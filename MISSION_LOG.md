@@ -566,3 +566,50 @@ OK  fonction atlas_set_country_geometry supprimée
 ### Prochaine phase
 Phase 2 — Moteur cartographique unique (`chantier/atlas-2-engine`) : suppression du code mort, `UnifiedExplorerMap` MapLibre globe, style Liquid Glass, captures 390/1440.
 
+## 2026-09-12 — CHANTIER ATLAS Phase 2 — Moteur cartographique unique (branche `chantier/atlas-2-engine`)
+
+### Livrables
+- **Suppression du code mort** : `src/app/carte-interactive/components/InteractiveMap.tsx` (346 l., `return null`) et `AdventureGenerator.tsx` (5 l.) — vérifiés sans consommateur (`rg` = 0) avant suppression.
+- **Moteur unique** `src/components/map/UnifiedExplorerMap.tsx` : MapLibre GL v6, `projection: globe`, style construit depuis la palette, couche monde pays (GeoJSON 110m réel), sentiers (points colorés palette DS), position utilisateur, contrôles glass 44 px (zoom/recentrage/capsule fond de carte), attribution, `prefers-reduced-motion` respecté.
+- **Engine** : `src/components/map/engine/mapTheme.ts` (palette, 4 paliers de zoom 0-3/4-7/8-13/14+, LOD 0/60/150/300, tolérances de simplification), `createMapStyle.ts` (tuiles OSM France/Topo Esri/Satellite Esri, fond stone), `icons.ts` (images canvas : points, dot utilisateur, clusters 5/10/25/50/100).
+- **Intégration `/explorer`** derrière `?atlas=1` (switch interne, remplacé par le feature flag en Phase 7) : `src/app/explorer/page.tsx` (searchParams Next 15) + `ExplorerClient.tsx` (rendu conditionnel, logique liste/filtres/panneau intacte).
+- **Correctif conformité** : `getDifficultyColor` (`src/components/explorer/types.ts`) migré des palettes Tailwind bannies (`#22c55e`, `#f97316`, `#ef4444`, `#7c3aed`, `#6b7280`) vers la palette DS (`#5B7F55`, `#C89A3B`, `#A8443A`, `#17402C`, `#5A7064`) — TDD.
+- **Worker MapLibre** : `scripts/atlas/copy-maplibre-worker.mjs` + `public/maplibre/maplibre-gl-worker.mjs` + `maplibre-gl-shared.mjs` (versionnés, convention `public/icons`) + hooks `predev`/`prebuild` + `setWorkerUrl()` avant création de carte.
+- **Captures** : `tests/visual/atlas-explorer.spec.ts` (protocole `prepareVisualPage`, SW neutralisé, consentement pré-posé, timeout 120 s) → `docs/atlas/captures/atlas-explorer-{desktop-chrome,iphone-14-pro,ipad-portrait}.png`.
+
+### Preuves brutes
+```
+$ npx tsc --noEmit
+TSC_EXIT=0
+
+$ npx vitest run tests/map tests/design-system/atlas-difficulty-colors.spec.ts tests/queries/trails-viewport.spec.ts
+Test Files  3 passed (3) | Tests  11 passed (11)
+
+$ npm test
+Test Files  4 failed | 318 passed | 4 skipped (326)   # 4 suites préexistantes (ops/a13), cf. Phase 1
+Tests  2253 passed | 23 skipped (2276)                # +7 tests vs Phase 1
+
+$ npm run lint
+LINT_EXIT=0 (warnings préexistants uniquement)
+
+$ npx playwright test --config=playwright.visual.config.ts tests/visual/atlas-explorer.spec.ts
+ok 1 [desktop-chrome]  (22.4s)
+ok 2 [iphone-14-pro]   (19.3s)
+ok 3 [ipad-portrait]   (19.2s)
+3 passed (1.2m)
+```
+
+### Écarts MapLibre v6.4.1 découverts et corrigés (diagnostic sur preuves, pas de contournement silencieux)
+1. **`sky` en racine de style bloque tout le pipeline de style** : aucun `style.load`/`load`, aucune source chargée (vérifié par compteurs d'événements : 0 / 15 s avec sky, tous les événements actifs sans). → sky retiré du style ; atmosphère sage appliquée via `map.setSky()` après `style.load` (rendu vérifié : 12 frames / 5 s).
+2. **Worker par défaut cassé sous bundler** : `import.meta.url` pointe vers un chunk inexistant → `new Worker(404)` silencieux → **toutes les sources GeoJSON invisibles** (`tileManagers` `loaded:false`, raster OK). Preuve : `renderedTrailPoints: 0` → après correctif `renderedTrailPoints: 4`. → worker servi depuis `/public/maplibre` + `setWorkerUrl`.
+3. **StrictMode** : un canvas créé puis détruit pendant le chargement du style bloquait le worker suivant → création de carte différée (timer 0, annulé au cleanup du premier montage).
+4. **Readiness sur `style.load`** (déterministe) au lieu de `load` (dépend du premier frame GPU/tuiles) — fixture de flakiness CI mobile.
+5. **Inversion `[lat,lng]` → `[lng,lat]`** attrapée par les captures (caméra sur l'océan Indien) : `DEFAULT_CENTER` et `initialView` corrigés en convention MapLibre.
+
+### Écarts de scope (documentés)
+- `leaflet`/`react-leaflet`/`leaflet.markercluster` non touchés (11 consommateurs hors périmètre, cf. Phase 0).
+- Le panneau mobile existant d'`ExplorerClient` (carrousel) prime visuellement sur les contrôles carte en mobile : polish de stacking prévu en Phase 3.
+
+### Prochaine phase
+Phase 3 — Palier local (`chantier/atlas-3-local`) : `useViewportData` (debounce 200 ms + AbortController + React Query bbox/zoom + LOD), clustering natif POI, panneau détail réutilisé, e2e pan/zoom/selection + preuve d'annulation des requêtes.
+

@@ -148,15 +148,15 @@ export function sanitizeGeoJSON(geojson: unknown): Record<string, unknown> | nul
 
 export function getDifficultyColor(difficulty: string | null | undefined): string {
   switch ((difficulty || '').toLowerCase()) {
-    case 'facile': return '#22c55e';
+    case 'facile': return '#5B7F55';
     case 'modérée':
     case 'moderee':
-    case 'moderate': return '#f97316';
+    case 'moderate': return '#C89A3B';
     case 'difficile':
-    case 'difficult': return '#ef4444';
+    case 'difficult': return '#A8443A';
     case 'expert':
-    case 'très difficile': return '#7c3aed';
-    default: return '#6b7280';
+    case 'très difficile': return '#17402C';
+    default: return '#5A7064';
   }
 }
 

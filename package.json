@@ -42,6 +42,7 @@
   "scripts": {
     "dev": "next dev -p 4000",
     "build": "next build",
+    "predev": "node scripts/atlas/copy-maplibre-worker.mjs",
     "start": "next start -p 4028",
     "lint": "next lint",
     "lint:fix": "next lint --fix",
@@ -64,7 +65,7 @@
     "coverage:pipeline": "tsx scripts/coverage/pipeline.ts",
     "icons:build": "node scripts/icons/build-sprite.mjs",
     "icons:codemod": "node scripts/icons/codemod-lucide-to-icon.mjs",
-    "prebuild": "node scripts/icons/build-sprite.mjs",
+    "prebuild": "node scripts/icons/build-sprite.mjs && node scripts/atlas/copy-maplibre-worker.mjs",
     "test:a11y": "playwright test --config=playwright.a11y.config.ts",
     "visual:sheet": "node scripts/visual/contact-sheet.mjs",
     "seed:y": "node scripts/seed/seed_y_profiles.mjs",
