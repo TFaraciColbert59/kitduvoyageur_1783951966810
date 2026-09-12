@@ -23,6 +23,14 @@ import { requiredPlanFor } from '@/features/adventure-intelligence/domain/entitl
 import { resolveUserEntitlements, generationQuotaFor } from '@/lib/entitlements/server';
 import { createSupabaseGenerationRequestStore } from '@/features/adventure-intelligence/server/generationRequests';
 import { rateLimit, rateLimitHeaders } from '@/lib/rate-limit';
+import {
+  correlationResponseHeaders,
+  readCorrelationId,
+  resolveCorrelationId,
+} from '@/lib/observability/correlation';
+import { createStructuredLogger } from '@/lib/observability/logger';
+
+const logger = createStructuredLogger({ service: 'api.adventure.generate' });
 
 export const dynamic = 'force-dynamic';
 
@@ -90,6 +98,8 @@ const generateSchema = z.object({
   // est écrite par `attach_adventure_plan_to_trip` / `select_adventure_plan_route`
   // (la RPC `create_adventure_plan_bundle` n'expose pas de p_correlation_id et
   // n'est pas modifiée ici — évolution additive réservée à une migration).
+  // Phase 10 : l'en-tête `x-correlation-id` est aussi accepté (corps prioritaire)
+  // et un identifiant est généré si rien de valide n'est fourni.
   correlationId: z.string().uuid('correlationId doit être un UUID').optional(),
 });
 
@@ -101,7 +111,11 @@ function zodDetails(error: z.ZodError): string {
  * Rejoue la réponse d'une clé `done` : plan + version + variantes relus depuis
  * la persistance, sans régénérer ni consommer de quota (audit #10).
  */
-async function reuseResponse(supabase: SupabaseClient, planId: string): Promise<NextResponse> {
+async function reuseResponse(
+  supabase: SupabaseClient,
+  planId: string,
+  correlationId: string
+): Promise<NextResponse> {
   try {
     const stored = await getAdventurePlan(supabase, planId);
     if (stored) {
@@ -118,8 +132,9 @@ async function reuseResponse(supabase: SupabaseClient, planId: string): Promise<
           explanation: 'Génération réutilisée (Idempotency-Key déjà traitée).',
           aiUsed: false,
           reused: true,
+          correlationId,
         },
-        { status: 200 }
+        { status: 200, headers: correlationResponseHeaders(correlationId) }
       );
     }
   } catch (error) {
@@ -128,7 +143,10 @@ async function reuseResponse(supabase: SupabaseClient, planId: string): Promise<
       error instanceof Error ? error.message : error
     );
   }
-  return NextResponse.json({ planId, reused: true }, { status: 200 });
+  return NextResponse.json(
+    { planId, reused: true, correlationId },
+    { status: 200, headers: correlationResponseHeaders(correlationId) }
+  );
 }
 
 /**
@@ -140,6 +158,11 @@ async function reuseResponse(supabase: SupabaseClient, planId: string): Promise<
  * serveur uniquement.
  */
 export async function POST(request: NextRequest) {
+  const startedAt = Date.now();
+  // Phase 10 — corrélation dès l'entrée : en-tête valide retenu en attendant le
+  // corps (qui prime), génération sinon. Jamais journalisé brut, jamais bloquant.
+  const headerCorrelation = resolveCorrelationId({ header: readCorrelationId(request) });
+  let correlationId = headerCorrelation.correlationId;
   try {
     const session = await createClient();
     const {
@@ -207,6 +230,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Phase 10 — le corps (continuité de chaîne) prime sur l'en-tête de transport.
+    const resolvedCorrelation = resolveCorrelationId({
+      header: readCorrelationId(request),
+      body: parsed.data.correlationId,
+    });
+    correlationId = resolvedCorrelation.correlationId;
+
     const supabase = getServiceSupabase();
     if (!supabase) {
       return NextResponse.json({ error: 'Service indisponible' }, { status: 503 });
@@ -233,7 +263,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (evaluation.decision === 'reuse' && evaluation.planId) {
-      return await reuseResponse(supabase, evaluation.planId);
+      return await reuseResponse(supabase, evaluation.planId, correlationId);
     }
     if (evaluation.decision === 'conflict') {
       return NextResponse.json(
@@ -282,7 +312,9 @@ export async function POST(request: NextRequest) {
           locks: parsed.data.locks,
           coordinates: parsed.data.coordinates,
           weatherDays: parsed.data.weatherDays,
-          correlationId: parsed.data.correlationId,
+          // Phase 10 — l'identifiant résolu (corps > en-tête > généré) est
+          // propagé aux runs moteurs (`adventure_engine_runs.correlation_id`).
+          correlationId,
           featureFlags: {
             performance_profile_v2: flags.performance_profile_v2,
             route_prediction_v2: flags.route_prediction_v2,
@@ -329,6 +361,16 @@ export async function POST(request: NextRequest) {
 
     await store.markDone(created.id, result.plan.id);
 
+    // Phase 10 — log structuré (aucune PII : identifiants techniques seulement).
+    logger.info('adventure.generate.completed', {
+      correlation_id: correlationId,
+      latency_ms: Date.now() - startedAt,
+      status: 201,
+      plan_id: result.plan.id,
+      ai_used: result.aiUsed,
+      correlation_source: resolvedCorrelation.source,
+    });
+
     return NextResponse.json(
       {
         planId: result.plan.id,
@@ -340,15 +382,23 @@ export async function POST(request: NextRequest) {
         candidateComparison: result.candidateComparison,
         explanation: result.explanation,
         aiUsed: result.aiUsed,
-        ...(result.correlationId ? { correlationId: result.correlationId } : {}),
+        // Phase 10 — toujours renvoyé (résolu ou généré) pour poursuivre la chaîne.
+        correlationId: result.correlationId ?? correlationId,
       },
-      { status: 201 }
+      { status: 201, headers: correlationResponseHeaders(correlationId) }
     );
   } catch (error) {
-    console.error(
-      '[adventure/generate] erreur inattendue:',
-      error instanceof Error ? error.message : error
+    const message = error instanceof Error ? error.message : String(error);
+    console.error('[adventure/generate] erreur inattendue:', message);
+    logger.error('adventure.generate.failed', {
+      correlation_id: correlationId,
+      latency_ms: Date.now() - startedAt,
+      status: 500,
+      error_message: message,
+    });
+    return NextResponse.json(
+      { error: 'Erreur serveur' },
+      { status: 500, headers: correlationResponseHeaders(correlationId) }
     );
-    return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
   }
 }

@@ -1,0 +1,82 @@
+{
+  "snapshot": {
+    "generatedAt": "2026-09-12T06:30:21.383Z",
+    "source": "local-db",
+    "db": {
+      "runs": {
+        "total": 144,
+        "last24h": 144,
+        "succeeded24h": 112,
+        "failed24h": 0,
+        "skipped24h": 32,
+        "avgDurationMs": 2,
+        "p95DurationMs": 3,
+        "latestStartedAt": "2026-09-12 02:12:02.114+00"
+      },
+      "queues": {
+        "pendingEvents": 0,
+        "failedEvents": 0,
+        "oldestPendingEventMinutes": 0,
+        "pendingGenerationRequests": 0,
+        "oldestGenerationRequestMinutes": 0
+      },
+      "rpc": {
+        "name": "current_feature_flags",
+        "samples": 5,
+        "avgMs": 0.58,
+        "p95Ms": 0.84
+      }
+    }
+  },
+  "evaluation": {
+    "ok": true,
+    "failures": [],
+    "warnings": [],
+    "checks": [
+      {
+        "id": "engine_runs_total",
+        "value": 144,
+        "ok": true
+      },
+      {
+        "id": "failed_run_ratio_24h",
+        "value": 0,
+        "threshold": 0.2,
+        "sample": 144,
+        "ok": true
+      },
+      {
+        "id": "pending_domain_events",
+        "value": 0,
+        "threshold": 50,
+        "ok": true
+      },
+      {
+        "id": "oldest_pending_event_minutes",
+        "value": 0,
+        "threshold": 60,
+        "ok": true
+      },
+      {
+        "id": "pending_generation_requests",
+        "value": 0,
+        "threshold": 20,
+        "ok": true
+      },
+      {
+        "id": "oldest_generation_request_minutes",
+        "value": 0,
+        "threshold": 30,
+        "ok": true
+      },
+      {
+        "id": "rpc_latency_avg_ms",
+        "value": 0.58,
+        "threshold": 250,
+        "samples": 5,
+        "ok": true
+      }
+    ]
+  },
+  "exitCode": 0
+}

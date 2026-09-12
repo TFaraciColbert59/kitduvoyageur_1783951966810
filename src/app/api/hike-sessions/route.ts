@@ -1,6 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { enforceRateLimit } from '@/lib/rate-limit/routes';
+import {
+  correlationResponseHeaders,
+  readCorrelationId,
+  resolveCorrelationId,
+} from '@/lib/observability/correlation';
+import { createStructuredLogger } from '@/lib/observability/logger';
+
+const logger = createStructuredLogger({ service: 'api.hike-sessions' });
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -77,11 +85,6 @@ function sanitizeTimedPositions(samples: TimedSample[] | undefined): TimedSample
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-/** Phase 2 — corrélation de chaîne validée (jamais un identifiant inventé). */
-function sanitizeCorrelationId(value: unknown): string | null {
-  return typeof value === 'string' && UUID_PATTERN.test(value) ? value : null;
-}
-
 /** Phase 7 — identifiant de voyage validé (jamais un identifiant inventé). */
 function sanitizeTripId(value: unknown): string | null {
   return typeof value === 'string' && UUID_PATTERN.test(value) ? value : null;
@@ -130,6 +133,8 @@ async function resolveTripId(
  * des carnet_moments automatiques si carnetId est fourni.
  */
 export async function POST(req: NextRequest) {
+  const startedAt = Date.now();
+  let correlationId: string | null = null;
   try {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
@@ -154,7 +159,13 @@ export async function POST(req: NextRequest) {
     if (limited) return limited;
 
     const body: SaveHikeSessionBody = await req.json();
-    const correlationId = sanitizeCorrelationId(body.correlationId);
+    // Phase 10 — corps (chaîne) > en-tête `x-correlation-id` > génération.
+    // Toujours un UUID : la session et le carnet restent corrélés même si le
+    // client n'a jamais fourni d'identifiant.
+    correlationId = resolveCorrelationId({
+      header: readCorrelationId(req),
+      body: body.correlationId,
+    }).correlationId;
     const tripId = await resolveTripId(
       supabase,
       userId,
@@ -285,10 +296,32 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    return NextResponse.json({ sessionId, carnetId });
+    // Phase 10 — log structuré sans PII (identifiants techniques seulement).
+    logger.info('hike_sessions.saved', {
+      correlation_id: correlationId,
+      latency_ms: Date.now() - startedAt,
+      status: 200,
+      session_id: sessionId,
+      carnet_id: carnetId,
+      trip_linked: Boolean(tripId),
+    });
+
+    return NextResponse.json(
+      { sessionId, carnetId },
+      { headers: correlationResponseHeaders(correlationId) }
+    );
   } catch (err) {
     console.error('[hike-sessions] Unexpected error:', err);
-    return NextResponse.json({ error: 'Erreur inattendue' }, { status: 500 });
+    logger.error('hike_sessions.failed', {
+      correlation_id: correlationId,
+      latency_ms: Date.now() - startedAt,
+      status: 500,
+      error_message: err instanceof Error ? err.message : String(err),
+    });
+    return NextResponse.json(
+      { error: 'Erreur inattendue' },
+      { status: 500, headers: correlationId ? correlationResponseHeaders(correlationId) : undefined }
+    );
   }
 }
 

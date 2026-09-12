@@ -69,7 +69,9 @@
     "ops:healthcheck": "node scripts/ops/a14_healthcheck.mjs",
     "ops:backup-restore": "powershell -ExecutionPolicy Bypass -File scripts/ops/a14_backup_restore_test.ps1",
     "ops:a15-load": "node scripts/ops/a15_load_test.mjs",
-    "ops:a15-rollout": "node scripts/ops/a15_rollout.mjs"
+    "ops:a15-rollout": "node scripts/ops/a15_rollout.mjs",
+    "ops:capacity": "node scripts/ops/phase10_capacity.mjs",
+    "ops:slo-check": "tsx scripts/ops/phase10_slo_check.ts"
   },
   "dependencies": {
     "@capacitor/android": "^8.5.0",
