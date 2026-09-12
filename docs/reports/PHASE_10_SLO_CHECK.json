@@ -1,0 +1,163 @@
+{
+  "generatedAt": "2026-09-12T06:30:22.086Z",
+  "sources": [
+    "health=docs/reports/PHASE_10_HEALTHCHECK.json",
+    "load=docs/reports/A15_LOAD_TEST.json",
+    "ai_usage=docs/reports/PHASE_10_AI_USAGE.json"
+  ],
+  "scope": "local/proxy — les valeurs issues d’A15 sont des proxys locaux, jamais des mesures de production ; les SLO absents restent insufficient_data",
+  "slos": [
+    {
+      "id": "api_availability_ratio",
+      "label": "Disponibilité API principale",
+      "target": 0.999,
+      "comparator": "gte",
+      "unit": "ratio",
+      "source": "plateforme d’hébergement (Vercel) — non mesurable localement",
+      "observed": null,
+      "status": "insufficient_data",
+      "reason": "mesure absente"
+    },
+    {
+      "id": "api_read_p95_ms",
+      "label": "Lecture API p95",
+      "target": 300,
+      "comparator": "lte",
+      "unit": "ms",
+      "source": "logs structurés par route / A15 `conditions` en proxy local",
+      "observed": 70.96,
+      "status": "pass",
+      "reason": "observé 70.96 ms — cible respectée"
+    },
+    {
+      "id": "api_write_p95_ms",
+      "label": "Écriture API p95",
+      "target": 500,
+      "comparator": "lte",
+      "unit": "ms",
+      "source": "logs structurés (routes POST) — aucun scénario d’écriture en charge aujourd’hui",
+      "observed": null,
+      "status": "insufficient_data",
+      "reason": "mesure absente"
+    },
+    {
+      "id": "http_5xx_ratio",
+      "label": "Erreurs 5xx",
+      "target": 0.01,
+      "comparator": "lte",
+      "unit": "ratio",
+      "source": "plateforme d’hébergement / logs structurés — proxy local A15",
+      "observed": 0,
+      "status": "pass",
+      "reason": "observé 0.00 % — cible respectée"
+    },
+    {
+      "id": "destructive_syncs",
+      "label": "Synchronisations destructives",
+      "target": 0,
+      "comparator": "eq",
+      "unit": "count",
+      "source": "journal de sync A13 (`offline_sync_operations`) — compteur ops",
+      "observed": null,
+      "status": "insufficient_data",
+      "reason": "mesure absente"
+    },
+    {
+      "id": "rls_violations",
+      "label": "Violations RLS",
+      "target": 0,
+      "comparator": "eq",
+      "unit": "count",
+      "source": "revue pgTAP (Phase 8) + journaux DB — compteur ops",
+      "observed": null,
+      "status": "insufficient_data",
+      "reason": "mesure absente"
+    },
+    {
+      "id": "carnet_entry_loss",
+      "label": "Perte d’entrée carnet",
+      "target": 0,
+      "comparator": "eq",
+      "unit": "count",
+      "source": "journal sync/offline (`hike_sessions`, `carnet_moments`) — compteur ops",
+      "observed": null,
+      "status": "insufficient_data",
+      "reason": "mesure absente"
+    },
+    {
+      "id": "jobs_pending_events",
+      "label": "Jobs en attente (file domaine)",
+      "target": 50,
+      "comparator": "lte",
+      "unit": "count",
+      "source": "A14 `adventure_domain_events` (mesurable localement)",
+      "observed": 0,
+      "status": "pass",
+      "reason": "observé 0 — cible respectée"
+    },
+    {
+      "id": "jobs_oldest_pending_min",
+      "label": "Retard maximal d’un job (min)",
+      "target": 60,
+      "comparator": "lte",
+      "unit": "min",
+      "source": "A14 `adventure_domain_events` (mesurable localement)",
+      "observed": 0,
+      "status": "pass",
+      "reason": "observé 0 min — cible respectée"
+    }
+  ],
+  "sloTotal": 9,
+  "failures": [],
+  "insufficient": [
+    "api_availability_ratio",
+    "api_write_p95_ms",
+    "destructive_syncs",
+    "rls_violations",
+    "carnet_entry_loss"
+  ],
+  "decision": {
+    "level": "incomplete",
+    "page": false,
+    "messages": [
+      "[SLO non mesuré] api_availability_ratio — instrumentation requise (plateforme d’hébergement (Vercel) — non mesurable localement)",
+      "[SLO non mesuré] api_write_p95_ms — instrumentation requise (logs structurés (routes POST) — aucun scénario d’écriture en charge aujourd’hui)",
+      "[SLO non mesuré] destructive_syncs — instrumentation requise (journal de sync A13 (`offline_sync_operations`) — compteur ops)",
+      "[SLO non mesuré] rls_violations — instrumentation requise (revue pgTAP (Phase 8) + journaux DB — compteur ops)",
+      "[SLO non mesuré] carnet_entry_loss — instrumentation requise (journal sync/offline (`hike_sessions`, `carnet_moments`) — compteur ops)"
+    ]
+  },
+  "aiBudget": {
+    "status": "insufficient_data",
+    "totals": {
+      "rows": 0,
+      "users": 0,
+      "requestsHeavy": 0,
+      "requestsFast": 0,
+      "totalRequests": 0,
+      "byFeature": {},
+      "firstDay": null,
+      "lastDay": null
+    },
+    "offenders": [],
+    "checks": [
+      {
+        "id": "per_user_daily_quota",
+        "ok": true,
+        "detail": "aucun dépassement (cibles 20 heavy / 100 fast par utilisateur et par jour)"
+      },
+      {
+        "id": "global_daily_requests",
+        "ok": null,
+        "detail": "plafond global non configuré — INSUFFICIENT_DATA"
+      },
+      {
+        "id": "monetary_budget_usd",
+        "ok": null,
+        "detail": "budget monétaire ou coût unitaire non configuré — INSUFFICIENT_DATA"
+      }
+    ],
+    "reason": "Modèles :free → coût token 0 constaté ; plafonds réels par utilisateur (20 heavy / 100 fast par jour). Budget global et barème monétaire : INSUFFICIENT_DATA (item humain/ops)."
+  },
+  "exitCode": 0
+}
