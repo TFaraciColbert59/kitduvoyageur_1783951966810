@@ -210,4 +210,39 @@ test.describe('Explorateur unifié (MapLibre globe)', () => {
     const legacyCount = await page.locator('.leaflet-container').count();
     expect(unifiedCount + legacyCount).toBeGreaterThan(0);
   });
+
+  test('dézoom molette borné : le globe reste cadré (minZoom)', async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== 'desktop-chrome', 'vérifié sur desktop');
+
+    await page.addInitScript(() => {
+      Object.defineProperty(navigator.serviceWorker, 'register', {
+        value: () => new Promise<never>(() => {}),
+        configurable: true,
+      });
+    });
+
+    await prepareVisualPage(page, '/explorer?atlas=1');
+    const mapRoot = page.getByTestId('unified-explorer-map');
+    await expect(mapRoot).toHaveAttribute('data-atlas-ready', 'true', { timeout: 45_000 });
+    await page.waitForTimeout(4_000); // plongée d'ouverture terminée
+
+    const hasTestHook = await page.evaluate(() =>
+      Boolean((window as unknown as { __atlasTestMap?: unknown }).__atlasTestMap)
+    );
+    test.skip(!hasTestHook, 'hook __atlasTestMap indisponible (build prod) — vérifié en dev.');
+
+    // Dézoom molette agressif : MapLibre v6 ne clampe pas la molette au minZoom,
+    // le verrou applicatif doit maintenir le globe cadré.
+    await page.mouse.move(950, 450);
+    for (let index = 0; index < 15; index += 1) {
+      await page.mouse.wheel(0, 400);
+      await page.waitForTimeout(60);
+    }
+    await page.waitForTimeout(1_000);
+
+    const zoom = await page.evaluate(
+      () => (window as unknown as { __atlasTestMap?: { getZoom(): number } }).__atlasTestMap?.getZoom()
+    );
+    expect(zoom).toBeGreaterThanOrEqual(1.2);
+  });
 });
