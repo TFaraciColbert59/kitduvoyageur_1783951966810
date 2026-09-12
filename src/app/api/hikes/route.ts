@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getTrails } from '@/lib/queries/trails';
+import { enforceRateLimit } from '@/lib/rate-limit/routes';
+import { clientIpFromHeaders } from '@/lib/rate-limit';
+import { parseOptionalBbox, parseOptionalNumber, VIEWPORT_RATE_LIMIT } from '@/lib/geo/requestViewport';
 
 export const revalidate = 60;
 export const dynamic = 'force-dynamic';
@@ -7,29 +10,46 @@ export const dynamic = 'force-dynamic';
 /**
  * GET /api/hikes
  *
- * Retourne les randonnées de l'Explorer. Les colonnes « synthétiques » de la
- * vue explore_trails (scores/durée/difficulté/dénivelé calculés par COALESCE)
- * sont surchargées par les VRAIES valeurs issues des tables :
+ * Retourne les randonnées de l'Explorer via la RPC PostGIS indexée
+ * `trails_in_viewport` (ATLAS Phase 1). Les colonnes « synthétiques » de la
+ * vue explore_trails sont surchargées par les VRAIES tables :
  *   hiking_routes  (distance réelle)
  *   trail_metadata (durée, difficulté, dénivelé, terrain, saison, aa)
  *   trail_scores   (scores réels)
  * Une donnée absente est renvoyée `null` — jamais inventée.
+ *
+ * Durcissement ATLAS Phase 5 : rate limiting par IP (failMode open) et bbox
+ * plafonnée à 20° par axe (`x-lkdv-bbox-clamped: 1` si recentrée).
  */
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
 
-  // Filter params
-  const minDist = searchParams.has('min_dist') ? Number(searchParams.get('min_dist')) : 2.0;
-  const maxDist = searchParams.has('max_dist') ? Number(searchParams.get('max_dist')) : null;
+  const limited = await enforceRateLimit(clientIpFromHeaders(request.headers), {
+    scope: 'hikes-viewport',
+    ...VIEWPORT_RATE_LIMIT,
+  });
+  if (limited) return limited;
+
+  const viewport = parseOptionalBbox(searchParams);
+  if (!viewport.ok) return viewport.response;
+
+  // Filter params — nombres stricts (NaN ⇒ 400, jamais transmis à la RPC).
+  const minDistResult = parseOptionalNumber(searchParams, 'min_dist');
+  if (!minDistResult.ok) return minDistResult.response;
+  const maxDistResult = parseOptionalNumber(searchParams, 'max_dist');
+  if (!maxDistResult.ok) return maxDistResult.response;
+  const limitResult = parseOptionalNumber(searchParams, 'limit');
+  if (!limitResult.ok) return limitResult.response;
+  const zoomResult = parseOptionalNumber(searchParams, 'zoom');
+  if (!zoomResult.ok) return zoomResult.response;
+
+  const minDist = minDistResult.value ?? 2.0;
+  const maxDist = maxDistResult.value;
   const difficulty = searchParams.get('difficulty');
   const search = searchParams.get('search');
   const includeShort = searchParams.get('include_short') === 'true';
-  const minLat = searchParams.has('min_lat') ? Number(searchParams.get('min_lat')) : null;
-  const maxLat = searchParams.has('max_lat') ? Number(searchParams.get('max_lat')) : null;
-  const minLng = searchParams.has('min_lng') ? Number(searchParams.get('min_lng')) : null;
-  const maxLng = searchParams.has('max_lng') ? Number(searchParams.get('max_lng')) : null;
-  const limit = searchParams.has('limit') ? Number(searchParams.get('limit')) : null;
-  const zoom = searchParams.has('zoom') ? Number(searchParams.get('zoom')) : null;
+  const limit = limitResult.value;
+  const zoom = zoomResult.value;
 
   try {
     const deduplicated = await getTrails({
@@ -38,16 +58,19 @@ export async function GET(request: NextRequest) {
       difficulty,
       search,
       includeShort,
-      minLat,
-      maxLat,
-      minLng,
-      maxLng,
+      minLat: viewport.bbox?.minLat ?? null,
+      maxLat: viewport.bbox?.maxLat ?? null,
+      minLng: viewport.bbox?.minLng ?? null,
+      maxLng: viewport.bbox?.maxLng ?? null,
       limit: limit ?? 150,
       zoom,
     });
 
     const response = NextResponse.json(deduplicated);
     response.headers.set('Cache-Control', 'public, max-age=60, stale-while-revalidate=300');
+    if (viewport.bbox && viewport.clamped) {
+      response.headers.set('x-lkdv-bbox-clamped', '1');
+    }
     return response;
   } catch (error: any) {
     console.error('API /api/hikes error:', error);

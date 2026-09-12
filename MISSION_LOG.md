@@ -697,3 +697,59 @@ ok 4,7 rendus iphone-14-pro / ipad-portrait
 ### Prochaine phase
 Phase 5 — Nettoyage & durcissement (`chantier/atlas-5-hardening`) : rate limiting `/api/hikes` + `/api/pois`, retrait `react-globe.gl`/`three` après remplacement de `CountryGlobe`, audit `silent-failure-hunter`, accessibilité, budget bundle.
 
+## 2026-09-12 — CHANTIER ATLAS Phase 5 — Nettoyage & durcissement (branche `chantier/atlas-5-hardening`)
+
+### Livrables
+- **Rate limiting + plafond serveur** : `VIEWPORT_RATE_LIMIT` (120 req/min/IP, `failMode: 'open'` — repli mémoire dégradé journalisé) sur `/api/hikes` et `/api/pois` via l'infra existante `enforceRateLimit` + `clientIpFromHeaders` ; bbox validée/plafonnée à 20°/axe (`parseOptionalBbox`, en-tête `x-lkdv-bbox-clamped: 1`) ; paramètres numériques stricts (NaN/vide ⇒ 400, jamais transmis à la RPC) ; tests `tests/security/atlas-abuse.spec.ts` (9, TDD rouge→vert).
+- **Globe pays MapLibre** : `src/components/map/UnifiedCountryGlobe.tsx` avec la même API de props que `CountryGlobe` (clic, sélection, focusPoint/focusCode, uniform, spinner « Chargement des pays… », erreur explicite, `[data-visual-mask]` conservé) ; monté sur `/pays` (EarthPageClient) et `PaysRightSidebar` ; auto-rotation retirée (écart volontaire, reduced-motion friendly). `CountryGlobe.tsx` supprimé, `react-globe.gl`, `three`, `@types/three` retirés de `package.json`, `transpilePackages` nettoyé.
+- **Accessibilité** : sélecteur de pays `sr-only` focusable (révélé au focus) sur `/pays` — alternative clavier/lecteur d'écran au clic globe (WCAG 2.1.1) ; contrôles carte 44 px avec `aria-label`/`aria-pressed`.
+- **Audit `silent-failure-hunter`** (rapport complet : 2 critiques, 4 hauts, 6 moyens, 11 bas) et **corrections appliquées** :
+  - `useViewportData` : échec journalisé avec contexte (URL/viewportKey), clé mémorisée uniquement en cas de succès (retry autorisé), `hasFetched` pour ne plus écraser les données initiales par un `EMPTY`.
+  - `getTrails` : plus d'« empty success » — cache servi explicitement avec log d'âge, sinon erreur propagée (route 5xx, pas de `Cache-Control` fabriqué) ; nom honnête « Sans nom » (plus de `Randonnée #id` fabriqué) ; coordonnées non finies ignorées + warn.
+  - `getPois` : erreurs des 5 sources journalisées avec bbox ; si toutes échouent, erreur propagée (pas de cache d'un résultat dégradé).
+  - `getAtlasDensity` : sources traitées indépendamment (une matview en échec n'efface plus l'autre), pas de cache partiel.
+  - `UnifiedExplorerMap`/`UnifiedCountryGlobe` : gardes d'initialisation MapLibre (jamais de spinner infini), timeout 4 s sur le GeoJSON pays, validation `features` tableau, logs d'erreur complets, validation centroïde avant `flyTo`.
+
+### Preuves brutes
+```
+$ npx tsc --noEmit
+TSC_EXIT=0
+
+$ npm test
+Test Files  4 failed | 322 passed | 4 skipped (330)   # 4 suites préexistantes (ops/a13)
+Tests  2276 passed | 23 skipped (2299)                # +10 tests vs Phase 4
+
+$ npm run lint
+LINT_EXIT=0 (warnings préexistants uniquement)
+
+$ npx playwright test --config=playwright.visual.config.ts tests/visual/atlas-explorer.spec.ts --project=desktop-chrome -g "rend le canvas"
+ok 1 explorateur unifié rendu + zéro pageerror (14.7s)
+```
+
+### Bundle avant/après (builds réels, même machine)
+```
+AVANT (main 8ee3ab3d, worktree + junction node_modules, .env copiés)
+  /pays               9.03 kB   342 kB First Load JS
+  /explorer           16.4 kB   266 kB
+  /carte-interactive   3.44 kB  325 kB
+  chunks JS totaux    10 370 KB (359 fichiers)
+
+APRÈS (chantier/atlas-5-hardening)
+  /pays               9.04 kB   342 kB
+  /explorer           16.4 kB   265 kB
+  /carte-interactive   3.45 kB  325 kB
+  chunks JS totaux     7 697 KB (352 fichiers)   → -2 673 KB (-25,8 %)
+```
+Le First Load JS des routes est inchangé (three/react-globe étaient chargés en chunks lazy) : le gain est de **2,7 Mo de JS retirés du build** (chunks three/react-globe supprimés). Budget ATLAS-R5 : /explorer 265 kB First Load JS — au-dessus de la cible 170 kB (héritage app partagé 104 kB + shell explorer), écart documenté pour l'optimisation transverse.
+
+### Tests visuels /pays — échecs préexistants prouvés
+12 échecs constatés (`communaute`, `carte-interactive`, `pays-fr`, `pays-skeleton-loading` × 3 devices). **Tous rejoués sur l'état AVANT (worktree `8ee3ab3d` + dev dédié) : mêmes échecs.** Aucune baseline modifiée (les masquer serait cacher une dérive antérieure au chantier).
+
+### Restes de l'audit (documentés, non bloquants)
+- `ExplorerClient` legacy : `if (!res.ok) return []` + géoloc silencieuse (hors scope ATLAS, à traiter séparément).
+- `mapTheme` zoom non fini → palier monde silencieux ; `densityLayers` lignes écartées sans compteur (low).
+- `refresh-atlas-density` : log complet ajouté, pas de timeout RPC (supabase-js ne propage pas de signal) — surveillé par le fail du cron.
+
+### Prochaine phase
+Phase 6 — Conformité design & QA (`chantier/atlas-6-conformite`) : agent `atlas-conformite-lg`, greps couleurs bannies, `tsc`/`lint`/`build`, revues multi-perspectives Icon Agents.
+

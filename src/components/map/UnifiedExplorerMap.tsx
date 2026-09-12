@@ -207,8 +207,16 @@ export default function UnifiedExplorerMap({
   const viewportData = useViewportData(viewport, true);
 
   useEffect(() => {
+    // Ne jamais écraser les données initiales avant une première réponse réseau
+    // (succès ou échec explicite) — ATLAS-R9.
+    if (!viewportData.hasFetched) return;
+    if (viewportData.error) {
+      console.error('[UnifiedExplorerMap] données viewport indisponibles', {
+        error: viewportData.error,
+      });
+    }
     callbacksRef.current.onViewportData?.(viewportData.data);
-  }, [viewportData.data]);
+  }, [viewportData.data, viewportData.hasFetched, viewportData.error]);
 
   const initialView = useMemo(() => {
     if (userLocation && isValidLatLng(userLocation[0], userLocation[1])) {
@@ -250,15 +258,23 @@ export default function UnifiedExplorerMap({
       // rendue). Voir scripts/atlas/copy-maplibre-worker.mjs.
       setWorkerUrl('/maplibre/maplibre-gl-worker.mjs');
 
-      const instance = new MapLibreMap({
-        container,
-        style: createMapStyle('topo'),
-        center: initialView.center,
-        zoom: initialView.zoom,
-        attributionControl: false,
-        dragRotate: false,
-        pitchWithRotate: false,
-      });
+      let instance: MapLibreMap;
+      try {
+        instance = new MapLibreMap({
+          container,
+          style: createMapStyle('topo'),
+          center: initialView.center,
+          zoom: initialView.zoom,
+          attributionControl: false,
+          dragRotate: false,
+          pitchWithRotate: false,
+        });
+      } catch (caught) {
+        // Jamais de spinner infini : erreur journalisée avec contexte, UI débloquée.
+        console.error("[UnifiedExplorerMap] échec d'initialisation MapLibre", caught);
+        setReady(true);
+        return;
+      }
       map = instance;
       mapRef.current = instance;
 
@@ -304,47 +320,53 @@ export default function UnifiedExplorerMap({
           console.error('[UnifiedExplorerMap] setSky indisponible:', error);
         }
 
-        registerAtlasMapImages(instance);
+        try {
+          registerAtlasMapImages(instance);
 
-        instance.addSource('atlas-trails', {
-          type: 'geojson',
-          data: buildTrailsFeatureCollection(trailsRef.current),
-        });
-        instance.addLayer({
-          id: 'atlas-trails-selected',
-          type: 'circle',
-          source: 'atlas-trails',
-          filter: ['==', ['get', 'id'], '__none__'],
-          paint: {
-            'circle-radius': 12,
-            'circle-color': 'rgba(0,0,0,0)',
-            'circle-stroke-color': MAP_COLORS.ink,
-            'circle-stroke-width': 3,
-          },
-        });
-        instance.addLayer({
-          id: 'atlas-trails-points',
-          type: 'circle',
-          source: 'atlas-trails',
-          paint: {
-            'circle-color': ['get', 'color'],
-            'circle-radius': 6,
-            'circle-stroke-color': MAP_COLORS.white,
-            'circle-stroke-width': 2,
-          },
-        });
+          instance.addSource('atlas-trails', {
+            type: 'geojson',
+            data: buildTrailsFeatureCollection(trailsRef.current),
+          });
+          instance.addLayer({
+            id: 'atlas-trails-selected',
+            type: 'circle',
+            source: 'atlas-trails',
+            filter: ['==', ['get', 'id'], '__none__'],
+            paint: {
+              'circle-radius': 12,
+              'circle-color': 'rgba(0,0,0,0)',
+              'circle-stroke-color': MAP_COLORS.ink,
+              'circle-stroke-width': 3,
+            },
+          });
+          instance.addLayer({
+            id: 'atlas-trails-points',
+            type: 'circle',
+            source: 'atlas-trails',
+            paint: {
+              'circle-color': ['get', 'color'],
+              'circle-radius': 6,
+              'circle-stroke-color': MAP_COLORS.white,
+              'circle-stroke-width': 2,
+            },
+          });
 
-        instance.on('click', 'atlas-trails-points', (event: MapLayerMouseEvent) => {
-          const id = event.features?.[0]?.properties?.id;
-          const trail = trailsRef.current.find((t) => t.id === String(id));
-          if (trail) callbacksRef.current.onTrailClick?.(trail);
-        });
-        instance.on('mouseenter', 'atlas-trails-points', () => {
-          instance.getCanvas().style.cursor = 'pointer';
-        });
-        instance.on('mouseleave', 'atlas-trails-points', () => {
-          instance.getCanvas().style.cursor = '';
-        });
+          instance.on('click', 'atlas-trails-points', (event: MapLayerMouseEvent) => {
+            const id = event.features?.[0]?.properties?.id;
+            const trail = trailsRef.current.find((t) => t.id === String(id));
+            if (trail) callbacksRef.current.onTrailClick?.(trail);
+          });
+          instance.on('mouseenter', 'atlas-trails-points', () => {
+            instance.getCanvas().style.cursor = 'pointer';
+          });
+          instance.on('mouseleave', 'atlas-trails-points', () => {
+            instance.getCanvas().style.cursor = '';
+          });
+        } catch (caught) {
+          // Les couches ATLAS peuvent échouer (images/canvas) : on journalise avec
+          // contexte et on débloque l'UI plutôt que de laisser un spinner infini.
+          console.error("[UnifiedExplorerMap] échec d'initialisation des couches", caught);
+        }
 
         setReady(true);
         callbacksRef.current.onMapReady?.();
@@ -354,14 +376,14 @@ export default function UnifiedExplorerMap({
       instance.on('moveend', emitViewport);
       instance.on('zoomend', emitViewport);
       instance.on('error', (event) => {
-        const message = event?.error?.message ?? String(event);
-        console.error('[UnifiedExplorerMap] MapLibre error:', message);
+        console.error('[UnifiedExplorerMap] MapLibre error', event?.error ?? event);
       });
 
     // Couche monde : polygones pays (GeoJSON statique réel, déjà utilisé par Earth).
     // La géométrie est enrichie côté client avec `atlas_iso`/`atlas_name` normalisés
     // (même résolution que le référentiel countries_geo) pour filtres et interactions.
     countriesAbort = new AbortController();
+    const countriesTimeout = window.setTimeout(() => countriesAbort?.abort(), 4_000);
     fetch(COUNTRIES_GEOJSON_URL, { signal: countriesAbort.signal })
       .then((response) => {
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -369,6 +391,9 @@ export default function UnifiedExplorerMap({
       })
       .then((geojson) => {
         if (cancelled || !mapRef.current) return;
+        if (!Array.isArray(geojson?.features)) {
+          throw new Error('GeoJSON pays invalide : propriété "features" absente');
+        }
         const current = mapRef.current;
         if (current.getSource('atlas-countries')) return;
         const beforeId = current.getLayer('atlas-trails-selected')
@@ -446,7 +471,10 @@ export default function UnifiedExplorerMap({
                 ? Number(density.trail_count)
                 : null,
           });
-          if (density && Number.isFinite(Number(density.centroid_lat))) {
+          if (
+            density &&
+            isValidLatLng(density.centroid_lat, density.centroid_lng)
+          ) {
             flyToTarget(current, {
               center: [Number(density.centroid_lng), Number(density.centroid_lat)],
               zoom: 4.6,
@@ -463,9 +491,13 @@ export default function UnifiedExplorerMap({
       })
       .catch((error: unknown) => {
         if ((error as Error)?.name !== 'AbortError') {
-          console.error('[UnifiedExplorerMap] GeoJSON pays indisponible:', error);
+          console.error('[UnifiedExplorerMap] GeoJSON pays indisponible', {
+            url: COUNTRIES_GEOJSON_URL,
+            error,
+          });
         }
-      });
+      })
+      .finally(() => window.clearTimeout(countriesTimeout));
     }, 0);
 
     return () => {

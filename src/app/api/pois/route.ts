@@ -1,37 +1,58 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getPois } from '@/lib/queries/pois';
+import { enforceRateLimit } from '@/lib/rate-limit/routes';
+import { clientIpFromHeaders } from '@/lib/rate-limit';
+import { parseOptionalBbox, parseOptionalNumber, VIEWPORT_RATE_LIMIT } from '@/lib/geo/requestViewport';
 
 export const revalidate = 60;
 
 /**
  * GET /api/pois
- * 
- * Retourne les points d'intérêt consolidés pour la carte aventure (outdoor_points, map_refuges, map_summits, map_water_points, trail_pois).
+ *
+ * Retourne les points d'intérêt consolidés pour la carte aventure (outdoor_points,
+ * map_refuges, map_summits, map_water_points, trail_pois).
+ *
+ * Durcissement ATLAS Phase 5 : rate limiting par IP (failMode open) et bbox
+ * plafonnée à 20° par axe (`x-lkdv-bbox-clamped: 1` si recentrée).
  */
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
 
+  const limited = await enforceRateLimit(clientIpFromHeaders(request.headers), {
+    scope: 'pois-viewport',
+    ...VIEWPORT_RATE_LIMIT,
+  });
+  if (limited) return limited;
+
+  const viewport = parseOptionalBbox(searchParams);
+  if (!viewport.ok) return viewport.response;
+
   const category = searchParams.get('category');
-  const minLat = searchParams.has('min_lat') ? Number(searchParams.get('min_lat')) : null;
-  const maxLat = searchParams.has('max_lat') ? Number(searchParams.get('max_lat')) : null;
-  const minLng = searchParams.has('min_lng') ? Number(searchParams.get('min_lng')) : null;
-  const maxLng = searchParams.has('max_lng') ? Number(searchParams.get('max_lng')) : null;
-  const zoom = searchParams.has('zoom') ? Number(searchParams.get('zoom')) : null;
-  const limit = searchParams.has('limit') ? Number(searchParams.get('limit')) : null;
+
+  // Nombres stricts (NaN ⇒ 400, jamais transmis au query builder).
+  const zoomResult = parseOptionalNumber(searchParams, 'zoom');
+  if (!zoomResult.ok) return zoomResult.response;
+  const limitResult = parseOptionalNumber(searchParams, 'limit');
+  if (!limitResult.ok) return limitResult.response;
+  const zoom = zoomResult.value;
+  const limit = limitResult.value;
 
   try {
     const pois = await getPois({
       category,
-      minLat,
-      maxLat,
-      minLng,
-      maxLng,
+      minLat: viewport.bbox?.minLat ?? null,
+      maxLat: viewport.bbox?.maxLat ?? null,
+      minLng: viewport.bbox?.minLng ?? null,
+      maxLng: viewport.bbox?.maxLng ?? null,
       zoom,
       limit,
     });
 
     const response = NextResponse.json(pois);
     response.headers.set('Cache-Control', 'public, max-age=60, stale-while-revalidate=300');
+    if (viewport.bbox && viewport.clamped) {
+      response.headers.set('x-lkdv-bbox-clamped', '1');
+    }
     return response;
   } catch (error: any) {
     console.error('API /api/pois error:', error);

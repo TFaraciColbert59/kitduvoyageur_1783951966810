@@ -164,18 +164,50 @@ describe('getTrails — RPC trails_in_viewport (ATLAS Phase 1)', () => {
     expect(trails.map((t) => t.id)).toContain('373');
   });
 
-  it('retourne [] et loggue sans exception si la RPC échoue', async () => {
+  it('propage l’erreur RPC quand aucun cache n’est disponible (ATLAS-R9)', async () => {
     state.rpcError = { message: 'boom' };
     const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
-    const trails = await getTrails({
-      minLat: 1,
-      maxLat: 2,
-      minLng: 3,
-      maxLng: 4,
-      limit: 64,
-    });
-    expect(trails).toEqual([]);
+    await expect(
+      getTrails({
+        minLat: 1,
+        maxLat: 2,
+        minLng: 3,
+        maxLng: 4,
+        limit: 64,
+      })
+    ).rejects.toThrow('[getTrails] boom');
     expect(spy).toHaveBeenCalled();
     spy.mockRestore();
+  });
+
+  it('nomme honnêtement une randonnée sans nom (jamais « Randonnée #id »)', async () => {
+    state.rpcResult = {
+      data: [
+        {
+          id: 999,
+          name: null,
+          start_lat: 50.1,
+          start_lng: 4.1,
+          distance_km: 5,
+          duration_hours: null,
+          difficulty: null,
+          elevation_gain: null,
+          adventure_score: null,
+          nature_score: null,
+          panorama_score: null,
+          ref: null,
+          network: null,
+          terrain_type: null,
+          family_friendly: null,
+          season: null,
+          ai_description: null,
+          geometry: null,
+        },
+      ],
+      error: null,
+    };
+    const trails = await getTrails({ minLat: 50, maxLat: 51, minLng: 4, maxLng: 5, limit: 65 });
+    expect(trails).toHaveLength(1);
+    expect(trails[0].name).toBe('Sans nom');
   });
 });

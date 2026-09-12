@@ -30,43 +30,56 @@ export const ATLAS_TILES: Record<AtlasTileMode, { tiles: string[]; attribution: 
   },
 };
 
-export function createMapStyle(mode: AtlasTileMode = 'topo'): StyleSpecification {
+export interface CreateMapStyleOptions {
+  /** Inclure les tuiles raster (défaut true). */
+  withTiles?: boolean;
+  /** Fond transparent (globe pays posé sur la vidéo Earth). */
+  transparentBackground?: boolean;
+}
+
+export function createMapStyle(
+  mode: AtlasTileMode = 'topo',
+  options: CreateMapStyleOptions = {}
+): StyleSpecification {
   // ⚠️ MapLibre v6.4.1 : un `sky` déclaré à la racine du style bloque tout le
   // pipeline de style (aucun style.load/load, sources jamais chargées).
   // L'atmosphère est donc appliquée via `map.setSky()` APRÈS le load
   // (voir UnifiedExplorerMap). Écart v6 documenté dans MISSION_LOG.
-  return {
-    version: 8,
-    projection: { type: 'globe' },
-    sources: {
-      'atlas-topo': {
-        type: 'raster',
-        tiles: ATLAS_TILES.topo.tiles,
-        tileSize: 256,
-        maxzoom: ATLAS_TILES.topo.maxzoom,
-        attribution: ATLAS_TILES.topo.attribution,
-      },
-      'atlas-osm': {
-        type: 'raster',
-        tiles: ATLAS_TILES.osm.tiles,
-        tileSize: 256,
-        maxzoom: ATLAS_TILES.osm.maxzoom,
-        attribution: ATLAS_TILES.osm.attribution,
-      },
-      'atlas-satellite': {
-        type: 'raster',
-        tiles: ATLAS_TILES.satellite.tiles,
-        tileSize: 256,
-        maxzoom: ATLAS_TILES.satellite.maxzoom,
-        attribution: ATLAS_TILES.satellite.attribution,
-      },
-    },
-    layers: [
-      {
-        id: 'atlas-background',
-        type: 'background',
-        paint: { 'background-color': MAP_COLORS.paper },
-      },
+  const { withTiles = true, transparentBackground = false } = options;
+  const sources: StyleSpecification['sources'] = {};
+  const layers: StyleSpecification['layers'] = [];
+
+  if (!transparentBackground) {
+    layers.push({
+      id: 'atlas-background',
+      type: 'background',
+      paint: { 'background-color': MAP_COLORS.paper },
+    });
+  }
+
+  if (withTiles) {
+    sources['atlas-topo'] = {
+      type: 'raster',
+      tiles: ATLAS_TILES.topo.tiles,
+      tileSize: 256,
+      maxzoom: ATLAS_TILES.topo.maxzoom,
+      attribution: ATLAS_TILES.topo.attribution,
+    };
+    sources['atlas-osm'] = {
+      type: 'raster',
+      tiles: ATLAS_TILES.osm.tiles,
+      tileSize: 256,
+      maxzoom: ATLAS_TILES.osm.maxzoom,
+      attribution: ATLAS_TILES.osm.attribution,
+    };
+    sources['atlas-satellite'] = {
+      type: 'raster',
+      tiles: ATLAS_TILES.satellite.tiles,
+      tileSize: 256,
+      maxzoom: ATLAS_TILES.satellite.maxzoom,
+      attribution: ATLAS_TILES.satellite.attribution,
+    };
+    layers.push(
       {
         id: 'atlas-tile-topo',
         type: 'raster',
@@ -87,7 +100,14 @@ export function createMapStyle(mode: AtlasTileMode = 'topo'): StyleSpecification
         source: 'atlas-satellite',
         layout: { visibility: mode === 'satellite' ? 'visible' : 'none' },
         paint: { 'raster-opacity': 0.9 },
-      },
-    ],
+      }
+    );
+  }
+
+  return {
+    version: 8,
+    projection: { type: 'globe' },
+    sources,
+    layers,
   };
 }

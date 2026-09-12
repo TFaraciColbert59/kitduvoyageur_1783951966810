@@ -48,11 +48,19 @@ export async function getAtlasDensity(): Promise<AtlasDensity> {
   ]);
 
   if (countriesResult.error || cellsResult.error) {
-    console.error(
-      '[getAtlasDensity] erreur matviews:',
-      countriesResult.error?.message ?? cellsResult.error?.message
-    );
-    return cache?.data ?? { countries: [], cells: [] };
+    // Chaque source est traitée indépendamment : une matview en échec ne fait pas
+    // disparaître l'autre. Jamais de résultat partiel mis en cache.
+    console.error('[getAtlasDensity] erreurs matviews', {
+      countries: countriesResult.error?.message ?? null,
+      cells: cellsResult.error?.message ?? null,
+    });
+    if (countriesResult.error && cellsResult.error) {
+      return cache?.data ?? { countries: [], cells: [] };
+    }
+    return {
+      countries: (countriesResult.data ?? []) as CountryDensityRow[],
+      cells: (cellsResult.data ?? []) as RegionDensityCell[],
+    };
   }
 
   const data: AtlasDensity = {
