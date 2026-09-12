@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gpx version="1.1" creator="LKDV fixtures" xmlns="http://www.topografix.com/GPX/1/1">
+  <metadata>
+    <name>Trace de test</name>
+  </metadata>
+  <trk>
+    <name>Trace de test</name>
+    <trkseg>
+      <trkpt lat="45.0000" lon="6.0000"><ele>1000</ele><time>2026-09-01T08:00:00Z</time></trkpt>
+      <trkpt lat="45.0100" lon="6.0100"><ele>1050</ele><time>2026-09-01T08:10:00Z</time></trkpt>
+      <trkpt lat="45.0200" lon="6.0200"><ele>1020</ele><time>2026-09-01T08:20:00Z</time></trkpt>
+      <trkpt lat="45.0300" lon="6.0300"><ele>1100</ele><time>2026-09-01T08:30:00Z</time></trkpt>
+    </trkseg>
+  </trk>
+</gpx>

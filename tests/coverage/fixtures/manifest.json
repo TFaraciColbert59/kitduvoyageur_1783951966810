@@ -1,0 +1,17 @@
+{
+  "datasetKey": "fixture-dataset",
+  "version": "2026.09.1",
+  "region": { "countryIsoA2": "FR", "regionCode": "FIXTURE-REGION" },
+  "source": {
+    "name": "Source de test",
+    "url": "https://example.invalid/source-fixture",
+    "licenseCode": "FIXTURE-OPEN-1.0",
+    "downloadedAt": "2026-09-01T00:00:00.000Z"
+  },
+  "authorization": {
+    "downloadAuthorized": true,
+    "reference": "Autorisation de test (fixture)"
+  },
+  "pipelineVersion": "phase4-1.0.0",
+  "importActor": "fixture-agent"
+}

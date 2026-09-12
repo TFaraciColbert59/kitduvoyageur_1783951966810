@@ -1,0 +1,6 @@
+{
+  "minValidGeometries": 2,
+  "minSourcedPois": 2,
+  "minSampledRoutes": 20,
+  "maxUnjustifiedBreaks": 0
+}

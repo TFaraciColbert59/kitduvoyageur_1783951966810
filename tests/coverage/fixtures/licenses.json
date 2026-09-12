@@ -1,0 +1,59 @@
+{
+  "licenses": [
+    {
+      "code": "FIXTURE-OPEN-1.0",
+      "name": "Licence de test ouverte",
+      "status": "active",
+      "allowsRedistribution": true,
+      "allowsCommercialUse": true,
+      "shareAlike": false,
+      "evidenceUrl": "https://example.invalid/licence-ouverte",
+      "evidenceNote": "Preuve de test",
+      "validUntil": null
+    },
+    {
+      "code": "FIXTURE-NOREDIST-1.0",
+      "name": "Licence de test sans redistribution",
+      "status": "active",
+      "allowsRedistribution": false,
+      "allowsCommercialUse": true,
+      "shareAlike": false,
+      "evidenceUrl": "https://example.invalid/licence-fermee",
+      "evidenceNote": "Preuve de test",
+      "validUntil": null
+    },
+    {
+      "code": "FIXTURE-REVOKED-1.0",
+      "name": "Licence de test révoquée",
+      "status": "revoked",
+      "allowsRedistribution": true,
+      "allowsCommercialUse": true,
+      "shareAlike": false,
+      "evidenceUrl": "https://example.invalid/licence-revoquee",
+      "evidenceNote": "Preuve de test",
+      "validUntil": null
+    },
+    {
+      "code": "FIXTURE-EXPIRED-1.0",
+      "name": "Licence de test expirée",
+      "status": "active",
+      "allowsRedistribution": true,
+      "allowsCommercialUse": true,
+      "shareAlike": false,
+      "evidenceUrl": "https://example.invalid/licence-expiree",
+      "evidenceNote": "Preuve de test",
+      "validUntil": "2020-01-01T00:00:00.000Z"
+    },
+    {
+      "code": "FIXTURE-NO-EVIDENCE-1.0",
+      "name": "Licence de test sans preuve",
+      "status": "active",
+      "allowsRedistribution": true,
+      "allowsCommercialUse": true,
+      "shareAlike": false,
+      "evidenceUrl": null,
+      "evidenceNote": null,
+      "validUntil": null
+    }
+  ]
+}

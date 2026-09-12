@@ -1,0 +1,14 @@
+{
+  "source": "docs/analysis/SYNTHESIS_DECISIONS.md#D-B",
+  "note": "Décision documentaire (5 pays pilotes + 3 extensions régionales). Ne constitue PAS une couverture de données.",
+  "targets": [
+    { "id": "fr", "label": "France", "kind": "country", "countryIsoA2": "FR", "regionCode": "" },
+    { "id": "is", "label": "Islande", "kind": "country", "countryIsoA2": "IS", "regionCode": "" },
+    { "id": "ma", "label": "Maroc", "kind": "country", "countryIsoA2": "MA", "regionCode": "" },
+    { "id": "it", "label": "Italie", "kind": "country", "countryIsoA2": "IT", "regionCode": "" },
+    { "id": "np", "label": "Népal", "kind": "country", "countryIsoA2": "NP", "regionCode": "" },
+    { "id": "madeira", "label": "Madère", "kind": "region", "countryIsoA2": "PT", "regionCode": "PT-30" },
+    { "id": "jura", "label": "Jura", "kind": "region", "countryIsoA2": "FR", "regionCode": "FR-JURA" },
+    { "id": "kumano", "label": "Kumano Kodo", "kind": "region", "countryIsoA2": "JP", "regionCode": "JP-KUMANO" }
+  ]
+}
