@@ -447,7 +447,7 @@ function buildKit(
   };
 }
 
-function buildBudgetLines(
+export function buildBudgetLines(
   layers: PreparationLayers,
   partySize: number,
   days: number | null,

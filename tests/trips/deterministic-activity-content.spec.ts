@@ -6,6 +6,10 @@ import {
   splitDays,
 } from '@/features/trips/domain/deterministicActivityContent';
 import type { TrailInput, TrailMetaInput } from '@/features/trips/domain/trailToActivity';
+import {
+  buildBudgetLines,
+  type PreparationLayers,
+} from '@/features/trips/engine/autogenPreparation';
 
 const BASE_TRAIL: TrailInput = {
   id: 42,
@@ -30,6 +34,12 @@ describe('splitDays', () => {
 
   it('45 km / 16 h → 3 jours (durée fournie prioritaire sur la distance)', () => {
     expect(splitDays(45, 16)).toBe(3);
+  });
+
+  it('bornes internes de 8 h : 7,9 h → 1, 8 h → 2, 16 h → 3 (durée explicite, distance nulle)', () => {
+    expect(splitDays(null, 7.9)).toBe(1);
+    expect(splitDays(null, 8)).toBe(2);
+    expect(splitDays(null, 16)).toBe(3);
   });
 
   it('sans données → 1 jour (jamais 0 ni négatif)', () => {
@@ -183,46 +193,108 @@ describe('buildDeterministicPois', () => {
 
 describe('buildDeterministicExpenses', () => {
   const META_4H: TrailMetaInput = { durationHours: 4 };
+  const TOTAL_LAYERS: PreparationLayers = {
+    budget: { value: { totalPerPersonEur: 100, dailyAverageEur: 50, currency: 'EUR' } },
+  };
+  const DAILY_LAYERS: PreparationLayers = {
+    budget: { value: { dailyAverageEur: 50, currency: 'EUR' } },
+  };
 
-  it('durée > 0 : hébergement + nourriture, montants null (à estimer, jamais inventés)', () => {
-    const lines = buildDeterministicExpenses(BASE_TRAIL, META_4H);
+  it('durée > 0 : hébergement + nourriture, montants positifs issus de buildBudgetLines, répartis', () => {
+    const expected = buildBudgetLines(TOTAL_LAYERS, 2, 1, []);
+    expect(expected).toHaveLength(1);
+
+    const lines = buildDeterministicExpenses(BASE_TRAIL, META_4H, 2, TOTAL_LAYERS);
 
     expect(lines.map((line) => line.category)).toEqual(['hébergement', 'nourriture']);
     expect(lines.map((line) => line.title)).toEqual([
       'Hébergement — Tour du Lac Blanc',
       'Nourriture — Tour du Lac Blanc',
     ]);
-    expect(lines.every((line) => line.amountEur === null)).toBe(true);
+    expect(lines.every((line) => line.amountEur > 0)).toBe(true);
+    expect(lines.reduce((sum, line) => sum + line.amountEur, 0)).toBe(expected[0].amountEur);
     expect(lines.every((line) => line.metadata.source === 'deterministic')).toBe(true);
+    expect(
+      lines.every((line) => line.metadata.formula === 'autogenPreparation.buildBudgetLines@v1')
+    ).toBe(true);
+    expect(lines.every((line) => line.metadata.partySize === 2)).toBe(true);
   });
 
-  it('multi-jours : ajoute la ligne transport', () => {
+  it('multi-jours : répartit le montant réel sur hébergement/nourriture/transport (somme exacte)', () => {
+    const expected = buildBudgetLines(DAILY_LAYERS, 1, 3, []);
+    expect(expected[0].amountEur).toBe(150); // 50 €/jour × 3 jours × 1 voyageur
+
     const lines = buildDeterministicExpenses(
       { ...BASE_TRAIL, distanceKm: 45 },
-      { durationHours: 16 }
+      { durationHours: 16 },
+      1,
+      DAILY_LAYERS
     );
 
     expect(lines.map((line) => line.category)).toEqual(['hébergement', 'nourriture', 'transport']);
     expect(lines[2].title).toBe('Transport — Tour du Lac Blanc');
-    expect(lines.every((line) => line.amountEur === null)).toBe(true);
+    expect(lines.map((line) => line.amountEur)).toEqual([50, 50, 50]);
+    expect(lines.reduce((sum, line) => sum + line.amountEur, 0)).toBe(expected[0].amountEur);
   });
 
-  it('durée absente : pas d’hébergement/nourriture, transport seulement si multi-jours', () => {
-    const multiDay = buildDeterministicExpenses({ ...BASE_TRAIL, distanceKm: 45 }, null);
-    expect(multiDay.map((line) => line.category)).toEqual(['transport']);
+  it('reliquat au centime sur les premières lignes, jamais de montant null', () => {
+    const expected = buildBudgetLines(TOTAL_LAYERS, 1, 3, []);
+    expect(expected[0].amountEur).toBe(100);
 
-    const singleDay = buildDeterministicExpenses(BASE_TRAIL, null);
-    expect(singleDay).toEqual([]);
+    const lines = buildDeterministicExpenses(
+      { ...BASE_TRAIL, distanceKm: 45 },
+      { durationHours: 16 },
+      1,
+      TOTAL_LAYERS
+    );
+
+    expect(lines.map((line) => line.amountEur)).toEqual([33.34, 33.33, 33.33]);
+    expect(lines.reduce((sum, line) => sum + line.amountEur, 0)).toBe(100);
+    expect(lines.every((line) => Number.isFinite(line.amountEur) && line.amountEur > 0)).toBe(true);
   });
 
-  it('durée 0 : aucune ligne hébergement/nourriture (rien d’inventé)', () => {
-    expect(buildDeterministicExpenses(BASE_TRAIL, { durationHours: 0 })).toEqual([]);
+  it('ligne unique (transport seul) : montant identique à buildBudgetLines pour les mêmes entrées', () => {
+    const expected = buildBudgetLines(TOTAL_LAYERS, 1, 2, []);
+
+    const lines = buildDeterministicExpenses(
+      { ...BASE_TRAIL, distanceKm: 45 },
+      null,
+      1,
+      TOTAL_LAYERS
+    );
+
+    expect(lines.map((line) => line.category)).toEqual(['transport']);
+    expect(lines[0].amountEur).toBe(expected[0].amountEur);
   });
 
-  it('partySize est tracé sans jamais inventer de montant', () => {
-    const lines = buildDeterministicExpenses(BASE_TRAIL, META_4H, 4);
+  it('entrées insuffisantes : aucune ligne (distance et durée nulles)', () => {
+    const lines = buildDeterministicExpenses(
+      { id: 7, name: 'Sentier Brut', geom: { type: 'LineString', coordinates: [] } },
+      null,
+      1,
+      TOTAL_LAYERS
+    );
 
-    expect(lines.every((line) => line.amountEur === null)).toBe(true);
-    expect(lines.every((line) => line.metadata.partySize === 4)).toBe(true);
+    expect(lines).toEqual([]);
+  });
+
+  it('durée 0 ou couche budget absente/sans montant : aucune ligne inventée', () => {
+    expect(
+      buildDeterministicExpenses(BASE_TRAIL, { durationHours: 0 }, 1, TOTAL_LAYERS)
+    ).toEqual([]);
+    expect(buildDeterministicExpenses(BASE_TRAIL, META_4H, 1, null)).toEqual([]);
+    expect(buildDeterministicExpenses(BASE_TRAIL, META_4H, 1, {})).toEqual([]);
+    expect(
+      buildDeterministicExpenses(BASE_TRAIL, META_4H, 1, { budget: { value: {} } })
+    ).toEqual([]);
+  });
+
+  it('déterminisme bit à bit sur appels répétés', () => {
+    const input: TrailInput = { ...BASE_TRAIL, distanceKm: 45 };
+    const first = buildDeterministicExpenses(input, { durationHours: 16 }, 2, TOTAL_LAYERS);
+    const second = buildDeterministicExpenses(input, { durationHours: 16 }, 2, TOTAL_LAYERS);
+
+    expect(second).toEqual(first);
+    expect(first.every((line) => line.amountEur > 0)).toBe(true);
   });
 });

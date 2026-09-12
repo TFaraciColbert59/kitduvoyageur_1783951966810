@@ -7,6 +7,10 @@
  * chaque brouillon porte `metadata.source = 'deterministic'`.
  */
 import type { TrailInput, TrailMetaInput, TrailPoint } from './trailToActivity';
+import {
+  buildBudgetLines,
+  type PreparationLayers,
+} from '../engine/autogenPreparation';
 
 export interface StepDraft {
   dayNumber: number;
@@ -34,7 +38,7 @@ export interface PoiDraft {
 
 export interface ExpenseDraft {
   title: string;
-  amountEur: number | null;
+  amountEur: number;
   category: string;
   metadata: Record<string, unknown>;
 }
@@ -62,10 +66,11 @@ function isPositiveNumber(value: unknown): value is number {
 /**
  * Découpage Naismith simplifié (D+ supposé nul ici) : durée de marche
  * `durationHours` si fournie (> 0), sinon `totalKm / 4.5` (≈ 4,5 km/h).
- * Une journée absorbe jusqu'à 8 h ; le compteur est `floor(hours / 8) + 1`
- * (jour 1 inclus, chaque bloc plein de 8 h ajoute un jour), borné à [1, 14].
- * Exemples épinglés par les tests : 12 km / 4 h → 1 ; 45 km / 16 h → 3 ;
- * null/null → 1 ; cap 14.
+ * Chaque jour doit rester sous 8 h d'effort ; le compteur est
+ * `floor(hours / 8) + 1` (jour 1 inclus, chaque bloc plein de 8 h ouvre le
+ * jour suivant), borne basse 1, haute 14 — durée nulle/absente → 1.
+ * Exemples épinglés par les tests : 7,9 h → 1 ; 8 h → 2 ; 16 h → 3 ;
+ * 12 km / 4 h → 1 ; 45 km / 16 h → 3 ; null/null → 1 ; cap 14.
  */
 export function splitDays(totalKm: number | null, durationHours: number | null): number {
   const km = isPositiveNumber(totalKm) ? totalKm : null;
@@ -210,15 +215,23 @@ export function buildDeterministicPois(
   return drafts;
 }
 
+/** Tag de provenance des montants (formule réelle, versionnée). */
+export const BUDGET_FORMULA_TAG = 'autogenPreparation.buildBudgetLines@v1';
+
 /**
- * Lignes prévisionnelles factuelles : hébergement/nourriture dès qu'une durée
- * réelle > 0 existe, transport en plus si le séjour est multi-jours. Les
- * montants restent `null` (« à estimer ») — aucun prix n'est inventé.
+ * Lignes prévisionnelles par catégorie : hébergement/nourriture dès qu'une
+ * durée réelle > 0 existe, transport en plus si le séjour est multi-jours.
+ * Seule source de montants : `buildBudgetLines(layers, …)` (couche budget
+ * réelle AutoGen) — le total est réparti au plus près entre les lignes
+ * (reliquat au centime sur les premières) et une ligne à montant nul est
+ * omise. Sans couche budget ou sans montant réel, aucune ligne n'est créée :
+ * jamais de `null` (colonne `trip_expenses.amount NOT NULL CHECK (amount > 0)`).
  */
 export function buildDeterministicExpenses(
   trail: TrailInput,
   meta: TrailMetaInput | null,
-  partySize = 1
+  partySize = 1,
+  layers: PreparationLayers | null = null
 ): ExpenseDraft[] {
   const trailName = trail.name.trim();
   const suffix = trailName !== '' ? ` — ${trailName}` : '';
@@ -226,23 +239,39 @@ export function buildDeterministicExpenses(
     1,
     Math.min(50, Math.trunc(isPresentNumber(partySize) ? partySize : 1))
   );
-  const lines: ExpenseDraft[] = [];
-  const push = (label: string, category: string) => {
-    lines.push({
-      title: `${label}${suffix}`,
-      amountEur: null,
-      category,
-      metadata: { source: 'deterministic', partySize: safePartySize },
-    });
-  };
+  const days = splitDays(trail.distanceKm ?? null, meta?.durationHours ?? null);
 
+  const candidates: { label: string; category: string }[] = [];
   if (isPositiveNumber(meta?.durationHours ?? null)) {
-    push('Hébergement', 'hébergement');
-    push('Nourriture', 'nourriture');
+    candidates.push({ label: 'Hébergement', category: 'hébergement' });
+    candidates.push({ label: 'Nourriture', category: 'nourriture' });
   }
-  if (splitDays(trail.distanceKm ?? null, meta?.durationHours ?? null) > 1) {
-    push('Transport', 'transport');
+  if (days > 1) {
+    candidates.push({ label: 'Transport', category: 'transport' });
   }
+  if (candidates.length === 0) return [];
 
-  return lines;
+  const warnings: string[] = [];
+  const formulaLines = layers ? buildBudgetLines(layers, safePartySize, days, warnings) : [];
+  const totalAmountEur = formulaLines.length > 0 ? formulaLines[0].amountEur : null;
+  if (totalAmountEur == null || totalAmountEur <= 0) return [];
+
+  const amountsCents = splitEvenly(Math.round(totalAmountEur * 100), candidates.length);
+
+  return candidates.flatMap((candidate, index) => {
+    const amountCents = amountsCents[index];
+    if (amountCents <= 0) return [];
+    return [
+      {
+        title: `${candidate.label}${suffix}`,
+        amountEur: amountCents / 100,
+        category: candidate.category,
+        metadata: {
+          source: 'deterministic',
+          formula: BUDGET_FORMULA_TAG,
+          partySize: safePartySize,
+        },
+      },
+    ];
+  });
 }
