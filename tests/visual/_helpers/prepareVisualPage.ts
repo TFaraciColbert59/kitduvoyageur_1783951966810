@@ -22,6 +22,16 @@ const DEV_OVERLAY_CSS =
   'nextjs-portal, [data-nextjs-toast], #nextjs-dev-overlay { display: none !important; opacity: 0 !important; visibility: hidden !important; }';
 
 /**
+ * Neutralise transitions et animations au moment de la capture : les états
+ * `.active` (ex. `glass-capsule-segment`, `transition: all`) appliqués après
+ * hydratation pouvaient être photographiés en plein vol sous charge CI
+ * (diff stable de ~1583 px sur l'onglet actif de /carte-interactive).
+ * Les états finaux restent identiques — seule la trajectoire est supprimée.
+ */
+const FREEZE_TRANSITIONS_CSS =
+  '*, *::before, *::after { transition-duration: 0s !important; transition-delay: 0s !important; animation-duration: 0s !important; animation-delay: 0s !important; }';
+
+/**
  * Prépare la page de façon déterministe puis navigue.
  * À appeler AVANT toute interaction ; l'horloge est figée avant le goto pour
  * que le premier rendu serveur/hydraté voie déjà la date figée (VISUAL_CLOCK).
@@ -79,6 +89,7 @@ export async function waitForVisualReady(page: Page): Promise<void> {
     ),
     new Promise<void>((resolve) => setTimeout(resolve, 8_000)),
   ]).catch(() => {});
+  await page.addStyleTag({ content: FREEZE_TRANSITIONS_CSS });
   await page.addStyleTag({ content: DEV_OVERLAY_CSS });
   await page.waitForTimeout(1200);
 }
