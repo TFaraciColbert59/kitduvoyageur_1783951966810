@@ -79,6 +79,13 @@ const generateSchema = z.object({
     .min(1, 'weatherDays doit être compris entre 1 et 7')
     .max(7, 'weatherDays doit être compris entre 1 et 7')
     .optional(),
+  // Phase 2 — corrélation de chaîne optionnelle : propagée aux runs de la
+  // génération et retournée au client pour enchaîner (attach voyage, sélection
+  // de route, session, publication). La colonne `adventure_plans.correlation_id`
+  // est écrite par `attach_adventure_plan_to_trip` / `select_adventure_plan_route`
+  // (la RPC `create_adventure_plan_bundle` n'expose pas de p_correlation_id et
+  // n'est pas modifiée ici — évolution additive réservée à une migration).
+  correlationId: z.string().uuid('correlationId doit être un UUID').optional(),
 });
 
 function zodDetails(error: z.ZodError): string {
@@ -244,6 +251,7 @@ export async function POST(request: NextRequest) {
           locks: parsed.data.locks,
           coordinates: parsed.data.coordinates,
           weatherDays: parsed.data.weatherDays,
+          correlationId: parsed.data.correlationId,
           featureFlags: {
             performance_profile_v2: flags.performance_profile_v2,
             route_prediction_v2: flags.route_prediction_v2,
@@ -301,6 +309,7 @@ export async function POST(request: NextRequest) {
         candidateComparison: result.candidateComparison,
         explanation: result.explanation,
         aiUsed: result.aiUsed,
+        ...(result.correlationId ? { correlationId: result.correlationId } : {}),
       },
       { status: 201 }
     );

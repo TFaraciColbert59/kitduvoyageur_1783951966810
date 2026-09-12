@@ -141,6 +141,11 @@ export interface AdventureGenerationInput {
   coordinates?: { lat: number; lng: number } | { lat: number; lng: number }[];
   /** A11 #15 — horizon de prévision demandé (1..7, défaut 3). */
   weatherDays?: number;
+  /**
+   * Phase 2 — corrélation de chaîne fournie par l'appelant (voyage → plan →
+   * route → session → publication). Absente : un identifiant est généré.
+   */
+  correlationId?: string;
 }
 
 export interface AdventureExplainContext {
@@ -159,6 +164,11 @@ export interface AdventureGenerationResult {
   runs: EngineRunRecord[];
   explanation: string;
   aiUsed: boolean;
+  /**
+   * Phase 2 — corrélation de la chaîne : fournie par l'appelant ou générée,
+   * propagée aux runs de la génération et à retourner au client.
+   */
+  correlationId?: string;
   /**
    * A13 (S4) — avertissements des sources vivantes : sections laissées vides
    * faute de source déterministe (jamais de donnée inventée). Toujours fourni
@@ -689,7 +699,8 @@ export async function generateAdventure(
   const now = input.now ?? new Date().toISOString();
   // A11 #34 — un seul identifiant de corrélation par génération, propagé à
   // tous les runs (tracés même en cas d'échec critique du pipeline).
-  const correlationId = randomUUID();
+  // Phase 2 — la corrélation de chaîne fournie par l'appelant prime.
+  const correlationId = input.correlationId ?? randomUUID();
 
   // A10 (10.9) — le consentement est vérifié AVANT tout chargement de profil :
   // sans `personal_performance`, aucun profil n'est lu et les adaptateurs
@@ -944,6 +955,7 @@ export async function generateAdventure(
     runs,
     explanation,
     aiUsed,
+    correlationId,
     liveSourceWarnings: liveSources.warnings,
   };
 }

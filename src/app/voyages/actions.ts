@@ -5,6 +5,7 @@ import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
 
 const DB_TRANSPORT_MODES = new Set(['foot', 'car', 'bus', 'train', 'plane', 'boat', 'bike', 'other']);
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const TRANSPORT_MODE_ALIASES: Record<string, string> = {
   walking: 'foot',
   hike: 'foot',
@@ -52,8 +53,15 @@ import {
 
 /**
  * 1. Création simple d'un voyage
+ *
+ * Phase 2 — `correlationId` optionnel : `trips` ne porte pas de colonne de
+ * corrélation (les pivots de la chaîne la stockent), il est donc propagé à
+ * l'événement et aux appels suivants, jamais persisté sur le voyage.
  */
-export async function createTripAction(input: CreateTripInput): Promise<{ slug: string }> {
+export async function createTripAction(
+  input: CreateTripInput,
+  correlationId?: string
+): Promise<{ slug: string }> {
   const supabase = await createClient();
   const {
     data: { user },
@@ -64,6 +72,10 @@ export async function createTripAction(input: CreateTripInput): Promise<{ slug: 
   }
 
   const trip = await createTrip(input, user.id);
+  const correlation =
+    typeof correlationId === 'string' && UUID_PATTERN.test(correlationId)
+      ? correlationId
+      : null;
 
   // Émission d'événement sur le bus unifié lkv_events
   await emitEvent({
@@ -76,6 +88,7 @@ export async function createTripAction(input: CreateTripInput): Promise<{ slug: 
     metadata: {
       title: trip.title,
       destination: trip.destination_name || trip.destination_country_code || '',
+      ...(correlation ? { correlation_id: correlation } : {}),
     },
   });
 
