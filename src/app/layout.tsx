@@ -237,6 +237,30 @@ export default async function RootLayout({
             }}
           />
         )}
+
+        {process.env.NODE_ENV !== 'production' && (
+          // Dev : un service worker résiduel d'un run production peut servir du
+          // HTML périmé pendant les redémarrages du serveur (hydratation cassée,
+          // ancienne UI). On le désinscrit et on purge ses caches automatiquement.
+          <script
+            id="service-worker-dev-cleanup"
+            suppressHydrationWarning
+            dangerouslySetInnerHTML={{
+              __html: `
+                if ('serviceWorker' in navigator) {
+                  navigator.serviceWorker.getRegistrations().then(function(registrations) {
+                    registrations.forEach(function(registration) { registration.unregister(); });
+                  }).catch(function() {});
+                  if (window.caches && caches.keys) {
+                    caches.keys().then(function(keys) {
+                      keys.forEach(function(key) { caches.delete(key); });
+                    }).catch(function() {});
+                  }
+                }
+              `,
+            }}
+          />
+        )}
       </head>
       <body
         className={`${dmSans.variable} ${manrope.variable} ${ibmPlexMono.variable} ${instrumentSerif.variable} ${dmSans.className} bg-[#EEF3EC] text-[#17402C] min-h-[100dvh]`}
