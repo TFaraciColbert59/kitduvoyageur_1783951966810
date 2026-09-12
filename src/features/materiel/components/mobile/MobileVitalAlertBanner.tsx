@@ -89,7 +89,7 @@ export function MobileVitalAlertBanner({
         transition={{ type: 'spring', stiffness: 400, damping: 30 }}
         className={cn(
           'w-full p-2.5 sm:p-3 rounded-2xl border select-none transition-all',
-          'bg-rose-50/95 dark:bg-rose-950/40 border-rose-200/90 dark:border-rose-900/50 text-[var(--lkv-danger)] dark:text-rose-200',
+          'bg-[var(--lkv-danger)]/10 border-[var(--lkv-danger)]/25 text-[var(--lkv-danger)]',
           'shadow-2xs backdrop-blur-md',
           className
         )}
@@ -97,15 +97,15 @@ export function MobileVitalAlertBanner({
         {/* ════ EN-TÊTE COMPACT : ICÔNE + TITRE & MESSAGE + BOUTONS ACTION & FERMER ════ */}
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2 min-w-0 flex-1">
-            <div className="w-7 h-7 rounded-xl bg-rose-200/80 dark:bg-rose-900/60 text-[var(--lkv-danger)] dark:text-rose-300 flex items-center justify-center shrink-0 shadow-2xs">
+            <div className="w-7 h-7 rounded-xl bg-[var(--lkv-danger)]/15 text-[var(--lkv-danger)] flex items-center justify-center shrink-0 shadow-2xs">
               <Icon name="alert-triangle" size={14} aria-hidden="true" />
             </div>
 
             <div className="min-w-0 flex-1">
-              <h4 className="text-xs font-bold text-[var(--lkv-danger)] dark:text-rose-200 truncate leading-tight">
+              <h4 className="text-xs font-bold text-[var(--lkv-danger)] truncate leading-tight">
                 {currentAlert.title}
               </h4>
-              <p className="text-[10.5px] text-[var(--lkv-danger)]/90 dark:text-rose-300/90 leading-tight truncate mt-0.5">
+              <p className="text-[10.5px] text-[var(--lkv-danger)]/90 leading-tight truncate mt-0.5">
                 {currentAlert.message}
               </p>
             </div>
@@ -129,7 +129,7 @@ export function MobileVitalAlertBanner({
               data-testid="vital-alert-dismiss"
               onClick={handleDismiss}
               aria-label="Masquer l'alerte"
-              className="w-7 h-7 flex items-center justify-center text-[var(--lkv-danger)]/70 hover:text-[var(--lkv-danger)] dark:text-rose-300/70 hover:bg-rose-200/50 dark:hover:bg-rose-900/50 rounded-full cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 shrink-0"
+              className="w-7 h-7 flex items-center justify-center text-[var(--lkv-danger)]/70 hover:text-[var(--lkv-danger)] hover:bg-[var(--lkv-danger)]/10 rounded-full cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lkv-danger)] shrink-0"
             >
               <XAnimated size={12} aria-hidden="true" />
             </button>

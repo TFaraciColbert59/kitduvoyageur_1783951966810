@@ -259,7 +259,7 @@ export function DepartMap({ trail, height = '240px', className, embedded = false
       )}
     >
       {/* ════ HEADER CARTE : NOM DU TRACÉ & DISTANCE ════ */}
-      <div className="px-4 py-2.5 border-b border-black/5 dark:border-white/10 flex items-center justify-between gap-2 bg-white/40 dark:bg-white/5 backdrop-blur-md shrink-0">
+      <div className="px-4 py-2.5 border-b border-black/5 flex items-center justify-between gap-2 bg-white/40 backdrop-blur-md shrink-0">
         <div className="flex items-center gap-2 min-w-0">
           <Icon name="map-pin" size={14} className="text-[var(--lkv-primary-hover)] shrink-0" />
           <span className="text-xs font-bold text-[var(--lkv-primary)] truncate">{trail.name}</span>
@@ -280,7 +280,7 @@ export function DepartMap({ trail, height = '240px', className, embedded = false
             aria-label="Exporter le tracé"
           >
             {isOfflineSaved ? (
-              <Icon name="check" size={14} className="text-forest-600" />
+              <Icon name="check" size={14} className="text-[var(--lkv-forest-600)]" />
             ) : (
               <DownloadAnimated size={14} />
             )}
@@ -339,7 +339,7 @@ export function DepartMap({ trail, height = '240px', className, embedded = false
 
         {/* Sélecteur de tuiles */}
         {showTilePicker && (
-          <div className="absolute top-2.5 right-14 z-[401] p-1.5 rounded-2xl bg-white/95 dark:bg-black/90 shadow-xl border border-black/10 flex flex-col gap-1 text-[11px] font-semibold text-[var(--lkv-primary)]">
+          <div className="absolute top-2.5 right-14 z-[401] p-1.5 rounded-2xl bg-white/95 shadow-xl border border-black/10 flex flex-col gap-1 text-[11px] font-semibold text-[var(--lkv-primary)]">
             <button
               type="button"
               onClick={() => handleTileChange('topo')}

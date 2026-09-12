@@ -66,7 +66,7 @@ export function DepartWeightBreakdown({
     : `Sac optimisé : poids de base sous contrôle.`;
 
   return (
-    <div className="glass rounded-card p-4 sm:p-5 space-y-4 border border-white/80 dark:border-white/10 shadow-sm backdrop-blur-md">
+    <div className="glass rounded-card p-4 sm:p-5 space-y-4 border border-white/80 shadow-sm backdrop-blur-md">
       {/* ════ HEADER : TITRE & POIDS TOTAL ════ */}
       <button
         type="button"
@@ -103,7 +103,7 @@ export function DepartWeightBreakdown({
 
       {/* ════ 3 PILIERS DU POIDS : PASTILLES BLANC ÉCLATANT LIQUID GLASS (Images 1 & 2) ════ */}
       <div className="grid grid-cols-3 gap-2.5 sm:gap-3.5">
-        <div className="py-2.5 px-3 rounded-full bg-white dark:bg-stone-900 border border-white/90 dark:border-white/20 text-center space-y-0.5 shadow-xs">
+        <div className="py-2.5 px-3 rounded-full bg-white border border-white/90 text-center space-y-0.5 shadow-xs">
           <span className="text-[8.5px] sm:text-[9.5px] font-mono uppercase tracking-wider text-[var(--lkv-text-muted)] block font-bold">
             Poids de base
           </span>
@@ -112,7 +112,7 @@ export function DepartWeightBreakdown({
           </span>
         </div>
 
-        <div className="py-2.5 px-3 rounded-full bg-white dark:bg-stone-900 border border-white/90 dark:border-white/20 text-center space-y-0.5 shadow-xs">
+        <div className="py-2.5 px-3 rounded-full bg-white border border-white/90 text-center space-y-0.5 shadow-xs">
           <span className="text-[8.5px] sm:text-[9.5px] font-mono uppercase tracking-wider text-[var(--lkv-text-muted)] block font-bold">
             Consommables
           </span>
@@ -121,7 +121,7 @@ export function DepartWeightBreakdown({
           </span>
         </div>
 
-        <div className="py-2.5 px-3 rounded-full bg-white dark:bg-stone-900 border border-white/90 dark:border-white/20 text-center space-y-0.5 shadow-xs">
+        <div className="py-2.5 px-3 rounded-full bg-white border border-white/90 text-center space-y-0.5 shadow-xs">
           <span className="text-[8.5px] sm:text-[9.5px] font-mono uppercase tracking-wider text-[var(--lkv-text-muted)] block font-bold">
             Porté sur soi
           </span>
@@ -145,10 +145,10 @@ export function DepartWeightBreakdown({
         </div>
 
         {/* Barre segmentée avec repères visuels */}
-        <div className="h-2 w-full rounded-full bg-black/10 dark:bg-white/10 overflow-hidden flex">
-          <div className="h-full bg-forest-600 w-[35%]" title="Ultraléger (<5kg)" />
-          <div className="h-full bg-forest-800 w-[35%]" title="Standard 3 saisons (5-9kg)" />
-          <div className="h-full bg-sand-600 w-[15%]" title="Lourd (>9kg)" />
+        <div className="h-2 w-full rounded-full bg-black/10 overflow-hidden flex">
+          <div className="h-full bg-[var(--lkv-forest-600)] w-[35%]" title="Ultraléger (<5kg)" />
+          <div className="h-full bg-[var(--lkv-forest-900)] w-[35%]" title="Standard 3 saisons (5-9kg)" />
+          <div className="h-full bg-[var(--lkv-warning)] w-[15%]" title="Lourd (>9kg)" />
           <div className="h-full bg-[var(--lkv-danger)] w-[15%]" title="Très lourd (>12kg)" />
         </div>
       </div>
@@ -169,7 +169,7 @@ export function DepartWeightBreakdown({
                 return (
                   <div
                     key={item.category}
-                    className="p-2 rounded-xl bg-white/60 dark:bg-white/5 border border-white/80 flex items-center justify-between gap-2 shadow-2xs"
+                    className="p-2 rounded-xl bg-white/70 border border-white/80 flex items-center justify-between gap-2 shadow-2xs"
                   >
                     <div className="flex items-center gap-1.5 min-w-0">
                       <span

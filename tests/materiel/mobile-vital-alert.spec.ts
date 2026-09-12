@@ -81,8 +81,8 @@ describe('MobileVitalAlertBanner (Retractable Vital Safety Notification Banner)'
 
       // iOS Notification styling
       expect(html).toContain('rounded-2xl');
-      expect(html).toContain('bg-rose-50');
-      expect(html).toContain('border-rose-200');
+      expect(html).toContain('bg-[var(--lkv-danger)]/10');
+      expect(html).toContain('border-[var(--lkv-danger)]/25');
       expect(html).toMatch(/text-\[#8A241B\]|text-\[var\(--lkv-danger\)\]/);
     });
 
