@@ -27,7 +27,7 @@ export default function QuickGrid() {
           </div>
         </Link>
         {/* Card 2: stone - "Carte des refuges" */}
-        <Link href="/carte-interactive" style={{ textDecoration: 'none' }}>
+        <Link href="/explorer" style={{ textDecoration: 'none' }}>
           <div style={{ aspectRatio: '1/1', borderRadius: '20px', padding: '14px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', background: '#F4F1EA', color: '#17402C' }}>
             <LkvIcon name="map-pin" size={22} color="#17402C" />
             <div>

@@ -33,7 +33,7 @@ const SECTIONS: NavSection[] = [
         items: [
           { label: 'Rechercher', icon: 'search', href: '', action: 'search' },
           { label: 'Panier', icon: 'bag', href: '/panier' },
-          { label: 'Carte interactive', icon: 'map-pin', href: '/carte-interactive' },
+          { label: 'Carte interactive', icon: 'map-pin', href: '/explorer' },
           { label: 'Boussole augmentée', icon: 'search', href: '/randonnee-active' },
           { label: 'Mode hors-ligne', icon: 'bookmark', href: '/hors-ligne' },
           { label: 'Carnets', icon: 'doc', href: '/carnets' },

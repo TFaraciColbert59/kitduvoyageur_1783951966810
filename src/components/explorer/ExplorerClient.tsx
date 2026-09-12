@@ -490,6 +490,7 @@ export default function ExplorerClient({
             trails={filteredTrails}
             pois={visiblePois}
             selectedTrailId={selectedTrailId}
+            selectedTrail={selectedTrail}
             onTrailClick={handleTrailClick}
             userLocation={userLocation}
             onLocationUpdate={handleLocationUpdate}

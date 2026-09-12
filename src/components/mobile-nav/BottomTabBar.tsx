@@ -38,7 +38,7 @@ const DEFAULT_TABS: Tab[] = [
     label: 'Aventures',
     iconName: 'mountain',
     ariaLabel: 'Explorer les sentiers et destinations',
-    matchPaths: ['/explorer', '/carte-interactive', '/hors-ligne'],
+    matchPaths: ['/explorer', '/hors-ligne'],
   },
   {
     href: '/hub',
