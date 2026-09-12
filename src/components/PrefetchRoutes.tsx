@@ -41,7 +41,7 @@ const PREFETCH_MAP: Record<string, PrefetchConfig> = {
     ],
   },
   "/explorer": {
-    routes: ["/carte-interactive", "/hors-ligne", "/hub"],
+    routes: ["/hors-ligne", "/hub"],
     queries: [
       {
         queryKey: ["hikes"],
@@ -57,16 +57,13 @@ const PREFETCH_MAP: Record<string, PrefetchConfig> = {
     routes: ["/kits", "/ai-configurator", "/explorer"],
   },
   "/pays": {
-    routes: ["/explorer", "/carte-interactive"],
+    routes: ["/explorer"],
   },
   "/compte": {
     routes: ["/profil", "/abonnements", "/mes-aventures"],
   },
   "/carnets": {
     routes: ["/communaute", "/compte"],
-  },
-  "/carte-interactive": {
-    routes: ["/explorer", "/hors-ligne"],
   },
 };
 

@@ -20,7 +20,7 @@ const QUICK_CARDS = [
   },
   {
     label: 'Carte',
-    href: '/carte-interactive',
+    href: '/explorer',
     icon: 'map-pin' as const,
     color: '#A6C1A0',
   },

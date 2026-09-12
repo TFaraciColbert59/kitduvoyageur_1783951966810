@@ -14,7 +14,6 @@ const staticRoutes: Array<{
   { url: '/hub', priority: 0.95, changeFrequency: 'daily' },
   { url: '/pays', priority: 0.9, changeFrequency: 'weekly' },
   { url: '/explorer', priority: 0.85, changeFrequency: 'weekly' },
-  { url: '/carte-interactive', priority: 0.85, changeFrequency: 'weekly' },
   { url: '/guides', priority: 0.8, changeFrequency: 'weekly' },
   { url: '/blog', priority: 0.8, changeFrequency: 'daily' },
   { url: '/kits', priority: 0.8, changeFrequency: 'weekly' },

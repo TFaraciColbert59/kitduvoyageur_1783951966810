@@ -109,6 +109,19 @@ test.describe('Explorateur unifié (MapLibre globe)', () => {
     await expect(page.getByRole('button', { name: 'Préparer' }).first()).toBeVisible({ timeout: 15_000 });
     await page.getByRole('button', { name: 'Voir la fiche complète' }).click();
     await expect(page.getByText('Préparer le matériel').first()).toBeVisible({ timeout: 15_000 });
+
+    // Parité legacy : le TRACÉ EXACT du sentier sélectionné est rendu (glow + ligne),
+    // alimenté par /api/hikes/[id] → geojson réel (jamais inventé).
+    await page.waitForTimeout(2_000);
+    const track = await page.evaluate(async () => {
+      const map = (window as unknown as { __atlasTestMap?: any }).__atlasTestMap;
+      if (!map || !map.getLayer('atlas-trail-track-line')) return { layers: false, features: 0 };
+      const source = map.getSource('atlas-trail-track');
+      const data = source?.getData ? await source.getData() : null;
+      return { layers: true, features: data?.features?.length ?? 0 };
+    });
+    expect(track.layers).toBe(true);
+    expect(track.features).toBeGreaterThan(0);
   });
 
   test('paliers continent → globe : densité, sélection pays, chorégraphie caméra', async ({ page }, testInfo) => {

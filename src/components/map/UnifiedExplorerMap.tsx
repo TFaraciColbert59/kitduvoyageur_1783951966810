@@ -3,6 +3,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import {
+  LngLatBounds,
   Map as MapLibreMap,
   Popup,
   setWorkerUrl,
@@ -12,7 +13,7 @@ import {
 import 'maplibre-gl/dist/maplibre-gl.css';
 import Icon from '@/components/ui/Icon';
 import type { MapTrail } from '@/components/explorer/types';
-import { getDifficultyColor, isValidLatLng } from '@/components/explorer/types';
+import { getDifficultyColor, isValidLatLng, sanitizeGeoJSON } from '@/components/explorer/types';
 import type { UnifiedPOI } from '@/lib/queries/pois';
 import { createMapStyle, type AtlasTileMode } from './engine/createMapStyle';
 import { prefersReducedMotion, easeToTarget, flyToTarget } from './engine/camera';
@@ -44,6 +45,8 @@ export interface UnifiedExplorerMapProps {
   trails?: MapTrail[];
   pois?: UnifiedPOI[];
   selectedTrailId?: string | null;
+  /** Sentier sélectionné (avec son `geojson` exact une fois chargé) — tracé affiché comme avant. */
+  selectedTrail?: MapTrail | null;
   onTrailClick?: (trail: MapTrail) => void;
   onPoiClick?: (poi: UnifiedPOI) => void;
   userLocation?: [number, number] | null;
@@ -86,6 +89,30 @@ function buildTrailsFeatureCollection(trails: MapTrail[]) {
           color: getDifficultyColor(trail.difficulty),
         },
       })),
+  };
+}
+
+/** Étend des bounds MapLibre à partir d'une structure de coordonnées GeoJSON. */
+function extendBoundsFromCoordinates(bounds: LngLatBounds, coordinates: unknown): void {
+  if (!Array.isArray(coordinates)) return;
+  if (typeof coordinates[0] === 'number' && typeof coordinates[1] === 'number') {
+    const lng = Number(coordinates[0]);
+    const lat = Number(coordinates[1]);
+    if (Number.isFinite(lng) && Number.isFinite(lat)) bounds.extend([lng, lat]);
+    return;
+  }
+  for (const child of coordinates) extendBoundsFromCoordinates(bounds, child);
+}
+
+/** Feature de tracé à partir du geojson exact d'un sentier (nettoyé, jamais inventé). */
+function buildTrailTrackFeature(trail: MapTrail | null | undefined) {
+  if (!trail) return null;
+  const geometry = sanitizeGeoJSON(trail.geojson);
+  if (!geometry) return null;
+  return {
+    type: 'Feature' as const,
+    properties: { id: String(trail.id) },
+    geometry,
   };
 }
 
@@ -158,6 +185,7 @@ export default function UnifiedExplorerMap({
   trails,
   pois,
   selectedTrailId = null,
+  selectedTrail = null,
   onTrailClick,
   onPoiClick,
   userLocation,
@@ -474,6 +502,15 @@ export default function UnifiedExplorerMap({
         );
 
         current.on('click', 'atlas-country-fill', (event: MapLayerMouseEvent) => {
+          // La sélection pays est un geste de vue monde/continent : on l'ignore
+          // en vue locale et dès qu'un sentier/POI est sous le doigt (évite
+          // d'ouvrir la carte pays en tapant un tracé).
+          if (current.getZoom() > 8) return;
+          const hitsInteractiveLayer = current.queryRenderedFeatures(event.point, {
+            layers: ['atlas-trails-points', 'atlas-pois-points', 'atlas-pois-clusters'],
+          });
+          if (hitsInteractiveLayer.length > 0) return;
+
           const feature = event.features?.[0];
           const iso = String(feature?.properties?.atlas_iso ?? '');
           if (!iso) return;
@@ -546,6 +583,63 @@ export default function UnifiedExplorerMap({
     if (!map || !ready || !map.getLayer('atlas-trails-selected')) return;
     map.setFilter('atlas-trails-selected', ['==', ['get', 'id'], selectedTrailId ?? '__none__']);
   }, [selectedTrailId, ready]);
+
+  // ── Tracé exact du sentier sélectionné (parité legacy : glow + ligne + cadrage) ──
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !ready) return;
+
+    const feature = buildTrailTrackFeature(selectedTrail);
+    const data = {
+      type: 'FeatureCollection' as const,
+      features: feature ? [feature] : [],
+    };
+
+    const source = map.getSource('atlas-trail-track') as GeoJSONSource | undefined;
+    if (source) {
+      source.setData(data as unknown as GeoJSON.GeoJSON);
+    } else {
+      map.addSource('atlas-trail-track', {
+        type: 'geojson',
+        data: data as unknown as GeoJSON.GeoJSON,
+      });
+      map.addLayer({
+        id: 'atlas-trail-track-glow',
+        type: 'line',
+        source: 'atlas-trail-track',
+        layout: { 'line-cap': 'round', 'line-join': 'round' },
+        paint: {
+          'line-color': MAP_COLORS.sageLight,
+          'line-width': 10,
+          'line-opacity': 0.45,
+        },
+      });
+      map.addLayer({
+        id: 'atlas-trail-track-line',
+        type: 'line',
+        source: 'atlas-trail-track',
+        layout: { 'line-cap': 'round', 'line-join': 'round' },
+        paint: {
+          'line-color': MAP_COLORS.ink,
+          'line-width': 5.5,
+          'line-opacity': 0.95,
+        },
+      });
+    }
+
+    // Cadrage identique au legacy : padding 60, zoom max 15.
+    if (feature) {
+      const bounds = new LngLatBounds();
+      extendBoundsFromCoordinates(bounds, feature.geometry.coordinates);
+      if (!bounds.isEmpty()) {
+        map.fitBounds(bounds, {
+          padding: 60,
+          maxZoom: 15,
+          duration: prefersReducedMotion() ? 0 : 700,
+        });
+      }
+    }
+  }, [selectedTrail, ready]);
 
   // ── POI (clustering natif MapLibre) ─────────────────────────────────────────
   useEffect(() => {
