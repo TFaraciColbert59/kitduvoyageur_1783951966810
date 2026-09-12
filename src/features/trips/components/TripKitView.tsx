@@ -1,7 +1,7 @@
 'use client';
 
 import Icon from '@/components/ui/Icon';
-import { useState, useTransition, useRef } from 'react';
+import { useMemo, useState, useTransition, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import Link from 'next/link';
@@ -9,16 +9,19 @@ import { GlassCard } from '@/components/ui/GlassCard';
 import { GlassCapsuleBtn } from '@/components/ui/GlassCapsuleBtn';
 import { GlassModal } from '@/components/ui/GlassModal';
 import { EmptyState } from '@/components/ui/EmptyState';
-import { PackagePlus, Plus, X } from 'lucide-react';
+import { CheckCircle2, Circle, PackagePlus, Pencil, Plus, X } from 'lucide-react';
 import type { TripFull, TripItem } from '../types/trip.types';
 import type { TripKitAnalysis, ShopProductReference } from '../types/kit.types';
 import type { InventoryItem } from '@/features/materiel/services/getInventory';
 import { cleanItemName } from '@/lib/cleanItemName';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
+import { classifyKitCompleteness } from '../engine/kitCompletenessEngine';
 import {
   addCustomTripItemAction,
   deleteTripItemAction,
   addInventoryItemToTripAction,
+  togglePackedAction,
+  updateTripItemDetailsAction,
 } from '@/app/voyages/kit-actions';
 
 export interface TripItemImageRef {
@@ -85,7 +88,111 @@ export function TripKitView({
   const [userInventory, setUserInventory] = useState<any[]>([]);
   const [isLoadingInventory, setIsLoadingInventory] = useState<boolean>(false);
   const [inventorySearch, setInventorySearch] = useState<string>('');
+  const [editingItem, setEditingItem] = useState<TripItem | null>(null);
+  const [editError, setEditError] = useState<string | null>(null);
+  const [busyPackedId, setBusyPackedId] = useState<string | null>(null);
   const { triggerHaptic } = useHapticFeedback();
+
+  // Phase 5 — complétude du kit : personnel / partagé / manquant + poids connus.
+  const completeness = useMemo(
+    () => classifyKitCompleteness(optimisticItems),
+    [optimisticItems]
+  );
+
+  const collaboratorsById = useMemo(
+    () =>
+      new Map(
+        (trip.collaborators || []).map((collab) => [
+          collab.user_id,
+          collab.profile?.full_name || collab.profile?.username || 'Voyageur',
+        ])
+      ),
+    [trip.collaborators]
+  );
+
+  const ownerLabel = (ownerId: string | null | undefined): string | null => {
+    if (!ownerId) return null;
+    if (ownerId === trip.user_id) return 'Vous';
+    return collaboratorsById.get(ownerId) ?? 'Voyageur';
+  };
+
+  const handleTogglePacked = (item: TripItem) => {
+    triggerHaptic('selection');
+    const nextPacked = !item.is_packed;
+    setBusyPackedId(item.id);
+    setOptimisticItems((prev) =>
+      prev.map((entry) =>
+        entry.id === item.id
+          ? { ...entry, is_packed: nextPacked, status: nextPacked ? 'packed' : 'needed' }
+          : entry
+      )
+    );
+    startTransition(async () => {
+      const res = await togglePackedAction(item.id, nextPacked, trip.slug);
+      if (!res.success) {
+        setOptimisticItems((prev) =>
+          prev.map((entry) =>
+            entry.id === item.id
+              ? { ...entry, is_packed: item.is_packed, status: item.status }
+              : entry
+          )
+        );
+        setInfoToast(res.error ?? 'Impossible de modifier le statut');
+        setTimeout(() => setInfoToast(null), 3500);
+      }
+      setBusyPackedId(null);
+    });
+  };
+
+  const handleUpdateItem = async (input: {
+    quantity: number;
+    weightGrams: number | null;
+    ownership: 'personal' | 'shared';
+    condition: 'neuf' | 'bon' | 'use' | 'a_remplacer' | 'pour_pieces' | null;
+    ownerId: string | null;
+    priority: 'vital' | 'recommended' | 'optional';
+  }) => {
+    if (!editingItem) return;
+    const target = editingItem;
+    setEditError(null);
+    setOptimisticItems((prev) =>
+      prev.map((entry) =>
+        entry.id === target.id
+          ? {
+              ...entry,
+              quantity: input.quantity,
+              weight_grams: input.weightGrams,
+              ownership: input.ownership,
+              condition: input.condition,
+              owner_id: input.ownerId,
+              priority: input.priority,
+              is_vital: input.priority === 'vital',
+            }
+          : entry
+      )
+    );
+    const res = await updateTripItemDetailsAction({
+      tripId: trip.id,
+      tripSlug: trip.slug,
+      itemId: target.id,
+      quantity: input.quantity,
+      weightGrams: input.weightGrams,
+      ownership: input.ownership,
+      condition: input.condition,
+      ownerId: input.ownerId,
+      priority: input.priority,
+      isVital: input.priority === 'vital',
+    });
+    if (!res.success) {
+      setOptimisticItems((prev) =>
+        prev.map((entry) => (entry.id === target.id ? target : entry))
+      );
+      setEditError(res.error ?? 'Modification impossible');
+      return;
+    }
+    setEditingItem(null);
+    router.refresh();
+  };
 
   const handleOpenInventory = async () => {
     triggerHaptic('light');
@@ -335,6 +442,26 @@ export function TripKitView({
           </div>
         </div>
 
+        {/* Phase 5 — complétude réelle du kit : personnel / partagé / manquant */}
+        <div className="flex flex-wrap items-center gap-2 text-[11px]">
+          <span className="rounded-full border border-white/60 bg-white/70 px-2.5 py-1 font-semibold text-[var(--lkv-text-secondary)]">
+            Personnel {completeness.summary.personalCount}
+          </span>
+          <span className="rounded-full border border-white/60 bg-white/70 px-2.5 py-1 font-semibold text-[var(--lkv-text-secondary)]">
+            Partagé {completeness.summary.sharedCount}
+          </span>
+          {completeness.summary.missingCount > 0 && (
+            <span className="rounded-full border border-[var(--lkv-warning)]/30 bg-[var(--lkv-warning)]/10 px-2.5 py-1 font-bold text-[var(--lkv-warning-dark)]">
+              Manquant {completeness.summary.missingCount}
+            </span>
+          )}
+          <span className="rounded-full border border-white/60 bg-white/70 px-2.5 py-1 font-semibold text-[var(--lkv-text-secondary)]">
+            {completeness.summary.knownWeightGrams > 0
+              ? `Poids connu ${(completeness.summary.knownWeightGrams / 1000).toFixed(2)} kg`
+              : 'Poids non renseigné'}
+          </span>
+        </div>
+
         {/* Boutique : les plus achetés (consommables d'abord) → boîte-flèche vers Mon Matériel */}
         {visibleShopSuggestions.length > 0 && (
           <div className="space-y-1">
@@ -397,6 +524,10 @@ export function TripKitView({
             items={filteredItems}
             imageByItemId={imageByItemId}
             onDeleteItem={handleDeleteItem}
+            onTogglePacked={handleTogglePacked}
+            onEdit={setEditingItem}
+            busyPackedId={busyPackedId}
+            canEdit={trip.permissions.canEdit}
           />
         ) : (
           <div className="divide-y divide-white/40">
@@ -406,6 +537,11 @@ export function TripKitView({
                 item={item}
                 imageUrl={imageByItemId.get(item.id) ?? null}
                 onDeleteItem={handleDeleteItem}
+                onTogglePacked={handleTogglePacked}
+                onEdit={setEditingItem}
+                busyPacked={busyPackedId === item.id}
+                ownerLabel={ownerLabel(item.owner_id)}
+                canEdit={trip.permissions.canEdit}
               />
             ))}
           </div>
@@ -624,7 +760,216 @@ export function TripKitView({
           </div>
         </div>
       </GlassModal>
+
+      {/* Phase 5 — édition complète d'un item (poids, quantité, partage, état, propriétaire) */}
+      <TripKitEditModal
+        key={editingItem?.id ?? 'kit-edit'}
+        item={editingItem}
+        error={editError}
+        currentUserId={trip.user_id}
+        collaborators={trip.collaborators || []}
+        onOpenChange={(open) => {
+          if (!open) {
+            setEditingItem(null);
+            setEditError(null);
+          }
+        }}
+        onSubmit={handleUpdateItem}
+      />
     </div>
+  );
+}
+
+interface TripKitEditModalProps {
+  item: TripItem | null;
+  error: string | null;
+  currentUserId: string;
+  collaborators: TripFull['collaborators'];
+  onOpenChange: (open: boolean) => void;
+  onSubmit: (input: {
+    quantity: number;
+    weightGrams: number | null;
+    ownership: 'personal' | 'shared';
+    condition: 'neuf' | 'bon' | 'use' | 'a_remplacer' | 'pour_pieces' | null;
+    ownerId: string | null;
+    priority: 'vital' | 'recommended' | 'optional';
+  }) => Promise<void>;
+}
+
+/** Phase 5 — modale unique d'édition d'un item du kit (aucun écran parallèle). */
+function TripKitEditModal({
+  item,
+  error,
+  currentUserId,
+  collaborators,
+  onOpenChange,
+  onSubmit,
+}: TripKitEditModalProps) {
+  const [quantity, setQuantity] = useState<string>(String(item?.quantity ?? 1));
+  const [weightGrams, setWeightGrams] = useState<string>(
+    item?.weight_grams != null ? String(item.weight_grams) : ''
+  );
+  const [ownership, setOwnership] = useState<'personal' | 'shared'>(
+    item?.ownership === 'shared' ? 'shared' : 'personal'
+  );
+  const [condition, setCondition] = useState<string>(item?.condition ?? '');
+  const [ownerId, setOwnerId] = useState<string>(item?.owner_id ?? '');
+  const [priority, setPriority] = useState<'vital' | 'recommended' | 'optional'>(
+    item?.priority === 'vital' || item?.is_vital
+      ? 'vital'
+      : item?.priority === 'optional'
+        ? 'optional'
+        : 'recommended'
+  );
+  const [busy, setBusy] = useState(false);
+
+  return (
+    <GlassModal open={item !== null} onOpenChange={onOpenChange} title="Modifier l’équipement" variant="sheet">
+      <div className="space-y-4 pb-2">
+        <p className="text-sm font-semibold text-[var(--lkv-text-primary)] truncate">
+          {item ? cleanItemName(item.item_name) : ''}
+        </p>
+
+        {error && (
+          <p role="alert" className="rounded-xl border border-[var(--lkv-danger)]/30 bg-[var(--lkv-danger)]/10 px-3 py-2 text-xs font-semibold text-[var(--lkv-danger)]">
+            {error}
+          </p>
+        )}
+
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="mb-1 block text-xs font-semibold text-[var(--lkv-text-primary)]">
+              Quantité
+            </label>
+            <input
+              className="glass-input w-full px-3 py-2 text-sm text-[var(--lkv-text-primary)]"
+              type="number"
+              min={1}
+              max={999}
+              value={quantity}
+              onChange={(event) => setQuantity(event.target.value)}
+            />
+          </div>
+          <div>
+            <label className="mb-1 block text-xs font-semibold text-[var(--lkv-text-primary)]">
+              Poids unitaire (g)
+            </label>
+            <input
+              className="glass-input w-full px-3 py-2 text-sm text-[var(--lkv-text-primary)]"
+              type="number"
+              min={0}
+              placeholder="non renseigné"
+              value={weightGrams}
+              onChange={(event) => setWeightGrams(event.target.value)}
+            />
+          </div>
+          <div>
+            <label className="mb-1 block text-xs font-semibold text-[var(--lkv-text-primary)]">
+              Type
+            </label>
+            <select
+              className="glass-input w-full px-3 py-2 text-sm text-[var(--lkv-text-primary)]"
+              value={ownership}
+              onChange={(event) => setOwnership(event.target.value as 'personal' | 'shared')}
+            >
+              <option value="personal">Personnel</option>
+              <option value="shared">Partagé (groupe)</option>
+            </select>
+          </div>
+          <div>
+            <label className="mb-1 block text-xs font-semibold text-[var(--lkv-text-primary)]">
+              État
+            </label>
+            <select
+              className="glass-input w-full px-3 py-2 text-sm text-[var(--lkv-text-primary)]"
+              value={condition}
+              onChange={(event) => setCondition(event.target.value)}
+            >
+              <option value="">Non renseigné</option>
+              <option value="neuf">Neuf</option>
+              <option value="bon">Bon état</option>
+              <option value="use">Usé</option>
+              <option value="a_remplacer">À remplacer</option>
+              <option value="pour_pieces">Pour pièces</option>
+            </select>
+          </div>
+          <div>
+            <label className="mb-1 block text-xs font-semibold text-[var(--lkv-text-primary)]">
+              Propriétaire
+            </label>
+            <select
+              className="glass-input w-full px-3 py-2 text-sm text-[var(--lkv-text-primary)]"
+              value={ownerId}
+              onChange={(event) => setOwnerId(event.target.value)}
+            >
+              <option value="">À assigner</option>
+              <option value={currentUserId}>Vous</option>
+              {collaborators
+                .filter((collab) => collab.user_id !== currentUserId)
+                .map((collab) => (
+                  <option key={collab.user_id} value={collab.user_id}>
+                    {collab.profile?.full_name || collab.profile?.username || 'Voyageur'}
+                  </option>
+                ))}
+            </select>
+          </div>
+          <div>
+            <label className="mb-1 block text-xs font-semibold text-[var(--lkv-text-primary)]">
+              Priorité
+            </label>
+            <select
+              className="glass-input w-full px-3 py-2 text-sm text-[var(--lkv-text-primary)]"
+              value={priority}
+              onChange={(event) =>
+                setPriority(event.target.value as 'vital' | 'recommended' | 'optional')
+              }
+            >
+              <option value="vital">Vital</option>
+              <option value="recommended">Recommandé</option>
+              <option value="optional">Optionnel</option>
+            </select>
+          </div>
+        </div>
+
+        <div className="flex items-center justify-end gap-3 border-t border-white/40 pt-4">
+          <GlassCapsuleBtn
+            type="button"
+            variant="default"
+            size="sm"
+            onClick={() => onOpenChange(false)}
+            disabled={busy}
+          >
+            Annuler
+          </GlassCapsuleBtn>
+          <GlassCapsuleBtn
+            type="button"
+            variant="primary"
+            size="sm"
+            disabled={busy}
+            onClick={() => {
+              setBusy(true);
+              void onSubmit({
+                quantity: Math.max(1, Number(quantity) || 1),
+                weightGrams:
+                  weightGrams.trim() === '' ? null : Math.max(0, Math.round(Number(weightGrams) || 0)),
+                ownership,
+                condition: (condition || null) as
+                  | 'neuf'
+                  | 'bon'
+                  | 'use'
+                  | 'a_remplacer'
+                  | 'pour_pieces'
+                  | null,
+                ownerId: ownerId || null,
+                priority,
+              }).finally(() => setBusy(false));
+            }}
+          >
+            Enregistrer
+          </GlassCapsuleBtn>
+        </div>
+      </div>
+    </GlassModal>
   );
 }
 
@@ -632,6 +977,11 @@ interface ItemRowProps {
   item: TripItem;
   imageUrl?: string | null;
   onDeleteItem: (id: string) => void;
+  onTogglePacked: (item: TripItem) => void;
+  onEdit: (item: TripItem) => void;
+  busyPacked: boolean;
+  ownerLabel: string | null;
+  canEdit: boolean;
 }
 
 function GearThumb({ url, name, size = 46 }: { url?: string | null; name: string; size?: number }) {
@@ -670,9 +1020,26 @@ function GearStockBadge({ quantity, stock = false }: { quantity: number; stock?:
   );
 }
 
-/** Ligne du sac : un seul bouton adaptatif — la croix retire du sac. */
-function TripKitItemRow({ item, imageUrl, onDeleteItem }: ItemRowProps) {
+/** Ligne du sac : état emballé, badges personnel/partagé/manquant, édition. */
+function TripKitItemRow({
+  item,
+  imageUrl,
+  onDeleteItem,
+  onTogglePacked,
+  onEdit,
+  busyPacked,
+  ownerLabel,
+  canEdit,
+}: ItemRowProps) {
   const displayName = cleanItemName(item.item_name);
+  const isMissing = item.status === 'missing';
+  const conditionLabels: Record<string, string> = {
+    neuf: 'Neuf',
+    bon: 'Bon état',
+    use: 'Usé',
+    a_remplacer: 'À remplacer',
+    pour_pieces: 'Pour pièces',
+  };
 
   return (
     <div
@@ -681,7 +1048,24 @@ function TripKitItemRow({ item, imageUrl, onDeleteItem }: ItemRowProps) {
       }`}
     >
       <div className="flex min-w-0 items-center gap-3">
-        <GearThumb url={imageUrl} name={displayName} />
+        {canEdit ? (
+          <button
+            type="button"
+            onClick={() => onTogglePacked(item)}
+            disabled={busyPacked}
+            aria-label={item.is_packed ? 'Marquer non emballé' : 'Marquer emballé'}
+            aria-pressed={item.is_packed}
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-lkv-primary transition-transform active:scale-90 disabled:opacity-50"
+          >
+            {item.is_packed ? (
+              <CheckCircle2 className="h-5 w-5" aria-hidden="true" />
+            ) : (
+              <Circle className="h-5 w-5" aria-hidden="true" />
+            )}
+          </button>
+        ) : (
+          <GearThumb url={imageUrl} name={displayName} />
+        )}
 
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
@@ -699,6 +1083,16 @@ function TripKitItemRow({ item, imageUrl, onDeleteItem }: ItemRowProps) {
                 emballé
               </span>
             )}
+            {isMissing && (
+              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-[var(--lkv-warning)]/10 text-[var(--lkv-warning-dark)] border border-[var(--lkv-warning)]/30 shrink-0">
+                manquant
+              </span>
+            )}
+            {item.ownership === 'shared' && (
+              <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-white/70 text-[var(--lkv-text-secondary)] border border-white/60 shrink-0">
+                partagé
+              </span>
+            )}
             {item.quantity > 1 && item.is_consumable && <GearStockBadge quantity={item.quantity} />}
             {item.is_vital && (
               <span className="text-[10px] font-bold text-[var(--lkv-danger)]">Vital</span>
@@ -707,11 +1101,30 @@ function TripKitItemRow({ item, imageUrl, onDeleteItem }: ItemRowProps) {
 
           <div className="mt-0.5 text-[11px] text-[var(--lkv-text-secondary)]">
             {item.weight_grams ? `${item.weight_grams} g` : 'poids non renseigné'}
+            {item.quantity > 1 ? ` · ×${item.quantity}` : ''}
+            {ownerLabel ? ` · ${ownerLabel}` : ''}
+            {item.condition ? ` · ${conditionLabels[item.condition] ?? item.condition}` : ''}
           </div>
+          {item.reason && (
+            <p className="mt-0.5 line-clamp-2 text-[10px] italic text-[var(--lkv-text-muted)]">
+              {item.reason}
+            </p>
+          )}
         </div>
       </div>
 
       <div className="flex shrink-0 items-center gap-1.5">
+        {canEdit && (
+          <button
+            type="button"
+            onClick={() => onEdit(item)}
+            className="flex h-11 w-11 items-center justify-center rounded-full glass-sub-card border border-white/60 text-[var(--lkv-text-secondary)] transition-all hover:text-lkv-primary active:scale-90"
+            title="Modifier l’équipement"
+            aria-label="Modifier l’équipement"
+          >
+            <Pencil className="h-4 w-4" aria-hidden="true" />
+          </button>
+        )}
         <button
           type="button"
           onClick={() => onDeleteItem(item.id)}
@@ -817,10 +1230,18 @@ function VirtualTripKitItemList({
   items,
   imageByItemId,
   onDeleteItem,
+  onTogglePacked,
+  onEdit,
+  busyPackedId,
+  canEdit,
 }: {
   items: TripItem[];
   imageByItemId: Map<string, string | null>;
   onDeleteItem: (id: string) => void;
+  onTogglePacked: (item: TripItem) => void;
+  onEdit: (item: TripItem) => void;
+  busyPackedId: string | null;
+  canEdit: boolean;
 }) {
   const parentRef = useRef<HTMLDivElement>(null);
   const rowVirtualizer = useVirtualizer({
@@ -857,6 +1278,11 @@ function VirtualTripKitItemList({
                 item={item}
                 imageUrl={imageByItemId.get(item.id) ?? null}
                 onDeleteItem={onDeleteItem}
+                onTogglePacked={onTogglePacked}
+                onEdit={onEdit}
+                busyPacked={busyPackedId === item.id}
+                ownerLabel={null}
+                canEdit={canEdit}
               />
             </div>
           );

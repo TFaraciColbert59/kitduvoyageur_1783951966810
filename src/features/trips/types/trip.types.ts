@@ -130,7 +130,14 @@ export interface TripItem {
   is_consumable?: boolean;
   notes?: string | null;
   source?: string | null;
-  /** Jour du voyage pour lequel ce matériel est requis (roadbook) — null = voyage entier. */
+  /** Phase 5 — matériel personnel ou partagé par le groupe. */
+  ownership?: 'personal' | 'shared';
+  /** Phase 5 — propriétaire réel (auth.users), null = à assigner. */
+  owner_id?: string | null;
+  /** Phase 5 — état déclaré, null = inconnu (jamais inventé). */
+  condition?: 'neuf' | 'bon' | 'use' | 'a_remplacer' | 'pour_pieces' | null;
+  /** Phase 5 — raison vérifiable de la recommandation (règle/donnée). */
+  reason?: string | null;
   day_number?: number | null;
   created_at: string;
   updated_at: string;

@@ -695,7 +695,10 @@ export default function InteractiveMap() {
             {/* Distance Filter Chips */}
             <div className="space-y-1">
               <p className="text-[10px] font-mono text-[#5A7064] uppercase font-bold tracking-wider">Distance :</p>
-              <div className="glass-capsule-bar w-full overflow-x-auto flex-nowrap">
+              {/* data-visual-mask : le rendu backdrop-filter (verre) de la barre
+                  varie d'un run à l'autre en CI (~1,9 k px de diff stable sur
+                  /carte-interactive) alors que la mise en page est identique. */}
+              <div className="glass-capsule-bar w-full overflow-x-auto flex-nowrap" data-visual-mask>
                 {DISTANCE_RANGES.map(r => (
                   <button
                     key={r.id}
