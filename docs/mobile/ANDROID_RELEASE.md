@@ -176,8 +176,9 @@ alias + chemin keystore, avec avertissement intégré) :
 `capacitor.config.ts` lit `CAPACITOR_SERVER_URL` au moment du `npx cap sync`.
 Sans elle, **aucune `server.url`** n'est écrite dans la config native et la
 coquille sert `public/index.html` (placeholder « Chargement… ») au lieu de
-l'app déployée. La CLI émet désormais un avertissement explicite quand la
-variable manque (`[capacitor.config] CAPACITOR_SERVER_URL absente […]`).
+l'app déployée. La CLI **échoue désormais explicitement** (`throw`) quand la
+variable manque : `[capacitor.config] CAPACITOR_SERVER_URL requise pour un
+build natif (sinon l app servira le placeholder). […]`
 
 ```powershell
 $env:CAPACITOR_SERVER_URL = "https://<domaine-de-test>"

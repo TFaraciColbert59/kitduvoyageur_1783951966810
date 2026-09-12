@@ -49,10 +49,14 @@ Select-String -Path android\app\src\main\assets\capacitor.config.json -Pattern "
 
 ## 3. Déroulé par cas
 
+> Tous les cas 1–5 s'exécutent sur `/explorer?atlas=1` : `?atlas=1` est requis
+> pour forcer le moteur unifié (ATLAS) — le flag global est désactivé par défaut
+> en code et `/explorer` seul peut servir le moteur legacy.
+
 ### Cas 1/3 — permission accordée
 
 1. Installer la build (`adb install` de l'APK, ou TestFlight/Xcode pour iOS).
-2. Ouvrir `/explorer` (ou `/explorer?atlas=1`).
+2. Ouvrir `/explorer?atlas=1`.
 3. Accepter la demande système de localisation.
 4. **Attendu :** la carte se centre sur la position, le marqueur utilisateur
    apparaît, la bbox requêtée correspond à la zone de l'utilisateur.
@@ -62,7 +66,7 @@ Select-String -Path android\app\src\main\assets\capacitor.config.json -Pattern "
 ### Cas 2/4 — permission refusée
 
 1. Révoquer la permission avant ouverture (chemins au §2).
-2. Ouvrir `/explorer` : aucune boucle de demande, carte sur le globe.
+2. Ouvrir `/explorer?atlas=1` : aucune boucle de demande, carte sur le globe.
 3. Taper « Explorer ma zone ».
 4. **Attendu :** la vue **reste sur le globe** (pas de plongée vers Chamonix) ;
    le message glass non bloquant apparaît ; après ~6 s il disparaît seul ; la
@@ -70,7 +74,7 @@ Select-String -Path android\app\src\main\assets\capacitor.config.json -Pattern "
 
 ### Cas 5 — dernière position mémorisée
 
-1. Avec permission accordée, faire au moins un fix réussi (ouvrir `/explorer`).
+1. Avec permission accordée, faire au moins un fix réussi (ouvrir `/explorer?atlas=1`).
 2. Révoquer la permission dans les réglages, relancer l'app.
 3. Taper « Explorer ma zone ».
 4. **Attendu :** vol vers la dernière position (marqueur + bbox locale), sans
