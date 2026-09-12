@@ -902,4 +902,12 @@ Aucune de ces étapes ne doit être improvisée sans le palier 100 % — c'est l
   - **Cause racine expérimentale** : le globe du chantier était **pratiquement invisible** — la plongée d'ouverture durait ~1 s et en `prefers-reduced-motion` elle **sautait le globe entièrement** (reproduit : `reduced-motion → zoom 6 immédiat`), puis à l'échelle locale l'interface ressemble légitimement à une carte plate. Les captures du chantier montraient le globe, mais jamais l'usage réel.
   - **Correctif racine** : `/explorer` **ouvre sur le globe et y reste** (plus d'auto-plongée) ; bouton libellé **« Explorer ma zone »** (44 px, à droite) qui plonge vers la position utilisateur (sinon dernière vue locale/vue initiale) ; « Vue globe » pour remonter ; `prefers-reduced-motion` → globe conservé, plongée non animée.
   - Preuves : `docs/atlas/captures/atlas-explorer-globe-default.png` + état `{"zoom":1.6,"projection":"globe"}` ; suites visuelles 6/6, e2e 2/2 (`3 × net::ERR_ABORTED`), `tsc` 0.
+- **Simplification UX mobile de l'explorateur (demande propriétaire « simplicité maximale comme avant », globe inchangé)** — skill `ux-mobile` + `apple-ui-designer` + `interaction-design` appliqués :
+  - **Une seule action principale** centrée au-dessus de la tab bar : « Explorer ma zone » (globe) ⇄ « Vue globe » (local), 48 px.
+  - **Zoom compact** : 2 boutons (−/+) à droite ; bouton « me recentrer » retiré en mobile (l'action principale recentre ; pincer reste natif). Colonne complete conservée en desktop.
+  - **Fond de carte** : capsule d'icônes 48 px en haut à gauche (relief/map/layers, `aria-label`), libellés texte conservés en desktop.
+  - **Densité : légende desktop-only** ; **attribution** déplacée en haut à droite en mobile (lisible, plus cachée derrière la tab bar).
+  - Inventaire mesuré avant/après (éléments flottants z≥100) : avant = légende 243 px + capsule 255 px + pile 103×190 px + attribution sous la tab bar ; après = tuiles 162×54 (haut), CTA 109×48 (centre bas), zoom 44×96 (droite), attribution 145×17 (haut droite) — aucun chevauchement à 360 et 430 px.
+  - **Piège CSS documenté** : les classes `.glass-*` imposent `display`/`min-width`/`min-height` (comme `.glass` imposait `position: relative`) — toute bascule responsive ou taille passe par un wrapper ou un utilitaire `!important` (jamais `hidden`/`w-11` directement sur un élément glass).
+  - Preuves : captures `test-results/mobile-iphone-14-pro-{globe,local}.png`, suites visuelles 8 passés / 10 skips desktop-only (globe + mobile + /pays), e2e 2/2, `tsc` 0.
 

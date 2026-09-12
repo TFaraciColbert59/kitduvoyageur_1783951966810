@@ -817,6 +817,9 @@ export default function UnifiedExplorerMap({
   const bottomControlsOffset = safeControls
     ? 'bottom-[calc(env(safe-area-inset-bottom,0px)+96px)]'
     : 'bottom-4';
+  const desktopTilesOffset = safeControls
+    ? 'md:bottom-[calc(env(safe-area-inset-bottom,0px)+96px)]'
+    : 'md:bottom-4';
 
   return (
     <div
@@ -832,7 +835,33 @@ export default function UnifiedExplorerMap({
         </div>
       )}
 
-      {/* Zoom + recentrage (44px, glass) */}
+      {/* Contrôles mobiles simplifiés :
+          - une action centrale « Explorer ma zone » / « Vue globe » ;
+          - zoom compact à droite (pincer pour zoomer reste natif) ;
+          - fond de carte en haut à gauche, icônes seules.
+          ⚠️ Les classes `.glass-*` imposent leur `display` : les bascules
+          responsives passent par des wrappers, jamais directement dessus. */}
+
+      {/* Action principale — mobile (centrée, seule au-dessus de la tab bar) */}
+      <div
+        className={`absolute left-1/2 -translate-x-1/2 ${bottomControlsOffset} z-[510] md:hidden`}
+        data-atlas-primary-cta="mobile"
+      >
+        <button
+          type="button"
+          onClick={handleToggleGlobe}
+          className="glass-capsule-btn !min-h-[48px] px-4 flex items-center justify-center gap-2 shadow-lg cursor-pointer active:scale-95"
+          aria-label={viewMode === 'globe' ? 'Explorer ma zone (vue locale)' : 'Afficher le globe'}
+          aria-pressed={viewMode === 'local'}
+        >
+          <Icon name="compass" size={15} />
+          <span className="text-[12px] font-bold whitespace-nowrap">
+            {viewMode === 'globe' ? 'Explorer ma zone' : 'Vue globe'}
+          </span>
+        </button>
+      </div>
+
+      {/* Zoom (−/+) + recentrage : mobile = zoom seul ; desktop = colonne complète */}
       <div
         className={`absolute right-3 ${bottomControlsOffset} z-[500] flex flex-col gap-2`}
         data-atlas-controls="right"
@@ -855,45 +884,49 @@ export default function UnifiedExplorerMap({
         >
           <Icon name="minus" size={16} />
         </button>
-        <button
-          type="button"
-          onClick={handleRecenter}
-          className="glass-circle-btn w-11 h-11 shadow-lg flex items-center justify-center cursor-pointer active:scale-95"
-          aria-label="Me recentrer"
-          title="Me recentrer"
-        >
-          <Icon name="navigation" size={16} />
-        </button>
-        <button
-          type="button"
-          onClick={handleToggleGlobe}
-          className="glass-capsule-btn min-h-[44px] px-3 flex items-center justify-center gap-1.5 shadow-lg cursor-pointer active:scale-95"
-          aria-label={viewMode === 'globe' ? 'Explorer ma zone (vue locale)' : 'Afficher le globe'}
-          title={viewMode === 'globe' ? 'Explorer ma zone' : 'Vue globe'}
-          aria-pressed={viewMode === 'local'}
-        >
-          <Icon name="compass" size={14} />
-          <span className="text-[11px] font-bold whitespace-nowrap">
-            {viewMode === 'globe' ? 'Explorer ma zone' : 'Vue globe'}
-          </span>
-        </button>
+        <div className="hidden md:contents">
+          <button
+            type="button"
+            onClick={handleRecenter}
+            className="glass-circle-btn w-11 h-11 shadow-lg flex items-center justify-center cursor-pointer active:scale-95"
+            aria-label="Me recentrer"
+            title="Me recentrer"
+          >
+            <Icon name="navigation" size={16} />
+          </button>
+          <button
+            type="button"
+            onClick={handleToggleGlobe}
+            className="glass-capsule-btn !min-h-[44px] px-3 flex items-center justify-center gap-1.5 shadow-lg cursor-pointer active:scale-95"
+            aria-label={viewMode === 'globe' ? 'Explorer ma zone (vue locale)' : 'Afficher le globe'}
+            title={viewMode === 'globe' ? 'Explorer ma zone' : 'Vue globe'}
+            aria-pressed={viewMode === 'local'}
+          >
+            <Icon name="compass" size={14} />
+            <span className="text-[11px] font-bold whitespace-nowrap">
+              {viewMode === 'globe' ? 'Explorer ma zone' : 'Vue globe'}
+            </span>
+          </button>
+        </div>
       </div>
 
-      {/* Légende densité (paliers continent/région : taille ∝ nombre de sentiers) */}
+      {/* Légende densité — desktop uniquement (simplicité mobile) */}
       {viewport && viewport.zoom > 2.4 && viewport.zoom < 14.4 && (
         <div
-          className={`absolute left-3 ${
+          className={`hidden md:block absolute left-3 ${
             safeControls ? 'bottom-[calc(env(safe-area-inset-bottom,0px)+152px)]' : 'bottom-20'
-          } z-[500] glass-pill text-[10px] font-semibold pointer-events-none`}
+          } z-[500] pointer-events-none`}
           data-atlas-density-legend="true"
         >
-          ● Densité de sentiers — taille ∝ nombre
+          <div className="glass-pill text-[10px] font-semibold">
+            ● Densité de sentiers — taille ∝ nombre
+          </div>
         </div>
       )}
 
-      {/* Fond de carte (capsule glass) */}
+      {/* Fond de carte — mobile : icônes en haut à gauche ; desktop : libellés en bas à gauche */}
       <div
-        className={`absolute left-3 ${bottomControlsOffset} z-[500] glass-capsule-bar flex items-center`}
+        className={`absolute left-3 top-[calc(env(safe-area-inset-top,0px)+10px)] md:top-auto ${desktopTilesOffset} z-[500] glass-capsule-bar flex items-center`}
         data-atlas-controls="tiles"
         role="group"
         aria-label="Fond de carte"
@@ -903,19 +936,25 @@ export default function UnifiedExplorerMap({
             key={mode}
             type="button"
             onClick={() => setTileMode(mode)}
-            className={`glass-capsule-segment px-3 min-h-[44px] text-[11px] font-semibold cursor-pointer ${
+            className={`glass-capsule-segment !w-12 !min-w-0 !px-0 md:!w-auto md:!min-w-[76px] md:!px-[18px] !min-h-[44px] text-[11px] font-semibold cursor-pointer flex items-center justify-center ${
               tileMode === mode ? 'active' : ''
             }`}
             aria-pressed={tileMode === mode}
+            aria-label={mode === 'topo' ? 'Relief' : mode === 'osm' ? 'Plan' : 'Satellite'}
             title={mode === 'topo' ? 'Relief' : mode === 'osm' ? 'Plan' : 'Satellite'}
           >
-            {mode === 'topo' ? 'Relief' : mode === 'osm' ? 'Plan' : 'Satellite'}
+            <span className="md:hidden inline-flex">
+              <Icon name={mode === 'topo' ? 'mountain' : mode === 'osm' ? 'map' : 'layers'} size={16} />
+            </span>
+            <span className="hidden md:inline">
+              {mode === 'topo' ? 'Relief' : mode === 'osm' ? 'Plan' : 'Satellite'}
+            </span>
           </button>
         ))}
       </div>
 
-      {/* Attribution légère (obligatoire pour les tuiles) */}
-      <div className="absolute left-1/2 -translate-x-1/2 bottom-[calc(env(safe-area-inset-bottom,0px)+2px)] z-[400] text-[9px] leading-none text-[#5A7064] bg-white/70 px-2 py-1 rounded-full pointer-events-none">
+      {/* Attribution légère (obligatoire pour les tuiles) — mobile : haut droite ; desktop : bas centre */}
+      <div className="absolute z-[400] right-3 top-[calc(env(safe-area-inset-top,0px)+16px)] md:right-auto md:left-1/2 md:-translate-x-1/2 md:top-auto md:bottom-[calc(env(safe-area-inset-bottom,0px)+2px)] text-[9px] leading-none text-[#5A7064] bg-white/70 px-2 py-1 rounded-full pointer-events-none">
         © OpenStreetMap France · Esri
       </div>
 
