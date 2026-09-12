@@ -1,6 +1,8 @@
 import React from 'react';
 import { getTrails } from '@/lib/queries/trails';
 import { getAtlasDensity, type AtlasDensity } from '@/lib/queries/atlas';
+import { currentFeatureFlags } from '@/features/hub/server/featureFlags';
+import { resolveUnifiedMapEnabled } from '@/lib/atlas/rollout';
 import ExplorerClient from '@/components/explorer/ExplorerClient';
 import type { MapTrail } from '@/components/explorer/types';
 
@@ -13,8 +15,15 @@ interface ExplorerPageProps {
 
 export default async function ExplorerPage({ searchParams }: ExplorerPageProps) {
   const resolvedSearchParams = searchParams ? await searchParams : undefined;
-  // Switch interne CHANTIER ATLAS (remplacé par le feature flag en Phase 7).
-  const unifiedMap = resolvedSearchParams?.atlas === '1';
+
+  // CHANTIER ATLAS Phase 7 — rollout progressif via le système de flags existant.
+  // `?atlas=1` reste le switch interne (tests/équipe) ; le flag global gouverne
+  // le trafic réel et permet un rollback instantané (moteur legacy conservé).
+  const flags = await currentFeatureFlags();
+  const unifiedMap = resolveUnifiedMapEnabled({
+    flagEnabled: flags.explorer_unified_map_enabled,
+    atlasParam: resolvedSearchParams?.atlas,
+  });
 
   let initialTrails: MapTrail[] = [];
   try {
