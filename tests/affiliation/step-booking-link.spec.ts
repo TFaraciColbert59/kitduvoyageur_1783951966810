@@ -4,6 +4,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import {
   buildStepBookingLink,
   buildBookingByStepId,
+  resolveBookingByStepId,
 } from '@/features/affiliation/engine/stepBookingLink';
 import { StepBookingLinkCta } from '@/features/affiliation/components/StepBookingLinkCta';
 import { ItineraryDayTimeline } from '@/features/hub/components/mobile/itinerary/ItineraryDayTimeline';
@@ -16,30 +17,31 @@ const CONTEXT = {
   endDate: '2026-07-08',
 };
 
-const dummyLink: AffiliateLink = {
-  id: 'link-booking-chamonix',
-  slug: 'booking-chamonix-hotel',
-  partner_id: 'partner-booking',
-  partner: {
-    id: 'partner-booking',
-    slug: 'booking',
-    name: 'Booking.com',
-    network: 'travelpayouts',
-    website_url: 'https://www.booking.com',
-    commission_rate_desc: '3% à 4%',
+function makeLink(overrides: Partial<AffiliateLink> & { id: string; slug: string }): AffiliateLink {
+  return {
+    partner_id: 'partner-booking',
+    partner: {
+      id: 'partner-booking',
+      slug: 'booking',
+      name: 'Booking.com',
+      network: 'travelpayouts',
+      website_url: 'https://www.booking.com',
+      commission_rate_desc: '3% à 4%',
+      is_active: true,
+      created_at: '2026-09-05T00:00:00Z',
+    },
+    category: 'hotel',
+    country_code: 'FR',
+    title: 'Hôtels & Refuges',
+    destination_name: null,
+    target_url: 'https://www.booking.com/searchresults.fr.html',
+    tracking_params: { marker: '584920' },
     is_active: true,
     created_at: '2026-09-05T00:00:00Z',
-  },
-  category: 'hotel',
-  country_code: 'FR',
-  title: 'Hôtels & Refuges — Chamonix-Mont-Blanc',
-  destination_name: 'Chamonix-Mont-Blanc',
-  target_url: 'https://www.booking.com/city/fr/chamonix.html',
-  tracking_params: { marker: '584920' },
-  is_active: true,
-  created_at: '2026-09-05T00:00:00Z',
-  updated_at: '2026-09-05T00:00:00Z',
-};
+    updated_at: '2026-09-05T00:00:00Z',
+    ...overrides,
+  };
+}
 
 describe('buildStepBookingLink (pur — jamais d’URL, filtrage par catégorie)', () => {
   it('hébergement → hotel avec searchTerms = hébergement + destination', () => {
@@ -123,6 +125,85 @@ describe('buildBookingByStepId', () => {
   });
 });
 
+describe('resolveBookingByStepId (résolution côté serveur : destination avant catégorie)', () => {
+  const chamonixHotel = makeLink({
+    id: 'link-chamonix',
+    slug: 'booking-chamonix-hotel',
+    destination_name: 'Chamonix-Mont-Blanc',
+    created_at: '2026-09-01T00:00:00Z',
+  });
+  const parisHotel = makeLink({
+    id: 'link-paris',
+    slug: 'booking-paris-hotel',
+    destination_name: 'Paris',
+    created_at: '2026-09-10T00:00:00Z',
+  });
+
+  it('un pool de liens même catégorie dans deux villes → slug de la destination de l’étape', () => {
+    const map = resolveBookingByStepId(
+      [
+        {
+          id: 'step-chamonix',
+          accommodationName: 'Refuge du Goûter',
+          locationName: 'Chamonix',
+          dayNumber: 1,
+        },
+      ],
+      [parisHotel, chamonixHotel],
+      CONTEXT
+    );
+
+    // Paris est plus récent, mais Chamonix matche la localisation de l'étape.
+    expect(map['step-chamonix']?.slug).toBe('booking-chamonix-hotel');
+    expect(map['step-chamonix']?.partnerName).toBe('Booking.com');
+  });
+
+  it('match insensible à la casse et aux diacritiques (étape → destination du voyage)', () => {
+    const nepalLink = makeLink({
+      id: 'link-nepal',
+      slug: 'booking-nepal-lodges',
+      destination_name: 'Népal',
+    });
+    const map = resolveBookingByStepId(
+      [{ id: 'step-1', accommodationName: 'Lodge', dayNumber: 1 }],
+      [parisHotel, nepalLink],
+      { ...CONTEXT, destinationName: 'NEPAL' }
+    );
+
+    expect(map['step-1']?.slug).toBe('booking-nepal-lodges');
+  });
+
+  it('repli sans match destination : premier candidat de la catégorie (récence)', () => {
+    const map = resolveBookingByStepId(
+      [{ id: 'step-1', accommodationName: 'Gîte', locationName: 'Cusco', dayNumber: 1 }],
+      [parisHotel, chamonixHotel],
+      { ...CONTEXT, destinationName: 'Cusco' }
+    );
+
+    expect(map['step-1']?.slug).toBe('booking-paris-hotel');
+  });
+
+  it('la catégorie reste un filtre dur : aucun candidat de la catégorie → pas d’entrée', () => {
+    const map = resolveBookingByStepId(
+      [{ id: 'step-flight', transportMode: 'plane', dayNumber: 1 }],
+      [parisHotel, chamonixHotel],
+      CONTEXT
+    );
+
+    expect(map['step-flight']).toBeUndefined();
+  });
+
+  it('une étape sans réservation n’entre jamais dans la carte', () => {
+    const map = resolveBookingByStepId(
+      [{ id: 'step-foot', transportMode: 'foot', dayNumber: 2 }],
+      [parisHotel, chamonixHotel],
+      CONTEXT
+    );
+
+    expect(Object.keys(map)).toEqual([]);
+  });
+});
+
 describe('StepBookingLinkCta (lien par étape, /go + rel sponsored)', () => {
   it('rend le href /go avec trip_id, rel sponsored nofollow et mention Suggestion/Lien partenaire', () => {
     const html = renderToStaticMarkup(
@@ -132,7 +213,8 @@ describe('StepBookingLinkCta (lien par étape, /go + rel sponsored)', () => {
           label: 'Hébergement — Refuge du Goûter',
           searchTerms: 'Refuge du Goûter Chamonix-Mont-Blanc',
         },
-        link: dummyLink,
+        slug: 'booking-chamonix-hotel',
+        partnerName: 'Booking.com',
         tripId: 'trip-mont-blanc-2026',
       })
     );
@@ -143,6 +225,7 @@ describe('StepBookingLinkCta (lien par étape, /go + rel sponsored)', () => {
     expect(html).toContain('Refuge du Goûter');
     expect(html).toContain('Suggestion');
     expect(html).toContain('Lien partenaire');
+    expect(html).toContain('Booking.com');
   });
 });
 
@@ -165,7 +248,7 @@ describe('ItineraryDayTimeline — lien de réservation par étape', () => {
     elevation_loss_m: 0,
   };
 
-  it('une étape avec hébergement rend le href /go de la carte affiliée', () => {
+  it('une étape avec hébergement rend le href /go résolu côté serveur', () => {
     const html = renderToStaticMarkup(
       React.createElement(ItineraryDayTimeline, {
         steps: [step],
@@ -175,9 +258,10 @@ describe('ItineraryDayTimeline — lien de réservation par étape', () => {
             category: 'hotel',
             label: 'Hébergement — Refuge du Goûter',
             searchTerms: 'Refuge du Goûter Chamonix-Mont-Blanc',
+            slug: 'booking-chamonix-hotel',
+            partnerName: 'Booking.com',
           },
         },
-        affiliateLinks: [dummyLink],
         onOpen: () => {},
       })
     );
@@ -186,7 +270,7 @@ describe('ItineraryDayTimeline — lien de réservation par étape', () => {
     expect(html).toContain('rel="sponsored nofollow"');
   });
 
-  it('sans lien fourni, aucune sortie /go n’est rendue', () => {
+  it('sans mise en relation serveur, aucune sortie /go n’est rendue', () => {
     const html = renderToStaticMarkup(
       React.createElement(ItineraryDayTimeline, {
         steps: [step],

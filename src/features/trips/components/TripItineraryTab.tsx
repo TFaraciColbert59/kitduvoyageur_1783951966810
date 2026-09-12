@@ -27,9 +27,9 @@ export function TripItineraryTab({ trip }: TripItineraryTabProps) {
   const [isRegenerating, setIsRegenerating] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  // T8 — liens d'affiliation + intentions de réservation par étape (hub normal ;
-  // hors provider ou hors hub, le contexte retombe sur vide → aucune sortie /go).
-  const { links: affiliateLinks, bookingByStepId } = useTripAffiliate();
+  // T8 — lien de réservation résolu par étape (hub normal ; hors provider ou
+  // hors hub, le contexte retombe sur vide → aucune sortie /go).
+  const { bookingByStepId } = useTripAffiliate();
 
   // Évaluation de la saisonnalité
   const seasonalityWarnings = useMemo(() => {
@@ -224,9 +224,6 @@ export function TripItineraryTab({ trip }: TripItineraryTabProps) {
         <div className="space-y-3">
           {canonicalSteps.map((step) => {
             const booking = bookingByStepId[step.id];
-            const bookingLink = booking
-              ? affiliateLinks.find((link) => link.category === booking.category)
-              : undefined;
             return (
               <GlassCard
                 key={step.id}
@@ -283,9 +280,14 @@ export function TripItineraryTab({ trip }: TripItineraryTabProps) {
                   </div>
                 </div>
 
-                {booking && bookingLink && (
+                {booking && (
                   <div className="mt-3 border-t border-black/5 pt-3">
-                    <StepBookingLinkCta booking={booking} link={bookingLink} tripId={trip.id} />
+                    <StepBookingLinkCta
+                      booking={booking}
+                      slug={booking.slug}
+                      partnerName={booking.partnerName}
+                      tripId={trip.id}
+                    />
                   </div>
                 )}
               </GlassCard>

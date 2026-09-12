@@ -1,33 +1,35 @@
 'use client';
 
 import { BedDouble, ExternalLink, Plane } from 'lucide-react';
-import type { AffiliateLink } from '../types/affiliate.types';
 import type { StepBookingSuggestion } from '../engine/stepBookingLink';
 
 export interface StepBookingLinkCtaProps {
   booking: StepBookingSuggestion;
-  /** Lien partenaire actif qui porte le slug de redirection trackée. */
-  link: AffiliateLink;
+  /** Slug du lien partenaire résolu côté serveur (redirection trackée /go). */
+  slug: string;
+  /** Nom du partenaire affiché (résolu côté serveur, optionnel). */
+  partnerName?: string | null;
   tripId?: string;
   className?: string;
 }
 
 /**
  * Lien de réservation compact affiché à côté d'une étape (itinéraire mobile et
- * desktop). L'URL passe par la redirection trackée `/go/<slug>` de l'engine
- * existant — jamais d'URL partenaire brute — et conserve
- * `rel="sponsored nofollow"`. Aucun nouveau vocabulaire visuel : surface
- * `glass-sub-card` du design system.
+ * desktop). Le slug provient de la résolution serveur (`bookingByStepId`) :
+ * aucun rapprochement de lien n'est refait côté client. L'URL passe par la
+ * redirection trackée `/go/<slug>` de l'engine existant — jamais d'URL
+ * partenaire brute — et conserve `rel="sponsored nofollow"`. Aucun nouveau
+ * vocabulaire visuel : surface `glass-sub-card` du design system.
  */
 export function StepBookingLinkCta({
   booking,
-  link,
+  slug,
+  partnerName,
   tripId,
   className = '',
 }: StepBookingLinkCtaProps) {
-  const href = tripId ? `/go/${link.slug}?trip_id=${tripId}` : `/go/${link.slug}`;
+  const href = tripId ? `/go/${slug}?trip_id=${tripId}` : `/go/${slug}`;
   const CategoryIcon = booking.category === 'hotel' ? BedDouble : Plane;
-  const partnerName = link.partner?.name;
 
   return (
     <a

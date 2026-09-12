@@ -14,17 +14,17 @@ import {
 import type { PlannerStep } from '@/features/trips/planner/plannerEngine';
 import { formatDurationShort, formatStepTime, transportLabel } from '../../../mobile/itineraryEngine';
 import { StepBookingLinkCta } from '@/features/affiliation/components/StepBookingLinkCta';
-import type { AffiliateLink } from '@/features/affiliation/types/affiliate.types';
-import type { StepBookingSuggestion } from '@/features/affiliation/engine/stepBookingLink';
+import type { ResolvedStepBookingLink } from '@/features/affiliation/engine/stepBookingLink';
 
 export interface ItineraryDayTimelineProps {
   steps: PlannerStep[];
   durations?: Record<string, number>;
   onOpen: (step: PlannerStep) => void;
-  /** T8 — intention de réservation par id d'étape (calculée côté hub). */
-  bookingByStepId?: Record<string, StepBookingSuggestion>;
-  /** T8 — liens d'affiliation actifs, matchés par catégorie (hotel/flight). */
-  affiliateLinks?: AffiliateLink[];
+  /**
+   * T8 — lien de réservation déjà résolu côté serveur par id d'étape
+   * (destination avant catégorie) : le slug est rendu tel quel.
+   */
+  bookingByStepId?: Record<string, ResolvedStepBookingLink>;
   /** T8 — voyage courant pour le suivi `/go/<slug>?trip_id=`. */
   tripId?: string;
 }
@@ -58,7 +58,6 @@ export function ItineraryDayTimeline({
   durations = {},
   onOpen,
   bookingByStepId = {},
-  affiliateLinks = [],
   tripId,
 }: ItineraryDayTimelineProps) {
   if (steps.length === 0) {
@@ -78,9 +77,6 @@ export function ItineraryDayTimeline({
         const time = formatStepTime(step.start_time);
         const duration = durations[step.id];
         const booking = bookingByStepId[step.id];
-        const bookingLink = booking
-          ? affiliateLinks.find((link) => link.category === booking.category)
-          : undefined;
         return (
           <li key={step.id} className="flex items-stretch gap-3">
             <div className="flex w-12 shrink-0 flex-col items-center pt-1">
@@ -148,10 +144,11 @@ export function ItineraryDayTimeline({
                 )}
               </button>
 
-              {booking && bookingLink && (
+              {booking && (
                 <StepBookingLinkCta
                   booking={booking}
-                  link={bookingLink}
+                  slug={booking.slug}
+                  partnerName={booking.partnerName}
                   tripId={tripId}
                   className="mt-1.5"
                 />

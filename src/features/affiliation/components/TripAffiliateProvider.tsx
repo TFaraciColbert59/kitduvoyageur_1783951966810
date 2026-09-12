@@ -2,13 +2,16 @@
 
 import { createContext, useContext, type ReactNode } from 'react';
 import type { AffiliateLink } from '../types/affiliate.types';
-import type { StepBookingSuggestion } from '../engine/stepBookingLink';
+import type { ResolvedStepBookingLink } from '../engine/stepBookingLink';
 
 export interface TripAffiliateContextValue {
   /** Liens d'affiliation actifs et pertinents du voyage (hub normal). */
   links: AffiliateLink[];
-  /** Intention de réservation par id d'étape (`trip_steps.id`), sans URL. */
-  bookingByStepId: Record<string, StepBookingSuggestion>;
+  /**
+   * Lien de réservation résolu par étape (`trip_steps.id`) : le slug est choisi
+   * côté serveur (destination avant catégorie), les vues clientes le rendent tel quel.
+   */
+  bookingByStepId: Record<string, ResolvedStepBookingLink>;
 }
 
 const EMPTY_TRIP_AFFILIATE: TripAffiliateContextValue = {

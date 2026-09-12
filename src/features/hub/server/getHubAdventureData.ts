@@ -13,8 +13,8 @@ import { getTripItemImages, type TripItemImage } from './getTripItemImages';
 import { fetchPublicProfiles } from '@/lib/queries/publicProfiles';
 import type { AffiliateCategory, AffiliateLink } from '@/features/affiliation/types/affiliate.types';
 import {
-  buildBookingByStepId,
-  type StepBookingSuggestion,
+  resolveBookingByStepId,
+  type ResolvedStepBookingLink,
 } from '@/features/affiliation/engine/stepBookingLink';
 
 /**
@@ -126,8 +126,11 @@ export interface HubAdventureData extends HubAdventureLists {
    * hébergement, activités, assurance, eSIM). Jamais servis hors hub.
    */
   affiliateLinks: AffiliateLink[];
-  /** T8 — Intention de réservation par étape (`trip_steps.id`), sans URL. */
-  bookingByStepId: Record<string, StepBookingSuggestion>;
+  /**
+   * T8 — Intention de réservation par étape (`trip_steps.id`) résolue côté
+   * serveur vers le slug du lien partenaire (destination avant catégorie).
+   */
+  bookingByStepId: Record<string, ResolvedStepBookingLink>;
 }
 
 const EMPTY_LISTS: HubAdventureLists = {
@@ -334,9 +337,17 @@ async function loadHubAffiliateLinks(
   }
 }
 
-/** T8 — Intentions de réservation par étape (pur, dérivé des trip_steps réels). */
-function buildTripBookingByStepId(trip: TripFull): Record<string, StepBookingSuggestion> {
-  return buildBookingByStepId(
+/**
+ * T8 — Intentions de réservation par étape résolues côté serveur : la
+ * destination de l'étape puis celle du voyage départagent les liens d'une même
+ * catégorie (repli : premier candidat par récence) — les vues clientes rendent
+ * le slug exact, sans re-matching.
+ */
+function buildTripBookingByStepId(
+  trip: TripFull,
+  affiliateLinks: AffiliateLink[],
+): Record<string, ResolvedStepBookingLink> {
+  return resolveBookingByStepId(
     (trip.steps ?? []).map((step) => ({
       id: step.id,
       accommodationName: step.accommodation_name,
@@ -344,7 +355,9 @@ function buildTripBookingByStepId(trip: TripFull): Record<string, StepBookingSug
       latitude: step.latitude,
       longitude: step.longitude,
       dayNumber: step.day_number,
+      locationName: step.location_name,
     })),
+    affiliateLinks,
     {
       destinationName: trip.destination_name ?? '',
       startDate: trip.start_date,
@@ -544,7 +557,7 @@ export async function getHubAdventureDataInner(): Promise<HubAdventureData> {
         checklist,
         itemImages,
         affiliateLinks,
-        bookingByStepId: buildTripBookingByStepId(trip),
+        bookingByStepId: buildTripBookingByStepId(trip, affiliateLinks),
       };
     }
     // Repli possession (aventure périmée — jamais de cul-de-sac).

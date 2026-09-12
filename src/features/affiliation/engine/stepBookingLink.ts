@@ -2,13 +2,16 @@
  * Task 8 — Liens de réservation par étape (pur, déterministe).
  *
  * Ce module ne construit JAMAIS d'URL : il expose seulement l'intention de
- * réservation (`category`, `label`, `searchTerms`). L'URL de suivi `/go/<slug>`
- * reste construite au rendu par les composants d'affiliation existants
- * (`AffiliateLinkCard`), qui portent `rel="sponsored nofollow"`.
+ * réservation (`category`, `label`, `searchTerms`) puis, côté serveur, la
+ * résolution vers le lien partenaire actif le plus pertinent (`slug`). L'URL de
+ * suivi `/go/<slug>` reste construite au rendu par les composants existants,
+ * qui portent `rel="sponsored nofollow"`.
  *
  * Les restaurants sont volontairement exclus : aucun programme d'affiliation
  * associé (documenté dans la spec §4.4).
  */
+
+import type { AffiliateLink } from '../types/affiliate.types';
 
 export type StepBookingCategory = 'hotel' | 'flight';
 
@@ -88,6 +91,115 @@ export function buildBookingByStepId(
     const suggestion = buildStepBookingLink(step, context);
     if (suggestion) {
       out[step.id] = suggestion;
+    }
+  }
+
+  return out;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Résolution serveur : intention → lien partenaire actif (fix round 1, T8)
+// ─────────────────────────────────────────────────────────────────────────────
+
+export interface ResolvedStepBookingLink extends StepBookingSuggestion {
+  /** Slug du lien partenaire actif résolu (redirection /go construite au rendu). */
+  slug: string;
+  partnerName: string | null;
+}
+
+export interface StepBookingResolutionContext extends StepBookingContext {
+  /** Localisation réelle de l'étape — prioritaire pour le rapprochement destination. */
+  stepLocationName?: string | null;
+}
+
+/** Normalisation casse + diacritiques + ponctuation pour le rapprochement. */
+function normalizeForMatch(value: string | null | undefined): string {
+  return (value ?? '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim();
+}
+
+/** Contenance bidirectionnelle insensible à la casse et aux diacritiques. */
+function destinationMatches(
+  linkDestination: string | null | undefined,
+  target: string | null | undefined
+): boolean {
+  const a = normalizeForMatch(linkDestination);
+  const b = normalizeForMatch(target);
+  if (!a || !b) return false;
+  return a.includes(b) || b.includes(a);
+}
+
+/** Destination (étape = 2, voyage = 1) d'abord, catégorie en filtre dur, puis récence. */
+function scoreCandidate(link: AffiliateLink, context: StepBookingResolutionContext): number {
+  let score = 0;
+  if (destinationMatches(link.destination_name, context.stepLocationName)) score += 2;
+  if (destinationMatches(link.destination_name, context.destinationName)) score += 1;
+  return score;
+}
+
+/**
+ * Résout l'intention de réservation vers UN lien partenaire actif.
+ * - La catégorie est un filtre dur (un hôtel ne renvoie jamais vers un vol).
+ * - Parmi les candidats, la destination de l'étape puis celle du voyage sont
+ *   rapprochées de `link.destination_name` (casse/diacritiques ignorés).
+ * - Repli assumé : sans aucun match de destination, le premier candidat le plus
+ *   récent de la catégorie est retenu (comportement historique, jamais de
+ *   cul-de-sac quand un programme existe).
+ */
+export function resolveStepBookingLink(
+  booking: StepBookingSuggestion,
+  candidates: readonly AffiliateLink[],
+  context: StepBookingResolutionContext
+): ResolvedStepBookingLink | null {
+  const categoryCandidates = candidates.filter((link) => link.category === booking.category);
+  if (categoryCandidates.length === 0) return null;
+
+  const ordered = [...categoryCandidates].sort((a, b) =>
+    (b.created_at ?? '').localeCompare(a.created_at ?? '')
+  );
+
+  let best = ordered[0];
+  let bestScore = scoreCandidate(best, context);
+  for (const link of ordered.slice(1)) {
+    const score = scoreCandidate(link, context);
+    if (score > bestScore) {
+      best = link;
+      bestScore = score;
+    }
+  }
+
+  return { ...booking, slug: best.slug, partnerName: best.partner?.name ?? null };
+}
+
+export interface ResolvedStepBookingSource extends StepBookingSource {
+  locationName?: string | null;
+}
+
+/**
+ * Carte `bookingByStepId` résolue côté serveur (loader hub) : chaque étape
+ * porte le slug exact du lien partenaire à rendre — les vues clientes n'ont
+ * plus à rapprocher par catégorie.
+ */
+export function resolveBookingByStepId(
+  steps: readonly ResolvedStepBookingSource[],
+  candidates: readonly AffiliateLink[],
+  context: StepBookingContext
+): Record<string, ResolvedStepBookingLink> {
+  const out: Record<string, ResolvedStepBookingLink> = {};
+
+  for (const step of steps) {
+    const booking = buildStepBookingLink(step, context);
+    if (!booking) continue;
+    const resolved = resolveStepBookingLink(booking, candidates, {
+      ...context,
+      stepLocationName: step.locationName,
+    });
+    if (resolved) {
+      out[step.id] = resolved;
     }
   }
 
