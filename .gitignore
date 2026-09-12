@@ -19,6 +19,11 @@ build/
 
 # Testing & Performance tools
 coverage/
+# Phase 4 — dossiers de code livrés (à ne pas confondre avec les rapports de
+# couverture de tests) : pipeline, tests unitaires et matrice de couverture.
+!scripts/coverage/
+!tests/coverage/
+!docs/coverage/
 jest-test-results.json
 lighthouse_results/
 baseline_home.json
