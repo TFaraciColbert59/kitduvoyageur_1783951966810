@@ -25,6 +25,7 @@ import type { TripBrief } from '../schemas/autoGen.schema';
 import { enqueueActivityEnrichment } from './activityEnrichment/enqueue';
 import { generateTripDocuments } from './generateTripDocuments';
 import { generateJournalNotes } from './generateJournalNotes';
+import { createKitForTrip } from './createKitForTrip';
 
 /**
  * « Préparer » un sentier → activité complète (Task 4).
@@ -91,6 +92,13 @@ const POI_CORRIDOR_KM = 0.75;
 const POI_BBOX_DEG = 0.01;
 const POI_LIMIT = 200;
 const PREPARE_SOURCE = 'prepare-trail';
+/**
+ * Fix course 409 : quand l'usine refuse parce qu'une génération concurrente est
+ * active, l'activité gagnante apparaît dans `trips` sous peu. On l'attend
+ * (borné) AVANT tout repli plutôt que de créer un doublon sans kit.
+ */
+const CONCURRENT_TRIP_RETRY_ATTEMPTS = 8;
+const CONCURRENT_TRIP_RETRY_DELAY_MS = 1000;
 
 function toFiniteNumber(value: unknown): number | null {
   if (value === null || value === undefined || value === '') return null;
@@ -298,6 +306,32 @@ async function findExistingTrip(
       metadata,
     },
   };
+}
+
+function delayMs(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/**
+ * Attente courte et bornée d'une activité créée par une génération concurrente
+ * (l'usine a répondu 409/429/5xx alors qu'un autre appel préparait le même
+ * sentier). Ré-interroge `findExistingTrip` jusqu'à 8 fois, 1 s d'intervalle :
+ * dès qu'elle apparaît, l'appelant la réutilise ; sinon repli assumé.
+ */
+async function waitForRacedTrip(
+  db: SupabaseClient,
+  userId: string,
+  routeId: number
+): Promise<ExistingTripResult> {
+  for (let attempt = 1; attempt <= CONCURRENT_TRIP_RETRY_ATTEMPTS; attempt += 1) {
+    const found = await findExistingTrip(db, userId, routeId);
+    if (found.status !== 'none') return found;
+    if (attempt < CONCURRENT_TRIP_RETRY_ATTEMPTS) {
+      console.warn('[LKDV preparer-sentier] attente de la génération concurrente…');
+      await delayMs(CONCURRENT_TRIP_RETRY_DELAY_MS);
+    }
+  }
+  return { status: 'none' };
 }
 
 /**
@@ -641,6 +675,7 @@ export async function prepareActivityFromTrail(trailIdRaw: string): Promise<Prep
   let layers: CreateTripFromAutogenIntentInput['layers'] | null = null;
   let brief: TripBrief | null = null;
   let status: 'created' | 'fallback_created' = 'created';
+  let factoryError: string | null = null;
 
   const rawInput = buildTrailRawInput(trail, meta);
   try {
@@ -670,6 +705,7 @@ export async function prepareActivityFromTrail(trailIdRaw: string): Promise<Prep
       }
       record = { tripId: created.tripId, slug: created.slug, title: created.title, metadata: null };
     } else {
+      factoryError = `autogen ${created.status}: ${created.error}`;
       console.error(
         '[LKDV preparer-sentier] usine autogen non-ok:',
         created.status,
@@ -677,10 +713,29 @@ export async function prepareActivityFromTrail(trailIdRaw: string): Promise<Prep
       );
     }
   } catch (error) {
+    factoryError = `autogen exception: ${error instanceof Error ? error.message : String(error)}`;
     console.error(
       '[LKDV preparer-sentier] usine autogen en échec:',
       error instanceof Error ? error.message : error
     );
+  }
+
+  if (!record) {
+    // Usine non-ok (dont 409 de course) ou en exception : une génération
+    // concurrente peut être en train de créer l'activité du même sentier.
+    // Attente courte bornée (≤ ~8 s) avant tout repli : réutiliser vaut mieux
+    // que dupliquer sans kit.
+    const raced = await waitForRacedTrip(db, user.id, routeId);
+    if (raced.status === 'error') {
+      return { status: 'unavailable', reason: 'persist_failed' };
+    }
+    if (raced.status === 'found') {
+      if (shouldReenqueueEnrichment(raced.trip.metadata)) {
+        await enqueueActivityEnrichment(raced.trip.tripId, user.id);
+      }
+      const { tripId, slug, title } = raced.trip;
+      return { status: 'reused', tripId, slug, title };
+    }
   }
 
   if (!record) {
@@ -693,7 +748,11 @@ export async function prepareActivityFromTrail(trailIdRaw: string): Promise<Prep
           primary_activity: 'hiking',
           status: 'draft',
           visibility: 'private',
-          metadata: { route_id: routeId, source: PREPARE_SOURCE },
+          metadata: {
+            route_id: routeId,
+            source: PREPARE_SOURCE,
+            ...(factoryError ? { prepare_error: factoryError.slice(0, 300) } : {}),
+          },
         },
         user.id
       );
@@ -724,6 +783,30 @@ export async function prepareActivityFromTrail(trailIdRaw: string): Promise<Prep
 
   if (!record) return { status: 'unavailable', reason: 'persist_failed' };
   const tripId = record.tripId;
+
+  // Fix « kit jamais manquant » : le repli `createTrip` ne passe pas par
+  // l'usine, donc aucun kit n'existerait. Le kit déterministe garantit un
+  // `/hub/kit-voyage` réellement garni (catalogue + règles, best-effort).
+  if (status === 'fallback_created') {
+    const kit = await createKitForTrip({
+      supabase: writer,
+      userId: user.id,
+      tripId,
+      trail: { id: trail.id, name: trail.name, distanceKm: trail.distanceKm ?? null },
+      meta: {
+        difficulty: meta?.difficulty ?? null,
+        durationHours: meta?.durationHours ?? null,
+        elevationGain: meta?.elevationGain ?? null,
+        terrainType: meta?.terrainType ?? null,
+        season: null,
+      },
+      partySize: partySizeFromBrief(brief),
+      layers: (layers as Record<string, unknown> | null) ?? null,
+    });
+    if (kit.kitId === null) {
+      console.warn('[LKDV preparer-sentier] kit déterministe indisponible pour', tripId);
+    }
+  }
 
   const persisted = await writeTripPrepareMetadata(writer, tripId, user.id, routeId);
   if (persisted.status === 'duplicate') {

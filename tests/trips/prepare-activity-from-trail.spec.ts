@@ -34,10 +34,14 @@ vi.mock('@/features/trips/engine/autoGenPipeline', () => ({ runAutoGenPipeline: 
 vi.mock('@/features/trips/server/createTripFromAutogenIntent', () => ({
   createTripFromAutogenIntent: vi.fn(),
 }));
+vi.mock('@/features/trips/server/createKitForTrip', () => ({
+  createKitForTrip: vi.fn(),
+}));
 
 import { createTrip } from '@/lib/queries-trips';
 import { runAutoGenPipeline } from '@/features/trips/engine/autoGenPipeline';
 import { createTripFromAutogenIntent } from '@/features/trips/server/createTripFromAutogenIntent';
+import { createKitForTrip } from '@/features/trips/server/createKitForTrip';
 import {
   PrepareActivityAuthError,
   prepareActivityFromTrail,
@@ -98,6 +102,7 @@ const mocks = {
   createTrip: vi.mocked(createTrip),
   runAutoGenPipeline: vi.mocked(runAutoGenPipeline),
   createTripFromAutogenIntent: vi.mocked(createTripFromAutogenIntent),
+  createKitForTrip: vi.mocked(createKitForTrip),
 };
 
 interface Captures {
@@ -215,6 +220,23 @@ function insertFor(captures: Captures, table: string) {
   return captures.inserts.find((entry) => entry.table === table);
 }
 
+/**
+ * Le repli s'accompagne désormais d'une attente courte bornée (8 × 1 s).
+ * Les tests pilotent ces horloges en fake timers : aucun test n'attend en réel.
+ */
+async function runWithFakeTimers<T>(run: () => Promise<T>): Promise<T> {
+  vi.useFakeTimers();
+  try {
+    const promise = run();
+    for (let step = 0; step < 20; step += 1) {
+      await vi.advanceTimersByTimeAsync(1000);
+    }
+    return await promise;
+  } finally {
+    vi.useRealTimers();
+  }
+}
+
 describe('prepareActivityFromTrail (Task 4)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -238,6 +260,7 @@ describe('prepareActivityFromTrail (Task 4)', () => {
       slug: TRIP.slug,
       title: TRIP.title,
     } as never);
+    mocks.createKitForTrip.mockResolvedValue({ kitId: 'kit-fallback', itemCount: 3 } as never);
   });
 
   it('(a) sentier absent → unavailable/not_found, aucune écriture', async () => {
@@ -420,7 +443,7 @@ describe('prepareActivityFromTrail (Task 4)', () => {
     serviceHolder.client = client;
     mocks.runAutoGenPipeline.mockRejectedValue(new Error('pipeline indisponible'));
 
-    const outcome = await prepareActivityFromTrail(String(ROUTE_ID));
+    const outcome = await runWithFakeTimers(() => prepareActivityFromTrail(String(ROUTE_ID)));
 
     expect(outcome).toEqual({
       status: 'fallback_created',
@@ -461,7 +484,7 @@ describe('prepareActivityFromTrail (Task 4)', () => {
       error: 'usine en échec',
     } as never);
 
-    const outcome = await prepareActivityFromTrail(String(ROUTE_ID));
+    const outcome = await runWithFakeTimers(() => prepareActivityFromTrail(String(ROUTE_ID)));
 
     expect(outcome.status).toBe('fallback_created');
     expect(mocks.createTrip).toHaveBeenCalledTimes(1);
@@ -506,7 +529,7 @@ describe('prepareActivityFromTrail (Task 4)', () => {
       message: 'duplicate key value violates unique constraint "uniq_trips_user_route"',
     });
 
-    const outcome = await prepareActivityFromTrail(String(ROUTE_ID));
+    const outcome = await runWithFakeTimers(() => prepareActivityFromTrail(String(ROUTE_ID)));
 
     expect(outcome).toEqual({
       status: 'reused',
@@ -661,11 +684,106 @@ describe('prepareActivityFromTrail (Task 4)', () => {
     serviceHolder.client = client;
     mocks.createTripFromAutogenIntent.mockRejectedValue(new Error('échec avant insertion'));
 
-    const outcome = await prepareActivityFromTrail(String(ROUTE_ID));
+    const outcome = await runWithFakeTimers(() => prepareActivityFromTrail(String(ROUTE_ID)));
 
     expect(outcome.status).toBe('fallback_created');
     expect(mocks.createTrip).toHaveBeenCalledTimes(1);
     expect(captures.deletes).toHaveLength(0);
+  });
+
+  it('(l) 409 de course puis activité apparue → attente courte, reused SANS repli ni kit', async () => {
+    const { client, captures } = createService({
+      route: ROUTE,
+      meta: META,
+      geojson: GEOJSON,
+      // 1er select = aucune activité ; 1re relance = encore aucune (attente) ;
+      // 2e relance = le gagnant de la course est visible.
+      existingTrips: [null, null, { id: TRIP.id, slug: TRIP.slug, title: TRIP.title }],
+      tripMetadata: { metadata: {} },
+    });
+    serviceHolder.client = client;
+    mocks.createTripFromAutogenIntent.mockResolvedValue({
+      ok: false,
+      status: 409,
+      error: 'Une génération est déjà en cours — réessayez dans un instant.',
+    } as never);
+
+    const outcome = await runWithFakeTimers(() => prepareActivityFromTrail(String(ROUTE_ID)));
+
+    expect(outcome).toEqual({
+      status: 'reused',
+      tripId: TRIP.id,
+      slug: TRIP.slug,
+      title: TRIP.title,
+    });
+    // Jamais de repli ni de kit : l'activité gagnante garde son propre kit.
+    expect(mocks.createTrip).not.toHaveBeenCalled();
+    expect(mocks.createKitForTrip).not.toHaveBeenCalled();
+    expect(insertFor(captures, 'trip_steps')).toBeUndefined();
+    expect(insertFor(captures, 'ai_jobs')).toBeDefined();
+  });
+
+  it('(m) usine en échec, aucune activité concurrente → fallback_created + kit déterministe', async () => {
+    const { client } = createService({
+      route: ROUTE,
+      meta: META,
+      geojson: GEOJSON,
+      existingTrips: [null],
+      tripMetadata: { metadata: {} },
+    });
+    serviceHolder.client = client;
+    mocks.createTripFromAutogenIntent.mockResolvedValue({
+      ok: false,
+      status: 500,
+      error: 'usine en échec',
+    } as never);
+
+    const outcome = await runWithFakeTimers(() => prepareActivityFromTrail(String(ROUTE_ID)));
+
+    expect(outcome).toEqual({
+      status: 'fallback_created',
+      tripId: TRIP.id,
+      slug: TRIP.slug,
+      title: TRIP.title,
+    });
+    expect(mocks.createTrip).toHaveBeenCalledTimes(1);
+    expect(mocks.createKitForTrip).toHaveBeenCalledTimes(1);
+
+    const kitArgs = mocks.createKitForTrip.mock.calls[0][0];
+    expect(kitArgs).toMatchObject({
+      supabase: client,
+      userId: USER_ID,
+      tripId: TRIP.id,
+      trail: { id: ROUTE_ID, name: 'Tour du Lac Blanc', distanceKm: 12.4 },
+      meta: {
+        difficulty: 'hard',
+        durationHours: 5.5,
+        elevationGain: 850,
+        terrainType: 'montagne',
+        season: null,
+      },
+      partySize: 1,
+    });
+    // Pipeline réussi mais usine non-ok : les couches réelles sont transmises.
+    expect(kitArgs.layers).toBe(BUDGET_LAYERS);
+  });
+
+  it('(n) pipeline en exception → kit déterministe appelé avec layers null', async () => {
+    const { client } = createService({
+      route: ROUTE,
+      meta: META,
+      geojson: GEOJSON,
+      existingTrips: [null],
+      tripMetadata: { metadata: {} },
+    });
+    serviceHolder.client = client;
+    mocks.runAutoGenPipeline.mockRejectedValue(new Error('pipeline indisponible'));
+
+    const outcome = await runWithFakeTimers(() => prepareActivityFromTrail(String(ROUTE_ID)));
+
+    expect(outcome.status).toBe('fallback_created');
+    const kitArgs = mocks.createKitForTrip.mock.calls[0][0];
+    expect(kitArgs.layers).toBeNull();
   });
 });
 
