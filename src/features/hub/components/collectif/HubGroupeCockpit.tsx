@@ -19,6 +19,7 @@ import { convertEphemeralGroup } from '@/features/tribu/actions/ephemeralGroup';
 import { formatEphemeralCountdown } from '@/features/tribu/lib/ephemeral';
 import GroupActivityLog from '@/features/tribu/components/GroupActivityLog';
 import GroupTaskTemplatesPanel from '@/features/tribu/components/GroupTaskTemplatesPanel';
+import LiveSharePanel from '@/features/tribu/components/LiveSharePanel';
 
 const DepensesCard = nextDynamic(() => import('@/components/groupes/DepensesCard'), { ssr: false });
 const DecisionsCard = nextDynamic(() => import('@/components/groupes/DecisionsCard'), { ssr: false });
@@ -207,6 +208,8 @@ export function HubGroupeCockpit({ groupId, initialTab }: { groupId: string; ini
             onApplied={refreshData}
           />
         )}
+
+        <LiveSharePanel groupId={data.id} isOrganizer={isCurrentUserOrganizer} />
 
         {linkedTrip && (
           <Link

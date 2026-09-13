@@ -15,6 +15,7 @@ import { convertEphemeralGroup } from '@/features/tribu/actions/ephemeralGroup';
 import { formatEphemeralCountdown } from '@/features/tribu/lib/ephemeral';
 import GroupActivityLog from '@/features/tribu/components/GroupActivityLog';
 import GroupTaskTemplatesPanel from '@/features/tribu/components/GroupTaskTemplatesPanel';
+import LiveSharePanel from '@/features/tribu/components/LiveSharePanel';
 import {
   assignGroupeKitItem,
   settleGroupeExpense,
@@ -451,6 +452,8 @@ export function GroupeMobileExperience({
           )}
         </div>
       )}
+
+      <LiveSharePanel groupId={groupId} isOrganizer={canManage} />
 
       <GroupeReadinessHero
         readiness={readiness}
