@@ -1,13 +1,14 @@
 'use client';
 
 import Icon from '@/components/ui/Icon';
-import React, { useState, useTransition } from 'react';
+import React, { useMemo, useState, useTransition } from 'react';
 import Link from 'next/link';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { GlassCapsuleBtn } from '@/components/ui/GlassCapsuleBtn';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { TripBadge } from './TripBadge';
 import { ConfirmDialog } from './ConfirmDialog';
+import { MemberProfileBadges } from './MemberProfileBadges';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import {
   inviteCollaboratorAction,
@@ -32,6 +33,12 @@ export function TripTeamView({ trip }: TripTeamViewProps) {
   const { triggerHaptic } = useHapticFeedback();
 
   const isOwner = trip.permissions.canInvite; // Seul l'owner a canInvite
+
+  // Task 19 — provenance des données de préparation par membre.
+  const memberProfileByUser = useMemo(
+    () => new Map((trip.member_profiles ?? []).map((profile) => [profile.user_id, profile])),
+    [trip.member_profiles]
+  );
 
   const handleRoleChange = (collaboratorId: string, newRole: 'owner' | 'editor' | 'viewer') => {
     triggerHaptic('selection');
@@ -152,6 +159,11 @@ export function TripTeamView({ trip }: TripTeamViewProps) {
                       <div className="text-xs text-lkv-secondary">
                         Rejoint le {new Date(collab.joined_at).toLocaleDateString('fr-FR')}
                       </div>
+                      <MemberProfileBadges
+                        profile={memberProfileByUser.get(collab.user_id)}
+                        maxFields={4}
+                        className="mt-1.5"
+                      />
                     </div>
                   </Link>
 

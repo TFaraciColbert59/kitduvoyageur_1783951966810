@@ -16,6 +16,7 @@ import type {
   TripSafetyCheckpoint,
   TripNote,
   TripRole,
+  TripMemberProfile,
 } from '@/features/trips/types/trip.types';
 import {
   createTripSchema,
@@ -257,6 +258,7 @@ async function loadFullTripDetails(
     poisRes,
     safetyRes,
     notesRes,
+    memberProfilesRes,
   ] = await Promise.all([
     supabase
       .from('trip_collaborators')
@@ -311,6 +313,9 @@ async function loadFullTripDetails(
       .eq('trip_id', trip.id)
       .order('is_pinned', { ascending: false })
       .order('created_at', { ascending: false }),
+
+    // Task 19 — snapshots profils membres (badges de provenance par membre).
+    supabase.from('trip_member_profiles').select('*').eq('trip_id', trip.id),
   ]);
 
   // Profils réels des collaborateurs ET des payeurs (vue publique — pas
@@ -340,6 +345,7 @@ async function loadFullTripDetails(
     pois: (poisRes.data as TripPoi[]) || [],
     safety_checkpoints: (safetyRes.data as TripSafetyCheckpoint[]) || [],
     notes: (notesRes.data as TripNote[]) || [],
+    member_profiles: (memberProfilesRes.data as TripMemberProfile[]) || [],
     user_role: role,
     permissions,
   };

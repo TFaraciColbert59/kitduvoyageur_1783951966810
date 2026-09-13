@@ -54,6 +54,7 @@ import { GroupeRail } from '../groupe/GroupeRail';
 import { ItineraryHero } from './ItineraryHero';
 import { RenameTripModal } from '@/features/trips/components/RenameTripModal';
 import { TripInviteButton } from '@/features/trips/components/TripInviteButton';
+import { PartyPreparationBanner } from '@/features/trips/components/MemberProfileBadges';
 import { DayTraceMap } from './DayTraceMap';
 import { ItineraryDayTimeline } from './ItineraryDayTimeline';
 import { ActivitySectionSkeleton } from '../../live/ActivitySectionSkeleton';
@@ -634,6 +635,8 @@ export function ItineraryMobileExperience({ trip, initialSteps }: ItineraryMobil
       />
 
       <TripInviteButton trip={trip} className="w-full justify-center" />
+
+      <PartyPreparationBanner partySize={trip.party_size} />
 
       <GroupeChipsRow chips={chips} />
 

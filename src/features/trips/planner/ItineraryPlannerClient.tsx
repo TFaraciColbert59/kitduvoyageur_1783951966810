@@ -23,6 +23,7 @@ import { StepEditModal } from './StepEditModal';
 import { MoveStepModal } from './MoveStepModal';
 import { RenameTripModal } from '@/features/trips/components/RenameTripModal';
 import { TripInviteButton } from '@/features/trips/components/TripInviteButton';
+import { PartyPreparationBanner } from '@/features/trips/components/MemberProfileBadges';
 import {
   addTripStepAction,
   updateTripStepAction,
@@ -441,6 +442,8 @@ export default function ItineraryPlannerClient({
           />
         </div>
       </div>
+
+      <PartyPreparationBanner partySize={trip.party_size} />
 
       {/* Carte du jour sélectionné — trace réelle découpée */}
       {routeId && (
