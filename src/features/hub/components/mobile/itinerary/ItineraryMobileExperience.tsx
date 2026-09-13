@@ -716,6 +716,14 @@ export function ItineraryMobileExperience({ trip, initialSteps }: ItineraryMobil
             day={selectedDay}
             days={daysCount}
             stepPoints={activeStepPoints}
+            interactive
+            pickPoint={mapPick ? { lat: mapPick.lat, lng: mapPick.lon } : null}
+            onMapClick={(point) => {
+              if (!canEdit) return;
+              triggerHaptic('light');
+              setMapPick({ lat: point.lat, lon: point.lng });
+              setPoiFormOpen(true);
+            }}
           />
         </div>
       )}

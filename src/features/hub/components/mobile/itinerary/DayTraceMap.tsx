@@ -7,6 +7,8 @@ import { samplePolyline, type TrailPoint } from '@/features/trips/domain/trailTo
 
 /** Marqueur d'étape du jour (terracotta), distinct des extrémités de trace. */
 const STEP_MARKER_COLOR = '#A8443A';
+/** Marqueur temporaire du point en cours de création (même code que l'ancienne carte). */
+const PICK_MARKER_COLOR = '#A8443A';
 
 type TraceCacheEntry = { ok: true; polyline: TrailPoint[] } | { ok: false };
 
@@ -27,6 +29,35 @@ function isFinitePoint(point: DayTracePoint | null | undefined): point is DayTra
     typeof point.lng === 'number' &&
     Number.isFinite(point.lng)
   );
+}
+
+/**
+ * Marqueurs de la carte : étapes géolocalisées du jour mises en avant, plus le
+ * point temporaire en cours de création s'il existe. Aucun point invalide.
+ */
+export function buildDayTraceMarkers(
+  stepPoints: DayTracePoint[] | null | undefined,
+  pickPoint: DayTracePoint | null | undefined
+): HubRoutePoint[] {
+  const markers = (Array.isArray(stepPoints) ? stepPoints : [])
+    .filter(isFinitePoint)
+    .map((point) => ({
+      lat: point.lat,
+      lon: point.lng,
+      label: 'Étape du jour',
+      color: STEP_MARKER_COLOR,
+    }));
+
+  if (isFinitePoint(pickPoint)) {
+    markers.push({
+      lat: pickPoint.lat,
+      lon: pickPoint.lng,
+      label: 'Nouveau point',
+      color: PICK_MARKER_COLOR,
+    });
+  }
+
+  return markers;
 }
 
 function loadRoutePolyline(routeId: string): Promise<TraceCacheEntry> {
@@ -108,6 +139,12 @@ export interface DayTraceMapProps {
   days: number;
   /** Étapes géolocalisées du jour (ordre du roadbook). */
   stepPoints?: DayTracePoint[] | null;
+  /** Carte pannable/zoomable + tap (création de POI) quand vrai. */
+  interactive?: boolean;
+  /** Point en cours de création, affiché temporairement sur la carte. */
+  pickPoint?: DayTracePoint | null;
+  /** Tap sur la carte (mode interactif) — reçoit le point réellement touché. */
+  onMapClick?: (point: DayTracePoint) => void;
   heightClassName?: string;
   className?: string;
 }
@@ -116,12 +153,17 @@ export interface DayTraceMapProps {
  * Carte du jour sélectionné : trace réelle découpée par jour (étapes si elles
  * sont géolocalisées, sinon fractions de la polyligne) via `HubRouteMap`.
  * Chargement discret (squelette) ; échec ou trace absente → aucun rendu.
+ * En mode interactif, le tap est retransmis (`onMapClick`) et le point en
+ * cours de création (`pickPoint`) apparaît comme marqueur temporaire.
  */
 export function DayTraceMap({
   routeId,
   day,
   days,
   stepPoints,
+  interactive = false,
+  pickPoint,
+  onMapClick,
   heightClassName = 'h-[16rem]',
   className,
 }: DayTraceMapProps) {
@@ -142,15 +184,17 @@ export function DayTraceMap({
     [dayTrace]
   );
 
-  const points = useMemo<HubRoutePoint[]>(
+  // Dépendances primitives : un nouvel objet `pickPoint` à chaque render
+  // parent ne doit pas reconstruire la carte Leaflet (clef `geoKey`).
+  const pickLat = pickPoint?.lat;
+  const pickLng = pickPoint?.lng;
+  const points = useMemo(
     () =>
-      validSteps.map((point) => ({
-        lat: point.lat,
-        lon: point.lng,
-        label: 'Étape du jour',
-        color: STEP_MARKER_COLOR,
-      })),
-    [validSteps]
+      buildDayTraceMarkers(
+        validSteps,
+        pickLat != null && pickLng != null ? { lat: pickLat, lng: pickLng } : null
+      ),
+    [validSteps, pickLat, pickLng]
   );
 
   if (!routeId) return null;
@@ -174,7 +218,13 @@ export function DayTraceMap({
       data-testid="day-trace-map"
       className={`relative w-full overflow-hidden rounded-2xl border border-white/60 ${heightClassName} ${className ?? ''}`}
     >
-      <HubRouteMap routeCoords={routeCoords} points={points} reserveBottom={0} />
+      <HubRouteMap
+        routeCoords={routeCoords}
+        points={points}
+        interactive={interactive}
+        onMapClick={(lat, lon) => onMapClick?.({ lat, lng: lon })}
+        reserveBottom={0}
+      />
     </div>
   );
 }
