@@ -20,6 +20,7 @@ import {
   flattenPreparationKitItems,
   polylineFromRouteGeom,
   regionSearchTerms,
+  sumBudgetLines,
   type AutogenPreparationPlan,
 } from '../engine/autogenPreparation';
 import { kitItemMatchesOwned } from '../engine/kitCompletenessEngine';
@@ -521,7 +522,7 @@ export async function persistPreparation(
           category: line.category,
           expense_date: today,
           split_type: 'equal',
-          is_planned: true,
+          is_planned: line.isPlanned,
           metadata: {
             source: 'autogen',
             estimated: true,
@@ -566,8 +567,7 @@ export async function persistPreparation(
 
   return {
     kitId,
-    estimatedBudgetEur:
-      preparation.budgetLines.length > 0 ? preparation.budgetLines[0].amountEur : null,
+    estimatedBudgetEur: sumBudgetLines(preparation.budgetLines),
     ownedItemsCount,
   };
 }
@@ -812,10 +812,7 @@ export async function createTripFromAutogenIntent(
             visibility: 'private',
             primary_activity: derivePrimaryActivity(input.brief ?? null),
             difficulty: deriveDifficulty(layers),
-            estimated_budget:
-              preparationPreview.budgetLines.length > 0
-                ? preparationPreview.budgetLines[0].amountEur
-                : null,
+            estimated_budget: sumBudgetLines(preparationPreview.budgetLines),
             metadata: baseMetadata,
           },
           user.id

@@ -122,6 +122,8 @@ export interface PreparationBudgetLine {
   title: string;
   amountEur: number;
   category: string;
+  /** Toujours `true` : une ligne prévisionnelle n'est jamais une dépense réelle. */
+  isPlanned: boolean;
   /** Phase 5 — provenance de l'estimation (jamais un prix partenaire). */
   provenance: {
     rule: 'total_per_person' | 'daily_average';
@@ -129,6 +131,33 @@ export interface PreparationBudgetLine {
     days: number | null;
   };
   reason: string;
+}
+
+/** Catégories canoniques des lignes prévisionnelles (ordre de répartition stable). */
+export const BUDGET_LINE_CATEGORIES = [
+  { category: 'hébergement', label: 'Hébergement' },
+  { category: 'nourriture', label: 'Nourriture' },
+  { category: 'transport', label: 'Transport' },
+  { category: 'activités', label: 'Activités' },
+  { category: 'matériel', label: 'Matériel' },
+  { category: 'divers', label: 'Divers' },
+] as const;
+
+/** Somme exacte des lignes prévisionnelles (au centime), `null` si aucune. */
+export function sumBudgetLines(lines: PreparationBudgetLine[]): number | null {
+  if (!Array.isArray(lines) || lines.length === 0) return null;
+  const totalCents = lines.reduce((sum, line) => {
+    const cents = Math.round(Number(line.amountEur) * 100);
+    return sum + (Number.isFinite(cents) ? cents : 0);
+  }, 0);
+  return totalCents > 0 ? totalCents / 100 : null;
+}
+
+/** Répartit un total entier au plus près : reliquat sur les premières lignes. */
+function splitEvenlyCents(totalCents: number, parts: number): number[] {
+  const base = Math.floor(totalCents / parts);
+  const remainder = totalCents - base * parts;
+  return Array.from({ length: parts }, (_, index) => base + (index < remainder ? 1 : 0));
 }
 
 export interface PreparationChecklistItem {
@@ -485,9 +514,10 @@ export function buildBudgetLines(
     warnings.push('Budget estimé indisponible dans la couche — aucune ligne créée.');
     return [];
   }
+  const resolvedRule = rule;
 
-  const reason =
-    rule === 'total_per_person'
+  const formulaReason =
+    resolvedRule === 'total_per_person'
       ? `Estimation couche budget : ${totalPerPerson} €/personne × ${partySize} voyageur${
           partySize > 1 ? 's' : ''
         } = ${amount} €.`
@@ -495,17 +525,26 @@ export function buildBudgetLines(
           (days ?? 0) > 1 ? 's' : ''
         } × ${partySize} voyageur${partySize > 1 ? 's' : ''} = ${amount} €.`;
 
-  return [
-    {
-      title: clampLabel(
-        `Budget prévisionnel estimé (${partySize} voyageur${partySize > 1 ? 's' : ''})`
-      ),
-      amountEur: amount,
-      category: 'budget_prev',
-      provenance: { rule, partySize, days },
-      reason,
-    },
-  ];
+  // Répartition catégorisée du total réel : jamais de ligne à zéro (le nombre
+  // de lignes est borné par le total en centimes), somme toujours égale au total.
+  const totalCents = Math.round(amount * 100);
+  const lineCount = Math.min(BUDGET_LINE_CATEGORIES.length, totalCents);
+  if (lineCount <= 0) {
+    warnings.push('Budget estimé inférieur au centime — aucune ligne créée.');
+    return [];
+  }
+  const amountsCents = splitEvenlyCents(totalCents, lineCount);
+
+  return BUDGET_LINE_CATEGORIES.slice(0, lineCount).map((entry, index) => ({
+    title: clampLabel(`Budget prévisionnel — ${entry.label}`),
+    amountEur: amountsCents[index] / 100,
+    category: entry.category,
+    isPlanned: true,
+    provenance: { rule: resolvedRule, partySize, days },
+    reason: `${formulaReason} Part « ${entry.label} » : ${(amountsCents[index] / 100)
+      .toFixed(2)
+      .replace('.', ',')} €.`,
+  }));
 }
 
 interface ChecklistSeed {

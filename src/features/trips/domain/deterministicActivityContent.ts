@@ -219,13 +219,12 @@ export function buildDeterministicPois(
 export const BUDGET_FORMULA_TAG = 'autogenPreparation.buildBudgetLines@v1';
 
 /**
- * Lignes prévisionnelles par catégorie : hébergement/nourriture dès qu'une
- * durée réelle > 0 existe, transport en plus si le séjour est multi-jours.
- * Seule source de montants : `buildBudgetLines(layers, …)` (couche budget
- * réelle AutoGen) — le total est réparti au plus près entre les lignes
- * (reliquat au centime sur les premières) et une ligne à montant nul est
- * omise. Sans couche budget ou sans montant réel, aucune ligne n'est créée :
- * jamais de `null` (colonne `trip_expenses.amount NOT NULL CHECK (amount > 0)`).
+ * Lignes prévisionnelles catégorisées du dressage : la couche budget réelle
+ * AutoGen fournit le total (`buildBudgetLines`), réparti en N catégories
+ * (hébergement/nourriture/transport/activités/matériel/divers), chacune > 0,
+ * somme exacte au centime. Sans couche budget ou sans montant réel, aucune
+ * ligne n'est créée : jamais de `null` (colonne `trip_expenses.amount NOT NULL
+ * CHECK (amount > 0)`).
  */
 export function buildDeterministicExpenses(
   trail: TrailInput,
@@ -233,45 +232,25 @@ export function buildDeterministicExpenses(
   partySize = 1,
   layers: PreparationLayers | null = null
 ): ExpenseDraft[] {
-  const trailName = trail.name.trim();
-  const suffix = trailName !== '' ? ` — ${trailName}` : '';
+  if (!layers) return [];
   const safePartySize = Math.max(
     1,
     Math.min(50, Math.trunc(isPresentNumber(partySize) ? partySize : 1))
   );
   const days = splitDays(trail.distanceKm ?? null, meta?.durationHours ?? null);
 
-  const candidates: { label: string; category: string }[] = [];
-  if (isPositiveNumber(meta?.durationHours ?? null)) {
-    candidates.push({ label: 'Hébergement', category: 'hébergement' });
-    candidates.push({ label: 'Nourriture', category: 'nourriture' });
-  }
-  if (days > 1) {
-    candidates.push({ label: 'Transport', category: 'transport' });
-  }
-  if (candidates.length === 0) return [];
-
   const warnings: string[] = [];
-  const formulaLines = layers ? buildBudgetLines(layers, safePartySize, days, warnings) : [];
-  const totalAmountEur = formulaLines.length > 0 ? formulaLines[0].amountEur : null;
-  if (totalAmountEur == null || totalAmountEur <= 0) return [];
+  const formulaLines = buildBudgetLines(layers, safePartySize, days, warnings);
+  if (formulaLines.length === 0) return [];
 
-  const amountsCents = splitEvenly(Math.round(totalAmountEur * 100), candidates.length);
-
-  return candidates.flatMap((candidate, index) => {
-    const amountCents = amountsCents[index];
-    if (amountCents <= 0) return [];
-    return [
-      {
-        title: `${candidate.label}${suffix}`,
-        amountEur: amountCents / 100,
-        category: candidate.category,
-        metadata: {
-          source: 'deterministic',
-          formula: BUDGET_FORMULA_TAG,
-          partySize: safePartySize,
-        },
-      },
-    ];
-  });
+  return formulaLines.map((line) => ({
+    title: line.title,
+    amountEur: line.amountEur,
+    category: line.category,
+    metadata: {
+      source: 'deterministic',
+      formula: BUDGET_FORMULA_TAG,
+      partySize: safePartySize,
+    },
+  }));
 }

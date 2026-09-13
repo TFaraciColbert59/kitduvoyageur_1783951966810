@@ -372,9 +372,26 @@ describe('Phase 3 — commande createTripFromAutogenIntent (TEST-PHASE3-CMD)', (
     expect(insertTables).toContain('trip_checklist_items');
 
     const budgetInsert = captures.inserts.find((entry) => entry.table === 'trip_expenses');
-    const budgetRows = budgetInsert?.values as Array<{ amount: number; is_planned: boolean }>;
-    expect(budgetRows[0].amount).toBe(300);
-    expect(budgetRows[0].is_planned).toBe(true);
+    const budgetRows = budgetInsert?.values as Array<{
+      amount: number;
+      is_planned: boolean;
+      category: string;
+    }>;
+    expect(budgetRows).toHaveLength(6);
+    expect(budgetRows.every((row) => row.amount > 0 && row.is_planned)).toBe(true);
+    expect(budgetRows.map((row) => row.category)).toEqual([
+      'hébergement',
+      'nourriture',
+      'transport',
+      'activités',
+      'matériel',
+      'divers',
+    ]);
+    const budgetTotalCents = budgetRows.reduce(
+      (sum, row) => sum + Math.round(row.amount * 100),
+      0
+    );
+    expect(budgetTotalCents).toBe(30000); // 300 €/personne × 1 voyageur
 
     // Le voyage porte le kit et le budget prévisionnel.
     const tripUpdate = captures.updates.find(

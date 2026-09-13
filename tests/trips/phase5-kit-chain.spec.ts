@@ -379,9 +379,14 @@ describe('Phase 5 — chaîne kit (TEST-PHASE5-CHAIN)', () => {
 
     const budgetInsert = captures.inserts.find((entry) => entry.table === 'trip_expenses');
     const budgetRows = budgetInsert?.values as BudgetRow[];
-    expect(budgetRows).toHaveLength(1);
-    expect(budgetRows[0].amount).toBe(600); // 300 €/pers × 2 voyageurs
-    expect(budgetRows[0].is_planned).toBe(true);
+    expect(budgetRows).toHaveLength(6);
+    expect(budgetRows.every((row) => row.is_planned)).toBe(true);
+    expect(budgetRows.every((row) => row.amount > 0)).toBe(true);
+    const budgetTotalCents = budgetRows.reduce(
+      (sum, row) => sum + Math.round(row.amount * 100),
+      0
+    );
+    expect(budgetTotalCents).toBe(60000); // 300 €/pers × 2 voyageurs
     expect(budgetRows[0].metadata.rule).toBe('total_per_person');
     expect(budgetRows[0].metadata.party_size).toBe(2);
     expect(String(budgetRows[0].metadata.reason)).toContain('300');
