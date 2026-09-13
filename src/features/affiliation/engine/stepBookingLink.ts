@@ -11,14 +11,23 @@
  * associé (documenté dans la spec §4.4).
  */
 
-import type { AffiliateLink } from '../types/affiliate.types';
+import type { AffiliateCategory, AffiliateLink } from '../types/affiliate.types';
 
 export type StepBookingCategory = 'hotel' | 'flight';
 
-export interface StepBookingSuggestion {
-  category: StepBookingCategory;
+/**
+ * Intention de réservation affiliée générique (étape OU suggestion LLM) : la
+ * catégorie reste un filtre dur, le libellé et les termes de recherche sont
+ * affichés tels quels (jamais d'URL construite ici).
+ */
+export interface AffiliateIntent {
+  category: AffiliateCategory;
   label: string;
   searchTerms: string;
+}
+
+export interface StepBookingSuggestion extends AffiliateIntent {
+  category: StepBookingCategory;
 }
 
 export interface StepBookingInput {
@@ -101,6 +110,12 @@ export function buildBookingByStepId(
 // Résolution serveur : intention → lien partenaire actif (fix round 1, T8)
 // ─────────────────────────────────────────────────────────────────────────────
 
+export interface ResolvedAffiliateIntent extends AffiliateIntent {
+  /** Slug du lien partenaire actif résolu (redirection /go construite au rendu). */
+  slug: string;
+  partnerName: string | null;
+}
+
 export interface ResolvedStepBookingLink extends StepBookingSuggestion {
   /** Slug du lien partenaire actif résolu (redirection /go construite au rendu). */
   slug: string;
@@ -142,20 +157,18 @@ function scoreCandidate(link: AffiliateLink, context: StepBookingResolutionConte
 }
 
 /**
- * Résout l'intention de réservation vers UN lien partenaire actif.
- * - La catégorie est un filtre dur (un hôtel ne renvoie jamais vers un vol).
- * - Parmi les candidats, la destination de l'étape puis celle du voyage sont
- *   rapprochées de `link.destination_name` (casse/diacritiques ignorés).
- * - Repli assumé : sans aucun match de destination, le premier candidat le plus
- *   récent de la catégorie est retenu (comportement historique, jamais de
- *   cul-de-sac quand un programme existe).
+ * Résout une intention affiliée (étape ou suggestion LLM) vers UN lien
+ * partenaire actif. La catégorie est un filtre dur ; parmi les candidats, la
+ * destination de l'étape puis celle du voyage sont rapprochées de
+ * `link.destination_name` (casse/diacritiques ignorés), la récence ne servant
+ * qu'à départager.
  */
-export function resolveStepBookingLink(
-  booking: StepBookingSuggestion,
+export function resolveAffiliateIntent<T extends AffiliateIntent>(
+  intent: T,
   candidates: readonly AffiliateLink[],
   context: StepBookingResolutionContext
-): ResolvedStepBookingLink | null {
-  const categoryCandidates = candidates.filter((link) => link.category === booking.category);
+): (T & { slug: string; partnerName: string | null }) | null {
+  const categoryCandidates = candidates.filter((link) => link.category === intent.category);
   if (categoryCandidates.length === 0) return null;
 
   const ordered = [...categoryCandidates].sort((a, b) =>
@@ -172,7 +185,19 @@ export function resolveStepBookingLink(
     }
   }
 
-  return { ...booking, slug: best.slug, partnerName: best.partner?.name ?? null };
+  return { ...intent, slug: best.slug, partnerName: best.partner?.name ?? null };
+}
+
+/**
+ * Résout l'intention de réservation d'une étape vers UN lien partenaire actif
+ * (même moteur que les suggestions d'enrichissement).
+ */
+export function resolveStepBookingLink(
+  booking: StepBookingSuggestion,
+  candidates: readonly AffiliateLink[],
+  context: StepBookingResolutionContext
+): ResolvedStepBookingLink | null {
+  return resolveAffiliateIntent(booking, candidates, context);
 }
 
 export interface ResolvedStepBookingSource extends StepBookingSource {

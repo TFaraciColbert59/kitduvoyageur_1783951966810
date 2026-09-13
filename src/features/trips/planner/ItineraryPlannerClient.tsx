@@ -10,7 +10,11 @@ import {
   moveStepBetweenDays,
   shiftDayNumbers,
   compactOrderIndices,
+  withStepProvenance,
 } from './plannerEngine';
+import { getTripPhase } from '../engine/temporalPhaseEngine';
+import { parseEnrichmentSuggestions } from '@/features/affiliation/engine/enrichmentSuggestions';
+import { TripSuggestionSection } from '@/features/affiliation/components/TripSuggestionSection';
 import { getCivilDurationDays } from '@/lib/dates/tripDates';
 import { tripSectionHref } from '../registry/tripSectionRegistry';
 import { DayNavigator } from './DayNavigator';
@@ -37,7 +41,10 @@ export default function ItineraryPlannerClient({
   trip,
   initialSteps,
 }: ItineraryPlannerClientProps) {
-  const [steps, setSteps] = useState<PlannerStep[]>(initialSteps);
+  // Fix round final — provenance réelle des trip_steps pour les badges LLM.
+  const [steps, setSteps] = useState<PlannerStep[]>(() =>
+    withStepProvenance(initialSteps, trip.steps ?? [])
+  );
   const [selectedDay, setSelectedDay] = useState<number>(1);
   const [editingStep, setEditingStep] = useState<PlannerStep | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -48,6 +55,10 @@ export default function ItineraryPlannerClient({
   const [isPending, startTransition] = useTransition();
 
   const canEdit = !!trip.permissions?.canEdit;
+  // Suggestions de réservation LLM : phase de préparation uniquement ; sans
+  // lien actif correspondant, le bloc est omis (aucune rangée morte).
+  const preparePhase = useMemo(() => getTripPhase(trip) === 'prepare', [trip]);
+  const suggestions = useMemo(() => parseEnrichmentSuggestions(trip.metadata), [trip.metadata]);
 
   // Calcul du nombre de jours total
   const calculatedDaysCount = useMemo(() => {
@@ -401,6 +412,14 @@ export default function ItineraryPlannerClient({
           />
         </div>
       </div>
+
+      {preparePhase && suggestions.length > 0 && (
+        <TripSuggestionSection
+          suggestions={suggestions}
+          destinationName={trip.destination_name}
+          tripId={trip.id}
+        />
+      )}
 
       {/* Contenu principal */}
       <main className="space-y-4">

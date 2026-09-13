@@ -16,7 +16,9 @@ import { formatDurationShort, formatStepTime, transportLabel } from '../../../mo
 import { StepBookingLinkCta } from '@/features/affiliation/components/StepBookingLinkCta';
 import type { ResolvedStepBookingLink } from '@/features/affiliation/engine/stepBookingLink';
 import { momentSlotOf } from '@/features/trips/engine/momentSlots';
+import { isLlmSuggestion } from '@/features/trips/engine/llmProvenance';
 import { MomentRow } from '@/features/trips/components/MomentRow';
+import { LlmSuggestionBadge } from '@/features/trips/components/LlmSuggestionBadge';
 import { LiveArrivalReveal } from '../../live/LiveArrivalReveal';
 import { useLiveArrivalReveal } from '../../live/useLiveArrivalReveal';
 
@@ -86,6 +88,7 @@ export function ItineraryDayTimeline({
         const duration = durations[step.id];
         const booking = bookingByStepId[step.id];
         const slot = momentSlotOf(step);
+        const llmStep = isLlmSuggestion(step.source, step.metadata);
         return (
           <li key={step.id} className="flex items-stretch gap-3">
             <div className="flex w-12 shrink-0 flex-col items-center pt-1">
@@ -109,7 +112,13 @@ export function ItineraryDayTimeline({
             <div className="min-w-0 flex-1">
               <LiveArrivalReveal id={step.id} liveIds={liveIds} index={index}>
                 {slot ? (
-                  <MomentRow title={step.title} slot={slot} className="mb-1" />
+                  <MomentRow
+                    title={step.title}
+                    slot={slot}
+                    source={step.source}
+                    metadata={step.metadata}
+                    className="mb-1"
+                  />
                 ) : (
                   <>
                     <button
@@ -130,8 +139,11 @@ export function ItineraryDayTimeline({
                         )}
                       </span>
 
-                      <span className="mt-1.5 block text-[13px] font-bold leading-snug text-[var(--lkv-text-primary)]">
-                        {step.title}
+                      <span className="mt-1.5 flex items-center gap-1.5">
+                        <span className="min-w-0 flex-1 text-[13px] font-bold leading-snug text-[var(--lkv-text-primary)]">
+                          {step.title}
+                        </span>
+                        {llmStep && <LlmSuggestionBadge />}
                       </span>
 
                       {step.location_name && (

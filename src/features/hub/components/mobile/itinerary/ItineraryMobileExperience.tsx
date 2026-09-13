@@ -17,6 +17,7 @@ import {
   compactOrderIndices,
   moveStepBetweenDays,
   recalculateDayMetrics,
+  withStepProvenance,
   type PlannerStep,
 } from '@/features/trips/planner/plannerEngine';
 import type { TripFull } from '@/features/trips/types/trip.types';
@@ -55,6 +56,11 @@ import { ItineraryHero } from './ItineraryHero';
 import { ItineraryMapSection } from './ItineraryMapSection';
 import { ItineraryDayTimeline } from './ItineraryDayTimeline';
 import { useTripAffiliate } from '@/features/affiliation/components/TripAffiliateProvider';
+import { TripSuggestionSection } from '@/features/affiliation/components/TripSuggestionSection';
+import { parseEnrichmentSuggestions } from '@/features/affiliation/engine/enrichmentSuggestions';
+import { getTripPhase } from '@/features/trips/engine/temporalPhaseEngine';
+import { isLlmSuggestion } from '@/features/trips/engine/llmProvenance';
+import { LlmSuggestionBadge } from '@/features/trips/components/LlmSuggestionBadge';
 import {
   ItineraryDaysDrawer,
   ItineraryItemsDrawer,
@@ -86,6 +92,9 @@ interface PoiRow {
   step_id: string | null;
   latitude: number | null;
   longitude: number | null;
+  /** Provenance additive (`llm_suggestion`) — badge discret sur la rangée. */
+  source?: string | null;
+  metadata?: Record<string, unknown> | null;
 }
 
 interface ItemRow {
@@ -105,10 +114,14 @@ export function ItineraryMobileExperience({ trip, initialSteps }: ItineraryMobil
   // contexte retombe sur vide → aucune sortie /go).
   const { bookingByStepId } = useTripAffiliate();
 
-  const [steps, setSteps] = useState<PlannerStep[]>(initialSteps);
+  // Fix round final — reporte `source`/`metadata` réels des trip_steps (les
+  // étapes du planificateur sont mappées sans provenance) pour les badges.
+  const [steps, setSteps] = useState<PlannerStep[]>(() =>
+    withStepProvenance(initialSteps, trip.steps ?? [])
+  );
   useEffect(() => {
-    setSteps(initialSteps);
-  }, [initialSteps]);
+    setSteps(withStepProvenance(initialSteps, trip.steps ?? []));
+  }, [initialSteps, trip.steps]);
 
   const [pois, setPois] = useState<PoiRow[]>((trip.pois ?? []) as PoiRow[]);
   useEffect(() => {
@@ -121,6 +134,10 @@ export function ItineraryMobileExperience({ trip, initialSteps }: ItineraryMobil
   }, [trip.items]);
 
   const canEdit = !!trip.permissions?.canEdit;
+  // Suggestions de réservation LLM : uniquement en phase de préparation du
+  // voyage actif, et jamais de rangée sans lien actif (le bloc s'auto-omet).
+  const preparePhase = useMemo(() => getTripPhase(trip) === 'prepare', [trip]);
+  const suggestions = useMemo(() => parseEnrichmentSuggestions(trip.metadata), [trip.metadata]);
   const daysCount = useMemo(
     () => resolveDaysCount(steps, trip.start_date, trip.end_date),
     [steps, trip.start_date, trip.end_date]
@@ -608,6 +625,14 @@ export function ItineraryMobileExperience({ trip, initialSteps }: ItineraryMobil
 
       <GroupeChipsRow chips={chips} />
 
+      {preparePhase && suggestions.length > 0 && (
+        <TripSuggestionSection
+          suggestions={suggestions}
+          destinationName={trip.destination_name}
+          tripId={trip.id}
+        />
+      )}
+
       <div ref={mapSectionRef} className="scroll-mt-4">
         <ItineraryMapSection
           routeCoords={routeCoords}
@@ -756,9 +781,12 @@ export function ItineraryMobileExperience({ trip, initialSteps }: ItineraryMobil
                   poi.visited ? 'border-2 border-[var(--sage-700)]/30' : ''
                 }`}
               >
-                <span className="inline-flex w-fit items-center gap-1 rounded-full bg-[var(--lkv-primary)]/10 px-2 py-0.5 text-[9.5px] font-bold uppercase tracking-[0.08em] text-[var(--lkv-primary)]">
-                  <MapPin size={11} aria-hidden="true" />
-                  {POI_CATEGORY_LABELS[poi.category ?? 'other'] ?? 'Autre'}
+                <span className="flex items-center gap-1.5">
+                  <span className="inline-flex w-fit items-center gap-1 rounded-full bg-[var(--lkv-primary)]/10 px-2 py-0.5 text-[9.5px] font-bold uppercase tracking-[0.08em] text-[var(--lkv-primary)]">
+                    <MapPin size={11} aria-hidden="true" />
+                    {POI_CATEGORY_LABELS[poi.category ?? 'other'] ?? 'Autre'}
+                  </span>
+                  {isLlmSuggestion(poi.source, poi.metadata) && <LlmSuggestionBadge />}
                 </span>
                 <span className="mt-1.5 line-clamp-2 text-[12.5px] font-bold leading-snug text-[var(--lkv-text-primary)]">
                   {poi.name}

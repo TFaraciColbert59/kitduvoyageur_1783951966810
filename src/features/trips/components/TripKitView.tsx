@@ -16,6 +16,8 @@ import type { InventoryItem } from '@/features/materiel/services/getInventory';
 import { cleanItemName } from '@/lib/cleanItemName';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { classifyKitCompleteness } from '../engine/kitCompletenessEngine';
+import { isLlmSuggestion } from '../engine/llmProvenance';
+import { LlmSuggestionBadge } from './LlmSuggestionBadge';
 import { LiveArrivalReveal } from '@/features/hub/components/live/LiveArrivalReveal';
 import { useLiveArrivalReveal } from '@/features/hub/components/live/useLiveArrivalReveal';
 import {
@@ -1101,6 +1103,7 @@ function TripKitItemRow({
               </span>
             )}
             {item.quantity > 1 && item.is_consumable && <GearStockBadge quantity={item.quantity} />}
+            {isLlmSuggestion(item.source) && <LlmSuggestionBadge />}
             {item.is_vital && (
               <span className="text-[10px] font-bold text-[var(--lkv-danger)]">Vital</span>
             )}
