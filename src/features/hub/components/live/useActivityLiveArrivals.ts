@@ -2,12 +2,31 @@
 
 // Hub live (§4.5) — bus d'arrivées d'activité. Les événements sont émis par
 // ActivityLiveBridge (canal Supabase dédié `hub-live-bridge`) sur window :
-//   CustomEvent('lkdv:activity-arrival', { detail: { table, id, eventType } })
+//   CustomEvent('lkdv:activity-arrival', { detail: { table, id, eventType, bucket? } })
 // Le hook déduplique par couple table:id (Set) puis dérive la phase de
 // préparation. Aucun abonnement realtime supplémentaire : un seul canal dédié.
 // T10 fix — `eventType` distingue INSERT (reveal de rangée) et UPDATE (écho
 // d'une action locale : compteurs/phase seulement, jamais de reveal).
+// Fix round final — `bucket` optionnel porte le bassin calculé par le pont
+// (étape avec hébergement/transport → affiliation) ; le cœur pur vit dans
+// `preparationPhases.ts`, partagé avec le chargeur serveur du hub.
 import { useEffect, useMemo, useState } from 'react';
+import {
+  bucketForArrival,
+  derivePreparationPhase,
+  type ActivityArrivalBucket,
+  type ActivityArrivalCounts,
+  type ActivityPreparationPhase,
+  type BucketedArrival,
+} from './preparationPhases';
+
+export type {
+  ActivityArrivalBucket,
+  ActivityArrivalCounts,
+  ActivityPreparationPhase,
+} from './preparationPhases';
+
+export { derivePreparationPhase };
 
 export interface ActivityArrival {
   /** Nom réel de la table publique (trip_steps, trip_pois, …). */
@@ -20,24 +39,11 @@ export interface ActivityArrival {
    * compteurs/phase sans animer une rangée déjà à l'écran.
    */
   eventType: ActivityArrivalEventType;
+  /** Fix round final — bassin calculé par le pont (hébergement/transport). */
+  bucket?: ActivityArrivalBucket | null;
 }
 
 export type ActivityArrivalEventType = 'INSERT' | 'UPDATE';
-
-export type ActivityPreparationPhase =
-  'waiting' | 'itinerary' | 'moments' | 'affiliation' | 'kit' | 'done';
-
-/** Bassins d'arrivées du rail de préparation. */
-export interface ActivityArrivalCounts {
-  /** trip_steps → itinéraire. */
-  steps: number;
-  /** trip_pois → moments de la carte. */
-  moments: number;
-  /** trip_expenses → transports & hébergements (affiliation). */
-  affiliation: number;
-  /** trip_items + trip_checklist_items → kit. */
-  kit: number;
-}
 
 export interface ActivityArrivalState {
   seen: Set<string>;
@@ -51,46 +57,13 @@ export interface ActivityLiveArrivals {
 
 export const ACTIVITY_ARRIVAL_EVENT = 'lkdv:activity-arrival';
 
-/**
- * Seuils exacts de dérivation de la phase (ordre du rail §4.5) :
- * 1. aucun bassin > 0 → `waiting` ;
- * 2. les quatre bassins > 0 → `done` (préparation servie intégralement) ;
- * 3. sinon la phase = dernier bassin servi, du plus avancé au moins avancé :
- *    `kit` > 0 → kit (y compris arrivée hors ordre), sinon `affiliation` > 0,
- *    sinon `moments` > 0, sinon `itinerary` (steps > 0).
- */
-export function derivePreparationPhase(counts: ActivityArrivalCounts): ActivityPreparationPhase {
-  const { steps, moments, affiliation, kit } = counts;
-
-  if (steps <= 0 && moments <= 0 && affiliation <= 0 && kit <= 0) return 'waiting';
-  if (steps > 0 && moments > 0 && affiliation > 0 && kit > 0) return 'done';
-  if (kit > 0) return 'kit';
-  if (affiliation > 0) return 'affiliation';
-  if (moments > 0) return 'moments';
-  return 'itinerary';
-}
-
-/** Mappe une table du bus vers son bassin (null = ignorée). */
-export function bucketForTable(table: string): keyof ActivityArrivalCounts | null {
-  switch (table) {
-    case 'trip_steps':
-      return 'steps';
-    case 'trip_pois':
-      return 'moments';
-    case 'trip_expenses':
-      return 'affiliation';
-    case 'trip_items':
-    case 'trip_checklist_items':
-      return 'kit';
-    default:
-      return null;
-  }
-}
-
-export function countArrivals(arrivals: readonly ActivityArrival[]): ActivityArrivalCounts {
+/** Comptage des arrivées par bassin (bucket explicite sinon table). */
+export function countArrivals<T extends BucketedArrival>(
+  arrivals: readonly T[]
+): ActivityArrivalCounts {
   const counts: ActivityArrivalCounts = { steps: 0, moments: 0, affiliation: 0, kit: 0 };
   for (const arrival of arrivals) {
-    const bucket = bucketForTable(arrival.table);
+    const bucket = bucketForArrival(arrival);
     if (bucket) counts[bucket] += 1;
   }
   return counts;
@@ -129,17 +102,33 @@ export function recordActivityArrival(
   return { seen, arrivals: [...state.arrivals, arrival] };
 }
 
+const ARRIVAL_BUCKETS = new Set<ActivityArrivalBucket>(['steps', 'moments', 'affiliation', 'kit']);
+
+function isArrivalBucket(value: unknown): value is ActivityArrivalBucket {
+  return typeof value === 'string' && ARRIVAL_BUCKETS.has(value as ActivityArrivalBucket);
+}
+
 /** Garde de forme pour les détails d'événement window non fiables. */
 export function isActivityArrival(value: unknown): value is ActivityArrival {
   if (!value || typeof value !== 'object') return false;
-  const candidate = value as { table?: unknown; id?: unknown; eventType?: unknown };
-  return (
-    typeof candidate.table === 'string' &&
-    candidate.table.length > 0 &&
-    typeof candidate.id === 'string' &&
-    candidate.id.length > 0 &&
-    (candidate.eventType === 'INSERT' || candidate.eventType === 'UPDATE')
-  );
+  const candidate = value as {
+    table?: unknown;
+    id?: unknown;
+    eventType?: unknown;
+    bucket?: unknown;
+  };
+  if (
+    !(
+      typeof candidate.table === 'string' &&
+      candidate.table.length > 0 &&
+      typeof candidate.id === 'string' &&
+      candidate.id.length > 0 &&
+      (candidate.eventType === 'INSERT' || candidate.eventType === 'UPDATE')
+    )
+  ) {
+    return false;
+  }
+  return candidate.bucket === undefined || candidate.bucket === null || isArrivalBucket(candidate.bucket);
 }
 
 /**

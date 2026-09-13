@@ -27,6 +27,7 @@ import { getCanonicalTripSteps } from '@/features/trips/hooks/useTripCounters';
 import type { TripFull, TripStats } from '@/features/trips/types/trip.types';
 import { calculateBudgetSummary } from '@/features/trips/engine/budgetEngine';
 import type { HubHikingContext, HubChecklistItem } from '../../server/getHubAdventureData';
+import type { HubPreparationSummary } from '../../server/preparationSummary';
 import type { TripItemImage } from '../../server/getTripItemImages';
 import type { TripPhase } from '@/features/trips/engine/temporalPhaseEngine';
 import { TripAffiliateSection } from '@/features/affiliation/components/TripAffiliateSection';
@@ -47,6 +48,11 @@ export interface SortieMenuProps {
   dayIndex?: number | null;
   /** T8 — liens d'affiliation actifs du voyage (hub normal, hors partage token). */
   affiliateLinks?: AffiliateLink[];
+  /**
+   * Fix round final — compteurs réels + état d'enrichissement du voyage actif :
+   * le rail démarre sur la vraie phase (done si enrichissement terminé).
+   */
+  preparation?: HubPreparationSummary | null;
 }
 
 function soonestExpiry(docs: TripFull['documents']): { label: string; inDays: number } | null {
@@ -134,6 +140,7 @@ export function SortieMenu({
   itemImages = [],
   dayIndex = null,
   affiliateLinks = [],
+  preparation = null,
 }: SortieMenuProps) {
   const ref: HubAdventureRef = { nature: 'sortie', slug: trip.slug };
   const duration = getTripDuration(trip);
@@ -815,7 +822,11 @@ export function SortieMenu({
   return (
     <>
       <div className="hidden lg:flex h-[calc(100%-24px)] min-h-[680px] flex-col gap-3 overflow-hidden">
-        <ActivityPreparationStatus className="shrink-0" />
+        <ActivityPreparationStatus
+          className="shrink-0"
+          preparation={preparation ? { counts: preparation, enrichmentStatus: preparation.enrichmentStatus } : null}
+          tripId={trip.id}
+        />
         <ActivityIdentityBar
           nature="sortie"
           name={trip.title}
@@ -846,7 +857,16 @@ export function SortieMenu({
       )}
 
       <MobileAdventureHub
-        rail={<ActivityPreparationStatus />}
+        rail={
+          <ActivityPreparationStatus
+            preparation={
+              preparation
+                ? { counts: preparation, enrichmentStatus: preparation.enrichmentStatus }
+                : null
+            }
+            tripId={trip.id}
+          />
+        }
         action={
           <NextActionCard
             actions={nextActions}

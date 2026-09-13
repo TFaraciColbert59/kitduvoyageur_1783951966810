@@ -16,6 +16,7 @@ import {
   resolveBookingByStepId,
   type ResolvedStepBookingLink,
 } from '@/features/affiliation/engine/stepBookingLink';
+import { buildHubPreparationSummary, type HubPreparationSummary } from './preparationSummary';
 
 /**
  * H3.1 — Chargeur serveur unique de l'aventure du hub (partagé par le layout
@@ -131,6 +132,12 @@ export interface HubAdventureData extends HubAdventureLists {
    * serveur vers le slug du lien partenaire (destination avant catégorie).
    */
   bookingByStepId: Record<string, ResolvedStepBookingLink>;
+  /**
+   * Fix round final — compteurs réels du rail de préparation (étapes, moments,
+   * affiliation, kit) + état d'enrichissement : le rail démarre sur la vraie
+   * phase dès le premier paint (voyage révisité/enrichi). Null hors sortie.
+   */
+  preparation: HubPreparationSummary | null;
 }
 
 const EMPTY_LISTS: HubAdventureLists = {
@@ -558,10 +565,11 @@ export async function getHubAdventureDataInner(): Promise<HubAdventureData> {
         itemImages,
         affiliateLinks,
         bookingByStepId: buildTripBookingByStepId(trip, affiliateLinks),
+        preparation: buildHubPreparationSummary(trip, checklist.length),
       };
     }
     // Repli possession (aventure périmée — jamais de cul-de-sac).
-    return { ...lists, adventure: { nature: 'possession' }, input: possessionInput(lists), trip: null, groupLabel: null, linkedTripSlug: null, group: null, hiking: null, checklist: [], itemImages: [], affiliateLinks: [], bookingByStepId: {} };
+    return { ...lists, adventure: { nature: 'possession' }, input: possessionInput(lists), trip: null, groupLabel: null, linkedTripSlug: null, group: null, hiking: null, checklist: [], itemImages: [], affiliateLinks: [], bookingByStepId: {}, preparation: null };
   }
 
   if (adventure.nature === 'collectif') {
@@ -606,10 +614,11 @@ export async function getHubAdventureDataInner(): Promise<HubAdventureData> {
       itemImages: [],
       affiliateLinks: [],
       bookingByStepId: {},
+      preparation: null,
     };
   }
 
-  return { ...lists, adventure, input: possessionInput(lists), trip: null, groupLabel: null, linkedTripSlug: null, group: null, hiking: null, checklist: [], itemImages: [], affiliateLinks: [], bookingByStepId: {} };
+  return { ...lists, adventure, input: possessionInput(lists), trip: null, groupLabel: null, linkedTripSlug: null, group: null, hiking: null, checklist: [], itemImages: [], affiliateLinks: [], bookingByStepId: {}, preparation: null };
 }
 
 /**
