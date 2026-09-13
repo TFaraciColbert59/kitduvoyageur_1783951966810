@@ -173,7 +173,7 @@ export function HubGroupeCockpit({ groupId, initialTab }: { groupId: string; ini
               </button>
             )}
             {convertError && (
-              <p role="alert" className="text-[10px] font-bold text-[#8A3B3B]">
+              <p role="alert" className="text-[10px] font-bold text-[var(--lkv-danger)]">
                 {convertError}
               </p>
             )}

@@ -77,7 +77,7 @@ export default function GroupTaskTemplatesPanel({
         ))}
       </div>
       {error && (
-        <p role="alert" className="text-[10px] font-bold text-[#8A3B3B] mt-2">
+        <p role="alert" className="text-[10px] font-bold text-[var(--lkv-danger)] mt-2">
           {error}
         </p>
       )}

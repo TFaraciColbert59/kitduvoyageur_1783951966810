@@ -185,7 +185,7 @@ export default function EphemeralGroupSheet({ open, onClose, onCreated }: Epheme
                     aria-pressed={checked}
                     className={`w-full flex items-center justify-between gap-2 rounded-xl px-3 py-2.5 text-xs font-bold transition-all min-h-[44px] ${
                       checked
-                        ? 'bg-[var(--lkv-accent-soft,#E4EFE6)] text-[var(--lkv-text-primary)] border border-[var(--lkv-accent,#5B7F55)]'
+                        ? 'bg-lkv-primary/10 text-lkv-primary border border-lkv-primary'
                         : 'glass-sub-card text-[var(--lkv-text-secondary)] border border-transparent'
                     }`}
                   >
@@ -204,7 +204,7 @@ export default function EphemeralGroupSheet({ open, onClose, onCreated }: Epheme
         </div>
 
         {error && (
-          <p className="text-xs font-bold text-[#8A3B3B]" role="alert">
+          <p className="text-xs font-bold text-[var(--lkv-danger)]" role="alert">
             {error}
           </p>
         )}

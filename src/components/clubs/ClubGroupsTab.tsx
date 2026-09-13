@@ -267,7 +267,7 @@ export default function ClubGroupsTab({
             </span>
           </button>
           {templateError && (
-            <p role="alert" className="text-xs font-bold text-[#8A3B3B]">
+            <p role="alert" className="text-xs font-bold text-[var(--lkv-danger)]">
               {templateError}
             </p>
           )}
@@ -331,7 +331,7 @@ export default function ClubGroupsTab({
                         onClick={() => toggleMember(member.user_id)}
                         className={`w-full flex items-center justify-between gap-2 rounded-xl px-3 py-2.5 text-xs font-bold transition-all min-h-[44px] ${
                           checked
-                            ? 'bg-[var(--lkv-accent-soft,#E4EFE6)] text-[var(--lkv-text-primary)] border border-[var(--lkv-accent,#5B7F55)]'
+                            ? 'bg-lkv-primary/10 text-lkv-primary border border-lkv-primary'
                             : 'glass-sub-card text-[var(--lkv-text-secondary)] border border-transparent'
                         }`}
                         aria-pressed={checked}
@@ -346,7 +346,7 @@ export default function ClubGroupsTab({
             )}
 
             {error && (
-              <p className="text-xs font-bold text-[#8A3B3B]" role="alert">
+              <p className="text-xs font-bold text-[var(--lkv-danger)]" role="alert">
                 {error}
               </p>
             )}
