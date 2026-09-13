@@ -195,7 +195,7 @@ export default function LiveSharePanel({ groupId, isOrganizer }: LiveSharePanelP
     return () => clearInterval(timer);
   }, [refresh]);
 
-  const { active, sharingError } = useLivePositionSharing({
+  const { active, sharingError, stop } = useLivePositionSharing({
     sessionId: session?.id ?? null,
     enabled: wantsToShare && !!session,
     onFatalError: (message) => {
@@ -217,13 +217,29 @@ export default function LiveSharePanel({ groupId, isOrganizer }: LiveSharePanelP
     setSession(result.session);
     setPositions([]);
     setMySharing(false);
-    setWantsToShare(true);
+    // Opt-in individuel : le partage démarre uniquement via le toggle.
+    setWantsToShare(false);
     setLoaded(true);
   };
 
   const handleToggleSharing = async () => {
+    const sharing = mySharing || active;
+    if (sharing) {
+      setBusy(true);
+      setError(null);
+      const result = await stop();
+      setBusy(false);
+      if (!result.ok) {
+        setError(result.error ?? 'Arrêt impossible pour le moment.');
+        return;
+      }
+      setMySharing(false);
+      setWantsToShare(false);
+      void refresh();
+      return;
+    }
     setError(null);
-    setWantsToShare((previous) => !previous);
+    setWantsToShare(true);
   };
 
   const handleCloseSession = async () => {

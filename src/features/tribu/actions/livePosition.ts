@@ -76,20 +76,28 @@ export async function startLiveSession(input: {
 
   const nowIso = new Date().toISOString();
 
-  await supabase
+  const { error: cleanupError } = await supabase
     .from('group_live_sessions')
     .update({ stopped_at: nowIso })
     .eq('group_id', parsed.data.groupId)
     .is('stopped_at', null)
     .lt('expires_at', nowIso);
+  if (cleanupError) {
+    console.error('[tribu-live/startLiveSession cleanup]', cleanupError);
+    return { ok: false, error: 'Démarrage impossible pour le moment.' };
+  }
 
-  const { data: active } = await supabase
+  const { data: active, error: activeError } = await supabase
     .from('group_live_sessions')
     .select('id')
     .eq('group_id', parsed.data.groupId)
     .is('stopped_at', null)
     .gt('expires_at', nowIso)
     .maybeSingle();
+  if (activeError) {
+    console.error('[tribu-live/startLiveSession active]', activeError);
+    return { ok: false, error: 'Démarrage impossible pour le moment.' };
+  }
   if (active) {
     return { ok: false, error: 'Une sortie live est déjà ouverte pour ce groupe.' };
   }
@@ -106,6 +114,9 @@ export async function startLiveSession(input: {
     .single();
 
   if (error || !session) {
+    if ((error as { code?: string } | null)?.code === '23505') {
+      return { ok: false, error: 'Une sortie live est déjà ouverte pour ce groupe.' };
+    }
     console.error('[tribu-live/startLiveSession]', error);
     return { ok: false, error: 'Démarrage impossible pour le moment.' };
   }
@@ -138,14 +149,32 @@ export async function stopLiveSession(input: { sessionId: string }): Promise<Liv
     return { ok: false, error: 'Connexion requise.' };
   }
 
-  const { error } = await supabase
+  const { data: updated, error } = await supabase
     .from('group_live_sessions')
     .update({ stopped_at: new Date().toISOString() })
-    .eq('id', parsed.data.sessionId);
+    .eq('id', parsed.data.sessionId)
+    .select('id');
   if (error) {
     console.error('[tribu-live/stopLiveSession]', error);
-    return { ok: false, error: 'Clôture impossible (droits insuffisants ?).' };
+    return { ok: false, error: 'Clôture impossible pour le moment.' };
   }
+  if (!updated || updated.length === 0) {
+    return {
+      ok: false,
+      error: 'Session déjà fermée ou droits insuffisants pour la clôturer.',
+    };
+  }
+
+  // Purge best-effort : les positions de la session ne servent plus.
+  // (La garantie complete reste le cron service-role `expire-live-positions`.)
+  const { error: purgeError } = await supabase
+    .from('group_live_positions')
+    .delete()
+    .eq('session_id', parsed.data.sessionId);
+  if (purgeError) {
+    console.error('[tribu-live/stopLiveSession purge]', purgeError);
+  }
+
   return { ok: true };
 }
 
@@ -231,7 +260,7 @@ export async function getLiveState(groupId: string): Promise<GetLiveStateResult>
   }
 
   const nowIso = new Date().toISOString();
-  const { data: session } = await supabase
+  const { data: session, error: sessionError } = await supabase
     .from('group_live_sessions')
     .select('id, started_by, started_at, expires_at')
     .eq('group_id', groupId)
@@ -240,6 +269,10 @@ export async function getLiveState(groupId: string): Promise<GetLiveStateResult>
     .order('started_at', { ascending: false })
     .limit(1)
     .maybeSingle();
+  if (sessionError) {
+    console.error('[tribu-live/getLiveState session]', sessionError);
+    return { ok: false, error: 'Impossible de charger l’état live pour le moment.' };
+  }
 
   if (!session) {
     return { ok: true, session: null, mySharing: false, positions: [] };
@@ -251,11 +284,16 @@ export async function getLiveState(groupId: string): Promise<GetLiveStateResult>
     expires_at: string;
   };
 
-  const { data: positions } = await supabase
+  const { data: positions, error: positionsError } = await supabase
     .from('group_live_positions')
     .select('user_id, lat, lng, updated_at')
     .eq('session_id', row.id)
+    .gt('expires_at', nowIso)
     .order('updated_at', { ascending: false });
+  if (positionsError) {
+    console.error('[tribu-live/getLiveState positions]', positionsError);
+    return { ok: false, error: 'Impossible de charger les positions pour le moment.' };
+  }
 
   const rows = (positions ?? []) as Array<{
     user_id: string;
@@ -264,10 +302,13 @@ export async function getLiveState(groupId: string): Promise<GetLiveStateResult>
     updated_at: string;
   }>;
 
-  const { data: profiles } = await supabase
+  const { data: profiles, error: profilesError } = await supabase
     .from('public_profiles')
     .select('id, full_name, avatar_url')
     .in('id', rows.map((r) => r.user_id));
+  if (profilesError) {
+    console.error('[tribu-live/getLiveState profiles]', profilesError);
+  }
 
   const profileMap = new Map(
     ((profiles ?? []) as Array<{ id: string; full_name: string | null; avatar_url: string | null }>).map(

@@ -41,7 +41,7 @@ describe('LiveSharePanelView', () => {
         id: 's1',
         startedBy: 'u1',
         startedAt: new Date().toISOString(),
-        expiresAt: new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString(),
+        expiresAt: new Date(Date.now() + 2 * 60 * 60 * 1000 + 5000).toISOString(),
       },
       mySharing: true,
       positions: [

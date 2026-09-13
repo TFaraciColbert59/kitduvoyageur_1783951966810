@@ -172,6 +172,7 @@ export default function ExplorerClient({
   const [liveSessionId, setLiveSessionId] = useState<string | null>(null);
   const [livePositions, setLivePositions] = useState<LiveMemberPosition[]>([]);
   const [liveMySharing, setLiveMySharing] = useState(false);
+  const [liveError, setLiveError] = useState<string | null>(null);
 
   const refreshLive = useCallback(async (groupId: string) => {
     const result = await getLiveState(groupId);
@@ -218,9 +219,18 @@ export default function ExplorerClient({
   const handleStopLiveSharing = async () => {
     if (!liveSessionId || activeAdventure?.nature !== 'collectif') return;
     const groupId = activeAdventure.id;
-    const result = await stopSharingPosition({ sessionId: liveSessionId });
+    setLiveError(null);
+    let result: { ok: boolean; error?: string };
+    try {
+      result = await stopSharingPosition({ sessionId: liveSessionId });
+    } catch {
+      result = { ok: false, error: 'Réseau indisponible.' };
+    }
     if (result.ok) {
+      setLiveMySharing(false);
       void refreshLive(groupId);
+    } else {
+      setLiveError(result.error ?? 'Arrêt impossible pour le moment.');
     }
   };
   // CHANTIER ATLAS — données réelles du viewport remontées par UnifiedExplorerMap.
@@ -663,6 +673,15 @@ export default function ExplorerClient({
             >
               Arrêter mon partage
             </button>
+          )}
+          {liveError && (
+            <span
+              role="alert"
+              className="text-[10px] font-bold text-[var(--lkv-danger)] whitespace-nowrap"
+              data-testid="explorer-live-error"
+            >
+              {liveError}
+            </span>
           )}
         </div>
       )}

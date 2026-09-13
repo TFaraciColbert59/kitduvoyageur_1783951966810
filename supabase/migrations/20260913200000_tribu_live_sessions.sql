@@ -48,6 +48,7 @@ CREATE POLICY "live_sessions_stop_own_or_manage" ON public.group_live_sessions
   FOR UPDATE TO authenticated
   USING (
     started_by = auth.uid()
+    OR expires_at < now()
     OR public.group_member_has_capability(group_id, auth.uid(), 'manage_members')
   )
   WITH CHECK (

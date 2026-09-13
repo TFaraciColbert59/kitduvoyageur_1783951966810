@@ -9,7 +9,7 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON public.travel_groups, public.group_membe
   public.group_live_sessions, public.group_live_positions, public.user_profiles
 TO authenticated, service_role;
 
-SELECT plan(17);
+SELECT plan(20);
 
 INSERT INTO auth.users (id, aud, role, email, encrypted_password, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
 VALUES
@@ -202,6 +202,55 @@ SELECT is(
     WHERE group_id = 'bd000000-0000-4000-8000-0000000000e1' AND stopped_at IS NULL),
   1,
   '17. LIVE-05. une seule session ouverte par groupe'
+);
+
+-- ════════════════════════════════════════════════════════════════════════════
+-- 18..20 — Contre-revue : TTL borne en base et ligne propre recupérable
+-- ════════════════════════════════════════════════════════════════════════════
+RESET ROLE;
+UPDATE public.group_live_sessions SET stopped_at = now()
+WHERE id = 'bd000000-0000-4000-8000-0000000000f2';
+INSERT INTO public.group_live_sessions (id, group_id, started_by, expires_at)
+VALUES ('bd000000-0000-4000-8000-0000000000f3', 'bd000000-0000-4000-8000-0000000000e1',
+        'bd000000-0000-4000-8000-0000000000a1', now() + interval '2 hours')
+ON CONFLICT (id) DO NOTHING;
+
+SET LOCAL ROLE authenticated;
+SET LOCAL "request.jwt.claim.sub" = 'bd000000-0000-4000-8000-0000000000a2';
+
+SELECT throws_ok(
+  $$ INSERT INTO public.group_live_positions (session_id, user_id, lat, lng, expires_at)
+     VALUES ('bd000000-0000-4000-8000-0000000000f3',
+             'bd000000-0000-4000-8000-0000000000a2', 45.5, 6.5, now() + interval '60 minutes') $$,
+  '42501', NULL,
+  '18. LIVE-06. TTL > 15 min refuse en base'
+);
+
+SELECT lives_ok(
+  $$ INSERT INTO public.group_live_positions (session_id, user_id, lat, lng, expires_at)
+     VALUES ('bd000000-0000-4000-8000-0000000000f3',
+             'bd000000-0000-4000-8000-0000000000a2', 45.5, 6.5, now() + interval '10 minutes') $$,
+  '19. LIVE-06. TTL conforme accepte'
+);
+
+RESET ROLE;
+UPDATE public.group_live_positions SET expires_at = now() - interval '1 minute'
+WHERE session_id = 'bd000000-0000-4000-8000-0000000000f3'
+  AND user_id = 'bd000000-0000-4000-8000-0000000000a2';
+SET LOCAL ROLE authenticated;
+SET LOCAL "request.jwt.claim.sub" = 'bd000000-0000-4000-8000-0000000000a2';
+
+DELETE FROM public.group_live_positions
+WHERE session_id = 'bd000000-0000-4000-8000-0000000000f3'
+  AND user_id = 'bd000000-0000-4000-8000-0000000000a2';
+
+RESET ROLE;
+SELECT is(
+  (SELECT count(*)::int FROM public.group_live_positions
+    WHERE session_id = 'bd000000-0000-4000-8000-0000000000f3'
+      AND user_id = 'bd000000-0000-4000-8000-0000000000a2'),
+  0,
+  '20. LIVE-06. sa ligne expiree reste supprimable par son proprietaire'
 );
 
 SELECT * FROM finish();

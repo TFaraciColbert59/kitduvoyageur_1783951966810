@@ -37,7 +37,10 @@ DROP POLICY IF EXISTS "live_positions_read_member_open_session" ON public.group_
 CREATE POLICY "live_positions_read_member_open_session" ON public.group_live_positions
   FOR SELECT TO authenticated
   USING (
-    expires_at > now()
+    (
+      user_id = auth.uid()
+      OR expires_at > now()
+    )
     AND EXISTS (
       SELECT 1 FROM public.group_live_sessions s
       WHERE s.id = session_id
@@ -52,6 +55,8 @@ CREATE POLICY "live_positions_share_own" ON public.group_live_positions
   FOR INSERT TO authenticated
   WITH CHECK (
     user_id = auth.uid()
+    AND expires_at > now()
+    AND expires_at <= now() + interval '15 minutes'
     AND EXISTS (
       SELECT 1 FROM public.group_live_sessions s
       WHERE s.id = session_id
@@ -76,6 +81,8 @@ CREATE POLICY "live_positions_update_own" ON public.group_live_positions
   )
   WITH CHECK (
     user_id = auth.uid()
+    AND expires_at > now()
+    AND expires_at <= now() + interval '15 minutes'
     AND EXISTS (
       SELECT 1 FROM public.group_live_sessions s
       WHERE s.id = session_id

@@ -139,6 +139,16 @@ export function GroupeMobileExperience({
   const decisions = useMemo(() => data.decisions || [], [data.decisions]);
   const messages = useMemo(() => data.discussions || [], [data.discussions]);
   const canManage = !!user;
+  const isGroupOrganizer = useMemo(
+    () =>
+      !!user &&
+      (members || []).some(
+        (member: any) =>
+          member.user_id === user.id &&
+          (member.role_code === 'organizer' || member.role_code === 'co_organizer')
+      ),
+    [user, members]
+  );
 
   const engineTasks = useMemo(
     () =>
@@ -453,7 +463,7 @@ export function GroupeMobileExperience({
         </div>
       )}
 
-      <LiveSharePanel groupId={groupId} isOrganizer={canManage} />
+      <LiveSharePanel groupId={groupId} isOrganizer={isGroupOrganizer} />
 
       <GroupeReadinessHero
         readiness={readiness}

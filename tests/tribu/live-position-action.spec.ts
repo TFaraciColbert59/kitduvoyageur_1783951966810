@@ -32,6 +32,8 @@ interface MockOptions {
   activeSession?: { id: string } | null;
   createdSession?: Record<string, unknown>;
   sessionRow?: Record<string, unknown> | null;
+  sessionError?: { message: string } | null;
+  zeroRowUpdate?: boolean;
   positions?: Array<Record<string, unknown>>;
   profiles?: Array<Record<string, unknown>>;
   writeError?: { message: string } | null;
@@ -67,6 +69,14 @@ function createSession(options: MockOptions) {
       return builder;
     };
     builder.maybeSingle = async () => {
+      if (table === 'group_live_sessions' && options.sessionError && mode === 'select') {
+        const hasGt = calls.some(
+          (c) => c.table === 'group_live_sessions' && c.op === 'gt'
+        );
+        if (hasGt || options.sessionRow !== undefined) {
+          return { data: null, error: options.sessionError };
+        }
+      }
       if (table === 'group_live_sessions' && options.sessionRow !== undefined && mode === 'select') {
         return { data: options.sessionRow, error: null };
       }
@@ -107,7 +117,12 @@ function createSession(options: MockOptions) {
       if (table === 'public_profiles') {
         return resolve({ data: options.profiles ?? [], error: null });
       }
-      if (mode === 'update') return resolve({ data: null, error: options.writeError ?? null });
+      if (mode === 'update') {
+        return resolve({
+          data: options.zeroRowUpdate ? [] : [{ id: 'updated' }],
+          error: options.writeError ?? null,
+        });
+      }
       return resolve({ data: null, error: null });
     };
     return builder;
@@ -288,5 +303,34 @@ describe('livePosition — actions', () => {
 
     const result = await getLiveState(GROUP);
     expect(result).toEqual({ ok: true, session: null, mySharing: false, positions: [] });
+  });
+
+  it('(i) état live : une erreur DB n’est jamais convertie en absence de données', async () => {
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    mockedCreateClient.mockResolvedValue(
+      createSession({
+        user: { id: ME },
+        sessionError: { message: 'boom' },
+      }) as never
+    );
+
+    const result = await getLiveState(GROUP);
+    expect(result).toEqual({
+      ok: false,
+      error: 'Impossible de charger l’état live pour le moment.',
+    });
+    consoleSpy.mockRestore();
+  });
+
+  it('(j) clôture : 0 ligne modifiée = échec explicite, pas un faux succès', async () => {
+    mockedCreateClient.mockResolvedValue(
+      createSession({ user: { id: ME }, zeroRowUpdate: true }) as never
+    );
+
+    const result = await stopLiveSession({ sessionId: SESSION });
+    expect(result).toEqual({
+      ok: false,
+      error: 'Session déjà fermée ou droits insuffisants pour la clôturer.',
+    });
   });
 });
