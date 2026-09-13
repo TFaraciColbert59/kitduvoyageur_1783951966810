@@ -38,22 +38,21 @@ import { hubSectionHref } from '@/features/hub/registry/hubSectionRegistry';
 import { formatEuro } from '../../../mobile/mobileHubEngine';
 import {
   buildDaySummaries,
-  buildRouteCoords,
   dayExpenses,
   formatDurationShort,
   itemsForDay,
   moveStepWithinDay,
-  poiMapPoints,
   poisForDay,
   resolveDaysCount,
   sortDayTimeline,
   tripItineraryTotals,
   unassignedPois,
 } from '../../../mobile/itineraryEngine';
+import { routeIdFromMetadata, type DayTracePoint } from '@/features/trips/domain/dayTraces';
 import { GroupeChipsRow, type GroupeChipDef } from '../groupe/GroupeChipsRow';
 import { GroupeRail } from '../groupe/GroupeRail';
 import { ItineraryHero } from './ItineraryHero';
-import { ItineraryMapSection } from './ItineraryMapSection';
+import { DayTraceMap } from './DayTraceMap';
 import { ItineraryDayTimeline } from './ItineraryDayTimeline';
 import { ActivitySectionSkeleton } from '../../live/ActivitySectionSkeleton';
 import { useTripAffiliate } from '@/features/affiliation/components/TripAffiliateProvider';
@@ -193,7 +192,9 @@ export function ItineraryMobileExperience({ trip, initialSteps }: ItineraryMobil
 
   const totals = useMemo(() => tripItineraryTotals(steps), [steps]);
 
-  const routeCoords = useMemo(() => buildRouteCoords(steps), [steps]);
+  // Trace réelle du sentier : chargée côté client depuis `metadata.route_id`
+  // (page.tsx = WIP propriétaire, jamais modifiée) puis découpée par jour.
+  const routeId = useMemo(() => routeIdFromMetadata(trip.metadata), [trip.metadata]);
   const days = useMemo(
     () => buildDaySummaries(steps, trip.start_date, daysCount),
     [steps, trip.start_date, daysCount]
@@ -216,14 +217,21 @@ export function ItineraryMobileExperience({ trip, initialSteps }: ItineraryMobil
     return map;
   }, [activeSteps]);
 
-  const highlightCoords = useMemo(() => buildRouteCoords(activeSteps), [activeSteps]);
+  const activeStepPoints = useMemo<DayTracePoint[]>(
+    () =>
+      activeSteps.flatMap((step) =>
+        step.latitude != null && step.longitude != null
+          ? [{ lat: Number(step.latitude), lng: Number(step.longitude) }]
+          : []
+      ),
+    [activeSteps]
+  );
   const dayStepIds = useMemo(() => new Set(activeSteps.map((step) => step.id)), [activeSteps]);
   const dayPois = useMemo(() => {
     const attached = poisForDay(pois, dayStepIds);
     const orphans = unassignedPois(pois);
     return [...attached, ...orphans];
   }, [pois, dayStepIds]);
-  const mapPoints = useMemo(() => poiMapPoints(pois), [pois]);
   const expensesView = useMemo(
     () => dayExpenses(trip.expenses ?? [], trip.start_date, selectedDay),
     [trip.expenses, trip.start_date, selectedDay]
@@ -638,19 +646,6 @@ export function ItineraryMobileExperience({ trip, initialSteps }: ItineraryMobil
         />
       )}
 
-      <div ref={mapSectionRef} className="scroll-mt-4">
-        <ItineraryMapSection
-          routeCoords={routeCoords}
-          highlightCoords={highlightCoords}
-          points={mapPoints}
-          pendingPoint={mapPick}
-          canEdit={canEdit}
-          onMapClick={(lat, lon) => setMapPick({ lat, lon })}
-          onConfirmPick={() => setPoiFormOpen(true)}
-          onClearPick={() => setMapPick(null)}
-        />
-      </div>
-
       {/* ── RAIL JOURNÉES ── */}
       <GroupeRail
         title="Journées"
@@ -713,6 +708,18 @@ export function ItineraryMobileExperience({ trip, initialSteps }: ItineraryMobil
         )}
       </GroupeRail>
 
+      {/* ── CARTE DU JOUR (trace réelle découpée) ── */}
+      {routeId && (
+        <div ref={mapSectionRef} className="scroll-mt-4 empty:hidden">
+          <DayTraceMap
+            routeId={routeId}
+            day={selectedDay}
+            days={daysCount}
+            stepPoints={activeStepPoints}
+          />
+        </div>
+      )}
+
       {/* ── TIMELINE DU JOUR (feuille de route) ── */}
       <section aria-label="Déroulé du jour">
         <div className="mb-3 flex items-end justify-between gap-3">
@@ -764,7 +771,7 @@ export function ItineraryMobileExperience({ trip, initialSteps }: ItineraryMobil
         title="Points d'intérêt"
         subtitle={`${dayPois.length} sur le parcours · ${pois.length} au total`}
         actionLabel="Carte"
-        onAction={() => setMapPick(null)}
+        onAction={scrollToMap}
         ariaLabel="Points d'intérêt"
       >
         {pois.length === 0 && enrichmentPending ? (

@@ -15,6 +15,8 @@ import {
 import { getTripPhase } from '../engine/temporalPhaseEngine';
 import { parseEnrichmentSuggestions } from '@/features/affiliation/engine/enrichmentSuggestions';
 import { TripSuggestionSection } from '@/features/affiliation/components/TripSuggestionSection';
+import { DayTraceMap } from '@/features/hub/components/mobile/itinerary/DayTraceMap';
+import { routeIdFromMetadata, type DayTracePoint } from '@/features/trips/domain/dayTraces';
 import { getCivilDurationDays } from '@/lib/dates/tripDates';
 import { tripSectionHref } from '../registry/tripSectionRegistry';
 import { DayNavigator } from './DayNavigator';
@@ -363,6 +365,19 @@ export default function ItineraryPlannerClient({
       .sort((a, b) => a.order_index - b.order_index);
   }, [steps, selectedDay]);
 
+  // Trace réelle du sentier : chargée côté client depuis `metadata.route_id`
+  // (page.tsx = WIP propriétaire, jamais modifiée) puis découpée par jour.
+  const routeId = useMemo(() => routeIdFromMetadata(trip.metadata), [trip.metadata]);
+  const activeDayStepPoints = useMemo<DayTracePoint[]>(
+    () =>
+      activeDaySteps.flatMap((step) =>
+        step.latitude != null && step.longitude != null
+          ? [{ lat: Number(step.latitude), lng: Number(step.longitude) }]
+          : []
+      ),
+    [activeDaySteps]
+  );
+
   return (
     <div className="space-y-4 pb-16">
       {/* Header Navigation Glass */}
@@ -415,6 +430,17 @@ export default function ItineraryPlannerClient({
           />
         </div>
       </div>
+
+      {/* Carte du jour sélectionné — trace réelle découpée */}
+      {routeId && (
+        <DayTraceMap
+          routeId={routeId}
+          day={selectedDay}
+          days={daysCount}
+          stepPoints={activeDayStepPoints}
+          heightClassName="h-[20rem]"
+        />
+      )}
 
       {preparePhase && suggestions.length > 0 && (
         <TripSuggestionSection
