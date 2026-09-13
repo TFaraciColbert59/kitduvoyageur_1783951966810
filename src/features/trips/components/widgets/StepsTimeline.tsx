@@ -1,7 +1,7 @@
 'use client';
 
 import Icon from '@/components/ui/Icon';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useMemo } from 'react';
 import Link from 'next/link';
 import type { TripPhase } from '../../engine/temporalPhaseEngine';
 import type { TripStep } from '../../types/trip.types';
@@ -12,7 +12,6 @@ export interface StepsTimelineProps {
   phase: TripPhase;
 }
 
-/** 3 copies empilées : copie du milieu affichée au départ, saut modulo sur le scroll. */
 function fmtKm(km: number | null): string {
   if (!km || km <= 0) return '';
   return `${(Math.round(km * 10) / 10).toLocaleString('fr-FR', { maximumFractionDigits: 1 })} km`;
@@ -24,17 +23,11 @@ function fmtMeters(m: number | null, unit = 'm'): string {
 }
 
 /**
- * Widget `steps-timeline` — déroulé des étapes du jour (boucle circulaire).
- * La carte « Point de départ » ouvre la boucle, suivie des étapes du jour
- * courant ; le conteneur boucle à l'infini : le nombre de copies est calibré
- * pour que la fenêtre de saut modulo reste toujours accessible (saut
- * instantané — respect de prefers-reduced-motion).
+ * Widget `steps-timeline` — déroulé des étapes du jour (liste simple).
+ * La carte « Point de départ » ouvre la liste, suivie des étapes du jour
+ * courant ; le conteneur défile simplement (jours réels uniquement).
  */
 export function StepsTimeline({ steps, dayIndex, phase }: StepsTimelineProps) {
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const copyRef = useRef<HTMLDivElement>(null);
-  const [copies, setCopies] = useState(3);
-
   const ordered = useMemo(
     () => [...steps].sort((a, b) => a.day_number - b.day_number || a.order_index - b.order_index),
     [steps]
@@ -66,37 +59,6 @@ export function StepsTimeline({ steps, dayIndex, phase }: StepsTimelineProps) {
         ? `Carnet · J${clampedDay}`
         : `Départ · J${clampedDay}`;
 
-  // Boucle : nombre de copies calibré pour que l'ancre centrale + la fenêtre
-  // de saut (± 1 copie) restent atteignables, même quand une unité est plus
-  // courte que la fenêtre. Ancre = copie centrale, saut modulo instantané.
-  useEffect(() => {
-    const el = scrollRef.current;
-    const copy = copyRef.current;
-    if (!el || !copy) return;
-    const h = copy.offsetHeight;
-    const c = el.clientHeight;
-    if (h <= 0 || c <= 0) return;
-    const needed = Math.max(3, 2 * (Math.ceil(c / h) + 1));
-    if (needed !== copies) {
-      setCopies(needed);
-      return;
-    }
-    const anchor = Math.floor(copies / 2) * h;
-    el.scrollTop = anchor;
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- copies est recalculé ci-dessus ; ordered/clampedDay pilotent le recalage
-  }, [ordered, clampedDay, copies]);
-
-  const handleScroll = () => {
-    const el = scrollRef.current;
-    const copy = copyRef.current;
-    if (!el || !copy) return;
-    const h = copy.offsetHeight;
-    if (h <= 0) return;
-    const anchor = Math.floor(copies / 2) * h;
-    if (el.scrollTop > anchor + h) el.scrollTop -= h;
-    else if (el.scrollTop < anchor - h) el.scrollTop += h;
-  };
-
   return (
     <div className="glass glass-pure flex h-full min-h-0 flex-col p-3.5 space-y-2.5 rounded-[1.5rem] font-sans">
       <div className="flex items-center justify-between">
@@ -110,124 +72,116 @@ export function StepsTimeline({ steps, dayIndex, phase }: StepsTimelineProps) {
       </div>
 
       <div
-        ref={scrollRef}
-        onScroll={handleScroll}
         className="flex min-h-0 flex-1 flex-col overflow-y-auto no-scrollbar scroll-auto"
         aria-label="Déroulé des étapes du voyage"
       >
-        {Array.from({ length: copies }, (_, copyIndex) => (
-          <div
-            key={copyIndex}
-            ref={copyIndex === 1 ? copyRef : undefined}
-            className="space-y-2 pb-2"
-          >
-            {startStep ? (
+        <div className="space-y-2 pb-2">
+          {startStep ? (
+            <Link
+              href="/hub/itineraire"
+              className="glass-sub-card rounded-xl border-2 border-[var(--lkv-primary)]/35 p-3 space-y-1.5 block hover:bg-white transition-colors cursor-pointer"
+              aria-label={`Point de départ : ${startStep.location_name ?? startStep.title}`}
+            >
+              <div className="flex items-center justify-between gap-2">
+                <span className="glass-pill text-[9px] font-bold text-[var(--lkv-primary)] flex items-center gap-1">
+                  <Icon name="map-pin" size={10} aria-hidden="true" />
+                  Point de départ
+                </span>
+                <span className="glass-pill text-[9px] font-bold text-[var(--lkv-text-muted)] tabular-nums">
+                  J{startStep.day_number}
+                </span>
+              </div>
+              <div className="text-xs font-bold text-[var(--lkv-text-primary)] leading-snug">
+                {startStep.title}
+              </div>
+              {startStep.location_name && (
+                <div className="text-[11px] text-[var(--lkv-text-secondary)] flex items-center gap-1">
+                  <Icon name="map-pin" size={11} aria-hidden="true" />
+                  {startStep.location_name}
+                </div>
+              )}
+              {totals.hasAny && (
+                <div className="text-[11px] text-[var(--lkv-text-secondary)] flex flex-wrap items-center gap-x-2.5 gap-y-0.5 tabular-nums pt-0.5 border-t border-[var(--lkv-primary)]/10">
+                  {totals.km > 0 && (
+                    <span className="flex items-center gap-1 whitespace-nowrap">
+                      <Icon name="route" size={11} aria-hidden="true" />
+                      {fmtKm(totals.km)}
+                    </span>
+                  )}
+                  {totals.dPlus > 0 && (
+                    <span className="flex items-center gap-1 whitespace-nowrap">
+                      <Icon name="mountain" size={11} aria-hidden="true" />+
+                      {fmtMeters(totals.dPlus)}
+                    </span>
+                  )}
+                  {totals.dLoss > 0 && (
+                    <span className="flex items-center gap-1 whitespace-nowrap">
+                      <Icon name="mountain" size={11} className="rotate-180" aria-hidden="true" />
+                      −{fmtMeters(totals.dLoss)}
+                    </span>
+                  )}
+                </div>
+              )}
+            </Link>
+          ) : null}
+
+          {daySteps.length > 0 ? (
+            daySteps.map((step) => (
               <Link
+                key={step.id}
                 href="/hub/itineraire"
-                className="glass-sub-card rounded-xl border-2 border-[var(--lkv-primary)]/35 p-3 space-y-1.5 block hover:bg-white transition-colors cursor-pointer"
-                aria-label={`Point de départ : ${startStep.location_name ?? startStep.title}`}
+                className="glass-sub-card rounded-xl border border-white/40 p-3 space-y-1.5 block hover:bg-white/80 transition-colors cursor-pointer"
+                aria-label={`Étape ${step.order_index + 1} du jour ${step.day_number} : ${step.title}`}
               >
                 <div className="flex items-center justify-between gap-2">
-                  <span className="glass-pill text-[9px] font-bold text-[var(--lkv-primary)] flex items-center gap-1">
-                    <Icon name="map-pin" size={10} aria-hidden="true" />
-                    Point de départ
+                  <span className="glass-pill text-[9px] font-bold text-[var(--lkv-text-primary)] tabular-nums">
+                    J{step.day_number} · {step.order_index + 1}
                   </span>
-                  <span className="glass-pill text-[9px] font-bold text-[var(--lkv-text-muted)] tabular-nums">
-                    J{startStep.day_number}
-                  </span>
+                  {step.accommodation_name && (
+                    <span className="text-[10px] text-[var(--lkv-text-muted)] flex items-center gap-1 min-w-0 truncate">
+                      <Icon name="moon-star" size={10} aria-hidden="true" />
+                      {step.accommodation_name}
+                    </span>
+                  )}
                 </div>
                 <div className="text-xs font-bold text-[var(--lkv-text-primary)] leading-snug">
-                  {startStep.title}
+                  {step.title}
                 </div>
-                {startStep.location_name && (
+                {step.location_name && (
                   <div className="text-[11px] text-[var(--lkv-text-secondary)] flex items-center gap-1">
                     <Icon name="map-pin" size={11} aria-hidden="true" />
-                    {startStep.location_name}
+                    {step.location_name}
                   </div>
                 )}
-                {totals.hasAny && (
-                  <div className="text-[11px] text-[var(--lkv-text-secondary)] flex flex-wrap items-center gap-x-2.5 gap-y-0.5 tabular-nums pt-0.5 border-t border-[var(--lkv-primary)]/10">
-                    {totals.km > 0 && (
-                      <span className="flex items-center gap-1 whitespace-nowrap">
+                {(step.distance_km || step.elevation_gain_m) && (
+                  <div className="text-[11px] text-[var(--lkv-text-muted)] flex items-center gap-2 tabular-nums">
+                    {fmtKm(step.distance_km) && (
+                      <span className="flex items-center gap-1">
                         <Icon name="route" size={11} aria-hidden="true" />
-                        {fmtKm(totals.km)}
+                        {fmtKm(step.distance_km)}
                       </span>
                     )}
-                    {totals.dPlus > 0 && (
-                      <span className="flex items-center gap-1 whitespace-nowrap">
+                    {Number(step.elevation_gain_m) > 0 && (
+                      <span className="flex items-center gap-1">
                         <Icon name="mountain" size={11} aria-hidden="true" />+
-                        {fmtMeters(totals.dPlus)}
-                      </span>
-                    )}
-                    {totals.dLoss > 0 && (
-                      <span className="flex items-center gap-1 whitespace-nowrap">
-                        <Icon name="mountain" size={11} className="rotate-180" aria-hidden="true" />
-                        −{fmtMeters(totals.dLoss)}
+                        {fmtMeters(step.elevation_gain_m)}
                       </span>
                     )}
                   </div>
                 )}
               </Link>
-            ) : null}
-
-            {daySteps.length > 0 ? (
-              daySteps.map((step) => (
-                <Link
-                  key={`${copyIndex}-${step.id}`}
-                  href="/hub/itineraire"
-                  className="glass-sub-card rounded-xl border border-white/40 p-3 space-y-1.5 block hover:bg-white/80 transition-colors cursor-pointer"
-                  aria-label={`Étape ${step.order_index + 1} du jour ${step.day_number} : ${step.title}`}
-                >
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="glass-pill text-[9px] font-bold text-[var(--lkv-text-primary)] tabular-nums">
-                      J{step.day_number} · {step.order_index + 1}
-                    </span>
-                    {step.accommodation_name && (
-                      <span className="text-[10px] text-[var(--lkv-text-muted)] flex items-center gap-1 min-w-0 truncate">
-                        <Icon name="moon-star" size={10} aria-hidden="true" />
-                        {step.accommodation_name}
-                      </span>
-                    )}
-                  </div>
-                  <div className="text-xs font-bold text-[var(--lkv-text-primary)] leading-snug">
-                    {step.title}
-                  </div>
-                  {step.location_name && (
-                    <div className="text-[11px] text-[var(--lkv-text-secondary)] flex items-center gap-1">
-                      <Icon name="map-pin" size={11} aria-hidden="true" />
-                      {step.location_name}
-                    </div>
-                  )}
-                  {(step.distance_km || step.elevation_gain_m) && (
-                    <div className="text-[11px] text-[var(--lkv-text-muted)] flex items-center gap-2 tabular-nums">
-                      {fmtKm(step.distance_km) && (
-                        <span className="flex items-center gap-1">
-                          <Icon name="route" size={11} aria-hidden="true" />
-                          {fmtKm(step.distance_km)}
-                        </span>
-                      )}
-                      {Number(step.elevation_gain_m) > 0 && (
-                        <span className="flex items-center gap-1">
-                          <Icon name="mountain" size={11} aria-hidden="true" />+
-                          {fmtMeters(step.elevation_gain_m)}
-                        </span>
-                      )}
-                    </div>
-                  )}
-                </Link>
-              ))
-            ) : (
-              <div className="glass-sub-card rounded-xl border border-white/40 p-4 space-y-1 text-center">
-                <p className="text-xs font-bold text-[var(--lkv-text-primary)]">
-                  Aucune étape pour le jour {clampedDay}
-                </p>
-                <p className="text-[11px] text-[var(--lkv-text-secondary)]">
-                  La suite du déroulé apparaît dès qu&apos;une étape est planifiée.
-                </p>
-              </div>
-            )}
-          </div>
-        ))}
+            ))
+          ) : (
+            <div className="glass-sub-card rounded-xl border border-white/40 p-4 space-y-1 text-center">
+              <p className="text-xs font-bold text-[var(--lkv-text-primary)]">
+                Aucune étape pour le jour {clampedDay}
+              </p>
+              <p className="text-[11px] text-[var(--lkv-text-secondary)]">
+                La suite du déroulé apparaît dès qu&apos;une étape est planifiée.
+              </p>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
