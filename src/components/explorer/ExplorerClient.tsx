@@ -18,6 +18,7 @@ import { XIcon as XAnimated } from '@/components/icons/x';
 import { RotateCCWIcon as RotateCcwAnimated, type RotateCCWIconHandle } from '@/components/icons/rotate-ccw';
 import { SearchIcon as SearchAnimated } from '@/components/icons/search';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import type { MapTrail } from '@/components/explorer/types';
 import {
   getDifficultyColor,
@@ -29,6 +30,9 @@ import {
 import ExplorerListCard from '@/components/explorer/ExplorerListCard';
 import ExplorerFilterPanel from '@/components/explorer/ExplorerFilterPanel';
 import ExplorerMobileHikeCarousel from '@/components/explorer/ExplorerMobileHikeCarousel';
+import EphemeralGroupSheet from '@/features/tribu/components/EphemeralGroupSheet';
+import { setActiveAdventureAction } from '@/features/hub/context/activeAdventureServer';
+import { hubSectionHref } from '@/features/hub/registry/hubSectionRegistry';
 import { getCurrentGeoPosition } from '@/lib/native/geolocation';
 
 // ── Dynamic (client-only) ─────────────────────────────────────────────────────
@@ -140,6 +144,20 @@ export default function ExplorerClient({
 
   const [liveViewportBbox, setLiveViewportBbox] = useState<{ minLat: number; maxLat: number; minLng: number; maxLng: number; zoom: number } | null>(null);
   const [showSearchHereButton, setShowSearchHereButton] = useState(false);
+  const router = useRouter();
+  const [ephemeralOpen, setEphemeralOpen] = useState(false);
+
+  const handleEphemeralCreated = async (result: { groupId: string; name: string }) => {
+    const res = await setActiveAdventureAction({
+      nature: 'collectif',
+      id: result.groupId,
+      title: result.name,
+    });
+    setEphemeralOpen(false);
+    if (res.success) {
+      router.push(hubSectionHref({ nature: 'collectif' }, 'groupe'));
+    }
+  };
   // CHANTIER ATLAS — données réelles du viewport remontées par UnifiedExplorerMap.
   const [unifiedViewportData, setUnifiedViewportData] = useState<{
     trails: MapTrail[];
@@ -489,6 +507,16 @@ export default function ExplorerClient({
 
           {/* Actions Desktop */}
           <div className="flex items-center gap-2 shrink-0">
+            <button
+              type="button"
+              onClick={() => setEphemeralOpen(true)}
+              className="glass-capsule-btn inline-flex items-center gap-1.5 text-[11px] font-bold !py-1.5 !px-3.5 cursor-pointer select-none active:opacity-85"
+              title="Créer une sortie éphémère avec des amis"
+              data-testid="ephemeral-group-cta-desktop"
+            >
+              <span>👥</span>
+              <span>Sortie entre amis</span>
+            </button>
             <Link
               href="/randonnee-active"
               className="glass-capsule-btn inline-flex items-center gap-1.5 text-[11px] font-bold !py-1.5 !px-3.5 cursor-pointer select-none active:opacity-85"
@@ -530,6 +558,20 @@ export default function ExplorerClient({
             safeControls
           />
         )}
+      </div>
+
+      {/* ── 2C. SORTIE ÉCLAIR — mobile : ancre gauche, au-dessus du carrousel ── */}
+      <div className="md:hidden fixed left-4 bottom-[calc(env(safe-area-inset-bottom,0px)+96px+var(--explorer-carousel-height,0px))] z-[860] pointer-events-auto">
+        <button
+          type="button"
+          onClick={() => setEphemeralOpen(true)}
+          className="glass-capsule-btn !min-h-[48px] px-3.5 flex items-center gap-2 shadow-lg cursor-pointer active:scale-95"
+          aria-label="Créer une sortie avec des amis"
+          data-testid="ephemeral-group-cta-mobile"
+        >
+          <span>👥</span>
+          <span className="text-[12px] font-bold whitespace-nowrap">Sortie entre amis</span>
+        </button>
       </div>
 
       {/* ── 2B. BOUTON FLOTTANT DYNAMIQUE : « RECHERCHER DANS CETTE ZONE » ── */}
@@ -868,6 +910,13 @@ export default function ExplorerClient({
           />
         )}
       </AnimatePresence>
+
+      {/* ── 7. SORTIE ÉCLAIR (groupe éphémère, géré dans le Hub) ── */}
+      <EphemeralGroupSheet
+        open={ephemeralOpen}
+        onClose={() => setEphemeralOpen(false)}
+        onCreated={handleEphemeralCreated}
+      />
     </div>
   );
 }

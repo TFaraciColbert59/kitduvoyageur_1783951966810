@@ -290,6 +290,9 @@ export async function getGroupeComplet(groupeId: string) {
     inviteCode: groupe.invite_code || '',
     trail: trailData,
     parentClub,
+    ephemeral: (groupe as any).is_ephemeral
+      ? { autoDissolveAt: ((groupe as any).auto_dissolve_at as string | null) ?? null }
+      : null,
     meta: {
       titlePrefix: (groupe.name?.split(' ')[0] || 'Groupe'),
       titleSuffix: (groupe.name?.split(' ').slice(1).join(' ') || ''),

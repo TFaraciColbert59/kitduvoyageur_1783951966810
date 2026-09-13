@@ -19,7 +19,7 @@ interface MockOptions {
   expired?: Array<{ id: string }>;
   selectError?: { message: string } | null;
   deleteError?: { message: string } | null;
-  calls?: Array<[string, string, ...unknown[]]>;
+  calls?: Array<[string, ...unknown[]]>;
 }
 
 function createSupabaseMock(options: MockOptions) {
@@ -87,7 +87,7 @@ describe('cron cleanup-ephemeral-groups', () => {
   });
 
   it('(c) aucun groupe expiré : aucun DELETE', async () => {
-    const calls: Array<[string, string, ...unknown[]]> = [];
+    const calls: Array<[string, ...unknown[]]> = [];
     mockedCreateClient.mockReturnValue(createSupabaseMock({ expired: [], calls }) as never);
 
     const response = await GET(makeRequest('test-secret'));
@@ -101,7 +101,7 @@ describe('cron cleanup-ephemeral-groups', () => {
   });
 
   it('(d) supprime uniquement les éphémères dépassés', async () => {
-    const calls: Array<[string, string, ...unknown[]]> = [];
+    const calls: Array<[string, ...unknown[]]> = [];
     mockedCreateClient.mockReturnValue(
       createSupabaseMock({
         expired: [{ id: 'g1' }, { id: 'g2' }],

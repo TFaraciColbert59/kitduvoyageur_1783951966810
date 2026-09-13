@@ -11,6 +11,8 @@ import DiscussionCard from '@/components/groupes/DiscussionCard';
 import VoyageursCard from '@/components/groupes/VoyageursCard';
 import ParcoursCard from '@/components/groupes/ParcoursCard';
 import { tripSectionHref } from '@/features/trips/registry/tripSectionRegistry';
+import { convertEphemeralGroup } from '@/features/tribu/actions/ephemeralGroup';
+import { formatEphemeralCountdown } from '@/features/tribu/lib/ephemeral';
 import {
   assignGroupeKitItem,
   settleGroupeExpense,
@@ -65,6 +67,18 @@ export function GroupeMobileExperience({
   const { triggerHaptic } = useHapticFeedback();
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+  const [convertingEphemeral, setConvertingEphemeral] = useState(false);
+
+  const handleConvertEphemeral = async () => {
+    setConvertingEphemeral(true);
+    const result = await convertEphemeralGroup(groupId);
+    setConvertingEphemeral(false);
+    if (result.ok) {
+      await onRefresh?.();
+    } else {
+      setErrorMsg(result.error);
+    }
+  };
 
   const [localTasks, setLocalTasks] = useState<any[]>(data.tasks || []);
   useEffect(() => {
@@ -405,6 +419,35 @@ export function GroupeMobileExperience({
             Voir →
           </span>
         </Link>
+      )}
+
+      {data.ephemeral && (
+        <div
+          className="glass rounded-2xl px-4 py-3 flex items-center justify-between gap-3"
+          data-testid="group-ephemeral-banner-mobile"
+        >
+          <div className="min-w-0">
+            <span className="text-[9px] font-mono uppercase tracking-widest text-[var(--lkv-text-secondary)] block">
+              Sortie du jour
+            </span>
+            <span className="text-xs font-bold text-[var(--lkv-text-primary)] truncate block">
+              {formatEphemeralCountdown(data.ephemeral.autoDissolveAt) ?? 'Groupe éclair'}
+            </span>
+          </div>
+          {canManage && (
+            <button
+              type="button"
+              onClick={handleConvertEphemeral}
+              disabled={convertingEphemeral}
+              className="glass-capsule-btn primary text-[11px] font-bold px-3 min-h-[44px] flex items-center shrink-0 disabled:opacity-60"
+              data-testid="group-ephemeral-convert-mobile"
+            >
+              <span className="relative z-10">
+                {convertingEphemeral ? 'Conversion…' : 'Groupe complet'}
+              </span>
+            </button>
+          )}
+        </div>
       )}
 
       <GroupeReadinessHero
