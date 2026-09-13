@@ -1176,3 +1176,32 @@ migration prod   → 20260912300000 appliquée (vérifiée par probe service-rol
 
 ### Actions propriétaire restantes
 Vérification visuelle du nouvel itinéraire sur ses captures ; usage réel du flux « Rejoindre » avec de vrais profils Terrain calibrés (sinon estimations/moyennes labellisées) ; dette notée : double écriture budget prévisionnel possible entre usine et platinage (dédoublonnage futur), 3/24 slugs de règles sans produit CSV (fallback poids base).
+---
+
+## 2026-09-13 — CHANTIER TRIBU — Lot 1 (Phases 0→6) : permissions de groupe, pont club, groupe éclair, délégations, quorum, journal, modèles
+
+> Spec : `docs/superpowers/specs/2026-09-13-chantier-tribu-design.md` · Plan : `docs/superpowers/plans/2026-09-13-chantier-tribu.md` · Rapport : `docs/tribu/rapport-lot1.md` · Preuve Phase 0 : `docs/tribu/phase0-preuve.md`. Décisions : fermer **toutes** les escalades RLS ; `member` self-only + capacité `contribute` ; pont sur `travel_groups` (jamais le legacy `/nouveau-groupe`) ; sélection éclair = co-membres + abonnements + recherche ; Phase 7 (position live) en lot 2.
+
+### Phase 0 — Sécurité
+- Capacités (10, dont `contribute`) + matrice 40 lignes + overrides ; `group_member_has_capability` (override > délégation > rôle) ; `search_path` durci (`lkv_can`, `is_moderateur`, etc.).
+- **5 `*_member_all` + 7 lectures publiques prod-only + `invitations_public_read_by_token` supprimées** ; policies par commande (SELECT membre observer inclus / INSERT contribute + owner / UPDATE-DELETE self**ou** manage_*) ; votes par appartenance self-only ; trigger anti auto-promotion ; join forcé `role='member'` ; **bootstrap organizer par trigger** (`seed_group_owner_membership`) ; `group_public_card_stats` (agrégats Bouteille sans fuite de lignes).
+- Preuves : `tribu_permissions.test.sql` **70/70**, harnais install+upgrade, double revue `database-reviewer` (NO-GO → correctifs → GO).
+
+### Phase 1 — Pont Club ↔ Hub (TRIBU-R1)
+- `parent_club_id` + `is_club_member` + enum `club_only` + policy dédiée ; garde d'insertion (groupe `club_only` = membre du club, RLS) ; onglet « Groupes » club desktop/mobile → cookie d'aventure + `/hub/groupe` ; action `createGroupFromClub` ; badge « Né du club X ».
+
+### Phase 2 — Groupe éclair
+- `is_ephemeral`/`auto_dissolve_at` + index partiel ; cron `cleanup-ephemeral-groups` (anti-TOCTOU) ; CTA Explorer + sheet (co-membres/follows/recherche) ; badge + countdown + conversion ; invitations compensées.
+
+### Phase 3→6
+- Délégations temporaires (rangs, ≤ 7 j, **additives** — bug soustractif attrapé en revue finale et corrigé) + UI ; quorum à la lecture (3 types, 6 tests) + toggle « Décision importante » ; journal d'activité par 6 triggers + panneau hub ; modèles de checklist club publiables et applicables en groupe.
+
+### Gates finaux
+```text
+tsc 0 · lint 0 · vitest 2708 passed | 23 skipped (4 suites préexistantes) · build ✓
+harnais DB install+upgrade → SUCCÈS (218 versions, pgTAP PASS) · pgTAP TRIBU 7 suites / 135 assertions vertes
+e2e prod 7/7 (preparer, depart, atlas) · garde design H-D85 14/14 · migrations prod 12/12 + vérif service-role
+```
+
+### Actions propriétaire restantes
+Vérification visuelle : onglet Groupes d'un club, création d'un groupe, sortie éclair depuis l'Explorer, journal et modèles dans /hub/groupe. Backlog lot 2 : e2e dédiés pont/modèles, alignement des affordances UI sur les capacités, puis **Phase 7 (position live)**.
