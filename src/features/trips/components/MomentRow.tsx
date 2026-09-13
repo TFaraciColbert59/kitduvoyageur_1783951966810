@@ -1,11 +1,15 @@
 import { Moon, Sun, Sunrise, type LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { MOMENT_SLOT_LABELS, momentTitleBody, type MomentSlot } from '../engine/momentSlots';
+import { isLlmSuggestion } from '../engine/llmProvenance';
+import { LlmSuggestionBadge } from './LlmSuggestionBadge';
 
 /**
  * Ligne de moment d'enrichissement (§4.3) — rendu compact matin / après-midi /
  * soir, distinct d'une étape d'itinéraire. Utilisé par la timeline mobile
  * (ItineraryDayTimeline) et l'onglet itinéraire desktop (TripItineraryTab).
+ * Fix round final — badge « Suggestion IA » quand la ligne vient du job LLM
+ * (`source` ou `metadata.source === 'llm_suggestion'`), une pastille par rangée.
  */
 const SLOT_STYLES: Record<MomentSlot, { Icon: LucideIcon; tone: string }> = {
   matin: { Icon: Sunrise, tone: 'bg-[var(--sage-50)] text-[var(--sage-700)]' },
@@ -20,12 +24,23 @@ export interface MomentRowProps {
   title: string | null | undefined;
   slot: MomentSlot;
   startTime?: string | null;
+  /** Provenance additive de la ligne (`llm_suggestion`). */
+  source?: string | null;
+  metadata?: Record<string, unknown> | null;
   className?: string;
 }
 
-export function MomentRow({ title, slot, startTime, className }: MomentRowProps) {
+export function MomentRow({
+  title,
+  slot,
+  startTime,
+  source,
+  metadata,
+  className,
+}: MomentRowProps) {
   const { Icon, tone } = SLOT_STYLES[slot];
   const time = startTime ? startTime.slice(0, 5) : null;
+  const showBadge = isLlmSuggestion(source, metadata);
 
   return (
     <div
@@ -48,6 +63,7 @@ export function MomentRow({ title, slot, startTime, className }: MomentRowProps)
           {momentTitleBody(title)}
         </span>
       </span>
+      {showBadge && <LlmSuggestionBadge />}
       {time && (
         <span className="shrink-0 text-[10px] font-semibold tabular-nums text-[var(--lkv-text-secondary)]">
           {time}

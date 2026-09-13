@@ -19,6 +19,8 @@ import { LiveArrivalReveal } from '@/features/hub/components/live/LiveArrivalRev
 import { useLiveArrivalReveal } from '@/features/hub/components/live/useLiveArrivalReveal';
 import { MomentRow } from './MomentRow';
 import { momentSlotOf } from '../engine/momentSlots';
+import { isLlmSuggestion } from '../engine/llmProvenance';
+import { LlmSuggestionBadge } from './LlmSuggestionBadge';
 import Link from 'next/link';
 
 interface TripItineraryTabProps {
@@ -268,6 +270,7 @@ export function TripItineraryTab({ trip }: TripItineraryTabProps) {
                           {step.accommodation_name}
                         </span>
                       )}
+                      {isLlmSuggestion(step.source, step.metadata) && <LlmSuggestionBadge />}
                     </div>
 
                     <h4 className="font-semibold text-lkv-primary text-base">{step.title}</h4>
@@ -332,6 +335,8 @@ export function TripItineraryTab({ trip }: TripItineraryTabProps) {
                                 title={extra.title}
                                 slot={slot}
                                 startTime={extra.start_time}
+                                source={extra.source}
+                                metadata={extra.metadata}
                               />
                             ) : (
                               <div className="flex items-start gap-2 rounded-xl bg-white/50 px-3 py-2">

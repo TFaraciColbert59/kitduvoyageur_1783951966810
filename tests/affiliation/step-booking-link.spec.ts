@@ -5,6 +5,7 @@ import {
   buildStepBookingLink,
   buildBookingByStepId,
   resolveBookingByStepId,
+  resolveStepBookingLink,
 } from '@/features/affiliation/engine/stepBookingLink';
 import { StepBookingLinkCta } from '@/features/affiliation/components/StepBookingLinkCta';
 import { ItineraryDayTimeline } from '@/features/hub/components/mobile/itinerary/ItineraryDayTimeline';
@@ -173,14 +174,38 @@ describe('resolveBookingByStepId (résolution côté serveur : destination avant
     expect(map['step-1']?.slug).toBe('booking-nepal-lodges');
   });
 
-  it('repli sans match destination : premier candidat de la catégorie (récence)', () => {
+  it('aucune correspondance de destination → pas d’entrée (aucun lien hors sujet)', () => {
     const map = resolveBookingByStepId(
       [{ id: 'step-1', accommodationName: 'Gîte', locationName: 'Cusco', dayNumber: 1 }],
       [parisHotel, chamonixHotel],
       { ...CONTEXT, destinationName: 'Cusco' }
     );
 
-    expect(map['step-1']?.slug).toBe('booking-paris-hotel');
+    expect(map['step-1']).toBeUndefined();
+  });
+
+  it('resolveStepBookingLink : correspondance exigée, récence seulement entre correspondants', () => {
+    const booking = {
+      category: 'hotel' as const,
+      label: 'Hébergement — Gîte',
+      searchTerms: 'Gîte Cusco',
+    };
+
+    // Aucun candidat ne matche Cusco → null (jamais de lien vers Paris).
+    expect(
+      resolveStepBookingLink(booking, [parisHotel, chamonixHotel], {
+        ...CONTEXT,
+        destinationName: 'Cusco',
+      })
+    ).toBeNull();
+
+    // Paris matche → le plus récent des correspondants est retenu.
+    expect(
+      resolveStepBookingLink(booking, [chamonixHotel, parisHotel], {
+        ...CONTEXT,
+        destinationName: 'Paris',
+      })?.slug
+    ).toBe('booking-paris-hotel');
   });
 
   it('la catégorie reste un filtre dur : aucun candidat de la catégorie → pas d’entrée', () => {

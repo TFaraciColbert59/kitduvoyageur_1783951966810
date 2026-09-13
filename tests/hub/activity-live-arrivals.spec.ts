@@ -30,6 +30,11 @@ import {
   type ActivityArrivalCounts,
 } from '@/features/hub/components/live/useActivityLiveArrivals';
 import {
+  bucketForRow,
+  mergePreparationCounts,
+  preparationPhase,
+} from '@/features/hub/components/live/preparationPhases';
+import {
   ArrivalReveal,
   arrivalDelay,
   arrivalInitial,
@@ -39,7 +44,9 @@ import {
   formatAnimatedNumber,
 } from '@/features/hub/components/live/AnimatedNumber';
 import { ActivitySectionSkeleton } from '@/features/hub/components/live/ActivitySectionSkeleton';
-import ActivityLiveBridge from '@/features/hub/components/live/ActivityLiveBridge';
+import ActivityLiveBridge, {
+  emitActivityArrival,
+} from '@/features/hub/components/live/ActivityLiveBridge';
 
 function counts(partial: Partial<ActivityArrivalCounts>): ActivityArrivalCounts {
   return { steps: 0, moments: 0, affiliation: 0, kit: 0, ...partial };
@@ -84,6 +91,102 @@ describe('derivePreparationPhase — seuils exacts', () => {
 
   it('kit en cas d’arrivée hors ordre (kit avant affiliation)', () => {
     expect(derivePreparationPhase(counts({ steps: 1, moments: 1, kit: 1 }))).toBe('kit');
+  });
+});
+
+describe('fix round final — bassins réels, fusion serveur et complétion', () => {
+  it('une étape portant hébergement/transport nourrit affiliation, sinon itinerary', () => {
+    expect(bucketForRow('trip_steps', { accommodation_name: 'Refuge du Goûter' })).toBe(
+      'affiliation'
+    );
+    expect(bucketForRow('trip_steps', { transport_mode: 'train' })).toBe('affiliation');
+    expect(bucketForRow('trip_steps', { accommodation_name: '   ', transport_mode: null })).toBe(
+      'steps'
+    );
+    expect(bucketForRow('trip_steps', { accommodation_name: null, transport_mode: null })).toBe(
+      'steps'
+    );
+    expect(bucketForRow('trip_pois', {})).toBe('moments');
+    expect(bucketForRow('trip_items', {})).toBe('kit');
+    expect(bucketForRow('trip_notes', {})).toBeNull();
+  });
+
+  it('countArrivals respecte un bucket explicite (arrivée affiliation)', () => {
+    const result = countArrivals([
+      { table: 'trip_steps', bucket: 'steps' },
+      { table: 'trip_steps', bucket: 'affiliation' },
+      { table: 'trip_pois', bucket: 'moments' },
+      { table: 'trip_items', bucket: 'kit' },
+    ]);
+
+    expect(result).toEqual({ steps: 1, moments: 1, affiliation: 1, kit: 1 });
+  });
+
+  it('mergePreparationCounts : max par bassin (rafraîchissement sans double comptage)', () => {
+    const merged = mergePreparationCounts(
+      { steps: 3, moments: 2, affiliation: 0, kit: 4 },
+      { steps: 1, moments: 2, affiliation: 1, kit: 0 }
+    );
+
+    expect(merged).toEqual({ steps: 3, moments: 2, affiliation: 1, kit: 4 });
+  });
+
+  it('preparationPhase : done dès que l’enrichissement serveur est terminé', () => {
+    expect(
+      preparationPhase({ steps: 0, moments: 0, affiliation: 0, kit: 0 }, 'done')
+    ).toBe('done');
+    expect(
+      preparationPhase({ steps: 1, moments: 1, affiliation: 1, kit: 1 }, 'pending')
+    ).toBe('done');
+    expect(
+      preparationPhase({ steps: 3, moments: 2, affiliation: 0, kit: 4 }, 'pending')
+    ).toBe('kit');
+    expect(
+      preparationPhase({ steps: 0, moments: 0, affiliation: 0, kit: 0 }, 'failed')
+    ).toBe('waiting');
+  });
+
+  it('isActivityArrival accepte un bucket valide et rejette un bassin inconnu', () => {
+    expect(
+      isActivityArrival({
+        table: 'trip_steps',
+        id: 's1',
+        eventType: 'INSERT',
+        bucket: 'affiliation',
+      })
+    ).toBe(true);
+    expect(
+      isActivityArrival({ table: 'trip_steps', id: 's1', eventType: 'INSERT', bucket: 'nope' })
+    ).toBe(false);
+  });
+
+  it('emitActivityArrival publie le bucket quand il est fourni', () => {
+    const dispatch = vi.fn();
+    class FakeCustomEvent {
+      type: string;
+      detail: unknown;
+      constructor(type: string, init?: { detail?: unknown }) {
+        this.type = type;
+        this.detail = init?.detail;
+      }
+    }
+    vi.stubGlobal('window', { dispatchEvent: dispatch });
+    vi.stubGlobal('CustomEvent', FakeCustomEvent);
+
+    try {
+      emitActivityArrival('trip_steps', 's1', 'INSERT', 'affiliation');
+
+      const event = dispatch.mock.calls[0][0] as { type: string; detail: unknown };
+      expect(event.type).toBe(ACTIVITY_ARRIVAL_EVENT);
+      expect(event.detail).toEqual({
+        table: 'trip_steps',
+        id: 's1',
+        eventType: 'INSERT',
+        bucket: 'affiliation',
+      });
+    } finally {
+      vi.unstubAllGlobals();
+    }
   });
 });
 
@@ -237,6 +340,35 @@ describe('AnimatedNumber — compteur tabulaire', () => {
     expect(source).toMatch(/const \[initialText\] = useState\(/);
     expect(source).toMatch(/\{initialText\}/);
     expect(source).not.toMatch(/\{formatAnimatedNumber\(value/);
+  });
+});
+
+describe('fix round final — compteurs animés + squelettes itinéraire', () => {
+  const readFile = (relative: string) => fs.readFileSync(path.join(process.cwd(), relative), 'utf8');
+
+  it('le rail consomme AnimatedNumber pour son compteur de phases', () => {
+    const source = readLiveSource('ActivityPreparationStatus.tsx');
+
+    expect(source).toContain("from './AnimatedNumber'");
+    expect(source).toContain('<AnimatedNumber value={completed}');
+  });
+
+  it('mobile : squelettes timeline/moments tant que l’enrichissement est pending et le bassin vide', () => {
+    const source = readFile(
+      'src/features/hub/components/mobile/itinerary/ItineraryMobileExperience.tsx'
+    );
+
+    expect(source).toContain('ActivitySectionSkeleton');
+    expect(source).toContain('variant="timeline"');
+    expect(source).toContain('variant="moments"');
+    expect(source).toContain("enrichment_status === 'pending'");
+  });
+
+  it('desktop : la timeline affiche le squelette (pending + 0 étape)', () => {
+    const source = readFile('src/features/trips/planner/DayView.tsx');
+
+    expect(source).toContain('ActivitySectionSkeleton');
+    expect(source).toContain('enrichmentPending');
   });
 });
 

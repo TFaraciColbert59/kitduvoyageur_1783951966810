@@ -6,11 +6,14 @@ import { StepCard } from './StepCard';
 import { recalculateDayMetrics, type PlannerStep } from './plannerEngine';
 import { GlassCapsuleBtn, GlassSubCard } from '@/components/ui';
 import { formatCivilDayIndex } from '@/lib/dates/tripDates';
+import { ActivitySectionSkeleton } from '@/features/hub/components/live/ActivitySectionSkeleton';
 
 export interface DayViewProps {
   dayNumber: number;
   startDate?: string | null;
   steps: PlannerStep[];
+  /** IMPORTANT 7 — enrichissement en attente + zéro étape → squelette timeline. */
+  enrichmentPending?: boolean;
   canEdit: boolean;
   onAddStep: (dayNumber: number) => void;
   onEditStep: (step: PlannerStep) => void;
@@ -27,6 +30,7 @@ export function DayView({
   dayNumber,
   startDate,
   steps,
+  enrichmentPending = false,
   canEdit,
   onAddStep,
   onEditStep,
@@ -219,6 +223,9 @@ export function DayView({
 
       {/* Liste ordonnée des étapes */}
       {steps.length === 0 ? (
+        enrichmentPending ? (
+          <ActivitySectionSkeleton variant="timeline" />
+        ) : (
         <div className="text-center py-12 px-4 rounded-[var(--lkv-radius-card)] glass border border-dashed border-white/60 shadow-sm">
           <div className="w-12 h-12 rounded-full glass-sub-card text-[var(--lkv-primary)] flex items-center justify-center mx-auto mb-3 shadow-2xs">
             <Icon name="footprints" className="w-6 h-6" />
@@ -240,6 +247,7 @@ export function DayView({
             </GlassCapsuleBtn>
           )}
         </div>
+        )
       ) : (
         <div className="space-y-3">
           {steps.map((step, idx) => (

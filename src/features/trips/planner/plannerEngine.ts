@@ -19,6 +19,36 @@ export interface PlannerStep {
   elevation_loss_m?: number | null;
   /** Phase enrichissement (§4.3) — kind (moment) / provenance, si mappé. */
   metadata?: Record<string, unknown> | null;
+  /** Provenance additive (`llm_suggestion`), si mappée depuis trip_steps. */
+  source?: string | null;
+}
+
+/**
+ * Fix round final — reporte `source`/`metadata` réels de `trip_steps` (TripFull)
+ * sur les étapes du planificateur (mappage initial sans provenance) : les
+ * rangées LLM affichent leur badge « Suggestion IA » sans requête nouvelle.
+ */
+export function withStepProvenance<
+  T extends { id: string; metadata?: Record<string, unknown> | null; source?: string | null },
+>(
+  steps: readonly T[],
+  tripSteps: ReadonlyArray<{
+    id: string;
+    metadata?: Record<string, unknown> | null;
+    source?: string | null;
+  }>
+): T[] {
+  if (tripSteps.length === 0) return [...steps];
+  const byId = new Map(tripSteps.map((step) => [step.id, step]));
+  return steps.map((step) => {
+    const real = byId.get(step.id);
+    if (!real) return step;
+    return {
+      ...step,
+      metadata: step.metadata ?? real.metadata ?? null,
+      source: step.source ?? real.source ?? null,
+    };
+  });
 }
 
 export interface DayMetrics {

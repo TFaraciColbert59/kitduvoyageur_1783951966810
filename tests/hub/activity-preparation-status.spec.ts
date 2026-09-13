@@ -168,6 +168,52 @@ describe('markup du rail', () => {
     expect(html).toContain('Préparation prête');
   });
 
+  it('compteurs serveur : phase réelle dès le premier paint (kit)', () => {
+    const html = renderToStaticMarkup(
+      React.createElement(ActivityPreparationStatus, {
+        preparation: {
+          counts: { steps: 3, moments: 2, affiliation: 0, kit: 4 },
+          enrichmentStatus: 'pending',
+        },
+        tripId: 'trip-1',
+      })
+    );
+
+    expect(html).toContain('data-phase="kit"');
+    expect(count(html, 'data-rail-check')).toBe(4);
+  });
+
+  it('enrichissement serveur done : rail terminé même sans affiliation (zéro dépense)', () => {
+    const html = renderToStaticMarkup(
+      React.createElement(ActivityPreparationStatus, {
+        preparation: {
+          counts: { steps: 1, moments: 1, affiliation: 0, kit: 2 },
+          enrichmentStatus: 'done',
+        },
+      })
+    );
+
+    expect(html).toContain('data-phase="done"');
+    expect(count(html, 'data-rail-check')).toBe(6);
+    expect(html).toContain('Préparation prête');
+  });
+
+  it('échec définitif : version essentielle servie + bouton Améliorer', () => {
+    const html = renderToStaticMarkup(
+      React.createElement(ActivityPreparationStatus, {
+        preparation: {
+          counts: { steps: 1, moments: 0, affiliation: 0, kit: 0 },
+          enrichmentStatus: 'failed',
+        },
+        tripId: 'trip-1',
+      })
+    );
+
+    expect(html).toContain('data-rail-essential');
+    expect(html).toContain('Version essentielle servie');
+    expect(html).toContain('Améliorer');
+  });
+
   it('reduced-motion : le rail rend sans animation de pulsation', () => {
     motionControl.reduced = true;
     const html = renderToStaticMarkup(
@@ -314,7 +360,10 @@ describe('fix round 1 — reveals INSERT uniquement (UPDATE = écho local)', () 
     );
     expect(bridge).toContain('payload.eventType');
     expect(bridge).toMatch(/eventType === 'UPDATE' \? 'UPDATE' : 'INSERT'/);
-    expect(bridge).toMatch(/emitActivityArrival\(payload\.table, String\(id\), eventType\)/);
+    expect(bridge).toMatch(/emitActivityArrival\(payload\.table, String\(id\), eventType/);
+    // Fix round final — le bassin est calculé depuis la ligne réelle.
+    expect(bridge).toContain('bucketForRow(payload.table, row)');
+    expect(bridge).toContain('payload.new');
   });
 
   it('emitActivityArrival publie { table, id, eventType } sur le bus', () => {

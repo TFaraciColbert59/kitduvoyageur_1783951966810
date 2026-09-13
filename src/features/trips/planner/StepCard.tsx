@@ -4,6 +4,8 @@ import Icon from '@/components/ui/Icon';
 import React from 'react';
 import { Footprints, Car, Bus, Train, Plane, Ship, Bike, Compass } from 'lucide-react';
 import type { PlannerStep } from './plannerEngine';
+import { isLlmSuggestion } from '../engine/llmProvenance';
+import { LlmSuggestionBadge } from '../components/LlmSuggestionBadge';
 
 export interface StepCardProps {
   step: PlannerStep;
@@ -81,6 +83,7 @@ export function StepCard({
 }: StepCardProps) {
   const Icon = getTransportIcon(step.transport_mode);
   const modeLabel = getTransportLabel(step.transport_mode);
+  const llmStep = isLlmSuggestion(step.source, step.metadata);
 
   return (
     <div className="glass rounded-[var(--lkv-radius-card)] p-4 sm:p-5 border border-white/60 shadow-sm transition-all duration-200 hover:shadow-md">
@@ -96,6 +99,7 @@ export function StepCard({
               <span className="text-[11px] font-semibold uppercase tracking-wider px-2.5 py-0.5 rounded-full glass-sub-card text-[var(--lkv-primary)] border border-white/60 shadow-2xs">
                 {modeLabel}
               </span>
+              {llmStep && <LlmSuggestionBadge />}
               {step.location_name && (
                 <span className="text-xs text-[var(--lkv-text-muted)] flex items-center gap-1 truncate max-w-[200px]">
                   <Icon name="map-pin" className="w-3.5 h-3.5 text-[var(--lkv-primary)] shrink-0" />

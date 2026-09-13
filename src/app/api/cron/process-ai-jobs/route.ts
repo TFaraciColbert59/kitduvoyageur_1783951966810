@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import type { SupabaseClient } from '@supabase/supabase-js';
 import { getServiceSupabase } from '@/lib/ai/serviceClient';
 import { consumeQuota } from '@/lib/ai/quota';
 import { askAI } from '@/lib/ai/askAI';
@@ -26,9 +27,13 @@ export const dynamic = 'force-dynamic';
  *
  * `activity-enrichment` (Préparer) délègue à `processActivityEnrichmentJob` :
  * quota → `deferred` (re-pending sans tentative), provider/transport → `retry`
- * (re-pending avec tentative+1), échec définitif → `failed` tracé dans
- * `trips.metadata`, succès → `done` + provenance dans les tables du voyage.
+ * (re-pending avec tentative+1, sauf au cap 5 → `failed` terminal + trace
+ * `trips.metadata`), échec définitif → `failed` tracé dans `trips.metadata`,
+ * succès → `done` + provenance dans les tables du voyage.
  */
+
+/** Cap de tentatives du claim SQL (`claim_pending_ai_jobs`, attempts < 5). */
+const MAX_ENRICHMENT_ATTEMPTS = 5;
 
 interface ProcessedCounts {
   done: number;
@@ -93,9 +98,32 @@ export async function POST(request: NextRequest) {
           continue;
         }
         if (enrichment.outcome === 'retry') {
+          const nextAttempts = job.attempts + 1;
+          // Cap 5 (miroir du claim SQL `attempts < 5`) : re-pending à 5 serait un
+          // cul-de-sac invisible (jamais réclamé). La 5e tentative est terminale :
+          // job `failed` + `trips.metadata.enrichment_status='failed'` pour que le
+          // rail serve « version essentielle » et propose « Améliorer ».
+          if (nextAttempts >= MAX_ENRICHMENT_ATTEMPTS) {
+            await supabase
+              .from('ai_jobs')
+              .update({
+                status: 'failed',
+                attempts: nextAttempts,
+                result: { error: enrichment.detail ?? 'enrichissement en échec' },
+                processed_at: enrichmentProcessedAt,
+              })
+              .eq('id', job.id);
+            await markTripEnrichmentFailed(
+              supabase,
+              parsedEnrichment.data.tripId,
+              enrichment.detail ?? 'enrichissement en échec'
+            );
+            counts.failed += 1;
+            continue;
+          }
           await supabase
             .from('ai_jobs')
-            .update({ status: 'pending', attempts: job.attempts + 1, processed_at: enrichmentProcessedAt })
+            .update({ status: 'pending', attempts: nextAttempts, processed_at: enrichmentProcessedAt })
             .eq('id', job.id);
           counts.retryFailed += 1;
           continue;
@@ -228,5 +256,48 @@ export async function POST(request: NextRequest) {
   } catch (err) {
     console.error('[ai/cron] erreur inattendue:', err instanceof Error ? err.message : err);
     return NextResponse.json({ error: 'Traitement interrompu' }, { status: 500 });
+  }
+}
+
+/**
+ * Échec terminal d'enrichissement (cap de tentatives) : fusionne l'état dans
+ * `trips.metadata` — même contrat que `service.traceFailure`, mais sans TripRow.
+ */
+async function markTripEnrichmentFailed(
+  supabase: SupabaseClient,
+  tripId: string,
+  detail: string
+): Promise<void> {
+  try {
+    const { data, error: readError } = await supabase
+      .from('trips')
+      .select('metadata')
+      .eq('id', tripId)
+      .maybeSingle();
+    if (readError) {
+      console.error('[ai/cron] lecture métadonnées activité en échec:', readError.message);
+      return;
+    }
+    const current =
+      data && typeof (data as { metadata?: unknown }).metadata === 'object' && data.metadata
+        ? ((data as { metadata: Record<string, unknown> }).metadata ?? {})
+        : {};
+    const { error } = await supabase
+      .from('trips')
+      .update({
+        metadata: {
+          ...current,
+          enrichment_status: 'failed',
+          enrichment_error: detail,
+          enrichment_at: new Date().toISOString(),
+        },
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', tripId);
+    if (error) {
+      console.error('[ai/cron] trace échec activité en échec:', error.message, tripId);
+    }
+  } catch (error) {
+    console.error('[ai/cron] trace échec activité en erreur inattendue:', error, tripId);
   }
 }

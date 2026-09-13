@@ -108,6 +108,8 @@ export interface TripStep {
   elevation_loss_m: number | null;
   /** Phase enrichissement (§4.3) — provenance / kind (moment, étape). */
   metadata?: Record<string, unknown> | null;
+  /** Provenance additive (`llm_suggestion` pour les lignes écrites par le job). */
+  source?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -192,6 +194,9 @@ export interface TripPoi {
   notes: string | null;
   visited: boolean;
   osm_id: string | null;
+  /** Provenance additive (`llm_suggestion`) + métadonnées du job. */
+  source?: string | null;
+  metadata?: Record<string, unknown> | null;
   created_at: string;
   updated_at: string;
 }
