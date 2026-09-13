@@ -197,6 +197,7 @@ const OWNED_ITEM = {
 function defaultRpcResults() {
   return {
     phase3_search_navigable_routes: { data: [ROUTE_ROW], error: null },
+    get_route_geojson: { data: GEOM_LINE, error: null },
     attach_adventure_plan_to_trip: {
       data: { plan_id: PLAN_ID, trip_id: TRIP_ID, correlation_id: CORRELATION_ID },
       error: null,
@@ -295,7 +296,6 @@ describe('Phase 5 — chaîne kit (TEST-PHASE5-CHAIN)', () => {
     const { client, captures } = createSession({
       user: { id: USER_ID },
       reads: {
-        hiking_routes: { id: ROUTE_ID, geom: GEOM_LINE },
         product_ownership: [OWNED_ITEM],
       },
       insertResults: { materiel_kits: { data: { id: 'kit-phase5' }, error: null } },
@@ -367,7 +367,6 @@ describe('Phase 5 — chaîne kit (TEST-PHASE5-CHAIN)', () => {
     const { client, captures } = createSession({
       user: { id: USER_ID },
       reads: {
-        hiking_routes: { id: ROUTE_ID, geom: GEOM_LINE },
         product_ownership: [],
       },
       insertResults: { materiel_kits: { data: { id: 'kit-phase5' }, error: null } },
@@ -402,7 +401,6 @@ describe('Phase 5 — chaîne kit (TEST-PHASE5-CHAIN)', () => {
     const { client, captures } = createSession({
       user: { id: USER_ID },
       reads: {
-        hiking_routes: { id: ROUTE_ID, geom: GEOM_LINE },
         product_ownership: [],
       },
       insertResults: { materiel_kits: { data: { id: 'kit-phase5' }, error: null } },

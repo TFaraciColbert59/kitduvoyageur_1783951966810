@@ -1,7 +1,6 @@
 'use server';
 
 import { randomUUID } from 'node:crypto';
-import { revalidatePath } from 'next/cache';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { createClient } from '@/lib/supabase/server';
 import { getServiceSupabase } from '@/lib/ai/serviceClient';
@@ -91,12 +90,19 @@ export type CreateTripFromAutogenIntentResult =
       tripId: string;
       slug: string;
       title: string;
-      planId: string | null;
-      routeId: number | null;
-      routeCandidates: AutogenRouteCandidate[];
-      correlationId: string;
-      reused: boolean;
       warnings: string[];
+      /**
+       * Champs de la chaîne complète ; absents d'un succès PARTIEL : le voyage
+       * est persisté mais la chaîne a été interrompue après l'insertion (la
+       * revalidation vit désormais dans le Route Handler).
+       */
+      planId?: string | null;
+      routeId?: number | null;
+      routeCandidates?: AutogenRouteCandidate[];
+      correlationId?: string;
+      reused?: boolean;
+      /** `true` = voyage persisté, chaîne interrompue après insertion. */
+      partial?: boolean;
     }
   | {
       ok: false;
@@ -435,6 +441,15 @@ export async function createTripFromAutogenIntent(
   const input = parsed.data;
   const layers = input.layers ?? {};
 
+  // Suivi hors `try` : un échec tardif APRÈS insertion doit répondre un succès
+  // partiel (le voyage existe) plutôt qu'une 500 qui ferait rejouer la chaîne
+  // et produirait un doublon (repli `createTrip` de l'appelant).
+  let warnings: string[] = [];
+  let store: ReturnType<typeof createSupabaseGenerationRequestStore> | null = null;
+  let pendingRequestId: string | null = null;
+  let tripRecord: { id: string; slug: string; title: string } | null = null;
+  let createdNewTrip = false;
+
   try {
     const session = await createClient();
     const {
@@ -449,8 +464,8 @@ export async function createTripFromAutogenIntent(
 
     const correlationId = input.correlationId ?? randomUUID();
     const idempotencyKey = input.idempotencyKey ?? correlationId;
-    const warnings: string[] = [];
-    const store = createSupabaseGenerationRequestStore(service);
+    warnings = [];
+    store = createSupabaseGenerationRequestStore(service);
 
     // ── 1. Registre de génération : idempotence, conflit, quota, reprise ─────
     const existing = await store.findByKey(user.id, idempotencyKey);
@@ -522,7 +537,6 @@ export async function createTripFromAutogenIntent(
       }
     }
 
-    let pendingRequestId: string | null = null;
     if (!existingPlanId) {
       if (existing?.status === 'failed') {
         await store.requeue(existing.id);
@@ -552,14 +566,18 @@ export async function createTripFromAutogenIntent(
     let routePolyline: { lat: number; lng: number }[] | null = null;
     if (bestRoute) {
       try {
-        const { data: geometryRow } = await session
-          .from('hiking_routes')
-          .select('id, geom')
-          .eq('id', bestRoute.routeId)
-          .maybeSingle();
-        routePolyline = polylineFromRouteGeom(
-          (geometryRow as { geom?: unknown } | null)?.geom
+        const { data: geometry, error: geometryError } = await session.rpc(
+          'get_route_geojson',
+          { p_route_id: bestRoute.routeId }
         );
+        if (geometryError) {
+          console.error(
+            '[LKDV autogen] lecture get_route_geojson en échec:',
+            geometryError.message
+          );
+        } else {
+          routePolyline = polylineFromRouteGeom(geometry);
+        }
       } catch (error) {
         console.error('[LKDV autogen] lecture géométrie en échec:', error);
       }
@@ -622,7 +640,6 @@ export async function createTripFromAutogenIntent(
       },
     };
 
-    let tripRecord: { id: string; slug: string; title: string } | null = null;
     if (existingTripId) {
       const { data: tripRow } = await session
         .from('trips')
@@ -666,6 +683,7 @@ export async function createTripFromAutogenIntent(
           slug: String((trip as { slug: string }).slug),
           title: String((trip as { title: string }).title),
         };
+        createdNewTrip = true;
       } catch (error) {
         console.error('[LKDV autogen] création du voyage en échec:', error);
         if (pendingRequestId) {
@@ -676,6 +694,47 @@ export async function createTripFromAutogenIntent(
     }
 
     const tripId = tripRecord.id;
+
+    // ── 3 bis. `route_id` écrit dès la création (idempotence précoce) ────────
+    // Le sentier réel est inscrit AVANT plan/kit : même si la chaîne s'arrête
+    // ensuite, le voyage reste identifiable (`uniq_trips_user_route`) et un
+    // rejeu de la préparation le réutilise au lieu d'en créer un second.
+    if (
+      createdNewTrip &&
+      bestRoute &&
+      Number.isInteger(bestRoute.routeId) &&
+      bestRoute.routeId > 0
+    ) {
+      baseMetadata.route_id = bestRoute.routeId;
+      try {
+        const { error: routeIdError } = await session
+          .from('trips')
+          .update({
+            metadata: { ...baseMetadata },
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', tripId)
+          .eq('user_id', user.id);
+        if (routeIdError) {
+          if (routeIdError.code === '23505') {
+            // Sentier déjà porté par un autre voyage : le voyage reste entier
+            // et utilisable sans `route_id` (métadonnées finales sans conflit).
+            delete baseMetadata.route_id;
+            console.warn(
+              '[LKDV autogen] route_id déjà pris à la création — voyage conservé sans route_id:',
+              tripId,
+              routeIdError.message
+            );
+          } else {
+            console.error('[LKDV autogen] route_id précoce en échec:', routeIdError.message);
+            warnings.push('Métadonnées de traçabilité partielles.');
+          }
+        }
+      } catch (error) {
+        console.error('[LKDV autogen] route_id précoce en échec:', error);
+        warnings.push('Métadonnées de traçabilité partielles.');
+      }
+    }
 
     // ── 4. Plan Adventure versionné (bundle plan/version/runs) ───────────────
     let planId = existingPlanId;
@@ -872,9 +931,6 @@ export async function createTripFromAutogenIntent(
       console.error('[LKDV autogen] événement trip.created en échec:', error);
     });
 
-    revalidatePath('/voyages');
-    revalidatePath('/hub', 'layout');
-
     return {
       ok: true,
       tripId,
@@ -892,6 +948,23 @@ export async function createTripFromAutogenIntent(
       '[LKDV autogen] erreur inattendue:',
       error instanceof Error ? error.message : error
     );
+    if (store && pendingRequestId) {
+      await store.markFailed(pendingRequestId).catch(() => undefined);
+    }
+    if (tripRecord) {
+      // Le voyage est déjà persisté : l'échec est tardif (la revalidation vit
+      // désormais dans le Route Handler). Répondre 500 ferait rejouer la
+      // chaîne chez l'appelant et produirait un second voyage — succès partiel.
+      warnings.push('revalidation déplacée vers le Route Handler');
+      return {
+        ok: true,
+        partial: true,
+        tripId: tripRecord.id,
+        slug: tripRecord.slug,
+        title: tripRecord.title,
+        warnings,
+      };
+    }
     return errorResult(500, 'Erreur serveur — réessayez.');
   }
 }

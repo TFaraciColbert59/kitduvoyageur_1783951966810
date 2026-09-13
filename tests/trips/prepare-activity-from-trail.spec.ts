@@ -6,6 +6,8 @@
  *   (c) sentier valide sans activité → `created`, `route_id` normalisé en nombre,
  *       dressage `trip_steps`/`trip_pois`/`trip_expenses` et enfilage `ai_jobs` ;
  *   (d) usine autogen en échec (exception ou non-ok) → `fallback_created` (trip minimal) ;
+ *   (j) usine ok partiel (voyage créé, échec tardif) → `created`, jamais de repli ;
+ *   (k) usine en exception avant insertion → repli autorisé ;
  *   (e) sentier sans géométrie → `unavailable/no_geometry` ;
  *   bonus : nom absent, non connecté, course sur l'index unique (23505 → reused),
  *   garantie `route_id` (retry + vérif + compensation `persist_failed`),
@@ -615,6 +617,55 @@ describe('prepareActivityFromTrail (Task 4)', () => {
     expect(mocks.runAutoGenPipeline).not.toHaveBeenCalled();
     expect(mocks.createTrip).not.toHaveBeenCalled();
     expect(captures.inserts).toHaveLength(0);
+  });
+
+  it('(j) usine ok partiel (voyage créé puis échec tardif) → created, AUCUN repli createTrip', async () => {
+    const { client, captures } = createService({
+      route: ROUTE,
+      meta: META,
+      geojson: GEOJSON,
+      existingTrips: [null],
+      tripMetadata: { metadata: {} },
+    });
+    serviceHolder.client = client;
+    mocks.createTripFromAutogenIntent.mockResolvedValue({
+      ok: true,
+      partial: true,
+      tripId: TRIP.id,
+      slug: TRIP.slug,
+      title: TRIP.title,
+      warnings: ['revalidation déplacée vers le Route Handler'],
+    } as never);
+
+    const outcome = await prepareActivityFromTrail(String(ROUTE_ID));
+
+    expect(outcome).toEqual({
+      status: 'created',
+      tripId: TRIP.id,
+      slug: TRIP.slug,
+      title: TRIP.title,
+    });
+    expect(mocks.createTrip).not.toHaveBeenCalled();
+    expect(insertFor(captures, 'trip_steps')).toBeDefined();
+    expect(insertFor(captures, 'ai_jobs')).toBeDefined();
+  });
+
+  it('(k) usine en exception AVANT toute insertion → repli createTrip autorisé', async () => {
+    const { client, captures } = createService({
+      route: ROUTE,
+      meta: META,
+      geojson: GEOJSON,
+      existingTrips: [null],
+      tripMetadata: { metadata: {} },
+    });
+    serviceHolder.client = client;
+    mocks.createTripFromAutogenIntent.mockRejectedValue(new Error('échec avant insertion'));
+
+    const outcome = await prepareActivityFromTrail(String(ROUTE_ID));
+
+    expect(outcome.status).toBe('fallback_created');
+    expect(mocks.createTrip).toHaveBeenCalledTimes(1);
+    expect(captures.deletes).toHaveLength(0);
   });
 });
 

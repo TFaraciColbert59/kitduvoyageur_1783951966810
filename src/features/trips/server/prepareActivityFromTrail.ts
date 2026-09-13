@@ -602,6 +602,16 @@ export async function prepareActivityFromTrail(trailIdRaw: string): Promise<Prep
       autoSelectRoute: true,
     });
     if (created.ok) {
+      // Succès partiel (échec tardif APRÈS insertion) : le voyage existe, il
+      // EST l'activité de ce sentier — jamais de repli `createTrip` ici, sous
+      // peine de créer un doublon réel.
+      if (created.partial) {
+        console.warn(
+          '[LKDV preparer-sentier] usine autogen partielle, voyage conservé:',
+          created.tripId,
+          created.warnings.join(' | ')
+        );
+      }
       record = { tripId: created.tripId, slug: created.slug, title: created.title, metadata: null };
     } else {
       console.error(
