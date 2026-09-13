@@ -20,7 +20,7 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON
   public.user_profiles
 TO authenticated, service_role;
 
-SELECT plan(47);
+SELECT plan(53);
 
 -- ----------------------------------------------------------------------------
 -- Fixtures — A organizer, B member, C observer, X non-membre, D pending
@@ -391,6 +391,74 @@ SELECT is(
    WHERE schemaname = 'public' AND policyname = 'invitations_public_read_by_token'),
   0,
   '47. INV-02. fuite `invitations_public_read_by_token` supprimee'
+);
+
+-- ════════════════════════════════════════════════════════════════════════════
+-- 48..53 — Integrite des roles (trigger enforce_group_role_change)
+-- ════════════════════════════════════════════════════════════════════════════
+
+-- Member B tente de s'auto-promouvoir
+SET LOCAL ROLE authenticated;
+SET LOCAL "request.jwt.claim.sub" = 'bd000000-0000-4000-8000-0000000000a2';
+
+SELECT throws_ok(
+  $$ UPDATE public.group_members SET role = 'organizer'
+     WHERE group_id = 'bd000000-0000-4000-8000-0000000000f1'
+       AND user_id = 'bd000000-0000-4000-8000-0000000000a2' $$,
+  '42501', NULL,
+  '48. INT-01. member : auto-promotion de role refusee'
+);
+SELECT throws_ok(
+  $$ UPDATE public.group_members SET status = 'left'
+     WHERE group_id = 'bd000000-0000-4000-8000-0000000000f1'
+       AND user_id = 'bd000000-0000-4000-8000-0000000000a2' $$,
+  '42501', NULL,
+  '49. INT-01. member : transition de statut non autorisee refusee'
+);
+
+-- Invite D accepte son invitation (pending -> active)
+RESET ROLE;
+SET LOCAL ROLE authenticated;
+SET LOCAL "request.jwt.claim.sub" = 'bd000000-0000-4000-8000-0000000000a5';
+
+SELECT lives_ok(
+  $$ UPDATE public.group_members SET status = 'active'
+     WHERE group_id = 'bd000000-0000-4000-8000-0000000000f1'
+       AND user_id = 'bd000000-0000-4000-8000-0000000000a5' $$,
+  '50. INT-02. invite : acceptation pending -> active autorisee'
+);
+
+-- Organizer A promeut B co-organisateur (manage_members)
+RESET ROLE;
+SET LOCAL ROLE authenticated;
+SET LOCAL "request.jwt.claim.sub" = 'bd000000-0000-4000-8000-0000000000a1';
+
+SELECT lives_ok(
+  $$ UPDATE public.group_members SET role = 'co_organizer'
+     WHERE group_id = 'bd000000-0000-4000-8000-0000000000f1'
+       AND user_id = 'bd000000-0000-4000-8000-0000000000a2' $$,
+  '51. INT-03. organizer : promotion d''un membre autorisee (manage_members)'
+);
+
+-- service_role (auth.uid() NULL) : gratuit
+RESET ROLE;
+
+SELECT lives_ok(
+  $$ UPDATE public.group_members SET role = 'member'
+     WHERE group_id = 'bd000000-0000-4000-8000-0000000000f1'
+       AND user_id = 'bd000000-0000-4000-8000-0000000000a2' $$,
+  '52. INT-03. service_role : changement de role tolere (auth.uid() NULL)'
+);
+
+-- Member B modifie un champ non protege (poids)
+SET LOCAL ROLE authenticated;
+SET LOCAL "request.jwt.claim.sub" = 'bd000000-0000-4000-8000-0000000000a2';
+
+SELECT lives_ok(
+  $$ UPDATE public.group_members SET weight_capacity = 12000
+     WHERE group_id = 'bd000000-0000-4000-8000-0000000000f1'
+       AND user_id = 'bd000000-0000-4000-8000-0000000000a2' $$,
+  '53. INT-04. member : mise a jour d''un champ libre autorisee'
 );
 
 SELECT * FROM finish();
