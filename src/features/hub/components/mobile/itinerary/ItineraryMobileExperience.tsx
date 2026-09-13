@@ -53,6 +53,7 @@ import { GroupeChipsRow, type GroupeChipDef } from '../groupe/GroupeChipsRow';
 import { GroupeRail } from '../groupe/GroupeRail';
 import { ItineraryHero } from './ItineraryHero';
 import { RenameTripModal } from '@/features/trips/components/RenameTripModal';
+import { TripInviteButton } from '@/features/trips/components/TripInviteButton';
 import { DayTraceMap } from './DayTraceMap';
 import { ItineraryDayTimeline } from './ItineraryDayTimeline';
 import { ActivitySectionSkeleton } from '../../live/ActivitySectionSkeleton';
@@ -631,6 +632,8 @@ export function ItineraryMobileExperience({ trip, initialSteps }: ItineraryMobil
         onOpenDays={() => setDaysOpen(true)}
         onRename={() => setRenameOpen(true)}
       />
+
+      <TripInviteButton trip={trip} className="w-full justify-center" />
 
       <GroupeChipsRow chips={chips} />
 

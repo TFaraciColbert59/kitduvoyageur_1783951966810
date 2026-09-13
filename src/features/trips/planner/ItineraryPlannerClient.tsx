@@ -22,6 +22,7 @@ import { DayView } from './DayView';
 import { StepEditModal } from './StepEditModal';
 import { MoveStepModal } from './MoveStepModal';
 import { RenameTripModal } from '@/features/trips/components/RenameTripModal';
+import { TripInviteButton } from '@/features/trips/components/TripInviteButton';
 import {
   addTripStepAction,
   updateTripStepAction,
@@ -389,6 +390,7 @@ export default function ItineraryPlannerClient({
           </div>
 
           <div className="flex items-center gap-2">
+            <TripInviteButton trip={trip} />
             {canEdit && (
               <GlassCapsuleBtn
                 type="button"
