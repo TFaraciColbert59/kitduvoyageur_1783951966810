@@ -18,8 +18,6 @@ import {
 import { HUB_HOME_HREF, hubSectionHref, type HubAdventureRef } from '../../../registry/hubSectionRegistry';
 import { estimateHikeDurationMin, formatHikeDuration } from '../../../engine/activityTypes';
 import { decideHikingNavigation } from '../../../engine/hikingNavigation';
-import { TripAffiliateSection } from '@/features/affiliation/components/TripAffiliateSection';
-import type { AffiliateLink } from '@/features/affiliation/types/affiliate.types';
 import type { TripFull } from '@/features/trips/types/trip.types';
 import type { HubHikingContext } from '../../../server/getHubAdventureData';
 
@@ -29,12 +27,6 @@ export interface SortieMomentProps {
   hiking?: HubHikingContext | null;
   /** Carte plein écran vertical sur la racine du hub (mobile). */
   fillViewport?: boolean;
-  /**
-   * T8 — liens d'affiliation actifs (phase prepare). Rendus dans la feuille du
-   * moment : la racine mobile du hub est plein écran sans scroll, la feuille
-   * (PremiumBottomSheet) est la surface de détail scrollable du moment.
-   */
-  affiliateLinks?: AffiliateLink[];
 }
 
 function MomentRow({ icon: Icon, label, value }: { icon: LucideIcon; label: string; value: string }) {
@@ -47,7 +39,7 @@ function MomentRow({ icon: Icon, label, value }: { icon: LucideIcon; label: stri
   );
 }
 
-export function SortieMoment({ trip, context, hiking, fillViewport = false, affiliateLinks = [] }: SortieMomentProps) {
+export function SortieMoment({ trip, context, hiking, fillViewport = false }: SortieMomentProps) {
   const moment = selectSortieMoment({ trip, context });
   const ref: HubAdventureRef = { nature: 'sortie', slug: trip.slug };
 
@@ -247,13 +239,6 @@ export function SortieMoment({ trip, context, hiking, fillViewport = false, affi
           Météo du jour : {Math.round(hiking.weather.current.tempC)}°C ·{' '}
           {hiking.weather.locationLabel ?? 'sur place'}
         </p>
-      )}
-      {affiliateLinks.length > 0 && (
-        <TripAffiliateSection
-          links={affiliateLinks}
-          tripId={trip.id}
-          countryNames={trip.destination_name ? [trip.destination_name] : []}
-        />
       )}
     </div>
   );

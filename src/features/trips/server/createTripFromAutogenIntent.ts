@@ -1,7 +1,6 @@
 'use server';
 
 import { randomUUID } from 'node:crypto';
-import { revalidatePath } from 'next/cache';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { createClient } from '@/lib/supabase/server';
 import { getServiceSupabase } from '@/lib/ai/serviceClient';
@@ -21,9 +20,14 @@ import {
   flattenPreparationKitItems,
   polylineFromRouteGeom,
   regionSearchTerms,
+  sumBudgetLines,
   type AutogenPreparationPlan,
 } from '../engine/autogenPreparation';
 import { kitItemMatchesOwned } from '../engine/kitCompletenessEngine';
+import {
+  selectKitProducts,
+  type KitProduct,
+} from '../engine/selectKitProducts';
 import {
   createSupabaseAdventurePersistence,
   createSupabaseAdventurePredictionPersistence,
@@ -43,6 +47,7 @@ import {
   resolveUserEntitlements,
   generationQuotaFor,
 } from '@/lib/entitlements/server';
+import { generateSafetyCheckpoints } from './generateSafetyCheckpoints';
 
 /**
  * Phase 3 — Commande canonique de création d'un voyage depuis l'intention
@@ -91,12 +96,19 @@ export type CreateTripFromAutogenIntentResult =
       tripId: string;
       slug: string;
       title: string;
-      planId: string | null;
-      routeId: number | null;
-      routeCandidates: AutogenRouteCandidate[];
-      correlationId: string;
-      reused: boolean;
       warnings: string[];
+      /**
+       * Champs de la chaîne complète ; absents d'un succès PARTIEL : le voyage
+       * est persisté mais la chaîne a été interrompue après l'insertion (la
+       * revalidation vit désormais dans le Route Handler).
+       */
+      planId?: string | null;
+      routeId?: number | null;
+      routeCandidates?: AutogenRouteCandidate[];
+      correlationId?: string;
+      reused?: boolean;
+      /** `true` = voyage persisté, chaîne interrompue après insertion. */
+      partial?: boolean;
     }
   | {
       ok: false;
@@ -262,30 +274,160 @@ function findOwnedMatch(
   );
 }
 
+/** Contexte réel passé au moteur de sélection catalogue. */
+export interface PreparationSelectionContext {
+  activity: string;
+  durationDays: number;
+  season?: string | null;
+  difficulty?: string | null;
+  elevationGainM?: number | null;
+  partySize: number;
+}
+
+interface CatalogueSelection {
+  products: KitProduct[];
+  bySlug: Map<string, { id: string }>;
+}
+
+function mapCataloguePriority(essentiality: string | null): KitProduct['priority'] {
+  const value = (essentiality ?? '').toLowerCase();
+  if (value.includes('indispensable')) return 'indispensable';
+  if (value.includes('optionnel')) return 'optionnel';
+  return 'recommande';
+}
+
+/**
+ * Catalogue kit réel (`shop_products` actifs), lu UNE fois par préparation.
+ * Seules les colonnes publiques sont sélectionnées (jamais `cost_price_eur`).
+ */
+async function loadKitCatalogue(supabase: SupabaseClient): Promise<CatalogueSelection> {
+  try {
+    const { data, error } = await supabase
+      .from('shop_products')
+      .select('id, slug, name, category, essentiality, weight_g, price_eur')
+      .eq('is_active', true)
+      .limit(500);
+    if (error || !Array.isArray(data)) {
+      if (error) {
+        console.error('[LKDV autogen] lecture catalogue kit en échec:', error.message);
+      }
+      return { products: [], bySlug: new Map() };
+    }
+    const products: KitProduct[] = [];
+    const bySlug = new Map<string, { id: string }>();
+    for (const row of data as Record<string, unknown>[]) {
+      const slug = typeof row.slug === 'string' ? row.slug : '';
+      if (slug === '') continue;
+      bySlug.set(slug, { id: String(row.id) });
+      products.push({
+        slug,
+        name: typeof row.name === 'string' ? row.name : slug,
+        category:
+          typeof row.category === 'string' && row.category !== '' ? row.category : 'Autre',
+        priority: mapCataloguePriority(
+          typeof row.essentiality === 'string' ? row.essentiality : null
+        ),
+        weightGrams: toFiniteNumber(row.weight_g),
+        sellPriceEur: toFiniteNumber(row.price_eur),
+      });
+    }
+    return { products, bySlug };
+  } catch (error) {
+    console.error('[LKDV autogen] lecture catalogue kit en échec:', error);
+    return { products: [], bySlug: new Map() };
+  }
+}
+
+interface PersistableKitSelectionItem {
+  name: string;
+  category: string;
+  quantity: number;
+  ownership: 'personal' | 'shared';
+  reason: string;
+  priority: 'vital' | 'recommended' | 'optional';
+  isVital: boolean;
+  weightGrams: number | null;
+  source: 'template' | 'contextual_kit';
+  recommendationKey: string | null;
+  shopProductId: string | null;
+}
+
+const SELECTION_PRIORITY: Record<
+  KitProduct['priority'],
+  PersistableKitSelectionItem['priority']
+> = {
+  indispensable: 'vital',
+  recommande: 'recommended',
+  optionnel: 'optional',
+};
+
 /** Persiste kit, budget, checklist et documents attendus (best-effort). */
-async function persistPreparation(
+export async function persistPreparation(
   supabase: SupabaseClient,
   userId: string,
   tripId: string,
   preparation: AutogenPreparationPlan,
+  selectionContext: PreparationSelectionContext,
   warnings: string[]
 ): Promise<{ kitId: string | null; estimatedBudgetEur: number | null; ownedItemsCount: number }> {
   let kitId: string | null = null;
   let ownedItemsCount = 0;
 
-  // Inventaire réel de l'utilisateur : détermine possédé/manquant + poids réels.
-  const ownedItems = await loadOwnedItems(supabase, userId);
+  // Inventaire réel + catalogue réel chargés en parallèle (UNE attente).
+  const [ownedItems, catalogue] = await Promise.all([
+    loadOwnedItems(supabase, userId),
+    loadKitCatalogue(supabase),
+  ]);
+  const selection = selectKitProducts(selectionContext, catalogue.products);
+  warnings.push(...selection.warnings);
 
   if (preparation.kit) {
     try {
-      const preparedItems = flattenPreparationKitItems(preparation.kit);
+      const selectedItems: PersistableKitSelectionItem[] = selection.items.map((item) => ({
+        name: item.product.name,
+        category: item.product.category,
+        quantity: item.quantity,
+        ownership: item.ownership,
+        reason: item.reason,
+        priority: SELECTION_PRIORITY[item.product.priority],
+        isVital: item.product.priority === 'indispensable',
+        weightGrams: item.product.weightGrams,
+        source: 'contextual_kit',
+        recommendationKey: null,
+        shopProductId: catalogue.bySlug.get(item.product.slug)?.id ?? null,
+      }));
+      // Repli historique uniquement si le catalogue réel est indisponible :
+      // jamais de kit vide tant que la couche kit existe.
+      const preparedItems: PersistableKitSelectionItem[] =
+        selectedItems.length > 0
+          ? selectedItems
+          : flattenPreparationKitItems(preparation.kit).map((item) => ({
+              name: item.name,
+              category: item.category,
+              quantity: item.quantity,
+              ownership: item.ownership,
+              reason: item.reason,
+              priority: item.priority,
+              isVital: item.isVital,
+              weightGrams: null,
+              source: item.source,
+              recommendationKey: item.recommendationKey,
+              shopProductId: null,
+            }));
+
+      // Poids du kit recalculé sur les lignes RÉELLEMENT écrites.
+      const totalWeightGrams = preparedItems.reduce((sum, item) => {
+        const owned = findOwnedMatch(item.name, item.recommendationKey, ownedItems);
+        return sum + (owned?.weightGrams ?? item.weightGrams ?? 0) * item.quantity;
+      }, 0);
+
       const { data: kit, error } = await supabase
         .from('materiel_kits')
         .insert({
           user_id: userId,
           name: preparation.kit.name,
           description: preparation.kit.description,
-          total_weight_g: preparation.kit.totalWeightGrams,
+          total_weight_g: totalWeightGrams,
           is_public: false,
           is_trashed: false,
         })
@@ -296,59 +438,66 @@ async function persistPreparation(
       } else {
         kitId = String((kit as { id: string }).id);
         if (preparedItems.length > 0) {
-          const { error: itemsError } = await supabase.from('materiel_kit_items').insert(
-            preparedItems.map((item) => {
-              const owned = findOwnedMatch(item.name, item.recommendationKey, ownedItems);
-              if (owned) ownedItemsCount++;
-              return {
-                kit_id: kitId,
-                user_id: userId,
-                name: item.name,
-                category: item.category,
-                weight_g: owned?.weightGrams ?? 0,
-                quantity: item.quantity,
-                is_checked: false,
-                ownership: item.ownership,
-                owner_id: item.ownership === 'personal' ? userId : null,
-                condition: owned?.condition ?? null,
-                reason: item.reason,
-                priority: item.priority,
-                is_vital: item.isVital,
-              };
-            })
-          );
+          // UNE insertion batch (colonnes reelles `materiel_kit_items` :
+          // `product_id` porte le lien catalogue, poids réels du catalogue).
+          const kitRows = preparedItems.map((item) => {
+            const owned = findOwnedMatch(item.name, item.recommendationKey, ownedItems);
+            if (owned) ownedItemsCount++;
+            return {
+              kit_id: kitId,
+              user_id: userId,
+              name: item.name,
+              category: item.category,
+              weight_g: owned?.weightGrams ?? item.weightGrams ?? 0,
+              quantity: item.quantity,
+              is_checked: false,
+              ownership: item.ownership,
+              owner_id: item.ownership === 'personal' ? userId : null,
+              condition: owned?.condition ?? null,
+              reason: item.reason,
+              priority: item.priority,
+              is_vital: item.isVital,
+              product_id: item.shopProductId,
+            };
+          });
+          const { error: itemsError } = await supabase
+            .from('materiel_kit_items')
+            .insert(kitRows);
           if (itemsError) {
             warnings.push('Kit créé mais ses articles n’ont pas tous été enregistrés.');
           }
 
           // Le sac du voyage (section Équipement / checklist) reflète le MÊME
-          // kit : poids repris de l'inventaire réel, sinon null (jamais un
-          // poids inventé) ; `missing` = matériel non possédé à se procurer.
-          const { error: tripItemsError } = await supabase.from('trip_items').insert(
-            preparedItems.map((item) => {
-              const owned = findOwnedMatch(item.name, item.recommendationKey, ownedItems);
-              return {
-                trip_id: tripId,
-                item_name: item.name,
-                category: item.category,
-                quantity: item.quantity,
-                weight_grams: owned?.weightGrams ?? null,
-                is_packed: false,
-                status: owned ? 'needed' : 'missing',
-                source: owned ? 'inventory' : item.source,
-                priority: item.priority,
-                is_vital: item.isVital,
-                is_worn: false,
-                is_consumable: false,
-                purchase_state: owned ? 'added' : 'needed',
-                inventory_item_id: owned?.id ?? null,
-                ownership: item.ownership,
-                owner_id: item.ownership === 'personal' ? userId : null,
-                condition: owned?.condition ?? null,
-                reason: item.reason,
-              };
-            })
-          );
+          // kit : poids catalogue réel quand l'inventaire ne le fournit pas ;
+          // `missing` = matériel non possédé à se procurer. UNE insertion batch,
+          // dérivée explicitement (aucun await par ligne).
+          const tripItemRows = preparedItems.map((item) => {
+            const owned = findOwnedMatch(item.name, item.recommendationKey, ownedItems);
+            return {
+              trip_id: tripId,
+              item_name: item.name,
+              category: item.category,
+              quantity: item.quantity,
+              weight_grams: owned?.weightGrams ?? item.weightGrams,
+              is_packed: false,
+              status: owned ? 'needed' : 'missing',
+              source: owned ? 'inventory' : item.source,
+              priority: item.priority,
+              is_vital: item.isVital,
+              is_worn: false,
+              is_consumable: false,
+              purchase_state: owned ? 'added' : 'needed',
+              inventory_item_id: owned?.id ?? null,
+              shop_product_id: item.shopProductId,
+              ownership: item.ownership,
+              owner_id: item.ownership === 'personal' ? userId : null,
+              condition: owned?.condition ?? null,
+              reason: item.reason,
+            };
+          });
+          const { error: tripItemsError } = await supabase
+            .from('trip_items')
+            .insert(tripItemRows);
           if (tripItemsError) {
             warnings.push('Kit créé mais le sac du voyage n’a pas été garni.');
           }
@@ -373,7 +522,7 @@ async function persistPreparation(
           category: line.category,
           expense_date: today,
           split_type: 'equal',
-          is_planned: true,
+          is_planned: line.isPlanned,
           metadata: {
             source: 'autogen',
             estimated: true,
@@ -418,8 +567,7 @@ async function persistPreparation(
 
   return {
     kitId,
-    estimatedBudgetEur:
-      preparation.budgetLines.length > 0 ? preparation.budgetLines[0].amountEur : null,
+    estimatedBudgetEur: sumBudgetLines(preparation.budgetLines),
     ownedItemsCount,
   };
 }
@@ -435,6 +583,15 @@ export async function createTripFromAutogenIntent(
   const input = parsed.data;
   const layers = input.layers ?? {};
 
+  // Suivi hors `try` : un échec tardif APRÈS insertion doit répondre un succès
+  // partiel (le voyage existe) plutôt qu'une 500 qui ferait rejouer la chaîne
+  // et produirait un doublon (repli `createTrip` de l'appelant).
+  let warnings: string[] = [];
+  let store: ReturnType<typeof createSupabaseGenerationRequestStore> | null = null;
+  let pendingRequestId: string | null = null;
+  let tripRecord: { id: string; slug: string; title: string } | null = null;
+  let createdNewTrip = false;
+
   try {
     const session = await createClient();
     const {
@@ -449,8 +606,8 @@ export async function createTripFromAutogenIntent(
 
     const correlationId = input.correlationId ?? randomUUID();
     const idempotencyKey = input.idempotencyKey ?? correlationId;
-    const warnings: string[] = [];
-    const store = createSupabaseGenerationRequestStore(service);
+    warnings = [];
+    store = createSupabaseGenerationRequestStore(service);
 
     // ── 1. Registre de génération : idempotence, conflit, quota, reprise ─────
     const existing = await store.findByKey(user.id, idempotencyKey);
@@ -522,7 +679,6 @@ export async function createTripFromAutogenIntent(
       }
     }
 
-    let pendingRequestId: string | null = null;
     if (!existingPlanId) {
       if (existing?.status === 'failed') {
         await store.requeue(existing.id);
@@ -552,14 +708,18 @@ export async function createTripFromAutogenIntent(
     let routePolyline: { lat: number; lng: number }[] | null = null;
     if (bestRoute) {
       try {
-        const { data: geometryRow } = await session
-          .from('hiking_routes')
-          .select('id, geom')
-          .eq('id', bestRoute.routeId)
-          .maybeSingle();
-        routePolyline = polylineFromRouteGeom(
-          (geometryRow as { geom?: unknown } | null)?.geom
+        const { data: geometry, error: geometryError } = await session.rpc(
+          'get_route_geojson',
+          { p_route_id: bestRoute.routeId }
         );
+        if (geometryError) {
+          console.error(
+            '[LKDV autogen] lecture get_route_geojson en échec:',
+            geometryError.message
+          );
+        } else {
+          routePolyline = polylineFromRouteGeom(geometry);
+        }
       } catch (error) {
         console.error('[LKDV autogen] lecture géométrie en échec:', error);
       }
@@ -622,7 +782,6 @@ export async function createTripFromAutogenIntent(
       },
     };
 
-    let tripRecord: { id: string; slug: string; title: string } | null = null;
     if (existingTripId) {
       const { data: tripRow } = await session
         .from('trips')
@@ -653,10 +812,7 @@ export async function createTripFromAutogenIntent(
             visibility: 'private',
             primary_activity: derivePrimaryActivity(input.brief ?? null),
             difficulty: deriveDifficulty(layers),
-            estimated_budget:
-              preparationPreview.budgetLines.length > 0
-                ? preparationPreview.budgetLines[0].amountEur
-                : null,
+            estimated_budget: sumBudgetLines(preparationPreview.budgetLines),
             metadata: baseMetadata,
           },
           user.id
@@ -666,6 +822,7 @@ export async function createTripFromAutogenIntent(
           slug: String((trip as { slug: string }).slug),
           title: String((trip as { title: string }).title),
         };
+        createdNewTrip = true;
       } catch (error) {
         console.error('[LKDV autogen] création du voyage en échec:', error);
         if (pendingRequestId) {
@@ -676,6 +833,47 @@ export async function createTripFromAutogenIntent(
     }
 
     const tripId = tripRecord.id;
+
+    // ── 3 bis. `route_id` écrit dès la création (idempotence précoce) ────────
+    // Le sentier réel est inscrit AVANT plan/kit : même si la chaîne s'arrête
+    // ensuite, le voyage reste identifiable (`uniq_trips_user_route`) et un
+    // rejeu de la préparation le réutilise au lieu d'en créer un second.
+    if (
+      createdNewTrip &&
+      bestRoute &&
+      Number.isInteger(bestRoute.routeId) &&
+      bestRoute.routeId > 0
+    ) {
+      baseMetadata.route_id = bestRoute.routeId;
+      try {
+        const { error: routeIdError } = await session
+          .from('trips')
+          .update({
+            metadata: { ...baseMetadata },
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', tripId)
+          .eq('user_id', user.id);
+        if (routeIdError) {
+          if (routeIdError.code === '23505') {
+            // Sentier déjà porté par un autre voyage : le voyage reste entier
+            // et utilisable sans `route_id` (métadonnées finales sans conflit).
+            delete baseMetadata.route_id;
+            console.warn(
+              '[LKDV autogen] route_id déjà pris à la création — voyage conservé sans route_id:',
+              tripId,
+              routeIdError.message
+            );
+          } else {
+            console.error('[LKDV autogen] route_id précoce en échec:', routeIdError.message);
+            warnings.push('Métadonnées de traçabilité partielles.');
+          }
+        }
+      } catch (error) {
+        console.error('[LKDV autogen] route_id précoce en échec:', error);
+        warnings.push('Métadonnées de traçabilité partielles.');
+      }
+    }
 
     // ── 4. Plan Adventure versionné (bundle plan/version/runs) ───────────────
     let planId = existingPlanId;
@@ -778,27 +976,45 @@ export async function createTripFromAutogenIntent(
     }
 
     // ── 7. Kit, budget, checklist, documents attendus (best-effort) ──────────
-    // Cohérence avec le VOYAGE/PLAN/ROUTE réellement retenus : les recommandations
-    // citent les données réelles du parcours sélectionné (distance, D+, difficulté).
-    const preparation = buildAutogenPreparation({
-      brief: input.brief ?? null,
-      layers,
-      partySize: draft.partySize,
-      routeName: selectedRouteId ? bestRoute?.name ?? null : null,
-      activity: tripActivity,
-      countryCode: draft.destinationCountryCode,
-      durationDays,
-      seasonMonth,
-      route: selectedRouteId ? routeContext : null,
-    });
+    // UN SEUL calcul de préparation (l'aperçu) est réutilisé ; le kit est
+    // construit depuis le catalogue réel (`selectKitProducts`) et les insertions
+    // sont batchées. Les recommandations citent le parcours candidat retenu.
+    const preparation = preparationPreview;
     warnings.push(...preparation.warnings);
     const { kitId, estimatedBudgetEur, ownedItemsCount } = await persistPreparation(
       session,
       user.id,
       tripId,
       preparation,
+      {
+        activity: tripActivity,
+        durationDays: durationDays ?? 0,
+        season: seasonMonth != null ? String(seasonMonth) : null,
+        difficulty: deriveDifficulty(layers),
+        elevationGainM: routeContext?.elevationGainM ?? null,
+        partySize: draft.partySize,
+      },
       warnings
     );
+
+    // ── 7 bis. Points de contrôle sécurité (best-effort, dates réelles) ─────
+    // Sans date de départ réelle, rien n'est créé (règle : jamais de date inventée).
+    if (draft.startDate) {
+      try {
+        const checkpoints = await generateSafetyCheckpoints(tripId, {
+          startDate: draft.startDate,
+          endDate: draft.endDate,
+          durationDays: durationDays ?? 0,
+          activity: tripActivity,
+          difficulty: routeContext?.difficulty ?? null,
+          countryCode: draft.destinationCountryCode,
+          partySize: draft.partySize,
+        });
+        warnings.push(...checkpoints.warnings);
+      } catch (error) {
+        console.error('[LKDV autogen] points de contrôle sécurité en échec:', error);
+      }
+    }
 
     // ── 8. Métadonnées finales : plan, parcours, préparation, avertissements ─
     // Comportement documenté (fix round final) : un `route_id` déjà pris
@@ -872,9 +1088,6 @@ export async function createTripFromAutogenIntent(
       console.error('[LKDV autogen] événement trip.created en échec:', error);
     });
 
-    revalidatePath('/voyages');
-    revalidatePath('/hub', 'layout');
-
     return {
       ok: true,
       tripId,
@@ -892,6 +1105,23 @@ export async function createTripFromAutogenIntent(
       '[LKDV autogen] erreur inattendue:',
       error instanceof Error ? error.message : error
     );
+    if (store && pendingRequestId) {
+      await store.markFailed(pendingRequestId).catch(() => undefined);
+    }
+    if (tripRecord) {
+      // Le voyage est déjà persisté : l'échec est tardif (la revalidation vit
+      // désormais dans le Route Handler). Répondre 500 ferait rejouer la
+      // chaîne chez l'appelant et produirait un second voyage — succès partiel.
+      warnings.push('revalidation déplacée vers le Route Handler');
+      return {
+        ok: true,
+        partial: true,
+        tripId: tripRecord.id,
+        slug: tripRecord.slug,
+        title: tripRecord.title,
+        warnings,
+      };
+    }
     return errorResult(500, 'Erreur serveur — réessayez.');
   }
 }

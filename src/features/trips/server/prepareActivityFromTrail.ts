@@ -23,6 +23,8 @@ import {
 import type { CreateTripFromAutogenIntentInput } from '../schemas/autogenTripCreate.schema';
 import type { TripBrief } from '../schemas/autoGen.schema';
 import { enqueueActivityEnrichment } from './activityEnrichment/enqueue';
+import { generateTripDocuments } from './generateTripDocuments';
+import { generateJournalNotes } from './generateJournalNotes';
 
 /**
  * « Préparer » un sentier → activité complète (Task 4).
@@ -449,6 +451,37 @@ interface PlateInput {
   partySize: number;
 }
 
+/**
+ * POI réels rattachés à un jour : index de polyligne le plus proche du POI,
+ * fraction de progression → jour correspondant (jamais un POI hors parcours).
+ */
+function poiNamesForDay(
+  pois: TrailPoiRow[],
+  polyline: TrailPoint[],
+  dayNumber: number,
+  days: number
+): string[] {
+  if (pois.length === 0 || polyline.length === 0 || days <= 0) return [];
+  const names: string[] = [];
+  for (const poi of pois) {
+    let bestIndex = 0;
+    let bestDistance = Number.POSITIVE_INFINITY;
+    for (let index = 0; index < polyline.length; index += 1) {
+      const deltaLat = polyline[index].lat - poi.lat;
+      const deltaLng = polyline[index].lng - poi.lng;
+      const squared = deltaLat * deltaLat + deltaLng * deltaLng;
+      if (squared < bestDistance) {
+        bestDistance = squared;
+        bestIndex = index;
+      }
+    }
+    const fraction = polyline.length > 1 ? bestIndex / (polyline.length - 1) : 0;
+    const day = Math.max(1, Math.min(days, Math.floor(fraction * days) + 1));
+    if (day === dayNumber) names.push(poi.name);
+  }
+  return names;
+}
+
 /** Dressage best-effort : chaque insert est isolé, jamais bloquant. */
 async function plateDeterministicContent(input: PlateInput): Promise<void> {
   const { writer, userId, tripId, trail, meta, polyline, pois, layers, partySize } = input;
@@ -479,6 +512,29 @@ async function plateDeterministicContent(input: PlateInput): Promise<void> {
       }
     } catch (error) {
       console.error('[LKDV preparer-sentier] insertion trip_steps en erreur inattendue:', error);
+    }
+
+    // Carnet : 1 note pré-remplie par jour réel (best-effort, données réelles).
+    try {
+      const journal = await generateJournalNotes(
+        tripId,
+        userId,
+        steps.map((step) => ({
+          dayNumber: step.dayNumber,
+          title: step.title,
+          distanceKm: step.distanceKm,
+          elevationGainM: step.elevationGainM,
+          poiNames: poiNamesForDay(pois, polyline, step.dayNumber, steps.length),
+        }))
+      );
+      if (journal.warnings.length > 0) {
+        console.warn(
+          '[LKDV preparer-sentier] notes de carnet partielles:',
+          journal.warnings.join(' | ')
+        );
+      }
+    } catch (error) {
+      console.error('[LKDV preparer-sentier] notes de carnet en échec:', error);
     }
   }
 
@@ -602,6 +658,16 @@ export async function prepareActivityFromTrail(trailIdRaw: string): Promise<Prep
       autoSelectRoute: true,
     });
     if (created.ok) {
+      // Succès partiel (échec tardif APRÈS insertion) : le voyage existe, il
+      // EST l'activité de ce sentier — jamais de repli `createTrip` ici, sous
+      // peine de créer un doublon réel.
+      if (created.partial) {
+        console.warn(
+          '[LKDV preparer-sentier] usine autogen partielle, voyage conservé:',
+          created.tripId,
+          created.warnings.join(' | ')
+        );
+      }
       record = { tripId: created.tripId, slug: created.slug, title: created.title, metadata: null };
     } else {
       console.error(
@@ -689,6 +755,19 @@ export async function prepareActivityFromTrail(trailIdRaw: string): Promise<Prep
     layers,
     partySize: partySizeFromBrief(brief),
   });
+
+  // Documents réels (feuille de route PDF + GPX) : best-effort, jamais bloquant.
+  try {
+    const documents = await generateTripDocuments(tripId, user.id);
+    if (documents.warnings.length > 0) {
+      console.warn(
+        '[LKDV preparer-sentier] documents réels partiels:',
+        documents.warnings.join(' | ')
+      );
+    }
+  } catch (error) {
+    console.error('[LKDV preparer-sentier] génération des documents en échec:', error);
+  }
 
   await enqueueActivityEnrichment(tripId, user.id);
 

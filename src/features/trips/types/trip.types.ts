@@ -3,6 +3,8 @@
  * Chantier 1 : Fondations du Module Voyage
  */
 
+import type { FieldSource } from '../domain/memberProfile';
+
 export type TripStatus = 'draft' | 'planned' | 'active' | 'completed' | 'cancelled';
 export type TripVisibility = 'private' | 'unlisted' | 'public';
 export type TripCollaboratorRole = 'owner' | 'editor' | 'viewer';
@@ -67,6 +69,8 @@ export interface Trip {
   group_id: string | null;
   share_token: string | null;
   kit_id?: string | null;
+  /** Task 15/18 — taille d'équipage recalculée (null = jamais recalculée). */
+  party_size?: number | null;
   metadata: Record<string, unknown> | null;
   created_at: string;
   updated_at: string;
@@ -270,8 +274,31 @@ export interface TripFull extends Trip {
   pois: TripPoi[];
   safety_checkpoints: TripSafetyCheckpoint[];
   notes: TripNote[];
+  /** Task 17/19 — snapshots profils membres par activité (badges provenance). */
+  member_profiles?: TripMemberProfile[];
   user_role?: TripRole | null;
   permissions: TripPermissions;
+}
+
+/** Snapshot `trip_member_profiles` : données de préparation par membre. */
+export interface TripMemberProfile {
+  trip_id: string;
+  user_id: string;
+  consented_at: string | null;
+  flat_speed_kmh: number | null;
+  ascent_speed_m_per_h: number | null;
+  descent_speed_m_per_h: number | null;
+  pack_weight_kg: number | null;
+  max_carry_kg: number | null;
+  experience_level: string | null;
+  limitations: string | null;
+  is_child: boolean;
+  sources: Record<string, FieldSource>;
+  calibration_level: string | null;
+  sample_count: number | null;
+  party_version: number;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface TripStats {

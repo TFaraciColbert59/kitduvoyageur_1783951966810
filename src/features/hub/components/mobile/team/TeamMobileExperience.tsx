@@ -3,6 +3,7 @@
 import { useMemo, useState, useTransition, type FormEvent } from 'react';
 import { Dog, HeartPulse, Plus, UserPlus } from 'lucide-react';
 import { ConfirmDialog } from '@/features/trips/components/ConfirmDialog';
+import { MemberProfileBadges } from '@/features/trips/components/MemberProfileBadges';
 import type { TripFull } from '@/features/trips/types/trip.types';
 import type { HumanParticipant } from '@/features/participants/types/participant.types';
 import { useParticipantsStore } from '@/features/participants/stores/useParticipantsStore';
@@ -65,8 +66,10 @@ export function TeamMobileExperience({ trip }: TeamMobileExperienceProps) {
         name: collab.profile?.full_name || 'Voyageur LKDV',
         role: collab.role,
         joinedAt: collab.joined_at,
+        profile:
+          (trip.member_profiles ?? []).find((entry) => entry.user_id === collab.user_id) ?? null,
       })),
-    [trip.collaborators]
+    [trip.collaborators, trip.member_profiles]
   );
 
   const daysLeft = useMemo(() => {
@@ -224,7 +227,7 @@ export function TeamMobileExperience({ trip }: TeamMobileExperienceProps) {
         ) : (
           memberRows.map((member) => (
             <li key={member.id} className="shrink-0 snap-start">
-              <div className="glass flex h-[9rem] w-[9.5rem] flex-col items-center justify-center gap-1.5 rounded-[1.4rem] p-3 text-center">
+              <div className="glass flex min-h-[9.5rem] w-[9.5rem] flex-col items-center justify-center gap-1.5 rounded-[1.4rem] p-3 text-center">
                 <span
                   className="flex h-11 w-11 items-center justify-center rounded-full bg-[var(--lkv-primary)] text-xs font-bold uppercase text-white"
                   aria-hidden="true"
@@ -237,6 +240,11 @@ export function TeamMobileExperience({ trip }: TeamMobileExperienceProps) {
                 <span className="rounded-full bg-[var(--lkv-primary)]/10 px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.1em] text-[var(--lkv-primary)]">
                   {teamRoleLabel(member.role as never) || member.role}
                 </span>
+                <MemberProfileBadges
+                  profile={member.profile}
+                  maxFields={2}
+                  className="justify-center"
+                />
                 <span className="text-[9.5px] font-medium text-[var(--lkv-text-primary)]/60">
                   {formatJoinDate(member.joinedAt)}
                 </span>

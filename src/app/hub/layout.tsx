@@ -3,6 +3,7 @@ import { getAdventureIntelligence } from '@/features/hub/server/getAdventureInte
 import { deriveHubProfile, type HubSectionId } from '@/features/hub/engine/hubProfileEngine';
 import { HubShell } from '@/features/hub/components/HubShell';
 import { AdventureIntelligenceHub } from '@/features/adventure-intelligence/ui';
+import { ItineraryAdventureCockpit } from '@/features/hub/components/mobile/itinerary/ItineraryAdventureCockpit';
 import { LiquidGlassDefs } from '@/components/ui-layouts/liquid-glass';
 import { TripAffiliateProvider } from '@/features/affiliation/components/TripAffiliateProvider';
 
@@ -43,12 +44,23 @@ export default async function HubLayout({ children }: { children: React.ReactNod
           tripStats={tripStats}
           adventureIntelligence={
             <AdventureIntelligenceHub
+              key="adventure-intelligence"
               cockpit={intelligence.cockpit}
               sections={intelligence.sections}
               sectionHrefs={intelligence.sectionHrefs}
               terrainEnabled={intelligence.terrainEnabled}
               terrainReports={intelligence.terrainReports}
             />
+          }
+          itineraryAdventureCockpit={
+            data.adventure.nature === 'sortie' ? (
+              <ItineraryAdventureCockpit
+                key="itinerary-adventure-cockpit"
+                cockpit={intelligence.cockpit}
+                sections={intelligence.sections}
+                sectionHrefs={intelligence.sectionHrefs}
+              />
+            ) : null
           }
         >
           {children}

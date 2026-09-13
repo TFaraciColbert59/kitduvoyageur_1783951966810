@@ -198,6 +198,43 @@ describe('Contextual Kit Engine (Chantier 6 — IA & Kit Contextuel)', () => {
     expect(analysis.completionPercent).toBe(100);
   });
 
+  it('retrouve un produit du catalogue importé (slug suffixé SKU ou nom)', () => {
+    const importedCatalogue: ShopProductReference[] = [
+      {
+        id: 'prod-sku',
+        slug: 'lampe-frontale-led-rechargeable-black-diamond-spot-400-1051281',
+        name: 'Lampe Frontale LED Rechargeable Black Diamond Spot 400',
+        brand: 'Black Diamond',
+        price_eur: 75.0,
+        weight_g: 90,
+        category_main: 'Éclairage',
+      },
+      {
+        id: 'prod-name',
+        slug: 'slug-boutique-personnalise',
+        name: 'Sifflet de Survie / Urgence – Catégorie BigBuy',
+        brand: 'BigBuy Outdoor',
+        price_eur: 6.0,
+        weight_g: 20,
+        category_main: 'Sécurité / Urgence',
+      },
+    ];
+
+    const analysis = generateTripContextualKit({
+      durationDays: 1,
+      currentItems: [],
+      availableProducts: importedCatalogue,
+    });
+
+    const headlamp = analysis.gearGaps.find((gap) => gap.id === 'rec-headlamp');
+    expect(headlamp?.shopProduct?.id).toBe('prod-sku');
+    expect(headlamp?.weightGrams).toBe(90);
+
+    const whistle = analysis.gearGaps.find((gap) => gap.id === 'rec-whistle');
+    expect(whistle?.shopProduct?.id).toBe('prod-name');
+    expect(whistle?.weightGrams).toBe(20);
+  });
+
   it('correctly calculates base weight by excluding worn and consumable items', () => {
     const currentItems: TripItem[] = [
       {

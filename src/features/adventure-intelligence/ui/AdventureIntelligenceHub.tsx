@@ -31,6 +31,11 @@ export interface AdventureIntelligenceHubProps {
   terrainEnabled?: boolean;
   terrainReports?: TerrainLiveReport[];
   className?: string;
+  /**
+   * Task 7 — montage discret d'une section (itinéraire) : bloc hub compact,
+   * conditions terrain réservées au montage plein de la racine.
+   */
+  compact?: boolean;
 }
 
 export function AdventureIntelligenceHub({
@@ -40,6 +45,7 @@ export function AdventureIntelligenceHub({
   terrainEnabled = false,
   terrainReports = [],
   className = '',
+  compact = false,
 }: AdventureIntelligenceHubProps) {
   const router = useRouter();
   const { isOffline, pendingCount } = useOfflineManager();
@@ -94,9 +100,10 @@ export function AdventureIntelligenceHub({
         sections={sections}
         onSelectSection={handleSelectSection}
         pendingSyncCount={pendingCount}
+        compact={compact}
       />
 
-      {terrainEnabled ? (
+      {terrainEnabled && !compact ? (
         <section
           data-testid="terrain-conditions"
           aria-label="Conditions terrain"

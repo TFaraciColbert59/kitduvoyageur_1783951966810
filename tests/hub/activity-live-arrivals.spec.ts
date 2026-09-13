@@ -346,11 +346,10 @@ describe('AnimatedNumber — compteur tabulaire', () => {
 describe('fix round final — compteurs animés + squelettes itinéraire', () => {
   const readFile = (relative: string) => fs.readFileSync(path.join(process.cwd(), relative), 'utf8');
 
-  it('le rail consomme AnimatedNumber pour son compteur de phases', () => {
+  it('le rail ne rend plus de compteur animé — barre silencieuse sans texte', () => {
     const source = readLiveSource('ActivityPreparationStatus.tsx');
 
-    expect(source).toContain("from './AnimatedNumber'");
-    expect(source).toContain('<AnimatedNumber value={completed}');
+    expect(source).not.toContain('AnimatedNumber');
   });
 
   it('mobile : squelettes timeline/moments tant que l’enrichissement est pending et le bassin vide', () => {

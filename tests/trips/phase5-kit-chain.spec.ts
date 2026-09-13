@@ -197,6 +197,7 @@ const OWNED_ITEM = {
 function defaultRpcResults() {
   return {
     phase3_search_navigable_routes: { data: [ROUTE_ROW], error: null },
+    get_route_geojson: { data: GEOM_LINE, error: null },
     attach_adventure_plan_to_trip: {
       data: { plan_id: PLAN_ID, trip_id: TRIP_ID, correlation_id: CORRELATION_ID },
       error: null,
@@ -295,7 +296,6 @@ describe('Phase 5 — chaîne kit (TEST-PHASE5-CHAIN)', () => {
     const { client, captures } = createSession({
       user: { id: USER_ID },
       reads: {
-        hiking_routes: { id: ROUTE_ID, geom: GEOM_LINE },
         product_ownership: [OWNED_ITEM],
       },
       insertResults: { materiel_kits: { data: { id: 'kit-phase5' }, error: null } },
@@ -367,7 +367,6 @@ describe('Phase 5 — chaîne kit (TEST-PHASE5-CHAIN)', () => {
     const { client, captures } = createSession({
       user: { id: USER_ID },
       reads: {
-        hiking_routes: { id: ROUTE_ID, geom: GEOM_LINE },
         product_ownership: [],
       },
       insertResults: { materiel_kits: { data: { id: 'kit-phase5' }, error: null } },
@@ -380,9 +379,14 @@ describe('Phase 5 — chaîne kit (TEST-PHASE5-CHAIN)', () => {
 
     const budgetInsert = captures.inserts.find((entry) => entry.table === 'trip_expenses');
     const budgetRows = budgetInsert?.values as BudgetRow[];
-    expect(budgetRows).toHaveLength(1);
-    expect(budgetRows[0].amount).toBe(600); // 300 €/pers × 2 voyageurs
-    expect(budgetRows[0].is_planned).toBe(true);
+    expect(budgetRows).toHaveLength(6);
+    expect(budgetRows.every((row) => row.is_planned)).toBe(true);
+    expect(budgetRows.every((row) => row.amount > 0)).toBe(true);
+    const budgetTotalCents = budgetRows.reduce(
+      (sum, row) => sum + Math.round(row.amount * 100),
+      0
+    );
+    expect(budgetTotalCents).toBe(60000); // 300 €/pers × 2 voyageurs
     expect(budgetRows[0].metadata.rule).toBe('total_per_person');
     expect(budgetRows[0].metadata.party_size).toBe(2);
     expect(String(budgetRows[0].metadata.reason)).toContain('300');
@@ -402,7 +406,6 @@ describe('Phase 5 — chaîne kit (TEST-PHASE5-CHAIN)', () => {
     const { client, captures } = createSession({
       user: { id: USER_ID },
       reads: {
-        hiking_routes: { id: ROUTE_ID, geom: GEOM_LINE },
         product_ownership: [],
       },
       insertResults: { materiel_kits: { data: { id: 'kit-phase5' }, error: null } },

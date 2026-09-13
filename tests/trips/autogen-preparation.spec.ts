@@ -18,6 +18,7 @@ import {
   regionSearchTerms,
   humanizeSlug,
   categoryForGearSlug,
+  sumBudgetLines,
 } from '@/features/trips/engine/autogenPreparation';
 import { TripBriefSchema, type TripBrief } from '@/features/trips/schemas/autoGen.schema';
 
@@ -107,12 +108,21 @@ describe('Phase 3 — préparation AutoGen (TEST-PHASE3-PREP)', () => {
     expect(plan.kit?.items[3].category).toBe('Eau & Filtres');
   });
 
-  it('TEST-PHASE3-PREP-03: budget prévisionnel = total/personne × voyageurs', () => {
+  it('TEST-PHASE3-PREP-03: budget prévisionnel total/personne × voyageurs, réparti par catégorie', () => {
     const plan = buildAutogenPreparation({ brief: brief(), layers: LAYERS, partySize: 2 });
 
-    expect(plan.budgetLines).toHaveLength(1);
-    expect(plan.budgetLines[0].amountEur).toBe(1224);
-    expect(plan.budgetLines[0].category).toBe('budget_prev');
+    expect(plan.budgetLines).toHaveLength(6);
+    expect(plan.budgetLines.map((line) => line.category)).toEqual([
+      'hébergement',
+      'nourriture',
+      'transport',
+      'activités',
+      'matériel',
+      'divers',
+    ]);
+    expect(plan.budgetLines.every((line) => line.isPlanned)).toBe(true);
+    expect(plan.budgetLines.every((line) => line.amountEur > 0)).toBe(true);
+    expect(sumBudgetLines(plan.budgetLines)).toBe(1224);
     expect(plan.warnings).toHaveLength(0);
   });
 

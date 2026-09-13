@@ -1,12 +1,13 @@
 'use client';
 
 import { useMemo, useState, useTransition, type FormEvent } from 'react';
-import { CalendarDays, NotebookPen, Pin, Plus, Trash2 } from 'lucide-react';
+import { CalendarDays, NotebookPen, Pencil, Pin, Plus, Trash2 } from 'lucide-react';
 import { ConfirmDialog } from '@/features/trips/components/ConfirmDialog';
 import { TripCompletionModal } from '@/features/trips/components/TripCompletionModal';
 import type { TripFull, TripNote } from '@/features/trips/types/trip.types';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { addTripNoteAction, deleteTripNoteAction } from '@/app/voyages/completion-actions';
+import { updateTripNoteAction } from '@/features/trips/actions/updateTripNoteAction';
 import { getTripDuration } from '@/features/trips/hooks/useTripDuration';
 import {
   availableNoteDays,
@@ -43,6 +44,8 @@ export function JournalMobileExperience({ trip }: JournalMobileExperienceProps) 
   const [editorOpen, setEditorOpen] = useState(false);
   const [completionOpen, setCompletionOpen] = useState(false);
   const [selected, setSelected] = useState<TripNote | null>(null);
+  const [editing, setEditing] = useState(false);
+  const [editDraft, setEditDraft] = useState('');
   const [confirmState, setConfirmState] = useState<{ id: string; label: string } | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const canEdit = trip.permissions.canEdit;
@@ -87,6 +90,32 @@ export function JournalMobileExperience({ trip }: JournalMobileExperienceProps) 
     });
   };
 
+  const openNote = (note: TripNote) => {
+    setEditing(false);
+    setEditDraft(note.content);
+    setSelected(note);
+  };
+
+  const handleEditSave = () => {
+    if (!selected) return;
+    const trimmed = editDraft.trim();
+    if (trimmed === '') {
+      setErrorMsg('Le contenu de la note est requis');
+      return;
+    }
+    setErrorMsg(null);
+    startTransition(async () => {
+      const res = await updateTripNoteAction(selected.id, trimmed);
+      if (res.ok) {
+        triggerHaptic('success');
+        setEditing(false);
+        setSelected((prev) => (prev ? { ...prev, content: trimmed } : prev));
+      } else {
+        setErrorMsg(res.error || 'Impossible de mettre à jour cette note');
+      }
+    });
+  };
+
   const chips: GroupeChipDef[] = [
     {
       key: 'notes',
@@ -127,7 +156,7 @@ export function JournalMobileExperience({ trip }: JournalMobileExperienceProps) 
         type="button"
         onClick={() => {
           triggerHaptic('selection');
-          setSelected(note);
+          openNote(note);
         }}
         aria-label={`Note ${noteTitle(note)}`}
         className="glass flex h-[10rem] w-[14.5rem] flex-col rounded-[1.4rem] p-3.5 text-left transition-transform active:scale-[0.98]"
@@ -314,7 +343,7 @@ export function JournalMobileExperience({ trip }: JournalMobileExperienceProps) 
                   type="button"
                   onClick={() => {
                     setListOpen(false);
-                    setSelected(note);
+                    openNote(note);
                   }}
                   className="glass-sub-card flex min-h-[44px] w-full items-center gap-3 rounded-2xl p-3 text-left"
                 >
@@ -340,7 +369,12 @@ export function JournalMobileExperience({ trip }: JournalMobileExperienceProps) 
       {/* Tiroir : note */}
       <GroupeDrawer
         open={selected !== null}
-        onOpenChange={(open) => !open && setSelected(null)}
+        onOpenChange={(open) => {
+          if (!open) {
+            setSelected(null);
+            setEditing(false);
+          }
+        }}
         title={selected ? noteTitle(selected) : 'Note'}
         width={460}
       >
@@ -362,18 +396,66 @@ export function JournalMobileExperience({ trip }: JournalMobileExperienceProps) 
                 {formatRelativeTime(selected.created_at)}
               </span>
             </div>
-            <p className="whitespace-pre-wrap text-[13px] font-medium leading-relaxed text-[var(--lkv-text-primary)]">
-              {selected.content}
-            </p>
-            {canEdit && (
-              <button
-                type="button"
-                onClick={() => setConfirmState({ id: selected.id, label: `« ${noteTitle(selected)} »` })}
-                className="glass-capsule-btn inline-flex min-h-[44px] w-full items-center justify-center gap-1.5 !py-3 text-sm font-bold text-[var(--lkv-danger)]"
-              >
-                <Trash2 size={15} aria-hidden="true" />
-                Supprimer la note
-              </button>
+
+            {editing ? (
+              <div className="space-y-3">
+                <textarea
+                  value={editDraft}
+                  onChange={(event) => setEditDraft(event.target.value)}
+                  rows={5}
+                  aria-label="Éditer le récit de la note"
+                  className="glass-input w-full px-3 py-2.5 text-sm text-[var(--lkv-text-primary)]"
+                />
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setEditing(false)}
+                    disabled={isPending}
+                    className="glass-capsule-btn inline-flex min-h-[44px] flex-1 items-center justify-center !py-3 text-sm font-bold disabled:opacity-50"
+                  >
+                    Annuler
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleEditSave}
+                    disabled={isPending}
+                    className="glass-capsule-btn primary inline-flex min-h-[44px] flex-1 items-center justify-center !py-3 text-sm font-bold disabled:opacity-50"
+                  >
+                    {isPending ? 'Enregistrement…' : 'Enregistrer'}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <p className="whitespace-pre-wrap text-[13px] font-medium leading-relaxed text-[var(--lkv-text-primary)]">
+                {selected.content}
+              </p>
+            )}
+
+            {canEdit && !editing && (
+              <div className="space-y-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEditDraft(selected.content);
+                    setEditing(true);
+                    triggerHaptic('light');
+                  }}
+                  className="glass-capsule-btn inline-flex min-h-[44px] w-full items-center justify-center gap-1.5 !py-3 text-sm font-bold"
+                >
+                  <Pencil size={15} aria-hidden="true" />
+                  Éditer la note
+                </button>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setConfirmState({ id: selected.id, label: `« ${noteTitle(selected)} »` })
+                  }
+                  className="glass-capsule-btn inline-flex min-h-[44px] w-full items-center justify-center gap-1.5 !py-3 text-sm font-bold text-[var(--lkv-danger)]"
+                >
+                  <Trash2 size={15} aria-hidden="true" />
+                  Supprimer la note
+                </button>
+              </div>
             )}
           </div>
         )}

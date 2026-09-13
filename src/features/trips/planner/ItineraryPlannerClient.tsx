@@ -2,6 +2,7 @@
 
 import Icon from '@/components/ui/Icon';
 import React, { useState, useTransition, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
 import { GlassCapsuleBtn, GlassModal } from '@/components/ui';
 import type { TripFull } from '@/features/trips/types/trip.types';
 import {
@@ -12,15 +13,17 @@ import {
   compactOrderIndices,
   withStepProvenance,
 } from './plannerEngine';
-import { getTripPhase } from '../engine/temporalPhaseEngine';
-import { parseEnrichmentSuggestions } from '@/features/affiliation/engine/enrichmentSuggestions';
-import { TripSuggestionSection } from '@/features/affiliation/components/TripSuggestionSection';
+import { DayTraceMap } from '@/features/hub/components/mobile/itinerary/DayTraceMap';
+import { routeIdFromMetadata, type DayTracePoint } from '@/features/trips/domain/dayTraces';
 import { getCivilDurationDays } from '@/lib/dates/tripDates';
 import { tripSectionHref } from '../registry/tripSectionRegistry';
 import { DayNavigator } from './DayNavigator';
 import { DayView } from './DayView';
 import { StepEditModal } from './StepEditModal';
 import { MoveStepModal } from './MoveStepModal';
+import { RenameTripModal } from '@/features/trips/components/RenameTripModal';
+import { TripInviteButton } from '@/features/trips/components/TripInviteButton';
+import { PartyPreparationBanner } from '@/features/trips/components/MemberProfileBadges';
 import {
   addTripStepAction,
   updateTripStepAction,
@@ -53,12 +56,10 @@ export default function ItineraryPlannerClient({
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+  const router = useRouter();
+  const [renameOpen, setRenameOpen] = useState(false);
 
   const canEdit = !!trip.permissions?.canEdit;
-  // Suggestions de réservation LLM : phase de préparation uniquement ; sans
-  // lien actif correspondant, le bloc est omis (aucune rangée morte).
-  const preparePhase = useMemo(() => getTripPhase(trip) === 'prepare', [trip]);
-  const suggestions = useMemo(() => parseEnrichmentSuggestions(trip.metadata), [trip.metadata]);
   // IMPORTANT 7 — squelette timeline tant que l'enrichissement est en attente
   // et qu'aucune étape n'existe (zéro CLS, jamais d'état vide trompeur).
   const enrichmentPending = trip.metadata?.enrichment_status === 'pending';
@@ -363,6 +364,19 @@ export default function ItineraryPlannerClient({
       .sort((a, b) => a.order_index - b.order_index);
   }, [steps, selectedDay]);
 
+  // Trace réelle du sentier : chargée côté client depuis `metadata.route_id`
+  // (page.tsx = WIP propriétaire, jamais modifiée) puis découpée par jour.
+  const routeId = useMemo(() => routeIdFromMetadata(trip.metadata), [trip.metadata]);
+  const activeDayStepPoints = useMemo<DayTracePoint[]>(
+    () =>
+      activeDaySteps.flatMap((step) =>
+        step.latitude != null && step.longitude != null
+          ? [{ lat: Number(step.latitude), lng: Number(step.longitude) }]
+          : []
+      ),
+    [activeDaySteps]
+  );
+
   return (
     <div className="space-y-4 pb-16">
       {/* Header Navigation Glass */}
@@ -377,6 +391,19 @@ export default function ItineraryPlannerClient({
           </div>
 
           <div className="flex items-center gap-2">
+            <TripInviteButton trip={trip} />
+            {canEdit && (
+              <GlassCapsuleBtn
+                type="button"
+                size="sm"
+                onClick={() => setRenameOpen(true)}
+                aria-label="Renommer l’activité"
+                icon={<Icon name="pencil" className="w-3.5 h-3.5" />}
+                className="!h-11"
+              >
+                <span className="hidden sm:inline">Renommer</span>
+              </GlassCapsuleBtn>
+            )}
             <GlassCapsuleBtn
               href={tripSectionHref(trip.slug, 'overview')}
               size="sm"
@@ -416,11 +443,16 @@ export default function ItineraryPlannerClient({
         </div>
       </div>
 
-      {preparePhase && suggestions.length > 0 && (
-        <TripSuggestionSection
-          suggestions={suggestions}
-          destinationName={trip.destination_name}
-          tripId={trip.id}
+      <PartyPreparationBanner partySize={trip.party_size} />
+
+      {/* Carte du jour sélectionné — trace réelle découpée */}
+      {routeId && (
+        <DayTraceMap
+          routeId={routeId}
+          day={selectedDay}
+          days={daysCount}
+          stepPoints={activeDayStepPoints}
+          heightClassName="h-[20rem]"
         />
       )}
 
@@ -471,6 +503,17 @@ export default function ItineraryPlannerClient({
         startDate={trip.start_date}
         steps={steps}
         onSelectTargetDay={handleSelectTargetDay}
+      />
+
+      <RenameTripModal
+        open={renameOpen}
+        onOpenChange={setRenameOpen}
+        tripId={trip.id}
+        currentTitle={trip.title}
+        onRenamed={() => {
+          router.refresh();
+          notifySuccess('Activité renommée.');
+        }}
       />
 
       {/* Dialogue accessible de confirmation de suppression */}

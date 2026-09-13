@@ -8,6 +8,7 @@ import {
 import type { TrailInput, TrailMetaInput } from '@/features/trips/domain/trailToActivity';
 import {
   buildBudgetLines,
+  sumBudgetLines,
   type PreparationLayers,
 } from '@/features/trips/engine/autogenPreparation';
 
@@ -200,19 +201,31 @@ describe('buildDeterministicExpenses', () => {
     budget: { value: { dailyAverageEur: 50, currency: 'EUR' } },
   };
 
-  it('durée > 0 : hébergement + nourriture, montants positifs issus de buildBudgetLines, répartis', () => {
+  it('répartit le total réel en 6 catégories, chacune > 0, somme exacte', () => {
     const expected = buildBudgetLines(TOTAL_LAYERS, 2, 1, []);
-    expect(expected).toHaveLength(1);
+    expect(expected).toHaveLength(6);
 
     const lines = buildDeterministicExpenses(BASE_TRAIL, META_4H, 2, TOTAL_LAYERS);
 
-    expect(lines.map((line) => line.category)).toEqual(['hébergement', 'nourriture']);
+    expect(lines.map((line) => line.category)).toEqual([
+      'hébergement',
+      'nourriture',
+      'transport',
+      'activités',
+      'matériel',
+      'divers',
+    ]);
     expect(lines.map((line) => line.title)).toEqual([
-      'Hébergement — Tour du Lac Blanc',
-      'Nourriture — Tour du Lac Blanc',
+      'Budget prévisionnel — Hébergement',
+      'Budget prévisionnel — Nourriture',
+      'Budget prévisionnel — Transport',
+      'Budget prévisionnel — Activités',
+      'Budget prévisionnel — Matériel',
+      'Budget prévisionnel — Divers',
     ]);
     expect(lines.every((line) => line.amountEur > 0)).toBe(true);
-    expect(lines.reduce((sum, line) => sum + line.amountEur, 0)).toBe(expected[0].amountEur);
+    expect(sumBudgetLines(expected)).toBe(200); // 100 €/personne × 2 voyageurs
+    expect(Math.round(lines.reduce((sum, line) => sum + line.amountEur * 100, 0))).toBe(20000);
     expect(lines.every((line) => line.metadata.source === 'deterministic')).toBe(true);
     expect(
       lines.every((line) => line.metadata.formula === 'autogenPreparation.buildBudgetLines@v1')
@@ -220,9 +233,9 @@ describe('buildDeterministicExpenses', () => {
     expect(lines.every((line) => line.metadata.partySize === 2)).toBe(true);
   });
 
-  it('multi-jours : répartit le montant réel sur hébergement/nourriture/transport (somme exacte)', () => {
+  it('multi-jours : même total réel réparti (règle daily_average, somme exacte)', () => {
     const expected = buildBudgetLines(DAILY_LAYERS, 1, 3, []);
-    expect(expected[0].amountEur).toBe(150); // 50 €/jour × 3 jours × 1 voyageur
+    expect(sumBudgetLines(expected)).toBe(150); // 50 €/jour × 3 jours × 1 voyageur
 
     const lines = buildDeterministicExpenses(
       { ...BASE_TRAIL, distanceKm: 45 },
@@ -231,15 +244,14 @@ describe('buildDeterministicExpenses', () => {
       DAILY_LAYERS
     );
 
-    expect(lines.map((line) => line.category)).toEqual(['hébergement', 'nourriture', 'transport']);
-    expect(lines[2].title).toBe('Transport — Tour du Lac Blanc');
-    expect(lines.map((line) => line.amountEur)).toEqual([50, 50, 50]);
-    expect(lines.reduce((sum, line) => sum + line.amountEur, 0)).toBe(expected[0].amountEur);
+    expect(lines).toHaveLength(6);
+    expect(Math.round(lines.reduce((sum, line) => sum + line.amountEur * 100, 0))).toBe(15000);
+    expect(lines[2].category).toBe('transport');
   });
 
-  it('reliquat au centime sur les premières lignes, jamais de montant null', () => {
+  it('reliquat au centime sur les premières lignes, jamais de montant nul', () => {
     const expected = buildBudgetLines(TOTAL_LAYERS, 1, 3, []);
-    expect(expected[0].amountEur).toBe(100);
+    expect(sumBudgetLines(expected)).toBe(100);
 
     const lines = buildDeterministicExpenses(
       { ...BASE_TRAIL, distanceKm: 45 },
@@ -248,26 +260,16 @@ describe('buildDeterministicExpenses', () => {
       TOTAL_LAYERS
     );
 
-    expect(lines.map((line) => line.amountEur)).toEqual([33.34, 33.33, 33.33]);
-    expect(lines.reduce((sum, line) => sum + line.amountEur, 0)).toBe(100);
+    expect(lines.map((line) => line.amountEur)).toEqual([
+      16.67, 16.67, 16.67, 16.67, 16.66, 16.66,
+    ]);
+    expect(Math.round(lines.reduce((sum, line) => sum + line.amountEur * 100, 0))).toBe(10000);
     expect(lines.every((line) => Number.isFinite(line.amountEur) && line.amountEur > 0)).toBe(true);
   });
 
-  it('ligne unique (transport seul) : montant identique à buildBudgetLines pour les mêmes entrées', () => {
-    const expected = buildBudgetLines(TOTAL_LAYERS, 1, 2, []);
+  it('sans métriques de sentier : le budget réel reste réparti en 6 catégories', () => {
+    const expected = buildBudgetLines(TOTAL_LAYERS, 1, 1, []);
 
-    const lines = buildDeterministicExpenses(
-      { ...BASE_TRAIL, distanceKm: 45 },
-      null,
-      1,
-      TOTAL_LAYERS
-    );
-
-    expect(lines.map((line) => line.category)).toEqual(['transport']);
-    expect(lines[0].amountEur).toBe(expected[0].amountEur);
-  });
-
-  it('entrées insuffisantes : aucune ligne (distance et durée nulles)', () => {
     const lines = buildDeterministicExpenses(
       { id: 7, name: 'Sentier Brut', geom: { type: 'LineString', coordinates: [] } },
       null,
@@ -275,13 +277,16 @@ describe('buildDeterministicExpenses', () => {
       TOTAL_LAYERS
     );
 
-    expect(lines).toEqual([]);
+    expect(lines).toHaveLength(6);
+    expect(lines.map((line) => line.category)).toEqual(expected.map((line) => line.category));
+    expect(Math.round(lines.reduce((sum, line) => sum + line.amountEur * 100, 0))).toBe(10000);
   });
 
-  it('durée 0 ou couche budget absente/sans montant : aucune ligne inventée', () => {
+  it('couche budget absente/sans montant : aucune ligne inventée', () => {
+    // Le budget réel ne dépend pas de la durée sentier : il reste réparti.
     expect(
       buildDeterministicExpenses(BASE_TRAIL, { durationHours: 0 }, 1, TOTAL_LAYERS)
-    ).toEqual([]);
+    ).toHaveLength(6);
     expect(buildDeterministicExpenses(BASE_TRAIL, META_4H, 1, null)).toEqual([]);
     expect(buildDeterministicExpenses(BASE_TRAIL, META_4H, 1, {})).toEqual([]);
     expect(

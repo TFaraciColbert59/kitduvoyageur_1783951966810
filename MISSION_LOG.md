@@ -1144,3 +1144,35 @@ migration prod   → 20260912200000 + 20260912201000 appliquées (audit doublons
 **Gates :** e2e atlas-explorer 3/3 ; `npx tsc --noEmit` → 0 ; `npx vitest run` → 333 fichiers OK, 4 suites préexistantes en échec ; `npm run build` ✓. Commit : `fix(explorer): controles carte tapables avec le carrousel mobile visible (stacking)`.
 
 **Réserve :** moteur legacy `ExplorerMap.tsx` (flag off) non couvert — ne lit pas la variable.
+
+## 2026-09-13 — CHANTIER ITINÉRAIRE, KITS & PRÉPARATION PERSONNALISÉE (branche `chantier/itineraire-kits-personnalisation`, 20 tasks SDD)
+
+> Spec : `docs/superpowers/specs/2026-09-12-itineraire-kits-personnalisation-design.md` · Plan : `docs/superpowers/plans/2026-09-12-itineraire-kits-personnalisation.md` · Décisions : catalogue CSV complet + sélection produits (vente public, achat/marge admin) ; recalcul complet auto au join ; documents = fichiers réels + liste ; carnet notes pré-remplies + édition ; règle données : **uniquement l'auto-apprentissage, sinon estimations, sinon moyennes — chaque champ labellisé appris/estimé/moyenne** ; snapshot + recalcul serveur synchrone. (Revues formelles allégées après T7 sur demande propriétaire « va à l'essentiel ».)
+
+### Correctifs bloquants
+- **Doublon éliminé** : `revalidatePath` retirés de l'usine (l'erreur console venait du render), catch → **succès partiel `{ok, tripId}`** (plus de 500 créateur ni de fallback double), **`metadata.route_id` écrit dès la création** (l'index unique protège), géométrie via RPC GeoJSON. (`4c29f75e`)
+- **Rail → barre silencieuse** (`9e5b69a9`) · **Sidebar « Déroulé du jour » sans défilement infini** (`dc062a9b`) · **Warning clé React** localisé (child AdventureIntelligenceHub non clé) et corrigé (`82968230`).
+
+### Itinéraire
+- **Carte du jour** (tracé réel découpé par jour, entre sélecteur et journée, mobile+desktop) + restauration du tap-POI sur la nouvelle carte (`55659f9d`, `3c10d771`) · **Renommage d'activité** (action + modal, cibles 44px) + esthétique (`70198130`, `5cda8f97`) · **Nettoyages hub** : NaturePill retirée sur l'itinéraire, « Réservations & Préparation Logistique » et suggestions retirées, cockpit aventure déplacé dans l'itinéraire (`309721ae`).
+
+### Kits (catalogue CSV 80 produits)
+- **Import** : 67 SKU uniques (dédup des 11 doublons), poids réels parsés, priorités, correction catégorie ; upsert `shop_products` (`860afa35`) · **Moteur `selectKitProducts`** (produits réels, quantités par personne/groupe, poids) branché sur `contextualKitEngine` (`03d3b8b6`) · **Kit en batch** : calcul de préparation 2×→1×, ~363→278 ms, aller-retours réduits (`324035c3`).
+
+### Générateurs
+- **Documents réels** : feuille de route **PDF** (builder pur sans dépendance) + **GPX** générés et uploadés, lignes `trip_documents` (`bdc6cfef`) · **Sécurité** : `trip_safety_checkpoints` réels (J-1/J1/quotidiens/fin, jamais de dates inventées) (`cbbf8f6a`) · **Carnet** : notes pré-remplies par jour (contexte réel + questions) + **édition sur place** (action + UI) (`f7d8c9ea`) · **Dépenses** : lignes prévisionnelles catégorisées toutes > 0 (`22a54d0c`).
+
+### Multi-personnes personnalisé
+- **Migration additive `trip_member_profiles` + `trips.party_size` appliquée en prod** (`91f8f3a6`) · **`deriveMemberInput`** : appris (Profil Terrain calibré, consentement) > estimé > moyennes, `sources` exhaustif (`3d702bf4`) · **`recomputeParty`** : moteur complet `buildGroupPlan` dé-neutralisé (portage, charge max, redistribution ≤ 5 kg), quantités/owner/budget recalculés, idempotent `party_version` (`840215cf`) · **Flow « Rejoindre »** : lien de partage, consentement, snapshot profil, recalcul immédiat (`abce9fe5`) · **Transparence** : badges Appris/Estimé/Moyenne + bandeau « recalculée pour N » (`b369cdb3`).
+
+### Gates finaux
+```
+npx tsc --noEmit → 0 · npm run lint → 0
+npx vitest run   → 2645 passed | 23 skipped ; 4 suites en échec = préexistantes
+npm run build    → ✓ Compiled (0) · e2e prod → 7/7 (preparer-sentier, depart-cockpit, atlas)
+visuel 3 projets → 26 passed / 0 failed
+migration prod   → 20260912300000 appliquée (vérifiée par probe service-role)
+```
+
+### Actions propriétaire restantes
+Vérification visuelle du nouvel itinéraire sur ses captures ; usage réel du flux « Rejoindre » avec de vrais profils Terrain calibrés (sinon estimations/moyennes labellisées) ; dette notée : double écriture budget prévisionnel possible entre usine et platinage (dédoublonnage futur), 3/24 slugs de règles sans produit CSV (fallback poids base).

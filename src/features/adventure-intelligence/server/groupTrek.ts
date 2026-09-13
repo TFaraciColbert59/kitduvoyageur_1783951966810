@@ -57,6 +57,11 @@ export interface MemberProfileSpeeds {
   flatSpeedKmH: number | null;
   ascentSpeedMPerHour: number | null;
   descentSpeedMPerHour: number | null;
+  /** Snapshot membre de l'activité (trip_member_profiles) — réel si fourni. */
+  packWeightKg?: number | null;
+  maxCarryKg?: number | null;
+  experienceLevel?: GroupMemberInput['experienceLevel'] | null;
+  isChild?: boolean;
 }
 
 /**
@@ -71,6 +76,8 @@ export interface GroupTrekDataSource {
   getDisplayNames(userIds: string[]): Promise<Record<string, string>>;
   hasActiveConsent(userId: string): Promise<boolean>;
   getProfileSpeeds(userId: string): Promise<MemberProfileSpeeds | null>;
+  /** Snapshot membre par activité (Task 18) — optionnel, fail-safe. */
+  getTripMemberProfile?(tripId: string, userId: string): Promise<MemberProfileSpeeds | null>;
   appendVersion(payload: {
     planId: string;
     userId: string;
@@ -138,6 +145,23 @@ function roleFromCrew(role: string): GroupMemberInput['role'] {
   return 'member';
 }
 
+/** Niveau déclaré (profil membre) → niveau moteur A8 (expert ≈ advanced). */
+function groupExperienceLevelFrom(value: unknown): GroupMemberInput['experienceLevel'] | null {
+  if (typeof value !== 'string' || value.trim() === '') return null;
+  const normalized = value.trim().toLowerCase();
+  if (normalized === 'beginner' || normalized === 'debut' || normalized === 'debutant') {
+    return 'beginner';
+  }
+  if (normalized === 'advanced' || normalized === 'aguerri' || normalized === 'avance') {
+    return 'advanced';
+  }
+  if (normalized === 'expert') return 'advanced';
+  if (normalized === 'intermediate' || normalized === 'regulier' || normalized === 'intermediaire') {
+    return 'intermediate';
+  }
+  return null;
+}
+
 async function resolvePlanStages(
   source: GroupTrekDataSource,
   plan: AdventurePlan
@@ -155,7 +179,8 @@ async function resolvePlanStages(
 
 async function buildGroupMembers(
   source: GroupTrekDataSource,
-  members: CrewMemberRow[]
+  members: CrewMemberRow[],
+  tripId: string | null
 ): Promise<GroupMemberInput[]> {
   const userIds = members.map((member) => member.userId);
   const displayNames: Record<string, string> = await source
@@ -180,8 +205,19 @@ async function buildGroupMembers(
       }
     }
 
+    // Task 18 — snapshot membre de l'activité : portage/expérience réels dès
+    // qu'ils existent (profils consentis uniquement, jamais de donnée inventée).
+    let snapshot: MemberProfileSpeeds | null = null;
+    if (consent && tripId && source.getTripMemberProfile) {
+      try {
+        snapshot = await source.getTripMemberProfile(tripId, member.userId);
+      } catch {
+        snapshot = null;
+      }
+    }
+
     const displayName = textOrNull(displayNames[member.userId]) ?? 'Membre';
-    if (!speeds) {
+    if (!speeds && !snapshot) {
       resolved.push(
         fallbackGroupMember({
           memberId: member.userId,
@@ -192,16 +228,18 @@ async function buildGroupMembers(
       continue;
     }
 
+    const effectiveSpeeds = speeds ?? (snapshot as MemberProfileSpeeds);
     resolved.push({
       memberId: member.userId,
       displayName,
       role: roleFromCrew(member.role),
-      flatSpeedKmH: speeds.flatSpeedKmH,
-      ascentSpeedMPerHour: speeds.ascentSpeedMPerHour,
-      descentSpeedMPerHour: speeds.descentSpeedMPerHour,
-      packWeightKg: null,
-      maxCarryKg: null,
-      experienceLevel: 'intermediate',
+      flatSpeedKmH: effectiveSpeeds.flatSpeedKmH,
+      ascentSpeedMPerHour: effectiveSpeeds.ascentSpeedMPerHour,
+      descentSpeedMPerHour: effectiveSpeeds.descentSpeedMPerHour,
+      packWeightKg: snapshot?.packWeightKg ?? null,
+      maxCarryKg: snapshot?.maxCarryKg ?? null,
+      experienceLevel: snapshot?.experienceLevel ?? 'intermediate',
+      isChild: snapshot?.isChild,
     });
   }
 
@@ -238,7 +276,7 @@ export async function computeAndPersistGroupPlan(
     return { ok: false, reason: 'crew_required' };
   }
 
-  const groupMembers = await buildGroupMembers(source, members);
+  const groupMembers = await buildGroupMembers(source, members, plan.tripId ?? null);
 
   const stages = await resolvePlanStages(source, plan);
   if (!stages) return { ok: false, reason: 'stages_unavailable' };
@@ -490,6 +528,28 @@ export function createSupabaseGroupTrekDataSource(
         flatSpeedKmH: finiteOrNull(row.flat_speed_kmh),
         ascentSpeedMPerHour: finiteOrNull(row.ascent_speed_m_per_h),
         descentSpeedMPerHour: finiteOrNull(row.descent_speed_m_per_h),
+      };
+    },
+
+    async getTripMemberProfile(tripId, userId) {
+      const { data, error } = await client
+        .from('trip_member_profiles')
+        .select(
+          'flat_speed_kmh, ascent_speed_m_per_h, descent_speed_m_per_h, pack_weight_kg, max_carry_kg, experience_level, is_child'
+        )
+        .eq('trip_id', tripId)
+        .eq('user_id', userId)
+        .maybeSingle();
+      if (error || !data) return null;
+      const row = data as Record<string, unknown>;
+      return {
+        flatSpeedKmH: finiteOrNull(row.flat_speed_kmh),
+        ascentSpeedMPerHour: finiteOrNull(row.ascent_speed_m_per_h),
+        descentSpeedMPerHour: finiteOrNull(row.descent_speed_m_per_h),
+        packWeightKg: finiteOrNull(row.pack_weight_kg),
+        maxCarryKg: finiteOrNull(row.max_carry_kg),
+        experienceLevel: groupExperienceLevelFrom(row.experience_level),
+        isChild: row.is_child === true,
       };
     },
 

@@ -1,0 +1,231 @@
+﻿===== AVANT (2026-09-13T10:39:08.317Z) =====
+Source       : src/features/trips/server/createTripFromAutogenIntent.ts
+Mode         : before
+
+-- Analyse statique persistPreparation --
+Appels DB directs (from/await)          : 5
+Appels helpers (loadOwnedItems/…)       : 1
+Aller-retours DB des helpers            : 1
+Points d'attente séquentiels            : 6
+Aller-retours DB total (persist+helpers): 6
+Calculs buildAutogenPreparation         : 2
+Boucles for avec await from (anti-batch): 0
+
+-- Mesure live (voyage scratch supprimé) --
+{
+  "skipped": false,
+  "runs": 3,
+  "roundTripsPerRun": 6,
+  "minMs": 252.02,
+  "avgMs": 294.21,
+  "maxMs": 370.3,
+  "details": [
+    {
+      "run": 1,
+      "totalMs": 370.3,
+      "timings": [
+        {
+          "label": "select inventaire",
+          "durationMs": 100.26
+        },
+        {
+          "label": "insert materiel_kits",
+          "durationMs": 67.85
+        },
+        {
+          "label": "insert materiel_kit_items (batch)",
+          "durationMs": 71.85
+        },
+        {
+          "label": "insert trip_items (batch)",
+          "durationMs": 56.72
+        },
+        {
+          "label": "insert trip_expenses (batch)",
+          "durationMs": 38.93
+        },
+        {
+          "label": "insert trip_checklist_items (batch)",
+          "durationMs": 34.69
+        }
+      ]
+    },
+    {
+      "run": 2,
+      "totalMs": 252.02,
+      "timings": [
+        {
+          "label": "select inventaire",
+          "durationMs": 33.77
+        },
+        {
+          "label": "insert materiel_kits",
+          "durationMs": 49.89
+        },
+        {
+          "label": "insert materiel_kit_items (batch)",
+          "durationMs": 46.02
+        },
+        {
+          "label": "insert trip_items (batch)",
+          "durationMs": 48.1
+        },
+        {
+          "label": "insert trip_expenses (batch)",
+          "durationMs": 40.53
+        },
+        {
+          "label": "insert trip_checklist_items (batch)",
+          "durationMs": 33.71
+        }
+      ]
+    },
+    {
+      "run": 3,
+      "totalMs": 260.32,
+      "timings": [
+        {
+          "label": "select inventaire",
+          "durationMs": 39.58
+        },
+        {
+          "label": "insert materiel_kits",
+          "durationMs": 37.88
+        },
+        {
+          "label": "insert materiel_kit_items (batch)",
+          "durationMs": 50.25
+        },
+        {
+          "label": "insert trip_items (batch)",
+          "durationMs": 52.66
+        },
+        {
+          "label": "insert trip_expenses (batch)",
+          "durationMs": 36.43
+        },
+        {
+          "label": "insert trip_checklist_items (batch)",
+          "durationMs": 43.52
+        }
+      ]
+    }
+  ]
+}
+
+
+===== APRÈS (2026-09-13T10:41:38.194Z) =====
+Source       : src/features/trips/server/createTripFromAutogenIntent.ts
+Mode         : after
+
+-- Analyse statique persistPreparation --
+Appels DB directs (from/await)          : 5
+Appels helpers (loadOwnedItems/…)       : 2
+Aller-retours DB des helpers            : 2
+Points d'attente séquentiels            : 6
+Aller-retours DB total (persist+helpers): 7
+Calculs buildAutogenPreparation         : 1
+Boucles for avec await from (anti-batch): 0
+
+-- Mesure live (voyage scratch supprimé) --
+{
+  "skipped": false,
+  "runs": 3,
+  "roundTripsPerRun": 7,
+  "minMs": 264.01,
+  "avgMs": 278.03,
+  "maxMs": 302.23,
+  "details": [
+    {
+      "run": 1,
+      "totalMs": 302.23,
+      "timings": [
+        {
+          "label": "select (inventaire ∥ catalogue)",
+          "durationMs": 80.76
+        },
+        {
+          "label": "insert materiel_kits",
+          "durationMs": 43.98
+        },
+        {
+          "label": "insert materiel_kit_items (batch)",
+          "durationMs": 51.31
+        },
+        {
+          "label": "insert trip_items (batch)",
+          "durationMs": 29.87
+        },
+        {
+          "label": "insert trip_expenses (batch)",
+          "durationMs": 42.52
+        },
+        {
+          "label": "insert trip_checklist_items (batch)",
+          "durationMs": 53.79
+        }
+      ]
+    },
+    {
+      "run": 2,
+      "totalMs": 267.84,
+      "timings": [
+        {
+          "label": "select (inventaire ∥ catalogue)",
+          "durationMs": 54.1
+        },
+        {
+          "label": "insert materiel_kits",
+          "durationMs": 41.02
+        },
+        {
+          "label": "insert materiel_kit_items (batch)",
+          "durationMs": 44.7
+        },
+        {
+          "label": "insert trip_items (batch)",
+          "durationMs": 51.13
+        },
+        {
+          "label": "insert trip_expenses (batch)",
+          "durationMs": 44.57
+        },
+        {
+          "label": "insert trip_checklist_items (batch)",
+          "durationMs": 32.32
+        }
+      ]
+    },
+    {
+      "run": 3,
+      "totalMs": 264.01,
+      "timings": [
+        {
+          "label": "select (inventaire ∥ catalogue)",
+          "durationMs": 39.24
+        },
+        {
+          "label": "insert materiel_kits",
+          "durationMs": 46.02
+        },
+        {
+          "label": "insert materiel_kit_items (batch)",
+          "durationMs": 44.79
+        },
+        {
+          "label": "insert trip_items (batch)",
+          "durationMs": 44.44
+        },
+        {
+          "label": "insert trip_expenses (batch)",
+          "durationMs": 43.1
+        },
+        {
+          "label": "insert trip_checklist_items (batch)",
+          "durationMs": 46.42
+        }
+      ]
+    }
+  ]
+}
+

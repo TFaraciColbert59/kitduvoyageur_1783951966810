@@ -10,6 +10,11 @@
  *   TEST-PHASE3-CMD-07 : quota 429 avec Retry-After.
  *   TEST-PHASE3-CMD-08 : idempotence par correlation_id (rejeu sans regénération).
  *   TEST-PHASE3-CMD-09 : sélection refusée par la base ⇒ voyage ok, navigation off.
+ *   TEST-PHASE3-CMD-11 : `route_id` écrit dès la création, avant plan/kit.
+ *   TEST-PHASE3-CMD-12 : polyline lue via rpc `get_route_geojson` (jamais la
+ *                        colonne brute `hiking_routes.geom`).
+ *   TEST-PHASE3-CMD-13 : échec tardif après insertion ⇒ succès partiel (pas de
+ *                        500, voyage conservé, requête marquée failed).
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
@@ -76,6 +81,7 @@ import { createClient } from '@/lib/supabase/server';
 import { getServiceSupabase } from '@/lib/ai/serviceClient';
 import { createTrip } from '@/lib/queries-trips';
 import { generateAdventure } from '@/features/adventure-intelligence/server/generateAdventure';
+import { currentAdventureFeatureFlags } from '@/features/adventure-intelligence/server/featureFlags';
 import { createTripFromAutogenIntent } from '@/features/trips/server/createTripFromAutogenIntent';
 import { TripBriefSchema } from '@/features/trips/schemas/autoGen.schema';
 
@@ -110,12 +116,15 @@ const mockedCreateClient = vi.mocked(createClient);
 const mockedService = vi.mocked(getServiceSupabase);
 const mockedCreateTrip = vi.mocked(createTrip);
 const mockedGenerate = vi.mocked(generateAdventure);
+const mockedFeatureFlags = vi.mocked(currentAdventureFeatureFlags);
 
 interface Captures {
   inserts: Array<{ table: string; values: unknown }>;
   updates: Array<{ table: string; values: unknown }>;
   deletes: string[];
   rpcCalls: Array<{ fn: string; args: Record<string, unknown> }>;
+  /** Séquence brute des accès (rpc/select/insert/update/delete) : ordre réel. */
+  order: string[];
 }
 
 interface SessionOptions {
@@ -128,11 +137,12 @@ interface SessionOptions {
 }
 
 function createSession(options: SessionOptions): { client: unknown; captures: Captures } {
-  const captures: Captures = { inserts: [], updates: [], deletes: [], rpcCalls: [] };
+  const captures: Captures = { inserts: [], updates: [], deletes: [], rpcCalls: [], order: [] };
   const client = {
     auth: { getUser: async () => ({ data: { user: options.user } }) },
     rpc: async (fn: string, args: Record<string, unknown>) => {
       captures.rpcCalls.push({ fn, args });
+      captures.order.push(`rpc:${fn}`);
       return options.rpcResults?.[fn] ?? { data: null, error: null };
     },
     from(table: string) {
@@ -150,20 +160,26 @@ function createSession(options: SessionOptions): { client: unknown; captures: Ca
         }
         return { data: null, error: null };
       };
-      builder.select = () => builder;
+      builder.select = () => {
+        captures.order.push(`select:${table}`);
+        return builder;
+      };
       builder.insert = (values: unknown) => {
         op = 'insert';
         captures.inserts.push({ table, values });
+        captures.order.push(`insert:${table}`);
         return builder;
       };
       builder.update = (values: unknown) => {
         op = 'update';
         captures.updates.push({ table, values });
+        captures.order.push(`update:${table}`);
         return builder;
       };
       builder.delete = () => {
         op = 'delete';
         captures.deletes.push(table);
+        captures.order.push(`delete:${table}`);
         return builder;
       };
       builder.eq = () => builder;
@@ -214,6 +230,7 @@ const GEOM_LINE = {
 function defaultRpcResults() {
   return {
     phase3_search_navigable_routes: { data: [ROUTE_ROW], error: null },
+    get_route_geojson: { data: GEOM_LINE, error: null },
     attach_adventure_plan_to_trip: {
       data: { plan_id: PLAN_ID, trip_id: TRIP_ID, correlation_id: CORRELATION_ID },
       error: null,
@@ -291,7 +308,6 @@ describe('Phase 3 — commande createTripFromAutogenIntent (TEST-PHASE3-CMD)', (
   it('TEST-PHASE3-CMD-03: chaîne complète (parcours, plan, préparation)', async () => {
     const { client, captures } = createSession({
       user: { id: USER_ID },
-      reads: { hiking_routes: { id: ROUTE_ID, geom: GEOM_LINE } },
       insertResults: { materiel_kits: { data: { id: 'kit-phase3' }, error: null } },
       rpcResults: defaultRpcResults(),
     });
@@ -356,9 +372,26 @@ describe('Phase 3 — commande createTripFromAutogenIntent (TEST-PHASE3-CMD)', (
     expect(insertTables).toContain('trip_checklist_items');
 
     const budgetInsert = captures.inserts.find((entry) => entry.table === 'trip_expenses');
-    const budgetRows = budgetInsert?.values as Array<{ amount: number; is_planned: boolean }>;
-    expect(budgetRows[0].amount).toBe(300);
-    expect(budgetRows[0].is_planned).toBe(true);
+    const budgetRows = budgetInsert?.values as Array<{
+      amount: number;
+      is_planned: boolean;
+      category: string;
+    }>;
+    expect(budgetRows).toHaveLength(6);
+    expect(budgetRows.every((row) => row.amount > 0 && row.is_planned)).toBe(true);
+    expect(budgetRows.map((row) => row.category)).toEqual([
+      'hébergement',
+      'nourriture',
+      'transport',
+      'activités',
+      'matériel',
+      'divers',
+    ]);
+    const budgetTotalCents = budgetRows.reduce(
+      (sum, row) => sum + Math.round(row.amount * 100),
+      0
+    );
+    expect(budgetTotalCents).toBe(30000); // 300 €/personne × 1 voyageur
 
     // Le voyage porte le kit et le budget prévisionnel.
     const tripUpdate = captures.updates.find(
@@ -396,7 +429,6 @@ describe('Phase 3 — commande createTripFromAutogenIntent (TEST-PHASE3-CMD)', (
   it('TEST-PHASE3-CMD-05: échec de génération ⇒ compensation et 500', async () => {
     const { client, captures } = createSession({
       user: { id: USER_ID },
-      reads: { hiking_routes: { id: ROUTE_ID, geom: GEOM_LINE } },
       rpcResults: defaultRpcResults(),
     });
     mockedCreateClient.mockResolvedValue(client as never);
@@ -473,9 +505,9 @@ describe('Phase 3 — commande createTripFromAutogenIntent (TEST-PHASE3-CMD)', (
   it('TEST-PHASE3-CMD-09: sélection refusée par la base ⇒ voyage ok, navigation off', async () => {
     const { client } = createSession({
       user: { id: USER_ID },
-      reads: { hiking_routes: { id: ROUTE_ID, geom: GEOM_LINE } },
       rpcResults: {
         phase3_search_navigable_routes: { data: [ROUTE_ROW], error: null },
+        get_route_geojson: { data: GEOM_LINE, error: null },
         attach_adventure_plan_to_trip: {
           data: { plan_id: PLAN_ID, trip_id: TRIP_ID, correlation_id: CORRELATION_ID },
           error: null,
@@ -501,7 +533,6 @@ describe('Phase 3 — commande createTripFromAutogenIntent (TEST-PHASE3-CMD)', (
     try {
       const { client, captures } = createSession({
         user: { id: USER_ID },
-        reads: { hiking_routes: { id: ROUTE_ID, geom: GEOM_LINE } },
         rpcResults: defaultRpcResults(),
         updateResults: {
           trips: {
@@ -529,5 +560,94 @@ describe('Phase 3 — commande createTripFromAutogenIntent (TEST-PHASE3-CMD)', (
     } finally {
       warnSpy.mockRestore();
     }
+  });
+
+  it('TEST-PHASE3-CMD-11: route_id écrit dès la création, avant plan/kit', async () => {
+    const { client, captures } = createSession({
+      user: { id: USER_ID },
+      insertResults: { materiel_kits: { data: { id: 'kit-phase3' }, error: null } },
+      rpcResults: defaultRpcResults(),
+    });
+    mockedCreateClient.mockResolvedValue(client as never);
+
+    const result = await createTripFromAutogenIntent(
+      validInput({
+        layers: {
+          kit: {
+            id: 'prop-kit',
+            layer: 'kit',
+            slotId: 'slot-kit',
+            value: { targetWeightKg: 6.8, essentialCategories: ['drap_de_sac'] },
+            provenance: { source: 'estimated' },
+            confidence: 'low',
+            rationale: 'Kit optimisé.',
+          },
+        },
+      })
+    );
+
+    expect(result.ok).toBe(true);
+
+    const earlyUpdate = captures.updates.find(
+      (entry) =>
+        entry.table === 'trips' &&
+        typeof entry.values === 'object' &&
+        entry.values !== null &&
+        (entry.values as { metadata?: { route_id?: unknown } }).metadata?.route_id === ROUTE_ID
+    );
+    expect(earlyUpdate).toBeTruthy();
+    const earlyMetadata = (
+      earlyUpdate?.values as { metadata: { route_id: number; autogen: { plan_id?: unknown } } }
+    ).metadata;
+    expect(typeof earlyMetadata.route_id).toBe('number');
+    expect(earlyMetadata.autogen.plan_id).toBeUndefined();
+
+    const routeUpdateIndex = captures.order.indexOf('update:trips');
+    const kitInsertIndex = captures.order.indexOf('insert:materiel_kits');
+    const attachIndex = captures.order.indexOf('rpc:attach_adventure_plan_to_trip');
+    expect(routeUpdateIndex).toBeGreaterThan(-1);
+    expect(routeUpdateIndex).toBeLessThan(kitInsertIndex);
+    expect(routeUpdateIndex).toBeLessThan(attachIndex);
+  });
+
+  it('TEST-PHASE3-CMD-12: polyline via rpc get_route_geojson (jamais la colonne geom brute)', async () => {
+    const { client, captures } = createSession({
+      user: { id: USER_ID },
+      reads: { hiking_routes: { id: ROUTE_ID, geom: GEOM_LINE } },
+      rpcResults: defaultRpcResults(),
+    });
+    mockedCreateClient.mockResolvedValue(client as never);
+
+    const result = await createTripFromAutogenIntent(validInput());
+
+    expect(result.ok).toBe(true);
+    const geometryCall = captures.rpcCalls.find((call) => call.fn === 'get_route_geojson');
+    expect(geometryCall?.args).toEqual({ p_route_id: ROUTE_ID });
+    expect(captures.order).not.toContain('select:hiking_routes');
+    expect(mockedGenerate.mock.calls[0][0].coordinates).toEqual([
+      { lat: 48.0, lng: 7.0 },
+      { lat: 48.1, lng: 7.1 },
+    ]);
+  });
+
+  it('TEST-PHASE3-CMD-13: échec tardif après insertion ⇒ succès partiel, pas de 500', async () => {
+    const { client, captures } = createSession({
+      user: { id: USER_ID },
+      rpcResults: defaultRpcResults(),
+    });
+    mockedCreateClient.mockResolvedValue(client as never);
+    mockedFeatureFlags.mockRejectedValueOnce(new Error('drapeaux indisponibles'));
+
+    const result = await createTripFromAutogenIntent(validInput());
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.partial).toBe(true);
+    expect(result.tripId).toBe(TRIP_ID);
+    expect(result.slug).toBe('vosges-2-j');
+    expect(result.warnings).toContain('revalidation déplacée vers le Route Handler');
+    expect(captures.deletes).not.toContain('trips');
+    expect(storeMock.markFailed).toHaveBeenCalledWith('req-phase3');
+    expect(mockedGenerate).not.toHaveBeenCalled();
   });
 });
