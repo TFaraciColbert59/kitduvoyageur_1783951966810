@@ -13,6 +13,7 @@ import ParcoursCard from '@/components/groupes/ParcoursCard';
 import { tripSectionHref } from '@/features/trips/registry/tripSectionRegistry';
 import { convertEphemeralGroup } from '@/features/tribu/actions/ephemeralGroup';
 import { formatEphemeralCountdown } from '@/features/tribu/lib/ephemeral';
+import GroupActivityLog from '@/features/tribu/components/GroupActivityLog';
 import {
   assignGroupeKitItem,
   settleGroupeExpense,
@@ -464,6 +465,8 @@ export function GroupeMobileExperience({
       />
 
       <GroupeChipsRow chips={chips} />
+
+      <GroupActivityLog entries={data.activityLog ?? []} compact />
 
       <GroupeCriticalPath
         tasks={criticalPath}

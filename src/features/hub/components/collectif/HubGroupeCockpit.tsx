@@ -17,6 +17,7 @@ import VoyageursCard from '@/components/groupes/VoyageursCard';
 import { GroupTrekPanel } from '@/features/adventure-intelligence/ui/GroupTrekPanel';
 import { convertEphemeralGroup } from '@/features/tribu/actions/ephemeralGroup';
 import { formatEphemeralCountdown } from '@/features/tribu/lib/ephemeral';
+import GroupActivityLog from '@/features/tribu/components/GroupActivityLog';
 
 const DepensesCard = nextDynamic(() => import('@/components/groupes/DepensesCard'), { ssr: false });
 const DecisionsCard = nextDynamic(() => import('@/components/groupes/DecisionsCard'), { ssr: false });
@@ -214,6 +215,7 @@ export function HubGroupeCockpit({ groupId, initialTab }: { groupId: string; ini
               <ParcoursCard groupId={data.id} trail={data.trail} meta={data.meta} />
             </div>
             <TachesCard tasks={data.tasks} groupId={data.id} onRefresh={refreshData} user={user} members={members} />
+            <GroupActivityLog entries={data.activityLog ?? []} />
           </div>
         )}
 
