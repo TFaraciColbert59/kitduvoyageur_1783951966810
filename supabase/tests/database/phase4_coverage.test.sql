@@ -104,6 +104,12 @@ UPDATE public.coverage_licenses
    SET status = 'revoked', revoked_at = now()
  WHERE id = 'c4a00000-0000-4000-8000-000000000003';
 
+-- Replay local : la baseline schema-only ne contient aucune ligne countries_geo,
+-- or coverage_regions.country_iso_a2 y est lie par FK — fixture autoportante.
+INSERT INTO public.countries_geo (id, iso_a2, name, languages)
+VALUES ('c4d00000-0000-4000-8000-000000000001', 'FR', 'France (fixture Phase 4)', '{}')
+ON CONFLICT DO NOTHING;
+
 INSERT INTO public.coverage_regions (id, country_iso_a2, region_code, region_name)
 VALUES
   ('c4b00000-0000-4000-8000-000000000001', 'FR', 'phase4-test', 'Région Phase 4 (test)'),

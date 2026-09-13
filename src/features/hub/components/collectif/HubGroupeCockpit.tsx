@@ -15,6 +15,10 @@ import TachesCard from '@/components/groupes/TachesCard';
 import EquipementCard from '@/components/groupes/EquipementCard';
 import VoyageursCard from '@/components/groupes/VoyageursCard';
 import { GroupTrekPanel } from '@/features/adventure-intelligence/ui/GroupTrekPanel';
+import { convertEphemeralGroup } from '@/features/tribu/actions/ephemeralGroup';
+import { formatEphemeralCountdown } from '@/features/tribu/lib/ephemeral';
+import GroupActivityLog from '@/features/tribu/components/GroupActivityLog';
+import GroupTaskTemplatesPanel from '@/features/tribu/components/GroupTaskTemplatesPanel';
 
 const DepensesCard = nextDynamic(() => import('@/components/groupes/DepensesCard'), { ssr: false });
 const DecisionsCard = nextDynamic(() => import('@/components/groupes/DecisionsCard'), { ssr: false });
@@ -39,6 +43,8 @@ export function HubGroupeCockpit({ groupId, initialTab }: { groupId: string; ini
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<any>(null);
   const [linkedTrip, setLinkedTrip] = useState<{ id: string; slug: string; title: string } | null>(null);
+  const [converting, setConverting] = useState(false);
+  const [convertError, setConvertError] = useState<string | null>(null);
   const loadedRef = useRef(false);
 
   const loadData = useCallback(async () => {
@@ -70,6 +76,19 @@ export function HubGroupeCockpit({ groupId, initialTab }: { groupId: string; ini
   }, [groupId, loadData]);
 
   const refreshData = useCallback(() => loadData(), [loadData]);
+
+  const handleConvertEphemeral = useCallback(async () => {
+    if (!data?.id) return;
+    setConverting(true);
+    setConvertError(null);
+    const result = await convertEphemeralGroup(data.id);
+    setConverting(false);
+    if (result.ok) {
+      await refreshData();
+    } else {
+      setConvertError(result.error);
+    }
+  }, [data?.id, refreshData]);
 
   if (loading) {
     return (
@@ -127,6 +146,68 @@ export function HubGroupeCockpit({ groupId, initialTab }: { groupId: string; ini
           data={data}
         />
 
+        {data.ephemeral && (
+          <div
+            className={`${cardClass} p-4 border border-white/70 shadow-sm flex items-center justify-between gap-4`}
+            data-testid="group-ephemeral-banner"
+          >
+            <div className="min-w-0">
+              <span className="text-[10px] font-medium uppercase tracking-[0.14em] text-[var(--lkv-text-secondary)] block">
+                Sortie du jour
+              </span>
+              <h4 className="text-sm font-bold text-[var(--lkv-text-primary)] truncate">
+                {formatEphemeralCountdown(data.ephemeral.autoDissolveAt) ?? 'Groupe éclair'}
+              </h4>
+            </div>
+            {isCurrentUserOrganizer && (
+              <button
+                type="button"
+                onClick={handleConvertEphemeral}
+                disabled={converting}
+                className="glass-capsule-btn primary text-xs font-bold px-4 min-h-[44px] flex items-center shrink-0 disabled:opacity-60"
+                data-testid="group-ephemeral-convert"
+              >
+                <span className="relative z-10">
+                  {converting ? 'Conversion…' : 'Transformer en groupe complet'}
+                </span>
+              </button>
+            )}
+            {convertError && (
+              <p role="alert" className="text-[10px] font-bold text-[var(--lkv-danger)]">
+                {convertError}
+              </p>
+            )}
+          </div>
+        )}
+
+        {data.parentClub && (
+          <Link
+            href={`/clubs/${data.parentClub.slug || data.parentClub.id}`}
+            className={`${cardClass} p-4 border border-white/70 shadow-sm flex items-center justify-between gap-4`}
+            data-testid="group-parent-club-badge"
+          >
+            <div className="min-w-0">
+              <span className="text-[10px] font-medium uppercase tracking-[0.14em] text-[var(--lkv-text-secondary)] block">
+                Né du club
+              </span>
+              <h4 className="text-sm font-bold text-[var(--lkv-text-primary)] truncate">
+                {data.parentClub.name}
+              </h4>
+            </div>
+            <span className="glass-capsule-btn text-xs font-bold px-4 min-h-[44px] flex items-center shrink-0">
+              Voir le club →
+            </span>
+          </Link>
+        )}
+
+        {data.parentClub && (
+          <GroupTaskTemplatesPanel
+            groupId={data.id}
+            clubId={data.parentClub.id}
+            onApplied={refreshData}
+          />
+        )}
+
         {linkedTrip && (
           <Link
             href={tripSectionHref(linkedTrip.slug, 'overview')}
@@ -152,6 +233,7 @@ export function HubGroupeCockpit({ groupId, initialTab }: { groupId: string; ini
               <ParcoursCard groupId={data.id} trail={data.trail} meta={data.meta} />
             </div>
             <TachesCard tasks={data.tasks} groupId={data.id} onRefresh={refreshData} user={user} members={members} />
+            <GroupActivityLog entries={data.activityLog ?? []} />
           </div>
         )}
 

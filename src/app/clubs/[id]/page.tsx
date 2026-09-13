@@ -19,10 +19,14 @@ import ClubTeamCard from '@/components/clubs/ClubTeamCard';
 import ClubAboutCard from '@/components/clubs/ClubAboutCard';
 import ClubProCard from '@/components/clubs/ClubProCard';
 import MobileClubDetailView from '@/components/clubs/MobileClubDetailView';
+import ClubGroupsTab from '@/components/clubs/ClubGroupsTab';
 import { createClient } from '@/lib/supabase/client';
 import { fetchPublicProfilesWith } from '@/lib/queries/publicProfilesCore';
 import { useAuth } from '@/contexts/AuthContext';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
+import { setActiveAdventureAction } from '@/features/hub/context/activeAdventureServer';
+import { hubSectionHref } from '@/features/hub/registry/hubSectionRegistry';
+import { createGroupFromClub } from '@/features/tribu/actions/createGroupFromClub';
 
 interface Club {
   id: string;
@@ -76,8 +80,6 @@ interface ClubEvent {
   is_featured?: boolean;
 }
 
-const TAB_LINKS = ['Vue d\'ensemble', 'Sorties', 'Membres', 'Photos', 'Discussions', 'Guides & Astuces', 'Parcours'];
-
 export default function ClubDetailPage() {
   const params = useParams();
   const router = useRouter();
@@ -87,6 +89,7 @@ export default function ClubDetailPage() {
   const [topics, setTopics] = useState<ClubTopic[]>([]);
   const [members, setMembers] = useState<ClubMember[]>([]);
   const [events, setEvents] = useState<ClubEvent[]>([]);
+  const [clubGroups, setClubGroups] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [activeTab, setActiveTab] = useState('Vue d\'ensemble');
@@ -135,6 +138,25 @@ export default function ClubDetailPage() {
 
   const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(null), 3000); };
 
+  const handleOpenClubGroup = async (group: any) => {
+    const res = await setActiveAdventureAction({ nature: 'collectif', id: group.id, title: group.name });
+    if (!res.success) {
+      showToast("Impossible d'ouvrir ce groupe pour le moment.");
+      return;
+    }
+    triggerHaptic('light');
+    router.push(hubSectionHref({ nature: 'collectif' }, 'groupe'));
+  };
+
+  const handleCreateClubGroup = async (name: string, memberIds: string[]) => {
+    if (!club) return { ok: false, error: 'Club introuvable.' };
+    const res = await createGroupFromClub({ clubId: club.id, name, memberIds });
+    if (!res.ok) return { ok: false, error: res.error };
+    if (res.warning) showToast(res.warning);
+    await handleOpenClubGroup({ id: res.groupId, name: res.name });
+    return { ok: true };
+  };
+
   const loadData = async () => {
     if (!clubId) return;
     setLoading(true);
@@ -147,11 +169,17 @@ export default function ClubDetailPage() {
     if (clubData) {
       setClub(clubData as Club);
       try {
-        const [topicsRes, membersRes, eventsRes] = await Promise.all([
+        const [topicsRes, membersRes, eventsRes, groupsRes] = await Promise.all([
           supabase.from('club_topics').select('*').eq('club_id', clubData.id).order('is_pinned', { ascending: false }).order('created_at', { ascending: false }),
           supabase.from('club_members').select('*').eq('club_id', clubData.id).eq('status', 'active'),
           supabase.from('club_events').select('*').eq('club_id', clubData.id).order('event_date', { ascending: true }),
+          supabase
+            .from('travel_groups')
+            .select('id, name, destination, theme, cover_url, departure_date, return_date, visibility, owner_id, parent_club_id')
+            .eq('parent_club_id', clubData.id)
+            .order('created_at', { ascending: false }),
         ]);
+        setClubGroups((groupsRes.data as any[]) ?? []);
         // F1 — auteurs/membres via la vue `public_profiles` (deux étapes).
         const topicRows = (topicsRes.data as any[]) ?? [];
         const memberRows = (membersRes.data as any[]) ?? [];
@@ -685,6 +713,20 @@ export default function ClubDetailPage() {
       );
     }
 
+    if (activeTab === 'Groupes') {
+      return (
+        <ClubGroupsTab
+          club={club}
+          groups={clubGroups}
+          members={members}
+          user={user}
+          isMember={isMember}
+          onCreate={handleCreateClubGroup}
+          onOpenGroup={handleOpenClubGroup}
+        />
+      );
+    }
+
     if (activeTab === 'Parcours') {
       return (
         <section className="glass rounded-2xl p-12 text-center text-[#5C6B5E]">
@@ -846,11 +888,14 @@ export default function ClubDetailPage() {
             topics={topics}
             members={members}
             events={events}
+            groups={clubGroups}
             user={user}
             isMember={isMember}
             onJoinToggle={handleToggleMember}
             joining={joining}
             onOpenCreatePost={() => setCreatePostModalOpen(true)}
+            onOpenGroup={handleOpenClubGroup}
+            onCreateGroup={handleCreateClubGroup}
             onRefresh={loadData}
           />
         </MobilePageShell>

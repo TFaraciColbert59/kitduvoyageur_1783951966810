@@ -23,6 +23,13 @@ interface Decision {
   question: string;
   options: Option[];
   footer: string;
+  pollType?: string;
+  resolution?: {
+    adopted: boolean;
+    reason: string;
+    winnerIndex: number | null;
+    requiredVotes: number | null;
+  };
 }
 
 interface DecisionsCardProps {
@@ -40,6 +47,31 @@ export default function DecisionsCard({ decisions: initialDecisions, groupId, on
   const [newOptions, setNewOptions] = useState(['', '']);
   const [loading, setLoading] = useState(false);
   const [savingVoteId, setSavingVoteId] = useState<string | null>(null);
+  const [importantDecision, setImportantDecision] = useState(false);
+
+  const resolutionLabel = (decision: Decision) => {
+    const resolution = decision.resolution;
+    if (!resolution) return '';
+    if (resolution.adopted) {
+      return decision.pollType === 'organizer_approval'
+        ? 'Décision approuvée (vote organisateur)'
+        : 'Décision adoptée';
+    }
+    switch (resolution.reason) {
+      case 'quorum_missing':
+        return resolution.requiredVotes
+          ? `Quorum non atteint — ${resolution.requiredVotes} voix requises`
+          : 'Quorum non atteint';
+      case 'organizer_missing':
+        return 'En attente d’un vote organisateur';
+      case 'tie':
+        return 'Égalité — un vote départageant est requis';
+      case 'no_votes':
+        return 'Aucun vote exprimé';
+      default:
+        return 'Décision non adoptée';
+    }
+  };
 
   React.useEffect(() => {
     setDecisions(initialDecisions);
@@ -146,7 +178,9 @@ export default function DecisionsCard({ decisions: initialDecisions, groupId, on
       created_by: user.id,
       question: newQuestion.trim(),
       options: formattedOptions,
-      status: 'open'
+      status: 'open',
+      poll_type: importantDecision ? 'quorum_majority' : 'simple',
+      quorum_threshold: 0.5,
     });
 
     if (error) {
@@ -156,6 +190,7 @@ export default function DecisionsCard({ decisions: initialDecisions, groupId, on
       setNewQuestion('');
       setNewOptions(['', '']);
       setIsAdding(false);
+      setImportantDecision(false);
       if (onRefresh) onRefresh();
     }
     setLoading(false);
@@ -211,6 +246,21 @@ export default function DecisionsCard({ decisions: initialDecisions, groupId, on
               </div>
             ))}
           </div>
+
+          <button
+            type="button"
+            onClick={() => setImportantDecision(!importantDecision)}
+            aria-pressed={importantDecision}
+            className={`w-full flex items-center justify-between gap-3 rounded-xl px-3 py-2.5 text-xs font-bold transition-all min-h-[44px] mb-2 ${
+              importantDecision
+                ? 'bg-lkv-primary/10 border border-lkv-primary text-lkv-primary'
+                : 'glass-sub-card text-lkv-text-muted border border-transparent'
+            }`}
+            data-testid="decision-important-toggle"
+          >
+            <span>Décision importante (quorum requis)</span>
+            <span aria-hidden>{importantDecision ? '✓' : '○'}</span>
+          </button>
           
           <div className="flex justify-between items-center mt-6">
             <button 
@@ -289,6 +339,17 @@ export default function DecisionsCard({ decisions: initialDecisions, groupId, on
               )})}
             </div>
             
+            {decision.pollType && decision.pollType !== 'simple' && decision.resolution && (
+              <p
+                className={`text-[10px] font-mono font-bold uppercase tracking-widest mb-2 ${
+                  decision.resolution.adopted ? 'text-lkv-primary' : 'text-lkv-text-muted'
+                }`}
+                data-testid="decision-resolution"
+              >
+                {resolutionLabel(decision)}
+              </p>
+            )}
+
             <div className="flex justify-between items-center text-[10px] font-mono uppercase tracking-widest text-lkv-text-muted pt-3 border-t border-lkv-primary/10 font-bold">
               <span>{totalVotes} votes exprimés</span>
             </div>

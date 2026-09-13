@@ -9,6 +9,7 @@ import ClubDiscussionCard from '@/components/clubs/ClubDiscussionCard';
 import ClubFeaturedEventCard from '@/components/clubs/ClubFeaturedEventCard';
 import ClubTeamCard from '@/components/clubs/ClubTeamCard';
 import ClubAboutCard from '@/components/clubs/ClubAboutCard';
+import ClubGroupsTab from '@/components/clubs/ClubGroupsTab';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 
 interface MobileClubDetailViewProps {
@@ -16,11 +17,14 @@ interface MobileClubDetailViewProps {
   topics: any[];
   members: any[];
   events: any[];
+  groups?: any[];
   user: any;
   isMember: boolean;
   onJoinToggle: () => Promise<void>;
   joining: boolean;
   onOpenCreatePost: () => void;
+  onOpenGroup?: (group: any) => void | Promise<void>;
+  onCreateGroup?: (name: string, memberIds: string[]) => Promise<{ ok: boolean; error?: string }>;
   onRefresh: () => void;
 }
 
@@ -29,15 +33,18 @@ export default function MobileClubDetailView({
   topics,
   members,
   events,
+  groups = [],
   user,
   isMember,
   onJoinToggle,
   joining,
   onOpenCreatePost,
+  onOpenGroup,
+  onCreateGroup,
   onRefresh,
 }: MobileClubDetailViewProps) {
   const { triggerHaptic } = useHapticFeedback();
-  const [activeSection, setActiveSection] = useState<'overview' | 'events' | 'discussions' | 'members' | 'guides'>('overview');
+  const [activeSection, setActiveSection] = useState<'overview' | 'events' | 'groups' | 'discussions' | 'members' | 'guides'>('overview');
 
   useEffect(() => {
     const handler = (e: any) => {
@@ -260,6 +267,20 @@ export default function MobileClubDetailView({
                   ))
                 )}
               </div>
+            )}
+
+            {/* GROUPES DE VOYAGE (pont vers le Hub, TRIBU-R1) */}
+            {activeSection === 'groups' && (
+              <ClubGroupsTab
+                club={club}
+                groups={groups}
+                members={members}
+                user={user}
+                isMember={isMember}
+                compact
+                onCreate={onCreateGroup ?? (async () => ({ ok: false, error: 'Indisponible.' }))}
+                onOpenGroup={onOpenGroup ?? (() => {})}
+              />
             )}
 
             {/* DISCUSSIONS */}

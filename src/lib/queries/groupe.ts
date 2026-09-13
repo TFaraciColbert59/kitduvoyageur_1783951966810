@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/client';
 import { fetchPublicProfilesWith } from '@/lib/queries/publicProfilesCore';
+import { resolvePoll } from '@/lib/queries/pollResolution';
 
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -75,6 +76,23 @@ export async function getGroupeComplet(groupeId: string) {
 
   const realGroupId = groupe.id;
 
+  // Pont club (TRIBU) : nom du club d'origine si le groupe en est issu.
+  let parentClub: { id: string; name: string; slug: string | null } | null = null;
+  if ((groupe as any).parent_club_id) {
+    const { data: clubRow } = await supabase
+      .from('clubs')
+      .select('id, name, slug')
+      .eq('id', (groupe as any).parent_club_id)
+      .maybeSingle();
+    if (clubRow) {
+      parentClub = {
+        id: (clubRow as any).id,
+        name: (clubRow as any).name,
+        slug: (clubRow as any).slug ?? null,
+      };
+    }
+  }
+
   // Fetch related tables in parallel — use simple joins without explicit FK names
   const [
     { data: travelMembers, error: membersErr },
@@ -83,6 +101,7 @@ export async function getGroupeComplet(groupeId: string) {
     { data: depenses, error: depErr },
     { data: messages, error: msgErr },
     { data: votes, error: votesErr },
+    { data: activityRows },
   ] = await Promise.all([
     supabase.from('group_members').select('id, user_id, role, status, joined_at').eq('group_id', realGroupId).order('joined_at', { ascending: true }),
     supabase.from('group_tasks').select('id, title, description, status, assigned_to, due_date, created_at').eq('group_id', realGroupId).order('created_at', { ascending: false }),
@@ -90,6 +109,7 @@ export async function getGroupeComplet(groupeId: string) {
     supabase.from('group_expenses').select('id, title, amount, category, split_between, status, created_at, paid_by').eq('group_id', realGroupId).order('created_at', { ascending: false }),
     supabase.from('group_messages').select('id, content, media_url, created_at, user_id').eq('group_id', realGroupId).order('created_at', { ascending: false }).limit(200),
     supabase.from('group_polls').select('*').eq('group_id', realGroupId).eq('status', 'open').order('created_at', { ascending: false }),
+    supabase.from('group_activity_log').select('id, actor_id, action_type, entity_type, summary, created_at').eq('group_id', realGroupId).order('created_at', { ascending: false }).limit(30),
   ]);
 
   if (membersErr) console.error('[groupe] members error:', membersErr);
@@ -107,6 +127,7 @@ export async function getGroupeComplet(groupeId: string) {
     ...(equipement ?? []).map((e: any) => e.assigned_to as string),
     ...(depenses ?? []).map((d: any) => d.paid_by as string),
     ...(messages ?? []).map((m: any) => m.user_id as string),
+    ...((activityRows ?? []) as any[]).map((log: any) => log.actor_id as string),
   ]);
 
   const membres = travelMembers || [];
@@ -189,6 +210,25 @@ export async function getGroupeComplet(groupeId: string) {
       };
     });
 
+    const resolution = resolvePoll({
+      poll: {
+        pollType: v.poll_type,
+        quorumThreshold: v.quorum_threshold != null ? Number(v.quorum_threshold) : null,
+        options: rawOptions,
+      },
+      votes: pollVotes.map((c: any) => ({ optionIndex: c.option_index })),
+      activeMembers: activeMembers.length,
+      organizerVotes: pollVotes
+        .filter((c: any) =>
+          activeMembers.some(
+            (m: any) =>
+              m.user_id === c.user_id &&
+              (m.role === 'organizer' || m.role === 'co_organizer')
+          )
+        )
+        .map((c: any) => ({ optionIndex: c.option_index })),
+    });
+
     return {
       id: v.id,
       author: 'Organisateur',
@@ -198,6 +238,13 @@ export async function getGroupeComplet(groupeId: string) {
       options,
       votesDetail: pollVotes.map((c: any) => ({ userId: c.user_id, optionIndex: c.option_index })),
       footer: `${totalChoices} votes exprimés`,
+      pollType: resolution.pollType,
+      resolution: {
+        adopted: resolution.adopted,
+        reason: resolution.reason,
+        winnerIndex: resolution.winnerIndex,
+        requiredVotes: resolution.requiredVotes,
+      },
     };
   });
 
@@ -272,6 +319,10 @@ export async function getGroupeComplet(groupeId: string) {
     id: realGroupId,
     inviteCode: groupe.invite_code || '',
     trail: trailData,
+    parentClub,
+    ephemeral: (groupe as any).is_ephemeral
+      ? { autoDissolveAt: ((groupe as any).auto_dissolve_at as string | null) ?? null }
+      : null,
     meta: {
       titlePrefix: (groupe.name?.split(' ')[0] || 'Groupe'),
       titleSuffix: (groupe.name?.split(' ').slice(1).join(' ') || ''),
@@ -302,6 +353,14 @@ export async function getGroupeComplet(groupeId: string) {
     discussions: formattedDiscussions,
     travelers: formattedTravelers,
     pendingTravelers,
+    activityLog: ((activityRows ?? []) as any[]).map((log: any) => ({
+      id: log.id,
+      summary: log.summary,
+      actionType: log.action_type,
+      entityType: log.entity_type,
+      createdAt: log.created_at,
+      actorName: displayName(profileMap[log.actor_id], 'Quelqu’un'),
+    })),
     activities: groupe.destination?.toLowerCase().includes('islande') || groupe.destination?.toLowerCase().includes('landmann') ? [
       { id: 'act-1', content: '🌋 **Jour 1** — Landmannalaugar → Hrafntinnusker · 12 km · +550m · Sources chaudes géothermiques et champs de rhyolite multicolores', time: formatDateShort(groupe.departure_date) || 'Jour 1' },
       { id: 'act-2', content: '🏔️ **Jour 2** — Hrafntinnusker → Álftavatn · 22 km · Traversée de glaciers noirs et lac turquoise', time: 'Jour 2' },

@@ -68,13 +68,13 @@ export default function BouteilleALaMer({ countryIso, countryName }: Props) {
     if (!countryIso) return;
     const iso = (countryIso || '').toLowerCase();
     
-    // Fetch public groups with members, owner and expenses
+    // Fetch public groups (owner + propres memberships) ; compteurs agrégés
+    // via RPC `group_public_card_stats` (lectures enfants publiques fermées).
     const { data: groupsData, error } = await supabase
       .from('travel_groups')
       .select(`
         *,
-        members:group_members(id, user_id, status, role),
-        expenses:group_expenses(amount)
+        members:group_members(id, user_id, status, role)
       `)
       .eq('visibility', 'public')
       .ilike('country_iso', iso)
@@ -86,6 +86,12 @@ export default function BouteilleALaMer({ countryIso, countryName }: Props) {
       const ownerProfiles = await fetchPublicProfilesWith(
         supabase,
         groupsData.map((g: any) => g.owner_id as string)
+      );
+      const { data: statsRows } = await supabase.rpc('group_public_card_stats', {
+        p_group_ids: groupsData.map((g: any) => g.id),
+      });
+      const statsById = new Map<string, any>(
+        ((statsRows as any[]) || []).map((s: any) => [s.group_id, s])
       );
       // Check user blocks if logged in
       let blockedUserIds = new Set<string>();
@@ -104,18 +110,19 @@ export default function BouteilleALaMer({ countryIso, countryName }: Props) {
       const processedGroups = groupsData
         .filter(g => !blockedUserIds.has(g.owner_id))
         .map(g => {
-          // Places calculate ONLY active members
-          const activeMembers = g.members?.filter((m: any) => m.status === 'active') || [];
-          const pendingMembers = g.members?.filter((m: any) => m.status === 'pending') || [];
+          // Places et totaux : agrégats serveur uniquement.
+          const stats = statsById.get(g.id);
+          const activeCount = Number(stats?.active_members ?? 0);
+          const pendingCount = Number(stats?.pending_members ?? 0);
           const userMembership = user ? g.members?.find((m: any) => m.user_id === user.id) : null;
-          const totalExpenses = (g.expenses || []).reduce((acc: number, cur: any) => acc + (Number(cur.amount) || 0), 0);
+          const totalExpenses = Number(stats?.total_expenses ?? 0);
 
           return {
             ...g,
             owner: ownerProfiles[g.owner_id] ?? null,
-            activeMembersCount: activeMembers.length,
-            pendingCount: pendingMembers.length,
-            spotsLeft: Math.max(0, (g.max_members || 12) - activeMembers.length),
+            activeMembersCount: activeCount,
+            pendingCount,
+            spotsLeft: Math.max(0, (g.max_members || 12) - activeCount),
             userMembershipStatus: userMembership?.status || null,
             userMembershipId: userMembership?.id || null,
             totalExpenses,
@@ -216,13 +223,8 @@ export default function BouteilleALaMer({ countryIso, countryName }: Props) {
 
       if (groupErr) throw groupErr;
 
-      // 4. Creator is active organizer
-      await supabase.from('group_members').insert({
-        group_id: newGroup.id,
-        user_id: user.id,
-        role: 'organizer',
-        status: 'active',
-      });
+      // 4. Le membership organizer du createur est pose par la base
+      //    (trigger seed_group_owner_membership, migration TRIBU M3).
 
       setShowCreateForm(false);
       setFormData({
