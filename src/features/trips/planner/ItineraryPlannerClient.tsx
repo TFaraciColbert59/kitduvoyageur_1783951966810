@@ -59,6 +59,9 @@ export default function ItineraryPlannerClient({
   // lien actif correspondant, le bloc est omis (aucune rangée morte).
   const preparePhase = useMemo(() => getTripPhase(trip) === 'prepare', [trip]);
   const suggestions = useMemo(() => parseEnrichmentSuggestions(trip.metadata), [trip.metadata]);
+  // IMPORTANT 7 — squelette timeline tant que l'enrichissement est en attente
+  // et qu'aucune étape n'existe (zéro CLS, jamais d'état vide trompeur).
+  const enrichmentPending = trip.metadata?.enrichment_status === 'pending';
 
   // Calcul du nombre de jours total
   const calculatedDaysCount = useMemo(() => {
@@ -427,6 +430,7 @@ export default function ItineraryPlannerClient({
           dayNumber={selectedDay}
           startDate={trip.start_date}
           steps={activeDaySteps}
+          enrichmentPending={enrichmentPending}
           canEdit={canEdit}
           onAddStep={(day) => {
             setCreateDayNumber(day);

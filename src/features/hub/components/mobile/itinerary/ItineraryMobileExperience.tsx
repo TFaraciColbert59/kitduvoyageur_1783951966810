@@ -55,6 +55,7 @@ import { GroupeRail } from '../groupe/GroupeRail';
 import { ItineraryHero } from './ItineraryHero';
 import { ItineraryMapSection } from './ItineraryMapSection';
 import { ItineraryDayTimeline } from './ItineraryDayTimeline';
+import { ActivitySectionSkeleton } from '../../live/ActivitySectionSkeleton';
 import { useTripAffiliate } from '@/features/affiliation/components/TripAffiliateProvider';
 import { TripSuggestionSection } from '@/features/affiliation/components/TripSuggestionSection';
 import { parseEnrichmentSuggestions } from '@/features/affiliation/engine/enrichmentSuggestions';
@@ -138,6 +139,10 @@ export function ItineraryMobileExperience({ trip, initialSteps }: ItineraryMobil
   // voyage actif, et jamais de rangée sans lien actif (le bloc s'auto-omet).
   const preparePhase = useMemo(() => getTripPhase(trip) === 'prepare', [trip]);
   const suggestions = useMemo(() => parseEnrichmentSuggestions(trip.metadata), [trip.metadata]);
+  // IMPORTANT 7 — tant que l'enrichissement est en attente et que le bassin est
+  // vide, la section itinéraire affiche un squelette pré-formé (zéro CLS) au
+  // lieu d'un état vide trompeur ; checklist/kit ont un contenu déterministe.
+  const enrichmentPending = trip.metadata?.enrichment_status === 'pending';
   const daysCount = useMemo(
     () => resolveDaysCount(steps, trip.start_date, trip.end_date),
     [steps, trip.start_date, trip.end_date]
@@ -738,16 +743,20 @@ export function ItineraryMobileExperience({ trip, initialSteps }: ItineraryMobil
           )}
         </div>
 
-        <ItineraryDayTimeline
-          steps={timelines}
-          durations={durations}
-          bookingByStepId={bookingByStepId}
-          tripId={trip.id}
-          onOpen={(step) => {
-            triggerHaptic('selection');
-            setDetailStepId(step.id);
-          }}
-        />
+        {steps.length === 0 && enrichmentPending ? (
+          <ActivitySectionSkeleton variant="timeline" />
+        ) : (
+          <ItineraryDayTimeline
+            steps={timelines}
+            durations={durations}
+            bookingByStepId={bookingByStepId}
+            tripId={trip.id}
+            onOpen={(step) => {
+              triggerHaptic('selection');
+              setDetailStepId(step.id);
+            }}
+          />
+        )}
       </section>
 
       {/* ── RAIL POI ── */}
@@ -758,7 +767,11 @@ export function ItineraryMobileExperience({ trip, initialSteps }: ItineraryMobil
         onAction={() => setMapPick(null)}
         ariaLabel="Points d'intérêt"
       >
-        {dayPois.length === 0 ? (
+        {pois.length === 0 && enrichmentPending ? (
+          <li className="shrink-0 snap-start">
+            <ActivitySectionSkeleton variant="moments" />
+          </li>
+        ) : dayPois.length === 0 ? (
           <li className="shrink-0 snap-start">
             <div className="glass-sub-card flex h-[8.5rem] w-[13rem] flex-col items-start justify-center gap-1 rounded-[1.4rem] p-4">
               <span className="text-sm font-bold text-[var(--lkv-text-primary)]">Aucun point d’intérêt</span>

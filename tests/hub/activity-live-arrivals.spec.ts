@@ -343,6 +343,35 @@ describe('AnimatedNumber — compteur tabulaire', () => {
   });
 });
 
+describe('fix round final — compteurs animés + squelettes itinéraire', () => {
+  const readFile = (relative: string) => fs.readFileSync(path.join(process.cwd(), relative), 'utf8');
+
+  it('le rail consomme AnimatedNumber pour son compteur de phases', () => {
+    const source = readLiveSource('ActivityPreparationStatus.tsx');
+
+    expect(source).toContain("from './AnimatedNumber'");
+    expect(source).toContain('<AnimatedNumber value={completed}');
+  });
+
+  it('mobile : squelettes timeline/moments tant que l’enrichissement est pending et le bassin vide', () => {
+    const source = readFile(
+      'src/features/hub/components/mobile/itinerary/ItineraryMobileExperience.tsx'
+    );
+
+    expect(source).toContain('ActivitySectionSkeleton');
+    expect(source).toContain('variant="timeline"');
+    expect(source).toContain('variant="moments"');
+    expect(source).toContain("enrichment_status === 'pending'");
+  });
+
+  it('desktop : la timeline affiche le squelette (pending + 0 étape)', () => {
+    const source = readFile('src/features/trips/planner/DayView.tsx');
+
+    expect(source).toContain('ActivitySectionSkeleton');
+    expect(source).toContain('enrichmentPending');
+  });
+});
+
 describe('ActivitySectionSkeleton — dimensions exactes, zéro CLS', () => {
   const variants = ['timeline', 'moments', 'affiliate', 'kit'] as const;
   const expectedItems: Record<(typeof variants)[number], number> = {

@@ -17,6 +17,7 @@ import { Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { countArrivals, useActivityLiveArrivals } from './useActivityLiveArrivals';
+import { AnimatedNumber } from './AnimatedNumber';
 import {
   EMPTY_ARRIVAL_COUNTS,
   PREPARATION_PHASES,
@@ -205,8 +206,9 @@ export function ActivityPreparationStatus({
         <p className="text-[10px] font-medium uppercase tracking-[0.14em] text-[var(--lkv-text-primary)]/70">
           Préparation live
         </p>
-        <span className="text-[11px] font-bold tabular-nums text-[var(--lkv-text-primary)]">
-          {completed}/{PREPARATION_PHASES.length}
+        <span className="flex items-center text-[11px] font-bold tabular-nums text-[var(--lkv-text-primary)]">
+          <AnimatedNumber value={completed} />
+          <span aria-hidden="true">/{PREPARATION_PHASES.length}</span>
         </span>
       </div>
 
