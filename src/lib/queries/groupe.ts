@@ -75,6 +75,23 @@ export async function getGroupeComplet(groupeId: string) {
 
   const realGroupId = groupe.id;
 
+  // Pont club (TRIBU) : nom du club d'origine si le groupe en est issu.
+  let parentClub: { id: string; name: string; slug: string | null } | null = null;
+  if ((groupe as any).parent_club_id) {
+    const { data: clubRow } = await supabase
+      .from('clubs')
+      .select('id, name, slug')
+      .eq('id', (groupe as any).parent_club_id)
+      .maybeSingle();
+    if (clubRow) {
+      parentClub = {
+        id: (clubRow as any).id,
+        name: (clubRow as any).name,
+        slug: (clubRow as any).slug ?? null,
+      };
+    }
+  }
+
   // Fetch related tables in parallel — use simple joins without explicit FK names
   const [
     { data: travelMembers, error: membersErr },
@@ -272,6 +289,7 @@ export async function getGroupeComplet(groupeId: string) {
     id: realGroupId,
     inviteCode: groupe.invite_code || '',
     trail: trailData,
+    parentClub,
     meta: {
       titlePrefix: (groupe.name?.split(' ')[0] || 'Groupe'),
       titleSuffix: (groupe.name?.split(' ').slice(1).join(' ') || ''),

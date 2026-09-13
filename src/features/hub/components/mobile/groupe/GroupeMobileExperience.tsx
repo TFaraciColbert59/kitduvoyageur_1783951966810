@@ -392,6 +392,21 @@ export function GroupeMobileExperience({
         </div>
       )}
 
+      {data.parentClub && (
+        <Link
+          href={`/clubs/${data.parentClub.slug || data.parentClub.id}`}
+          className="glass rounded-2xl px-4 py-3 flex items-center justify-between gap-3 min-h-[44px]"
+          data-testid="group-parent-club-badge-mobile"
+        >
+          <span className="text-xs font-bold text-[var(--lkv-text-primary)] truncate">
+            Né du club · {data.parentClub.name}
+          </span>
+          <span className="text-xs font-bold text-[var(--lkv-text-secondary)] shrink-0">
+            Voir →
+          </span>
+        </Link>
+      )}
+
       <GroupeReadinessHero
         readiness={readiness}
         daysLeft={daysLeft}

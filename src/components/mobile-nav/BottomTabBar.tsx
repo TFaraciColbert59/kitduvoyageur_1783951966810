@@ -699,6 +699,7 @@ function BottomTabBar() {
       return [
         { id: 'overview', label: 'Cockpit' },
         { id: 'events', label: 'Sorties' },
+        { id: 'groups', label: 'Groupes' },
         { id: 'discussions', label: 'Discussions' },
         { id: 'members', label: 'Membres' },
         { id: 'guides', label: 'Guides' },

@@ -20,6 +20,7 @@ export default function ClubVerticalTabs({
   const tabs = [
     { id: "Vue d'ensemble", label: "Vue d'ensemble" },
     { id: 'Sorties', label: 'Sorties' },
+    { id: 'Groupes', label: 'Groupes' },
     { id: 'Membres', label: 'Membres' },
     { id: 'Photos', label: 'Photos' },
     { id: 'Discussions', label: 'Discussions' },

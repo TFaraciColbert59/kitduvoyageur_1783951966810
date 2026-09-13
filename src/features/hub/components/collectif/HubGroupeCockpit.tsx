@@ -127,6 +127,26 @@ export function HubGroupeCockpit({ groupId, initialTab }: { groupId: string; ini
           data={data}
         />
 
+        {data.parentClub && (
+          <Link
+            href={`/clubs/${data.parentClub.slug || data.parentClub.id}`}
+            className={`${cardClass} p-4 border border-white/70 shadow-sm flex items-center justify-between gap-4`}
+            data-testid="group-parent-club-badge"
+          >
+            <div className="min-w-0">
+              <span className="text-[10px] font-medium uppercase tracking-[0.14em] text-[var(--lkv-text-secondary)] block">
+                Né du club
+              </span>
+              <h4 className="text-sm font-bold text-[var(--lkv-text-primary)] truncate">
+                {data.parentClub.name}
+              </h4>
+            </div>
+            <span className="glass-capsule-btn text-xs font-bold px-4 min-h-[44px] flex items-center shrink-0">
+              Voir le club →
+            </span>
+          </Link>
+        )}
+
         {linkedTrip && (
           <Link
             href={tripSectionHref(linkedTrip.slug, 'overview')}
