@@ -46,6 +46,7 @@ import {
   resolveUserEntitlements,
   generationQuotaFor,
 } from '@/lib/entitlements/server';
+import { generateSafetyCheckpoints } from './generateSafetyCheckpoints';
 
 /**
  * Phase 3 — Commande canonique de création d'un voyage depuis l'intention
@@ -998,6 +999,25 @@ export async function createTripFromAutogenIntent(
       },
       warnings
     );
+
+    // ── 7 bis. Points de contrôle sécurité (best-effort, dates réelles) ─────
+    // Sans date de départ réelle, rien n'est créé (règle : jamais de date inventée).
+    if (draft.startDate) {
+      try {
+        const checkpoints = await generateSafetyCheckpoints(tripId, {
+          startDate: draft.startDate,
+          endDate: draft.endDate,
+          durationDays: durationDays ?? 0,
+          activity: tripActivity,
+          difficulty: routeContext?.difficulty ?? null,
+          countryCode: draft.destinationCountryCode,
+          partySize: draft.partySize,
+        });
+        warnings.push(...checkpoints.warnings);
+      } catch (error) {
+        console.error('[LKDV autogen] points de contrôle sécurité en échec:', error);
+      }
+    }
 
     // ── 8. Métadonnées finales : plan, parcours, préparation, avertissements ─
     // Comportement documenté (fix round final) : un `route_id` déjà pris
