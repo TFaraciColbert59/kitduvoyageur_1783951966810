@@ -18,6 +18,10 @@ vi.mock('@/app/voyages/completion-actions', () => ({
   submitTripFieldReviewsAction: vi.fn(),
 }));
 
+vi.mock('@/features/trips/actions/updateTripNoteAction', () => ({
+  updateTripNoteAction: vi.fn(),
+}));
+
 describe('TripNotesView & TripCompletionModal — Chantier 8 UI', () => {
   const mockTripFull: TripFull = {
     id: 'trip-alpha',

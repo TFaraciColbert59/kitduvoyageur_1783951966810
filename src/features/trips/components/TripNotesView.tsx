@@ -10,8 +10,9 @@ import { TripCompletionModal } from './TripCompletionModal';
 import { ConfirmDialog } from './ConfirmDialog';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { addTripNoteAction, deleteTripNoteAction } from '@/app/voyages/completion-actions';
+import { updateTripNoteAction } from '@/features/trips/actions/updateTripNoteAction';
 import { getTripDuration } from '../hooks/useTripDuration';
-import type { TripFull } from '../types/trip.types';
+import type { TripFull, TripNote } from '../types/trip.types';
 
 interface TripNotesViewProps {
   trip: TripFull;
@@ -43,6 +44,8 @@ export function TripNotesView({ trip }: TripNotesViewProps) {
   const [isPending, startTransition] = useTransition();
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [confirmState, setConfirmState] = useState<{ noteId: string; label: string } | null>(null);
+  const [editState, setEditState] = useState<{ noteId: string; title: string | null } | null>(null);
+  const [editContent, setEditContent] = useState('');
   const { triggerHaptic } = useHapticFeedback();
 
   const canEdit = trip.permissions.canEdit;
@@ -81,6 +84,33 @@ export function TripNotesView({ trip }: TripNotesViewProps) {
   const handleDelete = (noteId: string, title?: string | null) => {
     const label = title ? `"${title}"` : 'cette note';
     setConfirmState({ noteId, label });
+  };
+
+  const handleEditOpen = (note: TripNote) => {
+    setErrorMessage(null);
+    triggerHaptic('light');
+    setEditState({ noteId: note.id, title: note.title });
+    setEditContent(note.content);
+  };
+
+  const handleEditSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!editState) return;
+    const trimmed = editContent.trim();
+    if (trimmed === '') {
+      setErrorMessage('Le contenu de la note est requis');
+      return;
+    }
+    setErrorMessage(null);
+    startTransition(async () => {
+      const res = await updateTripNoteAction(editState.noteId, trimmed);
+      if (res.ok) {
+        triggerHaptic('success');
+        setEditState(null);
+      } else {
+        setErrorMessage(res.error || 'Erreur lors de la mise à jour de la note');
+      }
+    });
   };
 
   const confirmDelete = () => {
@@ -300,14 +330,24 @@ export function TripNotesView({ trip }: TripNotesViewProps) {
                 </div>
 
                 {canEdit && (
-                  <button
-                    onClick={() => handleDelete(note.id, note.title)}
-                    disabled={isPending}
-                    className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-full glass-sub-card border border-white/60 text-[var(--lkv-text-muted)] hover:text-[var(--lkv-danger)] hover:bg-[var(--lkv-danger)]/10 transition-all shadow-2xs"
-                    aria-label="Supprimer la note"
-                  >
-                    <Icon name="trash2" size={16} />
-                  </button>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <button
+                      onClick={() => handleEditOpen(note)}
+                      disabled={isPending}
+                      className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-full glass-sub-card border border-white/60 text-[var(--lkv-text-muted)] hover:text-lkv-primary hover:bg-lkv-primary/10 transition-all shadow-2xs"
+                      aria-label="Éditer la note"
+                    >
+                      <Icon name="pencil" size={16} />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(note.id, note.title)}
+                      disabled={isPending}
+                      className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-full glass-sub-card border border-white/60 text-[var(--lkv-text-muted)] hover:text-[var(--lkv-danger)] hover:bg-[var(--lkv-danger)]/10 transition-all shadow-2xs"
+                      aria-label="Supprimer la note"
+                    >
+                      <Icon name="trash2" size={16} />
+                    </button>
+                  </div>
                 )}
               </div>
 
@@ -414,6 +454,52 @@ export function TripNotesView({ trip }: TripNotesViewProps) {
               </GlassCapsuleBtn>
               <GlassCapsuleBtn type="submit" variant="primary" size="sm" disabled={isPending}>
                 {isPending ? 'Enregistrement...' : 'Enregistrer la note'}
+              </GlassCapsuleBtn>
+            </div>
+          </form>
+        </div>
+      </GlassModal>
+
+      {/* Modal d'édition sur place */}
+      <GlassModal
+        open={editState !== null}
+        onOpenChange={(open) => {
+          if (!open) setEditState(null);
+        }}
+        title="Éditer la note"
+        variant="sheet"
+      >
+        <div className="pb-2 space-y-4">
+          {errorMessage && (
+            <div className="p-3 rounded-xl glass tone-danger text-[var(--lkv-danger)] text-xs border">
+              {errorMessage}
+            </div>
+          )}
+
+          {editState?.title && (
+            <p className="text-xs font-semibold text-lkv-secondary">{editState.title}</p>
+          )}
+
+          <form onSubmit={handleEditSubmit} className="space-y-4">
+            <textarea
+              value={editContent}
+              onChange={(e) => setEditContent(e.target.value)}
+              rows={6}
+              aria-label="Contenu de la note"
+              className="glass-input w-full px-3 py-2 text-sm text-[var(--lkv-text-primary)]"
+            />
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-white/40">
+              <GlassCapsuleBtn
+                type="button"
+                variant="default"
+                size="sm"
+                onClick={() => setEditState(null)}
+                disabled={isPending}
+              >
+                Annuler
+              </GlassCapsuleBtn>
+              <GlassCapsuleBtn type="submit" variant="primary" size="sm" disabled={isPending}>
+                {isPending ? 'Enregistrement...' : 'Enregistrer les modifications'}
               </GlassCapsuleBtn>
             </div>
           </form>
