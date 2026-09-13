@@ -20,7 +20,7 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON
   public.user_profiles
 TO authenticated, service_role;
 
-SELECT plan(67);
+SELECT plan(70);
 
 -- ----------------------------------------------------------------------------
 -- Fixtures — A organizer, B member, C observer, X non-membre, D pending
@@ -586,6 +586,59 @@ SELECT is(
      FROM public.group_public_card_stats(ARRAY['bd000000-0000-4000-8000-0000000000f4']::uuid[])),
   '(1,1)',
   '67. REV-06. RPC stats : compteurs du groupe public (1 actif, 1 pending)'
+);
+
+-- ════════════════════════════════════════════════════════════════════════════
+-- 68..70 — Contre-revue : cibles historiques, forge co_organizer
+-- ════════════════════════════════════════════════════════════════════════════
+RESET ROLE;
+RESET "request.jwt.claim.sub";
+
+-- Fixtures : Y rejoint f1, paie une depense, puis quitte le groupe.
+INSERT INTO public.group_members (group_id, user_id, role, status)
+VALUES ('bd000000-0000-4000-8000-0000000000f1',
+        'bd000000-0000-4000-8000-0000000000a6', 'member', 'active')
+ON CONFLICT (group_id, user_id) DO UPDATE SET role = 'member', status = 'active';
+
+INSERT INTO public.group_expenses (id, group_id, paid_by, title, amount)
+VALUES ('bd000000-0000-4000-8000-0000000000b5',
+        'bd000000-0000-4000-8000-0000000000f1',
+        'bd000000-0000-4000-8000-0000000000a6', 'Depense partant', 42);
+
+UPDATE public.group_members SET status = 'removed'
+WHERE group_id = 'bd000000-0000-4000-8000-0000000000f1'
+  AND user_id = 'bd000000-0000-4000-8000-0000000000a6';
+
+SET LOCAL ROLE authenticated;
+SET LOCAL "request.jwt.claim.sub" = 'bd000000-0000-4000-8000-0000000000a1';
+
+SELECT lives_ok(
+  $$ UPDATE public.group_expenses SET status = 'settled'
+     WHERE id = 'bd000000-0000-4000-8000-0000000000b5' $$,
+  '68. REV-07. organizer : regler la depense d''un payeur parti reste possible'
+);
+SELECT throws_ok(
+  $$ UPDATE public.group_expenses SET paid_by = 'bd000000-0000-4000-8000-0000000000a6'
+     WHERE id = 'bd000000-0000-4000-8000-0000000000ea' $$,
+  '42501', NULL,
+  '69. REV-07. organizer : reaffectation a une cible non active refusee'
+);
+
+-- Forge co_organizer : Y n'a plus de ligne, l'insert doit etre refuse par la policy.
+RESET ROLE;
+DELETE FROM public.group_members
+WHERE group_id = 'bd000000-0000-4000-8000-0000000000f1'
+  AND user_id = 'bd000000-0000-4000-8000-0000000000a6';
+
+SET LOCAL ROLE authenticated;
+SET LOCAL "request.jwt.claim.sub" = 'bd000000-0000-4000-8000-0000000000a1';
+
+SELECT throws_ok(
+  $$ INSERT INTO public.group_members (group_id, user_id, role, status)
+     VALUES ('bd000000-0000-4000-8000-0000000000f1',
+             'bd000000-0000-4000-8000-0000000000a6', 'co_organizer', 'active') $$,
+  '42501', NULL,
+  '70. REV-08. organizer : forge d''un co_organizer refusee (invite_members borne)'
 );
 
 SELECT * FROM finish();
