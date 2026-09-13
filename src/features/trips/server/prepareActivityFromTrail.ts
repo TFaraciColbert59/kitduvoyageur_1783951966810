@@ -62,6 +62,8 @@ interface TripRecord {
   tripId: string;
   slug: string;
   title: string;
+  /** Fix round final — métadonnées réelles du voyage réutilisé (re-enfilage). */
+  metadata: Record<string, unknown> | null;
 }
 
 interface TrailPoiRow {
@@ -268,7 +270,7 @@ async function findExistingTrip(
 ): Promise<ExistingTripResult> {
   const { data, error } = await db
     .from('trips')
-    .select('id, slug, title')
+    .select('id, slug, title, metadata')
     .eq('user_id', userId)
     .filter('metadata->>route_id', 'eq', String(routeId))
     .limit(1)
@@ -281,10 +283,31 @@ async function findExistingTrip(
   if (!data) return { status: 'none' };
 
   const row = data as Record<string, unknown>;
+  const metadata =
+    row.metadata && typeof row.metadata === 'object' && !Array.isArray(row.metadata)
+      ? (row.metadata as Record<string, unknown>)
+      : null;
   return {
     status: 'found',
-    trip: { tripId: String(row.id), slug: String(row.slug), title: String(row.title) },
+    trip: {
+      tripId: String(row.id),
+      slug: String(row.slug),
+      title: String(row.title),
+      metadata,
+    },
   };
+}
+
+/**
+ * Fix round final — un voyage réutilisé dont l'enrichissement n'a jamais abouti
+ * (aucune version enrichie, statut ≠ `done`) est ré-enfilé. Le service skippe
+ * immédiatement un voyage déjà enrichi : le rejeu est donc sans coût réel, et
+ * la reprise après un échec/cap de tentatives n'est plus un cul-de-sac.
+ */
+function shouldReenqueueEnrichment(metadata: Record<string, unknown> | null): boolean {
+  const version = metadata?.enrichment_version;
+  const enriched = typeof version === 'string' && version.trim() !== '';
+  return !enriched && metadata?.enrichment_status !== 'done';
 }
 
 function routeIdFromMetadata(metadata: unknown): string | null {
@@ -547,7 +570,13 @@ export async function prepareActivityFromTrail(trailIdRaw: string): Promise<Prep
   if (existing.status === 'error') {
     return { status: 'unavailable', reason: 'persist_failed' };
   }
-  if (existing.status === 'found') return { status: 'reused', ...existing.trip };
+  if (existing.status === 'found') {
+    if (shouldReenqueueEnrichment(existing.trip.metadata)) {
+      await enqueueActivityEnrichment(existing.trip.tripId, user.id);
+    }
+    const { tripId, slug, title } = existing.trip;
+    return { status: 'reused', tripId, slug, title };
+  }
 
   const { trail, meta, polyline } = loaded;
   const writer: SupabaseClient = service ?? session;
@@ -573,7 +602,7 @@ export async function prepareActivityFromTrail(trailIdRaw: string): Promise<Prep
       autoSelectRoute: true,
     });
     if (created.ok) {
-      record = { tripId: created.tripId, slug: created.slug, title: created.title };
+      record = { tripId: created.tripId, slug: created.slug, title: created.title, metadata: null };
     } else {
       console.error(
         '[LKDV preparer-sentier] usine autogen non-ok:',
@@ -606,6 +635,7 @@ export async function prepareActivityFromTrail(trailIdRaw: string): Promise<Prep
         tripId: String((trip as { id: string }).id),
         slug: String((trip as { slug: string }).slug),
         title: String((trip as { title: string }).title),
+        metadata: null,
       };
       status = 'fallback_created';
     } catch (error) {
@@ -614,17 +644,28 @@ export async function prepareActivityFromTrail(trailIdRaw: string): Promise<Prep
         if (raced.status === 'error') {
           return { status: 'unavailable', reason: 'persist_failed' };
         }
-        if (raced.status === 'found') return { status: 'reused', ...raced.trip };
+        if (raced.status === 'found') {
+          if (shouldReenqueueEnrichment(raced.trip.metadata)) {
+            await enqueueActivityEnrichment(raced.trip.tripId, user.id);
+          }
+          const { tripId, slug, title } = raced.trip;
+          return { status: 'reused', tripId, slug, title };
+        }
       }
       throw error;
     }
   }
 
+  if (!record) return { status: 'unavailable', reason: 'persist_failed' };
   const tripId = record.tripId;
 
   const persisted = await writeTripPrepareMetadata(writer, tripId, user.id, routeId);
   if (persisted.status === 'duplicate') {
-    return { status: 'reused', ...persisted.trip };
+    if (shouldReenqueueEnrichment(persisted.trip.metadata)) {
+      await enqueueActivityEnrichment(persisted.trip.tripId, user.id);
+    }
+    const { tripId: reusedTripId, slug, title } = persisted.trip;
+    return { status: 'reused', tripId: reusedTripId, slug, title };
   }
   if (persisted.status === 'failed') {
     await compensateCreatedTrip(writer, tripId, user.id);
@@ -646,5 +687,5 @@ export async function prepareActivityFromTrail(trailIdRaw: string): Promise<Prep
 
   await enqueueActivityEnrichment(tripId, user.id);
 
-  return { status, ...record };
+  return { status, tripId: record.tripId, slug: record.slug, title: record.title };
 }

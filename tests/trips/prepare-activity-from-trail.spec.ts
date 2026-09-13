@@ -152,7 +152,10 @@ function createService(options: ServiceOptions): { client: unknown; captures: Ca
         if (table === 'hiking_routes') return { data: options.route ?? null, error: null };
         if (table === 'trail_metadata') return { data: options.meta ?? null, error: null };
         if (table === 'trips') {
-          if (columns.includes('metadata')) {
+          // Seule la lecture exacte des métadonnées (writeTripPrepareMetadata)
+          // sert l'état local ; la recherche idempotente sélectionne aussi la
+          // colonne metadata et doit consommer la file existante.
+          if (columns.trim() === 'metadata') {
             return { data: tripMetadataState, error: null };
           }
           const next = existingQueue.length > 0 ? existingQueue.shift() : null;
@@ -258,7 +261,7 @@ describe('prepareActivityFromTrail (Task 4)', () => {
     expect(mocks.runAutoGenPipeline).not.toHaveBeenCalled();
   });
 
-  it('(b) activité existante (metadata.route_id) → reused, aucun insert', async () => {
+  it('(b) activité existante non enrichie → reused + ré-enfilage IA (aucun socle)', async () => {
     const { client, captures } = createService({
       route: ROUTE,
       meta: META,
@@ -275,7 +278,14 @@ describe('prepareActivityFromTrail (Task 4)', () => {
       slug: TRIP.slug,
       title: 'Tour du Lac Blanc (réutilisée)',
     });
-    expect(captures.inserts).toHaveLength(0);
+    // Fix round final — la réutilisation re-enfile le job (le service skippe
+    // immédiatement si le voyage est déjà enrichi) : plus de cul-de-sac.
+    expect(insertFor(captures, 'ai_jobs')?.values).toEqual({
+      user_id: USER_ID,
+      feature: 'activity-enrichment',
+      payload: { tripId: TRIP.id },
+    });
+    expect(insertFor(captures, 'trip_steps')).toBeUndefined();
     expect(captures.updates).toHaveLength(0);
     expect(mocks.runAutoGenPipeline).not.toHaveBeenCalled();
     expect(mocks.createTrip).not.toHaveBeenCalled();
@@ -285,6 +295,29 @@ describe('prepareActivityFromTrail (Task 4)', () => {
       operator: 'eq',
       value: '375',
     });
+  });
+
+  it('(b bis) activité déjà enrichie (enrichment_version) → reused sans ré-enfilage', async () => {
+    const { client, captures } = createService({
+      route: ROUTE,
+      meta: META,
+      geojson: GEOJSON,
+      existingTrips: [
+        {
+          id: TRIP.id,
+          slug: TRIP.slug,
+          title: TRIP.title,
+          metadata: { route_id: ROUTE_ID, enrichment_version: 'v1', enrichment_status: 'done' },
+        },
+      ],
+    });
+    serviceHolder.client = client;
+
+    const outcome = await prepareActivityFromTrail(String(ROUTE_ID));
+
+    expect(outcome.status).toBe('reused');
+    expect(insertFor(captures, 'ai_jobs')).toBeUndefined();
+    expect(captures.inserts).toHaveLength(0);
   });
 
   it('(c) sentier valide sans activité → created + route_id nombre + socle + job IA', async () => {
@@ -479,7 +512,9 @@ describe('prepareActivityFromTrail (Task 4)', () => {
       slug: TRIP.slug,
       title: TRIP.title,
     });
-    expect(captures.inserts).toHaveLength(0);
+    // Le perdant n'a rien écrit ; la réutilisation re-enfile le job.
+    expect(insertFor(captures, 'trip_steps')).toBeUndefined();
+    expect(insertFor(captures, 'ai_jobs')).toBeDefined();
   });
 
   it('sentier valide mais non connecté → PrepareActivityAuthError (aucune écriture)', async () => {
@@ -558,8 +593,8 @@ describe('prepareActivityFromTrail (Task 4)', () => {
       slug: TRIP.slug,
       title: TRIP.title,
     });
-    expect(captures.deletes).toHaveLength(0);
-    expect(insertFor(captures, 'ai_jobs')).toBeUndefined();
+    // La réutilisation re-enfile l'enrichissement du voyage retenu.
+    expect(insertFor(captures, 'ai_jobs')).toBeDefined();
   });
 
   it('(i) erreur de select idempotence → unavailable/persist_failed, aucune création', async () => {
