@@ -5,10 +5,12 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
 
 /**
- * T10 — Rail de préparation (§4.5) : 6 phases, coche spring 500/25, une
- * haptique `success` par complétion (anti-rafale 800 ms, portail IO),
- * `aria-live="polite"`, progression en `scaleX`. Plus les gardes du reveal
- * événementiel (`LiveArrivalReveal`) et de l'aperçu dev interdit en prod.
+ * T10 — Rail de préparation (§4.5) réduit à une barre silencieuse : seule la
+ * barre `data-testid="preparation-progressbar"` est rendue (`scaleX(completed/6)`,
+ * décorative, sans texte, libellé, liste ni `aria-live`) ; échec définitif
+ * d'enrichissement = barre masquée. Les helpers purs de `preparationPhases`
+ * restent couverts. Plus les gardes du reveal événementiel (`LiveArrivalReveal`)
+ * et de l'aperçu dev interdit en prod.
  */
 const motionControl = vi.hoisted(() => ({ reduced: false }));
 
@@ -123,105 +125,89 @@ describe('annonce aria-live — texte des mises à jour', () => {
   });
 });
 
-describe('markup du rail', () => {
-  it('rend les 6 phases, aria-live polite et l’annonce, data-phase exposé', () => {
-    const html = renderToStaticMarkup(
-      React.createElement(ActivityPreparationStatus, { phaseOverride: 'moments' })
-    );
+describe('markup du rail — barre silencieuse (task 2)', () => {
+  function renderRail(
+    props: React.ComponentProps<typeof ActivityPreparationStatus> = {}
+  ): string {
+    return renderToStaticMarkup(React.createElement(ActivityPreparationStatus, props));
+  }
 
-    for (const label of ['Analyse', 'Itinéraire', 'Moments', 'Transports &amp; hébergements', 'Kit', 'Finitions']) {
-      expect(html).toContain(label);
-    }
+  function textContent(html: string): string {
+    return html.replace(/<[^>]*>/g, '').trim();
+  }
+
+  it('seule la barre testid est rendue : ni texte, ni phases, ni aria-live', () => {
+    const html = renderRail({ phaseOverride: 'moments' });
+
+    expect(html).toContain('data-testid="preparation-progressbar"');
+    expect(html).toContain('aria-hidden="true"');
     expect(html).toContain('data-phase="moments"');
-    expect(html).toContain('aria-live="polite"');
-    expect(html).toContain('2 moments ajoutés');
-    expect(html).toContain('scaleX(');
+    expect(html).toContain(`scaleX(${2 / 6})`);
+
+    expect(html).not.toContain('/6');
+    expect(html).not.toContain('<ol');
+    expect(html).not.toContain('aria-live');
+    expect(html).not.toContain('Améliorer');
+    expect(html).not.toContain('data-rail-step');
+    for (const label of PREPARATION_PHASES.map((definition) => definition.label)) {
+      expect(html).not.toContain(label);
+    }
+    expect(textContent(html)).toBe('');
   });
 
-  it('phase terminée = coche ; phases futures = point ; current unique', () => {
-    const html = renderToStaticMarkup(
-      React.createElement(ActivityPreparationStatus, { phaseOverride: 'moments' })
-    );
+  it('la barre suit la phase : waiting 0, moments 2/6, done 1 (aucune coche)', () => {
+    expect(renderRail({ phaseOverride: 'waiting' })).toContain('scaleX(0)');
+    expect(renderRail({ phaseOverride: 'moments' })).toContain(`scaleX(${2 / 6})`);
 
-    expect(count(html, 'data-rail-check')).toBe(2);
-    expect(count(html, 'data-rail-current')).toBe(1);
-    expect(count(html, 'data-rail-pending')).toBe(3);
+    const done = renderRail({ phaseOverride: 'done' });
+    expect(done).toContain('scaleX(1)');
+    expect(done).not.toContain('data-rail-check');
+    expect(done).not.toContain('data-rail-current');
+    expect(done).not.toContain('data-rail-pending');
+    expect(done).not.toContain('Préparation prête');
   });
 
-  it('waiting : aucune coche, analyse courante', () => {
-    const html = renderToStaticMarkup(
-      React.createElement(ActivityPreparationStatus, { phaseOverride: 'waiting' })
-    );
-
-    expect(count(html, 'data-rail-check')).toBe(0);
-    expect(count(html, 'data-rail-current')).toBe(1);
-    expect(html).toContain('Analyse en cours');
-  });
-
-  it('done : les 6 coches, « Préparation prête », plus de phase courante', () => {
-    const html = renderToStaticMarkup(
-      React.createElement(ActivityPreparationStatus, { phaseOverride: 'done' })
-    );
-
-    expect(count(html, 'data-rail-check')).toBe(6);
-    expect(count(html, 'data-rail-current')).toBe(0);
-    expect(html).toContain('Préparation prête');
-  });
-
-  it('compteurs serveur : phase réelle dès le premier paint (kit)', () => {
-    const html = renderToStaticMarkup(
-      React.createElement(ActivityPreparationStatus, {
-        preparation: {
-          counts: { steps: 3, moments: 2, affiliation: 0, kit: 4 },
-          enrichmentStatus: 'pending',
-        },
-        tripId: 'trip-1',
-      })
-    );
+  it('compteurs serveur : phase réelle dès le premier paint (kit), barre 4/6', () => {
+    const html = renderRail({
+      preparation: {
+        counts: { steps: 3, moments: 2, affiliation: 0, kit: 4 },
+        enrichmentStatus: 'pending',
+      },
+      tripId: 'trip-1',
+    });
 
     expect(html).toContain('data-phase="kit"');
-    expect(count(html, 'data-rail-check')).toBe(4);
+    expect(html).toContain(`scaleX(${4 / 6})`);
+    expect(textContent(html)).toBe('');
   });
 
-  it('enrichissement serveur done : rail terminé même sans affiliation (zéro dépense)', () => {
-    const html = renderToStaticMarkup(
-      React.createElement(ActivityPreparationStatus, {
-        preparation: {
-          counts: { steps: 1, moments: 1, affiliation: 0, kit: 2 },
-          enrichmentStatus: 'done',
-        },
-      })
-    );
+  it('enrichissement serveur done : barre pleine même sans affiliation, sans texte', () => {
+    const html = renderRail({
+      preparation: {
+        counts: { steps: 1, moments: 1, affiliation: 0, kit: 2 },
+        enrichmentStatus: 'done',
+      },
+    });
 
     expect(html).toContain('data-phase="done"');
-    expect(count(html, 'data-rail-check')).toBe(6);
-    expect(html).toContain('Préparation prête');
+    expect(html).toContain('scaleX(1)');
+    expect(textContent(html)).toBe('');
   });
 
-  it('échec définitif : version essentielle servie + bouton Améliorer', () => {
-    const html = renderToStaticMarkup(
-      React.createElement(ActivityPreparationStatus, {
-        preparation: {
-          counts: { steps: 1, moments: 0, affiliation: 0, kit: 0 },
-          enrichmentStatus: 'failed',
-        },
-        tripId: 'trip-1',
-      })
-    );
+  it('échec définitif : barre masquée, aucun texte ni « Améliorer »', () => {
+    const html = renderRail({
+      preparation: {
+        counts: { steps: 1, moments: 0, affiliation: 0, kit: 0 },
+        enrichmentStatus: 'failed',
+      },
+      tripId: 'trip-1',
+    });
 
-    expect(html).toContain('data-rail-essential');
-    expect(html).toContain('Version essentielle servie');
-    expect(html).toContain('Améliorer');
-  });
-
-  it('reduced-motion : le rail rend sans animation de pulsation', () => {
-    motionControl.reduced = true;
-    const html = renderToStaticMarkup(
-      React.createElement(ActivityPreparationStatus, { phaseOverride: 'itinerary' })
-    );
-
-    expect(html).toContain('data-phase="itinerary"');
-    expect(html).not.toContain('animate-pulse-lkv');
+    expect(html).not.toContain('preparation-progressbar');
+    expect(html).not.toContain('activity-preparation-status');
+    expect(html).not.toContain('Améliorer');
+    expect(html).not.toContain('Version essentielle');
+    expect(textContent(html)).toBe('');
   });
 });
 
@@ -241,6 +227,16 @@ describe('garde-fous source du rail', () => {
     expect(file).toContain('scaleX(');
     // Jamais d'animation de largeur/hauteur.
     expect(file).not.toMatch(/animate[^\n]*\bwidth\b/);
+  });
+
+  it('barre silencieuse : aucun texte, liste, annonce ni relance dans la source', () => {
+    const file = source();
+    expect(file).not.toContain('aria-live');
+    expect(file).not.toContain('<ol');
+    expect(file).not.toContain('Améliorer');
+    expect(file).not.toContain('AnimatedNumber');
+    expect(file).not.toContain('data-rail-step');
+    expect(file).not.toContain('data-rail-check');
   });
 
   it('le pont realtime T9 est monté une seule fois, au niveau de la surface hub', () => {
