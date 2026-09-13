@@ -73,6 +73,9 @@ export async function publishTaskTemplate(input: {
   );
   if (itemsError) {
     console.error('[tribu/publishTaskTemplate] items insert failed:', itemsError);
+    // Compensation : jamais de modele vide publie silencieusement.
+    await supabase.from('group_task_templates').delete().eq('id', template.id);
+    return { ok: false, error: 'Publication interrompue — réessayez.' };
   }
 
   return { ok: true, templateId: template.id };

@@ -24,3 +24,16 @@ AS $$
 $$;
 
 GRANT EXECUTE ON FUNCTION public.is_club_member(UUID, UUID) TO authenticated;
+REVOKE EXECUTE ON FUNCTION public.is_club_member(UUID, UUID) FROM PUBLIC, anon;
+
+-- ── Garde d'insertion : un groupe club_only exige d'etre membre du club ─────
+DROP POLICY IF EXISTS "groups_auth_insert" ON public.travel_groups;
+CREATE POLICY "groups_auth_insert" ON public.travel_groups
+  FOR INSERT TO authenticated
+  WITH CHECK (
+    owner_id = auth.uid()
+    AND (
+      parent_club_id IS NULL
+      OR public.is_club_member(parent_club_id, auth.uid())
+    )
+  );

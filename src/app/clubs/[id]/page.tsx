@@ -152,6 +152,7 @@ export default function ClubDetailPage() {
     if (!club) return { ok: false, error: 'Club introuvable.' };
     const res = await createGroupFromClub({ clubId: club.id, name, memberIds });
     if (!res.ok) return { ok: false, error: res.error };
+    if (res.warning) showToast(res.warning);
     await handleOpenClubGroup({ id: res.groupId, name: res.name });
     return { ok: true };
   };

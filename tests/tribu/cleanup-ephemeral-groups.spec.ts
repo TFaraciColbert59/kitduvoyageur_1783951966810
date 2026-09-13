@@ -25,6 +25,7 @@ interface MockOptions {
 function createSupabaseMock(options: MockOptions) {
   const calls = options.calls ?? [];
   const builder: Record<string, unknown> = {};
+  let mode: 'select' | 'delete' = 'select';
   builder.select = () => builder;
   builder.eq = (col: string, val: unknown) => {
     calls.push(['eq', col, val]);
@@ -35,18 +36,23 @@ function createSupabaseMock(options: MockOptions) {
     return builder;
   };
   builder.delete = () => {
+    mode = 'delete';
     calls.push(['delete']);
     return builder;
   };
   builder.in = (col: string, val: unknown) => {
     calls.push(['in', col, val]);
-    return Promise.resolve({ error: options.deleteError ?? null });
+    return builder;
   };
-  builder.then = (resolve: (value: unknown) => unknown) =>
-    resolve({
+  builder.then = (resolve: (value: unknown) => unknown) => {
+    if (mode === 'delete') {
+      return resolve({ data: null, error: options.deleteError ?? null });
+    }
+    return resolve({
       data: options.expired ?? [],
       error: options.selectError ?? null,
     });
+  };
   return { from: () => builder };
 }
 

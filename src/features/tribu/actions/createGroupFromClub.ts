@@ -11,7 +11,7 @@ const CreateGroupFromClubSchema = z.object({
 });
 
 export type CreateGroupFromClubResult =
-  | { ok: true; groupId: string; name: string }
+  | { ok: true; groupId: string; name: string; warning?: string }
   | { ok: false; error: string };
 
 /**
@@ -79,6 +79,7 @@ export async function createGroupFromClub(input: {
   }
 
   const invitees = [...new Set(memberIds)].filter((id) => id !== user.id);
+  let warning: string | undefined;
   if (invitees.length > 0) {
     const { data: activeMembers } = await supabase
       .from('club_members')
@@ -102,10 +103,12 @@ export async function createGroupFromClub(input: {
       );
       if (inviteError) {
         console.error('[tribu/createGroupFromClub] invites insert failed:', inviteError);
+        warning =
+          'Groupe créé, mais les invitations ont échoué — invitez les membres depuis le Hub.';
       }
     }
   }
 
   revalidatePath('/clubs', 'layout');
-  return { ok: true, groupId: group.id, name: group.name };
+  return { ok: true, groupId: group.id, name: group.name, warning };
 }

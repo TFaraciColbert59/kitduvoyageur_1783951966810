@@ -38,7 +38,7 @@ function createSession(options: MockOptions & { groupMemberSingle?: unknown; upd
   const calls: Array<{ table: string; op: string; payload?: unknown; args?: unknown }> = [];
 
   function makeBuilder(table: string) {
-    let mode: 'select' | 'in' | 'ilike' | 'update' = 'select';
+    let mode: 'select' | 'in' | 'ilike' | 'update' | 'delete' = 'select';
     const builder: Record<string, unknown> = {};
     builder.select = () => builder;
     builder.eq = () => builder;
@@ -46,6 +46,11 @@ function createSession(options: MockOptions & { groupMemberSingle?: unknown; upd
     builder.update = (payload: unknown) => {
       mode = 'update';
       calls.push({ table, op: 'update', payload });
+      return builder;
+    };
+    builder.delete = () => {
+      mode = 'delete';
+      calls.push({ table, op: 'delete' });
       return builder;
     };
     builder.in = (column: string, values: unknown) => {
@@ -74,6 +79,7 @@ function createSession(options: MockOptions & { groupMemberSingle?: unknown; upd
     };
     builder.then = (resolve: (value: unknown) => unknown) => {
       if (mode === 'update') return resolve({ data: null, error: options.updateError ?? null });
+      if (mode === 'delete') return resolve({ data: null, error: null });
       if (table === 'group_members') {
         if (mode === 'in') return resolve({ data: options.coMembers ?? [], error: null });
         return resolve({ data: options.myMemberships ?? [], error: null });
@@ -191,8 +197,7 @@ describe('ephemeralGroup — actions', () => {
     expect(session.calls.filter((c) => c.op === 'insert')).toHaveLength(0);
   });
 
-  it('(e) conversion : réservée aux organisateurs, sinon refus sans update', async () => {
-    const memberSession = createSession({
+    it('(e) conversion : réservée aux organisateurs, sinon refus sans update', async () => {    const memberSession = createSession({
       user: { id: ME },
       groupMemberSingle: { role: 'member', status: 'active' },
     });
@@ -212,5 +217,25 @@ describe('ephemeralGroup — actions', () => {
     expect(ok).toEqual({ ok: true });
     const update = organizerSession.calls.find((c) => c.op === 'update');
     expect(update?.payload).toEqual({ is_ephemeral: false, auto_dissolve_at: null });
+  });
+
+  it('(f) échec des invitations : la sortie est compensée (supprimée)', async () => {
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const session = createSession({
+      user: { id: ME },
+      invitesError: { message: 'rls denied' },
+    });
+    mockedCreateClient.mockResolvedValue(session as never);
+
+    const result = await createEphemeralGroup({ inviteeIds: [CO_MEMBER] });
+
+    expect(result).toEqual({
+      ok: false,
+      error: 'Invitations impossibles — sortie non créée.',
+    });
+    expect(
+      session.calls.some((c) => c.table === 'travel_groups' && c.op === 'delete')
+    ).toBe(true);
+    consoleSpy.mockRestore();
   });
 });

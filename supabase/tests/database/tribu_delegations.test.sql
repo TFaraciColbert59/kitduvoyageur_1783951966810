@@ -14,14 +14,15 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON public.travel_groups, public.group_membe
   public.user_profiles
 TO authenticated, service_role;
 
-SELECT plan(13);
+SELECT plan(18);
 
 INSERT INTO auth.users (id, aud, role, email, encrypted_password, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
 VALUES
   ('bd000000-0000-4000-8000-0000000000d1', 'authenticated', 'authenticated', 'tribu_del_a@test.local', 'x', '{}', '{}', now(), now()),
   ('bd000000-0000-4000-8000-0000000000d2', 'authenticated', 'authenticated', 'tribu_del_b@test.local', 'x', '{}', '{}', now(), now()),
   ('bd000000-0000-4000-8000-0000000000d3', 'authenticated', 'authenticated', 'tribu_del_d@test.local', 'x', '{}', '{}', now(), now()),
-  ('bd000000-0000-4000-8000-0000000000d4', 'authenticated', 'authenticated', 'tribu_del_x@test.local', 'x', '{}', '{}', now(), now())
+  ('bd000000-0000-4000-8000-0000000000d4', 'authenticated', 'authenticated', 'tribu_del_x@test.local', 'x', '{}', '{}', now(), now()),
+  ('bd000000-0000-4000-8000-0000000000d5', 'authenticated', 'authenticated', 'tribu_del_o@test.local', 'x', '{}', '{}', now(), now())
 ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO public.user_profiles (id, full_name, email, role, trust_score)
@@ -29,7 +30,8 @@ VALUES
   ('bd000000-0000-4000-8000-0000000000d1', 'DEL Organisateur', 'tribu_del_a@test.local', 'user', 50),
   ('bd000000-0000-4000-8000-0000000000d2', 'DEL Membre', 'tribu_del_b@test.local', 'user', 50),
   ('bd000000-0000-4000-8000-0000000000d3', 'DEL Delegue', 'tribu_del_d@test.local', 'user', 50),
-  ('bd000000-0000-4000-8000-0000000000d4', 'DEL Externe', 'tribu_del_x@test.local', 'user', 50)
+  ('bd000000-0000-4000-8000-0000000000d4', 'DEL Externe', 'tribu_del_x@test.local', 'user', 50),
+  ('bd000000-0000-4000-8000-0000000000d5', 'DEL Observateur', 'tribu_del_o@test.local', 'user', 50)
 ON CONFLICT (id) DO UPDATE SET full_name = EXCLUDED.full_name;
 
 INSERT INTO public.travel_groups (id, name, owner_id, visibility)
@@ -40,7 +42,8 @@ INSERT INTO public.group_members (group_id, user_id, role, status)
 VALUES
   ('bd000000-0000-4000-8000-0000000000e1', 'bd000000-0000-4000-8000-0000000000d1', 'organizer', 'active'),
   ('bd000000-0000-4000-8000-0000000000e1', 'bd000000-0000-4000-8000-0000000000d2', 'member', 'active'),
-  ('bd000000-0000-4000-8000-0000000000e1', 'bd000000-0000-4000-8000-0000000000d3', 'member', 'active')
+  ('bd000000-0000-4000-8000-0000000000e1', 'bd000000-0000-4000-8000-0000000000d3', 'member', 'active'),
+  ('bd000000-0000-4000-8000-0000000000e1', 'bd000000-0000-4000-8000-0000000000d5', 'observer', 'active')
 ON CONFLICT (group_id, user_id) DO UPDATE SET role = EXCLUDED.role, status = EXCLUDED.status;
 
 -- A -> D : delegation organizer active
@@ -169,6 +172,62 @@ SELECT is(
    WHERE id = 'bd000000-0000-4000-8000-0000000000f2'),
   0,
   '13. DEL-08. delegation revoquee disparue'
+);
+
+-- ════════════════════════════════════════════════════════════════════════════
+-- 14..18 — Contre-revue : les delegations sont ADDITIVES (jamais soustractives)
+-- ════════════════════════════════════════════════════════════════════════════
+RESET ROLE;
+SET LOCAL ROLE authenticated;
+SET LOCAL "request.jwt.claim.sub" = 'bd000000-0000-4000-8000-0000000000d2';
+
+-- Un membre peut deleguer un role inferieur (observer) a l'organisateur.
+SELECT lives_ok(
+  $$ INSERT INTO public.group_role_delegations (id, group_id, from_user_id, to_user_id, delegated_role, ends_at)
+     VALUES ('bd000000-0000-4000-8000-0000000000f3',
+             'bd000000-0000-4000-8000-0000000000e1',
+             'bd000000-0000-4000-8000-0000000000d2',
+             'bd000000-0000-4000-8000-0000000000d1',
+             'observer', now() + interval '1 hour') $$,
+  '14. DEL-09. membre : delegation observer a un organisateur autorisee'
+);
+
+RESET ROLE;
+SELECT ok(
+  public.group_member_has_capability('bd000000-0000-4000-8000-0000000000e1', 'bd000000-0000-4000-8000-0000000000d1', 'manage_tasks'),
+  '15. DEL-09. delegation inferieure : NE retire PAS manage_tasks a l''organisateur'
+);
+SELECT ok(
+  public.group_member_has_capability('bd000000-0000-4000-8000-0000000000e1', 'bd000000-0000-4000-8000-0000000000d1', 'manage_members'),
+  '16. DEL-09. delegation inferieure : NE retire PAS manage_members'
+);
+
+-- Un observateur ne peut pas deleguer un role superieur.
+RESET ROLE;
+SET LOCAL ROLE authenticated;
+SET LOCAL "request.jwt.claim.sub" = 'bd000000-0000-4000-8000-0000000000d5';
+SELECT throws_ok(
+  $$ INSERT INTO public.group_role_delegations (group_id, from_user_id, to_user_id, delegated_role, ends_at)
+     VALUES ('bd000000-0000-4000-8000-0000000000e1',
+             'bd000000-0000-4000-8000-0000000000d5',
+             'bd000000-0000-4000-8000-0000000000d3',
+             'member', now() + interval '1 hour') $$,
+  '42501', NULL,
+  '17. DEL-10. observateur : delegation d''un role superieur refusee'
+);
+
+-- L'organisateur peut deleguer organizer (rang egal).
+RESET ROLE;
+SET LOCAL ROLE authenticated;
+SET LOCAL "request.jwt.claim.sub" = 'bd000000-0000-4000-8000-0000000000d1';
+SELECT lives_ok(
+  $$ INSERT INTO public.group_role_delegations (id, group_id, from_user_id, to_user_id, delegated_role, ends_at)
+     VALUES ('bd000000-0000-4000-8000-0000000000f4',
+             'bd000000-0000-4000-8000-0000000000e1',
+             'bd000000-0000-4000-8000-0000000000d1',
+             'bd000000-0000-4000-8000-0000000000d2',
+             'organizer', now() + interval '2 hours') $$,
+  '18. DEL-10. organizer : delegation organizer (rang egal) autorisee'
 );
 
 SELECT * FROM finish();

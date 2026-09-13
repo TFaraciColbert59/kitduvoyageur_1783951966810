@@ -38,7 +38,12 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ deleted: 0 });
     }
 
-    const { error: deleteError } = await supabase.from('travel_groups').delete().in('id', ids);
+    const { error: deleteError } = await supabase
+      .from('travel_groups')
+      .delete()
+      .in('id', ids)
+      .eq('is_ephemeral', true)
+      .lt('auto_dissolve_at', new Date().toISOString());
     if (deleteError) throw deleteError;
 
     return NextResponse.json({ deleted: ids.length });

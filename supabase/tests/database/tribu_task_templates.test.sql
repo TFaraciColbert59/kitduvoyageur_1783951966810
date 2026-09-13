@@ -9,7 +9,7 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON public.clubs, public.club_members,
   public.group_task_templates, public.group_task_template_items, public.user_profiles
 TO authenticated, service_role;
 
-SELECT plan(11);
+SELECT plan(13);
 
 INSERT INTO auth.users (id, aud, role, email, encrypted_password, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
 VALUES
@@ -147,6 +147,34 @@ SELECT is(
   (SELECT count(*)::int FROM public.group_task_templates WHERE id = 'bd000000-0000-4000-8000-0000000000c1'),
   1,
   '11. TPL-05. suppression par un simple membre sans effet'
+);
+
+-- 12 — un membre du club ne peut pas supprimer les items d'un autre auteur
+RESET ROLE;
+SET LOCAL ROLE authenticated;
+SET LOCAL "request.jwt.claim.sub" = 'bd000000-0000-4000-8000-0000000000a2';
+DELETE FROM public.group_task_template_items
+WHERE template_id = 'bd000000-0000-4000-8000-0000000000c1' AND title = 'Réserver refuges';
+
+RESET ROLE;
+SELECT is(
+  (SELECT count(*)::int FROM public.group_task_template_items
+    WHERE template_id = 'bd000000-0000-4000-8000-0000000000c1' AND title = 'Réserver refuges'),
+  1,
+  '12. TPL-06. suppression d''item par un pair sans effet'
+);
+
+-- 13 — un template orphelin (club supprime) n'est pas lisible par les non-membres
+UPDATE public.group_task_templates
+SET club_id = NULL
+WHERE id = 'bd000000-0000-4000-8000-0000000000c1';
+
+SET LOCAL ROLE authenticated;
+SET LOCAL "request.jwt.claim.sub" = 'bd000000-0000-4000-8000-0000000000a3';
+SELECT is(
+  (SELECT count(*)::int FROM public.group_task_templates WHERE id = 'bd000000-0000-4000-8000-0000000000c1'),
+  0,
+  '13. TPL-06. template orphelin de club invisible (source club)'
 );
 
 SELECT * FROM finish();

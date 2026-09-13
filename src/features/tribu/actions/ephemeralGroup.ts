@@ -184,6 +184,9 @@ export async function createEphemeralGroup(input: {
     );
     if (inviteError) {
       console.error('[tribu/createEphemeralGroup] invites insert failed:', inviteError);
+      // Compensation : une sortie ephemere sans ses invites n'a pas de sens.
+      await supabase.from('travel_groups').delete().eq('id', group.id);
+      return { ok: false, error: 'Invitations impossibles — sortie non créée.' };
     }
   }
 

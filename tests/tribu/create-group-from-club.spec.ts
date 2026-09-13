@@ -172,7 +172,12 @@ describe('createGroupFromClub — action serveur', () => {
       memberIds: [OTHER_ID],
     });
 
-    expect(result).toEqual({ ok: true, groupId: GROUP_ID, name: 'Groupe test' });
+    expect(result).toEqual({
+      ok: true,
+      groupId: GROUP_ID,
+      name: 'Groupe test',
+      warning: 'Groupe créé, mais les invitations ont échoué — invitez les membres depuis le Hub.',
+    });
     expect(consoleSpy).toHaveBeenCalled();
     consoleSpy.mockRestore();
   });

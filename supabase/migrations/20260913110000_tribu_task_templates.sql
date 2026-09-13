@@ -37,8 +37,8 @@ DROP POLICY IF EXISTS "task_templates_read" ON public.group_task_templates;
 CREATE POLICY "task_templates_read" ON public.group_task_templates
   FOR SELECT TO authenticated
   USING (
-    club_id IS NULL
-    OR public.is_club_member(club_id, auth.uid())
+    (club_id IS NULL AND source = 'official')
+    OR (club_id IS NOT NULL AND public.is_club_member(club_id, auth.uid()))
   );
 
 DROP POLICY IF EXISTS "task_templates_insert_club_member" ON public.group_task_templates;
@@ -79,14 +79,25 @@ CREATE POLICY "task_template_items_read" ON public.group_task_template_items
   );
 
 DROP POLICY IF EXISTS "task_template_items_write_author" ON public.group_task_template_items;
-CREATE POLICY "task_template_items_write_author" ON public.group_task_template_items
-  FOR ALL TO authenticated
+DROP POLICY IF EXISTS "task_template_items_insert_author" ON public.group_task_template_items;
+CREATE POLICY "task_template_items_insert_author" ON public.group_task_template_items
+  FOR INSERT TO authenticated
+  WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM public.group_task_templates t
+      WHERE t.id = template_id
+        AND t.created_by = auth.uid()
+    )
+  );
+
+DROP POLICY IF EXISTS "task_template_items_update_author" ON public.group_task_template_items;
+CREATE POLICY "task_template_items_update_author" ON public.group_task_template_items
+  FOR UPDATE TO authenticated
   USING (
     EXISTS (
       SELECT 1 FROM public.group_task_templates t
       WHERE t.id = template_id
-        AND (t.created_by = auth.uid()
-             OR (t.club_id IS NOT NULL AND public.is_club_member(t.club_id, auth.uid())))
+        AND t.created_by = auth.uid()
     )
   )
   WITH CHECK (
@@ -94,6 +105,26 @@ CREATE POLICY "task_template_items_write_author" ON public.group_task_template_i
       SELECT 1 FROM public.group_task_templates t
       WHERE t.id = template_id
         AND t.created_by = auth.uid()
+    )
+  );
+
+DROP POLICY IF EXISTS "task_template_items_delete_author_or_admin" ON public.group_task_template_items;
+CREATE POLICY "task_template_items_delete_author_or_admin" ON public.group_task_template_items
+  FOR DELETE TO authenticated
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.group_task_templates t
+      WHERE t.id = template_id
+        AND (
+          t.created_by = auth.uid()
+          OR (t.club_id IS NOT NULL AND EXISTS (
+            SELECT 1 FROM public.club_members cm
+            WHERE cm.club_id = t.club_id
+              AND cm.user_id = auth.uid()
+              AND cm.status = 'active'
+              AND cm.role IN ('admin', 'moderator')
+          ))
+        )
     )
   );
 

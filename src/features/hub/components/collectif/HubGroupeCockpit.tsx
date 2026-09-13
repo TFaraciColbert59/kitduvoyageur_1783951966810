@@ -44,6 +44,7 @@ export function HubGroupeCockpit({ groupId, initialTab }: { groupId: string; ini
   const [data, setData] = useState<any>(null);
   const [linkedTrip, setLinkedTrip] = useState<{ id: string; slug: string; title: string } | null>(null);
   const [converting, setConverting] = useState(false);
+  const [convertError, setConvertError] = useState<string | null>(null);
   const loadedRef = useRef(false);
 
   const loadData = useCallback(async () => {
@@ -79,10 +80,13 @@ export function HubGroupeCockpit({ groupId, initialTab }: { groupId: string; ini
   const handleConvertEphemeral = useCallback(async () => {
     if (!data?.id) return;
     setConverting(true);
+    setConvertError(null);
     const result = await convertEphemeralGroup(data.id);
     setConverting(false);
     if (result.ok) {
       await refreshData();
+    } else {
+      setConvertError(result.error);
     }
   }, [data?.id, refreshData]);
 
@@ -167,6 +171,11 @@ export function HubGroupeCockpit({ groupId, initialTab }: { groupId: string; ini
                   {converting ? 'Conversion…' : 'Transformer en groupe complet'}
                 </span>
               </button>
+            )}
+            {convertError && (
+              <p role="alert" className="text-[10px] font-bold text-[#8A3B3B]">
+                {convertError}
+              </p>
             )}
           </div>
         )}
