@@ -2,6 +2,7 @@
 
 import Icon from '@/components/ui/Icon';
 import React, { useState, useTransition, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
 import { GlassCapsuleBtn, GlassModal } from '@/components/ui';
 import type { TripFull } from '@/features/trips/types/trip.types';
 import {
@@ -23,6 +24,7 @@ import { DayNavigator } from './DayNavigator';
 import { DayView } from './DayView';
 import { StepEditModal } from './StepEditModal';
 import { MoveStepModal } from './MoveStepModal';
+import { RenameTripModal } from '@/features/trips/components/RenameTripModal';
 import {
   addTripStepAction,
   updateTripStepAction,
@@ -55,6 +57,8 @@ export default function ItineraryPlannerClient({
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+  const router = useRouter();
+  const [renameOpen, setRenameOpen] = useState(false);
 
   const canEdit = !!trip.permissions?.canEdit;
   // Suggestions de réservation LLM : phase de préparation uniquement ; sans
@@ -392,6 +396,17 @@ export default function ItineraryPlannerClient({
           </div>
 
           <div className="flex items-center gap-2">
+            {canEdit && (
+              <GlassCapsuleBtn
+                type="button"
+                size="sm"
+                onClick={() => setRenameOpen(true)}
+                aria-label="Renommer l’activité"
+                icon={<Icon name="pencil" className="w-3.5 h-3.5" />}
+              >
+                <span className="hidden sm:inline">Renommer</span>
+              </GlassCapsuleBtn>
+            )}
             <GlassCapsuleBtn
               href={tripSectionHref(trip.slug, 'overview')}
               size="sm"
@@ -497,6 +512,17 @@ export default function ItineraryPlannerClient({
         startDate={trip.start_date}
         steps={steps}
         onSelectTargetDay={handleSelectTargetDay}
+      />
+
+      <RenameTripModal
+        open={renameOpen}
+        onOpenChange={setRenameOpen}
+        tripId={trip.id}
+        currentTitle={trip.title}
+        onRenamed={() => {
+          router.refresh();
+          notifySuccess('Activité renommée.');
+        }}
       />
 
       {/* Dialogue accessible de confirmation de suppression */}

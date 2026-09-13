@@ -1,6 +1,6 @@
 'use client';
 
-import { CalendarDays, Plus } from 'lucide-react';
+import { CalendarDays, Pencil, Plus } from 'lucide-react';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import type { ItineraryTotals } from '../../../mobile/itineraryEngine';
 
@@ -12,6 +12,8 @@ export interface ItineraryHeroProps {
   canEdit: boolean;
   onAddStep: () => void;
   onOpenDays: () => void;
+  /** Renommage de l'activité (trips.title) — crayon près du titre. */
+  onRename?: () => void;
 }
 
 /** Hero mobile Itinéraire — totaux, échéance et accès rapides. */
@@ -23,6 +25,7 @@ export function ItineraryHero({
   canEdit,
   onAddStep,
   onOpenDays,
+  onRename,
 }: ItineraryHeroProps) {
   const { triggerHaptic } = useHapticFeedback();
 
@@ -33,7 +36,22 @@ export function ItineraryHero({
           <p className="text-[10px] font-medium uppercase tracking-[0.14em] text-[var(--lkv-text-primary)]/70">
             Feuille de route
           </p>
-          <p className="mt-0.5 truncate text-sm font-bold text-[var(--lkv-text-primary)]">{title}</p>
+          <div className="mt-0.5 flex min-w-0 items-center gap-1.5">
+            <p className="truncate text-sm font-bold text-[var(--lkv-text-primary)]">{title}</p>
+            {canEdit && onRename && (
+              <button
+                type="button"
+                onClick={() => {
+                  triggerHaptic('light');
+                  onRename();
+                }}
+                aria-label="Renommer l’activité"
+                className="glass-sub-card flex h-7 w-7 shrink-0 cursor-pointer items-center justify-center rounded-full border border-white/60 text-[var(--lkv-text-primary)]/70 shadow-2xs transition-all hover:text-[var(--lkv-text-primary)] active:scale-95"
+              >
+                <Pencil size={12} aria-hidden="true" />
+              </button>
+            )}
+          </div>
         </div>
         <div className="flex shrink-0 items-center gap-1.5">
           <span className="glass-pill uppercase tracking-[0.08em]">

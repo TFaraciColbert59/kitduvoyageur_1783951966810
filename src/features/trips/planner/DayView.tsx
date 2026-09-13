@@ -65,7 +65,7 @@ export function DayView({
   return (
     <div className="space-y-4">
       {/* En-tête de la journée */}
-      <div className="glass rounded-[var(--lkv-radius-card)] p-4 sm:p-5 border border-white/60 shadow-sm">
+      <div className="glass rounded-[var(--lkv-radius-card)] p-4 sm:p-6 border border-white/60 shadow-sm">
         <div className="flex items-start justify-between gap-4">
           <div>
             <div className="flex items-center gap-2">
@@ -78,7 +78,7 @@ export function DayView({
                 </span>
               )}
             </div>
-            <h2 className="text-lg sm:text-xl font-bold text-[var(--lkv-text-primary)] mt-1 font-display">
+            <h2 className="text-lg sm:text-xl font-bold text-[var(--lkv-text-primary)] mt-1.5 font-display">
               Itinéraire de la journée
             </h2>
           </div>
@@ -162,13 +162,13 @@ export function DayView({
         </div>
 
         {/* Barre de métriques déterministes */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3 mt-4 pt-3 border-t border-white/40">
-          <div className="glass-sub-card rounded-[var(--lkv-radius-md)] p-2.5 flex items-center gap-2.5 border border-white/50 shadow-2xs">
-            <div className="w-8 h-8 rounded-full bg-[var(--lkv-primary)]/10 text-[var(--lkv-primary)] flex items-center justify-center shrink-0">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-5 pt-4 border-t border-white/40">
+          <div className="glass-sub-card rounded-[var(--lkv-radius-md)] p-3 flex items-center gap-3 border border-white/50 shadow-2xs">
+            <div className="w-9 h-9 rounded-full bg-[var(--lkv-primary)]/10 text-[var(--lkv-primary)] flex items-center justify-center shrink-0">
               <Icon name="map-pin" className="w-4 h-4" />
             </div>
             <div>
-              <span className="text-[9.5px] font-mono uppercase tracking-wider text-[var(--lkv-text-secondary)] block">
+              <span className="text-[10px] font-mono uppercase tracking-[0.12em] text-[var(--lkv-text-secondary)] block">
                 Distance
               </span>
               <span className="text-sm font-bold text-[var(--lkv-text-primary)]">
@@ -177,12 +177,12 @@ export function DayView({
             </div>
           </div>
 
-          <div className="glass-sub-card rounded-[var(--lkv-radius-md)] p-2.5 flex items-center gap-2.5 border border-white/50 shadow-2xs">
-            <div className="w-8 h-8 rounded-full bg-[var(--lkv-primary)]/10 text-[var(--lkv-primary)] flex items-center justify-center shrink-0">
+          <div className="glass-sub-card rounded-[var(--lkv-radius-md)] p-3 flex items-center gap-3 border border-white/50 shadow-2xs">
+            <div className="w-9 h-9 rounded-full bg-[var(--lkv-primary)]/10 text-[var(--lkv-primary)] flex items-center justify-center shrink-0">
               <Icon name="trending-up" className="w-4 h-4" />
             </div>
             <div>
-              <span className="text-[9.5px] font-mono uppercase tracking-wider text-[var(--lkv-text-secondary)] block">
+              <span className="text-[10px] font-mono uppercase tracking-[0.12em] text-[var(--lkv-text-secondary)] block">
                 Dénivelé
               </span>
               <span className="text-sm font-bold text-[var(--lkv-text-primary)]">
@@ -191,12 +191,12 @@ export function DayView({
             </div>
           </div>
 
-          <div className="glass-sub-card rounded-[var(--lkv-radius-md)] p-2.5 flex items-center gap-2.5 border border-white/50 shadow-2xs">
-            <div className="w-8 h-8 rounded-full bg-[var(--lkv-primary)]/10 text-[var(--lkv-primary)] flex items-center justify-center shrink-0">
+          <div className="glass-sub-card rounded-[var(--lkv-radius-md)] p-3 flex items-center gap-3 border border-white/50 shadow-2xs">
+            <div className="w-9 h-9 rounded-full bg-[var(--lkv-primary)]/10 text-[var(--lkv-primary)] flex items-center justify-center shrink-0">
               <Icon name="clock" className="w-4 h-4" />
             </div>
             <div>
-              <span className="text-[9.5px] font-mono uppercase tracking-wider text-[var(--lkv-text-secondary)] block">
+              <span className="text-[10px] font-mono uppercase tracking-[0.12em] text-[var(--lkv-text-secondary)] block">
                 Durée est.
               </span>
               <span className="text-sm font-bold text-[var(--lkv-text-primary)]">
@@ -205,12 +205,12 @@ export function DayView({
             </div>
           </div>
 
-          <div className="glass-sub-card rounded-[var(--lkv-radius-md)] p-2.5 flex items-center gap-2.5 border border-white/50 shadow-2xs">
-            <div className="w-8 h-8 rounded-full bg-[var(--lkv-primary)]/10 text-[var(--lkv-primary)] flex items-center justify-center shrink-0">
+          <div className="glass-sub-card rounded-[var(--lkv-radius-md)] p-3 flex items-center gap-3 border border-white/50 shadow-2xs">
+            <div className="w-9 h-9 rounded-full bg-[var(--lkv-primary)]/10 text-[var(--lkv-primary)] flex items-center justify-center shrink-0">
               <Icon name="footprints" className="w-4 h-4" />
             </div>
             <div>
-              <span className="text-[9.5px] font-mono uppercase tracking-wider text-[var(--lkv-text-secondary)] block">
+              <span className="text-[10px] font-mono uppercase tracking-[0.12em] text-[var(--lkv-text-secondary)] block">
                 Étapes
               </span>
               <span className="text-sm font-bold text-[var(--lkv-text-primary)]">

@@ -52,6 +52,7 @@ import { routeIdFromMetadata, type DayTracePoint } from '@/features/trips/domain
 import { GroupeChipsRow, type GroupeChipDef } from '../groupe/GroupeChipsRow';
 import { GroupeRail } from '../groupe/GroupeRail';
 import { ItineraryHero } from './ItineraryHero';
+import { RenameTripModal } from '@/features/trips/components/RenameTripModal';
 import { DayTraceMap } from './DayTraceMap';
 import { ItineraryDayTimeline } from './ItineraryDayTimeline';
 import { ActivitySectionSkeleton } from '../../live/ActivitySectionSkeleton';
@@ -153,6 +154,7 @@ export function ItineraryMobileExperience({ trip, initialSteps }: ItineraryMobil
   }, [daysCount]);
 
   const [daysOpen, setDaysOpen] = useState(false);
+  const [renameOpen, setRenameOpen] = useState(false);
   const [detailStepId, setDetailStepId] = useState<string | null>(null);
   const [moveStepId, setMoveStepId] = useState<string | null>(null);
   const [formOpen, setFormOpen] = useState(false);
@@ -634,6 +636,7 @@ export function ItineraryMobileExperience({ trip, initialSteps }: ItineraryMobil
           setFormOpen(true);
         }}
         onOpenDays={() => setDaysOpen(true)}
+        onRename={() => setRenameOpen(true)}
       />
 
       <GroupeChipsRow chips={chips} />
@@ -961,6 +964,17 @@ export function ItineraryMobileExperience({ trip, initialSteps }: ItineraryMobil
         onInsertAfter={handleInsertDay}
         onDuplicate={handleDuplicateDay}
         onDelete={handleDeleteDay}
+      />
+
+      <RenameTripModal
+        open={renameOpen}
+        onOpenChange={setRenameOpen}
+        tripId={trip.id}
+        currentTitle={trip.title}
+        onRenamed={() => {
+          router.refresh();
+          notify('success', 'Activité renommée.');
+        }}
       />
 
       <ItineraryStepDrawer
