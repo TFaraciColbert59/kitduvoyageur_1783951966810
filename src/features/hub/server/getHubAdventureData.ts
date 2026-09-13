@@ -347,8 +347,8 @@ async function loadHubAffiliateLinks(
 /**
  * T8 — Intentions de réservation par étape résolues côté serveur : la
  * destination de l'étape puis celle du voyage départagent les liens d'une même
- * catégorie (repli : premier candidat par récence) — les vues clientes rendent
- * le slug exact, sans re-matching.
+ * catégorie. Au moins une correspondance de destination est exigée (sinon pas
+ * de lien du tout) — les vues clientes rendent le slug exact, sans re-matching.
  */
 function buildTripBookingByStepId(
   trip: TripFull,

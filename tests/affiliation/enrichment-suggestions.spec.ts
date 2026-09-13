@@ -99,6 +99,21 @@ describe('resolveEnrichmentSuggestions — catégorie dure, destination-aware', 
 
     expect(resolved).toEqual([]);
   });
+
+  it('destination sans correspondance → suggestion omise (résolveur durci)', () => {
+    const parisLink = makeLink({
+      id: 'link-paris',
+      slug: 'booking-paris-hotel',
+      destination_name: 'Paris',
+    });
+    const resolved = resolveEnrichmentSuggestions(
+      [{ category: 'hotel', label: 'Nuit', searchTerms: 'hôtel Chamonix' }],
+      [parisLink],
+      CONTEXT
+    );
+
+    expect(resolved).toEqual([]);
+  });
 });
 
 describe('TripSuggestionSection — rendu compact, jamais de rangée morte', () => {

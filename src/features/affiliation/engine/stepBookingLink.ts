@@ -158,33 +158,31 @@ function scoreCandidate(link: AffiliateLink, context: StepBookingResolutionConte
 
 /**
  * Résout une intention affiliée (étape ou suggestion LLM) vers UN lien
- * partenaire actif. La catégorie est un filtre dur ; parmi les candidats, la
- * destination de l'étape puis celle du voyage sont rapprochées de
- * `link.destination_name` (casse/diacritiques ignorés), la récence ne servant
- * qu'à départager.
+ * partenaire actif.
+ * - La catégorie est un filtre dur (un hôtel ne renvoie jamais vers un vol).
+ * - Au moins une correspondance de destination est exigée : localisation de
+ *   l'étape (score 2) ou destination du voyage (score 1), rapprochées de
+ *   `link.destination_name` (casse/diacritiques ignorés). AUCUN candidat ne
+ *   correspond → `null` : jamais de lien vers une mauvaise destination.
+ * - La récence ne départage que les candidats déjà correspondants.
  */
 export function resolveAffiliateIntent<T extends AffiliateIntent>(
   intent: T,
   candidates: readonly AffiliateLink[],
   context: StepBookingResolutionContext
 ): (T & { slug: string; partnerName: string | null }) | null {
-  const categoryCandidates = candidates.filter((link) => link.category === intent.category);
-  if (categoryCandidates.length === 0) return null;
+  const scored = candidates
+    .filter((link) => link.category === intent.category)
+    .map((link) => ({ link, score: scoreCandidate(link, context) }))
+    .filter((entry) => entry.score > 0)
+    .sort(
+      (a, b) =>
+        b.score - a.score || (b.link.created_at ?? '').localeCompare(a.link.created_at ?? '')
+    );
 
-  const ordered = [...categoryCandidates].sort((a, b) =>
-    (b.created_at ?? '').localeCompare(a.created_at ?? '')
-  );
+  if (scored.length === 0) return null;
 
-  let best = ordered[0];
-  let bestScore = scoreCandidate(best, context);
-  for (const link of ordered.slice(1)) {
-    const score = scoreCandidate(link, context);
-    if (score > bestScore) {
-      best = link;
-      bestScore = score;
-    }
-  }
-
+  const best = scored[0].link;
   return { ...intent, slug: best.slug, partnerName: best.partner?.name ?? null };
 }
 
