@@ -14,6 +14,7 @@ import { tripSectionHref } from '@/features/trips/registry/tripSectionRegistry';
 import { convertEphemeralGroup } from '@/features/tribu/actions/ephemeralGroup';
 import { formatEphemeralCountdown } from '@/features/tribu/lib/ephemeral';
 import GroupActivityLog from '@/features/tribu/components/GroupActivityLog';
+import GroupTaskTemplatesPanel from '@/features/tribu/components/GroupTaskTemplatesPanel';
 import {
   assignGroupeKitItem,
   settleGroupeExpense,
@@ -465,6 +466,14 @@ export function GroupeMobileExperience({
       />
 
       <GroupeChipsRow chips={chips} />
+
+      {data.parentClub && (
+        <GroupTaskTemplatesPanel
+          groupId={groupId}
+          clubId={data.parentClub.id}
+          onApplied={onRefresh}
+        />
+      )}
 
       <GroupActivityLog entries={data.activityLog ?? []} compact />
 

@@ -35,6 +35,7 @@ describe('ClubGroupsTab', () => {
     expect(html).toContain('Groupes du club');
     expect(html).toContain('Aucun groupe de voyage pour le moment');
     expect(html).toContain('club-groups-create-cta');
+    expect(html).toContain('Check-lists du club');
   });
 
   it('(b) liste des groupes rendue avec navigation Hub', () => {

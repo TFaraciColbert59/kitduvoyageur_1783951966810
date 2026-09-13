@@ -1,7 +1,12 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import Icon from '@/components/ui/AppIcon';
+import {
+  publishTaskTemplate,
+  listGroupTaskTemplates,
+  type ClubTaskTemplate,
+} from '@/features/tribu/actions/taskTemplates';
 
 interface ClubGroupsTabProps {
   club: any;
@@ -36,6 +41,50 @@ export default function ClubGroupsTab({
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [templates, setTemplates] = useState<ClubTaskTemplate[]>([]);
+  const [templateTitle, setTemplateTitle] = useState('');
+  const [templateItems, setTemplateItems] = useState('');
+  const [templateBusy, setTemplateBusy] = useState(false);
+  const [templateError, setTemplateError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!club?.id || !isMember) return;
+    let cancelled = false;
+    listGroupTaskTemplates(club.id).then((result) => {
+      if (cancelled || !result.ok) return;
+      setTemplates(result.templates.filter((t) => t.clubId === club.id));
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [club?.id, isMember]);
+
+  const handlePublishTemplate = async () => {
+    const items = templateItems
+      .split('\n')
+      .map((line) => line.trim())
+      .filter(Boolean);
+    if (!club?.id || !templateTitle.trim() || items.length === 0) {
+      setTemplateError('Renseignez un titre et au moins un élément (une ligne par élément).');
+      return;
+    }
+    setTemplateBusy(true);
+    setTemplateError(null);
+    const result = await publishTaskTemplate({
+      clubId: club.id,
+      title: templateTitle.trim(),
+      items,
+    });
+    setTemplateBusy(false);
+    if (!result.ok) {
+      setTemplateError(result.error);
+      return;
+    }
+    setTemplateTitle('');
+    setTemplateItems('');
+    const refreshed = await listGroupTaskTemplates(club.id);
+    if (refreshed.ok) setTemplates(refreshed.templates.filter((t) => t.clubId === club.id));
+  };
 
   const invitableMembers = useMemo(
     () =>
@@ -157,6 +206,71 @@ export default function ClubGroupsTab({
               </button>
             );
           })}
+        </div>
+      )}
+
+      {isMember && (
+        <div className="glass rounded-2xl p-4 space-y-3" data-testid="club-task-templates">
+          <div>
+            <h3 className="font-display font-bold text-sm text-[var(--lkv-text-primary)]">
+              Check-lists du club
+            </h3>
+            <p className="text-xs text-[var(--lkv-text-secondary)] mt-0.5">
+              Des modèles réutilisables, applicables en un tap dans les groupes du club.
+            </p>
+          </div>
+
+          {templates.length > 0 && (
+            <ul className="space-y-1.5">
+              {templates.map((template) => (
+                <li
+                  key={template.id}
+                  className="flex items-center justify-between gap-3 text-xs text-[var(--lkv-text-secondary)]"
+                >
+                  <span className="font-bold text-[var(--lkv-text-primary)] truncate">
+                    {template.title}
+                  </span>
+                  <span className="font-mono text-[10px] shrink-0">
+                    {template.items.length} éléments
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+
+          <input
+            type="text"
+            value={templateTitle}
+            onChange={(e) => setTemplateTitle(e.target.value)}
+            maxLength={80}
+            placeholder="Titre du modèle (ex. Bivouac été)"
+            className="w-full glass-input rounded-xl px-3 py-2.5 text-sm min-h-[44px]"
+            data-testid="club-template-title"
+          />
+          <textarea
+            value={templateItems}
+            onChange={(e) => setTemplateItems(e.target.value)}
+            rows={3}
+            placeholder={'Un élément par ligne\nRéserver les refuges\nVérifier la météo'}
+            className="w-full glass-input rounded-xl px-3 py-2.5 text-sm"
+            data-testid="club-template-items"
+          />
+          <button
+            type="button"
+            onClick={handlePublishTemplate}
+            disabled={templateBusy}
+            className="glass-capsule-btn py-2.5 px-4 text-xs font-bold min-h-[44px] disabled:opacity-60"
+            data-testid="club-template-publish"
+          >
+            <span className="relative z-10">
+              {templateBusy ? 'Publication…' : 'Publier le modèle'}
+            </span>
+          </button>
+          {templateError && (
+            <p role="alert" className="text-xs font-bold text-[#8A3B3B]">
+              {templateError}
+            </p>
+          )}
         </div>
       )}
 
