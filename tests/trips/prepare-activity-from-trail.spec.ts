@@ -127,6 +127,8 @@ interface ServiceOptions {
   /** File parallèle d'erreurs de select `trips` (entrée non nulle = erreur). */
   existingTripErrors?: Array<ServiceError | null>;
   tripMetadata?: Record<string, unknown> | null;
+  /** `kit_id` réel de l'activité réutilisée (fix kit rétro-généré). */
+  tripKitId?: string | null;
   /** File des erreurs d'update `trips` (entrée nulle = succès, mutation appliquée). */
   tripUpdateResults?: Array<ServiceError | null>;
   pois?: Record<string, unknown>[];
@@ -138,6 +140,7 @@ function createService(options: ServiceOptions): { client: unknown; captures: Ca
   const existingErrorQueue = [...(options.existingTripErrors ?? [])];
   const tripUpdateQueue = [...(options.tripUpdateResults ?? [])];
   let tripMetadataState: Record<string, unknown> | null = options.tripMetadata ?? null;
+  const tripKitIdState: string | null = options.tripKitId ?? null;
 
   const client = {
     rpc: async (fn: string, args: Record<string, unknown>) => {
@@ -164,6 +167,10 @@ function createService(options: ServiceOptions): { client: unknown; captures: Ca
           // colonne metadata et doit consommer la file existante.
           if (columns.trim() === 'metadata') {
             return { data: tripMetadataState, error: null };
+          }
+          // Lecture bornée du kit de l'activité réutilisée (fix rétro-génération).
+          if (columns.trim() === 'kit_id') {
+            return { data: { kit_id: tripKitIdState }, error: null };
           }
           const next = existingQueue.length > 0 ? existingQueue.shift() : null;
           const nextError = existingErrorQueue.length > 0 ? existingErrorQueue.shift() : null;
@@ -343,6 +350,52 @@ describe('prepareActivityFromTrail (Task 4)', () => {
     expect(outcome.status).toBe('reused');
     expect(insertFor(captures, 'ai_jobs')).toBeUndefined();
     expect(captures.inserts).toHaveLength(0);
+  });
+
+  it('(d2) réutilisation sans kit (`kit_id` null) → kit rétro-généré', async () => {
+    const { client } = createService({
+      route: ROUTE,
+      meta: META,
+      geojson: GEOJSON,
+      existingTrips: [{ id: TRIP.id, slug: TRIP.slug, title: TRIP.title }],
+      tripKitId: null,
+    });
+    serviceHolder.client = client;
+
+    const outcome = await prepareActivityFromTrail(String(ROUTE_ID));
+
+    expect(outcome.status).toBe('reused');
+    expect(mocks.createKitForTrip).toHaveBeenCalledTimes(1);
+    expect(mocks.createKitForTrip.mock.calls[0][0]).toMatchObject({
+      userId: USER_ID,
+      tripId: TRIP.id,
+      trail: { id: ROUTE_ID, name: 'Tour du Lac Blanc', distanceKm: 12.4 },
+      meta: {
+        difficulty: 'hard',
+        durationHours: 5.5,
+        elevationGain: 850,
+        terrainType: 'montagne',
+        season: null,
+      },
+      layers: null,
+    });
+    expect(mocks.createTrip).not.toHaveBeenCalled();
+  });
+
+  it('(e2) réutilisation avec kit existant → aucun kit rétro-généré', async () => {
+    const { client } = createService({
+      route: ROUTE,
+      meta: META,
+      geojson: GEOJSON,
+      existingTrips: [{ id: TRIP.id, slug: TRIP.slug, title: TRIP.title }],
+      tripKitId: 'kit-existant',
+    });
+    serviceHolder.client = client;
+
+    const outcome = await prepareActivityFromTrail(String(ROUTE_ID));
+
+    expect(outcome.status).toBe('reused');
+    expect(mocks.createKitForTrip).not.toHaveBeenCalled();
   });
 
   it('(c) sentier valide sans activité → created + route_id nombre + socle + job IA', async () => {

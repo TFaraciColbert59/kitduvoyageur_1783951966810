@@ -335,6 +335,57 @@ async function waitForRacedTrip(
 }
 
 /**
+ * Fix « kit jamais manquant » (réutilisation) : une activité existante sans
+ * `kit_id` (créée avant le correctif, par un ancien repli ou une course)
+ * reçoit un kit déterministe au moment où « Préparer » la réutilise.
+ *
+ * Best-effort et bon marché : UNE lecture bornée `kit_id` par réutilisation,
+ * création uniquement si le kit manque, jamais d'échec bloquant la
+ * réutilisation.
+ */
+async function ensureReusedTripKit(
+  db: SupabaseClient,
+  userId: string,
+  tripId: string,
+  trail: TrailInput,
+  meta: TrailMetaInput | null
+): Promise<void> {
+  try {
+    const { data, error } = await db
+      .from('trips')
+      .select('kit_id')
+      .eq('id', tripId)
+      .eq('user_id', userId)
+      .maybeSingle();
+    if (error) {
+      console.error('[LKDV preparer-sentier] lecture kit_id en échec:', error.message);
+      return;
+    }
+    if ((data as { kit_id?: unknown } | null)?.kit_id) return;
+
+    const kit = await createKitForTrip({
+      supabase: db,
+      userId,
+      tripId,
+      trail: { id: trail.id, name: trail.name, distanceKm: trail.distanceKm ?? null },
+      meta: {
+        difficulty: meta?.difficulty ?? null,
+        durationHours: meta?.durationHours ?? null,
+        elevationGain: meta?.elevationGain ?? null,
+        terrainType: meta?.terrainType ?? null,
+        season: null,
+      },
+      layers: null,
+    });
+    if (kit.kitId) {
+      console.warn('[LKDV preparer-sentier] kit rétro-généré pour activité réutilisée:', tripId);
+    }
+  } catch (error) {
+    console.error('[LKDV preparer-sentier] kit rétro-généré en échec:', error);
+  }
+}
+
+/**
  * Fix round final — un voyage réutilisé dont l'enrichissement n'a jamais abouti
  * (aucune version enrichie, statut ≠ `done`) est ré-enfilé. Le service skippe
  * immédiatement un voyage déjà enrichi : le rejeu est donc sans coût réel, et
@@ -664,6 +715,7 @@ export async function prepareActivityFromTrail(trailIdRaw: string): Promise<Prep
     if (shouldReenqueueEnrichment(existing.trip.metadata)) {
       await enqueueActivityEnrichment(existing.trip.tripId, user.id);
     }
+    await ensureReusedTripKit(db, user.id, existing.trip.tripId, loaded.trail, loaded.meta);
     const { tripId, slug, title } = existing.trip;
     return { status: 'reused', tripId, slug, title };
   }
@@ -773,6 +825,7 @@ export async function prepareActivityFromTrail(trailIdRaw: string): Promise<Prep
           if (shouldReenqueueEnrichment(raced.trip.metadata)) {
             await enqueueActivityEnrichment(raced.trip.tripId, user.id);
           }
+          await ensureReusedTripKit(db, user.id, raced.trip.tripId, trail, meta);
           const { tripId, slug, title } = raced.trip;
           return { status: 'reused', tripId, slug, title };
         }
@@ -818,6 +871,7 @@ export async function prepareActivityFromTrail(trailIdRaw: string): Promise<Prep
     if (shouldReenqueueEnrichment(persisted.trip.metadata)) {
       await enqueueActivityEnrichment(persisted.trip.tripId, user.id);
     }
+    await ensureReusedTripKit(db, user.id, persisted.trip.tripId, trail, meta);
     const { tripId: reusedTripId, slug, title } = persisted.trip;
     return { status: 'reused', tripId: reusedTripId, slug, title };
   }
