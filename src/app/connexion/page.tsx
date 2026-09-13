@@ -55,8 +55,9 @@ function AuthForm() {
         if (result?.user) await ensureProfile(result.user.id, result.user.email ?? email, '');
         trackEvent('login', { method: 'email' });
         toast('Connexion réussie ! Bienvenue.', 'success');
+        // Pas de router.refresh() ici : il déclenchait un second rendu RSC
+        // concurrent de la destination (course → page « indisponible »).
         router.push(nextPath ?? '/compte');
-        router.refresh();
       } else {
         const result = (await signUp(email, password, { fullName: name })) as { user?: { id: string; email?: string }; session?: unknown };
         if (result?.session) {
@@ -64,7 +65,6 @@ function AuthForm() {
           trackEvent('sign_up', { method: 'email' });
           toast('Compte créé !', 'success');
           router.push(nextPath ?? '/compte');
-          router.refresh();
         } else {
           if (result?.user) await ensureProfile(result.user.id, result.user.email ?? email, name);
           setConfirmationSent(true);

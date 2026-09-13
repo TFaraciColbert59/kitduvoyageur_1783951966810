@@ -157,7 +157,11 @@ function createService(options: ServiceOptions): { client: unknown; captures: Ca
 
       const settle = () => {
         if (op === 'insert') return { data: null, error: null };
-        if (op === 'update') return { data: null, error: pendingUpdateError };
+        if (op === 'update')
+          return {
+            data: pendingUpdateError ? null : [{ id: 'mock-trip' }],
+            error: pendingUpdateError,
+          };
         if (op === 'delete') return { data: null, error: null };
         if (table === 'hiking_routes') return { data: options.route ?? null, error: null };
         if (table === 'trail_metadata') return { data: options.meta ?? null, error: null };
