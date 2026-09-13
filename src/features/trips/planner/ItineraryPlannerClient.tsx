@@ -13,9 +13,6 @@ import {
   compactOrderIndices,
   withStepProvenance,
 } from './plannerEngine';
-import { getTripPhase } from '../engine/temporalPhaseEngine';
-import { parseEnrichmentSuggestions } from '@/features/affiliation/engine/enrichmentSuggestions';
-import { TripSuggestionSection } from '@/features/affiliation/components/TripSuggestionSection';
 import { DayTraceMap } from '@/features/hub/components/mobile/itinerary/DayTraceMap';
 import { routeIdFromMetadata, type DayTracePoint } from '@/features/trips/domain/dayTraces';
 import { getCivilDurationDays } from '@/lib/dates/tripDates';
@@ -61,10 +58,6 @@ export default function ItineraryPlannerClient({
   const [renameOpen, setRenameOpen] = useState(false);
 
   const canEdit = !!trip.permissions?.canEdit;
-  // Suggestions de réservation LLM : phase de préparation uniquement ; sans
-  // lien actif correspondant, le bloc est omis (aucune rangée morte).
-  const preparePhase = useMemo(() => getTripPhase(trip) === 'prepare', [trip]);
-  const suggestions = useMemo(() => parseEnrichmentSuggestions(trip.metadata), [trip.metadata]);
   // IMPORTANT 7 — squelette timeline tant que l'enrichissement est en attente
   // et qu'aucune étape n'existe (zéro CLS, jamais d'état vide trompeur).
   const enrichmentPending = trip.metadata?.enrichment_status === 'pending';
@@ -455,14 +448,6 @@ export default function ItineraryPlannerClient({
           days={daysCount}
           stepPoints={activeDayStepPoints}
           heightClassName="h-[20rem]"
-        />
-      )}
-
-      {preparePhase && suggestions.length > 0 && (
-        <TripSuggestionSection
-          suggestions={suggestions}
-          destinationName={trip.destination_name}
-          tripId={trip.id}
         />
       )}
 

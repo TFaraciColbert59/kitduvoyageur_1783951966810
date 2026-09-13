@@ -30,8 +30,6 @@ import type { HubHikingContext, HubChecklistItem } from '../../server/getHubAdve
 import type { HubPreparationSummary } from '../../server/preparationSummary';
 import type { TripItemImage } from '../../server/getTripItemImages';
 import type { TripPhase } from '@/features/trips/engine/temporalPhaseEngine';
-import { TripAffiliateSection } from '@/features/affiliation/components/TripAffiliateSection';
-import type { AffiliateLink } from '@/features/affiliation/types/affiliate.types';
 
 export interface SortieMenuProps {
   trip: TripFull;
@@ -46,8 +44,6 @@ export interface SortieMenuProps {
   itemImages?: TripItemImage[];
   /** Index du jour en cours (1-based, phase live) — journal & sécurité. */
   dayIndex?: number | null;
-  /** T8 — liens d'affiliation actifs du voyage (hub normal, hors partage token). */
-  affiliateLinks?: AffiliateLink[];
   /**
    * Fix round final — compteurs réels + état d'enrichissement du voyage actif :
    * le rail démarre sur la vraie phase (done si enrichissement terminé).
@@ -139,7 +135,6 @@ export function SortieMenu({
   checklist,
   itemImages = [],
   dayIndex = null,
-  affiliateLinks = [],
   preparation = null,
 }: SortieMenuProps) {
   const ref: HubAdventureRef = { nature: 'sortie', slug: trip.slug };
@@ -843,18 +838,7 @@ export function SortieMenu({
         {phase === 'live' && <SosFloatingButton safetyHref={hubSectionHref(ref, 'safety')} />}
       </div>
 
-      {/* T8 — Affiliation du hub normal (phase prepare) : le hub desktop est un
-          bento sans scroll, la section est donc rendue sous le bento (le <main>
-          centre scrolle) ; le mobile la porte dans la feuille du moment. */}
-      {phase === 'prepare' && affiliateLinks.length > 0 && (
-        <div className="hidden lg:block">
-          <TripAffiliateSection
-            links={affiliateLinks}
-            tripId={trip.id}
-            countryNames={trip.destination_name ? [trip.destination_name] : []}
-          />
-        </div>
-      )}
+      {/* T7 — affiliation retirée du hub (réservations hors des rendus hub). */}
 
       <MobileAdventureHub
         rail={
@@ -883,7 +867,6 @@ export function SortieMenu({
           context={momentContext}
           hiking={hiking}
           fillViewport
-          affiliateLinks={phase === 'prepare' ? affiliateLinks : []}
         />
 
         {phase === 'live' && <SosFloatingButton safetyHref={hubSectionHref(ref, 'safety')} />}

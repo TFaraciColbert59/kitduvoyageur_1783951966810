@@ -60,6 +60,11 @@ export interface HubShellProps {
    * à la racine /hub uniquement (jamais sur les sections, jamais sur /hub/nouveau).
    */
   adventureIntelligence?: React.ReactNode;
+  /**
+   * Task 7 — cockpit aventure discret de la section itinéraire (mode compact),
+   * monté en tête du contenu. Le montage plein reste réservé à la racine.
+   */
+  itineraryAdventureCockpit?: React.ReactNode;
   /** Contenu de section (rendu au centre desktop et dans le shell mobile). */
   children: React.ReactNode;
 }
@@ -98,12 +103,16 @@ export function HubShell({
   trips,
   tripStats = null,
   adventureIntelligence,
+  itineraryAdventureCockpit,
   children,
 }: HubShellProps) {
   const pathname = usePathname();
   const activeSection = hubSectionFromPathname(pathname);
   // A10 (10.11) — montage Adventure Intelligence réservé à la RACINE du hub.
   const isHubRoot = pathname === HUB_HOME_HREF;
+  // Task 7 — la section itinéraire reçoit le cockpit aventure discret en tête
+  // de contenu (NaturePill/Switcher masqués là uniquement).
+  const isItinerarySection = activeSection === 'itinerary' && adventure.nature === 'sortie';
   // H6.1 — le sélecteur mobile reste piloté par signal (retour Android).
   const [switcherSignal, setSwitcherSignal] = useState(0);
   const [switcherOpen, setSwitcherOpen] = useState(false);
@@ -268,6 +277,9 @@ export function HubShell({
             <div className="hidden">
               <AdventureSwitcher forceOpenSignal={switcherSignal} variant="mobile" hideTrigger />
             </div>
+            {isItinerarySection && itineraryAdventureCockpit ? (
+              <div className="mb-4">{itineraryAdventureCockpit}</div>
+            ) : null}
             {children}
           </div>
           {isHubRoot && adventureIntelligence ? (
@@ -284,18 +296,25 @@ export function HubShell({
         </MobilePageShell>
       }
     >
-      <div className="mb-3 md:max-w-xs">
-        <NaturePill nature={displayNature} open={pillOpen} onOpenSwitcher={() => setPillOpen(true)} />
-      </div>
+      {!isItinerarySection && (
+        <div className="mb-3 md:max-w-xs">
+          <NaturePill nature={displayNature} open={pillOpen} onOpenSwitcher={() => setPillOpen(true)} />
+        </div>
+      )}
       <AdventureSwitcher forceOpenSignal={switcherSignal} variant="desktop" hideTrigger />
+      {isItinerarySection && itineraryAdventureCockpit ? (
+        <div className="mb-3">{itineraryAdventureCockpit}</div>
+      ) : null}
       {children}
       {isHubRoot && adventureIntelligence ? adventureIntelligence : null}
-      <NatureSwitcherSheet
-        open={pillOpen}
-        onOpenChange={setPillOpen}
-        current={displayNature}
-        onSelect={selectNature}
-      />
+      {!isItinerarySection && (
+        <NatureSwitcherSheet
+          open={pillOpen}
+          onOpenChange={setPillOpen}
+          current={displayNature}
+          onSelect={selectNature}
+        />
+      )}
       </AppShellDesktop>
     </>
   );

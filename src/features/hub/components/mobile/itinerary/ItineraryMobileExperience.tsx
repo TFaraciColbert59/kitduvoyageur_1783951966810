@@ -57,9 +57,6 @@ import { DayTraceMap } from './DayTraceMap';
 import { ItineraryDayTimeline } from './ItineraryDayTimeline';
 import { ActivitySectionSkeleton } from '../../live/ActivitySectionSkeleton';
 import { useTripAffiliate } from '@/features/affiliation/components/TripAffiliateProvider';
-import { TripSuggestionSection } from '@/features/affiliation/components/TripSuggestionSection';
-import { parseEnrichmentSuggestions } from '@/features/affiliation/engine/enrichmentSuggestions';
-import { getTripPhase } from '@/features/trips/engine/temporalPhaseEngine';
 import { isLlmSuggestion } from '@/features/trips/engine/llmProvenance';
 import { LlmSuggestionBadge } from '@/features/trips/components/LlmSuggestionBadge';
 import {
@@ -135,10 +132,6 @@ export function ItineraryMobileExperience({ trip, initialSteps }: ItineraryMobil
   }, [trip.items]);
 
   const canEdit = !!trip.permissions?.canEdit;
-  // Suggestions de réservation LLM : uniquement en phase de préparation du
-  // voyage actif, et jamais de rangée sans lien actif (le bloc s'auto-omet).
-  const preparePhase = useMemo(() => getTripPhase(trip) === 'prepare', [trip]);
-  const suggestions = useMemo(() => parseEnrichmentSuggestions(trip.metadata), [trip.metadata]);
   // IMPORTANT 7 — tant que l'enrichissement est en attente et que le bassin est
   // vide, la section itinéraire affiche un squelette pré-formé (zéro CLS) au
   // lieu d'un état vide trompeur ; checklist/kit ont un contenu déterministe.
@@ -640,14 +633,6 @@ export function ItineraryMobileExperience({ trip, initialSteps }: ItineraryMobil
       />
 
       <GroupeChipsRow chips={chips} />
-
-      {preparePhase && suggestions.length > 0 && (
-        <TripSuggestionSection
-          suggestions={suggestions}
-          destinationName={trip.destination_name}
-          tripId={trip.id}
-        />
-      )}
 
       {/* ── RAIL JOURNÉES ── */}
       <GroupeRail

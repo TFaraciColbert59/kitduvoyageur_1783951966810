@@ -58,7 +58,6 @@ export default async function HubPage({
         checklist={data.checklist}
         itemImages={data.itemImages}
         dayIndex={phaseDetails.dayIndex}
-        affiliateLinks={data.affiliateLinks}
         preparation={data.preparation}
       />
     );
