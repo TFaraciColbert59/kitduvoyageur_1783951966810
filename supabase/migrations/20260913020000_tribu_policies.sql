@@ -69,7 +69,11 @@ CREATE POLICY "members_join_group" ON public.group_members
 DROP POLICY IF EXISTS "members_organizer_insert" ON public.group_members;
 CREATE POLICY "members_organizer_insert" ON public.group_members
   FOR INSERT TO authenticated
-  WITH CHECK (public.group_member_has_capability(group_id, auth.uid(), 'invite_members'));
+  WITH CHECK (
+    public.group_member_has_capability(group_id, auth.uid(), 'invite_members')
+    AND role IN ('member'::public.group_member_role, 'co_organizer'::public.group_member_role)
+    AND status IN ('pending'::public.group_member_status, 'active'::public.group_member_status)
+  );
 
 DROP POLICY IF EXISTS "members_update_own" ON public.group_members;
 CREATE POLICY "members_update_own" ON public.group_members
@@ -160,7 +164,18 @@ CREATE POLICY "expenses_update_own_or_manage" ON public.group_expenses
     public.is_group_member(group_id, auth.uid())
     AND (
       paid_by = auth.uid()
-      OR public.group_member_has_capability(group_id, auth.uid(), 'manage_expenses')
+      OR (
+        public.group_member_has_capability(group_id, auth.uid(), 'manage_expenses')
+        AND (
+          paid_by IS NULL
+          OR EXISTS (
+            SELECT 1 FROM public.group_members gm
+            WHERE gm.group_id = group_expenses.group_id
+              AND gm.user_id = group_expenses.paid_by
+              AND gm.status = 'active'
+          )
+        )
+      )
     )
   );
 
@@ -209,7 +224,18 @@ CREATE POLICY "kit_items_update_own_or_manage" ON public.group_kit_items
     public.is_group_member(group_id, auth.uid())
     AND (
       assigned_to = auth.uid()
-      OR public.group_member_has_capability(group_id, auth.uid(), 'manage_kit')
+      OR (
+        public.group_member_has_capability(group_id, auth.uid(), 'manage_kit')
+        AND (
+          assigned_to IS NULL
+          OR EXISTS (
+            SELECT 1 FROM public.group_members gm
+            WHERE gm.group_id = group_kit_items.group_id
+              AND gm.user_id = group_kit_items.assigned_to
+              AND gm.status = 'active'
+          )
+        )
+      )
     )
   );
 
@@ -281,7 +307,13 @@ CREATE POLICY "polls_update_own_or_manage" ON public.group_polls
     public.group_member_has_capability(group_id, auth.uid(), 'manage_polls')
     OR (created_by = auth.uid() AND public.group_member_has_capability(group_id, auth.uid(), 'contribute'))
   )
-  WITH CHECK (public.is_group_member(group_id, auth.uid()));
+  WITH CHECK (
+    public.is_group_member(group_id, auth.uid())
+    AND (
+      (created_by = auth.uid() AND public.group_member_has_capability(group_id, auth.uid(), 'contribute'))
+      OR public.group_member_has_capability(group_id, auth.uid(), 'manage_polls')
+    )
+  );
 
 DROP POLICY IF EXISTS "polls_delete_own_or_manage" ON public.group_polls;
 CREATE POLICY "polls_delete_own_or_manage" ON public.group_polls
@@ -343,7 +375,13 @@ CREATE POLICY "album_update_own_or_manage" ON public.group_album
     public.group_member_has_capability(group_id, auth.uid(), 'manage_album')
     OR (uploaded_by = auth.uid() AND public.group_member_has_capability(group_id, auth.uid(), 'contribute'))
   )
-  WITH CHECK (public.is_group_member(group_id, auth.uid()));
+  WITH CHECK (
+    public.is_group_member(group_id, auth.uid())
+    AND (
+      (uploaded_by = auth.uid() AND public.group_member_has_capability(group_id, auth.uid(), 'contribute'))
+      OR public.group_member_has_capability(group_id, auth.uid(), 'manage_album')
+    )
+  );
 
 DROP POLICY IF EXISTS "album_delete_own_or_manage" ON public.group_album;
 CREATE POLICY "album_delete_own_or_manage" ON public.group_album
@@ -365,3 +403,41 @@ CREATE POLICY "invitations_organizer_manage" ON public.group_invitations
     invited_by = auth.uid()
     AND public.group_member_has_capability(group_id, auth.uid(), 'invite_members')
   );
+
+-- ── 11. Découverte publique : agrégats sans lecture de lignes ───────────────
+-- La fermeture des lectures enfants publiques (`*_select_public_or_member`)
+-- prive les cartes « Bouteille à la mer » des compteurs pour les visiteurs.
+-- Cet agrégat SECURITY DEFINER ne renvoie que des compteurs/sommes, jamais
+-- de lignes, et uniquement pour les groupes explicitement publics.
+CREATE OR REPLACE FUNCTION public.group_public_card_stats(p_group_ids UUID[])
+RETURNS TABLE (
+  group_id UUID,
+  active_members INT,
+  pending_members INT,
+  total_expenses NUMERIC
+)
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
+  SELECT
+    g.id,
+    COALESCE((
+      SELECT count(*)::int FROM public.group_members gm
+      WHERE gm.group_id = g.id AND gm.status = 'active'
+    ), 0),
+    COALESCE((
+      SELECT count(*)::int FROM public.group_members gm
+      WHERE gm.group_id = g.id AND gm.status = 'pending'
+    ), 0),
+    COALESCE((
+      SELECT sum(e.amount) FROM public.group_expenses e
+      WHERE e.group_id = g.id
+    ), 0)::numeric
+  FROM public.travel_groups g
+  WHERE g.id = ANY(p_group_ids)
+    AND g.visibility = 'public'::public.group_visibility
+$$;
+
+GRANT EXECUTE ON FUNCTION public.group_public_card_stats(UUID[]) TO authenticated, anon;

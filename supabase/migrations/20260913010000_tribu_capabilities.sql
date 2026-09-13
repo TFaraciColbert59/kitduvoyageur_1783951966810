@@ -31,6 +31,9 @@ CREATE TABLE IF NOT EXISTS public.group_member_capability_overrides (
   PRIMARY KEY (group_id, user_id, capability)
 );
 
+CREATE INDEX IF NOT EXISTS idx_group_member_capability_overrides_user
+  ON public.group_member_capability_overrides(user_id);
+
 -- ── 3. Matrice par defaut (seed, jamais ecrasee une fois posee) ──────────────
 INSERT INTO public.group_role_capability_defaults (role, capability, allowed)
 SELECT r.role, c.capability,
@@ -94,7 +97,9 @@ AS $$
 $$;
 
 GRANT EXECUTE ON FUNCTION public.group_member_has_capability(UUID, UUID, public.group_capability)
-  TO authenticated, anon;
+  TO authenticated;
+REVOKE EXECUTE ON FUNCTION public.group_member_has_capability(UUID, UUID, public.group_capability)
+  FROM PUBLIC, anon;
 
 -- ── 5. RLS des nouvelles tables ──────────────────────────────────────────────
 ALTER TABLE public.group_role_capability_defaults ENABLE ROW LEVEL SECURITY;

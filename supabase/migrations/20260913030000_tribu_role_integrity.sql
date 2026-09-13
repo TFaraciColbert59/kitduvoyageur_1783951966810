@@ -51,3 +51,28 @@ DROP TRIGGER IF EXISTS enforce_group_role_change_trg ON public.group_members;
 CREATE TRIGGER enforce_group_role_change_trg
   BEFORE UPDATE ON public.group_members
   FOR EACH ROW EXECUTE FUNCTION public.enforce_group_role_change();
+
+-- ── Bootstrap : le createur d'un groupe devient organizer actif ─────────────
+-- Sans cela, un groupe neuf serait orphelin (aucune policy enfant ouverte
+-- a son proprietaire) et l'app devrait inserer le membership elle-meme
+-- (fragile, silencieusement ignorable, dupliquee par chaque nouveau flux).
+CREATE OR REPLACE FUNCTION public.seed_group_owner_membership()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
+BEGIN
+  IF NEW.owner_id IS NOT NULL THEN
+    INSERT INTO public.group_members (group_id, user_id, role, status)
+    VALUES (NEW.id, NEW.owner_id, 'organizer', 'active')
+    ON CONFLICT (group_id, user_id) DO NOTHING;
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS seed_group_owner_membership_trg ON public.travel_groups;
+CREATE TRIGGER seed_group_owner_membership_trg
+  AFTER INSERT ON public.travel_groups
+  FOR EACH ROW EXECUTE FUNCTION public.seed_group_owner_membership();

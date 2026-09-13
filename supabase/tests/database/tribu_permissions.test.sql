@@ -20,7 +20,7 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON
   public.user_profiles
 TO authenticated, service_role;
 
-SELECT plan(53);
+SELECT plan(67);
 
 -- ----------------------------------------------------------------------------
 -- Fixtures — A organizer, B member, C observer, X non-membre, D pending
@@ -31,7 +31,8 @@ VALUES
   ('bd000000-0000-4000-8000-0000000000a2', 'authenticated', 'authenticated', 'tribu_b@test.local', 'x', '{}', '{}', now(), now()),
   ('bd000000-0000-4000-8000-0000000000a3', 'authenticated', 'authenticated', 'tribu_c@test.local', 'x', '{}', '{}', now(), now()),
   ('bd000000-0000-4000-8000-0000000000a4', 'authenticated', 'authenticated', 'tribu_x@test.local', 'x', '{}', '{}', now(), now()),
-  ('bd000000-0000-4000-8000-0000000000a5', 'authenticated', 'authenticated', 'tribu_d@test.local', 'x', '{}', '{}', now(), now())
+  ('bd000000-0000-4000-8000-0000000000a5', 'authenticated', 'authenticated', 'tribu_d@test.local', 'x', '{}', '{}', now(), now()),
+  ('bd000000-0000-4000-8000-0000000000a6', 'authenticated', 'authenticated', 'tribu_y@test.local', 'x', '{}', '{}', now(), now())
 ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO public.user_profiles (id, full_name, email, role, trust_score)
@@ -40,7 +41,8 @@ VALUES
   ('bd000000-0000-4000-8000-0000000000a2', 'TRIBU Membre', 'tribu_b@test.local', 'user', 50),
   ('bd000000-0000-4000-8000-0000000000a3', 'TRIBU Observateur', 'tribu_c@test.local', 'user', 50),
   ('bd000000-0000-4000-8000-0000000000a4', 'TRIBU Externe', 'tribu_x@test.local', 'user', 50),
-  ('bd000000-0000-4000-8000-0000000000a5', 'TRIBU En attente', 'tribu_d@test.local', 'user', 50)
+  ('bd000000-0000-4000-8000-0000000000a5', 'TRIBU En attente', 'tribu_d@test.local', 'user', 50),
+  ('bd000000-0000-4000-8000-0000000000a6', 'TRIBU Nouveau', 'tribu_y@test.local', 'user', 50)
 ON CONFLICT (id) DO UPDATE SET full_name = EXCLUDED.full_name;
 
 INSERT INTO public.travel_groups (id, name, owner_id, visibility)
@@ -440,14 +442,15 @@ SELECT lives_ok(
   '51. INT-03. organizer : promotion d''un membre autorisee (manage_members)'
 );
 
--- service_role (auth.uid() NULL) : gratuit
+-- service / systeme (auth.uid() NULL) : changement de role tolere
 RESET ROLE;
+RESET "request.jwt.claim.sub";
 
 SELECT lives_ok(
   $$ UPDATE public.group_members SET role = 'member'
      WHERE group_id = 'bd000000-0000-4000-8000-0000000000f1'
        AND user_id = 'bd000000-0000-4000-8000-0000000000a2' $$,
-  '52. INT-03. service_role : changement de role tolere (auth.uid() NULL)'
+  '52. INT-03. systeme (auth.uid() NULL) : changement de role tolere'
 );
 
 -- Member B modifie un champ non protege (poids)
@@ -459,6 +462,130 @@ SELECT lives_ok(
      WHERE group_id = 'bd000000-0000-4000-8000-0000000000f1'
        AND user_id = 'bd000000-0000-4000-8000-0000000000a2' $$,
   '53. INT-04. member : mise a jour d''un champ libre autorisee'
+);
+
+-- ════════════════════════════════════════════════════════════════════════════
+-- 54..67 — Revue Phase 0 : bootstrap, jointures, transferts, RPC publique
+-- ════════════════════════════════════════════════════════════════════════════
+
+-- Bootstrap (C1) : le createur d'un groupe devient organizer actif
+SET LOCAL ROLE authenticated;
+SET LOCAL "request.jwt.claim.sub" = 'bd000000-0000-4000-8000-0000000000a1';
+
+SELECT lives_ok(
+  $$ INSERT INTO public.travel_groups (id, name, owner_id, visibility)
+     VALUES ('bd000000-0000-4000-8000-0000000000f5', 'TRIBU Groupe Bootstrap',
+             'bd000000-0000-4000-8000-0000000000a1', 'private') $$,
+  '54. REV-01. creation de groupe par un utilisateur'
+);
+SELECT is(
+  (SELECT count(*)::int FROM public.group_members
+   WHERE group_id = 'bd000000-0000-4000-8000-0000000000f5'
+     AND user_id = 'bd000000-0000-4000-8000-0000000000a1'
+     AND role = 'organizer' AND status = 'active'),
+  1,
+  '55. REV-01. bootstrap : createur organizer actif immediat'
+);
+
+-- Jointure publique / privee (flux VoyageursCard / BouteilleALaMer)
+SELECT lives_ok(
+  $$ INSERT INTO public.travel_groups (id, name, owner_id, visibility)
+     VALUES ('bd000000-0000-4000-8000-0000000000f4', 'TRIBU Groupe Public',
+             'bd000000-0000-4000-8000-0000000000a1', 'public') $$,
+  '56. REV-02. creation d''un groupe public'
+);
+RESET ROLE;
+SET LOCAL ROLE authenticated;
+SET LOCAL "request.jwt.claim.sub" = 'bd000000-0000-4000-8000-0000000000a4';
+
+SELECT lives_ok(
+  $$ INSERT INTO public.group_members (group_id, user_id, role, status)
+     VALUES ('bd000000-0000-4000-8000-0000000000f4',
+             'bd000000-0000-4000-8000-0000000000a4', 'member', 'pending') $$,
+  '57. REV-02. self-join d''un groupe public autorise'
+);
+SELECT throws_ok(
+  $$ INSERT INTO public.group_members (group_id, user_id, role, status)
+     VALUES ('bd000000-0000-4000-8000-0000000000f1',
+             'bd000000-0000-4000-8000-0000000000a4', 'member', 'pending') $$,
+  '42501', NULL,
+  '58. REV-02. self-join d''un groupe prive refuse'
+);
+
+-- invite_members borne (I1) : invitation OK, creation d'organizer refusee
+RESET ROLE;
+SET LOCAL ROLE authenticated;
+SET LOCAL "request.jwt.claim.sub" = 'bd000000-0000-4000-8000-0000000000a1';
+
+SELECT lives_ok(
+  $$ INSERT INTO public.group_members (group_id, user_id, role, status)
+     VALUES ('bd000000-0000-4000-8000-0000000000f1',
+             'bd000000-0000-4000-8000-0000000000a4', 'member', 'pending') $$,
+  '59. REV-03. organizer : invitation d''un membre autorisee'
+);
+SELECT throws_ok(
+  $$ INSERT INTO public.group_members (group_id, user_id, role, status)
+     VALUES ('bd000000-0000-4000-8000-0000000000f1',
+             'bd000000-0000-4000-8000-0000000000a6', 'organizer', 'active') $$,
+  '42501', NULL,
+  '60. REV-03. organizer : forge d''un organizer refusee (invite_members borne)'
+);
+
+-- Transferts de propriete (I2)
+RESET ROLE;
+SET LOCAL ROLE authenticated;
+SET LOCAL "request.jwt.claim.sub" = 'bd000000-0000-4000-8000-0000000000a2';
+
+SELECT lives_ok(
+  $$ INSERT INTO public.group_polls (id, group_id, created_by, question, options)
+     VALUES ('bd000000-0000-4000-8000-0000000000b3',
+             'bd000000-0000-4000-8000-0000000000f1',
+             'bd000000-0000-4000-8000-0000000000a2', 'Q B', '["a","b"]'::jsonb) $$,
+  '61. REV-04. member : creation de son propre sondage'
+);
+SELECT throws_ok(
+  $$ UPDATE public.group_polls SET created_by = 'bd000000-0000-4000-8000-0000000000a1'
+     WHERE id = 'bd000000-0000-4000-8000-0000000000b3' $$,
+  '42501', NULL,
+  '62. REV-04. member : transfert de propriete du sondage refuse'
+);
+SELECT lives_ok(
+  $$ INSERT INTO public.group_album (id, group_id, uploaded_by, image_url)
+     VALUES ('bd000000-0000-4000-8000-0000000000b4',
+             'bd000000-0000-4000-8000-0000000000f1',
+             'bd000000-0000-4000-8000-0000000000a2', 'img-b2.jpg') $$,
+  '63. REV-04. member : ajout de sa propre photo'
+);
+SELECT throws_ok(
+  $$ UPDATE public.group_album SET uploaded_by = 'bd000000-0000-4000-8000-0000000000a1'
+     WHERE id = 'bd000000-0000-4000-8000-0000000000b4' $$,
+  '42501', NULL,
+  '64. REV-04. member : transfert de propriete de la photo refuse'
+);
+
+-- Membre pending : l'invitation reste visible (branche pending de groups_public_read)
+RESET ROLE;
+SET LOCAL ROLE authenticated;
+SET LOCAL "request.jwt.claim.sub" = 'bd000000-0000-4000-8000-0000000000a4';
+
+SELECT is(
+  (SELECT count(*)::int FROM public.travel_groups
+   WHERE id = 'bd000000-0000-4000-8000-0000000000f1'),
+  1,
+  '65. REV-05. membre pending : lecture de son groupe (invitation visible)'
+);
+
+-- RPC d'agregats publics : compteurs sans lecture de lignes
+SELECT is(
+  (SELECT count(*)::int FROM public.group_public_card_stats(ARRAY['bd000000-0000-4000-8000-0000000000f1']::uuid[])),
+  0,
+  '66. REV-06. RPC stats : groupe prive exclu'
+);
+SELECT is(
+  (SELECT (active_members, pending_members)::text
+     FROM public.group_public_card_stats(ARRAY['bd000000-0000-4000-8000-0000000000f4']::uuid[])),
+  '(1,1)',
+  '67. REV-06. RPC stats : compteurs du groupe public (1 actif, 1 pending)'
 );
 
 SELECT * FROM finish();
