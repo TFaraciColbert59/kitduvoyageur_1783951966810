@@ -5,6 +5,12 @@ import { createClient } from '@/lib/supabase/client';
 import { PUBLIC_PROFILES_VIEW, fetchPublicProfilesWith } from '@/lib/queries/publicProfilesCore';
 import Icon from '@/components/ui/AppIcon';
 import { useToast } from '@/contexts/ToastContext';
+import {
+  createRoleDelegation,
+  revokeRoleDelegation,
+  listMyDelegations,
+  type ActiveDelegation,
+} from '@/features/tribu/actions/delegateRole';
 
 interface Traveler {
   id: string;
@@ -39,6 +45,10 @@ export default function VoyageursCard({ travelers, groupId, onRefresh, user, mem
   const [memberResults, setMemberResults] = useState<any[]>([]);
   const [memberSearchBusy, setMemberSearchBusy] = useState(false);
   const [addingId, setAddingId] = useState<string | null>(null);
+  const [delegations, setDelegations] = useState<ActiveDelegation[]>([]);
+  const [delegateTo, setDelegateTo] = useState('');
+  const [delegateHours, setDelegateHours] = useState(24);
+  const [delegationBusy, setDelegationBusy] = useState(false);
 
   const loadPendingMembers = async () => {
     if (!groupId) return;
@@ -60,7 +70,47 @@ export default function VoyageursCard({ travelers, groupId, onRefresh, user, mem
     setShowManageModal(true);
     setMemberQuery('');
     setMemberResults([]);
-    if (isOrganizer) loadPendingMembers();
+    if (isOrganizer) {
+      loadPendingMembers();
+      loadDelegations();
+    }
+  };
+
+  const loadDelegations = async () => {
+    if (!groupId) return;
+    const result = await listMyDelegations(groupId);
+    if (result.ok) setDelegations(result.delegations);
+  };
+
+  const memberName = (userId: string) => {
+    const row = (members || []).find((m: any) => m.user_id === userId);
+    return row?.user_profiles?.full_name || row?.user_profiles?.first_name || 'Membre';
+  };
+
+  const handleDelegate = async () => {
+    if (!delegateTo || !groupId) return;
+    setDelegationBusy(true);
+    const result = await createRoleDelegation({
+      groupId,
+      toUserId: delegateTo,
+      delegatedRole: 'organizer',
+      durationHours: delegateHours,
+    });
+    setDelegationBusy(false);
+    if (result.ok) {
+      setDelegateTo('');
+      await loadDelegations();
+    } else {
+      toast(result.error, 'error');
+    }
+  };
+
+  const handleRevokeDelegation = async (delegationId: string) => {
+    setDelegationBusy(true);
+    const result = await revokeRoleDelegation(delegationId);
+    setDelegationBusy(false);
+    if (result.ok) await loadDelegations();
+    else toast(result.error, 'error');
   };
 
   const searchMembers = async (q: string) => {
@@ -368,6 +418,78 @@ export default function VoyageursCard({ travelers, groupId, onRefresh, user, mem
                 )}
               </div>
             )}
+
+            {/* Delegation temporaire de role (Phase 3 TRIBU) */}
+            <div className="mb-4 p-3 glass-sub-card rounded-xl" data-testid="delegation-block">
+              <p className="text-xs font-bold text-lkv-primary mb-2">
+                Déléguer mon rôle (temporaire)
+              </p>
+              <div className="flex gap-2 items-center">
+                <select
+                  value={delegateTo}
+                  onChange={(e) => setDelegateTo(e.target.value)}
+                  className="glass-input flex-1 text-xs min-h-[36px]"
+                  aria-label="Membre à qui déléguer"
+                >
+                  <option value="">Choisir un membre…</option>
+                  {(members || [])
+                    .filter(
+                      (m: any) =>
+                        m.user_id && m.user_id !== user?.id && m.status !== 'pending' && m.status !== 'banned'
+                    )
+                    .map((m: any) => (
+                      <option key={m.user_id} value={m.user_id}>
+                        {m.user_profiles?.full_name || m.user_profiles?.first_name || 'Membre'}
+                      </option>
+                    ))}
+                </select>
+                <select
+                  value={delegateHours}
+                  onChange={(e) => setDelegateHours(Number(e.target.value))}
+                  className="glass-input text-xs min-h-[36px]"
+                  aria-label="Durée de la délégation"
+                >
+                  <option value={24}>24 h</option>
+                  <option value={72}>3 j</option>
+                  <option value={168}>7 j</option>
+                </select>
+                <button
+                  onClick={handleDelegate}
+                  disabled={!delegateTo || delegationBusy}
+                  className="glass-capsule-btn primary px-3 text-[10px] font-bold disabled:opacity-50 min-h-[36px]"
+                >
+                  <span className="relative z-10">Déléguer</span>
+                </button>
+              </div>
+              {delegations.length > 0 && (
+                <div className="mt-2 space-y-1">
+                  {delegations.map((delegation) => (
+                    <div
+                      key={delegation.id}
+                      className="flex items-center justify-between gap-2 text-[10px] text-lkv-text-muted"
+                    >
+                      <span className="truncate">
+                        {delegation.fromUserId === user?.id ? 'Vers' : 'De'}{' '}
+                        {memberName(
+                          delegation.fromUserId === user?.id
+                            ? delegation.toUserId
+                            : delegation.fromUserId
+                        )}{' '}
+                        · {delegation.delegatedRole} · fin{' '}
+                        {new Date(delegation.endsAt).toLocaleDateString('fr-FR')}
+                      </span>
+                      <button
+                        onClick={() => handleRevokeDelegation(delegation.id)}
+                        disabled={delegationBusy}
+                        className="font-bold text-red-600 disabled:opacity-50 shrink-0"
+                      >
+                        Reprendre
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
 
             <button 
               onClick={() => setShowManageModal(false)}
