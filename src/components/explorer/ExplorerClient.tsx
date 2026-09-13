@@ -29,6 +29,7 @@ import {
 import ExplorerListCard from '@/components/explorer/ExplorerListCard';
 import ExplorerFilterPanel from '@/components/explorer/ExplorerFilterPanel';
 import ExplorerMobileHikeCarousel from '@/components/explorer/ExplorerMobileHikeCarousel';
+import { getCurrentGeoPosition } from '@/lib/native/geolocation';
 
 // ── Dynamic (client-only) ─────────────────────────────────────────────────────
 
@@ -75,6 +76,22 @@ const DURATION_FILTERS = [
 const CATEGORIES = ['Tout', 'Refuge', 'Itinéraire', 'Bivouac', 'Escalade', 'Multi-jours', 'Famille'];
 
 import type { UnifiedPOI } from '@/lib/queries/pois';
+
+// ── Dernière position connue ───────────────────────────────────────────────────
+// Clé relue par `UnifiedExplorerMap` pour replier « Explorer ma zone » sans GPS.
+
+const LAST_LOCATION_STORAGE_KEY = 'lkdv_last_location';
+
+function rememberLastLocation(lat: number, lng: number): void {
+  try {
+    localStorage.setItem(
+      LAST_LOCATION_STORAGE_KEY,
+      JSON.stringify({ lat, lng, timestamp: Date.now() })
+    );
+  } catch {
+    // Stockage indisponible : le repli carte fonctionne sans dernière position.
+  }
+}
 
 // ── Props ─────────────────────────────────────────────────────────────────────
 
@@ -133,33 +150,37 @@ export default function ExplorerClient({
   queriedBboxRef.current = queriedBbox;
 
   // Géolocalisation immédiate au montage pour centrer sur la position de l'utilisateur par défaut
+  // (wrapper natif Capacitor ⇄ Web — jamais d'appel direct à `navigator.geolocation`).
   useEffect(() => {
-    if (typeof window !== 'undefined' && 'geolocation' in navigator && !initialGeoAppliedRef.current) {
-      navigator.geolocation.getCurrentPosition(
-        (pos) => {
-          const lat = pos.coords.latitude;
-          const lng = pos.coords.longitude;
-          setUserLocation([lat, lng]);
-          if (!initialGeoAppliedRef.current) {
-            initialGeoAppliedRef.current = true;
-            const deltaLat = 0.018;
-            const deltaLng = 0.026 / Math.cos((lat * Math.PI) / 180);
-            setQueriedBbox({
-              minLat: lat - deltaLat,
-              maxLat: lat + deltaLat,
-              minLng: lng - deltaLng,
-              maxLng: lng + deltaLng,
-              zoom: 14,
-            });
-            setShowSearchHereButton(false);
-          }
-        },
-        () => {
-          // Si refusé, conservation de la vue initiale par défaut
-        },
-        { enableHighAccuracy: true, timeout: 6000 }
-      );
-    }
+    if (initialGeoAppliedRef.current) return;
+    let cancelled = false;
+    void getCurrentGeoPosition({ enableHighAccuracy: true, timeout: 6000 })
+      .then((pos) => {
+        if (cancelled) return;
+        const lat = pos.latitude;
+        const lng = pos.longitude;
+        rememberLastLocation(lat, lng);
+        setUserLocation([lat, lng]);
+        if (!initialGeoAppliedRef.current) {
+          initialGeoAppliedRef.current = true;
+          const deltaLat = 0.018;
+          const deltaLng = 0.026 / Math.cos((lat * Math.PI) / 180);
+          setQueriedBbox({
+            minLat: lat - deltaLat,
+            maxLat: lat + deltaLat,
+            minLng: lng - deltaLng,
+            maxLng: lng + deltaLng,
+            zoom: 14,
+          });
+          setShowSearchHereButton(false);
+        }
+      })
+      .catch(() => {
+        // Si refusé ou indisponible, conservation de la vue initiale par défaut
+      });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const handleViewportChange = useCallback((bbox: { minLat: number; maxLat: number; minLng: number; maxLng: number; zoom: number }) => {
@@ -319,6 +340,7 @@ export default function ExplorerClient({
   }, []);
 
   const handleLocationUpdate = useCallback((loc: [number, number]) => {
+    rememberLastLocation(loc[0], loc[1]);
     setUserLocation(loc);
     if (!initialGeoAppliedRef.current) {
       initialGeoAppliedRef.current = true;

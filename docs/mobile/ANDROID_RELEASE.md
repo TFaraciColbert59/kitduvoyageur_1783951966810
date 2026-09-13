@@ -171,6 +171,29 @@ alias + chemin keystore, avec avertissement intégré) :
 
 ## 5. Construire l'AAB signé
 
+### 5.1 `CAPACITOR_SERVER_URL` — obligatoire pour une build testable
+
+`capacitor.config.ts` lit `CAPACITOR_SERVER_URL` au moment du `npx cap sync`.
+Sans elle, **aucune `server.url`** n'est écrite dans la config native et la
+coquille sert `public/index.html` (placeholder « Chargement… ») au lieu de
+l'app déployée. La CLI **échoue désormais explicitement** (`throw`) quand la
+variable manque : `[capacitor.config] CAPACITOR_SERVER_URL requise pour un
+build natif (sinon l app servira le placeholder). […]`
+
+```powershell
+$env:CAPACITOR_SERVER_URL = "https://<domaine-de-test>"
+npx cap sync android
+```
+
+Vérification après sync (la section `server` doit être présente) :
+
+```powershell
+Select-String -Path android\app\src\main\assets\capacitor.config.json -Pattern '"server"'
+```
+
+> Le protocole de test téléphone (permissions GPS accordées/refusées, SW) vit
+> dans `docs/explorer-mobile/protocole-native.md`.
+
 Depuis la racine du dépôt, avec `JAVA_HOME`/`ANDROID_HOME` définis (§3) :
 
 ```powershell
@@ -232,6 +255,7 @@ vérification local. La validation complète Play se fait à l'upload.
 | `Dependency requires at least JVM runtime version 11` | JDK 8 | JDK 21 |
 | `winget install` sans sortie puis timeout | UAC non interactif, session non admin | Archives portables (`§3`) ou shell admin |
 | `SDK location not found` | `ANDROID_HOME`/`local.properties` absents | `§3` |
+| App native bloquée sur « Chargement… » / placeholder | `CAPACITOR_SERVER_URL` absente au `npx cap sync` | Définir la variable puis re-`npx cap sync` (`§5.1`) |
 | AAB > plafond Play | Assets web 134,7 Mo | Alléger `public/assets`, découper l'app |
 
 ## 9. Fichiers versionnés par cette procédure

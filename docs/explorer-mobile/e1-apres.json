@@ -1,0 +1,1281 @@
+{
+  "phase": "apres",
+  "baseUrl": "http://localhost:4000",
+  "startedAt": "2026-09-12T18:49:34.904Z",
+  "viewports": [
+    {
+      "name": "390x844",
+      "width": 390,
+      "height": 844,
+      "pageErrors": [],
+      "dive": {
+        "ok": true,
+        "error": null,
+        "forcedDomClick": false
+      },
+      "measurements": {
+        "viewport": {
+          "width": 390,
+          "height": 844,
+          "dpr": 2
+        },
+        "url": "http://localhost:4000/explorer?atlas=1",
+        "carouselCardCount": 14,
+        "probes": [
+          {
+            "label": "zoom+",
+            "point": {
+              "x": 312,
+              "y": 441
+            },
+            "targetRect": {
+              "x": 290,
+              "y": 419,
+              "width": 44,
+              "height": 44,
+              "top": 419,
+              "right": 334,
+              "bottom": 463,
+              "left": 290
+            },
+            "target": {
+              "tag": "BUTTON",
+              "testid": null,
+              "ariaLabel": "Zoom avant",
+              "dataTrailId": null,
+              "classes": "glass-circle-btn w-11 h-11 shadow-lg flex items-center justify-center cursor-pointer active:scale-95",
+              "text": ""
+            },
+            "hitTestPass": true,
+            "topmostIsTarget": false,
+            "topmostWithinTarget": true,
+            "targetContainsTopmost": false,
+            "topmost": {
+              "tag": "SPAN",
+              "testid": null,
+              "ariaLabel": "plus",
+              "dataTrailId": null,
+              "classes": "inline-flex items-center justify-center select-none shrink-0  ",
+              "text": ""
+            },
+            "stackTop6": [
+              {
+                "tag": "SPAN",
+                "testid": null,
+                "ariaLabel": "plus",
+                "dataTrailId": null,
+                "classes": "inline-flex items-center justify-center select-none shrink-0  ",
+                "text": ""
+              },
+              {
+                "tag": "BUTTON",
+                "testid": null,
+                "ariaLabel": "Zoom avant",
+                "dataTrailId": null,
+                "classes": "glass-circle-btn w-11 h-11 shadow-lg flex items-center justify-center cursor-pointer active:scale-95",
+                "text": ""
+              },
+              {
+                "tag": "DIV",
+                "testid": null,
+                "ariaLabel": null,
+                "dataTrailId": null,
+                "classes": "absolute right-14 md:right-3 bottom-[calc(env(safe-area-inset-bottom,0px)+96px+var(--explorer-carousel-height,0px))] z-[500] flex flex-col gap-2",
+                "text": "Vue globe"
+              },
+              {
+                "tag": "CANVAS",
+                "testid": null,
+                "ariaLabel": "Map",
+                "dataTrailId": null,
+                "classes": "maplibregl-canvas",
+                "text": ""
+              },
+              {
+                "tag": "DIV",
+                "testid": null,
+                "ariaLabel": null,
+                "dataTrailId": null,
+                "classes": "absolute inset-0 w-full h-full maplibregl-map",
+                "text": ""
+              },
+              {
+                "tag": "DIV",
+                "testid": "unified-explorer-map",
+                "ariaLabel": null,
+                "dataTrailId": null,
+                "classes": "relative w-full h-full",
+                "text": "Vue globeVue globe● Densité de sentiers — taille ∝ nombreRel"
+              }
+            ],
+            "targetStackingChain": [
+              {
+                "tag": "DIV",
+                "testid": null,
+                "classes": "absolute right-14 md:right-3 bottom-[calc(env(safe-area-inset-bottom,0px)+96px+var(--explorer-carousel-height,0px))] z-[500] flex flex-col g",
+                "position": "absolute",
+                "zIndex": "500"
+              },
+              {
+                "tag": "DIV",
+                "testid": null,
+                "classes": "absolute inset-0 w-full h-full z-0 pointer-events-auto",
+                "position": "absolute",
+                "zIndex": "0"
+              }
+            ]
+          },
+          {
+            "label": "zoom-",
+            "point": {
+              "x": 312,
+              "y": 493
+            },
+            "targetRect": {
+              "x": 290,
+              "y": 471,
+              "width": 44,
+              "height": 44,
+              "top": 471,
+              "right": 334,
+              "bottom": 515,
+              "left": 290
+            },
+            "target": {
+              "tag": "BUTTON",
+              "testid": null,
+              "ariaLabel": "Zoom arrière",
+              "dataTrailId": null,
+              "classes": "glass-circle-btn w-11 h-11 shadow-lg flex items-center justify-center cursor-pointer active:scale-95",
+              "text": ""
+            },
+            "hitTestPass": true,
+            "topmostIsTarget": false,
+            "topmostWithinTarget": true,
+            "targetContainsTopmost": false,
+            "topmost": {
+              "tag": "SPAN",
+              "testid": null,
+              "ariaLabel": "minus",
+              "dataTrailId": null,
+              "classes": "inline-flex items-center justify-center select-none shrink-0  ",
+              "text": ""
+            },
+            "stackTop6": [
+              {
+                "tag": "SPAN",
+                "testid": null,
+                "ariaLabel": "minus",
+                "dataTrailId": null,
+                "classes": "inline-flex items-center justify-center select-none shrink-0  ",
+                "text": ""
+              },
+              {
+                "tag": "BUTTON",
+                "testid": null,
+                "ariaLabel": "Zoom arrière",
+                "dataTrailId": null,
+                "classes": "glass-circle-btn w-11 h-11 shadow-lg flex items-center justify-center cursor-pointer active:scale-95",
+                "text": ""
+              },
+              {
+                "tag": "DIV",
+                "testid": null,
+                "ariaLabel": null,
+                "dataTrailId": null,
+                "classes": "absolute right-14 md:right-3 bottom-[calc(env(safe-area-inset-bottom,0px)+96px+var(--explorer-carousel-height,0px))] z-[500] flex flex-col gap-2",
+                "text": "Vue globe"
+              },
+              {
+                "tag": "CANVAS",
+                "testid": null,
+                "ariaLabel": "Map",
+                "dataTrailId": null,
+                "classes": "maplibregl-canvas",
+                "text": ""
+              },
+              {
+                "tag": "DIV",
+                "testid": null,
+                "ariaLabel": null,
+                "dataTrailId": null,
+                "classes": "absolute inset-0 w-full h-full maplibregl-map",
+                "text": ""
+              },
+              {
+                "tag": "DIV",
+                "testid": "unified-explorer-map",
+                "ariaLabel": null,
+                "dataTrailId": null,
+                "classes": "relative w-full h-full",
+                "text": "Vue globeVue globe● Densité de sentiers — taille ∝ nombreRel"
+              }
+            ],
+            "targetStackingChain": [
+              {
+                "tag": "DIV",
+                "testid": null,
+                "classes": "absolute right-14 md:right-3 bottom-[calc(env(safe-area-inset-bottom,0px)+96px+var(--explorer-carousel-height,0px))] z-[500] flex flex-col g",
+                "position": "absolute",
+                "zIndex": "500"
+              },
+              {
+                "tag": "DIV",
+                "testid": null,
+                "classes": "absolute inset-0 w-full h-full z-0 pointer-events-auto",
+                "position": "absolute",
+                "zIndex": "0"
+              }
+            ]
+          },
+          {
+            "label": "preparer",
+            "point": {
+              "x": 137,
+              "y": 735
+            },
+            "targetRect": {
+              "x": 25,
+              "y": 717,
+              "width": 224,
+              "height": 36,
+              "top": 717,
+              "right": 249,
+              "bottom": 753,
+              "left": 25
+            },
+            "target": {
+              "tag": "BUTTON",
+              "testid": null,
+              "ariaLabel": null,
+              "dataTrailId": null,
+              "classes": "glass-capsule-btn flex-1 !min-h-[36px] text-xs font-bold shadow-xs active:scale-[0.97] transition-all cursor-pointer",
+              "text": "Préparer"
+            },
+            "hitTestPass": true,
+            "topmostIsTarget": false,
+            "topmostWithinTarget": true,
+            "targetContainsTopmost": false,
+            "topmost": {
+              "tag": "SPAN",
+              "testid": null,
+              "ariaLabel": null,
+              "dataTrailId": null,
+              "classes": "",
+              "text": "Préparer"
+            },
+            "stackTop6": [
+              {
+                "tag": "SPAN",
+                "testid": null,
+                "ariaLabel": null,
+                "dataTrailId": null,
+                "classes": "",
+                "text": "Préparer"
+              },
+              {
+                "tag": "BUTTON",
+                "testid": null,
+                "ariaLabel": null,
+                "dataTrailId": null,
+                "classes": "glass-capsule-btn flex-1 !min-h-[36px] text-xs font-bold shadow-xs active:scale-[0.97] transition-all cursor-pointer",
+                "text": "Préparer"
+              },
+              {
+                "tag": "DIV",
+                "testid": null,
+                "ariaLabel": null,
+                "dataTrailId": null,
+                "classes": "flex items-center gap-2 pt-1.5 border-t border-[#17402C]/08",
+                "text": "Préparer"
+              },
+              {
+                "tag": "DIV",
+                "testid": null,
+                "ariaLabel": null,
+                "dataTrailId": null,
+                "classes": "p-2.5 flex flex-col gap-1.5",
+                "text": "Helleketelbos10.3 km·2h36·+109mPréparer"
+              },
+              {
+                "tag": "DIV",
+                "testid": null,
+                "ariaLabel": null,
+                "dataTrailId": "215",
+                "classes": "snap-start shrink-0 w-[calc(100vw-68px)] max-w-[290px] rounded-lg overflow-hidden transition-all duration-200 cursor-pointer",
+                "text": "ModéréeHelleketelbos10.3 km·2h36·+109mPréparer"
+              },
+              {
+                "tag": "DIV",
+                "testid": null,
+                "ariaLabel": null,
+                "dataTrailId": null,
+                "classes": "flex gap-3 overflow-x-auto snap-x snap-mandatory px-3.5 pb-1 pointer-events-auto no-scrollbar",
+                "text": "ModéréeHelleketelbos10.3 km·2h36·+109mPréparerFacileSans nom"
+              }
+            ],
+            "targetStackingChain": [
+              {
+                "tag": "DIV",
+                "testid": null,
+                "classes": "block md:hidden fixed left-0 right-0 z-[800] pointer-events-none",
+                "position": "fixed",
+                "zIndex": "800"
+              }
+            ]
+          },
+          {
+            "label": "cta-mobile",
+            "point": {
+              "x": 195,
+              "y": 491
+            },
+            "targetRect": {
+              "x": 140.7,
+              "y": 467,
+              "width": 108.5,
+              "height": 48,
+              "top": 467,
+              "right": 249.3,
+              "bottom": 515,
+              "left": 140.7
+            },
+            "target": {
+              "tag": "BUTTON",
+              "testid": null,
+              "ariaLabel": "Afficher le globe",
+              "dataTrailId": null,
+              "classes": "glass-capsule-btn !min-h-[48px] px-4 flex items-center justify-center gap-2 shadow-lg cursor-pointer active:scale-95",
+              "text": "Vue globe"
+            },
+            "hitTestPass": true,
+            "topmostIsTarget": false,
+            "topmostWithinTarget": true,
+            "targetContainsTopmost": false,
+            "topmost": {
+              "tag": "SPAN",
+              "testid": null,
+              "ariaLabel": null,
+              "dataTrailId": null,
+              "classes": "text-[12px] font-bold whitespace-nowrap",
+              "text": "Vue globe"
+            },
+            "stackTop6": [
+              {
+                "tag": "SPAN",
+                "testid": null,
+                "ariaLabel": null,
+                "dataTrailId": null,
+                "classes": "text-[12px] font-bold whitespace-nowrap",
+                "text": "Vue globe"
+              },
+              {
+                "tag": "BUTTON",
+                "testid": null,
+                "ariaLabel": "Afficher le globe",
+                "dataTrailId": null,
+                "classes": "glass-capsule-btn !min-h-[48px] px-4 flex items-center justify-center gap-2 shadow-lg cursor-pointer active:scale-95",
+                "text": "Vue globe"
+              },
+              {
+                "tag": "DIV",
+                "testid": null,
+                "ariaLabel": null,
+                "dataTrailId": null,
+                "classes": "absolute left-1/2 -translate-x-1/2 bottom-[calc(env(safe-area-inset-bottom,0px)+96px+var(--explorer-carousel-height,0px))] z-[510] md:hidden",
+                "text": "Vue globe"
+              },
+              {
+                "tag": "CANVAS",
+                "testid": null,
+                "ariaLabel": "Map",
+                "dataTrailId": null,
+                "classes": "maplibregl-canvas",
+                "text": ""
+              },
+              {
+                "tag": "DIV",
+                "testid": null,
+                "ariaLabel": null,
+                "dataTrailId": null,
+                "classes": "absolute inset-0 w-full h-full maplibregl-map",
+                "text": ""
+              },
+              {
+                "tag": "DIV",
+                "testid": "unified-explorer-map",
+                "ariaLabel": null,
+                "dataTrailId": null,
+                "classes": "relative w-full h-full",
+                "text": "Vue globeVue globe● Densité de sentiers — taille ∝ nombreRel"
+              }
+            ],
+            "targetStackingChain": [
+              {
+                "tag": "DIV",
+                "testid": null,
+                "classes": "absolute left-1/2 -translate-x-1/2 bottom-[calc(env(safe-area-inset-bottom,0px)+96px+var(--explorer-carousel-height,0px))] z-[510] md:hidden",
+                "position": "absolute",
+                "zIndex": "510"
+              },
+              {
+                "tag": "DIV",
+                "testid": null,
+                "classes": "absolute inset-0 w-full h-full z-0 pointer-events-auto",
+                "position": "absolute",
+                "zIndex": "0"
+              }
+            ]
+          }
+        ],
+        "boxes": {
+          "carouselWrapper": {
+            "rect": {
+              "x": 0,
+              "y": 535.5,
+              "width": 390,
+              "height": 232.5,
+              "top": 535.5,
+              "right": 390,
+              "bottom": 768,
+              "left": 0
+            },
+            "style": {
+              "position": "fixed",
+              "zIndex": "800",
+              "bottom": "76px",
+              "left": "0px",
+              "right": "0px",
+              "pointerEvents": "none",
+              "overflowX": "visible",
+              "overflowY": "visible"
+            },
+            "inlineStyle": "bottom: calc(var(--bottom-tab-base-height, 68px) + 8px);"
+          },
+          "carouselScroller": {
+            "rect": {
+              "x": 0,
+              "y": 575.5,
+              "width": 390,
+              "height": 192.5,
+              "top": 575.5,
+              "right": 390,
+              "bottom": 768,
+              "left": 0
+            },
+            "style": {
+              "position": "static",
+              "zIndex": "auto",
+              "bottom": "auto",
+              "left": "auto",
+              "right": "auto",
+              "pointerEvents": "auto",
+              "overflowX": "auto",
+              "overflowY": "auto"
+            }
+          },
+          "firstCard": {
+            "rect": {
+              "x": 14,
+              "y": 575.5,
+              "width": 290,
+              "height": 188.5,
+              "top": 575.5,
+              "right": 304,
+              "bottom": 764,
+              "left": 14
+            },
+            "style": {
+              "position": "static",
+              "zIndex": "auto",
+              "bottom": "auto",
+              "left": "auto",
+              "right": "auto",
+              "pointerEvents": "auto",
+              "overflowX": "hidden",
+              "overflowY": "hidden"
+            }
+          },
+          "ctaWrapper": {
+            "rect": {
+              "x": 140.7,
+              "y": 467,
+              "width": 108.5,
+              "height": 48,
+              "top": 467,
+              "right": 249.3,
+              "bottom": 515,
+              "left": 140.7
+            },
+            "style": {
+              "position": "absolute",
+              "zIndex": "510",
+              "bottom": "329px",
+              "left": "195px",
+              "right": "86.4531px",
+              "pointerEvents": "auto",
+              "overflowX": "visible",
+              "overflowY": "visible"
+            }
+          },
+          "ctaButton": {
+            "rect": {
+              "x": 140.7,
+              "y": 467,
+              "width": 108.5,
+              "height": 48,
+              "top": 467,
+              "right": 249.3,
+              "bottom": 515,
+              "left": 140.7
+            },
+            "style": {
+              "position": "relative",
+              "zIndex": "auto",
+              "bottom": "0px",
+              "left": "0px",
+              "right": "0px",
+              "pointerEvents": "auto",
+              "overflowX": "visible",
+              "overflowY": "visible"
+            }
+          },
+          "zoomColumn": {
+            "rect": {
+              "x": 290,
+              "y": 419,
+              "width": 44,
+              "height": 96,
+              "top": 419,
+              "right": 334,
+              "bottom": 515,
+              "left": 290
+            },
+            "style": {
+              "position": "absolute",
+              "zIndex": "500",
+              "bottom": "329px",
+              "left": "290px",
+              "right": "56px",
+              "pointerEvents": "auto",
+              "overflowX": "visible",
+              "overflowY": "visible"
+            }
+          }
+        },
+        "mapRoot": {
+          "rect": {
+            "x": 0,
+            "y": 0,
+            "width": 390,
+            "height": 844,
+            "top": 0,
+            "right": 390,
+            "bottom": 844,
+            "left": 0
+          },
+          "style": {
+            "position": "relative",
+            "zIndex": "auto",
+            "bottom": "0px",
+            "left": "0px",
+            "right": "0px",
+            "pointerEvents": "auto",
+            "overflowX": "visible",
+            "overflowY": "visible"
+          },
+          "parent": {
+            "classes": "absolute inset-0 w-full h-full z-0 pointer-events-auto",
+            "style": {
+              "position": "absolute",
+              "zIndex": "0",
+              "bottom": "0px",
+              "left": "0px",
+              "right": "0px",
+              "pointerEvents": "auto",
+              "overflowX": "visible",
+              "overflowY": "visible"
+            }
+          }
+        },
+        "cssVars": {
+          "explorerCarouselHeight": "233px",
+          "bottomTabBaseHeight": ""
+        }
+      },
+      "screenshot": "C:\\Users\\Tony\\Downloads\\LKDV\\kitduvoyageur_1783951966810\\docs\\explorer-mobile\\e1-apres-390x844.png",
+      "zoomTap": {
+        "ok": true,
+        "error": null
+      },
+      "zoom": {
+        "before": 12,
+        "after": 13,
+        "worked": true
+      },
+      "ctaToggle": {
+        "labelStart": "Afficher le globe",
+        "taps": [
+          {
+            "ok": true,
+            "error": null
+          },
+          {
+            "ok": true,
+            "error": null
+          }
+        ],
+        "labels": [
+          "Afficher le globe",
+          "Explorer ma zone (vue locale)",
+          "Afficher le globe"
+        ],
+        "worked": true
+      },
+      "prepareTap": {
+        "ok": true,
+        "error": null,
+        "navigated": true,
+        "url": "http://localhost:4000/hub/depart?id=none&route=215"
+      }
+    },
+    {
+      "name": "430x932",
+      "width": 430,
+      "height": 932,
+      "pageErrors": [],
+      "dive": {
+        "ok": true,
+        "error": null,
+        "forcedDomClick": false
+      },
+      "measurements": {
+        "viewport": {
+          "width": 430,
+          "height": 932,
+          "dpr": 2
+        },
+        "url": "http://localhost:4000/explorer?atlas=1",
+        "carouselCardCount": 15,
+        "probes": [
+          {
+            "label": "zoom+",
+            "point": {
+              "x": 352,
+              "y": 529
+            },
+            "targetRect": {
+              "x": 330,
+              "y": 507,
+              "width": 44,
+              "height": 44,
+              "top": 507,
+              "right": 374,
+              "bottom": 551,
+              "left": 330
+            },
+            "target": {
+              "tag": "BUTTON",
+              "testid": null,
+              "ariaLabel": "Zoom avant",
+              "dataTrailId": null,
+              "classes": "glass-circle-btn w-11 h-11 shadow-lg flex items-center justify-center cursor-pointer active:scale-95",
+              "text": ""
+            },
+            "hitTestPass": true,
+            "topmostIsTarget": false,
+            "topmostWithinTarget": true,
+            "targetContainsTopmost": false,
+            "topmost": {
+              "tag": "SPAN",
+              "testid": null,
+              "ariaLabel": "plus",
+              "dataTrailId": null,
+              "classes": "inline-flex items-center justify-center select-none shrink-0  ",
+              "text": ""
+            },
+            "stackTop6": [
+              {
+                "tag": "SPAN",
+                "testid": null,
+                "ariaLabel": "plus",
+                "dataTrailId": null,
+                "classes": "inline-flex items-center justify-center select-none shrink-0  ",
+                "text": ""
+              },
+              {
+                "tag": "BUTTON",
+                "testid": null,
+                "ariaLabel": "Zoom avant",
+                "dataTrailId": null,
+                "classes": "glass-circle-btn w-11 h-11 shadow-lg flex items-center justify-center cursor-pointer active:scale-95",
+                "text": ""
+              },
+              {
+                "tag": "DIV",
+                "testid": null,
+                "ariaLabel": null,
+                "dataTrailId": null,
+                "classes": "absolute right-14 md:right-3 bottom-[calc(env(safe-area-inset-bottom,0px)+96px+var(--explorer-carousel-height,0px))] z-[500] flex flex-col gap-2",
+                "text": "Vue globe"
+              },
+              {
+                "tag": "CANVAS",
+                "testid": null,
+                "ariaLabel": "Map",
+                "dataTrailId": null,
+                "classes": "maplibregl-canvas",
+                "text": ""
+              },
+              {
+                "tag": "DIV",
+                "testid": null,
+                "ariaLabel": null,
+                "dataTrailId": null,
+                "classes": "absolute inset-0 w-full h-full maplibregl-map",
+                "text": ""
+              },
+              {
+                "tag": "DIV",
+                "testid": "unified-explorer-map",
+                "ariaLabel": null,
+                "dataTrailId": null,
+                "classes": "relative w-full h-full",
+                "text": "Vue globeVue globe● Densité de sentiers — taille ∝ nombreRel"
+              }
+            ],
+            "targetStackingChain": [
+              {
+                "tag": "DIV",
+                "testid": null,
+                "classes": "absolute right-14 md:right-3 bottom-[calc(env(safe-area-inset-bottom,0px)+96px+var(--explorer-carousel-height,0px))] z-[500] flex flex-col g",
+                "position": "absolute",
+                "zIndex": "500"
+              },
+              {
+                "tag": "DIV",
+                "testid": null,
+                "classes": "absolute inset-0 w-full h-full z-0 pointer-events-auto",
+                "position": "absolute",
+                "zIndex": "0"
+              }
+            ]
+          },
+          {
+            "label": "zoom-",
+            "point": {
+              "x": 352,
+              "y": 581
+            },
+            "targetRect": {
+              "x": 330,
+              "y": 559,
+              "width": 44,
+              "height": 44,
+              "top": 559,
+              "right": 374,
+              "bottom": 603,
+              "left": 330
+            },
+            "target": {
+              "tag": "BUTTON",
+              "testid": null,
+              "ariaLabel": "Zoom arrière",
+              "dataTrailId": null,
+              "classes": "glass-circle-btn w-11 h-11 shadow-lg flex items-center justify-center cursor-pointer active:scale-95",
+              "text": ""
+            },
+            "hitTestPass": true,
+            "topmostIsTarget": false,
+            "topmostWithinTarget": true,
+            "targetContainsTopmost": false,
+            "topmost": {
+              "tag": "SPAN",
+              "testid": null,
+              "ariaLabel": "minus",
+              "dataTrailId": null,
+              "classes": "inline-flex items-center justify-center select-none shrink-0  ",
+              "text": ""
+            },
+            "stackTop6": [
+              {
+                "tag": "SPAN",
+                "testid": null,
+                "ariaLabel": "minus",
+                "dataTrailId": null,
+                "classes": "inline-flex items-center justify-center select-none shrink-0  ",
+                "text": ""
+              },
+              {
+                "tag": "BUTTON",
+                "testid": null,
+                "ariaLabel": "Zoom arrière",
+                "dataTrailId": null,
+                "classes": "glass-circle-btn w-11 h-11 shadow-lg flex items-center justify-center cursor-pointer active:scale-95",
+                "text": ""
+              },
+              {
+                "tag": "DIV",
+                "testid": null,
+                "ariaLabel": null,
+                "dataTrailId": null,
+                "classes": "absolute right-14 md:right-3 bottom-[calc(env(safe-area-inset-bottom,0px)+96px+var(--explorer-carousel-height,0px))] z-[500] flex flex-col gap-2",
+                "text": "Vue globe"
+              },
+              {
+                "tag": "CANVAS",
+                "testid": null,
+                "ariaLabel": "Map",
+                "dataTrailId": null,
+                "classes": "maplibregl-canvas",
+                "text": ""
+              },
+              {
+                "tag": "DIV",
+                "testid": null,
+                "ariaLabel": null,
+                "dataTrailId": null,
+                "classes": "absolute inset-0 w-full h-full maplibregl-map",
+                "text": ""
+              },
+              {
+                "tag": "DIV",
+                "testid": "unified-explorer-map",
+                "ariaLabel": null,
+                "dataTrailId": null,
+                "classes": "relative w-full h-full",
+                "text": "Vue globeVue globe● Densité de sentiers — taille ∝ nombreRel"
+              }
+            ],
+            "targetStackingChain": [
+              {
+                "tag": "DIV",
+                "testid": null,
+                "classes": "absolute right-14 md:right-3 bottom-[calc(env(safe-area-inset-bottom,0px)+96px+var(--explorer-carousel-height,0px))] z-[500] flex flex-col g",
+                "position": "absolute",
+                "zIndex": "500"
+              },
+              {
+                "tag": "DIV",
+                "testid": null,
+                "classes": "absolute inset-0 w-full h-full z-0 pointer-events-auto",
+                "position": "absolute",
+                "zIndex": "0"
+              }
+            ]
+          },
+          {
+            "label": "preparer",
+            "point": {
+              "x": 137,
+              "y": 823
+            },
+            "targetRect": {
+              "x": 25,
+              "y": 805,
+              "width": 224,
+              "height": 36,
+              "top": 805,
+              "right": 249,
+              "bottom": 841,
+              "left": 25
+            },
+            "target": {
+              "tag": "BUTTON",
+              "testid": null,
+              "ariaLabel": null,
+              "dataTrailId": null,
+              "classes": "glass-capsule-btn flex-1 !min-h-[36px] text-xs font-bold shadow-xs active:scale-[0.97] transition-all cursor-pointer",
+              "text": "Préparer"
+            },
+            "hitTestPass": true,
+            "topmostIsTarget": false,
+            "topmostWithinTarget": true,
+            "targetContainsTopmost": false,
+            "topmost": {
+              "tag": "SPAN",
+              "testid": null,
+              "ariaLabel": null,
+              "dataTrailId": null,
+              "classes": "",
+              "text": "Préparer"
+            },
+            "stackTop6": [
+              {
+                "tag": "SPAN",
+                "testid": null,
+                "ariaLabel": null,
+                "dataTrailId": null,
+                "classes": "",
+                "text": "Préparer"
+              },
+              {
+                "tag": "BUTTON",
+                "testid": null,
+                "ariaLabel": null,
+                "dataTrailId": null,
+                "classes": "glass-capsule-btn flex-1 !min-h-[36px] text-xs font-bold shadow-xs active:scale-[0.97] transition-all cursor-pointer",
+                "text": "Préparer"
+              },
+              {
+                "tag": "DIV",
+                "testid": null,
+                "ariaLabel": null,
+                "dataTrailId": null,
+                "classes": "flex items-center gap-2 pt-1.5 border-t border-[#17402C]/08",
+                "text": "Préparer"
+              },
+              {
+                "tag": "DIV",
+                "testid": null,
+                "ariaLabel": null,
+                "dataTrailId": null,
+                "classes": "p-2.5 flex flex-col gap-1.5",
+                "text": "Helleketelbos10.3 km·2h36·+109mPréparer"
+              },
+              {
+                "tag": "DIV",
+                "testid": null,
+                "ariaLabel": null,
+                "dataTrailId": "215",
+                "classes": "snap-start shrink-0 w-[calc(100vw-68px)] max-w-[290px] rounded-lg overflow-hidden transition-all duration-200 cursor-pointer",
+                "text": "ModéréeHelleketelbos10.3 km·2h36·+109mPréparer"
+              },
+              {
+                "tag": "DIV",
+                "testid": null,
+                "ariaLabel": null,
+                "dataTrailId": null,
+                "classes": "flex gap-3 overflow-x-auto snap-x snap-mandatory px-3.5 pb-1 pointer-events-auto no-scrollbar",
+                "text": "ModéréeHelleketelbos10.3 km·2h36·+109mPréparerModéréeWarande"
+              }
+            ],
+            "targetStackingChain": [
+              {
+                "tag": "DIV",
+                "testid": null,
+                "classes": "block md:hidden fixed left-0 right-0 z-[800] pointer-events-none",
+                "position": "fixed",
+                "zIndex": "800"
+              }
+            ]
+          },
+          {
+            "label": "cta-mobile",
+            "point": {
+              "x": 215,
+              "y": 579
+            },
+            "targetRect": {
+              "x": 160.7,
+              "y": 555,
+              "width": 108.5,
+              "height": 48,
+              "top": 555,
+              "right": 269.3,
+              "bottom": 603,
+              "left": 160.7
+            },
+            "target": {
+              "tag": "BUTTON",
+              "testid": null,
+              "ariaLabel": "Afficher le globe",
+              "dataTrailId": null,
+              "classes": "glass-capsule-btn !min-h-[48px] px-4 flex items-center justify-center gap-2 shadow-lg cursor-pointer active:scale-95",
+              "text": "Vue globe"
+            },
+            "hitTestPass": true,
+            "topmostIsTarget": false,
+            "topmostWithinTarget": true,
+            "targetContainsTopmost": false,
+            "topmost": {
+              "tag": "SPAN",
+              "testid": null,
+              "ariaLabel": null,
+              "dataTrailId": null,
+              "classes": "text-[12px] font-bold whitespace-nowrap",
+              "text": "Vue globe"
+            },
+            "stackTop6": [
+              {
+                "tag": "SPAN",
+                "testid": null,
+                "ariaLabel": null,
+                "dataTrailId": null,
+                "classes": "text-[12px] font-bold whitespace-nowrap",
+                "text": "Vue globe"
+              },
+              {
+                "tag": "BUTTON",
+                "testid": null,
+                "ariaLabel": "Afficher le globe",
+                "dataTrailId": null,
+                "classes": "glass-capsule-btn !min-h-[48px] px-4 flex items-center justify-center gap-2 shadow-lg cursor-pointer active:scale-95",
+                "text": "Vue globe"
+              },
+              {
+                "tag": "DIV",
+                "testid": null,
+                "ariaLabel": null,
+                "dataTrailId": null,
+                "classes": "absolute left-1/2 -translate-x-1/2 bottom-[calc(env(safe-area-inset-bottom,0px)+96px+var(--explorer-carousel-height,0px))] z-[510] md:hidden",
+                "text": "Vue globe"
+              },
+              {
+                "tag": "CANVAS",
+                "testid": null,
+                "ariaLabel": "Map",
+                "dataTrailId": null,
+                "classes": "maplibregl-canvas",
+                "text": ""
+              },
+              {
+                "tag": "DIV",
+                "testid": null,
+                "ariaLabel": null,
+                "dataTrailId": null,
+                "classes": "absolute inset-0 w-full h-full maplibregl-map",
+                "text": ""
+              },
+              {
+                "tag": "DIV",
+                "testid": "unified-explorer-map",
+                "ariaLabel": null,
+                "dataTrailId": null,
+                "classes": "relative w-full h-full",
+                "text": "Vue globeVue globe● Densité de sentiers — taille ∝ nombreRel"
+              }
+            ],
+            "targetStackingChain": [
+              {
+                "tag": "DIV",
+                "testid": null,
+                "classes": "absolute left-1/2 -translate-x-1/2 bottom-[calc(env(safe-area-inset-bottom,0px)+96px+var(--explorer-carousel-height,0px))] z-[510] md:hidden",
+                "position": "absolute",
+                "zIndex": "510"
+              },
+              {
+                "tag": "DIV",
+                "testid": null,
+                "classes": "absolute inset-0 w-full h-full z-0 pointer-events-auto",
+                "position": "absolute",
+                "zIndex": "0"
+              }
+            ]
+          }
+        ],
+        "boxes": {
+          "carouselWrapper": {
+            "rect": {
+              "x": 0,
+              "y": 623.5,
+              "width": 430,
+              "height": 232.5,
+              "top": 623.5,
+              "right": 430,
+              "bottom": 856,
+              "left": 0
+            },
+            "style": {
+              "position": "fixed",
+              "zIndex": "800",
+              "bottom": "76px",
+              "left": "0px",
+              "right": "0px",
+              "pointerEvents": "none",
+              "overflowX": "visible",
+              "overflowY": "visible"
+            },
+            "inlineStyle": "bottom: calc(var(--bottom-tab-base-height, 68px) + 8px);"
+          },
+          "carouselScroller": {
+            "rect": {
+              "x": 0,
+              "y": 663.5,
+              "width": 430,
+              "height": 192.5,
+              "top": 663.5,
+              "right": 430,
+              "bottom": 856,
+              "left": 0
+            },
+            "style": {
+              "position": "static",
+              "zIndex": "auto",
+              "bottom": "auto",
+              "left": "auto",
+              "right": "auto",
+              "pointerEvents": "auto",
+              "overflowX": "auto",
+              "overflowY": "auto"
+            }
+          },
+          "firstCard": {
+            "rect": {
+              "x": 14,
+              "y": 663.5,
+              "width": 290,
+              "height": 188.5,
+              "top": 663.5,
+              "right": 304,
+              "bottom": 852,
+              "left": 14
+            },
+            "style": {
+              "position": "static",
+              "zIndex": "auto",
+              "bottom": "auto",
+              "left": "auto",
+              "right": "auto",
+              "pointerEvents": "auto",
+              "overflowX": "hidden",
+              "overflowY": "hidden"
+            }
+          },
+          "ctaWrapper": {
+            "rect": {
+              "x": 160.7,
+              "y": 555,
+              "width": 108.5,
+              "height": 48,
+              "top": 555,
+              "right": 269.3,
+              "bottom": 603,
+              "left": 160.7
+            },
+            "style": {
+              "position": "absolute",
+              "zIndex": "510",
+              "bottom": "329px",
+              "left": "215px",
+              "right": "106.453px",
+              "pointerEvents": "auto",
+              "overflowX": "visible",
+              "overflowY": "visible"
+            }
+          },
+          "ctaButton": {
+            "rect": {
+              "x": 160.7,
+              "y": 555,
+              "width": 108.5,
+              "height": 48,
+              "top": 555,
+              "right": 269.3,
+              "bottom": 603,
+              "left": 160.7
+            },
+            "style": {
+              "position": "relative",
+              "zIndex": "auto",
+              "bottom": "0px",
+              "left": "0px",
+              "right": "0px",
+              "pointerEvents": "auto",
+              "overflowX": "visible",
+              "overflowY": "visible"
+            }
+          },
+          "zoomColumn": {
+            "rect": {
+              "x": 330,
+              "y": 507,
+              "width": 44,
+              "height": 96,
+              "top": 507,
+              "right": 374,
+              "bottom": 603,
+              "left": 330
+            },
+            "style": {
+              "position": "absolute",
+              "zIndex": "500",
+              "bottom": "329px",
+              "left": "330px",
+              "right": "56px",
+              "pointerEvents": "auto",
+              "overflowX": "visible",
+              "overflowY": "visible"
+            }
+          }
+        },
+        "mapRoot": {
+          "rect": {
+            "x": 0,
+            "y": 0,
+            "width": 430,
+            "height": 932,
+            "top": 0,
+            "right": 430,
+            "bottom": 932,
+            "left": 0
+          },
+          "style": {
+            "position": "relative",
+            "zIndex": "auto",
+            "bottom": "0px",
+            "left": "0px",
+            "right": "0px",
+            "pointerEvents": "auto",
+            "overflowX": "visible",
+            "overflowY": "visible"
+          },
+          "parent": {
+            "classes": "absolute inset-0 w-full h-full z-0 pointer-events-auto",
+            "style": {
+              "position": "absolute",
+              "zIndex": "0",
+              "bottom": "0px",
+              "left": "0px",
+              "right": "0px",
+              "pointerEvents": "auto",
+              "overflowX": "visible",
+              "overflowY": "visible"
+            }
+          }
+        },
+        "cssVars": {
+          "explorerCarouselHeight": "233px",
+          "bottomTabBaseHeight": ""
+        }
+      },
+      "screenshot": "C:\\Users\\Tony\\Downloads\\LKDV\\kitduvoyageur_1783951966810\\docs\\explorer-mobile\\e1-apres-430x932.png",
+      "zoomTap": {
+        "ok": true,
+        "error": null
+      },
+      "zoom": {
+        "before": 12,
+        "after": 13,
+        "worked": true
+      },
+      "ctaToggle": {
+        "labelStart": "Afficher le globe",
+        "taps": [
+          {
+            "ok": true,
+            "error": null
+          },
+          {
+            "ok": true,
+            "error": null
+          }
+        ],
+        "labels": [
+          "Afficher le globe",
+          "Explorer ma zone (vue locale)",
+          "Afficher le globe"
+        ],
+        "worked": true
+      },
+      "prepareTap": {
+        "ok": true,
+        "error": null,
+        "navigated": true,
+        "url": "http://localhost:4000/hub/depart?id=none&route=215"
+      }
+    }
+  ],
+  "pageErrors": [],
+  "finishedAt": "2026-09-12T18:50:11.685Z"
+}
