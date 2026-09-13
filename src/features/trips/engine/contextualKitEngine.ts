@@ -6,6 +6,7 @@ import type {
 } from '../types/kit.types';
 import type { ElevationProfile } from '../lib/elevation';
 import { getCivilDurationDays } from '@/lib/dates/tripDates';
+import { kitProductBaseSlug } from '../domain/kitCatalogImport';
 
 export interface ContextualKitInput {
   countryCode?: string | null;
@@ -481,6 +482,23 @@ export const CONTEXTUAL_RULES: KitRuleTemplate[] = [
 ];
 
 /**
+ * Retrouve le produit catalogue d'une règle contextuelle.
+ * Le catalogue importé peut porter un slug exact, un slug suffixé du SKU
+ * (kebab(nom)-SKU) ou un slug historique : on rapproche par le nom en dernier
+ * recours — jamais de produit inventé si rien ne correspond.
+ */
+export function resolvePreferredProduct(
+  products: ShopProductReference[],
+  preferredSlug: string
+): ShopProductReference | null {
+  const exact = products.find((product) => product.slug === preferredSlug);
+  if (exact) return exact;
+  const suffixed = products.find((product) => product.slug.startsWith(`${preferredSlug}-`));
+  if (suffixed) return suffixed;
+  return products.find((product) => kitProductBaseSlug(product.name) === preferredSlug) ?? null;
+}
+
+/**
  * Moteur pur déterministe de recommandation de kit et d'analyse d'inventaire
  */
 export function generateTripContextualKit(input: ContextualKitInput): TripKitAnalysis {
@@ -547,9 +565,10 @@ export function generateTripContextualKit(input: ContextualKitInput): TripKitAna
     });
 
     if (!hasItem) {
-      const matchedProduct = availableProducts.find(
-        (p) => p.slug === rule.preferredProductSlug
-      ) || null;
+      const matchedProduct = resolvePreferredProduct(
+        availableProducts,
+        rule.preferredProductSlug
+      );
 
       // Anti-D3 : si le produit boutique a un poids de 0g, repli sur le poids de base calibré
       const weightGrams =
