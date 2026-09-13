@@ -569,7 +569,7 @@ describe('prepareActivityFromTrail (Task 4)', () => {
     expect(insertFor(captures, 'ai_jobs')).toBeDefined();
   });
 
-  it('(h) 23505 à l’écriture metadata.route_id → reused sans suppression', async () => {
+  it('(h) 23505 à l’écriture metadata.route_id → reused + suppression du perdant', async () => {
     const { client, captures } = createService({
       route: ROUTE,
       meta: META,
@@ -593,7 +593,9 @@ describe('prepareActivityFromTrail (Task 4)', () => {
       slug: TRIP.slug,
       title: TRIP.title,
     });
-    // La réutilisation re-enfile l'enrichissement du voyage retenu.
+    // Le perdant de la course est supprimé (cascades) : jamais d'orphelin
+    // sans route_id ; l'enrichissement du gagnant est ré-enfilé.
+    expect(captures.deletes).toContain('trips');
     expect(insertFor(captures, 'ai_jobs')).toBeDefined();
   });
 

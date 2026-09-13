@@ -122,6 +122,8 @@ interface SessionOptions {
   user: { id: string } | null;
   reads?: Record<string, unknown>;
   insertResults?: Record<string, { data?: unknown; error?: { message: string } | null }>;
+  /** Erreurs d'update par table (fix round final — 23505 metadata). */
+  updateResults?: Record<string, { error: { message: string; code?: string } | null }>;
   rpcResults?: Record<string, { data: unknown; error: { message: string } | null }>;
 }
 
@@ -142,6 +144,9 @@ function createSession(options: SessionOptions): { client: unknown; captures: Ca
         }
         if (op === 'select') {
           return { data: options.reads?.[table] ?? null, error: null };
+        }
+        if (op === 'update') {
+          return options.updateResults?.[table] ?? { data: null, error: null };
         }
         return { data: null, error: null };
       };
@@ -489,5 +494,40 @@ describe('Phase 3 — commande createTripFromAutogenIntent (TEST-PHASE3-CMD)', (
     if (!result.ok) return;
     expect(result.routeId).toBeNull();
     expect(result.warnings.some((warning) => warning.includes('sélection refusée'))).toBe(true);
+  });
+
+  it('TEST-PHASE3-CMD-10: route_id déjà pris (23505) ⇒ warn explicite, voyage conservé', async () => {
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    try {
+      const { client, captures } = createSession({
+        user: { id: USER_ID },
+        reads: { hiking_routes: { id: ROUTE_ID, geom: GEOM_LINE } },
+        rpcResults: defaultRpcResults(),
+        updateResults: {
+          trips: {
+            error: {
+              message:
+                'duplicate key value violates unique constraint "uniq_trips_user_route"',
+              code: '23505',
+            },
+          },
+        },
+      });
+      mockedCreateClient.mockResolvedValue(client as never);
+
+      const result = await createTripFromAutogenIntent(validInput());
+
+      // Comportement documenté : le voyage continue de fonctionner sans route_id.
+      expect(result.ok).toBe(true);
+      if (!result.ok) return;
+      expect(warnSpy).toHaveBeenCalledWith(
+        expect.stringContaining('route_id déjà pris'),
+        TRIP_ID,
+        expect.any(String)
+      );
+      expect(captures.deletes).not.toContain('trips');
+    } finally {
+      warnSpy.mockRestore();
+    }
   });
 });

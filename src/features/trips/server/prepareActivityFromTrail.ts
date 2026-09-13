@@ -661,6 +661,11 @@ export async function prepareActivityFromTrail(trailIdRaw: string): Promise<Prep
 
   const persisted = await writeTripPrepareMetadata(writer, tripId, user.id, routeId);
   if (persisted.status === 'duplicate') {
+    // Course perdue : le voyage fraîchement créé (sans `route_id`, il ne peut
+    // pas être le gagnant retrouvé par l'index unique) est supprimé — cascades
+    // enfants comprises — avant de servir l'activité gagnante. Jamais
+    // d'orphelin sans route_id.
+    await compensateCreatedTrip(writer, tripId, user.id);
     if (shouldReenqueueEnrichment(persisted.trip.metadata)) {
       await enqueueActivityEnrichment(persisted.trip.tripId, user.id);
     }

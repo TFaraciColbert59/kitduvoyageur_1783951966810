@@ -801,8 +801,13 @@ export async function createTripFromAutogenIntent(
     );
 
     // ── 8. Métadonnées finales : plan, parcours, préparation, avertissements ─
+    // Comportement documenté (fix round final) : un `route_id` déjà pris
+    // (23505 sur l'index unique `uniq_trips_user_route`) est explicitement
+    // journalisé — le voyage reste entier et utilisable SANS `route_id`, les
+    // métadonnées ne sont pas écrasées (les trajets autogen rejoués sur une
+    // route existante continuent de fonctionner).
     try {
-      await session
+      const { error: metadataError } = await session
         .from('trips')
         .update({
           metadata: {
@@ -825,6 +830,18 @@ export async function createTripFromAutogenIntent(
         })
         .eq('id', tripId)
         .eq('user_id', user.id);
+      if (metadataError) {
+        if (metadataError.code === '23505') {
+          console.warn(
+            '[LKDV autogen] route_id déjà pris — métadonnées finales non écrites, voyage conservé:',
+            tripId,
+            metadataError.message
+          );
+        } else {
+          console.error('[LKDV autogen] métadonnées finales en échec:', metadataError.message);
+          warnings.push('Métadonnées de traçabilité partielles.');
+        }
+      }
     } catch (error) {
       console.error('[LKDV autogen] métadonnées finales en échec:', error);
       warnings.push('Métadonnées de traçabilité partielles.');
