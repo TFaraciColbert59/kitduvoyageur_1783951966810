@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/client';
 import { fetchPublicProfilesWith } from '@/lib/queries/publicProfilesCore';
+import { resolvePoll } from '@/lib/queries/pollResolution';
 
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -206,6 +207,25 @@ export async function getGroupeComplet(groupeId: string) {
       };
     });
 
+    const resolution = resolvePoll({
+      poll: {
+        pollType: v.poll_type,
+        quorumThreshold: v.quorum_threshold != null ? Number(v.quorum_threshold) : null,
+        options: rawOptions,
+      },
+      votes: pollVotes.map((c: any) => ({ optionIndex: c.option_index })),
+      activeMembers: activeMembers.length,
+      organizerVotes: pollVotes
+        .filter((c: any) =>
+          activeMembers.some(
+            (m: any) =>
+              m.user_id === c.user_id &&
+              (m.role === 'organizer' || m.role === 'co_organizer')
+          )
+        )
+        .map((c: any) => ({ optionIndex: c.option_index })),
+    });
+
     return {
       id: v.id,
       author: 'Organisateur',
@@ -215,6 +235,13 @@ export async function getGroupeComplet(groupeId: string) {
       options,
       votesDetail: pollVotes.map((c: any) => ({ userId: c.user_id, optionIndex: c.option_index })),
       footer: `${totalChoices} votes exprimés`,
+      pollType: resolution.pollType,
+      resolution: {
+        adopted: resolution.adopted,
+        reason: resolution.reason,
+        winnerIndex: resolution.winnerIndex,
+        requiredVotes: resolution.requiredVotes,
+      },
     };
   });
 
