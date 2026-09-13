@@ -17,10 +17,20 @@ export const dynamic = 'force-dynamic';
  */
 export default async function HubLayout({ children }: { children: React.ReactNode }) {
   const data = await getHubAdventureData();
-  const intelligence = await getAdventureIntelligence();
+  // Données décoratives : jamais bloquantes pour le rendu du hub (un incident
+  // sur l'intelligence ou les stats ne doit pas blanchir la page).
+  const intelligence = await getAdventureIntelligence().catch((error) => {
+    console.error('[HubLayout] intelligence indisponible:', error);
+    return null;
+  });
   const profile = deriveHubProfile(data.input, new Date());
   const counts = buildHubCounts(data);
-  const tripStats = data.trip ? await getHubTripStats(data.trip.id) : null;
+  const tripStats = data.trip
+    ? await getHubTripStats(data.trip.id).catch((error) => {
+        console.error('[HubLayout] stats du voyage indisponibles:', error);
+        return null;
+      })
+    : null;
 
   const baseEnabled: HubSectionId[] =
     data.input.kind === 'sortie' ? (data.input.enabledSections ?? []) : [];
@@ -43,17 +53,19 @@ export default async function HubLayout({ children }: { children: React.ReactNod
           trips={data.trips}
           tripStats={tripStats}
           adventureIntelligence={
-            <AdventureIntelligenceHub
-              key="adventure-intelligence"
-              cockpit={intelligence.cockpit}
-              sections={intelligence.sections}
-              sectionHrefs={intelligence.sectionHrefs}
-              terrainEnabled={intelligence.terrainEnabled}
-              terrainReports={intelligence.terrainReports}
-            />
+            intelligence ? (
+              <AdventureIntelligenceHub
+                key="adventure-intelligence"
+                cockpit={intelligence.cockpit}
+                sections={intelligence.sections}
+                sectionHrefs={intelligence.sectionHrefs}
+                terrainEnabled={intelligence.terrainEnabled}
+                terrainReports={intelligence.terrainReports}
+              />
+            ) : null
           }
           itineraryAdventureCockpit={
-            data.adventure.nature === 'sortie' ? (
+            intelligence && data.adventure.nature === 'sortie' ? (
               <ItineraryAdventureCockpit
                 key="itinerary-adventure-cockpit"
                 cockpit={intelligence.cockpit}

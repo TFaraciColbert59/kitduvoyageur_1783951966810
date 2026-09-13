@@ -35,10 +35,39 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
-export const useAuth = () => {
+/**
+ * Fallback invité : un composant rendu hors provider (error boundary, shell
+ * transitoire, rendu RSC partiel) ne doit JAMAIS crasher tout l'arbre —
+ * cause du « écran blanc » constaté. Toutes les actions échouent proprement.
+ */
+const GUEST_AUTH_FALLBACK: AuthContextValue = {
+  user: null,
+  session: null,
+  profile: null,
+  loading: false,
+  signUp: async () => {
+    throw new Error('Authentification indisponible');
+  },
+  signIn: async () => {
+    throw new Error('Authentification indisponible');
+  },
+  signOut: async () => {},
+  getCurrentUser: async () => null,
+  isEmailVerified: () => false,
+  getUserProfile: async () => null,
+  refreshProfile: async () => {},
+};
+
+let warnedMissingProvider = false;
+
+export const useAuth = (): AuthContextValue => {
   const context = useContext(AuthContext);
   if (!context) {
-    throw new Error('useAuth must be used within AuthProvider');
+    if (!warnedMissingProvider) {
+      warnedMissingProvider = true;
+      console.warn('[AuthContext] useAuth hors AuthProvider — fallback invité appliqué.');
+    }
+    return GUEST_AUTH_FALLBACK;
   }
   return context;
 };
