@@ -23,6 +23,7 @@ import {
 import type { CreateTripFromAutogenIntentInput } from '../schemas/autogenTripCreate.schema';
 import type { TripBrief } from '../schemas/autoGen.schema';
 import { enqueueActivityEnrichment } from './activityEnrichment/enqueue';
+import { generateTripDocuments } from './generateTripDocuments';
 
 /**
  * « Préparer » un sentier → activité complète (Task 4).
@@ -699,6 +700,19 @@ export async function prepareActivityFromTrail(trailIdRaw: string): Promise<Prep
     layers,
     partySize: partySizeFromBrief(brief),
   });
+
+  // Documents réels (feuille de route PDF + GPX) : best-effort, jamais bloquant.
+  try {
+    const documents = await generateTripDocuments(tripId, user.id);
+    if (documents.warnings.length > 0) {
+      console.warn(
+        '[LKDV preparer-sentier] documents réels partiels:',
+        documents.warnings.join(' | ')
+      );
+    }
+  } catch (error) {
+    console.error('[LKDV preparer-sentier] génération des documents en échec:', error);
+  }
 
   await enqueueActivityEnrichment(tripId, user.id);
 
