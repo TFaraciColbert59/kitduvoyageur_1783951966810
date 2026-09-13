@@ -54,6 +54,13 @@ function toRecord(row: RawRow): GenerationRequestRecord {
 
 const TABLE = 'adventure_generation_requests';
 
+/**
+ * TTL d'auto-guérison des requêtes `pending` : au-delà, la requête est
+ * considérée orpheline (process interrompu) et basculée `failed` — un
+ * `pending` bloqué ne doit jamais condamner définitivement la génération.
+ */
+export const STALE_PENDING_MS = 10 * 60_000;
+
 export function createSupabaseGenerationRequestStore(
   client: SupabaseClient
 ): GenerationRequestStore {
@@ -70,13 +77,47 @@ export function createSupabaseGenerationRequestStore(
     },
 
     async hasActivePending(userId) {
-      const { count, error } = await client
+      const { data, error } = await client
         .from(TABLE)
-        .select('id', { count: 'exact', head: true })
+        .select('id, created_at')
         .eq('user_id', userId)
         .eq('status', 'pending');
       if (error) throw new Error(error.message);
-      return (count ?? 0) > 0;
+
+      const cutoff = Date.now() - STALE_PENDING_MS;
+      const active: string[] = [];
+      const stale: string[] = [];
+      for (const raw of (data ?? []) as Record<string, unknown>[]) {
+        const id = raw.id == null ? '' : String(raw.id);
+        if (id === '') continue;
+        const createdAt = Date.parse(String(raw.created_at ?? ''));
+        if (Number.isFinite(createdAt) && createdAt < cutoff) {
+          stale.push(id);
+        } else {
+          active.push(id);
+        }
+      }
+
+      // Auto-guérison best-effort : un `pending` périmé est marqué `failed`
+      // avant de rendre la main (jamais bloquant si l'écriture échoue).
+      for (const requestId of stale) {
+        try {
+          const { error: markError } = await client
+            .from(TABLE)
+            .update({ status: 'failed' })
+            .eq('id', requestId);
+          if (markError) {
+            console.error(
+              '[LKDV generation] pending périmé non marqué failed:',
+              markError.message
+            );
+          }
+        } catch (markError) {
+          console.error('[LKDV generation] pending périmé non marqué failed:', markError);
+        }
+      }
+
+      return active.length > 0;
     },
 
     async countRecent(userId, sinceIso) {

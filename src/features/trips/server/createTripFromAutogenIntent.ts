@@ -299,8 +299,11 @@ function mapCataloguePriority(essentiality: string | null): KitProduct['priority
 /**
  * Catalogue kit réel (`shop_products` actifs), lu UNE fois par préparation.
  * Seules les colonnes publiques sont sélectionnées (jamais `cost_price_eur`).
+ *
+ * Exporté (additif) pour le kit déterministe de repli
+ * (`createKitForTrip.ts`) : même catalogue, même moteur de sélection.
  */
-async function loadKitCatalogue(supabase: SupabaseClient): Promise<CatalogueSelection> {
+export async function loadKitCatalogue(supabase: SupabaseClient): Promise<CatalogueSelection> {
   try {
     const { data, error } = await supabase
       .from('shop_products')
