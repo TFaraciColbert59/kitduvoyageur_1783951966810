@@ -46,9 +46,9 @@ export function ItineraryHero({
                   onRename();
                 }}
                 aria-label="Renommer l’activité"
-                className="glass-sub-card flex h-7 w-7 shrink-0 cursor-pointer items-center justify-center rounded-full border border-white/60 text-[var(--lkv-text-primary)]/70 shadow-2xs transition-all hover:text-[var(--lkv-text-primary)] active:scale-95"
+                className="glass-circle-btn h-11 w-11 shrink-0"
               >
-                <Pencil size={12} aria-hidden="true" />
+                <Pencil size={14} aria-hidden="true" />
               </button>
             )}
           </div>

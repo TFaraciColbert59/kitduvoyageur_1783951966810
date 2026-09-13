@@ -403,6 +403,7 @@ export default function ItineraryPlannerClient({
                 onClick={() => setRenameOpen(true)}
                 aria-label="Renommer l’activité"
                 icon={<Icon name="pencil" className="w-3.5 h-3.5" />}
+                className="!h-11"
               >
                 <span className="hidden sm:inline">Renommer</span>
               </GlassCapsuleBtn>
