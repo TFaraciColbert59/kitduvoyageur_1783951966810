@@ -43,6 +43,7 @@ export default async function HubLayout({ children }: { children: React.ReactNod
           tripStats={tripStats}
           adventureIntelligence={
             <AdventureIntelligenceHub
+              key="adventure-intelligence"
               cockpit={intelligence.cockpit}
               sections={intelligence.sections}
               sectionHrefs={intelligence.sectionHrefs}
