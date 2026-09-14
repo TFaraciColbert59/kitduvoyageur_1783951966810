@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
@@ -310,7 +310,7 @@ export default function EditProfileView({ onCloseModal, onSave }: { onCloseModal
             <div className="flex flex-col sm:flex-row items-start sm:items-end justify-between gap-4 -mt-12 sm:-mt-14 relative z-10 px-4">
               <div className="flex items-end gap-4">
                 <div className="relative w-24 h-24 sm:w-28 sm:h-28 rounded-full border-4 border-white shadow-md overflow-hidden bg-white shrink-0">
-                  <img src={form.avatarUrl} alt={form.publicName} className="w-full h-full object-cover" />
+                  <img src={form.avatarUrl || '/assets/images/no_image.png'} alt={form.publicName} className="w-full h-full object-cover" />
                   <label className="absolute inset-0 bg-black/40 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-bold cursor-pointer">
                     <Icon name="CameraIcon" size={20} />
                     <input
@@ -739,7 +739,7 @@ export default function EditProfileView({ onCloseModal, onSave }: { onCloseModal
             <div className="text-[9px] font-mono tracking-widest text-[#A6C1A0] uppercase font-bold">APERÇU · PROFIL PUBLIC</div>
 
             <div className="flex items-center gap-4">
-              <img src={form.avatarUrl} alt={form.publicName} className="w-14 h-14 rounded-full object-cover border-2 border-white/20" />
+              <img src={form.avatarUrl || '/assets/images/no_image.png'} alt={form.publicName} className="w-14 h-14 rounded-full object-cover border-2 border-white/20" />
               <div>
                 <h3 className="font-display font-bold text-lg leading-tight">{form.publicName}</h3>
                 <p className="text-[11px] text-white/70 font-mono">@{form.username} · {form.city}</p>

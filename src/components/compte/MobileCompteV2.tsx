@@ -137,12 +137,12 @@ export default function MobileCompteV2() {
         const [profileRes, followersRes, followingRes] = await Promise.all([
           supabase.from('user_profiles').select('*').eq('id', user!.id).maybeSingle(),
           supabase.from('user_follows').select('id', { count: 'exact', head: true }).eq('following_id', user!.id),
-          supabase.from('user_follows').select('id', { count: 'exact', head: true }).eq('user_id', user!.id),
+          supabase.from('user_follows').select('id', { count: 'exact', head: true }).eq('follower_id', user!.id),
         ]);
 
         setProfile(profileRes.data);
-        setFollowers(followersRes.count ?? 142);
-        setFollowing(followingRes.count ?? 48);
+        setFollowers(followersRes.count ?? 0);
+        setFollowing(followingRes.count ?? 0);
 
         // 2. Carnets de voyage
         const carnetsRes = await supabase
@@ -165,7 +165,7 @@ export default function MobileCompteV2() {
         if (groupIds.length) {
           const gRes = await supabase
             .from('travel_groups')
-            .select('id,name,destination,cover_url,start_date,end_date,created_at')
+            .select('id,name,destination,cover_url,departure_date,return_date,created_at')
             .in('id', groupIds)
             .order('created_at', { ascending: false });
           groups = gRes.data || [];
@@ -347,7 +347,7 @@ export default function MobileCompteV2() {
   const currentXp = profile?.xp ?? 1450;
   const nextLevelXp = levelNum * 500;
   const trustScore = profile?.trust_score ?? 88;
-  const avatarUrl = profile?.avatar_url || (user?.user_metadata?.avatar_url as string) || '';
+      const avatarUrl = profile?.avatar_url || (user?.user_metadata?.avatar_url as string) || '/assets/images/no_image.png';
 
   const totalVoyages = content.filter((c) => c.kind === 'groupe').length || 12;
   const totalCarnets = content.filter((c) => c.kind === 'carnet').length || 8;

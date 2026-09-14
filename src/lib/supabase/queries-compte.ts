@@ -391,11 +391,22 @@ export async function fetchUserActivities(userId: string): Promise<CompteActivit
 export async function fetchNextTrip(userId: string): Promise<CompteProchainVoyage | null> {
   const supabase = createClient();
 
+  // Source canonique : travel_groups + group_members (les colonnes
+  // departure_date/return_date n'existent pas sur la table legacy `groupes`).
+  const { data: memberships } = await supabase
+    .from('group_members')
+    .select('group_id')
+    .eq('user_id', userId)
+    .eq('status', 'active');
+  const groupIds = ((memberships ?? []) as Array<{ group_id: string }>).map((m) => m.group_id);
+  if (groupIds.length === 0) return null;
+
+  const today = new Date().toISOString().split('T')[0];
   const { data } = await supabase
-    .from('groupes')
-    .select('*, groupe_membres!inner(user_id)')
-    .eq('groupe_membres.user_id', userId)
-    .gte('departure_date', new Date().toISOString().split('T')[0])
+    .from('travel_groups')
+    .select('id, name, destination, departure_date, return_date')
+    .in('id', groupIds)
+    .gte('departure_date', today)
     .order('departure_date', { ascending: true })
     .limit(1);
 
@@ -408,7 +419,7 @@ export async function fetchNextTrip(userId: string): Promise<CompteProchainVoyag
 
   return {
     id: g.id,
-    title: g.destination ?? 'Voyage',
+    title: g.destination ?? g.name ?? 'Voyage',
     title_highlight: '',
     days_left: Math.max(0, daysLeft),
     date_range: g.departure_date && g.return_date

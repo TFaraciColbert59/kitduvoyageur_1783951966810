@@ -4,7 +4,7 @@ import { createClient } from '@/lib/supabase/server';
 import { getPlaceBySlug, getUserTripsForPicker } from '@/lib/queries-places';
 import AppShell from '@/components/shell/AppShell';
 import { PlaceDetailClient } from '@/features/places/components/PlaceDetailClient';
-import { getCategoryLabel } from '@/features/places/components/PlaceCard';
+import { getCategoryLabel } from '@/features/places/lib/placeCategory';
 
 export const dynamic = 'force-dynamic';
 

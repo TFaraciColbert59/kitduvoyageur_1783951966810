@@ -8,7 +8,7 @@ import { LkvButton } from '@/components/ui/LkvButton';
 import { AddPlaceToTripModal, type UserTripOption } from './AddPlaceToTripModal';
 import { ReportPlaceModal } from './ReportPlaceModal';
 import { PlaceReviewSection } from './PlaceReviewSection';
-import { getCategoryLabel, getCategoryIcon } from './PlaceCard';
+import { getCategoryLabel, getCategoryIcon } from '../lib/placeCategory';
 import type { PlaceWithDistance, PlaceReview, PlacePhoto } from '../types/place.types';
 
 export interface PlaceDetailClientProps {

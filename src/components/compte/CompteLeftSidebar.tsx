@@ -52,7 +52,7 @@ export default function CompteLeftSidebar({
         <div className="p-3 rounded-2xl glass-sub-card flex items-center gap-3 relative overflow-hidden border border-white/50">
           <div className="relative w-11 h-11 rounded-full overflow-hidden border-2 border-white shadow-sm shrink-0 bg-[#17402C]">
             <Image
-              src={profile.avatar_url}
+              src={profile.avatar_url || '/assets/images/no_image.png'}
               alt={fullName}
               fill
               sizes="44px"

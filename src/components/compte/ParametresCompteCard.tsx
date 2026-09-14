@@ -333,7 +333,7 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
           {/* User mini badge top */}
           <div className="p-3 rounded-2xl glass-sub-card flex items-center gap-3">
             <div className="relative w-10 h-10 rounded-full overflow-hidden border border-[#17402C]/20 shrink-0">
-              <Image src={avatarUrl} alt={firstName} fill className="object-cover" />
+              <Image src={avatarUrl || '/assets/images/no_image.png'} alt={firstName} fill className="object-cover" />
             </div>
             <div className="min-w-0">
               <span className="font-bold text-[#17402C] text-xs block truncate">
@@ -413,7 +413,7 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
               {/* Photo Upload Block */}
               <div className="flex items-center gap-5 p-4 rounded-2xl glass-sub-card">
                 <div className="relative w-16 h-16 rounded-full overflow-hidden border-2 border-[#17402C]/20 shrink-0">
-                  <Image src={avatarUrl} alt={firstName} fill className="object-cover" />
+                  <Image src={avatarUrl || '/assets/images/no_image.png'} alt={firstName} fill className="object-cover" />
                 </div>
                 <div className="space-y-1.5">
                   <div className="flex items-center gap-3">

@@ -5,55 +5,14 @@ import React from 'react';
 import Link from 'next/link';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { LkvButton } from '@/components/ui/LkvButton';
-import { MapPin, Mountain, Tent, Droplet, Compass } from 'lucide-react';
 import type { PlaceWithDistance } from '../types/place.types';
+import { getCategoryIcon, getCategoryLabel } from '../lib/placeCategory';
+
+export { getCategoryIcon, getCategoryLabel } from '../lib/placeCategory';
 
 export interface PlaceCardProps {
   place: PlaceWithDistance;
   onAddToTrip?: (place: PlaceWithDistance) => void;
-}
-
-export function getCategoryLabel(category: string): string {
-  switch (category) {
-    case 'refuge':
-      return 'Refuge Alpin';
-    case 'bivouac':
-      return 'Bivouac';
-    case 'water_source':
-      return 'Source d’Eau';
-    case 'viewpoint':
-      return 'Belvédère';
-    case 'pass':
-      return 'Col';
-    case 'campground':
-      return 'Campement';
-    case 'summit':
-      return 'Sommet';
-    case 'lake':
-      return 'Lac';
-    case 'historical':
-      return 'Patrimoine';
-    default:
-      return 'Lieu Outdoor';
-  }
-}
-
-export function getCategoryIcon(category: string) {
-  switch (category) {
-    case 'refuge':
-      return Mountain;
-    case 'bivouac':
-    case 'campground':
-      return Tent;
-    case 'water_source':
-      return Droplet;
-    case 'pass':
-    case 'viewpoint':
-    case 'summit':
-      return Compass;
-    default:
-      return MapPin;
-  }
 }
 
 export function PlaceCard({ place, onAddToTrip }: PlaceCardProps) {

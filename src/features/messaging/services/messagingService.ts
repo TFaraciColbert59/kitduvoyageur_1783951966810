@@ -424,21 +424,6 @@ export const messagingService = {
 
     if (!cmError && cmData && cmData.length > 0) {
       memberData = cmData;
-    } else {
-      // Fallback sur conversation_participants
-      const { data: cpData } = await supabase
-        .from('conversation_participants')
-        .select('conversation_id')
-        .eq('user_id', userId);
-
-      if (cpData && cpData.length > 0) {
-        memberData = cpData.map((p) => ({
-          conversation_id: p.conversation_id,
-          unread_count: 0,
-          is_muted: false,
-          is_archived: false,
-        }));
-      }
     }
 
     if (memberData.length === 0) {
@@ -472,15 +457,6 @@ export const messagingService = {
 
     if (memRes) {
       allMembers = memRes as any;
-    } else {
-      const { data: partRes } = await supabase
-        .from('conversation_participants')
-        .select('conversation_id, user_id')
-        .in('conversation_id', conversationIds)
-        .neq('user_id', userId);
-      if (partRes) {
-        allMembers = partRes as any;
-      }
     }
 
     // 4. Obtenir le dernier message pour chaque conversation
