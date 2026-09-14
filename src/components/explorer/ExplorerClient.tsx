@@ -33,6 +33,13 @@ import ExplorerMobileHikeCarousel from '@/components/explorer/ExplorerMobileHike
 import EphemeralGroupSheet from '@/features/tribu/components/EphemeralGroupSheet';
 import { setActiveAdventureAction } from '@/features/hub/context/activeAdventureServer';
 import { hubSectionHref } from '@/features/hub/registry/hubSectionRegistry';
+import { useActiveAdventure } from '@/features/hub/context/ActiveAdventureContext';
+import { createClient } from '@/lib/supabase/client';
+import {
+  getLiveState,
+  stopSharingPosition,
+  type LiveMemberPosition,
+} from '@/features/tribu/actions/livePosition';
 import { getCurrentGeoPosition } from '@/lib/native/geolocation';
 
 // ── Dynamic (client-only) ─────────────────────────────────────────────────────
@@ -156,6 +163,74 @@ export default function ExplorerClient({
     setEphemeralOpen(false);
     if (res.success) {
       router.push(hubSectionHref({ nature: 'collectif' }, 'groupe'));
+    }
+  };
+
+  // ── Positions live du groupe (TRIBU Phase 7, lecture membres uniquement) ──
+  const { activeAdventure } = useActiveAdventure();
+  const supabaseLive = useMemo(() => createClient(), []);
+  const [liveSessionId, setLiveSessionId] = useState<string | null>(null);
+  const [livePositions, setLivePositions] = useState<LiveMemberPosition[]>([]);
+  const [liveMySharing, setLiveMySharing] = useState(false);
+  const [liveError, setLiveError] = useState<string | null>(null);
+
+  const refreshLive = useCallback(async (groupId: string) => {
+    const result = await getLiveState(groupId);
+    if (!result.ok) {
+      console.warn('[explorer/live]', result.error);
+      return;
+    }
+    setLiveSessionId(result.session?.id ?? null);
+    setLivePositions(result.positions);
+    setLiveMySharing(result.mySharing);
+  }, []);
+
+  const activeGroupId =
+    activeAdventure?.nature === 'collectif' ? activeAdventure.id : null;
+
+  useEffect(() => {
+    if (!activeGroupId) {
+      setLiveSessionId(null);
+      setLivePositions([]);
+      setLiveMySharing(false);
+      return;
+    }
+    const groupId = activeGroupId;
+    void refreshLive(groupId);
+    const interval = setInterval(() => {
+      void refreshLive(groupId);
+    }, 60_000);
+    const channel = supabaseLive
+      .channel(`group-live-${groupId}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'group_live_positions' },
+        () => {
+          void refreshLive(groupId);
+        }
+      )
+      .subscribe();
+    return () => {
+      clearInterval(interval);
+      void supabaseLive.removeChannel(channel);
+    };
+  }, [activeGroupId, refreshLive, supabaseLive]);
+
+  const handleStopLiveSharing = async () => {
+    if (!liveSessionId || activeAdventure?.nature !== 'collectif') return;
+    const groupId = activeAdventure.id;
+    setLiveError(null);
+    let result: { ok: boolean; error?: string };
+    try {
+      result = await stopSharingPosition({ sessionId: liveSessionId });
+    } catch {
+      result = { ok: false, error: 'Réseau indisponible.' };
+    }
+    if (result.ok) {
+      setLiveMySharing(false);
+      void refreshLive(groupId);
+    } else {
+      setLiveError(result.error ?? 'Arrêt impossible pour le moment.');
     }
   };
   // CHANTIER ATLAS — données réelles du viewport remontées par UnifiedExplorerMap.
@@ -544,6 +619,12 @@ export default function ExplorerClient({
             onViewportData={setUnifiedViewportData}
             countryDensity={atlasDensity?.countries}
             regionDensity={atlasDensity?.cells}
+            memberPositions={livePositions.map((position) => ({
+              userId: position.userId,
+              name: position.name,
+              lat: position.lat,
+              lng: position.lng,
+            }))}
             safeControls
           />
         ) : (
@@ -573,6 +654,37 @@ export default function ExplorerClient({
           <span className="text-[12px] font-bold whitespace-nowrap">Sortie entre amis</span>
         </button>
       </div>
+
+      {/* ── 2D. SESSION LIVE — positions des membres (jamais public) ── */}
+      {liveSessionId && (
+        <div
+          className="fixed left-4 bottom-[calc(env(safe-area-inset-bottom,0px)+156px+var(--explorer-carousel-height,0px))] md:bottom-40 z-[862] pointer-events-auto flex items-center gap-2 glass-pill"
+          data-testid="explorer-live-badge"
+        >
+          <span className="text-[10px] font-mono font-bold text-[var(--lkv-text-primary)] whitespace-nowrap">
+            ● {livePositions.length} position{livePositions.length > 1 ? 's' : ''} du groupe
+          </span>
+          {liveMySharing && (
+            <button
+              type="button"
+              onClick={handleStopLiveSharing}
+              className="text-[10px] font-bold underline min-h-[28px]"
+              data-testid="explorer-live-stop"
+            >
+              Arrêter mon partage
+            </button>
+          )}
+          {liveError && (
+            <span
+              role="alert"
+              className="text-[10px] font-bold text-[var(--lkv-danger)] whitespace-nowrap"
+              data-testid="explorer-live-error"
+            >
+              {liveError}
+            </span>
+          )}
+        </div>
+      )}
 
       {/* ── 2B. BOUTON FLOTTANT DYNAMIQUE : « RECHERCHER DANS CETTE ZONE » ── */}
       <AnimatePresence>

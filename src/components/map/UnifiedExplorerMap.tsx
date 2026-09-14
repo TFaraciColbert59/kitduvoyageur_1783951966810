@@ -30,6 +30,10 @@ import { buildCountryDensityFC, buildRegionDensityFC } from './layers/densityLay
 import type { CountryDensityRow, RegionDensityCell } from './layers/densityLayers';
 import { useViewportData } from './hooks/useViewportData';
 import type { ViewportQuery } from './hooks/viewportData';
+import {
+  buildMemberPositionsGeoJSON,
+  type MemberPositionInput,
+} from '@/features/tribu/lib/memberPositions';
 
 /**
  * CHANTIER ATLAS — moteur cartographique unique (MapLibre GL, projection globe).
@@ -65,6 +69,8 @@ export interface UnifiedExplorerMapProps {
   countryDensity?: CountryDensityRow[];
   /** Densité par cellule geohash-5 (matview Phase 1) — palier région. */
   regionDensity?: RegionDensityCell[];
+  /** Positions live des membres du groupe (session ouverte, TRIBU Phase 7). */
+  memberPositions?: MemberPositionInput[];
   safeControls?: boolean;
   compact?: boolean;
 }
@@ -222,6 +228,7 @@ export default function UnifiedExplorerMap({
   onViewportData,
   countryDensity,
   regionDensity,
+  memberPositions,
   safeControls = false,
 }: UnifiedExplorerMapProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -937,6 +944,49 @@ export default function UnifiedExplorerMap({
       },
     });
   }, [userLocation, ready]);
+
+  // ── Positions des membres (session live, TRIBU Phase 7) ─────────────────────
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !ready) return;
+    const data = buildMemberPositionsGeoJSON(memberPositions);
+
+    const source = map.getSource('atlas-members') as GeoJSONSource | undefined;
+    if (source) {
+      source.setData(data as unknown as GeoJSON.GeoJSON);
+      return;
+    }
+
+    map.addSource('atlas-members', { type: 'geojson', data: data as unknown as GeoJSON.GeoJSON });
+    map.addLayer({
+      id: 'atlas-members-circles',
+      type: 'circle',
+      source: 'atlas-members',
+      paint: {
+        'circle-radius': 13,
+        'circle-color': MAP_COLORS.white,
+        'circle-stroke-width': 2.5,
+        'circle-stroke-color': MAP_COLORS.sage,
+        'circle-opacity': 0.96,
+      },
+    });
+    map.addLayer({
+      id: 'atlas-members-labels',
+      type: 'symbol',
+      source: 'atlas-members',
+      layout: {
+        'text-field': ['get', 'name'],
+        'text-size': 10,
+        'text-offset': [0, 1.9],
+        'text-anchor': 'top',
+      },
+      paint: {
+        'text-color': MAP_COLORS.ink,
+        'text-halo-color': MAP_COLORS.white,
+        'text-halo-width': 1,
+      },
+    });
+  }, [memberPositions, ready]);
 
   // ── Fond de carte (topo / osm / satellite) ──────────────────────────────────
   useEffect(() => {

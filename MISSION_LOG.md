@@ -1205,3 +1205,31 @@ e2e prod 7/7 (preparer, depart, atlas) · garde design H-D85 14/14 · migrations
 
 ### Actions propriétaire restantes
 Vérification visuelle : onglet Groupes d'un club, création d'un groupe, sortie éclair depuis l'Explorer, journal et modèles dans /hub/groupe. Backlog lot 2 : e2e dédiés pont/modèles, alignement des affordances UI sur les capacités, puis **Phase 7 (position live)**.
+
+---
+
+## 2026-09-13 — CHANTIER TRIBU — Lot 2 : Phase 7 (partage de position live)
+
+> Spec : `docs/superpowers/specs/2026-09-13-tribu-phase7-position-live-design.md` · Plan : `docs/superpowers/plans/2026-09-13-tribu-phase7-position-live.md` · Rapport : `docs/tribu/rapport-phase7.md`. Opus : TRIBU-R4 (opt-in, jamais silencieux, indicateur permanent, arrêt 1 tap, expiration) et TRIBU-R6 (purge par cron). Ruling : sessions de partage + positions rattachées, zéro historique, lot 2 après revue du lot 1.
+
+### Données & serveur
+- **M12 sessions** : ouverture explicite, unique par groupe (index partiel), 1-72 h, clôture starter/manage_members/(tout membre si expirée).
+- **M13 positions** : une ligne par (session, membre), **TTL 15 min borné en base** (WITH CHECK), lecture membres + session ouverte + fraîcheur, self-only en écriture, propre ligne expirée récupérable. Appliquées en prod.
+- **Actions** `livePosition` : start (nettoyage expirées, 23505 explicite), stop (0 ligne = échec honnête + purge best-effort), share (session ouverte), stopSharing, getLiveState (**erreurs DB remontées, jamais un faux » aucune session »**).
+- **Hook** : ping 45 s, arrêt confirmé serveur (toggle/3 échecs/onglet masqué > 2 min/démontage), watchdog de fraîcheur 5 min.
+- **UI** : `LiveSharePanel` hub desktop+mobile — consentement explicite, durées 2/8/24 h, indicateur permanent » PARTAGE ACTIF — arrêt à un tap « , clôture organisateur only (mobile corrigé), aucun partage implicite au démarrage.
+- **Carte** : couche `atlas-members` (avatars/noms) sur `UnifiedExplorerMap`, badge » N positions du groupe « + stop 1 tap dans l'Explorer, Realtime + refresh 60 s.
+- **Cron** `expire-live-positions` : purge positions + fermeture sessions, filtres re-vérifiés.
+
+### Preuves
+```text
+pgTAP tribu_live 20/20 · vitest lot 70/70 · harnais DB install+upgrade PASS (220 versions)
+vitest complet 2734 passed | 23 skipped (4 suites préexistantes) · lint 0 · tsc 0 · build ✓
+e2e 7/7 (preparer, depart, atlas) · garde design 14/14 · prod : 2 migrations + probe service-role
+```
+
+### Revue `silent-failure-hunter` (NO-GO → corrigé)
+C1 arrêt 1 tap non effectif/inversé · C2 erreurs DB converties en absence · C3 stop carte muet · I1 clôture fantôme + bouton mobile trop large · I2 position expirée non récupérable · I3 TTL non borné en base · I4/I5 faux actif GPS / faux inactif · I6 nettoyage expirées + 23505 — **tous corrigés et couverts**.
+
+### Actions propriétaire restantes
+Vérification visuelle : panneau » Position live « dans /hub/groupe, badge/couche sur l'Explorer après démarrage d'une session (2 appareils pour voir le temps réel). Backlog noté : état du canal Realtime, purge à la clôture garantie par le cron seul, harmonisation UX manager mobile. **Chantier TRIBU complet (Phases 0→7).**

@@ -15,6 +15,7 @@ import { convertEphemeralGroup } from '@/features/tribu/actions/ephemeralGroup';
 import { formatEphemeralCountdown } from '@/features/tribu/lib/ephemeral';
 import GroupActivityLog from '@/features/tribu/components/GroupActivityLog';
 import GroupTaskTemplatesPanel from '@/features/tribu/components/GroupTaskTemplatesPanel';
+import LiveSharePanel from '@/features/tribu/components/LiveSharePanel';
 import {
   assignGroupeKitItem,
   settleGroupeExpense,
@@ -138,6 +139,16 @@ export function GroupeMobileExperience({
   const decisions = useMemo(() => data.decisions || [], [data.decisions]);
   const messages = useMemo(() => data.discussions || [], [data.discussions]);
   const canManage = !!user;
+  const isGroupOrganizer = useMemo(
+    () =>
+      !!user &&
+      (members || []).some(
+        (member: any) =>
+          member.user_id === user.id &&
+          (member.role_code === 'organizer' || member.role_code === 'co_organizer')
+      ),
+    [user, members]
+  );
 
   const engineTasks = useMemo(
     () =>
@@ -451,6 +462,8 @@ export function GroupeMobileExperience({
           )}
         </div>
       )}
+
+      <LiveSharePanel groupId={groupId} isOrganizer={isGroupOrganizer} />
 
       <GroupeReadinessHero
         readiness={readiness}
