@@ -305,12 +305,15 @@ export async function createPlace(
 
 /**
  * Récupère les voyages de l'utilisateur pour le sélecteur d'ajout rapide au voyage
+ * (`duration_days` n'existe pas en base : calculé depuis les dates civiles).
  */
-export async function getUserTripsForPicker(userId: string): Promise<Array<{ id: string; title: string; slug: string; duration_days: number }>> {
+export async function getUserTripsForPicker(
+  userId: string
+): Promise<Array<{ id: string; title: string; slug: string; duration_days: number }>> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from('trips')
-    .select('id, title, slug, duration_days')
+    .select('id, title, slug, start_date, end_date')
     .eq('user_id', userId)
     .order('created_at', { ascending: false })
     .limit(20);
@@ -320,5 +323,26 @@ export async function getUserTripsForPicker(userId: string): Promise<Array<{ id:
     return [];
   }
 
-  return data || [];
+  return ((data ?? []) as Array<{
+    id: string;
+    title: string;
+    slug: string;
+    start_date: string | null;
+    end_date: string | null;
+  }>).map((trip) => {
+    let durationDays = 0;
+    if (trip.start_date && trip.end_date) {
+      const start = new Date(`${trip.start_date}T00:00:00Z`).getTime();
+      const end = new Date(`${trip.end_date}T00:00:00Z`).getTime();
+      if (Number.isFinite(start) && Number.isFinite(end) && end >= start) {
+        durationDays = Math.round((end - start) / (24 * 60 * 60 * 1000)) + 1;
+      }
+    }
+    return {
+      id: trip.id,
+      title: trip.title,
+      slug: trip.slug,
+      duration_days: durationDays,
+    };
+  });
 }

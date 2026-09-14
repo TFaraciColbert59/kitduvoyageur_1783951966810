@@ -6,7 +6,9 @@ import { chromium } from 'playwright';
 
 const BASE = 'http://localhost:4000';
 const YDEMO = { email: 'y-demo@lekitduvoyageur.fr', password: 'Ydemo!2026' };
-const ROUTES = ['/hub', '/compte', '/profil', '/messagerie', '/randonnee-active'];
+const ROUTES = process.argv.slice(2).length > 0
+  ? process.argv.slice(2)
+  : ['/hub', '/compte', '/profil', '/messagerie', '/randonnee-active'];
 
 const browser = await chromium.launch();
 const context = await browser.newContext({ viewport: { width: 1440, height: 900 }, locale: 'fr-FR' });
