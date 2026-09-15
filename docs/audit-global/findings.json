@@ -1,0 +1,2377 @@
+{
+  "generatedAt": "2026-09-14T18:24:00.941Z",
+  "baseUrl": "http://localhost:4000",
+  "fixtures": {
+    "trailId": 26,
+    "productSlug": "accessoires-pour-sac-a-dos-categorie-bigbuy",
+    "kitSlug": "kit-minimaliste",
+    "clubSlug": "alpinistes-debutants",
+    "carnetId": "f21439a3-4daf-42ed-a778-1fa3fffa8f61",
+    "tripSlug": "queyras-etoile",
+    "groupId": "e0000001-0000-0000-0000-000000000005",
+    "lieuSlug": "refuge-du-gouter-mont-blanc",
+    "profileId": "aa000001-0000-0000-0000-000000000001"
+  },
+  "routeCount": 47,
+  "deviceCount": 3,
+  "captures": 141,
+  "issues": [],
+  "consoleNoise": [
+    {
+      "route": "lieu-detail",
+      "path": "/lieux/refuge-du-gouter-mont-blanc",
+      "device": "desktop",
+      "authed": false,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/lieux/refuge-du-gouter-mont-blanc",
+      "pageErrors": [],
+      "consoleErrors": [
+        "%o\n\n%s Error: Attempted to call getCategoryLabel() from the server but getCategoryLabel is on the client. It's not possible to invoke a client function from the server, it can only be rendered as a Component or passed to props of a Client Component.\n    at Module.generateMetadata (about://React/Serv",
+        "ErrorBoundaryWrapper caught: Error: Attempted to call getCategoryLabel() from the server but getCategoryLabel is on the client. It's not possible to invoke a client function from the server, it can only be rendered as a Component or passed to props of a Client Component.\n    at Module.generateMetada"
+      ],
+      "screenshot": "docs/audit-global/captures/desktop/lieu-detail.png"
+    },
+    {
+      "route": "communaute",
+      "path": "/communaute",
+      "device": "desktop",
+      "authed": false,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/communaute",
+      "pageErrors": [],
+      "consoleErrors": [
+        "Not allowed to load local resource: blob:http://localhost:4028/9c041e3f-5a72-4e3f-b7ba-ac8bb8b0f993",
+        "Not allowed to load local resource: blob:http://localhost:4028/9c041e3f-5a72-4e3f-b7ba-ac8bb8b0f993",
+        "Not allowed to load local resource: blob:http://localhost:4028/9c041e3f-5a72-4e3f-b7ba-ac8bb8b0f993",
+        "Not allowed to load local resource: blob:http://localhost:4028/9c041e3f-5a72-4e3f-b7ba-ac8bb8b0f993"
+      ],
+      "screenshot": "docs/audit-global/captures/desktop/communaute.png"
+    },
+    {
+      "route": "hub",
+      "path": "/hub",
+      "device": "desktop",
+      "authed": true,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/hub",
+      "pageErrors": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 ()"
+      ],
+      "screenshot": "docs/audit-global/captures/desktop/hub-auth.png"
+    },
+    {
+      "route": "compte",
+      "path": "/compte",
+      "device": "desktop",
+      "authed": true,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/compte",
+      "pageErrors": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 400 ()",
+        "Failed to load resource: the server responded with a status of 400 ()",
+        "Failed to load resource: the server responded with a status of 400 ()",
+        "Failed to load resource: the server responded with a status of 400 ()",
+        "An empty string (\"\") was passed to the %s attribute. This may cause the browser to download the whole page again over the network. To fix this, either do not render the element at all or pass null to %s instead of an empty string. src src",
+        "Image is missing required \"src\" property: JSHandle@node",
+        "Failed to load resource: the server responded with a status of 400 ()",
+        "Image is missing required \"src\" property: JSHandle@node",
+        "Failed to load resource: the server responded with a status of 404 ()",
+        "Failed to load resource: the server responded with a status of 404 ()"
+      ],
+      "screenshot": "docs/audit-global/captures/desktop/compte-auth.png"
+    },
+    {
+      "route": "compte-modifier",
+      "path": "/compte/modifier",
+      "device": "desktop",
+      "authed": true,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/compte/modifier",
+      "pageErrors": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 ()"
+      ],
+      "screenshot": "docs/audit-global/captures/desktop/compte-modifier-auth.png"
+    },
+    {
+      "route": "profil",
+      "path": "/profil",
+      "device": "desktop",
+      "authed": true,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/compte",
+      "pageErrors": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 400 ()",
+        "Failed to load resource: the server responded with a status of 400 ()",
+        "An empty string (\"\") was passed to the %s attribute. This may cause the browser to download the whole page again over the network. To fix this, either do not render the element at all or pass null to %s instead of an empty string. src src",
+        "Image is missing required \"src\" property: JSHandle@node",
+        "Image is missing required \"src\" property: JSHandle@node",
+        "Failed to load resource: the server responded with a status of 400 ()",
+        "Failed to load resource: the server responded with a status of 400 ()",
+        "Failed to load resource: the server responded with a status of 404 ()",
+        "Failed to load resource: the server responded with a status of 404 ()",
+        "Failed to load resource: the server responded with a status of 400 ()",
+        "Failed to load resource: the server responded with a status of 400 ()"
+      ],
+      "screenshot": "docs/audit-global/captures/desktop/profil-auth.png"
+    },
+    {
+      "route": "profil-public",
+      "path": "/profil/aa000001-0000-0000-0000-000000000001",
+      "device": "desktop",
+      "authed": true,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/profil/aa000001-0000-0000-0000-000000000001",
+      "pageErrors": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 ()",
+        "Failed to load resource: the server responded with a status of 404 ()"
+      ],
+      "screenshot": "docs/audit-global/captures/desktop/profil-public-auth.png"
+    },
+    {
+      "route": "carnets",
+      "path": "/carnets",
+      "device": "desktop",
+      "authed": true,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/carnets",
+      "pageErrors": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 ()"
+      ],
+      "screenshot": "docs/audit-global/captures/desktop/carnets-auth.png"
+    },
+    {
+      "route": "carnet-detail",
+      "path": "/carnets/f21439a3-4daf-42ed-a778-1fa3fffa8f61",
+      "device": "desktop",
+      "authed": true,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/carnets/f21439a3-4daf-42ed-a778-1fa3fffa8f61",
+      "pageErrors": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 ()"
+      ],
+      "screenshot": "docs/audit-global/captures/desktop/carnet-detail-auth.png"
+    },
+    {
+      "route": "carnet-nouveau",
+      "path": "/carnets/nouveau",
+      "device": "desktop",
+      "authed": true,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/carnets/nouveau",
+      "pageErrors": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 ()"
+      ],
+      "screenshot": "docs/audit-global/captures/desktop/carnet-nouveau-auth.png"
+    },
+    {
+      "route": "messagerie",
+      "path": "/messagerie",
+      "device": "desktop",
+      "authed": true,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/messagerie",
+      "pageErrors": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 ()",
+        "Failed to load resource: the server responded with a status of 404 ()",
+        "Failed to load resource: the server responded with a status of 404 ()"
+      ],
+      "screenshot": "docs/audit-global/captures/desktop/messagerie-auth.png"
+    },
+    {
+      "route": "randonnee-active",
+      "path": "/randonnee-active",
+      "device": "desktop",
+      "authed": true,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/randonnee-active",
+      "pageErrors": [],
+      "consoleErrors": [
+        "A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:\n\n- A server/client branch `if (typeof window !== 'undefined')`.\n- Variable input such as `Date.now()` or `Math.random()` wh"
+      ],
+      "screenshot": "docs/audit-global/captures/desktop/randonnee-active-auth.png"
+    },
+    {
+      "route": "rapport-expedition",
+      "path": "/rapport-expedition",
+      "device": "desktop",
+      "authed": true,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/rapport-expedition",
+      "pageErrors": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 ()"
+      ],
+      "screenshot": "docs/audit-global/captures/desktop/rapport-expedition-auth.png"
+    },
+    {
+      "route": "publier",
+      "path": "/publier",
+      "device": "desktop",
+      "authed": true,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/publier",
+      "pageErrors": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 ()",
+        "Failed to load resource: the server responded with a status of 404 ()"
+      ],
+      "screenshot": "docs/audit-global/captures/desktop/publier-auth.png"
+    },
+    {
+      "route": "communaute-publier",
+      "path": "/communaute/publier",
+      "device": "desktop",
+      "authed": true,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/communaute/publier",
+      "pageErrors": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 ()"
+      ],
+      "screenshot": "docs/audit-global/captures/desktop/communaute-publier-auth.png"
+    },
+    {
+      "route": "admin-refus",
+      "path": "/admin",
+      "device": "desktop",
+      "authed": true,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/",
+      "pageErrors": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 ()"
+      ],
+      "screenshot": "docs/audit-global/captures/desktop/admin-refus-auth.png"
+    },
+    {
+      "route": "lieu-detail",
+      "path": "/lieux/refuge-du-gouter-mont-blanc",
+      "device": "iphone",
+      "authed": false,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/lieux/refuge-du-gouter-mont-blanc",
+      "pageErrors": [],
+      "consoleErrors": [
+        "%o\n\n%s Error: Attempted to call getCategoryLabel() from the server but getCategoryLabel is on the client. It's not possible to invoke a client function from the server, it can only be rendered as a Component or passed to props of a Client Component.\n    at Module.generateMetadata (about://React/Serv",
+        "ErrorBoundaryWrapper caught: Error: Attempted to call getCategoryLabel() from the server but getCategoryLabel is on the client. It's not possible to invoke a client function from the server, it can only be rendered as a Component or passed to props of a Client Component.\n    at Module.generateMetada"
+      ],
+      "screenshot": "docs/audit-global/captures/iphone/lieu-detail.png"
+    },
+    {
+      "route": "communaute",
+      "path": "/communaute",
+      "device": "iphone",
+      "authed": false,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/communaute",
+      "pageErrors": [],
+      "consoleErrors": [
+        "Not allowed to load local resource: blob:http://localhost:4028/9c041e3f-5a72-4e3f-b7ba-ac8bb8b0f993",
+        "Not allowed to load local resource: blob:http://localhost:4028/9c041e3f-5a72-4e3f-b7ba-ac8bb8b0f993",
+        "Not allowed to load local resource: blob:http://localhost:4028/9c041e3f-5a72-4e3f-b7ba-ac8bb8b0f993",
+        "Not allowed to load local resource: blob:http://localhost:4028/9c041e3f-5a72-4e3f-b7ba-ac8bb8b0f993"
+      ],
+      "screenshot": "docs/audit-global/captures/iphone/communaute.png"
+    },
+    {
+      "route": "feed",
+      "path": "/feed",
+      "device": "iphone",
+      "authed": false,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/feed",
+      "pageErrors": [],
+      "consoleErrors": [
+        "A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:\n\n- A server/client branch `if (typeof window !== 'undefined')`.\n- Variable input such as `Date.now()` or `Math.random()` wh"
+      ],
+      "screenshot": "docs/audit-global/captures/iphone/feed.png"
+    },
+    {
+      "route": "compte",
+      "path": "/compte",
+      "device": "iphone",
+      "authed": true,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/compte",
+      "pageErrors": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 400 ()",
+        "Failed to load resource: the server responded with a status of 400 ()",
+        "Failed to load resource: the server responded with a status of 400 ()",
+        "An empty string (\"\") was passed to the %s attribute. This may cause the browser to download the whole page again over the network. To fix this, either do not render the element at all or pass null to %s instead of an empty string. src src",
+        "Image is missing required \"src\" property: JSHandle@node",
+        "Image is missing required \"src\" property: JSHandle@node",
+        "Failed to load resource: the server responded with a status of 400 ()",
+        "Failed to load resource: the server responded with a status of 404 ()",
+        "Failed to load resource: the server responded with a status of 400 ()",
+        "Failed to load resource: the server responded with a status of 404 ()"
+      ],
+      "screenshot": "docs/audit-global/captures/iphone/compte-auth.png"
+    },
+    {
+      "route": "compte-modifier",
+      "path": "/compte/modifier",
+      "device": "iphone",
+      "authed": true,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/compte/modifier",
+      "pageErrors": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 ()"
+      ],
+      "screenshot": "docs/audit-global/captures/iphone/compte-modifier-auth.png"
+    },
+    {
+      "route": "profil",
+      "path": "/profil",
+      "device": "iphone",
+      "authed": true,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/compte",
+      "pageErrors": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 400 ()",
+        "Failed to load resource: the server responded with a status of 400 ()",
+        "An empty string (\"\") was passed to the %s attribute. This may cause the browser to download the whole page again over the network. To fix this, either do not render the element at all or pass null to %s instead of an empty string. src src",
+        "Image is missing required \"src\" property: JSHandle@node",
+        "Image is missing required \"src\" property: JSHandle@node",
+        "Failed to load resource: the server responded with a status of 400 ()",
+        "Failed to load resource: the server responded with a status of 400 ()",
+        "Failed to load resource: the server responded with a status of 404 ()",
+        "Failed to load resource: the server responded with a status of 404 ()",
+        "Failed to load resource: the server responded with a status of 400 ()",
+        "Failed to load resource: the server responded with a status of 400 ()"
+      ],
+      "screenshot": "docs/audit-global/captures/iphone/profil-auth.png"
+    },
+    {
+      "route": "profil-public",
+      "path": "/profil/aa000001-0000-0000-0000-000000000001",
+      "device": "iphone",
+      "authed": true,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/profil/aa000001-0000-0000-0000-000000000001",
+      "pageErrors": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 ()",
+        "Failed to load resource: the server responded with a status of 404 ()"
+      ],
+      "screenshot": "docs/audit-global/captures/iphone/profil-public-auth.png"
+    },
+    {
+      "route": "carnets",
+      "path": "/carnets",
+      "device": "iphone",
+      "authed": true,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/carnets",
+      "pageErrors": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 ()"
+      ],
+      "screenshot": "docs/audit-global/captures/iphone/carnets-auth.png"
+    },
+    {
+      "route": "carnet-nouveau",
+      "path": "/carnets/nouveau",
+      "device": "iphone",
+      "authed": true,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/carnets/nouveau",
+      "pageErrors": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 ()"
+      ],
+      "screenshot": "docs/audit-global/captures/iphone/carnet-nouveau-auth.png"
+    },
+    {
+      "route": "messagerie",
+      "path": "/messagerie",
+      "device": "iphone",
+      "authed": true,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/messagerie",
+      "pageErrors": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 ()",
+        "Failed to load resource: the server responded with a status of 404 ()",
+        "Failed to load resource: the server responded with a status of 404 ()"
+      ],
+      "screenshot": "docs/audit-global/captures/iphone/messagerie-auth.png"
+    },
+    {
+      "route": "publier",
+      "path": "/publier",
+      "device": "iphone",
+      "authed": true,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/publier",
+      "pageErrors": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 ()",
+        "Failed to load resource: the server responded with a status of 404 ()"
+      ],
+      "screenshot": "docs/audit-global/captures/iphone/publier-auth.png"
+    },
+    {
+      "route": "communaute-publier",
+      "path": "/communaute/publier",
+      "device": "iphone",
+      "authed": true,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/communaute/publier",
+      "pageErrors": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 ()"
+      ],
+      "screenshot": "docs/audit-global/captures/iphone/communaute-publier-auth.png"
+    },
+    {
+      "route": "admin-refus",
+      "path": "/admin",
+      "device": "iphone",
+      "authed": true,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/",
+      "pageErrors": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 ()"
+      ],
+      "screenshot": "docs/audit-global/captures/iphone/admin-refus-auth.png"
+    },
+    {
+      "route": "lieu-detail",
+      "path": "/lieux/refuge-du-gouter-mont-blanc",
+      "device": "ipad",
+      "authed": false,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/lieux/refuge-du-gouter-mont-blanc",
+      "pageErrors": [],
+      "consoleErrors": [
+        "%o\n\n%s Error: Attempted to call getCategoryLabel() from the server but getCategoryLabel is on the client. It's not possible to invoke a client function from the server, it can only be rendered as a Component or passed to props of a Client Component.\n    at Module.generateMetadata (about://React/Serv",
+        "ErrorBoundaryWrapper caught: Error: Attempted to call getCategoryLabel() from the server but getCategoryLabel is on the client. It's not possible to invoke a client function from the server, it can only be rendered as a Component or passed to props of a Client Component.\n    at Module.generateMetada"
+      ],
+      "screenshot": "docs/audit-global/captures/ipad/lieu-detail.png"
+    },
+    {
+      "route": "compte",
+      "path": "/compte",
+      "device": "ipad",
+      "authed": true,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/compte",
+      "pageErrors": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 400 ()",
+        "Failed to load resource: the server responded with a status of 400 ()",
+        "Failed to load resource: the server responded with a status of 400 ()",
+        "Failed to load resource: the server responded with a status of 400 ()",
+        "An empty string (\"\") was passed to the %s attribute. This may cause the browser to download the whole page again over the network. To fix this, either do not render the element at all or pass null to %s instead of an empty string. src src",
+        "Image is missing required \"src\" property: JSHandle@node",
+        "Failed to load resource: the server responded with a status of 400 ()",
+        "Image is missing required \"src\" property: JSHandle@node",
+        "Failed to load resource: the server responded with a status of 404 ()",
+        "Failed to load resource: the server responded with a status of 404 ()"
+      ],
+      "screenshot": "docs/audit-global/captures/ipad/compte-auth.png"
+    },
+    {
+      "route": "compte-modifier",
+      "path": "/compte/modifier",
+      "device": "ipad",
+      "authed": true,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/compte/modifier",
+      "pageErrors": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 ()"
+      ],
+      "screenshot": "docs/audit-global/captures/ipad/compte-modifier-auth.png"
+    },
+    {
+      "route": "profil",
+      "path": "/profil",
+      "device": "ipad",
+      "authed": true,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/compte",
+      "pageErrors": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 400 ()",
+        "Failed to load resource: the server responded with a status of 400 ()",
+        "An empty string (\"\") was passed to the %s attribute. This may cause the browser to download the whole page again over the network. To fix this, either do not render the element at all or pass null to %s instead of an empty string. src src",
+        "Image is missing required \"src\" property: JSHandle@node",
+        "Image is missing required \"src\" property: JSHandle@node",
+        "Failed to load resource: the server responded with a status of 400 ()",
+        "Failed to load resource: the server responded with a status of 400 ()",
+        "Failed to load resource: the server responded with a status of 404 ()",
+        "Failed to load resource: the server responded with a status of 404 ()",
+        "Failed to load resource: the server responded with a status of 400 ()",
+        "Failed to load resource: the server responded with a status of 400 ()"
+      ],
+      "screenshot": "docs/audit-global/captures/ipad/profil-auth.png"
+    },
+    {
+      "route": "profil-public",
+      "path": "/profil/aa000001-0000-0000-0000-000000000001",
+      "device": "ipad",
+      "authed": true,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/profil/aa000001-0000-0000-0000-000000000001",
+      "pageErrors": [],
+      "consoleErrors": [
+        "Failed to load resource: net::ERR_CONNECTION_RESET",
+        "Failed to load resource: net::ERR_CONNECTION_RESET",
+        "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+        "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+        "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+        "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+        "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+        "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+        "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+        "Failed to load resource: net::ERR_CONNECTION_REFUSED"
+      ],
+      "screenshot": "docs/audit-global/captures/ipad/profil-public-auth.png"
+    },
+    {
+      "route": "carnets",
+      "path": "/carnets",
+      "device": "ipad",
+      "authed": true,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/carnets",
+      "pageErrors": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 ()"
+      ],
+      "screenshot": "docs/audit-global/captures/ipad/carnets-auth.png"
+    },
+    {
+      "route": "carnet-detail",
+      "path": "/carnets/f21439a3-4daf-42ed-a778-1fa3fffa8f61",
+      "device": "ipad",
+      "authed": true,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/carnets/f21439a3-4daf-42ed-a778-1fa3fffa8f61",
+      "pageErrors": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 ()"
+      ],
+      "screenshot": "docs/audit-global/captures/ipad/carnet-detail-auth.png"
+    },
+    {
+      "route": "carnet-nouveau",
+      "path": "/carnets/nouveau",
+      "device": "ipad",
+      "authed": true,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/carnets/nouveau",
+      "pageErrors": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 ()"
+      ],
+      "screenshot": "docs/audit-global/captures/ipad/carnet-nouveau-auth.png"
+    },
+    {
+      "route": "messagerie",
+      "path": "/messagerie",
+      "device": "ipad",
+      "authed": true,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/messagerie",
+      "pageErrors": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 ()",
+        "Failed to load resource: the server responded with a status of 404 ()",
+        "Failed to load resource: the server responded with a status of 404 ()"
+      ],
+      "screenshot": "docs/audit-global/captures/ipad/messagerie-auth.png"
+    },
+    {
+      "route": "rapport-expedition",
+      "path": "/rapport-expedition",
+      "device": "ipad",
+      "authed": true,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/rapport-expedition",
+      "pageErrors": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 ()"
+      ],
+      "screenshot": "docs/audit-global/captures/ipad/rapport-expedition-auth.png"
+    },
+    {
+      "route": "publier",
+      "path": "/publier",
+      "device": "ipad",
+      "authed": true,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/publier",
+      "pageErrors": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 ()",
+        "Failed to load resource: the server responded with a status of 404 ()"
+      ],
+      "screenshot": "docs/audit-global/captures/ipad/publier-auth.png"
+    },
+    {
+      "route": "communaute-publier",
+      "path": "/communaute/publier",
+      "device": "ipad",
+      "authed": true,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/communaute/publier",
+      "pageErrors": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 ()"
+      ],
+      "screenshot": "docs/audit-global/captures/ipad/communaute-publier-auth.png"
+    },
+    {
+      "route": "admin-refus",
+      "path": "/admin",
+      "device": "ipad",
+      "authed": true,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/",
+      "pageErrors": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 ()"
+      ],
+      "screenshot": "docs/audit-global/captures/ipad/admin-refus-auth.png"
+    }
+  ],
+  "brokenLinks": {},
+  "findings": [
+    {
+      "route": "home",
+      "path": "/",
+      "device": "desktop",
+      "authed": false,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/",
+      "pageErrors": [],
+      "consoleErrors": [],
+      "screenshot": "docs/audit-global/captures/desktop/home.png"
+    },
+    {
+      "route": "boutique",
+      "path": "/boutique",
+      "device": "desktop",
+      "authed": false,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/explorer",
+      "pageErrors": [],
+      "consoleErrors": [],
+      "screenshot": "docs/audit-global/captures/desktop/boutique.png"
+    },
+    {
+      "route": "produit",
+      "path": "/produit/accessoires-pour-sac-a-dos-categorie-bigbuy",
+      "device": "desktop",
+      "authed": false,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/produit/accessoires-pour-sac-a-dos-categorie-bigbuy",
+      "pageErrors": [],
+      "consoleErrors": [],
+      "screenshot": "docs/audit-global/captures/desktop/produit.png"
+    },
+    {
+      "route": "panier",
+      "path": "/panier",
+      "device": "desktop",
+      "authed": false,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/panier",
+      "pageErrors": [],
+      "consoleErrors": [],
+      "screenshot": "docs/audit-global/captures/desktop/panier.png"
+    },
+    {
+      "route": "checkout",
+      "path": "/checkout",
+      "device": "desktop",
+      "authed": false,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/connexion?redirect=%2Fcheckout",
+      "pageErrors": [],
+      "consoleErrors": [],
+      "screenshot": "docs/audit-global/captures/desktop/checkout.png"
+    },
+    {
+      "route": "kits",
+      "path": "/kits",
+      "device": "desktop",
+      "authed": false,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/kits",
+      "pageErrors": [],
+      "consoleErrors": [],
+      "screenshot": "docs/audit-global/captures/desktop/kits.png"
+    },
+    {
+      "route": "kit-detail",
+      "path": "/kits/kit-minimaliste",
+      "device": "desktop",
+      "authed": false,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/kits/kit-minimaliste",
+      "pageErrors": [],
+      "consoleErrors": [],
+      "screenshot": "docs/audit-global/captures/desktop/kit-detail.png"
+    },
+    {
+      "route": "occasion",
+      "path": "/occasion",
+      "device": "desktop",
+      "authed": false,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/occasion",
+      "pageErrors": [],
+      "consoleErrors": [],
+      "screenshot": "docs/audit-global/captures/desktop/occasion.png"
+    },
+    {
+      "route": "location",
+      "path": "/location",
+      "device": "desktop",
+      "authed": false,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/location",
+      "pageErrors": [],
+      "consoleErrors": [],
+      "screenshot": "docs/audit-global/captures/desktop/location.png"
+    },
+    {
+      "route": "abonnements",
+      "path": "/abonnements",
+      "device": "desktop",
+      "authed": false,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/abonnements",
+      "pageErrors": [],
+      "consoleErrors": [],
+      "screenshot": "docs/audit-global/captures/desktop/abonnements.png"
+    },
+    {
+      "route": "explorer",
+      "path": "/explorer",
+      "device": "desktop",
+      "authed": false,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/explorer",
+      "pageErrors": [],
+      "consoleErrors": [],
+      "screenshot": "docs/audit-global/captures/desktop/explorer.png"
+    },
+    {
+      "route": "carte-interactive",
+      "path": "/carte-interactive",
+      "device": "desktop",
+      "authed": false,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/explorer",
+      "pageErrors": [],
+      "consoleErrors": [],
+      "screenshot": "docs/audit-global/captures/desktop/carte-interactive.png"
+    },
+    {
+      "route": "pays-fr",
+      "path": "/pays/fr",
+      "device": "desktop",
+      "authed": false,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/pays/fr",
+      "pageErrors": [],
+      "consoleErrors": [],
+      "screenshot": "docs/audit-global/captures/desktop/pays-fr.png"
+    },
+    {
+      "route": "lieux",
+      "path": "/lieux",
+      "device": "desktop",
+      "authed": false,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/lieux",
+      "pageErrors": [],
+      "consoleErrors": [],
+      "screenshot": "docs/audit-global/captures/desktop/lieux.png"
+    },
+    {
+      "route": "lieu-detail",
+      "path": "/lieux/refuge-du-gouter-mont-blanc",
+      "device": "desktop",
+      "authed": false,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/lieux/refuge-du-gouter-mont-blanc",
+      "pageErrors": [],
+      "consoleErrors": [
+        "%o\n\n%s Error: Attempted to call getCategoryLabel() from the server but getCategoryLabel is on the client. It's not possible to invoke a client function from the server, it can only be rendered as a Component or passed to props of a Client Component.\n    at Module.generateMetadata (about://React/Serv",
+        "ErrorBoundaryWrapper caught: Error: Attempted to call getCategoryLabel() from the server but getCategoryLabel is on the client. It's not possible to invoke a client function from the server, it can only be rendered as a Component or passed to props of a Client Component.\n    at Module.generateMetada"
+      ],
+      "screenshot": "docs/audit-global/captures/desktop/lieu-detail.png"
+    },
+    {
+      "route": "evenements",
+      "path": "/evenements",
+      "device": "desktop",
+      "authed": false,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/evenements",
+      "pageErrors": [],
+      "consoleErrors": [],
+      "screenshot": "docs/audit-global/captures/desktop/evenements.png"
+    },
+    {
+      "route": "outils",
+      "path": "/outils",
+      "device": "desktop",
+      "authed": false,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/outils",
+      "pageErrors": [],
+      "consoleErrors": [],
+      "screenshot": "docs/audit-global/captures/desktop/outils.png"
+    },
+    {
+      "route": "hors-ligne",
+      "path": "/hors-ligne",
+      "device": "desktop",
+      "authed": false,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/hors-ligne",
+      "pageErrors": [],
+      "consoleErrors": [],
+      "screenshot": "docs/audit-global/captures/desktop/hors-ligne.png"
+    },
+    {
+      "route": "recompenses",
+      "path": "/recompenses",
+      "device": "desktop",
+      "authed": false,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/recompenses",
+      "pageErrors": [],
+      "consoleErrors": [],
+      "screenshot": "docs/audit-global/captures/desktop/recompenses.png"
+    },
+    {
+      "route": "fidelite",
+      "path": "/fidelite",
+      "device": "desktop",
+      "authed": false,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/fidelite",
+      "pageErrors": [],
+      "consoleErrors": [],
+      "screenshot": "docs/audit-global/captures/desktop/fidelite.png"
+    },
+    {
+      "route": "preparer-randonnee",
+      "path": "/preparer-randonnee",
+      "device": "desktop",
+      "authed": false,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/hub",
+      "pageErrors": [],
+      "consoleErrors": [],
+      "screenshot": "docs/audit-global/captures/desktop/preparer-randonnee.png"
+    },
+    {
+      "route": "ai-configurator",
+      "path": "/ai-configurator",
+      "device": "desktop",
+      "authed": false,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/ai-configurator",
+      "pageErrors": [],
+      "consoleErrors": [],
+      "screenshot": "docs/audit-global/captures/desktop/ai-configurator.png"
+    },
+    {
+      "route": "carbone",
+      "path": "/carbone",
+      "device": "desktop",
+      "authed": false,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/carbone",
+      "pageErrors": [],
+      "consoleErrors": [],
+      "screenshot": "docs/audit-global/captures/desktop/carbone.png"
+    },
+    {
+      "route": "copilote",
+      "path": "/copilote",
+      "device": "desktop",
+      "authed": false,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/copilote",
+      "pageErrors": [],
+      "consoleErrors": [],
+      "screenshot": "docs/audit-global/captures/desktop/copilote.png"
+    },
+    {
+      "route": "communaute",
+      "path": "/communaute",
+      "device": "desktop",
+      "authed": false,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/communaute",
+      "pageErrors": [],
+      "consoleErrors": [
+        "Not allowed to load local resource: blob:http://localhost:4028/9c041e3f-5a72-4e3f-b7ba-ac8bb8b0f993",
+        "Not allowed to load local resource: blob:http://localhost:4028/9c041e3f-5a72-4e3f-b7ba-ac8bb8b0f993",
+        "Not allowed to load local resource: blob:http://localhost:4028/9c041e3f-5a72-4e3f-b7ba-ac8bb8b0f993",
+        "Not allowed to load local resource: blob:http://localhost:4028/9c041e3f-5a72-4e3f-b7ba-ac8bb8b0f993"
+      ],
+      "screenshot": "docs/audit-global/captures/desktop/communaute.png"
+    },
+    {
+      "route": "clubs",
+      "path": "/clubs",
+      "device": "desktop",
+      "authed": false,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/clubs",
+      "pageErrors": [],
+      "consoleErrors": [],
+      "screenshot": "docs/audit-global/captures/desktop/clubs.png"
+    },
+    {
+      "route": "club-detail",
+      "path": "/clubs/alpinistes-debutants",
+      "device": "desktop",
+      "authed": false,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/clubs/alpinistes-debutants",
+      "pageErrors": [],
+      "consoleErrors": [],
+      "screenshot": "docs/audit-global/captures/desktop/club-detail.png"
+    },
+    {
+      "route": "feed",
+      "path": "/feed",
+      "device": "desktop",
+      "authed": false,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/feed",
+      "pageErrors": [],
+      "consoleErrors": [],
+      "screenshot": "docs/audit-global/captures/desktop/feed.png"
+    },
+    {
+      "route": "entraide",
+      "path": "/entraide",
+      "device": "desktop",
+      "authed": false,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/entraide",
+      "pageErrors": [],
+      "consoleErrors": [],
+      "screenshot": "docs/audit-global/captures/desktop/entraide.png"
+    },
+    {
+      "route": "connexion",
+      "path": "/connexion",
+      "device": "desktop",
+      "authed": false,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/connexion",
+      "pageErrors": [],
+      "consoleErrors": [],
+      "screenshot": "docs/audit-global/captures/desktop/connexion.png"
+    },
+    {
+      "route": "inscription",
+      "path": "/inscription",
+      "device": "desktop",
+      "authed": false,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/inscription",
+      "pageErrors": [],
+      "consoleErrors": [],
+      "screenshot": "docs/audit-global/captures/desktop/inscription.png"
+    },
+    {
+      "route": "hub",
+      "path": "/hub",
+      "device": "desktop",
+      "authed": true,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/hub",
+      "pageErrors": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 ()"
+      ],
+      "screenshot": "docs/audit-global/captures/desktop/hub-auth.png"
+    },
+    {
+      "route": "compte",
+      "path": "/compte",
+      "device": "desktop",
+      "authed": true,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/compte",
+      "pageErrors": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 400 ()",
+        "Failed to load resource: the server responded with a status of 400 ()",
+        "Failed to load resource: the server responded with a status of 400 ()",
+        "Failed to load resource: the server responded with a status of 400 ()",
+        "An empty string (\"\") was passed to the %s attribute. This may cause the browser to download the whole page again over the network. To fix this, either do not render the element at all or pass null to %s instead of an empty string. src src",
+        "Image is missing required \"src\" property: JSHandle@node",
+        "Failed to load resource: the server responded with a status of 400 ()",
+        "Image is missing required \"src\" property: JSHandle@node",
+        "Failed to load resource: the server responded with a status of 404 ()",
+        "Failed to load resource: the server responded with a status of 404 ()"
+      ],
+      "screenshot": "docs/audit-global/captures/desktop/compte-auth.png"
+    },
+    {
+      "route": "compte-modifier",
+      "path": "/compte/modifier",
+      "device": "desktop",
+      "authed": true,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/compte/modifier",
+      "pageErrors": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 ()"
+      ],
+      "screenshot": "docs/audit-global/captures/desktop/compte-modifier-auth.png"
+    },
+    {
+      "route": "profil",
+      "path": "/profil",
+      "device": "desktop",
+      "authed": true,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/compte",
+      "pageErrors": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 400 ()",
+        "Failed to load resource: the server responded with a status of 400 ()",
+        "An empty string (\"\") was passed to the %s attribute. This may cause the browser to download the whole page again over the network. To fix this, either do not render the element at all or pass null to %s instead of an empty string. src src",
+        "Image is missing required \"src\" property: JSHandle@node",
+        "Image is missing required \"src\" property: JSHandle@node",
+        "Failed to load resource: the server responded with a status of 400 ()",
+        "Failed to load resource: the server responded with a status of 400 ()",
+        "Failed to load resource: the server responded with a status of 404 ()",
+        "Failed to load resource: the server responded with a status of 404 ()",
+        "Failed to load resource: the server responded with a status of 400 ()",
+        "Failed to load resource: the server responded with a status of 400 ()"
+      ],
+      "screenshot": "docs/audit-global/captures/desktop/profil-auth.png"
+    },
+    {
+      "route": "profil-public",
+      "path": "/profil/aa000001-0000-0000-0000-000000000001",
+      "device": "desktop",
+      "authed": true,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/profil/aa000001-0000-0000-0000-000000000001",
+      "pageErrors": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 ()",
+        "Failed to load resource: the server responded with a status of 404 ()"
+      ],
+      "screenshot": "docs/audit-global/captures/desktop/profil-public-auth.png"
+    },
+    {
+      "route": "carnets",
+      "path": "/carnets",
+      "device": "desktop",
+      "authed": true,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/carnets",
+      "pageErrors": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 ()"
+      ],
+      "screenshot": "docs/audit-global/captures/desktop/carnets-auth.png"
+    },
+    {
+      "route": "carnet-detail",
+      "path": "/carnets/f21439a3-4daf-42ed-a778-1fa3fffa8f61",
+      "device": "desktop",
+      "authed": true,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/carnets/f21439a3-4daf-42ed-a778-1fa3fffa8f61",
+      "pageErrors": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 ()"
+      ],
+      "screenshot": "docs/audit-global/captures/desktop/carnet-detail-auth.png"
+    },
+    {
+      "route": "carnet-nouveau",
+      "path": "/carnets/nouveau",
+      "device": "desktop",
+      "authed": true,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/carnets/nouveau",
+      "pageErrors": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 ()"
+      ],
+      "screenshot": "docs/audit-global/captures/desktop/carnet-nouveau-auth.png"
+    },
+    {
+      "route": "voyage-detail",
+      "path": "/voyages/queyras-etoile",
+      "device": "desktop",
+      "authed": true,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/voyages/queyras-etoile",
+      "pageErrors": [],
+      "consoleErrors": [],
+      "screenshot": "docs/audit-global/captures/desktop/voyage-detail-auth.png"
+    },
+    {
+      "route": "preparer-sentier",
+      "path": "/preparer-sentier/26",
+      "device": "desktop",
+      "authed": true,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/preparer-sentier/26",
+      "pageErrors": [],
+      "consoleErrors": [],
+      "screenshot": "docs/audit-global/captures/desktop/preparer-sentier-auth.png"
+    },
+    {
+      "route": "messagerie",
+      "path": "/messagerie",
+      "device": "desktop",
+      "authed": true,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/messagerie",
+      "pageErrors": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 ()",
+        "Failed to load resource: the server responded with a status of 404 ()",
+        "Failed to load resource: the server responded with a status of 404 ()"
+      ],
+      "screenshot": "docs/audit-global/captures/desktop/messagerie-auth.png"
+    },
+    {
+      "route": "randonnee-active",
+      "path": "/randonnee-active",
+      "device": "desktop",
+      "authed": true,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/randonnee-active",
+      "pageErrors": [],
+      "consoleErrors": [
+        "A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:\n\n- A server/client branch `if (typeof window !== 'undefined')`.\n- Variable input such as `Date.now()` or `Math.random()` wh"
+      ],
+      "screenshot": "docs/audit-global/captures/desktop/randonnee-active-auth.png"
+    },
+    {
+      "route": "rapport-expedition",
+      "path": "/rapport-expedition",
+      "device": "desktop",
+      "authed": true,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/rapport-expedition",
+      "pageErrors": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 ()"
+      ],
+      "screenshot": "docs/audit-global/captures/desktop/rapport-expedition-auth.png"
+    },
+    {
+      "route": "publier",
+      "path": "/publier",
+      "device": "desktop",
+      "authed": true,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/publier",
+      "pageErrors": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 ()",
+        "Failed to load resource: the server responded with a status of 404 ()"
+      ],
+      "screenshot": "docs/audit-global/captures/desktop/publier-auth.png"
+    },
+    {
+      "route": "communaute-publier",
+      "path": "/communaute/publier",
+      "device": "desktop",
+      "authed": true,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/communaute/publier",
+      "pageErrors": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 ()"
+      ],
+      "screenshot": "docs/audit-global/captures/desktop/communaute-publier-auth.png"
+    },
+    {
+      "route": "admin-refus",
+      "path": "/admin",
+      "device": "desktop",
+      "authed": true,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/",
+      "pageErrors": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 ()"
+      ],
+      "screenshot": "docs/audit-global/captures/desktop/admin-refus-auth.png"
+    },
+    {
+      "route": "home",
+      "path": "/",
+      "device": "iphone",
+      "authed": false,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/",
+      "pageErrors": [],
+      "consoleErrors": [],
+      "screenshot": "docs/audit-global/captures/iphone/home.png"
+    },
+    {
+      "route": "boutique",
+      "path": "/boutique",
+      "device": "iphone",
+      "authed": false,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/explorer",
+      "pageErrors": [],
+      "consoleErrors": [],
+      "screenshot": "docs/audit-global/captures/iphone/boutique.png"
+    },
+    {
+      "route": "produit",
+      "path": "/produit/accessoires-pour-sac-a-dos-categorie-bigbuy",
+      "device": "iphone",
+      "authed": false,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/produit/accessoires-pour-sac-a-dos-categorie-bigbuy",
+      "pageErrors": [],
+      "consoleErrors": [],
+      "screenshot": "docs/audit-global/captures/iphone/produit.png"
+    },
+    {
+      "route": "panier",
+      "path": "/panier",
+      "device": "iphone",
+      "authed": false,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/panier",
+      "pageErrors": [],
+      "consoleErrors": [],
+      "screenshot": "docs/audit-global/captures/iphone/panier.png"
+    },
+    {
+      "route": "checkout",
+      "path": "/checkout",
+      "device": "iphone",
+      "authed": false,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/connexion?redirect=%2Fcheckout",
+      "pageErrors": [],
+      "consoleErrors": [],
+      "screenshot": "docs/audit-global/captures/iphone/checkout.png"
+    },
+    {
+      "route": "kits",
+      "path": "/kits",
+      "device": "iphone",
+      "authed": false,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/kits",
+      "pageErrors": [],
+      "consoleErrors": [],
+      "screenshot": "docs/audit-global/captures/iphone/kits.png"
+    },
+    {
+      "route": "kit-detail",
+      "path": "/kits/kit-minimaliste",
+      "device": "iphone",
+      "authed": false,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/kits/kit-minimaliste",
+      "pageErrors": [],
+      "consoleErrors": [],
+      "screenshot": "docs/audit-global/captures/iphone/kit-detail.png"
+    },
+    {
+      "route": "occasion",
+      "path": "/occasion",
+      "device": "iphone",
+      "authed": false,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/occasion",
+      "pageErrors": [],
+      "consoleErrors": [],
+      "screenshot": "docs/audit-global/captures/iphone/occasion.png"
+    },
+    {
+      "route": "location",
+      "path": "/location",
+      "device": "iphone",
+      "authed": false,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/location",
+      "pageErrors": [],
+      "consoleErrors": [],
+      "screenshot": "docs/audit-global/captures/iphone/location.png"
+    },
+    {
+      "route": "abonnements",
+      "path": "/abonnements",
+      "device": "iphone",
+      "authed": false,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/abonnements",
+      "pageErrors": [],
+      "consoleErrors": [],
+      "screenshot": "docs/audit-global/captures/iphone/abonnements.png"
+    },
+    {
+      "route": "explorer",
+      "path": "/explorer",
+      "device": "iphone",
+      "authed": false,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/explorer",
+      "pageErrors": [],
+      "consoleErrors": [],
+      "screenshot": "docs/audit-global/captures/iphone/explorer.png"
+    },
+    {
+      "route": "carte-interactive",
+      "path": "/carte-interactive",
+      "device": "iphone",
+      "authed": false,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/explorer",
+      "pageErrors": [],
+      "consoleErrors": [],
+      "screenshot": "docs/audit-global/captures/iphone/carte-interactive.png"
+    },
+    {
+      "route": "pays-fr",
+      "path": "/pays/fr",
+      "device": "iphone",
+      "authed": false,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/pays/fr",
+      "pageErrors": [],
+      "consoleErrors": [],
+      "screenshot": "docs/audit-global/captures/iphone/pays-fr.png"
+    },
+    {
+      "route": "lieux",
+      "path": "/lieux",
+      "device": "iphone",
+      "authed": false,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/lieux",
+      "pageErrors": [],
+      "consoleErrors": [],
+      "screenshot": "docs/audit-global/captures/iphone/lieux.png"
+    },
+    {
+      "route": "lieu-detail",
+      "path": "/lieux/refuge-du-gouter-mont-blanc",
+      "device": "iphone",
+      "authed": false,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/lieux/refuge-du-gouter-mont-blanc",
+      "pageErrors": [],
+      "consoleErrors": [
+        "%o\n\n%s Error: Attempted to call getCategoryLabel() from the server but getCategoryLabel is on the client. It's not possible to invoke a client function from the server, it can only be rendered as a Component or passed to props of a Client Component.\n    at Module.generateMetadata (about://React/Serv",
+        "ErrorBoundaryWrapper caught: Error: Attempted to call getCategoryLabel() from the server but getCategoryLabel is on the client. It's not possible to invoke a client function from the server, it can only be rendered as a Component or passed to props of a Client Component.\n    at Module.generateMetada"
+      ],
+      "screenshot": "docs/audit-global/captures/iphone/lieu-detail.png"
+    },
+    {
+      "route": "evenements",
+      "path": "/evenements",
+      "device": "iphone",
+      "authed": false,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/evenements",
+      "pageErrors": [],
+      "consoleErrors": [],
+      "screenshot": "docs/audit-global/captures/iphone/evenements.png"
+    },
+    {
+      "route": "outils",
+      "path": "/outils",
+      "device": "iphone",
+      "authed": false,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/outils",
+      "pageErrors": [],
+      "consoleErrors": [],
+      "screenshot": "docs/audit-global/captures/iphone/outils.png"
+    },
+    {
+      "route": "hors-ligne",
+      "path": "/hors-ligne",
+      "device": "iphone",
+      "authed": false,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/hors-ligne",
+      "pageErrors": [],
+      "consoleErrors": [],
+      "screenshot": "docs/audit-global/captures/iphone/hors-ligne.png"
+    },
+    {
+      "route": "recompenses",
+      "path": "/recompenses",
+      "device": "iphone",
+      "authed": false,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/recompenses",
+      "pageErrors": [],
+      "consoleErrors": [],
+      "screenshot": "docs/audit-global/captures/iphone/recompenses.png"
+    },
+    {
+      "route": "fidelite",
+      "path": "/fidelite",
+      "device": "iphone",
+      "authed": false,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/fidelite",
+      "pageErrors": [],
+      "consoleErrors": [],
+      "screenshot": "docs/audit-global/captures/iphone/fidelite.png"
+    },
+    {
+      "route": "preparer-randonnee",
+      "path": "/preparer-randonnee",
+      "device": "iphone",
+      "authed": false,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/hub",
+      "pageErrors": [],
+      "consoleErrors": [],
+      "screenshot": "docs/audit-global/captures/iphone/preparer-randonnee.png"
+    },
+    {
+      "route": "ai-configurator",
+      "path": "/ai-configurator",
+      "device": "iphone",
+      "authed": false,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/ai-configurator",
+      "pageErrors": [],
+      "consoleErrors": [],
+      "screenshot": "docs/audit-global/captures/iphone/ai-configurator.png"
+    },
+    {
+      "route": "carbone",
+      "path": "/carbone",
+      "device": "iphone",
+      "authed": false,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/carbone",
+      "pageErrors": [],
+      "consoleErrors": [],
+      "screenshot": "docs/audit-global/captures/iphone/carbone.png"
+    },
+    {
+      "route": "copilote",
+      "path": "/copilote",
+      "device": "iphone",
+      "authed": false,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/copilote",
+      "pageErrors": [],
+      "consoleErrors": [],
+      "screenshot": "docs/audit-global/captures/iphone/copilote.png"
+    },
+    {
+      "route": "communaute",
+      "path": "/communaute",
+      "device": "iphone",
+      "authed": false,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/communaute",
+      "pageErrors": [],
+      "consoleErrors": [
+        "Not allowed to load local resource: blob:http://localhost:4028/9c041e3f-5a72-4e3f-b7ba-ac8bb8b0f993",
+        "Not allowed to load local resource: blob:http://localhost:4028/9c041e3f-5a72-4e3f-b7ba-ac8bb8b0f993",
+        "Not allowed to load local resource: blob:http://localhost:4028/9c041e3f-5a72-4e3f-b7ba-ac8bb8b0f993",
+        "Not allowed to load local resource: blob:http://localhost:4028/9c041e3f-5a72-4e3f-b7ba-ac8bb8b0f993"
+      ],
+      "screenshot": "docs/audit-global/captures/iphone/communaute.png"
+    },
+    {
+      "route": "clubs",
+      "path": "/clubs",
+      "device": "iphone",
+      "authed": false,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/clubs",
+      "pageErrors": [],
+      "consoleErrors": [],
+      "screenshot": "docs/audit-global/captures/iphone/clubs.png"
+    },
+    {
+      "route": "club-detail",
+      "path": "/clubs/alpinistes-debutants",
+      "device": "iphone",
+      "authed": false,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/clubs/alpinistes-debutants",
+      "pageErrors": [],
+      "consoleErrors": [],
+      "screenshot": "docs/audit-global/captures/iphone/club-detail.png"
+    },
+    {
+      "route": "feed",
+      "path": "/feed",
+      "device": "iphone",
+      "authed": false,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/feed",
+      "pageErrors": [],
+      "consoleErrors": [
+        "A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:\n\n- A server/client branch `if (typeof window !== 'undefined')`.\n- Variable input such as `Date.now()` or `Math.random()` wh"
+      ],
+      "screenshot": "docs/audit-global/captures/iphone/feed.png"
+    },
+    {
+      "route": "entraide",
+      "path": "/entraide",
+      "device": "iphone",
+      "authed": false,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/entraide",
+      "pageErrors": [],
+      "consoleErrors": [],
+      "screenshot": "docs/audit-global/captures/iphone/entraide.png"
+    },
+    {
+      "route": "connexion",
+      "path": "/connexion",
+      "device": "iphone",
+      "authed": false,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/connexion",
+      "pageErrors": [],
+      "consoleErrors": [],
+      "screenshot": "docs/audit-global/captures/iphone/connexion.png"
+    },
+    {
+      "route": "inscription",
+      "path": "/inscription",
+      "device": "iphone",
+      "authed": false,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/inscription",
+      "pageErrors": [],
+      "consoleErrors": [],
+      "screenshot": "docs/audit-global/captures/iphone/inscription.png"
+    },
+    {
+      "route": "hub",
+      "path": "/hub",
+      "device": "iphone",
+      "authed": true,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/hub",
+      "pageErrors": [],
+      "consoleErrors": [],
+      "screenshot": "docs/audit-global/captures/iphone/hub-auth.png"
+    },
+    {
+      "route": "compte",
+      "path": "/compte",
+      "device": "iphone",
+      "authed": true,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/compte",
+      "pageErrors": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 400 ()",
+        "Failed to load resource: the server responded with a status of 400 ()",
+        "Failed to load resource: the server responded with a status of 400 ()",
+        "An empty string (\"\") was passed to the %s attribute. This may cause the browser to download the whole page again over the network. To fix this, either do not render the element at all or pass null to %s instead of an empty string. src src",
+        "Image is missing required \"src\" property: JSHandle@node",
+        "Image is missing required \"src\" property: JSHandle@node",
+        "Failed to load resource: the server responded with a status of 400 ()",
+        "Failed to load resource: the server responded with a status of 404 ()",
+        "Failed to load resource: the server responded with a status of 400 ()",
+        "Failed to load resource: the server responded with a status of 404 ()"
+      ],
+      "screenshot": "docs/audit-global/captures/iphone/compte-auth.png"
+    },
+    {
+      "route": "compte-modifier",
+      "path": "/compte/modifier",
+      "device": "iphone",
+      "authed": true,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/compte/modifier",
+      "pageErrors": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 ()"
+      ],
+      "screenshot": "docs/audit-global/captures/iphone/compte-modifier-auth.png"
+    },
+    {
+      "route": "profil",
+      "path": "/profil",
+      "device": "iphone",
+      "authed": true,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/compte",
+      "pageErrors": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 400 ()",
+        "Failed to load resource: the server responded with a status of 400 ()",
+        "An empty string (\"\") was passed to the %s attribute. This may cause the browser to download the whole page again over the network. To fix this, either do not render the element at all or pass null to %s instead of an empty string. src src",
+        "Image is missing required \"src\" property: JSHandle@node",
+        "Image is missing required \"src\" property: JSHandle@node",
+        "Failed to load resource: the server responded with a status of 400 ()",
+        "Failed to load resource: the server responded with a status of 400 ()",
+        "Failed to load resource: the server responded with a status of 404 ()",
+        "Failed to load resource: the server responded with a status of 404 ()",
+        "Failed to load resource: the server responded with a status of 400 ()",
+        "Failed to load resource: the server responded with a status of 400 ()"
+      ],
+      "screenshot": "docs/audit-global/captures/iphone/profil-auth.png"
+    },
+    {
+      "route": "profil-public",
+      "path": "/profil/aa000001-0000-0000-0000-000000000001",
+      "device": "iphone",
+      "authed": true,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/profil/aa000001-0000-0000-0000-000000000001",
+      "pageErrors": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 ()",
+        "Failed to load resource: the server responded with a status of 404 ()"
+      ],
+      "screenshot": "docs/audit-global/captures/iphone/profil-public-auth.png"
+    },
+    {
+      "route": "carnets",
+      "path": "/carnets",
+      "device": "iphone",
+      "authed": true,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/carnets",
+      "pageErrors": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 ()"
+      ],
+      "screenshot": "docs/audit-global/captures/iphone/carnets-auth.png"
+    },
+    {
+      "route": "carnet-detail",
+      "path": "/carnets/f21439a3-4daf-42ed-a778-1fa3fffa8f61",
+      "device": "iphone",
+      "authed": true,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/carnets/f21439a3-4daf-42ed-a778-1fa3fffa8f61",
+      "pageErrors": [],
+      "consoleErrors": [],
+      "screenshot": "docs/audit-global/captures/iphone/carnet-detail-auth.png"
+    },
+    {
+      "route": "carnet-nouveau",
+      "path": "/carnets/nouveau",
+      "device": "iphone",
+      "authed": true,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/carnets/nouveau",
+      "pageErrors": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 ()"
+      ],
+      "screenshot": "docs/audit-global/captures/iphone/carnet-nouveau-auth.png"
+    },
+    {
+      "route": "voyage-detail",
+      "path": "/voyages/queyras-etoile",
+      "device": "iphone",
+      "authed": true,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/voyages/queyras-etoile",
+      "pageErrors": [],
+      "consoleErrors": [],
+      "screenshot": "docs/audit-global/captures/iphone/voyage-detail-auth.png"
+    },
+    {
+      "route": "preparer-sentier",
+      "path": "/preparer-sentier/26",
+      "device": "iphone",
+      "authed": true,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/preparer-sentier/26",
+      "pageErrors": [],
+      "consoleErrors": [],
+      "screenshot": "docs/audit-global/captures/iphone/preparer-sentier-auth.png"
+    },
+    {
+      "route": "messagerie",
+      "path": "/messagerie",
+      "device": "iphone",
+      "authed": true,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/messagerie",
+      "pageErrors": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 ()",
+        "Failed to load resource: the server responded with a status of 404 ()",
+        "Failed to load resource: the server responded with a status of 404 ()"
+      ],
+      "screenshot": "docs/audit-global/captures/iphone/messagerie-auth.png"
+    },
+    {
+      "route": "randonnee-active",
+      "path": "/randonnee-active",
+      "device": "iphone",
+      "authed": true,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/randonnee-active",
+      "pageErrors": [],
+      "consoleErrors": [],
+      "screenshot": "docs/audit-global/captures/iphone/randonnee-active-auth.png"
+    },
+    {
+      "route": "rapport-expedition",
+      "path": "/rapport-expedition",
+      "device": "iphone",
+      "authed": true,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/rapport-expedition",
+      "pageErrors": [],
+      "consoleErrors": [],
+      "screenshot": "docs/audit-global/captures/iphone/rapport-expedition-auth.png"
+    },
+    {
+      "route": "publier",
+      "path": "/publier",
+      "device": "iphone",
+      "authed": true,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/publier",
+      "pageErrors": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 ()",
+        "Failed to load resource: the server responded with a status of 404 ()"
+      ],
+      "screenshot": "docs/audit-global/captures/iphone/publier-auth.png"
+    },
+    {
+      "route": "communaute-publier",
+      "path": "/communaute/publier",
+      "device": "iphone",
+      "authed": true,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/communaute/publier",
+      "pageErrors": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 ()"
+      ],
+      "screenshot": "docs/audit-global/captures/iphone/communaute-publier-auth.png"
+    },
+    {
+      "route": "admin-refus",
+      "path": "/admin",
+      "device": "iphone",
+      "authed": true,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/",
+      "pageErrors": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 ()"
+      ],
+      "screenshot": "docs/audit-global/captures/iphone/admin-refus-auth.png"
+    },
+    {
+      "route": "home",
+      "path": "/",
+      "device": "ipad",
+      "authed": false,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/",
+      "pageErrors": [],
+      "consoleErrors": [],
+      "screenshot": "docs/audit-global/captures/ipad/home.png"
+    },
+    {
+      "route": "boutique",
+      "path": "/boutique",
+      "device": "ipad",
+      "authed": false,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/explorer",
+      "pageErrors": [],
+      "consoleErrors": [],
+      "screenshot": "docs/audit-global/captures/ipad/boutique.png"
+    },
+    {
+      "route": "produit",
+      "path": "/produit/accessoires-pour-sac-a-dos-categorie-bigbuy",
+      "device": "ipad",
+      "authed": false,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/produit/accessoires-pour-sac-a-dos-categorie-bigbuy",
+      "pageErrors": [],
+      "consoleErrors": [],
+      "screenshot": "docs/audit-global/captures/ipad/produit.png"
+    },
+    {
+      "route": "panier",
+      "path": "/panier",
+      "device": "ipad",
+      "authed": false,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/panier",
+      "pageErrors": [],
+      "consoleErrors": [],
+      "screenshot": "docs/audit-global/captures/ipad/panier.png"
+    },
+    {
+      "route": "checkout",
+      "path": "/checkout",
+      "device": "ipad",
+      "authed": false,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/connexion?redirect=%2Fcheckout",
+      "pageErrors": [],
+      "consoleErrors": [],
+      "screenshot": "docs/audit-global/captures/ipad/checkout.png"
+    },
+    {
+      "route": "kits",
+      "path": "/kits",
+      "device": "ipad",
+      "authed": false,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/kits",
+      "pageErrors": [],
+      "consoleErrors": [],
+      "screenshot": "docs/audit-global/captures/ipad/kits.png"
+    },
+    {
+      "route": "kit-detail",
+      "path": "/kits/kit-minimaliste",
+      "device": "ipad",
+      "authed": false,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/kits/kit-minimaliste",
+      "pageErrors": [],
+      "consoleErrors": [],
+      "screenshot": "docs/audit-global/captures/ipad/kit-detail.png"
+    },
+    {
+      "route": "occasion",
+      "path": "/occasion",
+      "device": "ipad",
+      "authed": false,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/occasion",
+      "pageErrors": [],
+      "consoleErrors": [],
+      "screenshot": "docs/audit-global/captures/ipad/occasion.png"
+    },
+    {
+      "route": "location",
+      "path": "/location",
+      "device": "ipad",
+      "authed": false,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/location",
+      "pageErrors": [],
+      "consoleErrors": [],
+      "screenshot": "docs/audit-global/captures/ipad/location.png"
+    },
+    {
+      "route": "abonnements",
+      "path": "/abonnements",
+      "device": "ipad",
+      "authed": false,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/abonnements",
+      "pageErrors": [],
+      "consoleErrors": [],
+      "screenshot": "docs/audit-global/captures/ipad/abonnements.png"
+    },
+    {
+      "route": "explorer",
+      "path": "/explorer",
+      "device": "ipad",
+      "authed": false,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/explorer",
+      "pageErrors": [],
+      "consoleErrors": [],
+      "screenshot": "docs/audit-global/captures/ipad/explorer.png"
+    },
+    {
+      "route": "carte-interactive",
+      "path": "/carte-interactive",
+      "device": "ipad",
+      "authed": false,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/explorer",
+      "pageErrors": [],
+      "consoleErrors": [],
+      "screenshot": "docs/audit-global/captures/ipad/carte-interactive.png"
+    },
+    {
+      "route": "pays-fr",
+      "path": "/pays/fr",
+      "device": "ipad",
+      "authed": false,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/pays/fr",
+      "pageErrors": [],
+      "consoleErrors": [],
+      "screenshot": "docs/audit-global/captures/ipad/pays-fr.png"
+    },
+    {
+      "route": "lieux",
+      "path": "/lieux",
+      "device": "ipad",
+      "authed": false,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/lieux",
+      "pageErrors": [],
+      "consoleErrors": [],
+      "screenshot": "docs/audit-global/captures/ipad/lieux.png"
+    },
+    {
+      "route": "lieu-detail",
+      "path": "/lieux/refuge-du-gouter-mont-blanc",
+      "device": "ipad",
+      "authed": false,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/lieux/refuge-du-gouter-mont-blanc",
+      "pageErrors": [],
+      "consoleErrors": [
+        "%o\n\n%s Error: Attempted to call getCategoryLabel() from the server but getCategoryLabel is on the client. It's not possible to invoke a client function from the server, it can only be rendered as a Component or passed to props of a Client Component.\n    at Module.generateMetadata (about://React/Serv",
+        "ErrorBoundaryWrapper caught: Error: Attempted to call getCategoryLabel() from the server but getCategoryLabel is on the client. It's not possible to invoke a client function from the server, it can only be rendered as a Component or passed to props of a Client Component.\n    at Module.generateMetada"
+      ],
+      "screenshot": "docs/audit-global/captures/ipad/lieu-detail.png"
+    },
+    {
+      "route": "evenements",
+      "path": "/evenements",
+      "device": "ipad",
+      "authed": false,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/evenements",
+      "pageErrors": [],
+      "consoleErrors": [],
+      "screenshot": "docs/audit-global/captures/ipad/evenements.png"
+    },
+    {
+      "route": "outils",
+      "path": "/outils",
+      "device": "ipad",
+      "authed": false,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/outils",
+      "pageErrors": [],
+      "consoleErrors": [],
+      "screenshot": "docs/audit-global/captures/ipad/outils.png"
+    },
+    {
+      "route": "hors-ligne",
+      "path": "/hors-ligne",
+      "device": "ipad",
+      "authed": false,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/hors-ligne",
+      "pageErrors": [],
+      "consoleErrors": [],
+      "screenshot": "docs/audit-global/captures/ipad/hors-ligne.png"
+    },
+    {
+      "route": "recompenses",
+      "path": "/recompenses",
+      "device": "ipad",
+      "authed": false,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/recompenses",
+      "pageErrors": [],
+      "consoleErrors": [],
+      "screenshot": "docs/audit-global/captures/ipad/recompenses.png"
+    },
+    {
+      "route": "fidelite",
+      "path": "/fidelite",
+      "device": "ipad",
+      "authed": false,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/fidelite",
+      "pageErrors": [],
+      "consoleErrors": [],
+      "screenshot": "docs/audit-global/captures/ipad/fidelite.png"
+    },
+    {
+      "route": "preparer-randonnee",
+      "path": "/preparer-randonnee",
+      "device": "ipad",
+      "authed": false,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/hub",
+      "pageErrors": [],
+      "consoleErrors": [],
+      "screenshot": "docs/audit-global/captures/ipad/preparer-randonnee.png"
+    },
+    {
+      "route": "ai-configurator",
+      "path": "/ai-configurator",
+      "device": "ipad",
+      "authed": false,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/ai-configurator",
+      "pageErrors": [],
+      "consoleErrors": [],
+      "screenshot": "docs/audit-global/captures/ipad/ai-configurator.png"
+    },
+    {
+      "route": "carbone",
+      "path": "/carbone",
+      "device": "ipad",
+      "authed": false,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/carbone",
+      "pageErrors": [],
+      "consoleErrors": [],
+      "screenshot": "docs/audit-global/captures/ipad/carbone.png"
+    },
+    {
+      "route": "copilote",
+      "path": "/copilote",
+      "device": "ipad",
+      "authed": false,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/copilote",
+      "pageErrors": [],
+      "consoleErrors": [],
+      "screenshot": "docs/audit-global/captures/ipad/copilote.png"
+    },
+    {
+      "route": "communaute",
+      "path": "/communaute",
+      "device": "ipad",
+      "authed": false,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/communaute",
+      "pageErrors": [],
+      "consoleErrors": [],
+      "screenshot": "docs/audit-global/captures/ipad/communaute.png"
+    },
+    {
+      "route": "clubs",
+      "path": "/clubs",
+      "device": "ipad",
+      "authed": false,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/clubs",
+      "pageErrors": [],
+      "consoleErrors": [],
+      "screenshot": "docs/audit-global/captures/ipad/clubs.png"
+    },
+    {
+      "route": "club-detail",
+      "path": "/clubs/alpinistes-debutants",
+      "device": "ipad",
+      "authed": false,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/clubs/alpinistes-debutants",
+      "pageErrors": [],
+      "consoleErrors": [],
+      "screenshot": "docs/audit-global/captures/ipad/club-detail.png"
+    },
+    {
+      "route": "feed",
+      "path": "/feed",
+      "device": "ipad",
+      "authed": false,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/feed",
+      "pageErrors": [],
+      "consoleErrors": [],
+      "screenshot": "docs/audit-global/captures/ipad/feed.png"
+    },
+    {
+      "route": "entraide",
+      "path": "/entraide",
+      "device": "ipad",
+      "authed": false,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/entraide",
+      "pageErrors": [],
+      "consoleErrors": [],
+      "screenshot": "docs/audit-global/captures/ipad/entraide.png"
+    },
+    {
+      "route": "connexion",
+      "path": "/connexion",
+      "device": "ipad",
+      "authed": false,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/connexion",
+      "pageErrors": [],
+      "consoleErrors": [],
+      "screenshot": "docs/audit-global/captures/ipad/connexion.png"
+    },
+    {
+      "route": "inscription",
+      "path": "/inscription",
+      "device": "ipad",
+      "authed": false,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/inscription",
+      "pageErrors": [],
+      "consoleErrors": [],
+      "screenshot": "docs/audit-global/captures/ipad/inscription.png"
+    },
+    {
+      "route": "hub",
+      "path": "/hub",
+      "device": "ipad",
+      "authed": true,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/hub",
+      "pageErrors": [],
+      "consoleErrors": [],
+      "screenshot": "docs/audit-global/captures/ipad/hub-auth.png"
+    },
+    {
+      "route": "compte",
+      "path": "/compte",
+      "device": "ipad",
+      "authed": true,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/compte",
+      "pageErrors": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 400 ()",
+        "Failed to load resource: the server responded with a status of 400 ()",
+        "Failed to load resource: the server responded with a status of 400 ()",
+        "Failed to load resource: the server responded with a status of 400 ()",
+        "An empty string (\"\") was passed to the %s attribute. This may cause the browser to download the whole page again over the network. To fix this, either do not render the element at all or pass null to %s instead of an empty string. src src",
+        "Image is missing required \"src\" property: JSHandle@node",
+        "Failed to load resource: the server responded with a status of 400 ()",
+        "Image is missing required \"src\" property: JSHandle@node",
+        "Failed to load resource: the server responded with a status of 404 ()",
+        "Failed to load resource: the server responded with a status of 404 ()"
+      ],
+      "screenshot": "docs/audit-global/captures/ipad/compte-auth.png"
+    },
+    {
+      "route": "compte-modifier",
+      "path": "/compte/modifier",
+      "device": "ipad",
+      "authed": true,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/compte/modifier",
+      "pageErrors": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 ()"
+      ],
+      "screenshot": "docs/audit-global/captures/ipad/compte-modifier-auth.png"
+    },
+    {
+      "route": "profil",
+      "path": "/profil",
+      "device": "ipad",
+      "authed": true,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/compte",
+      "pageErrors": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 400 ()",
+        "Failed to load resource: the server responded with a status of 400 ()",
+        "An empty string (\"\") was passed to the %s attribute. This may cause the browser to download the whole page again over the network. To fix this, either do not render the element at all or pass null to %s instead of an empty string. src src",
+        "Image is missing required \"src\" property: JSHandle@node",
+        "Image is missing required \"src\" property: JSHandle@node",
+        "Failed to load resource: the server responded with a status of 400 ()",
+        "Failed to load resource: the server responded with a status of 400 ()",
+        "Failed to load resource: the server responded with a status of 404 ()",
+        "Failed to load resource: the server responded with a status of 404 ()",
+        "Failed to load resource: the server responded with a status of 400 ()",
+        "Failed to load resource: the server responded with a status of 400 ()"
+      ],
+      "screenshot": "docs/audit-global/captures/ipad/profil-auth.png"
+    },
+    {
+      "route": "profil-public",
+      "path": "/profil/aa000001-0000-0000-0000-000000000001",
+      "device": "ipad",
+      "authed": true,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/profil/aa000001-0000-0000-0000-000000000001",
+      "pageErrors": [],
+      "consoleErrors": [
+        "Failed to load resource: net::ERR_CONNECTION_RESET",
+        "Failed to load resource: net::ERR_CONNECTION_RESET",
+        "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+        "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+        "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+        "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+        "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+        "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+        "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+        "Failed to load resource: net::ERR_CONNECTION_REFUSED"
+      ],
+      "screenshot": "docs/audit-global/captures/ipad/profil-public-auth.png"
+    },
+    {
+      "route": "carnets",
+      "path": "/carnets",
+      "device": "ipad",
+      "authed": true,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/carnets",
+      "pageErrors": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 ()"
+      ],
+      "screenshot": "docs/audit-global/captures/ipad/carnets-auth.png"
+    },
+    {
+      "route": "carnet-detail",
+      "path": "/carnets/f21439a3-4daf-42ed-a778-1fa3fffa8f61",
+      "device": "ipad",
+      "authed": true,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/carnets/f21439a3-4daf-42ed-a778-1fa3fffa8f61",
+      "pageErrors": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 ()"
+      ],
+      "screenshot": "docs/audit-global/captures/ipad/carnet-detail-auth.png"
+    },
+    {
+      "route": "carnet-nouveau",
+      "path": "/carnets/nouveau",
+      "device": "ipad",
+      "authed": true,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/carnets/nouveau",
+      "pageErrors": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 ()"
+      ],
+      "screenshot": "docs/audit-global/captures/ipad/carnet-nouveau-auth.png"
+    },
+    {
+      "route": "voyage-detail",
+      "path": "/voyages/queyras-etoile",
+      "device": "ipad",
+      "authed": true,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/voyages/queyras-etoile",
+      "pageErrors": [],
+      "consoleErrors": [],
+      "screenshot": "docs/audit-global/captures/ipad/voyage-detail-auth.png"
+    },
+    {
+      "route": "preparer-sentier",
+      "path": "/preparer-sentier/26",
+      "device": "ipad",
+      "authed": true,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/preparer-sentier/26",
+      "pageErrors": [],
+      "consoleErrors": [],
+      "screenshot": "docs/audit-global/captures/ipad/preparer-sentier-auth.png"
+    },
+    {
+      "route": "messagerie",
+      "path": "/messagerie",
+      "device": "ipad",
+      "authed": true,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/messagerie",
+      "pageErrors": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 ()",
+        "Failed to load resource: the server responded with a status of 404 ()",
+        "Failed to load resource: the server responded with a status of 404 ()"
+      ],
+      "screenshot": "docs/audit-global/captures/ipad/messagerie-auth.png"
+    },
+    {
+      "route": "randonnee-active",
+      "path": "/randonnee-active",
+      "device": "ipad",
+      "authed": true,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/randonnee-active",
+      "pageErrors": [],
+      "consoleErrors": [],
+      "screenshot": "docs/audit-global/captures/ipad/randonnee-active-auth.png"
+    },
+    {
+      "route": "rapport-expedition",
+      "path": "/rapport-expedition",
+      "device": "ipad",
+      "authed": true,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/rapport-expedition",
+      "pageErrors": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 ()"
+      ],
+      "screenshot": "docs/audit-global/captures/ipad/rapport-expedition-auth.png"
+    },
+    {
+      "route": "publier",
+      "path": "/publier",
+      "device": "ipad",
+      "authed": true,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/publier",
+      "pageErrors": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 ()",
+        "Failed to load resource: the server responded with a status of 404 ()"
+      ],
+      "screenshot": "docs/audit-global/captures/ipad/publier-auth.png"
+    },
+    {
+      "route": "communaute-publier",
+      "path": "/communaute/publier",
+      "device": "ipad",
+      "authed": true,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/communaute/publier",
+      "pageErrors": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 ()"
+      ],
+      "screenshot": "docs/audit-global/captures/ipad/communaute-publier-auth.png"
+    },
+    {
+      "route": "admin-refus",
+      "path": "/admin",
+      "device": "ipad",
+      "authed": true,
+      "status": 200,
+      "finalUrl": "http://localhost:4000/",
+      "pageErrors": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 ()"
+      ],
+      "screenshot": "docs/audit-global/captures/ipad/admin-refus-auth.png"
+    }
+  ]
+}

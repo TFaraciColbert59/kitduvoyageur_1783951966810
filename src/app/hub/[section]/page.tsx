@@ -31,6 +31,7 @@ import { DocsMobileExperience } from '@/features/hub/components/mobile/docs/Docs
 import { SafetyMobileExperience } from '@/features/hub/components/mobile/safety/SafetyMobileExperience';
 import { JournalMobileExperience } from '@/features/hub/components/mobile/journal/JournalMobileExperience';
 import { ItineraryMobileExperience } from '@/features/hub/components/mobile/itinerary/ItineraryMobileExperience';
+import { ExportMobileExperience } from '@/features/hub/components/mobile/export/ExportMobileExperience';
 import { TripBudgetView } from '@/features/trips/components/TripBudgetView';
 import { TripDocumentsView } from '@/features/trips/components/TripDocumentsView';
 import { TripChecklistView } from '@/features/trips/components/TripChecklistView';
@@ -236,7 +237,16 @@ async function SortieSection({ sectionId, slug, jour }: { sectionId: string; slu
         trip.expenses || [],
         trip.collaborators || []
       );
-      return <TripExportView trip={trip} stats={stats} budgetSummary={budgetSummary} />;
+      return (
+        <>
+          <div className="hidden lg:block">
+            <TripExportView trip={trip} stats={stats} budgetSummary={budgetSummary} />
+          </div>
+          <div className="lg:hidden">
+            <ExportMobileExperience trip={trip} stats={stats} budgetSummary={budgetSummary} />
+          </div>
+        </>
+      );
     }
     default:
       return null;
