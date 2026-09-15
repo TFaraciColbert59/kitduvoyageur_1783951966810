@@ -1,8 +1,31 @@
-# Baseline « Instant-Feel » — Étape 0 (commit 08055da3 + instrumentation de mesure)
+# Baseline « Instant-Feel » — Étape 0 (commit 08055da3 + instrumentation de mesure) + lots P0
 
 Capturée le 2026-09-15 sur la branche `perf/instant-feel`, point de départ du chantier
-performance. **Aucune optimisation appliquée** : cette baseline est la référence « avant »
-de chaque lot P0→P5 (un chiffre avant/après par lot).
+performance. **Étape 0 sans optimisation** (référence « avant » de chaque lot), puis lots
+P0-1 / P0-2 / P0-3 livrés et mesurés — un chiffre avant/après par lot, plus bas.
+
+## 0. Résultats des lots P0 livrés (avant → après, p50, 5 runs, prod locale)
+
+| Lot | Métrique | Avant | Après | Gain |
+|---|---|---:|---:|---|
+| P0-1 | Données cross-comptes via SW | HTML/API privés en cache | liste blanche + purge + no-store | SEC-1 (RGPD) |
+| P0-2 | TTFB `/hub` sortie authentifiée | ~1000 ms (870-1050) | **615 ms** | **−38 %** |
+| P0-2 | `layout.adventure` (cascade) | ~800 ms | **~415 ms** | **−48 %** |
+| P0-2 | `lists` (rail + possession) | ~390 ms | ~250 ms | −140 ms |
+| P0-3 | TTFB = premier octet `/hub` | ~1000 ms (HTML bloqué) | **13-29 ms** (skeleton BENTO) | Loi 1 satisfaite |
+| P0-3 | HTML complet streame | — | anonyme 185 ms / sortie 612 ms | |
+
+**P0-4 (découpage `/hub/[section]`, cible ≤ 210 kB) — BLOQUÉ, reporté** :
+`dynamicImport({ssr:false})` depuis un module client référencé par un Server Component
+provoque un échec de rendu serveur (`Element type is invalid: got: undefined`, bascule
+d'urgence en client-rendering → error boundary « Cette section n'a pas pu charger » sur
+toutes les sections). Tentative testée et **revertée intégralement** (état P0-3 restauré
+et re-prouvé). Le découpage correct passe par le pattern client-boundary du lot P1-1
+(`<ViewportOnly>`, monté après hydratation, skeleton iso-géométrique par section) ;
+essai préalable sans `ssr:false` (SSR conservé) sans effet sur le First Load (565 kB,
+chunks préchargés par le flight). À reprendre avec P1-1.
+Nota : avec ou sans le lot, le plafond ≤ 210 kB exige aussi P1-3 (framer-motion +
+poids du layout partagé ≈ 250 kB : /hub = 104 shared + 13.5 page + ~206 layout).
 
 ## 1. Bundle de production (Next.js 15.5.25, ANALYZE=true)
 
