@@ -14,7 +14,7 @@ import { HubInvitationsSection } from '@/features/hub/components/collectif/HubIn
 import { HubVoyagesLiesSection } from '@/features/hub/components/collectif/HubVoyagesLiesSection';
 import { HubGroupeCockpit } from '@/features/hub/components/collectif/HubGroupeCockpit';
 import { loadTripSection } from '@/lib/tripSection';
-import { getTripStats } from '@/lib/queries-trips';
+import { getHubTripStats } from '@/features/hub/server/getHubAdventureData';
 import type { DatabaseTripChecklistItem } from '@/lib/supabase/types';
 import { getTripKitDetails } from '@/lib/queries-trip-kit';
 import { getTripItemImages } from '@/features/hub/server/getTripItemImages';
@@ -231,7 +231,9 @@ async function SortieSection({ sectionId, slug, jour }: { sectionId: string; slu
         </>
       );
     case 'export': {
-      const stats = await getTripStats(trip.id);
+      // P0-2 (C-06) — wrapper cache React partagé avec le layout : les 5
+      // requêtes stats ne tournent qu'une fois par requête, jamais 2×.
+      const stats = await getHubTripStats(trip.id);
       const budgetSummary = calculateBudgetSummary(
         { estimated_budget: trip.estimated_budget, budget_currency: trip.budget_currency },
         trip.expenses || [],

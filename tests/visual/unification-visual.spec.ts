@@ -16,13 +16,17 @@ const ROUTES = [
   { path: '/materiel', name: 'materiel' },
   { path: '/compte', name: 'compte' },
   { path: '/hub', name: 'hub' },
-  { path: '/pays/fr', name: 'pays-fr' },
+  {
+    path: '/pays/fr',
+    name: 'pays-fr',
+    abortPatterns: ['**/api/ai/country-guide/**'],
+  },
 ];
 
 test.describe('Chantier U — Non-Régression Visuelle Pixel', () => {
   for (const route of ROUTES) {
     test(`rendu stable et contrastes — ${route.name}`, async ({ page }) => {
-      await prepareVisualPage(page, route.path);
+      await prepareVisualPage(page, route.path, { abortPatterns: route.abortPatterns });
 
       // Vérifier la présence d'éléments interactifs
       const count = await page.locator('body *').count();

@@ -51,9 +51,15 @@ const HIDE_SCROLLBARS_CSS =
 export async function prepareVisualPage(
   page: Page,
   url: string,
-  opts?: { clock?: boolean }
+  opts?: { clock?: boolean; abortPatterns?: string[] }
 ): Promise<void> {
   if (opts?.clock !== false) await page.clock.setFixedTime(VISUAL_CLOCK);
+  // Contenu IA asynchrone (guide pays…) : dont la présence et la hauteur
+  // dépendent de la latence réseau → figé en état « indisponible » pour une
+  // capture déterministe. Jamais utilisé pour des données de rendu statiques.
+  for (const pattern of opts?.abortPatterns ?? []) {
+    await page.route(pattern, (route) => route.abort());
+  }
   await page.addInitScript(
     ({ key }) => {
       localStorage.setItem(

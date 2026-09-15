@@ -158,89 +158,92 @@ async function loadLists(userId: string | undefined): Promise<HubAdventureLists>
     trips: [],
   };
 
-  try {
-    const { data: memberData } = await supabase
+  // P0-2 — vague 1 : toutes les lectures indépendantes en parallèle
+  // (groupes de l'utilisateur, invitations, possession ×3, rail voyages).
+  const [memberRes, invitesRes, itemsRes, alertsRes, loansRes, tripsRes] = await Promise.all([
+    supabase
       .from('group_members')
       .select('group_id, role')
       .eq('user_id', userId)
-      .eq('status', 'active');
-    if (memberData?.length) {
-      const groupIds = memberData.map((m) => (m as { group_id: string }).group_id);
-      const { data: rows } = await supabase
-        .from('travel_groups')
-        .select('id, name')
-        .in('id', groupIds)
-        .order('created_at', { ascending: false });
-      out.groups = await Promise.all(
-        ((rows ?? []) as Array<{ id: string; name: string }>).map(async (g) => {
-          const { count } = await supabase
-            .from('group_members')
-            .select('*', { count: 'exact', head: true })
-            .eq('group_id', g.id)
-            .eq('status', 'active');
-          return {
-            ...g,
-            member_count: count ?? 0,
-            my_role:
-              (memberData.find((m) => (m as { group_id: string }).group_id === g.id) as { role: string } | undefined)?.role ?? null,
-          };
-        }),
-      );
-    }
-    const { count: invites } = await supabase
+      .eq('status', 'active'),
+    supabase
       .from('group_members')
       .select('*', { count: 'exact', head: true })
       .eq('user_id', userId)
-      .eq('status', 'pending');
-    out.pendingInvites = invites ?? 0;
-  } catch (err) {
-    console.error('[LKDV hub] groups error:', err);
-  }
-
-  try {
-    const [{ count: items }, { count: alerts }, { count: loans }] = await Promise.all([
-      supabase.from('product_ownership').select('*', { count: 'exact', head: true }).eq('user_id', userId),
-      supabase.from('alerts').select('*', { count: 'exact', head: true }).eq('user_id', userId).eq('is_resolved', false),
-      supabase.from('materiel_loans').select('*', { count: 'exact', head: true }).eq('lender_id', userId).in('status', ['en_cours', 'en_retard']),
-    ]);
-    out.possession = { items: items ?? 0, loans: loans ?? 0, alerts: alerts ?? 0 };
-  } catch (err) {
-    console.error('[LKDV hub] possession error:', err);
-  }
-
-  try {
-    const { data: tripRows } = await supabase
+      .eq('status', 'pending'),
+    supabase.from('product_ownership').select('*', { count: 'exact', head: true }).eq('user_id', userId),
+    supabase.from('alerts').select('*', { count: 'exact', head: true }).eq('user_id', userId).eq('is_resolved', false),
+    supabase.from('materiel_loans').select('*', { count: 'exact', head: true }).eq('lender_id', userId).in('status', ['en_cours', 'en_retard']),
+    supabase
       .from('trips')
       .select('id, slug, title, status, primary_activity, start_date, cover_image_url, trip_steps(distance_km, elevation_gain_m)')
       .eq('user_id', userId)
       .order('start_date', { ascending: false, nullsFirst: false })
-      .limit(20);
-    out.trips = ((tripRows ?? []) as Array<{
-      id: string;
-      slug: string;
-      title: string;
-      status: string;
-      primary_activity: string;
-      start_date: string | null;
-      cover_image_url: string | null;
-      trip_steps?: Array<{ distance_km: number | null; elevation_gain_m: number | null }>;
-    }>).map((row) => {
-      const steps = row.trip_steps ?? [];
-      return {
-        id: row.id,
-        slug: row.slug,
-        title: row.title,
-        status: row.status,
-        primary_activity: row.primary_activity,
-        start_date: row.start_date,
-        cover_image_url: row.cover_image_url,
-        distanceKm: Math.round(steps.reduce((s, st) => s + Number(st.distance_km || 0), 0) * 10) / 10,
-        dPlusM: Math.round(steps.reduce((s, st) => s + Number(st.elevation_gain_m || 0), 0)),
-        stepsCount: steps.length,
-      };
-    });
-  } catch (err) {
-    console.error('[LKDV hub] trips error:', err);
+      .limit(20),
+  ]);
+  out.pendingInvites = invitesRes.count ?? 0;
+  out.possession = {
+    items: itemsRes.count ?? 0,
+    loans: loansRes.count ?? 0,
+    alerts: alertsRes.count ?? 0,
+  };
+  out.trips = ((tripsRes.data ?? []) as Array<{
+    id: string;
+    slug: string;
+    title: string;
+    status: string;
+    primary_activity: string;
+    start_date: string | null;
+    cover_image_url: string | null;
+    trip_steps?: Array<{ distance_km: number | null; elevation_gain_m: number | null }>;
+  }>).map((row) => {
+    const steps = row.trip_steps ?? [];
+    return {
+      id: row.id,
+      slug: row.slug,
+      title: row.title,
+      status: row.status,
+      primary_activity: row.primary_activity,
+      start_date: row.start_date,
+      cover_image_url: row.cover_image_url,
+      distanceKm: Math.round(steps.reduce((s, st) => s + Number(st.distance_km || 0), 0) * 10) / 10,
+      dPlusM: Math.round(steps.reduce((s, st) => s + Number(st.elevation_gain_m || 0), 0)),
+      stepsCount: steps.length,
+    };
+  });
+
+  // P0-2 (C-07) — vague 2 (dépendante) : plus de N+1, une seule requête ramène
+  // tous les membres actifs des groupes de l'utilisateur ; compte + rôles
+  // agrégés en mémoire.
+  const memberData = (memberRes.data ?? []) as Array<{ group_id: string; role: string }>;
+  if (memberData.length) {
+    const groupIds = memberData.map((m) => m.group_id);
+    const [groupsRes, memberRowsRes] = await Promise.all([
+      supabase
+        .from('travel_groups')
+        .select('id, name')
+        .in('id', groupIds)
+        .order('created_at', { ascending: false }),
+      supabase
+        .from('group_members')
+        .select('group_id, role')
+        .in('group_id', groupIds)
+        .eq('status', 'active'),
+    ]);
+    const counts = new Map<string, number>();
+    const roles = new Map<string, string>();
+    for (const row of (memberRowsRes.data ?? []) as Array<{ group_id: string; role: string }>) {
+      counts.set(row.group_id, (counts.get(row.group_id) ?? 0) + 1);
+    }
+    for (const m of memberData) {
+      roles.set(m.group_id, m.role);
+    }
+    out.groups = ((groupsRes.data ?? []) as Array<{ id: string; name: string }>).map((g) => ({
+      id: g.id,
+      name: g.name,
+      member_count: counts.get(g.id) ?? 0,
+      my_role: roles.get(g.id) ?? null,
+    }));
   }
 
   return out;
@@ -522,17 +525,23 @@ async function loadHikingContext(
 
 export async function getHubAdventureDataInner(): Promise<HubAdventureData> {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await traceStage('auth.getUser', () => supabase.auth.getUser());
-  const lists = await traceStage('lists', () => loadLists(user?.id));
-  const stored = await getActiveAdventure();
+  // P0-2 — Étage 1 parallélisé : auth et cookie d'aventure active sont
+  // indépendants (lecture cookies seule pour le second).
+  const [{ data: { user } }, stored] = await Promise.all([
+    traceStage('auth.getUser', () => supabase.auth.getUser()),
+    getActiveAdventure(),
+  ]);
   const adventure: ActiveAdventureData = stored ?? { nature: 'possession' };
 
   if (adventure.nature === 'sortie') {
-    const trip = await traceStage('trip.full', () =>
-      getTripBySlug(adventure.slug, user?.id).catch(() => null),
-    );
+    // P0-2 — Étage 2 parallélisé : loadLists (rail) et getTripBySlug (contenu)
+    // dépendent tous deux de user.id mais sont indépendants entre eux.
+    const [lists, trip] = await Promise.all([
+      traceStage('lists', () => loadLists(user?.id)),
+      traceStage('trip.full', () =>
+        getTripBySlug(adventure.slug, user?.id).catch(() => null),
+      ),
+    ]);
     if (trip) {
       const activityType = deriveActivityType(trip.primary_activity);
       // Météo/parcours dès qu'une étape est géolocalisée — pas seulement
@@ -578,6 +587,7 @@ export async function getHubAdventureDataInner(): Promise<HubAdventureData> {
   }
 
   if (adventure.nature === 'collectif') {
+    const lists = await traceStage('lists', () => loadLists(user?.id));
     const g = lists.groups.find((x) => x.id === adventure.id);
     const membersCount = g?.member_count ?? 1;
     let linkedTripsCount = 0;
@@ -623,6 +633,7 @@ export async function getHubAdventureDataInner(): Promise<HubAdventureData> {
     };
   }
 
+  const lists = await traceStage('lists', () => loadLists(user?.id));
   return { ...lists, adventure, input: possessionInput(lists), trip: null, groupLabel: null, linkedTripSlug: null, group: null, hiking: null, checklist: [], itemImages: [], affiliateLinks: [], bookingByStepId: {}, preparation: null };
 }
 
