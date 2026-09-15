@@ -22,7 +22,9 @@ const nextConfig = {
     ignoreBuildErrors: false,
   },
   eslint: {
-    ignoreDuringBuilds: true,
+    // P0-5 (C-11, SEC-3) — 0 erreur au 2026-09-15 (915 warnings tolerés,
+    // reduction regle par regle a planifier) : le lint s'execute au build.
+    ignoreDuringBuilds: false,
   },
 
   images: {
@@ -31,7 +33,9 @@ const nextConfig = {
     formats: ['image/avif', 'image/webp'],
     deviceSizes: [640, 750, 828, 1080, 1200, 1920],
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
-    dangerouslyAllowSVG: true,
+    dangerouslyAllowSVG: false,
+    contentDispositionType: 'attachment',
+    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
     qualities: [75, 80, 85, 90, 95],
   },
 
@@ -189,6 +193,23 @@ const nextConfig = {
           {
             key: 'Permissions-Policy',
             value: 'camera=(), microphone=(), geolocation=(self), interest-cohort=()',
+          },
+          // P0-5 (C-10) — CSP en Report-Only (une semaine d'observation des
+          // rapports avant le mode bloquant ; nonce à poser sur les scripts
+          // inline JSON-LD avant le durcissement).
+          {
+            key: 'Content-Security-Policy-Report-Only',
+            value: [
+              "default-src 'self'",
+              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://va.vercel-scripts.com",
+              "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+              "font-src 'self' https://fonts.gstatic.com data:",
+              "img-src 'self' data: blob: https:",
+              "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.open-meteo.com https://va.vercel-scripts.com https://tile.openstreetmap.org https://tile.opentopomap.org https://*.arcgisonline.com https://api.stripe.com",
+              "frame-src https://js.stripe.com",
+              "worker-src 'self' blob:",
+              "report-uri /api/telemetry/hub",
+            ].join('; '),
           },
         ],
       },
