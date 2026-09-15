@@ -95,15 +95,9 @@ async function SortieSection({ sectionId, slug, jour }: { sectionId: string; slu
 
   switch (sectionId) {
     case 'itinerary': {
-      const supabase = await createClient();
-      const { data: rawSteps } = await supabase
-        .from('trip_steps')
-        .select('*')
-        .eq('trip_id', trip.id)
-        .order('day_number', { ascending: true })
-        .order('order_index', { ascending: true });
-
-      const initialSteps: PlannerStep[] = (rawSteps || []).map((s: any) => ({
+      // P2 (C-20) — un seul client, steps déjà chargés par loadTripSection
+      // (getTripBySlug inclut trip_steps) : plus de refetch ni de shadowing.
+      const initialSteps: PlannerStep[] = (trip.steps || []).map((s: any) => ({
         id: s.id,
         trip_id: s.trip_id,
         day_number: s.day_number,

@@ -197,7 +197,7 @@ self.addEventListener('fetch', (event) => {
         return fetch(request)
           .then((response) => {
             if (response.status === 200) {
-              cache.put(request, response.clone());
+              cache.put(request, response.clone()).then(() => evictTilesIfOverflowing(cache));
             }
             return response;
           })
@@ -233,3 +233,24 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 });
+
+// P2 (C-19) — LRU borné pour les tuiles : sans limite, une session de
+// randonnée peut saturer le quota d'origine et faire évacuer TOUT le storage
+// de l'origine (caches statiques, IndexedDB, packs offline). Borne 3000
+// entrées, éviction FIFO simple à chaque dépassement, jamais bloquante.
+const TILE_CACHE_MAX_ENTRIES = 3000;
+
+async function evictTilesIfOverflowing(cache) {
+  try {
+    const keys = await cache.keys();
+    if (keys.length <= TILE_CACHE_MAX_ENTRIES) return;
+    const overflow = keys.length - TILE_CACHE_MAX_ENTRIES;
+    // keys() liste dans l'ordre d'insertion pour un cache rempli
+    // séquentiellement : FIFO approxime le LRU à coût constant.
+    for (let i = 0; i < overflow; i += 1) {
+      await cache.delete(keys[i]);
+    }
+  } catch {
+    /* éviction best-effort */
+  }
+}
