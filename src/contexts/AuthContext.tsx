@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState, ReactNode, useMemo, useCallback } from 'react';
+import { createContext, useContext, useEffect, useRef, useState, ReactNode, useMemo, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import type { User, Session } from '@supabase/supabase-js';
 
@@ -150,6 +150,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     return () => subscription.unsubscribe();
   }, [supabase, ensureProfile]);
+
+  // SEC-1 — Isolation inter-comptes : tout changement d'utilisateur connecté
+  // (connexion d'un autre compte ou déconnexion) purge les caches privés du
+  // service worker (HTML runtime + images) pour qu'aucun HTML authentifié
+  // d'un compte ne soit resservi à un autre sur le même appareil.
+  const lastUserIdRef = useRef<string | null>(undefined as unknown as string | null);
+  useEffect(() => {
+    const currentId = user?.id ?? null;
+    const prevId = lastUserIdRef.current;
+    lastUserIdRef.current = currentId;
+    if (prevId === undefined || prevId === currentId) return;
+    navigator.serviceWorker?.controller?.postMessage({ type: 'LKDV_PURGE_PRIVATE' });
+  }, [user?.id]);
 
   const signUp = useCallback(async (email: string, password: string, metadata: { fullName?: string; avatarUrl?: string } = {}) => {
     const { data, error } = await supabase.auth.signUp({

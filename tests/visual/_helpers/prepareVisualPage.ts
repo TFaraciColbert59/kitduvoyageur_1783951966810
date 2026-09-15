@@ -78,6 +78,11 @@ export async function waitForVisualReady(page: Page): Promise<void> {
   await page
     .waitForSelector('[class*="animate-spin"]', { state: 'hidden', timeout: 10_000 })
     .catch(() => {});
+  // Skeletons de chargement (animate-pulse : météo, recommandations pays…) :
+  // une capture prise en plein chargement produit un diff géant non visuel.
+  await page
+    .waitForSelector('[class*="animate-pulse"]', { state: 'hidden', timeout: 12_000 })
+    .catch(() => {});
   // Polices : attente avec timeout Node.js (immunisé contre le gel de page.clock)
   await Promise.race([
     page.evaluate(() => document.fonts.ready),

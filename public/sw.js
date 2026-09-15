@@ -1,33 +1,74 @@
 /* ============================================================
-   LKDV — High-Performance Mobile Service Worker
-   Stratégie multi-niveaux :
-   - CacheFirst : polices Google, CSS/JS statiques Next.js, images locales
-   - StaleWhileRevalidate : images distantes, routes API (hikes, carnets)
-   - NetworkFirst : pages de navigation avec fallback offline
+   LKDV — Service Worker v4 (SEC-1 : isolation inter-comptes)
+   Stratégies :
+   - CacheFirst : polices, chunks Next.js statiques
+   - StaleWhileRevalidate : images publiques tierces + API PUBLIQUES uniquement
+   - Navigation : Network-First, cache HTML réservé aux routes PUBLIQUES
+     (liste blanche) ; les routes authentifiées ne sont JAMAIS mises en cache.
+   - Message LKDV_PURGE_PRIVATE : purge runtime+images à la déconnexion /
+     changement de compte (piloté par AuthContext).
+   Interdits absolus (RGPD) : HTML authentifié (/hub, /compte, /voyages…),
+   réponses API privées (/api/hub, /api/materiel, /api/voyages…) en cache.
    ============================================================ */
 
-const CACHE_VERSION = 'lkdv-v3';
+const CACHE_VERSION = 'lkdv-v4';
 const STATIC_CACHE = `lkdv-static-${CACHE_VERSION}`;
 const RUNTIME_CACHE = `lkdv-runtime-${CACHE_VERSION}`;
 const IMAGE_CACHE = `lkdv-images-${CACHE_VERSION}`;
 
+// Aucune route applicative authentifiée : uniquement des assets publics.
 const PRECACHE_ASSETS = [
-  '/',
-  '/voyages',
-  '/equipages',
-  '/explorer',
-  '/communaute',
-  '/hub',
-  '/compte',
-  '/pays',
-  '/hors-ligne',
   '/offline.html',
+  '/hors-ligne',
   '/manifest.json',
   '/assets/images/app_logo.png',
   '/favicon.ico',
 ];
 
-// 1. Installation & pré-mise en cache
+// Navigations HTML publiquement cacheables (anonymes, sans donnée perso).
+const PUBLIC_NAV_PATHS = new Set([
+  '/',
+  '/explorer',
+  '/pays',
+  '/guides',
+  '/kits',
+  '/lieux',
+  '/cgu',
+  '/cgv',
+  '/mentions-legales',
+  '/politique-confidentialite',
+  '/faq',
+  '/blog',
+  '/contact',
+  '/hors-ligne',
+  '/offline.html',
+]);
+const PUBLIC_NAV_PREFIXES = [
+  '/pays/',
+  '/guides/',
+  '/kits/',
+  '/lieux/',
+  '/blog/',
+  '/produit/',
+];
+
+// API GET publiques (aucune donnée personnelle, RLS anonyme).
+const PUBLIC_API_PREFIXES = [
+  '/api/hikes',
+  '/api/pois',
+  '/api/trails',
+  '/api/pays/',
+];
+
+function isPublicNavigation(pathname) {
+  return PUBLIC_NAV_PATHS.has(pathname) || PUBLIC_NAV_PREFIXES.some((p) => pathname.startsWith(p));
+}
+
+function isPublicApi(pathname) {
+  return PUBLIC_API_PREFIXES.some((p) => pathname.startsWith(p));
+}
+
+// 1. Installation & pré-mise en cache (assets publics uniquement)
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(STATIC_CACHE).then((cache) => {
@@ -39,13 +80,13 @@ self.addEventListener('install', (event) => {
   self.skipWaiting();
 });
 
-// 2. Activation & purge des anciens caches
+// 2. Activation & purge des anciens caches (versions précédentes incluses)
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((keys) => {
       return Promise.all(
         keys
-          .filter((k) => !k.includes(CACHE_VERSION))
+          .filter((k) => k !== STATIC_CACHE && k !== RUNTIME_CACHE && k !== IMAGE_CACHE && k !== 'lkdv-tiles-v1')
           .map((k) => caches.delete(k))
       );
     })
@@ -53,12 +94,24 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-// 3. Routage et stratégies de requêtes
+// 3. Purge des données privées (déconnexion / changement d'utilisateur).
+// AuthContext poste { type: 'LKDV_PURGE_PRIVATE' } au SW à chaque changement d'user.id.
+self.addEventListener('message', (event) => {
+  const data = event.data || {};
+  if (data.type === 'LKDV_PURGE_PRIVATE') {
+    event.waitUntil(
+      Promise.all([caches.delete(RUNTIME_CACHE), caches.delete(IMAGE_CACHE)])
+        .then(() => self.clients.matchAll({ includeUncontrolled: true }))
+        .then((clients) => clients.forEach((client) => client.postMessage({ type: 'LKDV_PRIVATE_PURGED' })))
+    );
+  }
+});
+
+// 4. Routage et stratégies de requêtes
 self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
-  // Ignorer les requêtes non-GET ou externes non-visées
   if (request.method !== 'GET') return;
   if (url.protocol !== 'http:' && url.protocol !== 'https:') return;
 
@@ -82,7 +135,9 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // -- Stratégie B : Images (Stale-While-Revalidate avec cache dédié) --
+  // -- Stratégie B : Images PUBLIQUES (Stale-While-Revalidate, cache dédié) --
+  // URLs signées Supabase : le token varie par session → jamais de collision
+  // inter-comptes ; l'image n'est resservie qu'en cas d'échec réseau.
   if (
     request.destination === 'image' ||
     url.pathname.match(/\.(png|jpg|jpeg|svg|webp|avif)$/) ||
@@ -92,7 +147,7 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(
       caches.open(IMAGE_CACHE).then(async (cache) => {
         const cached = await cache.match(request);
-        const fetchPromise = fetch(request)
+        const networkPromise = fetch(request)
           .then((networkResponse) => {
             if (networkResponse.status === 200) {
               cache.put(request, networkResponse.clone());
@@ -100,26 +155,20 @@ self.addEventListener('fetch', (event) => {
             return networkResponse;
           })
           .catch(() => cached);
-        return cached || fetchPromise;
+        return cached || networkPromise;
       })
     );
     return;
   }
 
-  // -- Stratégie C : API Routes GET (Stale-While-Revalidate) --
-  if (
-    url.pathname.startsWith('/api/hikes') ||
-    url.pathname.startsWith('/api/carnets') ||
-    url.pathname.startsWith('/api/materiel') ||
-    url.pathname.startsWith('/api/hub') ||
-    url.pathname.startsWith('/api/voyages') ||
-    url.pathname.startsWith('/api/trips') ||
-    url.pathname.startsWith('/api/equipages')
-  ) {
+  // -- Stratégie C : API GET — uniquement les endpoints publics (SWR) --
+  // Toute autre API (hub, materiel, voyages, trips, equipages, carnets…) :
+  // réseau seul, JAMAIS mis en cache (SEC-1).
+  if (isPublicApi(url.pathname)) {
     event.respondWith(
       caches.open(RUNTIME_CACHE).then(async (cache) => {
         const cached = await cache.match(request);
-        const networkFetch = fetch(request)
+        const networkPromise = fetch(request)
           .then((response) => {
             if (response.status === 200) {
               cache.put(request, response.clone());
@@ -127,13 +176,13 @@ self.addEventListener('fetch', (event) => {
             return response;
           })
           .catch(() => cached);
-        return cached || networkFetch;
+        return cached || networkPromise;
       })
     );
     return;
   }
 
-  // -- Stratégie E : Tuiles de Carte MapLibre / Leaflet / ESRI (Cache-First ultra-rapide) --
+  // -- Stratégie E : Tuiles de Carte (Cache-First, cache public dédié) --
   if (
     url.hostname.includes('tile.openstreetmap.org') ||
     url.hostname.includes('tile.opentopomap.org') ||
@@ -158,20 +207,25 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // -- Stratégie D : Navigation HTML (Network-First avec Fallback Cache/Offline) --
+  // -- Stratégie D : Navigation HTML --
+  // Network-First. Mise en cache UNIQUEMENT si la route est publique.
+  // Routes authentifiées : jamais cachees ; fallback offline.html.
   if (request.mode === 'navigate') {
+    const publicNav = url.origin === self.location.origin && isPublicNavigation(url.pathname);
     event.respondWith(
       fetch(request)
         .then((response) => {
-          if (response.status === 200) {
+          if (response.status === 200 && publicNav) {
             const clone = response.clone();
             caches.open(RUNTIME_CACHE).then((c) => c.put(request, clone));
           }
           return response;
         })
         .catch(async () => {
-          const cached = await caches.match(request);
-          if (cached) return cached;
+          if (publicNav) {
+            const cached = await caches.match(request);
+            if (cached) return cached;
+          }
           const offlinePage = await caches.match('/offline.html');
           return offlinePage || caches.match('/hors-ligne');
         })
