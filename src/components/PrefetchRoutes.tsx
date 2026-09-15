@@ -41,10 +41,14 @@ const PREFETCH_MAP: Record<string, PrefetchConfig> = {
     routes: ["/carnets", "/groupes", "/clubs", "/evenements", "/entraide"],
   },
   "/hub": {
-    routes: ["/kits", "/ai-configurator", "/explorer"],
+    // P1-4 (C-14) — la destination de tous les taps du hub : les sections
+    // canoniques de l'aventure active (registre hubSectionRegistry), pas des
+    // surfaces génériques.
+    routes: ["/hub/itineraire", "/hub/kit-voyage", "/hub/checklist", "/hub/documents", "/explorer"],
   },
   "/compte": {
-    routes: ["/profil", "/abonnements", "/mes-aventures"],
+    // C-14 : /mes-aventures est redirigée par le middleware — retirée.
+    routes: ["/profil", "/abonnements"],
   },
   "/carnets": {
     routes: ["/communaute", "/compte"],
