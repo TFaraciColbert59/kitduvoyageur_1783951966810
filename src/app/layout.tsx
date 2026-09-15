@@ -24,6 +24,7 @@ import { ConditionalCursor } from '@/components/ui/CustomCursor';
 import PrefetchRoutes from '@/components/PrefetchRoutes';
 import NativeAppBootstrap from '@/components/NativeAppBootstrap';
 import ServiceWorkerRegistration from '@/components/ServiceWorkerRegistration';
+import WebVitalsReporter from '@/components/WebVitalsReporter';
 import { ActiveTripProvider } from '@/features/trips/context/ActiveTripContext';
 import { getActiveTrip } from '@/features/trips/context/activeTripServer';
 import { ActiveAdventureProvider } from '@/features/hub/context/ActiveAdventureContext';
@@ -259,6 +260,7 @@ export default async function RootLayout({
                       {/* Service worker web (production) — jamais enregistré dans
                           l'app Capacitor (garde `isNative()` côté client). */}
                       <ServiceWorkerRegistration />
+        <WebVitalsReporter />
                       <KitSheetProvider>
                       <PrefetchRoutes />
                       <Suspense fallback={null}>
