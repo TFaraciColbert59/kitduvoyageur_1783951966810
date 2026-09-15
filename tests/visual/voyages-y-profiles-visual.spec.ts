@@ -12,6 +12,28 @@ import fs from 'node:fs';
 
 let cachedAuthCookie: { name: string; value: string; domain: string; path: string } | null = null;
 
+/**
+ * Cookie d'aventure active — même protocole que tests/a11y/e2e/hub-a11y.spec.ts.
+ * Sans cookie, /hub retombe sur la nature possession (H-AUTO-15) : les captures
+ * de sections (budget, itineraire…) tombent en 404. Chaque test verrouille son
+ * profil y-* seedé (horloge ancrée 01/06/2026) pour une baseline déterministe.
+ */
+function adventureCookie(data: unknown): { name: string; value: string; domain: string; path: string } {
+  return {
+    name: 'lkv_active_adventure',
+    value: Buffer.from(JSON.stringify(data), 'utf-8').toString('base64url'),
+    domain: 'localhost',
+    path: '/',
+  };
+}
+
+const SORTIE = (slug: string) =>
+  adventureCookie({ nature: 'sortie', id: slug, slug, title: slug });
+
+const Y_DAY_SOLO = SORTIE('y-day-solo');
+const Y_LONG_GROUP = SORTIE('y-long-group');
+const Y_EXPED_SOLO = SORTIE('y-exped-solo');
+
 async function getDemoAuthCookie(): Promise<{ name: string; value: string; domain: string; path: string } | null> {
   if (cachedAuthCookie) return cachedAuthCookie;
   // CI hermétique (Supabase placeholder, pas de .env) : sortie immédiate.
@@ -64,6 +86,7 @@ test.beforeEach(async ({ context }) => {
 
 test.describe('Profils Y — Decoupage & fidelite visuelle du Hub', () => {
   test('y-day-solo — Cockpit journee solo', async ({ page }) => {
+    await page.context().addCookies([Y_DAY_SOLO]);
     await prepareVisualPage(page, '/hub');
     const main = page.locator('main').first();
     await expect(main).toBeVisible();
@@ -71,6 +94,7 @@ test.describe('Profils Y — Decoupage & fidelite visuelle du Hub', () => {
   });
 
   test('y-day-solo — Itineraire simplifie', async ({ page }) => {
+    await page.context().addCookies([Y_DAY_SOLO]);
     await prepareVisualPage(page, '/hub/itineraire');
     const content = page.locator('main').first();
     await expect(content).toBeVisible();
@@ -78,6 +102,7 @@ test.describe('Profils Y — Decoupage & fidelite visuelle du Hub', () => {
   });
 
   test('y-long-group — Cockpit itinerance groupe avec equipage et budget', async ({ page }) => {
+    await page.context().addCookies([Y_LONG_GROUP]);
     await prepareVisualPage(page, '/hub');
     const main = page.locator('main').first();
     await expect(main).toBeVisible();
@@ -85,6 +110,7 @@ test.describe('Profils Y — Decoupage & fidelite visuelle du Hub', () => {
   });
 
   test('y-long-group — Synthese budget & balances', async ({ page }) => {
+    await page.context().addCookies([Y_LONG_GROUP]);
     await prepareVisualPage(page, '/hub/budget');
     const main = page.locator('main').first();
     await expect(main).toBeVisible();
@@ -92,6 +118,7 @@ test.describe('Profils Y — Decoupage & fidelite visuelle du Hub', () => {
   });
 
   test('y-long-group — Groupe & roles (participants)', async ({ page }) => {
+    await page.context().addCookies([Y_LONG_GROUP]);
     await prepareVisualPage(page, '/hub/groupe');
     const main = page.locator('main').first();
     await expect(main).toBeVisible();
@@ -99,6 +126,7 @@ test.describe('Profils Y — Decoupage & fidelite visuelle du Hub', () => {
   });
 
   test('y-exped-solo — Expedition solo & checkpoints de securite', async ({ page }) => {
+    await page.context().addCookies([Y_EXPED_SOLO]);
     await prepareVisualPage(page, '/hub');
     const main = page.locator('main').first();
     await expect(main).toBeVisible();
@@ -106,6 +134,7 @@ test.describe('Profils Y — Decoupage & fidelite visuelle du Hub', () => {
   });
 
   test('y-exped-solo — Securite & points de passage', async ({ page }) => {
+    await page.context().addCookies([Y_EXPED_SOLO]);
     await prepareVisualPage(page, '/hub/securite');
     const main = page.locator('main').first();
     await expect(main).toBeVisible();
@@ -113,6 +142,7 @@ test.describe('Profils Y — Decoupage & fidelite visuelle du Hub', () => {
   });
 
   test('y-exped-solo — Journal de bord & notes', async ({ page }) => {
+    await page.context().addCookies([Y_EXPED_SOLO]);
     await prepareVisualPage(page, '/hub/journal');
     const main = page.locator('main').first();
     await expect(main).toBeVisible();
@@ -123,6 +153,7 @@ test.describe('Profils Y — Decoupage & fidelite visuelle du Hub', () => {
   // baselines X-era « bugs compris ») : couverture rétablie sur slugs seedés. ———
 
   test('y-long-group — Section kit & sac a dos', async ({ page }) => {
+    await page.context().addCookies([Y_LONG_GROUP]);
     await prepareVisualPage(page, '/hub/kit-voyage');
     const main = page.locator('main').first();
     await expect(main).toBeVisible();
@@ -130,6 +161,7 @@ test.describe('Profils Y — Decoupage & fidelite visuelle du Hub', () => {
   });
 
   test('y-long-group — Feuille de route export', async ({ page }) => {
+    await page.context().addCookies([Y_LONG_GROUP]);
     await prepareVisualPage(page, '/hub/export');
     const main = page.locator('main').first();
     await expect(main).toBeVisible();
@@ -137,6 +169,7 @@ test.describe('Profils Y — Decoupage & fidelite visuelle du Hub', () => {
   });
 
   test('y-long-group — Checklist de depart', async ({ page }) => {
+    await page.context().addCookies([Y_LONG_GROUP]);
     await prepareVisualPage(page, '/hub/checklist');
     const main = page.locator('main').first();
     await expect(main).toBeVisible();
@@ -144,6 +177,7 @@ test.describe('Profils Y — Decoupage & fidelite visuelle du Hub', () => {
   });
 
   test('y-long-group — Documents de voyage', async ({ page }) => {
+    await page.context().addCookies([Y_LONG_GROUP]);
     await prepareVisualPage(page, '/hub/documents');
     const main = page.locator('main').first();
     await expect(main).toBeVisible();
@@ -151,6 +185,7 @@ test.describe('Profils Y — Decoupage & fidelite visuelle du Hub', () => {
   });
 
   test('liste /voyages — catalogue cockpit et filtres profil', async ({ page }) => {
+    await page.context().addCookies([Y_LONG_GROUP]);
     await prepareVisualPage(page, '/hub');
     const main = page.locator('main').first();
     await expect(main).toBeVisible();
@@ -158,6 +193,7 @@ test.describe('Profils Y — Decoupage & fidelite visuelle du Hub', () => {
   });
 
   test('wizard /voyages/nouveau — creation guidee', async ({ page }) => {
+    await page.context().addCookies([Y_LONG_GROUP]);
     await prepareVisualPage(page, '/hub/nouveau');
     const main = page.locator('main').first();
     await expect(main).toBeVisible();

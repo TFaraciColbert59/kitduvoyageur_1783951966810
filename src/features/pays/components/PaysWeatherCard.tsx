@@ -35,6 +35,9 @@ export function PaysWeatherCard({
   return (
     <section
       aria-label="Météo actuelle"
+      // Donnée live Open-Meteo (temp, condition, vent) : jamais identique
+      // entre deux captures → masque visuel canonique (protocole Y0.5).
+      data-visual-mask
       className={cn('glass rounded-[1.5rem] p-5 border border-white/50 shadow-xs space-y-2', className)}
     >
       <div className="flex items-center justify-between gap-2">

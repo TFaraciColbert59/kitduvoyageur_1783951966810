@@ -91,7 +91,12 @@ export default function PaysHeroOverview({
 
           {/* Hero Landscape Photo Showcase */}
           {heroImg && (
-            <div className="w-full lg:w-72 xl:w-80 h-44 sm:h-52 rounded-2xl overflow-hidden relative border border-white shadow-sm shrink-0 group">
+            <div
+              // Photo distante Unsplash : latence de chargement non déterministe
+              // → masque visuel canonique (protocole Y0.5, masque nommé).
+              data-visual-mask
+              className="w-full lg:w-72 xl:w-80 h-44 sm:h-52 rounded-2xl overflow-hidden relative border border-white shadow-sm shrink-0 group"
+            >
               <Image
                 src={heroImg}
                 alt={country.nom}

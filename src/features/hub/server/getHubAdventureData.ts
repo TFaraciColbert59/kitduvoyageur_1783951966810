@@ -17,6 +17,7 @@ import {
   type ResolvedStepBookingLink,
 } from '@/features/affiliation/engine/stepBookingLink';
 import { buildHubPreparationSummary, type HubPreparationSummary } from './preparationSummary';
+import { traceStage } from '@/lib/perf/ssrTrace';
 
 /**
  * H3.1 — Chargeur serveur unique de l'aventure du hub (partagé par le layout
@@ -523,13 +524,15 @@ export async function getHubAdventureDataInner(): Promise<HubAdventureData> {
   const supabase = await createClient();
   const {
     data: { user },
-  } = await supabase.auth.getUser();
-  const lists = await loadLists(user?.id);
+  } = await traceStage('auth.getUser', () => supabase.auth.getUser());
+  const lists = await traceStage('lists', () => loadLists(user?.id));
   const stored = await getActiveAdventure();
   const adventure: ActiveAdventureData = stored ?? { nature: 'possession' };
 
   if (adventure.nature === 'sortie') {
-    const trip = await getTripBySlug(adventure.slug, user?.id).catch(() => null);
+    const trip = await traceStage('trip.full', () =>
+      getTripBySlug(adventure.slug, user?.id).catch(() => null),
+    );
     if (trip) {
       const activityType = deriveActivityType(trip.primary_activity);
       // Météo/parcours dès qu'une étape est géolocalisée — pas seulement
@@ -537,15 +540,17 @@ export async function getHubAdventureDataInner(): Promise<HubAdventureData> {
       const hasGeoSteps = (trip.steps ?? []).some(
         (s) => s.latitude != null && s.longitude != null,
       );
-      const [group, hiking, checklist, itemImages, affiliateLinks] = await Promise.all([
-        loadCrewBlock(supabase, trip.id),
-        activityType === 'hiking' || hasGeoSteps
-          ? loadHikingContext(supabase, trip)
-          : Promise.resolve(null),
-        loadChecklist(supabase, trip.id),
-        getTripItemImages(trip.id),
-        loadHubAffiliateLinks(trip.destination_country_code),
-      ]);
+      const [group, hiking, checklist, itemImages, affiliateLinks] = await traceStage('trip.enrich', () =>
+        Promise.all([
+          loadCrewBlock(supabase, trip.id),
+          activityType === 'hiking' || hasGeoSteps
+            ? loadHikingContext(supabase, trip)
+            : Promise.resolve(null),
+          loadChecklist(supabase, trip.id),
+          getTripItemImages(trip.id),
+          loadHubAffiliateLinks(trip.destination_country_code),
+        ]),
+      );
       return {
         ...lists,
         adventure,

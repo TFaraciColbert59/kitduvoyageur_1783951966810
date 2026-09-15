@@ -6,6 +6,7 @@ import { AdventureIntelligenceHub } from '@/features/adventure-intelligence/ui';
 import { ItineraryAdventureCockpit } from '@/features/hub/components/mobile/itinerary/ItineraryAdventureCockpit';
 import { LiquidGlassDefs } from '@/components/ui-layouts/liquid-glass';
 import { TripAffiliateProvider } from '@/features/affiliation/components/TripAffiliateProvider';
+import { traceStage } from '@/lib/perf/ssrTrace';
 
 // Hub auth/cookie-driven : jamais prerenderee statiquement au build.
 export const dynamic = 'force-dynamic';
@@ -16,20 +17,24 @@ export const dynamic = 'force-dynamic';
  * et monte la coquille unique. Les pages du segment ne rendent que leur vue.
  */
 export default async function HubLayout({ children }: { children: React.ReactNode }) {
-  const data = await getHubAdventureData();
+  const data = await traceStage('layout.adventure', () => getHubAdventureData());
   // Données décoratives : jamais bloquantes pour le rendu du hub (un incident
   // sur l'intelligence ou les stats ne doit pas blanchir la page).
-  const intelligence = await getAdventureIntelligence().catch((error) => {
-    console.error('[HubLayout] intelligence indisponible:', error);
-    return null;
-  });
+  const intelligence = await traceStage('layout.intelligence', () =>
+    getAdventureIntelligence().catch((error) => {
+      console.error('[HubLayout] intelligence indisponible:', error);
+      return null;
+    }),
+  );
   const profile = deriveHubProfile(data.input, new Date());
   const counts = buildHubCounts(data);
   const tripStats = data.trip
-    ? await getHubTripStats(data.trip.id).catch((error) => {
-        console.error('[HubLayout] stats du voyage indisponibles:', error);
-        return null;
-      })
+    ? await traceStage('layout.stats', () =>
+        getHubTripStats(data.trip!.id).catch((error) => {
+          console.error('[HubLayout] stats du voyage indisponibles:', error);
+          return null;
+        }),
+      )
     : null;
 
   const baseEnabled: HubSectionId[] =
