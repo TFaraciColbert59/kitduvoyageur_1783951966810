@@ -136,8 +136,13 @@ function weatherLabel(code: number): string {
 export function MeteoBlock({ hiking }: { hiking: HubHikingContext | null }) {
   const current = hiking?.weather?.current;
   const days = (hiking?.weather?.days ?? []).slice(0, 5);
+  // Donnée live Open-Meteo → masque visuel canonique (protocole Y0.5).
   return (
-    <section className="glass p-4 rounded-[var(--lkv-radius-card)]" aria-label="Météo">
+    <section
+      data-visual-mask
+      className="glass p-4 rounded-[var(--lkv-radius-card)]"
+      aria-label="Météo"
+    >
       <div className="flex items-center gap-2">
         <Icon
           name="cloud-sun"

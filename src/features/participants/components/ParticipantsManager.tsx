@@ -85,7 +85,12 @@ export const ParticipantsManager: React.FC = () => {
   return (
     <div className="space-y-6 pb-24 animate-in fade-in duration-300">
       {/* Télémétrie de groupe */}
-      <div className="p-4 rounded-3xl bg-gradient-to-br from-[var(--lkv-forest-900)] to-[var(--lkv-forest-700)] text-white shadow-xl shadow-md/10 relative overflow-hidden">
+      <div
+        // Calcul hydrique/humain dépendant de la météo live (eau/jour varie) →
+        // masque visuel canonique sur la télémétrie (protocole Y0.5).
+        data-visual-mask
+        className="p-4 rounded-3xl bg-gradient-to-br from-[var(--lkv-forest-900)] to-[var(--lkv-forest-700)] text-white shadow-xl shadow-md/10 relative overflow-hidden"
+      >
         <div className="grid grid-cols-3 gap-2 text-center">
           <div className="p-2 rounded-xl bg-white/5">
             <span className="text-[9px] uppercase font-mono opacity-75 block">Poids portage</span>

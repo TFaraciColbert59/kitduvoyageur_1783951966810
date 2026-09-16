@@ -216,6 +216,9 @@ export function DayTraceMap({
       role="img"
       aria-label={`Trace réelle du jour ${day}`}
       data-testid="day-trace-map"
+      // Polyligne chargée via /api/hikes/[id] : présence selon la latence
+      // réseau → masque visuel canonique (protocole Y0.5, masque nommé).
+      data-visual-mask
       className={`relative w-full overflow-hidden rounded-2xl border border-white/60 ${heightClassName} ${className ?? ''}`}
     >
       <HubRouteMap

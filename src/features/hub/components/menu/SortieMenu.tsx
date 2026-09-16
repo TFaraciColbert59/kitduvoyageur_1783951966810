@@ -496,7 +496,12 @@ export function SortieMenu({
       span: 4,
       node: (
         <MenuCard href={hubSectionHref(ref, 'budget')} label="Budget">
-          <div className="mt-0.5 flex items-center gap-3">
+          {/* Donut + équilibres : compteurs animés (NumberFlow, hors gel CSS)
+              → masque visuel canonique (protocole Y0.5). */}
+          <div
+            data-visual-mask
+            className="mt-0.5 flex items-center gap-3"
+          >
             <div className="relative shrink-0" style={{ width: 44, height: 44 }}>
               <BudgetDonut
                 categories={topCats.map(([label, value]) => ({ label, value }))}
@@ -538,7 +543,12 @@ export function SortieMenu({
             </div>
           )}
           {showBalances && (
-            <div className="mt-1 min-h-0 border-t border-black/5 pt-0.5">
+            <div
+              // Équilibres : calcul dépendant des dépenses du jour (nombres
+              // animés) → masque visuel canonique (protocole Y0.5).
+              data-visual-mask
+              className="mt-1 min-h-0 border-t border-black/5 pt-0.5"
+            >
               <ul className="space-y-0.5">
                 {balanceRows.slice(0, 2).map((b) => {
                   const owes = b.net < 0;

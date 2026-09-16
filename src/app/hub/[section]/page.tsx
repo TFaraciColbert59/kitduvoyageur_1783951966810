@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
-import { getHubAdventureData } from '@/features/hub/server/getHubAdventureData';
+import { getHubAdventureData, getHubTripStats } from '@/features/hub/server/getHubAdventureData';
 import { MenuBack } from '@/features/hub/components/menu/MenuBack';
 import { hubSectionRegistry } from '@/features/hub/registry/hubSectionRegistry';
 import { HubInventaireSection } from '@/features/hub/components/possession/HubInventaireSection';
@@ -12,32 +12,32 @@ import { HubAlertesSection } from '@/features/hub/components/possession/HubAlert
 import { HubOublisSection } from '@/features/hub/components/possession/HubOublisSection';
 import { HubInvitationsSection } from '@/features/hub/components/collectif/HubInvitationsSection';
 import { HubVoyagesLiesSection } from '@/features/hub/components/collectif/HubVoyagesLiesSection';
-import { HubGroupeCockpit } from '@/features/hub/components/collectif/HubGroupeCockpit';
 import { loadTripSection } from '@/lib/tripSection';
-import { getHubTripStats } from '@/features/hub/server/getHubAdventureData';
 import type { DatabaseTripChecklistItem } from '@/lib/supabase/types';
 import { getTripKitDetails } from '@/lib/queries-trip-kit';
 import { getTripItemImages } from '@/features/hub/server/getTripItemImages';
 import { GearSection } from '@/features/hub/components/menu/GearSection';
 import { calculateBudgetSummary } from '@/features/trips/engine/budgetEngine';
 import { getTripPhaseDetails } from '@/features/trips/engine/temporalPhaseEngine';
-import ItineraryPlannerClient from '@/features/trips/planner/ItineraryPlannerClient';
 import type { PlannerStep } from '@/features/trips/planner/plannerEngine';
-import { TripTeamView } from '@/features/trips/components/TripTeamView';
-import { ParticipantsManager } from '@/features/participants/components/ParticipantsManager';
-import { TeamMobileExperience } from '@/features/hub/components/mobile/team/TeamMobileExperience';
-import { ChecklistMobileExperience } from '@/features/hub/components/mobile/checklist/ChecklistMobileExperience';
-import { DocsMobileExperience } from '@/features/hub/components/mobile/docs/DocsMobileExperience';
-import { SafetyMobileExperience } from '@/features/hub/components/mobile/safety/SafetyMobileExperience';
-import { JournalMobileExperience } from '@/features/hub/components/mobile/journal/JournalMobileExperience';
-import { ItineraryMobileExperience } from '@/features/hub/components/mobile/itinerary/ItineraryMobileExperience';
-import { ExportMobileExperience } from '@/features/hub/components/mobile/export/ExportMobileExperience';
-import { TripBudgetView } from '@/features/trips/components/TripBudgetView';
-import { TripDocumentsView } from '@/features/trips/components/TripDocumentsView';
-import { TripChecklistView } from '@/features/trips/components/TripChecklistView';
-import { TripSafetyView } from '@/features/trips/components/TripSafetyView';
-import { TripNotesView } from '@/features/trips/components/TripNotesView';
-import TripExportView from '@/features/trips/components/TripExportView';
+import { SectionLoading } from './sectionViews.client';
+import { ItineraryPlannerClient } from './sectionViews.client';
+import { ItineraryMobileExperience } from './sectionViews.client';
+import { TripTeamView } from './sectionViews.client';
+import { ParticipantsManager } from './sectionViews.client';
+import { TeamMobileExperience } from './sectionViews.client';
+import { ChecklistMobileExperience } from './sectionViews.client';
+import { DocsMobileExperience } from './sectionViews.client';
+import { SafetyMobileExperience } from './sectionViews.client';
+import { JournalMobileExperience } from './sectionViews.client';
+import { TripBudgetView } from './sectionViews.client';
+import { TripDocumentsView } from './sectionViews.client';
+import { TripChecklistView } from './sectionViews.client';
+import { TripSafetyView } from './sectionViews.client';
+import { TripNotesView } from './sectionViews.client';
+import { TripExportView } from './sectionViews.client';
+import { ExportMobileExperience } from './sectionViews.client';
+import { HubGroupeCockpit } from './sectionViews.client';
 
 /**
  * Étape 2 — Section active du hub (URL-driven, registre). LE rendu canonique :

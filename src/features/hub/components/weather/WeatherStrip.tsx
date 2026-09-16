@@ -24,10 +24,13 @@ export function WeatherStrip({
   locationLabel,
   variant = 'strip',
 }: WeatherStripProps) {
+  // Donnée live Open-Meteo : présence et valeur dépendent de la latence réseau
+  // → masque visuel canonique sur les deux états (protocole Y0.5, masque nommé).
+  const liveMask = { 'data-visual-mask': true } as const;
   if (!current) {
     if (variant === 'capsule') {
       return (
-        <div className="glass backdrop-blur-lg rounded-2xl p-2">
+        <div className="glass backdrop-blur-lg rounded-2xl p-2" {...liveMask}>
           <div className="flex items-center gap-2 min-h-[44px]">
             <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/80 border border-white/70 text-[var(--lkv-text-muted)]">
               <Icon name="cloud-off" size={16} aria-hidden="true" />
@@ -40,7 +43,7 @@ export function WeatherStrip({
       );
     }
     return (
-      <div className="glass rounded-xl px-3 py-2">
+      <div className="glass rounded-xl px-3 py-2" {...liveMask}>
         <div className="flex items-center gap-2.5 min-h-[44px]">
           <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/80 border border-white/70 text-[var(--lkv-text-muted)]">
             <Icon name="cloud-off" size={18} aria-hidden="true" />
@@ -56,7 +59,7 @@ export function WeatherStrip({
 
   if (variant === 'capsule') {
     return (
-      <div className="glass backdrop-blur-lg rounded-2xl p-2">
+      <div className="glass backdrop-blur-lg rounded-2xl p-2" {...liveMask}>
         <div className="flex items-center gap-2">
           <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/80 border border-white/70 text-[var(--lkv-secondary)]">
             <CurrentIcon size={16} aria-hidden="true" />
@@ -100,7 +103,7 @@ export function WeatherStrip({
   }
 
   return (
-    <div className="glass rounded-xl px-3 py-2">
+    <div className="glass rounded-xl px-3 py-2" {...liveMask}>
       <div className="flex items-center gap-2.5">
         <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/80 border border-white/70 text-[var(--lkv-secondary)]">
           <CurrentIcon size={18} aria-hidden="true" />

@@ -189,6 +189,9 @@ export default function HubMiniMap({ steps, distanceKm = 0, reserveBottom = 0, c
   return (
     <div
       ref={containerRef}
+      // Rendu de la carte (tuiles/trace) : timing réseau non déterministe →
+      // masque visuel canonique (protocole Y0.5, masque nommé).
+      data-visual-mask
       className={`pointer-events-none z-0 h-full w-full ${className ?? ''}`}
       aria-hidden="true"
     />

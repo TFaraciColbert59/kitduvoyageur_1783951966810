@@ -36,7 +36,10 @@ export const HumanParticipantCard: React.FC<HumanParticipantCardProps> = ({
 
   return (
     <>
-      <div className="p-4 rounded-3xl bg-white/70 dark:bg-white/5 backdrop-blur-xl border border-white/40 dark:border-white/10 shadow-sm hover:shadow-md transition-all flex flex-col justify-between gap-3">
+      <div
+        data-visual-mask
+        className="p-4 rounded-3xl bg-white/70 dark:bg-white/5 backdrop-blur-xl border border-white/40 dark:border-white/10 shadow-sm hover:shadow-md transition-all flex flex-col justify-between gap-3"
+      >
         {/* Top Info */}
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-center gap-3">

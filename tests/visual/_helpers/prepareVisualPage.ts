@@ -89,6 +89,12 @@ export async function waitForVisualReady(page: Page): Promise<void> {
   await page
     .waitForSelector('[class*="animate-pulse"]', { state: 'hidden', timeout: 12_000 })
     .catch(() => {});
+  // Vues lazy + streaming RSC (P0-4) : sur un serveur dev froid, la première
+  // compilation peut dépasser 12 s — on attend la résolution du stream avant
+  // la capture (retour immédiat dès que le contenu a remplacé le squelette).
+  await page
+    .waitForSelector('[aria-busy="true"]', { state: 'hidden', timeout: 60_000 })
+    .catch(() => {});
   // Polices : attente avec timeout Node.js (immunisé contre le gel de page.clock)
   await Promise.race([
     page.evaluate(() => document.fonts.ready),
@@ -128,6 +134,9 @@ export function visualMasks(page: Page): Locator[] {
     // peut manquer ou se peindre après la capture → diff ~1 tuile). Seul le
     // pane de tuiles est masqué ; marqueurs et contrôles restent vérifiés.
     page.locator('.leaflet-tile-pane'),
+    // Canvas MapLibre (globe pays, carte-interactive) : même catégorie que le
+    // pane Leaflet — fond de carte peint à des instants différents.
+    page.locator('.maplibregl-canvas'),
     page.locator('nextjs-portal'),
   ];
 }
