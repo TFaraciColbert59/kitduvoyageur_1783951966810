@@ -1,13 +1,13 @@
 ﻿'use client';
 
 import React, { useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 import { useToast } from '@/contexts/ToastContext';
 
 /**
- * OfflineBanner — sticky banner shown when the device loses connectivity.
- * Uses navigator.onLine via useOnlineStatus; fires a toast on reconnect.
+ * P1-3 (C-17 suite) — framer-motion retiré du graphe du layout racine :
+ * fade+slide en CSS pur (keyframes .lkv-offline-in), mêmes tokens et
+ * visibilité (H8). L'apparition reste animée, calme, system-like.
  */
 export default function OfflineBanner() {
   const { isOnline } = useOnlineStatus();
@@ -25,20 +25,13 @@ export default function OfflineBanner() {
   }, [isOnline, toast]);
 
   return (
-    <AnimatePresence>
-      {!isOnline && (
-        <motion.div
-          key="offline-banner"
-          initial={{ opacity: 0, y: -24 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -24 }}
-          transition={{ duration: 0.25, ease: [0.32, 0.72, 0, 1] }}
-          role="status"
-          aria-live="polite"
-          // H8 (parcours §5) : visible sur tous les viewports — avec le repli
-          // du chip hub hors-ligne, la bannière est l'unique indicateur.
-          className="flex pointer-events-none"
-          style={{
+    !isOnline && (
+      <div
+        key="offline-banner"
+        role="status"
+        aria-live="polite"
+        className="lkv-offline-in flex pointer-events-none"
+        style={{
             position: 'fixed',
             top: 'calc(env(safe-area-inset-top, 0px) + 8px)',
             left: 'max(12px, env(safe-area-inset-left, 0px))',
@@ -98,8 +91,7 @@ export default function OfflineBanner() {
             <path d="M2 2l20 20" />
             <path d="M12 20h.01" />
           </svg>
-        </motion.div>
-      )}
-    </AnimatePresence>
+      </div>
+    )
   );
 }

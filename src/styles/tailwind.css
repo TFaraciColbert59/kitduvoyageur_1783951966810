@@ -390,6 +390,18 @@
 
   @media (prefers-reduced-motion: reduce) {
     .lkv-page-fade { animation: none; }
+    .lkv-offline-in { animation: none; }
+  }
+
+  /* P1-3 (C-17 suite) — OfflineBanner en CSS pur (mêmes courbe/durée que
+     l'ancienne version framer-motion : 250 ms, ease [0.32,0.72,0,1]). */
+  .lkv-offline-in {
+    animation: lkv-offline-in 0.25s cubic-bezier(0.32, 0.72, 0, 1) both;
+  }
+
+  @keyframes lkv-offline-in {
+    from { opacity: 0; transform: translateY(-24px); }
+    to { opacity: 1; transform: translateY(0); }
   }
 
   @keyframes lkv-page-fade {

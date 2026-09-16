@@ -60,13 +60,18 @@ export function HubSidebarRight({
   const { shown: profileShown } = selectHubWidgets(profile);
 
   // Rail contextuel (colonne desktop seulement) : la section active priorise
-  // les widgets qui la concernent. La band mobile garde l'affichage complet.
+  // les widgets qui la concernent — FILTRÉS par la nature de l'aventure
+  // (une possession qui visite 'groupe' ne doit jamais rendre un widget
+  // collectif : hubSectionHref jetterait sinon). La band mobile garde
+  // l'affichage complet du profil.
   const mapped = activeSection ? SECTION_WIDGET_MAP[activeSection] : undefined;
   const contextualShown = mapped
     ? mapped
         .filter((id) => HUB_REAL_WIDGET_IDS.has(id))
         .map((id) => hubWidgetDef(id))
-        .filter((d): d is NonNullable<ReturnType<typeof hubWidgetDef>> => d !== undefined)
+        .filter((d): d is NonNullable<ReturnType<typeof hubWidgetDef>> =>
+          d !== undefined && d.natures.includes(profile.nature)
+        )
     : null;
   const shown = contextualShown && contextualShown.length > 0 ? contextualShown : profileShown;
 
