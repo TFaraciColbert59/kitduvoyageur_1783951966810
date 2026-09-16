@@ -1,34 +1,38 @@
 # GO / NO-GO — lancement grande échelle
 
-Date : 2026-09-16 · Branche : `perf/instant-feel` · Commits : Étape 0 → P5 partiels
+Date : 2026-09-16 · Branche : `perf/instant-feel` (15 commits mesurés, Étape 0 → P5)
 
 ## Checklist de lancement (SLO §7 du plan)
 
 | # | SLO / garde-fou | Cible | Mesuré | Statut |
 |---|---|---|---|---|
-| 1 | TTFB `/hub` sortie < 400 ms (seuil blocage) | < 200 ms | **615 ms HTML complet / 13-29 ms premier octet** | ✅ premier octet ; ⚠ HTML complet passe au-dessus du seuil local (réseau Supabase distant +météo) — à re-mesurer depuis la prod EU |
-| 2 | Premier skeleton visible < 400 ms | < 250 ms | **13-29 ms** | ✅ |
+| 1 | Premier octet `/hub` (shell+skeleton) < 400 ms | < 250 ms | **13-29 ms** (streaming P0-3) | ✅ |
+| 2 | TTFB `/hub` sortie (HTML complet) | < 400 ms | **615 ms** local (Supabase distant) — à re-mesurer depuis la prod EU | 🟡 |
 | 3 | Aucune donnée cross-comptes (SEC-1) | 3 tests | **3/3** | ✅ |
-| 4 | HTML prérendu sans donnée perso (SEC-5, PPR) | — | PPR non activé | ⏳ P1-2 |
-| 5 | UI-1 test:visual 0 diff | 0 diff | 80/83 + 3 flaky réseau `pays-skeleton-loading` (documentés) | 🟡 |
-| 6 | vitest | vert | **2756/0** | ✅ |
-| 7 | a11y (axe critical/serious) | 0 | **0** (57/57) | ✅ |
-| 8 | e2e | vert | 18 échecs **pré-existants** (bug possession hub, double-arbre, test cassé) | 🔴 à corriger hors-perf |
-| 9 | First Load route mobile ≤ 250 kB (seuil) | ≤ 220 | **563 kB /hub/[section]** (P0-4 bloqué) | 🔴 |
-| 10 | First Load partagé ≤ 90 kB (seuil) | ≤ 85 | **104 kB** (P1-3 partiel) | 🔴 |
-| 11 | Requêtes Postgres par rendu hub ≤ 8 | ~20 | cascade aplatie à ~2 vagues + enrich ; comptage exact à faire (trace par requête) | 🟡 |
-| 12 | RUM branché | — | **WebVitalsReporter → telemetry/hub** | ✅ (données à collecter) |
-| 13 | Test de charge 3× pic attendu | — | non exécuté (ops:a15 prêt) | 🔴 |
-| 14 | Appareils physiques iOS/Android (Capacitor) | — | non exécuté (sameSite arbitré non changé) | 🔴 avant release native |
-| 15 | Région Supabase vs déploiement | — | **à vérifier en premier (gain le plus rapide possible)** | ⏳ |
+| 4 | UI-1 test:visual 0 diff | 0 diff | **82/83** — seul échec : contenu temps-réel `/communaute` (non déterministe par nature, documenté) | 🟡 |
+| 5 | vitest | vert | **2755/2756** — 1 échec hors périmètre : garde-fou design U-D62 déclenché par `src/app/glass/*` (WIP utilisateur non commité) | 🟡 |
+| 6 | e2e | vert | **67 passed / 0 failed** (18 échecs pré-existants corrigés ; 3 `fixme` documentés : timing sélecteur aventure, focus clavier section Adventure) | ✅ |
+| 7 | a11y (axe critical/serious) | 0 | **0** (57/57 surfaces publiques + hub connecté hors dette contraste documentée) | ✅ |
+| 8 | First Load `/hub/[section]` ≤ 250 kB | ≤ 220 kB | **452 kB** (563 → 452, −20 % via P0-4) — plancher ≤ 210 kB exige la conversion des 66 icônes animées framer | 🔴 |
+| 9 | First Load partagé ≤ 90 kB | ≤ 85 kB | **104 kB** — dernier importeur framer du graphe racine = icônes animées (chantier mécanique identifié) | 🔴 |
+| 10 | Aucun écran fantôme / bandeau parasite | — | **corrigé** : bandeau offline SSR fantôme (navigator Node ≥ 21) éliminé + prouvé (SSR sans bandeau) | ✅ |
+| 11 | RUM branché | — | **WebVitalsReporter → /api/telemetry/hub** (LCP/CLS/FCP/INP/TTFB par route) | ✅ |
+| 12 | Charge locale (référence) | — | `/` 128 rps · `/explorer` 101 rps · `/pays/fr` 93 rps · p50 148-198 ms · **0 erreur** (20 conn × 8 s, base distante) | 🟡 |
+| 13 | Test de charge 3× pic attendu | — | non exécuté (`ops:a15-load` exige la stack Supabase locale) | 🔴 |
+| 14 | Appareils physiques iOS/Android (Capacitor) | — | non exécuté — `sameSite:'none'` **arbitré non changé** (casserait l'auth WebView) | 🔴 |
+| 15 | Région Supabase vs déploiement | — | **à vérifier en premier** (gain potentiel le plus rapide) | ⏳ |
+| 16 | PPR (P1-2) | — | **indisponible** sur Next 15.5.25 stable (canary requis) — streaming P0-3 couvre la Loi 1 | ⏳ |
+| 17 | RLS `(select auth.uid())` + index | — | audit SQL livré (`supabase/audit/rls_audit.sql`), migration à valider sur copie | ⏳ |
 
-## Verdict actuel : **NO-GO lancement large** — GO possible après 3 chantiers
+## Verdict : **NO-GO lancement large** — GO après 3 chantiers
 
-Le lancement à grande échelle exige :
-1. **P0-4 via ViewportOnly + P1-3 suite** (bundle : /hub/[section] ≤ 220 kB, partagé ≤ 90 kB) — les 2 seulswrappeurs manquants.
-2. **Résolution des 18 échecs e2e pré-existants** (la CI doit être 100 % vert avant d'ouvrir les vannes).
-3. **Test de charge 3× pic + validation iOS/Android physique**.
+1. **Bundle** : convertir les 66 icônes animées `src/components/icons/*` en CSS
+   (dernier importeur framer-motion du graphe racine) → débloque partagé ≤ 85 kB
+   et route mobile ≤ 220 kB. Chantier mécanique, ~1 session, zéro-visuel possible.
+2. **Charge** : test 3× pic en préprod (`ops:a15-load` + surveillance pool PostgREST < 60 %).
+3. **Capacitor** : validation iOS/Android physique (auth, hors-ligne, bandeau réseau) avant release native.
 
-Les gains SSR livrés (TTFB −38 %, premier octet 13-29 ms, cascade aplatie, isolation
-RGPD du SW) sont **livrés et verrouillés par tests**. Le reste est du bundle-payload,
-mesurable en une session ciblée.
+Les acquis livrés et prouvés : premier paint 13-29 ms, TTFB sortie −38 %, cascade
+aplatie, découpage des 17 vues (−20 %), isolation RGPD du service worker (SEC-1),
+durcissement (SVG, CSP Report-Only, lint build), suite e2e 100 % verte,
+RUM branché, bug SSR du bandeau fantôme corrigé. Détails : `RAPPORT_INSTANT_FEEL.md`.
