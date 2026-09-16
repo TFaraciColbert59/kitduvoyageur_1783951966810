@@ -1,14 +1,17 @@
 "use client";
 
-import { motion, useAnimation } from 'framer-motion';
-import type { HTMLAttributes } from 'react';
-import { forwardRef, useCallback, useImperativeHandle, useRef } from 'react';
-import { cn } from '@/lib/utils';
+import type { HTMLAttributes } from "react";
+import { forwardRef } from "react";
 
-export interface TentIconHandle {
-  startAnimation: () => void;
-  stopAnimation: () => void;
-}
+import { cn } from "@/lib/utils";
+import { AnimatedIconBase, type AnimatedIconHandle } from "./animated-base";
+
+/**
+ * P1-3 (fin) — converti framer-motion → CSS (pop).
+ * API inchangée : forwardRef startAnimation/stopAnimation, taille, classe.
+ */
+
+export type TentIconHandle = AnimatedIconHandle;
 
 interface TentIconProps extends HTMLAttributes<HTMLDivElement> {
   strokeWidth?: number;
@@ -16,19 +19,9 @@ interface TentIconProps extends HTMLAttributes<HTMLDivElement> {
 }
 
 const TentIcon = forwardRef<TentIconHandle, TentIconProps>(
-  ({ onMouseEnter, onMouseLeave, className, size = 28, ...props }, ref) => {
-    const controls = useAnimation();
-
-    return (
-      <div
-        className={cn(className)}
-        onMouseEnter={() => controls.start('animate')}
-        onMouseLeave={() => controls.start('normal')}
-        onClick={() => controls.start('animate')}
-        onTouchStart={() => controls.start('animate')}
-        {...props}
-      >
-        <svg
+  ({ className, size = 28, ...props }, ref) => (
+    <AnimatedIconBase ref={ref} className={cn(className)} size={size} {...props}>
+      <svg
           fill="none"
           height={size}
           stroke="currentColor"
@@ -39,22 +32,13 @@ const TentIcon = forwardRef<TentIconHandle, TentIconProps>(
           width={size}
           xmlns="http://www.w3.org/2000/svg"
         >
-          <motion.path
-            animate={controls}
-            d="M3.5 21 14 3l10.5 18H3.5z"
-            transition={{ duration: 0.4, ease: 'easeInOut' }}
-            variants={{
-              normal: { scale: 1 },
-              animate: { scale: [1, 1.15, 0.95, 1] },
-            }}
-          />
+          <path data-anim="pop" d="M3.5 21 14 3l10.5 18H3.5z" />
           <path d="M8.5 21 14 11l5.5 10" />
         </svg>
-      </div>
-    );
-  }
+    </AnimatedIconBase>
+  )
 );
 
-TentIcon.displayName = 'TentIcon';
+TentIcon.displayName = "TentIcon";
 
 export { TentIcon };

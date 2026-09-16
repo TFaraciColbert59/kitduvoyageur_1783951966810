@@ -1,72 +1,27 @@
 "use client";
 
-import type { Transition } from "framer-motion";
-import { motion, useAnimation } from "framer-motion";
 import type { HTMLAttributes } from "react";
-import { forwardRef, useCallback, useImperativeHandle, useRef } from "react";
+import { forwardRef } from "react";
 
 import { cn } from "@/lib/utils";
+import { AnimatedIconBase, type AnimatedIconHandle } from "./animated-base";
 
-export interface ChevronLeftIconHandle {
-  startAnimation: () => void;
-  stopAnimation: () => void;
-}
+/**
+ * P1-3 (fin) — converti framer-motion → CSS (nudge-left).
+ * API inchangée : forwardRef startAnimation/stopAnimation, taille, classe.
+ */
+
+export type ChevronLeftIconHandle = AnimatedIconHandle;
 
 interface ChevronLeftIconProps extends HTMLAttributes<HTMLDivElement> {
   strokeWidth?: number;
   size?: number;
 }
 
-const DEFAULT_TRANSITION: Transition = {
-  times: [0, 0.4, 1],
-  duration: 0.5,
-};
-
 const ChevronLeftIcon = forwardRef<ChevronLeftIconHandle, ChevronLeftIconProps>(
-  ({ onMouseEnter, onMouseLeave, className, size = 28, ...props }, ref) => {
-    const controls = useAnimation();
-    const isControlledRef = useRef(false);
-
-    useImperativeHandle(ref, () => {
-      isControlledRef.current = true;
-      return {
-        startAnimation: () => controls.start("animate"),
-        stopAnimation: () => controls.start("normal"),
-      };
-    });
-
-    const handleMouseEnter = useCallback(
-      (e: React.MouseEvent<HTMLDivElement>) => {
-        if (isControlledRef.current) {
-          onMouseEnter?.(e);
-        } else {
-          controls.start("animate");
-        }
-      },
-      [controls, onMouseEnter]
-    );
-
-    const handleMouseLeave = useCallback(
-      (e: React.MouseEvent<HTMLDivElement>) => {
-        if (isControlledRef.current) {
-          onMouseLeave?.(e);
-        } else {
-          controls.start("normal");
-        }
-      },
-      [controls, onMouseLeave]
-    );
-
-    return (
-      <div
-        className={cn(className)}
-        onMouseEnter={handleMouseEnter}
-        onMouseLeave={handleMouseLeave}
-        onClick={(e) => { props.onClick?.(e); if (!isControlledRef.current) controls.start("animate"); }}
-        onTouchStart={(e) => { props.onTouchStart?.(e); if (!isControlledRef.current) controls.start("animate"); }}
-        {...props}
-      >
-        <svg
+  ({ className, size = 28, ...props }, ref) => (
+    <AnimatedIconBase ref={ref} className={cn(className)} size={size} {...props}>
+      <svg
           fill="none"
           height={size}
           stroke="currentColor"
@@ -77,19 +32,10 @@ const ChevronLeftIcon = forwardRef<ChevronLeftIconHandle, ChevronLeftIconProps>(
           width={size}
           xmlns="http://www.w3.org/2000/svg"
         >
-          <motion.path
-            animate={controls}
-            d="m15 18-6-6 6-6"
-            transition={DEFAULT_TRANSITION}
-            variants={{
-              normal: { x: 0 },
-              animate: { x: [0, -2, 0] },
-            }}
-          />
+          <path data-anim="nudge-left" d="m15 18-6-6 6-6" />
         </svg>
-      </div>
-    );
-  }
+    </AnimatedIconBase>
+  )
 );
 
 ChevronLeftIcon.displayName = "ChevronLeftIcon";

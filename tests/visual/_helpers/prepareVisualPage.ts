@@ -54,6 +54,14 @@ export async function prepareVisualPage(
   opts?: { clock?: boolean; abortPatterns?: string[] }
 ): Promise<void> {
   if (opts?.clock !== false) await page.clock.setFixedTime(VISUAL_CLOCK);
+  // Environnement headless : Chromium peut rapporter navigator.onLine=false
+  // (faux hors-ligne) → l'app affiche « Hors ligne » et casse toutes les
+  // captures. Neutralisation déterministe (les vraies coupures restent
+  // couvertes par les tests offline dédiés).
+  await page.addInitScript(() => {
+    Object.defineProperty(navigator, 'onLine', { get: () => true, configurable: true });
+    window.addEventListener('offline', (e) => e.stopImmediatePropagation(), true);
+  });
   // Contenu IA asynchrone (guide pays…) : dont la présence et la hauteur
   // dépendent de la latence réseau → figé en état « indisponible » pour une
   // capture déterministe. Jamais utilisé pour des données de rendu statiques.

@@ -1,37 +1,33 @@
 "use client";
-import { motion, useAnimation } from 'framer-motion';
-import type { HTMLAttributes } from 'react';
-import { forwardRef } from 'react';
-import { cn } from '@/lib/utils';
 
-export interface MinusIconProps extends HTMLAttributes<HTMLDivElement> {
+import type { HTMLAttributes } from "react";
+import { forwardRef } from "react";
+
+import { cn } from "@/lib/utils";
+import { AnimatedIconBase, type AnimatedIconHandle } from "./animated-base";
+
+/**
+ * P1-3 (fin) — converti framer-motion → CSS (scale-x).
+ * API inchangée : forwardRef startAnimation/stopAnimation, taille, classe.
+ */
+
+export type MinusIconHandle = AnimatedIconHandle;
+
+interface MinusIconProps extends HTMLAttributes<HTMLDivElement> {
   strokeWidth?: number;
   size?: number;
 }
 
-export const MinusIcon = forwardRef<HTMLDivElement, MinusIconProps>(
-  ({ className, size = 20, ...props }, ref) => {
-    const controls = useAnimation();
-    return (
-      <div
-        ref={ref}
-        className={cn('inline-flex items-center justify-center cursor-pointer', className)}
-        onMouseEnter={() => controls.start('animate')}
-        onMouseLeave={() => controls.start('normal')}
-        onClick={() => controls.start('animate')}
-        onTouchStart={() => controls.start('animate')}
-        {...props}
-      >
-        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <motion.line
-            x1="5" y1="12" x2="19" y2="12"
-            animate={controls}
-            variants={{ normal: { scaleX: 1 }, animate: { scaleX: [1, 1.25, 0.9, 1] } }}
-            transition={{ duration: 0.25 }}
-          />
+const MinusIcon = forwardRef<MinusIconHandle, MinusIconProps>(
+  ({ className, size = 20, ...props }, ref) => (
+    <AnimatedIconBase ref={ref} className={cn(className)} size={size} {...props}>
+      <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <line data-anim="scale-x" x1="5" y1="12" x2="19" y2="12" />
         </svg>
-      </div>
-    );
-  }
+    </AnimatedIconBase>
+  )
 );
-MinusIcon.displayName = 'MinusIcon';
+
+MinusIcon.displayName = "MinusIcon";
+
+export { MinusIcon };

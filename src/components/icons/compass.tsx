@@ -1,15 +1,17 @@
 "use client";
 
-import { motion, useAnimation } from 'framer-motion';
 import type { HTMLAttributes } from "react";
-import { forwardRef, useCallback, useImperativeHandle, useRef } from "react";
+import { forwardRef } from "react";
 
 import { cn } from "@/lib/utils";
+import { AnimatedIconBase, type AnimatedIconHandle } from "./animated-base";
 
-export interface CompassIconHandle {
-  startAnimation: () => void;
-  stopAnimation: () => void;
-}
+/**
+ * P1-3 (fin) — converti framer-motion → CSS (spin).
+ * API inchangée : forwardRef startAnimation/stopAnimation, taille, classe.
+ */
+
+export type CompassIconHandle = AnimatedIconHandle;
 
 interface CompassIconProps extends HTMLAttributes<HTMLDivElement> {
   strokeWidth?: number;
@@ -17,51 +19,9 @@ interface CompassIconProps extends HTMLAttributes<HTMLDivElement> {
 }
 
 const CompassIcon = forwardRef<CompassIconHandle, CompassIconProps>(
-  ({ onMouseEnter, onMouseLeave, className, size = 28, ...props }, ref) => {
-    const controls = useAnimation();
-    const isControlledRef = useRef(false);
-
-    useImperativeHandle(ref, () => {
-      isControlledRef.current = true;
-
-      return {
-        startAnimation: () => controls.start("animate"),
-        stopAnimation: () => controls.start("normal"),
-      };
-    });
-
-    const handleMouseEnter = useCallback(
-      (e: React.MouseEvent<HTMLDivElement>) => {
-        if (isControlledRef.current) {
-          onMouseEnter?.(e);
-        } else {
-          controls.start("animate");
-        }
-      },
-      [controls, onMouseEnter]
-    );
-
-    const handleMouseLeave = useCallback(
-      (e: React.MouseEvent<HTMLDivElement>) => {
-        if (isControlledRef.current) {
-          onMouseLeave?.(e);
-        } else {
-          controls.start("normal");
-        }
-      },
-      [controls, onMouseLeave]
-    );
-
-    return (
-      <div
-        className={cn(className)}
-        onMouseEnter={handleMouseEnter}
-        onMouseLeave={handleMouseLeave}
-      onClick={() => controls.start('animate')}
-      onTouchStart={() => controls.start('animate')}
-        {...props}
-      >
-        <svg
+  ({ className, size = 28, ...props }, ref) => (
+    <AnimatedIconBase ref={ref} className={cn(className)} size={size} {...props}>
+      <svg
           fill="none"
           height={size}
           stroke="currentColor"
@@ -73,27 +33,10 @@ const CompassIcon = forwardRef<CompassIconHandle, CompassIconProps>(
           xmlns="http://www.w3.org/2000/svg"
         >
           <circle cx="12" cy="12" r="10" />
-          <motion.polygon
-            animate={controls}
-            points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"
-            transition={{
-              type: "spring",
-              stiffness: 120,
-              damping: 15,
-            }}
-            variants={{
-              normal: {
-                rotate: 0,
-              },
-              animate: {
-                rotate: 360,
-              },
-            }}
-          />
+          <polygon data-anim="spin" points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76" />
         </svg>
-      </div>
-    );
-  }
+    </AnimatedIconBase>
+  )
 );
 
 CompassIcon.displayName = "CompassIcon";

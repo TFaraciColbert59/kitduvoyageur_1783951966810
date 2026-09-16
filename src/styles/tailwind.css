@@ -466,6 +466,136 @@
     to { opacity: 1; }
   }
 
+  /* P1-3 (fin) — Icônes animées en CSS pur (remplace framer-motion dans le
+     graphe racine). Vocabulaire déclenché par `.lkv-ia:hover/:active` (icône
+     autonome) ou `.lkv-ia-run` (API impérative). Jamais au repos. */
+  .lkv-ia [data-anim] { will-change: transform, opacity, stroke-dashoffset; }
+  /* Transforms SVG ancrés sur la forme (sinon origine viewBox = coin haut-gauche). */
+  .lkv-ia [data-anim]:not([data-anim='draw']) { transform-box: fill-box; transform-origin: center; }
+  /* Repos : AUCUN dash (rendu identique au trait natif — un dash permanent avec
+     stroke-linecap round ajoute des ronds aux extrémités). Le dash n'existe que
+     pendant l'animation de dessin. */
+  .lkv-ia [data-anim='draw'] { stroke-dasharray: none; }
+
+  .lkv-ia:not(.lkv-ia-controlled):hover [data-anim],
+  .lkv-ia:not(.lkv-ia-controlled):active [data-anim],
+  .lkv-ia-run [data-anim] {
+    animation-duration: var(--lkv-ia-dur, 0.45s);
+    animation-fill-mode: both;
+    animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .lkv-ia:not(.lkv-ia-controlled):hover [data-anim='draw'],
+  .lkv-ia:not(.lkv-ia-controlled):active [data-anim='draw'],
+  .lkv-ia-run [data-anim='draw'] { animation-name: lkv-ia-draw; --lkv-ia-dur: 0.6s; stroke-dasharray: 1; stroke-dashoffset: 0; }
+  .lkv-ia:not(.lkv-ia-controlled):hover [data-anim='pop'],
+  .lkv-ia:not(.lkv-ia-controlled):active [data-anim='pop'],
+  .lkv-ia-run [data-anim='pop'] { animation-name: lkv-ia-pop; --lkv-ia-dur: 0.4s; }
+  .lkv-ia:not(.lkv-ia-controlled):hover [data-anim='wiggle'],
+  .lkv-ia:not(.lkv-ia-controlled):active [data-anim='wiggle'],
+  .lkv-ia-run [data-anim='wiggle'] { animation-name: lkv-ia-wiggle; --lkv-ia-dur: 0.5s; }
+  .lkv-ia:not(.lkv-ia-controlled):hover [data-anim='pulse'],
+  .lkv-ia:not(.lkv-ia-controlled):active [data-anim='pulse'],
+  .lkv-ia-run [data-anim='pulse'] { animation-name: lkv-ia-pulse; --lkv-ia-dur: 0.45s; animation-iteration-count: 2; }
+  .lkv-ia:not(.lkv-ia-controlled):hover [data-anim='spin'],
+  .lkv-ia:not(.lkv-ia-controlled):active [data-anim='spin'],
+  .lkv-ia-run [data-anim='spin'] { animation-name: lkv-ia-spin; --lkv-ia-dur: 0.5s; }
+  .lkv-ia:not(.lkv-ia-controlled):hover [data-anim='nudge-right'],
+  .lkv-ia:not(.lkv-ia-controlled):active [data-anim='nudge-right'],
+  .lkv-ia-run [data-anim='nudge-right'] { animation-name: lkv-ia-nudge-right; --lkv-ia-dur: 0.4s; }
+  .lkv-ia:not(.lkv-ia-controlled):hover [data-anim='nudge-left'],
+  .lkv-ia:not(.lkv-ia-controlled):active [data-anim='nudge-left'],
+  .lkv-ia-run [data-anim='nudge-left'] { animation-name: lkv-ia-nudge-left; --lkv-ia-dur: 0.4s; }
+  .lkv-ia:not(.lkv-ia-controlled):hover [data-anim='nudge-up'],
+  .lkv-ia:not(.lkv-ia-controlled):active [data-anim='nudge-up'],
+  .lkv-ia-run [data-anim='nudge-up'] { animation-name: lkv-ia-nudge-up; --lkv-ia-dur: 0.4s; }
+  .lkv-ia:not(.lkv-ia-controlled):hover [data-anim='bounce-y'],
+  .lkv-ia:not(.lkv-ia-controlled):active [data-anim='bounce-y'],
+  .lkv-ia-run [data-anim='bounce-y'] { animation-name: lkv-ia-bounce-y; --lkv-ia-dur: 0.5s; }
+  .lkv-ia:not(.lkv-ia-controlled):hover [data-anim='scale-x'],
+  .lkv-ia:not(.lkv-ia-controlled):active [data-anim='scale-x'],
+  .lkv-ia-run [data-anim='scale-x'] { animation-name: lkv-ia-scale-x; --lkv-ia-dur: 0.3s; }
+  .lkv-ia:not(.lkv-ia-controlled):hover [data-anim='squash'],
+  .lkv-ia:not(.lkv-ia-controlled):active [data-anim='squash'],
+  .lkv-ia-run [data-anim='squash'] { animation-name: lkv-ia-squash; --lkv-ia-dur: 0.6s; }
+  .lkv-ia:not(.lkv-ia-controlled):hover [data-anim='twinkle'],
+  .lkv-ia:not(.lkv-ia-controlled):active [data-anim='twinkle'],
+  .lkv-ia-run [data-anim='twinkle'] { animation-name: lkv-ia-twinkle; --lkv-ia-dur: 0.9s; }
+
+  /* Décalages des éléments secondaires (équivalents des delay framer). */
+  .lkv-ia [data-delay='0.2'] { animation-delay: 0.2s; }
+
+  @keyframes lkv-ia-draw {
+    from { stroke-dashoffset: 1; opacity: 0; }
+    to { stroke-dashoffset: 0; opacity: 1; }
+  }
+  @keyframes lkv-ia-pop {
+    0% { transform: scale(1); }
+    55% { transform: scale(1.12); }
+    100% { transform: scale(1); }
+  }
+  @keyframes lkv-ia-wiggle {
+    0% { transform: rotate(0); }
+    25% { transform: rotate(-10deg); }
+    55% { transform: rotate(10deg); }
+    80% { transform: rotate(-6deg); }
+    100% { transform: rotate(0); }
+  }
+  @keyframes lkv-ia-pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.15); }
+    100% { transform: scale(1); }
+  }
+  @keyframes lkv-ia-spin {
+    from { transform: rotate(0); }
+    to { transform: rotate(180deg); }
+  }
+  @keyframes lkv-ia-nudge-right {
+    0% { transform: translateX(0); }
+    50% { transform: translateX(3px); }
+    100% { transform: translateX(0); }
+  }
+  @keyframes lkv-ia-nudge-left {
+    0% { transform: translateX(0); }
+    50% { transform: translateX(-3px); }
+    100% { transform: translateX(0); }
+  }
+  @keyframes lkv-ia-nudge-up {
+    0% { transform: translateY(0); }
+    50% { transform: translateY(-3px); }
+    100% { transform: translateY(0); }
+  }
+  @keyframes lkv-ia-bounce-y {
+    0% { transform: translateY(0); }
+    60% { transform: translateY(-5px); }
+    100% { transform: translateY(-3px); }
+  }
+  @keyframes lkv-ia-scale-x {
+    0% { transform: scaleX(1); }
+    50% { transform: scaleX(0.75); }
+    100% { transform: scaleX(1); }
+  }
+  @keyframes lkv-ia-squash {
+    0% { transform: scaleY(1) scaleX(1); }
+    35% { transform: scaleY(1.3) scaleX(0.9); }
+    70% { transform: scaleY(0.9) scaleX(1.1); }
+    100% { transform: scaleY(1) scaleX(1); }
+  }
+  @keyframes lkv-ia-twinkle {
+    0% { opacity: 1; transform: scale(1); }
+    40% { opacity: 0.35; transform: scale(0.92); }
+    70% { opacity: 1; transform: scale(1.06); }
+    100% { opacity: 1; transform: scale(1); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .lkv-ia:not(.lkv-ia-controlled):hover [data-anim],
+    .lkv-ia:not(.lkv-ia-controlled):active [data-anim],
+    .lkv-ia-run [data-anim] {
+      animation: none;
+    }
+  }
+
   @keyframes scaleIn {
     from { transform: scale(0.94); opacity: 0; }
     to { transform: scale(1); opacity: 1; }

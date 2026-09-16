@@ -1,78 +1,27 @@
 "use client";
 
-import type { Variants } from "framer-motion";
-import { motion, useAnimation } from "framer-motion";
 import type { HTMLAttributes } from "react";
-import { forwardRef, useCallback, useImperativeHandle, useRef } from "react";
+import { forwardRef } from "react";
 
 import { cn } from "@/lib/utils";
+import { AnimatedIconBase, type AnimatedIconHandle } from "./animated-base";
 
-export interface XIconHandle {
-  startAnimation: () => void;
-  stopAnimation: () => void;
-}
+/**
+ * P1-3 (fin) — converti framer-motion → CSS (draw, draw:0.2).
+ * API inchangée : forwardRef startAnimation/stopAnimation, taille, classe.
+ */
+
+export type XIconHandle = AnimatedIconHandle;
 
 interface XIconProps extends HTMLAttributes<HTMLDivElement> {
   strokeWidth?: number;
   size?: number;
 }
 
-const PATH_VARIANTS: Variants = {
-  normal: {
-    opacity: 1,
-    pathLength: 1,
-  },
-  animate: {
-    opacity: [0, 1],
-    pathLength: [0, 1],
-  },
-};
-
 const XIcon = forwardRef<XIconHandle, XIconProps>(
-  ({ onMouseEnter, onMouseLeave, className, size = 28, ...props }, ref) => {
-    const controls = useAnimation();
-    const isControlledRef = useRef(false);
-
-    useImperativeHandle(ref, () => {
-      isControlledRef.current = true;
-
-      return {
-        startAnimation: () => controls.start("animate"),
-        stopAnimation: () => controls.start("normal"),
-      };
-    });
-
-    const handleMouseEnter = useCallback(
-      (e: React.MouseEvent<HTMLDivElement>) => {
-        if (isControlledRef.current) {
-          onMouseEnter?.(e);
-        } else {
-          controls.start("animate");
-        }
-      },
-      [controls, onMouseEnter]
-    );
-
-    const handleMouseLeave = useCallback(
-      (e: React.MouseEvent<HTMLDivElement>) => {
-        if (isControlledRef.current) {
-          onMouseLeave?.(e);
-        } else {
-          controls.start("normal");
-        }
-      },
-      [controls, onMouseLeave]
-    );
-    return (
-      <div
-        className={cn(className)}
-        onMouseEnter={handleMouseEnter}
-        onMouseLeave={handleMouseLeave}
-        onClick={(e) => { props.onClick?.(e); if (!isControlledRef.current) controls.start("animate"); }}
-        onTouchStart={(e) => { props.onTouchStart?.(e); if (!isControlledRef.current) controls.start("animate"); }}
-        {...props}
-      >
-        <svg
+  ({ className, size = 28, ...props }, ref) => (
+    <AnimatedIconBase ref={ref} className={cn(className)} size={size} {...props}>
+      <svg
           fill="none"
           height={size}
           stroke="currentColor"
@@ -83,21 +32,11 @@ const XIcon = forwardRef<XIconHandle, XIconProps>(
           width={size}
           xmlns="http://www.w3.org/2000/svg"
         >
-          <motion.path
-            animate={controls}
-            d="M18 6 6 18"
-            variants={PATH_VARIANTS}
-          />
-          <motion.path
-            animate={controls}
-            d="m6 6 12 12"
-            transition={{ delay: 0.2 }}
-            variants={PATH_VARIANTS}
-          />
+          <path data-anim="draw" pathLength="1" d="M18 6 6 18" />
+          <path data-anim="draw" data-delay="0.2" pathLength="1" d="m6 6 12 12" />
         </svg>
-      </div>
-    );
-  }
+    </AnimatedIconBase>
+  )
 );
 
 XIcon.displayName = "XIcon";

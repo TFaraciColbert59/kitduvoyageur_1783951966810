@@ -1,79 +1,27 @@
 "use client";
 
-import type { Variants } from 'framer-motion';
-import { motion, useAnimation } from 'framer-motion';
 import type { HTMLAttributes } from "react";
-import { forwardRef, useCallback, useImperativeHandle, useRef } from "react";
+import { forwardRef } from "react";
 
 import { cn } from "@/lib/utils";
+import { AnimatedIconBase, type AnimatedIconHandle } from "./animated-base";
 
-export interface BookmarkIconHandle {
-  startAnimation: () => void;
-  stopAnimation: () => void;
-}
+/**
+ * P1-3 (fin) — converti framer-motion → CSS (squash).
+ * API inchangée : forwardRef startAnimation/stopAnimation, taille, classe.
+ */
+
+export type BookmarkIconHandle = AnimatedIconHandle;
 
 interface BookmarkIconProps extends HTMLAttributes<HTMLDivElement> {
   strokeWidth?: number;
   size?: number;
 }
 
-const BOOKMARK_VARIANTS: Variants = {
-  normal: { scaleY: 1, scaleX: 1 },
-  animate: {
-    scaleY: [1, 1.3, 0.9, 1.05, 1],
-    scaleX: [1, 0.9, 1.1, 0.95, 1],
-    transition: {
-      duration: 0.6,
-      ease: "easeOut",
-    },
-  },
-};
-
 const BookmarkIcon = forwardRef<BookmarkIconHandle, BookmarkIconProps>(
-  ({ className, size = 28, onMouseEnter, onMouseLeave, ...props }, ref) => {
-    const controls = useAnimation();
-    const isControlledRef = useRef(false);
-
-    useImperativeHandle(ref, () => {
-      isControlledRef.current = true;
-      return {
-        startAnimation: () => controls.start("animate"),
-        stopAnimation: () => controls.start("normal"),
-      };
-    });
-
-    const handleMouseEnter = useCallback(
-      (e: React.MouseEvent<HTMLDivElement>) => {
-        if (isControlledRef.current) {
-          onMouseEnter?.(e);
-        } else {
-          controls.start("animate");
-        }
-      },
-      [controls, onMouseEnter]
-    );
-
-    const handleMouseLeave = useCallback(
-      (e: React.MouseEvent<HTMLDivElement>) => {
-        if (isControlledRef.current) {
-          onMouseLeave?.(e);
-        } else {
-          controls.start("normal");
-        }
-      },
-      [controls, onMouseLeave]
-    );
-
-    return (
-      <div
-        className={cn(className)}
-        onMouseEnter={handleMouseEnter}
-        onMouseLeave={handleMouseLeave}
-      onClick={() => controls.start('animate')}
-      onTouchStart={() => controls.start('animate')}
-        {...props}
-      >
-        <svg
+  ({ className, size = 28, ...props }, ref) => (
+    <AnimatedIconBase ref={ref} className={cn(className)} size={size} {...props}>
+      <svg
           fill="none"
           height={size}
           stroke="currentColor"
@@ -84,16 +32,10 @@ const BookmarkIcon = forwardRef<BookmarkIconHandle, BookmarkIconProps>(
           width={size}
           xmlns="http://www.w3.org/2000/svg"
         >
-          <motion.path
-            animate={controls}
-            d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"
-            style={{ originY: 0.5, originX: 0.5 }}
-            variants={BOOKMARK_VARIANTS}
-          />
+          <path data-anim="squash" d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z" style={{ transformOrigin: '50% 0%' }} />
         </svg>
-      </div>
-    );
-  }
+    </AnimatedIconBase>
+  )
 );
 
 BookmarkIcon.displayName = "BookmarkIcon";
