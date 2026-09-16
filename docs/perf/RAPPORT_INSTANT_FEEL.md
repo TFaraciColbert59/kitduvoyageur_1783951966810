@@ -43,17 +43,18 @@ Deux pièges documentés et résolus :
   documenté, requiert validation préprod iOS/Android).
 
 ### Ce qui n'a PAS bougé (et pourquoi)
-- **First Load JS partagé (104 kB)** : les 5 consommateurs framer du graphe racine
-  convertis en CSS pur — PageTransition, OfflineBanner, MobileDrawer, SearchOverlay
-  et les **27 icônes animées** de LkvIcon (`AnimatedIconBase`, animations CSS
-  `lkv-ia-*`, API ref/hover/reduced-motion préservée). **Mesure honnête** : le chunk
-  framer-motion (1362, 130 kB raw) était déjà isolé — il passe de 76 à 75 routes
-  /254 qui le chargent. L'hypothèse du rapport initial (« −40 kB sur le partagé via
-  les icônes ») est **invalidée par la mesure** : le partagé reste à 104 kB.
-- **Le plafond `/hub/[section]` ≤ 220 kB** exige de convertir framer-motion DANS les
-  vues elles-mêmes (sheets, carrousels, expériences mobiles : ~75 routes le chargent
-  encore). Chantier multi-fichiers identifié, chiffré, non livré — les icônes n'étaient
-  pas le goulot.
+- **Framer-motion hors du graphe statique hub (P1-3)** : 9 composants convertis en
+  CSS pur (LiquidGlassDefs scindé, AdventureCockpit/HubSection, AdventureCockpitControl,
+  QuickReportSheet, TerrainLiveCockpitControl, GlassSheet, GlassModal, Header) +
+  `useSheetDrag` (drag-to-dismiss natif préservé) + pilule Header glissante réimplémentée
+  (mesure + transition CSS). **Mesure : 75 → 28 routes chargent le chunk framer** ;
+  home `/` : 327 → **292 kB (−35 kB)**. Snapshots visuels : 82/83 (1 flaky cold).
+- **`/hub` et `/hub/[section]` : 325/452 kB** — le graphe statique de leurs sections
+  conserve 16 composants framer identifiés nommément (chantier suivant) :
+  `GlassCard`, `GlassDrawer`, `Sheet`, `PremiumBottomSheet`, `IOSSegmentedControl`,
+  `ScrollableTabs`, `bento-grid`, `KitsCockpit`, `DepartDesktopView`,
+  `DepartMobileExperience`, `AvailabilityGauge`, `TripKitSelector`, `NextActionCard`,
+  `ProgressionCard`, `ArrivalReveal`, `ForgetChecklistItem`.
 - **P1-2 PPR** : **indisponible sur Next 15.5.25 stable** — `experimental.ppr`
   exige la dernière canary (« can only be enabled when using the latest canary
   version »). Le streaming P0-3 (premier octet 13-29 ms) couvre la Loi 1 en
@@ -85,9 +86,10 @@ le pool PostgREST lors du test 3× (dashboard Supabase : connexions actives < 60
   copie** avant application (convention du dépôt) — procédure dans le fichier SQL.
 
 ## Restant (session suivante, ordre recommandé)
-1. **Framer des vues chaudes → CSS** (~75 routes chargent encore le chunk 1362) :
-   sheets (`PremiumBottomSheet`, `GlassSheet`), carrousels (`progressive-carousel`),
-   expériences mobiles du hub — c'est LE chemin vers `/hub/[section]` ≤ 220 kB.
+1. **16 composants framer du graphe hub → CSS** (liste nominative ci-dessus) :
+   c'est LE chemin vers `/hub/[section]` ≤ 220 kB. Patterns déjà maîtrisés :
+   sheets = `.lkv-sheet-up` + état closing ; pilules/tabs = mesure + transition CSS ;
+   cartes = hover/active CSS.
 2. **P2-2** : appliquer la migration RLS/index après validation sur copie + EXPLAIN.
 3. **P4** : test de charge 3× pic en préprod (`ops:a15-load` avec stack locale ou cible préprod).
 4. **P1-2 PPR** : migration Next canary (planifiée post-lancement).
