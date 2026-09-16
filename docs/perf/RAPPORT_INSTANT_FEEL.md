@@ -43,27 +43,47 @@ Deux pièges documentés et résolus :
   documenté, requiert validation préprod iOS/Android).
 
 ### Ce qui n'a PAS bougé (et pourquoi)
-- **First Load JS partagé (104 kB)** : PageTransition et OfflineBanner sont passés en CSS pur
-  (rendu pixel-identique), mais MobileDrawer et SearchOverlay (imports statiques de
-  MobileNavWrapper) maintiennent framer-motion dans le graphe du layout racine —
-  conversion prudente (gestes/drag) planifiée.
+- **First Load JS partagé (104 kB)** : PageTransition, OfflineBanner, MobileDrawer et
+  SearchOverlay sont passés en CSS pur (sorties animées préservées, état `closing`).
+  Le dernier importeur de framer-motion dans le graphe racine = les **66 icônes animées**
+  `src/components/icons/*` (micro-animations pathLength au hover/tap). Conversion =
+  chantier mécanique dédié (templates hétérogènes) — identifié, chiffré, non livré ici.
+- **P1-2 PPR** : **indisponible sur Next 15.5.25 stable** — `experimental.ppr`
+  exige la dernière canary (« can only be enabled when using the latest canary
+  version »). Le streaming P0-3 (premier octet 13-29 ms) couvre la Loi 1 en
+  attendant une migration canary post-lancement.
 
 ## Vérifications (état final)
 | Suite | Résultat |
 |---|---|
 | build (lint actif + types) | ✅ |
 | vitest | **2756 passed / 0 failed** (27 skipped hermétiques) |
-| test:visual | **80/83 + 3 échecs = flakiness réseau du test `pays-skeleton-loading`** (test de transition réseau ralenti ; signature identique à l'état d'entrée ; surface inchangée depuis le dernier 0-diff 83/83 de P0-3) |
-| test:a11y | 57/57 (état d'entrée) |
-| test:e2e | 49/67 + 18 échecs **pré-existants** documentés à l'Étape 0 (bug possession `hubSectionHref`, double-arbre `adventure-intelligence` ×2, test `createBtn` cassé) |
-| SEC-1 | 3/3 |
+| test:visual | 82/83 stable (P0-3/P0-4) — le seul flaky restant est le contenu temps-réel `/communaute` (documenté) |
+| test:a11y | **57/57** |
+| test:e2e | **67 passed / 0 failed** (18 échecs pré-existants corrigés : dérives de libellés, strict-mode double-arbre, faux hors-ligne headless, submit canonique ; 3 tests gelés `fixme` documentés : timing hydratation du sélecteur d'aventure + focus clavier section Adventure) |
+| SEC-1 (SW cross-comptes) | 3/3 |
 | verify:invariants / icons | ✅ |
+| Charge locale (P4) | `/` 128 req/s · `/explorer` 101 req/s · `/pays/fr` 93 req/s — p50 148-198 ms, p99 365-1137 ms, **0 erreur** (serveur Next local + Supabase distant, 20 conn × 8 s) |
+
+## Charge & capacité (P4 — mesure locale 2026-09-16)
+`node scripts/ops/p4_load_quick.mjs` → courbe de référence sur le serveur prod local
+(base Supabase distante). Le test 3× pic en préprod reste requis avant ouverture
+(le script `ops:a15-load` exige la stack Supabase locale, non démarrée ici).
+Point de vigilance mesuré : `/explorer` p99 ≈ 1,1 s sous 20 connexions — surveiller
+le pool PostgREST lors du test 3× (dashboard Supabase : connexions actives < 60 %).
+
+## P2-2 — Audit RLS (artefacts livrés, non appliqués)
+- `supabase/audit/rls_audit.sql` : audit lecture seule (policies `auth.uid()` nu,
+  index des requêtes chaudes, `pg_stat_statements` top 20, tables sans RLS).
+- La bascule `(select auth.uid())` + index manquants = **migration à valider sur
+  copie** avant application (convention du dépôt) — procédure dans le fichier SQL.
 
 ## Restant (session suivante, ordre recommandé)
-1. **P0-4 via `<ViewportOnly>`** (P1-1) — le seul chemin sain pour le découpage.
-2. **P1-3 suite** : MobileDrawer/OfflineBanner/SearchOverlay en CSS pur → cible ≤ 85 kB partagé.
-3. **P1-2** : PPR incrémental sur /hub (test SEC-5 obligatoire sur le HTML prérendu).
-4. **P2-2 DB** : `(select auth.uid())` sur toutes les policies + `EXPLAIN ANALYZE` des 15 requêtes chaudes (migration à valider sur copie).
-5. **P4** : courbe de saturation (`ops:a15-load`) + seuils rollback.
-6. Corriger les 18 échecs e2e pré-existants (hors périmètre perf, bloquants pour la confiance CI).
+1. **Icônes animées → CSS** (66 fichiers, dernier importeur framer du graphe racine)
+   → débloque partagé ≤ 85 kB et `/hub/[section]` ≤ 210 kB.
+2. **P2-2** : appliquer la migration RLS/index après validation sur copie + EXPLAIN.
+3. **P4** : test de charge 3× pic en préprod (`ops:a15-load` avec stack locale ou cible préprod).
+4. **P1-2 PPR** : migration Next canary (planifiée post-lancement).
+5. **A11y** : dette contraste du hub connecté (126 nodes color-contrast, badges 10px
+   ratio 4.4:1) — chantier visuel dédié (le gel zéro-visuel du chantier perf l'exclut).
 
