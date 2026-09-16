@@ -45,13 +45,20 @@ test('mobile : le CTA Préparer du carrousel redirige l’anonyme vers la connex
   await neutraliserServiceWorker(page);
 
   await page.setViewportSize(MOBILE_VIEWPORT);
+  // Consentement posé avant navigation (protocole Y0.5) : le bandeau cookies
+  // ne recouvre jamais les contrôles pendant le parcours.
+  await page.addInitScript(() => {
+    localStorage.setItem(
+      'lkdv_cookie_consent',
+      JSON.stringify({ necessary: true, analytics: false, marketing: false, version: '1' })
+    );
+  });
   await page.goto('/explorer?atlas=1');
 
   const mapRoot = page.getByTestId('unified-explorer-map');
   await expect(mapRoot).toHaveAttribute('data-atlas-ready', 'true', { timeout: 45_000 });
 
-  // La bannière cookies recouvre les contrôles bas d'écran en mobile : on la
-  // ferme avant d'utiliser la plongée vers la vue locale.
+  // Filet de sécurité : si un bandeau subsiste, le fermer avant la plongée.
   const refuseCookies = page.getByRole('button', { name: 'Refuser' });
   if (await refuseCookies.isVisible().catch(() => false)) {
     await refuseCookies.click();
@@ -87,7 +94,10 @@ test('sentier inconnu : page honnête, aucune donnée inventée, zéro pageerror
   await expect(
     page.getByRole('heading', { name: 'Données réelles indisponibles pour ce sentier' })
   ).toBeVisible({ timeout: 30_000 });
-  await expect(page.getByText("Ce sentier n'existe pas dans nos données réelles.")).toBeVisible();
+  // Double arbre desktop+mobile : cibler la première occurrence.
+  await expect(
+    page.getByText("Ce sentier n'existe pas dans nos données réelles.").first()
+  ).toBeVisible();
 
   expect(pageErrors, pageErrors.join('\n')).toHaveLength(0);
 });

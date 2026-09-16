@@ -404,6 +404,63 @@
     to { opacity: 1; transform: translateY(0); }
   }
 
+  /* P1-3 (C-17 suite) — MobileDrawer en CSS pur (entrée/sortie préservées,
+     remplace framer-motion dans le graphe racine). */
+  .lkv-drawer-scrim {
+    animation: lkv-fade-in 0.2s ease both;
+  }
+  .lkv-drawer-scrim--closing {
+    animation: lkv-fade-out 0.2s ease both;
+  }
+  .lkv-drawer-panel {
+    animation: lkv-drawer-in 0.24s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+  .lkv-drawer-panel--closing {
+    animation: lkv-drawer-out 0.22s cubic-bezier(0.5, 0, 0.75, 0) both;
+  }
+  @keyframes lkv-drawer-in {
+    from { transform: translateX(-100%); }
+    to { transform: translateX(0); }
+  }
+  @keyframes lkv-drawer-out {
+    from { transform: translateX(0); }
+    to { transform: translateX(-100%); }
+  }
+
+  /* P1-3 (C-17 suite) — SearchOverlay en CSS pur (fade + descente + scale). */
+  .lkv-search-panel {
+    animation: lkv-search-in 0.22s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+  .lkv-search-panel--closing {
+    animation: lkv-search-out 0.2s cubic-bezier(0.5, 0, 0.75, 0) both;
+  }
+  @keyframes lkv-search-in {
+    from { opacity: 0; transform: translateY(-20px) scale(0.98); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  @keyframes lkv-search-out {
+    from { opacity: 1; transform: translateY(0) scale(1); }
+    to { opacity: 0; transform: translateY(-20px) scale(0.98); }
+  }
+
+  @keyframes lkv-fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  @keyframes lkv-fade-out {
+    from { opacity: 1; }
+    to { opacity: 0; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .lkv-drawer-scrim, .lkv-drawer-scrim--closing,
+    .lkv-drawer-panel, .lkv-drawer-panel--closing,
+    .lkv-search-panel, .lkv-search-panel--closing,
+    .lkv-offline-in {
+      animation: none;
+    }
+  }
+
   @keyframes lkv-page-fade {
     from { opacity: 0.92; }
     to { opacity: 1; }

@@ -2,7 +2,6 @@
 
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { motion, AnimatePresence } from 'framer-motion';
 import LkvIcon from '@/components/ui/LkvIcon';
 import { useRecentSearches } from '@/components/search/useRecentSearches';
 import { useSearchContext } from '@/contexts/SearchContext';
@@ -15,6 +14,25 @@ export default function SearchOverlay() {
   const [query, setQuery] = useState('');
   const { haptic } = useHapticFeedback();
   const { recentSearches, addSearch, clearSearches, removeSearch } = useRecentSearches();
+
+  // P1-3 (C-17 suite) — sortie animée sans framer-motion : le panneau reste
+  // monté le temps de l'animation CSS de fermeture, puis unmount.
+  const [visible, setVisible] = useState(isSearchOpen);
+  const [closing, setClosing] = useState(false);
+  useEffect(() => {
+    if (isSearchOpen) {
+      setVisible(true);
+      setClosing(false);
+      return;
+    }
+    if (!visible) return;
+    setClosing(true);
+    const timer = setTimeout(() => {
+      setClosing(false);
+      setVisible(false);
+    }, 220);
+    return () => clearTimeout(timer);
+  }, [isSearchOpen, visible]);
 
   // Reset query when overlay opens
   useEffect(() => {
@@ -60,36 +78,29 @@ export default function SearchOverlay() {
   }, [isSearchOpen, closeSearch]);
 
   return (
-    <AnimatePresence>
-      {isSearchOpen && (
-        <>
-          {/* Scrim with deep frosted blur — completely masks underlying content */}
-          <motion.div
-            key="search-scrim"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.22 }}
-            style={{
-              position: 'fixed',
-              inset: 0,
-              background: 'rgba(11, 28, 19, 0.85)',
-              backdropFilter: 'blur(24px) saturate(190%)',
-              WebkitBackdropFilter: 'blur(24px) saturate(190%)',
-              zIndex: 99990,
-            }}
-            onClick={closeSearch}
-            aria-hidden="true"
-          />
+    visible && (
+      <>
+        {/* Scrim with deep frosted blur — completely masks underlying content */}
+        <div
+          key="search-scrim"
+          className={`lkv-drawer-scrim${closing ? ' lkv-drawer-scrim--closing' : ''}`}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(11, 28, 19, 0.85)',
+            backdropFilter: 'blur(24px) saturate(190%)',
+            WebkitBackdropFilter: 'blur(24px) saturate(190%)',
+            zIndex: 99990,
+          }}
+          onClick={closeSearch}
+          aria-hidden="true"
+        />
 
-          {/* Panel */}
-          <motion.div
-            key="search-panel"
-            initial={{ opacity: 0, y: -20, scale: 0.98 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -20, scale: 0.98 }}
-            transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
-            style={{
+        {/* Panel */}
+        <div
+          key="search-panel"
+          className={`lkv-search-panel${closing ? ' lkv-search-panel--closing' : ''}`}
+          style={{
               position: 'fixed',
               top: 0,
               left: 0,
@@ -249,9 +260,8 @@ export default function SearchOverlay() {
                 Ex&nbsp;: «&nbsp;tente&nbsp;», «&nbsp;Islande&nbsp;», «&nbsp;sac à dos randonnée&nbsp;»
               </div>
             )}
-          </motion.div>
-        </>
-      )}
-    </AnimatePresence>
+        </div>
+      </>
+    )
   );
 }

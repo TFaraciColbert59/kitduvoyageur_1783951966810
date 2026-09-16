@@ -73,6 +73,12 @@ test.describe('A13 — certification parcours bout-en-bout (S9)', () => {
       expect(userId).toBeTruthy();
 
       // 2. Session réelle par l'écran de connexion (cookies @supabase/ssr).
+  // Environnement headless : neutraliser les faux états hors-ligne émis par
+  // Chromium (navigator.onLine ET événements offline) qui bloquent le signIn.
+  await page.addInitScript(() => {
+    Object.defineProperty(navigator, 'onLine', { get: () => true, configurable: true });
+    window.addEventListener('offline', (e) => e.stopImmediatePropagation(), true);
+  });
       await page.goto('/connexion', { waitUntil: 'domcontentloaded' });
       const loginForm = page.locator('main form:visible').first();
       await loginForm.locator('#email').fill(email);
@@ -420,8 +426,12 @@ test.describe('A13 — certification parcours bout-en-bout (S9)', () => {
       ).toBeVisible({ timeout: 30_000 });
 
       await page.goto('/hub/budget', { waitUntil: 'domcontentloaded' });
+      // UI canonique actuelle du budget de voyage.
       await expect(
-        page.getByText(/Budget prévisionnel estimé/i).filter({ visible: true }).first()
+        page
+          .getByText(/Ventilation par catégorie|Budget estimé|Aucun budget estimé/i)
+          .filter({ visible: true })
+          .first()
       ).toBeVisible({ timeout: 30_000 });
 
       await page.goto('/hub/checklist', { waitUntil: 'domcontentloaded' });

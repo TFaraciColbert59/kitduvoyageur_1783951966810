@@ -3,7 +3,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { motion, AnimatePresence } from 'framer-motion';
 import LkvIcon from '@/components/ui/LkvIcon';
 import LkvButton from '@/components/ui/LkvButton';
 import { useAuth } from '@/contexts/AuthContext';
@@ -134,6 +133,25 @@ export default function MobileDrawer({ isOpen, onClose, onSearchOpen }: MobileDr
   const panelRef = useRef<HTMLDivElement>(null);
   const previousFocusRef = useRef<HTMLElement | null>(null);
 
+  // P1-3 (C-17 suite) — sortie animée sans framer-motion : le panneau reste
+  // monté le temps de l'animation CSS de fermeture (--closing), puis unmount.
+  const [visible, setVisible] = useState(isOpen);
+  const [closing, setClosing] = useState(false);
+  useEffect(() => {
+    if (isOpen) {
+      setVisible(true);
+      setClosing(false);
+      return;
+    }
+    if (!visible) return;
+    setClosing(true);
+    const timer = setTimeout(() => {
+      setClosing(false);
+      setVisible(false);
+    }, 240);
+    return () => clearTimeout(timer);
+  }, [isOpen, visible]);
+
   const currentYear = new Date().getFullYear();
   const currentMonth = new Date().getMonth();
   const season = currentMonth >= 2 && currentMonth <= 4 ? 'printemps'
@@ -192,40 +210,28 @@ export default function MobileDrawer({ isOpen, onClose, onSearchOpen }: MobileDr
   }, [isOpen, onClose]);
 
   return (
-    <AnimatePresence>
-      {isOpen && (
-        <>
-          {/* Scrim */}
-          <motion.div
-            key="drawer-scrim"
-            style={scrimStyle}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            onClick={onClose}
-            aria-hidden="true"
-          />
+    visible && (
+      <>
+        {/* Scrim */}
+        <div
+          key="drawer-scrim"
+          className={`lkv-drawer-scrim${closing ? ' lkv-drawer-scrim--closing' : ''}`}
+          style={scrimStyle}
+          onClick={onClose}
+          aria-hidden="true"
+        />
 
-          {/* Panel */}
-          <motion.div
-            key="drawer-panel"
-            id="mobile-drawer"
-            ref={panelRef}
-            style={panelStyle}
-            initial={{ x: '-100%' }}
-            animate={{ x: 0 }}
-            exit={{ x: '-100%' }}
-            transition={{
-              type: 'spring',
-              damping: 28,
-              stiffness: 300,
-              mass: 0.8,
-            }}
-            role="dialog"
-            aria-modal="true"
-            aria-label="Navigation principale"
-          >
+        {/* Panel */}
+        <div
+          key="drawer-panel"
+          id="mobile-drawer"
+          ref={panelRef}
+          className={`lkv-drawer-panel${closing ? ' lkv-drawer-panel--closing' : ''}`}
+          style={panelStyle}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Navigation principale"
+        >
             <div style={scrollableContentStyle}>
               {/* Header */}
               <header
@@ -492,9 +498,8 @@ export default function MobileDrawer({ isOpen, onClose, onSearchOpen }: MobileDr
                 </div>
               </footer>
             </div>
-          </motion.div>
-        </>
-      )}
-    </AnimatePresence>
+        </div>
+      </>
+    )
   );
 }
