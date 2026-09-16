@@ -1,4 +1,4 @@
-# RAPPORT INSTANT-FEEL — chantier performance LKDV
+﻿# RAPPORT INSTANT-FEEL — chantier performance LKDV
 
 Branche `perf/instant-feel`, base `08055da3` (programme/qualite-echelle).
 Baseline complète : `docs/perf/baseline/BASELINE.md`. Un lot = un commit = un chiffre.
@@ -15,10 +15,23 @@ Baseline complète : `docs/perf/baseline/BASELINE.md`. Un lot = un commit = un c
 | Chargement section (`/hub/[section]`) | getTripBySlug ×2 (10 tables ×2) | ×1 (cache React partagé) | −50 % DB | P2 |
 | N+1 compteurs groupes | 2+N requêtes | 2 requêtes `.in()` | n→2 | P0-2 |
 | Refetch `trip_steps` itinéraire | 1 requête redondante | 0 (trip.steps) | −1 | P2 |
-| First Load JS `/hub/[section]` | 563 kB | 563 kB | 0 (bloqué, voir §P0-4) | — |
+| **First Load JS `/hub/[section]`** | **563 kB** (177 kB page) | **452 kB** (95.3 kB page) | **−20 %** | **P0-4** |
 | First Load JS partagé | 104 kB | 104 kB | 0 (voir §P1-3) | P1-3 |
 | Cache tuiles SW | non borné (éviction totale possible) | LRU 3000 entrées | fiabilité terrain | P2 |
 | Sécurité SW | HTML/API privés en cache cross-comptes | liste blanche + purge + no-store | RGPD | P0-1 |
+| Bug hub possession | « Section groupe incompatible » (rail) | filtre par nature | e2e débloqués | fix bd21984 |
+
+### P0-4 livré via exports directs (pattern RSC prouvé)
+Deux pièges documentés et résolus :
+1. `next/dynamic` ssr:false invoqué via un **objet** local ou `React.lazy` +
+   wrapper → rendu serveur du lazy → `Element type invalid: got undefined`
+   (error boundary sur toutes les sections). **Reverté, re-testé par dichotomie.**
+2. Pattern correct : composants dynamic **exportés directement** du module client
+   (client references RSC, jamais exécutés côté serveur — même pattern que
+   `MobileNavWrapper`/`BottomTabBar`). Les 17 vues chargent après hydratation,
+   couvertes par un skeleton shimmer `aria-busy` (ux-mobile : jamais d'écran mort).
+   Gain : 563 → 452 kB ; le plancher ≤ 210 kB exige P1-3 (framer-motion encore
+   dans le graphe racine via MobileDrawer/SearchOverlay).
 
 ### Sécurité (bloquant lancement)
 - **P0-1 (a8223667)** : fuite cross-comptes du SW fermée. Tests **SEC-1 : 3/3** (précache,
@@ -30,21 +43,10 @@ Baseline complète : `docs/perf/baseline/BASELINE.md`. Un lot = un commit = un c
   documenté, requiert validation préprod iOS/Android).
 
 ### Ce qui n'a PAS bougé (et pourquoi)
-- **First Load JS partagé (104 kB)** : P1-3 a retiré framer-motion du graphe direct du
-  layout (PageTransition en CSS pur, rendu pixel-identique), mais `MobileDrawer`,
-  `OfflineBanner` et `SearchOverlay` (imports statiques de `MobileNavWrapper`) le
-  maintiennent dans le partagé. Leur conversion (gestes/drag, AnimatePresence) est le
-  prochain levier — travail prudent, non livré de ce fait.
-- **P0-4 (découpage `/hub/[section]`) — BLOQUÉ TECHNIQUEMENT** :
-  1. `next/dynamic` sans `ssr:false` : chunks préchargés par le flight → 565 kB, aucun gain.
-  2. `ssr:false` / `React.lazy` + Suspense dans un module client rendu par un RSC :
-     échec de rendu (`Element type is invalid: got: undefined` au re-rendu CSR →
-     error boundary sur toutes les sections). Vérifié par dichotomie : même un export
-     default isolé produit l'erreur. **Reverté intégralement** (état re-prouvé 83/83).
-  3. Voie correcte (session suivante) : `<ViewportOnly>` (P1-1) — monté après
-     hydratation via `useState/useEffect`, jamais de lazy dans l'arbre RSC, skeleton
-     iso-géométrique par section ; cible alors ≤ 210 kB avec P1-3.
-- Note : le plafond ≤ 210 kB exige aussi P1-3 (le layout partagé du hub pèse ~250 kB).
+- **First Load JS partagé (104 kB)** : PageTransition et OfflineBanner sont passés en CSS pur
+  (rendu pixel-identique), mais MobileDrawer et SearchOverlay (imports statiques de
+  MobileNavWrapper) maintiennent framer-motion dans le graphe du layout racine —
+  conversion prudente (gestes/drag) planifiée.
 
 ## Vérifications (état final)
 | Suite | Résultat |
@@ -64,3 +66,4 @@ Baseline complète : `docs/perf/baseline/BASELINE.md`. Un lot = un commit = un c
 4. **P2-2 DB** : `(select auth.uid())` sur toutes les policies + `EXPLAIN ANALYZE` des 15 requêtes chaudes (migration à valider sur copie).
 5. **P4** : courbe de saturation (`ops:a15-load`) + seuils rollback.
 6. Corriger les 18 échecs e2e pré-existants (hors périmètre perf, bloquants pour la confiance CI).
+
