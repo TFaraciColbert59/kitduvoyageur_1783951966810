@@ -7,9 +7,9 @@
  * Un seul choix par écran, 44 px minimum, drag-to-dismiss, animation
  * limitée à `transform`/`opacity`, `prefers-reduced-motion` honoré.
  */
-import { useCallback, useEffect, useReducer } from 'react';
-import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
+import { useCallback, useEffect, useReducer, useState } from 'react';
 import Icon from '@/components/ui/Icon';
+import { useSheetDrag } from '@/hooks/useSheetDrag';
 import type {
   TerrainPassability,
   TerrainReportCategory,
@@ -51,14 +51,34 @@ export default function QuickReportSheet({
   onSubmit,
   busy = false,
 }: QuickReportSheetProps) {
-  const reduceMotion = useReducedMotion();
   const [state, dispatch] = useReducer(terrainFlowReducer, undefined, createTerrainFlowState);
 
   useEffect(() => {
     if (!open) dispatch({ type: 'cancel' });
   }, [open]);
 
+  // P1-3 (fin) — sortie animée sans framer : le sheet reste monté le temps de
+  // l'animation CSS (--closing), puis unmount.
+  const [render, setRender] = useState(open);
+  const [closing, setClosing] = useState(false);
+  useEffect(() => {
+    if (open) {
+      setRender(true);
+      setClosing(false);
+      return;
+    }
+    if (!render) return;
+    setClosing(true);
+    const timer = setTimeout(() => {
+      setClosing(false);
+      setRender(false);
+    }, 340);
+    return () => clearTimeout(timer);
+  }, [open, render]);
+
   const close = useCallback(() => onOpenChange(false), [onOpenChange]);
+
+  const { panelRef, dragHandlers } = useSheetDrag({ onDismiss: close });
 
   const submit = useCallback(() => {
     if (!state.category || !state.severity || busy) return;
@@ -71,23 +91,10 @@ export default function QuickReportSheet({
     });
   }, [busy, onSubmit, state]);
 
-  const sheetMotion = reduceMotion
-    ? { initial: { opacity: 0 }, animate: { opacity: 1 }, exit: { opacity: 0 } }
-    : {
-        initial: { y: '100%', opacity: 0.6 },
-        animate: { y: 0, opacity: 1 },
-        exit: { y: '100%', opacity: 0 },
-      };
-
   return (
-    <AnimatePresence>
-      {open && (
-        <motion.div
-          className="fixed inset-0 z-50 flex items-end justify-center"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: reduceMotion ? 0 : 0.2 }}
+    render ? (
+        <div
+          className={`lkv-fade-in${closing ? ' lkv-fade-in--closing' : ''} fixed inset-0 z-50 flex items-end justify-center`}
         >
           <button
             type="button"
@@ -95,19 +102,13 @@ export default function QuickReportSheet({
             className="absolute inset-0 bg-[var(--lkv-overlay,rgba(11,31,23,0.4))]"
             onClick={close}
           />
-          <motion.section
+          <section
+            ref={panelRef as React.Ref<HTMLElement>}
             role="dialog"
             aria-modal="true"
             aria-label="Signaler un problème sur le sentier"
-            className="relative w-full max-w-lg rounded-t-3xl bg-[var(--lkv-surface,#FBFAF6)] pb-[calc(env(safe-area-inset-bottom)+16px)] shadow-2xl"
-            drag={reduceMotion ? false : 'y'}
-            dragConstraints={{ top: 0, bottom: 0 }}
-            dragElastic={0.15}
-            onDragEnd={(_event, info) => {
-              if (info.offset.y > 120) close();
-            }}
-            {...sheetMotion}
-            transition={{ duration: reduceMotion ? 0 : 0.32, ease: [0.16, 1, 0.3, 1] }}
+            className={`lkv-sheet-up${closing ? ' lkv-sheet-up--closing' : ''} relative w-full max-w-lg rounded-t-3xl bg-[var(--lkv-surface,#FBFAF6)] pb-[calc(env(safe-area-inset-bottom)+16px)] shadow-2xl`}
+            {...dragHandlers}
           >
             <div className="mx-auto mt-2 h-1 w-9 rounded-full bg-[var(--lkv-border-subtle,#D8D2C4)]" aria-hidden="true" />
 
@@ -128,8 +129,7 @@ export default function QuickReportSheet({
             </div>
 
             {state.step === 'category' && (
-              <ul className="grid grid-cols-2 gap-2 px-5 py-4">
-                {MVP_TERRAIN_CATEGORIES.map((category) => {
+              <ul className="grid grid-cols-2 gap-2 px-5 py-4">                {MVP_TERRAIN_CATEGORIES.map((category) => {
                   const display = categoryDisplay(category);
                   return (
                     <li key={category}>
@@ -244,9 +244,8 @@ export default function QuickReportSheet({
                 Retour
               </button>
             )}
-          </motion.section>
-        </motion.div>
-      )}
-    </AnimatePresence>
+          </section>
+        </div>
+    ) : null
   );
 }

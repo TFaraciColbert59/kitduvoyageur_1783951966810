@@ -1,10 +1,9 @@
 'use client';
 
 import Icon from '@/components/ui/Icon';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useLayoutEffect, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { motion } from 'framer-motion';
 import LkvIcon from '@/components/ui/LkvIcon';
 import { useAuth } from '@/contexts/AuthContext';
 import GlobalSearchModal from '@/components/ui/GlobalSearchModal';
@@ -22,6 +21,38 @@ export default function Header() {
   const pathname = usePathname();
   const { user } = useAuth();
   const [mounted, setMounted] = useState(false);
+
+  // P1-3 (fin) — pilule de navigation : position/ largeur mesurées sur l'item
+  // actif (glissement CSS), remplace le layoutId framer-motion.
+  const navRef = useRef<HTMLElement>(null);
+  const [pill, setPill] = useState<{ left: number; width: number } | null>(null);
+  useLayoutEffect(() => {
+    const nav = navRef.current;
+    if (!nav) return;
+    const active = nav.querySelector('[data-nav-active="true"]') as HTMLElement | null;
+    if (!active) {
+      setPill(null);
+      return;
+    }
+    const navRect = nav.getBoundingClientRect();
+    const rect = active.getBoundingClientRect();
+    setPill({ left: rect.left - navRect.left, width: rect.width });
+  }, [pathname, user]);
+  useEffect(() => {
+    const onResize = () => {
+      const nav = navRef.current;
+      if (!nav) return;
+      const active = nav.querySelector('[data-nav-active="true"]') as HTMLElement | null;
+      if (!active) return;
+      const navRect = nav.getBoundingClientRect();
+      const rect = active.getBoundingClientRect();
+      setPill({ left: rect.left - navRect.left, width: rect.width });
+    };
+    window.addEventListener('resize', onResize);
+    // Les polices décalent les libellés : re-mesure après chargement.
+    document.fonts?.ready.then(onResize).catch(() => {});
+    return () => window.removeEventListener('resize', onResize);
+  }, [pathname, user]);
   const [searchOpen, setSearchOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -115,8 +146,19 @@ export default function Header() {
               </div>
             </Link>
 
-            {/* Center: Navigation Links with Animated Sliding Pill */}
-            <nav className="flex items-center gap-1 p-0.5 rounded-full bg-white/[0.08] border border-white/25 shadow-inner shrink-0">
+            {/* Center: Navigation Links with Animated Sliding Pill (CSS +
+                mesure — remplace le layoutId framer, même glissement iOS). */}
+            <nav
+              ref={navRef}
+              className="relative flex items-center gap-1 p-0.5 rounded-full bg-white/[0.08] border border-white/25 shadow-inner shrink-0"
+            >
+              {pill && (
+                <span
+                  aria-hidden="true"
+                  className="absolute top-0.5 bottom-0.5 rounded-full bg-[#17402C]/10 border border-[#17402C]/15 shadow-inner transition-all duration-300 ease-out"
+                  style={{ left: pill.left, width: pill.width }}
+                />
+              )}
               {[
                 { label: 'Explorer', href: '/explorer' },
                 { label: 'Matériel', href: '/hub' },
@@ -133,15 +175,9 @@ export default function Header() {
                   <Link
                     key={link.label}
                     href={link.href}
+                    data-nav-active={isActive ? 'true' : undefined}
                     className="relative px-3.5 py-1 rounded-full text-[11px] font-bold tracking-wide uppercase transition-colors duration-200 cursor-pointer touch-manipulation whitespace-nowrap select-none"
                   >
-                    {isActive && (
-                      <motion.span
-                        layoutId="header-active-pill"
-                        className="absolute inset-0 rounded-full bg-[#17402C]/10 border border-[#17402C]/15 shadow-inner"
-                        transition={{ type: 'spring', stiffness: 450, damping: 32 }}
-                      />
-                    )}
                     <span
                       className={`relative z-10 transition-colors ${
                         isActive

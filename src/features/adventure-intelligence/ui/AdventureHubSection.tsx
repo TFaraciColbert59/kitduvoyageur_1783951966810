@@ -5,7 +5,6 @@
  * sections existantes du Hub (ids du registre `hubSectionRegistry`, aucune
  * route nouvelle). Composant autonome, prêt à être monté en Phase 9.
  */
-import { motion, useReducedMotion } from 'framer-motion';
 import Icon from '@/components/ui/Icon';
 import type { CockpitTone, CockpitView } from '../domain/cockpit';
 import OfflineBanner from './OfflineBanner';
@@ -56,16 +55,12 @@ export function AdventureHubSection({
   className = '',
   compact = false,
 }: AdventureHubSectionProps) {
-  const reduceMotion = useReducedMotion();
   const pendingDecisions = view.priorityActions.filter((action) => action.kind === 'decide');
   const showDecisions = !compact || pendingDecisions.length > 0;
 
   return (
-    <motion.section
-      initial={reduceMotion ? false : { opacity: 0, y: 6 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: reduceMotion ? 0 : 0.22, ease: [0.22, 1, 0.36, 1] }}
-      className={`rounded-[var(--lkv-radius-card)] bg-[var(--lkv-surface-card)] shadow-sm ${
+    <section
+      className={`lkv-appear rounded-[var(--lkv-radius-card)] bg-[var(--lkv-surface-card)] shadow-sm ${
         compact ? 'space-y-2.5 p-3' : 'space-y-3 p-4'
       } ${className}`}
       aria-label="Cockpit de l’aventure"
@@ -197,7 +192,7 @@ export function AdventureHubSection({
       </nav>
 
       <OfflineBanner offline={view.offline} pendingCount={pendingSyncCount} />
-    </motion.section>
+    </section>
   );
 }
 

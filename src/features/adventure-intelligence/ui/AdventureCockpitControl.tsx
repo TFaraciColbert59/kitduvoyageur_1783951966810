@@ -11,8 +11,7 @@
  * Tokens `--lkv-*`, safe-area, `prefers-reduced-motion`, zéro orange, aucun
  * dialogue natif ; sans plan aventure identifié, rien n'est monté.
  */
-import { useState } from 'react';
-import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
+import { useEffect, useState } from 'react';
 import Icon from '@/components/ui/Icon';
 import AdventureCockpit from './AdventureCockpit';
 import {
@@ -36,7 +35,6 @@ export default function AdventureCockpitControl({
   pendingSyncCount = 0,
   remainingDistanceKm = null,
 }: AdventureCockpitControlProps) {
-  const reduceMotion = useReducedMotion();
   const [open, setOpen] = useState(false);
   const { input, warnings, loading, error, refresh } = useAdventureCockpit({
     adventureId,
@@ -45,15 +43,26 @@ export default function AdventureCockpitControl({
     remainingDistanceKm,
   });
 
-  if (!adventureId) return null;
+  // P1-3 (fin) — sortie animée sans framer : le panneau reste monté le temps
+  // de l'animation CSS de fermeture (.lkv-sheet-up--closing), puis unmount.
+  const [render, setRender] = useState(open);
+  const [closing, setClosing] = useState(false);
+  useEffect(() => {
+    if (open) {
+      setRender(true);
+      setClosing(false);
+      return;
+    }
+    if (!render) return;
+    setClosing(true);
+    const timer = setTimeout(() => {
+      setClosing(false);
+      setRender(false);
+    }, 240);
+    return () => clearTimeout(timer);
+  }, [open, render]);
 
-  const sheetMotion = reduceMotion
-    ? { initial: { opacity: 0 }, animate: { opacity: 1 }, exit: { opacity: 0 } }
-    : {
-        initial: { y: '100%', opacity: 0.6 },
-        animate: { y: 0, opacity: 1 },
-        exit: { y: '100%', opacity: 0 },
-      };
+  if (!adventureId) return null;
 
   return (
     <>
@@ -74,16 +83,13 @@ export default function AdventureCockpitControl({
         ) : null}
       </button>
 
-      <AnimatePresence>
-        {open ? (
-          <motion.div
+      {render ? (
+          <div
             key="adventure-cockpit-sheet"
-            {...sheetMotion}
-            transition={{ duration: reduceMotion ? 0 : 0.22, ease: [0.22, 1, 0.36, 1] }}
             role="dialog"
             aria-modal="true"
             aria-label="Cockpit aventure"
-            className="absolute inset-x-0 bottom-0 z-50 max-h-[82dvh] overflow-y-auto rounded-t-3xl border-t border-[var(--lkv-border,rgba(23,64,44,0.12))] bg-[var(--lkv-surface,#F7F8F6)] px-4 pt-3 shadow-lg"
+            className={`lkv-sheet-up${closing ? ' lkv-sheet-up--closing' : ''} absolute inset-x-0 bottom-0 z-50 max-h-[82dvh] overflow-y-auto rounded-t-3xl border-t border-[var(--lkv-border,rgba(23,64,44,0.12))] bg-[var(--lkv-surface,#F7F8F6)] px-4 pt-3 shadow-lg`}
             style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 16px)' }}
           >
             <div className="mx-auto mb-3 h-1 w-9 rounded-full bg-[var(--lkv-text-subtle)]" aria-hidden="true" />
@@ -121,9 +127,8 @@ export default function AdventureCockpitControl({
                 {warnings.length} avertissement{warnings.length > 1 ? 's' : ''} — données partielles.
               </p>
             ) : null}
-          </motion.div>
-        ) : null}
-      </AnimatePresence>
+          </div>
+      ) : null}
     </>
   );
 }

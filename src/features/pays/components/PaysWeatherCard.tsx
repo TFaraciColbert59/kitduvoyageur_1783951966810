@@ -19,6 +19,9 @@ export function PaysWeatherCard({
   if (isLoading) {
     return (
       <div
+        // État de chargement : même zone que la carte météo (masquée aussi,
+        // sinon un fetch lent produit un squelette non masqué dans la capture).
+        data-visual-mask
         className={cn('glass rounded-[1.5rem] p-5 border border-white/50 shadow-xs animate-pulse space-y-3', className)}
         aria-hidden="true"
       >

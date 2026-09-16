@@ -5,7 +5,7 @@ import { deriveHubProfile, type HubSectionId } from '@/features/hub/engine/hubPr
 import { HubShell } from '@/features/hub/components/HubShell';
 import { AdventureIntelligenceHub } from '@/features/adventure-intelligence/ui';
 import { ItineraryAdventureCockpit } from '@/features/hub/components/mobile/itinerary/ItineraryAdventureCockpit';
-import { LiquidGlassDefs } from '@/components/ui-layouts/liquid-glass';
+import { LiquidGlassDefs } from '@/components/ui-layouts/liquid-glass-defs';
 import { TripAffiliateProvider } from '@/features/affiliation/components/TripAffiliateProvider';
 import { traceStage } from '@/lib/perf/ssrTrace';
 import HubLoading from './loading';

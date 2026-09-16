@@ -10,7 +10,6 @@
  * transform/opacité ≤ 220 ms, rayons/ombres système uniquement.
  */
 import { useMemo } from 'react';
-import { motion, useReducedMotion } from 'framer-motion';
 import Icon from '@/components/ui/Icon';
 import {
   buildCockpitView,
@@ -116,7 +115,6 @@ export function AdventureCockpit({
   onRecalculate,
   className = '',
 }: AdventureCockpitProps) {
-  const reduceMotion = useReducedMotion();
   const view = useMemo(() => buildCockpitView(input), [input]);
 
   const handleAction = (action: CockpitPriorityAction) => {
@@ -130,11 +128,8 @@ export function AdventureCockpit({
   const turnaround = formatTime(view.turnaroundTime);
 
   return (
-    <motion.div
-      initial={reduceMotion ? false : { opacity: 0, y: 6 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: reduceMotion ? 0 : 0.22, ease: [0.22, 1, 0.36, 1] }}
-      className={`space-y-3 pb-[env(safe-area-inset-bottom)] ${className}`}
+    <div
+      className={`lkv-appear space-y-3 pb-[env(safe-area-inset-bottom)] ${className}`}
       role="group"
       aria-label="Cockpit aventure"
     >
@@ -346,7 +341,7 @@ export function AdventureCockpit({
       )}
 
       <OfflineBanner offline={view.offline} pendingCount={pendingSyncCount} />
-    </motion.div>
+    </div>
   );
 }
 

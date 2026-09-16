@@ -1,48 +1,65 @@
 'use client';
 import * as Dialog from '@radix-ui/react-dialog';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useEffect, useState } from 'react';
 import { ArrowLeftIcon as ArrowLeftAnimated } from '@/components/icons/arrow-left';
 
+/**
+ * P1-3 (fin) — GlassSheet sans framer-motion : entrée/sortie animées en CSS
+ * (.lkv-sheet-full, 320 ms, courbe [0.32,0.72,0,1]) via un état de fermeture ;
+ * Radix Dialog conservé (focus trap, Escape, aria) avec forceMount + montage
+ * conditionnel — même contrat qu'AnimatePresence.
+ */
 export function GlassSheet({
   open, onOpenChange, title, children,
 }: { open: boolean; onOpenChange: (v: boolean) => void; title: string; children: React.ReactNode }) {
+  const [render, setRender] = useState(open);
+  const [closing, setClosing] = useState(false);
+  useEffect(() => {
+    if (open) {
+      setRender(true);
+      setClosing(false);
+      return;
+    }
+    if (!render) return;
+    setClosing(true);
+    const timer = setTimeout(() => {
+      setClosing(false);
+      setRender(false);
+    }, 340);
+    return () => clearTimeout(timer);
+  }, [open, render]);
+
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
-      <AnimatePresence>
-        {open && (
-          <Dialog.Portal forceMount>
-            <Dialog.Overlay asChild>
-              <motion.div
-                className="fixed inset-0 z-[10000] bg-ink-900/30"
-                initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                transition={{ duration: 0.28 }}
-              />
-            </Dialog.Overlay>
-            <Dialog.Content asChild aria-label={title}>
-              <motion.div
-                className="fixed inset-0 z-[10001] overflow-y-auto bg-[color:var(--glass-bg-strong)] backdrop-blur-[32px] backdrop-saturate-[200%]"
-                initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
-                transition={{ duration: 0.32, ease: [0.32, 0.72, 0, 1] }}
-              >
-                <header className="sticky top-0 z-10 flex items-center gap-3 px-4 pt-[env(safe-area-inset-top,0px)] h-[calc(56px+env(safe-area-inset-top,0px))] glass border-b border-glass-border">
-                  <Dialog.Close asChild>
-                    <button
-                      aria-label="Retour"
-                      className="glass interactive h-11 w-11 flex items-center justify-center rounded-full cursor-pointer"
-                    >
-                      <ArrowLeftAnimated size={18} className="text-[color:var(--label)]" aria-hidden="true" />
-                    </button>
-                  </Dialog.Close>
-                  <Dialog.Title className="font-display font-semibold text-[18px] sm:text-[20px] text-[color:var(--label)]">
-                    {title}
-                  </Dialog.Title>
-                </header>
-                <div className="px-4 pb-[calc(96px+env(safe-area-inset-bottom,0px))] pt-4 max-w-[var(--page-max-w)] mx-auto">{children}</div>
-              </motion.div>
-            </Dialog.Content>
-          </Dialog.Portal>
-        )}
-      </AnimatePresence>
+      {render && (
+        <Dialog.Portal forceMount>
+          <Dialog.Overlay asChild>
+            <div
+              className={`lkv-fade-in${closing ? ' lkv-fade-in--closing' : ''} fixed inset-0 z-[10000] bg-ink-900/30`}
+            />
+          </Dialog.Overlay>
+          <Dialog.Content asChild aria-label={title}>
+            <div
+              className={`lkv-sheet-full${closing ? ' lkv-sheet-full--closing' : ''} fixed inset-0 z-[10001] overflow-y-auto bg-[color:var(--glass-bg-strong)] backdrop-blur-[32px] backdrop-saturate-[200%]`}
+            >
+              <header className="sticky top-0 z-10 flex items-center gap-3 px-4 pt-[env(safe-area-inset-top,0px)] h-[calc(56px+env(safe-area-inset-top,0px))] glass border-b border-glass-border">
+                <Dialog.Close asChild>
+                  <button
+                    aria-label="Retour"
+                    className="glass interactive h-11 w-11 flex items-center justify-center rounded-full cursor-pointer"
+                  >
+                    <ArrowLeftAnimated size={18} className="text-[color:var(--label)]" aria-hidden="true" />
+                  </button>
+                </Dialog.Close>
+                <Dialog.Title className="font-display font-semibold text-[18px] sm:text-[20px] text-[color:var(--label)]">
+                  {title}
+                </Dialog.Title>
+              </header>
+              <div className="px-4 pb-[calc(96px+env(safe-area-inset-bottom,0px))] pt-4 max-w-[var(--page-max-w)] mx-auto">{children}</div>
+            </div>
+          </Dialog.Content>
+        </Dialog.Portal>
+      )}
     </Dialog.Root>
   );
 }

@@ -91,7 +91,13 @@ export function PaysRecommendations({
       </div>
 
       {isLoading ? (
-        <div className="space-y-2" aria-hidden="true">
+        <div
+          // État de chargement (API lente) : masqué comme le reste de la zone
+          // de recommandations — jamais de squelette non masqué dans la capture.
+          data-visual-mask
+          className="space-y-2"
+          aria-hidden="true"
+        >
           <div className="h-3 w-3/4 rounded-full bg-[#EAE6DF]/80 animate-pulse" />
           <div className="h-3 w-2/3 rounded-full bg-[#EAE6DF]/70 animate-pulse" />
         </div>

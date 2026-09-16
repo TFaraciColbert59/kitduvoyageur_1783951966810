@@ -461,6 +461,59 @@
     }
   }
 
+  /* P1-3 (fin) — apparition standard des blocs (remplace les fades framer) :
+     opacity 0→1 + y 6→0, 220 ms, même courbe. */
+  .lkv-appear {
+    animation: lkv-appear 0.22s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  @keyframes lkv-appear {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .lkv-appear { animation: none; }
+  }
+
+  /* P1-3 (fin) — bottom-sheets (remplace framer AnimatePresence + motion) :
+     entrée y 100%→0 + fondu, sortie inverse. Les composants gardent leur état
+     de fermeture (--closing) le temps de l'animation. */
+  .lkv-sheet-up { animation: lkv-sheet-up 0.22s cubic-bezier(0.22, 1, 0.36, 1) both; }
+  .lkv-sheet-up--closing { animation: lkv-sheet-down 0.2s cubic-bezier(0.4, 0, 1, 1) both; }
+  /* Plein écran (GlassSheet) : 320 ms, courbe [0.32,0.72,0,1] (parité framer). */
+  .lkv-sheet-full { animation: lkv-sheet-up 0.32s cubic-bezier(0.32, 0.72, 0, 1) both; }
+  .lkv-sheet-full--closing { animation: lkv-sheet-down 0.3s cubic-bezier(0.4, 0, 1, 1) both; }
+  @keyframes lkv-sheet-up {
+    from { transform: translateY(100%); opacity: 0.6; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+  @keyframes lkv-sheet-down {
+    from { transform: translateY(var(--lkv-sheet-from, 0)); opacity: 1; }
+    to { transform: translateY(100%); opacity: 0; }
+  }
+  .lkv-modal-in { animation: lkv-modal-in 0.2s cubic-bezier(0.16, 1, 0.3, 1) both; }
+  .lkv-modal-in--closing { animation: lkv-modal-out 0.18s cubic-bezier(0.4, 0, 1, 1) both; }
+  @keyframes lkv-modal-in {
+    from { opacity: 0; transform: scale(0.97); }
+    to { opacity: 1; transform: scale(1); }
+  }
+  @keyframes lkv-modal-out {
+    from { opacity: 1; transform: scale(1); }
+    to { opacity: 0; transform: scale(0.97); }
+  }
+  .lkv-fade-in { animation: lkv-fade-in 0.2s ease both; }
+  .lkv-fade-in--closing { animation: lkv-fade-out 0.2s ease both; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .lkv-sheet-up, .lkv-sheet-up--closing,
+    .lkv-sheet-full, .lkv-sheet-full--closing,
+    .lkv-modal-in, .lkv-modal-in--closing,
+    .lkv-fade-in, .lkv-fade-in--closing {
+      animation: none;
+    }
+  }
+
   @keyframes lkv-page-fade {
     from { opacity: 0.92; }
     to { opacity: 1; }
