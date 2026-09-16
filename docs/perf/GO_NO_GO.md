@@ -26,9 +26,10 @@ Date : 2026-09-16 · Branche : `perf/instant-feel` (15 commits mesurés, Étape 
 
 ## Verdict : **NO-GO lancement large** — GO après 3 chantiers
 
-1. **Bundle** : convertir les 66 icônes animées `src/components/icons/*` en CSS
-   (dernier importeur framer-motion du graphe racine) → débloque partagé ≤ 85 kB
-   et route mobile ≤ 220 kB. Chantier mécanique, ~1 session, zéro-visuel possible.
+1. **Bundle** : convertir framer-motion dans les **vues chaudes** (sheets, carrousels,
+   expériences mobiles — 75/254 routes chargent encore le chunk 1362). Les icônes
+   (faites), PageTransition/OfflineBanner/MobileDrawer/SearchOverlay (faits) ne
+   suffisent pas : la mesure a invalidé l'hypothèse « icônes = goulot ».
 2. **Charge** : test 3× pic en préprod (`ops:a15-load` + surveillance pool PostgREST < 60 %).
 3. **Capacitor** : validation iOS/Android physique (auth, hors-ligne, bandeau réseau) avant release native.
 
