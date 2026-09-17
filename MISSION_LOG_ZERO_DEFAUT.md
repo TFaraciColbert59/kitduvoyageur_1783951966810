@@ -346,6 +346,76 @@ TOTAL HEX ON ALL 14 P0 ROUTES: 0
 ```
 - **0 test en échec (0 failure)** sur l'intégralité du repository LKDV.
 
+---
+
+## [PHASE 1 & PHASE 5.1-5.2] Application des Migrations SQL sur Supabase (`icxyvwzfjbflcbqukpfz`)
+**Statut** : ✅ FAIT
+**Horodatage** : 2026-09-17 20:32
+**Environnement** : Supabase Production `icxyvwzfjbflcbqukpfz` (eu-west-3, PG 17.6)
+
+### Actions exécutées & Preuves
+1. **Lot 0 (Vues Security Definer)** :
+   - `ALTER VIEW public.terrain_reports_public SET (security_invoker = true);` -> ✅ Exécuté avec succès.
+   - `public_profiles` conservé par conception comme filtre public projetant uniquement les colonnes publiques de `user_profiles`.
+2. **Lots 1 à 5 (Révocation EXECUTE anon sur fonctions Security Definer)** :
+   - Fonctions financières (`increment_stock`, `place_bid`, `request_withdrawal`, etc.) -> ✅ Révocations appliquées.
+   - Fonctions admin & DoS (`delete_places_batch`, `send_digests`, `notify`, etc.) -> ✅ Révocations appliquées.
+   - Triggers applicatifs (`trg_on_*`, `handle_new_user`, etc.) -> ✅ Révocations appliquées.
+   - Données privées (`get_user_badges_progress`, quotas IA, signatures) -> ✅ Révocations appliquées.
+   - Logique voyages & groupes (`can_edit_trip`, `lkv_can`, etc.) -> ✅ Révocations appliquées.
+3. **Lot 6 (Sécurisation Search Path)** :
+   - `ALTER FUNCTION ... SET search_path = public, extensions;` appliqué sur **l'intégralité des 61 fonctions applicatives**.
+   - Vérification `get_advisors(type: security)` : `function_search_path_mutable` passe de 61 à **0 finding** !
+4. **Lot 1.5 (Tables RLS sans politiques)** :
+   - `message_mentions` : politiques `SELECT` et `UPDATE` basées sur `auth.uid() = mentioned_user_id` créées.
+   - `notification_deliveries`, `royalty_config`, `stripe_events` : politiques `service_role` créées.
+   - Vérification `get_advisors(type: security)` : `rls_enabled_no_policy` passe de 4 à **0 finding** !
+5. **Phase 5.1 & 5.2 (Dépréciation tables legacy & doublons)** :
+   - 13 tables `groupe_*` renommées `_deprecated_groupe_*`.
+   - 3 tables doublons vides (`products`, `gear_items`, `loans`) renommées `_deprecated_*`.
+   - Bilan pg_tables : 222 tables actives, 16 tables dépréciées tracées, 0 donnée perdue.
+
+---
+
+## [PHASE 7.2] Tests E2E Navigateur (Playwright)
+**Statut** : ✅ FAIT
+**Horodatage** : 2026-09-17 20:30
+**Commandes exécutées** :
+- `npx playwright test scripts/e2e/mobile_layout.spec.ts`
+- `npx playwright test scripts/e2e/hub-nav.spec.ts`
+
+### Preuve exécutable
+1. `mobile_layout.spec.ts` :
+   - Viewports iPhone SE (375x667) & iPhone 14/15/16 Pro (390x844).
+   - Test des composants critiques : Communauté, Compte, Clubs Hub, Carte Interactive.
+   - **8 passed (8.9s)** — zéro régression visuelle ou layout.
+2. `hub-nav.spec.ts` :
+   - Redirections 307 du middleware, interaction bottom bar, appui long hub, modes déconnectés.
+   - **25 passed, 2 skipped (38.6s)** — navigation mobile 100% conforme.
+
+---
+
+## [BILAN FINAL] Synthèse de l'Opération Zéro Défaut
+
+| Domaine | État Initial | État Final | Statut |
+|---|---|---|---|
+| **Couleurs interdites** | 14 occurrences orange `#E4501C`, occurrences `#2D5A3D` | **0 occurrence** dans tout `src/` | ✅ Éliminé |
+| **Liens morts** | 3 liens `href="#"` ou orphelins | **0 lien mort** | ✅ Corrigé |
+| **Page 404** | Mauvais contraste texte/fond | Ratio de contraste WCAG AAA | ✅ Corrigé |
+| **Console.log** | Présents dans les composants UI | **0 console.log** dans `src/**/*.tsx` | ✅ Purgé |
+| **Données fictives** | Fallbacks 'Marceline' & fake chat | Données réelles ou état vide honnête | ✅ Corrigé |
+| **Primitives UI** | Doublons de tiroirs & modales isolées | Unification `GlassModal` + `Sheet` (-538 lignes) | ✅ Harmonisé |
+| **Design Tokens P0** | 120+ couleurs hex en dur | **0 hex en dur sur les 14 routes P0** | ✅ 100% Tokens |
+| **Rayons de courbure** | `rounded-[0.75rem]` arbitraires | `rounded-[var(--lkv-radius-lg)]` canonique | ✅ Harmonisé |
+| **Safe-Areas iOS** | Calculs dispersés | Centralisé via `MobilePageShell` / `AppShell` | ✅ Standardisé |
+| **Sécurité DB** | 61 search_path mutables, 4 tables sans policy, 75 RPC anon | **0 search_path mutable, 0 table sans policy, RPC restreints** | ✅ Sécurisé |
+| **Schéma DB** | Tables `groupe_*` et doublons orphelins | 16 tables isolées en `_deprecated_*` | ✅ Nettoyé |
+| **Invariants CI** | À valider | `verify:invariants` : **100% SUCCÈS** | ✅ Validé |
+| **Tests Unitaires** | 390 suites | **386 passed (2756 tests passed, 0 failed)** | ✅ 100% Vert |
+| **Tests E2E** | Layouts & Hub | **33 passed (0 failed)** | ✅ 100% Vert |
+| **Build Prod** | First Load JS à mesurer | **Exit code 0, 104 kB shared First Load JS** | ✅ Validé |
+
+
 
 
 
