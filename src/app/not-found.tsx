@@ -1,27 +1,25 @@
 'use client';
 
 import React from 'react';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Icon from '@/components/ui/AppIcon';
 import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
 
 const POPULAR_PAGES = [
-  { label: 'Configurateur IA', href: '/ai-configurator', icon: 'SparklesIcon' },
-  { label: 'Boutique', href: '/boutique', icon: 'ShoppingBagIcon' },
-  { label: 'Destinations', href: '/pays', icon: 'GlobeAltIcon' },
+  { label: 'Explorer', href: '/explorer', icon: 'GlobeAltIcon' },
+  { label: 'Hub Voyage', href: '/hub', icon: 'SparklesIcon' },
+  { label: 'Boutique & Kits', href: '/boutique', icon: 'ShoppingBagIcon' },
+  { label: 'Communauté', href: '/communaute', icon: 'UserGroupIcon' },
 ];
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://lekitduvoyageur.fr';
 
 export default function NotFound() {
-  const router = useRouter();
-
   const webPageSchema = {
     '@context': 'https://schema.org',
     '@type': 'WebPage',
-    name: '404 \u2014 Page introuvable | Le Kit du Voyageur',
-    description: 'La page que vous cherchez a \u00e9t\u00e9 d\u00e9plac\u00e9e, renomm\u00e9e ou n\u2019existe plus.',
+    name: '404 — Page introuvable | Le Kit du Voyageur',
+    description: 'La page que vous cherchez a été déplacée, renommée ou n’existe plus.',
     url: `${siteUrl}/404`,
     isPartOf: { '@id': `${siteUrl}/#website` },
   };
@@ -34,34 +32,81 @@ export default function NotFound() {
 
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(webPageSchema) }} suppressHydrationWarning />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(webPageSchema) }}
+        suppressHydrationWarning
+      />
+
       {/* DESKTOP */}
-      <div className="hidden md:block">
-        <div className="min-h-screen flex flex-col items-center justify-center bg-[#17402C] p-4">
-          <div className="text-center max-w-lg">
-            <div className="flex justify-center mb-6">
-              <h1 className="text-[10rem] font-bold leading-none" style={{ fontFamily: 'var(--font-display)', color: '#17402C', opacity: 0.2 }}>404</h1>
-            </div>
-            <p className="text-[10px] font-mono text-[#17402C] tracking-[0.25em] uppercase mb-3" style={{ fontFamily: 'var(--font-mono)' }}>Page introuvable</p>
-            <h2 className="text-2xl font-bold text-white mb-3" style={{ fontFamily: 'var(--font-display)' }}>Cette page n&apos;existe pas</h2>
-            <p className="text-white/50 mb-8 text-sm leading-relaxed">La page que vous cherchez a peut-être été déplacée, renommée ou n&apos;existe plus.</p>
-            <div className="flex flex-col sm:flex-row gap-3 justify-center mb-10">
-              <button onClick={handleGoBack} className="inline-flex items-center justify-center gap-2 bg-white/10 hover:bg-white/20 text-white px-6 py-3 rounded-xl font-medium text-sm transition-all">
-                <Icon name="ArrowLeftIcon" size={16} variant="outline" />Retour
-              </button>
-              <Link href="/" className="inline-flex items-center justify-center gap-2 bg-[#17402C] hover:bg-[#cc3d10] text-white px-6 py-3 rounded-xl font-semibold text-sm transition-all">
-                <Icon name="HomeIcon" size={16} variant="outline" />Accueil
-              </Link>
-            </div>
-            <div>
-              <p className="text-xs text-white/30 font-mono tracking-widest uppercase mb-4" style={{ fontFamily: 'var(--font-mono)' }}>Pages populaires</p>
-              <div className="grid grid-cols-2 gap-2">
-                {POPULAR_PAGES.map((page) => (
-                  <Link key={page.href} href={page.href} className="flex items-center gap-2.5 bg-white/5 hover:bg-white/10 border border-white/8 rounded-xl px-4 py-3 text-sm text-white/60 hover:text-white transition-all">
-                    <Icon name={page.icon} size={14} variant="outline" className="text-[#17402C]" />{page.label}
-                  </Link>
-                ))}
-              </div>
+      <div className="hidden md:flex min-h-screen flex-col items-center justify-center bg-[var(--lkv-surface,#EEF3EC)] p-6">
+        <div className="text-center max-w-md w-full glass p-8 rounded-[1.75rem] border border-[#17402C]/10 shadow-elevation-2">
+          <div className="flex justify-center mb-4">
+            <span
+              className="text-8xl font-extrabold leading-none tracking-tight font-display select-none"
+              style={{
+                fontFamily: 'var(--font-display)',
+                color: 'var(--lkv-primary, #17402C)',
+                opacity: 0.25,
+              }}
+            >
+              404
+            </span>
+          </div>
+
+          <p
+            className="text-xs font-mono font-semibold tracking-[0.2em] uppercase text-[var(--lkv-secondary,#5B7F55)] mb-2"
+            style={{ fontFamily: 'var(--font-mono)' }}
+          >
+            Sentier introuvable
+          </p>
+
+          <h1
+            className="text-2xl font-bold text-[var(--lkv-text-primary,#17402C)] mb-3 font-display"
+            style={{ fontFamily: 'var(--font-display)' }}
+          >
+            Cette page n&apos;existe pas
+          </h1>
+
+          <p className="text-[var(--lkv-text-secondary,#5B7F55)] mb-8 text-sm leading-relaxed font-sans">
+            Le sentier que vous cherchez a peut-être été balisé ailleurs, renommé ou n&apos;existe plus.
+          </p>
+
+          <div className="flex flex-col sm:flex-row gap-3 justify-center mb-8">
+            <button
+              onClick={handleGoBack}
+              className="inline-flex items-center justify-center gap-2 bg-white/70 hover:bg-white text-[var(--lkv-primary,#17402C)] border border-[#17402C]/12 px-5 py-3 rounded-full font-medium text-sm transition-all active:scale-[0.98] min-h-[44px]"
+            >
+              <Icon name="ArrowLeftIcon" size={16} variant="outline" />
+              Retour
+            </button>
+            <Link
+              href="/hub"
+              className="inline-flex items-center justify-center gap-2 bg-[var(--lkv-primary,#17402C)] hover:bg-[var(--lkv-primary-hover,#205238)] text-white px-6 py-3 rounded-full font-semibold text-sm transition-all shadow-green active:scale-[0.98] min-h-[44px]"
+            >
+              <Icon name="HomeIcon" size={16} variant="outline" />
+              Aller au Hub
+            </Link>
+          </div>
+
+          <div className="pt-6 border-t border-[#17402C]/8">
+            <p
+              className="text-[11px] text-[var(--lkv-text-muted,#6B7568)] font-mono tracking-widest uppercase mb-3"
+              style={{ fontFamily: 'var(--font-mono)' }}
+            >
+              Points de repère
+            </p>
+            <div className="grid grid-cols-2 gap-2">
+              {POPULAR_PAGES.map((page) => (
+                <Link
+                  key={page.href}
+                  href={page.href}
+                  className="flex items-center gap-2.5 bg-white/60 hover:bg-white border border-[#17402C]/10 rounded-xl px-3.5 py-2.5 text-xs font-medium text-[var(--lkv-primary,#17402C)] transition-all active:scale-[0.98] min-h-[40px]"
+                >
+                  <Icon name={page.icon} size={14} variant="outline" className="text-[var(--lkv-secondary,#5B7F55)]" />
+                  {page.label}
+                </Link>
+              ))}
             </div>
           </div>
         </div>
@@ -69,27 +114,78 @@ export default function NotFound() {
 
       {/* MOBILE */}
       <div className="block md:hidden">
-        <MobilePageShell>
-          <div style={{ textAlign: 'center', padding: '32px 16px' }}>
-            <h1 style={{ fontSize: '80px', fontWeight: 800, color: '#17402C', opacity: 0.2, marginBottom: '16px', fontFamily: 'var(--font-display)', lineHeight: 1 }}>404</h1>
-            <p style={{ fontSize: '10px', fontFamily: 'var(--font-mono)', color: '#17402C', letterSpacing: '0.25em', textTransform: 'uppercase', marginBottom: '12px' }}>Page introuvable</p>
-            <h2 style={{ fontSize: '20px', fontWeight: 700, color: 'white', marginBottom: '12px', fontFamily: 'var(--font-display)' }}>Cette page n&apos;existe pas</h2>
-            <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.5)', marginBottom: '24px', lineHeight: '1.6' }}>La page que vous cherchez a peut-être été déplacée ou n&apos;existe plus.</p>
-            <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', marginBottom: '24px' }}>
-              <button onClick={handleGoBack} style={{ padding: '12px 20px', borderRadius: '12px', background: 'rgba(255,255,255,0.1)', color: 'white', border: 'none', fontSize: '13px', fontWeight: 500, cursor: 'pointer' }}>Retour</button>
-              <Link href="/" style={{ padding: '12px 20px', borderRadius: '12px', background: '#17402C', color: 'white', fontSize: '13px', fontWeight: 600, textDecoration: 'none' }}>Accueil</Link>
-            </div>
-            <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.3)', fontFamily: 'var(--font-mono)', letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: '12px' }}>Pages populaires</p>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-              {POPULAR_PAGES.map((page) => (
-                <Link key={page.href} href={page.href} style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(255,255,255,0.05)', padding: '12px', borderRadius: '10px', color: 'rgba(255,255,255,0.6)', textDecoration: 'none', fontSize: '13px', border: '1px solid rgba(255,255,255,0.08)' }}>
-                  {page.label}
+        <MobilePageShell background="var(--lkv-surface, #EEF3EC)">
+          <div className="px-5 py-10 text-center flex flex-col items-center justify-center min-h-[calc(100dvh-120px)]">
+            <div className="glass p-6 rounded-[1.75rem] border border-[#17402C]/10 w-full max-w-sm shadow-elevation-1">
+              <span
+                className="text-7xl font-extrabold leading-none font-display block mb-3 select-none"
+                style={{
+                  fontFamily: 'var(--font-display)',
+                  color: 'var(--lkv-primary, #17402C)',
+                  opacity: 0.25,
+                }}
+              >
+                404
+              </span>
+
+              <p
+                className="text-[10px] font-mono font-semibold tracking-[0.2em] uppercase text-[var(--lkv-secondary,#5B7F55)] mb-2"
+                style={{ fontFamily: 'var(--font-mono)' }}
+              >
+                Sentier introuvable
+              </p>
+
+              <h1
+                className="text-xl font-bold text-[var(--lkv-text-primary,#17402C)] mb-2 font-display"
+                style={{ fontFamily: 'var(--font-display)' }}
+              >
+                Cette page n&apos;existe pas
+              </h1>
+
+              <p className="text-[var(--lkv-text-secondary,#5B7F55)] mb-6 text-xs leading-relaxed font-sans">
+                Le sentier que vous cherchez a peut-être été déplacé ou n&apos;existe plus.
+              </p>
+
+              <div className="flex gap-2.5 justify-center mb-6">
+                <button
+                  onClick={handleGoBack}
+                  className="flex-1 inline-flex items-center justify-center gap-1.5 bg-white/70 active:bg-white text-[var(--lkv-primary,#17402C)] border border-[#17402C]/12 px-4 py-3 rounded-full font-medium text-xs transition-all min-h-[44px]"
+                >
+                  <Icon name="ArrowLeftIcon" size={14} variant="outline" />
+                  Retour
+                </button>
+                <Link
+                  href="/hub"
+                  className="flex-1 inline-flex items-center justify-center gap-1.5 bg-[var(--lkv-primary,#17402C)] active:bg-[var(--lkv-primary-hover,#205238)] text-white px-4 py-3 rounded-full font-semibold text-xs transition-all shadow-green min-h-[44px]"
+                >
+                  <Icon name="HomeIcon" size={14} variant="outline" />
+                  Hub
                 </Link>
-              ))}
+              </div>
+
+              <div className="pt-4 border-t border-[#17402C]/8">
+                <p
+                  className="text-[10px] text-[var(--lkv-text-muted,#6B7568)] font-mono tracking-widest uppercase mb-2.5"
+                  style={{ fontFamily: 'var(--font-mono)' }}
+                >
+                  Points de repère
+                </p>
+                <div className="grid grid-cols-2 gap-2">
+                  {POPULAR_PAGES.map((page) => (
+                    <Link
+                      key={page.href}
+                      href={page.href}
+                      className="flex items-center gap-2 bg-white/60 active:bg-white border border-[#17402C]/10 rounded-xl px-3 py-2 text-[11px] font-medium text-[var(--lkv-primary,#17402C)] transition-all min-h-[40px]"
+                    >
+                      <Icon name={page.icon} size={13} variant="outline" className="text-[var(--lkv-secondary,#5B7F55)]" />
+                      <span className="truncate">{page.label}</span>
+                    </Link>
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
         </MobilePageShell>
-        
       </div>
     </>
   );

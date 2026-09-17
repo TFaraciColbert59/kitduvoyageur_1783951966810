@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
@@ -645,7 +645,7 @@ export default function CheckoutPage() {
                   )}
 
                   <p className="text-center text-[10px] text-[#5A7064] mt-4 max-w-[250px] mx-auto leading-relaxed">
-                    En passant commande, vous acceptez les <a href="#" className="underline">CGV</a> et notre <a href="#" className="underline">politique de retour</a>. Vous ne serez débité qu'à l'expédition.
+                    En passant commande, vous acceptez les <Link href="/cgv" target="_blank" className="underline">CGV</Link> et notre <Link href="/politique-confidentialite" target="_blank" className="underline">politique de retour</Link>. Vous ne serez débité qu'à l'expédition.
                   </p>
                 </div>
               </div>

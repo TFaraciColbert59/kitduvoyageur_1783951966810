@@ -22,9 +22,13 @@ export function ExportShareBar() {
       URL.revokeObjectURL(url);
       setStatus('Inventaire exporté (CSV)');
     } else {
-      setStatus('Inventaire exporté (JSON) — ouvert dans la console');
       const data = await res.json();
-      console.log(data);
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = 'inventaire.json'; a.click();
+      URL.revokeObjectURL(url);
+      setStatus('Inventaire exporté (JSON)');
     }
   };
 

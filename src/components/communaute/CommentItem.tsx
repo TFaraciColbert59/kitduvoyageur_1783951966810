@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 import { lkvConfirm } from '@/components/ui/dialogs';
 
 import React, { useState } from 'react';
@@ -120,8 +120,8 @@ export default function CommentItem({
         reason: reportReason,
         table_name: tableName,
       });
-    } catch (e) {
-      console.log('Report saved locally:', e);
+    } catch {
+      // Ignorer l'erreur réseau ponctuelle sur signalement
     }
     setIsReported(true);
     setIsReporting(false);

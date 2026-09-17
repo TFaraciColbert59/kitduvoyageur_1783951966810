@@ -1,4 +1,5 @@
 import React from 'react';
+import Link from 'next/link';
 import type { CarnetRandonnee } from '@/lib/mock/carnet-chartreuse';
 
 interface RandonneesSouvenirCardProps {
@@ -23,7 +24,7 @@ export default function RandonneesSouvenirCard({ randonnees }: RandonneesSouveni
         <h3 className="font-display text-lg text-[#17402C]">
           Randonnées <em className="font-serif italic">parcourues</em>
         </h3>
-        <a href="#" className="text-xs font-medium text-[#17402C] hover:underline whitespace-nowrap">Tout →</a>
+        <Link href="/carnets" className="text-xs font-medium text-[#17402C] hover:underline whitespace-nowrap">Tout →</Link>
       </div>
       <p className="text-sm text-[#17402C]/60 mb-6 font-sans">Trois traces enregistrées, trois exportables au format GPX pour la fois prochaine.</p>
       <div className="space-y-3">
