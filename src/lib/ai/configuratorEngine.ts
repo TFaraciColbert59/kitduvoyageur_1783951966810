@@ -174,13 +174,13 @@ export async function fetchGroupContext(groupId: string): Promise<{
   try {
     const supabase = createClient();
     const { data: grp } = await supabase
-      .from('groupes')
-      .select('nom, destination')
+      .from('travel_groups')
+      .select('name, destination')
       .eq('id', groupId)
       .maybeSingle();
 
     const { data: members } = await supabase
-      .from('groupe_membres')
+      .from('group_members')
       .select('id')
       .eq('group_id', groupId);
 
@@ -190,7 +190,7 @@ export async function fetchGroupContext(groupId: string): Promise<{
       .eq('group_id', groupId);
 
     return {
-      groupName: grp?.nom ?? 'Groupe d’expédition',
+      groupName: grp?.name ?? 'Groupe d’expédition',
       destination: grp?.destination ?? 'Destinations variées',
       membersCount: (members || []).length || 1,
       sharedItems: (kitItems || []).map((k) => ({
