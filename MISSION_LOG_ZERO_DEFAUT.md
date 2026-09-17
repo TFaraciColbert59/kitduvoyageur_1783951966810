@@ -308,5 +308,20 @@ TOTAL HEX ON ALL 14 P0 ROUTES: 0
 - Preuve de compilation `npx tsc --noEmit` : **Exit code 0 (zéro erreur TypeScript)**.
 - Preuve des invariants CI `npm run verify:invariants` : **100% Validé**.
 
+---
+
+## [PHASE 6.3 & 6.4] Audit des rayons de courbure et centralisation Safe-Area
+**Statut** : ✅ FAIT
+**Horodatage** : 2026-09-17 20:18
+**Fichiers touchés** :
+- `src/app/page.tsx` (6 occurrences de `rounded-[0.75rem]` remplacées par `rounded-[var(--lkv-radius-lg)]`)
+- `src/components/shell/AppShell.tsx` (focus skip-link migré vers `var(--lkv-primary)`)
+
+### Preuve exécutable
+- Audit des rayons arbitraires `rounded-\[[0-9]+` sur les 14 routes P0 : **0 résultat**.
+- Audit `MobilePageShell` : composant délégué canoniquement vers `AppShell` gérant `env(safe-area-inset-top)` et `env(safe-area-inset-bottom)`.
+- Preuve de compilation `npx tsc --noEmit` : **Exit code 0 (zéro erreur TypeScript)**.
+
+
 
 

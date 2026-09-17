@@ -84,7 +84,7 @@ export default function HomePage() {
 
               {/* Right Card */}
               <div className="w-full max-w-[340px] flex-shrink-0">
-                <div className="bg-[var(--lkv-primary)]/5 backdrop-blur-xl border border-white/20 rounded-[0.75rem] p-6  shadow-black/5 relative overflow-hidden">
+                <div className="bg-[var(--lkv-primary)]/5 backdrop-blur-xl border border-white/20 rounded-[var(--lkv-radius-lg)] p-6  shadow-black/5 relative overflow-hidden">
                   <div className="absolute inset-0 bg-gradient-to-br from-white/40 to-white/10" />
                   <div className="relative z-10">
                     <p className="text-[9px] font-mono tracking-widest text-[var(--lkv-text-muted)] uppercase mb-1">ESPACE DE RÉSERVE</p>
@@ -133,7 +133,7 @@ export default function HomePage() {
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {/* Card 1 */}
-                <div className="relative h-[480px] rounded-[0.75rem] overflow-hidden group cursor-pointer">
+                <div className="relative h-[480px] rounded-[var(--lkv-radius-lg)] overflow-hidden group cursor-pointer">
                   <Image 
                     src="https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=800&q=80" 
                     alt="Chartreuse sentier des balcons" 
@@ -158,7 +158,7 @@ export default function HomePage() {
                 </div>
 
                 {/* Card 2 */}
-                <div className="relative h-[480px] rounded-[0.75rem] overflow-hidden group cursor-pointer">
+                <div className="relative h-[480px] rounded-[var(--lkv-radius-lg)] overflow-hidden group cursor-pointer">
                   <Image 
                     src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&q=80" 
                     alt="Bivouac étoilé Vercors" 
@@ -182,7 +182,7 @@ export default function HomePage() {
                 </div>
 
                 {/* Card 3 */}
-                <div className="relative h-[480px] rounded-[0.75rem] overflow-hidden group cursor-pointer">
+                <div className="relative h-[480px] rounded-[var(--lkv-radius-lg)] overflow-hidden group cursor-pointer">
                   <Image 
                     src="https://images.unsplash.com/photo-1559128010-7c1ad6e1b6a5?w=800&q=80" 
                     alt="Kayak Sans-Rançon" 
@@ -250,7 +250,7 @@ export default function HomePage() {
               </div>
               
               <div className="flex-1 w-full">
-                <div className="relative rounded-[0.75rem] overflow-hidden aspect-[4/5] lg:aspect-auto lg:h-[700px]">
+                <div className="relative rounded-[var(--lkv-radius-lg)] overflow-hidden aspect-[4/5] lg:aspect-auto lg:h-[700px]">
                   <img src="https://images.unsplash.com/photo-1454496522488-7a8e488e8606?w=1000&q=80" alt="Montagne" className="w-full h-full object-cover" />
                   <div className="absolute inset-0 bg-gradient-to-t from-[var(--lkv-primary)] via-transparent to-transparent opacity-80" />
                   <div className="absolute bottom-8 left-8 right-8">
@@ -266,7 +266,7 @@ export default function HomePage() {
           <section className="py-24 px-4 bg-[var(--lkv-surface)]">
             <div className="max-w-[1200px] mx-auto flex flex-col lg:flex-row items-center gap-16">
               <div className="flex-1 w-full">
-                <div className="relative rounded-[0.75rem] overflow-hidden aspect-square bg-[var(--stone-200)]">
+                <div className="relative rounded-[var(--lkv-radius-lg)] overflow-hidden aspect-square bg-[var(--stone-200)]">
                   <img src="https://images.unsplash.com/photo-1550ed4e1b-3b47bd21096a?w=1000&q=80" alt="Sac à dos en toile cirée" className="w-full h-full object-cover" />
                   <div className="absolute top-6 left-6">
                     <span className="bg-[var(--lkv-surface)] backdrop-blur px-3 py-1.5 rounded-full text-[10px] font-bold text-[var(--lkv-primary)] tracking-wide uppercase ">

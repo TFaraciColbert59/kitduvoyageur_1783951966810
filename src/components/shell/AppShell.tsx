@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React from 'react';
 import { usePathname } from 'next/navigation';
@@ -111,7 +111,7 @@ export default function AppShell({
       {/* Skip Link pour navigation clavier et lecteurs d'écran (WCAG AA 2.4.1) */}
       <a
         href="#main-content"
-        className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-[#17402C] focus:text-white focus:text-sm focus:font-semibold focus:rounded-xl focus:shadow-xl focus:outline-none focus:ring-2 focus:ring-amber-400"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-[var(--lkv-primary)] focus:text-white focus:text-sm focus:font-semibold focus:rounded-xl focus:shadow-xl focus:outline-none focus:ring-2 focus:ring-amber-400"
       >
         Aller au contenu principal
       </a>
