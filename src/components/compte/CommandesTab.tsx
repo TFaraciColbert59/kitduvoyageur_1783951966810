@@ -1008,7 +1008,7 @@ function AddressModal({
     onSave({
       id: initialData?.id || `temp-${Date.now()}`,
       label: formData.label,
-      name: formData.name || 'Marceline Chevrier',
+      name: formData.name || 'Voyageur',
       street: formData.street,
       city: formData.city,
       isDefault: initialData?.isDefault || false,
@@ -1192,7 +1192,7 @@ function CardModal({
             <input
               required
               type="text"
-              placeholder="Marceline Chevrier"
+              placeholder="Prénom Nom"
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               className="glass-input w-full uppercase"

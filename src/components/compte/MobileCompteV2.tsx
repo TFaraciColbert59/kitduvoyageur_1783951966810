@@ -332,25 +332,25 @@ export default function MobileCompteV2() {
     }
   };
 
-  // Identité calculée
-  const fullName = profile?.full_name || (user?.user_metadata?.full_name as string) || 'Marceline Chevrier';
+  // Identité calculée (données réelles)
+  const fullName = profile?.full_name || (user?.user_metadata?.full_name as string) || (user?.email ? user.email.split('@')[0] : 'Voyageur');
   const firstName = fullName.split(' ')[0] || 'Voyageur';
-  const handleName = (profile?.username || profile?.full_name || user?.email || 'marceline')
+  const handleName = (profile?.username || profile?.full_name || user?.email || 'voyageur')
     .toLowerCase()
     .split(/[@\s]/)[0]
-    .replace(/[^a-z0-9]/g, '') || 'marceline';
+    .replace(/[^a-z0-9]/g, '') || 'voyageur';
   const handle = `@${handleName}`;
-  const bio = profile?.bio || 'Guides, cols et bivouacs. Cartographier la lenteur, un chapitre à la fois.';
-  const location = profile?.location || 'Annecy, France';
-  const levelNum = profile?.level ?? 4;
+  const bio = profile?.bio || 'Voyageur passionné d’aventure et de grands espaces.';
+  const location = profile?.location || '';
+  const levelNum = profile?.level ?? 1;
   const levelTitle = LEVEL_NAMES[levelNum] || 'Aventurier';
-  const currentXp = profile?.xp ?? 1450;
-  const nextLevelXp = levelNum * 500;
-  const trustScore = profile?.trust_score ?? 88;
-      const avatarUrl = profile?.avatar_url || (user?.user_metadata?.avatar_url as string) || '/assets/images/no_image.png';
+  const currentXp = profile?.xp ?? 0;
+  const nextLevelXp = Math.max(levelNum * 500, 500);
+  const trustScore = profile?.trust_score ?? 50;
+  const avatarUrl = profile?.avatar_url || (user?.user_metadata?.avatar_url as string) || '/assets/images/no_image.png';
 
-  const totalVoyages = content.filter((c) => c.kind === 'groupe').length || 12;
-  const totalCarnets = content.filter((c) => c.kind === 'carnet').length || 8;
+  const totalVoyages = content.filter((c) => c.kind === 'groupe').length;
+  const totalCarnets = content.filter((c) => c.kind === 'carnet').length;
 
   /* ──────────────────────────────────────────────────────────────────────────
      ÉTAT NON CONNECTÉ

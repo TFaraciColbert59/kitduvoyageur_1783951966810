@@ -24,18 +24,15 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
   >('profil');
 
   // Form State – Profil & Identité
-  const [firstName, setFirstName] = useState(profile.first_name || 'Marceline');
-  const [lastName, setLastName] = useState((profile.last_name || 'Chevrier').replace('.', ''));
-  const [username, setUsername] = useState('@marceline.chv');
-  const [pronouns, setPronouns] = useState('Elle / her');
-  const [bio, setBio] = useState(
-    profile.bio ||
-      'Passionnée de bivouac estival et randonnée alpine en solo. Matériel léger, autonomie 3-5 jours. Basée à Grenoble.'
-  );
-  const [location, setLocation] = useState(profile.location || 'Grenoble, Isère');
-  const [primaryActivity, setPrimaryActivity] = useState('Randonnée & Bivouac (GR, alpages)');
+  const [firstName, setFirstName] = useState(profile.first_name || '');
+  const [lastName, setLastName] = useState((profile.last_name || '').replace('.', ''));
+  const [username, setUsername] = useState((profile as any).username ? `@${String((profile as any).username).replace(/^@/, '')}` : '');
+  const [pronouns, setPronouns] = useState('');
+  const [bio, setBio] = useState(profile.bio || '');
+  const [location, setLocation] = useState(profile.location || '');
+  const [primaryActivity, setPrimaryActivity] = useState('Randonnée & Bivouac');
   const [avatarUrl, setAvatarUrl] = useState(
-    profile.avatar_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80'
+    profile.avatar_url || '/assets/images/no_image.png'
   );
 
   // Form State – Notifications
@@ -64,7 +61,7 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
   const [firstDayOfWeek, setFirstDayOfWeek] = useState('monday');
 
   // Form State – Sécurité
-  const [email, setEmail] = useState('marceline.chevrier@example.com');
+  const [email, setEmail] = useState((profile as any).email || '');
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');

@@ -427,9 +427,7 @@ export const messagingService = {
     }
 
     if (memberData.length === 0) {
-      // Si aucune conversation n'existe en base, renvoyer le jeu de données démo ultra-enrichi
-      initDemoMessages(userId);
-      return getDemoConversations();
+      return [];
     }
 
     const conversationIds = memberData.map((m) => m.conversation_id);
@@ -442,8 +440,7 @@ export const messagingService = {
       .order('last_message_at', { ascending: false });
 
     if (convError || !conversations || conversations.length === 0) {
-      initDemoMessages(userId);
-      return getDemoConversations();
+      return [];
     }
 
     // 3. Obtenir les interlocuteurs pour les conversations directes (1:1)
@@ -536,12 +533,12 @@ export const messagingService = {
       return rpcData;
     }
 
-    // Mode démo / fallback local si la RPC n'est pas exécutée sur l'environnement Supabase distant
-    const demoConvs = getDemoConversations();
-    const existing = demoConvs.find((c) => c.other_member?.id === targetUserId);
-    if (existing) return existing.id;
+    if (rpcError) {
+      console.error('Erreur get_or_create_direct_conversation:', rpcError);
+      throw new Error(rpcError.message || 'Impossible de créer la discussion');
+    }
 
-    return 'demo-conv-1';
+    throw new Error('Impossible de créer la discussion');
   },
 
   async getMessages(conversationId: string, limit = 50): Promise<Message[]> {
