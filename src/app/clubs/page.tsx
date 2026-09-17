@@ -105,22 +105,22 @@ const EMPTY_CLUB_FORM: ClubForm = {
 
 // Dégradés officiels (tokens sage / warn / info / stone) — remplace les classes Tailwind legacy
 const COVER_GRADIENTS: Record<string, string> = {
-  'from-emerald-600 to-teal-700': 'from-[#365233] to-[#17402C]',
-  'from-blue-600 to-indigo-700': 'from-[#4B6B7C] to-[#2A5A6E]',
-  'from-amber-600 to-orange-700': 'from-[#C89A3B] to-[#8C6418]',
-  'from-stone-600 to-stone-800': 'from-[#7A7365] to-[#5B554A]',
-  'from-cyan-600 to-blue-700': 'from-[#3E6B7A] to-[#4B6B7C]',
-  'from-slate-600 to-gray-800': 'from-[#5A574E] to-[#3F3B34]',
+  'from-emerald-600 to-teal-700': 'from-[var(--lkv-forest-600)] to-[var(--lkv-primary)]',
+  'from-blue-600 to-indigo-700': 'from-[var(--lkv-info)] to-[var(--lkv-sky-600)]',
+  'from-amber-600 to-orange-700': 'from-[var(--lkv-warning)] to-[var(--lkv-warning)]',
+  'from-stone-600 to-stone-800': 'from-[var(--lkv-text-subtle)] to-[var(--lkv-text-muted)]',
+  'from-cyan-600 to-blue-700': 'from-[var(--lkv-info)] to-[var(--lkv-info)]',
+  'from-slate-600 to-gray-800': 'from-[var(--lkv-text-muted)] to-[var(--lkv-text-primary)]',
 };
 const normalizeCover = (c: string) => COVER_GRADIENTS[c] ?? c;
 
 const _COVER_COLORS: { label: string; value: string }[] = [
-  { label: 'Sauge', value: 'from-[#365233] to-[#17402C]' },
-  { label: 'Info', value: 'from-[#4B6B7C] to-[#2A5A6E]' },
-  { label: 'Warn', value: 'from-[#C89A3B] to-[#8C6418]' },
-  { label: 'Pierre', value: 'from-[#7A7365] to-[#5B554A]' },
-  { label: 'Océan', value: 'from-[#3E6B7A] to-[#4B6B7C]' },
-  { label: 'Ardoise', value: 'from-[#5A574E] to-[#3F3B34]' },
+  { label: 'Sauge', value: 'from-[var(--lkv-forest-600)] to-[var(--lkv-primary)]' },
+  { label: 'Info', value: 'from-[var(--lkv-info)] to-[var(--lkv-sky-600)]' },
+  { label: 'Warn', value: 'from-[var(--lkv-warning)] to-[var(--lkv-warning)]' },
+  { label: 'Pierre', value: 'from-[var(--lkv-text-subtle)] to-[var(--lkv-text-muted)]' },
+  { label: 'Océan', value: 'from-[var(--lkv-info)] to-[var(--lkv-info)]' },
+  { label: 'Ardoise', value: 'from-[var(--lkv-text-muted)] to-[var(--lkv-text-primary)]' },
 ];
 
 // ─── Club Create/Edit Modal ───────────────────────────────────────────────────
@@ -150,12 +150,12 @@ function ClubFormModal({
         {/* Header */}
         <div className="flex items-center justify-between p-6 sm:px-8 pt-8 pb-4 relative z-10">
           <div>
-            <h2 className="font-display font-800 text-[#17402C] text-2xl tracking-tight">
+            <h2 className="font-display font-800 text-[var(--lkv-primary)] text-2xl tracking-tight">
               {initial ? 'Modifier le club' : 'Créer un club'}
             </h2>
-            <p className="text-[#365233] text-sm mt-1">Configurez l&apos;espace de votre communauté.</p>
+            <p className="text-[var(--lkv-forest-600)] text-sm mt-1">Configurez l&apos;espace de votre communauté.</p>
           </div>
-          <button onClick={onClose} className="p-3 bg-white/40 rounded-full hover:bg-[#EEF3EC] text-[#17402C] transition-colors self-start">
+          <button onClick={onClose} className="p-3 bg-white/40 rounded-full hover:bg-[var(--lkv-surface-muted)] text-[var(--lkv-primary)] transition-colors self-start">
             <Icon name="XMarkIcon" size={20} />
           </button>
         </div>
@@ -164,7 +164,7 @@ function ClubFormModal({
         <div className="p-6 sm:px-8 space-y-6 max-h-[60vh] overflow-y-auto custom-scrollbar relative z-10">
           <div className="flex gap-4">
             <div className="w-24">
-              <label className="text-[11px] font-700 text-[#5A7064] uppercase tracking-widest block mb-2">Emoji</label>
+              <label className="text-[11px] font-700 text-[var(--lkv-text-muted)] uppercase tracking-widest block mb-2">Emoji</label>
               <input 
                 className="glass-input w-full text-center text-3xl" 
                 value={form.emoji} 
@@ -172,7 +172,7 @@ function ClubFormModal({
               />
             </div>
             <div className="flex-1">
-              <label className="text-[11px] font-700 text-[#5A7064] uppercase tracking-widest block mb-2">Nom du club <span className="text-[#5B7F55]">*</span></label>
+              <label className="text-[11px] font-700 text-[var(--lkv-text-muted)] uppercase tracking-widest block mb-2">Nom du club <span className="text-[var(--lkv-secondary)]">*</span></label>
               <input 
                 className="glass-input w-full text-base" 
                 placeholder="Ex: Club Sahara" 
@@ -184,7 +184,7 @@ function ClubFormModal({
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             <div>
-              <label className="text-[11px] font-700 text-[#5A7064] uppercase tracking-widest block mb-2">Type</label>
+              <label className="text-[11px] font-700 text-[var(--lkv-text-muted)] uppercase tracking-widest block mb-2">Type</label>
               <div className="glass-capsule-bar w-full p-1.5">
                 {[{ v: 'activite', l: '🎯 Activité' }, { v: 'pays', l: '🌍 Pays' }].map((opt) => (
                   <button 
@@ -199,7 +199,7 @@ function ClubFormModal({
               </div>
             </div>
             <div>
-              <label className="text-[11px] font-700 text-[#5A7064] uppercase tracking-widest block mb-2">Catégorie</label>
+              <label className="text-[11px] font-700 text-[var(--lkv-text-muted)] uppercase tracking-widest block mb-2">Catégorie</label>
               <input 
                 className="glass-input w-full text-sm" 
                 placeholder="Ex: Randonnée, Islande..." 
@@ -210,7 +210,7 @@ function ClubFormModal({
           </div>
 
           <div>
-            <label className="text-[11px] font-700 text-[#5A7064] uppercase tracking-widest block mb-2">Description</label>
+            <label className="text-[11px] font-700 text-[var(--lkv-text-muted)] uppercase tracking-widest block mb-2">Description</label>
             <textarea 
               rows={3} 
               className="glass-input w-full text-sm resize-none" 
@@ -221,7 +221,7 @@ function ClubFormModal({
           </div>
 
           <div>
-            <label className="text-[11px] font-700 text-[#5A7064] uppercase tracking-widest block mb-2">Règles du club</label>
+            <label className="text-[11px] font-700 text-[var(--lkv-text-muted)] uppercase tracking-widest block mb-2">Règles du club</label>
             <textarea 
               rows={2} 
               className="glass-input w-full text-sm resize-none" 
@@ -232,7 +232,7 @@ function ClubFormModal({
           </div>
 
           <div>
-            <label className="text-[11px] font-700 text-[#5A7064] uppercase tracking-widest block mb-3">Confidentialité</label>
+            <label className="text-[11px] font-700 text-[var(--lkv-text-muted)] uppercase tracking-widest block mb-3">Confidentialité</label>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               {[
                 { v: 'open', l: '🌍 Ouvert', d: 'Tout le monde' },
@@ -243,10 +243,10 @@ function ClubFormModal({
                   key={opt.v} 
                   type="button" 
                   onClick={() => set('privacy', opt.v)} 
-                  className={`p-4 rounded-2xl border text-left transition-all flex flex-col items-start glass-sub-card ${form.privacy === opt.v ? '!border-[#5B7F55]' : ''}`}
+                  className={`p-4 rounded-2xl border text-left transition-all flex flex-col items-start glass-sub-card ${form.privacy === opt.v ? '!border-[var(--lkv-secondary)]' : ''}`}
                 >
-                  <p className="text-sm font-700 text-[#17402C] mb-1">{opt.l}</p>
-                  <p className="text-[11px] text-[#5A7064]">{opt.d}</p>
+                  <p className="text-sm font-700 text-[var(--lkv-primary)] mb-1">{opt.l}</p>
+                  <p className="text-[11px] text-[var(--lkv-text-muted)]">{opt.d}</p>
                 </button>
               ))}
             </div>
@@ -534,8 +534,8 @@ function ClubDetailModal({
         <div className="flex-1 overflow-y-auto p-6 sm:p-8 custom-scrollbar bg-white/40">
           {loading ? (
             <div className="flex flex-col items-center justify-center py-20 opacity-50">
-              <div className="w-8 h-8 border-4 border-[#5B7F55] border-t-transparent rounded-full animate-spin mb-4" />
-              <p className="text-sm text-[#5A7064] font-500">Chargement des données du club...</p>
+              <div className="w-8 h-8 border-4 border-[var(--lkv-secondary)] border-t-transparent rounded-full animate-spin mb-4" />
+              <p className="text-sm text-[var(--lkv-text-muted)] font-500">Chargement des données du club...</p>
             </div>
           ) : (
             <div className="max-w-3xl mx-auto">
@@ -545,10 +545,10 @@ function ClubDetailModal({
                   {club.is_member && (
                     <div className="glass p-5 space-y-4">
                       <div className="flex items-center gap-3 mb-2">
-                        <div className="w-8 h-8 rounded-full bg-[#5B7F55]/10 flex items-center justify-center text-[#5B7F55]">
+                        <div className="w-8 h-8 rounded-full bg-[var(--lkv-secondary)]/10 flex items-center justify-center text-[var(--lkv-secondary)]">
                           <Icon name="PencilIcon" size={14} />
                         </div>
-                        <h3 className="font-700 text-[#17402C] text-base">Lancer une discussion</h3>
+                        <h3 className="font-700 text-[var(--lkv-primary)] text-base">Lancer une discussion</h3>
                       </div>
                       <input 
                         className="glass-input w-full text-sm" 
@@ -575,41 +575,41 @@ function ClubDetailModal({
                     </div>
                   )}
                   {topics.length === 0 ? (
-                    <div className="text-center py-16 border border-dashed border-[#17402C]/15 rounded-2xl bg-white/40">
+                    <div className="text-center py-16 border border-dashed border-[var(--lkv-primary)]/15 rounded-2xl bg-white/40">
                       <div className="text-5xl mb-4 opacity-50">💬</div>
-                      <p className="text-[#17402C] font-700 text-lg mb-1">Aucune discussion</p>
-                      <p className="text-[#5A7064] text-sm">Soyez le premier à lancer un sujet !</p>
+                      <p className="text-[var(--lkv-primary)] font-700 text-lg mb-1">Aucune discussion</p>
+                      <p className="text-[var(--lkv-text-muted)] text-sm">Soyez le premier à lancer un sujet !</p>
                     </div>
                   ) : (
                     topics.map((topic) => (
-                      <div key={topic.id} className={`group glass p-5 transition-all hover:interactive ${topic.is_pinned ? '!border-[#5B7F55]/40' : ''}`}>
+                      <div key={topic.id} className={`group glass p-5 transition-all hover:interactive ${topic.is_pinned ? '!border-[var(--lkv-secondary)]/40' : ''}`}>
                         <div className="flex items-start justify-between gap-4">
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 flex-wrap mb-2">
                               {topic.is_pinned && <span className="glass-pill">📌 ÉPINGLÉ</span>}
                               {topic.is_announcement && <span className="glass-pill pill-warn">📢 ANNONCE</span>}
-                              <h4 className="font-700 text-[#17402C] text-base group-hover:text-[#5B7F55] transition-colors">{topic.title}</h4>
+                              <h4 className="font-700 text-[var(--lkv-primary)] text-base group-hover:text-[var(--lkv-secondary)] transition-colors">{topic.title}</h4>
                             </div>
-                            {topic.content && <p className="text-sm text-[#5A7064] mb-4 line-clamp-2 leading-relaxed">{topic.content}</p>}
-                            <div className="flex items-center gap-4 text-xs font-500 text-[#5A7064]">
+                            {topic.content && <p className="text-sm text-[var(--lkv-text-muted)] mb-4 line-clamp-2 leading-relaxed">{topic.content}</p>}
+                            <div className="flex items-center gap-4 text-xs font-500 text-[var(--lkv-text-muted)]">
                               <span className="flex items-center gap-1.5 bg-white/40 px-2 py-1 rounded-md">
                                 <Icon name="UserIcon" size={12} /> {topic.author?.full_name ?? 'Anonyme'}
                               </span>
                               <span className="flex items-center gap-1.5">
-                                <Icon name="HeartIcon" size={14} className="text-[#A8443A]/70" /> {topic.likes_count}
+                                <Icon name="HeartIcon" size={14} className="text-[var(--lkv-danger)]/70" /> {topic.likes_count}
                               </span>
                               <span className="flex items-center gap-1.5">
-                                <Icon name="ChatBubbleLeftIcon" size={14} className="text-[#4B6B7C]/70" /> {topic.replies_count}
+                                <Icon name="ChatBubbleLeftIcon" size={14} className="text-[var(--lkv-info)]/70" /> {topic.replies_count}
                               </span>
                             </div>
                           </div>
                           {isAdmin && (
                             <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 bg-white/50 rounded-xl p-1">
                               <button onClick={() => handlePinTopic(topic)} title={topic.is_pinned ? 'Désépingler' : 'Épingler'} className="p-2 rounded-lg hover:bg-white transition-colors">
-                                <Icon name="BookmarkIcon" size={15} className={topic.is_pinned ? 'text-[#5B7F55]' : 'text-[#5A7064]'} />
+                                <Icon name="BookmarkIcon" size={15} className={topic.is_pinned ? 'text-[var(--lkv-secondary)]' : 'text-[var(--lkv-text-muted)]'} />
                               </button>
-                              <button onClick={() => handleDeleteTopic(topic.id)} title="Supprimer" className="p-2 rounded-lg hover:bg-[#A8443A]/20 transition-colors">
-                                <Icon name="TrashIcon" size={15} className="text-[#A8443A]" />
+                              <button onClick={() => handleDeleteTopic(topic.id)} title="Supprimer" className="p-2 rounded-lg hover:bg-[var(--lkv-danger)]/20 transition-colors">
+                                <Icon name="TrashIcon" size={15} className="text-[var(--lkv-danger)]" />
                               </button>
                             </div>
                           )}
@@ -627,24 +627,24 @@ function ClubDetailModal({
                     <div key={m.id} className="flex flex-col gap-3 p-4 glass hover:interactive">
                       <div className="flex items-start justify-between">
                         <div className="flex items-center gap-3">
-                          <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#5B7F55]/20 to-[#5B7F55]/5 flex items-center justify-center font-800 text-[#5B7F55] text-lg">
+                          <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[var(--lkv-secondary)]/20 to-[var(--lkv-secondary)]/5 flex items-center justify-center font-800 text-[var(--lkv-secondary)] text-lg">
                             {m.user?.full_name?.[0] ?? '?'}
                           </div>
                           <div>
-                            <p className="font-700 text-[#17402C] text-sm truncate">{m.user?.full_name ?? 'Anonyme'}</p>
+                            <p className="font-700 text-[var(--lkv-primary)] text-sm truncate">{m.user?.full_name ?? 'Anonyme'}</p>
                             <span className={`glass-pill mt-1 ${m.role === 'admin' ? 'pill-warn' : m.role === 'moderator' ? 'pill-info' : ''}`}>
                               {m.role === 'admin' ? '👑 ADMIN' : m.role === 'moderator' ? '🛡️ MODO' : '👤 MEMBRE'}
                             </span>
                           </div>
                         </div>
                         {isAdmin && m.user_id !== currentUserId && (
-                          <button onClick={() => handleBanMember(m)} className="p-2 rounded-full hover:bg-[#A8443A]/20 text-[#5A7064] hover:text-[#A8443A] transition-colors" title="Bannir">
+                          <button onClick={() => handleBanMember(m)} className="p-2 rounded-full hover:bg-[var(--lkv-danger)]/20 text-[var(--lkv-text-muted)] hover:text-[var(--lkv-danger)] transition-colors" title="Bannir">
                             <Icon name="NoSymbolIcon" size={15} />
                           </button>
                         )}
                       </div>
                       <div className="flex items-center justify-between mt-2 pt-3 border-t border-border">
-                        <p className="text-[11px] text-[#5A7064] font-600">Trust Score: {m.user?.trust_score ?? 0}</p>
+                        <p className="text-[11px] text-[var(--lkv-text-muted)] font-600">Trust Score: {m.user?.trust_score ?? 0}</p>
                         {isAdmin && m.user_id !== currentUserId && (
                           <select
                             value={m.role}
@@ -666,24 +666,24 @@ function ClubDetailModal({
               {activeTab === 'challenges' && (
                 <div className="space-y-4">
                   {challenges.length === 0 ? (
-                    <div className="text-center py-16 border border-dashed border-[#17402C]/15 rounded-2xl bg-white/40">
+                    <div className="text-center py-16 border border-dashed border-[var(--lkv-primary)]/15 rounded-2xl bg-white/40">
                       <div className="text-5xl mb-4 opacity-50">🏆</div>
-                      <p className="text-[#17402C] font-700 text-lg mb-1">Aucun défi en cours</p>
+                      <p className="text-[var(--lkv-primary)] font-700 text-lg mb-1">Aucun défi en cours</p>
                     </div>
                   ) : (
                     challenges.map((ch) => (
                       <div key={ch.id} className="glass p-6 transition-all relative overflow-hidden group hover:interactive">
-                        <div className="absolute -right-10 -top-10 w-40 h-40 bg-[#C89A3B]/10 rounded-full blur-3xl group-hover:bg-[#C89A3B]/20 transition-colors" />
+                        <div className="absolute -right-10 -top-10 w-40 h-40 bg-[var(--lkv-warning)]/10 rounded-full blur-3xl group-hover:bg-[var(--lkv-warning)]/20 transition-colors" />
                         <div className="relative z-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
                           <div>
                             <div className="flex items-center gap-3 mb-2">
-                              <span className="p-2 bg-[#C89A3B]/20 text-[#8C6418] rounded-xl"><Icon name="TrophyIcon" size={16} /></span>
-                              <h4 className="font-800 text-[#17402C] text-lg">{ch.title}</h4>
+                              <span className="p-2 bg-[var(--lkv-warning)]/20 text-[var(--lkv-warning)] rounded-xl"><Icon name="TrophyIcon" size={16} /></span>
+                              <h4 className="font-800 text-[var(--lkv-primary)] text-lg">{ch.title}</h4>
                             </div>
-                            <p className="text-sm text-[#5A7064] mb-4 max-w-xl">{ch.description}</p>
+                            <p className="text-sm text-[var(--lkv-text-muted)] mb-4 max-w-xl">{ch.description}</p>
                             <div className="flex items-center gap-4 text-xs font-600">
                               <span className="glass-pill pill-warn">+{ch.xp} XP à gagner</span>
-                              {ch.deadline && <span className="text-[#5A7064] flex items-center gap-1.5"><Icon name="ClockIcon" size={14} /> Fin le {new Date(ch.deadline).toLocaleDateString('fr-FR')}</span>}
+                              {ch.deadline && <span className="text-[var(--lkv-text-muted)] flex items-center gap-1.5"><Icon name="ClockIcon" size={14} /> Fin le {new Date(ch.deadline).toLocaleDateString('fr-FR')}</span>}
                             </div>
                           </div>
                           <button
@@ -705,29 +705,29 @@ function ClubDetailModal({
                   {isAdmin && (
                     <div className="glass p-6 space-y-4">
                       <div className="flex items-center gap-3 mb-4">
-                        <div className="w-8 h-8 rounded-full bg-[#5B7F55]/10 flex items-center justify-center text-[#5B7F55]">
+                        <div className="w-8 h-8 rounded-full bg-[var(--lkv-secondary)]/10 flex items-center justify-center text-[var(--lkv-secondary)]">
                           <Icon name="CalendarIcon" size={14} />
                         </div>
-                        <h3 className="font-700 text-[#17402C] text-base">Planifier un événement</h3>
+                        <h3 className="font-700 text-[var(--lkv-primary)] text-base">Planifier un événement</h3>
                       </div>
                       
                       <div className="space-y-4">
                         <div>
-                          <label className="text-[11px] font-700 text-[#5A7064] uppercase tracking-widest block mb-2">Titre</label>
+                          <label className="text-[11px] font-700 text-[var(--lkv-text-muted)] uppercase tracking-widest block mb-2">Titre</label>
                           <input className="glass-input w-full text-sm" placeholder="Titre de l'événement..." value={newEvent.title} onChange={(e) => setNewEvent((f) => ({ ...f, title: e.target.value }))} />
                         </div>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                           <div>
-                            <label className="text-[11px] font-700 text-[#5A7064] uppercase tracking-widest block mb-2">Date et Heure</label>
-                            <input type="datetime-local" className="glass-input w-full text-sm text-[#17402C]" value={newEvent.event_date} onChange={(e) => setNewEvent((f) => ({ ...f, event_date: e.target.value }))} />
+                            <label className="text-[11px] font-700 text-[var(--lkv-text-muted)] uppercase tracking-widest block mb-2">Date et Heure</label>
+                            <input type="datetime-local" className="glass-input w-full text-sm text-[var(--lkv-primary)]" value={newEvent.event_date} onChange={(e) => setNewEvent((f) => ({ ...f, event_date: e.target.value }))} />
                           </div>
                           <div>
-                            <label className="text-[11px] font-700 text-[#5A7064] uppercase tracking-widest block mb-2">Lieu / Lien</label>
+                            <label className="text-[11px] font-700 text-[var(--lkv-text-muted)] uppercase tracking-widest block mb-2">Lieu / Lien</label>
                             <input className="glass-input w-full text-sm" placeholder="Chamonix ou Lien Zoom..." value={newEvent.location} onChange={(e) => setNewEvent((f) => ({ ...f, location: e.target.value }))} />
                           </div>
                         </div>
                         <div>
-                          <label className="text-[11px] font-700 text-[#5A7064] uppercase tracking-widest block mb-2">Description</label>
+                          <label className="text-[11px] font-700 text-[var(--lkv-text-muted)] uppercase tracking-widest block mb-2">Description</label>
                           <textarea rows={2} className="glass-input w-full text-sm resize-none" placeholder="Détails de l'événement..." value={newEvent.description} onChange={(e) => setNewEvent((f) => ({ ...f, description: e.target.value }))} />
                         </div>
                         <div className="flex justify-end pt-2">
@@ -739,9 +739,9 @@ function ClubDetailModal({
                     </div>
                   )}
                   {events.length === 0 ? (
-                    <div className="text-center py-16 border border-dashed border-[#17402C]/15 rounded-2xl bg-white/40">
+                    <div className="text-center py-16 border border-dashed border-[var(--lkv-primary)]/15 rounded-2xl bg-white/40">
                       <div className="text-5xl mb-4 opacity-50">📅</div>
-                      <p className="text-[#17402C] font-700 text-lg mb-1">Aucun événement planifié</p>
+                      <p className="text-[var(--lkv-primary)] font-700 text-lg mb-1">Aucun événement planifié</p>
                     </div>
                   ) : (
                     events.map((ev) => (
@@ -749,17 +749,17 @@ function ClubDetailModal({
                         <div className="glass-sub-card rounded-xl p-4 flex flex-col items-center justify-center min-w-[100px]">
                           {ev.event_date ? (
                             <>
-                              <span className="text-sm font-800 text-[#5B7F55] uppercase">{new Date(ev.event_date).toLocaleDateString('fr-FR', { month: 'short' })}</span>
-                              <span className="text-3xl font-900 text-[#17402C]">{new Date(ev.event_date).getDate()}</span>
+                              <span className="text-sm font-800 text-[var(--lkv-secondary)] uppercase">{new Date(ev.event_date).toLocaleDateString('fr-FR', { month: 'short' })}</span>
+                              <span className="text-3xl font-900 text-[var(--lkv-primary)]">{new Date(ev.event_date).getDate()}</span>
                             </>
                           ) : (
-                            <span className="text-sm font-700 text-[#5A7064]">À DÉFINIR</span>
+                            <span className="text-sm font-700 text-[var(--lkv-text-muted)]">À DÉFINIR</span>
                           )}
                         </div>
                         <div className="flex-1 flex flex-col justify-center">
-                          <h4 className="font-800 text-[#17402C] text-lg mb-1">{ev.title}</h4>
-                          {ev.description && <p className="text-sm text-[#5A7064] mb-4 line-clamp-2">{ev.description}</p>}
-                          <div className="flex items-center gap-4 text-xs font-600 text-[#5A7064] flex-wrap mt-auto">
+                          <h4 className="font-800 text-[var(--lkv-primary)] text-lg mb-1">{ev.title}</h4>
+                          {ev.description && <p className="text-sm text-[var(--lkv-text-muted)] mb-4 line-clamp-2">{ev.description}</p>}
+                          <div className="flex items-center gap-4 text-xs font-600 text-[var(--lkv-text-muted)] flex-wrap mt-auto">
                             {ev.location && <span className="flex items-center gap-1.5 bg-white/40 px-2.5 py-1 rounded-md"><Icon name="MapPinIcon" size={14} />{ev.location}</span>}
                             <span className="flex items-center gap-1.5 bg-white/40 px-2.5 py-1 rounded-md">
                               <Icon name="UsersIcon" size={14} />{ev.participants_count} / {ev.max_participants} inscrits
@@ -784,31 +784,31 @@ function ClubDetailModal({
               {activeTab === 'moderation' && isAdmin && (
                 <div className="space-y-6">
                   <div>
-                    <h3 className="font-700 text-[#17402C] text-lg mb-4 flex items-center gap-2">
-                      <Icon name="ShieldCheckIcon" size={20} className="text-[#8C6418]" />
+                    <h3 className="font-700 text-[var(--lkv-primary)] text-lg mb-4 flex items-center gap-2">
+                      <Icon name="ShieldCheckIcon" size={20} className="text-[var(--lkv-warning)]" />
                       Demandes d&apos;adhésion en attente
                       <span className="glass-pill pill-warn">{pendingRequests.length}</span>
                     </h3>
                     {pendingRequests.length === 0 ? (
-                      <div className="text-center py-12 border border-dashed border-[#17402C]/15 rounded-2xl bg-white/40">
-                        <p className="text-[#5A7064] text-sm font-500">Aucune demande en attente pour le moment.</p>
+                      <div className="text-center py-12 border border-dashed border-[var(--lkv-primary)]/15 rounded-2xl bg-white/40">
+                        <p className="text-[var(--lkv-text-muted)] text-sm font-500">Aucune demande en attente pour le moment.</p>
                       </div>
                     ) : (
                       <div className="space-y-3">
                         {pendingRequests.map((req) => (
                           <div key={req.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 glass hover:interactive">
                             <div className="flex items-center gap-4">
-                              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-white/50 to-white/20 flex items-center justify-center font-800 text-[#17402C] text-lg border border-border">
+                              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-white/50 to-white/20 flex items-center justify-center font-800 text-[var(--lkv-primary)] text-lg border border-border">
                                 {(req as unknown as { user?: { full_name: string } }).user?.full_name?.[0] ?? '?'}
                               </div>
                               <div>
-                                <p className="font-700 text-[#17402C] text-base">{(req as unknown as { user?: { full_name: string } }).user?.full_name ?? 'Anonyme'}</p>
-                                <p className="text-xs text-[#5A7064] font-600 mt-0.5">Trust Score: {(req as unknown as { user?: { trust_score: number } }).user?.trust_score ?? 0}</p>
+                                <p className="font-700 text-[var(--lkv-primary)] text-base">{(req as unknown as { user?: { full_name: string } }).user?.full_name ?? 'Anonyme'}</p>
+                                <p className="text-xs text-[var(--lkv-text-muted)] font-600 mt-0.5">Trust Score: {(req as unknown as { user?: { trust_score: number } }).user?.trust_score ?? 0}</p>
                               </div>
                             </div>
                             <div className="flex gap-2 w-full sm:w-auto">
                               <button onClick={() => handleApproveRequest(req.id, req.user_id, true)} className="flex-1 sm:flex-none px-4 py-2 glass-capsule-btn primary text-sm">Accepter</button>
-                              <button onClick={() => handleApproveRequest(req.id, req.user_id, false)} className="flex-1 sm:flex-none px-4 py-2 glass-capsule-btn secondary text-sm text-[#A8443A]">Refuser</button>
+                              <button onClick={() => handleApproveRequest(req.id, req.user_id, false)} className="flex-1 sm:flex-none px-4 py-2 glass-capsule-btn secondary text-sm text-[var(--lkv-danger)]">Refuser</button>
                             </div>
                           </div>
                         ))}
@@ -823,7 +823,7 @@ function ClubDetailModal({
 
         {/* Modal Toast Overlay */}
         {toast && (
-          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-[100] bg-[#17402C] text-[#EEF3EC] px-6 py-3 rounded-full text-sm font-700  animate-fade-in-up">
+          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-[100] bg-[var(--lkv-primary)] text-[var(--lkv-surface-muted)] px-6 py-3 rounded-full text-sm font-700  animate-fade-in-up">
             {toast}
           </div>
         )}
@@ -878,14 +878,14 @@ function ClubCard({
               <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                 <button 
                   onClick={(e) => { e.stopPropagation(); onEdit(club); }} 
-                  className="p-2 bg-white/40 hover:bg-[#17402C] hover:text-[#EEF3EC] rounded-full transition-colors text-[#5A7064]"
+                  className="p-2 bg-white/40 hover:bg-[var(--lkv-primary)] hover:text-[var(--lkv-surface-muted)] rounded-full transition-colors text-[var(--lkv-text-muted)]"
                   title="Modifier"
                 >
                   <Icon name="PencilIcon" size={14} />
                 </button>
                 <button 
                   onClick={(e) => { e.stopPropagation(); onDelete(club); }} 
-                  className="p-2 bg-[#A8443A]/10 hover:bg-[#A8443A] text-[#A8443A] hover:text-white rounded-full transition-colors"
+                  className="p-2 bg-[var(--lkv-danger)]/10 hover:bg-[var(--lkv-danger)] text-[var(--lkv-danger)] hover:text-white rounded-full transition-colors"
                   title="Supprimer"
                 >
                   <Icon name="TrashIcon" size={14} />
@@ -893,7 +893,7 @@ function ClubCard({
               </div>
             )}
             {club.is_member && (
-              <span className="bg-[#5B7F55]/20 text-[#5B7F55] border border-[#5B7F55]/30 p-2 rounded-full" title="Vous êtes membre">
+              <span className="bg-[var(--lkv-secondary)]/20 text-[var(--lkv-secondary)] border border-[var(--lkv-secondary)]/30 p-2 rounded-full" title="Vous êtes membre">
                 <Icon name="CheckIcon" size={14} />
               </span>
             )}
@@ -903,7 +903,7 @@ function ClubCard({
         {/* Content */}
         <div className="mb-4">
           <div className="flex items-center gap-2 mb-1.5">
-            <span className="text-[10px] font-800 tracking-widest uppercase text-[#5A7064]">
+            <span className="text-[10px] font-800 tracking-widest uppercase text-[var(--lkv-text-muted)]">
               {club.type === 'activite' ? 'Activité' : 'Destination'}
             </span>
             {club.privacy !== 'open' && (
@@ -913,25 +913,25 @@ function ClubCard({
               </span>
             )}
           </div>
-          <h3 className="font-display font-800 text-[#17402C] text-xl leading-tight flex items-center gap-2 group-hover:text-[#5B7F55] transition-colors">
+          <h3 className="font-display font-800 text-[var(--lkv-primary)] text-xl leading-tight flex items-center gap-2 group-hover:text-[var(--lkv-secondary)] transition-colors">
             {club.name}
-            {club.is_verified && <Icon name="CheckBadgeIcon" size={18} className="text-[#4B6B7C]" />}
+            {club.is_verified && <Icon name="CheckBadgeIcon" size={18} className="text-[var(--lkv-info)]" />}
           </h3>
         </div>
 
-        <p className="text-sm text-[#5A7064] leading-relaxed line-clamp-3 mb-6 flex-1">
+        <p className="text-sm text-[var(--lkv-text-muted)] leading-relaxed line-clamp-3 mb-6 flex-1">
           {club.description}
         </p>
 
         {/* Footer Stats & Action */}
         <div className="mt-auto pt-5 border-t border-border flex items-center justify-between">
           <div className="flex flex-col gap-1">
-            <span className="text-xs font-700 text-[#17402C] flex items-center gap-1.5">
-              <Icon name="UsersIcon" size={14} className="text-[#5A7064]" />
+            <span className="text-xs font-700 text-[var(--lkv-primary)] flex items-center gap-1.5">
+              <Icon name="UsersIcon" size={14} className="text-[var(--lkv-text-muted)]" />
               {club.members_count.toLocaleString()} membres
             </span>
-            <span className="text-[11px] font-600 text-[#5A7064] flex items-center gap-1.5">
-              <Icon name="BoltIcon" size={12} className="text-[#C89A3B]/70" />
+            <span className="text-[11px] font-600 text-[var(--lkv-text-muted)] flex items-center gap-1.5">
+              <Icon name="BoltIcon" size={12} className="text-[var(--lkv-warning)]/70" />
               {club.active_this_month} actifs ce mois
             </span>
           </div>
@@ -941,7 +941,7 @@ function ClubCard({
             disabled={joining}
             className={`px-4 py-2.5 glass-capsule-btn text-xs font-800 ${
               club.is_member 
-                ? 'secondary text-[#A8443A]' 
+                ? 'secondary text-[var(--lkv-danger)]' 
                 : 'primary'
             }`}
           >
@@ -1064,8 +1064,8 @@ export default function ClubsPage() {
     setSaving(true);
     try {
       const colorMap: Record<string, string> = {
-        'activite': 'from-[#365233] to-[#17402C]',
-        'pays': 'from-[#4B6B7C] to-[#2A5A6E]',
+        'activite': 'from-[var(--lkv-forest-600)] to-[var(--lkv-primary)]',
+        'pays': 'from-[var(--lkv-info)] to-[var(--lkv-sky-600)]',
       };
       const payload = {
         name: form.name,
@@ -1075,7 +1075,7 @@ export default function ClubsPage() {
         category: form.category,
         rules: form.rules,
         privacy: form.privacy,
-        cover_color: colorMap[form.type] ?? 'from-[#365233] to-[#17402C]',
+        cover_color: colorMap[form.type] ?? 'from-[var(--lkv-forest-600)] to-[var(--lkv-primary)]',
         created_by: user.id,
       };
 
@@ -1133,27 +1133,27 @@ export default function ClubsPage() {
     <>
       {/* ── DESKTOP ── */}
       <div className="hidden md:block">
-        <main className="h-dvh overflow-hidden bg-[#EEF3EC] flex flex-col">
+        <main className="h-dvh overflow-hidden bg-[var(--lkv-surface-muted)] flex flex-col">
           <Header />
           <div className="flex-1 min-h-0 overflow-y-auto">
           {/* Immersive Hero Section */}
           <section className="relative pt-32 pb-20 lg:pt-40 lg:pb-32 overflow-hidden border-b border-white/5">
-            <div className="absolute inset-0 bg-[#EEF3EC] pointer-events-none" />
-            <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-[#5B7F55]/20 rounded-full blur-[120px] opacity-60 mix-blend-screen pointer-events-none animate-pulse-slow" />
-            <div className="absolute -bottom-40 -left-40 w-[600px] h-[600px] bg-[#4B6B7C]/10 rounded-full blur-[120px] opacity-50 mix-blend-screen pointer-events-none" />
+            <div className="absolute inset-0 bg-[var(--lkv-surface-muted)] pointer-events-none" />
+            <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-[var(--lkv-secondary)]/20 rounded-full blur-[120px] opacity-60 mix-blend-screen pointer-events-none animate-pulse-slow" />
+            <div className="absolute -bottom-40 -left-40 w-[600px] h-[600px] bg-[var(--lkv-info)]/10 rounded-full blur-[120px] opacity-50 mix-blend-screen pointer-events-none" />
 
             <div className="max-w-7xl mx-auto px-6 relative z-10">
               <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-10">
                 <div className="max-w-3xl">
                   <div className="inline-flex items-center gap-2 mb-6 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 backdrop-blur-md">
-                    <span className="w-2 h-2 rounded-full bg-[#5B7F55] animate-pulse" />
-                    <span className="text-xs font-700 tracking-widest uppercase text-[#17402C]/80">Espaces Communautaires</span>
+                    <span className="w-2 h-2 rounded-full bg-[var(--lkv-secondary)] animate-pulse" />
+                    <span className="text-xs font-700 tracking-widest uppercase text-[var(--lkv-primary)]/80">Espaces Communautaires</span>
                   </div>
-                  <h1 className="font-display font-900 text-5xl lg:text-7xl text-[#17402C] tracking-tight leading-[1.1] mb-6">
-                    Rejoignez le <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#5B7F55] to-[#A6C1A0]">Club.</span><br />
+                  <h1 className="font-display font-900 text-5xl lg:text-7xl text-[var(--lkv-primary)] tracking-tight leading-[1.1] mb-6">
+                    Rejoignez le <span className="text-transparent bg-clip-text bg-gradient-to-r from-[var(--lkv-secondary)] to-[var(--lkv-secondary-subtle)]">Club.</span><br />
                     Vivez l&apos;aventure.
                   </h1>
-                  <p className="text-lg lg:text-xl text-[#5A7064] font-500 leading-relaxed max-w-2xl">
+                  <p className="text-lg lg:text-xl text-[var(--lkv-text-muted)] font-500 leading-relaxed max-w-2xl">
                     Trouvez vos compagnons de route, échangez sur votre matériel favori et participez aux défis thématiques de la communauté Le Kit du Voyageur.
                   </p>
                 </div>
@@ -1201,7 +1201,7 @@ export default function ClubsPage() {
               </div>
 
               {error && (
-                <div className="mb-10 p-5 bg-[#A8443A]/10 border border-[#A8443A]/25 rounded-2xl flex items-center gap-3 text-[#A8443A]">
+                <div className="mb-10 p-5 bg-[var(--lkv-danger)]/10 border border-[var(--lkv-danger)]/25 rounded-2xl flex items-center gap-3 text-[var(--lkv-danger)]">
                   <Icon name="ExclamationTriangleIcon" size={20} />
                   <p className="font-600 text-sm">{error}</p>
                 </div>
@@ -1224,10 +1224,10 @@ export default function ClubsPage() {
                   <div className="w-24 h-24 bg-white/50 rounded-full flex items-center justify-center text-4xl mb-6">
                     {activeTab === 'mes-clubs' ? '🏕️' : '✨'}
                   </div>
-                  <h3 className="font-display font-800 text-2xl text-[#17402C] mb-3">
+                  <h3 className="font-display font-800 text-2xl text-[var(--lkv-primary)] mb-3">
                     {activeTab === 'mes-clubs' ? "Vous n'avez rejoint aucun club" : 'Espace encore vierge'}
                   </h3>
-                  <p className="text-[#5A7064] text-base max-w-md mb-8">
+                  <p className="text-[var(--lkv-text-muted)] text-base max-w-md mb-8">
                     {activeTab === 'mes-clubs'
                       ? 'Explorez les clubs existants et trouvez votre prochaine équipe de choc pour vos aventures.'
                       : "Il n'y a pas encore de club dans cette catégorie. Soyez le pionnier et créez le vôtre !"}
@@ -1272,7 +1272,7 @@ export default function ClubsPage() {
       </div>
 
       {/* ── MOBILE VIEW ── */}
-      <div className="block md:hidden min-h-screen relative font-sans text-[#17402C]">
+      <div className="block md:hidden min-h-screen relative font-sans text-[var(--lkv-primary)]">
         <MobilePageShell videoBackground={true} background="transparent">
           <MobileClubsHub
             clubs={clubs}
@@ -1316,11 +1316,11 @@ export default function ClubsPage() {
       {deleteClub && (
         <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-md flex items-center justify-center p-4">
           <div className="glass rounded-2xl p-8 max-w-sm w-full text-center transform transition-all scale-100">
-            <div className="w-20 h-20 rounded-full bg-[#A8443A]/10 flex items-center justify-center mx-auto mb-5">
-              <Icon name="ExclamationTriangleIcon" size={32} className="text-[#A8443A]" />
+            <div className="w-20 h-20 rounded-full bg-[var(--lkv-danger)]/10 flex items-center justify-center mx-auto mb-5">
+              <Icon name="ExclamationTriangleIcon" size={32} className="text-[var(--lkv-danger)]" />
             </div>
-            <h3 className="font-display font-800 text-[#17402C] text-xl mb-2">Supprimer le club ?</h3>
-            <p className="text-sm text-[#5A7064] mb-8">Cette action est irréversible. Toutes les données, membres et discussions de &quot;{deleteClub.name}&quot; seront perdus à jamais.</p>
+            <h3 className="font-display font-800 text-[var(--lkv-primary)] text-xl mb-2">Supprimer le club ?</h3>
+            <p className="text-sm text-[var(--lkv-text-muted)] mb-8">Cette action est irréversible. Toutes les données, membres et discussions de &quot;{deleteClub.name}&quot; seront perdus à jamais.</p>
 
             <div className="flex flex-col gap-3">
               <button
@@ -1343,8 +1343,8 @@ export default function ClubsPage() {
 
       {/* Global Toast */}
       {toast && (
-        <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[110] bg-[#17402C] text-[#EEF3EC] px-8 py-4 rounded-full text-sm font-700  animate-fade-in-up flex items-center gap-3">
-          <Icon name="CheckCircleIcon" size={18} className="text-[#EEF3EC]/70" />
+        <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[110] bg-[var(--lkv-primary)] text-[var(--lkv-surface-muted)] px-8 py-4 rounded-full text-sm font-700  animate-fade-in-up flex items-center gap-3">
+          <Icon name="CheckCircleIcon" size={18} className="text-[var(--lkv-surface-muted)]/70" />
           {toast}
         </div>
       )}

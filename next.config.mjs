@@ -65,6 +65,9 @@ const nextConfig = {
       '@heroicons/react/24/outline',
       '@heroicons/react/24/solid',
       '@heroicons/react',
+      '@headlessui/react',
+      '@radix-ui/react-dialog',
+      '@radix-ui/react-toast',
       '@tanstack/react-query',
       '@tanstack/react-virtual',
       'dexie',
@@ -72,6 +75,8 @@ const nextConfig = {
       'tailwind-merge',
       'framer-motion',
       'lucide-react',
+      'recharts',
+      'zustand',
     ],
   },
 

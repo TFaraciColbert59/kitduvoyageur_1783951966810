@@ -38,7 +38,7 @@ export default function MessageriePage() {
 
   return (
     <div
-      className="w-full min-h-[100dvh] flex-1 overflow-hidden flex flex-col bg-[#EEF3EC] relative"
+      className="w-full min-h-[100dvh] flex-1 overflow-hidden flex flex-col bg-[var(--lkv-surface-muted)] relative"
       style={{ ['--kb-inset' as string]: `${kbInset}px` }}
     >
       {/* Ambiance Liquid Glass LKDV — dégradés climatiques (CSS valide, cf. audit 1.1c) */}
@@ -73,15 +73,15 @@ export default function MessageriePage() {
               role="status"
               aria-label="Chargement de la messagerie"
             >
-              <div className="w-10 h-10 border-4 border-[#17402C] border-t-transparent rounded-full animate-spin" />
+              <div className="w-10 h-10 border-4 border-[var(--lkv-primary)] border-t-transparent rounded-full animate-spin" />
             </div>
           ) : !user ? (
             <div className="max-w-md w-full mx-auto text-center glass rounded-3xl p-8 shadow-sm m-4">
-              <div className="w-16 h-16 bg-[#17402C]/10 text-[#17402C] rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">
+              <div className="w-16 h-16 bg-[var(--lkv-primary)]/10 text-[var(--lkv-primary)] rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">
                 💬
               </div>
-              <h2 className="text-xl font-bold text-[#17402C]">Connexion requise</h2>
-              <p className="text-sm text-[#5A574E] mt-2 mb-6 leading-relaxed">
+              <h2 className="text-xl font-bold text-[var(--lkv-primary)]">Connexion requise</h2>
+              <p className="text-sm text-[var(--lkv-text-muted)] mt-2 mb-6 leading-relaxed">
                 Connectez-vous pour accéder à vos discussions et échanger avec les
                 membres de la communauté LKDV.
               </p>

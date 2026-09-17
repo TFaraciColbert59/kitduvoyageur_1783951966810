@@ -131,80 +131,80 @@ function CarnetModal({
 
   return (
     <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
-      <div className="bg-[#EDEAE0] border border-[#C8C3B0] rounded-2xl w-full max-w-2xl my-4">
-        <div className="flex items-center justify-between p-6 border-b border-[#C8C3B0]">
-          <h2 className="font-display font-700 text-[#17402C] text-xl">
+      <div className="bg-[var(--lkv-surface)] border border-[var(--lkv-border)] rounded-2xl w-full max-w-2xl my-4">
+        <div className="flex items-center justify-between p-6 border-b border-[var(--lkv-border)]">
+          <h2 className="font-display font-700 text-[var(--lkv-primary)] text-xl">
             {initial ? 'Modifier le carnet' : 'Nouveau carnet d\'expédition'}
           </h2>
-          <button onClick={onClose} className="p-2 rounded-xl hover:bg-[#C8C3B0]/40 transition-colors">
+          <button onClick={onClose} className="p-2 rounded-xl hover:bg-[var(--lkv-border)]/40 transition-colors">
             <Icon name="XMarkIcon" size={20} />
           </button>
         </div>
         <div className="p-6 space-y-5 max-h-[70vh] overflow-y-auto">
           <div>
-            <label className="text-xs font-700 text-[#5C6B5E] uppercase tracking-wider block mb-1.5">Titre *</label>
-            <input className="w-full bg-white border border-[#C8C3B0] rounded-xl px-4 py-2.5 text-sm text-[#17402C] focus:outline-none focus:ring-2 focus:ring-[#17402C]/30" placeholder="Ex: Circuit des Annapurnas — 18 jours" value={form.title} onChange={(e) => set('title', e.target.value)} />
+            <label className="text-xs font-700 text-[var(--lkv-text-muted)] uppercase tracking-wider block mb-1.5">Titre *</label>
+            <input className="w-full bg-white border border-[var(--lkv-border)] rounded-xl px-4 py-2.5 text-sm text-[var(--lkv-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--lkv-primary)]/30" placeholder="Ex: Circuit des Annapurnas — 18 jours" value={form.title} onChange={(e) => set('title', e.target.value)} />
           </div>
           <div>
-            <label className="text-xs font-700 text-[#5C6B5E] uppercase tracking-wider block mb-1.5">Destination *</label>
-            <input className="w-full bg-white border border-[#C8C3B0] rounded-xl px-4 py-2.5 text-sm text-[#17402C] focus:outline-none focus:ring-2 focus:ring-[#17402C]/30" placeholder="Ex: Népal, Corse, Islande..." value={form.destination} onChange={(e) => set('destination', e.target.value)} />
+            <label className="text-xs font-700 text-[var(--lkv-text-muted)] uppercase tracking-wider block mb-1.5">Destination *</label>
+            <input className="w-full bg-white border border-[var(--lkv-border)] rounded-xl px-4 py-2.5 text-sm text-[var(--lkv-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--lkv-primary)]/30" placeholder="Ex: Népal, Corse, Islande..." value={form.destination} onChange={(e) => set('destination', e.target.value)} />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="text-xs font-700 text-[#5C6B5E] uppercase tracking-wider block mb-1.5">Date de départ</label>
-              <input type="date" className="w-full bg-white border border-[#C8C3B0] rounded-xl px-4 py-2.5 text-sm text-[#17402C] focus:outline-none focus:ring-2 focus:ring-[#17402C]/30" value={form.start_date} onChange={(e) => set('start_date', e.target.value)} />
+              <label className="text-xs font-700 text-[var(--lkv-text-muted)] uppercase tracking-wider block mb-1.5">Date de départ</label>
+              <input type="date" className="w-full bg-white border border-[var(--lkv-border)] rounded-xl px-4 py-2.5 text-sm text-[var(--lkv-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--lkv-primary)]/30" value={form.start_date} onChange={(e) => set('start_date', e.target.value)} />
             </div>
             <div>
-              <label className="text-xs font-700 text-[#5C6B5E] uppercase tracking-wider block mb-1.5">Date de retour</label>
-              <input type="date" className="w-full bg-white border border-[#C8C3B0] rounded-xl px-4 py-2.5 text-sm text-[#17402C] focus:outline-none focus:ring-2 focus:ring-[#17402C]/30" value={form.end_date} onChange={(e) => set('end_date', e.target.value)} />
+              <label className="text-xs font-700 text-[var(--lkv-text-muted)] uppercase tracking-wider block mb-1.5">Date de retour</label>
+              <input type="date" className="w-full bg-white border border-[var(--lkv-border)] rounded-xl px-4 py-2.5 text-sm text-[var(--lkv-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--lkv-primary)]/30" value={form.end_date} onChange={(e) => set('end_date', e.target.value)} />
             </div>
           </div>
           <div>
-            <label className="text-xs font-700 text-[#5C6B5E] uppercase tracking-wider block mb-1.5">Description</label>
-            <textarea rows={4} className="w-full bg-white border border-[#C8C3B0] rounded-xl px-4 py-2.5 text-sm text-[#17402C] focus:outline-none focus:ring-2 focus:ring-[#17402C]/30 resize-none" placeholder="Décrivez votre expédition, les conditions, les moments forts..." value={form.description} onChange={(e) => set('description', e.target.value)} />
+            <label className="text-xs font-700 text-[var(--lkv-text-muted)] uppercase tracking-wider block mb-1.5">Description</label>
+            <textarea rows={4} className="w-full bg-white border border-[var(--lkv-border)] rounded-xl px-4 py-2.5 text-sm text-[var(--lkv-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--lkv-primary)]/30 resize-none" placeholder="Décrivez votre expédition, les conditions, les moments forts..." value={form.description} onChange={(e) => set('description', e.target.value)} />
           </div>
           <div>
-            <label className="text-xs font-700 text-[#5C6B5E] uppercase tracking-wider block mb-1.5">URL de la photo de couverture</label>
-            <input className="w-full bg-white border border-[#C8C3B0] rounded-xl px-4 py-2.5 text-sm text-[#17402C] focus:outline-none focus:ring-2 focus:ring-[#17402C]/30" placeholder="https://..." value={form.cover_image} onChange={(e) => set('cover_image', e.target.value)} />
+            <label className="text-xs font-700 text-[var(--lkv-text-muted)] uppercase tracking-wider block mb-1.5">URL de la photo de couverture</label>
+            <input className="w-full bg-white border border-[var(--lkv-border)] rounded-xl px-4 py-2.5 text-sm text-[var(--lkv-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--lkv-primary)]/30" placeholder="https://..." value={form.cover_image} onChange={(e) => set('cover_image', e.target.value)} />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="text-xs font-700 text-[#5C6B5E] uppercase tracking-wider block mb-1.5">Météo</label>
-              <input className="w-full bg-white border border-[#C8C3B0] rounded-xl px-4 py-2.5 text-sm text-[#17402C] focus:outline-none focus:ring-2 focus:ring-[#17402C]/30" placeholder="Ex: Ensoleillé, tempête J5..." value={form.weather} onChange={(e) => set('weather', e.target.value)} />
+              <label className="text-xs font-700 text-[var(--lkv-text-muted)] uppercase tracking-wider block mb-1.5">Météo</label>
+              <input className="w-full bg-white border border-[var(--lkv-border)] rounded-xl px-4 py-2.5 text-sm text-[var(--lkv-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--lkv-primary)]/30" placeholder="Ex: Ensoleillé, tempête J5..." value={form.weather} onChange={(e) => set('weather', e.target.value)} />
             </div>
             <div>
-              <label className="text-xs font-700 text-[#5C6B5E] uppercase tracking-wider block mb-1.5">Note parcours ({form.route_rating}/10)</label>
-              <input type="range" min={1} max={10} step={0.1} className="w-full mt-2 accent-[#17402C]" value={form.route_rating} onChange={(e) => set('route_rating', parseFloat(e.target.value))} />
+              <label className="text-xs font-700 text-[var(--lkv-text-muted)] uppercase tracking-wider block mb-1.5">Note parcours ({form.route_rating}/10)</label>
+              <input type="range" min={1} max={10} step={0.1} className="w-full mt-2 accent-[var(--lkv-primary)]" value={form.route_rating} onChange={(e) => set('route_rating', parseFloat(e.target.value))} />
             </div>
           </div>
           <div>
-            <label className="text-xs font-700 text-[#5C6B5E] uppercase tracking-wider block mb-1.5">Tags (séparés par des virgules)</label>
-            <input className="w-full bg-white border border-[#C8C3B0] rounded-xl px-4 py-2.5 text-sm text-[#17402C] focus:outline-none focus:ring-2 focus:ring-[#17402C]/30" placeholder="himalaya, autonomie, haute-altitude..." value={form.tags} onChange={(e) => set('tags', e.target.value)} />
+            <label className="text-xs font-700 text-[var(--lkv-text-muted)] uppercase tracking-wider block mb-1.5">Tags (séparés par des virgules)</label>
+            <input className="w-full bg-white border border-[var(--lkv-border)] rounded-xl px-4 py-2.5 text-sm text-[var(--lkv-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--lkv-primary)]/30" placeholder="himalaya, autonomie, haute-altitude..." value={form.tags} onChange={(e) => set('tags', e.target.value)} />
           </div>
           <div>
-            <label className="text-xs font-700 text-[#5C6B5E] uppercase tracking-wider block mb-2">Visibilité</label>
+            <label className="text-xs font-700 text-[var(--lkv-text-muted)] uppercase tracking-wider block mb-2">Visibilité</label>
             <div className="grid grid-cols-3 gap-2">
               {VISIBILITY_OPTS.map((opt) => (
-                <button key={opt.value} type="button" onClick={() => set('visibility', opt.value)} className={`p-3 rounded-xl border-2 text-left transition-all ${form.visibility === opt.value ? 'border-[#17402C] bg-[#17402C]/5' : 'border-[#C8C3B0] hover:border-[#17402C]/40'}`}>
-                  <p className="text-sm font-600 text-[#17402C]">{opt.label}</p>
-                  <p className="text-[10px] text-[#5C6B5E] mt-0.5">{opt.desc}</p>
+                <button key={opt.value} type="button" onClick={() => set('visibility', opt.value)} className={`p-3 rounded-xl border-2 text-left transition-all ${form.visibility === opt.value ? 'border-[var(--lkv-primary)] bg-[var(--lkv-primary)]/5' : 'border-[var(--lkv-border)] hover:border-[var(--lkv-primary)]/40'}`}>
+                  <p className="text-sm font-600 text-[var(--lkv-primary)]">{opt.label}</p>
+                  <p className="text-[10px] text-[var(--lkv-text-muted)] mt-0.5">{opt.desc}</p>
                 </button>
               ))}
             </div>
           </div>
-          <div className="flex items-center justify-between p-4 bg-white rounded-xl border border-[#C8C3B0]">
+          <div className="flex items-center justify-between p-4 bg-white rounded-xl border border-[var(--lkv-border)]">
             <div>
-              <p className="text-sm font-600 text-[#17402C]">Carnet collaboratif</p>
-              <p className="text-xs text-[#5C6B5E]">Permettre à d&apos;autres membres de contribuer</p>
+              <p className="text-sm font-600 text-[var(--lkv-primary)]">Carnet collaboratif</p>
+              <p className="text-xs text-[var(--lkv-text-muted)]">Permettre à d&apos;autres membres de contribuer</p>
             </div>
-            <button type="button" onClick={() => set('is_collaborative', !form.is_collaborative)} className={`w-12 h-6 rounded-full transition-all relative ${form.is_collaborative ? 'bg-[#17402C]' : 'bg-[#C8C3B0]'}`}>
+            <button type="button" onClick={() => set('is_collaborative', !form.is_collaborative)} className={`w-12 h-6 rounded-full transition-all relative ${form.is_collaborative ? 'bg-[var(--lkv-primary)]' : 'bg-[var(--lkv-border)]'}`}>
               <div className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-all ${form.is_collaborative ? 'left-6' : 'left-0.5'}`} />
             </button>
           </div>
         </div>
-        <div className="flex gap-3 p-6 border-t border-[#C8C3B0]">
-          <button onClick={onClose} className="flex-1 py-2.5 rounded-xl border border-[#C8C3B0] text-sm font-600 text-[#5C6B5E] hover:bg-[#C8C3B0]/20 transition-colors">Annuler</button>
-          <button onClick={() => onSave(form)} disabled={saving || !form.title.trim() || !form.destination.trim()} className="flex-1 py-2.5 rounded-xl bg-[#17402C] text-white text-sm font-700 hover:bg-[#17402C]/90 transition-colors disabled:opacity-50">
+        <div className="flex gap-3 p-6 border-t border-[var(--lkv-border)]">
+          <button onClick={onClose} className="flex-1 py-2.5 rounded-xl border border-[var(--lkv-border)] text-sm font-600 text-[var(--lkv-text-muted)] hover:bg-[var(--lkv-border)]/20 transition-colors">Annuler</button>
+          <button onClick={() => onSave(form)} disabled={saving || !form.title.trim() || !form.destination.trim()} className="flex-1 py-2.5 rounded-xl bg-[var(--lkv-primary)] text-white text-sm font-700 hover:bg-[var(--lkv-primary)]/90 transition-colors disabled:opacity-50">
             {saving ? 'Enregistrement...' : initial ? 'Mettre à jour' : 'Publier le carnet'}
           </button>
         </div>
@@ -319,9 +319,9 @@ function CarnetDetailModal({
 
   return (
     <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
-      <div className="bg-[#EDEAE0] border border-[#C8C3B0] rounded-2xl w-full max-w-3xl my-4 overflow-hidden">
+      <div className="bg-[var(--lkv-surface)] border border-[var(--lkv-border)] rounded-2xl w-full max-w-3xl my-4 overflow-hidden">
         {/* Cover Hero */}
-        <div className="relative h-64 overflow-hidden bg-[#17402C]">
+        <div className="relative h-64 overflow-hidden bg-[var(--lkv-primary)]">
           {carnet.cover_image ? (
             <Image src={carnet.cover_image} alt={carnet.cover_image_alt || carnet.title} fill className="object-cover" />
           ) : (
@@ -355,20 +355,20 @@ function CarnetDetailModal({
 
           {/* Bottom info */}
           <div className="absolute bottom-5 left-5 right-5">
-            <p className="text-[10px] font-mono text-[#17402C] uppercase tracking-wider mb-1">{carnet.destination}</p>
+            <p className="text-[10px] font-mono text-[var(--lkv-primary)] uppercase tracking-wider mb-1">{carnet.destination}</p>
             <h2 className="font-display font-800 text-white text-2xl leading-tight mb-2">{carnet.title}</h2>
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-2">
               {carnet.author_id ? (
                 <Link href={`/profil/${carnet.author_id}`} className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-                  <div className="w-7 h-7 rounded-lg bg-[#17402C]/30 flex items-center justify-center text-xs font-700 text-white">
+                  <div className="w-7 h-7 rounded-lg bg-[var(--lkv-primary)]/30 flex items-center justify-center text-xs font-700 text-white">
                     {carnet.author?.full_name?.[0] ?? '?'}
                   </div>
                   <span className="text-white/80 text-sm font-500">{carnet.author?.full_name ?? 'Anonyme'}</span>
                 </Link>
               ) : (
                 <>
-                  <div className="w-7 h-7 rounded-lg bg-[#17402C]/30 flex items-center justify-center text-xs font-700 text-white">
+                  <div className="w-7 h-7 rounded-lg bg-[var(--lkv-primary)]/30 flex items-center justify-center text-xs font-700 text-white">
                     {carnet.author?.full_name?.[0] ?? '?'}
                   </div>
                   <span className="text-white/80 text-sm font-500">{carnet.author?.full_name ?? 'Anonyme'}</span>
@@ -384,7 +384,7 @@ function CarnetDetailModal({
         {/* Scrollable content */}
         <div className="max-h-[60vh] overflow-y-auto">
           {/* Key stats */}
-          <div className="grid grid-cols-5 divide-x divide-[#C8C3B0] border-b border-[#C8C3B0]">
+          <div className="grid grid-cols-5 divide-x divide-[var(--lkv-border)] border-b border-[var(--lkv-border)]">
             {[
               { label: 'Note', value: `${carnet.route_rating}/10`, icon: '⭐' },
               { label: 'Durée', value: durationDays ? `${durationDays}j` : '—', icon: '📅' },
@@ -394,8 +394,8 @@ function CarnetDetailModal({
             ].map((s) => (
               <div key={s.label} className="p-4 text-center">
                 <p className="text-base mb-0.5">{s.icon}</p>
-                <p className="font-display font-700 text-[#17402C] text-sm">{s.value}</p>
-                <p className="text-[10px] text-[#5C6B5E]">{s.label}</p>
+                <p className="font-display font-700 text-[var(--lkv-primary)] text-sm">{s.value}</p>
+                <p className="text-[10px] text-[var(--lkv-text-muted)]">{s.label}</p>
               </div>
             ))}
           </div>
@@ -403,8 +403,8 @@ function CarnetDetailModal({
           <div className="p-6 space-y-6">
             {/* Dates */}
             {(carnet.start_date || carnet.end_date) && (
-              <div className="flex items-center gap-4 p-4 bg-[#17402C] rounded-xl">
-                <Icon name="CalendarDaysIcon" size={20} className="text-[#17402C] flex-shrink-0" />
+              <div className="flex items-center gap-4 p-4 bg-[var(--lkv-primary)] rounded-xl">
+                <Icon name="CalendarDaysIcon" size={20} className="text-[var(--lkv-primary)] flex-shrink-0" />
                 <div className="flex flex-wrap items-center gap-4 text-sm">
                   {carnet.start_date && (
                     <div>
@@ -424,7 +424,7 @@ function CarnetDetailModal({
                   {durationDays && (
                     <div className="ml-auto">
                       <p className="text-[10px] text-white/40 uppercase tracking-wider">Durée</p>
-                      <p className="font-mono font-700 text-[#17402C] text-lg">{durationDays}j</p>
+                      <p className="font-mono font-700 text-[var(--lkv-primary)] text-lg">{durationDays}j</p>
                     </div>
                   )}
                 </div>
@@ -434,18 +434,18 @@ function CarnetDetailModal({
             {/* Description */}
             {carnet.description && (
               <div>
-                <p className="text-[10px] font-mono text-[#5C6B5E] uppercase tracking-wider mb-3">Récit d&apos;expédition</p>
-                <p className="text-sm text-[#17402C] leading-relaxed whitespace-pre-line">{carnet.description}</p>
+                <p className="text-[10px] font-mono text-[var(--lkv-text-muted)] uppercase tracking-wider mb-3">Récit d&apos;expédition</p>
+                <p className="text-sm text-[var(--lkv-primary)] leading-relaxed whitespace-pre-line">{carnet.description}</p>
               </div>
             )}
 
             {/* Weather */}
             {carnet.weather && (
-              <div className="flex items-start gap-3 p-4 bg-[#E7E3D6] rounded-xl border border-[#C8C3B0]">
-                <Icon name="CloudIcon" size={18} className="text-[#5C6B5E] flex-shrink-0 mt-0.5" />
+              <div className="flex items-start gap-3 p-4 bg-[var(--lkv-surface)] rounded-xl border border-[var(--lkv-border)]">
+                <Icon name="CloudIcon" size={18} className="text-[var(--lkv-text-muted)] flex-shrink-0 mt-0.5" />
                 <div>
-                  <p className="text-[10px] font-mono text-[#5C6B5E] uppercase tracking-wider mb-1">Conditions météo</p>
-                  <p className="text-sm text-[#17402C]">{carnet.weather}</p>
+                  <p className="text-[10px] font-mono text-[var(--lkv-text-muted)] uppercase tracking-wider mb-1">Conditions météo</p>
+                  <p className="text-sm text-[var(--lkv-primary)]">{carnet.weather}</p>
                 </div>
               </div>
             )}
@@ -453,17 +453,17 @@ function CarnetDetailModal({
             {/* Map points */}
             {carnet.map_points?.length > 0 && (
               <div>
-                <p className="text-[10px] font-mono text-[#5C6B5E] uppercase tracking-wider mb-3">Points d&apos;étape</p>
+                <p className="text-[10px] font-mono text-[var(--lkv-text-muted)] uppercase tracking-wider mb-3">Points d&apos;étape</p>
                 <div className="space-y-2">
                   {carnet.map_points.map((point, i) => (
-                    <div key={i} className="flex items-center gap-3 p-3 bg-[#E7E3D6] rounded-xl border border-[#C8C3B0]">
-                      <div className="w-7 h-7 rounded-lg bg-[#17402C] flex items-center justify-center text-white text-xs font-700 flex-shrink-0">
+                    <div key={i} className="flex items-center gap-3 p-3 bg-[var(--lkv-surface)] rounded-xl border border-[var(--lkv-border)]">
+                      <div className="w-7 h-7 rounded-lg bg-[var(--lkv-primary)] flex items-center justify-center text-white text-xs font-700 flex-shrink-0">
                         {point.day ?? i + 1}
                       </div>
                       <div className="flex-1">
-                        <p className="text-sm font-600 text-[#17402C]">{point.label}</p>
+                        <p className="text-sm font-600 text-[var(--lkv-primary)]">{point.label}</p>
                         {point.lat != null && point.lng != null && (
-                          <p className="text-[10px] text-[#5C6B5E] font-mono">{point.lat.toFixed(4)}, {point.lng.toFixed(4)}</p>
+                          <p className="text-[10px] text-[var(--lkv-text-muted)] font-mono">{point.lat.toFixed(4)}, {point.lng.toFixed(4)}</p>
                         )}
                       </div>
                     </div>
@@ -475,30 +475,30 @@ function CarnetDetailModal({
             {/* Tags */}
             {carnet.tags?.length > 0 && (
               <div>
-                <p className="text-[10px] font-mono text-[#5C6B5E] uppercase tracking-wider mb-2">Tags</p>
+                <p className="text-[10px] font-mono text-[var(--lkv-text-muted)] uppercase tracking-wider mb-2">Tags</p>
                 <div className="flex flex-wrap gap-2">
                   {carnet.tags.map((tag) => (
-                    <span key={tag} className="text-xs bg-[#17402C] text-white/70 px-3 py-1.5 rounded-full">#{tag}</span>
+                    <span key={tag} className="text-xs bg-[var(--lkv-primary)] text-white/70 px-3 py-1.5 rounded-full">#{tag}</span>
                   ))}
                 </div>
               </div>
             )}
 
             {/* Actions */}
-            <div className="flex items-center gap-3 py-3 border-t border-[#C8C3B0]">
+            <div className="flex items-center gap-3 py-3 border-t border-[var(--lkv-border)]">
               {/* Reactions */}
               <div className="relative">
                 <button
                   onClick={() => setShowReactions(!showReactions)}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-600 border transition-all ${carnet.user_liked ? 'bg-[#17402C]/10 border-[#17402C]/30 text-[#17402C]' : 'border-[#C8C3B0] text-[#5C6B5E] hover:border-[#17402C]/30'}`}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-600 border transition-all ${carnet.user_liked ? 'bg-[var(--lkv-primary)]/10 border-[var(--lkv-primary)]/30 text-[var(--lkv-primary)]' : 'border-[var(--lkv-border)] text-[var(--lkv-text-muted)] hover:border-[var(--lkv-primary)]/30'}`}
                 >
                   {carnet.user_reaction ? REACTION_OPTS.find((r) => r.key === carnet.user_reaction)?.emoji : '🎒'}
                   <span>{carnet.likes_count} réactions</span>
                 </button>
                 {showReactions && (
-                  <div className="absolute bottom-full left-0 mb-2 bg-white border border-[#C8C3B0] rounded-xl p-2 flex gap-1  z-10">
+                  <div className="absolute bottom-full left-0 mb-2 bg-white border border-[var(--lkv-border)] rounded-xl p-2 flex gap-1  z-10">
                     {REACTION_OPTS.map((r) => (
-                      <button key={r.key} onClick={() => { onLike(carnet, r.key); setShowReactions(false); }} title={r.label} className={`w-9 h-9 rounded-lg flex items-center justify-center text-lg hover:bg-[#E7E3D6] transition-colors ${carnet.user_reaction === r.key ? 'bg-[#17402C]/10' : ''}`}>
+                      <button key={r.key} onClick={() => { onLike(carnet, r.key); setShowReactions(false); }} title={r.label} className={`w-9 h-9 rounded-lg flex items-center justify-center text-lg hover:bg-[var(--lkv-surface)] transition-colors ${carnet.user_reaction === r.key ? 'bg-[var(--lkv-primary)]/10' : ''}`}>
                         {r.emoji}
                       </button>
                     ))}
@@ -509,7 +509,7 @@ function CarnetDetailModal({
               {/* Favorite */}
               <button
                 onClick={() => onFavorite(carnet)}
-                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-600 border transition-all ${carnet.user_favorited ? 'bg-amber-50 border-amber-300 text-amber-600' : 'border-[#C8C3B0] text-[#5C6B5E] hover:border-amber-300'}`}
+                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-600 border transition-all ${carnet.user_favorited ? 'bg-amber-50 border-amber-300 text-amber-600' : 'border-[var(--lkv-border)] text-[var(--lkv-text-muted)] hover:border-amber-300'}`}
               >
                 <Icon name={carnet.user_favorited ? 'BookmarkSolidIcon' : 'BookmarkIcon'} size={15} />
                 {carnet.favorites_count} favoris
@@ -517,7 +517,7 @@ function CarnetDetailModal({
 
               {/* Author link */}
               {carnet.author_id && (
-                <Link href={`/profil/${carnet.author_id}`} className="ml-auto flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-600 border border-[#C8C3B0] text-[#5C6B5E] hover:text-[#17402C] transition-all">
+                <Link href={`/profil/${carnet.author_id}`} className="ml-auto flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-600 border border-[var(--lkv-border)] text-[var(--lkv-text-muted)] hover:text-[var(--lkv-primary)] transition-all">
                   <Icon name="UserCircleIcon" size={15} />
                   Voir le profil
                 </Link>
@@ -526,13 +526,13 @@ function CarnetDetailModal({
 
             {/* Comments */}
             <div>
-              <p className="text-[10px] font-mono text-[#5C6B5E] uppercase tracking-wider mb-3">
+              <p className="text-[10px] font-mono text-[var(--lkv-text-muted)] uppercase tracking-wider mb-3">
                 Commentaires ({commentCount})
               </p>
               {loadingComments ? (
-                <div className="space-y-2">{[1, 2].map((i) => <div key={i} className="h-14 bg-[#C8C3B0]/30 rounded-xl animate-pulse" />)}</div>
+                <div className="space-y-2">{[1, 2].map((i) => <div key={i} className="h-14 bg-[var(--lkv-border)]/30 rounded-xl animate-pulse" />)}</div>
               ) : comments.length === 0 ? (
-                <p className="text-sm text-[#5C6B5E] text-center py-4">Aucun commentaire. Soyez le premier !</p>
+                <p className="text-sm text-[var(--lkv-text-muted)] text-center py-4">Aucun commentaire. Soyez le premier !</p>
               ) : (
                 <div className="space-y-3 mb-4">
                   {(() => {
@@ -582,19 +582,19 @@ function CarnetDetailModal({
               {user ? (
                 <div className="flex gap-3">
                   <input
-                    className="flex-1 bg-white border border-[#C8C3B0] rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#17402C]/30"
+                    className="flex-1 bg-white border border-[var(--lkv-border)] rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--lkv-primary)]/30"
                     placeholder="Écrire un commentaire..."
                     value={newComment}
                     onChange={(e) => setNewComment(e.target.value)}
                     onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSubmitComment(); } }}
                   />
-                  <button onClick={handleSubmitComment} disabled={submitting || !newComment.trim()} className="px-4 py-2.5 bg-[#17402C] text-white rounded-xl text-sm font-600 disabled:opacity-50 hover:bg-[#17402C]/90 transition-colors">
+                  <button onClick={handleSubmitComment} disabled={submitting || !newComment.trim()} className="px-4 py-2.5 bg-[var(--lkv-primary)] text-white rounded-xl text-sm font-600 disabled:opacity-50 hover:bg-[var(--lkv-primary)]/90 transition-colors">
                     {submitting ? '...' : 'Envoyer'}
                   </button>
                 </div>
               ) : (
-                <p className="text-sm text-center text-[#5C6B5E] py-2">
-                  <Link href="/connexion" className="text-[#17402C] hover:underline">Connectez-vous</Link> pour commenter
+                <p className="text-sm text-center text-[var(--lkv-text-muted)] py-2">
+                  <Link href="/connexion" className="text-[var(--lkv-primary)] hover:underline">Connectez-vous</Link> pour commenter
                 </p>
               )}
             </div>
@@ -610,16 +610,16 @@ function DeleteModal({ open, onClose, onConfirm, deleting }: { open: boolean; on
   if (!open) return null;
   return (
     <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="bg-[#EDEAE0] border border-[#C8C3B0] rounded-2xl p-6 max-w-sm w-full">
+      <div className="bg-[var(--lkv-surface)] border border-[var(--lkv-border)] rounded-2xl p-6 max-w-sm w-full">
         <div className="text-center mb-5">
           <div className="w-14 h-14 rounded-2xl bg-red-100 flex items-center justify-center mx-auto mb-3">
             <Icon name="TrashIcon" size={24} className="text-red-500" />
           </div>
-          <h3 className="font-display font-700 text-[#17402C] text-lg mb-1">Supprimer ce carnet ?</h3>
-          <p className="text-sm text-[#5C6B5E]">Cette action est irréversible. Tous les commentaires et réactions seront supprimés.</p>
+          <h3 className="font-display font-700 text-[var(--lkv-primary)] text-lg mb-1">Supprimer ce carnet ?</h3>
+          <p className="text-sm text-[var(--lkv-text-muted)]">Cette action est irréversible. Tous les commentaires et réactions seront supprimés.</p>
         </div>
         <div className="flex gap-3">
-          <button onClick={onClose} className="flex-1 py-2.5 rounded-xl border border-[#C8C3B0] text-sm font-600 text-[#5C6B5E] hover:bg-[#C8C3B0]/20 transition-colors">Annuler</button>
+          <button onClick={onClose} className="flex-1 py-2.5 rounded-xl border border-[var(--lkv-border)] text-sm font-600 text-[var(--lkv-text-muted)] hover:bg-[var(--lkv-border)]/20 transition-colors">Annuler</button>
           <button onClick={onConfirm} disabled={deleting} className="flex-1 py-2.5 rounded-xl bg-red-500 text-white text-sm font-700 hover:bg-red-600 transition-colors disabled:opacity-50">
             {deleting ? 'Suppression...' : 'Supprimer'}
           </button>
@@ -656,9 +656,9 @@ function CarnetCard({
     : null;
 
   return (
-    <div className="bg-[#EDEAE0] border border-[#C8C3B0] rounded-2xl overflow-hidden hover: transition-shadow">
+    <div className="bg-[var(--lkv-surface)] border border-[var(--lkv-border)] rounded-2xl overflow-hidden hover: transition-shadow">
       {/* Cover — clickable to open detail */}
-      <button onClick={() => onViewDetail(carnet)} className="w-full relative h-52 overflow-hidden bg-[#C8C3B0] block">
+      <button onClick={() => onViewDetail(carnet)} className="w-full relative h-52 overflow-hidden bg-[var(--lkv-border)] block">
         {carnet.cover_image ? (
           <Image src={carnet.cover_image} alt={carnet.cover_image_alt || carnet.title} fill className="object-cover hover:scale-105 transition-transform duration-300" />
         ) : (
@@ -705,27 +705,27 @@ function CarnetCard({
       <div className="p-4">
         {/* Author */}
         <div className="flex items-center gap-3 mb-3">
-          <Link href={`/profil/${carnet.author_id}`} className="w-8 h-8 rounded-xl bg-[#17402C]/20 flex items-center justify-center text-xs font-700 text-[#17402C] flex-shrink-0 hover:bg-[#17402C]/30 transition-colors">
+          <Link href={`/profil/${carnet.author_id}`} className="w-8 h-8 rounded-xl bg-[var(--lkv-primary)]/20 flex items-center justify-center text-xs font-700 text-[var(--lkv-primary)] flex-shrink-0 hover:bg-[var(--lkv-primary)]/30 transition-colors">
             {carnet.author?.full_name?.[0] ?? '?'}
           </Link>
           <div className="flex-1 min-w-0">
-            <Link href={`/profil/${carnet.author_id}`} className="text-sm font-600 text-[#17402C] truncate hover:text-[#17402C] transition-colors block">{carnet.author?.full_name ?? 'Anonyme'}</Link>
-            <p className="text-[10px] text-[#5C6B5E]">Trust {carnet.author?.trust_score ?? 0}</p>
+            <Link href={`/profil/${carnet.author_id}`} className="text-sm font-600 text-[var(--lkv-primary)] truncate hover:text-[var(--lkv-primary)] transition-colors block">{carnet.author?.full_name ?? 'Anonyme'}</Link>
+            <p className="text-[10px] text-[var(--lkv-text-muted)]">Trust {carnet.author?.trust_score ?? 0}</p>
           </div>
           <div className="text-right flex-shrink-0">
-            <p className="font-mono font-700 text-[#17402C] text-sm">{carnet.route_rating}/10</p>
-            <p className="text-[10px] text-[#5C6B5E]">parcours</p>
+            <p className="font-mono font-700 text-[var(--lkv-primary)] text-sm">{carnet.route_rating}/10</p>
+            <p className="text-[10px] text-[var(--lkv-text-muted)]">parcours</p>
           </div>
         </div>
 
         {/* Excerpt */}
         {carnet.description && (
-          <p className="text-sm text-[#5C6B5E] mb-3 line-clamp-2">{carnet.description}</p>
+          <p className="text-sm text-[var(--lkv-text-muted)] mb-3 line-clamp-2">{carnet.description}</p>
         )}
 
         {/* Weather */}
         {carnet.weather && (
-          <div className="flex items-center gap-1.5 text-xs text-[#5C6B5E] mb-3 bg-[#E7E3D6] rounded-xl px-3 py-2">
+          <div className="flex items-center gap-1.5 text-xs text-[var(--lkv-text-muted)] mb-3 bg-[var(--lkv-surface)] rounded-xl px-3 py-2">
             <Icon name="CloudIcon" size={12} />
             <span className="truncate">{carnet.weather}</span>
           </div>
@@ -735,26 +735,26 @@ function CarnetCard({
         {carnet.tags?.length > 0 && (
           <div className="flex flex-wrap gap-1 mb-3">
             {carnet.tags.slice(0, 4).map((tag) => (
-              <span key={tag} className="text-[10px] bg-[#E7E3D6] text-[#5C6B5E] px-2 py-0.5 rounded-full">#{tag}</span>
+              <span key={tag} className="text-[10px] bg-[var(--lkv-surface)] text-[var(--lkv-text-muted)] px-2 py-0.5 rounded-full">#{tag}</span>
             ))}
           </div>
         )}
 
         {/* Actions */}
-        <div className="flex items-center gap-2 pt-2 border-t border-[#C8C3B0]/50">
+        <div className="flex items-center gap-2 pt-2 border-t border-[var(--lkv-border)]/50">
           {/* Reactions */}
           <div className="relative">
             <button
               onClick={() => setShowReactions(!showReactions)}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-600 border transition-all ${carnet.user_liked ? 'bg-[#17402C]/10 border-[#17402C]/30 text-[#17402C]' : 'border-[#C8C3B0] text-[#5C6B5E] hover:border-[#17402C]/30'}`}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-600 border transition-all ${carnet.user_liked ? 'bg-[var(--lkv-primary)]/10 border-[var(--lkv-primary)]/30 text-[var(--lkv-primary)]' : 'border-[var(--lkv-border)] text-[var(--lkv-text-muted)] hover:border-[var(--lkv-primary)]/30'}`}
             >
               {carnet.user_reaction ? REACTION_OPTS.find((r) => r.key === carnet.user_reaction)?.emoji : '🎒'}
               <span>{carnet.likes_count}</span>
             </button>
             {showReactions && (
-              <div className="absolute bottom-full left-0 mb-2 bg-white border border-[#C8C3B0] rounded-xl p-2 flex gap-1  z-10">
+              <div className="absolute bottom-full left-0 mb-2 bg-white border border-[var(--lkv-border)] rounded-xl p-2 flex gap-1  z-10">
                 {REACTION_OPTS.map((r) => (
-                  <button key={r.key} onClick={() => { onLike(carnet, r.key); setShowReactions(false); }} title={r.label} className={`w-8 h-8 rounded-lg flex items-center justify-center text-base hover:bg-[#E7E3D6] transition-colors ${carnet.user_reaction === r.key ? 'bg-[#17402C]/10' : ''}`}>
+                  <button key={r.key} onClick={() => { onLike(carnet, r.key); setShowReactions(false); }} title={r.label} className={`w-8 h-8 rounded-lg flex items-center justify-center text-base hover:bg-[var(--lkv-surface)] transition-colors ${carnet.user_reaction === r.key ? 'bg-[var(--lkv-primary)]/10' : ''}`}>
                     {r.emoji}
                   </button>
                 ))}
@@ -765,7 +765,7 @@ function CarnetCard({
           {/* Comments — opens detail modal */}
           <button
             onClick={() => onViewDetail(carnet)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-600 border border-[#C8C3B0] text-[#5C6B5E] hover:border-[#17402C]/30 transition-all"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-600 border border-[var(--lkv-border)] text-[var(--lkv-text-muted)] hover:border-[var(--lkv-primary)]/30 transition-all"
           >
             <Icon name="ChatBubbleLeftIcon" size={13} />
             <span>{carnet.comments_count}</span>
@@ -774,7 +774,7 @@ function CarnetCard({
           {/* Favorite */}
           <button
             onClick={() => onFavorite(carnet)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-600 border transition-all ${carnet.user_favorited ? 'bg-amber-50 border-amber-300 text-amber-600' : 'border-[#C8C3B0] text-[#5C6B5E] hover:border-amber-300'}`}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-600 border transition-all ${carnet.user_favorited ? 'bg-amber-50 border-amber-300 text-amber-600' : 'border-[var(--lkv-border)] text-[var(--lkv-text-muted)] hover:border-amber-300'}`}
           >
             <Icon name={carnet.user_favorited ? 'BookmarkSolidIcon' : 'BookmarkIcon'} size={13} />
             <span>{carnet.favorites_count}</span>
@@ -783,7 +783,7 @@ function CarnetCard({
           {/* View detail */}
           <Link
             href={`/carnets/${carnet.id}`}
-            className="ml-auto flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-600 bg-[#17402C] text-white hover:bg-[#17402C]/80 transition-all"
+            className="ml-auto flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-600 bg-[var(--lkv-primary)] text-white hover:bg-[var(--lkv-primary)]/80 transition-all"
           >
             <Icon name="ArrowTopRightOnSquareIcon" size={13} />
             Page complète
@@ -792,7 +792,7 @@ function CarnetCard({
           {/* Share */}
           <button
             onClick={() => onShare(carnet)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-600 border border-[#C8C3B0] text-[#5C6B5E] hover:border-[#17402C]/30 transition-all"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-600 border border-[var(--lkv-border)] text-[var(--lkv-text-muted)] hover:border-[var(--lkv-primary)]/30 transition-all"
           >
             <Icon name="ShareIcon" size={13} />
           </button>
@@ -1035,7 +1035,7 @@ export default function CarnetsPage() {
     <>
       {/* ── DESKTOP (3-Column Fullscreen 100dvh + CompteBackground) ── */}
       <div className="hidden md:block">
-        <div className="h-[100dvh] max-h-[100dvh] overflow-hidden bg-transparent font-sans text-[#17402C] relative flex flex-col">
+        <div className="h-[100dvh] max-h-[100dvh] overflow-hidden bg-transparent font-sans text-[var(--lkv-primary)] relative flex flex-col">
           <CompteBackground />
           <Header />
           <main className="flex-1 min-h-0 overflow-hidden w-full max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-4 flex gap-5">
@@ -1050,10 +1050,10 @@ export default function CarnetsPage() {
             {/* COLONNE CENTRALE (Scrollable Unique) */}
             <div className="flex-1 min-w-0 h-full overflow-y-auto custom-scrollbar pr-2 space-y-5">
               {/* Breadcrumbs */}
-              <div className="flex items-center gap-2 text-xs font-medium text-[#5C6B5E]">
-                <Link href="/communaute" className="hover:text-[#17402C] transition-colors">Communauté</Link>
-                <Icon name="ChevronRightIcon" size={12} className="text-[#5C6B5E]" />
-                <span className="text-[#17402C] font-semibold">Carnets d&apos;expédition</span>
+              <div className="flex items-center gap-2 text-xs font-medium text-[var(--lkv-text-muted)]">
+                <Link href="/communaute" className="hover:text-[var(--lkv-primary)] transition-colors">Communauté</Link>
+                <Icon name="ChevronRightIcon" size={12} className="text-[var(--lkv-text-muted)]" />
+                <span className="text-[var(--lkv-primary)] font-semibold">Carnets d&apos;expédition</span>
               </div>
 
               {/* Hub Hero */}
@@ -1071,9 +1071,9 @@ export default function CarnetsPage() {
 
               {/* Barre de Recherche & Filtre rapide */}
               <div className="glass rounded-2xl p-2.5 flex items-center gap-3">
-                <Icon name="MagnifyingGlassIcon" size={16} className="text-[#5C6B5E] ml-2 shrink-0" />
+                <Icon name="MagnifyingGlassIcon" size={16} className="text-[var(--lkv-text-muted)] ml-2 shrink-0" />
                 <input
-                  className="w-full bg-transparent border-none text-xs sm:text-sm text-[#17402C] placeholder-[#5C6B5E] focus:outline-none"
+                  className="w-full bg-transparent border-none text-xs sm:text-sm text-[var(--lkv-primary)] placeholder-[var(--lkv-text-muted)] focus:outline-none"
                   placeholder="Rechercher une destination, un massif ou un titre (ex: Vercors, Chartreuse)..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
@@ -1082,7 +1082,7 @@ export default function CarnetsPage() {
                   <button
                     type="button"
                     onClick={() => setSearch('')}
-                    className="p-1 rounded-full hover:bg-black/5 text-[#5C6B5E]"
+                    className="p-1 rounded-full hover:bg-black/5 text-[var(--lkv-text-muted)]"
                   >
                     <Icon name="XMarkIcon" size={14} />
                   </button>
@@ -1093,7 +1093,7 @@ export default function CarnetsPage() {
               <section className="space-y-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <h2 className="font-display font-bold text-lg text-[#17402C]">
+                    <h2 className="font-display font-bold text-lg text-[var(--lkv-primary)]">
                       {filter === 'mine' ? 'Mes carnets d’expédition' : filter === 'favorites' ? 'Mes récits favoris' : 'Récits & Expéditions'}
                     </h2>
                     <span className="glass-pill text-[10px] font-mono font-bold">
@@ -1111,8 +1111,8 @@ export default function CarnetsPage() {
                 ) : filtered.length === 0 ? (
                   <div className="glass p-12 text-center rounded-2xl">
                     <span className="text-3xl block mb-2">🏔️</span>
-                    <p className="text-sm font-bold text-[#17402C]">Aucun carnet trouvé</p>
-                    <p className="text-xs text-[#5C6B5E] mt-1">
+                    <p className="text-sm font-bold text-[var(--lkv-primary)]">Aucun carnet trouvé</p>
+                    <p className="text-xs text-[var(--lkv-text-muted)] mt-1">
                       Essayez de modifier votre recherche ou soyez le premier à partager cette aventure !
                     </p>
                   </div>
@@ -1143,7 +1143,7 @@ export default function CarnetsPage() {
       </div>
 
       {/* MOBILE VIEW */}
-      <div className="block md:hidden min-h-screen relative font-sans text-[#17402C]">
+      <div className="block md:hidden min-h-screen relative font-sans text-[var(--lkv-primary)]">
         <MobilePageShell videoBackground={true} background="transparent">
           <MobileCarnetsHub
             carnets={carnets}
@@ -1198,7 +1198,7 @@ export default function CarnetsPage() {
 
       {/* Toast */}
       {toast && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-[#17402C] text-white px-5 py-3 rounded-xl text-sm font-600 ">
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-[var(--lkv-primary)] text-white px-5 py-3 rounded-xl text-sm font-600 ">
           {toast}
         </div>
       )}

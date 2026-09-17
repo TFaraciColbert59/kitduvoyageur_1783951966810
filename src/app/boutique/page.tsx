@@ -79,10 +79,10 @@ export default function BoutiquePage() {
           <main className="h-full overflow-y-auto max-w-[var(--page-max-w)] mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-20">
             <header className="mb-8">
               <Eyebrow>Boutique</Eyebrow>
-              <h1 className="font-display font-bold text-4xl text-[#17402C] mt-1 mb-3">
+              <h1 className="font-display font-bold text-4xl text-[var(--lkv-primary)] mt-1 mb-3">
                 La boutique
               </h1>
-              <p className="text-[#5A7064] max-w-2xl text-base">
+              <p className="text-[var(--lkv-text-muted)] max-w-2xl text-base">
                 Chaque objet est testé en conditions réelles pendant six semaines minimum. Ceux qui
                 restent trouvent leur place ici.
               </p>
@@ -98,9 +98,9 @@ export default function BoutiquePage() {
                   className="p-6 flex flex-col justify-between gap-4"
                 >
                   <div className="space-y-2">
-                    <rayon.icone size={22} className="text-[#17402C]" aria-hidden />
-                    <h2 className="font-display font-bold text-xl text-[#17402C]">{rayon.nom}</h2>
-                    <p className="text-sm text-[#365233] leading-relaxed">{rayon.description}</p>
+                    <rayon.icone size={22} className="text-[var(--lkv-primary)]" aria-hidden />
+                    <h2 className="font-display font-bold text-xl text-[var(--lkv-primary)]">{rayon.nom}</h2>
+                    <p className="text-sm text-[var(--lkv-forest-600)] leading-relaxed">{rayon.description}</p>
                   </div>
 
                   <div className="flex items-center justify-end pt-2 border-t border-white/20">
@@ -123,12 +123,12 @@ export default function BoutiquePage() {
           <div className="px-3 pt-3 pb-24 flex flex-col gap-4">
             <header>
               <Eyebrow>Boutique</Eyebrow>
-              <h1 className="font-display font-bold text-[24px] tracking-tight text-[#17402C]">
+              <h1 className="font-display font-bold text-[24px] tracking-tight text-[var(--lkv-primary)]">
                 La boutique
               </h1>
             </header>
 
-            <p className="text-xs text-[#5A7064] leading-relaxed">
+            <p className="text-xs text-[var(--lkv-text-muted)] leading-relaxed">
               Chaque objet est testé en conditions réelles pendant six semaines minimum. Ceux qui
               restent trouvent leur place ici.
             </p>
@@ -143,12 +143,12 @@ export default function BoutiquePage() {
                   className="p-4 flex flex-col gap-3"
                 >
                   <div className="flex items-center gap-2">
-                    <rayon.icone size={18} className="text-[#17402C]" aria-hidden />
-                    <h2 className="font-display font-bold text-[17px] text-[#17402C]">
+                    <rayon.icone size={18} className="text-[var(--lkv-primary)]" aria-hidden />
+                    <h2 className="font-display font-bold text-[17px] text-[var(--lkv-primary)]">
                       {rayon.nom}
                     </h2>
                   </div>
-                  <p className="text-xs text-[#365233] leading-relaxed">{rayon.description}</p>
+                  <p className="text-xs text-[var(--lkv-forest-600)] leading-relaxed">{rayon.description}</p>
 
                   <div className="flex items-center justify-end pt-1">
                     <Link href={rayon.href} className="glass-capsule-btn primary">

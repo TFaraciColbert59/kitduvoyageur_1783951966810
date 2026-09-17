@@ -210,7 +210,7 @@ function CommunautePageContent() {
   }, [clubs, clubFilterTab, clubSearchQuery]);
 
   return (
-    <div className="min-h-screen md:h-dvh md:overflow-hidden text-[#17402C] selection:bg-[#17402C]/10 font-sans relative">
+    <div className="min-h-screen md:h-dvh md:overflow-hidden text-[var(--lkv-primary)] selection:bg-[var(--lkv-primary)]/10 font-sans relative">
       {/* Background immersif végétal / canopée */}
       <CompteBackground />
 
@@ -291,10 +291,10 @@ function CommunautePageContent() {
               {activeTab === 'fil' && (
                 <div className="space-y-4">
                   <div className="flex items-center justify-between px-1">
-                    <h3 className="font-display font-bold text-lg text-[#17402C]">
+                    <h3 className="font-display font-bold text-lg text-[var(--lkv-primary)]">
                       Derniers échos des sentiers
                     </h3>
-                    <span className="glass-pill text-[9.5px] font-mono font-bold text-[#5B7F55]">
+                    <span className="glass-pill text-[9.5px] font-mono font-bold text-[var(--lkv-secondary)]">
                       {posts.length} publications
                     </span>
                   </div>
@@ -306,8 +306,8 @@ function CommunautePageContent() {
                     {!loading && posts.length === 0 && (
                       <div className="glass bg-white/90 rounded-2xl p-10 border border-white text-center space-y-2">
                         <span className="text-3xl block">🌲</span>
-                        <h4 className="font-display font-bold text-sm text-[#17402C]">Le fil est calme</h4>
-                        <p className="text-xs text-[#5C6B5E]">
+                        <h4 className="font-display font-bold text-sm text-[var(--lkv-primary)]">Le fil est calme</h4>
+                        <p className="text-xs text-[var(--lkv-text-muted)]">
                           Aucune publication pour le moment. Partagez votre première sortie.
                         </p>
                       </div>
@@ -320,7 +320,7 @@ function CommunautePageContent() {
               {activeTab === 'carnets' && (
                 <div className="space-y-4">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                    <div className="flex bg-white/80 p-1 rounded-full border border-[#17402C]/10 overflow-x-auto gap-1">
+                    <div className="flex bg-white/80 p-1 rounded-full border border-[var(--lkv-primary)]/10 overflow-x-auto gap-1">
                       {[
                         { id: 'all', label: 'Tous' },
                         { id: 'Trek', label: '🏔️ Trek' },
@@ -334,8 +334,8 @@ function CommunautePageContent() {
                           onClick={() => setCarnetFilterCategory(cat.id)}
                           className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
                             carnetFilterCategory === cat.id
-                              ? 'bg-[#17402C] text-white shadow-xs'
-                              : 'text-[#5C6B5E] hover:text-[#17402C]'
+                              ? 'bg-[var(--lkv-primary)] text-white shadow-xs'
+                              : 'text-[var(--lkv-text-muted)] hover:text-[var(--lkv-primary)]'
                           }`}
                         >
                           {cat.label}
@@ -349,7 +349,7 @@ function CommunautePageContent() {
                         value={carnetSearchQuery}
                         onChange={(e) => setCarnetSearchQuery(e.target.value)}
                         placeholder="Rechercher un récit ou massif..."
-                        className="w-full bg-white/90 border border-[#17402C]/15 rounded-full px-3.5 py-1.5 text-xs text-[#17402C] focus:outline-none focus:ring-1 focus:ring-[#17402C]"
+                        className="w-full bg-white/90 border border-[var(--lkv-primary)]/15 rounded-full px-3.5 py-1.5 text-xs text-[var(--lkv-primary)] focus:outline-none focus:ring-1 focus:ring-[var(--lkv-primary)]"
                       />
                     </div>
                   </div>
@@ -362,8 +362,8 @@ function CommunautePageContent() {
                   {!loading && filteredCarnets.length === 0 && (
                     <div className="glass bg-white/90 rounded-2xl p-10 border border-white text-center space-y-2">
                       <span className="text-3xl block">📖</span>
-                      <h4 className="font-display font-bold text-sm text-[#17402C]">Aucun carnet publié</h4>
-                      <p className="text-xs text-[#5C6B5E]">
+                      <h4 className="font-display font-bold text-sm text-[var(--lkv-primary)]">Aucun carnet publié</h4>
+                      <p className="text-xs text-[var(--lkv-text-muted)]">
                         Les carnets apparaissent ici une fois partagés explicitement par leurs auteurs.
                       </p>
                     </div>
@@ -375,7 +375,7 @@ function CommunautePageContent() {
               {activeTab === 'clubs' && (
                 <div className="space-y-4">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                    <div className="flex bg-white/80 p-1 rounded-full border border-[#17402C]/10 overflow-x-auto gap-1">
+                    <div className="flex bg-white/80 p-1 rounded-full border border-[var(--lkv-primary)]/10 overflow-x-auto gap-1">
                       {[
                         { id: 'all', label: 'Tous les clubs' },
                         { id: 'activite', label: '🎯 Par Activité' },
@@ -387,8 +387,8 @@ function CommunautePageContent() {
                           onClick={() => setClubFilterTab(tb.id as any)}
                           className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
                             clubFilterTab === tb.id
-                              ? 'bg-[#17402C] text-white shadow-xs'
-                              : 'text-[#5C6B5E] hover:text-[#17402C]'
+                              ? 'bg-[var(--lkv-primary)] text-white shadow-xs'
+                              : 'text-[var(--lkv-text-muted)] hover:text-[var(--lkv-primary)]'
                           }`}
                         >
                           {tb.label}
@@ -402,7 +402,7 @@ function CommunautePageContent() {
                         value={clubSearchQuery}
                         onChange={(e) => setClubSearchQuery(e.target.value)}
                         placeholder="Rechercher un club..."
-                        className="w-full bg-white/90 border border-[#17402C]/15 rounded-full px-3.5 py-1.5 text-xs text-[#17402C] focus:outline-none focus:ring-1 focus:ring-[#17402C]"
+                        className="w-full bg-white/90 border border-[var(--lkv-primary)]/15 rounded-full px-3.5 py-1.5 text-xs text-[var(--lkv-primary)] focus:outline-none focus:ring-1 focus:ring-[var(--lkv-primary)]"
                       />
                     </div>
                   </div>
@@ -420,7 +420,7 @@ function CommunautePageContent() {
                           href={`/clubs/${slug}`}
                           className="glass bg-white/90 backdrop-blur-xl rounded-2xl overflow-hidden border border-white flex flex-col justify-between group hover:-translate-y-1 hover:shadow-xl transition-all"
                         >
-                          <div className="h-32 relative bg-[#17402C] overflow-hidden">
+                          <div className="h-32 relative bg-[var(--lkv-primary)] overflow-hidden">
                             {cover ? (
                               <img src={cover} alt={clubName} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
                             ) : (
@@ -435,17 +435,17 @@ function CommunautePageContent() {
                           </div>
                           <div className="p-4 space-y-2 flex-1 flex flex-col justify-between">
                             <div>
-                              <h3 className="font-display font-bold text-base text-[#17402C] group-hover:text-forest-800 transition-colors">
+                              <h3 className="font-display font-bold text-base text-[var(--lkv-primary)] group-hover:text-forest-800 transition-colors">
                                 {clubName}
                               </h3>
                               {clubDesc && (
-                                <p className="text-xs text-[#5C6B5E] line-clamp-2 mt-1">
+                                <p className="text-xs text-[var(--lkv-text-muted)] line-clamp-2 mt-1">
                                   {clubDesc}
                                 </p>
                               )}
                             </div>
-                            <div className="pt-2 border-t border-[#17402C]/10 flex items-center justify-between text-xs">
-                              <span className="text-[10px] font-mono text-[#5C6B5E]">
+                            <div className="pt-2 border-t border-[var(--lkv-primary)]/10 flex items-center justify-between text-xs">
+                              <span className="text-[10px] font-mono text-[var(--lkv-text-muted)]">
                                 👥 {club.members_count ?? 0} membres
                               </span>
                               <span className="glass-capsule-btn text-[10.5px] font-bold !py-1 !px-2.5">
@@ -460,8 +460,8 @@ function CommunautePageContent() {
                   {!loading && filteredClubs.length === 0 && (
                     <div className="glass bg-white/90 rounded-2xl p-10 border border-white text-center space-y-2">
                       <span className="text-3xl block">🏔️</span>
-                      <h4 className="font-display font-bold text-sm text-[#17402C]">Aucun club pour le moment</h4>
-                      <p className="text-xs text-[#5C6B5E]">Les collectifs créés apparaîtront ici.</p>
+                      <h4 className="font-display font-bold text-sm text-[var(--lkv-primary)]">Aucun club pour le moment</h4>
+                      <p className="text-xs text-[var(--lkv-text-muted)]">Les collectifs créés apparaîtront ici.</p>
                     </div>
                   )}
                 </div>
@@ -472,8 +472,8 @@ function CommunautePageContent() {
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <div>
-                      <h3 className="font-display font-bold text-lg text-[#17402C]">Expéditions en formation</h3>
-                      <p className="text-xs text-[#5C6B5E]">Trouvez des équipiers et partagez les préparatifs de bivouac.</p>
+                      <h3 className="font-display font-bold text-lg text-[var(--lkv-primary)]">Expéditions en formation</h3>
+                      <p className="text-xs text-[var(--lkv-text-muted)]">Trouvez des équipiers et partagez les préparatifs de bivouac.</p>
                     </div>
                     <Link
                       href="/nouveau-groupe"
@@ -495,22 +495,22 @@ function CommunautePageContent() {
                           <div className="flex items-center justify-between">
                             <span className="text-2xl">{grp.pictogram || '🏕️'}</span>
                             {grp.max_members > 0 && (
-                              <span className="glass-pill text-[9px] font-mono font-bold text-[#17402C]">
+                              <span className="glass-pill text-[9px] font-mono font-bold text-[var(--lkv-primary)]">
                                 {grp.max_members} PLACES
                               </span>
                             )}
                           </div>
-                          <h4 className="font-display font-bold text-base text-[#17402C] group-hover:text-forest-800 transition-colors">
+                          <h4 className="font-display font-bold text-base text-[var(--lkv-primary)] group-hover:text-forest-800 transition-colors">
                             {grp.name}
                           </h4>
                           {grp.description && (
-                            <p className="text-xs text-[#5C6B5E] line-clamp-2">
+                            <p className="text-xs text-[var(--lkv-text-muted)] line-clamp-2">
                               {grp.description}
                             </p>
                           )}
                         </div>
 
-                        <div className="pt-3 border-t border-[#17402C]/10 flex items-center justify-between text-[10px] font-mono text-[#5C6B5E] mt-3">
+                        <div className="pt-3 border-t border-[var(--lkv-primary)]/10 flex items-center justify-between text-[10px] font-mono text-[var(--lkv-text-muted)] mt-3">
                           <span>📍 {grp.massif || 'Massif non précisé'}</span>
                           <span className="glass-capsule-btn text-[10.5px] font-bold !py-1 !px-2.5">
                             Voir le cockpit →
@@ -522,8 +522,8 @@ function CommunautePageContent() {
                   {!loading && groups.length === 0 && (
                     <div className="glass bg-white/90 rounded-2xl p-10 border border-white text-center space-y-2">
                       <span className="text-3xl block">⛺</span>
-                      <h4 className="font-display font-bold text-sm text-[#17402C]">Aucune expédition en formation</h4>
-                      <p className="text-xs text-[#5C6B5E]">Créez un groupe pour préparer votre prochaine sortie.</p>
+                      <h4 className="font-display font-bold text-sm text-[var(--lkv-primary)]">Aucune expédition en formation</h4>
+                      <p className="text-xs text-[var(--lkv-text-muted)]">Créez un groupe pour préparer votre prochaine sortie.</p>
                     </div>
                   )}
                 </div>
@@ -534,8 +534,8 @@ function CommunautePageContent() {
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <div>
-                      <h3 className="font-display font-bold text-lg text-[#17402C]">Calendrier des Sorties Collectives</h3>
-                      <p className="text-xs text-[#5C6B5E]">Rejoignez une marche encadrée par des passionnés et des guides locaux.</p>
+                      <h3 className="font-display font-bold text-lg text-[var(--lkv-primary)]">Calendrier des Sorties Collectives</h3>
+                      <p className="text-xs text-[var(--lkv-text-muted)]">Rejoignez une marche encadrée par des passionnés et des guides locaux.</p>
                     </div>
                   </div>
 
@@ -546,25 +546,25 @@ function CommunautePageContent() {
                       <div key={ev.id} className="glass bg-white/90 backdrop-blur-xl p-5 rounded-2xl border border-white flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                         <div className="space-y-1.5">
                           <div className="flex items-center gap-2">
-                            <span className="bg-[#17402C] text-white text-[9px] font-mono font-bold px-2 py-0.5 rounded">
+                            <span className="bg-[var(--lkv-primary)] text-white text-[9px] font-mono font-bold px-2 py-0.5 rounded">
                               {ev.date || 'Date à confirmer'}
                             </span>
                             {ev.duration && (
-                              <span className="text-[10px] font-mono text-[#5C6B5E]">
+                              <span className="text-[10px] font-mono text-[var(--lkv-text-muted)]">
                                 ⏱ {ev.duration}
                               </span>
                             )}
                           </div>
-                          <h4 className="font-display font-bold text-base text-[#17402C]">
+                          <h4 className="font-display font-bold text-base text-[var(--lkv-primary)]">
                             {ev.title}
                           </h4>
-                          <p className="text-xs text-[#5C6B5E]">
+                          <p className="text-xs text-[var(--lkv-text-muted)]">
                             📍 {ev.location || 'Lieu à préciser'}
                             {ev.guide ? <> · Encadré par <strong>{ev.guide}</strong></> : null}
                           </p>
                         </div>
 
-                        <div className="flex items-center justify-between sm:justify-end gap-3 pt-2 sm:pt-0 border-t sm:border-t-0 border-[#17402C]/10">
+                        <div className="flex items-center justify-between sm:justify-end gap-3 pt-2 sm:pt-0 border-t sm:border-t-0 border-[var(--lkv-primary)]/10">
                           <span className="text-[10px] font-mono font-bold text-forest-800">
                             {ev.participants}{ev.maxParticipants > 0 ? `/${ev.maxParticipants}` : ''} inscrits
                           </span>
@@ -583,8 +583,8 @@ function CommunautePageContent() {
                   {!loading && events.length === 0 && (
                     <div className="glass bg-white/90 rounded-2xl p-10 border border-white text-center space-y-2">
                       <span className="text-3xl block">📅</span>
-                      <h4 className="font-display font-bold text-sm text-[#17402C]">Aucune sortie programmée</h4>
-                      <p className="text-xs text-[#5C6B5E]">Les événements à venir apparaîtront ici.</p>
+                      <h4 className="font-display font-bold text-sm text-[var(--lkv-primary)]">Aucune sortie programmée</h4>
+                      <p className="text-xs text-[var(--lkv-text-muted)]">Les événements à venir apparaîtront ici.</p>
                     </div>
                   )}
                 </div>
@@ -596,14 +596,14 @@ function CommunautePageContent() {
                   <div className="glass bg-white/90 rounded-2xl p-5 border border-white space-y-3">
                     <div className="flex items-center gap-2">
                       <span className="text-xl">💡</span>
-                      <h3 className="font-display font-bold text-base text-[#17402C]">Entraide &amp; Questions Terrain</h3>
+                      <h3 className="font-display font-bold text-base text-[var(--lkv-primary)]">Entraide &amp; Questions Terrain</h3>
                     </div>
-                    <p className="text-xs text-[#5C6B5E] leading-relaxed">
+                    <p className="text-xs text-[var(--lkv-text-muted)] leading-relaxed">
                       Posez vos questions sur l&apos;état des sentiers, le débit des sources, les conditions d&apos;enneigement et le matériel.
                     </p>
-                    <div className="p-3.5 rounded-xl bg-forest-50/80 border border-forest-200/60 text-xs text-[#17402C] space-y-1">
+                    <div className="p-3.5 rounded-xl bg-forest-50/80 border border-forest-200/60 text-xs text-[var(--lkv-primary)] space-y-1">
                       <span className="font-bold block">✓ Réponses validées par les Guides</span>
-                      <p className="text-[11px] text-[#5C6B5E]">Chaque information critique sur les sources et passages délicats est vérifiée par les référents du massif.</p>
+                      <p className="text-[11px] text-[var(--lkv-text-muted)]">Chaque information critique sur les sources et passages délicats est vérifiée par les référents du massif.</p>
                     </div>
                   </div>
                 </div>
@@ -624,7 +624,7 @@ function CommunautePageContent() {
 
 export default function CommunautePage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-[#17402C] flex items-center justify-center text-white text-xs font-mono">Chargement du Hub Communauté...</div>}>
+    <Suspense fallback={<div className="min-h-screen bg-[var(--lkv-primary)] flex items-center justify-center text-white text-xs font-mono">Chargement du Hub Communauté...</div>}>
       <CommunautePageContent />
     </Suspense>
   );

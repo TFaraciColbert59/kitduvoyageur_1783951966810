@@ -285,10 +285,10 @@ export default function CheckoutPage() {
 
   if (!mounted) {
     return (
-      <div className="min-h-screen bg-[#F5F2EC]">
+      <div className="min-h-screen bg-[var(--lkv-surface)]">
         <Header />
         <div className="pt-24 flex items-center justify-center min-h-[60vh]">
-          <div className="w-8 h-8 border-2 border-[#17402C] border-t-transparent rounded-full animate-spin" />
+          <div className="w-8 h-8 border-2 border-[var(--lkv-primary)] border-t-transparent rounded-full animate-spin" />
         </div>
         <Footer />
       </div>
@@ -298,14 +298,14 @@ export default function CheckoutPage() {
   return (
     <>
       {/* ── DESKTOP VIEW (fullscreen : page = 100dvh, scroll interne) ── */}
-      <div className="hidden md:flex flex-col h-[100dvh] overflow-hidden bg-[#EEF3EC] text-[#17402C]">
+      <div className="hidden md:flex flex-col h-[100dvh] overflow-hidden bg-[var(--lkv-surface-muted)] text-[var(--lkv-primary)]">
         <Header />
 
         <main id="main-content" className="flex-1 min-h-0 overflow-y-auto w-full pt-24 pb-6">
           <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
             {step !== 'confirmation' && (
-              <h1 className="font-display font-800 text-4xl text-[#17402C] mb-8">
-                Presque <em className="italic font-400 text-[#365233]">parti.</em>
+              <h1 className="font-display font-800 text-4xl text-[var(--lkv-primary)] mb-8">
+                Presque <em className="italic font-400 text-[var(--lkv-forest-600)]">parti.</em>
               </h1>
             )}
 
@@ -319,71 +319,71 @@ export default function CheckoutPage() {
                     {/* ── STEP 1: Vos coordonnées ── */}
                     <div className={`glass p-8 transition-opacity ${step !== 'livraison' ? 'opacity-50 pointer-events-none' : ''}`}>
                       <div className="flex items-center justify-between mb-6">
-                        <h2 className="font-display font-700 text-xl flex items-center gap-3 text-[#17402C]">
-                          <span className="font-400 italic text-[#365233]">01</span> Vos coordonnées
+                        <h2 className="font-display font-700 text-xl flex items-center gap-3 text-[var(--lkv-primary)]">
+                          <span className="font-400 italic text-[var(--lkv-forest-600)]">01</span> Vos coordonnées
                         </h2>
-                        <button className="text-xs font-600 text-[#17402C] hover:underline">Se connecter</button>
+                        <button className="text-xs font-600 text-[var(--lkv-primary)] hover:underline">Se connecter</button>
                       </div>
 
                       <div className="space-y-4">
                         <div>
-                          <label className="block text-[10px] font-semibold uppercase tracking-wider text-[#5A7064] mb-1.5">Email</label>
+                          <label className="block text-[10px] font-semibold uppercase tracking-wider text-[var(--lkv-text-muted)] mb-1.5">Email</label>
                           <input
                             type="email"
                             autoComplete="email"
                             value={shipping.email}
                             onChange={(e) => setShipping(prev => ({ ...prev, email: e.target.value }))}
-                            className={`glass-input w-full ${errors.email ? 'ring-1 ring-[#A8443A]' : ''}`}
+                            className={`glass-input w-full ${errors.email ? 'ring-1 ring-[var(--lkv-danger)]' : ''}`}
                           />
                         </div>
                         <label className="flex items-center gap-3 cursor-pointer mt-2">
                           <div className="glass-check-circle checked">
                             <Icon name="CheckIcon" size={10} />
                           </div>
-                          <span className="text-xs text-[#17402C]">Recevoir le journal du Kit — un envoi par saison, refuges et sentiers uniquement.</span>
+                          <span className="text-xs text-[var(--lkv-primary)]">Recevoir le journal du Kit — un envoi par saison, refuges et sentiers uniquement.</span>
                         </label>
                       </div>
                     </div>
 
                     {/* ── STEP 2: Livraison ── */}
                     <div className={`glass p-8 transition-opacity ${step !== 'livraison' ? 'opacity-50 pointer-events-none' : ''}`}>
-                      <h2 className="font-display font-700 text-xl flex items-center gap-3 mb-6 text-[#17402C]">
-                        <span className="font-400 italic text-[#365233]">02</span> Livraison
+                      <h2 className="font-display font-700 text-xl flex items-center gap-3 mb-6 text-[var(--lkv-primary)]">
+                        <span className="font-400 italic text-[var(--lkv-forest-600)]">02</span> Livraison
                       </h2>
 
                       <div className="grid grid-cols-2 gap-4 mb-8">
                         <div>
-                          <label className="block text-[10px] font-semibold uppercase tracking-wider text-[#5A7064] mb-1.5">Prénom</label>
+                          <label className="block text-[10px] font-semibold uppercase tracking-wider text-[var(--lkv-text-muted)] mb-1.5">Prénom</label>
                           <input
                             type="text"
                             autoComplete="given-name"
                             value={shipping.prenom}
                             onChange={(e) => setShipping(prev => ({ ...prev, prenom: e.target.value }))}
-                            className={`glass-input w-full ${errors.prenom ? 'ring-1 ring-[#A8443A]' : ''}`}
+                            className={`glass-input w-full ${errors.prenom ? 'ring-1 ring-[var(--lkv-danger)]' : ''}`}
                           />
                         </div>
                         <div>
-                          <label className="block text-[10px] font-semibold uppercase tracking-wider text-[#5A7064] mb-1.5">Nom</label>
+                          <label className="block text-[10px] font-semibold uppercase tracking-wider text-[var(--lkv-text-muted)] mb-1.5">Nom</label>
                           <input
                             type="text"
                             autoComplete="family-name"
                             value={shipping.nom}
                             onChange={(e) => setShipping(prev => ({ ...prev, nom: e.target.value }))}
-                            className={`glass-input w-full ${errors.nom ? 'ring-1 ring-[#A8443A]' : ''}`}
+                            className={`glass-input w-full ${errors.nom ? 'ring-1 ring-[var(--lkv-danger)]' : ''}`}
                           />
                         </div>
                         <div className="col-span-2">
-                          <label className="block text-[10px] font-semibold uppercase tracking-wider text-[#5A7064] mb-1.5">Adresse</label>
+                          <label className="block text-[10px] font-semibold uppercase tracking-wider text-[var(--lkv-text-muted)] mb-1.5">Adresse</label>
                           <input
                             type="text"
                             autoComplete="street-address"
                             value={shipping.adresse}
                             onChange={(e) => setShipping(prev => ({ ...prev, adresse: e.target.value }))}
-                            className={`glass-input w-full ${errors.adresse ? 'ring-1 ring-[#A8443A]' : ''}`}
+                            className={`glass-input w-full ${errors.adresse ? 'ring-1 ring-[var(--lkv-danger)]' : ''}`}
                           />
                         </div>
                         <div className="col-span-2">
-                          <label className="block text-[10px] font-semibold uppercase tracking-wider text-[#5A7064] mb-1.5">Complément (Optionnel)</label>
+                          <label className="block text-[10px] font-semibold uppercase tracking-wider text-[var(--lkv-text-muted)] mb-1.5">Complément (Optionnel)</label>
                           <input
                             type="text"
                             autoComplete="address-line2"
@@ -394,28 +394,28 @@ export default function CheckoutPage() {
                           />
                         </div>
                         <div>
-                          <label className="block text-[10px] font-semibold uppercase tracking-wider text-[#5A7064] mb-1.5">Code postal</label>
+                          <label className="block text-[10px] font-semibold uppercase tracking-wider text-[var(--lkv-text-muted)] mb-1.5">Code postal</label>
                           <input
                             type="text"
                             autoComplete="postal-code"
                             inputMode="numeric"
                             value={shipping.codePostal}
                             onChange={(e) => setShipping(prev => ({ ...prev, codePostal: e.target.value }))}
-                            className={`glass-input w-full ${errors.codePostal ? 'ring-1 ring-[#A8443A]' : ''}`}
+                            className={`glass-input w-full ${errors.codePostal ? 'ring-1 ring-[var(--lkv-danger)]' : ''}`}
                           />
                         </div>
                         <div>
-                          <label className="block text-[10px] font-semibold uppercase tracking-wider text-[#5A7064] mb-1.5">Ville</label>
+                          <label className="block text-[10px] font-semibold uppercase tracking-wider text-[var(--lkv-text-muted)] mb-1.5">Ville</label>
                           <input
                             type="text"
                             autoComplete="address-level2"
                             value={shipping.ville}
                             onChange={(e) => setShipping(prev => ({ ...prev, ville: e.target.value }))}
-                            className={`glass-input w-full ${errors.ville ? 'ring-1 ring-[#A8443A]' : ''}`}
+                            className={`glass-input w-full ${errors.ville ? 'ring-1 ring-[var(--lkv-danger)]' : ''}`}
                           />
                         </div>
                         <div>
-                          <label className="block text-[10px] font-semibold uppercase tracking-wider text-[#5A7064] mb-1.5">Pays</label>
+                          <label className="block text-[10px] font-semibold uppercase tracking-wider text-[var(--lkv-text-muted)] mb-1.5">Pays</label>
                           <select autoComplete="country" className="glass-input w-full appearance-none">
                             <option>France</option>
                             <option>Belgique</option>
@@ -423,7 +423,7 @@ export default function CheckoutPage() {
                           </select>
                         </div>
                         <div>
-                          <label className="block text-[10px] font-semibold uppercase tracking-wider text-[#5A7064] mb-1.5">Téléphone</label>
+                          <label className="block text-[10px] font-semibold uppercase tracking-wider text-[var(--lkv-text-muted)] mb-1.5">Téléphone</label>
                           <input
                             type="tel"
                             autoComplete="tel"
@@ -436,7 +436,7 @@ export default function CheckoutPage() {
                       </div>
 
                       <div>
-                        <label className="block text-[10px] font-semibold uppercase tracking-wider text-[#5A7064] mb-3">Mode d'expédition</label>
+                        <label className="block text-[10px] font-semibold uppercase tracking-wider text-[var(--lkv-text-muted)] mb-3">Mode d'expédition</label>
                         <div className="space-y-3">
                           {[
                             { id: 'standard', label: 'Livraison suivie', desc: 'Colis relais ou domicile - 3 à 5 jours ouvrés - CO2 compensé', price: totalPriceEur >= 99 ? 'Offerte' : '5,90 €' },
@@ -445,15 +445,15 @@ export default function CheckoutPage() {
                           ].map((opt) => (
                             <label key={opt.id} className="glass p-4 flex items-center justify-between rounded-md cursor-pointer transition-all" style={shippingOption === opt.id ? { borderColor: 'rgba(91,127,85,0.85)' } : undefined}>
                               <div className="flex items-center gap-4">
-                                <div className={`w-4 h-4 rounded-full border flex items-center justify-center flex-shrink-0 ${shippingOption === opt.id ? 'border-[#17402C]' : 'border-[#365233]'}`}>
-                                  {shippingOption === opt.id && <div className="w-2 h-2 bg-[#17402C] rounded-full" />}
+                                <div className={`w-4 h-4 rounded-full border flex items-center justify-center flex-shrink-0 ${shippingOption === opt.id ? 'border-[var(--lkv-primary)]' : 'border-[var(--lkv-forest-600)]'}`}>
+                                  {shippingOption === opt.id && <div className="w-2 h-2 bg-[var(--lkv-primary)] rounded-full" />}
                                 </div>
                                 <div>
-                                  <p className="font-600 text-sm text-[#17402C]">{opt.label}</p>
-                                  <p className="text-[10px] text-[#5A7064] mt-0.5">{opt.desc}</p>
+                                  <p className="font-600 text-sm text-[var(--lkv-primary)]">{opt.label}</p>
+                                  <p className="text-[10px] text-[var(--lkv-text-muted)] mt-0.5">{opt.desc}</p>
                                 </div>
                               </div>
-                              <span className={`font-bold font-mono text-sm ${opt.price === 'Offerte' ? 'text-[#17402C]' : 'text-[#17402C]'}`}>{opt.price}</span>
+                              <span className={`font-bold font-mono text-sm ${opt.price === 'Offerte' ? 'text-[var(--lkv-primary)]' : 'text-[var(--lkv-primary)]'}`}>{opt.price}</span>
                             </label>
                           ))}
                         </div>
@@ -468,31 +468,31 @@ export default function CheckoutPage() {
 
                     {/* ── STEP 3: Paiement ── */}
                     <div className={`glass p-8 transition-opacity ${step !== 'paiement' ? 'opacity-50 pointer-events-none' : ''}`}>
-                      <h2 className="font-display font-700 text-xl flex items-center gap-3 mb-6 text-[#17402C]">
-                        <span className="font-400 italic text-[#365233]">03</span> Paiement
+                      <h2 className="font-display font-700 text-xl flex items-center gap-3 mb-6 text-[var(--lkv-primary)]">
+                        <span className="font-400 italic text-[var(--lkv-forest-600)]">03</span> Paiement
                       </h2>
 
                       {step === 'paiement' && (
                         <>
                           {error && (
-                            <div className="mb-8 p-4 rounded-md bg-[#F5DDD9] border border-[#A8443A]/30 text-[#8A241B] text-sm leading-relaxed">
+                            <div className="mb-8 p-4 rounded-md bg-[var(--lkv-surface-muted)] border border-[var(--lkv-danger)]/30 text-[var(--lkv-danger)] text-sm leading-relaxed">
                               {error}
                             </div>
                           )}
                           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-8">
-                            <button className="glass p-3 flex flex-col items-center justify-center rounded-md text-[#17402C]" style={{ borderColor: 'rgba(91,127,85,0.85)' }}>
+                            <button className="glass p-3 flex flex-col items-center justify-center rounded-md text-[var(--lkv-primary)]" style={{ borderColor: 'rgba(91,127,85,0.85)' }}>
                               <Icon name="CreditCardIcon" size={24} className="mb-1" />
                               <span className="text-[10px] font-600 font-mono tracking-widest uppercase">Carte</span>
                             </button>
-                            <button className="glass p-3 flex flex-col items-center justify-center rounded-md text-[#5A7064] hover:text-[#17402C]">
+                            <button className="glass p-3 flex flex-col items-center justify-center rounded-md text-[var(--lkv-text-muted)] hover:text-[var(--lkv-primary)]">
                               <span className="text-xl mb-1">🍎</span>
                               <span className="text-[10px] font-600 font-mono tracking-widest uppercase">Apple Pay</span>
                             </button>
-                            <button className="glass p-3 flex flex-col items-center justify-center rounded-md text-[#5A7064] hover:text-[#17402C]">
-                              <span className="text-xl mb-1 text-[#4B6B7C] font-bold">P</span>
+                            <button className="glass p-3 flex flex-col items-center justify-center rounded-md text-[var(--lkv-text-muted)] hover:text-[var(--lkv-primary)]">
+                              <span className="text-xl mb-1 text-[var(--lkv-info)] font-bold">P</span>
                               <span className="text-[10px] font-600 font-mono tracking-widest uppercase">Compte</span>
                             </button>
-                            <button className="glass p-3 flex flex-col items-center justify-center rounded-md text-[#8C6418] hover:text-[#17402C]">
+                            <button className="glass p-3 flex flex-col items-center justify-center rounded-md text-[var(--lkv-warning)] hover:text-[var(--lkv-primary)]">
                               <span className="text-xs font-700 italic mb-1">3× sans frais</span>
                               <span className="text-[10px] font-600 font-mono tracking-widest uppercase">Alma</span>
                             </button>
@@ -500,9 +500,9 @@ export default function CheckoutPage() {
 
                           <div className="flex justify-center mb-8">
                             {/* Fake Credit Card visual */}
-                            <div className="w-full max-w-[320px] aspect-[1.586] bg-gradient-to-br from-[#17402C] to-[#365233] rounded-2xl p-6 text-white relative overflow-hidden">
+                            <div className="w-full max-w-[320px] aspect-[1.586] bg-gradient-to-br from-[var(--lkv-primary)] to-[var(--lkv-forest-600)] rounded-2xl p-6 text-white relative overflow-hidden">
                               <div className="absolute right-[-20px] top-[-20px] w-40 h-40 bg-white/5 rounded-full blur-2xl pointer-events-none" />
-                              <div className="w-12 h-8 bg-[#F1EDE6] rounded bg-gradient-to-br from-[#F1EDE6] to-[#D2CABC] mb-8" />
+                              <div className="w-12 h-8 bg-[var(--lkv-surface)] rounded bg-gradient-to-br from-[var(--lkv-surface)] to-[var(--lkv-border)] mb-8" />
                               <div className="font-mono text-xl tracking-[0.2em] mb-6 flex justify-between">
                                 <span>••••</span><span>••••</span><span>••••</span><span>4242</span>
                               </div>
@@ -522,21 +522,21 @@ export default function CheckoutPage() {
 
                           <div className="space-y-4">
                             <div>
-                              <label className="block text-[10px] font-semibold uppercase tracking-wider text-[#5A7064] mb-1.5">Numéro de carte</label>
+                              <label className="block text-[10px] font-semibold uppercase tracking-wider text-[var(--lkv-text-muted)] mb-1.5">Numéro de carte</label>
                               <input type="text" autoComplete="cc-number" inputMode="numeric" placeholder="1234 1234 1234 1234" className="glass-input w-full font-mono" />
                             </div>
                             <div className="grid grid-cols-2 gap-4">
                               <div>
-                                <label className="block text-[10px] font-semibold uppercase tracking-wider text-[#5A7064] mb-1.5">Expiration</label>
+                                <label className="block text-[10px] font-semibold uppercase tracking-wider text-[var(--lkv-text-muted)] mb-1.5">Expiration</label>
                                 <input type="text" autoComplete="cc-exp" placeholder="MM / AA" className="glass-input w-full font-mono" />
                               </div>
                               <div>
-                                <label className="block text-[10px] font-semibold uppercase tracking-wider text-[#5A7064] mb-1.5">Cryptogramme</label>
+                                <label className="block text-[10px] font-semibold uppercase tracking-wider text-[var(--lkv-text-muted)] mb-1.5">Cryptogramme</label>
                                 <input type="text" autoComplete="cc-csc" inputMode="numeric" placeholder="CVC" className="glass-input w-full font-mono" />
                               </div>
                             </div>
                             <div>
-                              <label className="block text-[10px] font-semibold uppercase tracking-wider text-[#5A7064] mb-1.5">Nom du titulaire</label>
+                              <label className="block text-[10px] font-semibold uppercase tracking-wider text-[var(--lkv-text-muted)] mb-1.5">Nom du titulaire</label>
                               <input type="text" autoComplete="cc-name" placeholder="Comme écrit sur la carte" className="glass-input w-full uppercase" />
                             </div>
 
@@ -544,7 +544,7 @@ export default function CheckoutPage() {
                               <div className="glass-check-circle checked">
                                 <Icon name="CheckIcon" size={10} />
                               </div>
-                              <span className="text-xs text-[#5A7064]">Enregistrer cette carte pour un futur achat (chiffrée par Stripe).</span>
+                              <span className="text-xs text-[var(--lkv-text-muted)]">Enregistrer cette carte pour un futur achat (chiffrée par Stripe).</span>
                             </label>
                           </div>
 
@@ -567,17 +567,17 @@ export default function CheckoutPage() {
                   /* ── STEP 3: Confirmation ── */
                   <div className="glass p-12 text-center h-full flex flex-col items-center justify-center min-h-[420px]">
                     <div className="w-20 h-20 glass rounded-full flex items-center justify-center mb-6">
-                      <Icon name="CheckIcon" size={32} className="text-[#17402C]" />
+                      <Icon name="CheckIcon" size={32} className="text-[var(--lkv-primary)]" />
                     </div>
-                    <h2 className="font-display font-800 text-3xl text-[#17402C] mb-4">Commande confirmée.</h2>
-                    <p className="text-[#5A7064] mb-2">
+                    <h2 className="font-display font-800 text-3xl text-[var(--lkv-primary)] mb-4">Commande confirmée.</h2>
+                    <p className="text-[var(--lkv-text-muted)] mb-2">
                       {orderNumber ? (
-                        <>Numéro de commande : <span className="font-mono font-600 text-[#17402C]">{orderNumber}</span></>
+                        <>Numéro de commande : <span className="font-mono font-600 text-[var(--lkv-primary)]">{orderNumber}</span></>
                       ) : (
                         'Votre numéro de commande vous sera envoyé par email.'
                       )}
                     </p>
-                    <p className="text-sm text-[#5A7064] mb-8 max-w-sm mx-auto leading-relaxed">
+                    <p className="text-sm text-[var(--lkv-text-muted)] mb-8 max-w-sm mx-auto leading-relaxed">
                       Merci ! Un email de confirmation vous a été envoyé. Préparez-vous pour l'aventure.
                     </p>
                     <Link href="/explorer" className="glass-capsule-btn">
@@ -590,7 +590,7 @@ export default function CheckoutPage() {
               {/* Order summary sidebar */}
               <div className="lg:col-span-5 xl:col-span-4">
                 <div className="glass p-8">
-                  <h3 className="font-display font-700 text-lg text-[#17402C] mb-6">Votre commande</h3>
+                  <h3 className="font-display font-700 text-lg text-[var(--lkv-primary)] mb-6">Votre commande</h3>
                   <div className="space-y-4 mb-6">
                     {items.map((item) => (
                       <div key={item.slug} className="flex items-center gap-4">
@@ -600,37 +600,37 @@ export default function CheckoutPage() {
                             <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
                           ) : (
                             <div className="w-full h-full flex items-center justify-center bg-white/40">
-                              <Icon name="PhotoIcon" size={16} className="text-[#5A7064]/40" />
+                              <Icon name="PhotoIcon" size={16} className="text-[var(--lkv-text-muted)]/40" />
                             </div>
                           )}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-xs font-600 text-[#17402C] truncate pr-2">{item.name}</p>
-                          <p className="text-[10px] text-[#5A7064] mt-0.5">Quantité : {item.quantity}</p>
+                          <p className="text-xs font-600 text-[var(--lkv-primary)] truncate pr-2">{item.name}</p>
+                          <p className="text-[10px] text-[var(--lkv-text-muted)] mt-0.5">Quantité : {item.quantity}</p>
                         </div>
-                        <p className="text-xs font-bold font-mono whitespace-nowrap text-[#17402C]">{(item.priceEur * item.quantity).toFixed(2)} €</p>
+                        <p className="text-xs font-bold font-mono whitespace-nowrap text-[var(--lkv-primary)]">{(item.priceEur * item.quantity).toFixed(2)} €</p>
                       </div>
                     ))}
                   </div>
 
                   <div className="border-t border-white/50 pt-5 space-y-2 mb-5">
                     <div className="flex justify-between text-xs">
-                      <span className="text-[#5A7064]">Sous-total</span>
-                      <span className="font-mono font-bold text-[#17402C]">{totalPriceEur.toFixed(2)} €</span>
+                      <span className="text-[var(--lkv-text-muted)]">Sous-total</span>
+                      <span className="font-mono font-bold text-[var(--lkv-primary)]">{totalPriceEur.toFixed(2)} €</span>
                     </div>
                     <div className="flex justify-between text-xs">
-                      <span className="text-[#5A7064]">Livraison suivie</span>
-                      <span className="font-mono font-bold text-[#17402C]">{shippingEur === 0 ? 'Offerte' : `${shippingEur.toFixed(2)} €`}</span>
+                      <span className="text-[var(--lkv-text-muted)]">Livraison suivie</span>
+                      <span className="font-mono font-bold text-[var(--lkv-primary)]">{shippingEur === 0 ? 'Offerte' : `${shippingEur.toFixed(2)} €`}</span>
                     </div>
                     <div className="flex justify-between text-xs">
-                      <span className="text-[#5A7064]">TVA (20 %, incluse)</span>
-                      <span className="font-mono font-bold text-[#17402C]">{(totalPriceEur * 0.2).toFixed(2)} €</span>
+                      <span className="text-[var(--lkv-text-muted)]">TVA (20 %, incluse)</span>
+                      <span className="font-mono font-bold text-[var(--lkv-primary)]">{(totalPriceEur * 0.2).toFixed(2)} €</span>
                     </div>
                   </div>
 
                   <div className="flex justify-between items-end font-display font-800 text-2xl pt-5 border-t border-white/50">
-                    <span className="text-lg text-[#17402C]">Total</span>
-                    <span className="font-mono font-bold text-[#17402C]">{grandTotal.toFixed(2)} €</span>
+                    <span className="text-lg text-[var(--lkv-primary)]">Total</span>
+                    <span className="font-mono font-bold text-[var(--lkv-primary)]">{grandTotal.toFixed(2)} €</span>
                   </div>
 
                   {step === 'livraison' && (
@@ -644,7 +644,7 @@ export default function CheckoutPage() {
                     </button>
                   )}
 
-                  <p className="text-center text-[10px] text-[#5A7064] mt-4 max-w-[250px] mx-auto leading-relaxed">
+                  <p className="text-center text-[10px] text-[var(--lkv-text-muted)] mt-4 max-w-[250px] mx-auto leading-relaxed">
                     En passant commande, vous acceptez les <Link href="/cgv" target="_blank" className="underline">CGV</Link> et notre <Link href="/politique-confidentialite" target="_blank" className="underline">politique de retour</Link>. Vous ne serez débité qu'à l'expédition.
                   </p>
                 </div>
@@ -658,53 +658,53 @@ export default function CheckoutPage() {
 
       {/* ── MOBILE VIEW (scroll natif) ── */}
       <div className="block md:hidden">
-        <MobilePageShell background="#EEF3EC">
+        <MobilePageShell background="var(--lkv-surface-muted)">
           <div style={{ padding: '12px 16px 20px' }}>
             <div style={{ display: 'flex', gap: '6px', marginBottom: '16px' }}>
               {[0,1,2,3].map(i => (
-                <div key={i} style={{ flex: 1, height: '3px', borderRadius: '999px', background: i < 2 ? '#A6C1A0' : i === 2 ? '#17402C' : 'rgba(23,64,44,0.08)' }} />
+                <div key={i} style={{ flex: 1, height: '3px', borderRadius: '999px', background: i < 2 ? 'var(--lkv-secondary-subtle)' : i === 2 ? 'var(--lkv-primary)' : 'rgba(23,64,44,0.08)' }} />
               ))}
             </div>
-            <div style={{ fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.14em', color: '#5A7064' }}>Étape 3 · 4 · Paiement</div>
-            <h1 style={{ fontSize: '26px', letterSpacing: '-0.025em', margin: 0, color: '#17402C' }}>
-              Un dernier <em style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic', color: '#17402C', fontWeight: 400 }}>geste.</em>
+            <div style={{ fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.14em', color: 'var(--lkv-text-muted)' }}>Étape 3 · 4 · Paiement</div>
+            <h1 style={{ fontSize: '26px', letterSpacing: '-0.025em', margin: 0, color: 'var(--lkv-primary)' }}>
+              Un dernier <em style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic', color: 'var(--lkv-primary)', fontWeight: 400 }}>geste.</em>
             </h1>
           </div>
 
           <div className="glass" style={{ margin: '0 16px 12px', padding: '14px', borderRadius: '14px', boxShadow: 'none' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: '#EEF3EC', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#17402C" strokeWidth="1.5"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+              <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'var(--lkv-surface-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--lkv-primary)" strokeWidth="1.5"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
               </div>
               <div style={{ flex: 1 }}>
-                <div style={{ fontSize: '13px', fontWeight: 500, color: '#17402C' }}>{shipping.prenom || 'Mathieu'} {shipping.nom || 'Chevrier'}</div>
-                <div style={{ fontSize: '11px', color: '#5A7064' }}>{shipping.adresse || '42 Rue de la République'} · {shipping.codePostal || '38000'} {shipping.ville || 'Grenoble'}</div>
+                <div style={{ fontSize: '13px', fontWeight: 500, color: 'var(--lkv-primary)' }}>{shipping.prenom || 'Mathieu'} {shipping.nom || 'Chevrier'}</div>
+                <div style={{ fontSize: '11px', color: 'var(--lkv-text-muted)' }}>{shipping.adresse || '42 Rue de la République'} · {shipping.codePostal || '38000'} {shipping.ville || 'Grenoble'}</div>
               </div>
               <div className="glass-pill" style={{ fontSize: '9px', fontWeight: 600, padding: '2px 8px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Maison</div>
             </div>
           </div>
 
           <div className="glass" style={{ margin: '0 16px 12px', padding: '14px', borderRadius: '14px', boxShadow: 'none' }}>
-            <div style={{ fontSize: '11px', fontWeight: 500, color: '#17402C', marginBottom: '10px' }}>Mode d'expédition</div>
+            <div style={{ fontSize: '11px', fontWeight: 500, color: 'var(--lkv-primary)', marginBottom: '10px' }}>Mode d'expédition</div>
             {[{ id: 'standard', label: 'Livraison suivie', price: 'Offerte', desc: '3-5 jours ouvrés' }, { id: 'express', label: 'Express 48h', price: '9,90 €', desc: 'Livré à domicile' }].map(opt => (
               <label key={opt.id} onClick={() => setShippingOption(opt.id)} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 0', borderTop: '1px solid rgba(23,64,44,0.08)', cursor: 'pointer' }}>
-                <div style={{ width: '18px', height: '18px', borderRadius: '999px', border: '1.5px solid', borderColor: shippingOption === opt.id ? '#17402C' : '#A6C1A0', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  {shippingOption === opt.id && <div style={{ width: '10px', height: '10px', borderRadius: '999px', background: '#17402C' }} />}
+                <div style={{ width: '18px', height: '18px', borderRadius: '999px', border: '1.5px solid', borderColor: shippingOption === opt.id ? 'var(--lkv-primary)' : 'var(--lkv-secondary-subtle)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  {shippingOption === opt.id && <div style={{ width: '10px', height: '10px', borderRadius: '999px', background: 'var(--lkv-primary)' }} />}
                 </div>
                 <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: '13px', fontWeight: 500, color: '#17402C' }}>{opt.label}</div>
-                  <div style={{ fontSize: '10px', color: '#5A7064' }}>{opt.desc}</div>
+                  <div style={{ fontSize: '13px', fontWeight: 500, color: 'var(--lkv-primary)' }}>{opt.label}</div>
+                  <div style={{ fontSize: '10px', color: 'var(--lkv-text-muted)' }}>{opt.desc}</div>
                 </div>
-                <div style={{ fontSize: '13px', fontWeight: 700, fontFamily: 'ui-monospace, monospace', color: '#17402C' }}>{opt.price}</div>
+                <div style={{ fontSize: '13px', fontWeight: 700, fontFamily: 'ui-monospace, monospace', color: 'var(--lkv-primary)' }}>{opt.price}</div>
               </label>
             ))}
           </div>
 
           <div className="glass" style={{ margin: '0 16px 12px', padding: '14px', borderRadius: '14px', boxShadow: 'none' }}>
-            <div style={{ fontSize: '11px', fontWeight: 500, color: '#17402C', marginBottom: '10px' }}>Moyen de paiement</div>
+            <div style={{ fontSize: '11px', fontWeight: 500, color: 'var(--lkv-primary)', marginBottom: '10px' }}>Moyen de paiement</div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
               {['Carte', 'Apple Pay', 'PayPal', "3× sans frais"].map(m => (
-                <button key={m} style={{ padding: '10px', borderRadius: '10px', background: '#EEF3EC', border: 'none', fontSize: '11px', fontWeight: 500, color: '#17402C', cursor: 'pointer', fontFamily: 'inherit', textAlign: 'center' }}>
+                <button key={m} style={{ padding: '10px', borderRadius: '10px', background: 'var(--lkv-surface-muted)', border: 'none', fontSize: '11px', fontWeight: 500, color: 'var(--lkv-primary)', cursor: 'pointer', fontFamily: 'inherit', textAlign: 'center' }}>
                   {m}
                 </button>
               ))}
@@ -712,25 +712,25 @@ export default function CheckoutPage() {
           </div>
 
           {error && (
-            <div style={{ margin: '0 16px 12px', padding: '12px 14px', background: '#F5DDD9', border: '1px solid rgba(168,68,58,0.4)', borderRadius: '12px', color: '#8A241B', fontSize: '12px', lineHeight: 1.5 }}>
+            <div style={{ margin: '0 16px 12px', padding: '12px 14px', background: 'var(--lkv-surface-muted)', border: '1px solid rgba(168,68,58,0.4)', borderRadius: '12px', color: 'var(--lkv-danger)', fontSize: '12px', lineHeight: 1.5 }}>
               {error}
             </div>
           )}
 
           <div className="glass" style={{ margin: '12px 16px', padding: '16px', borderRadius: '16px', boxShadow: 'none' }}>
-            <div style={{ fontSize: '11px', fontWeight: 500, marginBottom: '12px', opacity: 0.8, color: '#17402C' }}>Récapitulatif</div>
+            <div style={{ fontSize: '11px', fontWeight: 500, marginBottom: '12px', opacity: 0.8, color: 'var(--lkv-primary)' }}>Récapitulatif</div>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '12px', opacity: 0.7 }}>
-              <span style={{ color: '#5A7064' }}>Sous-total</span>
-              <span style={{ fontWeight: 700, fontFamily: 'ui-monospace, monospace', color: '#17402C' }}>{totalPriceEur.toFixed(0)} €</span>
+              <span style={{ color: 'var(--lkv-text-muted)' }}>Sous-total</span>
+              <span style={{ fontWeight: 700, fontFamily: 'ui-monospace, monospace', color: 'var(--lkv-primary)' }}>{totalPriceEur.toFixed(0)} €</span>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px', fontSize: '12px', opacity: 0.7 }}>
-              <span style={{ color: '#5A7064' }}>Livraison</span>
-              <span style={{ fontWeight: 700, fontFamily: 'ui-monospace, monospace', color: '#17402C' }}>{shippingEur === 0 ? 'Offerte' : `${shippingEur.toFixed(2)} €`}</span>
+              <span style={{ color: 'var(--lkv-text-muted)' }}>Livraison</span>
+              <span style={{ fontWeight: 700, fontFamily: 'ui-monospace, monospace', color: 'var(--lkv-primary)' }}>{shippingEur === 0 ? 'Offerte' : `${shippingEur.toFixed(2)} €`}</span>
             </div>
             <div style={{ height: '1px', background: 'rgba(255,255,255,0.35)', margin: '12px 0' }} />
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '14px' }}>
-              <span style={{ fontSize: '15px', fontWeight: 700, color: '#17402C' }}>Total</span>
-              <span style={{ fontSize: '15px', fontWeight: 700, fontFamily: 'ui-monospace, monospace', color: '#17402C' }}>{grandTotal.toFixed(0)} €</span>
+              <span style={{ fontSize: '15px', fontWeight: 700, color: 'var(--lkv-primary)' }}>Total</span>
+              <span style={{ fontSize: '15px', fontWeight: 700, fontFamily: 'ui-monospace, monospace', color: 'var(--lkv-primary)' }}>{grandTotal.toFixed(0)} €</span>
             </div>
             <button onClick={handleStripeCheckout} disabled={processing} className="glass-capsule-btn w-full" style={{ cursor: processing ? 'not-allowed' : 'pointer', fontFamily: 'inherit' }}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="1" y="11" width="22" height="10" rx="2"/><path d="M6 11V7a6 6 0 0 1 12 0v4"/></svg>

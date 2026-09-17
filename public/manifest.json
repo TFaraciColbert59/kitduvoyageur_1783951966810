@@ -5,7 +5,7 @@
     "start_url": "/",
     "scope": "/",
     "display": "standalone",
-    "background_color": "#1C2620",
+    "background_color": "#FBFAF6",
     "theme_color": "#17402C",
     "orientation": "portrait-primary",
     "lang": "fr",
@@ -36,6 +36,18 @@
     ],
     "shortcuts": [
         {
+            "name": "Hub Voyage",
+            "short_name": "Hub",
+            "description": "Accéder à mon cockpit de voyage",
+            "url": "/hub",
+            "icons": [
+                {
+                    "src": "/assets/images/app_logo.png",
+                    "sizes": "96x96"
+                }
+            ]
+        },
+        {
             "name": "Configurateur IA",
             "short_name": "Config",
             "description": "Créer un kit personnalisé",
@@ -48,22 +60,10 @@
             ]
         },
         {
-            "name": "Mon Inventaire",
-            "short_name": "Inventaire",
-            "description": "Gérer mon matériel",
-            "url": "/inventaire",
-            "icons": [
-                {
-                    "src": "/assets/images/app_logo.png",
-                    "sizes": "96x96"
-                }
-            ]
-        },
-        {
-            "name": "Carte Interactive",
-            "short_name": "Carte",
-            "description": "Explorer les sentiers du monde",
-            "url": "/carte-interactive",
+            "name": "Explorer le monde",
+            "short_name": "Explorer",
+            "description": "Explorer les pays et sentiers du monde",
+            "url": "/explorer",
             "icons": [
                 {
                     "src": "/assets/images/app_logo.png",

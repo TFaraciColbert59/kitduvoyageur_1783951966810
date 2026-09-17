@@ -196,13 +196,13 @@ export default function NouveauGroupePage() {
   ];
 
   return (
-    <div className="h-[100dvh] max-h-[100dvh] overflow-hidden bg-transparent font-sans text-[#17402C] relative flex flex-col">
+    <div className="h-[100dvh] max-h-[100dvh] overflow-hidden bg-transparent font-sans text-[var(--lkv-primary)] relative flex flex-col">
       <CompteBackground />
       <Header />
 
       <main className="flex-1 min-h-0 overflow-hidden w-full max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-4 flex gap-5">
         {/* COLONNE GAUCHE (Nav & Stepper) - 230px */}
-        <aside className="w-[230px] shrink-0 h-full max-h-full flex flex-col justify-between glass rounded-[1.5rem] p-3.5 text-[#17402C] font-sans overflow-hidden border border-white/40 shadow-sm select-none">
+        <aside className="w-[230px] shrink-0 h-full max-h-full flex flex-col justify-between glass rounded-[1.5rem] p-3.5 text-[var(--lkv-primary)] font-sans overflow-hidden border border-white/40 shadow-sm select-none">
           {/* ── 1. ZONE HAUTE FIXE (Identité & Actions) ── */}
           <div className="shrink-0 space-y-2.5">
             <div className="p-3 rounded-2xl glass-sub-card flex items-center gap-3 relative overflow-hidden border border-white/50">
@@ -210,13 +210,13 @@ export default function NouveauGroupePage() {
                 ⛺
               </div>
               <div className="min-w-0 flex-1">
-                <h4 className="font-display font-bold text-xs sm:text-sm text-[#17402C] truncate leading-tight">
+                <h4 className="font-display font-bold text-xs sm:text-sm text-[var(--lkv-primary)] truncate leading-tight">
                   Nouvelle{' '}
-                  <span className="font-serif italic font-normal text-[#5B7F55] text-xs">
+                  <span className="font-serif italic font-normal text-[var(--lkv-secondary)] text-xs">
                     Expédition
                   </span>
                 </h4>
-                <p className="text-[10px] font-mono text-[#5A7064] truncate mt-0.5">
+                <p className="text-[10px] font-mono text-[var(--lkv-text-muted)] truncate mt-0.5">
                   Studio Groupe
                 </p>
               </div>
@@ -244,7 +244,7 @@ export default function NouveauGroupePage() {
 
           {/* ── 2. ZONE CENTRALE SCROLLABLE À L'INTÉRIEUR (Stepper sans numéros/icônes) ── */}
           <nav className="flex-1 min-h-0 overflow-y-auto no-scrollbar py-2 space-y-1.5" aria-label="Étapes de création du groupe">
-            <p className="text-[9.5px] font-mono font-bold uppercase tracking-widest text-[#5A7064] px-2 mb-1">
+            <p className="text-[9.5px] font-mono font-bold uppercase tracking-widest text-[var(--lkv-text-muted)] px-2 mb-1">
               Étapes de création
             </p>
             {STEPS.map((st) => {
@@ -256,8 +256,8 @@ export default function NouveauGroupePage() {
                   onClick={() => setActiveStep(st.id)}
                   className={`w-full px-3 py-2.5 rounded-xl font-bold text-xs transition-all flex items-center justify-between group cursor-pointer border ${
                     isActive
-                      ? 'bg-[#17402C] text-white border-[#17402C] shadow-sm'
-                      : 'bg-white/80 hover:bg-white text-[#17402C] border-white/80 shadow-2xs'
+                      ? 'bg-[var(--lkv-primary)] text-white border-[var(--lkv-primary)] shadow-sm'
+                      : 'bg-white/80 hover:bg-white text-[var(--lkv-primary)] border-white/80 shadow-2xs'
                   }`}
                 >
                   <span className="truncate text-left">{st.label}</span>
@@ -268,8 +268,8 @@ export default function NouveauGroupePage() {
           </nav>
 
           {/* ── 3. ZONE BASSE FIXE (Footer) ── */}
-          <div className="shrink-0 pt-2 border-t border-[#17402C]/5 text-center">
-            <span className="text-[8.5px] font-mono text-[#5A7064] tracking-wider uppercase">
+          <div className="shrink-0 pt-2 border-t border-[var(--lkv-primary)]/5 text-center">
+            <span className="text-[8.5px] font-mono text-[var(--lkv-text-muted)] tracking-wider uppercase">
               Le Kit du Voyageur · Studio Groupe
             </span>
           </div>
@@ -278,44 +278,44 @@ export default function NouveauGroupePage() {
         {/* COLONNE CENTRALE (Formulaire dynamique) */}
         <div className="flex-1 min-w-0 h-full overflow-y-auto custom-scrollbar pr-2 space-y-4">
           {/* Breadcrumbs */}
-          <div className="flex items-center gap-2 text-xs font-medium text-[#5C6B5E]">
-            <Link href="/communaute" className="hover:text-[#17402C] transition-colors">Communauté</Link>
-            <Icon name="ChevronRightIcon" size={12} className="text-[#5C6B5E]" />
-            <Link href="/communaute?tab=groupes" className="hover:text-[#17402C] transition-colors">Groupes</Link>
-            <Icon name="ChevronRightIcon" size={12} className="text-[#5C6B5E]" />
-            <span className="text-[#17402C] font-semibold">Créer une expédition</span>
+          <div className="flex items-center gap-2 text-xs font-medium text-[var(--lkv-text-muted)]">
+            <Link href="/communaute" className="hover:text-[var(--lkv-primary)] transition-colors">Communauté</Link>
+            <Icon name="ChevronRightIcon" size={12} className="text-[var(--lkv-text-muted)]" />
+            <Link href="/communaute?tab=groupes" className="hover:text-[var(--lkv-primary)] transition-colors">Groupes</Link>
+            <Icon name="ChevronRightIcon" size={12} className="text-[var(--lkv-text-muted)]" />
+            <span className="text-[var(--lkv-primary)] font-semibold">Créer une expédition</span>
           </div>
 
           {/* STEP 1: INFOS */}
           {activeStep === 'infos' && (
             <div className="glass rounded-2xl p-6 space-y-5">
-              <div className="flex items-center justify-between pb-3 border-b border-[#17402C]/10">
+              <div className="flex items-center justify-between pb-3 border-b border-[var(--lkv-primary)]/10">
                 <div>
-                  <h2 className="font-display font-bold text-lg text-[#17402C]">Objectif, Esprit &amp; Niveau</h2>
-                  <p className="text-xs text-[#5C6B5E]">Donnez un titre percutant, décrivez le projet et fixez l’engagement requis.</p>
+                  <h2 className="font-display font-bold text-lg text-[var(--lkv-primary)]">Objectif, Esprit &amp; Niveau</h2>
+                  <p className="text-xs text-[var(--lkv-text-muted)]">Donnez un titre percutant, décrivez le projet et fixez l’engagement requis.</p>
                 </div>
                 <span className="glass-pill text-[9px] font-mono font-bold">01 · OBJECTIF</span>
               </div>
 
               <div className="space-y-4">
                 <div>
-                  <label className="block text-xs font-bold text-[#17402C] mb-1">Nom de l’expédition *</label>
+                  <label className="block text-xs font-bold text-[var(--lkv-primary)] mb-1">Nom de l’expédition *</label>
                   <input
                     type="text"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="Ex : Traversée de la Chartreuse en automne"
-                    className="w-full bg-white/90 border border-[#17402C]/15 rounded-xl px-3.5 py-2.5 text-xs text-[#17402C] focus:outline-none focus:ring-2 focus:ring-[#17402C]/20 font-bold"
+                    className="w-full bg-white/90 border border-[var(--lkv-primary)]/15 rounded-xl px-3.5 py-2.5 text-xs text-[var(--lkv-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--lkv-primary)]/20 font-bold"
                   />
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs font-bold text-[#17402C] mb-1">Type d'aventure</label>
+                    <label className="block text-xs font-bold text-[var(--lkv-primary)] mb-1">Type d'aventure</label>
                     <select
                       value={groupType}
                       onChange={(e) => setGroupType(e.target.value)}
-                      className="w-full bg-white/90 border border-[#17402C]/15 rounded-xl px-3 py-2 text-xs text-[#17402C]"
+                      className="w-full bg-white/90 border border-[var(--lkv-primary)]/15 rounded-xl px-3 py-2 text-xs text-[var(--lkv-primary)]"
                     >
                       <option>Traversée en autonomie</option>
                       <option>Week-end bivouac &amp; sommet</option>
@@ -326,11 +326,11 @@ export default function NouveauGroupePage() {
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-[#17402C] mb-1">Niveau d'engagement requis</label>
+                    <label className="block text-xs font-bold text-[var(--lkv-primary)] mb-1">Niveau d'engagement requis</label>
                     <select
                       value={level}
                       onChange={(e) => setLevel(e.target.value)}
-                      className="w-full bg-white/90 border border-[#17402C]/15 rounded-xl px-3 py-2 text-xs text-[#17402C]"
+                      className="w-full bg-white/90 border border-[var(--lkv-primary)]/15 rounded-xl px-3 py-2 text-xs text-[var(--lkv-primary)]"
                     >
                       <option>Tranquille &amp; contemplatif</option>
                       <option>Rythme moyen régulier (4-6h/j)</option>
@@ -341,13 +341,13 @@ export default function NouveauGroupePage() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-[#17402C] mb-1">Description du projet &amp; ambiance recherchée</label>
+                  <label className="block text-xs font-bold text-[var(--lkv-primary)] mb-1">Description du projet &amp; ambiance recherchée</label>
                   <textarea
                     rows={4}
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
                     placeholder="Précisez la philosophie du groupe, les pauses prévues, le portage..."
-                    className="w-full bg-white/90 border border-[#17402C]/15 rounded-xl p-3 text-xs text-[#17402C] focus:outline-none focus:ring-2 focus:ring-[#17402C]/20 leading-relaxed"
+                    className="w-full bg-white/90 border border-[var(--lkv-primary)]/15 rounded-xl p-3 text-xs text-[var(--lkv-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--lkv-primary)]/20 leading-relaxed"
                   />
                 </div>
               </div>
@@ -367,10 +367,10 @@ export default function NouveauGroupePage() {
           {/* STEP 2: SENTIER & TRACE */}
           {activeStep === 'sentier' && (
             <div className="glass rounded-2xl p-6 space-y-5">
-              <div className="flex items-center justify-between pb-3 border-b border-[#17402C]/10">
+              <div className="flex items-center justify-between pb-3 border-b border-[var(--lkv-primary)]/10">
                 <div>
-                  <h2 className="font-display font-bold text-lg text-[#17402C]">Sentier &amp; Trace GPX</h2>
-                  <p className="text-xs text-[#5C6B5E]">Choisissez un itinéraire certifié pour générer le profil 3D en direct.</p>
+                  <h2 className="font-display font-bold text-lg text-[var(--lkv-primary)]">Sentier &amp; Trace GPX</h2>
+                  <p className="text-xs text-[var(--lkv-text-muted)]">Choisissez un itinéraire certifié pour générer le profil 3D en direct.</p>
                 </div>
                 <span className="glass-pill text-[9px] font-mono font-bold">02 · SENTIER</span>
               </div>
@@ -389,12 +389,12 @@ export default function NouveauGroupePage() {
                         }}
                         className={`text-left p-3 rounded-xl transition-all ${
                           isSelected
-                            ? 'bg-[#17402C] text-white shadow-sm border border-white/20'
-                            : 'bg-white/80 text-[#17402C] border border-[#17402C]/10 hover:bg-white'
+                            ? 'bg-[var(--lkv-primary)] text-white shadow-sm border border-white/20'
+                            : 'bg-white/80 text-[var(--lkv-primary)] border border-[var(--lkv-primary)]/10 hover:bg-white'
                         }`}
                       >
                         <h4 className="font-bold text-xs truncate">{tr.name}</h4>
-                        <p className={`text-[10px] mt-0.5 ${isSelected ? 'text-emerald-200' : 'text-[#5C6B5E]'}`}>
+                        <p className={`text-[10px] mt-0.5 ${isSelected ? 'text-emerald-200' : 'text-[var(--lkv-text-muted)]'}`}>
                           {tr.region} · {tr.distance_km} km · +{tr.elevation_gain} m D+
                         </p>
                       </button>
@@ -403,7 +403,7 @@ export default function NouveauGroupePage() {
                 </div>
 
                 {/* Leaflet Live Trail Preview */}
-                <div className="rounded-xl overflow-hidden border border-[#17402C]/10 relative h-[220px] bg-[#E7E3D6]">
+                <div className="rounded-xl overflow-hidden border border-[var(--lkv-primary)]/10 relative h-[220px] bg-[var(--lkv-surface)]">
                   <div ref={mapContainerRef} className="w-full h-full" />
                 </div>
               </div>
@@ -430,10 +430,10 @@ export default function NouveauGroupePage() {
           {/* STEP 3: DATES & LOGISTIQUE */}
           {activeStep === 'logistique' && (
             <div className="glass rounded-2xl p-6 space-y-5">
-              <div className="flex items-center justify-between pb-3 border-b border-[#17402C]/10">
+              <div className="flex items-center justify-between pb-3 border-b border-[var(--lkv-primary)]/10">
                 <div>
-                  <h2 className="font-display font-bold text-lg text-[#17402C]">Calendrier, Hébergement &amp; Budget</h2>
-                  <p className="text-xs text-[#5C6B5E]">Fixez les dates, la flexibilité météo et les estimations de frais partagés.</p>
+                  <h2 className="font-display font-bold text-lg text-[var(--lkv-primary)]">Calendrier, Hébergement &amp; Budget</h2>
+                  <p className="text-xs text-[var(--lkv-text-muted)]">Fixez les dates, la flexibilité météo et les estimations de frais partagés.</p>
                 </div>
                 <span className="glass-pill text-[9px] font-mono font-bold">03 · LOGISTIQUE</span>
               </div>
@@ -441,29 +441,29 @@ export default function NouveauGroupePage() {
               <div className="space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div>
-                    <label className="block text-xs font-bold text-[#17402C] mb-1">Date de départ</label>
+                    <label className="block text-xs font-bold text-[var(--lkv-primary)] mb-1">Date de départ</label>
                     <input
                       type="date"
                       value={startDate}
                       onChange={(e) => setStartDate(e.target.value)}
-                      className="w-full bg-white/90 border border-[#17402C]/15 rounded-xl px-3 py-2 text-xs text-[#17402C]"
+                      className="w-full bg-white/90 border border-[var(--lkv-primary)]/15 rounded-xl px-3 py-2 text-xs text-[var(--lkv-primary)]"
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-[#17402C] mb-1">Date de retour</label>
+                    <label className="block text-xs font-bold text-[var(--lkv-primary)] mb-1">Date de retour</label>
                     <input
                       type="date"
                       value={endDate}
                       onChange={(e) => setEndDate(e.target.value)}
-                      className="w-full bg-white/90 border border-[#17402C]/15 rounded-xl px-3 py-2 text-xs text-[#17402C]"
+                      className="w-full bg-white/90 border border-[var(--lkv-primary)]/15 rounded-xl px-3 py-2 text-xs text-[var(--lkv-primary)]"
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-[#17402C] mb-1">Flexibilité météo</label>
+                    <label className="block text-xs font-bold text-[var(--lkv-primary)] mb-1">Flexibilité météo</label>
                     <select
                       value={dateFlexibility}
                       onChange={(e) => setDateFlexibility(e.target.value)}
-                      className="w-full bg-white/90 border border-[#17402C]/15 rounded-xl px-3 py-2 text-xs text-[#17402C]"
+                      className="w-full bg-white/90 border border-[var(--lkv-primary)]/15 rounded-xl px-3 py-2 text-xs text-[var(--lkv-primary)]"
                     >
                       <option>Dates fermes</option>
                       <option>± 1 jour selon météo</option>
@@ -475,11 +475,11 @@ export default function NouveauGroupePage() {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
                   <div>
-                    <label className="block text-xs font-bold text-[#17402C] mb-1">Type d'hébergement</label>
+                    <label className="block text-xs font-bold text-[var(--lkv-primary)] mb-1">Type d'hébergement</label>
                     <select
                       value={hebergementType}
                       onChange={(e) => setHebergementType(e.target.value)}
-                      className="w-full bg-white/90 border border-[#17402C]/15 rounded-xl px-3 py-2 text-xs text-[#17402C]"
+                      className="w-full bg-white/90 border border-[var(--lkv-primary)]/15 rounded-xl px-3 py-2 text-xs text-[var(--lkv-primary)]"
                     >
                       <option>Bivouac &amp; Refuges</option>
                       <option>100% Bivouac sous tente</option>
@@ -490,23 +490,23 @@ export default function NouveauGroupePage() {
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-[#17402C] mb-1">Budget estimé / pers.</label>
+                    <label className="block text-xs font-bold text-[var(--lkv-primary)] mb-1">Budget estimé / pers.</label>
                     <div className="relative">
                       <input
                         type="number"
                         value={estimatedBudget}
                         onChange={(e) => setEstimatedBudget(parseInt(e.target.value))}
-                        className="w-full bg-white/90 border border-[#17402C]/15 rounded-xl px-3 py-2 text-xs font-mono font-bold text-[#17402C]"
+                        className="w-full bg-white/90 border border-[var(--lkv-primary)]/15 rounded-xl px-3 py-2 text-xs font-mono font-bold text-[var(--lkv-primary)]"
                       />
-                      <span className="absolute right-3 top-2 text-xs text-[#5C6B5E] font-bold">€</span>
+                      <span className="absolute right-3 top-2 text-xs text-[var(--lkv-text-muted)] font-bold">€</span>
                     </div>
                   </div>
                 </div>
 
                 <div className="pt-2">
                   <div className="flex items-center justify-between mb-1">
-                    <label className="text-xs font-bold text-[#17402C]">Capacité maximale du groupe</label>
-                    <span className="font-bold text-xs text-[#17402C] font-mono">{maxMembers} équipiers max</span>
+                    <label className="text-xs font-bold text-[var(--lkv-primary)]">Capacité maximale du groupe</label>
+                    <span className="font-bold text-xs text-[var(--lkv-primary)] font-mono">{maxMembers} équipiers max</span>
                   </div>
                   <input
                     type="range"
@@ -514,9 +514,9 @@ export default function NouveauGroupePage() {
                     max={15}
                     value={maxMembers}
                     onChange={(e) => setMaxMembers(parseInt(e.target.value))}
-                    className="w-full accent-[#17402C]"
+                    className="w-full accent-[var(--lkv-primary)]"
                   />
-                  <div className="flex justify-between text-[10px] text-[#5C6B5E] font-mono mt-1">
+                  <div className="flex justify-between text-[10px] text-[var(--lkv-text-muted)] font-mono mt-1">
                     <span>2 pers. (Duo)</span>
                     <span>6 pers. (Équilibre idéal)</span>
                     <span>15 pers. (Max)</span>
@@ -546,17 +546,17 @@ export default function NouveauGroupePage() {
           {/* STEP 4: ÉQUIPIERS & MATÉRIEL REQUIS */}
           {activeStep === 'materiel' && (
             <div className="glass rounded-2xl p-6 space-y-5">
-              <div className="flex items-center justify-between pb-3 border-b border-[#17402C]/10">
+              <div className="flex items-center justify-between pb-3 border-b border-[var(--lkv-primary)]/10">
                 <div>
-                  <h2 className="font-display font-bold text-lg text-[#17402C]">Matériel Requis &amp; Sélection</h2>
-                  <p className="text-xs text-[#5C6B5E]">Listez les équipements indispensables que chaque participant doit posséder.</p>
+                  <h2 className="font-display font-bold text-lg text-[var(--lkv-primary)]">Matériel Requis &amp; Sélection</h2>
+                  <p className="text-xs text-[var(--lkv-text-muted)]">Listez les équipements indispensables que chaque participant doit posséder.</p>
                 </div>
                 <span className="glass-pill text-[9px] font-mono font-bold">04 · MATÉRIEL</span>
               </div>
 
               <div className="space-y-4">
                 <div>
-                  <label className="block text-xs font-bold text-[#17402C] mb-2">Mode de recrutement</label>
+                  <label className="block text-xs font-bold text-[var(--lkv-primary)] mb-2">Mode de recrutement</label>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {[
                       { id: 'validation', label: '🛡️ Sur validation', desc: 'Les équipiers postulent avec un message sur leur expérience.' },
@@ -566,8 +566,8 @@ export default function NouveauGroupePage() {
                         key={mode.id}
                         className={`p-3.5 rounded-xl cursor-pointer flex items-start gap-2.5 transition-all ${
                           recruitmentMode === mode.id
-                            ? 'bg-white border-2 border-[#17402C] shadow-xs'
-                            : 'bg-white/60 border border-[#17402C]/10'
+                            ? 'bg-white border-2 border-[var(--lkv-primary)] shadow-xs'
+                            : 'bg-white/60 border border-[var(--lkv-primary)]/10'
                         }`}
                       >
                         <input
@@ -576,11 +576,11 @@ export default function NouveauGroupePage() {
                           value={mode.id}
                           checked={recruitmentMode === mode.id}
                           onChange={() => setRecruitmentMode(mode.id)}
-                          className="mt-0.5 text-[#17402C]"
+                          className="mt-0.5 text-[var(--lkv-primary)]"
                         />
                         <div>
-                          <span className="text-xs font-bold text-[#17402C] block">{mode.label}</span>
-                          <span className="text-[10.5px] text-[#5C6B5E] block">{mode.desc}</span>
+                          <span className="text-xs font-bold text-[var(--lkv-primary)] block">{mode.label}</span>
+                          <span className="text-[10.5px] text-[var(--lkv-text-muted)] block">{mode.desc}</span>
                         </div>
                       </label>
                     ))}
@@ -588,17 +588,17 @@ export default function NouveauGroupePage() {
                 </div>
 
                 <div className="pt-2">
-                  <label className="block text-xs font-bold text-[#17402C] mb-2">Checklist matériel exigée des participants</label>
+                  <label className="block text-xs font-bold text-[var(--lkv-primary)] mb-2">Checklist matériel exigée des participants</label>
                   <div className="space-y-2">
                     {requiredGear.map((gear) => (
-                      <div key={gear.id} className="flex items-center justify-between p-2.5 rounded-xl bg-white/90 border border-[#17402C]/10 text-xs">
-                        <span className="font-bold text-[#17402C] flex items-center gap-2">
+                      <div key={gear.id} className="flex items-center justify-between p-2.5 rounded-xl bg-white/90 border border-[var(--lkv-primary)]/10 text-xs">
+                        <span className="font-bold text-[var(--lkv-primary)] flex items-center gap-2">
                           <span className="text-forest-700">✓</span> {gear.name}
                         </span>
                         <button
                           type="button"
                           onClick={() => handleRemoveGear(gear.id)}
-                          className="text-[#5C6B5E] hover:text-red-600 p-1"
+                          className="text-[var(--lkv-text-muted)] hover:text-red-600 p-1"
                         >
                           ✕
                         </button>
@@ -611,12 +611,12 @@ export default function NouveauGroupePage() {
                         value={newGearInput}
                         onChange={(e) => setNewGearInput(e.target.value)}
                         placeholder="Ex : DVA + Pelle + Sonde si hivernale..."
-                        className="flex-1 bg-white/90 border border-[#17402C]/15 rounded-xl px-3 py-2 text-xs text-[#17402C]"
+                        className="flex-1 bg-white/90 border border-[var(--lkv-primary)]/15 rounded-xl px-3 py-2 text-xs text-[var(--lkv-primary)]"
                       />
                       <button
                         type="button"
                         onClick={handleAddGear}
-                        className="px-4 py-2 bg-[#17402C] text-white rounded-xl text-xs font-bold hover:bg-[#1E5238] transition-colors shrink-0"
+                        className="px-4 py-2 bg-[var(--lkv-primary)] text-white rounded-xl text-xs font-bold hover:bg-[var(--lkv-primary-hover)] transition-colors shrink-0"
                       >
                         Ajouter
                       </button>
@@ -647,17 +647,17 @@ export default function NouveauGroupePage() {
           {/* STEP 5: STYLE & PICTOGRAMME */}
           {activeStep === 'style' && (
             <div className="glass rounded-2xl p-6 space-y-5">
-              <div className="flex items-center justify-between pb-3 border-b border-[#17402C]/10">
+              <div className="flex items-center justify-between pb-3 border-b border-[var(--lkv-primary)]/10">
                 <div>
-                  <h2 className="font-display font-bold text-lg text-[#17402C]">Personnalisation visuelle du Cockpit</h2>
-                  <p className="text-xs text-[#5C6B5E]">Choisissez un emblème et une couleur d’accent pour le cockpit d'expédition.</p>
+                  <h2 className="font-display font-bold text-lg text-[var(--lkv-primary)]">Personnalisation visuelle du Cockpit</h2>
+                  <p className="text-xs text-[var(--lkv-text-muted)]">Choisissez un emblème et une couleur d’accent pour le cockpit d'expédition.</p>
                 </div>
                 <span className="glass-pill text-[9px] font-mono font-bold">05 · STYLE</span>
               </div>
 
               <div className="space-y-4">
                 <div>
-                  <label className="block text-xs font-bold text-[#17402C] mb-2">Pictogramme de l’expédition</label>
+                  <label className="block text-xs font-bold text-[var(--lkv-primary)] mb-2">Pictogramme de l’expédition</label>
                   <div className="flex flex-wrap gap-2">
                     {PICTOGRAMS.map((pic) => (
                       <button
@@ -666,8 +666,8 @@ export default function NouveauGroupePage() {
                         onClick={() => setPictogram(pic)}
                         className={`w-10 h-10 rounded-xl text-xl flex items-center justify-center transition-all ${
                           pictogram === pic
-                            ? 'bg-[#17402C] text-white shadow-sm scale-110'
-                            : 'bg-white/80 hover:bg-white border border-[#17402C]/10'
+                            ? 'bg-[var(--lkv-primary)] text-white shadow-sm scale-110'
+                            : 'bg-white/80 hover:bg-white border border-[var(--lkv-primary)]/10'
                         }`}
                       >
                         {pic}
@@ -677,7 +677,7 @@ export default function NouveauGroupePage() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-[#17402C] mb-2">Couleur thématique du Hero</label>
+                  <label className="block text-xs font-bold text-[var(--lkv-primary)] mb-2">Couleur thématique du Hero</label>
                   <div className="flex flex-wrap gap-2.5">
                     {ACCENT_COLORS.map((col) => (
                       <button
@@ -686,8 +686,8 @@ export default function NouveauGroupePage() {
                         onClick={() => setAccentColor(col.value)}
                         className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold transition-all ${
                           accentColor === col.value
-                            ? 'bg-[#17402C] text-white shadow-sm'
-                            : 'bg-white/80 text-[#5C6B5E] border border-[#17402C]/10'
+                            ? 'bg-[var(--lkv-primary)] text-white shadow-sm'
+                            : 'bg-white/80 text-[var(--lkv-text-muted)] border border-[var(--lkv-primary)]/10'
                         }`}
                       >
                         <span className="w-3 h-3 rounded-full shrink-0 shadow-xs" style={{ backgroundColor: col.value }} />
@@ -725,14 +725,14 @@ export default function NouveauGroupePage() {
           {/* Live Cockpit Hero Mini Preview */}
           <div className="glass p-3.5 space-y-3 rounded-2xl">
             <div className="flex items-center justify-between">
-              <h3 className="font-display font-bold text-xs text-[#17402C]">Aperçu du Cockpit</h3>
+              <h3 className="font-display font-bold text-xs text-[var(--lkv-primary)]">Aperçu du Cockpit</h3>
               <span className="glass-pill text-[9px] font-mono font-bold">Live</span>
             </div>
 
             <div
               className="rounded-2xl p-4 text-white relative overflow-hidden shadow-sm flex flex-col justify-between min-h-[220px]"
               style={{
-                background: `linear-gradient(135deg, ${accentColor} 0%, #112D1F 100%)`
+                background: `linear-gradient(135deg, ${accentColor} 0%, var(--lkv-forest-950) 100%)`
               }}
             >
               <div>
@@ -760,14 +760,14 @@ export default function NouveauGroupePage() {
           </div>
 
           {/* CTA Final */}
-          <div className="glass tone-sand p-3.5 space-y-2 rounded-2xl text-[#17402C]">
-            <span className="glass-pill text-[9px] font-mono font-bold text-[#8C6418]">
+          <div className="glass tone-sand p-3.5 space-y-2 rounded-2xl text-[var(--lkv-primary)]">
+            <span className="glass-pill text-[9px] font-mono font-bold text-[var(--lkv-warning)]">
               🎒 PRÉPARATION D'EXPÉDITION
             </span>
-            <h3 className="font-display font-bold text-xs text-[#17402C]">
+            <h3 className="font-display font-bold text-xs text-[var(--lkv-primary)]">
               Lancer le cockpit de voyage
             </h3>
-            <p className="text-[11px] text-[#5C6B5E] leading-relaxed">
+            <p className="text-[11px] text-[var(--lkv-text-muted)] leading-relaxed">
               Vos équipiers recevront la liste de matériel exigé, les dates et la trace GPS officielle.
             </p>
             <div className="pt-1">

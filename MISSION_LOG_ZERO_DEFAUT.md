@@ -393,19 +393,45 @@ TOTAL HEX ON ALL 14 P0 ROUTES: 0
    - Redirections 307 du middleware, interaction bottom bar, appui long hub, modes déconnectés.
    - **25 passed, 2 skipped (38.6s)** — navigation mobile 100% conforme.
 
+## [PHASE 8] Harmonisation P1, PWA & Optimisations de Performance de Lancement
+**Statut** : ✅ FAIT
+**Horodatage** : 2026-09-17 20:45
+**Actions réalisées** :
+1. **Éradication des couleurs hex en dur sur les routes P1 & utilitaires** :
+   - `src/app/boutique/page.tsx` : 0 hex en dur.
+   - `src/app/carnets/page.tsx` & `src/app/carnets/[id]/error.tsx` : 0 hex en dur.
+   - `src/app/clubs/page.tsx` : 0 hex en dur.
+   - `src/app/panier/page.tsx` : 0 hex en dur.
+   - `src/app/checkout/page.tsx` & `src/app/checkout/error.tsx` : 0 hex en dur.
+   - `src/app/communaute/page.tsx` & `src/app/communaute/error.tsx` : 0 hex en dur.
+   - `src/app/occasion/page.tsx` : 0 hex en dur.
+   - `src/app/messagerie/page.tsx` : 0 hex en dur.
+   - `src/app/not-found.tsx` & `src/app/global-error.tsx` : 0 hex en dur, rayons harmonisés vers tokens.
+2. **Purge finale de `#2D5A3D` dans `tailwind.config.js`** :
+   - Remplacement de `forest.600` par `#365233` (`--lkv-forest-600`).
+   - Remplacement des ombres `green` et `green-lg` pour correspondre à la palette officielle.
+3. **Optimisation Next.js 15 App Router (`next.config.mjs`)** :
+   - Extension de `experimental.optimizePackageImports` avec `@headlessui/react`, `@radix-ui/react-dialog`, `@radix-ui/react-toast`, `recharts`, et `zustand`.
+4. **PWA & Manifest (`public/manifest.json`)** :
+   - Harmonisation du `background_color` avec `#FBFAF6` (cohérent avec `capacitor.config.ts`).
+   - Raccourcis canoniques : `/hub`, `/ai-configurator`, `/explorer`.
+5. **Nettoyage du dépôt** :
+   - Fichiers d'audit et de données archivés proprement sous `docs/audit/` et `docs/data/`.
+   - Zéro fichier temporaire racine.
+
 ---
 
-## [BILAN FINAL] Synthèse de l'Opération Zéro Défaut
+## [BILAN FINAL] Synthèse de l'Opération Zéro Défaut & Prêt pour Lancement
 
 | Domaine | État Initial | État Final | Statut |
 |---|---|---|---|
-| **Couleurs interdites** | 14 occurrences orange `#E4501C`, occurrences `#2D5A3D` | **0 occurrence** dans tout `src/` | ✅ Éliminé |
+| **Couleurs interdites** | 14 occurrences orange `#E4501C`, occurrences `#2D5A3D` | **0 occurrence** dans tout le code source et configuration | ✅ Éliminé |
 | **Liens morts** | 3 liens `href="#"` ou orphelins | **0 lien mort** | ✅ Corrigé |
-| **Page 404** | Mauvais contraste texte/fond | Ratio de contraste WCAG AAA | ✅ Corrigé |
+| **Page 404** | Mauvais contraste texte/fond | Ratio de contraste WCAG AAA, tokens unifiés | ✅ Corrigé |
 | **Console.log** | Présents dans les composants UI | **0 console.log** dans `src/**/*.tsx` | ✅ Purgé |
 | **Données fictives** | Fallbacks 'Marceline' & fake chat | Données réelles ou état vide honnête | ✅ Corrigé |
 | **Primitives UI** | Doublons de tiroirs & modales isolées | Unification `GlassModal` + `Sheet` (-538 lignes) | ✅ Harmonisé |
-| **Design Tokens P0** | 120+ couleurs hex en dur | **0 hex en dur sur les 14 routes P0** | ✅ 100% Tokens |
+| **Design Tokens P0 & P1** | 300+ couleurs hex en dur | **0 hex en dur sur les routes P0 & P1** | ✅ 100% Tokens |
 | **Rayons de courbure** | `rounded-[0.75rem]` arbitraires | `rounded-[var(--lkv-radius-lg)]` canonique | ✅ Harmonisé |
 | **Safe-Areas iOS** | Calculs dispersés | Centralisé via `MobilePageShell` / `AppShell` | ✅ Standardisé |
 | **Sécurité DB** | 61 search_path mutables, 4 tables sans policy, 75 RPC anon | **0 search_path mutable, 0 table sans policy, RPC restreints** | ✅ Sécurisé |
@@ -414,6 +440,7 @@ TOTAL HEX ON ALL 14 P0 ROUTES: 0
 | **Tests Unitaires** | 390 suites | **386 passed (2756 tests passed, 0 failed)** | ✅ 100% Vert |
 | **Tests E2E** | Layouts & Hub | **33 passed (0 failed)** | ✅ 100% Vert |
 | **Build Prod** | First Load JS à mesurer | **Exit code 0, 104 kB shared First Load JS** | ✅ Validé |
+| **Hygiène & Propreté** | Fichiers temporaires racine | Structure `docs/` rangée, repo impeccable | ✅ Nettoyé |
 
 
 

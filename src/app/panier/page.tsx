@@ -124,10 +124,10 @@ export default function PanierPage() {
 
   if (!mounted) {
     return (
-      <div className="min-h-screen bg-[#F5F2EC]">
+      <div className="min-h-screen bg-[var(--lkv-surface)]">
         <Header />
         <div className="pt-24 flex items-center justify-center min-h-[60vh]">
-          <div className="w-8 h-8 border-2 border-[#17402C] border-t-transparent rounded-full animate-spin" aria-label="Chargement du panier" />
+          <div className="w-8 h-8 border-2 border-[var(--lkv-primary)] border-t-transparent rounded-full animate-spin" aria-label="Chargement du panier" />
         </div>
         <Footer />
       </div>
@@ -137,19 +137,19 @@ export default function PanierPage() {
   return (
     <>
       {/* ── DESKTOP VIEW (fullscreen : page = 100dvh, scroll interne) ── */}
-      <div className="hidden md:flex flex-col h-[100dvh] overflow-hidden bg-[#EEF3EC] text-[#17402C]">
+      <div className="hidden md:flex flex-col h-[100dvh] overflow-hidden bg-[var(--lkv-surface-muted)] text-[var(--lkv-primary)]">
         <Header />
 
         {confirmDeleteId && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#17402C]/25 backdrop-blur-sm" role="dialog" aria-modal="true">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[var(--lkv-primary)]/25 backdrop-blur-sm" role="dialog" aria-modal="true">
             <div className="glass rounded-xl p-8 max-w-sm w-full text-center">
-              <h2 className="font-display font-700 text-xl text-[#17402C] mb-3">Retirer cet article ?</h2>
-              <p className="text-sm text-[#5A7064] mb-6">
+              <h2 className="font-display font-700 text-xl text-[var(--lkv-primary)] mb-3">Retirer cet article ?</h2>
+              <p className="text-sm text-[var(--lkv-text-muted)] mb-6">
                 {items.find((i) => i.id === confirmDeleteId)?.name} sera retiré de votre panier.
               </p>
               <div className="flex gap-3">
                 <button onClick={handleRemoveCancel} className="glass-capsule-btn flex-1" autoFocus>Annuler</button>
-                <button onClick={handleRemoveConfirm} className="glass-capsule-btn flex-1" style={{ background: 'rgba(168,68,58,0.92)', color: '#EEF3EC', borderColor: 'rgba(168,68,58,0.45)' }}>Retirer</button>
+                <button onClick={handleRemoveConfirm} className="glass-capsule-btn flex-1" style={{ background: 'rgba(168,68,58,0.92)', color: 'var(--lkv-surface-muted)', borderColor: 'rgba(168,68,58,0.45)' }}>Retirer</button>
               </div>
             </div>
           </div>
@@ -160,11 +160,11 @@ export default function PanierPage() {
             {items.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-20 gap-6 text-center">
                 <div className="w-20 h-20 rounded-full glass flex items-center justify-center">
-                  <Icon name="ShoppingBagIcon" size={36} className="text-[#17402C]/40" />
+                  <Icon name="ShoppingBagIcon" size={36} className="text-[var(--lkv-primary)]/40" />
                 </div>
                 <div>
-                  <p className="font-display font-800 text-3xl text-[#17402C] mb-2">Votre <em className="italic font-400 text-[#365233]">panier.</em> est vide</p>
-                  <p className="text-[#5A7064]">Explorez notre catalogue pour trouver votre équipement.</p>
+                  <p className="font-display font-800 text-3xl text-[var(--lkv-primary)] mb-2">Votre <em className="italic font-400 text-[var(--lkv-forest-600)]">panier.</em> est vide</p>
+                  <p className="text-[var(--lkv-text-muted)]">Explorez notre catalogue pour trouver votre équipement.</p>
                 </div>
                 <Link href="/boutique" className="glass-capsule-btn mt-4">
                   Voir le catalogue
@@ -173,11 +173,11 @@ export default function PanierPage() {
             ) : (
               <>
                 <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-4">
-                  <h1 className="font-display font-800 text-4xl text-[#17402C]">
-                    Votre <em className="italic font-400 text-[#365233]">panier.</em>
+                  <h1 className="font-display font-800 text-4xl text-[var(--lkv-primary)]">
+                    Votre <em className="italic font-400 text-[var(--lkv-forest-600)]">panier.</em>
                   </h1>
-                  <p className="text-[10px] font-semibold uppercase tracking-wider text-[#5A7064]">
-                    {totalItems} article{totalItems > 1 ? 's' : ''} · {totalWeightG >= 1000 ? `${(totalWeightG / 1000).toFixed(1).replace('.', ',')} kg` : `${totalWeightG} g`} · sous-total <span className="font-mono font-bold text-[#17402C]">{totalPriceEur.toFixed(0)} €</span>
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--lkv-text-muted)]">
+                    {totalItems} article{totalItems > 1 ? 's' : ''} · {totalWeightG >= 1000 ? `${(totalWeightG / 1000).toFixed(1).replace('.', ',')} kg` : `${totalWeightG} g`} · sous-total <span className="font-mono font-bold text-[var(--lkv-primary)]">{totalPriceEur.toFixed(0)} €</span>
                   </p>
                 </div>
 
@@ -195,15 +195,15 @@ export default function PanierPage() {
                         <div className="flex-1 flex flex-col justify-between min-w-0">
                           <div className="flex justify-between items-start gap-4">
                             <div>
-                              <p className="text-[10px] font-semibold uppercase tracking-wider text-[#5A7064] mb-1">{item.category || 'PORTAGE'}</p>
-                              <Link href={`/produit/${item.slug}`} className="font-display font-700 text-[#17402C] text-xl hover:text-[#365233] transition-colors line-clamp-2">
+                              <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--lkv-text-muted)] mb-1">{item.category || 'PORTAGE'}</p>
+                              <Link href={`/produit/${item.slug}`} className="font-display font-700 text-[var(--lkv-primary)] text-xl hover:text-[var(--lkv-forest-600)] transition-colors line-clamp-2">
                                 {item.name.split(' ').map((word, i, arr) =>
-                                  i >= arr.length - 2 ? <em key={i} className="italic font-400 text-[#365233] ml-1">{word}</em> : <span key={i} className="mr-1">{word}</span>
+                                  i >= arr.length - 2 ? <em key={i} className="italic font-400 text-[var(--lkv-forest-600)] ml-1">{word}</em> : <span key={i} className="mr-1">{word}</span>
                                 )}
                               </Link>
                               <div className="flex items-center gap-2 mt-2">
                                 <span className="glass-pill">
-                                  <span className="w-2 h-2 rounded-full bg-[#17402C] inline-block" />
+                                  <span className="w-2 h-2 rounded-full bg-[var(--lkv-primary)] inline-block" />
                                   {item.weightG >= 1000 ? `${(item.weightG / 1000).toFixed(1).replace('.', ',')} kg` : `${item.weightG} g`}
                                 </span>
                               </div>
@@ -211,11 +211,11 @@ export default function PanierPage() {
 
                             <div className="flex flex-col items-end">
                               <div className="glass-capsule-bar">
-                                <button onClick={() => handleQuantity(item.id, item.quantity - 1)} aria-label="Réduire la quantité" className="w-7 h-7 flex items-center justify-center rounded-full bg-white/70 hover:bg-white text-[#17402C] transition-colors">
+                                <button onClick={() => handleQuantity(item.id, item.quantity - 1)} aria-label="Réduire la quantité" className="w-7 h-7 flex items-center justify-center rounded-full bg-white/70 hover:bg-white text-[var(--lkv-primary)] transition-colors">
                                   <Icon name="MinusIcon" size={12} />
                                 </button>
-                                <span className="w-4 text-center font-600 text-sm text-[#17402C]">{item.quantity}</span>
-                                <button onClick={() => handleQuantity(item.id, item.quantity + 1)} aria-label="Augmenter la quantité" className="w-7 h-7 flex items-center justify-center rounded-full bg-white/70 hover:bg-white text-[#17402C] transition-colors">
+                                <span className="w-4 text-center font-600 text-sm text-[var(--lkv-primary)]">{item.quantity}</span>
+                                <button onClick={() => handleQuantity(item.id, item.quantity + 1)} aria-label="Augmenter la quantité" className="w-7 h-7 flex items-center justify-center rounded-full bg-white/70 hover:bg-white text-[var(--lkv-primary)] transition-colors">
                                   <Icon name="PlusIcon" size={12} />
                                 </button>
                               </div>
@@ -224,19 +224,19 @@ export default function PanierPage() {
 
                           <div className="flex justify-between items-end mt-4">
                             <div className="flex gap-4">
-                              <button className="flex items-center gap-1.5 text-xs font-600 text-[#5A7064] hover:text-[#17402C] transition-colors">
+                              <button className="flex items-center gap-1.5 text-xs font-600 text-[var(--lkv-text-muted)] hover:text-[var(--lkv-primary)] transition-colors">
                                 <Icon name="BookmarkIcon" size={14} variant="outline" />
                                 Enregistrer
                               </button>
-                              <button onClick={() => handleRemoveRequest(item.id)} className="flex items-center gap-1.5 text-xs font-600 text-[#5A7064] hover:text-[#A8443A] transition-colors">
+                              <button onClick={() => handleRemoveRequest(item.id)} className="flex items-center gap-1.5 text-xs font-600 text-[var(--lkv-text-muted)] hover:text-[var(--lkv-danger)] transition-colors">
                                 <Icon name="TrashIcon" size={14} variant="outline" />
                                 Retirer
                               </button>
                             </div>
 
                             <div className="text-right">
-                              <p className="font-mono font-bold text-[#17402C] text-xl">{(item.priceEur * item.quantity).toFixed(0)} €</p>
-                              <p className="text-[10px] text-[#5A7064]">TVA incluse</p>
+                              <p className="font-mono font-bold text-[var(--lkv-primary)] text-xl">{(item.priceEur * item.quantity).toFixed(0)} €</p>
+                              <p className="text-[10px] text-[var(--lkv-text-muted)]">TVA incluse</p>
                             </div>
                           </div>
                         </div>
@@ -250,9 +250,9 @@ export default function PanierPage() {
                           <img src="https://images.unsplash.com/photo-1572007886481-64539dc31d04?w=400&q=80" alt="Lampe" className="w-full h-full object-cover rounded-xl" />
                         </div>
                         <div className="min-w-0">
-                          <p className="text-[10px] font-semibold uppercase tracking-wider text-[#5A7064] mb-1">ON A PENSÉ POUR VOUS</p>
-                          <p className="font-display font-700 text-lg text-[#17402C]">Lampe frontale <em className="italic font-400 text-[#365233]">350 lumens.</em></p>
-                          <p className="text-xs text-[#5A7064] mt-1">Autonomie 45 h, batterie rechargeable. Souvent oubliée, jamais regrettée.</p>
+                          <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--lkv-text-muted)] mb-1">ON A PENSÉ POUR VOUS</p>
+                          <p className="font-display font-700 text-lg text-[var(--lkv-primary)]">Lampe frontale <em className="italic font-400 text-[var(--lkv-forest-600)]">350 lumens.</em></p>
+                          <p className="text-xs text-[var(--lkv-text-muted)] mt-1">Autonomie 45 h, batterie rechargeable. Souvent oubliée, jamais regrettée.</p>
                         </div>
                       </div>
                       <button className="glass-capsule-btn flex-shrink-0">
@@ -264,24 +264,24 @@ export default function PanierPage() {
                   {/* Order summary */}
                   <div className="lg:col-span-5 xl:col-span-4">
                     <div className="glass p-8">
-                      <h3 className="font-display font-700 text-xl text-[#17402C] mb-6">Récapitulatif</h3>
+                      <h3 className="font-display font-700 text-xl text-[var(--lkv-primary)] mb-6">Récapitulatif</h3>
 
                       <div className="space-y-4 mb-8">
                         <div className="flex justify-between text-sm">
-                          <span className="text-[#5A7064]">Sous-total ({totalItems} articles)</span>
-                          <span className="font-mono font-bold text-[#17402C]">{totalPriceEur.toFixed(0)} €</span>
+                          <span className="text-[var(--lkv-text-muted)]">Sous-total ({totalItems} articles)</span>
+                          <span className="font-mono font-bold text-[var(--lkv-primary)]">{totalPriceEur.toFixed(0)} €</span>
                         </div>
                         <div className="flex justify-between text-sm">
-                          <span className="text-[#5A7064]">Poids total</span>
-                          <span className="font-mono font-bold text-[#17402C]">{totalWeightG >= 1000 ? `${(totalWeightG / 1000).toFixed(1).replace('.', ',')} kg` : `${totalWeightG} g`}</span>
+                          <span className="text-[var(--lkv-text-muted)]">Poids total</span>
+                          <span className="font-mono font-bold text-[var(--lkv-primary)]">{totalWeightG >= 1000 ? `${(totalWeightG / 1000).toFixed(1).replace('.', ',')} kg` : `${totalWeightG} g`}</span>
                         </div>
                         <div className="flex justify-between text-sm">
-                          <span className="text-[#5A7064]">Livraison suivie</span>
-                          <span className="font-mono font-bold text-[#17402C]">{shippingEur === 0 ? 'Offerte' : `${shippingEur.toFixed(2)} €`}</span>
+                          <span className="text-[var(--lkv-text-muted)]">Livraison suivie</span>
+                          <span className="font-mono font-bold text-[var(--lkv-primary)]">{shippingEur === 0 ? 'Offerte' : `${shippingEur.toFixed(2)} €`}</span>
                         </div>
                         <div className="flex justify-between text-sm">
-                          <span className="text-[#5A7064]">Estimation TVA</span>
-                          <span className="font-600 text-[#5A7064]">Incluse</span>
+                          <span className="text-[var(--lkv-text-muted)]">Estimation TVA</span>
+                          <span className="font-600 text-[var(--lkv-text-muted)]">Incluse</span>
                         </div>
                       </div>
 
@@ -291,8 +291,8 @@ export default function PanierPage() {
                       </div>
 
                       <div className="flex justify-between items-end font-display font-800 text-2xl pt-6 border-t border-white/50 mb-6">
-                        <span className="text-xl text-[#17402C]">Total à payer</span>
-                        <span className="font-mono font-bold text-[#17402C]">{grandTotal.toFixed(0)} €</span>
+                        <span className="text-xl text-[var(--lkv-primary)]">Total à payer</span>
+                        <span className="font-mono font-bold text-[var(--lkv-primary)]">{grandTotal.toFixed(0)} €</span>
                       </div>
 
                       <Link href="/checkout" className="block w-full mb-4">
@@ -300,7 +300,7 @@ export default function PanierPage() {
                           Passer au paiement →
                         </LkvButton>
                       </Link>
-                      <p className="text-center text-[10px] text-[#5A7064] flex items-center justify-center gap-1.5 mb-8">
+                      <p className="text-center text-[10px] text-[var(--lkv-text-muted)] flex items-center justify-center gap-1.5 mb-8">
                         <Icon name="LockClosedIcon" size={12} /> Paiement sécurisé Stripe
                       </p>
 
@@ -312,7 +312,7 @@ export default function PanierPage() {
                         <div className="glass-pill px-3 py-1.5 text-[10px] font-600 font-mono">Apple Pay</div>
                       </div>
 
-                      <div className="glass-sub-card rounded-md p-4 flex justify-between gap-2 text-center text-[10px] font-600 text-[#5A7064]" style={{ boxShadow: 'none' }}>
+                      <div className="glass-sub-card rounded-md p-4 flex justify-between gap-2 text-center text-[10px] font-600 text-[var(--lkv-text-muted)]" style={{ boxShadow: 'none' }}>
                         <div className="flex flex-col items-center gap-2 flex-1">
                           <Icon name="StarIcon" size={16} /> Garantie à vie
                         </div>
@@ -337,11 +337,11 @@ export default function PanierPage() {
 
       {/* ── MOBILE VIEW (scroll natif) ── */}
       <div className="block md:hidden">
-        <MobilePageShell background="#EEF3EC">
+        <MobilePageShell background="var(--lkv-surface-muted)">
           {items.length === 0 ? (
             <div style={{ padding: '60px 20px', textAlign: 'center' }}>
-              <div style={{ fontSize: '22px', fontWeight: 500, color: '#17402C', marginBottom: '8px' }}>
-                Votre <em style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic', color: '#17402C', fontWeight: 400 }}>panier</em> est vide
+              <div style={{ fontSize: '22px', fontWeight: 500, color: 'var(--lkv-primary)', marginBottom: '8px' }}>
+                Votre <em style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic', color: 'var(--lkv-primary)', fontWeight: 400 }}>panier</em> est vide
               </div>
               <Link href="/boutique" className="glass-capsule-btn" style={{ marginTop: '16px', textDecoration: 'none' }}>
                 Voir le catalogue
@@ -351,11 +351,11 @@ export default function PanierPage() {
             <>
               {/* Cart header */}
               <div style={{ padding: '12px 16px 16px', borderBottom: '1px solid rgba(23,64,44,0.05)' }}>
-                <h1 style={{ fontSize: '28px', letterSpacing: '-0.025em', margin: 0, color: '#17402C' }}>
+                <h1 style={{ fontSize: '28px', letterSpacing: '-0.025em', margin: 0, color: 'var(--lkv-primary)' }}>
                   {totalItems} pièce{totalItems > 1 ? 's' : ''}<br/>
-                  <em style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic', color: '#17402C', fontWeight: 400 }}>prêtes à partir.</em>
+                  <em style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic', color: 'var(--lkv-primary)', fontWeight: 400 }}>prêtes à partir.</em>
                 </h1>
-                <div style={{ fontSize: '12px', color: '#5A7064', fontFamily: 'ui-monospace, monospace', marginTop: '2px' }}>
+                <div style={{ fontSize: '12px', color: 'var(--lkv-text-muted)', fontFamily: 'ui-monospace, monospace', marginTop: '2px' }}>
                   MSA-CH-2026-047 · panier ouvert
                 </div>
               </div>
@@ -364,30 +364,30 @@ export default function PanierPage() {
               {items.map((item) => (
                 <div key={item.id} style={{ display: 'flex', gap: '12px', padding: '16px', borderBottom: '1px solid rgba(23,64,44,0.05)' }}>
                   <Link href={`/produit/${item.slug}`} aria-label={item.name} style={{ textDecoration: 'none' }}>
-                    <div style={{ width: '76px', height: '92px', borderRadius: '12px', background: 'linear-gradient(135deg, #17402C 0%, #5B7F55 100%)', flexShrink: 0, overflow: 'hidden' }}>
+                    <div style={{ width: '76px', height: '92px', borderRadius: '12px', background: 'linear-gradient(135deg, var(--lkv-primary) 0%, var(--lkv-secondary) 100%)', flexShrink: 0, overflow: 'hidden' }}>
                       {item.image ? <img src={item.image} alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'cover', mixBlendMode: 'multiply' }} /> : null}
                     </div>
                   </Link>
                   <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                     <div>
-                      <div style={{ fontSize: '10px', color: '#5A7064', fontFamily: 'ui-monospace, monospace', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                      <div style={{ fontSize: '10px', color: 'var(--lkv-text-muted)', fontFamily: 'ui-monospace, monospace', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                         {item.category || 'PORTAGE'}
                       </div>
                       <Link href={`/produit/${item.slug}`} style={{ textDecoration: 'none' }}>
-                        <div style={{ fontSize: '14px', fontWeight: 500, color: '#17402C', marginTop: '2px' }}>
+                        <div style={{ fontSize: '14px', fontWeight: 500, color: 'var(--lkv-primary)', marginTop: '2px' }}>
                           {item.name}
                         </div>
                       </Link>
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '3px 6px', background: '#EEF3EC', borderRadius: '999px', border: '1px solid rgba(23,64,44,0.06)' }}>
-                        <button onClick={() => handleQuantity(item.id, Math.max(1, item.quantity - 1))} aria-label="Diminuer la quantité" style={{ width: '32px', height: '32px', borderRadius: '999px', background: '#EEF3EC', border: '1px solid rgba(23,64,44,0.08)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '15px', fontWeight: 600, color: '#17402C', fontFamily: 'inherit' }}>−</button>
-                        <span style={{ minWidth: '22px', textAlign: 'center', fontSize: '14px', fontWeight: 600, fontFamily: 'ui-monospace, monospace', color: '#17402C' }}>{item.quantity}</span>
-                        <button onClick={() => handleQuantity(item.id, item.quantity + 1)} aria-label="Augmenter la quantité" style={{ width: '32px', height: '32px', borderRadius: '999px', background: '#EEF3EC', border: '1px solid rgba(23,64,44,0.08)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '15px', fontWeight: 600, color: '#17402C', fontFamily: 'inherit' }}>+</button>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '3px 6px', background: 'var(--lkv-surface-muted)', borderRadius: '999px', border: '1px solid rgba(23,64,44,0.06)' }}>
+                        <button onClick={() => handleQuantity(item.id, Math.max(1, item.quantity - 1))} aria-label="Diminuer la quantité" style={{ width: '32px', height: '32px', borderRadius: '999px', background: 'var(--lkv-surface-muted)', border: '1px solid rgba(23,64,44,0.08)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '15px', fontWeight: 600, color: 'var(--lkv-primary)', fontFamily: 'inherit' }}>−</button>
+                        <span style={{ minWidth: '22px', textAlign: 'center', fontSize: '14px', fontWeight: 600, fontFamily: 'ui-monospace, monospace', color: 'var(--lkv-primary)' }}>{item.quantity}</span>
+                        <button onClick={() => handleQuantity(item.id, item.quantity + 1)} aria-label="Augmenter la quantité" style={{ width: '32px', height: '32px', borderRadius: '999px', background: 'var(--lkv-surface-muted)', border: '1px solid rgba(23,64,44,0.08)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '15px', fontWeight: 600, color: 'var(--lkv-primary)', fontFamily: 'inherit' }}>+</button>
                       </div>
                       <div style={{ textAlign: 'right' }}>
-                        <div style={{ fontSize: '15px', fontWeight: 700, fontFamily: 'ui-monospace, monospace', color: '#17402C' }}>{(item.priceEur * item.quantity).toFixed(0)} €</div>
-                        <button onClick={() => handleRemoveRequest(item.id)} style={{ fontSize: '11px', color: '#5A7064', background: 'none', border: 'none', cursor: 'pointer', padding: '4px 0', fontFamily: 'inherit' }}>Retirer</button>
+                        <div style={{ fontSize: '15px', fontWeight: 700, fontFamily: 'ui-monospace, monospace', color: 'var(--lkv-primary)' }}>{(item.priceEur * item.quantity).toFixed(0)} €</div>
+                        <button onClick={() => handleRemoveRequest(item.id)} style={{ fontSize: '11px', color: 'var(--lkv-text-muted)', background: 'none', border: 'none', cursor: 'pointer', padding: '4px 0', fontFamily: 'inherit' }}>Retirer</button>
                       </div>
                     </div>
                   </div>
@@ -395,30 +395,30 @@ export default function PanierPage() {
               ))}
 
               {/* Promo banner */}
-              <div className="glass-sub-card" style={{ margin: '16px', padding: '12px 16px', borderRadius: '14px', border: '1.5px dashed #A6C1A0', boxShadow: 'none' }}>
+              <div className="glass-sub-card" style={{ margin: '16px', padding: '12px 16px', borderRadius: '14px', border: '1.5px dashed var(--lkv-secondary-subtle)', boxShadow: 'none' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div>
-                    <div style={{ fontSize: '10px', fontFamily: 'ui-monospace, monospace', textTransform: 'uppercase', letterSpacing: '0.05em', color: '#5A7064' }}>Code promo</div>
-                    <div style={{ fontSize: '13px', fontWeight: 500, color: '#17402C', marginTop: '2px' }}>BIENVENUE10</div>
+                    <div style={{ fontSize: '10px', fontFamily: 'ui-monospace, monospace', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--lkv-text-muted)' }}>Code promo</div>
+                    <div style={{ fontSize: '13px', fontWeight: 500, color: 'var(--lkv-primary)', marginTop: '2px' }}>BIENVENUE10</div>
                   </div>
-                  <button style={{ fontSize: '12px', fontWeight: 500, color: '#17402C', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}>Appliquer →</button>
+                  <button style={{ fontSize: '12px', fontWeight: 500, color: 'var(--lkv-primary)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}>Appliquer →</button>
                 </div>
               </div>
 
               {/* Summary card */}
               <div className="glass" style={{ margin: '0 16px', padding: '16px', borderRadius: '16px', boxShadow: 'none' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                  <span style={{ fontSize: '13px', color: '#5A7064' }}>Sous-total</span>
-                  <span style={{ fontSize: '13px', fontWeight: 700, fontFamily: 'ui-monospace, monospace', color: '#17402C' }}>{totalPriceEur.toFixed(0)} €</span>
+                  <span style={{ fontSize: '13px', color: 'var(--lkv-text-muted)' }}>Sous-total</span>
+                  <span style={{ fontSize: '13px', fontWeight: 700, fontFamily: 'ui-monospace, monospace', color: 'var(--lkv-primary)' }}>{totalPriceEur.toFixed(0)} €</span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                  <span style={{ fontSize: '13px', color: '#5A7064' }}>Livraison</span>
-                  <span style={{ fontSize: '13px', fontWeight: 700, fontFamily: 'ui-monospace, monospace', color: '#17402C' }}>{shippingEur === 0 ? 'Offerte' : `${shippingEur.toFixed(2)} €`}</span>
+                  <span style={{ fontSize: '13px', color: 'var(--lkv-text-muted)' }}>Livraison</span>
+                  <span style={{ fontSize: '13px', fontWeight: 700, fontFamily: 'ui-monospace, monospace', color: 'var(--lkv-primary)' }}>{shippingEur === 0 ? 'Offerte' : `${shippingEur.toFixed(2)} €`}</span>
                 </div>
                 <div style={{ height: '1px', background: 'rgba(23,64,44,0.08)', margin: '12px 0' }} />
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span style={{ fontSize: '16px', fontWeight: 700, color: '#17402C' }}>Total</span>
-                  <span style={{ fontSize: '16px', fontWeight: 700, fontFamily: 'ui-monospace, monospace', color: '#17402C' }}>{grandTotal.toFixed(0)} €</span>
+                  <span style={{ fontSize: '16px', fontWeight: 700, color: 'var(--lkv-primary)' }}>Total</span>
+                  <span style={{ fontSize: '16px', fontWeight: 700, fontFamily: 'ui-monospace, monospace', color: 'var(--lkv-primary)' }}>{grandTotal.toFixed(0)} €</span>
                 </div>
               </div>
 

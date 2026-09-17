@@ -152,21 +152,21 @@ function MakeOfferModal({ item, onClose }: { item: OccasionItem; onClose: () => 
         {!sent ? (
           <>
             <div className="flex items-center justify-between mb-5">
-              <h3 className="font-display font-bold text-foreground text-lg text-[#17402C]">Faire une offre</h3>
+              <h3 className="font-display font-bold text-foreground text-lg text-[var(--lkv-primary)]">Faire une offre</h3>
               <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-white/40 transition-colors"><Icon name="XMarkIcon" size={18} /></button>
             </div>
             <div className="glass-sub-card rounded-xl p-3 mb-4">
-              <p className="text-xs text-[#5A7064] mb-0.5">Article</p>
-              <p className="text-sm font-semibold text-[#17402C]">{item.title}</p>
-              <p className="text-sm text-[#5B7F55] font-bold">{item.price} € (prix affiché)</p>
+              <p className="text-xs text-[var(--lkv-text-muted)] mb-0.5">Article</p>
+              <p className="text-sm font-semibold text-[var(--lkv-primary)]">{item.title}</p>
+              <p className="text-sm text-[var(--lkv-secondary)] font-bold">{item.price} € (prix affiché)</p>
             </div>
             <div className="mb-4">
-              <label className="block text-xs font-medium text-[#5A7064] mb-1">Votre offre (€)</label>
+              <label className="block text-xs font-medium text-[var(--lkv-text-muted)] mb-1">Votre offre (€)</label>
               <input
                 type="number" min={1} value={amount} onChange={(e) => setAmount(e.target.value)}
                 className="glass-input w-full text-lg font-bold"
               />
-              <p className="text-xs text-[#5A7064] mt-1">
+              <p className="text-xs text-[var(--lkv-text-muted)] mt-1">
                 Le vendeur pourra accepter ou refuser votre offre en 1 tap.
               </p>
             </div>
@@ -179,11 +179,11 @@ function MakeOfferModal({ item, onClose }: { item: OccasionItem; onClose: () => 
           </>
         ) : (
           <div className="text-center py-6">
-            <div className="w-16 h-16 rounded-full bg-[#E1EBDE] flex items-center justify-center mx-auto mb-4">
-              <Icon name="CheckIcon" size={28} className="text-[#5B7F55]" />
+            <div className="w-16 h-16 rounded-full bg-[var(--lkv-surface-muted)] flex items-center justify-center mx-auto mb-4">
+              <Icon name="CheckIcon" size={28} className="text-[var(--lkv-secondary)]" />
             </div>
-            <h3 className="font-display font-bold text-lg text-[#17402C] mb-2">Offre envoyée !</h3>
-            <p className="text-sm text-[#5A7064] mb-6">Le vendeur vous répondra rapidement.</p>
+            <h3 className="font-display font-bold text-lg text-[var(--lkv-primary)] mb-2">Offre envoyée !</h3>
+            <p className="text-sm text-[var(--lkv-text-muted)] mb-6">Le vendeur vous répondra rapidement.</p>
             <button onClick={onClose} className="glass-capsule-btn primary justify-center px-8 py-3">Fermer</button>
           </div>
         )}
@@ -204,17 +204,17 @@ function ContactModal({ item, onClose }: { item: OccasionItem; onClose: () => vo
           <>
             <div className="flex items-center justify-between mb-5">
               <div>
-                <h3 className="font-display font-bold text-lg text-[#17402C]">Contacter le vendeur</h3>
-                <p className="text-sm text-[#5A7064]">{item.seller}</p>
+                <h3 className="font-display font-bold text-lg text-[var(--lkv-primary)]">Contacter le vendeur</h3>
+                <p className="text-sm text-[var(--lkv-text-muted)]">{item.seller}</p>
               </div>
               <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-white/40 transition-colors"><Icon name="XMarkIcon" size={18} /></button>
             </div>
             <div className="glass-sub-card rounded-xl border-white/40 p-3 mb-4">
-              <p className="text-xs font-semibold text-[#5A7064] mb-1">Annonce</p>
-              <p className="text-sm font-semibold text-[#17402C]">{item.title}</p>
-              <p className="text-sm text-[#5B7F55] font-bold">{item.price}€</p>
+              <p className="text-xs font-semibold text-[var(--lkv-text-muted)] mb-1">Annonce</p>
+              <p className="text-sm font-semibold text-[var(--lkv-primary)]">{item.title}</p>
+              <p className="text-sm text-[var(--lkv-secondary)] font-bold">{item.price}€</p>
             </div>
-            <label className="text-xs font-semibold text-[#5A7064] uppercase tracking-wider block mb-1.5">Votre message</label>
+            <label className="text-xs font-semibold text-[var(--lkv-text-muted)] uppercase tracking-wider block mb-1.5">Votre message</label>
             <textarea className="glass-input resize-none w-full" rows={4} value={message} onChange={(e) => setMessage(e.target.value)} />
             <div className="flex gap-3 mt-4">
               <button onClick={onClose} className="glass-capsule-btn secondary flex-1 justify-center py-3">Annuler</button>
@@ -225,11 +225,11 @@ function ContactModal({ item, onClose }: { item: OccasionItem; onClose: () => vo
           </>
         ) : (
           <div className="text-center py-6">
-            <div className="w-16 h-16 rounded-full bg-[#E1EBDE] flex items-center justify-center mx-auto mb-4">
-              <Icon name="CheckIcon" size={28} className="text-[#5B7F55]" />
+            <div className="w-16 h-16 rounded-full bg-[var(--lkv-surface-muted)] flex items-center justify-center mx-auto mb-4">
+              <Icon name="CheckIcon" size={28} className="text-[var(--lkv-secondary)]" />
             </div>
-            <h3 className="font-display font-bold text-lg text-[#17402C] mb-2">Message envoyé !</h3>
-            <p className="text-sm text-[#5A7064] mb-6">{item.seller.split(' ')[0]} vous répondra par email.</p>
+            <h3 className="font-display font-bold text-lg text-[var(--lkv-primary)] mb-2">Message envoyé !</h3>
+            <p className="text-sm text-[var(--lkv-text-muted)] mb-6">{item.seller.split(' ')[0]} vous répondra par email.</p>
             <button onClick={onClose} className="glass-capsule-btn primary justify-center px-8 py-3">Fermer</button>
           </div>
         )}
@@ -305,7 +305,7 @@ function ItemDetailModal({ item, onClose }: { item: OccasionItem; onClose: () =>
       <div className="fixed inset-0 z-40 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4" onClick={onClose}>
         <div className="bg-[rgba(255,255,255,0.92)] border border-[rgba(255,255,255,0.60)] rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
           <div className="flex items-center justify-between p-5 border-b border-white/40 sticky top-0 bg-[rgba(255,255,255,0.85)] backdrop-blur-xl z-10">
-            <h2 className="font-display font-bold text-base text-[#17402C] line-clamp-1">{item.title}</h2>
+            <h2 className="font-display font-bold text-base text-[var(--lkv-primary)] line-clamp-1">{item.title}</h2>
             <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-white/40 transition-colors flex-shrink-0"><Icon name="XMarkIcon" size={18} /></button>
           </div>
 
@@ -342,10 +342,10 @@ function ItemDetailModal({ item, onClose }: { item: OccasionItem; onClose: () =>
             <div className="flex items-center justify-between">
               <div>
                 <div className="flex items-baseline gap-2">
-                  <span className="font-mono font-bold text-3xl text-[#17402C]">{item.price}€</span>
-                  {item.originalPrice > 0 && <span className="text-[#5A7064] line-through text-sm">{item.originalPrice}€</span>}
+                  <span className="font-mono font-bold text-3xl text-[var(--lkv-primary)]">{item.price}€</span>
+                  {item.originalPrice > 0 && <span className="text-[var(--lkv-text-muted)] line-through text-sm">{item.originalPrice}€</span>}
                 </div>
-                {item.negotiable && <p className="text-xs text-[#5B7F55] mt-0.5">Prix négociable — offres acceptées</p>}
+                {item.negotiable && <p className="text-xs text-[var(--lkv-secondary)] mt-0.5">Prix négociable — offres acceptées</p>}
               </div>
               <div className="flex gap-2">
                 {item.negotiable && (
@@ -370,8 +370,8 @@ function ItemDetailModal({ item, onClose }: { item: OccasionItem; onClose: () =>
             )}
 
             <div>
-              <h3 className="font-semibold text-[#17402C] mb-2 text-sm">Description</h3>
-              <p className="text-sm text-[#5A7064] leading-relaxed">{item.description}</p>
+              <h3 className="font-semibold text-[var(--lkv-primary)] mb-2 text-sm">Description</h3>
+              <p className="text-sm text-[var(--lkv-text-muted)] leading-relaxed">{item.description}</p>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
@@ -384,25 +384,25 @@ function ItemDetailModal({ item, onClose }: { item: OccasionItem; onClose: () =>
                 { label: 'Localisation', value: item.location },
               ].filter((d) => d.value).map((detail) => (
                 <div key={detail.label} className="glass-sub-card rounded-xl p-3">
-                  <p className="text-[10px] text-[#5A7064] mb-0.5">{detail.label}</p>
-                  <p className="text-sm font-medium text-[#17402C]">{detail.value}</p>
+                  <p className="text-[10px] text-[var(--lkv-text-muted)] mb-0.5">{detail.label}</p>
+                  <p className="text-sm font-medium text-[var(--lkv-primary)]">{detail.value}</p>
                 </div>
               ))}
             </div>
 
             <div className="glass-sub-card rounded-xl p-4">
-              <h3 className="font-semibold text-[#17402C] mb-3 text-sm">Vendeur</h3>
+              <h3 className="font-semibold text-[var(--lkv-primary)] mb-3 text-sm">Vendeur</h3>
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-sage-500/20 text-[#5B7F55] flex items-center justify-center font-bold text-sm flex-shrink-0">
+                <div className="w-10 h-10 rounded-full bg-sage-500/20 text-[var(--lkv-secondary)] flex items-center justify-center font-bold text-sm flex-shrink-0">
                   {item.sellerAvatar}
                 </div>
                 <div className="flex-1">
-                  <p className="font-medium text-[#17402C] text-sm">{item.seller}</p>
-                  <p className="text-xs text-[#5A7064]">{item.sellerSales} ventes · {item.location}</p>
+                  <p className="font-medium text-[var(--lkv-primary)] text-sm">{item.seller}</p>
+                  <p className="text-xs text-[var(--lkv-text-muted)]">{item.sellerSales} ventes · {item.location}</p>
                 </div>
                 <div className="text-right">
-                  <p className="font-bold text-[#17402C] text-sm">{item.sellerTrustScore}%</p>
-                  <p className="text-[10px] text-[#5A7064]">Fiabilité</p>
+                  <p className="font-bold text-[var(--lkv-primary)] text-sm">{item.sellerTrustScore}%</p>
+                  <p className="text-[10px] text-[var(--lkv-text-muted)]">Fiabilité</p>
                 </div>
               </div>
             </div>
@@ -412,16 +412,16 @@ function ItemDetailModal({ item, onClose }: { item: OccasionItem; onClose: () =>
               <div className="glass-sub-card rounded-xl p-4 border-[rgba(91,127,85,0.35)] bg-[rgba(91,127,85,0.12)]">
                 {receiptConfirmed ? (
                   <div className="flex items-center gap-3">
-                    <Icon name="CheckCircleIcon" size={20} variant="outline" className="text-[#5B7F55] flex-shrink-0" />
+                    <Icon name="CheckCircleIcon" size={20} variant="outline" className="text-[var(--lkv-secondary)] flex-shrink-0" />
                     <div>
-                      <p className="font-semibold text-[#365233] text-sm">Réception confirmée !</p>
-                      <p className="text-xs text-[#365233]/80">L&apos;article a été ajouté à votre inventaire. Le vendeur sera payé dans 48h.</p>
+                      <p className="font-semibold text-[var(--lkv-forest-600)] text-sm">Réception confirmée !</p>
+                      <p className="text-xs text-[var(--lkv-forest-600)]/80">L&apos;article a été ajouté à votre inventaire. Le vendeur sera payé dans 48h.</p>
                     </div>
                   </div>
                 ) : (
                   <div>
-                    <p className="font-semibold text-[#365233] text-sm mb-1">Avez-vous reçu cet article ?</p>
-                    <p className="text-xs text-[#365233]/80 mb-3">
+                    <p className="font-semibold text-[var(--lkv-forest-600)] text-sm mb-1">Avez-vous reçu cet article ?</p>
+                    <p className="text-xs text-[var(--lkv-forest-600)]/80 mb-3">
                       En confirmant la réception, l&apos;article sera ajouté à votre inventaire et le vendeur sera payé dans 48h.
                     </p>
                     <button
