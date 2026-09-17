@@ -1,0 +1,1773 @@
+﻿node.exe : npm notice run kitduvoyageur@0.1.0 prebuild
+Au caractère Ligne:1 : 1
++ & "C:\Program Files\nodejs/node.exe" "C:\Users\Tony\.npm-global/node_ ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (npm notice run ...@0.1.0 prebuild:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+npm notice run node scripts/icons/build-sprite.mjs && node scripts/atlas/copy-maplibre-worker.mjs
+✓ 157 glyphes SF-style générés dans public/icons/sf/
+✓ Manifest : src\components\ui\Icon\registry.generated.ts
+[atlas:worker] maplibre-gl-worker.mjs déjà à jour (18592 octets)
+[atlas:worker] maplibre-gl-shared.mjs déjà à jour (482036 octets)
+npm notice run kitduvoyageur@0.1.0 build
+npm notice run next build
+   ▲ Next.js 15.5.25
+   - Environments: .env.local, .env
+   - Experiments (use with caution):
+     · optimizePackageImports
+
+   Creating an optimized production build ...
+ ✓ Compiled successfully in 28.7s
+   Linting and checking validity of types ...
+
+./src/app/abonnements/page.tsx
+6:1  Warning: '@/components/mobile-nav/MobilePageShell' import is restricted from being used. [LKDV Shell] Pour les nouvelles pages, utiliser AppShell (@/components/shell). MobilePageShell reste supporté pour les pages existantes.  no-restricted-imports
+
+./src/app/admin/page.tsx
+9:1  Warning: '@/components/mobile-nav/MobilePageShell' import is restricted from being used. [LKDV Shell] Pour les nouvelles pages, utiliser AppShell (@/components/shell). MobilePageShell reste supporté pour les pages existantes.  no-restricted-imports
+50:7  Warning: 'ORDERS_DATA' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+355:108  Warning: 'e' is defined but never used. Allowed unused caught errors must match /^_/u.  @typescript-eslint/no-unused-vars
+355:110  Warning: Empty block statement.  no-empty
+949:18  Warning: 'setConfig' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+950:24  Warning: 'setActivePeriod' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+953:10  Warning: 'loading' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+996:6  Warning: React Hook useEffect has a missing dependency: 'loadData'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+1700:33  Warning: [LKDV Shell] Éviter env(safe-area-inset-bottom) directement. Utiliser AppShell ou la CSS var --bottom-nav-height. Si inévitable, ajouter // lkdv-safe-area-ok sur la ligne.  no-restricted-syntax
+
+./src/app/admin/produits/AdminProductsManager.tsx
+3:60  Warning: 'useRef' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+196:10  Warning: 'bulkTagVal' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+196:22  Warning: 'setBulkTagVal' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+227:10  Warning: 'newSubCatName' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+227:25  Warning: 'setNewSubCatName' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+228:10  Warning: 'selectedParentCat' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+228:29  Warning: 'setSelectedParentCat' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+458:16  Warning: 'e' is defined but never used. Allowed unused caught errors must match /^_/u.  @typescript-eslint/no-unused-vars
+470:16  Warning: 'e' is defined but never used. Allowed unused caught errors must match /^_/u.  @typescript-eslint/no-unused-vars
+482:16  Warning: 'e' is defined but never used. Allowed unused caught errors must match /^_/u.  @typescript-eslint/no-unused-vars
+652:15  Warning: 'id' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+652:19  Warning: 'created_at' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+652:31  Warning: 'updated_at' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+1307:35  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+1779:48  Warning: 'idx' is defined but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+1786:27  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/app/ai-configurator/components/ConfiguratorWizard.tsx
+8:10  Warning: 'Metric' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+512:9  Warning: Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-explicit-any').
+
+./src/app/ai-configurator/components/KitConfiguratorWizard.tsx
+195:3  Warning: 'isMobile' is assigned a value but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+464:17  Warning: Empty block statement.  no-empty
+974:28  Warning: [LKDV Shell] Éviter env(safe-area-inset-bottom) directement. Utiliser AppShell ou la CSS var --bottom-nav-height. Si inévitable, ajouter // lkdv-safe-area-ok sur la ligne.  no-restricted-syntax
+
+./src/app/ai-configurator/page.tsx
+3:1  Warning: '@/components/mobile-nav/MobilePageShell' import is restricted from being used. [LKDV Shell] Pour les nouvelles pages, utiliser AppShell (@/components/shell). MobilePageShell reste supporté pour les pages existantes.  no-restricted-imports
+
+./src/app/ambassadeurs/page.tsx
+3:27  Warning: 'useEffect' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+3:38  Warning: 'useCallback' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+3:51  Warning: 'useMemo' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+7:10  Warning: 'createClient' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+13:10  Warning: 'applyOpen' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+14:11  Warning: 'user' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./src/app/api/cron/process-ai-jobs/route.ts
+10:3  Warning: 'buildNarrativeFallback' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./src/app/api/dev/generate-country-blocks/route.ts
+7:3  Warning: 'SafetyCriticalBlockType' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./src/app/api/hikes/[id]/route.ts
+27:39  Warning: 'geojsonError' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./src/app/api/materiel/calendar/route.ts
+1:10  Warning: 'NextRequest' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./src/app/api/notifications/digest/route.ts
+30:28  Warning: 'req' is defined but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+34:27  Warning: 'req' is defined but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+54:14  Warning: 'triggerErr' is defined but never used. Allowed unused caught errors must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./src/app/api/notifications/process/route.ts
+44:28  Warning: 'req' is defined but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+106:15  Warning: Unexpected console statement. Only these console methods are allowed: warn, error, info.  no-console
+185:15  Warning: Unexpected console statement. Only these console methods are allowed: warn, error, info.  no-console
+
+./src/app/api/notifications/vapid/route.ts
+10:27  Warning: 'req' is defined but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./src/app/avis/page.tsx
+12:1  Warning: '@/components/mobile-nav/MobilePageShell' import is restricted from being used. [LKDV Shell] Pour les nouvelles pages, utiliser AppShell (@/components/shell). MobilePageShell reste supporté pour les pages existantes.  no-restricted-imports
+
+./src/app/blog/BlogClient.tsx
+7:1  Warning: '@/components/mobile-nav/MobilePageShell' import is restricted from being used. [LKDV Shell] Pour les nouvelles pages, utiliser AppShell (@/components/shell). MobilePageShell reste supporté pour les pages existantes.  no-restricted-imports
+113:15  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+151:13  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/app/boutique/page.tsx
+5:1  Warning: '@/components/mobile-nav/MobilePageShell' import is restricted from being used. [LKDV Shell] Pour les nouvelles pages, utiliser AppShell (@/components/shell). MobilePageShell reste supporté pour les pages existantes.  no-restricted-imports
+
+./src/app/carbone/page.tsx
+7:1  Warning: '@/components/mobile-nav/MobilePageShell' import is restricted from being used. [LKDV Shell] Pour les nouvelles pages, utiliser AppShell (@/components/shell). MobilePageShell reste supporté pour les pages existantes.  no-restricted-imports
+18:7  Warning: 'ECO_GEAR' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+26:26  Warning: 'setSelectedOffset' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+39:9  Warning: 'chartData' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./src/app/carnets/page.tsx
+8:8  Warning: 'BackButton' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+9:10  Warning: 'BackgroundVideo' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+10:8  Warning: 'CommunityHubNav' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+19:1  Warning: '@/components/mobile-nav/MobilePageShell' import is restricted from being used. [LKDV Shell] Pour les nouvelles pages, utiliser AppShell (@/components/shell). MobilePageShell reste supporté pour les pages existantes.  no-restricted-imports
+129:3  Warning: Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-explicit-any').
+633:10  Warning: 'CarnetCard' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+809:10  Warning: 'error' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+1153:39  Warning: 'liked' is defined but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+1157:39  Warning: 'saved' is defined but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./src/app/carnets/[id]/error.tsx
+7:3  Warning: 'error' is defined but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./src/app/carnets/[id]/page.tsx
+2:10  Warning: 'notFound' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+37:3  Warning: 'parent' is defined but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./src/app/carte-interactive/page.tsx
+3:1  Warning: '@/components/mobile-nav/MobilePageShell' import is restricted from being used. [LKDV Shell] Pour les nouvelles pages, utiliser AppShell (@/components/shell). MobilePageShell reste supporté pour les pages existantes.  no-restricted-imports
+
+./src/app/cgu/page.tsx
+5:1  Warning: '@/components/mobile-nav/MobilePageShell' import is restricted from being used. [LKDV Shell] Pour les nouvelles pages, utiliser AppShell (@/components/shell). MobilePageShell reste supporté pour les pages existantes.  no-restricted-imports
+
+./src/app/cgv/page.tsx
+5:1  Warning: '@/components/mobile-nav/MobilePageShell' import is restricted from being used. [LKDV Shell] Pour les nouvelles pages, utiliser AppShell (@/components/shell). MobilePageShell reste supporté pour les pages existantes.  no-restricted-imports
+
+./src/app/checkout/error.tsx
+28:17  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+41:23  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+
+./src/app/checkout/page.tsx
+12:1  Warning: '@/components/mobile-nav/MobilePageShell' import is restricted from being used. [LKDV Shell] Pour les nouvelles pages, utiliser AppShell (@/components/shell). MobilePageShell reste supporté pour les pages existantes.  no-restricted-imports
+22:10  Warning: 'paymentMethod' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+22:25  Warning: 'setPaymentMethod' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+25:10  Warning: 'stripeConfigured' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+115:9  Warning: 'handleVirementSubmit' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+272:9  Warning: 'steps' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+278:9  Warning: 'PAYMENT_METHODS' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+439:127  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+581:95  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+648:193  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+648:197  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+688:110  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+
+./src/app/clubs/nouveau/page.tsx
+1:1  Warning: '@/components/mobile-nav/MobilePageShell' import is restricted from being used. [LKDV Shell] Pour les nouvelles pages, utiliser AppShell (@/components/shell). MobilePageShell reste supporté pour les pages existantes.  no-restricted-imports
+
+./src/app/clubs/page.tsx
+7:1  Warning: '@/components/mobile-nav/MobilePageShell' import is restricted from being used. [LKDV Shell] Pour les nouvelles pages, utiliser AppShell (@/components/shell). MobilePageShell reste supporté pour les pages existantes.  no-restricted-imports
+9:8  Warning: 'CompteBackground' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+143:3  Warning: Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-explicit-any').
+839:3  Warning: 'onOpenDetail' is defined but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+958:9  Warning: 'router' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./src/app/clubs/[id]/page.tsx
+7:1  Warning: '@/components/mobile-nav/MobilePageShell' import is restricted from being used. [LKDV Shell] Pour les nouvelles pages, utiliser AppShell (@/components/shell). MobilePageShell reste supporté pour les pages existantes.  no-restricted-imports
+10:8  Warning: 'CommunityHubNav' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+11:8  Warning: 'SocialActions' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+13:8  Warning: 'MoreMenuSheet' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+100:26  Warning: 'setCreatePostType' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+106:10  Warning: 'selectedEventId' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+108:10  Warning: 'replyingToTopic' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+108:27  Warning: 'setReplyingToTopic' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+109:10  Warning: 'replyContent' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+109:24  Warning: 'setReplyContent' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+110:10  Warning: 'topicReplies' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+110:24  Warning: 'setTopicReplies' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+248:6  Warning: React Hook useEffect has a missing dependency: 'loadData'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+285:16  Warning: 'err' is defined but never used. Allowed unused caught errors must match /^_/u.  @typescript-eslint/no-unused-vars
+285:21  Warning: Empty block statement.  no-empty
+292:9  Warning: 'handleLikePost' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+308:9  Warning: 'handleOpenCommentsSheet' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+425:13  Warning: 'data' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+539:26  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+539:64  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+565:26  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+565:64  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+689:17  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+1026:29  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+
+./src/app/communaute/error.tsx
+28:17  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+41:23  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+
+./src/app/communaute/page.tsx
+18:1  Warning: '@/components/mobile-nav/MobilePageShell' import is restricted from being used. [LKDV Shell] Pour les nouvelles pages, utiliser AppShell (@/components/shell). MobilePageShell reste supporté pour les pages existantes.  no-restricted-imports
+425:31  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/app/communaute/publier/page.tsx
+7:1  Warning: '@/components/mobile-nav/MobilePageShell' import is restricted from being used. [LKDV Shell] Pour les nouvelles pages, utiliser AppShell (@/components/shell). MobilePageShell reste supporté pour les pages existantes.  no-restricted-imports
+8:8  Warning: 'BackButton' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+590:25  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+632:29  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+773:25  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+791:25  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+973:21  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/app/communaute-pro/page.tsx
+6:8  Warning: 'Icon' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+7:1  Warning: '@/components/mobile-nav/MobilePageShell' import is restricted from being used. [LKDV Shell] Pour les nouvelles pages, utiliser AppShell (@/components/shell). MobilePageShell reste supporté pour les pages existantes.  no-restricted-imports
+
+./src/app/components/home/HomepageFeaturedProductsSection.tsx
+6:8  Warning: 'Icon' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./src/app/components/home/HomepageHeroSection.tsx
+3:27  Warning: 'useEffect' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./src/app/components/home/HomepageSocialProofSection.tsx
+38:54  Warning: 'stats' is defined but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+85:35  Warning: 'i' is defined but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./src/app/compte/error.tsx
+28:17  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+41:23  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+
+./src/app/compte/page.tsx
+23:1  Warning: '@/components/mobile-nav/MobilePageShell' import is restricted from being used. [LKDV Shell] Pour les nouvelles pages, utiliser AppShell (@/components/shell). MobilePageShell reste supporté pour les pages existantes.  no-restricted-imports
+67:30  Warning: 'updatedFields' is defined but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+101:115  Warning: 'inventaire' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./src/app/connexion/page.tsx
+6:8  Warning: 'Icon' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+7:8  Warning: 'Link' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+13:1  Warning: '@/components/mobile-nav/MobilePageShell' import is restricted from being used. [LKDV Shell] Pour les nouvelles pages, utiliser AppShell (@/components/shell). MobilePageShell reste supporté pour les pages existantes.  no-restricted-imports
+
+./src/app/contact/page.tsx
+5:8  Warning: 'Footer' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+7:1  Warning: '@/components/mobile-nav/MobilePageShell' import is restricted from being used. [LKDV Shell] Pour les nouvelles pages, utiliser AppShell (@/components/shell). MobilePageShell reste supporté pour les pages existantes.  no-restricted-imports
+
+./src/app/cookies/page.tsx
+7:1  Warning: '@/components/mobile-nav/MobilePageShell' import is restricted from being used. [LKDV Shell] Pour les nouvelles pages, utiliser AppShell (@/components/shell). MobilePageShell reste supporté pour les pages existantes.  no-restricted-imports
+
+./src/app/copilote/page.tsx
+6:8  Warning: 'Icon' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+8:1  Warning: '@/components/mobile-nav/MobilePageShell' import is restricted from being used. [LKDV Shell] Pour les nouvelles pages, utiliser AppShell (@/components/shell). MobilePageShell reste supporté pour les pages existantes.  no-restricted-imports
+22:10  Warning: 'activeTab' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+22:21  Warning: 'setActiveTab' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./src/app/createurs/page.tsx
+6:8  Warning: 'Icon' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+7:1  Warning: '@/components/mobile-nav/MobilePageShell' import is restricted from being used. [LKDV Shell] Pour les nouvelles pages, utiliser AppShell (@/components/shell). MobilePageShell reste supporté pour les pages existantes.  no-restricted-imports
+
+./src/app/entraide/page.tsx
+7:1  Warning: '@/components/mobile-nav/MobilePageShell' import is restricted from being used. [LKDV Shell] Pour les nouvelles pages, utiliser AppShell (@/components/shell). MobilePageShell reste supporté pour les pages existantes.  no-restricted-imports
+35:10  Warning: 'showNewRequest' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./src/app/evenements/page.tsx
+6:1  Warning: '@/components/mobile-nav/MobilePageShell' import is restricted from being used. [LKDV Shell] Pour les nouvelles pages, utiliser AppShell (@/components/shell). MobilePageShell reste supporté pour les pages existantes.  no-restricted-imports
+409:9  Warning: 'spotsLeft' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+427:9  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+790:33  Warning: [LKDV Shell] Éviter env(safe-area-inset-bottom) directement. Utiliser AppShell ou la CSS var --bottom-nav-height. Si inévitable, ajouter // lkdv-safe-area-ok sur la ligne.  no-restricted-syntax
+
+./src/app/experts/page.tsx
+3:27  Warning: 'useEffect' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+3:38  Warning: 'useCallback' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+3:51  Warning: 'useMemo' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+6:8  Warning: 'Icon' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+7:10  Warning: 'createClient' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+9:1  Warning: '@/components/mobile-nav/MobilePageShell' import is restricted from being used. [LKDV Shell] Pour les nouvelles pages, utiliser AppShell (@/components/shell). MobilePageShell reste supporté pour les pages existantes.  no-restricted-imports
+12:10  Warning: 'bookingOpen' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+12:23  Warning: 'setBookingOpen' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+13:11  Warning: 'user' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./src/app/explorer/error.tsx
+28:17  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+41:23  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+
+./src/app/explorer/loading.tsx
+48:19  Warning: [LKDV Shell] Éviter env(safe-area-inset-bottom) directement. Utiliser AppShell ou la CSS var --bottom-nav-height. Si inévitable, ajouter // lkdv-safe-area-ok sur la ligne.  no-restricted-syntax
+
+./src/app/faq/page.tsx
+6:8  Warning: 'Footer' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+8:1  Warning: '@/components/mobile-nav/MobilePageShell' import is restricted from being used. [LKDV Shell] Pour les nouvelles pages, utiliser AppShell (@/components/shell). MobilePageShell reste supporté pour les pages existantes.  no-restricted-imports
+21:7  Warning: 'siteUrl' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./src/app/feed/page.tsx
+7:8  Warning: 'Link' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+8:1  Warning: '@/components/mobile-nav/MobilePageShell' import is restricted from being used. [LKDV Shell] Pour les nouvelles pages, utiliser AppShell (@/components/shell). MobilePageShell reste supporté pour les pages existantes.  no-restricted-imports
+19:10  Warning: 'showNewJournal' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./src/app/fidelite/page.tsx
+6:1  Warning: '@/components/mobile-nav/MobilePageShell' import is restricted from being used. [LKDV Shell] Pour les nouvelles pages, utiliser AppShell (@/components/shell). MobilePageShell reste supporté pour les pages existantes.  no-restricted-imports
+341:27  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/app/global-error.tsx
+4:3  Warning: 'error' is defined but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+22:38  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+22:54  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+29:28  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+
+./src/app/guides/page.tsx
+4:1  Warning: '@/components/mobile-nav/MobilePageShell' import is restricted from being used. [LKDV Shell] Pour les nouvelles pages, utiliser AppShell (@/components/shell). MobilePageShell reste supporté pour les pages existantes.  no-restricted-imports
+
+./src/app/guides/[slug]/GuideDetailClient.tsx
+7:1  Warning: '@/components/mobile-nav/MobilePageShell' import is restricted from being used. [LKDV Shell] Pour les nouvelles pages, utiliser AppShell (@/components/shell). MobilePageShell reste supporté pour les pages existantes.  no-restricted-imports
+282:11  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/app/hors-ligne/page.tsx
+5:1  Warning: '@/components/mobile-nav/MobilePageShell' import is restricted from being used. [LKDV Shell] Pour les nouvelles pages, utiliser AppShell (@/components/shell). MobilePageShell reste supporté pour les pages existantes.  no-restricted-imports
+
+./src/app/hub/[section]/page.tsx
+23:10  Warning: 'SectionLoading' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./src/app/inscription/page.tsx
+11:1  Warning: '@/components/mobile-nav/MobilePageShell' import is restricted from being used. [LKDV Shell] Pour les nouvelles pages, utiliser AppShell (@/components/shell). MobilePageShell reste supporté pour les pages existantes.  no-restricted-imports
+
+./src/app/kits/page.tsx
+5:1  Warning: '@/components/mobile-nav/MobilePageShell' import is restricted from being used. [LKDV Shell] Pour les nouvelles pages, utiliser AppShell (@/components/shell). MobilePageShell reste supporté pour les pages existantes.  no-restricted-imports
+
+./src/app/kits/[slug]/KitDetailPage.tsx
+8:1  Warning: '@/components/mobile-nav/MobilePageShell' import is restricted from being used. [LKDV Shell] Pour les nouvelles pages, utiliser AppShell (@/components/shell). MobilePageShell reste supporté pour les pages existantes.  no-restricted-imports
+
+./src/app/location/page.tsx
+9:1  Warning: '@/components/mobile-nav/MobilePageShell' import is restricted from being used. [LKDV Shell] Pour les nouvelles pages, utiliser AppShell (@/components/shell). MobilePageShell reste supporté pour les pages existantes.  no-restricted-imports
+681:34  Warning: [LKDV Shell] Éviter env(safe-area-inset-bottom) directement. Utiliser AppShell ou la CSS var --bottom-nav-height. Si inévitable, ajouter // lkdv-safe-area-ok sur la ligne.  no-restricted-syntax
+799:25  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/app/manifeste/page.tsx
+5:1  Warning: '@/components/mobile-nav/MobilePageShell' import is restricted from being used. [LKDV Shell] Pour les nouvelles pages, utiliser AppShell (@/components/shell). MobilePageShell reste supporté pour les pages existantes.  no-restricted-imports
+
+./src/app/mentions-legales/page.tsx
+5:1  Warning: '@/components/mobile-nav/MobilePageShell' import is restricted from being used. [LKDV Shell] Pour les nouvelles pages, utiliser AppShell (@/components/shell). MobilePageShell reste supporté pour les pages existantes.  no-restricted-imports
+
+./src/app/messagerie/page.tsx
+5:1  Warning: '@/components/mobile-nav/MobilePageShell' import is restricted from being used. [LKDV Shell] Pour les nouvelles pages, utiliser AppShell (@/components/shell). MobilePageShell reste supporté pour les pages existantes.  no-restricted-imports
+
+./src/app/not-found.tsx
+7:1  Warning: '@/components/mobile-nav/MobilePageShell' import is restricted from being used. [LKDV Shell] Pour les nouvelles pages, utiliser AppShell (@/components/shell). MobilePageShell reste supporté pour les pages existantes.  no-restricted-imports
+18:9  Warning: 'router' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./src/app/nouveau-groupe/page.tsx
+9:8  Warning: 'CommunityHubNav' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+82:50  Warning: Empty block statement.  no-empty
+85:58  Warning: Empty block statement.  no-empty
+127:81  Warning: Empty block statement.  no-empty
+132:45  Warning: Empty block statement.  no-empty
+138:52  Warning: Empty block statement.  no-empty
+314:90  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+329:92  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+478:90  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+488:37  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+653:120  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+765:31  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+
+./src/app/occasion/page.tsx
+11:1  Warning: '@/components/mobile-nav/MobilePageShell' import is restricted from being used. [LKDV Shell] Pour les nouvelles pages, utiliser AppShell (@/components/shell). MobilePageShell reste supporté pour les pages existantes.  no-restricted-imports
+
+./src/app/outils/page.tsx
+6:1  Warning: '@/components/mobile-nav/MobilePageShell' import is restricted from being used. [LKDV Shell] Pour les nouvelles pages, utiliser AppShell (@/components/shell). MobilePageShell reste supporté pour les pages existantes.  no-restricted-imports
+
+./src/app/outils/[slug]/page.tsx
+8:1  Warning: '@/components/mobile-nav/MobilePageShell' import is restricted from being used. [LKDV Shell] Pour les nouvelles pages, utiliser AppShell (@/components/shell). MobilePageShell reste supporté pour les pages existantes.  no-restricted-imports
+
+./src/app/page.tsx
+55:112  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+130:67  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+130:139  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+222:170  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+254:19  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+270:19  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+286:74  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+326:103  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+332:108  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+335:144  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+
+./src/app/panier/page.tsx
+7:8  Warning: 'WeightGauge' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+13:1  Warning: '@/components/mobile-nav/MobilePageShell' import is restricted from being used. [LKDV Shell] Pour les nouvelles pages, utiliser AppShell (@/components/shell). MobilePageShell reste supporté pour les pages existantes.  no-restricted-imports
+22:10  Warning: 'applyingLoyalty' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+78:9  Warning: 'handleApplyLoyaltyFree' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+103:9  Warning: 'handleRemoveLoyaltyFree' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+120:52  Warning: 'savedEur' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+123:9  Warning: 'loyaltyDiscount' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+250:27  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+368:37  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/app/pays/loading.tsx
+40:26  Warning: [LKDV Shell] Éviter env(safe-area-inset-bottom) directement. Utiliser AppShell ou la CSS var --bottom-nav-height. Si inévitable, ajouter // lkdv-safe-area-ok sur la ligne.  no-restricted-syntax
+
+./src/app/pays/[code]/CountryDetailClient.tsx
+5:1  Warning: '@/components/mobile-nav/MobilePageShell' import is restricted from being used. [LKDV Shell] Pour les nouvelles pages, utiliser AppShell (@/components/shell). MobilePageShell reste supporté pour les pages existantes.  no-restricted-imports
+
+./src/app/pays/[code]/error.tsx
+28:17  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+41:23  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+
+./src/app/politique-confidentialite/page.tsx
+5:1  Warning: '@/components/mobile-nav/MobilePageShell' import is restricted from being used. [LKDV Shell] Pour les nouvelles pages, utiliser AppShell (@/components/shell). MobilePageShell reste supporté pour les pages existantes.  no-restricted-imports
+
+./src/app/preparer-randonnee/components/DesktopPreparationView.tsx
+3:27  Warning: 'useEffect' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+46:3  Warning: 'isOnline' is defined but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+55:3  Warning: 'allMissingOrPartial' is defined but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+56:3  Warning: 'anyEssentialMissing' is defined but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+59:3  Warning: 'bState' is defined but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+73:9  Warning: 'missingAndPartial' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./src/app/preparer-randonnee/components/EquipmentGearItem.tsx
+74:37  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+
+./src/app/preparer-randonnee/components/EquipmentUnifiedList.tsx
+69:121  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+69:136  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+163:65  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+
+./src/app/preparer-randonnee/components/MobilePreparationView.tsx
+9:10  Warning: 'PreparationHero' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+121:25  Warning: [LKDV Shell] Éviter env(safe-area-inset-top) directement. Utiliser AppShell (safeTop=true) ou la CSS var --safe-top. Si inévitable (overlay de carte), ajouter // lkdv-safe-area-ok sur la ligne.  no-restricted-syntax
+
+./src/app/preparer-randonnee/components/PreparationScore.tsx
+27:47  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+
+./src/app/preparer-randonnee/components/StartDock.tsx
+4:10  Warning: 'Icon' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+30:24  Warning: [LKDV Shell] Éviter env(safe-area-inset-bottom) directement. Utiliser AppShell ou la CSS var --bottom-nav-height. Si inévitable, ajouter // lkdv-safe-area-ok sur la ligne.  no-restricted-syntax
+
+./src/app/preparer-randonnee/PreparationClient.tsx
+18:21  Warning: 'CartItem' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+114:16  Warning: 'err' is defined but never used. Allowed unused caught errors must match /^_/u.  @typescript-eslint/no-unused-vars
+126:9  Warning: The 'startPt' logical expression could make the dependencies of useCallback Hook (at line 189) change on every render. To fix this, wrap the initialization of 'startPt' in its own useMemo() Hook.  react-hooks/exhaustive-deps
+
+./src/app/pro/page.tsx
+7:1  Warning: '@/components/mobile-nav/MobilePageShell' import is restricted from being used. [LKDV Shell] Pour les nouvelles pages, utiliser AppShell (@/components/shell). MobilePageShell reste supporté pour les pages existantes.  no-restricted-imports
+
+./src/app/produit/[slug]/error.tsx
+28:17  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+41:23  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+
+./src/app/produit/[slug]/page.tsx
+36:3  Warning: 'parent' is defined but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./src/app/produit/[slug]/ProductDetailClient.tsx
+13:10  Warning: 'addToCart' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+17:1  Warning: '@/components/mobile-nav/MobilePageShell' import is restricted from being used. [LKDV Shell] Pour les nouvelles pages, utiliser AppShell (@/components/shell). MobilePageShell reste supporté pour les pages existantes.  no-restricted-imports
+84:11  Warning: 'user' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+193:9  Warning: 'handleAddToCart' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+259:25  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+469:19  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+477:165  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+537:23  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+593:19  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+648:19  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/app/profil/page.tsx
+5:8  Warning: 'MobileProfilePage' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+6:1  Warning: '@/components/mobile-nav/MobilePageShell' import is restricted from being used. [LKDV Shell] Pour les nouvelles pages, utiliser AppShell (@/components/shell). MobilePageShell reste supporté pour les pages existantes.  no-restricted-imports
+6:8  Warning: 'MobilePageShell' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./src/app/profil/[id]/page.tsx
+15:1  Warning: '@/components/mobile-nav/MobilePageShell' import is restricted from being used. [LKDV Shell] Pour les nouvelles pages, utiliser AppShell (@/components/shell). MobilePageShell reste supporté pour les pages existantes.  no-restricted-imports
+
+./src/app/publier/page.tsx
+5:1  Warning: '@/components/mobile-nav/MobilePageShell' import is restricted from being used. [LKDV Shell] Pour les nouvelles pages, utiliser AppShell (@/components/shell). MobilePageShell reste supporté pour les pages existantes.  no-restricted-imports
+
+./src/app/rapport-expedition/page.tsx
+10:1  Warning: '@/components/mobile-nav/MobilePageShell' import is restricted from being used. [LKDV Shell] Pour les nouvelles pages, utiliser AppShell (@/components/shell). MobilePageShell reste supporté pour les pages existantes.  no-restricted-imports
+348:11  Warning: 'duration' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+1066:33  Warning: [LKDV Shell] Éviter env(safe-area-inset-bottom) directement. Utiliser AppShell ou la CSS var --bottom-nav-height. Si inévitable, ajouter // lkdv-safe-area-ok sur la ligne.  no-restricted-syntax
+
+./src/app/recompenses/page.tsx
+7:1  Warning: '@/components/mobile-nav/MobilePageShell' import is restricted from being used. [LKDV Shell] Pour les nouvelles pages, utiliser AppShell (@/components/shell). MobilePageShell reste supporté pour les pages existantes.  no-restricted-imports
+72:6  Warning: React Hook useMemo has an unnecessary dependency: 'successMessage'. Either exclude it or remove the dependency array.  react-hooks/exhaustive-deps
+
+./src/app/voyages/[slug]/error.tsx
+13:24  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+
+./src/app/voyages/[slug]/not-found.tsx
+2:8  Warning: 'Link' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./src/components/carnet/CarnetDetailRightSidebar.tsx
+24:3  Warning: 'onExport' is defined but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./src/components/carnet/CarnetHero.tsx
+62:16  Warning: 'err' is defined but never used. Allowed unused caught errors must match /^_/u.  @typescript-eslint/no-unused-vars
+62:21  Warning: Empty block statement.  no-empty
+
+./src/components/carnet/CarnetMap.tsx
+49:15  Warning: Empty block statement.  no-empty
+54:13  Warning: Empty block statement.  no-empty
+118:17  Warning: Empty block statement.  no-empty
+153:45  Warning: Empty block statement.  no-empty
+156:45  Warning: Empty block statement.  no-empty
+167:17  Warning: Empty block statement.  no-empty
+178:17  Warning: Empty block statement.  no-empty
+
+./src/components/carnet/CarnetView.tsx
+8:8  Warning: 'CommunityHubNav' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+19:1  Warning: '@/components/mobile-nav/MobilePageShell' import is restricted from being used. [LKDV Shell] Pour les nouvelles pages, utiliser AppShell (@/components/shell). MobilePageShell reste supporté pour les pages existantes.  no-restricted-imports
+
+./src/components/carnet/HikeTimeline.tsx
+327:23  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/components/carnet/MobileCarnetDetailView.tsx
+158:20  Warning: [LKDV Shell] Éviter env(safe-area-inset-bottom) directement. Utiliser AppShell ou la CSS var --bottom-nav-height. Si inévitable, ajouter // lkdv-safe-area-ok sur la ligne.  no-restricted-syntax
+161:9  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+171:25  Warning: [LKDV Shell] Éviter env(safe-area-inset-top) directement. Utiliser AppShell (safeTop=true) ou la CSS var --safe-top. Si inévitable (overlay de carte), ajouter // lkdv-safe-area-ok sur la ligne.  no-restricted-syntax
+217:17  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+338:34  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+
+./src/components/carnet/MomentCard.tsx
+5:8  Warning: 'Icon' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+6:8  Warning: 'GlassIconButton' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+46:11  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+135:15  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/components/carnet/SpeciesIdentifier.tsx
+4:8  Warning: 'Icon' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+5:8  Warning: 'GlassIconButton' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+52:10  Warning: 'preview' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+200:56  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+
+./src/components/carnets/CarnetHubCard.tsx
+83:3  Warning: 'onShare' is defined but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+216:15  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/components/carnets/CreateCarnetView.tsx
+9:8  Warning: 'CommunityHubNav' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+28:44  Warning: 'onCloseModal' is assigned a value but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+564:38  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+903:115  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+1006:19  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/components/carnets/MobileCarnetCard.tsx
+54:9  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+97:15  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/components/carnets/MobileCarnetsHub.tsx
+5:8  Warning: 'Link' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+6:10  Warning: 'motion' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+6:18  Warning: 'AnimatePresence' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+29:3  Warning: 'user' is defined but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+82:15  Warning: Empty block statement.  no-empty
+
+./src/components/clubs/ClubAboutCard.tsx
+4:8  Warning: 'Icon' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+77:29  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+
+./src/components/clubs/ClubDiscussionCard.tsx
+6:18  Warning: 'AnimatePresence' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+289:21  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+349:25  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/components/clubs/ClubFeaturedEventCard.tsx
+4:8  Warning: 'Icon' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+5:8  Warning: 'GlassIconButton' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./src/components/clubs/ClubProCard.tsx
+5:8  Warning: 'Icon' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./src/components/clubs/ClubTeamCard.tsx
+38:21  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+73:21  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/components/clubs/CreateClubView.tsx
+9:8  Warning: 'CommunityHubNav' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+466:110  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+466:119  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+546:92  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+733:19  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/components/clubs/MobileClubCard.tsx
+6:8  Warning: 'GlassIconButton' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+48:15  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/components/clubs/MobileClubDetailView.tsx
+6:8  Warning: 'Icon' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+7:8  Warning: 'GlassIconButton' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+41:3  Warning: 'onOpenCreatePost' is defined but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+86:9  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+96:25  Warning: [LKDV Shell] Éviter env(safe-area-inset-top) directement. Utiliser AppShell (safeTop=true) ou la CSS var --safe-top. Si inévitable (overlay de carte), ajouter // lkdv-safe-area-ok sur la ligne.  no-restricted-syntax
+138:23  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/components/clubs/MobileClubsHub.tsx
+4:8  Warning: 'Link' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+5:10  Warning: 'motion' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+5:18  Warning: 'AnimatePresence' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+27:3  Warning: 'user' is defined but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./src/components/communaute/CommentItem.tsx
+51:10  Warning: 'isReported' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+66:9  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+124:7  Warning: Unexpected console statement. Only these console methods are allowed: warn, error, info.  no-console
+
+./src/components/communaute/CommunityLeftSidebar.tsx
+25:3  Warning: 'badgeCounts' is defined but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./src/components/communaute/CommunityPostCard.tsx
+496:13  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+705:75  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+734:33  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+817:33  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+860:41  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/components/communaute/EventDetailModal.tsx
+61:13  Warning: 'supabase' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./src/components/communaute/MobileCommunityHeader.tsx
+24:23  Warning: [LKDV Shell] Éviter env(safe-area-inset-top) directement. Utiliser AppShell (safeTop=true) ou la CSS var --safe-top. Si inévitable (overlay de carte), ajouter // lkdv-safe-area-ok sur la ligne.  no-restricted-syntax
+
+./src/components/compte/AventuresTab.tsx
+9:8  Warning: 'ProchainVoyageCard' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+16:40  Warning: 'profile' is defined but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+259:43  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+259:57  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+
+./src/components/compte/CarnetsTab.tsx
+85:7  Warning: 'FALLBACK_COVERS' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+97:38  Warning: 'profile' is defined but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+98:9  Warning: 'router' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+278:104  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+439:82  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+
+./src/components/compte/ClubsTab.tsx
+56:36  Warning: 'profile' is defined but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+60:10  Warning: 'loading' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+75:10  Warning: 'activities' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+214:9  Warning: 'handleRSVP' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./src/components/compte/CommandesCard.tsx
+46:64  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+
+./src/components/compte/CommandesTab.tsx
+5:8  Warning: 'Image' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+6:8  Warning: 'Link' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+121:40  Warning: 'profile' is defined but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+212:27  Warning: 'i' is defined but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+1032:128  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+1168:126  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+
+./src/components/compte/CompteLeftSidebar.tsx
+30:3  Warning: 'counts' is defined but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./src/components/compte/ConstanceCard.tsx
+10:41  Warning: 'constance' is defined but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./src/components/compte/EditProfileModal.tsx
+4:8  Warning: 'Icon' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./src/components/compte/EditProfileView.tsx
+10:9  Warning: 'router' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+11:10  Warning: 'loading' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+14:10  Warning: 'user' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+284:15  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+313:19  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+382:129  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+392:124  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+539:130  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+570:126  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+742:15  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+750:15  Warning: `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`.  react/no-unescaped-entities
+750:43  Warning: `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`.  react/no-unescaped-entities
+800:97  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+808:19  Warning: [LKDV Shell] Éviter env(safe-area-inset-bottom) directement. Utiliser AppShell ou la CSS var --bottom-nav-height. Si inévitable, ajouter // lkdv-safe-area-ok sur la ligne.  no-restricted-syntax
+
+./src/components/compte/FideliteTab.tsx
+67:10  Warning: 'formatDateFull' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+932:110  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+
+./src/components/compte/MesCarnetsCard.tsx
+45:99  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+
+./src/components/compte/MesClubsCard.tsx
+23:35  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+28:21  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+
+./src/components/compte/MobileCompteV2.tsx
+113:10  Warning: 'following' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+461:25  Warning: [LKDV Shell] Éviter env(safe-area-inset-top) directement. Utiliser AppShell (safeTop=true) ou la CSS var --safe-top. Si inévitable (overlay de carte), ajouter // lkdv-safe-area-ok sur la ligne.  no-restricted-syntax
+
+./src/components/compte/modals/ShareProfileModal.tsx
+17:3  Warning: 'userName' is assigned a value but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./src/components/compte/ParametresCompteCard.tsx
+68:10  Warning: 'currentPassword' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+309:123  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+471:129  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+667:28  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+751:34  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+808:43  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+818:131  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+1111:53  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+
+./src/components/compte/ProchainVoyageCard.tsx
+13:54  Warning: 'compact' is assigned a value but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./src/components/compte/tabs/TabCarnets.tsx
+45:61  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+
+./src/components/compte/tabs/TabEquipement.tsx
+11:10  Warning: 'viewMode' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+11:20  Warning: 'setViewMode' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./src/components/compte/tabs/TabVoyages.tsx
+101:42  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+
+./src/components/CookieConsentBanner.tsx
+47:31  Warning: [LKDV Shell] Éviter env(safe-area-inset-bottom) directement. Utiliser AppShell ou la CSS var --bottom-nav-height. Si inévitable, ajouter // lkdv-safe-area-ok sur la ligne.  no-restricted-syntax
+53:25  Warning: [LKDV Shell] Éviter env(safe-area-inset-bottom) directement. Utiliser AppShell ou la CSS var --bottom-nav-height. Si inévitable, ajouter // lkdv-safe-area-ok sur la ligne.  no-restricted-syntax
+
+./src/components/ErrorBoundaryWrapper.tsx
+32:66  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+
+./src/components/explorer/ExplorerClient.tsx
+7:10  Warning: 'Backpack' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+12:22  Warning: 'Bell' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+13:29  Warning: 'ShoppingBag' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+25:3  Warning: 'getDifficultyLabel' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+79:7  Warning: 'DIFFICULTY_FILTERS' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+87:7  Warning: 'CATEGORIES' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+140:10  Warning: 'sheetExpanded' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+364:9  Warning: The 'trails' conditional could make the dependencies of useMemo Hook (at line 419) change on every render. Move it inside the useMemo callback. Alternatively, wrap the initialization of 'trails' in its own useMemo() Hook.  react-hooks/exhaustive-deps
+540:15  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+645:22  Warning: [LKDV Shell] Éviter env(safe-area-inset-bottom) directement. Utiliser AppShell ou la CSS var --bottom-nav-height. Si inévitable, ajouter // lkdv-safe-area-ok sur la ligne.  no-restricted-syntax
+661:21  Warning: [LKDV Shell] Éviter env(safe-area-inset-bottom) directement. Utiliser AppShell ou la CSS var --bottom-nav-height. Si inévitable, ajouter // lkdv-safe-area-ok sur la ligne.  no-restricted-syntax
+697:23  Warning: [LKDV Shell] Éviter env(safe-area-inset-top) directement. Utiliser AppShell (safeTop=true) ou la CSS var --safe-top. Si inévitable (overlay de carte), ajouter // lkdv-safe-area-ok sur la ligne.  no-restricted-syntax
+929:17  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/components/explorer/ExplorerFilterPanel.tsx
+185:50  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+
+./src/components/explorer/ExplorerListCard.tsx
+61:9  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/components/explorer/ExplorerMap.tsx
+73:3  Warning: 'progressFrac' is assigned a value but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+74:3  Warning: 'autoFollow' is assigned a value but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+79:3  Warning: 'controlsPosition' is assigned a value but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+80:3  Warning: 'compact' is assigned a value but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+82:3  Warning: 'safeControls' is assigned a value but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+101:9  Warning: 'effectiveCompact' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+109:10  Warning: 'locationState' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+167:7  Warning: Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-explicit-any').
+219:7  Warning: Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-explicit-any').
+271:23  Warning: The ref value 'containerRef.current' will likely have changed by the time this effect cleanup function runs. If this ref points to a node rendered by React, copy 'containerRef.current' to a variable inside the effect, and use that variable in the cleanup function.  react-hooks/exhaustive-deps
+345:7  Warning: Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-explicit-any').
+507:9  Warning: 'handleManualLocate' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+552:15  Warning: [LKDV Shell] Éviter env(safe-area-inset-top) directement. Utiliser AppShell (safeTop=true) ou la CSS var --safe-top. Si inévitable (overlay de carte), ajouter // lkdv-safe-area-ok sur la ligne.  no-restricted-syntax
+
+./src/components/explorer/ExplorerMobileHikeCarousel.tsx
+5:18  Warning: 'AnimatePresence' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+12:29  Warning: 'ChevronDown' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+13:27  Warning: 'ChevronUp' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+185:19  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/components/explorer/ExplorerMobileSheet.tsx
+71:24  Warning: [LKDV Shell] Éviter env(safe-area-inset-bottom) directement. Utiliser AppShell ou la CSS var --bottom-nav-height. Si inévitable, ajouter // lkdv-safe-area-ok sur la ligne.  no-restricted-syntax
+134:64  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+
+./src/components/explorer/TrailDetailPanel.tsx
+9:28  Warning: 'Navigation' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+10:25  Warning: 'Compass' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+14:22  Warning: 'Play' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+79:23  Warning: 'setDescription' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+145:11  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+238:28  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+272:37  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+323:21  Warning: [LKDV Shell] Éviter env(safe-area-inset-bottom) directement. Utiliser AppShell ou la CSS var --bottom-nav-height. Si inévitable, ajouter // lkdv-safe-area-ok sur la ligne.  no-restricted-syntax
+
+./src/components/explorer/TrailLayer.tsx
+181:21  Warning: Empty block statement.  no-empty
+
+./src/components/Footer.tsx
+55:35  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+73:16  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+85:13  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/components/groupes/ActiviteCard.tsx
+26:17  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+
+./src/components/groupes/AProposCard.tsx
+4:8  Warning: 'Icon' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+71:106  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+
+./src/components/groupes/DepensesCard.tsx
+234:127  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+
+./src/components/groupes/EquipementCard.tsx
+55:9  Warning: 'router' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+103:11  Warning: 'ok' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+157:11  Warning: 'ok' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+273:44  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+426:74  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+575:105  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+
+./src/components/groupes/HeroVoyage.tsx
+39:16  Warning: 'err' is defined but never used. Allowed unused caught errors must match /^_/u.  @typescript-eslint/no-unused-vars
+39:21  Warning: Empty block statement.  no-empty
+
+./src/components/groupes/MobileGroupesHub.tsx
+4:8  Warning: 'Link' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+7:8  Warning: 'GlassIconButton' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+33:3  Warning: 'user' is defined but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+283:33  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+283:74  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+283:92  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+301:41  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+
+./src/components/groupes/MobileGroupesV2.tsx
+55:10  Warning: 'durationLabel' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+320:38  Warning: 'menuFor' is defined but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+320:47  Warning: 'setMenuFor' is defined but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+320:59  Warning: 'onEdit' is defined but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+320:67  Warning: 'onDelete' is defined but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+320:77  Warning: 'onLeave' is defined but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+321:9  Warning: 'isOwner' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+355:33  Warning: 'total' is defined but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+355:40  Warning: 'search' is defined but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+355:48  Warning: 'setSearch' is defined but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+407:100  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+421:95  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+422:109  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+454:81  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+
+./src/components/groupes/MobileGroupeView.tsx
+5:8  Warning: 'Icon' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+13:8  Warning: 'ProgressionCard' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+63:9  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/components/groupes/ParcoursCard.tsx
+14:40  Warning: 'groupId' is defined but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+33:48  Warning: Empty block statement.  no-empty
+37:62  Warning: Empty block statement.  no-empty
+131:48  Warning: Empty block statement.  no-empty
+135:36  Warning: The ref value 'containerRef.current' will likely have changed by the time this effect cleanup function runs. If this ref points to a node rendered by React, copy 'containerRef.current' to a variable inside the effect, and use that variable in the cleanup function.  react-hooks/exhaustive-deps
+135:73  Warning: Empty block statement.  no-empty
+138:6  Warning: React Hook useEffect has a missing dependency: 'trail.geojson.coordinates'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+
+./src/components/groupes/SafetyReminderCard.tsx
+47:229  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+54:118  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+59:59  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+
+./src/components/groupes/TachesCard.tsx
+206:19  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+206:71  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+
+./src/components/groupes/VoyageursCard.tsx
+40:10  Warning: 'joining' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+43:10  Warning: 'pendingMembers' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+152:9  Warning: 'acceptPending' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+152:44  Warning: 'userId' is defined but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+161:9  Warning: 'removePending' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+198:9  Warning: 'handleLeaveGroup' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+218:9  Warning: 'handleJoinByCode' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+328:76  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+
+./src/components/Header.tsx
+14:7  Warning: 'NAV_LINKS' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+23:10  Warning: 'mounted' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+139:17  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/components/hiking/ElevationProfileChart.tsx
+97:30  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+100:20  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+
+./src/components/home/FinalCTA.tsx
+57:35  Warning: [LKDV Shell] Éviter env(safe-area-inset-bottom) directement. Utiliser AppShell ou la CSS var --bottom-nav-height. Si inévitable, ajouter // lkdv-safe-area-ok sur la ligne.  no-restricted-syntax
+
+./src/components/home/QuickStartQuiz.tsx
+190:37  Warning: [LKDV Shell] Éviter env(safe-area-inset-bottom) directement. Utiliser AppShell ou la CSS var --bottom-nav-height. Si inévitable, ajouter // lkdv-safe-area-ok sur la ligne.  no-restricted-syntax
+222:32  Warning: [LKDV Shell] Éviter env(safe-area-inset-bottom) directement. Utiliser AppShell ou la CSS var --bottom-nav-height. Si inévitable, ajouter // lkdv-safe-area-ok sur la ligne.  no-restricted-syntax
+
+./src/components/map/InteractiveMap.tsx
+75:7  Warning: 'DIFFICULTIES' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+110:30  Warning: 'setSelectedDifficulty' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+303:69  Warning: Empty block statement.  no-empty
+344:45  Warning: Empty block statement.  no-empty
+350:48  Warning: Empty block statement.  no-empty
+388:63  Warning: Empty block statement.  no-empty
+533:21  Warning: Empty block statement.  no-empty
+766:77  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+866:26  Warning: [LKDV Shell] Éviter env(safe-area-inset-top) directement. Utiliser AppShell (safeTop=true) ou la CSS var --safe-top. Si inévitable (overlay de carte), ajouter // lkdv-safe-area-ok sur la ligne.  no-restricted-syntax
+884:23  Warning: [LKDV Shell] Éviter env(safe-area-inset-top) directement. Utiliser AppShell (safeTop=true) ou la CSS var --safe-top. Si inévitable (overlay de carte), ajouter // lkdv-safe-area-ok sur la ligne.  no-restricted-syntax
+
+./src/components/map/UnifiedExplorerMap.tsx
+1087:7  Warning: [LKDV Shell] Éviter env(safe-area-inset-bottom) directement. Utiliser AppShell ou la CSS var --bottom-nav-height. Si inévitable, ajouter // lkdv-safe-area-ok sur la ligne.  no-restricted-syntax
+1090:7  Warning: [LKDV Shell] Éviter env(safe-area-inset-bottom) directement. Utiliser AppShell ou la CSS var --bottom-nav-height. Si inévitable, ajouter // lkdv-safe-area-ok sur la ligne.  no-restricted-syntax
+1139:17  Warning: [LKDV Shell] Éviter env(safe-area-inset-bottom) directement. Utiliser AppShell ou la CSS var --bottom-nav-height. Si inévitable, ajouter // lkdv-safe-area-ok sur la ligne.  no-restricted-syntax
+1206:28  Warning: [LKDV Shell] Éviter env(safe-area-inset-bottom) directement. Utiliser AppShell ou la CSS var --bottom-nav-height. Si inévitable, ajouter // lkdv-safe-area-ok sur la ligne.  no-restricted-syntax
+1246:22  Warning: [LKDV Shell] Éviter env(safe-area-inset-bottom) directement. Utiliser AppShell ou la CSS var --bottom-nav-height. Si inévitable, ajouter // lkdv-safe-area-ok sur la ligne.  no-restricted-syntax
+1246:22  Warning: [LKDV Shell] Éviter env(safe-area-inset-top) directement. Utiliser AppShell (safeTop=true) ou la CSS var --safe-top. Si inévitable (overlay de carte), ajouter // lkdv-safe-area-ok sur la ligne.  no-restricted-syntax
+1254:21  Warning: [LKDV Shell] Éviter env(safe-area-inset-top) directement. Utiliser AppShell (safeTop=true) ou la CSS var --safe-top. Si inévitable (overlay de carte), ajouter // lkdv-safe-area-ok sur la ligne.  no-restricted-syntax
+
+./src/components/mobile-nav/BottomTabBar.tsx
+75:7  Warning: 'COMMUNITY_TABS' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+817:236  Warning: [LKDV Shell] Éviter env(safe-area-inset-bottom) directement. Utiliser AppShell ou la CSS var --bottom-nav-height. Si inévitable, ajouter // lkdv-safe-area-ok sur la ligne.  no-restricted-syntax
+856:24  Warning: [LKDV Shell] Éviter env(safe-area-inset-bottom) directement. Utiliser AppShell ou la CSS var --bottom-nav-height. Si inévitable, ajouter // lkdv-safe-area-ok sur la ligne.  no-restricted-syntax
+
+./src/components/mobile-nav/CopilotFAB.tsx
+19:17  Warning: [LKDV Shell] Éviter env(safe-area-inset-bottom) directement. Utiliser AppShell ou la CSS var --bottom-nav-height. Si inévitable, ajouter // lkdv-safe-area-ok sur la ligne.  no-restricted-syntax
+
+./src/components/mobile-nav/InstallPrompt.tsx
+80:17  Warning: [LKDV Shell] Éviter env(safe-area-inset-bottom) directement. Utiliser AppShell ou la CSS var --bottom-nav-height. Si inévitable, ajouter // lkdv-safe-area-ok sur la ligne.  no-restricted-syntax
+
+./src/components/mobile-nav/MobileDrawer.tsx
+241:28  Warning: [LKDV Shell] Éviter env(safe-area-inset-top) directement. Utiliser AppShell (safeTop=true) ou la CSS var --safe-top. Si inévitable (overlay de carte), ajouter // lkdv-safe-area-ok sur la ligne.  no-restricted-syntax
+266:26  Warning: [LKDV Shell] Éviter env(safe-area-inset-top) directement. Utiliser AppShell (safeTop=true) ou la CSS var --safe-top. Si inévitable (overlay de carte), ajouter // lkdv-safe-area-ok sur la ligne.  no-restricted-syntax
+454:28  Warning: [LKDV Shell] Éviter env(safe-area-inset-bottom) directement. Utiliser AppShell ou la CSS var --bottom-nav-height. Si inévitable, ajouter // lkdv-safe-area-ok sur la ligne.  no-restricted-syntax
+
+./src/components/mobile-nav/MobileHomePage.tsx
+22:29  Warning: [LKDV Shell] Éviter env(safe-area-inset-bottom) directement. Utiliser AppShell ou la CSS var --bottom-nav-height. Si inévitable, ajouter // lkdv-safe-area-ok sur la ligne.  no-restricted-syntax
+
+./src/components/mobile-nav/MobileHomeRedirect.tsx
+5:1  Warning: '@/components/mobile-nav/MobilePageShell' import is restricted from being used. [LKDV Shell] Pour les nouvelles pages, utiliser AppShell (@/components/shell). MobilePageShell reste supporté pour les pages existantes.  no-restricted-imports
+
+./src/components/mobile-nav/MobileProfilePage.tsx
+163:29  Warning: [LKDV Shell] Éviter env(safe-area-inset-bottom) directement. Utiliser AppShell ou la CSS var --bottom-nav-height. Si inévitable, ajouter // lkdv-safe-area-ok sur la ligne.  no-restricted-syntax
+171:10  Warning: 'activeTab' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+171:21  Warning: 'setActiveTab' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+451:29  Warning: [LKDV Shell] Éviter env(safe-area-inset-bottom) directement. Utiliser AppShell ou la CSS var --bottom-nav-height. Si inévitable, ajouter // lkdv-safe-area-ok sur la ligne.  no-restricted-syntax
+
+./src/components/mobile-nav/OfflineBanner.tsx
+36:18  Warning: [LKDV Shell] Éviter env(safe-area-inset-top) directement. Utiliser AppShell (safeTop=true) ou la CSS var --safe-top. Si inévitable (overlay de carte), ajouter // lkdv-safe-area-ok sur la ligne.  no-restricted-syntax
+
+./src/components/pays/BouteilleALaMer.tsx
+205:21  Warning: 'newGroup' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+459:104  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+467:152  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+493:182  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+510:107  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+564:38  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+564:116  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+568:69  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+600:27  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+600:27  Warning: img elements must have an alt prop, either with meaningful text, or an empty string for decorative images.  jsx-a11y/alt-text
+646:51  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+646:99  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+779:34  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+779:85  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+784:16  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+784:52  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+830:23  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+830:23  Warning: img elements must have an alt prop, either with meaningful text, or an empty string for decorative images.  jsx-a11y/alt-text
+845:29  Warning: `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`.  react/no-unescaped-entities
+845:37  Warning: `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`.  react/no-unescaped-entities
+
+./src/components/pays/MobileCountryDetailView.tsx
+7:8  Warning: 'Icon' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+21:15  Warning: 'PracticalSection' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+41:3  Warning: 'flagEmoji' is defined but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+48:17  Warning: 'guideData' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+48:39  Warning: 'isGuidesLoading' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+72:17  Warning: [LKDV Shell] Éviter env(safe-area-inset-bottom) directement. Utiliser AppShell ou la CSS var --bottom-nav-height. Si inévitable, ajouter // lkdv-safe-area-ok sur la ligne.  no-restricted-syntax
+249:46  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+337:29  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/components/pays/PaysCarnetsList.tsx
+98:19  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+123:23  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/components/pays/PaysCommunauteView.tsx
+19:35  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+
+./src/components/pays/PaysHeroOverview.tsx
+19:3  Warning: 'flagEmoji' is defined but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./src/components/pays/PaysLeftSidebar.tsx
+31:3  Warning: 'flagEmoji' is defined but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./src/components/pays/PaysPratiqueView.tsx
+6:8  Warning: 'Icon' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+8:36  Warning: 'BlockGuideData' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+15:3  Warning: 'DifficulteItem' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+59:53  Warning: 'isMobile' is assigned a value but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+60:28  Warning: 'isLoading' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+99:9  Warning: 'difficulte' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+119:24  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+263:37  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+360:27  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+568:30  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+622:24  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+
+./src/components/pays/PaysRightSidebar.tsx
+4:8  Warning: 'Link' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+6:8  Warning: 'Icon' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+7:8  Warning: 'CountryFlag' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+25:3  Warning: 'flagEmoji' is defined but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./src/components/produit/ProductBuyBar.tsx
+14:3  Warning: 'isOwned' is assigned a value but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./src/components/profile/PublicMobileProfileView.tsx
+32:3  Warning: 'activite' is defined but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+67:25  Warning: [LKDV Shell] Éviter env(safe-area-inset-top) directement. Utiliser AppShell (safeTop=true) ou la CSS var --safe-top. Si inévitable (overlay de carte), ajouter // lkdv-safe-area-ok sur la ligne.  no-restricted-syntax
+401:33  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+481:30  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+481:52  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+524:33  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+
+./src/components/search/SearchOverlay.tsx
+110:27  Warning: [LKDV Shell] Éviter env(safe-area-inset-top) directement. Utiliser AppShell (safeTop=true) ou la CSS var --safe-top. Si inévitable (overlay de carte), ajouter // lkdv-safe-area-ok sur la ligne.  no-restricted-syntax
+
+./src/components/social/CommentsSheet.tsx
+3:44  Warning: 'useEffect' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+209:27  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+305:35  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/components/social/CommunityHubNav.tsx
+41:9  Warning: 'pathname' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./src/components/social/PostCard.tsx
+4:10  Warning: 'motion' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+4:18  Warning: 'AnimatePresence' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+5:8  Warning: 'Icon' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+249:9  Warning: 'getOriginBadge' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+295:15  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+384:13  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/components/social/ReportSheet.tsx
+28:3  Warning: 'contentId' is defined but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+29:3  Warning: 'contentType' is defined but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./src/components/social/ShareSheet.tsx
+26:3  Warning: 'contentId' is defined but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+27:3  Warning: 'contentType' is defined but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+84:53  Warning: 'groupName' is defined but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+179:23  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+
+./src/components/social/SocialActions.tsx
+4:18  Warning: 'AnimatePresence' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+6:8  Warning: 'LkvIcon' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+28:3  Warning: 'contentId' is defined but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+29:3  Warning: 'contentType' is defined but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+31:3  Warning: 'commentsCount' is assigned a value but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+41:3  Warning: 'showMore' is assigned a value but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+46:10  Warning: 'likesCount' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+82:9  Warning: 'handleMore' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./src/components/terrain/TerrainHub.tsx
+44:24  Warning: [LKDV Shell] Éviter env(safe-area-inset-bottom) directement. Utiliser AppShell ou la CSS var --bottom-nav-height. Si inévitable, ajouter // lkdv-safe-area-ok sur la ligne.  no-restricted-syntax
+
+./src/components/ui/CountryFlag.tsx
+45:7  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/components/ui/GlassModal.tsx
+65:19  Warning: [LKDV Shell] Éviter env(safe-area-inset-bottom) directement. Utiliser AppShell ou la CSS var --bottom-nav-height. Si inévitable, ajouter // lkdv-safe-area-ok sur la ligne.  no-restricted-syntax
+
+./src/components/ui/GlassSheet.tsx
+45:33  Warning: [LKDV Shell] Éviter env(safe-area-inset-top) directement. Utiliser AppShell (safeTop=true) ou la CSS var --safe-top. Si inévitable (overlay de carte), ajouter // lkdv-safe-area-ok sur la ligne.  no-restricted-syntax
+58:30  Warning: [LKDV Shell] Éviter env(safe-area-inset-bottom) directement. Utiliser AppShell ou la CSS var --bottom-nav-height. Si inévitable, ajouter // lkdv-safe-area-ok sur la ligne.  no-restricted-syntax
+
+./src/components/ui/GlobalSearchModal.tsx
+4:8  Warning: 'Link' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+8:8  Warning: 'LkvIcon' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+367:25  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+442:72  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+449:27  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+
+./src/components/ui/Icon/registry.generated.ts
+3:1  Warning: Unused eslint-disable directive (no problems were reported).
+
+./src/components/ui/ImageViewer.tsx
+194:166  Warning: [LKDV Shell] Éviter env(safe-area-inset-top) directement. Utiliser AppShell (safeTop=true) ou la CSS var --safe-top. Si inévitable (overlay de carte), ajouter // lkdv-safe-area-ok sur la ligne.  no-restricted-syntax
+204:23  Warning: [LKDV Shell] Éviter env(safe-area-inset-top) directement. Utiliser AppShell (safeTop=true) ou la CSS var --safe-top. Si inévitable (overlay de carte), ajouter // lkdv-safe-area-ok sur la ligne.  no-restricted-syntax
+212:191  Warning: [LKDV Shell] Éviter env(safe-area-inset-bottom) directement. Utiliser AppShell ou la CSS var --bottom-nav-height. Si inévitable, ajouter // lkdv-safe-area-ok sur la ligne.  no-restricted-syntax
+
+./src/components/ui/ProductCard.tsx
+87:3  Warning: 'onRemoveFromCart' is defined but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./src/components/ui/ScrollableTabs.tsx
+29:3  Warning: 'variant' is assigned a value but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./src/components/ui/SmartImage.tsx
+5:8  Warning: 'Image' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+5:17  Warning: 'ImageProps' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+28:3  Warning: 'width' is defined but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+29:3  Warning: 'height' is defined but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+82:7  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/components/ui/StartDistanceModal.tsx
+74:30  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+
+./src/components/ui-layouts/progressive-carousel.tsx
+192:48  Warning: 'vertical' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./src/contexts/WishlistContext.tsx
+45:9  Warning: 'save' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+66:17  Warning: Empty block statement.  no-empty
+
+./src/features/adventure-intelligence/server/offlinePack.ts
+46:3  Warning: 'TRAIL_POI_LIMIT' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./src/features/adventure-intelligence/ui/AdventureCockpitControl.tsx
+75:26  Warning: [LKDV Shell] Éviter env(safe-area-inset-bottom) directement. Utiliser AppShell ou la CSS var --bottom-nav-height. Si inévitable, ajouter // lkdv-safe-area-ok sur la ligne.  no-restricted-syntax
+93:37  Warning: [LKDV Shell] Éviter env(safe-area-inset-bottom) directement. Utiliser AppShell ou la CSS var --bottom-nav-height. Si inévitable, ajouter // lkdv-safe-area-ok sur la ligne.  no-restricted-syntax
+
+./src/features/affiliation/components/AffiliateLinkCard.tsx
+3:8  Warning: 'Icon' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./src/features/crews/actions/crew-actions.ts
+7:3  Warning: 'updateCrewSchema' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+9:3  Warning: 'inviteCrewMemberSchema' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+12:3  Warning: 'verifyInviteToken' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./src/features/gear/stores/useGearStore.ts
+185:11  Warning: Empty block statement.  no-empty
+
+./src/features/hiking/components/DesktopDockBar.tsx
+36:24  Warning: [LKDV Shell] Éviter env(safe-area-inset-bottom) directement. Utiliser AppShell ou la CSS var --bottom-nav-height. Si inévitable, ajouter // lkdv-safe-area-ok sur la ligne.  no-restricted-syntax
+
+./src/features/hiking/components/DesktopTopBar.tsx
+28:3  Warning: 'batteryHours' is defined but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+29:3  Warning: 'userName' is assigned a value but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+38:21  Warning: [LKDV Shell] Éviter env(safe-area-inset-top) directement. Utiliser AppShell (safeTop=true) ou la CSS var --safe-top. Si inévitable (overlay de carte), ajouter // lkdv-safe-area-ok sur la ligne.  no-restricted-syntax
+
+./src/features/hiking/components/HikingCockpitPage.tsx
+234:6  Warning: React Hook useEffect has a missing dependency: 'hikingStore'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+485:71  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+609:125  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+
+./src/features/hiking/components/sheets/MoreSheet.tsx
+25:3  Warning: 'onOpenWeather' is defined but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./src/features/hiking/components/Terrain3DViewer.tsx
+16:3  Warning: 'userLocation' is defined but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./src/features/hiking/copilot/CopilotEngine.ts
+1:10  Warning: 'GPSPosition' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+2:10  Warning: 'HikeEngine' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./src/features/hiking/copilot/__tests__/CopilotEngine.test.ts
+13:7  Warning: Unexpected console statement. Only these console methods are allowed: warn, error, info.  no-console
+20:3  Warning: Unexpected console statement. Only these console methods are allowed: warn, error, info.  no-console
+59:3  Warning: Unexpected console statement. Only these console methods are allowed: warn, error, info.  no-console
+
+./src/features/hiking/engine/HikeAlertEngine.ts
+1:10  Warning: 'SafetyAlert' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./src/features/hiking/engine/__tests__/runTrackingTests.ts
+14:7  Warning: Unexpected console statement. Only these console methods are allowed: warn, error, info.  no-console
+21:3  Warning: Unexpected console statement. Only these console methods are allowed: warn, error, info.  no-console
+88:3  Warning: Unexpected console statement. Only these console methods are allowed: warn, error, info.  no-console
+
+./src/features/hiking/gpx/HikeReportPDFService.ts
+9:5  Warning: 'stats' is defined but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./src/features/hiking/gpx/__tests__/GPXEngine.test.ts
+5:3  Warning: Unexpected console statement. Only these console methods are allowed: warn, error, info.  no-console
+11:7  Warning: Unexpected console statement. Only these console methods are allowed: warn, error, info.  no-console
+36:3  Warning: Unexpected console statement. Only these console methods are allowed: warn, error, info.  no-console
+
+./src/features/hiking/intelligence/HikerProfileEngine.ts
+11:23  Warning: 'GPSPosition' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./src/features/hiking/intelligence/TrailIntelligenceEngine.ts
+13:23  Warning: 'GPSPosition' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./src/features/hiking/intelligence/__tests__/TrailIntelligenceEngine.test.ts
+14:7  Warning: Unexpected console statement. Only these console methods are allowed: warn, error, info.  no-console
+21:3  Warning: Unexpected console statement. Only these console methods are allowed: warn, error, info.  no-console
+91:3  Warning: Unexpected console statement. Only these console methods are allowed: warn, error, info.  no-console
+
+./src/features/hiking/journal/__tests__/JournalEventBuilder.test.ts
+15:7  Warning: Unexpected console statement. Only these console methods are allowed: warn, error, info.  no-console
+22:3  Warning: Unexpected console statement. Only these console methods are allowed: warn, error, info.  no-console
+84:3  Warning: Unexpected console statement. Only these console methods are allowed: warn, error, info.  no-console
+
+./src/features/hiking/navigation/__tests__/NavigationEngine.test.ts
+14:7  Warning: Unexpected console statement. Only these console methods are allowed: warn, error, info.  no-console
+21:3  Warning: Unexpected console statement. Only these console methods are allowed: warn, error, info.  no-console
+82:3  Warning: Unexpected console statement. Only these console methods are allowed: warn, error, info.  no-console
+
+./src/features/hiking/offline/OfflineManager.ts
+1:10  Warning: 'HikeSession' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+1:23  Warning: 'GPSPosition' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+1:36  Warning: 'JournalEntry' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./src/features/hiking/offline/__tests__/OfflineManager.test.ts
+13:7  Warning: Unexpected console statement. Only these console methods are allowed: warn, error, info.  no-console
+20:3  Warning: Unexpected console statement. Only these console methods are allowed: warn, error, info.  no-console
+31:9  Warning: 'notifiedStatus' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+41:3  Warning: Unexpected console statement. Only these console methods are allowed: warn, error, info.  no-console
+
+./src/features/hiking/safety/__tests__/SafetyEngine.test.ts
+14:7  Warning: Unexpected console statement. Only these console methods are allowed: warn, error, info.  no-console
+21:3  Warning: Unexpected console statement. Only these console methods are allowed: warn, error, info.  no-console
+44:3  Warning: Unexpected console statement. Only these console methods are allowed: warn, error, info.  no-console
+
+./src/features/hiking/services/HikerProfileService.ts
+1:23  Warning: 'GPSPosition' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./src/features/hiking/services/OfflineService.ts
+2:10  Warning: 'OfflineRegion' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./src/features/hiking/services/RouteGeom.ts
+284:70  Warning: 'windowM' is assigned a value but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./src/features/hiking/services/__tests__/HikeNarrativeService.test.ts
+5:3  Warning: Unexpected console statement. Only these console methods are allowed: warn, error, info.  no-console
+11:7  Warning: Unexpected console statement. Only these console methods are allowed: warn, error, info.  no-console
+36:3  Warning: Unexpected console statement. Only these console methods are allowed: warn, error, info.  no-console
+
+./src/features/hub/components/HubShell.tsx
+6:1  Warning: '@/components/mobile-nav/MobilePageShell' import is restricted from being used. [LKDV Shell] Pour les nouvelles pages, utiliser AppShell (@/components/shell). MobilePageShell reste supporté pour les pages existantes.  no-restricted-imports
+
+./src/features/hub/components/menu/SortieMenu.tsx
+455:23  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+617:25  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/features/hub/components/menu/SosFloatingButton.tsx
+31:19  Warning: [LKDV Shell] Éviter env(safe-area-inset-bottom) directement. Utiliser AppShell ou la CSS var --bottom-nav-height. Si inévitable, ajouter // lkdv-safe-area-ok sur la ligne.  no-restricted-syntax
+
+./src/features/hub/components/mobile/gear/GearItemPanel.tsx
+25:15  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/features/hub/components/mobile/gear/GearPhotoCarousel.tsx
+100:17  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/features/hub/components/mobile/gear/MemberBagResources.tsx
+20:15  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/features/hub/components/mobile/gear/MissingItemsDrawer.tsx
+47:21  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/features/hub/stores/useHubStore.ts
+98:56  Warning: 'get' is defined but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./src/features/kits/components/KitSheetModal.tsx
+10:3  Warning: 'KitSheetKit' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+11:3  Warning: 'KitTrustRow' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./src/features/materiel/actions/addDepartItem.ts
+21:3  Warning: 'isVital' is assigned a value but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./src/features/materiel/components/alertes/ExportShareBar.tsx
+27:7  Warning: Unexpected console statement. Only these console methods are allowed: warn, error, info.  no-console
+
+./src/features/materiel/components/alertes/MaintenanceCalendar.tsx
+31:55  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+
+./src/features/materiel/components/alertes/OccasionMarketplace.tsx
+23:110  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+
+./src/features/materiel/components/cards/GearCardSuivi.tsx
+5:23  Warning: 'Clock' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./src/features/materiel/components/depart/DepartChecklist.tsx
+82:3  Warning: 'participants' is assigned a value but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+89:23  Warning: 'setSearchQuery' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./src/features/materiel/components/depart/DepartEquipmentHub.tsx
+4:8  Warning: 'dynamic' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+6:29  Warning: 'ShoppingBag' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+8:24  Warning: 'Layers' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+9:30  Warning: 'ArrowUpRight' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+11:30  Warning: 'ExternalLink' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+118:3  Warning: 'emergencyContact' is assigned a value but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+119:3  Warning: 'trail' is assigned a value but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+120:3  Warning: 'weather' is assigned a value but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+160:31  Warning: 'setSelectedItemForLoan' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+368:9  Warning: 'handleDeleteItem' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+468:9  Warning: 'handleMarkAsOwned' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+726:25  Warning: 'cond' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+761:27  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+776:27  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+862:25  Warning: 'isConsumable' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+885:29  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+893:27  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/features/materiel/components/depart/DepartMap.tsx
+116:17  Warning: Empty block statement.  no-empty
+161:21  Warning: Empty block statement.  no-empty
+
+./src/features/materiel/components/depart/DepartParticipants.tsx
+33:15  Warning: Empty block statement.  no-empty
+
+./src/features/materiel/components/depart/DepartureSheetModal.tsx
+55:15  Warning: Empty block statement.  no-empty
+
+./src/features/materiel/components/depart/DepartWeather.tsx
+4:23  Warning: 'Clock' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+5:29  Warning: 'ChevronDown' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+6:10  Warning: 'motion' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+6:18  Warning: 'AnimatePresence' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+8:10  Warning: 'weatherLabel' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+36:42  Warning: 'updatedAt' is defined but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+37:10  Warning: 'showHourly' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+37:22  Warning: 'setShowHourly' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+38:9  Warning: 'shouldReduceMotion' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./src/features/materiel/components/depart/DepartWeightBreakdown.tsx
+7:10  Warning: 'cn' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+45:3  Warning: 'items' is assigned a value but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+46:3  Warning: 'participants' is assigned a value but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+47:3  Warning: 'comparableTripName' is defined but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+64:9  Warning: 'autoInsight' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./src/features/materiel/components/depart/KitSwitcher.tsx
+20:9  Warning: 'shouldReduceMotion' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./src/features/materiel/components/disponibilite/ConflictDetector.tsx
+11:62  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+
+./src/features/materiel/components/disponibilite/GanttTimeline.tsx
+13:9  Warning: 'cols' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./src/features/materiel/components/inventaire/AiInsightBanner.tsx
+21:81  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+
+./src/features/materiel/components/inventaire/InventoryOverview.tsx
+17:54  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+17:68  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+
+./src/features/materiel/components/inventaire/InventoryWorkspace.tsx
+212:66  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+
+./src/features/materiel/components/kits/KitBuilder.tsx
+832:35  Warning: 'idx' is defined but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./src/features/materiel/components/kits/KitManager.tsx
+15:30  Warning: 'kits' is defined but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+29:9  Warning: 'openEdit' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+74:9  Warning: 'remove' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./src/features/materiel/components/kits/KitOverviewCockpitCard.tsx
+5:10  Warning: 'Calendar' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+5:20  Warning: 'ShieldCheck' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+6:25  Warning: 'Compass' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./src/features/materiel/components/kits/KitProductSuggestions.tsx
+11:29  Warning: 'ShoppingBag' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./src/features/materiel/components/kits/KitsActiveCockpitCard.tsx
+59:25  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+
+./src/features/materiel/components/kits/KitsGrid.tsx
+7:10  Warning: 'Badge' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./src/features/materiel/components/kits/TemplateStore.tsx
+8:10  Warning: 'Badge' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./src/features/materiel/components/mobile/MobileChecklistItem.tsx
+182:13  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/features/materiel/services/generateSmartPrompts.ts
+31:3  Warning: 'participants' is assigned a value but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+36:3  Warning: 'activityType' is defined but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./src/features/materiel/services/getMaterielSummary.ts
+153:11  Warning: 'seenNames' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./src/features/messaging/components/AudioPlayerBubble.tsx
+76:9  Warning: 'progressPct' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./src/features/messaging/components/ConversationView.tsx
+116:55  Warning: 'durationSec' is defined but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+220:22  Warning: [LKDV Shell] Éviter env(safe-area-inset-top) directement. Utiliser AppShell (safeTop=true) ou la CSS var --safe-top. Si inévitable (overlay de carte), ajouter // lkdv-safe-area-ok sur la ligne.  no-restricted-syntax
+322:24  Warning: [LKDV Shell] Éviter env(safe-area-inset-bottom) directement. Utiliser AppShell ou la CSS var --bottom-nav-height. Si inévitable, ajouter // lkdv-safe-area-ok sur la ligne.  no-restricted-syntax
+
+./src/features/messaging/components/GroupSettingsModal.tsx
+34:21  Warning: 'setAvatarUrl' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./src/features/messaging/components/MessageComposer.tsx
+108:24  Warning: [LKDV Shell] Éviter env(safe-area-inset-bottom) directement. Utiliser AppShell ou la CSS var --bottom-nav-height. Si inévitable, ajouter // lkdv-safe-area-ok sur la ligne.  no-restricted-syntax
+
+./src/features/messaging/components/MobileSheet.tsx
+89:26  Warning: [LKDV Shell] Éviter env(safe-area-inset-bottom) directement. Utiliser AppShell ou la CSS var --bottom-nav-height. Si inévitable, ajouter // lkdv-safe-area-ok sur la ligne.  no-restricted-syntax
+
+./src/features/messaging/components/VoiceRecorderBar.tsx
+17:10  Warning: 'recording' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+56:16  Warning: 'err' is defined but never used. Allowed unused caught errors must match /^_/u.  @typescript-eslint/no-unused-vars
+74:6  Warning: React Hook useEffect has a missing dependency: 'haptic'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+121:24  Warning: [LKDV Shell] Éviter env(safe-area-inset-bottom) directement. Utiliser AppShell ou la CSS var --bottom-nav-height. Si inévitable, ajouter // lkdv-safe-area-ok sur la ligne.  no-restricted-syntax
+
+./src/features/messaging/services/messagingService.ts
+528:61  Warning: 'currentUserId' is defined but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./src/features/participants/components/GlassBreakModal.tsx
+64:26  Warning: [LKDV Shell] Éviter env(safe-area-inset-bottom) directement. Utiliser AppShell ou la CSS var --bottom-nav-height. Si inévitable, ajouter // lkdv-safe-area-ok sur la ligne.  no-restricted-syntax
+129:40  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+129:48  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+173:30  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+
+./src/features/participants/stores/useParticipantsStore.ts
+124:11  Warning: Empty block statement.  no-empty
+
+./src/features/places/components/PlaceCard.tsx
+3:8  Warning: 'Icon' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./src/features/places/components/PlaceDetailClient.tsx
+3:8  Warning: 'Icon' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./src/features/preparation/components/modals/AddGearModal.tsx
+80:76  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+
+./src/features/preparation/components/modals/AddParticipantModal.tsx
+28:24  Warning: 'setFitnessScore' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+32:27  Warning: 'setIceRelationship' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+215:79  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+280:52  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+
+./src/features/preparation/components/modals/GlassBreakModal.tsx
+66:26  Warning: [LKDV Shell] Éviter env(safe-area-inset-bottom) directement. Utiliser AppShell ou la CSS var --bottom-nav-height. Si inévitable, ajouter // lkdv-safe-area-ok sur la ligne.  no-restricted-syntax
+123:143  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+131:40  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+131:48  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+175:30  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+
+./src/features/preparation/components/SegmentedNav.tsx
+15:5  Warning: 'getWeightBreakdown' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./src/features/preparation/components/tabs/ShakedownTab.tsx
+8:29  Warning: 'ShoppingBag' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+92:27  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+211:33  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+249:33  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+
+./src/features/preparation/components/tabs/TeamTab.tsx
+5:33  Warning: 'DogParticipant' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+20:5  Warning: 'updateDog' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+239:38  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+
+./src/features/preparation/components/tabs/WeightTab.tsx
+5:10  Warning: 'Scale' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+5:17  Warning: 'Package' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+5:26  Warning: 'Shirt' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+5:33  Warning: 'Droplet' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+5:42  Warning: 'Check' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+36:9  Warning: 'totalKg' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./src/features/preparation/types/preparation.types.ts
+1:10  Warning: 'normalizeItemCategory' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./src/features/terrain-live/components/TerrainLiveCockpitControl.tsx
+146:26  Warning: [LKDV Shell] Éviter env(safe-area-inset-bottom) directement. Utiliser AppShell ou la CSS var --bottom-nav-height. Si inévitable, ajouter // lkdv-safe-area-ok sur la ligne.  no-restricted-syntax
+
+./src/features/tribu/components/EphemeralGroupSheet.tsx
+4:8  Warning: 'Icon' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./src/features/trips/components/TripExportView.tsx
+43:61  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+262:33  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+
+./src/features/trips/components/TripItineraryTab.tsx
+24:8  Warning: 'Link' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./src/features/trips/components/TripKitView.tsx
+767:23  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+999:7  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/features/trips/components/TripOverviewClient.tsx
+35:3  Warning: 'kitAnalysis' is defined but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./src/features/trips/components/TripSafetyView.tsx
+68:10  Warning: 'isPending' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./src/features/trips/connectors/realDataConnectors.ts
+263:12  Warning: 'error' is defined but never used. Allowed unused caught errors must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./src/features/trips/engine/budgetEngine.ts
+291:9  Warning: 'rangeEnd' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./src/features/trips/engine/tripProfileEngine.ts
+161:51  Warning: 'now' is defined but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./src/features/trips/lib/traceSvg.ts
+1:15  Warning: 'TripStep' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./src/features/trips/planner/DayView.tsx
+7:27  Warning: 'GlassSubCard' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./src/features/trips/planner/StepCard.tsx
+3:8  Warning: 'Icon' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./src/features/trips/wizard/TripWizard.tsx
+16:1  Warning: '@/components/mobile-nav/MobilePageShell' import is restricted from being used. [LKDV Shell] Pour les nouvelles pages, utiliser AppShell (@/components/shell). MobilePageShell reste supporté pour les pages existantes.  no-restricted-imports
+17:21  Warning: 'GlassSubCard' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+17:35  Warning: 'GlassPill' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./src/hooks/gestures/useDoubleTap.ts
+49:6  Warning: 'e' is defined but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./src/hooks/useActiveHikeMode.ts
+160:3  Warning: Unused eslint-disable directive (no problems were reported from 'react-hooks/exhaustive-deps').
+
+./src/hooks/useCompte.ts
+13:3  Warning: 'fetchUserOrders' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+26:9  Warning: 'supabase' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./src/hooks/useHapticFeedback.ts
+14:15  Warning: 'pattern' is defined but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./src/hooks/useOfflineInventory.ts
+62:6  Warning: React Hook useCallback has a missing dependency: 'loadInventory'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+
+./src/hooks/useUserKits.ts
+138:17  Warning: Empty block statement.  no-empty
+236:19  Warning: Empty block statement.  no-empty
+256:13  Warning: Empty block statement.  no-empty
+319:15  Warning: Empty block statement.  no-empty
+374:15  Warning: Empty block statement.  no-empty
+405:15  Warning: Empty block statement.  no-empty
+435:15  Warning: Empty block statement.  no-empty
+463:15  Warning: Empty block statement.  no-empty
+
+./src/lib/ai/country-content/generateContentBlock.ts
+2:10  Warning: 'z' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./src/lib/ai/country-content/generateSafetyCriticalBlock.ts
+6:3  Warning: 'ContentBlockType' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./src/lib/countryDetails.ts
+1:10  Warning: 'Country' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./src/lib/materiel/db.ts
+99:35  Warning: 'userId' is defined but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./src/lib/native/keyboard.ts
+11:11  Warning: Empty block statement.  no-empty
+
+./src/lib/native/platform.ts
+7:5  Warning: Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-require-imports').
+18:5  Warning: Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-require-imports').
+29:5  Warning: Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-require-imports').
+44:5  Warning: Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-require-imports').
+
+./src/lib/native/preferences.ts
+12:13  Warning: Empty block statement.  no-empty
+17:13  Warning: Empty block statement.  no-empty
+47:13  Warning: Empty block statement.  no-empty
+52:13  Warning: Empty block statement.  no-empty
+
+./src/lib/native/splash-screen.ts
+11:11  Warning: Empty block statement.  no-empty
+
+./src/lib/native/status-bar.ts
+13:11  Warning: Empty block statement.  no-empty
+21:11  Warning: Empty block statement.  no-empty
+29:11  Warning: Empty block statement.  no-empty
+42:11  Warning: Empty block statement.  no-empty
+
+./src/lib/preparation/plannedHikes.ts
+114:13  Warning: Empty block statement.  no-empty
+135:13  Warning: Empty block statement.  no-empty
+143:13  Warning: Empty block statement.  no-empty
+164:13  Warning: Empty block statement.  no-empty
+
+./src/lib/queries/carnet.ts
+121:43  Warning: 'idx' is defined but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./src/lib/supabase/queries-compte.ts
+219:36  Warning: 'ordersCount' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+
+info  - Need to disable some ESLint rules? Learn more here: https://nextjs.org/docs/app/api-reference/config/eslint#disabling-rules
+   Collecting page data ...
+ ⚠ Using edge runtime on a page currently disables static generation for that page
+   Generating static pages (0/273) ...
+   Generating static pages (68/273) 
+   Generating static pages (136/273) 
+   Generating static pages (204/273) 
+ ✓ Generating static pages (273/273)
+   Finalizing page optimization ...
+   Collecting build traces ...
+
+Route (app)                                 Size  First Load JS
+┌ ƒ /                                    3.18 kB         292 kB
+├ ƒ /_not-found                            472 B         104 kB
+├ ƒ /abonnements                         8.11 kB         292 kB
+├ ƒ /admin                                 14 kB         296 kB
+├ ƒ /admin/produits                      19.2 kB         266 kB
+├ ƒ /ai-configurator                     13.2 kB         295 kB
+├ ƒ /ambassadeurs                         3.8 kB         282 kB
+├ ƒ /api/account/delete                    472 B         104 kB
+├ ƒ /api/account/export                    472 B         104 kB
+├ ƒ /api/admin/rewards                     472 B         104 kB
+├ ƒ /api/adventure/[id]                    472 B         104 kB
+├ ƒ /api/adventure/[id]/cockpit            472 B         104 kB
+├ ƒ /api/adventure/[id]/group              472 B         104 kB
+├ ƒ /api/adventure/[id]/monitoring         472 B         104 kB
+├ ƒ /api/adventure/[id]/offline-pack       472 B         104 kB
+├ ƒ /api/adventure/[id]/select             472 B         104 kB
+├ ƒ /api/adventure/[id]/trek               472 B         104 kB
+├ ƒ /api/adventure/generate                472 B         104 kB
+├ ƒ /api/adventure/offline/sync            472 B         104 kB
+├ ƒ /api/affiliate/travelpayouts           472 B         104 kB
+├ ƒ /api/ai/chat-completion                472 B         104 kB
+├ ƒ /api/ai/country-guide/[code]           472 B         104 kB
+├ ƒ /api/ai/jobs                           472 B         104 kB
+├ ƒ /api/ai/ping                           472 B         104 kB
+├ ƒ /api/badges/unread                     472 B         104 kB
+├ ƒ /api/billing/entitlements              472 B         104 kB
+├ ƒ /api/carnet/identify-species           472 B         104 kB
+├ ƒ /api/carnets/[id]                      472 B         104 kB
+├ ƒ /api/checkout                          472 B         104 kB
+├ ƒ /api/cron/aggregate-segments           472 B         104 kB
+├ ƒ /api/cron/cleanup-ephemeral-groups     472 B         104 kB
+├ ƒ /api/cron/cleanup-solo-crews           472 B         104 kB
+├ ƒ /api/cron/expire-live-positions        472 B         104 kB
+├ ƒ /api/cron/expire-terrain-reports       472 B         104 kB
+├ ƒ /api/cron/finalize-kit-attributions    472 B         104 kB
+├ ƒ /api/cron/process-adventure-events     472 B         104 kB
+├ ƒ /api/cron/process-ai-jobs              472 B         104 kB
+├ ƒ /api/cron/process-hike-sessions        472 B         104 kB
+├ ƒ /api/cron/refresh-atlas-density        472 B         104 kB
+├ ƒ /api/cron/refresh-country-guides       472 B         104 kB
+├ ƒ /api/cron/refresh-kit-scores           472 B         104 kB
+├ ƒ /api/cron/run-adventure-shadows        472 B         104 kB
+├ ƒ /api/dev/generate-country-blocks       472 B         104 kB
+├ ƒ /api/discovery/search                  472 B         104 kB
+├ ƒ /api/guides/[country]/ask              472 B         104 kB
+├ ƒ /api/hike-sessions                     472 B         104 kB
+├ ƒ /api/hike-sessions/[id]                472 B         104 kB
+├ ƒ /api/hike-sessions/[id]/narrative      472 B         104 kB
+├ ƒ /api/hikes                             472 B         104 kB
+├ ƒ /api/hikes/[id]                        472 B         104 kB
+├ ƒ /api/hikes/geojson                     472 B         104 kB
+├ ƒ /api/hub/adventures                    472 B         104 kB
+├ ƒ /api/hub/dashboard                     472 B         104 kB
+├ ƒ /api/identity/signature                472 B         104 kB
+├ ƒ /api/indexnow                          472 B         104 kB
+├ ƒ /api/kit-report/convert-inventory      472 B         104 kB
+├ ƒ /api/kit-report/generate               472 B         104 kB
+├ ƒ /api/kit-report/save                   472 B         104 kB
+├ ƒ /api/kits/[id]/field-report            472 B         104 kB
+├ ƒ /api/kits/[id]/refer                   472 B         104 kB
+├ ƒ /api/kits/[id]/sheet                   472 B         104 kB
+├ ƒ /api/kits/discovery                    472 B         104 kB
+├ ƒ /api/kits/my-royalties                 472 B         104 kB
+├ ƒ /api/materiel/alerts/[id]              472 B         104 kB
+├ ƒ /api/materiel/calendar                 472 B         104 kB
+├ ƒ /api/materiel/export                   472 B         104 kB
+├ ƒ /api/materiel/fork                     472 B         104 kB
+├ ƒ /api/materiel/items                    472 B         104 kB
+├ ƒ /api/materiel/items/[id]               472 B         104 kB
+├ ƒ /api/materiel/kit-items/[id]           472 B         104 kB
+├ ƒ /api/materiel/kits                     472 B         104 kB
+├ ƒ /api/materiel/kits/[id]                472 B         104 kB
+├ ƒ /api/materiel/kits/[id]/history        472 B         104 kB
+├ ƒ /api/materiel/loans/[id]               472 B         104 kB
+├ ƒ /api/materiel/optimize                 472 B         104 kB
+├ ƒ /api/materiel/participants             472 B         104 kB
+├ ƒ /api/materiel/scan                     472 B         104 kB
+├ ƒ /api/materiel/search                   472 B         104 kB
+├ ƒ /api/materiel/share                    472 B         104 kB
+├ ƒ /api/notifications/digest              472 B         104 kB
+├ ƒ /api/notifications/process             472 B         104 kB
+├ ƒ /api/notifications/subscribe           472 B         104 kB
+├ ƒ /api/notifications/vapid               472 B         104 kB
+├ ƒ /api/og-preview                        472 B         104 kB
+├ ƒ /api/pays/[code]                       472 B         104 kB
+├ ƒ /api/pays/[code]/recommendations       472 B         104 kB
+├ ƒ /api/pays/[code]/regions               472 B         104 kB
+├ ƒ /api/pays/[code]/trails                472 B         104 kB
+├ ƒ /api/pays/[code]/weather               472 B         104 kB
+├ ƒ /api/pois                              472 B         104 kB
+├ ƒ /api/produit/neuf-check                472 B         104 kB
+├ ƒ /api/produit/occasion-check            472 B         104 kB
+├ ƒ /api/produit/trust-score-check         472 B         104 kB
+├ ƒ /api/rewards/claim                     472 B         104 kB
+├ ƒ /api/rewards/withdraw                  472 B         104 kB
+├ ƒ /api/seed                              472 B         104 kB
+├ ƒ /api/stripe/webhook                    472 B         104 kB
+├ ƒ /api/telemetry/hub                     472 B         104 kB
+├ ƒ /api/terrain/conditions                472 B         104 kB
+├ ƒ /api/terrain/reports                   472 B         104 kB
+├ ƒ /api/terrain/reports/[id]/confirm      472 B         104 kB
+├ ƒ /api/trails                            472 B         104 kB
+├ ƒ /api/trip-assistant                    472 B         104 kB
+├ ƒ /api/voyages                           472 B         104 kB
+├ ƒ /api/voyages/[slug]/gpx                472 B         104 kB
+├ ƒ /api/voyages/mine                      472 B         104 kB
+├ ƒ /auth/callback                         472 B         104 kB
+├ ƒ /avis                                7.65 kB         330 kB
+├ ƒ /blog                                7.62 kB         336 kB
+├ ƒ /boutique                              162 B         327 kB
+├ ƒ /carbone                             5.51 kB         284 kB
+├ ƒ /carnets                             15.5 kB         311 kB
+├ ● /carnets/[id]                        16.1 kB         351 kB
+├ ƒ /carnets/nouveau                      6.9 kB         285 kB
+├ ƒ /carte-interactive                   3.04 kB         281 kB
+├ ƒ /cgu                                 3.16 kB         281 kB
+├ ƒ /cgv                                 3.16 kB         281 kB
+├ ƒ /checkout                             8.4 kB         287 kB
+├ ƒ /clubs                               14.6 kB         296 kB
+├ ƒ /clubs/[id]                            18 kB         362 kB
+├ ƒ /clubs/nouveau                       7.41 kB         286 kB
+├ ƒ /communaute                          24.7 kB         376 kB
+├ ƒ /communaute-pro                      3.92 kB         282 kB
+├ ƒ /communaute/publier                    202 B         294 kB
+├ ƒ /compte                              26.1 kB         381 kB
+├ ƒ /compte/[userId]                       635 B         105 kB
+├ ƒ /compte/modifier                       914 B         290 kB
+├ ƒ /connexion                           6.25 kB         285 kB
+├ ƒ /contact                             4.28 kB         283 kB
+├ ƒ /cookies                             5.94 kB         284 kB
+├ ƒ /copilote                            2.83 kB         285 kB
+├ ƒ /createurs                           3.74 kB         282 kB
+├ ƒ /entraide                            3.85 kB         282 kB
+├ ƒ /evenements                            13 kB         291 kB
+├ ƒ /experts                             3.54 kB         282 kB
+├ ƒ /explorer                            18.4 kB         367 kB
+├ ƒ /faq                                 4.88 kB         283 kB
+├ ƒ /feed                                6.25 kB         288 kB
+├ ƒ /fidelite                            8.35 kB         287 kB
+├ ƒ /go/[slug]                             472 B         104 kB
+├ ƒ /guides                              3.56 kB         326 kB
+├ ƒ /guides/[slug]                       5.91 kB         284 kB
+├ ƒ /hors-ligne                          5.31 kB         287 kB
+├ ƒ /hub                                   12 kB         325 kB
+├ ƒ /hub/[section]                       95.6 kB         452 kB
+├ ƒ /hub/nouveau                         32.9 kB         408 kB
+├ ƒ /inscription                          5.2 kB         284 kB
+├ ƒ /k/[token]                           2.49 kB         160 kB
+├ ƒ /kits                                3.56 kB         326 kB
+├ ● /kits/[slug]                         4.83 kB         331 kB
+├   ├ /kits/islande-trek
+├   ├ /kits/gr20-corse
+├   └ /kits/vanlife-europe
+├ ƒ /lieux                               2.67 kB         331 kB
+├ ƒ /lieux/[slug]                        5.61 kB         334 kB
+├ ƒ /location                            10.2 kB         289 kB
+├ ƒ /manifeste                             162 B         327 kB
+├ ƒ /mentions-legales                    3.16 kB         281 kB
+├ ƒ /messagerie                          27.4 kB         325 kB
+├ ƒ /nouveau-groupe                      7.43 kB         286 kB
+├ ƒ /occasion                              10 kB         288 kB
+├ ƒ /outils                              3.16 kB         281 kB
+├ ƒ /outils/[slug]                       10.5 kB         293 kB
+├ ƒ /panier                              6.81 kB         285 kB
+├ ● /pays/[code]                         36.7 kB         420 kB
+├   ├ /pays/ad
+├   ├ /pays/ae
+├   ├ /pays/af
+├   └ [+193 more paths]
+├ ƒ /politique-confidentialite           3.16 kB         281 kB
+├ ƒ /preparer-randonnee                    472 B         104 kB
+├ ƒ /preparer-sentier/[id]                 170 B         108 kB
+├ ƒ /preparer-sentier/[id]/activer         472 B         104 kB
+├ ƒ /preparer-sentier/apercu             2.86 kB         167 kB
+├ ƒ /pro                                  4.9 kB         283 kB
+├ ● /produit/[slug]                      16.4 kB         346 kB
+├ ƒ /profil                                576 B         105 kB
+├ ƒ /profil/[id]                         7.67 kB         351 kB
+├ ƒ /publier                               507 B         294 kB
+├ ƒ /randonnee-active                    39.7 kB         364 kB
+├ ƒ /rapport-expedition                  8.37 kB         291 kB
+├ ƒ /recompenses                            8 kB         286 kB
+├ ƒ /rejoindre/[slug]                      170 B         108 kB
+├ ƒ /rejoindre/[slug]/accepter             472 B         104 kB
+├ ○ /robots.txt                            472 B         104 kB
+├ ƒ /sitemap.xml                           472 B         104 kB
+├ ƒ /voyages/[slug]                       132 kB         478 kB
+└ ƒ /voyages/[slug]/[section]            1.55 kB         109 kB
++ First Load JS shared by all             104 kB
+  ├ chunks/1255-5677598258169525.js        46 kB
+  ├ chunks/4bd1b696-100b9d70ed4e49c1.js  54.2 kB
+  └ other shared chunks (total)          3.77 kB
+
+
+ƒ Middleware                             98.5 kB
+
+○  (Static)   prerendered as static content
+●  (SSG)      prerendered as static HTML (uses generateStaticParams)
+ƒ  (Dynamic)  server-rendered on demand
+

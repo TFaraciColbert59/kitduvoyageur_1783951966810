@@ -194,7 +194,7 @@ export default function QuickStartQuiz() {
               className="flex items-center gap-2 px-4 py-3 rounded-full font-semibold text-sm text-white  transition-all duration-200 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#17402C] focus-visible:ring-offset-2 min-h-[44px]"
               style={{
                 background: '#17402C',
-                boxShadow: '0 4px 20px rgba(228,80,28,0.4)',
+                boxShadow: '0 4px 20px rgba(200,154,59,0.4)',
               }}
               aria-label="Ouvrir le quiz pour trouver votre aventure"
             >

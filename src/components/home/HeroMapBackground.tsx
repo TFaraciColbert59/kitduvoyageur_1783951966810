@@ -125,7 +125,7 @@ export default function HeroMapBackground() {
           {/* Dot */}
           <div
             className="w-3 h-3 rounded-full border-2 border-[#17402C]/80"
-            style={{ background: '#17402C', boxShadow: '0 0 8px rgba(228,80,28,0.6)' }}
+            style={{ background: '#17402C', boxShadow: '0 0 8px rgba(200,154,59,0.6)' }}
           />
         </div>
       ))}

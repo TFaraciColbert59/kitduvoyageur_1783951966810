@@ -23,7 +23,7 @@ export default function FinalCTA() {
       </div>
       <div
         className="absolute inset-0 pointer-events-none"
-        style={{ background: 'radial-gradient(ellipse 70% 50% at 50% 100%, rgba(228,80,28,0.1) 0%, transparent 70%)' }}
+        style={{ background: 'radial-gradient(ellipse 70% 50% at 50% 100%, rgba(200,154,59,0.1) 0%, transparent 70%)' }}
         aria-hidden="true"
       />
       <div className="relative z-10 max-w-4xl mx-auto px-5 sm:px-8 lg:px-12 text-center">
@@ -61,7 +61,7 @@ export default function FinalCTA() {
             className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-4 rounded-2xl font-semibold text-base text-white transition-all duration-200 hover:-translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#17402C] focus-visible:ring-offset-2 focus-visible:ring-offset-[#17402C] min-h-[52px]"
             style={{
               background: '#17402C',
-              boxShadow: '0 8px 32px rgba(228,80,28,0.3)',
+              boxShadow: '0 8px 32px rgba(200,154,59,0.3)',
             }}
           >
             <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">

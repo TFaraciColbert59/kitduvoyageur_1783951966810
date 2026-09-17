@@ -156,7 +156,7 @@ export default function BentoGrid() {
           >
             <div
               className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-              style={{ background: 'rgba(228,80,28,0.06)' }}
+              style={{ background: 'rgba(200,154,59,0.06)' }}
               aria-hidden="true"
             />
             <div

@@ -92,9 +92,9 @@ export default function TrailOfTheDay({ trail }: TrailOfTheDayProps) {
                   <span
                     className="px-3 py-1 rounded-full text-xs font-mono font-bold"
                     style={{
-                      background: 'rgba(228,80,28,0.2)',
+                      background: 'rgba(200,154,59,0.2)',
                       color: '#17402C',
-                      border: '1px solid rgba(228,80,28,0.3)',
+                      border: '1px solid rgba(200,154,59,0.3)',
                       fontFamily: 'var(--font-mono)',
                     }}
                   >
@@ -113,7 +113,7 @@ export default function TrailOfTheDay({ trail }: TrailOfTheDayProps) {
                   <span
                     className="px-2.5 py-1 rounded-full text-xs font-mono font-bold"
                     style={{
-                      background: 'rgba(228,80,28,0.2)',
+                      background: 'rgba(200,154,59,0.2)',
                       color: '#17402C',
                       fontFamily: 'var(--font-mono)',
                     }}

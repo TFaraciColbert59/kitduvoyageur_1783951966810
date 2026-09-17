@@ -47,9 +47,9 @@ export default function Hero() {
             <span
               className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-mono tracking-widest uppercase"
               style={{
-                background: 'rgba(228,80,28,0.15)',
+                background: 'rgba(200,154,59,0.15)',
                 color: '#17402C',
-                border: '1px solid rgba(228,80,28,0.3)',
+                border: '1px solid rgba(200,154,59,0.3)',
                 fontFamily: 'var(--font-mono)',
               }}
             >
@@ -109,10 +109,10 @@ export default function Hero() {
                 style={{
                   background: 'rgba(255,255,255,0.08)',
                   border: focused
-                    ? '1.5px solid rgba(228,80,28,0.7)'
+                    ? '1.5px solid rgba(200,154,59,0.7)'
                     : '1.5px solid rgba(255,255,255,0.15)',
                   backdropFilter: 'blur(12px)',
-                  boxShadow: focused ? '0 0 0 3px rgba(228,80,28,0.15)' : 'none',
+                  boxShadow: focused ? '0 0 0 3px rgba(200,154,59,0.15)' : 'none',
                 }}
                 aria-label="Rechercher une aventure ou un lieu"
               />
@@ -147,8 +147,8 @@ export default function Hero() {
                     className="w-full flex items-center gap-3 px-4 py-3 text-left text-sm text-white/70 hover:text-white hover:bg-white/8 transition-colors min-h-[44px] focus-visible:outline-none focus-visible:bg-white/8"
                   >
                     <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
-                      <circle cx="6" cy="6" r="4" stroke="rgba(228,80,28,0.6)" strokeWidth="1.5"/>
-                      <path d="M9.5 9.5l2.5 2.5" stroke="rgba(228,80,28,0.6)" strokeWidth="1.5" strokeLinecap="round"/>
+                      <circle cx="6" cy="6" r="4" stroke="rgba(200,154,59,0.6)" strokeWidth="1.5"/>
+                      <path d="M9.5 9.5l2.5 2.5" stroke="rgba(200,154,59,0.6)" strokeWidth="1.5" strokeLinecap="round"/>
                     </svg>
                     {s}
                   </button>
