@@ -38,7 +38,7 @@ export default function Error({
             href="/"
             className="glass-capsule-btn secondary w-full justify-center"
           >
-            Retour à l'accueil
+            Retour à l&apos;accueil
           </Link>
         </div>
       </div>
