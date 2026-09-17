@@ -322,6 +322,31 @@ TOTAL HEX ON ALL 14 P0 ROUTES: 0
 - Audit `MobilePageShell` : composant délégué canoniquement vers `AppShell` gérant `env(safe-area-inset-top)` et `env(safe-area-inset-bottom)`.
 - Preuve de compilation `npx tsc --noEmit` : **Exit code 0 (zéro erreur TypeScript)**.
 
+---
+
+## [PHASE 7.1 & 7.5] Non-régression complète (Vitest) & Build de contrôle de production
+**Statut** : ✅ FAIT
+**Horodatage** : 2026-09-17 20:20
+**Commandes exécutées** :
+- `npm run build`
+- `npx vitest run`
+
+### Preuve exécutable — Build de production (`npm run build`)
+- **Exit code 0** (succès total)
+- **First Load JS shared by all** : **104 kB** (budget < 170 kB respecté)
+- Génération réussie des 157 glyphes SF-style et vérification des workers MapLibre
+- Compilation App Router sans aucune erreur fatale
+
+### Preuve exécutable — Vitest (`npx vitest run`)
+```text
+ Test Files  386 passed | 4 skipped (390)
+      Tests  2756 passed | 27 skipped (2783)
+   Start at  20:20:10
+   Duration  24.60s
+```
+- **0 test en échec (0 failure)** sur l'intégralité du repository LKDV.
+
+
 
 
 
