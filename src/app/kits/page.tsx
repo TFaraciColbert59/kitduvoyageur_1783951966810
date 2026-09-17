@@ -103,10 +103,10 @@ export default function KitsPage() {
           <main className="h-full overflow-y-auto max-w-[var(--page-max-w)] mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-20">
             <header className="mb-8">
               <Eyebrow>Kits Prêts à Partir</Eyebrow>
-              <h1 className="font-display font-bold text-4xl text-[#17402C] mt-1 mb-3">
+              <h1 className="font-display font-bold text-4xl text-[var(--lkv-primary)] mt-1 mb-3">
                 Kits de voyage
               </h1>
-              <p className="text-[#5A7064] max-w-2xl text-base">
+              <p className="text-[var(--lkv-text-muted)] max-w-2xl text-base">
                 Découvrez nos kits complets et optimisés pour chaque destination. Équipement
                 sélectionné, testé et prêt à partir.
               </p>
@@ -122,12 +122,12 @@ export default function KitsPage() {
                   className="p-6 flex flex-col justify-between gap-4"
                 >
                   <div className="space-y-2">
-                    <h2 className="font-display font-bold text-xl text-[#17402C]">{kit.nom}</h2>
-                    <p className="text-sm text-[#365233] leading-relaxed">{kit.description}</p>
+                    <h2 className="font-display font-bold text-xl text-[var(--lkv-primary)]">{kit.nom}</h2>
+                    <p className="text-sm text-[var(--lkv-forest-600)] leading-relaxed">{kit.description}</p>
                   </div>
 
                   <div className="flex items-center justify-between pt-2 border-t border-white/20">
-                    <span className="text-xs font-mono font-medium text-[#5A7064]">
+                    <span className="text-xs font-mono font-medium text-[var(--lkv-text-muted)]">
                       {kit.weight} · {kit.itemsCount} articles
                     </span>
                     <Link href={`/kits/${kit.slug}`} className="glass-capsule-btn secondary">
@@ -150,19 +150,19 @@ export default function KitsPage() {
             <header className="flex items-center justify-between gap-2">
               <div>
                 <Eyebrow>Kits Prêts à Partir</Eyebrow>
-                <h1 className="font-display font-bold text-[24px] tracking-tight text-[#17402C]">
+                <h1 className="font-display font-bold text-[24px] tracking-tight text-[var(--lkv-primary)]">
                   Kits de voyage
                 </h1>
               </div>
               <Link
                 href="/hub"
-                className="glass interactive h-7.5 px-3 rounded-full flex items-center text-xs font-semibold text-[#17402C] border border-white/40 shadow-inner"
+                className="glass interactive h-7.5 px-3 rounded-full flex items-center text-xs font-semibold text-[var(--lkv-primary)] border border-white/40 shadow-inner"
               >
                 ← Matériel
               </Link>
             </header>
 
-            <p className="text-xs text-[#5A7064] leading-relaxed">
+            <p className="text-xs text-[var(--lkv-text-muted)] leading-relaxed">
               Kits complets et optimisés pour chaque destination. Équipement sélectionné, testé et
               prêt à partir.
             </p>
@@ -177,12 +177,12 @@ export default function KitsPage() {
                   className="p-4 flex flex-col gap-3"
                 >
                   <div className="flex items-start justify-between gap-2">
-                    <h2 className="font-display font-bold text-[17px] text-[#17402C]">{kit.nom}</h2>
+                    <h2 className="font-display font-bold text-[17px] text-[var(--lkv-primary)]">{kit.nom}</h2>
                   </div>
-                  <p className="text-xs text-[#365233] leading-relaxed">{kit.description}</p>
+                  <p className="text-xs text-[var(--lkv-forest-600)] leading-relaxed">{kit.description}</p>
 
                   <div className="flex items-center justify-between pt-1">
-                    <span className="text-[11px] font-mono text-[#5A7064]">
+                    <span className="text-[11px] font-mono text-[var(--lkv-text-muted)]">
                       {kit.weight} · {kit.itemsCount} articles
                     </span>
                     <Link href={`/kits/${kit.slug}`} className="glass-capsule-btn primary">

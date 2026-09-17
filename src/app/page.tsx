@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import Header from '@/components/Header';
@@ -31,7 +31,7 @@ export default function HomePage() {
       
       {/* ── DESKTOP & DIRECT VIEW ── */}
       <div>
-        <div className="min-h-screen bg-[#F7FAF8] font-sans text-[#17402C]">
+        <div className="min-h-screen bg-[var(--lkv-surface)] font-sans text-[var(--lkv-primary)]">
           <Header />
           <ResumeActiveTripCard />
           
@@ -39,32 +39,32 @@ export default function HomePage() {
           <section className="relative min-h-[90vh] flex flex-col pt-40 px-4 pb-12 overflow-hidden">
             {/* Background elements */}
             <div className="absolute inset-0 z-0">
-              <div className="absolute inset-0 bg-gradient-to-br from-[#E4EFE8] via-[#F7FAF8] to-white" />
+              <div className="absolute inset-0 bg-gradient-to-br from-[var(--lkv-primary-subtle)] via-[var(--lkv-surface)] to-white" />
               <div className="absolute -top-1/4 -left-1/4 w-[150%] h-[150%] bg-[radial-gradient(ellipse_at_top_left,rgba(148,182,161,0.15),transparent_50%)]" />
             </div>
 
             <div className="relative z-10 max-w-[1200px] mx-auto w-full flex flex-col lg:flex-row items-center gap-12 lg:gap-20 flex-1">
               {/* Left Text */}
               <div className="flex-1 max-w-2xl pt-10">
-                <p className="text-[10px] font-mono tracking-[0.2em] uppercase text-[#7A8A7D] mb-4">ÉDITION AUTOMNE - ET REFUGES PARTENAIRES</p>
-                <h1 className="text-5xl sm:text-6xl lg:text-7xl font-semibold text-[#17402C] leading-[1.1] mb-6">
+                <p className="text-[10px] font-mono tracking-[0.2em] uppercase text-[var(--lkv-text-muted)] mb-4">ÉDITION AUTOMNE - ET REFUGES PARTENAIRES</p>
+                <h1 className="text-5xl sm:text-6xl lg:text-7xl font-semibold text-[var(--lkv-primary)] leading-[1.1] mb-6">
                   Là où la carte<br />
-                  <span className="font-serif italic text-[#8BAF7C] font-normal">se termine.</span>
+                  <span className="font-serif italic text-[var(--lkv-secondary)] font-normal">se termine.</span>
                 </h1>
-                <p className="text-[#5A6A5D] text-base lg:text-lg mb-10 max-w-md leading-relaxed">
+                <p className="text-[var(--lkv-text-muted)] text-base lg:text-lg mb-10 max-w-md leading-relaxed">
                   Refuges bruts, sentiers oubliés, matériel choisi à la main. Le Kit du Voyageur assemble ce qu'il faut, exactement, pour partir léger — sans rien laisser au hasard.
                 </p>
                 <div className="flex flex-col sm:flex-row items-center gap-4 mb-16">
                   <Link
                     href="/ai-configurator"
-                    className="inline-flex items-center gap-2 px-6 py-3.5 bg-white text-[#17402C] font-semibold rounded-full hover:bg-gray-50 transition-all  border border-[#E8E4D8] text-sm"
+                    className="inline-flex items-center gap-2 px-6 py-3.5 bg-white text-[var(--lkv-primary)] font-semibold rounded-full hover:bg-gray-50 transition-all  border border-[var(--lkv-border)] text-sm"
                   >
                     Composer mon sac 
                     <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
                   </Link>
                   <Link
                     href="/explorer"
-                    className="inline-flex items-center gap-2 px-6 py-3.5 text-[#5A6A5D] font-medium rounded-full hover:bg-black/5 transition-all text-sm"
+                    className="inline-flex items-center gap-2 px-6 py-3.5 text-[var(--lkv-text-muted)] font-medium rounded-full hover:bg-black/5 transition-all text-sm"
                   >
                     Voir les aventures
                   </Link>
@@ -72,11 +72,11 @@ export default function HomePage() {
                 
                 {/* Reviews */}
                 <div className="flex items-center gap-4">
-                  <div className="flex items-center gap-1 text-[#D9B382]">
+                  <div className="flex items-center gap-1 text-[var(--lkv-warm-500)]">
                     <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-                    <span className="text-3xl font-bold text-[#17402C] leading-none ml-1">4,9</span>
+                    <span className="text-3xl font-bold text-[var(--lkv-primary)] leading-none ml-1">4,9</span>
                   </div>
-                  <p className="text-[10px] uppercase font-mono tracking-widest text-[#7A8A7D] leading-tight">
+                  <p className="text-[10px] uppercase font-mono tracking-widest text-[var(--lkv-text-muted)] leading-tight">
                     1 350+ VOYAGEURS RECOMMANDENT<br/>LEUR SÉJOUR
                   </p>
                 </div>
@@ -84,32 +84,32 @@ export default function HomePage() {
 
               {/* Right Card */}
               <div className="w-full max-w-[340px] flex-shrink-0">
-                <div className="bg-[#17402C]/5 backdrop-blur-xl border border-white/20 rounded-[0.75rem] p-6  shadow-black/5 relative overflow-hidden">
+                <div className="bg-[var(--lkv-primary)]/5 backdrop-blur-xl border border-white/20 rounded-[0.75rem] p-6  shadow-black/5 relative overflow-hidden">
                   <div className="absolute inset-0 bg-gradient-to-br from-white/40 to-white/10" />
                   <div className="relative z-10">
-                    <p className="text-[9px] font-mono tracking-widest text-[#5A6A5D] uppercase mb-1">ESPACE DE RÉSERVE</p>
-                    <h3 className="text-xl font-bold text-[#17402C] mb-6">Cabane du Grand Vaneau</h3>
+                    <p className="text-[9px] font-mono tracking-widest text-[var(--lkv-text-muted)] uppercase mb-1">ESPACE DE RÉSERVE</p>
+                    <h3 className="text-xl font-bold text-[var(--lkv-primary)] mb-6">Cabane du Grand Vaneau</h3>
                     
                     <div className="flex items-center gap-4 mb-8">
                       <div className="flex-1 bg-white/50 rounded-xl p-3 border border-white/40">
-                        <p className="text-[9px] uppercase tracking-widest text-[#7A8A7D] mb-0.5">Arrivée</p>
-                        <p className="text-sm font-semibold text-[#17402C]">Ven. 24 sept.</p>
+                        <p className="text-[9px] uppercase tracking-widest text-[var(--lkv-text-muted)] mb-0.5">Arrivée</p>
+                        <p className="text-sm font-semibold text-[var(--lkv-primary)]">Ven. 24 sept.</p>
                       </div>
                       <div className="flex-1 bg-white/50 rounded-xl p-3 border border-white/40">
-                        <p className="text-[9px] uppercase tracking-widest text-[#7A8A7D] mb-0.5">Départ</p>
-                        <p className="text-sm font-semibold text-[#17402C]">Lun. 27 sept.</p>
+                        <p className="text-[9px] uppercase tracking-widest text-[var(--lkv-text-muted)] mb-0.5">Départ</p>
+                        <p className="text-sm font-semibold text-[var(--lkv-primary)]">Lun. 27 sept.</p>
                       </div>
                     </div>
 
                     <div className="flex items-end justify-between mb-6">
                       <div>
-                        <span className="text-2xl font-bold text-[#17402C]">248 €</span>
-                        <span className="text-[#7A8A7D] text-xs"> / nuit</span>
+                        <span className="text-2xl font-bold text-[var(--lkv-primary)]">248 €</span>
+                        <span className="text-[var(--lkv-text-muted)] text-xs"> / nuit</span>
                       </div>
-                      <span className="text-[10px] text-[#5A6A5D]">Taxes comprises</span>
+                      <span className="text-[10px] text-[var(--lkv-text-muted)]">Taxes comprises</span>
                     </div>
 
-                    <Link href="/explorer" className="block w-full text-center py-3.5 bg-white text-[#17402C] font-semibold rounded-full  hover: transition-all text-sm border border-[#E8E4D8]">
+                    <Link href="/explorer" className="block w-full text-center py-3.5 bg-white text-[var(--lkv-primary)] font-semibold rounded-full  hover: transition-all text-sm border border-[var(--lkv-border)]">
                       Réserver cet abri
                     </Link>
                   </div>
@@ -122,11 +122,11 @@ export default function HomePage() {
           <section className="py-24 px-4 bg-white">
             <div className="max-w-[1200px] mx-auto">
               <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-16">
-                <h2 className="text-4xl md:text-5xl font-semibold text-[#17402C] leading-[1.1]">
+                <h2 className="text-4xl md:text-5xl font-semibold text-[var(--lkv-primary)] leading-[1.1]">
                   Trois façons<br />
-                  <span className="font-serif italic text-[#17402C] font-normal">de se perdre.</span>
+                  <span className="font-serif italic text-[var(--lkv-primary)] font-normal">de se perdre.</span>
                 </h2>
-                <p className="text-[#7A8A7D] text-sm max-w-sm uppercase font-mono tracking-wide leading-relaxed">
+                <p className="text-[var(--lkv-text-muted)] text-sm max-w-sm uppercase font-mono tracking-wide leading-relaxed">
                   Trois cartes qui suivent la même règle : moins d'équipement, plus de silence. Découvrez celle qui vous ressemble aujourd'hui.
                 </p>
               </div>
@@ -144,7 +144,7 @@ export default function HomePage() {
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
                   <div className="absolute top-4 left-4 right-4 flex justify-between items-start">
-                    <span className="bg-[#EEF3EC] backdrop-blur-sm px-3 py-1.5 rounded-full text-[10px] font-bold text-[#17402C] tracking-wide uppercase">3 Jours / 50 km</span>
+                    <span className="bg-[var(--lkv-surface)] backdrop-blur-sm px-3 py-1.5 rounded-full text-[10px] font-bold text-[var(--lkv-primary)] tracking-wide uppercase">3 Jours / 50 km</span>
                     <span className="w-8 h-8 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white"><svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg></span>
                   </div>
                   <div className="absolute bottom-6 left-6 right-6">
@@ -169,7 +169,7 @@ export default function HomePage() {
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
                   <div className="absolute top-4 left-4 right-4 flex justify-between items-start">
-                    <span className="bg-[#EEF3EC] backdrop-blur-sm px-3 py-1.5 rounded-full text-[10px] font-bold text-[#17402C] tracking-wide uppercase">2 Jours</span>
+                    <span className="bg-[var(--lkv-surface)] backdrop-blur-sm px-3 py-1.5 rounded-full text-[10px] font-bold text-[var(--lkv-primary)] tracking-wide uppercase">2 Jours</span>
                     <span className="w-8 h-8 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white"><svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg></span>
                   </div>
                   <div className="absolute bottom-6 left-6 right-6">
@@ -193,7 +193,7 @@ export default function HomePage() {
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
                   <div className="absolute top-4 left-4 right-4 flex justify-between items-start">
-                    <span className="bg-[#EEF3EC] backdrop-blur-sm px-3 py-1.5 rounded-full text-[10px] font-bold text-[#17402C] tracking-wide uppercase">1 Jour</span>
+                    <span className="bg-[var(--lkv-surface)] backdrop-blur-sm px-3 py-1.5 rounded-full text-[10px] font-bold text-[var(--lkv-primary)] tracking-wide uppercase">1 Jour</span>
                     <span className="w-8 h-8 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white"><svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg></span>
                   </div>
                   <div className="absolute bottom-6 left-6 right-6">
@@ -209,13 +209,13 @@ export default function HomePage() {
           </section>
 
           {/* ── MANIFESTO ── */}
-          <section className="bg-[#17402C] py-24 px-4 text-white">
+          <section className="bg-[var(--lkv-primary)] py-24 px-4 text-white">
             <div className="max-w-[1200px] mx-auto flex flex-col lg:flex-row items-center gap-16">
               <div className="flex-1 max-w-xl">
-                <p className="text-[10px] font-mono tracking-widest uppercase text-[#8BAF7C] mb-6">NOTRE PROMESSE</p>
+                <p className="text-[10px] font-mono tracking-widest uppercase text-[var(--lkv-secondary)] mb-6">NOTRE PROMESSE</p>
                 <h2 className="text-4xl md:text-5xl font-semibold leading-[1.1] mb-8">
                   Un sac. Une carte.<br/>
-                  Le <span className="font-serif italic text-[#8BAF7C] font-normal">reste</span> vient de<br/>
+                  Le <span className="font-serif italic text-[var(--lkv-secondary)] font-normal">reste</span> vient de<br/>
                   vous.
                 </h2>
                 <p className="text-white/70 text-sm leading-relaxed mb-10 max-w-md">
@@ -223,7 +223,7 @@ export default function HomePage() {
                 </p>
                 <Link
                   href="/manifeste"
-                  className="inline-flex items-center gap-2 px-6 py-3 bg-white text-[#17402C] font-semibold rounded-full hover:bg-gray-200 transition-all text-sm mb-16"
+                  className="inline-flex items-center gap-2 px-6 py-3 bg-white text-[var(--lkv-primary)] font-semibold rounded-full hover:bg-gray-200 transition-all text-sm mb-16"
                 >
                   Lire notre manifeste
                   <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
@@ -231,19 +231,19 @@ export default function HomePage() {
 
                 <div className="grid grid-cols-2 gap-x-8 gap-y-12">
                   <div>
-                    <p className="text-3xl font-bold mb-1">47<span className="text-[#8BAF7C] font-normal">+</span></p>
+                    <p className="text-3xl font-bold mb-1">47<span className="text-[var(--lkv-secondary)] font-normal">+</span></p>
                     <p className="text-[9px] font-mono tracking-widest uppercase text-white/50">REFUGES PARTENAIRES</p>
                   </div>
                   <div>
-                    <p className="text-3xl font-bold mb-1">1,<span className="text-2xl">4</span><span className="text-[#8BAF7C] font-normal text-xl ml-1">kg</span></p>
+                    <p className="text-3xl font-bold mb-1">1,<span className="text-2xl">4</span><span className="text-[var(--lkv-secondary)] font-normal text-xl ml-1">kg</span></p>
                     <p className="text-[9px] font-mono tracking-widest uppercase text-white/50">SAC DE BASE À SEC</p>
                   </div>
                   <div>
-                    <p className="text-3xl font-bold mb-1">6<span className="text-[#8BAF7C] font-normal text-xl ml-1">sem.</span></p>
+                    <p className="text-3xl font-bold mb-1">6<span className="text-[var(--lkv-secondary)] font-normal text-xl ml-1">sem.</span></p>
                     <p className="text-[9px] font-mono tracking-widest uppercase text-white/50">TESTS CONDITIONS EXTRÊMES</p>
                   </div>
                   <div>
-                    <p className="text-3xl font-bold mb-1">100<span className="text-[#8BAF7C] font-normal text-xl ml-1">%</span></p>
+                    <p className="text-3xl font-bold mb-1">100<span className="text-[var(--lkv-secondary)] font-normal text-xl ml-1">%</span></p>
                     <p className="text-[9px] font-mono tracking-widest uppercase text-white/50">SAUVAGE ET SANS RÉSEAU</p>
                   </div>
                 </div>
@@ -252,9 +252,9 @@ export default function HomePage() {
               <div className="flex-1 w-full">
                 <div className="relative rounded-[0.75rem] overflow-hidden aspect-[4/5] lg:aspect-auto lg:h-[700px]">
                   <img src="https://images.unsplash.com/photo-1454496522488-7a8e488e8606?w=1000&q=80" alt="Montagne" className="w-full h-full object-cover" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#17402C] via-transparent to-transparent opacity-80" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-[var(--lkv-primary)] via-transparent to-transparent opacity-80" />
                   <div className="absolute bottom-8 left-8 right-8">
-                    <p className="text-[9px] font-mono tracking-widest uppercase text-[#8BAF7C] mb-2">ALPES FRANÇAISES</p>
+                    <p className="text-[9px] font-mono tracking-widest uppercase text-[var(--lkv-secondary)] mb-2">ALPES FRANÇAISES</p>
                     <p className="text-lg font-semibold text-white">Trois jours dans la Chartreuse</p>
                   </div>
                 </div>
@@ -263,13 +263,13 @@ export default function HomePage() {
           </section>
 
           {/* ── PRODUCT HIGHLIGHT ── */}
-          <section className="py-24 px-4 bg-[#F7FAF8]">
+          <section className="py-24 px-4 bg-[var(--lkv-surface)]">
             <div className="max-w-[1200px] mx-auto flex flex-col lg:flex-row items-center gap-16">
               <div className="flex-1 w-full">
-                <div className="relative rounded-[0.75rem] overflow-hidden aspect-square bg-[#E8E4D8]">
+                <div className="relative rounded-[0.75rem] overflow-hidden aspect-square bg-[var(--stone-200)]">
                   <img src="https://images.unsplash.com/photo-1550ed4e1b-3b47bd21096a?w=1000&q=80" alt="Sac à dos en toile cirée" className="w-full h-full object-cover" />
                   <div className="absolute top-6 left-6">
-                    <span className="bg-[#EEF3EC] backdrop-blur px-3 py-1.5 rounded-full text-[10px] font-bold text-[#17402C] tracking-wide uppercase ">
+                    <span className="bg-[var(--lkv-surface)] backdrop-blur px-3 py-1.5 rounded-full text-[10px] font-bold text-[var(--lkv-primary)] tracking-wide uppercase ">
                       Édition artisanale
                     </span>
                   </div>
@@ -277,41 +277,41 @@ export default function HomePage() {
               </div>
 
               <div className="flex-1 max-w-md">
-                <p className="text-[10px] font-mono tracking-widest uppercase text-[#7A8A7D] mb-6">LE SAC ESSENTIEL</p>
-                <h2 className="text-4xl md:text-5xl font-semibold text-[#17402C] leading-[1.1] mb-6">
-                  45 L, <span className="font-serif italic text-[#17402C] font-normal">toile cirée</span>,<br/>
+                <p className="text-[10px] font-mono tracking-widest uppercase text-[var(--lkv-text-muted)] mb-6">LE SAC ESSENTIEL</p>
+                <h2 className="text-4xl md:text-5xl font-semibold text-[var(--lkv-primary)] leading-[1.1] mb-6">
+                  45 L, <span className="font-serif italic text-[var(--lkv-primary)] font-normal">toile cirée</span>,<br/>
                   rien de superflu.
                 </h2>
-                <p className="text-[#5A6A5D] text-sm leading-relaxed mb-10">
+                <p className="text-[var(--lkv-text-muted)] text-sm leading-relaxed mb-10">
                   Trois compartiments, une toile déperlante et un point d'accroche pour tapis de sol. Fabriqué dans les Alpes-de-Haute-Provence. Réparable à vie.
                 </p>
 
                 <div className="grid grid-cols-2 gap-y-6 mb-10">
                   <div>
-                    <p className="text-[9px] font-mono tracking-widest uppercase text-[#7A8A7D] mb-1">VOLUME</p>
-                    <p className="text-sm font-semibold text-[#17402C]">45 litres</p>
+                    <p className="text-[9px] font-mono tracking-widest uppercase text-[var(--lkv-text-muted)] mb-1">VOLUME</p>
+                    <p className="text-sm font-semibold text-[var(--lkv-primary)]">45 litres</p>
                   </div>
                   <div>
-                    <p className="text-[9px] font-mono tracking-widest uppercase text-[#7A8A7D] mb-1">POIDS À SEC</p>
-                    <p className="text-sm font-semibold text-[#17402C]">1,4 kg</p>
+                    <p className="text-[9px] font-mono tracking-widest uppercase text-[var(--lkv-text-muted)] mb-1">POIDS À SEC</p>
+                    <p className="text-sm font-semibold text-[var(--lkv-primary)]">1,4 kg</p>
                   </div>
                   <div>
-                    <p className="text-[9px] font-mono tracking-widest uppercase text-[#7A8A7D] mb-1">TISSU</p>
-                    <p className="text-sm font-semibold text-[#17402C]">Coton huilé 22 oz</p>
+                    <p className="text-[9px] font-mono tracking-widest uppercase text-[var(--lkv-text-muted)] mb-1">TISSU</p>
+                    <p className="text-sm font-semibold text-[var(--lkv-primary)]">Coton huilé 22 oz</p>
                   </div>
                   <div>
-                    <p className="text-[9px] font-mono tracking-widest uppercase text-[#7A8A7D] mb-1">GARANTIE</p>
-                    <p className="text-sm font-semibold text-[#17402C]">À vie</p>
+                    <p className="text-[9px] font-mono tracking-widest uppercase text-[var(--lkv-text-muted)] mb-1">GARANTIE</p>
+                    <p className="text-sm font-semibold text-[var(--lkv-primary)]">À vie</p>
                   </div>
                 </div>
 
-                <p className="text-3xl font-bold text-[#17402C] mb-8">340 €</p>
+                <p className="text-3xl font-bold text-[var(--lkv-primary)] mb-8">340 €</p>
 
                 <div className="flex items-center gap-4">
-                  <button className="px-8 py-3.5 bg-[#17402C] text-white font-semibold rounded-full hover:bg-[#2D3F35] transition-all text-sm ">
+                  <button className="px-8 py-3.5 bg-[var(--lkv-primary)] text-white font-semibold rounded-full hover:bg-[var(--lkv-primary-hover)] transition-all text-sm ">
                     Ajouter au sac
                   </button>
-                  <Link href="/boutique" className="text-sm font-semibold text-[#17402C] hover:text-[#17402C] transition-colors">
+                  <Link href="/boutique" className="text-sm font-semibold text-[var(--lkv-primary)] hover:text-[var(--lkv-primary-hover)] transition-colors">
                     Voir la fiche
                   </Link>
                 </div>
@@ -320,10 +320,10 @@ export default function HomePage() {
           </section>
 
           {/* ── FOOTER ── */}
-          <footer className="bg-[#131B16] pt-20 pb-10 px-4">
+          <footer className="bg-[var(--lkv-forest-950)] pt-20 pb-10 px-4">
             <div className="max-w-[1200px] mx-auto">
               <h2 className="text-3xl md:text-4xl font-semibold text-white mb-16">
-                Ce que vous emportez, <span className="font-serif italic text-[#8BAF7C] font-normal">c'est votre<br/>voyage.</span>
+                Ce que vous emportez, <span className="font-serif italic text-[var(--lkv-secondary)] font-normal">c'est votre<br/>voyage.</span>
               </h2>
 
               <div className="grid grid-cols-1 md:grid-cols-4 gap-10 mb-20">
@@ -331,8 +331,8 @@ export default function HomePage() {
                   <p className="text-[10px] font-mono tracking-widest uppercase text-white/50 mb-4">RECEVEZ LE JOURNAL</p>
                   <p className="text-white/70 text-xs mb-4">Un email par saison. Refuges, matériel, récit d'abris.</p>
                   <div className="flex gap-2">
-                    <input type="email" placeholder="votre@email.fr" className="bg-white/5 border border-white/10 rounded-full px-4 py-2 text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-[#8BAF7C] w-full" />
-                    <button className="bg-[#8BAF7C] text-[#131B16] px-4 py-2 rounded-full text-xs font-bold hover:bg-white transition-colors">S'inscrire</button>
+                    <input type="email" placeholder="votre@email.fr" className="bg-white/5 border border-white/10 rounded-full px-4 py-2 text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-[var(--lkv-secondary)] w-full" />
+                    <button className="bg-[var(--lkv-secondary)] text-[var(--lkv-forest-950)] px-4 py-2 rounded-full text-xs font-bold hover:bg-white transition-colors">S'inscrire</button>
                   </div>
                 </div>
 

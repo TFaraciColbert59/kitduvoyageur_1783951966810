@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -43,31 +43,31 @@ export default function InscriptionPage() {
         <div className="w-full max-w-md">
           {success ? (
             <div className="bg-card border border-border rounded-2xl p-8 text-center">
-              <div className="w-16 h-16 rounded-full bg-[rgba(91,127,85,0.12)] flex items-center justify-center mx-auto mb-4">
-                <Icon name="CheckCircleIcon" size={32} style={{ color: '#5B7F55' }} variant="outline" />
+              <div className="w-16 h-16 rounded-full bg-[var(--lkv-secondary)]/15 flex items-center justify-center mx-auto mb-4">
+                <Icon name="CheckCircleIcon" size={32} style={{ color: 'var(--lkv-secondary)' }} variant="outline" />
               </div>
               <h2 className="font-display text-xl text-foreground mb-2" style={{ fontFamily: 'var(--font-display)', fontWeight: 800 }}>Compte créé !</h2>
               <p className="text-sm text-foreground/60 mb-6">Un email de confirmation a été envoyé à <strong className="text-foreground">{form.email}</strong>.</p>
-              <Link href="/connexion" className="inline-flex items-center gap-2 bg-[#17402C] hover:bg-[#365233] text-white px-6 py-3 rounded-xl font-semibold text-sm transition-all shadow-sm"><Icon name="ArrowRightIcon" size={14} variant="outline" />Se connecter</Link>
+              <Link href="/connexion" className="inline-flex items-center gap-2 bg-[var(--lkv-primary)] hover:bg-[var(--lkv-forest-600)] text-white px-6 py-3 rounded-xl font-semibold text-sm transition-all shadow-sm"><Icon name="ArrowRightIcon" size={14} variant="outline" />Se connecter</Link>
             </div>
           ) : (
             <div className="bg-card border border-border rounded-2xl p-8">
               <div className="text-center mb-8">
-                <p className="text-xs font-mono text-[#5B7F55] tracking-widest uppercase mb-2" style={{ fontFamily: 'var(--font-mono)' }}>Rejoindre la communauté</p>
+                <p className="text-xs font-mono text-[var(--lkv-secondary)] tracking-widest uppercase mb-2" style={{ fontFamily: 'var(--font-mono)' }}>Rejoindre la communauté</p>
                 <h1 className="font-display text-2xl text-foreground" style={{ fontFamily: 'var(--font-display)', fontWeight: 800 }}>Créer un compte</h1>
                 <p className="text-sm text-foreground/50 mt-2">Configurez vos kits, sauvegardez vos aventures</p>
               </div>
-              {error && <div className="mb-4 p-3 bg-[rgba(168,68,58,0.08)] border border-[rgba(168,68,58,0.25)] rounded-xl text-[#8A241B] text-sm flex items-center gap-2"><Icon name="ExclamationCircleIcon" size={16} style={{ color: '#A8443A' }} className="flex-shrink-0" variant="outline" />{error}</div>}
+              {error && <div className="mb-4 p-3 bg-[var(--lkv-danger-bg,rgba(168,68,58,0.08))] border border-[var(--lkv-danger)]/25 rounded-xl text-[var(--lkv-danger)] text-sm flex items-center gap-2"><Icon name="ExclamationCircleIcon" size={16} style={{ color: 'var(--lkv-danger)' }} className="flex-shrink-0" variant="outline" />{error}</div>}
               <form onSubmit={handleSubmit} className="space-y-4">
-                <div><label className="block text-xs font-medium text-foreground/70 mb-1.5">Nom complet *</label><input type="text" required autoComplete="name" value={form.fullName} onChange={(e) => setForm({ ...form, fullName: e.target.value })} placeholder="Jean Dupont" className="w-full px-3 py-2.5 bg-background border border-border rounded-lg text-sm text-foreground placeholder:text-foreground/30 focus:outline-none focus:border-[#5B7F55]/60 transition-colors" /></div>
-                <div><label className="block text-xs font-medium text-foreground/70 mb-1.5">Email *</label><input type="email" required autoComplete="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="jean@exemple.fr" className="w-full px-3 py-2.5 bg-background border border-border rounded-lg text-sm text-foreground placeholder:text-foreground/30 focus:outline-none focus:border-[#5B7F55]/60 transition-colors" /></div>
-                <div><label className="block text-xs font-medium text-foreground/70 mb-1.5">Mot de passe *</label><input type="password" required autoComplete="new-password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} placeholder="8 caractères minimum" className="w-full px-3 py-2.5 bg-background border border-border rounded-lg text-sm text-foreground placeholder:text-foreground/30 focus:outline-none focus:border-[#5B7F55]/60 transition-colors" /></div>
-                <div><label className="block text-xs font-medium text-foreground/70 mb-1.5">Confirmer le mot de passe *</label><input type="password" required autoComplete="new-password" value={form.confirm} onChange={(e) => setForm({ ...form, confirm: e.target.value })} placeholder="Répéter le mot de passe" className="w-full px-3 py-2.5 bg-background border border-border rounded-lg text-sm text-foreground placeholder:text-foreground/30 focus:outline-none focus:border-[#5B7F55]/60 transition-colors" /></div>
-                <button type="submit" disabled={loading} className="w-full flex items-center justify-center gap-2 bg-[#17402C] hover:bg-[#365233] disabled:opacity-60 text-white px-6 py-3 rounded-xl font-semibold text-sm transition-all shadow-sm mt-2">
+                <div><label className="block text-xs font-medium text-foreground/70 mb-1.5">Nom complet *</label><input type="text" required autoComplete="name" value={form.fullName} onChange={(e) => setForm({ ...form, fullName: e.target.value })} placeholder="Jean Dupont" className="w-full px-3 py-2.5 bg-background border border-border rounded-lg text-sm text-foreground placeholder:text-foreground/30 focus:outline-none focus:border-[var(--lkv-secondary)]/60 transition-colors" /></div>
+                <div><label className="block text-xs font-medium text-foreground/70 mb-1.5">Email *</label><input type="email" required autoComplete="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="jean@exemple.fr" className="w-full px-3 py-2.5 bg-background border border-border rounded-lg text-sm text-foreground placeholder:text-foreground/30 focus:outline-none focus:border-[var(--lkv-secondary)]/60 transition-colors" /></div>
+                <div><label className="block text-xs font-medium text-foreground/70 mb-1.5">Mot de passe *</label><input type="password" required autoComplete="new-password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} placeholder="8 caractères minimum" className="w-full px-3 py-2.5 bg-background border border-border rounded-lg text-sm text-foreground placeholder:text-foreground/30 focus:outline-none focus:border-[var(--lkv-secondary)]/60 transition-colors" /></div>
+                <div><label className="block text-xs font-medium text-foreground/70 mb-1.5">Confirmer le mot de passe *</label><input type="password" required autoComplete="new-password" value={form.confirm} onChange={(e) => setForm({ ...form, confirm: e.target.value })} placeholder="Répéter le mot de passe" className="w-full px-3 py-2.5 bg-background border border-border rounded-lg text-sm text-foreground placeholder:text-foreground/30 focus:outline-none focus:border-[var(--lkv-secondary)]/60 transition-colors" /></div>
+                <button type="submit" disabled={loading} className="w-full flex items-center justify-center gap-2 bg-[var(--lkv-primary)] hover:bg-[var(--lkv-forest-600)] disabled:opacity-60 text-white px-6 py-3 rounded-xl font-semibold text-sm transition-all shadow-sm mt-2 cursor-pointer">
                   {loading ? <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />Création en cours…</> : <><Icon name="UserPlusIcon" size={16} variant="outline" />Créer mon compte</>}
                 </button>
               </form>
-              <p className="text-center text-xs text-foreground/50 mt-6">Déjà un compte ? <Link href="/connexion" className="text-[#17402C] hover:underline font-medium">Se connecter</Link></p>
+              <p className="text-center text-xs text-foreground/50 mt-6">Déjà un compte ? <Link href="/connexion" className="text-[var(--lkv-primary)] hover:underline font-medium">Se connecter</Link></p>
               <p className="text-center text-[10px] text-foreground/30 mt-3">En créant un compte, vous acceptez nos <Link href="/cgu" className="hover:underline">CGU</Link> et notre <Link href="/politique-confidentialite" className="hover:underline">politique de confidentialité</Link>.</p>
             </div>
           )}
@@ -80,28 +80,28 @@ export default function InscriptionPage() {
   const mobileContent = (
     <div style={{ padding: '16px' }}>
       {success ? (
-        <div style={{ textAlign: 'center', padding: '24px 16px', background: '#EEF3EC', borderRadius: '12px', border: '1px solid rgba(23,64,44,0.06)' }}>
-          <p style={{ fontSize: '32px', marginBottom: '12px', color: '#5B7F55' }}>✓</p>
-          <h2 style={{ fontSize: '20px', fontWeight: 800, color: '#17402C', marginBottom: '8px' }}>Compte créé !</h2>
+        <div style={{ textAlign: 'center', padding: '24px 16px', background: 'var(--lkv-surface)', borderRadius: '12px', border: '1px solid rgba(23,64,44,0.06)' }}>
+          <p style={{ fontSize: '32px', marginBottom: '12px', color: 'var(--lkv-secondary)' }}>✓</p>
+          <h2 style={{ fontSize: '20px', fontWeight: 800, color: 'var(--lkv-primary)', marginBottom: '8px' }}>Compte créé !</h2>
           <p style={{ fontSize: '13px', color: 'rgba(23,64,44,0.6)', marginBottom: '16px' }}>Un email de confirmation a été envoyé à <strong>{form.email}</strong>.</p>
-          <Link href="/connexion" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: '#17402C', color: 'white', padding: '10px 24px', borderRadius: '12px', fontSize: '14px', fontWeight: 600, textDecoration: 'none' }}>Se connecter</Link>
+          <Link href="/connexion" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'var(--lkv-primary)', color: 'white', padding: '10px 24px', borderRadius: '12px', fontSize: '14px', fontWeight: 600, textDecoration: 'none' }}>Se connecter</Link>
         </div>
       ) : (
         <div>
-          <p style={{ fontSize: '11px', fontFamily: 'var(--font-mono)', color: '#17402C', letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: '8px', textAlign: 'center' }}>Rejoindre la communauté</p>
-          <h1 style={{ fontSize: '24px', fontWeight: 800, color: '#17402C', textAlign: 'center', marginBottom: '4px' }}>Créer un compte</h1>
+          <p style={{ fontSize: '11px', fontFamily: 'var(--font-mono)', color: 'var(--lkv-primary)', letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: '8px', textAlign: 'center' }}>Rejoindre la communauté</p>
+          <h1 style={{ fontSize: '24px', fontWeight: 800, color: 'var(--lkv-primary)', textAlign: 'center', marginBottom: '4px' }}>Créer un compte</h1>
           <p style={{ fontSize: '13px', color: 'rgba(23,64,44,0.5)', textAlign: 'center', marginBottom: '24px' }}>Configurez vos kits, sauvegardez vos aventures</p>
-          {error && <div style={{ background: 'rgba(168,68,58,0.08)', border: '1px solid rgba(168,68,58,0.25)', borderRadius: '10px', padding: '10px 14px', marginBottom: '16px', fontSize: '13px', color: '#8A241B' }}>{error}</div>}
-          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '12px', background: '#EEF3EC', padding: '20px', borderRadius: '12px', border: '1px solid rgba(23,64,44,0.06)' }}>
-            <input type="text" required autoComplete="name" value={form.fullName} onChange={(e) => setForm({ ...form, fullName: e.target.value })} placeholder="Nom complet *" style={{ padding: '10px 12px', borderRadius: '10px', border: '1px solid rgba(23,64,44,0.06)', background: '#EEF3EC', fontSize: '14px', color: '#17402C' }} />
-            <input type="email" required autoComplete="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="Email *" style={{ padding: '10px 12px', borderRadius: '10px', border: '1px solid rgba(23,64,44,0.06)', background: '#EEF3EC', fontSize: '14px', color: '#17402C' }} />
-            <input type="password" required autoComplete="new-password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} placeholder="Mot de passe *" style={{ padding: '10px 12px', borderRadius: '10px', border: '1px solid rgba(23,64,44,0.06)', background: '#EEF3EC', fontSize: '14px', color: '#17402C' }} />
-            <input type="password" required autoComplete="new-password" value={form.confirm} onChange={(e) => setForm({ ...form, confirm: e.target.value })} placeholder="Confirmer le mot de passe *" style={{ padding: '10px 12px', borderRadius: '10px', border: '1px solid rgba(23,64,44,0.06)', background: '#EEF3EC', fontSize: '14px', color: '#17402C' }} />
-            <button type="submit" disabled={loading} style={{ background: '#17402C', color: 'white', border: 'none', padding: '12px', borderRadius: '12px', fontSize: '14px', fontWeight: 600, cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.6 : 1, marginTop: '4px' }}>
+          {error && <div style={{ background: 'var(--lkv-danger-bg, rgba(168,68,58,0.08))', border: '1px solid var(--lkv-danger)', borderRadius: '10px', padding: '10px 14px', marginBottom: '16px', fontSize: '13px', color: 'var(--lkv-danger)' }}>{error}</div>}
+          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '12px', background: 'var(--lkv-surface)', padding: '20px', borderRadius: '12px', border: '1px solid rgba(23,64,44,0.06)' }}>
+            <input type="text" required autoComplete="name" value={form.fullName} onChange={(e) => setForm({ ...form, fullName: e.target.value })} placeholder="Nom complet *" style={{ padding: '10px 12px', borderRadius: '10px', border: '1px solid rgba(23,64,44,0.06)', background: 'var(--lkv-surface)', fontSize: '14px', color: 'var(--lkv-primary)' }} />
+            <input type="email" required autoComplete="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="Email *" style={{ padding: '10px 12px', borderRadius: '10px', border: '1px solid rgba(23,64,44,0.06)', background: 'var(--lkv-surface)', fontSize: '14px', color: 'var(--lkv-primary)' }} />
+            <input type="password" required autoComplete="new-password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} placeholder="Mot de passe *" style={{ padding: '10px 12px', borderRadius: '10px', border: '1px solid rgba(23,64,44,0.06)', background: 'var(--lkv-surface)', fontSize: '14px', color: 'var(--lkv-primary)' }} />
+            <input type="password" required autoComplete="new-password" value={form.confirm} onChange={(e) => setForm({ ...form, confirm: e.target.value })} placeholder="Confirmer le mot de passe *" style={{ padding: '10px 12px', borderRadius: '10px', border: '1px solid rgba(23,64,44,0.06)', background: 'var(--lkv-surface)', fontSize: '14px', color: 'var(--lkv-primary)' }} />
+            <button type="submit" disabled={loading} style={{ background: 'var(--lkv-primary)', color: 'white', border: 'none', padding: '12px', borderRadius: '12px', fontSize: '14px', fontWeight: 600, cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.6 : 1, marginTop: '4px' }}>
               {loading ? 'Création en cours…' : 'Créer mon compte'}
             </button>
           </form>
-          <p style={{ textAlign: 'center', fontSize: '12px', color: 'rgba(23,64,44,0.5)', marginTop: '16px' }}>Déjà un compte ? <Link href="/connexion" style={{ color: '#17402C' }}>Se connecter</Link></p>
+          <p style={{ textAlign: 'center', fontSize: '12px', color: 'rgba(23,64,44,0.5)', marginTop: '16px' }}>Déjà un compte ? <Link href="/connexion" style={{ color: 'var(--lkv-primary)' }}>Se connecter</Link></p>
         </div>
       )}
     </div>

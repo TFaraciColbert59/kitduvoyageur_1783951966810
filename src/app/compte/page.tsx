@@ -73,8 +73,8 @@ export default function ComptePage() {
       <div className="h-dvh flex items-center justify-center font-sans relative">
         <CompteBackground />
         <div className="glass rounded-2xl p-6 flex flex-col items-center gap-3">
-          <div className="w-8 h-8 border-2 border-[#17402C] border-t-transparent rounded-full animate-spin" />
-          <p className="text-sm text-[#17402C] font-semibold">Chargement de votre tableau de bord...</p>
+          <div className="w-8 h-8 border-2 border-[var(--lkv-primary)] border-t-transparent rounded-full animate-spin" />
+          <p className="text-sm text-[var(--lkv-primary)] font-semibold">Chargement de votre tableau de bord...</p>
         </div>
       </div>
     );
@@ -86,8 +86,8 @@ export default function ComptePage() {
         <div className="min-h-[70vh] flex items-center justify-center font-sans relative p-4">
           <div className="glass rounded-3xl p-8 text-center max-w-md shadow-xl">
             <p className="text-5xl mb-4">🔐</p>
-            <h2 className="font-display font-bold text-2xl text-[#17402C] mb-2 tracking-tight">Connexion requise</h2>
-            <p className="text-sm text-[#5A7064] mb-6">Connectez-vous pour accéder à votre tableau de bord voyageur.</p>
+            <h2 className="font-display font-bold text-2xl text-[var(--lkv-primary)] mb-2 tracking-tight">Connexion requise</h2>
+            <p className="text-sm text-[var(--lkv-text-muted)] mb-6">Connectez-vous pour accéder à votre tableau de bord voyageur.</p>
             <Link href="/connexion?mode=connexion" className="glass-capsule-btn primary">
               Se connecter
             </Link>
@@ -153,7 +153,7 @@ export default function ComptePage() {
   };
 
   return (
-    <div className="min-h-screen md:h-dvh md:overflow-hidden text-[#17402C] selection:bg-[#17402C]/10 font-sans relative">
+    <div className="min-h-screen md:h-dvh md:overflow-hidden text-[var(--lkv-text-primary)] selection:bg-[var(--lkv-primary)]/10 font-sans relative">
       {/* Background immersif végétal */}
       <CompteBackground />
 
@@ -231,7 +231,7 @@ export default function ComptePage() {
 
       {/* Global Toast */}
       {toast && (
-        <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[300] bg-[#17402C] text-white px-6 py-3 rounded-full text-xs font-extrabold animate-fade-in-up flex items-center gap-2 border border-white/20 shadow-2xl">
+        <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[300] bg-[var(--lkv-primary)] text-white px-6 py-3 rounded-full text-xs font-extrabold animate-fade-in-up flex items-center gap-2 border border-white/20 shadow-2xl">
           <span>{toast}</span>
         </div>
       )}

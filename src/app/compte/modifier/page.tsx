@@ -11,7 +11,7 @@ export default function EditProfilePage() {
   const { triggerHaptic } = useHapticFeedback();
 
   return (
-    <div className="min-h-screen relative font-sans text-[#17402C]">
+    <div className="min-h-screen relative font-sans text-[var(--lkv-primary)]">
       <CompteBackground />
 
       {/* DESKTOP */}
@@ -31,13 +31,13 @@ export default function EditProfilePage() {
           <Link
             href="/compte"
             onClick={() => triggerHaptic('light')}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/90 text-xs font-bold text-[#17402C] border border-white shadow-2xs transition-all active:scale-95 cursor-pointer"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/90 text-xs font-bold text-[var(--lkv-primary)] border border-white shadow-2xs transition-all active:scale-95 cursor-pointer"
           >
             <span className="text-sm font-bold">‹</span>
             <span>Mon Compte</span>
           </Link>
 
-          <span className="font-display font-extrabold text-sm text-[#17402C]">
+          <span className="font-display font-extrabold text-sm text-[var(--lkv-primary)]">
             Modifier mon profil
           </span>
 

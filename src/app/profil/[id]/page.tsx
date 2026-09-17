@@ -86,10 +86,10 @@ export default function PublicProfilePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#F5F3ED] flex items-center justify-center">
+      <div className="min-h-screen bg-[var(--lkv-surface)] flex items-center justify-center">
         <div className="flex flex-col items-center gap-3">
-          <div className="w-8 h-8 border-2 border-[#17402C] border-t-transparent rounded-full animate-spin" />
-          <p className="text-sm text-[#5C6B5E] font-medium">Chargement du profil voyageur...</p>
+          <div className="w-8 h-8 border-2 border-[var(--lkv-primary)] border-t-transparent rounded-full animate-spin" />
+          <p className="text-sm text-[var(--lkv-text-muted)] font-medium">Chargement du profil voyageur...</p>
         </div>
       </div>
     );
@@ -97,14 +97,14 @@ export default function PublicProfilePage() {
 
   if (notFound || !profile) {
     return (
-      <div className="min-h-screen bg-[#F5F3ED] flex items-center justify-center p-6">
-        <div className="text-center max-w-md bg-white p-8 rounded-3xl border border-[#17402C]/10 ">
+      <div className="min-h-screen bg-[var(--lkv-surface)] flex items-center justify-center p-6">
+        <div className="text-center max-w-md bg-white p-8 rounded-3xl border border-[var(--lkv-border)] ">
           <p className="text-5xl mb-4">🧭</p>
-          <h2 className="font-display font-800 text-2xl text-[#17402C] mb-2">Profil introuvable</h2>
-          <p className="text-sm text-[#5C6B5E] mb-6">Ce voyageur n&apos;existe pas ou son profil est indisponible.</p>
+          <h2 className="font-display font-800 text-2xl text-[var(--lkv-primary)] mb-2">Profil introuvable</h2>
+          <p className="text-sm text-[var(--lkv-text-muted)] mb-6">Ce voyageur n&apos;existe pas ou son profil est indisponible.</p>
           <Link
             href="/communaute"
-            className="inline-flex items-center gap-2 px-6 py-3 bg-[#17402C] text-white rounded-full text-xs font-bold hover:bg-[#2A3830] transition-colors"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-[var(--lkv-primary)] text-white rounded-full text-xs font-bold hover:bg-[var(--lkv-primary-hover)] transition-colors"
           >
             Explorer la communauté
           </Link>
@@ -117,7 +117,7 @@ export default function PublicProfilePage() {
     <>
       {/* DESKTOP */}
       <div className="hidden md:block">
-        <div className="min-h-screen bg-transparent text-[#17402C] selection:bg-forest-900/20 font-sans relative">
+        <div className="min-h-screen bg-transparent text-[var(--lkv-primary)] selection:bg-forest-900/20 font-sans relative">
           <CompteBackground />
           <Header />
           
@@ -126,12 +126,12 @@ export default function PublicProfilePage() {
               
               {/* Top Navigation & Status */}
               <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center gap-2 text-xs font-semibold text-[#17402C]/60">
-                  <Link href="/" className="hover:text-[#17402C] transition-colors">Accueil</Link>
+                <div className="flex items-center gap-2 text-xs font-semibold text-[var(--lkv-text-muted)]">
+                  <Link href="/" className="hover:text-[var(--lkv-primary)] transition-colors">Accueil</Link>
                   <span>›</span>
-                  <Link href="/communaute" className="hover:text-[#17402C] transition-colors">Communauté</Link>
+                  <Link href="/communaute" className="hover:text-[var(--lkv-primary)] transition-colors">Communauté</Link>
                   <span>›</span>
-                  <span className="text-[#17402C] font-bold">Profil de {profile.first_name}</span>
+                  <span className="text-[var(--lkv-primary)] font-bold">Profil de {profile.first_name}</span>
                 </div>
                 
                 <div className="flex items-center gap-3">
@@ -191,7 +191,7 @@ export default function PublicProfilePage() {
 
           {/* Toast */}
           {toast && (
-            <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[110] bg-[#17402C] text-white px-6 py-3 rounded-full text-xs font-bold  flex items-center gap-2 border border-[#17402C]">
+            <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[110] bg-[var(--lkv-primary)] text-white px-6 py-3 rounded-full text-xs font-bold  flex items-center gap-2 border border-[var(--lkv-primary)]">
               <span>✨</span>
               <span>{toast}</span>
             </div>
@@ -219,7 +219,7 @@ export default function PublicProfilePage() {
           />
 
           {toast && (
-            <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-[110] bg-[#17402C] text-white px-5 py-2.5 rounded-full text-xs font-bold flex items-center gap-2 border border-white/20 shadow-xl">
+            <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-[110] bg-[var(--lkv-primary)] text-white px-5 py-2.5 rounded-full text-xs font-bold flex items-center gap-2 border border-white/20 shadow-xl">
               <span>✨</span>
               <span>{toast}</span>
             </div>

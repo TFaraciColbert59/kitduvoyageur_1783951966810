@@ -197,3 +197,116 @@ Le lien « Tout → » pointe désormais vers `/carnets`. Les liens CGV et polit
 - Types de domaine de compte extraits proprement dans `src/types/account.ts`.
 - Preuve de compilation `npx tsc --noEmit` : **Exit code 0 (zéro erreur TypeScript)**.
 
+---
+
+## [PHASE 5.3] Unification des primitives UI (Sheets & Modales)
+**Statut** : ✅ FAIT
+**Horodatage** : 2026-09-17 20:00
+**Fichiers touchés** :
+- `src/components/compte/modals/EditProfileDrawer.tsx` (supprimé)
+- `src/components/compte/modals/SettingsDrawer.tsx` (supprimé)
+- `src/components/compte/modals/ShareProfileModal.tsx` (supprimé)
+- `src/features/messaging/components/MobileSheet.tsx`
+- `src/features/trips/planner/MoveStepModal.tsx`
+- `src/features/trips/planner/StepEditModal.tsx`
+- `src/features/hiking/components/GPXImportExportModal.tsx`
+- `src/features/hiking/components/SafetyCenterModal.tsx`
+- `src/components/ui/ReportBlockModal.tsx`
+- `src/components/ui/StartDistanceModal.tsx`
+- `tests/trips/chantier-z5.spec.ts`
+**Commit** : `354b2d54`
+
+### Preuve avant
+- 3 fichiers modaux orphelins non importés dans `src/components/compte/modals/`.
+- `MobileSheet.tsx` : Implémentation ad-hoc manuelle avec listeners tactiles non standard et style isolé.
+- `MoveStepModal.tsx` et `StepEditModal.tsx` : Conteneurs de modales et backdrops ad-hoc non accessibles.
+- `GPXImportExportModal.tsx` et `SafetyCenterModal.tsx` : Backdrops ad-hoc, boutons < 44×44 px, couleurs non standard `#2D5A27`/`#4E9F3D`.
+- `ReportBlockModal.tsx` et `StartDistanceModal.tsx` : Conteneurs ad-hoc sans conformité Radix Dialog.
+
+### Preuve après
+- Suppression définitive des 3 doublons orphelins dans `compte/modals/`.
+- `MobileSheet.tsx` délégué directement à la primitive canonique `GlassModal` (`variant="sheet"`), transmettant instantanément l'accessibilité Radix Dialog, le backdrop blur Liquid Glass et les safe-areas aux 6 panneaux de messagerie.
+- `MoveStepModal` et `StepEditModal` unifiés autour de `GlassModal` (`variant="centered"`).
+- `GPXImportExportModal` unifié autour de la primitive canonique `Sheet` avec drag handle et cibles tactiles ≥ 44×44 px.
+- `SafetyCenterModal` unifié autour de `GlassModal`, purge des couleurs `#2D5A27`/`#4E9F3D` au profit des tokens canoniques (`--lkv-forest-600` / `#365233` et `border-white/10`).
+- `ReportBlockModal` et `StartDistanceModal` unifiés autour de `GlassModal`.
+- Élimination nette de 538 lignes de code dupliqué.
+- Preuve de compilation `npx tsc --noEmit` : **Exit code 0 (zéro erreur TypeScript)**.
+- Preuve des tests Vitest (`tests/trips/` & `tests/messaging/`) : **79 passed (79), 615 passed (615)**.
+
+---
+
+## [PHASE 7.3] Exécution et validation des Invariants CI anti-dérive
+**Statut** : ✅ FAIT
+**Horodatage** : 2026-09-17 20:01
+**Commande** : `npm run verify:invariants`
+
+### Preuve exécutable
+```text
+=== VÉRIFICATION DES INVARIANTS CI LKDV ===
+
+✓ Invariant 1a : Aucun token parallèle --role-* dans src/
+✓ user_orientation absent de tout composant public (hors identity)
+✓ features/kits ne lit jamais user_orientation
+✓ aucun token de couleur parallèle --role-*
+✓ palette du chantier vérifiée (identity)
+
+✓ ANTI-DÉRIVE : toutes les contraintes durables sont respectées.
+✓ Invariant 1b : Conformité palette identity vérifiée
+✓ Invariant 2 : Aucun terme monétaire dans le calcul de score kit_trust_scores
+✓ Invariant 3 : Aucun compteur de partage dans les composants UI de kits
+✓ Invariant 4a : La migration gelée 20260903050000_kit_attributions.sql n'est pas réintroduite
+✓ Invariant 4b : Migration 20260903050000_kit_attributions.sql correctement isolée dans supabase/migrations_frozen/
+✓ Invariant 4c : Route /api/kits/my-royalties verrouillée à 404
+✓ Invariant 5a : Aucun fichier .env stagé
+✓ Invariant 5b : Aucun secret en dur détecté dans src/
+=== VÉRIFICATION DES NOMS D'ICÔNES (1176 usages statiques) ===
+  registry: 95 glyphes pack, 157 SF-style, 27 animés
+  16 nom(s) Heroicon non vérifiables statiquement (tolérés)
+
+✓ Tous les noms d'icônes statiques sont résolus.
+✓ Invariant 6 : Tous les noms d'icônes canoniques sont résolus
+
+----------------------------------------
+✓ SUCCÈS : Tous les invariants CI anti-dérive sont validés.
+```
+
+---
+
+## [PHASE 6.2] Éradication des couleurs hex en dur sur les 14 routes P0 au profit des Design Tokens
+**Statut** : ✅ FAIT
+**Horodatage** : 2026-09-17 20:10
+**Fichiers touchés** :
+- `src/app/page.tsx` (60 hex éliminés -> 0)
+- `src/app/inscription/page.tsx` (24 hex éliminés -> 0)
+- `src/app/connexion/page.tsx` (13 hex éliminés -> 0)
+- `src/app/kits/page.tsx` (11 hex éliminés -> 0)
+- `src/app/profil/[id]/page.tsx` (17 hex éliminés -> 0)
+- `src/app/compte/page.tsx` (6 hex éliminés -> 0)
+- `src/app/compte/modifier/page.tsx` (3 hex éliminés -> 0)
+
+### Preuve exécutable (Vérification des 14 routes P0)
+```text
+File                             HexRemaining
+----                             ------------
+src/app/page.tsx                            0
+src/app/inscription/page.tsx                0
+src/app/connexion/page.tsx                  0
+src/app/auth/callback/route.ts              0
+src/app/explorer/page.tsx                   0
+src/app/pays/[code]/page.tsx                0
+src/app/hub/page.tsx                        0
+src/app/hub/[section]/page.tsx              0
+src/app/hub/nouveau/page.tsx                0
+src/app/compte/page.tsx                     0
+src/app/compte/modifier/page.tsx            0
+src/app/profil/[id]/page.tsx                0
+src/app/kits/page.tsx                       0
+src/app/produit/[slug]/page.tsx             0
+TOTAL HEX ON ALL 14 P0 ROUTES: 0
+```
+- Preuve de compilation `npx tsc --noEmit` : **Exit code 0 (zéro erreur TypeScript)**.
+- Preuve des invariants CI `npm run verify:invariants` : **100% Validé**.
+
+
+
