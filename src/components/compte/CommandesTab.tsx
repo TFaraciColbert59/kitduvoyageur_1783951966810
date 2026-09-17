@@ -665,7 +665,7 @@ export default function CommandesTab({ profile }: CommandesTabProps) {
 
             <div className="space-y-4 mb-4">
               {cards.map((card) => (
-                <div key={card.id} className="w-full aspect-[1.7] bg-gradient-to-br from-[#17402C] to-[#2D5A3D] rounded-2xl p-5 text-white relative overflow-hidden border border-white/10 shadow-md">
+                <div key={card.id} className="w-full aspect-[1.7] bg-gradient-to-br from-[#17402C] to-[#365233] rounded-2xl p-5 text-white relative overflow-hidden border border-white/10 shadow-md">
                   <div className="absolute -right-6 -top-6 w-24 h-24 bg-white/5 rounded-full blur-2xl pointer-events-none" />
 
                   {/* Chip */}
@@ -1132,7 +1132,7 @@ function CardModal({
         </div>
 
         {/* Visual Preview */}
-        <div className="w-full aspect-[1.7] bg-gradient-to-br from-[#17402C] to-[#2D5A3D] rounded-2xl p-5 text-white relative overflow-hidden shadow-md border border-white/10">
+        <div className="w-full aspect-[1.7] bg-gradient-to-br from-[#17402C] to-[#365233] rounded-2xl p-5 text-white relative overflow-hidden shadow-md border border-white/10">
           <div className="absolute -right-6 -top-6 w-24 h-24 bg-white/5 rounded-full blur-2xl pointer-events-none" />
           <div className="w-10 h-7 bg-gradient-to-br from-[#D9D5C4] to-[#B3AE9A] rounded-sm mb-5" />
           <div className="font-mono text-base tracking-[0.15em] mb-4 text-white">
