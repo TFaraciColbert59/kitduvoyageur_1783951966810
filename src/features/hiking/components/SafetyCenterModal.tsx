@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { motion } from 'framer-motion';
+import { GlassModal } from '@/components/ui/GlassModal';
 import { GPSPosition, SafetyAlert } from '../types';
 import { SafetyEngine } from '../safety/SafetyEngine';
 
@@ -59,33 +59,17 @@ export default function SafetyCenterModal({
   };
 
   return (
-    <div className="fixed inset-0 z-[120] bg-black/85 backdrop-blur-xl flex items-center justify-center p-4">
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        className="bg-[#0d1a12] border border-[#2D5A27]/60 rounded-[0.75rem] p-5 max-w-sm w-full text-white  space-y-4 relative"
-      >
-        {/* Close Button */}
-        <button
-          onClick={onClose}
-          className="absolute top-4 right-4 text-white/60 hover:text-white bg-white/10 w-8 h-8 rounded-full flex items-center justify-center text-sm"
-        >
-          ✕
-        </button>
-
-        {/* Header */}
-        <div className="flex items-center gap-3 border-b border-[#2D5A27]/40 pb-3">
-          <span className="text-2xl p-2 rounded-2xl bg-red-950/80 text-red-400 border border-red-500/40">
-            🛡️
-          </span>
-          <div>
-            <h2 className="font-bold text-base text-white">Centre de Sécurité</h2>
-            <p className="text-[11px] text-[#A6C1A0]">Assistance & Coordonnées GPS</p>
-          </div>
-        </div>
-
+    <GlassModal
+      open={isOpen}
+      onOpenChange={(open) => {
+        if (!open) onClose();
+      }}
+      title="Centre de Sécurité"
+      variant="centered"
+    >
+      <div className="space-y-4">
         {/* GPS Coordinates Display */}
-        <div className="bg-[#17402C]/60 border border-[#2D5A27]/40 rounded-2xl p-3.5 space-y-1 text-center">
+        <div className="bg-[#17402C]/60 border border-white/10 rounded-2xl p-3.5 space-y-1 text-center">
           <span className="text-[10px] text-[#A6C1A0] font-mono uppercase tracking-widest block">
             Coordonnées GPS WGS-84
           </span>
@@ -101,14 +85,14 @@ export default function SafetyCenterModal({
 
         {/* System Status Indicators */}
         <div className="grid grid-cols-2 gap-2 text-center text-xs font-mono">
-          <div className="bg-[#17402C]/40 border border-[#2D5A27]/30 rounded-xl p-2">
+          <div className="bg-[#17402C]/40 border border-white/10 rounded-xl p-2">
             <span className="text-[#A6C1A0] text-[10px] block">RÉSEAU</span>
             <span className={isOffline ? 'text-amber-400 font-bold' : 'text-emerald-400 font-bold'}>
               {isOffline ? '🌐 Hors Ligne' : '📶 Connecté'}
             </span>
           </div>
 
-          <div className="bg-[#17402C]/40 border border-[#2D5A27]/30 rounded-xl p-2">
+          <div className="bg-[#17402C]/40 border border-white/10 rounded-xl p-2">
             <span className="text-[#A6C1A0] text-[10px] block">BATTERIE</span>
             <span className={batteryLevel != null && batteryLevel <= 15 ? 'text-red-400 font-bold animate-pulse' : 'text-emerald-400 font-bold'}>
               🔋 {batteryLevel != null ? `${batteryLevel}%` : '—'}
@@ -128,7 +112,7 @@ export default function SafetyCenterModal({
                     ? 'bg-red-950/80 border-red-500/50 text-red-200'
                     : alert.severity === 'warning'
                     ? 'bg-amber-950/80 border-amber-500/50 text-amber-200'
-                    : 'bg-[#17402C] border-[#2D5A27]/40 text-white'
+                    : 'bg-[#17402C] border-white/10 text-white'
                 }`}
               >
                 <span>{alert.severity === 'critical' ? '🚨' : alert.severity === 'warning' ? '⚠️' : 'ℹ️'}</span>
@@ -143,7 +127,7 @@ export default function SafetyCenterModal({
           <button
             onClick={handleSharePosition}
             disabled={!currentPos}
-            className="w-full py-3 bg-[#2D6A4F] hover:bg-[#3D7A5F] text-white font-bold text-xs rounded-xl  border border-[#4E9F3D]/40 flex items-center justify-center gap-2 disabled:opacity-50"
+            className="w-full min-h-[44px] py-3 bg-[#365233] hover:bg-[#436740] text-white font-bold text-xs rounded-xl border border-white/20 flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
           >
             <span>📲</span>
             {copied ? '✓ Coordonnées copiées !' : 'Partager ma position GPS'}
@@ -155,7 +139,7 @@ export default function SafetyCenterModal({
                 onReturnToStart();
                 onClose();
               }}
-              className="w-full py-3 bg-[#17402C] hover:bg-[#23563C] text-white font-bold text-xs rounded-xl border border-[#2D5A27]/50 flex items-center justify-center gap-2"
+              className="w-full min-h-[44px] py-3 bg-[#17402C] hover:bg-[#23563C] text-white font-bold text-xs rounded-xl border border-white/20 flex items-center justify-center gap-2 cursor-pointer"
             >
               <span>↩️</span>
               Guider vers le point de départ
@@ -164,7 +148,7 @@ export default function SafetyCenterModal({
 
           <a
             href="tel:112"
-            className="w-full py-3.5 bg-gradient-to-r from-red-700 to-red-800 hover:from-red-800 hover:to-red-900 text-white font-bold text-xs rounded-xl  flex flex-col items-center justify-center border border-red-500/50 text-center"
+            className="w-full min-h-[48px] py-3.5 bg-gradient-to-r from-red-700 to-red-800 hover:from-red-800 hover:to-red-900 text-white font-bold text-xs rounded-xl flex flex-col items-center justify-center border border-red-500/50 text-center cursor-pointer"
           >
             <div className="flex items-center gap-1.5">
               <span>📞</span>
@@ -175,7 +159,7 @@ export default function SafetyCenterModal({
             </span>
           </a>
         </div>
-      </motion.div>
-    </div>
+      </div>
+    </GlassModal>
   );
 }

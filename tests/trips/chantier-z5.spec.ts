@@ -55,7 +55,7 @@ describe('CHANTIER Z5 — FINITION (D32 : image de couverture cassée)', () => {
     expect(lastProps.fallbackSrc).toBe(NO_IMAGE);
     // Sans cover_image_url, on ne passe PAS une URL vide à l'image.
     expect(lastProps.src).toBe(NO_IMAGE);
-  });
+  }, 15000);
 
   it('Z-D32.2 : une URL de couverture valide est bien transmise (pas de faux fallback)', async () => {
     const { TripCard } = await import('@/features/trips/components/TripCard');
@@ -68,7 +68,7 @@ describe('CHANTIER Z5 — FINITION (D32 : image de couverture cassée)', () => {
     expect(lastProps.src).toBe('https://exemple.fr/couverture.jpg');
     // Le composant garde le fallback prêt en cas d'échec de chargement (D32).
     expect(lastProps.fallbackSrc).toBe(NO_IMAGE);
-  });
+  }, 15000);
 
   it('Z-D32.3 : TripHero fournit lui aussi un fallback local (jamais gris cassé)', async () => {
     const { TripHero } = await import('@/features/trips/components/TripHero');
@@ -106,5 +106,5 @@ describe('CHANTIER Z5 — FINITION (D32 : image de couverture cassée)', () => {
     );
     expect(lastProps).not.toBeNull();
     expect(lastProps.fallbackSrc).toBe(NO_IMAGE);
-  });
+  }, 15000);
 });

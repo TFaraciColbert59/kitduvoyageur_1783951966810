@@ -4,6 +4,7 @@ import Icon from '@/components/ui/Icon';
 import React, { useState, useEffect } from 'react';
 import { Footprints, Car, Bus, Train, Plane, Ship, Bike, Compass } from 'lucide-react';
 import { GlassCapsuleBtn } from '@/components/ui/GlassCapsuleBtn';
+import { GlassModal } from '@/components/ui/GlassModal';
 import type { PlannerStep } from './plannerEngine';
 
 export interface StepEditModalProps {
@@ -109,34 +110,15 @@ export function StepEditModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/40 backdrop-blur-sm animate-in fade-in">
-      <div
-        className="w-full sm:max-w-lg glass rounded-t-3xl sm:rounded-[var(--lkv-radius-card)] border border-white/60 shadow-2xl overflow-hidden max-h-[90vh] flex flex-col"
-        role="dialog"
-        aria-modal="true"
-      >
-        {/* Header modal */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-white/40">
-          <div>
-            <span className="text-[11px] font-bold uppercase tracking-wider text-[var(--lkv-primary)]">
-              Jour {initialStep ? initialStep.day_number : dayNumber}
-            </span>
-            <h3 className="font-bold text-base sm:text-lg text-[var(--lkv-text-primary)]">
-              {initialStep ? 'Modifier l’étape' : 'Ajouter une étape'}
-            </h3>
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Fermer"
-            className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-full glass-sub-card border border-white/60 text-[var(--lkv-text-muted)] hover:text-[var(--lkv-primary)] transition-all shadow-2xs"
-          >
-            <Icon name="x" className="w-5 h-5" />
-          </button>
-        </div>
-
-        {/* Formulaire défilant */}
-        <form onSubmit={handleSubmit} className="p-5 overflow-y-auto space-y-4 flex-1">
+    <GlassModal
+      open={isOpen}
+      onOpenChange={(open) => {
+        if (!open) onClose();
+      }}
+      title={`${initialStep ? 'Modifier l’étape' : 'Ajouter une étape'} (Jour ${initialStep ? initialStep.day_number : dayNumber})`}
+      variant="centered"
+    >
+      <form onSubmit={handleSubmit} className="space-y-4 max-h-[70vh] overflow-y-auto pr-1">
           {error && (
             <div className="p-3 rounded-xl glass tone-danger border text-xs text-[var(--lkv-danger)]">
               {error}
@@ -295,7 +277,6 @@ export function StepEditModal({
             </GlassCapsuleBtn>
           </div>
         </form>
-      </div>
-    </div>
+    </GlassModal>
   );
 }

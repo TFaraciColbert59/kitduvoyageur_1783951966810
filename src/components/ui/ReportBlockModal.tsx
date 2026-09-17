@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { GlassModal } from '@/components/ui/GlassModal';
 
 export interface ReportTarget {
   userId: string;
@@ -133,19 +134,18 @@ export default function ReportBlockModal({ target, onClose, onSuccess }: Props) 
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
-      <div className="bg-[#14231C] border border-white/15 rounded-[24px] max-w-lg w-full p-6 text-white  relative overflow-hidden">
-        {/* Header */}
-        <div className="flex items-center justify-between pb-4 border-b border-white/10 mb-5">
-          <div className="flex items-center gap-2">
-            <span className="w-8 h-8 rounded-full bg-red-500/20 text-red-400 flex items-center justify-center text-sm font-bold">🛡️</span>
-            <div>
-              <h3 className="font-bold text-base text-white">Sécurité &amp; Signalement</h3>
-              <p className="text-[11px] text-white/50">Membre concerné : <strong className="text-white">{target.userName}</strong></p>
-            </div>
-          </div>
-          <button onClick={onClose} className="w-7 h-7 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-white/70 text-xs">✕</button>
-        </div>
+    <GlassModal
+      open={Boolean(target)}
+      onOpenChange={(open) => {
+        if (!open) onClose();
+      }}
+      title="Sécurité & Signalement"
+      variant="centered"
+    >
+      <div className="space-y-4">
+        <p className="text-xs text-[var(--lkv-text-muted)] -mt-1">
+          Membre concerné : <strong className="text-[var(--lkv-text-primary)]">{target.userName}</strong>
+        </p>
 
         {submitted ? (
           <div className="py-6 text-center">
@@ -276,6 +276,6 @@ export default function ReportBlockModal({ target, onClose, onSuccess }: Props) 
           </div>
         )}
       </div>
-    </div>
+    </GlassModal>
   );
 }

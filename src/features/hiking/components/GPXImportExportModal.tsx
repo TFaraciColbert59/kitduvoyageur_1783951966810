@@ -1,7 +1,7 @@
-﻿'use client';
+'use client';
 
 import React, { useState } from 'react';
-import { motion } from 'framer-motion';
+import Sheet from '@/components/ui/Sheet';
 import { GPXEngine, ParsedGPXData } from '../gpx/GPXEngine';
 import { GPSPosition, Waypoint } from '../types';
 
@@ -58,35 +58,14 @@ export default function GPXImportExportModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end justify-center select-none">
-      <motion.div
-        initial={{ y: '100%' }}
-        animate={{ y: 0 }}
-        exit={{ y: '100%' }}
-        transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-        className="w-full max-w-md bg-[#EEF3EC] text-[#17402C] rounded-t-[34px] pt-3 pb-10 px-4  space-y-4"
-      >
-        {/* Grabber */}
-        <div className="w-10 h-1 bg-[#17402C]/14 rounded-full mx-auto" />
-
-        {/* Sheet Header */}
-        <div className="flex items-center justify-between px-2">
-          <div>
-            <h2 className="text-2xl font-medium tracking-tight">
-              Fichiers <em className="font-serif italic text-[#17402C]">GPX & Tracés</em>
-            </h2>
-            <p className="text-[11px] font-mono text-[#6B7A72] tracking-wider mt-0.5">
-              IMPORT / EXPORT TRACEUR GPX 1.1
-            </p>
-          </div>
-          <button
-            onClick={onClose}
-            className="w-8 h-8 rounded-full bg-[#E9E4D9] flex items-center justify-center text-[#6B7A72] hover:text-[#17402C]"
-          >
-            ✕
-          </button>
-        </div>
-
+    <Sheet
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Fichiers GPX & Tracés"
+      description="IMPORT / EXPORT TRACEUR GPX 1.1"
+      maxWidth="max-w-md"
+    >
+      <div className="space-y-4">
         {errorMsg && (
           <div className="p-3 bg-red-100 text-red-800 rounded-2xl text-xs border border-red-200">
             ⚠️ {errorMsg}
@@ -100,7 +79,7 @@ export default function GPXImportExportModal({
           <p className="text-[10px] font-mono text-[#6B7A72]">
             Compatible Visorando, AllTrails, Komoot & Garmin
           </p>
-          <label className="inline-block mt-2 px-4 py-2 bg-[#17402C] text-white text-xs font-bold rounded-full cursor-pointer  active:scale-95 transition-transform">
+          <label className="inline-flex items-center justify-center min-h-[44px] mt-2 px-5 py-2.5 bg-[#17402C] text-white text-xs font-bold rounded-full cursor-pointer active:scale-95 transition-transform">
             Choisir un fichier .gpx
             <input type="file" accept=".gpx" onChange={handleFileUpload} className="hidden" />
           </label>
@@ -110,13 +89,13 @@ export default function GPXImportExportModal({
         {positions.length > 0 && (
           <button
             onClick={handleExportGPX}
-            className="w-full py-3.5 bg-[#EAF1E5] border border-[#A8C8A0] text-[#17402C] font-bold text-xs rounded-2xl flex items-center justify-center gap-2  active:scale-95 transition-transform"
+            className="w-full min-h-[44px] py-3 bg-[#EAF1E5] border border-[#A8C8A0] text-[#17402C] font-bold text-xs rounded-2xl flex items-center justify-center gap-2 active:scale-95 transition-transform cursor-pointer"
           >
             <span>📤</span>
             Exporter la trace actuelle ({positions.length} points GPS)
           </button>
         )}
-      </motion.div>
-    </div>
+      </div>
+    </Sheet>
   );
 }
