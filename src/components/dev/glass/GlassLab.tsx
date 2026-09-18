@@ -40,9 +40,14 @@ function MapBackdrop() {
   </svg>;
 }
 
+const viewportWidths: Record<string, string | undefined> = {
+  '320': '320px', '390': '390px', '430': '430px', 'tablet': '768px', 'full': undefined
+};
+
 export default function GlassLab() {
   const [requested, setRequested] = useState<GlassEngine>('standard');
   const [state, setState] = useState<FixtureState>('normal');
+  const [viewport, setViewport] = useState<'320' | '390' | '430' | 'tablet' | 'full'>('full');
   const [forceStandard, setForceStandard] = useState(false);
   const [rendererFailed, setRendererFailed] = useState(false);
   const [count, setCount] = useState(0);
@@ -63,9 +68,18 @@ export default function GlassLab() {
         <label><input type="checkbox" checked={forceStandard} onChange={event => setForceStandard(event.target.checked)} />Mode sobre</label>
         <label><input type="checkbox" checked={longList} onChange={event => setLongList(event.target.checked)} />Liste longue (CSS)</label>
       </div>
+      <div className={styles.controls}>
+        <label>Viewport <select value={viewport} onChange={e => setViewport(e.target.value as typeof viewport)}>
+          <option value="full">Desktop (plein)</option>
+          <option value="tablet">Tablette 768px</option>
+          <option value="430">iPhone Plus 430px</option>
+          <option value="390">iPhone 15 390px</option>
+          <option value="320">iPhone SE 320px</option>
+        </select></label>
+      </div>
       <p role="status" className={styles.status}>{rendererFailed ? 'Le moteur a échoué : rendu standard conservé.' : reason || `Moteur actif : ${engines.find(item => item.value === engine)?.label}.`}</p>
       <p className={styles.note}>Safari et Firefox : les deux wrappers premium gardent un rendu partiel. Ce laboratoire ne duplique aucun contenu pour simuler la réfraction.</p>
-      <div className={styles.grid}>
+      <div className={styles.grid} style={viewportWidths[viewport] ? { maxWidth: viewportWidths[viewport], margin: '0 auto' } : undefined}>
         {fixtures.map(fixture => <section key={fixture.key} className={styles.stage} data-fixture={fixture.key} aria-label={fixture.name}>
           {fixture.key === 'map' && <MapBackdrop />}
           <GlassLabSurface engine={engine} selected={state === 'selected'} critical={state === 'error'} onError={() => setRendererFailed(true)}>
