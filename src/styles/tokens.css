@@ -245,6 +245,19 @@
   --glass-critical-border: var(--lkv-danger-dark);
   --glass-focus: var(--lkv-primary);
   --glass-press-scale: 0.985;
+
+  /* Extended blur scale */
+  --glass-blur-xs: 4px;
+  --glass-blur-xl: 20px;
+
+  /* Additional depth tokens */
+  --glass-shadow-overlay: inset 0 1px 0 var(--glass-rim), 0 24px 48px -16px rgba(11, 31, 23, 0.32);
+  --glass-shadow-sheet: inset 0 1px 0 var(--glass-rim), 0 -4px 24px -8px rgba(11, 31, 23, 0.16);
+
+  /* Premium rdev tokens (used by PremiumGlassCard only) */
+  --glass-refraction-scale: 14;
+  --glass-aberration: 0.25;
+  --glass-elasticity: 0;
 }
 .dark {
   --glass-solid: #17241d;
@@ -259,6 +272,8 @@
   --glass-focus: #ccd8c8;
   --glass-selected-border: #ccd8c8;
   --glass-critical-border: #ffb4a9;
+  --glass-shadow-overlay: inset 0 1px 0 var(--glass-rim), 0 24px 48px -16px rgba(0, 0, 0, 0.5);
+  --glass-shadow-sheet: inset 0 1px 0 var(--glass-rim), 0 -4px 24px -8px rgba(0, 0, 0, 0.3);
 }
 
 

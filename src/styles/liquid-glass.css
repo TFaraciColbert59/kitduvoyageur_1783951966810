@@ -61,6 +61,7 @@
 .glass[data-glass-variant='overlay'] {
   -webkit-backdrop-filter: blur(var(--glass-blur-lg)) saturate(var(--glass-sat));
   backdrop-filter: blur(var(--glass-blur-lg)) saturate(var(--glass-sat));
+  box-shadow: var(--glass-shadow-overlay);
 }
 .glass[data-glass-variant='selected'] {
   border-color: var(--glass-selected-border);
@@ -768,6 +769,11 @@
 }
 .glass[data-glass-shape='sheet'] { border-radius: var(--glass-radius) var(--glass-radius) 0 0; }
 .glass[data-glass-shape='full'] { border-radius: 0; }
+/* Bottom sheet: radius on top only, upward shadow */
+.glass[data-glass-shape='bottom-sheet'] {
+  border-radius: var(--glass-radius) var(--glass-radius) 0 0;
+  box-shadow: var(--glass-shadow-sheet);
+}
 .glass[data-glass-shape='drawer'] { border-radius: var(--glass-radius) 0 0 var(--glass-radius); }
 :where(.glass) { overflow: hidden; }
 /* Filled actions keep their semantic contrast in every fallback mode. */
