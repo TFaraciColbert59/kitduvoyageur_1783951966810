@@ -1,4 +1,4 @@
-﻿export { GlassCard } from './GlassCard';
+export { GlassCard } from './GlassCard';
 export { GlassModal, type GlassModalProps } from './GlassModal';
 export { GlassSubCard, type GlassSubCardProps } from './GlassSubCard';
 export { GlassPill, type GlassPillProps, type GlassPillTone } from './GlassPill';
@@ -9,4 +9,5 @@ export { Badge, type BadgeTone } from './Badge';
 export { EmptyState, ErrorState, type EmptyStateProps, type ErrorStateProps } from './EmptyState';
 export { LkvButton } from './LkvButton';
 export { LkvChip, type LkvChipTone } from './LkvChip';
+export { PremiumGlassCard, type PremiumGlassCardProps } from './PremiumGlassCard';
 
