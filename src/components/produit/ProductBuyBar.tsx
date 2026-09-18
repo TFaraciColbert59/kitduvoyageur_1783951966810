@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState } from 'react';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
@@ -35,8 +35,8 @@ export default function ProductBuyBar({
         bottom: 0,
         padding: '10px 14px',
         background: 'rgba(255,255,255,0.96)',
-        backdropFilter: 'blur(24px) saturate(1.5)',
-        WebkitBackdropFilter: 'blur(24px) saturate(1.5)',
+        backdropFilter: 'blur(var(--glass-blur-xl)) saturate(var(--glass-sat))',
+        WebkitBackdropFilter: 'blur(var(--glass-blur-xl)) saturate(var(--glass-sat))',
         borderRadius: '22px',
         border: '1px solid rgba(23,64,44,0.08)',
         display: 'flex',

@@ -55,8 +55,8 @@ function StatPill({ icon, label, value }: { icon: React.ReactNode; label: string
       className="p-2.5 rounded-lg flex flex-col items-center justify-center text-center gap-0.5"
       style={{
         background: 'rgba(255, 255, 255, 0.45)',
-        backdropFilter: 'blur(12px)',
-        WebkitBackdropFilter: 'blur(12px)',
+        backdropFilter: 'blur(var(--glass-blur-md))',
+        WebkitBackdropFilter: 'blur(var(--glass-blur-md))',
         border: '1px solid rgba(255, 255, 255, 0.55)',
         boxShadow: SUB_CARD_INSET,
       }}
@@ -134,8 +134,8 @@ export default function TrailDetailPanel({ trail, onClose }: Props) {
         style={{
           background:
             'linear-gradient(180deg, rgba(255, 255, 255, 0.70) 0%, rgba(251, 250, 246, 0.40) 100%)',
-          backdropFilter: 'blur(28px) saturate(190%)',
-          WebkitBackdropFilter: 'blur(28px) saturate(190%)',
+          backdropFilter: 'blur(var(--glass-blur-xl)) saturate(var(--glass-sat))',
+          WebkitBackdropFilter: 'blur(var(--glass-blur-xl)) saturate(var(--glass-sat))',
           boxShadow:
             '0 24px 64px -12px rgba(23, 64, 44, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.6), inset 0 1.5px 2px rgba(255, 255, 255, 0.95)',
         }}
@@ -182,8 +182,8 @@ export default function TrailDetailPanel({ trail, onClose }: Props) {
               className="rounded-md px-3.5 py-2.5 shadow-xs"
               style={{
                 background: 'rgba(255, 255, 255, 0.65)',
-                backdropFilter: 'blur(16px)',
-                WebkitBackdropFilter: 'blur(16px)',
+                backdropFilter: 'blur(var(--glass-blur-lg))',
+                WebkitBackdropFilter: 'blur(var(--glass-blur-lg))',
                 border: '1px solid rgba(255, 255, 255, 0.70)',
               }}
             >
@@ -228,8 +228,8 @@ export default function TrailDetailPanel({ trail, onClose }: Props) {
             className="p-3.5 rounded-lg flex flex-col gap-2.5"
             style={{
               background: 'rgba(255, 255, 255, 0.40)',
-              backdropFilter: 'blur(12px)',
-              WebkitBackdropFilter: 'blur(12px)',
+              backdropFilter: 'blur(var(--glass-blur-md))',
+              WebkitBackdropFilter: 'blur(var(--glass-blur-md))',
               border: '1px solid rgba(255, 255, 255, 0.50)',
               boxShadow: SUB_CARD_INSET,
             }}
@@ -261,8 +261,8 @@ export default function TrailDetailPanel({ trail, onClose }: Props) {
             className="p-3.5 rounded-lg flex flex-col gap-2"
             style={{
               background: 'rgba(255, 255, 255, 0.40)',
-              backdropFilter: 'blur(12px)',
-              WebkitBackdropFilter: 'blur(12px)',
+              backdropFilter: 'blur(var(--glass-blur-md))',
+              WebkitBackdropFilter: 'blur(var(--glass-blur-md))',
               border: '1px solid rgba(255, 255, 255, 0.50)',
               boxShadow: SUB_CARD_INSET,
             }}
@@ -282,8 +282,8 @@ export default function TrailDetailPanel({ trail, onClose }: Props) {
             className="p-3 rounded-lg flex items-center justify-between gap-3"
             style={{
               background: 'rgba(255, 255, 255, 0.40)',
-              backdropFilter: 'blur(12px)',
-              WebkitBackdropFilter: 'blur(12px)',
+              backdropFilter: 'blur(var(--glass-blur-md))',
+              WebkitBackdropFilter: 'blur(var(--glass-blur-md))',
               border: '1px solid rgba(255, 255, 255, 0.50)',
               boxShadow: SUB_CARD_INSET,
             }}
@@ -324,8 +324,8 @@ export default function TrailDetailPanel({ trail, onClose }: Props) {
           style={{
             background:
               'linear-gradient(180deg, rgba(255, 255, 255, 0.65) 0%, rgba(251, 250, 246, 0.40) 100%)',
-            backdropFilter: 'blur(24px) saturate(190%)',
-            WebkitBackdropFilter: 'blur(24px) saturate(190%)',
+            backdropFilter: 'blur(var(--glass-blur-xl)) saturate(var(--glass-sat))',
+            WebkitBackdropFilter: 'blur(var(--glass-blur-xl)) saturate(var(--glass-sat))',
             borderTop: '1px solid rgba(255, 255, 255, 0.70)',
             boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.95)',
           }}

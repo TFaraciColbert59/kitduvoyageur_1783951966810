@@ -170,8 +170,8 @@ export default function ExplorerMobileHikeCarousel({
                   background: isSelected
                     ? 'linear-gradient(180deg, rgba(255, 255, 255, 0.85) 0%, rgba(251, 250, 246, 0.55) 100%)'
                     : 'linear-gradient(180deg, rgba(255, 255, 255, 0.65) 0%, rgba(251, 250, 246, 0.38) 100%)',
-                  backdropFilter: 'blur(20px) saturate(180%)',
-                  WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+                  backdropFilter: 'blur(var(--glass-blur-xl)) saturate(var(--glass-sat))',
+                  WebkitBackdropFilter: 'blur(var(--glass-blur-xl)) saturate(var(--glass-sat))',
                   border: isSelected
                     ? '1.5px solid rgba(255, 255, 255, 0.95)'
                     : '1px solid rgba(255, 255, 255, 0.70)',
@@ -275,8 +275,8 @@ export default function ExplorerMobileHikeCarousel({
           style={{
             background:
               'linear-gradient(180deg, rgba(255, 255, 255, 0.70) 0%, rgba(251, 250, 246, 0.40) 100%)',
-            backdropFilter: 'blur(24px) saturate(180%)',
-            WebkitBackdropFilter: 'blur(24px) saturate(180%)',
+            backdropFilter: 'blur(var(--glass-blur-xl)) saturate(var(--glass-sat))',
+            WebkitBackdropFilter: 'blur(var(--glass-blur-xl)) saturate(var(--glass-sat))',
             border: '1px solid rgba(255, 255, 255, 0.75)',
             boxShadow:
               '0 20px 50px -12px rgba(23, 64, 44, 0.2), inset 0 1.5px 2px rgba(255, 255, 255, 0.95)',

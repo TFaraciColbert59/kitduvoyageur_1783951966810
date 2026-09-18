@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useEffect, useRef } from 'react';
 import { useOnlineStatus } from '@/hooks/useOnlineStatus';
@@ -46,8 +46,8 @@ export default function OfflineBanner() {
             padding: '10px 14px',
             borderRadius: '14px',
             background: 'rgba(23,64,44,0.95)',
-            backdropFilter: 'blur(16px) saturate(1.4)',
-            WebkitBackdropFilter: 'blur(16px) saturate(1.4)',
+            backdropFilter: 'blur(var(--glass-blur-lg)) saturate(var(--glass-sat))',
+            WebkitBackdropFilter: 'blur(var(--glass-blur-lg)) saturate(var(--glass-sat))',
             border: '1px solid rgba(255,255,255,0.12)',
             boxShadow: '0 8px 24px rgba(23,64,44,0.25)',
           }}

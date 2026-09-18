@@ -151,7 +151,8 @@ export default function HomepageHeroSection() {
                         background: 'rgba(255,255,255,0.08)',
                         border: '1.5px solid rgba(255,255,255,0.14)',
                         borderRadius: '10px',
-                        backdropFilter: 'blur(16px)',
+                        backdropFilter: 'blur(var(--glass-blur-lg))',
+                        WebkitBackdropFilter: 'blur(var(--glass-blur-lg))',
                       }}
                       aria-label="Décrivez votre aventure"
                     />
@@ -203,7 +204,8 @@ export default function HomepageHeroSection() {
                   className="rounded-2xl overflow-hidden  relative"
                   style={{
                     background: 'rgba(245,243,238,0.92)',
-                    backdropFilter: 'blur(24px)',
+                    backdropFilter: 'blur(var(--glass-blur-xl))',
+                    WebkitBackdropFilter: 'blur(var(--glass-blur-xl))',
                     boxShadow: '0 24px 64px rgba(0,0,0,0.35)',
                     border: '1px solid rgba(255,255,255,0.4)',
                   }}

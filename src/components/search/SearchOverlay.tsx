@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
@@ -88,8 +88,8 @@ export default function SearchOverlay() {
             position: 'fixed',
             inset: 0,
             background: 'rgba(11, 28, 19, 0.85)',
-            backdropFilter: 'blur(24px) saturate(190%)',
-            WebkitBackdropFilter: 'blur(24px) saturate(190%)',
+            backdropFilter: 'blur(var(--glass-blur-xl)) saturate(var(--glass-sat))',
+            WebkitBackdropFilter: 'blur(var(--glass-blur-xl)) saturate(var(--glass-sat))',
             zIndex: 99990,
           }}
           onClick={closeSearch}

@@ -46,8 +46,8 @@ export default function ExplorerListCard({ trail, isSelected, onClick }: Props) 
         background: isSelected
           ? 'linear-gradient(180deg, rgba(255, 255, 255, 0.75) 0%, rgba(251, 250, 246, 0.45) 100%)'
           : 'linear-gradient(180deg, rgba(255, 255, 255, 0.55) 0%, rgba(251, 250, 246, 0.30) 100%)',
-        backdropFilter: 'blur(20px) saturate(180%)',
-        WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+        backdropFilter: 'blur(var(--glass-blur-xl)) saturate(var(--glass-sat))',
+        WebkitBackdropFilter: 'blur(var(--glass-blur-xl)) saturate(var(--glass-sat))',
         border: isSelected
           ? '1.5px solid rgba(23, 64, 44, 0.5)'
           : '1px solid rgba(255, 255, 255, 0.70)',

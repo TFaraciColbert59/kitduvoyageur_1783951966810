@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import Link from 'next/link';
@@ -87,7 +87,7 @@ function WriteReviewModal({ onClose, onSubmit }: { onClose: () => void; onSubmit
   const [rating, setRating] = useState(0); const [hovered, setHovered] = useState(0); const [submitted, setSubmitted] = useState(false); const [submitting, setSubmitting] = useState(false); const [form, setForm] = useState({ type: 'produit', target_name: '', title: '', comment: '' });
   const handleSubmit = async () => { if (!rating || !form.title || !form.comment || !form.target_name) return; setSubmitting(true); await onSubmit({ ...form, rating }); setSubmitting(false); setSubmitted(true); setTimeout(() => { onClose(); }, 2000); };
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px', backgroundColor: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)' }} onClick={onClose}>
+    <div style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px', backgroundColor: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(var(--glass-blur-xs))', WebkitBackdropFilter: 'blur(var(--glass-blur-xs))' }} onClick={onClose}>
       <div style={{ backgroundColor: '#EEF3EC', border: '1px solid rgba(23,64,44,0.12)', borderRadius: '16px', padding: '24px', width: '100%', maxWidth: '480px', boxShadow: '0 10px 25px rgba(23,64,44,0.15)', boxSizing: 'border-box' }} onClick={(e) => e.stopPropagation()}>
         {!submitted ? (
           <>

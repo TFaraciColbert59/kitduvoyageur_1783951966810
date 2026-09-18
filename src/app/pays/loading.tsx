@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 
 export default function CountryLoading() {
   return (
@@ -12,7 +12,8 @@ export default function CountryLoading() {
         className="absolute top-2.5 left-2.5 right-2.5 z-[900] h-12 rounded-full border border-white/60 animate-pulse"
         style={{
           background: 'linear-gradient(180deg, rgba(255,255,255,0.72) 0%, rgba(255,255,255,0.38) 100%)',
-          backdropFilter: 'blur(24px)',
+          backdropFilter: 'blur(var(--glass-blur-xl))',
+          WebkitBackdropFilter: 'blur(var(--glass-blur-xl))',
         }}
       />
 

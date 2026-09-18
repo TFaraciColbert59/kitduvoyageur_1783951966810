@@ -39,8 +39,8 @@ export default function HomeHeroSection({ onMenuOpen: _onMenuOpen }: HomeHeroSec
           alignSelf: 'flex-start',
           display: 'inline-flex', alignItems: 'center', gap: '8px',
           padding: '5px 12px',
-          background: 'rgba(255,255,255,0.12)', backdropFilter: 'blur(20px)',
-          WebkitBackdropFilter: 'blur(20px)',
+          background: 'rgba(255,255,255,0.12)', backdropFilter: 'blur(var(--glass-blur-xl))',
+          WebkitBackdropFilter: 'blur(var(--glass-blur-xl))',
           border: '1px solid rgba(255,255,255,0.2)', borderRadius: '999px',
           fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', fontWeight: 500,
         }}>

@@ -16,7 +16,8 @@ export default function ExplorerLoading() {
         className="absolute top-3 left-3 right-3 z-[700] h-12 rounded-2xl border border-white/50 animate-pulse"
         style={{
           background: 'rgba(255,255,255,0.72)',
-          backdropFilter: 'blur(28px)',
+          backdropFilter: 'blur(var(--glass-blur-xl))',
+          WebkitBackdropFilter: 'blur(var(--glass-blur-xl))',
         }}
       />
 
@@ -25,7 +26,8 @@ export default function ExplorerLoading() {
         className="hidden md:flex absolute left-3 top-[60px] bottom-3 z-[600] w-[360px] rounded-2xl border border-white/50 flex-col gap-2 p-3 animate-pulse"
         style={{
           background: 'rgba(255,255,255,0.68)',
-          backdropFilter: 'blur(32px)',
+          backdropFilter: 'blur(var(--glass-blur-xl))',
+          WebkitBackdropFilter: 'blur(var(--glass-blur-xl))',
         }}
       >
         <div className="h-10 bg-[#17402C]/10 rounded-xl" />
@@ -48,7 +50,8 @@ export default function ExplorerLoading() {
           bottom: 'calc(env(safe-area-inset-bottom, 0px) + 74px)',
           height: '30vh',
           background: 'rgba(255,255,255,0.60)',
-          backdropFilter: 'blur(24px)',
+          backdropFilter: 'blur(var(--glass-blur-xl))',
+          WebkitBackdropFilter: 'blur(var(--glass-blur-xl))',
         }}
       >
         <div className="w-10 h-1.5 mx-auto bg-[#17402C]/20 rounded-full" />

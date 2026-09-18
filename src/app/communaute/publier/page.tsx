@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 import { lkvAlert } from '@/components/ui/dialogs';
 
 import React, { useState, useMemo, useRef, useEffect, Suspense } from 'react';
@@ -1045,7 +1045,7 @@ function PublierPostContent() {
         </MobilePageShell>
 
         {/* Mobile sticky bottom bar */}
-        <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 50, background: 'rgba(255,255,255,0.95)', backdropFilter: 'blur(12px)', borderTop: '1px solid #E8E4D8', padding: '10px 16px', boxShadow: '0 -4px 20px rgba(0,0,0,0.1)' }}>
+        <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 50, background: 'rgba(255,255,255,0.95)', backdropFilter: 'blur(var(--glass-blur-md))', WebkitBackdropFilter: 'blur(var(--glass-blur-md))', borderTop: '1px solid #E8E4D8', padding: '10px 16px', boxShadow: '0 -4px 20px rgba(0,0,0,0.1)' }}>
           <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
             <button
               onClick={() => handlePublish(false)}

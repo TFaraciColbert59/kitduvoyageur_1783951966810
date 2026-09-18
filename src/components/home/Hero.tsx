@@ -111,7 +111,8 @@ export default function Hero() {
                   border: focused
                     ? '1.5px solid rgba(200,154,59,0.7)'
                     : '1.5px solid rgba(255,255,255,0.15)',
-                  backdropFilter: 'blur(12px)',
+                  backdropFilter: 'blur(var(--glass-blur-md))',
+                  WebkitBackdropFilter: 'blur(var(--glass-blur-md))',
                   boxShadow: focused ? '0 0 0 3px rgba(200,154,59,0.15)' : 'none',
                 }}
                 aria-label="Rechercher une aventure ou un lieu"

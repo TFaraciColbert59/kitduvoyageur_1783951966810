@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import dynamic from 'next/dynamic';
@@ -524,8 +524,8 @@ export default function ExplorerClient({
           className="pointer-events-auto flex items-center justify-between gap-3 px-3.5 py-1 rounded-full w-full"
           style={{
             background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.45) 0%, rgba(255, 255, 255, 0.18) 100%)',
-            backdropFilter: 'blur(20px) saturate(180%)',
-            WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+            backdropFilter: 'blur(var(--glass-blur-xl)) saturate(var(--glass-sat))',
+            WebkitBackdropFilter: 'blur(var(--glass-blur-xl)) saturate(var(--glass-sat))',
             border: '1px solid rgba(255, 255, 255, 0.55)',
             boxShadow: '0 8px 32px -4px rgba(23, 64, 44, 0.08), inset 0 1px 1.5px rgba(255, 255, 255, 0.85)',
           }}
@@ -735,8 +735,8 @@ export default function ExplorerClient({
               className="pointer-events-auto glass !rounded-r-none !rounded-l-2xl !w-12 !h-12 cursor-pointer transition-all active:scale-95 group relative flex items-center justify-center shadow-xl border-y border-l border-white/90"
               style={{
                 background: 'linear-gradient(180deg, rgba(240, 237, 228, 0.96) 0%, rgba(225, 221, 208, 0.88) 100%)',
-                backdropFilter: 'blur(16px) saturate(180%)',
-                WebkitBackdropFilter: 'blur(16px) saturate(180%)',
+                backdropFilter: 'blur(var(--glass-blur-lg)) saturate(var(--glass-sat))',
+                WebkitBackdropFilter: 'blur(var(--glass-blur-lg)) saturate(var(--glass-sat))',
                 boxShadow: '-4px 8px 24px -2px rgba(23, 64, 44, 0.15), inset 0 1.5px 2px rgba(255, 255, 255, 0.95)',
               }}
               title="Ouvrir la recherche et les filtres"
@@ -820,8 +820,8 @@ export default function ExplorerClient({
           className="pointer-events-auto flex items-center justify-between gap-1.5 p-1.5 rounded-full shrink-0"
           style={{
             background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.70) 0%, rgba(251, 250, 246, 0.40) 100%)',
-            backdropFilter: 'blur(20px) saturate(180%)',
-            WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+            backdropFilter: 'blur(var(--glass-blur-xl)) saturate(var(--glass-sat))',
+            WebkitBackdropFilter: 'blur(var(--glass-blur-xl)) saturate(var(--glass-sat))',
             border: '1px solid rgba(255, 255, 255, 0.75)',
             boxShadow: '0 8px 32px -4px rgba(23, 64, 44, 0.12), inset 0 1px 1.5px rgba(255, 255, 255, 0.95)',
           }}
@@ -863,7 +863,7 @@ export default function ExplorerClient({
               className="p-4 rounded-lg text-center flex flex-col items-center gap-2"
               style={{
                 background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.60) 0%, rgba(251, 250, 246, 0.35) 100%)',
-                backdropFilter: 'blur(16px)',
+                backdropFilter: 'blur(var(--glass-blur-lg))',
                 border: '1px solid rgba(255, 255, 255, 0.65)',
                 boxShadow: '0 8px 24px -4px rgba(23, 64, 44, 0.10)',
               }}
@@ -918,8 +918,8 @@ export default function ExplorerClient({
               className="rounded-xl overflow-hidden shadow-2xl"
               style={{
                 background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.70) 0%, rgba(251, 250, 246, 0.40) 100%)',
-                backdropFilter: 'blur(24px) saturate(190%)',
-                WebkitBackdropFilter: 'blur(24px) saturate(190%)',
+                backdropFilter: 'blur(var(--glass-blur-xl)) saturate(var(--glass-sat))',
+                WebkitBackdropFilter: 'blur(var(--glass-blur-xl)) saturate(var(--glass-sat))',
                 border: '1px solid rgba(255, 255, 255, 0.75)',
                 boxShadow: '0 20px 50px -12px rgba(23, 64, 44, 0.18), inset 0 1.5px 2px rgba(255, 255, 255, 0.95)',
               }}

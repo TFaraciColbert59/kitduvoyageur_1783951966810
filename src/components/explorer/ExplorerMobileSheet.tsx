@@ -81,8 +81,8 @@ export default function ExplorerMobileSheet({
         style={{
           background:
             'linear-gradient(180deg, rgba(255, 255, 255, 0.55) 0%, rgba(255, 255, 255, 0.28) 100%)',
-          backdropFilter: 'blur(24px) saturate(180%)',
-          WebkitBackdropFilter: 'blur(24px) saturate(180%)',
+          backdropFilter: 'blur(var(--glass-blur-xl)) saturate(var(--glass-sat))',
+          WebkitBackdropFilter: 'blur(var(--glass-blur-xl)) saturate(var(--glass-sat))',
           border: '1px solid rgba(255, 255, 255, 0.60)',
           boxShadow:
             '0 20px 50px -12px rgba(23,64,44, 0.20), inset 0 1.5px 1px rgba(255, 255, 255, 0.9)',

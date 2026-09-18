@@ -120,7 +120,8 @@ export default function HomepageDestinationsSection() {
                       background: 'rgba(255,255,255,0.12)',
                       border: '1px solid rgba(255,255,255,0.18)',
                       fontFamily: 'var(--font-mono)',
-                      backdropFilter: 'blur(8px)',
+                      backdropFilter: 'blur(var(--glass-blur-md))',
+                      WebkitBackdropFilter: 'blur(var(--glass-blur-md))',
                     }}
                   >
                     {dest.tag}
@@ -130,7 +131,7 @@ export default function HomepageDestinationsSection() {
                 {/* Arrow hover */}
                 <div
                   className="absolute top-4 right-4 w-8 h-8 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300"
-                  style={{ background: 'rgba(255,255,255,0.15)', backdropFilter: 'blur(8px)' }}
+                  style={{ background: 'rgba(255,255,255,0.15)', backdropFilter: 'blur(var(--glass-blur-md))', WebkitBackdropFilter: 'blur(var(--glass-blur-md))' }}
                   aria-hidden="true"
                 >
                   <Icon name="ArrowRightIcon" size={14} variant="outline" className="text-white" />

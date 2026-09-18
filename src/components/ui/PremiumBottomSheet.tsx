@@ -121,7 +121,7 @@ export default function PremiumBottomSheet({
           y,
 
           overflow: 'hidden',
-          background: isLiquid ? undefined : 'rgba(237,234,224,0.96)',        }}
+          }}
         // Entrée via framer-motion (remplace l'animation CSS `slideUp` qui
         // entrait en conflit de cascade avec le transform du drag).
         initial={{ y: reduceMotion ? 0 : '100%' }}

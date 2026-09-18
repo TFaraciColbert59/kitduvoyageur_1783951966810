@@ -122,8 +122,8 @@ export default function Header() {
             style={{
               background:
                 'linear-gradient(180deg, rgba(255, 255, 255, 0.35) 0%, rgba(255, 255, 255, 0.15) 100%)',
-              backdropFilter: 'blur(16px) saturate(170%)',
-              WebkitBackdropFilter: 'blur(16px) saturate(170%)',
+              backdropFilter: 'blur(var(--glass-blur-lg)) saturate(var(--glass-sat))',
+              WebkitBackdropFilter: 'blur(var(--glass-blur-lg)) saturate(var(--glass-sat))',
               border: '1px solid rgba(255, 255, 255, 0.50)',
               boxShadow:
                 'inset 0 1px 1.5px rgba(255, 255, 255, 0.85), 0 8px 24px -6px rgba(23, 64, 44, 0.10)',

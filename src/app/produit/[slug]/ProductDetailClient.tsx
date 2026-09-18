@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import ProductLineageCard from '@/components/kits/ProductLineageCard';
 
@@ -558,7 +558,7 @@ export default function ProductDetailClient({ slug, initialProduct }: { slug: st
           <div style={{ position: 'relative', width: '100%', aspectRatio: '1/1', background: '#E1EBDE', overflow: 'hidden' }}>
             {/* Back button */}
             <div style={{ position: 'absolute', top: '16px', left: '16px', zIndex: 20, display: 'flex', gap: '8px' }}>
-              <Link href="/boutique" style={{ width: '36px', height: '36px', background: 'rgba(255,255,255,0.92)', backdropFilter: 'blur(8px)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#17402C', border: '1px solid rgba(255,255,255,0.60)', textDecoration: 'none' }}>
+              <Link href="/boutique" style={{ width: '36px', height: '36px', background: 'rgba(255,255,255,0.92)', backdropFilter: 'blur(var(--glass-blur-md))', WebkitBackdropFilter: 'blur(var(--glass-blur-md))', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#17402C', border: '1px solid rgba(255,255,255,0.60)', textDecoration: 'none' }}>
                 <LkvIcon name="chevron-left" size={18} />
               </Link>
             </div>
@@ -566,7 +566,7 @@ export default function ProductDetailClient({ slug, initialProduct }: { slug: st
             {/* Favorite button */}
             <button
               onClick={() => setIsFavorite(!isFavorite)}
-              style={{ position: 'absolute', top: '16px', right: '16px', zIndex: 20, width: '36px', height: '36px', background: 'rgba(255,255,255,0.92)', backdropFilter: 'blur(8px)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(255,255,255,0.60)', color: '#17402C', cursor: 'pointer' }}
+              style={{ position: 'absolute', top: '16px', right: '16px', zIndex: 20, width: '36px', height: '36px', background: 'rgba(255,255,255,0.92)', backdropFilter: 'blur(var(--glass-blur-md))', WebkitBackdropFilter: 'blur(var(--glass-blur-md))', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(255,255,255,0.60)', color: '#17402C', cursor: 'pointer' }}
             >
               <LkvIcon name="heart" size={18} color={isFavorite ? '#A8443A' : 'inherit'} />
             </button>
@@ -602,7 +602,7 @@ export default function ProductDetailClient({ slug, initialProduct }: { slug: st
 
             {/* Paging indicators */}
             {product.images.length > 1 && (
-              <div style={{ position: 'absolute', bottom: '16px', left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: '6px', zIndex: 10, background: 'rgba(0,0,0,0.1)', backdropFilter: 'blur(4px)', padding: '4px 10px', borderRadius: '999px' }}>
+              <div style={{ position: 'absolute', bottom: '16px', left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: '6px', zIndex: 10, background: 'rgba(0,0,0,0.1)', backdropFilter: 'blur(var(--glass-blur-xs))', WebkitBackdropFilter: 'blur(var(--glass-blur-xs))', padding: '4px 10px', borderRadius: '999px' }}>
                 {product.images.map((_, i) => (
                   <span
                     key={i}

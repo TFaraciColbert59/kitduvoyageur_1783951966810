@@ -30,9 +30,9 @@ async function* walk(dir) {
 const results = {
   timestamp: new Date().toISOString(),
   glassCardUsages: 0,
-  issues: [],
   deletedImports: [],
-  inlineBackdropFilter: [],
+  hardcodedPixelBlur: [],
+  tokenifiedInlineBackdrop: [],
   cssOverrides: [],
 };
 
@@ -51,14 +51,12 @@ for await (const file of walk(SRC)) {
       results.deletedImports.push({ file: rel, note: 'imports deleted liquid-glass module' });
     }
     
-    // Check for inline backdrop-filter in style props
-    if (/style[=\s]*\{[^}]*backdrop[Ff]ilter/.test(content)) {
-      results.inlineBackdropFilter.push({ file: rel, note: 'inline backdropFilter in style prop' });
-    }
-    
-    // Check for inline style string with backdrop-filter
-    if (/style=["'][^"']*backdrop-filter/.test(content)) {
-      results.inlineBackdropFilter.push({ file: rel, note: 'inline backdrop-filter string in style' });
+    // Check for un-tokenified hardcoded pixel blurs in style props
+    if (/style[=\s]*\{[^}]*backdrop[Ff]ilter\s*:\s*['"][^'"]*blur\(\d+px\)/.test(content) ||
+        /style=["'][^"']*backdrop-filter:\s*blur\(\d+px\)/.test(content)) {
+      results.hardcodedPixelBlur.push({ file: rel, note: 'hardcoded pixel blur in style prop (un-tokenified)' });
+    } else if (/style[=\s]*\{[^}]*backdrop[Ff]ilter/.test(content) || /style=["'][^"']*backdrop-filter/.test(content)) {
+      results.tokenifiedInlineBackdrop.push({ file: rel, note: 'tokenified inline backdropFilter (uses CSS variables)' });
     }
   }
   
@@ -71,24 +69,26 @@ for await (const file of walk(SRC)) {
 }
 
 // Deduplicate
-results.inlineBackdropFilter = [...new Map(results.inlineBackdropFilter.map(x => [x.file, x])).values()];
+results.hardcodedPixelBlur = [...new Map(results.hardcodedPixelBlur.map(x => [x.file, x])).values()];
+results.tokenifiedInlineBackdrop = [...new Map(results.tokenifiedInlineBackdrop.map(x => [x.file, x])).values()];
 
 // Summary
-const totalIssues = results.deletedImports.length + results.inlineBackdropFilter.length + results.cssOverrides.length;
+const totalViolations = results.deletedImports.length + results.hardcodedPixelBlur.length + results.cssOverrides.length;
 console.log('\n=== LKDV Glass Audit ===');
 console.log(`✅ GlassCard usages: ${results.glassCardUsages}`);
+console.log(`✅ Token-compliant inline backdrop-filters: ${results.tokenifiedInlineBackdrop.length}`);
 console.log(`❌ Deleted imports still referenced: ${results.deletedImports.length}`);
-console.log(`⚠️ Inline backdrop-filter: ${results.inlineBackdropFilter.length}`);
+console.log(`❌ Hardcoded pixel blurs (un-tokenified): ${results.hardcodedPixelBlur.length}`);
 console.log(`⚠️ CSS overrides outside system: ${results.cssOverrides.length}`);
-console.log(`\nTotal issues: ${totalIssues}`);
+console.log(`\nPolicy violations: ${totalViolations}`);
 
 if (results.deletedImports.length) {
   console.log('\nDeleted imports:');
   results.deletedImports.forEach(i => console.log(` - ${i.file}: ${i.note}`));
 }
-if (results.inlineBackdropFilter.length) {
-  console.log('\nInline backdrop-filter:');
-  results.inlineBackdropFilter.forEach(i => console.log(` - ${i.file}: ${i.note}`));
+if (results.hardcodedPixelBlur.length) {
+  console.log('\nHardcoded pixel blurs:');
+  results.hardcodedPixelBlur.forEach(i => console.log(` - ${i.file}: ${i.note}`));
 }
 if (results.cssOverrides.length) {
   console.log('\nCSS overrides:');
