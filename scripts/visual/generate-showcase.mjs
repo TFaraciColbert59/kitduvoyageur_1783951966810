@@ -1,4 +1,4 @@
-﻿import { chromium } from '@playwright/test';
+import { chromium } from '@playwright/test';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 
@@ -332,6 +332,39 @@ const browser = await chromium.launch({ headless: true });
   await page.waitForTimeout(500);
   await page.screenshot({ path: path.join(outDir, 'glass-map-overlay.png'), fullPage: true });
   await page.close();
+}
+
+// ── Showcase 4: Live Glass Lab (/dev/glass) ──
+try {
+  const page = await browser.newPage({ viewport: { width: 1280, height: 900 }, deviceScaleFactor: 2 });
+  await page.goto('http://localhost:4000/dev/glass', { waitUntil: 'networkidle', timeout: 8000 });
+  await page.waitForTimeout(1000);
+  await page.screenshot({ path: path.join(outDir, 'glass-dev-lab.png'), fullPage: true });
+  console.log('Capture live /dev/glass standard réussie.');
+
+  // Activer le mode rdev (LiquidGlass tier="premium")
+  const rdevRadio = page.locator('input[name="engine"][value="rdev"]');
+  if (await rdevRadio.count() > 0) {
+    await rdevRadio.click();
+    await page.waitForTimeout(1000);
+    await page.screenshot({ path: path.join(outDir, 'glass-dev-lab-rdev.png'), fullPage: true });
+    console.log('Capture live /dev/glass rdev réussie.');
+
+    // Zoom sur la carte centrale "Au bord du lac" avec hover pour liseré spéculaire
+    const photoCard = page.locator('[data-fixture="voyage"] [data-lab-surface]');
+    if (await photoCard.count() > 0) {
+      const box = await photoCard.boundingBox();
+      if (box) {
+        await page.mouse.move(box.x + box.width * 0.35, box.y + box.height * 0.25);
+        await page.waitForTimeout(400);
+        await photoCard.screenshot({ path: path.join(outDir, 'glass-rdev-closeup.png') });
+        console.log('Capture closeup rdev réussie.');
+      }
+    }
+  }
+  await page.close();
+} catch (err) {
+  console.warn('Live dev/glass capture skipped or failed:', err.message);
 }
 
 await browser.close();

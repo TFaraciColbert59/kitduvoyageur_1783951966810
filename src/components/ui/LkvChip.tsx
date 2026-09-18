@@ -2,7 +2,7 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
 
-export type LkvChipTone = 'sage' | 'warn' | 'danger' | 'info' | 'stone' | 'light' | 'dark';
+export type LkvChipTone = 'sage' | 'warn' | 'danger' | 'info' | 'stone' | 'light' | 'dark' | 'glass';
 export interface LkvChipProps {
   label?: string;
   children?: React.ReactNode;
@@ -23,6 +23,7 @@ const tones: Record<LkvChipTone, { background: string; color: string; dot: strin
   stone: { background: 'var(--lkv-surface-muted)', color: 'var(--lkv-text-primary)', dot: 'var(--lkv-text-muted)' },
   light: { background: 'var(--glass-bg-medium)', color: 'var(--lkv-text-primary)', dot: 'var(--lkv-success)' },
   dark: { background: 'var(--lkv-primary)', color: 'var(--lkv-text-inverted)', dot: 'var(--lkv-success-bg)' },
+  glass: { background: 'var(--glass-tint)', color: 'var(--lkv-primary)', dot: 'var(--lkv-success)' },
 };
 export function LkvChip({ label, children, tone, variant, dot, active = false,
   disabled = false, onClick, className, style }: LkvChipProps) {

@@ -2,7 +2,7 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
 
-export type LkvButtonVariant = 'primary' | 'secondary' | 'light' | 'ghost-light' | 'ghost' | 'danger' | 'icon-only';
+export type LkvButtonVariant = 'primary' | 'secondary' | 'light' | 'ghost-light' | 'ghost' | 'danger' | 'icon-only' | 'glass' | 'glass-primary';
 export type LkvButtonSize = 'sm' | 'md' | 'lg';
 export interface LkvButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: LkvButtonVariant;
@@ -21,6 +21,8 @@ const materials: Record<LkvButtonVariant, React.CSSProperties> = {
   ghost: { background: 'transparent', color: 'var(--lkv-primary)', borderColor: 'transparent' },
   danger: { background: 'var(--lkv-danger-dark)', color: 'var(--lkv-text-inverted)', borderColor: 'transparent' },
   'icon-only': { background: 'var(--glass-bg-medium)', color: 'var(--lkv-primary)' },
+  glass: { background: 'var(--glass-tint)', color: 'var(--lkv-primary)', backdropFilter: 'blur(var(--glass-blur-sm)) saturate(var(--glass-sat))', WebkitBackdropFilter: 'blur(var(--glass-blur-sm)) saturate(var(--glass-sat))', boxShadow: 'var(--glass-inner-shadow)' },
+  'glass-primary': { background: 'var(--lkv-primary)', color: 'var(--lkv-text-inverted)', boxShadow: 'var(--glass-inner-shadow), var(--glass-drop)' },
 };
 const sizes: Record<LkvButtonSize, React.CSSProperties> = {
   sm: { padding: '6px 14px', fontSize: '12px' },

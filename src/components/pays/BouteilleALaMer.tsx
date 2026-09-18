@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 import { lkvAlert, lkvConfirm } from '@/components/ui/dialogs';
 
 import React, { useEffect, useState, useCallback } from 'react';
@@ -442,7 +442,7 @@ export default function BouteilleALaMer({ countryIso, countryName }: Props) {
 
   return (
     <>
-      <GlassCard tone="sage" className="mt-6 p-6 md:p-8 relative">
+      <GlassCard tier="premium" tone="sage" className="mt-6 p-6 md:p-8 relative">
       {/* Background Decorative */}
       <div className="absolute top-0 right-0 w-[300px] h-[300px] bg-[#A6C1A0] rounded-full mix-blend-screen filter blur-[80px] opacity-40 -translate-y-1/2 translate-x-1/2 pointer-events-none"></div>
       <div className="absolute bottom-0 left-0 w-[200px] h-[200px] bg-[#C89A3B] rounded-full mix-blend-screen filter blur-[80px] opacity-20 translate-y-1/2 -translate-x-1/2 pointer-events-none"></div>

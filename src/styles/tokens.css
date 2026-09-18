@@ -258,6 +258,11 @@
   --glass-refraction-scale: 14;
   --glass-aberration: 0.25;
   --glass-elasticity: 0;
+
+  /* Liquid Glass LKDV — palette officielle (cf. CLAUDE.md) */
+  --color-glass-forest: #17402C;
+  --color-glass-sage:   #5B7F55;
+  --color-glass-stone:  #FAF8F5;
 }
 .dark {
   --glass-solid: #17241d;

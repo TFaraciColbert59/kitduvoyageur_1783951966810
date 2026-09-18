@@ -790,3 +790,78 @@
     background: ButtonFace !important; color: ButtonText !important;
   }
 }
+
+/* ============================================================
+   LKDV — Système Liquid Glass Réel (Couches Optiques)
+   ============================================================ */
+
+:root {
+  /* Optique additionnelle */
+  --glass-blur-strong: 18px;
+  --glass-blur-light: 16px;
+  --glass-saturate: 170%;
+  --glass-brightness: 1.02;
+  --glass-tint: rgba(255, 255, 255, 0.08);
+  --glass-tint-strong: rgba(255, 255, 255, 0.42);
+
+  /* Géométrie */
+  --glass-radius-sm: 24px;
+  --glass-radius-md: 28px;
+  --glass-radius-lg: 32px;
+  --glass-radius-xl: 40px;
+  --glass-radius-pill: 999px;
+
+  /* Lumière & profondeur (ombres TOUJOURS en ink) */
+  --glass-rim-soft: rgba(255, 255, 255, 0.45);
+  --glass-inner-shadow: 0 0 0 0.5px rgba(255,255,255,0.5) inset,
+                        0 1px 3px rgba(255,255,255,0.28) inset,
+                        0 -1px 3px rgba(11,31,23,0.12) inset;
+  --glass-drop: 0 12px 40px rgba(11, 31, 23, 0.22),
+                0 2px 8px rgba(11, 31, 23, 0.14);
+  --glass-drop-strong: 0 20px 60px rgba(11, 31, 23, 0.32);
+
+  /* États */
+  --glass-hover-lift: translateY(-1px);
+  --glass-active-press: scale(0.98);
+}
+
+/* ---------- Niveau STANDARD : fallback universel ---------- */
+.lkv-glass {
+  position: relative;
+  border-radius: var(--glass-radius-sm);
+  background: var(--glass-tint);
+  backdrop-filter: blur(var(--glass-blur-light)) saturate(var(--glass-saturate));
+  -webkit-backdrop-filter: blur(var(--glass-blur-light)) saturate(var(--glass-saturate));
+  box-shadow: var(--glass-inner-shadow), var(--glass-drop);
+}
+
+/* ---------- Niveau PREMIUM : couches optiques ---------- */
+.lkv-glass--premium { position: relative; }
+
+.lkv-glass__warp {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: inherit;
+  backdrop-filter: blur(var(--glass-blur-md, 14px)) saturate(var(--glass-saturate));
+  -webkit-backdrop-filter: blur(var(--glass-blur-md, 14px)) saturate(var(--glass-saturate));
+  filter: url(#lkv-glass-filter);
+  background: var(--glass-tint);
+  box-shadow: var(--glass-drop);
+}
+
+.lkv-glass__rim {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1.5px;
+  pointer-events: none;
+  mix-blend-mode: screen;
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  box-shadow: var(--glass-inner-shadow);
+}
+
+.lkv-glass__content { position: relative; z-index: 2; }
+
