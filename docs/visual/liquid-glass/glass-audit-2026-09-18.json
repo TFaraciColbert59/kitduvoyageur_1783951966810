@@ -1,0 +1,90 @@
+{
+  "timestamp": "2026-09-18T15:56:01.240Z",
+  "glassCardUsages": 92,
+  "issues": [],
+  "deletedImports": [],
+  "inlineBackdropFilter": [
+    {
+      "file": "src/app/avis/page.tsx",
+      "note": "inline backdropFilter in style prop"
+    },
+    {
+      "file": "src/app/communaute/publier/page.tsx",
+      "note": "inline backdropFilter in style prop"
+    },
+    {
+      "file": "src/app/components/home/HomepageDestinationsSection.tsx",
+      "note": "inline backdropFilter in style prop"
+    },
+    {
+      "file": "src/app/components/home/HomepageHeroSection.tsx",
+      "note": "inline backdropFilter in style prop"
+    },
+    {
+      "file": "src/app/explorer/loading.tsx",
+      "note": "inline backdropFilter in style prop"
+    },
+    {
+      "file": "src/app/pays/loading.tsx",
+      "note": "inline backdropFilter in style prop"
+    },
+    {
+      "file": "src/app/produit/[slug]/ProductDetailClient.tsx",
+      "note": "inline backdropFilter in style prop"
+    },
+    {
+      "file": "src/components/explorer/ExplorerClient.tsx",
+      "note": "inline backdropFilter in style prop"
+    },
+    {
+      "file": "src/components/explorer/ExplorerListCard.tsx",
+      "note": "inline backdropFilter in style prop"
+    },
+    {
+      "file": "src/components/explorer/ExplorerMobileHikeCarousel.tsx",
+      "note": "inline backdropFilter in style prop"
+    },
+    {
+      "file": "src/components/explorer/ExplorerMobileSheet.tsx",
+      "note": "inline backdropFilter in style prop"
+    },
+    {
+      "file": "src/components/explorer/TrailDetailPanel.tsx",
+      "note": "inline backdropFilter in style prop"
+    },
+    {
+      "file": "src/components/Header.tsx",
+      "note": "inline backdropFilter in style prop"
+    },
+    {
+      "file": "src/components/home/Hero.tsx",
+      "note": "inline backdropFilter in style prop"
+    },
+    {
+      "file": "src/components/home/HomeHeroSection.tsx",
+      "note": "inline backdropFilter in style prop"
+    },
+    {
+      "file": "src/components/mobile-nav/BottomTabBar.tsx",
+      "note": "inline backdropFilter in style prop"
+    },
+    {
+      "file": "src/components/mobile-nav/OfflineBanner.tsx",
+      "note": "inline backdropFilter in style prop"
+    },
+    {
+      "file": "src/components/produit/ProductBuyBar.tsx",
+      "note": "inline backdropFilter in style prop"
+    },
+    {
+      "file": "src/components/search/SearchOverlay.tsx",
+      "note": "inline backdropFilter in style prop"
+    }
+  ],
+  "cssOverrides": [
+    {
+      "file": "src/app/pays/styles/country.css",
+      "note": "defines backdrop-filter outside canonical system"
+    }
+  ]
+}
