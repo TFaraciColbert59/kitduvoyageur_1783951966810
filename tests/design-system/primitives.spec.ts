@@ -10,7 +10,8 @@ describe('Sous-phase 2.3 — Primitives Partagées UI (TDD)', () => {
     );
     expect(html).toContain('glass');
     expect(html).toContain('Contenu carte');
-    expect(html).toContain('backdrop-blur-');
+    expect(html).toContain('data-glass-variant="base"');
+    expect(html).toContain('tone-sage');
   });
 
   it('TEST-PRIM-02: Tabs renders with options, accessibility and semantic classes', () => {

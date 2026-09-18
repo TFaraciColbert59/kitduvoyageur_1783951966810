@@ -108,7 +108,7 @@ export default function PaysPratiqueView({ country, isMobile = false }: PaysPrat
       {/* ══════════════════════════════════════════════════════════════════
           1. FICHE D'IDENTITÉ & REPÈRES OFFICIELS (Territoire certifié)
          ══════════════════════════════════════════════════════════════════ */}
-      <div className="glass rounded-[1.5rem] p-4 sm:p-5 space-y-3 border border-white/60 shadow-sm backdrop-blur-md">
+      <div className="glass p-4 sm:p-5 space-y-3">
         <div className="flex items-center justify-between pb-2.5 border-b border-[#17402C]/10">
           <div className="flex items-center gap-2.5">
             <div className="w-7 h-7 rounded-lg bg-[#5B7F55]/15 text-[#5B7F55] flex items-center justify-center font-bold text-xs shadow-2xs">
@@ -127,42 +127,42 @@ export default function PaysPratiqueView({ country, isMobile = false }: PaysPrat
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 text-xs">
-          <div className="p-3 rounded-2xl bg-white/75 border border-white/60 shadow-2xs space-y-1">
+          <div className="glass-sub-card p-3 space-y-1">
             <span className="text-[#5A7064] text-[9.5px] font-semibold uppercase tracking-wider block">Nom officiel</span>
             <span className="font-bold text-[#17402C] text-sm block truncate">
               {country.nom} {country.nom_en && country.nom_en.toLowerCase() !== country.nom.toLowerCase() ? `(${country.nom_en})` : ''}
             </span>
           </div>
 
-          <div className="p-3 rounded-2xl bg-white/75 border border-white/60 shadow-2xs space-y-1">
+          <div className="glass-sub-card p-3 space-y-1">
             <span className="text-[#5A7064] text-[9.5px] font-semibold uppercase tracking-wider block">Capitale</span>
             <span className="font-bold text-[#17402C] text-sm block truncate" title={country.capitale}>
               {country.capitale}
             </span>
           </div>
 
-          <div className="p-3 rounded-2xl bg-white/75 border border-white/60 shadow-2xs space-y-1">
+          <div className="glass-sub-card p-3 space-y-1">
             <span className="text-[#5A7064] text-[9.5px] font-semibold uppercase tracking-wider block">Continent &amp; Région</span>
             <span className="font-bold text-[#17402C] text-sm block truncate">
               {country.continent} · {country.region}
             </span>
           </div>
 
-          <div className="p-3 rounded-2xl bg-white/75 border border-white/60 shadow-2xs space-y-1">
+          <div className="glass-sub-card p-3 space-y-1">
             <span className="text-[#5A7064] text-[9.5px] font-semibold uppercase tracking-wider block">Langues</span>
             <span className="font-bold text-[#17402C] text-sm block truncate" title={country.langue}>
               {country.langue}
             </span>
           </div>
 
-          <div className="p-3 rounded-2xl bg-white/75 border border-white/60 shadow-2xs space-y-1">
+          <div className="glass-sub-card p-3 space-y-1">
             <span className="text-[#5A7064] text-[9.5px] font-semibold uppercase tracking-wider block">Superficie</span>
             <span className="font-mono font-bold text-[#17402C] text-sm block">
               {country.superficie_detail}
             </span>
           </div>
 
-          <div className="p-3 rounded-2xl bg-white/75 border border-white/60 shadow-2xs space-y-1">
+          <div className="glass-sub-card p-3 space-y-1">
             <span className="text-[#5A7064] text-[9.5px] font-semibold uppercase tracking-wider block">Devise &amp; Fuseau</span>
             <span className="font-bold text-[#17402C] text-sm block truncate">
               {country.monnaie || country.monnaie_nom} · {country.fuseau}
@@ -198,7 +198,7 @@ export default function PaysPratiqueView({ country, isMobile = false }: PaysPrat
           2. VUE D'ENSEMBLE & IDENTITÉ OUTDOOR (Tier 3)
          ══════════════════════════════════════════════════════════════════ */}
       {vueEnsemble && vueEnsemble.content_md && (
-        <div className="glass rounded-[1.75rem] p-5 sm:p-6 space-y-3.5 border border-white/70 shadow-xs bg-white/70 backdrop-blur-md">
+        <div className="glass p-5 sm:p-6 space-y-3.5">
           <div className="flex items-center justify-between pb-2 border-b border-[#17402C]/10">
             <div className="flex items-center gap-2">
               <span className="text-lg">🧭</span>
@@ -252,7 +252,7 @@ export default function PaysPratiqueView({ country, isMobile = false }: PaysPrat
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Formalités */}
             {formalites && formalites.content_md && (
-              <div className="glass rounded-[1.75rem] p-5 space-y-3.5 border border-white/60 shadow-xs bg-white/80 flex flex-col justify-between">
+              <div className="glass p-5 space-y-3.5 flex flex-col justify-between">
                 <div className="space-y-2.5">
                   <div className="flex items-center justify-between pb-2 border-b border-[#17402C]/10">
                     <div className="flex items-center gap-2">
@@ -300,7 +300,7 @@ export default function PaysPratiqueView({ country, isMobile = false }: PaysPrat
 
             {/* Sécurité & Alertes */}
             {securite && securite.content_md && (
-              <div className="glass rounded-[1.75rem] p-5 space-y-3.5 border border-white/60 shadow-xs bg-white/80 flex flex-col justify-between">
+              <div className="glass p-5 space-y-3.5 flex flex-col justify-between">
                 <div className="space-y-2.5">
                   <div className="flex items-center justify-between pb-2 border-b border-[#17402C]/10">
                     <div className="flex items-center gap-2">
@@ -351,7 +351,7 @@ export default function PaysPratiqueView({ country, isMobile = false }: PaysPrat
           <a
             href="tel:112"
             onClick={() => triggerHaptic('light')}
-            className="glass rounded-2xl p-3 sm:p-3.5 border border-white/70 shadow-2xs flex items-center justify-between gap-3 hover:border-rose-500/30 active:scale-[0.99] transition-all bg-white/75 cursor-pointer"
+            className="glass p-3 sm:p-3.5 flex items-center justify-between gap-3 hover:border-rose-500/30 active:scale-[0.99] transition-all cursor-pointer"
           >
             <div className="flex items-center gap-2.5">
               <span className="text-base sm:text-lg">🚨</span>
@@ -388,7 +388,7 @@ export default function PaysPratiqueView({ country, isMobile = false }: PaysPrat
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Transports */}
             {transport && transport.content_md && (
-              <div className="glass rounded-[1.75rem] p-5 space-y-3.5 border border-white/60 shadow-xs bg-white/75 flex flex-col justify-between">
+              <div className="glass p-5 space-y-3.5 flex flex-col justify-between">
                 <div className="space-y-2.5">
                   <div className="flex items-center justify-between pb-2 border-b border-[#17402C]/10">
                     <div className="flex items-center gap-2">
@@ -420,7 +420,7 @@ export default function PaysPratiqueView({ country, isMobile = false }: PaysPrat
 
             {/* Budget */}
             {budget && budget.content_md && (
-              <div className="glass rounded-[1.75rem] p-5 space-y-3.5 border border-white/60 shadow-xs bg-white/75 flex flex-col justify-between">
+              <div className="glass p-5 space-y-3.5 flex flex-col justify-between">
                 <div className="space-y-2.5">
                   <div className="flex items-center justify-between pb-2 border-b border-[#17402C]/10">
                     <div className="flex items-center gap-2">
@@ -452,7 +452,7 @@ export default function PaysPratiqueView({ country, isMobile = false }: PaysPrat
 
             {/* Santé */}
             {sante && sante.content_md && (
-              <div className="glass rounded-[1.75rem] p-5 space-y-3.5 border border-white/60 shadow-xs bg-white/75 flex flex-col justify-between">
+              <div className="glass p-5 space-y-3.5 flex flex-col justify-between">
                 <div className="space-y-2.5">
                   <div className="flex items-center justify-between pb-2 border-b border-[#17402C]/10">
                     <div className="flex items-center gap-2">
@@ -484,7 +484,7 @@ export default function PaysPratiqueView({ country, isMobile = false }: PaysPrat
 
             {/* Étiquette culturelle & Nature */}
             {etiquette && etiquette.content_md && (
-              <div className="glass rounded-[1.75rem] p-5 space-y-3.5 border border-white/60 shadow-xs bg-white/75 flex flex-col justify-between">
+              <div className="glass p-5 space-y-3.5 flex flex-col justify-between">
                 <div className="space-y-2.5">
                   <div className="flex items-center justify-between pb-2 border-b border-[#17402C]/10">
                     <div className="flex items-center gap-2">
@@ -522,7 +522,7 @@ export default function PaysPratiqueView({ country, isMobile = false }: PaysPrat
          ══════════════════════════════════════════════════════════════════ */}
       {/* Périodes par activité */}
       {periodes && (
-        <div className="glass rounded-[1.75rem] p-5 space-y-3.5 border border-white/60 shadow-xs bg-white/70">
+        <div className="glass p-5 space-y-3.5">
           <div className="flex items-center justify-between pb-2 border-b border-[#17402C]/10">
             <div className="flex items-center gap-2">
               <span className="text-lg">☀️</span>
@@ -540,7 +540,7 @@ export default function PaysPratiqueView({ country, isMobile = false }: PaysPrat
           {Array.isArray(periodes.content_json) && periodes.content_json.length > 0 && (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 pt-2">
               {(periodes.content_json as PeriodeActiviteItem[]).map((item, i) => (
-                <div key={i} className="p-3.5 rounded-2xl bg-white/80 border border-white/60 shadow-2xs space-y-1.5">
+                <div key={i} className="glass-sub-card p-3.5 space-y-1.5">
                   <div className="flex items-center justify-between">
                     <span className="font-bold text-xs text-[#17402C]">{item.activite}</span>
                     <span className="text-[9.5px] font-mono font-semibold px-2 py-0.5 rounded-full bg-[#5B7F55]/15 text-[#17402C]">
@@ -560,7 +560,7 @@ export default function PaysPratiqueView({ country, isMobile = false }: PaysPrat
 
       {/* Itinéraires outdoor suggérés */}
       {itineraires && (
-        <div className="glass rounded-[1.75rem] p-5 space-y-4 border border-white/60 shadow-xs bg-white/70">
+        <div className="glass p-5 space-y-4">
           <div className="flex items-center justify-between pb-2 border-b border-[#17402C]/10">
             <div className="flex items-center gap-2">
               <span className="text-lg">🥾</span>
@@ -578,7 +578,7 @@ export default function PaysPratiqueView({ country, isMobile = false }: PaysPrat
           {Array.isArray(itineraires.content_json) && itineraires.content_json.length > 0 && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 pt-1">
               {(itineraires.content_json as ItineraireItem[]).map((it, idx) => (
-                <div key={idx} className="p-4 rounded-2xl bg-white/85 border border-white/60 shadow-2xs space-y-2.5">
+                <div key={idx} className="glass-sub-card p-4 space-y-2.5">
                   <div className="flex items-start justify-between gap-2">
                     <h5 className="font-display font-bold text-sm text-[#17402C]">{it.nom}</h5>
                     <div className="flex items-center gap-1.5 shrink-0">
@@ -614,7 +614,7 @@ export default function PaysPratiqueView({ country, isMobile = false }: PaysPrat
 
       {/* Spots incontournables */}
       {spots && Array.isArray(spots.content_json) && spots.content_json.length > 0 && (
-        <div className="glass rounded-[1.75rem] p-5 space-y-3.5 border border-white/60 shadow-xs bg-white/70">
+        <div className="glass p-5 space-y-3.5">
           <div className="flex items-center justify-between pb-2 border-b border-[#17402C]/10">
             <div className="flex items-center gap-2">
               <span className="text-lg">🏔️</span>
@@ -629,7 +629,7 @@ export default function PaysPratiqueView({ country, isMobile = false }: PaysPrat
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 pt-1">
             {(spots.content_json as SpotItem[]).map((spot, i) => (
-              <div key={i} className="p-3.5 rounded-2xl bg-white/80 border border-white/60 shadow-2xs space-y-1.5">
+              <div key={i} className="glass-sub-card p-3.5 space-y-1.5">
                 <div className="flex items-center justify-between">
                   <h5 className="font-bold text-xs text-[#17402C] truncate">{spot.nom}</h5>
                   <span className="text-[9px] font-mono font-semibold text-[#5B7F55]">
@@ -646,7 +646,7 @@ export default function PaysPratiqueView({ country, isMobile = false }: PaysPrat
 
       {/* FAQ Voyageur Outdoor */}
       {faq && (
-        <div className="glass rounded-[1.75rem] p-5 space-y-3.5 border border-white/60 shadow-xs bg-white/75">
+        <div className="glass p-5 space-y-3.5">
           <div className="flex items-center justify-between pb-2 border-b border-[#17402C]/10">
             <div className="flex items-center gap-2">
               <span className="text-lg">❓</span>
@@ -666,7 +666,7 @@ export default function PaysPratiqueView({ country, isMobile = false }: PaysPrat
                 return (
                   <div
                     key={idx}
-                    className="rounded-2xl border border-white/60 bg-white/70 overflow-hidden shadow-2xs"
+                    className="glass-sub-card overflow-hidden"
                   >
                     <button
                       type="button"
@@ -711,7 +711,7 @@ export default function PaysPratiqueView({ country, isMobile = false }: PaysPrat
           6. VOTRE ÉQUIPEMENT & KIT RECOMMANDÉ (Tier 4 — Catalogue réel)
          ══════════════════════════════════════════════════════════════════ */}
       {kits && (
-        <div className="glass rounded-[2rem] p-5 sm:p-6 space-y-4 border border-[#5B7F55]/30 shadow-md bg-gradient-to-br from-white/90 via-white/80 to-[#5B7F55]/10 backdrop-blur-md">
+        <div className="glass p-5 sm:p-6 space-y-4">
           <div className="flex items-center justify-between pb-2.5 border-b border-[#17402C]/10">
             <div className="flex items-center gap-2.5">
               <div className="w-8 h-8 rounded-xl bg-[#17402C] text-white flex items-center justify-center font-bold text-sm shadow-xs">
@@ -738,7 +738,7 @@ export default function PaysPratiqueView({ country, isMobile = false }: PaysPrat
               {(kits.content_json as KitRecommendationItem[]).map((rec, kIdx) => (
                 <div
                   key={kIdx}
-                  className="p-4 rounded-2xl bg-white/90 border border-white/80 shadow-xs space-y-3 flex flex-col justify-between"
+                  className="glass-sub-card p-4 space-y-3 flex flex-col justify-between"
                 >
                   <div className="space-y-2">
                     <div className="flex items-start justify-between gap-2">

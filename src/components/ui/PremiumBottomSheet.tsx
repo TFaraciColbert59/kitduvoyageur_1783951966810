@@ -15,7 +15,7 @@ interface PremiumBottomSheetProps {
   defaultSnap?: 'peek' | 'half' | 'full';
   showHandle?: boolean;
   className?: string;
-  /** liquid = surface verre liquide (.glass) au lieu du fond opaque historique. */
+  /** Alias historique : les deux valeurs utilisent le matériau overlay partagé. */
   surface?: 'default' | 'liquid';
 }
 
@@ -93,7 +93,7 @@ export default function PremiumBottomSheet({
 
   const height = SNAP_HEIGHTS[currentSnap];
 
-  const isLiquid = surface === 'liquid';
+
 
   return createPortal(
     <>
@@ -101,10 +101,7 @@ export default function PremiumBottomSheet({
       <div
         className="fixed inset-0 z-[10000]"
         style={{
-          background: 'rgba(14,21,18,0.5)',
-          backdropFilter: 'blur(4px)',
-          WebkitBackdropFilter: 'blur(4px)',
-          animation: 'fadeIn 200ms ease both',
+          background: 'rgba(14,21,18,0.5)',          animation: 'fadeIn 200ms ease both',
         }}
         onClick={onClose}
         aria-hidden="true"
@@ -115,17 +112,16 @@ export default function PremiumBottomSheet({
         role="dialog"
         aria-modal="true"
         aria-label={title || 'Panneau'}
-        className={`fixed left-0 right-0 bottom-0 z-[10001] flex flex-col ${className}`}
+        data-glass-variant="overlay"
+        data-glass-shape="sheet"
+        data-surface-alias={surface}
+        className={`glass fixed left-0 right-0 bottom-0 z-[10001] flex flex-col ${className}`}
         style={{
           height,
           y,
-          borderRadius: '28px 28px 0 0',
+
           overflow: 'hidden',
-          background: isLiquid ? undefined : 'rgba(237,234,224,0.96)',
-          backdropFilter: isLiquid ? undefined : 'blur(32px) saturate(200%)',
-          WebkitBackdropFilter: isLiquid ? undefined : 'blur(32px) saturate(200%)',
-          boxShadow: '0 -4px 40px rgba(14,21,18,0.18), 0 -1px 0 rgba(255,255,255,0.5)',
-        }}
+          background: isLiquid ? undefined : 'rgba(237,234,224,0.96)',        }}
         // Entrée via framer-motion (remplace l'animation CSS `slideUp` qui
         // entrait en conflit de cascade avec le transform du drag).
         initial={{ y: reduceMotion ? 0 : '100%' }}
@@ -134,7 +130,7 @@ export default function PremiumBottomSheet({
         {...dragProps}
       >
         <div
-          className={`pb-safe flex h-full flex-col ${isLiquid ? 'glass rounded-t-[28px]' : ''}`}
+          className="pb-safe flex h-full flex-col"
         >
           {/* Handle — zone de drag principale */}
           {showHandle && (
@@ -147,10 +143,8 @@ export default function PremiumBottomSheet({
                 style={{
                   width: '36px',
                   height: '4px',
-                  borderRadius: '2px',
-                  background: isLiquid ? 'rgba(255,255,255,0.9)' : 'rgba(23,64,44,0.18)',
-                  boxShadow: isLiquid ? '0 1px 4px rgba(14,21,18,0.25)' : undefined,
-                }}
+                  borderRadius: 'var(--lkv-radius-full)',
+                  background: 'var(--lkv-text-muted)',                }}
               />
             </div>
           )}
@@ -162,7 +156,7 @@ export default function PremiumBottomSheet({
               className="flex items-center justify-between px-5 pb-3 flex-shrink-0 touch-none"
             >
               <h2
-                className="font-display font-bold text-[#17402C]"
+                className="font-display font-bold text-[var(--lkv-text-primary)]"
                 style={{ fontSize: '18px', letterSpacing: '-0.02em' }}
               >
                 {title}
@@ -170,10 +164,8 @@ export default function PremiumBottomSheet({
               <button
                 onClick={onClose}
                 aria-label="Fermer"
-                className="flex items-center justify-center w-11 h-11 rounded-full haptic-press cursor-pointer"
-                style={{ background: 'rgba(23,64,44,0.08)' }}
-              >
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#17402C" strokeWidth="2.5" strokeLinecap="round" aria-hidden="true">
+                className="glass-sub-card lkv-button-primitive flex items-center justify-center w-11 h-11 rounded-full cursor-pointer"              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden="true">
                   <path d="M18 6L6 18M6 6l12 12" />
                 </svg>
               </button>

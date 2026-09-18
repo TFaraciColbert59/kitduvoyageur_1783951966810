@@ -1,70 +1,54 @@
 'use client';
 import { forwardRef, type HTMLAttributes } from 'react';
-import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 
+export type GlassVariant = 'base' | 'elevated' | 'interactive' | 'selected' | 'overlay' | 'critical';
 type GlassTone = 'neutral' | 'sage' | 'warn' | 'danger' | 'info';
-type GlassBlur = 'sm' | 'md' | 'lg';
 
-interface GlassCardProps extends HTMLAttributes<HTMLDivElement> {
+export interface GlassCardProps extends HTMLAttributes<HTMLDivElement> {
+  variant?: GlassVariant;
+  /** Legacy aliases; material values always come from tokens.css. */
   tone?: GlassTone;
-  blur?: GlassBlur;
+  blur?: 'sm' | 'md' | 'lg';
   interactive?: boolean;
+  disabled?: boolean;
   as?: 'div' | 'article';
   ariaLabelledBy?: string;
 }
 
-/** U1 : classes littérales — Tailwind ne compile jamais `backdrop-blur-${value}` interpolé. */
-const blurClass: Record<GlassBlur, string> = {
-  sm: 'backdrop-blur-[8px]',
-  md: 'backdrop-blur-[10px]',
-  lg: 'backdrop-blur-[16px]',
-};
-
-const toneTint: Record<GlassTone, string> = {
-  neutral: 'border-white/40',
-  sage: 'border-white/50',
-  warn: 'border-[rgba(200,154,59,0.35)]',
-  danger: 'border-[rgba(168,68,58,0.35)]',
-  info: 'border-[rgba(75,107,124,0.35)]',
-};
-
 export const GlassCard = forwardRef<HTMLDivElement, GlassCardProps>(
-  (
-    {
-      tone = 'neutral',
-      blur = 'sm',
-      interactive = false,
-      as = 'div',
-      ariaLabelledBy,
-      className,
-      children,
-      ...props
-    },
-    ref
-  ) => {
-    const Comp = motion[as] as React.ElementType;
+  ({ variant, tone = 'neutral', blur = 'sm', interactive = false, disabled = false,
+    as: Component = 'div', ariaLabelledBy, className, children, onClick, onKeyDown,
+    tabIndex, role, ...props }, ref) => {
+    const resolvedVariant = variant ?? (tone === 'danger' ? 'critical' : interactive ? 'interactive' : 'base');
+    const actionable = Boolean(onClick);
+    const unavailable = disabled || props['aria-disabled'] === true || props['aria-disabled'] === 'true';
 
     return (
-      <Comp
-        ref={ref}
-        role={as === 'article' ? 'article' : undefined}
-        aria-labelledby={ariaLabelledBy}
-        tabIndex={interactive ? 0 : undefined}
-        className={cn(
-          'glass rounded-[var(--lkv-radius-card)] relative overflow-hidden',
-          interactive && 'interactive cursor-pointer',
-          blurClass[blur],
-          toneTint[tone],
-          className
-        )}
-        whileTap={interactive ? { scale: 0.985, transition: { type: 'spring', stiffness: 500, damping: 25 } } : undefined}
+      <Component
         {...props}
+        ref={ref}
+        role={role ?? (actionable ? 'button' : undefined)}
+        aria-labelledby={ariaLabelledBy ?? props['aria-labelledby']}
+        aria-disabled={unavailable || undefined}
+        tabIndex={unavailable && actionable ? -1 : tabIndex ?? (actionable ? 0 : undefined)}
+        data-glass-variant={resolvedVariant}
+        data-glass-blur={blur}
+        className={cn('glass relative overflow-hidden', `tone-${tone}`,
+          (interactive || actionable || variant === 'interactive') && 'interactive', className)}
+        onClick={unavailable ? undefined : onClick}
+        onKeyDown={(event) => {
+          onKeyDown?.(event);
+          if (!event.defaultPrevented && !unavailable && actionable && event.target === event.currentTarget
+            && (event.key === 'Enter' || event.key === ' ')) {
+            event.preventDefault();
+            event.currentTarget.click();
+          }
+        }}
       >
-        <div className="h-full min-h-0 flex flex-col justify-between">
-          {children}
-        </div>
-      </Comp>
+        {/* Preserve the established layout contract for existing consumers. */}
+        <div className="h-full min-h-0 flex flex-col justify-between">{children}</div>
+      </Component>
     );
   }
 );

@@ -29,17 +29,17 @@ export default function PaysCommunauteView({ country }: PaysCommunauteViewProps)
       {/* Main Stack */}
       <div className="space-y-6">
         {/* Bouteille à la mer */}
-        <div className="glass rounded-[1.5rem] p-5 sm:p-6 border border-white/50 shadow-sm">
+        <div className="glass p-5 sm:p-6">
           <BouteilleALaMer countryIso={country.code} countryName={country.nom} />
         </div>
 
         {/* Clubs & Carnets in side-by-side grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-          <div className="glass rounded-[1.5rem] p-5 border border-white/50 shadow-sm">
+          <div className="glass p-5">
             <PaysClubsList countryIso={country.code} countryName={country.nom} />
           </div>
 
-          <div className="glass rounded-[1.5rem] p-5 border border-white/50 shadow-sm">
+          <div className="glass p-5">
             <PaysCarnetsList countryIso={country.code} countryName={country.nom} />
           </div>
         </div>

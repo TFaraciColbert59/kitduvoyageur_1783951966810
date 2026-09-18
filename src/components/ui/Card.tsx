@@ -24,7 +24,7 @@ export const Card: React.FC<CardProps> = ({
   } as const;
 
   return (
-    <GlassCard
+    <GlassCard variant={variant === 'elevated' ? 'elevated' : interactive ? 'interactive' : 'base'}
       tone={toneMap[variant]}
       interactive={interactive}
       className={className}
@@ -36,3 +36,4 @@ export const Card: React.FC<CardProps> = ({
 };
 
 export default Card;
+

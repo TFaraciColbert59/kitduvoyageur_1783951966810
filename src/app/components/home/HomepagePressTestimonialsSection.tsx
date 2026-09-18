@@ -90,7 +90,7 @@ export default function HomepagePressTestimonialsSection() {
           {TESTIMONIALS.map((t, idx) => (
             <article
               key={t.id}
-              className="premium-card p-6 flex flex-col"
+              className="glass p-6 flex flex-col"
               style={{
                 opacity: visible ? 1 : 0,
                 transform: visible ? 'translateY(0)' : 'translateY(24px)',

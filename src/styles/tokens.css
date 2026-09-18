@@ -1,4 +1,4 @@
-﻿/**
+/**
  * LKDV DESIGN SYSTEM — CANONICAL TOKENS (Chantiers U, X & Y)
  *
  * SOURCE UNIQUE DE VÉRITÉ :
@@ -216,3 +216,50 @@
   --warning: var(--lkv-warning);
   --warning-bg: var(--lkv-warning-bg);
 }
+
+/* Liquid Glass: one material scale, shared across all routes. */
+:root {
+  --glass-solid: var(--lkv-surface);
+  --glass-text: var(--lkv-primary);
+  --glass-text-secondary: #365233;
+  --glass-bg-light: rgba(238, 243, 236, 0.70);
+  --glass-bg-medium: rgba(238, 243, 236, 0.82);
+  --glass-bg-strong: rgba(238, 243, 236, 0.94);
+  --glass-bg-dark: rgba(11, 31, 23, 0.90);
+  --glass-subtle-fill: rgba(238, 243, 236, 0.62);
+  --glass-border: rgba(23, 64, 44, 0.18);
+  --glass-rim: rgba(255, 255, 255, 0.72);
+  --glass-radius: var(--lkv-radius-card);
+  --glass-blur-sm: 6px;
+  --glass-blur-md: 10px;
+  --glass-blur-lg: 14px;
+  --glass-sat: 115%;
+  --glass-shadow: inset 0 1px 0 var(--glass-rim), 0 4px 16px -6px rgba(11, 31, 23, 0.14);
+  --glass-shadow-elevated: inset 0 1px 0 var(--glass-rim), 0 12px 32px -12px rgba(11, 31, 23, 0.23);
+  --glass-highlight-top: linear-gradient(100deg, transparent, var(--glass-rim) 24%, transparent 82%);
+  --glass-sheen: radial-gradient(100% 70% at 18% 0%, rgba(255, 255, 255, 0.16), transparent 70%);
+  --glass-edge-light: var(--glass-highlight-top);
+  --glass-highlight-radial: var(--glass-sheen);
+  --glass-tint-sage: var(--glass-bg-medium);
+  --glass-selected-border: var(--lkv-primary);
+  --glass-critical-border: var(--lkv-danger-dark);
+  --glass-focus: var(--lkv-primary);
+  --glass-press-scale: 0.985;
+}
+.dark {
+  --glass-solid: #17241d;
+  --glass-text: #eef3ec;
+  --glass-text-secondary: #ccd8c8;
+  --glass-bg-light: rgba(23, 36, 29, 0.78);
+  --glass-bg-medium: rgba(23, 36, 29, 0.88);
+  --glass-bg-strong: rgba(23, 36, 29, 0.96);
+  --glass-subtle-fill: rgba(23, 36, 29, 0.65);
+  --glass-border: rgba(255, 255, 255, 0.24);
+  --glass-rim: rgba(255, 255, 255, 0.20);
+  --glass-focus: #ccd8c8;
+  --glass-selected-border: #ccd8c8;
+  --glass-critical-border: #ffb4a9;
+}
+
+
+.glass { --lkv-text-secondary: var(--glass-text-secondary); }

@@ -91,7 +91,7 @@ export default function PaysCarnetsList({ countryIso, countryName }: Props) {
                 triggerHaptic('light');
                 router.push(`/carnets/${carnet.id}`);
               }}
-              className="glass bg-white/90 backdrop-blur-xl group cursor-pointer rounded-3xl overflow-hidden flex flex-col justify-between transition-all duration-300 border border-white shadow-xs p-3 space-y-2.5"
+              className="glass-sub-card group cursor-pointer overflow-hidden flex flex-col justify-between p-3 space-y-2.5"
             >
               <div className="space-y-2">
                 <div className="aspect-[16/10] rounded-2xl relative overflow-hidden bg-[#17402C]">
@@ -138,7 +138,7 @@ export default function PaysCarnetsList({ countryIso, countryName }: Props) {
           ))}
         </div>
       ) : (
-        <div className="glass bg-white/80 p-5 text-center rounded-3xl border border-white space-y-2">
+        <div className="glass-sub-card p-5 text-center space-y-2">
           <span className="text-3xl block">📖</span>
           <h4 className="font-bold text-xs text-[#17402C]">Aucun carnet publié en {countryName}</h4>
           <p className="text-[11px] text-[#5C6B5E] max-w-xs mx-auto">

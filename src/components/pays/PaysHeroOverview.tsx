@@ -32,7 +32,7 @@ export default function PaysHeroOverview({
   return (
     <div className="space-y-4 font-sans text-[#17402C]">
       {/* 1. HERO PAYS UNIFIÉ — PURE LIQUID GLASS */}
-      <div className="glass rounded-[1.5rem] p-5 sm:p-6 border border-white/60 shadow-sm overflow-hidden">
+      <div className="glass p-5 sm:p-6 overflow-hidden">
         <div className="flex flex-col lg:flex-row items-center justify-between gap-5">
           <div className="flex-1 max-w-2xl space-y-2.5">
             {/* Meta Tags Row */}
@@ -120,7 +120,7 @@ export default function PaysHeroOverview({
         {/* 2. STATS STRIP — 5 MÉTRIQUES CLÉS */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 pt-6 mt-6 border-t border-[#17402C]/5">
           {stats.map((s, idx) => (
-            <div key={idx} className="glass-sub-card p-3 rounded-xl border border-white/50 space-y-1">
+            <div key={idx} className="glass-sub-card p-3 space-y-1">
               <span className="text-[9px] font-mono font-bold text-[#5A7064] tracking-widest uppercase block">
                 {s.label}
               </span>
@@ -142,7 +142,7 @@ export default function PaysHeroOverview({
           country.points_interet_carte && country.points_interet_carte.length > 0
             ? 'lg:col-span-7'
             : 'lg:col-span-12'
-        } glass rounded-[1.5rem] p-6 space-y-4 border border-white/50 shadow-sm`}>
+        } glass p-6 space-y-4`}>
           <div>
             <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-[#5B7F55] block mb-1">
               Édition LKDV
@@ -159,7 +159,7 @@ export default function PaysHeroOverview({
           </div>
 
           {country.citation_texte && (
-            <div className="glass-sub-card p-4 rounded-xl border-l-4 border-[#8C6418] mt-4 space-y-1">
+            <div className="glass-sub-card p-4 border-l-4 border-[#8C6418] mt-4 space-y-1">
               <p className="font-serif italic text-xs sm:text-sm text-[#17402C] leading-snug">
                 « {country.citation_texte} »
               </p>
@@ -174,7 +174,7 @@ export default function PaysHeroOverview({
 
         {/* Right Map Vector Repères (5 cols) */}
         {country.points_interet_carte && country.points_interet_carte.length > 0 && (
-        <div className={`lg:col-span-5 glass rounded-[1.5rem] p-6 space-y-4 border border-white/50 shadow-sm`}>
+        <div className={`lg:col-span-5 glass p-6 space-y-4`}>
           <div>
             <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-[#5B7F55] block mb-1">
               Géographie
@@ -234,7 +234,7 @@ export default function PaysHeroOverview({
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           {country.highlights.map((h, i) => (
-            <div key={i} className="glass rounded-[1.25rem] p-4 space-y-2 border border-white/50 shadow-xs hover:border-[#5B7F55]/30 transition-colors">
+            <div key={i} className="glass p-4 space-y-2 hover:border-[#5B7F55]/30 transition-colors">
               <div className="w-8 h-8 rounded-xl bg-[#5B7F55]/15 text-[#5B7F55] flex items-center justify-center">
                 <Icon name="SparklesIcon" size={16} />
               </div>

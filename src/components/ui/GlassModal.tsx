@@ -55,15 +55,17 @@ export function GlassModal({
         <Dialog.Portal forceMount>
           <Dialog.Overlay asChild>
             <div
-              className={`lkv-fade-in${closing ? ' lkv-fade-in--closing' : ''} fixed inset-0 z-[10000] bg-ink-900/40 backdrop-blur-[2px]`}
+              className={`lkv-fade-in${closing ? ' lkv-fade-in--closing' : ''} fixed inset-0 z-[10000] bg-ink-900/40`}
             />
           </Dialog.Overlay>
           <Dialog.Content
             aria-describedby={undefined}
+            data-glass-variant="overlay"
+            data-glass-shape={isSheet ? "sheet" : undefined}
             className={
               isSheet
-                ? 'fixed inset-x-0 bottom-0 z-[10001] max-h-[92dvh] overflow-y-auto rounded-t-3xl bg-[color:var(--glass-bg-strong)] backdrop-blur-[32px] backdrop-saturate-[200%] border border-white/40 shadow-2xl pb-[calc(16px+env(safe-area-inset-bottom,0px))] // lkdv-safe-area-ok'
-                : 'fixed left-1/2 top-1/2 z-[10001] -translate-x-1/2 -translate-y-1/2 w-[min(520px,92vw)] max-h-[88dvh] overflow-y-auto rounded-3xl bg-[color:var(--glass-bg-strong)] backdrop-blur-[32px] backdrop-saturate-[200%] border border-white/40 shadow-2xl p-6'
+                ? 'glass fixed inset-x-0 bottom-0 z-[10001] max-h-[92dvh] overflow-y-auto rounded-t-3xl pb-[calc(16px+env(safe-area-inset-bottom,0px))] // lkdv-safe-area-ok'
+                : 'glass fixed left-1/2 top-1/2 z-[10001] -translate-x-1/2 -translate-y-1/2 w-[min(520px,92vw)] max-h-[88dvh] overflow-y-auto rounded-3xl p-6'
             }
           >
             <div
@@ -74,7 +76,7 @@ export function GlassModal({
               }
             >
               <div
-                className={`flex items-center justify-between gap-3 ${isSheet ? 'px-5 pt-4 sticky top-0 z-10 bg-[color:var(--glass-bg-strong)]/90 backdrop-blur-xl pb-3' : 'pb-3'}`}
+                className={`flex items-center justify-between gap-3 ${isSheet ? 'px-5 pt-4 sticky top-0 z-10 bg-[color:var(--glass-bg-strong)] pb-3' : 'pb-3'}`}
               >
                 <Dialog.Title
                   className={
@@ -89,7 +91,7 @@ export function GlassModal({
                   <button
                     type="button"
                     aria-label="Fermer"
-                    className="h-11 w-11 min-w-[44px] rounded-full glass-sub-card border border-white/60 flex items-center justify-center text-[var(--lkv-text-secondary)] hover:text-[var(--lkv-text-primary)] hover:bg-white transition-all cursor-pointer shadow-2xs active:scale-95"
+                    className="h-11 w-11 min-w-[44px] rounded-full glass-sub-card lkv-button-primitive flex items-center justify-center text-[var(--lkv-text-secondary)] hover:text-[var(--lkv-text-primary)] cursor-pointer"
                   >
                     <Icon name="x" size={18} aria-hidden="true" />
                   </button>

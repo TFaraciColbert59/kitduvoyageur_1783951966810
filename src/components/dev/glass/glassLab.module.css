@@ -1,0 +1,43 @@
+.lab { max-width: 1440px; margin: 0 auto; padding: max(32px, env(safe-area-inset-top)) 20px max(112px, env(safe-area-inset-bottom)); color: var(--glass-text, var(--lkv-text-primary)); }
+.lab header { max-width: 680px; margin-bottom: 24px; }
+.lab h1 { font-size: clamp(26px, 4vw, 42px); line-height: 1.15; font-weight: 650; margin: 8px 0 16px; }
+.lab h2 { font-size: 22px; line-height: 1.25; font-weight: 650; }
+.lab p { line-height: 1.6; }
+.eyebrow { font-size: 12px; font-weight: 650; letter-spacing: .06em; text-transform: uppercase; }
+.controls { display: flex; align-items: center; gap: 8px 20px; flex-wrap: wrap; padding: 0; margin: 12px 0; border: 0; }
+.controls legend { font-weight: 650; margin-bottom: 6px; }
+.controls label { display: inline-flex; align-items: center; gap: 8px; min-height: var(--lkv-touch-min); cursor: pointer; }
+.controls input { accent-color: var(--lkv-primary); }
+.controls select { min-height: var(--lkv-touch-min); background: var(--glass-solid, var(--lkv-surface)); color: inherit; border: 1px solid var(--lkv-border-strong); border-radius: var(--lkv-radius-sm); padding: 8px 12px; }
+.controls :focus-visible, .link:focus-visible { outline: 2px solid var(--lkv-primary); outline-offset: 3px; }
+.status { font-weight: 600; margin-top: 16px; }
+.note { font-size: 13px; max-width: 900px; margin: 8px 0 24px; }
+.grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; }
+.stage { position: relative; display: flex; align-items: center; min-height: 400px; padding: 20px; overflow: hidden; border-radius: var(--lkv-radius-2xl); background: var(--lkv-surface-muted); }
+.stage[data-fixture='voyage'] { background-image: url('/assets/images/mountain-1.jpg'); background-size: cover; background-position: center; }
+.map { position: absolute; inset: 0; width: 100%; height: 100%; }
+.surface { width: 100%; min-width: 0; }
+.content { position: relative; z-index: 1; display: flex; flex-direction: column; gap: 16px; padding: 24px; }
+.content p, .content h2 { margin: 0; }
+.metric { font: 500 12px/1.5 var(--font-mono); }
+.content button { align-self: flex-start; white-space: normal; text-align: left; }
+.opticalLayer { position: absolute; inset: 0; pointer-events: none; border-radius: inherit; }
+.engineHost { position: absolute; inset: 0; border-radius: var(--glass-radius, var(--lkv-radius-card)); }
+/* Lab-only adaptation: preserve canonical geometry and highlights. Optical engines
+   paint behind one accessible content tree. Their own card styling is removed. */
+.surface[data-lab-engine='rdev']:has([data-optical-engine='rdev'] :global(.glass)),
+.surface[data-lab-engine='samasante']:has([data-liquid-glass]) { background: transparent; backdrop-filter: none; -webkit-backdrop-filter: none; }
+.engineHost :global(.glass) { width: 100%; height: 100%; border: 0; box-shadow: none !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important; background: var(--glass-bg-medium); }
+.engineHost :global(.glass)::before, .engineHost :global(.glass)::after { display: none; }
+.engineHost :global(.glass__warp) { border-radius: inherit; }
+/* rdev adds sibling border overlays; the outer GlassCard owns these tokens. */
+.engineHost > span, .engineHost > div:not(:has(:global(.glass))) { display: none; }
+.engineHost[data-optical-engine='samasante'] > div { display: inline-block; }
+.contracts { margin-top: 40px; }
+.contracts > p { margin: 12px 0; }
+.variants { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr)); gap: 16px; }
+.example { padding: 20px; min-height: var(--lkv-touch-min); }
+.link { display: inline-flex; align-items: center; min-height: var(--lkv-touch-min); text-decoration: underline; }
+.longList { display: grid; gap: 16px; margin-top: 32px; }
+@media (max-width: 1000px) { .grid { grid-template-columns: 1fr; } .stage { min-height: 360px; } }
+@media (max-width: 360px) { .lab { padding-left: 12px; padding-right: 12px; } .stage { padding: 12px; } .content { padding: 20px; } }

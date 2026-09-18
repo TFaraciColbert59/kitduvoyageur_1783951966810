@@ -105,7 +105,7 @@ export default function MobileCountryDetailView({
 
       {/* ── 2. PANORAMIC HERO CARD (Cristal Liquid Glass) ── */}
       <div className="px-4 pt-3">
-        <div className="relative w-full h-56 rounded-xl overflow-hidden glass border border-white/80 shadow-md">
+        <div className="relative w-full h-56 overflow-hidden glass">
           <SmartImage
             src={heroImage}
             alt={country.nom}
@@ -146,9 +146,9 @@ export default function MobileCountryDetailView({
 
       {/* ── 3. QUICK STATS 4-METRIC GRID (Haute Définition) ── */}
       <div className="px-4 pt-3">
-        <div className="glass p-2.5 rounded-lg border border-white/80 shadow-xs bg-white/80">
+        <div className="glass p-2.5">
           <div className="grid grid-cols-4 gap-1.5 text-center">
-            <div className="glass-sub-card p-2 rounded-xl border border-white/90 bg-white/90 shadow-2xs">
+            <div className="glass-sub-card p-2">
               <span className="block font-mono font-bold text-[11px] sm:text-xs text-[#17402C] truncate" title={country.superficie_detail}>
                 {country.superficie_court === '—' ? '—' : (country.superficie_court.includes('km') ? country.superficie_court : `${country.superficie_court} km²`)}
               </span>
@@ -157,7 +157,7 @@ export default function MobileCountryDetailView({
               </span>
             </div>
 
-            <div className="glass-sub-card p-2 rounded-xl border border-white/90 bg-white/90 shadow-2xs">
+            <div className="glass-sub-card p-2">
               <span className="block font-mono font-bold text-xs text-[#17402C] truncate" title={country.capitale}>
                 {country.capitale}
               </span>
@@ -166,7 +166,7 @@ export default function MobileCountryDetailView({
               </span>
             </div>
 
-            <div className="glass-sub-card p-2 rounded-xl border border-white/90 bg-white/90 shadow-2xs">
+            <div className="glass-sub-card p-2">
               <span className="block font-mono font-bold text-xs text-[#5B7F55] truncate" title={country.monnaie || country.monnaie_nom}>
                 {country.monnaie_code || country.monnaie}
               </span>
@@ -175,7 +175,7 @@ export default function MobileCountryDetailView({
               </span>
             </div>
 
-            <div className="glass-sub-card p-2 rounded-xl border border-white/90 bg-white/90 shadow-2xs">
+            <div className="glass-sub-card p-2">
               <span className="block font-mono font-bold text-xs text-sand-800 truncate" title={country.fuseau}>
                 {country.fuseau}
               </span>
@@ -207,7 +207,7 @@ export default function MobileCountryDetailView({
 
                 <PaysRecommendations countryCode={country.code} />
 
-                <div className="glass p-4 sm:p-5 rounded-xl border border-white/80 shadow-xs bg-white/85 space-y-3">
+                <div className="glass p-4 sm:p-5 space-y-3">
                   <div className="flex items-center justify-between">
                     <span className="glass-pill text-[9.5px] font-mono font-bold text-[#5B7F55] bg-white/90 border border-white">
                       01 · Panorama Général
@@ -243,7 +243,7 @@ export default function MobileCountryDetailView({
                 </div>
 
                 {/* ── FICHE D'IDENTITÉ OFFICIELLE (11 Données Clés CSV) ── */}
-                <div className="glass p-4 rounded-lg border border-white/80 shadow-xs bg-white/85 space-y-2.5">
+                <div className="glass p-4 space-y-2.5">
                   <div className="flex items-center justify-between pb-1.5 border-b border-[#17402C]/5">
                     <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#5B7F55] flex items-center gap-1.5">
                       <span>📋</span> Fiche d'identité officielle
@@ -331,7 +331,7 @@ export default function MobileCountryDetailView({
                         <div
                           key={i}
                           onClick={() => handleSectionSwitch('destinations')}
-                          className="w-52 shrink-0 glass rounded-2xl overflow-hidden border border-white/80 shadow-2xs bg-white/85 cursor-pointer group snap-start"
+                          className="w-52 shrink-0 glass overflow-hidden cursor-pointer group snap-start"
                         >
                           <div className="h-26 relative overflow-hidden bg-[#17402C]">
                             <img
@@ -472,7 +472,7 @@ export default function MobileCountryDetailView({
               <div className="space-y-3">
                 {/* Live Weather Card */}
                 {country.meteo && (
-                <div className="glass p-4 rounded-lg border border-white/80 shadow-xs bg-white/85 space-y-2.5">
+                <div className="glass p-4 space-y-2.5">
                   <div className="flex items-center justify-between">
                     <span className="glass-pill text-[9.5px] font-mono font-bold text-[#5B7F55] bg-white">
                       ⛅ Météo en direct · {country.meteo.ville}
@@ -529,7 +529,7 @@ export default function MobileCountryDetailView({
         </AnimatePresence>
 
         {/* ── 5. AI CONFIGURATOR CALL TO ACTION BANNER ── */}
-        <div className="glass p-4 sm:p-5 rounded-xl border border-white/80 shadow-xs bg-white/85 space-y-2 mt-4">
+        <div className="glass p-4 sm:p-5 space-y-2 mt-4">
           <div className="flex items-center gap-2">
             <span className="text-xl">🎒</span>
             <h4 className="font-display font-bold text-sm text-[#17402C]">

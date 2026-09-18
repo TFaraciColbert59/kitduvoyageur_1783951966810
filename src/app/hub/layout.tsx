@@ -5,7 +5,6 @@ import { deriveHubProfile, type HubSectionId } from '@/features/hub/engine/hubPr
 import { HubShell } from '@/features/hub/components/HubShell';
 import { AdventureIntelligenceHub } from '@/features/adventure-intelligence/ui';
 import { ItineraryAdventureCockpit } from '@/features/hub/components/mobile/itinerary/ItineraryAdventureCockpit';
-import { LiquidGlassDefs } from '@/components/ui-layouts/liquid-glass-defs';
 import { TripAffiliateProvider } from '@/features/affiliation/components/TripAffiliateProvider';
 import { traceStage } from '@/lib/perf/ssrTrace';
 import HubLoading from './loading';
@@ -22,9 +21,7 @@ export const dynamic = 'force-dynamic';
  */
 export default function HubLayout({ children }: { children: React.ReactNode }) {
   return (
-    <>
-      <LiquidGlassDefs />
-      <Suspense fallback={<HubLoading />}>
+    <>      <Suspense fallback={<HubLoading />}>
         <HubLayoutAsync>{children}</HubLayoutAsync>
       </Suspense>
     </>

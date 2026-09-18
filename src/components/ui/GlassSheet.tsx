@@ -40,13 +40,15 @@ export function GlassSheet({
           </Dialog.Overlay>
           <Dialog.Content asChild aria-label={title}>
             <div
-              className={`lkv-sheet-full${closing ? ' lkv-sheet-full--closing' : ''} fixed inset-0 z-[10001] overflow-y-auto bg-[color:var(--glass-bg-strong)] backdrop-blur-[32px] backdrop-saturate-[200%]`}
+              data-glass-variant="overlay"
+              data-glass-shape="full"
+              className={`lkv-sheet-full${closing ? ' lkv-sheet-full--closing' : ''} glass fixed inset-0 z-[10001] overflow-y-auto`}
             >
-              <header className="sticky top-0 z-10 flex items-center gap-3 px-4 pt-[env(safe-area-inset-top,0px)] h-[calc(56px+env(safe-area-inset-top,0px))] glass border-b border-glass-border">
+              <header className="sticky top-0 z-10 flex items-center gap-3 px-4 pt-[env(safe-area-inset-top,0px)] h-[calc(56px+env(safe-area-inset-top,0px))] bg-[color:var(--glass-bg-strong)] border-b border-glass-border">
                 <Dialog.Close asChild>
                   <button
                     aria-label="Retour"
-                    className="glass interactive h-11 w-11 flex items-center justify-center rounded-full cursor-pointer"
+                    className="glass-sub-card lkv-button-primitive h-11 w-11 flex items-center justify-center rounded-full cursor-pointer"
                   >
                     <ArrowLeftAnimated size={18} className="text-[color:var(--label)]" aria-hidden="true" />
                   </button>

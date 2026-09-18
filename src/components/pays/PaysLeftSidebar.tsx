@@ -67,11 +67,11 @@ export default function PaysLeftSidebar({
   ];
 
   return (
-    <aside className="h-full max-h-full w-full flex-1 flex flex-col justify-between glass rounded-[1.5rem] p-3.5 text-[#17402C] font-sans overflow-hidden border border-white/40 shadow-sm select-none">
+    <aside className="h-full max-h-full w-full flex-1 flex flex-col justify-between glass p-3.5 text-[#17402C] font-sans overflow-hidden select-none">
       {/* ── 1. ZONE HAUTE FIXE (Identité du Pays & Actions Rapides) ── */}
       <div className="shrink-0 space-y-2.5">
         {/* Country Mini Header */}
-        <div className="p-3 rounded-2xl glass-sub-card flex items-center gap-3 relative overflow-hidden border border-white/50 shadow-2xs">
+        <div className="p-3 glass-sub-card flex items-center gap-3 relative overflow-hidden">
           <div className="shrink-0 flex items-center justify-center">
             <CountryFlag code={country.code} name={country.nom} size="lg" className="rounded-lg shadow-sm" />
           </div>
@@ -144,7 +144,7 @@ export default function PaysLeftSidebar({
       <div className="shrink-0 pt-2 border-t border-[#17402C]/5 space-y-1.5">
         <Link
           href="/explorer"
-          className="w-full glass-sub-card text-xs font-semibold text-[#365233] p-2 rounded-xl flex items-center justify-between hover:bg-white/80 transition-colors cursor-pointer border border-white/40"
+          className="w-full glass-sub-card text-xs font-semibold text-[#365233] p-2 flex items-center justify-between hover:bg-white/80 transition-colors cursor-pointer"
         >
           <span className="flex items-center gap-1.5">
             <span>←</span>

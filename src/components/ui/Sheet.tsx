@@ -2,7 +2,7 @@
 
 import Icon from '@/components/ui/Icon';
 import React, { useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 
 export interface SheetProps {
   isOpen: boolean;
@@ -28,6 +28,7 @@ export function Sheet({
   className = '',
   maxWidth = 'max-w-lg',
 }: SheetProps) {
+  const reduceMotion = useReducedMotion();
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && isOpen) {
@@ -53,17 +54,17 @@ export function Sheet({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
+            transition={{ duration: reduceMotion ? 0 : 0.2 }}
             onClick={onClose}
-            className="fixed inset-0 bg-black/40 backdrop-blur-sm"
+            className="fixed inset-0 bg-black/40"
           />
 
           {/* Modal / Sheet Container */}
           <motion.div
-            initial={{ y: '100%', opacity: 0.5 }}
+            initial={{ y: reduceMotion ? 0 : '100%', opacity: reduceMotion ? 1 : 0.5 }}
             animate={{ y: 0, opacity: 1 }}
-            exit={{ y: '100%', opacity: 0 }}
-            transition={{ type: 'spring', damping: 30, stiffness: 350 }}
+            exit={{ y: reduceMotion ? 0 : '100%', opacity: 0 }}
+            transition={reduceMotion ? { duration: 0 } : { type: 'spring', damping: 30, stiffness: 350 }}
             drag="y"
             dragConstraints={{ top: 0 }}
             dragElastic={0.2}
@@ -72,7 +73,9 @@ export function Sheet({
                 onClose?.();
               }
             }}
-            className={`relative z-10 w-full ${maxWidth} bg-white rounded-t-[28px] md:rounded-[28px] border border-stone-200/80 shadow-2xl overflow-hidden max-h-[90dvh] flex flex-col ${className}`}
+            data-glass-variant="overlay"
+            data-glass-shape="sheet"
+            className={`glass relative z-10 w-full ${maxWidth} md:!rounded-[var(--glass-radius)] overflow-hidden max-h-[90dvh] flex flex-col ${className}`}
           >
             {/* iOS Pull Handle (Mobile) */}
             <div className="pt-3 pb-1 flex justify-center md:hidden cursor-grab active:cursor-grabbing">
@@ -91,7 +94,7 @@ export function Sheet({
                 <button
                   type="button"
                   onClick={onClose}
-                  className="w-11 h-11 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-600 flex items-center justify-center transition-colors min-h-[44px] min-w-[44px] focus:outline-none focus-visible:ring-2 focus-visible:ring-lkv-primary"
+                  className="glass-sub-card lkv-button-primitive w-11 h-11 rounded-full text-stone-600 flex items-center justify-center transition-colors min-h-[44px] min-w-[44px] focus:outline-none focus-visible:ring-2 focus-visible:ring-lkv-primary"
                   aria-label="Fermer"
                 >
                   <Icon name="x" className="w-5 h-5" />

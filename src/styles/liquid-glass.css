@@ -1,49 +1,19 @@
-/* ============================================================
-   LIQUID GLASS DESIGN TOKENS — Mon Matériel (LKDV)
-   Inspiration Apple iOS 26 / WWDC 2025 — calé sur la charte
-   LKDV canonique (forest / sage / stone / ink). Zéro var(--lkv-warning).
-   ============================================================ */
-
+/* Canonical LKDV surface material. Optical values live in tokens.css.
+   .glass is also the semantic adapter for existing links/articles: no extra wrapper. */
 :root {
-  /* ---- Tokens sémantiques (dérivés de tokens.css) ---- */
-  --label: var(--ink-900);
-  --label-secondary: var(--ink-500);
-  --label-tertiary: var(--ink-300);
-  --label-quaternary: color-mix(in oklab, var(--ink-500) 40%, transparent);
-  --separator: color-mix(in oklab, var(--stone-800) 12%, transparent);
+  --label: var(--glass-text);
+  --label-secondary: var(--glass-text-secondary);
+  --label-tertiary: var(--glass-text-secondary);
+  --label-quaternary: var(--lkv-text-muted);
+  --separator: var(--lkv-border);
   --separator-opaque: var(--stone-200);
-  --fill-primary: color-mix(in oklab, var(--stone-800) 15%, transparent);
-  --fill-secondary: color-mix(in oklab, var(--stone-800) 10%, transparent);
-  --fill-tertiary: color-mix(in oklab, var(--stone-800) 6%, transparent);
-  --fill-quaternary: color-mix(in oklab, var(--stone-800) 4%, transparent);
-  --bg-primary: var(--stone-50);
+  --fill-primary: var(--lkv-primary-subtle);
+  --fill-secondary: var(--lkv-primary-subtle);
+  --fill-tertiary: var(--glass-subtle-fill);
+  --fill-quaternary: var(--glass-subtle-fill);
+  --bg-primary: var(--glass-solid);
   --bg-secondary: var(--stone-100);
   --bg-tertiary: var(--stone-200);
-
-  /* ---- Liquid Glass (iOS 26 Spec - True Crystal Glass with Soft White Veil) ---- */
-  --glass-bg-light: rgba(255, 255, 255, 0.45);
-  --glass-bg-medium: rgba(255, 255, 255, 0.55);
-  --glass-bg-strong: rgba(255, 255, 255, 0.75);
-  --glass-bg-dark: color-mix(in oklab, var(--ink-900) 15%, transparent);
-  --glass-border: rgba(255, 255, 255, 0.65);
-  --glass-highlight-top: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.95) 25%, rgba(255, 255, 255, 0.95) 75%, transparent 100%);
-  --glass-highlight-radial: radial-gradient(120% 60% at 20% 0%, rgba(255, 255, 255, 0.40), transparent 60%);
-  --glass-tint-sage: rgba(255, 255, 255, 0.08);
-  --glass-blur-sm: 6px;
-  --glass-blur-md: 10px;
-  --glass-blur-lg: 14px;
-  --glass-sat: 160%;
-
-  /* Specular / sheen / depth — Liquid Glass (iOS 26) */
-  --glass-edge-light: linear-gradient(
-    135deg,
-    rgba(255, 255, 255, 0.90) 0%,
-    rgba(255, 255, 255, 0.60) 32%,
-    rgba(255, 255, 255, 0.25) 65%,
-    rgba(11, 31, 23, 0.04) 100%
-  );
-  --glass-sheen: radial-gradient(130% 85% at 24% 0%, rgba(255, 255, 255, 0.45) 0%, rgba(255, 255, 255, 0.15) 100%);
-  /* ---- Radius (alias vers tokens.css) ---- */
   --r-xs: var(--lkv-radius-xs);
   --r-sm: var(--lkv-radius-sm);
   --r-md: var(--lkv-radius-md);
@@ -51,222 +21,75 @@
   --r-xl: var(--lkv-radius-card);
   --r-2xl: var(--lkv-radius-2xl);
   --r-full: var(--lkv-radius-full);
-
-  /* ---- Grille de page ---- */
   --page-max-w: 1280px;
   --grid-gap: var(--space-5);
-
-  /* ---- Motion complémentaires ---- */
-  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --ease-in-out: var(--ease-smooth);
   --ease-linear: linear;
 }
-/* Dark mode auto */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --label: var(--stone-50);
-    --label-secondary: color-mix(in oklab, var(--stone-50) 60%, transparent);
-    --separator: color-mix(in oklab, white 15%, transparent);
-    --bg-primary: var(--ink-900);
-    --bg-secondary: var(--ink-700);
-    --bg-tertiary: var(--ink-700);
-    --glass-bg-light: rgba(255, 255, 255, 0.15);
-    --glass-bg-medium: rgba(255, 255, 255, 0.10);
-    --glass-bg-strong: rgba(255, 255, 255, 0.22);
-    --glass-border: rgba(255, 255, 255, 0.18);
-  }
-}
 
-/* Le cockpit Mon Matériel reste ultra-lumineux et cristallin */
-[data-lkv-material-theme='light'] {
-  --label: var(--lkv-primary);
-  --label-secondary: var(--lkv-primary-soft);
-  --label-tertiary: var(--lkv-text-muted);
-  --bg-primary: var(--stone-50);
-  --bg-secondary: var(--stone-100);
-  --bg-tertiary: var(--stone-200);
-  --glass-bg-light: rgba(255, 255, 255, 0.14);
-  --glass-bg-medium: rgba(255, 255, 255, 0.08);
-  --glass-bg-strong: rgba(255, 255, 255, 0.18);
-  --glass-border: rgba(255, 255, 255, 0.35);
-}
-
-/* Accessibilité — reduce-transparency */
-@media (prefers-reduced-transparency: reduce) {
-  .glass,
-  [data-glass] {
-    background: var(--bg-primary) !important;
-    backdrop-filter: none !important;
-    -webkit-backdrop-filter: none !important;
-  }
-  .glass::before,
-  .glass::after,
-  [data-glass]::before,
-  [data-glass]::after {
-    display: none;
-  }
-}
-
-/* Accessibilité — reduce-motion */
-@media (prefers-reduced-motion: reduce) {
-  .glass,
-  [data-glass] {
-    transition-duration: 0.01ms !important;
-  }
-  .glass:hover {
-    transform: none !important;
-  }
-}
-
-/* Fallback si backdrop-filter non supporté */
-@supports not (backdrop-filter: blur(1px)) {
-  .glass,
-  [data-glass] {
-    background: color-mix(in oklab, var(--stone-50) 92%, transparent);
-  }
-}
-
-/* ============================================================
-   .glass — base utility (réutilisable partout)
-   ============================================================ */
 .glass {
-  position: relative;
-  isolation: isolate;
-  overflow: hidden;
-  background:
-    var(--glass-sheen),
-    var(--glass-bg-medium);
-  backdrop-filter: blur(var(--glass-blur-md)) saturate(var(--glass-sat));
-  -webkit-backdrop-filter: blur(var(--glass-blur-md)) saturate(var(--glass-sat));
-  border: 1px solid var(--glass-border);
-  border-radius: var(--r-lg);
-  box-shadow: var(--glass-depth-inset), 0 8px 30px -6px rgba(23, 64, 44, 0.08);
-  transition:
-    transform var(--dur-med) var(--ease-glass),
-    box-shadow var(--dur-med) var(--ease-glass),
-    background var(--dur-med) var(--ease-glass),
-    filter var(--dur-med) var(--ease-glass);
-}
+  --label: var(--glass-text);
+  --label-secondary: var(--glass-text-secondary);
+  --label-tertiary: var(--glass-text-secondary);
 
+  /* :where makes positioning defaults weaker than fixed/sticky/absolute utilities. */
+  isolation: isolate;
+  background: var(--glass-sheen), var(--glass-bg-medium);
+  color: var(--glass-text);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--glass-radius);
+  box-shadow: var(--glass-shadow);
+  -webkit-backdrop-filter: blur(var(--glass-blur-sm)) saturate(var(--glass-sat));
+  backdrop-filter: blur(var(--glass-blur-sm)) saturate(var(--glass-sat));
+  transition: transform var(--dur-xfast) var(--ease-glass);
+}
+:where(.glass) { position: relative; }
 .glass::before {
-  content: "";
+  content: '';
   position: absolute;
-  inset: 0 0 auto 0;
+  inset: 0 var(--space-5) auto;
   height: 1px;
   background: var(--glass-highlight-top);
   pointer-events: none;
-  z-index: 1;
-}
-
-/* Specular edge (rim light) : liseré masqué top/left brillant, bottom/right doux */
-.glass::after {
-  content: "";
-  position: absolute;
-  inset: -1px;
   border-radius: inherit;
-  padding: 1px;
-  background: var(--glass-edge-light);
-  -webkit-mask: linear-gradient(black 0 0) content-box, linear-gradient(black 0 0);
-  -webkit-mask-composite: xor;
-  mask: linear-gradient(black 0 0) content-box, linear-gradient(black 0 0);
-  mask-composite: exclude;
-  pointer-events: none;
-  z-index: 1;
 }
-
-.glass.interactive:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--glass-depth-inset), var(--elevation-4), 0 0 26px -8px color-mix(in oklab, var(--sage-500) 40%, transparent);
-  filter: brightness(1.02);
+.glass[data-glass-variant='elevated'],
+.glass[data-glass-variant='overlay'] {
+  background: var(--glass-sheen), var(--glass-bg-strong);
+  box-shadow: var(--glass-shadow-elevated);
 }
-
-.glass.interactive:active {
-  transform: translateY(0) scale(0.995);
-  transition-duration: var(--dur-xfast);
-}
-
-/* Hub — lisibilité du rail contextuel et des widgets sur fond photo immersif.
-   Les widgets héritent d'un verre renforcé (62 % de blanc) : le texte reste
-   lisible quelle que soit la photo de fond, sans casser la transparence.
-   Exception : `.glass-pure` garde la recette canonique du site (identique à la
-   sidebar gauche) quand une grande carte du rail doit matcher exactement. */
-.hub-rail .glass,
-.hub-rail [data-hub-widget] .glass {
-  background: var(--glass-sheen), rgba(255, 255, 255, 0.62);
-}
-.hub-rail .glass.glass-pure {
-  background: var(--glass-sheen), var(--glass-bg-medium);
-}
-.hub-rail .glass.tone-sage,
-.hub-rail .glass.tone-warn,
-.hub-rail .glass.tone-danger,
-.hub-rail .glass.tone-info {
-  background: var(--glass-sheen), rgba(255, 255, 255, 0.62);
-}
-
-.glass:focus-visible {
-  outline: none;
-  box-shadow: var(--glass-depth-inset), var(--elevation-3), 0 0 0 2px var(--bg-primary), 0 0 0 4px color-mix(in oklab, var(--sage-500) 60%, transparent);
-}
-
-/* Liquid Glass — lisibilité du texte sur verre très translucide */
-.glass h1, .glass h2, .glass h3, .glass p, .glass li, .glass span {
-  text-shadow: 0 1px 1px rgba(250, 248, 245, 0.6), 0 1px 2px rgba(20, 20, 15, 0.04);
-}
-
-/* Variantes tone ultra-cristallines sans voile */
-.glass.tone-sage {
-  background: rgba(255, 255, 255, 0.04);
-  border-color: rgba(255, 255, 255, 0.4);
-}
-
-.glass.tone-warn {
-  background: rgba(255, 255, 255, 0.04);
-  border-color: rgba(200, 154, 59, 0.35);
-}
-
-.glass.tone-danger {
-  background: rgba(255, 255, 255, 0.04);
-  border-color: rgba(168, 68, 58, 0.35);
-}
-
-.glass.tone-info {
-  background: rgba(255, 255, 255, 0.04);
-  border-color: rgba(75, 107, 124, 0.35);
-}
-
-/* Variantes blur */
-.glass.blur-sm {
-  backdrop-filter: blur(var(--glass-blur-sm)) saturate(var(--glass-sat));
-  -webkit-backdrop-filter: blur(var(--glass-blur-sm)) saturate(var(--glass-sat));
-}
-
-.glass.blur-lg {
-  backdrop-filter: blur(var(--glass-blur-lg)) saturate(var(--glass-sat));
+.glass[data-glass-variant='overlay'] {
   -webkit-backdrop-filter: blur(var(--glass-blur-lg)) saturate(var(--glass-sat));
+  backdrop-filter: blur(var(--glass-blur-lg)) saturate(var(--glass-sat));
 }
-
-/* Variantes size */
-.glass.size-sm {
-  border-radius: var(--r-sm);
-  box-shadow: var(--elevation-2);
+.glass[data-glass-variant='selected'] {
+  border-color: var(--glass-selected-border);
+  box-shadow: var(--glass-shadow), inset 0 0 0 1px var(--glass-selected-border);
 }
-
-.glass.size-card {
-  border-radius: var(--r-lg);
-  box-shadow: var(--elevation-2);
+.glass[data-glass-variant='critical'], .glass.tone-danger { border-color: var(--glass-critical-border); }
+.glass.tone-warn { border-color: var(--lkv-warning-dark); }
+.glass.tone-info { border-color: var(--lkv-info); }
+/* Deprecated blur/size aliases share the same recipe; they do not create local materials. */
+.glass.blur-sm, .glass.blur-lg, .glass.size-card, .glass.size-hero { border-radius: var(--glass-radius); }
+.glass.size-sm { border-radius: var(--lkv-radius-md); }
+.glass.interactive { cursor: pointer; }
+@media (hover: hover) and (pointer: fine) {
+  .glass.interactive:not([aria-disabled='true']):hover { transform: translateY(-1px); }
 }
-
-.glass.size-hero {
-  border-radius: var(--r-xl);
-  box-shadow: var(--elevation-3);
+.glass.interactive:not([aria-disabled='true']):active { transform: scale(var(--glass-press-scale)); }
+.glass[aria-disabled='true'] { cursor: default; }
+.glass:focus-visible {
+  outline: 2px solid var(--glass-focus);
+  outline-offset: 3px;
 }
-
-/* Spotlight (utilise --mx / --my mis à jour par SpotlightTracker) :
-   reflet lumineux qui suit le curseur sur la surface de la carte. */
-.glass.spotlight {
-  background:
-    radial-gradient(circle at var(--mx, 28%) var(--my, 0%), rgba(255, 255, 255, 0.38), transparent 55%),
-    var(--glass-bg-medium);
+.glass-sub-card {
+  background: var(--glass-subtle-fill);
+  color: var(--glass-text);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--lkv-radius-md);
+  box-shadow: none;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
 }
 
 /* Keyframes utilitaires */
@@ -444,406 +267,67 @@
    Ref: Apple Liquid Glass Stadium Pill & Segmented Bar
    ============================================================ */
 
-.glass-capsule-btn,
-.glass-btn {
+/* Canonical controls: thin fills inside surfaces, shared material outside. */
+.glass-capsule-btn, .glass-btn, .glass-circle-btn, .glass-capsule-btn-like {
   position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  min-height: 34px;
-  padding: 6px 14px;
-  border-radius: 9999px;
+  gap: var(--space-2);
+  min-width: var(--lkv-touch-min);
+  min-height: var(--lkv-touch-min);
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--lkv-radius-full);
   font-size: 12px;
-  font-weight: 700;
-  letter-spacing: -0.01em;
-  background: linear-gradient(
-    180deg,
-    rgba(240, 237, 228, 0.94) 0%,
-    rgba(225, 221, 208, 0.84) 100%
-  );
-  border: 1.5px solid rgba(255, 255, 255, 0.88);
-  color: var(--lkv-primary);
-  backdrop-filter: blur(16px) saturate(180%) brightness(1.02);
-  -webkit-backdrop-filter: blur(16px) saturate(180%) brightness(1.02);
-  box-shadow:
-    inset 0 1.5px 2px 0 rgba(255, 255, 255, 0.95),
-    inset 0 -1px 1px 0 rgba(23, 64, 44, 0.06),
-    0 2px 8px -1px rgba(23, 64, 44, 0.12);
-  transition:
-    transform var(--dur-fast) var(--ease-glass),
-    box-shadow var(--dur-fast) var(--ease-glass),
-    background var(--dur-fast) ease,
-    border-color var(--dur-fast) ease;
+  font-weight: 600;
+  color: var(--glass-text);
+  background: var(--glass-bg-medium);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+  -webkit-backdrop-filter: blur(var(--glass-blur-sm)) saturate(var(--glass-sat));
+  backdrop-filter: blur(var(--glass-blur-sm)) saturate(var(--glass-sat));
+  transition: transform var(--dur-xfast) var(--ease-glass);
   cursor: pointer;
   white-space: nowrap;
-  user-select: none;
 }
-
-.glass-capsule-btn > *,
-.glass-btn > *,
-.glass-capsule-btn-like > * {
-  position: relative;
-  z-index: 2;
+.glass-circle-btn { padding: var(--space-2); }
+.glass-capsule-btn.sm, .glass-btn.sm, .glass-capsule-btn.xs, .glass-btn.xs { font-size: 11px; }
+.glass-btn-primary, .glass-capsule-btn.primary, .glass-circle-btn.primary {
+  background: var(--lkv-primary); color: var(--lkv-text-inverted);
 }
-
-.glass-capsule-btn::before,
-.glass-btn::before,
-.glass-capsule-btn-like::before {
-  content: "";
-  position: absolute;
-  top: 1px;
-  left: 15%;
-  right: 15%;
-  height: 2px;
-  border-radius: 9999px;
-  background: radial-gradient(
-    circle,
-    rgba(255, 255, 255, 0.98) 0%,
-    transparent 80%
-  );
-  pointer-events: none;
-  z-index: 1;
+.glass-btn-secondary, .glass-capsule-btn.secondary { background: var(--glass-bg-medium); }
+.glass-btn-danger { background: var(--lkv-danger-dark); color: var(--lkv-text-inverted); }
+:is(.glass-btn, .glass-capsule-btn, .glass-circle-btn, .glass-capsule-btn-like):not(:disabled):active {
+  transform: scale(var(--glass-press-scale));
 }
-
-.glass-capsule-btn:hover,
-.glass-btn:hover {
-  transform: translateY(-1px) scale(1.04);
-  background: linear-gradient(
-    180deg,
-    rgba(255, 255, 255, 0.98) 0%,
-    rgba(235, 232, 222, 0.92) 100%
-  );
-  border-color: var(--lkv-text-inverted);
-  box-shadow:
-    inset 0 2px 2.5px 0 var(--lkv-text-inverted),
-    0 4px 14px -2px rgba(23, 64, 44, 0.18);
+:is(.glass-btn, .glass-capsule-btn, .glass-circle-btn):focus-visible {
+  outline: 2px solid var(--glass-focus); outline-offset: 3px;
 }
-
-.glass-capsule-btn:active,
-.glass-btn:active {
-  transform: translateY(0) scale(0.96);
-  box-shadow:
-    inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.7),
-    inset 0 -1px 1px 0 rgba(0, 0, 0, 0.12);
-  transition-duration: var(--dur-xfast);
-}
-
-.glass-btn:focus-visible,
-.glass-capsule-btn:focus-visible {
-  outline: none;
-  box-shadow: var(--elevation-3), 0 0 0 2px var(--bg-primary), 0 0 0 4px color-mix(in oklab, var(--sage-500) 60%, transparent);
-}
-
-.glass-capsule-btn.sm,
-.glass-btn.sm {
-  min-height: 28px;
-  padding: 3px 10px;
-  font-size: 10.5px;
-  gap: 4px;
-}
-
-.glass-capsule-btn.xs,
-.glass-btn.xs {
-  min-height: 24px;
-  padding: 2px 8px;
-  font-size: 9.5px;
-  gap: 3px;
-}
-
-/* Primary Capsule Button (Verre liquide Vert Forêt) */
-.glass-btn-primary,
-.glass-capsule-btn.primary {
-  background: linear-gradient(
-    180deg,
-    rgba(23, 64, 44, 0.92) 0%,
-    rgba(15, 43, 30, 0.96) 100%
-  );
-  border: 1.5px solid rgba(255, 255, 255, 0.45);
-  color: var(--stone-50);
-  box-shadow:
-    inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.6),
-    0 6px 20px -4px rgba(11, 31, 23, 0.25);
-}
-
-/* Like Capsule Button (Verre liquide Rouge Rosé Crystal) */
-.glass-capsule-btn-like {
-  position: relative;
-  isolation: isolate;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 9999px;
-  background: linear-gradient(
-    180deg,
-    rgba(254, 226, 226, 0.85) 0%,
-    rgba(254, 205, 211, 0.65) 100%
-  );
-  border: 1.5px solid rgba(244, 63, 94, 0.55);
-  color: var(--lkv-danger);
-  backdrop-filter: blur(24px) saturate(200%) brightness(1.06);
-  -webkit-backdrop-filter: blur(24px) saturate(200%) brightness(1.06);
-  box-shadow:
-    inset 0 1.5px 2px 0 rgba(255, 255, 255, 0.95),
-    inset 0 -1.5px 2px 0 rgba(225, 29, 72, 0.15);
-  transition: transform var(--dur-fast) var(--ease-glass),
-    box-shadow var(--dur-fast) var(--ease-glass),
-    background var(--dur-fast) ease,
-    border-color var(--dur-fast) ease;
-  cursor: pointer;
-  user-select: none;
-}
-
-/* Glass Circle Button (Exact Material Drag Handle / Action Capsule style - Image 3) */
-.glass-circle-btn {
-  position: relative;
-  isolation: isolate;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 9999px;
-  background: linear-gradient(
-    180deg,
-    rgba(244, 248, 245, 0.96) 0%,
-    rgba(226, 237, 228, 0.88) 100%
-  );
-  border: 1.5px solid rgba(255, 255, 255, 0.95);
-  color: var(--lkv-primary);
-  backdrop-filter: blur(16px) saturate(180%);
-  -webkit-backdrop-filter: blur(16px) saturate(180%);
-  box-shadow:
-    inset 0 1.5px 2px 0 rgba(255, 255, 255, 0.98),
-    inset 0 -1px 1px 0 rgba(23, 64, 44, 0.08),
-    0 2px 8px -1px rgba(23, 64, 44, 0.12);
-  transition: transform var(--dur-fast) var(--ease-glass),
-    box-shadow var(--dur-fast) var(--ease-glass),
-    background var(--dur-fast) ease;
-  cursor: pointer;
-  user-select: none;
-}
-
-.glass-circle-btn > * {
-  position: relative;
-  z-index: 2;
-}
-
-.glass-circle-btn::before {
-  content: "";
-  position: absolute;
-  top: 1.5px;
-  left: 15%;
-  right: 15%;
-  height: 2.5px;
-  border-radius: 9999px;
-  background: radial-gradient(
-    ellipse at center,
-    var(--lkv-text-inverted) 0%,
-    rgba(255, 255, 255, 0.95) 50%,
-    transparent 100%
-  );
-  box-shadow: 0 1px 2px rgba(255, 255, 255, 0.9);
-  pointer-events: none;
-  z-index: 3;
-}
-
-.glass-circle-btn:hover {
-  transform: translateY(-1px) scale(1.08);
-  background: linear-gradient(
-    180deg,
-    var(--lkv-text-inverted) 0%,
-    rgba(238, 246, 240, 0.96) 100%
-  );
-  border-color: var(--lkv-text-inverted);
-  box-shadow:
-    inset 0 2px 2.5px 0 var(--lkv-text-inverted),
-    0 4px 14px -2px rgba(23, 64, 44, 0.18);
-}
-
-.glass-circle-btn:active {
-  transform: scale(0.94);
-  box-shadow:
-    inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.7),
-    0 1px 3px 0 rgba(23, 64, 44, 0.1);
-}
-
-.glass-circle-btn.primary {
-  background: linear-gradient(
-    180deg,
-    var(--lkv-primary-hover) 0%,
-    var(--lkv-primary) 100%
-  ) !important;
-  border-color: rgba(255, 255, 255, 0.65) !important;
-  color: var(--lkv-text-inverted) !important;
-  box-shadow:
-    inset 0 2px 2.5px 0 rgba(255, 255, 255, 0.6),
-    inset 0 -1px 1px 0 rgba(0, 0, 0, 0.25),
-    0 4px 14px -2px rgba(23, 64, 44, 0.35) !important;
-}
-
-.glass-circle-btn.primary::before {
-  background: radial-gradient(
-    ellipse at center,
-    rgba(255, 255, 255, 0.95) 0%,
-    rgba(255, 255, 255, 0.7) 60%,
-    transparent 100%
-  );
-  box-shadow: 0 1px 2px rgba(255, 255, 255, 0.7);
-}
-
-.glass-circle-btn.primary:hover {
-  background: linear-gradient(
-    180deg,
-    var(--lkv-primary-hover) 0%,
-    var(--lkv-primary) 100%
-  ) !important;
-  border-color: rgba(255, 255, 255, 0.65) !important;
-  box-shadow:
-    inset 0 2px 2.5px 0 rgba(255, 255, 255, 0.7),
-    0 6px 18px -2px rgba(23, 64, 44, 0.45) !important;
-}
-
-.glass-capsule-btn-like:hover {
-  transform: translateY(-2px) scale(1.12);
-  background: linear-gradient(
-    180deg,
-    rgba(255, 241, 242, 0.95) 0%,
-    rgba(254, 205, 211, 0.85) 100%
-  );
-  border-color: rgba(225, 29, 72, 0.85);
-  color: var(--lkv-danger);
-}
-
-.glass-capsule-btn-like:active {
-  transform: translateY(0) scale(0.95);
-}
-
-.glass-btn-primary:hover,
-.glass-capsule-btn.primary:hover {
-  background: linear-gradient(
-    180deg,
-    rgba(34, 86, 60, 0.92) 0%,
-    rgba(17, 48, 33, 0.96) 100%
-  );
-  border-color: rgba(255, 255, 255, 0.55);
-  box-shadow:
-    inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.7),
-    0 8px 24px -4px rgba(11, 31, 23, 0.35);
-  color: var(--lkv-text-inverted);
-}
-
-/* Secondary Capsule Button (Verre liquide translucide) */
-.glass-btn-secondary,
-.glass-capsule-btn.secondary {
-  background: linear-gradient(
-    180deg,
-    rgba(255, 255, 255, 0.22) 0%,
-    rgba(255, 255, 255, 0.06) 100%
-  );
-  border: 1px solid rgba(255, 255, 255, 0.45);
-  color: var(--lkv-primary);
-  box-shadow:
-    inset 0 1px 1px 0 rgba(255, 255, 255, 0.7),
-    0 4px 14px -2px rgba(11, 31, 23, 0.06);
-}
-
-.glass-btn-secondary:hover,
-.glass-capsule-btn.secondary:hover {
-  background: linear-gradient(
-    180deg,
-    rgba(255, 255, 255, 0.35) 0%,
-    rgba(255, 255, 255, 0.14) 100%
-  );
-  border-color: rgba(255, 255, 255, 0.7);
-  box-shadow:
-    inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.9),
-    0 6px 18px -2px rgba(11, 31, 23, 0.10);
-  color: var(--lkv-primary);
-}
-
-.glass-btn-danger {
-  background: color-mix(in oklab, var(--danger) 14%, rgba(255,255,255,0.7));
-  border: 1.5px solid color-mix(in oklab, var(--danger) 35%, rgba(255,255,255,0.6));
-  color: var(--danger);
-}
-
-.glass-btn:disabled,
-.glass-capsule-btn:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-  transform: none !important;
-}
-
-/* Capsule Bar / Segmented Pill Control (Fidèle à la capture Command / Inbox iOS 26) */
+:is(.glass-btn, .glass-capsule-btn, .glass-circle-btn):disabled { opacity: 0.6; cursor: default; }
 .glass-capsule-bar {
   display: inline-flex;
-  align-items: center;
-  padding: 4px;
-  border-radius: 9999px;
-  background: linear-gradient(
-    180deg,
-    rgba(255, 255, 255, 0.42) 0%,
-    rgba(255, 255, 255, 0.20) 100%
-  );
-  border: 1.5px solid rgba(255, 255, 255, 0.55);
-  backdrop-filter: blur(14px) saturate(180%);
-  -webkit-backdrop-filter: blur(14px) saturate(180%);
-  box-shadow:
-    inset 0 1.5px 2px 0 rgba(255, 255, 255, 0.75),
-    inset 0 -1.5px 2px 0 rgba(0, 0, 0, 0.12),
-    0 10px 30px -4px rgba(11, 31, 23, 0.18);
-  gap: 4px;
+  gap: var(--space-1);
+  padding: var(--space-1);
+  background: var(--glass-bg-medium);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--lkv-radius-full);
 }
-
 .glass-capsule-segment {
   display: inline-flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 8px 18px;
-  border-radius: 9999px;
-  font-size: 12.5px;
+  gap: var(--space-2);
+  min-height: var(--lkv-touch-min);
+  min-width: var(--lkv-touch-min);
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--lkv-radius-full);
   font-weight: 600;
-  color: var(--lkv-primary);
-  gap: 4px;
-  transition: all var(--dur-fast) var(--ease-glass);
+  color: var(--glass-text);
+  background: transparent;
+  border: 1px solid transparent;
   cursor: pointer;
-  user-select: none;
-  min-width: 76px;
 }
-
-.glass-capsule-segment.active {
-  background: linear-gradient(
-    180deg,
-    rgba(255, 255, 255, 0.75) 0%,
-    rgba(255, 255, 255, 0.45) 100%
-  );
-  border: 1px solid rgba(255, 255, 255, 0.85);
-  box-shadow:
-    inset 0 1px 1.5px rgba(255, 255, 255, 0.95),
-    0 3px 10px -2px rgba(23, 64, 44, 0.15);
-  color: var(--lkv-primary);
-}
-
-.glass-capsule-segment:not(.active):hover {
-  background: rgba(255, 255, 255, 0.30);
-}
-
-/* Sub-cards et micro-widgets vitrés — avec léger voile blanc et reflet */
-.glass-sub-card {
-  background: rgba(255, 255, 255, 0.82);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.90);
-  border-radius: var(--r-md);
-  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.9), 0 2px 8px -2px rgba(23, 64, 44, 0.04);
-  transition: all var(--dur-fast) var(--ease-glass);
-}
-
-.glass-sub-card:hover {
-  background: rgba(255, 255, 255, 0.92);
-  border-color: rgba(255, 255, 255, 1);
-  box-shadow: inset 0 1px 1.5px rgba(255, 255, 255, 1), 0 4px 14px -2px rgba(23, 64, 44, 0.08);
-}
+.glass-capsule-segment.active { background: var(--lkv-primary); color: var(--lkv-text-inverted); }
 
 /* Mini checkboxes interactifs style iOS 26 Reminders */
 .glass-check-circle {
@@ -1036,57 +520,6 @@
    Boutons "gravés" DANS le verre : ni relief, ni lévitation.
    Tous uniformes, translucides, légèrement verdâtres (Sage).
    ============================================================ */
-.glass.interactive[class*="rounded-full"],
-.glass-capsule-btn,
-.glass-btn {
-  background: color-mix(in oklab, var(--sage-300) 24%, rgba(255, 255, 255, 0.55)) !important;
-  background-image: none !important;
-  border: 1px solid color-mix(in oklab, var(--sage-400) 45%, rgba(255, 255, 255, 0.6)) !important;
-  text-shadow: 0 1px 1px rgba(255, 255, 255, 0.5);
-  transform: none;
-  box-shadow:
-    inset 0 1px 1px rgba(20, 20, 15, 0.08),
-    inset 0 -1px 1px rgba(255, 255, 255, 0.75),
-    inset 0 0 0 1px color-mix(in oklab, var(--sage-300) 22%, transparent) !important;
-}
-
-/* Boutons pleins (bg-sage-800 / text-white) ramenés à la même teinte claire, texte vert foncé lisible */
-.glass.interactive[class*="rounded-full"][class*="bg-sage-800"] {
-  color: var(--sage-700) !important;
-}
-
-/* Capsule / boutons génériques : texte vert foncé uniforme (incl. .primary qui était blanc) */
-.glass-capsule-btn,
-.glass-btn {
-  color: var(--sage-700) !important;
-  text-shadow: 0 1px 1px rgba(255, 255, 255, 0.5) !important;
-}
-
-.glass.interactive[class*="rounded-full"]:hover,
-.glass-capsule-btn:hover,
-.glass-btn:hover {
-  transform: none !important;
-  filter: brightness(1.05);
-  background: color-mix(in oklab, var(--sage-300) 28%, rgba(255, 255, 255, 0.6)) !important;
-  background-image: none !important;
-  border-color: color-mix(in oklab, var(--sage-400) 60%, rgba(255, 255, 255, 0.55)) !important;
-  box-shadow:
-    inset 0 1px 2px rgba(20, 20, 15, 0.10),
-    inset 0 -1px 1px rgba(255, 255, 255, 0.8),
-    inset 0 0 0 1px color-mix(in oklab, var(--sage-300) 30%, transparent) !important;
-}
-
-.glass.interactive[class*="rounded-full"]:active,
-.glass-capsule-btn:active,
-.glass-btn:active {
-  transform: scale(0.985) !important;
-  filter: brightness(0.97);
-  transition-duration: var(--dur-xfast);
-}
-
-/* ============================================================
-   OLED ULTRA-SAVE MODE (black pure black, no GPU backdrop blur)
-   ============================================================ */
 .ultra-save-mode,
 .ultra-save-mode body {
   background-color: black !important;
@@ -1263,4 +696,91 @@
 [data-atlas-flying='true'] [data-atlas-glass='secondary'] {
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
+}
+
+/* One blur per visual surface. !important intentionally covers older inline recipes. */
+:is(.glass, [data-glass-variant]) :is(.glass, .glass-sub-card, .glass-btn, .glass-capsule-btn,
+  .glass-circle-btn, .glass-input, .glass-segmented, .glass-capsule-bar, .chip,
+  .lkv-chip-primitive, .lkv-button-primitive, [class*='backdrop-blur'], [style*='backdrop-filter']) {
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+.glass .glass {
+  background: var(--glass-subtle-fill);
+  box-shadow: none;
+}
+:is(.glass-btn, .glass-capsule-btn, .glass-circle-btn, .glass-capsule-segment,
+  .glass-segmented-item, .glass-send-btn, .lkv-button-primitive, button.lkv-chip-primitive) {
+  min-height: var(--lkv-touch-min);
+  min-width: var(--lkv-touch-min);
+}
+.lkv-button-primitive, button.lkv-chip-primitive {
+  transition: transform var(--dur-xfast) var(--ease-glass);
+}
+:is(.lkv-button-primitive, button.lkv-chip-primitive):not(:disabled):active {
+  transform: scale(var(--glass-press-scale));
+}
+:is(.lkv-button-primitive, button.lkv-chip-primitive, .glass-capsule-segment):focus-visible {
+  outline: 2px solid var(--glass-focus);
+  outline-offset: 3px;
+}
+/* Prefixed Safari support also counts as backdrop support. */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .glass, .glass-sub-card, .glass-input, .glass-capsule-bar,
+  .glass-btn, .glass-capsule-btn, .glass-circle-btn, .glass-segmented, .chip {
+    background: var(--glass-solid);
+  }
+}
+[data-glass-effects='reduced'] :is(.glass, .glass-sub-card, .glass-input, .glass-capsule-bar,
+  .glass-btn, .glass-capsule-btn, .glass-circle-btn, .glass-segmented, .chip) {
+  background: var(--glass-solid);
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+@media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
+  :is(.glass, .glass-sub-card, .glass-input, .glass-capsule-bar,
+    .glass-btn, .glass-capsule-btn, .glass-circle-btn, .glass-segmented, .chip) {
+    background: var(--glass-solid) !important;
+    color: var(--glass-text);
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+  }
+  .glass::before { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  :is(.glass, .glass-btn, .glass-capsule-btn, .glass-circle-btn, .glass-capsule-btn-like,
+    .glass-capsule-segment, .glass-sub-card, .lkv-button-primitive, .lkv-chip-primitive) {
+    transform: none !important;
+    transition: none !important;
+    animation: none !important;
+  }
+  .glass-anim-in, .glass-shimmer { animation: none !important; }
+}
+@media (forced-colors: active) {
+  .glass, .glass-sub-card { background: Canvas; color: CanvasText; border-color: CanvasText; box-shadow: none; }
+  .glass:focus-visible { outline-color: Highlight; }
+}
+
+
+/* Geometry is independent of optical material and never route-specific. */
+.glass.rounded-full, .glass-sub-card.rounded-full, .glass[data-glass-shape='pill'] {
+  border-radius: var(--lkv-radius-full);
+}
+.glass[data-glass-shape='sheet'] { border-radius: var(--glass-radius) var(--glass-radius) 0 0; }
+.glass[data-glass-shape='full'] { border-radius: 0; }
+.glass[data-glass-shape='drawer'] { border-radius: var(--glass-radius) 0 0 var(--glass-radius); }
+:where(.glass) { overflow: hidden; }
+/* Filled actions keep their semantic contrast in every fallback mode. */
+:is(.glass-btn-primary, .glass-capsule-btn.primary, .glass-circle-btn.primary) {
+  background: var(--lkv-primary) !important;
+  color: var(--lkv-text-inverted) !important;
+}
+.glass-btn-danger {
+  background: var(--lkv-danger-dark) !important;
+  color: var(--lkv-text-inverted) !important;
+}
+@media (forced-colors: active) {
+  :is(.glass-btn-primary, .glass-capsule-btn.primary, .glass-circle-btn.primary, .glass-btn-danger) {
+    background: ButtonFace !important; color: ButtonText !important;
+  }
 }
