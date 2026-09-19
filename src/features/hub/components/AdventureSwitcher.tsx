@@ -7,6 +7,7 @@ import * as Cmd from 'cmdk';
 import * as Dialog from '@radix-ui/react-dialog';
 import { Compass, Package, Users } from 'lucide-react';
 import { GlassSheet } from '@/components/ui/GlassSheet';
+import { zIndex } from '@/lib/ui/zIndex';
 import { useActiveAdventure } from '../context/ActiveAdventureContext';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import {
@@ -426,11 +427,15 @@ export function AdventureSwitcher({
           }}
         >
           <Dialog.Portal>
-            <Dialog.Overlay className="fixed inset-0 z-[10000] bg-ink-900/30" />
+            <Dialog.Overlay
+              className="fixed inset-0 bg-ink-900/30"
+              style={{ zIndex: zIndex.modal }}
+            />
             <Dialog.Content
               aria-label="Changer d'aventure"
               onClick={(e) => e.stopPropagation()}
-              className="fixed left-1/2 top-20 -translate-x-1/2 w-[min(520px,92vw)] z-[10001] rounded-[var(--lkv-radius-card)] shadow-lg border border-white/40 overflow-hidden"
+              style={{ zIndex: zIndex.modal }}
+              className="fixed left-1/2 top-20 -translate-x-1/2 w-[min(520px,92vw)] rounded-[var(--lkv-radius-card)] shadow-lg border border-white/40 overflow-hidden"
             >
               {/* .glass sur un enfant : la classe impose position:relative et
                   écraserait .fixed sur le Content lui-même. */}

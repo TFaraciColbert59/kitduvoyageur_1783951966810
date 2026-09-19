@@ -6,6 +6,14 @@ import { defineConfig, devices } from '@playwright/test';
  * ou `npm start` local). Seuls les parcours critiques du cockpit Mon Matériel
  * sont couverts ici en CI ; les scénarios complets vivent dans
  * `scripts/pw_mon_materiel_v3.ts` (venv local Chromium).
+ *
+ * M10 — matrice nommée précisément :
+ * - `desktop-chromium` : Desktop Chrome (Chromium) ;
+ * - `mobile-webkit`    : iPhone 14 Pro — WebKit réel (moteur de Safari) ;
+ * - `mobile-chromium`  : 430×932, Chromium mobile (≠ Safari, ≠ WKWebView).
+ *
+ * Le runtime natif WKWebView de l'app Capacitor n'est PAS couvert par ces
+ * projets : seule une validation sur appareil/simulateur iOS le démontre.
  */
 export default defineConfig({
   testDir: './scripts/e2e',
@@ -21,7 +29,19 @@ export default defineConfig({
     screenshot: 'only-on-failure',
   },
   projects: [
-    { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
+    { name: 'desktop-chromium', use: { ...devices['Desktop Chrome'] } },
+    // iPhone 14 Pro : le device Playwright sélectionne WebKit (moteur Safari).
+    { name: 'mobile-webkit', use: { ...devices['iPhone 14 Pro'] } },
+    // Même gabarit tactile en Chromium — ne remplace pas une preuve Safari.
+    {
+      name: 'mobile-chromium',
+      use: {
+        ...devices['Desktop Chrome'],
+        viewport: { width: 430, height: 932 },
+        isMobile: true,
+        hasTouch: true,
+      },
+    },
   ],
   webServer: process.env.PW_BASE_URL
     ? undefined

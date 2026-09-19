@@ -3,6 +3,7 @@
 import Icon from '@/components/ui/Icon';
 import React, { useEffect, useState } from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
+import { zIndex } from '@/lib/ui/zIndex';
 
 export interface GlassModalProps {
   open: boolean;
@@ -55,17 +56,19 @@ export function GlassModal({
         <Dialog.Portal forceMount>
           <Dialog.Overlay asChild>
             <div
-              className={`lkv-fade-in${closing ? ' lkv-fade-in--closing' : ''} fixed inset-0 z-[10000] bg-ink-900/40`}
+              className={`lkv-fade-in${closing ? ' lkv-fade-in--closing' : ''} fixed inset-0 bg-ink-900/40`}
+              style={{ zIndex: zIndex.modal }}
             />
           </Dialog.Overlay>
           <Dialog.Content
             aria-describedby={undefined}
             data-glass-variant="overlay"
             data-glass-shape={isSheet ? "sheet" : undefined}
+            style={{ zIndex: zIndex.modal }}
             className={
               isSheet
-                ? 'glass fixed inset-x-0 bottom-0 z-[10001] max-h-[92dvh] overflow-y-auto rounded-t-3xl pb-[calc(16px+env(safe-area-inset-bottom,0px))] // lkdv-safe-area-ok'
-                : 'glass fixed left-1/2 top-1/2 z-[10001] -translate-x-1/2 -translate-y-1/2 w-[min(520px,92vw)] max-h-[88dvh] overflow-y-auto rounded-3xl p-6'
+                ? 'glass fixed inset-x-0 bottom-0 max-h-[92dvh] overflow-y-auto rounded-t-3xl pb-[calc(16px+env(safe-area-inset-bottom,0px))] // lkdv-safe-area-ok'
+                : 'glass fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[min(520px,92vw)] max-h-[88dvh] overflow-y-auto rounded-3xl p-6'
             }
           >
             <div

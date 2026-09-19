@@ -1,6 +1,7 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, afterEach } from 'vitest';
 import {
   evaluatePrefetchPolicy,
+  evaluateCurrentPrefetchPolicy,
   type ConnectionLike,
 } from '@/lib/perf/networkPrefs';
 
@@ -41,5 +42,35 @@ describe('PERF — politique de prefetch réseau (P0)', () => {
     expect(verdict.allow).toBe(true);
     expect(verdict.allowData).toBe(true);
     expect(verdict.reason).toBe('ok');
+  });
+});
+
+describe('M08 — politique courante : réseau inconnu = limité', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('API connection absente ⇒ aucun prefetch (conservateur)', () => {
+    vi.stubGlobal('navigator', {});
+    const verdict = evaluateCurrentPrefetchPolicy();
+    expect(verdict).toMatchObject({
+      allow: false,
+      allowData: false,
+      reason: 'unknown-network',
+    });
+  });
+
+  it('API connection présente ⇒ verdict de la connexion réelle', () => {
+    vi.stubGlobal('navigator', { connection: { effectiveType: '4g' } });
+    expect(evaluateCurrentPrefetchPolicy()).toMatchObject({ allow: true, allowData: true });
+  });
+
+  it('saveData via la politique courante ⇒ tout est coupé', () => {
+    vi.stubGlobal('navigator', { connection: { saveData: true, effectiveType: '4g' } });
+    expect(evaluateCurrentPrefetchPolicy()).toMatchObject({
+      allow: false,
+      allowData: false,
+      reason: 'save-data',
+    });
   });
 });

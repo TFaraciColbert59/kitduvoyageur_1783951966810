@@ -5,7 +5,7 @@ import { prepareVisualPage } from './_helpers/prepareVisualPage';
 
 /**
  * CHANTIER DÉPART — Task 12 : captures visuelles du cockpit canonique.
- * Un test par projet (desktop-chrome / iphone-14-pro / ipad-portrait) :
+ * Un test par projet (desktop-chrome / iphone-14-pro-chromium / ipad-portrait) :
  * /hub/depart?id=none&route=375 → testid prêt → capture viewport
  * docs/depart/depart-<project>.png, zéro pageerror.
  *
@@ -15,7 +15,7 @@ import { prepareVisualPage } from './_helpers/prepareVisualPage';
 
 const OUT_DIR = path.join('docs', 'depart');
 const DEPART_URL = '/hub/depart?id=none&route=375';
-const MOBILE_EXPERIENCE_PROJECTS = new Set(['iphone-14-pro', 'ipad-portrait']);
+const MOBILE_EXPERIENCE_PROJECTS = new Set(['iphone-14-pro-chromium', 'ipad-portrait']);
 
 test.describe('DÉPART — captures cockpit (desktop + mobile)', () => {
   test('capture le cockpit du projet courant, zéro pageerror', async ({ page }, testInfo) => {

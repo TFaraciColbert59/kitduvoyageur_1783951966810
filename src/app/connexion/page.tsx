@@ -105,7 +105,7 @@ function AuthForm() {
   };
 
   return (
-    <main id="main-content" style={{ paddingTop: '80px', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '80px 16px 32px' }}>
+    <div style={{ paddingTop: '80px', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '80px 16px 32px' }}>
       <div style={{ width: '100%', maxWidth: '400px' }}>
         <div style={{ textAlign: 'center', marginBottom: '24px' }}>
           <h1 style={{ fontSize: '24px', fontWeight: 700, color: 'var(--lkv-primary)' }}>{mode === 'connexion' ? 'Bon retour, aventurier' : "Rejoindre l'expédition"}</h1>
@@ -241,7 +241,7 @@ function AuthForm() {
           </div>
         </div>
       </div>
-    </main>
+    </div>
   );
 }
 

@@ -225,7 +225,7 @@ export default function ProductDetailClient({ slug, initialProduct }: { slug: st
         <div data-lkv-material-theme="light" className="h-dvh overflow-hidden bg-transparent text-[#17402C]">
           <Header />
 
-          <main id="main-content" className="h-full overflow-y-auto pt-20 pb-16 bg-[rgba(238,243,236,0.78)] backdrop-blur-xl">
+          <div className="h-full overflow-y-auto pt-20 pb-16 bg-[rgba(238,243,236,0.78)] backdrop-blur-xl">
 
             {/* BREADCRUMB */}
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-6">
@@ -543,7 +543,7 @@ export default function ProductDetailClient({ slug, initialProduct }: { slug: st
               </div>
             </section>
 
-          </main>
+          </div>
           <Footer />
         </div>
       </div>

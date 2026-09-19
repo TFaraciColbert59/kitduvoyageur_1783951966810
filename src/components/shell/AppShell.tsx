@@ -127,10 +127,12 @@ export default function AppShell({
         </header>
       )}
 
-      {/* Contenu principal accessible */}
-      <main id="main-content" style={{ position: 'relative', zIndex: 1, width: '100%', maxWidth: '100%' }}>
+      {/* Contenu du shell — le landmark <main id="main-content"> unique est
+          rendu par src/app/layout.tsx (M04) : ici un conteneur neutre pour
+          ne jamais dupliquer le repère principal. */}
+      <div style={{ position: 'relative', zIndex: 1, width: '100%', maxWidth: '100%' }}>
         {children}
-      </main>
+      </div>
 
       {/* Slot bottomExtra (optionnel) — contenu au-dessus de la bottom bar */}
       {bottomExtra && (

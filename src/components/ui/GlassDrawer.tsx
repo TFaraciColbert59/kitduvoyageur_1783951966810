@@ -2,6 +2,7 @@
 import * as Dialog from '@radix-ui/react-dialog';
 import { motion, useReducedMotion } from 'framer-motion';
 import { XIcon as X } from '@/components/icons/x';
+import { zIndex } from '@/lib/ui/zIndex';
 
 export function GlassDrawer({
   open, onOpenChange, title, titleId, width = 520, children,
@@ -10,11 +11,11 @@ export function GlassDrawer({
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 z-[10000] bg-ink-900/25" />
+        <Dialog.Overlay className="fixed inset-0 bg-ink-900/25" style={{ zIndex: zIndex.modal }} />
         <Dialog.Content asChild aria-label={title} {...(titleId ? { 'aria-labelledby': titleId } : {})}>
           <motion.div
-            className="fixed right-0 top-0 bottom-0 z-[10001] h-full"
-            style={{ width: `min(${width}px, 100vw)`, maxWidth: '100vw' }}
+            className="fixed right-0 top-0 bottom-0 h-full"
+            style={{ width: `min(${width}px, 100vw)`, maxWidth: '100vw', zIndex: zIndex.modal }}
             initial={{ x: reduceMotion ? 0 : '100%' }} animate={{ x: 0 }} exit={{ x: reduceMotion ? 0 : '100%' }}
             transition={{ duration: reduceMotion ? 0 : 0.28, ease: [0.22, 1, 0.36, 1] }}
           >

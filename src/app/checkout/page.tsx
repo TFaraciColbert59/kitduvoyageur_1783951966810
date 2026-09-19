@@ -301,7 +301,7 @@ export default function CheckoutPage() {
       <div className="hidden md:flex flex-col h-[100dvh] overflow-hidden bg-transparent text-[#EEF3EC]">
         <Header />
 
-        <main id="main-content" className="flex-1 min-h-0 overflow-y-auto w-full pt-24 pb-6">
+        <div className="flex-1 min-h-0 overflow-y-auto w-full pt-24 pb-6">
           <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
             {step !== 'confirmation' && (
               <h1 className="font-display font-800 text-4xl text-[#EEF3EC] mb-8">
@@ -651,7 +651,7 @@ export default function CheckoutPage() {
               </div>
             </div>
           </div>
-        </main>
+        </div>
 
         <Footer />
       </div>

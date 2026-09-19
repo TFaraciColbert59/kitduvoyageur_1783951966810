@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom';
 import { motion, useReducedMotion } from 'framer-motion';
 import { useDragDismiss } from '@/hooks/gestures';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
+import { zIndex } from '@/lib/ui/zIndex';
 
 interface PremiumBottomSheetProps {
   isOpen: boolean;
@@ -99,9 +100,11 @@ export default function PremiumBottomSheet({
     <>
       {/* Backdrop */}
       <div
-        className="fixed inset-0 z-[10000]"
+        className="fixed inset-0"
         style={{
-          background: 'rgba(14,21,18,0.5)',          animation: 'fadeIn 200ms ease both',
+          zIndex: zIndex.modal,
+          background: 'rgba(14,21,18,0.5)',
+          animation: 'fadeIn 200ms ease both',
         }}
         onClick={onClose}
         aria-hidden="true"
@@ -115,8 +118,9 @@ export default function PremiumBottomSheet({
         data-glass-variant="overlay"
         data-glass-shape="sheet"
         data-surface-alias={surface}
-        className={`glass fixed left-0 right-0 bottom-0 z-[10001] flex flex-col ${className}`}
+        className={`glass fixed left-0 right-0 bottom-0 flex flex-col ${className}`}
         style={{
+          zIndex: zIndex.modal,
           height,
           y,
 

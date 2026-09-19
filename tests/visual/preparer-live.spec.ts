@@ -6,7 +6,7 @@ import { prepareVisualPage } from './_helpers/prepareVisualPage';
 /**
  * T10 — Captures de l'aperçu dev du rail de préparation
  * (`/preparer-sentier/apercu`, interdite en production) : rail aux 6 phases,
- * 4 squelettes, reveals. Un test par projet (desktop-chrome / iphone-14-pro /
+ * 4 squelettes, reveals. Un test par projet (desktop-chrome / iphone-14-pro-chromium /
  * ipad-portrait) → docs/preparer/apercu-<project>.png, zéro pageerror.
  *
  *   npx playwright test --config=playwright.visual.config.ts tests/visual/preparer-live.spec.ts

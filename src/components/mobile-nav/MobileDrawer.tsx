@@ -3,10 +3,12 @@
 import React, { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import LkvIcon from '@/components/ui/LkvIcon';
+import LkvIcon, { type LkvIconName } from '@/components/ui/LkvIcon';
 import LkvButton from '@/components/ui/LkvButton';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCartCount } from '@/hooks/useCartCount';
+import { zIndex } from '@/lib/ui/zIndex';
+import { DESTINATIONS } from '@/components/mobile-nav/destinationRegistry';
 
 interface MobileDrawerProps {
   isOpen: boolean;
@@ -18,7 +20,7 @@ interface NavItem {
   label: string;
   href: string;
   action?: 'search';
-  icon: 'home' | 'mountain' | 'bag' | 'doc' | 'user' | 'search' | 'chevron-left' | 'chevron-right' | 'heart' | 'bookmark' | 'bell' | 'map-pin' | 'star' | 'minus' | 'plus' | 'close' | 'menu' | 'arrow-right' | 'lock' | 'filter';
+  icon: LkvIconName;
 }
 
 interface NavSection {
@@ -26,7 +28,19 @@ interface NavSection {
   items: NavItem[];
 }
 
+// M02 — les destinations principales viennent du registre unique
+// (destinationRegistry) : mêmes href/libellés/icônes que la BottomTabBar.
+const DESTINATION_SECTION: NavSection = {
+  label: 'Destinations',
+  items: DESTINATIONS.map((destination) => ({
+    label: destination.label.fr,
+    icon: destination.iconName,
+    href: destination.href,
+  })),
+};
+
 const SECTIONS: NavSection[] = [
+  DESTINATION_SECTION,
 {
         label: 'Découvrir & Terrain',
         items: [
@@ -39,7 +53,6 @@ const SECTIONS: NavSection[] = [
           { label: 'Guides', icon: 'bookmark', href: '/guides' },
           { label: 'Blog', icon: 'doc', href: '/blog' },
           { label: 'Outils terrain', icon: 'search', href: '/outils' },
-          { label: 'Mon Matériel', icon: 'bag', href: '/hub' },
           { label: 'Mode rando GPS/SOS', icon: 'map-pin', href: '/randonnee-active' },
         ],
       },
@@ -56,7 +69,6 @@ const SECTIONS: NavSection[] = [
   {
     label: 'Compte & légal',
     items: [
-          { label: 'Mes Aventures', icon: 'mountain', href: '/hub' },
       { label: "Rapport d'Expédition", icon: 'doc', href: '/rapport-expedition' },
           { label: 'Rapport Kit', icon: 'bag', href: '/ai-configurator' },
       { label: 'Aide / FAQ', icon: 'heart', href: '/faq' },
@@ -99,7 +111,7 @@ const scrimStyle: React.CSSProperties = {
   WebkitBackdropFilter: 'blur(2px)',
   touchAction: 'none',
   overscrollBehavior: 'none',
-  zIndex: 50,
+  zIndex: zIndex.sheet,
 };
 
 const panelStyle: React.CSSProperties = {
@@ -110,7 +122,8 @@ const panelStyle: React.CSSProperties = {
   width: '88%',
   maxWidth: '360px',
   background: '#EEF3EC',
-  zIndex: 51,
+  // Même couche que le scrim : le panneau suit le scrim dans le DOM.
+  zIndex: zIndex.sheet,
   boxShadow: '20px 0 60px rgba(23,64,44,0.25)',
   display: 'flex',
   flexDirection: 'column',

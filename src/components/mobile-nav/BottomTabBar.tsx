@@ -16,92 +16,13 @@ import { evaluateCurrentPrefetchPolicy } from '@/lib/perf/networkPrefs';
 import { isMoveBeyondTolerance } from '@/hooks/gestures/gestureMath';
 import LkvIcon from '@/components/ui/LkvIcon';
 import { HUB_ALERTES_HREF } from '@/features/hub/registry/hubSectionRegistry';
-
-interface Tab {
-  href: string;
-  label: string;
-  iconName: 'home' | 'mountain' | 'bag' | 'doc' | 'user' | 'search' | 'chevron-left' | 'chevron-right' | 'heart' | 'bookmark' | 'bell' | 'map-pin' | 'star' | 'minus' | 'plus' | 'close' | 'menu' | 'arrow-right' | 'arrow-left' | 'lock' | 'filter' | 'users' | 'compass' | 'box' | 'sparkles' | 'tent' | 'book';
-  ariaLabel: string;
-  matchPaths?: string[];
-  isHero?: boolean;
-}
-
-const DEFAULT_TABS: Tab[] = [
-  {
-    href: '/explorer',
-    label: 'Explorer',
-    iconName: 'mountain',
-    ariaLabel: 'Explorer les sentiers, pays et destinations',
-    matchPaths: ['/explorer', '/hors-ligne', '/pays'],
-  },
-  {
-    href: '/hub',
-    label: 'Hub',
-    iconName: 'tent',
-    ariaLabel: 'Hub, mon aventure active',
-    // H-AUTO-42 : /materiel, /preparation et /terrain redirigent 307 vers /hub.
-    // Les surfaces collectives vivantes restent des surfaces hub.
-    matchPaths: ['/hub', '/voyages', '/groupes', '/equipages'],
-    isHero: true,
-  },
-  {
-    href: '/communaute',
-    label: 'Communauté',
-    iconName: 'users',
-    ariaLabel: 'Communauté, clubs, événements',
-    matchPaths: [
-      '/communaute',
-      '/communaute/publier',
-      '/clubs',
-      '/groupes',
-      '/carnets',
-      '/entraide',
-      '/createurs',
-      '/experts',
-      '/evenements',
-      '/feed',
-      '/messagerie',
-    ],
-  },
-  {
-    href: '/compte',
-    label: 'Profil',
-    iconName: 'user',
-    ariaLabel: 'Mon compte voyageur',
-    matchPaths: ['/compte', '/connexion', '/inscription', '/profil', '/progression'],
-  },
-];
-
-const COMMUNITY_TABS: Tab[] = [
-  {
-    href: '/communaute',
-    label: 'Fil',
-    iconName: 'sparkles',
-    ariaLabel: 'Fil d’actualité communauté',
-    matchPaths: ['/communaute', '/communaute/publier', '/feed'],
-  },
-  {
-    href: '/groupes',
-    label: 'Groupes',
-    iconName: 'users',
-    ariaLabel: 'Groupes de voyage',
-    matchPaths: ['/groupes'],
-  },
-  {
-    href: '/clubs',
-    label: 'Clubs',
-    iconName: 'tent',
-    ariaLabel: 'Clubs outdoor',
-    matchPaths: ['/clubs'],
-  },
-  {
-    href: '/carnets',
-    label: 'Carnets',
-    iconName: 'book',
-    ariaLabel: 'Carnets d’expédition',
-    matchPaths: ['/carnets'],
-  },
-];
+import { zIndex } from '@/lib/ui/zIndex';
+import {
+  DESTINATIONS,
+  getActiveDestinationId,
+  getDestinationByHref,
+  type Destination,
+} from '@/components/mobile-nav/destinationRegistry';
 
 // Badge de notification (style DS glass-pill) — affiché seulement si count > 0
 function BadgeDot({ count }: { count: number }) {
@@ -134,20 +55,22 @@ function BadgeDot({ count }: { count: number }) {
 // Durée d'appui long du tab Hub central (alignée sur les gestes du dépôt).
 const HUB_LONG_PRESS_MS = 550;
 
-// A memoized tab link — Liquid Glass icon-only, pilule animée glissante.
-// Tab Hub central (isHero) : appui long → sélecteur d'aventure compact
-// (3 natures) ; le clic simple ouvre toujours l'aventure active, jamais
-// une liste. Alternative accessible : aria-haspopup + Ctrl/Cmd+K/J dans
-// le switcher + déclencheur visible dans le hub.
+// Une destination de la barre : icône 22 (24 pour Aventures, tab « hero ») et
+// libellé visible sous l'icône (10px, contraste AA), cible ≥ 44×44.
+// Aventures : appui long → sélecteur d'aventure compact ; le clic simple ouvre
+// toujours l'aventure active, jamais une liste. Alternative accessible :
+// aria-haspopup + Ctrl/Cmd+K/J dans le switcher + déclencheur visible du hub.
 const TabLink = memo(function TabLink({
-  tab,
+  destination,
   isActive,
+  prefetch,
   onPress,
   badge,
   onLongPress,
 }: {
-  tab: Tab;
+  destination: Destination;
   isActive: boolean;
+  prefetch: boolean;
   onPress: (href: string) => void;
   badge: number;
   onLongPress?: () => void;
@@ -168,27 +91,28 @@ const TabLink = memo(function TabLink({
   useEffect(() => clearLongPressTimer, [clearLongPressTimer]);
 
   const prefetchData = useCallback(() => {
-    // P0 — garde réseau : pas de prefetch de données sur connexion limitée.
+    // P0 — garde réseau : pas de prefetch de données sur connexion limitée
+    // (réseau inconnu inclus, cf. M08 / networkPrefs).
     // L'ancien prefetch `['hikes']` non paramétré a été supprimé (clé jamais lue,
     // requête gaspillée) : la carte charge ses données par viewport via
     // `useViewportData` avec ses propres clés.
     const policy = evaluateCurrentPrefetchPolicy();
     if (!policy.allow || !policy.allowData) return;
 
-    if (tab.href === '/hub') {
+    if (destination.id === 'adventures') {
       queryClient.prefetchQuery({
         queryKey: ['hub-adventures'],
         queryFn: () => fetch('/api/hub/adventures').then((r) => (r.ok ? r.json() : null)),
         staleTime: 60_000,
       });
-    } else if (tab.href === '/communaute' || tab.href === '/carnets') {
+    } else if (destination.id === 'community') {
       queryClient.prefetchQuery({
         queryKey: ['carnets'],
         queryFn: () => fetch('/api/carnets').then((r) => (r.ok ? r.json() : [])),
         staleTime: 60_000,
       });
     }
-  }, [tab.href, queryClient]);
+  }, [destination.id, queryClient]);
 
   const handlePointerDown = (e: React.PointerEvent) => {
     if (!onLongPress) return;
@@ -214,39 +138,44 @@ const TabLink = memo(function TabLink({
       e.preventDefault();
       return;
     }
-    onPress(tab.href);
+    onPress(destination.href);
     // H5 : haptique medium à l'ouverture du hub, léger ailleurs.
-    triggerHaptic(tab.href === '/hub' ? 'medium' : 'light');
+    triggerHaptic(destination.id === 'adventures' ? 'medium' : 'light');
   };
 
   return (
     <Link
-      href={tab.href}
-      prefetch={true}
+      href={destination.href}
+      prefetch={prefetch}
       onClick={handleClick}
       onPointerEnter={prefetchData}
       onTouchStart={prefetchData}
-      onPointerDown={tab.isHero ? handlePointerDown : undefined}
-      onPointerMove={tab.isHero ? handlePointerMove : undefined}
-      onPointerUp={tab.isHero ? clearLongPressTimer : undefined}
-      onPointerCancel={tab.isHero ? clearLongPressTimer : undefined}
-      onPointerLeave={tab.isHero ? clearLongPressTimer : undefined}
-      onContextMenu={tab.isHero ? (e) => e.preventDefault() : undefined}
-      aria-haspopup={tab.isHero ? 'dialog' : undefined}
-      title={tab.isHero ? 'Appui long : changer d’aventure' : undefined}
-      aria-label={tab.ariaLabel}
+      onPointerDown={onLongPress ? handlePointerDown : undefined}
+      onPointerMove={onLongPress ? handlePointerMove : undefined}
+      onPointerUp={onLongPress ? clearLongPressTimer : undefined}
+      onPointerCancel={onLongPress ? clearLongPressTimer : undefined}
+      onPointerLeave={onLongPress ? clearLongPressTimer : undefined}
+      onContextMenu={onLongPress ? (e) => e.preventDefault() : undefined}
+      aria-haspopup={onLongPress ? 'dialog' : undefined}
+      aria-current={isActive ? 'page' : undefined}
+      title={onLongPress ? 'Appui long : changer d’aventure' : undefined}
+      aria-label={destination.ariaLabel}
       style={{
         display: 'flex',
+        flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
+        gap: 1,
         textDecoration: 'none',
         position: 'relative',
         userSelect: 'none',
         WebkitUserSelect: 'none',
         touchAction: 'manipulation',
         WebkitTapHighlightColor: 'transparent',
-        width: 44,
-        height: 44,
+        flex: '1 1 0',
+        minWidth: 44,
+        maxWidth: 76,
+        height: 52,
       }}
     >
       {isActive && (
@@ -256,9 +185,9 @@ const TabLink = memo(function TabLink({
           style={{
             position: 'absolute',
             top: 2,
-            bottom: 2,
-            left: 2,
-            right: 2,
+            left: 0,
+            right: 0,
+            margin: '0 auto',
             width: 40,
             height: 40,
             borderRadius: 9999,
@@ -271,9 +200,23 @@ const TabLink = memo(function TabLink({
         transition={{ type: 'spring', stiffness: 500, damping: 25 }}
         style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', zIndex: 1 }}
       >
-        {/* H5 : tab central accentué (icône 26 + anneau), pilule layoutId conservée. */}
-        <LkvIcon name={tab.iconName} size={tab.isHero ? 26 : 22} color={isActive ? '#17402C' : '#365233'} />
+        {/* Aventures : icône 24 + anneau, pilule layoutId conservée. */}
+        <LkvIcon name={destination.iconName} size={onLongPress ? 24 : 22} color={isActive ? '#17402C' : '#365233'} />
       </motion.span>
+      <span
+        style={{
+          position: 'relative',
+          zIndex: 1,
+          fontSize: 10,
+          lineHeight: '11px',
+          fontWeight: isActive ? 700 : 600,
+          letterSpacing: '0.01em',
+          color: isActive ? '#17402C' : '#365233',
+          whiteSpace: 'nowrap',
+        }}
+      >
+        {destination.label.fr}
+      </span>
       {badge > 0 && <BadgeDot count={badge} />}
     </Link>
   );
@@ -310,7 +253,7 @@ function HamburgerMenu({ menuOpen, setMenuOpen, messagerieBadge }: { menuOpen: b
               style={{
                 position: 'fixed',
                 inset: 0,
-                zIndex: 55,
+                zIndex: zIndex.sheet,
               }}
               aria-hidden="true"
             />
@@ -323,7 +266,7 @@ function HamburgerMenu({ menuOpen, setMenuOpen, messagerieBadge }: { menuOpen: b
                 position: 'absolute',
                 right: 0,
                 bottom: 'calc(100% + 8px)',
-                zIndex: 56,
+                zIndex: zIndex.sheet,
                 background: 'rgba(255, 255, 255, 0.45)',
                 backdropFilter: 'blur(var(--glass-blur-md)) saturate(var(--glass-sat))',
                 WebkitBackdropFilter: 'blur(var(--glass-blur-md)) saturate(var(--glass-sat))',
@@ -467,9 +410,13 @@ function BottomTabBar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [pressedTab, setPressedTab] = useState<string | null>(null);
   const [hiddenByEvent, setHiddenByEvent] = useState(false);
+  // M08 — le prefetch des Link suit la politique réseau existante
+  // (réseau inconnu = traité comme limité, jamais de prefetch aveugle).
+  const [prefetchAllowed, setPrefetchAllowed] = useState(false);
 
   useEffect(() => {
     setMounted(true);
+    setPrefetchAllowed(evaluateCurrentPrefetchPolicy().allow);
   }, []);
 
   useEffect(() => {
@@ -772,11 +719,13 @@ function BottomTabBar() {
 
   const badges = useUnreadBadge();
   const { groups } = useActiveAdventure();
-  const badgeFor = (href: string): number => {
+  const badgeFor = (destination: Destination): number => {
     // H5 : badge hub = agrégat (à préparer serveur + alertes matériel).
-    if (href === '/hub') return badges.materiel + (groups.possession[0]?.alertsCount ?? 0);
-    if (href === '/compte') return badges.profil;
-    if (href === '/communaute') return badges.communaute;
+    if (destination.id === 'adventures') {
+      return badges.materiel + (groups.possession[0]?.alertsCount ?? 0);
+    }
+    if (destination.id === 'me') return badges.profil;
+    if (destination.id === 'community') return badges.communaute;
     return 0;
   };
 
@@ -797,15 +746,16 @@ function BottomTabBar() {
     }
   }, [pathname, router]);
 
-  const isActive = (tab: Tab): boolean => {
-    if (pressedTab && pressedTab === tab.href) return true;
-    if (!tab.matchPaths) return pathname === tab.href;
-    return tab.matchPaths.some(p => pathname === p || pathname?.startsWith(p + '/'));
-  };
+  // M02 — état actif UNIQUE : le registre résout une seule destination.
+  // Le tap en cours (pressedTab) prime le temps de la navigation.
+  const pressedDestinationId = pressedTab
+    ? getDestinationByHref(pressedTab)?.id ?? null
+    : null;
+  const activeDestinationId = pressedDestinationId ?? getActiveDestinationId(pathname);
 
   if (!mounted) {
     return (
-      <nav role="navigation" aria-label="Chargement de la navigation" className="md:hidden flex items-center justify-center" style={{ position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 9999, pointerEvents: 'none', paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
+      <nav role="navigation" aria-label="Chargement de la navigation" className="md:hidden flex items-center justify-center" style={{ position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: zIndex.nav, pointerEvents: 'none', paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
         <div style={{
           height: 52,
           background: 'linear-gradient(180deg, rgba(255,255,255,0.72) 0%, rgba(255,255,255,0.38) 100%)',
@@ -839,9 +789,9 @@ function BottomTabBar() {
         left: 0,
         right: 0,
         bottom: 0,
-        zIndex: 9999,
+        zIndex: zIndex.nav,
         pointerEvents: 'none',
-        touchAction: 'none',
+        touchAction: 'manipulation',
         userSelect: 'none',
         WebkitUserSelect: 'none',
         paddingBottom: 'env(safe-area-inset-bottom, 0px)',
@@ -864,7 +814,7 @@ function BottomTabBar() {
           flexDirection: 'column',
           alignItems: 'center',
           pointerEvents: 'auto',
-          touchAction: 'none',
+          touchAction: 'manipulation',
           overscrollBehavior: 'contain',
           paddingBottom: '2px',
         }}
@@ -878,11 +828,14 @@ function BottomTabBar() {
               exit={{ y: 14, opacity: 0 }}
               transition={{ type: 'spring', stiffness: 450, damping: 28 }}
               style={{
+                // M03 — hauteur utile 44 px pour chaque bouton (content-box
+                // 44 + padding-top 4 = 48, moins les 8 px glissés sous la
+                // barre : la hauteur totale étendue reste 92 px).
                 width: 'calc(100% - 4px)',
-                height: 44,
+                height: 48,
                 marginBottom: -8,
                 paddingTop: 4,
-                paddingBottom: 10,
+                paddingBottom: 0,
                 background: 'linear-gradient(180deg, rgba(255,255,255,0.92) 0%, rgba(246,244,239,0.78) 100%)',
                 backdropFilter: 'blur(var(--glass-blur-xl)) saturate(var(--glass-sat))',
                 WebkitBackdropFilter: 'blur(var(--glass-blur-xl)) saturate(var(--glass-sat))',
@@ -922,7 +875,10 @@ function BottomTabBar() {
                     style={{
                       flex: isWideUpperTray ? '0 0 auto' : 1,
                       position: 'relative',
-                      height: 30,
+                      // M03 — cible tactile utile 44 px (le fond sélectionné
+                      // reste visuellement à 34 px via l'inset de la pilule).
+                      height: 44,
+                      minWidth: 44,
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
@@ -943,8 +899,9 @@ function BottomTabBar() {
                         layoutId="activeCommunityUpperTab"
                         style={{
                           position: 'absolute',
-                          top: 2,
-                          bottom: 2,
+                          // Fond visible 34 px dans une cible tactile de 44 px.
+                          top: 5,
+                          bottom: 5,
                           left: 2,
                           right: 2,
                           borderRadius: 999,
@@ -1018,25 +975,25 @@ function BottomTabBar() {
             boxShadow: 'inset 0 1px 1.5px rgba(255,255,255,0.95), inset 0 -1px 1px rgba(255,255,255,0.25), 0 10px 28px rgba(23, 64, 44, 0.12)',
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'space-around',
+            justifyContent: 'space-between',
             padding: '0 clamp(4px, 1.5vw, 8px)',
             gap: 'clamp(2px, 1.2vw, 6px)',
-            touchAction: 'none',
-            overscrollBehavior: 'none',
-          }}
-          onTouchMove={(e) => {
-            // Empêcher tout scroll résiduel de la page au glissement sur la bottom bar
-            e.stopPropagation();
+            // M03 — le pan vertical de la page reste possible au-dessus de la
+            // barre ; le plateau garde son propre `pan-x` pour faire défiler
+            // les sous-onglets.
+            touchAction: 'manipulation',
+            overscrollBehavior: 'contain',
           }}
         >
-          {DEFAULT_TABS.map((tab) => (
+          {DESTINATIONS.map((destination) => (
             <TabLink
-              key={tab.href}
-              tab={tab}
-              isActive={isActive(tab)}
+              key={destination.id}
+              destination={destination}
+              isActive={activeDestinationId === destination.id}
+              prefetch={prefetchAllowed}
               onPress={setPressedTab}
-              badge={badgeFor(tab.href)}
-              onLongPress={tab.isHero ? openHubSwitcher : undefined}
+              badge={badgeFor(destination)}
+              onLongPress={destination.id === 'adventures' ? openHubSwitcher : undefined}
             />
           ))}
 

@@ -93,10 +93,12 @@ export function AppShellDesktop({
               </aside>
             )}
 
-            {/* CENTER COLUMN: EXPANDED MAIN TAB CONTENT */}
-            <main id="main-content" className="flex-1 min-w-0 h-full overflow-y-auto no-scrollbar space-y-3 px-1 pb-4">
+            {/* CENTER COLUMN: EXPANDED MAIN TAB CONTENT — conteneur neutre :
+                le landmark <main id="main-content"> unique est rendu par
+                src/app/layout.tsx (M04). */}
+            <div className="flex-1 min-w-0 h-full overflow-y-auto no-scrollbar space-y-3 px-1 pb-4">
               {children}
-            </main>
+            </div>
 
             {/* RIGHT COLUMN: SIDEBAR WIDGETS WITHOUT HEADERS */}
             {sidebarRight && (

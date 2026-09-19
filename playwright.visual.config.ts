@@ -25,7 +25,11 @@ export default defineConfig({
       },
     },
     {
-      name: 'iphone-14-pro',
+      // M10 — gabarit iPhone 14 Pro rendu par CHROMIUM, pas par Safari : le
+      // nom l'affirme pour éviter toute confusion avec WebKit. Le runtime natif
+      // WKWebView de l'app Capacitor n'est PAS couvert par ce projet — seule
+      // une validation sur appareil/simulateur iOS le démontre.
+      name: 'iphone-14-pro-chromium',
       use: {
         ...devices['iPhone 14 Pro'],
         defaultBrowserType: 'chromium',

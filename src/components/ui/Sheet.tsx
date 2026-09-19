@@ -3,6 +3,7 @@
 import Icon from '@/components/ui/Icon';
 import React, { useEffect } from 'react';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
+import { zIndex } from '@/lib/ui/zIndex';
 
 export interface SheetProps {
   isOpen: boolean;
@@ -48,7 +49,10 @@ export function Sheet({
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center">
+        <div
+          className="fixed inset-0 flex items-end md:items-center justify-center"
+          style={{ zIndex: zIndex.sheet }}
+        >
           {/* Backdrop avec flou Apple */}
           <motion.div
             initial={{ opacity: 0 }}

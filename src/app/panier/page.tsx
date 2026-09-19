@@ -155,7 +155,7 @@ export default function PanierPage() {
           </div>
         )}
 
-        <main id="main-content" className="flex-1 min-h-0 overflow-y-auto w-full pt-24 pb-6">
+        <div className="flex-1 min-h-0 overflow-y-auto w-full pt-24 pb-6">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
             {items.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-20 gap-6 text-center">
@@ -330,7 +330,7 @@ export default function PanierPage() {
               </>
             )}
           </div>
-        </main>
+        </div>
 
         <Footer />
       </div>

@@ -2,6 +2,7 @@
 import * as Dialog from '@radix-ui/react-dialog';
 import { useEffect, useState } from 'react';
 import { ArrowLeftIcon as ArrowLeftAnimated } from '@/components/icons/arrow-left';
+import { zIndex } from '@/lib/ui/zIndex';
 
 /**
  * P1-3 (fin) — GlassSheet sans framer-motion : entrée/sortie animées en CSS
@@ -35,14 +36,16 @@ export function GlassSheet({
         <Dialog.Portal forceMount>
           <Dialog.Overlay asChild>
             <div
-              className={`lkv-fade-in${closing ? ' lkv-fade-in--closing' : ''} fixed inset-0 z-[10000] bg-ink-900/30`}
+              className={`lkv-fade-in${closing ? ' lkv-fade-in--closing' : ''} fixed inset-0 bg-ink-900/30`}
+              style={{ zIndex: zIndex.modal }}
             />
           </Dialog.Overlay>
           <Dialog.Content asChild aria-label={title}>
             <div
               data-glass-variant="overlay"
               data-glass-shape="full"
-              className={`lkv-sheet-full${closing ? ' lkv-sheet-full--closing' : ''} glass backdrop-blur-xl fixed inset-0 z-[10001] overflow-y-auto`}
+              style={{ zIndex: zIndex.modal }}
+              className={`lkv-sheet-full${closing ? ' lkv-sheet-full--closing' : ''} glass backdrop-blur-xl fixed inset-0 overflow-y-auto`}
             >
               <header className="sticky top-0 z-10 flex items-center gap-3 px-4 pt-[env(safe-area-inset-top,0px)] h-[calc(56px+env(safe-area-inset-top,0px))] bg-[color:var(--glass-bg-strong)] border-b border-glass-border">
                 <Dialog.Close asChild>

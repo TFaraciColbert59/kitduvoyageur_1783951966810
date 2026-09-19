@@ -36,8 +36,7 @@ export default function PreparerApercuPage() {
   if (process.env.NODE_ENV === 'production') notFound();
 
   return (
-    <main
-      id="main-content"
+    <div
       data-testid="preparer-apercu"
       className="min-h-screen bg-[rgba(238,243,236,0.8)] backdrop-blur-xl px-4 py-6 text-[var(--lkv-text-primary)]"
     >
@@ -95,6 +94,6 @@ export default function PreparerApercuPage() {
           ))}
         </ul>
       </section>
-    </main>
+    </div>
   );
 }

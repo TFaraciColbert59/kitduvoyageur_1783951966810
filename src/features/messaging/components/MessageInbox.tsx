@@ -10,6 +10,7 @@ import { ConversationView } from './ConversationView';
 import { NewConversationModal } from './NewConversationModal';
 import ReportBlockModal, { ReportTarget } from '@/components/ui/ReportBlockModal';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
+import { zIndex } from '@/lib/ui/zIndex';
 
 interface MessageInboxProps {
   currentUserId: string;
@@ -104,15 +105,17 @@ export const MessageInbox: React.FC<MessageInboxProps> = ({
 
       {/*
         Calque conversation : hors flux du shell, safe-areas gérées en interne.
-        z-[10000] passe au-dessus de la BottomTabBar (z-9999) — la descendance
-        (sheets, modales) est englobée dans ce stacking context.
+        M04 — couche `sheet` de l'échelle partagée : au-dessus de la
+        BottomTabBar (nav), sous les modales/sheets Radix portées au body
+        (GlassModal = layer modal), qui doivent rester visibles par-dessus.
       */}
       {selectedConversation && (
         <div
-          className={`md:hidden fixed inset-0 z-[10000] bg-[rgba(238,243,236,0.94)] backdrop-blur-xl ${
+          className={`md:hidden fixed inset-0 bg-[rgba(238,243,236,0.94)] backdrop-blur-xl ${
             isClosing ? 'msg-sheet-out' : 'msg-sheet-in'
           }`}
           style={{
+            zIndex: zIndex.sheet,
             height: 'calc(100dvh - var(--kb-inset, 0px))',
             paddingLeft: 'env(safe-area-inset-left, 0px)',
             paddingRight: 'env(safe-area-inset-right, 0px)',

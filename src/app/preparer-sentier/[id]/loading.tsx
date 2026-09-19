@@ -8,8 +8,7 @@ import React from 'react';
  */
 export default function PreparerSentierLoading() {
   return (
-    <main
-      id="main-content"
+    <div
       data-testid="preparer-sentier-loading"
       className="min-h-dvh grid place-items-center bg-transparent"
     >
@@ -22,6 +21,6 @@ export default function PreparerSentierLoading() {
           <div className="h-full w-2/5 animate-pulse rounded-full bg-[var(--lkv-primary)]/80 motion-reduce:animate-none" />
         </div>
       </div>
-    </main>
+    </div>
   );
 }

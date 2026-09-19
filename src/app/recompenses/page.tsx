@@ -81,59 +81,56 @@ export default function RecompensesPage() {
     setError(null);
 
     try {
-      // 1. Fetch user reward account
-      const { data: raData, error: raErr } = await supabase
-        .from('reward_accounts')
-        .select('*')
-        .eq('user_id', user.id)
-        .maybeSingle();
+      // M09 — lectures indépendantes en parallèle (aucune ne dépend d'une
+      // autre) ; mêmes données affichées, erreurs remontées à l'identique.
+      const [raRes, pRes, cRes, tRes, wRes] = await Promise.all([
+        // 1. Compte récompenses
+        supabase
+          .from('reward_accounts')
+          .select('*')
+          .eq('user_id', user.id)
+          .maybeSingle(),
+        // 2. Profil (ancienneté, score de confiance, niveau)
+        supabase
+          .from('user_profiles')
+          .select('created_at, trust_score, level, full_name')
+          .eq('id', user.id)
+          .single(),
+        // 3. Configuration récompenses
+        supabase.from('reward_config').select('key, value'),
+        // 4. Transactions de points
+        supabase
+          .from('reward_transactions')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false })
+          .limit(20),
+        // 5. Demandes de virement
+        supabase
+          .from('reward_withdrawals')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('requested_at', { ascending: false })
+          .limit(10),
+      ]);
 
-      if (raErr) throw raErr;
-      setAccount(raData);
+      if (raRes.error) throw raRes.error;
+      if (pRes.error) throw pRes.error;
+      if (cRes.error) throw cRes.error;
+      if (tRes.error) throw tRes.error;
+      if (wRes.error) throw wRes.error;
 
-      // 2. Fetch user profile (age, trust score, level)
-      const { data: pData, error: pErr } = await supabase
-        .from('user_profiles')
-        .select('created_at, trust_score, level, full_name')
-        .eq('id', user.id)
-        .single();
+      setAccount(raRes.data);
+      setProfile(pRes.data);
 
-      if (pErr) throw pErr;
-      setProfile(pData);
-
-      // 3. Fetch config settings
-      const { data: cData, error: cErr } = await supabase
-        .from('reward_config')
-        .select('key, value');
-
-      if (cErr) throw cErr;
-      const configMap = cData.reduce((acc: any, row: any) => {
+      const configMap = (cRes.data ?? []).reduce((acc: any, row: any) => {
         acc[row.key] = row.value;
         return acc;
       }, {});
       setConfig(configMap);
 
-      // 4. Fetch reward transactions
-      const { data: tData, error: tErr } = await supabase
-        .from('reward_transactions')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false })
-        .limit(20);
-
-      if (tErr) throw tErr;
-      setTransactions(tData || []);
-
-      // 5. Fetch withdrawals
-      const { data: wData, error: wErr } = await supabase
-        .from('reward_withdrawals')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('requested_at', { ascending: false })
-        .limit(10);
-
-      if (wErr) throw wErr;
-      setWithdrawals(wData || []);
+      setTransactions(tRes.data || []);
+      setWithdrawals(wRes.data || []);
 
     } catch (err: any) {
       console.error('Error loading rewards data:', err);
@@ -220,13 +217,17 @@ export default function RecompensesPage() {
     }
   };
 
+  // M09 — inconnu ≠ 50 : un trust_score absent/null n'est jamais remplacé par
+  // une valeur inventée. 0 reste une valeur légitime (score « Suspecte »).
+  const trustScore: number | null =
+    typeof profile?.trust_score === 'number' ? profile.trust_score : null;
+
   const getContributionRating = () => {
-    if (!profile) return '—';
-    const trust = profile.trust_score || 50;
-    if (trust >= 80) return 'Excellente (Créateur)';
-    if (trust >= 65) return 'Très bonne (Reconnu)';
-    if (trust >= 50) return 'Bonne (Actif)';
-    if (trust >= 35) return 'Moyenne (Nouveau)';
+    if (!profile || trustScore === null) return '—';
+    if (trustScore >= 80) return 'Excellente (Créateur)';
+    if (trustScore >= 65) return 'Très bonne (Reconnu)';
+    if (trustScore >= 50) return 'Bonne (Actif)';
+    if (trustScore >= 35) return 'Moyenne (Nouveau)';
     return 'Suspecte (Limité)';
   };
 
@@ -345,7 +346,11 @@ export default function RecompensesPage() {
             <p className="text-sm font-bold text-[#17402C] mt-2 truncate">
               {getContributionRating()}
             </p>
-            <p className="text-[9px] text-[#6B7A72] mt-0.5">Score confiance : {profile?.trust_score || 50}/100</p>
+            <p className="text-[9px] text-[#6B7A72] mt-0.5">
+              {trustScore === null
+                ? 'Score de confiance indisponible'
+                : `Score confiance : ${trustScore}/100`}
+            </p>
           </div>
 
           <div className="glass rounded-2xl p-4  relative overflow-hidden">

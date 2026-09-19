@@ -2,6 +2,21 @@ import type { CapacitorConfig } from "@capacitor/cli";
 
 const serverUrl = process.env.CAPACITOR_SERVER_URL;
 
+// M06 — séparation dev / release : le trafic en clair (cleartext HTTP,
+// mixed-content Android) n'est autorisé que pour un serveur de développement
+// local. `CAPACITOR_DEV_SERVER=1` force explicitement ce mode (utile quand
+// NODE_ENV n'est pas positionné) ; toute release exige HTTPS.
+const isDevServer =
+  process.env.NODE_ENV !== "production" || process.env.CAPACITOR_DEV_SERVER === "1";
+const allowCleartext = isDevServer;
+
+if (!isDevServer && serverUrl && !serverUrl.startsWith("https://")) {
+  throw new Error(
+    "[capacitor.config] CAPACITOR_SERVER_URL doit être en HTTPS pour une build release (cleartext et mixed-content sont interdits). " +
+      "Utiliser un serveur https:// ou définir CAPACITOR_DEV_SERVER=1 pour un serveur de développement local."
+  );
+}
+
 if (!serverUrl) {
   // Échec explicite au sync/build Capacitor : sans serveur distant, la coquille
   // native servirait `public/index.html` (placeholder) au lieu de l'app déployée.
@@ -21,7 +36,7 @@ const config: CapacitorConfig = {
   server: serverUrl
     ? {
         url: serverUrl,
-        cleartext: true,
+        cleartext: allowCleartext,
         androidScheme: "https",
         iosScheme: "capacitor",
       }
@@ -66,7 +81,7 @@ const config: CapacitorConfig = {
   },
   android: {
     backgroundColor: "#FBFAF6",
-    allowMixedContent: true,
+    allowMixedContent: allowCleartext,
     captureInput: true,
     webContentsDebuggingEnabled: process.env.NODE_ENV !== "production",
   },

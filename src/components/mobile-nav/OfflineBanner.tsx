@@ -1,18 +1,29 @@
 'use client';
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 import { useToast } from '@/contexts/ToastContext';
+import { zIndex } from '@/lib/ui/zIndex';
 
 /**
  * P1-3 (C-17 suite) — framer-motion retiré du graphe du layout racine :
  * fade+slide en CSS pur (keyframes .lkv-offline-in), mêmes tokens et
  * visibilité (H8). L'apparition reste animée, calme, system-like.
+ *
+ * M05 — la bannière ne prétend JAMAIS à du contenu en cache non démontré :
+ * le message « contenu en cache disponible » n'apparaît que si un service
+ * worker contrôle la page ET qu'un cache LKDV contient réellement des
+ * entrées. Sinon, message factuel « certaines fonctions sont indisponibles ».
  */
+const OFFLINE_MESSAGE_NO_CACHE = 'Hors ligne — certaines fonctions sont indisponibles.';
+const OFFLINE_MESSAGE_CACHED = 'Hors ligne — contenu en cache disponible.';
+
 export default function OfflineBanner() {
   const { isOnline } = useOnlineStatus();
   const { toast } = useToast();
   const wasOfflineRef = useRef(false);
+  // null = état non vérifié (ou hors ligne non actif) ; true/false = vérifié.
+  const [hasVerifiedCache, setHasVerifiedCache] = useState<boolean | null>(null);
 
   // Toast on reconnection (only if we were previously offline)
   useEffect(() => {
@@ -23,6 +34,45 @@ export default function OfflineBanner() {
       wasOfflineRef.current = true;
     }
   }, [isOnline, toast]);
+
+  useEffect(() => {
+    if (isOnline) {
+      setHasVerifiedCache(null);
+      return;
+    }
+
+    let cancelled = false;
+    const verifyCacheState = async () => {
+      const swActive =
+        typeof navigator !== 'undefined' &&
+        'serviceWorker' in navigator &&
+        Boolean(navigator.serviceWorker.controller);
+
+      let cached = false;
+      if (swActive && typeof caches !== 'undefined') {
+        try {
+          const keys = await caches.keys();
+          for (const key of keys.filter((k) => k.startsWith('lkdv-'))) {
+            const cache = await caches.open(key);
+            const entries = await cache.keys();
+            if (entries.length > 0) {
+              cached = true;
+              break;
+            }
+          }
+        } catch {
+          cached = false;
+        }
+      }
+
+      if (!cancelled) setHasVerifiedCache(swActive && cached);
+    };
+
+    verifyCacheState();
+    return () => {
+      cancelled = true;
+    };
+  }, [isOnline]);
 
   return (
     !isOnline && (
@@ -38,7 +88,7 @@ export default function OfflineBanner() {
             right: 'max(12px, env(safe-area-inset-right, 0px))',
             maxWidth: '460px',
             margin: '0 auto',
-            zIndex: 100,
+            zIndex: zIndex.toast,
             touchAction: 'none',
             overscrollBehavior: 'none',
             alignItems: 'center',
@@ -73,7 +123,7 @@ export default function OfflineBanner() {
               lineHeight: 1.35,
             }}
           >
-            Hors ligne — vous consultez le contenu en cache.
+            {hasVerifiedCache === true ? OFFLINE_MESSAGE_CACHED : OFFLINE_MESSAGE_NO_CACHE}
           </span>
           <svg
             width="16"
