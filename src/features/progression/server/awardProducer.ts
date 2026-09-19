@@ -14,7 +14,10 @@ export type ProducerAction =
   | 'hike_session_processed'
   | 'trail_prepared'
   | 'kit_field_report'
-  | 'place_review';
+  | 'place_review'
+  | 'carnet_published'
+  | 'checklist_completed'
+  | 'trip_completed';
 
 export interface AwardProducerInput {
   userId: string;

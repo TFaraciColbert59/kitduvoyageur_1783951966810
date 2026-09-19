@@ -2,6 +2,10 @@ import 'server-only';
 import { createClient } from '@/lib/supabase/server';
 import { getTripById } from '@/lib/queries-trips';
 import { convertTripToCarnetData } from '@/features/trips/engine/carnetConversionEngine';
+import {
+  awardCarnetPublished,
+  awardTripCompleted,
+} from '@/features/progression/server/producerHooks';
 import type { TripStatus } from '@/features/trips/types/trip.types';
 
 /**
@@ -30,6 +34,13 @@ export async function updateTripStatus(
   // auto-créé encore solo est supprimé automatiquement.
   if (status === 'completed' || status === 'cancelled') {
     await cleanupSoloAutoCrew(supabase, tripId);
+  }
+
+  // P2 — producteur « voyage terminé » : l'accroche recalcule elle-même les
+  // preuves en service role (session traitée liée, checklist 100 %, POI visité)
+  // et n'attribue qu'une fois par voyage. Toute erreur est avalée par le hook.
+  if (status === 'completed') {
+    await awardTripCompleted(tripId);
   }
 
   return { success: true };
@@ -145,6 +156,11 @@ export async function publishTripToCarnet(
   if (trip.status !== 'completed') {
     await updateTripStatus(tripId, 'completed');
   }
+
+  // P2 — producteur « carnet publié » : la preuve (visibilité réelle, lien
+  // voyage/session, contenu ≥ 3 moments ou ≥ 1 média) est recalculée en service
+  // role ; un carnet privé ou vide ne crédite rien. Idempotent par carnet.
+  await awardCarnetPublished(carnetId);
 
   return { success: true, carnetId };
 }

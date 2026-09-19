@@ -11,14 +11,15 @@ Règle : un producteur n'est actif que si sa preuve est vérifiable côté serve
 | Activité préparée depuis un sentier réel | `prepareActivityFromTrail` résultat `created` (index unique `uniq_trips_user_route`) | Sentier existant, géométrie réelle, propriétaire, résultat `created` (pas `reused`) | 30 | Se préparer 1.0 | 1 par sentier | P2 | `trail_prep:<user_id>:<route_id>` |
 | Débrief terrain du kit | `kit_field_reports` sur session `processed` portant le kit | Propriété session ET kit, session traitée exigée | 20 + 2/élément, plafond 40 | Se préparer 0.7 · Partager 0.3 | 40/session | P2 | `kit_report:<session_id>` |
 | Avis de lieu publié | `place_reviews` unicité `(place_id, author_id)` | Propriétaire, upsert unique ; +25 seulement si preuve terrain recalculée serveur | 15 (+25 certifié) | Partager 1.0 | 1 par lieu, édition sans recrédit | P2 | `place_review:<place_id>` |
+| Carnet publié | `carnets.visibility ∈ {public, friends}` + lien `carnets.trip_id` ou session (`hike_sessions.carnet_id`, `carnet_moments.hike_session_id`) | Auteur propriétaire, publication réelle, ≥ 3 moments ou ≥ 1 média (`carnet_media.url` ou `carnet_moments.image_url`) ; points à la publication | 60 | Partager 1.0 | 1 par carnet | P2 | `carnet:<carnet_id>` |
+| Checklist complétée | `trip_checklist_items` 100 % cochés (aucune colonne ne distingue un item dû : tous les items), voyage `planned`/`active` | État relu en service role après toggle (route `POST /api/trips/[id]/checklist/complete`) | 25 | Se préparer 1.0 | 1 par voyage | P2 | `checklist:<trip_id>` |
+| Voyage terminé | `trips.status='completed'` + ≥ 1 preuve : session `processed` liée, checklist 100 %, ou POI `visited` | Transition contrôlée via `updateTripStatus` ; une fois par voyage | 45 | Explorer 0.7 · Se préparer 0.3 | 1 par voyage | P2 | `trip:<trip_id>` |
 
-## À compléter dans ce programme
+## Livrés dans ce programme (P2)
 
-| Action | Ce qui manque | Critère proposé | Répartition | Statut |
-|---|---|---|---|---|
-| Carnet publié | Publication réelle (visibilité ≠ privée), lien voyage/session, critère moments/médias, points à la publication | ≥ 3 moments ou ≥ 1 média | Partager 1.0 | Désactivé tant que non livré |
-| Checklist complétée | RPC de clôture « 100 % des items dus faits », une fois par voyage | Voyage planifié/actif, date de départ encadrée | Se préparer 1.0 | Désactivé tant que non livré |
-| Voyage terminé | Automate d'état, au moins une preuve serveur (session traitée, checklist, POI visités) | Transition contrôlée vers `completed` | Explorer 0.7 · Se préparer 0.3 | Désactivé tant que non livré |
+Les trois derniers producteurs du tableau ci-dessus sont désormais branchés par des accroches qui recalculent la preuve en service role : `awardCarnetPublished` (routes serveur et client via `POST /api/carnets/[id]/publish`), `awardChecklistCompleted` (route `POST /api/trips/[id]/checklist/complete` appelée après chaque toggle) et `awardTripCompleted` (dans `updateTripStatus`). Preuves couvertes par `tests/features/progression/producerHooksCompletion.spec.ts`.
+
+Règle appliquée : une preuve incomplète refuse sans appeler le moteur (`success:false`, `reason` explicite) ; l'idempotence `<source>:<source_id>` garantit une seule attribution. Les routes client répondent 200 même en refus/erreur : la progression ne bloque jamais le parcours.
 
 ## Désactivés (faute de preuve exploitable)
 

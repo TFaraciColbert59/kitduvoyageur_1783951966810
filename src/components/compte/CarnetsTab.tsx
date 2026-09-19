@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import Icon from '@/components/ui/AppIcon';
 import { createClient } from '@/lib/supabase/client';
+import { requestCarnetPublicationAward } from '@/lib/progression-award-requests';
 import { fetchPublicProfilesWith } from '@/lib/queries/publicProfilesCore';
 import { UserProfile } from '@/lib/mock/compte-marceline';
 
@@ -235,7 +236,12 @@ export default function CarnetsTab({ profile }: CarnetsTabProps) {
     const { error } = await supabase.from('carnets').update({
       visibility: 'public'
     }).eq('id', id);
-    if (!error) await fetchData();
+    if (!error) {
+      // P2 — publication réelle : vérification serveur (lien + contenu) puis
+      // attribution idempotente ; non bloquant pour l'interface.
+      requestCarnetPublicationAward(id);
+      await fetchData();
+    }
   }
 
   // ─────────────────────────────────────────

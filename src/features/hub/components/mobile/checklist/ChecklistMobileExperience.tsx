@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { CalendarDays, CheckCircle2, Circle, ListTodo } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
+import { requestChecklistCompletionAward } from '@/lib/progression-award-requests';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import type { DatabaseTripChecklistItem } from '@/lib/supabase/types';
 import {
@@ -66,6 +67,9 @@ export function ChecklistMobileExperience({ tripId, daysUntilStart, items }: Che
         .eq('trip_id', tripId);
       if (error) {
         setRows(previous);
+      } else {
+        // P2 — vérification serveur de la complétion (idempotente, non bloquante).
+        requestChecklistCompletionAward(tripId);
       }
     })();
   };

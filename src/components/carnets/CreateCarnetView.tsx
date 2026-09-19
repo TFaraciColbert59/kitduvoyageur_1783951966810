@@ -9,6 +9,7 @@ import { ChevronRightIcon as ChevronRightAnimated } from '@/components/icons/che
 import CommunityHubNav from '@/components/social/CommunityHubNav';
 import CompteBackground from '@/components/compte/CompteBackground';
 import { createClient } from '@/lib/supabase/client';
+import { requestCarnetPublicationAward } from '@/lib/progression-award-requests';
 import { CarnetKitItem, CarnetMoment } from '@/types/carnet';
 
 export interface ChapterItem {
@@ -254,6 +255,12 @@ export default function CreateCarnetView({ onCloseModal }: { onCloseModal?: () =
         if (kitError) {
           console.warn('[CreateCarnetView] carnet_kit_items non enregistrés:', kitError.message);
         }
+      }
+
+      // P2 — publication explicite (visibilité ≠ privée) : le serveur revérifie
+      // la visibilité réelle, le rattachement et le contenu avant d'attribuer.
+      if (form.visibility !== 'private') {
+        requestCarnetPublicationAward(carnetId);
       }
 
       setSaveSuccess(true);

@@ -13,6 +13,7 @@ import CarnetHubHero from '@/components/carnets/CarnetHubHero';
 import CarnetHubCard from '@/components/carnets/CarnetHubCard';
 import CarnetRightSidebar from '@/components/carnets/CarnetRightSidebar';
 import { createClient } from '@/lib/supabase/client';
+import { requestCarnetPublicationAward } from '@/lib/progression-award-requests';
 import { fetchPublicProfilesWith } from '@/lib/queries/publicProfilesCore';
 import { useAuth } from '@/contexts/AuthContext';
 import CommentItem from '@/components/communaute/CommentItem';
@@ -919,10 +920,19 @@ export default function CarnetsPage() {
         const { error: uErr } = await supabase.from('carnets').update(payload).eq('id', editCarnet.id);
         if (uErr) throw uErr;
         showToast('Carnet mis à jour !');
+        // P2 — si la visibilité est publique/amis, le serveur revérifie la
+        // publication réelle (lien + contenu) et attribue une fois par carnet.
+        if (form.visibility !== 'private') {
+          requestCarnetPublicationAward(editCarnet.id);
+        }
       } else {
         const { data: newC, error: iErr } = await supabase.from('carnets').insert(payload).select('id').single();
         if (iErr) throw iErr;
         showToast('Carnet publié !');
+
+        if (form.visibility !== 'private' && newC?.id) {
+          requestCarnetPublicationAward(newC.id);
+        }
 
         // Trigger reward
         try {

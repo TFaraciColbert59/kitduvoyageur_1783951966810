@@ -5,6 +5,7 @@ import React, { useState } from 'react';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { createClient } from '@/lib/supabase/client';
+import { requestChecklistCompletionAward } from '@/lib/progression-award-requests';
 import type { DatabaseTripChecklistItem } from '@/lib/supabase/types';
 import { LiveArrivalReveal } from '@/features/hub/components/live/LiveArrivalReveal';
 import { useLiveArrivalReveal } from '@/features/hub/components/live/useLiveArrivalReveal';
@@ -303,6 +304,10 @@ export function TripChecklistView({ tripId, daysUntilStart, items }: TripCheckli
       if (error) {
         console.error('[LKDV checklist] toggle error:', error);
         setRows(previous);
+      } else {
+        // P2 — le serveur revérifie l'état réel (100 % des items) et attribue
+        // une seule fois par voyage ; ne bloque jamais le toggle.
+        requestChecklistCompletionAward(tripId);
       }
     })();
   };
