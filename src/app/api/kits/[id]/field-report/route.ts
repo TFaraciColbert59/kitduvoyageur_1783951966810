@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { fieldReportSchema, buildFieldReportItemKey } from '@/features/kits/fieldProof';
+import { awardKitFieldReport } from '@/features/progression/server/producerHooks';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -76,6 +77,10 @@ export async function POST(
       );
 
     if (upsertError) throw upsertError;
+
+    // P2 — producteur « débrief terrain » : n'attribue que si la session est
+    // traitée ; idempotent par session (le cron peut avoir déjà crédité).
+    await awardKitFieldReport(body.hike_session_id);
 
     return NextResponse.json({ ok: true }, { status: 200 });
   } catch (err) {

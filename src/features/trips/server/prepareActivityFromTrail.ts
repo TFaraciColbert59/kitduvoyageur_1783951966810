@@ -26,6 +26,7 @@ import { enqueueActivityEnrichment } from './activityEnrichment/enqueue';
 import { generateTripDocuments } from './generateTripDocuments';
 import { generateJournalNotes } from './generateJournalNotes';
 import { createKitForTrip } from './createKitForTrip';
+import { awardTrailPrepared } from '@/features/progression/server/producerHooks';
 
 /**
  * « Préparer » un sentier → activité complète (Task 4).
@@ -934,6 +935,12 @@ export async function prepareActivityFromTrail(trailIdRaw: string): Promise<Prep
   }
 
   await enqueueActivityEnrichment(tripId, user.id);
+
+  // P2 — producteur « activité préparée depuis un sentier réel » : uniquement
+  // une création réelle (pas une réutilisation), idempotent par (user, route).
+  if (status === 'created') {
+    await awardTrailPrepared(user.id, routeId, tripId);
+  }
 
   return { status, tripId: record.tripId, slug: record.slug, title: record.title };
 }

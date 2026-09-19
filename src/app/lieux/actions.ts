@@ -10,6 +10,7 @@ import {
 } from '@/features/places/schemas/place.schema';
 import { getPlaceById } from '@/lib/queries-places';
 import { getTripById } from '@/lib/queries-trips';
+import { awardPlaceReview } from '@/features/progression/server/producerHooks';
 
 export interface ActionState<T = unknown> {
   success?: boolean;
@@ -57,6 +58,10 @@ export async function addPlaceReviewAction(
       console.error('[addPlaceReviewAction] Erreur Supabase :', error);
       return { error: error.message };
     }
+
+    // P2 — producteur « avis publié » : la clé (place, auteur) rend l'édition
+    // idempotente (aucun recrédit) ; échec non bloquant pour l'utilisateur.
+    await awardPlaceReview(user.id, parsed.place_id);
 
     revalidatePath('/lieux');
     return { success: true, data: { reviewId: data.id } };
