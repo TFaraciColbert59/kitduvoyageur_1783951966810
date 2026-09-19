@@ -24,7 +24,9 @@ export interface LegacyRedirect {
  */
 export const LEGACY_REDIRECTS: Record<string, string> = {
   // ── Possession : les écrans fonctionnels vivent dans le hub ──
-  '/materiel': '/hub',
+  // `/materiel` est désormais la surface d'entrée Matériel (src/app/materiel) :
+  // plus de redirection. Les sous-routes historiques restent des liens
+  // profonds vers les sections canoniques du hub.
   '/materiel/inventaire': '/hub/inventaire',
   '/materiel/kits': '/hub/kit',
   '/materiel/preparation': '/hub/preparation',

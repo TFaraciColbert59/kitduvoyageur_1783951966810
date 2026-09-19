@@ -5,6 +5,7 @@ import { NumberStat } from '@/components/ui-layouts/number-stat';
 import { ChecklistCardBody } from './ChecklistCardBody';
 import { ActivityIdentityBar } from './ActivityIdentityBar';
 import { NextActionCard, type NextActionSignal } from './NextActionCard';
+import { ProgressionCompactCard } from '@/components/progression/ProgressionCompactCard';
 import { MoreSectionsGrid } from './MoreSectionsGrid';
 import { SosFloatingButton } from './SosFloatingButton';
 import { BudgetDonut } from './BudgetDonut';
@@ -858,6 +859,7 @@ export function SortieMenu({
           actions={nextActions}
           checklist={{ tripId: trip.id, items: checklist }}
         />
+        <ProgressionCompactCard />
         <div className="flex-1 min-h-0">
           <MoreSectionsGrid cells={primaryCells} moreCells={secondaryCells} fitRows={FIT_ROWS[phase]} />
         </div>
@@ -878,11 +880,14 @@ export function SortieMenu({
           />
         }
         action={
-          <NextActionCard
-            actions={nextActions}
-            checklist={{ tripId: trip.id, items: checklist }}
-            variant="compact"
-          />
+          <>
+            <NextActionCard
+              actions={nextActions}
+              checklist={{ tripId: trip.id, items: checklist }}
+              variant="compact"
+            />
+            <ProgressionCompactCard />
+          </>
         }
         tiles={mobileTiles}
         chips={mobileChips}

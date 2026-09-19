@@ -4,6 +4,7 @@ import { MenuCard } from './MenuCard';
 import { NumberStat } from '@/components/ui-layouts/number-stat';
 import { ActivityIdentityBar } from './ActivityIdentityBar';
 import { NextActionCard, type NextActionSignal } from './NextActionCard';
+import { ProgressionCompactCard } from '@/components/progression/ProgressionCompactCard';
 import { MobileAdventureHub } from '../mobile/MobileAdventureHub';
 import { CollectifMoment } from '../mobile/moments/CollectifMoment';
 import {
@@ -202,11 +203,17 @@ export function CollectifMenu({ summary, linkedTripSlug }: CollectifMenuProps) {
       <div className="hidden lg:flex h-[calc(100%-24px)] min-h-[680px] flex-col gap-3 overflow-hidden">
         <ActivityIdentityBar nature="collectif" name={name} />
         <NextActionCard actions={nextActions} />
+        <ProgressionCompactCard />
         <BentoGrid cells={cells} fitRows="minmax(0,1.1fr) minmax(0,1fr) minmax(0,1fr)" />
       </div>
 
       <MobileAdventureHub
-        action={<NextActionCard actions={nextActions} variant="compact" />}
+        action={
+          <>
+            <NextActionCard actions={nextActions} variant="compact" />
+            <ProgressionCompactCard />
+          </>
+        }
         tiles={mobileTiles}
         chips={mobileChips}
       >

@@ -143,7 +143,7 @@ export const config = {
     // le redirect ne tire jamais). Littéral obligatoire : Next refuse le spread
     // dans config.matcher — la synchro avec LEGACY_REDIRECTS est testée
     // (tests/features/hub/hubRedirects.spec.ts, INV-5).
-    '/materiel',
+    // `/materiel` n'y figure plus : surface d'entrée réelle (src/app/materiel).
     '/materiel/inventaire',
     '/materiel/kits',
     '/materiel/preparation',

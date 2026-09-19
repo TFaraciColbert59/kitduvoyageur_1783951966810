@@ -18,14 +18,16 @@ export default function ProgressionPage() {
       <div className="hidden md:block min-h-screen bg-background relative font-sans">
         <CompteBackground />
         <Header />
-        <main id="main-content" className="relative z-10 max-w-4xl mx-auto px-4 pt-24 pb-16">
+        {/* M04 — le landmark `main#main-content` unique est porté par src/app/layout.tsx.
+            Ici un simple conteneur de section pour ne jamais dupliquer le repère principal. */}
+        <section aria-label="Ma progression" className="relative z-10 max-w-4xl mx-auto px-4 pt-24 pb-16">
           <MarbleZone />
           <div className="p-2 sm:p-4">
             <Suspense fallback={<div className="h-64 flex items-center justify-center text-xs">Chargement...</div>}>
               <MaProgressionView />
             </Suspense>
           </div>
-        </main>
+        </section>
         <Footer />
       </div>
 

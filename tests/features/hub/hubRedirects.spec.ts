@@ -12,7 +12,8 @@ import { hubSectionRegistry } from '@/features/hub/registry/hubSectionRegistry';
 
 describe('H-AUTO-42 — resolveLegacyRedirect : table statique', () => {
   it('RED-1: possession — les écrans fonctionnels pointent vers leurs sections hub', () => {
-    expect(resolveLegacyRedirect('/materiel')?.destination).toBe('/hub');
+    // `/materiel` est la surface d'entrée Matériel : plus de redirection 307.
+    expect(resolveLegacyRedirect('/materiel')).toBeNull();
     expect(resolveLegacyRedirect('/materiel/inventaire')?.destination).toBe('/hub/inventaire');
     expect(resolveLegacyRedirect('/materiel/kits')?.destination).toBe('/hub/kit');
     expect(resolveLegacyRedirect('/materiel/preparation')?.destination).toBe('/hub/preparation');
