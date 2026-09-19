@@ -6,23 +6,20 @@ export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {
-    let userId = 'user_demo_01';
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
-    try {
-      const supabase = await createClient();
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user?.id) userId = user.id;
-    } catch (_e) {
-      // Fallback
+    if (!user) {
+      return NextResponse.json({ success: false, error: 'unauthorized' }, { status: 401 });
     }
 
-    const profile = await getProgressionProfile(userId);
+    const profile = await getProgressionProfile(user.id);
     return NextResponse.json({ success: true, profile });
-  } catch (err: any) {
-    console.error('[API /api/progression] Error:', err);
-    return NextResponse.json(
-      { success: false, error: err?.message || 'Erreur interne de progression' },
-      { status: 500 }
-    );
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Erreur interne de progression';
+    console.error('[API /api/progression] Error:', message);
+    return NextResponse.json({ success: false, error: message }, { status: 500 });
   }
 }

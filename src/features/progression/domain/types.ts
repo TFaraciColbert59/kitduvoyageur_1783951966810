@@ -11,6 +11,8 @@
  * 5. Territorial rankings: 5 filters (1 km / confidentiel, ville, région, pays, monde).
  *    Strict privacy: GPS coordinates and exact addresses are NEVER exposed in leaderboards.
  *    Critical mass threshold: < 5 active participants -> "Communauté en formation" state.
+ * 6. L'inconnu est distinct de zéro : aucune valeur de progression, de rang ou de solde
+ *    n'est inventée quand la donnée serveur n'existe pas (null, jamais un faux défaut).
  */
 
 export type SkillType = 'explorer' | 'preparer' | 'partager' | 'entraider';
@@ -94,33 +96,55 @@ export interface LeaderboardResult {
   currentUserEntry: LeaderboardEntry | null;
 }
 
+export interface ProgressionPoints {
+  lifetime: number;
+  season: number;
+  seasonId: string | null;
+}
+
+export interface ProgressionLevel {
+  level: number;
+  title: string | null;
+  nextLevelPoints: number | null;
+  progressPct: number;
+}
+
+export interface TerritorySummary {
+  cityName: string | null;
+  cityCode: string | null;
+  regionCode: string | null;
+  countryCode: string | null;
+}
+
 export interface UserProgressionProfile {
   userId: string;
-  displayName: string;
+  displayName: string | null;
   avatarUrl: string | null;
-  lifetimePoints: number;
-  seasonPoints: number;
-  level: number;
-  levelTitle: string;
-  nextLevelPoints: number | null;
-  levelProgressPct: number;
+  hasData: boolean;
+  points: ProgressionPoints;
+  level: ProgressionLevel;
   skills: Record<SkillType, SkillProgress>;
-  currentChallenge: ProgressionChallenge | null;
-  activeSeason: ProgressionSeason;
-  territory: TerritorialAttachment;
-  localRank: number | null;
-  totalSeasonParticipants: number;
+  challenge: ProgressionChallenge | null;
+  leaderboardRank: number | null;
+  usableBalance: number | null;
+  updatedAt: string | null;
+  territory: TerritorySummary | null;
 }
 
-export interface ProgressionActionPayload {
-  actionType: string;
-  idempotencyKey: string;
-  pointsTotal: number;
-  weights: Record<SkillType, number>;
-  explanation: string;
+export interface TerritorialLeaderboardRow {
+  rank: number;
+  alias: string | null;
+  level: number | null;
+  levelTitle: string | null;
+  seasonPoints: number;
+  isCurrentUser: boolean;
 }
 
-export interface FraudReversalPayload {
-  originalEventIdempotencyKey: string;
-  reason: string;
+export interface TerritorialLeaderboard {
+  filter: TerritoryFilter;
+  rows: TerritorialLeaderboardRow[];
+  totalParticipants: number;
+  communityForming: boolean;
+  minParticipants: number;
+  refreshedAt: string | null;
 }

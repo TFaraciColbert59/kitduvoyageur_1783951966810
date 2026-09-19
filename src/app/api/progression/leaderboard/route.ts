@@ -9,27 +9,24 @@ const VALID_FILTERS: TerritoryFilter[] = ['around_me', 'city', 'region', 'countr
 
 export async function GET(request: NextRequest) {
   try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return NextResponse.json({ success: false, error: 'unauthorized' }, { status: 401 });
+    }
+
     const { searchParams } = new URL(request.url);
     const filterParam = (searchParams.get('filter') || 'world') as TerritoryFilter;
     const filter: TerritoryFilter = VALID_FILTERS.includes(filterParam) ? filterParam : 'world';
 
-    let userId = 'user_demo_01';
-
-    try {
-      const supabase = await createClient();
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user?.id) userId = user.id;
-    } catch (_e) {
-      // Fallback
-    }
-
-    const leaderboard = await getTerritorialLeaderboard(userId, filter);
+    const leaderboard = await getTerritorialLeaderboard(user.id, filter);
     return NextResponse.json({ success: true, leaderboard });
-  } catch (err: any) {
-    console.error('[API /api/progression/leaderboard] Error:', err);
-    return NextResponse.json(
-      { success: false, error: err?.message || 'Erreur interne de classement' },
-      { status: 500 }
-    );
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Erreur interne de classement';
+    console.error('[API /api/progression/leaderboard] Error:', message);
+    return NextResponse.json({ success: false, error: message }, { status: 500 });
   }
 }
