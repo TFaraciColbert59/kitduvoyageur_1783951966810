@@ -15,6 +15,13 @@ CREATE TABLE IF NOT EXISTS public.country_sync_log (
   UNIQUE (code_iso)
 );
 
+-- Réparation additive : sur une base fraîche, la table a été créée par
+-- 20260710110000_admin_tables sans les colonnes de cache (CREATE TABLE IF NOT
+-- EXISTS ci-dessus est alors un no-op). Les ajouts sont idempotents et sans
+-- effet sur les bases où la table est déjà au bon schéma.
+ALTER TABLE public.country_sync_log ADD COLUMN IF NOT EXISTS code_iso text;
+ALTER TABLE public.country_sync_log ADD COLUMN IF NOT EXISTS cache_valid_until timestamptz;
+
 -- Index for fast lookups by code
 CREATE INDEX IF NOT EXISTS idx_country_sync_log_code ON public.country_sync_log (code_iso);
 CREATE INDEX IF NOT EXISTS idx_country_sync_log_valid_until ON public.country_sync_log (cache_valid_until);

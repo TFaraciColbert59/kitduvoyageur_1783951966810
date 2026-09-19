@@ -47,6 +47,11 @@ CREATE TABLE IF NOT EXISTS public.moderation_queue (
 );
 
 -- 4. Indexes
+-- Réparation additive : moderation_queue est créée par 20260710110000_admin_tables
+-- sans listing_id (le CREATE TABLE IF NOT EXISTS ci-dessus est un no-op sur une
+-- base fraîche). Ajout idempotent, sans effet sur les bases déjà conformes.
+ALTER TABLE public.moderation_queue ADD COLUMN IF NOT EXISTS listing_id UUID;
+ALTER TABLE public.moderation_queue ADD COLUMN IF NOT EXISTS soumis_par UUID;
 CREATE INDEX IF NOT EXISTS idx_listings_occasion_statut ON public.listings(occasion_statut);
 CREATE INDEX IF NOT EXISTS idx_listings_faire_offre ON public.listings(faire_offre_active) WHERE faire_offre_active = true;
 CREATE INDEX IF NOT EXISTS idx_moderation_queue_statut ON public.moderation_queue(statut);
