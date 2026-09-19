@@ -12,6 +12,7 @@ import MesClubsCard from '@/components/compte/MesClubsCard';
 import BadgesCard from '@/components/compte/BadgesCard';
 import ConstanceCard from '@/components/compte/ConstanceCard';
 import CompteBackground from '@/components/compte/CompteBackground';
+import { MarbleZone } from '@/components/glass/MarbleZone';
 import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
 import PublicMobileProfileView from '@/components/profile/PublicMobileProfileView';
 import {
@@ -86,10 +87,10 @@ export default function PublicProfilePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[var(--lkv-surface)] flex items-center justify-center">
+      <div className="min-h-screen bg-transparent flex items-center justify-center">
         <div className="flex flex-col items-center gap-3">
-          <div className="w-8 h-8 border-2 border-[var(--lkv-primary)] border-t-transparent rounded-full animate-spin" />
-          <p className="text-sm text-[var(--lkv-text-muted)] font-medium">Chargement du profil voyageur...</p>
+          <div className="w-8 h-8 border-2 border-[#EEF3EC] border-t-transparent rounded-full animate-spin" />
+          <p className="text-sm text-[#CCE0D4] font-medium">Chargement du profil voyageur...</p>
         </div>
       </div>
     );
@@ -97,14 +98,14 @@ export default function PublicProfilePage() {
 
   if (notFound || !profile) {
     return (
-      <div className="min-h-screen bg-[var(--lkv-surface)] flex items-center justify-center p-6">
-        <div className="text-center max-w-md bg-white p-8 rounded-3xl border border-[var(--lkv-border)] ">
+      <div className="min-h-screen bg-transparent flex items-center justify-center p-6">
+        <div className="glass text-center max-w-md p-8 rounded-3xl">
           <p className="text-5xl mb-4">🧭</p>
           <h2 className="font-display font-800 text-2xl text-[var(--lkv-primary)] mb-2">Profil introuvable</h2>
           <p className="text-sm text-[var(--lkv-text-muted)] mb-6">Ce voyageur n&apos;existe pas ou son profil est indisponible.</p>
           <Link
             href="/communaute"
-            className="inline-flex items-center gap-2 px-6 py-3 bg-[var(--lkv-primary)] text-white rounded-full text-xs font-bold hover:bg-[var(--lkv-primary-hover)] transition-colors"
+            className="glass-capsule-btn primary text-xs font-bold"
           >
             Explorer la communauté
           </Link>
@@ -119,6 +120,7 @@ export default function PublicProfilePage() {
       <div className="hidden md:block">
         <div className="min-h-screen bg-transparent text-[var(--lkv-primary)] selection:bg-forest-900/20 font-sans relative">
           <CompteBackground />
+          <MarbleZone />
           <Header />
           
           <main className="pt-24 pb-16">

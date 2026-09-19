@@ -11,7 +11,7 @@ export default function PreparerSentierLoading() {
     <main
       id="main-content"
       data-testid="preparer-sentier-loading"
-      className="min-h-dvh grid place-items-center bg-[var(--lkv-surface)]"
+      className="min-h-dvh grid place-items-center bg-transparent"
     >
       <div
         role="status"

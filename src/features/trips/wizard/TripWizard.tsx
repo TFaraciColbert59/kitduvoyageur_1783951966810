@@ -168,12 +168,12 @@ export function TripWizard() {
                 type="button"
                 onClick={() => isDone && setStep(step)}
                 disabled={!isDone && !isCurrent}
-                className={`w-full text-left p-2.5 rounded-xl transition-all flex items-start gap-2.5 ${
+                className={`glass-capsule-btn w-full text-left !justify-start !items-start gap-2.5 !rounded-2xl !p-2.5 transition-all ${
                   isCurrent
-                    ? 'bg-[var(--lkv-primary)] text-white shadow-sm'
+                    ? 'primary shadow-sm'
                     : isDone
-                      ? 'hover:bg-white/60 text-forest-900 cursor-pointer'
-                      : 'text-sage-400 cursor-default opacity-60'
+                      ? 'cursor-pointer'
+                      : 'cursor-default opacity-60'
                 }`}
               >
                 <div
@@ -219,7 +219,7 @@ export function TripWizard() {
           <span>Brouillon en cours</span>
         </span>
         <div className="space-y-2 text-xs">
-          <div className="p-2 rounded-xl bg-white/40 border border-white/60">
+          <div className="glass-sub-card p-2 rounded-xl">
             <span className="text-[10px] text-sage-700 block">Pays choisis</span>
             <span className="font-semibold text-forest-900">
               {state.countries.length > 0
@@ -227,11 +227,11 @@ export function TripWizard() {
                 : 'En sélection...'}
             </span>
           </div>
-          <div className="p-2 rounded-xl bg-white/40 border border-white/60">
+          <div className="glass-sub-card p-2 rounded-xl">
             <span className="text-[10px] text-sage-700 block">Durée estimée</span>
             <span className="font-semibold text-forest-900">{state.durationDays} jours</span>
           </div>
-          <div className="p-2 rounded-xl bg-white/40 border border-white/60">
+          <div className="glass-sub-card p-2 rounded-xl">
             <span className="text-[10px] text-sage-700 block">Style & Difficulté</span>
             <span className="font-semibold capitalize text-forest-900">
               {state.activityType} · {state.difficulty}
@@ -261,6 +261,32 @@ export function TripWizard() {
             </div>
             <div className="glass rounded-2xl p-5 border border-white/60 shadow-md">
               {renderCurrentStep()}
+
+              {/* Contrôles de navigation mobile */}
+              {state.step < 5 && (
+                <div className="flex mt-6 pt-5 border-t border-white/40 items-center justify-between gap-3">
+                  <GlassCapsuleBtn
+                    type="button"
+                    onClick={handlePrev}
+                    disabled={state.step === 1}
+                    variant="default"
+                    icon={<Icon name="chevron-left" size={16} />}
+                    className="flex-1 justify-center !min-h-[44px]"
+                  >
+                    Précédent
+                  </GlassCapsuleBtn>
+
+                  <GlassCapsuleBtn
+                    type="button"
+                    onClick={handleNext}
+                    variant="primary"
+                    icon={<Icon name="chevron-right" size={16} />}
+                    className="flex-1 justify-center !min-h-[44px]"
+                  >
+                    Continuer
+                  </GlassCapsuleBtn>
+                </div>
+              )}
             </div>
           </div>
         </MobilePageShell>

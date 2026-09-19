@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import Header from '@/components/Header';
 import { CompteBackground } from '@/components/compte/CompteBackground';
+import { MarbleZone } from '@/components/glass/MarbleZone';
 import HeroProfil from '@/components/compte/HeroProfil';
 import StatsBandeau from '@/components/compte/StatsBandeau';
 import { CompteTab } from '@/components/compte/TabsCompte';
@@ -29,6 +30,7 @@ const CarnetsTab = dynamic(() => import('@/components/compte/CarnetsTab'), { ssr
 const ClubsTab = dynamic(() => import('@/components/compte/ClubsTab'), { ssr: false });
 const CommandesTab = dynamic(() => import('@/components/compte/CommandesTab'), { ssr: false });
 const FideliteTab = dynamic(() => import('@/components/compte/FideliteTab'), { ssr: false });
+const MaProgressionView = dynamic(() => import('@/components/progression/MaProgressionView'), { ssr: false });
 import { useAuth } from '@/contexts/AuthContext';
 import { fetchDashboardData, type CompteDashboardData } from '@/lib/supabase/queries-compte';
 
@@ -64,6 +66,16 @@ export default function ComptePage() {
     loadData();
   }, [user]);
 
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const p = new URLSearchParams(window.location.search).get('tab');
+      if (p === 'progression') setActiveTab('progression');
+      else if (p && ['vue-d-ensemble', 'progression', 'aventures', 'carnets', 'clubs', 'commandes', 'fidelite', 'parametres'].includes(p)) {
+        setActiveTab(p as CompteTab);
+      }
+    }
+  }, []);
+
   const handleSaveProfile = (updatedFields: any) => {
     showToast('Profil mis à jour avec succès !');
   };
@@ -73,8 +85,8 @@ export default function ComptePage() {
       <div className="h-dvh flex items-center justify-center font-sans relative">
         <CompteBackground />
         <div className="glass rounded-2xl p-6 flex flex-col items-center gap-3">
-          <div className="w-8 h-8 border-2 border-[var(--lkv-primary)] border-t-transparent rounded-full animate-spin" />
-          <p className="text-sm text-[var(--lkv-primary)] font-semibold">Chargement de votre tableau de bord...</p>
+          <div className="w-8 h-8 border-2 border-[var(--card-content)] border-t-transparent rounded-full animate-spin" />
+          <p className="text-sm text-[var(--card-content)] font-semibold">Chargement de votre tableau de bord...</p>
         </div>
       </div>
     );
@@ -86,8 +98,8 @@ export default function ComptePage() {
         <div className="min-h-[70vh] flex items-center justify-center font-sans relative p-4">
           <div className="glass rounded-3xl p-8 text-center max-w-md shadow-xl">
             <p className="text-5xl mb-4">🔐</p>
-            <h2 className="font-display font-bold text-2xl text-[var(--lkv-primary)] mb-2 tracking-tight">Connexion requise</h2>
-            <p className="text-sm text-[var(--lkv-text-muted)] mb-6">Connectez-vous pour accéder à votre tableau de bord voyageur.</p>
+            <h2 className="font-display font-bold text-2xl text-[var(--card-content)] mb-2 tracking-tight">Connexion requise</h2>
+            <p className="text-sm text-[var(--glass-text-secondary)] mb-6">Connectez-vous pour accéder à votre tableau de bord voyageur.</p>
             <Link href="/connexion?mode=connexion" className="glass-capsule-btn primary">
               Se connecter
             </Link>
@@ -115,6 +127,13 @@ export default function ComptePage() {
 
       case 'commandes':
         return <CommandesTab profile={profile as any} />;
+
+      case 'progression':
+        return (
+          <div className="w-full">
+            <MaProgressionView />
+          </div>
+        );
 
       case 'fidelite':
         return <FideliteTab profile={profile as any} />;
@@ -156,6 +175,7 @@ export default function ComptePage() {
     <div className="min-h-screen md:h-dvh md:overflow-hidden text-[var(--lkv-text-primary)] selection:bg-[var(--lkv-primary)]/10 font-sans relative">
       {/* Background immersif végétal */}
       <CompteBackground />
+      <MarbleZone />
 
       {/* Mobile-only app-like view */}
       <div className="block md:hidden min-h-screen">

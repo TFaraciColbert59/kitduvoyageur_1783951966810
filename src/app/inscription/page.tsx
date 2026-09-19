@@ -42,16 +42,16 @@ export default function InscriptionPage() {
       <main className="flex items-center justify-center min-h-screen px-4 pt-16 pb-16">
         <div className="w-full max-w-md">
           {success ? (
-            <div className="bg-card border border-border rounded-2xl p-8 text-center">
+            <div className="glass rounded-2xl p-8 text-center">
               <div className="w-16 h-16 rounded-full bg-[var(--lkv-secondary)]/15 flex items-center justify-center mx-auto mb-4">
                 <Icon name="CheckCircleIcon" size={32} style={{ color: 'var(--lkv-secondary)' }} variant="outline" />
               </div>
               <h2 className="font-display text-xl text-foreground mb-2" style={{ fontFamily: 'var(--font-display)', fontWeight: 800 }}>Compte créé !</h2>
               <p className="text-sm text-foreground/60 mb-6">Un email de confirmation a été envoyé à <strong className="text-foreground">{form.email}</strong>.</p>
-              <Link href="/connexion" className="inline-flex items-center gap-2 bg-[var(--lkv-primary)] hover:bg-[var(--lkv-forest-600)] text-white px-6 py-3 rounded-xl font-semibold text-sm transition-all shadow-sm"><Icon name="ArrowRightIcon" size={14} variant="outline" />Se connecter</Link>
+              <Link href="/connexion" className="glass-capsule-btn primary !px-6 !py-3 !text-sm !font-semibold"><Icon name="ArrowRightIcon" size={14} variant="outline" />Se connecter</Link>
             </div>
           ) : (
-            <div className="bg-card border border-border rounded-2xl p-8">
+            <div className="glass rounded-2xl p-8">
               <div className="text-center mb-8">
                 <p className="text-xs font-mono text-[var(--lkv-secondary)] tracking-widest uppercase mb-2" style={{ fontFamily: 'var(--font-mono)' }}>Rejoindre la communauté</p>
                 <h1 className="font-display text-2xl text-foreground" style={{ fontFamily: 'var(--font-display)', fontWeight: 800 }}>Créer un compte</h1>
@@ -63,7 +63,7 @@ export default function InscriptionPage() {
                 <div><label className="block text-xs font-medium text-foreground/70 mb-1.5">Email *</label><input type="email" required autoComplete="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="jean@exemple.fr" className="w-full px-3 py-2.5 bg-background border border-border rounded-lg text-sm text-foreground placeholder:text-foreground/30 focus:outline-none focus:border-[var(--lkv-secondary)]/60 transition-colors" /></div>
                 <div><label className="block text-xs font-medium text-foreground/70 mb-1.5">Mot de passe *</label><input type="password" required autoComplete="new-password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} placeholder="8 caractères minimum" className="w-full px-3 py-2.5 bg-background border border-border rounded-lg text-sm text-foreground placeholder:text-foreground/30 focus:outline-none focus:border-[var(--lkv-secondary)]/60 transition-colors" /></div>
                 <div><label className="block text-xs font-medium text-foreground/70 mb-1.5">Confirmer le mot de passe *</label><input type="password" required autoComplete="new-password" value={form.confirm} onChange={(e) => setForm({ ...form, confirm: e.target.value })} placeholder="Répéter le mot de passe" className="w-full px-3 py-2.5 bg-background border border-border rounded-lg text-sm text-foreground placeholder:text-foreground/30 focus:outline-none focus:border-[var(--lkv-secondary)]/60 transition-colors" /></div>
-                <button type="submit" disabled={loading} className="w-full flex items-center justify-center gap-2 bg-[var(--lkv-primary)] hover:bg-[var(--lkv-forest-600)] disabled:opacity-60 text-white px-6 py-3 rounded-xl font-semibold text-sm transition-all shadow-sm mt-2 cursor-pointer">
+                <button type="submit" disabled={loading} className="glass-capsule-btn primary w-full flex items-center justify-center gap-2 !px-6 !py-3 !text-sm !font-semibold mt-2">
                   {loading ? <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />Création en cours…</> : <><Icon name="UserPlusIcon" size={16} variant="outline" />Créer mon compte</>}
                 </button>
               </form>
@@ -80,11 +80,11 @@ export default function InscriptionPage() {
   const mobileContent = (
     <div style={{ padding: '16px' }}>
       {success ? (
-        <div style={{ textAlign: 'center', padding: '24px 16px', background: 'var(--lkv-surface)', borderRadius: '12px', border: '1px solid rgba(23,64,44,0.06)' }}>
+        <div className="glass" style={{ textAlign: 'center', padding: '24px 16px' }}>
           <p style={{ fontSize: '32px', marginBottom: '12px', color: 'var(--lkv-secondary)' }}>✓</p>
           <h2 style={{ fontSize: '20px', fontWeight: 800, color: 'var(--lkv-primary)', marginBottom: '8px' }}>Compte créé !</h2>
           <p style={{ fontSize: '13px', color: 'rgba(23,64,44,0.6)', marginBottom: '16px' }}>Un email de confirmation a été envoyé à <strong>{form.email}</strong>.</p>
-          <Link href="/connexion" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'var(--lkv-primary)', color: 'white', padding: '10px 24px', borderRadius: '12px', fontSize: '14px', fontWeight: 600, textDecoration: 'none' }}>Se connecter</Link>
+          <Link href="/connexion" className="glass-capsule-btn primary !px-6 !py-2.5 !text-sm !font-semibold">Se connecter</Link>
         </div>
       ) : (
         <div>
@@ -92,12 +92,12 @@ export default function InscriptionPage() {
           <h1 style={{ fontSize: '24px', fontWeight: 800, color: 'var(--lkv-primary)', textAlign: 'center', marginBottom: '4px' }}>Créer un compte</h1>
           <p style={{ fontSize: '13px', color: 'rgba(23,64,44,0.5)', textAlign: 'center', marginBottom: '24px' }}>Configurez vos kits, sauvegardez vos aventures</p>
           {error && <div style={{ background: 'var(--lkv-danger-bg, rgba(168,68,58,0.08))', border: '1px solid var(--lkv-danger)', borderRadius: '10px', padding: '10px 14px', marginBottom: '16px', fontSize: '13px', color: 'var(--lkv-danger)' }}>{error}</div>}
-          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '12px', background: 'var(--lkv-surface)', padding: '20px', borderRadius: '12px', border: '1px solid rgba(23,64,44,0.06)' }}>
+          <form onSubmit={handleSubmit} className="glass" style={{ display: 'flex', flexDirection: 'column', gap: '12px', padding: '20px' }}>
             <input type="text" required autoComplete="name" value={form.fullName} onChange={(e) => setForm({ ...form, fullName: e.target.value })} placeholder="Nom complet *" style={{ padding: '10px 12px', borderRadius: '10px', border: '1px solid rgba(23,64,44,0.06)', background: 'var(--lkv-surface)', fontSize: '14px', color: 'var(--lkv-primary)' }} />
             <input type="email" required autoComplete="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="Email *" style={{ padding: '10px 12px', borderRadius: '10px', border: '1px solid rgba(23,64,44,0.06)', background: 'var(--lkv-surface)', fontSize: '14px', color: 'var(--lkv-primary)' }} />
             <input type="password" required autoComplete="new-password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} placeholder="Mot de passe *" style={{ padding: '10px 12px', borderRadius: '10px', border: '1px solid rgba(23,64,44,0.06)', background: 'var(--lkv-surface)', fontSize: '14px', color: 'var(--lkv-primary)' }} />
             <input type="password" required autoComplete="new-password" value={form.confirm} onChange={(e) => setForm({ ...form, confirm: e.target.value })} placeholder="Confirmer le mot de passe *" style={{ padding: '10px 12px', borderRadius: '10px', border: '1px solid rgba(23,64,44,0.06)', background: 'var(--lkv-surface)', fontSize: '14px', color: 'var(--lkv-primary)' }} />
-            <button type="submit" disabled={loading} style={{ background: 'var(--lkv-primary)', color: 'white', border: 'none', padding: '12px', borderRadius: '12px', fontSize: '14px', fontWeight: 600, cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.6 : 1, marginTop: '4px' }}>
+            <button type="submit" disabled={loading} className="glass-capsule-btn primary w-full !py-3 !text-sm !font-semibold mt-1">
               {loading ? 'Création en cours…' : 'Créer mon compte'}
             </button>
           </form>

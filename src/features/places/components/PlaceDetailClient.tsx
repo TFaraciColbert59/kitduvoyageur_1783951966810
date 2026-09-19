@@ -155,7 +155,7 @@ export function PlaceDetailClient({ place, reviews, photos, userTrips }: PlaceDe
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 text-xs">
           {/* Eau */}
-          <div className="p-3.5 rounded-2xl bg-stone-50/80 border border-stone-200/60 flex items-start gap-3">
+          <div className="glass-sub-card p-3.5 rounded-2xl flex items-start gap-3">
             <Icon name="droplet" className="w-4 h-4 text-[#5B7F55] shrink-0 mt-0.5" />
             <div>
               <span className="text-stone-500 font-semibold block">Eau potable / Source</span>
@@ -170,7 +170,7 @@ export function PlaceDetailClient({ place, reviews, photos, userTrips }: PlaceDe
           </div>
 
           {/* Accès & Frais */}
-          <div className="p-3.5 rounded-2xl bg-stone-50/80 border border-stone-200/60 flex items-start gap-3">
+          <div className="glass-sub-card p-3.5 rounded-2xl flex items-start gap-3">
             <Icon name="users" className="w-4 h-4 text-[#5B7F55] shrink-0 mt-0.5" />
             <div>
               <span className="text-stone-500 font-semibold block">Accès / Tarifs</span>
@@ -183,7 +183,7 @@ export function PlaceDetailClient({ place, reviews, photos, userTrips }: PlaceDe
 
           {/* Saison */}
           {info.openingSeason && (
-            <div className="p-3.5 rounded-2xl bg-stone-50/80 border border-stone-200/60 flex items-start gap-3">
+            <div className="glass-sub-card p-3.5 rounded-2xl flex items-start gap-3">
               <Icon name="calendar" className="w-4 h-4 text-[#5B7F55] shrink-0 mt-0.5" />
               <div>
                 <span className="text-stone-500 font-semibold block">Période gardée / Saison</span>
@@ -194,7 +194,7 @@ export function PlaceDetailClient({ place, reviews, photos, userTrips }: PlaceDe
 
           {/* Capacité */}
           {info.capacity && (
-            <div className="p-3.5 rounded-2xl bg-stone-50/80 border border-stone-200/60 flex items-start gap-3">
+            <div className="glass-sub-card p-3.5 rounded-2xl flex items-start gap-3">
               <Icon name="mountain" className="w-4 h-4 text-[#5B7F55] shrink-0 mt-0.5" />
               <div>
                 <span className="text-stone-500 font-semibold block">Capacité d’accueil</span>
@@ -204,7 +204,7 @@ export function PlaceDetailClient({ place, reviews, photos, userTrips }: PlaceDe
           )}
 
           {/* Feux */}
-          <div className="p-3.5 rounded-2xl bg-stone-50/80 border border-stone-200/60 flex items-start gap-3">
+          <div className="glass-sub-card p-3.5 rounded-2xl flex items-start gap-3">
             <Icon name="flame" className="w-4 h-4 text-[#5B7F55] shrink-0 mt-0.5" />
             <div>
               <span className="text-stone-500 font-semibold block">Feux de camp</span>
@@ -215,7 +215,7 @@ export function PlaceDetailClient({ place, reviews, photos, userTrips }: PlaceDe
           </div>
 
           {/* Coordonnées */}
-          <div className="p-3.5 rounded-2xl bg-stone-50/80 border border-stone-200/60 flex items-start gap-3">
+          <div className="glass-sub-card p-3.5 rounded-2xl flex items-start gap-3">
             <Icon name="map-pin" className="w-4 h-4 text-[#5B7F55] shrink-0 mt-0.5" />
             <div>
               <span className="text-stone-500 font-semibold block">
@@ -230,7 +230,7 @@ export function PlaceDetailClient({ place, reviews, photos, userTrips }: PlaceDe
 
           {/* Téléphone si renseigné */}
           {info.phone && (
-            <div className="p-3.5 rounded-2xl bg-stone-50/80 border border-stone-200/60 flex items-start gap-3">
+            <div className="glass-sub-card p-3.5 rounded-2xl flex items-start gap-3">
               <Icon name="phone" className="w-4 h-4 text-[#5B7F55] shrink-0 mt-0.5" />
               <div>
                 <span className="text-stone-500 font-semibold block">Contact téléphonique</span>
@@ -246,7 +246,7 @@ export function PlaceDetailClient({ place, reviews, photos, userTrips }: PlaceDe
 
           {/* Site Web si renseigné */}
           {info.website && (
-            <div className="p-3.5 rounded-2xl bg-stone-50/80 border border-stone-200/60 flex items-start gap-3">
+            <div className="glass-sub-card p-3.5 rounded-2xl flex items-start gap-3">
               <Icon name="globe" className="w-4 h-4 text-[#5B7F55] shrink-0 mt-0.5" />
               <div>
                 <span className="text-stone-500 font-semibold block">Site officiel</span>

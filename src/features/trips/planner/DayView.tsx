@@ -99,7 +99,7 @@ export function DayView({
                 type="button"
                 onClick={() => setShowMenu(!showMenu)}
                 aria-label="Options de la journée"
-                className="w-8 h-8 rounded-full glass-sub-card border border-white/60 flex items-center justify-center text-[var(--lkv-text-secondary)] hover:text-[var(--lkv-text-primary)] hover:bg-white transition-all cursor-pointer shadow-2xs"
+                className="glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8 flex items-center justify-center transition-all cursor-pointer"
               >
                 <Icon name="more-vertical" className="w-4 h-4" />
               </button>
@@ -115,9 +115,9 @@ export function DayView({
                         setShowMenu(false);
                         onAddStep(dayNumber);
                       }}
-                      className="w-full flex items-center gap-2.5 px-3.5 py-2 hover:bg-white/60 text-left cursor-pointer"
+                      className="glass-capsule-btn w-full flex items-center gap-2.5 !justify-start !px-3.5 !py-2 !rounded-xl text-left cursor-pointer"
                     >
-                      <Icon name="plus" className="w-4 h-4 text-[var(--lkv-primary)]" />
+                      <Icon name="plus" className="w-4 h-4" />
                       <span>Ajouter une étape</span>
                     </button>
                     <button
@@ -126,9 +126,9 @@ export function DayView({
                         setShowMenu(false);
                         onInsertDayAfter(dayNumber);
                       }}
-                      className="w-full flex items-center gap-2.5 px-3.5 py-2 hover:bg-white/60 text-left cursor-pointer"
+                      className="glass-capsule-btn w-full flex items-center gap-2.5 !justify-start !px-3.5 !py-2 !rounded-xl text-left cursor-pointer"
                     >
-                      <Icon name="calendar-plus" className="w-4 h-4 text-[var(--lkv-primary)]" />
+                      <Icon name="calendar-plus" className="w-4 h-4" />
                       <span>Insérer un jour après</span>
                     </button>
                     <button
@@ -137,9 +137,9 @@ export function DayView({
                         setShowMenu(false);
                         onDuplicateDay(dayNumber);
                       }}
-                      className="w-full flex items-center gap-2.5 px-3.5 py-2 hover:bg-white/60 text-left cursor-pointer"
+                      className="glass-capsule-btn w-full flex items-center gap-2.5 !justify-start !px-3.5 !py-2 !rounded-xl text-left cursor-pointer"
                     >
-                      <Icon name="copy" className="w-4 h-4 text-[var(--lkv-primary)]" />
+                      <Icon name="copy" className="w-4 h-4" />
                       <span>Dupliquer la journée</span>
                     </button>
                     <div className="my-1 border-t border-white/40" />
@@ -149,9 +149,9 @@ export function DayView({
                         setShowMenu(false);
                         onDeleteDay(dayNumber);
                       }}
-                      className="w-full flex items-center gap-2.5 px-3.5 py-2 hover:bg-[var(--lkv-danger)]/10 text-left text-[var(--lkv-danger)] font-medium cursor-pointer"
+                      className="glass-capsule-btn w-full flex items-center gap-2.5 !justify-start !px-3.5 !py-2 !rounded-xl text-left font-medium cursor-pointer"
                     >
-                      <Icon name="trash2" className="w-4 h-4 text-[var(--lkv-danger)]" />
+                      <Icon name="trash2" className="w-4 h-4" />
                       <span>Supprimer la journée</span>
                     </button>
                   </div>

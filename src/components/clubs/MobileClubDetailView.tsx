@@ -55,6 +55,15 @@ export default function MobileClubDetailView({
     window.addEventListener('club-detail-tab-change', handler);
     return () => window.removeEventListener('club-detail-tab-change', handler);
   }, []);
+  
+  const validEvents = useMemo(() => {
+    const future = events.filter((e: any) => {
+      if (!e.date) return true;
+      const d = new Date(e.date);
+      return isNaN(d.getTime()) || d.getTime() >= new Date().setHours(0, 0, 0, 0);
+    });
+    return Array.from(new Map(future.map((e: any) => [e.id || e.title, e])).values());
+  }, [events]);
 
   const clubDiscussions = useMemo(() => {
     return topics.map((t: any) => ({
@@ -200,7 +209,7 @@ export default function MobileClubDetailView({
                 <div className="grid grid-cols-3 gap-2.5">
                   <div className="glass bg-white/80 p-3 rounded-2xl text-center border border-white">
                     <p className="font-mono text-[9px] uppercase tracking-widest text-[#5C6B5E] mb-1 font-bold">Sorties</p>
-                    <p className="font-mono font-bold text-xl text-[#17402C]">{events.length}</p>
+                    <p className="font-mono font-bold text-xl text-[#17402C]">{validEvents.length}</p>
                     <p className="text-[9px] text-[#5C6B5E] font-mono">programmées</p>
                   </div>
                   <div className="glass bg-white/80 p-3 rounded-2xl text-center border border-white">
@@ -219,7 +228,7 @@ export default function MobileClubDetailView({
                 <ClubAboutCard club={club} />
 
                 {/* Prochains Événements Preview */}
-                {events.length > 0 && (
+                {validEvents.length > 0 && (
                   <div className="space-y-2">
                     <div className="flex items-center justify-between px-1">
                       <h3 className="font-display font-bold text-sm text-[#17402C]">Prochaines sorties</h3>
@@ -231,7 +240,7 @@ export default function MobileClubDetailView({
                         <span>Voir tout →</span>
                       </button>
                     </div>
-                    {events.slice(0, 2).map((ev: any) => (
+                    {validEvents.slice(0, 2).map((ev: any) => (
                       <ClubFeaturedEventCard key={ev.id} event={ev} />
                     ))}
                   </div>
@@ -254,15 +263,15 @@ export default function MobileClubDetailView({
               <div className="space-y-3">
                 <div className="flex items-center justify-between px-1">
                   <h3 className="font-display font-bold text-sm text-[#17402C]">Sorties & Rassemblements</h3>
-                  <span className="text-[10px] font-mono text-[#5C6B5E]">{events.length} sorties</span>
+                  <span className="text-[10px] font-mono text-[#5C6B5E]">{validEvents.length} sorties</span>
                 </div>
-                {events.length === 0 ? (
+                {validEvents.length === 0 ? (
                   <div className="py-10 text-center glass bg-white/80 p-6 rounded-3xl border border-white">
                     <span className="text-3xl block mb-1">📅</span>
                     <p className="text-xs text-[#5C6B5E]">Aucune sortie programmée pour le moment.</p>
                   </div>
                 ) : (
-                  events.map((ev: any) => (
+                  validEvents.map((ev: any) => (
                     <ClubFeaturedEventCard key={ev.id} event={ev} />
                   ))
                 )}

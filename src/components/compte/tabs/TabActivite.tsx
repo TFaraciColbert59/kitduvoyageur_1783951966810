@@ -22,7 +22,7 @@ export default function TabActivite({ activities, badges, loading }: TabActivite
     <div className="space-y-6">
       {/* Badges & Récompenses rapides */}
       {earnedBadges.length > 0 && (
-        <div className="bg-white rounded-3xl p-5 sm:p-6 border border-black/[0.06] shadow-2xs">
+        <div className="glass rounded-3xl p-5 sm:p-6">
           <div className="flex items-center justify-between mb-4">
             <div>
               <h3 className="font-bold text-sm text-[#17402C] flex items-center gap-1.5">
@@ -59,7 +59,7 @@ export default function TabActivite({ activities, badges, loading }: TabActivite
       )}
 
       {/* Flux d'activité */}
-      <div className="bg-white rounded-3xl p-5 sm:p-6 border border-black/[0.06] shadow-2xs">
+      <div className="glass rounded-3xl p-5 sm:p-6">
         <div className="flex items-center justify-between mb-4">
           <h3 className="font-bold text-sm text-[#17402C] flex items-center gap-1.5">
             <span>⚡</span> Activité récente
@@ -78,7 +78,7 @@ export default function TabActivite({ activities, badges, loading }: TabActivite
             </p>
             <Link
               href="/explorer"
-              className="inline-flex items-center gap-1.5 mt-4 px-4 py-2 rounded-full bg-[#17402C] text-white text-xs font-bold  active:scale-95 transition-transform"
+              className="glass-capsule-btn primary inline-flex items-center gap-1.5 mt-4 text-xs font-bold"
             >
               <span>+ Préparer une aventure</span>
             </Link>

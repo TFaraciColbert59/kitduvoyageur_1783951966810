@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import Link from 'next/link';
@@ -155,7 +155,7 @@ function ClubFormModal({
             </h2>
             <p className="text-[var(--lkv-forest-600)] text-sm mt-1">Configurez l&apos;espace de votre communauté.</p>
           </div>
-          <button onClick={onClose} className="p-3 bg-white/40 rounded-full hover:bg-[var(--lkv-surface-muted)] text-[var(--lkv-primary)] transition-colors self-start">
+          <button onClick={onClose} className="glass-circle-btn self-start">
             <Icon name="XMarkIcon" size={20} />
           </button>
         </div>
@@ -243,7 +243,7 @@ function ClubFormModal({
                   key={opt.v} 
                   type="button" 
                   onClick={() => set('privacy', opt.v)} 
-                  className={`p-4 rounded-2xl border text-left transition-all flex flex-col items-start glass-sub-card ${form.privacy === opt.v ? '!border-[var(--lkv-secondary)]' : ''}`}
+                  className={`w-full !p-4 text-left flex flex-col items-start glass-capsule-btn ${form.privacy === opt.v ? 'primary' : ''}`}
                 >
                   <p className="text-sm font-700 text-[var(--lkv-primary)] mb-1">{opt.l}</p>
                   <p className="text-[11px] text-[var(--lkv-text-muted)]">{opt.d}</p>
@@ -499,7 +499,7 @@ function ClubDetailModal({
                 </p>
               </div>
             </div>
-            <button onClick={onClose} className="p-3 bg-black/20 hover:bg-black/40 backdrop-blur-md rounded-full transition-colors text-white">
+            <button onClick={onClose} className="glass-circle-btn">
               <Icon name="XMarkIcon" size={18} />
             </button>
           </div>
@@ -575,7 +575,7 @@ function ClubDetailModal({
                     </div>
                   )}
                   {topics.length === 0 ? (
-                    <div className="text-center py-16 border border-dashed border-[var(--lkv-primary)]/15 rounded-2xl bg-white/40">
+                    <div className="glass-sub-card text-center py-16 rounded-2xl">
                       <div className="text-5xl mb-4 opacity-50">💬</div>
                       <p className="text-[var(--lkv-primary)] font-700 text-lg mb-1">Aucune discussion</p>
                       <p className="text-[var(--lkv-text-muted)] text-sm">Soyez le premier à lancer un sujet !</p>
@@ -605,11 +605,11 @@ function ClubDetailModal({
                           </div>
                           {isAdmin && (
                             <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 bg-white/50 rounded-xl p-1">
-                              <button onClick={() => handlePinTopic(topic)} title={topic.is_pinned ? 'Désépingler' : 'Épingler'} className="p-2 rounded-lg hover:bg-white transition-colors">
-                                <Icon name="BookmarkIcon" size={15} className={topic.is_pinned ? 'text-[var(--lkv-secondary)]' : 'text-[var(--lkv-text-muted)]'} />
+                              <button onClick={() => handlePinTopic(topic)} title={topic.is_pinned ? 'Désépingler' : 'Épingler'} className="glass-circle-btn">
+                                <Icon name="bookmark" size={15} className={topic.is_pinned ? 'text-[var(--lkv-secondary)]' : 'text-[var(--lkv-text-muted)]'} />
                               </button>
-                              <button onClick={() => handleDeleteTopic(topic.id)} title="Supprimer" className="p-2 rounded-lg hover:bg-[var(--lkv-danger)]/20 transition-colors">
-                                <Icon name="TrashIcon" size={15} className="text-[var(--lkv-danger)]" />
+                              <button onClick={() => handleDeleteTopic(topic.id)} title="Supprimer" className="glass-circle-btn hover:bg-[var(--lkv-danger)]/15">
+                                <Icon name="trash2" size={15} className="text-[var(--lkv-danger)]" />
                               </button>
                             </div>
                           )}
@@ -638,7 +638,7 @@ function ClubDetailModal({
                           </div>
                         </div>
                         {isAdmin && m.user_id !== currentUserId && (
-                          <button onClick={() => handleBanMember(m)} className="p-2 rounded-full hover:bg-[var(--lkv-danger)]/20 text-[var(--lkv-text-muted)] hover:text-[var(--lkv-danger)] transition-colors" title="Bannir">
+                          <button onClick={() => handleBanMember(m)} className="glass-circle-btn hover:bg-[var(--lkv-danger)]/15 text-[var(--lkv-text-muted)] hover:text-[var(--lkv-danger)]" title="Bannir">
                             <Icon name="NoSymbolIcon" size={15} />
                           </button>
                         )}
@@ -666,7 +666,7 @@ function ClubDetailModal({
               {activeTab === 'challenges' && (
                 <div className="space-y-4">
                   {challenges.length === 0 ? (
-                    <div className="text-center py-16 border border-dashed border-[var(--lkv-primary)]/15 rounded-2xl bg-white/40">
+                    <div className="glass-sub-card text-center py-16 rounded-2xl">
                       <div className="text-5xl mb-4 opacity-50">🏆</div>
                       <p className="text-[var(--lkv-primary)] font-700 text-lg mb-1">Aucun défi en cours</p>
                     </div>
@@ -739,7 +739,7 @@ function ClubDetailModal({
                     </div>
                   )}
                   {events.length === 0 ? (
-                    <div className="text-center py-16 border border-dashed border-[var(--lkv-primary)]/15 rounded-2xl bg-white/40">
+                    <div className="glass-sub-card text-center py-16 rounded-2xl">
                       <div className="text-5xl mb-4 opacity-50">📅</div>
                       <p className="text-[var(--lkv-primary)] font-700 text-lg mb-1">Aucun événement planifié</p>
                     </div>
@@ -790,7 +790,7 @@ function ClubDetailModal({
                       <span className="glass-pill pill-warn">{pendingRequests.length}</span>
                     </h3>
                     {pendingRequests.length === 0 ? (
-                      <div className="text-center py-12 border border-dashed border-[var(--lkv-primary)]/15 rounded-2xl bg-white/40">
+                      <div className="glass-sub-card text-center py-12 rounded-2xl">
                         <p className="text-[var(--lkv-text-muted)] text-sm font-500">Aucune demande en attente pour le moment.</p>
                       </div>
                     ) : (
@@ -878,17 +878,17 @@ function ClubCard({
               <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                 <button 
                   onClick={(e) => { e.stopPropagation(); onEdit(club); }} 
-                  className="p-2 bg-white/40 hover:bg-[var(--lkv-primary)] hover:text-[var(--lkv-surface-muted)] rounded-full transition-colors text-[var(--lkv-text-muted)]"
+                  className="glass-circle-btn text-[var(--lkv-text-muted)] hover:text-[var(--lkv-primary)]"
                   title="Modifier"
                 >
-                  <Icon name="PencilIcon" size={14} />
+                  <Icon name="pencil" size={14} />
                 </button>
                 <button 
                   onClick={(e) => { e.stopPropagation(); onDelete(club); }} 
-                  className="p-2 bg-[var(--lkv-danger)]/10 hover:bg-[var(--lkv-danger)] text-[var(--lkv-danger)] hover:text-white rounded-full transition-colors"
+                  className="glass-circle-btn text-[var(--lkv-danger)] hover:bg-[var(--lkv-danger)]/15"
                   title="Supprimer"
                 >
-                  <Icon name="TrashIcon" size={14} />
+                  <Icon name="trash2" size={14} />
                 </button>
               </div>
             )}
@@ -1133,12 +1133,12 @@ export default function ClubsPage() {
     <>
       {/* ── DESKTOP ── */}
       <div className="hidden md:block">
-        <main className="h-dvh overflow-hidden bg-[var(--lkv-surface-muted)] flex flex-col">
+        <main className="h-dvh overflow-hidden bg-[rgba(238,243,236,0.74)] backdrop-blur-xl flex flex-col">
           <Header />
           <div className="flex-1 min-h-0 overflow-y-auto">
           {/* Immersive Hero Section */}
           <section className="relative pt-32 pb-20 lg:pt-40 lg:pb-32 overflow-hidden border-b border-white/5">
-            <div className="absolute inset-0 bg-[var(--lkv-surface-muted)] pointer-events-none" />
+            <div className="absolute inset-0 bg-transparent pointer-events-none" />
             <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-[var(--lkv-secondary)]/20 rounded-full blur-[120px] opacity-60 mix-blend-screen pointer-events-none animate-pulse-slow" />
             <div className="absolute -bottom-40 -left-40 w-[600px] h-[600px] bg-[var(--lkv-info)]/10 rounded-full blur-[120px] opacity-50 mix-blend-screen pointer-events-none" />
 

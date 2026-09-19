@@ -61,7 +61,7 @@ export default function ActiviteCard({ activites }: ActiviteCardProps) {
           activites.slice(0, 3).map((item) => (
             <div
               key={item.id}
-              className="flex items-center justify-between p-2 rounded-xl bg-white/70 hover:bg-white transition-all shadow-2xs border border-white/60 text-xs"
+              className="glass-sub-card flex items-center justify-between p-2 rounded-xl transition-all text-xs"
             >
               <div className="flex items-center gap-2 min-w-0">
                 {getIcon(item.icon_type)}

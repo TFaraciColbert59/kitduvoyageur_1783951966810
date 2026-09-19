@@ -81,10 +81,8 @@ export function MissingItemsDrawer({
                     type="button"
                     onClick={() => onAdvance(row)}
                     disabled={busy}
-                    className={`flex h-10 flex-1 items-center justify-center gap-1.5 rounded-full px-3 text-xs font-bold transition-transform active:scale-[0.98] disabled:opacity-50 ${
-                      row.state === 'needed'
-                        ? 'bg-[var(--lkv-primary)] text-white'
-                        : 'border border-[var(--lkv-primary)]/25 bg-white/80 text-[var(--lkv-primary)]'
+                    className={`glass-capsule-btn flex h-10 flex-1 items-center justify-center gap-1.5 px-3 text-xs font-bold transition-transform active:scale-[0.98] disabled:opacity-50 ${
+                      row.state === 'needed' ? 'primary' : ''
                     }`}
                   >
                     <Icon size={14} aria-hidden="true" />
@@ -96,7 +94,7 @@ export function MissingItemsDrawer({
                       onClick={() => onReset(row)}
                       disabled={busy}
                       aria-label="Revenir à « à ajouter »"
-                      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/70 bg-white/70 text-[var(--lkv-text-secondary)] transition-transform active:scale-[0.94] disabled:opacity-50"
+                      className="glass-circle-btn h-10 w-10 shrink-0 text-[var(--lkv-text-secondary)] transition-transform active:scale-[0.94] disabled:opacity-50"
                     >
                       <RotateCcw size={15} aria-hidden="true" />
                     </button>

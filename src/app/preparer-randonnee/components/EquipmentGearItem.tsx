@@ -70,17 +70,17 @@ export const EquipmentGearItem: React.FC<EquipmentGearItemProps> = ({
 
         <div className="gear-actions">
           {status === 'missing' && (
-            <button className="primary" onClick={onAdd}>
+            <button className="glass-capsule-btn primary" onClick={onAdd}>
               <Icon name="plus" /> J'ai cet équipement
             </button>
           )}
           {status === 'partial' && (
-            <button className="primary" onClick={onAdd}>
+            <button className="glass-capsule-btn primary" onClick={onAdd}>
               <Icon name="plus" /> Compléter
             </button>
           )}
           {onAddToCart && (
-            <button className="secondary" onClick={onAddToCart}>
+            <button className="glass-capsule-btn" onClick={onAddToCart}>
               <Icon name="bag" /> Panier
             </button>
           )}

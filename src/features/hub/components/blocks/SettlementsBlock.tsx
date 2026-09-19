@@ -53,7 +53,7 @@ export function SettlementsBlock({ trip, slug }: { trip: TripFull; slug: string 
           {settlements.map((s, i) => (
             <li
               key={`${s.fromUserId}-${s.toUserId}-${i}`}
-              className="flex items-center justify-between px-3 py-2.5 rounded-[var(--lkv-radius-md)] bg-white/35 border border-white/50"
+              className="glass-sub-card flex items-center justify-between px-3 py-2.5 rounded-[var(--lkv-radius-md)]"
             >
               <span className="text-sm text-[var(--lkv-text-primary)] truncate">
                 <strong className="font-semibold">{s.fromName}</strong> doit{' '}

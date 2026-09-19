@@ -74,17 +74,17 @@ function shortDate(iso: string | null | undefined): string {
 const ORDER: Record<TripPhase, Array<[string, 3 | 4 | 6 | 8]>> = {
   prepare: [
     ['itinerary', 8], ['gear', 4], ['budget', 4], ['groupe', 4], ['checklist', 4],
-    ['docs', 3], ['safety', 3], ['journal', 3], ['context', 3],
+    ['docs', 3], ['safety', 3], ['journal', 3], ['context', 3], ['progression', 3],
   ],
   live: [
     ['cockpit', 8], ['safety', 4], ['itinerary', 8], ['gear', 4],
     ['journal', 4], ['groupe', 4], ['budget', 4],
-    ['checklist', 3], ['docs', 3], ['context', 3],
+    ['checklist', 3], ['docs', 3], ['context', 3], ['progression', 3],
   ],
   recount: [
     ['raconter', 8], ['context', 4], ['itinerary', 8], ['gear', 4],
     ['journal', 4], ['groupe', 4], ['budget', 4],
-    ['checklist', 3], ['docs', 3], ['safety', 3],
+    ['checklist', 3], ['docs', 3], ['safety', 3], ['progression', 3],
   ],
 };
 
@@ -97,9 +97,9 @@ const FIT_ROWS: Record<TripPhase, string> = {
 
 /** Cartes secondaires : hors bento mobile, regroupées dans « Plus de sections ». */
 const MOBILE_SECONDARY: Record<TripPhase, string[]> = {
-  prepare: ['safety', 'journal', 'docs', 'context'],
-  live: ['checklist', 'docs', 'context'],
-  recount: ['docs', 'safety', 'checklist'],
+  prepare: ['safety', 'journal', 'docs', 'context', 'progression'],
+  live: ['checklist', 'docs', 'context', 'progression'],
+  recount: ['docs', 'safety', 'checklist', 'progression'],
 };
 
 const PHASE_LABELS: Record<TripPhase, string> = {
@@ -812,6 +812,22 @@ export function SortieMenu({
               </li>
             )}
           </ul>
+        </MenuCard>
+      ),
+    },
+    progression: {
+      span: 3,
+      node: (
+        <MenuCard href="/progression" label="Ma progression">
+          <div className="mt-1 flex items-center justify-between">
+            <div>
+              <p className="text-xs font-bold text-[var(--lkv-text-primary)]">Rang & Défis</p>
+              <p className="text-[11px] text-[var(--lkv-text-secondary)]">Classement local</p>
+            </div>
+            <span className="rounded-full bg-[var(--lkv-primary)]/10 px-2 py-0.5 font-mono text-[11px] font-bold text-[var(--lkv-primary)]">
+              Voir →
+            </span>
+          </div>
         </MenuCard>
       ),
     },

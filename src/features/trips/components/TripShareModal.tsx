@@ -71,10 +71,8 @@ export function TripShareModal({ trip, isOpen, onClose }: TripShareModalProps) {
               type="button"
               disabled={!isOwner || isPending}
               onClick={() => handleVisibilityChange('private')}
-              className={`p-3 rounded-xl border text-left transition-all ${
-                visibility === 'private'
-                  ? 'bg-[var(--lkv-primary)] text-white border-[var(--lkv-primary)] shadow-sm'
-                  : 'glass-sub-card border border-white/60 text-[var(--lkv-text-primary)] hover:bg-white shadow-2xs'
+              className={`glass-capsule-btn w-full !justify-start !rounded-2xl !p-3 text-left transition-all disabled:opacity-60 ${
+                visibility === 'private' ? 'primary shadow-sm' : ''
               }`}
             >
               <div className="flex items-center gap-1.5 font-bold text-xs">
@@ -92,10 +90,8 @@ export function TripShareModal({ trip, isOpen, onClose }: TripShareModalProps) {
               type="button"
               disabled={!isOwner || isPending}
               onClick={() => handleVisibilityChange('unlisted')}
-              className={`p-3 rounded-xl border text-left transition-all ${
-                visibility === 'unlisted'
-                  ? 'bg-[var(--lkv-primary)] text-white border-[var(--lkv-primary)] shadow-sm'
-                  : 'glass-sub-card border border-white/60 text-[var(--lkv-text-primary)] hover:bg-white shadow-2xs'
+              className={`glass-capsule-btn w-full !justify-start !rounded-2xl !p-3 text-left transition-all disabled:opacity-60 ${
+                visibility === 'unlisted' ? 'primary shadow-sm' : ''
               }`}
             >
               <div className="flex items-center gap-1.5 font-bold text-xs">
@@ -113,10 +109,8 @@ export function TripShareModal({ trip, isOpen, onClose }: TripShareModalProps) {
               type="button"
               disabled={!isOwner || isPending}
               onClick={() => handleVisibilityChange('public')}
-              className={`p-3 rounded-xl border text-left transition-all ${
-                visibility === 'public'
-                  ? 'bg-[var(--lkv-primary)] text-white border-[var(--lkv-primary)] shadow-sm'
-                  : 'glass-sub-card border border-white/60 text-[var(--lkv-text-primary)] hover:bg-white shadow-2xs'
+              className={`glass-capsule-btn w-full !justify-start !rounded-2xl !p-3 text-left transition-all disabled:opacity-60 ${
+                visibility === 'public' ? 'primary shadow-sm' : ''
               }`}
             >
               <div className="flex items-center gap-1.5 font-bold text-xs">

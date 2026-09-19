@@ -103,10 +103,10 @@ export default function KitsPage() {
           <main className="h-full overflow-y-auto max-w-[var(--page-max-w)] mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-20">
             <header className="mb-8">
               <Eyebrow>Kits Prêts à Partir</Eyebrow>
-              <h1 className="font-display font-bold text-4xl text-[var(--lkv-primary)] mt-1 mb-3">
+              <h1 className="font-display font-bold text-4xl text-[#EEF3EC] mt-1 mb-3">
                 Kits de voyage
               </h1>
-              <p className="text-[var(--lkv-text-muted)] max-w-2xl text-base">
+              <p className="text-[#CCE0D4] max-w-2xl text-base">
                 Découvrez nos kits complets et optimisés pour chaque destination. Équipement
                 sélectionné, testé et prêt à partir.
               </p>
@@ -150,7 +150,7 @@ export default function KitsPage() {
             <header className="flex items-center justify-between gap-2">
               <div>
                 <Eyebrow>Kits Prêts à Partir</Eyebrow>
-                <h1 className="font-display font-bold text-[24px] tracking-tight text-[var(--lkv-primary)]">
+                <h1 className="font-display font-bold text-[24px] tracking-tight text-[#EEF3EC]">
                   Kits de voyage
                 </h1>
               </div>
@@ -162,7 +162,7 @@ export default function KitsPage() {
               </Link>
             </header>
 
-            <p className="text-xs text-[var(--lkv-text-muted)] leading-relaxed">
+            <p className="text-xs text-[#CCE0D4] leading-relaxed">
               Kits complets et optimisés pour chaque destination. Équipement sélectionné, testé et
               prêt à partir.
             </p>

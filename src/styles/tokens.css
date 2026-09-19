@@ -21,7 +21,11 @@
   --lkv-secondary-subtle: #D8E5D5;
   --lkv-secondary-rgb: 91, 127, 85;
 
-  /* TOILE UNIQUE LKDV — fond uni plat légèrement teinté vert doux (directive fond) */
+  /* TOILE UNIQUE LKDV — fond d'écran applicatif unique (image marbrée vert forêt),
+     appliqué à toutes les routes via .lkv-app-background (cf. tailwind.css). */
+  --lkv-app-bg-image: url('/assets/images/app-background.jpg');
+  --lkv-app-bg-fallback: #1C3B2A;
+
   --lkv-surface: #EEF3EC;
   --lkv-surface-paper: #EEF3EC;
   --lkv-surface-card: #FFFFFF;
@@ -217,27 +221,31 @@
   --warning-bg: var(--lkv-warning-bg);
 }
 
-/* Liquid Glass: one material scale, shared across all routes. */
+/* Liquid Glass: one material scale, shared across all routes.
+   Les valeurs --glass-* sont reliées aux tokens --card-* (STYLE UNIQUE) :
+   modifier --card-* met à jour toutes les cards du site. */
 :root {
-  --glass-solid: var(--lkv-surface);
-  --glass-text: var(--lkv-primary);
-  --glass-text-secondary: #365233;
-  --glass-bg-light: rgba(238, 243, 236, 0.70);
-  --glass-bg-medium: rgba(238, 243, 236, 0.82);
-  --glass-bg-strong: rgba(238, 243, 236, 0.94);
+  --glass-solid: var(--card-tint-solid);
+  --glass-text: var(--card-content);
+  --glass-text-secondary: rgba(255, 255, 255, 0.82);
+  /* Toile image : les remplissages verre sont renforcés pour rester lisibles
+     sur la marbrure sombre (contraste texte sombre sur verre clair). */
+  --glass-bg-light: rgba(238, 243, 236, 0.80);
+  --glass-bg-medium: var(--card-tint);
+  --glass-bg-strong: var(--card-tint-strong);
   --glass-bg-dark: rgba(11, 31, 23, 0.90);
-  --glass-subtle-fill: rgba(238, 243, 236, 0.62);
-  --glass-border: rgba(23, 64, 44, 0.18);
-  --glass-rim: rgba(255, 255, 255, 0.72);
-  --glass-radius: var(--lkv-radius-card);
-  --glass-blur-sm: 6px;
-  --glass-blur-md: 10px;
-  --glass-blur-lg: 14px;
-  --glass-sat: 115%;
-  --glass-shadow: inset 0 1px 0 var(--glass-rim), 0 4px 16px -6px rgba(11, 31, 23, 0.14);
-  --glass-shadow-elevated: inset 0 1px 0 var(--glass-rim), 0 12px 32px -12px rgba(11, 31, 23, 0.23);
-  --glass-highlight-top: linear-gradient(100deg, transparent, var(--glass-rim) 24%, transparent 82%);
-  --glass-sheen: radial-gradient(100% 70% at 18% 0%, rgba(255, 255, 255, 0.16), transparent 70%);
+  --glass-subtle-fill: rgba(238, 243, 236, 0.78);
+  --glass-border: rgba(23, 64, 44, 0.22);
+  --glass-rim: rgba(255, 255, 255, 0.85);
+  --glass-radius: var(--card-radius);
+  --glass-blur-sm: var(--card-blur);
+  --glass-blur-md: 16px;
+  --glass-blur-lg: 20px;
+  --glass-sat: var(--card-saturate);
+  --glass-shadow: var(--card-shadow);
+  --glass-shadow-elevated: var(--card-shadow-elevated);
+  --glass-highlight-top: linear-gradient(100deg, transparent, var(--glass-rim) 22%, transparent 84%);
+  --glass-sheen: radial-gradient(100% 70% at 18% 0%, rgba(255, 255, 255, 0.22), transparent 70%);
   --glass-edge-light: var(--glass-highlight-top);
   --glass-highlight-radial: var(--glass-sheen);
   --glass-tint-sage: var(--glass-bg-medium);
@@ -263,6 +271,41 @@
   --color-glass-forest: #17402C;
   --color-glass-sage:   #5B7F55;
   --color-glass-stone:  #FAF8F5;
+
+  /* ════════════════════════════════════════════════════════════════
+     BOUTONS — STYLE UNIQUE (référence section 4 « Référence photo »)
+     Source de vérité unique : modifier UNE valeur ici met à jour
+     TOUS les boutons du site (classes CSS + composants React).
+     ════════════════════════════════════════════════════════════════ */
+  --btn-tint: rgba(255, 255, 255, 0.2);            /* teinte du verre (référence photo) */
+  --btn-tint-solid: #17402C;                        /* primaire / actif / publier */
+  --btn-blur: 6px;                                  /* flou du verre */
+  --btn-saturate: 160%;                             /* saturation du verre */
+  --btn-content: #FFFFFF;                           /* couleur du contenu (texte + icônes) */
+  --btn-text-shadow: 0 1px 3px rgba(11, 31, 23, 0.45);
+  --btn-shadow: 0 4px 14px rgba(11, 31, 23, 0.16), 0 1px 3px rgba(11, 31, 23, 0.1);
+  --btn-radius: 999px;                              /* rayon des pilules */
+  --btn-font-size: 12px;
+  --btn-font-weight: 600;
+  --btn-press-scale: 0.97;                          /* feedback d'appui */
+  --btn-disabled-opacity: 0.45;
+
+  /* ════════════════════════════════════════════════════════════════
+     CARDS — STYLE UNIQUE (100% identique aux boutons)
+     Même matériau que --btn-* : verre blanc 0.20, blur 6, sat 160,
+     ombre identique, contenu blanc. Seul le rayon diffère (28px).
+     Modifier UNE valeur ici met à jour TOUTES les cards du site.
+     ════════════════════════════════════════════════════════════════ */
+  --card-tint: rgba(255, 255, 255, 0.2);            /* = --btn-tint */
+  --card-tint-strong: rgba(255, 255, 255, 0.42);    /* cards élevées / panneaux */
+  --card-tint-solid: #EEF3EC;                       /* repli opaque (a11y) */
+  --card-blur: 6px;                                 /* = --btn-blur */
+  --card-saturate: 160%;                            /* = --btn-saturate */
+  --card-radius: 28px;                              /* rayon des cards */
+  --card-content: #FFFFFF;                          /* = --btn-content */
+  --card-border: transparent;                       /* liserés seuls (comme les boutons) */
+  --card-shadow: 0 4px 14px rgba(11, 31, 23, 0.16), 0 1px 3px rgba(11, 31, 23, 0.1); /* = --btn-shadow */
+  --card-shadow-elevated: 0 10px 28px rgba(11, 31, 23, 0.2), 0 2px 6px rgba(11, 31, 23, 0.12);
 }
 .dark {
   --glass-solid: #17241d;

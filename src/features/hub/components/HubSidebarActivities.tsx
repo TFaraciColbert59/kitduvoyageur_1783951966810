@@ -60,28 +60,21 @@ export function HubSidebarActivities({ trips, activeSlug = null }: HubSidebarAct
                 type="button"
                 onClick={() => open(t)}
                 aria-current={current ? 'true' : undefined}
-                className={`group w-full min-h-[44px] flex items-center gap-2.5 rounded-lg text-left cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)] ${
-                  current ? 'bg-white/70' : 'hover:bg-white/60'
+                className={`glass-capsule-btn group w-full !justify-start !gap-2.5 !rounded-lg !px-2.5 min-h-[44px] text-left cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)] ${
+                  current ? 'primary' : ''
                 }`}
               >
-                <span
-                  aria-hidden="true"
-                  className={`shrink-0 ${current ? 'text-[var(--lkv-primary)]' : 'text-[var(--lkv-text-muted)]'}`}
-                >
+                <span aria-hidden="true" className="shrink-0">
                   <Icon name="compass" size={16} />
                 </span>
-                <span
-                  className={`flex-1 min-w-0 truncate text-[13px] font-semibold ${
-                    current ? 'text-[var(--lkv-primary)]' : 'text-[var(--lkv-text-primary)]'
-                  }`}
-                >
+                <span className="flex-1 min-w-0 truncate text-[13px] font-semibold">
                   {t.title}
                 </span>
                 {current && (
                   <Icon
                     name="check"
                     size={12}
-                    className="shrink-0 text-[var(--lkv-primary)]"
+                    className="shrink-0"
                     aria-label="Aventure active"
                   />
                 )}

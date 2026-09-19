@@ -39,6 +39,7 @@ import HubSidebarRight from './HubSidebarRight';
 import { HubNetworkStatus } from './HubNetworkStatus';
 import { HubRealtimeRefresh } from './HubRealtimeRefresh';
 import { ActivityLiveBridge } from './live/ActivityLiveBridge';
+import { MarbleZone } from '@/components/glass/MarbleZone';
 import type { HubUserTripLite } from '../server/getHubAdventureData';
 
 export interface HubShellProps {
@@ -258,6 +259,7 @@ export function HubShell({
 
   return (
     <>
+      <MarbleZone />
       {/* T10 — un seul pont realtime du voyage actif pour TOUTE la surface hub
           (racine + sections) : le rail et les reveals le consomment. */}
       <ActivityLiveBridge tripId={adventure.nature === 'sortie' ? adventure.id : null} />

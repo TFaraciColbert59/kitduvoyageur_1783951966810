@@ -13,7 +13,7 @@ export default function CommunauteProPage() {
     <>
       {/* DESKTOP */}
       <div className="hidden md:block">
-        <div className="min-h-screen bg-[#EEF3EC] text-[#17402C]">
+        <div className="min-h-screen bg-transparent text-[#17402C]">
           <Header />
           <main className="pt-24 pb-20 max-w-4xl mx-auto px-4 text-center">
             <div className="glass p-8 sm:p-12 rounded-3xl">
@@ -38,7 +38,7 @@ export default function CommunauteProPage() {
                     key={t.id}
                     onClick={() => setActiveTab(t.id as any)}
                     className={`glass-capsule-btn py-2.5 px-4 text-xs font-bold ${
-                      activeTab === t.id ? 'active text-[#17402C]' : 'text-[#365233]'
+                      activeTab === t.id ? 'primary' : ''
                     }`}
                   >
                     {t.label}
@@ -58,9 +58,9 @@ export default function CommunauteProPage() {
             <h1 style={{ fontSize: '20px', fontWeight: 800, color: '#17402C', marginBottom: '8px' }}>Communauté Pro</h1>
             <p style={{ fontSize: '13px', color: 'rgba(23,64,44,0.6)', marginBottom: '16px' }}>Forum, Q&amp;A et fiches d&apos;expédition.</p>
             <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
-              <button onClick={() => setActiveTab('forum')} style={{ padding: '8px 14px', borderRadius: '8px', background: activeTab === 'forum' ? '#17402C' : '#F4F1EA', color: activeTab === 'forum' ? 'white' : 'rgba(23,64,44,0.6)', border: 'none', fontSize: '12px', cursor: 'pointer' }}>Forum</button>
-              <button onClick={() => setActiveTab('qa')} style={{ padding: '8px 14px', borderRadius: '8px', background: activeTab === 'qa' ? '#17402C' : '#F4F1EA', color: activeTab === 'qa' ? 'white' : 'rgba(23,64,44,0.6)', border: 'none', fontSize: '12px', cursor: 'pointer' }}>Q&A</button>
-              <button onClick={() => setActiveTab('fiches')} style={{ padding: '8px 14px', borderRadius: '8px', background: activeTab === 'fiches' ? '#17402C' : '#F4F1EA', color: activeTab === 'fiches' ? 'white' : 'rgba(23,64,44,0.6)', border: 'none', fontSize: '12px', cursor: 'pointer' }}>Fiches</button>
+              <button onClick={() => setActiveTab('forum')} className={`glass-capsule-btn ${activeTab === 'forum' ? 'primary' : ''}`}>Forum</button>
+              <button onClick={() => setActiveTab('qa')} className={`glass-capsule-btn ${activeTab === 'qa' ? 'primary' : ''}`}>Q&A</button>
+              <button onClick={() => setActiveTab('fiches')} className={`glass-capsule-btn ${activeTab === 'fiches' ? 'primary' : ''}`}>Fiches</button>
             </div>
             <p style={{ textAlign: 'center', color: 'rgba(23,64,44,0.5)', padding: '20px' }}>Contenu à venir.</p>
           </div>

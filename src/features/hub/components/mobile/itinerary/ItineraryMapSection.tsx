@@ -78,7 +78,7 @@ export function ItineraryMapSection({
             type="button"
             onClick={onClearPick}
             aria-label="Annuler le point choisi"
-            className="glass-sub-card inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[var(--lkv-text-muted)]"
+            className="glass-circle-btn h-11 w-11 shrink-0"
           >
             <X size={16} aria-hidden="true" />
           </button>

@@ -5,7 +5,6 @@ import { SearchIcon as SearchAnimated } from '@/components/icons/search';
 import { RotateCCWIcon as RotateCcwAnimated } from '@/components/icons/rotate-ccw';
 import LkvButton from '@/components/ui/LkvButton';
 import LkvChip from '@/components/ui/LkvChip';
-import { getDifficultyColor } from './types';
 
 export interface PoiFilterItem {
   id: string;
@@ -86,7 +85,7 @@ export default function ExplorerFilterPanel({
             <button
               type="button"
               onClick={() => onSearchChange?.('')}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-black/10 hover:bg-black/20 flex items-center justify-center text-[#17402C] text-[10px] cursor-pointer"
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8 text-[10px] cursor-pointer"
             >
               ✕
             </button>
@@ -118,9 +117,8 @@ export default function ExplorerFilterPanel({
                 type="button"
                 onClick={() => onToggleDifficulty(d)}
                 className={`glass-capsule-btn !py-1 !px-3 text-[10.5px] font-bold transition-all cursor-pointer ${
-                  active ? '!text-white !border-transparent shadow-xs scale-105' : 'hover:scale-105'
+                  active ? 'primary shadow-xs scale-105' : 'hover:scale-105'
                 }`}
-                style={active ? { backgroundColor: getDifficultyColor(d) } : {}}
               >
                 {d}
               </button>
@@ -198,9 +196,8 @@ export default function ExplorerFilterPanel({
                 type="button"
                 onClick={() => onTogglePoiCategory?.(poi.id)}
                 className={`glass-capsule-btn !py-1 !px-3 text-[10.5px] font-bold transition-all cursor-pointer ${
-                  active ? '!text-white !border-transparent shadow-xs scale-105' : 'hover:scale-105'
+                  active ? 'primary shadow-xs scale-105' : 'hover:scale-105'
                 }`}
-                style={active ? { backgroundColor: poi.color } : {}}
               >
                 <span>{poi.label}</span>
               </button>

@@ -25,7 +25,7 @@ export const EquipmentOkItem: React.FC<EquipmentOkItemProps> = ({ label, qty, on
         <Icon name="check" />
       </div>
       {onAddToCart && (
-        <button className="cart-btn" onClick={onAddToCart}>
+        <button className="glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8" onClick={onAddToCart}>
           <Icon name="bag" />
         </button>
       )}

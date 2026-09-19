@@ -9,7 +9,7 @@ import StripCTA from '@/components/home/StripCTA';
 
 export default function MobileHomePage() {
   return (
-    <div style={{ background: '#EEF3EC', minHeight: '100dvh' }}>
+    <div style={{ background: 'transparent', minHeight: '100dvh' }}>
       <HomeHeroSection />
       <QuickGrid />
       <EditorialCard

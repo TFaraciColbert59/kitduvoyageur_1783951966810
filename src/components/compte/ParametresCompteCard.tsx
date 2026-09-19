@@ -347,16 +347,16 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
                 <button
                   key={item.id}
                   onClick={() => setActiveSection(item.id as typeof activeSection)}
-                  className={`w-full p-3 rounded-xl font-bold text-xs transition-all flex items-center justify-between ${
+                  className={`w-full text-xs font-semibold transition-all flex items-center justify-between glass-capsule-btn ${
                     isActive
-                      ? 'bg-[#17402C] text-white shadow-md'
+                      ? 'primary'
                       : item.danger
-                      ? 'text-[#A8443A] hover:bg-[#A8443A]/10'
-                      : 'text-[#17402C] hover:bg-white/60'
+                      ? 'danger'
+                      : ''
                   }`}
                 >
                   <div className="flex items-center gap-3">
-                    <span className={isActive ? 'text-[#A6C1A0]' : 'text-[#5A7064]'}>
+                    <span>
                       <Icon name={item.icon as any} size={16} />
                     </span>
                     <span>{item.label}</span>
@@ -378,7 +378,7 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
           <div className="pt-3 border-t border-[#17402C]/5 text-center">
             <button
               onClick={handleExportData}
-              className="text-xs font-mono font-bold text-[#5B7F55] hover:underline"
+              className="glass-capsule-btn !py-1.5 !px-3 !min-h-0 text-xs font-mono font-bold"
             >
               Export des données (.JSON)
             </button>
@@ -427,7 +427,7 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
                         setAvatarUrl('https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80');
                         markDirty();
                       }}
-                      className="text-xs font-semibold text-[#A8443A] hover:underline"
+                      className="glass-capsule-btn danger !py-1.5 !px-3 !min-h-0 text-xs font-semibold"
                     >
                       Réinitialiser
                     </button>
@@ -681,10 +681,8 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
                           setProfileVisibility(mode);
                           markDirty();
                         }}
-                        className={`p-3 rounded-2xl border text-center font-bold capitalize transition-all ${
-                          profileVisibility === mode
-                            ? 'bg-[#17402C] text-white border-[#17402C] shadow-md'
-                            : 'glass-sub-card text-[#5A7064] hover:text-[#17402C]'
+                        className={`glass-capsule-btn !min-h-0 !min-w-0 w-full !p-3 text-center font-bold capitalize transition-all ${
+                          profileVisibility === mode ? 'primary' : ''
                         }`}
                       >
                         {mode === 'public' ? '🌐 Public' : mode === 'membres' ? '👥 Membres' : '🔒 Privé'}
@@ -704,10 +702,8 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
                           setTripsVisibility(mode);
                           markDirty();
                         }}
-                        className={`p-3 rounded-2xl border text-center font-bold capitalize transition-all ${
-                          tripsVisibility === mode
-                            ? 'bg-[#17402C] text-white border-[#17402C] shadow-md'
-                            : 'glass-sub-card text-[#5A7064] hover:text-[#17402C]'
+                        className={`glass-capsule-btn !min-h-0 !min-w-0 w-full !p-3 text-center font-bold capitalize transition-all ${
+                          tripsVisibility === mode ? 'primary' : ''
                         }`}
                       >
                         {mode === 'public' ? '🌐 Public' : mode === 'membres' ? '👥 Membres' : '🔒 Privé'}
@@ -727,10 +723,8 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
                           setGearVisibility(mode);
                           markDirty();
                         }}
-                        className={`p-3 rounded-2xl border text-center font-bold capitalize transition-all ${
-                          gearVisibility === mode
-                            ? 'bg-[#17402C] text-white border-[#17402C] shadow-md'
-                            : 'glass-sub-card text-[#5A7064] hover:text-[#17402C]'
+                        className={`glass-capsule-btn !min-h-0 !min-w-0 w-full !p-3 text-center font-bold capitalize transition-all ${
+                          gearVisibility === mode ? 'primary' : ''
                         }`}
                       >
                         {mode === 'public' ? '🌐 Public' : mode === 'membres' ? '👥 Membres' : '🔒 Privé'}
@@ -829,14 +823,12 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
                         setLanguage(lang.code as typeof language);
                         markDirty();
                       }}
-                      className={`p-3.5 rounded-2xl border text-left transition-all ${
-                        language === lang.code
-                          ? 'bg-[#17402C] border-[#17402C] text-white shadow-md'
-                          : 'glass-sub-card text-[#5A7064] hover:text-[#17402C]'
+                      className={`glass-capsule-btn !min-h-0 !min-w-0 w-full !p-3.5 text-left transition-all ${
+                        language === lang.code ? 'primary' : ''
                       }`}
                     >
                       <span className="font-bold text-sm block">{lang.code} • {lang.name}</span>
-                      <span className={`text-[11px] block mt-0.5 ${language === lang.code ? 'text-[#A6C1A0]' : 'text-[#5A7064]'}`}>{lang.sub}</span>
+                      <span className="text-[11px] block mt-0.5 opacity-80">{lang.sub}</span>
                     </button>
                   ))}
                 </div>
@@ -1051,7 +1043,7 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
                   {activeSessions.length > 1 && (
                     <button
                       onClick={handleDisconnectAllOthers}
-                      className="text-xs font-semibold text-[#A8443A] hover:underline"
+                      className="glass-capsule-btn danger !py-1.5 !px-3 !min-h-0 text-xs font-semibold"
                     >
                       Se déconnecter de tous les autres appareils
                     </button>
@@ -1086,7 +1078,7 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
                       {!sess.isCurrent && (
                         <button
                           onClick={() => handleDisconnectSession(sess.id)}
-                          className="px-3 py-1.5 text-xs font-bold text-[#A8443A] bg-[#A8443A]/10 hover:bg-[#A8443A]/20 rounded-xl transition-colors"
+                          className="glass-capsule-btn danger !py-1.5 !px-3 !min-h-0 text-xs font-bold transition-colors"
                         >
                           Déconnecter
                         </button>
@@ -1160,14 +1152,14 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
                 setIsDirty(false);
                 setDirtyCount(0);
               }}
-              className="text-xs font-semibold text-white/70 hover:underline"
+              className="glass-capsule-btn !py-1.5 !px-3 !min-h-0 text-xs font-bold"
             >
               Annuler
             </button>
             <button
               onClick={handleSaveAll}
               disabled={saving}
-              className="glass-capsule-btn primary text-xs font-bold !bg-white !text-[#17402C]"
+              className="glass-capsule-btn text-xs font-bold"
             >
               {saving ? 'Enregistrement…' : 'Enregistrer tout'}
             </button>

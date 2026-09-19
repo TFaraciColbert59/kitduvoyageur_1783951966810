@@ -191,7 +191,7 @@ export function TripTeamView({ trip }: TripTeamViewProps) {
                       onClick={() => requestRemove(collab.id, name)}
                       disabled={isPending}
                       title="Retirer de l'expédition"
-                      className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-full glass-sub-card border border-white/60 text-[var(--lkv-danger)] hover:bg-[var(--lkv-danger)]/10 hover:text-[var(--lkv-danger)] transition-all shadow-2xs"
+                      className="glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8 flex items-center justify-center disabled:opacity-60 transition-all"
                     >
                       <Icon name="trash2" size={16} />
                     </button>
@@ -218,7 +218,7 @@ export function TripTeamView({ trip }: TripTeamViewProps) {
               <button
                 onClick={() => setIsInviteOpen(false)}
                 aria-label="Fermer"
-                className="w-8 h-8 rounded-full glass-sub-card border border-white/60 flex items-center justify-center text-[var(--lkv-text-secondary)] hover:text-[var(--lkv-text-primary)] hover:bg-white transition-all cursor-pointer shadow-2xs"
+                className="glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8 flex items-center justify-center transition-all cursor-pointer"
               >
                 <Icon name="x" size={18} />
               </button>

@@ -54,19 +54,19 @@ function ToolPoidssSac() {
 
   return (
     <div className="space-y-6">
-      <div className="bg-card border border-border rounded-2xl p-6">
+      <div className="glass rounded-2xl p-6">
         <p className="font-mono text-[10px] text-muted-foreground uppercase tracking-widest mb-2" style={{ fontFamily: 'var(--font-mono)' }}>POIDS TOTAL DU SAC</p>
         <WeightGauge weightG={totalG} maxG={20000} size="lg" />
         <div className="mt-3 grid grid-cols-3 gap-3 text-center">
-          <div className="bg-background rounded-lg p-2 border border-border">
+          <div className="glass-sub-card rounded-lg p-2">
             <p className="font-mono text-[10px] text-muted-foreground" style={{ fontFamily: 'var(--font-mono)' }}>TOTAL</p>
             <p className="font-mono font-700 text-info" style={{ fontFamily: 'var(--font-mono)' }}>{totalG >= 1000 ? `${(totalG / 1000).toFixed(2)} kg` : `${totalG} g`}</p>
           </div>
-          <div className="bg-background rounded-lg p-2 border border-border">
+          <div className="glass-sub-card rounded-lg p-2">
             <p className="font-mono text-[10px] text-muted-foreground" style={{ fontFamily: 'var(--font-mono)' }}>ARTICLES</p>
             <p className="font-mono font-700 text-foreground" style={{ fontFamily: 'var(--font-mono)' }}>{categories.flatMap((c) => c.items).length}</p>
           </div>
-          <div className="bg-background rounded-lg p-2 border border-border">
+          <div className="glass-sub-card rounded-lg p-2">
             <p className="font-mono text-[10px] text-muted-foreground" style={{ fontFamily: 'var(--font-mono)' }}>CATÉGORIES</p>
             <p className="font-mono font-700 text-foreground" style={{ fontFamily: 'var(--font-mono)' }}>{categories.filter((c) => c.items.length > 0).length}</p>
           </div>
@@ -74,7 +74,7 @@ function ToolPoidssSac() {
       </div>
 
       {/* Add item */}
-      <div className="bg-card border border-border rounded-2xl p-5">
+      <div className="glass rounded-2xl p-5">
         <h3 className="font-display font-700 text-base mb-4" style={{ fontFamily: 'var(--font-display)' }}>Ajouter un article</h3>
         <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
           <select
@@ -105,7 +105,7 @@ function ToolPoidssSac() {
               style={{ fontFamily: 'var(--font-mono)' }}
               onKeyDown={(e) => e.key === 'Enter' && addItem()}
             />
-            <button onClick={addItem} className="btn-primary px-4 py-2.5 text-sm" aria-label="Ajouter">+</button>
+            <button onClick={addItem} className="glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8" aria-label="Ajouter">+</button>
           </div>
         </div>
       </div>
@@ -115,7 +115,7 @@ function ToolPoidssSac() {
         {categories.filter((c) => c.items.length > 0).map((cat) => {
           const catTotal = cat.items.reduce((s, i) => s + i.poids_g, 0);
           return (
-            <div key={cat.id} className="bg-card border border-border rounded-xl p-4">
+            <div key={cat.id} className="glass rounded-xl p-4">
               <div className="flex items-center justify-between mb-3">
                 <span className="font-medium text-sm">{cat.icon} {cat.nom}</span>
                 <span className="font-mono text-xs text-info" style={{ fontFamily: 'var(--font-mono)' }}>{catTotal} g</span>
@@ -127,7 +127,7 @@ function ToolPoidssSac() {
                     <span className="text-muted-foreground">{item.nom}</span>
                     <div className="flex items-center gap-3">
                       <span className="font-mono text-info" style={{ fontFamily: 'var(--font-mono)' }}>{item.poids_g} g</span>
-                      <button onClick={() => removeItem(cat.id, idx)} className="text-muted-foreground hover:text-red-400 transition-colors" aria-label={`Supprimer ${item.nom}`}>×</button>
+                      <button onClick={() => removeItem(cat.id, idx)} className="glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8" aria-label={`Supprimer ${item.nom}`}>×</button>
                     </div>
                   </div>
                 ))}
@@ -165,19 +165,19 @@ function ToolBudget() {
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-2 gap-4">
-        <div className="bg-card border border-border rounded-xl p-4">
+        <div className="glass rounded-xl p-4">
           <label className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider block mb-2" style={{ fontFamily: 'var(--font-mono)' }}>DURÉE (jours)</label>
           <input type="number" min={1} max={365} value={jours} onChange={(e) => setJours(Math.max(1, parseInt(e.target.value) || 1))}
             className="w-full px-3 py-2 rounded-lg bg-background border border-border font-mono text-lg font-700 focus:outline-none focus:border-primary" style={{ fontFamily: 'var(--font-mono)' }} />
         </div>
-        <div className="bg-card border border-border rounded-xl p-4">
+        <div className="glass rounded-xl p-4">
           <label className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider block mb-2" style={{ fontFamily: 'var(--font-mono)' }}>PERSONNES</label>
           <input type="number" min={1} max={20} value={personnes} onChange={(e) => setPersonnes(Math.max(1, parseInt(e.target.value) || 1))}
             className="w-full px-3 py-2 rounded-lg bg-background border border-border font-mono text-lg font-700 focus:outline-none focus:border-primary" style={{ fontFamily: 'var(--font-mono)' }} />
         </div>
       </div>
 
-      <div className="bg-card border border-border rounded-2xl p-6">
+      <div className="glass rounded-2xl p-6">
         <h3 className="font-display font-700 text-base mb-4" style={{ fontFamily: 'var(--font-display)' }}>Budget par jour / personne (€)</h3>
         <div className="space-y-3">
           {postes.map((poste, idx) => (
@@ -205,7 +205,7 @@ function ToolBudget() {
           { label: `PAR JOUR (×${personnes})`, value: `${(totalParJour * personnes).toFixed(0)} €`, color: 'text-accent' },
           { label: `TOTAL ${jours}J`, value: `${totalVoyage.toFixed(0)} €`, color: 'text-primary' },
         ].map((stat) => (
-          <div key={stat.label} className="bg-card border border-border rounded-xl p-4 text-center">
+          <div key={stat.label} className="glass rounded-xl p-4 text-center">
             <p className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider mb-1" style={{ fontFamily: 'var(--font-mono)' }}>{stat.label}</p>
             <p className={`font-mono font-700 text-2xl ${stat.color}`} style={{ fontFamily: 'var(--font-mono)' }}>{stat.value}</p>
           </div>
@@ -262,16 +262,16 @@ function ToolConvertisseur() {
 
   return (
     <div className="space-y-5">
-      <div className="flex gap-1 bg-card rounded-lg p-1 border border-border flex-wrap">
+      <div className="flex gap-1 glass rounded-lg p-1 flex-wrap">
         {(Object.keys(conversions) as (keyof typeof conversions)[]).map((t) => (
           <button key={t} onClick={() => setTab(t as 'distance' | 'poids' | 'temperature' | 'devises')}
-            className={`flex-1 min-w-[80px] px-3 py-2 rounded-md text-xs font-medium transition-all capitalize ${tab === t ? 'bg-primary text-white' : 'text-muted-foreground hover:text-foreground'}`}>
+            className={`glass-capsule-btn flex-1 min-w-[80px] text-xs font-medium capitalize ${tab === t ? 'primary' : ''}`}>
             {conversions[t].label}
           </button>
         ))}
       </div>
 
-      <div className="bg-card border border-border rounded-xl p-4">
+      <div className="glass rounded-xl p-4">
         <label className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider block mb-2" style={{ fontFamily: 'var(--font-mono)' }}>VALEUR À CONVERTIR</label>
         <input type="number" value={value} onChange={(e) => setValue(e.target.value)}
           className="w-full px-4 py-3 rounded-lg bg-background border border-border font-mono text-xl font-700 focus:outline-none focus:border-primary"
@@ -284,7 +284,7 @@ function ToolConvertisseur() {
             ? num * conv.factor + conv.offset
             : num * conv.factor;
           return (
-            <div key={idx} className="flex items-center justify-between bg-card border border-border rounded-xl p-4">
+            <div key={idx} className="flex items-center justify-between glass rounded-xl p-4">
               <div className="flex items-center gap-3">
                 <span className="font-mono text-sm text-muted-foreground" style={{ fontFamily: 'var(--font-mono)' }}>{num} {conv.from}</span>
                 <span className="text-muted-foreground">→</span>
@@ -346,7 +346,7 @@ function ToolChecklist() {
 
   return (
     <div className="space-y-5">
-      <div className="flex items-center justify-between bg-card border border-border rounded-xl p-4">
+      <div className="flex items-center justify-between glass rounded-xl p-4">
         <div>
           <p className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider" style={{ fontFamily: 'var(--font-mono)' }}>PROGRESSION</p>
           <p className="font-mono font-700 text-xl text-foreground" style={{ fontFamily: 'var(--font-mono)' }}>{checked}/{items.length}</p>
@@ -356,7 +356,7 @@ function ToolChecklist() {
             <div className="h-full bg-primary rounded-full transition-all duration-500" style={{ width: `${items.length ? (checked / items.length) * 100 : 0}%` }} />
           </div>
         </div>
-        <button onClick={handleSave} className={`btn-primary py-2 px-4 text-sm transition-all ${saved ? 'bg-emerald-600 border-emerald-600' : ''}`}>
+        <button onClick={handleSave} className="glass-capsule-btn primary py-2 px-4 text-sm">
           {saved ? '✓ Sauvegardé' : 'Sauvegarder'}
         </button>
       </div>
@@ -372,12 +372,12 @@ function ToolChecklist() {
           aria-label="Catégorie">
           {[...cats, 'Divers'].map((c) => <option key={c}>{c}</option>)}
         </select>
-        <button onClick={addItem} className="btn-primary px-4 py-2.5 text-sm">+</button>
+        <button onClick={addItem} className="glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8">+</button>
       </div>
 
       {/* Items by category */}
       {cats.map((cat) => (
-        <div key={cat} className="bg-card border border-border rounded-xl overflow-hidden">
+        <div key={cat} className="glass rounded-xl overflow-hidden">
           <div className="px-4 py-2.5 bg-muted/30 border-b border-border">
             <span className="font-mono text-xs text-muted-foreground uppercase tracking-wider" style={{ fontFamily: 'var(--font-mono)' }}>{cat}</span>
           </div>
@@ -386,13 +386,13 @@ function ToolChecklist() {
               <div key={item.id} className={`flex items-center gap-3 px-4 py-3 transition-colors ${item.checked ? 'opacity-50' : ''}`}>
                 <button
                   onClick={() => toggleItem(item.id)}
-                  className={`w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 transition-all ${item.checked ? 'bg-primary border-primary' : 'border-border hover:border-primary'}`}
+                  className={`glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8 flex-shrink-0 ${item.checked ? 'primary' : ''}`}
                   aria-label={`${item.checked ? 'Décocher' : 'Cocher'} ${item.text}`}
                 >
                   {item.checked && <span className="text-white text-[10px]">✓</span>}
                 </button>
                 <span className={`flex-1 text-sm ${item.checked ? 'line-through text-muted-foreground' : 'text-foreground'}`}>{item.text}</span>
-                <button onClick={() => removeItem(item.id)} className="text-muted-foreground hover:text-red-400 transition-colors text-xs" aria-label={`Supprimer ${item.text}`}>×</button>
+                <button onClick={() => removeItem(item.id)} className="glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8" aria-label={`Supprimer ${item.text}`}>×</button>
               </div>
             ))}
           </div>
@@ -436,20 +436,20 @@ function ToolTailles() {
       <div className="flex gap-2">
         {(['vetements', 'chaussures'] as const).map((t) => (
           <button key={t} onClick={() => { setType(t); setTailleFR(t === 'vetements' ? 'M' : '42'); }}
-            className={`flex-1 py-2.5 rounded-lg text-sm font-medium transition-all capitalize ${type === t ? 'bg-primary text-white' : 'bg-card border border-border text-muted-foreground hover:text-foreground'}`}>
+            className={`glass-capsule-btn flex-1 text-sm font-medium capitalize ${type === t ? 'primary' : ''}`}>
             {t === 'vetements' ? '👕 Vêtements' : '👟 Chaussures'}
           </button>
         ))}
       </div>
 
-      <div className="bg-card border border-border rounded-xl p-4">
+      <div className="glass rounded-xl p-4">
         <label className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider block mb-3" style={{ fontFamily: 'var(--font-mono)' }}>
           TAILLE FR / EU
         </label>
         <div className="flex flex-wrap gap-2">
           {keys.map((k) => (
             <button key={k} onClick={() => setTailleFR(k)}
-              className={`px-4 py-2 rounded-lg font-mono text-sm font-600 transition-all ${tailleFR === k ? 'bg-primary text-white' : 'bg-background border border-border text-foreground hover:border-primary'}`}
+              className={`glass-capsule-btn font-mono text-sm font-600 ${tailleFR === k ? 'primary' : ''}`}
               style={{ fontFamily: 'var(--font-mono)' }}>
               {k}
             </button>
@@ -460,7 +460,7 @@ function ToolTailles() {
       {currentData && (
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
           {Object.entries(currentData).map(([country, size]) => (
-            <div key={country} className="bg-card border border-border rounded-xl p-4 text-center">
+            <div key={country} className="glass rounded-xl p-4 text-center">
               <p className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider mb-1" style={{ fontFamily: 'var(--font-mono)' }}>{country}</p>
               <p className="font-mono font-700 text-2xl text-foreground" style={{ fontFamily: 'var(--font-mono)' }}>{size}</p>
             </div>
@@ -517,7 +517,7 @@ function ToolFuseaux() {
     <div className="space-y-5">
       <div className="grid grid-cols-2 gap-4">
         {[{ label: 'VOTRE VILLE', value: baseCity, setter: setBaseCity }, { label: 'DESTINATION', value: targetCity, setter: setTargetCity }].map(({ label, value, setter }) => (
-          <div key={label} className="bg-card border border-border rounded-xl p-4">
+          <div key={label} className="glass rounded-xl p-4">
             <label className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider block mb-2" style={{ fontFamily: 'var(--font-mono)' }}>{label}</label>
             <select value={value} onChange={(e) => setter(e.target.value)}
               className="w-full px-3 py-2 rounded-lg bg-background border border-border text-sm focus:outline-none focus:border-primary"
@@ -530,7 +530,7 @@ function ToolFuseaux() {
         ))}
       </div>
 
-      <div className="bg-card border border-border rounded-xl p-4 text-center">
+      <div className="glass rounded-xl p-4 text-center">
         <p className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider mb-2" style={{ fontFamily: 'var(--font-mono)' }}>DÉCALAGE HORAIRE</p>
         <p className="font-mono font-700 text-4xl text-primary" style={{ fontFamily: 'var(--font-mono)' }}>
           {diff >= 0 ? '+' : ''}{diff}h
@@ -542,7 +542,7 @@ function ToolFuseaux() {
 
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
         {Object.entries(cities).map(([city, data]) => (
-          <div key={city} className="bg-card border border-border rounded-lg p-3 text-center">
+          <div key={city} className="glass rounded-lg p-3 text-center">
             <p className="text-lg mb-1">{data.flag}</p>
             <p className="text-xs text-muted-foreground mb-1">{city}</p>
             <p className="font-mono font-600 text-sm text-foreground" style={{ fontFamily: 'var(--font-mono)' }}>{getLocalTime(city)}</p>
@@ -589,7 +589,7 @@ function ToolBoussole() {
         <div className="text-center py-12">
           <div className="text-6xl mb-4">🧭</div>
           <p className="text-muted-foreground mb-6">Activez les capteurs pour utiliser la boussole et le niveau</p>
-          <button onClick={startSensors} className="btn-primary px-8 py-3">Activer les capteurs</button>
+          <button onClick={startSensors} className="glass-capsule-btn primary px-8 py-3">Activer les capteurs</button>
         </div>
       ) : (
         <>
@@ -598,7 +598,7 @@ function ToolBoussole() {
           )}
 
           {/* Compass */}
-          <div className="bg-card border border-border rounded-2xl p-6 text-center">
+          <div className="glass rounded-2xl p-6 text-center">
             <p className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider mb-4" style={{ fontFamily: 'var(--font-mono)' }}>BOUSSOLE</p>
             <div className="relative w-40 h-40 mx-auto mb-4">
               <div className="absolute inset-0 rounded-full border-2 border-border flex items-center justify-center bg-background">
@@ -615,7 +615,7 @@ function ToolBoussole() {
           </div>
 
           {/* Level */}
-          <div className="bg-card border border-border rounded-2xl p-6">
+          <div className="glass rounded-2xl p-6">
             <p className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider mb-4 text-center" style={{ fontFamily: 'var(--font-mono)' }}>NIVEAU À BULLE</p>
             <div className={`w-32 h-32 mx-auto rounded-full border-4 flex items-center justify-center relative ${isLevel ? 'border-emerald-400' : 'border-border'}`}>
               <div
@@ -682,7 +682,7 @@ function ToolChronometre() {
 
   return (
     <div className="space-y-5">
-      <div className="bg-card border border-border rounded-2xl p-8 text-center">
+      <div className="glass rounded-2xl p-8 text-center">
         <p className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider mb-4" style={{ fontFamily: 'var(--font-mono)' }}>CHRONOMÈTRE</p>
         <p className="font-mono font-700 text-5xl md:text-6xl text-foreground tabular-nums" style={{ fontFamily: 'var(--font-mono)' }}>
           {fmt(elapsed)}
@@ -696,23 +696,23 @@ function ToolChronometre() {
 
       <div className="flex gap-3 justify-center">
         <button onClick={() => setRunning(!running)}
-          className={`px-8 py-3 rounded-xl font-medium text-base transition-all ${running ? 'bg-yellow-500 text-white hover:bg-yellow-600' : 'btn-primary'}`}>
+          className={`glass-capsule-btn px-8 py-3 font-medium text-base ${running ? '' : 'primary'}`}>
           {running ? '⏸ Pause' : elapsed > 0 ? '▶ Reprendre' : '▶ Démarrer'}
         </button>
         {running && (
-          <button onClick={addLap} className="px-6 py-3 rounded-xl bg-card border border-border text-foreground hover:border-primary transition-all font-medium">
+          <button onClick={addLap} className="glass-capsule-btn px-6 py-3 font-medium">
             🏁 Tour
           </button>
         )}
         {elapsed > 0 && !running && (
-          <button onClick={reset} className="px-6 py-3 rounded-xl bg-card border border-border text-muted-foreground hover:text-foreground transition-all font-medium">
+          <button onClick={reset} className="glass-capsule-btn px-6 py-3 font-medium">
             ↺ Reset
           </button>
         )}
       </div>
 
       {laps.length > 0 && (
-        <div className="bg-card border border-border rounded-xl overflow-hidden">
+        <div className="glass rounded-xl overflow-hidden">
           <div className="px-4 py-2.5 bg-muted/30 border-b border-border">
             <span className="font-mono text-xs text-muted-foreground uppercase tracking-wider" style={{ fontFamily: 'var(--font-mono)' }}>TOURS</span>
           </div>
@@ -755,12 +755,12 @@ function ToolRations() {
   return (
     <div className="space-y-5">
       <div className="grid grid-cols-2 gap-4">
-        <div className="bg-card border border-border rounded-xl p-4">
+        <div className="glass rounded-xl p-4">
           <label className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider block mb-2" style={{ fontFamily: 'var(--font-mono)' }}>PERSONNES</label>
           <input type="number" min={1} max={20} value={personnes} onChange={(e) => setPersonnes(Math.max(1, parseInt(e.target.value) || 1))}
             className="w-full px-3 py-2 rounded-lg bg-background border border-border font-mono text-xl font-700 focus:outline-none focus:border-primary" style={{ fontFamily: 'var(--font-mono)' }} />
         </div>
-        <div className="bg-card border border-border rounded-xl p-4">
+        <div className="glass rounded-xl p-4">
           <label className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider block mb-2" style={{ fontFamily: 'var(--font-mono)' }}>JOURS</label>
           <input type="number" min={1} max={30} value={jours} onChange={(e) => setJours(Math.max(1, parseInt(e.target.value) || 1))}
             className="w-full px-3 py-2 rounded-lg bg-background border border-border font-mono text-xl font-700 focus:outline-none focus:border-primary" style={{ fontFamily: 'var(--font-mono)' }} />
@@ -768,23 +768,23 @@ function ToolRations() {
       </div>
 
       <div className="grid grid-cols-2 gap-4">
-        <div className="bg-card border border-border rounded-xl p-4">
+        <div className="glass rounded-xl p-4">
           <p className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider mb-3" style={{ fontFamily: 'var(--font-mono)' }}>EFFORT</p>
           <div className="flex flex-col gap-2">
             {(['léger', 'modéré', 'intense'] as const).map((e) => (
               <button key={e} onClick={() => setEffort(e)}
-                className={`py-2 rounded-lg text-sm font-medium transition-all capitalize ${effort === e ? 'bg-primary text-white' : 'bg-background border border-border text-muted-foreground hover:text-foreground'}`}>
+                className={`glass-capsule-btn py-2 text-sm font-medium capitalize ${effort === e ? 'primary' : ''}`}>
                 {e === 'léger' ? '🚶 Léger' : e === 'modéré' ? '🏃 Modéré' : '⛰️ Intense'}
               </button>
             ))}
           </div>
         </div>
-        <div className="bg-card border border-border rounded-xl p-4">
+        <div className="glass rounded-xl p-4">
           <p className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider mb-3" style={{ fontFamily: 'var(--font-mono)' }}>CLIMAT</p>
           <div className="flex flex-col gap-2">
             {(['froid', 'tempéré', 'chaud'] as const).map((c) => (
               <button key={c} onClick={() => setChaleur(c)}
-                className={`py-2 rounded-lg text-sm font-medium transition-all capitalize ${chaleur === c ? 'bg-info text-white' : 'bg-background border border-border text-muted-foreground hover:text-foreground'}`}>
+                className={`glass-capsule-btn py-2 text-sm font-medium capitalize ${chaleur === c ? 'primary' : ''}`}>
                 {c === 'froid' ? '❄️ Froid' : c === 'tempéré' ? '🌤 Tempéré' : '☀️ Chaud'}
               </button>
             ))}
@@ -798,7 +798,7 @@ function ToolRations() {
           { label: 'NOURRITURE / JOUR', value: `${nourritureParJourG} g`, icon: '🍽️', color: 'text-accent' },
           { label: 'CALORIES / JOUR', value: `${caloriesParJour} kcal`, icon: '⚡', color: 'text-primary' },
         ].map((stat) => (
-          <div key={stat.label} className="bg-card border border-border rounded-xl p-4 text-center">
+          <div key={stat.label} className="glass rounded-xl p-4 text-center">
             <p className="text-2xl mb-1">{stat.icon}</p>
             <p className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider mb-1" style={{ fontFamily: 'var(--font-mono)' }}>{stat.label}</p>
             <p className={`font-mono font-700 text-xl ${stat.color}`} style={{ fontFamily: 'var(--font-mono)' }}>{stat.value}</p>
@@ -897,7 +897,7 @@ function ToolPlanificateur() {
 
   return (
     <div className="space-y-6">
-      <div className="bg-card border border-border rounded-2xl p-5 space-y-4">
+      <div className="glass rounded-2xl p-5 space-y-4">
         <div>
           <label className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider block mb-2" style={{ fontFamily: 'var(--font-mono)' }}>DESTINATION</label>
           <input
@@ -935,14 +935,14 @@ function ToolPlanificateur() {
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
             {(Object.entries(styleLabels) as [string, string][]).map(([k, v]) => (
               <button key={k} onClick={() => setStyle(k as 'aventure' | 'culture' | 'detente' | 'mixte')}
-                className={`py-2.5 rounded-lg text-sm font-medium transition-all ${style === k ? 'bg-primary text-white' : 'bg-background border border-border text-muted-foreground hover:text-foreground'}`}>
+                className={`glass-capsule-btn py-2.5 text-sm font-medium ${style === k ? 'primary' : ''}`}>
                 {v}
               </button>
             ))}
           </div>
         </div>
 
-        <button onClick={generate} className="w-full btn-primary py-3 text-base font-semibold">
+        <button onClick={generate} className="glass-capsule-btn primary w-full py-3 text-base font-semibold">
           🗺️ Générer mon itinéraire
         </button>
       </div>
@@ -956,7 +956,7 @@ function ToolPlanificateur() {
             <span className="text-xs text-muted-foreground">{budgetLabels[budget]}</span>
           </div>
           {etapes.map((etape) => (
-            <div key={etape.jour} className="bg-card border border-border rounded-xl p-4 flex gap-4">
+            <div key={etape.jour} className="glass rounded-xl p-4 flex gap-4">
               <div className="flex-shrink-0 w-10 h-10 rounded-full bg-primary/10 border border-primary/30 flex items-center justify-center">
                 <span className="font-mono font-700 text-sm text-primary" style={{ fontFamily: 'var(--font-mono)' }}>J{etape.jour}</span>
               </div>
@@ -1094,7 +1094,7 @@ export default function OutilSlugPage() {
                   .filter(([s]) => s !== slug)
                   .map(([s, t]) => (
                     <Link key={s} href={`/outils/${s}`}
-                      className="flex items-center gap-2 px-3 py-2 rounded-lg bg-card border border-border text-sm text-muted-foreground hover:text-foreground hover:border-info/50 transition-all">
+                      className="flex items-center gap-2 px-3 py-2 glass-sub-card rounded-lg text-sm text-muted-foreground hover:text-foreground transition-all">
                       <span>{t.icon}</span>
                       <span>{t.nom}</span>
                     </Link>
@@ -1140,13 +1140,12 @@ export default function OutilSlugPage() {
                     <Link
                       key={s}
                       href={`/outils/${s}`}
+                      className="glass-sub-card"
                       style={{
                         display: 'flex',
                         alignItems: 'center',
                         gap: '6px',
                         padding: '8px 14px',
-                        background: '#F4F1EA',
-                        border: '1px solid rgba(23,64,44,0.06)',
                         borderRadius: '10px',
                         fontSize: '13px',
                         color: '#6B7A72',

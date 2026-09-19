@@ -262,7 +262,7 @@ export function PlaceReviewSection({
         </h4>
 
         {reviews.length === 0 ? (
-          <div className="p-8 rounded-xl bg-stone-50 border border-stone-200/60 text-center">
+          <div className="glass p-8 rounded-xl text-center">
             <p className="text-sm text-stone-600">
               Soyez le premier randonneur à certifier les conditions de ce lieu !
             </p>

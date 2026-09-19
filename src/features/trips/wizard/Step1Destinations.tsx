@@ -88,10 +88,8 @@ export function Step1Destinations({ selectedCountries, onChange }: Step1Destinat
                 key={country.code}
                 type="button"
                 onClick={() => toggleCountry(country)}
-                className={`flex items-center justify-between p-3.5 sm:p-4 rounded-2xl border text-left transition-all min-h-[56px] ${
-                  active
-                    ? 'bg-lkv-primary text-white border-lkv-primary shadow-md'
-                    : 'bg-white/80 hover:bg-white text-lkv-primary border-black/5 hover:border-black/10'
+                className={`glass-capsule-btn w-full flex items-center justify-between !rounded-2xl !p-3.5 sm:!p-4 text-left transition-all ${
+                  active ? 'primary shadow-md' : ''
                 }`}
               >
                 <div className="flex items-center gap-3">
@@ -152,10 +150,8 @@ export function Step1Destinations({ selectedCountries, onChange }: Step1Destinat
                     toggleCountry(c);
                     setSearch('');
                   }}
-                  className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-left text-xs transition-colors min-h-[44px] ${
-                    active
-                      ? 'bg-[var(--lkv-success-bg)] text-lkv-primary font-semibold'
-                      : 'hover:bg-[var(--lkv-surface-paper)] text-[var(--lkv-text-secondary)]'
+                  className={`glass-capsule-btn w-full flex items-center !justify-between !rounded-xl !px-3 !py-2 text-left text-xs transition-colors ${
+                    active ? 'primary font-semibold' : ''
                   }`}
                 >
                   <span className="flex items-center gap-2">
@@ -183,7 +179,7 @@ export function Step1Destinations({ selectedCountries, onChange }: Step1Destinat
           {selectedCountries.map((country, idx) => (
             <div
               key={country.code}
-              className="flex items-center justify-between p-3 bg-white/80 backdrop-blur-sm rounded-xl border border-black/5"
+              className="glass-sub-card flex items-center justify-between p-3 rounded-xl"
             >
               <div className="flex items-center gap-3">
                 <span className="w-6 h-6 rounded-full bg-[var(--lkv-surface-paper)] border border-black/10 text-xs font-bold text-lkv-primary flex items-center justify-center">
@@ -206,7 +202,7 @@ export function Step1Destinations({ selectedCountries, onChange }: Step1Destinat
                       disabled={idx === 0}
                       onClick={() => moveUp(idx)}
                       aria-label="Monter ce pays"
-                      className="p-2 rounded-lg text-[var(--lkv-text-muted)] hover:bg-black/5 disabled:opacity-30 disabled:hover:bg-transparent min-w-[var(--lkv-touch-min)] min-h-[var(--lkv-touch-min)] flex items-center justify-center"
+                      className="glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8 disabled:opacity-30 flex items-center justify-center"
                     >
                       <Icon name="arrow-up" size={14} />
                     </button>
@@ -215,7 +211,7 @@ export function Step1Destinations({ selectedCountries, onChange }: Step1Destinat
                       disabled={idx === selectedCountries.length - 1}
                       onClick={() => moveDown(idx)}
                       aria-label="Descendre ce pays"
-                      className="p-2 rounded-lg text-[var(--lkv-text-muted)] hover:bg-black/5 disabled:opacity-30 disabled:hover:bg-transparent min-w-[var(--lkv-touch-min)] min-h-[var(--lkv-touch-min)] flex items-center justify-center"
+                      className="glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8 disabled:opacity-30 flex items-center justify-center"
                     >
                       <Icon name="arrow-down" size={14} />
                     </button>
@@ -223,7 +219,7 @@ export function Step1Destinations({ selectedCountries, onChange }: Step1Destinat
                       type="button"
                       onClick={() => removeCountry(country.code)}
                       aria-label="Retirer ce pays"
-                      className="p-2 rounded-lg text-rose-600 hover:bg-rose-50 min-w-[var(--lkv-touch-min)] min-h-[var(--lkv-touch-min)] flex items-center justify-center"
+                      className="glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8 flex items-center justify-center"
                     >
                       <Icon name="trash2" size={14} />
                     </button>

@@ -111,7 +111,7 @@ function EventDetailModal({
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={event.cover_image || '/assets/images/no_image.png'} alt={event.cover_alt} className="w-full h-full object-cover" />
           <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
-          <button onClick={onClose} className="absolute top-4 right-4 p-2 bg-black/40 backdrop-blur-sm rounded-xl hover:bg-black/60 transition-colors">
+          <button onClick={onClose} className="glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8 absolute top-4 right-4">
             <Icon name="XMarkIcon" size={18} className="text-white" />
           </button>
           <div className="absolute top-4 left-4 flex gap-2">
@@ -204,10 +204,10 @@ function EventDetailModal({
             <div>
               <button
                 onClick={() => setShowKitty((v) => !v)}
-                className="w-full flex items-center justify-between p-4 glass-sub-card rounded-xl hover:border-[#5B7F55]/40 transition-colors"
+                className="glass-capsule-btn w-full justify-between"
               >
                 <div className="flex items-center gap-2">
-                  <Icon name="BanknotesIcon" size={16} className="text-[#5B7F55]" />
+                  <Icon name="BanknotesIcon" size={16} />
                   <span className="font-600 text-foreground">Cagnotte groupe</span>
                 </div>
                 <div className="flex items-center gap-2">
@@ -281,7 +281,7 @@ function EventCard({ event, onToggleRegister, onViewDetail }: { event: Event; on
 
   return (
     <div className="glass overflow-hidden">
-      <button onClick={() => onViewDetail(event)} className="w-full relative aspect-[16/7] overflow-hidden block">
+      <button onClick={() => onViewDetail(event)} className="glass-capsule-btn !p-0 !rounded-none !block w-full relative aspect-[16/7] overflow-hidden">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={event.cover_image || '/assets/images/no_image.png'} alt={event.cover_alt} className="w-full h-full object-cover hover:scale-105 transition-transform duration-300" />
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
@@ -343,10 +343,10 @@ function EventCard({ event, onToggleRegister, onViewDetail }: { event: Event; on
         <div className="mb-4">
           <button
             onClick={() => setShowKitty((v) => !v)}
-            className="w-full flex items-center justify-between p-3 glass-sub-card rounded-xl hover:border-[#5B7F55]/40 transition-colors"
+            className="glass-capsule-btn w-full justify-between"
           >
             <div className="flex items-center gap-2">
-              <Icon name="BanknotesIcon" size={14} className="text-[#5B7F55]" />
+              <Icon name="BanknotesIcon" size={14} />
               <span className="text-sm font-600 text-foreground">Cagnotte groupe</span>
             </div>
             <div className="flex items-center gap-2">
@@ -422,8 +422,8 @@ function MobileEventCard({ event, onToggleRegister, onViewDetail }: { event: Eve
   };
 
   return (
-    <div style={{ background: '#EEF3EC', border: '1px solid rgba(23,64,44,0.10)', borderRadius: '12px', overflow: 'hidden', marginBottom: '12px' }}>
-      <button onClick={() => onViewDetail(event)} style={{ width: '100%', position: 'relative', height: '160px', overflow: 'hidden', display: 'block', border: 'none', padding: 0, cursor: 'pointer' }}>
+    <div className="glass" style={{ borderRadius: '12px', overflow: 'hidden', marginBottom: '12px' }}>
+      <button onClick={() => onViewDetail(event)} className="glass-capsule-btn !p-0 !rounded-none !block" style={{ width: '100%', position: 'relative', height: '160px', overflow: 'hidden' }}>
         <img src={event.cover_image || '/assets/images/no_image.png'} alt={event.cover_alt} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.7), transparent)' }} />
         <div style={{ position: 'absolute', top: '8px', left: '8px', display: 'flex', gap: '4px' }}>
@@ -441,27 +441,26 @@ function MobileEventCard({ event, onToggleRegister, onViewDetail }: { event: Eve
       </button>
       <div style={{ padding: '12px' }}>
         <div style={{ display: 'flex', gap: '8px', marginBottom: '10px' }}>
-          <div style={{ flex: 1, padding: '8px', background: '#EEF3EC', borderRadius: '8px', border: '1px solid rgba(23,64,44,0.10)' }}>
+          <div className="glass-sub-card" style={{ flex: 1, padding: '8px', borderRadius: '8px' }}>
             <p style={{ fontSize: '9px', color: '#5A7064', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600, margin: '0 0 2px 0' }}>Date</p>
             <p style={{ fontSize: '13px', fontWeight: 700, color: '#17402C', margin: 0 }}>{formatDate(event.event_date)}</p>
           </div>
-          <div style={{ flex: 1, padding: '8px', background: '#EEF3EC', borderRadius: '8px', border: '1px solid rgba(23,64,44,0.10)' }}>
+          <div className="glass-sub-card" style={{ flex: 1, padding: '8px', borderRadius: '8px' }}>
             <p style={{ fontSize: '9px', color: '#5A7064', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600, margin: '0 0 2px 0' }}>Places</p>
             <p style={{ fontSize: '13px', fontWeight: 700, color: '#17402C', margin: 0 }}>{event.current_participants}/{event.max_participants}</p>
           </div>
         </div>
         <div style={{ display: 'flex', gap: '8px' }}>
           <button onClick={() => onViewDetail(event)}
-            style={{ flex: 1, padding: '10px', borderRadius: '8px', fontSize: '12px', fontWeight: 600, border: '1px solid rgba(23,64,44,0.10)', background: '#EEF3EC', color: '#5A7064', cursor: 'pointer' }}>
+            className="glass-capsule-btn flex-1 text-xs font-semibold">
             Details
           </button>
           <button onClick={handleToggle}
             disabled={registering || (event.status === 'full' && !event.is_registered)}
-            style={{
-              flex: 1, padding: '10px', borderRadius: '8px', fontSize: '12px', fontWeight: 700, border: 'none', cursor: registering ? 'default' : 'pointer',
-              background: event.status === 'full' && !event.is_registered ? '#E8E4D8' : event.is_registered ? '#E1EBDE' : '#17402C',
-              color: event.status === 'full' && !event.is_registered ? '#5A7064' : event.is_registered ? '#17402C' : '#fff',
-            }}>
+            className={`flex-1 glass-capsule-btn text-xs font-bold ${
+              event.status === 'full' && !event.is_registered ? 'secondary opacity-50 cursor-not-allowed'
+                : event.is_registered ? 'secondary' : 'primary'
+            }`}>
             {registering ? '...' : event.status === 'full' && !event.is_registered ? "Complet" : event.is_registered ? "✓ Inscrit" : "S'inscrire"}
           </button>
         </div>
@@ -624,7 +623,7 @@ export default function EvenementsPage() {
               <button
                 key={f.id}
                 onClick={() => setFilter(f.id)}
-                className={`glass-pill flex-shrink-0 cursor-pointer ${filter === f.id ? '!bg-[#17402C] !text-white !border-[#17402C]' : ''}`}
+                className={`glass-capsule-btn flex-shrink-0 ${filter === f.id ? 'primary' : ''}`}
               >
                 {f.label}
               </button>
@@ -711,8 +710,7 @@ export default function EvenementsPage() {
         <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.6)', margin: '0 0 12px 0', lineHeight: 1.4 }}>
           Par des membres verifies avec Trust Score et cagnotte integree.
         </p>
-        <button onClick={() => setShowCreateModal(true)}
-          style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '10px 16px', background: '#365233', color: '#fff', borderRadius: '8px', fontSize: '12px', fontWeight: 700, border: 'none', cursor: 'pointer' }}>
+        <button onClick={() => setShowCreateModal(true)} className="glass-capsule-btn primary text-xs font-bold">
           + Organiser une sortie
         </button>
       </div>
@@ -727,11 +725,7 @@ export default function EvenementsPage() {
           { id: 'alpinisme', label: '⛏️ Alpi' },
         ].map((f) => (
           <button key={f.id} onClick={() => setFilter(f.id)}
-            style={{
-              flexShrink: 0, padding: '8px 14px', borderRadius: '20px', fontSize: '12px', fontWeight: 700, border: 'none', cursor: 'pointer',
-              background: filter === f.id ? '#17402C' : '#EEF3EC',
-              color: filter === f.id ? '#fff' : '#5A7064',
-            }}>
+            className={`glass-capsule-btn flex-shrink-0 text-xs font-bold ${filter === f.id ? 'primary' : ''}`}>
             {f.label}
           </button>
         ))}
@@ -797,7 +791,7 @@ export default function EvenementsPage() {
           <div className="glass rounded-2xl p-6 max-w-lg w-full my-4">
             <div className="flex items-center justify-between mb-5">
               <h2 className="font-display font-700 text-foreground text-lg">Organiser une sortie</h2>
-              <button onClick={() => setShowCreateModal(false)} className="p-2 rounded-lg hover:bg-muted transition-colors">
+              <button onClick={() => setShowCreateModal(false)} className="glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8">
                 <Icon name="XMarkIcon" size={18} />
               </button>
             </div>

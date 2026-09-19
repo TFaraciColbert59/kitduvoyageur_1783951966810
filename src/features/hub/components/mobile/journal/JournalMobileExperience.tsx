@@ -159,23 +159,23 @@ export function JournalMobileExperience({ trip }: JournalMobileExperienceProps) 
           openNote(note);
         }}
         aria-label={`Note ${noteTitle(note)}`}
-        className="glass flex h-[10rem] w-[14.5rem] flex-col rounded-[1.4rem] p-3.5 text-left transition-transform active:scale-[0.98]"
+        className="glass-capsule-btn flex h-[10rem] w-[14.5rem] !flex-col !items-start !justify-start !rounded-[1.4rem] !p-3.5 text-left transition-transform active:scale-[0.98]"
       >
         <span className="flex items-center gap-1.5">
-          {note.is_pinned && <Pin size={12} className="text-[var(--lkv-primary)]" aria-hidden="true" />}
+          {note.is_pinned && <Pin size={12} aria-hidden="true" />}
           {note.day_number != null && (
             <span className="rounded-full bg-[var(--lkv-primary)]/10 px-2 py-0.5 text-[9.5px] font-bold text-[var(--lkv-primary)]">
               Jour {note.day_number}
             </span>
           )}
-          <span className="ml-auto text-[9.5px] font-medium text-[var(--lkv-text-primary)]/60">
+          <span className="ml-auto text-[9.5px] font-medium">
             {formatRelativeTime(note.created_at)}
           </span>
         </span>
-        <span className="mt-2 line-clamp-1 text-[12.5px] font-bold text-[var(--lkv-text-primary)]">
+        <span className="mt-2 line-clamp-1 text-[12.5px] font-bold">
           {noteTitle(note)}
         </span>
-        <span className="mt-1 line-clamp-3 text-[11px] font-medium leading-snug text-[var(--lkv-text-primary)]/70">
+        <span className="mt-1 line-clamp-3 text-[11px] font-medium leading-snug">
           {note.content}
         </span>
       </button>
@@ -193,7 +193,7 @@ export function JournalMobileExperience({ trip }: JournalMobileExperienceProps) 
           <button
             type="button"
             onClick={() => setErrorMsg(null)}
-            className="flex h-11 w-11 items-center justify-center rounded-full text-[var(--lkv-text-muted)]"
+            className="glass-circle-btn h-11 w-11 shrink-0 text-[var(--lkv-text-muted)]"
             aria-label="Fermer le message"
           >
             ×
@@ -310,8 +310,8 @@ export function JournalMobileExperience({ trip }: JournalMobileExperienceProps) 
             type="button"
             onClick={() => setDayFilter('all')}
             aria-pressed={dayFilter === 'all'}
-            className={`min-h-[44px] rounded-full px-3.5 text-xs font-bold transition-colors ${
-              dayFilter === 'all' ? 'bg-[var(--lkv-primary)] text-white' : 'glass-sub-card text-[var(--lkv-text-primary)]/75'
+            className={`glass-capsule-btn !px-3.5 min-h-[44px] text-xs font-bold ${
+              dayFilter === 'all' ? 'primary' : ''
             }`}
           >
             Tous les jours
@@ -322,8 +322,8 @@ export function JournalMobileExperience({ trip }: JournalMobileExperienceProps) 
               type="button"
               onClick={() => setDayFilter(day)}
               aria-pressed={dayFilter === day}
-              className={`min-h-[44px] rounded-full px-3.5 text-xs font-bold transition-colors ${
-                dayFilter === day ? 'bg-[var(--lkv-primary)] text-white' : 'glass-sub-card text-[var(--lkv-text-primary)]/75'
+              className={`glass-capsule-btn !px-3.5 min-h-[44px] text-xs font-bold ${
+                dayFilter === day ? 'primary' : ''
               }`}
             >
               Jour {day}
@@ -345,9 +345,9 @@ export function JournalMobileExperience({ trip }: JournalMobileExperienceProps) 
                     setListOpen(false);
                     openNote(note);
                   }}
-                  className="glass-sub-card flex min-h-[44px] w-full items-center gap-3 rounded-2xl p-3 text-left"
+                  className="glass-capsule-btn flex min-h-[44px] w-full !justify-start !gap-3 !rounded-2xl !p-3 text-left"
                 >
-                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/70 text-[var(--lkv-secondary)]">
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/10">
                     {note.is_pinned ? <Pin size={15} aria-hidden="true" /> : <NotebookPen size={15} aria-hidden="true" />}
                   </span>
                   <span className="min-w-0 flex-1">

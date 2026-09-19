@@ -80,15 +80,7 @@ export default function HikingProfileCard() {
   // Seuil minimum : 3 sorties pour avoir du sens statistiquement
   if (stats.total_sessions < 3) {
     return (
-      <div
-        style={{
-          background: '#EDEAE0',
-          border: '1px solid rgba(23,64,44,0.06)',
-          borderRadius: '18px',
-          padding: '16px',
-          marginBottom: '8px',
-        }}
-      >
+      <div className="glass rounded-3xl p-4 mb-2">
         <p style={{ fontSize: '11px', fontWeight: 700, color: '#9AAD9E', fontFamily: 'var(--font-mono)', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: '8px' }}>
           🥾 Profil Randonneur
         </p>
@@ -128,7 +120,7 @@ export default function HikingProfileCard() {
         ].map((s) => (
           <div
             key={s.label}
-            className="p-2.5 rounded-2xl text-center bg-white/80 border border-white shadow-2xs"
+            className="glass-sub-card p-2.5 rounded-2xl text-center"
           >
             <div className="text-base mb-0.5">{s.icon}</div>
             <div className="text-xs font-bold text-[#17402C]">{s.value}</div>

@@ -42,7 +42,7 @@ export function GlassSheet({
             <div
               data-glass-variant="overlay"
               data-glass-shape="full"
-              className={`lkv-sheet-full${closing ? ' lkv-sheet-full--closing' : ''} glass fixed inset-0 z-[10001] overflow-y-auto`}
+              className={`lkv-sheet-full${closing ? ' lkv-sheet-full--closing' : ''} glass backdrop-blur-xl fixed inset-0 z-[10001] overflow-y-auto`}
             >
               <header className="sticky top-0 z-10 flex items-center gap-3 px-4 pt-[env(safe-area-inset-top,0px)] h-[calc(56px+env(safe-area-inset-top,0px))] bg-[color:var(--glass-bg-strong)] border-b border-glass-border">
                 <Dialog.Close asChild>

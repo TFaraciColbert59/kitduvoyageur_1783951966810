@@ -30,10 +30,8 @@ export function NaturePill({
       aria-expanded={open}
       aria-label="Changer la nature de l'aventure"
       onClick={onOpenSwitcher}
-      className={`inline-flex items-center gap-1.5 px-4 min-h-[44px] w-full sm:w-auto rounded-full text-sm font-semibold cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)] ${
-        active
-          ? 'bg-[var(--lkv-primary)] text-white'
-          : 'bg-[var(--lkv-surface)] text-[var(--lkv-text-primary)]'
+      className={`glass-capsule-btn inline-flex items-center gap-1.5 px-4 min-h-[44px] w-full sm:w-auto text-sm font-semibold cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)] ${
+        active ? 'primary' : ''
       }`}
     >
       <span className="truncate">

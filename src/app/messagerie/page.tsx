@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React from 'react';
 import Header from '@/components/Header';
@@ -38,7 +38,7 @@ export default function MessageriePage() {
 
   return (
     <div
-      className="w-full min-h-[100dvh] flex-1 overflow-hidden flex flex-col bg-[var(--lkv-surface-muted)] relative"
+      className="w-full min-h-[100dvh] flex-1 overflow-hidden flex flex-col bg-[rgba(238,243,236,0.74)] backdrop-blur-xl relative"
       style={{ ['--kb-inset' as string]: `${kbInset}px` }}
     >
       {/* Ambiance Liquid Glass LKDV — dégradés climatiques (CSS valide, cf. audit 1.1c) */}

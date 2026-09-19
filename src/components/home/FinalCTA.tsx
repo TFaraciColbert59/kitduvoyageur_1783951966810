@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Icon from '@/components/ui/AppIcon';
 
 export default function FinalCTA() {
   return (
@@ -58,25 +59,15 @@ export default function FinalCTA() {
         >
           <Link
             href="/ai-configurator"
-            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-4 rounded-2xl font-semibold text-base text-white transition-all duration-200 hover:-translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#17402C] focus-visible:ring-offset-2 focus-visible:ring-offset-[#17402C] min-h-[52px]"
-            style={{
-              background: '#17402C',
-              boxShadow: '0 8px 32px rgba(200,154,59,0.3)',
-            }}
+            className="glass-capsule-btn primary w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-4 text-base min-h-[52px]"
           >
-            <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
-              <path d="M9 2l1.5 4.5H15l-3.75 2.75 1.5 4.5L9 11l-3.75 2.75 1.5-4.5L3 6.5h4.5L9 2z" fill="currentColor"/>
-            </svg>
+            <Icon name="sparkles" size={16} />
             Configurer mon kit IA
           </Link>
 
           <Link
             href="/pays"
-            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-4 rounded-2xl font-semibold text-base transition-all duration-200 hover:-translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#17402C] min-h-[52px]"
-            style={{
-              border: '1.5px solid rgba(231,227,214,0.2)',
-              color: 'rgba(231,227,214,0.8)',
-            }}
+            className="glass-capsule-btn secondary w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-4 text-base min-h-[52px]"
           >
             Explorer les destinations
           </Link>

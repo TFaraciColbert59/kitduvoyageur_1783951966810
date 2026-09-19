@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
+import Icon from '@/components/ui/AppIcon';
 import {
   type CompteUserProfile,
   type CompteCarnet,
@@ -68,7 +69,7 @@ export default function PublicMobileProfileView({
         <Link
           href="/communaute"
           onClick={() => triggerHaptic('light')}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/90 text-xs font-bold text-[#17402C] border border-white shadow-2xs transition-all active:scale-95 cursor-pointer"
+          className="glass-capsule-btn text-xs font-bold !py-1.5 !px-3 cursor-pointer"
         >
           <span className="text-sm font-bold">‹</span>
           <span>Communauté</span>
@@ -78,7 +79,7 @@ export default function PublicMobileProfileView({
           <span className="font-display font-extrabold text-sm text-[#17402C] truncate max-w-[140px]">
             {handleName}
           </span>
-          <span className="glass-pill font-mono bg-white/80 border-white text-[10px]">
+          <span className="glass-pill font-mono text-[10px]">
             Niv.{levelNum}
           </span>
         </div>
@@ -89,15 +90,9 @@ export default function PublicMobileProfileView({
             onShare();
           }}
           aria-label="Partager ce profil"
-          className="w-8 h-8 rounded-full flex items-center justify-center transition-all bg-white/80 border border-white active:scale-90 shadow-2xs cursor-pointer text-[#17402C]"
+          className="glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8 cursor-pointer"
         >
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-            <circle cx="18" cy="5" r="3" />
-            <circle cx="6" cy="12" r="3" />
-            <circle cx="18" cy="19" r="3" />
-            <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
-            <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
-          </svg>
+          <Icon name="share2" size={15} />
         </button>
       </header>
 
@@ -185,7 +180,7 @@ export default function PublicMobileProfileView({
                   triggerHaptic('light');
                   setTrustModalOpen(true);
                 }}
-                className="glass-pill cursor-pointer bg-white/80 border-white hover:bg-white transition-all active:scale-95"
+                className="glass-capsule-btn !min-h-0 !min-w-0 !py-1 !px-2.5 text-[10px] font-mono font-bold cursor-pointer transition-all active:scale-95"
               >
                 🛡️ Trust {trustScore}/100
               </button>
@@ -218,10 +213,8 @@ export default function PublicMobileProfileView({
           <div className="flex items-center gap-2 pt-4">
             <button
               onClick={handleFollowToggle}
-              className={`flex-1 !py-2.5 text-xs font-bold rounded-full transition-all active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer shadow-xs ${
-                following
-                  ? 'bg-white/90 text-[#17402C] border border-white'
-                  : 'bg-[#17402C] text-white hover:bg-[#17402C]/90'
+              className={`glass-capsule-btn flex-1 !py-2.5 text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer ${
+                following ? '' : 'primary'
               }`}
             >
               <span>{following ? '✓ Abonné' : '+ S\'abonner'}</span>
@@ -232,9 +225,7 @@ export default function PublicMobileProfileView({
               onClick={() => triggerHaptic('selection')}
               className="glass-capsule-btn secondary flex-1 !py-2.5 text-xs font-bold"
             >
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-              </svg>
+              <Icon name="message-square" size={13} />
               Message
             </Link>
 
@@ -244,15 +235,9 @@ export default function PublicMobileProfileView({
                 onShare();
               }}
               aria-label="Partager"
-              className="glass-capsule-btn w-10 !py-2.5"
+              className="glass-circle-btn !w-10 !h-10 !min-w-10 !min-h-10 !p-0"
             >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                <circle cx="18" cy="5" r="3" />
-                <circle cx="6" cy="12" r="3" />
-                <circle cx="18" cy="19" r="3" />
-                <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
-                <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
-              </svg>
+              <Icon name="share2" size={14} />
             </button>
           </div>
         </div>
@@ -316,15 +301,15 @@ export default function PublicMobileProfileView({
                     triggerHaptic('selection');
                     setTab(t.id);
                   }}
-                  className={`relative px-3 py-1.5 text-xs font-extrabold whitespace-nowrap rounded-xl transition-all cursor-pointer flex items-center gap-1.5 z-10 ${
-                    isActive ? 'text-white' : 'text-[#17402C]/70 hover:text-[#17402C] hover:bg-white/40'
+                  className={`glass-capsule-btn !min-w-0 !min-h-0 !py-1.5 !px-3 text-xs font-extrabold whitespace-nowrap transition-all cursor-pointer z-10 ${
+                    isActive ? 'primary' : ''
                   }`}
                 >
                   {isActive && (
                     <motion.div
                       layoutId="public-tab-active"
                       transition={{ type: 'spring', stiffness: 500, damping: 35 }}
-                      className="absolute inset-0 rounded-xl bg-[#17402C] shadow-xs -z-10"
+                      className="absolute inset-0 rounded-full bg-[#17402C] shadow-xs -z-10"
                     />
                   )}
                   <span className="text-[11px]">{t.icon}</span>
@@ -343,10 +328,8 @@ export default function PublicMobileProfileView({
                   setViewMode('grid');
                 }}
                 aria-label="Vue Grille"
-                className={`p-1.5 rounded-lg transition-all cursor-pointer ${
-                  viewMode === 'grid'
-                    ? 'bg-[#17402C] text-white shadow-2xs'
-                    : 'text-[#17402C]/50 hover:bg-white/60'
+                className={`glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8 !p-0 transition-all cursor-pointer ${
+                  viewMode === 'grid' ? 'primary' : ''
                 }`}
               >
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
@@ -362,10 +345,8 @@ export default function PublicMobileProfileView({
                   setViewMode('list');
                 }}
                 aria-label="Vue Liste"
-                className={`p-1.5 rounded-lg transition-all cursor-pointer ${
-                  viewMode === 'list'
-                    ? 'bg-[#17402C] text-white shadow-2xs'
-                    : 'text-[#17402C]/50 hover:bg-white/60'
+                className={`glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8 !p-0 transition-all cursor-pointer ${
+                  viewMode === 'list' ? 'primary' : ''
                 }`}
               >
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
@@ -577,7 +558,7 @@ export default function PublicMobileProfileView({
                     Score de Confiance : {trustScore}/100
                   </h3>
                 </div>
-                <button onClick={() => setTrustModalOpen(false)} className="p-1 rounded-full text-[#17402C]/40">
+                <button onClick={() => setTrustModalOpen(false)} className="glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8 !p-0">
                   ✕
                 </button>
               </div>

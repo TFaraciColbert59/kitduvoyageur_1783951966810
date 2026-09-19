@@ -463,7 +463,7 @@ export default function FideliteTab({ profile: initialProfile }: FideliteTabProp
               </h3>
               <p className="text-xs text-[#5A7064] font-mono mt-0.5">{unlockedBadges.length} / {totalBadges} débloqués</p>
             </div>
-            <button onClick={() => setShowAllBadgesModal(false)} className="p-2 text-[#5A7064] hover:text-[#17402C] transition-colors rounded-full hover:bg-black/5">
+            <button onClick={() => setShowAllBadgesModal(false)} className="glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8 !p-0 transition-colors">
               <Icon name="XMarkIcon" size={24} />
             </button>
           </div>
@@ -731,28 +731,28 @@ export default function FideliteTab({ profile: initialProfile }: FideliteTabProp
                   <button
                     type="button"
                     onClick={() => setPaymentProvider('bank_transfer')}
-                    className={`glass-sub-card flex items-center gap-3 p-3.5 rounded-xl transition-all text-left ${
-                      paymentProvider === 'bank_transfer' ? '!border-[#17402C] !bg-white/80' : ''
+                    className={`glass-capsule-btn flex items-center gap-3 !min-h-0 !p-3.5 transition-all text-left ${
+                      paymentProvider === 'bank_transfer' ? 'primary' : ''
                     }`}
                   >
                     <span className="text-xl">🏦</span>
                     <div>
-                      <p className="text-xs font-bold text-[#17402C]">Virement Bancaire (SEPA)</p>
-                      <p className="text-[10px] text-[#5A7064]">RIB / IBAN européen</p>
+                      <p className="text-xs font-bold">Virement Bancaire (SEPA)</p>
+                      <p className="text-[10px] opacity-80">RIB / IBAN européen</p>
                     </div>
                   </button>
 
                   <button
                     type="button"
                     onClick={() => setPaymentProvider('paypal')}
-                    className={`glass-sub-card flex items-center gap-3 p-3.5 rounded-xl transition-all text-left ${
-                      paymentProvider === 'paypal' ? '!border-[#17402C] !bg-white/80' : ''
+                    className={`glass-capsule-btn flex items-center gap-3 !min-h-0 !p-3.5 transition-all text-left ${
+                      paymentProvider === 'paypal' ? 'primary' : ''
                     }`}
                   >
                     <span className="text-xl">💳</span>
                     <div>
-                      <p className="text-xs font-bold text-[#17402C]">PayPal</p>
-                      <p className="text-[10px] text-[#5A7064]">Virement direct par email</p>
+                      <p className="text-xs font-bold">PayPal</p>
+                      <p className="text-[10px] opacity-80">Virement direct par email</p>
                     </div>
                   </button>
                 </div>

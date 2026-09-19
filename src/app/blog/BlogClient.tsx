@@ -106,7 +106,7 @@ function PostCard({ post }: { post: BlogPost }) {
 function MobilePostCard({ post }: { post: BlogPost }) {
   return (
     <Link href={`/guides/${post.slug}`} style={{ display: 'block', textDecoration: 'none' }}>
-      <article style={{ borderRadius: '12px', border: '1px solid rgba(23,64,44,0.08)', background: '#F4F1EA', overflow: 'hidden', marginBottom: '12px' }}>
+      <article className="glass" style={{ overflow: 'hidden', marginBottom: '12px' }}>
         <div style={{ display: 'flex', gap: '12px', padding: '12px' }}>
           <div style={{ width: '80px', height: '90px', borderRadius: '8px', overflow: 'hidden', flexShrink: 0, position: 'relative', background: '#E8E4D8' }}>
             {post.image && (
@@ -145,7 +145,7 @@ function MobilePostCard({ post }: { post: BlogPost }) {
 function MobileFeaturedCard({ post }: { post: BlogPost }) {
   return (
     <Link href={`/guides/${post.slug}`} style={{ display: 'block', textDecoration: 'none', marginBottom: '16px' }}>
-      <article style={{ borderRadius: '12px', border: '1px solid rgba(23,64,44,0.08)', background: '#F4F1EA', overflow: 'hidden' }}>
+      <article className="glass" style={{ overflow: 'hidden' }}>
         <div style={{ position: 'relative', height: '180px', overflow: 'hidden', background: '#E8E4D8' }}>
           {post.image && (
             <img src={post.image} alt={post.image_alt} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
@@ -193,13 +193,13 @@ export default function BlogClient({ posts }: { posts: BlogPost[] }) {
     <>
       {/* Hero */}
       <div className="mb-8">
-        <p className="text-[11px] font-mono uppercase tracking-[0.14em] text-[#5A7064] mb-2" style={{ fontFamily: 'var(--font-mono)' }}>
+        <p className="text-[11px] font-mono uppercase tracking-[0.14em] text-[#CCE0D4] mb-2" style={{ fontFamily: 'var(--font-mono)' }}>
           BLOG — {posts.length} ARTICLES
         </p>
-        <h1 className="font-display font-bold text-3xl tracking-tight text-[#17402C]" style={{ fontFamily: 'var(--font-display)' }}>
+        <h1 className="font-display font-bold text-3xl tracking-tight text-[#EEF3EC]" style={{ fontFamily: 'var(--font-display)' }}>
           Conseils &amp; guides
         </h1>
-        <p className="mt-1.5 text-sm text-[#5A7064] max-w-2xl">
+        <p className="mt-1.5 text-sm text-[#CCE0D4] max-w-2xl">
           Expertise terrain, comparatifs honnêtes et inspirations pour voyager mieux, plus léger et plus loin.
         </p>
       </div>
@@ -232,7 +232,7 @@ export default function BlogClient({ posts }: { posts: BlogPost[] }) {
       {/* Featured posts */}
       {featured.length > 0 && activeCategory === 'Tous' && !searchQuery && (
         <div className="mb-10">
-          <h2 className="font-display font-bold text-xl text-[#17402C] mb-4" style={{ fontFamily: 'var(--font-display)' }}>
+          <h2 className="font-display font-bold text-xl text-[#EEF3EC] mb-4" style={{ fontFamily: 'var(--font-display)' }}>
             À la une
           </h2>
           <div className={`grid gap-6 ${featured.length >= 2 ? 'md:grid-cols-2' : 'md:grid-cols-1 max-w-2xl'}`}>
@@ -247,8 +247,8 @@ export default function BlogClient({ posts }: { posts: BlogPost[] }) {
       {filtered.length === 0 ? (
         <div className="text-center py-16">
           <p className="text-4xl mb-4">📝</p>
-          <h3 className="font-display font-bold text-xl text-[#17402C] mb-2" style={{ fontFamily: 'var(--font-display)' }}>Aucun article trouvé</h3>
-          <p className="text-[#5A7064] mb-6">Essayez une autre catégorie ou un autre terme de recherche.</p>
+          <h3 className="font-display font-bold text-xl text-[#EEF3EC] mb-2" style={{ fontFamily: 'var(--font-display)' }}>Aucun article trouvé</h3>
+          <p className="text-[#CCE0D4] mb-6">Essayez une autre catégorie ou un autre terme de recherche.</p>
           <button onClick={() => { setActiveCategory('Tous'); setSearchQuery(''); }} className="glass-capsule-btn primary">
             Voir tous les articles
           </button>
@@ -256,12 +256,12 @@ export default function BlogClient({ posts }: { posts: BlogPost[] }) {
       ) : (
         <>
           {(activeCategory !== 'Tous' || searchQuery) && (
-            <p className="font-mono text-sm text-[#5A7064] mb-6" style={{ fontFamily: 'var(--font-mono)' }}>
-              <span className="font-bold text-[#17402C]">{filtered.length}</span> article{filtered.length > 1 ? 's' : ''}
+            <p className="font-mono text-sm text-[#CCE0D4] mb-6" style={{ fontFamily: 'var(--font-mono)' }}>
+              <span className="font-bold text-[#EEF3EC]">{filtered.length}</span> article{filtered.length > 1 ? 's' : ''}
             </p>
           )}
           {(!searchQuery && activeCategory === 'Tous') && nonFeaturedFiltered.length > 0 && (
-            <h2 className="font-display font-bold text-xl text-[#17402C] mb-4" style={{ fontFamily: 'var(--font-display)' }}>
+            <h2 className="font-display font-bold text-xl text-[#EEF3EC] mb-4" style={{ fontFamily: 'var(--font-display)' }}>
               Tous les articles
             </h2>
           )}
@@ -300,13 +300,13 @@ export default function BlogClient({ posts }: { posts: BlogPost[] }) {
     <div style={{ padding: '16px' }}>
       {/* Hero */}
       <div style={{ marginBottom: '24px' }}>
-        <p style={{ fontFamily: 'ui-monospace, monospace', fontSize: '11px', color: '#17402C', letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: '4px' }}>
+        <p style={{ fontFamily: 'ui-monospace, monospace', fontSize: '11px', color: '#D8E5D5', letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: '4px' }}>
           BLOG — {posts.length} ARTICLES
         </p>
-        <h1 style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '22px', color: '#17402C', margin: 0 }}>
+        <h1 style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '22px', color: '#EEF3EC', margin: 0 }}>
           Conseils & Guides
         </h1>
-        <p style={{ fontSize: '13px', color: '#5A7064', marginTop: '6px', lineHeight: 1.5 }}>
+        <p style={{ fontSize: '13px', color: '#CCE0D4', marginTop: '6px', lineHeight: 1.5 }}>
           Expertise terrain, comparatifs honnetes et inspirations pour voyager mieux, plus leger et plus loin.
         </p>
       </div>
@@ -328,18 +328,7 @@ export default function BlogClient({ posts }: { posts: BlogPost[] }) {
           <button
             key={cat}
             onClick={() => setActiveCategory(cat)}
-            style={{
-              flexShrink: 0,
-              padding: '8px 14px',
-              borderRadius: '10px',
-              fontSize: '13px',
-              fontWeight: 600,
-              border: 'none',
-              cursor: 'pointer',
-              background: activeCategory === cat ? '#17402C' : '#F4F1EA',
-              color: activeCategory === cat ? '#FFFFFF' : '#5A7064',
-              transition: 'all 0.2s',
-            }}
+            className={`glass-capsule-segment flex-shrink-0 ${activeCategory === cat ? 'active' : ''}`}
           >
             {cat}
           </button>
@@ -349,7 +338,7 @@ export default function BlogClient({ posts }: { posts: BlogPost[] }) {
       {/* Featured */}
       {featured.length > 0 && activeCategory === 'Tous' && !searchQuery && (
         <div style={{ marginBottom: '20px' }}>
-          <h2 style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '16px', color: '#17402C', marginBottom: '12px' }}>
+          <h2 style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '16px', color: '#EEF3EC', marginBottom: '12px' }}>
             A la une
           </h2>
           {featured.slice(0, 1).map((post) => (
@@ -362,22 +351,22 @@ export default function BlogClient({ posts }: { posts: BlogPost[] }) {
       {filtered.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '40px 0' }}>
           <p style={{ fontSize: '32px', marginBottom: '8px' }}>📝</p>
-          <p style={{ fontWeight: 700, fontSize: '16px', color: '#17402C', marginBottom: '4px' }}>Aucun article trouve</p>
-          <p style={{ fontSize: '13px', color: '#5A7064', marginBottom: '16px' }}>Essayez une autre categorie ou un autre terme de recherche.</p>
+          <p style={{ fontWeight: 700, fontSize: '16px', color: '#EEF3EC', marginBottom: '4px' }}>Aucun article trouve</p>
+          <p style={{ fontSize: '13px', color: '#CCE0D4', marginBottom: '16px' }}>Essayez une autre categorie ou un autre terme de recherche.</p>
           <button onClick={() => { setActiveCategory('Tous'); setSearchQuery(''); }}
-            style={{ padding: '10px 24px', background: '#17402C', color: '#fff', borderRadius: '10px', fontSize: '13px', fontWeight: 600, border: 'none', cursor: 'pointer' }}>
+            className="glass-capsule-btn primary !px-6 !py-2.5 !text-[13px]">
             Voir tous les articles
           </button>
         </div>
       ) : (
         <>
           {(activeCategory !== 'Tous' || searchQuery) && (
-            <p style={{ fontFamily: 'ui-monospace, monospace', fontSize: '13px', color: '#5A7064', marginBottom: '12px' }}>
-              <strong style={{ color: '#17402C' }}>{filtered.length}</strong> article{filtered.length > 1 ? 's' : ''}
+            <p style={{ fontFamily: 'ui-monospace, monospace', fontSize: '13px', color: '#CCE0D4', marginBottom: '12px' }}>
+              <strong style={{ color: '#EEF3EC' }}>{filtered.length}</strong> article{filtered.length > 1 ? 's' : ''}
             </p>
           )}
           {(!searchQuery && activeCategory === 'Tous') && nonFeaturedFiltered.length > 0 && (
-            <h2 style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '16px', color: '#17402C', marginBottom: '12px' }}>
+            <h2 style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '16px', color: '#EEF3EC', marginBottom: '12px' }}>
               Tous les articles
             </h2>
           )}
@@ -390,7 +379,7 @@ export default function BlogClient({ posts }: { posts: BlogPost[] }) {
       )}
 
       {/* Newsletter */}
-      <div style={{ marginTop: '24px', padding: '20px', borderRadius: '12px', border: '1px solid rgba(23,64,44,0.08)', background: '#F4F1EA', textAlign: 'center' }}>
+      <div className="glass" style={{ marginTop: '24px', padding: '20px', textAlign: 'center' }}>
         <p style={{ fontSize: '28px', marginBottom: '8px' }}>📬</p>
         <h3 style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '16px', color: '#17402C', margin: '0 0 8px 0' }}>
           Restez informe
@@ -404,7 +393,7 @@ export default function BlogClient({ posts }: { posts: BlogPost[] }) {
             placeholder="votre@email.fr"
             style={{ flex: 1, padding: '10px 14px', borderRadius: '10px', border: '1px solid rgba(23,64,44,0.08)', background: '#EEF3EC', color: '#17402C', fontSize: '13px', outline: 'none' }}
           />
-          <button style={{ padding: '10px 16px', background: '#17402C', color: '#fff', borderRadius: '10px', fontSize: '13px', fontWeight: 600, border: 'none', cursor: 'pointer', whiteSpace: 'nowrap' }}>
+          <button className="glass-capsule-btn primary !px-4 !py-2.5 !text-[13px] whitespace-nowrap">
             S&apos;abonner
           </button>
         </div>
@@ -415,7 +404,7 @@ export default function BlogClient({ posts }: { posts: BlogPost[] }) {
   return (
     <>
       {/* ── DESKTOP ── fullscreen, scroll interne */}
-      <div className="hidden md:flex flex-col h-[100dvh] overflow-hidden bg-[#EEF3EC]" data-lkv-material-theme="light">
+      <div className="hidden md:flex flex-col h-[100dvh] overflow-hidden bg-transparent" data-lkv-material-theme="light">
         <Header />
         <main className="flex-1 min-h-0 overflow-y-auto">
           <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-12">

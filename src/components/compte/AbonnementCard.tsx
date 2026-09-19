@@ -19,7 +19,7 @@ export default function AbonnementCard({ subscription }: AbonnementCardProps) {
       </div>
 
       {/* Content */}
-      <div className="flex items-center justify-between p-2 rounded-xl bg-white/70 border border-white/60">
+      <div className="glass-sub-card flex items-center justify-between p-2 rounded-xl">
         <div>
           <div className="text-xs font-bold text-[#17402C]">{subscription?.plan_name || 'Guide Alpin'}</div>
           <div className="text-[9.5px] text-[#5A7064]">

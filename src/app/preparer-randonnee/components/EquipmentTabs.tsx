@@ -23,19 +23,19 @@ export const EquipmentTabs: React.FC<EquipmentTabsProps> = ({
     <div className="tabs">
       <button
         onClick={() => onChange('missing')}
-        className={activeTab === 'missing' ? 'on miss' : ''}
+        className={`glass-capsule-btn ${activeTab === 'missing' ? 'primary' : ''}`}
       >
         Il te manque <span className="cnt">{missingCount}</span>
       </button>
       <button
         onClick={() => onChange('ok')}
-        className={activeTab === 'ok' ? 'on ok' : ''}
+        className={`glass-capsule-btn ${activeTab === 'ok' ? 'primary' : ''}`}
       >
         Suffisant <span className="cnt">{okCount}</span>
       </button>
       <button
         onClick={() => onChange('ctx')}
-        className={activeTab === 'ctx' ? 'on warn' : ''}
+        className={`glass-capsule-btn ${activeTab === 'ctx' ? 'primary' : ''}`}
       >
         Selon conditions <span className="cnt">{ctxCount}</span>
       </button>

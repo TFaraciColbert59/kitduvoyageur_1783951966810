@@ -1,8 +1,8 @@
-﻿'use client';
+'use client';
 
 import React from 'react';
 
-export type CompteTab = 'vue-d-ensemble' | 'aventures' | 'carnets' | 'clubs' | 'commandes' | 'fidelite' | 'parametres';
+export type CompteTab = 'vue-d-ensemble' | 'progression' | 'aventures' | 'carnets' | 'clubs' | 'commandes' | 'fidelite' | 'parametres';
 
 interface TabsCompteProps {
   activeTab: CompteTab;
@@ -19,6 +19,7 @@ interface TabsCompteProps {
 export default function TabsCompte({ activeTab, onTabChange, counts }: TabsCompteProps) {
   const tabs = [
     { id: 'vue-d-ensemble' as CompteTab, label: "Vue d'ensemble" },
+    { id: 'progression' as CompteTab, label: 'Ma progression' },
     { id: 'aventures' as CompteTab, label: `Groupes (${counts.aventures})` },
     { id: 'carnets' as CompteTab, label: `Carnets de route (${counts.carnets})`, hasDot: true },
     { id: 'clubs' as CompteTab, label: `Clubs (${counts.clubs})` },

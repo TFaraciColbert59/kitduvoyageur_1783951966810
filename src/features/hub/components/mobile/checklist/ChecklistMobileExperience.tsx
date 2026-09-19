@@ -116,28 +116,28 @@ export function ChecklistMobileExperience({ tripId, daysUntilStart, items }: Che
             onClick={() => toggleItem(item)}
             aria-pressed={done}
             aria-label={`${done ? 'Décocher' : 'Cocher'} ${item.label}`}
-            className={`flex h-[8.5rem] w-[13rem] flex-col rounded-[1.4rem] p-3 text-left transition-transform active:scale-[0.97] ${
-              done ? 'glass border-2 border-[var(--lkv-primary)]/30' : 'glass'
+            className={`glass-capsule-btn flex h-[8.5rem] w-[13rem] !flex-col !items-start !justify-start !rounded-[1.4rem] !p-3 text-left transition-transform active:scale-[0.97] ${
+              done ? 'primary' : ''
             }`}
           >
             <span className="flex w-full items-start justify-between gap-2">
-              <span className="rounded-full bg-[var(--lkv-primary)]/10 px-2 py-0.5 text-[10px] font-bold text-[var(--lkv-primary)]">
+              <span className="rounded-full bg-[var(--lkv-primary)]/10 px-2 py-0.5 text-[10px] font-bold">
                 {BUCKET_TITLES[item.due_offset_days >= 30 ? 'j30' : item.due_offset_days >= 8 ? 'j7' : 'j1'].subtitle}
               </span>
               {done ? (
-                <CheckCircle2 size={17} className="shrink-0 text-[var(--lkv-primary)]" aria-hidden="true" />
+                <CheckCircle2 size={17} className="shrink-0" aria-hidden="true" />
               ) : (
-                <Circle size={17} className="shrink-0 text-[var(--lkv-text-primary)]/30" aria-hidden="true" />
+                <Circle size={17} className="shrink-0" aria-hidden="true" />
               )}
             </span>
             <span
               className={`mt-2 line-clamp-3 text-[12.5px] font-bold leading-snug ${
-                done ? 'text-[var(--lkv-text-primary)]/50 line-through' : 'text-[var(--lkv-text-primary)]'
+                done ? 'line-through opacity-60' : ''
               }`}
             >
               {item.label}
             </span>
-            <span className="mt-auto text-[10px] font-medium text-[var(--lkv-text-primary)]/60">
+            <span className="mt-auto text-[10px] font-medium">
               {item.done ? 'Fait' : `J-${item.due_offset_days}`}
             </span>
           </button>
@@ -165,7 +165,7 @@ export function ChecklistMobileExperience({ tripId, daysUntilStart, items }: Che
             type="button"
             onClick={() => openWith('todo')}
             aria-label={`Détail de la checklist — ${progress.pct}% prêt`}
-            className="relative shrink-0 rounded-full transition-transform active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)]"
+            className="glass-circle-btn relative shrink-0 transition-transform active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)]"
           >
             <BudgetRing pct={progress.pct}>
               <span className="font-display text-2xl font-extrabold leading-none text-[var(--lkv-text-primary)]">
@@ -247,10 +247,8 @@ export function ChecklistMobileExperience({ tripId, daysUntilStart, items }: Che
               type="button"
               onClick={() => setFilter(option.key)}
               aria-pressed={filter === option.key}
-              className={`min-h-[44px] flex-1 rounded-full px-3 text-xs font-bold transition-colors ${
-                filter === option.key
-                  ? 'bg-[var(--lkv-primary)] text-white'
-                  : 'glass-sub-card text-[var(--lkv-text-primary)]/75'
+              className={`glass-capsule-btn flex-1 !px-3 min-h-[44px] text-xs font-bold ${
+                filter === option.key ? 'primary' : ''
               }`}
             >
               {option.label}
@@ -273,7 +271,7 @@ export function ChecklistMobileExperience({ tripId, daysUntilStart, items }: Che
                     onClick={() => toggleItem(item)}
                     aria-pressed={done}
                     aria-label={`${done ? 'Décocher' : 'Cocher'} ${item.label}`}
-                    className="glass-sub-card flex min-h-[44px] w-full items-start gap-3 rounded-2xl p-3 text-left"
+                    className="glass-capsule-btn flex min-h-[44px] w-full !items-start !justify-start !gap-3 !rounded-2xl !p-3 text-left"
                   >
                     {done ? (
                       <CheckCircle2 size={18} className="mt-0.5 shrink-0 text-[var(--lkv-primary)]" aria-hidden="true" />

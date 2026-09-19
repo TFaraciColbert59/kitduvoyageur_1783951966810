@@ -938,7 +938,7 @@ export default function ConfiguratorWizard() {
   };
 
   return (
-    <div className="min-h-[100dvh] bg-[var(--lkv-surface-paper)] lg:h-dvh lg:overflow-hidden flex flex-col-reverse lg:flex-row">
+    <div className="min-h-[100dvh] bg-[rgba(238,243,236,0.8)] backdrop-blur-xl lg:h-dvh lg:overflow-hidden flex flex-col-reverse lg:flex-row">
       {/* LEFT COLUMN: Steps (Clair) */}
       <div className="flex-1 lg:w-7/12 relative lg:overflow-y-auto">
         <div ref={topRef} className="max-w-3xl mx-auto px-4 sm:px-8 lg:px-12 py-10 sm:py-14">

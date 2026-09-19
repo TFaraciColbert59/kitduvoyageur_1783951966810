@@ -1,9 +1,11 @@
 /* Canonical LKDV surface material. Optical values live in tokens.css.
    .glass is also the semantic adapter for existing links/articles: no extra wrapper. */
 :root {
-  --label: var(--glass-text);
-  --label-secondary: var(--glass-text-secondary);
-  --label-tertiary: var(--glass-text-secondary);
+  /* Jetons iOS sémantiques. Hors verre, --label reste sombre (pages claires).
+     La portée .glass (plus bas) les rétablit sur le contenu du matériau. */
+  --label: var(--lkv-text-primary);
+  --label-secondary: var(--lkv-text-secondary);
+  --label-tertiary: var(--lkv-text-secondary);
   --label-quaternary: var(--lkv-text-muted);
   --separator: var(--lkv-border);
   --separator-opaque: var(--stone-200);
@@ -34,13 +36,14 @@
 
   /* :where makes positioning defaults weaker than fixed/sticky/absolute utilities. */
   isolation: isolate;
-  background: var(--glass-sheen), var(--glass-bg-medium);
+  /* STYLE UNIQUE des cards — piloté par les tokens --card-* (tokens.css). */
+  background: var(--glass-sheen), var(--card-tint);
   color: var(--glass-text);
-  border: 1px solid var(--glass-border);
+  border: 1px solid var(--card-border);
   border-radius: var(--glass-radius);
   box-shadow: var(--glass-shadow);
-  -webkit-backdrop-filter: blur(var(--glass-blur-sm)) saturate(var(--glass-sat));
-  backdrop-filter: blur(var(--glass-blur-sm)) saturate(var(--glass-sat));
+  -webkit-backdrop-filter: blur(var(--card-blur)) saturate(var(--card-saturate));
+  backdrop-filter: blur(var(--card-blur)) saturate(var(--card-saturate));
   transition: transform var(--dur-xfast) var(--ease-glass);
 }
 :where(.glass) { position: relative; }
@@ -52,6 +55,28 @@
   background: var(--glass-highlight-top);
   pointer-events: none;
   border-radius: inherit;
+}
+/* Liseré spéculaire en surimpression (référence rdev) */
+.glass::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1.5px;
+  pointer-events: none;
+  mix-blend-mode: overlay;
+  opacity: 0.6;
+  -webkit-mask: linear-gradient(rgb(0, 0, 0) 0 0) content-box, linear-gradient(rgb(0, 0, 0) 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  box-shadow: 0 0 0 0.5px rgba(255, 255, 255, 0.55) inset,
+    0 1px 3px rgba(255, 255, 255, 0.3) inset,
+    0 1px 4px rgba(11, 31, 23, 0.18) inset;
+  background: linear-gradient(135deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.16) 33%,
+    rgba(255, 255, 255, 0.45) 66%,
+    rgba(255, 255, 255, 0) 100%);
 }
 .glass[data-glass-variant='elevated'],
 .glass[data-glass-variant='overlay'] {
@@ -83,17 +108,7 @@
   outline: 2px solid var(--glass-focus);
   outline-offset: 3px;
 }
-.glass-sub-card {
-  background: var(--glass-subtle-fill);
-  color: var(--glass-text);
-  border: 1px solid var(--glass-border);
-  border-radius: var(--lkv-radius-md);
-  box-shadow: none;
-  -webkit-backdrop-filter: none;
-  backdrop-filter: none;
-}
 
-/* Keyframes utilitaires */
 @keyframes glassFadeIn {
   from {
     opacity: 0;
@@ -268,7 +283,8 @@
    Ref: Apple Liquid Glass Stadium Pill & Segmented Bar
    ============================================================ */
 
-/* Canonical controls: thin fills inside surfaces, shared material outside. */
+/* Canonical controls: thin fills inside surfaces, shared material outside.
+   Recette de référence rdev : radius full, blur 6 sat 160, double liseré. */
 .glass-capsule-btn, .glass-btn, .glass-circle-btn, .glass-capsule-btn-like {
   position: relative;
   display: inline-flex;
@@ -278,26 +294,93 @@
   min-width: var(--lkv-touch-min);
   min-height: var(--lkv-touch-min);
   padding: var(--space-2) var(--space-4);
-  border-radius: var(--lkv-radius-full);
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--glass-text);
-  background: var(--glass-bg-medium);
-  border: 1px solid var(--glass-border);
-  box-shadow: var(--glass-shadow);
-  -webkit-backdrop-filter: blur(var(--glass-blur-sm)) saturate(var(--glass-sat));
-  backdrop-filter: blur(var(--glass-blur-sm)) saturate(var(--glass-sat));
+  border-radius: var(--btn-radius);
+  font-size: var(--btn-font-size);
+  font-weight: var(--btn-font-weight);
+  /* Référence photo (section 4) — valeurs pilotées par les tokens --btn-* (tokens.css).
+     Un seul point de changement pour 100% des boutons du site. */
+  color: var(--btn-content);
+  text-shadow: var(--btn-text-shadow);
+  background: var(--btn-tint);
+  border: none;
+  box-shadow: var(--btn-shadow);
+  -webkit-backdrop-filter: blur(var(--btn-blur)) saturate(var(--btn-saturate));
+  backdrop-filter: blur(var(--btn-blur)) saturate(var(--btn-saturate));
   transition: transform var(--dur-xfast) var(--ease-glass);
   cursor: pointer;
   white-space: nowrap;
 }
+/* Contenu blanc garanti (texte + icônes masques) sur les boutons non pleins */
+:is(.glass-capsule-btn, .glass-btn, .glass-circle-btn, .glass-capsule-btn-like):not(.primary):not(.danger) :is(span, svg, i, b, strong, p) {
+  color: inherit !important;
+}
+:is(.glass-capsule-btn, .glass-btn, .glass-circle-btn, .glass-capsule-btn-like):not(.primary):not(.danger) span[style*='mask-image'] {
+  background-color: currentColor !important;
+}
+/* Exemption : les badges .glass-pill internes gardent leur teinte forêt */
+:is(.glass-capsule-btn, .glass-btn, .glass-circle-btn, .lkv-button-primitive) .glass-pill,
+:is(.glass-capsule-btn, .glass-btn, .glass-circle-btn, .lkv-button-primitive) .glass-pill :is(span, svg, i) {
+  color: var(--glass-text) !important;
+}
+:is(.glass-capsule-btn, .glass-btn, .glass-circle-btn, .lkv-button-primitive) .glass-pill span[style*='mask-image'] {
+  background-color: currentColor !important;
+}
+/* Liseré spéculaire (screen) — porté de la pile LiquidGlass */
+.glass-capsule-btn::before, .glass-btn::before, .glass-circle-btn::before, .glass-capsule-btn-like::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1.5px;
+  pointer-events: none;
+  mix-blend-mode: screen;
+  opacity: 0.85;
+  -webkit-mask: linear-gradient(rgb(0, 0, 0) 0 0) content-box, linear-gradient(rgb(0, 0, 0) 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  box-shadow: 0 0 0 0.5px rgba(255, 255, 255, 0.5) inset,
+    0 1px 3px rgba(255, 255, 255, 0.28) inset,
+    0 -1px 3px rgba(11, 31, 23, 0.12) inset;
+  background: linear-gradient(135deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.16) 33%,
+    rgba(255, 255, 255, 0.45) 66%,
+    rgba(255, 255, 255, 0) 100%);
+}
+/* Liseré en surimpression (overlay) — même géométrie, rendu plus riche */
+.glass-capsule-btn::after, .glass-btn::after, .glass-circle-btn::after, .glass-capsule-btn-like::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1.5px;
+  pointer-events: none;
+  mix-blend-mode: overlay;
+  opacity: 0.6;
+  -webkit-mask: linear-gradient(rgb(0, 0, 0) 0 0) content-box, linear-gradient(rgb(0, 0, 0) 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  box-shadow: 0 0 0 0.5px rgba(255, 255, 255, 0.55) inset,
+    0 1px 3px rgba(255, 255, 255, 0.3) inset,
+    0 1px 4px rgba(11, 31, 23, 0.18) inset;
+  background: linear-gradient(135deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.16) 33%,
+    rgba(255, 255, 255, 0.45) 66%,
+    rgba(255, 255, 255, 0) 100%);
+}
 .glass-circle-btn { padding: var(--space-2); }
+/* Les boutons-cartes multi-lignes (contenu clampa) ne subissent pas le nowrap des pilules. */
+:is(.glass-capsule-btn, .glass-btn, .glass-capsule-btn-like) :is(.line-clamp-1, .line-clamp-2, .line-clamp-3, .line-clamp-4, .line-clamp-5, .line-clamp-6) {
+  white-space: normal;
+}
 .glass-capsule-btn.sm, .glass-btn.sm, .glass-capsule-btn.xs, .glass-btn.xs { font-size: 11px; }
 .glass-btn-primary, .glass-capsule-btn.primary, .glass-circle-btn.primary {
-  background: var(--lkv-primary); color: var(--lkv-text-inverted);
+  background: var(--btn-tint-solid); color: var(--btn-content);
 }
-.glass-btn-secondary, .glass-capsule-btn.secondary { background: var(--glass-bg-medium); }
-.glass-btn-danger { background: var(--lkv-danger-dark); color: var(--lkv-text-inverted); }
+.glass-btn-secondary, .glass-capsule-btn.secondary { background: var(--btn-tint); }
+.lkv-button-primitive { text-shadow: var(--btn-text-shadow); }
+.glass-btn-danger, .glass-capsule-btn.danger, .glass-circle-btn.danger { background: var(--lkv-danger-dark); color: var(--lkv-text-inverted); }
 :is(.glass-btn, .glass-capsule-btn, .glass-circle-btn, .glass-capsule-btn-like):not(:disabled):active {
   transform: scale(var(--glass-press-scale));
 }
@@ -329,6 +412,34 @@
   cursor: pointer;
 }
 .glass-capsule-segment.active { background: var(--lkv-primary); color: var(--lkv-text-inverted); }
+
+/* Contrôles de zoom Leaflet natifs (carte roadbook) — matériau des boutons DS.
+   Les contrôles sont injectés par Leaflet : simple habillage, aucune logique touchée. */
+.leaflet-control-zoom.leaflet-bar {
+  border: none !important;
+  border-radius: var(--btn-radius) !important;
+  box-shadow: var(--btn-shadow) !important;
+  overflow: hidden;
+}
+.leaflet-control-zoom.leaflet-bar a {
+  width: var(--lkv-touch-min) !important;
+  height: var(--lkv-touch-min) !important;
+  line-height: var(--lkv-touch-min) !important;
+  color: var(--btn-content) !important;
+  background: var(--btn-tint) !important;
+  border: none !important;
+  text-shadow: var(--btn-text-shadow);
+  -webkit-backdrop-filter: blur(var(--btn-blur)) saturate(var(--btn-saturate));
+  backdrop-filter: blur(var(--btn-blur)) saturate(var(--btn-saturate));
+}
+.leaflet-control-zoom.leaflet-bar a:hover,
+.leaflet-control-zoom.leaflet-bar a:focus {
+  background: rgba(255, 255, 255, 0.32) !important;
+  color: var(--btn-content) !important;
+}
+.leaflet-control-zoom.leaflet-bar a.leaflet-disabled {
+  opacity: var(--btn-disabled-opacity);
+}
 
 /* Mini checkboxes interactifs style iOS 26 Reminders */
 .glass-check-circle {
@@ -699,6 +810,14 @@
   -webkit-backdrop-filter: none;
 }
 
+/* Contenu blanc garanti (texte + icônes masques) dans les boutons LkvButton */
+.lkv-button-primitive :is(span, svg, i, b, strong, p) {
+  color: inherit !important;
+}
+.lkv-button-primitive span[style*='mask-image'] {
+  background-color: currentColor !important;
+}
+
 /* One blur per visual surface. !important intentionally covers older inline recipes. */
 :is(.glass, [data-glass-variant]) :is(.glass, .glass-sub-card, .glass-btn, .glass-capsule-btn,
   .glass-circle-btn, .glass-input, .glass-segmented, .glass-capsule-bar, .chip,
@@ -706,8 +825,35 @@
   -webkit-backdrop-filter: none !important;
   backdrop-filter: none !important;
 }
-.glass .glass {
+/* Exception : boutons verre posés sur un média (fond = photo, pas de glass imbriqué).
+   On réautorise l'optique réelle comme la référence rdev. */
+:is(.glass, [data-glass-variant]) .lkdv-photo-actions
+  :is(.lkv-button-primitive, .lkv-chip-primitive, .glass-circle-btn, [style*='backdrop-filter']) {
+  -webkit-backdrop-filter: blur(6px) saturate(160%) !important;
+  backdrop-filter: blur(6px) saturate(160%) !important;
+}
+@media (prefers-reduced-transparency: reduce), (prefers-contrast: more), (forced-colors: active) {
+  :is(.glass, [data-glass-variant]) .lkdv-photo-actions
+    :is(.lkv-button-primitive, .lkv-chip-primitive, .glass-circle-btn, [style*='backdrop-filter']) {
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+  }
+}
+[data-glass-effects='reduced'] :is(.glass, [data-glass-variant]) .lkdv-photo-actions
+  :is(.lkv-button-primitive, .lkv-chip-primitive, .glass-circle-btn, [style*='backdrop-filter']),
+.ultra-save-mode :is(.glass, [data-glass-variant]) .lkdv-photo-actions
+  :is(.lkv-button-primitive, .lkv-chip-primitive, .glass-circle-btn, [style*='backdrop-filter']) {
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+.glass .glass,
+.glass .glass-sub-card {
+  /* Surface imbriquée = puits clair, jamais de second flou. */
+  --label: var(--lkv-text-primary);
+  --label-secondary: var(--lkv-text-secondary);
+  --label-tertiary: var(--lkv-text-secondary);
   background: var(--glass-subtle-fill);
+  color: var(--lkv-text-primary);
   box-shadow: none;
 }
 :is(.glass-btn, .glass-capsule-btn, .glass-circle-btn, .glass-capsule-segment,
@@ -728,29 +874,46 @@
 /* Prefixed Safari support also counts as backdrop support. */
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
   .glass, .glass-sub-card, .glass-input, .glass-capsule-bar,
-  .glass-btn, .glass-capsule-btn, .glass-circle-btn, .glass-segmented, .chip {
+  .glass-btn, .glass-capsule-btn, .glass-circle-btn, .glass-segmented, .chip,
+  .lkv-glass, .lkv-glass__warp {
     background: var(--glass-solid);
+  }
+  .lkv-glass, .lkv-glass__warp {
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
   }
 }
 [data-glass-effects='reduced'] :is(.glass, .glass-sub-card, .glass-input, .glass-capsule-bar,
-  .glass-btn, .glass-capsule-btn, .glass-circle-btn, .glass-segmented, .chip) {
+  .glass-btn, .glass-capsule-btn, .glass-circle-btn, .glass-segmented, .chip,
+  .lkv-glass, .lkv-glass__warp) {
   background: var(--glass-solid);
   -webkit-backdrop-filter: none !important;
   backdrop-filter: none !important;
 }
+/* Le repli opaque clair restaure un contenu sombre lisible. */
+[data-glass-effects='reduced'] :is(.glass, .glass-sub-card) {
+  color: var(--lkv-text-primary);
+}
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  :is(.glass, .glass-sub-card) {
+    color: var(--lkv-text-primary);
+  }
+}
 @media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
   :is(.glass, .glass-sub-card, .glass-input, .glass-capsule-bar,
-    .glass-btn, .glass-capsule-btn, .glass-circle-btn, .glass-segmented, .chip) {
+    .glass-btn, .glass-capsule-btn, .glass-circle-btn, .glass-segmented, .chip,
+    .lkv-glass, .lkv-glass__warp) {
     background: var(--glass-solid) !important;
-    color: var(--glass-text);
+    color: var(--lkv-text-primary);
     -webkit-backdrop-filter: none !important;
     backdrop-filter: none !important;
   }
-  .glass::before { display: none; }
+  .glass::before, .glass::after { display: none; }
 }
 @media (prefers-reduced-motion: reduce) {
   :is(.glass, .glass-btn, .glass-capsule-btn, .glass-circle-btn, .glass-capsule-btn-like,
-    .glass-capsule-segment, .glass-sub-card, .lkv-button-primitive, .lkv-chip-primitive) {
+    .glass-capsule-segment, .glass-sub-card, .lkv-button-primitive, .lkv-chip-primitive,
+    .lkv-glass--premium) {
     transform: none !important;
     transition: none !important;
     animation: none !important;
@@ -845,7 +1008,6 @@
   border-radius: inherit;
   backdrop-filter: blur(var(--glass-blur-md, 14px)) saturate(var(--glass-saturate));
   -webkit-backdrop-filter: blur(var(--glass-blur-md, 14px)) saturate(var(--glass-saturate));
-  filter: url(#lkv-glass-filter);
   background: var(--glass-tint);
   box-shadow: var(--glass-drop);
 }
@@ -857,11 +1019,44 @@
   padding: 1.5px;
   pointer-events: none;
   mix-blend-mode: screen;
-  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask: linear-gradient(rgb(0, 0, 0) 0 0) content-box, linear-gradient(rgb(0, 0, 0) 0 0);
   -webkit-mask-composite: xor;
   mask-composite: exclude;
   box-shadow: var(--glass-inner-shadow);
 }
 
 .lkv-glass__content { position: relative; z-index: 2; }
+
+/* ---------- Ambilight des cartes média (halo flou de la photo) ---------- */
+/* Fusion haut de photo → verre de la card : fondu givré progressif. */
+.lkdv-photo-melt {
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 5rem;
+  pointer-events: none;
+  -webkit-backdrop-filter: blur(14px) saturate(1.5);
+  backdrop-filter: blur(14px) saturate(1.5);
+  background: linear-gradient(to bottom, rgba(255, 255, 255, 0.6), rgba(255, 255, 255, 0) 100%);
+  -webkit-mask-image: linear-gradient(to bottom, rgb(0, 0, 0) 0%, rgba(0, 0, 0, 0) 100%);
+  mask-image: linear-gradient(to bottom, rgb(0, 0, 0) 0%, rgba(0, 0, 0, 0) 100%);
+}
+
+/* Mode sobre, contraste renforcé ou transparence réduite : pas de halo. */
+[data-glass-effects='reduced'] .lkdv-ambilight,
+.ultra-save-mode .lkdv-ambilight {
+  display: none !important;
+}
+@media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
+  .lkdv-ambilight { display: none !important; }
+  .lkdv-photo-melt {
+    background: linear-gradient(to bottom, rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0) 100%);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
+@media (forced-colors: active) {
+  .lkdv-ambilight { display: none !important; }
+  .lkdv-photo-melt { display: none !important; }
+}
+
 

@@ -24,7 +24,7 @@ export function BudgetSideTrigger({ progressPct, over, hasTarget, onOpen }: Budg
             : 'Budget — aucune estimation'
         }
         title="Toutes les dépenses"
-        className="glass interactive flex h-14 w-12 items-center justify-center border border-white/60 shadow-lg transition-transform active:scale-[0.96] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)]"
+        className="glass-circle-btn flex h-14 w-12 items-center justify-center transition-transform active:scale-[0.96] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)]"
         style={{ borderRadius: '22px 0 0 22px' }}
       >
         <svg viewBox="0 0 40 40" className="h-9 w-9 -rotate-90" aria-hidden="true">

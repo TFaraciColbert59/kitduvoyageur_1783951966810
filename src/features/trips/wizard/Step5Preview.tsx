@@ -115,7 +115,7 @@ export function Step5Preview({
         <button
           type="button"
           onClick={onBackToEdit}
-          className="px-4 py-2 bg-rose-600 text-white text-xs font-semibold rounded-xl"
+          className="glass-capsule-btn primary !px-4 !py-2 text-xs font-semibold"
         >
           Modifier les paramètres
         </button>
@@ -141,11 +141,11 @@ export function Step5Preview({
 
       {/* Métriques clés */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <div className="p-3.5 bg-white/80 rounded-2xl border border-black/5 text-center">
+        <div className="glass-sub-card p-3.5 rounded-2xl text-center">
           <div className="text-[11px] font-semibold text-lkv-secondary uppercase">Durée</div>
           <div className="text-xl font-bold text-lkv-primary mt-0.5">{output.total_days} jours</div>
         </div>
-        <div className="p-3.5 bg-white/80 rounded-2xl border border-black/5 text-center">
+        <div className="glass-sub-card p-3.5 rounded-2xl text-center">
           <div className="text-[11px] font-semibold text-lkv-secondary uppercase">
             Distance estimée
           </div>
@@ -153,7 +153,7 @@ export function Step5Preview({
             {output.total_distance_km} km
           </div>
         </div>
-        <div className="p-3.5 bg-white/80 rounded-2xl border border-black/5 text-center">
+        <div className="glass-sub-card p-3.5 rounded-2xl text-center">
           <div className="text-[11px] font-semibold text-lkv-secondary uppercase">
             Dénivelé positif
           </div>
@@ -161,7 +161,7 @@ export function Step5Preview({
             +{output.total_elevation_gain_m}m D+
           </div>
         </div>
-        <div className="p-3.5 bg-white/80 rounded-2xl border border-black/5 text-center">
+        <div className="glass-sub-card p-3.5 rounded-2xl text-center">
           <div className="text-[11px] font-semibold text-lkv-secondary uppercase">Rythme</div>
           <div className="text-xl font-bold text-lkv-primary mt-0.5 capitalize">{state.pace}</div>
         </div>
@@ -210,7 +210,7 @@ export function Step5Preview({
           {output.steps.map((step, idx) => (
             <div
               key={idx}
-              className="p-4 bg-white/90 rounded-2xl border border-black/5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs"
+              className="glass-sub-card p-4 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3"
             >
               <div className="space-y-1">
                 <div className="flex items-center gap-2">
@@ -265,7 +265,7 @@ export function Step5Preview({
           {output.items.map((it, idx) => (
             <div
               key={idx}
-              className="p-3 bg-white/80 rounded-xl border border-black/5 flex items-center justify-between"
+              className="glass-sub-card p-3 rounded-xl flex items-center justify-between"
             >
               <div>
                 <div className="text-xs font-semibold text-lkv-primary">{it.item_name}</div>
@@ -288,7 +288,7 @@ export function Step5Preview({
         <button
           type="button"
           onClick={onBackToEdit}
-          className="w-full sm:w-auto px-5 py-3 rounded-xl border border-black/10 text-xs font-semibold text-lkv-primary hover:bg-black/5 flex items-center justify-center gap-2 min-h-[48px]"
+          className="glass-capsule-btn w-full sm:w-auto !px-5 !py-3 text-xs font-semibold flex items-center justify-center gap-2 min-h-[48px]"
         >
           <Icon name="rotate-ccw" size={14} />
           <span>Modifier les paramètres</span>
@@ -297,7 +297,7 @@ export function Step5Preview({
         <button
           type="button"
           onClick={() => onComplete(persistedSlug || 'mon-voyage')}
-          className="w-full sm:w-auto px-7 py-3.5 rounded-xl bg-lkv-primary hover:bg-[var(--lkv-primary-hover)] text-white text-sm font-bold shadow-md flex items-center justify-center gap-2 transition-all min-h-[48px]"
+          className="glass-capsule-btn primary w-full sm:w-auto !px-7 !py-3.5 text-sm font-bold shadow-md flex items-center justify-center gap-2 transition-all min-h-[48px]"
         >
           <span>Enregistrer et ouvrir mon voyage</span>
           <Icon name="arrow-right" size={16} />

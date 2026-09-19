@@ -8,16 +8,6 @@ export interface GearInfoSliderProps {
   onOpenList: () => void;
 }
 
-function cardClasses(tone: GearInfoCard['tone']): string {
-  if (tone === 'warn') {
-    return 'border border-[var(--lkv-danger)]/20 bg-[var(--lkv-danger)]/10';
-  }
-  if (tone === 'accent') {
-    return 'border border-[var(--lkv-primary)]/15 bg-[var(--lkv-primary)]/10';
-  }
-  return 'glass-sub-card';
-}
-
 export function GearInfoSlider({ cards, onOpenMissing, onOpenList }: GearInfoSliderProps) {
   if (cards.length === 0) return null;
 
@@ -36,24 +26,16 @@ export function GearInfoSlider({ cards, onOpenMissing, onOpenList }: GearInfoSli
                 type="button"
                 onClick={handleClick}
                 aria-label={`${card.label} — ${card.value}. ${card.hint}`}
-                className={`flex h-[6.75rem] w-[10.75rem] flex-col items-start justify-between rounded-[1.4rem] p-3 text-left transition-transform active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)] ${cardClasses(card.tone)}`}
+                className="glass-capsule-btn flex h-[6.75rem] w-[10.75rem] !flex-col !items-start !justify-between !rounded-[1.4rem] !p-3 text-left transition-transform active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)]"
               >
-                <span
-                  className={`text-[10px] font-medium uppercase tracking-[0.14em] ${
-                    card.tone === 'warn' ? 'text-[var(--lkv-danger)]' : 'text-[var(--lkv-text-primary)]'
-                  }`}
-                >
+                <span className="text-[10px] font-medium uppercase tracking-[0.14em]">
                   {card.label}
                 </span>
                 <span className="w-full">
-                  <span
-                    className={`block font-display text-xl font-extrabold tabular-nums ${
-                      card.tone === 'warn' ? 'text-[var(--lkv-danger)]' : 'text-[var(--lkv-text-primary)]'
-                    }`}
-                  >
+                  <span className="block font-display text-xl font-extrabold tabular-nums">
                     {card.value}
                   </span>
-                  <span className="block truncate text-[10.5px] font-medium text-[var(--lkv-text-primary)]/80">
+                  <span className="block truncate text-[10.5px] font-medium">
                     {card.hint}
                   </span>
                 </span>

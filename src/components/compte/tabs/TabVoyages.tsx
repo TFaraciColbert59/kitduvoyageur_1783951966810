@@ -22,7 +22,7 @@ export default function TabVoyages({ prochainVoyage, clubs, loading }: TabVoyage
     <div className="space-y-6">
       {/* 1. Prochain Voyage Planifié */}
       {hasNextTrip ? (
-        <div className="bg-white rounded-3xl p-5 sm:p-6 border border-[#A9C6B0] shadow-2xs relative overflow-hidden">
+        <div className="glass rounded-3xl p-5 sm:p-6 relative overflow-hidden">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
               <span className="text-[10px] font-mono font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-[#E1EBDD] text-[#17402C]">
@@ -37,7 +37,7 @@ export default function TabVoyages({ prochainVoyage, clubs, loading }: TabVoyage
             </div>
 
             <div className="flex items-center gap-3">
-              <div className="text-center px-4 py-2 bg-[#EEF3EC] rounded-2xl border border-black/[0.06]">
+              <div className="glass-sub-card text-center px-4 py-2 rounded-2xl">
                 <p className="text-2xl font-bold font-mono text-[#17402C] leading-none">
                   {prochainVoyage.days_left}
                 </p>
@@ -48,7 +48,7 @@ export default function TabVoyages({ prochainVoyage, clubs, loading }: TabVoyage
 
               <Link
                 href={`/groupes/${prochainVoyage.group_id}`}
-                className="px-4 py-2.5 rounded-xl bg-[#17402C] text-white text-xs font-bold  active:scale-95 transition-transform"
+                className="glass-capsule-btn primary text-xs font-bold"
               >
                 Gérer le départ
               </Link>
@@ -56,7 +56,7 @@ export default function TabVoyages({ prochainVoyage, clubs, loading }: TabVoyage
           </div>
         </div>
       ) : (
-        <div className="bg-white rounded-3xl p-6 sm:p-8 border border-black/[0.06] shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="glass rounded-3xl p-6 sm:p-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <h3 className="font-bold text-base text-[#17402C]">
               Aucun voyage planifié
@@ -67,7 +67,7 @@ export default function TabVoyages({ prochainVoyage, clubs, loading }: TabVoyage
           </div>
           <Link
             href="/explorer"
-            className="px-5 py-2.5 rounded-xl bg-[#17402C] hover:bg-[#17402C] text-white text-xs font-bold  active:scale-95 transition-transform shrink-0 text-center"
+            className="glass-capsule-btn primary text-xs font-bold shrink-0 text-center"
           >
             + Planifier un voyage
           </Link>
@@ -75,7 +75,7 @@ export default function TabVoyages({ prochainVoyage, clubs, loading }: TabVoyage
       )}
 
       {/* 2. Groupes & Expéditions Rejoins */}
-      <div className="bg-white rounded-3xl p-5 sm:p-6 border border-black/[0.06] shadow-2xs">
+      <div className="glass rounded-3xl p-5 sm:p-6">
         <div className="flex items-center justify-between mb-4">
           <div>
             <h3 className="font-bold text-sm text-[#17402C] flex items-center gap-1.5">
@@ -101,7 +101,7 @@ export default function TabVoyages({ prochainVoyage, clubs, loading }: TabVoyage
             <p className="text-xs">Vous n'avez rejoint aucun groupe pour le moment.</p>
             <Link
               href="/groupes"
-              className="inline-block mt-3 px-4 py-2 rounded-full bg-[#F4F1EB] hover:bg-[#EBE7DF] text-[#17402C] text-xs font-bold transition-colors"
+              className="glass-capsule-btn inline-block mt-3 text-xs font-bold"
             >
               Rejoindre un club
             </Link>
@@ -112,7 +112,7 @@ export default function TabVoyages({ prochainVoyage, clubs, loading }: TabVoyage
               <Link
                 key={club.id}
                 href={`/clubs/${club.id}`}
-                className="group p-3.5 rounded-2xl bg-[#EEF3EC] border border-black/[0.04] hover:border-[#17402C]/30 flex items-center justify-between gap-3 transition-all"
+                className="glass-sub-card group p-3.5 rounded-2xl hover:border-[#17402C]/30 flex items-center justify-between gap-3 transition-all"
               >
                 <div className="flex items-center gap-3 min-w-0">
                   <div className="w-10 h-10 rounded-xl bg-[#F4F1EB] flex items-center justify-center text-lg shrink-0">

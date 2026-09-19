@@ -17,7 +17,8 @@ import path from 'node:path';
 
 const root = process.cwd();
 const setPath = path.join(root, 'scripts', 'icons', 'icon-set.json');
-const phosphorDir = path.join(root, 'node_modules', '@phosphor-icons', 'core', 'assets', 'regular');
+const phosphorAssetsDir = path.join(root, 'node_modules', '@phosphor-icons', 'core', 'assets');
+const phosphorDir = path.join(phosphorAssetsDir, 'regular');
 const outDir = path.join(root, 'public', 'icons', 'sf');
 const manifestPath = path.join(root, 'src', 'components', 'ui', 'Icon', 'registry.generated.ts');
 
@@ -40,8 +41,12 @@ fs.mkdirSync(outDir, { recursive: true });
 const names = [];
 const missing = [];
 
-for (const { name, slug } of set) {
-  const src = path.join(phosphorDir, `${slug}.svg`);
+for (const { name, slug, weight = 'regular' } of set) {
+  // Graisse Phosphor native : regular | bold | fill | light | thin | duotone.
+  const boldFile = `${slug}-${weight}.svg`;
+  const regularFile = `${slug}.svg`;
+  let src = path.join(phosphorAssetsDir, weight, boldFile);
+  if (!fs.existsSync(src)) src = path.join(phosphorDir, regularFile);
   if (!fs.existsSync(src)) {
     missing.push(`${name} (${slug})`);
     continue;

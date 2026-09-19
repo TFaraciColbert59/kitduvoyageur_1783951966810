@@ -50,7 +50,7 @@ export function ExpenseRow({
           <button
             onClick={onSettle}
             disabled={isPending}
-            className="min-h-[44px] min-w-[44px] px-2 flex items-center justify-center gap-1 rounded-full bg-[var(--lkv-primary)]/10 text-[var(--lkv-primary)] text-[11px] font-bold hover:bg-[var(--lkv-primary)]/20 transition-all"
+            className="glass-capsule-btn primary !min-h-[44px] !py-1 !px-2.5 flex items-center justify-center gap-1 text-[11px] font-bold disabled:opacity-60 transition-all"
             title="Régler cette dépense prévue"
           >
             <Icon name="check-circle" size={14} />
@@ -62,7 +62,7 @@ export function ExpenseRow({
             <button
               onClick={onEdit}
               disabled={isPending}
-              className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-full glass-sub-card border border-white/60 text-[var(--lkv-text-muted)] hover:text-lkv-primary transition-all shadow-2xs"
+              className="glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8 flex items-center justify-center disabled:opacity-60 transition-all"
               title="Modifier la dépense"
             >
               <Icon name="pencil" size={14} />
@@ -70,7 +70,7 @@ export function ExpenseRow({
             <button
               onClick={onDelete}
               disabled={isPending}
-              className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-full glass-sub-card border border-white/60 text-[var(--lkv-text-muted)] hover:text-[var(--lkv-danger)] hover:bg-[var(--lkv-danger)]/10 transition-all shadow-2xs"
+              className="glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8 flex items-center justify-center disabled:opacity-60 transition-all"
               title="Supprimer la dépense"
             >
               <Icon name="trash2" size={14} />

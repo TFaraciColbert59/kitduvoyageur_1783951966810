@@ -307,7 +307,8 @@
   {
     "lucide": "Ellipsis",
     "name": "ellipsis",
-    "slug": "dots-three"
+    "slug": "dots-three",
+    "weight": "bold"
   },
   {
     "lucide": "Euro",
@@ -343,6 +344,12 @@
     "lucide": "Filter",
     "name": "filter",
     "slug": "funnel"
+  },
+  {
+    "lucide": "Flag",
+    "name": "flag",
+    "slug": "flag",
+    "weight": "bold"
   },
   {
     "lucide": "Flame",
@@ -407,7 +414,8 @@
   {
     "lucide": "ImagePlus",
     "name": "image-plus",
-    "slug": "image-square"
+    "slug": "image-square",
+    "weight": "bold"
   },
   {
     "lucide": "Info",
@@ -423,6 +431,12 @@
     "lucide": "Layers",
     "name": "layers",
     "slug": "stack"
+  },
+  {
+    "lucide": "Link",
+    "name": "link",
+    "slug": "link",
+    "weight": "bold"
   },
   {
     "lucide": "Lock",
@@ -452,12 +466,14 @@
   {
     "lucide": "MapPin",
     "name": "map-pin",
-    "slug": "map-pin"
+    "slug": "map-pin",
+    "weight": "bold"
   },
   {
     "lucide": "MessageSquare",
     "name": "message-square",
-    "slug": "chat"
+    "slug": "chat",
+    "weight": "bold"
   },
   {
     "lucide": "MessageSquarePlus",
@@ -522,7 +538,8 @@
   {
     "lucide": "Pencil",
     "name": "pencil",
-    "slug": "pencil"
+    "slug": "pencil",
+    "weight": "bold"
   },
   {
     "lucide": "Phone",
@@ -577,7 +594,8 @@
   {
     "lucide": "Reply",
     "name": "reply",
-    "slug": "arrow-bend-up-left"
+    "slug": "arrow-bend-up-left",
+    "weight": "bold"
   },
   {
     "lucide": "RotateCcw",
@@ -602,7 +620,8 @@
   {
     "lucide": "Send",
     "name": "send",
-    "slug": "paper-plane-tilt"
+    "slug": "paper-plane-tilt",
+    "weight": "bold"
   },
   {
     "lucide": "Share2",
@@ -712,7 +731,8 @@
   {
     "lucide": "Trash2",
     "name": "trash2",
-    "slug": "trash"
+    "slug": "trash",
+    "weight": "bold"
   },
   {
     "lucide": "TrendingDown",

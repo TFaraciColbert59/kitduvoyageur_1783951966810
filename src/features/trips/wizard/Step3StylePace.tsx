@@ -141,18 +141,18 @@ export function Step3StylePace({
         <label className="block text-xs font-semibold text-lkv-primary uppercase tracking-wider mb-2.5">
           Type d&apos;hébergement privilégié
         </label>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5" role="radiogroup" aria-label="Type d'hébergement privilégié">
           {ACCOMMODATIONS.map(({ id, title, desc, Icon }) => {
             const active = accommodationType === id;
             return (
               <button
                 key={id}
                 type="button"
+                role="radio"
+                aria-checked={active}
                 onClick={() => onAccommodationChange(id)}
-                className={`flex items-start gap-3 p-3.5 rounded-2xl border text-left transition-all min-h-[52px] ${
-                  active
-                    ? 'bg-lkv-primary text-white border-lkv-primary shadow-sm'
-                    : 'bg-white/80 hover:bg-white text-lkv-primary border-black/5 hover:border-black/10'
+                className={`glass-capsule-btn flex w-full !items-start !justify-start gap-3 !rounded-2xl !p-3.5 text-left transition-all ${
+                  active ? 'primary shadow-sm' : ''
                 }`}
               >
                 <div
@@ -182,18 +182,18 @@ export function Step3StylePace({
         <label className="block text-xs font-semibold text-lkv-primary uppercase tracking-wider mb-2.5">
           Rythme quotidien
         </label>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5" role="radiogroup" aria-label="Rythme quotidien">
           {PACES.map(({ id, title, kms, desc }) => {
             const active = pace === id;
             return (
               <button
                 key={id}
                 type="button"
+                role="radio"
+                aria-checked={active}
                 onClick={() => onPaceChange(id)}
-                className={`p-3.5 rounded-2xl border text-left transition-all min-h-[52px] ${
-                  active
-                    ? 'bg-lkv-primary text-white border-lkv-primary shadow-sm'
-                    : 'bg-white/80 hover:bg-white text-lkv-primary border-black/5 hover:border-black/10'
+                className={`glass-capsule-btn w-full !justify-start !rounded-2xl !p-3.5 text-left transition-all ${
+                  active ? 'primary shadow-sm' : ''
                 }`}
               >
                 <div className="flex items-center justify-between">
@@ -221,18 +221,18 @@ export function Step3StylePace({
         <label className="block text-xs font-semibold text-lkv-primary uppercase tracking-wider mb-2.5">
           Activité dominante
         </label>
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2" role="radiogroup" aria-label="Activité dominante">
           {ACTIVITIES.map(({ id, title, Icon }) => {
             const active = activityType === id;
             return (
               <button
                 key={id}
                 type="button"
+                role="radio"
+                aria-checked={active}
                 onClick={() => onActivityChange(id)}
-                className={`flex flex-col items-center justify-center p-3 rounded-2xl border text-center transition-all min-h-[64px] ${
-                  active
-                    ? 'bg-lkv-primary text-white border-lkv-primary'
-                    : 'bg-white/80 hover:bg-white text-lkv-primary border-black/5'
+                className={`glass-capsule-btn flex flex-col items-center justify-center !rounded-2xl !p-3 text-center transition-all ${
+                  active ? 'primary' : ''
                 }`}
               >
                 <Icon
@@ -251,18 +251,18 @@ export function Step3StylePace({
         <label className="block text-xs font-semibold text-lkv-primary uppercase tracking-wider mb-2.5">
           Niveau technique & expérience
         </label>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2" role="radiogroup" aria-label="Niveau technique & expérience">
           {DIFFICULTIES.map(({ id, title, desc }) => {
             const active = difficulty === id;
             return (
               <button
                 key={id}
                 type="button"
+                role="radio"
+                aria-checked={active}
                 onClick={() => onDifficultyChange(id)}
-                className={`p-3 rounded-xl border text-left transition-all min-h-[44px] ${
-                  active
-                    ? 'bg-lkv-primary text-white border-lkv-primary'
-                    : 'bg-white/80 hover:bg-white text-lkv-primary border-black/5'
+                className={`glass-capsule-btn w-full min-h-[44px] !justify-start !rounded-2xl !p-3 text-left transition-all ${
+                  active ? 'primary' : ''
                 }`}
               >
                 <div className="text-xs font-semibold">{title}</div>

@@ -109,15 +109,13 @@ export function Step2Dates({
       </div>
 
       {/* Onglets Dates précises vs Durée seule */}
-      <div className="flex p-1 bg-black/5 rounded-2xl max-w-sm">
+      <div className="glass-capsule-bar flex w-full max-w-sm" role="tablist" aria-label="Mode de sélection des dates">
         <button
           type="button"
+          role="tab"
+          aria-selected={datesChoice === 'duration'}
           onClick={() => onDatesChoiceChange('duration')}
-          className={`flex-1 py-2.5 px-4 rounded-xl text-xs font-semibold transition-all min-h-[44px] ${
-            datesChoice === 'duration'
-              ? 'bg-white text-lkv-primary shadow-sm'
-              : 'text-[var(--lkv-text-muted)] hover:text-lkv-primary'
-          }`}
+          className={`glass-capsule-segment flex-1 !px-4 text-xs font-semibold ${datesChoice === 'duration' ? 'active' : ''}`}
         >
           <div className="flex items-center justify-center gap-1.5">
             <Icon name="clock" size={14} />
@@ -126,12 +124,10 @@ export function Step2Dates({
         </button>
         <button
           type="button"
+          role="tab"
+          aria-selected={datesChoice === 'dates'}
           onClick={() => onDatesChoiceChange('dates')}
-          className={`flex-1 py-2.5 px-4 rounded-xl text-xs font-semibold transition-all min-h-[44px] ${
-            datesChoice === 'dates'
-              ? 'bg-white text-lkv-primary shadow-sm'
-              : 'text-[var(--lkv-text-muted)] hover:text-lkv-primary'
-          }`}
+          className={`glass-capsule-segment flex-1 !px-4 text-xs font-semibold ${datesChoice === 'dates' ? 'active' : ''}`}
         >
           <div className="flex items-center justify-center gap-1.5">
             <Icon name="calendar" size={14} />
@@ -170,7 +166,7 @@ export function Step2Dates({
       )}
 
       {/* Sélecteur de durée (affiché ou ajusté dans les deux modes) */}
-      <div className="p-4 sm:p-5 bg-white/80 rounded-2xl border border-black/5 space-y-4">
+      <div className="glass-sub-card p-4 sm:p-5 rounded-2xl space-y-4">
         <div className="flex items-center justify-between">
           <span className="text-xs font-semibold text-lkv-primary uppercase tracking-wider">
             Durée de l&apos;expédition
@@ -186,10 +182,8 @@ export function Step2Dates({
               key={d}
               type="button"
               onClick={() => onDurationChange(d)}
-              className={`py-2 px-3 rounded-xl text-xs font-semibold border transition-all min-h-[44px] ${
-                durationDays === d
-                  ? 'bg-lkv-primary text-white border-lkv-primary'
-                  : 'bg-white hover:bg-black/5 text-lkv-primary border-black/10'
+              className={`glass-capsule-btn !py-2 !px-3 text-xs font-semibold transition-all ${
+                durationDays === d ? 'primary' : ''
               }`}
             >
               {d} jours

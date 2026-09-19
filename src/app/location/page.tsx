@@ -238,7 +238,7 @@ function RentalDetailModal({ listing, onClose }: { listing: RentalListing; onClo
       <div className="bg-card border border-border rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between p-5 border-b border-border sticky top-0 bg-card z-10">
           <h2 className="font-display font-700 text-foreground text-base line-clamp-1">{listing.title}</h2>
-          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-muted transition-colors flex-shrink-0">
+          <button onClick={onClose} className="glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8 flex-shrink-0">
             <Icon name="XMarkIcon" size={18} />
           </button>
         </div>
@@ -316,7 +316,7 @@ function RentalDetailModal({ listing, onClose }: { listing: RentalListing; onClo
 
             <button
               onClick={() => setShowCalendar(!showCalendar)}
-              className="w-full text-xs text-muted-foreground hover:text-foreground flex items-center justify-center gap-1.5 py-2 border border-border rounded-xl hover:border-foreground/30 transition-all"
+              className="glass-capsule-btn w-full !text-xs flex items-center justify-center gap-1.5 !py-2"
             >
               <Icon name="CalendarIcon" size={12} />
               {showCalendar ? 'Masquer le calendrier' : 'Voir les disponibilités'}
@@ -343,9 +343,7 @@ function RentalDetailModal({ listing, onClose }: { listing: RentalListing; onClo
             <button
               disabled={!listing.available}
               onClick={() => listing.available && setReserved(true)}
-              className={`w-full py-3 rounded-xl text-sm font-600 transition-all ${
-                listing.available ? 'btn-primary justify-center' : 'bg-muted text-muted-foreground cursor-not-allowed'
-              }`}
+              className={`glass-capsule-btn w-full !py-3 !text-sm !font-semibold ${listing.available ? 'primary' : ''}`}
             >
               {listing.available
                 ? days > 0 ? `Réserver — ${totalPrice}€ + ${listing.deposit}€ caution` : 'Réserver'
@@ -369,7 +367,7 @@ function RentalDetailModal({ listing, onClose }: { listing: RentalListing; onClo
             <h3 className="font-display font-700 text-foreground text-xl mb-2">Réservation confirmée !</h3>
             <p className="text-sm text-muted-foreground mb-2">{listing.title}</p>
             <p className="text-sm text-muted-foreground mb-6">{listing.owner} vous contactera pour organiser la remise du matériel.</p>
-            <button onClick={onClose} className="btn-primary justify-center px-8 py-3">Fermer</button>
+            <button onClick={onClose} className="glass-capsule-btn primary justify-center px-8 py-3">Fermer</button>
           </div>
         )}
       </div>
@@ -381,7 +379,7 @@ function RentalCard({ listing, onClick }: { listing: RentalListing; onClick: () 
   const cond = conditionConfig[listing.condition];
 
   return (
-    <div className="topo-card group flex flex-col cursor-pointer hover:border-primary/20 transition-all" onClick={onClick}>
+    <div className="glass group flex flex-col cursor-pointer hover:border-primary/20 transition-all" onClick={onClick}>
       <div className="relative overflow-hidden aspect-[4/3] rounded-t-xl">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={listing.image || '/assets/images/no_image.png'} alt={listing.alt} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
@@ -568,7 +566,7 @@ export default function LocationPage() {
             </select>
             <button
               onClick={() => setShowListModal(true)}
-              className="btn-primary flex items-center gap-2 whitespace-nowrap"
+              className="glass-capsule-btn primary flex items-center gap-2 whitespace-nowrap"
             >
               <Icon name="PlusIcon" size={16} />
               Proposer du matériel
@@ -581,7 +579,7 @@ export default function LocationPage() {
               <button
                 key={cat}
                 onClick={() => setCategory(cat)}
-                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${category === cat ? 'bg-primary text-white' : 'bg-card border border-border text-muted-foreground hover:text-foreground'}`}
+                className={`glass-capsule-btn !px-3 !py-1.5 !text-sm !font-medium ${category === cat ? 'primary' : ''}`}
               >
                 {cat}
               </button>
@@ -614,7 +612,7 @@ export default function LocationPage() {
               <>
                 <div className="flex items-center justify-between mb-5">
                   <h3 className="font-display font-700 text-foreground text-lg">Proposer du matériel</h3>
-                  <button onClick={() => setShowListModal(false)} className="p-1.5 rounded-lg hover:bg-muted transition-colors">
+                  <button onClick={() => setShowListModal(false)} className="glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8">
                     <Icon name="XMarkIcon" size={18} />
                   </button>
                 </div>
@@ -626,7 +624,7 @@ export default function LocationPage() {
                   <textarea placeholder="Description et état du matériel..." className="input-field resize-none w-full" rows={3} value={listForm.description} onChange={e => setListForm(p => ({ ...p, description: e.target.value }))} />
                 </div>
                 <div className="flex gap-3 mt-4">
-                  <button onClick={() => setShowListModal(false)} className="btn-secondary flex-1 justify-center py-3">Annuler</button>
+                  <button onClick={() => setShowListModal(false)} className="glass-capsule-btn flex-1 justify-center py-3">Annuler</button>
                   <button
                     disabled={listSaving || !listForm.title.trim()}
                     onClick={async () => {
@@ -651,7 +649,7 @@ export default function LocationPage() {
                         setListSaving(false);
                       }
                     }}
-                    className="btn-primary flex-1 justify-center py-3 disabled:opacity-50"
+                    className="glass-capsule-btn primary flex-1 justify-center py-3"
                   >
                     {listSaving ? 'Envoi...' : 'Soumettre'}
                   </button>
@@ -664,7 +662,7 @@ export default function LocationPage() {
                 </div>
                 <h3 className="font-display font-700 text-foreground text-lg mb-2">Demande envoyée !</h3>
                 <p className="text-sm text-muted-foreground mb-6">Notre équipe validera votre annonce sous 24h.</p>
-                <button onClick={() => { setListSent(false); setShowListModal(false); }} className="btn-primary justify-center px-8 py-3">Fermer</button>
+                <button onClick={() => { setListSent(false); setShowListModal(false); }} className="glass-capsule-btn primary justify-center px-8 py-3">Fermer</button>
               </div>
             )}
           </div>
@@ -753,19 +751,7 @@ export default function LocationPage() {
                 <button
                   key={cat}
                   onClick={() => setCategory(cat)}
-                  style={{
-                    padding: '6px 14px',
-                    borderRadius: '999px',
-                    fontSize: '12px',
-                    fontWeight: '600',
-                    whiteSpace: 'nowrap',
-                    border: '1px solid',
-                    background: category === cat ? '#17402C' : '#fff',
-                    color: category === cat ? '#fff' : '#3A4A3D',
-                    borderColor: category === cat ? '#17402C' : '#E4E0D4',
-                    cursor: 'pointer',
-                    flexShrink: 0,
-                  }}
+                  className={`glass-capsule-btn flex-shrink-0 !px-3.5 !py-1.5 !text-xs !font-semibold ${category === cat ? 'primary' : ''}`}
                 >
                   {cat}
                 </button>
@@ -774,7 +760,7 @@ export default function LocationPage() {
 
             {/* Results */}
             {filtered.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '40px 16px', background: '#fff', borderRadius: '16px', border: '1px solid #E8E4D8' }}>
+              <div className="glass" style={{ textAlign: 'center', padding: '40px 16px' }}>
                 <p style={{ fontSize: '14px', color: '#7A8A7D' }}>Aucun article trouvé</p>
               </div>
             ) : (
@@ -785,12 +771,10 @@ export default function LocationPage() {
                     <div
                       key={listing.id}
                       onClick={() => setSelectedListing(listing)}
+                      className="glass"
                       style={{
                         display: 'flex',
                         gap: '12px',
-                        background: '#fff',
-                        borderRadius: '14px',
-                        border: '1px solid #E8E4D8',
                         overflow: 'hidden',
                         cursor: 'pointer',
                       }}
@@ -827,22 +811,7 @@ export default function LocationPage() {
             {/* Propose CTA */}
             <button
               onClick={() => setShowListModal(true)}
-              style={{
-                width: '100%',
-                marginTop: '16px',
-                padding: '14px',
-                background: '#17402C',
-                color: '#fff',
-                borderRadius: '14px',
-                fontSize: '13px',
-                fontWeight: '700',
-                border: 'none',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '8px',
-              }}
+              className="glass-capsule-btn primary w-full !mt-4 !py-3.5 !text-[13px] !font-bold flex items-center justify-center gap-2"
             >
               + Proposer du matériel
             </button>

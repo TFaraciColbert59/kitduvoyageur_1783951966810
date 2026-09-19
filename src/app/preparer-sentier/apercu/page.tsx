@@ -39,7 +39,7 @@ export default function PreparerApercuPage() {
     <main
       id="main-content"
       data-testid="preparer-apercu"
-      className="min-h-screen bg-[var(--lkv-surface)] px-4 py-6 text-[var(--lkv-text-primary)]"
+      className="min-h-screen bg-[rgba(238,243,236,0.8)] backdrop-blur-xl px-4 py-6 text-[var(--lkv-text-primary)]"
     >
       <header className="mx-auto max-w-5xl">
         <h1 className="font-display text-xl font-extrabold tracking-tight">

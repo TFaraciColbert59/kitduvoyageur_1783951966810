@@ -286,7 +286,7 @@ export function TripCompletionModal({ trip, isOpen, onClose }: TripCompletionMod
                                   [candidate.placeId]: { ...currentRev, rating: star },
                                 }))
                               }
-                              className="text-[var(--lkv-warning)] hover:scale-110 transition-transform"
+                              className="glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8 hover:scale-110 transition-transform"
                             >
                               <Icon name="star" size={16} />
                             </button>

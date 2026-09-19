@@ -121,13 +121,13 @@ export default function HomepageAIDemoSection({ stats }: Props) {
 
             <Link
               href="/ai-configurator"
-              className="btn-primary"
+              className="glass-capsule-btn primary px-7 py-3.5 text-sm"
               style={{
                 opacity: visible ? 1 : 0,
                 transition: 'opacity 0.5s ease 0.4s',
               }}
             >
-              <Icon name="SparklesIcon" size={16} variant="outline" />
+              <Icon name="sparkles" size={16} />
               Lancer mon configurateur
             </Link>
           </div>

@@ -41,7 +41,7 @@ export function ResumeActiveTripCard() {
           <div className="flex flex-wrap items-center gap-2.5 pt-2 md:pt-0">
             <Link
               href={tripSectionHref(activeTrip.slug, 'overview')}
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[var(--lkv-secondary)] text-[var(--lkv-primary)] font-bold text-xs hover:bg-[var(--lkv-secondary)]/90 transition-transform active:scale-95 shadow-sm"
+              className="glass-capsule-btn primary inline-flex items-center gap-2 !px-4 !py-2.5 font-bold text-xs transition-transform active:scale-95"
             >
               <Icon name="compass" size={14} />
               <span>Reprendre le voyage</span>
@@ -50,17 +50,17 @@ export function ResumeActiveTripCard() {
 
             <Link
               href={`${tripSectionHref(activeTrip.slug, 'overview')}?phase=live`}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-white/10 hover:bg-white/15 text-white font-semibold text-xs border border-white/15 transition-all"
+              className="glass-capsule-btn inline-flex items-center gap-1.5 !px-3.5 !py-2.5 font-semibold text-xs transition-all"
             >
-              <Icon name="radio" size={13} className="text-[var(--lkv-secondary)]" />
+              <Icon name="radio" size={13} />
               <span>Cockpit</span>
             </Link>
 
             <Link
               href="/hub"
-              className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-white/10 hover:bg-white/15 text-white font-semibold text-xs border border-white/15 transition-all"
+              className="glass-capsule-btn inline-flex items-center gap-1.5 !px-3.5 !py-2.5 font-semibold text-xs transition-all"
             >
-              <Icon name="package" size={13} className="text-[var(--lkv-secondary)]" />
+              <Icon name="package" size={13} />
               <span>Mon sac</span>
             </Link>
 
@@ -70,7 +70,7 @@ export function ResumeActiveTripCard() {
               disabled={isPending}
               aria-label="Fermer l'expédition active"
               title="Désactiver l'expédition active"
-              className="p-2.5 rounded-xl bg-white/5 hover:bg-white/15 text-white/60 hover:text-white transition-colors border border-white/10"
+              className="glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8 disabled:opacity-60 transition-colors"
             >
               <Icon name="x" size={14} />
             </button>

@@ -159,7 +159,7 @@ export default function TrailDetailPanel({ trail, onClose }: Props) {
               <button
                 type="button"
                 onClick={handleShare}
-                className="glass-circle-btn w-9 h-9"
+                className="glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8"
                 aria-label="Partager le sentier"
                 title="Partager"
               >
@@ -168,7 +168,7 @@ export default function TrailDetailPanel({ trail, onClose }: Props) {
               <button
                 type="button"
                 onClick={onClose}
-                className="glass-circle-btn w-9 h-9"
+                className="glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8"
                 aria-label="Fermer la fiche détaillée"
                 title="Fermer"
               >
@@ -304,11 +304,7 @@ export default function TrailDetailPanel({ trail, onClose }: Props) {
             <button
               type="button"
               onClick={handleOfflineToggle}
-              className={
-                isOfflineAvailable
-                  ? 'h-8 px-3.5 rounded-full text-xs font-bold bg-rose-50/90 text-rose-700 border border-rose-200 cursor-pointer active:scale-95 shrink-0 transition-all'
-                  : 'glass-capsule-btn text-xs font-bold !py-1.5 !px-3.5 shrink-0'
-              }
+              className="glass-capsule-btn text-xs font-bold !py-1.5 !px-3.5 !min-h-0 h-8 shrink-0"
             >
               {isOfflineAvailable ? 'Supprimer' : 'Télécharger'}
             </button>

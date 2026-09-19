@@ -70,30 +70,18 @@ export function DayNavigator({
                 triggerHaptic('selection');
                 onSelectDay(dayNum);
               }}
-              className={`snap-start flex flex-col items-start px-3.5 py-2 rounded-[var(--lkv-radius-md)] transition-all shrink-0 min-h-[44px] min-w-[72px] text-left select-none cursor-pointer border active:scale-95 ${
-                isSelected
-                  ? 'bg-[var(--lkv-primary)] text-white border-[var(--lkv-primary)] shadow-sm'
-                  : 'glass-sub-card border border-white/50 text-[var(--lkv-text-primary)] hover:bg-white'
+              className={`glass-capsule-btn snap-start flex flex-col !items-start !justify-start !px-3.5 !py-2 !rounded-2xl transition-all shrink-0 min-w-[72px] text-left select-none cursor-pointer active:scale-95 ${
+                isSelected ? 'primary shadow-sm' : ''
               }`}
             >
               <div className="flex items-center justify-between w-full gap-2">
                 <span className="text-xs font-bold tracking-tight">Jour {dayNum}</span>
-                <span
-                  className={`text-[9px] px-1.5 py-0.5 rounded-full font-mono font-bold ${
-                    isSelected
-                      ? 'bg-white/20 text-white'
-                      : 'bg-black/5 text-[var(--lkv-text-secondary)]'
-                  }`}
-                >
+                <span className="text-[9px] px-1.5 py-0.5 rounded-full font-mono font-bold bg-white/20">
                   {daySteps.length}
                 </span>
               </div>
               {dateStr && (
-                <span
-                  className={`text-[10px] truncate max-w-[85px] mt-0.5 ${
-                    isSelected ? 'text-white/80' : 'text-[var(--lkv-text-secondary)]'
-                  }`}
-                >
+                <span className="text-[10px] truncate max-w-[85px] mt-0.5">
                   {dateStr}
                 </span>
               )}
@@ -109,7 +97,7 @@ export function DayNavigator({
               triggerHaptic('light');
               onAddDay();
             }}
-            className="flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-[var(--lkv-radius-md)] glass-sub-card border border-dashed border-white/80 text-[var(--lkv-text-secondary)] hover:text-[var(--lkv-text-primary)] hover:bg-white transition-all shrink-0 min-h-[44px] text-xs font-semibold cursor-pointer active:scale-95"
+            className="glass-capsule-btn flex items-center justify-center gap-1.5 !px-3.5 !py-2 !rounded-2xl transition-all shrink-0 text-xs font-semibold cursor-pointer active:scale-95"
             title="Ajouter un jour supplémentaire"
           >
             <Icon name="plus" className="w-3.5 h-3.5" />

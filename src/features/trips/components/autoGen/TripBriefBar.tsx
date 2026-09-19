@@ -97,7 +97,7 @@ export const TripBriefBar: React.FC<TripBriefBarProps> = ({
             type="button"
             onClick={handleAttachment}
             aria-label="Joindre un tracé GPX ou une photo"
-            className="p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center text-[var(--lkv-text-subtle)] hover:text-[var(--lkv-text-muted)]  rounded-xl hover:bg-[var(--lkv-surface-muted)]  transition-colors"
+            className="glass-circle-btn flex items-center justify-center transition-colors"
           >
             <Icon name="paperclip" className="w-5 h-5" />
           </button>
@@ -107,7 +107,7 @@ export const TripBriefBar: React.FC<TripBriefBarProps> = ({
             type="button"
             onClick={handleVoiceInput}
             aria-label="Dicter une consigne vocale"
-            className="p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center text-[var(--lkv-text-subtle)] hover:text-[var(--lkv-secondary-hover)]  rounded-xl hover:bg-[var(--lkv-surface-muted)]  transition-colors"
+            className="glass-circle-btn flex items-center justify-center transition-colors"
           >
             <Icon name="mic" className="w-5 h-5" />
           </button>
@@ -116,7 +116,7 @@ export const TripBriefBar: React.FC<TripBriefBarProps> = ({
           <button
             type="submit"
             disabled={!query.trim() || isGenerating}
-            className="px-4 py-2.5 min-h-[44px] bg-[var(--lkv-secondary-hover)] hover:bg-[var(--lkv-primary-soft)] disabled:opacity-50 text-white font-medium text-sm rounded-xl flex items-center space-x-1.5 shadow-sm transition-transform active:scale-95"
+            className="glass-capsule-btn primary !px-4 !py-2.5 text-sm font-medium flex items-center gap-1.5 disabled:opacity-50 transition-transform active:scale-95"
           >
             <span>Générer mon voyage</span>
             <Icon name="arrow-right" className="w-4 h-4" />
@@ -132,7 +132,7 @@ export const TripBriefBar: React.FC<TripBriefBarProps> = ({
             key={sugg.label}
             type="button"
             onClick={() => handleChipClick(sugg.query)}
-            className="px-3 py-1 min-h-[var(--lkv-touch-min)] text-xs bg-[var(--lkv-surface-muted)]  text-[var(--lkv-text-muted)]  hover:bg-[var(--lkv-success-bg)]  hover:text-[var(--lkv-secondary-hover)]  rounded-full transition-colors active:scale-95"
+            className="glass-capsule-btn !px-3 !py-1 text-xs transition-colors active:scale-95"
           >
             {sugg.label}
           </button>

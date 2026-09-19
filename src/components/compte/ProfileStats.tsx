@@ -57,7 +57,7 @@ export default function ProfileStats({
             triggerHaptic('selection');
             onStatClick?.(item.key);
           }}
-          className="bg-white rounded-2xl p-3 sm:p-4 border border-black/[0.06] hover:border-[#17402C]/30 shadow-2xs text-left transition-all active:scale-[0.98] group flex flex-col justify-between gap-1"
+          className="glass rounded-2xl p-3 sm:p-4 hover:border-[#17402C]/30 text-left transition-all active:scale-[0.98] group flex flex-col justify-between gap-1"
         >
           <div className="flex items-center justify-between">
             <span className="text-base sm:text-lg">{item.icon}</span>

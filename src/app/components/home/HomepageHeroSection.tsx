@@ -273,8 +273,7 @@ export default function HomepageHeroSection() {
                       </div>
                       <Link
                         href="/ai-configurator"
-                        className="px-5 py-2.5 text-sm font-semibold text-white rounded-xl transition-all hover:opacity-90 hover:-translate-y-0.5 shadow-green"
-                        style={{ background: '#17402C', boxShadow: '0 8px 24px rgba(23,64,44,0.28)' }}
+                        className="glass-capsule-btn primary px-5 py-2.5 text-sm font-semibold"
                       >
                         Configurer mon sac
                       </Link>

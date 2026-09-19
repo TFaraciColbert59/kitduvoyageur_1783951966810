@@ -80,10 +80,8 @@ export default function ClubVerticalTabs({
               key={tab.id}
               type="button"
               onClick={() => setActiveTab(tab.id)}
-              className={`w-full px-3 py-2.5 rounded-xl font-bold text-xs transition-all flex items-center justify-between group cursor-pointer border ${
-                isActive
-                  ? 'bg-[#17402C] text-white border-[#17402C] shadow-sm'
-                  : 'bg-white/80 hover:bg-white text-[#17402C] border-white/80 shadow-2xs'
+              className={`w-full glass-capsule-btn font-bold text-xs flex items-center justify-between group cursor-pointer ${
+                isActive ? 'primary' : ''
               }`}
             >
               <span className="truncate text-left">{tab.label}</span>

@@ -566,21 +566,21 @@ function DraftRow({
             <div className="flex items-center gap-1.5 flex-shrink-0">
               <button
                 onClick={() => router.push(`/carnets/${draft.slug || draft.id}/edit`)}
-                className="px-3 py-1.5 bg-[#17402C] hover:bg-[#365233] text-white text-xs font-700 rounded-full transition-colors"
+                className="glass-capsule-btn primary !py-1.5 !px-3 !min-h-0 text-xs font-bold transition-colors"
               >
                 Reprendre
               </button>
               <button
                 onClick={() => onPublish(draft.id)}
                 title="Publier"
-                className="p-1.5 text-forest-600 hover:text-forest-700 hover:bg-forest-50 rounded-lg transition-colors"
+                className="glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8 !p-0 transition-colors"
               >
                 <Icon name="ArrowUpOnSquareIcon" size={14} />
               </button>
               <button
                 onClick={() => onDelete(draft.id)}
                 title="Supprimer"
-                className="p-1.5 text-[#5A7064] hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                className="glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8 !p-0 transition-colors"
               >
                 <Icon name="TrashIcon" size={14} />
               </button>

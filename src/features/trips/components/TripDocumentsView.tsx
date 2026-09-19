@@ -427,7 +427,7 @@ function DocCard({ doc, required = false, canEdit, isPending, onDelete }: DocCar
           <button
             onClick={() => onDelete(doc.id)}
             disabled={isPending}
-            className="min-h-[44px] min-w-[44px] rounded-full flex items-center justify-center glass-sub-card border border-white/60 text-[var(--lkv-text-muted)] hover:text-[var(--lkv-danger)] hover:bg-[var(--lkv-danger)]/10 transition-all shadow-2xs"
+            className="glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8 flex items-center justify-center disabled:opacity-60 transition-all"
             title="Supprimer ce document"
           >
             <Icon name="trash2" size={15} />

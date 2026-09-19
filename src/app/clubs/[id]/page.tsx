@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
@@ -493,7 +493,7 @@ export default function ClubDetailPage() {
       <>
         {/* DESKTOP LOADING */}
         <div className="hidden md:block">
-          <div className="min-h-screen bg-[#F5F3ED] selection:bg-forest-900/20 flex flex-col">
+          <div className="min-h-screen bg-transparent text-[#EEF3EC] selection:bg-forest-900/20 flex flex-col">
             <Header />
             <main className="flex-1 animate-pulse">
               <div className="h-[400px] bg-forest-900/10 mx-auto w-full max-w-[1400px] rounded-b-[3rem] mt-16" />
@@ -528,25 +528,25 @@ export default function ClubDetailPage() {
       <>
         {/* DESKTOP NOT FOUND */}
         <div className="hidden md:block">
-          <div className="min-h-screen bg-[#F5F3ED] selection:bg-forest-900/20 flex flex-col">
+          <div className="min-h-screen bg-transparent text-[#EEF3EC] selection:bg-forest-900/20 flex flex-col">
             <Header />
             <main className="flex-1 flex flex-col items-center justify-center text-center px-6 py-24">
               <div className="w-20 h-20 rounded-[0.75rem] bg-forest-900/10 flex items-center justify-center mb-6">
                 <Icon name="UserGroupIcon" size={32} className="text-forest-900/40" />
               </div>
-              <h1 className="font-display font-800 text-3xl mb-3">Club introuvable</h1>
-              <p className="text-forest-900/60 max-w-md mb-8">
+              <h1 className="font-display font-800 text-3xl mb-3 text-[#EEF3EC]">Club introuvable</h1>
+              <p className="text-[#CCE0D4] max-w-md mb-8">
                 Ce club n'existe pas, a été supprimé, ou vous n'en êtes pas membre.
               </p>
               <div className="flex items-center gap-4">
                 <button
                   type="button"
                   onClick={() => { setNotFound(false); loadData(); }}
-                  className="px-6 py-3 rounded-full bg-forest-900 text-white text-sm font-700 hover:bg-forest-800 transition-colors"
+                  className="glass-capsule-btn primary text-sm font-bold"
                 >
                   Réessayer
                 </button>
-                <Link href="/clubs" className="px-6 py-3 rounded-full border border-forest-900/20 text-forest-900 text-sm font-700 hover:bg-forest-900/5 transition-colors">
+                <Link href="/clubs" className="glass-capsule-btn text-sm font-bold">
                   Tous les clubs
                 </Link>
               </div>
@@ -560,18 +560,18 @@ export default function ClubDetailPage() {
               <div style={{ width: 72, height: 72, borderRadius: 24, background: 'rgba(23,64,44,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 20 }}>
                 <Icon name="UserGroupIcon" size={28} className="text-forest-900/40" />
               </div>
-              <h1 style={{ fontFamily: 'Georgia, serif', fontSize: 24, fontWeight: 700, color: '#17402C', marginBottom: 8 }}>Club introuvable</h1>
-              <p style={{ color: '#6B7A72', fontSize: 15, lineHeight: 1.5, maxWidth: 300, marginBottom: 24 }}>
+              <h1 style={{ fontFamily: 'Georgia, serif', fontSize: 24, fontWeight: 700, color: '#EEF3EC', marginBottom: 8 }}>Club introuvable</h1>
+              <p style={{ color: '#CCE0D4', fontSize: 15, lineHeight: 1.5, maxWidth: 300, marginBottom: 24 }}>
                 Ce club n'existe pas, a été supprimé, ou vous n'en êtes pas membre.
               </p>
               <button
                 type="button"
                 onClick={() => { setNotFound(false); loadData(); }}
-                style={{ width: '100%', maxWidth: 300, padding: '14px 0', borderRadius: 999, background: '#17402C', color: '#EEF3EC', fontSize: 15, fontWeight: 700, marginBottom: 12 }}
+                className="glass-capsule-btn primary w-full max-w-[300px] text-sm font-bold mb-3"
               >
                 Réessayer
               </button>
-              <Link href="/clubs" style={{ width: '100%', maxWidth: 300, padding: '14px 0', borderRadius: 999, border: '1px solid rgba(23,64,44,0.2)', color: '#17402C', fontSize: 15, fontWeight: 700, textAlign: 'center' }}>
+              <Link href="/clubs" className="glass-capsule-btn w-full max-w-[300px] text-sm font-bold text-center">
                 Tous les clubs
               </Link>
             </div>
@@ -638,7 +638,7 @@ export default function ClubDetailPage() {
                     </button>
                     <button
                       onClick={() => handleViewParticipants(ev.id)}
-                      className="glass-capsule-btn p-2.5 shrink-0"
+                      className="glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8 shrink-0"
                       title="Voir les participants"
                     >
                       <Icon name="UsersIcon" size={14} className="relative z-10" />
@@ -663,7 +663,7 @@ export default function ClubDetailPage() {
               <Link
                 key={member.id}
                 href={member.user_id ? `/profil/${member.user_id}` : '/clubs'}
-                className="flex items-center gap-3 p-3 rounded-xl glass-sub-card hover:bg-white/50 transition-colors"
+                className="glass-sub-card flex items-center gap-3 p-3 rounded-xl transition-colors"
               >
                 <div className="w-10 h-10 rounded-full bg-[#17402C] text-white flex items-center justify-center font-bold text-sm shadow-sm shrink-0">
                   {member.user?.full_name?.[0] || '👤'}
@@ -750,7 +750,7 @@ export default function ClubDetailPage() {
               <span className="glass-pill text-[10px] font-mono font-bold">{events.length} sorties</span>
             </div>
             {events.length > 0 && (
-              <button onClick={() => setActiveTab('Sorties')} className="text-xs font-bold text-[#17402C] hover:underline">
+              <button onClick={() => setActiveTab('Sorties')} className="glass-capsule-btn sm font-bold">
                 Voir tout →
               </button>
             )}
@@ -882,7 +882,7 @@ export default function ClubDetailPage() {
       <div className="block md:hidden">
         {/* safeTop=false: MobileClubDetailView embarque son propre header sticky (MobileClubDetailView.tsx:89)
             qui calcule top-[calc(max(env(safe-area-inset-top,0px),12px)+6px)] */}
-        <MobilePageShell safeTop={false} videoBackground={false} background="#EEF3EC">
+        <MobilePageShell safeTop={false} videoBackground={false} background="transparent">
           <MobileClubDetailView
             club={club}
             topics={topics}
@@ -933,7 +933,7 @@ export default function ClubDetailPage() {
               </div>
               <button
                 onClick={() => setCreatePostModalOpen(false)}
-                className="text-[#5C6B5E] hover:text-[#17402C] glass w-8 h-8 rounded-full border border-white flex items-center justify-center transition-colors"
+                className="glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8"
               >
                 <Icon name="XMarkIcon" size={16} />
               </button>
@@ -972,10 +972,10 @@ export default function ClubDetailPage() {
                   <button
                     type="button"
                     onClick={() => showToast('Lieu défini sur ' + (club.location || club.name))}
-                    className="w-8 h-8 rounded-full bg-[#F5F2E8] text-[#17402C] flex items-center justify-center hover:bg-[#EAE6DF] transition-colors border border-[#17402C]/10"
+                    className="glass-circle-btn"
                     title="Lieu"
                   >
-                    <Icon name="MapPinIcon" size={14} />
+                    <Icon name="map-pin" size={14} />
                   </button>
                 </div>
 
@@ -983,14 +983,14 @@ export default function ClubDetailPage() {
                   <button
                     type="button"
                     onClick={() => setCreatePostModalOpen(false)}
-                    className="px-3.5 py-2 text-[#5C6B5E] hover:text-[#17402C] font-bold text-xs transition-colors"
+                    className="glass-capsule-btn secondary font-bold text-xs"
                   >
                     Annuler
                   </button>
                   <button
                     type="submit"
                     disabled={submitting}
-                    className="px-5 py-2 rounded-full text-xs font-bold bg-[#17402C] text-white shadow-xs disabled:opacity-50 active:scale-95"
+                    className="glass-capsule-btn primary text-xs font-bold disabled:opacity-50"
                   >
                     {submitting ? 'Publication...' : 'Publier'}
                   </button>
@@ -1015,7 +1015,7 @@ export default function ClubDetailPage() {
               </h3>
               <button
                 onClick={() => setParticipantsModalOpen(false)}
-                className="text-[#5C6B5E] hover:text-[#17402C] w-7 h-7 rounded-full flex items-center justify-center"
+                className="glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8"
               >
                 <Icon name="XMarkIcon" size={16} />
               </button>
@@ -1030,7 +1030,7 @@ export default function ClubDetailPage() {
                   <Link
                     key={participant.user_id}
                     href={participant.user_id ? `/profil/${participant.user_id}` : '/clubs'}
-                    className="flex items-center gap-3 p-2.5 bg-white/60 hover:bg-white rounded-2xl transition-colors cursor-pointer border border-white"
+                    className="glass-sub-card flex items-center gap-3 p-2.5 rounded-2xl transition-colors cursor-pointer"
                   >
                     <div className="relative">
                       {participant.user?.trust_score && participant.user.trust_score > 80 && (

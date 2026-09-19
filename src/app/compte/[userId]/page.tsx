@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
@@ -17,7 +17,7 @@ export default function CompteUserRedirectPage() {
   }, [userId, router]);
 
   return (
-    <div className="min-h-screen bg-[#F5F3ED] flex items-center justify-center">
+    <div className="min-h-screen bg-transparent flex items-center justify-center">
       <div className="flex flex-col items-center gap-3">
         <div className="w-8 h-8 border-2 border-[#17402C] border-t-transparent rounded-full animate-spin" />
         <p className="text-sm text-[#5A7064] font-medium">Redirection vers le profil voyageur...</p>

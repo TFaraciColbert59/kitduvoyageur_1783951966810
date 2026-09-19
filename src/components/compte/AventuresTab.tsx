@@ -341,10 +341,8 @@ export default function AventuresTab({ profile }: AventuresTabProps) {
               <button
                 key={year}
                 onClick={() => setActiveYear(year)}
-                className={`px-3 py-1 rounded-full text-xs font-mono font-bold transition-colors ${
-                  activeYear === year
-                    ? 'bg-[#17402C] text-white'
-                    : 'bg-white/50 text-[#5A7064] hover:bg-white'
+                className={`glass-capsule-btn !py-1 !px-3 !min-h-0 text-xs font-mono font-bold transition-colors ${
+                  activeYear === year ? 'primary' : ''
                 }`}
               >
                 {year}
@@ -358,10 +356,8 @@ export default function AventuresTab({ profile }: AventuresTabProps) {
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                className={`px-3 py-1 rounded-full text-xs font-bold transition-colors ${
-                  activeTab === tab
-                    ? 'glass-pill !bg-[#17402C] !text-white'
-                    : 'bg-white/50 text-[#5A7064] hover:bg-white'
+                className={`glass-capsule-btn !py-1 !px-3 !min-h-0 text-xs font-bold transition-colors ${
+                  activeTab === tab ? 'primary' : ''
                 }`}
               >
                 {tab}

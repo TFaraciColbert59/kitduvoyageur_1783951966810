@@ -61,7 +61,7 @@ export function BudgetAllExpensesDrawer({
           <button
             type="button"
             onClick={onClearCategory}
-            className="inline-flex min-h-[44px] items-center gap-1.5 rounded-full bg-[var(--lkv-primary)]/10 px-3 text-[11px] font-bold text-[var(--lkv-primary)] transition-transform active:scale-[0.97]"
+            className="glass-capsule-btn inline-flex !min-h-[44px] items-center gap-1.5 !px-3 text-[11px] font-bold transition-transform active:scale-[0.97]"
             aria-label={`Retirer le filtre catégorie ${categoryLabel}`}
           >
             {categoryLabel}

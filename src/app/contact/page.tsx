@@ -33,20 +33,20 @@ export default function ContactPage() {
   );
 
   const desktopContent = (
-    <div data-lkv-material-theme="light" className="h-dvh overflow-hidden bg-[#EEF3EC]">
+    <div data-lkv-material-theme="light" className="h-dvh overflow-hidden bg-transparent">
       <Header />
       <main className="h-full overflow-hidden pt-20">
         <div className="w-full max-w-5xl mx-auto px-6 pb-6 h-full flex flex-col gap-5">
           <div className="flex-shrink-0">
-            <p className="glass-eyebrow mb-2">Support &amp; Contact</p>
-            <h1 className="font-display text-3xl md:text-4xl font-bold tracking-tight text-[#17402C] mb-2">Contactez-nous</h1>
-            <p className="text-[#365233] text-sm max-w-xl leading-relaxed">Notre équipe répond sous 48 heures ouvrées.</p>
+            <p className="glass-eyebrow mb-2" style={{ color: '#D8E5D5' }}>Support &amp; Contact</p>
+            <h1 className="font-display text-3xl md:text-4xl font-bold tracking-tight text-[#EEF3EC] mb-2">Contactez-nous</h1>
+            <p className="text-[#CCE0D4] text-sm max-w-xl leading-relaxed">Notre équipe répond sous 48 heures ouvrées.</p>
           </div>
 
           {/* Contenu riche — scroll interne uniquement */}
           <div className="flex-1 min-h-0 overflow-y-auto pr-1 pb-2 grid grid-cols-1 lg:grid-cols-2 gap-6 content-start">
             <div className="flex flex-col gap-3">
-              <h2 className="font-semibold text-[#17402C] text-base">Nos équipes</h2>
+              <h2 className="font-semibold text-[#EEF3EC] text-base">Nos équipes</h2>
               {contacts.map((c) => (
                 <a key={c.href} href={c.href} className="glass-sub-card group flex items-start gap-4 p-4" style={{ textDecoration: 'none' }}>
                   <div className="w-10 h-10 rounded-xl bg-white/10 border border-white/40 flex items-center justify-center flex-shrink-0">
@@ -62,7 +62,7 @@ export default function ContactPage() {
               ))}
             </div>
             <div>
-              <h2 className="font-semibold text-[#17402C] text-base mb-3">Envoyer un message</h2>
+              <h2 className="font-semibold text-[#EEF3EC] text-base mb-3">Envoyer un message</h2>
               {submitted ? (
                 <div className="glass flex flex-col items-center justify-center py-12 px-6 text-center">
                   <div className="w-14 h-14 rounded-full bg-[#5B7F55]/15 flex items-center justify-center mb-4">
@@ -70,7 +70,7 @@ export default function ContactPage() {
                   </div>
                   <h3 className="font-semibold text-[#17402C] mb-2">Message envoyé !</h3>
                   <p className="text-sm text-[#5A7064] max-w-xs">Nous vous répondrons sous 48 heures ouvrées.</p>
-                  <button onClick={() => { setSubmitted(false); setForm({ name: '', email: '', subject: '', message: '' }); }} className="mt-6 text-sm text-[#5B7F55] hover:underline" style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
+                  <button onClick={() => { setSubmitted(false); setForm({ name: '', email: '', subject: '', message: '' }); }} className="glass-capsule-btn mt-6 text-sm">
                     Envoyer un autre message
                   </button>
                 </div>
@@ -102,7 +102,7 @@ export default function ContactPage() {
                     <Label>Message *</Label>
                     <textarea required rows={5} value={form.message} onChange={(e) => setForm({ ...form, message: e.target.value })} placeholder="Décrivez votre demande en détail..." className="glass-input w-full resize-none" style={{ minHeight: '120px' }} />
                   </div>
-                  <button type="submit" disabled={submitting} className="glass-capsule-btn">
+                  <button type="submit" disabled={submitting} className="glass-capsule-btn primary">
                     {submitting ? (
                       <>
                         <span className="w-4 h-4 rounded-full animate-spin" style={{ border: '2px solid rgba(54,82,51,0.25)', borderTopColor: '#365233' }} />
@@ -126,9 +126,9 @@ export default function ContactPage() {
 
   const mobileContent = (
     <div style={{ padding: '16px' }}>
-      <p style={{ fontSize: '11px', fontFamily: 'var(--font-mono)', color: '#17402C', letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: '12px' }}>Support &amp; Contact</p>
-      <h1 style={{ fontSize: '24px', fontWeight: 800, color: '#17402C', marginBottom: '8px', fontFamily: 'var(--font-display)' }}>Contactez-nous</h1>
-      <p style={{ fontSize: '13px', color: '#5A7064', marginBottom: '24px' }}>Notre équipe répond sous 48 heures ouvrées.</p>
+      <p style={{ fontSize: '11px', fontFamily: 'var(--font-mono)', color: '#D8E5D5', letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: '12px' }}>Support &amp; Contact</p>
+      <h1 style={{ fontSize: '24px', fontWeight: 800, color: '#EEF3EC', marginBottom: '8px', fontFamily: 'var(--font-display)' }}>Contactez-nous</h1>
+      <p style={{ fontSize: '13px', color: '#CCE0D4', marginBottom: '24px' }}>Notre équipe répond sous 48 heures ouvrées.</p>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '24px' }}>
         {contacts.map((c) => (
@@ -150,7 +150,7 @@ export default function ContactPage() {
           <p style={{ fontSize: '24px', marginBottom: '12px' }}>✓</p>
           <h3 style={{ fontSize: '16px', fontWeight: 600, color: '#17402C', marginBottom: '8px' }}>Message envoyé !</h3>
           <p style={{ fontSize: '13px', color: '#5A7064', marginBottom: '16px' }}>Nous vous répondrons sous 48 heures ouvrées.</p>
-          <button onClick={() => { setSubmitted(false); setForm({ name: '', email: '', subject: '', message: '' }); }} style={{ color: '#17402C', textDecoration: 'underline', fontSize: '13px', background: 'none', border: 'none', cursor: 'pointer' }}>Envoyer un autre message</button>
+          <button onClick={() => { setSubmitted(false); setForm({ name: '', email: '', subject: '', message: '' }); }} className="glass-capsule-btn text-[13px]">Envoyer un autre message</button>
         </div>
       ) : (
         <form onSubmit={handleSubmit}>
@@ -167,7 +167,7 @@ export default function ContactPage() {
               <option value="autre">Autre</option>
             </select>
             <textarea required rows={4} value={form.message} onChange={(e) => setForm({ ...form, message: e.target.value })} placeholder="Message *" aria-label="Message" className="glass-input" style={{ width: '100%', minHeight: '100px', resize: 'none' }} />
-            <button type="submit" disabled={submitting} className="glass-capsule-btn" style={{ width: '100%' }}>
+            <button type="submit" disabled={submitting} className="glass-capsule-btn primary" style={{ width: '100%' }}>
               {submitting ? 'Envoi en cours…' : 'Envoyer le message'}
             </button>
           </div>

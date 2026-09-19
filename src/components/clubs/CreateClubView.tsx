@@ -218,10 +218,8 @@ export default function CreateClubView() {
                   key={sec.id}
                   type="button"
                   onClick={() => setActiveSection(sec.id)}
-                  className={`w-full px-3 py-2.5 rounded-xl font-bold text-xs transition-all flex items-center justify-between group cursor-pointer border ${
-                    isActive
-                      ? 'bg-[#17402C] text-white border-[#17402C] shadow-sm'
-                      : 'bg-white/80 hover:bg-white text-[#17402C] border-white/80 shadow-2xs'
+                  className={`w-full glass-capsule-btn font-bold text-xs flex items-center justify-between group cursor-pointer ${
+                    isActive ? 'primary' : ''
                   }`}
                 >
                   <span className="truncate text-left">{sec.label}</span>
@@ -406,10 +404,8 @@ export default function CreateClubView() {
                           key={z}
                           type="button"
                           onClick={() => toggleZone(z)}
-                          className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${
-                            isSelected
-                              ? 'bg-[#17402C] text-white shadow-xs'
-                              : 'bg-white/80 text-[#5C6B5E] border border-[#17402C]/10 hover:border-[#17402C]/30'
+                          className={`glass-capsule-btn !py-1.5 !px-3 !text-xs font-semibold ${
+                            isSelected ? 'primary' : ''
                           }`}
                         >
                           {isSelected ? '✓ ' : '+ '} {z}
@@ -495,9 +491,9 @@ export default function CreateClubView() {
                     <button
                       type="button"
                       onClick={() => removeRule(rule.id)}
-                      className="text-[#5C6B5E] hover:text-red-600 p-1"
+                      className="glass-circle-btn shrink-0"
                     >
-                      <Icon name="XMarkIcon" size={14} />
+                      <Icon name="x" size={14} />
                     </button>
                   </div>
                 ))}
@@ -505,9 +501,9 @@ export default function CreateClubView() {
                 <button
                   type="button"
                   onClick={addRule}
-                  className="w-full py-2.5 rounded-xl border border-dashed border-[#17402C]/20 hover:border-[#17402C] text-xs font-bold text-[#17402C] flex items-center justify-center gap-1.5 transition-colors"
+                  className="w-full glass-capsule-btn text-xs font-bold"
                 >
-                  <Icon name="PlusIcon" size={14} /> Ajouter une règle à la charte
+                  <Icon name="plus" size={14} /> Ajouter une règle à la charte
                 </button>
               </div>
 
@@ -727,7 +723,7 @@ export default function CreateClubView() {
               <span className="glass-pill text-[9px] font-mono font-bold">Live</span>
             </div>
 
-            <div className="rounded-xl overflow-hidden bg-white border border-[#17402C]/10 shadow-xs flex flex-col">
+            <div className="glass-sub-card rounded-xl overflow-hidden flex flex-col">
               <div className="h-28 relative bg-[#17402C]">
                 {form.coverImage && (
                   <img src={form.coverImage} alt="Cover" className="w-full h-full object-cover" />

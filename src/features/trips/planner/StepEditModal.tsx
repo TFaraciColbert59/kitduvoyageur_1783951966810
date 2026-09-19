@@ -153,10 +153,8 @@ export function StepEditModal({
                     key={id}
                     type="button"
                     onClick={() => setTransportMode(id)}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all shadow-2xs ${
-                      isSelected
-                        ? 'bg-[var(--lkv-primary)] text-white shadow-sm border border-[var(--lkv-primary)]'
-                        : 'glass-sub-card border border-white/60 text-[var(--lkv-text-muted)] hover:text-[var(--lkv-primary)] hover:bg-white/90'
+                    className={`glass-capsule-btn flex items-center gap-1.5 !px-3 !py-1.5 text-xs font-medium transition-all ${
+                      isSelected ? 'primary shadow-sm' : ''
                     }`}
                   >
                     <Icon className="w-3.5 h-3.5" />

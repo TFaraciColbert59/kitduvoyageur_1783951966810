@@ -127,7 +127,7 @@ export const DesktopPreparationView: React.FC<DesktopPreparationViewProps> = ({
                   router.push('/explorer');
                 }
               }}
-              className="inline-flex items-center gap-1 text-white/95 hover:text-white bg-white/15 hover:bg-white/30 backdrop-blur-xl px-2.5 py-0.5 rounded-full transition-all text-[11px] font-semibold tracking-wide border border-white/30 "
+              className="glass-capsule-btn text-[11px] font-semibold tracking-wide"
             >
               <Icon name="back" className="w-3 h-3" /> Explorer
             </button>
@@ -158,7 +158,7 @@ export const DesktopPreparationView: React.FC<DesktopPreparationViewProps> = ({
           <div className="mt-3 pt-2 border-t border-white/20">
              <button
                onClick={() => setShowDateModal(true)}
-               className="w-full bg-white hover:bg-[#EEF3EC] text-[#17402C] py-2 px-3 rounded-xl font-bold text-xs  flex items-center justify-center gap-2 transition-all cursor-pointer border border-black/10 active:scale-98"
+               className="glass-capsule-btn w-full font-bold text-xs"
              >
                <span>📦 Continuer à préparer cette randonnée</span>
              </button>
@@ -300,13 +300,13 @@ export const DesktopPreparationView: React.FC<DesktopPreparationViewProps> = ({
             <div className="flex gap-2.5">
               <button
                 onClick={() => setShowDateModal(true)}
-                className="flex-1 bg-[#EEF3EC] hover:bg-white text-[#17402C] py-3.5 rounded-xl font-bold text-xs  flex items-center justify-center gap-2 transition-all cursor-pointer border border-black/10"
+                className="glass-capsule-btn flex-1 text-xs font-bold"
               >
                 <span>📦 Continuer à préparer cette randonnée</span>
               </button>
               <button
                 onClick={handleStart}
-                className="flex-1 bg-[#17402C] hover:bg-[#2D4034] text-white py-3.5 rounded-xl font-black tracking-wider uppercase text-xs  shadow-md/40 flex items-center justify-center gap-2 transition-all hover:scale-[1.005] active:scale-[0.995] cursor-pointer border border-white/20"
+                className="glass-capsule-btn primary flex-1 font-black tracking-wider uppercase text-xs"
               >
                 <Icon name="gps" className="w-4 h-4" />
                 Démarrer
@@ -342,7 +342,7 @@ export const DesktopPreparationView: React.FC<DesktopPreparationViewProps> = ({
                 <button
                   type="button"
                   onClick={() => setShowDateModal(false)}
-                  className="flex-1 py-2.5 rounded-xl text-xs font-semibold text-[#6B7A72] hover:bg-black/[0.04]"
+                  className="glass-capsule-btn flex-1 text-xs font-semibold"
                 >
                   Annuler
                 </button>
@@ -363,7 +363,7 @@ export const DesktopPreparationView: React.FC<DesktopPreparationViewProps> = ({
                     setShowDateModal(false);
                     router.push('/compte');
                   }}
-                  className="flex-1 py-2.5 rounded-xl text-xs font-bold bg-[#17402C] text-white hover:bg-[#17402C] "
+                  className="glass-capsule-btn primary flex-1 text-xs font-bold"
                 >
                   Enregistrer & Préparer →
                 </button>

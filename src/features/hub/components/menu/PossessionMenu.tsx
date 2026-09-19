@@ -73,12 +73,21 @@ export function PossessionMenu({ summary }: PossessionMenuProps) {
       description: 'Complétez le sac du départ.',
     });
   }
-  nextActions.push({
-    kind: 'all-clear',
-    href: hubSectionHref(ref, 'kit'),
-    title: 'Tout est à jour',
-    description: `${pluralize(summary.inventaire.count, 'objet')} · ${pluralize(summary.kits.count, 'kit')} · fiabilité ${summary.alertes.reliabilityScore}%`,
-  });
+  if (summary.inventaire.count === 0) {
+    nextActions.push({
+      kind: 'tasks',
+      href: hubSectionHref(ref, 'inventaire'),
+      title: 'Inventaire vide',
+      description: 'Ajoutez votre premier équipement pour commencer votre préparation.',
+    });
+  } else {
+    nextActions.push({
+      kind: 'all-clear',
+      href: hubSectionHref(ref, 'kit'),
+      title: 'Tout est à jour',
+      description: `${pluralize(summary.inventaire.count, 'objet')} · ${pluralize(summary.kits.count, 'kit')} · fiabilité ${summary.alertes.reliabilityScore}%`,
+    });
+  }
 
   const cells = [
     {
@@ -97,9 +106,11 @@ export function PossessionMenu({ summary }: PossessionMenuProps) {
         >
           <p className="mt-1 text-3xl font-extrabold tracking-tight text-[var(--lkv-text-primary)]">
             {departDays ?? '—'}
-            <span className="ml-2 text-xs font-semibold text-[var(--lkv-text-secondary)]">
-              <NumberStat value={summary.depart.readinessPct} suffix="%" /> prêt
-            </span>
+            {summary.inventaire.count > 0 && (
+              <span className="ml-2 text-xs font-semibold text-[var(--lkv-text-secondary)]">
+                <NumberStat value={summary.depart.readinessPct} suffix="%" /> prêt
+              </span>
+            )}
           </p>
           <p className="text-xs text-[var(--lkv-text-secondary)]">
             {departDate ? `Départ ${departDate}` : 'Aucune date'}
@@ -109,7 +120,7 @@ export function PossessionMenu({ summary }: PossessionMenuProps) {
           <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-black/5">
             <div
               className="h-full rounded-full bg-gradient-to-r from-[var(--lkv-secondary)] to-[var(--lkv-primary)]"
-              style={{ width: `${summary.depart.readinessPct}%` }}
+              style={{ width: `${summary.inventaire.count > 0 ? summary.depart.readinessPct : 0}%` }}
             />
           </div>
         </MenuCard>
@@ -128,20 +139,26 @@ export function PossessionMenu({ summary }: PossessionMenuProps) {
             </span>
           </p>
           <p className="mt-1 text-xs text-[var(--lkv-text-secondary)]">
-            {summary.alertes.criticalCount > 0 ? (
-              <span className="font-bold text-[var(--lkv-danger)]">
-                {pluralize(summary.alertes.criticalCount, 'critique', 'critiques')}
-              </span>
+            {summary.inventaire.count > 0 ? (
+              <>
+                {summary.alertes.criticalCount > 0 ? (
+                  <span className="font-bold text-[var(--lkv-danger)]">
+                    {pluralize(summary.alertes.criticalCount, 'critique', 'critiques')}
+                  </span>
+                ) : (
+                  'Équipement sain'
+                )}
+                {summary.alertes.warningCount > 0 ? ` · ${summary.alertes.warningCount} vigilance` : ''}
+                {` · fiabilité ${summary.alertes.reliabilityScore}%`}
+              </>
             ) : (
-              'Équipement sain'
+              'Aucun équipement à vérifier'
             )}
-            {summary.alertes.warningCount > 0 ? ` · ${summary.alertes.warningCount} vigilance` : ''}
-            {` · fiabilité ${summary.alertes.reliabilityScore}%`}
           </p>
           <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-black/5">
             <div
               className="h-full rounded-full bg-gradient-to-r from-[var(--lkv-secondary)] to-[var(--lkv-primary)]"
-              style={{ width: `${summary.alertes.reliabilityScore}%` }}
+              style={{ width: `${summary.inventaire.count > 0 ? summary.alertes.reliabilityScore : 0}%` }}
             />
           </div>
         </MenuCard>
@@ -161,12 +178,18 @@ export function PossessionMenu({ summary }: PossessionMenuProps) {
           <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-black/5">
             <div
               className="h-full rounded-full bg-gradient-to-r from-[var(--lkv-secondary)] to-[var(--lkv-primary)]"
-              style={{ width: `${summary.inventaire.goodConditionPct}%` }}
+              style={{ width: `${summary.inventaire.count > 0 ? summary.inventaire.goodConditionPct : 0}%` }}
             />
           </div>
           <p className="mt-1 text-xs text-[var(--lkv-text-secondary)]">
-            <NumberStat value={summary.inventaire.goodConditionPct} suffix="%" /> en bon état
-            {summary.inventaire.lastAddedLabel ? ` · ${summary.inventaire.lastAddedLabel}` : ''}
+            {summary.inventaire.count > 0 ? (
+              <>
+                <NumberStat value={summary.inventaire.goodConditionPct} suffix="%" /> en bon état
+                {summary.inventaire.lastAddedLabel ? ` · ${summary.inventaire.lastAddedLabel}` : ''}
+              </>
+            ) : (
+              'Ajoutez votre premier objet'
+            )}
           </p>
         </MenuCard>
       ),

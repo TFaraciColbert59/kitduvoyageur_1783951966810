@@ -91,7 +91,7 @@ export default function GuideDetailClient({ slug }: { slug: string }) {
 
   const desktopNotFound = (
     <div className="max-w-[820px] mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-12 text-center">
-      <div className="py-16">
+      <div className="py-16 glass rounded-xl">
         <Icon name="BookOpenIcon" size={48} className="mx-auto mb-4 text-[#5A7064]" variant="outline" />
         <h1 className="font-display font-bold text-2xl text-[#17402C] mb-3" style={{ fontFamily: 'var(--font-display)' }}>
           Guide introuvable
@@ -110,6 +110,7 @@ export default function GuideDetailClient({ slug }: { slug: string }) {
 
   const desktopDetail = guide ? (
     <div className="max-w-[820px] mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-12">
+      <div className="glass rounded-xl p-6 sm:p-10">
       {/* Breadcrumb */}
       <nav className="flex items-center gap-2 text-xs text-[#5A7064] mb-6">
         <Link href="/" className="hover:text-[#17402C] transition-colors">Accueil</Link>
@@ -218,6 +219,7 @@ export default function GuideDetailClient({ slug }: { slug: string }) {
           Retour aux guides
         </Link>
       </div>
+      </div>
     </div>
   ) : null;
 
@@ -243,6 +245,7 @@ export default function GuideDetailClient({ slug }: { slug: string }) {
 
   const mobileDetail = guide ? (
     <div style={{ padding: '16px' }}>
+      <div className="glass-sub-card" style={{ padding: '16px' }}>
       {/* Breadcrumb */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', color: '#5A7064', marginBottom: '12px', overflow: 'hidden', whiteSpace: 'nowrap' }}>
         <Link href="/" style={{ color: '#5A7064', textDecoration: 'none' }}>Accueil</Link>
@@ -306,7 +309,7 @@ export default function GuideDetailClient({ slug }: { slug: string }) {
               Ce guide complet vous accompagne dans la preparation de votre aventure en <strong>{guide.destination}</strong>.
               Retrouvez tous les conseils essentiels pour partir bien equipe et en toute securite.
             </p>
-            <div style={{ marginTop: '16px', padding: '16px', borderRadius: '10px', background: '#EDF3ED', border: '1px solid rgba(23,64,44,0.2)' }}>
+            <div className="glass-sub-card" style={{ marginTop: '16px', padding: '16px', borderRadius: '10px' }}>
               <p style={{ fontWeight: 600, fontSize: '14px', color: '#17402C', marginBottom: '8px' }}>
                 Configurez votre kit pour {guide.destination}
               </p>
@@ -337,6 +340,7 @@ export default function GuideDetailClient({ slug }: { slug: string }) {
         <Link href="/guides" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: '#5A7064', textDecoration: 'none' }}>
           ← Retour aux guides
         </Link>
+      </div>
       </div>
     </div>
   ) : null;

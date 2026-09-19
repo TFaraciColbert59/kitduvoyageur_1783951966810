@@ -45,7 +45,7 @@ export function TripKitSelector({ tripId, kits, currentId }: TripKitSelectorProp
         type="button"
         onClick={() => setOpen((v) => !v)}
         className={cn(
-          'glass-sub-card w-full min-h-[44px] flex items-center justify-between gap-2 px-3 py-2 rounded-xl text-xs font-semibold text-[var(--lkv-primary)] hover:bg-white/40 transition-colors focus-visible:outline-2 focus-visible:outline-[var(--lkv-primary)] cursor-pointer',
+          'glass-capsule-btn w-full !justify-between !gap-2 !px-3 !py-2 !rounded-xl min-h-[44px] text-xs font-semibold focus-visible:outline-2 focus-visible:outline-[var(--lkv-primary)] cursor-pointer',
           isPending && 'opacity-60'
         )}
         aria-expanded={open}
@@ -53,7 +53,7 @@ export function TripKitSelector({ tripId, kits, currentId }: TripKitSelectorProp
       >
         <span className="truncate">{cleanKitName(current.name)}</span>
         <motion.span animate={{ rotate: open ? 180 : 0 }} transition={{ duration: 0.18 }}>
-          <ChevronDown size={12} aria-hidden="true" className="text-[var(--lkv-text-muted)]" />
+          <ChevronDown size={12} aria-hidden="true" />
         </motion.span>
       </button>
 
@@ -76,10 +76,8 @@ export function TripKitSelector({ tripId, kits, currentId }: TripKitSelectorProp
                   aria-selected={kit.id === activeId}
                   onClick={() => handleSelect(kit.id)}
                   className={cn(
-                    'w-full min-h-[44px] text-left px-3.5 py-2 text-xs font-medium transition-colors cursor-pointer',
-                    kit.id === activeId
-                      ? 'text-[var(--lkv-primary)] font-semibold bg-white/40'
-                      : 'text-[var(--lkv-text-muted)] hover:bg-white/20 hover:text-[var(--lkv-primary)]'
+                    'glass-capsule-btn w-full !justify-start !rounded-none !px-3.5 !py-2 min-h-[44px] text-left text-xs font-medium cursor-pointer',
+                    kit.id === activeId ? 'primary font-semibold' : ''
                   )}
                 >
                   {cleanKitName(kit.name)}

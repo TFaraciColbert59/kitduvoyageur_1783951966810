@@ -108,16 +108,18 @@ export function ItineraryDaysDrawer({
                 type="button"
                 onClick={() => onSelect(day.day)}
                 aria-pressed={isActive}
-                className="flex min-h-[44px] w-full items-center gap-3 text-left"
+                className={`glass-capsule-btn flex min-h-[44px] w-full !justify-start !gap-3 text-left ${
+                  isActive ? 'primary' : ''
+                }`}
               >
-                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--lkv-primary)]/10 font-display text-sm font-extrabold text-[var(--lkv-primary)]">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--lkv-primary)]/10 font-display text-sm font-extrabold">
                   J{day.day}
                 </span>
                 <span className="min-w-0 flex-1">
-                  <span className="block truncate text-[13px] font-bold text-[var(--lkv-text-primary)]">
+                  <span className="block truncate text-[13px] font-bold">
                     {day.dateLabel ?? `Jour ${day.day}`}
                   </span>
-                  <span className="block text-[10.5px] font-medium text-[var(--lkv-text-primary)]/65">
+                  <span className="block text-[10.5px] font-medium">
                     {day.stepsCount} étape{day.stepsCount > 1 ? 's' : ''} · {day.distanceKm} km · +{day.elevGainM} m
                   </span>
                 </span>
@@ -155,7 +157,7 @@ export function ItineraryDaysDrawer({
                     onClick={() => onDelete(day.day)}
                     disabled={isPending || days.length <= 1}
                     aria-label={`Supprimer le jour ${day.day}`}
-                    className="glass-sub-card inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[var(--lkv-danger)] disabled:opacity-40"
+                    className="glass-circle-btn h-11 w-11 shrink-0 !text-[var(--lkv-danger)] disabled:opacity-40"
                   >
                     <Trash2 size={15} aria-hidden="true" />
                   </button>
@@ -510,16 +512,16 @@ export function ItineraryMoveDrawer({
               type="button"
               onClick={() => onPick(day.day)}
               disabled={isPending}
-              className="glass-sub-card flex min-h-[48px] w-full items-center gap-3 rounded-2xl p-3 text-left disabled:opacity-50"
+              className="glass-capsule-btn flex min-h-[48px] w-full !justify-start !gap-3 !rounded-2xl !p-3 text-left disabled:opacity-50"
             >
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--lkv-primary)]/10 text-[12px] font-extrabold text-[var(--lkv-primary)]">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--lkv-primary)]/10 text-[12px] font-extrabold">
                 J{day.day}
               </span>
               <span className="min-w-0 flex-1">
-                <span className="block truncate text-[12.5px] font-bold text-[var(--lkv-text-primary)]">
+                <span className="block truncate text-[12.5px] font-bold">
                   {day.dateLabel ?? `Jour ${day.day}`}
                 </span>
-                <span className="block text-[10.5px] font-medium text-[var(--lkv-text-primary)]/65">
+                <span className="block text-[10.5px] font-medium">
                   {day.stepsCount} étape{day.stepsCount > 1 ? 's' : ''} · {day.distanceKm} km
                 </span>
               </span>
@@ -671,10 +673,8 @@ export function ItineraryPoiDetailDrawer({
             onClick={() => onToggleVisited(!poi.visited)}
             disabled={isPending}
             aria-pressed={poi.visited}
-            className={`inline-flex min-h-[44px] w-full items-center justify-center gap-1.5 rounded-full px-4 text-sm font-bold transition-colors disabled:opacity-50 ${
-              poi.visited
-                ? 'bg-[var(--sage-50)] text-[var(--sage-700)] ring-1 ring-[var(--sage-700)]/20'
-                : 'glass-capsule-btn'
+            className={`glass-capsule-btn inline-flex min-h-[44px] w-full items-center justify-center gap-1.5 !px-4 text-sm font-bold disabled:opacity-50 ${
+              poi.visited ? 'primary' : ''
             }`}
           >
             {poi.visited ? <Eye size={15} aria-hidden="true" /> : <EyeOff size={15} aria-hidden="true" />}

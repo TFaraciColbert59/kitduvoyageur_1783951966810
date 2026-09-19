@@ -129,7 +129,7 @@ export function WeatherStrip({
             return (
               <div
                 key={d.date}
-                className="flex-1 rounded-lg bg-white/60 border border-white/60 px-1.5 py-1.5 text-center"
+                className="glass-sub-card flex-1 rounded-lg px-1.5 py-1.5 text-center"
               >
                 <p className="text-[9px] font-medium uppercase tracking-[0.14em] text-[var(--lkv-text-muted)]">
                   {d.day}

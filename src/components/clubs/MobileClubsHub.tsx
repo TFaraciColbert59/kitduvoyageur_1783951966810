@@ -116,7 +116,8 @@ export default function MobileClubsHub({
               <button
                 type="button"
                 onClick={() => setSearch('')}
-                className="absolute right-3 text-[#5A7064] text-xs font-bold"
+                aria-label="Effacer la recherche"
+                className="!absolute right-2 glass-circle-btn !w-6 !h-6 !min-w-6 !min-h-6 text-xs font-bold"
               >
                 ✕
               </button>
@@ -148,10 +149,8 @@ export default function MobileClubsHub({
                   triggerHaptic('light');
                   setSelectedCategory(cat);
                 }}
-                className={`px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all border ${
-                  isSelected
-                    ? 'bg-[#17402C] text-white border-[#17402C] shadow-sm'
-                    : 'bg-white/80 hover:bg-white text-[#17402C] border-white/70 shadow-2xs'
+                className={`glass-capsule-btn !py-1.5 !px-3 !text-xs font-bold whitespace-nowrap ${
+                  isSelected ? 'primary' : ''
                 }`}
               >
                 <span>{cat}</span>

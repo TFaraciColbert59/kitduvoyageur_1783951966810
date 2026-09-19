@@ -16,7 +16,7 @@ export default function Error({
   }, [error]);
 
   return (
-    <div className="min-h-screen bg-[var(--lkv-surface-muted)] flex flex-col items-center justify-center p-4">
+    <div className="min-h-screen bg-transparent flex flex-col items-center justify-center p-4">
       <div className="glass rounded-xl p-8 max-w-md w-full text-center space-y-6">
         <div className="w-16 h-16 bg-white/40 rounded-2xl flex items-center justify-center mx-auto mb-4">
           <svg className="w-8 h-8 text-[var(--lkv-primary)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -30,7 +30,7 @@ export default function Error({
         <div className="flex flex-col gap-3 pt-4">
           <button
             onClick={() => reset()}
-            className="glass-capsule-btn w-full"
+            className="glass-capsule-btn primary w-full"
           >
             Réessayer
           </button>

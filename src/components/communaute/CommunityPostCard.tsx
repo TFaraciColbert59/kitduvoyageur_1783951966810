@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import Link from 'next/link';
@@ -6,6 +6,7 @@ import dynamic from 'next/dynamic';
 import { motion, AnimatePresence } from 'framer-motion';
 import Icon from '@/components/ui/AppIcon';
 import GlassIconButton from '@/components/ui/GlassIconButton';
+import LiquidGlass from '@/components/glass/LiquidGlass';
 import SmartImage from '@/components/ui/SmartImage';
 import ReportSheet from '@/components/social/ReportSheet';
 import { createClient } from '@/lib/supabase/client';
@@ -63,6 +64,70 @@ export const timeAgo = (dateStr: string) => {
   return `Il y a ${Math.floor(hours / 24)} j`;
 };
 
+/** Pastille verre — pile LiquidGlass, style unique (référence section 4).
+ *  Les valeurs viennent des tokens --btn-* (tokens.css) : une seule
+ *  modification met à jour toutes les pastilles du site. */
+function OverlayPill({ label, onClick, pillWidth, children }: {
+  label: string;
+  onClick?: () => void;
+  /** Largeur fixe (px) pour aligner plusieurs pastilles sur la même taille. */
+  pillWidth?: number;
+  children: React.ReactNode;
+}) {
+  return (
+    <LiquidGlass
+      as="button"
+      type="button"
+      aria-label={label}
+      onClick={onClick}
+      displacementScale={70}
+      blurAmount={6}
+      saturation={160}
+      aberrationIntensity={2}
+      cornerRadius={999}
+      priority="media"
+      elasticity={0.3}
+      glassTint="var(--btn-tint)"
+      shadow="var(--btn-shadow)"
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: '8px',
+        lineHeight: 1,
+        minHeight: '44px',
+        minWidth: pillWidth ? `${pillWidth}px` : '44px',
+        width: pillWidth ? `${pillWidth}px` : undefined,
+        padding: pillWidth ? '0' : '0 14px',
+        border: 'none',
+        color: 'var(--btn-content)',
+        textShadow: 'var(--btn-text-shadow)',
+        fontWeight: 900,
+        fontSize: '13px',
+        letterSpacing: '0.01em',
+        fontVariantNumeric: 'tabular-nums',
+        fontFamily: 'var(--font-sans), system-ui, sans-serif',
+        cursor: 'pointer',
+        WebkitTapHighlightColor: 'transparent',
+        userSelect: 'none',
+      }}
+    >
+      <span
+        style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '8px',
+          lineHeight: 1,
+          width: '100%',
+        }}
+      >
+        {children}
+      </span>
+    </LiquidGlass>
+  );
+}
+
 // Heart SVG Icon helper for crisp rendering
 export function HeartSvg({ filled = false, className = '' }: { filled?: boolean; className?: string }) {
   if (filled) {
@@ -81,7 +146,7 @@ export function HeartSvg({ filled = false, className = '' }: { filled?: boolean;
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth="2"
+      strokeWidth="3"
       strokeLinecap="round"
       strokeLinejoin="round"
       className={`w-3.5 h-3.5 text-[#17402C] hover:text-rose-600 transition-colors ${className}`}
@@ -247,10 +312,17 @@ export default function CommunityPostCard({
     },
   });
 
-  // Une URL locale (blob:, data: locale de démo) ne doit jamais être affichée
-  // ni proposée à la visionneuse : seules les URLs http(s) persistables le sont.
+  // URLs http(s) persistables ou chemins locaux (/assets/...) : jamais blob:/data:.
   const displayableImage =
-    !!post.image_url && /^https?:\/\//i.test(post.image_url) ? post.image_url : null;
+    !!post.image_url && /^(https?:\/\/|\/)/i.test(post.image_url) ? post.image_url : null;
+
+  // Troncature façon Twitter : 200 caractères max, « Afficher plus » pour étendre.
+  const CONTENT_LIMIT = 200;
+  const [isContentExpanded, setIsContentExpanded] = useState(false);
+  const contentTruncated = (post.content || '').length > CONTENT_LIMIT;
+  const displayContent = contentTruncated && !isContentExpanded
+    ? post.content.slice(0, CONTENT_LIMIT).trimEnd() + '…'
+    : post.content;
 
   // Long-press sur le corps du post → menu rapide (réaction, enregistrer, masquer, signaler).
   const longPress = useLongPress(() => {
@@ -431,8 +503,124 @@ export default function CommunityPostCard({
 
   if (isHidden) return null;
 
+  // Menu contextuel partagé (rangée sous le texte et overlay média).
+  const moreMenuNode = (
+    <AnimatePresence>
+      {showMoreMenu && (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95, y: -4 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.95, y: -4 }}
+          className="absolute right-0 bottom-full mb-2 w-48 bg-white/95 backdrop-blur-xl border border-white/90 rounded-2xl p-1.5 shadow-xl z-40 space-y-1 text-xs text-[#17402C]"
+        >
+          <button
+            type="button"
+            onClick={handleToggleSave}
+            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-black/5 transition-colors text-left"
+          >
+            <Icon name="bookmark" size={14} className={isSaved ? "text-amber-600" : "text-[#5C6B5E]"} />
+            <span>{isSaved ? "Retirer des favoris" : "Enregistrer"}</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => { handleShare(); setShowMoreMenu(false); }}
+            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-black/5 transition-colors text-left"
+          >
+            <Icon name="link" size={14} className="text-[#5C6B5E]" />
+            <span>Copier le lien direct</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={handleHidePost}
+            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-black/5 transition-colors text-left"
+          >
+            <Icon name="eye-off" size={14} className="text-[#5C6B5E]" />
+            <span>Masquer ce post</span>
+          </button>
+
+          <div className="border-t border-[#17402C]/10 my-1" />
+
+          <button
+            type="button"
+            onClick={handleReport}
+            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-red-50 text-red-600 transition-colors text-left font-semibold"
+          >
+            <Icon name="flag" size={14} />
+            <span>Signaler le post</span>
+          </button>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+
+  // Rangée d'actions sous le texte (posts sans image) — même design, ton carte claire.
+  const actionsContent = (
+    <>
+      <div className="flex items-center gap-2.5">
+        <OverlayPill label="J'aime cette expédition" onClick={handleLike} pillWidth={84}>
+          <span style={{ width: '15px', height: '15px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <HeartSvg filled={isLiked} />
+          </span>
+          {likesCount > 0 && <span style={{ lineHeight: 1 }}>{likesCount}</span>}
+        </OverlayPill>
+
+        <OverlayPill label="Commenter la publication" onClick={handleToggleComments} pillWidth={84}>
+          <Icon name="message-square" size={15} color="#ffffff" />
+          {commentsCount > 0 && <span style={{ lineHeight: 1 }}>{commentsCount}</span>}
+        </OverlayPill>
+      </div>
+
+      <div className="flex items-center gap-2.5">
+        <OverlayPill label="Partager" onClick={handleShare}>
+          <Icon name="send" size={15} color="#ffffff" />
+        </OverlayPill>
+
+        <div className="relative" ref={menuRef}>
+          <OverlayPill label="Options de la publication" onClick={() => setShowMoreMenu(!showMoreMenu)}>
+            <Icon name="ellipsis" size={16} color="#ffffff" />
+          </OverlayPill>
+          {moreMenuNode}
+        </div>
+      </div>
+    </>
+  );
+
+  // Rangée d'actions en verre posée sur la photo (pile LiquidGlass, référence rdev).
+  const overlayActionsContent = (
+    <>
+      <div className="flex items-center gap-2.5">
+        <OverlayPill label="J'aime cette expédition" onClick={handleLike} pillWidth={84}>
+          <span style={{ width: '15px', height: '15px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <HeartSvg filled={isLiked} className={isLiked ? '' : '!text-white'} />
+          </span>
+          {likesCount > 0 && <span style={{ lineHeight: 1 }}>{likesCount}</span>}
+        </OverlayPill>
+
+        <OverlayPill label="Commenter la publication" onClick={handleToggleComments} pillWidth={84}>
+          <Icon name="message-square" size={15} color="#ffffff" />
+          {commentsCount > 0 && <span style={{ lineHeight: 1 }}>{commentsCount}</span>}
+        </OverlayPill>
+      </div>
+
+      <div className="flex items-center gap-2.5">
+        <OverlayPill label="Partager" onClick={handleShare}>
+          <Icon name="send" size={15} color="#ffffff" />
+        </OverlayPill>
+
+        <div className="relative" ref={menuRef}>
+          <OverlayPill label="Options de la publication" onClick={() => setShowMoreMenu(!showMoreMenu)}>
+            <Icon name="ellipsis" size={16} color="#ffffff" />
+          </OverlayPill>
+          {moreMenuNode}
+        </div>
+      </div>
+    </>
+  );
+
   return (
-    <div className="glass bg-white/90 backdrop-blur-xl rounded-2xl p-4 sm:p-5 border border-white shadow-xs space-y-4 relative">
+    <div className="community-post glass rounded-2xl overflow-hidden p-4 sm:p-5 relative space-y-4">
       {/* Toast notification */}
       {toastMessage && (
         <div className="absolute top-3 left-1/2 -translate-x-1/2 z-30 bg-[#17402C] text-white text-[11px] font-mono px-3 py-1 rounded-full shadow-md animate-fade-in">
@@ -451,7 +639,7 @@ export default function CommunityPostCard({
               setHeartBurst((k) => k + 1);
               setShowQuickMenu(false);
             }}
-            className="w-11 h-11 rounded-full flex items-center justify-center hover:bg-stone-100/80 text-xl active:scale-125 transition-transform"
+            className="glass-circle-btn w-11 h-11 rounded-full flex items-center justify-center text-xl active:scale-125 transition-transform"
             title="J'aime"
           >
             ❤️
@@ -459,7 +647,7 @@ export default function CommunityPostCard({
           <button
             type="button"
             onClick={() => { haptic('light'); handleToggleSave(); }}
-            className="w-11 h-11 rounded-full flex items-center justify-center hover:bg-stone-100/80 text-xl active:scale-125 transition-transform"
+            className="glass-circle-btn w-11 h-11 rounded-full flex items-center justify-center text-xl active:scale-125 transition-transform"
             title={isSaved ? 'Retirer des favoris' : 'Enregistrer'}
           >
             {isSaved ? '⭐' : '🔖'}
@@ -468,7 +656,7 @@ export default function CommunityPostCard({
           <button
             type="button"
             onClick={() => { haptic('light'); handleHidePost(); }}
-            className="w-11 h-11 rounded-full flex items-center justify-center hover:bg-stone-100/80 text-base active:scale-125 transition-transform"
+            className="glass-circle-btn w-11 h-11 rounded-full flex items-center justify-center text-base active:scale-125 transition-transform"
             title="Masquer"
           >
             🙈
@@ -476,7 +664,7 @@ export default function CommunityPostCard({
           <button
             type="button"
             onClick={() => { haptic('light'); handleReport(); }}
-            className="w-11 h-11 rounded-full flex items-center justify-center hover:bg-stone-100/80 text-base active:scale-125 transition-transform"
+            className="glass-circle-btn w-11 h-11 rounded-full flex items-center justify-center text-base active:scale-125 transition-transform"
             title="Signaler"
           >
             🚩
@@ -505,28 +693,46 @@ export default function CommunityPostCard({
           )}
           <div>
             <div className="flex items-center gap-2">
-              <span className="text-xs font-bold text-[#17402C] group-hover/author:underline">{post.author?.full_name || 'Voyageur LKDV'}</span>
+              <span className="text-[15px] font-semibold tracking-[-0.01em] text-[#17402C] group-hover/author:underline">{post.author?.full_name || 'Voyageur LKDV'}</span>
               {post.author?.loyalty_level && (
-                <span className="bg-[#17402C]/10 text-[#17402C] text-[9px] font-mono font-bold px-1.5 py-0.2 rounded uppercase">
+                <span className="bg-[#17402C]/10 text-[#17402C] text-[10px] font-mono font-bold px-2 py-0.5 rounded-full uppercase">
                   {post.author.loyalty_level}
                 </span>
               )}
             </div>
-            <span className="text-[10px] text-[#5C6B5E] font-mono">{timeAgo(post.created_at || new Date().toISOString())}</span>
+            <span className="text-[12px] text-[#5C6B5E] font-mono mt-0.5 block">{timeAgo(post.created_at || new Date().toISOString())}</span>
           </div>
         </Link>
 
-        <span className="glass-pill text-[9px] font-mono font-bold text-[#17402C]">FIL</span>
+        <span className="glass-pill text-[10px] font-mono font-bold text-[#17402C]">FIL</span>
       </div>
 
-      {/* Content */}
-      <p className="text-xs sm:text-sm text-[#17402C] leading-relaxed whitespace-pre-line">
-        {post.content}
+      {/* Content — 200 caractères max, expansion façon Twitter ; respiration haut/bas */}
+      <p className="text-[15px] text-[#17402C] leading-[1.7] whitespace-pre-line py-2">
+        {displayContent}
+        {contentTruncated && !isContentExpanded && (
+          <button
+            type="button"
+            onClick={() => setIsContentExpanded(true)}
+            className="text-[15px] font-semibold text-[#17402C]/75 hover:text-[#17402C] ml-1 py-0.5 inline"
+          >
+            Afficher plus
+          </button>
+        )}
+        {contentTruncated && isContentExpanded && (
+          <button
+            type="button"
+            onClick={() => setIsContentExpanded(false)}
+            className="text-[15px] font-semibold text-[#17402C]/75 hover:text-[#17402C] ml-1 py-0.5 inline"
+          >
+            Afficher moins
+          </button>
+        )}
       </p>
 
       {/* Snapshot figé du carnet lié (Phase 7) — jamais de lecture live */}
       {post.snapshot_payload && (
-        <div className="rounded-2xl border border-[#17402C]/10 bg-white/70 overflow-hidden">
+        <div className="glass-sub-card rounded-2xl overflow-hidden">
           {post.snapshot_payload.cover_image && (
             <div className="aspect-[16/7] bg-[#EEF3EC]">
               <SmartImage
@@ -557,17 +763,54 @@ export default function CommunityPostCard({
         </div>
       )}
 
-      {/* Attached Media — tap = visionneuse, double-tap = like + cœur animé (IG) */}
+      {/* Attached Media — plein-bord, haute (jusque sous le texte), collée au bas de la card */}
       {displayableImage && (
-        <div
-          {...doubleTap}
-          className="relative rounded-2xl overflow-hidden aspect-[16/10] bg-[#EEF3EC] border border-white/80 shadow-2xs select-none cursor-zoom-in"
-        >
-          <SmartImage
-            src={displayableImage}
-            alt="Photo de l'expédition"
-            className="w-full h-full object-cover"
+        <div className={`relative -mx-4 sm:-mx-5 ${showComments ? '' : '-mb-4 sm:-mb-5'}`}>
+          {/* Ambilight — les couleurs de la photo remontent dans la card jusqu'à ~30% sous le texte */}
+          <div
+            aria-hidden="true"
+            className="lkdv-ambilight pointer-events-none absolute -top-24 inset-x-0 h-60"
+            style={{
+              backgroundImage: `url(${displayableImage})`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center 30%',
+              filter: 'blur(50px) saturate(1.7)',
+              transform: 'scale(1.25)',
+              opacity: 0.45,
+              WebkitMaskImage: 'linear-gradient(to top, rgba(0,0,0,1) 0%, rgba(0,0,0,0.35) 55%, rgba(0,0,0,0) 100%)',
+              maskImage: 'linear-gradient(to top, rgba(0,0,0,1) 0%, rgba(0,0,0,0.35) 55%, rgba(0,0,0,0) 100%)',
+            }}
           />
+          <div
+            {...doubleTap}
+            className="relative z-10 overflow-hidden aspect-[4/5] sm:aspect-[16/10] bg-[#EEF3EC] select-none cursor-zoom-in"
+          >
+            <SmartImage
+              src={displayableImage}
+              alt="Photo de l'expédition"
+              className="w-full h-full object-cover"
+            />
+
+            {/* Fusion givrée : la photo se dissout dans le verre de la card (sans ligne dure) */}
+            <div aria-hidden="true" className="lkdv-photo-melt" />
+
+          {/* Voile de lisibilité sous les contrôles (pattern iOS Photos) */}
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-[#0B1F17]/35 via-[#0B1F17]/10 to-transparent"
+          />
+
+          {/* Date — pill verre en haut à droite de l'image */}
+          <div
+            className="absolute top-3 right-3 px-3 py-1.5 rounded-full text-[11px] font-mono text-[#17402C] tracking-wider border border-white/50"
+            style={{
+              background: 'rgba(255,255,255,0.62)',
+              backdropFilter: 'blur(8px) saturate(160%)',
+              WebkitBackdropFilter: 'blur(8px) saturate(160%)',
+            }}
+          >
+            {timeAgo(post.created_at || new Date().toISOString())}
+          </div>
 
           {/* Cœur animé du double-tap — transform/opacity uniquement, 60fps */}
           <AnimatePresence>
@@ -590,102 +833,27 @@ export default function CommunityPostCard({
               </motion.div>
             )}
           </AnimatePresence>
+
+          {/* Actions sociales en verre posées sur la photo — pile LiquidGlass (référence rdev) */}
+          <div
+            className="lkdv-photo-actions absolute inset-x-3.5 bottom-3.5 flex items-center justify-between"
+            onClick={(e) => e.stopPropagation()}
+            onPointerDown={(e) => e.stopPropagation()}
+          >
+            {overlayActionsContent}
+          </div>
+          </div>
         </div>
       )}
       </div>
       {/* Fin zone geste */}
 
-      {/* Actions Row: Like, Comment (left) | Share, More Options (right) */}
-      <div className="pt-2.5 border-t border-[#17402C]/10 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          {/* Like Button with clean Vector Heart */}
-          <GlassIconButton
-            title="J'aime cette expédition"
-            active={isLiked}
-            count={likesCount}
-            onClick={handleLike}
-            icon={<HeartSvg filled={isLiked} />}
-          />
-
-          {/* Comment Button with clean Vector Bubble */}
-          <GlassIconButton
-            title="Commenter la publication"
-            count={commentsCount}
-            onClick={handleToggleComments}
-            icon={<Icon name="ChatBubbleLeftIcon" size={14} className="text-[#17402C]" />}
-          />
+      {/* Actions Row — sous le texte uniquement quand il n'y a pas d'image (sinon sur l'image) */}
+      {!displayableImage && (
+        <div className="pt-2.5 border-t border-[#17402C]/10 flex items-center justify-between">
+          {actionsContent}
         </div>
-
-        {/* Right Actions: Share & 3-dots Menu */}
-        <div className="flex items-center gap-2">
-          <GlassIconButton
-            size="md"
-            title="Partager"
-            onClick={handleShare}
-            icon={<Icon name="PaperAirplaneIcon" size={14} className="text-[#17402C]" />}
-          />
-
-          {/* 3-dots functional menu button */}
-          <div className="relative" ref={menuRef}>
-            <GlassIconButton
-              size="md"
-              title="Options de la publication"
-              onClick={() => setShowMoreMenu(!showMoreMenu)}
-              icon={<Icon name="EllipsisHorizontalIcon" size={16} className="text-[#17402C]" />}
-            />
-
-            {/* Floating context menu */}
-            <AnimatePresence>
-              {showMoreMenu && (
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.95, y: -4 }}
-                  animate={{ opacity: 1, scale: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.95, y: -4 }}
-                  className="absolute right-0 bottom-full mb-2 w-48 bg-white/95 backdrop-blur-xl border border-white/90 rounded-2xl p-1.5 shadow-xl z-40 space-y-1 text-xs text-[#17402C]"
-                >
-                  <button
-                    type="button"
-                    onClick={handleToggleSave}
-                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-black/5 transition-colors text-left"
-                  >
-                    <Icon name={isSaved ? "BookmarkSolidIcon" : "BookmarkIcon"} size={14} className={isSaved ? "text-amber-600" : "text-[#5C6B5E]"} />
-                    <span>{isSaved ? "Retirer des favoris" : "Enregistrer"}</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => { handleShare(); setShowMoreMenu(false); }}
-                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-black/5 transition-colors text-left"
-                  >
-                    <Icon name="LinkIcon" size={14} className="text-[#5C6B5E]" />
-                    <span>Copier le lien direct</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={handleHidePost}
-                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-black/5 transition-colors text-left"
-                  >
-                    <Icon name="EyeSlashIcon" size={14} className="text-[#5C6B5E]" />
-                    <span>Masquer ce post</span>
-                  </button>
-
-                  <div className="border-t border-[#17402C]/10 my-1" />
-
-                  <button
-                    type="button"
-                    onClick={handleReport}
-                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-red-50 text-red-600 transition-colors text-left font-semibold"
-                  >
-                    <Icon name="FlagIcon" size={14} />
-                    <span>Signaler le post</span>
-                  </button>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-        </div>
-      </div>
+      )}
 
       {/* Full Feature Threaded Comments Drawer (Pure Liquid Glass) */}
       <AnimatePresence>
@@ -723,7 +891,7 @@ export default function CommunityPostCard({
                   return (
                     <div key={rootComment.id} className="space-y-2">
                       {/* Root Comment Card (Pure Liquid Glass) */}
-                      <div className="glass p-3.5 rounded-2xl border border-white/60 bg-white/45 backdrop-blur-xl shadow-2xs space-y-2 group relative">
+                      <div className="glass p-3.5 rounded-2xl border border-white/60 shadow-2xs space-y-2 group relative">
                         <div className="flex items-center justify-between text-[10px]">
                           <Link
                             href={rootComment.author?.id ? `/profil/${rootComment.author.id}` : '/communaute'}
@@ -759,13 +927,13 @@ export default function CommunityPostCard({
                                   size="sm"
                                   title="Modifier"
                                   onClick={() => handleStartEditComment(rootComment)}
-                                  icon={<Icon name="PencilIcon" size={11} />}
+                                  icon={<Icon name="pencil" size={11} />}
                                 />
                                 <GlassIconButton
                                   size="sm"
                                   title="Supprimer"
                                   onClick={() => handleDeleteComment(rootComment.id)}
-                                  icon={<Icon name="TrashIcon" size={11} className="text-red-600" />}
+                                  icon={<Icon name="trash2" size={11} className="text-red-600" />}
                                 />
                               </>
                             ) : (
@@ -773,7 +941,7 @@ export default function CommunityPostCard({
                                 size="sm"
                                 title="Signaler"
                                 onClick={() => handleReportComment(rootComment.id)}
-                                icon={<Icon name="FlagIcon" size={11} />}
+                                icon={<Icon name="flag" size={11} />}
                               />
                             )}
                           </div>
@@ -792,14 +960,14 @@ export default function CommunityPostCard({
                               <button
                                 type="button"
                                 onClick={() => setEditingCommentId(null)}
-                                className="px-3 py-1 text-[11px] font-bold text-[#5C6B5E] hover:text-[#17402C]"
+                                className="glass-capsule-btn !min-w-0 !min-h-0 px-3.5 py-1 text-[11px] font-bold !text-[#5C6B5E]"
                               >
                                 Annuler
                               </button>
                               <button
                                 type="button"
                                 onClick={() => handleSaveEditComment(rootComment.id)}
-                                className="glass-circle-btn px-3.5 py-1 text-[11px] font-bold !bg-[#17402C] !text-white"
+                                className="glass-capsule-btn primary text-[11px] font-bold !py-1 !px-3.5"
                               >
                                 Enregistrer
                               </button>
@@ -830,7 +998,7 @@ export default function CommunityPostCard({
                             size="sm"
                             title={`Répondre à ${rootComment.author?.full_name || 'ce message'}`}
                             onClick={() => handleReplyTo(rootComment.author?.full_name || 'Voyageur', rootComment.id)}
-                            icon={<span className="text-[10px] font-bold">↩</span>}
+                            icon={<Icon name="reply" size={12} />}
                           />
 
                           <GlassIconButton
@@ -852,7 +1020,7 @@ export default function CommunityPostCard({
                               key={reply.id}
                               className="relative before:absolute before:-left-4 sm:before:-left-5 before:top-4 before:w-3 sm:before:w-4 before:h-[2px] before:bg-[#17402C]/20 before:rounded-full"
                             >
-                              <div className="glass p-3 rounded-2xl border border-white/60 bg-white/35 backdrop-blur-xl shadow-2xs space-y-1.5 group">
+                              <div className="glass p-3 rounded-2xl border border-white/60 shadow-2xs space-y-1.5 group">
                                 <div className="flex items-center justify-between text-[10px]">
                                   <div className="flex items-center gap-2">
                                     <div className="w-5 h-5 rounded-full bg-[#17402C] text-white flex items-center justify-center font-bold text-[10px] overflow-hidden border border-white/30">
@@ -880,14 +1048,14 @@ export default function CommunityPostCard({
                                         size="sm"
                                         title="Supprimer"
                                         onClick={() => handleDeleteComment(reply.id)}
-                                        icon={<Icon name="TrashIcon" size={11} className="text-red-600" />}
+                                        icon={<Icon name="trash2" size={11} className="text-red-600" />}
                                       />
                                     ) : (
                                       <GlassIconButton
                                         size="sm"
                                         title="Signaler"
                                         onClick={() => handleReportComment(reply.id)}
-                                        icon={<Icon name="FlagIcon" size={11} />}
+                                        icon={<Icon name="flag" size={11} />}
                                       />
                                     )}
                                   </div>
@@ -936,12 +1104,12 @@ export default function CommunityPostCard({
             {/* Liquid Glass Composer Bar */}
             <div className="space-y-1.5 pt-1">
               {replyingTo && (
-                <div className="glass px-3 py-1.5 rounded-xl border border-forest-300/60 bg-forest-50/60 backdrop-blur-md flex items-center justify-between text-[11px] text-forest-900 shadow-2xs">
+                <div className="glass px-3 py-1.5 rounded-xl border border-forest-300/60 flex items-center justify-between text-[11px] text-forest-900 shadow-2xs">
                   <span>En réponse à <strong>@{replyingTo}</strong></span>
                   <button
                     type="button"
                     onClick={() => { setReplyingTo(null); setParentCommentId(null); setCommentText(''); }}
-                    className="font-bold hover:text-forest-950 px-1"
+                    className="glass-circle-btn !w-9 !h-9 !min-w-9 !min-h-9 font-bold"
                   >
                     ✕
                   </button>
@@ -949,7 +1117,7 @@ export default function CommunityPostCard({
               )}
 
               {/* Liquid Glass Input Capsule with Image 3 Glass Buttons */}
-              <div className="glass p-1.5 pl-3 rounded-full border border-white/70 bg-white/50 backdrop-blur-xl flex items-center gap-1.5 shadow-xs">
+              <div className="glass p-1.5 pl-3 rounded-full border border-white/70 flex items-center gap-1.5 shadow-xs">
                 <input
                   ref={commentInputRef}
                   type="text"
@@ -970,7 +1138,7 @@ export default function CommunityPostCard({
                   size="sm"
                   title="Joindre une photo"
                   onClick={() => fileInputRef.current?.click()}
-                  icon={<Icon name="PhotoIcon" size={13} />}
+                  icon={<Icon name="image-plus" size={13} />}
                 />
                 <GlassIconButton
                   size="sm"
@@ -982,14 +1150,14 @@ export default function CommunityPostCard({
                   size="sm"
                   title="Partager ma position"
                   onClick={handleShareLocation}
-                  icon={<Icon name="MapPinIcon" size={13} />}
+                  icon={<Icon name="map-pin" size={13} />}
                 />
 
                 <GlassIconButton
                   size="md"
                   title="Publier le commentaire"
                   onClick={() => handleSendComment()}
-                  icon={<Icon name="PaperAirplaneIcon" size={13} />}
+                  icon={<Icon name="send" size={13} />}
                 />
               </div>
             </div>

@@ -432,7 +432,7 @@ export function TripKitView({
               onClick={handleOpenInventory}
               aria-label="Importer depuis mon matériel"
               title="Importer depuis mon matériel"
-              className="glass-sub-card flex h-11 w-11 items-center justify-center rounded-full text-lkv-secondary transition-transform active:scale-95"
+              className="glass-circle-btn flex items-center justify-center transition-transform active:scale-95"
             >
               <Icon name="package" className="w-4 h-4" />
             </button>
@@ -441,7 +441,7 @@ export function TripKitView({
               onClick={() => setIsAddModalOpen(true)}
               aria-label="Ajouter un objet"
               title="Ajouter un objet"
-              className="flex h-11 w-11 items-center justify-center rounded-full bg-lkv-primary text-white transition-transform active:scale-95"
+              className="glass-circle-btn primary flex items-center justify-center transition-transform active:scale-95"
             >
               <Icon name="plus" className="w-4 h-4" />
             </button>
@@ -510,7 +510,7 @@ export function TripKitView({
           <button
             type="button"
             onClick={() => setShowAllSuggestions((value) => !value)}
-            className="w-full pt-1 text-center text-xs font-semibold text-lkv-primary transition-opacity active:opacity-70"
+            className="glass-capsule-btn w-full !py-2 text-xs font-semibold transition-all active:opacity-70"
           >
             {showAllSuggestions ? 'Voir moins' : `Voir plus d’idées (${addRowsCount})`}
           </button>
@@ -1064,7 +1064,7 @@ function TripKitItemRow({
             disabled={busyPacked}
             aria-label={item.is_packed ? 'Marquer non emballé' : 'Marquer emballé'}
             aria-pressed={item.is_packed}
-            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-lkv-primary transition-transform active:scale-90 disabled:opacity-50"
+            className="glass-circle-btn shrink-0 flex items-center justify-center transition-transform active:scale-90 disabled:opacity-50"
           >
             {item.is_packed ? (
               <CheckCircle2 className="h-5 w-5" aria-hidden="true" />
@@ -1128,7 +1128,7 @@ function TripKitItemRow({
           <button
             type="button"
             onClick={() => onEdit(item)}
-            className="flex h-11 w-11 items-center justify-center rounded-full glass-sub-card border border-white/60 text-[var(--lkv-text-secondary)] transition-all hover:text-lkv-primary active:scale-90"
+            className="glass-circle-btn flex items-center justify-center transition-all active:scale-90"
             title="Modifier l’équipement"
             aria-label="Modifier l’équipement"
           >
@@ -1138,7 +1138,7 @@ function TripKitItemRow({
         <button
           type="button"
           onClick={() => onDeleteItem(item.id)}
-          className="flex h-11 w-11 items-center justify-center rounded-full glass-sub-card border border-white/60 text-[var(--lkv-text-muted)] transition-all hover:bg-[var(--lkv-danger)]/10 hover:text-[var(--lkv-danger)] active:scale-90"
+          className="glass-circle-btn flex items-center justify-center transition-all active:scale-90"
           title="Retirer du sac"
           aria-label="Retirer du sac"
         >
@@ -1184,7 +1184,7 @@ function GearInventoryAddRow({
             onAdd({ id: inv.id, name: inv.name, category: inv.category, weight_g: inv.weight_g })
           }
           disabled={busy}
-          className="flex h-11 w-11 items-center justify-center rounded-full bg-lkv-primary text-white transition-transform active:scale-90 disabled:opacity-50"
+          className="glass-circle-btn primary flex items-center justify-center transition-transform active:scale-90 disabled:opacity-50"
           title="Ajouter au sac"
           aria-label={`Ajouter ${inv.name} au sac`}
         >
@@ -1225,7 +1225,7 @@ function GearShopAddRow({
           type="button"
           onClick={() => onAddToInventory(product)}
           disabled={busy}
-          className="flex h-11 w-11 items-center justify-center rounded-full bg-lkv-primary text-white transition-transform active:scale-90 disabled:opacity-50"
+          className="glass-circle-btn primary flex items-center justify-center transition-transform active:scale-90 disabled:opacity-50"
           title="Ajouter à Mon Matériel"
           aria-label={`Ajouter ${product.name} à mon matériel`}
         >

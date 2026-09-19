@@ -13,10 +13,16 @@ interface CommunityRightSidebarProps {
 
 export default function CommunityRightSidebar({ clubs = [], events = [] }: CommunityRightSidebarProps) {
   const topClubs = clubs.slice(0, 3);
-  const upcomingEvents = events.slice(0, 3);
+  const validEvents = events.filter((e) => {
+    if (!e.date) return true;
+    const d = new Date(e.date);
+    return isNaN(d.getTime()) || d.getTime() >= new Date().setHours(0, 0, 0, 0);
+  });
+  const uniqueEvents = Array.from(new Map(validEvents.map(e => [e.id || e.title, e])).values());
+  const upcomingEvents = uniqueEvents.slice(0, 3);
 
   return (
-    <aside className="w-[300px] shrink-0 h-full overflow-y-auto custom-scrollbar flex flex-col gap-3.5 pb-8">
+    <aside className="community-right-sidebar w-full min-w-0 shrink-0 h-full overflow-y-auto custom-scrollbar flex flex-col gap-3.5 pb-8">
       {/* WIDGET LIVE ACTIVITY FEED (Phase 7) */}
       <LiveActivityFeed limit={4} title="Événements en direct" />
 
@@ -39,7 +45,7 @@ export default function CommunityRightSidebar({ clubs = [], events = [] }: Commu
               <Link
                 key={out.id}
                 href="/communaute?tab=evenements"
-                className="block p-2.5 rounded-xl bg-white/75 hover:bg-white border border-white/70 space-y-1.5 shadow-2xs transition-all"
+                className="block p-2.5 rounded-xl bg-white/55 hover:bg-white/80 border border-white/70 space-y-1.5 shadow-2xs transition-all"
               >
                 <div className="flex items-center justify-between">
                   <span className="text-[9.5px] font-mono font-bold text-forest-800 bg-forest-50 px-2 py-0.5 rounded">
@@ -71,7 +77,7 @@ export default function CommunityRightSidebar({ clubs = [], events = [] }: Commu
             <GlassIconButton
               size="sm"
               title="Voir tous les clubs"
-              icon={<Icon name="ArrowRightIcon" size={12} />}
+              icon={<Icon name="arrow-right" size={12} />}
             />
           </Link>
         </div>
@@ -86,7 +92,7 @@ export default function CommunityRightSidebar({ clubs = [], events = [] }: Commu
               <Link
                 key={club.id}
                 href={`/clubs/${club.slug || club.id}`}
-                className="flex items-center justify-between p-2 rounded-xl bg-white/70 hover:bg-white transition-all shadow-2xs border border-white/60 group"
+                className="flex items-center justify-between p-2 rounded-xl bg-white/55 hover:bg-white/80 transition-all shadow-2xs border border-white/60 group"
               >
                 <div className="flex items-center gap-2 min-w-0">
                   <span className="text-base shrink-0">{club.emoji || '🏕️'}</span>
@@ -104,9 +110,9 @@ export default function CommunityRightSidebar({ clubs = [], events = [] }: Commu
                   <span className="text-[9.5px] font-mono text-[#5C6B5E]">
                     {club.members_count ?? 0}
                   </span>
-                  <div className="w-6 h-6 rounded-full bg-black/5 flex items-center justify-center text-[#17402C] group-hover:bg-[#17402C] group-hover:text-white transition-colors">
-                    <Icon name="ChevronRightIcon" size={11} />
-                  </div>
+                  <span className="glass-circle-btn !w-7 !h-7 !min-w-7 !min-h-7">
+                    <Icon name="chevron-right" size={11} aria-hidden="true" />
+                  </span>
                 </div>
               </Link>
             ))}

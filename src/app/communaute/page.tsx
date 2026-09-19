@@ -13,12 +13,12 @@ import { CompteBackground } from '@/components/compte/CompteBackground';
 import CarnetHubCard from '@/components/carnets/CarnetHubCard';
 import CommunityStoriesBar from '@/components/communaute/CommunityStoriesBar';
 import CommunityLeftSidebar from '@/components/communaute/CommunityLeftSidebar';
-import CommunityHeroOverview from '@/components/communaute/CommunityHeroOverview';
 import CommunityRightSidebar from '@/components/communaute/CommunityRightSidebar';
 import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
 import MobileCommunityHub from '@/components/communaute/MobileCommunityHub';
 import CommunityPostCard from '@/components/communaute/CommunityPostCard';
 import LineageDiscovery from '@/components/kits/LineageDiscovery';
+import CommunityHeroOverview from '@/components/communaute/CommunityHeroOverview';
 
 function formatEventDate(value?: string | null): string {
   if (!value) return '';
@@ -117,6 +117,7 @@ function CommunautePageContent() {
           .from('events')
           .select('*')
           .neq('status', 'past')
+          .gte('event_date', new Date().toISOString().split('T')[0])
           .order('event_date', { ascending: true })
           .limit(20),
       ]);
@@ -125,7 +126,14 @@ function CommunautePageContent() {
       const carnetsData = carnetsRes.status === 'fulfilled' ? (carnetsRes.value.data ?? []) : [];
       const clubsData = clubsRes.status === 'fulfilled' ? (clubsRes.value.data ?? []) : [];
       const groupsData = groupsRes.status === 'fulfilled' ? (groupsRes.value.data ?? []) : [];
-      const eventsData = eventsRes.status === 'fulfilled' ? (eventsRes.value.data ?? []) : [];
+      const rawEvents = eventsRes.status === 'fulfilled' ? (eventsRes.value.data ?? []) : [];
+      const seenEventIds = new Set<string>();
+      const eventsData = rawEvents.filter((ev: any) => {
+        const key = String(ev.id || `${ev.title}_${ev.event_date}`);
+        if (seenEventIds.has(key)) return false;
+        seenEventIds.add(key);
+        return true;
+      });
 
       // F1 — auteurs via la vue `public_profiles` (deux étapes, jamais d'embed).
       const authorProfiles = await fetchPublicProfilesWith(supabase, [

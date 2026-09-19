@@ -665,40 +665,76 @@ export default function KitConfiguratorWizard({
 
             {/* 2x2 Choice Cards Grid (Steps 1 to 4) */}
             {step.options.length > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 mb-6">
-                {step.options.map((opt) => {
-                  const isSelected = answers[step.id] === opt.id;
+              <>
+                <div
+                  role="radiogroup"
+                  aria-label={`${step.titlePrefix} ${step.titleItalic}`}
+                  className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 mb-4"
+                >
+                  {step.options.map((opt) => {
+                    const isSelected = answers[step.id] === opt.id;
 
-                  return (
-                    <div
-                      key={opt.id}
-                      onClick={() => handleSelectOption(opt.id)}
-                      className={`glass-sub-card p-4 sm:p-5 rounded-2xl cursor-pointer transition-all duration-200 flex flex-col justify-between border ${
-                        isSelected
-                          ? '!bg-white/95 !border-[var(--lkv-text-primary)] shadow-md ring-2 ring-[var(--lkv-text-primary)]/10'
-                          : 'hover:!bg-white/80'
-                      }`}
-                    >
-                      <div className="flex items-start justify-between mb-3">
-                        <StepIcon icon={opt.icon} active={isSelected} />
-                        <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-all ${
-                          isSelected ? 'bg-[var(--lkv-text-primary)] border-[var(--lkv-text-primary)] text-white' : 'border-[var(--lkv-text-primary)]/20 bg-white/60'
-                        }`}>
-                          {isSelected && <span className="text-[10px] font-bold">✓</span>}
+                    return (
+                      <div
+                        key={opt.id}
+                        role="radio"
+                        aria-checked={isSelected}
+                        tabIndex={0}
+                        aria-label={`${opt.titlePrefix} ${opt.titleItalic} — ${opt.subtext}`}
+                        onClick={() => handleSelectOption(opt.id)}
+                        onKeyDown={(e) => {
+                          if (e.key === ' ' || e.key === 'Enter') {
+                            e.preventDefault();
+                            handleSelectOption(opt.id);
+                          }
+                        }}
+                        className={`glass-sub-card p-4 sm:p-5 rounded-2xl cursor-pointer transition-all duration-200 flex flex-col justify-between border focus-visible:outline-2 focus-visible:outline-[var(--lkv-primary)] focus-visible:outline-offset-2 ${
+                          isSelected
+                            ? '!bg-white/95 !border-[var(--lkv-text-primary)] shadow-md ring-2 ring-[var(--lkv-text-primary)]/10'
+                            : 'hover:!bg-white/80'
+                        }`}
+                      >
+                        <div className="flex items-start justify-between mb-3">
+                          <StepIcon icon={opt.icon} active={isSelected} />
+                          <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-all ${
+                            isSelected ? 'bg-[var(--lkv-text-primary)] border-[var(--lkv-text-primary)] text-white' : 'border-[var(--lkv-text-primary)]/20 bg-white/60'
+                          }`}>
+                            {isSelected && <span className="text-[10px] font-bold">✓</span>}
+                          </div>
+                        </div>
+
+                        <div>
+                          <h3 className="font-display font-bold text-sm text-[var(--lkv-text-primary)] mb-1">
+                            {opt.titlePrefix}{' '}
+                            <span className="font-serif italic font-normal text-[var(--lkv-warning-dark)]">{opt.titleItalic}</span>
+                          </h3>
+                          <p className="text-xs text-[var(--lkv-text-muted)] leading-snug">{opt.subtext}</p>
                         </div>
                       </div>
+                    );
+                  })}
+                </div>
 
-                      <div>
-                        <h3 className="font-display font-bold text-sm text-[var(--lkv-text-primary)] mb-1">
-                          {opt.titlePrefix}{' '}
-                          <span className="font-serif italic font-normal text-[var(--lkv-warning-dark)]">{opt.titleItalic}</span>
-                        </h3>
-                        <p className="text-xs text-[var(--lkv-text-muted)] leading-snug">{opt.subtext}</p>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
+                {/* Mobile Quick Navigation placed directly after choices */}
+                <div className="flex sm:hidden items-center justify-between pb-4">
+                  {currentStepIndex > 0 ? (
+                    <button
+                      type="button"
+                      onClick={handlePrev}
+                      className="glass-capsule-btn text-xs font-bold !min-h-[44px] !py-2 !px-4"
+                    >
+                      ‹ Précédent
+                    </button>
+                  ) : <div />}
+                  <button
+                    type="button"
+                    onClick={handleNext}
+                    className="glass-capsule-btn primary text-xs font-bold !min-h-[44px] !py-2 !px-5 shadow-sm"
+                  >
+                    <span>{nextStepLabel}</span>
+                  </button>
+                </div>
+              </>
             ) : (
               /* Step 5: Connected 360° Intelligent Report Breakdown */
               report && (

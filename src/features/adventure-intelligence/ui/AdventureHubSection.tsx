@@ -97,7 +97,7 @@ export function AdventureHubSection({
         {view.indicators.length === 0 ? (
           <p
             role="status"
-            className="rounded-2xl bg-[var(--lkv-surface)] px-3 py-3 text-[13px] text-[var(--lkv-text-secondary)]"
+            className="rounded-2xl bg-[var(--lkv-surface)] px-3 py-3 text-[13px] text-forest-900"
           >
             Aucune donnée disponible pour le moment.
           </p>

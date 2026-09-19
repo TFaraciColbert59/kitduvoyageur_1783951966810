@@ -158,11 +158,7 @@ export function StepCard({
                 onClick={() => onMoveUp(step.id)}
                 disabled={isFirst}
                 aria-label="Monter cette étape"
-                className={`w-9 h-9 sm:w-8 sm:h-8 rounded-full flex items-center justify-center transition-all shadow-2xs ${
-                  isFirst
-                    ? 'opacity-30 cursor-not-allowed border border-white/30 text-[var(--lkv-text-muted)]'
-                    : 'glass-sub-card border border-white/60 text-[var(--lkv-text-muted)] hover:text-[var(--lkv-primary)] hover:bg-white/90 active:scale-95'
-                }`}
+                className="glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8 disabled:opacity-30 flex items-center justify-center transition-all active:scale-95"
               >
                 <Icon name="chevron-up" className="w-4 h-4" />
               </button>
@@ -171,11 +167,7 @@ export function StepCard({
                 onClick={() => onMoveDown(step.id)}
                 disabled={isLast}
                 aria-label="Descendre cette étape"
-                className={`w-9 h-9 sm:w-8 sm:h-8 rounded-full flex items-center justify-center transition-all shadow-2xs ${
-                  isLast
-                    ? 'opacity-30 cursor-not-allowed border border-white/30 text-[var(--lkv-text-muted)]'
-                    : 'glass-sub-card border border-white/60 text-[var(--lkv-text-muted)] hover:text-[var(--lkv-primary)] hover:bg-white/90 active:scale-95'
-                }`}
+                className="glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8 disabled:opacity-30 flex items-center justify-center transition-all active:scale-95"
               >
                 <Icon name="chevron-down" className="w-4 h-4" />
               </button>
@@ -187,7 +179,7 @@ export function StepCard({
               onClick={() => onMoveToDay(step)}
               aria-label="Déplacer vers un autre jour"
               title="Déplacer vers un autre jour"
-              className="w-9 h-9 sm:w-8 sm:h-8 rounded-full glass-sub-card border border-white/60 flex items-center justify-center text-[var(--lkv-text-muted)] hover:text-[var(--lkv-primary)] hover:bg-white/90 active:scale-95 transition-all shadow-2xs"
+              className="glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8 flex items-center justify-center active:scale-95 transition-all"
             >
               <Icon name="arrow-right-left" className="w-4 h-4" />
             </button>
@@ -198,7 +190,7 @@ export function StepCard({
               onClick={() => onEdit(step)}
               aria-label="Modifier l'étape"
               title="Modifier"
-              className="w-9 h-9 sm:w-8 sm:h-8 rounded-full glass-sub-card border border-white/60 flex items-center justify-center text-[var(--lkv-text-muted)] hover:text-[var(--lkv-primary)] hover:bg-white/90 active:scale-95 transition-all shadow-2xs"
+              className="glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8 flex items-center justify-center active:scale-95 transition-all"
             >
               <Icon name="pencil" className="w-4 h-4" />
             </button>
@@ -209,7 +201,7 @@ export function StepCard({
               onClick={() => onDelete(step.id)}
               aria-label="Supprimer l'étape"
               title="Supprimer"
-              className="w-9 h-9 sm:w-8 sm:h-8 rounded-full glass-sub-card border border-white/60 flex items-center justify-center text-[var(--lkv-text-muted)] hover:text-[var(--lkv-danger)] hover:bg-[var(--lkv-danger)]/10 active:scale-95 transition-all shadow-2xs"
+              className="glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8 flex items-center justify-center active:scale-95 transition-all"
             >
               <Icon name="trash2" className="w-4 h-4" />
             </button>

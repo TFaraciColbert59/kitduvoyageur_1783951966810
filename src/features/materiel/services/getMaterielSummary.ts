@@ -54,7 +54,8 @@ const EMPTY: MaterielSummary = {
   depart: {
     id: 'none',
     destination: 'Aucun départ planifié',
-    startsAt: new Date().toISOString(),
+    startsAt: '',
+    isEstimated: true,
     readinessPct: 0,
     status: 'warning',
     totalWeightKg: 0,
@@ -77,7 +78,7 @@ const EMPTY: MaterielSummary = {
   },
   inventaire: {
     count: 0,
-    goodConditionPct: 100,
+    goodConditionPct: 0,
     orderedCount: 0,
     lastAddedLabel: null,
     goodCount: 0,
@@ -86,7 +87,7 @@ const EMPTY: MaterielSummary = {
     count: 0,
     criticalCount: 0,
     warningCount: 0,
-    reliabilityScore: 100,
+    reliabilityScore: 0,
     lastAlertLabel: null,
   },
   dispo: {
@@ -210,11 +211,7 @@ export async function getMaterielSummary(): Promise<MaterielSummary> {
         checkedItems: checkedCount,
         totalItems: kitItems.length,
         nextDepartLabel: firstKit ? firstKit.name : null,
-        sampleItems: sampleItems.length > 0 ? sampleItems : [
-          { name: 'Tente & Bivouac', is_checked: true },
-          { name: 'Gourde filtrante 1L', is_checked: false },
-          { name: 'Trousse de secours', is_checked: false },
-        ],
+        sampleItems,
       },
       kits: {
         count: activeKits.length,
@@ -226,7 +223,7 @@ export async function getMaterielSummary(): Promise<MaterielSummary> {
       },
       inventaire: {
         count: invCount,
-        goodConditionPct: invCount ? Math.round((goodConditionItems / invCount) * 100) : 100,
+        goodConditionPct: invCount ? Math.round((goodConditionItems / invCount) * 100) : 0,
         orderedCount: 0,
         lastAddedLabel: invData.length > 0 ? 'Dernier ajout récent' : null,
         goodCount: goodConditionItems,
@@ -235,7 +232,7 @@ export async function getMaterielSummary(): Promise<MaterielSummary> {
         count: activeAlerts.length,
         criticalCount,
         warningCount,
-        reliabilityScore: Math.max(0, 100 - activeAlerts.length * 10),
+        reliabilityScore: invCount > 0 ? Math.max(0, 100 - activeAlerts.length * 10) : 0,
         lastAlertLabel: activeAlerts.length > 0 ? `${activeAlerts.length} alerte(s) active(s)` : null,
       },
       dispo: {

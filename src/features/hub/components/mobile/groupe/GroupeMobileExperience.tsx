@@ -411,7 +411,7 @@ export function GroupeMobileExperience({
           <button
             type="button"
             onClick={() => setErrorMsg(null)}
-            className="flex h-11 w-11 items-center justify-center rounded-full text-[var(--lkv-text-muted)] hover:text-[var(--lkv-text-primary)]"
+            className="glass-circle-btn h-11 w-11 shrink-0 text-[var(--lkv-text-muted)] hover:text-[var(--lkv-text-primary)]"
             aria-label="Fermer le message"
           >
             ×
@@ -516,17 +516,17 @@ export function GroupeMobileExperience({
             type="button"
             onClick={() => setCaisseOpen(true)}
             aria-label={`Caisse commune — ${balances.outstanding > 0 ? `${formatEuro(balances.outstanding)} à régler` : 'comptes équilibrés'}`}
-            className={`glass interactive flex h-[9.5rem] w-[9.5rem] flex-col rounded-[1.4rem] p-3 text-left transition-transform active:scale-[0.97] ${
-              balances.outstanding > 0 ? 'border-2 border-[var(--lkv-primary)]/35' : ''
+            className={`glass-capsule-btn flex h-[9.5rem] w-[9.5rem] !flex-col !items-start !justify-start !rounded-[1.4rem] !p-3 text-left transition-transform active:scale-[0.97] ${
+              balances.outstanding > 0 ? 'primary' : ''
             }`}
           >
-            <span className="w-fit rounded-full bg-[var(--lkv-primary)]/10 px-2 py-0.5 text-[10px] font-bold text-[var(--lkv-primary)]">
+            <span className="w-fit rounded-full bg-[var(--lkv-primary)]/10 px-2 py-0.5 text-[10px] font-bold">
               {balances.outstanding > 0 ? 'À régler' : 'Équilibré'}
             </span>
-            <span className="mt-2 font-display text-xl font-extrabold tabular-nums text-[var(--lkv-text-primary)]">
+            <span className="mt-2 font-display text-xl font-extrabold tabular-nums">
               {balances.outstanding > 0 ? formatEuro(balances.outstanding) : '—'}
             </span>
-            <span className="mt-auto text-[10.5px] font-medium text-[var(--lkv-text-primary)]/70">
+            <span className="mt-auto text-[10.5px] font-medium">
               {pendingExpenses.length > 0
                 ? `${pendingExpenses.length} à rembourser`
                 : 'Rien à rembourser'}
@@ -539,7 +539,7 @@ export function GroupeMobileExperience({
               type="button"
               onClick={() => setCaisseOpen(true)}
               aria-label={`${expense.title} — ${formatEuro(expense.amount)}`}
-              className="glass interactive flex h-[9.5rem] w-[9.5rem] flex-col rounded-[1.4rem] p-3 text-left transition-transform active:scale-[0.97]"
+              className="glass-capsule-btn flex h-[9.5rem] w-[9.5rem] !flex-col !items-start !justify-start !rounded-[1.4rem] !p-3 text-left transition-transform active:scale-[0.97]"
             >
               <span
                 className={`w-fit rounded-full px-2 py-0.5 text-[10px] font-bold ${
@@ -550,13 +550,13 @@ export function GroupeMobileExperience({
               >
                 {expense.settled ? 'Réglée' : 'En attente'}
               </span>
-              <span className="mt-2 line-clamp-2 text-[12.5px] font-bold leading-snug text-[var(--lkv-text-primary)]">
+              <span className="mt-2 line-clamp-2 text-[12.5px] font-bold leading-snug">
                 {expense.title}
               </span>
-              <span className="mt-auto block font-display text-lg font-extrabold tabular-nums text-[var(--lkv-text-primary)]">
+              <span className="mt-auto block font-display text-lg font-extrabold tabular-nums">
                 {formatEuro(expense.amount)}
               </span>
-              <span className="block truncate text-[10px] font-medium text-[var(--lkv-text-primary)]/70">
+              <span className="block truncate text-[10px] font-medium">
                 Avancé par {expense.payerName}
               </span>
             </button>
@@ -577,10 +577,10 @@ export function GroupeMobileExperience({
             <button
               type="button"
               onClick={() => setEquipmentOpen(true)}
-              className="glass-sub-card flex h-[9.5rem] w-[13rem] flex-col items-start justify-center gap-1 rounded-[1.4rem] p-4 text-left"
+              className="glass-capsule-btn flex h-[9.5rem] w-[13rem] !flex-col !items-start !justify-center !gap-1 !rounded-[1.4rem] !p-4 !whitespace-normal text-left"
             >
-              <span className="text-sm font-bold text-[var(--lkv-text-primary)]">Aucun objet partagé</span>
-              <span className="text-xs font-medium text-[var(--lkv-text-primary)]/70">
+              <span className="text-sm font-bold">Aucun objet partagé</span>
+              <span className="text-xs font-medium">
                 Ajoutez le matériel commun du groupe.
               </span>
             </button>
@@ -659,17 +659,15 @@ export function GroupeMobileExperience({
                           onClick={() => handleVote(decision.id, option.id)}
                           disabled={!canManage || isPending}
                           aria-pressed={selected}
-                          className={`w-full rounded-xl px-2.5 py-1.5 text-left transition-colors disabled:opacity-60 ${
-                            selected
-                              ? 'bg-[var(--lkv-primary)]/15 ring-1 ring-[var(--lkv-primary)]/30'
-                              : 'bg-black/[0.03] hover:bg-black/[0.05]'
+                          className={`glass-capsule-btn w-full !justify-start !rounded-xl !px-2.5 !py-1.5 text-left disabled:opacity-60 ${
+                            selected ? 'primary' : ''
                           }`}
                         >
                           <span className="flex items-center justify-between gap-2">
-                            <span className="min-w-0 truncate text-[11.5px] font-semibold text-[var(--lkv-text-primary)]">
+                            <span className="min-w-0 truncate text-[11.5px] font-semibold">
                               {option.label}
                             </span>
-                            <span className="shrink-0 text-[10.5px] font-bold tabular-nums text-[var(--lkv-text-primary)]/70">
+                            <span className="shrink-0 text-[10.5px] font-bold tabular-nums">
                               {option.percentage}%
                             </span>
                           </span>
@@ -746,13 +744,13 @@ export function GroupeMobileExperience({
               type="button"
               onClick={() => setMembersOpen(true)}
               aria-label="Inviter des compagnons"
-              className="glass-sub-card flex h-[8rem] w-[8.75rem] flex-col items-center justify-center gap-2 rounded-[1.4rem] border-2 border-dashed border-[var(--lkv-primary)]/30 p-3 transition-transform active:scale-[0.97]"
+              className="glass-capsule-btn flex h-[8rem] w-[8.75rem] !flex-col !items-center !justify-center !gap-2 !rounded-[1.4rem] !border-2 !border-dashed !border-white/50 !p-3 transition-transform active:scale-[0.97]"
             >
-              <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--lkv-primary)]/10 text-[var(--lkv-primary)]">
+              <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--lkv-primary)]/10">
                 <Plus size={18} aria-hidden="true" />
               </span>
-              <span className="text-[11px] font-bold text-[var(--lkv-text-primary)]">Inviter</span>
-              <span className="text-[9px] font-semibold uppercase tracking-[0.12em] text-[var(--lkv-text-primary)]/60">
+              <span className="text-[11px] font-bold">Inviter</span>
+              <span className="text-[9px] font-semibold uppercase tracking-[0.12em]">
                 {data.inviteCode}
               </span>
             </button>
@@ -774,12 +772,12 @@ export function GroupeMobileExperience({
               <button
                 type="button"
                 onClick={() => setDiscussionOpen(true)}
-                className="glass interactive flex h-[8.5rem] w-[14.5rem] flex-col rounded-[1.4rem] p-3.5 text-left transition-transform active:scale-[0.98]"
+                className="glass-capsule-btn flex h-[8.5rem] w-[14.5rem] !flex-col !items-start !justify-start !rounded-[1.4rem] !p-3.5 text-left transition-transform active:scale-[0.98]"
               >
-                <p className="line-clamp-3 font-serif-lkv text-[13.5px] italic leading-snug text-[var(--lkv-text-primary)]">
+                <p className="line-clamp-3 font-serif-lkv text-[13.5px] italic leading-snug">
                   « {message.content} »
                 </p>
-                <p className="mt-auto truncate pt-1.5 text-[10px] font-semibold uppercase tracking-[0.1em] text-[var(--lkv-text-primary)]/60">
+                <p className="mt-auto truncate pt-1.5 text-[10px] font-semibold uppercase tracking-[0.1em]">
                   {message.author} · {message.time}
                 </p>
               </button>

@@ -68,7 +68,7 @@ const DEFAULT_TABS: Tab[] = [
     label: 'Profil',
     iconName: 'user',
     ariaLabel: 'Mon compte voyageur',
-    matchPaths: ['/compte', '/connexion', '/inscription', '/profil'],
+    matchPaths: ['/compte', '/connexion', '/inscription', '/profil', '/progression'],
   },
 ];
 
@@ -292,19 +292,10 @@ function HamburgerMenu({ menuOpen, setMenuOpen, messagerieBadge }: { menuOpen: b
           setMenuOpen(!menuOpen);
         }}
         aria-label="Menu actions"
+        className="glass-circle-btn"
         style={{
           width: '44px',
           height: '44px',
-          borderRadius: '999px',
-          background: 'rgba(255, 255, 255, 0.25)',
-          backdropFilter: 'blur(var(--glass-blur-lg))',
-          WebkitBackdropFilter: 'blur(var(--glass-blur-lg))',
-          border: '1px solid rgba(255, 255, 255, 0.45)',
-          boxShadow: 'inset 0 1px 1px rgba(255,255,255,0.6)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          color: '#17402C',
           cursor: 'pointer',
           outline: 'none',
         }}

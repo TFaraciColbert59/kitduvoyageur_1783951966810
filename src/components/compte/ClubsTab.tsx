@@ -527,7 +527,7 @@ export default function ClubsTab({ profile }: { profile?: any }) {
                     onClick={() => handleJoinDiscovery(disc.id, disc.name)}
                     disabled={disc.isJoined}
                     className={`glass-capsule-btn !py-1 !px-2.5 text-[10px] font-bold shrink-0 ${
-                      disc.isJoined ? '!bg-[#5B7F55]/20 !text-[#5B7F55]' : 'primary'
+                      disc.isJoined ? '' : 'primary'
                     }`}
                   >
                     {disc.isJoined ? 'Envoyé' : 'Rejoindre'}

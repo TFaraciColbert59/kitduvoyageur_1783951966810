@@ -3,21 +3,26 @@
 import React from 'react';
 import Link from 'next/link';
 import Icon from '@/components/ui/AppIcon';
-import { ChevronRightIcon as ChevronRightAnimated } from '@/components/icons/chevron-right';
+import LiquidGlass from '@/components/glass/LiquidGlass';
 import { CommunityHubTab } from '@/components/social/CommunityHubNav';
 
 interface CommunityLeftSidebarProps {
   activeTab: CommunityHubTab;
   onTabChange: (tab: CommunityHubTab) => void;
-  badgeCounts: {
-    fil?: number;
-    carnets?: number;
-    clubs?: number;
-    groupes?: number;
-    evenements?: number;
-  };
+  badgeCounts: Partial<Record<Exclude<CommunityHubTab, 'entraide'>, number>>;
   onFilterMassif?: (massif: string) => void;
 }
+
+const tabs: { id: CommunityHubTab; label: string; icon: string }[] = [
+  { id: 'fil', label: "Fil d’actualité", icon: 'layers' },
+  { id: 'carnets', label: 'Carnets de voyage', icon: 'book-open' },
+  { id: 'clubs', label: 'Clubs & collectifs', icon: 'users' },
+  { id: 'groupes', label: 'Expéditions', icon: 'map' },
+  { id: 'evenements', label: 'Événements', icon: 'calendar-days' },
+  { id: 'entraide', label: 'Entraide', icon: 'message-square' },
+];
+const massifs = ['Chartreuse', 'Vercors', 'Mont-Blanc', 'Belledonne', 'Vanoise'];
+const focusStyle = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#17402C] focus-visible:ring-offset-2';
 
 export default function CommunityLeftSidebar({
   activeTab,
@@ -25,126 +30,102 @@ export default function CommunityLeftSidebar({
   badgeCounts,
   onFilterMassif,
 }: CommunityLeftSidebarProps) {
-  const tabs = [
-    { id: 'fil' as CommunityHubTab, label: 'Fil d\'actualité' },
-    { id: 'carnets' as CommunityHubTab, label: 'Carnets de voyage' },
-    { id: 'clubs' as CommunityHubTab, label: 'Clubs & Collectifs' },
-    { id: 'groupes' as CommunityHubTab, label: 'Expéditions' },
-    { id: 'evenements' as CommunityHubTab, label: 'Événements & Sorties' },
-    { id: 'entraide' as CommunityHubTab, label: 'Entraide & Q&A' },
-  ];
-
-  const massifs = ['Chartreuse', 'Vercors', 'Mont-Blanc', 'Belledonne', 'Vanoise'];
-
   return (
-    <aside className="h-full max-h-full w-full flex-1 flex flex-col justify-between glass rounded-[1.5rem] p-3.5 text-[#17402C] font-sans overflow-hidden border border-white/40 shadow-sm select-none">
-      {/* ── 1. ZONE HAUTE FIXE (Identité Communauté & Actions Rapides) ── */}
-      <div className="shrink-0 space-y-2.5">
-        {/* Community Identity Mini Card */}
-        <div className="p-3 rounded-2xl glass-sub-card flex items-center gap-3 relative overflow-hidden border border-white/50">
-          <div className="w-10 h-10 rounded-full flex items-center justify-center text-xl shrink-0 bg-white/80 border border-white shadow-xs">
-            🌲
+    <LiquidGlass
+      as="aside"
+      mode="shader"
+      cornerRadius={30}
+      displacementScale={36}
+      blurAmount={18}
+      saturation={140}
+      aberrationIntensity={1.5}
+      glassTint="rgba(255,255,255,0.54)"
+      interactive={false}
+      elasticity={0}
+      className="community-sidebar h-full w-full overflow-hidden text-[#17402C] [&>div:last-child]:h-full"
+    >
+      <div className="flex h-full min-h-0 flex-col p-4">
+        <div className="flex shrink-0 items-center gap-3 px-2 pb-5 pt-2">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white/65 shadow-xs">
+            <Icon name="globe" size={23} />
           </div>
-          <div className="min-w-0 flex-1">
-            <h4 className="font-display font-bold text-xs sm:text-sm text-[#17402C] truncate leading-tight">
-              Communauté{' '}
-              <span className="font-serif italic font-normal text-[#5B7F55] text-xs">
-                LKDV
-              </span>
-            </h4>
-            <p className="text-[10px] font-mono text-[#5A7064] truncate mt-0.5">
-              Sans algorithme
-            </p>
-          </div>
-        </div>
-
-        {/* Studio de Création Rapide */}
-        <div className="grid grid-cols-2 gap-1.5">
-          <Link
-            href="/carnets/nouveau"
-            className="glass-capsule-btn primary text-[10.5px] font-bold !py-1.5 !px-2 flex items-center justify-center gap-1 shadow-none cursor-pointer"
-          >
-            <Icon name="PlusIcon" size={12} />
-            <span>Publier</span>
-          </Link>
-
-          <Link
-            href="/nouveau-groupe"
-            className="glass-capsule-btn text-[10.5px] font-bold !py-1.5 !px-2 flex items-center justify-center gap-1 shadow-none cursor-pointer"
-          >
-            <Icon name="UserGroupIcon" size={12} />
-            <span>Expédition</span>
-          </Link>
-        </div>
-      </div>
-
-      {/* ── 2. ZONE CENTRALE SCROLLABLE À L'INTÉRIEUR (Navigation) ── */}
-      <nav className="flex-1 min-h-0 overflow-y-auto no-scrollbar py-2 space-y-1.5" aria-label="Navigation de la communauté">
-        <p className="text-[9.5px] font-mono font-bold uppercase tracking-widest text-[#5A7064] px-2 mb-1">
-          Espaces
-        </p>
-
-        {tabs.map((t) => {
-          const isActive = activeTab === t.id;
-          return (
-            <button
-              key={t.id}
-              type="button"
-              onClick={() => onTabChange(t.id)}
-              className={`w-full px-3 py-2.5 rounded-xl font-bold text-xs transition-all flex items-center justify-between group cursor-pointer border ${
-                isActive
-                  ? 'bg-[#17402C] text-white border-[#17402C] shadow-sm'
-                  : 'bg-white/80 hover:bg-white text-[#17402C] border-white/80 shadow-2xs'
-              }`}
-            >
-              <span className="truncate text-left">{t.label}</span>
-              {isActive && <ChevronRightAnimated size={13} className="text-white/70 shrink-0" />}
-            </button>
-          );
-        })}
-
-        {/* Massifs Phares Shortcuts */}
-        <div className="pt-2 border-t border-[#17402C]/5 space-y-1.5">
-          <span className="text-[9.5px] font-mono font-bold uppercase tracking-widest text-[#5A7064] px-2 block">
-            Massifs Phares
-          </span>
-          <div className="flex flex-wrap gap-1 px-1">
-            {massifs.map((m) => (
-              <button
-                key={m}
-                type="button"
-                onClick={() => {
-                  onFilterMassif?.(m);
-                  onTabChange('carnets');
-                }}
-                className="text-[9.5px] font-mono font-semibold px-2 py-0.5 rounded-md bg-white/70 hover:bg-white text-[#17402C] transition-all cursor-pointer shadow-2xs border border-white/60"
-              >
-                {m}
-              </button>
-            ))}
+          <div>
+            <p className="text-[15px] font-semibold tracking-[-0.025em]">Votre communauté</p>
+            <p className="mt-0.5 text-xs text-[#476254]">Le voyage se partage.</p>
           </div>
         </div>
-      </nav>
 
-      {/* ── 3. ZONE BASSE FIXE (Raccourci Explorer & Footer) ── */}
-      <div className="shrink-0 pt-2 border-t border-[#17402C]/5 space-y-1.5">
         <Link
-          href="/explorer"
-          className="w-full glass-sub-card text-xs font-semibold text-[#365233] p-2 rounded-xl flex items-center justify-between hover:bg-white/80 transition-colors cursor-pointer border border-white/40"
+          href="/carnets/nouveau"
+          className={`glass-capsule-btn primary flex min-h-11 shrink-0 w-full items-center justify-center gap-2 px-4 text-sm font-semibold ${focusStyle}`}
         >
-          <span className="flex items-center gap-1.5">
-            <span>←</span>
-            <span>Explorer les aventures</span>
-          </span>
-          <span className="text-[9px] font-mono text-[#5A7064]">LKDV</span>
+          <Icon name="plus" size={18} />
+          Partager un récit
         </Link>
 
-        <div className="text-center">
-          <span className="text-[8.5px] font-mono text-[#5A7064] tracking-wider uppercase">
-            Le Kit du Voyageur · Communauté v2.0
-          </span>
+        <nav className="mt-6 min-h-0 flex-1 overflow-y-auto px-0.5 pb-3" aria-label="Navigation de la communauté">
+          <p className="mb-2 px-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#476254]">Découvrir</p>
+          <div className="space-y-1">
+            {tabs.map((tab) => {
+              const isActive = activeTab === tab.id;
+              const count = tab.id === 'entraide' ? undefined : badgeCounts[tab.id];
+              return (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => onTabChange(tab.id)}
+                  aria-current={isActive ? 'page' : undefined}
+                  className={`flex min-h-12 w-full items-center gap-3 rounded-2xl px-3 text-left text-[13px] motion-safe:transition-transform motion-safe:duration-150 motion-safe:active:scale-[0.98] ${focusStyle} ${
+                    isActive
+                      ? 'bg-white/80 font-semibold shadow-xs'
+                      : 'font-medium hover:bg-[#17402C]/5'
+                  }`}
+                >
+                  <Icon name={tab.icon} size={19} className="shrink-0" />
+                  <span className="min-w-0 flex-1">{tab.label}</span>
+                  {typeof count === 'number' && count > 0 && (
+                    <span className={`min-w-6 rounded-full px-1.5 py-0.5 text-center text-[11px] tabular-nums ${isActive ? 'bg-[#17402C]/10 text-[#17402C]' : 'text-[#476254]'}`}>
+                      {count}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="mt-6">
+            <p className="mb-2 px-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#476254]">Au fil des massifs</p>
+            <div className="space-y-0.5">
+              {massifs.map((massif) => (
+                <button
+                  key={massif}
+                  type="button"
+                  onClick={() => {
+                    onFilterMassif?.(massif);
+                    onTabChange('carnets');
+                  }}
+                  className={`flex min-h-11 w-full items-center gap-3 rounded-xl px-3 text-left text-xs font-medium transition-all hover:bg-[#17402C]/5 active:scale-[0.99] ${focusStyle}`}
+                >
+                  <Icon name="map-pin" size={15} className="text-[#476254]" />
+                  {massif}
+                  <Icon name="chevron-right" size={12} className="ml-auto text-[#476254]" />
+                </button>
+              ))}
+            </div>
+          </div>
+        </nav>
+
+        <div className="shrink-0 space-y-1 border-t border-[#17402C]/10 pt-3">
+          <Link href="/nouveau-groupe" className={`glass-capsule-btn flex min-h-11 w-full items-center justify-center gap-2 px-4 text-xs font-semibold ${focusStyle}`}>
+            <Icon name="user-plus" size={18} />
+            Créer une expédition
+          </Link>
+          <Link href="/explorer" className={`flex min-h-11 items-center gap-3 rounded-xl px-3 text-xs font-medium transition-all hover:bg-[#17402C]/5 active:scale-[0.99] ${focusStyle}`}>
+            <Icon name="arrow-up-right" size={18} />
+            Explorer les aventures
+          </Link>
         </div>
       </div>
-    </aside>
+    </LiquidGlass>
   );
 }

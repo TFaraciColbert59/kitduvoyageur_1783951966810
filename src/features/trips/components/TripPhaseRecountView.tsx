@@ -57,10 +57,8 @@ export function TripPhaseRecountView({ trip }: TripPhaseRecountViewProps) {
         <button
           type="button"
           onClick={() => setActiveSection('notes')}
-          className={`flex items-center gap-2 px-4 py-2.5 rounded-full text-xs sm:text-sm font-semibold transition-all border min-h-[44px] ${
-            activeSection === 'notes'
-              ? 'bg-[var(--lkv-primary)] text-white border-[var(--lkv-primary)] shadow-sm'
-              : 'glass-sub-card border border-white/60 text-[var(--lkv-text-primary)] hover:bg-white'
+          className={`glass-capsule-btn flex items-center gap-2 !px-4 !py-2.5 text-xs sm:text-sm font-semibold transition-all ${
+            activeSection === 'notes' ? 'primary shadow-sm' : ''
           }`}
         >
           <Icon name="book-open" size={15} />
@@ -81,10 +79,8 @@ export function TripPhaseRecountView({ trip }: TripPhaseRecountViewProps) {
         <button
           type="button"
           onClick={() => setActiveSection('budget')}
-          className={`flex items-center gap-2 px-4 py-2.5 rounded-full text-xs sm:text-sm font-semibold transition-all border min-h-[44px] ${
-            activeSection === 'budget'
-              ? 'bg-[var(--lkv-primary)] text-white border-[var(--lkv-primary)] shadow-sm'
-              : 'glass-sub-card border border-white/60 text-[var(--lkv-text-primary)] hover:bg-white'
+          className={`glass-capsule-btn flex items-center gap-2 !px-4 !py-2.5 text-xs sm:text-sm font-semibold transition-all ${
+            activeSection === 'budget' ? 'primary shadow-sm' : ''
           }`}
         >
           <Icon name="credit-card" size={15} />

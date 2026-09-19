@@ -91,10 +91,10 @@ export default function EventDetailModal({
           {/* Close Button */}
           <button
             onClick={onClose}
-            className="absolute top-5 right-5 w-9 h-9 rounded-full glass-capsule-btn flex items-center justify-center text-[#17402C] p-0"
+            className="absolute top-5 right-5 w-9 h-9 rounded-full glass-circle-btn flex items-center justify-center text-[#17402C] p-0"
             aria-label="Fermer"
           >
-            <Icon name="XMarkIcon" size={18} />
+            <Icon name="x" size={18} />
           </button>
 
           {/* Toast */}
@@ -136,7 +136,7 @@ export default function EventDetailModal({
             {/* Date */}
             <div className="p-4 bg-[#F5F2E8]/60 border border-[#17402C]/5 rounded-2xl flex items-start gap-3">
               <div className="w-9 h-9 rounded-xl bg-white flex items-center justify-center text-[#17402C]  shrink-0">
-                <Icon name="CalendarIcon" size={18} />
+                <Icon name="calendar" size={18} />
               </div>
               <div className="min-w-0">
                 <p className="text-[10px] font-mono uppercase tracking-wider text-[#5C6B5E]">Date & Heure</p>
@@ -149,7 +149,7 @@ export default function EventDetailModal({
             {/* Location */}
             <div className="p-4 bg-[#F5F2E8]/60 border border-[#17402C]/5 rounded-2xl flex items-start gap-3">
               <div className="w-9 h-9 rounded-xl bg-white flex items-center justify-center text-[#17402C]  shrink-0">
-                <Icon name="MapPinIcon" size={18} />
+                <Icon name="map-pin" size={18} />
               </div>
               <div className="min-w-0">
                 <p className="text-[10px] font-mono uppercase tracking-wider text-[#5C6B5E]">Lieu de rassemblement</p>
@@ -162,7 +162,7 @@ export default function EventDetailModal({
             {/* Participants */}
             <div className="p-4 bg-[#F5F2E8]/60 border border-[#17402C]/5 rounded-2xl flex items-start gap-3">
               <div className="w-9 h-9 rounded-xl bg-white flex items-center justify-center text-[#17402C]  shrink-0">
-                <Icon name="UserGroupIcon" size={18} />
+                <Icon name="users" size={18} />
               </div>
               <div className="min-w-0">
                 <p className="text-[10px] font-mono uppercase tracking-wider text-[#5C6B5E]">Places</p>
@@ -255,16 +255,16 @@ export default function EventDetailModal({
                 className="w-10 h-10 rounded-full glass-capsule-btn flex items-center justify-center text-[#17402C] p-0 shrink-0"
                 aria-label="Explorer le club"
               >
-                <Icon name="ArrowRightIcon" size={16} />
+                <Icon name="arrow-right" size={16} />
               </Link>
             )}
             <button
               onClick={handleJoin}
               disabled={joining || joined || isPast}
-              className="glass-capsule-btn px-5 py-2.5 text-xs font-bold flex items-center justify-center gap-2 disabled:opacity-50"
+              className="glass-capsule-btn primary px-5 py-2.5 text-xs font-bold flex items-center justify-center gap-2 disabled:opacity-50"
             >
               <span>{joined ? '✓ Inscrit' : joining ? 'Inscription...' : isPast ? 'Passée' : 'Rejoindre'}</span>
-              <Icon name="ArrowRightIcon" size={14} />
+              <Icon name="arrow-right" size={14} />
             </button>
           </div>
         </motion.div>

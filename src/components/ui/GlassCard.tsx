@@ -31,13 +31,15 @@ const RADIUS: Record<GlassVariant, number> = {
 export interface GlassCardProps extends HTMLAttributes<HTMLDivElement> {
   children?: ReactNode;
   variant?: GlassVariant;
-  /** standard = CSS léger (listes longues) · premium = réfraction SVG */
+  /** standard = CSS léger (listes longues) · premium = réfraction SVG (défaut, budgeté) */
   tier?: GlassTier;
   tone?: GlassTone;
   blur?: 'sm' | 'md' | 'lg';
   interactive?: boolean;
   disabled?: boolean;
   overLight?: boolean;
+  /** Teinte du verre (ex: var(--btn-tint) pour la card au style unique sur image). */
+  glassTint?: string;
   padding?: string;
   as?: 'div' | 'article';
   ariaLabelledBy?: string;
@@ -47,12 +49,13 @@ export const GlassCard = forwardRef<HTMLDivElement, GlassCardProps>(
   (
     {
       variant,
-      tier = 'standard',
+      tier = 'premium',
       tone = 'neutral',
       blur = 'sm',
       interactive = false,
       disabled = false,
       overLight = false,
+      glassTint,
       padding = '18px 20px',
       as: Component = 'div',
       ariaLabelledBy,
@@ -123,7 +126,7 @@ export const GlassCard = forwardRef<HTMLDivElement, GlassCardProps>(
             borderRadius: radius,
             padding,
             cursor: actionable && !unavailable ? 'pointer' : undefined,
-            ...(overLight ? { background: 'rgba(255,255,255,0.42)' } : null),
+            ...(overLight ? { background: 'var(--card-tint-strong, rgba(255,255,255,0.42))' } : null),
             ...style,
           }}
         >
@@ -155,13 +158,14 @@ export const GlassCard = forwardRef<HTMLDivElement, GlassCardProps>(
           ...style,
         }}
         mode="shader"
-        displacementScale={resolvedVariant === 'overlay' ? 34 : 26}
-        blurAmount={resolvedVariant === 'overlay' ? 18 : 14}
-        saturation={170}
+        displacementScale={resolvedVariant === 'overlay' ? 34 : resolvedVariant === 'interactive' ? 28 : 25}
+        blurAmount={resolvedVariant === 'overlay' ? 18 : 12}
+        saturation={180}
         aberrationIntensity={resolvedVariant === 'critical' ? 3.2 : 2}
         cornerRadius={radius}
         interactive={isInteractive && !unavailable}
         overLight={overLight}
+        glassTint={glassTint}
         onClick={unavailable ? undefined : onClick}
       >
         <div

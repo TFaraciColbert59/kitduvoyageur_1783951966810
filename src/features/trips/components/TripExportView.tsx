@@ -34,7 +34,7 @@ export default function ExportClientView({ trip, stats, budgetSummary }: ExportC
     .sort((a, b) => a - b);
 
   const renderPrintContent = () => (
-    <div className="bg-white rounded-[var(--lkv-radius-card)] p-6 sm:p-8 shadow-sm border border-white/60 print:p-0 print:border-none print:shadow-none print:rounded-none max-w-4xl mx-auto space-y-8 print:space-y-6">
+    <div className="glass rounded-[var(--lkv-radius-card)] p-6 sm:p-8 print:p-0 print:border-none print:shadow-none print:rounded-none max-w-4xl mx-auto space-y-8 print:space-y-6">
       {/* En-tete officiel */}
       <header className="border-b border-white/60 pb-6">
         <div className="flex justify-between items-start">

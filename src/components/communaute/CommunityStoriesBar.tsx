@@ -1,34 +1,80 @@
 'use client';
 
-import React from 'react';
-
-interface CommunityStoriesBarProps {
-  currentUser?: any;
-}
+import React, { useState } from 'react';
+import StoriesViewer, { type StoryUser } from './StoriesViewer';
 
 /**
- * Barre de stories en direct. Aucune story serveur n'existe encore : l'état
- * affiché est un vrai état vide, jamais un jeu de données de démonstration.
+ * Stories du terrain — barre horizontale + visionneur plein écran.
+ * Exemples locaux (assets du repo, aucun réseau requis) en attendant
+ * les stories serveur ; remplacés dès que l'API existe.
  */
-export default function CommunityStoriesBar({ currentUser }: CommunityStoriesBarProps) {
+const DEMO_STORIES: StoryUser[] = [
+  {
+    id: 'story-demo-1',
+    name: 'Tony',
+    time: '12 min',
+    slides: [
+      { image: '/assets/images/community-hikers.jpg', caption: 'Crête des Mélèzes — 6h12, -2°C, lumière incroyable.' },
+    ],
+  },
+  {
+    id: 'story-demo-2',
+    name: 'Claire',
+    time: '1 h',
+    slides: [
+      { image: '/assets/images/community-morning.jpg', caption: 'Bivouac au lever du jour, lac encore gelé.' },
+      { image: '/assets/images/community-hikers.jpg', caption: 'Descente par la combe nord, la neige tient encore.' },
+    ],
+  },
+  {
+    id: 'story-demo-3',
+    name: 'Marc',
+    time: '3 h',
+    slides: [
+      { image: '/assets/images/community-morning.jpg', caption: 'Lac gelé — rive nord, un miroir parfait.' },
+    ],
+  },
+];
+
+export default function CommunityStoriesBar({ currentUser }: { currentUser?: any }) {
+  const [viewerStart, setViewerStart] = useState<number | null>(null);
+
   return (
-    <div className="glass p-3.5 rounded-2xl border border-white/60 bg-white/80 shadow-xs">
-      <div className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2 min-w-0">
-          <span className="w-2 h-2 rounded-full bg-[#17402C]/30" />
-          <span className="text-[11px] font-bold text-[#17402C] truncate">
-            Stories en direct
-          </span>
+    <>
+      <div className="community-stories">
+        <div className="story-track">
+          {/* Votre story */}
+          <button type="button" className="story-item" aria-label="Ajouter une story">
+            <span className="story-ring story-ring--self">
+              <span className="story-avatar story-avatar--self">+</span>
+            </span>
+            <span className="story-name">Votre story</span>
+          </button>
+
+          {DEMO_STORIES.map((user, i) => (
+            <button
+              key={user.id}
+              type="button"
+              className="story-item"
+              aria-label={`Voir la story de ${user.name}`}
+              onClick={() => setViewerStart(i)}
+            >
+              <span className="story-ring">
+                <span className="story-avatar">{user.name.charAt(0)}</span>
+              </span>
+              <span className="story-name">{user.name}</span>
+            </button>
+          ))}
         </div>
-        <span className="glass-pill text-[8.5px] font-mono font-bold text-[#5C6B5E]">
-          0 EN DIRECT
-        </span>
       </div>
-      <p className="text-[10.5px] text-[#5C6B5E] leading-relaxed mt-1.5">
-        {currentUser
-          ? 'Aucune story partagée pour le moment.'
-          : 'Connectez-vous pour suivre les stories du terrain.'}
-      </p>
-    </div>
+
+      {viewerStart !== null && (
+        <StoriesViewer
+          users={DEMO_STORIES}
+          startUser={viewerStart}
+          onClose={() => setViewerStart(null)}
+        />
+      )}
+    </>
   );
 }

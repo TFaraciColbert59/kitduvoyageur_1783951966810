@@ -80,7 +80,7 @@ export default function MobileCommunityHub({
       {/* 0. STICKY TOPBAR HEADER */}
       <MobileCommunityHeader />
 
-      <div className="px-3.5 pt-2 space-y-3.5">
+      <div className="px-4 pt-2 space-y-5 pb-8">
         {/* Pull to refresh visual feedback indicator */}
         {(pullProgress > 0 || isRefreshing) && (
           <div
@@ -94,16 +94,31 @@ export default function MobileCommunityHub({
           </div>
         )}
 
+        <nav className="community-navigation" aria-label="Espaces de la communauté">
+          {([
+            ['fil', 'Pour vous', 'layers'],
+            ['carnets', 'Carnets', 'book-open'],
+            ['clubs', 'Clubs', 'users'],
+            ['groupes', 'Expéditions', 'map'],
+            ['evenements', 'Sorties', 'calendar'],
+            ['entraide', 'Entraide', 'message-square'],
+          ] as const).map(([tab, label, icon]) => (
+            <button type="button" key={tab} aria-label={label} aria-current={currentTab === tab ? 'page' : undefined} onClick={() => { triggerHaptic('light'); setCurrentTab(tab); onTabChange?.(tab); }}>
+              <Icon name={icon} size={17} /><span>{label}</span>
+            </button>
+          ))}
+        </nav>
         {/* 1. LIVE EXPLORER STORIES BAR */}
         <div className="glass rounded-[1.25rem] p-2.5 border border-white/50 shadow-2xs">
           <CommunityStoriesBar currentUser={user} />
         </div>
 
       {/* 3. ACTIVE TAB CONTENT STREAM */}
-      <div className="space-y-3.5 pt-1">
+      <div className="space-y-4 pt-1">
         {/* ── TAB 1: FIL D'ACTUALITÉ ── */}
         {currentTab === 'fil' && (
-          <div className="space-y-3.5">
+          <div className="space-y-4">
+<div className="community-stream-heading"><h2>Au fil des aventures</h2><span>Les derniers récits</span></div>
             {loading ? (
               <div className="space-y-3">
                 {[1, 2].map((i) => (
@@ -153,11 +168,7 @@ export default function MobileCommunityHub({
                     triggerHaptic('light');
                     setCarnetFilter(m);
                   }}
-                  className={`text-[10px] font-mono font-bold px-2.5 py-1 rounded-full whitespace-nowrap transition-all border ${
-                    carnetFilter === m
-                      ? 'bg-[#17402C] text-white border-[#17402C] shadow-xs'
-                      : 'bg-white/80 text-[#17402C] border-white/70 shadow-2xs'
-                  }`}
+                  className={`glass-capsule-btn text-xs font-medium !py-0 !px-3.5 whitespace-nowrap ${carnetFilter === m ? 'primary' : ''}`}
                 >
                   {m === 'all' ? 'Tous les massifs' : m}
                 </button>
@@ -190,7 +201,7 @@ export default function MobileCommunityHub({
                 className="glass rounded-2xl p-4 border border-white/60 shadow-xs flex items-center justify-between gap-3 block active:scale-[0.98] transition-transform"
               >
                 <div className="flex items-center gap-3 min-w-0">
-                  <div className="w-12 h-12 rounded-2xl bg-white/80 border border-white flex items-center justify-center text-2xl shrink-0 shadow-2xs">
+                  <div className="w-12 h-12 rounded-2xl bg-white/55 border border-white flex items-center justify-center text-2xl shrink-0 shadow-2xs">
                     {c.emoji || '🏕️'}
                   </div>
                   <div className="min-w-0 space-y-0.5">
@@ -211,9 +222,7 @@ export default function MobileCommunityHub({
                   </div>
                 </div>
 
-                <div className="w-7 h-7 rounded-full bg-white/80 flex items-center justify-center text-[#17402C] shrink-0 shadow-2xs">
-                  <Icon name="ArrowRightIcon" size={12} />
-                </div>
+                <span className="glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8"><Icon name="arrow-right" size={12} /></span>
               </Link>
             ))}
             {!loading && clubs.length === 0 && (
@@ -245,7 +254,7 @@ export default function MobileCommunityHub({
                       <p className="text-[11px] text-[#5A7064] line-clamp-2 leading-relaxed">{grp.description}</p>
                     )}
                   </div>
-                  <div className="w-10 h-10 rounded-xl bg-white/80 border border-white text-xl flex items-center justify-center shrink-0 shadow-2xs">
+                  <div className="w-10 h-10 rounded-xl bg-white/55 border border-white text-xl flex items-center justify-center shrink-0 shadow-2xs">
                     {grp.pictogram || '🏕️'}
                   </div>
                 </div>

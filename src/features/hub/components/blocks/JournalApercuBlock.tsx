@@ -50,7 +50,7 @@ export function JournalApercuBlock({ trip, slug }: { trip: TripFull; slug: strin
           {notes.map((n) => (
             <li
               key={n.id}
-              className="px-3 py-2.5 rounded-[var(--lkv-radius-md)] bg-white/35 border border-white/50"
+              className="glass-sub-card px-3 py-2.5 rounded-[var(--lkv-radius-md)]"
             >
               <div className="flex items-center gap-2 mb-0.5">
                 {n.day_number != null && (

@@ -65,10 +65,8 @@ export function MoveStepModal({
                 type="button"
                 disabled={isCurrent}
                 onClick={() => handlePick(dayNum)}
-                className={`w-full flex items-center justify-between p-3.5 rounded-[var(--lkv-radius-md)] border text-left transition-all min-h-[48px] shadow-2xs ${
-                  isCurrent
-                    ? 'glass-sub-card border-white/30 opacity-60 cursor-not-allowed'
-                    : 'glass-sub-card border-white/60 hover:bg-white/90 active:scale-[0.99]'
+                className={`glass-capsule-btn w-full flex items-center !justify-between !rounded-2xl !p-3.5 text-left transition-all min-h-[48px] ${
+                  isCurrent ? 'primary opacity-60 cursor-not-allowed' : 'active:scale-[0.99]'
                 }`}
               >
                 <div className="flex items-center gap-3">

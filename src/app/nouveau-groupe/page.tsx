@@ -254,10 +254,8 @@ export default function NouveauGroupePage() {
                   key={st.id}
                   type="button"
                   onClick={() => setActiveStep(st.id)}
-                  className={`w-full px-3 py-2.5 rounded-xl font-bold text-xs transition-all flex items-center justify-between group cursor-pointer border ${
-                    isActive
-                      ? 'bg-[var(--lkv-primary)] text-white border-[var(--lkv-primary)] shadow-sm'
-                      : 'bg-white/80 hover:bg-white text-[var(--lkv-primary)] border-white/80 shadow-2xs'
+                  className={`glass-capsule-btn w-full !px-3 !py-2.5 font-bold text-xs justify-between ${
+                    isActive ? 'primary' : ''
                   }`}
                 >
                   <span className="truncate text-left">{st.label}</span>
@@ -387,14 +385,12 @@ export default function NouveauGroupePage() {
                           setSelectedTrail(tr);
                           setName(tr.name);
                         }}
-                        className={`text-left p-3 rounded-xl transition-all ${
-                          isSelected
-                            ? 'bg-[var(--lkv-primary)] text-white shadow-sm border border-white/20'
-                            : 'bg-white/80 text-[var(--lkv-primary)] border border-[var(--lkv-primary)]/10 hover:bg-white'
+                        className={`glass-capsule-btn flex-col !items-start !p-3 text-left ${
+                          isSelected ? 'primary' : ''
                         }`}
                       >
                         <h4 className="font-bold text-xs truncate">{tr.name}</h4>
-                        <p className={`text-[10px] mt-0.5 ${isSelected ? 'text-emerald-200' : 'text-[var(--lkv-text-muted)]'}`}>
+                        <p className="text-[10px] mt-0.5">
                           {tr.region} · {tr.distance_km} km · +{tr.elevation_gain} m D+
                         </p>
                       </button>
@@ -564,10 +560,10 @@ export default function NouveauGroupePage() {
                     ].map((mode) => (
                       <label
                         key={mode.id}
-                        className={`p-3.5 rounded-xl cursor-pointer flex items-start gap-2.5 transition-all ${
+                        className={`glass-sub-card p-3.5 rounded-xl cursor-pointer flex items-start gap-2.5 transition-all ${
                           recruitmentMode === mode.id
-                            ? 'bg-white border-2 border-[var(--lkv-primary)] shadow-xs'
-                            : 'bg-white/60 border border-[var(--lkv-primary)]/10'
+                            ? 'border-2 border-[var(--lkv-primary)] shadow-xs'
+                            : ''
                         }`}
                       >
                         <input
@@ -591,14 +587,14 @@ export default function NouveauGroupePage() {
                   <label className="block text-xs font-bold text-[var(--lkv-primary)] mb-2">Checklist matériel exigée des participants</label>
                   <div className="space-y-2">
                     {requiredGear.map((gear) => (
-                      <div key={gear.id} className="flex items-center justify-between p-2.5 rounded-xl bg-white/90 border border-[var(--lkv-primary)]/10 text-xs">
+                      <div key={gear.id} className="glass-sub-card flex items-center justify-between p-2.5 rounded-xl text-xs">
                         <span className="font-bold text-[var(--lkv-primary)] flex items-center gap-2">
                           <span className="text-forest-700">✓</span> {gear.name}
                         </span>
                         <button
                           type="button"
                           onClick={() => handleRemoveGear(gear.id)}
-                          className="text-[var(--lkv-text-muted)] hover:text-red-600 p-1"
+                          className="glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8"
                         >
                           ✕
                         </button>
@@ -616,7 +612,7 @@ export default function NouveauGroupePage() {
                       <button
                         type="button"
                         onClick={handleAddGear}
-                        className="px-4 py-2 bg-[var(--lkv-primary)] text-white rounded-xl text-xs font-bold hover:bg-[var(--lkv-primary-hover)] transition-colors shrink-0"
+                        className="glass-capsule-btn primary text-xs font-bold shrink-0"
                       >
                         Ajouter
                       </button>
@@ -664,10 +660,8 @@ export default function NouveauGroupePage() {
                         key={pic}
                         type="button"
                         onClick={() => setPictogram(pic)}
-                        className={`w-10 h-10 rounded-xl text-xl flex items-center justify-center transition-all ${
-                          pictogram === pic
-                            ? 'bg-[var(--lkv-primary)] text-white shadow-sm scale-110'
-                            : 'bg-white/80 hover:bg-white border border-[var(--lkv-primary)]/10'
+                        className={`glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8 text-xl ${
+                          pictogram === pic ? 'primary' : ''
                         }`}
                       >
                         {pic}
@@ -684,10 +678,8 @@ export default function NouveauGroupePage() {
                         key={col.id}
                         type="button"
                         onClick={() => setAccentColor(col.value)}
-                        className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold transition-all ${
-                          accentColor === col.value
-                            ? 'bg-[var(--lkv-primary)] text-white shadow-sm'
-                            : 'bg-white/80 text-[var(--lkv-text-muted)] border border-[var(--lkv-primary)]/10'
+                        className={`glass-capsule-btn text-xs font-bold ${
+                          accentColor === col.value ? 'primary' : ''
                         }`}
                       >
                         <span className="w-3 h-3 rounded-full shrink-0 shadow-xs" style={{ backgroundColor: col.value }} />

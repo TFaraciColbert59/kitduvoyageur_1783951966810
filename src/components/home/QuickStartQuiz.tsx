@@ -113,8 +113,7 @@ export default function QuickStartQuiz() {
                 </div>
                 <button
                   onClick={() => setIsOpen(true)}
-                  className="flex-shrink-0 inline-flex items-center gap-2 px-6 py-3.5 rounded-xl font-semibold text-sm text-white transition-all duration-200 hover:-translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#17402C] focus-visible:ring-offset-2 focus-visible:ring-offset-[#17402C] min-h-[44px]"
-                  style={{ background: '#17402C' }}
+                  className="glass-capsule-btn primary flex-shrink-0 inline-flex items-center gap-2 px-6 py-3.5 text-sm"
                 >
                   ✨ Démarrer le quiz
                 </button>
@@ -191,11 +190,7 @@ export default function QuickStartQuiz() {
           >
             <button
               onClick={() => setIsOpen(true)}
-              className="flex items-center gap-2 px-4 py-3 rounded-full font-semibold text-sm text-white  transition-all duration-200 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#17402C] focus-visible:ring-offset-2 min-h-[44px]"
-              style={{
-                background: '#17402C',
-                boxShadow: '0 4px 20px rgba(200,154,59,0.4)',
-              }}
+              className="glass-capsule-btn primary flex items-center gap-2 px-4 py-3 text-sm"
               aria-label="Ouvrir le quiz pour trouver votre aventure"
             >
               ✨ Quiz aventure

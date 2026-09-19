@@ -301,7 +301,7 @@ export function BudgetMobileExperience({ trip, initialDay }: BudgetMobileExperie
           <button
             type="button"
             onClick={() => setErrorMsg(null)}
-            className="flex h-11 w-11 items-center justify-center rounded-full text-[var(--lkv-text-muted)] hover:text-[var(--lkv-text-primary)]"
+            className="glass-circle-btn h-11 w-11 shrink-0 text-[var(--lkv-text-muted)] hover:text-[var(--lkv-text-primary)]"
             aria-label="Fermer le message"
           >
             ×
@@ -411,13 +411,13 @@ export function BudgetMobileExperience({ trip, initialDay }: BudgetMobileExperie
                     type="button"
                     onClick={() => handleSettle(settleTarget, collaborator.user_id)}
                     disabled={isPending}
-                    className={`min-h-[44px] w-full rounded-[var(--lkv-radius-md)] border border-white/60 glass-sub-card px-4 py-2.5 text-left text-sm font-semibold transition-all hover:border-[var(--lkv-primary)]/40 ${
+                    className={`glass-capsule-btn w-full !justify-start !rounded-[var(--lkv-radius-md)] !px-4 !py-2.5 min-h-[44px] text-left text-sm font-semibold ${
                       collaborator.user_id === trip.user_id ? 'ring-1 ring-[var(--lkv-primary)]/30' : ''
                     }`}
                   >
                     {collaborator.profile?.full_name || `Voyageur (${collaborator.user_id.slice(0, 6)})`}
                     {collaborator.user_id === trip.user_id && (
-                      <span className="ml-2 text-[10px] text-[var(--lkv-text-muted)]">(moi)</span>
+                      <span className="ml-2 text-[10px]">(moi)</span>
                     )}
                   </button>
                 ))}

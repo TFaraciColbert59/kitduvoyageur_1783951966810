@@ -343,7 +343,7 @@ function PublierPostContent() {
       {/* ── DESKTOP ── */}
       <div className="hidden md:block">
         <Header />
-        <main className="min-h-screen bg-[#F5F2EA] text-[#17402C] pt-24 pb-32">
+        <main className="min-h-screen bg-[rgba(245,242,234,0.78)] backdrop-blur-xl text-[#17402C] pt-24 pb-32">
           {/* Toast Notification */}
           {toastMessage && (
             <div className="fixed top-24 right-6 z-[999] bg-[#17402C] text-white px-5 py-3 rounded-2xl  text-xs font-bold animate-fade-in border border-forest-500">
@@ -1067,8 +1067,8 @@ export default function PublierPostPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-[#F5F2EA] flex items-center justify-center">
-          <div className="w-8 h-8 border-2 border-[#17402C] border-t-transparent rounded-full animate-spin" />
+        <div className="min-h-screen bg-transparent flex items-center justify-center">
+          <div className="w-8 h-8 border-2 border-[#EEF3EC] border-t-transparent rounded-full animate-spin" />
         </div>
       }
     >

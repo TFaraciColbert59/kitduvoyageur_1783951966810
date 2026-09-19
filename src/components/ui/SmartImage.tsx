@@ -35,6 +35,7 @@ export default function SmartImage({
   const [imgSrc, setImgSrc] = useState<string>(src || fallbackSrc);
   const [hasError, setHasError] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const imgRef = React.useRef<HTMLImageElement>(null);
 
   useEffect(() => {
     if (src && src.trim() !== '') {
@@ -45,6 +46,18 @@ export default function SmartImage({
       setImgSrc(fallbackSrc);
     }
   }, [src, fallbackSrc]);
+
+  /* Course de chargement : une image en cache peut finir de charger AVANT que
+   * React n'attache `onLoad` → on vérifie `complete` après montage/changement. */
+  useEffect(() => {
+    const el = imgRef.current;
+    if (!el) return;
+    if (el.complete) {
+      if (el.naturalWidth > 0) setIsLoading(false);
+      else handleError();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [imgSrc]);
 
   const handleError = () => {
     if (imgSrc !== fallbackSrc) {
@@ -80,6 +93,7 @@ export default function SmartImage({
         <div className="absolute inset-0 bg-[#EAE6DF]/60 backdrop-blur-xs animate-pulse z-10" />
       )}
       <img
+        ref={imgRef}
         src={imgSrc}
         alt={alt}
         loading={priority ? 'eager' : 'lazy'}

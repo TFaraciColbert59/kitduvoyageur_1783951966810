@@ -3,7 +3,7 @@ import React from 'react';
 export default function CountryLoading() {
   return (
     <div
-      className="fixed inset-0 bg-[#EEF3EC] overflow-hidden select-none"
+      className="fixed inset-0 bg-transparent overflow-hidden select-none"
       aria-busy="true"
       aria-label="Chargement du globe terrestre…"
     >
@@ -31,8 +31,8 @@ export default function CountryLoading() {
 
       {/* Spinner */}
       <div className="absolute inset-x-0 top-[38vh] flex flex-col items-center gap-2">
-        <div className="w-8 h-8 rounded-full border-[3px] border-[#17402C] border-t-transparent animate-spin" />
-        <span className="text-[11px] font-mono font-bold text-[#17402C]">Chargement des pays…</span>
+        <div className="w-8 h-8 rounded-full border-[3px] border-[#EEF3EC] border-t-transparent animate-spin" />
+        <span className="text-[11px] font-mono font-bold text-[#EEF3EC]">Chargement des pays…</span>
       </div>
 
       {/* Continents strip skeleton */}

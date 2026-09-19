@@ -19,7 +19,7 @@ function FilterBar({ filter, onChange }: { filter: 'all' | 'open' | 'nearby'; on
         <button
           key={f.key}
           onClick={() => onChange(f.key)}
-          className={`glass-capsule-segment ${filter === f.key ? 'active' : ''}`}
+          className={`glass-capsule-btn ${filter === f.key ? 'primary' : ''}`}
           style={{ flex: '1 1 auto' }}
           aria-pressed={filter === f.key}
         >
@@ -38,18 +38,18 @@ export default function EntraidePage() {
     <>
       {/* DESKTOP — fullscreen sans scroll */}
       <div className="hidden md:block">
-        <div data-lkv-material-theme="light" className="h-dvh overflow-hidden bg-[#EEF3EC]">
+        <div data-lkv-material-theme="light" className="h-dvh overflow-hidden bg-transparent">
           <Header />
           <main className="h-full overflow-hidden pt-20 flex items-center justify-center px-6 pb-10">
             <div className="w-full max-w-3xl mx-auto flex flex-col items-center text-center gap-5">
               <div className="flex items-center gap-3">
                 <span className="glass-pill px-3.5 py-1.5 text-[10px] font-bold tracking-widest uppercase">Communauté</span>
-                <span className="glass-eyebrow">Entraide SOS</span>
+                <span className="glass-eyebrow" style={{ color: '#D8E5D5' }}>Entraide SOS</span>
               </div>
-              <h1 className="font-display text-4xl md:text-5xl font-bold tracking-tight text-[#17402C] leading-tight">
-                Réseau d&apos;entraide <span className="text-[#5B7F55]">géolocalisé</span>
+              <h1 className="font-display text-4xl md:text-5xl font-bold tracking-tight text-[#EEF3EC] leading-tight">
+                Réseau d&apos;entraide <span className="text-[#A9C6B0]">géolocalisé</span>
               </h1>
-              <p className="text-[#365233] text-sm max-w-md leading-relaxed">
+              <p className="text-[#CCE0D4] text-sm max-w-md leading-relaxed">
                 Trouvez du soutien, partagez des conseils et demandez de l&apos;aide autour de vous, où que vous soyez.
               </p>
               <FilterBar filter={filter} onChange={setFilter} />
@@ -70,8 +70,8 @@ export default function EntraidePage() {
       <div className="block md:hidden">
         <MobilePageShell>
           <div style={{ padding: '16px' }}>
-            <h1 style={{ fontSize: '20px', fontWeight: 800, color: '#17402C', marginBottom: '8px', fontFamily: 'var(--font-display)' }}>Entraide</h1>
-            <p style={{ fontSize: '13px', color: '#5A7064', marginBottom: '16px' }}>Réseau d&apos;entraide géolocalisé.</p>
+            <h1 style={{ fontSize: '20px', fontWeight: 800, color: '#EEF3EC', marginBottom: '8px', fontFamily: 'var(--font-display)' }}>Entraide</h1>
+            <p style={{ fontSize: '13px', color: '#CCE0D4', marginBottom: '16px' }}>Réseau d&apos;entraide géolocalisé.</p>
             <div style={{ marginBottom: '16px' }}>
               <FilterBar filter={filter} onChange={setFilter} />
             </div>

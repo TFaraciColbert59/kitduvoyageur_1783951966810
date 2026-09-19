@@ -52,7 +52,7 @@ export const EquipmentUnifiedList: React.FC<EquipmentUnifiedListProps> = ({
 
   if (items.length === 0) {
     return (
-      <div className="bg-white/20 backdrop-blur-md p-6 rounded-2xl border border-white/30 border-dashed text-center">
+      <div className="glass-sub-card p-6 rounded-2xl border-dashed text-center">
         <div className="text-2xl mb-1">🎒</div>
         <p className="text-xs font-black text-[#17402C]">Aucun équipement à préparer.</p>
         <p className="text-[10px] text-[#17402C]/70 font-bold">Ajoute tes affaires depuis ton inventaire.</p>
@@ -74,7 +74,7 @@ export const EquipmentUnifiedList: React.FC<EquipmentUnifiedListProps> = ({
         const { req, status, available, matching } = it;
         const unit = req.unit || 'unité';
         return (
-          <div key={`${req.id}-${idx}`} className="bg-white/20 backdrop-blur-md p-4 rounded-2xl border border-white/40  transition-all hover:bg-white/35 hover:border-white/60 hover:">
+          <div key={`${req.id}-${idx}`} className="glass-sub-card p-4 rounded-2xl transition-all">
             {/* Header */}
             <div className="flex items-start gap-2.5">
               <span className={`mt-0.5 shrink-0 text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full ${STATUS_STYLE[status]}`}>
@@ -113,7 +113,7 @@ export const EquipmentUnifiedList: React.FC<EquipmentUnifiedListProps> = ({
                   const item = d.item;
                   const qty = item?.quantity ?? 1;
                   return (
-                    <div key={item?.id || d.reason} className="flex items-center gap-2 bg-white/25 border border-white/30 rounded-xl px-2.5 py-1.5">
+                    <div key={item?.id || d.reason} className="glass-sub-card flex items-center gap-2 rounded-xl px-2.5 py-1.5">
                       <div className="min-w-0 flex-1">
                         <p className="text-[11px] font-black text-[#17402C] truncate">{item?.name || 'Équipement'}</p>
                         <p className="text-[9px] font-mono text-[#17402C]/60">{item?.condition || 'bon'} · {qty} {unit}{item?.weight_g ? ` · ${item.weight_g}g` : ''}</p>
@@ -124,7 +124,7 @@ export const EquipmentUnifiedList: React.FC<EquipmentUnifiedListProps> = ({
                             type="button"
                             onClick={() => onQty(item?.id, -1)}
                             disabled={qty <= 1}
-                            className="w-6 h-6 rounded-md bg-[#17402C]/10 hover:bg-[#17402C]/20 text-[#17402C] text-xs font-black disabled:opacity-40 cursor-pointer"
+                            className="glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8 text-xs font-black disabled:opacity-40"
                           >
                             −
                           </button>
@@ -132,14 +132,14 @@ export const EquipmentUnifiedList: React.FC<EquipmentUnifiedListProps> = ({
                           <button
                             type="button"
                             onClick={() => onQty(item?.id, 1)}
-                            className="w-6 h-6 rounded-md bg-[#17402C]/10 hover:bg-[#17402C]/20 text-[#17402C] text-xs font-black cursor-pointer"
+                            className="glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8 text-xs font-black"
                           >
                             +
                           </button>
                           <button
                             type="button"
                             onClick={() => onDelete(item?.id)}
-                            className="w-6 h-6 rounded-md ml-1 text-[#B85838] hover:bg-[#B85838]/10 text-xs font-black cursor-pointer"
+                            className="glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8 ml-1 text-xs font-black"
                             title="Supprimer cet équipement"
                           >
                             🗑
@@ -158,7 +158,7 @@ export const EquipmentUnifiedList: React.FC<EquipmentUnifiedListProps> = ({
                 <button
                   type="button"
                   onClick={() => onAdd(req.label, req.categoryKeywords[0] || 'Autre')}
-                  className="bg-[#17402C] hover:bg-[#2D4034] text-white text-[11px] font-black px-3.5 py-1.5 rounded-xl transition-all  flex items-center gap-1.5 cursor-pointer"
+                  className="glass-capsule-btn primary text-[11px] font-black"
                 >
                   <Icon name="plus" className="w-3.5 h-3.5" /> J'ai déjà cet équipement
                 </button>
@@ -166,7 +166,7 @@ export const EquipmentUnifiedList: React.FC<EquipmentUnifiedListProps> = ({
                   <button
                     type="button"
                     onClick={() => onAddToCart(req.label, req.categoryKeywords[0] || 'Autre')}
-                    className="bg-white/80 hover:bg-white text-[#17402C] text-[11px] font-black px-3.5 py-1.5 rounded-xl transition-all flex items-center gap-1.5 cursor-pointer border border-black/10 "
+                    className="glass-capsule-btn text-[11px] font-black"
                   >
                     <Icon name="bag" className="w-3.5 h-3.5" /> Mettre dans le panier (Livraison 48h)
                   </button>

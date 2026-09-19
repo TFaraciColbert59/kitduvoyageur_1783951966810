@@ -22,6 +22,8 @@ export interface SocialActionsProps {
   showSave?: boolean;
   showMore?: boolean;
   className?: string;
+  /** Boutons posés par-dessus l'image : fond dense, compteurs visibles. */
+  overlay?: boolean;
 }
 
 export default function SocialActions({
@@ -40,6 +42,7 @@ export default function SocialActions({
   showSave = true,
   showMore = true,
   className = '',
+  overlay = false,
 }: SocialActionsProps) {
   const { triggerHaptic } = useHapticFeedback();
   const [liked, setLiked] = useState(initialIsLiked);
@@ -86,8 +89,19 @@ export default function SocialActions({
     onMore?.();
   };
 
+  /* Style des pastilles selon le contexte : discret sur la carte, dense sur l'image. */
+  const pillBase = overlay
+    ? 'glass-capsule-btn w-10 h-10 rounded-full flex items-center justify-center p-0 cursor-pointer transition-all duration-200 shrink-0'
+    : 'glass-capsule-btn w-9 h-9 rounded-full flex items-center justify-center p-0 cursor-pointer transition-all duration-200 shrink-0';
+  const pillStyle = overlay
+    ? { background: 'rgba(255,255,255,0.62)', border: '1px solid rgba(255,255,255,0.6)', boxShadow: '0 4px 14px rgba(11,31,23,0.25)' }
+    : undefined;
+  const countStyle = overlay
+    ? { fontSize: '11px', fontWeight: 700, color: '#17402C', marginLeft: '6px', fontVariantNumeric: 'tabular-nums' as const }
+    : undefined;
+
   return (
-    <div className={`flex items-center justify-between w-full pt-2 text-[#17402C] ${className}`}>
+    <div className={`flex items-center justify-between w-full text-[#17402C] ${overlay ? '' : 'pt-2'} ${className}`}>
       {/* Left actions: Like, Comment, Share */}
       <div className="flex items-center gap-2">
         {/* Like - Red Rosé Liquid Glass Heart */}
@@ -96,9 +110,10 @@ export default function SocialActions({
           whileHover={{ scale: 1.12 }}
           whileTap={{ scale: 0.9 }}
           onClick={handleLike}
-          className={`w-9 h-9 rounded-full ${
-            liked ? 'glass-capsule-btn-like' : 'glass-capsule-btn text-[#17402C] hover:border-rose-300'
-          } flex items-center justify-center p-0 cursor-pointer transition-all duration-200 shrink-0`}
+          className={`${pillBase} ${
+            liked ? 'glass-capsule-btn-like' : 'text-[#17402C] hover:border-rose-300'
+          }`}
+          style={pillStyle}
           aria-label={liked ? 'Je n’aime plus' : 'J’aime'}
         >
           <Icon
@@ -107,6 +122,7 @@ export default function SocialActions({
             color={liked ? "#E11D48" : "#17402C"}
             className="relative z-10"
           />
+          {overlay && likesCount > 0 && <span style={countStyle}>{likesCount}</span>}
         </motion.button>
 
         {/* Comment */}
@@ -116,10 +132,12 @@ export default function SocialActions({
             whileHover={{ scale: 1.12 }}
             whileTap={{ scale: 0.9 }}
             onClick={handleComments}
-            className="w-9 h-9 rounded-full glass-capsule-btn flex items-center justify-center text-[#17402C] p-0 cursor-pointer transition-all duration-200 shrink-0"
-            aria-label="Commenter"
+            className={`${pillBase} text-[#17402C]`}
+            style={pillStyle}
+            aria-label={commentsCount > 0 ? `Voir les ${commentsCount} commentaire${commentsCount > 1 ? 's' : ''}` : 'Commenter'}
           >
             <Icon name="ChatBubbleLeftIcon" size={18} color="#17402C" className="relative z-10" />
+            {overlay && commentsCount > 0 && <span style={countStyle}>{commentsCount}</span>}
           </motion.button>
         )}
 
@@ -129,8 +147,9 @@ export default function SocialActions({
           whileHover={{ scale: 1.12 }}
           whileTap={{ scale: 0.9 }}
           onClick={handleShare}
-          className="w-9 h-9 rounded-full glass-capsule-btn flex items-center justify-center text-[#17402C] p-0 cursor-pointer transition-all duration-200 shrink-0"
-          aria-label="Transférer dans un groupe ou partager"
+          className={`${pillBase} text-[#17402C]`}
+          style={pillStyle}
+          aria-label="Partager la publication"
         >
           <Icon name="PaperAirplaneIcon" size={18} color="#17402C" className="relative z-10" />
         </motion.button>
@@ -144,10 +163,9 @@ export default function SocialActions({
             whileHover={{ scale: 1.12 }}
             whileTap={{ scale: 0.9 }}
             onClick={handleSave}
-            className={`w-9 h-9 rounded-full glass-capsule-btn flex items-center justify-center p-0 cursor-pointer transition-all duration-200 shrink-0 ${
-              saved ? 'active' : ''
-            }`}
-            aria-label={saved ? 'Retirer des enregistrés' : 'Enregistrer'}
+            className={`${pillBase} ${saved ? 'active' : ''}`}
+            style={pillStyle}
+            aria-label={saved ? 'Retirer des favoris' : 'Enregistrer dans mes favoris'}
           >
             <Icon
               name={saved ? "BookmarkSolidIcon" : "BookmarkIcon"}

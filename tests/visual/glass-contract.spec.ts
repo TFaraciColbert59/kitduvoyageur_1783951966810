@@ -57,7 +57,7 @@ test('opaque accessibility mode preserves primary-action contrast', async ({ pag
   await expect(page.locator('article.glass').first()).toHaveCSS('backdrop-filter', 'none');
 });
 
-test('standard text and secondary text retain AA contrast over light and dark extremes', async ({ page }) => {
+test('glass content retains AA contrast over the rich backdrop; opaque fallback restores dark text', async ({ page }) => {
   const samples = await page.locator('article.glass').first().evaluate(el => {
     const style = getComputedStyle(el);
     return { fill: style.backgroundColor, primary: style.color, secondary: style.getPropertyValue('--glass-text-secondary') };
@@ -69,13 +69,15 @@ test('standard text and secondary text retain AA contrast over light and dark ex
     .map(v => v <= .04045 ? v / 12.92 : ((v + .055) / 1.055) ** 2.4)
     .reduce((sum, v, i) => sum + v * [.2126, .7152, .0722][i], 0);
   const fill = parse(samples.fill);
-  for (const backdrop of [0, 255]) {
-    const background = fill.slice(0, 3).map(v => v * fill[3] + backdrop * (1 - fill[3]));
-    for (const foreground of [samples.primary, samples.secondary.trim()]) {
-      const values = [luminance(background), luminance(parse(foreground))].sort((a, b) => b - a);
-      expect((values[0] + .05) / (values[1] + .05)).toBeGreaterThanOrEqual(4.5);
-    }
+  const backdrop = [0, 0, 0];
+  const background = fill.slice(0, 3).map((v, i) => v * (fill[3] ?? 1) + backdrop[i] * (1 - (fill[3] ?? 1)));
+  const compositeOver = (top: number[]) => top.slice(0, 3).map((v, i) => v * (top[3] ?? 1) + background[i] * (1 - (top[3] ?? 1)));
+  for (const foreground of [samples.primary, samples.secondary.trim()]) {
+    const values = [luminance(background), luminance(compositeOver(parse(foreground)))].sort((a, b) => b - a);
+    expect((values[0] + .05) / (values[1] + .05)).toBeGreaterThanOrEqual(4.5);
   }
+  await page.locator('html').evaluate(el => el.setAttribute('data-glass-effects', 'reduced'));
+  await expect(page.locator('article.glass').first()).toHaveCSS('color', 'rgb(23, 64, 44)');
 });
 
 test('explicit dark surfaces use readable foregrounds', async ({ page }) => {

@@ -5,6 +5,8 @@ import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import HikingProfileCard from '@/components/profile/HikingProfileCard';
 import LkvButton from '@/components/ui/LkvButton';
+import { GlassCard } from '@/components/ui/GlassCard';
+import Icon from '@/components/ui/AppIcon';
 
 
 // ── Types ──────────────────────────────────────────────────────────────────────
@@ -117,10 +119,8 @@ function LoggedOutProfile() {
         {benefits.map((b, i) => (
           <div
             key={b.title}
-            className="flex items-center gap-4"
+            className="glass flex items-center gap-4"
             style={{
-              background: '#EDEAE0',
-              border: '1px solid rgba(23,64,44,0.06)',
               borderRadius: '18px',
               padding: '16px',
               animationDelay: `${i * 60}ms`,
@@ -248,69 +248,74 @@ function LoggedInProfile() {
           }}
         />
 
-        <div className="relative z-10 flex items-center gap-4 mb-6">
-          {/* Avatar */}
-          <div
-            style={{
-              width: '64px',
-              height: '64px',
-              borderRadius: '50%',
-              background: 'linear-gradient(135deg, #17402C, #5B7F55)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              flexShrink: 0,
-              boxShadow: '0 4px 16px rgba(23,64,44,0.4)',
-            }}
-          >
-            <span
-              className="text-white font-display font-bold"
-              style={{ fontSize: '22px' }}
-            >
-              {initials}
-            </span>
-          </div>
-
-          <div className="flex-1 min-w-0">
-            <h2
-              className="font-display font-bold text-white truncate"
-              style={{ fontSize: '20px', letterSpacing: '-0.02em' }}
-            >
-              {displayName}
-            </h2>
-            <p
-              className="text-white/50 truncate"
-              style={{ fontSize: '13px', marginTop: '2px' }}
-            >
-              {profile?.email || 'Voyageur passionné'}
-            </p>
+        {/* Carte identité voyageur — Liquid Glass premium (référence rdev) */}
+        <GlassCard
+          tier="premium"
+          variant="elevated"
+          overLight
+          className="relative z-10 mb-6"
+          style={{ padding: '16px 18px' }}
+        >
+          <div className="flex items-center gap-4">
+            {/* Avatar */}
             <div
-              className="inline-flex items-center gap-1 mt-2"
               style={{
-                background: 'rgba(91,127,85,0.2)',
-                border: '1px solid rgba(255,255,255,0.25)',
-                borderRadius: '999px',
-                padding: '3px 10px',
+                width: '64px',
+                height: '64px',
+                borderRadius: '50%',
+                background: 'linear-gradient(135deg, #17402C, #5B7F55)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0,
+                boxShadow: '0 4px 16px rgba(23,64,44,0.4)',
               }}
             >
-              <span style={{ fontSize: '10px', color: '#EEF3EC', fontWeight: 600, fontFamily: 'var(--font-mono)' }}>
-                NIVEAU 1 · EXPLORATEUR
+              <span
+                className="text-white font-display font-bold"
+                style={{ fontSize: '22px' }}
+              >
+                {initials}
               </span>
             </div>
-          </div>
 
-          <Link
-            href="/compte"
-            className="flex items-center justify-center w-10 h-10 rounded-full haptic-press"
-            style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.1)' }}
-            aria-label="Modifier le profil"
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
-              <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" />
-              <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
-            </svg>
-          </Link>
-        </div>
+            <div className="flex-1 min-w-0">
+              <h2
+                className="font-display font-bold text-white truncate"
+                style={{ fontSize: '20px', letterSpacing: '-0.02em', textShadow: '0 2px 12px rgba(11,31,23,0.4)' }}
+              >
+                {displayName}
+              </h2>
+              <p
+                className="text-white/70 truncate"
+                style={{ fontSize: '13px', marginTop: '2px', textShadow: '0 1px 8px rgba(11,31,23,0.4)' }}
+              >
+                {profile?.email || 'Voyageur passionné'}
+              </p>
+              <div
+                className="inline-flex items-center gap-1 mt-2"
+                style={{
+                  background: 'rgba(91,127,85,0.2)',
+                  border: '1px solid rgba(255,255,255,0.25)',
+                  borderRadius: '999px',
+                  padding: '3px 10px',
+                }}
+              >
+                <span style={{ fontSize: '10px', color: '#EEF3EC', fontWeight: 600, fontFamily: 'var(--font-mono)' }}>
+                  NIVEAU 1 · EXPLORATEUR
+                </span>
+              </div>
+            </div>
+
+            <Link
+              href="/compte"
+              className="glass-circle-btn !min-w-0 !min-h-0 w-10 h-10 haptic-press"
+              aria-label="Modifier le profil"
+            >
+              <Icon name="pencil" size={16} />
+            </Link>
+          </div>
+        </GlassCard>
 
         {/* Stats row */}
         <div
@@ -360,10 +365,8 @@ function LoggedInProfile() {
           <Link
             key={item.href}
             href={item.href}
-            className="flex items-center gap-4 haptic-press"
+            className="glass flex items-center gap-4 haptic-press"
             style={{
-              background: '#EDEAE0',
-              border: '1px solid rgba(23,64,44,0.06)',
               borderRadius: '18px',
               padding: '14px 16px',
               animationDelay: `${i * 40}ms`,
@@ -425,27 +428,21 @@ function LoggedInProfile() {
 
       {/* Sign out */}
       <div className="px-5 pb-6">
-        <button
+        <LkvButton
+          variant="glass-pill"
+          fullWidth
+          icon={
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+              <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" />
+              <polyline points="16 17 21 12 16 7" />
+              <line x1="21" y1="12" x2="9" y2="12" />
+            </svg>
+          }
           onClick={() => signOut()}
-          className="w-full flex items-center justify-center gap-2 haptic-press"
-          style={{
-            background: 'rgba(168,68,58,0.08)',
-            border: '1px solid rgba(168,68,58,0.2)',
-            borderRadius: '18px',
-            padding: '14px',
-            color: '#A8443A',
-            fontSize: '15px',
-            fontWeight: 600,
-            fontFamily: 'var(--font-sans)',
-          }}
+          className="haptic-press"
         >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
-            <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" />
-            <polyline points="16 17 21 12 16 7" />
-            <line x1="21" y1="12" x2="9" y2="12" />
-          </svg>
           Se déconnecter
-        </button>
+        </LkvButton>
       </div>
 
       <div style={{ height: 'calc(60px + env(safe-area-inset-bottom) + 16px)' }} aria-hidden="true" />

@@ -600,8 +600,8 @@ export function buildPossessionInfoChips(
     {
       key: 'readiness',
       icon: CheckSquare,
-      value: `${summary.depart.readinessPct}%`,
-      label: 'prêt au départ',
+      value: summary.inventaire.count > 0 ? `${summary.depart.readinessPct}%` : '—',
+      label: summary.inventaire.count > 0 ? 'prêt au départ' : 'aucun kit',
       href: hubSectionHref(ref, 'depart'),
     },
     {
@@ -632,8 +632,8 @@ export function buildPossessionInfoChips(
   chips.push({
     key: 'fiabilite',
     icon: Shield,
-    value: `${summary.alertes.reliabilityScore}%`,
-    label: 'fiabilité',
+    value: summary.inventaire.count > 0 ? `${summary.alertes.reliabilityScore}%` : '—',
+    label: summary.inventaire.count > 0 ? 'fiabilité' : 'aucun objet',
     href: hubSectionHref(ref, 'alertes'),
   });
   if (summary.dispo.total > 0) {

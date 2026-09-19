@@ -64,7 +64,7 @@ export default function CarbonePage() {
           <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               <div className="lg:col-span-1 space-y-4">
-                <div className="topo-card p-5">
+                <div className="glass p-5">
                   <h2 className="font-display font-700 text-base text-foreground mb-4">Paramètres du voyage</h2>
                   <div className="space-y-4">
                     <div className="grid grid-cols-2 gap-3">
@@ -84,13 +84,13 @@ export default function CarbonePage() {
                       </select>
                     </div>
                     <div><label className="block text-xs font-mono text-muted-foreground uppercase tracking-wider mb-2">Activités</label>
-                      <div className="flex flex-wrap gap-1.5">{ACTIVITIES_LIST.map(a => (<button key={a} onClick={() => toggleActivity(a)} className={`text-xs px-2.5 py-1 rounded-full border transition-all ${trip.activities.includes(a) ? 'bg-primary text-white border-primary' : 'border-border text-muted-foreground hover:border-primary hover:text-primary'}`}>{a}</button>))}</div>
+                      <div className="flex flex-wrap gap-1.5">{ACTIVITIES_LIST.map(a => (<button key={a} onClick={() => toggleActivity(a)} className={`glass-capsule-btn text-xs ${trip.activities.includes(a) ? 'primary' : ''}`}>{a}</button>))}</div>
                     </div>
                   </div>
                 </div>
               </div>
               <div className="lg:col-span-2 space-y-5">
-                <div className="topo-card p-6">
+                <div className="glass p-6">
                   <div className="flex items-center justify-between mb-4"><h2 className="font-display font-700 text-xl text-foreground">Bilan carbone estimé</h2><span className={`text-sm px-3 py-1 rounded-full font-medium ${level.color} ${level.bg}`}>{level.label}</span></div>
                   <div className="flex items-end gap-3 mb-6"><div className="font-mono text-5xl font-700 text-foreground">{emissions.total}</div><div className="text-muted-foreground mb-2">tonnes CO₂e / personne</div></div>
                 </div>
@@ -107,7 +107,7 @@ export default function CarbonePage() {
           <div style={{ padding: '16px' }}>
             <h1 style={{ fontSize: '20px', fontWeight: 800, color: '#17402C', marginBottom: '12px', fontFamily: 'var(--font-display)' }}>Bilan carbone</h1>
             <p style={{ fontSize: '13px', color: 'rgba(23,64,44,0.6)', marginBottom: '16px' }}>Calculez l&apos;impact CO₂ de votre voyage.</p>
-            <div style={{ background: '#EEF3EC', borderRadius: '12px', border: '1px solid rgba(23,64,44,0.06)', padding: '16px', marginBottom: '16px' }}>
+            <div className="glass" style={{ borderRadius: '12px', padding: '16px', marginBottom: '16px' }}>
               <h2 style={{ fontSize: '14px', fontWeight: 700, color: '#17402C', marginBottom: '12px' }}>Paramètres du voyage</h2>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
@@ -119,12 +119,12 @@ export default function CarbonePage() {
                 </select>
               </div>
             </div>
-            <div style={{ background: '#EEF3EC', borderRadius: '12px', border: '1px solid rgba(23,64,44,0.06)', padding: '16px', textAlign: 'center' }}>
+            <div className="glass" style={{ borderRadius: '12px', padding: '16px', textAlign: 'center' }}>
               <p style={{ fontSize: '11px', color: 'rgba(23,64,44,0.5)', marginBottom: '4px' }}>Bilan carbone estimé</p>
               <p style={{ fontSize: '32px', fontWeight: 700, color: '#17402C', fontFamily: 'monospace' }}>{emissions.total}</p>
               <p style={{ fontSize: '12px', color: 'rgba(23,64,44,0.5)' }}>tonnes CO₂e / personne</p>
             </div>
-            {selectedProject && <button onClick={() => setOffsetDone(true)} style={{ width: '100%', marginTop: '16px', padding: '14px', background: '#17402C', color: 'white', border: 'none', borderRadius: '12px', fontSize: '14px', fontWeight: 600, cursor: 'pointer' }}>{offsetDone ? 'Compensé !' : `Compenser — ${offsetCost}€`}</button>}
+            {selectedProject && <button onClick={() => setOffsetDone(true)} className="glass-capsule-btn primary" style={{ width: '100%', marginTop: '16px' }}>{offsetDone ? 'Compensé !' : `Compenser — ${offsetCost}€`}</button>}
           </div>
         </MobilePageShell>
         

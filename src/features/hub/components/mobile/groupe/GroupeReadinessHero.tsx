@@ -67,7 +67,7 @@ export function GroupeReadinessHero({
           type="button"
           onClick={onOpenDetails}
           aria-label={`Détail de la préparation — ${readiness.pct}% prêt`}
-          className="relative shrink-0 rounded-full transition-transform active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)]"
+          className="glass-circle-btn relative shrink-0 transition-transform active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)]"
         >
           <BudgetRing pct={readiness.pct}>
             <NumberStat

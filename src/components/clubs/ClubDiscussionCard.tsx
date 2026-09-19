@@ -314,7 +314,7 @@ export default function ClubDiscussionCard({
                         setNewMessage('');
                         composerInputRef.current?.focus();
                       }}
-                      className="text-[10px] font-bold text-[#17402C] hover:underline ml-1"
+                      className="glass-capsule-btn !min-h-[26px] !py-0.5 !px-2 !text-[10px] font-bold ml-1"
                     >
                       Répondre
                     </button>
@@ -377,19 +377,18 @@ export default function ClubDiscussionCard({
                     )}
 
                     {/* Footer Actions (Likes & Replies count) */}
-                    <div className="mt-3 pt-2 border-t border-[#17402C]/6 flex items-center gap-4 text-xs font-medium text-[#5C6B5E]">
+                    <div className="mt-3 pt-2 border-t border-[#17402C]/6 flex items-center gap-2 text-xs font-medium text-[#5C6B5E]">
                       <button
                         type="button"
+                        aria-label={isUserLiked ? "Je n'aime plus" : "J'aime"}
                         onClick={() => handleToggleLike(msg)}
-                        className={`flex items-center gap-1.5 transition-colors cursor-pointer group/like ${
-                          isUserLiked ? 'text-rose-600 font-bold' : 'hover:text-[#17402C]'
-                        }`}
+                        className="glass-capsule-btn !py-1 !px-3"
                       >
                         <motion.svg
                           whileTap={{ scale: 1.3 }}
                           transition={{ type: 'spring', stiffness: 500, damping: 15 }}
                           viewBox="0 0 24 24"
-                          className="w-4 h-4 transition-transform"
+                          className="w-4 h-4 transition-transform relative z-10"
                           fill={isUserLiked ? '#E11D48' : 'none'}
                           stroke={isUserLiked ? '#E11D48' : 'currentColor'}
                           strokeWidth="1.8"
@@ -398,18 +397,19 @@ export default function ClubDiscussionCard({
                         >
                           <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
                         </motion.svg>
-                        <span className="font-mono text-xs">{msg.likes || 0}</span>
+                        <span className="font-mono text-xs relative z-10">{msg.likes || 0}</span>
                       </button>
                       <button
                         type="button"
+                        aria-label="Répondre au message"
                         onClick={() => {
                           setReplyingTo(msg);
                           composerInputRef.current?.focus();
                         }}
-                        className="flex items-center gap-1.5 hover:text-[#17402C] transition-colors"
+                        className="glass-capsule-btn !py-1 !px-3"
                       >
-                        <Icon name="ChatBubbleLeftIcon" size={14} />
-                        <span>{msg.replies || 0} réponses</span>
+                        <Icon name="message-square" size={13} className="relative z-10" />
+                        <span className="relative z-10">{msg.replies || 0} réponses</span>
                       </button>
                     </div>
                   </div>
@@ -451,8 +451,9 @@ export default function ClubDiscussionCard({
           </span>
           <button
             type="button"
+            aria-label="Annuler la réponse"
             onClick={() => setReplyingTo(null)}
-            className="text-[#5C6B5E] hover:text-red-600 font-bold px-1"
+            className="glass-circle-btn !w-7 !h-7 !min-w-7 !min-h-7 font-bold"
           >
             ✕
           </button>
@@ -494,6 +495,7 @@ export default function ClubDiscussionCard({
             onClick={() => gpxInputRef.current?.click()}
             disabled={uploading || loading}
             title="Partager une trace GPX"
+            aria-label="Partager une trace GPX"
             icon={<span className="text-[11px]">🗺️</span>}
           />
           <GlassIconButton
@@ -501,6 +503,7 @@ export default function ClubDiscussionCard({
             onClick={() => fileInputRef.current?.click()}
             disabled={uploading || loading}
             title="Envoyer une photo"
+            aria-label="Envoyer une photo"
             icon={<Icon name="PhotoIcon" size={13} />}
           />
           <GlassIconButton
@@ -508,6 +511,7 @@ export default function ClubDiscussionCard({
             onClick={handleShareLocation}
             disabled={locating || loading}
             title="Partager ma position"
+            aria-label="Partager ma position"
             icon={<Icon name="MapPinIcon" size={13} />}
           />
           <GlassIconButton
@@ -516,6 +520,7 @@ export default function ClubDiscussionCard({
             disabled={!newMessage.trim() || loading}
             active={Boolean(newMessage.trim())}
             title="Envoyer"
+            aria-label="Envoyer"
             icon={<Icon name="PaperAirplaneIcon" size={13} className={Boolean(newMessage.trim()) ? 'text-white' : ''} />}
           />
         </div>

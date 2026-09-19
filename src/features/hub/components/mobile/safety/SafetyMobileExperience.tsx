@@ -187,7 +187,7 @@ export function SafetyMobileExperience({ trip }: SafetyMobileExperienceProps) {
           <button
             type="button"
             onClick={() => setPointerError(null)}
-            className="flex h-11 w-11 items-center justify-center rounded-full text-[var(--lkv-text-muted)]"
+            className="glass-circle-btn h-11 w-11 shrink-0 text-[var(--lkv-text-muted)]"
             aria-label="Fermer le message"
           >
             ×
@@ -312,10 +312,8 @@ export function SafetyMobileExperience({ trip }: SafetyMobileExperienceProps) {
               type="button"
               onClick={() => setFilter(option.key)}
               aria-pressed={filter === option.key}
-              className={`min-h-[44px] rounded-full px-3.5 text-xs font-bold transition-colors ${
-                filter === option.key
-                  ? 'bg-[var(--lkv-primary)] text-white'
-                  : 'glass-sub-card text-[var(--lkv-text-primary)]/75'
+              className={`glass-capsule-btn !px-3.5 min-h-[44px] text-xs font-bold ${
+                filter === option.key ? 'primary' : ''
               }`}
             >
               {option.label}

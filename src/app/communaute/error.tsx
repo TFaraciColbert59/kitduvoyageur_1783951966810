@@ -16,7 +16,7 @@ export default function Error({
   }, [error]);
 
   return (
-    <div className="min-h-screen bg-[var(--lkv-surface,#FBFAF6)] flex flex-col items-center justify-center p-4">
+    <div className="min-h-screen bg-transparent flex flex-col items-center justify-center p-4">
       <div className="bg-white rounded-[var(--lkv-radius-lg,1.25rem)] p-8 max-w-md w-full text-center space-y-6 active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
         <div className="w-16 h-16 bg-[var(--lkv-surface-muted,#F1EDE6)] rounded-2xl flex items-center justify-center mx-auto mb-4">
           <svg className="w-8 h-8 text-[var(--lkv-primary)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">

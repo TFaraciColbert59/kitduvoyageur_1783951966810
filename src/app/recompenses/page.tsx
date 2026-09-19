@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import Link from 'next/link';
@@ -283,7 +283,7 @@ export default function RecompensesPage() {
           <p className="text-5xl mb-4">🔐</p>
           <h2 className="font-display font-800 text-xl text-[#17402C] mb-2">Authentification requise</h2>
           <p className="text-xs text-[#6B7A72] mb-6 max-w-sm">Vous devez vous connecter à votre compte Le Kit du Voyageur pour voir et gérer vos récompenses.</p>
-          <Link href="/connexion?mode=connexion" className="px-6 py-2.5 bg-[#17402C] text-white rounded-full text-xs font-bold hover:bg-[#365233] transition-colors">
+          <Link href="/connexion?mode=connexion" className="glass-capsule-btn primary !px-6 !py-2.5 !text-xs !font-bold">
             Se connecter
           </Link>
         </div>
@@ -332,7 +332,7 @@ export default function RecompensesPage() {
 
         {/* Dashboard Grid Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="bg-[#EEF3EC] border border-stone-200/60 rounded-2xl p-4 ">
+          <div className="glass rounded-2xl p-4 ">
             <p className="text-[10px] font-mono tracking-wider text-[#6B7A72] uppercase">Mes points actifs</p>
             <p className="text-xl font-display font-900 text-[#17402C] mt-1">
               {account?.eligible_points || 0} pts
@@ -340,7 +340,7 @@ export default function RecompensesPage() {
             <p className="text-[9px] text-[#6B7A72] mt-0.5">Pour la période en cours</p>
           </div>
 
-          <div className="bg-[#EEF3EC] border border-stone-200/60 rounded-2xl p-4 ">
+          <div className="glass rounded-2xl p-4 ">
             <p className="text-[10px] font-mono tracking-wider text-[#6B7A72] uppercase">Ma contribution</p>
             <p className="text-sm font-bold text-[#17402C] mt-2 truncate">
               {getContributionRating()}
@@ -348,7 +348,7 @@ export default function RecompensesPage() {
             <p className="text-[9px] text-[#6B7A72] mt-0.5">Score confiance : {profile?.trust_score || 50}/100</p>
           </div>
 
-          <div className="bg-[#EEF3EC] border border-[#A3C4A3]/30 rounded-2xl p-4  relative overflow-hidden">
+          <div className="glass rounded-2xl p-4  relative overflow-hidden">
             <div className="absolute right-3 top-3 text-[#17402C]/10 text-2xl font-bold">€</div>
             <p className="text-[10px] font-mono tracking-wider text-[#6B7A72] uppercase">Disponibles</p>
             <p className="text-xl font-display font-900 text-[#17402C] mt-1">
@@ -357,7 +357,7 @@ export default function RecompensesPage() {
             <p className="text-[9px] text-[#6B7A72] mt-0.5">Prêts au retrait</p>
           </div>
 
-          <div className="bg-[#EEF3EC] border border-stone-200/60 rounded-2xl p-4 ">
+          <div className="glass rounded-2xl p-4 ">
             <p className="text-[10px] font-mono tracking-wider text-[#6B7A72] uppercase">En cours / en attente</p>
             <p className="text-xl font-display font-900 text-[#17402C]/70 mt-1">
               {account?.pending_cash ? account.pending_cash.toFixed(2) : '0.00'} €
@@ -369,7 +369,7 @@ export default function RecompensesPage() {
         {/* Withdrawal Section & Guide */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
           {/* Cash-out Form */}
-          <div className="lg:col-span-7 bg-[#EEF3EC] border border-stone-200/60 rounded-[0.75rem] p-6  space-y-6">
+          <div className="glass lg:col-span-7 rounded-[0.75rem] p-6  space-y-6">
             <div className="flex items-center justify-between border-b border-stone-200/60 pb-3">
               <h3 className="font-display font-800 text-[#17402C] text-sm tracking-tight flex items-center gap-1.5">
                 <Icon name="CurrencyEuroIcon" size={18} className="text-[#17402C]" />
@@ -410,11 +410,7 @@ export default function RecompensesPage() {
                   <button
                     type="button"
                     onClick={() => setPaymentProvider('bank_transfer')}
-                    className={`flex flex-col items-center justify-center p-3 border rounded-xl transition-all ${
-                      paymentProvider === 'bank_transfer'
-                        ? 'border-[#17402C] bg-[#17402C]/5 text-[#17402C] font-bold'
-                        : 'border-stone-200/80 bg-white text-[#6B7A72]'
-                    }`}
+                    className={`glass-capsule-btn flex flex-col items-center justify-center !p-3 ${paymentProvider === 'bank_transfer' ? 'primary' : ''}`}
                   >
                     <span className="text-base mb-1">🏦</span>
                     <span className="text-[10px]">Virement SEPA</span>
@@ -422,11 +418,7 @@ export default function RecompensesPage() {
                   <button
                     type="button"
                     onClick={() => setPaymentProvider('paypal')}
-                    className={`flex flex-col items-center justify-center p-3 border rounded-xl transition-all ${
-                      paymentProvider === 'paypal'
-                        ? 'border-[#17402C] bg-[#17402C]/5 text-[#17402C] font-bold'
-                        : 'border-stone-200/80 bg-white text-[#6B7A72]'
-                    }`}
+                    className={`glass-capsule-btn flex flex-col items-center justify-center !p-3 ${paymentProvider === 'paypal' ? 'primary' : ''}`}
                   >
                     <span className="text-base mb-1">💳</span>
                     <span className="text-[10px]">Paypal</span>
@@ -435,7 +427,7 @@ export default function RecompensesPage() {
               </div>
 
               {paymentProvider === 'bank_transfer' && (
-                <div className="space-y-3 bg-white p-4 rounded-2xl border border-stone-200/40">
+                <div className="glass-sub-card space-y-3 p-4 rounded-2xl">
                   <div>
                     <label htmlFor="iban" className="block text-[10px] text-[#6B7A72] mb-1 uppercase font-semibold">IBAN</label>
                     <input
@@ -464,7 +456,7 @@ export default function RecompensesPage() {
               )}
 
               {paymentProvider === 'paypal' && (
-                <div className="bg-white p-4 rounded-2xl border border-stone-200/40">
+                <div className="glass-sub-card p-4 rounded-2xl">
                   <label htmlFor="paypalEmail" className="block text-[10px] text-[#6B7A72] mb-1 uppercase font-semibold">Adresse email Paypal</label>
                   <input
                     type="email"
@@ -481,7 +473,7 @@ export default function RecompensesPage() {
               <button
                 type="submit"
                 disabled={submitting || (account?.available_cash || 0) < minThreshold}
-                className="w-full py-3 bg-[#17402C] text-white rounded-full text-xs font-bold hover:bg-[#365233] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
+                className="glass-capsule-btn primary w-full !py-3 !text-xs !font-bold flex items-center justify-center gap-1.5"
               >
                 {submitting ? (
                   <>
@@ -496,7 +488,7 @@ export default function RecompensesPage() {
           </div>
 
           {/* Guide Section */}
-          <div className="lg:col-span-5 bg-white border border-stone-200/40 rounded-[0.75rem] p-6  space-y-4">
+          <div className="glass lg:col-span-5 rounded-[0.75rem] p-6  space-y-4">
             <h3 className="font-display font-800 text-[#17402C] text-sm tracking-tight flex items-center gap-1.5">
               <Icon name="BookOpenIcon" size={18} className="text-[#17402C]" />
               Règles et Fonctionnement
@@ -521,12 +513,12 @@ export default function RecompensesPage() {
         {/* Ledger & Withdrawals lists */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
           {/* Ledger of points transactions */}
-          <div className="bg-[#EEF3EC] border border-stone-200/60 rounded-[0.75rem] p-6  space-y-4">
+          <div className="glass rounded-[0.75rem] p-6  space-y-4">
             <h3 className="font-display font-800 text-[#17402C] text-sm tracking-tight flex items-center gap-1.5">
               <Icon name="ClipboardDocumentListIcon" size={18} className="text-[#17402C]" />
               Historique de points (Ledger)
             </h3>
-            <div className="overflow-hidden border border-stone-200/40 rounded-2xl bg-white max-h-96 overflow-y-auto">
+            <div className="glass-sub-card overflow-hidden rounded-2xl max-h-96 overflow-y-auto">
               {transactions.length === 0 ? (
                 <div className="p-6 text-center text-xs text-[#6B7A72]">Aucune transaction enregistrée.</div>
               ) : (
@@ -557,12 +549,12 @@ export default function RecompensesPage() {
           </div>
 
           {/* History of Cash-out withdrawals */}
-          <div className="bg-[#EEF3EC] border border-stone-200/60 rounded-[0.75rem] p-6  space-y-4">
+          <div className="glass rounded-[0.75rem] p-6  space-y-4">
             <h3 className="font-display font-800 text-[#17402C] text-sm tracking-tight flex items-center gap-1.5">
               <Icon name="WrenchScrewdriverIcon" size={18} className="text-[#17402C]" />
               Demandes de virements
             </h3>
-            <div className="overflow-hidden border border-stone-200/40 rounded-2xl bg-white max-h-96 overflow-y-auto">
+            <div className="glass-sub-card overflow-hidden rounded-2xl max-h-96 overflow-y-auto">
               {withdrawals.length === 0 ? (
                 <div className="p-6 text-center text-xs text-[#6B7A72]">Aucun virement demandé.</div>
               ) : (
@@ -606,7 +598,7 @@ export default function RecompensesPage() {
     <div className="min-h-screen bg-[#F5F3ED] text-[#17402C] selection:bg-[#17402C]/20 font-sans">
       {/* Mobile Shell */}
       <div className="block md:hidden">
-        <MobilePageShell background="#F5F3EE">
+        <MobilePageShell background="transparent">
           <div className="pt-4 pb-20">
             {pageContent(true)}
           </div>

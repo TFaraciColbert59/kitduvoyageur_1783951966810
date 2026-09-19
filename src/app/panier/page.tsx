@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
@@ -124,7 +124,7 @@ export default function PanierPage() {
 
   if (!mounted) {
     return (
-      <div className="min-h-screen bg-[var(--lkv-surface)]">
+      <div className="min-h-screen bg-transparent">
         <Header />
         <div className="pt-24 flex items-center justify-center min-h-[60vh]">
           <div className="w-8 h-8 border-2 border-[var(--lkv-primary)] border-t-transparent rounded-full animate-spin" aria-label="Chargement du panier" />
@@ -137,7 +137,7 @@ export default function PanierPage() {
   return (
     <>
       {/* ── DESKTOP VIEW (fullscreen : page = 100dvh, scroll interne) ── */}
-      <div className="hidden md:flex flex-col h-[100dvh] overflow-hidden bg-[var(--lkv-surface-muted)] text-[var(--lkv-primary)]">
+      <div className="hidden md:flex flex-col h-[100dvh] overflow-hidden bg-transparent text-[#EEF3EC]">
         <Header />
 
         {confirmDeleteId && (
@@ -149,7 +149,7 @@ export default function PanierPage() {
               </p>
               <div className="flex gap-3">
                 <button onClick={handleRemoveCancel} className="glass-capsule-btn flex-1" autoFocus>Annuler</button>
-                <button onClick={handleRemoveConfirm} className="glass-capsule-btn flex-1" style={{ background: 'rgba(168,68,58,0.92)', color: 'var(--lkv-surface-muted)', borderColor: 'rgba(168,68,58,0.45)' }}>Retirer</button>
+                <button onClick={handleRemoveConfirm} className="glass-capsule-btn danger flex-1">Retirer</button>
               </div>
             </div>
           </div>
@@ -163,8 +163,8 @@ export default function PanierPage() {
                   <Icon name="ShoppingBagIcon" size={36} className="text-[var(--lkv-primary)]/40" />
                 </div>
                 <div>
-                  <p className="font-display font-800 text-3xl text-[var(--lkv-primary)] mb-2">Votre <em className="italic font-400 text-[var(--lkv-forest-600)]">panier.</em> est vide</p>
-                  <p className="text-[var(--lkv-text-muted)]">Explorez notre catalogue pour trouver votre équipement.</p>
+                  <p className="font-display font-800 text-3xl text-[#EEF3EC] mb-2">Votre <em className="italic font-400 text-[#A9C6B0]">panier.</em> est vide</p>
+                  <p className="text-[#CCE0D4]">Explorez notre catalogue pour trouver votre équipement.</p>
                 </div>
                 <Link href="/boutique" className="glass-capsule-btn mt-4">
                   Voir le catalogue
@@ -173,11 +173,11 @@ export default function PanierPage() {
             ) : (
               <>
                 <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-4">
-                  <h1 className="font-display font-800 text-4xl text-[var(--lkv-primary)]">
-                    Votre <em className="italic font-400 text-[var(--lkv-forest-600)]">panier.</em>
+                  <h1 className="font-display font-800 text-4xl text-[#EEF3EC]">
+                    Votre <em className="italic font-400 text-[#A9C6B0]">panier.</em>
                   </h1>
-                  <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--lkv-text-muted)]">
-                    {totalItems} article{totalItems > 1 ? 's' : ''} · {totalWeightG >= 1000 ? `${(totalWeightG / 1000).toFixed(1).replace('.', ',')} kg` : `${totalWeightG} g`} · sous-total <span className="font-mono font-bold text-[var(--lkv-primary)]">{totalPriceEur.toFixed(0)} €</span>
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-[#CCE0D4]">
+                    {totalItems} article{totalItems > 1 ? 's' : ''} · {totalWeightG >= 1000 ? `${(totalWeightG / 1000).toFixed(1).replace('.', ',')} kg` : `${totalWeightG} g`} · sous-total <span className="font-mono font-bold text-[#EEF3EC]">{totalPriceEur.toFixed(0)} €</span>
                   </p>
                 </div>
 
@@ -211,11 +211,11 @@ export default function PanierPage() {
 
                             <div className="flex flex-col items-end">
                               <div className="glass-capsule-bar">
-                                <button onClick={() => handleQuantity(item.id, item.quantity - 1)} aria-label="Réduire la quantité" className="w-7 h-7 flex items-center justify-center rounded-full bg-white/70 hover:bg-white text-[var(--lkv-primary)] transition-colors">
+                                <button onClick={() => handleQuantity(item.id, item.quantity - 1)} aria-label="Réduire la quantité" className="glass-circle-btn !w-7 !h-7 !min-w-7 !min-h-7">
                                   <Icon name="MinusIcon" size={12} />
                                 </button>
                                 <span className="w-4 text-center font-600 text-sm text-[var(--lkv-primary)]">{item.quantity}</span>
-                                <button onClick={() => handleQuantity(item.id, item.quantity + 1)} aria-label="Augmenter la quantité" className="w-7 h-7 flex items-center justify-center rounded-full bg-white/70 hover:bg-white text-[var(--lkv-primary)] transition-colors">
+                                <button onClick={() => handleQuantity(item.id, item.quantity + 1)} aria-label="Augmenter la quantité" className="glass-circle-btn !w-7 !h-7 !min-w-7 !min-h-7">
                                   <Icon name="PlusIcon" size={12} />
                                 </button>
                               </div>
@@ -224,11 +224,11 @@ export default function PanierPage() {
 
                           <div className="flex justify-between items-end mt-4">
                             <div className="flex gap-4">
-                              <button className="flex items-center gap-1.5 text-xs font-600 text-[var(--lkv-text-muted)] hover:text-[var(--lkv-primary)] transition-colors">
+                              <button className="glass-capsule-btn !min-h-[34px] !py-1 !px-3 !text-xs !font-bold">
                                 <Icon name="BookmarkIcon" size={14} variant="outline" />
                                 Enregistrer
                               </button>
-                              <button onClick={() => handleRemoveRequest(item.id)} className="flex items-center gap-1.5 text-xs font-600 text-[var(--lkv-text-muted)] hover:text-[var(--lkv-danger)] transition-colors">
+                              <button onClick={() => handleRemoveRequest(item.id)} className="glass-capsule-btn !min-h-[34px] !py-1 !px-3 !text-xs !font-bold">
                                 <Icon name="TrashIcon" size={14} variant="outline" />
                                 Retirer
                               </button>
@@ -337,11 +337,11 @@ export default function PanierPage() {
 
       {/* ── MOBILE VIEW (scroll natif) ── */}
       <div className="block md:hidden">
-        <MobilePageShell background="var(--lkv-surface-muted)">
+        <MobilePageShell background="transparent">
           {items.length === 0 ? (
             <div style={{ padding: '60px 20px', textAlign: 'center' }}>
-              <div style={{ fontSize: '22px', fontWeight: 500, color: 'var(--lkv-primary)', marginBottom: '8px' }}>
-                Votre <em style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic', color: 'var(--lkv-primary)', fontWeight: 400 }}>panier</em> est vide
+              <div style={{ fontSize: '22px', fontWeight: 500, color: '#EEF3EC', marginBottom: '8px' }}>
+                Votre <em style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic', color: '#A9C6B0', fontWeight: 400 }}>panier</em> est vide
               </div>
               <Link href="/boutique" className="glass-capsule-btn" style={{ marginTop: '16px', textDecoration: 'none' }}>
                 Voir le catalogue
@@ -350,12 +350,12 @@ export default function PanierPage() {
           ) : (
             <>
               {/* Cart header */}
-              <div style={{ padding: '12px 16px 16px', borderBottom: '1px solid rgba(23,64,44,0.05)' }}>
-                <h1 style={{ fontSize: '28px', letterSpacing: '-0.025em', margin: 0, color: 'var(--lkv-primary)' }}>
+              <div style={{ padding: '12px 16px 16px', borderBottom: '1px solid rgba(255,255,255,0.18)' }}>
+                <h1 style={{ fontSize: '28px', letterSpacing: '-0.025em', margin: 0, color: '#EEF3EC' }}>
                   {totalItems} pièce{totalItems > 1 ? 's' : ''}<br/>
-                  <em style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic', color: 'var(--lkv-primary)', fontWeight: 400 }}>prêtes à partir.</em>
+                  <em style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic', color: '#A9C6B0', fontWeight: 400 }}>prêtes à partir.</em>
                 </h1>
-                <div style={{ fontSize: '12px', color: 'var(--lkv-text-muted)', fontFamily: 'ui-monospace, monospace', marginTop: '2px' }}>
+                <div style={{ fontSize: '12px', color: '#CCE0D4', fontFamily: 'ui-monospace, monospace', marginTop: '2px' }}>
                   MSA-CH-2026-047 · panier ouvert
                 </div>
               </div>
@@ -381,13 +381,13 @@ export default function PanierPage() {
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '3px 6px', background: 'var(--lkv-surface-muted)', borderRadius: '999px', border: '1px solid rgba(23,64,44,0.06)' }}>
-                        <button onClick={() => handleQuantity(item.id, Math.max(1, item.quantity - 1))} aria-label="Diminuer la quantité" style={{ width: '32px', height: '32px', borderRadius: '999px', background: 'var(--lkv-surface-muted)', border: '1px solid rgba(23,64,44,0.08)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '15px', fontWeight: 600, color: 'var(--lkv-primary)', fontFamily: 'inherit' }}>−</button>
+                        <button onClick={() => handleQuantity(item.id, Math.max(1, item.quantity - 1))} aria-label="Diminuer la quantité" className="glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8 !text-[15px] !font-semibold">−</button>
                         <span style={{ minWidth: '22px', textAlign: 'center', fontSize: '14px', fontWeight: 600, fontFamily: 'ui-monospace, monospace', color: 'var(--lkv-primary)' }}>{item.quantity}</span>
-                        <button onClick={() => handleQuantity(item.id, item.quantity + 1)} aria-label="Augmenter la quantité" style={{ width: '32px', height: '32px', borderRadius: '999px', background: 'var(--lkv-surface-muted)', border: '1px solid rgba(23,64,44,0.08)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '15px', fontWeight: 600, color: 'var(--lkv-primary)', fontFamily: 'inherit' }}>+</button>
+                        <button onClick={() => handleQuantity(item.id, item.quantity + 1)} aria-label="Augmenter la quantité" className="glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8 !text-[15px] !font-semibold">+</button>
                       </div>
                       <div style={{ textAlign: 'right' }}>
                         <div style={{ fontSize: '15px', fontWeight: 700, fontFamily: 'ui-monospace, monospace', color: 'var(--lkv-primary)' }}>{(item.priceEur * item.quantity).toFixed(0)} €</div>
-                        <button onClick={() => handleRemoveRequest(item.id)} style={{ fontSize: '11px', color: 'var(--lkv-text-muted)', background: 'none', border: 'none', cursor: 'pointer', padding: '4px 0', fontFamily: 'inherit' }}>Retirer</button>
+                        <button onClick={() => handleRemoveRequest(item.id)} className="glass-capsule-btn !min-h-0 !py-1 !px-3 !text-[11px] !font-semibold">Retirer</button>
                       </div>
                     </div>
                   </div>
@@ -401,7 +401,7 @@ export default function PanierPage() {
                     <div style={{ fontSize: '10px', fontFamily: 'ui-monospace, monospace', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--lkv-text-muted)' }}>Code promo</div>
                     <div style={{ fontSize: '13px', fontWeight: 500, color: 'var(--lkv-primary)', marginTop: '2px' }}>BIENVENUE10</div>
                   </div>
-                  <button style={{ fontSize: '12px', fontWeight: 500, color: 'var(--lkv-primary)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}>Appliquer →</button>
+                  <button className="glass-capsule-btn !min-h-0 !py-1.5 !px-3.5 !text-xs !font-semibold">Appliquer →</button>
                 </div>
               </div>
 

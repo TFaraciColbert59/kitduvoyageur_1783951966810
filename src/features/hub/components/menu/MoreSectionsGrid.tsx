@@ -35,7 +35,7 @@ export function MoreSectionsGrid({ cells, moreCells, fitRows }: MoreSectionsGrid
           triggerHaptic('light');
           setOpen(true);
         }}
-        className="w-full mt-3 flex items-center gap-3 px-4 min-h-[44px] rounded-2xl border border-white/60 bg-white/55 text-left cursor-pointer active:scale-[0.99] transition-transform"
+        className="glass-capsule-btn w-full mt-3 flex items-center gap-3 px-4 min-h-[44px] text-left cursor-pointer active:scale-[0.99] transition-transform"
       >
         <Icon
           name="more-horizontal"

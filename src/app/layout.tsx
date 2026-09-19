@@ -69,7 +69,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   viewportFit: 'cover',
   interactiveWidget: 'resizes-visual',
-  themeColor: '#EEF3EC',
+  themeColor: '#1C3B2A',
 };
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://lekitduvoyageur.fr';
@@ -165,8 +165,8 @@ export default async function RootLayout({
     <html
       lang="fr"
       suppressHydrationWarning
-      className={`${dmSans.variable} ${manrope.variable} ${ibmPlexMono.variable} bg-[#EEF3EC] text-[#17402C]`}
-      style={{ backgroundColor: '#EEF3EC', colorScheme: 'light' }}
+      className={`${dmSans.variable} ${manrope.variable} ${ibmPlexMono.variable} bg-[#1C3B2A] text-[#17402C]`}
+      style={{ backgroundColor: '#1C3B2A', colorScheme: 'light' }}
     >
       <head>
         {/* Preload critical images for LCP optimization */}
@@ -243,9 +243,11 @@ export default async function RootLayout({
         )}
       </head>
       <body
-        className={`${dmSans.variable} ${manrope.variable} ${ibmPlexMono.variable} ${instrumentSerif.variable} ${dmSans.className} bg-[#EEF3EC] text-[#17402C] min-h-[100dvh]`}
-        style={{ backgroundColor: '#EEF3EC' }}
+        className={`${dmSans.variable} ${manrope.variable} ${ibmPlexMono.variable} ${instrumentSerif.variable} ${dmSans.className} bg-transparent text-[#17402C] min-h-[100dvh]`}
+        style={{ backgroundColor: 'transparent' }}
       >
+        {/* Toile unique LKDV — fond d'écran de toutes les routes */}
+        <div className="lkv-app-background" aria-hidden="true" />
         <AuthProvider>
           <ActiveTripProvider initialTrip={activeTrip}>
             <ActiveAdventureProvider initialAdventure={activeAdventure}>

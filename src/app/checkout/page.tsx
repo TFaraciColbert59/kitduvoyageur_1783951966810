@@ -285,10 +285,10 @@ export default function CheckoutPage() {
 
   if (!mounted) {
     return (
-      <div className="min-h-screen bg-[var(--lkv-surface)]">
+      <div className="min-h-screen bg-transparent">
         <Header />
         <div className="pt-24 flex items-center justify-center min-h-[60vh]">
-          <div className="w-8 h-8 border-2 border-[var(--lkv-primary)] border-t-transparent rounded-full animate-spin" />
+          <div className="w-8 h-8 border-2 border-[#EEF3EC] border-t-transparent rounded-full animate-spin" />
         </div>
         <Footer />
       </div>
@@ -298,14 +298,14 @@ export default function CheckoutPage() {
   return (
     <>
       {/* ── DESKTOP VIEW (fullscreen : page = 100dvh, scroll interne) ── */}
-      <div className="hidden md:flex flex-col h-[100dvh] overflow-hidden bg-[var(--lkv-surface-muted)] text-[var(--lkv-primary)]">
+      <div className="hidden md:flex flex-col h-[100dvh] overflow-hidden bg-transparent text-[#EEF3EC]">
         <Header />
 
         <main id="main-content" className="flex-1 min-h-0 overflow-y-auto w-full pt-24 pb-6">
           <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
             {step !== 'confirmation' && (
-              <h1 className="font-display font-800 text-4xl text-[var(--lkv-primary)] mb-8">
-                Presque <em className="italic font-400 text-[var(--lkv-forest-600)]">parti.</em>
+              <h1 className="font-display font-800 text-4xl text-[#EEF3EC] mb-8">
+                Presque <em className="italic font-400 text-[#A9C6B0]">parti.</em>
               </h1>
             )}
 
@@ -322,7 +322,7 @@ export default function CheckoutPage() {
                         <h2 className="font-display font-700 text-xl flex items-center gap-3 text-[var(--lkv-primary)]">
                           <span className="font-400 italic text-[var(--lkv-forest-600)]">01</span> Vos coordonnées
                         </h2>
-                        <button className="text-xs font-600 text-[var(--lkv-primary)] hover:underline">Se connecter</button>
+                        <button className="glass-capsule-btn !min-h-0 !py-1.5 !px-3.5 !text-xs !font-semibold">Se connecter</button>
                       </div>
 
                       <div className="space-y-4">
@@ -480,19 +480,19 @@ export default function CheckoutPage() {
                             </div>
                           )}
                           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-8">
-                            <button className="glass p-3 flex flex-col items-center justify-center rounded-md text-[var(--lkv-primary)]" style={{ borderColor: 'rgba(91,127,85,0.85)' }}>
+                            <button className="glass-capsule-btn primary p-3 flex flex-col items-center justify-center">
                               <Icon name="CreditCardIcon" size={24} className="mb-1" />
                               <span className="text-[10px] font-600 font-mono tracking-widest uppercase">Carte</span>
                             </button>
-                            <button className="glass p-3 flex flex-col items-center justify-center rounded-md text-[var(--lkv-text-muted)] hover:text-[var(--lkv-primary)]">
+                            <button className="glass-capsule-btn p-3 flex flex-col items-center justify-center">
                               <span className="text-xl mb-1">🍎</span>
                               <span className="text-[10px] font-600 font-mono tracking-widest uppercase">Apple Pay</span>
                             </button>
-                            <button className="glass p-3 flex flex-col items-center justify-center rounded-md text-[var(--lkv-text-muted)] hover:text-[var(--lkv-primary)]">
-                              <span className="text-xl mb-1 text-[var(--lkv-info)] font-bold">P</span>
+                            <button className="glass-capsule-btn p-3 flex flex-col items-center justify-center">
+                              <span className="text-xl mb-1 font-bold">P</span>
                               <span className="text-[10px] font-600 font-mono tracking-widest uppercase">Compte</span>
                             </button>
-                            <button className="glass p-3 flex flex-col items-center justify-center rounded-md text-[var(--lkv-warning)] hover:text-[var(--lkv-primary)]">
+                            <button className="glass-capsule-btn p-3 flex flex-col items-center justify-center">
                               <span className="text-xs font-700 italic mb-1">3× sans frais</span>
                               <span className="text-[10px] font-600 font-mono tracking-widest uppercase">Alma</span>
                             </button>
@@ -634,12 +634,12 @@ export default function CheckoutPage() {
                   </div>
 
                   {step === 'livraison' && (
-                    <button onClick={handleShippingSubmit} className="glass-capsule-btn w-full mt-6">
+                    <button onClick={handleShippingSubmit} className="glass-capsule-btn primary w-full mt-6">
                       Payer {grandTotal.toFixed(2)} € par carte
                     </button>
                   )}
                   {step === 'paiement' && (
-                    <button onClick={handleStripeCheckout} disabled={processing} className="glass-capsule-btn w-full mt-6">
+                    <button onClick={handleStripeCheckout} disabled={processing} className="glass-capsule-btn primary w-full mt-6">
                       {processing ? 'Traitement...' : `Payer ${grandTotal.toFixed(2)} € par carte`}
                     </button>
                   )}
@@ -658,16 +658,16 @@ export default function CheckoutPage() {
 
       {/* ── MOBILE VIEW (scroll natif) ── */}
       <div className="block md:hidden">
-        <MobilePageShell background="var(--lkv-surface-muted)">
+        <MobilePageShell background="transparent">
           <div style={{ padding: '12px 16px 20px' }}>
             <div style={{ display: 'flex', gap: '6px', marginBottom: '16px' }}>
               {[0,1,2,3].map(i => (
                 <div key={i} style={{ flex: 1, height: '3px', borderRadius: '999px', background: i < 2 ? 'var(--lkv-secondary-subtle)' : i === 2 ? 'var(--lkv-primary)' : 'rgba(23,64,44,0.08)' }} />
               ))}
             </div>
-            <div style={{ fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.14em', color: 'var(--lkv-text-muted)' }}>Étape 3 · 4 · Paiement</div>
-            <h1 style={{ fontSize: '26px', letterSpacing: '-0.025em', margin: 0, color: 'var(--lkv-primary)' }}>
-              Un dernier <em style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic', color: 'var(--lkv-primary)', fontWeight: 400 }}>geste.</em>
+            <div style={{ fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.14em', color: '#CCE0D4' }}>Étape 3 · 4 · Paiement</div>
+            <h1 style={{ fontSize: '26px', letterSpacing: '-0.025em', margin: 0, color: '#EEF3EC' }}>
+              Un dernier <em style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic', color: '#A9C6B0', fontWeight: 400 }}>geste.</em>
             </h1>
           </div>
 
@@ -704,7 +704,7 @@ export default function CheckoutPage() {
             <div style={{ fontSize: '11px', fontWeight: 500, color: 'var(--lkv-primary)', marginBottom: '10px' }}>Moyen de paiement</div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
               {['Carte', 'Apple Pay', 'PayPal', "3× sans frais"].map(m => (
-                <button key={m} style={{ padding: '10px', borderRadius: '10px', background: 'var(--lkv-surface-muted)', border: 'none', fontSize: '11px', fontWeight: 500, color: 'var(--lkv-primary)', cursor: 'pointer', fontFamily: 'inherit', textAlign: 'center' }}>
+                <button key={m} className="glass-capsule-btn !p-2.5 !text-[11px] !font-semibold">
                   {m}
                 </button>
               ))}
@@ -732,7 +732,7 @@ export default function CheckoutPage() {
               <span style={{ fontSize: '15px', fontWeight: 700, color: 'var(--lkv-primary)' }}>Total</span>
               <span style={{ fontSize: '15px', fontWeight: 700, fontFamily: 'ui-monospace, monospace', color: 'var(--lkv-primary)' }}>{grandTotal.toFixed(0)} €</span>
             </div>
-            <button onClick={handleStripeCheckout} disabled={processing} className="glass-capsule-btn w-full" style={{ cursor: processing ? 'not-allowed' : 'pointer', fontFamily: 'inherit' }}>
+            <button onClick={handleStripeCheckout} disabled={processing} className="glass-capsule-btn primary w-full">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="1" y="11" width="22" height="10" rx="2"/><path d="M6 11V7a6 6 0 0 1 12 0v4"/></svg>
               Payer {grandTotal.toFixed(0)} €
             </button>

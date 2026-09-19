@@ -99,7 +99,7 @@ export function ParcoursBlock({ hiking, slug }: { hiking: HubHikingContext | nul
 
 function Stat({ icon, label, value }: { icon: ReactNode; label: string; value: string }) {
   return (
-    <div className="rounded-lg bg-[var(--lkv-surface-raised)] p-2">
+    <div className="glass-sub-card rounded-lg p-2">
       <div className="flex items-center gap-1 text-[var(--lkv-text-muted)]">
         {icon}
         <span className="text-[10px] font-medium uppercase tracking-[0.14em]">{label}</span>
@@ -169,7 +169,7 @@ export function MeteoBlock({ hiking }: { hiking: HubHikingContext | null }) {
           {days.map((d) => (
             <div
               key={d.date}
-              className="rounded-lg bg-[var(--lkv-surface-raised)] p-1.5 text-center"
+              className="glass-sub-card rounded-lg p-1.5 text-center"
             >
               <p className="text-[10px] font-medium tabular-nums text-[var(--lkv-text-muted)]">
                 {d.day}

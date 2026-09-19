@@ -268,10 +268,8 @@ export function TripNotesView({ trip }: TripNotesViewProps) {
         <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
           <button
             onClick={() => setSelectedDayFilter('all')}
-            className={`px-3 py-1.5 rounded-full font-medium transition-all shadow-2xs ${
-              selectedDayFilter === 'all'
-                ? 'bg-[var(--lkv-primary)] text-white shadow-sm'
-                : 'glass-sub-card border border-white/60 text-[var(--lkv-text-muted)] hover:text-[var(--lkv-primary)] hover:bg-white/90'
+            className={`glass-capsule-btn !px-3 !py-1.5 font-medium transition-all ${
+              selectedDayFilter === 'all' ? 'primary shadow-sm' : ''
             }`}
           >
             Toutes ({notes.length})
@@ -280,10 +278,8 @@ export function TripNotesView({ trip }: TripNotesViewProps) {
             <button
               key={day}
               onClick={() => setSelectedDayFilter(day)}
-              className={`px-3 py-1.5 rounded-full font-medium transition-all shadow-2xs ${
-                selectedDayFilter === day
-                  ? 'bg-[var(--lkv-primary)] text-white shadow-sm'
-                  : 'glass-sub-card border border-white/60 text-[var(--lkv-text-muted)] hover:text-[var(--lkv-primary)] hover:bg-white/90'
+              className={`glass-capsule-btn !px-3 !py-1.5 font-medium transition-all ${
+                selectedDayFilter === day ? 'primary shadow-sm' : ''
               }`}
             >
               Jour {day}
@@ -334,7 +330,7 @@ export function TripNotesView({ trip }: TripNotesViewProps) {
                     <button
                       onClick={() => handleEditOpen(note)}
                       disabled={isPending}
-                      className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-full glass-sub-card border border-white/60 text-[var(--lkv-text-muted)] hover:text-lkv-primary hover:bg-lkv-primary/10 transition-all shadow-2xs"
+                      className="glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8 flex items-center justify-center disabled:opacity-60 transition-all"
                       aria-label="Éditer la note"
                     >
                       <Icon name="pencil" size={16} />
@@ -342,7 +338,7 @@ export function TripNotesView({ trip }: TripNotesViewProps) {
                     <button
                       onClick={() => handleDelete(note.id, note.title)}
                       disabled={isPending}
-                      className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-full glass-sub-card border border-white/60 text-[var(--lkv-text-muted)] hover:text-[var(--lkv-danger)] hover:bg-[var(--lkv-danger)]/10 transition-all shadow-2xs"
+                      className="glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8 flex items-center justify-center disabled:opacity-60 transition-all"
                       aria-label="Supprimer la note"
                     >
                       <Icon name="trash2" size={16} />

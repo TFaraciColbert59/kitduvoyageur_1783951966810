@@ -73,14 +73,14 @@ export default function HomepageFinalCTASection() {
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <Link
             href="/ai-configurator"
-            className="btn-primary text-base px-8 py-4 min-h-[52px] justify-center"
+            className="glass-capsule-btn primary text-base px-8 py-4 min-h-[52px] justify-center"
           >
-            <Icon name="SparklesIcon" size={18} variant="outline" />
+            <Icon name="sparkles" size={18} />
             Configurer mon kit IA
           </Link>
           <Link
             href="/pays"
-            className="btn-ghost-dark text-base px-8 py-4 min-h-[52px] justify-center"
+            className="glass-capsule-btn secondary text-base px-8 py-4 min-h-[52px] justify-center"
           >
             Explorer les destinations
           </Link>

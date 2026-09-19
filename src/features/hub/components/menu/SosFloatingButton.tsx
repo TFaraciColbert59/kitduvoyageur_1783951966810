@@ -30,7 +30,7 @@ export function SosFloatingButton({ safetyHref }: SosFloatingButtonProps) {
         style={{
           bottom: 'calc(var(--bottom-nav-height, 52px) + 12px + env(safe-area-inset-bottom, 0px))',
         }} // lkdv-safe-area-ok
-        className="fixed right-4 z-[900] md:bottom-6 md:right-6 md:!bottom-6 flex h-14 w-14 items-center justify-center rounded-full bg-[var(--lkv-danger)] text-white shadow-xl border-2 border-white/70 transition-transform active:scale-90 cursor-pointer"
+        className="glass-circle-btn danger fixed right-4 z-[900] md:bottom-6 md:right-6 md:!bottom-6 flex h-14 w-14 items-center justify-center transition-transform active:scale-90 cursor-pointer"
       >
         <Icon name="siren" size={24} aria-hidden="true" />
       </button>
@@ -58,7 +58,7 @@ export function SosFloatingButton({ safetyHref }: SosFloatingButtonProps) {
           <Link
             href={safetyHref}
             onClick={() => triggerHaptic('selection')}
-            className="flex items-center gap-4 rounded-2xl border border-white/60 bg-white/60 p-4 active:scale-[0.98] transition-transform"
+            className="glass-sub-card flex items-center gap-4 rounded-2xl p-4 active:scale-[0.98] transition-transform"
           >
             <span className="flex h-12 w-12 items-center justify-center rounded-full bg-[var(--lkv-primary)]/10 text-[var(--lkv-primary)] shrink-0">
               <Icon name="shield" size={22} aria-hidden="true" />

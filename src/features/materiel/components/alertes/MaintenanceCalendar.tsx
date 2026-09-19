@@ -34,7 +34,7 @@ export function MaintenanceCalendar({ events }: { events: MaintenanceEvent[] }) 
         {cells.map((day, i) => (
           <div key={i} className={`h-8 flex items-center justify-center text-xs rounded-[var(--r-sm)] ${day === null ? '' : 'bg-stone-100'}`}>
             {day !== null && (
-              byDay.has(day) ? <Badge tone="warn">{day}</Badge> : <span className="text-[color:var(--label)]">{day}</span>
+              byDay.has(day) ? <Badge tone="warn">{day}</Badge> : <span className="text-[color:var(--lkv-primary)]">{day}</span>
             )}
           </div>
         ))}

@@ -96,7 +96,7 @@ export default function ClubFeaturedEventCard({
           <button
             type="button"
             onClick={onViewParticipants}
-            className="text-[11px] text-[#5C6B5E] font-medium hover:text-[#17402C]"
+            className="glass-capsule-btn sm font-medium"
           >
             Participants ({currentParticipants})
           </button>

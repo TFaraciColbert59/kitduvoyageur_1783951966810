@@ -42,10 +42,10 @@ export const PreparationHero: React.FC<PreparationHeroProps> = ({
           <circle cx="20" cy="220" r="5" fill="#17402C" />
           <circle cx="360" cy="40" r="5" fill="#17402C" />
         </svg>
-        <button className="back" onClick={onBack} aria-label="Retour">
+        <button className="glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8" onClick={onBack} aria-label="Retour">
           <Icon name="back" />
         </button>
-        <button className="save" onClick={onSave} aria-label="Sauvegarder la randonnée">
+        <button className="glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8" onClick={onSave} aria-label="Sauvegarder la randonnée">
           <Icon name="bookmark" />
         </button>
         <div className="hero-body">

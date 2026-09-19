@@ -49,18 +49,18 @@ export default function FeedPage() {
                 <div className="flex items-center gap-2 mb-4"><span className="tag-badge bg-secondary/30 text-forest-300 border border-forest-500/30 text-[10px]">COMMUNAUTÉ</span><span className="text-white/50 text-xs font-mono-data">CARNETS DE VOYAGE</span></div>
                 <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6">
                   <div><h1 className="text-section-title text-white mb-3">Carnets d&apos;expédition<br /><span className="text-primary">vérifiés par les données</span></h1><p className="text-white/60 text-base max-w-xl">Pas des posts — des récits longs avec tracé GPS, météo réelle, matériel utilisé.</p></div>
-                  <button onClick={() => setShowNewJournal(true)} className="btn-primary flex-shrink-0 self-start lg:self-auto"><Icon name="PencilSquareIcon" size={16} />Écrire un carnet</button>
+                  <button onClick={() => setShowNewJournal(true)} className="glass-capsule-btn primary flex-shrink-0 self-start lg:self-auto"><Icon name="PencilSquareIcon" size={16} />Écrire un carnet</button>
                 </div>
               </div>
             </section>
             <section className="sticky top-16 z-30 bg-background/95 backdrop-blur-md border-b border-border"><div className="max-w-7xl mx-auto px-4"><div className="flex items-center gap-1 py-3 overflow-x-auto scrollbar-hide">
               {[{ id: 'all', label: 'Tous les carnets' }, { id: 'verified', label: '✓ Achat vérifié' }, { id: 'gps', label: '📍 Tracé GPS' }, { id: 'recent', label: 'Récents' }].map((f) => (
-                <button key={f.id} onClick={() => setFilter(f.id as typeof filter)} className={`category-pill flex-shrink-0 ${filter === f.id ? 'active' : ''}`}>{f.label}</button>
+                <button key={f.id} onClick={() => setFilter(f.id as typeof filter)} className={`glass-capsule-segment flex-shrink-0 ${filter === f.id ? 'active' : ''}`}>{f.label}</button>
               ))}
             </div></div></section>
             <div className="max-w-7xl mx-auto px-4 py-10">
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                <div className="lg:col-span-2 space-y-8">{filtered.map((j) => <div key={j.id} className="topo-card overflow-hidden p-5"><h2 className="font-display font-700 text-lg mb-2">{j.title}</h2><p className="text-sm text-muted-foreground">{j.excerpt}</p></div>)}</div>
+                <div className="lg:col-span-2 space-y-8">{filtered.map((j) => <div key={j.id} className="glass overflow-hidden p-5"><h2 className="font-display font-700 text-lg mb-2">{j.title}</h2><p className="text-sm text-muted-foreground">{j.excerpt}</p></div>)}</div>
               </div>
             </div>
           </div>
@@ -93,11 +93,11 @@ export default function FeedPage() {
             <p style={{ fontSize: '13px', color: 'rgba(23,64,44,0.6)', marginBottom: '16px' }}>Récits avec tracé GPS et matériel utilisé.</p>
             <div style={{ display: 'flex', gap: '6px', marginBottom: '16px', overflowX: 'auto' }}>
               {[{ id: 'all', label: 'Tous' }, { id: 'verified', label: 'Vérifiés' }, { id: 'gps', label: 'GPS' }].map((f) => (
-                <button key={f.id} onClick={() => setFilter(f.id as typeof filter)} style={{ padding: '6px 14px', borderRadius: '20px', fontSize: '12px', border: 'none', cursor: 'pointer', background: filter === f.id ? '#17402C' : '#F4F1EA', color: filter === f.id ? 'white' : 'rgba(23,64,44,0.6)', whiteSpace: 'nowrap' }}>{f.label}</button>
+                <button key={f.id} onClick={() => setFilter(f.id as typeof filter)} className={`glass-capsule-segment flex-shrink-0 ${filter === f.id ? 'active' : ''}`}>{f.label}</button>
               ))}
             </div>
             {filtered.map((j) => (
-              <div key={j.id} style={{ background: '#EEF3EC', borderRadius: '12px', border: '1px solid rgba(23,64,44,0.06)', padding: '14px', marginBottom: '12px' }}>
+              <div key={j.id} className="glass" style={{ padding: '14px', marginBottom: '12px' }}>
                 <h2 style={{ fontSize: '14px', fontWeight: 700, color: '#17402C', marginBottom: '4px' }}>{j.title}</h2>
                 <p style={{ fontSize: '11px', color: 'rgba(23,64,44,0.5)', marginBottom: '8px' }}>{j.author} · {j.country} · {j.duration}</p>
                 <p style={{ fontSize: '12px', color: 'rgba(23,64,44,0.6)', lineHeight: '1.5' }}>{j.excerpt}</p>

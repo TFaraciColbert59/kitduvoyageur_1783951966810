@@ -47,7 +47,7 @@ export interface AppShellProps {
  */
 export default function AppShell({
   children,
-  background = '#EEF3EC',
+  background = 'transparent',
   videoBackground = true,
   safeTop = true,
   hasBottomNav = true,
@@ -76,11 +76,11 @@ export default function AppShell({
     ? 'var(--bottom-tab-extended-height, calc(92px + env(safe-area-inset-bottom, 0px)))'
     : 'var(--bottom-tab-base-height, calc(52px + env(safe-area-inset-bottom, 0px)))';
 
-  // Sur mobile, le fond edge-to-edge garantit zéro rebord blanc / jour sous la safe-area.
-  // Sur desktop avec videoBackground, on bascule en transparent pour laisser voir CompteBackground.
-  const isDefaultBg = background === '#EEF3EC';
-  const containerBgStyle = videoBackground && isDefaultBg ? undefined : background;
-  const containerBgClass = videoBackground && isDefaultBg ? 'bg-[#EEF3EC] md:bg-transparent' : '';
+  // TOILE UNIQUE : le fond applicatif (image marbrée) est global et fixe.
+  // Le shell est transparent par défaut pour le laisser traverser sur toutes
+  // les routes ; seul un `background` explicite (hors 'transparent') peint.
+  const containerBgStyle = background === 'transparent' ? undefined : background;
+  const containerBgClass = '';
 
   return (
     <div

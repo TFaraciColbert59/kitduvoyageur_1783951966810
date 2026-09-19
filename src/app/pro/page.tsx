@@ -31,13 +31,13 @@ export default function B2BPage() {
                   <div className="flex items-center gap-2 mb-5"><span className="tag-badge bg-primary/20 text-primary border border-primary/30 text-[10px]">PHASE 2</span><span className="text-white/50 text-xs font-mono-data">ESPACE PROFESSIONNEL B2B</span></div>
                   <h1 className="text-hero text-white mb-4">L&apos;équipement outdoor<br />pour les pros</h1>
                   <p className="text-white/60 text-lg max-w-xl mb-8">Tarifs préférentiels, commandes groupées et outils dédiés.</p>
-                  <div className="flex gap-4"><button onClick={() => setShowContactModal(true)} className="btn-primary py-3.5 px-7"><Icon name="BuildingOfficeIcon" size={18} />Demander un accès pro</button><button onClick={() => setActiveTab('catalogue')} className="btn-ghost-white py-3.5 px-7">Voir le catalogue pro</button></div>
+                  <div className="flex gap-4"><button onClick={() => setShowContactModal(true)} className="glass-capsule-btn primary py-3.5 px-7"><Icon name="BuildingOfficeIcon" size={18} />Demander un accès pro</button><button onClick={() => setActiveTab('catalogue')} className="glass-capsule-btn py-3.5 px-7">Voir le catalogue pro</button></div>
                 </div>
               </div>
             </section>
             <section className="sticky top-16 z-30 bg-background/95 backdrop-blur-md border-b border-border"><div className="max-w-7xl mx-auto px-4">
               <div className="flex gap-0">{[{ id: 'plans', label: 'Offres pro', icon: 'SparklesIcon' }, { id: 'catalogue', label: 'Catalogue B2B', icon: 'TagIcon' }, { id: 'dashboard', label: 'Dashboard pro', icon: 'ChartBarIcon' }].map((tab) => (
-                <button key={tab.id} onClick={() => setActiveTab(tab.id as typeof activeTab)} className={`flex items-center gap-2 px-5 py-4 text-sm font-600 border-b-2 transition-all ${activeTab === tab.id ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground'}`}>
+                <button key={tab.id} onClick={() => setActiveTab(tab.id as typeof activeTab)} className={`glass-capsule-btn flex items-center gap-2 px-5 py-4 text-sm font-600 ${activeTab === tab.id ? 'primary' : ''}`}>
                   <Icon name={tab.icon} size={16} />{tab.label}</button>
               ))}</div></div></section>
             <div className="max-w-7xl mx-auto px-4 py-10">
@@ -55,19 +55,19 @@ export default function B2BPage() {
             <h1 style={{ fontSize: '20px', fontWeight: 800, color: '#17402C', marginBottom: '16px' }}>Espace Pro B2B</h1>
             <p style={{ fontSize: '13px', color: 'rgba(23,64,44,0.6)', marginBottom: '20px' }}>Tarifs préférentiels pour les professionnels.</p>
             <div style={{ display: 'flex', gap: '8px', marginBottom: '20px' }}>
-              <button onClick={() => setActiveTab('plans')} style={{ padding: '8px 16px', borderRadius: '8px', background: activeTab === 'plans' ? '#17402C' : '#F4F1EA', color: activeTab === 'plans' ? 'white' : 'rgba(23,64,44,0.6)', border: 'none', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}>Offres</button>
-              <button onClick={() => setActiveTab('catalogue')} style={{ padding: '8px 16px', borderRadius: '8px', background: activeTab === 'catalogue' ? '#17402C' : '#F4F1EA', color: activeTab === 'catalogue' ? 'white' : 'rgba(23,64,44,0.6)', border: 'none', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}>Catalogue</button>
+              <button onClick={() => setActiveTab('plans')} className={`glass-capsule-btn ${activeTab === 'plans' ? 'primary' : ''}`}>Offres</button>
+              <button onClick={() => setActiveTab('catalogue')} className={`glass-capsule-btn ${activeTab === 'catalogue' ? 'primary' : ''}`}>Catalogue</button>
             </div>
             {activeTab === 'plans' && PRO_PLANS.map((plan) => (
-              <div key={plan.id} style={{ background: '#EEF3EC', borderRadius: '12px', border: '1px solid rgba(23,64,44,0.06)', padding: '16px', marginBottom: '12px' }}>
+              <div key={plan.id} className="glass" style={{ borderRadius: '12px', padding: '16px', marginBottom: '12px' }}>
                 <h3 style={{ fontSize: '16px', fontWeight: 700, color: '#17402C', marginBottom: '4px' }}>{plan.name}</h3>
                 <p style={{ fontSize: '13px', color: 'rgba(23,64,44,0.5)', marginBottom: '8px' }}>{plan.description}</p>
                 <p style={{ fontSize: '28px', fontWeight: 800, color: '#17402C', marginBottom: '12px' }}>{plan.price}€<span style={{ fontSize: '13px', fontWeight: 400 }}>/{plan.period}</span></p>
                 <ul style={{ marginBottom: '12px' }}>{plan.features.map((f) => <li key={f} style={{ fontSize: '13px', color: 'rgba(23,64,44,0.7)', padding: '3px 0' }}>✓ {f}</li>)}</ul>
-                <button onClick={() => setShowContactModal(true)} style={{ width: '100%', padding: '10px', borderRadius: '10px', background: '#17402C', color: 'white', border: 'none', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}>Choisir cette offre</button>
+                <button onClick={() => setShowContactModal(true)} className="glass-capsule-btn primary" style={{ width: '100%' }}>Choisir cette offre</button>
               </div>
             ))}
-            <button onClick={() => setShowContactModal(true)} style={{ width: '100%', padding: '14px', background: '#17402C', color: 'white', border: 'none', borderRadius: '12px', fontSize: '14px', fontWeight: 600, cursor: 'pointer' }}>Demander un accès pro</button>
+            <button onClick={() => setShowContactModal(true)} className="glass-capsule-btn primary" style={{ width: '100%' }}>Demander un accès pro</button>
           </div>
         </MobilePageShell>
         
@@ -77,8 +77,8 @@ export default function B2BPage() {
             <div className="bg-card rounded-2xl border border-border p-6 max-w-md w-full" onClick={(e) => e.stopPropagation()}>
               {!contactSent ? <>
                 <h3 className="font-display font-700 text-foreground text-lg mb-4">Demande d&apos;accès professionnel</h3>
-                <button onClick={() => setContactSent(true)} className="btn-primary w-full justify-center py-3">Envoyer la demande</button>
-              </> : <div className="text-center py-8"><h3 className="font-display font-700 text-foreground text-lg mb-2">Demande envoyée !</h3><button onClick={() => { setShowContactModal(false); setContactSent(false); }} className="btn-primary justify-center px-8 py-3">Fermer</button></div>}
+                <button onClick={() => setContactSent(true)} className="glass-capsule-btn primary w-full justify-center py-3">Envoyer la demande</button>
+              </> : <div className="text-center py-8"><h3 className="font-display font-700 text-foreground text-lg mb-2">Demande envoyée !</h3><button onClick={() => { setShowContactModal(false); setContactSent(false); }} className="glass-capsule-btn primary justify-center px-8 py-3">Fermer</button></div>}
             </div>
           </div>
         )}

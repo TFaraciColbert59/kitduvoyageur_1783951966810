@@ -1,6 +1,8 @@
 'use client';
 
 import React from 'react';
+import LiquidGlass from '@/components/glass/LiquidGlass';
+import { cn } from '@/lib/utils';
 
 interface GlassIconButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   icon?: React.ReactNode;
@@ -11,51 +13,97 @@ interface GlassIconButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElem
   badge?: React.ReactNode;
 }
 
+const SIZE_PX: Record<'sm' | 'md' | 'lg', number> = { sm: 28, md: 32, lg: 36 };
+
+/**
+ * Bouton icône rond — pile LiquidGlass complète (référence section 4) :
+ * warp + double liseré + glow + réfraction budgétée + élasticité.
+ * Valeurs pilotées par les tokens --btn-* (tokens.css).
+ */
 export default function GlassIconButton({
   icon,
   active = false,
-  activeClassName = '!bg-[#17402C] !text-white !border-emerald-700/80 !shadow-md',
+  activeClassName = '',
   size = 'md',
   count,
   badge,
   className = '',
+  style,
+  disabled,
+  onClick,
   children,
+  type = 'button',
   ...props
 }: GlassIconButtonProps) {
-  const sizeClasses = {
-    sm: 'w-7 h-7 text-xs',
-    md: 'w-8 h-8 text-sm',
-    lg: 'w-9 h-9 text-base',
-  };
-
   const isCountMode = count !== undefined && count !== null;
+  const px = SIZE_PX[size];
 
   return (
-    <button
-      type="button"
-      className={`glass-circle-btn ${
-        isCountMode
-          ? 'h-8 px-2.5 gap-1.5'
-          : sizeClasses[size]
-      } ${
-        active ? activeClassName : ''
-      } ${className}`}
+    <LiquidGlass
+      as="button"
       {...props}
+      type={type}
+      disabled={disabled}
+      aria-pressed={active || undefined}
+      onClick={onClick}
+      className={cn('lkv-button-primitive touch-manipulation', active ? activeClassName : '', className)}
+      cornerRadius={999}
+      displacementScale={70}
+      blurAmount={6}
+      saturation={160}
+      aberrationIntensity={2}
+      priority="media"
+      elasticity={0.3}
+      glassTint={active ? 'var(--btn-tint-solid)' : 'var(--btn-tint)'}
+      shadow="var(--btn-shadow)"
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        minWidth: '44px',
+        minHeight: '44px',
+        width: isCountMode ? undefined : `${px}px`,
+        height: `${px}px`,
+        padding: isCountMode ? '0 10px' : 0,
+        border: 'none',
+        color: 'var(--btn-content)',
+        fontWeight: 700,
+        fontSize: '11px',
+        cursor: disabled ? 'not-allowed' : 'pointer',
+        opacity: disabled ? 0.45 : 1,
+        WebkitTapHighlightColor: 'transparent',
+        userSelect: 'none',
+        ...style,
+      }}
     >
-      {icon}
-      {children}
-
-      {isCountMode && (
-        <span className="text-[11px] font-mono font-bold tracking-tight text-[#17402C]">
-          {count}
-        </span>
-      )}
-
-      {badge && (
-        <span className="absolute -top-1 -right-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-forest-600 text-[8px] font-bold text-white shadow-xs">
-          {badge}
-        </span>
-      )}
-    </button>
+      <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '6px', lineHeight: 1, position: 'relative' }}>
+        {icon}
+        {children}
+        {isCountMode && <span style={{ fontVariantNumeric: 'tabular-nums' }}>{count}</span>}
+        {badge && (
+          <span
+            aria-hidden="true"
+            style={{
+              position: 'absolute',
+              top: '-10px',
+              right: '-10px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              height: '14px',
+              minWidth: '14px',
+              padding: '0 3px',
+              borderRadius: '999px',
+              background: '#17402C',
+              color: '#fff',
+              fontSize: '8px',
+              fontWeight: 700,
+            }}
+          >
+            {badge}
+          </span>
+        )}
+      </span>
+    </LiquidGlass>
   );
 }

@@ -79,7 +79,7 @@ export function StepsTimeline({ steps, dayIndex, phase }: StepsTimelineProps) {
           {startStep ? (
             <Link
               href="/hub/itineraire"
-              className="glass-sub-card rounded-xl border-2 border-[var(--lkv-primary)]/35 p-3 space-y-1.5 block hover:bg-white transition-colors cursor-pointer"
+              className="glass-capsule-btn primary flex w-full flex-col !items-stretch !justify-start !rounded-2xl !p-3 space-y-1.5 transition-colors cursor-pointer"
               aria-label={`Point de départ : ${startStep.location_name ?? startStep.title}`}
             >
               <div className="flex items-center justify-between gap-2">
@@ -130,7 +130,7 @@ export function StepsTimeline({ steps, dayIndex, phase }: StepsTimelineProps) {
               <Link
                 key={step.id}
                 href="/hub/itineraire"
-                className="glass-sub-card rounded-xl border border-white/40 p-3 space-y-1.5 block hover:bg-white/80 transition-colors cursor-pointer"
+                className="glass-capsule-btn flex w-full flex-col !items-stretch !justify-start !rounded-2xl !p-3 space-y-1.5 transition-colors cursor-pointer"
                 aria-label={`Étape ${step.order_index + 1} du jour ${step.day_number} : ${step.title}`}
               >
                 <div className="flex items-center justify-between gap-2">

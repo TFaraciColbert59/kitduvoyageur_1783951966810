@@ -60,7 +60,7 @@ export function GearPhotoCarousel({ cards, onSelect, heading = 'Équipement du s
             onClick={() => scrollByCard(-1)}
             disabled={!canLeft}
             aria-label="Éléments précédents"
-            className="glass-sub-card flex h-10 w-10 items-center justify-center rounded-full text-[var(--lkv-primary)] transition-transform active:scale-[0.94] disabled:opacity-40"
+            className="glass-circle-btn h-10 w-10 shrink-0 transition-transform active:scale-[0.94] disabled:opacity-40"
           >
             <ArrowLeft size={16} aria-hidden="true" />
           </button>
@@ -69,7 +69,7 @@ export function GearPhotoCarousel({ cards, onSelect, heading = 'Équipement du s
             onClick={() => scrollByCard(1)}
             disabled={!canRight}
             aria-label="Éléments suivants"
-            className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--lkv-primary)] text-white shadow-sm transition-transform active:scale-[0.94] disabled:opacity-40"
+            className="glass-circle-btn primary h-10 w-10 shrink-0 transition-transform active:scale-[0.94] disabled:opacity-40"
           >
             <ArrowRight size={16} aria-hidden="true" />
           </button>

@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
+import Icon from '@/components/ui/AppIcon';
 
 interface NaviguerButtonProps {
   isActive: boolean;
@@ -17,32 +18,14 @@ export default function NaviguerButton({ isActive }: NaviguerButtonProps) {
     >
       {/* Elevated circle */}
       <div
-        className="flex items-center justify-center rounded-full transition-all duration-150"
+        className="glass-circle-btn primary flex items-center justify-center rounded-full transition-all duration-150"
         style={{
           width: '52px',
           height: '52px',
-          background: isActive
-            ? 'linear-gradient(135deg, #17402C 0%, #365233 100%)'
-            : 'linear-gradient(135deg, #17402C 0%, #5B7F55 100%)',
-          boxShadow: isActive
-            ? '0 4px 16px rgba(23, 64, 44, 0.45), 0 2px 4px rgba(0,0,0,0.15)'
-            : '0 4px 12px rgba(23, 64, 44, 0.3), 0 2px 4px rgba(0,0,0,0.12)',
           transform: isActive ? 'scale(1.05)' : 'scale(1)',
         }}
       >
-        <svg
-          width="24"
-          height="24"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="white"
-          strokeWidth="2.2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          aria-hidden="true"
-        >
-          <polygon points="3 11 22 2 13 21 11 13 3 11" />
-        </svg>
+        <Icon name="send" size={24} />
       </div>
       <span
         className="text-[10px] font-medium leading-none"

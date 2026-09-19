@@ -45,7 +45,7 @@ export default function ClubTeamCard({
               triggerHaptic('light');
               onViewAll();
             }}
-            className="text-[11px] font-mono font-bold text-[#5C6B5E] hover:text-[#17402C]"
+            className="glass-capsule-btn sm font-mono font-bold"
           >
             Tous les membres →
           </button>
@@ -61,7 +61,7 @@ export default function ClubTeamCard({
           admins.slice(0, 4).map((admin) => (
             <div
               key={admin.id}
-              className="flex items-center gap-3 p-2.5 rounded-2xl bg-white/70 border border-white/80 shadow-2xs"
+              className="glass-sub-card flex items-center gap-3 p-2.5 rounded-2xl"
             >
               <Link
                 href={admin.user_id ? `/profil/${admin.user_id}` : '#'}
@@ -113,7 +113,7 @@ export default function ClubTeamCard({
           <button
             type="button"
             onClick={onViewAll}
-            className="text-[11px] text-[#5C6B5E] font-medium text-center w-full block hover:underline pt-1"
+            className="glass-capsule-btn sm w-full font-medium"
           >
             + {admins.length - 4} autre{admins.length - 4 > 1 ? 's' : ''} organisateur{admins.length - 4 > 1 ? 's' : ''}
           </button>

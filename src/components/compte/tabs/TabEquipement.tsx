@@ -22,7 +22,7 @@ export default function TabEquipement() {
   return (
     <div className="space-y-4">
       {/* Header & Synthèse du Sac */}
-      <div className="bg-white rounded-3xl p-5 sm:p-6 border border-black/[0.06] shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="glass rounded-3xl p-5 sm:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3.5">
           <div className="w-12 h-12 rounded-2xl bg-[#E1EBDD] flex items-center justify-center text-2xl shrink-0">
             🎒
@@ -41,13 +41,13 @@ export default function TabEquipement() {
         <div className="flex items-center gap-2">
           <Link
             href="/compte"
-            className="px-4 py-2.5 rounded-xl bg-[#F4F1EB] hover:bg-[#EBE7DF] text-[#17402C] text-xs font-bold transition-colors"
+            className="glass-capsule-btn text-xs font-bold"
           >
             Mon Compte
           </Link>
           <Link
             href="/boutique"
-            className="px-4 py-2.5 rounded-xl bg-[#17402C] text-white text-xs font-bold  active:scale-95 transition-transform"
+            className="glass-capsule-btn primary text-xs font-bold"
           >
             + Compléter
           </Link>
@@ -56,7 +56,7 @@ export default function TabEquipement() {
 
       {/* Liste des équipements */}
       {equipment.length === 0 ? (
-        <div className="bg-white rounded-3xl p-10 text-center border border-dashed border-black/10">
+        <div className="glass rounded-3xl p-10 text-center border border-dashed border-black/10">
           <p className="text-4xl mb-3">🎒</p>
           <h4 className="font-bold text-sm text-[#17402C]">Votre sac est vide</h4>
           <p className="text-xs text-[#5A7064] max-w-sm mx-auto mt-1 mb-5">
@@ -64,7 +64,7 @@ export default function TabEquipement() {
           </p>
           <Link
             href="/boutique"
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#17402C] text-white text-xs font-bold "
+            className="glass-capsule-btn primary inline-flex items-center gap-2 text-xs font-bold"
           >
             Explorer la boutique & équipement
           </Link>

@@ -11,6 +11,7 @@ import ReportBlockModal, { ReportTarget } from '@/components/ui/ReportBlockModal
 import { GlassCard } from '@/components/ui/GlassCard';
 import { Badge } from '@/components/ui/Badge';
 import { GlassSheet } from '@/components/ui/GlassSheet';
+import Icon from '@/components/ui/AppIcon';
 
 interface Props {
   countryIso: string;
@@ -484,7 +485,7 @@ export default function BouteilleALaMer({ countryIso, countryName }: Props) {
                 }`}
                 title={user && !canCreate ? `Trust score requis : ${CREATION_THRESHOLD}` : ''}
               >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path><line x1="12" y1="5" x2="12" y2="15"></line><line x1="8" y1="9" x2="12" y2="5"></line><line x1="16" y1="9" x2="12" y2="5"></line></svg>
+                <Icon name="message-square" size={14} />
                 Lancer bouteille à la mer
               </button>
               

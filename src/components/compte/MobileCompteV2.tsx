@@ -9,6 +9,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { createClient } from '@/lib/supabase/client';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import SmartImage from '@/components/ui/SmartImage';
+import Icon from '@/components/ui/AppIcon';
+import { calculateLevel } from '@/features/progression/domain/rules';
 
 /* ─── Tokens Design System LKDV (palette officielle Liquid Glass v2.0) ─── */
 const C = {
@@ -342,10 +344,12 @@ export default function MobileCompteV2() {
   const handle = `@${handleName}`;
   const bio = profile?.bio || 'Voyageur passionné d’aventure et de grands espaces.';
   const location = profile?.location || '';
-  const levelNum = profile?.level ?? 1;
-  const levelTitle = LEVEL_NAMES[levelNum] || 'Aventurier';
-  const currentXp = profile?.xp ?? 0;
-  const nextLevelXp = Math.max(levelNum * 500, 500);
+  const currentPoints = profile?.lifetime_points ?? profile?.points ?? profile?.xp ?? 0;
+  const calculatedLevel = calculateLevel(currentPoints);
+  const levelNum = calculatedLevel.level;
+  const levelTitle = calculatedLevel.title;
+  const nextLevelPoints = calculatedLevel.nextLevelPoints;
+  const progressPct = calculatedLevel.progressPct;
   const trustScore = profile?.trust_score ?? 50;
   const avatarUrl = profile?.avatar_url || (user?.user_metadata?.avatar_url as string) || '/assets/images/no_image.png';
 
@@ -465,11 +469,10 @@ export default function MobileCompteV2() {
             triggerHaptic('light');
             setRewardModalOpen(true);
           }}
-          className="flex items-center gap-1.5 text-base font-bold tracking-tight text-left focus:outline-none cursor-pointer"
-          style={{ color: C.ink900 }}
+          className="glass-capsule-btn !min-w-0 !min-h-0 !py-1.5 !px-3 text-base font-bold tracking-tight text-left cursor-pointer"
         >
           <span>{handleName}</span>
-          <span className="glass-pill font-mono bg-white/80 border-white">
+          <span className="glass-pill font-mono">
             Niv.{String(levelNum).padStart(2, '0')}
           </span>
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
@@ -483,13 +486,10 @@ export default function MobileCompteV2() {
             href="/hub/alertes"
             onClick={() => triggerHaptic('light')}
             aria-label="Alertes et notifications"
-            className="w-9 h-9 rounded-full flex items-center justify-center transition-all bg-white/80 border border-white active:scale-90 shadow-2xs cursor-pointer"
+            className="glass-circle-btn !w-9 !h-9 !min-w-9 !min-h-9 cursor-pointer"
             style={{ color: C.ink900 }}
           >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
-              <path d="M13.7 21a2 2 0 0 1-3.4 0" />
-            </svg>
+            <Icon name="bell" size={18} />
           </Link>
           <button
             onClick={() => {
@@ -497,14 +497,9 @@ export default function MobileCompteV2() {
               setMenuOpen(true);
             }}
             aria-label="Options et paramètres"
-            className="w-9 h-9 rounded-full flex items-center justify-center transition-all bg-white/80 border border-white active:scale-90 shadow-2xs cursor-pointer"
-            style={{ color: C.ink900 }}
+            className="glass-circle-btn !w-9 !h-9 !min-w-9 !min-h-9 cursor-pointer"
           >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-              <circle cx="5" cy="12" r="1.5" />
-              <circle cx="12" cy="12" r="1.5" />
-              <circle cx="19" cy="12" r="1.5" />
-            </svg>
+            <Icon name="ellipsis" size={18} />
           </button>
         </div>
       </header>
@@ -545,13 +540,9 @@ export default function MobileCompteV2() {
                   router.push('/compte/modifier');
                 }}
                 aria-label="Modifier la photo"
-                className="absolute bottom-0 right-0 w-6 h-6 rounded-full text-white flex items-center justify-center border-2 border-white active:scale-90 transition-transform shadow-2xs cursor-pointer"
-                style={{ background: C.forest800 }}
+                className="absolute bottom-0 right-0 glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8 !p-0 cursor-pointer"
               >
-                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
-                  <circle cx="12" cy="13" r="4" />
-                </svg>
+                <Icon name="image-plus" size={10} />
               </button>
             </div>
 
@@ -607,7 +598,7 @@ export default function MobileCompteV2() {
               </svg>
               <span
                 onClick={() => setRewardModalOpen(true)}
-                className="glass-pill cursor-pointer bg-white/80 border-white hover:bg-white transition-all active:scale-95"
+                className="glass-capsule-btn !min-h-0 !min-w-0 !py-1 !px-2.5 text-[10px] font-mono font-bold cursor-pointer transition-all active:scale-95"
               >
                 🛡️ Trust {trustScore}/100
               </span>
@@ -649,6 +640,35 @@ export default function MobileCompteV2() {
             </div>
           </div>
 
+          {/* Bannière Ma Progression & Classements */}
+          <Link
+            href="/progression"
+            onClick={() => triggerHaptic('selection')}
+            className="mt-3 flex items-center justify-between p-3 rounded-2xl border border-[#17402C]/10 bg-white/75 hover:bg-white/95 transition-all active:scale-[0.98] shadow-2xs cursor-pointer min-h-[52px]"
+          >
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="w-10 h-10 rounded-xl bg-[#17402C] text-white flex items-center justify-center text-lg shrink-0 shadow-2xs">
+                {calculatedLevel.badge || '🏆'}
+              </div>
+              <div className="min-w-0">
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <span className="text-xs font-bold truncate" style={{ color: C.ink900 }}>
+                    Ma progression & classements
+                  </span>
+                  <span className="text-[10px] font-mono px-1.5 py-0.2 rounded-full bg-[#17402C]/10 text-[#17402C] font-semibold">
+                    Niv. {calculatedLevel.level}
+                  </span>
+                </div>
+                <p className="text-[11px] truncate" style={{ color: C.ink500 }}>
+                  {currentPoints.toLocaleString('fr-FR')} Points LKDV · {calculatedLevel.title}
+                </p>
+              </div>
+            </div>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={C.forest800} strokeWidth="2.5" strokeLinecap="round" className="shrink-0 ml-1">
+              <path d="M9 18l6-6-6-6" />
+            </svg>
+          </Link>
+
           {/* Actions Rapides */}
           <div className="flex items-center gap-2 pt-4">
             <Link
@@ -656,22 +676,14 @@ export default function MobileCompteV2() {
               onClick={() => triggerHaptic('light')}
               className="glass-capsule-btn primary flex-1 !py-2.5 text-xs font-bold"
             >
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                <path d="M17 3l4 4L8 20l-5 1 1-5L17 3z" />
-              </svg>
+              <Icon name="pencil" size={13} />
               Modifier
             </Link>
             <button
               onClick={handleShareProfile}
-              className="glass-capsule-btn secondary flex-1 !py-2.5 text-xs font-bold"
+              className="glass-capsule-btn flex-1 !py-2.5 text-xs font-bold"
             >
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                <circle cx="18" cy="5" r="3" />
-                <circle cx="6" cy="12" r="3" />
-                <circle cx="18" cy="19" r="3" />
-                <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
-                <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
-              </svg>
+              <Icon name="share2" size={13} />
               Partager
             </button>
             <button
@@ -680,7 +692,7 @@ export default function MobileCompteV2() {
                 setMenuOpen(true);
               }}
               aria-label="Options"
-              className="glass-capsule-btn w-10 !py-2.5"
+              className="glass-circle-btn !w-10 !h-10 !min-w-10 !min-h-10 !p-0"
             >
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
                 <circle cx="12" cy="12" r="3" />
@@ -767,15 +779,15 @@ export default function MobileCompteV2() {
                     triggerHaptic('selection');
                     setTab(t.id);
                   }}
-                  className={`relative px-3 py-1.5 text-xs font-extrabold whitespace-nowrap rounded-xl transition-all cursor-pointer flex items-center gap-1.5 z-10 ${
-                    isActive ? 'text-white' : 'text-[#17402C]/70 hover:text-[#17402C] hover:bg-white/40'
+                  className={`glass-capsule-btn !min-w-0 !min-h-0 !py-1.5 !px-3 text-xs font-extrabold whitespace-nowrap transition-all cursor-pointer z-10 ${
+                    isActive ? 'primary' : ''
                   }`}
                 >
                   {isActive && (
                     <motion.div
                       layoutId="compte-tab-active"
                       transition={{ type: 'spring', stiffness: 500, damping: 35 }}
-                      className="absolute inset-0 rounded-xl bg-[#17402C] shadow-xs -z-10"
+                      className="absolute inset-0 rounded-full bg-[#17402C] shadow-xs -z-10"
                     />
                   )}
                   <span className="text-[11px]">{t.icon}</span>
@@ -794,10 +806,8 @@ export default function MobileCompteV2() {
                   setViewMode('grid');
                 }}
                 aria-label="Vue Grille"
-                className={`p-1.5 rounded-lg transition-all cursor-pointer ${
-                  viewMode === 'grid'
-                    ? 'bg-[#17402C] text-white shadow-2xs'
-                    : 'text-[#17402C]/50 hover:bg-white/60'
+                className={`glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8 !p-0 transition-all cursor-pointer ${
+                  viewMode === 'grid' ? 'primary' : ''
                 }`}
               >
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
@@ -813,10 +823,8 @@ export default function MobileCompteV2() {
                   setViewMode('list');
                 }}
                 aria-label="Vue Liste"
-                className={`p-1.5 rounded-lg transition-all cursor-pointer ${
-                  viewMode === 'list'
-                    ? 'bg-[#17402C] text-white shadow-2xs'
-                    : 'text-[#17402C]/50 hover:bg-white/60'
+                className={`glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8 !p-0 transition-all cursor-pointer ${
+                  viewMode === 'list' ? 'primary' : ''
                 }`}
               >
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
@@ -859,9 +867,7 @@ export default function MobileCompteV2() {
               className="glass-capsule-btn primary !py-2 !px-3.5 text-xs font-bold"
             >
               <span>Détails</span>
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                <path d="M5 12h14M12 5l7 7-7 7" />
-              </svg>
+              <Icon name="arrow-right" size={12} />
             </Link>
           </div>
 
@@ -874,10 +880,8 @@ export default function MobileCompteV2() {
                   triggerHaptic('light');
                   setSelectedGearCat(cat.key);
                 }}
-                className={`glass-pill whitespace-nowrap !py-1.5 cursor-pointer ${
-                  selectedGearCat === cat.key
-                    ? '!bg-[#17402C] !text-white !border-[#17402C]'
-                    : '!bg-white/80 !border-white/80'
+                className={`glass-capsule-btn whitespace-nowrap !py-1.5 !min-h-0 cursor-pointer ${
+                  selectedGearCat === cat.key ? 'primary' : ''
                 }`}
               >
                 <span>{cat.icon}</span>
@@ -962,9 +966,7 @@ export default function MobileCompteV2() {
                 className="glass-capsule-btn primary inline-flex !py-2.5 text-xs font-bold"
               >
                 <span>{tab === 'carnets' ? 'Écrire un carnet' : 'Créer un voyage'}</span>
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                  <path d="M5 12h14M12 5l7 7-7 7" />
-                </svg>
+                <Icon name="arrow-right" size={12} />
               </Link>
             </div>
           ) : viewMode === 'grid' ? (
@@ -1140,28 +1142,32 @@ export default function MobileCompteV2() {
                     Niveau {levelNum} · {levelTitle}
                   </h3>
                 </div>
-                <button onClick={() => setRewardModalOpen(false)} className="p-1 rounded-full text-[#17402C]/40">
+                <button onClick={() => setRewardModalOpen(false)} className="glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8 !p-0">
                   ✕
                 </button>
               </div>
 
-              {/* Jauge d'XP */}
+              {/* Jauge de Points LKDV */}
               <div className="p-4 rounded-2xl" style={{ background: C.stone }}>
                 <div className="flex justify-between text-xs font-mono mb-1.5 font-semibold">
-                  <span style={{ color: C.forest800 }}>{currentXp} XP</span>
-                  <span style={{ color: C.ink500 }}>Objectif : {nextLevelXp} XP</span>
+                  <span style={{ color: C.forest800 }}>{currentPoints.toLocaleString('fr-FR')} pts LKDV</span>
+                  <span style={{ color: C.ink500 }}>
+                    {nextLevelPoints ? `Objectif : ${nextLevelPoints.toLocaleString('fr-FR')} pts` : 'Niveau Max'}
+                  </span>
                 </div>
                 <div className="w-full h-2.5 rounded-full overflow-hidden bg-[#17402C]/10">
                   <div
                     className="h-full rounded-full"
                     style={{
-                      width: `${Math.min(100, Math.round((currentXp / nextLevelXp) * 100))}%`,
+                      width: `${progressPct}%`,
                       background: `linear-gradient(90deg, ${C.forest800}, ${C.sage500})`,
                     }}
                   />
                 </div>
                 <p className="text-[11px] font-serif italic mt-2" style={{ color: C.ink700 }}>
-                  Plus que {Math.max(0, nextLevelXp - currentXp)} XP pour débloquer le rang supérieur.
+                  {nextLevelPoints
+                    ? `Plus que ${Math.max(0, nextLevelPoints - currentPoints).toLocaleString('fr-FR')} points LKDV pour débloquer le rang supérieur.`
+                    : 'Félicitations, vous avez atteint le niveau maximal de progression permanente !'}
                 </p>
               </div>
 
@@ -1205,14 +1211,14 @@ export default function MobileCompteV2() {
               </div>
 
               <Link
-                href="/fidelite"
+                href="/progression"
                 onClick={() => {
                   triggerHaptic('selection');
                   setRewardModalOpen(false);
                 }}
                 className="glass-capsule-btn primary w-full"
               >
-                Voir toutes mes récompenses & avantages
+                Voir ma progression & les classements
               </Link>
             </motion.div>
           </div>
@@ -1250,7 +1256,7 @@ export default function MobileCompteV2() {
                 </h3>
                 <button
                   onClick={() => setMenuOpen(false)}
-                  className="w-7 h-7 rounded-full flex items-center justify-center text-[#17402C]/50"
+                  className="glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8 !p-0"
                 >
                   ✕
                 </button>
@@ -1259,9 +1265,10 @@ export default function MobileCompteV2() {
               <div className="space-y-1">
                 {([
                   { label: 'Modifier mon profil', icon: '👤', href: '/compte/modifier' },
+                  { label: 'Ma progression & classements', icon: '🏆', href: '/progression' },
                   { label: 'Mon Compte', icon: '🎒', href: '/compte' },
                   { label: 'Mes commandes & factures', icon: '📦', href: '/boutique' },
-                  { label: 'Programme Fidélité & Récompenses', icon: '🏆', href: '/fidelite' },
+                  { label: 'Programme Fidélité & Récompenses', icon: '✨', href: '/fidelite' },
                   { label: 'Gains & Parrainage', icon: '💎', href: '/recompenses' },
                   { label: 'Mes alertes & notifications', icon: '🔔', href: '/hub/alertes' },
                   { label: 'Confidentialité & Données', icon: '🔒', href: '/politique-confidentialite' },
@@ -1296,7 +1303,7 @@ export default function MobileCompteV2() {
                         router.push('/connexion');
                       }
                     }}
-                    className="w-full flex items-center gap-3 p-3 rounded-xl text-xs font-bold text-[#A8443A] active:bg-[#A8443A]/10 transition-colors"
+                    className="glass-capsule-btn danger w-full text-xs font-bold"
                   >
                     <span>🚪</span>
                     <span>Se déconnecter</span>

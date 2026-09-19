@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import Icon from '@/components/ui/Icon';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
@@ -312,7 +312,7 @@ export function AdventureSwitcher({
               closeAll();
             }}
             disabled={isPending}
-            className="text-[10.5px] font-semibold text-[var(--lkv-danger)] hover:underline cursor-pointer"
+            className="glass-capsule-btn !min-h-[44px] !px-3 !py-1 !text-[10.5px] font-semibold !text-[var(--lkv-danger)] cursor-pointer disabled:opacity-50"
           >
             Détacher l&apos;aventure active
           </button>
@@ -322,7 +322,7 @@ export function AdventureSwitcher({
         <button
           type="button"
           onClick={() => reloadAdventures()}
-          className="inline-flex items-center gap-1 text-[10.5px] font-semibold text-[var(--lkv-text-secondary)] hover:text-[var(--lkv-text-primary)] cursor-pointer"
+          className="glass-capsule-btn !min-h-[44px] !px-3 !py-1 inline-flex items-center gap-1 !text-[10.5px] font-semibold cursor-pointer"
           aria-label="Recharger la liste des aventures"
         >
           <Icon name="refresh-cw" size={11} />
@@ -404,24 +404,14 @@ export function AdventureSwitcher({
             onClick={() => {
               if (!isMobile) setOpen((v) => !v);
             }}
-            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full glass-capsule-btn text-xs font-semibold text-[var(--lkv-text-primary)] min-h-[44px] cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)]"
+            className="inline-flex items-center gap-2 px-3 py-1.5 glass-capsule-btn text-xs font-semibold min-h-[44px] cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)]"
             aria-haspopup="dialog"
             aria-expanded={open}
             title="Changer d'aventure (Ctrl/Cmd+K ou J)"
           >
-            <Icon
-              name="compass"
-              size={14}
-              className="text-[var(--lkv-secondary)]"
-              aria-hidden="true"
-            />
+            <Icon name="compass" size={14} aria-hidden="true" />
             <span className="max-w-[160px] truncate hidden sm:inline">{triggerLabel}</span>
-            <Icon
-              name="chevrons-up-down"
-              size={12}
-              className="text-[var(--lkv-text-muted)]"
-              aria-hidden="true"
-            />
+            <Icon name="chevrons-up-down" size={12} aria-hidden="true" />
           </button>
         </div>
       )}
@@ -457,16 +447,11 @@ export function AdventureSwitcher({
             onClick={() => {
               if (variant === 'mobile' && isMobile) setSheetOpen(true);
             }}
-            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-full glass-capsule-btn text-xs font-semibold text-[var(--lkv-text-primary)] min-h-[44px] cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)] max-w-full"
+            className="inline-flex items-center gap-1.5 px-3 py-2 glass-capsule-btn text-xs font-semibold min-h-[44px] cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)] max-w-full"
             aria-haspopup="dialog"
             aria-expanded={sheetOpen}
           >
-            <Icon
-              name="compass"
-              size={14}
-              className="shrink-0 text-[var(--lkv-secondary)]"
-              aria-hidden="true"
-            />
+            <Icon name="compass" size={14} className="shrink-0" aria-hidden="true" />
             <span className="max-w-[110px] truncate">{triggerLabel}</span>
           </button>
         </div>

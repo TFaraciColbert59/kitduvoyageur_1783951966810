@@ -89,7 +89,7 @@ export function MomentMapCard({
               aria-label="Agrandir la carte"
               aria-haspopup="dialog"
               aria-expanded={open}
-              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/70 bg-white/80 text-[var(--lkv-primary)] shadow-2xs transition-transform active:scale-[0.94] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)]"
+              className="glass-circle-btn h-10 w-10 shrink-0 transition-transform active:scale-[0.94] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)]"
             >
               <Expand size={16} aria-hidden="true" />
             </button>

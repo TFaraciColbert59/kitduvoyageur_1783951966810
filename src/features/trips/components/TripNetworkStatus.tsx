@@ -95,9 +95,7 @@ export function TripNetworkStatus({
         onClick={handleManualSync}
         disabled={isPending || !onSyncAction}
         className={cn(
-          'inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium',
-          'bg-[var(--lkv-warning-dark)]/10 text-[var(--lkv-warning-dark)] border border-[var(--lkv-warning-dark)]/30',
-          'shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--lkv-warning-dark)]/40',
+          'glass-capsule-btn flex items-center gap-1.5 !px-3 !py-1 text-xs font-medium disabled:opacity-60',
           className
         )}
         role="status"

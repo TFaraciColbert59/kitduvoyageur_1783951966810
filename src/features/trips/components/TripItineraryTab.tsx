@@ -339,7 +339,7 @@ export function TripItineraryTab({ trip }: TripItineraryTabProps) {
                                 metadata={extra.metadata}
                               />
                             ) : (
-                              <div className="flex items-start gap-2 rounded-xl bg-white/50 px-3 py-2">
+                              <div className="glass-sub-card flex items-start gap-2 rounded-xl px-3 py-2">
                                 <span className="shrink-0 text-[11px] font-bold tabular-nums text-lkv-secondary">
                                   {extra.start_time?.slice(0, 5) ?? '—'}
                                 </span>

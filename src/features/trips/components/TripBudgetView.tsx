@@ -199,7 +199,7 @@ export function TripBudgetView({ trip, initialDay }: TripBudgetViewProps) {
           <span>{errorMsg}</span>
           <button
             onClick={() => setErrorMsg(null)}
-            className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-full text-[var(--lkv-text-muted)] hover:text-[var(--lkv-text-primary)]"
+            className="glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8 flex items-center justify-center"
             aria-label="Fermer le message"
           >
             ×
@@ -457,7 +457,7 @@ export function TripBudgetView({ trip, initialDay }: TripBudgetViewProps) {
                             setEditTarget(null);
                             setIsAddOpen(true);
                           }}
-                          className="min-h-[44px] w-full flex items-center justify-center gap-2 rounded-[var(--lkv-radius-md)] border border-dashed border-[var(--lkv-primary)]/40 text-[var(--lkv-primary)] text-xs font-semibold hover:bg-[var(--lkv-primary)]/5 transition-all"
+                          className="glass-capsule-btn w-full flex items-center justify-center gap-2 text-xs font-semibold transition-all"
                         >
                           <Icon name="plus" size={14} /> Enregistrer une dépense du jour
                         </button>
@@ -664,8 +664,8 @@ export function TripBudgetView({ trip, initialDay }: TripBudgetViewProps) {
                     key={c.user_id}
                     onClick={() => handleSettle(settleTarget, c.user_id)}
                     disabled={isPending}
-                    className={`min-h-[44px] w-full glass-sub-card px-4 py-2.5 rounded-[var(--lkv-radius-md)] border border-white/60 text-sm font-semibold text-left transition-all hover:border-[var(--lkv-primary)]/40 ${
-                      c.user_id === trip.user_id ? 'ring-1 ring-[var(--lkv-primary)]/30' : ''
+                    className={`glass-capsule-btn w-full !justify-start !rounded-2xl !px-4 !py-2.5 text-sm font-semibold text-left transition-all ${
+                      c.user_id === trip.user_id ? 'primary' : ''
                     }`}
                   >
                     {c.profile?.full_name || `Voyageur (${c.user_id.slice(0, 6)})`}

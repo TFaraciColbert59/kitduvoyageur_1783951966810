@@ -56,7 +56,7 @@ function StarRating({ value, onChange }: { value: number; onChange: (v: number) 
           key={star}
           type="button"
           onClick={() => onChange(star)}
-          className={`transition-colors ${star <= value ? 'text-amber-400' : 'text-white/20 hover:text-amber-300'}`}
+          className={`glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8 ${star <= value ? 'primary' : ''}`}
         >
           <Icon name="StarIcon" size={20} variant="solid" />
         </button>
@@ -85,7 +85,7 @@ function NewReportModal({ onClose, onSave }: { onClose: () => void; onSave: (f: 
             <h2 className="font-display font-700 text-foreground text-lg">Nouveau rapport d&apos;expédition</h2>
             <p className="text-xs text-muted-foreground mt-0.5">Étape {step} / 3</p>
           </div>
-          <button onClick={onClose} className="p-2 rounded-lg hover:bg-muted transition-colors">
+          <button onClick={onClose} className="glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8">
             <Icon name="XMarkIcon" size={18} />
           </button>
         </div>
@@ -111,7 +111,7 @@ function NewReportModal({ onClose, onSave }: { onClose: () => void; onSave: (f: 
                 <label className="text-xs font-600 text-muted-foreground uppercase tracking-wider block mb-1.5">Type d&apos;expédition</label>
                 <div className="flex flex-wrap gap-2">
                   {EXPEDITION_TYPES.map((t) => (
-                    <button key={t} type="button" onClick={() => update('type', t)} className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${form.type === t ? 'bg-cyan-500 border-cyan-500 text-white' : 'border-border text-muted-foreground hover:border-cyan-500/40'}`}>{t}</button>
+                    <button key={t} type="button" onClick={() => update('type', t)} className={`glass-capsule-btn text-xs font-medium ${form.type === t ? 'primary' : ''}`}>{t}</button>
                   ))}
                 </div>
               </div>
@@ -169,12 +169,12 @@ function NewReportModal({ onClose, onSave }: { onClose: () => void; onSave: (f: 
 
         <div className="flex gap-3 p-5 border-t border-border">
           {step > 1 && (
-            <button onClick={() => setStep(step - 1)} className="btn-secondary flex-1 justify-center py-3">Retour</button>
+            <button onClick={() => setStep(step - 1)} className="glass-capsule-btn secondary flex-1 justify-center py-3">Retour</button>
           )}
           {step < 3 ? (
-            <button onClick={() => setStep(step + 1)} disabled={!canNext} className="btn-primary flex-1 justify-center py-3 disabled:opacity-40 disabled:cursor-not-allowed">Suivant</button>
+            <button onClick={() => setStep(step + 1)} disabled={!canNext} className="glass-capsule-btn primary flex-1 justify-center py-3 disabled:opacity-40 disabled:cursor-not-allowed">Suivant</button>
           ) : (
-            <button onClick={() => onSave(form)} className="btn-primary flex-1 justify-center py-3">
+            <button onClick={() => onSave(form)} className="glass-capsule-btn primary flex-1 justify-center py-3">
               <Icon name="CheckIcon" size={16} />
               Créer le rapport
             </button>
@@ -194,8 +194,8 @@ function ReportDetailModal({ report, onClose }: { report: PastReport; onClose: (
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={report.image} alt={report.alt} className="w-full h-full object-cover" />
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
-          <button onClick={onClose} className="absolute top-3 right-3 p-2 rounded-lg bg-black/50 hover:bg-black/70 transition-colors">
-            <Icon name="XMarkIcon" size={18} className="text-white" />
+          <button onClick={onClose} className="glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8 absolute top-3 right-3">
+            <Icon name="XMarkIcon" size={18} />
           </button>
           <div className="absolute bottom-3 left-4 right-4">
             <span className="px-2 py-0.5 bg-cyan-500 rounded-full text-xs font-bold text-white">{report.type}</span>
@@ -448,7 +448,7 @@ export default function RapportExpeditionPage() {
               </div>
               <button
                 onClick={() => setShowNewReportModal(true)}
-                className="flex items-center gap-2 px-5 py-3 bg-cyan-500 hover:bg-cyan-400 text-white rounded-xl font-medium transition-all  shadow-cyan-500/20 whitespace-nowrap flex-shrink-0"
+                className="glass-capsule-btn primary px-5 py-3 font-medium whitespace-nowrap flex-shrink-0"
               >
                 <Icon name="PlusIcon" size={18} variant="outline" />
                 Nouveau rapport
@@ -486,7 +486,7 @@ export default function RapportExpeditionPage() {
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`px-5 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === tab.id ? 'bg-cyan-500 text-white ' : 'text-white/50 hover:text-white'}`}
+                  className={`glass-capsule-btn px-5 py-2 text-sm font-medium ${activeTab === tab.id ? 'primary' : ''}`}
                 >
                   {tab.label}
                 </button>
@@ -509,7 +509,7 @@ export default function RapportExpeditionPage() {
                 <h2 className="font-display font-700 text-xl text-white">Mes expéditions ({reports.length})</h2>
                 <button
                   onClick={() => setShowNewReportModal(true)}
-                  className="flex items-center gap-2 px-4 py-2 bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 rounded-xl text-sm hover:bg-cyan-500/20 transition-all"
+                  className="glass-capsule-btn px-4 py-2 text-sm"
                 >
                   <Icon name="PlusIcon" size={14} variant="outline" />
                   Nouveau
@@ -534,7 +534,7 @@ export default function RapportExpeditionPage() {
                   </div>
                   <button
                     onClick={() => setShowNewReportModal(true)}
-                    className="flex items-center gap-2 px-5 py-3 bg-cyan-500 hover:bg-cyan-400 text-white rounded-xl font-medium transition-all"
+                    className="glass-capsule-btn primary px-5 py-3 font-medium"
                   >
                     <Icon name="PlusIcon" size={16} variant="outline" />
                     Créer mon premier rapport
@@ -672,7 +672,7 @@ export default function RapportExpeditionPage() {
                     <button
                       onClick={handleSend}
                       disabled={isLoading || !userInput.trim()}
-                      className="px-4 py-2.5 bg-cyan-500 rounded-xl text-white hover:bg-cyan-400 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                      className="glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8 disabled:opacity-40 disabled:cursor-not-allowed"
                     >
                       <Icon name="PaperAirplaneIcon" size={16} variant="outline" />
                     </button>
@@ -682,7 +682,7 @@ export default function RapportExpeditionPage() {
                       <button
                         key={prompt}
                         onClick={() => setUserInput(prompt)}
-                        className="px-3 py-1.5 bg-white/5 border border-border rounded-full text-xs text-white/50 hover:text-white hover:border-cyan-500/30 transition-all"
+                        className="glass-capsule-btn px-3 py-1.5 text-xs"
                       >
                         {prompt}
                       </button>
@@ -723,21 +723,8 @@ export default function RapportExpeditionPage() {
             </p>
             <button
               onClick={() => setShowNewReportModal(true)}
-              style={{
-                width: '100%',
-                padding: '12px',
-                background: '#17402C',
-                color: '#fff',
-                borderRadius: '12px',
-                fontSize: '14px',
-                fontWeight: 500,
-                border: 'none',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '8px',
-              }}
+              className="glass-capsule-btn primary"
+              style={{ width: '100%' }}
             >
               + Nouveau rapport
             </button>
@@ -745,21 +732,21 @@ export default function RapportExpeditionPage() {
 
           {/* Stats */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', padding: '12px 16px' }}>
-            <div style={{ padding: '12px', background: '#EEF3EC', borderRadius: '10px', border: '1px solid rgba(23,64,44,0.06)' }}>
+            <div className="glass" style={{ padding: '12px', borderRadius: '10px' }}>
               <p style={{ fontSize: '10px', color: '#6B7A72', margin: '0 0 2px 0' }}>Exp&eacute;ditions</p>
               <p style={{ fontSize: '20px', fontWeight: 700, color: '#17402C', margin: 0, fontFamily: 'ui-monospace, monospace' }}>{reports.length}</p>
             </div>
-            <div style={{ padding: '12px', background: '#EEF3EC', borderRadius: '10px', border: '1px solid rgba(23,64,44,0.06)' }}>
+            <div className="glass" style={{ padding: '12px', borderRadius: '10px' }}>
               <p style={{ fontSize: '10px', color: '#6B7A72', margin: '0 0 2px 0' }}>Score moyen</p>
               <p style={{ fontSize: '20px', fontWeight: 700, color: '#17402C', margin: 0, fontFamily: 'ui-monospace, monospace' }}>{reports.length > 0 ? `${avgScore}/100` : '\u2014'}</p>
             </div>
-            <div style={{ padding: '12px', background: '#EEF3EC', borderRadius: '10px', border: '1px solid rgba(23,64,44,0.06)' }}>
+            <div className="glass" style={{ padding: '12px', borderRadius: '10px' }}>
               <p style={{ fontSize: '10px', color: '#6B7A72', margin: '0 0 2px 0' }}>Budget total</p>
               <p style={{ fontSize: '20px', fontWeight: 700, color: totalBudgetDelta > 0 ? '#DC2626' : '#059669', margin: 0, fontFamily: 'ui-monospace, monospace' }}>
                 {totalBudgetDelta !== 0 ? `${totalBudgetDelta > 0 ? '+' : ''}${totalBudgetDelta}\u20ac` : '\u2014'}
               </p>
             </div>
-            <div style={{ padding: '12px', background: '#EEF3EC', borderRadius: '10px', border: '1px solid rgba(23,64,44,0.06)' }}>
+            <div className="glass" style={{ padding: '12px', borderRadius: '10px' }}>
               <p style={{ fontSize: '10px', color: '#6B7A72', margin: '0 0 2px 0' }}>&Eacute;quipements</p>
               <p style={{ fontSize: '20px', fontWeight: 700, color: '#17402C', margin: 0, fontFamily: 'ui-monospace, monospace' }}>
                 {userGear.length > 0 ? `${(totalWeight / 1000).toFixed(1)} kg` : '\u2014'}
@@ -771,33 +758,13 @@ export default function RapportExpeditionPage() {
           <div style={{ display: 'flex', gap: '4px', padding: '0 16px' }}>
             <button
               onClick={() => setActiveTab('historique')}
-              style={{
-                flex: 1,
-                padding: '10px',
-                background: activeTab === 'historique' ? '#17402C' : '#F4F1EA',
-                color: activeTab === 'historique' ? '#fff' : '#6B7A72',
-                borderRadius: '10px',
-                fontSize: '12px',
-                fontWeight: 500,
-                border: 'none',
-                cursor: 'pointer',
-              }}
+              className={`glass-capsule-btn flex-1 text-xs font-medium ${activeTab === 'historique' ? 'primary' : ''}`}
             >
               Mes exp&eacute;ditions
             </button>
             <button
               onClick={() => setActiveTab('ia')}
-              style={{
-                flex: 1,
-                padding: '10px',
-                background: activeTab === 'ia' ? '#17402C' : '#F4F1EA',
-                color: activeTab === 'ia' ? '#fff' : '#6B7A72',
-                borderRadius: '10px',
-                fontSize: '12px',
-                fontWeight: 500,
-                border: 'none',
-                cursor: 'pointer',
-              }}
+              className={`glass-capsule-btn flex-1 text-xs font-medium ${activeTab === 'ia' ? 'primary' : ''}`}
             >
               Analyse IA
             </button>
@@ -819,16 +786,7 @@ export default function RapportExpeditionPage() {
                 </p>
                 <button
                   onClick={() => setShowNewReportModal(true)}
-                  style={{
-                    padding: '8px 14px',
-                    background: '#17402C',
-                    color: '#fff',
-                    borderRadius: '8px',
-                    fontSize: '12px',
-                    fontWeight: 500,
-                    border: 'none',
-                    cursor: 'pointer',
-                  }}
+                  className="glass-capsule-btn primary text-xs font-medium"
                 >
                   + Nouveau
                 </button>
@@ -854,16 +812,7 @@ export default function RapportExpeditionPage() {
                   <p style={{ fontSize: '12px', color: '#6B7A72', margin: '0 0 16px 0' }}>Cr&eacute;ez votre premier rapport.</p>
                   <button
                     onClick={() => setShowNewReportModal(true)}
-                    style={{
-                      padding: '12px 24px',
-                      background: '#17402C',
-                      color: '#fff',
-                      borderRadius: '12px',
-                      fontSize: '14px',
-                      fontWeight: 500,
-                      border: 'none',
-                      cursor: 'pointer',
-                    }}
+                    className="glass-capsule-btn primary"
                   >
                     Cr&eacute;er mon premier rapport
                   </button>
@@ -876,10 +825,9 @@ export default function RapportExpeditionPage() {
                     <div
                       key={report.id}
                       onClick={() => setSelectedReport(report)}
+                      className="glass"
                       style={{
-                        background: '#EEF3EC',
                         borderRadius: '12px',
-                        border: '1px solid rgba(23,64,44,0.06)',
                         overflow: 'hidden',
                         cursor: 'pointer',
                       }}
@@ -920,7 +868,7 @@ export default function RapportExpeditionPage() {
           {/* ── IA TAB (Mobile) ── */}
           {activeTab === 'ia' && (
             <div style={{ padding: '16px' }}>
-              <div style={{ background: '#EEF3EC', borderRadius: '12px', border: '1px solid rgba(23,64,44,0.06)', overflow: 'hidden' }}>
+              <div className="glass" style={{ borderRadius: '12px', overflow: 'hidden' }}>
                 {/* Header */}
                 <div style={{ padding: '12px', borderBottom: '1px solid rgba(23,64,44,0.06)', display: 'flex', alignItems: 'center', gap: '10px' }}>
                   <div style={{ width: '28px', height: '28px', borderRadius: '8px', background: '#17402C', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: '13px' }}>
@@ -936,15 +884,15 @@ export default function RapportExpeditionPage() {
                 {/* Profile context */}
                 <div style={{ padding: '12px', borderBottom: '1px solid rgba(23,64,44,0.06)' }}>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px' }}>
-                    <div style={{ padding: '8px', background: '#F4F1EA', borderRadius: '8px', textAlign: 'center' }}>
+                    <div className="glass-sub-card" style={{ padding: '8px', borderRadius: '8px', textAlign: 'center' }}>
                       <p style={{ fontSize: '16px', fontWeight: 700, color: '#17402C', margin: '0 0 2px 0', fontFamily: 'ui-monospace, monospace' }}>{reports.length}</p>
                       <p style={{ fontSize: '9px', color: '#6B7A72', margin: 0 }}>Exp&eacute;ditions</p>
                     </div>
-                    <div style={{ padding: '8px', background: '#F4F1EA', borderRadius: '8px', textAlign: 'center' }}>
+                    <div className="glass-sub-card" style={{ padding: '8px', borderRadius: '8px', textAlign: 'center' }}>
                       <p style={{ fontSize: '16px', fontWeight: 700, color: '#17402C', margin: '0 0 2px 0', fontFamily: 'ui-monospace, monospace' }}>{avgScore > 0 ? `${avgScore}/100` : '\u2014'}</p>
                       <p style={{ fontSize: '9px', color: '#6B7A72', margin: 0 }}>Score</p>
                     </div>
-                    <div style={{ padding: '8px', background: '#F4F1EA', borderRadius: '8px', textAlign: 'center' }}>
+                    <div className="glass-sub-card" style={{ padding: '8px', borderRadius: '8px', textAlign: 'center' }}>
                       <p style={{ fontSize: '16px', fontWeight: 700, color: '#17402C', margin: '0 0 2px 0', fontFamily: 'ui-monospace, monospace' }}>{userGear.length}</p>
                       <p style={{ fontSize: '9px', color: '#6B7A72', margin: 0 }}>&Eacute;quipements</p>
                     </div>
@@ -1024,16 +972,7 @@ export default function RapportExpeditionPage() {
                     <button
                       onClick={handleSend}
                       disabled={isLoading || !userInput.trim()}
-                      style={{
-                        padding: '10px 14px',
-                        background: '#17402C',
-                        color: '#fff',
-                        borderRadius: '10px',
-                        border: 'none',
-                        cursor: 'pointer',
-                        fontSize: '14px',
-                        opacity: isLoading || !userInput.trim() ? 0.5 : 1,
-                      }}
+                      className="glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8 disabled:opacity-50"
                     >
                       &#10148;
                     </button>
@@ -1043,15 +982,7 @@ export default function RapportExpeditionPage() {
                       <button
                         key={prompt}
                         onClick={() => setUserInput(prompt)}
-                        style={{
-                          padding: '4px 10px',
-                          background: '#F4F1EA',
-                          border: '1px solid rgba(23,64,44,0.06)',
-                          borderRadius: '999px',
-                          fontSize: '10px',
-                          color: '#6B7A72',
-                          cursor: 'pointer',
-                        }}
+                        className="glass-capsule-btn text-[10px]"
                       >
                         {prompt}
                       </button>

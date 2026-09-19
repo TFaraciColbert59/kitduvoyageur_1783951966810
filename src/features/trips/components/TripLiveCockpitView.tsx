@@ -1,6 +1,7 @@
-﻿'use client';
+'use client';
 
 import Icon from '@/components/ui/Icon';
+import Link from 'next/link';
 import React, { useState, useTransition } from 'react';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { GlassCapsuleBtn } from '@/components/ui/GlassCapsuleBtn';
@@ -162,10 +163,8 @@ export function TripLiveCockpitView({
         <button
           type="button"
           onClick={() => setIsSunMode(!isSunMode)}
-          className={`flex items-center gap-2 px-3.5 py-2 rounded-full text-xs font-bold transition-all min-h-[44px] ${
-            isSunMode
-              ? 'bg-[var(--lkv-warning)] text-black shadow-lg active:scale-95'
-              : 'glass-sub-card border border-white/60 hover:bg-white text-lkv-primary shadow-2xs active:scale-95'
+          className={`glass-capsule-btn flex items-center gap-2 !px-3.5 !py-2 text-xs font-bold transition-all active:scale-95 ${
+            isSunMode ? 'primary' : ''
           }`}
           title="Bascule en contraste élevé plein soleil pour consultation sous forte luminosité"
         >
@@ -186,13 +185,7 @@ export function TripLiveCockpitView({
             type="button"
             disabled={activeDay <= 1}
             onClick={() => setActiveDay((prev) => Math.max(1, prev - 1))}
-            className={`flex items-center gap-1 px-3 py-2 rounded-xl text-xs font-semibold min-h-[44px] transition-all ${
-              activeDay <= 1
-                ? 'opacity-30 cursor-not-allowed'
-                : isSunMode
-                  ? 'bg-white/10 hover:bg-white/20 text-white active:scale-95'
-                  : 'glass-sub-card border border-white/60 hover:bg-white shadow-2xs'
-            }`}
+            className="glass-capsule-btn flex items-center gap-1 !px-3 !py-2 text-xs font-semibold transition-all disabled:opacity-30 active:scale-95"
           >
             <Icon name="chevron-left" size={16} />
             <span className="hidden sm:inline">Jour précédent</span>
@@ -221,13 +214,7 @@ export function TripLiveCockpitView({
             type="button"
             disabled={activeDay >= calculatedTotalDays}
             onClick={() => setActiveDay((prev) => Math.min(calculatedTotalDays, prev + 1))}
-            className={`flex items-center gap-1 px-3 py-2 rounded-xl text-xs font-semibold min-h-[44px] transition-all ${
-              activeDay >= calculatedTotalDays
-                ? 'opacity-30 cursor-not-allowed'
-                : isSunMode
-                  ? 'bg-white/10 hover:bg-white/20 text-white active:scale-95'
-                  : 'glass-sub-card border border-white/60 hover:bg-white shadow-2xs'
-            }`}
+            className="glass-capsule-btn flex items-center gap-1 !px-3 !py-2 text-xs font-semibold transition-all disabled:opacity-30 active:scale-95"
           >
             <span className="hidden sm:inline">Jour suivant</span>
             <Icon name="chevron-right" size={16} />
@@ -593,7 +580,7 @@ export function TripLiveCockpitView({
                 type="button"
                 onClick={handleCopyCoordinates}
                 disabled={!isEmergencyCoordsVerified}
-                className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-full glass-sub-card border border-white/60 hover:bg-white text-lkv-primary shadow-2xs active:scale-95 cursor-pointer"
+                className="glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8 flex items-center justify-center disabled:opacity-30 active:scale-95 cursor-pointer"
                 title="Copier les coordonnées pour les secours"
               >
                 {copiedCoords ? (
@@ -617,10 +604,8 @@ export function TripLiveCockpitView({
           <button
             type="button"
             onClick={() => setShowSafetyCheckpoints(!showSafetyCheckpoints)}
-            className={`px-4 py-2 rounded-full text-xs font-semibold border transition-all min-h-[44px] flex items-center gap-2 ${
-              showSafetyCheckpoints
-                ? 'bg-[var(--lkv-primary)] text-white border-[var(--lkv-primary)]'
-                : 'glass-sub-card border border-white/60 text-[var(--lkv-text-primary)] hover:bg-white'
+            className={`glass-capsule-btn !px-4 !py-2 text-xs font-semibold transition-all flex items-center gap-2 ${
+              showSafetyCheckpoints ? 'primary' : ''
             }`}
           >
             <Icon name="shield" size={14} />
@@ -634,15 +619,21 @@ export function TripLiveCockpitView({
           <button
             type="button"
             onClick={() => setShowFullItinerary(!showFullItinerary)}
-            className={`px-4 py-2 rounded-full text-xs font-semibold border transition-all min-h-[44px] flex items-center gap-2 ${
-              showFullItinerary
-                ? 'bg-[var(--lkv-primary)] text-white border-[var(--lkv-primary)]'
-                : 'glass-sub-card border border-white/60 text-[var(--lkv-text-primary)] hover:bg-white'
+            className={`glass-capsule-btn !px-4 !py-2 text-xs font-semibold transition-all flex items-center gap-2 ${
+              showFullItinerary ? 'primary' : ''
             }`}
           >
             <Icon name="navigation" size={14} />
             <span>{showFullItinerary ? 'Masquer l’itinéraire complet' : 'Voir tout le tracé'}</span>
           </button>
+
+          <Link
+            href="/progression"
+            className="glass-capsule-btn !px-4 !py-2 text-xs font-semibold transition-all flex items-center gap-2"
+          >
+            <Icon name="award" size={14} />
+            <span>Ma progression LKDV</span>
+          </Link>
         </div>
 
         {showSafetyCheckpoints && (

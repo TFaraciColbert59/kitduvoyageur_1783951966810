@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 import { lkvConfirm } from '@/components/ui/dialogs';
 
 import React, { useEffect, useState, useCallback } from 'react';
@@ -65,8 +65,8 @@ export default function HorsLignePage() {
   const totalTiles = routes.reduce((sum, r) => sum + r.tileCount, 0);
 
   return (
-    <MobilePageShell background="#F5F2EC">
-      <div className="min-h-screen bg-[#F5F2EC]">
+    <MobilePageShell background="transparent">
+      <div className="min-h-screen bg-transparent">
         {/* Header */}
         <div className="bg-[#17402C] text-white px-4 pt-8 pb-6">
           <div className="flex items-center gap-3 mb-1">
@@ -88,7 +88,7 @@ export default function HorsLignePage() {
 
         {/* Résumé stockage */}
         {!loading && routes.length > 0 && (
-          <div className="mx-4 mt-4 bg-white rounded-2xl p-4 border border-[#E8E4D8] flex items-center gap-4">
+          <div className="glass mx-4 mt-4 rounded-2xl p-4 flex items-center gap-4">
             <div className="w-10 h-10 rounded-xl bg-[#EDF7F0] flex items-center justify-center flex-shrink-0">
               <span className="text-xl">💾</span>
             </div>
@@ -118,10 +118,10 @@ export default function HorsLignePage() {
               <div className="w-16 h-16 rounded-full bg-[#E8E4D8] flex items-center justify-center mb-4">
                 <span className="text-3xl">📵</span>
               </div>
-              <h2 className="text-base font-semibold text-[#17402C] mb-1">
+              <h2 className="text-base font-semibold text-[#EEF3EC] mb-1">
                 Aucune randonnée hors-ligne
               </h2>
-              <p className="text-sm text-[#7A8A7D] max-w-60">
+              <p className="text-sm text-[#CCE0D4] max-w-60">
                 Depuis la page d&apos;une randonnée, appuie sur &ldquo;Télécharger pour hors-ligne&rdquo; avant de partir.
               </p>
               <Link
@@ -135,7 +135,7 @@ export default function HorsLignePage() {
             routes.map((route) => (
               <div
                 key={route.routeId}
-                className="bg-white rounded-2xl border border-[#E8E4D8] overflow-hidden"
+                className="glass rounded-2xl overflow-hidden"
               >
                 <div className="p-4">
                   <div className="flex items-start justify-between gap-2">
@@ -183,7 +183,7 @@ export default function HorsLignePage() {
                     id={`delete-offline-${route.routeId}`}
                     onClick={() => handleDelete(route.routeId)}
                     disabled={deletingId === route.routeId}
-                    className="flex-1 py-3 text-center text-xs font-semibold text-red-500 hover:bg-red-50 transition-colors disabled:opacity-50"
+                    className="glass-capsule-btn danger flex-1 text-xs font-semibold disabled:opacity-50"
                   >
                     {deletingId === route.routeId ? '⏳ Suppression…' : '🗑 Supprimer'}
                   </button>

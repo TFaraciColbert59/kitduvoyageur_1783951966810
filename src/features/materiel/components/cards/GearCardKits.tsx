@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 import Icon from '@/components/ui/Icon';
 import Link from 'next/link';
 import { GlassCard } from '@/components/ui/GlassCard';
@@ -14,20 +14,7 @@ interface KitsData {
 }
 
 export function GearCardKits({ data, className }: { data: KitsData; className?: string }) {
-  const cleanName = (n: string | null) =>
-    n ? n.replace(/\s*\(copie\)/gi, '').trim() : 'Trek Jura 2 jours';
-  const kits =
-    data.topKits && data.topKits.length > 0
-      ? data.topKits
-      : [
-          {
-            id: '1',
-            name: cleanName(data.assignedKitName),
-            weightKg: 12.4,
-            completionPct: data.avgCompletionPct || 100,
-          },
-          { id: '2', name: 'Bivouac Été Express', weightKg: 7.8, completionPct: 85 },
-        ];
+  const kits = data.topKits || [];
 
   return (
     <GlassCard as="article" interactive ariaLabelledBy="kits-title" className={className}>
@@ -52,41 +39,58 @@ export function GearCardKits({ data, className }: { data: KitsData; className?: 
           </div>
         </div>
 
-        {/* Top Kits Preview Cards */}
-        <div className="flex flex-col gap-1 sm:gap-1.5">
-          {kits.slice(0, 2).map((k) => (
-            <div
-              key={k.id}
-              className="glass-sub-card px-2 py-1 sm:px-2.5 sm:py-1.5 flex items-center justify-between gap-1 text-[10px] sm:text-xs"
+        {data.count === 0 ? (
+          <div className="flex flex-col items-center justify-center py-2">
+            <p className="text-[10px] sm:text-xs text-[var(--lkv-text-secondary)] text-center mb-2">
+              Aucun kit configuré.
+            </p>
+            <Link
+              href="/hub/materiel/kits/nouveau"
+              className="glass-capsule-btn primary w-full flex justify-center items-center gap-1.5 !min-h-[44px] !text-[11px] !font-bold shadow-sm"
             >
-              <div className="flex items-center gap-1.5 truncate">
-                <div className="w-4 h-4 sm:w-5 sm:h-5 rounded bg-white/40 border border-white/60 flex items-center justify-center text-[var(--lkv-primary)] flex-shrink-0">
-                  <Icon name="package" size={9} />
-                </div>
-                <span className="font-semibold text-[var(--lkv-primary)] truncate">{k.name}</span>
-              </div>
-              <div className="flex items-center gap-1 shrink-0">
-                <span className="text-[9.5px] font-mono text-[var(--lkv-text-muted)]">
-                  {k.weightKg}kg
-                </span>
-                {k.completionPct === 100 && (
-                  <span className="glass-check-circle checked !w-3 !h-3 flex items-center justify-center">
-                    <Icon name="check" size={7} strokeWidth={3} />
-                  </span>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* Progress Bar */}
-        <div className="space-y-0.5 sm:space-y-1">
-          <div className="flex items-center justify-between text-[10px] sm:text-xs font-semibold text-[var(--lkv-primary-soft)]">
-            <span>Complétude</span>
-            <span className="font-mono text-[var(--lkv-primary)]">{data.avgCompletionPct}%</span>
+              <Icon name="plus" size={12} />
+              <span>Créer mon premier kit</span>
+            </Link>
           </div>
-          <ProgressBar value={data.avgCompletionPct} label="Complétude moyenne" tone="sage" />
-        </div>
+        ) : (
+          <>
+            {/* Top Kits Preview Cards */}
+            <div className="flex flex-col gap-1 sm:gap-1.5">
+              {kits.slice(0, 2).map((k) => (
+                <div
+                  key={k.id}
+                  className="glass-sub-card px-2 py-1 sm:px-2.5 sm:py-1.5 flex items-center justify-between gap-1 text-[10px] sm:text-xs"
+                >
+                  <div className="flex items-center gap-1.5 truncate">
+                    <div className="w-4 h-4 sm:w-5 sm:h-5 rounded bg-white/40 border border-white/60 flex items-center justify-center text-[var(--lkv-primary)] flex-shrink-0">
+                      <Icon name="package" size={9} />
+                    </div>
+                    <span className="font-semibold text-[var(--lkv-primary)] truncate">{k.name}</span>
+                  </div>
+                  <div className="flex items-center gap-1 shrink-0">
+                    <span className="text-[9.5px] font-mono text-[var(--lkv-text-muted)]">
+                      {k.weightKg}kg
+                    </span>
+                    {k.completionPct === 100 && (
+                      <span className="glass-check-circle checked !w-3 !h-3 flex items-center justify-center">
+                        <Icon name="check" size={7} strokeWidth={3} />
+                      </span>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Progress Bar */}
+            <div className="space-y-0.5 sm:space-y-1">
+              <div className="flex items-center justify-between text-[10px] sm:text-xs font-semibold text-[var(--lkv-primary-soft)]">
+                <span>Complétude</span>
+                <span className="font-mono text-[var(--lkv-primary)]">{data.avgCompletionPct}%</span>
+              </div>
+              <ProgressBar value={data.avgCompletionPct} label="Complétude moyenne" tone="sage" />
+            </div>
+          </>
+        )}
 
         {/* Footer */}
         <div className="flex items-center justify-between gap-1.5 pt-0.5 min-w-0">
@@ -102,13 +106,15 @@ export function GearCardKits({ data, className }: { data: KitsData; className?: 
               ? `Total parc (${data.count}) : ${data.totalWeightKg} kg`
               : `${data.count} kits prêts`}
           </span>
-          <Link
-            href="/hub/kit"
-            className="glass-capsule-btn secondary text-[9.5px] sm:text-xs !h-6 sm:!h-7 !px-2 sm:!px-2.5 shrink-0"
-          >
-            <span>Ouvrir</span>
-            <Icon name="arrow-right" size={10} />
-          </Link>
+          {data.count > 0 && (
+            <Link
+              href="/hub/kit"
+              className="glass-capsule-btn secondary text-[9.5px] sm:text-xs !h-6 sm:!h-7 !px-2 sm:!px-2.5 shrink-0"
+            >
+              <span>Ouvrir</span>
+              <Icon name="arrow-right" size={10} />
+            </Link>
+          )}
         </div>
       </div>
     </GlassCard>

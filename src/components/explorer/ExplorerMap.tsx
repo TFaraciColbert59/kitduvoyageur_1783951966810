@@ -602,7 +602,7 @@ export default function ExplorerMap({
             onClick={handleRecenter}
             title="Recentrer sur ma position"
             aria-label="Recentrer sur ma position"
-            className="glass-circle-btn !w-8 !h-8"
+            className="glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8"
           >
             <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
               <circle cx="12" cy="12" r="4" />
@@ -615,7 +615,7 @@ export default function ExplorerMap({
             onClick={handleZoomIn}
             title="Zoom avant"
             aria-label="Zoom avant"
-            className="glass-circle-btn !w-8 !h-8 font-bold text-sm"
+            className="glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8 font-bold text-sm"
           >
             +
           </button>
@@ -625,7 +625,7 @@ export default function ExplorerMap({
             onClick={handleZoomOut}
             title="Zoom arrière"
             aria-label="Zoom arrière"
-            className="glass-circle-btn !w-8 !h-8 font-bold text-sm"
+            className="glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8 font-bold text-sm"
           >
             −
           </button>

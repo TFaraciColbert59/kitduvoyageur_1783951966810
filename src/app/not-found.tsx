@@ -114,7 +114,7 @@ export default function NotFound() {
 
       {/* MOBILE */}
       <div className="block md:hidden">
-        <MobilePageShell background="var(--lkv-surface, var(--lkv-surface-muted))">
+        <MobilePageShell background="transparent">
           <div className="px-5 py-10 text-center flex flex-col items-center justify-center min-h-[calc(100dvh-120px)]">
             <div className="glass p-6 rounded-[1.75rem] border border-[var(--lkv-primary)]/10 w-full max-w-sm shadow-elevation-1">
               <span

@@ -134,18 +134,18 @@ export function DocsMobileExperience({ trip }: DocsMobileExperienceProps) {
           setSelected(row);
         }}
         aria-label={`Document ${row.title} — ${statusShortLabel(row.status)}`}
-        className="glass flex h-[10rem] w-[10rem] flex-col rounded-[1.4rem] p-3 text-left transition-transform active:scale-[0.97]"
+        className="glass-capsule-btn flex h-[10rem] w-[10rem] !flex-col !items-start !justify-start !rounded-[1.4rem] !p-3 text-left transition-transform active:scale-[0.97]"
       >
         <span className={`w-fit rounded-full px-2 py-0.5 text-[10px] font-bold ${STATUS_TONES[row.status]}`}>
           {statusShortLabel(row.status)}
         </span>
-        <span className="mt-2 line-clamp-2 text-[12.5px] font-bold leading-snug text-[var(--lkv-text-primary)]">
+        <span className="mt-2 line-clamp-2 text-[12.5px] font-bold leading-snug">
           {row.title}
         </span>
-        <span className="mt-1 text-[10px] font-semibold uppercase tracking-[0.1em] text-[var(--lkv-text-primary)]/60">
+        <span className="mt-1 text-[10px] font-semibold uppercase tracking-[0.1em]">
           {CATEGORY_LABELS[row.category ?? 'other'] ?? 'Autre'}
         </span>
-        <span className="mt-auto text-[10px] font-medium leading-snug text-[var(--lkv-text-primary)]/70">
+        <span className="mt-auto text-[10px] font-medium leading-snug">
           {row.label}
         </span>
       </button>
@@ -163,7 +163,7 @@ export function DocsMobileExperience({ trip }: DocsMobileExperienceProps) {
           <button
             type="button"
             onClick={() => setErrorMsg(null)}
-            className="flex h-11 w-11 items-center justify-center rounded-full text-[var(--lkv-text-muted)]"
+            className="glass-circle-btn h-11 w-11 shrink-0 text-[var(--lkv-text-muted)]"
             aria-label="Fermer le message"
           >
             ×
@@ -290,10 +290,8 @@ export function DocsMobileExperience({ trip }: DocsMobileExperienceProps) {
               type="button"
               onClick={() => setFilter(option.key)}
               aria-pressed={filter === option.key}
-              className={`min-h-[44px] rounded-full px-3.5 text-xs font-bold transition-colors ${
-                filter === option.key
-                  ? 'bg-[var(--lkv-primary)] text-white'
-                  : 'glass-sub-card text-[var(--lkv-text-primary)]/75'
+              className={`glass-capsule-btn min-h-[44px] !px-3.5 text-xs font-bold ${
+                filter === option.key ? 'primary' : ''
               }`}
             >
               {option.label}
@@ -315,16 +313,16 @@ export function DocsMobileExperience({ trip }: DocsMobileExperienceProps) {
                     setListOpen(false);
                     setSelected(row);
                   }}
-                  className="glass-sub-card flex min-h-[44px] w-full items-center gap-3 rounded-2xl p-3 text-left"
+                  className="glass-capsule-btn flex min-h-[44px] w-full !justify-start !gap-3 !rounded-2xl !p-3 text-left"
                 >
-                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/70 text-[var(--lkv-secondary)]">
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/10">
                     <FileText size={15} aria-hidden="true" />
                   </span>
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate text-[13px] font-bold text-[var(--lkv-text-primary)]">
+                    <span className="block truncate text-[13px] font-bold">
                       {row.title}
                     </span>
-                    <span className="block truncate text-[10.5px] font-medium text-[var(--lkv-text-primary)]/65">
+                    <span className="block truncate text-[10.5px] font-medium">
                       {CATEGORY_LABELS[row.category ?? 'other'] ?? 'Autre'} · {row.label}
                     </span>
                   </span>

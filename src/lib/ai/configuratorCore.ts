@@ -94,8 +94,24 @@ export function analyzeKit(params: AnalyzeKitParams): KitAnalysis {
 
   // Helper to pick a real product from the catalog matching a sub-category.
   // Never fabricates a product: returns null when the catalog has no match.
+  const isExcludedAdultTrekItem = (p: RealShopProduct): boolean => {
+    const text = `${p.name} ${p.category}`.toLowerCase();
+    // Exclure les articles bébés, enfants et accessoires inadaptés à un trek adulte
+    if (/\b(bébé|bebe|baby|enfant|nourrisson|kids?|junior)\b/.test(text) || /\+?\s*\d+\s*mois\b/.test(text)) {
+      return true;
+    }
+    if (text.includes('couteau') && !text.includes('veste') && !text.includes('pantalon')) {
+      return true;
+    }
+    return false;
+  };
+
   const findProductForCategory = (catName: string): RealShopProduct | null => {
-    const match = catalog.find((p) => p.category.toLowerCase().includes(catName.toLowerCase()) || p.name.toLowerCase().includes(catName.toLowerCase()));
+    const catLower = catName.toLowerCase();
+    let match = catalog.find((p) => !isExcludedAdultTrekItem(p) && p.category.toLowerCase().includes(catLower));
+    if (!match) {
+      match = catalog.find((p) => !isExcludedAdultTrekItem(p) && p.name.toLowerCase().includes(catLower));
+    }
     return match || null;
   };
 

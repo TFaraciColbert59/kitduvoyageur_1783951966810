@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React from 'react';
 import Icon from '@/components/ui/AppIcon';
@@ -119,6 +119,7 @@ export default function HeroVoyage({ data, groupId, inviteCode, onOpenChat }: He
             onClick={handleInvite}
             className="glass-capsule-btn p-2.5"
             title="Options"
+            aria-label="Options du voyage"
           >
             <Icon name="EllipsisHorizontalIcon" size={16} className="relative z-10" />
           </button>

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Header from '@/components/Header';
 import EditProfileView from '@/components/compte/EditProfileView';
 import CompteBackground from '@/components/compte/CompteBackground';
+import { MarbleZone } from '@/components/glass/MarbleZone';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 
 export default function EditProfilePage() {
@@ -13,6 +14,7 @@ export default function EditProfilePage() {
   return (
     <div className="min-h-screen relative font-sans text-[var(--lkv-primary)]">
       <CompteBackground />
+      <MarbleZone />
 
       {/* DESKTOP */}
       <div className="hidden md:block">
@@ -31,7 +33,7 @@ export default function EditProfilePage() {
           <Link
             href="/compte"
             onClick={() => triggerHaptic('light')}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/90 text-xs font-bold text-[var(--lkv-primary)] border border-white shadow-2xs transition-all active:scale-95 cursor-pointer"
+            className="glass-capsule-btn text-xs font-bold !py-1.5 !px-3 cursor-pointer"
           >
             <span className="text-sm font-bold">‹</span>
             <span>Mon Compte</span>

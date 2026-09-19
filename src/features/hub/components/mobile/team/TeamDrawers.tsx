@@ -147,7 +147,7 @@ export function TeamMembersDrawer({
                     onClick={() => onRequestRemove(member.id, member.name)}
                     disabled={isPending}
                     aria-label={`Retirer ${member.name} de l'expédition`}
-                    className="glass-sub-card inline-flex h-11 w-11 items-center justify-center rounded-full text-[var(--lkv-danger)] disabled:opacity-50"
+                    className="glass-circle-btn h-11 w-11 shrink-0 !text-[var(--lkv-danger)] disabled:opacity-50"
                   >
                     <Trash2 size={16} aria-hidden="true" />
                   </button>
@@ -245,7 +245,7 @@ export function TeamCarnetDrawer({
                   type="button"
                   onClick={() => onRemove(human.id)}
                   aria-label={`Retirer ${human.publicData.firstName} du carnet`}
-                  className="glass-sub-card inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[var(--lkv-danger)]"
+                  className="glass-circle-btn h-11 w-11 shrink-0 !text-[var(--lkv-danger)]"
                 >
                   <Trash2 size={15} aria-hidden="true" />
                 </button>
@@ -398,7 +398,7 @@ export function TeamDogsDrawer({
                   type="button"
                   onClick={() => onRemove(dog.id)}
                   aria-label={`Retirer ${dog.name}`}
-                  className="glass-sub-card inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[var(--lkv-danger)]"
+                  className="glass-circle-btn h-11 w-11 shrink-0 !text-[var(--lkv-danger)]"
                 >
                   <Trash2 size={15} aria-hidden="true" />
                 </button>

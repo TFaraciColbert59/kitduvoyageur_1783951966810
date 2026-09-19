@@ -125,7 +125,7 @@ export function ItineraryDayTimeline({
                       type="button"
                       onClick={() => onOpen(step)}
                       aria-label={`${time ? `${time} · ` : ''}${step.title}`}
-                      className="glass mb-1 min-h-[44px] w-full rounded-[1.4rem] p-3 text-left transition-transform active:scale-[0.98]"
+                      className="glass-capsule-btn mb-1 min-h-[44px] w-full !justify-start !rounded-[1.4rem] !p-3 !whitespace-normal text-left transition-transform active:scale-[0.98]"
                     >
                       <span className="flex w-full items-center gap-2">
                         <span className="inline-flex items-center gap-1 rounded-full bg-[var(--lkv-primary)]/10 px-2 py-0.5 text-[9.5px] font-bold uppercase tracking-[0.08em] text-[var(--lkv-primary)]">

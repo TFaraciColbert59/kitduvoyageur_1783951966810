@@ -180,7 +180,7 @@ export function InventoryWorkspace({ items }: { items: InventoryItem[] }) {
 
         <div className="col-span-12 md:col-span-9">
           {view === 'grid' && (filtered.length > 0 ? <InventoryVirtualGrid items={filtered} onSelect={setSelected} /> : (
-            <p className="text-sm text-[color:var(--label-secondary)]">Aucun objet ne correspond.</p>
+            <p className="text-sm text-[color:var(--glass-text-secondary)]">Aucun objet ne correspond.</p>
           ))}
           {view === 'table' && (
             <GlassCard className="p-3 overflow-x-auto">

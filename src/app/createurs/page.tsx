@@ -34,8 +34,8 @@ export default function CreateursPage() {
             <h1 style={{ fontSize: '20px', fontWeight: 800, color: '#17402C', marginBottom: '8px' }}>Espace Créateurs</h1>
             <p style={{ fontSize: '13px', color: 'rgba(23,64,44,0.6)', marginBottom: '16px' }}>Guides, photographes et créateurs vérifiés.</p>
             <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
-              <button onClick={() => setActiveTab('produits')} style={{ padding: '8px 14px', borderRadius: '8px', background: activeTab === 'produits' ? '#17402C' : '#F4F1EA', color: activeTab === 'produits' ? 'white' : 'rgba(23,64,44,0.6)', border: 'none', fontSize: '12px', cursor: 'pointer' }}>Catalogue</button>
-              <button onClick={() => setActiveTab('créateurs')} style={{ padding: '8px 14px', borderRadius: '8px', background: activeTab === 'créateurs' ? '#17402C' : '#F4F1EA', color: activeTab === 'créateurs' ? 'white' : 'rgba(23,64,44,0.6)', border: 'none', fontSize: '12px', cursor: 'pointer' }}>Créateurs</button>
+              <button onClick={() => setActiveTab('produits')} className={`glass-capsule-btn ${activeTab === 'produits' ? 'primary' : ''}`}>Catalogue</button>
+              <button onClick={() => setActiveTab('créateurs')} className={`glass-capsule-btn ${activeTab === 'créateurs' ? 'primary' : ''}`}>Créateurs</button>
             </div>
             <p style={{ textAlign: 'center', color: 'rgba(23,64,44,0.5)', padding: '20px' }}>Contenu à venir.</p>
           </div>

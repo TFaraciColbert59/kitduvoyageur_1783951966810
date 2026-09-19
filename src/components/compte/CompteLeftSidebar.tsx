@@ -36,6 +36,7 @@ export default function CompteLeftSidebar({
 
   const tabs = [
     { id: 'vue-d-ensemble' as CompteTab, label: "Vue d'ensemble" },
+    { id: 'progression' as CompteTab, label: 'Ma progression' },
     { id: 'aventures' as CompteTab, label: 'Mes Groupes' },
     { id: 'carnets' as CompteTab, label: 'Carnets de route' },
     { id: 'clubs' as CompteTab, label: 'Mes Clubs' },
@@ -109,10 +110,8 @@ export default function CompteLeftSidebar({
               key={t.id}
               type="button"
               onClick={() => onTabChange(t.id)}
-              className={`w-full px-3 py-2.5 rounded-xl font-bold text-xs transition-all flex items-center justify-between group cursor-pointer border ${
-                isActive
-                  ? 'bg-[#17402C] text-white border-[#17402C] shadow-sm'
-                  : 'bg-white/80 hover:bg-white text-[#17402C] border-white/80 shadow-2xs'
+              className={`w-full !justify-between text-xs font-semibold transition-all flex items-center group cursor-pointer glass-capsule-btn ${
+                isActive ? 'primary' : ''
               }`}
             >
               <span className="truncate text-left">{t.label}</span>
@@ -127,7 +126,7 @@ export default function CompteLeftSidebar({
         <button
           type="button"
           onClick={onShareProfile}
-          className="w-full glass-sub-card text-xs font-semibold text-[#365233] p-2 rounded-xl flex items-center justify-center gap-1.5 hover:bg-white/80 transition-colors cursor-pointer border border-white/40"
+          className="w-full glass-capsule-btn text-xs font-semibold !py-2 flex items-center justify-center gap-1.5 cursor-pointer"
         >
           <Icon name="ShareIcon" size={13} />
           <span>Partager mon profil</span>

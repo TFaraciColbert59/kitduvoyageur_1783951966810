@@ -610,21 +610,21 @@ export default function CommandesTab({ profile }: CommandesTabProps) {
                         setAddressToEdit(addr);
                         setShowAddressModal(true);
                       }}
-                      className="text-[11px] text-[#365233] hover:text-[#17402C] font-bold transition-colors"
+                      className="glass-capsule-btn primary !py-1 !px-3 !min-h-0 text-[11px] font-bold transition-colors"
                     >
                       Modifier
                     </button>
                     {addr.isDefault ? (
                       <button
                         onClick={() => handleDeleteAddress(addr.id)}
-                        className="text-[11px] text-[#A8443A] hover:underline font-bold transition-colors"
+                        className="glass-capsule-btn danger !py-1 !px-3 !min-h-0 text-[11px] font-bold transition-colors"
                       >
                         Supprimer
                       </button>
                     ) : (
                       <button
                         onClick={() => handleSetDefaultAddress(addr.id)}
-                        className="text-[11px] text-[#5A7064] hover:text-[#17402C] font-bold transition-colors"
+                        className="glass-capsule-btn !py-1 !px-3 !min-h-0 text-[11px] font-bold transition-colors"
                       >
                         Définir par défaut
                       </button>
@@ -906,7 +906,7 @@ function ActiveOrderCard({
         {(order.derivedStatus === 'confirmed' || order.derivedStatus === 'preparing') && (
           <button
             onClick={onCancel}
-            className="px-3 py-1.5 text-[#A8443A] hover:bg-[#A8443A]/10 rounded-full text-xs font-bold transition-colors"
+            className="glass-capsule-btn danger !py-1.5 !px-3 !min-h-0 text-xs font-bold transition-colors"
           >
             Annuler
           </button>
@@ -968,14 +968,14 @@ function HistoryOrderRow({
         <button
           onClick={onInvoice}
           title="Télécharger la facture"
-          className="p-1.5 text-[#5A7064] hover:text-[#17402C] hover:bg-white/60 rounded-lg transition-colors"
+          className="glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8 !p-0"
         >
           <Icon name="ArrowDownTrayIcon" size={14} />
         </button>
         <button
           onClick={onTrack}
           title="Voir le détail"
-          className="p-1.5 text-[#5A7064] hover:text-[#17402C] hover:bg-white/60 rounded-lg transition-colors"
+          className="glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8 !p-0"
         >
           <Icon name="EyeIcon" size={14} />
         </button>
@@ -1022,7 +1022,7 @@ function AddressModal({
           <h3 className="font-display font-bold text-2xl text-[#17402C]">
             {initialData ? 'Modifier l\'adresse' : 'Ajouter une adresse'}
           </h3>
-          <button onClick={onClose} className="p-2 text-[#5A7064] hover:text-[#17402C] transition-colors rounded-full hover:bg-black/5">
+          <button onClick={onClose} className="glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8 !p-0 transition-colors">
             <Icon name="XMarkIcon" size={20} />
           </button>
         </div>
@@ -1126,7 +1126,7 @@ function CardModal({
       <div className="glass-modal max-w-md w-full p-7 space-y-6">
         <div className="flex items-center justify-between">
           <h3 className="font-display font-bold text-2xl text-[#17402C]">Ajouter une carte</h3>
-          <button onClick={onClose} className="p-2 text-[#5A7064] hover:text-[#17402C] transition-colors rounded-full hover:bg-black/5">
+          <button onClick={onClose} className="glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8 !p-0 transition-colors">
             <Icon name="XMarkIcon" size={20} />
           </button>
         </div>

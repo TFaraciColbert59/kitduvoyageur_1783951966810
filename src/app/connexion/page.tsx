@@ -24,12 +24,38 @@ function AuthForm() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [forgotPasswordOpen, setForgotPasswordOpen] = useState(false);
+  const [resetSent, setResetSent] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [confirmationSent, setConfirmationSent] = useState(false);
   const router = useRouter();
   const { signIn, signUp } = useAuth();
   const { toast } = useToast();
+
+  const handleResetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    if (!email) {
+      setError('Veuillez renseigner votre adresse email pour réinitialiser votre mot de passe.');
+      return;
+    }
+    setLoading(true);
+    try {
+      const supabase = createClient();
+      const { error: resetErr } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/connexion`,
+      });
+      if (resetErr) throw resetErr;
+      setResetSent(true);
+      toast('Lien de réinitialisation envoyé par email.', 'info');
+    } catch (err: any) {
+      setError(err?.message || 'Erreur lors de l’envoi de l’email.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const ensureProfile = async (userId: string, userEmail: string, fullName: string) => {
     try {
@@ -88,27 +114,119 @@ function AuthForm() {
 
         <div style={{ display: 'flex', borderRadius: '40px', border: '1px solid rgba(23,64,44,0.06)', background: 'var(--lkv-surface-hover)', padding: '4px', marginBottom: '20px' }}>
           {(['connexion', 'inscription'] as const).map((m) => (
-            <button key={m} onClick={() => { setMode(m); setError(''); setConfirmationSent(false); }} style={{ flex: 1, padding: '10px', borderRadius: '40px', border: 'none', fontSize: '14px', fontWeight: 600, cursor: 'pointer', background: mode === m ? 'var(--lkv-primary)' : 'transparent', color: mode === m ? 'white' : 'var(--lkv-text-muted)' }}>{m === 'connexion' ? 'Connexion' : 'Inscription'}</button>
+            <button key={m} onClick={() => { setMode(m); setError(''); setConfirmationSent(false); setForgotPasswordOpen(false); }} className={`glass-capsule-btn flex-1 !text-sm !font-semibold ${mode === m && !forgotPasswordOpen ? 'primary' : ''}`}>{m === 'connexion' ? 'Connexion' : 'Inscription'}</button>
           ))}
         </div>
 
-        <div style={{ background: 'var(--lkv-surface-hover)', borderRadius: '12px', border: '1px solid rgba(23,64,44,0.06)', padding: '24px' }}>
+        <div className="glass" style={{ padding: '24px' }}>
           {confirmationSent ? (
             <div style={{ textAlign: 'center' }}>
               <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: 'rgba(16,185,129,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px' }}><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--lkv-primary)" strokeWidth="2"><polyline points="20 6 9 17 4 12" /></svg></div>
               <p style={{ fontWeight: 700, color: 'var(--lkv-primary)', marginBottom: '8px' }}>Vérifiez vos emails !</p>
               <p style={{ fontSize: '13px', color: 'var(--lkv-text-muted)', marginBottom: '16px' }}>Un email a été envoyé à <strong>{email}</strong>.</p>
-              <button onClick={() => { setMode('connexion'); setConfirmationSent(false); }} style={{ width: '100%', padding: '12px', borderRadius: '10px', background: 'var(--lkv-primary)', color: 'white', border: 'none', fontWeight: 600, fontSize: '14px', cursor: 'pointer' }}>Passer à la connexion →</button>
+              <button onClick={() => { setMode('connexion'); setConfirmationSent(false); }} className="glass-capsule-btn primary w-full !py-3 !text-sm !font-semibold">Passer à la connexion →</button>
             </div>
+          ) : forgotPasswordOpen ? (
+            <form onSubmit={handleResetPassword} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              <h2 style={{ fontSize: '16px', fontWeight: 700, color: 'var(--lkv-primary)' }}>Mot de passe oublié</h2>
+              <p style={{ fontSize: '13px', color: 'var(--lkv-text-muted)' }}>
+                Saisissez votre adresse email pour recevoir un lien sécurisé de réinitialisation.
+              </p>
+              {resetSent ? (
+                <div style={{ background: 'var(--lkv-success-bg, rgba(16,185,129,0.1))', border: '1px solid var(--lkv-success)', padding: '12px', borderRadius: '10px', fontSize: '13px', color: 'var(--lkv-primary)' }}>
+                  Un email de réinitialisation vous a été envoyé. Vérifiez votre boîte de réception.
+                </div>
+              ) : (
+                <>
+                  <div>
+                    <label htmlFor="reset-email" style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--lkv-text-primary)', marginBottom: '4px' }}>
+                      Adresse email
+                    </label>
+                    <input
+                      id="reset-email"
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="nom@exemple.com"
+                      autoComplete="email"
+                      required
+                      style={{ width: '100%', padding: '10px 14px', minHeight: '44px', borderRadius: '10px', border: '1px solid rgba(23,64,44,0.1)', background: 'var(--lkv-surface)', fontSize: '14px', color: 'var(--lkv-primary)' }}
+                    />
+                  </div>
+                  {error && <div style={{ background: 'var(--lkv-danger-bg)', border: '1px solid var(--lkv-danger)', padding: '10px', borderRadius: '10px', fontSize: '13px', color: 'var(--lkv-danger)' }}>{error}</div>}
+                  <button type="submit" disabled={loading} className="glass-capsule-btn primary w-full !min-h-[44px] !py-3 !text-[15px] !font-semibold">
+                    {loading ? 'Envoi en cours...' : 'Envoyer le lien'}
+                  </button>
+                </>
+              )}
+              <button
+                type="button"
+                onClick={() => { setForgotPasswordOpen(false); setError(''); }}
+                className="text-xs text-[var(--lkv-text-muted)] hover:text-[var(--lkv-primary)] underline text-center cursor-pointer mt-2"
+              >
+                Retour à la connexion
+              </button>
+            </form>
           ) : (
             <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
               {mode === 'inscription' && (
-                <input id="name" type="text" autoComplete="name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Prénom" aria-label="Prénom" style={{ padding: '10px 14px', borderRadius: '10px', border: '1px solid rgba(23,64,44,0.06)', background: 'var(--lkv-surface)', fontSize: '14px', color: 'var(--lkv-primary)' }} />
+                <div>
+                  <label htmlFor="name" style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--lkv-text-primary)', marginBottom: '4px' }}>
+                    Prénom ou pseudo
+                  </label>
+                  <input id="name" type="text" autoComplete="name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Prénom" style={{ width: '100%', padding: '10px 14px', minHeight: '44px', borderRadius: '10px', border: '1px solid rgba(23,64,44,0.1)', background: 'var(--lkv-surface)', fontSize: '14px', color: 'var(--lkv-primary)' }} />
+                </div>
               )}
-              <input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Adresse email" autoComplete="email" aria-label="Adresse email" style={{ padding: '10px 14px', borderRadius: '10px', border: '1px solid rgba(23,64,44,0.06)', background: 'var(--lkv-surface)', fontSize: '14px', color: 'var(--lkv-primary)' }} />
-              <input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder={mode === 'inscription' ? 'Minimum 8 caractères' : 'Mot de passe'} autoComplete={mode === 'inscription' ? 'new-password' : 'current-password'} aria-label={mode === 'inscription' ? 'Mot de passe' : 'Mot de passe'} style={{ padding: '10px 14px', borderRadius: '10px', border: '1px solid rgba(23,64,44,0.06)', background: 'var(--lkv-surface)', fontSize: '14px', color: 'var(--lkv-primary)' }} />
+              <div>
+                <label htmlFor="email" style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--lkv-text-primary)', marginBottom: '4px' }}>
+                  Adresse email
+                </label>
+                <input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="nom@exemple.com" autoComplete="email" required style={{ width: '100%', padding: '10px 14px', minHeight: '44px', borderRadius: '10px', border: '1px solid rgba(23,64,44,0.1)', background: 'var(--lkv-surface)', fontSize: '14px', color: 'var(--lkv-primary)' }} />
+              </div>
+
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                  <label htmlFor="password" style={{ fontSize: '12px', fontWeight: 600, color: 'var(--lkv-text-primary)' }}>
+                    {mode === 'inscription' ? 'Mot de passe (8 car. min)' : 'Mot de passe'}
+                  </label>
+                  {mode === 'connexion' && (
+                    <button
+                      type="button"
+                      onClick={() => { setForgotPasswordOpen(true); setError(''); }}
+                      className="text-[11px] text-[var(--lkv-text-muted)] hover:text-[var(--lkv-primary)] underline cursor-pointer"
+                    >
+                      Mot de passe oublié ?
+                    </button>
+                  )}
+                </div>
+                <div style={{ position: 'relative' }}>
+                  <input
+                    id="password"
+                    type={showPassword ? 'text' : 'password'}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder={mode === 'inscription' ? 'Minimum 8 caractères' : 'Mot de passe'}
+                    autoComplete={mode === 'inscription' ? 'new-password' : 'current-password'}
+                    required
+                    style={{ width: '100%', padding: '10px 44px 10px 14px', minHeight: '44px', borderRadius: '10px', border: '1px solid rgba(23,64,44,0.1)', background: 'var(--lkv-surface)', fontSize: '14px', color: 'var(--lkv-primary)' }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    aria-label={showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
+                    style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--lkv-text-muted)' }}
+                  >
+                    {showPassword ? (
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" /><line x1="1" y1="1" x2="23" y2="23" /></svg>
+                    ) : (
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></svg>
+                    )}
+                  </button>
+                </div>
+              </div>
+
               {error && <div style={{ background: 'var(--lkv-danger-bg)', border: '1px solid var(--lkv-danger)', padding: '10px', borderRadius: '10px', fontSize: '13px', color: 'var(--lkv-danger)' }}>{error}</div>}
-              <button type="submit" disabled={loading} style={{ background: 'var(--lkv-primary)', color: 'white', border: 'none', padding: '14px', borderRadius: '12px', fontSize: '15px', fontWeight: 600, cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.6 : 1 }}>
+              <button type="submit" disabled={loading} className="glass-capsule-btn primary w-full !min-h-[44px] !py-3.5 !text-[15px] !font-semibold">
                 {loading ? (mode === 'connexion' ? 'Connexion…' : 'Création…') : (mode === 'connexion' ? 'Se connecter' : 'Créer mon compte')}
               </button>
             </form>
@@ -116,7 +234,7 @@ function AuthForm() {
           <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid rgba(23,64,44,0.06)', textAlign: 'center' }}>
             <p style={{ fontSize: '12px', color: 'rgba(23,64,44,0.5)' }}>
               {mode === 'connexion' ? "Pas encore de compte ? " : "Déjà un compte ? "}
-              <button type="button" onClick={() => { setMode(mode === 'connexion' ? 'inscription' : 'connexion'); setError(''); setConfirmationSent(false); }} style={{ color: 'var(--lkv-primary)', fontWeight: 500, background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}>
+              <button type="button" onClick={() => { setMode(mode === 'connexion' ? 'inscription' : 'connexion'); setError(''); setConfirmationSent(false); setForgotPasswordOpen(false); }} className="glass-capsule-btn !min-h-0 !py-1 !px-3 !text-xs !font-semibold">
                 {mode === 'connexion' ? "S'inscrire" : 'Se connecter'}
               </button>
             </p>

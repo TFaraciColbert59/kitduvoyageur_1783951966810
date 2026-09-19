@@ -2,6 +2,7 @@
 
 import React from 'react';
 import AppImage from '@/components/ui/AppImage';
+import Icon from '@/components/ui/AppIcon';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { CompteUserProfile } from '@/lib/supabase/queries-compte';
 
@@ -30,7 +31,7 @@ export default function ProfileHeader({
     : '@voyageur';
 
   return (
-    <div className={`bg-white rounded-3xl p-5 sm:p-6 border border-black/[0.06] shadow-2xs ${className}`}>
+    <div className={`glass rounded-3xl p-5 sm:p-6 ${className}`}>
       <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 sm:gap-6">
         {/* Avatar & Infos Principales */}
         <div className="flex items-start gap-4 sm:gap-5 min-w-0">
@@ -101,12 +102,9 @@ export default function ProfileHeader({
               triggerHaptic('light');
               onEdit();
             }}
-            className="flex-1 sm:flex-initial px-4 py-2.5 rounded-xl bg-[#F4F1EB] hover:bg-[#EBE7DF] text-[#17402C] font-semibold text-xs transition-colors flex items-center justify-center gap-1.5 active:scale-95"
+            className="glass-capsule-btn flex-1 sm:flex-initial text-xs font-semibold flex items-center justify-center gap-1.5"
           >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-            </svg>
+            <Icon name="pencil" size={14} />
             <span>Modifier</span>
           </button>
 
@@ -115,17 +113,11 @@ export default function ProfileHeader({
               triggerHaptic('light');
               onShare();
             }}
-            className="p-2.5 rounded-xl bg-[#F4F1EB] hover:bg-[#EBE7DF] text-[#17402C] transition-colors flex items-center justify-center active:scale-95"
+            className="glass-circle-btn"
             title="Partager mon profil"
             aria-label="Partager"
           >
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <circle cx="18" cy="5" r="3" />
-              <circle cx="6" cy="12" r="3" />
-              <circle cx="18" cy="19" r="3" />
-              <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
-              <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
-            </svg>
+            <Icon name="share2" size={15} />
           </button>
 
           <button
@@ -133,7 +125,7 @@ export default function ProfileHeader({
               triggerHaptic('light');
               onSettings();
             }}
-            className="p-2.5 rounded-xl bg-[#F4F1EB] hover:bg-[#EBE7DF] text-[#17402C] transition-colors flex items-center justify-center active:scale-95"
+            className="glass-circle-btn"
             title="Paramètres"
             aria-label="Paramètres"
           >

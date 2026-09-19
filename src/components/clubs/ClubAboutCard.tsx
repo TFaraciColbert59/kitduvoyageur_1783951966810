@@ -40,22 +40,22 @@ export default function ClubAboutCard({ club }: ClubAboutCardProps) {
 
       {/* Paramètres clés */}
       <div className="grid grid-cols-2 gap-2 text-[10.5px]">
-        <div className="p-2.5 rounded-2xl bg-white/70 border border-white/80 shadow-2xs">
+        <div className="glass-sub-card p-2.5 rounded-2xl">
           <span className="font-mono uppercase text-[#5C6B5E] block text-[8.5px] font-bold">Catégorie</span>
           <span className="font-bold text-[#17402C] truncate block mt-0.5">{club.category || 'Outdoor'}</span>
         </div>
 
-        <div className="p-2.5 rounded-2xl bg-white/70 border border-white/80 shadow-2xs">
+        <div className="glass-sub-card p-2.5 rounded-2xl">
           <span className="font-mono uppercase text-[#5C6B5E] block text-[8.5px] font-bold">Localisation</span>
           <span className="font-bold text-[#17402C] truncate block mt-0.5">{club.location || 'France'}</span>
         </div>
 
-        <div className="p-2.5 rounded-2xl bg-white/70 border border-white/80 shadow-2xs">
+        <div className="glass-sub-card p-2.5 rounded-2xl">
           <span className="font-mono uppercase text-[#5C6B5E] block text-[8.5px] font-bold">Membres</span>
           <span className="font-bold text-[#17402C] truncate block mt-0.5">{club.members_count || 1} inscrits</span>
         </div>
 
-        <div className="p-2.5 rounded-2xl bg-white/70 border border-white/80 shadow-2xs">
+        <div className="glass-sub-card p-2.5 rounded-2xl">
           <span className="font-mono uppercase text-[#5C6B5E] block text-[8.5px] font-bold">Créé en</span>
           <span className="font-bold text-[#17402C] truncate block mt-0.5">{createdYear}</span>
         </div>
@@ -76,11 +76,11 @@ export default function ClubAboutCard({ club }: ClubAboutCardProps) {
               <span className="text-xs">📜</span>
               <span>Charte d'engagement</span>
             </div>
-            <span className="text-[10px] text-[#5C6B5E] font-mono">{showRules ? '▲ Fermer' : '▼ Lire'}</span>
+            <span className="text-[10px] font-mono">{showRules ? '▲ Fermer' : '▼ Lire'}</span>
           </button>
 
           {showRules && (
-            <div className="mt-2 p-3 rounded-2xl bg-white/70 border border-white/80 text-xs text-[#17402C] leading-relaxed whitespace-pre-wrap">
+            <div className="glass-sub-card mt-2 p-3 rounded-2xl text-xs text-[#17402C] leading-relaxed whitespace-pre-wrap">
               {club.rules || club.description}
             </div>
           )}

@@ -127,10 +127,8 @@ export default function PaysLeftSidebar({
               key={s.id}
               type="button"
               onClick={() => onSectionChange(s.id)}
-              className={`w-full px-3 py-2.5 rounded-xl font-bold text-xs transition-all flex items-center justify-between group cursor-pointer border ${
-                isActive
-                  ? 'bg-[#17402C] text-white border-[#17402C] shadow-sm'
-                  : 'bg-white/80 hover:bg-white text-[#17402C] border-white/80 shadow-2xs'
+              className={`glass-capsule-btn w-full !px-3 !py-2.5 !justify-between font-bold text-xs transition-all group cursor-pointer ${
+                isActive ? 'primary' : ''
               }`}
             >
               <span className="truncate text-left">{s.label}</span>

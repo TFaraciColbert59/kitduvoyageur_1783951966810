@@ -261,24 +261,17 @@ export default function MobileDrawer({ isOpen, onClose, onSearchOpen }: MobileDr
                 {/* Close button */}
                 <button
                   onClick={onClose}
+                  className="glass-circle-btn"
                   style={{
                     position: 'absolute',
                     top: 'calc(env(safe-area-inset-top, 0px) + 12px)',
                     right: '12px',
                     width: '44px',
                     height: '44px',
-                    borderRadius: '999px',
-                    background: 'rgba(255,255,255,0.14)',
-                    color: '#fff',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    border: 'none',
-                    cursor: 'pointer',
                   }}
                   aria-label="Fermer le menu"
                 >
-                  <LkvIcon name="close" size={14} />
+                  <LkvIcon name="close" size={14} color="#17402C" />
                 </button>
 
                 {/* Logo + Brand */}
@@ -459,14 +452,13 @@ export default function MobileDrawer({ isOpen, onClose, onSearchOpen }: MobileDr
                 <Link
                   href="/abonnements"
                   onClick={onClose}
+                  className="glass"
                   style={{
                     display: 'flex',
                     alignItems: 'center',
                     gap: '12px',
                     padding: '12px',
-                    background: '#EEF3EC',
                     borderRadius: '14px',
-                    border: '1px solid rgba(23,64,44,0.05)',
                     textDecoration: 'none',
                   }}
                 >

@@ -96,7 +96,7 @@ export default function ClubHero({
             <button
               type="button"
               onClick={onShare}
-              className="glass-capsule-btn p-3 text-white border-white/30 hover:bg-white/20"
+              className="glass-circle-btn"
               title="Partager le club"
             >
               <Icon name="ShareIcon" size={16} className="relative z-10" />

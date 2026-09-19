@@ -77,20 +77,12 @@ export function HubMobileSectionsSheet({
                   type="button"
                   onClick={() => select(def.id)}
                   aria-current={active ? 'page' : undefined}
-                  className={`w-full flex items-center gap-3 px-3 min-h-[44px] rounded-[var(--lkv-radius-md)] text-left cursor-pointer ${
-                    active ? 'bg-[var(--lkv-primary)] text-white' : 'hover:bg-black/5'
+                  className={`glass-capsule-btn w-full !justify-start !gap-3 !px-3 !rounded-[var(--lkv-radius-md)] min-h-[44px] text-left cursor-pointer font-semibold ${
+                    active ? 'primary' : ''
                   }`}
                 >
-                  <Icon
-                    size={16}
-                    className={`shrink-0 ${active ? 'text-white' : 'text-[var(--lkv-text-secondary)]'}`}
-                    aria-hidden="true"
-                  />
-                  <span
-                    className={`flex-1 text-sm font-semibold ${active ? 'text-white' : 'text-[var(--lkv-text-primary)]'}`}
-                  >
-                    {def.label}
-                  </span>
+                  <Icon size={16} className="shrink-0" aria-hidden="true" />
+                  <span className="flex-1 text-sm font-semibold">{def.label}</span>
                   {count !== null && count > 0 && (
                     <span
                       className={`text-[10px] font-bold tabular-nums px-1.5 py-0.5 rounded-full ${
@@ -135,7 +127,7 @@ export function HubMobileSectionsSheet({
                 setIsOpen(false);
                 onOpenPicker();
               }}
-              className="w-full px-3 min-h-[44px] text-xs font-semibold text-[var(--lkv-text-secondary)] text-left cursor-pointer"
+              className="glass-capsule-btn w-full !justify-start !px-3 min-h-[44px] text-xs font-semibold cursor-pointer"
             >
               Personnaliser les sections…
             </button>

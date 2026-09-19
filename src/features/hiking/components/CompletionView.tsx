@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
+import Link from 'next/link';
 import KitDebriefPanel from './KitDebriefPanel';
 
 interface HighlightItem {
@@ -191,6 +192,33 @@ export default function CompletionView({
         {kitId && sessionId && (
           <KitDebriefPanel kitId={kitId} sessionId={sessionId} />
         )}
+
+        {/* Points LKDV & Progression Reward */}
+        <div className="p-4 rounded-2xl bg-white/10 border border-[#C6DCBE]/25 backdrop-blur-md">
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2">
+              <span className="text-xl">🏆</span>
+              <span className="font-mono text-xs font-bold uppercase tracking-wider text-[#C6DCBE]">
+                Points LKDV Validés
+              </span>
+            </div>
+            <span className="font-mono text-sm font-bold text-[#A8C8A0]">
+              +{Math.max(30, Math.round(30 + (distanceKm || 0) * 4))} pts
+            </span>
+          </div>
+          <p className="text-xs text-white/80 leading-relaxed">
+            Votre sortie crédite vos compétences <strong className="text-white">Explorer</strong> et <strong className="text-white">Se préparer</strong> ainsi que votre classement de saison.
+          </p>
+          <Link
+            href="/progression"
+            className="mt-3 flex items-center justify-between text-xs font-semibold text-[#A8C8A0] hover:text-[#C6DCBE] transition-colors pt-2 border-t border-white/10"
+          >
+            <span>Consulter mon niveau et mes classements</span>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+              <path d="M9 18l6-6-6-6" />
+            </svg>
+          </Link>
+        </div>
 
         {/* Main CTA Button: Voir mon aventure */}
         <button

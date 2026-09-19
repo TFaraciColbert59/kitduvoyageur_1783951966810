@@ -213,7 +213,7 @@ export default function CommentItem({
                 className="w-7 h-7 rounded-full glass-capsule-btn flex items-center justify-center text-[#17402C] p-0"
                 aria-label={`Répondre à ${comment.author?.full_name || 'cette personne'}`}
               >
-                <Icon name="ChatBubbleLeftIcon" size={12} />
+                <Icon name="message-square" size={12} />
               </button>
             )}
             {isOwnComment ? (
@@ -223,14 +223,14 @@ export default function CommentItem({
                   className="w-7 h-7 rounded-full glass-capsule-btn flex items-center justify-center text-[#17402C] p-0"
                   aria-label="Modifier"
                 >
-                  <Icon name="PencilIcon" size={12} />
+                  <Icon name="pencil" size={12} />
                 </button>
                 <button
                   onClick={handleDeleteComment}
                   className="w-7 h-7 rounded-full glass-capsule-btn flex items-center justify-center text-red-600 p-0"
                   aria-label="Supprimer"
                 >
-                  <Icon name="TrashIcon" size={12} />
+                  <Icon name="trash2" size={12} />
                 </button>
               </>
             ) : (
@@ -239,7 +239,7 @@ export default function CommentItem({
                 className="w-7 h-7 rounded-full glass-capsule-btn flex items-center justify-center text-[#17402C] p-0"
                 aria-label="Signaler"
               >
-                <Icon name="FlagIcon" size={12} />
+                <Icon name="flag" size={12} />
               </button>
             )}
           </div>

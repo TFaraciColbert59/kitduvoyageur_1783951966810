@@ -31,14 +31,14 @@ export default function TabCarnets({ carnets, loading }: TabCarnetsProps) {
 
         <Link
           href="/carnets/nouveau"
-          className="px-4 py-2 rounded-xl bg-[#17402C] hover:bg-[#17402C] text-white text-xs font-bold  active:scale-95 transition-transform flex items-center gap-1.5"
+          className="glass-capsule-btn primary text-xs font-bold flex items-center gap-1.5"
         >
           <span>+ Nouveau carnet</span>
         </Link>
       </div>
 
       {!carnets || carnets.length === 0 ? (
-        <div className="bg-white rounded-3xl p-10 text-center border border-dashed border-black/10">
+        <div className="glass rounded-3xl p-10 text-center border border-dashed border-black/10">
           <p className="text-4xl mb-3">📖</p>
           <h4 className="font-bold text-sm text-[#17402C]">Aucun carnet rédigé</h4>
           <p className="text-xs text-[#5A7064] max-w-sm mx-auto mt-1 mb-5">
@@ -46,7 +46,7 @@ export default function TabCarnets({ carnets, loading }: TabCarnetsProps) {
           </p>
           <Link
             href="/carnets/nouveau"
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#17402C] text-white text-xs font-bold "
+            className="glass-capsule-btn primary inline-flex items-center gap-2 text-xs font-bold"
           >
             <span>+ Rédiger mon premier carnet</span>
           </Link>
@@ -57,7 +57,7 @@ export default function TabCarnets({ carnets, loading }: TabCarnetsProps) {
             <Link
               key={c.id}
               href={`/carnets/${c.id}`}
-              className="group bg-white rounded-3xl overflow-hidden border border-black/[0.06] hover:border-[#17402C]/30 shadow-2xs hover: transition-all flex flex-col justify-between"
+              className="group glass rounded-3xl overflow-hidden hover:border-[#17402C]/30 transition-all flex flex-col justify-between"
             >
               <div className="relative aspect-[16/9] bg-[#F4F1EB] overflow-hidden">
                 <AppImage

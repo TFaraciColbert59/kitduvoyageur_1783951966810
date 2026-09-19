@@ -129,10 +129,8 @@ export const ProposalCard: React.FC<ProposalCardProps> = ({
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
       data-locked={proposal.locked ? 'true' : 'false'}
-      className={`relative rounded-2xl p-4 transition-all duration-200 border select-none ${
-        proposal.locked
-          ? 'bg-[var(--lkv-warning-bg)]  border-[var(--lkv-warning)]  shadow-md'
-          : 'bg-white/90  border-[var(--lkv-stone-200)]  shadow-sm hover:shadow-md'
+      className={`glass relative rounded-2xl p-4 transition-all duration-200 select-none ${
+        proposal.locked ? 'tone-warn' : ''
       }`}
     >
       {/* En-tête : Couche + Provenance + Cadenas (Geste 2) */}
@@ -180,10 +178,8 @@ export const ProposalCard: React.FC<ProposalCardProps> = ({
           aria-label={
             proposal.locked ? 'Déverrouiller cette proposition' : 'Verrouiller cette proposition'
           }
-          className={`min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl transition-colors ${
-            proposal.locked
-              ? 'bg-[var(--lkv-warning)] text-white shadow-sm'
-              : 'text-[var(--lkv-text-subtle)] hover:text-[var(--lkv-text-muted)]  hover:bg-[var(--lkv-surface-muted)] '
+          className={`glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8 flex items-center justify-center transition-colors ${
+            proposal.locked ? 'primary' : ''
           }`}
         >
           {proposal.locked ? (
@@ -220,7 +216,7 @@ export const ProposalCard: React.FC<ProposalCardProps> = ({
             onClick={handlePrevAlt}
             disabled={activeAltIndex === 0}
             aria-label="Alternative précédente"
-            className="p-1.5 min-w-[var(--lkv-touch-min)] min-h-[var(--lkv-touch-min)] flex items-center justify-center rounded-lg hover:bg-[var(--lkv-surface-muted)]  disabled:opacity-30"
+            className="glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8 flex items-center justify-center disabled:opacity-30"
           >
             <Icon name="chevron-left" className="w-4 h-4" />
           </button>
@@ -232,7 +228,7 @@ export const ProposalCard: React.FC<ProposalCardProps> = ({
             onClick={handleNextAlt}
             disabled={activeAltIndex >= totalProposals - 1}
             aria-label="Alternative suivante"
-            className="p-1.5 min-w-[var(--lkv-touch-min)] min-h-[var(--lkv-touch-min)] flex items-center justify-center rounded-lg hover:bg-[var(--lkv-surface-muted)]  disabled:opacity-30"
+            className="glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8 flex items-center justify-center disabled:opacity-30"
           >
             <Icon name="chevron-right" className="w-4 h-4" />
           </button>
@@ -246,7 +242,7 @@ export const ProposalCard: React.FC<ProposalCardProps> = ({
           type="button"
           onClick={handleVoiceEdit}
           aria-label="Ajuster par commande vocale"
-          className="flex items-center space-x-1 px-2.5 py-1.5 min-h-[var(--lkv-touch-min)] text-xs font-medium rounded-lg text-[var(--lkv-text-muted)]  hover:bg-[var(--lkv-surface-muted)] "
+          className="glass-capsule-btn flex items-center gap-1 !px-2.5 !py-1.5 text-xs font-medium"
         >
           <Icon name="mic" className="w-3.5 h-3.5 text-[var(--lkv-secondary)]" />
           <span>Ajuster</span>
@@ -288,7 +284,7 @@ export const ProposalCard: React.FC<ProposalCardProps> = ({
                 type="button"
                 onClick={() => setEditOpen(false)}
                 aria-label="Fermer"
-                className="w-9 h-9 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-full glass-sub-card border border-white/60 text-[var(--lkv-text-secondary)] hover:bg-white transition-all cursor-pointer"
+                className="glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8 flex items-center justify-center transition-all cursor-pointer"
               >
                 <Icon name="x" size={18} />
               </button>
@@ -305,7 +301,7 @@ export const ProposalCard: React.FC<ProposalCardProps> = ({
               <button
                 type="button"
                 onClick={() => setEditOpen(false)}
-                className="glass-capsule-btn px-4 py-2 text-xs font-semibold text-[var(--lkv-text-secondary)]"
+                className="glass-capsule-btn !px-4 !py-2 text-xs font-semibold"
               >
                 Annuler
               </button>

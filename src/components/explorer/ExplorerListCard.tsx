@@ -36,25 +36,11 @@ export default function ExplorerListCard({ trail, isSelected, onClick }: Props) 
       whileHover={{ y: -2, scale: 1.01 }}
       whileTap={{ scale: 0.985 }}
       onClick={onClick}
-      className={`group relative flex shrink-0 h-[84px] w-full gap-2.5 p-2.5 cursor-pointer transition-all duration-200 select-none ${
-        isSelected
-          ? 'ring-2 ring-[#17402C]/40 shadow-lg scale-[1.01]'
-          : 'hover:scale-[1.01] shadow-xs hover:shadow-md'
+      data-glass-variant={isSelected ? 'selected' : undefined}
+      className={`glass group relative flex shrink-0 h-[84px] w-full gap-2.5 p-2.5 cursor-pointer transition-all duration-200 select-none ${
+        isSelected ? 'scale-[1.01]' : 'hover:scale-[1.01]'
       }`}
-      style={{
-        borderRadius: 22,
-        background: isSelected
-          ? 'linear-gradient(180deg, rgba(255, 255, 255, 0.75) 0%, rgba(251, 250, 246, 0.45) 100%)'
-          : 'linear-gradient(180deg, rgba(255, 255, 255, 0.55) 0%, rgba(251, 250, 246, 0.30) 100%)',
-        backdropFilter: 'blur(var(--glass-blur-xl)) saturate(var(--glass-sat))',
-        WebkitBackdropFilter: 'blur(var(--glass-blur-xl)) saturate(var(--glass-sat))',
-        border: isSelected
-          ? '1.5px solid rgba(23, 64, 44, 0.5)'
-          : '1px solid rgba(255, 255, 255, 0.70)',
-        boxShadow: isSelected
-          ? '0 12px 36px -6px rgba(23, 64, 44, 0.18), inset 0 1px 1.5px rgba(255, 255, 255, 0.95)'
-          : '0 4px 16px -2px rgba(23, 64, 44, 0.06), inset 0 1px 1px rgba(255, 255, 255, 0.85)',
-      }}
+      style={{ borderRadius: 22 }}
     >
       {/* Vignette Photo Liquid Glass */}
       <div className="relative w-16 h-16 rounded-md overflow-hidden shrink-0 bg-[#F1EDE6] border border-white/60">

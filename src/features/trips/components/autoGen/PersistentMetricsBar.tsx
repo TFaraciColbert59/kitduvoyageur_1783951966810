@@ -113,7 +113,7 @@ export const PersistentMetricsBar: React.FC<PersistentMetricsBarProps> = ({
             type="button"
             onClick={handleValidate}
             disabled={isValidating}
-            className="w-full sm:w-auto min-h-[44px] px-6 py-2.5 rounded-xl font-medium text-sm bg-lkv-primary hover:opacity-90 text-white shadow-md transition-all active:scale-95 flex items-center justify-center space-x-2"
+            className="glass-capsule-btn primary w-full sm:w-auto !px-6 !py-2.5 font-medium text-sm transition-all active:scale-95 flex items-center justify-center gap-2"
           >
             <Icon name="check-circle2" className="w-4 h-4" />
             <span>{isValidating ? 'Génération du carnet...' : 'Valider ce voyage'}</span>

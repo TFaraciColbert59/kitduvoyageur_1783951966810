@@ -45,9 +45,9 @@ export default async function PreparerSentierPage({
     return (
       <main
         id="main-content"
-        className="flex min-h-screen items-center justify-center bg-[#EEF3EC] px-6 py-24"
+        className="flex min-h-screen items-center justify-center bg-transparent px-6 py-24"
       >
-        <div className="w-full max-w-md text-center">
+        <div className="glass-sub-card w-full max-w-md text-center p-6">
           <h1 className="text-2xl font-bold text-[#17402C]">
             {persistFailed
               ? 'Préparation momentanément indisponible — réessayez'

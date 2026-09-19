@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { usePWAStandalone } from '@/hooks/usePWAStandalone';
+import Icon from '@/components/ui/AppIcon';
 
 const DISMISS_KEY = 'lkdv_install_dismissed_at';
 const DISMISS_DAYS = 14;
@@ -109,8 +110,7 @@ export default function InstallPrompt() {
         {!isIOS && deferredPrompt && (
           <button
             onClick={handleInstall}
-            className="text-xs font-semibold px-3 py-1.5 rounded-full"
-            style={{ background: '#17402C', color: 'white' }}
+            className="glass-capsule-btn text-xs font-semibold px-3 py-1.5 !min-h-0"
             aria-label="Installer l'application sur l'écran d'accueil"
           >
             Installer
@@ -119,12 +119,9 @@ export default function InstallPrompt() {
         <button
           onClick={handleDismiss}
           aria-label="Fermer la suggestion d'installation"
-          className="flex items-center justify-center w-7 h-7 rounded-full"
-          style={{ background: 'rgba(255,255,255,0.1)' }}
+          className="glass-circle-btn !w-7 !h-7 !min-w-0 !min-h-0"
         >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden="true">
-            <path d="M18 6 6 18M6 6l12 12" />
-          </svg>
+          <Icon name="x" size={14} />
         </button>
       </div>
     </div>

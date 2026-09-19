@@ -75,10 +75,8 @@ export function GearItemPanel({ card, tripSlug, open, onOpenChange, busy, onTogg
             type="button"
             onClick={() => onTogglePacked(card)}
             disabled={busy}
-            className={`flex h-12 w-full items-center justify-center gap-2 rounded-full text-sm font-bold transition-transform active:scale-[0.98] disabled:opacity-50 ${
-              card.isPacked
-                ? 'border border-[var(--lkv-primary)]/25 bg-white/80 text-[var(--lkv-primary)]'
-                : 'bg-[var(--lkv-primary)] text-white'
+            className={`glass-capsule-btn flex h-12 w-full items-center justify-center gap-2 text-sm font-bold transition-transform active:scale-[0.98] disabled:opacity-50 ${
+              card.isPacked ? '' : 'primary'
             }`}
           >
             <Check size={16} aria-hidden="true" />
@@ -87,7 +85,7 @@ export function GearItemPanel({ card, tripSlug, open, onOpenChange, busy, onTogg
 
           <HapticLink
             href={hubSectionHref({ nature: 'sortie', slug: tripSlug }, 'checklist')}
-            className="flex h-11 items-center justify-center rounded-full border border-white/70 bg-white/70 text-xs font-bold text-[var(--lkv-primary)] transition-transform active:scale-[0.98]"
+            className="glass-capsule-btn flex h-11 items-center justify-center text-xs font-bold transition-transform active:scale-[0.98]"
           >
             Voir la checklist de départ
           </HapticLink>

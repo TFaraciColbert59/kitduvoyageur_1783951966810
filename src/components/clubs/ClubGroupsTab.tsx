@@ -185,7 +185,7 @@ export default function ClubGroupsTab({
                 key={group.id}
                 type="button"
                 onClick={() => onOpenGroup(group)}
-                className="glass rounded-2xl p-4 text-left flex flex-col gap-2 min-h-[44px] transition-all hover:shadow-md"
+                className="glass-capsule-btn w-full !p-4 text-left flex flex-col !items-stretch gap-2 min-h-[44px]"
                 data-testid="club-group-card"
               >
                 <div className="flex items-start justify-between gap-2">
@@ -293,7 +293,7 @@ export default function ClubGroupsTab({
               <button
                 type="button"
                 onClick={() => setModalOpen(false)}
-                className="w-11 h-11 rounded-full glass-icon-btn flex items-center justify-center"
+                className="glass-circle-btn !w-11 !h-11 !min-w-11 !min-h-11"
                 aria-label="Fermer"
               >
                 ✕
@@ -329,10 +329,8 @@ export default function ClubGroupsTab({
                         key={member.user_id}
                         type="button"
                         onClick={() => toggleMember(member.user_id)}
-                        className={`w-full flex items-center justify-between gap-2 rounded-xl px-3 py-2.5 text-xs font-bold transition-all min-h-[44px] ${
-                          checked
-                            ? 'bg-lkv-primary/10 text-lkv-primary border border-lkv-primary'
-                            : 'glass-sub-card text-[var(--lkv-text-secondary)] border border-transparent'
+                        className={`w-full justify-between gap-2 glass-capsule-btn text-xs font-bold min-h-[44px] ${
+                          checked ? 'primary' : ''
                         }`}
                         aria-pressed={checked}
                       >

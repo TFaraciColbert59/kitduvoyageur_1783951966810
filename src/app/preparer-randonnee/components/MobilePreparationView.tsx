@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -98,7 +98,7 @@ export const MobilePreparationView: React.FC<MobilePreparationViewProps> = ({
   ];
 
   return (
-    <div className="min-h-screen bg-[#F5F2EC] font-sans pb-[190px] relative overflow-x-hidden">
+    <div className="min-h-screen bg-[rgba(245,242,236,0.8)] backdrop-blur-xl font-sans pb-[190px] relative overflow-x-hidden">
       {!isOnline && (
          <div className="w-full bg-[#B85838] text-white text-[10px] uppercase tracking-widest font-mono text-center py-1 absolute top-0 z-50">
            Mode Hors-Ligne Actif
@@ -128,7 +128,7 @@ export const MobilePreparationView: React.FC<MobilePreparationViewProps> = ({
                 router.push('/explorer');
               }
             }}
-            className="w-8 h-8 rounded-full bg-[#17402C]/80 backdrop-blur-md text-white border border-white/20  flex items-center justify-center pointer-events-auto active:scale-95 transition-all text-sm font-bold cursor-pointer"
+            className="glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8 pointer-events-auto text-sm font-bold"
             aria-label="Retour"
           >
             ←
@@ -247,7 +247,7 @@ export const MobilePreparationView: React.FC<MobilePreparationViewProps> = ({
               <button
                 type="button"
                 onClick={() => setShowDateModal(false)}
-                className="flex-1 py-2.5 rounded-xl text-xs font-semibold text-[#6B7A72] hover:bg-black/[0.04]"
+                className="glass-capsule-btn flex-1 text-xs font-semibold"
               >
                 Annuler
               </button>
@@ -268,7 +268,7 @@ export const MobilePreparationView: React.FC<MobilePreparationViewProps> = ({
                   setShowDateModal(false);
                   router.push('/compte');
                 }}
-                className="flex-1 py-2.5 rounded-xl text-xs font-bold bg-[#17402C] text-white hover:bg-[#17402C] "
+                className="glass-capsule-btn primary flex-1 text-xs font-bold"
               >
                 Enregistrer →
               </button>

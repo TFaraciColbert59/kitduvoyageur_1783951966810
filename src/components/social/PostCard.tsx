@@ -72,9 +72,10 @@ export default function PostCard({
     month: 'short',
   });
 
-  const shouldTruncate = post.content && post.content.length > 220;
+  const CONTENT_LIMIT = 200;
+  const shouldTruncate = post.content && post.content.length > CONTENT_LIMIT;
   const displayContent = shouldTruncate && !isExpanded
-    ? post.content.slice(0, 220) + '...'
+    ? post.content.slice(0, CONTENT_LIMIT).trimEnd() + '…'
     : post.content;
 
   const postUrl = typeof window !== 'undefined'
@@ -282,10 +283,10 @@ export default function PostCard({
   return (
     <article
       id={`post-${post.id}`}
-      className={`glass rounded-xl p-4 sm:p-5 transition-shadow duration-200 flex flex-col gap-3.5 ${className}`}
+      className={`glass rounded-xl overflow-hidden transition-shadow duration-200 flex flex-col ${className}`}
     >
       {/* Header : Author info, Origin/Time & context menu */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between px-4 pt-4 pb-3">
         <div className="flex items-center gap-3 min-w-0">
           <a
             href={post.author_id ? `/profil/${post.author_id}` : '#'}
@@ -340,25 +341,34 @@ export default function PostCard({
         </button>
       </div>
 
-      {/* Body content */}
-      <div className="text-sm text-[#17402C] leading-relaxed break-words font-sans">
+      {/* Body content — 200 caractères max, expansion façon Twitter */}
+      <div className="text-sm text-[#17402C] leading-relaxed break-words font-sans px-4 pb-3">
         <p className="whitespace-pre-line">
           {displayContent}
+          {shouldTruncate && !isExpanded && (
+            <button
+              type="button"
+              onClick={() => setIsExpanded(true)}
+              className="text-[13px] font-medium text-[#17402C]/70 hover:text-[#17402C] ml-1 inline"
+            >
+              Afficher plus
+            </button>
+          )}
+          {shouldTruncate && isExpanded && (
+            <button
+              type="button"
+              onClick={() => setIsExpanded(false)}
+              className="text-[13px] font-medium text-[#17402C]/70 hover:text-[#17402C] ml-1 inline"
+            >
+              Afficher moins
+            </button>
+          )}
         </p>
-        {shouldTruncate && (
-          <button
-            type="button"
-            onClick={() => setIsExpanded(!isExpanded)}
-            className="text-[11px] font-bold text-[#17402C] hover:underline mt-1 block"
-          >
-            {isExpanded ? 'Moins' : 'Lire la suite...'}
-          </button>
-        )}
       </div>
 
       {/* Tags rendered inline or attached */}
       {post.tags && post.tags.length > 0 && (
-        <div className="flex flex-wrap gap-1.5 -mt-1">
+        <div className="flex flex-wrap gap-1.5 px-4 pb-3 -mt-1">
           {post.tags.map((tag, idx) => (
             <span
               key={idx}
@@ -370,28 +380,47 @@ export default function PostCard({
         </div>
       )}
 
-      {/* Media attachment with top-right date mono badge & bottom-left geo badge ONLY if media_url exists */}
+      {/* Media plein-bord (collé aux bords de la card) + boutons en verre par-dessus */}
       {post.media_url && (
-        <div className="relative w-full rounded-2xl overflow-hidden bg-black/5 max-h-80 flex items-center justify-center border border-[#17402C]/5 group">
+        <div className="relative w-full">
+          {/* Ambilight — les couleurs du média remontent dans la card jusqu'à ~30% sous le texte */}
+          <div
+            aria-hidden="true"
+            className="lkdv-ambilight pointer-events-none absolute -top-24 inset-x-0 h-60"
+            style={{
+              backgroundImage: `url(${post.media_url})`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center 30%',
+              filter: 'blur(50px) saturate(1.7)',
+              transform: 'scale(1.25)',
+              opacity: 0.45,
+              WebkitMaskImage: 'linear-gradient(to top, rgba(0,0,0,1) 0%, rgba(0,0,0,0.35) 55%, rgba(0,0,0,0) 100%)',
+              maskImage: 'linear-gradient(to top, rgba(0,0,0,1) 0%, rgba(0,0,0,0.35) 55%, rgba(0,0,0,0) 100%)',
+            }}
+          />
+          <div className="relative z-10">
           {post.media_type === 'video' ? (
             <video
               src={post.media_url}
               controls
-              className="w-full h-auto max-h-80 object-cover rounded-2xl"
+              className="w-full h-auto max-h-[540px] sm:max-h-[420px] object-cover"
               preload="metadata"
             />
           ) : (
             <img
               src={post.media_url}
               alt="Média publication"
-              className="w-full h-auto max-h-80 object-cover rounded-2xl"
+              className="w-full h-auto max-h-[540px] sm:max-h-[420px] object-cover"
               loading="lazy"
             />
           )}
 
+          {/* Fusion givrée : le média se dissout dans le verre de la card (sans ligne dure) */}
+          <div aria-hidden="true" className="lkdv-photo-melt" />
+
           {/* Geo Location Capsule Overlay */}
           {post.location && (
-            <div className="absolute bottom-2.5 left-2.5 px-3 py-1.5 glass-pill rounded-full flex items-center gap-1.5 text-[10px] font-bold text-[#17402C] tracking-wider uppercase border border-white/40">
+            <div className="absolute bottom-16 left-3 px-3 py-1.5 glass-pill rounded-full flex items-center gap-1.5 text-[10px] font-bold text-[#17402C] tracking-wider uppercase border border-white/40">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#17402C" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="12" cy="10" r="3" />
                 <path d="M12 2a8 8 0 0 1 8 8c0 6-8 12-8 12S4 16 4 10a8 8 0 0 1 8-8z" />
@@ -400,29 +429,55 @@ export default function PostCard({
             </div>
           )}
 
-          {/* Date Mono Badge Top Right */}
-          <div className="absolute top-2.5 right-2.5 px-2.5 py-1 bg-black/60 backdrop-blur-md rounded-full text-[10px] font-mono text-white tracking-wider">
+          {/* Date — pill verre en haut à droite */}
+          <div className="absolute top-3 right-3 px-2.5 py-1 rounded-full text-[10px] font-mono text-[#17402C] tracking-wider border border-white/50"
+            style={{ background: 'rgba(255,255,255,0.62)', backdropFilter: 'blur(8px) saturate(160%)', WebkitBackdropFilter: 'blur(8px) saturate(160%)' }}>
             {dateFormatted}
+          </div>
+
+          {/* Actions sociales en verre, par-dessus l'image */}
+          <div className="lkdv-photo-actions absolute inset-x-3 bottom-3">
+            <SocialActions
+              contentId={post.id}
+              contentType="post"
+              likesCount={post.likes_count}
+              commentsCount={commentsCount}
+              isLiked={post.user_liked}
+              isSaved={post.user_saved}
+              onLike={onLike}
+              onSave={onSave}
+              onOpenComments={() => {
+                setIsCommentsOpen(true);
+                loadComments();
+              }}
+              onShare={() => setIsShareOpen(true)}
+              overlay
+            />
+          </div>
           </div>
         </div>
       )}
 
-      {/* Standardized Social Actions */}
-      <SocialActions
-        contentId={post.id}
-        contentType="post"
-        likesCount={post.likes_count}
-        commentsCount={commentsCount}
-        isLiked={post.user_liked}
-        isSaved={post.user_saved}
-        onLike={onLike}
-        onSave={onSave}
-        onOpenComments={() => {
-          setIsCommentsOpen(true);
-          loadComments();
-        }}
-        onShare={() => setIsShareOpen(true)}
-      />
+      {/* Actions sociales sous le texte (posts sans image) */}
+      {!post.media_url && (
+        <div className="px-4 pb-3">
+          <SocialActions
+            contentId={post.id}
+            contentType="post"
+            likesCount={post.likes_count}
+            commentsCount={commentsCount}
+            isLiked={post.user_liked}
+            isSaved={post.user_saved}
+            onLike={onLike}
+            onSave={onSave}
+            onOpenComments={() => {
+              setIsCommentsOpen(true);
+              loadComments();
+            }}
+            onShare={() => setIsShareOpen(true)}
+          />
+        </div>
+      )}
 
       {/* Context Menu Sheet */}
       <MoreMenuSheet

@@ -23,17 +23,17 @@ export function ActivityIdentityBar({ nature, name, phaseLabel, daysUntil }: Act
   const Icon: LucideIcon = ICONS[nature];
   return (
     <div className="flex items-center gap-2.5 px-1 py-0.5">
-      <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[var(--lkv-forest-900)] text-sage-300 shrink-0">
+      <span className="flex h-7 w-7 items-center justify-center rounded-full bg-white/15 text-white ring-1 ring-white/25 shrink-0">
         <Icon size={13} aria-hidden="true" />
       </span>
-      <p className="min-w-0 truncate text-lg font-serif-lkv italic leading-snug text-[var(--lkv-text-primary)]">{name}</p>
+      <p className="min-w-0 truncate text-lg font-serif-lkv italic leading-snug text-[var(--card-content)]">{name}</p>
       {phaseLabel && (
-        <span className="shrink-0 rounded-full bg-[var(--lkv-primary)]/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--lkv-primary)]">
+        <span className="shrink-0 rounded-full bg-white/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-white ring-1 ring-white/25">
           {phaseLabel}
         </span>
       )}
       {daysUntil != null && daysUntil >= 0 && (
-        <span className="shrink-0 rounded-full border border-white/70 bg-white/60 px-2 py-0.5 text-[10px] font-bold tabular-nums text-[var(--lkv-text-secondary)]">
+        <span className="shrink-0 rounded-full border border-white/30 bg-white/15 px-2 py-0.5 text-[10px] font-bold tabular-nums text-white">
           J-{daysUntil}
         </span>
       )}

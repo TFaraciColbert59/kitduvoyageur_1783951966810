@@ -8,10 +8,10 @@ export default function QuickGrid() {
   return (
     <div style={{ padding: '20px 16px 8px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-        <h2 style={{ fontSize: '20px', letterSpacing: '-0.015em', margin: 0, color: '#17402C' }}>
-          Par où <em style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic', color: '#17402C' }}>commencer.</em>
+        <h2 style={{ fontSize: '20px', letterSpacing: '-0.015em', margin: 0, color: '#EEF3EC' }}>
+          Par où <em style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic', color: '#A9C6B0' }}>commencer.</em>
         </h2>
-        <Link href="/explorer" style={{ fontSize: '12px', color: '#17402C', fontWeight: 500, textDecoration: 'none' }}>
+        <Link href="/explorer" style={{ fontSize: '12px', color: '#EEF3EC', fontWeight: 500, textDecoration: 'none' }}>
           Tout voir &rarr;
         </Link>
       </div>

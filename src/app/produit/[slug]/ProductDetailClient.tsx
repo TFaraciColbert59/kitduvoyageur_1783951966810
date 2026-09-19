@@ -148,10 +148,10 @@ export default function ProductDetailClient({ slug, initialProduct }: { slug: st
 
   if (loading) {
     return (
-      <div className="min-h-dvh bg-[#EEF3EC]">
+      <div className="min-h-dvh bg-transparent">
         <Header />
         <div className="pt-24 max-w-[1120px] mx-auto px-4 flex items-center justify-center min-h-[60vh]">
-          <div className="w-8 h-8 rounded-full border-2 border-[#17402C] border-t-transparent animate-spin" />
+          <div className="w-8 h-8 rounded-full border-2 border-[#EEF3EC] border-t-transparent animate-spin" />
         </div>
       </div>
     );
@@ -159,10 +159,10 @@ export default function ProductDetailClient({ slug, initialProduct }: { slug: st
 
   if (!product && loadError) {
     return (
-      <div className="min-h-dvh bg-[#EEF3EC]">
+      <div className="min-h-dvh bg-transparent">
         <Header />
         <div className="pt-24 pb-16 max-w-[1120px] mx-auto px-4">
-          <div className="bg-[rgba(255,255,255,0.92)] border border-[rgba(255,255,255,0.60)] rounded-lg max-w-[32rem] mx-auto p-10 text-center">
+          <div className="glass rounded-lg max-w-[32rem] mx-auto p-10 text-center">
             <div className="text-[3rem] mb-4">⚠️</div>
             <h1 className="font-display font-bold text-3xl text-[#17402C] mb-2">Produit introuvable</h1>
             <p className="text-sm text-[#5A7064] mb-6">
@@ -222,10 +222,10 @@ export default function ProductDetailClient({ slug, initialProduct }: { slug: st
     <>
       {/* ── DESKTOP VIEW ── */}
       <div className="hidden md:block">
-        <div data-lkv-material-theme="light" className="h-dvh overflow-hidden bg-[#EEF3EC] text-[#17402C]">
+        <div data-lkv-material-theme="light" className="h-dvh overflow-hidden bg-transparent text-[#17402C]">
           <Header />
 
-          <main id="main-content" className="h-full overflow-y-auto pt-20 pb-16">
+          <main id="main-content" className="h-full overflow-y-auto pt-20 pb-16 bg-[rgba(238,243,236,0.78)] backdrop-blur-xl">
 
             {/* BREADCRUMB */}
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-6">
@@ -253,8 +253,7 @@ export default function ProductDetailClient({ slug, initialProduct }: { slug: st
                       <button
                         key={i}
                         onClick={() => setActiveImage(i)}
-                        className="relative w-20 h-20 aspect-square rounded-xl overflow-hidden border-2 cursor-pointer"
-                        style={{ background: '#E1EBDE', borderColor: i === activeImage ? '#17402C' : 'transparent' }}
+                        className={`glass-circle-btn !w-20 !h-20 !min-w-20 !min-h-20 !p-0 overflow-hidden cursor-pointer ${i === activeImage ? 'primary' : 'opacity-70 hover:opacity-100'}`}
                       >
                         <img src={img.url} alt={`Miniature ${i+1}`} className="w-full h-full object-cover mix-blend-multiply opacity-90" />
                       </button>
@@ -281,7 +280,7 @@ export default function ProductDetailClient({ slug, initialProduct }: { slug: st
                       />
                     </AnimatePresence>
 
-                    <button className="absolute bottom-4 right-4 w-10 h-10 bg-white/80 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-white hover:scale-105 transition-opacity duration-200 opacity-0 group-hover:opacity-100" style={{ color: '#17402C' }}>
+                    <button className="glass-circle-btn absolute bottom-4 right-4 !w-10 !h-10 !min-w-10 !min-h-10 hover:scale-105 transition-opacity duration-200 opacity-0 group-hover:opacity-100">
                       <Icon name="ArrowsPointingOutIcon" size={16} variant="outline" />
                     </button>
                   </div>
@@ -342,7 +341,7 @@ export default function ProductDetailClient({ slug, initialProduct }: { slug: st
                           <button
                             key={vol}
                             onClick={() => setSelectedVolume(vol)}
-                            className={`px-4 py-2 rounded-full text-xs font-semibold transition-all ${selectedVolume === vol ? 'glass-capsule-btn primary' : 'glass-capsule-btn secondary'}`}
+                            className={`glass-capsule-btn !px-4 !py-2 !text-xs !font-semibold ${selectedVolume === vol ? 'primary' : 'secondary'}`}
                           >
                             {vol}
                           </button>
@@ -361,7 +360,7 @@ export default function ProductDetailClient({ slug, initialProduct }: { slug: st
                           <button
                             key={strap}
                             onClick={() => setSelectedStrap(strap)}
-                            className={`px-4 py-2 rounded-full text-xs font-semibold transition-all ${selectedStrap === strap ? 'glass-capsule-btn primary' : 'glass-capsule-btn secondary'}`}
+                            className={`glass-capsule-btn !px-4 !py-2 !text-xs !font-semibold ${selectedStrap === strap ? 'primary' : 'secondary'}`}
                           >
                             {strap}
                           </button>
@@ -405,9 +404,7 @@ export default function ProductDetailClient({ slug, initialProduct }: { slug: st
                           setCartAdded(true);
                           setTimeout(() => setCartAdded(false), 2500);
                         }}
-                        className={`glass-capsule-btn primary flex-1 justify-center h-[52px] font-bold text-sm flex items-center gap-2 ${
-                          inCart ? 'ring-2 ring-[#17402C]/30' : ''
-                        }`}
+                        className="glass-capsule-btn primary flex-1 justify-center h-[52px] font-bold text-sm flex items-center gap-2"
                       >
                         {cartAdded ? (
                           <><Icon name="CheckCircleIcon" size={18} /> Ajouté au panier !</>
@@ -421,7 +418,7 @@ export default function ProductDetailClient({ slug, initialProduct }: { slug: st
                       <motion.button
                         whileTap={{ scale: 0.8 }}
                         onClick={() => setIsFavorite(!isFavorite)}
-                        className={`w-[52px] h-[52px] rounded-full border flex items-center justify-center transition-colors flex-shrink-0 relative overflow-hidden ${isFavorite ? 'border-[#17402C] bg-[#17402C]/10 text-[#17402C]' : 'border-white/40 bg-white/70 backdrop-blur-sm hover:bg-white text-[#17402C]'}`}
+                        className={`glass-circle-btn !w-[52px] !h-[52px] !min-w-[52px] !min-h-[52px] !p-0 flex-shrink-0 ${isFavorite ? 'primary' : ''}`}
                       >
                         <AnimatePresence mode="wait">
                           <motion.div
@@ -553,12 +550,12 @@ export default function ProductDetailClient({ slug, initialProduct }: { slug: st
 
       {/* ── MOBILE VIEW ── */}
       <div className="block md:hidden">
-        <MobilePageShell background="#EEF3EC">
+        <MobilePageShell background="transparent">
           {/* Gallery */}
           <div style={{ position: 'relative', width: '100%', aspectRatio: '1/1', background: '#E1EBDE', overflow: 'hidden' }}>
             {/* Back button */}
             <div style={{ position: 'absolute', top: '16px', left: '16px', zIndex: 20, display: 'flex', gap: '8px' }}>
-              <Link href="/boutique" style={{ width: '36px', height: '36px', background: 'rgba(255,255,255,0.92)', backdropFilter: 'blur(var(--glass-blur-md))', WebkitBackdropFilter: 'blur(var(--glass-blur-md))', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#17402C', border: '1px solid rgba(255,255,255,0.60)', textDecoration: 'none' }}>
+              <Link href="/boutique" className="glass-circle-btn !w-9 !h-9 !min-w-9 !min-h-9">
                 <LkvIcon name="chevron-left" size={18} />
               </Link>
             </div>
@@ -566,7 +563,7 @@ export default function ProductDetailClient({ slug, initialProduct }: { slug: st
             {/* Favorite button */}
             <button
               onClick={() => setIsFavorite(!isFavorite)}
-              style={{ position: 'absolute', top: '16px', right: '16px', zIndex: 20, width: '36px', height: '36px', background: 'rgba(255,255,255,0.92)', backdropFilter: 'blur(var(--glass-blur-md))', WebkitBackdropFilter: 'blur(var(--glass-blur-md))', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(255,255,255,0.60)', color: '#17402C', cursor: 'pointer' }}
+              className={`glass-circle-btn absolute top-4 right-4 z-20 !w-9 !h-9 !min-w-9 !min-h-9 ${isFavorite ? 'primary' : ''}`}
             >
               <LkvIcon name="heart" size={18} color={isFavorite ? '#A8443A' : 'inherit'} />
             </button>
@@ -621,7 +618,7 @@ export default function ProductDetailClient({ slug, initialProduct }: { slug: st
 
           {/* Thumbnails list */}
           {product.images.length > 1 && (
-            <div style={{ display: 'flex', gap: '8px', padding: '8px 16px', overflowX: 'auto', background: '#EEF3EC', scrollbarWidth: 'none' }}>
+            <div style={{ display: 'flex', gap: '8px', padding: '8px 16px', overflowX: 'auto', background: 'transparent', scrollbarWidth: 'none' }}>
               {product.images.map((img, i) => (
                 <button
                   key={i}
@@ -632,18 +629,7 @@ export default function ProductDetailClient({ slug, initialProduct }: { slug: st
                       gallery.scrollTo({ left: gallery.clientWidth * i, behavior: 'smooth' });
                     }
                   }}
-                  style={{
-                    width: '48px',
-                    height: '48px',
-                    borderRadius: '12px',
-                    overflow: 'hidden',
-                    border: '2px solid',
-                    borderColor: i === activeImage ? '#17402C' : 'transparent',
-                    flexShrink: 0,
-                    background: '#E1EBDE',
-                    padding: 0,
-                    cursor: 'pointer',
-                  }}
+                  className={`glass-circle-btn !w-12 !h-12 !min-w-12 !min-h-12 !p-0 overflow-hidden flex-shrink-0 cursor-pointer ${i === activeImage ? 'primary' : 'opacity-70 hover:opacity-100'}`}
                 >
                   <img src={img.url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', mixBlendMode: 'multiply' }} />
                 </button>
@@ -656,20 +642,20 @@ export default function ProductDetailClient({ slug, initialProduct }: { slug: st
             <span className="glass-pill" style={{ fontFamily: 'var(--font-mono)', marginBottom: '8px' }}>
               {product.categorie}
             </span>
-            <h1 style={{ fontSize: '24px', fontWeight: 600, color: '#17402C', margin: 0, letterSpacing: '-0.02em', lineHeight: 1.2 }}>
+            <h1 style={{ fontSize: '24px', fontWeight: 600, color: '#EEF3EC', margin: 0, letterSpacing: '-0.02em', lineHeight: 1.2 }}>
               {product.nom}
             </h1>
-            <div style={{ fontSize: '12px', color: '#5A7064', marginTop: '4px', fontWeight: 500 }}>
-              Par <span style={{ fontWeight: 600, color: '#17402C' }}>{product.marque}</span>
+            <div style={{ fontSize: '12px', color: '#CCE0D4', marginTop: '4px', fontWeight: 500 }}>
+              Par <span style={{ fontWeight: 600, color: '#EEF3EC' }}>{product.marque}</span>
             </div>
 
             {/* Price & Rating */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '16px', paddingBottom: '16px', borderBottom: '1px solid rgba(23,64,44,0.08)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '16px', paddingBottom: '16px', borderBottom: '1px solid rgba(255,255,255,0.18)' }}>
               <div>
-                <span style={{ fontSize: '24px', fontWeight: 700, fontFamily: 'var(--font-mono)', color: '#17402C' }}>
+                <span style={{ fontSize: '24px', fontWeight: 700, fontFamily: 'var(--font-mono)', color: '#EEF3EC' }}>
                   {product.prix_cents > 0 ? `${(product.prix_cents / 100).toFixed(2)} €` : '—'}
                 </span>
-                <span style={{ fontSize: '10px', color: '#5A7064', display: 'block', marginTop: '2px' }}>TVA incluse</span>
+                <span style={{ fontSize: '10px', color: '#CCE0D4', display: 'block', marginTop: '2px' }}>TVA incluse</span>
               </div>
               
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: '#5A7064', background: '#E1EBDE', padding: '6px 12px', borderRadius: '12px' }}>
@@ -691,7 +677,7 @@ export default function ProductDetailClient({ slug, initialProduct }: { slug: st
 
           {/* Specifications Grid */}
           <div style={{ padding: '8px 20px' }}>
-            <h3 className="text-[11px] font-bold uppercase tracking-wider text-[#17402C] mb-3">Caractéristiques</h3>
+            <h3 className="text-[11px] font-bold uppercase tracking-wider text-[#EEF3EC] mb-3">Caractéristiques</h3>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
               <div className="glass-sub-card p-3">
                 <div className="text-[10px] uppercase text-[#5A7064] tracking-wide">Poids</div>
@@ -723,13 +709,12 @@ export default function ProductDetailClient({ slug, initialProduct }: { slug: st
           {/* Dynamic variants */}
           {product.variants && product.variants.length > 0 && (
             <div style={{ padding: '16px 20px' }}>
-              <h3 className="text-[11px] font-bold uppercase tracking-wider text-[#17402C] mb-2.5">Options</h3>
+              <h3 className="text-[11px] font-bold uppercase tracking-wider text-[#EEF3EC] mb-2.5">Options</h3>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
                 {product.variants.map((v: any, i: number) => (
                   <button
                     key={i}
-                    className="glass-capsule-btn secondary"
-                    style={{ padding: '8px 14px', fontSize: '12px', fontWeight: 600, fontFamily: 'inherit' }}
+                    className="glass-capsule-btn secondary !px-3.5 !py-2 !text-xs !font-semibold"
                   >
                     {v.size || v.name || v.sku}
                   </button>
@@ -740,8 +725,8 @@ export default function ProductDetailClient({ slug, initialProduct }: { slug: st
 
           {/* Description */}
           <div style={{ padding: '16px 20px 100px' }}>
-            <h3 className="text-[11px] font-bold uppercase tracking-wider text-[#17402C] mb-2">Présentation</h3>
-            <p style={{ fontSize: '14px', color: '#365233', lineHeight: 1.5, margin: 0, whiteSpace: 'pre-line' }}>
+            <h3 className="text-[11px] font-bold uppercase tracking-wider text-[#EEF3EC] mb-2">Présentation</h3>
+            <p style={{ fontSize: '14px', color: '#CCE0D4', lineHeight: 1.5, margin: 0, whiteSpace: 'pre-line' }}>
               {product.description}
             </p>
           </div>

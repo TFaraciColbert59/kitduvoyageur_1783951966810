@@ -109,7 +109,7 @@ export const MessageInbox: React.FC<MessageInboxProps> = ({
       */}
       {selectedConversation && (
         <div
-          className={`md:hidden fixed inset-0 z-[10000] bg-[#EEF3EC] ${
+          className={`md:hidden fixed inset-0 z-[10000] bg-[rgba(238,243,236,0.94)] backdrop-blur-xl ${
             isClosing ? 'msg-sheet-out' : 'msg-sheet-in'
           }`}
           style={{

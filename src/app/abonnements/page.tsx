@@ -161,13 +161,13 @@ export default function AbonnementsPage() {
           <div className="flex items-center gap-3 bg-card border border-border rounded-xl p-1">
             <button
               onClick={() => setBillingAnnual(false)}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${!billingAnnual ? 'bg-primary text-white' : 'text-white/50 hover:text-white'}`}>
+              className={`glass-capsule-btn !text-sm ${!billingAnnual ? 'primary' : ''}`}>
 
               Mensuel
             </button>
             <button
               onClick={() => setBillingAnnual(true)}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${billingAnnual ? 'bg-primary text-white' : 'text-white/50 hover:text-white'}`}>
+              className={`glass-capsule-btn !text-sm flex items-center gap-2 ${billingAnnual ? 'primary' : ''}`}>
 
               Annuel
               <span className="text-xs bg-green-500/20 text-green-400 px-1.5 py-0.5 rounded-full">-20%</span>
@@ -228,7 +228,7 @@ export default function AbonnementsPage() {
                   </div>
                 }
 
-                <button className={`w-full py-2.5 rounded-xl text-sm font-semibold transition-all ${plan.id === 'expedition' ? 'bg-amber-400 text-black hover:bg-amber-300' : plan.id === 'aventurier' ? 'bg-primary text-white hover:bg-primary/90' : 'border border-white/20 text-white hover:bg-white/10'}`}>
+                <button className={`glass-capsule-btn w-full !text-sm ${plan.id !== 'explorer' ? 'primary' : ''}`}>
                   {plan.cta}
                 </button>
               </div>);
@@ -317,16 +317,16 @@ export default function AbonnementsPage() {
             <button
               key={p.id}
               onClick={() => setSelectedProfile(p.id)}
-              className={`flex items-center gap-3 p-4 rounded-xl border transition-all text-left ${selectedProfile === p.id ? 'border-primary bg-primary/10 text-white' : 'border-border bg-card text-white/60 hover:border-white/30 hover:text-white'}`}>
+              className={`glass-capsule-btn !text-sm flex items-center gap-3 p-4 text-left ${selectedProfile === p.id ? 'primary' : ''}`}>
 
-                <Icon name={p.icon as string} size={18} variant="outline" className={selectedProfile === p.id ? 'text-primary' : ''} />
+                <Icon name={p.icon as string} size={18} variant="outline" />
                 <span className="text-sm font-medium">{p.label}</span>
               </button>
             )}
           </div>
           <div className="mt-6 text-center">
             <p className="text-xs text-white/30 mb-3">Profil sélectionné : <span className="text-white/60">{PROFILES.find((p) => p.id === selectedProfile)?.label}</span></p>
-            <Link href="/ai-configurator" className="inline-flex items-center gap-2 px-6 py-3 bg-primary rounded-xl text-white font-semibold text-sm hover:bg-primary/90 transition-all">
+            <Link href="/ai-configurator" className="glass-capsule-btn primary !px-6 !py-3 !text-sm !font-semibold">
               <Icon name="SparklesIcon" size={16} variant="outline" />
               Affiner mon profil avec l&apos;IA
             </Link>
@@ -356,11 +356,11 @@ export default function AbonnementsPage() {
       <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '20px' }}>
         <div style={{ display: 'flex', gap: '4px', background: '#1a2420', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '10px', padding: '3px' }}>
           <button onClick={() => setBillingAnnual(false)}
-            style={{ padding: '8px 16px', borderRadius: '8px', fontSize: '13px', fontWeight: 600, border: 'none', cursor: 'pointer', background: !billingAnnual ? '#17402C' : 'transparent', color: !billingAnnual ? '#fff' : 'rgba(255,255,255,0.5)' }}>
+            className={`glass-capsule-btn !text-[13px] ${!billingAnnual ? 'primary' : ''}`}>
             Mensuel
           </button>
           <button onClick={() => setBillingAnnual(true)}
-            style={{ padding: '8px 16px', borderRadius: '8px', fontSize: '13px', fontWeight: 600, border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', background: billingAnnual ? '#17402C' : 'transparent', color: billingAnnual ? '#fff' : 'rgba(255,255,255,0.5)' }}>
+            className={`glass-capsule-btn !text-[13px] flex items-center gap-1.5 ${billingAnnual ? 'primary' : ''}`}>
             Annuel
             <span style={{ fontSize: '10px', background: 'rgba(34,197,94,0.2)', color: '#22c55e', padding: '1px 6px', borderRadius: '10px' }}>-20%</span>
           </button>
@@ -416,12 +416,7 @@ export default function AbonnementsPage() {
                   <p style={{ fontSize: '11px', color: '#fbbf24', margin: 0 }}>🎁 {plan.box}</p>
                 </div>
               )}
-              <button style={{
-                width: '100%', padding: '10px', borderRadius: '8px', fontSize: '12px', fontWeight: 700, cursor: 'pointer',
-                background: plan.id === 'expedition' ? '#f59e0b' : plan.id === 'aventurier' ? '#17402C' : 'transparent',
-                color: plan.id === 'expedition' ? '#000' : plan.id === 'aventurier' ? '#fff' : 'rgba(255,255,255,0.7)',
-                border: plan.id === 'explorer' ? '1px solid rgba(255,255,255,0.2)' : 'none',
-              }}>
+              <button className={`glass-capsule-btn w-full !text-xs ${plan.id !== 'explorer' ? 'primary' : ''}`}>
                 {plan.cta}
               </button>
             </div>
@@ -497,15 +492,8 @@ export default function AbonnementsPage() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px' }}>
           {PROFILES.map((p) => (
             <button key={p.id} onClick={() => setSelectedProfile(p.id)}
-              style={{
-                display: 'flex', alignItems: 'center', gap: '8px', padding: '10px', borderRadius: '8px', border: '1px solid', cursor: 'pointer', fontSize: '12px', fontWeight: 500,
-                background: selectedProfile === p.id ? 'rgba(23,64,44,0.1)' : '#1a2420',
-                borderColor: selectedProfile === p.id ? '#17402C' : 'rgba(255,255,255,0.08)',
-                color: selectedProfile === p.id ? '#fff' : 'rgba(255,255,255,0.6)',
-              }}>
-              <span style={{ color: selectedProfile === p.id ? '#17402C' : 'inherit' }}>
-                <Icon name={p.icon as string} size={16} variant="outline" />
-              </span>
+              className={`glass-capsule-btn !text-xs flex items-center gap-2 p-2.5 ${selectedProfile === p.id ? 'primary' : ''}`}>
+              <Icon name={p.icon as string} size={16} variant="outline" />
               <span>{p.label}</span>
             </button>
           ))}
@@ -514,7 +502,7 @@ export default function AbonnementsPage() {
           <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.3)', marginBottom: '10px' }}>
             Profil selectionne : <span style={{ color: 'rgba(255,255,255,0.6)' }}>{PROFILES.find((p) => p.id === selectedProfile)?.label}</span>
           </p>
-          <Link href="/ai-configurator" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '10px 20px', background: '#17402C', color: '#fff', borderRadius: '10px', fontSize: '13px', fontWeight: 600, textDecoration: 'none' }}>
+          <Link href="/ai-configurator" className="glass-capsule-btn primary !px-5 !py-2.5 !text-[13px] !font-semibold">
             Affiner mon profil avec l&apos;IA
           </Link>
         </div>

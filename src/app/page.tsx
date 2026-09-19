@@ -2,6 +2,7 @@ import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import Header from '@/components/Header';
+import Icon from '@/components/ui/AppIcon';
 import { ResumeActiveTripCard } from '@/features/trips/components/ResumeActiveTripCard';
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://lekitduvoyageur.fr';
@@ -31,40 +32,39 @@ export default function HomePage() {
       
       {/* ── DESKTOP & DIRECT VIEW ── */}
       <div>
-        <div className="min-h-screen bg-[var(--lkv-surface)] font-sans text-[var(--lkv-primary)]">
+        <div className="min-h-screen bg-transparent font-sans text-[var(--lkv-primary)]">
           <Header />
           <ResumeActiveTripCard />
           
           {/* ── HERO ── */}
           <section className="relative min-h-[90vh] flex flex-col pt-40 px-4 pb-12 overflow-hidden">
-            {/* Background elements */}
+            {/* Fond applicatif visible — voile radial sombre léger pour la profondeur */}
             <div className="absolute inset-0 z-0">
-              <div className="absolute inset-0 bg-gradient-to-br from-[var(--lkv-primary-subtle)] via-[var(--lkv-surface)] to-white" />
-              <div className="absolute -top-1/4 -left-1/4 w-[150%] h-[150%] bg-[radial-gradient(ellipse_at_top_left,rgba(148,182,161,0.15),transparent_50%)]" />
+              <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(11,31,23,0.18),rgba(11,31,23,0.45))]" />
             </div>
 
             <div className="relative z-10 max-w-[1200px] mx-auto w-full flex flex-col lg:flex-row items-center gap-12 lg:gap-20 flex-1">
               {/* Left Text */}
               <div className="flex-1 max-w-2xl pt-10">
-                <p className="text-[10px] font-mono tracking-[0.2em] uppercase text-[var(--lkv-text-muted)] mb-4">ÉDITION AUTOMNE - ET REFUGES PARTENAIRES</p>
-                <h1 className="text-5xl sm:text-6xl lg:text-7xl font-semibold text-[var(--lkv-primary)] leading-[1.1] mb-6">
+                <p className="text-[10px] font-mono tracking-[0.2em] uppercase text-[#CCE0D4] mb-4">ÉDITION AUTOMNE - ET REFUGES PARTENAIRES</p>
+                <h1 className="text-5xl sm:text-6xl lg:text-7xl font-semibold text-[#EEF3EC] leading-[1.1] mb-6">
                   Là où la carte<br />
-                  <span className="font-serif italic text-[var(--lkv-secondary)] font-normal">se termine.</span>
+                  <span className="font-serif italic text-[#A9C6B0] font-normal">se termine.</span>
                 </h1>
-                <p className="text-[var(--lkv-text-muted)] text-base lg:text-lg mb-10 max-w-md leading-relaxed">
+                <p className="text-[#D8E5D5] text-base lg:text-lg mb-10 max-w-md leading-relaxed">
                   Refuges bruts, sentiers oubliés, matériel choisi à la main. Le Kit du Voyageur assemble ce qu'il faut, exactement, pour partir léger — sans rien laisser au hasard.
                 </p>
                 <div className="flex flex-col sm:flex-row items-center gap-4 mb-16">
                   <Link
                     href="/ai-configurator"
-                    className="inline-flex items-center gap-2 px-6 py-3.5 bg-white text-[var(--lkv-primary)] font-semibold rounded-full hover:bg-gray-50 transition-all  border border-[var(--lkv-border)] text-sm"
+                    className="glass-capsule-btn primary inline-flex items-center gap-2 px-6 py-3.5 text-sm"
                   >
                     Composer mon sac 
-                    <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                    <Icon name="arrow-right" size={14} />
                   </Link>
                   <Link
                     href="/explorer"
-                    className="inline-flex items-center gap-2 px-6 py-3.5 text-[var(--lkv-text-muted)] font-medium rounded-full hover:bg-black/5 transition-all text-sm"
+                    className="inline-flex items-center gap-2 px-6 py-3.5 text-[#EEF3EC] font-medium rounded-full hover:bg-white/10 transition-all text-sm"
                   >
                     Voir les aventures
                   </Link>
@@ -74,9 +74,9 @@ export default function HomePage() {
                 <div className="flex items-center gap-4">
                   <div className="flex items-center gap-1 text-[var(--lkv-warm-500)]">
                     <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-                    <span className="text-3xl font-bold text-[var(--lkv-primary)] leading-none ml-1">4,9</span>
+                    <span className="text-3xl font-bold text-[#EEF3EC] leading-none ml-1">4,9</span>
                   </div>
-                  <p className="text-[10px] uppercase font-mono tracking-widest text-[var(--lkv-text-muted)] leading-tight">
+                  <p className="text-[10px] uppercase font-mono tracking-widest text-[#CCE0D4] leading-tight">
                     1 350+ VOYAGEURS RECOMMANDENT<br/>LEUR SÉJOUR
                   </p>
                 </div>
@@ -109,8 +109,8 @@ export default function HomePage() {
                       <span className="text-[10px] text-[var(--lkv-text-muted)]">Taxes comprises</span>
                     </div>
 
-                    <Link href="/explorer" className="block w-full text-center py-3.5 bg-white text-[var(--lkv-primary)] font-semibold rounded-full  hover: transition-all text-sm border border-[var(--lkv-border)]">
-                      Réserver cet abri
+                    <Link href="/explorer" className="glass-capsule-btn primary block w-full text-center py-3.5 text-sm">
+                      Découvrir ce refuge
                     </Link>
                   </div>
                 </div>
@@ -119,14 +119,14 @@ export default function HomePage() {
           </section>
 
           {/* ── 3 WAYS TO GET LOST ── */}
-          <section className="py-24 px-4 bg-white">
+          <section className="py-24 px-4 bg-transparent">
             <div className="max-w-[1200px] mx-auto">
               <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-16">
-                <h2 className="text-4xl md:text-5xl font-semibold text-[var(--lkv-primary)] leading-[1.1]">
+                <h2 className="text-4xl md:text-5xl font-semibold text-[#EEF3EC] leading-[1.1]">
                   Trois façons<br />
-                  <span className="font-serif italic text-[var(--lkv-primary)] font-normal">de se perdre.</span>
+                  <span className="font-serif italic text-[#A9C6B0] font-normal">de se perdre.</span>
                 </h2>
-                <p className="text-[var(--lkv-text-muted)] text-sm max-w-sm uppercase font-mono tracking-wide leading-relaxed">
+                <p className="text-[#CCE0D4] text-sm max-w-sm uppercase font-mono tracking-wide leading-relaxed">
                   Trois cartes qui suivent la même règle : moins d'équipement, plus de silence. Découvrez celle qui vous ressemble aujourd'hui.
                 </p>
               </div>
@@ -223,10 +223,10 @@ export default function HomePage() {
                 </p>
                 <Link
                   href="/manifeste"
-                  className="inline-flex items-center gap-2 px-6 py-3 bg-white text-[var(--lkv-primary)] font-semibold rounded-full hover:bg-gray-200 transition-all text-sm mb-16"
+                  className="glass-capsule-btn secondary inline-flex items-center gap-2 px-6 py-3 text-sm mb-16"
                 >
                   Lire notre manifeste
-                  <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                  <Icon name="arrow-right" size={14} />
                 </Link>
 
                 <div className="grid grid-cols-2 gap-x-8 gap-y-12">
@@ -263,7 +263,7 @@ export default function HomePage() {
           </section>
 
           {/* ── PRODUCT HIGHLIGHT ── */}
-          <section className="py-24 px-4 bg-[var(--lkv-surface)]">
+          <section className="py-24 px-4 bg-transparent">
             <div className="max-w-[1200px] mx-auto flex flex-col lg:flex-row items-center gap-16">
               <div className="flex-1 w-full">
                 <div className="relative rounded-[var(--lkv-radius-lg)] overflow-hidden aspect-square bg-[var(--stone-200)]">
@@ -277,41 +277,41 @@ export default function HomePage() {
               </div>
 
               <div className="flex-1 max-w-md">
-                <p className="text-[10px] font-mono tracking-widest uppercase text-[var(--lkv-text-muted)] mb-6">LE SAC ESSENTIEL</p>
-                <h2 className="text-4xl md:text-5xl font-semibold text-[var(--lkv-primary)] leading-[1.1] mb-6">
-                  45 L, <span className="font-serif italic text-[var(--lkv-primary)] font-normal">toile cirée</span>,<br/>
+                <p className="text-[10px] font-mono tracking-widest uppercase text-[#CCE0D4] mb-6">LE SAC ESSENTIEL</p>
+                <h2 className="text-4xl md:text-5xl font-semibold text-[#EEF3EC] leading-[1.1] mb-6">
+                  45 L, <span className="font-serif italic text-[#A9C6B0] font-normal">toile cirée</span>,<br/>
                   rien de superflu.
                 </h2>
-                <p className="text-[var(--lkv-text-muted)] text-sm leading-relaxed mb-10">
+                <p className="text-[#CCE0D4] text-sm leading-relaxed mb-10">
                   Trois compartiments, une toile déperlante et un point d'accroche pour tapis de sol. Fabriqué dans les Alpes-de-Haute-Provence. Réparable à vie.
                 </p>
 
                 <div className="grid grid-cols-2 gap-y-6 mb-10">
                   <div>
-                    <p className="text-[9px] font-mono tracking-widest uppercase text-[var(--lkv-text-muted)] mb-1">VOLUME</p>
-                    <p className="text-sm font-semibold text-[var(--lkv-primary)]">45 litres</p>
+                    <p className="text-[9px] font-mono tracking-widest uppercase text-[#CCE0D4] mb-1">VOLUME</p>
+                    <p className="text-sm font-semibold text-[#EEF3EC]">45 litres</p>
                   </div>
                   <div>
-                    <p className="text-[9px] font-mono tracking-widest uppercase text-[var(--lkv-text-muted)] mb-1">POIDS À SEC</p>
-                    <p className="text-sm font-semibold text-[var(--lkv-primary)]">1,4 kg</p>
+                    <p className="text-[9px] font-mono tracking-widest uppercase text-[#CCE0D4] mb-1">POIDS À SEC</p>
+                    <p className="text-sm font-semibold text-[#EEF3EC]">1,4 kg</p>
                   </div>
                   <div>
-                    <p className="text-[9px] font-mono tracking-widest uppercase text-[var(--lkv-text-muted)] mb-1">TISSU</p>
-                    <p className="text-sm font-semibold text-[var(--lkv-primary)]">Coton huilé 22 oz</p>
+                    <p className="text-[9px] font-mono tracking-widest uppercase text-[#CCE0D4] mb-1">TISSU</p>
+                    <p className="text-sm font-semibold text-[#EEF3EC]">Coton huilé 22 oz</p>
                   </div>
                   <div>
-                    <p className="text-[9px] font-mono tracking-widest uppercase text-[var(--lkv-text-muted)] mb-1">GARANTIE</p>
-                    <p className="text-sm font-semibold text-[var(--lkv-primary)]">À vie</p>
+                    <p className="text-[9px] font-mono tracking-widest uppercase text-[#CCE0D4] mb-1">GARANTIE</p>
+                    <p className="text-sm font-semibold text-[#EEF3EC]">À vie</p>
                   </div>
                 </div>
 
-                <p className="text-3xl font-bold text-[var(--lkv-primary)] mb-8">340 €</p>
+                <p className="text-3xl font-bold text-[#EEF3EC] mb-8">340 €</p>
 
                 <div className="flex items-center gap-4">
-                  <button className="px-8 py-3.5 bg-[var(--lkv-primary)] text-white font-semibold rounded-full hover:bg-[var(--lkv-primary-hover)] transition-all text-sm ">
+                  <button className="glass-capsule-btn primary px-8 py-3.5 text-sm">
                     Ajouter au sac
                   </button>
-                  <Link href="/boutique" className="text-sm font-semibold text-[var(--lkv-primary)] hover:text-[var(--lkv-primary-hover)] transition-colors">
+                  <Link href="/boutique" className="text-sm font-semibold text-[#EEF3EC] hover:text-white transition-colors">
                     Voir la fiche
                   </Link>
                 </div>
@@ -332,7 +332,7 @@ export default function HomePage() {
                   <p className="text-white/70 text-xs mb-4">Un email par saison. Refuges, matériel, récit d'abris.</p>
                   <div className="flex gap-2">
                     <input type="email" placeholder="votre@email.fr" className="bg-white/5 border border-white/10 rounded-full px-4 py-2 text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-[var(--lkv-secondary)] w-full" />
-                    <button className="bg-[var(--lkv-secondary)] text-[var(--lkv-forest-950)] px-4 py-2 rounded-full text-xs font-bold hover:bg-white transition-colors">S'inscrire</button>
+                    <button className="glass-capsule-btn primary px-4 py-2 text-xs font-bold">S'inscrire</button>
                   </div>
                 </div>
 

@@ -300,7 +300,7 @@ export default function OutilsPage() {
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 {tools.map((tool) => (
                   <Link key={tool.slug} href={`/outils/${tool.slug}`} className="group block">
-                    <article className="h-full border border-border rounded-2xl bg-card hover:border-info/50 transition-all duration-300 hover: hover:shadow-info/10 p-6 flex flex-col">
+                    <article className="glass h-full rounded-2xl hover:border-info/50 transition-all duration-300 p-6 flex flex-col">
                       <div className="flex items-start justify-between mb-4">
                         <div className="text-4xl" role="img" aria-label={tool.nom}>{tool.icon}</div>
                         <div className="flex flex-col items-end gap-1.5">
@@ -379,13 +379,11 @@ export default function OutilsPage() {
                   href={`/outils/${tool.slug}`}
                   style={{ textDecoration: 'none' }}
                 >
-                  <div style={{
+                  <div className="glass" style={{
                     display: 'flex',
                     alignItems: 'flex-start',
                     gap: '14px',
                     padding: '14px',
-                    background: '#F4F1EA',
-                    border: '1px solid rgba(23,64,44,0.06)',
                     borderRadius: '16px',
                   }}>
                     <span style={{ fontSize: '28px', flexShrink: 0 }} role="img" aria-label={tool.nom}>{tool.icon}</span>

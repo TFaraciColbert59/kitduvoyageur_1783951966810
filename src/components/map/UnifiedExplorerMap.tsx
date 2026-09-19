@@ -335,6 +335,24 @@ export default function UnifiedExplorerMap({
       // rendue). Voir scripts/atlas/copy-maplibre-worker.mjs.
       setWorkerUrl('/maplibre/maplibre-gl-worker.mjs');
 
+      // Vérification sécurisée du support WebGL pour éviter tout crash critique
+      const hasWebGL = (() => {
+        try {
+          const testCanvas = document.createElement('canvas');
+          return !!(window.WebGLRenderingContext && (testCanvas.getContext('webgl') || testCanvas.getContext('experimental-webgl')));
+        } catch {
+          return false;
+        }
+      })();
+
+      if (!hasWebGL) {
+        console.warn('[UnifiedExplorerMap] WebGL non supporté sur ce terminal/navigateur. Mode liste activé.');
+        setReady(true);
+        callbacksRef.current.onMapReady?.();
+        callbacksRef.current.onViewportData?.({ trails: trailsRef.current, pois: poisRef.current });
+        return;
+      }
+
       let instance: MapLibreMap;
       try {
         instance = new MapLibreMap({
@@ -354,15 +372,26 @@ export default function UnifiedExplorerMap({
         // Jamais de spinner infini : erreur journalisée avec contexte, UI débloquée.
         console.error("[UnifiedExplorerMap] échec d'initialisation MapLibre", caught);
         setReady(true);
+        callbacksRef.current.onMapReady?.();
+        // Fallback viewport data pour débloquer la vue liste
+        callbacksRef.current.onViewportData?.({ trails: trailsRef.current, pois: poisRef.current });
         return;
       }
       map = instance;
       mapRef.current = instance;
 
+      // Handle async WebGL context errors (e.g. GPUInitializationError)
+      instance.on('webglcontextlost', () => {
+        console.error("[UnifiedExplorerMap] WebGL context lost");
+        callbacksRef.current.onViewportData?.({ trails: trailsRef.current, pois: poisRef.current });
+      });
+
       // FLUIDITÉ F2 : inertie de pan guidée (valeurs officielles du README/d.ts
       // maplibre : linearity 0.3, maxSpeed 1400, deceleration 2500) — le monde
       // « glisse » après le geste au lieu de s'arrêter net.
-      instance.dragPan.enable({ linearity: 0.3, maxSpeed: 1400, deceleration: 2500 });
+      if (instance.dragPan && typeof instance.dragPan.enable === 'function') {
+        instance.dragPan.enable({ linearity: 0.3, maxSpeed: 1400, deceleration: 2500 });
+      }
 
       // MapLibre v6 (projection globe) n'applique pas `minZoom` au dézoom
       // molette/pince : sans ce verrou, l'utilisateur descend sous le seuil et
@@ -666,7 +695,11 @@ export default function UnifiedExplorerMap({
       if (tierHapticTimer !== null) window.clearTimeout(tierHapticTimer);
       countriesAbort?.abort();
       if (map) {
-        map.remove();
+        try {
+          map.remove();
+        } catch (e) {
+          console.warn('[UnifiedExplorerMap] map.remove() safely caught:', e);
+        }
         mapRef.current = null;
       }
       setReady(false);

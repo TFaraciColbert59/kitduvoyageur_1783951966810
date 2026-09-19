@@ -153,7 +153,7 @@ function MakeOfferModal({ item, onClose }: { item: OccasionItem; onClose: () => 
           <>
             <div className="flex items-center justify-between mb-5">
               <h3 className="font-display font-bold text-foreground text-lg text-[var(--lkv-primary)]">Faire une offre</h3>
-              <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-white/40 transition-colors"><Icon name="XMarkIcon" size={18} /></button>
+              <button onClick={onClose} className="glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8"><Icon name="XMarkIcon" size={18} /></button>
             </div>
             <div className="glass-sub-card rounded-xl p-3 mb-4">
               <p className="text-xs text-[var(--lkv-text-muted)] mb-0.5">Article</p>
@@ -207,7 +207,7 @@ function ContactModal({ item, onClose }: { item: OccasionItem; onClose: () => vo
                 <h3 className="font-display font-bold text-lg text-[var(--lkv-primary)]">Contacter le vendeur</h3>
                 <p className="text-sm text-[var(--lkv-text-muted)]">{item.seller}</p>
               </div>
-              <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-white/40 transition-colors"><Icon name="XMarkIcon" size={18} /></button>
+              <button onClick={onClose} className="glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8"><Icon name="XMarkIcon" size={18} /></button>
             </div>
             <div className="glass-sub-card rounded-xl border-white/40 p-3 mb-4">
               <p className="text-xs font-semibold text-[var(--lkv-text-muted)] mb-1">Annonce</p>
@@ -306,7 +306,7 @@ function ItemDetailModal({ item, onClose }: { item: OccasionItem; onClose: () =>
         <div className="bg-[rgba(255,255,255,0.92)] border border-[rgba(255,255,255,0.60)] rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
           <div className="flex items-center justify-between p-5 border-b border-white/40 sticky top-0 bg-[rgba(255,255,255,0.85)] backdrop-blur-xl z-10">
             <h2 className="font-display font-bold text-base text-[var(--lkv-primary)] line-clamp-1">{item.title}</h2>
-            <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-white/40 transition-colors flex-shrink-0"><Icon name="XMarkIcon" size={18} /></button>
+            <button onClick={onClose} className="glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8 flex-shrink-0"><Icon name="XMarkIcon" size={18} /></button>
           </div>
 
           <div className="p-5 space-y-5">
@@ -575,12 +575,12 @@ export default function OccasionPage() {
               <option value="price_desc">Prix décroissant</option>
               <option value="discount">Meilleures remises</option>
             </select>
-            <button onClick={() => setShowSellModal(true)} className="btn-primary flex items-center gap-2 whitespace-nowrap">
+            <button onClick={() => setShowSellModal(true)} className="glass-capsule-btn primary flex items-center gap-2 whitespace-nowrap">
               <Icon name="PlusIcon" size={16} />
               Vendre un article
             </button>
             {user && (
-              <Link href="/compte" className="btn-secondary flex items-center gap-2 whitespace-nowrap">
+              <Link href="/compte" className="glass-capsule-btn flex items-center gap-2 whitespace-nowrap">
                 <Icon name="ArchiveBoxIcon" size={16} variant="outline" />
                 Depuis mon compte
               </Link>
@@ -592,7 +592,7 @@ export default function OccasionPage() {
             {CATEGORIES.map((cat) => (
               <button
                 key={cat} onClick={() => setCategory(cat)}
-                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${category === cat ? 'bg-primary text-white' : 'bg-card border border-border text-muted-foreground hover:text-foreground'}`}
+                className={`glass-capsule-btn !px-3 !py-1.5 !text-sm !font-medium ${category === cat ? 'primary' : ''}`}
               >
                 {cat}
               </button>
@@ -614,7 +614,7 @@ export default function OccasionPage() {
                 return (
                   <div
                     key={item.id}
-                    className="topo-card group flex flex-col cursor-pointer hover:border-primary/20 transition-all"
+                    className="glass group flex flex-col cursor-pointer hover:border-primary/20 transition-all"
                     onClick={() => setSelectedItem(item)}
                   >
                     <div className="relative overflow-hidden aspect-[4/3] rounded-t-xl">
@@ -697,7 +697,7 @@ export default function OccasionPage() {
               <>
                 <div className="flex items-center justify-between mb-5">
                   <h3 className="font-display font-700 text-foreground text-lg">Vendre un article</h3>
-                  <button onClick={() => setShowSellModal(false)} className="p-1.5 rounded-lg hover:bg-muted transition-colors">
+                  <button onClick={() => setShowSellModal(false)} className="glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8">
                     <Icon name="XMarkIcon" size={18} />
                   </button>
                 </div>
@@ -715,7 +715,7 @@ export default function OccasionPage() {
                   <textarea placeholder="Description de l'article..." className="input-field resize-none w-full" rows={3} value={sellForm.description} onChange={e => setSellForm(p => ({ ...p, description: e.target.value }))} />
                 </div>
                 <div className="flex gap-3 mt-4">
-                  <button onClick={() => setShowSellModal(false)} className="btn-secondary flex-1 justify-center py-3">Annuler</button>
+                  <button onClick={() => setShowSellModal(false)} className="glass-capsule-btn flex-1 justify-center py-3">Annuler</button>
                   <button
                     disabled={sellSaving || !sellForm.title.trim()}
                     onClick={async () => {
@@ -737,7 +737,7 @@ export default function OccasionPage() {
                         setSellSaving(false);
                       }
                     }}
-                    className="btn-primary flex-1 justify-center py-3 disabled:opacity-50"
+                    className="glass-capsule-btn primary flex-1 justify-center py-3"
                   >
                     {sellSaving ? 'Publication...' : 'Publier'}
                   </button>
@@ -750,7 +750,7 @@ export default function OccasionPage() {
                 </div>
                 <h3 className="font-display font-700 text-foreground text-lg mb-2">Annonce publiée !</h3>
                 <p className="text-sm text-muted-foreground mb-6">Votre annonce est maintenant visible.</p>
-                <button onClick={() => { setSellSent(false); setShowSellModal(false); }} className="btn-primary justify-center px-8 py-3">Fermer</button>
+                <button onClick={() => { setSellSent(false); setShowSellModal(false); }} className="glass-capsule-btn primary justify-center px-8 py-3">Fermer</button>
               </div>
             )}
           </div>

@@ -183,14 +183,10 @@ export function TripSafetyView({ trip }: TripSafetyViewProps) {
                         <button
                           type="button"
                           onClick={() => handleCheckIn(cp.id)}
-                          className="min-h-[44px] px-3 py-1.5 rounded-full text-xs font-semibold glass-sub-card border border-white/60 hover:bg-white text-[var(--lkv-primary)] flex items-center gap-1.5 cursor-pointer active:scale-95 transition-transform"
+                          className="glass-capsule-btn !px-3 !py-1.5 text-xs font-semibold flex items-center gap-1.5 cursor-pointer active:scale-95 transition-transform"
                           aria-label={`Pointer le passage : ${cp.label}`}
                         >
-                          <Icon
-                            name="check-circle2"
-                            size={13}
-                            className="text-[var(--lkv-success)]"
-                          />
+                          <Icon name="check-circle2" size={13} />
                           <span>Pointer</span>
                         </button>
                       )}

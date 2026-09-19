@@ -161,24 +161,12 @@ export default function ExplorerMobileHikeCarousel({
               <div
                 key={trail.id}
                 data-trail-id={trail.id}
+                data-glass-variant={isSelected ? 'selected' : undefined}
                 onClick={() => {
                   triggerHaptic('selection');
                   onSelectTrail(trail);
                 }}
-                className="snap-start shrink-0 w-[calc(100vw-68px)] max-w-[290px] rounded-lg overflow-hidden transition-all duration-200 cursor-pointer"
-                style={{
-                  background: isSelected
-                    ? 'linear-gradient(180deg, rgba(255, 255, 255, 0.85) 0%, rgba(251, 250, 246, 0.55) 100%)'
-                    : 'linear-gradient(180deg, rgba(255, 255, 255, 0.65) 0%, rgba(251, 250, 246, 0.38) 100%)',
-                  backdropFilter: 'blur(var(--glass-blur-xl)) saturate(var(--glass-sat))',
-                  WebkitBackdropFilter: 'blur(var(--glass-blur-xl)) saturate(var(--glass-sat))',
-                  border: isSelected
-                    ? '1.5px solid rgba(255, 255, 255, 0.95)'
-                    : '1px solid rgba(255, 255, 255, 0.70)',
-                  boxShadow: isSelected
-                    ? '0 12px 36px -6px rgba(23, 64, 44, 0.20), inset 0 1.5px 2px rgba(255, 255, 255, 0.95)'
-                    : '0 8px 24px -4px rgba(23, 64, 44, 0.10), inset 0 1px 1px rgba(255, 255, 255, 0.85)',
-                }}
+                className="glass snap-start shrink-0 w-[calc(100vw-68px)] max-w-[290px] rounded-lg overflow-hidden transition-all duration-200 cursor-pointer"
               >
                 {/* Photo Header */}
                 <div className="relative h-20 w-full overflow-hidden bg-stone-200">
@@ -289,7 +277,7 @@ export default function ExplorerMobileHikeCarousel({
             <button
               type="button"
               onClick={toggleViewMode}
-              className="text-xs font-bold text-[#5A7064] hover:text-[#17402C]"
+              className="glass-capsule-btn !min-h-[32px] !py-1 !px-3 text-xs font-bold"
             >
               Fermer ✕
             </button>

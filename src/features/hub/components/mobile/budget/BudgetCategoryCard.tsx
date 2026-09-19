@@ -35,20 +35,20 @@ export function BudgetCategoryCard({ rows, onSelect }: BudgetCategoryCardProps) 
                 onSelect(row.key);
               }}
               aria-label={`${row.label} — ${formatEuro(row.amount)}, ${row.pct}%`}
-              className="flex min-h-[44px] w-full items-center gap-2.5 rounded-xl px-1 text-left transition-colors hover:bg-white/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)]"
+              className="glass-capsule-btn flex min-h-[44px] w-full !justify-start !gap-2.5 !rounded-xl !px-1 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)]"
             >
               <span
                 className="h-2.5 w-2.5 shrink-0 rounded-full"
                 style={{ background: row.color }}
                 aria-hidden="true"
               />
-              <span className="min-w-0 truncate text-sm font-semibold text-[var(--lkv-text-primary)]">
+              <span className="min-w-0 truncate text-sm font-semibold">
                 {row.label}
               </span>
-              <span className="ml-auto shrink-0 text-sm font-bold tabular-nums text-[var(--lkv-text-primary)]">
+              <span className="ml-auto shrink-0 text-sm font-bold tabular-nums">
                 {formatEuro(row.amount)}
               </span>
-              <span className="w-9 shrink-0 text-right text-[11px] font-semibold tabular-nums text-[var(--lkv-text-primary)]/60">
+              <span className="w-9 shrink-0 text-right text-[11px] font-semibold tabular-nums">
                 {row.pct}%
               </span>
             </button>

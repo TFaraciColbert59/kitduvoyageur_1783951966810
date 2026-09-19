@@ -660,7 +660,7 @@ export default function InteractiveMap() {
   }, [filteredPois, selectedPoiId]);
 
   return (
-    <div className="relative w-full h-full flex overflow-hidden font-sans bg-[#EEF3EC]">
+    <div className="relative w-full h-full flex overflow-hidden font-sans bg-transparent">
       
       {/* ── SIDEBAR PANEL (scroll interne) ── */}
       <div className={`${showMobileFilters ? 'fixed inset-0 z-50 sm:relative sm:inset-auto flex flex-col' : 'hidden'} sm:flex sm:w-[380px] sm:shrink-0 bg-white border-r border-[#E4DED3] overflow-hidden`}>

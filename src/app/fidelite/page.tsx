@@ -140,7 +140,7 @@ export default function FidelitePage() {
           <div className={s('', 'max-w-7xl mx-auto px-4 mb-6')} style={s({ textAlign: 'center', padding: '40px 0' }, {})}>
             <p className={s('text-3xl mb-3', 'text-4xl mb-3')}>⚠️</p>
             <p className={s('text-xs text-muted-foreground mb-4', 'text-sm text-muted-foreground mb-4')}>{error}</p>
-            <button onClick={() => loadData()} className={s('px-4 py-2 bg-primary text-white rounded-lg text-xs font-600', 'px-5 py-2.5 bg-primary text-white rounded-xl text-sm font-600')} style={{ border: 'none', cursor: 'pointer' }}>Réessayer</button>
+            <button onClick={() => loadData()} className={s('glass-capsule-btn primary !px-4 !py-2 !text-xs !font-semibold', 'glass-capsule-btn primary !px-5 !py-2.5 !text-sm !font-semibold')}>Réessayer</button>
           </div>
         )}
         {!error && (
@@ -209,8 +209,8 @@ export default function FidelitePage() {
             ].map((tab) => (
               <button key={tab.id} onClick={() => setActiveTab(tab.id as typeof activeTab)}
                 className={s(
-                  `flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all flex-shrink-0 ${activeTab === tab.id ? 'bg-primary text-white' : 'text-muted-foreground hover:text-foreground bg-card'}`,
-                  `flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all ${activeTab === tab.id ? 'bg-primary text-white' : 'text-muted-foreground hover:text-foreground hover:bg-muted'}`
+                  `glass-capsule-btn !px-3 !py-1.5 !text-xs !font-medium whitespace-nowrap flex-shrink-0 ${activeTab === tab.id ? 'primary' : ''}`,
+                  `glass-capsule-btn !px-4 !py-2 !text-sm !font-medium whitespace-nowrap ${activeTab === tab.id ? 'primary' : ''}`
                 )}>
                 <Icon name={tab.icon as string} size={isMobile ? 14 : 16} variant="outline" />
                 {tab.label}
@@ -221,7 +221,7 @@ export default function FidelitePage() {
           {/* Overview Tab */}
           {activeTab === 'overview' && (
             <div className={s('space-y-4', 'space-y-6')}>
-              <div className={s('bg-card rounded-xl border border-border p-4', 'bg-card rounded-2xl border border-border p-6')}>
+              <div className={s('glass rounded-xl p-4', 'glass rounded-2xl p-6')}>
                 <h2 className={s('text-base font-display font-700 mb-4', 'text-lg font-display font-700 mb-5')}>Niveaux voyageur</h2>
                 <div className="relative">
                   <div className={s('absolute top-4 left-4 right-4 h-0.5 bg-border', 'absolute top-6 left-6 right-6 h-0.5 bg-border')} />
@@ -265,7 +265,7 @@ export default function FidelitePage() {
                   </ul>
                 </div>
                 {nextLevel && (
-                  <div className={s('rounded-xl border border-border bg-card p-4 opacity-70', 'rounded-xl border border-border bg-card p-5 opacity-70')}>
+                  <div className={s('glass rounded-xl p-4 opacity-70', 'glass rounded-xl p-5 opacity-70')}>
                     <div className={s('flex items-center gap-2 mb-2', 'flex items-center gap-3 mb-3')}>
                       <span className={s('text-2xl grayscale', 'text-3xl grayscale')}>{nextLevel.badge}</span>
                       <div>
@@ -293,7 +293,7 @@ export default function FidelitePage() {
                   { label: 'Récompenses', value: String(redeemedIds.length), icon: 'TrophyIcon', color: 'text-amber-600' },
                   { label: 'Solde actuel', value: formatPoints(userPoints), icon: 'StarIcon', color: 'text-blue-600' },
                 ].map((stat) => (
-                  <div key={stat.label} className={s('bg-card rounded-xl border border-border p-3', 'bg-card rounded-xl border border-border p-4')}>
+                  <div key={stat.label} className={s('glass rounded-xl p-3', 'glass rounded-xl p-4')}>
                     <Icon name={stat.icon as string} size={s(16, 20)} variant="outline" className={`${stat.color} mb-1`} />
                     <p className={s('text-base font-display font-700', 'text-xl font-display font-700')}>{stat.value}</p>
                     <p className={s('text-[10px] text-muted-foreground', 'text-xs text-muted-foreground')}>{stat.label}</p>
@@ -317,8 +317,8 @@ export default function FidelitePage() {
                 ].map((cat) => (
                   <button key={cat.id} onClick={() => setFilterCategory(cat.id)}
                     className={s(
-                      `px-2.5 py-1 rounded-lg text-xs font-medium transition-all ${filterCategory === cat.id ? 'bg-primary text-white' : 'bg-card border border-border text-muted-foreground hover:text-foreground'}`,
-                      `px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${filterCategory === cat.id ? 'bg-primary text-white' : 'bg-card border border-border text-muted-foreground hover:text-foreground'}`
+                      `glass-capsule-btn !px-2.5 !py-1 !text-xs !font-medium ${filterCategory === cat.id ? 'primary' : ''}`,
+                      `glass-capsule-btn !px-3 !py-1.5 !text-sm !font-medium ${filterCategory === cat.id ? 'primary' : ''}`
                     )}>
                     {cat.label}
                   </button>
@@ -336,7 +336,7 @@ export default function FidelitePage() {
                     const isRedeemed = redeemedIds.includes(reward.id);
                     const isRedeeming = redeemingId === reward.id;
                     return (
-                      <div key={reward.id} className={s(`bg-card rounded-xl border overflow-hidden transition-all ${isRedeemed ? 'border-emerald-300 opacity-70' : canAfford ? 'border-border hover:border-primary/40' : 'border-border opacity-60'}`, `bg-card rounded-xl border overflow-hidden transition-all ${isRedeemed ? 'border-emerald-300 opacity-70' : canAfford ? 'border-border hover:border-primary/40 hover:' : 'border-border opacity-60'}`)}>
+                      <div key={reward.id} className={s(`glass rounded-xl overflow-hidden transition-all ${isRedeemed ? 'border-emerald-300 opacity-70' : canAfford ? 'hover:border-primary/40' : 'opacity-60'}`, `glass rounded-xl overflow-hidden transition-all ${isRedeemed ? 'border-emerald-300 opacity-70' : canAfford ? 'hover:border-primary/40 hover:' : 'opacity-60'}`)}>
                         <div className={s('relative h-28 overflow-hidden', 'relative h-36 overflow-hidden')}>
                           <img src={reward.image} alt={reward.alt} className="w-full h-full object-cover" />
                           <div className={s('absolute top-1.5 right-1.5 bg-amber-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-lg font-mono', 'absolute top-2 right-2 bg-amber-500 text-white text-xs font-bold px-2 py-1 rounded-lg font-mono')}>
@@ -357,8 +357,8 @@ export default function FidelitePage() {
                               onClick={() => handleRedeem(reward)}
                               disabled={!canAfford || isRedeemed || isRedeeming || !user}
                               className={s(
-                                `px-2 py-1 rounded-lg text-[10px] font-medium transition-all ${isRedeemed ? 'bg-emerald-100 text-emerald-700 border border-emerald-200' : isRedeeming ? 'bg-primary/50 text-white' : canAfford && user ? 'bg-primary text-white hover:opacity-90' : 'bg-muted text-muted-foreground cursor-not-allowed'}`,
-                                `px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${isRedeemed ? 'bg-emerald-100 text-emerald-700 border border-emerald-200' : isRedeeming ? 'bg-primary/50 text-white' : canAfford && user ? 'bg-primary text-white hover:opacity-90' : 'bg-muted text-muted-foreground cursor-not-allowed'}`
+                                `glass-capsule-btn !px-2 !py-1 !text-[10px] !font-medium ${canAfford && user && !isRedeemed && !isRedeeming ? 'primary' : ''}`,
+                                `glass-capsule-btn !px-3 !py-1.5 !text-xs !font-medium ${canAfford && user && !isRedeemed && !isRedeeming ? 'primary' : ''}`
                               )}>
                               {isRedeemed ? '✅ Obtenu' : isRedeeming ? '⏳...' : !user ? 'Connectez-vous' : canAfford ? 'Échanger' : 'Points insuffisants'}
                             </button>
@@ -383,7 +383,7 @@ export default function FidelitePage() {
                 <p className={s('text-center py-6 text-muted-foreground text-xs', 'text-center py-8 text-muted-foreground')}>Aucun historique de points pour l&apos;instant.</p>
               ) : (
                 history.map((entry) => (
-                  <div key={entry.id} className={s('flex items-center gap-2 p-2.5 bg-card rounded-xl border border-border', 'flex items-center gap-3 p-3 bg-card rounded-xl border border-border')}>
+                  <div key={entry.id} className={s('glass flex items-center gap-2 p-2.5 rounded-xl', 'glass flex items-center gap-3 p-3 rounded-xl')}>
                     <div className={s(`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 ${entry.type === 'earned' ? 'bg-emerald-50 border border-emerald-200' : 'bg-red-50 border border-red-200'}`, `w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${entry.type === 'earned' ? 'bg-emerald-50 border border-emerald-200' : 'bg-red-50 border border-red-200'}`)}>
                       <Icon name={entry.type === 'earned' ? 'ArrowTrendingUpIcon' : 'ArrowTrendingDownIcon'} size={s(12, 16)} variant="outline" className={entry.type === 'earned' ? 'text-emerald-600' : 'text-red-500'} />
                     </div>
@@ -405,7 +405,7 @@ export default function FidelitePage() {
             <div className={s('space-y-4', 'space-y-6')}>
               <div className={s('grid grid-cols-1 gap-2', 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4')}>
                 {EARN_ACTIONS.map((action) => (
-                  <div key={action.action} className={s('bg-card rounded-xl border border-border p-3 flex items-center gap-2', 'bg-card rounded-xl border border-border p-4 flex items-center gap-3')}>
+                  <div key={action.action} className={s('glass rounded-xl p-3 flex items-center gap-2', 'glass rounded-xl p-4 flex items-center gap-3')}>
                     <span className={s('text-2xl', 'text-3xl')}>{action.icon}</span>
                     <div>
                       <p className={s('font-semibold text-xs', 'font-semibold text-sm')}>{action.action}</p>
@@ -426,7 +426,7 @@ export default function FidelitePage() {
                       const code = `KDV-REF-${user?.id?.slice(0, 8).toUpperCase() ?? 'XXXXXXXX'}`;
                       navigator.clipboard?.writeText(code);
                     }}
-                    className={s('px-3 py-1.5 bg-white/20 hover:bg-white/30 rounded-lg text-xs font-medium transition-colors', 'px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg text-sm font-medium transition-colors')}>
+                    className={s('glass-capsule-btn !px-3 !py-1.5 !text-xs !font-medium', 'glass-capsule-btn !px-4 !py-2 !text-sm !font-medium')}>
                     Copier
                   </button>
                 </div>

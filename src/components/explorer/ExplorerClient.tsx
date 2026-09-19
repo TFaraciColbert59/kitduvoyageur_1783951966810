@@ -17,6 +17,7 @@ import { SlidersHorizontalIcon as SlidersHorizontalAnimated } from '@/components
 import { XIcon as XAnimated } from '@/components/icons/x';
 import { RotateCCWIcon as RotateCcwAnimated, type RotateCCWIconHandle } from '@/components/icons/rotate-ccw';
 import { SearchIcon as SearchAnimated } from '@/components/icons/search';
+import Icon from '@/components/ui/AppIcon';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import type { MapTrail } from '@/components/explorer/types';
@@ -516,7 +517,7 @@ export default function ExplorerClient({
   // ── RENDER ────────────────────────────────────────────────────────────────────
 
   return (
-    <div className="relative w-full h-[100dvh] overflow-hidden bg-[#EEF3EC] select-none" style={{ minHeight: '100dvh', height: '100dvh', width: '100%' }}>
+    <div className="relative w-full h-[100dvh] overflow-hidden bg-transparent select-none" style={{ minHeight: '100dvh', height: '100dvh', width: '100%' }}>
 
       {/* ── 1A. HEADER DESKTOP (GRAND ÉCRAN >= 768px) ── */}
       <header className="hidden md:block fixed top-3 left-1/2 -translate-x-1/2 z-[1000] w-full max-w-[640px] px-3 pointer-events-none">
@@ -582,6 +583,14 @@ export default function ExplorerClient({
 
           {/* Actions Desktop */}
           <div className="flex items-center gap-2 shrink-0">
+            <Link
+              href="/progression"
+              className="glass-capsule-btn inline-flex items-center gap-1.5 text-[11px] font-bold !py-1.5 !px-3.5 cursor-pointer select-none active:opacity-85"
+              title="Consulter ma progression et mes classements"
+            >
+              <span>🧭</span>
+              <span>Ma progression</span>
+            </Link>
             <button
               type="button"
               onClick={() => setEphemeralOpen(true)}
@@ -603,6 +612,41 @@ export default function ExplorerClient({
           </div>
         </div>
       </header>
+ 
+      {/* ── 1B. HEADER MOBILE (ÉCRAN < 768px) ── */}
+      <div className="md:hidden fixed top-[calc(env(safe-area-inset-top,0px)+12px)] left-4 right-4 z-[950] pointer-events-none flex items-center justify-between">
+        <Link
+          href="/"
+          className="pointer-events-auto glass-circle-btn w-11 h-11 shadow-lg flex items-center justify-center cursor-pointer active:scale-95"
+          aria-label="Retour à l'accueil"
+        >
+          <img
+            src="/assets/images/app_logo.png"
+            alt="LKDV"
+            width={28}
+            height={28}
+            className="w-7 h-7 object-cover rounded-full"
+          />
+        </Link>
+
+        <div className="flex items-center gap-2 pointer-events-auto">
+          <Link
+            href="/progression"
+            className="glass-capsule-btn !min-h-[44px] px-3.5 flex items-center gap-1.5 shadow-lg text-xs font-bold active:scale-95 cursor-pointer"
+            aria-label="Ma progression"
+          >
+            <span>🧭</span>
+            <span>Progression</span>
+          </Link>
+          <Link
+            href="/compte"
+            className="glass-circle-btn w-11 h-11 shadow-lg flex items-center justify-center active:scale-95 cursor-pointer"
+            aria-label="Mon compte"
+          >
+            <Icon name="user" size={17} />
+          </Link>
+        </div>
+      </div>
 
       {/* ── 2. CARTE UNIQUE PLEIN ÉCRAN (100% FLUIDE) ── */}
       <div className="absolute inset-0 w-full h-full z-0 pointer-events-auto" style={{ width: '100%', height: '100%' }}>
@@ -668,7 +712,7 @@ export default function ExplorerClient({
             <button
               type="button"
               onClick={handleStopLiveSharing}
-              className="text-[10px] font-bold underline min-h-[28px]"
+              className="glass-capsule-btn !min-h-[28px] !py-0.5 !px-3 text-[10px] font-bold"
               data-testid="explorer-live-stop"
             >
               Arrêter mon partage
@@ -732,17 +776,11 @@ export default function ExplorerClient({
               exit={{ opacity: 0, x: 20 }}
               type="button"
               onClick={() => setFiltersOpen(true)}
-              className="pointer-events-auto glass !rounded-r-none !rounded-l-2xl !w-12 !h-12 cursor-pointer transition-all active:scale-95 group relative flex items-center justify-center shadow-xl border-y border-l border-white/90"
-              style={{
-                background: 'linear-gradient(180deg, rgba(240, 237, 228, 0.96) 0%, rgba(225, 221, 208, 0.88) 100%)',
-                backdropFilter: 'blur(var(--glass-blur-lg)) saturate(var(--glass-sat))',
-                WebkitBackdropFilter: 'blur(var(--glass-blur-lg)) saturate(var(--glass-sat))',
-                boxShadow: '-4px 8px 24px -2px rgba(23, 64, 44, 0.15), inset 0 1.5px 2px rgba(255, 255, 255, 0.95)',
-              }}
+              className="pointer-events-auto glass-circle-btn !rounded-r-none !rounded-l-2xl !w-12 !h-12 cursor-pointer transition-all active:scale-95 group relative flex items-center justify-center"
               title="Ouvrir la recherche et les filtres"
               aria-label="Ouvrir la recherche et les filtres"
             >
-              <SlidersHorizontalAnimated size={20} className="text-[#17402C]" />
+              <SlidersHorizontalAnimated size={20} />
               {(activeFilterCount > 0 || searchQuery.trim().length > 0) && (
                 <span className="absolute top-1 left-1 w-4 h-4 rounded-full bg-[#17402C] text-white text-[9px] font-mono font-bold flex items-center justify-center shadow-xs">
                   {activeFilterCount + (searchQuery.trim().length > 0 ? 1 : 0)}
@@ -757,10 +795,7 @@ export default function ExplorerClient({
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: 100 }}
               transition={{ type: 'spring', stiffness: 400, damping: 35 }}
-              className="pointer-events-auto w-[320px] sm:w-[350px] p-4 rounded-l-3xl bg-[rgba(255,255,255,0.92)] border-y border-l border-white/80 shadow-2xl backdrop-blur-xl space-y-3"
-              style={{
-                boxShadow: '-8px 16px 36px -6px rgba(23, 64, 44, 0.16), inset 0 1px 1.5px rgba(255, 255, 255, 0.95)',
-              }}
+              className="glass pointer-events-auto w-[320px] sm:w-[350px] p-4 !rounded-r-none !rounded-l-3xl space-y-3"
             >
               <div className="flex items-center justify-between pb-2 border-b border-[#17402C]/10">
                 <div className="flex items-center gap-2">
@@ -780,10 +815,10 @@ export default function ExplorerClient({
                 <button
                   type="button"
                   onClick={() => setFiltersOpen(false)}
-                  className="w-7 h-7 rounded-full bg-black/5 hover:bg-black/10 flex items-center justify-center text-[#17402C] transition-colors cursor-pointer"
+                  className="glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8 cursor-pointer"
                   title="Fermer"
                 >
-                  <XAnimated size={14} />
+                  <Icon name="x" size={14} />
                 </button>
               </div>
 
@@ -839,7 +874,7 @@ export default function ExplorerClient({
               <button
                 type="button"
                 onClick={() => handleSearchChange('')}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#5A7064] hover:text-[#17402C]"
+                className="absolute right-2 top-1/2 -translate-y-1/2 glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8"
               >
                 <XAnimated size={12} />
               </button>
@@ -859,15 +894,7 @@ export default function ExplorerClient({
           className="flex-1 min-h-0 overflow-y-auto pr-0.5 pb-4 flex flex-col gap-2 pointer-events-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         >
           {filteredTrails.length === 0 ? (
-            <div
-              className="p-4 rounded-lg text-center flex flex-col items-center gap-2"
-              style={{
-                background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.60) 0%, rgba(251, 250, 246, 0.35) 100%)',
-                backdropFilter: 'blur(var(--glass-blur-lg))',
-                border: '1px solid rgba(255, 255, 255, 0.65)',
-                boxShadow: '0 8px 24px -4px rgba(23, 64, 44, 0.10)',
-              }}
-            >
+            <div className="glass p-4 rounded-lg text-center flex flex-col items-center gap-2">
               <Compass size={18} className="text-[#5A7064]" />
               <p className="text-[12px] font-bold text-[#17402C]">Aucun itinéraire trouvé</p>
               <button
@@ -914,16 +941,7 @@ export default function ExplorerClient({
             transition={{ type: 'spring', stiffness: 400, damping: 38 }}
             className="hidden md:block absolute z-[950] bottom-4 left-[375px] w-[320px] max-w-[calc(100vw-32px)] pointer-events-auto"
           >
-            <div
-              className="rounded-xl overflow-hidden shadow-2xl"
-              style={{
-                background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.70) 0%, rgba(251, 250, 246, 0.40) 100%)',
-                backdropFilter: 'blur(var(--glass-blur-xl)) saturate(var(--glass-sat))',
-                WebkitBackdropFilter: 'blur(var(--glass-blur-xl)) saturate(var(--glass-sat))',
-                border: '1px solid rgba(255, 255, 255, 0.75)',
-                boxShadow: '0 20px 50px -12px rgba(23, 64, 44, 0.18), inset 0 1.5px 2px rgba(255, 255, 255, 0.95)',
-              }}
-            >
+            <div className="glass rounded-xl overflow-hidden">
               {/* Photo hero */}
               <div className="relative h-20 w-full overflow-hidden bg-stone-200">
                 <img
@@ -943,7 +961,7 @@ export default function ExplorerClient({
                 <button
                   type="button"
                   onClick={() => { setSelectedTrailId(null); setSelectedTrail(null); }}
-                  className="glass-circle-btn w-6.5 h-6.5 absolute top-2 right-2"
+                  className="glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8 absolute top-2 right-2"
                   title="Fermer"
                   aria-label="Fermer"
                 >

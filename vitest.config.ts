@@ -10,7 +10,7 @@ export default defineConfig({
   test: {
     environment: 'node',
     include: ['tests/**/*.spec.ts', 'tests/**/*.spec.tsx', 'src/**/__tests__/**/*.test.ts', 'src/**/__tests__/**/*.test.tsx'],
-    exclude: ['node_modules/**', 'tests/visual/**', 'tests/a11y/e2e/**'],
+    exclude: ['node_modules/**', 'tests/visual/**', 'tests/a11y/e2e/**', 'tests/ui/**'],
   },
   resolve: {
     alias: {

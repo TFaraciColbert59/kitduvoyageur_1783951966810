@@ -76,8 +76,8 @@ function ReviewCard({ review, onHelpful }: { review: Review; onHelpful: (id: str
       <h4 className="font-display font-bold text-[#17402C] text-sm mb-2">{review.title}</h4>
       <p className="text-sm text-[#365233] leading-relaxed flex-1">{review.comment}</p>
       <div className="flex items-center justify-between mt-4 pt-3 border-t border-white/40">
-        <button onClick={() => { if (!voted) { onHelpful(review.id); setVoted(true); } }} className={`flex items-center gap-1.5 text-xs transition-colors ${voted ? 'text-[#5B7F55] font-semibold' : 'text-[#5A7064] hover:text-[#17402C]'}`}><Icon name="HandThumbUpIcon" size={14} />Utile ({review.helpful_count + (voted ? 1 : 0)})</button>
-        <button className="text-xs text-[#5A7064] hover:text-[#17402C] transition-colors flex items-center gap-1"><Icon name="FlagIcon" size={12} />Signaler</button>
+        <button onClick={() => { if (!voted) { onHelpful(review.id); setVoted(true); } }} className={`glass-capsule-btn !min-h-0 !py-1 !px-3 !text-xs ${voted ? 'primary' : ''}`}><Icon name="HandThumbUpIcon" size={14} />Utile ({review.helpful_count + (voted ? 1 : 0)})</button>
+        <button className="glass-capsule-btn !min-h-0 !py-1 !px-3 !text-xs"><Icon name="FlagIcon" size={12} />Signaler</button>
       </div>
     </GlassCard>
   );
@@ -93,7 +93,7 @@ function WriteReviewModal({ onClose, onSubmit }: { onClose: () => void; onSubmit
           <>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
               <h3 style={{ fontSize: '18px', fontWeight: 700, color: '#17402C', margin: 0 }}>Laisser un avis</h3>
-              <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '6px', color: '#5A7064' }}>
+              <button onClick={onClose} className="glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8">
                 <Icon name="XMarkIcon" size={18} />
               </button>
             </div>
@@ -105,22 +105,9 @@ function WriteReviewModal({ onClose, onSubmit }: { onClose: () => void; onSubmit
                     <button
                       key={key}
                       onClick={() => setForm((f) => ({ ...f, type: key }))}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px',
-                        padding: '10px',
-                        borderRadius: '12px',
-                        border: form.type === key ? '2px solid #17402C' : '1px solid rgba(23,64,44,0.12)',
-                        background: form.type === key ? 'rgba(23,64,44,0.05)' : '#fff',
-                        color: '#17402C',
-                        fontSize: '13px',
-                        cursor: 'pointer',
-                        textAlign: 'left',
-                        fontFamily: 'inherit',
-                      }}
+                      className={`glass-capsule-btn flex items-center gap-2 !p-2.5 !text-[13px] text-left ${form.type === key ? 'primary' : ''}`}
                     >
-                      <Icon name={val.icon} size={14} className="text-[#5A7064]" />
+                      <Icon name={val.icon} size={14} />
                       {val.label}
                     </button>
                   ))}
@@ -169,10 +156,10 @@ function WriteReviewModal({ onClose, onSubmit }: { onClose: () => void; onSubmit
               </div>
             </div>
             <div style={{ display: 'flex', gap: '12px', marginTop: '24px' }}>
-              <button type="button" onClick={onClose} className="glass-capsule-btn secondary" style={{ flex: 1 }}>
+              <button type="button" onClick={onClose} className="glass-capsule-btn secondary flex-1">
                 Annuler
               </button>
-              <button type="button" onClick={handleSubmit} disabled={submitting || !rating || !form.title || !form.comment} className="glass-capsule-btn primary" style={{ flex: 1 }}>
+              <button type="button" onClick={handleSubmit} disabled={submitting || !rating || !form.title || !form.comment} className="glass-capsule-btn primary flex-1">
                 <Icon name="PaperAirplaneIcon" size={16} />
                 {submitting ? 'Publication...' : 'Publier l\'avis'}
               </button>
@@ -184,7 +171,7 @@ function WriteReviewModal({ onClose, onSubmit }: { onClose: () => void; onSubmit
               <Icon name="CheckIcon" size={28} style={{ color: '#17402C' }} />
             </div>
             <h3 style={{ fontSize: '18px', fontWeight: 700, color: '#17402C', marginBottom: '8px' }}>Avis publié !</h3>
-            <button onClick={onClose} className="glass-capsule-btn primary" style={{ padding: '10px 32px' }}>
+            <button onClick={onClose} className="glass-capsule-btn primary !px-8 !py-2.5">
               Fermer
             </button>
           </div>
@@ -238,24 +225,24 @@ export default function AvisPage() {
   return (
     <>
       {/* DESKTOP — fullscreen, scroll interne sur le contenu */}
-      <div className="hidden md:flex flex-col h-[100dvh] overflow-hidden bg-[#EEF3EC]" data-lkv-material-theme="light">
+      <div className="hidden md:flex flex-col h-[100dvh] overflow-hidden bg-transparent" data-lkv-material-theme="light">
         <Header />
         <main className="flex-1 min-h-0 overflow-y-auto">
           <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-12">
             <div className="flex items-end justify-between gap-6 mb-6">
               <div>
-                <p className="text-[11px] font-mono uppercase tracking-[0.14em] text-[#5A7064] mb-2">AVIS &amp; ÉVALUATIONS</p>
-                <h1 className="font-display font-bold text-3xl tracking-tight text-[#17402C]">Les avis de la communauté</h1>
-                <p className="text-sm text-[#5A7064] mt-1.5 max-w-xl">Avis vérifiés sur les produits, kits, locations et articles d&apos;occasion.</p>
+                <p className="text-[11px] font-mono uppercase tracking-[0.14em] text-[#CCE0D4] mb-2">AVIS &amp; ÉVALUATIONS</p>
+                <h1 className="font-display font-bold text-3xl tracking-tight text-[#EEF3EC]">Les avis de la communauté</h1>
+                <p className="text-sm text-[#CCE0D4] mt-1.5 max-w-xl">Avis vérifiés sur les produits, kits, locations et articles d&apos;occasion.</p>
               </div>
               <button onClick={() => setShowWriteModal(true)} className="glass-capsule-btn primary flex-shrink-0"><Icon name="PencilSquareIcon" size={16} />Laisser un avis</button>
             </div>
 
             <div className="flex items-center gap-3 mb-6">
-              <span className="font-display font-bold text-4xl text-[#17402C]">{avgRating}</span>
+              <span className="font-display font-bold text-4xl text-[#EEF3EC]">{avgRating}</span>
               <div>
                 <StarRating rating={Math.round(parseFloat(avgRating))} size={16} />
-                <p className="text-[11px] text-[#5A7064] mt-0.5">{reviews.length} avis</p>
+                <p className="text-[11px] text-[#CCE0D4] mt-0.5">{reviews.length} avis</p>
               </div>
             </div>
 
@@ -276,9 +263,9 @@ export default function AvisPage() {
                 {[1, 2, 3, 4].map((i) => <div key={i} className="h-48 rounded-xl glass-sub-card" />)}
               </div>
             ) : filtered.length === 0 ? (
-              <div className="text-center py-16 text-[#5A7064]">
+              <div className="text-center py-16 text-[#CCE0D4]">
                 <Icon name="StarIcon" size={40} className="mx-auto mb-3 opacity-30" />
-                <p className="font-display font-bold text-[#17402C] mb-1">Aucun avis pour l&apos;instant</p>
+                <p className="font-display font-bold text-[#EEF3EC] mb-1">Aucun avis pour l&apos;instant</p>
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">{filtered.map((review) => <ReviewCard key={review.id} review={review} onHelpful={handleHelpful} />)}</div>
@@ -293,19 +280,19 @@ export default function AvisPage() {
       <div className="block md:hidden">
         <MobilePageShell>
           <div style={{ padding: '16px' }}>
-            <p style={{ fontSize: '11px', fontFamily: 'var(--font-mono)', color: '#17402C', letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: '12px' }}>AVIS & ÉVALUATIONS</p>
-            <h1 style={{ fontSize: '24px', fontWeight: 800, color: '#17402C', marginBottom: '8px', fontFamily: 'var(--font-display)' }}>Les avis de la communauté</h1>
-            <p style={{ fontSize: '13px', color: '#5A7064', marginBottom: '16px' }}>Avis vérifiés sur les produits, kits et locations.</p>
+            <p style={{ fontSize: '11px', fontFamily: 'var(--font-mono)', color: '#D8E5D5', letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: '12px' }}>AVIS & ÉVALUATIONS</p>
+            <h1 style={{ fontSize: '24px', fontWeight: 800, color: '#EEF3EC', marginBottom: '8px', fontFamily: 'var(--font-display)' }}>Les avis de la communauté</h1>
+            <p style={{ fontSize: '13px', color: '#CCE0D4', marginBottom: '16px' }}>Avis vérifiés sur les produits, kits et locations.</p>
             <div style={{ display: 'flex', gap: '6px', marginBottom: '16px', overflowX: 'auto' }}>
               {[{ id: 'tous', label: 'Tous' }, { id: 'produit', label: 'Produits' }, { id: 'kit', label: 'Kits' }, { id: 'location', label: 'Locations' }, { id: 'occasion', label: 'Occasion' }].map((f) => (
-                <button key={f.id} onClick={() => setActiveFilter(f.id as typeof activeFilter)} style={{ padding: '6px 14px', borderRadius: '20px', fontSize: '12px', cursor: 'pointer', background: activeFilter === f.id ? '#17402C' : '#F4F1EA', color: activeFilter === f.id ? 'white' : '#5A7064', whiteSpace: 'nowrap', border: activeFilter === f.id ? 'none' : '1px solid rgba(23,64,44,0.08)' }}>{f.label}</button>
+                <button key={f.id} onClick={() => setActiveFilter(f.id as typeof activeFilter)} className={`glass-capsule-segment flex-shrink-0 ${activeFilter === f.id ? 'active' : ''}`}>{f.label}</button>
               ))}
             </div>
-            {error ? <div style={{ textAlign: 'center', padding: '40px 0' }}><p style={{ fontSize: '28px', marginBottom: '8px' }}>⚠️</p><p style={{ fontSize: '13px', color: '#5A7064', marginBottom: '12px' }}>{error}</p><button onClick={() => loadReviews()} className="glass-capsule-btn primary" style={{ padding: '8px 16px', fontSize: '12px' }}>Réessayer</button></div>
-              : filtered.length === 0 ? <p style={{ textAlign: 'center', color: '#5A7064', padding: '40px 0' }}>Aucun avis pour l&apos;instant</p>
+            {error ? <div style={{ textAlign: 'center', padding: '40px 0' }}><p style={{ fontSize: '28px', marginBottom: '8px' }}>⚠️</p><p style={{ fontSize: '13px', color: '#CCE0D4', marginBottom: '12px' }}>{error}</p><button onClick={() => loadReviews()} className="glass-capsule-btn primary !px-4 !py-2 !text-xs">Réessayer</button></div>
+              : filtered.length === 0 ? <p style={{ textAlign: 'center', color: '#CCE0D4', padding: '40px 0' }}>Aucun avis pour l&apos;instant</p>
               : <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>{filtered.map((review) => {
                 const authorName = review.author?.full_name ?? 'Membre';
-                return <div key={review.id} style={{ background: '#EEF3EC', borderRadius: '12px', border: '1px solid rgba(23,64,44,0.08)', padding: '14px' }}>
+                return <div key={review.id} className="glass" style={{ padding: '14px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
                     <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: '#17402C', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: 700 }}>{authorName[0]}</div>
                     <div><p style={{ fontSize: '13px', fontWeight: 600, color: '#17402C' }}>{authorName}</p><p style={{ fontSize: '11px', color: '#5A7064' }}>⭐ {review.rating}/5</p></div>
@@ -315,7 +302,7 @@ export default function AvisPage() {
                 </div>;
               })}</div>
             }
-            <button onClick={() => setShowWriteModal(true)} className="glass-capsule-btn primary" style={{ width: '100%', marginTop: '16px', padding: '12px', fontSize: '14px' }}>Laisser un avis</button>
+            <button onClick={() => setShowWriteModal(true)} className="glass-capsule-btn primary w-full !mt-4 !py-3 !text-sm">Laisser un avis</button>
           </div>
         </MobilePageShell>
 

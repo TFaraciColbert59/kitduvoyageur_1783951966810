@@ -26,7 +26,7 @@ export const StartDock: React.FC<StartDockProps> = ({
 
   return (
     <div
-      className="fixed left-3 right-3 z-[70] bg-white/95 backdrop-blur-2xl border border-white/80 rounded-2xl p-2.5  flex flex-col gap-2 pointer-events-auto"
+      className="glass fixed left-3 right-3 z-[70] rounded-2xl p-2.5 flex flex-col gap-2 pointer-events-auto"
       style={{ bottom: 'calc(env(safe-area-inset-bottom) + 62px + 8px)' }}
     >
       {/* Top Status line */}
@@ -47,14 +47,14 @@ export const StartDock: React.FC<StartDockProps> = ({
         {onContinuePreparation && (
           <button
             onClick={onContinuePreparation}
-            className="flex-1 h-10 px-3 rounded-xl bg-white hover:bg-[#EEF3EC] text-[#17402C] text-xs font-bold  border border-black/10 flex items-center justify-center gap-1.5 transition-all active:scale-95 shrink-0"
+            className="glass-capsule-btn flex-1 h-10 text-xs font-bold shrink-0"
           >
             <span>📦 Continuer à préparer</span>
           </button>
         )}
         <button
           onClick={onStart}
-          className="flex-1 h-10 px-4 rounded-xl bg-[#17402C] hover:bg-[#17402C] text-white text-xs font-bold  flex items-center justify-center gap-1.5 transition-all cursor-pointer active:scale-95 shrink-0"
+          className="glass-capsule-btn primary flex-1 h-10 text-xs font-bold shrink-0"
         >
           <span>Démarrer</span>
           <svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">

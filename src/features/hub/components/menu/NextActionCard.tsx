@@ -102,12 +102,12 @@ export function NextActionCard({ actions, checklist, variant = 'default' }: Next
       } ${isAllClear ? '' : 'ring-1 ring-[var(--lkv-primary)]/20'}`}
     >
       <div
-        className={`flex items-center border transition-transform active:scale-[0.99] ${
+        className={`flex items-center transition-transform active:scale-[0.99] ${
           compact ? 'gap-3 rounded-[1.25rem] p-3' : 'gap-3.5 rounded-[1.5rem] p-4'
         } min-h-[44px] ${
           isAllClear
-            ? 'border-white/60 bg-white/55'
-            : 'border-[var(--lkv-forest-900)]/15 bg-[var(--lkv-forest-900)] text-sage-300 shadow-sm'
+            ? 'glass'
+            : 'border border-[var(--lkv-forest-900)]/15 bg-[var(--lkv-forest-900)] text-sage-300 shadow-sm'
         }`}
         style={reduceMotion ? undefined : { transition: 'transform 0.15s ease' }}
       >

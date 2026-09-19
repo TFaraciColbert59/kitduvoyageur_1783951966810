@@ -88,36 +88,24 @@ export function BudgetDaySlider({ slides, onSelectDay }: BudgetDaySliderProps) {
               aria-label={`Jour ${slide.dayNumber} — ${slide.label}, ${formatEuro(slide.realTotal)} réel${
                 slide.plannedTotal > 0 ? `, ${formatEuro(slide.plannedTotal)} prévu` : ''
               }`}
-              className={`relative flex h-[9rem] w-[9rem] flex-col justify-between rounded-[1.4rem] p-3 text-left transition-transform active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)] ${
-                slide.isToday
-                  ? 'glass interactive border-2 border-[var(--lkv-primary)]/35 text-[var(--lkv-text-primary)]'
-                  : 'glass interactive text-[var(--lkv-text-primary)]'
+              className={`glass-capsule-btn relative flex h-[9rem] w-[9rem] !flex-col !items-start !justify-between !rounded-[1.4rem] !p-3 text-left transition-transform active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)] ${
+                slide.isToday ? 'primary' : ''
               }`}
             >
               <span className="flex w-full items-start justify-between gap-1">
-                <span
-                  className={`rounded-full px-2 py-0.5 text-[10px] font-bold tabular-nums ${
-                    slide.isToday
-                      ? 'bg-[var(--lkv-primary)] text-white'
-                      : 'bg-[var(--lkv-primary)]/10 text-[var(--lkv-primary)]'
-                  }`}
-                >
+                <span className="rounded-full bg-[var(--lkv-primary)]/10 px-2 py-0.5 text-[10px] font-bold tabular-nums">
                   J{slide.dayNumber}
                 </span>
               </span>
 
               <span className="w-full">
-                <span
-                  className={`block truncate text-[10px] font-semibold uppercase tracking-[0.08em] ${
-                    slide.isToday ? 'text-[var(--lkv-primary)]' : 'text-[var(--lkv-text-primary)]/60'
-                  }`}
-                >
+                <span className="block truncate text-[10px] font-semibold uppercase tracking-[0.08em]">
                   {slide.isToday ? 'Aujourd’hui' : slide.label}
                 </span>
                 <span className="mt-0.5 block font-display text-lg font-extrabold tabular-nums">
                   {formatEuro(slide.realTotal)}
                 </span>
-                <span className="mt-0.5 block truncate text-[10.5px] font-medium text-[var(--lkv-text-primary)]/70">
+                <span className="mt-0.5 block truncate text-[10.5px] font-medium">
                   {slide.plannedTotal > 0
                     ? `+ ${formatEuro(slide.plannedTotal)} prévu`
                     : slide.expenseCount === 0

@@ -77,10 +77,8 @@ export function NatureSwitcherSheet({
             onPointerUp={disarmReset}
             onPointerLeave={disarmReset}
             aria-pressed={current === id}
-            className={`flex flex-col items-center gap-1.5 px-2 py-3 min-h-[44px] rounded-[var(--lkv-radius-md)] cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)] ${
-              current === id
-                ? 'bg-[var(--lkv-primary)] text-white'
-                : 'bg-white/40 text-[var(--lkv-text-primary)]'
+            className={`glass-capsule-btn !flex-col !gap-1.5 !px-2 !py-3 !rounded-[var(--lkv-radius-md)] min-h-[44px] cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)] ${
+              current === id ? 'primary' : ''
             }`}
           >
             <Icon size={18} aria-hidden="true" />
@@ -93,7 +91,7 @@ export function NatureSwitcherSheet({
           <button
             type="button"
             onClick={reset}
-            className="w-full min-h-[44px] rounded-[var(--lkv-radius-md)] text-xs font-semibold text-[var(--lkv-danger)] hover:underline cursor-pointer"
+            className="glass-capsule-btn w-full !rounded-[var(--lkv-radius-md)] min-h-[44px] text-xs font-semibold !text-[var(--lkv-danger)] cursor-pointer"
           >
             Réinitialiser (retour Matériel)
           </button>

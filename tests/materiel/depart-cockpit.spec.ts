@@ -57,7 +57,7 @@ describe('Depart Cockpit - Complete V2 Test Suite', () => {
     it('fournit un fallback sûr en cas d ID inconnu ou none sans tracé fictif forcé', async () => {
       const fallback = await getDepartDetail('none');
       expect(fallback).toBeDefined();
-      expect(fallback.assignedKit.items.length).toBeGreaterThan(0);
+      expect(fallback.assignedKit.items.length).toBe(0);
     });
   });
 

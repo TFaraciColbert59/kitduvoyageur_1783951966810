@@ -213,7 +213,7 @@ export default function EditProfileView({ onCloseModal, onSave }: { onCloseModal
   };
 
   return (
-    <div className="min-h-screen bg-[#EEF3EC] font-sans text-[#17402C] pb-28">
+    <div className="min-h-screen bg-[rgba(238,243,236,0.8)] backdrop-blur-xl font-sans text-[#17402C] pb-28">
       {/* 1. TOP STICKY NAVBAR — desktop uniquement */}
       <header className="hidden md:flex sticky top-0 z-40 glass border-b border-[#17402C]/5 px-4 sm:px-8 py-3.5 items-center justify-between">
         <div className="flex items-center gap-4">
@@ -284,7 +284,7 @@ export default function EditProfileView({ onCloseModal, onSave }: { onCloseModal
               <img src={form.heroUrl} alt="Photo de couverture" className="w-full h-full object-cover" />
               <div className="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-colors" />
               <div className="absolute top-4 right-4 flex gap-2">
-                <label className="glass-capsule-btn text-xs font-bold cursor-pointer !bg-white/90 !text-[#17402C]">
+                <label className="glass-capsule-btn text-xs font-bold cursor-pointer">
                   <Icon name="CameraIcon" size={14} /> Changer
                   <input
                     type="file"
@@ -299,7 +299,7 @@ export default function EditProfileView({ onCloseModal, onSave }: { onCloseModal
                 </label>
                 <button
                   onClick={() => setField('heroUrl', 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?q=80&w=1200')}
-                  className="glass-capsule-btn text-xs font-bold !bg-black/60 !text-white"
+                  className="glass-capsule-btn text-xs font-bold"
                 >
                   Réinitialiser
                 </button>
@@ -491,8 +491,8 @@ export default function EditProfileView({ onCloseModal, onSave }: { onCloseModal
                       key={massif}
                       type="button"
                       onClick={() => toggleArrayItem('selectedMassifs', massif)}
-                      className={`glass-sub-card !px-3.5 !py-1.5 rounded-full text-xs font-bold transition-all ${
-                        isSelected ? '!bg-[#17402C] !text-white !border-[#17402C] shadow-sm' : 'text-[#5A7064]'
+                      className={`glass-capsule-btn !py-1.5 !px-3.5 !min-h-0 text-xs font-bold transition-all ${
+                        isSelected ? 'primary' : ''
                       }`}
                     >
                       {isSelected ? `✓ ${massif}` : massif}
@@ -523,7 +523,7 @@ export default function EditProfileView({ onCloseModal, onSave }: { onCloseModal
                   {form.languages.map((lang) => (
                     <span key={lang} className="glass-pill text-xs font-bold flex items-center gap-1.5">
                       <span>✓ {lang}</span>
-                      <button type="button" onClick={() => toggleArrayItem('languages', lang)} className="hover:text-[#A8443A] transition-colors ml-0.5">✕</button>
+                      <button type="button" onClick={() => toggleArrayItem('languages', lang)} className="glass-circle-btn !w-5 !h-5 !min-w-5 !min-h-5 !p-0 transition-colors">✕</button>
                     </span>
                   ))}
                 </div>
@@ -554,8 +554,8 @@ export default function EditProfileView({ onCloseModal, onSave }: { onCloseModal
                       key={d.id}
                       type="button"
                       onClick={() => toggleArrayItem('disciplines', d.id)}
-                      className={`glass-sub-card p-3 rounded-2xl text-xs font-bold transition-all text-center ${
-                        isSelected ? '!bg-[#17402C] !text-white !border-[#17402C] shadow-sm' : 'text-[#5A7064]'
+                      className={`glass-capsule-btn !min-h-0 !min-w-0 w-full !p-3 text-xs font-bold transition-all text-center ${
+                        isSelected ? 'primary' : ''
                       }`}
                     >
                       {d.label}
@@ -581,12 +581,12 @@ export default function EditProfileView({ onCloseModal, onSave }: { onCloseModal
                       key={lvl.id}
                       type="button"
                       onClick={() => setField('experienceLevel', lvl.id)}
-                      className={`glass-sub-card p-3.5 rounded-2xl text-center transition-all ${
-                        isActive ? '!bg-[#17402C] !text-white !border-[#17402C] shadow-md' : 'text-[#5A7064]'
+                      className={`glass-capsule-btn !min-h-0 !min-w-0 w-full !p-3.5 text-center transition-all ${
+                        isActive ? 'primary' : ''
                       }`}
                     >
                       <div className="font-bold text-xs">{lvl.label}</div>
-                      <div className={`text-[10px] font-mono mt-0.5 ${isActive ? 'text-white/75' : 'text-[#5A7064]'}`}>{lvl.sub}</div>
+                      <div className="text-[10px] font-mono mt-0.5 opacity-80">{lvl.sub}</div>
                     </button>
                   );
                 })}
@@ -665,7 +665,7 @@ export default function EditProfileView({ onCloseModal, onSave }: { onCloseModal
                         <button
                           type="button"
                           onClick={() => setField(app.key, false)}
-                          className="px-3 py-1.5 rounded-full text-xs font-semibold text-[#A8443A] hover:underline transition-colors"
+                          className="glass-capsule-btn danger !py-1.5 !px-3 !min-h-0 text-xs font-semibold transition-colors"
                         >
                           Déconnecter
                         </button>
@@ -813,14 +813,14 @@ export default function EditProfileView({ onCloseModal, onSave }: { onCloseModal
         </div>
 
         <div className="flex items-center gap-2 md:gap-3 w-full md:w-auto justify-end">
-          <Link href="/compte" className="px-3 md:px-4 py-2 text-xs font-semibold text-white/70 hover:text-white transition-colors whitespace-nowrap">
+          <Link href="/compte" className="glass-capsule-btn !py-2 !px-4 text-xs font-bold whitespace-nowrap">
             Annuler
           </Link>
 
           <button
             onClick={handleSave}
             disabled={saving}
-            className="glass-capsule-btn primary text-xs font-bold !bg-white !text-[#17402C] whitespace-nowrap"
+            className="glass-capsule-btn text-xs font-bold whitespace-nowrap"
           >
             {saving ? 'Enregistrement…' : saveSuccess ? '✓ Enregistré !' : 'Enregistrer'}
             <span className="hidden md:inline"> les changements</span>

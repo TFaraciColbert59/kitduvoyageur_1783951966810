@@ -15,10 +15,10 @@ export default function HomeHeroSection({ onMenuOpen: _onMenuOpen }: HomeHeroSec
       position: 'relative', height: '460px',
       padding: '90px 20px 24px', color: '#fff', overflow: 'hidden',
     }}>
-      {/* Background gradient — forest-900 base */}
+      {/* Voile forest dégradé — laisse transparaître la toile applicative */}
       <div style={{
         position: 'absolute', inset: 0,
-        background: 'linear-gradient(180deg, #1a2f24 0%, #17402C 100%)',
+        background: 'linear-gradient(180deg, rgba(26,47,36,0.55) 0%, rgba(23,64,44,0.82) 100%)',
       }} />
       {/* Radial overlays for depth */}
       <div style={{

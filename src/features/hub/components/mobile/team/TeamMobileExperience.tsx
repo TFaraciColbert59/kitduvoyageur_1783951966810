@@ -182,7 +182,7 @@ export function TeamMobileExperience({ trip }: TeamMobileExperienceProps) {
           <button
             type="button"
             onClick={() => setActionError(null)}
-            className="flex h-11 w-11 items-center justify-center rounded-full text-[var(--lkv-text-muted)]"
+            className="glass-circle-btn h-11 w-11 shrink-0 text-[var(--lkv-text-muted)]"
             aria-label="Fermer le message"
           >
             ×
@@ -216,10 +216,10 @@ export function TeamMobileExperience({ trip }: TeamMobileExperienceProps) {
             <button
               type="button"
               onClick={() => setMembersOpen(true)}
-              className="glass-sub-card flex h-[9rem] w-[13rem] flex-col items-start justify-center gap-1 rounded-[1.4rem] p-4 text-left"
+              className="glass-capsule-btn flex h-[9rem] w-[13rem] !flex-col !items-start !justify-center !gap-1 !rounded-[1.4rem] !p-4 !whitespace-normal text-left"
             >
-              <span className="text-sm font-bold text-[var(--lkv-text-primary)]">Sortie en solo</span>
-              <span className="text-xs font-medium text-[var(--lkv-text-primary)]/70">
+              <span className="text-sm font-bold">Sortie en solo</span>
+              <span className="text-xs font-medium">
                 Invitez un compagnon de route.
               </span>
             </button>
@@ -258,12 +258,12 @@ export function TeamMobileExperience({ trip }: TeamMobileExperienceProps) {
               type="button"
               onClick={() => setMembersOpen(true)}
               aria-label="Inviter un voyageur"
-              className="glass-sub-card flex h-[9rem] w-[9.5rem] flex-col items-center justify-center gap-2 rounded-[1.4rem] border-2 border-dashed border-[var(--lkv-primary)]/30 p-3"
+              className="glass-capsule-btn flex h-[9rem] w-[9.5rem] !flex-col !items-center !justify-center !gap-2 !rounded-[1.4rem] !border-2 !border-dashed !border-white/50 !p-3"
             >
-              <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--lkv-primary)]/10 text-[var(--lkv-primary)]">
+              <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--lkv-primary)]/10">
                 <UserPlus size={17} aria-hidden="true" />
               </span>
-              <span className="text-[11px] font-bold text-[var(--lkv-text-primary)]">Inviter</span>
+              <span className="text-[11px] font-bold">Inviter</span>
             </button>
           </li>
         )}
@@ -319,12 +319,12 @@ export function TeamMobileExperience({ trip }: TeamMobileExperienceProps) {
             type="button"
             onClick={() => setCarnetOpen(true)}
             aria-label="Ajouter un équipier au carnet"
-            className="glass-sub-card flex h-[9.5rem] w-[9.5rem] flex-col items-center justify-center gap-2 rounded-[1.4rem] border-2 border-dashed border-[var(--lkv-primary)]/30 p-3"
+            className="glass-capsule-btn flex h-[9.5rem] w-[9.5rem] !flex-col !items-center !justify-center !gap-2 !rounded-[1.4rem] !border-2 !border-dashed !border-white/50 !p-3"
           >
-            <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--lkv-primary)]/10 text-[var(--lkv-primary)]">
+            <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--lkv-primary)]/10">
               <Plus size={17} aria-hidden="true" />
             </span>
-            <span className="text-[11px] font-bold text-[var(--lkv-text-primary)]">Ajouter</span>
+            <span className="text-[11px] font-bold">Ajouter</span>
           </button>
         </li>
       </GroupeRail>
@@ -342,10 +342,10 @@ export function TeamMobileExperience({ trip }: TeamMobileExperienceProps) {
             <button
               type="button"
               onClick={() => setDogsOpen(true)}
-              className="glass-sub-card flex h-[9.5rem] w-[13rem] flex-col items-start justify-center gap-1 rounded-[1.4rem] p-4 text-left"
+              className="glass-capsule-btn flex h-[9.5rem] w-[13rem] !flex-col !items-start !justify-center !gap-1 !rounded-[1.4rem] !p-4 !whitespace-normal text-left"
             >
-              <span className="text-sm font-bold text-[var(--lkv-text-primary)]">Aucun compagnon canin</span>
-              <span className="text-xs font-medium text-[var(--lkv-text-primary)]/70">
+              <span className="text-sm font-bold">Aucun compagnon canin</span>
+              <span className="text-xs font-medium">
                 Ajoutez un chien et son sac de bât.
               </span>
             </button>

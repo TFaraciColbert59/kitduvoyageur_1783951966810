@@ -11,7 +11,8 @@ export default function CarnetError({
   reset: () => void;
 }) {
   return (
-    <div className="min-h-screen bg-[var(--lkv-surface)] flex flex-col items-center justify-center p-6 text-center">
+    <div className="min-h-screen bg-transparent flex flex-col items-center justify-center p-6 text-center">
+      <div className="glass-sub-card flex flex-col items-center rounded-xl p-8">
       <div className="w-16 h-16 rounded-full bg-[var(--lkv-primary)]/5 flex items-center justify-center mb-6">
         <span className="text-3xl">⚠️</span>
       </div>
@@ -27,17 +28,18 @@ export default function CarnetError({
       <div className="flex flex-wrap items-center justify-center gap-4">
         <button
           onClick={() => reset()}
-          className="px-6 py-3 bg-[var(--lkv-primary)] text-[var(--lkv-surface)] rounded-full text-xs font-bold uppercase tracking-wider hover:bg-[var(--lkv-primary-hover)] transition-colors"
+          className="glass-capsule-btn primary px-6 text-xs font-bold uppercase tracking-wider"
         >
           Réessayer
         </button>
 
         <Link
           href="/carnets"
-          className="px-6 py-3 border border-[var(--lkv-border)] text-[var(--lkv-primary)] rounded-full text-xs font-bold uppercase tracking-wider hover:bg-[var(--lkv-primary)]/5 transition-colors"
+          className="glass-capsule-btn px-6 text-xs font-bold uppercase tracking-wider"
         >
           Retour aux carnets
         </Link>
+      </div>
       </div>
     </div>
   );

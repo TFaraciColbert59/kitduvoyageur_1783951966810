@@ -660,24 +660,22 @@ export function ItineraryMobileExperience({ trip, initialSteps }: ItineraryMobil
                 }}
                 aria-pressed={isActive}
                 aria-label={`Jour ${day.day} — ${day.dateLabel ?? ''} · ${day.stepsCount} étapes`}
-                className={`flex h-[8.5rem] w-[9rem] flex-col rounded-[1.4rem] p-3 text-left transition-transform active:scale-[0.97] ${
-                  isActive ? 'glass border-2 border-[var(--lkv-primary)]/35' : 'glass'
+                className={`glass-capsule-btn flex h-[8.5rem] w-[9rem] !flex-col !items-start !justify-start !rounded-[1.4rem] !p-3 text-left transition-transform active:scale-[0.97] ${
+                  isActive ? 'primary' : ''
                 }`}
               >
                 <span
-                  className={`w-fit rounded-full px-2 py-0.5 text-[10px] font-bold ${
-                    isActive ? 'bg-[var(--lkv-primary)] text-white' : 'bg-[var(--lkv-primary)]/10 text-[var(--lkv-primary)]'
-                  }`}
+                  className="w-fit rounded-full bg-[var(--lkv-primary)]/10 px-2 py-0.5 text-[10px] font-bold"
                 >
                   J{day.day}
                 </span>
-                <span className="mt-1.5 truncate text-[11px] font-bold uppercase tracking-[0.08em] text-[var(--lkv-text-primary)]">
+                <span className="mt-1.5 truncate text-[11px] font-bold uppercase tracking-[0.08em]">
                   {day.dateLabel ?? 'Jour'}
                 </span>
-                <span className="mt-1 text-[10.5px] font-medium text-[var(--lkv-text-primary)]/70">
+                <span className="mt-1 text-[10.5px] font-medium">
                   {day.stepsCount} étape{day.stepsCount > 1 ? 's' : ''}
                 </span>
-                <span className="mt-auto text-[10.5px] font-semibold tabular-nums text-[var(--lkv-text-primary)]/75">
+                <span className="mt-auto text-[10.5px] font-semibold tabular-nums">
                   {day.distanceKm} km · +{day.elevGainM} m
                 </span>
               </button>
@@ -691,12 +689,12 @@ export function ItineraryMobileExperience({ trip, initialSteps }: ItineraryMobil
               onClick={() => handleInsertDay(daysCount)}
               disabled={isPending}
               aria-label="Ajouter une journée à la fin"
-              className="glass-sub-card flex h-[8.5rem] w-[9rem] flex-col items-center justify-center gap-2 rounded-[1.4rem] border-2 border-dashed border-[var(--lkv-primary)]/30 p-3 disabled:opacity-50"
+              className="glass-capsule-btn flex h-[8.5rem] w-[9rem] !flex-col !items-center !justify-center !gap-2 !rounded-[1.4rem] !border-2 !border-dashed !border-white/50 !p-3 disabled:opacity-50"
             >
-              <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--lkv-primary)]/10 text-[var(--lkv-primary)]">
+              <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--lkv-primary)]/10">
                 <CalendarPlus size={17} aria-hidden="true" />
               </span>
-              <span className="text-[11px] font-bold text-[var(--lkv-text-primary)]">Ajouter un jour</span>
+              <span className="text-[11px] font-bold">Ajouter un jour</span>
             </button>
           </li>
         )}
@@ -799,26 +797,24 @@ export function ItineraryMobileExperience({ trip, initialSteps }: ItineraryMobil
                   setPoiDetailId(poi.id);
                 }}
                 aria-label={`Point d'intérêt ${poi.name}`}
-                className={`glass flex h-[8.5rem] w-[10.5rem] flex-col rounded-[1.4rem] p-3 text-left transition-transform active:scale-[0.97] ${
-                  poi.visited ? 'border-2 border-[var(--sage-700)]/30' : ''
-                }`}
+                className="glass-capsule-btn flex h-[8.5rem] w-[10.5rem] !flex-col !items-start !justify-start !rounded-[1.4rem] !p-3 text-left transition-transform active:scale-[0.97]"
               >
                 <span className="flex items-center gap-1.5">
-                  <span className="inline-flex w-fit items-center gap-1 rounded-full bg-[var(--lkv-primary)]/10 px-2 py-0.5 text-[9.5px] font-bold uppercase tracking-[0.08em] text-[var(--lkv-primary)]">
+                  <span className="inline-flex w-fit items-center gap-1 rounded-full bg-[var(--lkv-primary)]/10 px-2 py-0.5 text-[9.5px] font-bold uppercase tracking-[0.08em]">
                     <MapPin size={11} aria-hidden="true" />
                     {POI_CATEGORY_LABELS[poi.category ?? 'other'] ?? 'Autre'}
                   </span>
                   {isLlmSuggestion(poi.source, poi.metadata) && <LlmSuggestionBadge />}
                 </span>
-                <span className="mt-1.5 line-clamp-2 text-[12.5px] font-bold leading-snug text-[var(--lkv-text-primary)]">
+                <span className="mt-1.5 line-clamp-2 text-[12.5px] font-bold leading-snug">
                   {poi.name}
                 </span>
                 {poi.notes && (
-                  <span className="mt-0.5 line-clamp-2 text-[10px] font-medium leading-snug text-[var(--lkv-text-primary)]/65">
+                  <span className="mt-0.5 line-clamp-2 text-[10px] font-medium leading-snug">
                     {poi.notes}
                   </span>
                 )}
-                <span className="mt-auto text-[10px] font-semibold uppercase tracking-[0.1em] text-[var(--lkv-text-primary)]/60">
+                <span className="mt-auto text-[10px] font-semibold uppercase tracking-[0.1em]">
                   {poi.visited ? 'Visité' : poi.step_id ? 'Rattaché' : 'Non affecté'}
                 </span>
               </button>
@@ -844,18 +840,18 @@ export function ItineraryMobileExperience({ trip, initialSteps }: ItineraryMobil
             type="button"
             onClick={() => router.push(`${budgetHref}?jour=${selectedDay}`)}
             aria-label={`Ouvrir le budget du jour ${selectedDay}`}
-            className={`glass interactive flex h-[8.5rem] w-[10rem] flex-col rounded-[1.4rem] p-3 text-left transition-transform active:scale-[0.97] ${
-              expensesView.count > 0 ? 'border-2 border-[var(--lkv-primary)]/30' : ''
+            className={`glass-capsule-btn flex h-[8.5rem] w-[10rem] !flex-col !items-start !justify-start !rounded-[1.4rem] !p-3 text-left transition-transform active:scale-[0.97] ${
+              expensesView.count > 0 ? 'primary' : ''
             }`}
           >
-            <span className="inline-flex w-fit items-center gap-1 rounded-full bg-[var(--lkv-primary)]/10 px-2 py-0.5 text-[9.5px] font-bold uppercase tracking-[0.08em] text-[var(--lkv-primary)]">
+            <span className="inline-flex w-fit items-center gap-1 rounded-full bg-[var(--lkv-primary)]/10 px-2 py-0.5 text-[9.5px] font-bold uppercase tracking-[0.08em]">
               <Wallet size={11} aria-hidden="true" />
               Total jour
             </span>
-            <span className="mt-2 font-display text-lg font-extrabold tabular-nums text-[var(--lkv-text-primary)]">
+            <span className="mt-2 font-display text-lg font-extrabold tabular-nums">
               {formatEuro(expensesView.total)}
             </span>
-            <span className="mt-auto inline-flex items-center gap-0.5 text-[10px] font-semibold text-[var(--lkv-primary)]">
+            <span className="mt-auto inline-flex items-center gap-0.5 text-[10px] font-semibold">
               Ouvrir le budget
               <ChevronRight size={11} aria-hidden="true" />
             </span>
@@ -867,7 +863,7 @@ export function ItineraryMobileExperience({ trip, initialSteps }: ItineraryMobil
               type="button"
               onClick={() => router.push(`${budgetHref}?jour=${selectedDay}`)}
               aria-label={`${expense.title ?? 'Dépense'} — ${formatEuro(Number(expense.amount) || 0)}`}
-              className="glass interactive flex h-[8.5rem] w-[10rem] flex-col rounded-[1.4rem] p-3 text-left transition-transform active:scale-[0.97]"
+              className="glass-capsule-btn flex h-[8.5rem] w-[10rem] !flex-col !items-start !justify-start !rounded-[1.4rem] !p-3 text-left transition-transform active:scale-[0.97]"
             >
               <span
                 className={`w-fit rounded-full px-2 py-0.5 text-[9.5px] font-bold uppercase tracking-[0.08em] ${
@@ -878,10 +874,10 @@ export function ItineraryMobileExperience({ trip, initialSteps }: ItineraryMobil
               >
                 {expense.is_planned ? 'Prévu' : 'Réel'}
               </span>
-              <span className="mt-1.5 line-clamp-2 text-[12px] font-bold leading-snug text-[var(--lkv-text-primary)]">
+              <span className="mt-1.5 line-clamp-2 text-[12px] font-bold leading-snug">
                 {expense.title ?? 'Dépense'}
               </span>
-              <span className="mt-auto font-display text-base font-extrabold tabular-nums text-[var(--lkv-text-primary)]">
+              <span className="mt-auto font-display text-base font-extrabold tabular-nums">
                 {formatEuro(Number(expense.amount) || 0)}
               </span>
             </button>
@@ -906,10 +902,10 @@ export function ItineraryMobileExperience({ trip, initialSteps }: ItineraryMobil
             <button
               type="button"
               onClick={() => setItemsOpen(true)}
-              className="glass-sub-card flex h-[8.5rem] w-[13rem] flex-col items-start justify-center gap-1 rounded-[1.4rem] p-4 text-left"
+              className="glass-capsule-btn flex h-[8.5rem] w-[13rem] !flex-col !items-start !justify-center !gap-1 !rounded-[1.4rem] !p-4 !whitespace-normal text-left"
             >
-              <span className="text-sm font-bold text-[var(--lkv-text-primary)]">Matériel à prévoir</span>
-              <span className="text-xs font-medium text-[var(--lkv-text-primary)]/70">
+              <span className="text-sm font-bold">Matériel à prévoir</span>
+              <span className="text-xs font-medium">
                 Rattachez le kit nécessaire à cette journée.
               </span>
             </button>
@@ -921,18 +917,18 @@ export function ItineraryMobileExperience({ trip, initialSteps }: ItineraryMobil
                 type="button"
                 onClick={() => setItemsOpen(true)}
                 aria-label={`Matériel ${item.item_name}`}
-                className="glass flex h-[8.5rem] w-[10rem] flex-col rounded-[1.4rem] p-3 text-left transition-transform active:scale-[0.97]"
+                className="glass-capsule-btn flex h-[8.5rem] w-[10rem] !flex-col !items-start !justify-start !rounded-[1.4rem] !p-3 text-left transition-transform active:scale-[0.97]"
               >
                 <span
-                  className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--lkv-primary)]/10 text-[var(--lkv-primary)]"
+                  className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--lkv-primary)]/10"
                   aria-hidden="true"
                 >
                   <Backpack size={15} />
                 </span>
-                <span className="mt-1.5 line-clamp-2 text-[12px] font-bold leading-snug text-[var(--lkv-text-primary)]">
+                <span className="mt-1.5 line-clamp-2 text-[12px] font-bold leading-snug">
                   {item.item_name}
                 </span>
-                <span className="mt-auto text-[10px] font-medium text-[var(--lkv-text-primary)]/65">
+                <span className="mt-auto text-[10px] font-medium">
                   {item.category ?? 'Divers'}
                   {item.weight_grams ? ` · ${Math.round(item.weight_grams / 10) / 100} kg` : ''}
                   {item.is_packed ? ' · Emballé' : ''}

@@ -31,18 +31,18 @@ export default function GuidesPage() {
   return (
     <>
       {/* ── DESKTOP ── fullscreen, scroll interne */}
-      <div className="hidden md:flex flex-col h-[100dvh] overflow-hidden bg-[#EEF3EC]" data-lkv-material-theme="light">
+      <div className="hidden md:flex flex-col h-[100dvh] overflow-hidden bg-transparent" data-lkv-material-theme="light">
         <Header />
         <main className="flex-1 min-h-0 overflow-y-auto">
           <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-12">
             <div className="mb-8">
-              <p className="text-[11px] font-mono uppercase tracking-[0.14em] text-[#5A7064] mb-2" style={{ fontFamily: 'var(--font-mono)' }}>
+              <p className="text-[11px] font-mono uppercase tracking-[0.14em] text-[#CCE0D4] mb-2" style={{ fontFamily: 'var(--font-mono)' }}>
                 GUIDES &amp; CHECKLISTS
               </p>
-              <h1 className="font-display font-bold text-3xl tracking-tight text-[#17402C]">
+              <h1 className="font-display font-bold text-3xl tracking-tight text-[#EEF3EC]">
                 Guides de voyage
               </h1>
-              <p className="mt-1.5 text-sm text-[#5A7064] max-w-2xl">
+              <p className="mt-1.5 text-sm text-[#CCE0D4] max-w-2xl">
                 Découvrez nos guides complets pour préparer chaque aventure. Conseils d&apos;experts, checklists et équipement recommandé.
               </p>
             </div>
@@ -73,10 +73,10 @@ export default function GuidesPage() {
       <div className="block md:hidden">
         <MobilePageShell>
           <div style={{ padding: '16px' }}>
-            <h1 style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '24px', color: '#17402C', marginBottom: '8px' }}>
+            <h1 style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '24px', color: '#EEF3EC', marginBottom: '8px' }}>
               Guides de voyage
             </h1>
-            <p style={{ color: '#5A7064', fontSize: '14px', marginBottom: '24px', lineHeight: 1.5 }}>
+            <p style={{ color: '#CCE0D4', fontSize: '14px', marginBottom: '24px', lineHeight: 1.5 }}>
               Decouvrez nos guides complets pour preparer chaque aventure.
             </p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -84,7 +84,8 @@ export default function GuidesPage() {
                 <Link
                   key={guide.slug}
                   href={`/guides/${guide.slug}`}
-                  style={{ display: 'block', padding: '16px', background: '#F4F1EA', border: '1px solid rgba(23,64,44,0.08)', borderRadius: '12px', textDecoration: 'none' }}
+                  className="glass"
+                  style={{ display: 'block', padding: '16px', borderRadius: '12px', textDecoration: 'none' }}
                 >
                   <h2 style={{ fontWeight: 600, fontSize: '16px', color: '#17402C', marginBottom: '4px' }}>
                     {guide.title}

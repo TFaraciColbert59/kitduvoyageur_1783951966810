@@ -344,7 +344,7 @@ export default function HikingCockpitPage({ terrainEnabled = false }: HikingCock
 
   return (
     <div className="w-full h-[100dvh] relative overflow-hidden bg-[#EAE6DF] text-[#17402C] select-none font-sans">
-      <div className="relative w-full h-full overflow-hidden bg-[#EEF3EC]">
+      <div className="relative w-full h-full overflow-hidden bg-transparent">
           {showCompletionScreen ? (
             <CompletionView
               routeName={dbRouteData?.name || (routeIdParam ? `Itinéraire #${routeIdParam}` : 'Randonnée')}

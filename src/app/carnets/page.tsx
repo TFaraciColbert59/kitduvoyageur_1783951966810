@@ -19,6 +19,7 @@ import CommentItem from '@/components/communaute/CommentItem';
 import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
 import MobileCarnetsHub from '@/components/carnets/MobileCarnetsHub';
 import CompteBackground from '@/components/compte/CompteBackground';
+import { MarbleZone } from '@/components/glass/MarbleZone';
 import { SkeletonCarnetCard } from '@/components/ui/Skeleton';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -490,7 +491,7 @@ function CarnetDetailModal({
               <div className="relative">
                 <button
                   onClick={() => setShowReactions(!showReactions)}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-600 border transition-all ${carnet.user_liked ? 'bg-[var(--lkv-primary)]/10 border-[var(--lkv-primary)]/30 text-[var(--lkv-primary)]' : 'border-[var(--lkv-border)] text-[var(--lkv-text-muted)] hover:border-[var(--lkv-primary)]/30'}`}
+                  className={`glass-capsule-btn text-xs font-semibold ${carnet.user_liked ? 'primary' : ''}`}
                 >
                   {carnet.user_reaction ? REACTION_OPTS.find((r) => r.key === carnet.user_reaction)?.emoji : '🎒'}
                   <span>{carnet.likes_count} réactions</span>
@@ -509,16 +510,16 @@ function CarnetDetailModal({
               {/* Favorite */}
               <button
                 onClick={() => onFavorite(carnet)}
-                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-600 border transition-all ${carnet.user_favorited ? 'bg-amber-50 border-amber-300 text-amber-600' : 'border-[var(--lkv-border)] text-[var(--lkv-text-muted)] hover:border-amber-300'}`}
+                className={`glass-capsule-btn text-xs font-semibold ${carnet.user_favorited ? 'primary' : ''}`}
               >
-                <Icon name={carnet.user_favorited ? 'BookmarkSolidIcon' : 'BookmarkIcon'} size={15} />
+                <Icon name="bookmark" size={14} />
                 {carnet.favorites_count} favoris
               </button>
 
               {/* Author link */}
               {carnet.author_id && (
-                <Link href={`/profil/${carnet.author_id}`} className="ml-auto flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-600 border border-[var(--lkv-border)] text-[var(--lkv-text-muted)] hover:text-[var(--lkv-primary)] transition-all">
-                  <Icon name="UserCircleIcon" size={15} />
+                <Link href={`/profil/${carnet.author_id}`} className="ml-auto glass-capsule-btn text-xs font-semibold">
+                  <Icon name="user" size={14} />
                   Voir le profil
                 </Link>
               )}
@@ -588,7 +589,7 @@ function CarnetDetailModal({
                     onChange={(e) => setNewComment(e.target.value)}
                     onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSubmitComment(); } }}
                   />
-                  <button onClick={handleSubmitComment} disabled={submitting || !newComment.trim()} className="px-4 py-2.5 bg-[var(--lkv-primary)] text-white rounded-xl text-sm font-600 disabled:opacity-50 hover:bg-[var(--lkv-primary)]/90 transition-colors">
+                  <button onClick={handleSubmitComment} disabled={submitting || !newComment.trim()} className="glass-capsule-btn primary text-xs font-semibold shrink-0">
                     {submitting ? '...' : 'Envoyer'}
                   </button>
                 </div>
@@ -746,7 +747,7 @@ function CarnetCard({
           <div className="relative">
             <button
               onClick={() => setShowReactions(!showReactions)}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-600 border transition-all ${carnet.user_liked ? 'bg-[var(--lkv-primary)]/10 border-[var(--lkv-primary)]/30 text-[var(--lkv-primary)]' : 'border-[var(--lkv-border)] text-[var(--lkv-text-muted)] hover:border-[var(--lkv-primary)]/30'}`}
+              className={`glass-capsule-btn text-xs font-semibold ${carnet.user_liked ? 'primary' : ''}`}
             >
               {carnet.user_reaction ? REACTION_OPTS.find((r) => r.key === carnet.user_reaction)?.emoji : '🎒'}
               <span>{carnet.likes_count}</span>
@@ -765,36 +766,36 @@ function CarnetCard({
           {/* Comments — opens detail modal */}
           <button
             onClick={() => onViewDetail(carnet)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-600 border border-[var(--lkv-border)] text-[var(--lkv-text-muted)] hover:border-[var(--lkv-primary)]/30 transition-all"
+            className="glass-capsule-btn text-xs font-semibold"
           >
-            <Icon name="ChatBubbleLeftIcon" size={13} />
+            <Icon name="message-square" size={13} />
             <span>{carnet.comments_count}</span>
           </button>
 
           {/* Favorite */}
           <button
             onClick={() => onFavorite(carnet)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-600 border transition-all ${carnet.user_favorited ? 'bg-amber-50 border-amber-300 text-amber-600' : 'border-[var(--lkv-border)] text-[var(--lkv-text-muted)] hover:border-amber-300'}`}
+            className={`glass-capsule-btn text-xs font-semibold ${carnet.user_favorited ? 'primary' : ''}`}
           >
-            <Icon name={carnet.user_favorited ? 'BookmarkSolidIcon' : 'BookmarkIcon'} size={13} />
+            <Icon name="bookmark" size={13} />
             <span>{carnet.favorites_count}</span>
           </button>
 
           {/* View detail */}
           <Link
             href={`/carnets/${carnet.id}`}
-            className="ml-auto flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-600 bg-[var(--lkv-primary)] text-white hover:bg-[var(--lkv-primary)]/80 transition-all"
+            className="ml-auto glass-capsule-btn primary text-xs font-semibold"
           >
-            <Icon name="ArrowTopRightOnSquareIcon" size={13} />
+            <Icon name="arrow-up-right" size={13} />
             Page complète
           </Link>
 
           {/* Share */}
           <button
             onClick={() => onShare(carnet)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-600 border border-[var(--lkv-border)] text-[var(--lkv-text-muted)] hover:border-[var(--lkv-primary)]/30 transition-all"
+            className="glass-capsule-btn text-xs font-semibold"
           >
-            <Icon name="ShareIcon" size={13} />
+            <Icon name="share2" size={13} />
           </button>
         </div>
       </div>
@@ -1037,6 +1038,7 @@ export default function CarnetsPage() {
       <div className="hidden md:block">
         <div className="h-[100dvh] max-h-[100dvh] overflow-hidden bg-transparent font-sans text-[var(--lkv-primary)] relative flex flex-col">
           <CompteBackground />
+          <MarbleZone />
           <Header />
           <main className="flex-1 min-h-0 overflow-hidden w-full max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-4 flex gap-5">
             {/* COLONNE GAUCHE (Nav & Vertical Tabs) - 230px */}

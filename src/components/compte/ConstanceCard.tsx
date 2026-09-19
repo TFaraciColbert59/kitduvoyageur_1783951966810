@@ -42,12 +42,8 @@ export default function ConstanceCard({ constance }: ConstanceCardProps) {
             <button
               key={d.name + idx}
               onClick={() => setActiveDayIndex(idx)}
-              className={`flex flex-col items-center justify-between py-1.5 px-0.5 rounded-lg border transition-all cursor-pointer ${
-                isSelected
-                  ? 'bg-[#17402C] text-white border-[#17402C] shadow-2xs'
-                  : hasActivity
-                  ? 'bg-white/80 border-white text-[#17402C] hover:border-[#5B7F55]/40'
-                  : 'bg-white/30 border-[#17402C]/5 text-[#5A7064] hover:bg-white/60'
+              className={`glass-capsule-btn flex flex-col items-center justify-between !py-1.5 !px-0.5 !min-w-0 !min-h-0 transition-all cursor-pointer ${
+                isSelected ? 'primary' : ''
               }`}
               title={`${d.label} : ${d.count} sortie(s)`}
             >

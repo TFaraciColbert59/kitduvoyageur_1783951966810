@@ -3,8 +3,6 @@
 import Icon from '@/components/ui/Icon';
 import React, { useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { ChevronDownIcon as ChevronDownAnimated } from '@/components/icons/chevron-down';
-import { ChevronUpIcon as ChevronUpAnimated } from '@/components/icons/chevron-up';
 import type { MapTrail } from './types';
 import ExplorerListCard from './ExplorerListCard';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
@@ -116,9 +114,9 @@ export default function ExplorerMobileSheet({
             onClick={toggle}
             onPointerDown={(e) => e.stopPropagation()}
             aria-label={expanded ? 'Replier la liste' : 'Déplier la liste'}
-            className="w-7 h-7 rounded-full bg-white/70 hover:bg-white border border-white/60 text-[#17402C] flex items-center justify-center transition-all active:scale-90 "
+            className="glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8 transition-all active:scale-90"
           >
-            {expanded ? <ChevronDownAnimated size={12} /> : <ChevronUpAnimated size={12} />}
+            <Icon name={expanded ? 'chevron-down' : 'chevron-up'} size={12} />
           </button>
         </div>
       </div>

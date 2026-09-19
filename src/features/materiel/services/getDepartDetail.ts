@@ -374,7 +374,7 @@ export async function getDepartDetail(id?: string | null, selectedRouteId?: stri
     const { data: { user } } = await supabase.auth.getUser();
 
     // Si utilisateur invité ou id d'un kit modèle
-    if (!user || id === 'tmb-4j' || id === 'vercors-ultra' || id === 'belledonne-winter' || id === 'none') {
+    if (!user || id === 'tmb-4j' || id === 'vercors-ultra' || id === 'belledonne-winter') {
       const trailData = await resolveTrail(
         supabase,
         selectedRouteId,
@@ -411,7 +411,7 @@ export async function getDepartDetail(id?: string | null, selectedRouteId?: stri
     }
 
     let kit: KitRow | null = null;
-    if (id) {
+    if (id && id !== 'none') {
       const { data } = await supabase
         .from('materiel_kits')
         .select(baseSelect)
@@ -421,7 +421,7 @@ export async function getDepartDetail(id?: string | null, selectedRouteId?: stri
         .maybeSingle();
       kit = (data as unknown as KitRow | null) ?? null;
     }
-    if (!kit) {
+    if (!kit && id !== 'none') {
       const { data } = await supabase
         .from('materiel_kits')
         .select(baseSelect)
@@ -433,17 +433,46 @@ export async function getDepartDetail(id?: string | null, selectedRouteId?: stri
       kit = (data as unknown as KitRow | null) ?? null;
     }
 
-    // Si pas de kit trouvé en base, renvoyer le showcase avec tracé réel
+    // Si pas de kit trouvé en base ou si création explicite ('none'), renvoyer un état vide honnête
     if (!kit) {
-      const explicitRoute = Boolean(selectedRouteId);
-      const trailData = await resolveTrail(supabase, selectedRouteId, 'Sambre');
-      const requestedTrail =
-        explicitRoute && trailData && String(trailData.id) === String(selectedRouteId) ? trailData : null;
-      const identity = resolveDepartIdentity({
-        destination: 'Tour du Mont-Blanc — 4j Bivouac',
-        trailName: requestedTrail?.name ?? null,
-      });
-      return getShowcaseDepart('tmb-4j', trailData, identity.fromTrail ? identity.title : null);
+      return {
+        id: 'none',
+        destination: 'Prochain départ',
+        startsAt: null,
+        endsAt: null,
+        status: 'draft',
+        readinessScore: {
+          status: 'warning',
+          grade: 'C',
+          label: 'Kit vide',
+          percentage: 0,
+          missingVitals: [],
+          factors: ['Aucun équipement ajouté'],
+        },
+        baseWeightG: 0,
+        wornWeightG: 0,
+        consumablesWeightG: 0,
+        totalPackWeightG: 0,
+        assignedKit: {
+          id: 'none',
+          name: 'Nouveau kit',
+          totalWeightG: 0,
+          items: [],
+        },
+        weightBreakdown: [],
+        checklistPct: 0,
+        checklistSections: [],
+        checklistItems: [],
+        durationDays: 0,
+        consumables: {},
+        trail: null,
+        participants: [{ name: 'Vous', initial: 'V', color: 'var(--lkv-primary)', profileId: user.id }],
+        emergencyContact: null,
+        coverImageUrl: null,
+        activityType: null,
+        comparableTrip: null,
+        updatedAt: new Date().toISOString(),
+      };
     }
 
     const cleanDestination = (kit.name || 'Prochain départ').replace(/\s*\((?:copie|copy)\)\s*/gi, '').trim();
@@ -616,6 +645,46 @@ export async function getDepartDetail(id?: string | null, selectedRouteId?: stri
     };
   } catch (err) {
     console.error('getDepartDetail fallback to showcase', err);
+    if (id === 'none') {
+      return {
+        id: 'none',
+        destination: 'Prochain départ',
+        startsAt: null,
+        endsAt: null,
+        status: 'draft',
+        readinessScore: {
+          status: 'warning',
+          grade: 'C',
+          label: 'Kit vide',
+          percentage: 0,
+          missingVitals: [],
+          factors: ['Aucun équipement ajouté'],
+        },
+        baseWeightG: 0,
+        wornWeightG: 0,
+        consumablesWeightG: 0,
+        totalPackWeightG: 0,
+        assignedKit: {
+          id: 'none',
+          name: 'Nouveau kit',
+          totalWeightG: 0,
+          items: [],
+        },
+        weightBreakdown: [],
+        checklistPct: 0,
+        checklistSections: [],
+        checklistItems: [],
+        durationDays: 0,
+        consumables: {},
+        trail: null,
+        participants: [],
+        emergencyContact: null,
+        coverImageUrl: null,
+        activityType: null,
+        comparableTrip: null,
+        updatedAt: new Date().toISOString(),
+      };
+    }
     return getShowcaseDepart(id ?? undefined);
   }
 }

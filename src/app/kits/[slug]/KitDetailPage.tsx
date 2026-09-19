@@ -138,7 +138,7 @@ export default function KitDetailPage() {
       <>
         {/* ── DESKTOP ── */}
         <div className="hidden md:block">
-          <div data-lkv-material-theme="light" className="h-dvh overflow-hidden bg-[#EEF3EC]">
+          <div data-lkv-material-theme="light" className="h-dvh overflow-hidden bg-transparent">
             <Header />
             <main className="h-full overflow-y-auto pt-20">
               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
@@ -174,7 +174,7 @@ export default function KitDetailPage() {
       <>
         {/* ── DESKTOP ── */}
         <div className="hidden md:block">
-          <div data-lkv-material-theme="light" className="h-dvh overflow-hidden bg-[#EEF3EC]">
+          <div data-lkv-material-theme="light" className="h-dvh overflow-hidden bg-transparent">
             <Header />
             <main className="h-full overflow-y-auto pt-20">
               <div className="min-h-[60dvh] flex items-center justify-center px-4">
@@ -210,14 +210,14 @@ export default function KitDetailPage() {
     <>
       {/* ── DESKTOP ── */}
       <div className="hidden md:block">
-        <div data-lkv-material-theme="light" className="h-dvh overflow-hidden bg-[#EEF3EC]">
+        <div data-lkv-material-theme="light" className="h-dvh overflow-hidden bg-transparent">
           <Header />
           <main className="h-full overflow-y-auto">
             {/* Hero */}
             <section className="relative h-72 md:h-80 overflow-hidden">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={kit.image} alt={kit.alt} className="w-full h-full object-cover" />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#EEF3EC] via-[#EEF3EC]/25 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-[#1C3B2A] via-[#1C3B2A]/25 to-transparent" />
               <div className="absolute bottom-0 left-0 right-0 p-6 md:p-10">
                 <div className="max-w-7xl mx-auto space-y-2">
                   <nav
@@ -253,7 +253,7 @@ export default function KitDetailPage() {
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 {/* Main Content */}
                 <div className="lg:col-span-2">
-                  <p className="text-[#365233] mb-6 leading-relaxed text-sm">{kit.description}</p>
+                  <p className="text-[#CCE0D4] mb-6 leading-relaxed text-sm">{kit.description}</p>
 
                   {/* Tabs */}
                   <div className="glass-capsule-bar w-fit mb-6" role="tablist" aria-label="Contenu du kit">
@@ -263,7 +263,7 @@ export default function KitDetailPage() {
                         role="tab"
                         aria-selected={activeTab === tab}
                         onClick={() => setActiveTab(tab)}
-                        className={`glass-capsule-segment ${activeTab === tab ? 'active' : ''}`}
+                        className={`glass-capsule-btn ${activeTab === tab ? 'primary' : ''}`}
                       >
                         {tab === 'composition' ? 'Composition' : 'Conseils terrain'}
                       </button>
@@ -273,7 +273,7 @@ export default function KitDetailPage() {
                   {activeTab === 'composition' && (
                     <div className="space-y-3" role="tabpanel" aria-label="Composition du kit">
                       {(kit.items ?? []).length === 0 ? (
-                        <p className="text-sm text-[#5A7064]">Aucun article dans ce kit.</p>
+                        <p className="text-sm text-[#CCE0D4]">Aucun article dans ce kit.</p>
                       ) : (
                         (kit.items ?? []).map((item) => (
                           <div
@@ -314,7 +314,7 @@ export default function KitDetailPage() {
                   {activeTab === 'conseils' && (
                     <div className="space-y-3" role="tabpanel" aria-label="Conseils terrain">
                       {(kit.conseils ?? []).length === 0 ? (
-                        <p className="text-sm text-[#5A7064]">Aucun conseil disponible pour ce kit.</p>
+                        <p className="text-sm text-[#CCE0D4]">Aucun conseil disponible pour ce kit.</p>
                       ) : (
                         (kit.conseils ?? []).map((conseil, i) => (
                           <div key={i} className="glass-sub-card p-3 rounded-2xl flex items-start gap-3">
@@ -401,10 +401,10 @@ export default function KitDetailPage() {
             {/* Header with back link */}
             <header className="flex items-center justify-between gap-2">
               <div className="min-w-0">
-                <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#5A7064]">
+                <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#CCE0D4]">
                   {kit.difficulte} · {kit.activite}
                 </span>
-                <h1 className="font-display font-bold text-[20px] tracking-tight text-[#17402C] truncate">
+                <h1 className="font-display font-bold text-[20px] tracking-tight text-[#EEF3EC] truncate">
                   {kit.nom}
                 </h1>
               </div>
@@ -421,7 +421,7 @@ export default function KitDetailPage() {
               <div className="relative h-44 w-full">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={kit.image} alt={kit.alt} className="w-full h-full object-cover" />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#EEF3EC]/95 via-[#EEF3EC]/30 to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#1C3B2A]/95 via-[#1C3B2A]/30 to-transparent" />
                 <div className="absolute bottom-3 left-3 right-3">
                   <p className="text-xs font-medium text-[#17402C] bg-[rgba(255,255,255,0.92)] border border-[rgba(255,255,255,0.60)] rounded-sm px-2 py-1 inline-flex">
                     📍 {kit.destination} · 🗓 {kit.saison}
@@ -430,7 +430,7 @@ export default function KitDetailPage() {
               </div>
             </GlassCard>
 
-            <p className="text-xs text-[#365233] leading-relaxed px-1">{kit.description}</p>
+            <p className="text-xs text-[#CCE0D4] leading-relaxed px-1">{kit.description}</p>
 
             {/* Animated Tab Pill Selector */}
             <div className="glass-capsule-bar w-full">
@@ -441,7 +441,7 @@ export default function KitDetailPage() {
                     key={tab}
                     type="button"
                     onClick={() => setActiveTab(tab)}
-                    className={`glass-capsule-segment flex-1 ${isActive ? 'active' : ''}`}
+                    className={`glass-capsule-btn flex-1 ${isActive ? 'primary' : ''}`}
                   >
                     {tab === 'composition' ? 'Composition' : 'Conseils'}
                   </button>
@@ -452,7 +452,7 @@ export default function KitDetailPage() {
             {activeTab === 'composition' && (
               <div className="flex flex-col gap-2">
                 {(kit.items ?? []).length === 0 ? (
-                  <p className="text-xs text-[#5A7064] p-4 text-center">Aucun article dans ce kit.</p>
+                  <p className="text-xs text-[#CCE0D4] p-4 text-center">Aucun article dans ce kit.</p>
                 ) : (
                   (kit.items ?? []).map((item) => (
                     <div
@@ -492,7 +492,7 @@ export default function KitDetailPage() {
             {activeTab === 'conseils' && (
               <div className="flex flex-col gap-2">
                 {(kit.conseils ?? []).length === 0 ? (
-                  <p className="text-xs text-[#5A7064] p-4 text-center">Aucun conseil disponible pour ce kit.</p>
+                  <p className="text-xs text-[#CCE0D4] p-4 text-center">Aucun conseil disponible pour ce kit.</p>
                 ) : (
                   (kit.conseils ?? []).map((conseil, i) => (
                     <div key={i} className="glass-sub-card p-3 rounded-2xl flex items-start gap-3">

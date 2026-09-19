@@ -1675,9 +1675,11 @@ export default function AdminPage() {
             ))}
           </div>
 
-          {/* Section content */}
+          {/* Section content — voile glass sur la toile applicative */}
           <div style={{
-            backgroundColor: '#EEF3EC',
+            backgroundColor: 'rgba(238, 243, 236, 0.86)',
+            backdropFilter: 'blur(18px)',
+            WebkitBackdropFilter: 'blur(18px)',
             minHeight: 'calc(100vh - 120px)',
             padding: '16px',
           }}>

@@ -2,6 +2,9 @@
 
 import { useState } from 'react';
 import { GlassCard } from '@/components/ui/GlassCard';
+import { LkvButton } from '@/components/ui/LkvButton';
+import { LkvChip } from '@/components/ui/LkvChip';
+import CommunityPostCard, { type CommunityPostItem } from '@/components/communaute/CommunityPostCard';
 import { GlassLabSurface } from './GlassLabSurface';
 import { resolveGlassEngine, type GlassEngine } from './glassLabPolicy';
 import { useGlassCapabilities } from './useGlassCapabilities';
@@ -43,6 +46,37 @@ function MapBackdrop() {
 const viewportWidths: Record<string, string | undefined> = {
   '320': '320px', '390': '390px', '430': '430px', 'tablet': '768px', 'full': undefined
 };
+
+/* Fixtures de posts façon Twitter — données locales de démonstration uniquement. */
+const demoPosts: CommunityPostItem[] = [
+  {
+    id: 'demo-post-1',
+    user_id: 'demo-user',
+    content:
+      'Départ à 5h du matin depuis le refuge, la tête dans le brouillard et le cœur léger. On a suivi la crête jusqu’au col des Mélèzes avant que le soleil ne perce. ' +
+      'De là-haut, le lac était encore gelé sur sa rive nord, une lumière incroyable sur les aiguilles. On a partagé un thé brûlant, puis redescendu par la combe nord où la neige tenait encore dans les couloirs. ' +
+      'Une journée parfaite, du genre qui reste gravé. Hâte de repartir avec vous tous la semaine prochaine !',
+    author: { id: 'demo-user', full_name: 'Claire Berthier', avatar_url: 'https://i.pravatar.cc/150?img=47', loyalty_level: 'EXPERT' },
+    image_url: '/assets/images/community-hikers.jpg',
+    likes_count: 128,
+    comments_count: 24,
+    created_at: new Date(Date.now() - 3600 * 1000 * 5).toISOString(),
+    user_liked: false,
+    user_saved: false,
+  },
+  {
+    id: 'demo-post-2',
+    user_id: 'demo-user-2',
+    content: 'Petite pensée du soir pour le sentier des crêtes, sans image mais avec du cœur.',
+    author: { id: 'demo-user-2', full_name: 'Marc Dubois', loyalty_level: 'AVENTURIER' },
+    image_url: null,
+    likes_count: 42,
+    comments_count: 7,
+    created_at: new Date(Date.now() - 3600 * 1000 * 26).toISOString(),
+    user_liked: true,
+    user_saved: false,
+  },
+];
 
 export default function GlassLab() {
   const [requested, setRequested] = useState<GlassEngine>('standard');
@@ -87,18 +121,76 @@ export default function GlassLab() {
           </GlassLabSurface>
         </section>)}
       </div>
+      <section className={styles.stage} data-fixture="pill" aria-label="Pastille réfractive" style={{ maxWidth: 430, margin: '0 auto' }}>
+        <MapBackdrop />
+        <div className={styles.content} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <p className={styles.eyebrow}>Pastille réfractive · référence rdev</p>
+          <h2>Log Out</h2>
+          <p>Liseré spéculaire, réfraction du fond et élasticité au pointeur.</p>
+          <LkvButton
+            variant="glass-pill"
+            onClick={increment}
+            icon={
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+                <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" />
+                <polyline points="16 17 21 12 16 7" />
+                <line x1="21" y1="12" x2="9" y2="12" />
+              </svg>
+            }
+          >
+            Se déconnecter
+          </LkvButton>
+          <LkvButton variant="glass-pill-primary" onClick={increment}>Choisir cet exemple</LkvButton>
+        </div>
+      </section>
+      <section className={styles.stage} data-fixture="controls" aria-label="Tous les contrôles" style={{ maxWidth: 720, margin: '0 auto' }}>
+        <div className={styles.content} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <p className={styles.eyebrow}>Toutes les variantes · même pile optique</p>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'center' }}>
+            <LkvButton variant="primary" onClick={increment}>primary</LkvButton>
+            <LkvButton variant="secondary" onClick={increment}>secondary</LkvButton>
+            <LkvButton variant="light" onClick={increment}>light</LkvButton>
+            <LkvButton variant="ghost" onClick={increment}>ghost</LkvButton>
+            <LkvButton variant="danger" onClick={increment}>danger</LkvButton>
+            <LkvButton variant="icon-only" aria-label="icône seule" onClick={increment}>★</LkvButton>
+            <LkvButton variant="glass-pill" onClick={increment}>glass-pill</LkvButton>
+            <LkvButton variant="glass-pill-primary" onClick={increment}>pill-primary</LkvButton>
+          </div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'center' }}>
+            <LkvChip label="sage" tone="sage" onClick={increment} />
+            <LkvChip label="info" tone="info" onClick={increment} />
+            <LkvChip label="danger" tone="danger" onClick={increment} />
+            <LkvChip label="glass" tone="glass" onClick={increment} />
+            <LkvChip label="active" tone="glass" active onClick={increment} />
+          </div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'center' }}>
+            <button type="button" className="glass-capsule-btn">capsule</button>
+            <button type="button" className="glass-capsule-btn primary">capsule primary</button>
+            <button type="button" className="glass-capsule-btn secondary">capsule secondary</button>
+            <button type="button" className="glass-circle-btn" aria-label="cercle">●</button>
+          </div>
+        </div>
+      </section>
+      <section className={styles.stage} data-fixture="posts" aria-label="Posts communauté façon Twitter" style={{ maxWidth: 560, margin: '0 auto' }}>
+        <div className={styles.content} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <p className={styles.eyebrow}>Posts communauté · image plein-bord, boutons en verre par-dessus, 200 caractères</p>
+          {demoPosts.map((post) => (
+            <CommunityPostCard key={post.id} post={post} user={{ id: post.user_id }} />
+          ))}
+        </div>
+      </section>
       <section className={styles.contracts} aria-labelledby="interaction-heading">
         <h2 id="interaction-heading">Contrat clavier et états canoniques</h2>
         <p role="status" data-testid="glass-action-count">Actions : {count}</p>
         <div className={styles.variants}>
-          <GlassCard interactive onClick={increment} className={styles.example} aria-label="Action de carte">Activer avec Entrée ou Espace</GlassCard>
-          <GlassCard interactive disabled onClick={increment} className={styles.example} aria-label="Carte désactivée">Carte désactivée</GlassCard>
-          <GlassCard interactive onClick={increment} className={styles.example} aria-label="Carte avec lien">
+          <GlassCard tier="standard" interactive onClick={increment} className={styles.example} aria-label="Action de carte">Activer avec Entrée ou Espace</GlassCard>
+          <GlassCard tier="standard" interactive disabled onClick={increment} className={styles.example} aria-label="Carte désactivée">Carte désactivée</GlassCard>
+          <GlassCard tier="standard" interactive onClick={increment} className={styles.example} aria-label="Carte avec lien">
             <span>Une action imbriquée ne doit pas activer la carte.</span>
             <a href="#interaction-heading" className={styles.link}>Lien interne de démonstration</a>
             <button type="button" className="glass-capsule-btn" onClick={() => setCount(previous => previous + 10)}>Action imbriquée (+10)</button>
           </GlassCard>
-          {(['base', 'elevated', 'selected', 'overlay', 'critical'] as const).map(variant => <GlassCard key={variant} variant={variant} className={styles.example}>{variant}</GlassCard>)}
+          {(['base', 'elevated', 'selected', 'overlay', 'critical'] as const).map(variant => <GlassCard key={variant} tier="standard" variant={variant} className={styles.example}>{variant}</GlassCard>)}
         </div>
       </section>
       {longList && <section aria-label="Liste longue de test" className={styles.longList}>

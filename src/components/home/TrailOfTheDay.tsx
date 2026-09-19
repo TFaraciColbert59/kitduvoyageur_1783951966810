@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Icon from '@/components/ui/AppIcon';
 import type { TrailOfDay } from '@/lib/home-queries';
 
 interface TrailOfTheDayProps {
@@ -186,22 +187,14 @@ export default function TrailOfTheDay({ trail }: TrailOfTheDayProps) {
               <div className="flex flex-wrap gap-3">
                 <Link
                   href={`/explorer?trail=${trail.id}`}
-                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm text-white transition-all duration-200 hover:-translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#17402C] focus-visible:ring-offset-2 focus-visible:ring-offset-[#17402C] min-h-[44px]"
-                  style={{ background: '#17402C' }}
+                  className="glass-capsule-btn primary inline-flex items-center gap-2 px-5 py-2.5 text-sm"
                 >
                   Voir sur la carte
-                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
-                    <path d="M2.5 7h9M8 3.5l3.5 3.5L8 10.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
+                  <Icon name="arrow-right" size={14} />
                 </Link>
                 <Link
                   href="/ai-configurator"
-                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm transition-all duration-200 hover:-translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#17402C] focus-visible:ring-offset-2 focus-visible:ring-offset-[#17402C] min-h-[44px]"
-                  style={{
-                    background: 'rgba(255,255,255,0.06)',
-                    color: 'rgba(231,227,214,0.8)',
-                    border: '1px solid rgba(255,255,255,0.1)',
-                  }}
+                  className="glass-capsule-btn secondary inline-flex items-center gap-2 px-5 py-2.5 text-sm"
                 >
                   Préparer mon kit
                 </Link>

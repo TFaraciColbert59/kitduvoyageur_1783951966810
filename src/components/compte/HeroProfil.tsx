@@ -4,6 +4,7 @@ import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import Icon from '@/components/ui/AppIcon';
+import { GlassCard } from '@/components/ui/GlassCard';
 import { UserProfile } from '@/lib/types/profile';
 import UserFieldSignature from '@/components/identity/UserFieldSignature';
 
@@ -42,7 +43,7 @@ export default function HeroProfil({ profile, onEditProfile, onShareProfile }: H
         <div className="flex items-center gap-2.5">
           <button
             onClick={onEditProfile}
-            className="glass-capsule-btn !bg-white/85 backdrop-blur-md text-xs font-bold !py-1.5 !px-3.5 shadow-sm hover:!bg-white cursor-pointer"
+            className="glass-capsule-btn text-xs font-bold !py-1.5 !px-3.5 cursor-pointer"
           >
             <Icon name="PencilSquareIcon" size={14} />
             <span>Modifier profil</span>
@@ -50,7 +51,7 @@ export default function HeroProfil({ profile, onEditProfile, onShareProfile }: H
 
           <button
             onClick={onShareProfile}
-            className="glass-capsule-btn primary !bg-[#17402C]/90 backdrop-blur-md text-xs font-bold !py-1.5 !px-3.5 shadow-sm cursor-pointer"
+            className="glass-capsule-btn primary text-xs font-bold !py-1.5 !px-3.5 cursor-pointer"
           >
             <Icon name="ShareIcon" size={14} />
             <span>Partager</span>
@@ -58,8 +59,15 @@ export default function HeroProfil({ profile, onEditProfile, onShareProfile }: H
         </div>
       </div>
 
-      {/* Bottom Main Identity Card — Single unified glass container */}
-      <div className="glass relative z-10 mt-6 rounded-2xl p-5 sm:p-6 border border-white/60 shadow-lg text-[#17402C]">
+      {/* Bottom Main Identity Card — MÊME STYLE que le bouton unique, posée sur la photo */}
+      <GlassCard
+        tier="premium"
+        variant="base"
+        interactive={false}
+        glassTint="var(--btn-tint)"
+        className="relative z-10 mt-6"
+        padding="20px 24px"
+      >
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-5">
           
           <div className="flex items-start sm:items-center gap-4.5 max-w-2xl">
@@ -76,23 +84,23 @@ export default function HeroProfil({ profile, onEditProfile, onShareProfile }: H
               </div>
               <button
                 onClick={onEditProfile}
-                className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-[#C89A3B] text-white flex items-center justify-center border border-white hover:scale-110 transition-transform shadow cursor-pointer"
+                className="absolute -bottom-1 -right-1 glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8 !p-0 cursor-pointer"
                 title="Changer de photo"
               >
-                <Icon name="CameraIcon" size={12} />
+                <Icon name="image-plus" size={12} />
               </button>
             </div>
 
             {/* Names & Bio */}
             <div className="space-y-1.5">
-              <h1 className="font-display font-bold text-2xl sm:text-3xl tracking-tight text-[#17402C] leading-tight">
+              <h1 className="font-display font-bold text-2xl sm:text-3xl tracking-tight text-white leading-tight" style={{ textShadow: 'var(--btn-text-shadow)' }}>
                 {profile.first_name}{' '}
-                <span className="font-serif italic font-normal text-[#8C6418]">
+                <span className="font-serif italic font-normal text-[#F5D9A8]">
                   {profile.last_name}
                 </span>
               </h1>
 
-              <p className="text-xs sm:text-sm text-[#365233] leading-relaxed font-medium">
+              <p className="text-xs sm:text-sm text-white/85 leading-relaxed font-medium" style={{ textShadow: 'var(--btn-text-shadow)' }}>
                 {profile.bio}
               </p>
 
@@ -140,7 +148,7 @@ export default function HeroProfil({ profile, onEditProfile, onShareProfile }: H
           </div>
 
         </div>
-      </div>
+      </GlassCard>
     </div>
   );
 }

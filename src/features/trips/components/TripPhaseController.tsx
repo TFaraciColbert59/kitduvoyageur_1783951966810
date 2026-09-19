@@ -51,7 +51,7 @@ export function TripPhaseController({
   ];
 
   return (
-    <div className="w-full glass-sub-card p-1.5 rounded-[var(--lkv-radius-full)] border border-white/60 shadow-2xs backdrop-blur-md">
+    <div className="w-full glass-capsule-bar p-1.5">
       <div
         className="grid grid-cols-3 gap-1.5"
         role="tablist"
@@ -68,29 +68,17 @@ export function TripPhaseController({
               role="tab"
               aria-selected={isSelected}
               onClick={() => onPhaseChange(p.id)}
-              className={`relative flex flex-col sm:flex-row items-center justify-center gap-1.5 sm:gap-2.5 py-2 sm:py-3 px-2 rounded-full font-medium transition-all duration-200 min-h-[52px] select-none border ${
-                isSelected
-                  ? 'bg-[var(--lkv-primary)] text-white border-[var(--lkv-primary)] shadow-md'
-                  : 'glass-sub-card border border-white/60 text-[var(--lkv-text-primary)] hover:bg-white/60 active:scale-98'
+              className={`glass-capsule-segment relative flex flex-col sm:flex-row items-center justify-center gap-1.5 sm:gap-2.5 !py-2 sm:!py-3 !px-2 font-medium transition-all duration-200 min-h-[52px] select-none ${
+                isSelected ? 'active' : ''
               }`}
             >
               {/* Icône de la phase */}
-              <span
-                className={`z-10 ${isSelected ? 'text-sage-300' : 'text-[var(--lkv-text-secondary)]'}`}
-              >
-                {p.icon}
-              </span>
+              <span className="z-10">{p.icon}</span>
 
               {/* Titre & Sous-titre */}
               <div className="text-center sm:text-left z-10">
                 <div className="text-xs sm:text-sm font-extrabold leading-tight">{p.label}</div>
-                <div
-                  className={`text-[10px] hidden sm:block font-medium truncate ${
-                    isSelected ? 'text-white/80' : 'text-[var(--lkv-text-secondary)]'
-                  }`}
-                >
-                  {p.subLabel}
-                </div>
+                <div className="text-[10px] hidden sm:block font-medium truncate">{p.subLabel}</div>
               </div>
 
               {/* Pastille indiquant la phase temporelle naturelle en cours */}
