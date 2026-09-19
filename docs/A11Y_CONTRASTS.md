@@ -1,5 +1,10 @@
 # Tableau des Contrastes & Conformité WCAG 2.2 AA (LKDV)
 
+> **Note P5 (2026-09-19)** : ce tableau décrit la palette d'avant la direction visuelle
+> mobile. Les valeurs en vigueur (clair/sombre) et les contrastes mesurés sur le rendu
+> composé sont dans `docs/visual/VISUAL_DIRECTION.md` (audit : `npm run audit:contrast`).
+> La réconciliation ligne à ligne de ce document reste à faire.
+
 ## 1. Référentiel
 Ce tableau documente les couples de couleurs autorisés dans le Design System Unifié LKDV, vérifiés selon la formule de luminance relative W3C (WCAG 2.2 niveau AA : ratio minimal 4.5:1 pour texte normal, 3.0:1 pour grand texte / composants graphiques).
 

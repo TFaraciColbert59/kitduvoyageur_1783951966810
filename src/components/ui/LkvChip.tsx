@@ -23,7 +23,7 @@ const tones: Record<LkvChipTone, { background: string; color: string; dot: strin
   info: { background: 'var(--lkv-info-bg)', color: 'var(--sky-800)', dot: 'var(--lkv-info)' },
   stone: { background: 'var(--lkv-surface-muted)', color: 'var(--lkv-text-primary)', dot: 'var(--lkv-text-muted)' },
   light: { background: 'var(--glass-bg-medium)', color: 'var(--lkv-text-primary)', dot: 'var(--lkv-success)' },
-  dark: { background: 'var(--lkv-primary)', color: 'var(--lkv-text-inverted)', dot: 'var(--lkv-success-bg)' },
+  dark: { background: 'var(--lkv-action)', color: 'var(--btn-on-solid)', dot: 'var(--lkv-success-bg)' },
   glass: { background: 'var(--glass-tint)', color: 'var(--lkv-primary)', dot: 'var(--lkv-success)' },
 };
 export function LkvChip({ label, children, tone, variant, dot, active = false,
@@ -61,7 +61,7 @@ export function LkvChip({ label, children, tone, variant, dot, active = false,
           padding: '5px 12px',
           border: 'none',
           background: 'transparent',
-          color: 'var(--btn-content)',
+          color: active ? 'var(--btn-on-solid)' : 'var(--btn-content)',
           textShadow: 'var(--btn-text-shadow)',
           fontWeight: active ? 700 : 600,
           fontFamily: 'inherit',
@@ -74,7 +74,7 @@ export function LkvChip({ label, children, tone, variant, dot, active = false,
       >
         <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '6px', fontSize: '11px', color: 'inherit' }}>
           {dot && <span aria-hidden="true" style={{ width: '6px', height: '6px', borderRadius: '50%',
-            background: active ? '#FFFFFF' : material.dot, flexShrink: 0 }} />}
+            background: active ? 'var(--btn-on-solid)' : material.dot, flexShrink: 0 }} />}
           {children ?? label}
         </span>
       </LiquidGlass>
@@ -89,8 +89,8 @@ export function LkvChip({ label, children, tone, variant, dot, active = false,
       style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
         padding: '5px 12px', borderRadius: 'var(--lkv-radius-full)', fontSize: '11px',
         fontWeight: active ? 600 : 500, fontFamily: 'inherit',
-        background: active ? 'var(--lkv-primary)' : material.background,
-        color: active ? 'var(--lkv-text-inverted)' : material.color,
+        background: active ? 'var(--lkv-action)' : material.background,
+        color: active ? 'var(--btn-on-solid)' : material.color,
         border: '1px solid var(--lkv-border)', cursor: 'default',
         opacity: disabled ? 0.45 : 1, userSelect: 'none', WebkitTapHighlightColor: 'transparent',
         ...style,

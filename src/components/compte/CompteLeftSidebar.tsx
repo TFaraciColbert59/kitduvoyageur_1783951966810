@@ -7,6 +7,7 @@ import Icon from '@/components/ui/AppIcon';
 import { ChevronRightIcon as ChevronRightAnimated } from '@/components/icons/chevron-right';
 import { CompteTab } from '@/components/compte/TabsCompte';
 import { UserProfile } from '@/lib/types/profile';
+import { useTranslation } from '@/lib/i18n/context';
 
 interface CompteLeftSidebarProps {
   activeTab: CompteTab;
@@ -31,18 +32,19 @@ export default function CompteLeftSidebar({
   onEditProfile,
   onShareProfile,
 }: CompteLeftSidebarProps) {
+  const { t } = useTranslation();
   const fullName = `${profile.first_name} ${profile.last_name}`;
   const handle = `@${profile.first_name.toLowerCase()}${profile.last_name.toLowerCase().slice(0, 1)}`;
 
   const tabs = [
-    { id: 'vue-d-ensemble' as CompteTab, label: "Vue d'ensemble" },
-    { id: 'progression' as CompteTab, label: 'Ma progression' },
-    { id: 'aventures' as CompteTab, label: 'Mes Groupes' },
-    { id: 'carnets' as CompteTab, label: 'Carnets de route' },
-    { id: 'clubs' as CompteTab, label: 'Mes Clubs' },
-    { id: 'commandes' as CompteTab, label: 'Commandes & Achats' },
-    { id: 'fidelite' as CompteTab, label: 'Gains & Récompenses' },
-    { id: 'parametres' as CompteTab, label: 'Paramètres' },
+    { id: 'vue-d-ensemble' as CompteTab, label: t('account.overview') },
+    { id: 'progression' as CompteTab, label: t('account.progression') },
+    { id: 'aventures' as CompteTab, label: t('account.adventures') },
+    { id: 'carnets' as CompteTab, label: t('account.journals') },
+    { id: 'clubs' as CompteTab, label: t('account.clubs') },
+    { id: 'commandes' as CompteTab, label: t('account.orders') },
+    { id: 'fidelite' as CompteTab, label: t('account.rewards') },
+    { id: 'parametres' as CompteTab, label: t('account.settings') },
   ];
 
   return (
@@ -98,9 +100,9 @@ export default function CompteLeftSidebar({
       </div>
 
       {/* ── 2. ZONE CENTRALE SCROLLABLE À L'INTÉRIEUR (Navigation) ── */}
-      <nav className="flex-1 min-h-0 overflow-y-auto no-scrollbar py-2 space-y-1.5" aria-label="Navigation du compte">
+      <nav className="flex-1 min-h-0 overflow-y-auto no-scrollbar py-2 space-y-1.5" aria-label={t('account.navigationAria')}>
         <p className="text-[9.5px] font-mono font-bold uppercase tracking-widest text-[#5A7064] px-2 mb-1">
-          Navigation
+          {t('account.navigation')}
         </p>
 
         {tabs.map((t) => {

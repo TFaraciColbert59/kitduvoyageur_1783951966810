@@ -1,6 +1,7 @@
 ﻿import React, { Suspense } from 'react';
 import type { Metadata, Viewport } from 'next';
-import { DM_Sans, Manrope, IBM_Plex_Mono, Instrument_Serif } from 'next/font/google';
+import { cookies, headers } from 'next/headers';
+import { Manrope, IBM_Plex_Mono, Instrument_Serif } from 'next/font/google';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 import '@/styles/tokens.css';
 import '@/styles/tailwind.css';
@@ -29,16 +30,11 @@ import { ActiveTripProvider } from '@/features/trips/context/ActiveTripContext';
 import { getActiveTrip } from '@/features/trips/context/activeTripServer';
 import { ActiveAdventureProvider } from '@/features/hub/context/ActiveAdventureContext';
 import { getActiveAdventure } from '@/features/hub/context/activeAdventureServer';
+import { LocaleProvider } from '@/lib/i18n/context';
+import { LOCALE_COOKIE, resolveLocale } from '@/lib/i18n/locale';
 
-// Fonts
-const dmSans = DM_Sans({
-  subsets: ['latin'],
-  variable: '--font-sans',
-  display: 'swap',
-  weight: ['300', '400', '500', '600', '700'],
-  preload: true,
-});
-
+// Fonts — direction §6 : police système pour le corps/UI (--font-sans défini
+// dans tokens.css), Manrope conservée pour les titres de marque.
 const manrope = Manrope({
   subsets: ['latin'],
   variable: '--font-display',
@@ -69,7 +65,12 @@ export const viewport: Viewport = {
   initialScale: 1,
   viewportFit: 'cover',
   interactiveWidget: 'resizes-visual',
-  themeColor: '#1C3B2A',
+  // Direction P5 §6 : plus de verrouillage clair — les deux schémas sont déclarés.
+  colorScheme: 'light dark',
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#F5F7F3' },
+    { media: '(prefers-color-scheme: dark)', color: '#101C17' },
+  ],
 };
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://lekitduvoyageur.fr';
@@ -158,17 +159,32 @@ export default async function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   const activeTrip = await getActiveTrip();
   const activeAdventure = await getActiveAdventure();
+  const cookieStore = await cookies();
+  const headerStore = await headers();
+  const locale = resolveLocale({
+    cookie: cookieStore.get(LOCALE_COOKIE)?.value,
+    acceptLanguage: headerStore.get('accept-language'),
+  });
   const organizationSchema = getOrganizationSchema(siteUrl);
   const websiteSchema = getWebsiteSchema(siteUrl);
 
   return (
     <html
-      lang="fr"
+      lang={locale}
       suppressHydrationWarning
-      className={`${dmSans.variable} ${manrope.variable} ${ibmPlexMono.variable} bg-[#1C3B2A] text-[#17402C]`}
-      style={{ backgroundColor: '#1C3B2A', colorScheme: 'light' }}
+      className={`${manrope.variable} ${ibmPlexMono.variable}`}
     >
       <head>
+        {/* Thème honnête : respect de prefers-color-scheme, surcharge
+            localStorage si l'utilisateur a choisi explicitement (ThemeToggle),
+            application de la classe .dark AVANT la peinture (anti-flash). */}
+        <script
+          id="lkdv-theme-init"
+          suppressHydrationWarning
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var t=window.localStorage.getItem('theme');var d=t==='dark'||(t!=='light'&&window.matchMedia('(prefers-color-scheme: dark)').matches);var r=document.documentElement;r.classList.toggle('dark',d);r.setAttribute('data-theme',d?'dark':'light');r.style.colorScheme=d?'dark':'light';}catch(e){}})();`,
+          }}
+        />
         {/* Preload critical images for LCP optimization */}
         <link
           rel="preload"
@@ -243,11 +259,12 @@ export default async function RootLayout({
         )}
       </head>
       <body
-        className={`${dmSans.variable} ${manrope.variable} ${ibmPlexMono.variable} ${instrumentSerif.variable} ${dmSans.className} bg-transparent text-[#17402C] min-h-[100dvh]`}
+        className={`${manrope.variable} ${ibmPlexMono.variable} ${instrumentSerif.variable} bg-transparent min-h-[100dvh]`}
         style={{ backgroundColor: 'transparent' }}
       >
         {/* Toile unique LKDV — fond d'écran de toutes les routes */}
         <div className="lkv-app-background" aria-hidden="true" />
+        <LocaleProvider initialLocale={locale}>
         <AuthProvider>
           <ActiveTripProvider initialTrip={activeTrip}>
             <ActiveAdventureProvider initialAdventure={activeAdventure}>
@@ -293,6 +310,7 @@ export default async function RootLayout({
             </ActiveAdventureProvider>
           </ActiveTripProvider>
         </AuthProvider>
+        </LocaleProvider>
         <SpeedInsights />
       </body>
     </html>

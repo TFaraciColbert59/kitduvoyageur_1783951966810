@@ -139,19 +139,21 @@ module.exports = {
         danger: '#A8443A',
         info: '#4B6B7C',
       },
+      // Direction P5 §6 : rayons 12 / 16 / 24 (xs = micro-éléments, card = 24).
       borderRadius: {
         DEFAULT: 'var(--radius)',
         xs: '6px',
-        sm: '10px',
-        md: '14px',
-        lg: '20px',
-        xl: '26px',
-        card: '28px',
-        '2xl': '32px',
+        sm: '12px',
+        md: '16px',
+        lg: '24px',
+        xl: '24px',
+        card: '24px',
+        '2xl': '24px',
         full: '9999px',
       },
+      // Police système pour le corps/UI ; Manrope reste la police de marque.
       fontFamily: {
-        sans: ['DM Sans', 'var(--font-sans)', 'sans-serif'],
+        sans: ['var(--font-sans)', 'system-ui', '-apple-system', 'Segoe UI', 'Roboto', 'sans-serif'],
         display: ['Manrope', 'var(--font-display)', 'sans-serif'],
         mono: ['IBM Plex Mono', 'var(--font-mono)', 'monospace'],
         body: ['var(--font-body)', 'sans-serif'],

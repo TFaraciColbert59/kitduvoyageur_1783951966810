@@ -30,7 +30,8 @@ test('low effects mode removes every glass blur and preserves solid fill', async
   for (const surface of await page.locator('.glass, .glass-capsule-btn').all()) {
     await expect(surface).toHaveCSS('backdrop-filter', 'none');
   }
-  await expect(page.locator('article.glass').first()).toHaveCSS('background-color', 'rgb(238, 243, 236)');
+  // Direction P5 : le repli opaque clair est blanc (surface de carte #FFFFFF).
+  await expect(page.locator('article.glass').first()).toHaveCSS('background-color', 'rgb(255, 255, 255)');
 });
 
 test('reduced motion suppresses press transforms', async ({ page }) => {
@@ -52,7 +53,8 @@ test('opaque accessibility mode preserves primary-action contrast', async ({ pag
   await page.getByRole('button', { name: 'Choisir' }).evaluate(el => el.classList.add('primary'));
   await page.emulateMedia({ contrast: 'more' });
   const action = page.getByRole('button', { name: 'Choisir' });
-  await expect(action).toHaveCSS('background-color', 'rgb(23, 64, 44)');
+  // Direction P5 : action #226148, contenu blanc (contraste mesuré 7,31:1).
+  await expect(action).toHaveCSS('background-color', 'rgb(34, 97, 72)');
   await expect(action).toHaveCSS('color', 'rgb(255, 255, 255)');
   await expect(page.locator('article.glass').first()).toHaveCSS('backdrop-filter', 'none');
 });
@@ -69,7 +71,9 @@ test('glass content retains AA contrast over the rich backdrop; opaque fallback 
     .map(v => v <= .04045 ? v / 12.92 : ((v + .055) / 1.055) ** 2.4)
     .reduce((sum, v, i) => sum + v * [.2126, .7152, .0722][i], 0);
   const fill = parse(samples.fill);
-  const backdrop = [0, 0, 0];
+  // Direction P5 : la toile applicative est claire (#F5F7F3) — le contraste
+  // du verre se mesure composé sur ce fond, plus sur l'ancienne marbrure sombre.
+  const backdrop = [245, 247, 243];
   const background = fill.slice(0, 3).map((v, i) => v * (fill[3] ?? 1) + backdrop[i] * (1 - (fill[3] ?? 1)));
   const compositeOver = (top: number[]) => top.slice(0, 3).map((v, i) => v * (top[3] ?? 1) + background[i] * (1 - (top[3] ?? 1)));
   for (const foreground of [samples.primary, samples.secondary.trim()]) {
@@ -77,12 +81,12 @@ test('glass content retains AA contrast over the rich backdrop; opaque fallback 
     expect((values[0] + .05) / (values[1] + .05)).toBeGreaterThanOrEqual(4.5);
   }
   await page.locator('html').evaluate(el => el.setAttribute('data-glass-effects', 'reduced'));
-  await expect(page.locator('article.glass').first()).toHaveCSS('color', 'rgb(23, 64, 44)');
+  await expect(page.locator('article.glass').first()).toHaveCSS('color', 'rgb(23, 43, 36)');
 });
 
 test('explicit dark surfaces use readable foregrounds', async ({ page }) => {
   await page.locator('html').evaluate(el => el.classList.add('dark'));
-  await expect(page.locator('article.glass').first()).toHaveCSS('color', 'rgb(238, 243, 236)');
+  await expect(page.locator('article.glass').first()).toHaveCSS('color', 'rgb(241, 245, 241)');
 });
 
 test('canonical surfaces preserve fixed panel positioning and pill geometry', async ({ page }) => {

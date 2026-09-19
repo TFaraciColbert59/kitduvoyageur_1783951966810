@@ -11,6 +11,7 @@ import { useToast } from '@/contexts/ToastContext';
 import { trackEvent } from '@/lib/analytics';
 import { createClient } from '@/lib/supabase/client';
 import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
+import { useTranslation } from '@/lib/i18n/context';
 
 type AuthMode = 'connexion' | 'inscription';
 
@@ -33,12 +34,13 @@ function AuthForm() {
   const router = useRouter();
   const { signIn, signUp } = useAuth();
   const { toast } = useToast();
+  const { t } = useTranslation();
 
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     if (!email) {
-      setError('Veuillez renseigner votre adresse email pour réinitialiser votre mot de passe.');
+      setError(t('auth.errorMissingEmail'));
       return;
     }
     setLoading(true);
@@ -49,9 +51,9 @@ function AuthForm() {
       });
       if (resetErr) throw resetErr;
       setResetSent(true);
-      toast('Lien de réinitialisation envoyé par email.', 'info');
+      toast(t('auth.toastResetSent'), 'info');
     } catch (err: any) {
-      setError(err?.message || 'Erreur lors de l’envoi de l’email.');
+      setError(err?.message || t('auth.errorResetEmail'));
     } finally {
       setLoading(false);
     }
@@ -71,16 +73,16 @@ function AuthForm() {
     e.preventDefault();
     setError('');
     setConfirmationSent(false);
-    if (!email || !password) { setError('Veuillez remplir tous les champs.'); return; }
-    if (mode === 'inscription' && !name) { setError('Veuillez entrer votre prénom.'); return; }
-    if (password.length < 8) { setError('Le mot de passe doit contenir au moins 8 caractères.'); return; }
+    if (!email || !password) { setError(t('auth.errorMissingFields')); return; }
+    if (mode === 'inscription' && !name) { setError(t('auth.errorFirstName')); return; }
+    if (password.length < 8) { setError(t('auth.errorPasswordLength')); return; }
     setLoading(true);
     try {
       if (mode === 'connexion') {
         const result = (await signIn(email, password)) as { user?: { id: string; email?: string } };
         if (result?.user) await ensureProfile(result.user.id, result.user.email ?? email, '');
         trackEvent('login', { method: 'email' });
-        toast('Connexion réussie ! Bienvenue.', 'success');
+        toast(t('auth.toastWelcome'), 'success');
         // Pas de router.refresh() ici : il déclenchait un second rendu RSC
         // concurrent de la destination (course → page « indisponible »).
         router.push(nextPath ?? '/compte');
@@ -89,17 +91,17 @@ function AuthForm() {
         if (result?.session) {
           if (result?.user) await ensureProfile(result.user.id, result.user.email ?? email, name);
           trackEvent('sign_up', { method: 'email' });
-          toast('Compte créé !', 'success');
+          toast(t('auth.toastAccountCreated'), 'success');
           router.push(nextPath ?? '/compte');
         } else {
           if (result?.user) await ensureProfile(result.user.id, result.user.email ?? email, name);
           setConfirmationSent(true);
-          toast('Un email de confirmation a été envoyé.', 'info');
+          toast(t('auth.toastConfirmationSent'), 'info');
         }
       }
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Une erreur est survenue.';
-      const friendlyMsg = msg.includes('Invalid login credentials') ? 'Email ou mot de passe incorrect.' : msg.includes('User already registered') ? 'Un compte existe déjà avec cet email.' : msg;
+      const msg = err instanceof Error ? err.message : t('auth.errorGeneric');
+      const friendlyMsg = msg.includes('Invalid login credentials') ? t('auth.errorInvalidCredentials') : msg.includes('User already registered') ? t('auth.errorAlreadyRegistered') : msg;
       setError(friendlyMsg);
     } finally { setLoading(false); }
   };
@@ -108,13 +110,13 @@ function AuthForm() {
     <div style={{ paddingTop: '80px', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '80px 16px 32px' }}>
       <div style={{ width: '100%', maxWidth: '400px' }}>
         <div style={{ textAlign: 'center', marginBottom: '24px' }}>
-          <h1 style={{ fontSize: '24px', fontWeight: 700, color: 'var(--lkv-primary)' }}>{mode === 'connexion' ? 'Bon retour, aventurier' : "Rejoindre l'expédition"}</h1>
-          <p style={{ color: 'var(--lkv-text-muted)', fontSize: '14px', marginTop: '4px' }}>{mode === 'connexion' ? 'Connectez-vous pour accéder à vos kits.' : "Créez votre carnet d'expédition numérique."}</p>
+          <h1 style={{ fontSize: '24px', fontWeight: 700, color: 'var(--lkv-primary)' }}>{t(mode === 'connexion' ? 'auth.signInTitle' : 'auth.signUpTitle')}</h1>
+          <p style={{ color: 'var(--lkv-text-muted)', fontSize: '14px', marginTop: '4px' }}>{t(mode === 'connexion' ? 'auth.signInSubtitle' : 'auth.signUpSubtitle')}</p>
         </div>
 
         <div style={{ display: 'flex', borderRadius: '40px', border: '1px solid rgba(23,64,44,0.06)', background: 'var(--lkv-surface-hover)', padding: '4px', marginBottom: '20px' }}>
           {(['connexion', 'inscription'] as const).map((m) => (
-            <button key={m} onClick={() => { setMode(m); setError(''); setConfirmationSent(false); setForgotPasswordOpen(false); }} className={`glass-capsule-btn flex-1 !text-sm !font-semibold ${mode === m && !forgotPasswordOpen ? 'primary' : ''}`}>{m === 'connexion' ? 'Connexion' : 'Inscription'}</button>
+            <button key={m} onClick={() => { setMode(m); setError(''); setConfirmationSent(false); setForgotPasswordOpen(false); }} className={`glass-capsule-btn flex-1 !text-sm !font-semibold ${mode === m && !forgotPasswordOpen ? 'primary' : ''}`}>{t(m === 'connexion' ? 'auth.signIn' : 'auth.signUp')}</button>
           ))}
         </div>
 
@@ -122,32 +124,32 @@ function AuthForm() {
           {confirmationSent ? (
             <div style={{ textAlign: 'center' }}>
               <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: 'rgba(16,185,129,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px' }}><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--lkv-primary)" strokeWidth="2"><polyline points="20 6 9 17 4 12" /></svg></div>
-              <p style={{ fontWeight: 700, color: 'var(--lkv-primary)', marginBottom: '8px' }}>Vérifiez vos emails !</p>
-              <p style={{ fontSize: '13px', color: 'var(--lkv-text-muted)', marginBottom: '16px' }}>Un email a été envoyé à <strong>{email}</strong>.</p>
-              <button onClick={() => { setMode('connexion'); setConfirmationSent(false); }} className="glass-capsule-btn primary w-full !py-3 !text-sm !font-semibold">Passer à la connexion →</button>
+              <p style={{ fontWeight: 700, color: 'var(--lkv-primary)', marginBottom: '8px' }}>{t('auth.confirmationTitle')}</p>
+              <p style={{ fontSize: '13px', color: 'var(--lkv-text-muted)', marginBottom: '16px' }}>{t('auth.confirmationBodyPrefix')} <strong>{email}</strong>{t('auth.confirmationBodySuffix')}</p>
+              <button onClick={() => { setMode('connexion'); setConfirmationSent(false); }} className="glass-capsule-btn primary w-full !py-3 !text-sm !font-semibold">{t('auth.goToSignIn')}</button>
             </div>
           ) : forgotPasswordOpen ? (
             <form onSubmit={handleResetPassword} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-              <h2 style={{ fontSize: '16px', fontWeight: 700, color: 'var(--lkv-primary)' }}>Mot de passe oublié</h2>
+              <h2 style={{ fontSize: '16px', fontWeight: 700, color: 'var(--lkv-primary)' }}>{t('auth.forgotPassword')}</h2>
               <p style={{ fontSize: '13px', color: 'var(--lkv-text-muted)' }}>
-                Saisissez votre adresse email pour recevoir un lien sécurisé de réinitialisation.
+                {t('auth.forgotPasswordHint')}
               </p>
               {resetSent ? (
                 <div style={{ background: 'var(--lkv-success-bg, rgba(16,185,129,0.1))', border: '1px solid var(--lkv-success)', padding: '12px', borderRadius: '10px', fontSize: '13px', color: 'var(--lkv-primary)' }}>
-                  Un email de réinitialisation vous a été envoyé. Vérifiez votre boîte de réception.
+                  {t('auth.resetSentBody')}
                 </div>
               ) : (
                 <>
                   <div>
                     <label htmlFor="reset-email" style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--lkv-text-primary)', marginBottom: '4px' }}>
-                      Adresse email
+                      {t('auth.email')}
                     </label>
                     <input
                       id="reset-email"
                       type="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      placeholder="nom@exemple.com"
+                      placeholder={t('auth.emailPlaceholder')}
                       autoComplete="email"
                       required
                       style={{ width: '100%', padding: '10px 14px', minHeight: '44px', borderRadius: '10px', border: '1px solid rgba(23,64,44,0.1)', background: 'var(--lkv-surface)', fontSize: '14px', color: 'var(--lkv-primary)' }}
@@ -155,7 +157,7 @@ function AuthForm() {
                   </div>
                   {error && <div style={{ background: 'var(--lkv-danger-bg)', border: '1px solid var(--lkv-danger)', padding: '10px', borderRadius: '10px', fontSize: '13px', color: 'var(--lkv-danger)' }}>{error}</div>}
                   <button type="submit" disabled={loading} className="glass-capsule-btn primary w-full !min-h-[44px] !py-3 !text-[15px] !font-semibold">
-                    {loading ? 'Envoi en cours...' : 'Envoyer le lien'}
+                    {loading ? t('auth.resetSubmitting') : t('auth.resetSubmit')}
                   </button>
                 </>
               )}
@@ -164,7 +166,7 @@ function AuthForm() {
                 onClick={() => { setForgotPasswordOpen(false); setError(''); }}
                 className="text-xs text-[var(--lkv-text-muted)] hover:text-[var(--lkv-primary)] underline text-center cursor-pointer mt-2"
               >
-                Retour à la connexion
+                {t('auth.backToSignIn')}
               </button>
             </form>
           ) : (
@@ -172,22 +174,22 @@ function AuthForm() {
               {mode === 'inscription' && (
                 <div>
                   <label htmlFor="name" style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--lkv-text-primary)', marginBottom: '4px' }}>
-                    Prénom ou pseudo
+                    {t('auth.name')}
                   </label>
-                  <input id="name" type="text" autoComplete="name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Prénom" style={{ width: '100%', padding: '10px 14px', minHeight: '44px', borderRadius: '10px', border: '1px solid rgba(23,64,44,0.1)', background: 'var(--lkv-surface)', fontSize: '14px', color: 'var(--lkv-primary)' }} />
+                  <input id="name" type="text" autoComplete="name" value={name} onChange={(e) => setName(e.target.value)} placeholder={t('auth.namePlaceholder')} style={{ width: '100%', padding: '10px 14px', minHeight: '44px', borderRadius: '10px', border: '1px solid rgba(23,64,44,0.1)', background: 'var(--lkv-surface)', fontSize: '14px', color: 'var(--lkv-primary)' }} />
                 </div>
               )}
               <div>
                 <label htmlFor="email" style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--lkv-text-primary)', marginBottom: '4px' }}>
-                  Adresse email
+                  {t('auth.email')}
                 </label>
-                <input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="nom@exemple.com" autoComplete="email" required style={{ width: '100%', padding: '10px 14px', minHeight: '44px', borderRadius: '10px', border: '1px solid rgba(23,64,44,0.1)', background: 'var(--lkv-surface)', fontSize: '14px', color: 'var(--lkv-primary)' }} />
+                <input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder={t('auth.emailPlaceholder')} autoComplete="email" required style={{ width: '100%', padding: '10px 14px', minHeight: '44px', borderRadius: '10px', border: '1px solid rgba(23,64,44,0.1)', background: 'var(--lkv-surface)', fontSize: '14px', color: 'var(--lkv-primary)' }} />
               </div>
 
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
                   <label htmlFor="password" style={{ fontSize: '12px', fontWeight: 600, color: 'var(--lkv-text-primary)' }}>
-                    {mode === 'inscription' ? 'Mot de passe (8 car. min)' : 'Mot de passe'}
+                    {mode === 'inscription' ? t('auth.passwordWithMin') : t('auth.password')}
                   </label>
                   {mode === 'connexion' && (
                     <button
@@ -195,7 +197,7 @@ function AuthForm() {
                       onClick={() => { setForgotPasswordOpen(true); setError(''); }}
                       className="text-[11px] text-[var(--lkv-text-muted)] hover:text-[var(--lkv-primary)] underline cursor-pointer"
                     >
-                      Mot de passe oublié ?
+                      {t('auth.forgotPasswordLink')}
                     </button>
                   )}
                 </div>
@@ -205,7 +207,7 @@ function AuthForm() {
                     type={showPassword ? 'text' : 'password'}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    placeholder={mode === 'inscription' ? 'Minimum 8 caractères' : 'Mot de passe'}
+                    placeholder={mode === 'inscription' ? t('auth.passwordMinPlaceholder') : t('auth.passwordPlaceholder')}
                     autoComplete={mode === 'inscription' ? 'new-password' : 'current-password'}
                     required
                     style={{ width: '100%', padding: '10px 44px 10px 14px', minHeight: '44px', borderRadius: '10px', border: '1px solid rgba(23,64,44,0.1)', background: 'var(--lkv-surface)', fontSize: '14px', color: 'var(--lkv-primary)' }}
@@ -213,7 +215,7 @@ function AuthForm() {
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    aria-label={showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
+                    aria-label={showPassword ? t('auth.hidePassword') : t('auth.showPassword')}
                     style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--lkv-text-muted)' }}
                   >
                     {showPassword ? (
@@ -227,15 +229,15 @@ function AuthForm() {
 
               {error && <div style={{ background: 'var(--lkv-danger-bg)', border: '1px solid var(--lkv-danger)', padding: '10px', borderRadius: '10px', fontSize: '13px', color: 'var(--lkv-danger)' }}>{error}</div>}
               <button type="submit" disabled={loading} className="glass-capsule-btn primary w-full !min-h-[44px] !py-3.5 !text-[15px] !font-semibold">
-                {loading ? (mode === 'connexion' ? 'Connexion…' : 'Création…') : (mode === 'connexion' ? 'Se connecter' : 'Créer mon compte')}
+                {loading ? t(mode === 'connexion' ? 'auth.submittingSignIn' : 'auth.submittingSignUp') : t(mode === 'connexion' ? 'auth.submitSignIn' : 'auth.submitSignUp')}
               </button>
             </form>
           )}
           <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid rgba(23,64,44,0.06)', textAlign: 'center' }}>
             <p style={{ fontSize: '12px', color: 'rgba(23,64,44,0.5)' }}>
-              {mode === 'connexion' ? "Pas encore de compte ? " : "Déjà un compte ? "}
+              {mode === 'connexion' ? t('auth.noAccount') : t('auth.haveAccount')}{' '}
               <button type="button" onClick={() => { setMode(mode === 'connexion' ? 'inscription' : 'connexion'); setError(''); setConfirmationSent(false); setForgotPasswordOpen(false); }} className="glass-capsule-btn !min-h-0 !py-1 !px-3 !text-xs !font-semibold">
-                {mode === 'connexion' ? "S'inscrire" : 'Se connecter'}
+                {mode === 'connexion' ? t('auth.registerLink') : t('auth.signIn')}
               </button>
             </p>
           </div>

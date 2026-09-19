@@ -376,7 +376,7 @@
 }
 .glass-capsule-btn.sm, .glass-btn.sm, .glass-capsule-btn.xs, .glass-btn.xs { font-size: 11px; }
 .glass-btn-primary, .glass-capsule-btn.primary, .glass-circle-btn.primary {
-  background: var(--btn-tint-solid); color: var(--btn-content);
+  background: var(--btn-tint-solid); color: var(--btn-on-solid);
 }
 .glass-btn-secondary, .glass-capsule-btn.secondary { background: var(--btn-tint); }
 .lkv-button-primitive { text-shadow: var(--btn-text-shadow); }
@@ -411,7 +411,7 @@
   border: 1px solid transparent;
   cursor: pointer;
 }
-.glass-capsule-segment.active { background: var(--lkv-primary); color: var(--lkv-text-inverted); }
+.glass-capsule-segment.active { background: var(--lkv-action); color: var(--btn-on-solid); }
 
 /* Contrôles de zoom Leaflet natifs (carte roadbook) — matériau des boutons DS.
    Les contrôles sont injectés par Leaflet : simple habillage, aucune logique touchée. */
@@ -434,7 +434,7 @@
 }
 .leaflet-control-zoom.leaflet-bar a:hover,
 .leaflet-control-zoom.leaflet-bar a:focus {
-  background: rgba(255, 255, 255, 0.32) !important;
+  background: var(--lkv-hover-surface) !important;
   color: var(--btn-content) !important;
 }
 .leaflet-control-zoom.leaflet-bar a.leaflet-disabled {
@@ -484,8 +484,17 @@
 
 .glass-input:focus {
   outline: none;
-  border-color: color-mix(in oklab, var(--sage-500) 60%, transparent);
-  box-shadow: 0 0 0 3px color-mix(in oklab, var(--sage-500) 25%, transparent);
+  border-color: var(--lkv-action);
+  box-shadow: 0 0 0 3px var(--lkv-focus-ring);
+}
+
+/* États désactivés (direction §6 : tous les états complétés) */
+.glass-input:disabled {
+  background: var(--lkv-disabled-bg);
+  border-color: var(--lkv-border);
+  color: var(--lkv-disabled-text);
+  cursor: not-allowed;
+  opacity: 1;
 }
 
 /* ============================================================
@@ -939,10 +948,12 @@
 }
 .glass[data-glass-shape='drawer'] { border-radius: var(--glass-radius) 0 0 var(--glass-radius); }
 :where(.glass) { overflow: hidden; }
-/* Filled actions keep their semantic contrast in every fallback mode. */
+/* Filled actions keep their semantic contrast in every fallback mode.
+   P5 : l'action est --lkv-action (vert forêt clair/sombre selon le mode)
+   et son contenu --btn-on-solid (blanc en clair, encre en sombre). */
 :is(.glass-btn-primary, .glass-capsule-btn.primary, .glass-circle-btn.primary) {
-  background: var(--lkv-primary) !important;
-  color: var(--lkv-text-inverted) !important;
+  background: var(--lkv-action) !important;
+  color: var(--btn-on-solid) !important;
 }
 .glass-btn-danger {
   background: var(--lkv-danger-dark) !important;
@@ -964,13 +975,13 @@
   --glass-blur-light: 16px;
   --glass-saturate: 170%;
   --glass-brightness: 1.02;
-  --glass-tint: rgba(255, 255, 255, 0.08);
-  --glass-tint-strong: rgba(255, 255, 255, 0.42);
+  --glass-tint: rgba(255, 255, 255, 0.55);
+  --glass-tint-strong: rgba(255, 255, 255, 0.78);
 
-  /* Géométrie */
-  --glass-radius-sm: 24px;
-  --glass-radius-md: 28px;
-  --glass-radius-lg: 32px;
+  /* Géométrie — direction P5 : rayons 12/16/24 */
+  --glass-radius-sm: 12px;
+  --glass-radius-md: 16px;
+  --glass-radius-lg: 24px;
   --glass-radius-xl: 40px;
   --glass-radius-pill: 999px;
 
@@ -1057,6 +1068,83 @@
 @media (forced-colors: active) {
   .lkdv-ambilight { display: none !important; }
   .lkdv-photo-melt { display: none !important; }
+}
+
+/* ════════════════════════════════════════════════════════════════
+   MODE SOMBRE — complète les éléments du matériau qui utilisaient la
+   gamme sage/stone claire en dur (le reste suit les tokens --lkv-*).
+   Spec §6 : tous les états complétés, pas seulement l'inversion du fond.
+   ════════════════════════════════════════════════════════════════ */
+.dark .glass-pill {
+  background: color-mix(in oklab, var(--sage-500) 28%, transparent);
+  color: var(--sage-200);
+  border-color: color-mix(in oklab, var(--sage-500) 42%, transparent);
+}
+
+.dark .glass-check-circle {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: var(--sage-300);
+}
+
+.dark .glass-check-circle.checked {
+  background: var(--sage-500);
+  border-color: var(--sage-500);
+}
+
+.dark .glass-progress {
+  background: color-mix(in oklab, var(--stone-50) 12%, transparent);
+}
+
+.dark .glass-progress-fill {
+  background: var(--sage-300);
+}
+
+.dark .glass-segmented {
+  background: color-mix(in oklab, var(--stone-50) 10%, transparent);
+  border-color: color-mix(in oklab, var(--stone-50) 12%, transparent);
+}
+
+.dark .mini-list__row {
+  background: color-mix(in oklab, var(--stone-50) 8%, transparent);
+  border-color: color-mix(in oklab, var(--stone-50) 10%, transparent);
+}
+
+.dark .gauge__track {
+  stroke: color-mix(in oklab, var(--stone-50) 16%, transparent);
+}
+
+/* Optique legacy (.lkv-glass) */
+.dark {
+  --glass-tint: rgba(255, 255, 255, 0.10);
+  --glass-tint-strong: rgba(255, 255, 255, 0.16);
+}
+
+/* Messagerie : bulles et bouton d'envoi lisibles en sombre */
+.dark .msg-bubble {
+  background: linear-gradient(180deg, rgba(27, 45, 36, 0.92), rgba(16, 28, 23, 0.88));
+  border-color: rgba(241, 245, 241, 0.24);
+  color: var(--lkv-text-primary);
+  box-shadow:
+    inset 0 1px 1px rgba(241, 245, 241, 0.12),
+    0 2px 8px -2px rgba(0, 0, 0, 0.4),
+    0 8px 22px -8px rgba(0, 0, 0, 0.5);
+}
+
+.dark .msg-bubble--mine {
+  background: linear-gradient(165deg, var(--lkv-action-hover) 0%, var(--lkv-action) 100%);
+  border-color: rgba(241, 245, 241, 0.32);
+  color: var(--btn-on-solid);
+}
+
+.dark .glass-send-btn {
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.18) 0%,
+    rgba(255, 255, 255, 0.06) 45%,
+    color-mix(in oklab, var(--sage-500) 30%, transparent) 110%
+  );
+  border-color: rgba(241, 245, 241, 0.32);
+  color: var(--lkv-action);
 }
 
 

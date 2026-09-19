@@ -1,28 +1,40 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
 
+/* ── Variables sémantiques — mode clair (direction P5 §6) ─────────
+   Elles pointent vers les tokens --lkv-* de tokens.css : le bloc .dark
+   de tokens.css suffit à basculer fonds, surfaces, textes, bordures,
+   champs, focus et états. Aucun hexadécimal ici (garde-fou U-D60). */
+:root {
+  color-scheme: light;
+  --background: var(--lkv-surface);
+  --foreground: var(--lkv-text-primary);
+  --primary: var(--lkv-action);
+  --primary-hover: var(--lkv-action-hover);
+  --primary-subtle: var(--lkv-primary-subtle);
+  --primary-foreground: var(--lkv-on-action);
+  --secondary: var(--lkv-secondary);
+  --secondary-foreground: var(--lkv-text-inverted);
+  --accent: var(--lkv-secondary);
+  --accent-foreground: var(--lkv-text-inverted);
+  --card: var(--lkv-surface-card);
+  --card-foreground: var(--lkv-text-primary);
+  --surface: var(--lkv-surface);
+  --surface-elevated: var(--lkv-surface-elevated);
+  --border: var(--lkv-border);
+  --border-subtle: var(--lkv-border-subtle);
+  --muted: var(--lkv-surface-muted);
+  --muted-foreground: var(--lkv-text-secondary);
+  --input: var(--lkv-field-bg);
+  --ring: var(--lkv-action);
+  --radius: var(--lkv-radius-md);
+}
+
+/* Mode sombre : les variables sémantiques suivent les tokens .dark ;
+   seules les ombres (plus profondes) restent explicites. */
 .dark {
-  --background: var(--lkv-forest-800);
-  --foreground: var(--sand-50);
-  --primary: var(--lkv-forest-400);
-  --primary-hover: var(--lkv-forest-400);
-  --primary-subtle: rgba(74,124,91,0.15);
-  --secondary: var(--lkv-forest-700);
-  --secondary-foreground: var(--sand-100);
-  --accent: var(--lkv-forest-300);
-  --accent-foreground: var(--lkv-forest-800);
-  --card: var(--lkv-forest-700);
-  --card-foreground: var(--sand-50);
-  --surface: var(--lkv-forest-800);
-  --surface-elevated: var(--lkv-forest-700);
-  --border: rgba(255,255,255,0.08);
-  --border-subtle: rgba(255,255,255,0.05);
-  --muted: var(--lkv-forest-700);
-  --muted-foreground: var(--lkv-forest-200);
-  --input: var(--lkv-forest-700);
-  --ring: var(--lkv-forest-400);
+  color-scheme: dark;
 
   /* Shadow colors for dark mode */
   --shadow-xs: 0 1px 2px rgba(0,0,0,0.3);
@@ -32,7 +44,6 @@
   --shadow-xl: 0 16px 48px rgba(0,0,0,0.45), 0 8px 16px rgba(0,0,0,0.35);
   --shadow-2xl: 0 32px 80px rgba(0,0,0,0.5), 0 16px 32px rgba(0,0,0,0.4);
 }
-
 @layer base {
   * {
     box-sizing: border-box;
@@ -63,6 +74,9 @@
     background-color: transparent !important;
     color: var(--foreground);
     font-family: var(--font-sans);
+    /* Corps 16 (tokens) : en rem, le texte agrandi navigateur reste pris en compte. */
+    font-size: var(--lkv-text-body);
+    line-height: var(--lkv-line-body);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     -webkit-text-size-adjust: 100%;
@@ -136,7 +150,25 @@
 
 @layer utilities {
   .font-display { font-family: var(--font-display); }
-  .font-mono-data { font-family: var(--font-mono); }
+  .font-mono-data {
+    font-family: var(--font-mono);
+    /* Compteurs, points, rangs : chiffres tabulaires (direction §6). */
+    font-variant-numeric: var(--lkv-font-numeric);
+  }
+
+  /* Échelle typographique direction : corps 16 / secondaire 14 / titres 22–28.
+     Toutes les tailles sont en rem (texte agrandi navigateur pris en charge). */
+  .text-lkv-body { font-size: var(--lkv-text-body); line-height: var(--lkv-line-body); }
+  .text-lkv-body-sm { font-size: var(--lkv-text-body-sm); line-height: var(--lkv-line-body); }
+  .text-lkv-title-sm { font-size: var(--lkv-text-title-sm); line-height: 1.25; }
+  .text-lkv-title-lg { font-size: var(--lkv-text-title-lg); line-height: 1.15; }
+  .lkv-tabular-nums { font-variant-numeric: var(--lkv-font-numeric); }
+
+  /* Marge d'écran 16, jamais sous les encoches (safe areas). */
+  .lkv-screen-x {
+    padding-left: max(var(--lkv-screen-margin), env(safe-area-inset-left, 0px));
+    padding-right: max(var(--lkv-screen-margin), env(safe-area-inset-right, 0px));
+  }
 
   .text-hero {
     font-size: clamp(3rem, 7vw, 6rem);
@@ -184,7 +216,7 @@
   .btn-primary:hover {
     background: var(--primary-hover);
     transform: translateY(-1px);
-    box-shadow: 0 8px 24px rgba(45,90,61,0.28);
+    box-shadow: var(--card-shadow-elevated);
   }
 
   .btn-primary:active {
@@ -209,7 +241,7 @@
   .focus-ring:focus-within, .focus-ring:focus-visible {
     outline: none;
     border-color: var(--primary);
-    box-shadow: 0 0 0 3px rgba(45, 90, 61, 0.15);
+    box-shadow: 0 0 0 3px var(--lkv-focus-ring);
   }
 
   /* Global focus-visible for keyboard navigation */
@@ -286,7 +318,7 @@
   .badge-primary {
     background: var(--primary-subtle);
     color: var(--primary);
-    border: 1px solid rgba(45,90,61,0.2);
+    border: 1px solid var(--border);
   }
 
   .badge-dark {
@@ -693,6 +725,7 @@
     font-size: 0.75rem;
     color: var(--muted-foreground);
     letter-spacing: 0.02em;
+    font-variant-numeric: var(--lkv-font-numeric);
   }
 
   .nav-underline { position: relative; }
@@ -857,10 +890,14 @@ body {
   pointer-events: none;
   user-select: none;
   background-color: var(--lkv-app-bg-fallback);
-  background-image: var(--lkv-app-bg-image);
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
+  /* Direction §6 : la topographie décorative est atténuée (teinte 90%) pour
+     ne jamais faire reposer le texte essentiel sur un contraste variable.
+     Les surfaces de contenu (cards) sont opaques/translucides claires par-dessus. */
+  background-image: linear-gradient(var(--lkv-app-bg-tint), var(--lkv-app-bg-tint)),
+    var(--lkv-app-bg-image);
+  background-size: cover, cover;
+  background-position: center, center;
+  background-repeat: no-repeat, no-repeat;
 }
 
 /* 3. Accélération matérielle GPU pour conteneurs animés */

@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { useTranslation } from '@/lib/i18n/context';
 
 export type CompteTab = 'vue-d-ensemble' | 'progression' | 'aventures' | 'carnets' | 'clubs' | 'commandes' | 'fidelite' | 'parametres';
 
@@ -17,15 +18,16 @@ interface TabsCompteProps {
 }
 
 export default function TabsCompte({ activeTab, onTabChange, counts }: TabsCompteProps) {
+  const { t } = useTranslation();
   const tabs = [
-    { id: 'vue-d-ensemble' as CompteTab, label: "Vue d'ensemble" },
-    { id: 'progression' as CompteTab, label: 'Ma progression' },
-    { id: 'aventures' as CompteTab, label: `Groupes (${counts.aventures})` },
-    { id: 'carnets' as CompteTab, label: `Carnets de route (${counts.carnets})`, hasDot: true },
-    { id: 'clubs' as CompteTab, label: `Clubs (${counts.clubs})` },
-    { id: 'commandes' as CompteTab, label: `Commandes (${counts.commandes})` },
-    { id: 'fidelite' as CompteTab, label: 'Gains & Récompenses' },
-    { id: 'parametres' as CompteTab, label: 'Paramètres' },
+    { id: 'vue-d-ensemble' as CompteTab, label: t('account.overview') },
+    { id: 'progression' as CompteTab, label: t('account.progression') },
+    { id: 'aventures' as CompteTab, label: `${t('account.adventures')} (${counts.aventures})` },
+    { id: 'carnets' as CompteTab, label: `${t('account.journals')} (${counts.carnets})`, hasDot: true },
+    { id: 'clubs' as CompteTab, label: `${t('account.clubs')} (${counts.clubs})` },
+    { id: 'commandes' as CompteTab, label: `${t('account.orders')} (${counts.commandes})` },
+    { id: 'fidelite' as CompteTab, label: t('account.rewards') },
+    { id: 'parametres' as CompteTab, label: t('account.settings') },
   ];
 
   return (

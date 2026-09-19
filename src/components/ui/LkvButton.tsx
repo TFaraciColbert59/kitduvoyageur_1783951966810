@@ -20,17 +20,17 @@ export interface LkvButtonProps extends React.ButtonHTMLAttributes<HTMLButtonEle
  * une seule valeur à changer pour mettre à jour 100% des boutons du site. */
 const INK_GLASS = 'var(--btn-tint)';
 const variantOptics: Record<LkvButtonVariant, { tint?: string; color: string }> = {
-  primary: { tint: 'var(--btn-tint-solid)', color: 'var(--btn-content)' },
+  primary: { tint: 'var(--btn-tint-solid)', color: 'var(--btn-on-solid)' },
   secondary: { tint: INK_GLASS, color: 'var(--btn-content)' },
   light: { tint: INK_GLASS, color: 'var(--btn-content)' },
   'ghost-light': { tint: INK_GLASS, color: 'var(--btn-content)' },
   ghost: { tint: INK_GLASS, color: 'var(--btn-content)' },
-  danger: { tint: 'var(--lkv-danger-dark)', color: 'var(--btn-content)' },
+  danger: { tint: 'var(--lkv-danger-dark)', color: 'var(--btn-on-solid)' },
   'icon-only': { tint: INK_GLASS, color: 'var(--btn-content)' },
   glass: { tint: INK_GLASS, color: 'var(--btn-content)' },
-  'glass-primary': { tint: 'var(--btn-tint-solid)', color: 'var(--btn-content)' },
+  'glass-primary': { tint: 'var(--btn-tint-solid)', color: 'var(--btn-on-solid)' },
   'glass-pill': { tint: INK_GLASS, color: 'var(--btn-content)' },
-  'glass-pill-primary': { tint: 'var(--btn-tint-solid)', color: 'var(--btn-content)' },
+  'glass-pill-primary': { tint: 'var(--btn-tint-solid)', color: 'var(--btn-on-solid)' },
 };
 
 const variantPadding: Record<LkvButtonSize, string> = {

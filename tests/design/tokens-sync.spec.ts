@@ -26,6 +26,8 @@ describe('CHANTIER X — SYNCHRONISATION TOKENS', () => {
     expect(css).toContain('--lkv-primary-hover: #205238;');
     expect(css).toContain('--lkv-primary-soft: #365233;');
     expect(css).toContain('--lkv-success: #5B7F55;');
-    expect(css).toContain('--lkv-radius-card: 28px;');
+    // P5 direction §6 : rayons 12/16/24 — le rayon carte passe de 28 à 24
+    // (la vérification reste, seule la valeur canonique change).
+    expect(css).toContain('--lkv-radius-card: 24px;');
   });
 });

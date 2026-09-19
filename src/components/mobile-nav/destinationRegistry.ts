@@ -1,4 +1,5 @@
 import type { LkvIconName } from '@/components/ui/LkvIcon';
+import type { Locale } from '@/lib/i18n/locale';
 
 /**
  * M02 — Registre canonique des destinations principales de la barre mobile.
@@ -9,7 +10,8 @@ import type { LkvIconName } from '@/components/ui/LkvIcon';
  *   destination (résolution exacte puis préfixe le plus long) ;
  * - `/groupes` appartient à Aventures : le middleware redirige cette route
  *   vers la surface hub de groupe (src/lib/hub/hubRedirects.ts) ;
- * - labels FR/EN statiques, aucun i18n runtime.
+ * - labels FR/EN statiques portés par le registre ; le helper
+ *   `getDestinationLabel(id, locale)` lit la locale demandée ;
  *
  * Note : `/materiel` est aujourd'hui un alias 307 → `/hub` (hubRedirects).
  * La destination Matériel existe dans le registre pour la direction produit ;
@@ -26,7 +28,7 @@ export type DestinationId =
 export interface Destination {
   id: DestinationId;
   href: string;
-  /** Libellés statiques (pas d'i18n runtime). */
+  /** Libellés statiques FR/EN, résolus par `getDestinationLabel`. */
   label: { fr: string; en: string };
   ariaLabel: string;
   iconName: LkvIconName;
@@ -107,6 +109,16 @@ export const DESTINATIONS: readonly Destination[] = [
 /** Destination propriétaire d'un href exact (utile pour l'état pressé). */
 export function getDestinationByHref(href: string): Destination | null {
   return DESTINATIONS.find((destination) => destination.href === href) ?? null;
+}
+
+/**
+ * Libellé d'une destination dans la locale demandée. Retourne l'id en repli
+ * (jamais d'exception) : aucune structure ni BottomTabBar n'est modifiée.
+ */
+export function getDestinationLabel(id: DestinationId, locale: Locale): string {
+  const destination = DESTINATIONS.find((item) => item.id === id);
+  if (!destination) return id;
+  return destination.label[locale];
 }
 
 /**

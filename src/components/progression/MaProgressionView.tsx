@@ -6,6 +6,9 @@ import { Award, ChevronDown, Gift, Target, Trophy } from 'lucide-react';
 import Icon from '@/components/ui/AppIcon';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { createClient } from '@/lib/supabase/client';
+import { useTranslation, type LocaleContextValue } from '@/lib/i18n/context';
+import { plural, type TranslationKey } from '@/lib/i18n/translate';
+import { formatDate, formatNumber } from '@/lib/i18n/format';
 import {
   UserProgressionProfile,
   TerritorialLeaderboard,
@@ -18,34 +21,43 @@ interface MaProgressionViewProps {
   compact?: boolean;
 }
 
-const TERRITORY_FILTERS: { id: TerritoryFilter; label: string; icon: string }[] = [
-  { id: 'around_me', label: '1 km', icon: 'map-pin' },
-  { id: 'city', label: 'Ville', icon: 'navigation' },
-  { id: 'region', label: 'Région', icon: 'map' },
-  { id: 'country', label: 'Pays', icon: 'flag' },
-  { id: 'world', label: 'Monde', icon: 'globe' },
+type TFn = LocaleContextValue['t'];
+
+const SKILL_LABEL_KEYS: Record<SkillType, TranslationKey> = {
+  explorer: 'progression.skill.explorer',
+  preparer: 'progression.skill.preparer',
+  partager: 'progression.skill.partager',
+  entraider: 'progression.skill.entraider',
+};
+
+const TERRITORY_FILTERS: { id: TerritoryFilter; labelKey: TranslationKey; icon: string }[] = [
+  { id: 'around_me', labelKey: 'progression.territoryAroundMe', icon: 'map-pin' },
+  { id: 'city', labelKey: 'progression.territoryCity', icon: 'navigation' },
+  { id: 'region', labelKey: 'progression.territoryRegion', icon: 'map' },
+  { id: 'country', labelKey: 'progression.territoryCountry', icon: 'flag' },
+  { id: 'world', labelKey: 'progression.territoryWorld', icon: 'globe' },
 ];
 
 /** Raisons honnêtes d'indisponibilité renvoyées par la RPC de classement. */
-const LEADERBOARD_REASONS: Record<string, string> = {
-  flag_off: 'fonctionnalité localisation désactivée',
-  no_private_attachment: 'aucun rattachement privé enregistré',
-  rpc_unavailable: 'service de classement indisponible',
+const LEADERBOARD_REASONS: Record<string, TranslationKey> = {
+  flag_off: 'progression.reasonFlagOff',
+  no_private_attachment: 'progression.reasonNoPrivateAttachment',
+  rpc_unavailable: 'progression.reasonRpcUnavailable',
 };
 
-const GAIN_TYPE_LABELS: Record<string, string> = {
-  like: 'Like reçu',
-  comment: 'Commentaire',
-  post: 'Publication',
-  carnet: 'Carnet publié',
-  message: 'Message de groupe',
-  referral: 'Parrainage',
-  admin: 'Attribution manuelle',
-  PROGRESSION_AWARD: 'Progression',
-  hike_session: 'Session de randonnée',
-  trail_prep: 'Sentier préparé',
-  kit_report: 'Débrief de kit',
-  place_review: 'Avis de lieu',
+const GAIN_TYPE_LABELS: Record<string, TranslationKey> = {
+  like: 'progression.gainType.like',
+  comment: 'progression.gainType.comment',
+  post: 'progression.gainType.post',
+  carnet: 'progression.gainType.carnet',
+  message: 'progression.gainType.message',
+  referral: 'progression.gainType.referral',
+  admin: 'progression.gainType.admin',
+  PROGRESSION_AWARD: 'progression.gainType.progressionAward',
+  hike_session: 'progression.gainType.hikeSession',
+  trail_prep: 'progression.gainType.trailPrep',
+  kit_report: 'progression.gainType.kitReport',
+  place_review: 'progression.gainType.placeReview',
 };
 
 interface EarnedDistinction {
@@ -58,7 +70,7 @@ interface EarnedDistinction {
 interface GainRow {
   id: string;
   points: number;
-  label: string;
+  type: string;
   createdAt: string;
 }
 
@@ -74,21 +86,16 @@ interface GainsState {
   items: GainRow[];
 }
 
-function formatDate(value: string | null): string | null {
-  if (!value) return null;
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return null;
-  return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' });
+function reasonLabel(reason: string | null | undefined, t: TFn): string {
+  if (!reason) return t('progression.reasonUnavailable');
+  const key = LEADERBOARD_REASONS[reason];
+  return key ? t(key) : t('progression.reasonUnavailable');
 }
 
-function reasonLabel(reason: string | null | undefined): string {
-  if (!reason) return 'indisponible';
-  return LEADERBOARD_REASONS[reason] ?? 'indisponible';
-}
-
-function gainLabel(type: string): string {
-  if (!type) return 'Gain';
-  return GAIN_TYPE_LABELS[type] ?? type.replace(/_/g, ' ');
+function gainLabel(type: string, t: TFn): string {
+  if (!type) return t('progression.gainFallback');
+  const key = GAIN_TYPE_LABELS[type];
+  return key ? t(key) : type.replace(/_/g, ' ');
 }
 
 /** Section détaillée repliée par défaut (divulgation progressive accessible). */
@@ -164,6 +171,7 @@ function SummaryChip({
 
 export default function MaProgressionView({ initialProfile, compact = false }: MaProgressionViewProps) {
   const { triggerHaptic } = useHapticFeedback();
+  const { t, locale } = useTranslation();
   const [profile, setProfile] = useState<UserProgressionProfile | null>(initialProfile || null);
   const [selectedFilter, setSelectedFilter] = useState<TerritoryFilter>('city');
   const [leaderboard, setLeaderboard] = useState<TerritorialLeaderboard | null>(null);
@@ -275,7 +283,7 @@ export default function MaProgressionView({ initialProfile, compact = false }: M
               const badge = Array.isArray(row.badges) ? (row.badges[0] ?? null) : row.badges;
               return {
                 id: row.badge_id,
-                name: badge?.name?.trim() || 'Distinction',
+                name: badge?.name?.trim() || '',
                 icon: badge?.icon?.trim() || null,
                 earnedAt: row.earned_at,
               };
@@ -297,7 +305,7 @@ export default function MaProgressionView({ initialProfile, compact = false }: M
             items: rows.map((row) => ({
               id: row.id,
               points: Math.max(0, Math.floor(Number(row.points) || 0)),
-              label: gainLabel(row.transaction_type),
+              type: row.transaction_type,
               createdAt: row.created_at,
             })),
           });
@@ -327,7 +335,7 @@ export default function MaProgressionView({ initialProfile, compact = false }: M
       <div className="flex min-h-[320px] flex-col items-center justify-center p-8 text-center">
         <div className="mb-3 h-8 w-8 animate-spin rounded-full border-2 border-[var(--lkv-primary)] border-t-transparent motion-reduce:animate-none" />
         <p className="text-sm font-semibold text-[var(--lkv-text-primary)]">
-          Calcul de votre cordée LKDV...
+          {t('progression.loadingProfile')}
         </p>
       </div>
     );
@@ -343,8 +351,10 @@ export default function MaProgressionView({ initialProfile, compact = false }: M
   const challenge = profile.challenge;
   const seasonPoints = profile.points.seasonId !== null ? profile.points.season : null;
   const usableBalance = profile.usableBalance;
-  const filterLabel =
-    TERRITORY_FILTERS.find((filter) => filter.id === selectedFilter)?.label ?? selectedFilter;
+  const filterLabel = t(
+    TERRITORY_FILTERS.find((filter) => filter.id === selectedFilter)?.labelKey ??
+      'progression.territoryCity'
+  );
   const challengePct =
     challenge && challenge.targetProgress > 0
       ? Math.min(100, Math.round((challenge.currentProgress / challenge.targetProgress) * 100))
@@ -383,23 +393,25 @@ export default function MaProgressionView({ initialProfile, compact = false }: M
             <div className="min-w-0">
               <h1 className="truncate font-display text-xl font-extrabold tracking-tight text-[var(--lkv-text-primary)] sm:text-2xl">
                 {hasData
-                  ? profile.level.title ?? `Niveau ${profile.level.level}`
-                  : 'Ma progression'}
+                  ? profile.level.title ?? `${t('progression.level')} ${profile.level.level}`
+                  : t('progression.title')}
               </h1>
               <p className="text-xs font-medium text-[var(--lkv-text-secondary)]">
-                {hasData ? `Niveau ${profile.level.level}` : 'Aucune progression enregistrée'}
+                {hasData
+                  ? `${t('progression.level')} ${profile.level.level}`
+                  : t('progression.noData')}
                 {hasData && profile.displayName ? ` · ${profile.displayName}` : ''}
               </p>
             </div>
           </div>
           <div className="flex items-center gap-2">
             <StatBlock
-              label="Points LKDV cumulés"
-              value={hasData ? profile.points.lifetime.toLocaleString('fr-FR') : '—'}
+              label={t('progression.pointsLifetime')}
+              value={hasData ? formatNumber(profile.points.lifetime, {}, locale) : '—'}
             />
             <StatBlock
-              label="Points de saison"
-              value={seasonPoints !== null ? seasonPoints.toLocaleString('fr-FR') : '—'}
+              label={t('progression.pointsSeason')}
+              value={seasonPoints !== null ? formatNumber(seasonPoints, {}, locale) : '—'}
             />
           </div>
         </div>
@@ -409,10 +421,10 @@ export default function MaProgressionView({ initialProfile, compact = false }: M
             <div className="mb-1.5 flex items-center justify-between text-xs font-medium">
               <span className="text-[var(--lkv-text-secondary)]">
                 {profile.level.nextLevelPoints
-                  ? `Progression vers le niveau ${profile.level.level + 1}`
+                  ? t('progression.progressToLevel', { level: profile.level.level + 1 })
                   : profile.level.title
-                    ? 'Sommet atteint · Niveau maximum'
-                    : 'Seuils de niveau indisponibles'}
+                    ? t('progression.maxLevel')
+                    : t('progression.levelThresholdsUnavailable')}
               </span>
               <span className="font-mono font-bold text-[var(--lkv-text-primary)]">
                 {profile.level.progressPct}%
@@ -423,7 +435,7 @@ export default function MaProgressionView({ initialProfile, compact = false }: M
               aria-valuenow={profile.level.progressPct}
               aria-valuemin={0}
               aria-valuemax={100}
-              aria-label="Progression du niveau"
+              aria-label={t('progression.levelProgressAria')}
               className="h-2.5 w-full overflow-hidden rounded-full border border-white/60 bg-black/5 p-0.5"
             >
               <div
@@ -432,18 +444,17 @@ export default function MaProgressionView({ initialProfile, compact = false }: M
               />
             </div>
             <div className="mt-1 flex items-center justify-between font-mono text-[11px] text-[var(--lkv-text-muted)]">
-              <span>{profile.points.lifetime.toLocaleString('fr-FR')} pts</span>
+              <span>{formatNumber(profile.points.lifetime, {}, locale)} {t('progression.pointsShort')}</span>
               <span>
                 {profile.level.nextLevelPoints
-                  ? `${profile.level.nextLevelPoints.toLocaleString('fr-FR')} pts`
+                  ? `${formatNumber(profile.level.nextLevelPoints, {}, locale)} ${t('progression.pointsShort')}`
                   : '—'}
               </span>
             </div>
           </div>
         ) : (
           <p className="mt-3 rounded-2xl border border-white/80 bg-white/60 p-3 text-xs leading-relaxed text-[var(--lkv-text-secondary)]">
-            Vos points et votre niveau apparaîtront après votre première activité validée :
-            session de randonnée traitée, avis de lieu publié, débrief de kit ou carnet partagé.
+            {t('progression.noDataBody')}
           </p>
         )}
       </section>
@@ -454,7 +465,7 @@ export default function MaProgressionView({ initialProfile, compact = false }: M
         className="glass rounded-3xl border border-white/70 p-4 shadow-sm sm:p-5"
       >
         <h2 id="progression-resume" className="sr-only">
-          Résumé de progression
+          {t('progression.summaryAria')}
         </h2>
 
         <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
@@ -472,7 +483,7 @@ export default function MaProgressionView({ initialProfile, compact = false }: M
               <div className="min-w-0 flex-1">
                 <div className="flex items-center justify-between gap-2">
                   <span className="truncate text-xs font-bold text-[var(--lkv-text-primary)]">
-                    {data.label}
+                    {t(SKILL_LABEL_KEYS[key])}
                   </span>
                   <span className="font-mono text-xs font-bold text-[var(--lkv-primary)]">
                     {hasData ? `${data.pct}%` : '—'}
@@ -483,7 +494,7 @@ export default function MaProgressionView({ initialProfile, compact = false }: M
                   aria-valuenow={hasData ? data.pct : 0}
                   aria-valuemin={0}
                   aria-valuemax={100}
-                  aria-label={`Compétence ${data.label}`}
+                  aria-label={t('progression.skillProgressAria', { skill: t(SKILL_LABEL_KEYS[key]) })}
                   className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-black/5"
                 >
                   <div
@@ -501,14 +512,14 @@ export default function MaProgressionView({ initialProfile, compact = false }: M
             {rank !== null && (
               <SummaryChip
                 icon={<Trophy size={15} />}
-                label={`Rang · ${filterLabel}`}
+                label={`${t('progression.rank')} · ${filterLabel}`}
                 value={`#${rank}`}
               />
             )}
             {challenge !== null && (
               <SummaryChip
                 icon={<Target size={15} />}
-                label="Prochain défi"
+                label={t('progression.nextChallenge')}
                 value={
                   challengePct !== null
                     ? `${challenge.title} · ${challenge.currentProgress}/${challenge.targetProgress} ${challenge.unit}`
@@ -519,8 +530,8 @@ export default function MaProgressionView({ initialProfile, compact = false }: M
             {usableBalance !== null && (
               <SummaryChip
                 icon={<Gift size={15} />}
-                label="Solde utilisable (récompenses uniquement)"
-                value={`${usableBalance.toLocaleString('fr-FR')} pts`}
+                label={t('progression.usableBalance')}
+                value={`${formatNumber(usableBalance, {}, locale)} ${t('progression.pointsShort')}`}
               />
             )}
           </div>
@@ -531,7 +542,7 @@ export default function MaProgressionView({ initialProfile, compact = false }: M
           challenge === null &&
           usableBalance === null && (
             <p className="mt-3 text-xs text-[var(--lkv-text-secondary)]">
-              Aucun rang, défi ou solde à afficher pour le moment.
+              {t('progression.emptySummary')}
             </p>
           )}
       </section>
@@ -539,16 +550,19 @@ export default function MaProgressionView({ initialProfile, compact = false }: M
       {/* ── (c) SECTIONS DÉTAILLÉES — repliées par défaut ── */}
 
       <ProgressionSection
-        title="Classement territorial"
+        title={t('progression.leaderboard')}
         summary={
           leaderboard
-            ? `${leaderboard.totalParticipants} participant${leaderboard.totalParticipants > 1 ? 's' : ''} · ${filterLabel}`
-            : '5 filtres : 1 km, ville, région, pays, monde'
+            ? `${plural(locale, leaderboard.totalParticipants, {
+                one: t('progression.participantOne', { count: leaderboard.totalParticipants }),
+                other: t('progression.participantOther', { count: leaderboard.totalParticipants }),
+              })} · ${filterLabel}`
+            : t('progression.leaderboardFiltersSummary')
         }
       >
         <div
           role="tablist"
-          aria-label="Filtres de classement territorial"
+          aria-label={t('progression.leaderboardFiltersAria')}
           className="glass-capsule-bar no-scrollbar mb-4 overflow-x-auto p-1"
         >
           <div className="flex min-w-max items-center gap-1">
@@ -565,7 +579,7 @@ export default function MaProgressionView({ initialProfile, compact = false }: M
                   }`}
                 >
                   <Icon name={f.icon} size={13} />
-                  <span>{f.label}</span>
+                  <span>{t(f.labelKey)}</span>
                 </button>
               );
             })}
@@ -574,26 +588,25 @@ export default function MaProgressionView({ initialProfile, compact = false }: M
 
         {leaderboardUnavailable && (
           <p className="mb-4 rounded-2xl border border-white/80 bg-white/60 p-3 text-xs text-[var(--lkv-text-secondary)]">
-            Classement momentanément indisponible. Réessayez dans un instant.
+            {t('progression.leaderboardUnavailable')}
           </p>
         )}
 
         {leaderboard?.seasonUnavailable && (
           <p className="mb-4 rounded-2xl border border-white/80 bg-white/60 p-3 text-xs text-[var(--lkv-text-secondary)]">
-            Aucune saison active : le classement de saison n’est pas disponible.
+            {t('progression.seasonUnavailable')}
           </p>
         )}
 
         {leaderboard?.territoryMissing && (
           <p className="mb-4 rounded-2xl border border-white/80 bg-white/60 p-3 text-xs text-[var(--lkv-text-secondary)]">
-            Aucun territoire déclaré pour ce filtre. Déclarez votre commune pour rejoindre le
-            classement.
+            {t('progression.territoryMissing')}
           </p>
         )}
 
         {leaderboard?.localUnavailable && (
           <p className="mb-4 rounded-2xl border border-white/80 bg-white/60 p-3 text-xs text-[var(--lkv-text-secondary)]">
-            Classement à 1 km indisponible : {reasonLabel(leaderboard.reason)}.
+            {t('progression.localUnavailable', { reason: reasonLabel(leaderboard.reason, t) })}
           </p>
         )}
 
@@ -603,11 +616,10 @@ export default function MaProgressionView({ initialProfile, compact = false }: M
               🌱
             </div>
             <h4 className="text-sm font-bold text-[var(--lkv-text-primary)]">
-              Communauté en formation dans cette zone
+              {t('progression.communityForming')}
             </h4>
             <p className="mx-auto max-w-md text-xs leading-relaxed text-[var(--lkv-text-muted)]">
-              Il y a actuellement moins de {leaderboard.minParticipants} explorateurs actifs dans ce
-              périmètre. Élargissez votre vue ou soyez le premier à poser votre trace.
+              {t('progression.communityFormingBody', { count: leaderboard.minParticipants })}
             </p>
           </div>
         )}
@@ -615,7 +627,7 @@ export default function MaProgressionView({ initialProfile, compact = false }: M
         <div className="space-y-2">
           {loadingLeaderboard ? (
             <div className="py-6 text-center text-xs font-medium text-[var(--lkv-text-muted)]">
-              Chargement du classement...
+              {t('progression.loadingLeaderboard')}
             </div>
           ) : leaderboard?.rows && leaderboard.rows.length > 0 ? (
             leaderboard.rows.map((entry) => {
@@ -644,20 +656,22 @@ export default function MaProgressionView({ initialProfile, compact = false }: M
                             : 'text-[var(--lkv-text-primary)]'
                         }`}
                       >
-                        {entry.alias ?? '—'} {isCurrentUser ? '(Vous)' : ''}
+                        {entry.alias ?? '—'} {isCurrentUser ? t('progression.you') : ''}
                       </span>
                       <span className="block text-[10.5px] text-[var(--lkv-text-muted)]">
-                        {entry.level !== null ? `Niv. ${entry.level}` : 'Niveau —'}
+                        {entry.level !== null
+                          ? `${t('progression.levelShort')} ${entry.level}`
+                          : `${t('progression.level')} —`}
                         {entry.levelTitle ? ` · ${entry.levelTitle}` : ''}
                       </span>
                     </div>
                   </div>
                   <div className="shrink-0 text-right">
                     <span className="block font-mono text-xs font-extrabold text-[var(--lkv-primary)] sm:text-sm">
-                      {entry.seasonPoints.toLocaleString('fr-FR')} pts
+                      {formatNumber(entry.seasonPoints, {}, locale)} {t('progression.pointsShort')}
                     </span>
                     <span className="font-mono text-[9.5px] text-[var(--lkv-text-muted)]">
-                      saison en cours
+                      {t('progression.currentSeason')}
                     </span>
                   </div>
                 </div>
@@ -666,7 +680,7 @@ export default function MaProgressionView({ initialProfile, compact = false }: M
           ) : (
             !leaderboardUnavailable && (
               <div className="py-5 text-center text-xs italic text-[var(--lkv-text-muted)]">
-                Aucun participant pour ce filtre actuellement.
+                {t('progression.noParticipant')}
               </div>
             )
           )}
@@ -674,11 +688,11 @@ export default function MaProgressionView({ initialProfile, compact = false }: M
       </ProgressionSection>
 
       <ProgressionSection
-        title="Défis"
+        title={t('progression.challenges')}
         summary={
           challenge
-            ? `Défi en cours · +${challenge.pointsReward} pts`
-            : 'Aucun défi en cours'
+            ? `${t('progression.challengeInProgress')} · +${challenge.pointsReward} ${t('progression.pointsShort')}`
+            : t('progression.challengeNone')
         }
       >
         {challenge ? (
@@ -688,7 +702,7 @@ export default function MaProgressionView({ initialProfile, compact = false }: M
                 {challenge.title}
               </h3>
               <span className="glass-pill text-[10px] font-mono font-bold text-[var(--lkv-primary)]">
-                +{challenge.pointsReward} pts
+                +{challenge.pointsReward} {t('progression.pointsShort')}
               </span>
             </div>
             <p className="mt-1 text-xs leading-relaxed text-[var(--lkv-text-secondary)]">
@@ -705,7 +719,7 @@ export default function MaProgressionView({ initialProfile, compact = false }: M
               aria-valuenow={challengePct ?? 0}
               aria-valuemin={0}
               aria-valuemax={100}
-              aria-label="Avancement du défi"
+              aria-label={t('progression.challengeProgressAria')}
               className="mt-1.5 h-2 w-full overflow-hidden rounded-full bg-black/5"
             >
               <div
@@ -715,7 +729,7 @@ export default function MaProgressionView({ initialProfile, compact = false }: M
             </div>
             {challenge.isCompleted && (
               <p className="mt-2 text-xs font-semibold text-[var(--lkv-primary)]">
-                Objectif atteint.
+                {t('progression.challengeCompleted')}
               </p>
             )}
             {/* Le remplacement 1/semaine n'est pas disponible : la route
@@ -724,40 +738,41 @@ export default function MaProgressionView({ initialProfile, compact = false }: M
           </div>
         ) : (
           <p className="text-xs leading-relaxed text-[var(--lkv-text-secondary)]">
-            Aucun défi en cours. Les défis sont attribués avec la saison et progressent à partir
-            de vos événements validés — aucune sanction d’absence.
+            {t('progression.challengeNoneBody')}
           </p>
         )}
       </ProgressionSection>
 
       <ProgressionSection
-        title="Distinctions"
+        title={t('progression.distinctions')}
         summary={
           distinctions.status === 'ready'
             ? distinctions.items.length > 0
-              ? `${distinctions.items.length} distinction${distinctions.items.length > 1 ? 's' : ''} obtenue${distinctions.items.length > 1 ? 's' : ''}`
-              : 'Aucune distinction obtenue'
-            : 'Vos badges obtenus'
+              ? plural(locale, distinctions.items.length, {
+                  one: t('progression.distinctionOne', { count: distinctions.items.length }),
+                  other: t('progression.distinctionOther', { count: distinctions.items.length }),
+                })
+              : t('progression.distinctionNone')
+            : t('progression.distinctionsDefault')
         }
       >
         {distinctions.status === 'loading' && (
-          <p className="text-xs text-[var(--lkv-text-muted)]">Chargement des distinctions...</p>
+          <p className="text-xs text-[var(--lkv-text-muted)]">{t('progression.loadingDistinctions')}</p>
         )}
         {distinctions.status === 'unavailable' && (
           <p className="text-xs text-[var(--lkv-text-secondary)]">
-            Distinctions indisponibles pour le moment.
+            {t('progression.distinctionUnavailable')}
           </p>
         )}
         {distinctions.status === 'ready' && distinctions.items.length === 0 && (
           <p className="text-xs leading-relaxed text-[var(--lkv-text-secondary)]">
-            Aucune distinction obtenue pour le moment. Vos badges historiques apparaîtront ici
-            dès qu’ils seront attribués.
+            {t('progression.distinctionEmpty')}
           </p>
         )}
         {distinctions.status === 'ready' && distinctions.items.length > 0 && (
           <ul className="grid grid-cols-1 gap-2 sm:grid-cols-2">
             {distinctions.items.map((distinction) => {
-              const earnedLabel = formatDate(distinction.earnedAt);
+              const earnedLabel = formatDate(distinction.earnedAt, undefined, locale);
               return (
                 <li
                   key={distinction.id}
@@ -771,10 +786,12 @@ export default function MaProgressionView({ initialProfile, compact = false }: M
                   </span>
                   <span className="min-w-0">
                     <span className="block truncate text-xs font-bold text-[var(--lkv-text-primary)]">
-                      {distinction.name}
+                      {distinction.name || t('progression.distinctionFallbackName')}
                     </span>
                     <span className="block text-[10.5px] text-[var(--lkv-text-muted)]">
-                      {earnedLabel ? `Obtenue le ${earnedLabel}` : 'Obtenue'}
+                      {earnedLabel
+                        ? t('progression.distinctionEarnedOn', { date: earnedLabel })
+                        : t('progression.distinctionEarned')}
                     </span>
                   </span>
                 </li>
@@ -785,38 +802,40 @@ export default function MaProgressionView({ initialProfile, compact = false }: M
       </ProgressionSection>
 
       <ProgressionSection
-        title="Historique de gains"
+        title={t('progression.gainsHistory')}
         summary={
           gains.status === 'ready'
             ? gains.items.length > 0
-              ? `${gains.items.length} gain${gains.items.length > 1 ? 's' : ''} récent${gains.items.length > 1 ? 's' : ''}`
-              : 'Aucun gain enregistré'
-            : 'Vos derniers gains validés'
+              ? plural(locale, gains.items.length, {
+                  one: t('progression.gainOne', { count: gains.items.length }),
+                  other: t('progression.gainOther', { count: gains.items.length }),
+                })
+              : t('progression.gainsNone')
+            : t('progression.gainsLast')
         }
       >
         {gains.status === 'loading' && (
-          <p className="text-xs text-[var(--lkv-text-muted)]">Chargement de l’historique...</p>
+          <p className="text-xs text-[var(--lkv-text-muted)]">{t('progression.loadingGains')}</p>
         )}
         {gains.status === 'unavailable' && (
           <p className="text-xs text-[var(--lkv-text-secondary)]">
-            Historique indisponible pour le moment.
+            {t('progression.gainsUnavailable')}
           </p>
         )}
         {gains.status === 'ready' && gains.items.length === 0 && (
           <p className="text-xs leading-relaxed text-[var(--lkv-text-secondary)]">
-            Aucun gain enregistré pour le moment. Les points sont crédités après validation
-            serveur de vos actions.
+            {t('progression.gainsNoneBody')}
           </p>
         )}
         {gains.status === 'ready' && gains.items.length > 0 && (
           <ul className="divide-y divide-black/5">
             {gains.items.map((gain) => {
-              const dateLabel = formatDate(gain.createdAt);
+              const dateLabel = formatDate(gain.createdAt, undefined, locale);
               return (
                 <li key={gain.id} className="flex items-center justify-between gap-3 py-2.5">
                   <span className="min-w-0">
                     <span className="block truncate text-xs font-bold text-[var(--lkv-text-primary)]">
-                      {gain.label}
+                      {gainLabel(gain.type, t)}
                     </span>
                     {dateLabel && (
                       <span className="block text-[10.5px] text-[var(--lkv-text-muted)]">
@@ -825,7 +844,7 @@ export default function MaProgressionView({ initialProfile, compact = false }: M
                     )}
                   </span>
                   <span className="shrink-0 font-mono text-xs font-extrabold text-[var(--lkv-primary)]">
-                    +{gain.points.toLocaleString('fr-FR')} pts
+                    +{formatNumber(gain.points, {}, locale)} {t('progression.pointsShort')}
                   </span>
                 </li>
               );
@@ -836,19 +855,19 @@ export default function MaProgressionView({ initialProfile, compact = false }: M
           href="/recompenses"
           className="mt-3 inline-flex min-h-[44px] items-center text-xs font-bold text-[var(--lkv-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)]"
         >
-          Voir tout dans Récompenses →
+          {t('progression.seeAllRewards')}
         </Link>
       </ProgressionSection>
 
       {/* Liens économiques distincts : récompenses utilisables et fidélité historique. */}
-      <section aria-label="Récompenses et fidélité" className="flex flex-wrap gap-2">
+      <section aria-label={t('progression.rewardsAndLoyaltyAria')} className="flex flex-wrap gap-2">
         <Link href="/recompenses" className="glass-capsule-btn secondary">
           <Gift size={14} aria-hidden="true" />
-          <span>Récompenses</span>
+          <span>{t('progression.rewards')}</span>
         </Link>
         <Link href="/fidelite" className="glass-capsule-btn secondary">
           <Award size={14} aria-hidden="true" />
-          <span>Fidélité</span>
+          <span>{t('progression.loyalty')}</span>
         </Link>
       </section>
     </div>

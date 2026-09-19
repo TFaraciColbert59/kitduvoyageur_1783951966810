@@ -33,9 +33,11 @@ const FideliteTab = dynamic(() => import('@/components/compte/FideliteTab'), { s
 const MaProgressionView = dynamic(() => import('@/components/progression/MaProgressionView'), { ssr: false });
 import { useAuth } from '@/contexts/AuthContext';
 import { fetchDashboardData, type CompteDashboardData } from '@/lib/supabase/queries-compte';
+import { useTranslation } from '@/lib/i18n/context';
 
 export default function ComptePage() {
   const { user } = useAuth();
+  const { t } = useTranslation();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<CompteTab>('vue-d-ensemble');
   const [toast, setToast] = useState<string | null>(null);
@@ -86,7 +88,7 @@ export default function ComptePage() {
         <CompteBackground />
         <div className="glass rounded-2xl p-6 flex flex-col items-center gap-3">
           <div className="w-8 h-8 border-2 border-[var(--card-content)] border-t-transparent rounded-full animate-spin" />
-          <p className="text-sm text-[var(--card-content)] font-semibold">Chargement de votre tableau de bord...</p>
+          <p className="text-sm text-[var(--card-content)] font-semibold">{t('account.loadingDashboard')}</p>
         </div>
       </div>
     );
@@ -98,10 +100,10 @@ export default function ComptePage() {
         <div className="min-h-[70vh] flex items-center justify-center font-sans relative p-4">
           <div className="glass rounded-3xl p-8 text-center max-w-md shadow-xl">
             <p className="text-5xl mb-4">🔐</p>
-            <h2 className="font-display font-bold text-2xl text-[var(--card-content)] mb-2 tracking-tight">Connexion requise</h2>
-            <p className="text-sm text-[var(--glass-text-secondary)] mb-6">Connectez-vous pour accéder à votre tableau de bord voyageur.</p>
+            <h2 className="font-display font-bold text-2xl text-[var(--card-content)] mb-2 tracking-tight">{t('account.signInRequired')}</h2>
+            <p className="text-sm text-[var(--glass-text-secondary)] mb-6">{t('account.signInRequiredBody')}</p>
             <Link href="/connexion?mode=connexion" className="glass-capsule-btn primary">
-              Se connecter
+              {t('auth.submitSignIn')}
             </Link>
           </div>
         </div>
