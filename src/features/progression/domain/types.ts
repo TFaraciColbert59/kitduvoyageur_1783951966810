@@ -147,4 +147,16 @@ export interface TerritorialLeaderboard {
   communityForming: boolean;
   minParticipants: number;
   refreshedAt: string | null;
+  /** Rang du demandeur, fourni par le serveur même hors page courante. */
+  rank?: number | null;
+  /** Filtre 1 km indisponible (flag serveur éteint, rattachement privé absent…). */
+  localUnavailable?: boolean;
+  /** Territoire déclaré manquant pour le filtre demandé. */
+  territoryMissing?: boolean;
+  /** Aucune saison active côté serveur. */
+  seasonUnavailable?: boolean;
+  /** Raison honnête d'indisponibilité (`flag_off`, `no_private_attachment`…). */
+  reason?: string | null;
+  /** Erreur serveur explicite (`rate_limited`). */
+  error?: string | null;
 }

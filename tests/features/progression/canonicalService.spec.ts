@@ -30,7 +30,15 @@ interface TableState {
   error: { message: string } | null;
 }
 
-function createSupabaseMock(state: Record<string, TableState | undefined>) {
+interface RpcState {
+  data: unknown;
+  error: { message: string } | null;
+}
+
+function createSupabaseMock(
+  state: Record<string, TableState | undefined>,
+  rpcState?: Record<string, RpcState | undefined>
+) {
   const calls: Array<[string, ...unknown[]]> = [];
   const client = {
     from(table: string) {
@@ -59,12 +67,24 @@ function createSupabaseMock(state: Record<string, TableState | undefined>) {
       ) => Promise.resolve({ data: result.data, error: result.error }).then(resolve, reject);
       return builder;
     },
+    ...(rpcState
+      ? {
+          rpc: (name: string, params: unknown) => {
+            calls.push(['rpc', name, params]);
+            const result = rpcState[name] ?? { data: null, error: null };
+            return Promise.resolve({ data: result.data, error: result.error });
+          },
+        }
+      : {}),
   };
   return { client, calls };
 }
 
-function useMock(state: Record<string, TableState | undefined>) {
-  const mock = createSupabaseMock(state);
+function useMock(
+  state: Record<string, TableState | undefined>,
+  rpcState?: Record<string, RpcState | undefined>
+) {
+  const mock = createSupabaseMock(state, rpcState);
   mockedCreateClient.mockReturnValue(mock.client as never);
   return mock;
 }
@@ -281,6 +301,179 @@ describe('progressionService — classement territorial', () => {
     expect(serialized).not.toContain('uuid-autre');
     expect(serialized).not.toContain(USER_ID);
     expect(serialized).not.toContain('"user_id"');
+  });
+
+  it('RPC disponible : mappe le payload serveur, jamais d’UUID, rang fourni', async () => {
+    const { calls } = useMock(
+      {
+        progression_rules: { data: { payload: RULES_PAYLOAD }, error: null },
+      },
+      {
+        get_leaderboard: {
+          data: {
+            rows: [
+              {
+                alias: 'Voyageur abc123',
+                level: 3,
+                level_title: 'Arpenteur des Bois',
+                season_points: 300,
+                rank: 1,
+                is_current_user: false,
+              },
+              {
+                alias: 'Voyageur def456',
+                level: 2,
+                level_title: 'Marcheur Averti',
+                season_points: 100,
+                rank: 2,
+                is_current_user: true,
+              },
+            ],
+            total_participants: 2,
+            community_forming: true,
+            min_participants: 5,
+            refreshed_at: '2026-09-19T12:00:00.000Z',
+            rank: 2,
+          },
+          error: null,
+        },
+      }
+    );
+
+    const leaderboard = await getTerritorialLeaderboard(USER_ID, 'around_me', {
+      limit: 10,
+      cursor: { points: 500, userId: USER_ID },
+    });
+
+    expect(leaderboard.filter).toBe('around_me');
+    expect(leaderboard.rows).toHaveLength(2);
+    expect(leaderboard.rows[0]).toEqual({
+      rank: 1,
+      alias: 'Voyageur abc123',
+      level: 3,
+      levelTitle: 'Arpenteur des Bois',
+      seasonPoints: 300,
+      isCurrentUser: false,
+    });
+    expect(leaderboard.rows[1].isCurrentUser).toBe(true);
+    expect(leaderboard.rank).toBe(2);
+    expect(leaderboard.totalParticipants).toBe(2);
+    expect(leaderboard.communityForming).toBe(true);
+    expect(leaderboard.refreshedAt).toBe('2026-09-19T12:00:00.000Z');
+    expect(calls).toContainEqual([
+      'rpc',
+      'get_leaderboard',
+      {
+        p_user_id: USER_ID,
+        p_filter: 'local',
+        p_limit: 10,
+        p_cursor_points: 500,
+        p_cursor_user: USER_ID,
+      },
+    ]);
+
+    const serialized = JSON.stringify(leaderboard);
+    expect(serialized).not.toContain(USER_ID);
+    expect(serialized).not.toContain('"user_id"');
+    expect(serialized).not.toContain('lat');
+  });
+
+  it('RPC local sous flag off : local_unavailable + reason, aucune ligne inventée', async () => {
+    useMock(
+      {
+        progression_rules: { data: { payload: RULES_PAYLOAD }, error: null },
+      },
+      {
+        get_leaderboard: {
+          data: {
+            rows: [],
+            total_participants: 0,
+            community_forming: true,
+            min_participants: 5,
+            refreshed_at: null,
+            rank: null,
+            local_unavailable: true,
+            reason: 'flag_off',
+          },
+          error: null,
+        },
+      }
+    );
+
+    const leaderboard = await getTerritorialLeaderboard(USER_ID, 'around_me');
+
+    expect(leaderboard.rows).toEqual([]);
+    expect(leaderboard.communityForming).toBe(true);
+    expect(leaderboard.localUnavailable).toBe(true);
+    expect(leaderboard.reason).toBe('flag_off');
+  });
+
+  it('RPC rate limited : erreur explicite sans données', async () => {
+    useMock(
+      {
+        progression_rules: { data: { payload: RULES_PAYLOAD }, error: null },
+      },
+      {
+        get_leaderboard: {
+          data: { error: 'rate_limited' },
+          error: null,
+        },
+      }
+    );
+
+    const leaderboard = await getTerritorialLeaderboard(USER_ID, 'around_me');
+
+    expect(leaderboard.error).toBe('rate_limited');
+    expect(leaderboard.rows).toEqual([]);
+    expect(leaderboard.totalParticipants).toBe(0);
+  });
+
+  it('RPC absente + filtre 1 km : jamais d’élargissement silencieux', async () => {
+    useMock({
+      progression_rules: { data: { payload: RULES_PAYLOAD }, error: null },
+      progression_leaderboard_agg: {
+        data: [{ user_id: USER_ID, season_points: 90, level: 2, alias: 'Voyageur' }],
+        error: null,
+      },
+    });
+
+    const leaderboard = await getTerritorialLeaderboard(USER_ID, 'around_me');
+
+    expect(leaderboard.rows).toEqual([]);
+    expect(leaderboard.totalParticipants).toBe(0);
+    expect(leaderboard.localUnavailable).toBe(true);
+    expect(leaderboard.reason).toBe('rpc_unavailable');
+  });
+
+  it('RPC en erreur : repli honnête sur la lecture tolérante des agrégats', async () => {
+    const { calls } = useMock(
+      {
+        progression_rules: { data: { payload: RULES_PAYLOAD }, error: null },
+        progression_leaderboard_agg: {
+          data: [{ user_id: USER_ID, season_points: 30, level: 1, alias: 'Voyageur' }],
+          error: null,
+        },
+      },
+      {
+        get_leaderboard: { data: null, error: { message: 'relation absente' } },
+      }
+    );
+
+    const leaderboard = await getTerritorialLeaderboard(USER_ID, 'world');
+
+    expect(leaderboard.rows).toHaveLength(1);
+    expect(leaderboard.rows[0].isCurrentUser).toBe(true);
+    expect(calls).toContainEqual([
+      'rpc',
+      'get_leaderboard',
+      {
+        p_user_id: USER_ID,
+        p_filter: 'world',
+        p_limit: 50,
+        p_cursor_points: null,
+        p_cursor_user: null,
+      },
+    ]);
   });
 });
 

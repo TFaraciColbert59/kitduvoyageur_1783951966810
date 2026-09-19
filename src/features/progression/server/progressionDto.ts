@@ -134,7 +134,7 @@ export function isSkillType(value: unknown): value is SkillType {
   return typeof value === 'string' && (SKILL_TYPES as string[]).includes(value);
 }
 
-function clampPoints(value: number | null | undefined): number {
+export function clampPoints(value: number | null | undefined): number {
   const numeric = Number(value);
   return Number.isFinite(numeric) && numeric > 0 ? Math.floor(numeric) : 0;
 }
