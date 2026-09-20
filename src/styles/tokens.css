@@ -261,6 +261,112 @@
   --warning-bg: var(--lkv-warning-bg);
 }
 
+/* ══════════════════════════════════════════════════════════════════
+   PHASE 1 — Échelles complémentaires (additif, sans redesign)
+   Catégories manquantes pour piloter la refonte Phase 2 depuis un
+   nombre limité de fichiers : contrôles, icônes, opacités, z-index
+   overlay, safe areas, breakpoints, typographie étendue, flous
+   canoniques, largeurs de bordure, motion.
+   Aucune valeur existante n'est modifiée.
+   ══════════════════════════════════════════════════════════════════ */
+:root {
+  /* ├─ Contrôles (hauteurs & paddings canoniques) */
+  --control-height-xs: 32px;
+  --control-height-sm: 36px;
+  --control-height-md: var(--lkv-touch-min);          /* 44px */
+  --control-height-lg: var(--lkv-touch-comfortable);  /* 48px */
+  --control-height-xl: 56px;
+  --control-padding-x-sm: 12px;
+  --control-padding-x-md: 16px;
+  --control-padding-x-lg: 24px;
+  --control-radius: var(--lkv-radius-sm);
+  --control-radius-pill: var(--lkv-radius-full);
+
+  /* ├─ Tailles d'icônes */
+  --icon-xs: 12px;
+  --icon-sm: 16px;
+  --icon-md: 20px;
+  --icon-lg: 24px;
+  --icon-xl: 32px;
+  --icon-2xl: 48px;
+
+  /* ├─ Opacités */
+  --opacity-0: 0;
+  --opacity-5: 0.05;
+  --opacity-10: 0.1;
+  --opacity-20: 0.2;
+  --opacity-30: 0.3;
+  --opacity-40: 0.4;
+  --opacity-50: 0.5;
+  --opacity-60: 0.6;
+  --opacity-70: 0.7;
+  --opacity-80: 0.8;
+  --opacity-90: 0.9;
+  --opacity-95: 0.95;
+  --opacity-100: 1;
+  --opacity-disabled: var(--btn-disabled-opacity);   /* 0.45 */
+  --opacity-muted: 0.6;
+  --opacity-subtle: 0.4;
+  --opacity-scrim: 0.45;
+
+  /* ├─ Z-index (compléments aux tokens exclusifs §6) */
+  --z-dropdown: 10;
+  --z-fab: 30;
+  --z-modal: 55;      /* au-dessus sheet (50), sous command (60) */
+  --z-popover: 65;
+  --z-tooltip: 80;
+  --z-emergency: 90;
+
+  /* ├─ Safe areas (alias des env() iOS/Android) */
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+
+  /* ├─ Breakpoints (miroir Tailwind, utilisables en JS) */
+  --bp-sm: 640px;
+  --bp-md: 768px;
+  --bp-lg: 1024px;
+  --bp-xl: 1280px;
+  --bp-2xl: 1536px;
+
+  /* ├─ Typographie étendue */
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  --leading-tight: 1.2;
+  --leading-snug: 1.35;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.65;
+  --tracking-tight: -0.01em;
+  --tracking-normal: 0em;
+  --tracking-wide: 0.02em;
+  --tracking-caps: 0.04em;
+
+  /* ├─ Flous canoniques (échelle cible Phase 2) */
+  --blur-none: 0px;
+  --blur-sm: 4px;
+  --blur-md: 8px;
+  --blur-lg: 16px;
+  --blur-xl: 24px;
+  --blur-2xl: 40px;
+
+  /* ├─ Largeurs de bordure */
+  --border-width-hairline: 0.5px;
+  --border-width-thin: 1px;
+  --border-width-medium: 1.5px;
+  --border-width-thick: 2px;
+
+  /* ├─ Surfaces complémentaires */
+  --lkv-surface-raised: var(--lkv-surface-card);
+
+  /* ├─ Motion (alias canoniques des easings historiques) */
+  --dur-instant: 80ms;
+  --spring-smooth: var(--ease-smooth);
+  --spring-bounce: var(--ease-spring);
+}
+
 /* Liquid Glass: one material scale, shared across all routes.
    Les valeurs --glass-* sont reliées aux tokens --card-* (STYLE UNIQUE) :
    modifier --card-* met à jour toutes les cards du site. */

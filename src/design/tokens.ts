@@ -68,6 +68,18 @@ export const typography = {
     bold: '700',
     extrabold: '800',
   },
+  leading: {
+    tight: 'var(--leading-tight)',
+    snug: 'var(--leading-snug)',
+    normal: 'var(--leading-normal)',
+    relaxed: 'var(--leading-relaxed)',
+  },
+  tracking: {
+    tight: 'var(--tracking-tight)',
+    normal: 'var(--tracking-normal)',
+    wide: 'var(--tracking-wide)',
+    caps: 'var(--tracking-caps)',
+  },
 } as const;
 
 export const spacing = {
@@ -82,6 +94,110 @@ export const spacing = {
   10: 'var(--space-10)',
   12: 'var(--space-12)',
   16: 'var(--space-16)',
+} as const;
+
+export const controlSizes = {
+  xs: 'var(--control-height-xs)',
+  sm: 'var(--control-height-sm)',
+  md: 'var(--control-height-md)',
+  lg: 'var(--control-height-lg)',
+  xl: 'var(--control-height-xl)',
+} as const;
+
+export const iconSizes = {
+  xs: 'var(--icon-xs)',
+  sm: 'var(--icon-sm)',
+  md: 'var(--icon-md)',
+  lg: 'var(--icon-lg)',
+  xl: 'var(--icon-xl)',
+  '2xl': 'var(--icon-2xl)',
+} as const;
+
+export const opacity = {
+  0: 'var(--opacity-0)',
+  5: 'var(--opacity-5)',
+  10: 'var(--opacity-10)',
+  20: 'var(--opacity-20)',
+  30: 'var(--opacity-30)',
+  40: 'var(--opacity-40)',
+  50: 'var(--opacity-50)',
+  60: 'var(--opacity-60)',
+  70: 'var(--opacity-70)',
+  80: 'var(--opacity-80)',
+  90: 'var(--opacity-90)',
+  95: 'var(--opacity-95)',
+  100: 'var(--opacity-100)',
+  disabled: 'var(--opacity-disabled)',
+  muted: 'var(--opacity-muted)',
+  subtle: 'var(--opacity-subtle)',
+  scrim: 'var(--opacity-scrim)',
+} as const;
+
+export const zIndex = {
+  base: 'var(--z-base)',
+  dropdown: 'var(--z-dropdown)',
+  sticky: 'var(--z-sticky)',
+  fab: 'var(--z-fab)',
+  drawer: 'var(--z-drawer)',
+  sheet: 'var(--z-sheet)',
+  modal: 'var(--z-modal)',
+  command: 'var(--z-command)',
+  popover: 'var(--z-popover)',
+  toast: 'var(--z-toast)',
+  tooltip: 'var(--z-tooltip)',
+  emergency: 'var(--z-emergency)',
+} as const;
+
+export const safeArea = {
+  top: 'var(--safe-top)',
+  right: 'var(--safe-right)',
+  bottom: 'var(--safe-bottom)',
+  left: 'var(--safe-left)',
+} as const;
+
+/* Miroir des breakpoints Tailwind. En CSS, les media queries ne peuvent pas
+ * consommer var() : les valeurs brutes sont conservées ici pour le JS
+ * (matchMedia) et documentées dans tokens.css (--bp-*). */
+export const breakpoints = {
+  sm: '640px',
+  md: '768px',
+  lg: '1024px',
+  xl: '1280px',
+  '2xl': '1536px',
+} as const;
+
+export const blur = {
+  none: 'var(--blur-none)',
+  sm: 'var(--blur-sm)',
+  md: 'var(--blur-md)',
+  lg: 'var(--blur-lg)',
+  xl: 'var(--blur-xl)',
+  '2xl': 'var(--blur-2xl)',
+} as const;
+
+export const borders = {
+  hairline: 'var(--border-width-hairline)',
+  thin: 'var(--border-width-thin)',
+  medium: 'var(--border-width-medium)',
+  thick: 'var(--border-width-thick)',
+} as const;
+
+export const motion = {
+  duration: {
+    instant: 'var(--dur-instant)',
+    xfast: 'var(--dur-xfast)',
+    fast: 'var(--dur-fast)',
+    med: 'var(--dur-med)',
+    slow: 'var(--dur-slow)',
+    xslow: 'var(--dur-xslow)',
+  },
+  easing: {
+    glass: 'var(--ease-glass)',
+    spring: 'var(--ease-spring)',
+    smooth: 'var(--ease-smooth)',
+    out: 'var(--ease-out)',
+    emphasis: 'var(--ease-emphasis)',
+  },
 } as const;
 
 export const radius = {
@@ -179,6 +295,15 @@ export const theme = {
   radius,
   shadows,
   transition,
+  controlSizes,
+  iconSizes,
+  opacity,
+  zIndex,
+  safeArea,
+  breakpoints,
+  blur,
+  borders,
+  motion,
 };
 
 export default theme;

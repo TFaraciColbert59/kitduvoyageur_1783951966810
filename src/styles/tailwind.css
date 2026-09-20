@@ -693,11 +693,7 @@
   .delay-400 { animation-delay: 400ms; }
   .delay-500 { animation-delay: 500ms; }
 
-  /* Safe Areas */
-  .pt-safe { padding-top: env(safe-area-inset-top); }
-  .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
-  .pl-safe { padding-left: env(safe-area-inset-left); }
-  .pr-safe { padding-right: env(safe-area-inset-right); }
+  /* Safe Areas — définitions canoniques plus bas (§5, .pt-safe/.pb-safe) */
 
   /* Touch Targets */
   .touch-target {
@@ -714,11 +710,6 @@
     scrollbar-width: none;
   }
   .scrollbar-hide::-webkit-scrollbar { display: none; }
-
-  .dark-surface {
-    background-color: var(--dark-bg);
-    color: var(--secondary-foreground);
-  }
 
   .mono-data {
     font-family: var(--font-mono);
@@ -743,13 +734,6 @@
 
   .nav-underline:hover::after,
   .nav-underline.active::after { width: 100%; }
-
-  .gradient-text-green {
-    background: linear-gradient(135deg, var(--forest-600) 0%, var(--forest-400) 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
 
   .img-hover-zoom { overflow: hidden; }
 
