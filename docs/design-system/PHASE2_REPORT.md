@@ -232,11 +232,77 @@ Toutes les valeurs viennent des tokens (contrôles, radius, typographie, couleur
 7. `ReportBlockModal` : dernier `confirm()` natif.
 8. Formulaires legacy (`LkvInput` & co) à généraliser.
 
+## Lot 5 — Modales/Sheets canoniques + découpage BottomTabBar (TERMINÉ pour ce périmètre)
+
+### Primitives canoniques d'overlay
+
+| Primitive | Rôle | API |
+|---|---|---|
+| `Modal` | information / édition / formulaire léger | `open`, `onOpenChange`, `title`, `description`, `children`, `footer`, `size` sm/md/lg, `scrollable`, `loading`, `dismissible`, `hideTitle` |
+| `Sheet` | sélection / actions mobiles | `open`, `onOpenChange`, `title`, `children`, `footer`, `detent` auto/medium/large, `dismissible` — safe-area bas, scroll interne, poignée |
+| `ConfirmDialog` | confirmation (lot 3) | inchangé |
+| `PromptDialog` | saisie courte (lot 4) | inchangé |
+
+- `GlassModal` (23), `GlassSheet` (5), `PremiumBottomSheet` (2) : **0 consommateur → supprimés** (+ exports retirés).
+- Legacy `Sheet` (`isOpen/onClose`) remplacé par la nouvelle API (28 importeurs au total).
+- `GlassDrawer` (10 importeurs) : **exception documentée** — panneau latéral desktop, pattern distinct conservé.
+
+### Overlays `role="dialog"` maison : 17 → 11
+
+Migrés : `panier` (confirm → `lkvConfirm`), `ProposalCard` → `Modal`, `ClubGroupsTab`, `EphemeralGroupSheet`, `QuickReportSheet` → `Sheet`.
+Exceptions documentées (11) : `ImageViewer`, `StoriesViewer` (média), `MobileDrawer` (tiroir latéral), `SearchOverlay` (recherche live), `TerrainLiveCockpitControl` + `AdventureCockpitControl` (cockpits drag), `GlassBreakModal` ×2 (urgence médicale, matériau custom + re-verrouillage), `AddParticipantModal`/`AddGearModal` (formulaires préparation matériau forêt), `useHubSwipeNav` (sélecteur CSS, pas un dialogue).
+Sheets sociales détectées hors périmètre (`social/ReportSheet`, `MoreMenuSheet`, `CommentsSheet`) → candidates lot suivant.
+
+### Confirm/alert/prompt natifs : 0
+
+`ReportBlockModal` migré (`confirm` → `lkvConfirm` destructif, `alert` → `lkvAlert`). Plus aucun appel navigateur applicatif.
+
+### BottomTabBar découpée (961 → 8 modules ≤ 250 lignes)
+
+`navigation/` : `WebNavigationBar` (79) · `NavigationSurface` (127) · `NavigationPlateau` (224) · `useNavigationPlateau` (239) · `TabItem` (198) · `HamburgerMenu` (196) · `ProminentAction` (28) · `useNavigationBadges` (20) ; `NavigationBar` (17) reste le point de bascule (`NATIVE_TABBAR_ENABLED = false`) ; `destinationRegistry` non dupliqué ; `BottomTabBar.tsx` supprimé. Comportement conservé (11 événements écoutés, 9 émis, haptics, prefetch, masquage, badges, appui long 550 ms).
+
+### Métriques avant / après
+
+| Mesure | Avant lot 5 | Après lot 5 |
+|---|---|---|
+| Importeurs `GlassModal` / `GlassSheet` / `PremiumBottomSheet` | 23 / 5 / 2 | **0 / 0 / 0** |
+| `Sheet` canonique | legacy | **28 importeurs** · `Modal` 7 |
+| `role="dialog"` maison | 17 | **11** (exceptions documentées) |
+| `confirm/alert/prompt` natifs | 1 | **0** |
+| Bottom bars détectées | 3 | **2** (`WebNavigationBar` + desktop) |
+| BottomTabBar LOC | 961 | **0** (8 modules ≤ 250) |
+| Styles inline | 1 522 | **1 513** |
+| Hex | 5 192 | **5 188** |
+| `z-[…]` littéraux | 79 | **77** |
+| `rounded-[…]` littéraux | 218 | **217** |
+| Primitives `ui/` | 53 | **51** |
+
+### Captures et tests
+
+- Captures : `docs/design-system/phase2-screenshots/lot5/` (60 fichiers).
+- `type-check` ✅ 0 · `lint` ✅ 0 · `vitest` ✅ 407 fichiers / **2 946 tests** · `build` ✅ 13,1 s.
+
+### Exceptions / régressions assumées
+
+1. Drag-to-dismiss et snap points non repris dans la nouvelle `Sheet` (2 écrans concernés) — à restaurer si l'UX le justifie.
+2. `GlassSheet` plein écran → bottom sheet 90dvh sur 4 écrans (changement voulu).
+3. `KitSheetModal` perd le centrage desktop ; texte « glissez la poignée » retiré de `MomentMapCard`.
+4. Animations de sortie absentes des nouvelles primitives (entrée seule, comme `ConfirmDialog`).
+
+### Dette restante (Lot 6)
+
+1. **13 headers custom** → `PageHeader` ; **11 `role="dialog"`** exceptions ; 3 sheets sociales.
+2. Consolidation `Badge`/`LkvChip` (information/statut vs action/sélection).
+3. **217 `rounded-[…]`** et **77 `z-[…]`** littéraux ; **5 188 hex** ; **1 513 styles inline**.
+4. **54 paires desktop/mobile** à fusionner sur les cas simples.
+5. Drag/snap de la Sheet, animations de sortie, `GlassDrawer` (10 importeurs) à trancher.
+6. Formulaires legacy (`LkvInput` & co).
+
 ## Lots suivants
 
 | Lot | Contenu | Statut |
 |---|---|---|
-| 5 | Headers, overlays/modales canoniques, purge rounded/z, pages desktop/mobile, découpage BottomTabBar | à faire |
+| 6 | Headers, Badge/Chip, purge rounded/z/hex/inline, paires desktop-mobile, finitions Sheet | à faire |
 
 ## Risques / points ouverts
 
