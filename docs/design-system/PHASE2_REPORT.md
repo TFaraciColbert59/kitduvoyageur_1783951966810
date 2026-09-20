@@ -381,11 +381,48 @@ Sheets sociales détectées hors périmètre (`social/ReportSheet`, `MoreMenuShe
 
 ### Prochaine famille : **Matériel / kits / départ** (famille 2)
 
+## Lot 6 — Itération 2 · Famille 2 : Matériel / Kits / Départ (TERMINÉE)
+
+### Périmètre et résultat
+120 fichiers (app matériel/kits + `features/materiel` + partagés) ; **60 fichiers modifiés** (57 source + 3 tests), **0 supprimé** (staging mort non touché).
+
+| Mesure (périmètre famille 2) | Avant | Après |
+|---|---|---|
+| Hex UI | 62 | **0** |
+| `rounded-[…]` littéraux | 17 | **0** |
+| `z-[…]` littéraux | 2 | **0** |
+| `<button>` bruts | 91 | **7** (6 fichiers morts + 1 exception live) |
+| Overlays custom `fixed inset-0` | 4 | **1** (backdrop listbox, z tokenisé) |
+| Classes legacy `glass-*` | 152 | **32** (30 fichiers/CSS morts + 2 `glass-progress` contractuels) |
+| Styles inline | 15 | **14** (tous dynamiques) |
+
+- Migrations : 84 boutons live → `Button`/`IconButton`/`Chip`/`Tabs`, overlays → `Modal`/`Sheet`/`lkvConfirm`, états → `EmptyState`/`LoadingState`/`Skeleton`, recherche → `SearchField`, pastilles → `Badge`, lignes → `ListItem`, surfaces → `Card`, headers → `PageHeader` — **Smart Departure inclus** (mêmes primitives).
+- Exception documentée : `DepartChecklist.tsx:606` (accordéon disclosure `aria-expanded` dense), `glass-progress` (contrat de test), contrôles natifs `<select>`/checkbox tokenisés, `window.print()` conservé.
+- **Logique métier intacte** : aucun fichier actions/domain/services/hooks/store modifié ; `NATIVE_TABBAR_ENABLED` inchangé.
+
+### Métriques globales après famille 2
+
+| Mesure | Après famille 1 | Après famille 2 |
+|---|---|---|
+| Headers custom | 0 | **0** |
+| `rounded-[…]` littéraux | 145 | **138** |
+| `z-[…]` littéraux | 68 | **66** |
+| Hex | 5 147 | **5 085** |
+| Styles inline | 1 490 | **1 489** |
+| Paires desktop/mobile | 54 | 54 |
+| Bottom bars | 2 | 2 |
+| Overlays custom | 11 | 11 |
+
+### Vérification
+`type-check` ✅ 0 · `lint` ✅ 0 · `vitest` ✅ 407 fichiers / **2 946 tests** · `build` ✅ 17,9 s · **60 captures** `phase2-screenshots/lot6-famille2/`. 3 tests adaptés (classes → tokens, `<hr>` → `Divider`, `glass-pill` → `Badge`), **aucun supprimé**.
+
+### Prochaine famille : **Famille 3 — Voyage / préparation**
+
 ## Lots suivants
 
 | Lot | Contenu | Statut |
 |---|---|---|
-| 6 (suite) | Famille 2 Matériel/kits/départ → … → famille 9 secondaires | en cours |
+| 6 (suite) | Famille 3 Voyage/préparation → … → famille 9 secondaires | en cours |
 
 ## Risques / points ouverts
 
