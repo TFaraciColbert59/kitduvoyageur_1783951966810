@@ -36,7 +36,7 @@ export interface TerritoryState {
 export type TerritoryWriteResult =
   | { ok: true; declared: TerritoryState['declared'] }
   | { ok: true; privateAttachment: TerritoryState['privateAttachment'] }
-  | { ok: false; error: 'consent_required' | 'invalid_coordinates' | 'lock_active' | 'correction_limit' };
+  | { ok: false; error: 'consent_required' | 'invalid_coordinates' | 'lock_active' | 'correction_limit' | 'territory_locked_24h' };
 
 const CORRECTION_WINDOW_DAYS = 30;
 
@@ -127,6 +127,42 @@ export async function updateDeclaredTerritory(
 ): Promise<TerritoryWriteResult> {
   const supabase = createTerritoryServiceClient();
   const countryCode = normalizeCode(input.country_code);
+  const nextCity = normalizeCode(input.city_code);
+  const nextRegion = normalizeCode(input.region_code);
+
+  // Anti-manipulation de classement : un changement réel de ville/région/pays
+  // est plafonné à un par 24 h et journalisé ; re-soumettre l'identique est libre.
+  const { data: current } = await supabase
+    .from('user_territory')
+    .select('city_code, region_code, country_code')
+    .eq('user_id', userId)
+    .maybeSingle();
+
+  const unchanged =
+    current !== null &&
+    (current.city_code ?? null) === nextCity &&
+    (current.region_code ?? null) === nextRegion &&
+    (current.country_code ?? 'FR') === (countryCode ?? 'FR');
+
+  if (current !== null && !unchanged) {
+    const { data: lastChange } = await supabase
+      .from('territory_change_log')
+      .select('created_at')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (
+      lastChange?.created_at &&
+      Date.now() - new Date(lastChange.created_at).getTime() < 24 * 60 * 60 * 1000
+    ) {
+      return { ok: false, error: 'territory_locked_24h' };
+    }
+    await supabase.from('territory_change_log').insert({
+      user_id: userId,
+      reason: 'declared_territory_change',
+    });
+  }
 
   const { data, error } = await supabase
     .from('user_territory')
@@ -134,8 +170,8 @@ export async function updateDeclaredTerritory(
       {
         user_id: userId,
         country_code: countryCode ?? 'FR',
-        city_code: normalizeCode(input.city_code),
-        region_code: normalizeCode(input.region_code),
+        city_code: nextCity,
+        region_code: nextRegion,
         city_name: normalizeCode(input.city_name),
         source: 'manual',
         updated_at: new Date().toISOString(),
