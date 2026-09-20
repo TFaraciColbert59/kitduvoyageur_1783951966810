@@ -343,11 +343,49 @@ Sheets sociales détectées hors périmètre (`social/ReportSheet`, `MoreMenuShe
 4. 54 paires desktop/mobile (cas simples d'abord) ; 2 bottom bars → 1 contrat + adapters.
 5. Hex (5 171) et styles inline (1 498) des pages non encore migrées.
 
+## Lot 6 — Itération 2 · Famille 1 : Home / hubs (TERMINÉE)
+
+### Périmètre et résultat
+107 fichiers (1 Home + 9 `src/app/hub` + 97 composants hub réellement importés) ; **70 fichiers modifiés**, **0 supprimé** (staging hub non touché).
+
+| Mesure (périmètre famille 1) | Avant | Après |
+|---|---|---|
+| Hex codés en dur | 34 | **10** (Leaflet SVG : `var()` non interprété — valeurs canoniques de tokens, garde-fou H-D85 R2) |
+| `rounded-[…]` littéraux | 72 | **0** |
+| `z-[…]` littéraux | 6 | **0** |
+| Styles inline | 36 | **28** (tous dynamiques : progression, couleurs runtime, motion, offsets) |
+| Headers custom (`src/app/hub`) | 2 | **0** |
+| Boutons bruts / `<Button>` / `<IconButton>` | 126 / 2 / 0 | **1 / 100 / 24** |
+| `glass-capsule-btn` / `glass-circle-btn` / `glass-pill` | 117 / 23 / 12 | **10 / 0 / 0** |
+| `GlassCapsuleBtn` / spinners maison | 4 / 3 | **0 / 0** |
+
+- Migration : 125 boutons bruts → `Button`/`IconButton`, `glass-pill` → `Badge` (12), filtres → `Tabs`, lignes → `ListItem`, surfaces → `Card`, sélecteur de mode → `Chip`, états vides/erreur → `EmptyState`/`ErrorState`, spinners → `Spinner`/`LoadingState`.
+- **Exception headers supprimée** : `PageHeader.subtitleLines` (0/2+ = multi-lignes `line-clamp`, défaut 1 strictement inchangé) → les 2 `hub/error.tsx` sont migrés ; `src/app` = **0 header custom**.
+- Exceptions documentées : 10 hex Leaflet, 28 inline dynamiques, 11 `<header>` = en-têtes de cartes de section (pas des h1 de page), 10 liens-actions `glass-capsule-btn` (pas de `<button>`), 1 `role="switch"` custom (pas de `Switch` canonique), `GlassCapsuleBtn` conservé (26 importeurs hors périmètre).
+
+### Métriques globales après famille 1
+
+| Mesure | Baseline lot 6 | Après famille 1 |
+|---|---|---|
+| Headers custom | 13 | **0** |
+| `rounded-[…]` littéraux | 217 | **145** |
+| `z-[…]` littéraux | 74 | **68** |
+| Hex | 5 171 | **5 147** |
+| Styles inline | 1 498 | **1 490** |
+| Paires desktop/mobile | 54 | 54 |
+| Bottom bars | 2 | 2 |
+| Overlays custom | 11 | 11 |
+
+### Vérification
+`type-check` ✅ 0 · `lint` ✅ 0 · `vitest` ✅ 407 fichiers / **2 946 tests** · `build` ✅ 14,3 s · **60 captures** `phase2-screenshots/lot6-famille1/`. 4 tests impactés : 3 corrigés côté code, 1 adapté (contrat `IconButton`), **aucun supprimé**.
+
+### Prochaine famille : **Matériel / kits / départ** (famille 2)
+
 ## Lots suivants
 
 | Lot | Contenu | Statut |
 |---|---|---|
-| 6 (suite) | Familles de pages + purge rounded/z/hex/inline + paires desktop-mobile | en cours |
+| 6 (suite) | Famille 2 Matériel/kits/départ → … → famille 9 secondaires | en cours |
 
 ## Risques / points ouverts
 
