@@ -503,7 +503,7 @@ export function SortieMenu({
             data-visual-mask
             className="mt-0.5 flex items-center gap-3"
           >
-            <div className="relative shrink-0" style={{ width: 44, height: 44 }}>
+            <div className="relative h-11 w-11 shrink-0">
               <BudgetDonut
                 categories={topCats.map(([label, value]) => ({ label, value }))}
                 size={44}
@@ -527,8 +527,7 @@ export function SortieMenu({
                   {topCats.map(([cat, sum], i) => (
                     <li key={cat} className="flex items-center gap-1.5 text-[11px]">
                       <span
-                        className="h-2 w-2 shrink-0 rounded-full"
-                        style={{ background: i === 0 ? 'var(--lkv-primary)' : 'var(--lkv-secondary)' }}
+                        className={`h-2 w-2 shrink-0 rounded-full ${i === 0 ? 'bg-[var(--lkv-primary)]' : 'bg-[var(--lkv-secondary)]'}`}
                       />
                       <span className="truncate text-[var(--lkv-text-secondary)]">{cat}</span>
                       <span className="font-bold text-[var(--lkv-text-primary)] ml-auto shrink-0">{Math.round(sum)} {currency}</span>

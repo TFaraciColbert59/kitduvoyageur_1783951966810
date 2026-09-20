@@ -1,7 +1,7 @@
 'use client';
 
 import { Plus } from 'lucide-react';
-import { Sheet } from '@/components/ui';
+import { Sheet, Button } from '@/components/ui';
 import { ExpenseRow } from '@/features/trips/components/budget/ExpenseRow';
 import type { TripExpense } from '@/features/trips/types/trip.types';
 import { formatEuro } from '../../../mobile/mobileHubEngine';
@@ -74,14 +74,14 @@ export function DayExpensesDrawer({
         )}
 
         {canManage && (
-          <button
+          <Button variant="primary"
             type="button"
             onClick={onAdd}
-            className="glass-capsule-btn primary inline-flex w-full items-center justify-center gap-1.5 !py-3 text-sm font-bold"
+            className="inline-flex w-full items-center justify-center gap-1.5 !py-3 text-sm font-bold"
           >
             <Plus size={15} aria-hidden="true" />
             Enregistrer une dépense
-          </button>
+          </Button>
         )}
       </div>
     </Sheet>

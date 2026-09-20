@@ -3,6 +3,7 @@
 import { CalendarDays, Pencil, Plus } from 'lucide-react';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import type { ItineraryTotals } from '../../../mobile/itineraryEngine';
+import { Button, IconButton, Badge } from '@/components/ui';
 
 export interface ItineraryHeroProps {
   title: string;
@@ -30,7 +31,7 @@ export function ItineraryHero({
   const { triggerHaptic } = useHapticFeedback();
 
   return (
-    <section className="glass relative overflow-hidden rounded-[1.75rem] p-4" aria-label="Itinéraire du voyage">
+    <section className="glass relative overflow-hidden rounded-[var(--lkv-radius-card)] p-4" aria-label="Itinéraire du voyage">
       <header className="flex items-start justify-between gap-2">
         <div className="min-w-0">
           <p className="text-[10px] font-medium uppercase tracking-[0.14em] text-[var(--lkv-text-primary)]/70">
@@ -39,28 +40,29 @@ export function ItineraryHero({
           <div className="mt-0.5 flex min-w-0 items-center gap-1.5">
             <p className="truncate text-sm font-bold text-[var(--lkv-text-primary)]">{title}</p>
             {canEdit && onRename && (
-              <button
+              <IconButton
+                variant="glass"
                 type="button"
                 onClick={() => {
                   triggerHaptic('light');
                   onRename();
                 }}
                 aria-label="Renommer l’activité"
-                className="glass-circle-btn h-11 w-11 shrink-0"
+                className="h-11 w-11 shrink-0"
               >
                 <Pencil size={14} aria-hidden="true" />
-              </button>
+              </IconButton>
             )}
           </div>
         </div>
         <div className="flex shrink-0 items-center gap-1.5">
-          <span className="glass-pill uppercase tracking-[0.08em]">
+          <Badge tone="stone" className="uppercase tracking-[0.08em]">
             {daysCount} jour{daysCount > 1 ? 's' : ''}
-          </span>
+          </Badge>
           {daysLeft != null && (
-            <span className="glass-pill uppercase tracking-[0.08em]">
+            <Badge tone="stone" className="uppercase tracking-[0.08em]">
               {daysLeft >= 0 ? `J-${daysLeft}` : 'En cours'}
-            </span>
+            </Badge>
           )}
         </div>
       </header>
@@ -102,29 +104,30 @@ export function ItineraryHero({
 
       <div className="mt-4 flex gap-2">
         {canEdit && (
-          <button
+          <Button variant="primary"
             type="button"
             onClick={() => {
               triggerHaptic('light');
               onAddStep();
             }}
-            className="glass-capsule-btn primary inline-flex min-h-[44px] flex-1 items-center justify-center gap-1.5 !py-3 text-sm font-bold"
+            className="inline-flex min-h-[44px] flex-1 items-center justify-center gap-1.5 !py-3 text-sm font-bold"
           >
             <Plus size={15} aria-hidden="true" />
             Ajouter une étape
-          </button>
+          </Button>
         )}
-        <button
+        <Button
+          variant="secondary"
           type="button"
           onClick={() => {
             triggerHaptic('selection');
             onOpenDays();
           }}
-          className="glass-capsule-btn inline-flex min-h-[44px] flex-1 items-center justify-center gap-1.5 !py-3 text-sm font-bold"
+          className="inline-flex min-h-[44px] flex-1 items-center justify-center gap-1.5 !py-3 text-sm font-bold"
         >
           <CalendarDays size={15} aria-hidden="true" />
           Gérer les jours
-        </button>
+        </Button>
       </div>
     </section>
   );

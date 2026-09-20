@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useMemo, useState, useTransition } from 'react';
-import { AlertTriangle, CheckCircle2, Clock, Phone, Radio, ShieldCheck } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, Clock, Phone, Radio, ShieldCheck, X } from 'lucide-react';
+import { Badge, Button, IconButton, ListItem, Tabs } from '@/components/ui';
 import type { TripFull, TripSafetyCheckpoint } from '@/features/trips/types/trip.types';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { checkTripSafetyPoint } from '@/features/trips/actions/checkTripSafetyPoint';
@@ -134,7 +135,7 @@ export function SafetyMobileExperience({ trip }: SafetyMobileExperienceProps) {
     return (
       <li key={checkpoint.id} className="shrink-0 snap-start">
         <div
-          className={`glass flex h-[10.5rem] w-[11rem] flex-col rounded-[1.4rem] p-3 ${
+          className={`glass flex h-[10.5rem] w-[11rem] flex-col rounded-[var(--lkv-radius-lg)] p-3 ${
             overdue ? 'border-2 border-[var(--lkv-danger)]/30' : ''
           }`}
         >
@@ -157,15 +158,16 @@ export function SafetyMobileExperience({ trip }: SafetyMobileExperienceProps) {
             </p>
           )}
           {checkpoint.status !== 'checked' && canEdit ? (
-            <button
-              type="button"
+            <Button
+              variant="primary"
+              size="sm"
               onClick={() => handleCheckIn(checkpoint)}
               disabled={isPending}
               aria-label={`Pointer ${checkpoint.label}`}
-              className="glass-capsule-btn primary mt-auto inline-flex min-h-[44px] items-center justify-center !py-2 text-[11px] font-bold disabled:opacity-50"
+              className="mt-auto min-h-[44px] !py-2 text-[11px] font-bold"
             >
               Pointer
-            </button>
+            </Button>
           ) : (
             <p className="mt-auto text-[10px] font-semibold uppercase tracking-[0.1em] text-[var(--lkv-text-primary)]/50">
               {checkpoint.status === 'checked' ? 'Pointé' : 'Lecture seule'}
@@ -184,25 +186,26 @@ export function SafetyMobileExperience({ trip }: SafetyMobileExperienceProps) {
           role="alert"
         >
           <span>{pointerError}</span>
-          <button
-            type="button"
+          <IconButton
+            variant="glass"
+            size="lg"
             onClick={() => setPointerError(null)}
-            className="glass-circle-btn h-11 w-11 shrink-0 text-[var(--lkv-text-muted)]"
+            className="shrink-0 text-[var(--lkv-text-muted)]"
             aria-label="Fermer le message"
           >
-            ×
-          </button>
+            <X size={16} aria-hidden="true" />
+          </IconButton>
         </div>
       )}
 
-      <section className="glass relative overflow-hidden rounded-[1.75rem] p-4" aria-label="Sécurité du voyage">
+      <section className="glass relative overflow-hidden rounded-[var(--lkv-radius-card)] p-4" aria-label="Sécurité du voyage">
         <header className="flex items-start justify-between gap-2">
           <p className="text-[10px] font-medium uppercase tracking-[0.14em] text-[var(--lkv-text-primary)]/70">
             Sécurité du voyage
           </p>
-          <span className="glass-pill shrink-0 uppercase tracking-[0.08em]">
+          <Badge tone="stone" className="shrink-0 uppercase tracking-[0.08em]">
             {progress.checked}/{progress.total} pointés
-          </span>
+          </Badge>
         </header>
 
         <div className="mt-3 flex items-center gap-4">
@@ -232,13 +235,14 @@ export function SafetyMobileExperience({ trip }: SafetyMobileExperienceProps) {
           </div>
         </div>
 
-        <button
-          type="button"
+        <Button
+          variant="primary"
+          fullWidth
           onClick={() => openWith('pending')}
-          className="glass-capsule-btn primary mt-4 inline-flex w-full items-center justify-center gap-1.5 !py-3 text-sm font-bold"
+          className="mt-4 !py-3 text-sm font-bold"
         >
           Voir les points de contrôle
-        </button>
+        </Button>
       </section>
 
       <GroupeChipsRow chips={chips} />
@@ -252,7 +256,7 @@ export function SafetyMobileExperience({ trip }: SafetyMobileExperienceProps) {
       >
         {sorted.length === 0 ? (
           <li className="shrink-0 snap-start">
-            <div className="glass-sub-card flex h-[10.5rem] w-[13rem] flex-col items-start justify-center gap-1 rounded-[1.4rem] p-4">
+            <div className="glass-sub-card flex h-[10.5rem] w-[13rem] flex-col items-start justify-center gap-1 rounded-[var(--lkv-radius-lg)] p-4">
               <span className="text-sm font-bold text-[var(--lkv-text-primary)]">Aucun point de contrôle</span>
               <span className="text-xs font-medium text-[var(--lkv-text-primary)]/70">
                 Les points de sécurité apparaîtront ici.
@@ -272,7 +276,7 @@ export function SafetyMobileExperience({ trip }: SafetyMobileExperienceProps) {
         <li className="shrink-0 snap-start">
           <a
             href="tel:112"
-            className="glass flex h-[7.5rem] w-[9.5rem] flex-col items-center justify-center gap-1 rounded-[1.4rem] p-3 text-center"
+            className="glass flex h-[7.5rem] w-[9.5rem] flex-col items-center justify-center gap-1 rounded-[var(--lkv-radius-lg)] p-3 text-center"
             aria-label="Appeler le 112 — urgences européennes"
           >
             <Phone size={18} className="text-[var(--lkv-danger)]" aria-hidden="true" />
@@ -285,7 +289,7 @@ export function SafetyMobileExperience({ trip }: SafetyMobileExperienceProps) {
         <li className="shrink-0 snap-start">
           <a
             href="tel:114"
-            className="glass flex h-[7.5rem] w-[9.5rem] flex-col items-center justify-center gap-1 rounded-[1.4rem] p-3 text-center"
+            className="glass flex h-[7.5rem] w-[9.5rem] flex-col items-center justify-center gap-1 rounded-[var(--lkv-radius-lg)] p-3 text-center"
             aria-label="Appeler le 114 — urgences montagne"
           >
             <Phone size={18} className="text-[var(--lkv-primary)]" aria-hidden="true" />
@@ -298,28 +302,18 @@ export function SafetyMobileExperience({ trip }: SafetyMobileExperienceProps) {
       </GroupeRail>
 
       <GroupeDrawer open={drawerOpen} onOpenChange={setDrawerOpen} title="Points de contrôle" width={460}>
-        <div className="flex flex-wrap gap-2">
-          {(
-            [
-              { key: 'all', label: 'Tout' },
-              { key: 'pending', label: 'À pointer' },
-              { key: 'checked', label: 'Validés' },
-              { key: 'late', label: 'En alerte' },
-            ] as Array<{ key: SafetyFilter; label: string }>
-          ).map((option) => (
-            <button
-              key={option.key}
-              type="button"
-              onClick={() => setFilter(option.key)}
-              aria-pressed={filter === option.key}
-              className={`glass-capsule-btn !px-3.5 min-h-[44px] text-xs font-bold ${
-                filter === option.key ? 'primary' : ''
-              }`}
-            >
-              {option.label}
-            </button>
-          ))}
-        </div>
+        <Tabs
+          variant="scrollable"
+          ariaLabel="Filtrer les points de contrôle"
+          value={filter}
+          onChange={(id) => setFilter(id as SafetyFilter)}
+          options={[
+            { id: 'all', label: 'Tout' },
+            { id: 'pending', label: 'À pointer' },
+            { id: 'checked', label: 'Validés' },
+            { id: 'late', label: 'En alerte' },
+          ]}
+        />
 
         {filtered.length === 0 ? (
           <p className="py-6 text-center text-sm font-medium text-[var(--lkv-text-primary)]/70">
@@ -330,33 +324,34 @@ export function SafetyMobileExperience({ trip }: SafetyMobileExperienceProps) {
             {filtered.map((checkpoint) => {
               const Icon = STATUS_ICONS[checkpoint.status];
               return (
-                <li key={checkpoint.id} className="glass-sub-card rounded-2xl p-3">
-                  <div className="flex items-center gap-3">
-                    <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${STATUS_TONES[checkpoint.status]}`}>
-                      <Icon size={15} aria-hidden="true" />
-                    </span>
-                    <span className="min-w-0 flex-1">
-                      <span className="block truncate text-[13px] font-bold text-[var(--lkv-text-primary)]">
-                        {checkpoint.label}
+                <li key={checkpoint.id}>
+                  <ListItem
+                    as="div"
+                    className="flex-wrap"
+                    leading={
+                      <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${STATUS_TONES[checkpoint.status]}`}>
+                        <Icon size={15} aria-hidden="true" />
                       </span>
-                      <span className="block text-[10.5px] font-medium text-[var(--lkv-text-primary)]/65">
-                        {formatSchedule(checkpoint.scheduled_at)} · {safetyStatusLabel(checkpoint.status)}
-                      </span>
-                    </span>
-                    {checkpoint.status !== 'checked' && canEdit && (
-                      <button
-                        type="button"
-                        onClick={() => handleCheckIn(checkpoint)}
-                        disabled={isPending}
-                        aria-label={`Pointer ${checkpoint.label}`}
-                        className="glass-capsule-btn primary inline-flex min-h-[44px] shrink-0 items-center !px-3 !py-2 text-[11px] font-bold disabled:opacity-50"
-                      >
-                        Pointer
-                      </button>
-                    )}
-                  </div>
+                    }
+                    title={checkpoint.label}
+                    subtitle={`${formatSchedule(checkpoint.scheduled_at)} · ${safetyStatusLabel(checkpoint.status)}`}
+                    trailing={
+                      checkpoint.status !== 'checked' && canEdit ? (
+                        <Button
+                          variant="primary"
+                          size="sm"
+                          onClick={() => handleCheckIn(checkpoint)}
+                          disabled={isPending}
+                          aria-label={`Pointer ${checkpoint.label}`}
+                          className="min-h-[44px] !px-3 !py-2 text-[11px] font-bold"
+                        >
+                          Pointer
+                        </Button>
+                      ) : undefined
+                    }
+                  />
                   {checkpoint.notes && (
-                    <p className="mt-2 text-[11px] font-medium leading-snug text-[var(--lkv-text-primary)]/70">
+                    <p className="mt-1 px-3 text-[11px] font-medium leading-snug text-[var(--lkv-text-primary)]/70">
                       {checkpoint.notes}
                     </p>
                   )}

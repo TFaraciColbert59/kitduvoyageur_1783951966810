@@ -1,7 +1,7 @@
 'use client';
 
 import { Check } from 'lucide-react';
-import { Sheet } from '@/components/ui';
+import { Button, Sheet } from '@/components/ui';
 import { HapticLink } from '../../menu/HapticLink';
 import { hubSectionHref } from '../../../registry/hubSectionRegistry';
 import type { GearCardData } from '../../../mobile/gearEngine';
@@ -71,17 +71,16 @@ export function GearItemPanel({ card, tripSlug, open, onOpenChange, busy, onTogg
             </div>
           </dl>
 
-          <button
-            type="button"
+          <Button
+            variant={card.isPacked ? 'secondary' : 'primary'}
+            fullWidth
             onClick={() => onTogglePacked(card)}
             disabled={busy}
-            className={`glass-capsule-btn flex h-12 w-full items-center justify-center gap-2 text-sm font-bold transition-transform active:scale-[0.98] disabled:opacity-50 ${
-              card.isPacked ? '' : 'primary'
-            }`}
+            icon={<Check size={16} aria-hidden="true" />}
+            className="h-12 text-sm font-bold"
           >
-            <Check size={16} aria-hidden="true" />
             {card.isPacked ? 'Retirer du sac' : 'Marquer comme prêt'}
-          </button>
+          </Button>
 
           <HapticLink
             href={hubSectionHref({ nature: 'sortie', slug: tripSlug }, 'checklist')}

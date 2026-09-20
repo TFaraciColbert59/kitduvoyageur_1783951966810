@@ -1,6 +1,7 @@
 'use client';
 
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
+import { Button } from '@/components/ui';
 import type { BudgetChipDef, BudgetFilter } from '../../../mobile/budgetEngine';
 
 export interface BudgetChipsRowProps {
@@ -22,14 +23,14 @@ export function BudgetChipsRow({ chips, onSelect }: BudgetChipsRowProps) {
           const Icon = chip.icon;
           return (
             <li key={chip.key} className="shrink-0">
-              <button
-                type="button"
+              <Button
+                variant="secondary"
                 onClick={() => {
                   triggerHaptic('selection');
                   onSelect(chip.filter);
                 }}
                 aria-label={`${chip.value} — ${chip.label}`}
-                className="glass-capsule-btn flex min-h-[44px] !items-center !gap-2 !rounded-2xl !px-3 !py-2 transition-transform active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)]"
+                className="min-h-[44px] flex !items-center !gap-2 !rounded-[var(--lkv-radius-md)] !px-3 !py-2"
               >
                 <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-white/40 bg-white/10">
                   <Icon size={14} aria-hidden="true" />
@@ -40,7 +41,7 @@ export function BudgetChipsRow({ chips, onSelect }: BudgetChipsRowProps) {
                     {chip.label}
                   </span>
                 </span>
-              </button>
+              </Button>
             </li>
           );
         })}

@@ -6,6 +6,7 @@ import type { BudgetSummary } from '@/features/trips/engine/budgetEngine';
 import { budgetProgress } from '../../../mobile/budgetEngine';
 import { formatEuro } from '../../../mobile/mobileHubEngine';
 import { BudgetRing } from './BudgetRing';
+import { Button, Badge } from '@/components/ui';
 
 export interface BudgetHeroCardProps {
   summary: BudgetSummary;
@@ -35,16 +36,14 @@ export function BudgetHeroCard({ summary, isMulti, remaining, onAdd }: BudgetHer
   const { pct, over, hasTarget } = budgetProgress(summary);
 
   return (
-    <section className="glass relative overflow-hidden rounded-[1.75rem] p-4">
+    <section className="glass relative overflow-hidden rounded-[var(--lkv-radius-card)] p-4">
       <header className="flex items-start justify-between gap-2">
         <p className="text-[10px] font-medium uppercase tracking-[0.14em] text-[var(--lkv-text-primary)]/70">
           Budget du voyage
         </p>
-        <span
-          className={`glass-pill ${over ? 'pill-danger' : ''} shrink-0 uppercase tracking-[0.08em]`}
-        >
+        <Badge tone={over ? 'danger' : 'stone'} className="shrink-0 uppercase tracking-[0.08em]">
           {hasTarget ? (over ? 'Dépassé' : `${pct}% du prévu`) : 'Sans estimation'}
-        </span>
+        </Badge>
       </header>
 
       <div className="mt-3 flex items-center gap-4">
@@ -72,14 +71,14 @@ export function BudgetHeroCard({ summary, isMulti, remaining, onAdd }: BudgetHer
         </div>
       </div>
 
-      <button
+      <Button variant="primary"
         type="button"
         onClick={onAdd}
-        className="glass-capsule-btn primary mt-4 inline-flex w-full items-center justify-center gap-1.5 !py-3 text-sm font-bold"
+        className="mt-4 inline-flex w-full items-center justify-center gap-1.5 !py-3 text-sm font-bold"
       >
         <Plus size={15} aria-hidden="true" />
         Ajouter une dépense
-      </button>
+      </Button>
     </section>
   );
 }

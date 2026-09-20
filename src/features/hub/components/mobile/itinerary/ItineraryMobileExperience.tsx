@@ -13,6 +13,7 @@ import {
   Wallet,
 } from 'lucide-react';
 import { ConfirmDialog } from '@/features/trips/components/ConfirmDialog';
+import { Button } from '@/components/ui';
 import {
   compactOrderIndices,
   moveStepBetweenDays,
@@ -612,7 +613,7 @@ export function ItineraryMobileExperience({ trip, initialSteps }: ItineraryMobil
       {toast && (
         <div
           role={toast.kind === 'error' ? 'alert' : 'status'}
-          className={`glass fixed bottom-24 left-1/2 z-[9000] w-[min(22rem,calc(100vw-2rem))] -translate-x-1/2 rounded-2xl p-3 text-center text-xs font-semibold shadow-lg ${
+          className={`glass fixed bottom-24 left-1/2 z-[var(--z-toast)] w-[min(22rem,calc(100vw-2rem))] -translate-x-1/2 rounded-2xl p-3 text-center text-xs font-semibold shadow-lg ${
             toast.kind === 'error' ? 'text-[var(--lkv-danger)]' : 'text-[var(--lkv-primary)]'
           }`}
         >
@@ -652,17 +653,15 @@ export function ItineraryMobileExperience({ trip, initialSteps }: ItineraryMobil
           const isActive = day.day === selectedDay;
   return (
             <li key={day.day} className="shrink-0 snap-start">
-              <button
-                type="button"
+              <Button
+                variant={isActive ? 'primary' : 'secondary'}
                 onClick={() => {
                   triggerHaptic('selection');
                   setSelectedDay(day.day);
                 }}
                 aria-pressed={isActive}
                 aria-label={`Jour ${day.day} — ${day.dateLabel ?? ''} · ${day.stepsCount} étapes`}
-                className={`glass-capsule-btn flex h-[8.5rem] w-[9rem] !flex-col !items-start !justify-start !rounded-[1.4rem] !p-3 text-left transition-transform active:scale-[0.97] ${
-                  isActive ? 'primary' : ''
-                }`}
+                className="flex h-[8.5rem] w-[9rem] !flex-col !items-start !justify-start !rounded-[var(--lkv-radius-lg)] !p-3 text-left"
               >
                 <span
                   className="w-fit rounded-full bg-[var(--lkv-primary)]/10 px-2 py-0.5 text-[10px] font-bold"
@@ -678,24 +677,24 @@ export function ItineraryMobileExperience({ trip, initialSteps }: ItineraryMobil
                 <span className="mt-auto text-[10.5px] font-semibold tabular-nums">
                   {day.distanceKm} km · +{day.elevGainM} m
                 </span>
-              </button>
+              </Button>
             </li>
           );
         })}
         {canEdit && (
           <li className="shrink-0 snap-start">
-            <button
-              type="button"
+            <Button
+              variant="secondary"
               onClick={() => handleInsertDay(daysCount)}
               disabled={isPending}
               aria-label="Ajouter une journée à la fin"
-              className="glass-capsule-btn flex h-[8.5rem] w-[9rem] !flex-col !items-center !justify-center !gap-2 !rounded-[1.4rem] !border-2 !border-dashed !border-white/50 !p-3 disabled:opacity-50"
+              className="flex h-[8.5rem] w-[9rem] !flex-col !items-center !justify-center !gap-2 !rounded-[var(--lkv-radius-lg)] !border-2 !border-dashed !border-white/50 !p-3"
             >
               <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--lkv-primary)]/10">
                 <CalendarPlus size={17} aria-hidden="true" />
               </span>
               <span className="text-[11px] font-bold">Ajouter un jour</span>
-            </button>
+            </Button>
           </li>
         )}
       </GroupeRail>
@@ -736,17 +735,18 @@ export function ItineraryMobileExperience({ trip, initialSteps }: ItineraryMobil
             </p>
           </div>
           {canEdit && (
-            <button
-              type="button"
+            <Button
+              variant="secondary"
+              size="sm"
               onClick={() => {
                 setFormStep(null);
                 setFormOpen(true);
               }}
-              className="glass-capsule-btn min-h-[44px] shrink-0 !px-3 !py-1.5 text-[11px] font-bold"
+              icon={<Plus size={13} aria-hidden="true" />}
+              className="min-h-[44px] shrink-0 !px-3 !py-1.5 text-[11px] font-bold"
             >
-              <Plus size={13} aria-hidden="true" />
               Étape
-            </button>
+            </Button>
           )}
         </div>
 
@@ -780,7 +780,7 @@ export function ItineraryMobileExperience({ trip, initialSteps }: ItineraryMobil
           </li>
         ) : dayPois.length === 0 ? (
           <li className="shrink-0 snap-start">
-            <div className="glass-sub-card flex h-[8.5rem] w-[13rem] flex-col items-start justify-center gap-1 rounded-[1.4rem] p-4">
+            <div className="glass-sub-card flex h-[8.5rem] w-[13rem] flex-col items-start justify-center gap-1 rounded-[var(--lkv-radius-lg)] p-4">
               <span className="text-sm font-bold text-[var(--lkv-text-primary)]">Aucun point d’intérêt</span>
               <span className="text-xs font-medium text-[var(--lkv-text-primary)]/70">
                 Touchez la carte pour en ajouter un.
@@ -790,14 +790,14 @@ export function ItineraryMobileExperience({ trip, initialSteps }: ItineraryMobil
         ) : (
           dayPois.map((poi) => (
             <li key={poi.id} className="shrink-0 snap-start">
-              <button
-                type="button"
+              <Button
+                variant="secondary"
                 onClick={() => {
                   triggerHaptic('selection');
                   setPoiDetailId(poi.id);
                 }}
                 aria-label={`Point d'intérêt ${poi.name}`}
-                className="glass-capsule-btn flex h-[8.5rem] w-[10.5rem] !flex-col !items-start !justify-start !rounded-[1.4rem] !p-3 text-left transition-transform active:scale-[0.97]"
+                className="flex h-[8.5rem] w-[10.5rem] !flex-col !items-start !justify-start !rounded-[var(--lkv-radius-lg)] !p-3 text-left"
               >
                 <span className="flex items-center gap-1.5">
                   <span className="inline-flex w-fit items-center gap-1 rounded-full bg-[var(--lkv-primary)]/10 px-2 py-0.5 text-[9.5px] font-bold uppercase tracking-[0.08em]">
@@ -817,7 +817,7 @@ export function ItineraryMobileExperience({ trip, initialSteps }: ItineraryMobil
                 <span className="mt-auto text-[10px] font-semibold uppercase tracking-[0.1em]">
                   {poi.visited ? 'Visité' : poi.step_id ? 'Rattaché' : 'Non affecté'}
                 </span>
-              </button>
+              </Button>
             </li>
           ))
         )}
@@ -836,13 +836,11 @@ export function ItineraryMobileExperience({ trip, initialSteps }: ItineraryMobil
         ariaLabel="Dépenses du jour"
       >
         <li className="shrink-0 snap-start">
-          <button
-            type="button"
+          <Button
+            variant={expensesView.count > 0 ? 'primary' : 'secondary'}
             onClick={() => router.push(`${budgetHref}?jour=${selectedDay}`)}
             aria-label={`Ouvrir le budget du jour ${selectedDay}`}
-            className={`glass-capsule-btn flex h-[8.5rem] w-[10rem] !flex-col !items-start !justify-start !rounded-[1.4rem] !p-3 text-left transition-transform active:scale-[0.97] ${
-              expensesView.count > 0 ? 'primary' : ''
-            }`}
+            className="flex h-[8.5rem] w-[10rem] !flex-col !items-start !justify-start !rounded-[var(--lkv-radius-lg)] !p-3 text-left"
           >
             <span className="inline-flex w-fit items-center gap-1 rounded-full bg-[var(--lkv-primary)]/10 px-2 py-0.5 text-[9.5px] font-bold uppercase tracking-[0.08em]">
               <Wallet size={11} aria-hidden="true" />
@@ -855,15 +853,15 @@ export function ItineraryMobileExperience({ trip, initialSteps }: ItineraryMobil
               Ouvrir le budget
               <ChevronRight size={11} aria-hidden="true" />
             </span>
-          </button>
+          </Button>
         </li>
         {expensesView.rows.map((expense) => (
           <li key={expense.id} className="shrink-0 snap-start">
-            <button
-              type="button"
+            <Button
+              variant="secondary"
               onClick={() => router.push(`${budgetHref}?jour=${selectedDay}`)}
               aria-label={`${expense.title ?? 'Dépense'} — ${formatEuro(Number(expense.amount) || 0)}`}
-              className="glass-capsule-btn flex h-[8.5rem] w-[10rem] !flex-col !items-start !justify-start !rounded-[1.4rem] !p-3 text-left transition-transform active:scale-[0.97]"
+              className="flex h-[8.5rem] w-[10rem] !flex-col !items-start !justify-start !rounded-[var(--lkv-radius-lg)] !p-3 text-left"
             >
               <span
                 className={`w-fit rounded-full px-2 py-0.5 text-[9.5px] font-bold uppercase tracking-[0.08em] ${
@@ -880,7 +878,7 @@ export function ItineraryMobileExperience({ trip, initialSteps }: ItineraryMobil
               <span className="mt-auto font-display text-base font-extrabold tabular-nums">
                 {formatEuro(Number(expense.amount) || 0)}
               </span>
-            </button>
+            </Button>
           </li>
         ))}
       </GroupeRail>
@@ -899,25 +897,25 @@ export function ItineraryMobileExperience({ trip, initialSteps }: ItineraryMobil
       >
         {dayItems.length === 0 ? (
           <li className="shrink-0 snap-start">
-            <button
-              type="button"
+            <Button
+              variant="secondary"
               onClick={() => setItemsOpen(true)}
-              className="glass-capsule-btn flex h-[8.5rem] w-[13rem] !flex-col !items-start !justify-center !gap-1 !rounded-[1.4rem] !p-4 !whitespace-normal text-left"
+              className="flex h-[8.5rem] w-[13rem] !flex-col !items-start !justify-center !gap-1 !rounded-[var(--lkv-radius-lg)] !p-4 !whitespace-normal text-left"
             >
               <span className="text-sm font-bold">Matériel à prévoir</span>
               <span className="text-xs font-medium">
                 Rattachez le kit nécessaire à cette journée.
               </span>
-            </button>
+            </Button>
           </li>
         ) : (
           dayItems.map((item) => (
             <li key={item.id} className="shrink-0 snap-start">
-              <button
-                type="button"
+              <Button
+                variant="secondary"
                 onClick={() => setItemsOpen(true)}
                 aria-label={`Matériel ${item.item_name}`}
-                className="glass-capsule-btn flex h-[8.5rem] w-[10rem] !flex-col !items-start !justify-start !rounded-[1.4rem] !p-3 text-left transition-transform active:scale-[0.97]"
+                className="flex h-[8.5rem] w-[10rem] !flex-col !items-start !justify-start !rounded-[var(--lkv-radius-lg)] !p-3 text-left"
               >
                 <span
                   className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--lkv-primary)]/10"
@@ -933,7 +931,7 @@ export function ItineraryMobileExperience({ trip, initialSteps }: ItineraryMobil
                   {item.weight_grams ? ` · ${Math.round(item.weight_grams / 10) / 100} kg` : ''}
                   {item.is_packed ? ' · Emballé' : ''}
                 </span>
-              </button>
+              </Button>
             </li>
           ))
         )}

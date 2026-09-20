@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Check, Copy, Users } from 'lucide-react';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
+import { Button } from '@/components/ui';
 
 export interface GroupeMemberRow {
   userId: string;
@@ -40,13 +41,13 @@ export function GroupeMembersCard({ members, pending, inviteCode, onManage }: Gr
           Membres · {members.length}
         </p>
         {onManage && (
-          <button
+          <Button variant="secondary"
             type="button"
             onClick={onManage}
-            className="glass-capsule-btn !px-3 !py-1.5 text-[11px] font-bold min-h-[44px]"
+            className="!px-3 !py-1.5 text-[11px] font-bold min-h-[44px]"
           >
             Gérer
-          </button>
+          </Button>
         )}
       </div>
 
@@ -116,14 +117,14 @@ export function GroupeMembersCard({ members, pending, inviteCode, onManage }: Gr
                 {inviteCode}
               </span>
             </span>
-            <button
+            <Button variant="secondary"
               type="button"
               onClick={copyCode}
-              className="glass-capsule-btn shrink-0 !px-3 !py-1.5 text-[11px] font-bold min-h-[44px]"
+              className="shrink-0 !px-3 !py-1.5 text-[11px] font-bold min-h-[44px]"
             >
               {copied ? <Check size={13} aria-hidden="true" /> : <Copy size={13} aria-hidden="true" />}
               {copied ? 'Copié' : 'Copier'}
-            </button>
+            </Button>
           </div>
         )}
       </div>

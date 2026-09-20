@@ -42,7 +42,7 @@ export function BudgetRing({ pct, over = false, size = 112, stroke = 10, childre
           strokeLinecap="round"
           strokeDasharray={circumference}
           strokeDashoffset={mounted ? targetOffset : circumference}
-          style={{ transition: 'stroke-dashoffset 700ms var(--ease-glass)' }}
+          className="transition-[stroke-dashoffset] duration-700 ease-[var(--ease-glass)]"
         />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">{children}</div>

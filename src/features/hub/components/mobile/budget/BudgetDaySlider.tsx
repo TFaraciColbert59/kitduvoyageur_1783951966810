@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
+import { Button, IconButton } from '@/components/ui';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { formatEuro } from '../../../mobile/mobileHubEngine';
 import type { BudgetDaySlide } from '../../../mobile/budgetEngine';
@@ -51,24 +52,24 @@ export function BudgetDaySlider({ slides, onSelectDay }: BudgetDaySliderProps) {
           </p>
         </div>
         <div className="flex shrink-0 items-center gap-2">
-          <button
-            type="button"
+          <IconButton
+            variant="glass"
             onClick={() => scrollByCard(-1)}
             disabled={!canLeft}
             aria-label="Jours précédents"
-            className="glass-circle-btn h-10 w-10 disabled:opacity-40"
+            className="h-10 w-10"
           >
             <ArrowLeft size={16} aria-hidden="true" />
-          </button>
-          <button
-            type="button"
+          </IconButton>
+          <IconButton
+            variant="solid"
             onClick={() => scrollByCard(1)}
             disabled={!canRight}
             aria-label="Jours suivants"
-            className="glass-circle-btn primary h-10 w-10 disabled:opacity-40"
+            className="h-10 w-10"
           >
             <ArrowRight size={16} aria-hidden="true" />
-          </button>
+          </IconButton>
         </div>
       </div>
 
@@ -79,8 +80,8 @@ export function BudgetDaySlider({ slides, onSelectDay }: BudgetDaySliderProps) {
       >
         {slides.map((slide) => (
           <li key={slide.key} className="shrink-0 snap-start">
-            <button
-              type="button"
+            <Button
+              variant={slide.isToday ? 'primary' : 'secondary'}
               onClick={() => {
                 triggerHaptic('light');
                 onSelectDay(slide);
@@ -88,9 +89,7 @@ export function BudgetDaySlider({ slides, onSelectDay }: BudgetDaySliderProps) {
               aria-label={`Jour ${slide.dayNumber} — ${slide.label}, ${formatEuro(slide.realTotal)} réel${
                 slide.plannedTotal > 0 ? `, ${formatEuro(slide.plannedTotal)} prévu` : ''
               }`}
-              className={`glass-capsule-btn relative flex h-[9rem] w-[9rem] !flex-col !items-start !justify-between !rounded-[1.4rem] !p-3 text-left transition-transform active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)] ${
-                slide.isToday ? 'primary' : ''
-              }`}
+              className="relative flex h-[9rem] w-[9rem] !flex-col !items-start !justify-between !rounded-[var(--lkv-radius-lg)] !p-3 text-left"
             >
               <span className="flex w-full items-start justify-between gap-1">
                 <span className="rounded-full bg-[var(--lkv-primary)]/10 px-2 py-0.5 text-[10px] font-bold tabular-nums">
@@ -113,7 +112,7 @@ export function BudgetDaySlider({ slides, onSelectDay }: BudgetDaySliderProps) {
                       : `${slide.expenseCount} dépense${slide.expenseCount > 1 ? 's' : ''}`}
                 </span>
               </span>
-            </button>
+            </Button>
           </li>
         ))}
       </ul>

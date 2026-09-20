@@ -2,7 +2,8 @@
 
 import { useEffect, useMemo, useState, useTransition } from 'react';
 import Link from 'next/link';
-import { CheckSquare, Package, Plus, Users, Wallet } from 'lucide-react';
+import { CheckSquare, Package, Plus, Users, Wallet, X } from 'lucide-react';
+import { Button, Card, IconButton } from '@/components/ui';
 import TachesCard from '@/components/groupes/TachesCard';
 import EquipementCard from '@/components/groupes/EquipementCard';
 import DepensesCard from '@/components/groupes/DepensesCard';
@@ -408,35 +409,39 @@ export function GroupeMobileExperience({
           role="alert"
         >
           <span>{errorMsg}</span>
-          <button
-            type="button"
+          <IconButton
+            variant="glass"
+            size="lg"
             onClick={() => setErrorMsg(null)}
-            className="glass-circle-btn h-11 w-11 shrink-0 text-[var(--lkv-text-muted)] hover:text-[var(--lkv-text-primary)]"
+            className="shrink-0 text-[var(--lkv-text-muted)] hover:text-[var(--lkv-text-primary)]"
             aria-label="Fermer le message"
           >
-            ×
-          </button>
+            <X size={16} aria-hidden="true" />
+          </IconButton>
         </div>
       )}
 
       {data.parentClub && (
         <Link
           href={`/clubs/${data.parentClub.slug || data.parentClub.id}`}
-          className="glass rounded-2xl px-4 py-3 flex items-center justify-between gap-3 min-h-[44px]"
+          className="block"
           data-testid="group-parent-club-badge-mobile"
         >
-          <span className="text-xs font-bold text-[var(--lkv-text-primary)] truncate">
-            Né du club · {data.parentClub.name}
-          </span>
-          <span className="text-xs font-bold text-[var(--lkv-text-secondary)] shrink-0">
-            Voir →
-          </span>
+          <Card variant="compact" className="flex items-center justify-between gap-3">
+            <span className="text-xs font-bold text-[var(--lkv-text-primary)] truncate">
+              Né du club · {data.parentClub.name}
+            </span>
+            <span className="text-xs font-bold text-[var(--lkv-text-secondary)] shrink-0">
+              Voir →
+            </span>
+          </Card>
         </Link>
       )}
 
       {data.ephemeral && (
-        <div
-          className="glass rounded-2xl px-4 py-3 flex items-center justify-between gap-3"
+        <Card
+          variant="compact"
+          className="flex items-center justify-between gap-3"
           data-testid="group-ephemeral-banner-mobile"
         >
           <div className="min-w-0">
@@ -448,19 +453,18 @@ export function GroupeMobileExperience({
             </span>
           </div>
           {canManage && (
-            <button
-              type="button"
+            <Button
+              variant="primary"
+              size="sm"
               onClick={handleConvertEphemeral}
               disabled={convertingEphemeral}
-              className="glass-capsule-btn primary text-[11px] font-bold px-3 min-h-[44px] flex items-center shrink-0 disabled:opacity-60"
+              className="min-h-[44px] shrink-0"
               data-testid="group-ephemeral-convert-mobile"
             >
-              <span className="relative z-10">
-                {convertingEphemeral ? 'Conversion…' : 'Groupe complet'}
-              </span>
-            </button>
+              {convertingEphemeral ? 'Conversion…' : 'Groupe complet'}
+            </Button>
           )}
-        </div>
+        </Card>
       )}
 
       <LiveSharePanel groupId={groupId} isOrganizer={isGroupOrganizer} />
@@ -512,13 +516,11 @@ export function GroupeMobileExperience({
         ariaLabel="Caisse commune"
       >
         <li className="shrink-0 snap-start">
-          <button
-            type="button"
+          <Button
+            variant={balances.outstanding > 0 ? 'primary' : 'secondary'}
             onClick={() => setCaisseOpen(true)}
             aria-label={`Caisse commune — ${balances.outstanding > 0 ? `${formatEuro(balances.outstanding)} à régler` : 'comptes équilibrés'}`}
-            className={`glass-capsule-btn flex h-[9.5rem] w-[9.5rem] !flex-col !items-start !justify-start !rounded-[1.4rem] !p-3 text-left transition-transform active:scale-[0.97] ${
-              balances.outstanding > 0 ? 'primary' : ''
-            }`}
+            className="flex h-[9.5rem] w-[9.5rem] !flex-col !items-start !justify-start !rounded-[var(--lkv-radius-lg)] !p-3 text-left"
           >
             <span className="w-fit rounded-full bg-[var(--lkv-primary)]/10 px-2 py-0.5 text-[10px] font-bold">
               {balances.outstanding > 0 ? 'À régler' : 'Équilibré'}
@@ -531,15 +533,15 @@ export function GroupeMobileExperience({
                 ? `${pendingExpenses.length} à rembourser`
                 : 'Rien à rembourser'}
             </span>
-          </button>
+          </Button>
         </li>
         {recentExpenses.map((expense) => (
           <li key={expense.id} className="shrink-0 snap-start">
-            <button
-              type="button"
+            <Button
+              variant="secondary"
               onClick={() => setCaisseOpen(true)}
               aria-label={`${expense.title} — ${formatEuro(expense.amount)}`}
-              className="glass-capsule-btn flex h-[9.5rem] w-[9.5rem] !flex-col !items-start !justify-start !rounded-[1.4rem] !p-3 text-left transition-transform active:scale-[0.97]"
+              className="flex h-[9.5rem] w-[9.5rem] !flex-col !items-start !justify-start !rounded-[var(--lkv-radius-lg)] !p-3 text-left"
             >
               <span
                 className={`w-fit rounded-full px-2 py-0.5 text-[10px] font-bold ${
@@ -559,7 +561,7 @@ export function GroupeMobileExperience({
               <span className="block truncate text-[10px] font-medium">
                 Avancé par {expense.payerName}
               </span>
-            </button>
+            </Button>
           </li>
         ))}
       </GroupeRail>
@@ -574,16 +576,16 @@ export function GroupeMobileExperience({
       >
         {localKit.length === 0 ? (
           <li className="shrink-0 snap-start">
-            <button
-              type="button"
+            <Button
+              variant="secondary"
               onClick={() => setEquipmentOpen(true)}
-              className="glass-capsule-btn flex h-[9.5rem] w-[13rem] !flex-col !items-start !justify-center !gap-1 !rounded-[1.4rem] !p-4 !whitespace-normal text-left"
+              className="flex h-[9.5rem] w-[13rem] !flex-col !items-start !justify-center !gap-1 !rounded-[var(--lkv-radius-lg)] !p-4 !whitespace-normal text-left"
             >
               <span className="text-sm font-bold">Aucun objet partagé</span>
               <span className="text-xs font-medium">
                 Ajoutez le matériel commun du groupe.
               </span>
-            </button>
+            </Button>
           </li>
         ) : (
           localKit.slice(0, 8).map((item: any) => {
@@ -591,7 +593,7 @@ export function GroupeMobileExperience({
             return (
               <li key={item.id} className="shrink-0 snap-start">
                 <div
-                  className={`flex h-[9.5rem] w-[9.5rem] flex-col rounded-[1.4rem] p-3 ${
+                  className={`flex h-[9.5rem] w-[9.5rem] flex-col rounded-[var(--lkv-radius-lg)] p-3 ${
                     mine ? 'glass border-2 border-[var(--lkv-primary)]/35' : 'glass'
                   }`}
                 >
@@ -604,27 +606,29 @@ export function GroupeMobileExperience({
                   <p className="mt-0.5 text-[10.5px] font-medium text-[var(--lkv-text-primary)]/70">{item.weight}</p>
                   <div className="mt-auto">
                     {mine ? (
-                      <button
-                        type="button"
+                      <Button
+                        variant="primary"
+                        fullWidth
                         onClick={() => handleAssignKit(item.id, null)}
                         disabled={isPending}
-                        className="glass-capsule-btn primary inline-flex w-full items-center justify-center !py-2 text-[11px] font-bold min-h-[44px] disabled:opacity-50"
+                        className="!py-2 text-[11px] font-bold"
                       >
                         Pris par moi ✓
-                      </button>
+                      </Button>
                     ) : item.assigneeId ? (
                       <p className="truncate text-[10.5px] font-semibold text-[var(--lkv-text-primary)]/70">
                         Pris par {item.assignee}
                       </p>
                     ) : (
-                      <button
-                        type="button"
+                      <Button
+                        variant="primary"
+                        fullWidth
                         onClick={() => handleAssignKit(item.id, user?.id ?? null)}
                         disabled={!canManage || isPending}
-                        className="glass-capsule-btn primary inline-flex w-full items-center justify-center !py-2 text-[11px] font-bold min-h-[44px] disabled:opacity-50"
+                        className="!py-2 text-[11px] font-bold"
                       >
                         Je l’apporte
-                      </button>
+                      </Button>
                     )}
                   </div>
                 </div>
@@ -645,7 +649,7 @@ export function GroupeMobileExperience({
         >
           {decisions.map((decision: any) => (
             <li key={decision.id} className="shrink-0 snap-start">
-              <div className="glass flex h-[11rem] w-[16rem] flex-col rounded-[1.4rem] p-3.5">
+              <div className="glass flex h-[11rem] w-[16rem] flex-col rounded-[var(--lkv-radius-lg)] p-3.5">
                 <p className="line-clamp-2 text-[13px] font-bold leading-snug text-[var(--lkv-text-primary)]">
                   {decision.question}
                 </p>
@@ -654,14 +658,13 @@ export function GroupeMobileExperience({
                     const selected = myVotes[decision.id] === option.index;
                     return (
                       <li key={option.id}>
-                        <button
-                          type="button"
+                        <Button
+                          variant={selected ? 'primary' : 'secondary'}
+                          fullWidth
                           onClick={() => handleVote(decision.id, option.id)}
                           disabled={!canManage || isPending}
                           aria-pressed={selected}
-                          className={`glass-capsule-btn w-full !justify-start !rounded-xl !px-2.5 !py-1.5 text-left disabled:opacity-60 ${
-                            selected ? 'primary' : ''
-                          }`}
+                          className="!justify-start !rounded-[var(--lkv-radius-sm)] !px-2.5 !py-1.5 text-left"
                         >
                           <span className="flex items-center justify-between gap-2">
                             <span className="min-w-0 truncate text-[11.5px] font-semibold">
@@ -677,7 +680,7 @@ export function GroupeMobileExperience({
                               style={{ width: `${Math.min(100, Math.max(0, option.percentage))}%` }}
                             />
                           </span>
-                        </button>
+                        </Button>
                       </li>
                     );
                   })}
@@ -704,7 +707,7 @@ export function GroupeMobileExperience({
       >
         {travelers.map((member: any) => (
           <li key={member.user_id} className="shrink-0 snap-start">
-            <div className="glass flex h-[8rem] w-[8.75rem] flex-col items-center justify-center gap-1.5 rounded-[1.4rem] p-3 text-center">
+            <div className="glass flex h-[8rem] w-[8.75rem] flex-col items-center justify-center gap-1.5 rounded-[var(--lkv-radius-lg)] p-3 text-center">
               <span
                 className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--lkv-primary)]/10 text-sm font-bold text-[var(--lkv-primary)]"
                 aria-hidden="true"
@@ -722,7 +725,7 @@ export function GroupeMobileExperience({
         ))}
         {pendingTravelers.map((member: any) => (
           <li key={member.user_id} className="shrink-0 snap-start">
-            <div className="flex h-[8rem] w-[8.75rem] flex-col items-center justify-center gap-1.5 rounded-[1.4rem] border-2 border-dashed border-[var(--lkv-primary)]/25 p-3 text-center opacity-80">
+            <div className="flex h-[8rem] w-[8.75rem] flex-col items-center justify-center gap-1.5 rounded-[var(--lkv-radius-lg)] border-2 border-dashed border-[var(--lkv-primary)]/25 p-3 text-center opacity-80">
               <span
                 className="flex h-10 w-10 items-center justify-center rounded-full bg-black/5 text-sm font-bold text-[var(--lkv-text-primary)]/60"
                 aria-hidden="true"
@@ -740,11 +743,11 @@ export function GroupeMobileExperience({
         ))}
         {data.inviteCode && (
           <li className="shrink-0 snap-start">
-            <button
-              type="button"
+            <Button
+              variant="secondary"
               onClick={() => setMembersOpen(true)}
               aria-label="Inviter des compagnons"
-              className="glass-capsule-btn flex h-[8rem] w-[8.75rem] !flex-col !items-center !justify-center !gap-2 !rounded-[1.4rem] !border-2 !border-dashed !border-white/50 !p-3 transition-transform active:scale-[0.97]"
+              className="flex h-[8rem] w-[8.75rem] !flex-col !items-center !justify-center !gap-2 !rounded-[var(--lkv-radius-lg)] !border-2 !border-dashed !border-white/50 !p-3"
             >
               <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--lkv-primary)]/10">
                 <Plus size={18} aria-hidden="true" />
@@ -753,7 +756,7 @@ export function GroupeMobileExperience({
               <span className="text-[9px] font-semibold uppercase tracking-[0.12em]">
                 {data.inviteCode}
               </span>
-            </button>
+            </Button>
           </li>
         )}
       </GroupeRail>
@@ -769,10 +772,10 @@ export function GroupeMobileExperience({
         >
           {messages.slice(0, 5).map((message: any) => (
             <li key={message.id} className="shrink-0 snap-start">
-              <button
-                type="button"
+              <Button
+                variant="secondary"
                 onClick={() => setDiscussionOpen(true)}
-                className="glass-capsule-btn flex h-[8.5rem] w-[14.5rem] !flex-col !items-start !justify-start !rounded-[1.4rem] !p-3.5 text-left transition-transform active:scale-[0.98]"
+                className="flex h-[8.5rem] w-[14.5rem] !flex-col !items-start !justify-start !rounded-[var(--lkv-radius-lg)] !p-3.5 text-left"
               >
                 <p className="line-clamp-3 font-serif-lkv text-[13.5px] italic leading-snug">
                   « {message.content} »
@@ -780,7 +783,7 @@ export function GroupeMobileExperience({
                 <p className="mt-auto truncate pt-1.5 text-[10px] font-semibold uppercase tracking-[0.1em]">
                   {message.author} · {message.time}
                 </p>
-              </button>
+              </Button>
             </li>
           ))}
         </GroupeRail>
@@ -789,19 +792,21 @@ export function GroupeMobileExperience({
       {linkedTrip && (
         <Link
           href={tripSectionHref(linkedTrip.slug, 'overview')}
-          className="glass flex items-center justify-between gap-3 rounded-2xl p-3.5"
+          className="block"
         >
-          <span className="min-w-0">
-            <span className="block text-[9.5px] font-semibold uppercase tracking-[0.12em] text-[var(--lkv-text-primary)]/60">
-              Voyage lié
+          <Card variant="compact" className="flex items-center justify-between gap-3">
+            <span className="min-w-0">
+              <span className="block text-[9.5px] font-semibold uppercase tracking-[0.12em] text-[var(--lkv-text-primary)]/60">
+                Voyage lié
+              </span>
+              <span className="block truncate text-sm font-bold text-[var(--lkv-text-primary)]">
+                {linkedTrip.title}
+              </span>
             </span>
-            <span className="block truncate text-sm font-bold text-[var(--lkv-text-primary)]">
-              {linkedTrip.title}
+            <span className="glass-capsule-btn primary min-h-[44px] shrink-0 !px-4 text-xs font-bold">
+              Ouvrir le cockpit →
             </span>
-          </span>
-          <span className="glass-capsule-btn primary min-h-[44px] shrink-0 !px-4 text-xs font-bold">
-            Ouvrir le cockpit →
-          </span>
+          </Card>
         </Link>
       )}
 

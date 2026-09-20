@@ -1,5 +1,6 @@
 'use client';
 
+import { Button } from '@/components/ui';
 import type { GearInfoCard } from '../../../mobile/gearEngine';
 
 export interface GearInfoSliderProps {
@@ -22,11 +23,11 @@ export function GearInfoSlider({ cards, onOpenMissing, onOpenList }: GearInfoSli
           };
           return (
             <li key={card.key} className="shrink-0">
-              <button
-                type="button"
+              <Button
+                variant="secondary"
                 onClick={handleClick}
                 aria-label={`${card.label} — ${card.value}. ${card.hint}`}
-                className="glass-capsule-btn flex h-[6.75rem] w-[10.75rem] !flex-col !items-start !justify-between !rounded-[1.4rem] !p-3 text-left transition-transform active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)]"
+                className="flex h-[6.75rem] w-[10.75rem] !flex-col !items-start !justify-between !rounded-[var(--lkv-radius-lg)] !p-3 text-left"
               >
                 <span className="text-[10px] font-medium uppercase tracking-[0.14em]">
                   {card.label}
@@ -39,7 +40,7 @@ export function GearInfoSlider({ cards, onOpenMissing, onOpenList }: GearInfoSli
                     {card.hint}
                   </span>
                 </span>
-              </button>
+              </Button>
             </li>
           );
         })}

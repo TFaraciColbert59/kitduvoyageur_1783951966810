@@ -102,8 +102,9 @@ describe('RenameTripModal — formulaire et action', () => {
 
     expect(hero).toContain('onRename');
     expect(hero).toMatch(/Pencil/);
-    // Cible tactile 44px HIG/repo : crayon hero et déclencheur desktop.
-    expect(hero).toMatch(/glass-circle-btn h-11 w-11/);
+    // Cible tactile 44px HIG/repo : crayon hero (IconButton canonique) et déclencheur desktop.
+    expect(hero).toContain('IconButton');
+    expect(hero).toMatch(/h-11 w-11/);
     expect(desktop).toContain('!h-11');
     expect(mobile).toContain('<RenameTripModal');
     expect(desktop).toContain('<RenameTripModal');

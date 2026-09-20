@@ -4,7 +4,7 @@ import { useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useReducedMotion } from 'framer-motion';
 import { AlertTriangle, CheckCircle2, Package, Weight } from 'lucide-react';
-import { Sheet } from '@/components/ui';
+import { Sheet, Button, Card } from '@/components/ui';
 import { DepartHeroCard } from '@/features/materiel/components/depart/hero/DepartHeroCard';
 import { DepartAlertsBanner } from '@/features/materiel/components/depart/DepartAlertsBanner';
 import { DepartTerrainSection } from '@/features/materiel/components/depart/DepartTerrainSection';
@@ -205,12 +205,13 @@ export function DepartMobileExperience({
       />
 
       {!isOnline && (
-        <p
+        <Card
           role="status"
-          className="glass-sub-card rounded-2xl px-3 py-2 text-xs font-medium text-[var(--lkv-text-primary)]/70"
+          variant="compact"
+          className="text-xs font-medium text-[var(--lkv-text-primary)]/70"
         >
           Mode hors-ligne — fiche et données en cache, synchronisation automatique.
-        </p>
+        </Card>
       )}
 
       <DepartAlertsBanner
@@ -230,7 +231,7 @@ export function DepartMobileExperience({
       >
         {pendingItems.length === 0 ? (
           <li className="shrink-0 snap-start">
-            <div className="glass-sub-card flex h-[8.5rem] w-[10.5rem] flex-col justify-center gap-1 rounded-[1.4rem] p-3">
+            <div className="glass-sub-card flex h-[8.5rem] w-[10.5rem] flex-col justify-center gap-1 rounded-[var(--lkv-radius-lg)] p-3">
               <span className="text-sm font-bold text-[var(--lkv-text-primary)]">Sac prêt</span>
               <span className="text-xs font-medium text-[var(--lkv-text-primary)]/70">
                 Tous les articles sont cochés.
@@ -243,7 +244,7 @@ export function DepartMobileExperience({
             return (
               <li
                 key={item.id ?? item.name}
-                className="glass flex h-[8.5rem] w-[10.5rem] shrink-0 snap-start flex-col rounded-[1.4rem] p-3"
+                className="glass flex h-[8.5rem] w-[10.5rem] shrink-0 snap-start flex-col rounded-[var(--lkv-radius-lg)] p-3"
               >
                 <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--lkv-warning)]/15 text-[var(--lkv-warning)]">
                   <Package size={15} aria-hidden="true" />
@@ -272,7 +273,7 @@ export function DepartMobileExperience({
       <GroupeRail title="Poids par catégorie" ariaLabel="Poids par catégorie">
         {weightBreakdown.length === 0 ? (
           <li className="shrink-0 snap-start">
-            <div className="glass-sub-card flex h-[6.75rem] w-[9.5rem] flex-col justify-center gap-1 rounded-[1.4rem] p-3">
+            <div className="glass-sub-card flex h-[6.75rem] w-[9.5rem] flex-col justify-center gap-1 rounded-[var(--lkv-radius-lg)] p-3">
               <span className="text-sm font-bold text-[var(--lkv-text-primary)]">Poids à venir</span>
               <span className="text-xs font-medium text-[var(--lkv-text-primary)]/70">
                 Aucune catégorie pesée.
@@ -288,7 +289,7 @@ export function DepartMobileExperience({
             return (
               <li
                 key={category.category}
-                className="glass flex h-[6.75rem] w-[9.5rem] shrink-0 snap-start flex-col rounded-[1.4rem] p-3"
+                className="glass flex h-[6.75rem] w-[9.5rem] shrink-0 snap-start flex-col rounded-[var(--lkv-radius-lg)] p-3"
               >
                 <span className="truncate text-[9px] font-semibold uppercase tracking-[0.12em] text-[var(--lkv-text-primary)]/60">
                   {category.category}
@@ -313,14 +314,15 @@ export function DepartMobileExperience({
         )}
       </GroupeRail>
 
-      <section className="glass rounded-[1.75rem] p-4" aria-label="Équipement">
-        <button
-          type="button"
+      <section className="glass rounded-[var(--lkv-radius-card)] p-4" aria-label="Équipement">
+        <Button
+          variant="primary"
+          fullWidth
           onClick={handleOpenEquipment}
-          className="glass-capsule-btn primary min-h-[44px] w-full !py-3 text-sm font-bold"
+          className="!py-3 text-sm font-bold"
         >
           Gérer le matériel
-        </button>
+        </Button>
       </section>
 
       <DepartEquipeSection depart={depart} onOpenSheet={() => setSheetOpen(true)} />

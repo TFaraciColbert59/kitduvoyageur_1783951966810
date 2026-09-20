@@ -3,6 +3,7 @@
 import { useState, type ReactNode } from 'react';
 import { ArrowRight, Expand } from 'lucide-react';
 import { Sheet } from '@/components/ui/Sheet';
+import { IconButton } from '@/components/ui';
 import { HapticLink } from '../menu/HapticLink';
 import HubRouteMap, { type HubRoutePoint } from './HubRouteMap';
 
@@ -44,7 +45,7 @@ export function MomentMapCard({
   return (
     <section
       aria-label={sheetTitle}
-      className={`relative ${heightClass} overflow-hidden rounded-[1.75rem] border border-white/50 bg-[var(--lkv-forest-50)] shadow-sm`}
+      className={`relative ${heightClass} overflow-hidden rounded-[var(--lkv-radius-card)] border border-white/50 bg-[var(--lkv-forest-50)] shadow-sm`}
     >
       <div className="absolute inset-0 z-0">
         <HubRouteMap
@@ -83,16 +84,17 @@ export function MomentMapCard({
         <div className="glass rounded-2xl p-3.5">
           {panel}
           <div className={`mt-3 flex items-center justify-end gap-2 ${reserveFabSpace ? 'pr-16' : ''}`}>
-            <button
+            <IconButton
+              variant="glass"
               type="button"
               onClick={() => setOpen(true)}
               aria-label="Agrandir la carte"
               aria-haspopup="dialog"
               aria-expanded={open}
-              className="glass-circle-btn h-10 w-10 shrink-0 transition-transform active:scale-[0.94] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)]"
+              className="h-10 w-10 shrink-0 transition-transform active:scale-[0.94] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)]"
             >
               <Expand size={16} aria-hidden="true" />
-            </button>
+            </IconButton>
             <HapticLink
               href={cta.href}
               ariaLabel={cta.label}

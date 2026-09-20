@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ArrowLeft, ArrowRight, Check } from 'lucide-react';
+import { Button, IconButton } from '@/components/ui';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import type { GearCardData } from '../../../mobile/gearEngine';
 import { LiveArrivalReveal } from '../../live/LiveArrivalReveal';
@@ -55,24 +56,24 @@ export function GearPhotoCarousel({ cards, onSelect, heading = 'Équipement du s
           </p>
         </div>
         <div className="flex shrink-0 items-center gap-2">
-          <button
-            type="button"
+          <IconButton
+            variant="glass"
             onClick={() => scrollByCard(-1)}
             disabled={!canLeft}
             aria-label="Éléments précédents"
-            className="glass-circle-btn h-10 w-10 shrink-0 transition-transform active:scale-[0.94] disabled:opacity-40"
+            className="h-10 w-10 shrink-0"
           >
             <ArrowLeft size={16} aria-hidden="true" />
-          </button>
-          <button
-            type="button"
+          </IconButton>
+          <IconButton
+            variant="solid"
             onClick={() => scrollByCard(1)}
             disabled={!canRight}
             aria-label="Éléments suivants"
-            className="glass-circle-btn primary h-10 w-10 shrink-0 transition-transform active:scale-[0.94] disabled:opacity-40"
+            className="h-10 w-10 shrink-0"
           >
             <ArrowRight size={16} aria-hidden="true" />
-          </button>
+          </IconButton>
         </div>
       </div>
 
@@ -87,15 +88,15 @@ export function GearPhotoCarousel({ cards, onSelect, heading = 'Équipement du s
             className="w-[72vw] max-w-[19rem] shrink-0 snap-start sm:w-[17rem] lg:w-[20rem]"
           >
             <LiveArrivalReveal id={card.id} liveIds={liveIds} index={index}>
-              <button
-                type="button"
-              onClick={() => {
-                triggerHaptic('light');
-                onSelect(card);
-              }}
-              aria-label={`${card.name} — ${card.categoryLabel}${card.weightKg != null ? `, ${card.weightKg} kg` : ''}`}
-              className="relative block h-[23rem] w-full overflow-hidden rounded-[1.75rem] border border-white/40 bg-[var(--lkv-forest-50)] text-left shadow-sm transition-transform active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)] lg:h-[26rem]"
-            >
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  triggerHaptic('light');
+                  onSelect(card);
+                }}
+                aria-label={`${card.name} — ${card.categoryLabel}${card.weightKg != null ? `, ${card.weightKg} kg` : ''}`}
+                className="relative block h-[23rem] w-full overflow-hidden rounded-[var(--lkv-radius-card)] border border-white/40 bg-[var(--lkv-forest-50)] !p-0 text-left shadow-sm lg:h-[26rem]"
+              >
               {card.imageUrl ? (
                 <img
                   src={card.imageUrl}
@@ -140,7 +141,7 @@ export function GearPhotoCarousel({ cards, onSelect, heading = 'Équipement du s
                 {card.quantity > 1 && <span className="tabular-nums">×{card.quantity}</span>}
                 {card.isConsumable && <span>consommable</span>}
               </span>
-              </button>
+              </Button>
             </LiveArrivalReveal>
           </li>
         ))}

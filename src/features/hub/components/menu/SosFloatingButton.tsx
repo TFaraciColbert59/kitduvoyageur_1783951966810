@@ -4,6 +4,7 @@
 // bas à droite ; ouvre une confirmation (jamais d'appel automatique) avec
 // le 112 et l'accès direct aux points de contrôle.
 import Icon from '@/components/ui/Icon';
+import { IconButton } from '@/components/ui';
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { Sheet } from '@/components/ui/Sheet';
@@ -20,7 +21,8 @@ export function SosFloatingButton({ safetyHref }: SosFloatingButtonProps) {
 
   return (
     <>
-      <button
+      <IconButton
+        variant="solid"
         type="button"
         onClick={() => {
           triggerHaptic('warning');
@@ -30,10 +32,10 @@ export function SosFloatingButton({ safetyHref }: SosFloatingButtonProps) {
         style={{
           bottom: 'calc(var(--bottom-nav-height) + 12px)',
         }} // lkdv-safe-area-ok
-        className="glass-circle-btn danger fixed right-4 z-[900] md:bottom-6 md:right-6 md:!bottom-6 flex h-14 w-14 items-center justify-center transition-transform active:scale-90 cursor-pointer"
+        className="fixed right-4 z-[var(--z-drawer)] !bg-[var(--lkv-danger-dark)] text-[var(--lkv-text-inverted)] hover:!bg-[var(--lkv-danger)] md:bottom-6 md:right-6 md:!bottom-6 flex h-14 w-14 items-center justify-center transition-transform active:scale-90 cursor-pointer"
       >
         <Icon name="siren" size={24} aria-hidden="true" />
-      </button>
+      </IconButton>
 
       <Sheet open={open} onOpenChange={setOpen} title="Urgence">
         <div className="space-y-4 pb-2">

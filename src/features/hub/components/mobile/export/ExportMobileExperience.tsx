@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import type { TripFull, TripStats } from '@/features/trips/types/trip.types';
 import type { BudgetSummary } from '@/features/trips/engine/budgetEngine';
+import { Badge, Button, ListItem } from '@/components/ui';
 import { printActiveView } from '@/lib/native/print';
 import { HUB_HOME_HREF } from '@/features/hub/registry/hubSectionRegistry';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
@@ -71,7 +72,7 @@ export function ExportMobileExperience({ trip, stats, budgetSummary }: ExportMob
 
   return (
     <div className="flex min-w-0 flex-col gap-5 pb-1">
-      <section className="glass relative overflow-hidden rounded-[1.75rem] p-4" aria-label="Feuille de route à exporter">
+      <section className="glass relative overflow-hidden rounded-[var(--lkv-radius-card)] p-4" aria-label="Feuille de route à exporter">
         <header className="flex items-start justify-between gap-2">
           <div className="min-w-0">
             <p className="text-[10px] font-medium uppercase tracking-[0.14em] text-[var(--lkv-text-primary)]/70">
@@ -80,9 +81,9 @@ export function ExportMobileExperience({ trip, stats, budgetSummary }: ExportMob
             <p className="mt-0.5 truncate text-sm font-bold text-[var(--lkv-text-primary)]">{trip.title}</p>
           </div>
           {daysLeft != null && (
-            <span className="glass-pill shrink-0 uppercase tracking-[0.08em]">
+            <Badge tone="stone" className="shrink-0 uppercase tracking-[0.08em]">
               {daysLeft >= 0 ? `J-${daysLeft}` : 'En cours'}
-            </span>
+            </Badge>
           )}
         </header>
 
@@ -102,25 +103,25 @@ export function ExportMobileExperience({ trip, stats, budgetSummary }: ExportMob
             <Download size={15} aria-hidden="true" />
             GPX
           </a>
-          <button
-            type="button"
+          <Button
+            variant="secondary"
             onClick={() => {
               triggerHaptic('light');
               printActiveView();
             }}
-            className="glass-capsule-btn inline-flex min-h-[44px] items-center justify-center gap-1.5 !py-3 text-sm font-bold"
+            icon={<Printer size={15} aria-hidden="true" />}
+            className="!py-3 text-sm font-bold"
           >
-            <Printer size={15} aria-hidden="true" />
             PDF
-          </button>
-          <button
-            type="button"
+          </Button>
+          <Button
+            variant="secondary"
             onClick={handleShare}
-            className="glass-capsule-btn col-span-2 inline-flex min-h-[44px] items-center justify-center gap-1.5 !py-3 text-sm font-bold"
+            icon={<Share2 size={15} aria-hidden="true" />}
+            className="col-span-2 !py-3 text-sm font-bold"
           >
-            <Share2 size={15} aria-hidden="true" />
             Partager la feuille de route
-          </button>
+          </Button>
         </div>
 
         {notice && (
@@ -141,35 +142,40 @@ export function ExportMobileExperience({ trip, stats, budgetSummary }: ExportMob
               {program.length} jour{program.length > 1 ? 's' : ''} planifié{program.length > 1 ? 's' : ''}
             </p>
           </div>
-          <Link
-            href={program[0]?.href ?? HUB_HOME_HREF}
-            className="glass-capsule-btn min-h-[44px] shrink-0 !px-3 !py-1.5 text-[11px] font-bold"
-          >
-            Ouvrir
+          <Link href={program[0]?.href ?? HUB_HOME_HREF} className="shrink-0">
+            <Button variant="secondary" size="sm" className="min-h-[44px] !px-3 !py-1.5 text-[11px] font-bold">
+              Ouvrir
+            </Button>
           </Link>
         </div>
 
         <ul className="space-y-2">
           {program.slice(0, 8).map((day) => (
             <li key={day.day}>
-              <Link
-                href={day.href}
-                className="glass-sub-card flex min-h-[44px] items-center gap-3 rounded-2xl p-3"
-              >
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--lkv-primary)]/10 text-[12px] font-extrabold text-[var(--lkv-primary)]">
-                  J{day.day}
-                </span>
-                <span className="min-w-0 flex-1">
-                  <span className="flex items-center gap-1.5 text-[12.5px] font-bold text-[var(--lkv-text-primary)]">
-                    <CalendarDays size={12} className="shrink-0 text-[var(--lkv-secondary)]" aria-hidden="true" />
-                    <span className="truncate">{day.dateLabel ?? `Jour ${day.day}`}</span>
-                  </span>
-                  <span className="mt-0.5 flex items-center gap-1.5 text-[10.5px] font-medium text-[var(--lkv-text-primary)]/65">
-                    <Route size={11} aria-hidden="true" />
-                    {day.stepsCount} étape{day.stepsCount > 1 ? 's' : ''} · {day.distanceKm} km
-                  </span>
-                </span>
-                <ChevronRight size={15} className="shrink-0 text-[var(--lkv-text-primary)]/40" aria-hidden="true" />
+              <Link href={day.href} className="block">
+                <ListItem
+                  as="div"
+                  leading={
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--lkv-primary)]/10 text-[12px] font-extrabold text-[var(--lkv-primary)]">
+                      J{day.day}
+                    </span>
+                  }
+                  title={
+                    <span className="flex items-center gap-1.5">
+                      <CalendarDays size={12} className="shrink-0 text-[var(--lkv-secondary)]" aria-hidden="true" />
+                      <span className="truncate">{day.dateLabel ?? `Jour ${day.day}`}</span>
+                    </span>
+                  }
+                  subtitle={
+                    <span className="flex items-center gap-1.5">
+                      <Route size={11} aria-hidden="true" />
+                      {day.stepsCount} étape{day.stepsCount > 1 ? 's' : ''} · {day.distanceKm} km
+                    </span>
+                  }
+                  trailing={
+                    <ChevronRight size={15} className="shrink-0 text-[var(--lkv-text-primary)]/40" aria-hidden="true" />
+                  }
+                />
               </Link>
             </li>
           ))}
@@ -191,7 +197,7 @@ export function ExportMobileExperience({ trip, stats, budgetSummary }: ExportMob
           <li key={card.key} className="shrink-0 snap-start">
             <Link
               href={card.href}
-              className="glass flex h-[8.5rem] w-[10.5rem] flex-col rounded-[1.4rem] p-3 transition-transform active:scale-[0.97]"
+              className="glass flex h-[8.5rem] w-[10.5rem] flex-col rounded-[var(--lkv-radius-lg)] p-3 transition-transform active:scale-[0.97]"
             >
               <span className="w-fit rounded-full bg-[var(--lkv-primary)]/10 px-2 py-0.5 text-[9.5px] font-bold uppercase tracking-[0.08em] text-[var(--lkv-primary)]">
                 {card.label}

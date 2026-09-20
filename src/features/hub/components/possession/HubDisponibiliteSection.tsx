@@ -58,7 +58,7 @@ export async function HubDisponibiliteSection() {
         <div>
           <h2 id="hub-gauge-title" className="sr-only">Disponibilité</h2>
           <p className="text-[10px] font-medium uppercase tracking-[0.14em] text-[var(--lkv-text-muted)]">Objets disponibles</p>
-          <p className="text-sm text-[color:var(--label-secondary)]">{active.length} en prêt</p>
+          <p className="text-sm text-[var(--lkv-text-secondary)]">{active.length} en prêt</p>
         </div>
       </Card>
       <div className="col-span-12 md:col-span-8">

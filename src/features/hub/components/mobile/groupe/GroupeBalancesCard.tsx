@@ -4,6 +4,7 @@ import { ArrowRight, Wallet } from 'lucide-react';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { formatEuro } from '../../../mobile/mobileHubEngine';
 import type { GroupeBalancesView } from '../../../mobile/groupeEngine';
+import { Button } from '@/components/ui';
 
 export interface GroupePendingExpense {
   id: string;
@@ -37,13 +38,13 @@ export function GroupeBalancesCard({
           Caisse commune
         </p>
         {onOpenExpenses && (
-          <button
+          <Button variant="secondary"
             type="button"
             onClick={onOpenExpenses}
-            className="glass-capsule-btn !px-3 !py-1.5 text-[11px] font-bold min-h-[44px]"
+            className="!px-3 !py-1.5 text-[11px] font-bold min-h-[44px]"
           >
             Dépenses
-          </button>
+          </Button>
         )}
       </div>
 
@@ -148,17 +149,17 @@ export function GroupeBalancesCard({
                     <span className="shrink-0 text-[12px] font-bold tabular-nums text-[var(--lkv-text-primary)]">
                       {formatEuro(expense.amount)}
                     </span>
-                    <button
+                    <Button variant="primary"
                       type="button"
                       onClick={() => {
                         triggerHaptic('medium');
                         onSettle(expense.id);
                       }}
                       disabled={isPending}
-                      className="glass-capsule-btn primary shrink-0 !px-3 !py-1.5 text-[11px] font-bold min-h-[44px] disabled:opacity-50"
+                      className="shrink-0 !px-3 !py-1.5 text-[11px] font-bold min-h-[44px] disabled:opacity-50"
                     >
                       Marquer remboursé
-                    </button>
+                    </Button>
                   </li>
                 ))}
               </ul>

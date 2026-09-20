@@ -4,6 +4,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import nextDynamic from 'next/dynamic';
 import { useAuth } from '@/contexts/AuthContext';
+import { Button, Card, ErrorState, LoadingState } from '@/components/ui';
 import { getGroupeComplet } from '@/lib/queries/groupe';
 import { createClient } from '@/lib/supabase/client';
 import { tripSectionHref } from '@/features/trips/registry/tripSectionRegistry';
@@ -93,27 +94,21 @@ export function HubGroupeCockpit({ groupId, initialTab }: { groupId: string; ini
 
   if (loading) {
     return (
-      <div className="glass p-8 text-center max-w-md w-full mx-auto relative z-10" aria-live="polite">
-        <div className="w-8 h-8 border-2 border-[var(--lkv-text-primary)] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-        <div className="font-display font-bold text-lg text-[var(--lkv-text-primary)]">Chargement du groupe...</div>
-      </div>
+      <Card className="relative z-10 mx-auto w-full max-w-md" aria-live="polite">
+        <LoadingState label="Chargement du groupe…" />
+      </Card>
     );
   }
 
   if (!data) {
     return (
-      <div className="glass p-8 text-center max-w-md w-full mx-auto relative z-10">
-        <h2 className="font-display font-bold text-xl text-[var(--lkv-text-primary)] mb-2">Groupe inaccessible</h2>
-        <p className="text-sm text-[var(--lkv-text-secondary)] mb-6">
-          Ce groupe n&apos;existe plus ou vous n&apos;y avez plus accès.
-        </p>
-        <button
-          onClick={refreshData}
-          className="glass-capsule-btn primary px-5 py-2.5 text-xs font-bold min-h-[44px]"
-        >
-          <span className="relative z-10">Réessayer</span>
-        </button>
-      </div>
+      <Card className="relative z-10 mx-auto w-full max-w-md">
+        <ErrorState
+          title="Groupe inaccessible"
+          message="Ce groupe n'existe plus ou vous n'y avez plus accès."
+          onRetry={refreshData}
+        />
+      </Card>
     );
   }
 
@@ -121,7 +116,6 @@ export function HubGroupeCockpit({ groupId, initialTab }: { groupId: string; ini
   const isCurrentUserOrganizer = !!user && members.some(
     (m: any) => m.user_id === user.id && (m.role_code === 'organizer' || m.role_code === 'co_organizer')
   );
-  const cardClass = 'glass rounded-[var(--lkv-radius-card)]';
 
   return (
     <>
@@ -148,8 +142,9 @@ export function HubGroupeCockpit({ groupId, initialTab }: { groupId: string; ini
         />
 
         {data.ephemeral && (
-          <div
-            className={`${cardClass} p-4 border border-white/70 shadow-sm flex items-center justify-between gap-4`}
+          <Card
+            variant="compact"
+            className="flex items-center justify-between gap-4"
             data-testid="group-ephemeral-banner"
           >
             <div className="min-w-0">
@@ -161,43 +156,44 @@ export function HubGroupeCockpit({ groupId, initialTab }: { groupId: string; ini
               </h4>
             </div>
             {isCurrentUserOrganizer && (
-              <button
-                type="button"
+              <Button
+                variant="primary"
+                size="sm"
                 onClick={handleConvertEphemeral}
                 disabled={converting}
-                className="glass-capsule-btn primary text-xs font-bold px-4 min-h-[44px] flex items-center shrink-0 disabled:opacity-60"
+                className="min-h-[44px] shrink-0"
                 data-testid="group-ephemeral-convert"
               >
-                <span className="relative z-10">
-                  {converting ? 'Conversion…' : 'Transformer en groupe complet'}
-                </span>
-              </button>
+                {converting ? 'Conversion…' : 'Transformer en groupe complet'}
+              </Button>
             )}
             {convertError && (
               <p role="alert" className="text-[10px] font-bold text-[var(--lkv-danger)]">
                 {convertError}
               </p>
             )}
-          </div>
+          </Card>
         )}
 
         {data.parentClub && (
           <Link
             href={`/clubs/${data.parentClub.slug || data.parentClub.id}`}
-            className={`${cardClass} p-4 border border-white/70 shadow-sm flex items-center justify-between gap-4`}
+            className="block"
             data-testid="group-parent-club-badge"
           >
-            <div className="min-w-0">
-              <span className="text-[10px] font-medium uppercase tracking-[0.14em] text-[var(--lkv-text-secondary)] block">
-                Né du club
+            <Card variant="compact" className="flex items-center justify-between gap-4">
+              <div className="min-w-0">
+                <span className="text-[10px] font-medium uppercase tracking-[0.14em] text-[var(--lkv-text-secondary)] block">
+                  Né du club
+                </span>
+                <h4 className="text-sm font-bold text-[var(--lkv-text-primary)] truncate">
+                  {data.parentClub.name}
+                </h4>
+              </div>
+              <span className="glass-capsule-btn text-xs font-bold px-4 min-h-[44px] flex items-center shrink-0">
+                Voir le club →
               </span>
-              <h4 className="text-sm font-bold text-[var(--lkv-text-primary)] truncate">
-                {data.parentClub.name}
-              </h4>
-            </div>
-            <span className="glass-capsule-btn text-xs font-bold px-4 min-h-[44px] flex items-center shrink-0">
-              Voir le club →
-            </span>
+            </Card>
           </Link>
         )}
 
@@ -212,19 +208,18 @@ export function HubGroupeCockpit({ groupId, initialTab }: { groupId: string; ini
         <LiveSharePanel groupId={data.id} isOrganizer={isCurrentUserOrganizer} />
 
         {linkedTrip && (
-          <Link
-            href={tripSectionHref(linkedTrip.slug, 'overview')}
-            className={`${cardClass} p-4 border border-white/70 shadow-sm flex items-center justify-between gap-4`}
-          >
-            <div className="min-w-0">
-              <span className="text-[10px] font-medium uppercase tracking-[0.14em] text-[var(--lkv-text-secondary)] block">
-                Expédition LKDV associée
+          <Link href={tripSectionHref(linkedTrip.slug, 'overview')} className="block">
+            <Card variant="compact" className="flex items-center justify-between gap-4">
+              <div className="min-w-0">
+                <span className="text-[10px] font-medium uppercase tracking-[0.14em] text-[var(--lkv-text-secondary)] block">
+                  Expédition LKDV associée
+                </span>
+                <h4 className="text-sm font-bold text-[var(--lkv-text-primary)] truncate">{linkedTrip.title}</h4>
+              </div>
+              <span className="glass-capsule-btn primary text-xs font-bold px-4 min-h-[44px] flex items-center shrink-0">
+                Ouvrir le cockpit →
               </span>
-              <h4 className="text-sm font-bold text-[var(--lkv-text-primary)] truncate">{linkedTrip.title}</h4>
-            </div>
-            <span className="glass-capsule-btn primary text-xs font-bold px-4 min-h-[44px] flex items-center shrink-0">
-              Ouvrir le cockpit →
-            </span>
+            </Card>
           </Link>
         )}
 
@@ -240,15 +235,15 @@ export function HubGroupeCockpit({ groupId, initialTab }: { groupId: string; ini
           </div>
         )}
 
-        {activeTab === 'tasks' && <div className={cardClass}><TachesCard tasks={data.tasks} groupId={data.id} onRefresh={refreshData} user={user} members={members} /></div>}
-        {activeTab === 'equipment' && <div className={cardClass}><EquipementCard equipment={data.equipment} groupId={data.id} onRefresh={refreshData} user={user} members={members} /></div>}
-        {activeTab === 'expenses' && <div className={cardClass}><DepensesCard expenses={data.expenses} groupId={data.id} onRefresh={refreshData} user={user} members={members} /></div>}
-        {activeTab === 'decisions' && <div className={cardClass}><DecisionsCard decisions={data.decisions} groupId={data.id} onRefresh={refreshData} user={user} /></div>}
-        {activeTab === 'discussion' && <div className={cardClass}><DiscussionCard discussions={data.discussions} groupId={data.id} onRefresh={refreshData} user={user} /></div>}
+        {activeTab === 'tasks' && <Card className="p-0"><TachesCard tasks={data.tasks} groupId={data.id} onRefresh={refreshData} user={user} members={members} /></Card>}
+        {activeTab === 'equipment' && <Card className="p-0"><EquipementCard equipment={data.equipment} groupId={data.id} onRefresh={refreshData} user={user} members={members} /></Card>}
+        {activeTab === 'expenses' && <Card className="p-0"><DepensesCard expenses={data.expenses} groupId={data.id} onRefresh={refreshData} user={user} members={members} /></Card>}
+        {activeTab === 'decisions' && <Card className="p-0"><DecisionsCard decisions={data.decisions} groupId={data.id} onRefresh={refreshData} user={user} /></Card>}
+        {activeTab === 'discussion' && <Card className="p-0"><DiscussionCard discussions={data.discussions} groupId={data.id} onRefresh={refreshData} user={user} /></Card>}
         {activeTab === 'members' && (
-          <div className={cardClass}>
+          <Card className="p-0">
             <VoyageursCard travelers={data.travelers} groupId={data.id} onRefresh={refreshData} user={user} members={members} group={data} isOrganizer={isCurrentUserOrganizer} />
-          </div>
+          </Card>
         )}
       </div>
 

@@ -1,5 +1,6 @@
 'use client';
 
+import { Button } from '@/components/ui';
 import type { Nature } from '../engine/hubNature';
 
 const LABELS: Record<Nature, string> = {
@@ -23,21 +24,18 @@ export function NaturePill({
 }) {
   const active = nature !== 'possession';
   return (
-    <button
-      type="button"
-      role="button"
+    <Button
+      variant={active ? 'primary' : 'secondary'}
       aria-haspopup="dialog"
       aria-expanded={open}
       aria-label="Changer la nature de l'aventure"
       onClick={onOpenSwitcher}
-      className={`glass-capsule-btn inline-flex items-center gap-1.5 px-4 min-h-[44px] w-full sm:w-auto text-sm font-semibold cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)] ${
-        active ? 'primary' : ''
-      }`}
+      className="w-full sm:w-auto"
     >
       <span className="truncate">
         {LABELS[nature]} <span aria-hidden="true" className="text-[14px]">▾</span>
       </span>
-    </button>
+    </Button>
   );
 }
 

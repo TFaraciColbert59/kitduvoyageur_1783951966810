@@ -1,7 +1,7 @@
 'use client';
 
 import { Check, Package, RotateCcw, ShoppingBag, Truck } from 'lucide-react';
-import { Sheet } from '@/components/ui';
+import { Sheet, Button, IconButton } from '@/components/ui';
 import { PURCHASE_META, type MissingRow } from '../../../mobile/gearEngine';
 import type { TripPurchaseState } from '@/features/trips/types/trip.types';
 
@@ -77,27 +77,25 @@ export function MissingItemsDrawer({
                 </div>
 
                 <div className="mt-2.5 flex items-center gap-2">
-                  <button
-                    type="button"
+                  <Button
+                    variant={row.state === 'needed' ? 'primary' : 'secondary'}
                     onClick={() => onAdvance(row)}
                     disabled={busy}
-                    className={`glass-capsule-btn flex h-10 flex-1 items-center justify-center gap-1.5 px-3 text-xs font-bold transition-transform active:scale-[0.98] disabled:opacity-50 ${
-                      row.state === 'needed' ? 'primary' : ''
-                    }`}
+                    icon={<Icon size={14} aria-hidden="true" />}
+                    className="h-10 flex-1 px-3 text-xs font-bold"
                   >
-                    <Icon size={14} aria-hidden="true" />
                     {meta.action}
-                  </button>
+                  </Button>
                   {row.state !== 'needed' && (
-                    <button
-                      type="button"
+                    <IconButton
+                      variant="ghost"
                       onClick={() => onReset(row)}
                       disabled={busy}
                       aria-label="Revenir à « à ajouter »"
-                      className="glass-circle-btn h-10 w-10 shrink-0 text-[var(--lkv-text-secondary)] transition-transform active:scale-[0.94] disabled:opacity-50"
+                      className="h-10 w-10 shrink-0 text-[var(--lkv-text-secondary)]"
                     >
                       <RotateCcw size={15} aria-hidden="true" />
-                    </button>
+                    </IconButton>
                   )}
                 </div>
               </li>

@@ -4,6 +4,7 @@ import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { ChevronDownIcon as ChevronDown } from '@/components/icons/chevron-down';
 import { setTripKit } from '@/features/trips/actions/setTripKit';
 import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui';
 
 interface TripKitSelectorProps {
   tripId: string;
@@ -41,11 +42,11 @@ export function TripKitSelector({ tripId, kits, currentId }: TripKitSelectorProp
 
   return (
     <div className="relative" aria-label="Changer de kit">
-      <button
+      <Button variant="secondary"
         type="button"
         onClick={() => setOpen((v) => !v)}
         className={cn(
-          'glass-capsule-btn w-full !justify-between !gap-2 !px-3 !py-2 !rounded-xl min-h-[44px] text-xs font-semibold focus-visible:outline-2 focus-visible:outline-[var(--lkv-primary)] cursor-pointer',
+          'w-full !justify-between !gap-2 !px-3 !py-2 !rounded-xl min-h-[44px] text-xs font-semibold focus-visible:outline-2 focus-visible:outline-[var(--lkv-primary)] cursor-pointer',
           isPending && 'opacity-60'
         )}
         aria-expanded={open}
@@ -55,7 +56,7 @@ export function TripKitSelector({ tripId, kits, currentId }: TripKitSelectorProp
         <motion.span animate={{ rotate: open ? 180 : 0 }} transition={{ duration: 0.18 }}>
           <ChevronDown size={12} aria-hidden="true" />
         </motion.span>
-      </button>
+      </Button>
 
       <AnimatePresence>
         {open && (
@@ -70,18 +71,19 @@ export function TripKitSelector({ tripId, kits, currentId }: TripKitSelectorProp
           >
             {kitsForSelect.map((kit) => (
               <li key={kit.id}>
-                <button
+                <Button
+                  variant={kit.id === activeId ? 'primary' : 'secondary'}
                   type="button"
                   role="option"
                   aria-selected={kit.id === activeId}
                   onClick={() => handleSelect(kit.id)}
                   className={cn(
-                    'glass-capsule-btn w-full !justify-start !rounded-none !px-3.5 !py-2 min-h-[44px] text-left text-xs font-medium cursor-pointer',
-                    kit.id === activeId ? 'primary font-semibold' : ''
+                    'w-full !justify-start !rounded-none !px-3.5 !py-2 min-h-[44px] text-left text-xs font-medium cursor-pointer',
+                    kit.id === activeId ? 'font-semibold' : ''
                   )}
                 >
                   {cleanKitName(kit.name)}
-                </button>
+                </Button>
               </li>
             ))}
           </motion.ul>

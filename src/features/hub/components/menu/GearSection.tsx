@@ -87,7 +87,7 @@ export async function GearSection({
     <div className="space-y-4">
       <div className="hidden lg:block space-y-4">
       <GearCarouselBlock tripSlug={trip.slug} cards={gearCards} />
-      <Card className="rounded-2xl border border-white p-4 sm:p-5">
+      <Card className="p-4 sm:p-5">
         <div className="flex items-start justify-between gap-3 flex-wrap">
           <Eyebrow>Kit sélectionné</Eyebrow>
           <TripKitSelector
@@ -170,45 +170,48 @@ export async function GearSection({
       </Card>
 
       <section aria-label="Infos importantes" className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        {/* Verre simple (pas de GlassCard) : la hauteur suit le contenu, les
+        {/* Cartes compactes canoniques : la hauteur suit le contenu, les
             eyebrows ne sont plus rognés par overflow-hidden sous grid stretch. */}
-        <article
-          className={`glass rounded-2xl border border-white p-3 flex flex-col gap-1 items-start ${
-            criticalAlerts > 0 ? 'tone-danger' : ''
-          }`}
+        <Card
+          as="article"
+          variant="compact"
+          tone={criticalAlerts > 0 ? 'danger' : 'neutral'}
+          className="flex flex-col gap-1 items-start"
         >
           <Eyebrow>Alertes</Eyebrow>
           <p className="font-display font-semibold text-2xl tabular-nums text-[var(--lkv-text-primary)]">
             {activeAlerts}
           </p>
           {criticalAlerts > 0 && <Badge tone="danger">{criticalAlerts} critiques</Badge>}
-        </article>
+        </Card>
 
-        <article
-          className={`glass rounded-2xl border border-white p-3 flex flex-col gap-1 items-start ${
-            loansLate > 0 ? 'tone-warn' : ''
-          }`}
+        <Card
+          as="article"
+          variant="compact"
+          tone={loansLate > 0 ? 'warn' : 'neutral'}
+          className="flex flex-col gap-1 items-start"
         >
           <Eyebrow>Prêts</Eyebrow>
           <p className="font-display font-semibold text-2xl tabular-nums text-[var(--lkv-text-primary)]">
             {loansActive}
           </p>
           {loansLate > 0 && <Badge tone="warn">{loansLate} en retard</Badge>}
-        </article>
+        </Card>
 
-        <article
-          className={`glass rounded-2xl border border-white p-3 flex flex-col gap-1 items-start ${
-            toReplace > 0 ? 'tone-warn' : ''
-          }`}
+        <Card
+          as="article"
+          variant="compact"
+          tone={toReplace > 0 ? 'warn' : 'neutral'}
+          className="flex flex-col gap-1 items-start"
         >
           <Eyebrow>À remplacer</Eyebrow>
           <p className="font-display font-semibold text-2xl tabular-nums text-[var(--lkv-text-primary)]">
             {toReplace}
           </p>
           {toReplace > 0 && <Badge tone="warn">objets usés</Badge>}
-        </article>
+        </Card>
 
-        <article className="glass rounded-2xl border border-white p-3 flex flex-col gap-1 items-start">
+        <Card as="article" variant="compact" className="flex flex-col gap-1 items-start">
           <Eyebrow>Poids du sac</Eyebrow>
           <p className="font-display font-semibold text-2xl tabular-nums text-[var(--lkv-text-primary)]">
             {formatWeight(analysis.totalWeightGrams)}
@@ -216,7 +219,7 @@ export async function GearSection({
           <p className="text-xs text-[var(--lkv-text-muted)]">
             {analysis.packedItemsCount}/{analysis.totalItemsCount} emballés
           </p>
-        </article>
+        </Card>
       </section>
       </div>
 

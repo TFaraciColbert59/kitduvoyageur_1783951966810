@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server';
+import { Card, EmptyState, ListItem } from '@/components/ui';
 import { HubInviteButtons } from './HubInviteButtons';
 
 interface PendingInvite {
@@ -34,24 +35,20 @@ export async function HubInvitationsSection() {
 
   if (invites.length === 0) {
     return (
-      <div className="glass p-4 rounded-[var(--lkv-radius-card)]">
-        <p className="text-sm text-[var(--lkv-text-secondary)]">Aucune invitation en attente.</p>
-      </div>
+      <Card>
+        <EmptyState compact title="Aucune invitation en attente." />
+      </Card>
     );
   }
 
   return (
     <ul className="space-y-3">
       {invites.map((inv) => (
-        <li
+        <ListItem
           key={inv.id}
-          className="glass p-4 rounded-[var(--lkv-radius-card)] flex items-center gap-3"
-        >
-          <span className="flex-1 min-w-0">
-            <span className="block text-sm font-bold text-[var(--lkv-text-primary)] truncate">{inv.name}</span>
-          </span>
-          <HubInviteButtons groupId={inv.group_id} />
-        </li>
+          title={inv.name}
+          trailing={<HubInviteButtons groupId={inv.group_id} />}
+        />
       ))}
     </ul>
   );

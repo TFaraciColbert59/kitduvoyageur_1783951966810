@@ -98,12 +98,12 @@ export function NextActionCard({ actions, checklist, variant = 'default' }: Next
     <Link
       href={picked.href}
       className={`group block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)] ${
-        compact ? 'rounded-[1.25rem]' : 'rounded-[1.5rem]'
+        compact ? 'rounded-[var(--lkv-radius-md)]' : 'rounded-[var(--lkv-radius-lg)]'
       } ${isAllClear ? '' : 'ring-1 ring-[var(--lkv-primary)]/20'}`}
     >
       <div
         className={`flex items-center transition-transform active:scale-[0.99] ${
-          compact ? 'gap-3 rounded-[1.25rem] p-3' : 'gap-3.5 rounded-[1.5rem] p-4'
+          compact ? 'gap-3 rounded-[var(--lkv-radius-md)] p-3' : 'gap-3.5 rounded-[var(--lkv-radius-lg)] p-4'
         } min-h-[44px] ${
           isAllClear
             ? 'glass'

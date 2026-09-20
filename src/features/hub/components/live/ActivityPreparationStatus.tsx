@@ -122,7 +122,7 @@ export function ActivityPreparationStatus({
       data-testid="activity-preparation-status"
       data-phase={phase}
       aria-label="Préparation de l’activité"
-      className={cn('glass relative overflow-hidden rounded-[1.75rem] px-3 py-2.5', className)}
+      className={cn('glass relative overflow-hidden rounded-[var(--lkv-radius-card)] px-3 py-2.5', className)}
     >
       <div className="mt-2 h-1 overflow-hidden rounded-full bg-black/5" aria-hidden="true">
         <div

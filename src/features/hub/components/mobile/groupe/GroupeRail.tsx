@@ -2,6 +2,7 @@
 
 import type { ReactNode } from 'react';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
+import { Button } from '@/components/ui';
 
 export interface GroupeRailProps {
   title: string;
@@ -35,16 +36,16 @@ export function GroupeRail({
           )}
         </div>
         {onAction && (
-          <button
+          <Button variant="secondary"
             type="button"
             onClick={() => {
               triggerHaptic('selection');
               onAction();
             }}
-            className="glass-capsule-btn min-h-[44px] shrink-0 !px-3 !py-1.5 text-[11px] font-bold"
+            className="min-h-[44px] shrink-0 !px-3 !py-1.5 text-[11px] font-bold"
           >
             {actionLabel}
-          </button>
+          </Button>
         )}
       </div>
       <ul className="hub-hscroll -mx-4 flex list-none snap-x gap-3 overflow-x-auto px-4 pb-1">

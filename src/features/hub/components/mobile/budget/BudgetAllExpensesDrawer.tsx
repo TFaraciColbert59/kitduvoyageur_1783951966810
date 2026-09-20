@@ -2,7 +2,7 @@
 
 import { Plus, X } from 'lucide-react';
 import { Tabs } from '@/components/ui/Tabs';
-import { Sheet } from '@/components/ui';
+import { Button, Sheet } from '@/components/ui';
 import { ExpenseRow } from '@/features/trips/components/budget/ExpenseRow';
 import type { TripExpense } from '@/features/trips/types/trip.types';
 import type { BudgetFilter } from '../../../mobile/budgetEngine';
@@ -58,26 +58,29 @@ export function BudgetAllExpensesDrawer({
         />
 
         {categoryLabel && (
-          <button
-            type="button"
+          <Button
+            variant="secondary"
+            size="sm"
             onClick={onClearCategory}
-            className="glass-capsule-btn inline-flex !min-h-[44px] items-center gap-1.5 !px-3 text-[11px] font-bold transition-transform active:scale-[0.97]"
+            icon={<X size={12} aria-hidden="true" />}
+            iconPosition="trailing"
+            className="min-h-[44px] !px-3 text-[11px] font-bold"
             aria-label={`Retirer le filtre catégorie ${categoryLabel}`}
           >
             {categoryLabel}
-            <X size={12} aria-hidden="true" />
-          </button>
+          </Button>
         )}
 
         {canManage && (
-          <button
-            type="button"
+          <Button
+            variant="primary"
+            fullWidth
             onClick={onAdd}
-            className="glass-capsule-btn primary inline-flex w-full items-center justify-center gap-1.5 !py-3 text-sm font-bold"
+            icon={<Plus size={15} aria-hidden="true" />}
+            className="!py-3 text-sm font-bold"
           >
-            <Plus size={15} aria-hidden="true" />
             Ajouter une dépense
-          </button>
+          </Button>
         )}
 
         {rows.length === 0 ? (

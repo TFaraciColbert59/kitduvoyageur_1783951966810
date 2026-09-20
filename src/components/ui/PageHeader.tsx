@@ -11,6 +11,11 @@ export interface PageHeaderProps
   extends Omit<React.HTMLAttributes<HTMLElement>, 'title'> {
   title: React.ReactNode;
   subtitle?: React.ReactNode;
+  /**
+   * Lignes autorisées pour le sous-titre : `1` (défaut) = troncature sur une
+   * ligne ; `2`+ = clamp multi-lignes ; `0` = aucune limite.
+   */
+  subtitleLines?: number;
   /** Slot retour, ou `true` pour le contrôle canonique HeaderBackButton. */
   back?: React.ReactNode | boolean;
   backHref?: string;
@@ -34,9 +39,24 @@ export interface PageHeaderProps
  * PageHeader — header de page canonique (Phase 2, Lot 2).
  * Structure invariable : [Back / Leading] — Titre — [Trailing action].
  */
+const SUBTITLE_LINES: Record<number, string> = {
+  1: 'truncate',
+  2: 'line-clamp-2',
+  3: 'line-clamp-3',
+  4: 'line-clamp-4',
+  5: 'line-clamp-5',
+  6: 'line-clamp-6',
+};
+
+function subtitleClampClass(lines: number): string {
+  if (lines <= 0) return 'break-words';
+  return SUBTITLE_LINES[lines] ?? 'line-clamp-6';
+}
+
 export function PageHeader({
   title,
   subtitle,
+  subtitleLines = 1,
   back,
   backHref,
   backLabel,
@@ -72,7 +92,12 @@ export function PageHeader({
   );
 
   const subtitleNode = subtitle ? (
-    <p className="min-w-0 truncate text-[length:var(--lkv-text-footnote)] text-[color:var(--lkv-text-secondary)]">
+    <p
+      className={cn(
+        'min-w-0 text-[length:var(--lkv-text-footnote)] text-[color:var(--lkv-text-secondary)]',
+        subtitleClampClass(subtitleLines)
+      )}
+    >
       {subtitle}
     </p>
   ) : null;

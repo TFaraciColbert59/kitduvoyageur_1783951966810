@@ -1,6 +1,7 @@
 'use client';
 
 import { CalendarDays, Dog, ShieldCheck, UserPlus, Users } from 'lucide-react';
+import { Badge, Button } from '@/components/ui';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { personInitials } from '../../../mobile/teamEngine';
 
@@ -19,10 +20,13 @@ export interface TeamHeroProps {
 
 function MetaPill({ icon: Icon, label }: { icon: typeof Users; label: string }) {
   return (
-    <span className="flex items-center gap-1 rounded-full bg-white/70 px-2.5 py-1 text-[10.5px] font-semibold text-[var(--lkv-text-primary)]/80 ring-1 ring-white/60">
+    <Badge
+      tone="stone"
+      className="gap-1 bg-white/70 px-2.5 py-1 text-[10.5px] font-semibold text-[var(--lkv-text-primary)]/80 ring-1 ring-white/60"
+    >
       <Icon size={12} aria-hidden="true" />
       {label}
-    </span>
+    </Badge>
   );
 }
 
@@ -42,7 +46,7 @@ export function TeamHero({
   const { triggerHaptic } = useHapticFeedback();
 
   return (
-    <section className="glass relative overflow-hidden rounded-[1.75rem] p-4" aria-label="Équipe du voyage">
+    <section className="glass relative overflow-hidden rounded-[var(--lkv-radius-card)] p-4" aria-label="Équipe du voyage">
       <header className="flex items-start justify-between gap-2">
         <div className="min-w-0">
           <p className="text-[10px] font-medium uppercase tracking-[0.14em] text-[var(--lkv-text-primary)]/70">
@@ -51,9 +55,9 @@ export function TeamHero({
           <p className="mt-0.5 truncate text-sm font-bold text-[var(--lkv-text-primary)]">{title}</p>
         </div>
         {daysLeft != null && (
-          <span className="glass-pill shrink-0 uppercase tracking-[0.08em]">
+          <Badge tone="stone" className="shrink-0 uppercase tracking-[0.08em]">
             {daysLeft >= 0 ? `J-${daysLeft}` : 'En cours'}
-          </span>
+          </Badge>
         )}
       </header>
 
@@ -110,29 +114,29 @@ export function TeamHero({
 
       <div className="mt-4 flex gap-2">
         {isOwner && (
-          <button
-            type="button"
+          <Button
+            variant="primary"
             onClick={() => {
               triggerHaptic('light');
               onInvite();
             }}
-            className="glass-capsule-btn primary inline-flex min-h-[44px] flex-1 items-center justify-center gap-1.5 !py-3 text-sm font-bold"
+            icon={<UserPlus size={15} aria-hidden="true" />}
+            className="flex-1 !py-3 text-sm font-bold"
           >
-            <UserPlus size={15} aria-hidden="true" />
             Inviter
-          </button>
+          </Button>
         )}
-        <button
-          type="button"
+        <Button
+          variant="secondary"
           onClick={() => {
             triggerHaptic('selection');
             onOpenCarnet();
           }}
-          className="glass-capsule-btn inline-flex min-h-[44px] flex-1 items-center justify-center gap-1.5 !py-3 text-sm font-bold"
+          icon={<CalendarDays size={15} aria-hidden="true" />}
+          className="flex-1 !py-3 text-sm font-bold"
         >
-          <CalendarDays size={15} aria-hidden="true" />
           Carnet d&apos;équipage
-        </button>
+        </Button>
       </div>
     </section>
   );

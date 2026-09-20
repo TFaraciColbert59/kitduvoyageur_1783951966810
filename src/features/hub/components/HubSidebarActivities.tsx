@@ -1,6 +1,7 @@
 'use client';
 
 import Icon from '@/components/ui/Icon';
+import { Button } from '@/components/ui';
 import React from 'react';
 import { useRouter } from 'next/navigation';
 import { useActiveAdventure } from '../context/ActiveAdventureContext';
@@ -56,13 +57,12 @@ export function HubSidebarActivities({ trips, activeSlug = null }: HubSidebarAct
               );
           return (
             <li key={t.id}>
-              <button
-                type="button"
+              <Button
+                variant={current ? 'primary' : 'secondary'}
+                fullWidth
                 onClick={() => open(t)}
                 aria-current={current ? 'true' : undefined}
-                className={`glass-capsule-btn group w-full !justify-start !gap-2.5 !rounded-lg !px-2.5 min-h-[44px] text-left cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)] ${
-                  current ? 'primary' : ''
-                }`}
+                className="min-h-[44px] !justify-start !gap-2.5 !rounded-[var(--lkv-radius-sm)] !px-2.5 text-left"
               >
                 <span aria-hidden="true" className="shrink-0">
                   <Icon name="compass" size={16} />
@@ -78,7 +78,7 @@ export function HubSidebarActivities({ trips, activeSlug = null }: HubSidebarAct
                     aria-label="Aventure active"
                   />
                 )}
-              </button>
+              </Button>
             </li>
           );
         })}

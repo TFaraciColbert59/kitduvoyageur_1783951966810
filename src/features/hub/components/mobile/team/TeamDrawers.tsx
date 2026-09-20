@@ -3,6 +3,7 @@
 import { useState, type FormEvent } from 'react';
 import { Dog, HeartPulse, Plus, Trash2, UserPlus } from 'lucide-react';
 import Icon from '@/components/ui/Icon';
+import { Badge, Button, IconButton, type BadgeTone } from '@/components/ui';
 import type { HumanParticipant, DogParticipant } from '@/features/participants/types/participant.types';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { carnetRoleLabel, dogLoadView, formatJoinDate, personInitials, teamRoleLabel } from '../../../mobile/teamEngine';
@@ -12,6 +13,12 @@ const ROLE_TONES: Record<string, string> = {
   guide: 'bg-[var(--lkv-primary)]/12 text-[var(--lkv-primary)]',
   medic: 'bg-[var(--lkv-danger)]/10 text-[var(--lkv-danger)]',
   member: 'bg-[var(--sage-50)] text-[var(--sage-700)]',
+};
+
+const ROLE_BADGES: Record<string, BadgeTone> = {
+  guide: 'stone',
+  medic: 'danger',
+  member: 'sage',
 };
 
 /* ─────────────── Équipiers & invitation ─────────────── */
@@ -91,14 +98,16 @@ export function TeamMembersDrawer({
             <option value="editor">Éditeur — peut modifier</option>
             <option value="viewer">Lecteur — consultation seule</option>
           </select>
-          <button
+          <Button
             type="submit"
-            disabled={isPending}
-            className="glass-capsule-btn primary inline-flex min-h-[44px] w-full items-center justify-center gap-1.5 !py-3 text-sm font-bold disabled:opacity-50"
+            variant="primary"
+            fullWidth
+            loading={isPending}
+            icon={<UserPlus size={15} aria-hidden="true" />}
+            className="!py-3 text-sm font-bold"
           >
-            <UserPlus size={15} aria-hidden="true" />
             {isPending ? 'Envoi…' : "Envoyer l'invitation"}
-          </button>
+          </Button>
         </form>
       )}
 
@@ -122,9 +131,9 @@ export function TeamMembersDrawer({
                     {formatJoinDate(member.joinedAt)}
                   </span>
                 </span>
-                <span className="shrink-0 rounded-full bg-[var(--lkv-primary)]/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.08em] text-[var(--lkv-primary)]">
+                <Badge tone="stone" className="shrink-0 bg-[var(--lkv-primary)]/10 px-2.5 py-1 uppercase tracking-[0.08em] text-[var(--lkv-primary)]">
                   {teamRoleLabel(member.role as never) || member.role}
-                </span>
+                </Badge>
               </div>
 
               {isOwner && !isRowOwner && (
@@ -142,15 +151,15 @@ export function TeamMembersDrawer({
                       <option value="viewer">Lecteur</option>
                     </select>
                   </label>
-                  <button
-                    type="button"
+                  <IconButton
+                    variant="ghost"
                     onClick={() => onRequestRemove(member.id, member.name)}
                     disabled={isPending}
                     aria-label={`Retirer ${member.name} de l'expédition`}
-                    className="glass-circle-btn h-11 w-11 shrink-0 !text-[var(--lkv-danger)] disabled:opacity-50"
+                    className="shrink-0 !text-[var(--lkv-danger)]"
                   >
                     <Trash2 size={16} aria-hidden="true" />
-                  </button>
+                  </IconButton>
                 </div>
               )}
             </li>
@@ -228,40 +237,42 @@ export function TeamCarnetDrawer({
                   <span className="truncate text-sm font-bold text-[var(--lkv-text-primary)]">
                     {human.publicData.firstName}
                   </span>
-                  <span
-                    className={`shrink-0 rounded-full px-2 py-0.5 text-[9.5px] font-bold uppercase tracking-[0.08em] ${
-                      ROLE_TONES[human.publicData.role] ?? ROLE_TONES.member
+                  <Badge
+                    tone={ROLE_BADGES[human.publicData.role] ?? 'sage'}
+                    className={`shrink-0 px-2 py-0.5 uppercase tracking-[0.08em] ${
+                      human.publicData.role === 'guide' ? ROLE_TONES.guide : ''
                     }`}
                   >
                     {carnetRoleLabel(human.publicData.role)}
-                  </span>
+                  </Badge>
                 </span>
                 <span className="mt-0.5 block text-[10.5px] font-medium text-[var(--lkv-text-primary)]/65">
                   Sac {human.publicData.packWeightKg} kg · Forme {human.publicData.fitnessScore}%
                 </span>
               </span>
               {onRemove && humans.length > 1 && (
-                <button
-                  type="button"
+                <IconButton
+                  variant="ghost"
                   onClick={() => onRemove(human.id)}
                   aria-label={`Retirer ${human.publicData.firstName} du carnet`}
-                  className="glass-circle-btn h-11 w-11 shrink-0 !text-[var(--lkv-danger)]"
+                  className="shrink-0 !text-[var(--lkv-danger)]"
                 >
                   <Trash2 size={15} aria-hidden="true" />
-                </button>
+                </IconButton>
               )}
             </div>
-            <button
-              type="button"
+            <Button
+              variant="secondary"
+              fullWidth
               onClick={() => {
                 triggerHaptic('selection');
                 onMedical(human);
               }}
-              className="glass-capsule-btn mt-2.5 inline-flex min-h-[44px] w-full items-center justify-center gap-1.5 !py-2.5 text-xs font-bold"
+              icon={<HeartPulse size={14} aria-hidden="true" />}
+              className="mt-2.5 !py-2.5 text-xs font-bold"
             >
-              <HeartPulse size={14} aria-hidden="true" />
               Fiche médicale / ICE
-            </button>
+            </Button>
           </li>
         ))}
       </ul>
@@ -323,13 +334,15 @@ export function TeamCarnetDrawer({
           aria-label="Téléphone du contact d'urgence ICE"
           className="glass-input w-full px-3 py-2.5 text-sm text-[var(--lkv-text-primary)] min-h-[44px]"
         />
-        <button
+        <Button
           type="submit"
+          variant="primary"
+          fullWidth
           disabled={!firstName.trim()}
-          className="glass-capsule-btn primary inline-flex min-h-[44px] w-full items-center justify-center !py-3 text-sm font-bold disabled:opacity-50"
+          className="!py-3 text-sm font-bold"
         >
           Ajouter au carnet
-        </button>
+        </Button>
       </form>
     </GroupeDrawer>
   );
@@ -386,22 +399,22 @@ export function TeamDogsDrawer({
                 <span className="min-w-0 flex-1">
                   <span className="flex items-center gap-2">
                     <span className="truncate text-sm font-bold text-[var(--lkv-text-primary)]">{dog.name}</span>
-                    <span className="shrink-0 rounded-full bg-[var(--sage-50)] px-2 py-0.5 text-[9.5px] font-bold text-[var(--sage-700)]">
+                    <Badge tone="sage" className="shrink-0 px-2 py-0.5">
                       {dog.breed}
-                    </span>
+                    </Badge>
                   </span>
                   <span className="mt-0.5 block text-[10.5px] font-medium text-[var(--lkv-text-primary)]/65">
                     {dog.weightKg} kg · Capacité max {dog.maxCarryingCapacityKg} kg
                   </span>
                 </span>
-                <button
-                  type="button"
+                <IconButton
+                  variant="ghost"
                   onClick={() => onRemove(dog.id)}
                   aria-label={`Retirer ${dog.name}`}
-                  className="glass-circle-btn h-11 w-11 shrink-0 !text-[var(--lkv-danger)]"
+                  className="shrink-0 !text-[var(--lkv-danger)]"
                 >
                   <Trash2 size={15} aria-hidden="true" />
-                </button>
+                </IconButton>
               </div>
 
               <div className="mt-2.5 flex items-center justify-between gap-3 border-t border-black/5 pt-2.5">
@@ -487,13 +500,15 @@ export function TeamDogsDrawer({
         <p className="text-[10.5px] font-medium text-[var(--lkv-text-primary)]/60">
           Capacité de portage estimée à 15 % du poids : {(Math.max(0, Number(weight) || 0) * 0.15).toFixed(1)} kg
         </p>
-        <button
+        <Button
           type="submit"
+          variant="primary"
+          fullWidth
           disabled={!name.trim()}
-          className="glass-capsule-btn primary inline-flex min-h-[44px] w-full items-center justify-center !py-3 text-sm font-bold disabled:opacity-50"
+          className="!py-3 text-sm font-bold"
         >
           Ajouter le compagnon
-        </button>
+        </Button>
       </form>
     </GroupeDrawer>
   );

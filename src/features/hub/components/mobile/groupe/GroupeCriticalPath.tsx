@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ArrowLeft, ArrowRight, CalendarDays, Check } from 'lucide-react';
+import { Button, Card, EmptyState, IconButton } from '@/components/ui';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import type { GroupeCriticalTask } from '../../../mobile/groupeEngine';
 
@@ -83,56 +84,53 @@ export function GroupeCriticalPath({
           </p>
         </div>
         <div className="flex shrink-0 items-center gap-2">
-          <button
-            type="button"
+          <Button
+            variant="secondary"
+            size="sm"
             onClick={onOpenAll}
-            className="glass-capsule-btn !px-3 !py-1.5 text-[11px] font-bold min-h-[44px]"
+            className="min-h-[44px] !px-3 !py-1.5 text-[11px] font-bold"
           >
             Tout voir
-          </button>
+          </Button>
           {tasks.length > 0 && (
             <>
-              <button
-                type="button"
+              <IconButton
+                variant="glass"
                 onClick={() => scrollByCard(-1)}
                 disabled={!canLeft}
                 aria-label="Tâches précédentes"
-                className="glass-circle-btn h-10 w-10 disabled:opacity-40"
+                className="h-10 w-10"
               >
                 <ArrowLeft size={16} aria-hidden="true" />
-              </button>
-              <button
-                type="button"
+              </IconButton>
+              <IconButton
+                variant="solid"
                 onClick={() => scrollByCard(1)}
                 disabled={!canRight}
                 aria-label="Tâches suivantes"
-                className="glass-circle-btn primary h-10 w-10 disabled:opacity-40"
+                className="h-10 w-10"
               >
                 <ArrowRight size={16} aria-hidden="true" />
-              </button>
+              </IconButton>
             </>
           )}
         </div>
       </div>
 
       {tasks.length === 0 ? (
-        <div className="glass-sub-card rounded-2xl p-4">
-          <p className="text-sm font-bold text-[var(--lkv-text-primary)]">
-            {openCount === 0 ? 'Rien dans le chemin critique' : 'Aucune échéance active'}
-          </p>
-          <p className="mt-1 text-xs font-medium text-[var(--lkv-text-primary)]/70">
-            {openCount === 0
-              ? 'Toutes les tâches ouvertes sont terminées. Beau travail.'
-              : 'Ajoutez une date à vos tâches pour prioriser la préparation.'}
-          </p>
-          <button
-            type="button"
-            onClick={onOpenAll}
-            className="glass-capsule-btn mt-3 min-h-[44px] !px-4 text-xs font-bold"
-          >
-            Gérer les tâches
-          </button>
-        </div>
+        <Card>
+          <EmptyState
+            compact
+            title={openCount === 0 ? 'Rien dans le chemin critique' : 'Aucune échéance active'}
+            description={
+              openCount === 0
+                ? 'Toutes les tâches ouvertes sont terminées. Beau travail.'
+                : 'Ajoutez une date à vos tâches pour prioriser la préparation.'
+            }
+            actionLabel="Gérer les tâches"
+            onAction={onOpenAll}
+          />
+        </Card>
       ) : (
         <ul
           ref={scrollRef}
@@ -144,7 +142,7 @@ export function GroupeCriticalPath({
             return (
               <li key={task.id} className="shrink-0 snap-start">
                 <div
-                  className={`flex h-[10.5rem] w-[9.5rem] flex-col rounded-[1.4rem] p-3 ${
+                  className={`flex h-[10.5rem] w-[9.5rem] flex-col rounded-[var(--lkv-radius-lg)] p-3 ${
                     task.isOverdue
                       ? 'glass border-2 border-[var(--lkv-danger)]/25'
                       : 'glass'
@@ -165,18 +163,18 @@ export function GroupeCriticalPath({
                   </p>
 
                   <div className="mt-auto flex items-center justify-between gap-1">
-                    <button
-                      type="button"
+                    <IconButton
+                      variant="glass"
                       onClick={() => {
                         triggerHaptic('medium');
                         onToggle(task);
                       }}
                       disabled={!canManage || isPending}
                       aria-label={`Marquer « ${task.title} » comme terminée`}
-                      className="glass-check-circle h-10 w-10 disabled:opacity-40"
+                      className="h-10 w-10"
                     >
                       <Check size={13} aria-hidden="true" />
-                    </button>
+                    </IconButton>
 
                     <label
                       className={`relative inline-flex h-10 w-10 items-center justify-center rounded-full glass-sub-card text-[var(--lkv-text-primary)]/70 transition-colors ${

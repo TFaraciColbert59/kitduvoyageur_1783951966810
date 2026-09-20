@@ -1,9 +1,10 @@
 'use client';
 
 import { useMemo, useState, useTransition, type FormEvent } from 'react';
-import { CalendarDays, NotebookPen, Pencil, Pin, Plus, Trash2 } from 'lucide-react';
+import { CalendarDays, NotebookPen, Pencil, Pin, Plus, Trash2, X } from 'lucide-react';
 import { ConfirmDialog } from '@/features/trips/components/ConfirmDialog';
 import { TripCompletionModal } from '@/features/trips/components/TripCompletionModal';
+import { Badge, Button, IconButton, ListItem, Tabs } from '@/components/ui';
 import type { TripFull, TripNote } from '@/features/trips/types/trip.types';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { addTripNoteAction, deleteTripNoteAction } from '@/app/voyages/completion-actions';
@@ -152,21 +153,21 @@ export function JournalMobileExperience({ trip }: JournalMobileExperienceProps) 
 
   const noteCard = (note: TripNote) => (
     <li key={note.id} className="shrink-0 snap-start">
-      <button
-        type="button"
+      <Button
+        variant="secondary"
         onClick={() => {
           triggerHaptic('selection');
           openNote(note);
         }}
         aria-label={`Note ${noteTitle(note)}`}
-        className="glass-capsule-btn flex h-[10rem] w-[14.5rem] !flex-col !items-start !justify-start !rounded-[1.4rem] !p-3.5 text-left transition-transform active:scale-[0.98]"
+        className="flex h-[10rem] w-[14.5rem] !flex-col !items-start !justify-start !rounded-[var(--lkv-radius-lg)] !p-3.5 text-left"
       >
         <span className="flex items-center gap-1.5">
           {note.is_pinned && <Pin size={12} aria-hidden="true" />}
           {note.day_number != null && (
-            <span className="rounded-full bg-[var(--lkv-primary)]/10 px-2 py-0.5 text-[9.5px] font-bold text-[var(--lkv-primary)]">
+            <Badge tone="stone" className="bg-[var(--lkv-primary)]/10 px-2 py-0.5 text-[var(--lkv-primary)]">
               Jour {note.day_number}
-            </span>
+            </Badge>
           )}
           <span className="ml-auto text-[9.5px] font-medium">
             {formatRelativeTime(note.created_at)}
@@ -178,7 +179,7 @@ export function JournalMobileExperience({ trip }: JournalMobileExperienceProps) 
         <span className="mt-1 line-clamp-3 text-[11px] font-medium leading-snug">
           {note.content}
         </span>
-      </button>
+      </Button>
     </li>
   );
 
@@ -190,23 +191,24 @@ export function JournalMobileExperience({ trip }: JournalMobileExperienceProps) 
           role="alert"
         >
           <span>{errorMsg}</span>
-          <button
-            type="button"
+          <IconButton
+            variant="glass"
+            size="lg"
             onClick={() => setErrorMsg(null)}
-            className="glass-circle-btn h-11 w-11 shrink-0 text-[var(--lkv-text-muted)]"
+            className="shrink-0 text-[var(--lkv-text-muted)]"
             aria-label="Fermer le message"
           >
-            ×
-          </button>
+            <X size={16} aria-hidden="true" />
+          </IconButton>
         </div>
       )}
 
-      <section className="glass relative overflow-hidden rounded-[1.75rem] p-4" aria-label="Carnet de bord">
+      <section className="glass relative overflow-hidden rounded-[var(--lkv-radius-card)] p-4" aria-label="Carnet de bord">
         <header className="flex items-start justify-between gap-2">
           <p className="text-[10px] font-medium uppercase tracking-[0.14em] text-[var(--lkv-text-primary)]/70">
             Carnet de bord
           </p>
-          <span className="glass-pill shrink-0 uppercase tracking-[0.08em]">{stats.total} notes</span>
+          <Badge tone="stone" className="shrink-0 uppercase tracking-[0.08em]">{stats.total} notes</Badge>
         </header>
 
         <div className="mt-3 flex items-center gap-4">
@@ -238,27 +240,27 @@ export function JournalMobileExperience({ trip }: JournalMobileExperienceProps) 
 
         {canEdit && (
           <div className="mt-4 flex gap-2">
-            <button
-              type="button"
+            <Button
+              variant="primary"
               onClick={() => {
                 triggerHaptic('light');
                 setEditorOpen(true);
               }}
-              className="glass-capsule-btn primary inline-flex min-h-[44px] flex-1 items-center justify-center gap-1.5 !py-3 text-sm font-bold"
+              icon={<Plus size={15} aria-hidden="true" />}
+              className="flex-1 !py-3 text-sm font-bold"
             >
-              <Plus size={15} aria-hidden="true" />
               Écrire
-            </button>
-            <button
-              type="button"
+            </Button>
+            <Button
+              variant="secondary"
               onClick={() => {
                 triggerHaptic('selection');
                 setCompletionOpen(true);
               }}
-              className="glass-capsule-btn inline-flex min-h-[44px] flex-1 items-center justify-center !py-3 text-sm font-bold"
+              className="flex-1 !py-3 text-sm font-bold"
             >
               Clôturer
-            </button>
+            </Button>
           </div>
         )}
       </section>
@@ -293,7 +295,7 @@ export function JournalMobileExperience({ trip }: JournalMobileExperienceProps) 
         {sorted.slice(0, 8).map(noteCard)}
         {sorted.length === 0 && (
           <li className="shrink-0 snap-start">
-            <div className="glass-sub-card flex h-[10rem] w-[14.5rem] flex-col items-start justify-center gap-1 rounded-[1.4rem] p-4">
+            <div className="glass-sub-card flex h-[10rem] w-[14.5rem] flex-col items-start justify-center gap-1 rounded-[var(--lkv-radius-lg)] p-4">
               <span className="text-sm font-bold text-[var(--lkv-text-primary)]">Carnet vide</span>
               <span className="text-xs font-medium text-[var(--lkv-text-primary)]/70">
                 Racontez votre première journée.
@@ -305,31 +307,16 @@ export function JournalMobileExperience({ trip }: JournalMobileExperienceProps) 
 
       {/* Tiroir : liste des notes */}
       <GroupeDrawer open={listOpen} onOpenChange={setListOpen} title="Carnet de bord" width={470}>
-        <div className="flex flex-wrap gap-2">
-          <button
-            type="button"
-            onClick={() => setDayFilter('all')}
-            aria-pressed={dayFilter === 'all'}
-            className={`glass-capsule-btn !px-3.5 min-h-[44px] text-xs font-bold ${
-              dayFilter === 'all' ? 'primary' : ''
-            }`}
-          >
-            Tous les jours
-          </button>
-          {days.map((day) => (
-            <button
-              key={day}
-              type="button"
-              onClick={() => setDayFilter(day)}
-              aria-pressed={dayFilter === day}
-              className={`glass-capsule-btn !px-3.5 min-h-[44px] text-xs font-bold ${
-                dayFilter === day ? 'primary' : ''
-              }`}
-            >
-              Jour {day}
-            </button>
-          ))}
-        </div>
+        <Tabs
+          variant="scrollable"
+          ariaLabel="Filtrer par jour"
+          value={dayFilter === 'all' ? 'all' : String(dayFilter)}
+          onChange={(id) => setDayFilter(id === 'all' ? 'all' : Number(id))}
+          options={[
+            { id: 'all', label: 'Tous les jours' },
+            ...days.map((day) => ({ id: String(day), label: `Jour ${day}` })),
+          ]}
+        />
 
         {filtered.length === 0 ? (
           <p className="py-6 text-center text-sm font-medium text-[var(--lkv-text-primary)]/70">
@@ -338,29 +325,20 @@ export function JournalMobileExperience({ trip }: JournalMobileExperienceProps) 
         ) : (
           <ul className="space-y-2">
             {filtered.map((note) => (
-              <li key={note.id}>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setListOpen(false);
-                    openNote(note);
-                  }}
-                  className="glass-capsule-btn flex min-h-[44px] w-full !justify-start !gap-3 !rounded-2xl !p-3 text-left"
-                >
+              <ListItem
+                key={note.id}
+                onClick={() => {
+                  setListOpen(false);
+                  openNote(note);
+                }}
+                leading={
                   <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/10">
                     {note.is_pinned ? <Pin size={15} aria-hidden="true" /> : <NotebookPen size={15} aria-hidden="true" />}
                   </span>
-                  <span className="min-w-0 flex-1">
-                    <span className="block truncate text-[13px] font-bold text-[var(--lkv-text-primary)]">
-                      {noteTitle(note)}
-                    </span>
-                    <span className="block truncate text-[10.5px] font-medium text-[var(--lkv-text-primary)]/65">
-                      {note.day_number != null ? `Jour ${note.day_number} · ` : ''}
-                      {formatRelativeTime(note.created_at)}
-                    </span>
-                  </span>
-                </button>
-              </li>
+                }
+                title={noteTitle(note)}
+                subtitle={`${note.day_number != null ? `Jour ${note.day_number} · ` : ''}${formatRelativeTime(note.created_at)}`}
+              />
             ))}
           </ul>
         )}
@@ -382,15 +360,15 @@ export function JournalMobileExperience({ trip }: JournalMobileExperienceProps) 
           <div className="space-y-4">
             <div className="glass-sub-card flex flex-wrap items-center gap-2 rounded-2xl p-3">
               {selected.day_number != null && (
-                <span className="rounded-full bg-[var(--lkv-primary)]/10 px-2.5 py-1 text-[10px] font-bold text-[var(--lkv-primary)]">
+                <Badge tone="stone" className="bg-[var(--lkv-primary)]/10 px-2.5 py-1 text-[var(--lkv-primary)]">
                   Jour {selected.day_number}
-                </span>
+                </Badge>
               )}
               {selected.is_pinned && (
-                <span className="flex items-center gap-1 rounded-full bg-[var(--sage-50)] px-2.5 py-1 text-[10px] font-bold text-[var(--sage-700)]">
+                <Badge tone="sage" className="px-2.5 py-1">
                   <Pin size={11} aria-hidden="true" />
                   Épinglée
-                </span>
+                </Badge>
               )}
               <span className="ml-auto text-[10.5px] font-medium text-[var(--lkv-text-primary)]/60">
                 {formatRelativeTime(selected.created_at)}
@@ -407,22 +385,22 @@ export function JournalMobileExperience({ trip }: JournalMobileExperienceProps) 
                   className="glass-input w-full px-3 py-2.5 text-sm text-[var(--lkv-text-primary)]"
                 />
                 <div className="flex gap-2">
-                  <button
-                    type="button"
+                  <Button
+                    variant="secondary"
                     onClick={() => setEditing(false)}
                     disabled={isPending}
-                    className="glass-capsule-btn inline-flex min-h-[44px] flex-1 items-center justify-center !py-3 text-sm font-bold disabled:opacity-50"
+                    className="flex-1 !py-3 text-sm font-bold"
                   >
                     Annuler
-                  </button>
-                  <button
-                    type="button"
+                  </Button>
+                  <Button
+                    variant="primary"
                     onClick={handleEditSave}
-                    disabled={isPending}
-                    className="glass-capsule-btn primary inline-flex min-h-[44px] flex-1 items-center justify-center !py-3 text-sm font-bold disabled:opacity-50"
+                    loading={isPending}
+                    className="flex-1 !py-3 text-sm font-bold"
                   >
                     {isPending ? 'Enregistrement…' : 'Enregistrer'}
-                  </button>
+                  </Button>
                 </div>
               </div>
             ) : (
@@ -433,28 +411,30 @@ export function JournalMobileExperience({ trip }: JournalMobileExperienceProps) 
 
             {canEdit && !editing && (
               <div className="space-y-2">
-                <button
-                  type="button"
+                <Button
+                  variant="secondary"
+                  fullWidth
                   onClick={() => {
                     setEditDraft(selected.content);
                     setEditing(true);
                     triggerHaptic('light');
                   }}
-                  className="glass-capsule-btn inline-flex min-h-[44px] w-full items-center justify-center gap-1.5 !py-3 text-sm font-bold"
+                  icon={<Pencil size={15} aria-hidden="true" />}
+                  className="!py-3 text-sm font-bold"
                 >
-                  <Pencil size={15} aria-hidden="true" />
                   Éditer la note
-                </button>
-                <button
-                  type="button"
+                </Button>
+                <Button
+                  variant="destructive"
+                  fullWidth
                   onClick={() =>
                     setConfirmState({ id: selected.id, label: `« ${noteTitle(selected)} »` })
                   }
-                  className="glass-capsule-btn inline-flex min-h-[44px] w-full items-center justify-center gap-1.5 !py-3 text-sm font-bold text-[var(--lkv-danger)]"
+                  icon={<Trash2 size={15} aria-hidden="true" />}
+                  className="!py-3 text-sm font-bold"
                 >
-                  <Trash2 size={15} aria-hidden="true" />
                   Supprimer la note
-                </button>
+                </Button>
               </div>
             )}
           </div>
@@ -499,13 +479,15 @@ export function JournalMobileExperience({ trip }: JournalMobileExperienceProps) 
             aria-label="Récit de la note"
             className="glass-input w-full px-3 py-2.5 text-sm text-[var(--lkv-text-primary)]"
           />
-          <button
+          <Button
             type="submit"
-            disabled={isPending}
-            className="glass-capsule-btn primary inline-flex min-h-[44px] w-full items-center justify-center !py-3 text-sm font-bold disabled:opacity-50"
+            variant="primary"
+            fullWidth
+            loading={isPending}
+            className="!py-3 text-sm font-bold"
           >
             {isPending ? 'Enregistrement…' : 'Enregistrer la note'}
-          </button>
+          </Button>
         </form>
       </GroupeDrawer>
 

@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React from 'react';
 import { HubQuickCreate } from './HubQuickCreate';
@@ -26,7 +26,7 @@ export function HubSidebarLeft({ statusSlot, trips, activeSlug = null, primaryAc
   return (
     <aside
       aria-label="Activités du hub"
-      className="h-full max-h-full w-full flex-1 flex flex-col glass rounded-[1.5rem] p-3.5 text-[var(--lkv-text-primary)] font-sans overflow-hidden select-none"
+      className="h-full max-h-full w-full flex-1 flex flex-col glass rounded-[var(--lkv-radius-lg)] p-3.5 text-[var(--lkv-text-primary)] font-sans overflow-hidden select-none"
     >
       {primaryAction ? (
         <div className="shrink-0 pb-3">{primaryAction}</div>

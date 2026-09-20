@@ -1,8 +1,9 @@
 'use client';
 
 import { useMemo, useState, useTransition, type FormEvent } from 'react';
-import { CalendarClock, ExternalLink, FileText, Plus, ShieldCheck, Trash2 } from 'lucide-react';
+import { CalendarClock, ExternalLink, FileText, Plus, ShieldCheck, Trash2, X } from 'lucide-react';
 import { ConfirmDialog } from '@/features/trips/components/ConfirmDialog';
+import { Badge, Button, IconButton, ListItem, Tabs, type BadgeTone } from '@/components/ui';
 import type { TripFull } from '@/features/trips/types/trip.types';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { addTripDocumentAction, deleteTripDocumentAction } from '@/app/voyages/document-actions';
@@ -24,11 +25,11 @@ const CATEGORY_LABELS: Record<string, string> = {
   other: 'Autre',
 };
 
-const STATUS_TONES: Record<DocsStatus, string> = {
-  expired: 'bg-[var(--lkv-danger)]/10 text-[var(--lkv-danger)]',
-  warning: 'bg-[var(--lkv-warning)]/10 text-[var(--lkv-warning)]',
-  valid: 'bg-[var(--sage-50)] text-[var(--sage-700)]',
-  none: 'bg-black/5 text-[var(--lkv-text-primary)]/60',
+const STATUS_BADGE_TONES: Record<DocsStatus, BadgeTone> = {
+  expired: 'danger',
+  warning: 'warn',
+  valid: 'sage',
+  none: 'stone',
 };
 
 type DocsFilter = 'all' | DocsStatus;
@@ -127,18 +128,18 @@ export function DocsMobileExperience({ trip }: DocsMobileExperienceProps) {
 
   const docCard = (row: DocsRow) => (
     <li key={row.id} className="shrink-0 snap-start">
-      <button
-        type="button"
+      <Button
+        variant="secondary"
         onClick={() => {
           triggerHaptic('selection');
           setSelected(row);
         }}
         aria-label={`Document ${row.title} — ${statusShortLabel(row.status)}`}
-        className="glass-capsule-btn flex h-[10rem] w-[10rem] !flex-col !items-start !justify-start !rounded-[1.4rem] !p-3 text-left transition-transform active:scale-[0.97]"
+        className="flex h-[10rem] w-[10rem] !flex-col !items-start !justify-start !rounded-[var(--lkv-radius-lg)] !p-3 text-left"
       >
-        <span className={`w-fit rounded-full px-2 py-0.5 text-[10px] font-bold ${STATUS_TONES[row.status]}`}>
+        <Badge tone={STATUS_BADGE_TONES[row.status]} className="w-fit px-2 py-0.5">
           {statusShortLabel(row.status)}
-        </span>
+        </Badge>
         <span className="mt-2 line-clamp-2 text-[12.5px] font-bold leading-snug">
           {row.title}
         </span>
@@ -148,7 +149,7 @@ export function DocsMobileExperience({ trip }: DocsMobileExperienceProps) {
         <span className="mt-auto text-[10px] font-medium leading-snug">
           {row.label}
         </span>
-      </button>
+      </Button>
     </li>
   );
 
@@ -160,23 +161,24 @@ export function DocsMobileExperience({ trip }: DocsMobileExperienceProps) {
           role="alert"
         >
           <span>{errorMsg}</span>
-          <button
-            type="button"
+          <IconButton
+            variant="glass"
+            size="lg"
             onClick={() => setErrorMsg(null)}
-            className="glass-circle-btn h-11 w-11 shrink-0 text-[var(--lkv-text-muted)]"
+            className="shrink-0 text-[var(--lkv-text-muted)]"
             aria-label="Fermer le message"
           >
-            ×
-          </button>
+            <X size={16} aria-hidden="true" />
+          </IconButton>
         </div>
       )}
 
-      <section className="glass relative overflow-hidden rounded-[1.75rem] p-4" aria-label="Documents du voyage">
+      <section className="glass relative overflow-hidden rounded-[var(--lkv-radius-card)] p-4" aria-label="Documents du voyage">
         <header className="flex items-start justify-between gap-2">
           <p className="text-[10px] font-medium uppercase tracking-[0.14em] text-[var(--lkv-text-primary)]/70">
             Documents du voyage
           </p>
-          <span className="glass-pill shrink-0 uppercase tracking-[0.08em]">{view.total} docs</span>
+          <Badge tone="stone" className="shrink-0 uppercase tracking-[0.08em]">{view.total} docs</Badge>
         </header>
 
         <ul className="mt-3 grid grid-cols-3 gap-2">
@@ -208,25 +210,25 @@ export function DocsMobileExperience({ trip }: DocsMobileExperienceProps) {
 
         <div className="mt-4 flex gap-2">
           {canEdit && (
-            <button
-              type="button"
+            <Button
+              variant="primary"
               onClick={() => {
                 triggerHaptic('light');
                 setAddOpen(true);
               }}
-              className="glass-capsule-btn primary inline-flex min-h-[44px] flex-1 items-center justify-center gap-1.5 !py-3 text-sm font-bold"
+              icon={<Plus size={15} aria-hidden="true" />}
+              className="flex-1 !py-3 text-sm font-bold"
             >
-              <Plus size={15} aria-hidden="true" />
               Attacher
-            </button>
+            </Button>
           )}
-          <button
-            type="button"
+          <Button
+            variant="secondary"
             onClick={() => openList('all')}
-            className="glass-capsule-btn inline-flex min-h-[44px] flex-1 items-center justify-center !py-3 text-sm font-bold"
+            className="flex-1 !py-3 text-sm font-bold"
           >
             Tous les documents
-          </button>
+          </Button>
         </div>
       </section>
 
@@ -241,7 +243,7 @@ export function DocsMobileExperience({ trip }: DocsMobileExperienceProps) {
       >
         {priorityRows.length === 0 ? (
           <li className="shrink-0 snap-start">
-            <div className="glass-sub-card flex h-[10rem] w-[13rem] flex-col items-start justify-center gap-1 rounded-[1.4rem] p-4">
+            <div className="glass-sub-card flex h-[10rem] w-[13rem] flex-col items-start justify-center gap-1 rounded-[var(--lkv-radius-lg)] p-4">
               <span className="text-sm font-bold text-[var(--lkv-text-primary)]">Documents à jour</span>
               <span className="text-xs font-medium text-[var(--lkv-text-primary)]/70">
                 Aucune échéance dans les 6 mois.
@@ -263,7 +265,7 @@ export function DocsMobileExperience({ trip }: DocsMobileExperienceProps) {
         {view.rows.slice(0, 8).map(docCard)}
         {view.rows.length === 0 && (
           <li className="shrink-0 snap-start">
-            <div className="glass-sub-card flex h-[10rem] w-[13rem] flex-col items-start justify-center gap-1 rounded-[1.4rem] p-4">
+            <div className="glass-sub-card flex h-[10rem] w-[13rem] flex-col items-start justify-center gap-1 rounded-[var(--lkv-radius-lg)] p-4">
               <span className="text-sm font-bold text-[var(--lkv-text-primary)]">Aucun document</span>
               <span className="text-xs font-medium text-[var(--lkv-text-primary)]/70">
                 Attachez passeport, assurance ou billets.
@@ -275,29 +277,19 @@ export function DocsMobileExperience({ trip }: DocsMobileExperienceProps) {
 
       {/* Tiroir : liste complète filtrable */}
       <GroupeDrawer open={listOpen} onOpenChange={setListOpen} title="Documents" width={460}>
-        <div className="flex flex-wrap gap-2">
-          {(
-            [
-              { key: 'all', label: 'Tout' },
-              { key: 'expired', label: 'Expirés' },
-              { key: 'warning', label: 'À renouveler' },
-              { key: 'valid', label: 'Valides' },
-              { key: 'none', label: 'Sans échéance' },
-            ] as Array<{ key: DocsFilter; label: string }>
-          ).map((option) => (
-            <button
-              key={option.key}
-              type="button"
-              onClick={() => setFilter(option.key)}
-              aria-pressed={filter === option.key}
-              className={`glass-capsule-btn min-h-[44px] !px-3.5 text-xs font-bold ${
-                filter === option.key ? 'primary' : ''
-              }`}
-            >
-              {option.label}
-            </button>
-          ))}
-        </div>
+        <Tabs
+          variant="scrollable"
+          ariaLabel="Filtrer les documents"
+          value={filter}
+          onChange={(id) => setFilter(id as DocsFilter)}
+          options={[
+            { id: 'all', label: 'Tout' },
+            { id: 'expired', label: 'Expirés' },
+            { id: 'warning', label: 'À renouveler' },
+            { id: 'valid', label: 'Valides' },
+            { id: 'none', label: 'Sans échéance' },
+          ]}
+        />
 
         {filtered.length === 0 ? (
           <p className="py-6 text-center text-sm font-medium text-[var(--lkv-text-primary)]/70">
@@ -306,31 +298,25 @@ export function DocsMobileExperience({ trip }: DocsMobileExperienceProps) {
         ) : (
           <ul className="space-y-2">
             {filtered.map((row) => (
-              <li key={row.id}>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setListOpen(false);
-                    setSelected(row);
-                  }}
-                  className="glass-capsule-btn flex min-h-[44px] w-full !justify-start !gap-3 !rounded-2xl !p-3 text-left"
-                >
+              <ListItem
+                key={row.id}
+                onClick={() => {
+                  setListOpen(false);
+                  setSelected(row);
+                }}
+                leading={
                   <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/10">
                     <FileText size={15} aria-hidden="true" />
                   </span>
-                  <span className="min-w-0 flex-1">
-                    <span className="block truncate text-[13px] font-bold">
-                      {row.title}
-                    </span>
-                    <span className="block truncate text-[10.5px] font-medium">
-                      {CATEGORY_LABELS[row.category ?? 'other'] ?? 'Autre'} · {row.label}
-                    </span>
-                  </span>
-                  <span className={`shrink-0 rounded-full px-2 py-0.5 text-[9.5px] font-bold ${STATUS_TONES[row.status]}`}>
+                }
+                title={row.title}
+                subtitle={`${CATEGORY_LABELS[row.category ?? 'other'] ?? 'Autre'} · ${row.label}`}
+                trailing={
+                  <Badge tone={STATUS_BADGE_TONES[row.status]} className="px-2 py-0.5">
                     {statusShortLabel(row.status)}
-                  </span>
-                </button>
-              </li>
+                  </Badge>
+                }
+              />
             ))}
           </ul>
         )}
@@ -350,9 +336,9 @@ export function DocsMobileExperience({ trip }: DocsMobileExperienceProps) {
                 <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--lkv-text-primary)]/60">
                   {CATEGORY_LABELS[selected.category ?? 'other'] ?? 'Autre'}
                 </span>
-                <span className={`rounded-full px-2.5 py-1 text-[10px] font-bold ${STATUS_TONES[selected.status]}`}>
+                <Badge tone={STATUS_BADGE_TONES[selected.status]} className="px-2.5 py-1">
                   {statusShortLabel(selected.status)}
-                </span>
+                </Badge>
               </div>
               <p className="text-sm font-bold text-[var(--lkv-text-primary)]">{selected.title}</p>
               <p className="text-[11.5px] font-medium text-[var(--lkv-text-primary)]/70">{selected.label}</p>
@@ -381,14 +367,15 @@ export function DocsMobileExperience({ trip }: DocsMobileExperienceProps) {
             )}
 
             {canEdit && (
-              <button
-                type="button"
+              <Button
+                variant="destructive"
+                fullWidth
                 onClick={() => setConfirmState({ id: selected.id, title: selected.title })}
-                className="glass-capsule-btn inline-flex min-h-[44px] w-full items-center justify-center gap-1.5 !py-3 text-sm font-bold text-[var(--lkv-danger)]"
+                icon={<Trash2 size={15} aria-hidden="true" />}
+                className="!py-3 text-sm font-bold"
               >
-                <Trash2 size={15} aria-hidden="true" />
                 Supprimer
-              </button>
+              </Button>
             )}
           </div>
         )}
@@ -445,13 +432,15 @@ export function DocsMobileExperience({ trip }: DocsMobileExperienceProps) {
             aria-label="Notes sur le document"
             className="glass-input w-full px-3 py-2.5 text-sm text-[var(--lkv-text-primary)]"
           />
-          <button
+          <Button
             type="submit"
-            disabled={isPending}
-            className="glass-capsule-btn primary inline-flex min-h-[44px] w-full items-center justify-center !py-3 text-sm font-bold disabled:opacity-50"
+            variant="primary"
+            fullWidth
+            loading={isPending}
+            className="!py-3 text-sm font-bold"
           >
             {isPending ? 'Enregistrement…' : 'Attacher le document'}
-          </button>
+          </Button>
         </form>
       </GroupeDrawer>
 

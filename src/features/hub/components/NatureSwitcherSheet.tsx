@@ -3,6 +3,7 @@
 import { useRef, useState } from 'react';
 import { Compass, Package, Users } from 'lucide-react';
 import { Sheet } from '@/components/ui/Sheet';
+import { Button } from '@/components/ui';
 import { resetHubPrefs, type Nature } from '../engine/hubNature';
 
 const NATURES: { id: Nature; label: string; Icon: typeof Package }[] = [
@@ -68,33 +69,32 @@ export function NatureSwitcherSheet({
     <Sheet open={open} onOpenChange={onOpenChange} title="Changer la nature de l'aventure">
       <div className="grid grid-cols-3 gap-2 p-2">
         {NATURES.map(({ id, label, Icon }) => (
-          <button
+          <Button
             key={id}
-            type="button"
+            variant={current === id ? 'primary' : 'secondary'}
             data-testid={`nature-option-${id}`}
             onClick={() => pick(id)}
             onPointerDown={armReset}
             onPointerUp={disarmReset}
             onPointerLeave={disarmReset}
             aria-pressed={current === id}
-            className={`glass-capsule-btn !flex-col !gap-1.5 !px-2 !py-3 !rounded-[var(--lkv-radius-md)] min-h-[44px] cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)] ${
-              current === id ? 'primary' : ''
-            }`}
+            className="!flex-col !gap-1.5 !rounded-[var(--lkv-radius-md)] !px-2 !py-3"
           >
             <Icon size={18} aria-hidden="true" />
             <span className="text-xs font-semibold">{label}</span>
-          </button>
+          </Button>
         ))}
       </div>
       {showReset && (
         <div className="px-2 pb-2">
-          <button
-            type="button"
+          <Button
+            variant="ghost"
+            fullWidth
             onClick={reset}
-            className="glass-capsule-btn w-full !rounded-[var(--lkv-radius-md)] min-h-[44px] text-xs font-semibold !text-[var(--lkv-danger)] cursor-pointer"
+            className="!rounded-[var(--lkv-radius-md)] text-xs font-semibold !text-[var(--lkv-danger)]"
           >
             Réinitialiser (retour Matériel)
-          </button>
+          </Button>
         </div>
       )}
     </Sheet>

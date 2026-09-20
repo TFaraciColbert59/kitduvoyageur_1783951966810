@@ -3,6 +3,7 @@
 import React, { useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { Spinner } from '@/components/ui';
 import { setActiveAdventureAction } from '../context/activeAdventureServer';
 import type { ActiveAdventureData } from '../context/adventureSchema';
 
@@ -40,7 +41,7 @@ export function TripSwitchBootstrap({
 
   return (
     <div className="min-h-[40vh] flex flex-col items-center justify-center gap-3">
-      <div className="w-8 h-8 rounded-full border-2 border-lkv-primary border-t-transparent animate-spin" />
+      <Spinner size="lg" label="Bascule vers le hub" />
       <Link
         href={target}
         className="text-xs font-semibold text-[var(--lkv-text-secondary)] hover:text-[var(--lkv-text-primary)] min-h-[44px] inline-flex items-center"

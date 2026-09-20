@@ -146,7 +146,7 @@ export function HubSidebarRight({
       aria-label="Contexte de l'aventure"
       className="hub-rail w-full h-full overflow-y-auto no-scrollbar flex flex-col gap-3"
     >
-      <div className="glass shrink-0 p-3.5 rounded-[1.5rem]">
+      <div className="glass shrink-0 p-3.5 rounded-[var(--lkv-radius-lg)]">
         <p className="text-sm font-bold text-[var(--lkv-text-primary)]">
           {NATURE_LABELS[profile.nature]}
           {profile.nature === 'collectif'

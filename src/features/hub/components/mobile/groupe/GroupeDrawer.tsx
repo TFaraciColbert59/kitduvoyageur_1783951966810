@@ -2,7 +2,7 @@
 
 import type { ReactNode } from 'react';
 import { ArrowRight } from 'lucide-react';
-import { Sheet } from '@/components/ui';
+import { Sheet, Button } from '@/components/ui';
 import { NumberStat } from '@/components/ui-layouts/number-stat';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import type { GroupeReadiness } from '../../../mobile/groupeEngine';
@@ -100,18 +100,18 @@ export function GroupeReadinessDrawer({
         })}
       </ul>
 
-      <button
+      <Button variant="primary"
         type="button"
         onClick={() => {
           triggerHaptic('light');
           onOpenChange(false);
           onPrimary();
         }}
-        className="glass-capsule-btn primary inline-flex w-full items-center justify-center gap-1.5 !py-3 text-sm font-bold"
+        className="inline-flex w-full items-center justify-center gap-1.5 !py-3 text-sm font-bold"
       >
         {primaryLabel}
         <ArrowRight size={15} aria-hidden="true" />
-      </button>
+      </Button>
     </GroupeDrawer>
   );
 }

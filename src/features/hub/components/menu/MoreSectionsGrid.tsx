@@ -4,6 +4,7 @@
 // sur mobile les cartes secondaires quittent le bento pour un tiroir sheet
 // (un clic de plus, identique en contenu — aération sans perte d'accès).
 import Icon from '@/components/ui/Icon';
+import { Button } from '@/components/ui';
 import React, { useState } from 'react';
 import { BentoGrid, type BentoCell } from '@/components/ui-layouts/bento-grid';
 import { Sheet } from '@/components/ui/Sheet';
@@ -29,13 +30,13 @@ export function MoreSectionsGrid({ cells, moreCells, fitRows }: MoreSectionsGrid
   return (
     <>
       <BentoGrid cells={cells} />
-      <button
+      <Button variant="secondary"
         type="button"
         onClick={() => {
           triggerHaptic('light');
           setOpen(true);
         }}
-        className="glass-capsule-btn w-full mt-3 flex items-center gap-3 px-4 min-h-[44px] text-left cursor-pointer active:scale-[0.99] transition-transform"
+        className="w-full mt-3 flex items-center gap-3 px-4 min-h-[44px] text-left cursor-pointer active:scale-[0.99] transition-transform"
       >
         <Icon
           name="more-horizontal"
@@ -49,7 +50,7 @@ export function MoreSectionsGrid({ cells, moreCells, fitRows }: MoreSectionsGrid
         <span className="ml-auto rounded-full bg-[var(--lkv-primary)]/10 px-2 py-0.5 text-[10px] font-bold text-[var(--lkv-primary)]">
           {moreCells.length}
         </span>
-      </button>
+      </Button>
       <Sheet open={open} onOpenChange={setOpen} title="Plus de sections">
         <div className="pb-2">
           <BentoGrid cells={moreCells} />

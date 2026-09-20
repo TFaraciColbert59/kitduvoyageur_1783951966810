@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { Button } from '@/components/ui';
 import { createClient } from '@/lib/supabase/client';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 
@@ -39,22 +40,24 @@ export function HubInviteButtons({ groupId }: HubInviteButtonsProps) {
 
   return (
     <div className="flex gap-2 shrink-0">
-      <button
-        type="button"
+      <Button
+        variant="primary"
+        size="sm"
         onClick={() => answer(true)}
         disabled={busy}
-        className="glass-capsule-btn primary min-h-[44px] px-4 text-xs font-bold cursor-pointer disabled:opacity-50"
+        className="min-h-[44px]"
       >
         Accepter
-      </button>
-      <button
-        type="button"
+      </Button>
+      <Button
+        variant="secondary"
+        size="sm"
         onClick={() => answer(false)}
         disabled={busy}
-        className="glass-capsule-btn min-h-[44px] px-4 text-xs font-bold cursor-pointer disabled:opacity-50"
+        className="min-h-[44px]"
       >
         Refuser
-      </button>
+      </Button>
     </div>
   );
 }

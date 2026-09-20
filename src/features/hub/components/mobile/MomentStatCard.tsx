@@ -13,7 +13,7 @@ export function MomentStatCard({ eyebrow, badge, children, cta }: MomentStatCard
   return (
     <section
       aria-label={eyebrow}
-      className="relative overflow-hidden rounded-[1.75rem] bg-[var(--lkv-primary)] p-4 text-white shadow-sm"
+      className="relative overflow-hidden rounded-[var(--lkv-radius-card)] bg-[var(--lkv-primary)] p-4 text-white shadow-sm"
     >
       <span
         className="pointer-events-none absolute -right-10 -top-12 h-40 w-40 rounded-full bg-white/10"

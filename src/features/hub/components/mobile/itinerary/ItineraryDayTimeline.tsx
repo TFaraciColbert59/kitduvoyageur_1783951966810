@@ -11,6 +11,7 @@ import {
   Ship,
   Train,
 } from 'lucide-react';
+import { Button } from '@/components/ui';
 import type { PlannerStep } from '@/features/trips/planner/plannerEngine';
 import { formatDurationShort, formatStepTime, transportLabel } from '../../../mobile/itineraryEngine';
 import { StepBookingLinkCta } from '@/features/affiliation/components/StepBookingLinkCta';
@@ -121,11 +122,12 @@ export function ItineraryDayTimeline({
                   />
                 ) : (
                   <>
-                    <button
-                      type="button"
+                    <Button
+                      variant="secondary"
+                      fullWidth
                       onClick={() => onOpen(step)}
                       aria-label={`${time ? `${time} · ` : ''}${step.title}`}
-                      className="glass-capsule-btn mb-1 min-h-[44px] w-full !justify-start !rounded-[1.4rem] !p-3 !whitespace-normal text-left transition-transform active:scale-[0.98]"
+                      className="mb-1 !justify-start !rounded-[var(--lkv-radius-lg)] !p-3 !whitespace-normal text-left"
                     >
                       <span className="flex w-full items-center gap-2">
                         <span className="inline-flex items-center gap-1 rounded-full bg-[var(--lkv-primary)]/10 px-2 py-0.5 text-[9.5px] font-bold uppercase tracking-[0.08em] text-[var(--lkv-primary)]">
@@ -168,7 +170,7 @@ export function ItineraryDayTimeline({
                           {step.description}
                         </span>
                       )}
-                    </button>
+                    </Button>
 
                     {booking && (
                       <StepBookingLinkCta

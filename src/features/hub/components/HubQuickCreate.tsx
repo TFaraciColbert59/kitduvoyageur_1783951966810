@@ -1,6 +1,7 @@
 'use client';
 
 import Icon from '@/components/ui/Icon';
+import { Button } from '@/components/ui';
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { QuickCreateTripModal } from '@/features/trips/components/QuickCreateTripModal';
@@ -16,14 +17,14 @@ export function HubQuickCreate() {
 
   return (
     <>
-      <button
+      <Button variant="primary"
         type="button"
         onClick={() => setOpen(true)}
-        className="glass-capsule-btn primary w-full min-h-[44px] !px-3 flex items-center justify-center gap-1.5 text-xs font-bold cursor-pointer active:scale-[0.98]"
+        className="w-full min-h-[44px] !px-3 flex items-center justify-center gap-1.5 text-xs font-bold cursor-pointer active:scale-[0.98]"
       >
         <Icon name="plus" size={14} aria-hidden="true" />
         <span>Nouvelle activité</span>
-      </button>
+      </Button>
       <Link
         href={HUB_NEW_HREF}
         className="w-full text-center text-[10.5px] font-semibold text-[var(--lkv-text-secondary)] hover:text-[var(--lkv-text-primary)] cursor-pointer min-h-[44px] flex items-center justify-center"

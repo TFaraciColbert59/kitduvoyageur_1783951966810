@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
+import { PageHeader } from '@/components/ui';
 import { getHubAdventureData, getHubTripStats } from '@/features/hub/server/getHubAdventureData';
 import { MenuBack } from '@/features/hub/components/menu/MenuBack';
 import { hubSectionRegistry } from '@/features/hub/registry/hubSectionRegistry';
@@ -61,8 +62,7 @@ export default async function HubSectionPage({
 
   return (
     <div className="space-y-2.5">
-      <MenuBack />
-      <h1 className="sr-only">{def.label}</h1>
+      <PageHeader title={<span className="sr-only">{def.label}</span>} back={<MenuBack />} />
       {def.id === 'inventaire' && <HubInventaireSection />}
       {def.id === 'kit' && <HubKitSection />}
       {def.id === 'preparation' && <HubPreparationSection />}

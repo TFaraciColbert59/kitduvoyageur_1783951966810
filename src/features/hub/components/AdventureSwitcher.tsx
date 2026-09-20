@@ -1,6 +1,7 @@
 'use client';
 
 import Icon from '@/components/ui/Icon';
+import { Button } from '@/components/ui';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import * as Cmd from 'cmdk';
@@ -306,29 +307,29 @@ export function AdventureSwitcher({
       )}
       <div className="flex items-center justify-between px-2 pb-1">
         {activeAdventure ? (
-          <button
+          <Button variant="secondary"
             type="button"
             onClick={() => {
               clearActiveAdventure();
               closeAll();
             }}
             disabled={isPending}
-            className="glass-capsule-btn !min-h-[44px] !px-3 !py-1 !text-[10.5px] font-semibold !text-[var(--lkv-danger)] cursor-pointer disabled:opacity-50"
+            className="!min-h-[44px] !px-3 !py-1 !text-[10.5px] font-semibold !text-[var(--lkv-danger)] cursor-pointer disabled:opacity-50"
           >
             Détacher l&apos;aventure active
-          </button>
+          </Button>
         ) : (
           <span className="text-[10.5px] text-[var(--lkv-text-muted)]">Aucune aventure active</span>
         )}
-        <button
+        <Button variant="secondary"
           type="button"
           onClick={() => reloadAdventures()}
-          className="glass-capsule-btn !min-h-[44px] !px-3 !py-1 inline-flex items-center gap-1 !text-[10.5px] font-semibold cursor-pointer"
+          className="!min-h-[44px] !px-3 !py-1 inline-flex items-center gap-1 !text-[10.5px] font-semibold cursor-pointer"
           aria-label="Recharger la liste des aventures"
         >
           <Icon name="refresh-cw" size={11} />
           Recharger
-        </button>
+        </Button>
       </div>
     </>
   );
@@ -400,12 +401,12 @@ export function AdventureSwitcher({
     <>
       {!hideTrigger && (
         <div className="hidden md:block">
-          <button
+          <Button variant="secondary"
             type="button"
             onClick={() => {
               if (!isMobile) setOpen((v) => !v);
             }}
-            className="inline-flex items-center gap-2 px-3 py-1.5 glass-capsule-btn text-xs font-semibold min-h-[44px] cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)]"
+            className="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-semibold min-h-[44px] cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)]"
             aria-haspopup="dialog"
             aria-expanded={open}
             title="Changer d'aventure (Ctrl/Cmd+K ou J)"
@@ -413,7 +414,7 @@ export function AdventureSwitcher({
             <Icon name="compass" size={14} aria-hidden="true" />
             <span className="max-w-[160px] truncate hidden sm:inline">{triggerLabel}</span>
             <Icon name="chevrons-up-down" size={12} aria-hidden="true" />
-          </button>
+          </Button>
         </div>
       )}
 
@@ -447,18 +448,18 @@ export function AdventureSwitcher({
 
       {!hideTrigger && (
         <div className="md:hidden min-w-0">
-          <button
+          <Button variant="secondary"
             type="button"
             onClick={() => {
               if (variant === 'mobile' && isMobile) setSheetOpen(true);
             }}
-            className="inline-flex items-center gap-1.5 px-3 py-2 glass-capsule-btn text-xs font-semibold min-h-[44px] cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)] max-w-full"
+            className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold min-h-[44px] cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)] max-w-full"
             aria-haspopup="dialog"
             aria-expanded={sheetOpen}
           >
             <Icon name="compass" size={14} className="shrink-0" aria-hidden="true" />
             <span className="max-w-[110px] truncate">{triggerLabel}</span>
-          </button>
+          </Button>
         </div>
       )}
 

@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState, useTransition, type FormEvent } from 'react';
-import { GlassCapsuleBtn } from '@/components/ui/GlassCapsuleBtn';
+import { X } from 'lucide-react';
+import { Button, IconButton } from '@/components/ui';
 import { Sheet } from '@/components/ui/Sheet';
 import { ConfirmDialog } from '@/features/trips/components/ConfirmDialog';
 import { ExpenseFormSheet } from '@/features/trips/components/budget/ExpenseFormSheet';
@@ -298,14 +299,15 @@ export function BudgetMobileExperience({ trip, initialDay }: BudgetMobileExperie
       {errorMsg && (
         <div className="glass tone-danger flex items-center justify-between gap-2 rounded-xl p-3 text-xs text-[var(--lkv-danger)]" role="alert">
           <span>{errorMsg}</span>
-          <button
-            type="button"
+          <IconButton
+            variant="glass"
+            size="lg"
             onClick={() => setErrorMsg(null)}
-            className="glass-circle-btn h-11 w-11 shrink-0 text-[var(--lkv-text-muted)] hover:text-[var(--lkv-text-primary)]"
+            className="shrink-0 text-[var(--lkv-text-muted)] hover:text-[var(--lkv-text-primary)]"
             aria-label="Fermer le message"
           >
-            ×
-          </button>
+            <X size={16} aria-hidden="true" />
+          </IconButton>
         </div>
       )}
 
@@ -405,12 +407,13 @@ export function BudgetMobileExperience({ trip, initialDay }: BudgetMobileExperie
               </p>
               <div className="space-y-2">
                 {(trip.collaborators || []).map((collaborator) => (
-                  <button
+                  <Button
                     key={collaborator.user_id}
-                    type="button"
+                    variant="secondary"
+                    fullWidth
                     onClick={() => handleSettle(settleTarget, collaborator.user_id)}
                     disabled={isPending}
-                    className={`glass-capsule-btn w-full !justify-start !rounded-[var(--lkv-radius-md)] !px-4 !py-2.5 min-h-[44px] text-left text-sm font-semibold ${
+                    className={`!justify-start !rounded-[var(--lkv-radius-md)] !px-4 !py-2.5 text-left text-sm font-semibold ${
                       collaborator.user_id === trip.user_id ? 'ring-1 ring-[var(--lkv-primary)]/30' : ''
                     }`}
                   >
@@ -418,13 +421,13 @@ export function BudgetMobileExperience({ trip, initialDay }: BudgetMobileExperie
                     {collaborator.user_id === trip.user_id && (
                       <span className="ml-2 text-[10px]">(moi)</span>
                     )}
-                  </button>
+                  </Button>
                 ))}
               </div>
               <div className="flex justify-end pt-1">
-                <GlassCapsuleBtn variant="default" size="sm" onClick={() => setSettleTarget(null)}>
+                <Button variant="secondary" size="sm" onClick={() => setSettleTarget(null)}>
                   Annuler
-                </GlassCapsuleBtn>
+                </Button>
               </div>
             </>
           )}

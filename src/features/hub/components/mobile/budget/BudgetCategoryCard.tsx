@@ -1,6 +1,7 @@
 'use client';
 
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
+import { ListItem } from '@/components/ui';
 import { formatEuro } from '../../../mobile/mobileHubEngine';
 import type { BudgetCategoryRow } from '../../../mobile/budgetEngine';
 
@@ -14,7 +15,7 @@ export function BudgetCategoryCard({ rows, onSelect }: BudgetCategoryCardProps) 
   if (rows.length === 0) return null;
 
   return (
-    <section aria-label="Répartition par catégorie" className="glass rounded-[1.4rem] p-4">
+    <section aria-label="Répartition par catégorie" className="glass rounded-[var(--lkv-radius-lg)] p-4">
       <p className="text-[10px] font-medium uppercase tracking-[0.14em] text-[var(--lkv-text-primary)]">
         Répartition
       </p>
@@ -27,32 +28,28 @@ export function BudgetCategoryCard({ rows, onSelect }: BudgetCategoryCardProps) 
 
       <ul className="mt-2.5 space-y-0.5">
         {rows.map((row) => (
-          <li key={row.key}>
-            <button
-              type="button"
-              onClick={() => {
-                triggerHaptic('selection');
-                onSelect(row.key);
-              }}
-              aria-label={`${row.label} — ${formatEuro(row.amount)}, ${row.pct}%`}
-              className="glass-capsule-btn flex min-h-[44px] w-full !justify-start !gap-2.5 !rounded-xl !px-1 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)]"
-            >
+          <ListItem
+            key={row.key}
+            onClick={() => {
+              triggerHaptic('selection');
+              onSelect(row.key);
+            }}
+            aria-label={`${row.label} — ${formatEuro(row.amount)}, ${row.pct}%`}
+            leading={
               <span
                 className="h-2.5 w-2.5 shrink-0 rounded-full"
                 style={{ background: row.color }}
                 aria-hidden="true"
               />
-              <span className="min-w-0 truncate text-sm font-semibold">
-                {row.label}
+            }
+            title={row.label}
+            trailing={
+              <span className="flex shrink-0 items-center gap-2">
+                <span className="text-sm font-bold tabular-nums">{formatEuro(row.amount)}</span>
+                <span className="w-9 text-right text-[11px] font-semibold tabular-nums">{row.pct}%</span>
               </span>
-              <span className="ml-auto shrink-0 text-sm font-bold tabular-nums">
-                {formatEuro(row.amount)}
-              </span>
-              <span className="w-9 shrink-0 text-right text-[11px] font-semibold tabular-nums">
-                {row.pct}%
-              </span>
-            </button>
-          </li>
+            }
+          />
         ))}
       </ul>
     </section>

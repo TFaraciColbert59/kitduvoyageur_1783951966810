@@ -19,7 +19,7 @@ export function SectionCarousel({ tiles, label = 'Sections de l’aventure' }: S
               <HapticLink
                 href={tile.href}
                 ariaLabel={tile.label}
-                className={`relative flex h-[8.75rem] w-[7.75rem] flex-col items-center justify-center rounded-[1.4rem] p-3 text-center transition-transform active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)] sm:h-[9.5rem] sm:w-[8.5rem] md:h-[10rem] md:w-[9rem] ${
+                className={`relative flex h-[8.75rem] w-[7.75rem] flex-col items-center justify-center rounded-[var(--lkv-radius-lg)] p-3 text-center transition-transform active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)] sm:h-[9.5rem] sm:w-[8.5rem] md:h-[10rem] md:w-[9rem] ${
                   tile.accent
                     ? 'bg-[var(--lkv-primary)] text-white shadow-sm'
                     : 'glass interactive text-[var(--lkv-text-primary)]'
@@ -37,7 +37,7 @@ export function SectionCarousel({ tiles, label = 'Sections de l’aventure' }: S
                   </span>
                 )}
                 <span
-                  className={`flex h-14 w-14 items-center justify-center rounded-[1.1rem] border ${
+                  className={`flex h-14 w-14 items-center justify-center rounded-[var(--lkv-radius-md)] border ${
                     tile.accent
                       ? 'border-white/20 bg-white/10 text-white'
                       : 'border-white/70 bg-white/70 text-[var(--lkv-secondary)] shadow-2xs'

@@ -1,6 +1,7 @@
 'use client';
 
 import { ArrowRight } from 'lucide-react';
+import { Badge, Button, IconButton } from '@/components/ui';
 import { NumberStat } from '@/components/ui-layouts/number-stat';
 import type { GroupeReadiness } from '../../../mobile/groupeEngine';
 import { BudgetRing } from '../budget/BudgetRing';
@@ -43,31 +44,31 @@ export function GroupeReadinessHero({
   onOpenDetails,
 }: GroupeReadinessHeroProps) {
   return (
-    <section className="glass relative overflow-hidden rounded-[1.75rem] p-4" aria-label="Préparation du groupe">
+    <section className="glass relative overflow-hidden rounded-[var(--lkv-radius-card)] p-4" aria-label="Préparation du groupe">
       <header className="flex items-start justify-between gap-2">
         <p className="text-[10px] font-medium uppercase tracking-[0.14em] text-[var(--lkv-text-primary)]/70">
           Préparation du groupe
         </p>
         <div className="flex shrink-0 items-center gap-1.5">
           {pendingCount > 0 && (
-            <span className="glass-pill pill-info uppercase tracking-[0.08em]">
+            <Badge tone="info" className="uppercase tracking-[0.08em]">
               {pendingCount} en attente
-            </span>
+            </Badge>
           )}
           {daysLeft != null && (
-            <span className="glass-pill uppercase tracking-[0.08em]">
+            <Badge tone="stone" className="uppercase tracking-[0.08em]">
               {daysLeft >= 0 ? `J-${daysLeft}` : 'En cours'}
-            </span>
+            </Badge>
           )}
         </div>
       </header>
 
       <div className="mt-3 flex items-center gap-4">
-        <button
-          type="button"
+        <IconButton
+          variant="glass"
           onClick={onOpenDetails}
           aria-label={`Détail de la préparation — ${readiness.pct}% prêt`}
-          className="glass-circle-btn relative shrink-0 transition-transform active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)]"
+          className="relative shrink-0"
         >
           <BudgetRing pct={readiness.pct}>
             <NumberStat
@@ -77,8 +78,8 @@ export function GroupeReadinessHero({
             <span className="mt-0.5 text-[9px] font-medium uppercase tracking-[0.12em] text-[var(--lkv-text-primary)]/75">
               prêt
             </span>
-          </BudgetRing>
-        </button>
+            </BudgetRing>
+        </IconButton>
 
         <ul className="min-w-0 flex-1 space-y-2.5">
           <FactorRow label="Tâches" pct={readiness.factors.tasks} />
@@ -108,14 +109,16 @@ export function GroupeReadinessHero({
         </p>
       </div>
 
-      <button
-        type="button"
+      <Button
+        variant="primary"
+        fullWidth
         onClick={onPrimary}
-        className="glass-capsule-btn primary mt-4 inline-flex w-full items-center justify-center gap-1.5 !py-3 text-sm font-bold"
+        icon={<ArrowRight size={15} aria-hidden="true" />}
+        iconPosition="trailing"
+        className="mt-4 !py-3 text-sm font-bold"
       >
         {primaryLabel}
-        <ArrowRight size={15} aria-hidden="true" />
-      </button>
+      </Button>
     </section>
   );
 }

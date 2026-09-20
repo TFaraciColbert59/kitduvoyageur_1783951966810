@@ -38,13 +38,13 @@ export function MenuCard({
   className = '',
 }: MenuCardProps) {
   const content = (
-    <div className="glass relative h-full overflow-hidden rounded-[1.5rem]">
+    <div className="glass relative h-full overflow-hidden rounded-[var(--lkv-radius-lg)]">
       {media && (
-        <div data-media-root className="absolute inset-0 z-10 overflow-hidden rounded-[1.5rem]">
+        <div data-media-root className="absolute inset-0 z-10 overflow-hidden rounded-[var(--lkv-radius-lg)]">
           {media}
         </div>
       )}
-      <div className="relative z-30 flex h-full min-h-0 flex-col justify-end rounded-[1.5rem] p-3">
+      <div className="relative z-30 flex h-full min-h-0 flex-col justify-end rounded-[var(--lkv-radius-lg)] p-3">
         <div
           data-media-content-panel
           className={
@@ -85,7 +85,7 @@ export function MenuCard({
 
   if (interactiveBody) {
     return (
-      <div className="group relative block h-full rounded-[1.5rem] transition-transform active:scale-[0.99]">
+      <div className="group relative block h-full rounded-[var(--lkv-radius-lg)] transition-transform active:scale-[0.99]">
         {content}
       </div>
     );
@@ -94,7 +94,7 @@ export function MenuCard({
   return (
     <Link
       href={href}
-      className={`group relative block h-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)] rounded-[1.5rem] transition-transform active:scale-[0.99] ${className}`}
+      className={`group relative block h-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)] rounded-[var(--lkv-radius-lg)] transition-transform active:scale-[0.99] ${className}`}
     >
       {content}
     </Link>

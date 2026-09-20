@@ -1,5 +1,7 @@
 'use client';
 
+import { IconButton } from '@/components/ui';
+
 export interface BudgetSideTriggerProps {
   progressPct: number;
   over: boolean;
@@ -14,9 +16,9 @@ export function BudgetSideTrigger({ progressPct, over, hasTarget, onOpen }: Budg
   const offset = circumference * (1 - pct / 100);
 
   return (
-    <div className="fixed right-0 top-1/2 z-[900] -translate-y-1/2">
-      <button
-        type="button"
+    <div className="fixed right-0 top-1/2 z-[var(--z-drawer)] -translate-y-1/2">
+      <IconButton
+        variant="glass"
         onClick={onOpen}
         aria-label={
           hasTarget
@@ -24,8 +26,7 @@ export function BudgetSideTrigger({ progressPct, over, hasTarget, onOpen }: Budg
             : 'Budget — aucune estimation'
         }
         title="Toutes les dépenses"
-        className="glass-circle-btn flex h-14 w-12 items-center justify-center transition-transform active:scale-[0.96] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)]"
-        style={{ borderRadius: '22px 0 0 22px' }}
+        className="flex h-14 w-12 !rounded-l-[var(--lkv-radius-lg)] !rounded-r-none"
       >
         <svg viewBox="0 0 40 40" className="h-9 w-9 -rotate-90" aria-hidden="true">
           <circle
@@ -38,10 +39,10 @@ export function BudgetSideTrigger({ progressPct, over, hasTarget, onOpen }: Budg
             strokeLinecap="round"
             strokeDasharray={circumference}
             strokeDashoffset={offset}
-            style={{ transition: 'stroke-dashoffset 500ms var(--ease-glass)' }}
+            className="transition-[stroke-dashoffset] duration-500 ease-[var(--ease-glass)]"
           />
         </svg>
-      </button>
+      </IconButton>
     </div>
   );
 }

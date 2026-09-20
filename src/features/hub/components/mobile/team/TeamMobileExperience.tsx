@@ -1,9 +1,10 @@
 'use client';
 
 import { useMemo, useState, useTransition, type FormEvent } from 'react';
-import { Dog, HeartPulse, Plus, UserPlus } from 'lucide-react';
+import { Dog, HeartPulse, Plus, UserPlus, X } from 'lucide-react';
 import { ConfirmDialog } from '@/features/trips/components/ConfirmDialog';
 import { MemberProfileBadges } from '@/features/trips/components/MemberProfileBadges';
+import { Badge, Button, IconButton, type BadgeTone } from '@/components/ui';
 import type { TripFull } from '@/features/trips/types/trip.types';
 import type { HumanParticipant } from '@/features/participants/types/participant.types';
 import { useParticipantsStore } from '@/features/participants/stores/useParticipantsStore';
@@ -27,6 +28,12 @@ const CARNET_ROLE_TONES: Record<string, string> = {
   guide: 'bg-[var(--lkv-primary)]/12 text-[var(--lkv-primary)]',
   medic: 'bg-[var(--lkv-danger)]/10 text-[var(--lkv-danger)]',
   member: 'bg-[var(--sage-50)] text-[var(--sage-700)]',
+};
+
+const CARNET_ROLE_BADGES: Record<string, BadgeTone> = {
+  guide: 'stone',
+  medic: 'danger',
+  member: 'sage',
 };
 
 /** Expérience mobile de la section Groupe d'une sortie (équipiers + carnet + chiens). */
@@ -179,14 +186,15 @@ export function TeamMobileExperience({ trip }: TeamMobileExperienceProps) {
           role="alert"
         >
           <span>{actionError}</span>
-          <button
-            type="button"
+          <IconButton
+            variant="glass"
+            size="lg"
             onClick={() => setActionError(null)}
-            className="glass-circle-btn h-11 w-11 shrink-0 text-[var(--lkv-text-muted)]"
+            className="shrink-0 text-[var(--lkv-text-muted)]"
             aria-label="Fermer le message"
           >
-            ×
-          </button>
+            <X size={16} aria-hidden="true" />
+          </IconButton>
         </div>
       )}
 
@@ -213,21 +221,21 @@ export function TeamMobileExperience({ trip }: TeamMobileExperienceProps) {
       >
         {memberRows.length === 0 ? (
           <li className="shrink-0 snap-start">
-            <button
-              type="button"
+            <Button
+              variant="secondary"
               onClick={() => setMembersOpen(true)}
-              className="glass-capsule-btn flex h-[9rem] w-[13rem] !flex-col !items-start !justify-center !gap-1 !rounded-[1.4rem] !p-4 !whitespace-normal text-left"
+              className="flex h-[9rem] w-[13rem] !flex-col !items-start !justify-center !gap-1 !rounded-[var(--lkv-radius-lg)] !p-4 !whitespace-normal text-left"
             >
               <span className="text-sm font-bold">Sortie en solo</span>
               <span className="text-xs font-medium">
                 Invitez un compagnon de route.
               </span>
-            </button>
+            </Button>
           </li>
         ) : (
           memberRows.map((member) => (
             <li key={member.id} className="shrink-0 snap-start">
-              <div className="glass flex min-h-[9.5rem] w-[9.5rem] flex-col items-center justify-center gap-1.5 rounded-[1.4rem] p-3 text-center">
+              <div className="glass flex min-h-[9.5rem] w-[9.5rem] flex-col items-center justify-center gap-1.5 rounded-[var(--lkv-radius-lg)] p-3 text-center">
                 <span
                   className="flex h-11 w-11 items-center justify-center rounded-full bg-[var(--lkv-primary)] text-xs font-bold uppercase text-white"
                   aria-hidden="true"
@@ -254,17 +262,17 @@ export function TeamMobileExperience({ trip }: TeamMobileExperienceProps) {
         )}
         {isOwner && memberRows.length > 0 && (
           <li className="shrink-0 snap-start">
-            <button
-              type="button"
+            <Button
+              variant="secondary"
               onClick={() => setMembersOpen(true)}
               aria-label="Inviter un voyageur"
-              className="glass-capsule-btn flex h-[9rem] w-[9.5rem] !flex-col !items-center !justify-center !gap-2 !rounded-[1.4rem] !border-2 !border-dashed !border-white/50 !p-3"
+              className="flex h-[9rem] w-[9.5rem] !flex-col !items-center !justify-center !gap-2 !rounded-[var(--lkv-radius-lg)] !border-2 !border-dashed !border-white/50 !p-3"
             >
               <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--lkv-primary)]/10">
                 <UserPlus size={17} aria-hidden="true" />
               </span>
               <span className="text-[11px] font-bold">Inviter</span>
-            </button>
+            </Button>
           </li>
         )}
       </GroupeRail>
@@ -279,7 +287,7 @@ export function TeamMobileExperience({ trip }: TeamMobileExperienceProps) {
       >
         {humans.map((human) => (
           <li key={human.id} className="shrink-0 snap-start">
-            <div className="glass flex h-[9.5rem] w-[9.5rem] flex-col rounded-[1.4rem] p-3">
+            <div className="glass flex h-[9.5rem] w-[9.5rem] flex-col rounded-[var(--lkv-radius-lg)] p-3">
               <span
                 className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--lkv-forest-900)] text-[11px] font-bold text-white"
                 aria-hidden="true"
@@ -289,43 +297,45 @@ export function TeamMobileExperience({ trip }: TeamMobileExperienceProps) {
               <p className="mt-1.5 truncate text-[12.5px] font-bold text-[var(--lkv-text-primary)]">
                 {human.publicData.firstName}
               </p>
-              <span
-                className={`mt-0.5 w-fit rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.08em] ${
-                  CARNET_ROLE_TONES[human.publicData.role] ?? CARNET_ROLE_TONES.member
+              <Badge
+                tone={CARNET_ROLE_BADGES[human.publicData.role] ?? 'sage'}
+                className={`mt-0.5 w-fit px-2 py-0.5 uppercase tracking-[0.08em] ${
+                  human.publicData.role === 'guide' ? CARNET_ROLE_TONES.guide : ''
                 }`}
               >
                 {carnetRoleLabel(human.publicData.role)}
-              </span>
+              </Badge>
               <p className="mt-1 text-[10px] font-medium text-[var(--lkv-text-primary)]/65">
                 Sac {human.publicData.packWeightKg} kg · Forme {human.publicData.fitnessScore}%
               </p>
-              <button
-                type="button"
+              <Button
+                variant="secondary"
+                size="sm"
                 onClick={() => {
                   triggerHaptic('selection');
                   setSelectedHuman(human);
                 }}
                 aria-label={`Fiche médicale de ${human.publicData.firstName}`}
-                className="glass-capsule-btn mt-auto inline-flex min-h-[44px] items-center justify-center gap-1 !py-2 text-[10.5px] font-bold"
+                icon={<HeartPulse size={13} aria-hidden="true" />}
+                className="mt-auto min-h-[44px] !py-2 text-[10.5px] font-bold"
               >
-                <HeartPulse size={13} aria-hidden="true" />
                 Fiche ICE
-              </button>
+              </Button>
             </div>
           </li>
         ))}
         <li className="shrink-0 snap-start">
-          <button
-            type="button"
+          <Button
+            variant="secondary"
             onClick={() => setCarnetOpen(true)}
             aria-label="Ajouter un équipier au carnet"
-            className="glass-capsule-btn flex h-[9.5rem] w-[9.5rem] !flex-col !items-center !justify-center !gap-2 !rounded-[1.4rem] !border-2 !border-dashed !border-white/50 !p-3"
+            className="flex h-[9.5rem] w-[9.5rem] !flex-col !items-center !justify-center !gap-2 !rounded-[var(--lkv-radius-lg)] !border-2 !border-dashed !border-white/50 !p-3"
           >
             <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--lkv-primary)]/10">
               <Plus size={17} aria-hidden="true" />
             </span>
             <span className="text-[11px] font-bold">Ajouter</span>
-          </button>
+          </Button>
         </li>
       </GroupeRail>
 
@@ -339,23 +349,23 @@ export function TeamMobileExperience({ trip }: TeamMobileExperienceProps) {
       >
         {dogs.length === 0 ? (
           <li className="shrink-0 snap-start">
-            <button
-              type="button"
+            <Button
+              variant="secondary"
               onClick={() => setDogsOpen(true)}
-              className="glass-capsule-btn flex h-[9.5rem] w-[13rem] !flex-col !items-start !justify-center !gap-1 !rounded-[1.4rem] !p-4 !whitespace-normal text-left"
+              className="flex h-[9.5rem] w-[13rem] !flex-col !items-start !justify-center !gap-1 !rounded-[var(--lkv-radius-lg)] !p-4 !whitespace-normal text-left"
             >
               <span className="text-sm font-bold">Aucun compagnon canin</span>
               <span className="text-xs font-medium">
                 Ajoutez un chien et son sac de bât.
               </span>
-            </button>
+            </Button>
           </li>
         ) : (
           dogs.map((dog) => {
             const load = dogLoadView(dog);
             return (
               <li key={dog.id} className="shrink-0 snap-start">
-                <div className="glass flex h-[9.5rem] w-[9.5rem] flex-col rounded-[1.4rem] p-3">
+                <div className="glass flex h-[9.5rem] w-[9.5rem] flex-col rounded-[var(--lkv-radius-lg)] p-3">
                   <span className="flex items-center gap-1.5">
                     <span
                       className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--lkv-secondary)]/15 text-[var(--lkv-text-primary)]"
@@ -385,8 +395,8 @@ export function TeamMobileExperience({ trip }: TeamMobileExperienceProps) {
                       style={{ width: `${Math.min(100, Math.max(0, load.pct))}%` }}
                     />
                   </div>
-                  <button
-                    type="button"
+                  <Button
+                    variant={dog.isCarryingPack ? 'primary' : 'secondary'}
                     role="switch"
                     aria-checked={dog.isCarryingPack}
                     aria-label={`${dog.name} porte le sac`}
@@ -394,12 +404,10 @@ export function TeamMobileExperience({ trip }: TeamMobileExperienceProps) {
                       triggerHaptic('selection');
                       updateDog(dog.id, { isCarryingPack: !dog.isCarryingPack });
                     }}
-                    className={`glass-capsule-btn mt-auto inline-flex min-h-[44px] items-center justify-center gap-1.5 !py-2 text-[10.5px] font-bold ${
-                      dog.isCarryingPack ? 'primary' : ''
-                    }`}
+                    className="mt-auto min-h-[44px] !py-2 text-[10.5px] font-bold"
                   >
                     {dog.isCarryingPack ? 'Porte le sac ✓' : 'Sac au repos'}
-                  </button>
+                  </Button>
                 </div>
               </li>
             );
