@@ -33,11 +33,11 @@ import { getActiveAdventure } from '@/features/hub/context/activeAdventureServer
 import { LocaleProvider } from '@/lib/i18n/context';
 import { LOCALE_COOKIE, resolveLocale } from '@/lib/i18n/locale';
 
-// Fonts — direction §6 : police système pour le corps/UI (--font-sans défini
-// dans tokens.css), Manrope conservée pour les titres de marque.
+// Fonts — Phase 2 : SF Pro (système) pour toute l'UI (--font-sans/--font-display
+// définis dans tokens.css), Manrope conservée comme police de marque (--font-brand).
 const manrope = Manrope({
   subsets: ['latin'],
-  variable: '--font-display',
+  variable: '--font-brand',
   display: 'swap',
   weight: ['400', '500', '600', '700', '800'],
   preload: false,
@@ -68,8 +68,8 @@ export const viewport: Viewport = {
   // Direction P5 §6 : plus de verrouillage clair — les deux schémas sont déclarés.
   colorScheme: 'light dark',
   themeColor: [
-    { media: '(prefers-color-scheme: light)', color: '#F5F7F3' },
-    { media: '(prefers-color-scheme: dark)', color: '#101C17' },
+    { media: '(prefers-color-scheme: light)', color: '#EDF1EA' },
+    { media: '(prefers-color-scheme: dark)', color: '#0B1510' },
   ],
 };
 

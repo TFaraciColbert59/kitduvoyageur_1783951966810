@@ -19,14 +19,14 @@ export type GlassVariant =
 export type GlassTier = 'standard' | 'premium';
 export type GlassTone = 'neutral' | 'sage' | 'warn' | 'danger' | 'info';
 
-// Direction P5 §6 : rayons 12/16/24 — les cartes GlassCard partagent 24.
+// Phase 2 — rayon carte 26 (aligné sur --lkv-radius-card).
 const RADIUS: Record<GlassVariant, number> = {
-  base: 24,
-  elevated: 24,
-  interactive: 24,
-  selected: 24,
-  overlay: 24,
-  critical: 24,
+  base: 26,
+  elevated: 26,
+  interactive: 26,
+  selected: 26,
+  overlay: 26,
+  critical: 26,
 };
 
 export interface GlassCardProps extends HTMLAttributes<HTMLDivElement> {

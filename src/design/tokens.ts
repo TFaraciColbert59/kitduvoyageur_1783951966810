@@ -46,10 +46,28 @@ export const colors = {
 
 export const typography = {
   fontFamily: {
-    heading: 'var(--font-display), Manrope, system-ui, sans-serif',
+    heading: 'var(--font-display), system-ui, sans-serif',
     body: 'var(--font-sans), system-ui, -apple-system, Segoe UI, Roboto, sans-serif',
+    brand: "var(--font-brand), 'Manrope', sans-serif",
     serif: 'var(--font-serif), Instrument Serif, serif',
     mono: 'var(--font-mono), IBM Plex Mono, monospace',
+  },
+  /* Phase 2 — échelle Dynamic Type iOS (SF Pro). */
+  dynamicType: {
+    caption2: 'var(--lkv-text-caption-2)',
+    caption: 'var(--lkv-text-caption)',
+    footnote: 'var(--lkv-text-footnote)',
+    subheadline: 'var(--lkv-text-subheadline)',
+    callout: 'var(--lkv-text-callout)',
+    body: 'var(--lkv-text-body)',
+    headline: 'var(--lkv-text-headline)',
+    title3: 'var(--lkv-text-title-sm)',
+    title1: 'var(--lkv-text-title-lg)',
+    largeTitle: 'var(--lkv-text-title-xl)',
+  },
+  lineHeight: {
+    body: 'var(--lkv-line-body)',
+    title: 'var(--lkv-line-title)',
   },
   size: {
     xs: '0.75rem',
@@ -62,10 +80,10 @@ export const typography = {
     '4xl': '2.25rem',
   },
   weight: {
-    regular: '400',
-    medium: '500',
-    semibold: '600',
-    bold: '700',
+    regular: 'var(--lkv-weight-regular)',
+    medium: 'var(--lkv-weight-medium)',
+    semibold: 'var(--lkv-weight-semibold)',
+    bold: 'var(--lkv-weight-bold)',
     extrabold: '800',
   },
   leading: {
@@ -79,6 +97,8 @@ export const typography = {
     normal: 'var(--tracking-normal)',
     wide: 'var(--tracking-wide)',
     caps: 'var(--tracking-caps)',
+    title: 'var(--lkv-tracking-title)',
+    body: 'var(--lkv-tracking-body)',
   },
 } as const;
 
@@ -190,6 +210,10 @@ export const motion = {
     med: 'var(--dur-med)',
     slow: 'var(--dur-slow)',
     xslow: 'var(--dur-xslow)',
+    press: 'var(--motion-press-duration)',
+    control: 'var(--motion-control-duration)',
+    sheet: 'var(--motion-sheet-duration)',
+    page: 'var(--motion-page-duration)',
   },
   easing: {
     glass: 'var(--ease-glass)',
@@ -197,6 +221,25 @@ export const motion = {
     smooth: 'var(--ease-smooth)',
     out: 'var(--ease-out)',
     emphasis: 'var(--ease-emphasis)',
+    standard: 'var(--motion-ease-standard)',
+    decelerate: 'var(--motion-ease-decelerate)',
+    accelerate: 'var(--motion-ease-accelerate)',
+  },
+  pressScale: 'var(--motion-press-scale)',
+} as const;
+
+export const materials = {
+  bar: {
+    background: 'var(--material-bar-bg)',
+    border: 'var(--material-bar-border)',
+    blur: 'var(--material-bar-blur)',
+    saturate: 'var(--material-bar-saturate)',
+  },
+  sheet: {
+    background: 'var(--material-sheet-bg)',
+  },
+  edgeEffect: {
+    height: 'var(--edge-effect-height)',
   },
 } as const;
 
@@ -208,6 +251,9 @@ export const radius = {
   xl: 'var(--lkv-radius-xl)',
   '2xl': 'var(--lkv-radius-2xl)',
   card: 'var(--lkv-radius-card)',
+  sheet: 'var(--lkv-radius-sheet)',
+  control: 'var(--lkv-radius-control)',
+  concentric: 'var(--lkv-radius-concentric)',
   full: 'var(--lkv-radius-full)',
 } as const;
 
@@ -304,6 +350,7 @@ export const theme = {
   blur,
   borders,
   motion,
+  materials,
 };
 
 export default theme;

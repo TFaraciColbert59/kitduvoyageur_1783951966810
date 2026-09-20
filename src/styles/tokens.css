@@ -35,9 +35,14 @@
      appliqué à toutes les routes via .lkv-app-background (cf. tailwind.css).
      La teinte --lkv-app-bg-tint atténue la topographie décorative pour que le
      texte essentiel ne repose jamais sur un contraste variable (spec §6). */
-  --lkv-app-bg-image: url('/assets/images/app-background.jpg');
-  --lkv-app-bg-fallback: #F5F7F3;
-  --lkv-app-bg-tint: rgba(245, 247, 243, 0.90);
+  /* Phase 2 — background LKDV : brume sauge/forêt en couches CSS pures
+     (calme, sans photo), le contenu repose sur des surfaces lisibles. */
+  --lkv-app-bg-fallback: #EDF1EA;
+  --lkv-app-bg-top: #F5F8F3;
+  --lkv-app-bg-mid: #EDF2EA;
+  --lkv-app-bg-bottom: #E4EBE4;
+  --lkv-app-bg-glow-sage: rgba(91, 127, 85, 0.12);
+  --lkv-app-bg-glow-forest: rgba(23, 64, 44, 0.07);
 
   --lkv-surface: #F5F7F3;
   --lkv-surface-paper: #FFFFFF;
@@ -174,31 +179,51 @@
   --lkv-touch-min: 44px;
   --lkv-touch-comfortable: 48px;
 
-  /* Direction §6 : rayons 12 / 16 / 24. xs (6) reste pour les micro-éléments. */
-  --lkv-radius-xs: 6px;
+  /* Phase 2 — formes iOS : capsules pour les contrôles, cartes 26,
+     feuilles 34 en haut, et rayon concentrique (rayon parent − padding). */
+  --lkv-radius-xs: 8px;
   --lkv-radius-sm: 12px;
   --lkv-radius-md: 16px;
   --lkv-radius-lg: 24px;
   --lkv-radius-xl: 24px;
-  --lkv-radius-card: 24px;
+  --lkv-radius-card: 26px;
   --lkv-radius-2xl: 24px;
+  --lkv-radius-sheet: 34px;
+  --lkv-radius-control: 14px;
+  --lkv-radius-concentric: calc(var(--lkv-radius-card) - var(--space-4));
   --lkv-radius-full: 9999px;
 
   /* ── 5. Typographie & Transitions (direction §6) ───────────
      Police système pour le corps/UI (adaptation documentée vs dossier) ;
      Manrope reste la police de marque pour les titres. */
-  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-  --font-display: 'Manrope', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  /* Phase 2 — SF Pro d'abord (iOS), Manrope conservée pour la marque. */
+  --font-sans: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-display: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, system-ui, sans-serif;
+  --font-brand: 'Manrope', system-ui, sans-serif;
   --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
   --font-body: var(--font-sans);
 
-  /* Corps 16 / secondaire 14 / titres 22–28 ; valeurs en rem : le texte
-     agrandi navigateur (zoom / taille de police) reste pris en charge. */
-  --lkv-text-body: 1rem;
-  --lkv-text-body-sm: 0.875rem;
+  /* Phase 2 — échelle Dynamic Type iOS (large title 34, body 17, footnote 13).
+     Valeurs en rem : le texte agrandi navigateur reste pris en charge. */
+  --lkv-text-caption-2: 0.6875rem;
+  --lkv-text-caption: 0.75rem;
+  --lkv-text-footnote: 0.8125rem;
+  --lkv-text-subheadline: 0.9375rem;
+  --lkv-text-callout: 1rem;
+  --lkv-text-body: 1.0625rem;
+  --lkv-text-body-sm: 0.9375rem;
+  --lkv-text-headline: 1.0625rem;
   --lkv-text-title-sm: 1.375rem;
-  --lkv-text-title-lg: 1.75rem;
-  --lkv-line-body: 1.5;
+  --lkv-text-title-lg: 2.125rem;
+  --lkv-text-title-xl: 2.5rem;
+  --lkv-line-body: 1.4;
+  --lkv-line-title: 1.18;
+  --lkv-tracking-title: -0.022em;
+  --lkv-tracking-body: -0.01em;
+  --lkv-weight-regular: 400;
+  --lkv-weight-medium: 500;
+  --lkv-weight-semibold: 600;
+  --lkv-weight-bold: 700;
   --lkv-font-numeric: tabular-nums;
 
   --dur-xfast: 120ms;
@@ -216,6 +241,16 @@
   --lkv-dur: 220ms;
   --lkv-ease: cubic-bezier(0.4, 0, 0.2, 1);
   --lkv-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* Phase 2 — motion iOS : appui 110 ms, contrôle 220 ms, feuille 380 ms. */
+  --motion-press-duration: 110ms;
+  --motion-control-duration: 220ms;
+  --motion-sheet-duration: 380ms;
+  --motion-page-duration: 260ms;
+  --motion-ease-standard: cubic-bezier(0.32, 0.72, 0, 1);
+  --motion-ease-decelerate: cubic-bezier(0.16, 1, 0.3, 1);
+  --motion-ease-accelerate: cubic-bezier(0.55, 0, 1, 0.45);
+  --motion-press-scale: 0.97;
 
   /* ── 6. Z-Index Tokens (Exclusifs) ───────────────────────── */
   --z-base: 0;
@@ -417,12 +452,12 @@
   --glass-bg-strong: var(--card-tint-strong);
   --glass-bg-dark: rgba(16, 28, 23, 0.90);
   --glass-subtle-fill: rgba(255, 255, 255, 0.66);
-  --glass-border: rgba(23, 43, 36, 0.16);
+  --glass-border: rgba(23, 43, 36, 0.12);
   --glass-rim: rgba(255, 255, 255, 0.85);
   --glass-radius: var(--card-radius);
   --glass-blur-sm: var(--card-blur);
-  --glass-blur-md: 16px;
-  --glass-blur-lg: 20px;
+  --glass-blur-md: 18px;
+  --glass-blur-lg: 26px;
   --glass-sat: var(--card-saturate);
   --glass-shadow: var(--card-shadow);
   --glass-shadow-elevated: var(--card-shadow-elevated);
@@ -438,7 +473,7 @@
 
   /* Extended blur scale */
   --glass-blur-xs: 4px;
-  --glass-blur-xl: 20px;
+  --glass-blur-xl: 32px;
 
   /* Additional depth tokens */
   --glass-shadow-overlay: inset 0 1px 0 var(--glass-rim), 0 24px 48px -16px rgba(11, 31, 23, 0.32);
@@ -459,9 +494,9 @@
      Source de vérité unique : modifier UNE valeur ici met à jour
      TOUS les boutons du site (classes CSS + composants React).
      ════════════════════════════════════════════════════════════════ */
-  --btn-tint: rgba(255, 255, 255, 0.72);            /* verre clair (référence photo adaptée) */
+  --btn-tint: rgba(255, 255, 255, 0.78);            /* verre clair (Phase 2) */
   --btn-tint-solid: var(--lkv-action);              /* primaire / actif / publier */
-  --btn-blur: 6px;                                  /* flou du verre */
+  --btn-blur: 10px;                                 /* flou du verre (Phase 2) */
   --btn-saturate: 160%;                             /* saturation du verre */
   --btn-content: var(--lkv-text-primary);           /* contenu des boutons en verre */
   --btn-on-solid: var(--lkv-on-action);             /* contenu des boutons pleins */
@@ -478,16 +513,28 @@
      Surfaces claires (blanc translucide), rayon 24, contenu sombre.
      Modifier UNE valeur ici met à jour TOUTES les cards du site.
      ════════════════════════════════════════════════════════════════ */
-  --card-tint: rgba(255, 255, 255, 0.55);           /* verre clair sur fond sauge pâle */
-  --card-tint-strong: rgba(255, 255, 255, 0.78);    /* cards élevées / panneaux */
+  --card-tint: rgba(255, 255, 255, 0.64);           /* verre clair (Phase 2) */
+  --card-tint-strong: rgba(255, 255, 255, 0.84);    /* cards élevées / panneaux */
   --card-tint-solid: #FFFFFF;                       /* repli opaque (a11y) */
-  --card-blur: 6px;                                 /* = --btn-blur */
+  --card-blur: 14px;                                /* verre plus profond (Phase 2) */
   --card-saturate: 160%;                            /* = --btn-saturate */
   --card-radius: 24px;                              /* rayon des cards (direction 12/16/24) */
   --card-content: var(--lkv-text-primary);          /* contenu sombre sur surface claire */
   --card-border: transparent;                       /* liserés seuls (comme les boutons) */
   --card-shadow: 0 4px 14px rgba(23, 43, 36, 0.12), 0 1px 3px rgba(23, 43, 36, 0.08);
   --card-shadow-elevated: 0 10px 28px rgba(23, 43, 36, 0.16), 0 2px 6px rgba(23, 43, 36, 0.10);
+
+  /* ════════════════════════════════════════════════════════════════
+     PHASE 2 — MATÉRIAUX DE BARRES + EDGE EFFECT (Liquid Glass web)
+     Les barres flottent au-dessus du contenu ; un dégradé de bord
+     (scroll edge effect « soft ») sépare sans bordure dure.
+     ════════════════════════════════════════════════════════════════ */
+  --material-bar-bg: rgba(249, 251, 248, 0.72);
+  --material-bar-border: rgba(255, 255, 255, 0.55);
+  --material-bar-blur: 28px;
+  --material-bar-saturate: 180%;
+  --material-sheet-bg: rgba(252, 253, 251, 0.92);
+  --edge-effect-height: 22px;
 }
 
 /* ══════════════════════════════════════════════════════════════════
@@ -514,8 +561,12 @@
   --lkv-secondary-hover: #B8CDB4;
   --lkv-secondary-subtle: #24382C;
 
-  --lkv-app-bg-fallback: #101C17;
-  --lkv-app-bg-tint: rgba(16, 28, 23, 0.90);
+  --lkv-app-bg-fallback: #0B1510;
+  --lkv-app-bg-top: #111E17;
+  --lkv-app-bg-mid: #0E1A14;
+  --lkv-app-bg-bottom: #0A130E;
+  --lkv-app-bg-glow-sage: rgba(127, 196, 154, 0.10);
+  --lkv-app-bg-glow-forest: rgba(0, 0, 0, 0.35);
 
   --lkv-surface: #101C17;
   --lkv-surface-paper: #1B2D24;
@@ -561,7 +612,7 @@
   --glass-bg-medium: rgba(27, 45, 36, 0.88);
   --glass-bg-strong: rgba(27, 45, 36, 0.96);
   --glass-subtle-fill: rgba(27, 45, 36, 0.65);
-  --glass-border: rgba(241, 245, 241, 0.24);
+  --glass-border: rgba(241, 245, 241, 0.18);
   --glass-rim: rgba(241, 245, 241, 0.20);
   --glass-focus: #7FC49A;
   --glass-selected-border: #7FC49A;
@@ -582,6 +633,10 @@
   --card-content: #F1F5F1;
   --card-shadow: 0 4px 14px rgba(0, 0, 0, 0.40), 0 1px 3px rgba(0, 0, 0, 0.30);
   --card-shadow-elevated: 0 10px 28px rgba(0, 0, 0, 0.48), 0 2px 6px rgba(0, 0, 0, 0.32);
+
+  --material-bar-bg: rgba(17, 30, 23, 0.72);
+  --material-bar-border: rgba(255, 255, 255, 0.10);
+  --material-sheet-bg: rgba(15, 26, 20, 0.94);
 }
 
 

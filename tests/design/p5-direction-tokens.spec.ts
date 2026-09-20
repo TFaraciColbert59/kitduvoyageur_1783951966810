@@ -74,26 +74,29 @@ describe('P5 — échelles espacements, rayons et typographie', () => {
     expect(tailwind).toContain('.lkv-screen-x');
   });
 
-  it('rayons 12/16/24 (xs conservé pour les micro-éléments)', () => {
+  it('rayons Phase 2 : cartes 26, feuilles 34, contrôles concentriques', () => {
     expect(tokens).toContain('--lkv-radius-sm: 12px;');
     expect(tokens).toContain('--lkv-radius-md: 16px;');
     expect(tokens).toContain('--lkv-radius-lg: 24px;');
-    expect(tokens).toContain('--lkv-radius-card: 24px;');
+    expect(tokens).toContain('--lkv-radius-card: 26px;');
+    expect(tokens).toContain('--lkv-radius-sheet: 34px;');
+    expect(tokens).toContain('--lkv-radius-concentric:');
   });
 
-  it('typographie : corps 16, secondaire 14, titres 22–28 en rem', () => {
-    expect(tokens).toContain('--lkv-text-body: 1rem;');
-    expect(tokens).toContain('--lkv-text-body-sm: 0.875rem;');
+  it('typographie Phase 2 : échelle Dynamic Type iOS (body 17, large title 34)', () => {
+    expect(tokens).toContain('--lkv-text-body: 1.0625rem;');
+    expect(tokens).toContain('--lkv-text-body-sm: 0.9375rem;');
     expect(tokens).toContain('--lkv-text-title-sm: 1.375rem;');
-    expect(tokens).toContain('--lkv-text-title-lg: 1.75rem;');
+    expect(tokens).toContain('--lkv-text-title-lg: 2.125rem;');
     expect(tokens).toContain('--lkv-font-numeric: tabular-nums;');
     expect(tailwind).toContain('.text-lkv-body');
     expect(tailwind).toContain('.text-lkv-title-lg');
   });
 
-  it('police système pour le corps/UI, Manrope conservée pour les titres', () => {
-    expect(tokens).toContain('--font-display: \'Manrope\'');
-    expect(tokens).toContain("--font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto");
+  it('SF Pro (système) pour toute l\'UI, Manrope conservée pour la marque', () => {
+    expect(tokens).toContain("--font-display: -apple-system, BlinkMacSystemFont, 'SF Pro Display'");
+    expect(tokens).toContain("--font-brand: 'Manrope'");
+    expect(tokens).toContain("--font-sans: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto");
   });
 });
 
@@ -113,8 +116,10 @@ describe('P5 — câblage du mode sombre et topographie', () => {
     expect(tailwind).toContain('color-scheme: dark;');
   });
 
-  it('la topographie décorative est atténuée par une teinte dédiée', () => {
-    expect(tokens).toContain('--lkv-app-bg-tint:');
-    expect(tailwind).toContain('linear-gradient(var(--lkv-app-bg-tint)');
+  it('background LKDV Phase 2 : brume CSS en couches (halos + dégradé)', () => {
+    expect(tokens).toContain('--lkv-app-bg-glow-sage:');
+    expect(tokens).toContain('--lkv-app-bg-top:');
+    expect(tailwind).toContain('radial-gradient(120% 80% at 12% -10%, var(--lkv-app-bg-glow-sage)');
+    expect(tailwind).toContain('linear-gradient(180deg, var(--lkv-app-bg-top)');
   });
 });

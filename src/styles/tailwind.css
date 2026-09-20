@@ -150,19 +150,54 @@
 
 @layer utilities {
   .font-display { font-family: var(--font-display); }
+  .font-brand { font-family: var(--font-brand); }
   .font-mono-data {
     font-family: var(--font-mono);
     /* Compteurs, points, rangs : chiffres tabulaires (direction §6). */
     font-variant-numeric: var(--lkv-font-numeric);
   }
 
-  /* Échelle typographique direction : corps 16 / secondaire 14 / titres 22–28.
+  /* Phase 2 — échelle Dynamic Type iOS (large title 34, body 17, footnote 13).
      Toutes les tailles sont en rem (texte agrandi navigateur pris en charge). */
-  .text-lkv-body { font-size: var(--lkv-text-body); line-height: var(--lkv-line-body); }
+  .text-lkv-caption-2 { font-size: var(--lkv-text-caption-2); line-height: 1.3; }
+  .text-lkv-caption { font-size: var(--lkv-text-caption); line-height: 1.3; }
+  .text-lkv-footnote { font-size: var(--lkv-text-footnote); line-height: 1.38; }
+  .text-lkv-subheadline { font-size: var(--lkv-text-subheadline); line-height: 1.35; }
+  .text-lkv-body { font-size: var(--lkv-text-body); line-height: var(--lkv-line-body); letter-spacing: var(--lkv-tracking-body); }
   .text-lkv-body-sm { font-size: var(--lkv-text-body-sm); line-height: var(--lkv-line-body); }
-  .text-lkv-title-sm { font-size: var(--lkv-text-title-sm); line-height: 1.25; }
-  .text-lkv-title-lg { font-size: var(--lkv-text-title-lg); line-height: 1.15; }
+  .text-lkv-callout { font-size: var(--lkv-text-callout); line-height: 1.35; }
+  .text-lkv-headline { font-size: var(--lkv-text-headline); line-height: 1.3; font-weight: var(--lkv-weight-semibold); }
+  .text-lkv-title-sm { font-size: var(--lkv-text-title-sm); line-height: var(--lkv-line-title); letter-spacing: var(--lkv-tracking-title); font-weight: var(--lkv-weight-bold); }
+  .text-lkv-title-lg { font-size: var(--lkv-text-title-lg); line-height: var(--lkv-line-title); letter-spacing: var(--lkv-tracking-title); font-weight: var(--lkv-weight-bold); }
+  .text-lkv-title-xl { font-size: var(--lkv-text-title-xl); line-height: 1.12; letter-spacing: var(--lkv-tracking-title); font-weight: var(--lkv-weight-bold); }
   .lkv-tabular-nums { font-variant-numeric: var(--lkv-font-numeric); }
+
+  /* Phase 2 — matériau de barre flottante (Liquid Glass web). */
+  .lkv-material-bar {
+    background-color: var(--material-bar-bg);
+    border: 1px solid var(--material-bar-border);
+    -webkit-backdrop-filter: blur(var(--material-bar-blur)) saturate(var(--material-bar-saturate));
+    backdrop-filter: blur(var(--material-bar-blur)) saturate(var(--material-bar-saturate));
+  }
+
+  /* Scroll edge effect « soft » : le contenu s'estompe sous une barre. */
+  .lkv-edge-top::before,
+  .lkv-edge-bottom::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: var(--edge-effect-height);
+    pointer-events: none;
+  }
+  .lkv-edge-top::before {
+    top: 0;
+    background: linear-gradient(to bottom, var(--lkv-app-bg-fallback), transparent);
+  }
+  .lkv-edge-bottom::after {
+    bottom: 0;
+    background: linear-gradient(to top, var(--lkv-app-bg-fallback), transparent);
+  }
 
   /* Marge d'écran 16, jamais sous les encoches (safe areas). */
   .lkv-screen-x {
@@ -752,14 +787,13 @@ body {
   pointer-events: none;
   user-select: none;
   background-color: var(--lkv-app-bg-fallback);
-  /* Direction §6 : la topographie décorative est atténuée (teinte 90%) pour
-     ne jamais faire reposer le texte essentiel sur un contraste variable.
-     Les surfaces de contenu (cards) sont opaques/translucides claires par-dessus. */
-  background-image: linear-gradient(var(--lkv-app-bg-tint), var(--lkv-app-bg-tint)),
-    var(--lkv-app-bg-image);
-  background-size: cover, cover;
-  background-position: center, center;
-  background-repeat: no-repeat, no-repeat;
+  /* Phase 2 — brume LKDV en couches : halos sauge/forêt + dégradé vertical.
+     Aucune photo : le contraste du texte reste stable sur toutes les pages. */
+  background-image:
+    radial-gradient(120% 80% at 12% -10%, var(--lkv-app-bg-glow-sage) 0%, transparent 62%),
+    radial-gradient(110% 70% at 100% 108%, var(--lkv-app-bg-glow-forest) 0%, transparent 60%),
+    linear-gradient(180deg, var(--lkv-app-bg-top) 0%, var(--lkv-app-bg-mid) 46%, var(--lkv-app-bg-bottom) 100%);
+  background-attachment: fixed;
 }
 
 /* 3. Accélération matérielle GPU pour conteneurs animés */
