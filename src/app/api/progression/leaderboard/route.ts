@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { enforceRateLimit } from '@/lib/rate-limit/routes';
 import {
   getTerritorialLeaderboard,
   type LeaderboardOptions,
@@ -7,6 +8,15 @@ import {
 import { TerritoryFilter } from '@/features/progression/domain/types';
 
 export const dynamic = 'force-dynamic';
+
+/**
+ * Classement privé par utilisateur (le rang « moi » dépend de la session) :
+ * cache navigateur court uniquement, jamais partagé.
+ */
+const LEADERBOARD_CACHE_HEADERS = {
+  'Cache-Control': 'private, max-age=30, stale-while-revalidate=60',
+  Vary: 'Cookie',
+} as const;
 
 const VALID_FILTERS: TerritoryFilter[] = ['around_me', 'city', 'region', 'country', 'world'];
 const DEFAULT_LIMIT = 50;
@@ -43,6 +53,16 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ success: false, error: 'unauthorized' }, { status: 401 });
     }
 
+    // 60/min : protection de la RPC de rang ; le filtre 1 km conserve son
+    // quota interne de 30/h (leaderboard_access_log, anti-triangulation).
+    const limited = await enforceRateLimit(user.id, {
+      scope: 'progression-leaderboard',
+      limit: 60,
+      windowMs: 60_000,
+      failMode: 'closed',
+    });
+    if (limited) return limited;
+
     const { searchParams } = new URL(request.url);
     const filterParam = (searchParams.get('filter') || 'world') as TerritoryFilter;
     const filter: TerritoryFilter = VALID_FILTERS.includes(filterParam) ? filterParam : 'world';
@@ -53,7 +73,10 @@ export async function GET(request: NextRequest) {
     if (leaderboard.error === 'rate_limited') {
       return NextResponse.json({ success: false, error: 'rate_limited' }, { status: 429 });
     }
-    return NextResponse.json({ success: true, leaderboard });
+    return NextResponse.json(
+      { success: true, leaderboard },
+      { headers: LEADERBOARD_CACHE_HEADERS }
+    );
   } catch (err) {
     const message = 'Erreur interne de classement'; console.error('[API /api/progression/leaderboard]', err);
     console.error('[API /api/progression/leaderboard] Error:', message);

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { enforceRateLimit } from '@/lib/rate-limit/routes';
 import {
   getTerritoryState,
   updateDeclaredTerritory,
@@ -7,6 +8,19 @@ import {
 } from '@/features/progression/server/territoryService';
 
 export const dynamic = 'force-dynamic';
+
+/** État de territoire privé : cache navigateur court, jamais partagé. */
+const TERRITORY_CACHE_HEADERS = {
+  'Cache-Control': 'private, max-age=30, stale-while-revalidate=60',
+  Vary: 'Cookie',
+} as const;
+
+const TERRITORY_RATE_LIMIT = {
+  scope: 'progression-territory',
+  limit: 30,
+  windowMs: 60_000,
+  failMode: 'closed',
+} as const;
 
 export async function GET() {
   try {
@@ -19,8 +33,11 @@ export async function GET() {
       return NextResponse.json({ success: false, error: 'unauthorized' }, { status: 401 });
     }
 
+    const limited = await enforceRateLimit(user.id, TERRITORY_RATE_LIMIT);
+    if (limited) return limited;
+
     const state = await getTerritoryState(user.id);
-    return NextResponse.json({ success: true, ...state });
+    return NextResponse.json({ success: true, ...state }, { headers: TERRITORY_CACHE_HEADERS });
   } catch (err) {
     const message = 'Erreur lors de la lecture du territoire'; console.error('[API /api/progression/territory]', err);
     console.error('[API /api/progression/territory] Error:', message);
@@ -38,6 +55,9 @@ export async function POST(request: NextRequest) {
     if (!user) {
       return NextResponse.json({ success: false, error: 'unauthorized' }, { status: 401 });
     }
+
+    const limited = await enforceRateLimit(user.id, TERRITORY_RATE_LIMIT);
+    if (limited) return limited;
 
     let body: Record<string, unknown>;
     try {

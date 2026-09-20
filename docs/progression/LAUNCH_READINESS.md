@@ -33,7 +33,7 @@ Statuts : **vérifié** (preuve locale exécutée), **implémenté** (code livr�
 | Internationalisation | FR/EN critiques, pluriels, formats, RTL préparé | **Partiel assumé** | Infra + surfaces critiques (connexion, progression, compte, navigation) ; 459 fichiers restants listés dans `docs/i18n/COVERAGE.md` |
 | Performance web mobile | LCP ≤ 2,5 s, INP ≤ 200 ms, CLS ≤ 0,1 (terrain p75) | **Non vérifié** | Build mesuré ; aucune mesure terrain possible ici ; budgets non instrumentés |
 | Coque native | Démarrage, mémoire, fluidité iPhone/Android | **Non vérifié** | Aucun appareil ni macOS ; `cleartext`/`allowMixedContent` séparés dev/release ; cycle de vie repris |
-| Disponibilité 99,9 % / stabilité | Instrumentation et historique | **Non vérifié** | Dépend de la production ; healthcheck outbox livré (`scripts/ops/progression_outbox_health.mjs`) |
+| Disponibilité 99,9 % / stabilité | Instrumentation et historique | **Non vérifié** | Dépend de la production ; healthcheck outbox + file classement livré (`scripts/ops/progression_outbox_health.mjs`), runbook `docs/progression/OPERATIONS.md`, plans `docs/progression/PERFORMANCE.md` |
 | Charge et coûts | Scénario 2× sur environnement de test autorisé | **Restant** | Scripts `ops:a15-load` existants à exécuter sur environnement dédié |
 | Accessibilité WCAG 2.2 AA | Web + tests assistifs | **Partiel** | Contrastes mesurés ; tests a11y existants verts ; audit manuel VoiceOver/TalkBack non réalisé |
 | Confidentialité | Position exacte exclue, consentement, export/suppression | **Vérifié localement** | `user_territory_private` inaccessible aux clients (pgTAP) ; parcours de consentement implémenté ; export/suppression existants |

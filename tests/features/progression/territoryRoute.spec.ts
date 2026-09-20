@@ -87,6 +87,10 @@ describe('GET /api/progression/territory', () => {
       privateAttachment: ATTACHMENT,
     });
     expect(mockedGetState).toHaveBeenCalledWith(USER_ID);
+    expect(response.headers.get('Cache-Control')).toBe(
+      'private, max-age=30, stale-while-revalidate=60'
+    );
+    expect(response.headers.get('Vary')).toBe('Cookie');
 
     const serialized = JSON.stringify(body);
     expect(serialized).not.toContain('lat');
@@ -145,6 +149,8 @@ describe('POST /api/progression/territory — choix manuel', () => {
       city_name: 'Grenoble',
     });
     expect(mockedPrivate).not.toHaveBeenCalled();
+    // Mutation : jamais de cache.
+    expect(response.headers.get('Cache-Control')).toBeNull();
   });
 });
 

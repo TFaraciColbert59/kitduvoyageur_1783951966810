@@ -21,6 +21,57 @@ interface ProgressionCompactCardProps {
 }
 
 /**
+ * Cache mémoire court, module-level : évite le double appel systématique
+ * profil + classement quand la carte est montée deux fois sur le même écran
+ * (CollectifMenu, PossessionMenu, SortieMenu) et absorbe les remontages
+ * rapprochés. Limites assumées : par instance JS (onglet), non partagé entre
+ * onglets/worktrees, perdu au rechargement ; aucune lib partagée n'est ajoutée
+ * pour ce besoin (TTL 60 s aligné sur le `Cache-Control` des routes).
+ */
+const RESPONSE_CACHE_TTL_MS = 60_000;
+interface MemoryCacheEntry {
+  expiresAt: number;
+  payload: unknown;
+}
+const memoryResponseCache = new Map<string, MemoryCacheEntry>();
+const inflightRequests = new Map<string, Promise<unknown>>();
+
+async function fetchJsonCached(url: string): Promise<unknown> {
+  const cached = memoryResponseCache.get(url);
+  if (cached && cached.expiresAt > Date.now()) return cached.payload;
+
+  const inflight = inflightRequests.get(url);
+  if (inflight) return inflight;
+
+  const request = fetch(url, { cache: 'no-store' })
+    .then(async (response) => {
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const payload = await response.json();
+      memoryResponseCache.set(url, {
+        expiresAt: Date.now() + RESPONSE_CACHE_TTL_MS,
+        payload,
+      });
+      return payload;
+    })
+    .finally(() => {
+      inflightRequests.delete(url);
+    });
+
+  inflightRequests.set(url, request);
+  return request;
+}
+
+interface ProfilePayload {
+  success?: boolean;
+  profile?: UserProgressionProfile;
+}
+
+interface LeaderboardPayload {
+  success?: boolean;
+  leaderboard?: TerritorialLeaderboard;
+}
+
+/**
  * Carte de progression compacte de la racine Aventures (`/hub`).
  *
  * Honnêteté : lit uniquement `/api/progression` (profil canonique) et, pour le
@@ -40,12 +91,8 @@ export function ProgressionCompactCard({ className = '' }: ProgressionCompactCar
 
     async function load() {
       try {
-        const response = await fetch('/api/progression', { cache: 'no-store' });
-        if (!response.ok) return;
-        const payload = await response.json();
-        const profile: UserProgressionProfile | null = payload?.success
-          ? (payload.profile as UserProgressionProfile)
-          : null;
+        const payload = (await fetchJsonCached('/api/progression')) as ProfilePayload | null;
+        const profile = payload?.success ? (payload.profile ?? null) : null;
         if (!profile || !alive) return;
 
         let rank =
@@ -54,25 +101,23 @@ export function ProgressionCompactCard({ className = '' }: ProgressionCompactCar
             : null;
 
         // `leaderboardRank` n'est pas encore projeté par le profil : le rang
-        // réel vient de la même RPC que Ma progression (filtre ville).
-        if (rank === null) {
+        // réel vient de la même RPC que Ma progression (filtre ville). On ne
+        // sollicite le classement que si un profil avec données existe : un
+        // compte sans progression n'a rien à classer.
+        if (rank === null && profile.hasData) {
           try {
-            const leaderboardResponse = await fetch(
-              '/api/progression/leaderboard?filter=city&limit=1',
-              { cache: 'no-store' }
-            );
-            if (leaderboardResponse.ok) {
-              const leaderboardPayload = await leaderboardResponse.json();
-              const leaderboard: TerritorialLeaderboard | null = leaderboardPayload?.success
-                ? (leaderboardPayload.leaderboard as TerritorialLeaderboard)
-                : null;
-              if (
-                leaderboard &&
-                typeof leaderboard.rank === 'number' &&
-                leaderboard.rank > 0
-              ) {
-                rank = leaderboard.rank;
-              }
+            const leaderboardPayload = (await fetchJsonCached(
+              '/api/progression/leaderboard?filter=city&limit=1'
+            )) as LeaderboardPayload | null;
+            const leaderboard = leaderboardPayload?.success
+              ? (leaderboardPayload.leaderboard ?? null)
+              : null;
+            if (
+              leaderboard &&
+              typeof leaderboard.rank === 'number' &&
+              leaderboard.rank > 0
+            ) {
+              rank = leaderboard.rank;
             }
           } catch {
             // Rang indisponible : aucun rang affiché, jamais inventé.

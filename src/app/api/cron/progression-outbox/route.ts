@@ -6,8 +6,12 @@ export const dynamic = 'force-dynamic';
 /** Taille du lot consommé par exécution de cron. */
 const OUTBOX_LIMIT = 50;
 
+/** Rétention de l'outbox traité (la RPC purge_progression_outbox borne aussi). */
+const OUTBOX_KEEP_DAYS = 90;
+
 /**
  * Cron P1 — consomme l'outbox de progression : journal, cumuls, saison, niveau.
+ * Une fois par exécution, purge aussi l'outbox traité au-delà de 90 jours.
  * Déclencheur externe avec `Authorization: Bearer ${CRON_SECRET}`. La RPC
  * `process_progression_outbox` est atomique et concurrente (`SKIP LOCKED`).
  */
@@ -36,5 +40,21 @@ export async function POST(request: NextRequest) {
   }
 
   const result = (data ?? { processed: 0, failed: 0 }) as { processed?: number; failed?: number };
-  return NextResponse.json({ processed: result.processed ?? 0, failed: result.failed ?? 0 });
+
+  // Maintenance non bloquante : l'échec de purge ne remet pas en cause le lot.
+  let purged = 0;
+  const { data: purgeData, error: purgeError } = await supabase.rpc('purge_progression_outbox', {
+    p_keep_days: OUTBOX_KEEP_DAYS,
+  });
+  if (purgeError) {
+    console.warn('[progression/cron] purge outbox en échec:', purgeError.message);
+  } else if (typeof purgeData === 'number') {
+    purged = purgeData;
+  }
+
+  return NextResponse.json({
+    processed: result.processed ?? 0,
+    failed: result.failed ?? 0,
+    purged,
+  });
 }
