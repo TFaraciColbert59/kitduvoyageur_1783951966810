@@ -1,7 +1,8 @@
-﻿'use client';
+'use client';
 
 import Icon from '@/components/ui/Icon';
 import React, { useState, useRef, useEffect } from 'react';
+import { IconButton } from '@/components/ui';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 
 interface AudioPlayerBubbleProps {
@@ -77,31 +78,31 @@ export const AudioPlayerBubble: React.FC<AudioPlayerBubbleProps> = ({ audioUrl, 
 
   return (
     <div
-      className={`flex items-center gap-3 p-2.5 my-1 rounded-2xl max-w-xs ${
+      className={`my-[var(--space-1)] flex max-w-xs items-center gap-[var(--space-3)] rounded-[var(--lkv-radius-md)] border p-[var(--space-2)] ${
         isMine
-          ? 'bg-white/10 text-[#EEF3EC] border border-white/20'
-          : 'bg-stone-50/95 text-[#14140F] border border-stone-200/80 shadow-2xs'
+          ? 'border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] text-[color:var(--lkv-text-inverted)]'
+          : 'border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-card)] text-[color:var(--lkv-text-primary)] shadow-elevation-1'
       }`}
     >
-      <button
+      <IconButton
         type="button"
+        variant={isMine ? 'glass' : 'solid'}
         onClick={togglePlay}
-        className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 shadow-xs transition-transform active:scale-95 ${
-          isMine ? 'glass-circle-btn text-[#17402C]' : 'glass-circle-btn primary text-white'
-        }`}
+        className="shrink-0 shadow-elevation-1"
         title={isPlaying ? 'Pause' : 'Écouter la note vocale'}
+        aria-label={isPlaying ? 'Pause' : 'Écouter la note vocale'}
       >
         {isPlaying ? (
-          <Icon name="pause" className="w-4 h-4" />
+          <Icon name="pause" className="size-4" aria-hidden="true" />
         ) : (
-          <Icon name="play" className="w-4 h-4 ml-0.5" />
+          <Icon name="play" className="ml-0.5 size-4" aria-hidden="true" />
         )}
-      </button>
+      </IconButton>
 
-      <div className="flex-1 flex flex-col gap-1">
-        <div className="flex items-center justify-between text-[10px] font-semibold opacity-90">
-          <span className="flex items-center gap-1">
-            <Icon name="mic" className="w-3 h-3 text-[#5B7F55]" />
+      <div className="flex flex-1 flex-col gap-[var(--space-1)]">
+        <div className="flex items-center justify-between text-[length:var(--lkv-text-caption-2)] font-semibold opacity-90">
+          <span className="flex items-center gap-[var(--space-1)]">
+            <Icon name="mic" className="size-3 text-[color:var(--lkv-secondary)]" aria-hidden="true" />
             Note vocale
           </span>
           <span className="font-mono">
@@ -109,7 +110,7 @@ export const AudioPlayerBubble: React.FC<AudioPlayerBubbleProps> = ({ audioUrl, 
           </span>
         </div>
 
-        <div className="relative w-full flex items-center">
+        <div className="relative flex w-full items-center">
           <input
             type="range"
             min={0}
@@ -117,7 +118,8 @@ export const AudioPlayerBubble: React.FC<AudioPlayerBubbleProps> = ({ audioUrl, 
             step={0.1}
             value={currentTime}
             onChange={handleSeek}
-            className="w-full h-1.5 rounded-lg appearance-none cursor-pointer bg-[#17402C]/15 accent-[#5B7F55] focus:outline-none"
+            aria-label="Position de lecture"
+            className="h-1.5 w-full cursor-pointer appearance-none rounded-full bg-[color:var(--lkv-primary)]/15 accent-[var(--lkv-secondary)] focus:outline-none"
           />
         </div>
       </div>

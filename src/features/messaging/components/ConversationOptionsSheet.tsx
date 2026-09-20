@@ -3,6 +3,7 @@
 import Icon from '@/components/ui/Icon';
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
+import { Button, ListItem } from '@/components/ui';
 import type { Conversation } from '../types/messaging.types';
 import { messagingService } from '../services/messagingService';
 import { MobileSheet } from './MobileSheet';
@@ -100,9 +101,6 @@ export const ConversationOptionsSheet: React.FC<ConversationOptionsSheetProps> =
     closeAndRefresh();
   };
 
-  const menuItemClass =
-    'w-full p-3.5 rounded-2xl bg-white/70 hover:bg-[#17402C]/10 border border-stone-200/50 flex items-center gap-3 text-[15px] font-semibold text-[#17402C] transition-colors min-h-[52px]';
-
   return (
     <MobileSheet
       isOpen={isOpen}
@@ -110,8 +108,8 @@ export const ConversationOptionsSheet: React.FC<ConversationOptionsSheetProps> =
       title={isPending ? 'Demande de message' : 'Options de conversation'}
     >
       {member && (
-        <div className="flex items-center gap-3 mb-4 pt-1">
-          <div className="w-12 h-12 rounded-full overflow-hidden relative ring-2 ring-white/90 shadow-xs bg-stone-100 shrink-0">
+        <div className="mb-[var(--space-4)] flex items-center gap-[var(--space-3)] pt-[var(--space-1)]">
+          <div className="relative size-12 shrink-0 overflow-hidden rounded-full bg-[color:var(--lkv-surface-muted)] shadow-elevation-1 ring-2 ring-[color:var(--glass-border)]">
             <Image
               src={member.avatar_url || '/assets/images/no_image.png'}
               alt=""
@@ -124,10 +122,10 @@ export const ConversationOptionsSheet: React.FC<ConversationOptionsSheetProps> =
             />
           </div>
           <div className="min-w-0">
-            <p className="font-bold text-[15px] text-[#17402C] truncate">
+            <p className="truncate text-[length:var(--lkv-text-subheadline)] font-bold text-[color:var(--lkv-text-primary)]">
               {member.full_name || 'Voyageur LKDV'}
             </p>
-            <p className="text-[13px] text-[#5A574E] truncate">
+            <p className="truncate text-[length:var(--lkv-text-footnote)] text-[color:var(--lkv-text-secondary)]">
               {isPending ? 'Souhaite vous écrire' : 'Conversation directe'}
             </p>
           </div>
@@ -135,80 +133,71 @@ export const ConversationOptionsSheet: React.FC<ConversationOptionsSheetProps> =
       )}
 
       {isPending ? (
-        <div className="space-y-2">
-          <button
-            type="button"
+        <div className="space-y-[var(--space-2)]">
+          <ListItem
+            as="div"
+            disabled={loading}
             onClick={handleAccept}
+            className="min-h-[52px] border border-[color:var(--lkv-secondary)]/40 bg-[color:var(--lkv-secondary)]/10"
+            leading={<Icon name="check" className="size-5 text-[color:var(--lkv-forest-700)]" aria-hidden="true" />}
+            title="Accepter la demande"
+          />
+          <ListItem
+            as="div"
             disabled={loading}
-            className={`${menuItemClass} bg-[#EDF3ED] border-[#A3C4A3]/40`}
-          >
-            <Icon name="check" className="w-5 h-5 text-[#2D6B4A]" />
-            Accepter la demande
-          </button>
-          <button
-            type="button"
             onClick={handleDecline}
-            disabled={loading}
-            className={menuItemClass}
-          >
-            <Icon name="x" className="w-5 h-5 text-[#8A241B]" />
-            Refuser la demande
-          </button>
+            className="min-h-[52px]"
+            leading={<Icon name="x" className="size-5 text-[color:var(--lkv-danger-dark)]" aria-hidden="true" />}
+            title="Refuser la demande"
+          />
           {onReport && (
-            <button
-              type="button"
+            <ListItem
+              as="div"
               onClick={() => {
                 onReport(conversation);
                 onClose();
               }}
-              className="w-full p-3.5 rounded-2xl bg-[#F5DDD9]/70 hover:bg-[#F5DDD9]/90 border border-[#A8443A]/30 flex items-center gap-3 text-[15px] font-semibold text-[#8A241B] transition-colors min-h-[52px]"
-            >
-              <Icon name="shield-alert" className="w-5 h-5 text-[#8A241B]" />
-              Signaler ou bloquer
-            </button>
+              className="min-h-[52px] border border-[color:var(--lkv-danger)]/30 bg-[color:var(--lkv-danger-bg)]"
+              leading={<Icon name="shield-alert" className="size-5 text-[color:var(--lkv-danger-dark)]" aria-hidden="true" />}
+              title={<span className="text-[color:var(--lkv-danger-dark)]">Signaler ou bloquer</span>}
+            />
           )}
         </div>
       ) : showMuteSubmenu ? (
-        <div className="space-y-2">
-          <h4 className="text-xs font-bold text-[#5A574E] uppercase tracking-wider mb-2">
+        <div className="space-y-[var(--space-2)]">
+          <h4 className="mb-[var(--space-2)] text-[length:var(--lkv-text-caption)] font-bold uppercase tracking-wider text-[color:var(--lkv-text-secondary)]">
             Masquer les notifications
           </h4>
-          <button
-            type="button"
+          <ListItem
+            as="div"
+            disabled={loading}
             onClick={() => handleMuteToggle(1)}
+            title="Pendant 1 heure"
+            className="min-h-[52px]"
+          />
+          <ListItem
+            as="div"
             disabled={loading}
-            className={`${menuItemClass} text-[15px]`}
-          >
-            Pendant 1 heure
-          </button>
-          <button
-            type="button"
             onClick={() => handleMuteToggle(8)}
+            title="Pendant 8 heures"
+            className="min-h-[52px]"
+          />
+          <ListItem
+            as="div"
             disabled={loading}
-            className={`${menuItemClass} text-[15px]`}
-          >
-            Pendant 8 heures
-          </button>
-          <button
-            type="button"
             onClick={() => handleMuteToggle(undefined)}
-            disabled={loading}
-            className={`${menuItemClass} text-[15px]`}
-          >
-            Jusqu&apos;à réactivation (Toujours)
-          </button>
-          <button
-            type="button"
-            onClick={() => setShowMuteSubmenu(false)}
-            className="w-full text-center mt-2 py-3 text-[15px] text-[#5A574E] font-semibold hover:text-[#17402C] min-h-[52px] flex items-center justify-center"
-          >
+            title="Jusqu'à réactivation (Toujours)"
+            className="min-h-[52px]"
+          />
+          <Button type="button" variant="ghost" fullWidth onClick={() => setShowMuteSubmenu(false)}>
             Retour
-          </button>
+          </Button>
         </div>
       ) : (
-        <div className="space-y-2">
-          <button
-            type="button"
+        <div className="space-y-[var(--space-2)]">
+          <ListItem
+            as="div"
+            disabled={loading}
             onClick={() => {
               if (isMuted) {
                 handleMuteToggle(0);
@@ -216,45 +205,51 @@ export const ConversationOptionsSheet: React.FC<ConversationOptionsSheetProps> =
                 setShowMuteSubmenu(true);
               }
             }}
-            disabled={loading}
-            className={`${menuItemClass} justify-between`}
-          >
-            <span className="flex items-center gap-3">
-              {isMuted ? (
-                <Icon name="bell" className="w-5 h-5 text-[#5B7F55]" />
+            className="min-h-[52px]"
+            leading={
+              isMuted ? (
+                <Icon name="bell" className="size-5 text-[color:var(--lkv-secondary)]" aria-hidden="true" />
               ) : (
-                <Icon name="bell-off" className="w-5 h-5 text-[#5A574E]" />
-              )}
-              {isMuted ? 'Réactiver les notifications' : 'Masquer les notifications'}
-            </span>
-            {isMuted && <Icon name="check" className="w-5 h-5 text-[#5B7F55]" />}
-          </button>
+                <Icon name="bell-off" className="size-5 text-[color:var(--lkv-text-secondary)]" aria-hidden="true" />
+              )
+            }
+            title={isMuted ? 'Réactiver les notifications' : 'Masquer les notifications'}
+            trailing={
+              isMuted ? (
+                <Icon name="check" className="size-5 text-[color:var(--lkv-secondary)]" aria-hidden="true" />
+              ) : undefined
+            }
+          />
 
-          <button
-            type="button"
-            onClick={handleArchiveToggle}
+          <ListItem
+            as="div"
             disabled={loading}
-            className={`${menuItemClass} justify-between`}
-          >
-            <span className="flex items-center gap-3">
-              <Icon name="archive" className="w-5 h-5 text-[#5A574E]" />
-              {isArchived ? 'Désarchiver la conversation' : 'Archiver la conversation'}
-            </span>
-            {isArchived && <Icon name="check" className="w-5 h-5 text-[#5B7F55]" />}
-          </button>
+            onClick={handleArchiveToggle}
+            className="min-h-[52px]"
+            leading={<Icon name="archive" className="size-5 text-[color:var(--lkv-text-secondary)]" aria-hidden="true" />}
+            title={isArchived ? 'Désarchiver la conversation' : 'Archiver la conversation'}
+            trailing={
+              isArchived ? (
+                <Icon name="check" className="size-5 text-[color:var(--lkv-secondary)]" aria-hidden="true" />
+              ) : undefined
+            }
+          />
 
           {onReport && (
-            <button
-              type="button"
+            <ListItem
+              as="div"
               onClick={() => {
                 onReport(conversation);
                 onClose();
               }}
-              className="w-full p-3.5 rounded-2xl bg-[#F5DDD9]/70 hover:bg-[#F5DDD9]/90 border border-[#A8443A]/30 flex items-center gap-3 text-[15px] font-semibold text-[#8A241B] transition-colors min-h-[52px]"
-            >
-              <Icon name="shield-alert" className="w-5 h-5 text-[#8A241B]" />
-              Signaler ou bloquer {member?.full_name || ''}
-            </button>
+              className="min-h-[52px] border border-[color:var(--lkv-danger)]/30 bg-[color:var(--lkv-danger-bg)]"
+              leading={<Icon name="shield-alert" className="size-5 text-[color:var(--lkv-danger-dark)]" aria-hidden="true" />}
+              title={
+                <span className="text-[color:var(--lkv-danger-dark)]">
+                  Signaler ou bloquer {member?.full_name || ''}
+                </span>
+              }
+            />
           )}
         </div>
       )}

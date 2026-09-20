@@ -3,6 +3,7 @@
 import Icon from '@/components/ui/Icon';
 import React, { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
+import { Button, EmptyState, ListItem, Skeleton } from '@/components/ui';
 import type {
   ProductMessageMeta,
   TrailMessageMeta,
@@ -116,8 +117,25 @@ export const ComposerMenuSheet: React.FC<ComposerMenuSheetProps> = ({
     if (gpxInputRef.current) gpxInputRef.current.value = '';
   };
 
-  const itemClass =
-    'w-full p-3.5 rounded-2xl bg-white/70 hover:bg-[#17402C]/10 border border-stone-200/50 flex items-center gap-3 text-[15px] font-semibold text-[#17402C] transition-colors min-h-[52px]';
+  const backButton = (
+    <Button
+      type="button"
+      variant="ghost"
+      size="sm"
+      onClick={() => setView('menu')}
+      icon={<Icon name="arrow-left" className="size-4" aria-hidden="true" />}
+    >
+      Retour
+    </Button>
+  );
+
+  const loadingRows = (
+    <div className="space-y-[var(--space-2)]">
+      {[1, 2, 3].map((i) => (
+        <Skeleton key={i} className="h-14 w-full rounded-[var(--lkv-radius-md)]" />
+      ))}
+    </div>
+  );
 
   return (
     <MobileSheet
@@ -142,94 +160,81 @@ export const ComposerMenuSheet: React.FC<ComposerMenuSheetProps> = ({
       />
 
       {view === 'menu' && (
-        <div className="space-y-2">
-          <button type="button" onClick={() => gpxInputRef.current?.click()} className={itemClass}>
-            <Icon name="route" className="w-5 h-5 text-[#2D6B4A]" />
-            Carte GPX — partager un itinéraire
-            <span className="ml-auto text-[13px] font-medium text-[#5A574E]">.gpx</span>
-          </button>
-          <button type="button" onClick={openEquip} className={itemClass}>
-            <Icon name="map-pin" className="w-5 h-5 text-[#2D6B4A]" />
-            Équipement — depuis mon inventaire
-          </button>
-          <button type="button" onClick={openTrails} className={itemClass}>
-            <Icon name="mountain" className="w-5 h-5 text-[#2D6B4A]" />
-            Partager une randonnée
-          </button>
-          <button type="button" onClick={openKits} className={itemClass}>
-            <Icon name="backpack" className="w-5 h-5 text-[#2D6B4A]" />
-            Partager un kit — lignée
-          </button>
+        <div className="space-y-[var(--space-2)]">
+          <ListItem
+            as="div"
+            onClick={() => gpxInputRef.current?.click()}
+            className="min-h-[52px]"
+            leading={<Icon name="route" className="size-5 text-[color:var(--lkv-forest-700)]" aria-hidden="true" />}
+            title="Carte GPX — partager un itinéraire"
+            metadata={<span className="font-medium text-[color:var(--lkv-text-secondary)]">.gpx</span>}
+          />
+          <ListItem
+            as="div"
+            onClick={openEquip}
+            className="min-h-[52px]"
+            leading={<Icon name="map-pin" className="size-5 text-[color:var(--lkv-forest-700)]" aria-hidden="true" />}
+            title="Équipement — depuis mon inventaire"
+          />
+          <ListItem
+            as="div"
+            onClick={openTrails}
+            className="min-h-[52px]"
+            leading={<Icon name="mountain" className="size-5 text-[color:var(--lkv-forest-700)]" aria-hidden="true" />}
+            title="Partager une randonnée"
+          />
+          <ListItem
+            as="div"
+            onClick={openKits}
+            className="min-h-[52px]"
+            leading={<Icon name="backpack" className="size-5 text-[color:var(--lkv-forest-700)]" aria-hidden="true" />}
+            title="Partager un kit — lignée"
+          />
         </div>
       )}
 
       {view === 'kit' && (
-        <div className="space-y-2">
-          <button
-            type="button"
-            onClick={() => setView('menu')}
-            className="flex items-center gap-2 px-2 py-1 text-[13px] font-semibold text-[#5A574E] hover:text-[#17402C]"
-          >
-            <Icon name="arrow-left" className="w-4 h-4" />
-            Retour
-          </button>
+        <div className="space-y-[var(--space-2)]">
+          {backButton}
           {loadingKits ? (
-            <div className="space-y-2">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="h-14 bg-stone-100/80 rounded-2xl animate-pulse" />
-              ))}
-            </div>
+            loadingRows
           ) : kits.length === 0 ? (
-            <p className="text-center text-[14px] text-[#5A574E] py-6">Aucun kit à partager.</p>
+            <EmptyState compact title="Aucun kit à partager" />
           ) : (
             kits.map((kit) => (
-              <button
+              <ListItem
                 key={kit.id}
-                type="button"
+                as="div"
                 onClick={() => {
                   haptic('light');
                   onSendKit({ kind: 'kit', kit_id: kit.id, kit_name: kit.name });
                   onClose();
                 }}
-                className="w-full text-left p-3 rounded-2xl bg-white/70 hover:bg-[#17402C]/10 border border-stone-200/60 flex items-center gap-3 active:scale-[0.98] min-h-[60px]"
-              >
-                <div className="w-10 h-10 rounded-xl bg-[#EDF3ED] ring-1 ring-[#A3C4A3]/50 shrink-0 flex items-center justify-center">
-                  <Icon name="backpack" className="w-5 h-5 text-[#17402C]" />
-                </div>
-                <span className="text-[15px] font-medium text-[#14140F] flex-1 min-w-0 truncate">
-                  {kit.name}
-                </span>
-              </button>
+                className="min-h-[60px]"
+                leading={
+                  <span className="flex size-10 shrink-0 items-center justify-center rounded-[var(--lkv-radius-sm)] bg-[color:var(--lkv-surface-muted)] ring-1 ring-[color:var(--lkv-secondary)]/50">
+                    <Icon name="backpack" className="size-5 text-[color:var(--lkv-text-primary)]" aria-hidden="true" />
+                  </span>
+                }
+                title={kit.name}
+              />
             ))
           )}
         </div>
       )}
 
       {view === 'equip' && (
-        <div className="space-y-2">
-          <button
-            type="button"
-            onClick={() => setView('menu')}
-            className="flex items-center gap-2 px-2 py-1 text-[13px] font-semibold text-[#5A574E] hover:text-[#17402C]"
-          >
-            <Icon name="arrow-left" className="w-4 h-4" />
-            Retour
-          </button>
+        <div className="space-y-[var(--space-2)]">
+          {backButton}
           {loadingInv ? (
-            <div className="space-y-2">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="h-14 bg-stone-100/80 rounded-2xl animate-pulse" />
-              ))}
-            </div>
+            loadingRows
           ) : inventory.length === 0 ? (
-            <p className="text-center text-[14px] text-[#5A574E] py-6">
-              Aucun équipement dans votre inventaire.
-            </p>
+            <EmptyState compact title="Aucun équipement dans votre inventaire" />
           ) : (
             inventory.map((item) => (
-              <button
+              <ListItem
                 key={item.id}
-                type="button"
+                as="div"
                 onClick={() => {
                   haptic('light');
                   onSendProduct({
@@ -243,57 +248,41 @@ export const ComposerMenuSheet: React.FC<ComposerMenuSheetProps> = ({
                   });
                   onClose();
                 }}
-                className="w-full text-left p-3 rounded-2xl bg-white/70 hover:bg-[#17402C]/10 border border-stone-200/60 flex items-center gap-3 active:scale-[0.98] min-h-[60px]"
-              >
-                <div className="w-10 h-10 rounded-xl overflow-hidden relative ring-1 ring-white/80 shrink-0 bg-stone-100">
-                  <Image
-                    src={item.photo_url || '/assets/images/no_image.png'}
-                    alt=""
-                    fill
-                    className="object-cover"
-                    sizes="40px"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).src = '/assets/images/no_image.png';
-                    }}
-                  />
-                </div>
-                <div className="flex-1 min-w-0 overflow-hidden">
-                  <p className="font-semibold text-[15px] text-[#17402C] truncate">{item.name}</p>
-                  <p className="text-[13px] text-[#5A574E] truncate">
-                    {item.category || 'Équipement'}
-                  </p>
-                </div>
-              </button>
+                className="min-h-[60px]"
+                leading={
+                  <span className="relative size-10 shrink-0 overflow-hidden rounded-[var(--lkv-radius-sm)] bg-[color:var(--lkv-surface-muted)] ring-1 ring-[color:var(--glass-border)]">
+                    <Image
+                      src={item.photo_url || '/assets/images/no_image.png'}
+                      alt=""
+                      fill
+                      className="object-cover"
+                      sizes="40px"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = '/assets/images/no_image.png';
+                      }}
+                    />
+                  </span>
+                }
+                title={item.name}
+                subtitle={item.category || 'Équipement'}
+              />
             ))
           )}
         </div>
       )}
 
       {view === 'trail' && (
-        <div className="space-y-2">
-          <button
-            type="button"
-            onClick={() => setView('menu')}
-            className="flex items-center gap-2 px-2 py-1 text-[13px] font-semibold text-[#5A574E] hover:text-[#17402C]"
-          >
-            <Icon name="arrow-left" className="w-4 h-4" />
-            Retour
-          </button>
+        <div className="space-y-[var(--space-2)]">
+          {backButton}
           {loadingTrails ? (
-            <div className="space-y-2">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="h-14 bg-stone-100/80 rounded-2xl animate-pulse" />
-              ))}
-            </div>
+            loadingRows
           ) : trails.length === 0 ? (
-            <p className="text-center text-[14px] text-[#5A574E] py-6">
-              Aucune randonnée disponible.
-            </p>
+            <EmptyState compact title="Aucune randonnée disponible" />
           ) : (
             trails.map((t) => (
-              <button
+              <ListItem
                 key={t.id}
-                type="button"
+                as="div"
                 onClick={() => {
                   haptic('light');
                   onSendTrail({
@@ -306,20 +295,17 @@ export const ComposerMenuSheet: React.FC<ComposerMenuSheetProps> = ({
                   });
                   onClose();
                 }}
-                className="w-full text-left p-3.5 rounded-2xl bg-white/70 hover:bg-[#17402C]/10 border border-stone-200/60 flex items-center gap-3 active:scale-[0.98] min-h-[60px]"
-              >
-                <div className="w-10 h-10 rounded-full bg-[#17402C]/10 text-[#17402C] flex items-center justify-center shrink-0">
-                  <Icon name="mountain" className="w-5 h-5" />
-                </div>
-                <div className="flex-1 min-w-0 overflow-hidden">
-                  <p className="font-semibold text-[15px] text-[#17402C] truncate">{t.name}</p>
-                  <p className="text-[13px] text-[#5A574E] truncate">
-                    {[t.distance_km != null ? `${t.distance_km} km` : null, t.region]
-                      .filter(Boolean)
-                      .join(' · ')}
-                  </p>
-                </div>
-              </button>
+                className="min-h-[60px]"
+                leading={
+                  <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[color:var(--lkv-primary)]/10 text-[color:var(--lkv-text-primary)]">
+                    <Icon name="mountain" className="size-5" aria-hidden="true" />
+                  </span>
+                }
+                title={t.name}
+                subtitle={[t.distance_km != null ? `${t.distance_km} km` : null, t.region]
+                  .filter(Boolean)
+                  .join(' · ')}
+              />
             ))
           )}
         </div>

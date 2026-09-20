@@ -4,12 +4,20 @@ import { lkvAlert } from '@/components/ui/dialogs';
 import React, { useState, useMemo, useRef, useEffect, Suspense } from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
-import BackButton from '@/components/ui/BackButton';
+import AppShell from '@/components/shell/AppShell';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { createClient } from '@/lib/supabase/client';
+import {
+  Button,
+  Card,
+  Chip,
+  Divider,
+  IconButton,
+  LoadingState,
+  PageHeader,
+} from '@/components/ui';
 
 type PostType = 'photo' | 'billet' | 'question' | 'evenement';
 type AudienceType = 'public' | 'club' | 'abonnies';
@@ -20,16 +28,23 @@ interface UserCarnetOption {
   id: string;
   title: string;
   correlation_id: string | null;
-}
-
-interface UserCarnetOption {
-  id: string;
-  title: string;
-  correlation_id: string | null;
   destination?: string | null;
   description?: string | null;
   cover_image?: string | null;
 }
+
+const POST_TYPES: Array<{ id: PostType; emoji: string; title: string; hint: string }> = [
+  { id: 'photo', emoji: '🖼️', title: 'Photo / vidéo', hint: 'Instantané ou galerie' },
+  { id: 'billet', emoji: '📝', title: 'Billet', hint: 'Texte long, mise en page' },
+  { id: 'question', emoji: '⏱️', title: 'Question', hint: 'Demandez aux membres' },
+  { id: 'evenement', emoji: '📅', title: 'Événement', hint: 'Sortie à venir' },
+];
+
+const AUDIENCES: Array<{ id: AudienceType; emoji: string; title: string; hint: string }> = [
+  { id: 'public', emoji: '🌐', title: 'Fil public', hint: 'Communauté + votre profil' },
+  { id: 'club', emoji: '👥', title: 'Un club', hint: 'Vos clubs uniquement' },
+  { id: 'abonnies', emoji: '🔒', title: 'Abonnés', hint: 'Vos abonnés uniquement' },
+];
 
 function PublierPostContent() {
   const router = useRouter();
@@ -338,741 +353,643 @@ function PublierPostContent() {
     }
   };
 
+  const publishDisabled = isSubmitting || (requiresCarnetConsent && !publicationConsent);
+
   return (
-    <>
-      {/* ── DESKTOP ── */}
-      <div className="hidden md:block">
-        <Header />
-        <main className="min-h-screen bg-[rgba(245,242,234,0.78)] backdrop-blur-xl text-[#17402C] pt-24 pb-32">
-          {/* Toast Notification */}
-          {toastMessage && (
-            <div className="fixed top-24 right-6 z-[999] bg-[#17402C] text-white px-5 py-3 rounded-2xl  text-xs font-bold animate-fade-in border border-forest-500">
-              {toastMessage}
-            </div>
-          )}
+    <div className="relative min-h-screen bg-[color:var(--lkv-surface)]/80 pb-32 text-[color:var(--lkv-text-primary)] backdrop-blur-xl md:pb-24 md:pt-24">
+      {/* Toast Notification */}
+      {toastMessage && (
+        <div className="animate-fade-in fixed right-4 top-24 z-[var(--z-toast)] rounded-[var(--lkv-radius-md)] bg-[color:var(--lkv-primary)] px-[var(--space-5)] py-[var(--space-3)] text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-inverted)] shadow-elevation-4">
+          {toastMessage}
+        </div>
+      )}
 
-          <div className="container mx-auto px-4 max-w-7xl">
-            {/* Top Bar Navigation */}
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
-              <div className="flex items-center gap-2 text-xs font-semibold text-[#7A8A7D]">
-                <Link href="/" className="hover:text-[#17402C]">Le Kit du Voyageur</Link>
-                <span>›</span>
-                <Link href="/communaute" className="hover:text-[#17402C]">Communauté</Link>
-                <span>›</span>
-                <span className="text-[#17402C] font-bold">Publier</span>
+      <div className="mx-auto w-full max-w-7xl px-[var(--space-4)]">
+        {/* Top Bar Navigation */}
+        <div className="mb-[var(--space-8)] flex flex-col items-start justify-between gap-[var(--space-4)] sm:flex-row sm:items-center">
+          <nav aria-label="Fil d'Ariane" className="flex flex-wrap items-center gap-[var(--space-2)] text-[length:var(--lkv-text-caption)] font-semibold text-[color:var(--lkv-text-muted)]">
+            <Link href="/" className="transition-colors hover:text-[color:var(--lkv-text-primary)]">Le Kit du Voyageur</Link>
+            <span aria-hidden="true">›</span>
+            <Link href="/communaute" className="transition-colors hover:text-[color:var(--lkv-text-primary)]">Communauté</Link>
+            <span aria-hidden="true">›</span>
+            <span className="font-bold text-[color:var(--lkv-text-primary)]">Publier</span>
+          </nav>
+
+          <Button
+            type="button"
+            variant="primary"
+            loading={isSubmitting}
+            disabled={publishDisabled}
+            onClick={() => handlePublish(false)}
+            className="hidden md:inline-flex"
+          >
+            {isSubmitting ? 'Publication...' : 'Publier'}
+          </Button>
+        </div>
+
+        {/* Hero Header */}
+        <PageHeader
+          variant="large"
+          className="mb-[var(--space-10)]"
+          title={
+            <span>
+              Un moment, <em className="font-serif font-normal italic">partagé.</em>
+            </span>
+          }
+          subtitle="Une photo depuis un col, un conseil sur un matériel, une question à la communauté. Les posts vivent quelques jours dans le fil, les carnets restent."
+          subtitleLines={0}
+        />
+
+        {/* Main 2-Column Grid */}
+        <div className="grid grid-cols-1 items-start gap-[var(--space-8)] lg:grid-cols-12">
+
+          {/* LEFT COLUMN: FORM STEPS */}
+          <div className="space-y-[var(--space-6)] lg:col-span-8">
+
+            {/* SECTION 01: Type de publication */}
+            <Card className="space-y-[var(--space-4)]">
+              <div className="flex items-center justify-between">
+                <h2 className="text-[length:var(--lkv-text-headline)] font-bold text-[color:var(--lkv-text-primary)]">
+                  Type de <em className="font-serif font-normal italic">publication</em>
+                </h2>
+                <span className="font-mono text-[length:var(--lkv-text-caption-2)] uppercase text-[color:var(--lkv-text-muted)]">01 — Format</span>
               </div>
-
-              <div className="flex items-center gap-3">
-                <button
-                  onClick={() => handlePublish(false)}
-                  disabled={isSubmitting || (requiresCarnetConsent && !publicationConsent)}
-                  className="px-6 py-2 bg-[#17402C] text-white rounded-full text-xs font-bold hover:bg-[#2D3F35] transition-all disabled:opacity-50"
-                >
-                  {isSubmitting ? 'Publication...' : 'Publier'}
-                </button>
-              </div>
-            </div>
-
-            {/* Hero Header */}
-            <div className="mb-10">
-              <span className="text-xs font-mono text-[#7A8A7D] uppercase tracking-widest block mb-2">— NOUVEAU POST</span>
-              <h1 className="text-4xl md:text-5xl font-extrabold text-[#17402C] tracking-tight leading-tight">
-                Un moment, <em className="font-serif italic font-normal text-[#17402C]">partagé.</em>
-              </h1>
-              <p className="text-sm text-[#5A6A5D] mt-2 max-w-2xl font-light leading-relaxed">
-                Une photo depuis un col, un conseil sur un matériel, une question à la communauté.
-                Les posts vivent quelques jours dans le fil, les carnets restent.
+              <p className="text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-muted)]">
+                Choisissez la forme qui correspond à ce que vous voulez partager. Chaque type adapt les champs et le rendu dans le fil.
               </p>
-            </div>
 
-            {/* Main 2-Column Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+              <div className="grid grid-cols-2 gap-[var(--space-3)] sm:grid-cols-4">
+                {POST_TYPES.map((type) => (
+                  <Card
+                    key={type.id}
+                    variant="interactive"
+                    selected={postType === type.id}
+                    onClick={() => {
+                      setPostType(type.id);
+                      if (type.id === 'question') {
+                        setTags((prev) => (prev.includes('question') ? prev : [...prev, 'question']));
+                      }
+                    }}
+                    className="flex flex-col items-center justify-center gap-[var(--space-2)] p-[var(--space-4)] text-center"
+                  >
+                    <span className={`flex size-9 items-center justify-center rounded-[var(--lkv-radius-sm)] text-base ${postType === type.id ? 'bg-[color:var(--lkv-primary)] text-[color:var(--lkv-text-inverted)]' : 'bg-[color:var(--lkv-surface-muted)] text-[color:var(--lkv-primary)]'}`}>
+                      {type.emoji}
+                    </span>
+                    <span className="block text-[length:var(--lkv-text-caption)] font-bold leading-tight">{type.title}</span>
+                    <span className="mt-0.5 text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">{type.hint}</span>
+                  </Card>
+                ))}
+              </div>
+            </Card>
 
-              {/* LEFT COLUMN: FORM STEPS */}
-              <div className="lg:col-span-8 space-y-6">
+            {/* SECTION 02: Le contenu */}
+            <Card className="space-y-[var(--space-4)]">
+              <div className="flex items-center justify-between">
+                <h2 className="text-[length:var(--lkv-text-headline)] font-bold text-[color:var(--lkv-text-primary)]">Le contenu</h2>
+                <span className="font-mono text-[length:var(--lkv-text-caption-2)] uppercase text-[color:var(--lkv-text-muted)]">02 — Ce que vous partagez</span>
+              </div>
+              <p className="text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-muted)]">
+                {postType === 'question'
+                  ? 'Posez une question claire à la communauté outdoor pour obtenir des réponses pertinentes.'
+                  : postType === 'evenement'
+                  ? 'Proposez une sortie ou une expédition en groupe.'
+                  : 'Un mot court engage plus qu\'un long paragraphe. Une image, une phrase — c\'est souvent tout ce qu\'il faut.'}
+              </p>
 
-                {/* SECTION 01: Type de publication */}
-                <div className="bg-white rounded-[0.75rem] p-6 border border-[#E8E4D8]  active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
-                  <div className="flex items-center justify-between mb-2">
-                    <h2 className="text-base font-bold text-[#17402C]">
-                      Type de <em className="font-serif italic font-normal text-[#17402C]">publication</em>
-                    </h2>
-                    <span className="text-[10px] font-mono text-[#7A8A7D] uppercase">01 — Format</span>
+              <div className="space-y-[var(--space-4)]">
+                <div>
+                  <div className="mb-1.5 flex items-center justify-between">
+                    <label htmlFor="post-title" className="text-[length:var(--lkv-text-caption)] font-semibold text-[color:var(--lkv-text-primary)]">
+                      {postType === 'question'
+                        ? 'Intitulé de votre question *'
+                        : postType === 'evenement'
+                        ? 'Nom de la sortie ou événement *'
+                        : 'Titre '}
+                      {postType === 'photo' && <span className="font-normal text-[color:var(--lkv-text-muted)]">(Optionnel pour une seule photo)</span>}
+                    </label>
                   </div>
-                  <p className="text-xs text-[#7A8A7D] mb-5">
-                    Choisissez la forme qui correspond à ce que vous voulez partager. Chaque type adapt les champs et le rendu dans le fil.
-                  </p>
-
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                    <button
-                      type="button"
-                      onClick={() => setPostType('photo')}
-                      className={`flex flex-col items-center justify-center p-4 rounded-2xl border text-center transition-all ${
-                        postType === 'photo'
-                          ? 'bg-[#EAF0EB] border-[#17402C] text-[#17402C] '
-                          : 'bg-[#EEF3EC] border-[#E8E4D8] text-[#5A6A5D] hover:bg-white'
-                      }`}
-                    >
-                      <div className={`w-9 h-9 rounded-xl flex items-center justify-center mb-2 text-base ${postType === 'photo' ? 'bg-[#17402C] text-white' : 'bg-[#E8E4D8] text-[#17402C]'}`}>
-                        🖼️
-                      </div>
-                      <span className="text-xs font-bold block leading-tight">Photo / vidéo</span>
-                      <span className="text-[10px] text-[#7A8A7D] mt-0.5">Instantané ou galerie</span>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => setPostType('billet')}
-                      className={`flex flex-col items-center justify-center p-4 rounded-2xl border text-center transition-all ${
-                        postType === 'billet'
-                          ? 'bg-[#EAF0EB] border-[#17402C] text-[#17402C] '
-                          : 'bg-[#EEF3EC] border-[#E8E4D8] text-[#5A6A5D] hover:bg-white'
-                      }`}
-                    >
-                      <div className={`w-9 h-9 rounded-xl flex items-center justify-center mb-2 text-base ${postType === 'billet' ? 'bg-[#17402C] text-white' : 'bg-[#E8E4D8] text-[#17402C]'}`}>
-                        📝
-                      </div>
-                      <span className="text-xs font-bold block leading-tight">Billet</span>
-                      <span className="text-[10px] text-[#7A8A7D] mt-0.5">Texte long, mise en page</span>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setPostType('question');
-                        if (!tags.includes('question')) setTags([...tags, 'question']);
-                      }}
-                      className={`flex flex-col items-center justify-center p-4 rounded-2xl border text-center transition-all ${
-                        postType === 'question'
-                          ? 'bg-[#EAF0EB] border-[#17402C] text-[#17402C] '
-                          : 'bg-[#EEF3EC] border-[#E8E4D8] text-[#5A6A5D] hover:bg-white'
-                      }`}
-                    >
-                      <div className={`w-9 h-9 rounded-xl flex items-center justify-center mb-2 text-base ${postType === 'question' ? 'bg-[#17402C] text-white' : 'bg-[#E8E4D8] text-[#17402C]'}`}>
-                        ⏱️
-                      </div>
-                      <span className="text-xs font-bold block leading-tight">Question</span>
-                      <span className="text-[10px] text-[#7A8A7D] mt-0.5">Demandez aux membres</span>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => setPostType('evenement')}
-                      className={`flex flex-col items-center justify-center p-4 rounded-2xl border text-center transition-all ${
-                        postType === 'evenement'
-                          ? 'bg-[#EAF0EB] border-[#17402C] text-[#17402C] '
-                          : 'bg-[#EEF3EC] border-[#E8E4D8] text-[#5A6A5D] hover:bg-white'
-                      }`}
-                    >
-                      <div className={`w-9 h-9 rounded-xl flex items-center justify-center mb-2 text-base ${postType === 'evenement' ? 'bg-[#17402C] text-white' : 'bg-[#E8E4D8] text-[#17402C]'}`}>
-                        📅
-                      </div>
-                      <span className="text-xs font-bold block leading-tight">Événement</span>
-                      <span className="text-[10px] text-[#7A8A7D] mt-0.5">Sortie à venir</span>
-                    </button>
-                  </div>
+                  <input
+                    id="post-title"
+                    type="text"
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    placeholder={
+                      postType === 'question'
+                        ? 'Ex: Quelle tente 2 places ultralégère conseiller pour les Alpes ?'
+                        : postType === 'evenement'
+                        ? 'Ex: Traversée du Charmant Som au coucher du soleil'
+                        : 'Donnez un titre à votre post...'
+                    }
+                    className="w-full rounded-[var(--lkv-radius-md)] border border-[color:var(--lkv-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-4)] py-[var(--space-3)] text-[length:var(--lkv-text-caption)] font-semibold text-[color:var(--lkv-text-primary)] placeholder:text-[color:var(--lkv-text-muted)] focus:border-[color:var(--lkv-primary)] focus:outline-none focus:ring-2 focus:ring-[color:var(--lkv-focus-ring)]"
+                  />
                 </div>
 
-                {/* SECTION 02: Le contenu */}
-                <div className="bg-white rounded-[0.75rem] p-6 border border-[#E8E4D8]  active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
-                  <div className="flex items-center justify-between mb-2">
-                    <h2 className="text-base font-bold text-[#17402C]">Le contenu</h2>
-                    <span className="text-[10px] font-mono text-[#7A8A7D] uppercase">02 — Ce que vous partagez</span>
-                  </div>
-                  <p className="text-xs text-[#7A8A7D] mb-5">
-                    {postType === 'question'
-                      ? 'Posez une question claire à la communauté outdoor pour obtenir des réponses pertinentes.'
-                      : postType === 'evenement'
-                      ? 'Proposez une sortie ou une expédition en groupe.'
-                      : 'Un mot court engage plus qu\'un long paragraphe. Une image, une phrase — c\'est souvent tout ce qu\'il faut.'}
-                  </p>
-
-                  <div className="space-y-4">
+                {postType === 'evenement' && (
+                  <div className="grid grid-cols-1 gap-[var(--space-4)] rounded-[var(--lkv-radius-md)] border border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-muted)] p-[var(--space-4)] sm:grid-cols-2">
                     <div>
-                      <div className="flex items-center justify-between mb-1.5">
-                        <label className="text-xs font-semibold text-[#17402C]">
-                          {postType === 'question'
-                            ? 'Intitulé de votre question *'
-                            : postType === 'evenement'
-                            ? 'Nom de la sortie ou événement *'
-                            : 'Titre '}
-                          {postType === 'photo' && <span className="text-[#7A8A7D] font-normal">(Optionnel pour une seule photo)</span>}
-                        </label>
-                      </div>
+                      <label htmlFor="event-date" className="mb-[var(--space-1)] block text-[length:var(--lkv-text-caption)] font-semibold text-[color:var(--lkv-text-primary)]">Date de l&apos;événement *</label>
                       <input
-                        type="text"
-                        value={title}
-                        onChange={(e) => setTitle(e.target.value)}
-                        placeholder={
-                          postType === 'question'
-                            ? 'Ex: Quelle tente 2 places ultralégère conseiller pour les Alpes ?'
-                            : postType === 'evenement'
-                            ? 'Ex: Traversée du Charmant Som au coucher du soleil'
-                            : 'Donnez un titre à votre post...'
-                        }
-                        className="w-full px-4 py-3 bg-[#F5F2EA] border border-[#E4E0D4] rounded-2xl text-xs font-semibold text-[#17402C] focus:outline-none focus:border-[#17402C]"
+                        id="event-date"
+                        type="date"
+                        value={eventDate}
+                        onChange={(e) => setEventDate(e.target.value)}
+                        className="w-full rounded-[var(--lkv-radius-sm)] border border-[color:var(--lkv-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[var(--space-2)] text-[length:var(--lkv-text-caption)] font-semibold"
                       />
                     </div>
-
-                    {postType === 'evenement' && (
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 bg-[#F5F2EA] rounded-2xl border border-[#E4E0D4]">
-                        <div>
-                          <label className="block text-xs font-semibold text-[#17402C] mb-1">Date de l&apos;événement *</label>
-                          <input type="date" value={eventDate} onChange={(e) => setEventDate(e.target.value)} className="w-full px-3 py-2 bg-white border border-[#E4E0D4] rounded-xl text-xs font-semibold" />
-                        </div>
-                        <div>
-                          <label className="block text-xs font-semibold text-[#17402C] mb-1">Capacité max (participants)</label>
-                          <input type="number" value={eventMaxParticipants} onChange={(e) => setEventMaxParticipants(Number(e.target.value))} className="w-full px-3 py-2 bg-white border border-[#E4E0D4] rounded-xl text-xs font-semibold" />
-                        </div>
-                      </div>
-                    )}
-
                     <div>
-                      <label className="block text-xs font-semibold text-[#17402C] mb-1.5">
-                        {postType === 'question' ? 'Détails de la question *' : 'Texte du post *'}
-                      </label>
-
-                      <div className="border border-[#E4E0D4] rounded-2xl overflow-hidden bg-[#F5F2EA]">
-                        <div className="flex items-center gap-1 px-3 py-2 bg-[#EBE7DC] border-b border-[#E4E0D4] text-xs">
-                          <button type="button" onClick={() => setIsBold(!isBold)} className={`w-7 h-7 rounded-lg font-bold flex items-center justify-center transition-colors ${isBold ? 'bg-[#17402C] text-white' : 'hover:bg-white/50 text-[#17402C]'}`}>B</button>
-                          <button type="button" onClick={() => setIsItalic(!isItalic)} className={`w-7 h-7 rounded-lg italic font-serif flex items-center justify-center transition-colors ${isItalic ? 'bg-[#17402C] text-white' : 'hover:bg-white/50 text-[#17402C]'}`}>I</button>
-                          <button type="button" className="w-7 h-7 rounded-lg underline flex items-center justify-center hover:bg-white/50 text-[#17402C]">U</button>
-                          <span className="w-px h-4 bg-[#D8D3C4] mx-1" />
-                          <button type="button" className="w-7 h-7 rounded-lg font-bold text-xs flex items-center justify-center hover:bg-white/50 text-[#17402C]">H</button>
-                          <button type="button" className="w-7 h-7 rounded-lg font-serif italic text-sm flex items-center justify-center hover:bg-white/50 text-[#17402C]">“</button>
-                          <button type="button" className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-white/50 text-[#17402C]">::</button>
-                          <span className="w-px h-4 bg-[#D8D3C4] mx-1" />
-                          <button type="button" className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-white/50 text-[#17402C]">🔗</button>
-                          <button type="button" className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-white/50 text-[#17402C]">📷</button>
-                        </div>
-
-                        <textarea
-                          rows={postType === 'photo' ? 4 : 8}
-                          value={content}
-                          onChange={(e) => setContent(e.target.value)}
-                          placeholder={
-                            postType === 'question'
-                              ? 'Décrivez votre contexte, le budget, votre niveau ou vos contraintes...'
-                              : postType === 'evenement'
-                              ? 'Précisez l\'itinéraire, l\'équipement requis et le lieu de rdv...'
-                              : 'Racontez votre expérience, partagez votre conseil...'
-                          }
-                          className={`w-full p-4 bg-transparent text-xs text-[#17402C] leading-relaxed focus:outline-none resize-y ${isBold ? 'font-bold' : ''} ${isItalic ? 'italic font-serif' : ''}`}
-                        />
-                      </div>
-
-                      <div className="flex items-center justify-between mt-2 text-[10px] text-[#7A8A7D]">
-                        <span>Mise en forme légère : les liens et les citations sont automatiquement supportés</span>
-                        <span className="font-mono font-bold text-[#17402C]">{wordCount} mots</span>
-                      </div>
+                      <label htmlFor="event-capacity" className="mb-[var(--space-1)] block text-[length:var(--lkv-text-caption)] font-semibold text-[color:var(--lkv-text-primary)]">Capacité max (participants)</label>
+                      <input
+                        id="event-capacity"
+                        type="number"
+                        value={eventMaxParticipants}
+                        onChange={(e) => setEventMaxParticipants(Number(e.target.value))}
+                        className="w-full rounded-[var(--lkv-radius-sm)] border border-[color:var(--lkv-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[var(--space-2)] text-[length:var(--lkv-text-caption)] font-semibold"
+                      />
                     </div>
                   </div>
+                )}
+
+                <div>
+                  <label htmlFor="post-content" className="mb-1.5 block text-[length:var(--lkv-text-caption)] font-semibold text-[color:var(--lkv-text-primary)]">
+                    {postType === 'question' ? 'Détails de la question *' : 'Texte du post *'}
+                  </label>
+
+                  <div className="overflow-hidden rounded-[var(--lkv-radius-md)] border border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-muted)]">
+                    <div className="flex items-center gap-[var(--space-1)] border-b border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-muted)] px-[var(--space-3)] py-[var(--space-2)] text-[length:var(--lkv-text-caption)]">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        aria-pressed={isBold}
+                        aria-label="Gras"
+                        onClick={() => setIsBold(!isBold)}
+                        className={`size-7 min-h-0 px-0 font-bold ${isBold ? 'bg-[color:var(--lkv-primary)] text-[color:var(--lkv-text-inverted)]' : ''}`}
+                      >
+                        B
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        aria-pressed={isItalic}
+                        aria-label="Italique"
+                        onClick={() => setIsItalic(!isItalic)}
+                        className={`size-7 min-h-0 px-0 font-serif italic ${isItalic ? 'bg-[color:var(--lkv-primary)] text-[color:var(--lkv-text-inverted)]' : ''}`}
+                      >
+                        I
+                      </Button>
+                      <Button type="button" variant="ghost" size="sm" aria-label="Souligné" className="size-7 min-h-0 px-0 underline">
+                        U
+                      </Button>
+                      <Divider orientation="vertical" spacing="sm" className="mx-[var(--space-1)] h-4" />
+                      <Button type="button" variant="ghost" size="sm" aria-label="Titre" className="size-7 min-h-0 px-0 text-[length:var(--lkv-text-caption-2)] font-bold">
+                        H
+                      </Button>
+                      <Button type="button" variant="ghost" size="sm" aria-label="Citation" className="size-7 min-h-0 px-0 font-serif italic">
+                        “
+                      </Button>
+                      <Button type="button" variant="ghost" size="sm" aria-label="Code" className="size-7 min-h-0 px-0">
+                        ::
+                      </Button>
+                      <Divider orientation="vertical" spacing="sm" className="mx-[var(--space-1)] h-4" />
+                      <Button type="button" variant="ghost" size="sm" aria-label="Insérer un lien" className="size-7 min-h-0 px-0">
+                        🔗
+                      </Button>
+                      <Button type="button" variant="ghost" size="sm" aria-label="Insérer une image" className="size-7 min-h-0 px-0">
+                        📷
+                      </Button>
+                    </div>
+
+                    <textarea
+                      id="post-content"
+                      rows={postType === 'photo' ? 4 : 8}
+                      value={content}
+                      onChange={(e) => setContent(e.target.value)}
+                      placeholder={
+                        postType === 'question'
+                          ? 'Décrivez votre contexte, le budget, votre niveau ou vos contraintes...'
+                          : postType === 'evenement'
+                          ? 'Précisez l\'itinéraire, l\'équipement requis et le lieu de rdv...'
+                          : 'Racontez votre expérience, partagez votre conseil...'
+                      }
+                      className={`w-full resize-y bg-transparent p-[var(--space-4)] text-[length:var(--lkv-text-caption)] leading-relaxed text-[color:var(--lkv-text-primary)] placeholder:text-[color:var(--lkv-text-muted)] focus:outline-none ${isBold ? 'font-bold' : ''} ${isItalic ? 'font-serif italic' : ''}`}
+                    />
+                  </div>
+
+                  <div className="mt-[var(--space-2)] flex items-center justify-between text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">
+                    <span>Mise en forme légère : les liens et les citations sont automatiquement supportés</span>
+                    <span className="font-mono font-bold text-[color:var(--lkv-text-primary)]">{wordCount} mots</span>
+                  </div>
                 </div>
+              </div>
+            </Card>
 
-                {/* SECTION 03: Photos & vidéos */}
-                <div className="bg-white rounded-[0.75rem] p-6 border border-[#E8E4D8]  active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
-                  <div className="flex items-center justify-between mb-2">
-                    <h2 className="text-base font-bold text-[#17402C]">Photos <em className="font-serif italic font-normal text-[#17402C]">& vidéos</em></h2>
-                    <span className="text-[10px] font-mono text-[#7A8A7D] uppercase">03 — Médias</span>
+            {/* SECTION 03: Photos & vidéos */}
+            <Card className="space-y-[var(--space-4)]">
+              <div className="flex items-center justify-between">
+                <h2 className="text-[length:var(--lkv-text-headline)] font-bold text-[color:var(--lkv-text-primary)]">
+                  Photos <em className="font-serif font-normal italic">& vidéos</em>
+                </h2>
+                <span className="font-mono text-[length:var(--lkv-text-caption-2)] uppercase text-[color:var(--lkv-text-muted)]">03 — Médias</span>
+              </div>
+              <p className="text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-muted)]">
+                Jusqu&apos;à 10 fichiers. Glissez-déposez ou parcourez. La première image devient la vignette du post.
+              </p>
+
+              <input type="file" ref={fileInputRef} onChange={handleFileSelect} accept="image/*,video/*" className="hidden" />
+              <Card
+                variant="interactive"
+                onClick={() => fileInputRef.current?.click()}
+                className="mb-[var(--space-4)] border-2 border-dashed border-[color:var(--lkv-border-strong)] bg-[color:var(--lkv-surface-muted)] p-[var(--space-8)] text-center"
+              >
+                <div className="mx-auto mb-[var(--space-2)] flex size-10 items-center justify-center rounded-full bg-[color:var(--lkv-surface-card)] text-base">⇪</div>
+                <p className="text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)]">Cliquez pour afficher / ou parcourez</p>
+                <p className="mt-[var(--space-1)] text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">JPG, PNG, MP4 max 20Mo</p>
+              </Card>
+
+              <div className="grid grid-cols-4 gap-[var(--space-3)]">
+                {photos.map((src, index) => (
+                  <div key={index} className="group relative aspect-[4/3] overflow-hidden rounded-[var(--lkv-radius-md)] border border-[color:var(--lkv-border)] bg-black/10">
+                    <img src={src} alt="Preview" className="size-full object-cover" />
+                    <IconButton
+                      type="button"
+                      variant="glass"
+                      size="sm"
+                      onClick={() => handleRemovePhoto(index)}
+                      aria-label="Retirer cette photo"
+                      className="absolute right-1 top-1 bg-black/60 text-[color:var(--lkv-text-inverted)] opacity-80 transition-opacity group-hover:opacity-100"
+                    >
+                      ✕
+                    </IconButton>
                   </div>
-                  <p className="text-xs text-[#7A8A7D] mb-5">Jusqu&apos;à 10 fichiers. Glissez-déposez ou parcourez. La première image devient la vignette du post.</p>
+                ))}
+                <Card
+                  variant="interactive"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="flex aspect-[4/3] flex-col items-center justify-center border-2 border-dashed border-[color:var(--lkv-border-strong)] bg-[color:var(--lkv-surface-muted)] text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-muted)]"
+                >
+                  <span className="mb-0.5 text-base">+</span>
+                  <span className="text-[length:var(--lkv-text-caption-2)]">Ajouter</span>
+                </Card>
+              </div>
+            </Card>
 
-                  <input type="file" ref={fileInputRef} onChange={handleFileSelect} accept="image/*,video/*" className="hidden" />
-                  <div onClick={() => fileInputRef.current?.click()} className="border-2 border-dashed border-[#D1CBB8] rounded-2xl p-8 bg-[#F5F2EA] text-center cursor-pointer hover:border-[#17402C] transition-all mb-4">
-                    <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center mx-auto mb-2 text-base ">⇪</div>
-                    <p className="text-xs font-bold text-[#17402C]">Cliquez pour afficher / ou parcourez</p>
-                    <p className="text-[10px] text-[#7A8A7D] mt-1">JPG, PNG, MP4 max 20Mo</p>
-                  </div>
+            {/* SECTION 04: Liens internes */}
+            <Card className="space-y-[var(--space-4)]">
+              <div className="flex items-center justify-between">
+                <h2 className="text-[length:var(--lkv-text-headline)] font-bold text-[color:var(--lkv-text-primary)]">
+                  Liens <em className="font-serif font-normal italic">internes</em>
+                </h2>
+                <span className="font-mono text-[length:var(--lkv-text-caption-2)] uppercase text-[color:var(--lkv-text-muted)]">04 — Contexte</span>
+              </div>
+              <p className="text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-muted)]">
+                Rattachez votre post à un contenu existant : le lien apparaîtra en pied de post et enrichira le fil.
+              </p>
 
-                  <div className="grid grid-cols-4 gap-3">
-                    {photos.map((src, index) => (
-                      <div key={index} className="relative aspect-[4/3] rounded-2xl overflow-hidden bg-black/10 group border border-[#E4E0D4]">
-                        <img src={src} alt="Preview" className="w-full h-full object-cover" />
-                        <button type="button" onClick={() => handleRemovePhoto(index)} className="absolute top-2 right-2 w-6 h-6 rounded-full bg-black/60 text-white flex items-center justify-center text-xs opacity-80 group-hover:opacity-100 transition-opacity">✕</button>
-                      </div>
+              <div className="space-y-[var(--space-4)]">
+                <div>
+                  <label htmlFor="linked-carnet" className="mb-1.5 block text-[length:var(--lkv-text-caption)] font-semibold text-[color:var(--lkv-text-primary)]">Carnet lié</label>
+                  <select
+                    id="linked-carnet"
+                    value={linkedCarnet}
+                    onChange={(e) => { setLinkedCarnet(e.target.value); setPublicationConsent(false); }}
+                    className="w-full rounded-[var(--lkv-radius-md)] border border-[color:var(--lkv-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-4)] py-[var(--space-3)] text-[length:var(--lkv-text-caption)] font-semibold text-[color:var(--lkv-text-primary)] focus:outline-none focus:ring-2 focus:ring-[color:var(--lkv-focus-ring)]"
+                  >
+                    <option value="">— Aucun carnet —</option>
+                    {userCarnets.map((carnet) => (
+                      <option key={carnet.id} value={carnet.id}>
+                        {carnet.title}
+                      </option>
                     ))}
-                    <button type="button" onClick={() => fileInputRef.current?.click()} className="aspect-[4/3] rounded-2xl border-2 border-dashed border-[#D1CBB8] bg-[#F5F2EA] flex flex-col items-center justify-center text-xs text-[#7A8A7D] font-bold hover:bg-white transition-all">
-                      <span className="text-base mb-0.5">+</span>
-                      <span className="text-[10px]">Ajouter</span>
-                    </button>
-                  </div>
+                  </select>
+                  {userCarnets.length === 0 && (
+                    <p className="mt-1.5 text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">
+                      Aucun carnet disponible — terminez une sortie pour en créer un.
+                    </p>
+                  )}
                 </div>
 
-                {/* SECTION 04: Liens internes */}
-                <div className="bg-white rounded-[0.75rem] p-6 border border-[#E8E4D8]  active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
-                  <div className="flex items-center justify-between mb-2">
-                    <h2 className="text-base font-bold text-[#17402C]">Liens <em className="font-serif italic font-normal text-[#17402C]">internes</em></h2>
-                    <span className="text-[10px] font-mono text-[#7A8A7D] uppercase">04 — Contexte</span>
-                  </div>
-                  <p className="text-xs text-[#7A8A7D] mb-5">Rattachez votre post à un contenu existant : le lien apparaîtra en pied de post et enrichira le fil.</p>
-
-                  <div className="space-y-4">
-                    <div>
-                      <label className="block text-xs font-semibold text-[#17402C] mb-1.5">Carnet lié</label>
-                      <select value={linkedCarnet} onChange={(e) => { setLinkedCarnet(e.target.value); setPublicationConsent(false); }} className="w-full px-4 py-3 bg-[#F5F2EA] border border-[#E4E0D4] rounded-2xl text-xs font-semibold text-[#17402C] focus:outline-none">
-                        <option value="">— Aucun carnet —</option>
-                        {userCarnets.map((carnet) => (
-                          <option key={carnet.id} value={carnet.id}>
-                            {carnet.title}
-                          </option>
-                        ))}
-                      </select>
-                      {userCarnets.length === 0 && (
-                        <p className="text-[10px] text-[#7A8A7D] mt-1.5">
-                          Aucun carnet disponible — terminez une sortie pour en créer un.
-                        </p>
+                {selectedCarnet && (
+                  <Card variant="compact" className="space-y-[var(--space-2)]">
+                    <span className="font-mono text-[length:var(--lkv-text-caption-2)] font-bold uppercase text-[color:var(--lkv-text-muted)]">Aperçu du carnet publié (instantané)</span>
+                    <div className="flex items-center gap-[var(--space-3)]">
+                      {selectedCarnet.cover_image && (
+                        <img src={selectedCarnet.cover_image} alt="" className="size-14 rounded-[var(--lkv-radius-sm)] border border-[color:var(--lkv-border)] object-cover" />
                       )}
-                    </div>
-
-                    {selectedCarnet && (
-                      <div className="p-4 rounded-2xl bg-[#F5F2EA] border border-[#E4E0D4] space-y-2">
-                        <span className="text-[10px] font-mono font-bold text-[#7A8A7D] uppercase">Aperçu du carnet publié (instantané)</span>
-                        <div className="flex items-center gap-3">
-                          {selectedCarnet.cover_image && (
-                            <img src={selectedCarnet.cover_image} alt="" className="w-14 h-14 rounded-xl object-cover border border-[#E4E0D4]" />
-                          )}
-                          <div className="min-w-0">
-                            <h4 className="text-xs font-bold text-[#17402C] truncate">{selectedCarnet.title}</h4>
-                            {selectedCarnet.destination && (
-                              <p className="text-[10px] text-[#7A8A7D] truncate">📍 {selectedCarnet.destination}</p>
-                            )}
-                          </div>
-                        </div>
-                        <p className="text-[10.5px] text-[#5A6A5D] leading-relaxed">
-                          La publication crée un instantané figé de ce carnet. Vos modifications ultérieures du carnet privé ne seront pas publiées automatiquement.
-                        </p>
-                        <label className="flex items-start gap-2 cursor-pointer pt-1">
-                          <input
-                            type="checkbox"
-                            checked={publicationConsent}
-                            onChange={(e) => setPublicationConsent(e.target.checked)}
-                            className="mt-0.5 accent-[#17402C]"
-                          />
-                          <span className="text-[11px] font-semibold text-[#17402C]">
-                            Je consens à publier cet instantané dans le fil communauté.
-                          </span>
-                        </label>
-                        <label className="flex items-start gap-2 cursor-pointer">
-                          <input
-                            type="checkbox"
-                            checked={stripCoordinates}
-                            onChange={(e) => setStripCoordinates(e.target.checked)}
-                            className="mt-0.5 accent-[#17402C]"
-                          />
-                          <span className="text-[11px] font-semibold text-[#17402C]">
-                            Retirer les coordonnées et points de carte de l&apos;instantané.
-                          </span>
-                        </label>
-                      </div>
-                    )}
-
-                    <div>
-                      <label className="block text-xs font-semibold text-[#17402C] mb-1.5">Localisation</label>
-                      <div className="relative flex items-center">
-                        <span className="absolute left-4 text-xs">📍</span>
-                        <input type="text" value={location} onChange={(e) => setLocation(e.target.value)} placeholder="Ex: Massif de la Chartreuse, Isère..." className="w-full pl-9 pr-24 py-3 bg-[#F5F2EA] border border-[#E4E0D4] rounded-2xl text-xs font-semibold text-[#17402C] focus:outline-none" />
-                        <button type="button" onClick={handleDetectLocation} disabled={isDetectingLocation} className="absolute right-3 px-3 py-1 bg-white border border-[#E4E0D4] rounded-xl text-[10px] font-bold text-[#17402C] hover:bg-[#F5F2EA] transition-colors">
-                          {isDetectingLocation ? 'Recherche...' : 'Détecter'}
-                        </button>
-                      </div>
-                    </div>
-
-                    <div>
-                      <div className="flex items-center justify-between mb-1.5">
-                        <label className="text-xs font-semibold text-[#17402C]">Tags <span className="text-[#7A8A7D] font-normal">(Au moins 2 pour trouver le post)</span></label>
-                      </div>
-                      <div className="flex flex-wrap items-center gap-2 p-2.5 bg-[#F5F2EA] border border-[#E4E0D4] rounded-2xl min-h-[48px]">
-                        {tags.map((tag) => (
-                          <span key={tag} className="px-3 py-1 bg-[#17402C] text-white text-xs font-semibold rounded-full flex items-center gap-1.5">
-                            <span>{tag}</span>
-                            <button type="button" onClick={() => handleRemoveTag(tag)} className="text-white/70 hover:text-white text-[10px]">✕</button>
-                          </span>
-                        ))}
-                        <input type="text" enterKeyHint="done" value={tagInput} onChange={(e) => setTagInput(e.target.value)} onKeyDown={handleAddTag} placeholder="+ Ajouter un tag..." className="bg-transparent text-xs text-[#17402C] focus:outline-none px-2 py-1 flex-1 min-w-[120px]" />
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="block text-xs font-semibold text-[#17402C] mb-1.5">Mentionner des membres</label>
-                      <div className="flex flex-wrap items-center gap-2 p-2.5 bg-[#F5F2EA] border border-[#E4E0D4] rounded-2xl min-h-[48px]">
-                        {mentions.map((m) => (
-                          <span key={m} className="px-3 py-1 bg-[#EDF7F0] text-[#2D6A4F] border border-[#B7E4C7] text-xs font-semibold rounded-full flex items-center gap-1.5">
-                            <span>@{m}</span>
-                            <button type="button" onClick={() => handleRemoveMention(m)} className="text-[#2D6A4F]/70 hover:text-[#2D6A4F] text-[10px]">✕</button>
-                          </span>
-                        ))}
-                        <input type="text" enterKeyHint="done" value={mentionInput} onChange={(e) => setMentionInput(e.target.value)} onKeyDown={handleAddMention} placeholder="Taper @ pour mentionner..." className="bg-transparent text-xs text-[#17402C] focus:outline-none px-2 py-1 flex-1 min-w-[140px]" />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* SECTION 05: Où publier */}
-                <div className="bg-white rounded-[0.75rem] p-6 border border-[#E8E4D8]  active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
-                  <div className="flex items-center justify-between mb-2">
-                    <h2 className="text-base font-bold text-[#17402C]">Où publier</h2>
-                    <span className="text-[10px] font-mono text-[#7A8A7D] uppercase">05 — Destination</span>
-                  </div>
-                  <p className="text-xs text-[#7A8A7D] mb-5">Un post peut apparaître sur votre profil, sur le fil communauté, ou uniquement dans un club spécifique dont vous êtes membre.</p>
-
-                  <div className="space-y-4">
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                      <button type="button" onClick={() => setAudience('public')} className={`flex flex-col p-4 rounded-2xl border text-left transition-all ${audience === 'public' ? 'bg-[#EAF0EB] border-[#17402C] text-[#17402C]' : 'bg-[#EEF3EC] border-[#E8E4D8] text-[#5A6A5D]'}`}>
-                        <span className="text-base mb-1">🌐</span>
-                        <span className="text-xs font-bold block">Fil public</span>
-                        <span className="text-[10px] text-[#7A8A7D] mt-0.5">Communauté + votre profil</span>
-                      </button>
-                      <button type="button" onClick={() => setAudience('club')} className={`flex flex-col p-4 rounded-2xl border text-left transition-all ${audience === 'club' ? 'bg-[#EAF0EB] border-[#17402C] text-[#17402C]' : 'bg-[#EEF3EC] border-[#E8E4D8] text-[#5A6A5D]'}`}>
-                        <span className="text-base mb-1">👥</span>
-                        <span className="text-xs font-bold block">Un club</span>
-                        <span className="text-[10px] text-[#7A8A7D] mt-0.5">Vos clubs uniquement</span>
-                      </button>
-                      <button type="button" onClick={() => setAudience('abonnies')} className={`flex flex-col p-4 rounded-2xl border text-left transition-all ${audience === 'abonnies' ? 'bg-[#EAF0EB] border-[#17402C] text-[#17402C]' : 'bg-[#EEF3EC] border-[#E8E4D8] text-[#5A6A5D]'}`}>
-                        <span className="text-base mb-1">🔒</span>
-                        <span className="text-xs font-bold block">Abonnés</span>
-                        <span className="text-[10px] text-[#7A8A7D] mt-0.5">Vos abonnés uniquement</span>
-                      </button>
-                    </div>
-
-                    {audience === 'club' && (
-                      <div className="pt-2">
-                        <label className="block text-xs font-semibold text-[#17402C] mb-2">Sélectionner un de vos clubs rejoint *</label>
-                        {loadingUserClubs ? (
-                          <p className="text-xs text-[#7A8A7D] animate-pulse">Chargement de vos clubs...</p>
-                        ) : userClubs.length > 0 ? (
-                          <div className="flex flex-wrap gap-2">
-                            {userClubs.map((c: any) => (
-                              <button key={c.id} type="button" onClick={() => setSelectedClub(c.id)} className={`px-3.5 py-2 rounded-full text-xs font-semibold flex items-center gap-1.5 border transition-all ${selectedClub === c.id ? 'bg-[#17402C] text-white border-[#17402C]' : 'bg-[#F5F2EA] text-[#3A4A3D] border-[#E4E0D4] hover:bg-white'}`}>
-                                <span>{c.emoji || '🏕️'}</span>
-                                <span>{c.name}</span>
-                              </button>
-                            ))}
-                          </div>
-                        ) : (
-                          <div className="p-4 bg-[#F5F2EA] rounded-2xl border border-[#E4E0D4] text-xs text-[#5A6A5D]">
-                            <p className="font-bold text-[#17402C] mb-1">Vous n&apos;avez rejoint aucun club pour le moment.</p>
-                            <p>Rejoignez un club depuis la page <Link href="/communaute" className="underline text-[#17402C] font-bold">Communauté</Link> pour y publier vos posts.</p>
-                          </div>
+                      <div className="min-w-0">
+                        <h4 className="truncate text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)]">{selectedCarnet.title}</h4>
+                        {selectedCarnet.destination && (
+                          <p className="truncate text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">📍 {selectedCarnet.destination}</p>
                         )}
                       </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {/* RIGHT COLUMN: PREVIEW & QUALITY SCORE */}
-              <div className="lg:col-span-4 space-y-6 sticky top-28">
-
-                {/* CARD 1: LIVE PREVIEW */}
-                <div className="bg-white rounded-[0.75rem] p-5 border border-[#E8E4D8]  active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
-                  <div className="text-[10px] font-mono text-[#7A8A7D] uppercase tracking-wider mb-3">APERÇU · FIL COMMUNAUTÉ</div>
-
-                  <div className="space-y-3">
-                    <div className="flex items-center gap-3">
-                      {user?.user_metadata?.avatar_url ? (
-                        <img src={user.user_metadata.avatar_url} alt="Avatar" className="w-9 h-9 rounded-full object-cover border border-[#E4E0D4]" />
-                      ) : (
-                        <div className="w-9 h-9 rounded-full bg-[#17402C] text-white flex items-center justify-center text-xs font-bold">
-                          {(user?.user_metadata?.full_name?.charAt(0) || 'V').toUpperCase()}
-                        </div>
-                      )}
-                      <div>
-                        <h4 className="text-xs font-bold text-[#17402C]">{user?.user_metadata?.full_name || 'Vous'}</h4>
-                        <p className="text-[10px] text-[#7A8A7D]">À l&apos;instant{location ? ` · ${location.split('/')[0]}` : ''}</p>
-                      </div>
                     </div>
-
-                    {title && postType !== 'photo' && (
-                      <h3 className="text-xs font-bold text-[#17402C] leading-snug line-clamp-2">{title}</h3>
-                    )}
-
-                    {photos.length > 0 && (
-                      <div className="relative aspect-[16/9] rounded-2xl overflow-hidden bg-[#E7E3D6]">
-                        <img src={photos[0]} alt="Preview" className="w-full h-full object-cover" />
-                      </div>
-                    )}
-
-                    <p className="text-xs text-[#5A6A5D] leading-relaxed line-clamp-3">{content}</p>
-
-                    <div className="flex items-center justify-between pt-2 border-t border-[#F0ECE1] text-[11px] text-[#7A8A7D]">
-                      <div className="flex items-center gap-3">
-                        <span>💬 0</span>
-                        <span>❤️ 0</span>
-                        <span>🚀 0</span>
-                      </div>
-                      <div className="flex gap-1 text-[10px] text-[#17402C] font-semibold">
-                        {tags.slice(0, 2).map((t) => (<span key={t}>#{t}</span>))}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* CARD 2: POST BIEN PENSÉ */}
-                <div className="bg-white rounded-[0.75rem] p-5 border border-[#E8E4D8]  active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
-                  <h3 className="text-sm font-bold text-[#17402C] mb-1">Post <em className="font-serif italic font-normal text-[#17402C]">bien pensé</em></h3>
-                  <p className="text-[11px] text-[#7A8A7D] mb-4">Les posts avec image + mention + regroupement ont en moyenne 3x plus d&apos;interactions.</p>
-
-                  <div className="space-y-2 text-xs">
-                    <div className="flex items-center justify-between text-[#17402C] font-semibold">
-                      <span className="flex items-center gap-1.5">{title.trim() ? '✓' : '○'} Titre rédigé</span>
-                      <span className="text-[10px] text-[#7A8A7D]">{title.trim() ? 'FAIT' : 'À FAIRE'}</span>
-                    </div>
-                    <div className="flex items-center justify-between text-[#17402C] font-semibold">
-                      <span className="flex items-center gap-1.5">{photos.length > 0 ? '✓' : '○'} {photos.length} photos ajoutées</span>
-                      <span className="text-[10px] text-[#7A8A7D]">{photos.length > 0 ? 'FAIT' : 'OPTIONNEL'}</span>
-                    </div>
-                    <div className="flex items-center justify-between text-[#17402C] font-semibold">
-                      <span className="flex items-center gap-1.5">{linkedCarnet ? '✓ Carnet lié' : '○ Option carnet'}</span>
-                      <span className="text-[10px] text-[#7A8A7D]">{linkedCarnet ? 'FAIT' : 'OPTIONNEL'}</span>
-                    </div>
-                    <div className="flex items-center justify-between text-[#17402C] font-semibold">
-                      <span className="flex items-center gap-1.5">{tags.length > 0 ? '✓' : '○'} {tags.length} tags + {mentions.length} mention</span>
-                      <span className="text-[10px] text-[#7A8A7D]">{tags.length > 0 ? 'FAIT' : 'OPTIONNEL'}</span>
-                    </div>
-                    <div className="flex items-center justify-between text-[#7A8A7D]">
-                      <span className="flex items-center gap-1.5">{location ? '✓' : '○'} Ajouter la géolocalisation exacte</span>
-                      <span className="text-[10px]">{location ? 'FAIT' : 'OPTIONNEL'}</span>
-                    </div>
-                  </div>
-
-                  <div className="mt-5 pt-4 border-t border-[#F0ECE1]">
-                    <div className="flex items-center justify-between text-xs mb-1.5">
-                      <span className="font-bold text-[#17402C]">Prêt : qualité élevée</span>
-                      <span className="font-bold text-[#17402C] font-mono">{qualityScore}%</span>
-                    </div>
-                    <div className="w-full h-2 bg-[#E8E4D8] rounded-full overflow-hidden">
-                      <div className="h-full bg-[#17402C] rounded-full transition-all duration-500" style={{ width: `${qualityScore}%` }} />
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* BOTTOM STICKY ACTION BAR */}
-          <div className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-t border-[#E8E4D8] py-3.5 px-6 ">
-            <div className="container mx-auto max-w-7xl flex flex-col sm:flex-row items-center justify-between gap-4">
-              <div className="flex items-center gap-2 text-xs font-semibold text-[#17402C]">
-                <span className="w-2 h-2 rounded-full bg-forest-500 animate-pulse" />
-                <span>Prêt à publier</span>
-                <span className="text-[#7A8A7D]">·</span>
-                <span className="text-[#7A8A7D]">{wordCount} mots</span>
-                <span className="text-[#7A8A7D]">·</span>
-                <span className="text-[#7A8A7D]">{photos.length} photos</span>
-                <span className="text-[#7A8A7D]">·</span>
-                <span className="text-[#7A8A7D]">qualité {qualityScore}%</span>
-              </div>
-
-              <div className="flex items-center gap-3">
-                <button onClick={() => handlePublish(false)} disabled={isSubmitting || (requiresCarnetConsent && !publicationConsent)} className="px-7 py-2.5 bg-[#17402C] text-white rounded-full text-xs font-bold hover:bg-[#2D3F35] transition-all disabled:opacity-50">
-                  {isSubmitting ? 'Publication...' : 'Publier maintenant'}
-                </button>
-              </div>
-            </div>
-          </div>
-        </main>
-        <Footer />
-      </div>
-
-      {/* ── MOBILE ── */}
-      <div className="block md:hidden">
-        {/* Toast Notification (fixed overlay) */}
-        {toastMessage && (
-          <div style={{ position: 'fixed', top: '80px', right: '16px', zIndex: 999, background: '#17402C', color: '#fff', padding: '12px 20px', borderRadius: '16px', boxShadow: '0 10px 30px rgba(0,0,0,0.3)', fontSize: '12px', fontWeight: 700, border: '1px solid #17402C' }}>
-            {toastMessage}
-          </div>
-        )}
-
-        <MobilePageShell>
-          <div style={{ padding: '16px' }}>
-            {/* Breadcrumb */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', color: '#7A8A7D', fontWeight: 600, marginBottom: '12px' }}>
-              <Link href="/communaute" style={{ color: '#7A8A7D', textDecoration: 'none' }}>Communauté</Link>
-              <span>›</span>
-              <span style={{ color: '#17402C', fontWeight: 700 }}>Publier</span>
-            </div>
-
-            {/* Hero */}
-            <div style={{ marginBottom: '20px' }}>
-              <div style={{ fontSize: '10px', fontFamily: 'ui-monospace, monospace', color: '#7A8A7D', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '6px' }}>— NOUVEAU POST</div>
-              <h1 style={{ fontSize: '24px', fontWeight: 800, color: '#17402C', margin: 0, lineHeight: 1.1 }}>
-                Un moment, <em style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic', color: '#17402C', fontWeight: 400 }}>partagé.</em>
-              </h1>
-            </div>
-
-            {/* Section: Type */}
-            <div style={{ background: '#fff', borderRadius: '16px', padding: '16px', border: '1px solid #E8E4D8', marginBottom: '12px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-                <span style={{ fontSize: '14px', fontWeight: 700, color: '#17402C' }}>Type</span>
-                <span style={{ fontSize: '9px', fontFamily: 'ui-monospace, monospace', color: '#7A8A7D', textTransform: 'uppercase' }}>01 — Format</span>
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-                {[
-                  { id: 'photo', label: '🖼️', sub: 'Photo' },
-                  { id: 'billet', label: '📝', sub: 'Billet' },
-                  { id: 'question', label: '⏱️', sub: 'Question' },
-                  { id: 'evenement', label: '📅', sub: 'Événement' },
-                ].map(opt => (
-                  <button
-                    key={opt.id}
-                    onClick={() => {
-                      setPostType(opt.id as PostType);
-                      if (opt.id === 'question' && !tags.includes('question')) setTags([...tags, 'question']);
-                    }}
-                    style={{
-                      padding: '12px', borderRadius: '12px', border: `1.5px solid ${postType === opt.id ? '#17402C' : '#E8E4D8'}`,
-                      background: postType === opt.id ? '#EAF0EB' : '#EEF3EC',
-                      textAlign: 'center', cursor: 'pointer', fontFamily: 'inherit',
-                    }}
-                  >
-                    <div style={{ fontSize: '18px', marginBottom: '4px' }}>{opt.label}</div>
-                    <div style={{ fontSize: '11px', fontWeight: 700, color: '#17402C' }}>{opt.sub}</div>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Section: Content */}
-            <div style={{ background: '#fff', borderRadius: '16px', padding: '16px', border: '1px solid #E8E4D8', marginBottom: '12px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
-                <span style={{ fontSize: '14px', fontWeight: 700, color: '#17402C' }}>Contenu</span>
-                <span style={{ fontSize: '9px', fontFamily: 'ui-monospace, monospace', color: '#7A8A7D', textTransform: 'uppercase' }}>02</span>
-              </div>
-              <input
-                type="text"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder="Titre de votre post..."
-                style={{ width: '100%', padding: '12px', background: '#F5F2EA', border: '1px solid #E4E0D4', borderRadius: '12px', fontSize: '12px', fontWeight: 600, color: '#17402C', outline: 'none', marginBottom: '10px', boxSizing: 'border-box', fontFamily: 'inherit' }}
-              />
-              <textarea
-                rows={6}
-                value={content}
-                onChange={(e) => setContent(e.target.value)}
-                placeholder="Racontez votre expérience..."
-                style={{ width: '100%', padding: '12px', background: '#F5F2EA', border: '1px solid #E4E0D4', borderRadius: '12px', fontSize: '12px', color: '#17402C', outline: 'none', resize: 'vertical', boxSizing: 'border-box', fontFamily: 'inherit' }}
-              />
-              <div style={{ fontSize: '10px', color: '#7A8A7D', textAlign: 'right', marginTop: '4px', fontFamily: 'ui-monospace, monospace' }}>{wordCount} mots</div>
-            </div>
-
-            {/* Section: Photos */}
-            <div style={{ background: '#fff', borderRadius: '16px', padding: '16px', border: '1px solid #E8E4D8', marginBottom: '12px' }}>
-              <div style={{ fontSize: '14px', fontWeight: 700, color: '#17402C', marginBottom: '8px' }}>Photos & vidéos</div>
-              <input type="file" ref={fileInputRef} onChange={handleFileSelect} accept="image/*,video/*" style={{ display: 'none' }} />
-              <div
-                onClick={() => fileInputRef.current?.click()}
-                style={{ border: '2px dashed #D1CBB8', borderRadius: '12px', padding: '20px', background: '#F5F2EA', textAlign: 'center', cursor: 'pointer', marginBottom: '10px' }}
-              >
-                <div style={{ fontSize: '24px', marginBottom: '4px' }}>⇪</div>
-                <div style={{ fontSize: '12px', fontWeight: 700, color: '#17402C' }}>Ajouter des photos</div>
-                <div style={{ fontSize: '10px', color: '#7A8A7D' }}>JPG, PNG max 20Mo</div>
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px' }}>
-                {photos.map((src, index) => (
-                  <div key={index} style={{ aspectRatio: '4/3', borderRadius: '10px', overflow: 'hidden', background: 'rgba(0,0,0,0.05)', position: 'relative', border: '1px solid #E4E0D4' }}>
-                    <img src={src} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                    <button onClick={() => handleRemovePhoto(index)} style={{ position: 'absolute', top: '4px', right: '4px', width: '20px', height: '20px', borderRadius: '50%', background: 'rgba(0,0,0,0.5)', color: '#fff', border: 'none', cursor: 'pointer', fontSize: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Section: Localisation & Tags */}
-            <div style={{ background: '#fff', borderRadius: '16px', padding: '16px', border: '1px solid #E8E4D8', marginBottom: '12px' }}>
-              <div style={{ fontSize: '14px', fontWeight: 700, color: '#17402C', marginBottom: '8px' }}>Localisation & Tags</div>
-              <div style={{ display: 'flex', gap: '8px', marginBottom: '10px' }}>
-                <input type="text" value={location} onChange={(e) => setLocation(e.target.value)} placeholder="Lieu..." style={{ flex: 1, padding: '10px', background: '#F5F2EA', border: '1px solid #E4E0D4', borderRadius: '10px', fontSize: '12px', color: '#17402C', outline: 'none', fontFamily: 'inherit' }} />
-                <button onClick={handleDetectLocation} disabled={isDetectingLocation} style={{ padding: '10px 14px', background: '#fff', border: '1px solid #E4E0D4', borderRadius: '10px', fontSize: '10px', fontWeight: 700, color: '#17402C', cursor: 'pointer', whiteSpace: 'nowrap', fontFamily: 'inherit' }}>{isDetectingLocation ? '...' : '📍'}</button>
-              </div>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', padding: '8px', background: '#F5F2EA', border: '1px solid #E4E0D4', borderRadius: '10px', minHeight: '40px' }}>
-                {tags.map(tag => (
-                  <span key={tag} style={{ padding: '4px 10px', background: '#17402C', color: '#fff', borderRadius: '999px', fontSize: '10px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    {tag}
-                    <button onClick={() => handleRemoveTag(tag)} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.7)', cursor: 'pointer', fontSize: '10px', padding: 0 }}>✕</button>
-                  </span>
-                ))}
-                <input type="text" enterKeyHint="done" value={tagInput} onChange={e => setTagInput(e.target.value)} onKeyDown={handleAddTag} placeholder="+ Tag" style={{ background: 'transparent', border: 'none', fontSize: '11px', color: '#17402C', outline: 'none', flex: 1, minWidth: '80px', fontFamily: 'inherit' }} />
-              </div>
-            </div>
-
-            {/* Section: Audience */}
-            <div style={{ background: '#fff', borderRadius: '16px', padding: '16px', border: '1px solid #E8E4D8', marginBottom: '12px' }}>
-              <div style={{ fontSize: '14px', fontWeight: 700, color: '#17402C', marginBottom: '8px' }}>Audience</div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '6px', marginBottom: '12px' }}>
-                <button onClick={() => setAudience('public')} style={{ padding: '10px', borderRadius: '10px', border: `1.5px solid ${audience === 'public' ? '#17402C' : '#E8E4D8'}`, background: audience === 'public' ? '#EAF0EB' : '#EEF3EC', cursor: 'pointer', textAlign: 'center', fontFamily: 'inherit' }}>
-                  <div style={{ fontSize: '16px' }}>🌐</div>
-                  <div style={{ fontSize: '9px', fontWeight: 700, color: '#17402C' }}>Public</div>
-                </button>
-                <button onClick={() => setAudience('club')} style={{ padding: '10px', borderRadius: '10px', border: `1.5px solid ${audience === 'club' ? '#17402C' : '#E8E4D8'}`, background: audience === 'club' ? '#EAF0EB' : '#EEF3EC', cursor: 'pointer', textAlign: 'center', fontFamily: 'inherit' }}>
-                  <div style={{ fontSize: '16px' }}>👥</div>
-                  <div style={{ fontSize: '9px', fontWeight: 700, color: '#17402C' }}>Club</div>
-                </button>
-                <button onClick={() => setAudience('abonnies')} style={{ padding: '10px', borderRadius: '10px', border: `1.5px solid ${audience === 'abonnies' ? '#17402C' : '#E8E4D8'}`, background: audience === 'abonnies' ? '#EAF0EB' : '#EEF3EC', cursor: 'pointer', textAlign: 'center', fontFamily: 'inherit' }}>
-                  <div style={{ fontSize: '16px' }}>🔒</div>
-                  <div style={{ fontSize: '9px', fontWeight: 700, color: '#17402C' }}>Abonnés</div>
-                </button>
-              </div>
-              <div style={{ paddingTop: '8px', borderTop: '1px solid #F0ECE1' }}>
-                <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: '#17402C', marginBottom: '6px' }}>Carnet lié</label>
-                <select
-                  value={linkedCarnet}
-                  onChange={(e) => { setLinkedCarnet(e.target.value); setPublicationConsent(false); }}
-                  style={{ width: '100%', padding: '10px', background: '#F5F2EA', border: '1px solid #E4E0D4', borderRadius: '10px', fontSize: '12px', color: '#17402C', fontFamily: 'inherit' }}
-                >
-                  <option value="">— Aucun carnet —</option>
-                  {userCarnets.map((carnet) => (
-                    <option key={carnet.id} value={carnet.id}>{carnet.title}</option>
-                  ))}
-                </select>
-                {selectedCarnet && (
-                  <div style={{ marginTop: '10px', padding: '10px', background: '#F5F2EA', borderRadius: '10px', border: '1px solid #E4E0D4' }}>
-                    <p style={{ margin: 0, fontSize: '10.5px', color: '#5A6A5D', lineHeight: 1.5 }}>
-                      La publication crée un instantané figé de ce carnet ; vos modifications privées ultérieures ne seront pas republiées.
+                    <p className="text-[length:var(--lkv-text-caption-2)] leading-relaxed text-[color:var(--lkv-text-secondary)]">
+                      La publication crée un instantané figé de ce carnet. Vos modifications ultérieures du carnet privé ne seront pas publiées automatiquement.
                     </p>
-                    <label style={{ display: 'flex', gap: '8px', alignItems: 'flex-start', marginTop: '8px' }}>
-                      <input type="checkbox" checked={publicationConsent} onChange={(e) => setPublicationConsent(e.target.checked)} />
-                      <span style={{ fontSize: '11px', fontWeight: 600, color: '#17402C' }}>Je consens à publier cet instantané.</span>
+                    <label className="flex cursor-pointer items-start gap-[var(--space-2)] pt-[var(--space-1)]">
+                      <input
+                        type="checkbox"
+                        checked={publicationConsent}
+                        onChange={(e) => setPublicationConsent(e.target.checked)}
+                        className="mt-0.5 accent-[var(--lkv-primary)]"
+                      />
+                      <span className="text-[length:var(--lkv-text-caption-2)] font-semibold text-[color:var(--lkv-text-primary)]">
+                        Je consens à publier cet instantané dans le fil communauté.
+                      </span>
                     </label>
-                    <label style={{ display: 'flex', gap: '8px', alignItems: 'flex-start', marginTop: '6px' }}>
-                      <input type="checkbox" checked={stripCoordinates} onChange={(e) => setStripCoordinates(e.target.checked)} />
-                      <span style={{ fontSize: '11px', fontWeight: 600, color: '#17402C' }}>Retirer les coordonnées et points de carte.</span>
+                    <label className="flex cursor-pointer items-start gap-[var(--space-2)]">
+                      <input
+                        type="checkbox"
+                        checked={stripCoordinates}
+                        onChange={(e) => setStripCoordinates(e.target.checked)}
+                        className="mt-0.5 accent-[var(--lkv-primary)]"
+                      />
+                      <span className="text-[length:var(--lkv-text-caption-2)] font-semibold text-[color:var(--lkv-text-primary)]">
+                        Retirer les coordonnées et points de carte de l&apos;instantané.
+                      </span>
                     </label>
+                  </Card>
+                )}
+
+                <div>
+                  <label htmlFor="post-location" className="mb-1.5 block text-[length:var(--lkv-text-caption)] font-semibold text-[color:var(--lkv-text-primary)]">Localisation</label>
+                  <div className="relative flex items-center">
+                    <span className="absolute left-[var(--space-4)] text-[length:var(--lkv-text-caption)]" aria-hidden="true">📍</span>
+                    <input
+                      id="post-location"
+                      type="text"
+                      value={location}
+                      onChange={(e) => setLocation(e.target.value)}
+                      placeholder="Ex: Massif de la Chartreuse, Isère..."
+                      className="w-full rounded-[var(--lkv-radius-md)] border border-[color:var(--lkv-border)] bg-[color:var(--lkv-field-bg)] py-[var(--space-3)] pl-9 pr-24 text-[length:var(--lkv-text-caption)] font-semibold text-[color:var(--lkv-text-primary)] placeholder:text-[color:var(--lkv-text-muted)] focus:outline-none focus:ring-2 focus:ring-[color:var(--lkv-focus-ring)]"
+                    />
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      loading={isDetectingLocation}
+                      disabled={isDetectingLocation}
+                      onClick={handleDetectLocation}
+                      className="absolute right-[var(--space-2)]"
+                    >
+                      Détecter
+                    </Button>
+                  </div>
+                </div>
+
+                <div>
+                  <div className="mb-1.5 flex items-center justify-between">
+                    <label htmlFor="post-tag-input" className="text-[length:var(--lkv-text-caption)] font-semibold text-[color:var(--lkv-text-primary)]">
+                      Tags <span className="font-normal text-[color:var(--lkv-text-muted)]">(Au moins 2 pour trouver le post)</span>
+                    </label>
+                  </div>
+                  <div className="flex min-h-[48px] flex-wrap items-center gap-[var(--space-2)] rounded-[var(--lkv-radius-md)] border border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-muted)] p-[var(--space-2)]">
+                    {tags.map((tag) => (
+                      <Chip key={tag} onClick={() => handleRemoveTag(tag)} aria-label={`Retirer le tag ${tag}`}>
+                        <span>{tag}</span>
+                        <span aria-hidden="true">✕</span>
+                      </Chip>
+                    ))}
+                    <input
+                      id="post-tag-input"
+                      type="text"
+                      enterKeyHint="done"
+                      value={tagInput}
+                      onChange={(e) => setTagInput(e.target.value)}
+                      onKeyDown={handleAddTag}
+                      placeholder="+ Ajouter un tag..."
+                      className="min-w-[120px] flex-1 bg-transparent px-[var(--space-2)] py-[var(--space-1)] text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-primary)] placeholder:text-[color:var(--lkv-text-muted)] focus:outline-none"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label htmlFor="post-mention-input" className="mb-1.5 block text-[length:var(--lkv-text-caption)] font-semibold text-[color:var(--lkv-text-primary)]">Mentionner des membres</label>
+                  <div className="flex min-h-[48px] flex-wrap items-center gap-[var(--space-2)] rounded-[var(--lkv-radius-md)] border border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-muted)] p-[var(--space-2)]">
+                    {mentions.map((m) => (
+                      <Chip key={m} tone="sage" onClick={() => handleRemoveMention(m)} aria-label={`Retirer la mention ${m}`}>
+                        <span>@{m}</span>
+                        <span aria-hidden="true">✕</span>
+                      </Chip>
+                    ))}
+                    <input
+                      id="post-mention-input"
+                      type="text"
+                      enterKeyHint="done"
+                      value={mentionInput}
+                      onChange={(e) => setMentionInput(e.target.value)}
+                      onKeyDown={handleAddMention}
+                      placeholder="Taper @ pour mentionner..."
+                      className="min-w-[140px] flex-1 bg-transparent px-[var(--space-2)] py-[var(--space-1)] text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-primary)] placeholder:text-[color:var(--lkv-text-muted)] focus:outline-none"
+                    />
+                  </div>
+                </div>
+              </div>
+            </Card>
+
+            {/* SECTION 05: Où publier */}
+            <Card className="space-y-[var(--space-4)]">
+              <div className="flex items-center justify-between">
+                <h2 className="text-[length:var(--lkv-text-headline)] font-bold text-[color:var(--lkv-text-primary)]">Où publier</h2>
+                <span className="font-mono text-[length:var(--lkv-text-caption-2)] uppercase text-[color:var(--lkv-text-muted)]">05 — Destination</span>
+              </div>
+              <p className="text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-muted)]">
+                Un post peut apparaître sur votre profil, sur le fil communauté, ou uniquement dans un club spécifique dont vous êtes membre.
+              </p>
+
+              <div className="space-y-[var(--space-4)]">
+                <div className="grid grid-cols-1 gap-[var(--space-3)] sm:grid-cols-3">
+                  {AUDIENCES.map((option) => (
+                    <Card
+                      key={option.id}
+                      variant="interactive"
+                      selected={audience === option.id}
+                      onClick={() => setAudience(option.id)}
+                      className="flex flex-col p-[var(--space-4)] text-left"
+                    >
+                      <span className="mb-[var(--space-1)] text-base">{option.emoji}</span>
+                      <span className="block text-[length:var(--lkv-text-caption)] font-bold">{option.title}</span>
+                      <span className="mt-0.5 text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">{option.hint}</span>
+                    </Card>
+                  ))}
+                </div>
+
+                {audience === 'club' && (
+                  <div className="pt-[var(--space-2)]">
+                    <label className="mb-[var(--space-2)] block text-[length:var(--lkv-text-caption)] font-semibold text-[color:var(--lkv-text-primary)]">Sélectionner un de vos clubs rejoint *</label>
+                    {loadingUserClubs ? (
+                      <LoadingState label="Chargement de vos clubs" />
+                    ) : userClubs.length > 0 ? (
+                      <div className="flex flex-wrap gap-[var(--space-2)]">
+                        {userClubs.map((c: any) => (
+                          <Chip
+                            key={c.id}
+                            selected={selectedClub === c.id}
+                            onClick={() => setSelectedClub(c.id)}
+                          >
+                            <span aria-hidden="true">{c.emoji || '🏕️'}</span>
+                            <span>{c.name}</span>
+                          </Chip>
+                        ))}
+                      </div>
+                    ) : (
+                      <Card variant="compact" className="text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-secondary)]">
+                        <p className="mb-[var(--space-1)] font-bold text-[color:var(--lkv-text-primary)]">Vous n&apos;avez rejoint aucun club pour le moment.</p>
+                        <p>Rejoignez un club depuis la page <Link href="/communaute" className="font-bold text-[color:var(--lkv-text-primary)] underline">Communauté</Link> pour y publier vos posts.</p>
+                      </Card>
+                    )}
                   </div>
                 )}
               </div>
-            </div>
+            </Card>
           </div>
-        </MobilePageShell>
 
-        {/* Mobile sticky bottom bar */}
-        <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 50, background: 'rgba(255,255,255,0.95)', backdropFilter: 'blur(var(--glass-blur-md))', WebkitBackdropFilter: 'blur(var(--glass-blur-md))', borderTop: '1px solid #E8E4D8', padding: '10px 16px', boxShadow: '0 -4px 20px rgba(0,0,0,0.1)' }}>
-          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-            <button
-              onClick={() => handlePublish(false)}
-              disabled={isSubmitting || (requiresCarnetConsent && !publicationConsent)}
-              style={{ flex: 2, padding: '10px', borderRadius: '999px', border: 'none', background: '#17402C', color: '#fff', fontSize: '11px', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', opacity: isSubmitting || (requiresCarnetConsent && !publicationConsent) ? 0.5 : 1 }}
-            >
-              {isSubmitting ? 'Publication...' : 'Publier'}
-            </button>
+          {/* RIGHT COLUMN: PREVIEW & QUALITY SCORE */}
+          <div className="space-y-[var(--space-6)] lg:sticky lg:top-28 lg:col-span-4">
+
+            {/* CARD 1: LIVE PREVIEW */}
+            <Card className="space-y-[var(--space-3)]">
+              <div className="font-mono text-[length:var(--lkv-text-caption-2)] uppercase tracking-wider text-[color:var(--lkv-text-muted)]">APERÇU · FIL COMMUNAUTÉ</div>
+
+              <div className="space-y-[var(--space-3)]">
+                <div className="flex items-center gap-[var(--space-3)]">
+                  {user?.user_metadata?.avatar_url ? (
+                    <img src={user.user_metadata.avatar_url} alt="Avatar" className="size-9 rounded-full border border-[color:var(--lkv-border)] object-cover" />
+                  ) : (
+                    <div className="flex size-9 items-center justify-center rounded-full bg-[color:var(--lkv-primary)] text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-inverted)]">
+                      {(user?.user_metadata?.full_name?.charAt(0) || 'V').toUpperCase()}
+                    </div>
+                  )}
+                  <div>
+                    <h4 className="text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)]">{user?.user_metadata?.full_name || 'Vous'}</h4>
+                    <p className="text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">À l&apos;instant{location ? ` · ${location.split('/')[0]}` : ''}</p>
+                  </div>
+                </div>
+
+                {title && postType !== 'photo' && (
+                  <h3 className="line-clamp-2 text-[length:var(--lkv-text-caption)] font-bold leading-snug text-[color:var(--lkv-text-primary)]">{title}</h3>
+                )}
+
+                {photos.length > 0 && (
+                  <div className="relative aspect-[16/9] overflow-hidden rounded-[var(--lkv-radius-md)] bg-[color:var(--lkv-surface-muted)]">
+                    <img src={photos[0]} alt="Preview" className="size-full object-cover" />
+                  </div>
+                )}
+
+                <p className="line-clamp-3 text-[length:var(--lkv-text-caption)] leading-relaxed text-[color:var(--lkv-text-secondary)]">{content}</p>
+
+                <div className="flex items-center justify-between border-t border-[color:var(--lkv-border)] pt-[var(--space-2)] text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">
+                  <div className="flex items-center gap-[var(--space-3)]">
+                    <span>💬 0</span>
+                    <span>❤️ 0</span>
+                    <span>🚀 0</span>
+                  </div>
+                  <div className="flex gap-[var(--space-1)] font-semibold text-[color:var(--lkv-text-primary)]">
+                    {tags.slice(0, 2).map((t) => (<span key={t}>#{t}</span>))}
+                  </div>
+                </div>
+              </div>
+            </Card>
+
+            {/* CARD 2: POST BIEN PENSÉ */}
+            <Card className="space-y-[var(--space-4)]">
+              <div>
+                <h3 className="text-[length:var(--lkv-text-headline)] font-bold text-[color:var(--lkv-text-primary)]">
+                  Post <em className="font-serif font-normal italic">bien pensé</em>
+                </h3>
+                <p className="mt-[var(--space-1)] text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">
+                  Les posts avec image + mention + regroupement ont en moyenne 3x plus d&apos;interactions.
+                </p>
+              </div>
+
+              <div className="space-y-[var(--space-2)] text-[length:var(--lkv-text-caption)]">
+                <div className="flex items-center justify-between font-semibold text-[color:var(--lkv-text-primary)]">
+                  <span className="flex items-center gap-[var(--space-1)]">{title.trim() ? '✓' : '○'} Titre rédigé</span>
+                  <span className="text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">{title.trim() ? 'FAIT' : 'À FAIRE'}</span>
+                </div>
+                <div className="flex items-center justify-between font-semibold text-[color:var(--lkv-text-primary)]">
+                  <span className="flex items-center gap-[var(--space-1)]">{photos.length > 0 ? '✓' : '○'} {photos.length} photos ajoutées</span>
+                  <span className="text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">{photos.length > 0 ? 'FAIT' : 'OPTIONNEL'}</span>
+                </div>
+                <div className="flex items-center justify-between font-semibold text-[color:var(--lkv-text-primary)]">
+                  <span className="flex items-center gap-[var(--space-1)]">{linkedCarnet ? '✓ Carnet lié' : '○ Option carnet'}</span>
+                  <span className="text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">{linkedCarnet ? 'FAIT' : 'OPTIONNEL'}</span>
+                </div>
+                <div className="flex items-center justify-between font-semibold text-[color:var(--lkv-text-primary)]">
+                  <span className="flex items-center gap-[var(--space-1)]">{tags.length > 0 ? '✓' : '○'} {tags.length} tags + {mentions.length} mention</span>
+                  <span className="text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">{tags.length > 0 ? 'FAIT' : 'OPTIONNEL'}</span>
+                </div>
+                <div className="flex items-center justify-between text-[color:var(--lkv-text-muted)]">
+                  <span className="flex items-center gap-[var(--space-1)]">{location ? '✓' : '○'} Ajouter la géolocalisation exacte</span>
+                  <span className="text-[length:var(--lkv-text-caption-2)]">{location ? 'FAIT' : 'OPTIONNEL'}</span>
+                </div>
+              </div>
+
+              <div className="mt-[var(--space-5)] border-t border-[color:var(--lkv-border)] pt-[var(--space-4)]">
+                <div className="mb-1.5 flex items-center justify-between text-[length:var(--lkv-text-caption)]">
+                  <span className="font-bold text-[color:var(--lkv-text-primary)]">Prêt : qualité élevée</span>
+                  <span className="font-mono font-bold text-[color:var(--lkv-text-primary)]">{qualityScore}%</span>
+                </div>
+                <div className="h-2 w-full overflow-hidden rounded-full bg-[color:var(--lkv-surface-muted)]">
+                  <div className="h-full rounded-full bg-[color:var(--lkv-primary)] transition-all duration-500" style={{ width: `${qualityScore}%` }} />
+                </div>
+              </div>
+            </Card>
           </div>
         </div>
-
-        
       </div>
-    </>
+
+      {/* BOTTOM STICKY ACTION BAR */}
+      <div className="fixed bottom-0 left-0 right-0 z-[var(--z-sticky)] border-t border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-paper)]/95 px-[var(--space-6)] py-[var(--space-3)] pb-[max(var(--safe-bottom),var(--space-3))] backdrop-blur-[var(--blur-md)]">
+        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-[var(--space-4)] sm:flex-row">
+          <div className="flex flex-wrap items-center gap-[var(--space-2)] text-[length:var(--lkv-text-caption)] font-semibold text-[color:var(--lkv-text-primary)]">
+            <span className="size-2 animate-pulse rounded-full bg-[color:var(--lkv-secondary)]" />
+            <span>Prêt à publier</span>
+            <span className="text-[color:var(--lkv-text-muted)]">·</span>
+            <span className="text-[color:var(--lkv-text-muted)]">{wordCount} mots</span>
+            <span className="text-[color:var(--lkv-text-muted)]">·</span>
+            <span className="text-[color:var(--lkv-text-muted)]">{photos.length} photos</span>
+            <span className="text-[color:var(--lkv-text-muted)]">·</span>
+            <span className="text-[color:var(--lkv-text-muted)]">qualité {qualityScore}%</span>
+          </div>
+
+          <div className="flex items-center gap-[var(--space-3)]">
+            <Button
+              type="button"
+              variant="primary"
+              size="lg"
+              loading={isSubmitting}
+              disabled={publishDisabled}
+              onClick={() => handlePublish(false)}
+            >
+              {isSubmitting ? 'Publication...' : 'Publier maintenant'}
+            </Button>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
 
-export default function PublierPostPage() {
+
+export default function PublierPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-transparent flex items-center justify-center">
-          <div className="w-8 h-8 border-2 border-[#EEF3EC] border-t-transparent rounded-full animate-spin" />
+        <div className="flex min-h-screen items-center justify-center bg-[color:var(--lkv-surface-paper)]">
+          <LoadingState label="Chargement de l'éditeur" />
         </div>
       }
     >
-      <PublierPostContent />
+      <AppShell>
+        <div className="hidden md:block">
+          <Header />
+        </div>
+        <PublierPostContent />
+        <div className="hidden md:block">
+          <Footer />
+        </div>
+      </AppShell>
     </Suspense>
   );
 }

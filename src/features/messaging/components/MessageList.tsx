@@ -2,6 +2,7 @@
 
 import Icon from '@/components/ui/Icon';
 import React, { useRef, useEffect, useState, useCallback } from 'react';
+import { Button, EmptyState, Skeleton } from '@/components/ui';
 import type { Message, ConversationMember } from '../types/messaging.types';
 import { MessageBubble, type BubbleGroupPosition } from './MessageBubble';
 import { TypingIndicator } from './TypingIndicator';
@@ -21,27 +22,27 @@ interface MessageListProps {
 
 export const MessageListSkeleton = () => (
   <div
-    className="flex-1 p-4 space-y-4 animate-pulse overflow-hidden"
+    className="flex-1 space-y-[var(--space-4)] overflow-hidden p-[var(--space-4)]"
     aria-busy="true"
     aria-label="Chargement des messages"
   >
-    <div className="flex items-end gap-2.5">
-      <div className="w-8 h-8 rounded-full bg-stone-200/70 shrink-0" />
-      <div className="space-y-1.5 max-w-[65%]">
-        <div className="h-10 w-48 bg-stone-200/70 rounded-2xl rounded-tl-xs" />
-        <div className="h-7 w-32 bg-stone-200/60 rounded-2xl" />
+    <div className="flex items-end gap-[var(--space-2)]">
+      <Skeleton className="size-8 shrink-0 rounded-full" />
+      <div className="max-w-[65%] space-y-[var(--space-1)]">
+        <Skeleton className="h-10 w-48 rounded-[var(--lkv-radius-md)]" />
+        <Skeleton className="h-7 w-32 rounded-[var(--lkv-radius-md)]" />
       </div>
     </div>
-    <div className="flex items-end gap-2.5 justify-end">
-      <div className="space-y-1.5 max-w-[65%] flex flex-col items-end">
-        <div className="h-12 w-56 bg-[#5B7F55]/20 rounded-2xl rounded-tr-xs" />
-        <div className="h-8 w-36 bg-[#5B7F55]/15 rounded-2xl" />
+    <div className="flex items-end justify-end gap-[var(--space-2)]">
+      <div className="flex max-w-[65%] flex-col items-end space-y-[var(--space-1)]">
+        <Skeleton className="h-12 w-56 rounded-[var(--lkv-radius-md)]" />
+        <Skeleton className="h-8 w-36 rounded-[var(--lkv-radius-md)]" />
       </div>
     </div>
-    <div className="flex items-end gap-2.5">
-      <div className="w-8 h-8 rounded-full bg-stone-200/70 shrink-0" />
-      <div className="space-y-1.5 max-w-[65%]">
-        <div className="h-14 w-60 bg-stone-200/70 rounded-2xl rounded-tl-xs" />
+    <div className="flex items-end gap-[var(--space-2)]">
+      <Skeleton className="size-8 shrink-0 rounded-full" />
+      <div className="max-w-[65%] space-y-[var(--space-1)]">
+        <Skeleton className="h-14 w-60 rounded-[var(--lkv-radius-md)]" />
       </div>
     </div>
   </div>
@@ -136,9 +137,9 @@ export const MessageList: React.FC<MessageListProps> = ({
     const el = document.getElementById(`msg-bubble-${messageId}`);
     if (el) {
       el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      el.classList.add('ring-2', 'ring-[#5B7F55]', 'ring-offset-2', 'rounded-2xl');
+      el.classList.add('ring-2', 'ring-[color:var(--lkv-secondary)]', 'ring-offset-2', 'rounded-[var(--lkv-radius-md)]');
       setTimeout(() => {
-        el.classList.remove('ring-2', 'ring-[#5B7F55]', 'ring-offset-2', 'rounded-2xl');
+        el.classList.remove('ring-2', 'ring-[color:var(--lkv-secondary)]', 'ring-offset-2', 'rounded-[var(--lkv-radius-md)]');
       }, 1500);
     }
   };
@@ -148,24 +149,21 @@ export const MessageList: React.FC<MessageListProps> = ({
       ref={containerRef}
       onScroll={handleScroll}
       aria-label="Fil de discussion"
-      className="flex-1 overflow-y-auto overscroll-contain p-3 sm:p-4 space-y-0.5 custom-scrollbar relative"
-      style={{ WebkitOverflowScrolling: 'touch' }}
+      className="custom-scrollbar relative flex-1 space-y-0.5 overflow-y-auto overscroll-contain p-[var(--space-3)] [-webkit-overflow-scrolling:touch] sm:p-[var(--space-4)]"
     >
       {loading && messages.length === 0 ? (
         <MessageListSkeleton />
       ) : messages.length === 0 ? (
-        <div className="flex flex-col items-center justify-center h-full text-center p-6">
-          <div className="w-16 h-16 rounded-full bg-[#17402C]/10 text-[#17402C] flex items-center justify-center mb-3 text-2xl">
-            💬
-          </div>
-          <h3 className="text-base font-bold text-[#17402C]">
-            C&apos;est le début de votre discussion
-          </h3>
-          <p className="text-xs text-[#5A574E] max-w-xs mt-1">
-            Envoyez un premier message pour échanger vos conseils de voyage ou planifier votre
-            expédition.
-          </p>
-        </div>
+        <EmptyState
+          className="h-full"
+          icon={
+            <span className="flex size-16 items-center justify-center rounded-full bg-[color:var(--lkv-primary)]/10 text-2xl text-[color:var(--lkv-primary)]">
+              💬
+            </span>
+          }
+          title="C'est le début de votre discussion"
+          description="Envoyez un premier message pour échanger vos conseils de voyage ou planifier votre expédition."
+        />
       ) : (
         messages.map((msg, index) => {
           const isMine = msg.sender_id === currentUserId;
@@ -225,8 +223,8 @@ export const MessageList: React.FC<MessageListProps> = ({
           return (
             <React.Fragment key={msg.id}>
               {showDaySeparator && (
-                <div className="flex justify-center my-4" role="separator">
-                  <span className="px-3 py-1 rounded-full bg-white/70 backdrop-blur-md border border-white/60 text-[11px] font-semibold text-[#5A574E] uppercase tracking-[0.1em]">
+                <div className="my-[var(--space-4)] flex justify-center" role="separator">
+                  <span className="rounded-full border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] px-[var(--space-3)] py-[var(--space-1)] text-[length:var(--lkv-text-caption-2)] font-semibold uppercase tracking-[0.1em] text-[color:var(--lkv-text-secondary)] backdrop-blur-[var(--blur-md)]">
                     {dayLabel(msg.created_at)}
                   </span>
                 </div>
@@ -254,19 +252,21 @@ export const MessageList: React.FC<MessageListProps> = ({
 
       {/* Floating "Nouveaux messages ↓" pill */}
       {hasNewUnseenMessages && !isNearBottom && (
-        <div className="sticky bottom-3 inset-x-0 flex justify-center z-20 pointer-events-none">
-          <button
+        <div className="pointer-events-none sticky inset-x-0 bottom-3 z-[var(--z-sticky)] flex justify-center">
+          <Button
             type="button"
+            variant="primary"
+            size="sm"
             onClick={() => {
               haptic('light');
               scrollToBottom('smooth');
               setHasNewUnseenMessages(false);
             }}
-            className="pointer-events-auto glass-capsule-btn primary py-2 px-4 text-[13px] font-bold shadow-lg flex items-center gap-1.5 active:scale-95 min-h-[44px] msg-pill-in"
+            className="msg-pill-in pointer-events-auto shadow-elevation-3"
+            icon={<Icon name="arrow-down" className="size-4" aria-hidden="true" />}
           >
-            <Icon name="arrow-down" className="w-4 h-4" />
-            <span>Nouveaux messages</span>
-          </button>
+            Nouveaux messages
+          </Button>
         </div>
       )}
     </div>

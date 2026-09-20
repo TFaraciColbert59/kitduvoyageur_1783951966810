@@ -1,7 +1,8 @@
-﻿'use client';
+'use client';
 
 import Icon from '@/components/ui/Icon';
 import React, { useState, useCallback } from 'react';
+import { Button, Card, ErrorState } from '@/components/ui';
 import type { UserProfileSummary, Conversation } from '../types/messaging.types';
 import { useConversations } from '../hooks/useConversations';
 import { useBackGuard } from '../hooks/useBackGuard';
@@ -64,23 +65,15 @@ export const MessageInbox: React.FC<MessageInboxProps> = ({
   };
 
   const errorState = (
-    <div className="w-full h-full flex flex-col items-center justify-center text-center px-8">
-      <div className="w-14 h-14 rounded-full bg-[#F5DDD9] text-[#A8443A] flex items-center justify-center mb-4">
-        <Icon name="alert-triangle" className="w-7 h-7" />
-      </div>
-      <h3 className="text-base font-bold text-[#17402C]">Discussions indisponibles</h3>
-      <p className="text-sm text-[#5A574E] mt-1.5 max-w-xs leading-relaxed">{error}</p>
-      <button
-        type="button"
-        onClick={() => {
-          haptic('light');
-          refreshConversations();
-        }}
-        className="glass-capsule-btn primary mt-5 px-6 min-h-[48px] text-sm font-bold"
-      >
-        Réessayer
-      </button>
-    </div>
+    <ErrorState
+      className="h-full"
+      title="Discussions indisponibles"
+      message={error || undefined}
+      onRetry={() => {
+        haptic('light');
+        refreshConversations();
+      }}
+    />
   );
 
   return (
@@ -111,14 +104,11 @@ export const MessageInbox: React.FC<MessageInboxProps> = ({
       */}
       {selectedConversation && (
         <div
-          className={`md:hidden fixed inset-0 bg-[rgba(238,243,236,0.94)] backdrop-blur-xl ${
+          className={`fixed inset-0 h-[calc(100dvh-var(--kb-inset,0px))] bg-[color:var(--lkv-surface)]/95 pl-[var(--safe-left)] pr-[var(--safe-right)] backdrop-blur-xl md:hidden ${
             isClosing ? 'msg-sheet-out' : 'msg-sheet-in'
           }`}
           style={{
             zIndex: zIndex.sheet,
-            height: 'calc(100dvh - var(--kb-inset, 0px))',
-            paddingLeft: 'env(safe-area-inset-left, 0px)',
-            paddingRight: 'env(safe-area-inset-right, 0px)',
           }}
           role="region"
           aria-label={`Conversation avec ${
@@ -168,27 +158,30 @@ export const MessageInbox: React.FC<MessageInboxProps> = ({
               onRefreshConversations={refreshConversations}
             />
           ) : (
-            <div className="w-full h-full glass rounded-3xl flex flex-col items-center justify-center text-center p-8 shadow-xs">
-              <div className="w-20 h-20 rounded-full bg-[#17402C]/10 text-[#17402C] flex items-center justify-center mb-4">
-                <Icon name="send" className="w-10 h-10" />
+            <Card className="flex h-full w-full flex-col items-center justify-center p-[var(--space-8)] text-center">
+              <div className="mb-[var(--space-4)] flex size-20 items-center justify-center rounded-full bg-[color:var(--lkv-primary)]/10 text-[color:var(--lkv-primary)]">
+                <Icon name="send" className="size-10" aria-hidden="true" />
               </div>
-              <h3 className="text-xl font-bold text-[#17402C]">Vos messages</h3>
-              <p className="text-sm text-[#5A574E] max-w-md mt-2 leading-relaxed">
+              <h3 className="text-[length:var(--lkv-text-title-sm)] font-bold text-[color:var(--lkv-text-primary)]">
+                Vos messages
+              </h3>
+              <p className="mt-[var(--space-2)] max-w-md text-[length:var(--lkv-text-footnote)] leading-relaxed text-[color:var(--lkv-text-secondary)]">
                 Sélectionnez une conversation ou lancez une nouvelle discussion avec un membre de la
                 communauté LKDV.
               </p>
-              <button
+              <Button
                 type="button"
+                variant="primary"
                 onClick={() => {
                   haptic('light');
                   setIsModalOpen(true);
                 }}
-                className="glass-capsule-btn primary mt-6 px-6 text-sm font-semibold shadow-md flex items-center gap-2 min-h-[48px]"
+                className="mt-[var(--space-6)] shadow-elevation-2"
+                icon={<Icon name="plus" className="size-4" aria-hidden="true" />}
               >
-                <Icon name="plus" className="w-4 h-4" />
                 Nouvelle discussion
-              </button>
-            </div>
+              </Button>
+            </Card>
           )}
         </div>
       </div>

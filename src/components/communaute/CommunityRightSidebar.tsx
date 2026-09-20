@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import Icon from '@/components/ui/AppIcon';
-import { IconButton } from '@/components/ui';
+import { Badge, Card, IconButton } from '@/components/ui';
 import { LiveActivityFeed } from '@/components/activity/LiveActivityFeed';
 
 interface CommunityRightSidebarProps {
@@ -22,97 +22,103 @@ export default function CommunityRightSidebar({ clubs = [], events = [] }: Commu
   const upcomingEvents = uniqueEvents.slice(0, 3);
 
   return (
-    <aside className="community-right-sidebar w-full min-w-0 shrink-0 h-full overflow-y-auto custom-scrollbar flex flex-col gap-3.5 pb-8">
+    <aside className="community-right-sidebar flex h-full w-full min-w-0 shrink-0 flex-col gap-[var(--space-3)] overflow-y-auto pb-[var(--space-8)] custom-scrollbar">
       {/* WIDGET LIVE ACTIVITY FEED (Phase 7) */}
       <LiveActivityFeed limit={4} title="Événements en direct" />
 
       {/* WIDGET: PROCHAINES SORTIES (données serveur) */}
-      <div className="glass p-3.5 space-y-2.5 rounded-2xl border border-white/70 shadow-xs">
+      <Card variant="compact" className="space-y-[var(--space-2)]">
         <div className="flex items-center justify-between">
-          <h3 className="font-display font-bold text-xs text-[#17402C]">Prochaines sorties</h3>
-          <span className="glass-pill text-[8.5px] font-mono font-bold text-[#17402C]">
-            {upcomingEvents.length}
-          </span>
+          <h3 className="font-display text-[length:var(--lkv-text-footnote)] font-bold text-[color:var(--lkv-text-primary)]">
+            Prochaines sorties
+          </h3>
+          <Badge tone="stone">{upcomingEvents.length}</Badge>
         </div>
 
         {upcomingEvents.length === 0 ? (
-          <p className="text-[10.5px] text-[#5C6B5E] leading-relaxed">
+          <p className="text-[length:var(--lkv-text-caption-2)] leading-relaxed text-[color:var(--lkv-text-muted)]">
             Aucune sortie programmée pour le moment.
           </p>
         ) : (
-          <div className="space-y-2">
+          <div className="space-y-[var(--space-2)]">
             {upcomingEvents.map((out) => (
               <Link
                 key={out.id}
                 href="/communaute?tab=evenements"
-                className="block p-2.5 rounded-xl bg-white/55 hover:bg-white/80 border border-white/70 space-y-1.5 shadow-2xs transition-all"
+                className="block space-y-[var(--space-1)] rounded-[var(--lkv-radius-sm)] border border-[color:var(--lkv-border-subtle)] bg-[color:var(--lkv-surface-muted)]/55 p-[var(--space-2)] shadow-elevation-1 transition-colors hover:bg-[color:var(--lkv-hover-surface)]"
               >
                 <div className="flex items-center justify-between">
-                  <span className="text-[9.5px] font-mono font-bold text-forest-800 bg-forest-50 px-2 py-0.5 rounded">
+                  <Badge tone="sage" className="px-[var(--space-2)] font-mono">
                     📅 {out.date || 'Date à confirmer'}
-                  </span>
+                  </Badge>
                   {out.maxParticipants > 0 && (
-                    <span className="text-[9px] font-mono font-bold text-[#5C6B5E]">
+                    <span className="font-mono text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-muted)]">
                       {out.participants}/{out.maxParticipants}
                     </span>
                   )}
                 </div>
-                <h4 className="font-display font-bold text-xs text-[#17402C] leading-snug truncate">
+                <h4 className="truncate font-display text-[length:var(--lkv-text-caption)] font-bold leading-snug text-[color:var(--lkv-text-primary)]">
                   {out.title}
                 </h4>
                 {out.location && (
-                  <p className="text-[9.5px] text-[#5C6B5E] truncate">📍 {out.location}</p>
+                  <p className="truncate text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">
+                    📍 {out.location}
+                  </p>
                 )}
               </Link>
             ))}
           </div>
         )}
-      </div>
+      </Card>
 
       {/* WIDGET: CLUBS POPULAIRES (données serveur) */}
-      <div className="glass p-3.5 space-y-2.5 rounded-2xl border border-white/70 shadow-xs">
+      <Card variant="compact" className="space-y-[var(--space-2)]">
         <div className="flex items-center justify-between">
-          <h3 className="font-display font-bold text-xs text-[#17402C]">Clubs populaires</h3>
+          <h3 className="font-display text-[length:var(--lkv-text-footnote)] font-bold text-[color:var(--lkv-text-primary)]">
+            Clubs populaires
+          </h3>
           <Link href="/communaute?tab=clubs">
             <IconButton
               size="sm"
               title="Voir tous les clubs"
               aria-label="Voir tous les clubs"
             >
-              <Icon name="arrow-right" size={12} />
+              <Icon name="arrow-right" size={12} aria-hidden="true" />
             </IconButton>
           </Link>
         </div>
 
         {topClubs.length === 0 ? (
-          <p className="text-[10.5px] text-[#5C6B5E] leading-relaxed">
+          <p className="text-[length:var(--lkv-text-caption-2)] leading-relaxed text-[color:var(--lkv-text-muted)]">
             Aucun club pour le moment.
           </p>
         ) : (
-          <div className="space-y-1.5">
+          <div className="space-y-[var(--space-1)]">
             {topClubs.map((club) => (
               <Link
                 key={club.id}
                 href={`/clubs/${club.slug || club.id}`}
-                className="flex items-center justify-between p-2 rounded-xl bg-white/55 hover:bg-white/80 transition-all shadow-2xs border border-white/60 group"
+                className="group flex items-center justify-between rounded-[var(--lkv-radius-sm)] border border-[color:var(--lkv-border-subtle)] bg-[color:var(--lkv-surface-muted)]/55 p-[var(--space-2)] shadow-elevation-1 transition-colors hover:bg-[color:var(--lkv-hover-surface)]"
               >
-                <div className="flex items-center gap-2 min-w-0">
-                  <span className="text-base shrink-0">{club.emoji || '🏕️'}</span>
+                <div className="flex min-w-0 items-center gap-[var(--space-2)]">
+                  <span className="shrink-0 text-base">{club.emoji || '🏕️'}</span>
                   <div className="min-w-0">
-                    <div className="text-xs font-bold text-[#17402C] truncate group-hover:text-forest-800 transition-colors">
+                    <div className="truncate text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)] transition-colors group-hover:text-[color:var(--lkv-primary)]">
                       {club.name}
                     </div>
                     {club.category && (
-                      <div className="text-[9px] text-[#5C6B5E] truncate">{club.category}</div>
+                      <div className="truncate text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">
+                        {club.category}
+                      </div>
                     )}
                   </div>
                 </div>
 
-                <div className="flex items-center gap-1.5 shrink-0">
-                  <span className="text-[9.5px] font-mono text-[#5C6B5E]">
+                <div className="flex shrink-0 items-center gap-[var(--space-1)]">
+                  <span className="font-mono text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">
                     {club.members_count ?? 0}
                   </span>
-                  <span className="glass-circle-btn !w-7 !h-7 !min-w-7 !min-h-7">
+                  <span className="flex size-7 items-center justify-center rounded-full bg-[color:var(--lkv-surface-card)] text-[color:var(--lkv-text-muted)]">
                     <Icon name="chevron-right" size={11} aria-hidden="true" />
                   </span>
                 </div>
@@ -120,23 +126,23 @@ export default function CommunityRightSidebar({ clubs = [], events = [] }: Commu
             ))}
           </div>
         )}
-      </div>
+      </Card>
 
       {/* WIDGET 4: CHARTE DE LA MAISON */}
-      <div className="glass tone-sand p-3.5 space-y-2 rounded-2xl text-[#17402C] border border-[#C89A3B]/30 shadow-xs">
+      <Card tone="warn" variant="compact" className="space-y-[var(--space-2)]">
         <div className="flex items-center justify-between">
-          <span className="glass-pill text-[8.5px] font-mono font-bold text-[#8C6418]">
+          <Badge tone="warn" className="font-mono">
             🌲 ÉTHIQUE TERRAIN
-          </span>
-          <span className="text-xs">⛺</span>
+          </Badge>
+          <span className="text-[length:var(--lkv-text-caption)]">⛺</span>
         </div>
-        <h3 className="font-display font-bold text-xs text-[#17402C]">
+        <h3 className="font-display text-[length:var(--lkv-text-footnote)] font-bold text-[color:var(--lkv-text-primary)]">
           L’Esprit de la Maison
         </h3>
-        <p className="text-[10.5px] text-[#5C6B5E] leading-relaxed">
+        <p className="text-[length:var(--lkv-text-caption-2)] leading-relaxed text-[color:var(--lkv-text-muted)]">
           Zéro trace en bivouac, respect du silence des crêtes et entraide sincère entre marcheurs de tous niveaux.
         </p>
-      </div>
+      </Card>
     </aside>
   );
 }

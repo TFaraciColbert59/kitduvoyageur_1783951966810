@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Icon from '@/components/ui/AppIcon';
-import { Sheet } from '@/components/ui';
+import { Button, Card, ListItem, Sheet } from '@/components/ui';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 
 export interface MoreMenuSheetProps {
@@ -49,88 +49,72 @@ export default function MoreMenuSheet({
       title={title}
       dragToDismiss
     >
-      <div className="flex flex-col gap-2">
-          <div className="flex flex-col divide-y divide-stone-100 bg-[#F5F2E8]/40 rounded-2xl overflow-hidden border border-black/5">
-            {/* Share action */}
-            {onShare && (
-              <button
-                type="button"
-                onClick={() => handleAction(onShare)}
-                className="flex items-center gap-3 w-full px-4 py-3.5 text-xs font-bold text-[#17402C] hover:bg-black/5 active:bg-black/10 transition-colors text-left"
-              >
-                <Icon name="PaperAirplaneIcon" size={18} className="text-[#17402C]" />
-                <span>Partager le contenu</span>
-              </button>
-            )}
+      <div className="flex flex-col gap-[var(--space-2)]">
+        <Card className="divide-y divide-[color:var(--lkv-border-subtle)] overflow-hidden p-0">
+          {/* Share action */}
+          {onShare && (
+            <ListItem
+              as="div"
+              onClick={() => handleAction(onShare)}
+              leading={<Icon name="PaperAirplaneIcon" size={18} className="text-[color:var(--lkv-primary)]" />}
+              title="Partager le contenu"
+            />
+          )}
 
-            {/* Copy Link */}
-            {onCopyLink && (
-              <button
-                type="button"
-                onClick={() => handleAction(onCopyLink)}
-                className="flex items-center gap-3 w-full px-4 py-3.5 text-xs font-bold text-[#17402C] hover:bg-black/5 active:bg-black/10 transition-colors text-left"
-              >
-                <Icon name="LinkIcon" size={18} className="text-[#17402C]" />
-                <span>Copier le lien</span>
-              </button>
-            )}
+          {/* Copy Link */}
+          {onCopyLink && (
+            <ListItem
+              as="div"
+              onClick={() => handleAction(onCopyLink)}
+              leading={<Icon name="LinkIcon" size={18} className="text-[color:var(--lkv-primary)]" />}
+              title="Copier le lien"
+            />
+          )}
 
-            {/* Edit (if owner) */}
-            {isOwner && onEdit && (
-              <button
-                type="button"
-                onClick={() => handleAction(onEdit)}
-                className="flex items-center gap-3 w-full px-4 py-3.5 text-xs font-bold text-[#17402C] hover:bg-black/5 active:bg-black/10 transition-colors text-left"
-              >
-                <Icon name="PencilIcon" size={18} className="text-[#17402C]" />
-                <span>Modifier</span>
-              </button>
-            )}
+          {/* Edit (if owner) */}
+          {isOwner && onEdit && (
+            <ListItem
+              as="div"
+              onClick={() => handleAction(onEdit)}
+              leading={<Icon name="PencilIcon" size={18} className="text-[color:var(--lkv-primary)]" />}
+              title="Modifier"
+            />
+          )}
 
-            {/* Mute / Leave */}
-            {onMuteOrLeave && (
-              <button
-                type="button"
-                onClick={() => handleAction(onMuteOrLeave)}
-                className="flex items-center gap-3 w-full px-4 py-3.5 text-xs font-medium text-[#5C6B5E] hover:bg-black/5 active:bg-black/10 transition-colors text-left"
-              >
-                <Icon name="EyeSlashIcon" size={18} />
-                <span>{leaveLabel}</span>
-              </button>
-            )}
+          {/* Mute / Leave */}
+          {onMuteOrLeave && (
+            <ListItem
+              as="div"
+              onClick={() => handleAction(onMuteOrLeave)}
+              leading={<Icon name="EyeSlashIcon" size={18} className="text-[color:var(--lkv-text-secondary)]" />}
+              title={<span className="font-medium text-[color:var(--lkv-text-secondary)]">{leaveLabel}</span>}
+            />
+          )}
 
-            {/* Delete (if owner) */}
-            {isOwner && onDelete && (
-              <button
-                type="button"
-                onClick={() => handleAction(onDelete)}
-                className="flex items-center gap-3 w-full px-4 py-3.5 text-xs font-bold text-red-600 hover:bg-red-50 active:bg-red-100 transition-colors text-left"
-              >
-                <Icon name="TrashIcon" size={18} className="text-red-600" />
-                <span>Supprimer définitivement</span>
-              </button>
-            )}
+          {/* Delete (if owner) */}
+          {isOwner && onDelete && (
+            <ListItem
+              as="div"
+              onClick={() => handleAction(onDelete)}
+              leading={<Icon name="TrashIcon" size={18} className="text-[color:var(--lkv-danger)]" />}
+              title={<span className="text-[color:var(--lkv-danger)]">Supprimer définitivement</span>}
+            />
+          )}
 
-            {/* Report action */}
-            {!isOwner && onReport && (
-              <button
-                type="button"
-                onClick={() => handleAction(onReport)}
-                className="flex items-center gap-3 w-full px-4 py-3.5 text-xs font-bold text-red-600 hover:bg-red-50 active:bg-red-100 transition-colors text-left"
-              >
-                <Icon name="ExclamationTriangleIcon" size={18} className="text-red-600" />
-                <span>Signaler ce contenu</span>
-              </button>
-            )}
-          </div>
+          {/* Report action */}
+          {!isOwner && onReport && (
+            <ListItem
+              as="div"
+              onClick={() => handleAction(onReport)}
+              leading={<Icon name="ExclamationTriangleIcon" size={18} className="text-[color:var(--lkv-danger)]" />}
+              title={<span className="text-[color:var(--lkv-danger)]">Signaler ce contenu</span>}
+            />
+          )}
+        </Card>
 
-          <button
-            type="button"
-            onClick={onClose}
-            className="w-full py-3 mt-1 bg-white border border-[#17402C]/10 rounded-2xl text-xs font-bold text-[#17402C] hover:bg-stone-50 active:scale-[0.99] transition-all text-center"
-          >
-            Annuler
-          </button>
+        <Button type="button" variant="secondary" fullWidth onClick={onClose}>
+          Annuler
+        </Button>
       </div>
     </Sheet>
   );

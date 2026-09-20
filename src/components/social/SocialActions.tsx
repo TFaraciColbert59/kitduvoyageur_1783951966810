@@ -1,9 +1,8 @@
 'use client';
 
 import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import Icon from '@/components/ui/AppIcon';
-import LkvIcon from '@/components/ui/LkvIcon';
+import { IconButton } from '@/components/ui';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 
 export interface SocialActionsProps {
@@ -89,91 +88,82 @@ export default function SocialActions({
     onMore?.();
   };
 
-  /* Style des pastilles selon le contexte : discret sur la carte, dense sur l'image. */
-  const pillBase = overlay
-    ? 'glass-capsule-btn w-10 h-10 rounded-full flex items-center justify-center p-0 cursor-pointer transition-all duration-200 shrink-0'
-    : 'glass-capsule-btn w-9 h-9 rounded-full flex items-center justify-center p-0 cursor-pointer transition-all duration-200 shrink-0';
-  const pillStyle = overlay
-    ? { background: 'rgba(255,255,255,0.62)', border: '1px solid rgba(255,255,255,0.6)', boxShadow: '0 4px 14px rgba(11,31,23,0.25)' }
-    : undefined;
-  const countStyle = overlay
-    ? { fontSize: '11px', fontWeight: 700, color: '#17402C', marginLeft: '6px', fontVariantNumeric: 'tabular-nums' as const }
+  const pillClass = overlay
+    ? 'size-[var(--control-height-lg)] border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] text-[color:var(--lkv-primary)] shadow-elevation-2 backdrop-blur-[var(--blur-md)]'
+    : 'size-[var(--control-height-sm)] text-[color:var(--lkv-primary)]';
+
+  const countClass = overlay
+    ? 'ml-[6px] text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-primary)] [font-variant-numeric:tabular-nums]'
     : undefined;
 
   return (
-    <div className={`flex items-center justify-between w-full text-[#17402C] ${overlay ? '' : 'pt-2'} ${className}`}>
+    <div
+      className={`flex w-full items-center justify-between text-[color:var(--lkv-primary)] ${overlay ? '' : 'pt-[var(--space-2)]'} ${className}`}
+    >
       {/* Left actions: Like, Comment, Share */}
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-[var(--space-2)]">
         {/* Like - Red Rosé Liquid Glass Heart */}
-        <motion.button
+        <IconButton
           type="button"
-          whileHover={{ scale: 1.12 }}
-          whileTap={{ scale: 0.9 }}
+          variant="ghost"
+          size="lg"
           onClick={handleLike}
-          className={`${pillBase} ${
-            liked ? 'glass-capsule-btn-like' : 'text-[#17402C] hover:border-rose-300'
-          }`}
-          style={pillStyle}
+          className={pillClass}
           aria-label={liked ? 'Je n’aime plus' : 'J’aime'}
         >
           <Icon
-            name={liked ? "HeartIconSolid" : "HeartIcon"}
+            name={liked ? 'HeartIconSolid' : 'HeartIcon'}
             size={18}
-            color={liked ? "#E11D48" : "#17402C"}
-            className="relative z-10"
+            color={liked ? 'var(--lkv-danger)' : 'var(--lkv-primary)'}
           />
-          {overlay && likesCount > 0 && <span style={countStyle}>{likesCount}</span>}
-        </motion.button>
+          {overlay && likesCount > 0 && <span className={countClass}>{likesCount}</span>}
+        </IconButton>
 
         {/* Comment */}
         {showComments && (
-          <motion.button
+          <IconButton
             type="button"
-            whileHover={{ scale: 1.12 }}
-            whileTap={{ scale: 0.9 }}
+            variant="ghost"
+            size="lg"
             onClick={handleComments}
-            className={`${pillBase} text-[#17402C]`}
-            style={pillStyle}
+            className={pillClass}
             aria-label={commentsCount > 0 ? `Voir les ${commentsCount} commentaire${commentsCount > 1 ? 's' : ''}` : 'Commenter'}
           >
-            <Icon name="ChatBubbleLeftIcon" size={18} color="#17402C" className="relative z-10" />
-            {overlay && commentsCount > 0 && <span style={countStyle}>{commentsCount}</span>}
-          </motion.button>
+            <Icon name="ChatBubbleLeftIcon" size={18} color="var(--lkv-primary)" />
+            {overlay && commentsCount > 0 && <span className={countClass}>{commentsCount}</span>}
+          </IconButton>
         )}
 
         {/* Share / Reply in groups */}
-        <motion.button
+        <IconButton
           type="button"
-          whileHover={{ scale: 1.12 }}
-          whileTap={{ scale: 0.9 }}
+          variant="ghost"
+          size="lg"
           onClick={handleShare}
-          className={`${pillBase} text-[#17402C]`}
-          style={pillStyle}
+          className={pillClass}
           aria-label="Partager la publication"
         >
-          <Icon name="PaperAirplaneIcon" size={18} color="#17402C" className="relative z-10" />
-        </motion.button>
+          <Icon name="PaperAirplaneIcon" size={18} color="var(--lkv-primary)" />
+        </IconButton>
       </div>
 
       {/* Right actions: Bookmark/Save */}
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-[var(--space-2)]">
         {showSave && (
-          <motion.button
+          <IconButton
             type="button"
-            whileHover={{ scale: 1.12 }}
-            whileTap={{ scale: 0.9 }}
+            variant="ghost"
+            size="lg"
             onClick={handleSave}
-            className={`${pillBase} ${saved ? 'active' : ''}`}
-            style={pillStyle}
+            className={`${pillClass} ${saved ? 'bg-[color:var(--lkv-action-soft)]' : ''}`}
             aria-label={saved ? 'Retirer des favoris' : 'Enregistrer dans mes favoris'}
           >
             <Icon
-              name={saved ? "BookmarkSolidIcon" : "BookmarkIcon"}
+              name={saved ? 'BookmarkSolidIcon' : 'BookmarkIcon'}
               size={18}
-              color="#17402C"
-              className="relative z-10"
+              color="var(--lkv-primary)"
             />
-          </motion.button>
+          </IconButton>
         )}
       </div>
     </div>

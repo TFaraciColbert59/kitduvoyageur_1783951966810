@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { Button } from '@/components/ui';
 import StoriesViewer, { type StoryUser } from './StoriesViewer';
 
 /**
@@ -41,31 +42,40 @@ export default function CommunityStoriesBar({ currentUser }: { currentUser?: any
 
   return (
     <>
-      <div className="community-stories">
-        <div className="story-track">
-          {/* Votre story */}
-          <button type="button" className="story-item" aria-label="Ajouter une story">
-            <span className="story-ring story-ring--self">
-              <span className="story-avatar story-avatar--self">+</span>
+      <div className="flex w-full items-center gap-[var(--space-2)] overflow-x-auto pb-[var(--space-1)] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          className="shrink-0"
+          aria-label="Ajouter une story"
+          icon={
+            <span className="flex size-7 items-center justify-center rounded-full border border-dashed border-[color:var(--lkv-border-strong)] text-[length:var(--lkv-text-footnote)] font-bold text-[color:var(--lkv-primary)]">
+              +
             </span>
-            <span className="story-name">Votre story</span>
-          </button>
+          }
+        >
+          Votre story
+        </Button>
 
-          {DEMO_STORIES.map((user, i) => (
-            <button
-              key={user.id}
-              type="button"
-              className="story-item"
-              aria-label={`Voir la story de ${user.name}`}
-              onClick={() => setViewerStart(i)}
-            >
-              <span className="story-ring">
-                <span className="story-avatar">{user.name.charAt(0)}</span>
+        {DEMO_STORIES.map((user, i) => (
+          <Button
+            key={user.id}
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="shrink-0"
+            aria-label={`Voir la story de ${user.name}`}
+            onClick={() => setViewerStart(i)}
+            icon={
+              <span className="flex size-7 items-center justify-center rounded-full bg-[color:var(--lkv-primary)] text-[length:var(--lkv-text-footnote)] font-bold uppercase text-[color:var(--lkv-text-inverted)]">
+                {user.name.charAt(0)}
               </span>
-              <span className="story-name">{user.name}</span>
-            </button>
-          ))}
-        </div>
+            }
+          >
+            {user.name}
+          </Button>
+        ))}
       </div>
 
       {viewerStart !== null && (

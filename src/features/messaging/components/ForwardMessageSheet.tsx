@@ -3,6 +3,7 @@
 import Icon from '@/components/ui/Icon';
 import React, { useState, useEffect, useMemo } from 'react';
 import Image from 'next/image';
+import { Card, EmptyState, ListItem, SearchField, Skeleton } from '@/components/ui';
 import type { Conversation, Message } from '../types/messaging.types';
 import { messagingService } from '../services/messagingService';
 import { MobileSheet } from './MobileSheet';
@@ -78,78 +79,64 @@ export const ForwardMessageSheet: React.FC<ForwardMessageSheetProps> = ({
       onClose={onClose}
       title={message ? 'Transférer le message' : 'Transférer'}
     >
-      <div className="relative">
-        <Icon
-          name="search"
-          className="w-4 h-4 text-[#5A574E] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"
-        />
-        <input
-          type="search"
-          inputMode="search"
-          enterKeyHint="search"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Chercher une conversation…"
-          aria-label="Chercher une conversation"
-          className="w-full py-2.5 text-[16px] glass-input font-medium"
-          style={{ minHeight: 44, borderRadius: 14, paddingLeft: 38, paddingRight: 14 }}
-        />
-      </div>
+      <SearchField
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        onClear={() => setSearch('')}
+        placeholder="Chercher une conversation…"
+        aria-label="Chercher une conversation"
+        inputMode="search"
+        enterKeyHint="search"
+      />
 
       {errorMsg && (
-        <p className="mt-3 px-3 py-2 rounded-xl bg-[#F5DDD9]/80 text-[#8A241B] text-[13px] font-semibold">
+        <Card tone="danger" variant="compact" className="mt-[var(--space-3)] text-[length:var(--lkv-text-footnote)] font-semibold">
           {errorMsg}
-        </p>
+        </Card>
       )}
 
-      <div className="space-y-2 mt-4">
+      <div className="mt-[var(--space-4)] space-y-[var(--space-2)]">
         {loading ? (
-          <div className="space-y-2">
+          <div className="space-y-[var(--space-2)]">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="h-14 bg-stone-100/80 rounded-2xl animate-pulse" />
+              <Skeleton key={i} className="h-14 w-full rounded-[var(--lkv-radius-md)]" />
             ))}
           </div>
         ) : candidates.length === 0 ? (
-          <p className="text-[15px] text-center text-[#5A574E] py-8">
-            Aucune conversation disponible pour le transfert.
-          </p>
+          <EmptyState
+            compact
+            title="Aucune conversation disponible"
+            description="Aucune conversation disponible pour le transfert."
+          />
         ) : (
           candidates.map((conv) => {
             const isGroup = conv.type === 'group';
             const title = conv.title || (isGroup ? "Groupe d'expédition" : 'Voyageur LKDV');
             return (
-              <button
+              <ListItem
                 key={conv.id}
-                type="button"
+                as="div"
                 disabled={sendingId !== null}
                 onClick={() => handleForward(conv)}
-                className="w-full text-left p-3.5 rounded-2xl bg-white/70 hover:bg-[#17402C]/10 border border-stone-200/60 hover:border-[#17402C]/30 transition-all flex items-center gap-3 group active:scale-[0.98] min-h-[60px]"
-              >
-                <div className="w-10 h-10 rounded-full overflow-hidden relative ring-1 ring-white/80 shrink-0">
-                  <Image
-                    src={conv.avatar_url || '/assets/images/no_image.png'}
-                    alt=""
-                    fill
-                    className="object-cover"
-                    sizes="40px"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).src = '/assets/images/no_image.png';
-                    }}
-                  />
-                </div>
-                <div className="flex-1 min-w-0 overflow-hidden">
-                  <p className="font-semibold text-[15px] text-[#17402C] truncate group-hover:font-bold">
-                    {title}
-                  </p>
-                  <p className="text-[13px] text-[#5A574E] truncate">
-                    {isGroup ? 'Groupe de voyage' : conv.other_member?.full_name || 'Voyageur LKDV'}
-                  </p>
-                </div>
-                <Icon
-                  name="send"
-                  className="w-4 h-4 text-[#5A574E] group-hover:text-[#17402C] shrink-0"
-                />
-              </button>
+                className="min-h-[60px]"
+                leading={
+                  <span className="relative size-10 shrink-0 overflow-hidden rounded-full ring-1 ring-[color:var(--glass-border)]">
+                    <Image
+                      src={conv.avatar_url || '/assets/images/no_image.png'}
+                      alt=""
+                      fill
+                      className="object-cover"
+                      sizes="40px"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = '/assets/images/no_image.png';
+                      }}
+                    />
+                  </span>
+                }
+                title={title}
+                subtitle={isGroup ? 'Groupe de voyage' : conv.other_member?.full_name || 'Voyageur LKDV'}
+                trailing={<Icon name="send" className="size-4 text-[color:var(--lkv-text-muted)]" aria-hidden="true" />}
+              />
             );
           })
         )}

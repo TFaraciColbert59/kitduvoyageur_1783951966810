@@ -28,28 +28,28 @@ export const TrailCard: React.FC<TrailCardProps> = ({ meta, isMine }) => {
   return (
     <Link
       href={href}
-      className={`mt-2 max-w-[240px] rounded-2xl px-3.5 py-3 flex flex-col gap-1.5 ${
-        isMine ? 'bg-white/15 border-white/30' : 'bg-white/70 border-stone-200/70'
-      } border shadow-sm active:scale-[0.98] transition-transform`}
+      className={`mt-[var(--space-2)] flex max-w-[240px] flex-col gap-[var(--space-1)] rounded-[var(--lkv-radius-md)] border px-[var(--space-3)] py-[var(--space-3)] shadow-elevation-1 transition-transform active:scale-[0.98] ${
+        isMine ? 'border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)]' : 'border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-card)]'
+      }`}
     >
       <span
-        className={`text-[10px] font-bold uppercase tracking-wider ${
-          isMine ? 'text-white/80' : 'text-[#2D6B4A]'
+        className={`text-[length:var(--lkv-text-caption-2)] font-bold uppercase tracking-wider ${
+          isMine ? 'text-[color:var(--lkv-text-inverted)]/80' : 'text-[color:var(--lkv-forest-700)]'
         }`}
       >
         🥾 Randonnée
       </span>
       <p
-        className={`text-[14px] font-bold leading-snug ${
-          isMine ? 'text-white' : 'text-[#17402C]'
+        className={`text-[length:var(--lkv-text-caption)] font-bold leading-snug ${
+          isMine ? 'text-[color:var(--lkv-text-inverted)]' : 'text-[color:var(--lkv-text-primary)]'
         }`}
       >
         {title}
       </p>
       {(km || deniv) && (
         <p
-          className={`text-[12px] font-medium ${
-            isMine ? 'text-white/80' : 'text-[#5A574E]'
+          className={`text-[length:var(--lkv-text-caption)] font-medium ${
+            isMine ? 'text-[color:var(--lkv-text-inverted)]/80' : 'text-[color:var(--lkv-text-secondary)]'
           }`}
         >
           {[km, deniv, meta.region].filter(Boolean).join(' · ')}

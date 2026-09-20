@@ -143,8 +143,7 @@ export const ConversationRow: React.FC<ConversationRowProps> = ({
           elle ne peut donc pas transparaître derrière la carte translucide. */}
       {(dx < 0 || snappedOpen) && (
         <div
-          className="absolute inset-y-0 right-0 flex items-stretch"
-          style={{ width: REVEAL_WIDTH }}
+          className="absolute inset-y-0 right-0 flex w-32 items-stretch"
         >
           <div className="flex-1 flex items-center justify-center gap-0">
             {isPending ? (
@@ -153,7 +152,7 @@ export const ConversationRow: React.FC<ConversationRowProps> = ({
                   type="button"
                   onClick={() => fire('accept')}
                   aria-label="Accepter la demande"
-                  className="h-full flex-1 bg-[#2D6B4A] text-white flex flex-col items-center justify-center gap-1 active:opacity-85"
+                  className="h-full flex-1 bg-[color:var(--lkv-forest-700)] text-[color:var(--lkv-text-inverted)] flex flex-col items-center justify-center gap-1 active:opacity-85"
                 >
                   <Icon name="check" className="w-5 h-5" />
                   <span className="text-[9px] font-bold">Accepter</span>
@@ -162,7 +161,7 @@ export const ConversationRow: React.FC<ConversationRowProps> = ({
                   type="button"
                   onClick={() => fire('decline')}
                   aria-label="Refuser la demande"
-                  className="h-full flex-1 bg-[#8A241B] text-white flex flex-col items-center justify-center gap-1 active:opacity-85"
+                  className="h-full flex-1 bg-[color:var(--lkv-danger)] text-[color:var(--lkv-text-inverted)] flex flex-col items-center justify-center gap-1 active:opacity-85"
                 >
                   <Icon name="x" className="w-5 h-5" />
                   <span className="text-[9px] font-bold">Refuser</span>
@@ -174,7 +173,7 @@ export const ConversationRow: React.FC<ConversationRowProps> = ({
                   type="button"
                   onClick={() => fire('archive')}
                   aria-label={conversation.is_archived ? 'Désarchiver' : 'Archiver'}
-                  className="h-full flex-1 bg-[#17402C] text-white flex flex-col items-center justify-center gap-1 active:opacity-85"
+                  className="h-full flex-1 bg-[color:var(--lkv-primary)] text-[color:var(--lkv-text-inverted)] flex flex-col items-center justify-center gap-1 active:opacity-85"
                 >
                   {conversation.is_archived ? (
                     <Icon name="archive-restore" className="w-5 h-5" />
@@ -193,7 +192,7 @@ export const ConversationRow: React.FC<ConversationRowProps> = ({
                       ? 'Réactiver les notifications'
                       : 'Masquer les notifications'
                   }
-                  className="h-full flex-1 bg-[#C89A3B] text-white flex flex-col items-center justify-center gap-1 active:opacity-85"
+                  className="h-full flex-1 bg-[color:var(--lkv-warning)] text-[color:var(--lkv-text-inverted)] flex flex-col items-center justify-center gap-1 active:opacity-85"
                 >
                   {conversation.is_muted ? (
                     <Icon name="bell" className="w-5 h-5" />
@@ -238,11 +237,11 @@ export const ConversationRow: React.FC<ConversationRowProps> = ({
         }`}
         className={`w-full min-h-[76px] text-left p-3.5 rounded-2xl flex items-center gap-3.5 relative border active:scale-[0.985] ${
           isSelected
-            ? 'bg-[#17402C]/10 border-[#17402C]/30 shadow-xs ring-1 ring-[#17402C]/20'
+            ? 'bg-[color:var(--lkv-primary)]/10 border-[color:var(--lkv-primary)]/30 shadow-elevation-1 ring-1 ring-[color:var(--lkv-primary)]/20'
             : unreadCount > 0
               ? // Conversation avec messages non lus : ombre portée douce (pas de compteur).
-                'bg-white/95 border-white/90 shadow-md'
-              : 'bg-white/95 border-white/85 shadow-2xs'
+                'bg-[color:var(--lkv-surface-card)]/95 border-[color:var(--glass-border)] shadow-elevation-3'
+              : 'bg-[color:var(--lkv-surface-card)]/95 border-[color:var(--glass-border)] shadow-elevation-1'
         }`}
         style={{
           transform: `translate3d(${dx}px,0,0)`,
@@ -263,7 +262,7 @@ export const ConversationRow: React.FC<ConversationRowProps> = ({
             }
             title={profileId ? `Voir le profil de ${title}` : undefined}
             aria-label={profileId ? `Voir le profil de ${title}` : undefined}
-            className="block w-12 h-12 rounded-full overflow-hidden relative ring-2 ring-white/90 shadow-xs bg-stone-100"
+            className="block w-12 h-12 rounded-full overflow-hidden relative ring-2 ring-[color:var(--glass-border)] shadow-elevation-1 bg-[color:var(--lkv-surface-muted)]"
           >
             <Image
               src={avatarUrl}
@@ -277,7 +276,7 @@ export const ConversationRow: React.FC<ConversationRowProps> = ({
             />
           </span>
           {isGroup && (
-            <span className="absolute -bottom-1 -right-1 bg-[#17402C] text-white rounded-full p-1 shadow-xs border border-white">
+            <span className="absolute -bottom-1 -right-1 bg-[color:var(--lkv-primary)] text-[color:var(--lkv-text-inverted)] rounded-full p-1 shadow-xs border border-white">
               <Icon name="users" className="w-3 h-3" />
             </span>
           )}
@@ -286,7 +285,7 @@ export const ConversationRow: React.FC<ConversationRowProps> = ({
         <div className="flex-1 min-w-0">
           <div className="flex items-baseline justify-between gap-2 mb-1">
             <h4
-              className={`text-[15px] truncate text-[#17402C] ${
+              className={`text-[length:var(--lkv-text-subheadline)] truncate text-[color:var(--lkv-text-primary)] ${
                 unreadCount > 0 ? 'font-bold' : 'font-semibold'
               }`}
             >
@@ -303,14 +302,14 @@ export const ConversationRow: React.FC<ConversationRowProps> = ({
                 }
                 className={
                   profileId
-                    ? 'cursor-pointer hover:underline decoration-[#A3C4A3] underline-offset-2'
+                    ? 'cursor-pointer hover:underline decoration-[color:var(--lkv-sage-300)] underline-offset-2'
                     : ''
                 }
               >
                 {title}
               </span>
             </h4>
-            <span className="text-[12px] text-[#5A574E] shrink-0 font-medium font-mono tabular-nums">
+            <span className="text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-secondary)] shrink-0 font-medium font-mono tabular-nums">
               {formatConversationTimestamp(conversation.last_message_at)}
             </span>
           </div>
@@ -318,7 +317,7 @@ export const ConversationRow: React.FC<ConversationRowProps> = ({
           <div className="flex items-center justify-between gap-2">
             <p
               className={`text-xs truncate leading-snug ${
-                unreadCount > 0 ? 'text-[#14140F] font-semibold' : 'text-[#5A574E]'
+                unreadCount > 0 ? 'text-[color:var(--lkv-text-primary)] font-semibold' : 'text-[color:var(--lkv-text-secondary)]'
               }`}
             >
               {isGroup && lastMsg?.sender_name ? `${lastMsg.sender_name.split(' ')[0]} : ` : ''}
@@ -327,7 +326,7 @@ export const ConversationRow: React.FC<ConversationRowProps> = ({
 
             <span className="flex items-center gap-1.5 shrink-0">
               {conversation.is_muted && (
-                <Icon name="bell-off" className="w-3.5 h-3.5 text-[#8C8779]" />
+                <Icon name="bell-off" className="w-3.5 h-3.5 text-[color:var(--lkv-text-subtle)]" />
               )}
             </span>
           </div>

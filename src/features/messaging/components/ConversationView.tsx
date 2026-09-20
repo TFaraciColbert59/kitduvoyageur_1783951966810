@@ -4,6 +4,7 @@ import Icon from '@/components/ui/Icon';
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
+import { Button, HeaderBackButton, IconButton, PageHeader } from '@/components/ui';
 import type {
   Conversation,
   UserProfileSummary,
@@ -214,32 +215,36 @@ export const ConversationView: React.FC<ConversationViewProps> = ({
     }
   };
 
-  return (
-    <div className="flex flex-col h-full w-full glass rounded-none md:rounded-3xl overflow-hidden relative">
-      {/* Top Header avec safe-area iOS */}
-      <div className="pt-[calc(env(safe-area-inset-top,0px)+8px)] md:pt-3 p-3 bg-white/90 backdrop-blur-2xl border-b border-stone-200/60 flex items-center justify-between z-10 shrink-0 shadow-2xs">
-        <div className="flex items-center gap-2 sm:gap-3 overflow-hidden">
-          {onBack && (
-            <button
-              onClick={() => {
-                haptic('light');
-                onBack();
-              }}
-              aria-label="Retour aux conversations"
-              className="glass-circle-btn w-10 h-10 text-[#17402C] shadow-xs active:scale-95 shrink-0"
-              title="Retour aux conversations"
-            >
-              <Icon name="arrow-left" className="w-5 h-5" />
-            </button>
-          )}
+  const headerTargetLabel = isGroup ? 'Gérer le groupe' : `Voir le profil de ${title}`;
 
-          <div
-            className="relative shrink-0"
-            style={{ cursor: isGroup || otherProfileId ? 'pointer' : 'default' }}
-            onClick={openHeaderTarget}
-            title={isGroup ? 'Gérer le groupe' : `Voir le profil de ${title}`}
-          >
-            <div className="w-10 h-10 rounded-full overflow-hidden relative ring-2 ring-white/90 shadow-xs bg-stone-100">
+  return (
+    <div className="relative flex h-full w-full flex-col overflow-hidden rounded-none bg-[color:var(--lkv-surface-card)] md:rounded-[var(--lkv-radius-lg)]">
+      {/* Top Header avec safe-area iOS */}
+      <PageHeader
+        className="z-10 shrink-0 border-b border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface)]/90 px-[var(--space-3)] pb-[var(--space-3)] pt-[calc(var(--safe-top)+8px)] shadow-elevation-1 backdrop-blur-[var(--blur-lg)] md:pt-[var(--space-3)]"
+        back={
+          <div className="flex items-center gap-[var(--space-2)]">
+            {onBack && (
+              <HeaderBackButton
+                label="Retour aux conversations"
+                title="Retour aux conversations"
+                onClick={(event) => {
+                  event.preventDefault();
+                  haptic('light');
+                  onBack();
+                }}
+              />
+            )}
+            <IconButton
+              type="button"
+              variant="ghost"
+              onClick={openHeaderTarget}
+              title={headerTargetLabel}
+              aria-label={headerTargetLabel}
+              className={`relative size-10 shrink-0 overflow-hidden p-0 ring-2 ring-[color:var(--glass-border)] shadow-elevation-1 ${
+                isGroup || otherProfileId ? 'cursor-pointer' : 'cursor-default'
+              }`}
+            >
               <Image
                 src={avatarUrl}
                 alt={title}
@@ -250,59 +255,57 @@ export const ConversationView: React.FC<ConversationViewProps> = ({
                   (e.target as HTMLImageElement).src = '/assets/images/no_image.png';
                 }}
               />
-            </div>
-            {/*
-              Pastille de présence retirée : elle était affichée en dur sans
-              channel de présence Supabase (cf. audit 1.6). Rebrancher quand un
-              channel rejoin/leave ou un champ last_seen_at existera.
-            */}
+            </IconButton>
           </div>
-
-          <div
-            className="overflow-hidden"
-            style={{ cursor: isGroup || otherProfileId ? 'pointer' : 'default' }}
+        }
+        title={
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
             onClick={openHeaderTarget}
+            className="max-w-full gap-[var(--space-1)] px-0 text-left"
+            title={headerTargetLabel}
           >
-            <h3 className="text-sm font-bold text-[#17402C] leading-tight truncate flex items-center gap-1.5">
-              <span className="truncate">{title}</span>
-              {isGroup && <Icon name="users" className="w-3.5 h-3.5 text-[#5A574E] shrink-0" />}
-            </h3>
-            <p className="text-[11px] text-[#486944] font-medium truncate">
-              {isGroup ? 'Groupe de Voyage' : 'Membre LKDV'}
-            </p>
-          </div>
-        </div>
+            <span className="truncate">{title}</span>
+            {isGroup && <Icon name="users" className="size-3.5 shrink-0 text-[color:var(--lkv-text-secondary)]" aria-hidden="true" />}
+          </Button>
+        }
+        subtitle={isGroup ? 'Groupe de Voyage' : 'Membre LKDV'}
+        actions={
+          <>
+            {isGroup && (
+              <IconButton
+                type="button"
+                variant="glass"
+                onClick={() => {
+                  haptic('light');
+                  setShowGroupSettingsModal(true);
+                }}
+                aria-label="Gérer le groupe"
+                title="Gérer le groupe"
+                className="shadow-elevation-1"
+              >
+                <Icon name="users" className="size-5" aria-hidden="true" />
+              </IconButton>
+            )}
 
-        <div className="flex items-center gap-1.5 shrink-0">
-          {isGroup && (
-            <button
+            <IconButton
               type="button"
+              variant="glass"
               onClick={() => {
                 haptic('light');
-                setShowGroupSettingsModal(true);
+                setShowOptionsModal(true);
               }}
-              aria-label="Gérer le groupe"
-              className="glass-circle-btn w-10 h-10 text-[#17402C] shadow-xs active:scale-95"
-              title="Gérer le groupe"
+              aria-label="Options de conversation"
+              title="Options de conversation"
+              className="shadow-elevation-1"
             >
-              <Icon name="users" className="w-5 h-5" />
-            </button>
-          )}
-
-          <button
-            type="button"
-            onClick={() => {
-              haptic('light');
-              setShowOptionsModal(true);
-            }}
-            aria-label="Options de conversation"
-            className="glass-circle-btn w-10 h-10 text-[#17402C] shadow-xs active:scale-95"
-            title="Options de conversation"
-          >
-            <Icon name="more-vertical" className="w-5 h-5" />
-          </button>
-        </div>
-      </div>
+              <Icon name="more-vertical" className="size-5" aria-hidden="true" />
+            </IconButton>
+          </>
+        }
+      />
 
       <MessageList
         key={conversation.id}
@@ -319,14 +322,16 @@ export const ConversationView: React.FC<ConversationViewProps> = ({
 
       {/* Message Request Action Bar (Pending status) */}
       {convStatus === 'pending' ? (
-        <div className="p-4 glass border-t border-white/40 flex flex-col gap-3 animate-slide-up shrink-0 pb-[calc(env(safe-area-inset-bottom,0px)+12px)]">
-          <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-full bg-[#C89A3B]/15 text-[#C89A3B] flex items-center justify-center shrink-0">
-              <Icon name="shield-alert" className="w-5 h-5" />
+        <div className="animate-slide-up flex shrink-0 flex-col gap-[var(--space-3)] border-t border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface)]/95 px-[var(--space-4)] pb-[calc(var(--safe-bottom)+var(--space-3))] pt-[var(--space-4)] backdrop-blur-[var(--blur-lg)]">
+          <div className="flex items-center gap-[var(--space-2)]">
+            <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-[color:var(--lkv-warning)]/15 text-[color:var(--lkv-warning)]">
+              <Icon name="shield-alert" className="size-5" aria-hidden="true" />
             </div>
             <div>
-              <p className="text-xs font-bold text-[#17402C]">Demande de message</p>
-              <p className="text-[11px] text-[#5A7064]">
+              <p className="text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)]">
+                Demande de message
+              </p>
+              <p className="text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">
                 Souhaitez-vous autoriser {conversation.other_member?.full_name || 'ce voyageur'} à
                 échanger avec vous ?
               </p>
@@ -335,32 +340,33 @@ export const ConversationView: React.FC<ConversationViewProps> = ({
 
           {/* Sous 360px les trois actions ne tiennent pas sur une ligne :
               flex-wrap laisse « Bloquer » passer à la ligne suivante. */}
-          <div className="flex flex-wrap items-center gap-2 pt-1">
-            <button
+          <div className="flex flex-wrap items-center gap-[var(--space-2)] pt-[var(--space-1)]">
+            <Button
+              type="button"
+              variant="primary"
               onClick={handleAcceptRequest}
-              className="flex-1 glass-capsule-btn primary text-xs font-bold min-h-[44px] flex items-center justify-center gap-1.5 active:scale-95"
+              className="flex-1"
+              icon={<Icon name="check" className="size-4" aria-hidden="true" />}
             >
-              <Icon name="check" className="w-4 h-4" />
               Accepter
-            </button>
-            <button
+            </Button>
+            <Button
+              type="button"
+              variant="secondary"
               onClick={handleDeclineRequest}
-              className="flex-1 glass-capsule-btn text-xs font-semibold min-h-[44px] flex items-center justify-center gap-1.5 active:scale-95"
+              className="flex-1"
+              icon={<Icon name="x" className="size-4" aria-hidden="true" />}
             >
-              <Icon name="x" className="w-4 h-4" />
               Refuser
-            </button>
-            <button
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
               onClick={handleOpenReportBlock}
-              className="glass-capsule-btn px-4 text-xs font-semibold min-h-[44px] flex items-center justify-center gap-1.5 active:scale-95"
-              style={{
-                background: 'color-mix(in oklab, var(--danger) 14%, transparent)',
-                color: 'var(--danger)',
-                borderColor: 'color-mix(in oklab, var(--danger) 35%, transparent)',
-              }}
+              className="border border-[color:var(--lkv-danger)]/35 text-[color:var(--lkv-danger)] hover:bg-[color:var(--lkv-danger-bg)]"
             >
               Bloquer
-            </button>
+            </Button>
           </div>
         </div>
       ) : (
@@ -415,7 +421,7 @@ export const ConversationView: React.FC<ConversationViewProps> = ({
       />
 
       {/* Transfert de message — ce sheet passe au-dessus du calque conversation
-          (MobileSheet en z-[10010], conversaton en z-[10000]). */}
+          (MobileSheet au-dessus du calque conversation). */}
       <ForwardMessageSheet
         isOpen={forwardMessage !== null}
         onClose={() => setForwardMessage(null)}

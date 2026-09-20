@@ -3,6 +3,7 @@
 import Icon from '@/components/ui/Icon';
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
+import { Card, Skeleton } from '@/components/ui';
 import type { OpenGraphPreviewData } from '../types/messaging.types';
 
 const ogCache = new Map<string, OpenGraphPreviewData | null>();
@@ -61,31 +62,31 @@ export const OpenGraphCard: React.FC<OpenGraphCardProps> = ({ url, isMine }) => 
   if (failed || (!loading && !ogData)) return null;
 
   return (
-    <div className="mt-2 overflow-hidden rounded-xl border border-[#17402C]/10 transition-all hover:shadow-md">
+    <Card variant="compact" className="mt-[var(--space-2)] overflow-hidden p-0 transition-shadow hover:shadow-elevation-2">
       {loading ? (
-        <div className="p-3 bg-[#17402C]/5 animate-pulse flex flex-col gap-2">
-          <div className="h-28 bg-[#C8DAC3]/40 rounded-lg w-full" />
-          <div className="h-3 bg-[#C8DAC3]/60 rounded w-3/4" />
-          <div className="h-2 bg-[#C8DAC3]/40 rounded w-1/2" />
+        <div className="flex animate-pulse flex-col gap-[var(--space-2)] bg-[color:var(--lkv-primary)]/5 p-[var(--space-3)]">
+          <Skeleton className="h-28 w-full rounded-[var(--lkv-radius-sm)]" />
+          <Skeleton className="h-3 w-3/4 rounded" />
+          <Skeleton className="h-2 w-1/2 rounded" />
         </div>
       ) : ogData ? (
         <a
           href={ogData.url}
           target="_blank"
           rel="noopener noreferrer"
-          className={`block text-left group ${
+          className={`group block text-left ${
             isMine
-              ? 'bg-white/15 text-white'
-              : 'bg-[#F1EDE6]/90 text-[#17402C] border border-[#E4DED3]/80'
+              ? 'bg-[color:var(--card-tint-strong)] text-[color:var(--lkv-text-inverted)]'
+              : 'border border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-card)] text-[color:var(--lkv-text-primary)]'
           }`}
         >
           {ogData.image && (
-            <div className="relative w-full h-32 bg-[#17402C]/10 overflow-hidden">
+            <div className="relative h-32 w-full overflow-hidden bg-[color:var(--lkv-primary)]/10">
               <Image
                 src={ogData.image}
                 alt={ogData.title}
                 fill
-                className="object-cover group-hover:scale-105 transition-transform duration-300"
+                className="object-cover transition-transform duration-300 group-hover:scale-105"
                 sizes="(max-width: 768px) 100vw, 300px"
                 onError={(e) => {
                   (e.target as HTMLElement).style.display = 'none';
@@ -93,23 +94,23 @@ export const OpenGraphCard: React.FC<OpenGraphCardProps> = ({ url, isMine }) => 
               />
             </div>
           )}
-          <div className="p-2.5 space-y-1">
-            <div className="flex items-center gap-1.5 text-[10px] font-semibold opacity-75">
-              <Icon name="globe" className="w-3 h-3 shrink-0" />
+          <div className="space-y-[var(--space-1)] p-[var(--space-3)]">
+            <div className="flex items-center gap-[var(--space-1)] text-[length:var(--lkv-text-caption-2)] font-semibold opacity-75">
+              <Icon name="globe" className="size-3 shrink-0" />
               <span className="truncate">{ogData.domain}</span>
-              <Icon name="external-link" className="w-2.5 h-2.5 shrink-0 ml-auto opacity-60" />
+              <Icon name="external-link" className="ml-auto size-2.5 shrink-0 opacity-60" />
             </div>
-            <p className="text-xs font-bold leading-tight line-clamp-1 group-hover:underline">
+            <p className="line-clamp-1 text-[length:var(--lkv-text-caption)] font-bold leading-tight group-hover:underline">
               {ogData.title}
             </p>
             {ogData.description && (
-              <p className="text-[11px] opacity-80 leading-snug line-clamp-2">
+              <p className="line-clamp-2 text-[length:var(--lkv-text-caption)] leading-snug opacity-80">
                 {ogData.description}
               </p>
             )}
           </div>
         </a>
       ) : null}
-    </div>
+    </Card>
   );
 };

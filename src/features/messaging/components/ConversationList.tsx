@@ -2,6 +2,7 @@
 
 import Icon from '@/components/ui/Icon';
 import React, { useState, useMemo, useEffect } from 'react';
+import { Card, EmptyState, IconButton, SearchField, Skeleton, Tabs } from '@/components/ui';
 import type { Conversation } from '../types/messaging.types';
 import { ConversationRow, type SwipeAction } from './ConversationRow';
 import { ConversationOptionsSheet } from './ConversationOptionsSheet';
@@ -37,24 +38,21 @@ const MESSAGERIE_TAB_CHANGE = 'messagerie-tab-change';
 
 export const ConversationListSkeleton = () => (
   <div
-    className="space-y-2 p-1 animate-pulse"
+    className="space-y-[var(--space-2)] p-[var(--space-1)]"
     aria-busy="true"
     aria-label="Chargement des conversations"
   >
     {[1, 2, 3, 4, 5].map((i) => (
-      <div
-        key={i}
-        className="w-full min-h-[76px] p-3.5 rounded-2xl bg-white/40 border border-white/60 flex items-center gap-3.5"
-      >
-        <div className="w-12 h-12 rounded-full bg-stone-200/70 shrink-0" />
-        <div className="flex-1 min-w-0 space-y-2">
-          <div className="flex items-center justify-between gap-2">
-            <div className="h-3.5 bg-stone-200/80 rounded-md w-28" />
-            <div className="h-2.5 bg-stone-200/60 rounded-md w-10" />
+      <Card key={i} variant="compact" className="flex min-h-[76px] items-center gap-[var(--space-3)]">
+        <Skeleton className="size-12 shrink-0 rounded-full" />
+        <div className="min-w-0 flex-1 space-y-[var(--space-2)]">
+          <div className="flex items-center justify-between gap-[var(--space-2)]">
+            <Skeleton className="h-3.5 w-28 rounded-[var(--lkv-radius-xs)]" />
+            <Skeleton className="h-2.5 w-10 rounded-[var(--lkv-radius-xs)]" />
           </div>
-          <div className="h-3 bg-stone-200/60 rounded-md w-44" />
+          <Skeleton className="h-3 w-44 rounded-[var(--lkv-radius-xs)]" />
         </div>
-      </div>
+      </Card>
     ))}
   </div>
 );
@@ -146,94 +144,65 @@ export const ConversationList: React.FC<ConversationListProps> = ({
   }, [conversations, activeTab, debouncedSearch]);
 
   return (
-    <div className="flex flex-col h-full w-full glass rounded-none md:rounded-3xl overflow-hidden relative">
+    <Card className="relative flex h-full w-full flex-col overflow-hidden rounded-none bg-[color:var(--lkv-surface-card)] p-0 md:rounded-[var(--lkv-radius-lg)]">
       {/* Chrome haut — recherche + bouton « + » unique (gère le safe-area top) */}
-      <div className="msg-safe-top shrink-0 px-3 md:px-4 pb-3 border-b border-stone-200/60 bg-white/70 backdrop-blur-2xl">
-        <div className="flex items-center gap-2">
-          <div className="relative flex-1 min-w-0">
-            <Icon
-              name="search"
-              className="w-4 h-4 text-[#5A574E] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"
-            />
-            <input
-              type="search"
-              inputMode="search"
-              enterKeyHint="search"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Rechercher un voyageur, un groupe…"
-              aria-label="Rechercher une conversation"
-              className="w-full text-[16px] glass-input font-medium"
-              style={{
-                minHeight: 44,
-                borderRadius: 14,
-                // Le padding Tailwind est écrasé par .glass-input (10px 14px) :
-                // on force les marges inline pour dégager l'icône et le clear.
-                paddingLeft: 38,
-                paddingRight: 44,
-              }}
-            />
-            {search && (
-              <button
-                type="button"
-                onClick={() => {
-                  haptic('light');
-                  setSearch('');
-                  setDebouncedSearch('');
-                }}
-                aria-label="Effacer la recherche"
-                className="absolute right-1 top-1/2 -translate-y-1/2 w-11 h-11 flex items-center justify-center text-[#5A574E]"
-              >
-                <span className="glass-circle-btn w-7 h-7 flex items-center justify-center shadow-2xs">
-                  <Icon name="x" className="w-3.5 h-3.5" />
-                </span>
-              </button>
-            )}
-          </div>
+      <div className="msg-safe-top shrink-0 border-b border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface)]/70 px-[var(--space-3)] pb-[var(--space-3)] backdrop-blur-[var(--blur-lg)] md:px-[var(--space-4)]">
+        <div className="flex items-center gap-[var(--space-2)]">
+          <SearchField
+            containerClassName="flex-1 min-w-0"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            onClear={() => {
+              haptic('light');
+              setSearch('');
+              setDebouncedSearch('');
+            }}
+            placeholder="Rechercher un voyageur, un groupe…"
+            aria-label="Rechercher une conversation"
+            inputMode="search"
+            enterKeyHint="search"
+          />
 
           {/* Bouton « + » unique — verre givré, comme les autres boutons ronds du site */}
-          <button
+          <IconButton
             type="button"
+            variant="solid"
             onClick={() => {
               haptic('medium');
               onNewConversation();
             }}
             aria-label="Nouvelle discussion"
-            className="glass-circle-btn w-11 h-11 shadow-md active:scale-95 flex items-center justify-center shrink-0"
+            className="shrink-0 shadow-elevation-2"
             title="Nouvelle discussion"
           >
-            <Icon name="plus" className="w-5 h-5" />
-          </button>
+            <Icon name="plus" className="size-5" aria-hidden="true" />
+          </IconButton>
         </div>
       </div>
 
       {/* Liste */}
-      <div
-        className="flex-1 overflow-y-auto overscroll-contain px-3 md:px-4 pt-3 space-y-2 custom-scrollbar"
-        style={{ WebkitOverflowScrolling: 'touch', paddingBottom: 12 }}
-      >
+      <div className="custom-scrollbar flex-1 space-y-[var(--space-2)] overflow-y-auto overscroll-contain px-[var(--space-3)] pb-[var(--space-3)] pt-[var(--space-3)] [-webkit-overflow-scrolling:touch] md:px-[var(--space-4)]">
         {loading ? (
           <ConversationListSkeleton />
         ) : filteredConversations.length === 0 ? (
-          <div className="text-center py-12 px-6">
-            <div className="w-14 h-14 rounded-full bg-[#17402C]/10 text-[#17402C] flex items-center justify-center mx-auto mb-3">
-              <Icon name="message-square" className="w-7 h-7" />
-            </div>
-            <p className="text-sm font-semibold text-[#17402C]">
-              {debouncedSearch
+          <EmptyState
+            compact
+            icon={<Icon name="message-square" size={28} aria-hidden="true" />}
+            title={
+              debouncedSearch
                 ? 'Aucun résultat'
                 : activeTab === 'requests'
                   ? 'Aucune demande en attente'
-                  : 'Aucune discussion'}
-            </p>
-            <p className="text-[13px] text-[#5A574E] mt-1 leading-relaxed max-w-[240px] mx-auto">
-              {debouncedSearch
+                  : 'Aucune discussion'
+            }
+            description={
+              debouncedSearch
                 ? 'Essayez un autre nom de voyageur ou de groupe.'
                 : activeTab === 'requests'
                   ? 'Les nouvelles demandes de message apparaîtront ici.'
-                  : 'Lancez une discussion avec un membre de la communauté.'}
-            </p>
-          </div>
+                  : 'Lancez une discussion avec un membre de la communauté.'
+            }
+          />
         ) : (
           filteredConversations.map((conv) => (
             <ConversationRow
@@ -262,39 +231,26 @@ export const ConversationList: React.FC<ConversationListProps> = ({
 
       {/* Onglets — DESKTOP uniquement (sidebar dual-pane). Sur mobile le
           filtre vit dans le tray d'extension de la BottomTabBar (canonique). */}
-      <div className="hidden md:block shrink-0 px-3 md:px-4 pt-2 pb-3 mt-1 border-t border-stone-200/60 bg-white/40 backdrop-blur-2xl">
-        <div
-          role="tablist"
-          aria-label="Filtrer les conversations"
-          className="glass-capsule-bar w-full justify-between gap-1"
-        >
-          {TABS.map((t) => {
-            const isActive = activeTab === t.id;
-            return (
-              <button
-                key={t.id}
-                type="button"
-                role="tab"
-                aria-selected={isActive}
-                onClick={() => {
-                  haptic('light');
-                  setActiveTab(t.id);
-                }}
-                className={`glass-capsule-segment flex-1 !min-w-0 min-h-[36px] !px-1.5 text-[13px] flex items-center justify-center gap-1 ${
-                  isActive ? 'active' : ''
-                }`}
-              >
-                <span className="truncate">{t.label}</span>
-                {t.id === 'requests' && pendingRequestsCount > 0 && (
-                  <span className="px-1.5 min-w-[18px] h-[18px] bg-[#C89A3B] text-white rounded-full text-[10px] font-mono font-bold flex items-center justify-center">
-                    {pendingRequestsCount}
-                  </span>
-                )}
-              </button>
-            );
-          })}
-        </div>
+      <div className="mt-[var(--space-1)] hidden shrink-0 border-t border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface)]/40 px-[var(--space-3)] pb-[var(--space-3)] pt-[var(--space-2)] backdrop-blur-[var(--blur-lg)] md:block md:px-[var(--space-4)]">
+        <Tabs
+          ariaLabel="Filtrer les conversations"
+          value={activeTab}
+          onChange={(id) => {
+            haptic('light');
+            setActiveTab(id as TabId);
+          }}
+          options={TABS.map((t) => ({
+            id: t.id,
+            label: t.label,
+            badge:
+              t.id === 'requests' && pendingRequestsCount > 0 ? (
+                <span className="ml-[var(--space-1)] flex size-[18px] min-w-[18px] items-center justify-center rounded-full bg-[color:var(--lkv-warning)] px-1.5 font-mono text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-inverted)]">
+                  {pendingRequestsCount}
+                </span>
+              ) : undefined,
+          }))}
+        />
       </div>
-    </div>
+    </Card>
   );
 };

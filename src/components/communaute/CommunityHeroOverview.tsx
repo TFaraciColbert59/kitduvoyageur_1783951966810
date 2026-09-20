@@ -1,4 +1,5 @@
 import React from 'react';
+import { Button, Card } from '@/components/ui';
 
 interface Props {
   carnetsCount: number;
@@ -14,21 +15,23 @@ export default function CommunityHeroOverview({
   onNavigateTab,
 }: Props) {
   return (
-    <div className="glass rounded-[1.5rem] p-4 border border-white/50 shadow-xs flex flex-col md:flex-row justify-between items-center gap-4">
+    <Card variant="featured" className="flex flex-col items-center justify-between gap-[var(--space-4)] md:flex-row">
       <div>
-        <h2 className="font-display font-bold text-xl text-[var(--lkv-primary)]">Le Camp de Base</h2>
-        <p className="text-sm text-[var(--lkv-text-muted)] mt-1">
+        <h2 className="font-display text-[length:var(--lkv-text-title-sm)] font-bold text-[color:var(--lkv-primary)]">
+          Le Camp de Base
+        </h2>
+        <p className="mt-[var(--space-1)] text-[length:var(--lkv-text-footnote)] text-[color:var(--lkv-text-muted)]">
           Découvrez {carnetsCount} carnets, rejoignez {clubsCount} clubs ou intégrez {groupsCount} groupes.
         </p>
       </div>
-      <div className="flex gap-2">
-        <button onClick={() => onNavigateTab('carnets')} className="glass-capsule-btn text-xs font-bold px-3 py-1.5">
+      <div className="flex gap-[var(--space-2)]">
+        <Button variant="secondary" size="sm" onClick={() => onNavigateTab('carnets')}>
           Voir les carnets
-        </button>
-        <button onClick={() => onNavigateTab('clubs')} className="glass-capsule-btn text-xs font-bold px-3 py-1.5">
+        </Button>
+        <Button variant="secondary" size="sm" onClick={() => onNavigateTab('clubs')}>
           Voir les clubs
-        </button>
+        </Button>
       </div>
-    </div>
+    </Card>
   );
 }

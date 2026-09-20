@@ -1,7 +1,8 @@
-﻿'use client';
+'use client';
 
 import Icon from '@/components/ui/Icon';
 import React, { useState, useEffect } from 'react';
+import { Card, Skeleton } from '@/components/ui';
 import { GPXEngine, ParsedGPXData } from '@/features/hiking/gpx/GPXEngine';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 
@@ -135,23 +136,24 @@ export const GPXPreviewCard: React.FC<GPXPreviewCardProps> = ({
   }, [gpxData]);
 
   return (
-    <div
-      className={`my-2 p-3 rounded-2xl overflow-hidden border transition-all ${
+    <Card
+      variant="compact"
+      className={`my-[var(--space-2)] overflow-hidden ${
         isMine
-          ? 'bg-white/10 text-[#EEF3EC] border-white/20'
-          : 'bg-stone-50/95 text-[#14140F] border-stone-200/80 shadow-xs'
+          ? 'border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] text-[color:var(--lkv-text-inverted)]'
+          : 'border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-card)] text-[color:var(--lkv-text-primary)] shadow-elevation-1'
       }`}
     >
-      <div className="flex items-center justify-between gap-2 mb-2">
-        <div className="flex items-center gap-2 overflow-hidden">
-          <div className="w-8 h-8 rounded-full bg-[#5B7F55]/20 text-[#17402C] flex items-center justify-center shrink-0">
-            <Icon name="navigation" className="w-4 h-4" />
+      <div className="mb-[var(--space-2)] flex items-center justify-between gap-[var(--space-2)]">
+        <div className="flex items-center gap-[var(--space-2)] overflow-hidden">
+          <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-[color:var(--lkv-secondary)]/20 text-[color:var(--lkv-text-primary)]">
+            <Icon name="navigation" className="size-4" aria-hidden="true" />
           </div>
           <div className="overflow-hidden">
-            <h4 className="font-bold text-xs truncate leading-tight">
+            <h4 className="truncate text-[length:var(--lkv-text-caption)] font-bold leading-tight">
               {gpxData?.title || fileName}
             </h4>
-            <p className="text-[10px] opacity-75 font-mono">Fichier Tracé GPS (.gpx)</p>
+            <p className="font-mono text-[length:var(--lkv-text-caption-2)] opacity-75">Fichier Tracé GPS (.gpx)</p>
           </div>
         </div>
 
@@ -160,71 +162,79 @@ export const GPXPreviewCard: React.FC<GPXPreviewCardProps> = ({
             href={gpxUrl}
             download={fileName}
             onClick={() => haptic('light')}
-            className={`w-8 h-8 rounded-full flex items-center justify-center transition-all shrink-0 ${
-              isMine ? 'glass-circle-btn text-[#17402C]' : 'glass-circle-btn primary text-white'
+            className={`flex size-8 shrink-0 items-center justify-center rounded-full transition-colors ${
+              isMine
+                ? 'bg-[color:var(--card-tint-strong)] text-[color:var(--lkv-text-primary)]'
+                : 'bg-[color:var(--lkv-action)] text-[color:var(--lkv-text-inverted)]'
             }`}
             title="Télécharger le fichier GPX"
+            aria-label="Télécharger le fichier GPX"
           >
-            <Icon name="download" className="w-3.5 h-3.5" />
+            <Icon name="download" className="size-3.5" aria-hidden="true" />
           </a>
         )}
       </div>
 
       {loading ? (
-        <div className="h-20 bg-[#17402C]/5 animate-pulse rounded-xl flex items-center justify-center text-xs opacity-75">
-          Chargement de la trace GPS...
+        <div className="space-y-[var(--space-2)]">
+          <Skeleton className="h-20 w-full rounded-[var(--lkv-radius-sm)]" />
+          <div className="grid grid-cols-3 gap-[var(--space-1)]">
+            <Skeleton className="h-12 rounded-[var(--lkv-radius-sm)]" />
+            <Skeleton className="h-12 rounded-[var(--lkv-radius-sm)]" />
+            <Skeleton className="h-12 rounded-[var(--lkv-radius-sm)]" />
+          </div>
         </div>
       ) : error || !stats ? (
-        <div className="p-2 text-[11px] opacity-80 border border-dashed rounded-xl flex items-center gap-1.5">
-          <Icon name="map-pin" className="w-3.5 h-3.5 shrink-0 text-[#5B7F55]" />
+        <div className="flex items-center gap-[var(--space-1)] rounded-[var(--lkv-radius-sm)] border border-dashed border-[color:var(--lkv-border)] p-[var(--space-2)] text-[length:var(--lkv-text-caption)] opacity-80">
+          <Icon name="map-pin" className="size-3.5 shrink-0 text-[color:var(--lkv-secondary)]" aria-hidden="true" />
           <span className="truncate">Tracé GPX prêt pour synchronisation hors-ligne.</span>
         </div>
       ) : (
-        <div className="space-y-2">
+        <div className="space-y-[var(--space-2)]">
           {/* SVG Map Path Preview */}
-          <div className="relative w-full h-24 bg-[#17402C]/10 rounded-xl overflow-hidden flex items-center justify-center p-1 border border-[#17402C]/10">
-            <svg viewBox="0 0 240 90" className="w-full h-full">
+          <div className="relative flex h-24 w-full items-center justify-center overflow-hidden rounded-[var(--lkv-radius-sm)] border border-[color:var(--lkv-border)] bg-[color:var(--lkv-primary)]/10 p-[var(--space-1)]">
+            <svg viewBox="0 0 240 90" className="size-full">
               <polyline
                 fill="none"
-                stroke="#5B7F55"
+                stroke="var(--lkv-secondary)"
                 strokeWidth="3"
                 strokeLinecap="round"
                 strokeLinejoin="round"
                 points={svgPath}
               />
             </svg>
-            <div className="absolute bottom-1 right-2 text-[9px] font-mono opacity-60 font-semibold">
+            <div className="absolute bottom-1 right-2 font-mono text-[length:var(--lkv-text-caption-2)] font-semibold opacity-60">
               LKDV GPS Preview
             </div>
           </div>
 
           {/* Stats Grid */}
-          <div className="grid grid-cols-3 gap-1.5 text-center">
-            <div className="p-1.5 bg-[#17402C]/5 rounded-lg">
-              <span className="block text-[9px] uppercase tracking-wider font-semibold opacity-70">
+          <div className="grid grid-cols-3 gap-[var(--space-1)] text-center">
+            <div className="rounded-[var(--lkv-radius-sm)] bg-[color:var(--lkv-primary)]/5 p-[var(--space-1)]">
+              <span className="block text-[length:var(--lkv-text-caption-2)] font-semibold uppercase tracking-wider opacity-70">
                 Distance
               </span>
-              <span className="font-bold text-xs font-mono">{stats.distKm} km</span>
+              <span className="font-mono text-[length:var(--lkv-text-caption)] font-bold">{stats.distKm} km</span>
             </div>
 
-            <div className="p-1.5 bg-[#17402C]/5 rounded-lg">
-              <span className="block text-[9px] uppercase tracking-wider font-semibold opacity-70">
+            <div className="rounded-[var(--lkv-radius-sm)] bg-[color:var(--lkv-primary)]/5 p-[var(--space-1)]">
+              <span className="block text-[length:var(--lkv-text-caption-2)] font-semibold uppercase tracking-wider opacity-70">
                 Dénivelé D+
               </span>
-              <span className="font-bold text-xs font-mono text-[#5B7F55]">+{stats.dPlus} m</span>
+              <span className="font-mono text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-secondary)]">+{stats.dPlus} m</span>
             </div>
 
-            <div className="p-1.5 bg-[#17402C]/5 rounded-lg">
-              <span className="block text-[9px] uppercase tracking-wider font-semibold opacity-70">
+            <div className="rounded-[var(--lkv-radius-sm)] bg-[color:var(--lkv-primary)]/5 p-[var(--space-1)]">
+              <span className="block text-[length:var(--lkv-text-caption-2)] font-semibold uppercase tracking-wider opacity-70">
                 Alt. Max
               </span>
-              <span className="font-bold text-xs font-mono">
+              <span className="font-mono text-[length:var(--lkv-text-caption)] font-bold">
                 {stats.maxEle ? `${stats.maxEle} m` : '-'}
               </span>
             </div>
           </div>
         </div>
       )}
-    </div>
+    </Card>
   );
 };

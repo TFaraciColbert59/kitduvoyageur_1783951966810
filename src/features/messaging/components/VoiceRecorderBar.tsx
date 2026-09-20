@@ -2,6 +2,7 @@
 
 import Icon from '@/components/ui/Icon';
 import React, { useState, useEffect, useRef } from 'react';
+import { Button, IconButton } from '@/components/ui';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 
 interface VoiceRecorderBarProps {
@@ -98,68 +99,60 @@ export const VoiceRecorderBar: React.FC<VoiceRecorderBarProps> = ({
 
   if (permissionError) {
     return (
-      <div className="p-3 bg-[#F5DDD9]/90 border-t border-[#A8443A]/20 flex items-center justify-between gap-3 text-xs text-[#8A241B] font-medium">
-        <div className="flex items-center gap-2">
-          <Icon name="alert-circle" className="w-4 h-4 shrink-0 text-[#A8443A]" />
+      <div className="flex items-center justify-between gap-[var(--space-3)] border-t border-[color:var(--lkv-danger)]/20 bg-[color:var(--lkv-danger-bg)] p-[var(--space-3)] text-[length:var(--lkv-text-caption)] font-medium text-[color:var(--lkv-danger-dark)]">
+        <div className="flex items-center gap-[var(--space-2)]">
+          <Icon name="alert-circle" className="size-4 shrink-0 text-[color:var(--lkv-danger)]" aria-hidden="true" />
           <span>{permissionError}</span>
         </div>
-        <button
-          type="button"
-          onClick={onCancel}
-          className="px-3 py-1 rounded-full bg-[#A8443A]/15 text-[#8A241B] font-semibold shrink-0 min-h-[32px]"
-        >
+        <Button type="button" variant="secondary" size="sm" onClick={onCancel} className="shrink-0">
           Fermer
-        </button>
+        </Button>
       </div>
     );
   }
 
   return (
-    <div
-      className="p-3 glass border-t border-white/40 flex items-center justify-between gap-3 msg-sheet-in"
-      style={{
-        paddingBottom: 'max(calc(env(safe-area-inset-bottom, 0px) - var(--kb-inset, 0px)), 12px)',
-      }}
-    >
-      <div className="flex items-center gap-3">
+    <div className="msg-sheet-in flex items-center justify-between gap-[var(--space-3)] border-t border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] p-[var(--space-3)] pb-[max(calc(var(--safe-bottom)-var(--kb-inset,0px)),12px)] backdrop-blur-[var(--blur-md)]">
+      <div className="flex items-center gap-[var(--space-3)]">
         <div className="relative flex items-center justify-center" aria-hidden="true">
-          <span className="w-3 h-3 bg-[#A8443A] rounded-full animate-ping absolute" />
-          <span className="w-3 h-3 bg-[#A8443A] rounded-full relative" />
+          <span className="absolute size-3 animate-ping rounded-full bg-[color:var(--lkv-danger)]" />
+          <span className="relative size-3 rounded-full bg-[color:var(--lkv-danger)]" />
         </div>
-        <Icon name="mic" className="w-4 h-4 text-[#A8443A]" />
-        <span className="font-mono font-bold text-sm text-[#17402C] tracking-wider">
+        <Icon name="mic" className="size-4 text-[color:var(--lkv-danger)]" aria-hidden="true" />
+        <span className="font-mono text-[length:var(--lkv-text-footnote)] font-bold tracking-wider text-[color:var(--lkv-text-primary)]">
           {formatTimer(seconds)}
         </span>
-        <span className="text-xs text-[#5A7064] font-medium hidden sm:inline">
+        <span className="hidden text-[length:var(--lkv-text-caption)] font-medium text-[color:var(--lkv-text-muted)] sm:inline">
           Enregistrement de la note vocale terrain...
         </span>
       </div>
 
-      <div className="flex items-center gap-2">
-        <button
+      <div className="flex items-center gap-[var(--space-2)]">
+        <IconButton
           type="button"
+          variant="glass"
           onClick={() => {
             haptic('light');
             onCancel();
           }}
           aria-label="Annuler l'enregistrement"
-          className="glass-circle-btn w-10 h-10 text-[#A8443A] active:scale-95"
           title="Annuler"
+          className="text-[color:var(--lkv-danger)]"
         >
-          <Icon name="trash2" className="w-4 h-4" />
-        </button>
+          <Icon name="trash2" className="size-4" aria-hidden="true" />
+        </IconButton>
 
-        <button
+        <Button
           type="button"
+          variant="primary"
+          size="md"
           onClick={handleStopAndSend}
           disabled={seconds < 1}
-          className={`glass-capsule-btn px-4 min-h-[44px] text-xs font-bold flex items-center gap-1.5 transition-all ${
-            seconds >= 1 ? 'primary shadow-md active:scale-95' : 'opacity-40 cursor-not-allowed'
-          }`}
+          icon={<Icon name="send" className="size-3.5" aria-hidden="true" />}
+          className={seconds >= 1 ? 'shadow-elevation-2' : 'opacity-40'}
         >
-          <Icon name="send" className="w-3.5 h-3.5" />
           Envoyer
-        </button>
+        </Button>
       </div>
     </div>
   );

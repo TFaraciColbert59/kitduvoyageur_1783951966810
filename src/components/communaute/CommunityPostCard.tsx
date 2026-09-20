@@ -5,8 +5,7 @@ import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import { motion, AnimatePresence } from 'framer-motion';
 import Icon from '@/components/ui/AppIcon';
-import { IconButton } from '@/components/ui';
-import LiquidGlass from '@/components/glass/LiquidGlass';
+import { Badge, Button, Card, Divider, IconButton } from '@/components/ui';
 import SmartImage from '@/components/ui/SmartImage';
 import ReportSheet from '@/components/social/ReportSheet';
 import { createClient } from '@/lib/supabase/client';
@@ -64,70 +63,6 @@ export const timeAgo = (dateStr: string) => {
   return `Il y a ${Math.floor(hours / 24)} j`;
 };
 
-/** Pastille verre — pile LiquidGlass, style unique (référence section 4).
- *  Les valeurs viennent des tokens --btn-* (tokens.css) : une seule
- *  modification met à jour toutes les pastilles du site. */
-function OverlayPill({ label, onClick, pillWidth, children }: {
-  label: string;
-  onClick?: () => void;
-  /** Largeur fixe (px) pour aligner plusieurs pastilles sur la même taille. */
-  pillWidth?: number;
-  children: React.ReactNode;
-}) {
-  return (
-    <LiquidGlass
-      as="button"
-      type="button"
-      aria-label={label}
-      onClick={onClick}
-      displacementScale={70}
-      blurAmount={6}
-      saturation={160}
-      aberrationIntensity={2}
-      cornerRadius={999}
-      priority="media"
-      elasticity={0.3}
-      glassTint="var(--btn-tint)"
-      shadow="var(--btn-shadow)"
-      style={{
-        display: 'inline-flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: '8px',
-        lineHeight: 1,
-        minHeight: '44px',
-        minWidth: pillWidth ? `${pillWidth}px` : '44px',
-        width: pillWidth ? `${pillWidth}px` : undefined,
-        padding: pillWidth ? '0' : '0 14px',
-        border: 'none',
-        color: 'var(--btn-content)',
-        textShadow: 'var(--btn-text-shadow)',
-        fontWeight: 900,
-        fontSize: '13px',
-        letterSpacing: '0.01em',
-        fontVariantNumeric: 'tabular-nums',
-        fontFamily: 'var(--font-sans), system-ui, sans-serif',
-        cursor: 'pointer',
-        WebkitTapHighlightColor: 'transparent',
-        userSelect: 'none',
-      }}
-    >
-      <span
-        style={{
-          display: 'inline-flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: '8px',
-          lineHeight: 1,
-          width: '100%',
-        }}
-      >
-        {children}
-      </span>
-    </LiquidGlass>
-  );
-}
-
 // Heart SVG Icon helper for crisp rendering
 export function HeartSvg({ filled = false, className = '' }: { filled?: boolean; className?: string }) {
   if (filled) {
@@ -135,7 +70,7 @@ export function HeartSvg({ filled = false, className = '' }: { filled?: boolean;
       <svg
         viewBox="0 0 24 24"
         fill="currentColor"
-        className={`w-3.5 h-3.5 text-rose-500 transition-transform duration-200 scale-110 ${className}`}
+        className={`size-3.5 scale-110 text-[color:var(--lkv-danger)] transition-transform duration-200 ${className}`}
       >
         <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
       </svg>
@@ -149,7 +84,7 @@ export function HeartSvg({ filled = false, className = '' }: { filled?: boolean;
       strokeWidth="3"
       strokeLinecap="round"
       strokeLinejoin="round"
-      className={`w-3.5 h-3.5 text-[#17402C] hover:text-rose-600 transition-colors ${className}`}
+      className={`size-3.5 text-[color:var(--lkv-text-primary)] transition-colors hover:text-[color:var(--lkv-danger)] ${className}`}
     >
       <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
     </svg>
@@ -511,108 +446,129 @@ export default function CommunityPostCard({
           initial={{ opacity: 0, scale: 0.95, y: -4 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: -4 }}
-          className="absolute right-0 bottom-full mb-2 w-48 bg-white/95 backdrop-blur-xl border border-white/90 rounded-2xl p-1.5 shadow-xl z-40 space-y-1 text-xs text-[#17402C]"
+          className="absolute bottom-full right-0 z-[var(--z-dropdown)] mb-[var(--space-2)] w-48"
         >
-          <button
-            type="button"
-            onClick={handleToggleSave}
-            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-black/5 transition-colors text-left"
-          >
-            <Icon name="bookmark" size={14} className={isSaved ? "text-amber-600" : "text-[#5C6B5E]"} />
-            <span>{isSaved ? "Retirer des favoris" : "Enregistrer"}</span>
-          </button>
+          <Card className="space-y-[var(--space-1)] p-[var(--space-1)]">
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              fullWidth
+              className="justify-start"
+              onClick={handleToggleSave}
+              icon={<Icon name="bookmark" size={14} className={isSaved ? 'text-[color:var(--lkv-warning)]' : 'text-[color:var(--lkv-text-secondary)]'} aria-hidden="true" />}
+            >
+              {isSaved ? 'Retirer des favoris' : 'Enregistrer'}
+            </Button>
 
-          <button
-            type="button"
-            onClick={() => { handleShare(); setShowMoreMenu(false); }}
-            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-black/5 transition-colors text-left"
-          >
-            <Icon name="link" size={14} className="text-[#5C6B5E]" />
-            <span>Copier le lien direct</span>
-          </button>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              fullWidth
+              className="justify-start"
+              onClick={() => { handleShare(); setShowMoreMenu(false); }}
+              icon={<Icon name="link" size={14} className="text-[color:var(--lkv-text-secondary)]" aria-hidden="true" />}
+            >
+              Copier le lien direct
+            </Button>
 
-          <button
-            type="button"
-            onClick={handleHidePost}
-            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-black/5 transition-colors text-left"
-          >
-            <Icon name="eye-off" size={14} className="text-[#5C6B5E]" />
-            <span>Masquer ce post</span>
-          </button>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              fullWidth
+              className="justify-start"
+              onClick={handleHidePost}
+              icon={<Icon name="eye-off" size={14} className="text-[color:var(--lkv-text-secondary)]" aria-hidden="true" />}
+            >
+              Masquer ce post
+            </Button>
 
-          <div className="border-t border-[#17402C]/10 my-1" />
+            <Divider spacing="sm" />
 
-          <button
-            type="button"
-            onClick={handleReport}
-            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-red-50 text-red-600 transition-colors text-left font-semibold"
-          >
-            <Icon name="flag" size={14} />
-            <span>Signaler le post</span>
-          </button>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              fullWidth
+              className="justify-start text-[color:var(--lkv-danger)] hover:bg-[color:var(--lkv-danger-bg)]"
+              onClick={handleReport}
+              icon={<Icon name="flag" size={14} aria-hidden="true" />}
+            >
+              Signaler le post
+            </Button>
+          </Card>
         </motion.div>
       )}
     </AnimatePresence>
   );
 
-  // Rangée d'actions sous le texte (posts sans image) — même design, ton carte claire.
-  const actionsContent = (
+  // Rangée d'actions : même contenu sur la carte claire et sur le média.
+  const actionsNode = (onImage: boolean) => (
     <>
-      <div className="flex items-center gap-2.5">
-        <OverlayPill label="J'aime cette expédition" onClick={handleLike} pillWidth={84}>
-          <span style={{ width: '15px', height: '15px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-            <HeartSvg filled={isLiked} />
-          </span>
-          {likesCount > 0 && <span style={{ lineHeight: 1 }}>{likesCount}</span>}
-        </OverlayPill>
+      <div className="flex items-center gap-[var(--space-2)]">
+        <Button
+          type="button"
+          variant="secondary"
+          size="sm"
+          onClick={handleLike}
+          aria-label="J'aime cette expédition"
+          className={onImage ? 'min-w-[84px] border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] backdrop-blur-[var(--blur-md)]' : 'min-w-[84px]'}
+        >
+          <HeartSvg filled={isLiked} className={onImage && !isLiked ? '!text-[color:var(--lkv-text-inverted)]' : ''} />
+          {likesCount > 0 && <span className="tabular-nums">{likesCount}</span>}
+        </Button>
 
-        <OverlayPill label="Commenter la publication" onClick={handleToggleComments} pillWidth={84}>
-          <Icon name="message-square" size={15} color="#ffffff" />
-          {commentsCount > 0 && <span style={{ lineHeight: 1 }}>{commentsCount}</span>}
-        </OverlayPill>
+        <Button
+          type="button"
+          variant="secondary"
+          size="sm"
+          onClick={handleToggleComments}
+          aria-label="Commenter la publication"
+          className={onImage ? 'min-w-[84px] border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] backdrop-blur-[var(--blur-md)]' : 'min-w-[84px]'}
+        >
+          <Icon
+            name="message-square"
+            size={15}
+            color={onImage ? 'var(--lkv-text-inverted)' : 'var(--lkv-text-primary)'}
+            aria-hidden="true"
+          />
+          {commentsCount > 0 && <span className="tabular-nums">{commentsCount}</span>}
+        </Button>
       </div>
 
-      <div className="flex items-center gap-2.5">
-        <OverlayPill label="Partager" onClick={handleShare}>
-          <Icon name="send" size={15} color="#ffffff" />
-        </OverlayPill>
+      <div className="flex items-center gap-[var(--space-2)]">
+        <IconButton
+          type="button"
+          variant="glass"
+          onClick={handleShare}
+          aria-label="Partager"
+          className={onImage ? 'border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] backdrop-blur-[var(--blur-md)]' : ''}
+        >
+          <Icon
+            name="send"
+            size={15}
+            color={onImage ? 'var(--lkv-text-inverted)' : 'var(--lkv-text-primary)'}
+            aria-hidden="true"
+          />
+        </IconButton>
 
         <div className="relative" ref={menuRef}>
-          <OverlayPill label="Options de la publication" onClick={() => setShowMoreMenu(!showMoreMenu)}>
-            <Icon name="ellipsis" size={16} color="#ffffff" />
-          </OverlayPill>
-          {moreMenuNode}
-        </div>
-      </div>
-    </>
-  );
-
-  // Rangée d'actions en verre posée sur la photo (pile LiquidGlass, référence rdev).
-  const overlayActionsContent = (
-    <>
-      <div className="flex items-center gap-2.5">
-        <OverlayPill label="J'aime cette expédition" onClick={handleLike} pillWidth={84}>
-          <span style={{ width: '15px', height: '15px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-            <HeartSvg filled={isLiked} className={isLiked ? '' : '!text-white'} />
-          </span>
-          {likesCount > 0 && <span style={{ lineHeight: 1 }}>{likesCount}</span>}
-        </OverlayPill>
-
-        <OverlayPill label="Commenter la publication" onClick={handleToggleComments} pillWidth={84}>
-          <Icon name="message-square" size={15} color="#ffffff" />
-          {commentsCount > 0 && <span style={{ lineHeight: 1 }}>{commentsCount}</span>}
-        </OverlayPill>
-      </div>
-
-      <div className="flex items-center gap-2.5">
-        <OverlayPill label="Partager" onClick={handleShare}>
-          <Icon name="send" size={15} color="#ffffff" />
-        </OverlayPill>
-
-        <div className="relative" ref={menuRef}>
-          <OverlayPill label="Options de la publication" onClick={() => setShowMoreMenu(!showMoreMenu)}>
-            <Icon name="ellipsis" size={16} color="#ffffff" />
-          </OverlayPill>
+          <IconButton
+            type="button"
+            variant="glass"
+            onClick={() => setShowMoreMenu(!showMoreMenu)}
+            aria-label="Options de la publication"
+            className={onImage ? 'border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] backdrop-blur-[var(--blur-md)]' : ''}
+          >
+            <Icon
+              name="ellipsis"
+              size={16}
+              color={onImage ? 'var(--lkv-text-inverted)' : 'var(--lkv-text-primary)'}
+              aria-hidden="true"
+            />
+          </IconButton>
           {moreMenuNode}
         </div>
       </div>
@@ -620,55 +576,69 @@ export default function CommunityPostCard({
   );
 
   return (
-    <div className="community-post glass rounded-2xl overflow-hidden p-4 sm:p-5 relative space-y-4">
+    <Card className="community-post relative space-y-[var(--space-4)] overflow-hidden p-[var(--space-4)] sm:p-[var(--space-5)]">
       {/* Toast notification */}
       {toastMessage && (
-        <div className="absolute top-3 left-1/2 -translate-x-1/2 z-30 bg-[#17402C] text-white text-[11px] font-mono px-3 py-1 rounded-full shadow-md animate-fade-in">
+        <div className="animate-fade-in absolute left-1/2 top-3 z-[var(--z-toast)] -translate-x-1/2 rounded-full bg-[color:var(--lkv-primary)] px-3 py-1 font-mono text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-inverted)] shadow-elevation-2">
           {toastMessage}
         </div>
       )}
 
       {/* Menu rapide long-press (mission gestes, Phase 4) — glass, palette LKDV */}
       {showQuickMenu && (
-        <div className="absolute top-10 left-1/2 -translate-x-1/2 z-40 p-1.5 glass rounded-2xl shadow-lg flex items-center gap-1 animate-scale-in">
-          <button
-            type="button"
-            onClick={() => {
-              haptic('light');
-              if (!isLiked) handleLike();
-              setHeartBurst((k) => k + 1);
-              setShowQuickMenu(false);
-            }}
-            className="glass-circle-btn w-11 h-11 rounded-full flex items-center justify-center text-xl active:scale-125 transition-transform"
-            title="J'aime"
-          >
-            ❤️
-          </button>
-          <button
-            type="button"
-            onClick={() => { haptic('light'); handleToggleSave(); }}
-            className="glass-circle-btn w-11 h-11 rounded-full flex items-center justify-center text-xl active:scale-125 transition-transform"
-            title={isSaved ? 'Retirer des favoris' : 'Enregistrer'}
-          >
-            {isSaved ? '⭐' : '🔖'}
-          </button>
-          <div className="w-px h-5 bg-stone-200/80 mx-0.5" />
-          <button
-            type="button"
-            onClick={() => { haptic('light'); handleHidePost(); }}
-            className="glass-circle-btn w-11 h-11 rounded-full flex items-center justify-center text-base active:scale-125 transition-transform"
-            title="Masquer"
-          >
-            🙈
-          </button>
-          <button
-            type="button"
-            onClick={() => { haptic('light'); handleReport(); }}
-            className="glass-circle-btn w-11 h-11 rounded-full flex items-center justify-center text-base active:scale-125 transition-transform"
-            title="Signaler"
-          >
-            🚩
-          </button>
+        <div className="animate-scale-in absolute left-1/2 top-10 z-[var(--z-dropdown)] -translate-x-1/2">
+          <Card className="flex items-center gap-[var(--space-1)] p-[var(--space-1)] shadow-elevation-3">
+            <IconButton
+              type="button"
+              variant="glass"
+              size="lg"
+              onClick={() => {
+                haptic('light');
+                if (!isLiked) handleLike();
+                setHeartBurst((k) => k + 1);
+                setShowQuickMenu(false);
+              }}
+              title="J'aime"
+              aria-label="J'aime"
+              className="text-xl active:scale-125"
+            >
+              ❤️
+            </IconButton>
+            <IconButton
+              type="button"
+              variant="glass"
+              size="lg"
+              onClick={() => { haptic('light'); handleToggleSave(); }}
+              title={isSaved ? 'Retirer des favoris' : 'Enregistrer'}
+              aria-label={isSaved ? 'Retirer des favoris' : 'Enregistrer'}
+              className="text-xl active:scale-125"
+            >
+              {isSaved ? '⭐' : '🔖'}
+            </IconButton>
+            <div className="mx-0.5 h-5 w-px bg-[color:var(--lkv-border)]" />
+            <IconButton
+              type="button"
+              variant="glass"
+              size="lg"
+              onClick={() => { haptic('light'); handleHidePost(); }}
+              title="Masquer"
+              aria-label="Masquer"
+              className="text-base active:scale-125"
+            >
+              🙈
+            </IconButton>
+            <IconButton
+              type="button"
+              variant="glass"
+              size="lg"
+              onClick={() => { haptic('light'); handleReport(); }}
+              title="Signaler"
+              aria-label="Signaler"
+              className="text-base active:scale-125"
+            >
+              🚩
+            </IconButton>
+          </Card>
         </div>
       )}
 
@@ -678,89 +648,99 @@ export default function CommunityPostCard({
       <div className="flex items-center justify-between">
         <Link
           href={post.author?.id ? `/profil/${post.author.id}` : post.user_id ? `/profil/${post.user_id}` : '/communaute'}
-          className="flex items-center gap-3 group/author cursor-pointer"
+          className="group/author flex cursor-pointer items-center gap-[var(--space-3)]"
         >
           {post.author?.avatar_url ? (
             <img
               src={post.author.avatar_url}
               alt={post.author?.full_name || 'Auteur'}
-              className="w-10 h-10 rounded-full object-cover border border-[#17402C]/10 group-hover/author:scale-105 transition-transform"
+              className="size-10 rounded-full border border-[color:var(--lkv-border)] object-cover transition-transform group-hover/author:scale-105"
             />
           ) : (
-            <div className="w-10 h-10 rounded-full bg-[#17402C] text-white flex items-center justify-center text-sm font-bold border border-[#17402C]/10 group-hover/author:scale-105 transition-transform">
+            <div className="flex size-10 items-center justify-center rounded-full border border-[color:var(--lkv-border)] bg-[color:var(--lkv-primary)] text-[length:var(--lkv-text-footnote)] font-bold text-[color:var(--lkv-text-inverted)] transition-transform group-hover/author:scale-105">
               {(post.author?.full_name?.charAt(0) || 'V').toUpperCase()}
             </div>
           )}
           <div>
-            <div className="flex items-center gap-2">
-              <span className="text-[15px] font-semibold tracking-[-0.01em] text-[#17402C] group-hover/author:underline">{post.author?.full_name || 'Voyageur LKDV'}</span>
+            <div className="flex items-center gap-[var(--space-2)]">
+              <span className="text-[length:var(--lkv-text-subheadline)] font-semibold tracking-[-0.01em] text-[color:var(--lkv-text-primary)] group-hover/author:underline">
+                {post.author?.full_name || 'Voyageur LKDV'}
+              </span>
               {post.author?.loyalty_level && (
-                <span className="bg-[#17402C]/10 text-[#17402C] text-[10px] font-mono font-bold px-2 py-0.5 rounded-full uppercase">
+                <Badge tone="sage" className="font-mono uppercase">
                   {post.author.loyalty_level}
-                </span>
+                </Badge>
               )}
             </div>
-            <span className="text-[12px] text-[#5C6B5E] font-mono mt-0.5 block">{timeAgo(post.created_at || new Date().toISOString())}</span>
+            <span className="mt-0.5 block font-mono text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-muted)]">
+              {timeAgo(post.created_at || new Date().toISOString())}
+            </span>
           </div>
         </Link>
 
-        <span className="glass-pill text-[10px] font-mono font-bold text-[#17402C]">FIL</span>
+        <Badge tone="stone" className="font-mono">FIL</Badge>
       </div>
 
       {/* Content — 200 caractères max, expansion façon Twitter ; respiration haut/bas */}
-      <p className="text-[15px] text-[#17402C] leading-[1.7] whitespace-pre-line py-2">
+      <p className="whitespace-pre-line py-[var(--space-2)] text-[length:var(--lkv-text-subheadline)] leading-[1.7] text-[color:var(--lkv-text-primary)]">
         {displayContent}
         {contentTruncated && !isContentExpanded && (
-          <button
+          <Button
             type="button"
+            variant="ghost"
+            size="sm"
+            className="ml-[var(--space-1)] text-[length:var(--lkv-text-subheadline)] font-semibold text-[color:var(--lkv-primary)]"
             onClick={() => setIsContentExpanded(true)}
-            className="text-[15px] font-semibold text-[#17402C]/75 hover:text-[#17402C] ml-1 py-0.5 inline"
           >
             Afficher plus
-          </button>
+          </Button>
         )}
         {contentTruncated && isContentExpanded && (
-          <button
+          <Button
             type="button"
+            variant="ghost"
+            size="sm"
+            className="ml-[var(--space-1)] text-[length:var(--lkv-text-subheadline)] font-semibold text-[color:var(--lkv-primary)]"
             onClick={() => setIsContentExpanded(false)}
-            className="text-[15px] font-semibold text-[#17402C]/75 hover:text-[#17402C] ml-1 py-0.5 inline"
           >
             Afficher moins
-          </button>
+          </Button>
         )}
       </p>
 
       {/* Snapshot figé du carnet lié (Phase 7) — jamais de lecture live */}
       {post.snapshot_payload && (
-        <div className="glass-sub-card rounded-2xl overflow-hidden">
+        <Card variant="compact" className="overflow-hidden p-0">
           {post.snapshot_payload.cover_image && (
-            <div className="aspect-[16/7] bg-[#EEF3EC]">
+            <div className="aspect-[16/7] bg-[color:var(--lkv-surface-muted)]">
               <SmartImage
                 src={post.snapshot_payload.cover_image}
                 alt={post.snapshot_payload.title || 'Carnet publié'}
-                className="w-full h-full object-cover"
+                className="size-full object-cover"
               />
             </div>
           )}
-          <div className="p-3 space-y-1">
-            <div className="flex items-center gap-2">
-              <span className="glass-pill text-[8.5px] font-mono font-bold text-[#17402C]">
+          <div className="space-y-[var(--space-1)] p-[var(--space-3)]">
+            <div className="flex items-center gap-[var(--space-2)]">
+              <Badge tone="sage" className="font-mono">
                 CARNET · INSTANTANÉ PUBLIÉ
-              </span>
+              </Badge>
             </div>
-            <h4 className="font-display font-bold text-sm text-[#17402C]">
+            <h4 className="font-display text-[length:var(--lkv-text-footnote)] font-bold text-[color:var(--lkv-text-primary)]">
               {post.snapshot_payload.title || 'Carnet de voyage'}
             </h4>
             {post.snapshot_payload.destination && (
-              <p className="text-[11px] text-[#5C6B5E]">📍 {post.snapshot_payload.destination}</p>
+              <p className="text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-muted)]">
+                📍 {post.snapshot_payload.destination}
+              </p>
             )}
             {post.snapshot_payload.description && (
-              <p className="text-xs text-[#5C6B5E] leading-relaxed line-clamp-3">
+              <p className="line-clamp-3 text-[length:var(--lkv-text-caption)] leading-relaxed text-[color:var(--lkv-text-muted)]">
                 {post.snapshot_payload.description}
               </p>
             )}
           </div>
-        </div>
+        </Card>
       )}
 
       {/* Attached Media — plein-bord, haute (jusque sous le texte), collée au bas de la card */}
@@ -783,12 +763,12 @@ export default function CommunityPostCard({
           />
           <div
             {...doubleTap}
-            className="relative z-10 overflow-hidden aspect-[4/5] sm:aspect-[16/10] bg-[#EEF3EC] select-none cursor-zoom-in"
+            className="relative z-10 aspect-[4/5] select-none overflow-hidden bg-[color:var(--lkv-surface-muted)] cursor-zoom-in sm:aspect-[16/10]"
           >
             <SmartImage
               src={displayableImage}
               alt="Photo de l'expédition"
-              className="w-full h-full object-cover"
+              className="size-full object-cover"
             />
 
             {/* Fusion givrée : la photo se dissout dans le verre de la card (sans ligne dure) */}
@@ -797,18 +777,11 @@ export default function CommunityPostCard({
           {/* Voile de lisibilité sous les contrôles (pattern iOS Photos) */}
           <div
             aria-hidden="true"
-            className="pointer-events-none absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-[#0B1F17]/35 via-[#0B1F17]/10 to-transparent"
+            className="pointer-events-none absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-[color:var(--lkv-forest-950)]/35 via-[color:var(--lkv-forest-950)]/10 to-transparent"
           />
 
           {/* Date — pill verre en haut à droite de l'image */}
-          <div
-            className="absolute top-3 right-3 px-3 py-1.5 rounded-full text-[11px] font-mono text-[#17402C] tracking-wider border border-white/50"
-            style={{
-              background: 'rgba(255,255,255,0.62)',
-              backdropFilter: 'blur(8px) saturate(160%)',
-              WebkitBackdropFilter: 'blur(8px) saturate(160%)',
-            }}
-          >
+          <div className="absolute right-3 top-3 rounded-full border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] px-3 py-1.5 font-mono text-[length:var(--lkv-text-caption)] tracking-wider text-[color:var(--lkv-text-primary)] backdrop-blur-[var(--blur-md)]">
             {timeAgo(post.created_at || new Date().toISOString())}
           </div>
 
@@ -827,7 +800,7 @@ export default function CommunityPostCard({
                 transition={{ duration: 0.7, times: [0, 0.25, 0.6, 1], ease: 'easeOut' }}
                 onAnimationComplete={() => setHeartBurst(0)}
               >
-                <svg viewBox="0 0 24 24" fill="currentColor" className="w-20 h-20 text-rose-500 drop-shadow-lg">
+                <svg viewBox="0 0 24 24" fill="currentColor" className="size-20 text-[color:var(--lkv-danger)] drop-shadow-lg">
                   <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
                 </svg>
               </motion.div>
@@ -840,7 +813,7 @@ export default function CommunityPostCard({
             onClick={(e) => e.stopPropagation()}
             onPointerDown={(e) => e.stopPropagation()}
           >
-            {overlayActionsContent}
+            {actionsNode(true)}
           </div>
           </div>
         </div>
@@ -850,8 +823,8 @@ export default function CommunityPostCard({
 
       {/* Actions Row — sous le texte uniquement quand il n'y a pas d'image (sinon sur l'image) */}
       {!displayableImage && (
-        <div className="pt-2.5 border-t border-[#17402C]/10 flex items-center justify-between">
-          {actionsContent}
+        <div className="flex items-center justify-between border-t border-[color:var(--lkv-border)] pt-[var(--space-2)]">
+          {actionsNode(false)}
         </div>
       )}
 
@@ -862,24 +835,26 @@ export default function CommunityPostCard({
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            className="overflow-hidden pt-4 border-t border-[#17402C]/10 space-y-3.5"
+            className="space-y-[var(--space-3)] overflow-hidden border-t border-[color:var(--lkv-border)] pt-[var(--space-4)]"
           >
             {/* Header of comments drawer */}
-            <div className="flex items-center justify-between text-xs text-[#5C6B5E] px-1">
-              <div className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-forest-600 animate-pulse" />
-                <span className="font-bold text-[#17402C]">Discussions ({comments.length})</span>
+            <div className="flex items-center justify-between px-[var(--space-1)] text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-muted)]">
+              <div className="flex items-center gap-[var(--space-2)]">
+                <span className="size-2 animate-pulse rounded-full bg-[color:var(--lkv-secondary)]" />
+                <span className="font-bold text-[color:var(--lkv-text-primary)]">Discussions ({comments.length})</span>
               </div>
-              <span className="text-[10px] font-mono text-[#5C6B5E]">Fil d'échange en direct</span>
+              <span className="font-mono text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">Fil d&apos;échange en direct</span>
             </div>
 
             {/* List of comments (Root Comments with Nested Threaded Replies) */}
-            <div className="space-y-3 max-h-80 overflow-y-auto custom-scrollbar pr-1">
+            <div className="custom-scrollbar max-h-80 space-y-[var(--space-3)] overflow-y-auto pr-[var(--space-1)]">
               {commentsLoading && comments.length === 0 && (
-                <p className="text-[11px] text-[#5C6B5E] px-1 py-3">Chargement des commentaires...</p>
+                <p className="px-[var(--space-1)] py-[var(--space-3)] text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-muted)]">
+                  Chargement des commentaires...
+                </p>
               )}
               {!commentsLoading && commentsLoaded && comments.length === 0 && (
-                <p className="text-[11px] text-[#5C6B5E] px-1 py-3">
+                <p className="px-[var(--space-1)] py-[var(--space-3)] text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-muted)]">
                   Aucun commentaire pour le moment.
                 </p>
               )}
@@ -889,30 +864,30 @@ export default function CommunityPostCard({
                   const replies = comments.filter((c) => c.parentId === rootComment.id);
 
                   return (
-                    <div key={rootComment.id} className="space-y-2">
+                    <div key={rootComment.id} className="space-y-[var(--space-2)]">
                       {/* Root Comment Card (Pure Liquid Glass) */}
-                      <div className="glass p-3.5 rounded-2xl border border-white/60 shadow-2xs space-y-2 group relative">
-                        <div className="flex items-center justify-between text-[10px]">
+                      <Card variant="compact" className="group relative space-y-[var(--space-2)]">
+                        <div className="flex items-center justify-between text-[length:var(--lkv-text-caption-2)]">
                           <Link
                             href={rootComment.author?.id ? `/profil/${rootComment.author.id}` : '/communaute'}
-                            className="flex items-center gap-2.5 group/cauthor cursor-pointer"
+                            className="group/cauthor flex cursor-pointer items-center gap-[var(--space-2)]"
                           >
-                            <div className="w-7 h-7 rounded-full bg-[#17402C] text-white flex items-center justify-center font-bold text-xs overflow-hidden border border-white/40 shadow-xs group-hover/cauthor:scale-105 transition-transform">
+                            <div className="flex size-7 items-center justify-center overflow-hidden rounded-full border border-[color:var(--lkv-border)] bg-[color:var(--lkv-primary)] text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-inverted)] shadow-elevation-1 transition-transform group-hover/cauthor:scale-105">
                               {rootComment.author?.avatar_url ? (
                                 <img
                                   src={rootComment.author.avatar_url}
                                   alt={rootComment.author?.full_name || 'Voyageur'}
-                                  className="w-full h-full object-cover"
+                                  className="size-full object-cover"
                                 />
                               ) : (
                                 (rootComment.author?.full_name?.charAt(0) || 'V').toUpperCase()
                               )}
                             </div>
                             <div>
-                              <span className="font-bold text-xs text-[#17402C] block leading-tight group-hover/cauthor:underline">
+                              <span className="block text-[length:var(--lkv-text-caption)] font-bold leading-tight text-[color:var(--lkv-text-primary)] group-hover/cauthor:underline">
                                 {rootComment.author?.full_name || 'Voyageur'}
                               </span>
-                              <span className="text-[9.5px] text-[#5C6B5E] font-mono">
+                              <span className="font-mono text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">
                                 {timeAgo(rootComment.created_at || new Date().toISOString())}
                                 {rootComment.edited && ' · modifié'}
                               </span>
@@ -920,7 +895,7 @@ export default function CommunityPostCard({
                           </Link>
 
                           {/* Comment Options Buttons (Image 3 style) */}
-                          <div className="flex items-center gap-1 opacity-70 group-hover:opacity-100 transition-opacity">
+                          <div className="flex items-center gap-[var(--space-1)] opacity-70 transition-opacity group-hover:opacity-100">
                             {rootComment.isOwner ? (
                               <>
                                 <IconButton
@@ -929,7 +904,7 @@ export default function CommunityPostCard({
                                   onClick={() => handleStartEditComment(rootComment)}
                                   aria-label="Modifier"
                                 >
-                                  <Icon name="pencil" size={11} />
+                                  <Icon name="pencil" size={11} aria-hidden="true" />
                                 </IconButton>
                                 <IconButton
                                   size="sm"
@@ -937,7 +912,7 @@ export default function CommunityPostCard({
                                   onClick={() => handleDeleteComment(rootComment.id)}
                                   aria-label="Supprimer"
                                 >
-                                  <Icon name="trash2" size={11} className="text-red-600" />
+                                  <Icon name="trash2" size={11} className="text-[color:var(--lkv-danger)]" aria-hidden="true" />
                                 </IconButton>
                               </>
                             ) : (
@@ -947,7 +922,7 @@ export default function CommunityPostCard({
                                 onClick={() => handleReportComment(rootComment.id)}
                                 aria-label="Signaler"
                               >
-                                <Icon name="flag" size={11} />
+                                <Icon name="flag" size={11} aria-hidden="true" />
                               </IconButton>
                             )}
                           </div>
@@ -955,43 +930,45 @@ export default function CommunityPostCard({
 
                         {/* Comment Content or Edit Form */}
                         {editingCommentId === rootComment.id ? (
-                          <div className="pl-9 space-y-2 pt-1">
+                          <div className="space-y-[var(--space-2)] pl-9 pt-[var(--space-1)]">
                             <textarea
                               rows={2}
                               value={editingText}
                               onChange={(e) => setEditingText(e.target.value)}
-                              className="glass w-full rounded-xl p-2.5 text-xs text-[#17402C] focus:outline-none focus:ring-1 focus:ring-[#17402C]"
+                              className="w-full rounded-[var(--lkv-radius-sm)] border border-[color:var(--lkv-border)] bg-[color:var(--lkv-field-bg)] p-[var(--space-2)] text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-primary)] focus:outline-none focus:ring-2 focus:ring-[color:var(--lkv-focus-ring)]"
                             />
-                            <div className="flex items-center gap-2 justify-end">
-                              <button
+                            <div className="flex items-center justify-end gap-[var(--space-2)]">
+                              <Button
                                 type="button"
+                                variant="ghost"
+                                size="sm"
                                 onClick={() => setEditingCommentId(null)}
-                                className="glass-capsule-btn !min-w-0 !min-h-0 px-3.5 py-1 text-[11px] font-bold !text-[#5C6B5E]"
                               >
                                 Annuler
-                              </button>
-                              <button
+                              </Button>
+                              <Button
                                 type="button"
+                                variant="primary"
+                                size="sm"
                                 onClick={() => handleSaveEditComment(rootComment.id)}
-                                className="glass-capsule-btn primary text-[11px] font-bold !py-1 !px-3.5"
                               >
                                 Enregistrer
-                              </button>
+                              </Button>
                             </div>
                           </div>
                         ) : (
                           <>
-                            <p className="text-xs text-[#17402C] pl-9 leading-relaxed">
+                            <p className="pl-9 text-[length:var(--lkv-text-caption)] leading-relaxed text-[color:var(--lkv-text-primary)]">
                               {rootComment.content}
                             </p>
 
                             {/* Image Attachment */}
                             {rootComment.attachment && (
-                              <div className="pl-9 pt-1">
+                              <div className="pl-9 pt-[var(--space-1)]">
                                 <img
                                   src={rootComment.attachment}
                                   alt="Pièce jointe"
-                                  className="w-40 h-28 object-cover rounded-xl border border-white/60 shadow-xs"
+                                  className="h-28 w-40 rounded-[var(--lkv-radius-sm)] border border-[color:var(--lkv-border)] object-cover shadow-elevation-1"
                                 />
                               </div>
                             )}
@@ -999,14 +976,14 @@ export default function CommunityPostCard({
                         )}
 
                         {/* Footer Reply & Like Buttons */}
-                        <div className="flex items-center justify-between pl-9 pt-1 text-[11px]">
+                        <div className="flex items-center justify-between pl-9 pt-[var(--space-1)] text-[length:var(--lkv-text-caption)]">
                           <IconButton
                             size="sm"
                             title={`Répondre à ${rootComment.author?.full_name || 'ce message'}`}
                             onClick={() => handleReplyTo(rootComment.author?.full_name || 'Voyageur', rootComment.id)}
                             aria-label={`Répondre à ${rootComment.author?.full_name || 'ce message'}`}
                           >
-                            <Icon name="reply" size={12} />
+                            <Icon name="reply" size={12} aria-hidden="true" />
                           </IconButton>
 
                           <IconButton
@@ -1016,44 +993,41 @@ export default function CommunityPostCard({
                             aria-label="Aimer ce commentaire"
                             variant={rootComment.userLiked ? 'solid' : 'glass'}
                             aria-pressed={rootComment.userLiked || undefined}
-                            style={{ width: 'auto', paddingInline: '10px' }}
+                            className="w-auto px-2.5"
                           >
-                            <span className="inline-flex items-center gap-1.5"><HeartSvg filled={rootComment.userLiked} className="w-3 h-3" /><span className="tabular-nums">{rootComment.likes || 0}</span></span>
+                            <span className="inline-flex items-center gap-1.5"><HeartSvg filled={rootComment.userLiked} className="size-3" /><span className="tabular-nums">{rootComment.likes || 0}</span></span>
                           </IconButton>
                         </div>
-                      </div>
+                      </Card>
 
                       {/* Threaded Child Replies (Offset with Connecting Guide Line) */}
                       {replies.length > 0 && (
-                        <div className="relative ml-5 sm:ml-7 pl-4 sm:pl-5 border-l-2 border-[#17402C]/20 space-y-2 pt-1">
+                        <div className="relative ml-5 space-y-[var(--space-2)] border-l-2 border-[color:var(--lkv-border)] pl-4 pt-[var(--space-1)] sm:ml-7 sm:pl-5">
                           {replies.map((reply) => (
-                            <div
-                              key={reply.id}
-                              className="relative before:absolute before:-left-4 sm:before:-left-5 before:top-4 before:w-3 sm:before:w-4 before:h-[2px] before:bg-[#17402C]/20 before:rounded-full"
-                            >
-                              <div className="glass p-3 rounded-2xl border border-white/60 shadow-2xs space-y-1.5 group">
-                                <div className="flex items-center justify-between text-[10px]">
-                                  <div className="flex items-center gap-2">
-                                    <div className="w-5 h-5 rounded-full bg-[#17402C] text-white flex items-center justify-center font-bold text-[10px] overflow-hidden border border-white/30">
+                            <div key={reply.id} className="relative">
+                              <Card variant="compact" className="group space-y-[var(--space-1)]">
+                                <div className="flex items-center justify-between text-[length:var(--lkv-text-caption-2)]">
+                                  <div className="flex items-center gap-[var(--space-2)]">
+                                    <div className="flex size-5 items-center justify-center overflow-hidden rounded-full border border-[color:var(--lkv-border)] bg-[color:var(--lkv-primary)] text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-inverted)]">
                                       {reply.author?.avatar_url ? (
                                         <img
                                           src={reply.author.avatar_url}
                                           alt={reply.author?.full_name || 'Voyageur'}
-                                          className="w-full h-full object-cover"
+                                          className="size-full object-cover"
                                         />
                                       ) : (
                                         (reply.author?.full_name?.charAt(0) || 'V').toUpperCase()
                                       )}
                                     </div>
-                                    <span className="font-bold text-[11px] text-[#17402C]">
+                                    <span className="text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)]">
                                       {reply.author?.full_name || 'Voyageur'}
                                     </span>
-                                    <span className="text-[9px] text-[#5C6B5E] font-mono">
+                                    <span className="font-mono text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">
                                       {timeAgo(reply.created_at || new Date().toISOString())}
                                     </span>
                                   </div>
 
-                                  <div className="flex items-center gap-1 opacity-70 group-hover:opacity-100 transition-opacity">
+                                  <div className="flex items-center gap-[var(--space-1)] opacity-70 transition-opacity group-hover:opacity-100">
                                     {reply.isOwner ? (
                                       <IconButton
                                         size="sm"
@@ -1061,7 +1035,7 @@ export default function CommunityPostCard({
                                         onClick={() => handleDeleteComment(reply.id)}
                                         aria-label="Supprimer"
                                       >
-                                        <Icon name="trash2" size={11} className="text-red-600" />
+                                        <Icon name="trash2" size={11} className="text-[color:var(--lkv-danger)]" aria-hidden="true" />
                                       </IconButton>
                                     ) : (
                                       <IconButton
@@ -1070,13 +1044,13 @@ export default function CommunityPostCard({
                                         onClick={() => handleReportComment(reply.id)}
                                         aria-label="Signaler"
                                       >
-                                        <Icon name="flag" size={11} />
+                                        <Icon name="flag" size={11} aria-hidden="true" />
                                       </IconButton>
                                     )}
                                   </div>
                                 </div>
 
-                                <p className="text-xs text-[#17402C] pl-7 leading-relaxed">
+                                <p className="pl-7 text-[length:var(--lkv-text-caption)] leading-relaxed text-[color:var(--lkv-text-primary)]">
                                   {reply.content}
                                 </p>
 
@@ -1088,12 +1062,12 @@ export default function CommunityPostCard({
                                     aria-label="Aimer cette réponse"
                                     variant={reply.userLiked ? 'solid' : 'glass'}
                                     aria-pressed={reply.userLiked || undefined}
-                                    style={{ width: 'auto', paddingInline: '10px' }}
+                                    className="w-auto px-2.5"
                                   >
-                                    <span className="inline-flex items-center gap-1.5"><HeartSvg filled={reply.userLiked} className="w-2.5 h-2.5" /><span className="tabular-nums">{reply.likes || 0}</span></span>
+                                    <span className="inline-flex items-center gap-1.5"><HeartSvg filled={reply.userLiked} className="size-2.5" /><span className="tabular-nums">{reply.likes || 0}</span></span>
                                   </IconButton>
                                 </div>
-                              </div>
+                              </Card>
                             </div>
                           ))}
                         </div>
@@ -1120,22 +1094,23 @@ export default function CommunityPostCard({
             />
 
             {/* Liquid Glass Composer Bar */}
-            <div className="space-y-1.5 pt-1">
+            <div className="space-y-[var(--space-1)] pt-[var(--space-1)]">
               {replyingTo && (
-                <div className="glass px-3 py-1.5 rounded-xl border border-forest-300/60 flex items-center justify-between text-[11px] text-forest-900 shadow-2xs">
+                <Card variant="compact" tone="info" className="flex items-center justify-between text-[length:var(--lkv-text-caption)]">
                   <span>En réponse à <strong>@{replyingTo}</strong></span>
-                  <button
+                  <IconButton
                     type="button"
+                    size="sm"
                     onClick={() => { setReplyingTo(null); setParentCommentId(null); setCommentText(''); }}
-                    className="glass-circle-btn !w-9 !h-9 !min-w-9 !min-h-9 font-bold"
+                    aria-label="Annuler la réponse"
                   >
                     ✕
-                  </button>
-                </div>
+                  </IconButton>
+                </Card>
               )}
 
               {/* Liquid Glass Input Capsule with Image 3 Glass Buttons */}
-              <div className="glass p-1.5 pl-3 rounded-full border border-white/70 flex items-center gap-1.5 shadow-xs">
+              <Card variant="compact" className="flex items-center gap-[var(--space-1)] rounded-full pl-[var(--space-3)]">
                 <input
                   ref={commentInputRef}
                   type="text"
@@ -1148,7 +1123,7 @@ export default function CommunityPostCard({
                     }
                   }}
                   placeholder={replyingTo ? `Répondre à @${replyingTo}...` : "Ajouter une réponse ou un retour terrain..."}
-                  className="flex-1 bg-transparent border-none text-xs text-[#17402C] focus:outline-none placeholder-[#5C6B5E]"
+                  className="min-w-0 flex-1 border-none bg-transparent text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-primary)] placeholder:text-[color:var(--lkv-text-muted)] focus:outline-none"
                 />
 
                 {/* Attachment & Action Buttons (Image 3 Style) */}
@@ -1158,7 +1133,7 @@ export default function CommunityPostCard({
                   onClick={() => fileInputRef.current?.click()}
                   aria-label="Joindre une photo"
                 >
-                  <Icon name="image-plus" size={13} />
+                  <Icon name="image-plus" size={13} aria-hidden="true" />
                 </IconButton>
                 <IconButton
                   size="sm"
@@ -1166,7 +1141,7 @@ export default function CommunityPostCard({
                   onClick={() => gpxInputRef.current?.click()}
                   aria-label="Partager un GPX"
                 >
-                  <span className="text-[11px] leading-none">🗺️</span>
+                  <span className="text-[length:var(--lkv-text-caption)] leading-none">🗺️</span>
                 </IconButton>
                 <IconButton
                   size="sm"
@@ -1174,7 +1149,7 @@ export default function CommunityPostCard({
                   onClick={handleShareLocation}
                   aria-label="Partager ma position"
                 >
-                  <Icon name="map-pin" size={13} />
+                  <Icon name="map-pin" size={13} aria-hidden="true" />
                 </IconButton>
 
                 <IconButton
@@ -1182,10 +1157,11 @@ export default function CommunityPostCard({
                   title="Publier le commentaire"
                   onClick={() => handleSendComment()}
                   aria-label="Publier le commentaire"
+                  variant="solid"
                 >
-                  <Icon name="send" size={13} />
+                  <Icon name="send" size={13} aria-hidden="true" />
                 </IconButton>
-              </div>
+              </Card>
             </div>
           </motion.div>
         )}
@@ -1219,6 +1195,6 @@ export default function CommunityPostCard({
           if (error) throw error;
         }}
       />
-    </div>
+    </Card>
   );
 }

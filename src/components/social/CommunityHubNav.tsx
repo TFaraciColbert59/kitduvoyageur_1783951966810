@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React from 'react';
 import Link from 'next/link';
@@ -50,7 +50,7 @@ export default function CommunityHubNav({
 
   if (layoutVariant === 'vertical') {
     return (
-      <nav className="w-full space-y-1.5" aria-label="Navigation de la communauté">
+      <nav className="w-full space-y-[var(--space-1)]" aria-label="Navigation de la communauté">
         {TABS.map((tab) => {
           const isActive = activeTab === tab.key;
 
@@ -59,14 +59,14 @@ export default function CommunityHubNav({
               key={tab.key}
               href={tab.href}
               onClick={(e) => handleTabClick(tab.key, e)}
-              className={`w-full px-3 py-2.5 rounded-xl font-bold text-xs transition-all flex items-center justify-between group cursor-pointer border ${
+              className={`flex min-h-[var(--control-height-md)] w-full cursor-pointer items-center justify-between gap-[var(--space-2)] rounded-[var(--lkv-radius-md)] border px-[var(--space-3)] py-[var(--space-2)] text-[length:var(--lkv-text-footnote)] font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)] ${
                 isActive
-                  ? 'bg-[#17402C] text-white border-[#17402C] shadow-sm'
-                  : 'bg-white/80 hover:bg-white text-[#17402C] border-white/80 shadow-2xs'
+                  ? 'border-transparent bg-[color:var(--lkv-action)] text-[color:var(--lkv-on-action)] shadow-elevation-1'
+                  : 'border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-card)] text-[color:var(--lkv-text-primary)] hover:bg-[color:var(--lkv-hover-surface)]'
               }`}
             >
               <span className="truncate text-left">{tab.label}</span>
-              {isActive && <ChevronRightAnimated size={13} className="text-white/70 shrink-0" />}
+              {isActive && <ChevronRightAnimated size={13} className="shrink-0 text-white/70" />}
             </Link>
           );
         })}
@@ -75,8 +75,8 @@ export default function CommunityHubNav({
   }
 
   return (
-    <div className="w-full flex justify-center py-2 sticky top-0 z-30 bg-[#EEF3EC]/80 backdrop-blur-md">
-      <div className="glass-capsule-bar flex items-center justify-between gap-1 w-full max-w-xl p-1 overflow-x-auto">
+    <div className="sticky top-0 z-[var(--z-sticky)] flex w-full justify-center bg-[color:var(--lkv-surface)]/80 py-[var(--space-2)] backdrop-blur-[var(--blur-md)]">
+      <div className="flex w-full max-w-xl items-center justify-between gap-[var(--space-1)] overflow-x-auto rounded-full border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] p-[var(--space-1)] shadow-elevation-1 backdrop-blur-[var(--blur-md)]">
         {TABS.map((tab) => {
           const isActive = activeTab === tab.key;
           const badge = badgeCounts[tab.key];
@@ -86,15 +86,19 @@ export default function CommunityHubNav({
               key={tab.key}
               href={tab.href}
               onClick={(e) => handleTabClick(tab.key, e)}
-              className={`glass-capsule-segment flex-1 flex items-center justify-center gap-1.5 py-2 px-2.5 text-xs font-semibold select-none transition-all whitespace-nowrap ${
-                isActive ? 'active text-[#17402C]' : 'text-[#365233]'
+              className={`flex min-h-[var(--control-height-sm)] flex-1 select-none items-center justify-center gap-[6px] whitespace-nowrap rounded-full px-[var(--space-3)] py-[var(--space-2)] text-[length:var(--lkv-text-footnote)] font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)] ${
+                isActive
+                  ? 'bg-[color:var(--lkv-surface-card)] text-[color:var(--lkv-text-primary)] shadow-elevation-1'
+                  : 'text-[color:var(--lkv-text-secondary)] hover:bg-[color:var(--lkv-hover-surface)]'
               }`}
             >
               <span>{tab.label}</span>
               {badge !== undefined && badge > 0 && (
                 <span
-                  className={`text-[10px] px-1.5 py-0.5 rounded-full font-mono ${
-                    isActive ? 'bg-[#17402C]/10 text-[#17402C]' : 'bg-[#365233]/10 text-[#365233]'
+                  className={`rounded-full px-1.5 py-0.5 font-mono text-[length:var(--lkv-text-caption-2)] ${
+                    isActive
+                      ? 'bg-[color:var(--lkv-action)]/10 text-[color:var(--lkv-primary)]'
+                      : 'bg-[color:var(--lkv-secondary)]/10 text-[color:var(--lkv-secondary)]'
                   }`}
                 >
                   {badge}

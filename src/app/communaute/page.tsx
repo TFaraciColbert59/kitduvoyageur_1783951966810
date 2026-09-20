@@ -19,6 +19,7 @@ import MobileCommunityHub from '@/components/communaute/MobileCommunityHub';
 import CommunityPostCard from '@/components/communaute/CommunityPostCard';
 import LineageDiscovery from '@/components/kits/LineageDiscovery';
 import CommunityHeroOverview from '@/components/communaute/CommunityHeroOverview';
+import { Badge, Button, Card, Chip, EmptyState, LoadingState, SearchField } from '@/components/ui';
 
 function formatEventDate(value?: string | null): string {
   if (!value) return '';
@@ -218,16 +219,16 @@ function CommunautePageContent() {
   }, [clubs, clubFilterTab, clubSearchQuery]);
 
   return (
-    <div className="min-h-screen md:h-dvh md:overflow-hidden text-[var(--lkv-primary)] selection:bg-[var(--lkv-primary)]/10 font-sans relative">
+    <div className="relative min-h-screen font-sans text-[color:var(--lkv-primary)] selection:bg-[color:var(--lkv-primary)]/10 md:h-dvh md:overflow-hidden">
       {/* Background immersif végétal / canopée */}
       <CompteBackground />
 
       {/* ══════════════════════════════════════════════════════════════════════
           1. VERSION MOBILE (block md:hidden)
          ══════════════════════════════════════════════════════════════════════ */}
-      <div className="block md:hidden min-h-screen">
-        {/* safeTop=false: MobileCommunityHeader embarque son propre header sticky (MobileCommunityHeader.tsx:24)
-            qui calcule pt-[calc(max(env(safe-area-inset-top,0px),10px)+6px)] */}
+      <div className="block min-h-screen md:hidden">
+        {/* safeTop=false: MobileCommunityHeader embarque son propre header sticky
+            (safe-area top gérée par le composant, cf. MobileCommunityHeader.tsx) */}
         <MobilePageShell videoBackground={true} safeTop={false}>
           <MobileCommunityHub
             posts={posts}
@@ -249,16 +250,16 @@ function CommunautePageContent() {
       {/* ══════════════════════════════════════════════════════════════════════
           2. VERSION DESKTOP COCKPIT 3 COLONNES FULLSCREEN (hidden md:flex)
          ══════════════════════════════════════════════════════════════════════ */}
-      <div className="hidden md:flex flex-col h-full overflow-hidden">
+      <div className="hidden h-full flex-col overflow-hidden md:flex">
         {/* Global Site Header */}
         <Header />
 
         {/* Main 3-Column Cockpit Container */}
-        <div className="flex-1 overflow-hidden pt-24 sm:pt-[96px] pb-5 px-4 sm:px-6 lg:px-8 max-w-[1680px] w-full mx-auto">
-          <div className="flex items-start gap-6 h-full">
+        <div className="mx-auto w-full max-w-[1680px] flex-1 overflow-hidden px-4 pb-5 pt-24 sm:px-6 sm:pt-[96px] lg:px-8">
+          <div className="flex h-full items-start gap-6">
 
             {/* LEFT COLUMN: NAVIGATION SIDEBAR (280px) */}
-            <div className="w-[280px] shrink-0 h-full overflow-hidden">
+            <div className="h-full w-[280px] shrink-0 overflow-hidden">
               <CommunityLeftSidebar
                 activeTab={activeTab}
                 onTabChange={handleTabSelect}
@@ -274,7 +275,7 @@ function CommunautePageContent() {
             </div>
 
             {/* CENTER COLUMN: MAIN TAB CONTENT */}
-            <main className="flex-1 h-full overflow-y-auto no-scrollbar space-y-6 px-1">
+            <main className="no-scrollbar h-full flex-1 space-y-[var(--space-6)] overflow-y-auto px-1">
               {/* HERO BANNER COMMUNAUTÉ */}
               <CommunityHeroOverview
                 carnetsCount={carnets.length}
@@ -284,41 +285,41 @@ function CommunautePageContent() {
               />
 
               {/* LIVE EXPLORER STORIES BAR */}
-              <div className="glass rounded-[1.5rem] p-3.5 border border-white/50 shadow-xs">
+              <Card variant="featured" className="p-[var(--space-3)]">
                 <CommunityStoriesBar currentUser={user} />
-              </div>
+              </Card>
 
               {/* DÉCOUVERTE LIGNÉES (Lot 7) — ce qui revient du terrain + lignées endurantes */}
               {activeTab === 'fil' && (
-                <div className="glass rounded-[1.5rem] p-4 border border-white/50 shadow-xs">
+                <Card variant="featured" className="p-[var(--space-4)]">
                   <LineageDiscovery />
-                </div>
+                </Card>
               )}
 
               {/* ONGLET 1: FIL D'ACTUALITÉ */}
               {activeTab === 'fil' && (
-                <div className="space-y-4">
+                <div className="space-y-[var(--space-4)]">
                   <div className="flex items-center justify-between px-1">
-                    <h3 className="font-display font-bold text-lg text-[var(--lkv-primary)]">
+                    <h3 className="font-display text-[length:var(--lkv-text-title-sm)] font-bold text-[color:var(--lkv-primary)]">
                       Derniers échos des sentiers
                     </h3>
-                    <span className="glass-pill text-[9.5px] font-mono font-bold text-[var(--lkv-secondary)]">
+                    <Badge tone="stone" className="font-mono">
                       {posts.length} publications
-                    </span>
+                    </Badge>
                   </div>
 
-                  <div className="space-y-4">
+                  <div className="space-y-[var(--space-4)]">
                     {posts.map((post, i) => (
                       <CommunityPostCard key={post.id || i} post={post} user={user} />
                     ))}
                     {!loading && posts.length === 0 && (
-                      <div className="glass bg-white/90 rounded-2xl p-10 border border-white text-center space-y-2">
-                        <span className="text-3xl block">🌲</span>
-                        <h4 className="font-display font-bold text-sm text-[var(--lkv-primary)]">Le fil est calme</h4>
-                        <p className="text-xs text-[var(--lkv-text-muted)]">
-                          Aucune publication pour le moment. Partagez votre première sortie.
-                        </p>
-                      </div>
+                      <Card className="text-center">
+                        <EmptyState
+                          icon={<span className="text-3xl">🌲</span>}
+                          title="Le fil est calme"
+                          description="Aucune publication pour le moment. Partagez votre première sortie."
+                        />
+                      </Card>
                     )}
                   </div>
                 </div>
@@ -326,9 +327,9 @@ function CommunautePageContent() {
 
               {/* ONGLET 2: CARNETS DE VOYAGE */}
               {activeTab === 'carnets' && (
-                <div className="space-y-4">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                    <div className="flex bg-white/80 p-1 rounded-full border border-[var(--lkv-primary)]/10 overflow-x-auto gap-1">
+                <div className="space-y-[var(--space-4)]">
+                  <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
+                    <div className="no-scrollbar flex gap-[var(--space-1)] overflow-x-auto rounded-full border border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-card)]/80 p-1">
                       {[
                         { id: 'all', label: 'Tous' },
                         { id: 'Trek', label: '🏔️ Trek' },
@@ -337,85 +338,77 @@ function CommunautePageContent() {
                         { id: 'Van Life', label: '🚐 Van Life' },
                         { id: 'Vélo', label: '🚵 Vélo' },
                       ].map((cat) => (
-                        <button
+                        <Chip
                           key={cat.id}
+                          selected={carnetFilterCategory === cat.id}
                           onClick={() => setCarnetFilterCategory(cat.id)}
-                          className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
-                            carnetFilterCategory === cat.id
-                              ? 'bg-[var(--lkv-primary)] text-white shadow-xs'
-                              : 'text-[var(--lkv-text-muted)] hover:text-[var(--lkv-primary)]'
-                          }`}
+                          className="whitespace-nowrap"
                         >
                           {cat.label}
-                        </button>
+                        </Chip>
                       ))}
                     </div>
 
-                    <div className="relative w-full sm:w-64">
-                      <input
-                        type="text"
-                        value={carnetSearchQuery}
-                        onChange={(e) => setCarnetSearchQuery(e.target.value)}
-                        placeholder="Rechercher un récit ou massif..."
-                        className="w-full bg-white/90 border border-[var(--lkv-primary)]/15 rounded-full px-3.5 py-1.5 text-xs text-[var(--lkv-primary)] focus:outline-none focus:ring-1 focus:ring-[var(--lkv-primary)]"
-                      />
-                    </div>
+                    <SearchField
+                      containerClassName="w-full sm:w-64"
+                      value={carnetSearchQuery}
+                      onChange={(e) => setCarnetSearchQuery(e.target.value)}
+                      onClear={() => setCarnetSearchQuery('')}
+                      placeholder="Rechercher un récit ou massif..."
+                      aria-label="Rechercher un récit ou un massif"
+                    />
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 gap-[var(--space-4)] sm:grid-cols-2">
                     {filteredCarnets.map((carnet, i) => (
                       <CarnetHubCard key={carnet.id || i} carnet={carnet} currentUserId={user?.id} />
                     ))}
                   </div>
                   {!loading && filteredCarnets.length === 0 && (
-                    <div className="glass bg-white/90 rounded-2xl p-10 border border-white text-center space-y-2">
-                      <span className="text-3xl block">📖</span>
-                      <h4 className="font-display font-bold text-sm text-[var(--lkv-primary)]">Aucun carnet publié</h4>
-                      <p className="text-xs text-[var(--lkv-text-muted)]">
-                        Les carnets apparaissent ici une fois partagés explicitement par leurs auteurs.
-                      </p>
-                    </div>
+                    <Card className="text-center">
+                      <EmptyState
+                        icon={<span className="text-3xl">📖</span>}
+                        title="Aucun carnet publié"
+                        description="Les carnets apparaissent ici une fois partagés explicitement par leurs auteurs."
+                      />
+                    </Card>
                   )}
                 </div>
               )}
 
               {/* ONGLET 3: CLUBS & COLLECTIFS */}
               {activeTab === 'clubs' && (
-                <div className="space-y-4">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                    <div className="flex bg-white/80 p-1 rounded-full border border-[var(--lkv-primary)]/10 overflow-x-auto gap-1">
+                <div className="space-y-[var(--space-4)]">
+                  <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
+                    <div className="no-scrollbar flex gap-[var(--space-1)] overflow-x-auto rounded-full border border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-card)]/80 p-1">
                       {[
                         { id: 'all', label: 'Tous les clubs' },
                         { id: 'activite', label: '🎯 Par Activité' },
                         { id: 'pays', label: '🌍 Par Massif' },
                         { id: 'my_clubs', label: '⭐ Mes Clubs' },
                       ].map((tb) => (
-                        <button
+                        <Chip
                           key={tb.id}
+                          selected={clubFilterTab === tb.id}
                           onClick={() => setClubFilterTab(tb.id as any)}
-                          className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
-                            clubFilterTab === tb.id
-                              ? 'bg-[var(--lkv-primary)] text-white shadow-xs'
-                              : 'text-[var(--lkv-text-muted)] hover:text-[var(--lkv-primary)]'
-                          }`}
+                          className="whitespace-nowrap"
                         >
                           {tb.label}
-                        </button>
+                        </Chip>
                       ))}
                     </div>
 
-                    <div className="relative w-full sm:w-64">
-                      <input
-                        type="text"
-                        value={clubSearchQuery}
-                        onChange={(e) => setClubSearchQuery(e.target.value)}
-                        placeholder="Rechercher un club..."
-                        className="w-full bg-white/90 border border-[var(--lkv-primary)]/15 rounded-full px-3.5 py-1.5 text-xs text-[var(--lkv-primary)] focus:outline-none focus:ring-1 focus:ring-[var(--lkv-primary)]"
-                      />
-                    </div>
+                    <SearchField
+                      containerClassName="w-full sm:w-64"
+                      value={clubSearchQuery}
+                      onChange={(e) => setClubSearchQuery(e.target.value)}
+                      onClear={() => setClubSearchQuery('')}
+                      placeholder="Rechercher un club..."
+                      aria-label="Rechercher un club"
+                    />
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 gap-[var(--space-4)] sm:grid-cols-2">
                     {filteredClubs.map((club, i) => {
                       const clubName = club.name || club.title || 'Club';
                       const clubDesc = club.description || club.slogan || '';
@@ -423,203 +416,224 @@ function CommunautePageContent() {
                       const slug = club.slug || club.id || `club-${i}`;
 
                       return (
-                        <Link
-                          key={club.id || i}
-                          href={`/clubs/${slug}`}
-                          className="glass bg-white/90 backdrop-blur-xl rounded-2xl overflow-hidden border border-white flex flex-col justify-between group hover:-translate-y-1 hover:shadow-xl transition-all"
-                        >
-                          <div className="h-32 relative bg-[var(--lkv-primary)] overflow-hidden">
-                            {cover ? (
-                              <img src={cover} alt={clubName} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
-                            ) : (
-                              <div className="w-full h-full flex items-center justify-center text-4xl">{club.emoji || '🏕️'}</div>
-                            )}
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
-                            {club.category && (
-                              <span className="absolute bottom-2 left-3 px-2.5 py-0.5 bg-black/40 backdrop-blur-md rounded-full text-[9px] font-mono text-white font-bold">
-                                {club.category}
-                              </span>
-                            )}
-                          </div>
-                          <div className="p-4 space-y-2 flex-1 flex flex-col justify-between">
-                            <div>
-                              <h3 className="font-display font-bold text-base text-[var(--lkv-primary)] group-hover:text-forest-800 transition-colors">
-                                {clubName}
-                              </h3>
-                              {clubDesc && (
-                                <p className="text-xs text-[var(--lkv-text-muted)] line-clamp-2 mt-1">
-                                  {clubDesc}
-                                </p>
+                        <Link key={club.id || i} href={`/clubs/${slug}`} className="block">
+                          <Card
+                            variant="interactive"
+                            className="flex h-full flex-col justify-between overflow-hidden p-0 transition-transform hover:-translate-y-1"
+                          >
+                            <div className="relative h-32 overflow-hidden bg-[color:var(--lkv-primary)]">
+                              {cover ? (
+                                <img src={cover} alt={clubName} className="size-full object-cover transition-transform duration-700 group-hover:scale-105" />
+                              ) : (
+                                <div className="flex size-full items-center justify-center text-4xl">{club.emoji || '🏕️'}</div>
+                              )}
+                              <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
+                              {club.category && (
+                                <Badge tone="stone" className="absolute bottom-2 left-3 border-0 bg-black/40 font-mono text-[color:var(--lkv-text-inverted)] backdrop-blur-[var(--blur-md)]">
+                                  {club.category}
+                                </Badge>
                               )}
                             </div>
-                            <div className="pt-2 border-t border-[var(--lkv-primary)]/10 flex items-center justify-between text-xs">
-                              <span className="text-[10px] font-mono text-[var(--lkv-text-muted)]">
-                                👥 {club.members_count ?? 0} membres
-                              </span>
-                              <span className="glass-capsule-btn text-[10.5px] font-bold !py-1 !px-2.5">
-                                Rejoindre →
-                              </span>
+                            <div className="flex flex-1 flex-col justify-between space-y-[var(--space-2)] p-[var(--space-4)]">
+                              <div>
+                                <h3 className="font-display text-[length:var(--lkv-text-subheadline)] font-bold text-[color:var(--lkv-primary)] transition-colors">
+                                  {clubName}
+                                </h3>
+                                {clubDesc && (
+                                  <p className="mt-[var(--space-1)] line-clamp-2 text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-muted)]">
+                                    {clubDesc}
+                                  </p>
+                                )}
+                              </div>
+                              <div className="flex items-center justify-between border-t border-[color:var(--lkv-border)] pt-[var(--space-2)] text-[length:var(--lkv-text-caption)]">
+                                <span className="font-mono text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">
+                                  👥 {club.members_count ?? 0} membres
+                                </span>
+                                <Badge tone="sage">Rejoindre →</Badge>
+                              </div>
                             </div>
-                          </div>
+                          </Card>
                         </Link>
                       );
                     })}
                   </div>
                   {!loading && filteredClubs.length === 0 && (
-                    <div className="glass bg-white/90 rounded-2xl p-10 border border-white text-center space-y-2">
-                      <span className="text-3xl block">🏔️</span>
-                      <h4 className="font-display font-bold text-sm text-[var(--lkv-primary)]">Aucun club pour le moment</h4>
-                      <p className="text-xs text-[var(--lkv-text-muted)]">Les collectifs créés apparaîtront ici.</p>
-                    </div>
+                    <Card className="text-center">
+                      <EmptyState
+                        icon={<span className="text-3xl">🏔️</span>}
+                        title="Aucun club pour le moment"
+                        description="Les collectifs créés apparaîtront ici."
+                      />
+                    </Card>
                   )}
                 </div>
               )}
 
               {/* ONGLET 4: GROUPES D'EXPÉDITION */}
               {activeTab === 'groupes' && (
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
+                <div className="space-y-[var(--space-4)]">
+                  <div className="flex items-center justify-between gap-[var(--space-3)]">
                     <div>
-                      <h3 className="font-display font-bold text-lg text-[var(--lkv-primary)]">Expéditions en formation</h3>
-                      <p className="text-xs text-[var(--lkv-text-muted)]">Trouvez des équipiers et partagez les préparatifs de bivouac.</p>
+                      <h3 className="font-display text-[length:var(--lkv-text-title-sm)] font-bold text-[color:var(--lkv-primary)]">
+                        Expéditions en formation
+                      </h3>
+                      <p className="text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-muted)]">
+                        Trouvez des équipiers et partagez les préparatifs de bivouac.
+                      </p>
                     </div>
-                    <Link
-                      href="/nouveau-groupe"
-                      className="glass-capsule-btn primary text-xs font-bold !py-1.5 !px-3.5 flex items-center gap-1.5"
-                    >
-                      <Icon name="PlusIcon" size={13} />
-                      <span>Créer</span>
+                    <Link href="/nouveau-groupe" className="inline-flex shrink-0">
+                      <Button
+                        variant="primary"
+                        size="sm"
+                        icon={<Icon name="PlusIcon" size={13} aria-hidden="true" />}
+                      >
+                        Créer
+                      </Button>
                     </Link>
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 gap-[var(--space-4)] sm:grid-cols-2">
                     {groups.map((grp, i) => (
                       <Link
                         key={grp.id || i}
                         href={grp.id ? `/groupes/${grp.id}` : '/communaute?tab=groupes'}
-                        className="glass bg-white/90 backdrop-blur-xl rounded-2xl p-5 border border-white hover:shadow-xl transition-all group flex flex-col justify-between"
+                        className="block"
                       >
-                        <div className="space-y-2">
-                          <div className="flex items-center justify-between">
-                            <span className="text-2xl">{grp.pictogram || '🏕️'}</span>
-                            {grp.max_members > 0 && (
-                              <span className="glass-pill text-[9px] font-mono font-bold text-[var(--lkv-primary)]">
-                                {grp.max_members} PLACES
-                              </span>
+                        <Card variant="interactive" className="flex h-full flex-col justify-between">
+                          <div className="space-y-[var(--space-2)]">
+                            <div className="flex items-center justify-between">
+                              <span className="text-2xl">{grp.pictogram || '🏕️'}</span>
+                              {grp.max_members > 0 && (
+                                <Badge tone="stone" className="font-mono">
+                                  {grp.max_members} PLACES
+                                </Badge>
+                              )}
+                            </div>
+                            <h4 className="font-display text-[length:var(--lkv-text-subheadline)] font-bold text-[color:var(--lkv-primary)] transition-colors">
+                              {grp.name}
+                            </h4>
+                            {grp.description && (
+                              <p className="line-clamp-2 text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-muted)]">
+                                {grp.description}
+                              </p>
                             )}
                           </div>
-                          <h4 className="font-display font-bold text-base text-[var(--lkv-primary)] group-hover:text-forest-800 transition-colors">
-                            {grp.name}
-                          </h4>
-                          {grp.description && (
-                            <p className="text-xs text-[var(--lkv-text-muted)] line-clamp-2">
-                              {grp.description}
-                            </p>
-                          )}
-                        </div>
 
-                        <div className="pt-3 border-t border-[var(--lkv-primary)]/10 flex items-center justify-between text-[10px] font-mono text-[var(--lkv-text-muted)] mt-3">
-                          <span>📍 {grp.massif || 'Massif non précisé'}</span>
-                          <span className="glass-capsule-btn text-[10.5px] font-bold !py-1 !px-2.5">
-                            Voir le cockpit →
-                          </span>
-                        </div>
+                          <div className="mt-[var(--space-3)] flex items-center justify-between border-t border-[color:var(--lkv-border)] pt-[var(--space-3)] font-mono text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">
+                            <span>📍 {grp.massif || 'Massif non précisé'}</span>
+                            <Badge tone="sage">Voir le cockpit →</Badge>
+                          </div>
+                        </Card>
                       </Link>
                     ))}
                   </div>
                   {!loading && groups.length === 0 && (
-                    <div className="glass bg-white/90 rounded-2xl p-10 border border-white text-center space-y-2">
-                      <span className="text-3xl block">⛺</span>
-                      <h4 className="font-display font-bold text-sm text-[var(--lkv-primary)]">Aucune expédition en formation</h4>
-                      <p className="text-xs text-[var(--lkv-text-muted)]">Créez un groupe pour préparer votre prochaine sortie.</p>
-                    </div>
+                    <Card className="text-center">
+                      <EmptyState
+                        icon={<span className="text-3xl">⛺</span>}
+                        title="Aucune expédition en formation"
+                        description="Créez un groupe pour préparer votre prochaine sortie."
+                      />
+                    </Card>
                   )}
                 </div>
               )}
 
               {/* ONGLET 5: ÉVÉNEMENTS & SORTIES */}
               {activeTab === 'evenements' && (
-                <div className="space-y-4">
+                <div className="space-y-[var(--space-4)]">
                   <div className="flex items-center justify-between">
                     <div>
-                      <h3 className="font-display font-bold text-lg text-[var(--lkv-primary)]">Calendrier des Sorties Collectives</h3>
-                      <p className="text-xs text-[var(--lkv-text-muted)]">Rejoignez une marche encadrée par des passionnés et des guides locaux.</p>
+                      <h3 className="font-display text-[length:var(--lkv-text-title-sm)] font-bold text-[color:var(--lkv-primary)]">
+                        Calendrier des Sorties Collectives
+                      </h3>
+                      <p className="text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-muted)]">
+                        Rejoignez une marche encadrée par des passionnés et des guides locaux.
+                      </p>
                     </div>
                   </div>
 
-                  <div className="space-y-3">
+                  <div className="space-y-[var(--space-3)]">
                     {events.map((ev) => {
                       const joined = joinedEventIds[String(ev.id)];
                       return (
-                      <div key={ev.id} className="glass bg-white/90 backdrop-blur-xl p-5 rounded-2xl border border-white flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                        <div className="space-y-1.5">
-                          <div className="flex items-center gap-2">
-                            <span className="bg-[var(--lkv-primary)] text-white text-[9px] font-mono font-bold px-2 py-0.5 rounded">
+                      <Card key={ev.id} className="flex flex-col justify-between gap-[var(--space-4)] sm:flex-row sm:items-center">
+                        <div className="space-y-[var(--space-1)]">
+                          <div className="flex items-center gap-[var(--space-2)]">
+                            <Badge tone="sage" className="font-mono">
                               {ev.date || 'Date à confirmer'}
-                            </span>
+                            </Badge>
                             {ev.duration && (
-                              <span className="text-[10px] font-mono text-[var(--lkv-text-muted)]">
+                              <span className="font-mono text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">
                                 ⏱ {ev.duration}
                               </span>
                             )}
                           </div>
-                          <h4 className="font-display font-bold text-base text-[var(--lkv-primary)]">
+                          <h4 className="font-display text-[length:var(--lkv-text-subheadline)] font-bold text-[color:var(--lkv-primary)]">
                             {ev.title}
                           </h4>
-                          <p className="text-xs text-[var(--lkv-text-muted)]">
+                          <p className="text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-muted)]">
                             📍 {ev.location || 'Lieu à préciser'}
                             {ev.guide ? <> · Encadré par <strong>{ev.guide}</strong></> : null}
                           </p>
                         </div>
 
-                        <div className="flex items-center justify-between sm:justify-end gap-3 pt-2 sm:pt-0 border-t sm:border-t-0 border-[var(--lkv-primary)]/10">
-                          <span className="text-[10px] font-mono font-bold text-forest-800">
+                        <div className="flex items-center justify-between gap-[var(--space-3)] border-t border-[color:var(--lkv-border)] pt-[var(--space-2)] sm:justify-end sm:border-t-0 sm:pt-0">
+                          <span className="font-mono text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-primary)]">
                             {ev.participants}{ev.maxParticipants > 0 ? `/${ev.maxParticipants}` : ''} inscrits
                           </span>
-                          <button
-                            onClick={() => handleJoinEvent(ev.id)}
+                          <Button
+                            type="button"
+                            variant={joined ? 'secondary' : 'primary'}
+                            size="sm"
                             disabled={joined}
-                            className="glass-capsule-btn primary text-[10.5px] font-bold !py-1 !px-3 disabled:opacity-60"
+                            onClick={() => handleJoinEvent(ev.id)}
                           >
                             {joined ? 'Inscrit ✓' : "S'inscrire"}
-                          </button>
+                          </Button>
                         </div>
-                      </div>
+                      </Card>
                       );
                     })}
                   </div>
                   {!loading && events.length === 0 && (
-                    <div className="glass bg-white/90 rounded-2xl p-10 border border-white text-center space-y-2">
-                      <span className="text-3xl block">📅</span>
-                      <h4 className="font-display font-bold text-sm text-[var(--lkv-primary)]">Aucune sortie programmée</h4>
-                      <p className="text-xs text-[var(--lkv-text-muted)]">Les événements à venir apparaîtront ici.</p>
-                    </div>
+                    <Card className="text-center">
+                      <EmptyState
+                        icon={<span className="text-3xl">📅</span>}
+                        title="Aucune sortie programmée"
+                        description="Les événements à venir apparaîtront ici."
+                      />
+                    </Card>
                   )}
                 </div>
               )}
 
               {/* ONGLET 6: ENTRAIDE & Q&A */}
               {activeTab === 'entraide' && (
-                <div className="space-y-4">
-                  <div className="glass bg-white/90 rounded-2xl p-5 border border-white space-y-3">
-                    <div className="flex items-center gap-2">
+                <div className="space-y-[var(--space-4)]">
+                  <Card className="space-y-[var(--space-3)]">
+                    <div className="flex items-center gap-[var(--space-2)]">
                       <span className="text-xl">💡</span>
-                      <h3 className="font-display font-bold text-base text-[var(--lkv-primary)]">Entraide &amp; Questions Terrain</h3>
+                      <h3 className="font-display text-[length:var(--lkv-text-subheadline)] font-bold text-[color:var(--lkv-primary)]">
+                        Entraide &amp; Questions Terrain
+                      </h3>
                     </div>
-                    <p className="text-xs text-[var(--lkv-text-muted)] leading-relaxed">
+                    <p className="text-[length:var(--lkv-text-caption)] leading-relaxed text-[color:var(--lkv-text-muted)]">
                       Posez vos questions sur l&apos;état des sentiers, le débit des sources, les conditions d&apos;enneigement et le matériel.
                     </p>
-                    <div className="p-3.5 rounded-xl bg-forest-50/80 border border-forest-200/60 text-xs text-[var(--lkv-primary)] space-y-1">
-                      <span className="font-bold block">✓ Réponses validées par les Guides</span>
-                      <p className="text-[11px] text-[var(--lkv-text-muted)]">Chaque information critique sur les sources et passages délicats est vérifiée par les référents du massif.</p>
-                    </div>
-                  </div>
+                    <Card variant="compact" tone="sage" className="space-y-[var(--space-1)]">
+                      <span className="block font-bold text-[color:var(--lkv-text-primary)]">✓ Réponses validées par les Guides</span>
+                      <p className="text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">
+                        Chaque information critique sur les sources et passages délicats est vérifiée par les référents du massif.
+                      </p>
+                    </Card>
+                  </Card>
                 </div>
               )}
             </main>
 
             {/* RIGHT COLUMN: SIDEBAR WIDGETS (310px) */}
-            <div className="w-[310px] shrink-0 h-full overflow-hidden">
+            <div className="h-full w-[310px] shrink-0 overflow-hidden">
               <CommunityRightSidebar clubs={clubs} events={events} />
             </div>
 
@@ -632,7 +646,13 @@ function CommunautePageContent() {
 
 export default function CommunautePage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-[var(--lkv-primary)] flex items-center justify-center text-white text-xs font-mono">Chargement du Hub Communauté...</div>}>
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center bg-[color:var(--lkv-surface)]">
+          <LoadingState label="Chargement du Hub Communauté..." />
+        </div>
+      }
+    >
       <CommunautePageContent />
     </Suspense>
   );

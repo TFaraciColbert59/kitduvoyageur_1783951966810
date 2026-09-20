@@ -3,6 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import Icon from '@/components/ui/AppIcon';
+import { Badge, Button, ListItem } from '@/components/ui';
 import LiquidGlass from '@/components/glass/LiquidGlass';
 import { CommunityHubTab } from '@/components/social/CommunityHubNav';
 
@@ -22,7 +23,6 @@ const tabs: { id: CommunityHubTab; label: string; icon: string }[] = [
   { id: 'entraide', label: 'Entraide', icon: 'message-square' },
 ];
 const massifs = ['Chartreuse', 'Vercors', 'Mont-Blanc', 'Belledonne', 'Vanoise'];
-const focusStyle = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#17402C] focus-visible:ring-offset-2';
 
 export default function CommunityLeftSidebar({
   activeTab,
@@ -42,86 +42,88 @@ export default function CommunityLeftSidebar({
       glassTint="rgba(255,255,255,0.54)"
       interactive={false}
       elasticity={0}
-      className="community-sidebar h-full w-full overflow-hidden text-[#17402C] [&>div:last-child]:h-full"
+      className="community-sidebar h-full w-full overflow-hidden text-[color:var(--lkv-text-primary)] [&>div:last-child]:h-full"
     >
-      <div className="flex h-full min-h-0 flex-col p-4">
-        <div className="flex shrink-0 items-center gap-3 px-2 pb-5 pt-2">
-          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white/65 shadow-xs">
+      <div className="flex h-full min-h-0 flex-col p-[var(--space-4)]">
+        <div className="flex shrink-0 items-center gap-[var(--space-3)] px-[var(--space-2)] pb-[var(--space-5)] pt-[var(--space-2)]">
+          <div className="flex size-11 shrink-0 items-center justify-center rounded-[var(--lkv-radius-md)] bg-[color:var(--lkv-surface-card)]/65 shadow-elevation-1">
             <Icon name="globe" size={23} />
           </div>
           <div>
-            <p className="text-[15px] font-semibold tracking-[-0.025em]">Votre communauté</p>
-            <p className="mt-0.5 text-xs text-[#476254]">Le voyage se partage.</p>
+            <p className="text-[length:var(--lkv-text-subheadline)] font-semibold tracking-[-0.025em]">Votre communauté</p>
+            <p className="mt-0.5 text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-secondary)]">Le voyage se partage.</p>
           </div>
         </div>
 
-        <Link
-          href="/carnets/nouveau"
-          className={`glass-capsule-btn primary flex min-h-11 shrink-0 w-full items-center justify-center gap-2 px-4 text-sm font-semibold ${focusStyle}`}
-        >
-          <Icon name="plus" size={18} />
-          Partager un récit
+        <Link href="/carnets/nouveau" className="flex min-h-11 w-full shrink-0">
+          <Button variant="primary" fullWidth icon={<Icon name="plus" size={18} aria-hidden="true" />}>
+            Partager un récit
+          </Button>
         </Link>
 
-        <nav className="mt-6 min-h-0 flex-1 overflow-y-auto px-0.5 pb-3" aria-label="Navigation de la communauté">
-          <p className="mb-2 px-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#476254]">Découvrir</p>
-          <div className="space-y-1">
+        <nav className="mt-[var(--space-6)] min-h-0 flex-1 overflow-y-auto px-0.5 pb-[var(--space-3)]" aria-label="Navigation de la communauté">
+          <p className="mb-[var(--space-2)] px-[var(--space-3)] text-[length:var(--lkv-text-caption-2)] font-semibold uppercase tracking-[0.12em] text-[color:var(--lkv-text-secondary)]">
+            Découvrir
+          </p>
+          <div className="space-y-[var(--space-1)]">
             {tabs.map((tab) => {
               const isActive = activeTab === tab.id;
               const count = tab.id === 'entraide' ? undefined : badgeCounts[tab.id];
               return (
-                <button
+                <ListItem
                   key={tab.id}
-                  type="button"
+                  as="div"
+                  selected={isActive}
                   onClick={() => onTabChange(tab.id)}
-                  aria-current={isActive ? 'page' : undefined}
-                  className={`flex min-h-12 w-full items-center gap-3 rounded-2xl px-3 text-left text-[13px] motion-safe:transition-transform motion-safe:duration-150 motion-safe:active:scale-[0.98] ${focusStyle} ${
-                    isActive
-                      ? 'bg-white/80 font-semibold shadow-xs'
-                      : 'font-medium hover:bg-[#17402C]/5'
-                  }`}
-                >
-                  <Icon name={tab.icon} size={19} className="shrink-0" />
-                  <span className="min-w-0 flex-1">{tab.label}</span>
-                  {typeof count === 'number' && count > 0 && (
-                    <span className={`min-w-6 rounded-full px-1.5 py-0.5 text-center text-[11px] tabular-nums ${isActive ? 'bg-[#17402C]/10 text-[#17402C]' : 'text-[#476254]'}`}>
-                      {count}
-                    </span>
-                  )}
-                </button>
+                  className="min-h-12 px-[var(--space-3)]"
+                  leading={<Icon name={tab.icon} size={19} className="shrink-0" />}
+                  title={
+                    <span className="text-[length:var(--lkv-text-footnote)]">{tab.label}</span>
+                  }
+                  metadata={
+                    typeof count === 'number' && count > 0 ? (
+                      <Badge tone={isActive ? 'sage' : 'stone'}>{count}</Badge>
+                    ) : undefined
+                  }
+                />
               );
             })}
           </div>
 
-          <div className="mt-6">
-            <p className="mb-2 px-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#476254]">Au fil des massifs</p>
+          <div className="mt-[var(--space-6)]">
+            <p className="mb-[var(--space-2)] px-[var(--space-3)] text-[length:var(--lkv-text-caption-2)] font-semibold uppercase tracking-[0.12em] text-[color:var(--lkv-text-secondary)]">
+              Au fil des massifs
+            </p>
             <div className="space-y-0.5">
               {massifs.map((massif) => (
-                <button
+                <ListItem
                   key={massif}
-                  type="button"
+                  as="div"
                   onClick={() => {
                     onFilterMassif?.(massif);
                     onTabChange('carnets');
                   }}
-                  className={`flex min-h-11 w-full items-center gap-3 rounded-xl px-3 text-left text-xs font-medium transition-all hover:bg-[#17402C]/5 active:scale-[0.99] ${focusStyle}`}
-                >
-                  <Icon name="map-pin" size={15} className="text-[#476254]" />
-                  {massif}
-                  <Icon name="chevron-right" size={12} className="ml-auto text-[#476254]" />
-                </button>
+                  className="min-h-11 px-[var(--space-3)]"
+                  leading={<Icon name="map-pin" size={15} className="text-[color:var(--lkv-text-secondary)]" />}
+                  title={<span className="text-[length:var(--lkv-text-caption)] font-medium">{massif}</span>}
+                  trailing={<Icon name="chevron-right" size={12} className="text-[color:var(--lkv-text-secondary)]" aria-hidden="true" />}
+                />
               ))}
             </div>
           </div>
         </nav>
 
-        <div className="shrink-0 space-y-1 border-t border-[#17402C]/10 pt-3">
-          <Link href="/nouveau-groupe" className={`glass-capsule-btn flex min-h-11 w-full items-center justify-center gap-2 px-4 text-xs font-semibold ${focusStyle}`}>
-            <Icon name="user-plus" size={18} />
-            Créer une expédition
+        <div className="shrink-0 space-y-[var(--space-1)] border-t border-[color:var(--lkv-border)] pt-[var(--space-3)]">
+          <Link href="/nouveau-groupe" className="flex min-h-11 w-full">
+            <Button variant="secondary" fullWidth icon={<Icon name="user-plus" size={18} aria-hidden="true" />}>
+              Créer une expédition
+            </Button>
           </Link>
-          <Link href="/explorer" className={`flex min-h-11 items-center gap-3 rounded-xl px-3 text-xs font-medium transition-all hover:bg-[#17402C]/5 active:scale-[0.99] ${focusStyle}`}>
-            <Icon name="arrow-up-right" size={18} />
+          <Link
+            href="/explorer"
+            className="flex min-h-11 items-center gap-[var(--space-3)] rounded-[var(--lkv-radius-md)] px-[var(--space-3)] text-[length:var(--lkv-text-caption)] font-medium transition-colors hover:bg-[color:var(--lkv-hover-surface)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]"
+          >
+            <Icon name="arrow-up-right" size={18} aria-hidden="true" />
             Explorer les aventures
           </Link>
         </div>

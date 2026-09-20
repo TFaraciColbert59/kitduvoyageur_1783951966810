@@ -1,9 +1,10 @@
-﻿'use client';
+'use client';
 
 import Icon from '@/components/ui/Icon';
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { Badge, Card, Chip, IconButton, Spinner } from '@/components/ui';
 import type { Message } from '../types/messaging.types';
 import { formatMessageDate } from '../lib/messagingUtils';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
@@ -136,28 +137,28 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
 
   const marginClass =
     groupPosition === 'first'
-      ? 'mt-2 mb-0.5'
+      ? 'mt-[var(--space-2)] mb-0.5'
       : groupPosition === 'middle'
         ? 'my-0.5'
         : groupPosition === 'last'
-          ? 'mt-0.5 mb-2'
+          ? 'mt-0.5 mb-[var(--space-2)]'
           : 'my-1.5';
 
   const bubbleRadiusClass = isMine
     ? groupPosition === 'first'
-      ? 'rounded-2xl rounded-tr-xs rounded-br-sm'
+      ? 'rounded-[var(--lkv-radius-md)] rounded-tr-xs rounded-br-[var(--lkv-radius-xs)]'
       : groupPosition === 'middle'
-        ? 'rounded-2xl rounded-tr-sm rounded-br-sm'
+        ? 'rounded-[var(--lkv-radius-md)] rounded-tr-[var(--lkv-radius-xs)] rounded-br-[var(--lkv-radius-xs)]'
         : groupPosition === 'last'
-          ? 'rounded-2xl rounded-tr-sm rounded-br-xs'
-          : 'rounded-2xl rounded-tr-xs'
+          ? 'rounded-[var(--lkv-radius-md)] rounded-tr-[var(--lkv-radius-xs)] rounded-br-xs'
+          : 'rounded-[var(--lkv-radius-md)] rounded-tr-xs'
     : groupPosition === 'first'
-      ? 'rounded-2xl rounded-tl-xs rounded-bl-sm'
+      ? 'rounded-[var(--lkv-radius-md)] rounded-tl-xs rounded-bl-[var(--lkv-radius-xs)]'
       : groupPosition === 'middle'
-        ? 'rounded-2xl rounded-tl-sm rounded-bl-sm'
+        ? 'rounded-[var(--lkv-radius-md)] rounded-tl-[var(--lkv-radius-xs)] rounded-bl-[var(--lkv-radius-xs)]'
         : groupPosition === 'last'
-          ? 'rounded-2xl rounded-tl-sm rounded-bl-xs'
-          : 'rounded-2xl rounded-tl-xs';
+          ? 'rounded-[var(--lkv-radius-md)] rounded-tl-[var(--lkv-radius-xs)] rounded-bl-xs'
+          : 'rounded-[var(--lkv-radius-md)] rounded-tl-xs';
 
   const showAvatar = !isMine && (groupPosition === 'last' || groupPosition === 'single');
   const showHeader =
@@ -167,7 +168,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
     <div
       id={`msg-bubble-${message.id}`}
       {...swipeHandlers}
-      className={`group relative flex items-end gap-2.5 ${marginClass} transition-all ${
+      className={`group relative flex items-end gap-[var(--space-2)] ${marginClass} transition-all ${
         isMine ? 'flex-row-reverse' : 'flex-row'
       }`}
     >
@@ -175,7 +176,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
         (showAvatar ? (
           <Link
             href={`/profil/${message.sender_profile?.id || ''}`}
-            className="w-8 h-8 rounded-full overflow-hidden relative shrink-0 ring-1 ring-white/80 shadow-xs bg-stone-100 mb-0.5 cursor-pointer hover:ring-2 hover:ring-[#A3C4A3] transition-shadow"
+            className="relative mb-0.5 size-8 shrink-0 cursor-pointer overflow-hidden rounded-full bg-[color:var(--lkv-surface-muted)] shadow-elevation-1 ring-1 ring-[color:var(--glass-border)] transition-shadow hover:ring-2 hover:ring-[color:var(--lkv-secondary)]"
             title={`Voir le profil de ${senderName}`}
             aria-label={`Voir le profil de ${senderName}`}
           >
@@ -195,12 +196,12 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
         ))}
 
       <div
-        className={`max-w-[78%] sm:max-w-[70%] flex flex-col ${isMine ? 'items-end' : 'items-start'}`}
+        className={`flex max-w-[78%] flex-col sm:max-w-[70%] ${isMine ? 'items-end' : 'items-start'}`}
       >
         {showHeader && (
           <Link
             href={`/profil/${message.sender_profile?.id || ''}`}
-            className="text-[12px] font-semibold text-[#5A7064] hover:text-[#17402C] transition-colors ml-1 mb-1 block cursor-pointer"
+            className="mb-[var(--space-1)] ml-[var(--space-1)] block cursor-pointer text-[length:var(--lkv-text-caption)] font-semibold text-[color:var(--lkv-text-muted)] transition-colors hover:text-[color:var(--lkv-text-primary)]"
           >
             {senderName}
           </Link>
@@ -208,54 +209,63 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
 
         {/* Action Menu overlay */}
         {showActionMenu && (
-          <div
-            className={`z-30 mb-2 p-1.5 glass rounded-2xl shadow-lg flex items-center gap-1 animate-scale-in ${
+          <Card
+            className={`animate-scale-in z-[var(--z-dropdown)] mb-[var(--space-2)] flex items-center gap-[var(--space-1)] p-[var(--space-1)] shadow-elevation-3 ${
               isMine ? 'origin-bottom-right' : 'origin-bottom-left'
             }`}
           >
             {REACTION_PALETTE.map((emoji) => (
-              <button
+              <IconButton
                 key={emoji}
                 type="button"
+                variant="ghost"
+                size="lg"
                 onClick={() => {
                   haptic('light');
                   onToggleReaction?.(message.id, emoji);
                   setShowActionMenu(false);
                 }}
-                className="w-11 h-11 rounded-full flex items-center justify-center hover:bg-stone-100/80 text-xl active:scale-125 transition-transform"
+                className="text-xl active:scale-125"
+                aria-label={`Réagir avec ${emoji}`}
               >
                 {emoji}
-              </button>
+              </IconButton>
             ))}
-            <div className="w-px h-5 bg-stone-200/80 mx-1" />
-            <button
+            <div className="mx-[var(--space-1)] h-5 w-px bg-[color:var(--lkv-border)]" />
+            <IconButton
               type="button"
+              variant="glass"
+              size="sm"
               onClick={() => {
                 haptic('light');
                 onReply?.(message);
                 setShowActionMenu(false);
               }}
-              className="glass-circle-btn w-8 h-8 text-[#17402C] text-xs font-semibold flex items-center justify-center shadow-xs"
+              className="text-[length:var(--lkv-text-caption)] font-semibold shadow-elevation-1"
               title="Répondre"
+              aria-label="Répondre"
             >
-              <Icon name="reply" className="w-3.5 h-3.5" />
-            </button>
-            <button
+              <Icon name="reply" className="size-3.5" aria-hidden="true" />
+            </IconButton>
+            <IconButton
               type="button"
+              variant="glass"
+              size="sm"
               onClick={() => {
                 haptic('light');
                 onForward?.(message);
                 setShowActionMenu(false);
               }}
-              className="glass-circle-btn w-8 h-8 text-[#17402C] text-xs font-semibold flex items-center justify-center shadow-xs"
+              className="text-[length:var(--lkv-text-caption)] font-semibold shadow-elevation-1"
               title="Transférer"
+              aria-label="Transférer"
             >
-              <Icon name="share2" className="w-3.5 h-3.5" />
-            </button>
-          </div>
+              <Icon name="share2" className="size-3.5" aria-hidden="true" />
+            </IconButton>
+          </Card>
         )}
 
-        <div className="relative group/bubble flex items-center gap-1.5">
+        <div className="group/bubble relative flex items-center gap-[var(--space-1)]">
           {/* Action trigger button on hover / focus / first-of-group */}
           {/*
             Boutons d'action masqués sur tactile : sur mobile le long-press et
@@ -263,41 +273,45 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
             largeur utile (cf. audit 1.4).
           */}
           <div
-            className={`hidden md:flex opacity-0 group-hover/bubble:opacity-100 focus-within:opacity-100 transition-opacity items-center gap-1 ${
+            className={`hidden items-center gap-[var(--space-1)] opacity-0 transition-opacity focus-within:opacity-100 group-hover/bubble:opacity-100 md:flex ${
               isMine ? 'flex-row-reverse' : 'flex-row'
             }`}
           >
-            <button
+            <IconButton
               type="button"
+              variant="glass"
+              size="sm"
               onClick={() => {
                 haptic('light');
                 setShowActionMenu(!showActionMenu);
               }}
               aria-label="Réagir"
-              className="glass-circle-btn w-8 h-8 text-[#5A574E] hover:text-[#17402C] shadow-2xs"
+              className="text-[color:var(--lkv-text-secondary)] shadow-elevation-1 hover:text-[color:var(--lkv-text-primary)]"
               title="Réagir"
             >
-              <Icon name="smile" className="w-3.5 h-3.5" />
-            </button>
-            <button
+              <Icon name="smile" className="size-3.5" aria-hidden="true" />
+            </IconButton>
+            <IconButton
               type="button"
+              variant="glass"
+              size="sm"
               onClick={() => {
                 haptic('light');
                 onReply?.(message);
               }}
               aria-label="Répondre"
-              className="glass-circle-btn w-8 h-8 text-[#5A574E] hover:text-[#17402C] shadow-2xs"
+              className="text-[color:var(--lkv-text-secondary)] shadow-elevation-1 hover:text-[color:var(--lkv-text-primary)]"
               title="Répondre"
             >
-              <Icon name="reply" className="w-3.5 h-3.5" />
-            </button>
+              <Icon name="reply" className="size-3.5" aria-hidden="true" />
+            </IconButton>
           </div>
 
           <div
             onClick={doubleTap.onClick}
             {...longPress}
-            className={`relative px-4 py-3 transition-all select-none cursor-pointer ${bubbleRadiusClass} ${
-              isMine ? 'msg-bubble--mine' : 'msg-bubble text-[#14140F]'
+            className={`relative cursor-pointer select-none px-[var(--space-4)] py-[var(--space-3)] transition-all ${bubbleRadiusClass} ${
+              isMine ? 'msg-bubble--mine' : 'msg-bubble text-[color:var(--lkv-text-primary)]'
             }`}
           >
             {/* Quoted Message */}
@@ -309,20 +323,20 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                     onScrollToMessage(message.reply_to_message.id);
                   }
                 }}
-                className={`text-xs px-3 py-1.5 rounded-lg mb-2 border-l-2 cursor-pointer transition-opacity hover:opacity-90 ${
+                className={`mb-[var(--space-2)] cursor-pointer rounded-[var(--lkv-radius-sm)] border-l-2 px-[var(--space-3)] py-1.5 text-[length:var(--lkv-text-caption)] transition-opacity hover:opacity-90 ${
                   isMine
-                    ? 'bg-white/10 border-white/80 text-[#EEF3EC]/90'
-                    : 'bg-white/45 border-[#17402C]/60 text-[#17402C]'
+                    ? 'border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] text-[color:var(--lkv-text-inverted)]/90'
+                    : 'border-[color:var(--lkv-primary)]/60 bg-[color:var(--card-tint-strong)] text-[color:var(--lkv-text-primary)]'
                 }`}
               >
-                <p className="font-bold text-[11px]">{message.reply_to_message.sender_name}</p>
-                <p className="truncate text-[11px]">{message.reply_to_message.content}</p>
+                <p className="text-[length:var(--lkv-text-caption-2)] font-bold">{message.reply_to_message.sender_name}</p>
+                <p className="truncate text-[length:var(--lkv-text-caption-2)]">{message.reply_to_message.content}</p>
               </div>
             )}
 
             {/* Attachments */}
             {message.attachments && message.attachments.length > 0 && (
-              <div className="space-y-2 mb-2">
+              <div className="mb-[var(--space-2)] space-y-[var(--space-2)]">
                 {message.attachments.map((att) => {
                   const isGpx = att.file_name?.endsWith('.gpx') || att.file_type?.includes('gpx');
                   const isAudio = att.file_type?.startsWith('audio/');
@@ -347,15 +361,15 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                   return (
                     <div
                       key={att.id}
-                      className="rounded-xl overflow-hidden max-w-sm border border-[#17402C]/10"
+                      className="max-w-sm overflow-hidden rounded-[var(--lkv-radius-sm)] border border-[color:var(--lkv-border)]"
                     >
                       {att.file_type.startsWith('image/') ? (
-                        <div className="relative w-64 h-48">
+                        <div className="relative h-48 w-64">
                           <Image
                             src={att.file_url}
                             alt={att.file_name || 'Image'}
                             fill
-                            className="object-cover cursor-pointer hover:opacity-95 transition-opacity"
+                            className="cursor-pointer object-cover transition-opacity hover:opacity-95"
                           />
                         </div>
                       ) : (
@@ -363,9 +377,9 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                           href={att.file_url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="flex items-center gap-2 p-2 bg-[#17402C]/5 hover:bg-[#17402C]/10 rounded-lg text-xs"
+                          className="flex items-center gap-[var(--space-2)] rounded-[var(--lkv-radius-sm)] bg-[color:var(--lkv-primary)]/5 p-[var(--space-2)] text-[length:var(--lkv-text-caption)] transition-colors hover:bg-[color:var(--lkv-primary)]/10"
                         >
-                          <Icon name="file-text" className="w-4 h-4" />
+                          <Icon name="file-text" className="size-4" aria-hidden="true" />
                           <span className="truncate underline">
                             {att.file_name || 'Télécharger le fichier'}
                           </span>
@@ -395,8 +409,8 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                 href={message.content}
                 target="_blank"
                 rel="noopener noreferrer"
-                className={`block mt-1 rounded-2xl overflow-hidden border ${
-                  isMine ? 'border-white/25' : 'border-[#17402C]/10'
+                className={`mt-[var(--space-1)] block overflow-hidden rounded-[var(--lkv-radius-md)] border ${
+                  isMine ? 'border-[color:var(--glass-border)]' : 'border-[color:var(--lkv-border)]'
                 }`}
                 title="Ouvrir l'image"
               >
@@ -405,7 +419,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                   src={message.content}
                   alt="Photo partagée"
                   loading="lazy"
-                  className="block w-full max-w-[260px] max-h-72 object-cover cursor-zoom-in"
+                  className="block max-h-72 w-full max-w-[260px] cursor-zoom-in object-cover"
                   onError={(e) => {
                     (e.target as HTMLImageElement).src = '/assets/images/no_image.png';
                   }}
@@ -434,7 +448,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
               message.message_type !== 'product' &&
               message.message_type !== 'trail' &&
               message.message_type !== 'kit' && (
-                <p className="text-[15px] leading-[1.45] whitespace-pre-wrap break-words font-normal">
+                <p className="whitespace-pre-wrap break-words text-[length:var(--lkv-text-subheadline)] font-normal leading-[1.45]">
                   {message.content}
                 </p>
               )}
@@ -446,37 +460,35 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
               message.message_type !== 'image' && <OpenGraphCard url={firstUrl} isMine={isMine} />}
 
             {/* Footer timestamp & status / read receipts */}
-            <div className="flex items-center justify-end gap-1.5 mt-1.5">
+            <div className="mt-1.5 flex items-center justify-end gap-[var(--space-1)]">
               <span
-                className={`text-[11px] font-medium ${
-                  isMine ? 'text-[#EEF3EC]/80' : 'text-[#5A574E]'
+                className={`text-[length:var(--lkv-text-caption-2)] font-medium ${
+                  isMine ? 'text-[color:var(--lkv-text-inverted)]/80' : 'text-[color:var(--lkv-text-secondary)]'
                 }`}
               >
                 {formatMessageDate(message.created_at)}
               </span>
 
               {isMine && (
-                <span className="text-[#EEF3EC] flex items-center gap-1">
+                <span className="flex items-center gap-[var(--space-1)]">
                   {message.status === 'sending' ? (
-                    <span className="w-2.5 h-2.5 rounded-full border-2 border-[#EEF3EC] border-t-transparent animate-spin inline-block" />
+                    <Spinner size="sm" tone="current" label="Envoi en cours" />
                   ) : message.status === 'error' ? (
-                    <span className="bg-[#A8443A] text-white px-1.5 py-0.5 rounded-full text-[10px] font-bold">
-                      ! Échec
-                    </span>
+                    <Badge tone="danger">! Échec</Badge>
                   ) : isReadByRecipient || (readByCount && readByCount > 0) ? (
                     <span
-                      className="flex items-center gap-0.5 text-[#C8DAC3] text-[10px] font-semibold"
+                      className="flex items-center gap-0.5 text-[length:var(--lkv-text-caption-2)] font-semibold text-[color:var(--lkv-forest-100)]"
                       title={
                         readByNames && readByNames.length > 0
                           ? `Lu par : ${readByNames.join(', ')}`
                           : 'Vu'
                       }
                     >
-                      <Icon name="check-check" className="w-3.5 h-3.5 inline text-[#C8DAC3]" />
+                      <Icon name="check-check" className="inline size-3.5 text-[color:var(--lkv-forest-100)]" aria-hidden="true" />
                       <span>{readByCount && readByCount > 1 ? `Vu par ${readByCount}` : 'Vu'}</span>
                     </span>
                   ) : (
-                    <Icon name="check" className="w-3.5 h-3.5 inline" />
+                    <Icon name="check" className="inline size-3.5" aria-hidden="true" />
                   )}
                 </span>
               )}
@@ -486,24 +498,19 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
 
         {/* Reaction Pills below bubble */}
         {reactionsGrouped.length > 0 && (
-          <div className={`flex flex-wrap gap-1 mt-1 ${isMine ? 'justify-end' : 'justify-start'}`}>
+          <div className={`mt-[var(--space-1)] flex flex-wrap gap-[var(--space-1)] ${isMine ? 'justify-end' : 'justify-start'}`}>
             {reactionsGrouped.map((item) => (
-              <button
+              <Chip
                 key={item.emoji}
-                type="button"
+                selected={item.userReacted}
                 onClick={() => {
                   haptic('light');
                   onToggleReaction?.(message.id, item.emoji);
                 }}
-                className={`px-2.5 py-1 rounded-full text-[11px] font-bold flex items-center gap-1.5 border transition-transform active:scale-90 ${
-                  item.userReacted
-                    ? 'bg-[#17402C]/12 text-[#17402C] border-[#17402C]/40 ring-1 ring-[#17402C]/20 shadow-inner'
-                    : 'bg-white/60 backdrop-blur-md text-[#17402C] border-white/60 hover:bg-white/85 shadow-inner'
-                }`}
               >
                 <span>{item.emoji}</span>
-                {item.count > 1 && <span>{item.count}</span>}
-              </button>
+                {item.count > 1 && <span className="tabular-nums">{item.count}</span>}
+              </Chip>
             ))}
           </div>
         )}

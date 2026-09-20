@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Icon from '@/components/ui/AppIcon';
+import { Badge, Button, Card, Chip, EmptyState, Skeleton, Spinner, Tabs } from '@/components/ui';
 import CommunityPostCard, { CommunityPostItem } from '@/components/communaute/CommunityPostCard';
 import CarnetHubCard from '@/components/carnets/CarnetHubCard';
 import CommunityStoriesBar from '@/components/communaute/CommunityStoriesBar';
@@ -26,6 +27,17 @@ interface MobileCommunityHubProps {
   joinedEventIds?: Record<string, boolean>;
   onJoinEvent?: (eventId: string | number) => Promise<void> | void;
 }
+
+const TABS: Array<{ id: CommunityMobileTab; label: string; icon: React.ReactNode }> = [
+  { id: 'fil', label: 'Pour vous', icon: <Icon name="layers" size={17} aria-hidden="true" /> },
+  { id: 'carnets', label: 'Carnets', icon: <Icon name="book-open" size={17} aria-hidden="true" /> },
+  { id: 'clubs', label: 'Clubs', icon: <Icon name="users" size={17} aria-hidden="true" /> },
+  { id: 'groupes', label: 'Expéditions', icon: <Icon name="map" size={17} aria-hidden="true" /> },
+  { id: 'evenements', label: 'Sorties', icon: <Icon name="calendar" size={17} aria-hidden="true" /> },
+  { id: 'entraide', label: 'Entraide', icon: <Icon name="message-square" size={17} aria-hidden="true" /> },
+];
+
+const MASSIFS = ['all', 'Chartreuse', 'Vercors', 'Mont-Blanc', 'Belledonne', 'Vanoise'];
 
 export default function MobileCommunityHub({
   posts = [],
@@ -76,272 +88,309 @@ export default function MobileCommunityHub({
   });
 
   return (
-    <div className="w-full min-h-full bg-transparent font-sans text-[#17402C]">
+    <div className="min-h-full w-full bg-transparent font-sans text-[color:var(--lkv-text-primary)]">
       {/* 0. STICKY TOPBAR HEADER */}
       <MobileCommunityHeader />
 
-      <div className="px-4 pt-2 space-y-5 pb-8">
+      <div className="space-y-[var(--space-5)] px-[var(--space-4)] pb-[var(--space-8)] pt-[var(--space-2)]">
         {/* Pull to refresh visual feedback indicator */}
         {(pullProgress > 0 || isRefreshing) && (
           <div
-            className="w-full flex items-center justify-center py-2 transition-all overflow-hidden"
+            className="flex w-full items-center justify-center overflow-hidden py-[var(--space-2)] transition-all"
             style={{ height: isRefreshing ? '44px' : `${Math.min(pullProgress * 44, 44)}px` }}
           >
-            <div className="flex items-center gap-2 px-3 py-1 rounded-full glass-pill text-xs font-medium text-[#17402C] shadow-2xs">
-              <div className={`w-3.5 h-3.5 rounded-full border-2 border-[#17402C] border-t-transparent ${isRefreshing ? 'animate-spin' : ''}`} />
-              <span className="text-[11px] font-mono">{isRefreshing ? 'Actualisation...' : 'Tirer pour rafraîchir'}</span>
-            </div>
+            <Card variant="compact" className="flex items-center gap-[var(--space-2)] rounded-full py-[var(--space-1)] text-[length:var(--lkv-text-caption)] font-medium">
+              <Spinner size="sm" />
+              <span className="font-mono text-[length:var(--lkv-text-caption-2)]">
+                {isRefreshing ? 'Actualisation...' : 'Tirer pour rafraîchir'}
+              </span>
+            </Card>
           </div>
         )}
 
-        <nav className="community-navigation" aria-label="Espaces de la communauté">
-          {([
-            ['fil', 'Pour vous', 'layers'],
-            ['carnets', 'Carnets', 'book-open'],
-            ['clubs', 'Clubs', 'users'],
-            ['groupes', 'Expéditions', 'map'],
-            ['evenements', 'Sorties', 'calendar'],
-            ['entraide', 'Entraide', 'message-square'],
-          ] as const).map(([tab, label, icon]) => (
-            <button type="button" key={tab} aria-label={label} aria-current={currentTab === tab ? 'page' : undefined} onClick={() => { triggerHaptic('light'); setCurrentTab(tab); onTabChange?.(tab); }}>
-              <Icon name={icon} size={17} /><span>{label}</span>
-            </button>
-          ))}
-        </nav>
+        <Tabs
+          variant="scrollable"
+          ariaLabel="Espaces de la communauté"
+          value={currentTab}
+          onChange={(tab) => {
+            triggerHaptic('light');
+            setCurrentTab(tab as CommunityMobileTab);
+            onTabChange?.(tab as CommunityMobileTab);
+          }}
+          options={TABS}
+        />
         {/* 1. LIVE EXPLORER STORIES BAR */}
-        <div className="glass rounded-[1.25rem] p-2.5 border border-white/50 shadow-2xs">
+        <Card variant="featured" className="p-[var(--space-2)]">
           <CommunityStoriesBar currentUser={user} />
-        </div>
+        </Card>
 
-      {/* 3. ACTIVE TAB CONTENT STREAM */}
-      <div className="space-y-4 pt-1">
-        {/* ── TAB 1: FIL D'ACTUALITÉ ── */}
-        {currentTab === 'fil' && (
-          <div className="space-y-4">
-<div className="community-stream-heading"><h2>Au fil des aventures</h2><span>Les derniers récits</span></div>
-            {loading ? (
-              <div className="space-y-3">
-                {[1, 2].map((i) => (
-                  <div key={i} className="glass p-4 rounded-2xl animate-pulse space-y-3">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-[#17402C]/10" />
-                      <div className="space-y-1.5 flex-1">
-                        <div className="w-28 h-3 bg-[#17402C]/10 rounded" />
-                        <div className="w-16 h-2 bg-[#17402C]/5 rounded" />
+        {/* 3. ACTIVE TAB CONTENT STREAM */}
+        <div className="space-y-[var(--space-4)] pt-[var(--space-1)]">
+          {/* ── TAB 1: FIL D'ACTUALITÉ ── */}
+          {currentTab === 'fil' && (
+            <div className="space-y-[var(--space-4)]">
+              <div className="flex items-center justify-between">
+                <h2 className="font-display text-[length:var(--lkv-text-subheadline)] font-bold">Au fil des aventures</h2>
+                <span className="text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">Les derniers récits</span>
+              </div>
+              {loading ? (
+                <div className="space-y-[var(--space-3)]">
+                  {[1, 2].map((i) => (
+                    <Card key={i} className="space-y-[var(--space-3)]">
+                      <div className="flex items-center gap-[var(--space-3)]">
+                        <Skeleton className="size-10 shrink-0 rounded-full" />
+                        <div className="flex-1 space-y-[var(--space-1)]">
+                          <Skeleton className="h-3 w-28 rounded" />
+                          <Skeleton className="h-2 w-16 rounded" />
+                        </div>
+                      </div>
+                      <Skeleton className="h-12 w-full rounded-[var(--lkv-radius-md)]" />
+                      <Skeleton className="h-44 w-full rounded-[var(--lkv-radius-md)]" />
+                    </Card>
+                  ))}
+                </div>
+              ) : posts.length === 0 ? (
+                <Card>
+                  <EmptyState
+                    compact
+                    icon={<span className="text-3xl">🌲</span>}
+                    title="Le fil est calme"
+                    description="Soyez le premier à partager votre traversée ou vos conseils !"
+                    actionLabel="Publier un récit"
+                    actionHref="/carnets/nouveau"
+                  />
+                </Card>
+              ) : (
+                posts.map((post) => (
+                  <CommunityPostCard key={post.id} post={post} user={user} />
+                ))
+              )}
+            </div>
+          )}
+
+          {/* ── TAB 2: CARNETS DE VOYAGE ── */}
+          {currentTab === 'carnets' && (
+            <div className="space-y-[var(--space-3)]">
+              {/* Massif filter chips */}
+              <div className="no-scrollbar flex items-center gap-[var(--space-1)] overflow-x-auto pb-[var(--space-1)]">
+                {MASSIFS.map((m) => (
+                  <Chip
+                    key={m}
+                    selected={carnetFilter === m}
+                    onClick={() => {
+                      triggerHaptic('light');
+                      setCarnetFilter(m);
+                    }}
+                    className="whitespace-nowrap"
+                  >
+                    {m === 'all' ? 'Tous les massifs' : m}
+                  </Chip>
+                ))}
+              </div>
+
+              {filteredCarnets.length === 0 ? (
+                <Card>
+                  <EmptyState
+                    compact
+                    icon={<span className="text-3xl">📖</span>}
+                    title="Aucun carnet pour ce massif"
+                    description="Essayez un autre massif ou filtre."
+                  />
+                </Card>
+              ) : (
+                <div className="space-y-[var(--space-3)]">
+                  {filteredCarnets.map((carnet) => (
+                    <CarnetHubCard key={carnet.id || carnet.title} carnet={carnet} currentUserId={user?.id} />
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ── TAB 3: CLUBS & COLLECTIFS ── */}
+          {currentTab === 'clubs' && (
+            <div className="space-y-[var(--space-3)]">
+              {clubs.map((c) => (
+                <Link
+                  key={c.id || c.name}
+                  href={c.id ? `/clubs/${c.id}` : c.slug ? `/clubs/${c.slug}` : '/communaute?tab=clubs'}
+                  className="block transition-transform active:scale-[0.98]"
+                >
+                  <Card variant="compact" className="flex items-center justify-between gap-[var(--space-3)]">
+                    <div className="flex min-w-0 items-center gap-[var(--space-3)]">
+                      <div className="flex size-12 shrink-0 items-center justify-center rounded-[var(--lkv-radius-md)] border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] text-2xl shadow-elevation-1">
+                        {c.emoji || '🏕️'}
+                      </div>
+                      <div className="min-w-0 space-y-0.5">
+                        <div className="flex items-center gap-[var(--space-2)]">
+                          <h4 className="truncate font-display text-[length:var(--lkv-text-footnote)] font-bold text-[color:var(--lkv-text-primary)]">
+                            {c.name}
+                          </h4>
+                          <Badge tone="stone" className="shrink-0 font-mono">
+                            {c.members_count ?? 0} m.
+                          </Badge>
+                        </div>
+                        {(c.slogan || c.description) && (
+                          <p className="line-clamp-1 text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-muted)]">
+                            {c.slogan || c.description}
+                          </p>
+                        )}
+                        {c.category && (
+                          <span className="block font-mono text-[length:var(--lkv-text-caption-2)] font-semibold text-[color:var(--lkv-secondary)]">
+                            📍 {c.category}
+                          </span>
+                        )}
                       </div>
                     </div>
-                    <div className="w-full h-12 bg-[#17402C]/5 rounded-xl" />
-                    <div className="w-full h-44 bg-[#17402C]/10 rounded-xl" />
-                  </div>
-                ))}
-              </div>
-            ) : posts.length === 0 ? (
-              <div className="py-12 text-center glass p-6 rounded-2xl space-y-2">
-                <span className="text-3xl block">🌲</span>
-                <h3 className="font-bold text-[#17402C] text-sm">Le fil est calme</h3>
-                <p className="text-xs text-[#5A7064]">Soyez le premier à partager votre traversée ou vos conseils !</p>
-                <Link
-                  href="/carnets/nouveau"
-                  className="glass-capsule-btn primary text-xs font-bold !py-1.5 !px-4 inline-block mt-2"
-                >
-                  Publier un récit
+
+                    <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-[color:var(--lkv-surface-muted)] text-[color:var(--lkv-text-secondary)]">
+                      <Icon name="arrow-right" size={12} aria-hidden="true" />
+                    </span>
+                  </Card>
                 </Link>
-              </div>
-            ) : (
-              posts.map((post) => (
-                <CommunityPostCard key={post.id} post={post} user={user} />
-              ))
-            )}
-          </div>
-        )}
-
-        {/* ── TAB 2: CARNETS DE VOYAGE ── */}
-        {currentTab === 'carnets' && (
-          <div className="space-y-3">
-            {/* Massif filter chips */}
-            <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1">
-              {['all', 'Chartreuse', 'Vercors', 'Mont-Blanc', 'Belledonne', 'Vanoise'].map((m) => (
-                <button
-                  key={m}
-                  type="button"
-                  onClick={() => {
-                    triggerHaptic('light');
-                    setCarnetFilter(m);
-                  }}
-                  className={`glass-capsule-btn text-xs font-medium !py-0 !px-3.5 whitespace-nowrap ${carnetFilter === m ? 'primary' : ''}`}
-                >
-                  {m === 'all' ? 'Tous les massifs' : m}
-                </button>
               ))}
+              {!loading && clubs.length === 0 && (
+                <Card>
+                  <EmptyState
+                    compact
+                    icon={<span className="text-3xl">🏔️</span>}
+                    title="Aucun club pour le moment"
+                    description="Les collectifs créés apparaîtront ici."
+                  />
+                </Card>
+              )}
             </div>
+          )}
 
-            {filteredCarnets.length === 0 ? (
-              <div className="py-12 text-center glass p-6 rounded-2xl space-y-2">
-                <span className="text-3xl block">📖</span>
-                <p className="font-bold text-[#17402C] text-sm">Aucun carnet pour ce massif</p>
-                <p className="text-xs text-[#5A7064]">Essayez un autre massif ou filtre.</p>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {filteredCarnets.map((carnet) => (
-                  <CarnetHubCard key={carnet.id || carnet.title} carnet={carnet} currentUserId={user?.id} />
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* ── TAB 3: CLUBS & COLLECTIFS ── */}
-        {currentTab === 'clubs' && (
-          <div className="space-y-3">
-            {clubs.map((c) => (
-              <Link
-                key={c.id || c.name}
-                href={c.id ? `/clubs/${c.id}` : c.slug ? `/clubs/${c.slug}` : '/communaute?tab=clubs'}
-                className="glass rounded-2xl p-4 border border-white/60 shadow-xs flex items-center justify-between gap-3 block active:scale-[0.98] transition-transform"
-              >
-                <div className="flex items-center gap-3 min-w-0">
-                  <div className="w-12 h-12 rounded-2xl bg-white/55 border border-white flex items-center justify-center text-2xl shrink-0 shadow-2xs">
-                    {c.emoji || '🏕️'}
-                  </div>
-                  <div className="min-w-0 space-y-0.5">
-                    <div className="flex items-center gap-2">
-                      <h4 className="font-display font-bold text-sm text-[#17402C] truncate">{c.name}</h4>
-                      <span className="glass-pill text-[8.5px] font-mono font-bold text-[#17402C] shrink-0">
-                        {c.members_count ?? 0} m.
-                      </span>
-                    </div>
-                    {(c.slogan || c.description) && (
-                      <p className="text-[11px] text-[#5A7064] line-clamp-1">{c.slogan || c.description}</p>
-                    )}
-                    {c.category && (
-                      <span className="text-[9.5px] font-mono text-[#5B7F55] font-semibold block">
-                        📍 {c.category}
-                      </span>
-                    )}
-                  </div>
-                </div>
-
-                <span className="glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8"><Icon name="arrow-right" size={12} /></span>
-              </Link>
-            ))}
-            {!loading && clubs.length === 0 && (
-              <div className="py-12 text-center glass p-6 rounded-2xl space-y-2">
-                <span className="text-3xl block">🏔️</span>
-                <p className="font-bold text-[#17402C] text-sm">Aucun club pour le moment</p>
-                <p className="text-xs text-[#5A7064]">Les collectifs créés apparaîtront ici.</p>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* ── TAB 4: GROUPES D'EXPÉDITION ── */}
-        {currentTab === 'groupes' && (
-          <div className="space-y-3">
-            {groups.map((grp) => (
-              <Link
-                key={grp.id || grp.name}
-                href={grp.id ? `/groupes/${grp.id}` : '/communaute?tab=groupes'}
-                className="glass rounded-2xl p-4 border border-white/60 shadow-xs flex flex-col justify-between space-y-3 block active:scale-[0.98] transition-transform"
-              >
-                <div className="flex items-start justify-between gap-2">
-                  <div className="space-y-1">
-                    <span className="glass-pill text-[9px] font-mono font-bold text-[#17402C]">
-                      📍 {grp.massif || 'Massif non précisé'}
-                    </span>
-                    <h4 className="font-display font-bold text-sm text-[#17402C]">{grp.name}</h4>
-                    {grp.description && (
-                      <p className="text-[11px] text-[#5A7064] line-clamp-2 leading-relaxed">{grp.description}</p>
-                    )}
-                  </div>
-                  <div className="w-10 h-10 rounded-xl bg-white/55 border border-white text-xl flex items-center justify-center shrink-0 shadow-2xs">
-                    {grp.pictogram || '🏕️'}
-                  </div>
-                </div>
-
-                {grp.max_members > 0 && (
-                  <div className="pt-2.5 border-t border-[#17402C]/5 flex items-center justify-between">
-                    <div className="flex items-center gap-1.5 text-[11px] font-mono text-[#5A7064]">
-                      <span className="font-bold text-[#17402C]">{grp.max_members}</span> places max
-                    </div>
-
-                    <span className="glass-capsule-btn text-[10.5px] font-bold !py-1 !px-2.5">
-                      Voir le cockpit →
-                    </span>
-                  </div>
-                )}
-              </Link>
-            ))}
-            {!loading && groups.length === 0 && (
-              <div className="py-12 text-center glass p-6 rounded-2xl space-y-2">
-                <span className="text-3xl block">⛺</span>
-                <p className="font-bold text-[#17402C] text-sm">Aucune expédition en formation</p>
-                <p className="text-xs text-[#5A7064]">Créez un groupe pour préparer votre prochaine sortie.</p>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* ── TAB 5: ÉVÉNEMENTS & SORTIES ── */}
-        {currentTab === 'evenements' && (
-          <div className="space-y-3">
-            {events.map((ev) => {
-              const joined = joinedEventIds[String(ev.id)];
-              return (
-              <div
-                key={ev.id || ev.title}
-                className="glass rounded-2xl p-4 border border-white/60 shadow-xs flex items-center justify-between gap-3"
-              >
-                <div className="space-y-1 min-w-0">
-                  <span className="glass-pill text-[9px] font-mono font-bold text-[#17402C]">
-                    📅 {ev.date || 'Date à confirmer'}
-                  </span>
-                  <h4 className="font-display font-bold text-sm text-[#17402C] truncate">{ev.title}</h4>
-                  <p className="text-[11px] text-[#5A7064] font-mono">
-                    📍 {ev.location || 'Lieu à préciser'}
-                    {ev.guide ? ` · ${ev.guide}` : ''}
-                  </p>
-                </div>
-
-                <button
-                  onClick={() => onJoinEvent?.(ev.id)}
-                  disabled={joined}
-                  className="glass-capsule-btn primary text-[10.5px] font-bold !py-1 !px-2.5 shrink-0 disabled:opacity-60"
+          {/* ── TAB 4: GROUPES D'EXPÉDITION ── */}
+          {currentTab === 'groupes' && (
+            <div className="space-y-[var(--space-3)]">
+              {groups.map((grp) => (
+                <Link
+                  key={grp.id || grp.name}
+                  href={grp.id ? `/groupes/${grp.id}` : '/communaute?tab=groupes'}
+                  className="block transition-transform active:scale-[0.98]"
                 >
-                  {joined ? 'Inscrit ✓' : "S'inscrire"}
-                </button>
-              </div>
-              );
-            })}
-            {!loading && events.length === 0 && (
-              <div className="py-12 text-center glass p-6 rounded-2xl space-y-2">
-                <span className="text-3xl block">📅</span>
-                <p className="font-bold text-[#17402C] text-sm">Aucune sortie programmée</p>
-                <p className="text-xs text-[#5A7064]">Les événements à venir apparaîtront ici.</p>
-              </div>
-            )}
-          </div>
-        )}
+                  <Card variant="compact" className="flex flex-col justify-between space-y-[var(--space-3)]">
+                    <div className="flex items-start justify-between gap-[var(--space-2)]">
+                      <div className="space-y-[var(--space-1)]">
+                        <Badge tone="stone" className="font-mono">
+                          📍 {grp.massif || 'Massif non précisé'}
+                        </Badge>
+                        <h4 className="font-display text-[length:var(--lkv-text-footnote)] font-bold text-[color:var(--lkv-text-primary)]">
+                          {grp.name}
+                        </h4>
+                        {grp.description && (
+                          <p className="line-clamp-2 text-[length:var(--lkv-text-caption)] leading-relaxed text-[color:var(--lkv-text-muted)]">
+                            {grp.description}
+                          </p>
+                        )}
+                      </div>
+                      <div className="flex size-10 shrink-0 items-center justify-center rounded-[var(--lkv-radius-sm)] border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] text-xl shadow-elevation-1">
+                        {grp.pictogram || '🏕️'}
+                      </div>
+                    </div>
 
-        {/* ── TAB 6: ENTRAIDE & Q&A ── */}
-        {currentTab === 'entraide' && (
-          <div className="space-y-3">
-            <div className="glass rounded-2xl p-4 border border-white/60 shadow-xs space-y-2.5">
-              <div className="flex items-center gap-2">
-                <span className="text-xl">💡</span>
-                <h3 className="font-display font-bold text-sm text-[#17402C]">Entraide &amp; Conditions de Sentier</h3>
-              </div>
-              <p className="text-xs text-[#5A7064] leading-relaxed">
-                Posez vos questions sur le débit des sources, l&apos;enneigement des cols et les refuges non gardés.
-              </p>
-              <div className="p-3 rounded-xl glass-sub-card text-xs text-[#17402C] space-y-1 border border-white/50">
-                <span className="font-bold block text-[11px] text-[#17402C]">✓ Réponses validées par les Guides LKDV</span>
-                <p className="text-[10.5px] text-[#5A7064]">Chaque info critique est confirmée sur le terrain par les explorateurs référents.</p>
-              </div>
+                    {grp.max_members > 0 && (
+                      <div className="flex items-center justify-between border-t border-[color:var(--lkv-border-subtle)] pt-[var(--space-2)]">
+                        <div className="flex items-center gap-[var(--space-1)] font-mono text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-muted)]">
+                          <span className="font-bold text-[color:var(--lkv-text-primary)]">{grp.max_members}</span> places max
+                        </div>
+
+                        <Badge tone="sage">Voir le cockpit →</Badge>
+                      </div>
+                    )}
+                  </Card>
+                </Link>
+              ))}
+              {!loading && groups.length === 0 && (
+                <Card>
+                  <EmptyState
+                    compact
+                    icon={<span className="text-3xl">⛺</span>}
+                    title="Aucune expédition en formation"
+                    description="Créez un groupe pour préparer votre prochaine sortie."
+                  />
+                </Card>
+              )}
             </div>
-          </div>
-        )}
-      </div>
+          )}
+
+          {/* ── TAB 5: ÉVÉNEMENTS & SORTIES ── */}
+          {currentTab === 'evenements' && (
+            <div className="space-y-[var(--space-3)]">
+              {events.map((ev) => {
+                const joined = joinedEventIds[String(ev.id)];
+                return (
+                  <Card
+                    key={ev.id || ev.title}
+                    variant="compact"
+                    className="flex items-center justify-between gap-[var(--space-3)]"
+                  >
+                    <div className="min-w-0 space-y-[var(--space-1)]">
+                      <Badge tone="stone" className="font-mono">
+                        📅 {ev.date || 'Date à confirmer'}
+                      </Badge>
+                      <h4 className="truncate font-display text-[length:var(--lkv-text-footnote)] font-bold text-[color:var(--lkv-text-primary)]">
+                        {ev.title}
+                      </h4>
+                      <p className="font-mono text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-muted)]">
+                        📍 {ev.location || 'Lieu à préciser'}
+                        {ev.guide ? ` · ${ev.guide}` : ''}
+                      </p>
+                    </div>
+
+                    <Button
+                      type="button"
+                      variant={joined ? 'secondary' : 'primary'}
+                      size="sm"
+                      disabled={joined}
+                      onClick={() => onJoinEvent?.(ev.id)}
+                      className="shrink-0"
+                    >
+                      {joined ? 'Inscrit ✓' : "S'inscrire"}
+                    </Button>
+                  </Card>
+                );
+              })}
+              {!loading && events.length === 0 && (
+                <Card>
+                  <EmptyState
+                    compact
+                    icon={<span className="text-3xl">📅</span>}
+                    title="Aucune sortie programmée"
+                    description="Les événements à venir apparaîtront ici."
+                  />
+                </Card>
+              )}
+            </div>
+          )}
+
+          {/* ── TAB 6: ENTRAIDE & Q&A ── */}
+          {currentTab === 'entraide' && (
+            <div className="space-y-[var(--space-3)]">
+              <Card variant="compact" className="space-y-[var(--space-2)]">
+                <div className="flex items-center gap-[var(--space-2)]">
+                  <span className="text-xl">💡</span>
+                  <h3 className="font-display text-[length:var(--lkv-text-footnote)] font-bold text-[color:var(--lkv-text-primary)]">
+                    Entraide &amp; Conditions de Sentier
+                  </h3>
+                </div>
+                <p className="text-[length:var(--lkv-text-caption)] leading-relaxed text-[color:var(--lkv-text-muted)]">
+                  Posez vos questions sur le débit des sources, l&apos;enneigement des cols et les refuges non gardés.
+                </p>
+                <Card variant="compact" tone="info" className="space-y-[var(--space-1)]">
+                  <span className="block text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)]">
+                    ✓ Réponses validées par les Guides LKDV
+                  </span>
+                  <p className="text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-secondary)]">
+                    Chaque info critique est confirmée sur le terrain par les explorateurs référents.
+                  </p>
+                </Card>
+              </Card>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

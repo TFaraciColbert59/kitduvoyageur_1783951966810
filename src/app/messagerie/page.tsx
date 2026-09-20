@@ -6,7 +6,8 @@ import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
 import { useAuth } from '@/contexts/AuthContext';
 import { MessageInbox } from '@/features/messaging/components/MessageInbox';
 import { useKeyboardInset } from '@/features/messaging/hooks/useKeyboardInset';
-import { LoadingState } from '@/components/ui';
+import { Button, Card, LoadingState } from '@/components/ui';
+import Link from 'next/link';
 
 export default function MessageriePage() {
   const { user, profile, loading } = useAuth();
@@ -39,56 +40,51 @@ export default function MessageriePage() {
 
   return (
     <div
-      className="w-full min-h-[100dvh] flex-1 overflow-hidden flex flex-col bg-[rgba(238,243,236,0.74)] backdrop-blur-xl relative"
+      className="relative flex min-h-[100dvh] w-full flex-1 flex-col overflow-hidden bg-[color:var(--lkv-surface)]/75 backdrop-blur-xl"
       style={{ ['--kb-inset' as string]: `${kbInset}px` }}
     >
-      {/* Ambiance Liquid Glass LKDV — dégradés climatiques (CSS valide, cf. audit 1.1c) */}
+      {/* Ambiance Liquid Glass LKDV — dégradés climatiques (tokens) */}
       <div
         aria-hidden="true"
-        className="absolute inset-0 pointer-events-none"
-        style={{
-          background:
-            'radial-gradient(ellipse at top left, rgba(148,181,161,0.18), transparent 55%),' +
-            'radial-gradient(ellipse at bottom right, rgba(91,127,85,0.12), transparent 50%),' +
-            'radial-gradient(ellipse at 50% 15%, rgba(168,200,160,0.14), transparent 60%)',
-        }}
+        className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,var(--lkv-app-bg-glow-sage),transparent_55%),radial-gradient(ellipse_at_bottom_right,var(--lkv-app-bg-glow-forest),transparent_50%),radial-gradient(ellipse_at_50%_15%,rgba(168,200,160,0.14),transparent_60%)]"
       />
 
       {/* Header global desktop */}
-      <div className="hidden md:block relative z-10">
+      <div className="relative z-10 hidden md:block">
         <Header />
       </div>
 
       {/*
-        safeTop={false} : ConversationList gère lui-même env(safe-area-inset-top)
+        safeTop={false} : ConversationList gère lui-même la safe-area top
         dans son header sticky (cf. .msg-safe-top). videoBackground={false} :
         le chat est opaque plein écran, la vidéo de fond serait un coût pur.
       */}
       <MobilePageShell safeTop={false} hasBottomNav={!hasActiveConv} videoBackground={false}>
         <main
-          className="w-full flex-1 min-h-0 relative z-10 overflow-hidden flex flex-col items-center justify-center md:pt-2 md:pb-2 md:px-6"
+          className="relative z-10 flex w-full flex-1 flex-col items-center justify-center overflow-hidden md:px-6 md:pb-2 md:pt-2"
         >
           {loading ? (
-            <div className="flex items-center justify-center h-full">
+            <div className="flex h-full items-center justify-center">
               <LoadingState label="Chargement de la messagerie" />
             </div>
           ) : !user ? (
-            <div className="max-w-md w-full mx-auto text-center glass rounded-3xl p-8 shadow-sm m-4">
-              <div className="w-16 h-16 bg-[var(--lkv-primary)]/10 text-[var(--lkv-primary)] rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">
+            <Card className="m-[var(--space-4)] w-full max-w-md text-center">
+              <div className="mx-auto mb-[var(--space-4)] flex size-16 items-center justify-center rounded-full bg-[color:var(--lkv-primary)]/10 text-2xl text-[color:var(--lkv-primary)]">
                 💬
               </div>
-              <h2 className="text-xl font-bold text-[var(--lkv-primary)]">Connexion requise</h2>
-              <p className="text-sm text-[var(--lkv-text-muted)] mt-2 mb-6 leading-relaxed">
+              <h2 className="text-[length:var(--lkv-text-title-sm)] font-bold text-[color:var(--lkv-primary)]">
+                Connexion requise
+              </h2>
+              <p className="mb-[var(--space-6)] mt-[var(--space-2)] text-[length:var(--lkv-text-footnote)] leading-relaxed text-[color:var(--lkv-text-muted)]">
                 Connectez-vous pour accéder à vos discussions et échanger avec les
                 membres de la communauté LKDV.
               </p>
-              <a
-                href="/connexion"
-                className="glass-capsule-btn primary inline-flex px-6 min-h-[48px] text-sm font-bold shadow-md"
-              >
-                Se connecter
-              </a>
-            </div>
+              <Link href="/connexion" className="block w-full">
+                <Button variant="primary" size="lg" fullWidth>
+                  Se connecter
+                </Button>
+              </Link>
+            </Card>
           ) : (
             <MessageInbox
               currentUserId={user.id}

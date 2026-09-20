@@ -2,7 +2,8 @@
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import Icon from '@/components/ui/AppIcon';
+import Icon from '@/components/ui/AppIcon'
+import { IconButton } from '@/components/ui';
 
 export interface StorySlide {
   image: string;
@@ -189,9 +190,10 @@ export default function StoriesViewer({
             <span className="story-header-name">{user.name}</span>
             {user.time && <span className="story-header-time">{user.time}</span>}
           </span>
-          <button
+          <IconButton
             type="button"
-            className="story-close"
+            variant="glass"
+            className="absolute right-[var(--space-4)] top-[var(--space-4)] z-[var(--z-sticky)] bg-black/40 text-white active:scale-[var(--motion-press-scale)]"
             aria-label="Fermer les stories"
             onPointerDown={(e) => e.stopPropagation()}
             onClick={(e) => {
@@ -199,8 +201,8 @@ export default function StoriesViewer({
               onClose();
             }}
           >
-            <Icon name="x" size={18} color="#ffffff" />
-          </button>
+            <Icon name="x" size={18} color="var(--lkv-text-inverted)" />
+          </IconButton>
         </div>
 
         {/* Légende */}

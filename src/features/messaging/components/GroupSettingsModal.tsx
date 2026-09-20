@@ -5,6 +5,7 @@ import { lkvConfirm } from '@/components/ui/dialogs';
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { Badge, Button, Card, IconButton, Skeleton } from '@/components/ui';
 import type { Conversation, ConversationMember } from '../types/messaging.types';
 import { messagingService } from '../services/messagingService';
 import { MobileSheet } from './MobileSheet';
@@ -132,21 +133,21 @@ export const GroupSettingsModal: React.FC<GroupSettingsModalProps> = ({
     conversation.id === 'demo-conv-2' ? '/hub/depart?id=demo-expedition' : '/hub/depart';
 
   // Bottom sheet Liquid Glass (MobileSheet) : pattern canonique des modales
-  // messagerie mobile (drag-to-dismiss, z-[10010], scrim), au lieu d'une
+  // messagerie mobile (drag-to-dismiss, scrim), au lieu d'une
   // modale centrée hors système.
   return (
     <MobileSheet isOpen={isOpen} onClose={onClose} title="Gestion du groupe">
       {errorMessage && (
-        <div className="mb-3 p-2.5 bg-[#F5DDD9]/90 border border-[#A8443A]/25 text-[#8A241B] rounded-2xl text-xs font-semibold">
+        <div className="mb-[var(--space-3)] rounded-[var(--lkv-radius-md)] border border-[color:var(--lkv-danger)]/25 bg-[color:var(--lkv-danger-bg)] p-[var(--space-3)] text-[length:var(--lkv-text-caption)] font-semibold text-[color:var(--lkv-danger-dark)]">
           {errorMessage}
         </div>
       )}
 
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-[var(--space-4)]">
         {/* Group Header Info Edit */}
-        <div className="p-3.5 bg-white/70 rounded-2xl border border-stone-200/60 flex flex-col gap-3 shadow-2xs">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-full overflow-hidden relative ring-2 ring-[#17402C]/20 bg-stone-200 shrink-0">
+        <Card variant="compact" className="flex flex-col gap-[var(--space-3)]">
+          <div className="flex items-center gap-[var(--space-3)]">
+            <div className="relative size-12 shrink-0 overflow-hidden rounded-full bg-[color:var(--lkv-surface-muted)] ring-2 ring-[color:var(--lkv-primary)]/20">
               <Image
                 src={avatarUrl || conversation.avatar_url || '/assets/images/no_image.png'}
                 alt={title}
@@ -161,35 +162,43 @@ export const GroupSettingsModal: React.FC<GroupSettingsModalProps> = ({
 
             <div className="flex-1 overflow-hidden">
               {isEditingTitle && isAdmin ? (
-                <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-[var(--space-1)]">
                   <input
                     type="text"
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
-                    className="w-full px-2.5 py-1.5 text-[16px] md:text-xs rounded-xl border border-[#17402C]/50 bg-white font-bold text-[#17402C] shadow-inner-xs"
+                    aria-label="Nom du groupe"
+                    className="w-full rounded-[var(--lkv-radius-sm)] border border-[color:var(--lkv-primary)]/50 bg-[color:var(--lkv-field-bg)] px-[var(--space-2)] py-1.5 text-[16px] font-bold text-[color:var(--lkv-text-primary)] shadow-elevation-1 md:text-[length:var(--lkv-text-caption)]"
                   />
-                  <button
+                  <IconButton
+                    variant="solid"
+                    size="sm"
                     onClick={handleSaveGroupInfo}
-                    className="glass-circle-btn primary w-8 h-8 shrink-0 flex items-center justify-center"
+                    aria-label="Enregistrer le nom"
+                    className="shrink-0"
                   >
-                    <Icon name="check" className="w-3.5 h-3.5" />
-                  </button>
+                    <Icon name="check" className="size-3.5" aria-hidden="true" />
+                  </IconButton>
                 </div>
               ) : (
-                <div className="flex items-center justify-between gap-1">
-                  <h4 className="font-bold text-sm text-[#17402C] truncate">{title}</h4>
+                <div className="flex items-center justify-between gap-[var(--space-1)]">
+                  <h4 className="truncate text-[length:var(--lkv-text-footnote)] font-bold text-[color:var(--lkv-text-primary)]">
+                    {title}
+                  </h4>
                   {isAdmin && (
-                    <button
+                    <IconButton
+                      size="sm"
                       onClick={() => setIsEditingTitle(true)}
-                      className="glass-circle-btn w-8 h-8 text-[#5A574E] hover:text-[#17402C] shrink-0"
+                      className="shrink-0 text-[color:var(--lkv-text-secondary)] hover:text-[color:var(--lkv-text-primary)]"
                       title="Modifier le nom"
+                      aria-label="Modifier le nom"
                     >
-                      <Icon name="edit2" className="w-3.5 h-3.5" />
-                    </button>
+                      <Icon name="edit2" className="size-3.5" aria-hidden="true" />
+                    </IconButton>
                   )}
                 </div>
               )}
-              <p className="text-[11px] text-[#5A574E] font-medium">
+              <p className="text-[length:var(--lkv-text-caption-2)] font-medium text-[color:var(--lkv-text-secondary)]">
                 {members.length} membres inscrits
               </p>
             </div>
@@ -199,47 +208,49 @@ export const GroupSettingsModal: React.FC<GroupSettingsModalProps> = ({
           <Link
             href={expeditionUrl}
             onClick={onClose}
-            className="flex items-center justify-between p-2.5 bg-[#5B7F55]/10 hover:bg-[#5B7F55]/20 border border-[#5B7F55]/30 rounded-2xl text-xs text-[#17402C] font-bold transition-all group shadow-2xs"
+            className="group flex items-center justify-between rounded-[var(--lkv-radius-md)] border border-[color:var(--lkv-secondary)]/30 bg-[color:var(--lkv-secondary)]/10 p-[var(--space-2)] text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)] shadow-elevation-1 transition-colors hover:bg-[color:var(--lkv-secondary)]/20"
           >
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-[var(--space-2)]">
               <span className="text-base">🎒</span>
               <span>Fiche Cockpit / Matériel Partagé</span>
             </div>
             <Icon
               name="external-link"
-              className="w-3.5 h-3.5 text-[#17402C] group-hover:translate-x-0.5 transition-transform"
+              className="size-3.5 text-[color:var(--lkv-text-primary)] transition-transform group-hover:translate-x-0.5"
+              aria-hidden="true"
             />
           </Link>
-        </div>
+        </Card>
 
         {/* Members List */}
         <div>
-          <h4 className="text-xs font-bold text-[#5A574E] uppercase tracking-wider mb-2">
+          <h4 className="mb-[var(--space-2)] text-[length:var(--lkv-text-caption)] font-bold uppercase tracking-wider text-[color:var(--lkv-text-secondary)]">
             Membres de l&apos;Expédition ({members.length})
           </h4>
 
           {loading ? (
-            <div className="space-y-2">
+            <div className="space-y-[var(--space-2)]">
               {[1, 2, 3].map((i) => (
-                <div key={i} className="h-12 bg-stone-100/80 animate-pulse rounded-2xl" />
+                <Skeleton key={i} className="h-12 w-full rounded-[var(--lkv-radius-md)]" />
               ))}
             </div>
           ) : (
-            <div className="space-y-2">
+            <div className="space-y-[var(--space-2)]">
               {members.map((mem) => {
                 const isMe = mem.user_id === currentUserId;
                 const name = mem.profile?.full_name || (isMe ? 'Vous' : 'Voyageur LKDV');
                 const avatar = mem.profile?.avatar_url || '/assets/images/no_image.png';
 
                 return (
-                  <div
+                  <Card
                     key={mem.id}
-                    className="p-2.5 bg-white/70 hover:bg-white/90 border border-stone-200/60 rounded-2xl flex items-center justify-between gap-2 shadow-2xs"
+                    variant="compact"
+                    className="flex items-center justify-between gap-[var(--space-2)]"
                   >
-                    <div className="flex items-center gap-2.5 overflow-hidden">
+                    <div className="flex items-center gap-[var(--space-2)] overflow-hidden">
                       <Link
                         href={`/profil/${mem.user_id}`}
-                        className="w-8 h-8 rounded-full overflow-hidden relative shrink-0 bg-stone-200 ring-1 ring-white cursor-pointer hover:ring-2 hover:ring-[#A3C4A3] transition-shadow"
+                        className="relative size-8 shrink-0 overflow-hidden rounded-full bg-[color:var(--lkv-surface-muted)] ring-1 ring-[color:var(--glass-border)] transition-shadow hover:ring-2 hover:ring-[color:var(--lkv-secondary)]"
                         title={`Voir le profil de ${name}`}
                         aria-label={`Voir le profil de ${name}`}
                       >
@@ -258,72 +269,69 @@ export const GroupSettingsModal: React.FC<GroupSettingsModalProps> = ({
                       <div className="overflow-hidden">
                         <Link
                           href={`/profil/${mem.user_id}`}
-                          className="font-bold text-xs text-[#17402C] truncate flex items-center gap-1 hover:underline decoration-[#A3C4A3] underline-offset-2"
+                          className="flex items-center gap-[var(--space-1)] truncate text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)] underline-offset-2 hover:underline"
                           title={`Voir le profil de ${name}`}
                         >
                           <span>{name}</span>
                           {isMe && (
-                            <span className="text-[10px] text-[#5A574E] font-normal">(Vous)</span>
+                            <span className="text-[length:var(--lkv-text-caption-2)] font-normal text-[color:var(--lkv-text-secondary)]">(Vous)</span>
                           )}
                         </Link>
-                        <span
-                          className={`inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full ${
-                            mem.role === 'owner'
-                              ? 'bg-[#FBF1DC] text-[#8C6418] border border-[#C89A3B]/35'
-                              : mem.role === 'admin'
-                                ? 'bg-[#5B7F55]/15 text-[#17402C] border border-[#5B7F55]/40'
-                                : 'bg-stone-100 text-[#5A574E]'
-                          }`}
+                        <Badge
+                          tone={mem.role === 'owner' ? 'warn' : mem.role === 'admin' ? 'sage' : 'stone'}
+                          className="mt-0.5"
                         >
                           {mem.role === 'owner' ? (
                             <>
-                              <Icon name="crown" className="w-2.5 h-2.5 text-[#C89A3B]" />{' '}
-                              Organisateur
+                              <Icon name="crown" className="size-2.5 text-[color:var(--lkv-warning)]" aria-hidden="true" /> Organisateur
                             </>
                           ) : mem.role === 'admin' ? (
                             <>
-                              <Icon name="shield" className="w-2.5 h-2.5 text-[#5B7F55]" /> Admin
+                              <Icon name="shield" className="size-2.5 text-[color:var(--lkv-secondary)]" aria-hidden="true" /> Admin
                             </>
                           ) : (
                             <>
-                              <Icon name="user" className="w-2.5 h-2.5 text-[#5A574E]" /> Membre
+                              <Icon name="user" className="size-2.5 text-[color:var(--lkv-text-secondary)]" aria-hidden="true" /> Membre
                             </>
                           )}
-                        </span>
+                        </Badge>
                       </div>
                     </div>
 
                     {/* Admin Controls */}
                     {isAdmin && !isMe && (
-                      <div className="flex items-center gap-1 shrink-0">
+                      <div className="flex shrink-0 items-center gap-[var(--space-1)]">
                         {isOwner && (
-                          <button
+                          <Button
                             type="button"
+                            variant="ghost"
+                            size="sm"
                             onClick={() =>
                               handleRoleChange(
                                 mem.user_id,
                                 mem.role === 'admin' ? 'member' : 'admin'
                               )
                             }
-                            className="glass-capsule-btn xs text-[#17402C]"
                             title={
                               mem.role === 'admin' ? 'Rétrograder en membre' : 'Promouvoir en Admin'
                             }
                           >
                             {mem.role === 'admin' ? 'Rétrograder' : 'Promouvoir'}
-                          </button>
+                          </Button>
                         )}
-                        <button
+                        <IconButton
                           type="button"
+                          size="sm"
                           onClick={() => handleRemoveMember(mem.user_id, name)}
-                          className="glass-circle-btn w-8 h-8 text-[#A8443A] hover:bg-[#F5DDD9]/60"
+                          className="text-[color:var(--lkv-danger)] hover:bg-[color:var(--lkv-danger-bg)]"
                           title="Retirer du groupe"
+                          aria-label="Retirer du groupe"
                         >
-                          <Icon name="user-minus" className="w-3.5 h-3.5" />
-                        </button>
+                          <Icon name="user-minus" className="size-3.5" aria-hidden="true" />
+                        </IconButton>
                       </div>
                     )}
-                  </div>
+                  </Card>
                 );
               })}
             </div>
@@ -332,15 +340,17 @@ export const GroupSettingsModal: React.FC<GroupSettingsModalProps> = ({
       </div>
 
       {/* Footer Leave Group */}
-      <div className="pt-3 border-t border-stone-200/60 mt-3 shrink-0">
-        <button
-          onClick={handleLeaveGroup}
+      <div className="mt-[var(--space-3)] shrink-0 border-t border-[color:var(--lkv-border)] pt-[var(--space-3)]">
+        <Button
+          type="button"
+          variant="destructive"
+          fullWidth
           disabled={loading}
-          className="w-full min-h-[44px] py-2.5 px-4 bg-[#F5DDD9]/70 hover:bg-[#F5DDD9]/90 text-[#8A241B] border border-[#A8443A]/30 rounded-2xl text-xs font-bold transition-all flex items-center justify-center gap-2 active:scale-95"
+          onClick={handleLeaveGroup}
+          icon={<Icon name="log-out" className="size-4" aria-hidden="true" />}
         >
-          <Icon name="log-out" className="w-4 h-4 text-[#8A241B]" />
           Quitter le groupe d&apos;expédition
-        </button>
+        </Button>
       </div>
     </MobileSheet>
   );

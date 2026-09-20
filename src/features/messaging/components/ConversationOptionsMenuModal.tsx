@@ -2,6 +2,7 @@
 
 import Icon from '@/components/ui/Icon';
 import React, { useState } from 'react';
+import { Button, ListItem } from '@/components/ui';
 import type { Conversation } from '../types/messaging.types';
 import { messagingService } from '../services/messagingService';
 import { MobileSheet } from './MobileSheet';
@@ -72,42 +73,41 @@ export const ConversationOptionsMenuModal: React.FC<ConversationOptionsMenuModal
   return (
     <MobileSheet isOpen={isOpen} onClose={onClose} title="Options de conversation">
       {showMuteSubmenu ? (
-        <div className="space-y-2 animate-fade-in">
-          <h4 className="text-xs font-bold text-[#5A574E] uppercase tracking-wider mb-2">
+        <div className="animate-fade-in space-y-[var(--space-2)]">
+          <h4 className="mb-[var(--space-2)] text-[length:var(--lkv-text-caption)] font-bold uppercase tracking-wider text-[color:var(--lkv-text-secondary)]">
             Masquer les notifications
           </h4>
-          <button
+          <ListItem
+            as="div"
+            disabled={loading}
             onClick={() => handleMuteToggle(1)}
+            title="Pendant 1 heure"
+            className="min-h-[52px]"
+          />
+          <ListItem
+            as="div"
             disabled={loading}
-            className="w-full text-left p-3.5 rounded-2xl bg-white/70 hover:bg-[#17402C]/10 font-medium text-[15px] text-[#17402C] transition-colors min-h-[52px] flex items-center border border-stone-200/50"
-          >
-            Pendant 1 heure
-          </button>
-          <button
             onClick={() => handleMuteToggle(8)}
+            title="Pendant 8 heures"
+            className="min-h-[52px]"
+          />
+          <ListItem
+            as="div"
             disabled={loading}
-            className="w-full text-left p-3.5 rounded-2xl bg-white/70 hover:bg-[#17402C]/10 font-medium text-[15px] text-[#17402C] transition-colors min-h-[52px] flex items-center border border-stone-200/50"
-          >
-            Pendant 8 heures
-          </button>
-          <button
             onClick={() => handleMuteToggle(undefined)}
-            disabled={loading}
-            className="w-full text-left p-3.5 rounded-2xl bg-white/70 hover:bg-[#17402C]/10 font-medium text-[15px] text-[#17402C] transition-colors min-h-[52px] flex items-center border border-stone-200/50"
-          >
-            Jusqu&apos;à réactivation (Toujours)
-          </button>
-          <button
-            onClick={() => setShowMuteSubmenu(false)}
-            className="w-full text-center mt-2 py-3 text-[15px] text-[#5A574E] font-semibold hover:text-[#17402C] min-h-[52px] flex items-center justify-center"
-          >
+            title="Jusqu'à réactivation (Toujours)"
+            className="min-h-[52px]"
+          />
+          <Button type="button" variant="ghost" fullWidth onClick={() => setShowMuteSubmenu(false)}>
             Retour
-          </button>
+          </Button>
         </div>
       ) : (
-        <div className="space-y-2">
+        <div className="space-y-[var(--space-2)]">
           {/* Mute Button */}
-          <button
+          <ListItem
+            as="div"
+            disabled={loading}
             onClick={() => {
               if (isMuted) {
                 handleMuteToggle(0);
@@ -115,47 +115,55 @@ export const ConversationOptionsMenuModal: React.FC<ConversationOptionsMenuModal
                 setShowMuteSubmenu(true);
               }
             }}
-            disabled={loading}
-            className="w-full p-3.5 rounded-2xl bg-white/70 hover:bg-[#17402C]/10 border border-stone-200/50 flex items-center justify-between text-[15px] font-semibold text-[#17402C] transition-colors min-h-[52px]"
-          >
-            <div className="flex items-center gap-3">
-              {isMuted ? (
-                <Icon name="bell" className="w-4 h-4 text-[#5B7F55]" />
+            className="min-h-[52px]"
+            leading={
+              isMuted ? (
+                <Icon name="bell" className="size-4 text-[color:var(--lkv-secondary)]" aria-hidden="true" />
               ) : (
-                <Icon name="bell-off" className="w-4 h-4 text-[#5A574E]" />
-              )}
-              <span>
-                {isMuted ? 'Réactiver les notifications' : 'Masquer les notifications (Mute)'}
-              </span>
-            </div>
-            {isMuted && <Icon name="check" className="w-4 h-4 text-[#5B7F55]" />}
-          </button>
+                <Icon name="bell-off" className="size-4 text-[color:var(--lkv-text-secondary)]" aria-hidden="true" />
+              )
+            }
+            title={
+              isMuted ? 'Réactiver les notifications' : 'Masquer les notifications (Mute)'
+            }
+            trailing={
+              isMuted ? (
+                <Icon name="check" className="size-4 text-[color:var(--lkv-secondary)]" aria-hidden="true" />
+              ) : undefined
+            }
+          />
 
           {/* Archive Button */}
-          <button
-            onClick={handleArchiveToggle}
+          <ListItem
+            as="div"
             disabled={loading}
-            className="w-full p-3.5 rounded-2xl bg-white/70 hover:bg-[#17402C]/10 border border-stone-200/50 flex items-center justify-between text-[15px] font-semibold text-[#17402C] transition-colors min-h-[52px]"
-          >
-            <div className="flex items-center gap-3">
-              <Icon name="archive" className="w-4 h-4 text-[#5A574E]" />
-              <span>{isArchived ? 'Désarchiver la conversation' : 'Archiver la conversation'}</span>
-            </div>
-            {isArchived && <Icon name="check" className="w-4 h-4 text-[#5B7F55]" />}
-          </button>
+            onClick={handleArchiveToggle}
+            className="min-h-[52px]"
+            leading={<Icon name="archive" className="size-4 text-[color:var(--lkv-text-secondary)]" aria-hidden="true" />}
+            title={isArchived ? 'Désarchiver la conversation' : 'Archiver la conversation'}
+            trailing={
+              isArchived ? (
+                <Icon name="check" className="size-4 text-[color:var(--lkv-secondary)]" aria-hidden="true" />
+              ) : undefined
+            }
+          />
 
           {/* Report & Block Button */}
           {conversation.other_member && (
-            <button
+            <ListItem
+              as="div"
               onClick={() => {
                 onClose();
                 onOpenReportBlock();
               }}
-              className="w-full p-3.5 rounded-2xl bg-[#F5DDD9]/70 hover:bg-[#F5DDD9]/90 border border-[#A8443A]/30 flex items-center gap-3 text-[15px] font-semibold text-[#8A241B] transition-colors mt-2 min-h-[52px]"
-            >
-              <Icon name="shield-alert" className="w-4 h-4 text-[#8A241B]" />
-              <span>Signaler ou Bloquer {conversation.other_member.full_name}</span>
-            </button>
+              className="mt-[var(--space-2)] min-h-[52px] text-[color:var(--lkv-danger-dark)]"
+              leading={<Icon name="shield-alert" className="size-4 text-[color:var(--lkv-danger)]" aria-hidden="true" />}
+              title={
+                <span className="text-[color:var(--lkv-danger-dark)]">
+                  Signaler ou Bloquer {conversation.other_member.full_name}
+                </span>
+              }
+            />
           )}
         </div>
       )}

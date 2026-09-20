@@ -2,6 +2,7 @@
 
 import Icon from '@/components/ui/Icon';
 import React, { useState, useRef, useEffect } from 'react';
+import { Button, IconButton } from '@/components/ui';
 import type {
   Message,
   ProductMessageMeta,
@@ -48,7 +49,7 @@ export const MessageComposer: React.FC<MessageComposerProps> = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // Auto-resize — aligné sur le min-height 44px de .glass-input, max 132px.
+  // Auto-resize — aligné sur le min-height 44px du champ, max 132px.
   useEffect(() => {
     const el = textareaRef.current;
     if (!el) return;
@@ -102,41 +103,38 @@ export const MessageComposer: React.FC<MessageComposerProps> = ({
   }
 
   return (
-    <div
-      className="bg-white/90 backdrop-blur-2xl border-t border-stone-200/60 flex flex-col shrink-0 shadow-lg"
-      style={{
-        paddingBottom: 'max(calc(env(safe-area-inset-bottom, 0px) - var(--kb-inset, 0px)), 8px)',
-      }}
-    >
+    <div className="flex shrink-0 flex-col border-t border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface)]/90 pb-[max(calc(var(--safe-bottom)-var(--kb-inset,0px)),8px)] shadow-elevation-3 backdrop-blur-[var(--blur-lg)]">
       {replyToMessage && (
-        <div className="px-4 py-2 bg-stone-50/95 border-b border-stone-200/60 flex items-center justify-between animate-fade-in">
-          <div className="flex items-center gap-2.5 overflow-hidden">
-            <div className="w-1 h-8 bg-[#17402C] rounded-full shrink-0" />
-            <Icon name="reply" className="w-4 h-4 text-[#17402C] shrink-0" />
-            <div className="text-xs overflow-hidden">
-              <span className="font-bold text-[#17402C] block truncate">
+        <div className="animate-fade-in flex items-center justify-between border-b border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-muted)]/95 px-[var(--space-4)] py-[var(--space-2)]">
+          <div className="flex items-center gap-[var(--space-2)] overflow-hidden">
+            <div className="h-8 w-1 shrink-0 rounded-full bg-[color:var(--lkv-primary)]" />
+            <Icon name="reply" className="size-4 shrink-0 text-[color:var(--lkv-text-primary)]" aria-hidden="true" />
+            <div className="overflow-hidden text-[length:var(--lkv-text-caption)]">
+              <span className="block truncate font-bold text-[color:var(--lkv-text-primary)]">
                 Réponse à {replyToMessage.sender_profile?.full_name || 'un voyageur'}
               </span>
-              <span className="text-[#5A574E] truncate block text-[11px]">
+              <span className="block truncate text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-secondary)]">
                 {replyToMessage.content}
               </span>
             </div>
           </div>
-          <button
+          <IconButton
             type="button"
+            size="sm"
             onClick={() => {
               haptic('light');
               onCancelReply?.();
             }}
-            className="glass-circle-btn w-7 h-7 text-[#5A574E] hover:text-[#17402C] shrink-0"
+            className="shrink-0 text-[color:var(--lkv-text-secondary)] hover:text-[color:var(--lkv-text-primary)]"
             title="Annuler la réponse"
+            aria-label="Annuler la réponse"
           >
-            <Icon name="x" className="w-3.5 h-3.5" />
-          </button>
+            <Icon name="x" className="size-3.5" aria-hidden="true" />
+          </IconButton>
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="p-2 sm:p-3 flex items-end gap-1.5 sm:gap-2">
+      <form onSubmit={handleSubmit} className="flex items-end gap-[var(--space-1)] p-[var(--space-2)] sm:gap-[var(--space-2)] sm:p-[var(--space-3)]">
         <input
           type="file"
           ref={fileInputRef}
@@ -146,21 +144,23 @@ export const MessageComposer: React.FC<MessageComposerProps> = ({
         />
 
         {/* Photo — envoie une image via le flux d'upload existant */}
-        <button
+        <Button
           type="button"
+          variant="secondary"
+          size="md"
+          iconOnly
+          disabled={disabled}
           onClick={() => {
             haptic('light');
             fileInputRef.current?.click();
           }}
-          disabled={disabled}
           aria-label="Envoyer une photo"
-          className="glass-circle-btn w-11 h-11 text-[#17402C] shrink-0 active:scale-95 shadow-2xs"
           title="Envoyer une photo"
-        >
-          <Icon name="image-plus" className="w-5 h-5" />
-        </button>
+          className="shrink-0"
+          icon={<Icon name="image-plus" className="size-5" aria-hidden="true" />}
+        />
 
-        <div className="flex-1 relative flex items-center min-w-0">
+        <div className="relative flex min-w-0 flex-1 items-center">
           <textarea
             ref={textareaRef}
             rows={1}
@@ -170,59 +170,59 @@ export const MessageComposer: React.FC<MessageComposerProps> = ({
             disabled={disabled}
             enterKeyHint="send"
             inputMode="text"
+            aria-label="Votre message"
             placeholder={
               replyToMessage
                 ? `Répondre à ${replyToMessage.sender_profile?.full_name || 'voyageur'}...`
                 : 'Votre message...'
             }
-            className="w-full pl-4 pr-3 py-2 text-[16px] md:text-sm glass-input font-medium resize-none min-h-[44px] max-h-[132px] leading-relaxed custom-scrollbar transition-all"
+            className="custom-scrollbar max-h-[132px] min-h-[44px] w-full resize-none rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] py-[var(--space-2)] pl-[var(--space-4)] pr-[var(--space-3)] text-[16px] font-medium leading-relaxed text-[color:var(--lkv-text-primary)] transition-all placeholder:text-[color:var(--lkv-text-muted)] focus:outline-none focus:ring-2 focus:ring-[color:var(--lkv-focus-ring)] md:text-[length:var(--lkv-text-footnote)]"
           />
         </div>
 
         {onSendVoiceNote && (
-          <button
+          <IconButton
             type="button"
+            variant="glass"
+            disabled={disabled}
             onClick={() => {
               haptic('medium');
               setIsRecordingVoice(true);
             }}
-            disabled={disabled}
             aria-label="Enregistrer une note vocale terrain"
-            className="glass-circle-btn w-11 h-11 text-[#17402C] hover:text-[#A8443A] shrink-0 active:scale-95 shadow-2xs"
             title="Enregistrer une note vocale terrain"
+            className="shrink-0 text-[color:var(--lkv-text-primary)] hover:text-[color:var(--lkv-danger)]"
           >
-            <Icon name="mic" className="w-5 h-5" />
-          </button>
+            <Icon name="mic" className="size-5" aria-hidden="true" />
+          </IconButton>
         )}
 
         {/* Menu ••• — GPX, équipement, randonnée */}
-        <button
+        <IconButton
           type="button"
+          variant="glass"
+          disabled={disabled}
           onClick={() => {
             haptic('medium');
             setIsMenuOpen(true);
           }}
-          disabled={disabled}
           aria-label="Partager un GPX, un équipement ou une randonnée"
-          className="glass-circle-btn w-11 h-11 text-[#17402C] shrink-0 active:scale-95 shadow-2xs"
           title="Partager un GPX, un équipement ou une randonnée"
+          className="shrink-0"
         >
-          <Icon name="ellipsis" className="w-5 h-5" />
-        </button>
+          <Icon name="ellipsis" className="size-5" aria-hidden="true" />
+        </IconButton>
 
-        <button
+        <IconButton
           type="submit"
+          variant={content.trim() && !disabled ? 'solid' : 'ghost'}
           disabled={!content.trim() || disabled}
           aria-label="Envoyer le message"
-          className={`w-11 h-11 shrink-0 ${
-            content.trim() && !disabled
-              ? 'glass-circle-btn primary shadow-md active:scale-95 cursor-pointer'
-              : 'glass-circle-btn opacity-55 cursor-not-allowed text-[#5A574E]'
-          }`}
           title="Envoyer le message"
+          className="shrink-0 shadow-elevation-2"
         >
-          <Icon name="send" className="w-4 h-4" />
-        </button>
+          <Icon name="send" className="size-4" aria-hidden="true" />
+        </IconButton>
       </form>
 
       <ComposerMenuSheet

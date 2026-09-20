@@ -4,6 +4,7 @@ import { lkvConfirm } from '@/components/ui/dialogs';
 import React, { useState } from 'react';
 import Link from 'next/link';
 import Icon from '@/components/ui/AppIcon';
+import { Button, Card, IconButton } from '@/components/ui';
 import { createClient } from '@/lib/supabase/client';
 import { fetchPublicProfilesWith } from '@/lib/queries/publicProfilesCore';
 
@@ -61,9 +62,9 @@ export default function CommentItem({
 
   const profileId = comment.author_id || comment.author?.id;
   const authorBlock = (
-    <div className="w-7 h-7 rounded-full mt-1 object-cover border border-[#E8E4D8] shrink-0 overflow-hidden bg-[#E7E3D6] flex items-center justify-center text-[10px] font-bold text-[#17402C]">
+    <div className="mt-[var(--space-1)] flex size-7 shrink-0 items-center justify-center overflow-hidden rounded-full border border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-muted)] text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-primary)]">
       {comment.author?.avatar_url ? (
-        <img src={comment.author.avatar_url} alt={comment.author?.full_name || 'Utilisateur'} className="w-full h-full object-cover" />
+        <img src={comment.author.avatar_url} alt={comment.author?.full_name || 'Utilisateur'} className="size-full object-cover" />
       ) : comment.author?.full_name?.charAt(0) || 'V'}
     </div>
   );
@@ -189,157 +190,161 @@ export default function CommentItem({
   };
 
   return (
-    <div className="flex gap-3 text-sm group/comment relative">
+    <div className="group/comment relative flex gap-[var(--space-3)] text-[length:var(--lkv-text-footnote)]">
       {avatarArea}
 
-      <div className="flex-1 glass-sub-card rounded-2xl rounded-tl-none p-3 relative">
+      <Card variant="compact" className="relative flex-1 rounded-tl-none">
         {/* Comment Header */}
-        <div className="flex items-center justify-between gap-2 mb-1">
+        <div className="mb-[var(--space-1)] flex items-center justify-between gap-[var(--space-2)]">
           {profileId ? (
-            <Link href={`/profil/${profileId}`} className="font-bold text-xs text-[#17402C] hover:text-[#17402C] transition-colors">
+            <Link href={`/profil/${profileId}`} className="text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)] transition-colors hover:text-[color:var(--lkv-primary)]">
               {comment.author?.full_name || 'Voyageur'}
             </Link>
           ) : (
-            <div className="font-bold text-xs text-[#17402C]">
+            <div className="text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)]">
               {comment.author?.full_name || 'Voyageur'}
             </div>
           )}
 
           {/* Action buttons */}
-          <div className="flex items-center gap-1.5 opacity-80 group-hover/comment:opacity-100 transition-opacity ml-auto">
+          <div className="ml-auto flex items-center gap-[var(--space-1)] opacity-80 transition-opacity group-hover/comment:opacity-100">
             {onReply && (
-              <button
+              <IconButton
+                variant="glass"
+                size="sm"
                 onClick={() => setIsReplying(!isReplying)}
-                className="w-7 h-7 rounded-full glass-capsule-btn flex items-center justify-center text-[#17402C] p-0"
                 aria-label={`Répondre à ${comment.author?.full_name || 'cette personne'}`}
               >
-                <Icon name="message-square" size={12} />
-              </button>
+                <Icon name="message-square" size={12} aria-hidden="true" />
+              </IconButton>
             )}
             {isOwnComment ? (
               <>
-                <button
+                <IconButton
+                  variant="glass"
+                  size="sm"
                   onClick={() => setIsEditing(!isEditing)}
-                  className="w-7 h-7 rounded-full glass-capsule-btn flex items-center justify-center text-[#17402C] p-0"
                   aria-label="Modifier"
                 >
-                  <Icon name="pencil" size={12} />
-                </button>
-                <button
+                  <Icon name="pencil" size={12} aria-hidden="true" />
+                </IconButton>
+                <IconButton
+                  variant="glass"
+                  size="sm"
                   onClick={handleDeleteComment}
-                  className="w-7 h-7 rounded-full glass-capsule-btn flex items-center justify-center text-red-600 p-0"
                   aria-label="Supprimer"
+                  className="text-[color:var(--lkv-danger)]"
                 >
-                  <Icon name="trash2" size={12} />
-                </button>
+                  <Icon name="trash2" size={12} aria-hidden="true" />
+                </IconButton>
               </>
             ) : (
-              <button
+              <IconButton
+                variant="glass"
+                size="sm"
                 onClick={() => setIsReporting(!isReporting)}
-                className="w-7 h-7 rounded-full glass-capsule-btn flex items-center justify-center text-[#17402C] p-0"
                 aria-label="Signaler"
               >
-                <Icon name="flag" size={12} />
-              </button>
+                <Icon name="flag" size={12} aria-hidden="true" />
+              </IconButton>
             )}
           </div>
         </div>
 
         {/* Editing Inline Form */}
         {isEditing ? (
-          <div className="mt-1 space-y-2">
+          <div className="mt-[var(--space-1)] space-y-[var(--space-2)]">
             <textarea
               rows={2}
               value={editText}
               onChange={(e) => setEditText(e.target.value)}
-              className="w-full p-2 bg-white border border-[#E4E0D4] rounded-xl text-xs text-[#17402C] focus:outline-none focus:border-[#17402C]"
+              className="w-full rounded-[var(--lkv-radius-sm)] border border-[color:var(--lkv-border)] bg-[color:var(--lkv-field-bg)] p-[var(--space-2)] text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-primary)] focus:border-[color:var(--lkv-primary)] focus:outline-none"
             />
-            <div className="flex items-center gap-2 justify-end">
-              <button
-                onClick={() => setIsEditing(false)}
-                className="px-3 py-1 bg-white border border-[#E4E0D4] rounded-full text-[10px] font-bold text-[#5C6B5E] hover:bg-[#EEF3EC]"
-              >
+            <div className="flex items-center justify-end gap-[var(--space-2)]">
+              <Button type="button" variant="secondary" size="sm" onClick={() => setIsEditing(false)}>
                 Annuler
-              </button>
-              <button
-                onClick={handleSaveEdit}
+              </Button>
+              <Button
+                type="button"
+                variant="primary"
+                size="sm"
+                loading={isSaving}
                 disabled={isSaving || !editText.trim()}
-                className="px-3 py-1 bg-[#17402C] text-white rounded-full text-[10px] font-bold hover:bg-[#17402C] transition-colors"
+                onClick={handleSaveEdit}
               >
-                {isSaving ? 'Enregistrement...' : 'Enregistrer'}
-              </button>
+                Enregistrer
+              </Button>
             </div>
           </div>
         ) : (
           /* Comment Text */
-          <p className="text-xs text-[#4A574C] leading-relaxed whitespace-pre-wrap">{comment.content}</p>
+          <p className="whitespace-pre-wrap text-[length:var(--lkv-text-caption)] leading-relaxed text-[color:var(--lkv-text-secondary)]">
+            {comment.content}
+          </p>
         )}
 
         {/* Report Inline Popover Form */}
         {isReporting && (
-          <div className="mt-3 p-3 bg-white rounded-xl border border-sand-200  text-xs space-y-2">
-            <p className="font-bold text-[#17402C]">Motif du signalement :</p>
+          <div className="mt-[var(--space-3)] space-y-[var(--space-2)] rounded-[var(--lkv-radius-sm)] border border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-card)] p-[var(--space-3)] text-[length:var(--lkv-text-caption)]">
+            <p className="font-bold text-[color:var(--lkv-text-primary)]">Motif du signalement :</p>
             <select
               value={reportReason}
               onChange={(e) => setReportReason(e.target.value)}
-              className="w-full p-1.5 bg-[#F5F2E8] border border-[#E4E0D4] rounded-lg text-xs"
+              className="w-full rounded-[var(--lkv-radius-xs)] border border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-muted)] p-1.5 text-[length:var(--lkv-text-caption)]"
             >
               <option value="Propos inappropriés">Propos inappropriés / Injurieux</option>
               <option value="Spam / Publicité">Spam ou publicité non sollicitée</option>
               <option value="Harcèlement">Harcèlement ou propos haineux</option>
               <option value="Contenu trompeur">Fausse information / Trompeur</option>
             </select>
-            <div className="flex justify-end gap-2 pt-1">
-              <button
-                onClick={() => setIsReporting(false)}
-                className="px-2.5 py-1 bg-stone-100 rounded-lg text-[10px] font-bold text-stone-600"
-              >
+            <div className="flex justify-end gap-[var(--space-2)] pt-[var(--space-1)]">
+              <Button type="button" variant="secondary" size="sm" onClick={() => setIsReporting(false)}>
                 Annuler
-              </button>
-              <button
-                onClick={handleSendReport}
-                className="px-3 py-1 bg-red-600 text-white rounded-lg text-[10px] font-bold hover:bg-red-700"
-              >
+              </Button>
+              <Button type="button" variant="destructive" size="sm" onClick={handleSendReport}>
                 Confirmer le signalement
-              </button>
+              </Button>
             </div>
           </div>
         )}
 
         {/* Success toast badge */}
         {reportSuccessMsg && (
-          <div className="mt-2 text-[10px] font-bold text-sand-700 bg-sand-50 border border-sand-200 px-2.5 py-1 rounded-lg">
+          <div className="mt-[var(--space-2)] rounded-[var(--lkv-radius-xs)] border border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-muted)] px-[var(--space-2)] py-[var(--space-1)] text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-secondary)]">
             {reportSuccessMsg}
           </div>
         )}
 
         {/* Reply to this person */}
         {isReplying && onReply && (
-          <div className="mt-3">
-            <p className="text-[10px] font-bold text-[#17402C] mb-1.5">
+          <div className="mt-[var(--space-3)]">
+            <p className="mb-1.5 text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-primary)]">
               Répondre à {replyTargetName || comment.author?.full_name || 'cette personne'}
             </p>
-            <div className="flex gap-2">
+            <div className="flex gap-[var(--space-2)]">
               <input
                 type="text"
                 value={replyText}
                 onChange={e => setReplyText(e.target.value)}
                 onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendReply(); } }}
                 placeholder={`Écrire une réponse à ${comment.author?.full_name || '…'}`}
-                className="flex-1 bg-white border border-[#E4E0D4] rounded-xl px-3 py-2 text-xs text-[#17402C] focus:outline-none focus:border-[#17402C]"
+                className="flex-1 rounded-[var(--lkv-radius-sm)] border border-[color:var(--lkv-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[var(--space-2)] text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-primary)] focus:border-[color:var(--lkv-primary)] focus:outline-none"
                 disabled={sendingReply}
               />
-              <button
-                onClick={handleSendReply}
+              <Button
+                type="button"
+                variant="primary"
+                size="sm"
+                loading={sendingReply}
                 disabled={sendingReply || !replyText.trim()}
-                className="px-3 py-2 bg-[#17402C] text-white rounded-xl text-[10px] font-bold hover:bg-[#17402C] disabled:opacity-50"
+                onClick={handleSendReply}
               >
-                {sendingReply ? '…' : 'Envoyer'}
-              </button>
+                Envoyer
+              </Button>
             </div>
           </div>
         )}
-      </div>
+      </Card>
     </div>
   );
 }
