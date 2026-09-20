@@ -164,7 +164,7 @@ export default function TachesCard({ tasks: initialTasks, groupId, onRefresh, us
   };
 
   const handleDeleteTask = async (id: string) => {
-    if (!lkvConfirm('Voulez-vous vraiment supprimer cette tâche ?')) return;
+    if (!(await lkvConfirm('Voulez-vous vraiment supprimer cette tâche ?'))) return;
 
     setTasks(prev => prev.filter(t => t.id !== id));
 

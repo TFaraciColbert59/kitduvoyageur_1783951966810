@@ -1298,7 +1298,7 @@ export default function MobileCompteV2() {
                     onClick={async () => {
                       triggerHaptic('warning');
                       setMenuOpen(false);
-                      if (lkvConfirm('Voulez-vous vraiment vous déconnecter ?')) {
+                      if (await lkvConfirm('Voulez-vous vraiment vous déconnecter ?')) {
                         await signOut();
                         router.push('/connexion');
                       }

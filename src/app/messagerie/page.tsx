@@ -6,6 +6,7 @@ import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
 import { useAuth } from '@/contexts/AuthContext';
 import { MessageInbox } from '@/features/messaging/components/MessageInbox';
 import { useKeyboardInset } from '@/features/messaging/hooks/useKeyboardInset';
+import { LoadingState } from '@/components/ui';
 
 export default function MessageriePage() {
   const { user, profile, loading } = useAuth();
@@ -68,12 +69,8 @@ export default function MessageriePage() {
           className="w-full flex-1 min-h-0 relative z-10 overflow-hidden flex flex-col items-center justify-center md:pt-2 md:pb-2 md:px-6"
         >
           {loading ? (
-            <div
-              className="flex items-center justify-center h-full"
-              role="status"
-              aria-label="Chargement de la messagerie"
-            >
-              <div className="w-10 h-10 border-4 border-[var(--lkv-primary)] border-t-transparent rounded-full animate-spin" />
+            <div className="flex items-center justify-center h-full">
+              <LoadingState label="Chargement de la messagerie" />
             </div>
           ) : !user ? (
             <div className="max-w-md w-full mx-auto text-center glass rounded-3xl p-8 shadow-sm m-4">

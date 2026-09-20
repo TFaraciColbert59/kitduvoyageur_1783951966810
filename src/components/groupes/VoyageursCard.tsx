@@ -159,7 +159,7 @@ export default function VoyageursCard({ travelers, groupId, onRefresh, user, mem
   };
 
   const removePending = async (id: string) => {
-    if (!lkvConfirm('Retirer cette invitation ?')) return;
+    if (!(await lkvConfirm('Retirer cette invitation ?'))) return;
     setLoadingId(id);
     await supabase.from('group_members').delete().eq('id', id);
     setLoadingId(null);
@@ -169,7 +169,7 @@ export default function VoyageursCard({ travelers, groupId, onRefresh, user, mem
 
   const handleRemoveMember = async (memberId: string) => {
     if (!groupId || !isOrganizer) return;
-    if (!lkvConfirm('Êtes-vous sûr de vouloir retirer ce membre du groupe ?')) return;
+    if (!(await lkvConfirm('Êtes-vous sûr de vouloir retirer ce membre du groupe ?'))) return;
     
     setLoadingId(memberId);
     const { error } = await supabase
@@ -199,7 +199,7 @@ export default function VoyageursCard({ travelers, groupId, onRefresh, user, mem
     if (!groupId || !user) return;
     const myMembership = members?.find((m: any) => m.user_id === user.id);
     if (!myMembership) return;
-    if (!lkvConfirm('Voulez-vous quitter ce groupe ? Vous pourrez rejoindre un autre groupe sans aucune pénalité.')) return;
+    if (!(await lkvConfirm('Voulez-vous quitter ce groupe ? Vous pourrez rejoindre un autre groupe sans aucune pénalité.'))) return;
 
     setLoadingId(myMembership.id);
     const { error } = await supabase

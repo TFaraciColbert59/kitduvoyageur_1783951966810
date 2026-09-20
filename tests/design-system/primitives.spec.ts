@@ -14,16 +14,18 @@ describe('Sous-phase 2.3 — Primitives Partagées UI (TDD)', () => {
     expect(html).toContain('tone-sage');
   });
 
-  it('TEST-PRIM-02: Tabs renders with options, accessibility and semantic classes', () => {
-    const tabs = [
-      { id: 't1', label: 'Itinéraire', badge: 5 },
+  it('TEST-PRIM-02: Tabs (API canonique Lot 3) rend options, état actif et compteur', () => {
+    const options = [
+      { id: 't1', label: 'Itinéraire', count: 5 },
       { id: 't2', label: 'Sac à dos' },
     ];
     const html = renderToStaticMarkup(
-      React.createElement(Tabs, { tabs, activeTab: 't1', onSelectTab: () => {} })
+      React.createElement(Tabs, { options, value: 't1', onChange: () => {} })
     );
+    expect(html).toContain('role="tablist"');
     expect(html).toContain('Itinéraire');
     expect(html).toContain('Sac à dos');
+    expect(html).toContain('aria-selected="true"');
     expect(html).toContain('5');
   });
 

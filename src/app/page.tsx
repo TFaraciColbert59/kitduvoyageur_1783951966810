@@ -2,6 +2,7 @@ import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import Header from '@/components/Header';
+import { Button } from '@/components/ui';
 import Icon from '@/components/ui/AppIcon';
 import { ResumeActiveTripCard } from '@/features/trips/components/ResumeActiveTripCard';
 
@@ -307,9 +308,9 @@ export default function HomePage() {
                 <p className="text-3xl font-bold text-[#EEF3EC] mb-8">340 €</p>
 
                 <div className="flex items-center gap-4">
-                  <button className="glass-capsule-btn primary px-8 py-3.5 text-sm">
+                  <Button variant="primary">
                     Ajouter au sac
-                  </button>
+                  </Button>
                   <Link href="/boutique" className="text-sm font-semibold text-[#EEF3EC] hover:text-white transition-colors">
                     Voir la fiche
                   </Link>
@@ -331,7 +332,7 @@ export default function HomePage() {
                   <p className="text-white/70 text-xs mb-4">Un email par saison. Refuges, matériel, récit d'abris.</p>
                   <div className="flex gap-2">
                     <input type="email" placeholder="votre@email.fr" className="bg-white/5 border border-white/10 rounded-full px-4 py-2 text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-[var(--lkv-secondary)] w-full" />
-                    <button className="glass-capsule-btn primary px-4 py-2 text-xs font-bold">S'inscrire</button>
+                    <Button variant="primary" size="sm">S'inscrire</Button>
                   </div>
                 </div>
 

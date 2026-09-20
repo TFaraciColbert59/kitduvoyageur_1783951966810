@@ -123,7 +123,7 @@ export default function EquipementCard({ equipment, groupId, onRefresh, user, me
   };
 
   const handleDeleteItem = async (itemId: string) => {
-    if (!lkvConfirm('Supprimer cet objet du sac partagé ?')) return;
+    if (!(await lkvConfirm('Supprimer cet objet du sac partagé ?'))) return;
     triggerHaptic('warning');
     setBusyId(itemId);
     await runOp(

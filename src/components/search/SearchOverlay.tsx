@@ -3,6 +3,7 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import LkvIcon from '@/components/ui/LkvIcon';
+import { IconButton, SearchField } from '@/components/ui';
 import { useRecentSearches } from '@/components/search/useRecentSearches';
 import { useSearchContext } from '@/contexts/SearchContext';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
@@ -10,7 +11,7 @@ import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 export default function SearchOverlay() {
   const { isSearchOpen, closeSearch } = useSearchContext();
   const router = useRouter();
-  const inputRef = useRef<HTMLInputElement>(null);
+  const formRef = useRef<HTMLFormElement>(null);
   const [query, setQuery] = useState('');
   const { haptic } = useHapticFeedback();
   const { recentSearches, addSearch, clearSearches, removeSearch } = useRecentSearches();
@@ -40,7 +41,7 @@ export default function SearchOverlay() {
       setQuery('');
       haptic('selection');
       // Focus input after animation
-      setTimeout(() => inputRef.current?.focus(), 150);
+      setTimeout(() => formRef.current?.querySelector<HTMLInputElement>('input')?.focus(), 150);
     }
   }, [isSearchOpen, haptic]);
 
@@ -122,55 +123,19 @@ export default function SearchOverlay() {
             aria-label="Recherche"
           >
             {/* Search form */}
-            <form onSubmit={handleSubmit}>
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '12px',
-                  background: '#fff',
-                  borderRadius: '14px',
-                  padding: '0 16px',
-                  height: '50px',
-                  border: '1px solid rgba(23,64,44,0.08)',
-                }}
-              >
-                <LkvIcon name="search" size={20} color="#6B7A72" />
-                <input
-                  ref={inputRef}
-                  type="search"
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  placeholder="Chercher un produit, un pays, un guide…"
-                  aria-label="Rechercher sur le site"
-                  autoComplete="off"
-                  style={{
-                    flex: 1,
-                    border: 'none',
-                    outline: 'none',
-                    background: 'transparent',
-                    fontSize: '16px',
-                    color: '#17402C',
-                    fontFamily: 'var(--font-sans)',
-                  }}
-                />
-                {query && (
-                  <button
-                    type="button"
-                    onClick={() => setQuery('')}
-                    aria-label="Effacer la recherche"
-                    style={{
-                      background: 'none',
-                      border: 'none',
-                      cursor: 'pointer',
-                      color: '#6B7A72',
-                      padding: '4px',
-                    }}
-                  >
-                    <LkvIcon name="close" size={18} />
-                  </button>
-                )}
-              </div>
+            <form ref={formRef} onSubmit={handleSubmit} className="flex items-center gap-3">
+              <SearchField
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                onClear={() => setQuery('')}
+                placeholder="Chercher un produit, un pays, un guide…"
+                aria-label="Rechercher sur le site"
+                autoComplete="off"
+                containerClassName="min-w-0 flex-1"
+              />
+              <IconButton aria-label="Fermer la recherche" onClick={closeSearch}>
+                <LkvIcon name="close" size={20} />
+              </IconButton>
             </form>
 
             {/* Recent searches */}

@@ -68,7 +68,7 @@ export default function DepensesCard({ expenses, groupId, onRefresh, user, membe
   };
 
   const handleDeleteExpense = async (id: string) => {
-    if (!lkvConfirm('Voulez-vous vraiment supprimer cette dépense ?')) return;
+    if (!(await lkvConfirm('Voulez-vous vraiment supprimer cette dépense ?'))) return;
     const { error } = await supabase.from('group_expenses').delete().eq('id', id);
     if (!error && onRefresh) onRefresh();
   };

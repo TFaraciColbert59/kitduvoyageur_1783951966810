@@ -105,7 +105,7 @@ export function InventoryWorkspace({ items }: { items: InventoryItem[] }) {
   };
 
   const handleDelete = async (item: InventoryItem) => {
-    if (!lkvConfirm(`Supprimer « ${item.name} » ?`)) return;
+    if (!(await lkvConfirm(`Supprimer « ${item.name} » ?`))) return;
     try {
       const res = await fetch(`/api/materiel/items/${item.id}`, { method: 'DELETE' });
       if (!res.ok) throw new Error('Erreur');

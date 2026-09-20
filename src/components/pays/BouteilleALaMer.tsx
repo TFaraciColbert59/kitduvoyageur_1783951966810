@@ -316,7 +316,7 @@ export default function BouteilleALaMer({ countryIso, countryName }: Props) {
   // 3. Cancel Pending Request (Voluntary departure with 0 penalty)
   const handleCancelRequest = async (group: any) => {
     if (!user || !group.userMembershipId) return;
-    if (!lkvConfirm("Voulez-vous annuler votre demande de participation ?")) return;
+    if (!(await lkvConfirm("Voulez-vous annuler votre demande de participation ?"))) return;
 
     setCancelLoadingId(group.id);
     try {
@@ -387,7 +387,7 @@ export default function BouteilleALaMer({ countryIso, countryName }: Props) {
   // 5. Creator: Reject Applicant
   const handleRejectApplicant = async (applicant: any) => {
     if (!user || !selectedGroupForManagement) return;
-    if (!lkvConfirm(`Refuser la demande de ${applicant.profile?.full_name || 'ce membre'} ?`)) return;
+    if (!(await lkvConfirm(`Refuser la demande de ${applicant.profile?.full_name || 'ce membre'} ?`))) return;
 
     setProcessingApplicantId(applicant.id);
     try {

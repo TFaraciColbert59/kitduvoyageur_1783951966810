@@ -43,7 +43,7 @@ export default function HorsLignePage() {
   }, [loadRoutes]);
 
   const handleDelete = useCallback(async (routeId: string) => {
-    if (!lkvConfirm('Supprimer cette randonnée du stockage hors-ligne ?')) return;
+    if (!(await lkvConfirm('Supprimer cette randonnée du stockage hors-ligne ?'))) return;
     setDeletingId(routeId);
     try {
       await offline.deleteOffline(routeId);

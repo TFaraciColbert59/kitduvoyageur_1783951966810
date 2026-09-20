@@ -15,6 +15,7 @@ import {
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import AppShell from '@/components/shell/AppShell';
+import { Card, ListItem } from '@/components/ui';
 import { CompteBackground } from '@/components/compte/CompteBackground';
 import {
   getMaterielSummary,
@@ -45,14 +46,14 @@ function plural(count: number, singular: string, pluralForm = `${singular}s`): s
 
 function StatChip({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-2xl border border-white/80 bg-white/60 px-3 py-2">
+    <Card variant="compact" className="px-3 py-2">
       <span className="block font-mono text-[10px] font-bold uppercase tracking-wider text-[var(--lkv-text-muted)]">
         {label}
       </span>
       <span className="font-mono text-base font-extrabold tabular-nums text-[var(--lkv-text-primary)]">
         {value}
       </span>
-    </div>
+    </Card>
   );
 }
 
@@ -255,25 +256,20 @@ function MaterielSurface({ summary }: { summary: MaterielSummary }) {
               <li key={row.label}>
                 <Link
                   href={row.href}
-                  className="flex min-h-[44px] items-center gap-3 rounded-2xl border border-white/80 bg-white/60 p-3 transition-colors hover:bg-white/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)]"
+                  className="block rounded-[var(--lkv-radius-md)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)]"
                 >
-                  <Shield
-                    size={16}
-                    className="shrink-0 text-[var(--lkv-warning-dark)]"
-                    aria-hidden="true"
-                  />
-                  <span className="min-w-0 flex-1">
-                    <span className="block text-sm font-bold text-[var(--lkv-text-primary)]">
-                      {row.label}
-                    </span>
-                    <span className="block text-xs text-[var(--lkv-text-secondary)]">
-                      {row.detail}
-                    </span>
-                  </span>
-                  <ChevronRight
-                    size={15}
-                    className="shrink-0 text-[var(--lkv-text-muted)]"
-                    aria-hidden="true"
+                  <ListItem
+                    as="div"
+                    leading={
+                      <Shield
+                        size={16}
+                        className="shrink-0 text-[var(--lkv-warning-dark)]"
+                        aria-hidden="true"
+                      />
+                    }
+                    title={row.label}
+                    subtitle={row.detail}
+                    chevron
                   />
                 </Link>
               </li>

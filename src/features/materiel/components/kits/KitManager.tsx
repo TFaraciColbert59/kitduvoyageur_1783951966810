@@ -72,7 +72,7 @@ export function KitManager({ kits, inventory }: { kits: KitListItem[]; inventory
   };
 
   const remove = async (k: KitListItem) => {
-    if (!lkvConfirm(`Supprimer le kit « ${k.name} » ?`)) return;
+    if (!(await lkvConfirm(`Supprimer le kit « ${k.name} » ?`))) return;
     const res = await fetch(`/api/materiel/kits/${k.id}`, { method: 'DELETE' });
     if (res.ok) { toast('Kit supprimé', 'success'); router.refresh(); }
     else toast('Erreur', 'error');

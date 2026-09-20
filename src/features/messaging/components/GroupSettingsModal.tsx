@@ -95,7 +95,7 @@ export const GroupSettingsModal: React.FC<GroupSettingsModalProps> = ({
   };
 
   const handleRemoveMember = async (targetUserId: string, targetName: string) => {
-    if (!lkvConfirm(`Voulez-vous vraiment retirer ${targetName} du groupe ?`)) return;
+    if (!(await lkvConfirm(`Voulez-vous vraiment retirer ${targetName} du groupe ?`))) return;
 
     haptic('medium');
     setErrorMessage(null);
@@ -111,7 +111,7 @@ export const GroupSettingsModal: React.FC<GroupSettingsModalProps> = ({
   };
 
   const handleLeaveGroup = async () => {
-    if (!lkvConfirm("Voulez-vous vraiment quitter ce groupe d'expédition ?")) return;
+    if (!(await lkvConfirm("Voulez-vous vraiment quitter ce groupe d'expédition ?"))) return;
 
     haptic('medium');
     setErrorMessage(null);

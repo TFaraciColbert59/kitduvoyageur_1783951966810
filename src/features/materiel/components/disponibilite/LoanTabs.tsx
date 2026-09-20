@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { Badge } from '@/components/ui/Badge';
 import LkvButton from '@/components/ui/LkvButton';
-import IOSSegmentedControl from '@/components/ui/IOSSegmentedControl';
+import { Tabs } from '@/components/ui/Tabs';
 import { useToast } from '@/contexts/ToastContext';
 import type { LoanItem } from '@/features/materiel/services/getLoans';
 
@@ -45,7 +45,7 @@ export function LoanTabs({ loans, userId }: { loans: LoanItem[]; userId: string 
   return (
     <GlassCard as="article" ariaLabelledBy="loans-tabs-title" className="p-4">
       <h3 id="loans-tabs-title" className="sr-only">Liste des prêts</h3>
-      <IOSSegmentedControl
+      <Tabs
         options={TAB_OPTIONS}
         value={tab}
         onChange={(id) => setTab(id as Tab)}

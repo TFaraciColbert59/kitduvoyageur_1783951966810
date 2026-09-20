@@ -226,7 +226,7 @@ export default function CarnetsTab({ profile }: CarnetsTabProps) {
 
   // ─── delete draft ─────────────────────────
   async function handleDeleteDraft(id: string) {
-    if (!lkvConfirm('Supprimer ce brouillon définitivement ?')) return;
+    if (!(await lkvConfirm('Supprimer ce brouillon définitivement ?'))) return;
     await supabase.from('carnets').delete().eq('id', id);
     setDrafts(prev => prev.filter(d => d.id !== id));
   }

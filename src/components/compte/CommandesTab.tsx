@@ -246,7 +246,7 @@ export default function CommandesTab({ profile }: CommandesTabProps) {
 
   // ─── actions ──────────────────────────────
   const handleCancelOrder = async (orderId: string) => {
-    if (!lkvConfirm('Êtes-vous sûr de vouloir annuler cette commande ?')) return;
+    if (!(await lkvConfirm('Êtes-vous sûr de vouloir annuler cette commande ?'))) return;
     const { error } = await supabase.from('orders').update({ status: 'cancelled' }).eq('id', orderId);
     if (!error) {
       showToast('Commande annulée');
