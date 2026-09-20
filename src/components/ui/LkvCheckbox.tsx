@@ -1,7 +1,7 @@
 'use client';
 import React, { forwardRef } from 'react';
 import { cn } from '@/lib/utils';
-import { CheckCheckIcon as CheckIcon } from '@/components/icons/check-check';
+import Icon from '@/components/ui/Icon';
 
 export interface LkvCheckboxProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'type'> {
   label?: React.ReactNode;
@@ -41,7 +41,7 @@ export const LkvCheckbox = forwardRef<HTMLInputElement, LkvCheckboxProps>(
               className
             )}
           >
-            {checked && <CheckIcon size={13} className="text-white stroke-[3]" />}
+            {checked && <Icon name="CheckIcon" size={13} className="text-white" strokeWidth={3} />}
           </div>
         </div>
         {(label || description) && (
