@@ -2,9 +2,8 @@
 import { lkvConfirm } from '@/components/ui/dialogs';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Card } from '@/components/ui';
+import { Card, Modal } from '@/components/ui';
 import { Eyebrow } from '@/components/ui/Eyebrow';
-import { GlassDrawer } from '@/components/ui/GlassDrawer';
 import { useToast } from '@/contexts/ToastContext';
 import type { KitListItem } from '@/features/materiel/services/getKits';
 import type { InventoryItem } from '@/features/materiel/services/getInventory';
@@ -91,7 +90,7 @@ export function KitManager({ kits, inventory }: { kits: KitListItem[]; inventory
         </button>
       </div>
 
-      <GlassDrawer open={open} onOpenChange={setOpen} title={editing ? 'Modifier le kit' : 'Nouveau kit'}>
+      <Modal open={open} onOpenChange={setOpen} title={editing ? 'Modifier le kit' : 'Nouveau kit'}>
         <div className="flex flex-col gap-3.5">
           <label className="flex flex-col gap-1 text-xs sm:text-sm">
             <span className="font-semibold text-[var(--lkv-primary-soft)]">Nom *</span>
@@ -129,7 +128,7 @@ export function KitManager({ kits, inventory }: { kits: KitListItem[]; inventory
             {saving ? 'Enregistrement…' : 'Enregistrer'}
           </button>
         </div>
-      </GlassDrawer>
+      </Modal>
     </Card>
   );
 }

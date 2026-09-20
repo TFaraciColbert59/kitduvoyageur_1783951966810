@@ -1,9 +1,8 @@
 'use client';
 
-import React, { useState, useMemo, useRef, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { useState, useMemo, useRef } from 'react';
+import { Sheet } from '@/components/ui';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
-import { useDragDismiss } from '@/hooks/gestures';
 
 export interface CommentData {
   id: string;
@@ -52,9 +51,6 @@ export default function CommentsSheet({
   onDeleteComment,
 }: CommentsSheetProps) {
   const { triggerHaptic } = useHapticFeedback();
-  // Fermeture au drag (mission gestes, Phase 2) — poignée + en-tête ;
-  // la liste de commentaires reste libre de scroller (mode 'handle').
-  const { dragProps, handleProps, y } = useDragDismiss({ onDismiss: onClose, mode: 'handle' });
   const [newComment, setNewComment] = useState('');
   const [replyTarget, setReplyTarget] = useState<{ id: string; authorName: string } | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -117,60 +113,58 @@ export default function CommentsSheet({
     }, 60);
   };
 
-  if (!isOpen) return null;
+  const commentForm = (
+    <form onSubmit={handleSubmit} className="flex items-center gap-2">
+      <input
+        ref={inputRef}
+        type="text"
+        value={newComment}
+        onChange={(e) => setNewComment(e.target.value)}
+        placeholder={replyTarget ? `Répondre à @${replyTarget.authorName}...` : 'Ajouter un commentaire...'}
+        className="flex-1 glass bg-white/90 border border-white/80 rounded-full px-4 py-2.5 text-xs text-[#17402C] placeholder-[#5C6B5E] focus:outline-none focus:ring-1 focus:ring-[#17402C] font-medium shadow-2xs"
+      />
+      <button
+        type="submit"
+        disabled={!newComment.trim() || submitting}
+        className="glass-capsule-btn primary !w-10 !h-10 !p-0 !min-h-[40px] flex items-center justify-center text-white disabled:opacity-40 shrink-0 cursor-pointer shadow-md active:scale-95 transition-all"
+        aria-label="Envoyer le commentaire"
+      >
+        {submitting ? (
+          <span className="text-xs font-bold">...</span>
+        ) : (
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="22" y1="2" x2="11" y2="13" />
+            <polygon points="22 2 15 22 11 13 2 9 22 2" />
+          </svg>
+        )}
+      </button>
+    </form>
+  );
 
   return (
-    <AnimatePresence>
-      <div className="fixed inset-0 z-[999] flex items-end justify-center">
-        {/* Backdrop */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="fixed inset-0 bg-black/60 backdrop-blur-md"
-          onClick={onClose}
-        />
+    <Sheet
+      open={isOpen}
+      onOpenChange={(open) => {
+        if (!open) onClose();
+      }}
+      title={title}
+      hideTitle
+      dragToDismiss
+      footer={commentForm}
+    >
+      {/* Header */}
+      <div className="flex items-center gap-2 pb-3 border-b border-[#17402C]/10">
+        <span className="text-base">💬</span>
+        <h3 className="font-display font-bold text-sm sm:text-base text-[#17402C] tracking-wide">
+          {title}
+        </h3>
+        <span className="text-xs px-2.5 py-0.5 rounded-full bg-[#17402C]/10 text-[#17402C] font-mono font-bold">
+          {comments.length}
+        </span>
+      </div>
 
-        {/* Liquid Glass Sheet Content */}
-        <motion.div
-          initial={{ y: '100%' }}
-          animate={{ y: 0 }}
-          exit={{ y: '100%' }}
-          transition={{ type: 'spring', damping: 28, stiffness: 350 }}
-          onClick={(e) => e.stopPropagation()}
-          style={{ y }}
-          {...dragProps}
-          className="relative z-10 w-full max-w-lg glass bg-white/95 backdrop-blur-2xl text-[#17402C] rounded-t-[32px] p-4 sm:p-5 pb-8 sm:pb-6 flex flex-col h-[82vh] max-h-[680px] border-t border-white shadow-2xl"
-        >
-          {/* Drag handle */}
-          <div
-            {...handleProps}
-            className="w-12 h-1.5 bg-[#17402C]/20 rounded-full mx-auto mb-3 shrink-0 cursor-grab active:cursor-grabbing touch-none"
-          />
-
-          {/* Header */}
-          <div className="flex items-center justify-between pb-3 border-b border-[#17402C]/10 shrink-0">
-            <div className="flex items-center gap-2">
-              <span className="text-base">💬</span>
-              <h3 className="font-display font-bold text-sm sm:text-base text-[#17402C] tracking-wide">
-                {title}
-              </h3>
-              <span className="text-xs px-2.5 py-0.5 rounded-full bg-[#17402C]/10 text-[#17402C] font-mono font-bold">
-                {comments.length}
-              </span>
-            </div>
-            <button
-              type="button"
-              onClick={onClose}
-              className="w-8 h-8 rounded-full glass-circle-btn !bg-black/5 hover:!bg-black/10 flex items-center justify-center text-[#17402C] p-0 shrink-0 font-bold text-xs"
-              aria-label="Fermer"
-            >
-              ✕
-            </button>
-          </div>
-
-          {/* Comments List */}
-          <div className="flex-1 overflow-y-auto py-3 space-y-3 custom-scrollbar pr-1">
+      {/* Comments List */}
+      <div className="py-3 space-y-3 custom-scrollbar pr-1">
             {loading ? (
               <div className="space-y-2.5 py-2">
                 {[1, 2, 3].map((i) => (
@@ -260,8 +254,7 @@ export default function CommentsSheet({
                         className="flex flex-col items-center gap-0.5 pt-0.5 text-[#5C6B5E] hover:text-[#17402C] active:scale-80 transition-all shrink-0 cursor-pointer"
                         aria-label="Aimer le commentaire"
                       >
-                        <motion.svg
-                          whileTap={{ scale: 1.3 }}
+                        <svg
                           width="16"
                           height="16"
                           viewBox="0 0 24 24"
@@ -273,7 +266,7 @@ export default function CommentsSheet({
                           className={rootLikedState.liked ? 'scale-110 text-rose-600' : ''}
                         >
                           <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
-                        </motion.svg>
+                        </svg>
                         <span className="text-[10px] font-mono font-bold leading-none">
                           {rootLikedState.count > 0 ? rootLikedState.count : ''}
                         </span>
@@ -403,34 +396,6 @@ export default function CommentsSheet({
             </div>
           )}
 
-          {/* Comment Form Input Bar */}
-          <form onSubmit={handleSubmit} className="pt-3 border-t border-[#17402C]/10 shrink-0 flex items-center gap-2">
-            <input
-              ref={inputRef}
-              type="text"
-              value={newComment}
-              onChange={(e) => setNewComment(e.target.value)}
-              placeholder={replyTarget ? `Répondre à @${replyTarget.authorName}...` : 'Ajouter un commentaire...'}
-              className="flex-1 glass bg-white/90 border border-white/80 rounded-full px-4 py-2.5 text-xs text-[#17402C] placeholder-[#5C6B5E] focus:outline-none focus:ring-1 focus:ring-[#17402C] font-medium shadow-2xs"
-            />
-            <button
-              type="submit"
-              disabled={!newComment.trim() || submitting}
-              className="glass-capsule-btn primary !w-10 !h-10 !p-0 !min-h-[40px] flex items-center justify-center text-white disabled:opacity-40 shrink-0 cursor-pointer shadow-md active:scale-95 transition-all"
-              aria-label="Envoyer le commentaire"
-            >
-              {submitting ? (
-                <span className="text-xs font-bold">...</span>
-              ) : (
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-                  <line x1="22" y1="2" x2="11" y2="13" />
-                  <polygon points="22 2 15 22 11 13 2 9 22 2" />
-                </svg>
-              )}
-            </button>
-          </form>
-        </motion.div>
-      </div>
-    </AnimatePresence>
+    </Sheet>
   );
 }

@@ -1,10 +1,9 @@
 'use client';
 
 import React from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import Icon from '@/components/ui/AppIcon';
+import { Sheet } from '@/components/ui';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
-import { useDragDismiss } from '@/hooks/gestures';
 
 export interface MoreMenuSheetProps {
   isOpen: boolean;
@@ -34,10 +33,6 @@ export default function MoreMenuSheet({
   leaveLabel = 'Masquer cette publication',
 }: MoreMenuSheetProps) {
   const { triggerHaptic } = useHapticFeedback();
-  // Fermeture au drag (mission gestes, Phase 2) — poignée + en-tête.
-  const { dragProps, handleProps, y } = useDragDismiss({ onDismiss: onClose, mode: 'handle' });
-
-  if (!isOpen) return null;
 
   const handleAction = (action?: () => void) => {
     triggerHaptic('selection');
@@ -46,39 +41,15 @@ export default function MoreMenuSheet({
   };
 
   return (
-    <AnimatePresence>
-      <div className="fixed inset-0 z-[150] flex items-end justify-center">
-        {/* Backdrop */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="fixed inset-0 bg-black/60 backdrop-blur-sm"
-          onClick={onClose}
-        />
-
-        {/* Sheet Content */}
-        <motion.div
-          initial={{ y: '100%' }}
-          animate={{ y: 0 }}
-          exit={{ y: '100%' }}
-          transition={{ type: 'spring', damping: 28, stiffness: 350 }}
-          style={{ y }}
-          {...dragProps}
-          className="relative z-10 w-full max-w-lg glass rounded-t-3xl p-5 pb-8 flex flex-col gap-2"
-        >
-          {/* Drag handle */}
-          <div
-            {...handleProps}
-            className="w-10 h-1 bg-stone-300 rounded-full mx-auto mb-3 cursor-grab active:cursor-grabbing touch-none"
-          />
-
-          {title && (
-            <p className="text-xs font-semibold text-center text-[#5C6B5E] mb-2 truncate px-4">
-              {title}
-            </p>
-          )}
-
+    <Sheet
+      open={isOpen}
+      onOpenChange={(open) => {
+        if (!open) onClose();
+      }}
+      title={title}
+      dragToDismiss
+    >
+      <div className="flex flex-col gap-2">
           <div className="flex flex-col divide-y divide-stone-100 bg-[#F5F2E8]/40 rounded-2xl overflow-hidden border border-black/5">
             {/* Share action */}
             {onShare && (
@@ -160,8 +131,7 @@ export default function MoreMenuSheet({
           >
             Annuler
           </button>
-        </motion.div>
       </div>
-    </AnimatePresence>
+    </Sheet>
   );
 }

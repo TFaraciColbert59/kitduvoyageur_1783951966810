@@ -4,8 +4,7 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
 import Link from 'next/link';
-import { Card } from '@/components/ui';
-import { Eyebrow } from '@/components/ui/Eyebrow';
+import { Card, PageHeader } from '@/components/ui';
 import { FlaskConical, Mountain, Users } from 'lucide-react';
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://lekitduvoyageur.fr';
@@ -75,16 +74,15 @@ export default function ManifestePage() {
         <div data-lkv-material-theme="light" className="h-dvh overflow-hidden relative">
           <Header />
           <main className="h-full overflow-y-auto max-w-[var(--page-max-w)] mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-20">
-            <header className="mb-8">
-              <Eyebrow>Notre promesse</Eyebrow>
-              <h1 className="font-display font-bold text-4xl text-[#17402C] mt-1 mb-3">
-                Un sac. Une carte. Le reste vient de vous.
-              </h1>
-              <p className="text-[#5A7064] max-w-2xl text-base">
-                Le Kit du Voyageur est né à Grenoble, entre les massifs et les gares : aider chacun
-                à partir mieux équipé, plus léger, et entouré.
-              </p>
-            </header>
+            <PageHeader
+              variant="large"
+              className="mb-3"
+              title="Un sac. Une carte. Le reste vient de vous."
+            />
+            <p className="mb-8 max-w-2xl text-base text-[#5A7064]">
+              Le Kit du Voyageur est né à Grenoble, entre les massifs et les gares : aider chacun
+              à partir mieux équipé, plus léger, et entouré.
+            </p>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {PRINCIPES.map((principe) => (
@@ -121,12 +119,10 @@ export default function ManifestePage() {
       <div className="block md:hidden">
         <MobilePageShell>
           <div className="px-3 pt-3 pb-24 flex flex-col gap-4">
-            <header>
-              <Eyebrow>Notre promesse</Eyebrow>
-              <h1 className="font-display font-bold text-[24px] tracking-tight text-[#17402C]">
-                Un sac. Une carte. Le reste vient de vous.
-              </h1>
-            </header>
+            <PageHeader
+              variant="large"
+              title="Un sac. Une carte. Le reste vient de vous."
+            />
 
             <div className="flex flex-col gap-3">
               {PRINCIPES.map((principe) => (

@@ -17,6 +17,8 @@ export interface SheetProps {
   detent?: SheetDetent;
   dismissible?: boolean;
   hideTitle?: boolean;
+  /** Fermeture par glissement de la poignée (translation Y, seuil 25 %). */
+  dragToDismiss?: boolean;
 }
 
 const DETENT: Record<SheetDetent, string> = {
@@ -25,12 +27,16 @@ const DETENT: Record<SheetDetent, string> = {
   large: 'h-[90dvh]',
 };
 
+const prefersReducedMotion = () =>
+  typeof window !== 'undefined' &&
+  typeof window.matchMedia === 'function' &&
+  window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
 /**
  * Sheet — bottom sheet canonique (Phase 2, Lot 5).
  * Radix Dialog ancré en bas : focus trap, Escape/overlay (si dismissible),
- * scroll interne, safe-area iOS. Pas de drag-to-dismiss : la fermeture passe
- * par le bouton, Escape ou le scrim (volontaire, cohérent avec les overlays
- * canoniques du Lot 3).
+ * scroll interne, safe-area iOS. `dragToDismiss` ajoute la fermeture par
+ * glissement de la poignée (désactivée si `prefers-reduced-motion`).
  */
 export function Sheet({
   open,
@@ -42,7 +48,46 @@ export function Sheet({
   detent = 'auto',
   dismissible = true,
   hideTitle = false,
+  dragToDismiss = false,
 }: SheetProps) {
+  const panelRef = React.useRef<HTMLDivElement>(null);
+  const dragStart = React.useRef<number | null>(null);
+  const [dragY, setDragY] = React.useState(0);
+  const [dragging, setDragging] = React.useState(false);
+
+  React.useEffect(() => {
+    if (open) {
+      dragStart.current = null;
+      setDragY(0);
+      setDragging(false);
+    }
+  }, [open]);
+
+  const handlePointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (!dragToDismiss || prefersReducedMotion()) return;
+    dragStart.current = event.clientY;
+    setDragging(true);
+    event.currentTarget.setPointerCapture?.(event.pointerId);
+  };
+
+  const handlePointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (dragStart.current === null) return;
+    setDragY(Math.max(0, event.clientY - dragStart.current));
+  };
+
+  const handlePointerEnd = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (dragStart.current === null) return;
+    const distance = Math.max(0, event.clientY - dragStart.current);
+    const height = panelRef.current?.offsetHeight ?? 0;
+    dragStart.current = null;
+    setDragging(false);
+    if (height > 0 && distance > height * 0.25) {
+      onOpenChange(false);
+      return;
+    }
+    setDragY(0);
+  };
+
   const blockDismiss = (event: { preventDefault: () => void }) => {
     if (!dismissible) event.preventDefault();
   };
@@ -50,7 +95,7 @@ export function Sheet({
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
-        <Dialog.Overlay className="lkv-fade-in fixed inset-0 z-[var(--z-sheet)] bg-[color:var(--lkv-overlay-scrim)] backdrop-blur-[var(--blur-sm)]" />
+        <Dialog.Overlay className="lkv-fade-in fixed inset-0 z-[var(--z-sheet)] bg-[color:var(--lkv-overlay-scrim)] backdrop-blur-[var(--blur-sm)] data-[state=closed]:[animation:lkv-fade-out_0.2s_ease_both] motion-reduce:[animation:none]" />
         <Dialog.Content
           onEscapeKeyDown={blockDismiss}
           onPointerDownOutside={blockDismiss}
@@ -58,11 +103,31 @@ export function Sheet({
           {...(description ? {} : { 'aria-describedby': undefined })}
           className={cn(
             'fixed inset-x-0 bottom-0 z-[var(--z-sheet)] flex flex-col focus:outline-none',
+            'data-[state=closed]:[animation:lkv-sheet-down_0.2s_cubic-bezier(0.4,0,1,1)_both] motion-reduce:[animation:none]',
             DETENT[detent]
           )}
         >
-          <div className="lkv-sheet-up flex max-h-[90dvh] min-h-0 flex-1 flex-col overflow-hidden rounded-t-[var(--lkv-radius-sheet)] border-t border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-card)] shadow-[var(--elevation-4)]">
-            <div aria-hidden="true" className="flex shrink-0 justify-center pt-[var(--space-3)]">
+          <div
+            ref={panelRef}
+            style={{
+              transform: dragY > 0 ? `translateY(${dragY}px)` : undefined,
+              transition: dragging
+                ? 'none'
+                : 'transform var(--motion-control-duration) var(--motion-ease-standard)',
+            }}
+            className="lkv-sheet-up flex max-h-[90dvh] min-h-0 flex-1 flex-col overflow-hidden rounded-t-[var(--lkv-radius-sheet)] border-t border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-card)] shadow-[var(--elevation-4)]"
+          >
+            <div
+              aria-hidden="true"
+              onPointerDown={handlePointerDown}
+              onPointerMove={handlePointerMove}
+              onPointerUp={handlePointerEnd}
+              onPointerCancel={handlePointerEnd}
+              className={cn(
+                'flex shrink-0 justify-center pt-[var(--space-3)]',
+                dragToDismiss && 'cursor-grab touch-none select-none active:cursor-grabbing'
+              )}
+            >
               <div className="h-1.5 w-12 rounded-full bg-[color:var(--lkv-text-muted)] opacity-40" />
             </div>
             {title ? (

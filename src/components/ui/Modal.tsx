@@ -53,18 +53,19 @@ export function Modal({
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
-        <Dialog.Overlay className="lkv-fade-in fixed inset-0 z-[var(--z-modal)] bg-[color:var(--lkv-overlay-scrim)] backdrop-blur-[var(--blur-sm)]" />
+        <Dialog.Overlay className="lkv-fade-in fixed inset-0 z-[var(--z-modal)] bg-[color:var(--lkv-overlay-scrim)] backdrop-blur-[var(--blur-sm)] data-[state=closed]:[animation:lkv-fade-out_0.2s_ease_both] motion-reduce:[animation:none]" />
         <Dialog.Content
           onEscapeKeyDown={blockDismiss}
           onPointerDownOutside={blockDismiss}
           onInteractOutside={blockDismiss}
           {...(description ? {} : { 'aria-describedby': undefined })}
           className={cn(
-            'fixed left-1/2 top-1/2 z-[var(--z-modal)] -translate-x-1/2 -translate-y-1/2 focus:outline-none',
+            'group fixed left-1/2 top-1/2 z-[var(--z-modal)] -translate-x-1/2 -translate-y-1/2 focus:outline-none',
+            'data-[state=closed]:[animation:lkv-fade-out_0.18s_ease_both] motion-reduce:[animation:none]',
             SIZE[size]
           )}
         >
-          <div className="lkv-modal-in flex max-h-[85dvh] flex-col overflow-hidden rounded-[var(--lkv-radius-card)] border border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-card)] shadow-[var(--elevation-4)]">
+          <div className="lkv-modal-in flex max-h-[85dvh] flex-col overflow-hidden rounded-[var(--lkv-radius-card)] border border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-card)] shadow-[var(--elevation-4)] group-data-[state=closed]:[animation:lkv-modal-out_0.18s_cubic-bezier(0.4,0,1,1)_both] motion-reduce:[animation:none]">
             <div className="flex shrink-0 items-start justify-between gap-[var(--space-3)] px-[var(--space-5)] pt-[var(--space-5)]">
               <div className="min-w-0">
                 <Dialog.Title

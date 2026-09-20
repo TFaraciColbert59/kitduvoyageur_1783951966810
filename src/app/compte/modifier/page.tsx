@@ -3,6 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import Header from '@/components/Header';
+import { PageHeader } from '@/components/ui';
 import EditProfileView from '@/components/compte/EditProfileView';
 import CompteBackground from '@/components/compte/CompteBackground';
 import { MarbleZone } from '@/components/glass/MarbleZone';
@@ -28,23 +29,22 @@ export default function EditProfilePage() {
 
       {/* MOBILE */}
       <div className="block md:hidden pb-32">
-        {/* Mobile top bar Liquid Glass */}
-        <div className="sticky top-0 z-40 px-4 pt-3 pb-2.5 flex items-center justify-between gap-2 backdrop-blur-md bg-white/70 border-b border-white/60">
-          <Link
-            href="/compte"
-            onClick={() => triggerHaptic('light')}
-            className="glass-capsule-btn text-xs font-bold !py-1.5 !px-3 cursor-pointer"
-          >
-            <span className="text-sm font-bold">‹</span>
-            <span>Mon Compte</span>
-          </Link>
-
-          <span className="font-display font-extrabold text-sm text-[var(--lkv-primary)]">
-            Modifier mon profil
-          </span>
-
-          <div className="w-16" />
-        </div>
+        <PageHeader
+          sticky
+          variant="inline"
+          className="px-4 pt-3 pb-2.5"
+          title="Modifier mon profil"
+          back={
+            <Link
+              href="/compte"
+              onClick={() => triggerHaptic('light')}
+              className="glass-capsule-btn text-xs font-bold !py-1.5 !px-3 cursor-pointer"
+            >
+              <span className="text-sm font-bold">‹</span>
+              <span>Mon Compte</span>
+            </Link>
+          }
+        />
 
         <div className="pt-2 px-2">
           <EditProfileView />

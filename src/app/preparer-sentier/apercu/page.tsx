@@ -6,6 +6,7 @@ import {
   type ActivitySectionSkeletonVariant,
 } from '@/features/hub/components/live/ActivitySectionSkeleton';
 import { ArrivalReveal } from '@/features/hub/components/live/ArrivalReveal';
+import { PageHeader } from '@/components/ui';
 
 /**
  * `/preparer-sentier/apercu` — page d'aperçu DEV uniquement (fixtures locales
@@ -40,14 +41,12 @@ export default function PreparerApercuPage() {
       data-testid="preparer-apercu"
       className="min-h-screen bg-[rgba(238,243,236,0.8)] backdrop-blur-xl px-4 py-6 text-[var(--lkv-text-primary)]"
     >
-      <header className="mx-auto max-w-5xl">
-        <h1 className="font-display text-xl font-extrabold tracking-tight">
-          Aperçu préparation live
-        </h1>
-        <p className="mt-1 text-xs font-medium text-[var(--lkv-text-secondary)]">
-          Fixtures locales — page de validation visuelle réservée au développement.
-        </p>
-      </header>
+      <PageHeader
+        variant="large"
+        className="mx-auto max-w-5xl"
+        title="Aperçu préparation live"
+        subtitle="Fixtures locales — page de validation visuelle réservée au développement."
+      />
 
       <section className="mx-auto mt-6 max-w-5xl" aria-label="Rail par phase">
         <p className="text-[10px] font-medium uppercase tracking-[0.14em] text-[var(--lkv-text-primary)]/70">

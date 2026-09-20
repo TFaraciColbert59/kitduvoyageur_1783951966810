@@ -4,8 +4,7 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
 import Link from 'next/link';
-import { Card } from '@/components/ui';
-import { Eyebrow } from '@/components/ui/Eyebrow';
+import { Card, PageHeader } from '@/components/ui';
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://lekitduvoyageur.fr';
 
@@ -101,16 +100,11 @@ export default function KitsPage() {
         <div data-lkv-material-theme="light" className="h-dvh overflow-hidden relative">
           <Header />
           <main className="h-full overflow-y-auto max-w-[var(--page-max-w)] mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-20">
-            <header className="mb-8">
-              <Eyebrow>Kits Prêts à Partir</Eyebrow>
-              <h1 className="font-display font-bold text-4xl text-[#EEF3EC] mt-1 mb-3">
-                Kits de voyage
-              </h1>
-              <p className="text-[#CCE0D4] max-w-2xl text-base">
-                Découvrez nos kits complets et optimisés pour chaque destination. Équipement
-                sélectionné, testé et prêt à partir.
-              </p>
-            </header>
+            <PageHeader variant="large" className="mb-3" title="Kits de voyage" />
+            <p className="mb-8 max-w-2xl text-base text-[#CCE0D4]">
+              Découvrez nos kits complets et optimisés pour chaque destination. Équipement
+              sélectionné, testé et prêt à partir.
+            </p>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {KITS.map((kit) => (
@@ -147,20 +141,18 @@ export default function KitsPage() {
       <div className="block md:hidden">
         <MobilePageShell>
           <div className="px-3 pt-3 pb-24 flex flex-col gap-4">
-            <header className="flex items-center justify-between gap-2">
-              <div>
-                <Eyebrow>Kits Prêts à Partir</Eyebrow>
-                <h1 className="font-display font-bold text-[24px] tracking-tight text-[#EEF3EC]">
-                  Kits de voyage
-                </h1>
-              </div>
-              <Link
-                href="/hub"
-                className="glass interactive h-7.5 px-3 rounded-full flex items-center text-xs font-semibold text-[var(--lkv-primary)] border border-white/40 shadow-inner"
-              >
-                ← Matériel
-              </Link>
-            </header>
+            <PageHeader
+              variant="large"
+              title="Kits de voyage"
+              back={
+                <Link
+                  href="/hub"
+                  className="glass interactive h-7.5 px-3 rounded-full flex items-center text-xs font-semibold text-[var(--lkv-primary)] border border-white/40 shadow-inner"
+                >
+                  ← Matériel
+                </Link>
+              }
+            />
 
             <p className="text-xs text-[#CCE0D4] leading-relaxed">
               Kits complets et optimisés pour chaque destination. Équipement sélectionné, testé et

@@ -1,12 +1,11 @@
 import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
-import { Button, IconButton } from '@/components/ui';
-import { LkvChip } from '@/components/ui/LkvChip';
+import { Button, Chip, IconButton } from '@/components/ui';
 
 describe('Accessible shared glass controls', () => {
   it('exposes a selected chip as a native toggle button', () => {
-    const html = renderToStaticMarkup(<LkvChip active onClick={() => {}}>Carte</LkvChip>);
+    const html = renderToStaticMarkup(<Chip selected onClick={() => {}}>Carte</Chip>);
     expect(html).toMatch(/^<button\b/);
     expect(html).toContain('type="button"');
     expect(html).toContain('aria-pressed="true"');
@@ -14,14 +13,14 @@ describe('Accessible shared glass controls', () => {
   });
 
   it('retains button semantics and disabled state for an unavailable action', () => {
-    const html = renderToStaticMarkup(<LkvChip disabled onClick={() => {}}>Indisponible</LkvChip>);
+    const html = renderToStaticMarkup(<Chip selected={false} disabled onClick={() => {}}>Indisponible</Chip>);
     expect(html).toMatch(/^<button\b/);
     expect(html).toContain('disabled=""');
     expect(html).toContain('aria-pressed="false"');
   });
 
   it('renders a passive chip as text without keyboard stop or optical layer', () => {
-    const html = renderToStaticMarkup(<LkvChip label="Recommandé" />);
+    const html = renderToStaticMarkup(<Chip>Recommandé</Chip>);
     expect(html).toMatch(/^<span\b/);
     expect(html).not.toMatch(/role="button"|tabindex|backdrop-filter/);
   });

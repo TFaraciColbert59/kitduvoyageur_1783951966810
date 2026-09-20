@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { Button, IconButton } from '@/components/ui';
-import { LkvChip } from '@/components/ui/LkvChip';
+import { Chip } from '@/components/ui';
 import Icon from '@/components/ui/AppIcon';
 import LiquidGlass from '@/components/glass/LiquidGlass';
 
@@ -230,7 +230,7 @@ export default function StyleShowcase() {
         <VariablePanel />
 
         {/* 1 — Composants de l'app (pile LiquidGlass) */}
-        <Section title="1 · Composants de l'app" hint="Button · IconButton · LkvChip — tous sur la même pile, contenu blanc, actif = forêt plein">
+        <Section title="1 · Composants de l'app" hint="Button · IconButton · Chip — tous sur la même pile, contenu blanc, actif = forêt plein">
           <Button variant="primary">Action principale</Button>
           <Button variant="secondary">Action secondaire</Button>
           <Button variant="ghost">Discret</Button>
@@ -260,9 +260,9 @@ export default function StyleShowcase() {
           <RefPill label="Tous les massifs" solid>Tous les massifs</RefPill>
           <RefPill label="Chartreuse">Chartreuse</RefPill>
           <RefPill label="Vercors">Vercors</RefPill>
-          <LkvChip label="Sage" tone="sage" />
-          <LkvChip label="Info" tone="info" />
-          <LkvChip label="Actif" tone="glass" active onClick={() => {}} />
+          <Chip tone="sage">Sage</Chip>
+          <Chip tone="info">Info</Chip>
+          <Chip selected onClick={() => {}}>Actif</Chip>
         </Section>
 
         {/* 3 — Sur photo (même pile, mêmes pastilles) */}

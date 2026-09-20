@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import Icon from '@/components/ui/AppIcon';
+import { PageHeader } from '@/components/ui';
 import { createClient } from '@/lib/supabase/client';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -1006,9 +1007,20 @@ export default function AdminProductsManager() {
         </div>
       )}
 
-      {/* ─── Top Header & Tabs ───────────────────────────────────────────────── */}
-      <header className="sticky top-0 z-40 bg-[#131F1A]/95 backdrop-blur-md border-b border-white/10 px-4 lg:px-8 py-3.5 flex flex-wrap items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
+      {/* ─── Top Header ──────────────────────────────────────────────────────── */}
+      <PageHeader
+        sticky
+        variant="inline"
+        className="dark px-4 lg:px-8"
+        title={
+          <span className="flex items-center gap-2">
+            Gestion Catalogue
+            <span className="text-[11px] font-mono px-2 py-0.5 rounded-full bg-[#17402C] text-[#8BAF7C] border border-[#8BAF7C]/30">
+              {kpis.total} items
+            </span>
+          </span>
+        }
+        back={
           <Link
             href="/admin"
             className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-white/70 hover:text-white transition-all text-xs font-mono"
@@ -1016,16 +1028,30 @@ export default function AdminProductsManager() {
             <Icon name="ArrowLeftIcon" size={14} />
             <span>Dashboard</span>
           </Link>
-          <div className="h-5 w-px bg-white/10" />
-          <h1 className="text-lg font-bold font-display tracking-tight text-white flex items-center gap-2">
-            Gestion Catalogue
-            <span className="text-[11px] font-mono px-2 py-0.5 rounded-full bg-[#17402C] text-[#8BAF7C] border border-[#8BAF7C]/30">
-              {kpis.total} items
-            </span>
-          </h1>
-        </div>
+        }
+        actions={
+          <>
+            <button
+              onClick={() => fetchProducts()}
+              disabled={refreshing}
+              className="p-2 rounded-lg bg-white/5 hover:bg-white/10 text-white/70 hover:text-white transition-all disabled:opacity-50"
+              title="Rafraîchir les données"
+            >
+              <Icon name="ArrowPathIcon" size={16} className={refreshing ? 'animate-spin' : ''} />
+            </button>
+            <button
+              onClick={() => openProductEditor()}
+              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-[#365233] hover:bg-[#205238] text-white text-xs font-bold  transition-all active:scale-95"
+            >
+              <Icon name="PlusIcon" size={16} />
+              <span>Nouveau Produit</span>
+            </button>
+          </>
+        }
+      />
 
-        {/* Tab Switcher */}
+      {/* ─── Tab Switcher ────────────────────────────────────────────────────── */}
+      <div className="px-4 lg:px-8 pt-3">
         <nav className="flex items-center gap-1 bg-black/30 p-1 rounded-xl border border-white/5 overflow-x-auto">
           {[
             { id: 'catalogue', label: 'Catalogue', icon: 'Squares2X2Icon' },
@@ -1051,26 +1077,7 @@ export default function AdminProductsManager() {
             </button>
           ))}
         </nav>
-
-        {/* Global Action Buttons */}
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => fetchProducts()}
-            disabled={refreshing}
-            className="p-2 rounded-lg bg-white/5 hover:bg-white/10 text-white/70 hover:text-white transition-all disabled:opacity-50"
-            title="Rafraîchir les données"
-          >
-            <Icon name="ArrowPathIcon" size={16} className={refreshing ? 'animate-spin' : ''} />
-          </button>
-          <button
-            onClick={() => openProductEditor()}
-            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-[#365233] hover:bg-[#205238] text-white text-xs font-bold  transition-all active:scale-95"
-          >
-            <Icon name="PlusIcon" size={16} />
-            <span>Nouveau Produit</span>
-          </button>
-        </div>
-      </header>
+      </div>
 
       {/* ─── Main Content Container ─────────────────────────────────────────── */}
       <main className="max-w-7xl mx-auto p-4 lg:p-8 space-y-6">

@@ -1,7 +1,7 @@
 'use client';
 
 import { Plus } from 'lucide-react';
-import { GlassDrawer } from '@/components/ui/GlassDrawer';
+import { Sheet } from '@/components/ui';
 import { ExpenseRow } from '@/features/trips/components/budget/ExpenseRow';
 import type { TripExpense } from '@/features/trips/types/trip.types';
 import { formatEuro } from '../../../mobile/mobileHubEngine';
@@ -37,11 +37,10 @@ export function DayExpensesDrawer({
   onAdd,
 }: DayExpensesDrawerProps) {
   return (
-    <GlassDrawer
+    <Sheet
       open={open}
       onOpenChange={onOpenChange}
       title={slide ? `Jour ${slide.dayNumber} · ${slide.label}` : 'Jour'}
-      width={430}
     >
       <div className="space-y-3 pb-4">
         {slide && (
@@ -85,7 +84,7 @@ export function DayExpensesDrawer({
           </button>
         )}
       </div>
-    </GlassDrawer>
+    </Sheet>
   );
 }
 

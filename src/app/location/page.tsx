@@ -7,6 +7,7 @@ import Icon from '@/components/ui/AppIcon';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
+import { PageHeader } from '@/components/ui';
 
 interface RentalListing {
   id: string;
@@ -236,12 +237,17 @@ function RentalDetailModal({ listing, onClose }: { listing: RentalListing; onClo
   return (
     <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4" onClick={onClose}>
       <div className="bg-card border border-border rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-        <div className="flex items-center justify-between p-5 border-b border-border sticky top-0 bg-card z-10">
-          <h2 className="font-display font-700 text-foreground text-base line-clamp-1">{listing.title}</h2>
-          <button onClick={onClose} className="glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8 flex-shrink-0">
-            <Icon name="XMarkIcon" size={18} />
-          </button>
-        </div>
+        <PageHeader
+          sticky
+          variant="inline"
+          className="border-b border-border bg-card px-5"
+          title={listing.title}
+          actions={
+            <button onClick={onClose} className="glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8 flex-shrink-0">
+              <Icon name="XMarkIcon" size={18} />
+            </button>
+          }
+        />
 
         {!reserved ? (
           <div className="p-5 space-y-5">

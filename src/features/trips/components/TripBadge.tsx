@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { LkvChip, type LkvChipTone } from '@/components/ui/LkvChip';
+import { Badge, type BadgeTone } from '@/components/ui';
 import type {
   TripStatus,
   TripDifficulty,
@@ -16,32 +16,40 @@ export interface TripBadgeProps {
   className?: string;
 }
 
-const STATUS_CONFIG: Record<TripStatus, { label: string; tone: LkvChipTone }> = {
+const DOT: Record<BadgeTone, string> = {
+  sage: 'bg-[color:var(--lkv-success)]',
+  warn: 'bg-[color:var(--lkv-warning)]',
+  danger: 'bg-[color:var(--lkv-danger)]',
+  info: 'bg-[color:var(--lkv-info)]',
+  stone: 'bg-[color:var(--lkv-text-muted)]',
+};
+
+const STATUS_CONFIG: Record<TripStatus, { label: string; tone: BadgeTone }> = {
   draft: { label: 'Brouillon', tone: 'stone' },
   planned: { label: 'Planifié', tone: 'info' },
   active: { label: 'En cours', tone: 'sage' },
-  completed: { label: 'Terminé', tone: 'light' },
+  completed: { label: 'Terminé', tone: 'stone' },
   cancelled: { label: 'Annulé', tone: 'danger' },
 };
 
-const DIFFICULTY_CONFIG: Record<TripDifficulty, { label: string; tone: LkvChipTone }> = {
+const DIFFICULTY_CONFIG: Record<TripDifficulty, { label: string; tone: BadgeTone }> = {
   easy: { label: 'Facile', tone: 'sage' },
   moderate: { label: 'Modéré', tone: 'info' },
   hard: { label: 'Difficile', tone: 'warn' },
   expert: { label: 'Expert', tone: 'danger' },
 };
 
-const ACTIVITY_CONFIG: Record<TripActivityType, { label: string; tone: LkvChipTone }> = {
+const ACTIVITY_CONFIG: Record<TripActivityType, { label: string; tone: BadgeTone }> = {
   hiking: { label: 'Randonnée', tone: 'sage' },
   trekking: { label: 'Trek', tone: 'sage' },
   bivouac: { label: 'Bivouac', tone: 'info' },
   roadtrip: { label: 'Roadtrip', tone: 'stone' },
-  cultural: { label: 'Culture', tone: 'light' },
+  cultural: { label: 'Culture', tone: 'stone' },
   bushcraft: { label: 'Bushcraft', tone: 'warn' },
   mixed: { label: 'Mixte', tone: 'stone' },
 };
 
-const ROLE_CONFIG: Record<TripRole, { label: string; tone: LkvChipTone }> = {
+const ROLE_CONFIG: Record<TripRole, { label: string; tone: BadgeTone }> = {
   owner: { label: 'Organisateur', tone: 'sage' },
   editor: { label: 'Éditeur', tone: 'info' },
   viewer: { label: 'Lecteur', tone: 'stone' },
@@ -49,7 +57,7 @@ const ROLE_CONFIG: Record<TripRole, { label: string; tone: LkvChipTone }> = {
 
 export function TripBadge({ type, value, size = 'sm', className = '' }: TripBadgeProps) {
   let label = String(value);
-  let tone: LkvChipTone = 'stone';
+  let tone: BadgeTone = 'stone';
 
   if (type === 'status' && value in STATUS_CONFIG) {
     const cfg = STATUS_CONFIG[value as TripStatus];
@@ -70,12 +78,14 @@ export function TripBadge({ type, value, size = 'sm', className = '' }: TripBadg
   }
 
   return (
-    <LkvChip
+    <Badge
       tone={tone}
-      dot={type === 'status'}
       className={`${size === 'sm' ? 'text-xs px-2.5 py-0.5' : 'text-sm px-3 py-1'} ${className}`}
     >
+      {type === 'status' && (
+        <span aria-hidden="true" className={`h-1.5 w-1.5 shrink-0 rounded-full ${DOT[tone]}`} />
+      )}
       {label}
-    </LkvChip>
+    </Badge>
   );
 }

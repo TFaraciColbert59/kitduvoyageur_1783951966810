@@ -1,7 +1,7 @@
 'use client';
 
 import { Check } from 'lucide-react';
-import { GlassDrawer } from '@/components/ui/GlassDrawer';
+import { Sheet } from '@/components/ui';
 import { HapticLink } from '../../menu/HapticLink';
 import { hubSectionHref } from '../../../registry/hubSectionRegistry';
 import type { GearCardData } from '../../../mobile/gearEngine';
@@ -17,7 +17,7 @@ export interface GearItemPanelProps {
 
 export function GearItemPanel({ card, tripSlug, open, onOpenChange, busy, onTogglePacked }: GearItemPanelProps) {
   return (
-    <GlassDrawer open={open} onOpenChange={onOpenChange} title={card?.name ?? 'Équipement'} width={430}>
+    <Sheet open={open} onOpenChange={onOpenChange} title={card?.name ?? 'Équipement'}>
       {card && (
         <div className="space-y-4">
           <div className="relative h-48 overflow-hidden rounded-2xl border border-white/60 bg-[var(--lkv-forest-50)]">
@@ -91,7 +91,7 @@ export function GearItemPanel({ card, tripSlug, open, onOpenChange, busy, onTogg
           </HapticLink>
         </div>
       )}
-    </GlassDrawer>
+    </Sheet>
   );
 }
 

@@ -9,7 +9,7 @@ import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
 import WeightGauge from '@/components/WeightGauge';
 import TopoSeparator from '@/components/TopoSeparator';
 import Icon from '@/components/ui/AppIcon';
-import { Card } from '@/components/ui';
+import { Card, PageHeader } from '@/components/ui';
 import { saveCart, getCart } from '@/lib/cart';
 import { createClient } from '@/lib/supabase/client';
 
@@ -398,23 +398,19 @@ export default function KitDetailPage() {
       <div className="block md:hidden">
         <MobilePageShell>
           <div className="px-3 pt-3 pb-24 flex flex-col gap-3.5">
-            {/* Header with back link */}
-            <header className="flex items-center justify-between gap-2">
-              <div className="min-w-0">
-                <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#CCE0D4]">
-                  {kit.difficulte} · {kit.activite}
-                </span>
-                <h1 className="font-display font-bold text-[20px] tracking-tight text-[#EEF3EC] truncate">
-                  {kit.nom}
-                </h1>
-              </div>
-              <Link
-                href="/kits"
-                className="glass interactive h-7.5 px-3 rounded-full flex items-center text-xs font-semibold text-[#17402C] border border-white/40 shadow-inner shrink-0"
-              >
-                ← Kits
-              </Link>
-            </header>
+            <PageHeader
+              variant="inline"
+              title={kit.nom}
+              subtitle={`${kit.difficulte} · ${kit.activite}`}
+              back={
+                <Link
+                  href="/kits"
+                  className="glass interactive h-7.5 px-3 rounded-full flex items-center text-xs font-semibold text-[#17402C] border border-white/40 shadow-inner shrink-0"
+                >
+                  ← Kits
+                </Link>
+              }
+            />
 
             {/* Mobile Hero Card */}
             <Card tone="sage" className="overflow-hidden p-0 border border-white/40">

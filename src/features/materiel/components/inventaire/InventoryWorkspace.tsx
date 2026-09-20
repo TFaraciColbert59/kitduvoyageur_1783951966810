@@ -2,10 +2,9 @@
 import { lkvConfirm } from '@/components/ui/dialogs';
 import { useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Card } from '@/components/ui';
+import { Card, Modal } from '@/components/ui';
 import { Eyebrow } from '@/components/ui/Eyebrow';
 import { Badge } from '@/components/ui/Badge';
-import { GlassDrawer } from '@/components/ui/GlassDrawer';
 import { useToast } from '@/contexts/ToastContext';
 import type { InventoryItem } from '@/features/materiel/services/getInventory';
 import { InventoryVirtualGrid } from './InventoryVirtualGrid';
@@ -245,7 +244,7 @@ export function InventoryWorkspace({ items }: { items: InventoryItem[] }) {
       {scanResult && <p className="text-sm text-[color:var(--label-secondary)]">Ajouté : {scanResult}</p>}
 
       {/* Détail */}
-      <GlassDrawer open={!!selected} onOpenChange={(v) => { if (!v) setSelected(null); }} title={selected?.name ?? 'Détail'}>
+      <Modal open={!!selected} onOpenChange={(v) => { if (!v) setSelected(null); }} title={selected?.name ?? 'Détail'}>
         {selected && (
           <div className="flex flex-col gap-3">
             <div className="flex gap-2">
@@ -264,10 +263,10 @@ export function InventoryWorkspace({ items }: { items: InventoryItem[] }) {
             </div>
           </div>
         )}
-      </GlassDrawer>
+      </Modal>
 
       {/* Formulaire Ajouter/Modifier */}
-      <GlassDrawer open={formOpen} onOpenChange={setFormOpen} title={editing ? 'Modifier l’objet' : 'Ajouter un objet'}>
+      <Modal open={formOpen} onOpenChange={setFormOpen} title={editing ? 'Modifier l’objet' : 'Ajouter un objet'}>
         <div className="flex flex-col gap-3">
           <label className="flex flex-col gap-1 text-sm">
             <span className="text-[color:var(--label-secondary)]">Nom *</span>
@@ -301,7 +300,7 @@ export function InventoryWorkspace({ items }: { items: InventoryItem[] }) {
             {saving ? 'Enregistrement…' : 'Enregistrer'}
           </button>
         </div>
-      </GlassDrawer>
+      </Modal>
     </>
   );
 }

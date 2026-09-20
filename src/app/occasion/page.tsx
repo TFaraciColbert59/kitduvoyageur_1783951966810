@@ -9,6 +9,7 @@ import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
+import { PageHeader } from '@/components/ui';
 
 interface OccasionItem {
   id: string;
@@ -304,10 +305,15 @@ function ItemDetailModal({ item, onClose }: { item: OccasionItem; onClose: () =>
     <>
       <div className="fixed inset-0 z-40 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4" onClick={onClose}>
         <div className="bg-[rgba(255,255,255,0.92)] border border-[rgba(255,255,255,0.60)] rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-          <div className="flex items-center justify-between p-5 border-b border-white/40 sticky top-0 bg-[rgba(255,255,255,0.85)] backdrop-blur-xl z-10">
-            <h2 className="font-display font-bold text-base text-[var(--lkv-primary)] line-clamp-1">{item.title}</h2>
-            <button onClick={onClose} className="glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8 flex-shrink-0"><Icon name="XMarkIcon" size={18} /></button>
-          </div>
+          <PageHeader
+            sticky
+            variant="inline"
+            className="border-b border-white/40 bg-[rgba(255,255,255,0.85)] px-5 backdrop-blur-xl"
+            title={item.title}
+            actions={
+              <button onClick={onClose} className="glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8 flex-shrink-0"><Icon name="XMarkIcon" size={18} /></button>
+            }
+          />
 
           <div className="p-5 space-y-5">
             <div className="relative rounded-xl overflow-hidden aspect-video">

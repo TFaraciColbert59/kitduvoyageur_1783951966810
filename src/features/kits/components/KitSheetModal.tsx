@@ -17,7 +17,8 @@ import {
   conservationPhrase,
   shouldDisplayScore,
 } from '../trust';
-import { Sheet } from '@/components/ui/Sheet';
+import { Modal, Sheet } from '@/components/ui';
+import { useMediaQuery } from '@/hooks/useMediaQuery';
 
 const ORIGIN_LABEL: Record<string, string> = {
   configurateur: 'Conçu dans le configurateur',
@@ -123,26 +124,36 @@ export default function KitSheetModal({ kitId, context: _context, onClose }: Kit
     router.push(`/randonnee-active?kitId=${data?.kit.id ?? ''}`);
   }, [data, haptic, router]);
 
-  if (loading) {
-    return (
-      <Sheet open onOpenChange={(v) => !v && close()} title="Lignée de kit">
-        <div className="py-12 text-center">
-          <p style={{ color: '#6B7A72', fontSize: 14 }}>Chargement de la lignée…</p>
-        </div>
+  const isDesktop = useMediaQuery('(min-width: 768px)');
+  const renderShell = (title: string, children: React.ReactNode) =>
+    isDesktop ? (
+      <Modal open onOpenChange={(v) => !v && close()} title={title} size="lg">
+        {children}
+      </Modal>
+    ) : (
+      <Sheet open onOpenChange={(v) => !v && close()} title={title} detent="large">
+        {children}
       </Sheet>
+    );
+
+  if (loading) {
+    return renderShell(
+      'Lignée de kit',
+      <div className="py-12 text-center">
+        <p style={{ color: '#6B7A72', fontSize: 14 }}>Chargement de la lignée…</p>
+      </div>
     );
   }
 
   if (error || !data) {
-    return (
-      <Sheet open onOpenChange={(v) => !v && close()} title="Lignée de kit">
-        <div className="py-8 text-center">
-          <p style={{ color: '#17402C' }}>⚠️ {error ?? 'Kit introuvable'}</p>
-          <button onClick={close} className="mt-4 w-full py-3 rounded-xl font-semibold text-sm" style={{ background: '#17402C', color: '#EEF3EC' }}>
-            Fermer
-          </button>
-        </div>
-      </Sheet>
+    return renderShell(
+      'Lignée de kit',
+      <div className="py-8 text-center">
+        <p style={{ color: '#17402C' }}>⚠️ {error ?? 'Kit introuvable'}</p>
+        <button onClick={close} className="mt-4 w-full py-3 rounded-xl font-semibold text-sm" style={{ background: '#17402C', color: '#EEF3EC' }}>
+          Fermer
+        </button>
+      </div>
     );
   }
 
@@ -157,14 +168,9 @@ export default function KitSheetModal({ kitId, context: _context, onClose }: Kit
   const best = [...survival].sort((a, b) => (survivalRate(b.kept_count, b.dropped_count) ?? 0) - (survivalRate(a.kept_count, a.dropped_count) ?? 0))[0];
   const showScore = trust != null && shouldDisplayScore(trust.sessions_count);
 
-  return (
-    <Sheet
-      open
-      onOpenChange={(v) => !v && close()}
-      title={kit.name}
-      detent="large"
-    >
-      <div className="flex flex-col gap-4 pb-6">
+  return renderShell(
+    kit.name,
+    <div className="flex flex-col gap-4 pb-6">
         {/* En-tête métadonnées */}
         <div>
           <Eyebrow>Lignée de kit</Eyebrow>
@@ -292,6 +298,5 @@ export default function KitSheetModal({ kitId, context: _context, onClose }: Kit
           </p>
         )}
       </div>
-    </Sheet>
   );
 }

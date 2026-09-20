@@ -4,7 +4,7 @@ import { useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useReducedMotion } from 'framer-motion';
 import { AlertTriangle, CheckCircle2, Package, Weight } from 'lucide-react';
-import { GlassDrawer } from '@/components/ui/GlassDrawer';
+import { Sheet } from '@/components/ui';
 import { DepartHeroCard } from '@/features/materiel/components/depart/hero/DepartHeroCard';
 import { DepartAlertsBanner } from '@/features/materiel/components/depart/DepartAlertsBanner';
 import { DepartTerrainSection } from '@/features/materiel/components/depart/DepartTerrainSection';
@@ -340,11 +340,11 @@ export function DepartMobileExperience({
         />
       </GroupeDrawer>
 
-      <GlassDrawer
+      <Sheet
         open={equipmentOpen}
         onOpenChange={setEquipmentOpen}
         title="Parc matériel"
-        width={720}
+        detent="large"
       >
         <DepartEquipmentHub
           inventory={inventory}
@@ -361,7 +361,7 @@ export function DepartMobileExperience({
           kitId={depart.id || 'kit-default'}
           isRealKit={isRealKit}
         />
-      </GlassDrawer>
+      </Sheet>
 
       <DepartureSheetModal
         depart={depart}

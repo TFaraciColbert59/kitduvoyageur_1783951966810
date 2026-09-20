@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Card } from '@/components/ui';
 import { Button, IconButton } from '@/components/ui';
-import { LkvChip } from '@/components/ui/LkvChip';
+import { Chip } from '@/components/ui';
 import CommunityPostCard, { type CommunityPostItem } from '@/components/communaute/CommunityPostCard';
 import { GlassLabSurface } from './GlassLabSurface';
 import { resolveGlassEngine, type GlassEngine } from './glassLabPolicy';
@@ -157,11 +157,11 @@ export default function GlassLab() {
             <Button variant="primary" onClick={increment}>pill-primary</Button>
           </div>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'center' }}>
-            <LkvChip label="sage" tone="sage" onClick={increment} />
-            <LkvChip label="info" tone="info" onClick={increment} />
-            <LkvChip label="danger" tone="danger" onClick={increment} />
-            <LkvChip label="glass" tone="glass" onClick={increment} />
-            <LkvChip label="active" tone="glass" active onClick={increment} />
+            <Chip tone="sage" onClick={increment}>sage</Chip>
+            <Chip tone="info" onClick={increment}>info</Chip>
+            <Chip tone="danger" onClick={increment}>danger</Chip>
+            <Chip onClick={increment}>glass</Chip>
+            <Chip selected onClick={increment}>active</Chip>
           </div>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'center' }}>
             <button type="button" className="glass-capsule-btn">capsule</button>

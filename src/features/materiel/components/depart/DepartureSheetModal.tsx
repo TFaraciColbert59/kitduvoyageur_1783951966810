@@ -3,7 +3,8 @@ import Icon from '@/components/ui/Icon';
 import { useState, useTransition } from 'react';
 import { PlayIcon as PlayAnimated } from '@/components/icons/play';
 import { RotateCCWIcon as RotateCcwAnimated } from '@/components/icons/rotate-ccw';
-import { GlassDrawer } from '@/components/ui/GlassDrawer';
+import { Modal, Sheet } from '@/components/ui';
+import { useMediaQuery } from '@/hooks/useMediaQuery';
 import { formatDistanceKm, formatWeight } from '@/features/materiel/domain/departCalculations';
 import { updateDepartStatus } from '@/features/materiel/actions/updateDepartStatus';
 import { cn } from '@/lib/utils';
@@ -28,6 +29,7 @@ export function DepartureSheetModal({
   const [copied, setCopied] = useState(false);
   const [currentStatus, setCurrentStatus] = useState(depart.status);
   const [isPending, startTransition] = useTransition();
+  const isDesktop = useMediaQuery('(min-width: 768px)');
 
   const departsAt = depart.startsAt ? new Date(depart.startsAt) : null;
   const dateLabel = departsAt
@@ -71,14 +73,7 @@ export function DepartureSheetModal({
     });
   };
 
-  return (
-    <GlassDrawer
-      open={isOpen}
-      onOpenChange={(v) => !v && onClose()}
-      title="Fiche officielle"
-      titleId="departure-sheet-title"
-      width={560}
-    >
+  const content = (
       <div className="space-y-4 font-sans text-[var(--lkv-primary)]">
         {/* En-tête de la Fiche : statut, destination, sentier */}
         <div className="space-y-1">
@@ -248,6 +243,29 @@ export function DepartureSheetModal({
           </div>
         </div>
       </div>
-    </GlassDrawer>
+  );
+
+  if (isDesktop) {
+    return (
+      <Modal
+        open={isOpen}
+        onOpenChange={(v) => !v && onClose()}
+        title="Fiche officielle"
+        size="lg"
+      >
+        {content}
+      </Modal>
+    );
+  }
+
+  return (
+    <Sheet
+      open={isOpen}
+      onOpenChange={(v) => !v && onClose()}
+      title="Fiche officielle"
+      detent="large"
+    >
+      {content}
+    </Sheet>
   );
 }

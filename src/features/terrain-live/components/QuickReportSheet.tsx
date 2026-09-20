@@ -72,6 +72,7 @@ export default function QuickReportSheet({
     <Sheet
       open={open}
       onOpenChange={onOpenChange}
+      dragToDismiss
       title={
         state.step === 'category'
           ? 'Que se passe-t-il ?'

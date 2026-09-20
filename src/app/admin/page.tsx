@@ -1,5 +1,6 @@
 ﻿'use client';
 import { lkvPromptAsync } from '@/components/ui/dialogs';
+import { PageHeader } from '@/components/ui';
 
 import React, { useState, useEffect, useMemo } from 'react';
 import Icon from '@/components/ui/AppIcon';
@@ -1544,10 +1545,13 @@ export default function AdminPage() {
 
           {/* Main content */}
           <main className={`flex-1 min-h-screen transition-all duration-300 ${sidebarCollapsed ? 'lg:ml-14' : 'lg:ml-56'} ml-0`}>
-            {/* Top bar */}
-            <div className="sticky top-0 z-30 bg-[#151F1A]/95 backdrop-blur-md border-b border-white/6 px-4 sm:px-6 py-3.5 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                {/* Mobile menu toggle */}
+            <PageHeader
+              sticky
+              variant="inline"
+              className="dark px-4 sm:px-6"
+              title={SECTION_TITLES[activeSection]}
+              subtitle={<span className="hidden sm:block">Admin · Le Kit du Voyageur</span>}
+              back={
                 <button
                   onClick={() => setMobileSidebarOpen(true)}
                   className="lg:hidden p-2 rounded-xl bg-white/8 text-white/60 hover:text-white transition-colors"
@@ -1555,25 +1559,19 @@ export default function AdminPage() {
                 >
                   <Icon name="Bars3Icon" size={18} variant="outline" />
                 </button>
-                <div>
-                  <h1 className="font-display font-700 text-white text-base" style={{ fontFamily: 'var(--font-display)' }}>
-                    {SECTION_TITLES[activeSection]}
-                  </h1>
-                  <p className="text-[10px] font-mono text-white/25 mt-0.5 hidden sm:block" style={{ fontFamily: 'var(--font-mono)' }}>
-                    Admin · Le Kit du Voyageur
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="hidden sm:flex items-center gap-1.5">
-                  <div className="w-1.5 h-1.5 rounded-full bg-forest-400 animate-pulse" />
-                  <span className="text-[10px] font-mono text-white/30" style={{ fontFamily: 'var(--font-mono)' }}>Live</span>
-                </div>
-                <div className="w-7 h-7 rounded-lg bg-[#17402C]/20 flex items-center justify-center">
-                  <span className="text-[10px] font-mono font-700 text-[#17402C]" style={{ fontFamily: 'var(--font-mono)' }}>JA</span>
-                </div>
-              </div>
-            </div>
+              }
+              actions={
+                <>
+                  <div className="hidden sm:flex items-center gap-1.5">
+                    <div className="w-1.5 h-1.5 rounded-full bg-forest-400 animate-pulse" />
+                    <span className="text-[10px] font-mono text-white/30" style={{ fontFamily: 'var(--font-mono)' }}>Live</span>
+                  </div>
+                  <div className="w-7 h-7 rounded-lg bg-[#17402C]/20 flex items-center justify-center">
+                    <span className="text-[10px] font-mono font-700 text-[#17402C]" style={{ fontFamily: 'var(--font-mono)' }}>JA</span>
+                  </div>
+                </>
+              }
+            />
 
             {/* Section content */}
             <div className="p-4 sm:p-6">
@@ -1598,45 +1596,18 @@ export default function AdminPage() {
       {/* ── MOBILE ── */}
       <div className="block md:hidden">
         <MobilePageShell>
-          {/* Top bar */}
-          <div style={{
-            position: 'sticky',
-            top: 0,
-            zIndex: 30,
-            backgroundColor: '#17402C',
-            padding: '12px 16px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            borderBottom: '1px solid rgba(23,64,44,0.06)',
-          }}>
-            <h1 style={{
-              fontFamily: 'Georgia, serif',
-              fontStyle: 'italic',
-              color: '#EDF3ED',
-              fontWeight: 400,
-              fontSize: '18px',
-              margin: 0,
-            }}>
-              Admin
-            </h1>
-            <div style={{
-              width: '28px',
-              height: '28px',
-              borderRadius: '8px',
-              backgroundColor: 'rgba(163,196,163,0.15)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}>
-              <span style={{
-                fontFamily: 'ui-monospace, monospace',
-                fontSize: '10px',
-                fontWeight: 700,
-                color: '#A3C4A3',
-              }}>JA</span>
-            </div>
-          </div>
+          <PageHeader
+            sticky
+            transparent
+            variant="inline"
+            className="bg-[#17402C] px-4 py-3"
+            title={<span className="text-[#EDF3ED]">Admin</span>}
+            actions={
+              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-[rgba(163,196,163,0.15)]">
+                <span className="text-[10px] font-mono font-bold text-[#A3C4A3]">JA</span>
+              </div>
+            }
+          />
 
           {/* Section pills */}
           <div style={{

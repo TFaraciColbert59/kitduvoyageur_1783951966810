@@ -2,7 +2,7 @@
 
 import type { ReactNode } from 'react';
 import { ArrowRight } from 'lucide-react';
-import { GlassDrawer } from '@/components/ui/GlassDrawer';
+import { Sheet } from '@/components/ui';
 import { NumberStat } from '@/components/ui-layouts/number-stat';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import type { GroupeReadiness } from '../../../mobile/groupeEngine';
@@ -16,12 +16,12 @@ export interface GroupeDrawerProps {
   children: ReactNode;
 }
 
-/** Tiroir latéral glass du groupe (même primitive que Budget/Équipement). */
-export function GroupeDrawer({ open, onOpenChange, title, width = 460, children }: GroupeDrawerProps) {
+/** Feuille du groupe (même primitive que Budget/Équipement). */
+export function GroupeDrawer({ open, onOpenChange, title, children }: GroupeDrawerProps) {
   return (
-    <GlassDrawer open={open} onOpenChange={onOpenChange} title={title} width={width}>
+    <Sheet open={open} onOpenChange={onOpenChange} title={title}>
       <div className="space-y-4 pb-4">{children}</div>
-    </GlassDrawer>
+    </Sheet>
   );
 }
 

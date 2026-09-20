@@ -15,7 +15,7 @@ import {
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import AppShell from '@/components/shell/AppShell';
-import { Card, ListItem } from '@/components/ui';
+import { Card, ListItem, PageHeader } from '@/components/ui';
 import { CompteBackground } from '@/components/compte/CompteBackground';
 import {
   getMaterielSummary,
@@ -146,17 +146,11 @@ function MaterielSurface({ summary }: { summary: MaterielSummary }) {
 
   return (
     <div className="w-full space-y-5 font-sans text-[var(--lkv-text-primary)]">
-      <header className="space-y-1">
-        <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-[var(--lkv-text-secondary)]">
-          Mon matériel
-        </p>
-        <h1 className="font-display text-2xl font-extrabold tracking-tight text-[var(--lkv-text-primary)] sm:text-3xl">
-          Matériel
-        </h1>
-        <p className="text-sm text-[var(--lkv-text-secondary)]">
-          Kit actif, éléments à préparer et accès rapides.
-        </p>
-      </header>
+      <PageHeader
+        variant="large"
+        title="Matériel"
+        subtitle="Kit actif, éléments à préparer et accès rapides."
+      />
 
       {/* ── Ajout d'équipement : action immédiatement visible ── */}
       <Link

@@ -4,7 +4,7 @@ import React from 'react';
 import { SearchIcon as SearchAnimated } from '@/components/icons/search';
 import { RotateCCWIcon as RotateCcwAnimated } from '@/components/icons/rotate-ccw';
 import { Button } from '@/components/ui';
-import LkvChip from '@/components/ui/LkvChip';
+import { Chip } from '@/components/ui';
 
 export interface PoiFilterItem {
   id: string;
@@ -134,12 +134,13 @@ export default function ExplorerFilterPanel({
           {DURATION_FILTERS.map((f) => {
             const active = activeDuration === f.label;
             return (
-              <LkvChip
+              <Chip
                 key={f.label}
-                label={f.label}
-                active={active}
+                selected={active}
                 onClick={() => onSelectDuration(active ? null : f.label)}
-              />
+              >
+                {f.label}
+              </Chip>
             );
           })}
         </div>
@@ -152,12 +153,13 @@ export default function ExplorerFilterPanel({
           {CATEGORIES.map((c) => {
             const active = activeCategory === c;
             return (
-              <LkvChip
+              <Chip
                 key={c}
-                label={c}
-                active={active}
+                selected={active}
                 onClick={() => onSelectCategory(c)}
-              />
+              >
+                {c}
+              </Chip>
             );
           })}
         </div>

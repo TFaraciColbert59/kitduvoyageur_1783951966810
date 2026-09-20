@@ -2,7 +2,7 @@
 
 import { Plus, X } from 'lucide-react';
 import { Tabs } from '@/components/ui/Tabs';
-import { GlassDrawer } from '@/components/ui/GlassDrawer';
+import { Sheet } from '@/components/ui';
 import { ExpenseRow } from '@/features/trips/components/budget/ExpenseRow';
 import type { TripExpense } from '@/features/trips/types/trip.types';
 import type { BudgetFilter } from '../../../mobile/budgetEngine';
@@ -45,7 +45,7 @@ export function BudgetAllExpensesDrawer({
   const segmentValue = filter === 'today' ? 'all' : filter;
 
   return (
-    <GlassDrawer open={open} onOpenChange={onOpenChange} title="Toutes les dépenses" width={430}>
+    <Sheet open={open} onOpenChange={onOpenChange} title="Toutes les dépenses">
       <div className="space-y-3 pb-4">
         <Tabs
           options={[
@@ -103,7 +103,7 @@ export function BudgetAllExpensesDrawer({
           </ul>
         )}
       </div>
-    </GlassDrawer>
+    </Sheet>
   );
 }
 

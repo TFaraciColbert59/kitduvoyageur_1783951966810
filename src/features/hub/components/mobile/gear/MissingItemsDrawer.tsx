@@ -1,7 +1,7 @@
 'use client';
 
 import { Check, Package, RotateCcw, ShoppingBag, Truck } from 'lucide-react';
-import { GlassDrawer } from '@/components/ui/GlassDrawer';
+import { Sheet } from '@/components/ui';
 import { PURCHASE_META, type MissingRow } from '../../../mobile/gearEngine';
 import type { TripPurchaseState } from '@/features/trips/types/trip.types';
 
@@ -30,7 +30,7 @@ export function MissingItemsDrawer({
   onReset,
 }: MissingItemsDrawerProps) {
   return (
-    <GlassDrawer open={open} onOpenChange={onOpenChange} title="Ce qui manque" width={430}>
+    <Sheet open={open} onOpenChange={onOpenChange} title="Ce qui manque">
       {rows.length === 0 ? (
         <p className="py-8 text-center text-sm font-medium text-[var(--lkv-text-secondary)]">
           Rien à acheter — votre sac est complet.
@@ -105,7 +105,7 @@ export function MissingItemsDrawer({
           })}
         </ul>
       )}
-    </GlassDrawer>
+    </Sheet>
   );
 }
 

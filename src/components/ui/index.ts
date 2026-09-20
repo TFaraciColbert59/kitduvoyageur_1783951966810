@@ -1,4 +1,3 @@
-export { GlassDrawer } from './GlassDrawer';
 export { Modal, type ModalProps, type ModalSize } from './Modal';
 export { GlassSubCard, type GlassSubCardProps } from './GlassSubCard';
 export { GlassPill, type GlassPillProps, type GlassPillTone } from './GlassPill';
@@ -15,7 +14,7 @@ export { SearchField, type SearchFieldProps } from './SearchField';
 export { Sheet, type SheetProps } from './Sheet';
 export { Badge, type BadgeTone } from './Badge';
 export { EmptyState, ErrorState, type EmptyStateProps, type ErrorStateProps } from './EmptyState';
-export { LkvChip, type LkvChipTone } from './LkvChip';
+export { Chip, type ChipTone, type ChipProps } from './Chip';
 export {
   Skeleton,
   SkeletonCard,

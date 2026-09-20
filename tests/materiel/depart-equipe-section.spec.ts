@@ -104,20 +104,22 @@ describe('DepartEquipeSection (équipe + accès fiche officielle)', () => {
   });
 });
 
-describe('DepartureSheetModal (migration GlassDrawer)', () => {
+describe('DepartureSheetModal (primitives canoniques Modal/Sheet)', () => {
   const src = readFileSync(
     'src/features/materiel/components/depart/DepartureSheetModal.tsx',
     'utf8'
   );
 
-  it('utilise le conteneur GlassDrawer au lieu d’un fixed inset-0 z-50 maison', () => {
-    expect(src).toContain('GlassDrawer');
+  it('utilise Modal (desktop) et Sheet (mobile) au lieu d’un fixed inset-0 z-50 maison', () => {
+    expect(src).toContain('<Modal');
+    expect(src).toContain('<Sheet');
+    expect(src).not.toContain('GlassDrawer');
     expect(src).not.toContain('fixed inset-0 z-50');
   });
 
-  it('préserve l’ancre #departure-sheet-title sur le Dialog.Title sans dupliquer le titre', () => {
+  it('conserve un titre canonique unique par conteneur (Dialog.Title fourni par la primitive)', () => {
     expect(src).toContain('title="Fiche officielle"');
-    expect(src).toContain('titleId="departure-sheet-title"');
-    expect(src.match(/departure-sheet-title/g) ?? []).toHaveLength(1);
+    expect(src.match(/title="Fiche officielle"/g) ?? []).toHaveLength(2);
+    expect(src).not.toContain('titleId=');
   });
 });
