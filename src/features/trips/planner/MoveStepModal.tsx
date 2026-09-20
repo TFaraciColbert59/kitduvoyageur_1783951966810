@@ -5,7 +5,7 @@ import React from 'react';
 import type { PlannerStep } from './plannerEngine';
 import { formatCivilDayIndex } from '@/lib/dates/tripDates';
 
-import { GlassModal } from '@/components/ui/GlassModal';
+import { Modal } from '@/components/ui/Modal';
 
 export interface MoveStepModalProps {
   isOpen: boolean;
@@ -41,13 +41,12 @@ export function MoveStepModal({
   }
 
   return (
-    <GlassModal
+    <Modal
       open={isOpen}
       onOpenChange={(open) => {
         if (!open) onClose();
       }}
       title={`Déplacer l’étape — ${step.title}`}
-      variant="centered"
     >
       <div className="space-y-2 max-h-[60vh] overflow-y-auto pr-1">
           <p className="text-xs text-[var(--lkv-text-muted)] mb-3">
@@ -106,6 +105,6 @@ export function MoveStepModal({
             );
           })}
       </div>
-    </GlassModal>
+    </Modal>
   );
 }

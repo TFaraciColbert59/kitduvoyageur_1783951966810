@@ -3,7 +3,7 @@
 import Icon from '@/components/ui/Icon';
 import React, { useState, useTransition, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { GlassCapsuleBtn, GlassModal } from '@/components/ui';
+import { GlassCapsuleBtn, Modal } from '@/components/ui';
 import type { TripFull } from '@/features/trips/types/trip.types';
 import {
   type PlannerStep,
@@ -517,7 +517,7 @@ export default function ItineraryPlannerClient({
       />
 
       {/* Dialogue accessible de confirmation de suppression */}
-      <GlassModal
+      <Modal
         open={dayPendingDeletion !== null}
         onOpenChange={(v: boolean) => {
           if (!v) setDayPendingDeletion(null);
@@ -560,7 +560,7 @@ export default function ItineraryPlannerClient({
             </GlassCapsuleBtn>
           </div>
         </div>
-      </GlassModal>
+      </Modal>
     </div>
   );
 }

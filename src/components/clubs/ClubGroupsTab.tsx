@@ -2,6 +2,7 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
 import Icon from '@/components/ui/AppIcon';
+import { Sheet } from '@/components/ui/Sheet';
 import {
   publishTaskTemplate,
   listGroupTaskTemplates,
@@ -274,95 +275,76 @@ export default function ClubGroupsTab({
         </div>
       )}
 
-      {modalOpen && (
-        <div
-          className="fixed inset-0 z-[1200] flex items-end sm:items-center justify-center p-4"
-          role="dialog"
-          aria-modal="true"
-          aria-label="Créer un groupe de voyage"
-        >
-          <div
-            className="absolute inset-0 bg-black/40"
-            onClick={() => (submitting ? null : setModalOpen(false))}
-          />
-          <div className="relative w-full max-w-md glass-panel rounded-[var(--lkv-radius-card)] p-5 space-y-4 max-h-[85vh] overflow-y-auto">
-            <div className="flex items-center justify-between">
-              <h3 className="font-display font-bold text-base text-[var(--lkv-text-primary)]">
-                Nouveau groupe de voyage
-              </h3>
-              <button
-                type="button"
-                onClick={() => setModalOpen(false)}
-                className="glass-circle-btn !w-11 !h-11 !min-w-11 !min-h-11"
-                aria-label="Fermer"
-              >
-                ✕
-              </button>
-            </div>
+      <Sheet
+        open={modalOpen}
+        onOpenChange={(v) => {
+          if (!v && !submitting) setModalOpen(false);
+        }}
+        title="Nouveau groupe de voyage"
+      >
+        <div className="space-y-4">
+          <label className="block space-y-1.5">
+            <span className="text-xs font-bold text-[var(--lkv-text-secondary)]">
+              Nom du groupe
+            </span>
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              maxLength={80}
+              placeholder={`Ex. Traversée des Écrins — ${club?.name || 'club'}`}
+              className="w-full glass-input rounded-xl px-3 py-2.5 text-sm min-h-[44px]"
+              data-testid="club-group-name-input"
+            />
+          </label>
 
-            <label className="block space-y-1.5">
+          {invitableMembers.length > 0 && (
+            <div className="space-y-1.5">
               <span className="text-xs font-bold text-[var(--lkv-text-secondary)]">
-                Nom du groupe
+                Inviter des membres ({selected.size})
               </span>
-              <input
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                maxLength={80}
-                placeholder={`Ex. Traversée des Écrins — ${club?.name || 'club'}`}
-                className="w-full glass-input rounded-xl px-3 py-2.5 text-sm min-h-[44px]"
-                data-testid="club-group-name-input"
-              />
-            </label>
-
-            {invitableMembers.length > 0 && (
-              <div className="space-y-1.5">
-                <span className="text-xs font-bold text-[var(--lkv-text-secondary)]">
-                  Inviter des membres ({selected.size})
-                </span>
-                <div className="max-h-56 overflow-y-auto space-y-1 pr-1">
-                  {invitableMembers.map((member: any) => {
-                    const label = member.user?.full_name || 'Membre du club';
-                    const checked = selected.has(member.user_id);
-                    return (
-                      <button
-                        key={member.user_id}
-                        type="button"
-                        onClick={() => toggleMember(member.user_id)}
-                        className={`w-full justify-between gap-2 glass-capsule-btn text-xs font-bold min-h-[44px] ${
-                          checked ? 'primary' : ''
-                        }`}
-                        aria-pressed={checked}
-                      >
-                        <span className="truncate">{label}</span>
-                        <span aria-hidden>{checked ? '✓' : '+'}</span>
-                      </button>
-                    );
-                  })}
-                </div>
+              <div className="max-h-56 overflow-y-auto space-y-1 pr-1">
+                {invitableMembers.map((member: any) => {
+                  const label = member.user?.full_name || 'Membre du club';
+                  const checked = selected.has(member.user_id);
+                  return (
+                    <button
+                      key={member.user_id}
+                      type="button"
+                      onClick={() => toggleMember(member.user_id)}
+                      className={`w-full justify-between gap-2 glass-capsule-btn text-xs font-bold min-h-[44px] ${
+                        checked ? 'primary' : ''
+                      }`}
+                      aria-pressed={checked}
+                    >
+                      <span className="truncate">{label}</span>
+                      <span aria-hidden>{checked ? '✓' : '+'}</span>
+                    </button>
+                  );
+                })}
               </div>
-            )}
+            </div>
+          )}
 
-            {error && (
-              <p className="text-xs font-bold text-[var(--lkv-danger)]" role="alert">
-                {error}
-              </p>
-            )}
+          {error && (
+            <p className="text-xs font-bold text-[var(--lkv-danger)]" role="alert">
+              {error}
+            </p>
+          )}
 
-            <button
-              type="button"
-              onClick={handleCreate}
-              disabled={submitting}
-              className="glass-capsule-btn primary w-full py-3 text-sm font-bold min-h-[44px] disabled:opacity-60"
-              data-testid="club-group-submit"
-            >
-              <span className="relative z-10">
-                {submitting ? 'Création…' : 'Créer et ouvrir dans le Hub'}
-              </span>
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={handleCreate}
+            disabled={submitting}
+            className="glass-capsule-btn primary w-full py-3 text-sm font-bold min-h-[44px] disabled:opacity-60"
+            data-testid="club-group-submit"
+          >
+            <span className="relative z-10">
+              {submitting ? 'Création…' : 'Créer et ouvrir dans le Hub'}
+            </span>
+          </button>
         </div>
-      )}
+      </Sheet>
     </section>
   );
 }

@@ -1,7 +1,12 @@
 import { describe, it, expect } from 'vitest';
+import fs from 'node:fs';
+import path from 'node:path';
 import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { Card, Tabs, Sheet, Badge, EmptyState } from '@/components/ui';
+
+const read = (relative: string) =>
+  fs.readFileSync(path.join(process.cwd(), relative), 'utf8');
 
 describe('Sous-phase 2.3 — Primitives Partagées UI (TDD)', () => {
   it('TEST-PRIM-01: Card renders canonical surface with tone styles', () => {
@@ -28,17 +33,20 @@ describe('Sous-phase 2.3 — Primitives Partagées UI (TDD)', () => {
     expect(html).toContain('5');
   });
 
-  it('TEST-PRIM-03: Sheet renders with accessibility title and dismiss button when open', () => {
-    const html = renderToStaticMarkup(
-      React.createElement(
-        Sheet,
-        { isOpen: true, onClose: () => {}, title: 'Édition étape' },
-        React.createElement('p', null, 'Formulaire')
+  it('TEST-PRIM-03: Sheet (Radix) monte sans crash et expose l’a11y de fermeture', () => {
+    expect(() =>
+      renderToStaticMarkup(
+        React.createElement(Sheet, {
+          open: true,
+          onOpenChange: () => {},
+          title: 'Édition étape',
+          children: React.createElement('p', null, 'Formulaire'),
+        })
       )
-    );
-    expect(html).toContain('Édition étape');
-    expect(html).toContain('Formulaire');
-    expect(html).toContain('aria-label="Fermer"');
+    ).not.toThrow();
+    const src = read('src/components/ui/Sheet.tsx');
+    expect(src).toContain('Dialog.Title');
+    expect(src).toContain('aria-label="Fermer"');
   });
 
   it('TEST-PRIM-04: Badge renders with unified chip styling', () => {

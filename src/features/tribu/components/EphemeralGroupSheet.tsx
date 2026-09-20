@@ -2,6 +2,7 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
 import Icon from '@/components/ui/AppIcon';
+import { Sheet } from '@/components/ui/Sheet';
 import {
   getSocialSuggestions,
   searchTripPartners,
@@ -105,37 +106,16 @@ export default function EphemeralGroupSheet({ open, onClose, onCreated }: Epheme
     await onCreated({ groupId: result.groupId, name: result.name });
   };
 
-  if (!open) return null;
-
   return (
-    <div
-      className="fixed inset-0 z-[1300] flex items-end justify-center"
-      role="dialog"
-      aria-modal="true"
-      aria-label="Créer une sortie avec des amis"
-      data-testid="ephemeral-group-sheet"
+    <Sheet
+      open={open}
+      onOpenChange={(v) => {
+        if (!v && !submitting) onClose();
+      }}
+      title="Sortie avec des amis"
+      description="Un groupe éclair, à gérer dans le Hub — dissous automatiquement après la sortie."
     >
-      <div className="absolute inset-0 bg-black/40" onClick={() => (submitting ? null : onClose())} />
-      <div className="relative w-full max-w-lg glass-panel rounded-t-[1.75rem] sm:rounded-[1.75rem] p-5 space-y-4 max-h-[85vh] overflow-y-auto sm:mb-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h3 className="font-display font-bold text-base text-[var(--lkv-text-primary)]">
-              Sortie avec des amis
-            </h3>
-            <p className="text-xs text-[var(--lkv-text-secondary)]">
-              Un groupe éclair, à gérer dans le Hub — dissous automatiquement après la sortie.
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="w-11 h-11 rounded-full glass-icon-btn flex items-center justify-center shrink-0"
-            aria-label="Fermer"
-          >
-            ✕
-          </button>
-        </div>
-
+      <div data-testid="ephemeral-group-sheet" className="space-y-4">
         <label className="block space-y-1.5">
           <span className="text-xs font-bold text-[var(--lkv-text-secondary)]">Nom de la sortie</span>
           <input
@@ -221,6 +201,6 @@ export default function EphemeralGroupSheet({ open, onClose, onCreated }: Epheme
           </span>
         </button>
       </div>
-    </div>
+    </Sheet>
   );
 }

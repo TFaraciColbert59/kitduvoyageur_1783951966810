@@ -2,7 +2,7 @@
 
 import { useState, type ReactNode } from 'react';
 import { ArrowRight, Expand } from 'lucide-react';
-import PremiumBottomSheet from '@/components/ui/PremiumBottomSheet';
+import { Sheet } from '@/components/ui/Sheet';
 import { HapticLink } from '../menu/HapticLink';
 import HubRouteMap, { type HubRoutePoint } from './HubRouteMap';
 
@@ -104,13 +104,11 @@ export function MomentMapCard({
         </div>
       </div>
 
-      <PremiumBottomSheet
-        isOpen={open}
-        onClose={() => setOpen(false)}
+      <Sheet
+        open={open}
+        onOpenChange={(v) => !v && setOpen(false)}
         title={sheetTitle}
-        surface="liquid"
-        snapPoints={['half', 'full']}
-        defaultSnap="half"
+        detent="medium"
       >
         <div className="flex flex-col">
           <div className="h-[40dvh] min-h-[16rem] border-b border-white/40">
@@ -124,7 +122,7 @@ export function MomentMapCard({
           </div>
           <div className="space-y-3 px-5 pb-6 pt-4">
             <p className="text-[10.5px] font-medium text-[var(--lkv-text-primary)]/80">
-              Déplacez et zoomez la carte — glissez la poignée pour agrandir le panneau.
+              Déplacez et zoomez la carte.
             </p>
             {legend.length > 0 && (
               <ul className="flex flex-wrap gap-2" aria-label="Légende de la carte">
@@ -146,7 +144,7 @@ export function MomentMapCard({
             {sheetContent}
           </div>
         </div>
-      </PremiumBottomSheet>
+      </Sheet>
     </section>
   );
 }

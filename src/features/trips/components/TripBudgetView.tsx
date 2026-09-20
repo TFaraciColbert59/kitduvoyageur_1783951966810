@@ -4,7 +4,7 @@ import Icon from '@/components/ui/Icon';
 import React, { useEffect, useMemo, useState, useTransition } from 'react';
 import { Card } from '@/components/ui';
 import { GlassCapsuleBtn } from '@/components/ui/GlassCapsuleBtn';
-import { GlassModal } from '@/components/ui/GlassModal';
+import { Sheet } from '@/components/ui/Sheet';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { calculateBudgetSummary, buildBudgetDayPlan } from '../engine/budgetEngine';
 import {
@@ -645,11 +645,10 @@ export function TripBudgetView({ trip, initialDay }: TripBudgetViewProps) {
       />
 
       {/* Choix du payeur pour « Régler » une dépense prévue (multi) */}
-      <GlassModal
+      <Sheet
         open={settleTarget !== null}
         onOpenChange={(open) => !open && setSettleTarget(null)}
         title="Régler la dépense prévue"
-        variant="sheet"
       >
         <div className="pb-2 space-y-4">
           {settleTarget && (
@@ -683,7 +682,7 @@ export function TripBudgetView({ trip, initialDay }: TripBudgetViewProps) {
             </>
           )}
         </div>
-      </GlassModal>
+      </Sheet>
 
       {/* Modale de confirmation de suppression */}
       <ConfirmDialog

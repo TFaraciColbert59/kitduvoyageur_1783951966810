@@ -1,12 +1,12 @@
 'use client';
 
-import BottomTabBar from './BottomTabBar';
+import WebNavigationBar from './navigation/WebNavigationBar';
 
 /**
  * NavigationBar — contrat unique de la navigation principale (Phase 2, Lot 2).
  *
  * Une seule barre active à la fois :
- * - `WebNavigationBar` : `BottomTabBar` (implémentation actuelle, WebView) ;
+ * - `WebNavigationBar` : implémentation actuelle (assemblage `navigation/`), WebView ;
  * - `NativeNavigationBar` : UITabBar via plugin Capacitor — NON branchée.
  *
  * Le drapeau `NATIVE_TABBAR_ENABLED` reste désactivé tant que l'intégration
@@ -16,5 +16,5 @@ import BottomTabBar from './BottomTabBar';
 export const NATIVE_TABBAR_ENABLED = false;
 
 export default function NavigationBar() {
-  return <BottomTabBar />;
+  return <WebNavigationBar />;
 }

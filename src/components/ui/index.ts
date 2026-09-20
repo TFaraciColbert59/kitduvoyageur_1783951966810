@@ -1,6 +1,5 @@
-export { GlassModal, type GlassModalProps } from './GlassModal';
 export { GlassDrawer } from './GlassDrawer';
-export { GlassSheet } from './GlassSheet';
+export { Modal, type ModalProps, type ModalSize } from './Modal';
 export { GlassSubCard, type GlassSubCardProps } from './GlassSubCard';
 export { GlassPill, type GlassPillProps, type GlassPillTone } from './GlassPill';
 export { GlassCapsuleBtn, type GlassCapsuleBtnProps, type GlassCapsuleBtnVariant, type GlassCapsuleBtnSize } from './GlassCapsuleBtn';

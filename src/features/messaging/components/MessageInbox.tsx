@@ -107,7 +107,7 @@ export const MessageInbox: React.FC<MessageInboxProps> = ({
         Calque conversation : hors flux du shell, safe-areas gérées en interne.
         M04 — couche `sheet` de l'échelle partagée : au-dessus de la
         BottomTabBar (nav), sous les modales/sheets Radix portées au body
-        (GlassModal = layer modal), qui doivent rester visibles par-dessus.
+        (Modal/Sheet = layer modal), qui doivent rester visibles par-dessus.
       */}
       {selectedConversation && (
         <div

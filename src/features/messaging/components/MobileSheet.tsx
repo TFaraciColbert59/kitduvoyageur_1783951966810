@@ -1,6 +1,6 @@
 'use client';
 
-import { GlassModal } from '@/components/ui/GlassModal';
+import { Sheet } from '@/components/ui/Sheet';
 
 interface MobileSheetProps {
   isOpen: boolean;
@@ -10,7 +10,7 @@ interface MobileSheetProps {
 }
 
 /**
- * MobileSheet — bottom sheet réutilisable unifiée autour de la primitive canonique GlassModal.
+ * MobileSheet — bottom sheet réutilisable unifiée autour de la primitive canonique Sheet.
  * Fournit l'accessibilité Radix Dialog (focus trap, Escape, aria), les animations
  * CSS GPU-safe, le backdrop blur Liquid Glass et la prise en compte des safe-areas iOS.
  */
@@ -21,15 +21,14 @@ export const MobileSheet: React.FC<MobileSheetProps> = ({
   children,
 }) => {
   return (
-    <GlassModal
+    <Sheet
       open={isOpen}
       onOpenChange={(open) => {
         if (!open) onClose();
       }}
       title={title}
-      variant="sheet"
     >
       <div className="py-2">{children}</div>
-    </GlassModal>
+    </Sheet>
   );
 };

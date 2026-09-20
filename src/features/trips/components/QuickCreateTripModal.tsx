@@ -3,7 +3,7 @@
 import Icon from '@/components/ui/Icon';
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { GlassModal } from '@/components/ui/GlassModal';
+import { Sheet } from '@/components/ui/Sheet';
 import { GlassCapsuleBtn } from '@/components/ui/GlassCapsuleBtn';
 import { LkvInput } from '@/components/ui/LkvInput';
 import { tripSectionHref } from '../registry/tripSectionRegistry';
@@ -96,13 +96,12 @@ export function QuickCreateTripModal({ isOpen, onClose, onSubmitTrip }: QuickCre
   };
 
   return (
-    <GlassModal
+    <Sheet
       open={isOpen}
       onOpenChange={(v) => {
         if (!v) onClose();
       }}
       title="Créer un nouveau voyage"
-      variant="sheet"
     >
       <div className="pb-2">
         {/* Error alert */}
@@ -227,6 +226,6 @@ export function QuickCreateTripModal({ isOpen, onClose, onSubmitTrip }: QuickCre
           </div>
         </form>
       </div>
-    </GlassModal>
+    </Sheet>
   );
 }

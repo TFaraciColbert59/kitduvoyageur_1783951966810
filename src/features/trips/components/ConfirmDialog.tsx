@@ -2,7 +2,7 @@
 
 import Icon from '@/components/ui/Icon';
 import React from 'react';
-import { GlassModal } from '@/components/ui/GlassModal';
+import { Sheet } from '@/components/ui/Sheet';
 import { GlassCapsuleBtn } from '@/components/ui/GlassCapsuleBtn';
 
 export interface ConfirmDialogProps {
@@ -24,7 +24,7 @@ export interface ConfirmDialogProps {
 /**
  * Y3.5 — Modale de confirmation accessible, remplaçant `window.confirm`.
  * Règle Y-D80 n°5 : aucun dialogue natif (alert/confirm/prompt) dans le module.
- * Radix Dialog (GlassModal) : focus trap, Escape, scroll-lock.
+ * Radix Dialog (Sheet) : focus trap, Escape, scroll-lock.
  */
 export function ConfirmDialog({
   title,
@@ -37,7 +37,7 @@ export function ConfirmDialog({
   onCancel,
 }: ConfirmDialogProps) {
   return (
-    <GlassModal
+    <Sheet
       open={open}
       onOpenChange={(v) => {
         if (!v) onCancel();
@@ -82,7 +82,7 @@ export function ConfirmDialog({
           </GlassCapsuleBtn>
         </div>
       </div>
-    </GlassModal>
+    </Sheet>
   );
 }
 

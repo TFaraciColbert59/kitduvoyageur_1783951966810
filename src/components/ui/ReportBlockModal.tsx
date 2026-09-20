@@ -3,7 +3,8 @@
 import React, { useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { GlassModal } from '@/components/ui/GlassModal';
+import { Modal } from '@/components/ui/Modal';
+import { lkvAlert, lkvConfirm } from '@/components/ui/dialogs';
 
 export interface ReportTarget {
   userId: string;
@@ -95,7 +96,7 @@ export default function ReportBlockModal({ target, onClose, onSuccess }: Props) 
       if (onSuccess) onSuccess();
     } catch (err: any) {
       console.error(err);
-      alert("Une erreur est survenue lors du signalement.");
+      lkvAlert("Une erreur est survenue lors du signalement.");
     } finally {
       setLoading(false);
     }
@@ -103,7 +104,16 @@ export default function ReportBlockModal({ target, onClose, onSuccess }: Props) 
 
   const handleBlock = async () => {
     if (!user) return;
-    if (!confirm(`Voulez-vous vraiment bloquer ${target.userName} ? Vous ne verrez plus ses demandes et il ne pourra plus vous contacter.`)) return;
+    if (
+      !(await lkvConfirm({
+        title: `Bloquer ${target.userName} ?`,
+        message:
+          'Vous ne verrez plus ses demandes et il ne pourra plus vous contacter.',
+        confirmLabel: 'Bloquer',
+        variant: 'destructive',
+      }))
+    )
+      return;
 
     setLoading(true);
     try {
@@ -127,20 +137,19 @@ export default function ReportBlockModal({ target, onClose, onSuccess }: Props) 
       if (onSuccess) onSuccess();
     } catch (err: any) {
       console.error(err);
-      alert("Erreur lors du blocage.");
+      lkvAlert("Erreur lors du blocage.");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <GlassModal
+    <Modal
       open={Boolean(target)}
       onOpenChange={(open) => {
         if (!open) onClose();
       }}
       title="Sécurité & Signalement"
-      variant="centered"
     >
       <div className="space-y-4">
         <p className="text-xs text-[var(--lkv-text-muted)] -mt-1">
@@ -276,6 +285,6 @@ export default function ReportBlockModal({ target, onClose, onSuccess }: Props) 
           </div>
         )}
       </div>
-    </GlassModal>
+    </Modal>
   );
 }

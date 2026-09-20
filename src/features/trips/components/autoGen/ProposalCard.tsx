@@ -1,6 +1,7 @@
 'use client';
 
 import Icon from '@/components/ui/Icon';
+import { Modal } from '@/components/ui/Modal';
 import React, { useState } from 'react';
 import type { Proposal, LayerId } from '@/features/trips/schemas/autoGen.schema';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
@@ -267,56 +268,40 @@ export const ProposalCard: React.FC<ProposalCardProps> = ({
       )}
 
       {/* Modale d'édition rapide (ex-window.prompt, règle Y-D80 n°5) */}
-      {editOpen && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in"
-          role="dialog"
-          aria-modal="true"
-          aria-label="Ajuster ce composant"
-        >
-          <div className="glass rounded-[var(--lkv-radius-xl)] border border-white/70 max-w-md w-full p-6 shadow-2xl space-y-4">
-            <div className="flex items-center justify-between">
-              <h4 className="text-sm font-bold text-[var(--lkv-text-primary)] flex items-center gap-2">
-                <Icon name="mic" size={16} className="text-[var(--lkv-secondary)]" />
-                Ajuster ce composant
-              </h4>
-              <button
-                type="button"
-                onClick={() => setEditOpen(false)}
-                aria-label="Fermer"
-                className="glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8 flex items-center justify-center transition-all cursor-pointer"
-              >
-                <Icon name="x" size={18} />
-              </button>
-            </div>
-            <input
-              autoFocus
-              value={editValue}
-              onChange={(e) => setEditValue(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && submitEdit()}
-              placeholder="Ajustez ce composant par commande vocale ou texte :"
-              className="glass-input w-full px-3 py-2 text-sm text-[var(--lkv-text-primary)]"
-            />
-            <div className="flex items-center justify-end gap-2">
-              <button
-                type="button"
-                onClick={() => setEditOpen(false)}
-                className="glass-capsule-btn !px-4 !py-2 text-xs font-semibold"
-              >
-                Annuler
-              </button>
-              <button
-                type="button"
-                onClick={submitEdit}
-                disabled={!editValue.trim()}
-                className="glass-capsule-btn primary px-4 py-2 text-xs font-bold disabled:opacity-50"
-              >
-                Appliquer
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <Modal
+        open={editOpen}
+        onOpenChange={(v) => !v && setEditOpen(false)}
+        title="Ajuster ce composant"
+        size="sm"
+        footer={
+          <>
+            <button
+              type="button"
+              onClick={() => setEditOpen(false)}
+              className="glass-capsule-btn !px-4 !py-2 text-xs font-semibold"
+            >
+              Annuler
+            </button>
+            <button
+              type="button"
+              onClick={submitEdit}
+              disabled={!editValue.trim()}
+              className="glass-capsule-btn primary px-4 py-2 text-xs font-bold disabled:opacity-50"
+            >
+              Appliquer
+            </button>
+          </>
+        }
+      >
+        <input
+          autoFocus
+          value={editValue}
+          onChange={(e) => setEditValue(e.target.value)}
+          onKeyDown={(e) => e.key === 'Enter' && submitEdit()}
+          placeholder="Ajustez ce composant par commande vocale ou texte :"
+          className="glass-input w-full px-3 py-2 text-sm text-[var(--lkv-text-primary)]"
+        />
+      </Modal>
     </div>
   );
 };

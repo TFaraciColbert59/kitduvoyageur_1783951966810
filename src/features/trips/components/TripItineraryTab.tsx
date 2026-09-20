@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import type { TripFull, TripStats, TripStep } from '../types/trip.types';
 import { Card } from '@/components/ui';
 import { GlassCapsuleBtn } from '@/components/ui/GlassCapsuleBtn';
-import { GlassModal } from '@/components/ui/GlassModal';
+import { Modal } from '@/components/ui/Modal';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { checkSeasonalityForDates } from '../engine/seasonality';
 import { getCanonicalTripSteps } from '../hooks/useTripCounters';
@@ -201,7 +201,7 @@ export function TripItineraryTab({ trip }: TripItineraryTabProps) {
       )}
 
       {/* Modal de confirmation régénération */}
-      <GlassModal
+      <Modal
         open={confirmOpen}
         onOpenChange={setConfirmOpen}
         title="Régénérer cet itinéraire ?"
@@ -242,7 +242,7 @@ export function TripItineraryTab({ trip }: TripItineraryTabProps) {
             </GlassCapsuleBtn>
           </div>
         </div>
-      </GlassModal>
+      </Modal>
 
       {/* 3. Liste détaillée des étapes */}
       {canonicalSteps.length > 0 ? (

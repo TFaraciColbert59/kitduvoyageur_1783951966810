@@ -10,7 +10,7 @@ import { Minimize2Icon as Minimize2 } from '@/components/icons/minimize-2';
 import { DownloadIcon as DownloadAnimated } from '@/components/icons/download';
 import { Maximize2Icon as Maximize2Animated } from '@/components/icons/maximize-2';
 import { Skeleton } from '@/components/ui/Skeleton';
-import { GlassModal } from '@/components/ui/GlassModal';
+import { Sheet } from '@/components/ui/Sheet';
 import { formatDistanceKm } from '@/features/materiel/domain/departCalculations';
 import { cn } from '@/lib/utils';
 import type { MapTrail } from '@/components/explorer/types';
@@ -375,14 +375,13 @@ export function DepartMap({ trail, height = '240px', className, embedded = false
       </div>
 
       {!embedded && (
-        <GlassModal
+        <Sheet
           open={isFullscreen}
           onOpenChange={setIsFullscreen}
           title="Carte du tracé"
-          variant="sheet"
         >
           <DepartMap trail={trail} embedded />
-        </GlassModal>
+        </Sheet>
       )}
     </div>
   );

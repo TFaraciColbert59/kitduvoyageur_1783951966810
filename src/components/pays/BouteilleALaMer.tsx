@@ -10,7 +10,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import ReportBlockModal, { ReportTarget } from '@/components/ui/ReportBlockModal';
 import { Card } from '@/components/ui';
 import { Badge } from '@/components/ui/Badge';
-import { GlassSheet } from '@/components/ui/GlassSheet';
+import { Sheet } from '@/components/ui/Sheet';
 import Icon from '@/components/ui/AppIcon';
 
 interface Props {
@@ -742,7 +742,7 @@ export default function BouteilleALaMer({ countryIso, countryName }: Props) {
 
       {/* ── MODAL: Demande de rejoindre (avec clauses financières et 18+) ── */}
       {joinModalGroup && (
-        <GlassSheet open onOpenChange={(v) => { if (!v) setJoinModalGroup(null); }} title="Rejoindre l'expédition">
+        <Sheet open onOpenChange={(v) => { if (!v) setJoinModalGroup(null); }} title="Rejoindre l'expédition">
           <div className="space-y-3 text-xs text-[#365233] leading-relaxed mb-5">
             <p className="text-xs text-[#486944] font-semibold">{joinModalGroup.name}</p>
             <div className="glass-sub-card p-3 space-y-1">
@@ -803,12 +803,12 @@ export default function BouteilleALaMer({ countryIso, countryName }: Props) {
               {joinLoadingId === joinModalGroup.id ? 'Envoi...' : 'Envoyer la demande'}
             </button>
           </div>
-        </GlassSheet>
+        </Sheet>
       )}
 
       {/* ── MODAL: Gestion des candidatures par le créateur ── */}
       {selectedGroupForManagement && (
-        <GlassSheet open onOpenChange={(v) => { if (!v) setSelectedGroupForManagement(null); }} title="Demandes en attente">
+        <Sheet open onOpenChange={(v) => { if (!v) setSelectedGroupForManagement(null); }} title="Demandes en attente">
           <p className="text-xs text-[#5A7064] mb-4">{selectedGroupForManagement.name} · {selectedGroupForManagement.spotsLeft} place(s) restante(s)</p>
 
           <div className="space-y-3.5 pr-1">
@@ -880,7 +880,7 @@ export default function BouteilleALaMer({ countryIso, countryName }: Props) {
               })
             )}
           </div>
-        </GlassSheet>
+        </Sheet>
       )}
 
       </Card>

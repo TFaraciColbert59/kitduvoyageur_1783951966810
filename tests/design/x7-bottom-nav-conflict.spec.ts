@@ -14,12 +14,12 @@ describe('CHANTIER X7 — CONFLIT DE BAS D\'ÉCRAN MOBILE ET HIÉRARCHIE Z-INDEX
     expect(bar).toContain('z-30');
   });
 
-  it('BottomTabBar opère sur la couche nav du registre zIndex avec pointer-events délégués', () => {
-    const tabbar = fs.readFileSync('src/components/mobile-nav/BottomTabBar.tsx', 'utf-8');
+  it('NavigationSurface opère sur la couche nav du registre zIndex avec pointer-events délégués', () => {
+    const surface = fs.readFileSync('src/components/mobile-nav/navigation/NavigationSurface.tsx', 'utf-8');
     // M04 — plus de 9999 ad hoc : la barre consomme l'échelle partagée
     // (src/lib/ui/zIndex.ts, couche `nav`).
-    expect(tabbar).toContain("from '@/lib/ui/zIndex'");
-    expect(tabbar).toContain('zIndex: zIndex.nav');
-    expect(tabbar).toContain("pointerEvents: 'none'");
+    expect(surface).toContain("from '@/lib/ui/zIndex'");
+    expect(surface).toContain('zIndex: zIndex.nav');
+    expect(surface).toContain("pointerEvents: 'none'");
   });
 });

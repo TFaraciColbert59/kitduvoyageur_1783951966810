@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useTransition } from 'react';
 import { GlassCapsuleBtn } from '@/components/ui/GlassCapsuleBtn';
-import { GlassModal } from '@/components/ui/GlassModal';
+import { Sheet } from '@/components/ui/Sheet';
 import { LkvInput } from '@/components/ui/LkvInput';
 import { renameTrip, type RenameTripResult } from '@/features/trips/actions/renameTrip';
 
@@ -124,11 +124,10 @@ export function RenameTripModal({
   };
 
   return (
-    <GlassModal
+    <Sheet
       open={open}
       onOpenChange={onOpenChange}
       title="Renommer l’activité"
-      variant="sheet"
     >
       <div className="pb-2">
         <RenameTripForm
@@ -140,7 +139,7 @@ export function RenameTripModal({
           onCancel={() => onOpenChange(false)}
         />
       </div>
-    </GlassModal>
+    </Sheet>
   );
 }
 

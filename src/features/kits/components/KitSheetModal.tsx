@@ -17,7 +17,7 @@ import {
   conservationPhrase,
   shouldDisplayScore,
 } from '../trust';
-import PremiumBottomSheet from '@/components/ui/PremiumBottomSheet';
+import { Sheet } from '@/components/ui/Sheet';
 
 const ORIGIN_LABEL: Record<string, string> = {
   configurateur: 'Conçu dans le configurateur',
@@ -125,24 +125,24 @@ export default function KitSheetModal({ kitId, context: _context, onClose }: Kit
 
   if (loading) {
     return (
-      <PremiumBottomSheet isOpen={true} onClose={close} title="Lignée de kit">
+      <Sheet open onOpenChange={(v) => !v && close()} title="Lignée de kit">
         <div className="py-12 text-center">
           <p style={{ color: '#6B7A72', fontSize: 14 }}>Chargement de la lignée…</p>
         </div>
-      </PremiumBottomSheet>
+      </Sheet>
     );
   }
 
   if (error || !data) {
     return (
-      <PremiumBottomSheet isOpen={true} onClose={close} title="Lignée de kit">
+      <Sheet open onOpenChange={(v) => !v && close()} title="Lignée de kit">
         <div className="py-8 text-center">
           <p style={{ color: '#17402C' }}>⚠️ {error ?? 'Kit introuvable'}</p>
           <button onClick={close} className="mt-4 w-full py-3 rounded-xl font-semibold text-sm" style={{ background: '#17402C', color: '#EEF3EC' }}>
             Fermer
           </button>
         </div>
-      </PremiumBottomSheet>
+      </Sheet>
     );
   }
 
@@ -158,13 +158,11 @@ export default function KitSheetModal({ kitId, context: _context, onClose }: Kit
   const showScore = trust != null && shouldDisplayScore(trust.sessions_count);
 
   return (
-    <PremiumBottomSheet
-      isOpen={true}
-      onClose={close}
+    <Sheet
+      open
+      onOpenChange={(v) => !v && close()}
       title={kit.name}
-      snapPoints={['half', 'full']}
-      defaultSnap="full"
-      className="md:max-w-[420px] md:left-1/2 md:-translate-x-1/2 md:rounded-3xl"
+      detent="large"
     >
       <div className="flex flex-col gap-4 pb-6">
         {/* En-tête métadonnées */}
@@ -294,6 +292,6 @@ export default function KitSheetModal({ kitId, context: _context, onClose }: Kit
           </p>
         )}
       </div>
-    </PremiumBottomSheet>
+    </Sheet>
   );
 }

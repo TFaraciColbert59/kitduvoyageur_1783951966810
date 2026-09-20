@@ -2,7 +2,7 @@
 
 import Icon from '@/components/ui/Icon';
 import React, { useState, useTransition } from 'react';
-import { GlassModal } from '@/components/ui/GlassModal';
+import { Sheet } from '@/components/ui/Sheet';
 import { GlassCapsuleBtn } from '@/components/ui/GlassCapsuleBtn';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { checkDocumentExpiry } from '../engine/exportEngine';
@@ -232,11 +232,10 @@ export function TripDocumentsView({ trip }: TripDocumentsViewProps) {
       )}
 
       {/* Modal d'ajout de document */}
-      <GlassModal
+      <Sheet
         open={isAddOpen}
         onOpenChange={setIsAddOpen}
         title="Attacher un document sécurisé"
-        variant="sheet"
       >
         <div className="pb-2">
           {errorMsg && (
@@ -330,7 +329,7 @@ export function TripDocumentsView({ trip }: TripDocumentsViewProps) {
             </div>
           </form>
         </div>
-      </GlassModal>
+      </Sheet>
 
       {/* Modale de confirmation de suppression */}
       <ConfirmDialog

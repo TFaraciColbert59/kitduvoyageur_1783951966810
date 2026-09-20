@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import * as Cmd from 'cmdk';
 import * as Dialog from '@radix-ui/react-dialog';
 import { Compass, Package, Users } from 'lucide-react';
-import { GlassSheet } from '@/components/ui/GlassSheet';
+import { Sheet } from '@/components/ui/Sheet';
 import { zIndex } from '@/lib/ui/zIndex';
 import { useActiveAdventure } from '../context/ActiveAdventureContext';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
@@ -462,7 +462,7 @@ export function AdventureSwitcher({
         </div>
       )}
 
-      <GlassSheet
+      <Sheet
         open={variant === 'mobile' && isMobile && sheetOpen}
         onOpenChange={(v) => {
           setSheetOpen(v);
@@ -471,7 +471,7 @@ export function AdventureSwitcher({
         title="Changer d'aventure"
       >
         <div className="glass p-2 rounded-[var(--lkv-radius-card)]">{listContent(false)}</div>
-      </GlassSheet>
+      </Sheet>
     </>
   );
 }

@@ -6,7 +6,7 @@
  *
  * - nav    : barre d'onglets principale mobile (sous les feuilles/modales)
  * - sheet  : tiroirs, feuilles, menus contextuels (Drawer, Sheet, Hamburger)
- * - modal  : modales et dialogues plein écran (Glass*, PremiumBottomSheet)
+ * - modal  : modales et dialogues plein écran (Modal, Sheet)
  * - toast  : bandeaux de statut transitoires (hors ligne, confirmations)
  * - debug  : outils de développement uniquement
  */

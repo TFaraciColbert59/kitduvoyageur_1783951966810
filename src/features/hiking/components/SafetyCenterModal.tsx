@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { GlassModal } from '@/components/ui/GlassModal';
+import { Modal } from '@/components/ui/Modal';
 import { GPSPosition, SafetyAlert } from '../types';
 import { SafetyEngine } from '../safety/SafetyEngine';
 
@@ -59,13 +59,12 @@ export default function SafetyCenterModal({
   };
 
   return (
-    <GlassModal
+    <Modal
       open={isOpen}
       onOpenChange={(open) => {
         if (!open) onClose();
       }}
       title="Centre de Sécurité"
-      variant="centered"
     >
       <div className="space-y-4">
         {/* GPS Coordinates Display */}
@@ -160,6 +159,6 @@ export default function SafetyCenterModal({
           </a>
         </div>
       </div>
-    </GlassModal>
+    </Modal>
   );
 }

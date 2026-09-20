@@ -10,7 +10,7 @@ import {
  * qu'à une destination, l'état actif est unique et les libellés sont définis
  * en FR/EN (pas d'i18n runtime).
  */
-describe('M02 — registre des destinations (BottomTabBar / MobileDrawer)', () => {
+describe('M02 — registre des destinations (navigation mobile)', () => {
   it('expose exactement 5 destinations avec des href uniques', () => {
     expect(DESTINATIONS).toHaveLength(5);
     const hrefs = DESTINATIONS.map((d) => d.href);

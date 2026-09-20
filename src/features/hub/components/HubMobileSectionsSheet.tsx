@@ -3,7 +3,7 @@
 import Icon from '@/components/ui/Icon';
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { GlassSheet } from '@/components/ui/GlassSheet';
+import { Sheet } from '@/components/ui/Sheet';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import {
   hubSectionHref,
@@ -23,7 +23,7 @@ export interface HubMobileSectionsSheetProps {
 
 /**
  * H3.3 — Navigation mobile des sections (miroir TripMobileSectionsSheet).
- * GlassSheet iOS, cibles ≥44px, haptique, compteurs réels, hrefs registre.
+ * Sheet iOS, cibles ≥44px, haptique, compteurs réels, hrefs registre.
  */
 export function HubMobileSectionsSheet({
   adventure,
@@ -61,7 +61,7 @@ export function HubMobileSectionsSheet({
         </span>
       </button>
 
-      <GlassSheet open={isOpen} onOpenChange={setIsOpen} title="Navigation du hub">
+      <Sheet open={isOpen} onOpenChange={setIsOpen} title="Navigation du hub">
         <div className="space-y-1 py-2">
           {/* Regroupement par zone : essentiel / compléments — lisibilité mobile */}
           {(() => {
@@ -133,7 +133,7 @@ export function HubMobileSectionsSheet({
             </button>
           )}
         </div>
-      </GlassSheet>
+      </Sheet>
     </>
   );
 }

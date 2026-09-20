@@ -11,11 +11,11 @@ vi.mock('next/link', () => ({
 
 vi.mock('@/features/trips/actions/renameTrip', () => ({ renameTrip: vi.fn() }));
 
-// GlassModal passe par un portail Radix (rendu vide en SSR) : on le remplace
+// Sheet passe par un portail Radix (rendu vide en SSR) : on le remplace
 // par un conteneur neutre pour tester le contenu réel du formulaire.
-vi.mock('@/components/ui/GlassModal', () => ({
-  GlassModal: ({ children }: { children: React.ReactNode }) =>
-    React.createElement('div', { 'data-testid': 'glass-modal' }, children),
+vi.mock('@/components/ui/Sheet', () => ({
+  Sheet: ({ children }: { children: React.ReactNode }) =>
+    React.createElement('div', { 'data-testid': 'sheet' }, children),
 }));
 
 import { renameTrip } from '@/features/trips/actions/renameTrip';
@@ -92,7 +92,7 @@ describe('RenameTripModal — formulaire et action', () => {
     expect(src).toContain('onOpenChange(false)');
     expect(src).toContain('onRenamed?.(clean)');
     expect(src).toContain('LkvInput');
-    expect(src).toContain('GlassModal');
+    expect(src).toContain('Sheet');
   });
 
   it('source : crayons branchés sur le hero mobile et l’en-tête desktop', () => {

@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { GlassCapsuleBtn } from '@/components/ui/GlassCapsuleBtn';
-import { GlassModal } from '@/components/ui/GlassModal';
+import { Sheet } from '@/components/ui/Sheet';
 import type { TripFull, TripExpense } from '../../types/trip.types';
 import { BUDGET_CATEGORY_OPTIONS } from './budgetFormat';
 
@@ -31,11 +31,10 @@ export function ExpenseFormSheet({
   const todayStr = new Date().toISOString().slice(0, 10);
 
   return (
-    <GlassModal
+    <Sheet
       open={open}
       onOpenChange={(o) => !o && onClose()}
       title={expense ? 'Modifier la dépense' : 'Nouvelle dépense'}
-      variant="sheet"
     >
       <div className="pb-2">
         <form onSubmit={(e) => onSubmit(e, expense)} className="space-y-4">
@@ -163,7 +162,7 @@ export function ExpenseFormSheet({
           </div>
         </form>
       </div>
-    </GlassModal>
+    </Sheet>
   );
 }
 

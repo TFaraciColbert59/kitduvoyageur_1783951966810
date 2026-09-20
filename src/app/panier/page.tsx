@@ -7,6 +7,7 @@ import Footer from '@/components/Footer';
 import WeightGauge from '@/components/WeightGauge';
 import Icon from '@/components/ui/AppIcon';
 import { Button } from '@/components/ui';
+import { lkvConfirm } from '@/components/ui/dialogs';
 import { getCart, updateQuantity, removeFromCart, getCartTotals, applyLoyaltyFree, removeLoyaltyFree, CartItem } from '@/lib/cart';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -16,7 +17,6 @@ export default function PanierPage() {
   const [items, setItems] = useState<CartItem[]>([]);
   const [mounted, setMounted] = useState(false);
   const [removingId, setRemovingId] = useState<string | null>(null);
-  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [loyaltyPoints, setLoyaltyPoints] = useState(0);
   const [loyaltyLevel, setLoyaltyLevel] = useState('Explorateur');
   const [applyingLoyalty, setApplyingLoyalty] = useState<string | null>(null);
@@ -56,23 +56,21 @@ export default function PanierPage() {
     setItems(updated);
   };
 
-  const handleRemoveRequest = (id: string) => {
-    setConfirmDeleteId(id);
-  };
-
-  const handleRemoveConfirm = () => {
-    if (!confirmDeleteId) return;
-    setRemovingId(confirmDeleteId);
-    setConfirmDeleteId(null);
+  const handleRemoveRequest = async (id: string) => {
+    const item = items.find((i) => i.id === id);
+    const confirmed = await lkvConfirm({
+      title: 'Retirer cet article ?',
+      message: `${item?.name ?? 'Cet article'} sera retiré de votre panier.`,
+      confirmLabel: 'Retirer',
+      variant: 'destructive',
+    });
+    if (!confirmed) return;
+    setRemovingId(id);
     setTimeout(() => {
-      const updated = removeFromCart(confirmDeleteId);
+      const updated = removeFromCart(id);
       setItems(updated);
       setRemovingId(null);
     }, 300);
-  };
-
-  const handleRemoveCancel = () => {
-    setConfirmDeleteId(null);
   };
 
   const handleApplyLoyaltyFree = async (itemId: string, itemPrice: number) => {
@@ -139,21 +137,6 @@ export default function PanierPage() {
       {/* ── DESKTOP VIEW (fullscreen : page = 100dvh, scroll interne) ── */}
       <div className="hidden md:flex flex-col h-[100dvh] overflow-hidden bg-transparent text-[#EEF3EC]">
         <Header />
-
-        {confirmDeleteId && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[var(--lkv-primary)]/25 backdrop-blur-sm" role="dialog" aria-modal="true">
-            <div className="glass rounded-xl p-8 max-w-sm w-full text-center">
-              <h2 className="font-display font-700 text-xl text-[var(--lkv-primary)] mb-3">Retirer cet article ?</h2>
-              <p className="text-sm text-[var(--lkv-text-muted)] mb-6">
-                {items.find((i) => i.id === confirmDeleteId)?.name} sera retiré de votre panier.
-              </p>
-              <div className="flex gap-3">
-                <button onClick={handleRemoveCancel} className="glass-capsule-btn flex-1" autoFocus>Annuler</button>
-                <button onClick={handleRemoveConfirm} className="glass-capsule-btn danger flex-1">Retirer</button>
-              </div>
-            </div>
-          </div>
-        )}
 
         <div className="flex-1 min-h-0 overflow-y-auto w-full pt-24 pb-6">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">

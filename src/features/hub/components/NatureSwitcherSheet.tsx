@@ -2,7 +2,7 @@
 
 import { useRef, useState } from 'react';
 import { Compass, Package, Users } from 'lucide-react';
-import { GlassSheet } from '@/components/ui/GlassSheet';
+import { Sheet } from '@/components/ui/Sheet';
 import { resetHubPrefs, type Nature } from '../engine/hubNature';
 
 const NATURES: { id: Nature; label: string; Icon: typeof Package }[] = [
@@ -65,7 +65,7 @@ export function NatureSwitcherSheet({
   };
 
   return (
-    <GlassSheet open={open} onOpenChange={onOpenChange} title="Changer la nature de l'aventure">
+    <Sheet open={open} onOpenChange={onOpenChange} title="Changer la nature de l'aventure">
       <div className="grid grid-cols-3 gap-2 p-2">
         {NATURES.map(({ id, label, Icon }) => (
           <button
@@ -97,7 +97,7 @@ export function NatureSwitcherSheet({
           </button>
         </div>
       )}
-    </GlassSheet>
+    </Sheet>
   );
 }
 

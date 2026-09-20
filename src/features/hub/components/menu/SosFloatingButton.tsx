@@ -6,7 +6,7 @@
 import Icon from '@/components/ui/Icon';
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { GlassModal } from '@/components/ui/GlassModal';
+import { Sheet } from '@/components/ui/Sheet';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 
 export interface SosFloatingButtonProps {
@@ -35,7 +35,7 @@ export function SosFloatingButton({ safetyHref }: SosFloatingButtonProps) {
         <Icon name="siren" size={24} aria-hidden="true" />
       </button>
 
-      <GlassModal open={open} onOpenChange={setOpen} title="Urgence" variant="sheet">
+      <Sheet open={open} onOpenChange={setOpen} title="Urgence">
         <div className="space-y-4 pb-2">
           <a
             href="tel:112"
@@ -77,7 +77,7 @@ export function SosFloatingButton({ safetyHref }: SosFloatingButtonProps) {
             Pas d&apos;appel automatique : la confirmation reste toujours manuelle.
           </p>
         </div>
-      </GlassModal>
+      </Sheet>
     </>
   );
 }

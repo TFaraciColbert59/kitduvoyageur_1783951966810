@@ -2,7 +2,7 @@
 
 import Icon from '@/components/ui/Icon';
 import React, { useState, useTransition } from 'react';
-import { GlassModal } from '@/components/ui/GlassModal';
+import { Sheet } from '@/components/ui/Sheet';
 import { GlassCapsuleBtn, GlassPill } from '@/components/ui';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { hubSectionRegistry } from '../registry/hubSectionRegistry';
@@ -82,13 +82,12 @@ export function HubSectionPicker({
   };
 
   return (
-    <GlassModal
+    <Sheet
       open={isOpen}
       onOpenChange={(v) => {
         if (!v) onClose();
       }}
       title="Personnaliser les sections"
-      variant="sheet"
       hideTitle
     >
       <div className="pb-2">
@@ -207,7 +206,7 @@ export function HubSectionPicker({
           </GlassCapsuleBtn>
         </div>
       </div>
-    </GlassModal>
+    </Sheet>
   );
 }
 

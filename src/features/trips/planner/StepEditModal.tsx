@@ -4,7 +4,7 @@ import Icon from '@/components/ui/Icon';
 import React, { useState, useEffect } from 'react';
 import { Footprints, Car, Bus, Train, Plane, Ship, Bike, Compass } from 'lucide-react';
 import { GlassCapsuleBtn } from '@/components/ui/GlassCapsuleBtn';
-import { GlassModal } from '@/components/ui/GlassModal';
+import { Modal } from '@/components/ui/Modal';
 import type { PlannerStep } from './plannerEngine';
 
 export interface StepEditModalProps {
@@ -110,13 +110,12 @@ export function StepEditModal({
   }
 
   return (
-    <GlassModal
+    <Modal
       open={isOpen}
       onOpenChange={(open) => {
         if (!open) onClose();
       }}
       title={`${initialStep ? 'Modifier l’étape' : 'Ajouter une étape'} (Jour ${initialStep ? initialStep.day_number : dayNumber})`}
-      variant="centered"
     >
       <form onSubmit={handleSubmit} className="space-y-4 max-h-[70vh] overflow-y-auto pr-1">
           {error && (
@@ -275,6 +274,6 @@ export function StepEditModal({
             </GlassCapsuleBtn>
           </div>
         </form>
-    </GlassModal>
+    </Modal>
   );
 }

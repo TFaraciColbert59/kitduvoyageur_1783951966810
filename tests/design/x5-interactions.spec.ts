@@ -11,11 +11,11 @@ describe('CHANTIER X5 — INTERACTIONS ET MICRO-INTERACTIONS CANONIQUES', () => 
     expect(css).toContain('--ease-emphasis:');
   });
 
-  it('GlassSheet réutilise la courbe canonique iOS sheet', () => {
-    // P1-3 : l'easing vit dans la classe CSS .lkv-sheet-full (framer retiré
+  it('Sheet réutilise la courbe canonique iOS sheet', () => {
+    // P1-3 : l'easing vit dans la classe CSS .lkv-sheet-up (framer retiré
     // du graphe statique) — le composant doit l'utiliser, pas le redéclarer.
-    const sheetCode = fs.readFileSync('src/components/ui/GlassSheet.tsx', 'utf-8');
-    expect(sheetCode).toContain('lkv-sheet-full');
+    const sheetCode = fs.readFileSync('src/components/ui/Sheet.tsx', 'utf-8');
+    expect(sheetCode).toContain('lkv-sheet-up');
     expect(sheetCode).toContain('backdrop-blur');
     const css = fs.readFileSync('src/styles/tailwind.css', 'utf-8');
     expect(css).toContain('0.32, 0.72, 0, 1');

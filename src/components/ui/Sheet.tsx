@@ -1,117 +1,115 @@
 'use client';
 
-import Icon from '@/components/ui/Icon';
-import React, { useEffect } from 'react';
-import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
-import { zIndex } from '@/lib/ui/zIndex';
+import React from 'react';
+import * as Dialog from '@radix-ui/react-dialog';
+import { cn } from '@/lib/utils';
+import Icon from './Icon';
+
+export type SheetDetent = 'auto' | 'medium' | 'large';
 
 export interface SheetProps {
-  isOpen: boolean;
-  onClose?: () => void;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
   title?: string;
   description?: string;
-  children?: React.ReactNode;
-  className?: string;
-  maxWidth?: string;
+  children: React.ReactNode;
+  footer?: React.ReactNode;
+  detent?: SheetDetent;
+  dismissible?: boolean;
+  hideTitle?: boolean;
 }
 
+const DETENT: Record<SheetDetent, string> = {
+  auto: '',
+  medium: 'h-[55dvh]',
+  large: 'h-[90dvh]',
+};
+
 /**
- * Primitive Sheet / Modal unifiée LKDV (Phase 2.3).
- * - Mobile (<md) : Bottom-sheet iOS avec barre d'attrape (drag handle) et gesture drag-to-dismiss.
- * - Desktop (md+) : Modal centré avec backdrop glassmorphism et fermeture ESC.
+ * Sheet — bottom sheet canonique (Phase 2, Lot 5).
+ * Radix Dialog ancré en bas : focus trap, Escape/overlay (si dismissible),
+ * scroll interne, safe-area iOS. Pas de drag-to-dismiss : la fermeture passe
+ * par le bouton, Escape ou le scrim (volontaire, cohérent avec les overlays
+ * canoniques du Lot 3).
  */
 export function Sheet({
-  isOpen,
-  onClose,
+  open,
+  onOpenChange,
   title,
   description,
   children,
-  className = '',
-  maxWidth = 'max-w-lg',
+  footer,
+  detent = 'auto',
+  dismissible = true,
+  hideTitle = false,
 }: SheetProps) {
-  const reduceMotion = useReducedMotion();
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isOpen) {
-        onClose?.();
-      }
-    };
-    if (isOpen) {
-      document.body.style.overflow = 'hidden';
-      window.addEventListener('keydown', handleKeyDown);
-    }
-    return () => {
-      document.body.style.overflow = '';
-      window.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [isOpen, onClose]);
+  const blockDismiss = (event: { preventDefault: () => void }) => {
+    if (!dismissible) event.preventDefault();
+  };
 
   return (
-    <AnimatePresence>
-      {isOpen && (
-        <div
-          className="fixed inset-0 flex items-end md:items-center justify-center"
-          style={{ zIndex: zIndex.sheet }}
+    <Dialog.Root open={open} onOpenChange={onOpenChange}>
+      <Dialog.Portal>
+        <Dialog.Overlay className="lkv-fade-in fixed inset-0 z-[var(--z-sheet)] bg-[color:var(--lkv-overlay-scrim)] backdrop-blur-[var(--blur-sm)]" />
+        <Dialog.Content
+          onEscapeKeyDown={blockDismiss}
+          onPointerDownOutside={blockDismiss}
+          onInteractOutside={blockDismiss}
+          {...(description ? {} : { 'aria-describedby': undefined })}
+          className={cn(
+            'fixed inset-x-0 bottom-0 z-[var(--z-sheet)] flex flex-col focus:outline-none',
+            DETENT[detent]
+          )}
         >
-          {/* Backdrop avec flou Apple */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: reduceMotion ? 0 : 0.2 }}
-            onClick={onClose}
-            className="fixed inset-0 bg-black/40"
-          />
-
-          {/* Modal / Sheet Container */}
-          <motion.div
-            initial={{ y: reduceMotion ? 0 : '100%', opacity: reduceMotion ? 1 : 0.5 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: reduceMotion ? 0 : '100%', opacity: 0 }}
-            transition={reduceMotion ? { duration: 0 } : { type: 'spring', damping: 30, stiffness: 350 }}
-            drag="y"
-            dragConstraints={{ top: 0 }}
-            dragElastic={0.2}
-            onDragEnd={(_e, info) => {
-              if (info.offset.y > 100 || info.velocity.y > 500) {
-                onClose?.();
-              }
-            }}
-            data-glass-variant="overlay"
-            data-glass-shape="sheet"
-            className={`glass relative z-10 w-full ${maxWidth} md:!rounded-[var(--glass-radius)] overflow-hidden max-h-[90dvh] flex flex-col ${className}`}
-          >
-            {/* iOS Pull Handle (Mobile) */}
-            <div className="pt-3 pb-1 flex justify-center md:hidden cursor-grab active:cursor-grabbing">
-              <div className="w-12 h-1.5 rounded-full bg-stone-300" />
+          <div className="lkv-sheet-up flex max-h-[90dvh] min-h-0 flex-1 flex-col overflow-hidden rounded-t-[var(--lkv-radius-sheet)] border-t border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-card)] shadow-[var(--elevation-4)]">
+            <div aria-hidden="true" className="flex shrink-0 justify-center pt-[var(--space-3)]">
+              <div className="h-1.5 w-12 rounded-full bg-[color:var(--lkv-text-muted)] opacity-40" />
             </div>
-
-            {/* Header */}
-            {(Boolean(title) || typeof onClose === 'function') && (
-              <div className="px-6 py-4 border-b border-stone-100 flex items-center justify-between">
-                <div>
-                  {title && <h3 className="text-lg font-bold text-lkv-primary">{title}</h3>}
+            {title ? (
+              <div className="flex shrink-0 items-center justify-between gap-[var(--space-3)] px-[var(--space-5)] pb-[var(--space-3)] pt-[var(--space-2)]">
+                <div className="min-w-0">
+                  <Dialog.Title
+                    className={cn(
+                      'text-[length:var(--lkv-text-title-sm)] font-bold leading-[var(--lkv-line-title)] text-[color:var(--lkv-text-primary)]',
+                      hideTitle && 'sr-only'
+                    )}
+                  >
+                    {title}
+                  </Dialog.Title>
                   {description && (
-                    <p className="text-xs text-lkv-text-muted mt-0.5">{description}</p>
+                    <Dialog.Description className="mt-[var(--space-1)] text-[length:var(--lkv-text-body-sm)] text-[color:var(--lkv-text-secondary)]">
+                      {description}
+                    </Dialog.Description>
                   )}
                 </div>
-                <button
-                  type="button"
-                  onClick={onClose}
-                  className="glass-sub-card lkv-button-primitive w-11 h-11 rounded-full text-stone-600 flex items-center justify-center transition-colors min-h-[44px] min-w-[44px] focus:outline-none focus-visible:ring-2 focus-visible:ring-lkv-primary"
-                  aria-label="Fermer"
-                >
-                  <Icon name="x" className="w-5 h-5" />
-                </button>
+                {dismissible && (
+                  <Dialog.Close asChild>
+                    <button
+                      type="button"
+                      aria-label="Fermer"
+                      className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[color:var(--lkv-text-secondary)] transition-colors hover:bg-[color:var(--lkv-hover-surface)] hover:text-[color:var(--lkv-text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]"
+                    >
+                      <Icon name="x" size={18} aria-hidden="true" />
+                    </button>
+                  </Dialog.Close>
+                )}
+              </div>
+            ) : (
+              <Dialog.Title className="sr-only">Fenêtre de dialogue</Dialog.Title>
+            )}
+            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-[var(--space-5)] pb-[var(--space-4)] pt-[var(--space-1)]">
+              {children}
+            </div>
+            {footer && (
+              <div className="shrink-0 border-t border-[color:var(--lkv-border)] px-[var(--space-5)] pb-[calc(var(--safe-bottom)+var(--space-4))] pt-[var(--space-4)]">
+                {footer}
               </div>
             )}
-
-            {/* Body */}
-            <div className="p-6 overflow-y-auto flex-1">{children}</div>
-          </motion.div>
-        </div>
-      )}
-    </AnimatePresence>
+            {!footer && <div className="shrink-0 pb-[calc(var(--safe-bottom)+var(--space-4))]" />}
+          </div>
+        </Dialog.Content>
+      </Dialog.Portal>
+    </Dialog.Root>
   );
 }
 

@@ -32,8 +32,8 @@ describe('wiring des sections Pays (mobile)', () => {
   });
 
   it('ajoute les onglets correspondants dans la barre mobile', () => {
-    const tabBar = read('src/components/mobile-nav/BottomTabBar.tsx');
-    expect(tabBar).toContain("{ id: 'gastronomie', label: 'Gastronomie' }");
-    expect(tabBar).toContain("{ id: 'hebergements', label: 'Hébergements' }");
+    const plateau = read('src/components/mobile-nav/navigation/NavigationPlateau.tsx');
+    expect(plateau).toContain("{ id: 'gastronomie', label: 'Gastronomie' }");
+    expect(plateau).toContain("{ id: 'hebergements', label: 'Hébergements' }");
   });
 });

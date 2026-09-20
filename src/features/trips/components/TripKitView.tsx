@@ -7,7 +7,7 @@ import { useVirtualizer } from '@tanstack/react-virtual';
 import Link from 'next/link';
 import { Card } from '@/components/ui';
 import { GlassCapsuleBtn } from '@/components/ui/GlassCapsuleBtn';
-import { GlassModal } from '@/components/ui/GlassModal';
+import { Sheet } from '@/components/ui/Sheet';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { CheckCircle2, Circle, PackagePlus, Pencil, Plus, X } from 'lucide-react';
 import type { TripFull, TripItem } from '../types/trip.types';
@@ -557,11 +557,10 @@ export function TripKitView({
       </Card>
 
       {/* Modal Ajout Rapide d'Équipement */}
-      <GlassModal
+      <Sheet
         open={isAddModalOpen}
         onOpenChange={setIsAddModalOpen}
         title="Ajouter un équipement au sac"
-        variant="sheet"
       >
         <div className="pb-2">
           <form
@@ -649,14 +648,13 @@ export function TripKitView({
             </div>
           </form>
         </div>
-      </GlassModal>
+      </Sheet>
 
       {/* Modal Sélecteur d'inventaire personnel (Y6.3 — Pont matériel) */}
-      <GlassModal
+      <Sheet
         open={isInventoryModalOpen}
         onOpenChange={setIsInventoryModalOpen}
         title="Importer depuis Mon Matériel"
-        variant="sheet"
         hideTitle
       >
         <div className="pb-2">
@@ -767,7 +765,7 @@ export function TripKitView({
             </Link>
           </div>
         </div>
-      </GlassModal>
+      </Sheet>
 
       {/* Phase 5 — édition complète d'un item (poids, quantité, partage, état, propriétaire) */}
       <TripKitEditModal
@@ -832,7 +830,7 @@ function TripKitEditModal({
   const [busy, setBusy] = useState(false);
 
   return (
-    <GlassModal open={item !== null} onOpenChange={onOpenChange} title="Modifier l’équipement" variant="sheet">
+    <Sheet open={item !== null} onOpenChange={onOpenChange} title="Modifier l’équipement">
       <div className="space-y-4 pb-2">
         <p className="text-sm font-semibold text-[var(--lkv-text-primary)] truncate">
           {item ? cleanItemName(item.item_name) : ''}
@@ -977,7 +975,7 @@ function TripKitEditModal({
           </GlassCapsuleBtn>
         </div>
       </div>
-    </GlassModal>
+    </Sheet>
   );
 }
 

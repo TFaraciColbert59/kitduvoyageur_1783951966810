@@ -3,7 +3,7 @@
 import Icon from '@/components/ui/Icon';
 import React, { useState, useTransition } from 'react';
 import { Card } from '@/components/ui';
-import { GlassModal } from '@/components/ui/GlassModal';
+import { Sheet } from '@/components/ui/Sheet';
 import { GlassCapsuleBtn } from '@/components/ui/GlassCapsuleBtn';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { TripCompletionModal } from './TripCompletionModal';
@@ -371,11 +371,10 @@ export function TripNotesView({ trip }: TripNotesViewProps) {
       )}
 
       {/* Modal d'ajout de note */}
-      <GlassModal
+      <Sheet
         open={isAddOpen}
         onOpenChange={setIsAddOpen}
         title="Nouvelle page du carnet de bord"
-        variant="sheet"
       >
         <div className="pb-2 space-y-4">
           {errorMessage && (
@@ -454,16 +453,15 @@ export function TripNotesView({ trip }: TripNotesViewProps) {
             </div>
           </form>
         </div>
-      </GlassModal>
+      </Sheet>
 
       {/* Modal d'édition sur place */}
-      <GlassModal
+      <Sheet
         open={editState !== null}
         onOpenChange={(open) => {
           if (!open) setEditState(null);
         }}
         title="Éditer la note"
-        variant="sheet"
       >
         <div className="pb-2 space-y-4">
           {errorMessage && (
@@ -500,7 +498,7 @@ export function TripNotesView({ trip }: TripNotesViewProps) {
             </div>
           </form>
         </div>
-      </GlassModal>
+      </Sheet>
 
       {/* Modal de rétrospective & clôture */}
       <TripCompletionModal

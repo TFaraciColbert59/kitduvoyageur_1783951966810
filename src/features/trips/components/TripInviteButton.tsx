@@ -2,7 +2,7 @@
 
 import Icon from '@/components/ui/Icon';
 import React, { useState } from 'react';
-import { GlassModal } from '@/components/ui/GlassModal';
+import { Sheet } from '@/components/ui/Sheet';
 import { GlassCapsuleBtn } from '@/components/ui/GlassCapsuleBtn';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import type { TripFull } from '../types/trip.types';
@@ -63,11 +63,10 @@ export function TripInviteButton({ trip, className }: TripInviteButtonProps) {
         Inviter des amis
       </GlassCapsuleBtn>
 
-      <GlassModal
+      <Sheet
         open={open}
         onOpenChange={setOpen}
         title="Inviter des amis"
-        variant="sheet"
       >
         <div className="space-y-4 pb-2">
           <p className="text-sm font-bold text-[var(--lkv-text-primary)]">
@@ -98,7 +97,7 @@ export function TripInviteButton({ trip, className }: TripInviteButtonProps) {
             population. Les quantités et le budget se recalculent à chaque arrivée.
           </p>
         </div>
-      </GlassModal>
+      </Sheet>
     </>
   );
 }

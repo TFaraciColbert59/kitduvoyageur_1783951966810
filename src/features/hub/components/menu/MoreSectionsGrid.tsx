@@ -6,7 +6,7 @@
 import Icon from '@/components/ui/Icon';
 import React, { useState } from 'react';
 import { BentoGrid, type BentoCell } from '@/components/ui-layouts/bento-grid';
-import { GlassModal } from '@/components/ui/GlassModal';
+import { Sheet } from '@/components/ui/Sheet';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 
@@ -50,11 +50,11 @@ export function MoreSectionsGrid({ cells, moreCells, fitRows }: MoreSectionsGrid
           {moreCells.length}
         </span>
       </button>
-      <GlassModal open={open} onOpenChange={setOpen} title="Plus de sections" variant="sheet">
+      <Sheet open={open} onOpenChange={setOpen} title="Plus de sections">
         <div className="pb-2">
           <BentoGrid cells={moreCells} />
         </div>
-      </GlassModal>
+      </Sheet>
     </>
   );
 }

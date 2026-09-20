@@ -11,7 +11,8 @@ import { join } from 'path';
 
 const tokens = readFileSync('src/styles/tokens.css', 'utf8');
 const appShell = readFileSync('src/components/shell/AppShell.tsx', 'utf8');
-const tabBar = readFileSync('src/components/mobile-nav/BottomTabBar.tsx', 'utf8');
+const tabBar = readFileSync('src/components/mobile-nav/navigation/WebNavigationBar.tsx', 'utf8');
+const navigationSurface = readFileSync('src/components/mobile-nav/navigation/NavigationSurface.tsx', 'utf8');
 const registry = readFileSync('src/components/mobile-nav/destinationRegistry.ts', 'utf8');
 const navigationBar = readFileSync('src/components/mobile-nav/NavigationBar.tsx', 'utf8');
 
@@ -69,22 +70,22 @@ describe('LOT 2 — navigation centralisée', () => {
     expect(registry).toContain('EXTENDED_NAV_PREFIXES');
   });
 
-  it('AppShell et BottomTabBar utilisent le même prédicat', () => {
+  it('AppShell et WebNavigationBar utilisent le même prédicat', () => {
     expect(appShell).toContain('hasExtendedNav(pathname)');
     expect(tabBar).toContain('hasExtendedNav(pathname)');
     // Plus de liste de routes dupliquée dans le shell.
     expect(appShell).not.toContain("pathname?.startsWith('/communaute')");
   });
 
-  it('BottomTabBar consomme la hauteur canonique et le matériau par tokens', () => {
-    expect(tabBar).toContain("height: 'var(--nav-height)'");
-    expect(tabBar).toContain('lkv-material-bar');
-    expect(tabBar).not.toContain('height: 52,');
+  it('NavigationSurface consomme la hauteur canonique et le matériau par tokens', () => {
+    expect(navigationSurface).toContain("height: 'var(--nav-height)'");
+    expect(navigationSurface).toContain('lkv-material-bar');
+    expect(navigationSurface).not.toContain('height: 52,');
   });
 
   it('le contrat NavigationBar existe et le drapeau natif reste désactivé', () => {
     expect(navigationBar).toContain('export const NATIVE_TABBAR_ENABLED = false;');
-    expect(navigationBar).toContain('<BottomTabBar />');
+    expect(navigationBar).toContain('<WebNavigationBar />');
   });
 });
 

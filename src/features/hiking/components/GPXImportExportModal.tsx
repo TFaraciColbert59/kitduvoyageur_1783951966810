@@ -59,11 +59,10 @@ export default function GPXImportExportModal({
 
   return (
     <Sheet
-      isOpen={isOpen}
-      onClose={onClose}
+      open={isOpen}
+      onOpenChange={(v) => !v && onClose()}
       title="Fichiers GPX & Tracés"
       description="IMPORT / EXPORT TRACEUR GPX 1.1"
-      maxWidth="max-w-md"
     >
       <div className="space-y-4">
         {errorMsg && (
