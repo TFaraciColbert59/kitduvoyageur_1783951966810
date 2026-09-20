@@ -15,6 +15,7 @@
 | Coquille native | Capacitor 8.5, WebView charge **l'URL distante** `CAPACITOR_SERVER_URL` ; `public/index.html` = placeholder | `capacitor.config.ts` |
 | Plugins utiles | `@capacitor/app` (deep links/`appUrlOpen`), `haptics`, `status-bar`, `keyboard` | `package.json` |
 | Plugin navigation bar | **absent** (aucun plugin tab bar natif installé) | `package.json` |
+| Contrat de bascule | `NavigationBar` (`NATIVE_TABBAR_ENABLED = false`) ; onglets + plateau centralisés dans `destinationRegistry` | `src/components/mobile-nav/NavigationBar.tsx` |
 | Scheme | `lkdv` (deep links), `contentInset: 'never'`, `StatusBar.overlaysWebView: true` | `capacitor.config.ts` |
 
 **Contrainte structurante** : le contenu est servi par une URL distante. Une barre native ne peut

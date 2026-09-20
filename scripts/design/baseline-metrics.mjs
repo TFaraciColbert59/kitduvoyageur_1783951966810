@@ -60,6 +60,8 @@ const zArb = countMatches(tsFiles, /z-\[/g);
 const inlineStyles = countMatches(tsFiles, /style=\{\{/g);
 const windowDialogs = countMatches(tsFiles, /window\.(confirm|alert|prompt)\s*\(/g);
 const lkvDialogs = countMatches(tsFiles, /\blkv(Confirm|Alert|Prompt)\s*\(/g);
+const safeAreaEnvDirect = countMatches(tsFiles, /env\(safe-area-inset-/g);
+const legacyNavVars = countMatches(tsFiles, /--bottom-tab-(base|extended)-height/g);
 
 const modalPrimitives = {};
 for (const name of ['GlassModal', 'Sheet', 'GlassSheet', 'PremiumBottomSheet', 'GlassDrawer']) {
@@ -111,6 +113,8 @@ const metrics = {
   inlineStyles: inlineStyles.total,
   windowConfirmAlertPrompt: windowDialogs.total,
   lkvDialogCalls: lkvDialogs.total,
+  safeAreaEnvDirect: safeAreaEnvDirect.total,
+  legacyNavHeightVars: legacyNavVars.total,
   modalPrimitiveImporters: modalPrimitives,
   roleDialogFiles: roleDialog.length,
   bottomBarFiles: bottomBarFiles.length,
@@ -136,6 +140,8 @@ if (process.argv.includes('--json')) {
   console.log(`| Styles inline (\`style={{...}}\`) | ${inlineStyles.total} |`);
   console.log(`| \`window.confirm/alert/prompt\` | ${windowDialogs.total} |`);
   console.log(`| Appels \`lkvConfirm/Alert/Prompt\` | ${lkvDialogs.total} |`);
+  console.log(`| \`env(safe-area-inset-*)\` directs | ${safeAreaEnvDirect.total} |`);
+  console.log(`| Anciennes variables \`--bottom-tab-*\` | ${legacyNavVars.total} |`);
   console.log(`| Importeurs de primitives modales (GlassModal/Sheet/GlassSheet/PremiumBottomSheet/GlassDrawer) | ${Object.values(modalPrimitives).join(' / ')} |`);
   console.log(`| Fichiers avec \`role="dialog"\` | ${roleDialog.length} |`);
   console.log(`| Implémentations bottom bar détectées | ${bottomBarFiles.length} |`);

@@ -78,7 +78,28 @@ Toutes les couleurs doivent provenir directement de `src/design/tokens.ts` ou de
 
 ---
 
-## 5. Procédure avant de créer un composant UI
+## 5. Mémoire musculaire et contrats de structure (Phase 2, Lot 2)
+
+### Règles d'emplacement (non négociables)
+
+| Zone | Règle |
+|---|---|
+| **Leading** | Le retour est toujours à gauche, via `HeaderBackButton` (44×44, chevron, historique puis `backHref`). Aucune page ne réimplémente un bouton retour. |
+| **Centre / titre** | Même alignement (gauche) et mêmes niveaux : titre inline 17 semi-bold, titre large 34 bold (`PageHeader variant`). Sous-titre en footnote 13. |
+| **Trailing** | L'action contextuelle est toujours à droite du header, même taille de cible ; l'overflow/menu y reste aussi. |
+| **Page** | Recherche au même niveau logique (header ou premier bloc), filtres sous le header (`toolbar` de `ListPageLayout`), CTA de validation selon `PageActions` (inline ou sticky). |
+
+### Contrats
+
+1. **AppShell** — unique shell de page : `Background → header → contenu (scroll) → bottomExtra`. Il réserve la navigation via `--bottom-nav-height` et applique `--page-top-inset` / `--nav-offset*`. Aucune page ne calcule `env(safe-area-inset-*)`.
+2. **Safe areas** — source unique : `src/styles/tokens.css` (`--safe-*`, `--nav-height: 52px`, `--nav-offset`, `--nav-offset-extended`, `--page-*-inset`, `--keyboard-inset`). Le plateau secondaire est déclaré une seule fois (`destinationRegistry.hasExtendedNav`).
+3. **PageHeader** — structure invariable `[Back] — Titre — [Trailing]` ; variantes `inline`/`large`, `sticky`, `transparent`/`scrollAware`. Aucune feature ne crée son propre header.
+4. **NavigationBar** — une seule barre active (`NavigationBar` → `BottomTabBar`) ; onglets définis par `destinationRegistry` (une source pour Web/Android/futur natif) ; `NATIVE_TABBAR_ENABLED` reste `false` jusqu'à vérification SDK macOS.
+5. **Scroll** — le shell est le seul conteneur de scroll ; `min-height: 100svh`/`100dvh` (`.lkv-shell`) ; pas de `100vh` brut, pas de padding bas manuel (réservé par le shell), pas de scroll imbriqué sans nécessité.
+6. **Clavier** — Capacitor `Keyboard.resize: 'body'` gère la compensation native ; le CSS ne rajoute **aucune** compensation (pas de double). `--keyboard-inset` reste disponible pour les cas web purs.
+7. **Overlays** — une seule échelle (`--z-*` / `src/lib/ui/zIndex.ts`) : contenu < header sticky < FAB < nav < drawer < sheet < modal < popover < command < toast < tooltip < urgence. Les `z-[...]` locaux sont migrés progressivement.
+
+## 6. Procédure avant de créer un composant UI
 
 > **Règle anti-régression (Phase 2) :** « Existe-t-il déjà une primitive ou un pattern dans `@/design` capable de couvrir ce besoin ? »
 > Si oui : étendre ou réutiliser. **Ne jamais créer une variante uniquement pour reproduire exactement l'ancien écran.**

@@ -49,11 +49,76 @@ inline styles 1 529, modales 23/2/5/2/10, pages desktop/mobile 54) : le lot 1 ag
 couche tokens, pas encore dans les pages. Premières réductions attendues aux lots 2 (shell,
 navigation) et 3+ (familles de pages). Commande : `node scripts/design/baseline-metrics.mjs`.
 
+## Lot 2 — Shell, safe areas, header et navigation (TERMINÉ)
+
+### Architecture finale AppShell
+
+```text
+AppShell (unique shell de page)
+ ├─ Background            → CompteBackground (canvas global .lkv-app-background)
+ ├─ Header layer          → slot `header` (PageHeader sticky/material)
+ ├─ Main scroll layer     → contenu, padding = --page-top-inset / --bottom-nav-height
+ ├─ BottomExtra layer     → au-dessus de la barre (filtres, plateau)
+ └─ NavigationBar (global, rendu par MobileNavWrapper)
+     └─ contrat NavigationBar → BottomTabBar (Web) · UITabBar (natif, désactivé)
+```
+
+### Stratégie safe-area finale (source unique)
+
+| Besoin | Token | Consommé par |
+|---|---|---|
+| Encoches / Dynamic Island | `--safe-top/right/bottom/left` = `env(safe-area-inset-*)` | `tokens.css` uniquement |
+| Hauteur barre / plateau | `--nav-height: 52px`, `--nav-plateau-height: 48px` | `BottomTabBar` |
+| Offsets navigation | `--nav-offset`, `--nav-offset-extended` | `AppShell` (`--bottom-nav-height`), cartes/FAB |
+| Insets de page | `--page-top-inset`, `--page-bottom-inset*`, `--page-bottom-inset-bare` | `AppShell`, `OfflineBanner` |
+| Overlays | `--overlay-inset-top/bottom` | modales/sheets (lot 3) |
+| Clavier | `--keyboard-inset: 0px` (Capacitor `resize: body` gère le natif) | contrats, pas de double compensation |
+
+### Contrats
+
+- **PageHeader** : `[Back] — Titre — [Trailing]` invariable ; variantes `inline` (17 semi-bold) / `large` (34 bold) ; `sticky`, `transparent` + `scrollAware` (état matériau au scroll) ; retour via `HeaderBackButton` (44×44, chevron, historique puis `backHref`).
+- **NavigationBar** : point de bascule unique (`NATIVE_TABBAR_ENABLED = false`) ; onglets et prédicat de plateau centralisés dans `destinationRegistry` (`DESTINATIONS`, `getActiveDestinationId`, `hasExtendedNav`).
+- **Scroll** : `.lkv-shell` = seul conteneur (`100svh`/`100dvh`, overscroll contenu) ; plus de `100vh` brut ni de padding bas manuel.
+- **Règles de mémoire musculaire** documentées dans `DESIGN_SYSTEM.md` §5.
+
+### Anciens systèmes supprimés
+
+- Variables `--bottom-tab-base-height` / `--bottom-tab-extended-height` et leurs replis 80/112/68 px (0 occurrence restante).
+- Listes de routes du plateau dupliquées (AppShell) → `hasExtendedNav`.
+- `env(safe-area-inset-*)` dans AppShell, BottomTabBar, OfflineBanner, MobileDrawer, MobileProfilePage, SosFloatingButton → tokens (13 → 0 ; seuls des commentaires documentaires subsistent dans AppShell).
+- Double compensation safe-area du bouton SOS (`--bottom-nav-height` + `env()` → tokens).
+- Ancien matériau inline de la barre (gradient + ombres codées) → `.lkv-material-bar` par tokens.
+
+### Métriques avant / après
+
+| Mesure | Avant lot 2 | Après lot 2 |
+|---|---|---|
+| Variables `--bottom-tab-*` | 8 | **0** |
+| `env(safe-area-inset-*)` shell/nav/bannière/FAB | 13 | **0** |
+| Hauteurs de barre codées en dur (52/80/68/112) | 4 | **0** (`--nav-height` / `--nav-offset*`) |
+| Listes de routes du plateau dupliquées | 2 | **1** (`hasExtendedNav`) |
+| Bottom bars | 3 fichiers | 1 contrat actif (`NavigationBar`) ; 2 legacy (desktop/mobile) |
+| Headers custom (pages `src/app`) | 13 | 13 (migration lot 4) |
+| `z-[...]` | 86 | 86 (migration lot 4) |
+
+### Captures et tests
+
+- Captures : `docs/design-system/phase2-screenshots/lot2/` (60 fichiers) — plateau + barre empilés sans contenu masqué, matériau allégé, safe areas correctes sur les 4 gabarits.
+- `type-check` ✅ · `lint` ✅ · `vitest` ✅ 406 fichiers / 2 946 tests · `tests/design` ✅ 18 fichiers / 161 tests (dont nouveau `lot2-shell.spec.ts`) · `build` ✅.
+- Contrats historiques recablés : `x7-bottom-nav-conflict` (conservé), `y7-app-first` (invariant safe-area renforcé : tokens → shell).
+
+### Dette restante (lot 2)
+
+1. `z-[...]` et headers custom des pages non migrées (lot 4).
+2. `PageHeader` non encore adopté par les pages (13 headers maison) — migration par familles.
+3. Bottom bar : composant encore volumineux (975 lignes, logique de plateaux par feature) — découpage prévu au lot 3/4.
+4. Écouteur clavier : contrat posé, aucune implémentation JS (pas de double compensation) ; à valider sur appareil.
+5. `AppShellDesktop` non unifié avec le nouveau shell (desktop hors périmètre mobile).
+
 ## Lots suivants (socle puis familles)
 
 | Lot | Contenu | Statut |
 |---|---|---|
-| 2 | Safe-area unifiée, `AppShell`, `PageHeader`, navigation visuelle + étude bottom bar | à faire |
 | 3 | Composants canoniques (Button, Card, Input, Sheet, Modal, Tabs, EmptyState, Spinner) | à faire |
 | 4+ | Migration des pages par familles, avec comparaison baseline à chaque famille | à faire |
 
