@@ -5,6 +5,7 @@ import React, { useMemo } from 'react';
 import Link from 'next/link';
 import type { TripPhase } from '../../engine/temporalPhaseEngine';
 import type { TripStep } from '../../types/trip.types';
+import { Badge, Card } from '@/components/ui';
 
 export interface StepsTimelineProps {
   steps: TripStep[];
@@ -21,6 +22,9 @@ function fmtMeters(m: number | null, unit = 'm'): string {
   if (!m || m <= 0) return '';
   return `${m.toLocaleString('fr-FR')} ${unit}`;
 }
+
+const LINK_CARD_CLASS =
+  'flex w-full flex-col items-stretch justify-start gap-[var(--space-1)] rounded-[var(--lkv-radius-md)] border border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-card)] p-[var(--space-3)] transition-colors hover:bg-[color:var(--lkv-hover-surface)]';
 
 /**
  * Widget `steps-timeline` — déroulé des étapes du jour (liste simple).
@@ -60,62 +64,60 @@ export function StepsTimeline({ steps, dayIndex, phase }: StepsTimelineProps) {
         : `Départ · J${clampedDay}`;
 
   return (
-    <div className="glass glass-pure flex h-full min-h-0 flex-col p-3.5 space-y-2.5 rounded-[1.5rem] font-sans">
+    <Card className="flex h-full min-h-0 flex-col space-y-[var(--space-2)] p-[var(--space-3)]">
       <div className="flex items-center justify-between">
-        <h3 className="font-display font-bold text-xs text-[var(--lkv-primary)] flex items-center gap-1.5">
+        <h3 className="flex items-center gap-[var(--space-2)] font-display text-[length:var(--lkv-text-footnote)] font-bold text-[color:var(--lkv-primary)]">
           <Icon name="route" size={13} aria-hidden="true" />
           Déroulé du jour
         </h3>
-        <span className="glass-pill text-[9.5px] font-bold text-[var(--lkv-text-primary)]">
-          {phasePill}
-        </span>
+        <Badge tone="stone">{phasePill}</Badge>
       </div>
 
       <div
-        className="flex min-h-0 flex-1 flex-col overflow-y-auto no-scrollbar scroll-auto"
+        className="flex min-h-0 flex-1 flex-col overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         aria-label="Déroulé des étapes du voyage"
       >
-        <div className="space-y-2 pb-2">
+        <div className="space-y-[var(--space-2)] pb-[var(--space-2)]">
           {startStep ? (
             <Link
               href="/hub/itineraire"
-              className="glass-capsule-btn primary flex w-full flex-col !items-stretch !justify-start !rounded-2xl !p-3 space-y-1.5 transition-colors cursor-pointer"
+              className={LINK_CARD_CLASS}
               aria-label={`Point de départ : ${startStep.location_name ?? startStep.title}`}
             >
-              <div className="flex items-center justify-between gap-2">
-                <span className="glass-pill text-[9px] font-bold text-[var(--lkv-primary)] flex items-center gap-1">
+              <div className="flex items-center justify-between gap-[var(--space-2)]">
+                <Badge tone="sage">
                   <Icon name="map-pin" size={10} aria-hidden="true" />
                   Point de départ
-                </span>
-                <span className="glass-pill text-[9px] font-bold text-[var(--lkv-text-muted)] tabular-nums">
+                </Badge>
+                <Badge tone="stone" className="tabular-nums">
                   J{startStep.day_number}
-                </span>
+                </Badge>
               </div>
-              <div className="text-xs font-bold text-[var(--lkv-text-primary)] leading-snug">
+              <div className="text-[length:var(--lkv-text-footnote)] font-bold leading-snug text-[color:var(--lkv-text-primary)]">
                 {startStep.title}
               </div>
               {startStep.location_name && (
-                <div className="text-[11px] text-[var(--lkv-text-secondary)] flex items-center gap-1">
+                <div className="flex items-center gap-[var(--space-1)] text-[11px] text-[color:var(--lkv-text-secondary)]">
                   <Icon name="map-pin" size={11} aria-hidden="true" />
                   {startStep.location_name}
                 </div>
               )}
               {totals.hasAny && (
-                <div className="text-[11px] text-[var(--lkv-text-secondary)] flex flex-wrap items-center gap-x-2.5 gap-y-0.5 tabular-nums pt-0.5 border-t border-[var(--lkv-primary)]/10">
+                <div className="flex flex-wrap items-center gap-x-[var(--space-3)] gap-y-0.5 border-t border-[color:var(--lkv-primary)]/10 pt-0.5 text-[11px] tabular-nums text-[color:var(--lkv-text-secondary)]">
                   {totals.km > 0 && (
-                    <span className="flex items-center gap-1 whitespace-nowrap">
+                    <span className="flex items-center gap-[var(--space-1)] whitespace-nowrap">
                       <Icon name="route" size={11} aria-hidden="true" />
                       {fmtKm(totals.km)}
                     </span>
                   )}
                   {totals.dPlus > 0 && (
-                    <span className="flex items-center gap-1 whitespace-nowrap">
+                    <span className="flex items-center gap-[var(--space-1)] whitespace-nowrap">
                       <Icon name="mountain" size={11} aria-hidden="true" />+
                       {fmtMeters(totals.dPlus)}
                     </span>
                   )}
                   {totals.dLoss > 0 && (
-                    <span className="flex items-center gap-1 whitespace-nowrap">
+                    <span className="flex items-center gap-[var(--space-1)] whitespace-nowrap">
                       <Icon name="mountain" size={11} className="rotate-180" aria-hidden="true" />
                       −{fmtMeters(totals.dLoss)}
                     </span>
@@ -130,39 +132,39 @@ export function StepsTimeline({ steps, dayIndex, phase }: StepsTimelineProps) {
               <Link
                 key={step.id}
                 href="/hub/itineraire"
-                className="glass-capsule-btn flex w-full flex-col !items-stretch !justify-start !rounded-2xl !p-3 space-y-1.5 transition-colors cursor-pointer"
+                className={LINK_CARD_CLASS}
                 aria-label={`Étape ${step.order_index + 1} du jour ${step.day_number} : ${step.title}`}
               >
-                <div className="flex items-center justify-between gap-2">
-                  <span className="glass-pill text-[9px] font-bold text-[var(--lkv-text-primary)] tabular-nums">
+                <div className="flex items-center justify-between gap-[var(--space-2)]">
+                  <Badge tone="stone" className="tabular-nums">
                     J{step.day_number} · {step.order_index + 1}
-                  </span>
+                  </Badge>
                   {step.accommodation_name && (
-                    <span className="text-[10px] text-[var(--lkv-text-muted)] flex items-center gap-1 min-w-0 truncate">
+                    <span className="flex min-w-0 items-center gap-[var(--space-1)] truncate text-[10px] text-[color:var(--lkv-text-muted)]">
                       <Icon name="moon-star" size={10} aria-hidden="true" />
                       {step.accommodation_name}
                     </span>
                   )}
                 </div>
-                <div className="text-xs font-bold text-[var(--lkv-text-primary)] leading-snug">
+                <div className="text-[length:var(--lkv-text-footnote)] font-bold leading-snug text-[color:var(--lkv-text-primary)]">
                   {step.title}
                 </div>
                 {step.location_name && (
-                  <div className="text-[11px] text-[var(--lkv-text-secondary)] flex items-center gap-1">
+                  <div className="flex items-center gap-[var(--space-1)] text-[11px] text-[color:var(--lkv-text-secondary)]">
                     <Icon name="map-pin" size={11} aria-hidden="true" />
                     {step.location_name}
                   </div>
                 )}
                 {(step.distance_km || step.elevation_gain_m) && (
-                  <div className="text-[11px] text-[var(--lkv-text-muted)] flex items-center gap-2 tabular-nums">
+                  <div className="flex items-center gap-[var(--space-2)] text-[11px] tabular-nums text-[color:var(--lkv-text-muted)]">
                     {fmtKm(step.distance_km) && (
-                      <span className="flex items-center gap-1">
+                      <span className="flex items-center gap-[var(--space-1)]">
                         <Icon name="route" size={11} aria-hidden="true" />
                         {fmtKm(step.distance_km)}
                       </span>
                     )}
                     {Number(step.elevation_gain_m) > 0 && (
-                      <span className="flex items-center gap-1">
+                      <span className="flex items-center gap-[var(--space-1)]">
                         <Icon name="mountain" size={11} aria-hidden="true" />+
                         {fmtMeters(step.elevation_gain_m)}
                       </span>
@@ -172,18 +174,18 @@ export function StepsTimeline({ steps, dayIndex, phase }: StepsTimelineProps) {
               </Link>
             ))
           ) : (
-            <div className="glass-sub-card rounded-xl border border-white/40 p-4 space-y-1 text-center">
-              <p className="text-xs font-bold text-[var(--lkv-text-primary)]">
+            <Card variant="compact" className="space-y-[var(--space-1)] text-center">
+              <p className="text-[length:var(--lkv-text-footnote)] font-bold text-[color:var(--lkv-text-primary)]">
                 Aucune étape pour le jour {clampedDay}
               </p>
-              <p className="text-[11px] text-[var(--lkv-text-secondary)]">
+              <p className="text-[11px] text-[color:var(--lkv-text-secondary)]">
                 La suite du déroulé apparaît dès qu&apos;une étape est planifiée.
               </p>
-            </div>
+            </Card>
           )}
         </div>
       </div>
-    </div>
+    </Card>
   );
 }
 

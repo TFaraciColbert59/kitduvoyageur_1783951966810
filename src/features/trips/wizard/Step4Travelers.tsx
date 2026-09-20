@@ -4,6 +4,7 @@ import Icon from '@/components/ui/Icon';
 import React from 'react';
 import type { GroupType } from './wizardTypes';
 import { Users, User, Heart, Smile } from 'lucide-react';
+import { Button, Card, Chip, IconButton } from '@/components/ui';
 
 interface Step4TravelersProps {
   travelersCount: number;
@@ -28,6 +29,9 @@ const GROUP_TYPES: Array<{
   { id: 'family', label: 'En famille', Icon: Smile },
 ];
 
+const FIELD_CLASS =
+  'min-h-[48px] w-full rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] text-[length:var(--lkv-text-body-sm)] text-[color:var(--lkv-text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]';
+
 export function Step4Travelers({
   travelersCount,
   groupType,
@@ -40,128 +44,132 @@ export function Step4Travelers({
   onDescriptionChange,
 }: Step4TravelersProps) {
   return (
-    <div className="space-y-6">
+    <div className="space-y-[var(--space-6)]">
       <div>
-        <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-lkv-secondary mb-1">
+        <div className="mb-1 flex items-center gap-[var(--space-2)] text-[length:var(--lkv-text-footnote)] font-semibold uppercase tracking-wider text-[color:var(--lkv-secondary)]">
           <Icon name="users" size={14} />
           <span>Étape 4 sur 5</span>
         </div>
-        <h2 className="text-2xl sm:text-3xl font-bold text-lkv-primary">
+        <h2 className="text-[length:var(--lkv-text-title-sm)] font-bold text-[color:var(--lkv-text-primary)] sm:text-[length:var(--lkv-text-title-lg)]">
           Qui prend part à l&apos;aventure ?
         </h2>
-        <p className="text-sm text-[var(--lkv-text-muted)] mt-1">
+        <p className="mt-1 text-[length:var(--lkv-text-footnote)] text-[color:var(--lkv-text-muted)]">
           Le nombre de participants permet de dimensionner le matériel partagé (abri, popote,
           filtrage) et d&apos;équilibrer les sacs.
         </p>
       </div>
 
       {/* 1. Nombre de participants avec Stepper */}
-      <div className="glass-sub-card p-4 sm:p-5 rounded-2xl space-y-4">
+      <Card className="space-y-[var(--space-4)]">
         <div className="flex items-center justify-between">
-          <span className="text-xs font-semibold text-lkv-primary uppercase tracking-wider">
+          <span className="text-[length:var(--lkv-text-footnote)] font-semibold uppercase tracking-wider text-[color:var(--lkv-text-primary)]">
             Nombre de voyageurs
           </span>
-          <div className="flex items-center gap-3">
-            <button
+          <div className="flex items-center gap-[var(--space-3)]">
+            <IconButton
               type="button"
+              size="sm"
               onClick={() => onTravelersCountChange(Math.max(1, travelersCount - 1))}
               disabled={travelersCount <= 1}
               aria-label="Diminuer le nombre de voyageurs"
-              className="glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8 disabled:opacity-30 flex items-center justify-center transition-all"
             >
               <Icon name="minus" size={16} />
-            </button>
-            <span className="text-xl font-bold text-lkv-primary w-8 text-center">
+            </IconButton>
+            <span className="w-8 text-center text-[length:var(--lkv-text-title-sm)] font-bold text-[color:var(--lkv-text-primary)]">
               {travelersCount}
             </span>
-            <button
+            <IconButton
               type="button"
+              size="sm"
+              variant="solid"
               onClick={() => onTravelersCountChange(Math.min(50, travelersCount + 1))}
               disabled={travelersCount >= 50}
               aria-label="Augmenter le nombre de voyageurs"
-              className="glass-circle-btn primary !w-8 !h-8 !min-w-8 !min-h-8 disabled:opacity-30 flex items-center justify-center transition-all"
             >
               <Icon name="plus" size={16} />
-            </button>
+            </IconButton>
           </div>
         </div>
 
         {/* Boutons rapides */}
-        <div className="grid grid-cols-4 gap-2 pt-1">
+        <div className="grid grid-cols-4 gap-[var(--space-2)] pt-[var(--space-1)]">
           {[1, 2, 4, 6].map((n) => (
-            <button
+            <Chip
               key={n}
-              type="button"
+              selected={travelersCount === n}
               onClick={() => {
                 onTravelersCountChange(n);
                 if (n === 1) onGroupTypeChange('solo');
                 else if (n === 2) onGroupTypeChange('couple');
                 else onGroupTypeChange('friends');
               }}
-              className={`glass-capsule-btn !py-2 text-xs font-semibold transition-all ${
-                travelersCount === n ? 'primary' : ''
-              }`}
             >
               {n === 1 ? '1 (Solo)' : n === 2 ? '2 (Duo)' : `${n} personnes`}
-            </button>
+            </Chip>
           ))}
         </div>
-      </div>
+      </Card>
 
       {/* 2. Type de groupe */}
       <div>
-        <label className="block text-xs font-semibold text-lkv-primary uppercase tracking-wider mb-2.5">
+        <label className="mb-[var(--space-3)] block text-[length:var(--lkv-text-footnote)] font-semibold uppercase tracking-wider text-[color:var(--lkv-text-primary)]">
           Type de groupe
         </label>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2" role="radiogroup" aria-label="Type de groupe">
+        <div
+          className="grid grid-cols-2 gap-[var(--space-2)] sm:grid-cols-4"
+          role="radiogroup"
+          aria-label="Type de groupe"
+        >
           {GROUP_TYPES.map(({ id, label, Icon }) => {
             const active = groupType === id;
             return (
-              <button
+              <Card
                 key={id}
-                type="button"
+                variant="interactive"
                 role="radio"
                 aria-checked={active}
+                selected={active}
                 onClick={() => onGroupTypeChange(id)}
-                className={`glass-capsule-btn flex items-center justify-center gap-2 !p-3 text-center transition-all ${
-                  active ? 'primary' : ''
-                }`}
+                className="flex items-center justify-center gap-[var(--space-2)] text-center"
               >
                 <Icon size={16} />
-                <span className="text-xs font-semibold">{label}</span>
-              </button>
+                <span className="text-[length:var(--lkv-text-footnote)] font-semibold text-[color:var(--lkv-text-primary)]">
+                  {label}
+                </span>
+              </Card>
             );
           })}
         </div>
       </div>
 
       {/* 3. Titre et description de l'expédition */}
-      <div className="space-y-4 pt-2">
+      <div className="space-y-[var(--space-4)] pt-[var(--space-2)]">
         <div>
-          <div className="flex items-center justify-between mb-1">
-            <label className="text-xs font-semibold text-lkv-primary">
+          <div className="mb-1 flex items-center justify-between">
+            <label className="text-[length:var(--lkv-text-footnote)] font-semibold text-[color:var(--lkv-text-primary)]">
               Nom de l&apos;expédition
             </label>
-            <button
+            <Button
               type="button"
+              size="sm"
+              variant="secondary"
+              icon={<Icon name="sparkles" size={11} />}
               onClick={() => onTitleChange(defaultSuggestedTitle)}
-              className="glass-capsule-btn !min-h-[44px] !py-1 !px-3 text-[11px] font-semibold flex items-center gap-1"
             >
-              <Icon name="sparkles" size={11} />
-              <span>Suggérer le titre</span>
-            </button>
+              Suggérer le titre
+            </Button>
           </div>
           <input
             type="text"
             value={title}
             placeholder={defaultSuggestedTitle}
             onChange={(e) => onTitleChange(e.target.value)}
-            className="w-full px-4 py-3 bg-white rounded-xl border border-black/10 text-sm focus:ring-2 focus:ring-lkv-primary focus:outline-none min-h-[48px] text-lkv-primary font-medium"
+            className={`${FIELD_CLASS} font-medium`}
           />
         </div>
 
         <div>
-          <label className="block text-xs font-semibold text-lkv-primary mb-1">
+          <label className="mb-1 block text-[length:var(--lkv-text-footnote)] font-semibold text-[color:var(--lkv-text-primary)]">
             Notes & objectifs (facultatif)
           </label>
           <textarea
@@ -169,19 +177,19 @@ export function Step4Travelers({
             value={description}
             onChange={(e) => onDescriptionChange(e.target.value)}
             placeholder="Ex : Première expérience de haute altitude, objectif autonomie complète en tente..."
-            className="w-full px-4 py-3 bg-white rounded-xl border border-black/10 text-xs focus:ring-2 focus:ring-lkv-primary focus:outline-none resize-none text-[var(--lkv-text-secondary)]"
+            className={`${FIELD_CLASS} resize-none text-[color:var(--lkv-text-secondary)]`}
           />
         </div>
       </div>
 
       {/* Info calcul de sac */}
-      <div className="p-3.5 bg-[var(--lkv-success-bg)] border border-[var(--lkv-success-bg)] rounded-xl flex items-center gap-2.5 text-xs text-lkv-primary">
-        <Icon name="info" size={16} className="text-lkv-secondary shrink-0" />
-        <span>
+      <Card tone="sage" className="flex items-center gap-[var(--space-2)]">
+        <Icon name="info" size={16} className="shrink-0 text-[color:var(--lkv-secondary)]" />
+        <span className="text-[length:var(--lkv-text-footnote)] text-[color:var(--lkv-text-primary)]">
           Le moteur ajustera la liste de matériel : les tentes et réchauds sont partagés, tandis que
           les duvets et vêtements sont comptés individuellement.
         </span>
-      </div>
+      </Card>
     </div>
   );
 }

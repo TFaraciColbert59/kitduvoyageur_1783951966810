@@ -1,11 +1,21 @@
 'use client';
 
 import Icon from '@/components/ui/Icon';
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import type { GearCategory, GearStatus } from '../../types/preparation.types';
 import { usePreparationStore } from '../../stores/usePreparationStore';
 import { AddGearModal } from '../modals/AddGearModal';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
+import {
+  Badge,
+  Button,
+  Chip,
+  EmptyState,
+  IconButton,
+  ListItem,
+  Tabs,
+  type TabOption,
+} from '@/components/ui';
 
 const CATEGORIES: { key: GearCategory | 'all'; label: string; icon: string }[] = [
   { key: 'all', label: 'Tout', icon: '🎒' },
@@ -41,24 +51,35 @@ export function GearTab() {
     return true;
   });
 
+  const categoryOptions = useMemo<readonly TabOption[]>(
+    () =>
+      CATEGORIES.map((cat) => ({
+        id: cat.key,
+        label: cat.label,
+        icon: <span aria-hidden="true">{cat.icon}</span>,
+      })),
+    []
+  );
+
+  const statusOptions = useMemo<readonly TabOption[]>(
+    () => [
+      { id: 'all', label: 'Tous', count: items.length },
+      { id: 'packed', label: 'Dans le sac', count: items.filter((i) => i.status === 'packed').length },
+      { id: 'owned', label: 'Possédés', count: items.filter((i) => i.status === 'owned').length },
+      { id: 'to_buy', label: 'À acheter', count: items.filter((i) => i.status === 'to_buy').length },
+    ],
+    [items]
+  );
+
   const getStatusBadge = (status: GearStatus) => {
     switch (status) {
       case 'packed':
-        return {
-          label: 'Dans le sac',
-          bg: 'bg-emerald-100 text-emerald-900 border-emerald-300',
-        };
+        return { label: 'Dans le sac', tone: 'sage' as const };
       case 'owned':
-        return {
-          label: 'Possédé',
-          bg: 'bg-blue-100 text-blue-900 border-blue-300',
-        };
+        return { label: 'Possédé', tone: 'info' as const };
       case 'to_buy':
       default:
-        return {
-          label: 'À acheter',
-          bg: 'bg-amber-100 text-amber-900 border-amber-300',
-        };
+        return { label: 'À acheter', tone: 'warn' as const };
     }
   };
 
@@ -70,190 +91,123 @@ export function GearTab() {
   };
 
   return (
-    <div className="space-y-3 animate-in fade-in duration-200">
-      {/* Category Horizontal Filter Scroller */}
-      <div className="flex gap-1.5 overflow-x-auto no-scrollbar py-0.5">
-        {CATEGORIES.map((cat) => (
-          <button
-            key={cat.key}
-            type="button"
-            onClick={() => {
-              triggerHaptic('light');
-              setCategoryFilter(cat.key);
-            }}
-            className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-1.5 ${
-              categoryFilter === cat.key
-                ? 'bg-[#17402C] text-white shadow-xs'
-                : 'bg-white/85 dark:bg-black/50 text-[#17402C] dark:text-[#E7E3D6] border border-white/80 dark:border-white/10 shadow-2xs hover:bg-white'
-            }`}
-          >
-            <span>{cat.icon}</span>
-            <span>{cat.label}</span>
-          </button>
-        ))}
-      </div>
+    <div className="space-y-[var(--space-3)] animate-in fade-in duration-200">
+      <Tabs
+        variant="scrollable"
+        options={categoryOptions}
+        value={categoryFilter}
+        ariaLabel="Catégories d'équipement"
+        onChange={(key) => {
+          triggerHaptic('light');
+          setCategoryFilter(key as GearCategory | 'all');
+        }}
+      />
 
-      {/* Status Filter Tabs & Add CTA */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2">
-        <div className="flex items-center gap-1 p-1 bg-white/85 dark:bg-black/50 backdrop-blur-md rounded-2xl border border-white/80 dark:border-white/10 shadow-2xs overflow-x-auto no-scrollbar">
-          <button
-            type="button"
-            onClick={() => setStatusFilter('all')}
-            className={`px-2.5 py-1 rounded-xl text-[11px] font-bold whitespace-nowrap transition-all ${
-              statusFilter === 'all'
-                ? 'bg-[#17402C] text-white shadow-xs'
-                : 'text-[#17402C] dark:text-[#E7E3D6]'
-            }`}
-          >
-            Tous ({items.length})
-          </button>
-          <button
-            type="button"
-            onClick={() => setStatusFilter('packed')}
-            className={`px-2.5 py-1 rounded-xl text-[11px] font-bold whitespace-nowrap transition-all ${
-              statusFilter === 'packed'
-                ? 'bg-emerald-800 text-white shadow-xs'
-                : 'text-[#17402C] dark:text-[#E7E3D6]'
-            }`}
-          >
-            Dans le sac ({items.filter((i) => i.status === 'packed').length})
-          </button>
-          <button
-            type="button"
-            onClick={() => setStatusFilter('owned')}
-            className={`px-2.5 py-1 rounded-xl text-[11px] font-bold whitespace-nowrap transition-all ${
-              statusFilter === 'owned'
-                ? 'bg-blue-800 text-white shadow-xs'
-                : 'text-[#17402C] dark:text-[#E7E3D6]'
-            }`}
-          >
-            Possédés ({items.filter((i) => i.status === 'owned').length})
-          </button>
-          <button
-            type="button"
-            onClick={() => setStatusFilter('to_buy')}
-            className={`px-2.5 py-1 rounded-xl text-[11px] font-bold whitespace-nowrap transition-all ${
-              statusFilter === 'to_buy'
-                ? 'bg-amber-800 text-white shadow-xs'
-                : 'text-[#17402C] dark:text-[#E7E3D6]'
-            }`}
-          >
-            À acheter ({items.filter((i) => i.status === 'to_buy').length})
-          </button>
-        </div>
+      <div className="flex flex-col items-stretch justify-between gap-[var(--space-2)] sm:flex-row sm:items-center">
+        <Tabs
+          options={statusOptions}
+          value={statusFilter}
+          ariaLabel="Statut du matériel"
+          className="overflow-x-auto"
+          onChange={(status) => setStatusFilter(status as GearStatus | 'all')}
+        />
 
-        <button
-          type="button"
+        <Button
+          icon={<Icon name="plus" size={14} />}
           onClick={() => {
             triggerHaptic('light');
             setIsAddModalOpen(true);
           }}
-          className="h-8.5 px-4 rounded-full bg-[#17402C] hover:bg-[#1f543a] text-white font-bold text-xs shadow-sm flex items-center justify-center gap-1.5 shrink-0 active:scale-95 transition-all"
+          className="shrink-0"
         >
-          <Icon name="plus" size={14} />
-          <span>Ajouter un équipement</span>
-        </button>
+          Ajouter un équipement
+        </Button>
       </div>
 
-      {/* Items List */}
-      <div className="space-y-2">
-        {filteredItems.length === 0 ? (
-          <div className="p-8 rounded-3xl bg-white/90 dark:bg-[#17402C]/90 backdrop-blur-xl border border-white/80 text-center text-xs text-[#5A7064] space-y-2 shadow-xs">
-            <p>Aucun équipement dans cette sélection.</p>
-            <button
-              type="button"
-              onClick={() => setIsAddModalOpen(true)}
-              className="text-forest-700 font-bold hover:underline"
-            >
-              + Ajouter un premier équipement
-            </button>
-          </div>
-        ) : (
-          filteredItems.map((item) => {
+      {filteredItems.length === 0 ? (
+        <EmptyState
+          compact
+          icon={<Icon name="backpack" size={24} />}
+          title="Aucun équipement dans cette sélection."
+          actionLabel="Ajouter un premier équipement"
+          onAction={() => setIsAddModalOpen(true)}
+        />
+      ) : (
+        <ul className="space-y-[var(--space-2)]">
+          {filteredItems.map((item) => {
             const badge = getStatusBadge(item.status);
 
             return (
-              <div
+              <ListItem
                 key={item.id}
-                className="p-3.5 sm:p-4 rounded-2xl bg-white/90 dark:bg-[#17402C]/90 backdrop-blur-xl border border-white/80 dark:border-white/20 flex items-center justify-between gap-3 shadow-xs hover:shadow-sm transition-all"
-              >
-                {/* Left: Info */}
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-1.5 flex-wrap">
-                    <h4 className="text-xs sm:text-sm font-bold text-[#17402C] dark:text-[#E7E3D6] truncate">
-                      {item.name}
-                    </h4>
-
+                className="border border-[color:var(--lkv-border-subtle)] bg-[color:var(--lkv-surface-card)]"
+                title={
+                  <span className="flex flex-wrap items-center gap-[var(--space-2)]">
+                    <span className="truncate">{item.name}</span>
                     {item.isVital && (
-                      <span className="px-1.5 py-0.5 rounded-md bg-red-100 text-red-800 text-[9px] font-bold border border-red-300 flex items-center gap-0.5">
+                      <Badge tone="danger">
                         <Icon name="shield" size={10} /> VITAL
-                      </span>
+                      </Badge>
                     )}
-
                     {item.isConsumable && (
-                      <span className="px-1.5 py-0.5 rounded-md bg-sand-100 text-sand-800 text-[9px] font-bold border border-sand-300 flex items-center gap-0.5">
+                      <Badge tone="warn">
                         <Icon name="flame" size={10} /> VIVRES
-                      </span>
+                      </Badge>
                     )}
-                  </div>
-
-                  <div className="flex items-center gap-2.5 mt-1 text-[11px] text-[#365233] dark:text-[#9AAD9E] font-mono">
-                    <span className="font-extrabold text-[#17402C] dark:text-white">
+                  </span>
+                }
+                subtitle={
+                  <span className="flex flex-wrap items-center gap-[var(--space-2)] font-mono">
+                    <span className="font-extrabold text-[color:var(--lkv-text-primary)]">
                       {item.weightGrams} g
                     </span>
-                    {item.brand && <span className="text-[#5A7064]">· {item.brand}</span>}
-                    {item.quantity > 1 && (
-                      <span className="text-[#5A7064]">· Qté: {item.quantity}</span>
-                    )}
-                  </div>
-                </div>
+                    {item.brand && <span>· {item.brand}</span>}
+                    {item.quantity > 1 && <span>· Qté: {item.quantity}</span>}
+                  </span>
+                }
+                trailing={
+                  <span className="flex items-center gap-[var(--space-2)]">
+                    <label
+                      title="Cocher si cet objet est porté sur vous (non pesé dans le Base Weight)"
+                      className="hidden cursor-pointer select-none items-center gap-[var(--space-1)] text-[10px] font-mono font-semibold text-[color:var(--lkv-text-primary)] hover:opacity-80 sm:flex"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={item.isWorn}
+                        onChange={() => {
+                          triggerHaptic('light');
+                          toggleItemWorn(item.id);
+                        }}
+                        className="cursor-pointer rounded accent-[color:var(--sage-600)]"
+                      />
+                      <span>Porté 👕</span>
+                    </label>
 
-                {/* Right: Actions */}
-                <div className="flex items-center gap-2 shrink-0">
-                  {/* Worn checkbox */}
-                  <label
-                    title="Cocher si cet objet est porté sur vous (non pesé dans le Base Weight)"
-                    className="flex items-center gap-1 text-[10px] font-mono font-semibold cursor-pointer select-none text-[#17402C] dark:text-[#E7E3D6] hover:opacity-80"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={item.isWorn}
-                      onChange={() => {
+                    <Chip
+                      tone={badge.tone}
+                      onClick={() => setItemStatus(item.id, cycleStatus(item.status))}
+                    >
+                      {badge.label}
+                    </Chip>
+
+                    <IconButton
+                      aria-label="Supprimer l'équipement"
+                      title="Supprimer l'équipement"
+                      size="sm"
+                      onClick={() => {
                         triggerHaptic('light');
-                        toggleItemWorn(item.id);
+                        removeItem(item.id);
                       }}
-                      className="rounded text-forest-600 focus:ring-forest-500 cursor-pointer"
-                    />
-                    <span className="hidden sm:inline">Porté 👕</span>
-                  </label>
-
-                  {/* Status cycle button */}
-                  <button
-                    type="button"
-                    onClick={() => setItemStatus(item.id, cycleStatus(item.status))}
-                    className={`px-3 py-1 rounded-xl text-[10px] font-bold border shadow-2xs active:scale-95 transition-all ${badge.bg}`}
-                  >
-                    {badge.label}
-                  </button>
-
-                  {/* Delete button */}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      triggerHaptic('light');
-                      removeItem(item.id);
-                    }}
-                    className="text-[#5A7064] hover:text-red-600 p-1 text-xs transition-colors"
-                    title="Supprimer l'équipement"
-                  >
-                    <Icon name="trash2" size={14} />
-                  </button>
-                </div>
-              </div>
+                    >
+                      <Icon name="trash2" size={14} />
+                    </IconButton>
+                  </span>
+                }
+              />
             );
-          })
-        )}
-      </div>
+          })}
+        </ul>
+      )}
 
       <AddGearModal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} />
     </div>

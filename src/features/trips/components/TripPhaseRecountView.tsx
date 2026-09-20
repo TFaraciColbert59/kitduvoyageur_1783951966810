@@ -2,7 +2,7 @@
 
 import Icon from '@/components/ui/Icon';
 import React, { useState } from 'react';
-import { Card, GlassCapsuleBtn } from '@/components/ui';
+import { Button, Card, Tabs, type TabOption } from '@/components/ui';
 import type { TripFull } from '../types/trip.types';
 import { TripNotesView } from './TripNotesView';
 import { TripBudgetView } from './TripBudgetView';
@@ -18,75 +18,61 @@ export function TripPhaseRecountView({ trip }: TripPhaseRecountViewProps) {
   const [activeSection, setActiveSection] = useState<RecountSectionId>('notes');
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
 
+  const sectionOptions: readonly TabOption[] = [
+    {
+      id: 'notes',
+      label: 'Carnet de bord & Notes',
+      icon: <Icon name="book-open" size={15} />,
+      count: trip.notes?.length ?? 0,
+    },
+    {
+      id: 'budget',
+      label: 'Bilan Dépenses & Soldes',
+      icon: <Icon name="credit-card" size={15} />,
+    },
+  ];
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-[var(--space-6)]">
       {/* 1. Bannière d'accomplissement & Export */}
-      <Card tone="sage" className="p-5 sm:p-6 rounded-3xl border border-white/70">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="flex items-start sm:items-center gap-3.5">
-            <div className="w-12 h-12 rounded-2xl bg-lkv-primary text-white flex items-center justify-center shrink-0 shadow-md">
+      <Card tone="sage">
+        <div className="flex flex-col justify-between gap-[var(--space-4)] sm:flex-row sm:items-center">
+          <div className="flex items-start gap-[var(--space-4)] sm:items-center">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[var(--lkv-radius-md)] bg-[color:var(--lkv-action)] text-[color:var(--lkv-on-action)] shadow-elevation-1">
               <Icon name="sparkles" size={24} />
             </div>
             <div>
-              <span className="text-xs font-bold uppercase tracking-wider text-lkv-secondary">
+              <span className="text-[length:var(--lkv-text-footnote)] font-bold uppercase tracking-wider text-[color:var(--lkv-secondary)]">
                 Phase Raconter · Retour d’Expédition
               </span>
-              <h2 className="text-xl font-extrabold text-lkv-primary mt-0.5">
+              <h2 className="mt-0.5 text-[length:var(--lkv-text-title-sm)] font-extrabold text-[color:var(--lkv-text-primary)]">
                 Récits, Bilan & Partage de l’Aventure
               </h2>
-              <p className="text-xs sm:text-sm text-lkv-secondary mt-1">
+              <p className="mt-1 text-[length:var(--lkv-text-footnote)] text-[color:var(--lkv-text-secondary)] sm:text-[length:var(--lkv-text-body-sm)]">
                 Consignez vos anecdotes, clôturez les comptes et inspirez la communauté.
               </p>
             </div>
           </div>
 
-          <GlassCapsuleBtn
+          <Button
             type="button"
             onClick={() => setIsShareModalOpen(true)}
-            variant="primary"
             size="sm"
             icon={<Icon name="share2" size={15} />}
           >
             Partager / Exporter GPX
-          </GlassCapsuleBtn>
+          </Button>
         </div>
       </Card>
 
       {/* 2. Sous-onglets de la phase Raconter */}
-      <div className="flex items-center gap-2">
-        <button
-          type="button"
-          onClick={() => setActiveSection('notes')}
-          className={`glass-capsule-btn flex items-center gap-2 !px-4 !py-2.5 text-xs sm:text-sm font-semibold transition-all ${
-            activeSection === 'notes' ? 'primary shadow-sm' : ''
-          }`}
-        >
-          <Icon name="book-open" size={15} />
-          <span>Carnet de bord & Notes</span>
-          {trip.notes && trip.notes.length > 0 && (
-            <span
-              className={`text-[10px] px-1.5 py-0.5 rounded-full ${
-                activeSection === 'notes'
-                  ? 'bg-white/20 text-white'
-                  : 'text-[var(--lkv-text-muted)]'
-              }`}
-            >
-              {trip.notes.length}
-            </span>
-          )}
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setActiveSection('budget')}
-          className={`glass-capsule-btn flex items-center gap-2 !px-4 !py-2.5 text-xs sm:text-sm font-semibold transition-all ${
-            activeSection === 'budget' ? 'primary shadow-sm' : ''
-          }`}
-        >
-          <Icon name="credit-card" size={15} />
-          <span>Bilan Dépenses & Soldes</span>
-        </button>
-      </div>
+      <Tabs
+        options={sectionOptions}
+        value={activeSection}
+        ariaLabel="Sections de la phase Raconter"
+        onChange={(id) => setActiveSection(id as RecountSectionId)}
+        className="max-w-xl"
+      />
 
       {/* 3. Contenu de la sous-section */}
       <div>

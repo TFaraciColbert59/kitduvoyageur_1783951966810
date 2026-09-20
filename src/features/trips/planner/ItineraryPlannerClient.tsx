@@ -2,8 +2,9 @@
 
 import Icon from '@/components/ui/Icon';
 import React, { useState, useTransition, useMemo } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { GlassCapsuleBtn, Modal } from '@/components/ui';
+import { Button, Card, ConfirmDialog } from '@/components/ui';
 import type { TripFull } from '@/features/trips/types/trip.types';
 import {
   type PlannerStep,
@@ -379,58 +380,63 @@ export default function ItineraryPlannerClient({
 
   return (
     <div className="space-y-4 pb-16">
-      {/* Header Navigation Glass */}
-      <div className="glass rounded-[var(--lkv-radius-card)] border border-white/60 shadow-sm p-3">
-        <div className="flex items-center justify-between gap-4">
-          <div className="flex items-center gap-2 min-w-0">
+      {/* Header Navigation */}
+      <Card className="p-[var(--space-3)]">
+        <div className="flex items-center justify-between gap-[var(--space-4)]">
+          <div className="flex min-w-0 items-center gap-[var(--space-2)]">
             {isPending && (
-              <span className="text-[11px] text-[var(--lkv-text-secondary)] animate-pulse font-mono">
+              <span className="animate-pulse font-mono text-[11px] text-[color:var(--lkv-text-secondary)]">
                 Enregistrement...
               </span>
             )}
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-[var(--space-2)]">
             <TripInviteButton trip={trip} />
             {canEdit && (
-              <GlassCapsuleBtn
+              <Button
                 type="button"
-                size="sm"
+                variant="secondary"
                 onClick={() => setRenameOpen(true)}
                 aria-label="Renommer l’activité"
-                icon={<Icon name="pencil" className="w-3.5 h-3.5" />}
-                className="!h-11"
+                icon={<Icon name="pencil" size={14} />}
               >
                 <span className="hidden sm:inline">Renommer</span>
-              </GlassCapsuleBtn>
+              </Button>
             )}
-            <GlassCapsuleBtn
+            <Link
               href={tripSectionHref(trip.slug, 'overview')}
-              size="sm"
               aria-label="Voir le cockpit du voyage"
-              icon={<Icon name="map" className="w-3.5 h-3.5" />}
+              className="inline-flex min-h-[var(--control-height-sm)] shrink-0 select-none items-center justify-center gap-[var(--space-2)] whitespace-nowrap rounded-full border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] px-[var(--space-3)] text-[length:var(--lkv-text-footnote)] font-semibold text-[color:var(--card-content)] backdrop-blur-[var(--blur-md)] transition-colors hover:bg-[color:var(--lkv-hover-surface)]"
             >
+              <Icon name="map" size={14} />
               <span className="hidden sm:inline">Cockpit</span>
-            </GlassCapsuleBtn>
+            </Link>
           </div>
         </div>
 
         {/* Toasts flottants discrets */}
         {errorMessage && (
-          <div className="mt-3 bg-[var(--lkv-danger)]/10 text-[var(--lkv-danger)] border border-[var(--lkv-danger)]/20 px-4 py-2 text-xs flex items-center gap-2 rounded-[var(--lkv-radius-md)] animate-in fade-in">
-            <Icon name="alert-circle" className="w-4 h-4 shrink-0" />
+          <Card
+            tone="danger"
+            className="mt-[var(--space-3)] flex items-center gap-[var(--space-2)] px-[var(--space-4)] py-[var(--space-2)] text-[length:var(--lkv-text-footnote)] text-[color:var(--lkv-danger-dark)] animate-in fade-in"
+          >
+            <Icon name="alert-circle" size={16} className="shrink-0" />
             <span>{errorMessage}</span>
-          </div>
+          </Card>
         )}
         {successMessage && (
-          <div className="mt-3 bg-[var(--lkv-success)]/10 text-[var(--lkv-success)] border border-[var(--lkv-success)]/20 px-4 py-2 text-xs flex items-center gap-2 rounded-[var(--lkv-radius-md)] animate-in fade-in">
-            <Icon name="check-circle2" className="w-4 h-4 shrink-0" />
+          <Card
+            tone="sage"
+            className="mt-[var(--space-3)] flex items-center gap-[var(--space-2)] px-[var(--space-4)] py-[var(--space-2)] text-[length:var(--lkv-text-footnote)] text-[color:var(--lkv-text-primary)] animate-in fade-in"
+          >
+            <Icon name="check-circle2" size={16} className="shrink-0" />
             <span>{successMessage}</span>
-          </div>
+          </Card>
         )}
 
         {/* Sélecteur horizontal de journées */}
-        <div className="mt-3 pt-3 border-t border-white/40">
+        <div className="mt-[var(--space-3)] border-t border-[color:var(--lkv-border-subtle)] pt-[var(--space-3)]">
           <DayNavigator
             daysCount={daysCount}
             selectedDay={selectedDay}
@@ -441,7 +447,7 @@ export default function ItineraryPlannerClient({
             canEdit={canEdit}
           />
         </div>
-      </div>
+      </Card>
 
       <PartyPreparationBanner partySize={trip.party_size} />
 
@@ -517,50 +523,19 @@ export default function ItineraryPlannerClient({
       />
 
       {/* Dialogue accessible de confirmation de suppression */}
-      <Modal
+      <ConfirmDialog
         open={dayPendingDeletion !== null}
-        onOpenChange={(v: boolean) => {
-          if (!v) setDayPendingDeletion(null);
+        title={`Supprimer le Jour ${dayPendingDeletion} ?`}
+        description={`Cette journée contient ${steps.filter((s) => s.day_number === dayPendingDeletion).length} étape(s). Confirmez-vous la suppression intégrale de la journée et de ses étapes ?`}
+        confirmLabel="Supprimer définitivement"
+        variant="destructive"
+        onCancel={() => setDayPendingDeletion(null)}
+        onConfirm={() => {
+          const day = dayPendingDeletion;
+          setDayPendingDeletion(null);
+          if (day !== null) executeDeleteDay(day);
         }}
-        title="Supprimer le jour ?"
-        hideTitle
-      >
-        <div className="space-y-4">
-          <div className="flex items-center gap-3 text-[var(--lkv-danger)]">
-            <Icon name="alert-circle" className="w-6 h-6 shrink-0" aria-hidden="true" />
-            <h3 className="font-semibold text-base text-[var(--lkv-text-primary)]">
-              Supprimer le Jour {dayPendingDeletion} ?
-            </h3>
-          </div>
-          <p className="text-sm text-[var(--lkv-text-secondary)] leading-relaxed">
-            Cette journée contient {steps.filter((s) => s.day_number === dayPendingDeletion).length}{' '}
-            étape(s). Confirmez-vous la suppression intégrale de la journée et de ses étapes ?
-          </p>
-          <div className="flex items-center justify-end gap-3 pt-2">
-            <GlassCapsuleBtn
-              type="button"
-              variant="default"
-              size="sm"
-              onClick={() => setDayPendingDeletion(null)}
-            >
-              Annuler
-            </GlassCapsuleBtn>
-            <GlassCapsuleBtn
-              type="button"
-              variant="primary"
-              size="sm"
-              onClick={() => {
-                const day = dayPendingDeletion;
-                setDayPendingDeletion(null);
-                if (day !== null) executeDeleteDay(day);
-              }}
-              className="bg-[var(--lkv-danger)] hover:bg-[var(--lkv-danger)]/90 text-white border-[var(--lkv-danger)]"
-            >
-              Supprimer définitivement
-            </GlassCapsuleBtn>
-          </div>
-        </div>
-      </Modal>
+      />
     </div>
   );
 }

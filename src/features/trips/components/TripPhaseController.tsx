@@ -13,6 +13,11 @@ export interface TripPhaseControllerProps {
   daysUntilStart?: number | null;
 }
 
+/**
+ * TripPhaseController — sélecteur de phase à double ligne (libellé + repère
+ * temporel) et marqueur de phase naturelle : contenu non couvert par `Tabs`,
+ * exception documentée. Surface, typo, couleurs et états consomment les tokens.
+ */
 export function TripPhaseController({
   activePhase,
   naturalPhase,
@@ -51,7 +56,7 @@ export function TripPhaseController({
   ];
 
   return (
-    <div className="w-full glass-capsule-bar p-1.5">
+    <div className="w-full rounded-full border border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-muted)] p-1.5">
       <div
         className="grid grid-cols-3 gap-1.5"
         role="tablist"
@@ -68,27 +73,31 @@ export function TripPhaseController({
               role="tab"
               aria-selected={isSelected}
               onClick={() => onPhaseChange(p.id)}
-              className={`glass-capsule-segment relative flex flex-col sm:flex-row items-center justify-center gap-1.5 sm:gap-2.5 !py-2 sm:!py-3 !px-2 font-medium transition-all duration-200 min-h-[52px] select-none ${
-                isSelected ? 'active' : ''
+              className={`relative flex min-h-[52px] select-none flex-col items-center justify-center gap-1.5 rounded-full px-2 py-2 font-medium transition-colors duration-200 sm:flex-row sm:gap-2.5 sm:py-3 ${
+                isSelected
+                  ? 'bg-[color:var(--lkv-surface-card)] text-[color:var(--lkv-text-primary)] shadow-elevation-1'
+                  : 'text-[color:var(--lkv-text-secondary)] hover:bg-[color:var(--lkv-hover-surface)]'
               }`}
             >
               {/* Icône de la phase */}
               <span className="z-10">{p.icon}</span>
 
               {/* Titre & Sous-titre */}
-              <div className="text-center sm:text-left z-10">
-                <div className="text-xs sm:text-sm font-extrabold leading-tight">{p.label}</div>
-                <div className="text-[10px] hidden sm:block font-medium truncate">{p.subLabel}</div>
+              <div className="z-10 text-center sm:text-left">
+                <div className="text-[length:var(--lkv-text-footnote)] font-extrabold leading-tight">
+                  {p.label}
+                </div>
+                <div className="hidden truncate text-[10px] font-medium sm:block">{p.subLabel}</div>
               </div>
 
               {/* Pastille indiquant la phase temporelle naturelle en cours */}
               {isNatural && (
                 <span
                   title="Phase actuelle du voyage"
-                  className={`absolute top-1.5 right-1.5 sm:top-2 sm:right-2.5 z-10 flex h-2 w-2 rounded-full ${
+                  className={`absolute right-1.5 top-1.5 z-10 flex h-2 w-2 rounded-full sm:right-2.5 sm:top-2 ${
                     isSelected
-                      ? 'bg-[var(--lkv-accent)]'
-                      : 'bg-[var(--lkv-success)] ring-2 ring-white'
+                      ? 'bg-[color:var(--lkv-accent)]'
+                      : 'bg-[color:var(--lkv-success)] ring-2 ring-white'
                   }`}
                 />
               )}

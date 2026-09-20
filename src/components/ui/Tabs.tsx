@@ -10,6 +10,8 @@ export interface TabOption {
   label: string;
   icon?: React.ReactNode;
   count?: number;
+  /** Pastille libre (score, libellé) — prioritaire sur `count`. */
+  badge?: React.ReactNode;
 }
 
 export interface TabsProps {
@@ -71,11 +73,11 @@ export function Tabs({
             >
               {option.icon}
               {option.label}
-              {typeof option.count === 'number' && option.count > 0 && (
+              {option.badge ?? (typeof option.count === 'number' && option.count > 0 && (
                 <span className="ml-[var(--space-1)] rounded-full bg-black/10 px-[6px] text-[length:var(--lkv-text-caption-2)]">
                   {option.count > 9 ? '9+' : option.count}
                 </span>
-              )}
+              ))}
             </button>
           );
         })}
@@ -111,11 +113,11 @@ export function Tabs({
           >
             {option.icon}
             {option.label}
-            {typeof option.count === 'number' && option.count > 0 && (
+            {option.badge ?? (typeof option.count === 'number' && option.count > 0 && (
               <span className="ml-[var(--space-1)] rounded-full bg-black/10 px-[6px] text-[length:var(--lkv-text-caption-2)]">
                 {option.count > 9 ? '9+' : option.count}
               </span>
-            )}
+            ))}
           </button>
         );
       })}

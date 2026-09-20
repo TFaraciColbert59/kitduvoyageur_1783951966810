@@ -471,7 +471,9 @@ describe('fix round 1 — kit desktop virtualisé (>50 objets)', () => {
   it('la branche non virtualisée reste revealée', () => {
     const source = kitSource();
     const nonVirtual = source.slice(
-      source.indexOf('<div ref={containerRef} className="divide-y divide-white/40">')
+      source.indexOf(
+        '<div ref={containerRef} className="divide-y divide-[color:var(--lkv-border-subtle)]">'
+      )
     );
     expect(nonVirtual).toContain('<LiveArrivalReveal');
   });

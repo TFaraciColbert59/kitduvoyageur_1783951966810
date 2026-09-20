@@ -5,6 +5,10 @@ import { Modal } from '@/components/ui/Modal';
 import React, { useState } from 'react';
 import type { Proposal, LayerId } from '@/features/trips/schemas/autoGen.schema';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
+import { Badge, Button, Card, IconButton } from '@/components/ui';
+
+const FIELD_CLASS =
+  'min-h-[var(--control-height-md)] w-full rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] text-[length:var(--lkv-text-body-sm)] text-[var(--lkv-text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]';
 
 export interface ProposalCardProps {
   proposal: Proposal<any>;
@@ -126,26 +130,23 @@ export const ProposalCard: React.FC<ProposalCardProps> = ({
   const priceEur = currentItem.value?.priceEur ?? currentItem.value?.totalPerPersonEur;
 
   return (
-    <div
+    <Card
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
       data-locked={proposal.locked ? 'true' : 'false'}
-      className={`glass relative rounded-2xl p-4 transition-all duration-200 select-none ${
-        proposal.locked ? 'tone-warn' : ''
-      }`}
+      tone={proposal.locked ? 'warn' : 'neutral'}
+      className="relative select-none transition-all duration-200"
     >
       {/* En-tête : Couche + Provenance + Cadenas (Geste 2) */}
-      <div className="flex items-center justify-between gap-2 mb-2">
-        <div className="flex flex-wrap items-center gap-1.5">
-          <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-[var(--lkv-surface-muted)]  text-[var(--lkv-text-secondary)] ">
-            {LAYER_LABELS[proposal.layer] || proposal.layer}
-          </span>
+      <div className="mb-[var(--space-2)] flex items-center justify-between gap-[var(--space-2)]">
+        <div className="flex flex-wrap items-center gap-[var(--space-2)]">
+          <Badge tone="stone">{LAYER_LABELS[proposal.layer] || proposal.layer}</Badge>
           {currentItem.confidence === 'low' || currentItem.provenance?.source === 'estimated' ? (
-            <span className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full bg-[var(--lkv-warning)]  text-[var(--lkv-warning-dark)]  border border-[var(--lkv-warning)] ">
-              <Icon name="help-circle" className="w-3 h-3 text-[var(--lkv-warning-dark)] " />
+            <Badge tone="warn" className="gap-1">
+              <Icon name="help-circle" size={12} className="text-[color:var(--lkv-warning-dark)]" />
               <span className="font-medium">Estimation</span>
               {currentItem.provenance?.sourceRef && (
-                <span className="text-[var(--lkv-warning-dark)]  hidden sm:inline">
+                <span className="hidden text-[color:var(--lkv-warning-dark)] sm:inline">
                   · {currentItem.provenance.sourceRef}
                 </span>
               )}
@@ -156,16 +157,16 @@ export const ProposalCard: React.FC<ProposalCardProps> = ({
                 }
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center text-[10px] font-semibold underline underline-offset-2 ml-1 text-[var(--lkv-warning-dark)]  hover:text-[var(--lkv-warning-dark)]"
+                className="ml-1 inline-flex items-center text-[10px] font-semibold text-[color:var(--lkv-warning-dark)] underline underline-offset-2 hover:text-[color:var(--lkv-warning-dark)]"
                 onClick={(e) => e.stopPropagation()}
               >
                 vérifier
-                <Icon name="external-link" className="w-2.5 h-2.5 ml-0.5" />
+                <Icon name="external-link" size={10} className="ml-0.5" />
               </a>
-            </span>
+            </Badge>
           ) : (
-            <span className="flex items-center text-[11px] text-[var(--lkv-text-muted)] ">
-              <Icon name="shield-check" className="w-3.5 h-3.5 mr-1 text-[var(--lkv-secondary)]" />
+            <span className="flex items-center text-[11px] text-[color:var(--lkv-text-muted)]">
+              <Icon name="shield-check" size={14} className="mr-1 text-[color:var(--lkv-secondary)]" />
               {PROVENANCE_LABELS[currentItem.provenance?.source] || currentItem.provenance?.source}
               {currentItem.provenance?.sourceRef && ` · ${currentItem.provenance.sourceRef}`}
             </span>
@@ -173,96 +174,89 @@ export const ProposalCard: React.FC<ProposalCardProps> = ({
         </div>
 
         {/* Bouton de Verrouillage (Geste 2) — Target >= 44x44px */}
-        <button
+        <IconButton
           type="button"
+          size="sm"
+          variant={proposal.locked ? 'solid' : 'ghost'}
           onClick={toggleLock}
           aria-label={
             proposal.locked ? 'Déverrouiller cette proposition' : 'Verrouiller cette proposition'
           }
-          className={`glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8 flex items-center justify-center transition-colors ${
-            proposal.locked ? 'primary' : ''
-          }`}
         >
-          {proposal.locked ? (
-            <Icon name="lock" className="w-4 h-4" />
-          ) : (
-            <Icon name="unlock" className="w-4 h-4" />
-          )}
-        </button>
+          {proposal.locked ? <Icon name="lock" size={16} /> : <Icon name="unlock" size={16} />}
+        </IconButton>
       </div>
 
       {/* Corps principal : Titre / Valeur */}
-      <div className="my-2">
+      <div className="my-[var(--space-2)]">
         <div className="flex items-baseline justify-between">
-          <h4 className="font-semibold text-[var(--lkv-text-primary)]  text-base leading-snug">
+          <h4 className="text-[length:var(--lkv-text-body)] font-semibold leading-snug text-[color:var(--lkv-text-primary)]">
             {valueName}
           </h4>
           {priceEur !== undefined && (
-            <span className="font-mono font-bold text-[var(--lkv-text-primary)]  text-base ml-2">
+            <span className="ml-[var(--space-2)] font-mono text-[length:var(--lkv-text-body)] font-bold text-[color:var(--lkv-text-primary)]">
               {priceEur} €
             </span>
           )}
         </div>
-        <p className="text-xs text-[var(--lkv-text-muted)]  mt-1 line-clamp-2">
+        <p className="mt-1 line-clamp-2 text-[length:var(--lkv-text-footnote)] text-[color:var(--lkv-text-muted)]">
           {currentItem.rationale}
         </p>
       </div>
 
       {/* Barre basse : Geste 1 (Balayage / Alternatives) & Geste 3 (Dictée) */}
-      <div className="flex items-center justify-between pt-2 border-t border-[var(--lkv-surface-muted)]  mt-3 text-xs text-[var(--lkv-text-muted)]">
+      <div className="mt-[var(--space-3)] flex items-center justify-between border-t border-[color:var(--lkv-border-subtle)] pt-[var(--space-2)] text-[length:var(--lkv-text-footnote)] text-[color:var(--lkv-text-muted)]">
         {/* Contrôles d'alternatives (Geste 1) */}
-        <div className="flex items-center space-x-1">
-          <button
+        <div className="flex items-center gap-[var(--space-1)]">
+          <IconButton
             type="button"
+            size="sm"
             onClick={handlePrevAlt}
             disabled={activeAltIndex === 0}
             aria-label="Alternative précédente"
-            className="glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8 flex items-center justify-center disabled:opacity-30"
           >
-            <Icon name="chevron-left" className="w-4 h-4" />
-          </button>
-          <span className="font-mono text-xs px-1">
+            <Icon name="chevron-left" size={16} />
+          </IconButton>
+          <span className="px-1 font-mono text-[length:var(--lkv-text-footnote)]">
             {activeAltIndex + 1} / {totalProposals}
           </span>
-          <button
+          <IconButton
             type="button"
+            size="sm"
             onClick={handleNextAlt}
             disabled={activeAltIndex >= totalProposals - 1}
             aria-label="Alternative suivante"
-            className="glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8 flex items-center justify-center disabled:opacity-30"
           >
-            <Icon name="chevron-right" className="w-4 h-4" />
-          </button>
-          <span className="text-[11px] text-[var(--lkv-text-subtle)] ml-1 hidden sm:inline">
+            <Icon name="chevron-right" size={16} />
+          </IconButton>
+          <span className="ml-1 hidden text-[11px] text-[color:var(--lkv-text-muted)] sm:inline">
             Balayer pour alterner
           </span>
         </div>
 
         {/* Contrôle Dictée / Réglage fin (Geste 3) */}
-        <button
+        <Button
           type="button"
+          size="sm"
+          variant="secondary"
           onClick={handleVoiceEdit}
           aria-label="Ajuster par commande vocale"
-          className="glass-capsule-btn flex items-center gap-1 !px-2.5 !py-1.5 text-xs font-medium"
+          icon={<Icon name="mic" size={14} className="text-[color:var(--lkv-secondary)]" />}
         >
-          <Icon name="mic" className="w-3.5 h-3.5 text-[var(--lkv-secondary)]" />
-          <span>Ajuster</span>
-        </button>
+          Ajuster
+        </Button>
       </div>
 
       {/* Impact tags */}
       {currentItem.impacts && currentItem.impacts.length > 0 && (
-        <div className="mt-2 flex items-center gap-1">
-          <span className="text-[10px] uppercase font-semibold text-[var(--lkv-text-subtle)]">
+        <div className="mt-[var(--space-2)] flex items-center gap-[var(--space-1)]">
+          <span className="text-[10px] font-semibold uppercase text-[color:var(--lkv-text-muted)]">
             Impact :
           </span>
           {currentItem.impacts.map((imp: string) => (
-            <span
-              key={imp}
-              className="text-[10px] px-1.5 py-0.5 rounded bg-[var(--lkv-warning-bg)]  text-[var(--lkv-warning-dark)]  font-medium"
-            >
+            <Badge key={imp} tone="warn">
               {imp.replace('slot-', '')}
-            </span>
+            </Badge>
           ))}
         </div>
       )}
@@ -275,21 +269,12 @@ export const ProposalCard: React.FC<ProposalCardProps> = ({
         size="sm"
         footer={
           <>
-            <button
-              type="button"
-              onClick={() => setEditOpen(false)}
-              className="glass-capsule-btn !px-4 !py-2 text-xs font-semibold"
-            >
+            <Button type="button" variant="secondary" size="sm" onClick={() => setEditOpen(false)}>
               Annuler
-            </button>
-            <button
-              type="button"
-              onClick={submitEdit}
-              disabled={!editValue.trim()}
-              className="glass-capsule-btn primary px-4 py-2 text-xs font-bold disabled:opacity-50"
-            >
+            </Button>
+            <Button type="button" size="sm" onClick={submitEdit} disabled={!editValue.trim()}>
               Appliquer
-            </button>
+            </Button>
           </>
         }
       >
@@ -299,9 +284,9 @@ export const ProposalCard: React.FC<ProposalCardProps> = ({
           onChange={(e) => setEditValue(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && submitEdit()}
           placeholder="Ajustez ce composant par commande vocale ou texte :"
-          className="glass-input w-full px-3 py-2 text-sm text-[var(--lkv-text-primary)]"
+          className={FIELD_CLASS}
         />
       </Modal>
-    </div>
+    </Card>
   );
 };

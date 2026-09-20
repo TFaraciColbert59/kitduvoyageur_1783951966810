@@ -6,6 +6,7 @@ import { Footprints, Car, Bus, Train, Plane, Ship, Bike, Compass } from 'lucide-
 import type { PlannerStep } from './plannerEngine';
 import { isLlmSuggestion } from '../engine/llmProvenance';
 import { LlmSuggestionBadge } from '../components/LlmSuggestionBadge';
+import { Badge, Card, IconButton } from '@/components/ui';
 
 export interface StepCardProps {
   step: PlannerStep;
@@ -81,68 +82,61 @@ export function StepCard({
   onMoveToDay,
   onDelete,
 }: StepCardProps) {
-  const Icon = getTransportIcon(step.transport_mode);
+  const TransportIcon = getTransportIcon(step.transport_mode);
   const modeLabel = getTransportLabel(step.transport_mode);
   const llmStep = isLlmSuggestion(step.source, step.metadata);
 
   return (
-    <div className="glass rounded-[var(--lkv-radius-card)] p-4 sm:p-5 border border-white/60 shadow-sm transition-all duration-200 hover:shadow-md">
-      <div className="flex items-start justify-between gap-3">
+    <Card className="sm:p-[var(--space-5)]">
+      <div className="flex items-start justify-between gap-[var(--space-3)]">
         {/* En-tête de l'étape & Titre */}
-        <div className="flex items-start gap-3 flex-1 min-w-0">
-          <div className="w-10 h-10 rounded-full glass-sub-card border border-white/60 text-[var(--lkv-primary)] flex items-center justify-center shrink-0 shadow-2xs">
-            <Icon className="w-5 h-5" />
+        <div className="flex min-w-0 flex-1 items-start gap-[var(--space-3)]">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[color:var(--lkv-border-subtle)] bg-[color:var(--lkv-surface-muted)] text-[color:var(--lkv-primary)]">
+            <TransportIcon className="h-5 w-5" />
           </div>
 
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 flex-wrap mb-1">
-              <span className="text-[11px] font-semibold uppercase tracking-wider px-2.5 py-0.5 rounded-full glass-sub-card text-[var(--lkv-primary)] border border-white/60 shadow-2xs">
-                {modeLabel}
-              </span>
+          <div className="min-w-0 flex-1">
+            <div className="mb-1 flex flex-wrap items-center gap-[var(--space-2)]">
+              <Badge tone="stone">{modeLabel}</Badge>
               {llmStep && <LlmSuggestionBadge />}
               {step.location_name && (
-                <span className="text-xs text-[var(--lkv-text-muted)] flex items-center gap-1 truncate max-w-[200px]">
-                  <Icon name="map-pin" className="w-3.5 h-3.5 text-[var(--lkv-primary)] shrink-0" />
+                <span className="flex max-w-[200px] items-center gap-[var(--space-1)] truncate text-[length:var(--lkv-text-footnote)] text-[color:var(--lkv-text-muted)]">
+                  <Icon name="map-pin" size={14} className="shrink-0 text-[color:var(--lkv-primary)]" />
                   {step.location_name}
                 </span>
               )}
             </div>
 
-            <h4 className="font-semibold text-[var(--lkv-text-primary)] text-sm sm:text-base leading-snug break-words">
+            <h4 className="break-words text-[length:var(--lkv-text-footnote)] font-semibold leading-snug text-[color:var(--lkv-text-primary)] sm:text-[length:var(--lkv-text-body-sm)]">
               {step.title}
             </h4>
 
             {step.description && (
-              <p className="text-xs text-[var(--lkv-text-muted)] mt-1 line-clamp-2 leading-relaxed">
+              <p className="mt-1 line-clamp-2 text-[length:var(--lkv-text-footnote)] leading-relaxed text-[color:var(--lkv-text-muted)]">
                 {step.description}
               </p>
             )}
 
             {/* Badges de métriques */}
-            <div className="flex items-center gap-2 mt-3 flex-wrap text-xs font-medium">
+            <div className="mt-[var(--space-3)] flex flex-wrap items-center gap-[var(--space-2)] text-[length:var(--lkv-text-footnote)] font-medium">
               {step.distance_km != null && step.distance_km > 0 && (
-                <span className="inline-flex items-center gap-1 glass-sub-card px-2.5 py-1 rounded-full border border-white/60 text-xs font-semibold text-[var(--lkv-primary)] shadow-2xs">
-                  {step.distance_km} km
-                </span>
+                <Badge tone="sage">{step.distance_km} km</Badge>
               )}
               {step.elevation_gain_m != null && step.elevation_gain_m > 0 && (
-                <span className="inline-flex items-center gap-1 glass-sub-card px-2.5 py-1 rounded-full border border-white/60 text-xs font-semibold text-[var(--lkv-primary)] shadow-2xs">
-                  +{step.elevation_gain_m}m D+
-                </span>
+                <Badge tone="sage">+{step.elevation_gain_m}m D+</Badge>
               )}
               {step.elevation_loss_m != null && step.elevation_loss_m > 0 && (
-                <span className="inline-flex items-center gap-1 glass-sub-card px-2.5 py-1 rounded-full border border-white/60 text-xs font-semibold text-[var(--lkv-text-muted)] shadow-2xs">
-                  -{step.elevation_loss_m}m D-
-                </span>
+                <Badge tone="stone">-{step.elevation_loss_m}m D-</Badge>
               )}
               {step.accommodation_name && (
-                <span className="inline-flex items-center gap-1 glass-sub-card px-2.5 py-1 rounded-full border border-white/60 text-xs text-[var(--lkv-primary)] font-medium shadow-2xs truncate max-w-[200px]">
+                <Badge tone="stone" className="max-w-[200px] truncate">
                   <Icon
                     name="bed-double"
-                    className="w-3.5 h-3.5 text-[var(--lkv-primary)] shrink-0"
+                    size={14}
+                    className="shrink-0 text-[color:var(--lkv-primary)]"
                   />
                   {step.accommodation_name}
-                </span>
+                </Badge>
               )}
             </div>
           </div>
@@ -150,64 +144,64 @@ export function StepCard({
 
         {/* Contrôles tactiles et accessibles (min 44px) */}
         {canEdit && (
-          <div className="flex flex-col sm:flex-row items-center gap-1.5 shrink-0 ml-2">
+          <div className="ml-[var(--space-2)] flex shrink-0 flex-col items-center gap-[var(--space-1)] sm:flex-row">
             {/* Monter / Descendre */}
-            <div className="flex sm:flex-col items-center gap-1">
-              <button
+            <div className="flex items-center gap-[var(--space-1)] sm:flex-col">
+              <IconButton
                 type="button"
+                size="sm"
                 onClick={() => onMoveUp(step.id)}
                 disabled={isFirst}
                 aria-label="Monter cette étape"
-                className="glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8 disabled:opacity-30 flex items-center justify-center transition-all active:scale-95"
               >
-                <Icon name="chevron-up" className="w-4 h-4" />
-              </button>
-              <button
+                <Icon name="chevron-up" size={16} />
+              </IconButton>
+              <IconButton
                 type="button"
+                size="sm"
                 onClick={() => onMoveDown(step.id)}
                 disabled={isLast}
                 aria-label="Descendre cette étape"
-                className="glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8 disabled:opacity-30 flex items-center justify-center transition-all active:scale-95"
               >
-                <Icon name="chevron-down" className="w-4 h-4" />
-              </button>
+                <Icon name="chevron-down" size={16} />
+              </IconButton>
             </div>
 
             {/* Déplacer vers un autre jour */}
-            <button
+            <IconButton
               type="button"
+              size="sm"
               onClick={() => onMoveToDay(step)}
               aria-label="Déplacer vers un autre jour"
               title="Déplacer vers un autre jour"
-              className="glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8 flex items-center justify-center active:scale-95 transition-all"
             >
-              <Icon name="arrow-right-left" className="w-4 h-4" />
-            </button>
+              <Icon name="arrow-right-left" size={16} />
+            </IconButton>
 
             {/* Modifier */}
-            <button
+            <IconButton
               type="button"
+              size="sm"
               onClick={() => onEdit(step)}
               aria-label="Modifier l'étape"
               title="Modifier"
-              className="glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8 flex items-center justify-center active:scale-95 transition-all"
             >
-              <Icon name="pencil" className="w-4 h-4" />
-            </button>
+              <Icon name="pencil" size={16} />
+            </IconButton>
 
             {/* Supprimer */}
-            <button
+            <IconButton
               type="button"
+              size="sm"
               onClick={() => onDelete(step.id)}
               aria-label="Supprimer l'étape"
               title="Supprimer"
-              className="glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8 flex items-center justify-center active:scale-95 transition-all"
             >
-              <Icon name="trash2" className="w-4 h-4" />
-            </button>
+              <Icon name="trash2" size={16} />
+            </IconButton>
           </div>
         )}
       </div>
-    </div>
+    </Card>
   );
 }

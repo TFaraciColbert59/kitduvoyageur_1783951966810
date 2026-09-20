@@ -3,8 +3,7 @@
 import Icon from '@/components/ui/Icon';
 import Link from 'next/link';
 import React, { useState, useTransition } from 'react';
-import { Card } from '@/components/ui';
-import { GlassCapsuleBtn } from '@/components/ui/GlassCapsuleBtn';
+import { Badge, Button, Card, IconButton } from '@/components/ui';
 import type { TripFull, TripStep, TripStats } from '../types/trip.types';
 import { addExpenseAction } from '@/app/voyages/budget-actions';
 import { TripSafetyView } from './TripSafetyView';
@@ -17,6 +16,9 @@ export interface TripLiveCockpitViewProps {
   dayIndex?: number | null;
   totalDays?: number | null;
 }
+
+const FIELD_SUN_CLASS =
+  'min-h-[44px] w-full rounded-[var(--lkv-radius-control)] border px-[var(--space-3)] text-[length:var(--lkv-text-body-sm)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]';
 
 export function getCurrentStepForDay(steps: TripStep[], dayNumber: number): TripStep | null {
   if (!steps || steps.length === 0) return null;
@@ -137,22 +139,31 @@ export function TripLiveCockpitView({
     });
   };
 
+  const fieldClass = (sunAware = true) =>
+    sunAware && isSunMode
+      ? `${FIELD_SUN_CLASS} border-white/30 bg-black text-white`
+      : `${FIELD_SUN_CLASS} border-[color:var(--lkv-border)] bg-[color:var(--lkv-field-bg)] text-[color:var(--lkv-text-primary)]`;
+
+  const metricCardClass = isSunMode
+    ? 'border-white/10 bg-white/5'
+    : 'border-[color:var(--lkv-border-subtle)] bg-[color:var(--lkv-surface-card)]';
+
   return (
     <div
-      className={`space-y-6 transition-colors duration-200 ${
-        isSunMode ? 'bg-black text-white p-4 sm:p-6 rounded-3xl' : ''
+      className={`space-y-[var(--space-6)] transition-colors duration-200 ${
+        isSunMode ? 'rounded-[var(--lkv-radius-card)] bg-black p-[var(--space-4)] text-white sm:p-[var(--space-6)]' : ''
       }`}
     >
       {/* 1. Barre de statut Cockpit & Mode Plein Soleil */}
-      <div className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2.5">
+      <div className="flex items-center justify-between gap-[var(--space-3)]">
+        <div className="flex items-center gap-[var(--space-2)]">
           <span className="relative flex h-3 w-3">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full [animation-iteration-count:3] bg-[var(--lkv-success)]/80 opacity-75" />
-            <span className="relative inline-flex rounded-full h-3 w-3 bg-[var(--lkv-success)]" />
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[color:var(--lkv-success)]/80 opacity-75 [animation-iteration-count:3]" />
+            <span className="relative inline-flex h-3 w-3 rounded-full bg-[color:var(--lkv-success)]" />
           </span>
           <span
-            className={`text-xs font-bold uppercase tracking-wider ${
-              isSunMode ? 'text-[var(--lkv-warning)]' : 'text-lkv-primary'
+            className={`text-[length:var(--lkv-text-footnote)] font-bold uppercase tracking-wider ${
+              isSunMode ? 'text-[color:var(--lkv-warning)]' : 'text-[color:var(--lkv-text-primary)]'
             }`}
           >
             Cockpit Terrain · Mode Vivre
@@ -160,48 +171,47 @@ export function TripLiveCockpitView({
         </div>
 
         {/* Bouton Plein Soleil (Contraste maximal en extérieur) */}
-        <button
+        <Button
           type="button"
+          variant={isSunMode ? 'primary' : 'secondary'}
+          size="sm"
           onClick={() => setIsSunMode(!isSunMode)}
-          className={`glass-capsule-btn flex items-center gap-2 !px-3.5 !py-2 text-xs font-bold transition-all active:scale-95 ${
-            isSunMode ? 'primary' : ''
-          }`}
+          icon={<Icon name={isSunMode ? 'sun' : 'moon'} size={16} />}
+          aria-pressed={isSunMode}
           title="Bascule en contraste élevé plein soleil pour consultation sous forte luminosité"
         >
-          {isSunMode ? <Icon name="sun" size={16} /> : <Icon name="moon" size={16} />}
-          <span>{isSunMode ? 'Mode Standard' : 'Plein Soleil'}</span>
-        </button>
+          {isSunMode ? 'Mode Standard' : 'Plein Soleil'}
+        </Button>
       </div>
 
       {/* 2. Sélecteur de Jour & Progression de l'étape */}
       <Card
         tone={isSunMode ? 'neutral' : 'sage'}
-        className={`p-4 sm:p-6 rounded-3xl border transition-all ${
-          isSunMode ? 'bg-black/90 border-white/20 text-white' : 'border-white/70'
-        }`}
+        className={isSunMode ? 'border-white/20 bg-black/90 text-white' : ''}
       >
-        <div className="flex items-center justify-between gap-2 mb-4">
-          <button
+        <div className="mb-[var(--space-4)] flex items-center justify-between gap-[var(--space-2)]">
+          <Button
             type="button"
+            variant="secondary"
+            size="sm"
             disabled={activeDay <= 1}
             onClick={() => setActiveDay((prev) => Math.max(1, prev - 1))}
-            className="glass-capsule-btn flex items-center gap-1 !px-3 !py-2 text-xs font-semibold transition-all disabled:opacity-30 active:scale-95"
+            icon={<Icon name="chevron-left" size={16} />}
           >
-            <Icon name="chevron-left" size={16} />
             <span className="hidden sm:inline">Jour précédent</span>
-          </button>
+          </Button>
 
           <div className="text-center">
             <span
-              className={`text-xs font-bold uppercase tracking-wider ${
-                isSunMode ? 'text-[var(--lkv-warning)]' : 'text-lkv-secondary'
+              className={`text-[length:var(--lkv-text-footnote)] font-bold uppercase tracking-wider ${
+                isSunMode ? 'text-[color:var(--lkv-warning)]' : 'text-[color:var(--lkv-text-secondary)]'
               }`}
             >
               {isFutureTrip ? 'Voyage à venir' : 'Étape active'}
             </span>
             <div
-              className={`text-xl sm:text-2xl font-extrabold ${
-                isSunMode ? 'text-white' : 'text-lkv-primary'
+              className={`text-[length:var(--lkv-text-title-sm)] font-extrabold sm:text-[length:var(--lkv-text-title-lg)] ${
+                isSunMode ? 'text-white' : 'text-[color:var(--lkv-text-primary)]'
               }`}
             >
               {isFutureTrip && phaseDetails.daysUntilStart !== null
@@ -210,22 +220,24 @@ export function TripLiveCockpitView({
             </div>
           </div>
 
-          <button
+          <Button
             type="button"
+            variant="secondary"
+            size="sm"
             disabled={activeDay >= calculatedTotalDays}
             onClick={() => setActiveDay((prev) => Math.min(calculatedTotalDays, prev + 1))}
-            className="glass-capsule-btn flex items-center gap-1 !px-3 !py-2 text-xs font-semibold transition-all disabled:opacity-30 active:scale-95"
+            icon={<Icon name="chevron-right" size={16} />}
+            iconPosition="trailing"
           >
             <span className="hidden sm:inline">Jour suivant</span>
-            <Icon name="chevron-right" size={16} />
-          </button>
+          </Button>
         </div>
 
         {/* Barre de progression */}
-        <div className="w-full bg-white/30 rounded-full h-2 overflow-hidden mb-6">
+        <div className="mb-[var(--space-6)] h-2 w-full overflow-hidden rounded-full bg-[color:var(--lkv-surface-muted)]">
           <div
-            className={`h-full transition-all duration-300 rounded-full ${
-              isSunMode ? 'bg-[var(--lkv-warning)]' : 'bg-lkv-primary'
+            className={`h-full rounded-full transition-all duration-300 ${
+              isSunMode ? 'bg-[color:var(--lkv-warning)]' : 'bg-[color:var(--lkv-primary)]'
             }`}
             style={{ width: `${Math.round((activeDay / calculatedTotalDays) * 100)}%` }}
           />
@@ -233,26 +245,26 @@ export function TripLiveCockpitView({
 
         {/* Détails de l'étape courante */}
         {currentStep ? (
-          <div className="space-y-4">
+          <div className="space-y-[var(--space-4)]">
             <div>
               <div
-                className={`text-xs font-semibold ${
-                  isSunMode ? 'text-[var(--lkv-warning)]' : 'text-lkv-secondary'
+                className={`text-[length:var(--lkv-text-footnote)] font-semibold ${
+                  isSunMode ? 'text-[color:var(--lkv-warning)]' : 'text-[color:var(--lkv-text-secondary)]'
                 }`}
               >
                 {currentStep.location_name || 'En chemin'}
               </div>
               <h3
-                className={`text-lg sm:text-xl font-bold mt-0.5 ${
-                  isSunMode ? 'text-white font-black' : 'text-lkv-primary'
+                className={`mt-0.5 text-[length:var(--lkv-text-subheadline)] font-bold sm:text-[length:var(--lkv-text-title-sm)] ${
+                  isSunMode ? 'font-black text-white' : 'text-[color:var(--lkv-text-primary)]'
                 }`}
               >
                 {currentStep.title}
               </h3>
               {currentStep.description && (
                 <p
-                  className={`text-xs sm:text-sm mt-1 leading-relaxed ${
-                    isSunMode ? 'text-white/80' : 'text-lkv-secondary'
+                  className={`mt-1 text-[length:var(--lkv-text-footnote)] leading-relaxed sm:text-[length:var(--lkv-text-body-sm)] ${
+                    isSunMode ? 'text-white/80' : 'text-[color:var(--lkv-text-secondary)]'
                   }`}
                 >
                   {currentStep.description}
@@ -261,97 +273,73 @@ export function TripLiveCockpitView({
             </div>
 
             {/* Cartes métriques de l'étape */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3 pt-2">
-              <div
-                className={`p-3 rounded-2xl border ${
-                  isSunMode
-                    ? 'bg-white/5 border-white/10'
-                    : 'glass-sub-card border border-white/60 shadow-2xs'
-                }`}
-              >
-                <div className="flex items-center gap-1.5 text-xs text-lkv-secondary mb-1">
+            <div className="grid grid-cols-2 gap-[var(--space-2)] pt-[var(--space-2)] sm:grid-cols-4 sm:gap-[var(--space-3)]">
+              <div className={`rounded-[var(--lkv-radius-md)] border p-[var(--space-3)] ${metricCardClass}`}>
+                <div className="mb-1 flex items-center gap-[var(--space-2)] text-[length:var(--lkv-text-footnote)] text-[color:var(--lkv-text-secondary)]">
                   <Icon
                     name="navigation"
                     size={13}
-                    className={isSunMode ? 'text-[var(--lkv-warning)]' : 'text-lkv-primary'}
+                    className={isSunMode ? 'text-[color:var(--lkv-warning)]' : 'text-[color:var(--lkv-primary)]'}
                   />
                   <span>Distance</span>
                 </div>
                 <div
-                  className={`text-lg sm:text-xl font-black ${
-                    isSunMode ? 'text-[var(--lkv-warning)]' : 'text-lkv-primary'
+                  className={`text-[length:var(--lkv-text-subheadline)] font-black sm:text-[length:var(--lkv-text-title-sm)] ${
+                    isSunMode ? 'text-[color:var(--lkv-warning)]' : 'text-[color:var(--lkv-text-primary)]'
                   }`}
                 >
                   {currentStep.distance_km ? `${currentStep.distance_km} km` : '—'}
                 </div>
               </div>
 
-              <div
-                className={`p-3 rounded-2xl border ${
-                  isSunMode
-                    ? 'bg-white/5 border-white/10'
-                    : 'glass-sub-card border border-white/60 shadow-2xs'
-                }`}
-              >
-                <div className="flex items-center gap-1.5 text-xs text-lkv-secondary mb-1">
+              <div className={`rounded-[var(--lkv-radius-md)] border p-[var(--space-3)] ${metricCardClass}`}>
+                <div className="mb-1 flex items-center gap-[var(--space-2)] text-[length:var(--lkv-text-footnote)] text-[color:var(--lkv-text-secondary)]">
                   <Icon
                     name="mountain"
                     size={13}
-                    className={isSunMode ? 'text-[var(--lkv-warning)]' : 'text-lkv-primary'}
+                    className={isSunMode ? 'text-[color:var(--lkv-warning)]' : 'text-[color:var(--lkv-primary)]'}
                   />
                   <span>Dénivelé +</span>
                 </div>
                 <div
-                  className={`text-lg sm:text-xl font-black ${
-                    isSunMode ? 'text-[var(--lkv-warning)]' : 'text-lkv-primary'
+                  className={`text-[length:var(--lkv-text-subheadline)] font-black sm:text-[length:var(--lkv-text-title-sm)] ${
+                    isSunMode ? 'text-[color:var(--lkv-warning)]' : 'text-[color:var(--lkv-text-primary)]'
                   }`}
                 >
                   {currentStep.elevation_gain_m ? `+${currentStep.elevation_gain_m} m` : '—'}
                 </div>
               </div>
 
-              <div
-                className={`p-3 rounded-2xl border ${
-                  isSunMode
-                    ? 'bg-white/5 border-white/10'
-                    : 'glass-sub-card border border-white/60 shadow-2xs'
-                }`}
-              >
-                <div className="flex items-center gap-1.5 text-xs text-lkv-secondary mb-1">
+              <div className={`rounded-[var(--lkv-radius-md)] border p-[var(--space-3)] ${metricCardClass}`}>
+                <div className="mb-1 flex items-center gap-[var(--space-2)] text-[length:var(--lkv-text-footnote)] text-[color:var(--lkv-text-secondary)]">
                   <Icon
                     name="mountain"
                     size={13}
-                    className={isSunMode ? 'text-[var(--lkv-warning)]' : 'text-lkv-primary'}
+                    className={isSunMode ? 'text-[color:var(--lkv-warning)]' : 'text-[color:var(--lkv-primary)]'}
                   />
                   <span>Dénivelé -</span>
                 </div>
                 <div
-                  className={`text-lg sm:text-xl font-black ${
-                    isSunMode ? 'text-[var(--lkv-warning)]' : 'text-lkv-primary'
+                  className={`text-[length:var(--lkv-text-subheadline)] font-black sm:text-[length:var(--lkv-text-title-sm)] ${
+                    isSunMode ? 'text-[color:var(--lkv-warning)]' : 'text-[color:var(--lkv-text-primary)]'
                   }`}
                 >
                   {currentStep.elevation_loss_m ? `-${currentStep.elevation_loss_m} m` : '—'}
                 </div>
               </div>
 
-              <div
-                className={`p-3 rounded-2xl border ${
-                  isSunMode
-                    ? 'bg-white/5 border-white/10'
-                    : 'glass-sub-card border border-white/60 shadow-2xs'
-                }`}
-              >
-                <div className="flex items-center gap-1.5 text-xs text-lkv-secondary mb-1">
+              <div className={`rounded-[var(--lkv-radius-md)] border p-[var(--space-3)] ${metricCardClass}`}>
+                <div className="mb-1 flex items-center gap-[var(--space-2)] text-[length:var(--lkv-text-footnote)] text-[color:var(--lkv-text-secondary)]">
                   <Icon
                     name="home"
                     size={13}
-                    className={isSunMode ? 'text-[var(--lkv-warning)]' : 'text-lkv-primary'}
+                    className={isSunMode ? 'text-[color:var(--lkv-warning)]' : 'text-[color:var(--lkv-primary)]'}
                   />
                   <span>Hébergement</span>
                 </div>
                 <div
-                  className={`text-xs sm:text-sm font-bold truncate ${
-                    isSunMode ? 'text-white' : 'text-lkv-primary'
+                  className={`truncate text-[length:var(--lkv-text-footnote)] font-bold sm:text-[length:var(--lkv-text-body-sm)] ${
+                    isSunMode ? 'text-white' : 'text-[color:var(--lkv-text-primary)]'
                   }`}
                 >
                   {currentStep.accommodation_name || 'Bivouac / Refuge'}
@@ -362,13 +350,13 @@ export function TripLiveCockpitView({
             {/* Mode de transport & Ravitaillement */}
             {currentStep.transport_mode && (
               <div
-                className={`p-3 rounded-2xl border text-xs flex items-start gap-2 ${
+                className={`flex items-start gap-[var(--space-2)] rounded-[var(--lkv-radius-md)] border p-[var(--space-3)] text-[length:var(--lkv-text-footnote)] ${
                   isSunMode
-                    ? 'bg-[var(--lkv-warning)]/10 border-[var(--lkv-warning)]/30 text-[var(--lkv-warning)]'
-                    : 'bg-lkv-primary/5 border-lkv-primary/10 text-lkv-primary'
+                    ? 'border-[color:var(--lkv-warning)]/30 bg-[color:var(--lkv-warning)]/10 text-[color:var(--lkv-warning)]'
+                    : 'border-[color:var(--lkv-primary)]/10 bg-[color:var(--lkv-primary)]/5 text-[color:var(--lkv-text-primary)]'
                 }`}
               >
-                <Icon name="droplets" size={16} className="shrink-0 mt-0.5" />
+                <Icon name="droplets" size={16} className="mt-0.5 shrink-0" />
                 <div>
                   <span className="font-bold">Déplacement : </span>
                   Progression en{' '}
@@ -381,9 +369,13 @@ export function TripLiveCockpitView({
             )}
           </div>
         ) : (
-          <div className="text-center py-6">
-            <Icon name="compass" className="w-10 h-10 mx-auto text-lkv-secondary/60 mb-2" />
-            <p className="text-sm font-semibold text-lkv-primary">
+          <div className="py-[var(--space-6)] text-center">
+            <Icon
+              name="compass"
+              size={40}
+              className="mx-auto mb-2 text-[color:var(--lkv-text-secondary)]/60"
+            />
+            <p className="text-[length:var(--lkv-text-footnote)] font-semibold text-[color:var(--lkv-text-primary)]">
               Aucune étape détaillée définie pour ce jour.
             </p>
           </div>
@@ -391,105 +383,106 @@ export function TripLiveCockpitView({
       </Card>
 
       {/* 3. Actions Rapides Terrain (Dépense en 2 taps & Secours) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-[var(--space-4)] sm:grid-cols-2">
         {/* Saisie rapide de dépense en 2 clics */}
         <Card
-          tone="neutral"
-          className={`p-5 rounded-3xl border ${
-            isSunMode ? 'bg-black/80 border-white/20 text-white' : 'border-white/60'
-          }`}
+          className={isSunMode ? 'border-white/20 bg-black/80 text-white' : ''}
         >
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-2">
-              <Icon name="credit-card" className="w-5 h-5 text-[var(--lkv-success)]" />
-              <h4 className="font-bold text-sm">Dépense Express Terrain</h4>
+          <div className="mb-[var(--space-3)] flex items-center justify-between">
+            <div className="flex items-center gap-[var(--space-2)]">
+              <Icon name="credit-card" size={20} className="text-[color:var(--lkv-success)]" />
+              <h4 className="text-[length:var(--lkv-text-footnote)] font-bold">
+                Dépense Express Terrain
+              </h4>
             </div>
-            <span className="text-[11px] px-2 py-0.5 rounded-full bg-[var(--lkv-success)]/10 text-[var(--lkv-success)] font-semibold">
-              2 taps
-            </span>
+            <Badge tone="sage">2 taps</Badge>
           </div>
 
-          <p className={`text-xs mb-4 ${isSunMode ? 'text-white/70' : 'text-lkv-secondary'}`}>
+          <p
+            className={`mb-[var(--space-4)] text-[length:var(--lkv-text-footnote)] ${
+              isSunMode ? 'text-white/70' : 'text-[color:var(--lkv-text-secondary)]'
+            }`}
+          >
             Enregistrez instantanément vos frais de refuge, ravitaillement ou transport sans quitter
             la piste.
           </p>
 
           {!isQuickExpenseOpen ? (
-            <GlassCapsuleBtn
+            <Button
               variant="primary"
-              size="default"
               onClick={() => setIsQuickExpenseOpen(true)}
               icon={<Icon name="plus" size={18} />}
-              className="w-full justify-center"
+              fullWidth
             >
               Saisir une dépense
-            </GlassCapsuleBtn>
+            </Button>
           ) : (
-            <form onSubmit={handleQuickExpenseSubmit} className="space-y-3">
+            <form onSubmit={handleQuickExpenseSubmit} className="space-y-[var(--space-3)]">
               {expenseSuccessMsg && (
-                <div className="p-2.5 rounded-xl bg-[var(--lkv-success)]/15 border border-[var(--lkv-success)]/30 text-[var(--lkv-success)] text-xs font-semibold flex items-center gap-2">
+                <Card
+                  tone="sage"
+                  className="flex items-center gap-[var(--space-2)] p-[var(--space-2)] text-[length:var(--lkv-text-footnote)] font-semibold text-[color:var(--lkv-text-primary)]"
+                >
                   <Icon name="check-circle2" size={16} />
                   <span>{expenseSuccessMsg}</span>
-                </div>
+                </Card>
               )}
               {expenseErrorMsg && (
-                <div className="p-2.5 rounded-xl glass tone-danger border text-[var(--lkv-danger)] text-xs font-semibold flex items-center gap-2">
+                <Card
+                  role="alert"
+                  tone="danger"
+                  className="flex items-center gap-[var(--space-2)] p-[var(--space-2)] text-[length:var(--lkv-text-footnote)] font-semibold text-[color:var(--lkv-danger-dark)]"
+                >
                   <Icon name="alert-triangle" size={16} />
                   <span>{expenseErrorMsg}</span>
-                </div>
+                </Card>
               )}
 
-              <div>
-                <label className="block text-xs font-medium mb-1">Montant (€)</label>
+              <label className="block">
+                <span className="mb-1 block text-[length:var(--lkv-text-footnote)] font-medium">
+                  Montant (€)
+                </span>
                 <input
                   type="number"
                   step="0.01"
                   name="amount"
                   required
                   placeholder="Ex: 24.50"
-                  className={`w-full px-3 py-2 rounded-xl text-sm border font-semibold min-h-[44px] ${
-                    isSunMode ? 'bg-black text-white border-white/30' : 'glass-input'
-                  }`}
+                  className={`${fieldClass()} font-semibold`}
                 />
-              </div>
+              </label>
 
-              <div>
-                <label className="block text-xs font-medium mb-1">Objet / Titre</label>
+              <label className="block">
+                <span className="mb-1 block text-[length:var(--lkv-text-footnote)] font-medium">
+                  Objet / Titre
+                </span>
                 <input
                   type="text"
                   name="title"
                   required
                   placeholder="Ex: Repas refuge ou pain"
-                  className={`w-full px-3 py-2 rounded-xl text-sm border min-h-[44px] ${
-                    isSunMode ? 'bg-black text-white border-white/30' : 'glass-input'
-                  }`}
+                  className={fieldClass()}
                 />
-              </div>
+              </label>
 
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <label className="block text-xs font-medium mb-1">Catégorie</label>
-                  <select
-                    name="category"
-                    className={`w-full px-3 py-2 rounded-xl text-xs border min-h-[44px] ${
-                      isSunMode ? 'bg-black text-white border-white/30' : 'glass-input'
-                    }`}
-                  >
+              <div className="grid grid-cols-2 gap-[var(--space-2)]">
+                <label className="block">
+                  <span className="mb-1 block text-[length:var(--lkv-text-footnote)] font-medium">
+                    Catégorie
+                  </span>
+                  <select name="category" className={`${fieldClass()} text-[length:var(--lkv-text-footnote)]`}>
                     <option value="food">Ravitaillement</option>
                     <option value="accommodation">Hébergement</option>
                     <option value="transport">Transport</option>
                     <option value="activities">Activité</option>
                     <option value="other">Autre</option>
                   </select>
-                </div>
-                <div>
-                  <label className="block text-xs font-medium mb-1">Payé par</label>
-                  <select
-                    name="paidBy"
-                    className={`w-full px-3 py-2 rounded-xl text-xs border min-h-[44px] ${
-                      isSunMode ? 'bg-black text-white border-white/30' : 'glass-input'
-                    }`}
-                  >
+                </label>
+                <label className="block">
+                  <span className="mb-1 block text-[length:var(--lkv-text-footnote)] font-medium">
+                    Payé par
+                  </span>
+                  <select name="paidBy" className={`${fieldClass()} text-[length:var(--lkv-text-footnote)]`}>
                     <option value={trip.user_id}>Moi-même</option>
                     {trip.collaborators?.map((c) => (
                       <option key={c.id} value={c.user_id}>
@@ -497,56 +490,43 @@ export function TripLiveCockpitView({
                       </option>
                     ))}
                   </select>
-                </div>
+                </label>
               </div>
 
-              <div className="flex items-center gap-2 pt-1">
-                <GlassCapsuleBtn
+              <div className="flex items-center gap-[var(--space-2)] pt-[var(--space-1)]">
+                <Button
                   type="button"
-                  variant="default"
+                  variant="secondary"
                   size="sm"
                   onClick={() => setIsQuickExpenseOpen(false)}
                   className="flex-1 justify-center"
                 >
                   Annuler
-                </GlassCapsuleBtn>
-                <GlassCapsuleBtn
-                  type="submit"
-                  variant="primary"
-                  size="sm"
-                  disabled={isPendingExpense}
-                  className="flex-1 justify-center"
-                >
+                </Button>
+                <Button type="submit" size="sm" loading={isPendingExpense} className="flex-1 justify-center">
                   {isPendingExpense ? 'Enregistrement…' : 'Valider'}
-                </GlassCapsuleBtn>
+                </Button>
               </div>
             </form>
           )}
         </Card>
 
         {/* Urgence & Secours Montagne Hors-Ligne */}
-        <Card
-          tone="neutral"
-          className={`p-5 rounded-3xl border ${
-            isSunMode ? 'bg-black/80 border-white/20 text-white' : 'border-white/60'
-          }`}
-        >
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-2">
-              <Icon name="shield" className="w-5 h-5 text-[var(--lkv-danger)]" />
-              <h4 className="font-bold text-sm">Secours & Urgences</h4>
+        <Card className={isSunMode ? 'border-white/20 bg-black/80 text-white' : ''}>
+          <div className="mb-[var(--space-3)] flex items-center justify-between">
+            <div className="flex items-center gap-[var(--space-2)]">
+              <Icon name="shield" size={20} className="text-[color:var(--lkv-danger)]" />
+              <h4 className="text-[length:var(--lkv-text-footnote)] font-bold">Secours & Urgences</h4>
             </div>
-            <span className="text-[11px] px-2.5 py-1 rounded-full glass-pill text-[var(--lkv-danger)] font-semibold border border-[var(--lkv-danger)]/20">
-              Hors-Ligne
-            </span>
+            <Badge tone="danger">Hors-Ligne</Badge>
           </div>
 
-          <div className="space-y-3">
+          <div className="space-y-[var(--space-3)]">
             {/* Boutons d'appel rapide */}
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-2 gap-[var(--space-2)]">
               <a
                 href="tel:112"
-                className="flex items-center justify-center gap-2 p-3 rounded-full bg-[var(--lkv-danger)] hover:bg-[var(--lkv-danger)]/90 text-white text-sm font-extrabold shadow-md min-h-[48px] transition-all"
+                className="flex min-h-[48px] items-center justify-center gap-[var(--space-2)] rounded-full bg-[color:var(--lkv-danger)] p-[var(--space-3)] text-[length:var(--lkv-text-body-sm)] font-extrabold text-white shadow-elevation-2 transition-colors hover:bg-[color:var(--lkv-danger)]/90"
               >
                 <Icon name="phone-call" size={16} />
                 <span>Appel 112</span>
@@ -554,7 +534,7 @@ export function TripLiveCockpitView({
 
               <a
                 href="sms:114"
-                className="flex items-center justify-center gap-2 p-3 rounded-full glass-sub-card border border-white/60 hover:bg-white text-[var(--lkv-danger)] text-sm font-extrabold shadow-xs min-h-[48px] transition-all"
+                className="flex min-h-[48px] items-center justify-center gap-[var(--space-2)] rounded-full border border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-card)] p-[var(--space-3)] text-[length:var(--lkv-text-body-sm)] font-extrabold text-[color:var(--lkv-danger)] transition-colors hover:bg-[color:var(--lkv-hover-surface)]"
               >
                 <Icon name="message-square" size={16} />
                 <span>SMS 114</span>
@@ -563,35 +543,38 @@ export function TripLiveCockpitView({
 
             {/* Coordonnées GPS de l'étape courante */}
             <div
-              className={`p-3 rounded-xl border flex items-center justify-between gap-2 ${
+              className={`flex items-center justify-between gap-[var(--space-2)] rounded-[var(--lkv-radius-sm)] border p-[var(--space-3)] ${
                 isSunMode
-                  ? 'bg-black border-white/20'
-                  : 'glass-sub-card border border-white/60 shadow-2xs'
+                  ? 'border-white/20 bg-black'
+                  : 'border-[color:var(--lkv-border-subtle)] bg-[color:var(--lkv-surface-card)]'
               }`}
             >
               <div className="min-w-0">
-                <div className="text-[10px] text-lkv-secondary font-bold uppercase tracking-wider">
+                <div className="text-[10px] font-bold uppercase tracking-wider text-[color:var(--lkv-text-secondary)]">
                   Position étape
                 </div>
-                <div className="font-mono text-xs font-bold truncate">{emergencyCoordsText}</div>
+                <div className="truncate font-mono text-[length:var(--lkv-text-footnote)] font-bold">
+                  {emergencyCoordsText}
+                </div>
               </div>
 
-              <button
+              <IconButton
                 type="button"
+                size="sm"
                 onClick={handleCopyCoordinates}
                 disabled={!isEmergencyCoordsVerified}
-                className="glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8 flex items-center justify-center disabled:opacity-30 active:scale-95 cursor-pointer"
+                aria-label="Copier les coordonnées pour les secours"
                 title="Copier les coordonnées pour les secours"
               >
                 {copiedCoords ? (
-                  <Icon name="check" size={16} className="text-[var(--lkv-success)]" />
+                  <Icon name="check" size={16} className="text-[color:var(--lkv-success)]" />
                 ) : (
                   <Icon name="copy" size={16} />
                 )}
-              </button>
+              </IconButton>
             </div>
 
-            <p className="text-[11px] text-lkv-secondary leading-snug">
+            <p className="text-[11px] leading-snug text-[color:var(--lkv-text-secondary)]">
               En cas d’urgence vitale, composez immédiatement le 112 ou envoyez un SMS au 114.
             </p>
           </div>
@@ -599,37 +582,35 @@ export function TripLiveCockpitView({
       </div>
 
       {/* 4. Points de contrôle & Tracé détaillé (Extensible) */}
-      <div className="space-y-3 pt-2">
-        <div className="flex flex-wrap items-center gap-2">
-          <button
+      <div className="space-y-[var(--space-3)] pt-[var(--space-2)]">
+        <div className="flex flex-wrap items-center gap-[var(--space-2)]">
+          <Button
             type="button"
+            variant={showSafetyCheckpoints ? 'primary' : 'secondary'}
+            size="sm"
             onClick={() => setShowSafetyCheckpoints(!showSafetyCheckpoints)}
-            className={`glass-capsule-btn !px-4 !py-2 text-xs font-semibold transition-all flex items-center gap-2 ${
-              showSafetyCheckpoints ? 'primary' : ''
-            }`}
+            aria-pressed={showSafetyCheckpoints}
+            icon={<Icon name="shield" size={14} />}
           >
-            <Icon name="shield" size={14} />
-            <span>
-              {showSafetyCheckpoints
-                ? 'Masquer les jalons sécurité'
-                : 'Consulter les jalons de sécurité'}
-            </span>
-          </button>
+            {showSafetyCheckpoints
+              ? 'Masquer les jalons sécurité'
+              : 'Consulter les jalons de sécurité'}
+          </Button>
 
-          <button
+          <Button
             type="button"
+            variant={showFullItinerary ? 'primary' : 'secondary'}
+            size="sm"
             onClick={() => setShowFullItinerary(!showFullItinerary)}
-            className={`glass-capsule-btn !px-4 !py-2 text-xs font-semibold transition-all flex items-center gap-2 ${
-              showFullItinerary ? 'primary' : ''
-            }`}
+            aria-pressed={showFullItinerary}
+            icon={<Icon name="navigation" size={14} />}
           >
-            <Icon name="navigation" size={14} />
-            <span>{showFullItinerary ? 'Masquer l’itinéraire complet' : 'Voir tout le tracé'}</span>
-          </button>
+            {showFullItinerary ? 'Masquer l’itinéraire complet' : 'Voir tout le tracé'}
+          </Button>
 
           <Link
             href="/progression"
-            className="glass-capsule-btn !px-4 !py-2 text-xs font-semibold transition-all flex items-center gap-2"
+            className="inline-flex min-h-[var(--control-height-sm)] items-center gap-[var(--space-2)] rounded-full border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] px-[var(--space-4)] text-[length:var(--lkv-text-footnote)] font-semibold text-[color:var(--card-content)] backdrop-blur-[var(--blur-md)] transition-colors hover:bg-[color:var(--lkv-hover-surface)]"
           >
             <Icon name="award" size={14} />
             <span>Ma progression LKDV</span>
@@ -637,13 +618,13 @@ export function TripLiveCockpitView({
         </div>
 
         {showSafetyCheckpoints && (
-          <div className="pt-2 animate-in fade-in duration-200">
+          <div className="pt-[var(--space-2)] animate-in fade-in duration-200">
             <TripSafetyView trip={trip} />
           </div>
         )}
 
         {showFullItinerary && (
-          <div className="pt-2 animate-in fade-in duration-200">
+          <div className="pt-[var(--space-2)] animate-in fade-in duration-200">
             <TripItineraryTab trip={trip} stats={stats} />
           </div>
         )}

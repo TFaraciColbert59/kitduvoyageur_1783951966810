@@ -2,9 +2,8 @@
 
 import Icon from '@/components/ui/Icon';
 import React, { useState, useTransition } from 'react';
-import { Card } from '@/components/ui';
+import { Button, Card, IconButton } from '@/components/ui';
 import { Sheet } from '@/components/ui/Sheet';
-import { GlassCapsuleBtn } from '@/components/ui/GlassCapsuleBtn';
 import {
   calculateTripRetrospectiveMetrics,
   extractCertifiedPlaceCandidates,
@@ -15,6 +14,12 @@ import {
   submitTripFieldReviewsAction,
 } from '@/app/voyages/completion-actions';
 import type { TripFull } from '../types/trip.types';
+
+const FIELD_CLASS =
+  'min-h-[var(--control-height-md)] w-full rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] text-[length:var(--lkv-text-body-sm)] text-[var(--lkv-text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]';
+
+const LABEL_CLASS =
+  'mb-1 block text-[length:var(--lkv-text-footnote)] font-semibold text-[color:var(--lkv-text-primary)]';
 
 interface TripCompletionModalProps {
   trip: TripFull;
@@ -119,176 +124,175 @@ export function TripCompletionModal({ trip, isOpen, onClose }: TripCompletionMod
       }}
       title="Rétrospective & Carnet de Voyage"
     >
-      <div className="pb-2 space-y-6">
+      <div className="space-y-[var(--space-6)] pb-2">
         {/* Messages de retour */}
         {successMessage && (
-          <div className="p-4 rounded-2xl glass tone-sage border text-sm text-[var(--lkv-success)] flex items-center gap-2">
-            <Icon name="check-circle2" size={18} className="text-lkv-primary shrink-0" />
+          <Card
+            tone="sage"
+            className="flex items-center gap-[var(--space-2)] text-[length:var(--lkv-text-body-sm)] text-[color:var(--lkv-text-primary)]"
+          >
+            <Icon name="check-circle2" size={18} className="shrink-0" />
             <span>{successMessage}</span>
-          </div>
+          </Card>
         )}
 
         {errorMessage && (
-          <div className="p-4 rounded-2xl glass tone-danger border text-sm text-[var(--lkv-danger)]">
+          <Card
+            role="alert"
+            tone="danger"
+            className="text-[length:var(--lkv-text-body-sm)] text-[color:var(--lkv-danger-dark)]"
+          >
             {errorMessage}
-          </div>
+          </Card>
         )}
 
         {/* Métriques d'aventure */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <Card
-            tone="neutral"
-            className="p-3.5 rounded-[var(--lkv-radius-lg)] border border-white/60 text-center"
-          >
-            <Icon name="navigation" size={18} className="mx-auto text-lkv-primary mb-1" />
-            <div className="text-lg font-bold text-lkv-primary">{metrics.totalKm} km</div>
-            <div className="text-[11px] text-lkv-secondary">Distance totale</div>
+        <div className="grid grid-cols-2 gap-[var(--space-3)] sm:grid-cols-4">
+          <Card variant="compact" className="text-center">
+            <Icon name="navigation" size={18} className="mx-auto mb-1 text-[color:var(--lkv-primary)]" />
+            <div className="text-[length:var(--lkv-text-subheadline)] font-bold text-[color:var(--lkv-text-primary)]">
+              {metrics.totalKm} km
+            </div>
+            <div className="text-[11px] text-[color:var(--lkv-text-secondary)]">Distance totale</div>
           </Card>
 
-          <Card
-            tone="neutral"
-            className="p-3.5 rounded-[var(--lkv-radius-lg)] border border-white/60 text-center"
-          >
-            <Icon name="mountain" size={18} className="mx-auto text-lkv-primary mb-1" />
-            <div className="text-lg font-bold text-lkv-primary">
+          <Card variant="compact" className="text-center">
+            <Icon name="mountain" size={18} className="mx-auto mb-1 text-[color:var(--lkv-primary)]" />
+            <div className="text-[length:var(--lkv-text-subheadline)] font-bold text-[color:var(--lkv-text-primary)]">
               +{metrics.totalElevationGainM} m
             </div>
-            <div className="text-[11px] text-lkv-secondary">Dénivelé positif</div>
+            <div className="text-[11px] text-[color:var(--lkv-text-secondary)]">Dénivelé positif</div>
           </Card>
 
-          <Card
-            tone="neutral"
-            className="p-3.5 rounded-[var(--lkv-radius-lg)] border border-white/60 text-center"
-          >
-            <Icon name="package" size={18} className="mx-auto text-lkv-primary mb-1" />
-            <div className="text-lg font-bold text-lkv-primary">{metrics.packedWeightKg} kg</div>
-            <div className="text-[11px] text-lkv-secondary">
+          <Card variant="compact" className="text-center">
+            <Icon name="package" size={18} className="mx-auto mb-1 text-[color:var(--lkv-primary)]" />
+            <div className="text-[length:var(--lkv-text-subheadline)] font-bold text-[color:var(--lkv-text-primary)]">
+              {metrics.packedWeightKg} kg
+            </div>
+            <div className="text-[11px] text-[color:var(--lkv-text-secondary)]">
               {metrics.packedGearCount} items emportés
             </div>
           </Card>
 
-          <Card
-            tone="neutral"
-            className="p-3.5 rounded-[var(--lkv-radius-lg)] border border-white/60 text-center"
-          >
-            <Icon name="award" size={18} className="mx-auto text-lkv-primary mb-1" />
-            <div className="text-lg font-bold text-lkv-primary">{metrics.durationDays} jours</div>
-            <div className="text-[11px] text-lkv-secondary">{metrics.nbNuits} nuits vécues</div>
+          <Card variant="compact" className="text-center">
+            <Icon name="award" size={18} className="mx-auto mb-1 text-[color:var(--lkv-primary)]" />
+            <div className="text-[length:var(--lkv-text-subheadline)] font-bold text-[color:var(--lkv-text-primary)]">
+              {metrics.durationDays} jours
+            </div>
+            <div className="text-[11px] text-[color:var(--lkv-text-secondary)]">
+              {metrics.nbNuits} nuits vécues
+            </div>
           </Card>
         </div>
 
         {/* Formulaire REX */}
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-[var(--space-6)]">
           {/* Section 1 : Publication Carnet */}
-          <div className="space-y-3">
+          <div className="space-y-[var(--space-3)]">
             <div className="flex items-center justify-between">
-              <label className="flex items-center gap-2 cursor-pointer select-none">
+              <label className="flex cursor-pointer select-none items-center gap-[var(--space-2)]">
                 <input
                   type="checkbox"
                   checked={publishCarnet}
                   onChange={(e) => setPublishCarnet(e.target.checked)}
-                  className="w-4 h-4 rounded text-lkv-primary focus:ring-lkv-primary"
+                  className="h-4 w-4 rounded accent-[color:var(--lkv-primary)]"
                 />
-                <span className="text-sm font-semibold text-lkv-primary flex items-center gap-1.5">
+                <span className="flex items-center gap-[var(--space-2)] text-[length:var(--lkv-text-body-sm)] font-semibold text-[color:var(--lkv-text-primary)]">
                   <Icon name="book-open" size={16} /> Publier en carnet de bord communautaire
                 </span>
               </label>
             </div>
 
             {publishCarnet && (
-              <div className="p-4 rounded-2xl glass-sub-card border border-white/60 shadow-2xs space-y-3">
-                <div>
-                  <label className="block text-xs font-semibold text-lkv-primary mb-1">
-                    Titre du carnet d&apos;expédition
-                  </label>
+              <Card variant="compact" className="space-y-[var(--space-3)]">
+                <label className="block">
+                  <span className={LABEL_CLASS}>Titre du carnet d&apos;expédition</span>
                   <input
                     type="text"
                     value={carnetTitle}
                     onChange={(e) => setCarnetTitle(e.target.value)}
                     required
-                    className="glass-input w-full px-3 py-2 text-sm text-[var(--lkv-text-primary)]"
+                    className={FIELD_CLASS}
                   />
-                </div>
+                </label>
 
-                <div>
-                  <label className="block text-xs font-semibold text-lkv-primary mb-1">
-                    Introduction / Récit de synthèse
-                  </label>
+                <label className="block">
+                  <span className={LABEL_CLASS}>Introduction / Récit de synthèse</span>
                   <textarea
                     rows={3}
                     value={carnetDescription}
                     onChange={(e) => setCarnetDescription(e.target.value)}
                     placeholder="Résumez les moments forts, la météo, l'ambiance..."
-                    className="glass-input w-full px-3 py-2 text-sm text-[var(--lkv-text-primary)]"
+                    className={FIELD_CLASS}
                   />
-                </div>
+                </label>
 
-                <div className="flex items-center gap-4 text-xs">
-                  <label className="flex items-center gap-1.5 cursor-pointer text-lkv-primary">
+                <div className="flex items-center gap-[var(--space-4)] text-[length:var(--lkv-text-footnote)]">
+                  <label className="flex cursor-pointer items-center gap-[var(--space-2)] text-[color:var(--lkv-text-primary)]">
                     <input
                       type="radio"
                       name="visibility"
                       checked={isPublic}
                       onChange={() => setIsPublic(true)}
-                      className="text-lkv-primary"
+                      className="accent-[color:var(--lkv-primary)]"
                     />
                     <span>Public (visible dans Explorer & Carnets)</span>
                   </label>
-                  <label className="flex items-center gap-1.5 cursor-pointer text-lkv-secondary">
+                  <label className="flex cursor-pointer items-center gap-[var(--space-2)] text-[color:var(--lkv-text-secondary)]">
                     <input
                       type="radio"
                       name="visibility"
                       checked={!isPublic}
                       onChange={() => setIsPublic(false)}
-                      className="text-lkv-primary"
+                      className="accent-[color:var(--lkv-primary)]"
                     />
                     <span>Privé (visible uniquement par l&apos;équipe)</span>
                   </label>
                 </div>
-              </div>
+              </Card>
             )}
           </div>
 
           {/* Section 2 : Avis certifiés terrain (Preuve terrain) */}
           {placeCandidates.length > 0 && (
-            <div className="space-y-3">
+            <div className="space-y-[var(--space-3)]">
               <div>
-                <h4 className="text-sm font-semibold text-lkv-primary flex items-center gap-1.5">
+                <h4 className="flex items-center gap-[var(--space-2)] text-[length:var(--lkv-text-body-sm)] font-semibold text-[color:var(--lkv-text-primary)]">
                   <Icon name="map-pin" size={16} /> Certifier vos lieux visités (Preuve terrain)
                 </h4>
-                <p className="text-xs text-lkv-secondary">
+                <p className="text-[length:var(--lkv-text-footnote)] text-[color:var(--lkv-text-secondary)]">
                   Vos avis sont certifiés réels (pondération x2 dans le scoring communautaire).
                 </p>
               </div>
 
-              <div className="space-y-3">
+              <div className="space-y-[var(--space-3)]">
                 {placeCandidates.map((candidate) => {
                   const currentRev = reviews[candidate.placeId] || { rating: 5, comment: '' };
                   return (
-                    <div
-                      key={candidate.placeId}
-                      className="p-3.5 rounded-2xl glass-sub-card border border-white/60 shadow-2xs space-y-2"
-                    >
+                    <Card key={candidate.placeId} variant="compact" className="space-y-[var(--space-2)]">
                       <div className="flex items-center justify-between">
-                        <span className="text-xs font-semibold text-lkv-primary">
+                        <span className="text-[length:var(--lkv-text-footnote)] font-semibold text-[color:var(--lkv-text-primary)]">
                           {candidate.name}
                         </span>
                         {/* Note étoiles */}
-                        <div className="flex items-center gap-1">
+                        <div className="flex items-center gap-[var(--space-1)]">
                           {[1, 2, 3, 4, 5].map((star) => (
-                            <button
+                            <IconButton
                               key={star}
                               type="button"
+                              size="sm"
+                              aria-label={`Noter ${star} étoile${star > 1 ? 's' : ''}`}
+                              aria-pressed={currentRev.rating === star}
                               onClick={() =>
                                 setReviews((prev) => ({
                                   ...prev,
                                   [candidate.placeId]: { ...currentRev, rating: star },
                                 }))
                               }
-                              className="glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8 hover:scale-110 transition-transform"
+                              className={currentRev.rating === star ? 'text-[color:var(--lkv-warning)]' : ''}
                             >
                               <Icon name="star" size={16} />
-                            </button>
+                            </IconButton>
                           ))}
                         </div>
                       </div>
@@ -303,9 +307,9 @@ export function TripCompletionModal({ trip, isOpen, onClose }: TripCompletionMod
                             [candidate.placeId]: { ...currentRev, comment: e.target.value },
                           }))
                         }
-                        className="glass-input w-full px-3 py-1.5 text-xs text-[var(--lkv-text-primary)]"
+                        className={FIELD_CLASS}
                       />
-                    </div>
+                    </Card>
                   );
                 })}
               </div>
@@ -313,19 +317,19 @@ export function TripCompletionModal({ trip, isOpen, onClose }: TripCompletionMod
           )}
 
           {/* Boutons d'action */}
-          <div className="flex items-center justify-end gap-3 pt-2 border-t border-white/40">
-            <GlassCapsuleBtn
+          <div className="flex items-center justify-end gap-[var(--space-3)] border-t border-[color:var(--lkv-border-subtle)] pt-[var(--space-2)]">
+            <Button
               type="button"
-              variant="default"
+              variant="secondary"
               size="sm"
               onClick={onClose}
               disabled={isPending}
             >
               Annuler
-            </GlassCapsuleBtn>
-            <GlassCapsuleBtn type="submit" variant="primary" size="sm" disabled={isPending}>
+            </Button>
+            <Button type="submit" size="sm" loading={isPending}>
               {isPending ? 'Enregistrement en cours...' : "Valider & Clôturer l'expédition"}
-            </GlassCapsuleBtn>
+            </Button>
           </div>
         </form>
       </div>

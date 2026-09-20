@@ -1,4 +1,5 @@
 import { cn } from '@/lib/utils';
+import { Badge } from '@/components/ui';
 
 export interface LlmSuggestionBadgeProps {
   className?: string;
@@ -6,19 +7,15 @@ export interface LlmSuggestionBadgeProps {
 
 /**
  * Badge discret de provenance « Suggestion IA » — une seule pastille par rangée
- * écrite par le job d'enrichissement (étapes, moments, POI, kit). Vocabulaire
- * existant `glass-pill`, aucune nouvelle couleur.
+ * écrite par le job d'enrichissement (étapes, moments, POI, kit). Contrat
+ * `Badge` canonique, aucune nouvelle couleur.
  */
 export function LlmSuggestionBadge({ className }: LlmSuggestionBadgeProps) {
   return (
-    <span
-      data-llm-badge=""
-      className={cn(
-        'glass-pill shrink-0 !px-1.5 !py-0.5 text-[9px] font-bold uppercase tracking-[0.08em]',
-        className
-      )}
-    >
-      Suggestion IA
+    <span data-llm-badge="" className={cn('inline-flex shrink-0', className)}>
+      <Badge tone="stone" className="uppercase tracking-[0.08em]">
+        Suggestion IA
+      </Badge>
     </span>
   );
 }

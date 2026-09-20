@@ -3,6 +3,7 @@
 import Icon from '@/components/ui/Icon';
 import React from 'react';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
+import { Button } from '@/components/ui';
 
 export interface PersistentMetricsBarProps {
   totalBudgetEur: number;
@@ -35,36 +36,38 @@ export const PersistentMetricsBar: React.FC<PersistentMetricsBarProps> = ({
     <div
       data-budget-overflow={isBudgetOverflow ? 'true' : 'false'}
       data-weight-overflow={isWeightOverflow ? 'true' : 'false'}
-      className="fixed bottom-[var(--bottom-nav-height,0px)] left-0 right-0 z-30 bg-surface/90 backdrop-blur-xl border-t border-border/60 px-4 py-3 shadow-2xl transition-all"
+      className="fixed bottom-[var(--bottom-nav-height,0px)] left-0 right-0 z-[var(--z-fab)] border-t border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-card)]/90 px-4 py-3 shadow-elevation-3 backdrop-blur-[var(--blur-lg)] transition-all"
     >
-      <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
+      <div className="mx-auto flex max-w-5xl flex-col items-center justify-between gap-[var(--space-3)] sm:flex-row">
         {/* Métriques synchrones */}
-        <div className="flex items-center gap-6 w-full sm:w-auto justify-around sm:justify-start">
+        <div className="flex w-full items-center justify-around gap-[var(--space-6)] sm:w-auto sm:justify-start">
           {/* Budget */}
-          <div className="flex items-center space-x-2.5">
+          <div className="flex items-center gap-[var(--space-2)]">
             <div
-              className={`p-2 rounded-xl ${
+              className={`rounded-[var(--lkv-radius-sm)] p-[var(--space-2)] ${
                 isBudgetOverflow
-                  ? 'bg-[var(--lkv-danger)]/15 text-[var(--lkv-danger)]'
-                  : 'bg-[var(--lkv-success)]/15 text-[var(--lkv-success)]'
+                  ? 'bg-[color:var(--lkv-danger)]/15 text-[color:var(--lkv-danger)]'
+                  : 'bg-[color:var(--lkv-success)]/15 text-[color:var(--lkv-success)]'
               }`}
             >
-              <Icon name="euro" className="w-4 h-4" />
+              <Icon name="euro" size={16} />
             </div>
             <div>
-              <div className="flex items-baseline space-x-1">
-                <span className="font-mono text-base font-bold text-text-primary">
+              <div className="flex items-baseline gap-[var(--space-1)]">
+                <span className="font-mono text-[length:var(--lkv-text-subheadline)] font-bold text-[color:var(--lkv-text-primary)]">
                   {totalBudgetEur} €
                 </span>
                 {maxBudgetEur > 0 && (
-                  <span className="text-xs text-text-muted font-mono">/ {maxBudgetEur} €</span>
+                  <span className="font-mono text-[length:var(--lkv-text-footnote)] text-[color:var(--lkv-text-muted)]">
+                    / {maxBudgetEur} €
+                  </span>
                 )}
               </div>
-              <div className="text-[11px] font-medium text-text-muted flex items-center gap-1">
+              <div className="flex items-center gap-[var(--space-1)] text-[11px] font-medium text-[color:var(--lkv-text-muted)]">
                 <span>Budget estimé</span>
                 {isBudgetOverflow && (
-                  <span className="text-[var(--lkv-danger)] font-semibold flex items-center">
-                    <Icon name="alert-triangle" className="w-3 h-3 inline mr-0.5" />
+                  <span className="flex items-center font-semibold text-[color:var(--lkv-danger)]">
+                    <Icon name="alert-triangle" size={12} className="mr-0.5 inline" />
                     Dépassement budget
                   </span>
                 )}
@@ -72,33 +75,35 @@ export const PersistentMetricsBar: React.FC<PersistentMetricsBarProps> = ({
             </div>
           </div>
 
-          <div className="h-8 w-px bg-border/60" />
+          <div className="h-8 w-px bg-[color:var(--lkv-border)]" />
 
           {/* Poids du sac */}
-          <div className="flex items-center space-x-2.5">
+          <div className="flex items-center gap-[var(--space-2)]">
             <div
-              className={`p-2 rounded-xl ${
+              className={`rounded-[var(--lkv-radius-sm)] p-[var(--space-2)] ${
                 isWeightOverflow
-                  ? 'bg-[var(--lkv-warning)]/15 text-[var(--lkv-warning)]'
-                  : 'bg-lkv-primary/15 text-lkv-primary'
+                  ? 'bg-[color:var(--lkv-warning)]/15 text-[color:var(--lkv-warning)]'
+                  : 'bg-[color:var(--lkv-primary)]/15 text-[color:var(--lkv-primary)]'
               }`}
             >
-              <Icon name="weight" className="w-4 h-4" />
+              <Icon name="weight" size={16} />
             </div>
             <div>
-              <div className="flex items-baseline space-x-1">
-                <span className="font-mono text-base font-bold text-text-primary">
+              <div className="flex items-baseline gap-[var(--space-1)]">
+                <span className="font-mono text-[length:var(--lkv-text-subheadline)] font-bold text-[color:var(--lkv-text-primary)]">
                   {totalWeightKg.toFixed(1)} kg
                 </span>
                 {maxWeightKg > 0 && (
-                  <span className="text-xs text-text-muted font-mono">/ {maxWeightKg} kg</span>
+                  <span className="font-mono text-[length:var(--lkv-text-footnote)] text-[color:var(--lkv-text-muted)]">
+                    / {maxWeightKg} kg
+                  </span>
                 )}
               </div>
-              <div className="text-[11px] font-medium text-text-muted flex items-center gap-1">
+              <div className="flex items-center gap-[var(--space-1)] text-[11px] font-medium text-[color:var(--lkv-text-muted)]">
                 <span>Poids du sac</span>
                 {isWeightOverflow && (
-                  <span className="text-[var(--lkv-warning)] font-semibold flex items-center">
-                    <Icon name="alert-triangle" className="w-3 h-3 inline mr-0.5" />
+                  <span className="flex items-center font-semibold text-[color:var(--lkv-warning)]">
+                    <Icon name="alert-triangle" size={12} className="mr-0.5 inline" />
                     Sac trop lourd
                   </span>
                 )}
@@ -109,15 +114,16 @@ export const PersistentMetricsBar: React.FC<PersistentMetricsBarProps> = ({
 
         {/* Bouton de validation globale */}
         <div className="w-full sm:w-auto">
-          <button
+          <Button
             type="button"
             onClick={handleValidate}
-            disabled={isValidating}
-            className="glass-capsule-btn primary w-full sm:w-auto !px-6 !py-2.5 font-medium text-sm transition-all active:scale-95 flex items-center justify-center gap-2"
+            loading={isValidating}
+            icon={<Icon name="check-circle2" size={16} />}
+            fullWidth
+            className="sm:w-auto"
           >
-            <Icon name="check-circle2" className="w-4 h-4" />
-            <span>{isValidating ? 'Génération du carnet...' : 'Valider ce voyage'}</span>
-          </button>
+            {isValidating ? 'Génération du carnet...' : 'Valider ce voyage'}
+          </Button>
         </div>
       </div>
     </div>

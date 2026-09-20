@@ -4,8 +4,7 @@ import Icon from '@/components/ui/Icon';
 import React from 'react';
 import type { PlannerStep } from './plannerEngine';
 import { formatCivilDayIndex } from '@/lib/dates/tripDates';
-
-import { Modal } from '@/components/ui/Modal';
+import { Badge, ListItem, Modal } from '@/components/ui';
 
 export interface MoveStepModalProps {
   isOpen: boolean;
@@ -48,62 +47,62 @@ export function MoveStepModal({
       }}
       title={`Déplacer l’étape — ${step.title}`}
     >
-      <div className="space-y-2 max-h-[60vh] overflow-y-auto pr-1">
-          <p className="text-xs text-[var(--lkv-text-muted)] mb-3">
-            Sélectionnez la journée de destination (actuellement au Jour {step.day_number}) :
-          </p>
+      <div className="space-y-[var(--space-2)] pr-1">
+        <p className="mb-[var(--space-3)] text-[length:var(--lkv-text-footnote)] text-[color:var(--lkv-text-muted)]">
+          Sélectionnez la journée de destination (actuellement au Jour {step.day_number}) :
+        </p>
 
+        <ul className="space-y-[var(--space-2)]">
           {daysList.map((dayNum) => {
             const isCurrent = step.day_number === dayNum;
             const daySteps = steps.filter((s) => s.day_number === dayNum);
             const dateStr = formatDayDate(dayNum);
 
             return (
-              <button
-                key={dayNum}
-                type="button"
-                disabled={isCurrent}
-                onClick={() => handlePick(dayNum)}
-                className={`glass-capsule-btn w-full flex items-center !justify-between !rounded-2xl !p-3.5 text-left transition-all min-h-[48px] ${
-                  isCurrent ? 'primary opacity-60 cursor-not-allowed' : 'active:scale-[0.99]'
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <div
-                    className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-xs shadow-2xs ${
-                      isCurrent
-                        ? 'bg-[var(--lkv-primary)] text-white'
-                        : 'glass border border-white/60 text-[var(--lkv-primary)]'
-                    }`}
-                  >
-                    J{dayNum}
-                  </div>
-                  <div>
-                    <div className="font-semibold text-sm text-[var(--lkv-text-primary)] flex items-center gap-2">
+              <li key={dayNum}>
+                <ListItem
+                  disabled={isCurrent}
+                  selected={isCurrent}
+                  onClick={() => handlePick(dayNum)}
+                  leading={
+                    <span
+                      className={`flex h-9 w-9 items-center justify-center rounded-full text-[length:var(--lkv-text-caption-2)] font-bold ${
+                        isCurrent
+                          ? 'bg-[color:var(--lkv-primary)] text-[color:var(--lkv-text-inverted)]'
+                          : 'border border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-card)] text-[color:var(--lkv-primary)]'
+                      }`}
+                    >
+                      J{dayNum}
+                    </span>
+                  }
+                  title={
+                    <span className="flex items-center gap-[var(--space-2)]">
                       <span>Jour {dayNum}</span>
-                      {isCurrent && (
-                        <span className="text-[10px] bg-[var(--lkv-primary)]/10 text-[var(--lkv-primary)] px-2 py-0.5 rounded-full font-medium border border-[var(--lkv-primary)]/20">
-                          Actuel
-                        </span>
-                      )}
-                    </div>
-                    <div className="text-xs text-[var(--lkv-text-muted)] flex items-center gap-2 mt-0.5">
+                      {isCurrent && <Badge tone="sage">Actuel</Badge>}
+                    </span>
+                  }
+                  subtitle={
+                    <span className="flex items-center gap-[var(--space-2)]">
                       {dateStr && <span>{dateStr}</span>}
                       <span>•</span>
                       <span>{daySteps.length} étape(s)</span>
-                    </div>
-                  </div>
-                </div>
-
-                {!isCurrent && (
-                  <Icon
-                    name="arrow-right"
-                    className="w-4 h-4 text-[var(--lkv-primary)] shrink-0 mr-1"
-                  />
-                )}
-              </button>
+                    </span>
+                  }
+                  trailing={
+                    !isCurrent ? (
+                      <Icon
+                        name="arrow-right"
+                        size={16}
+                        className="shrink-0 text-[color:var(--lkv-primary)]"
+                      />
+                    ) : undefined
+                  }
+                  className="min-h-[48px]"
+                />
+              </li>
             );
           })}
+        </ul>
       </div>
     </Modal>
   );

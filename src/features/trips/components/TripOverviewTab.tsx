@@ -2,7 +2,7 @@
 
 import Icon from '@/components/ui/Icon';
 import React from 'react';
-import { GlassSubCard, GlassCapsuleBtn } from '@/components/ui';
+import { Button, Card, EmptyState } from '@/components/ui';
 import { TripBadge } from './TripBadge';
 import { getTripDuration } from '../hooks/useTripDuration';
 import { getKitCounters } from '../hooks/useKitCounters';
@@ -28,117 +28,116 @@ export function TripOverviewTab({ trip, stats, onTabChange }: TripOverviewTabPro
   const packedPercent = kit.total > 0 ? Math.round((kit.ready / kit.total) * 100) : 0;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-[var(--space-6)]">
       {/* 1. Métriques Clés */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-        <GlassSubCard className="p-4 rounded-[var(--lkv-radius-card)] border border-white/60 shadow-2xs">
-          <div className="flex items-center gap-1.5 text-[var(--lkv-text-secondary)] text-xs font-semibold uppercase tracking-wider mb-1">
+      <div className="grid grid-cols-2 gap-[var(--space-3)] sm:grid-cols-4 sm:gap-[var(--space-4)]">
+        <Card variant="compact" className="p-[var(--space-4)]">
+          <div className="mb-1 flex items-center gap-[var(--space-2)] text-[length:var(--lkv-text-footnote)] font-semibold uppercase tracking-wider text-[color:var(--lkv-text-secondary)]">
             <Icon name="calendar" size={13} />
             <span>Durée</span>
           </div>
-          <div className="text-xl sm:text-2xl font-bold text-[var(--lkv-text-primary)]">
+          <div className="text-[length:var(--lkv-text-title-sm)] font-bold text-[color:var(--lkv-text-primary)] sm:text-[length:var(--lkv-text-title-lg)]">
             {duration.durationDays} {duration.durationDays > 1 ? 'jours' : 'jour'}
           </div>
-          <div className="text-xs text-[var(--lkv-text-secondary)] mt-0.5">
+          <div className="mt-0.5 text-[length:var(--lkv-text-footnote)] text-[color:var(--lkv-text-secondary)]">
             {steps.length} étapes prévues
           </div>
-        </GlassSubCard>
+        </Card>
 
-        <GlassSubCard className="p-4 rounded-[var(--lkv-radius-card)] border border-white/60 shadow-2xs">
-          <div className="flex items-center gap-1.5 text-[var(--lkv-text-secondary)] text-xs font-semibold uppercase tracking-wider mb-1">
+        <Card variant="compact" className="p-[var(--space-4)]">
+          <div className="mb-1 flex items-center gap-[var(--space-2)] text-[length:var(--lkv-text-footnote)] font-semibold uppercase tracking-wider text-[color:var(--lkv-text-secondary)]">
             <Icon name="navigation" size={13} />
             <span>Distance</span>
           </div>
-          <div className="text-xl sm:text-2xl font-bold text-[var(--lkv-text-primary)]">
+          <div className="text-[length:var(--lkv-text-title-sm)] font-bold text-[color:var(--lkv-text-primary)] sm:text-[length:var(--lkv-text-title-lg)]">
             {dist.totalKm} km
           </div>
-          <div className="text-xs text-[var(--lkv-text-secondary)] mt-0.5 font-mono">
+          <div className="mt-0.5 font-mono text-[length:var(--lkv-text-footnote)] text-[color:var(--lkv-text-secondary)]">
             +{dist.dPlus}m / -{dist.dMinus}m D±
           </div>
-        </GlassSubCard>
+        </Card>
 
-        <GlassSubCard className="p-4 rounded-[var(--lkv-radius-card)] border border-white/60 shadow-2xs">
-          <div className="flex items-center gap-1.5 text-[var(--lkv-text-secondary)] text-xs font-semibold uppercase tracking-wider mb-1">
+        <Card variant="compact" className="p-[var(--space-4)]">
+          <div className="mb-1 flex items-center gap-[var(--space-2)] text-[length:var(--lkv-text-footnote)] font-semibold uppercase tracking-wider text-[color:var(--lkv-text-secondary)]">
             <Icon name="package" size={13} />
             <span>Sac à dos</span>
           </div>
-          <div className="text-xl sm:text-2xl font-bold text-[var(--lkv-text-primary)]">
+          <div className="text-[length:var(--lkv-text-title-sm)] font-bold text-[color:var(--lkv-text-primary)] sm:text-[length:var(--lkv-text-title-lg)]">
             {packedPercent}%
           </div>
-          <div className="text-xs text-[var(--lkv-text-secondary)] mt-0.5">
+          <div className="mt-0.5 text-[length:var(--lkv-text-footnote)] text-[color:var(--lkv-text-secondary)]">
             {kit.ready}/{kit.total} objets prêts
           </div>
-        </GlassSubCard>
+        </Card>
 
-        <GlassSubCard className="p-4 rounded-[var(--lkv-radius-card)] border border-white/60 shadow-2xs">
-          <div className="flex items-center gap-1.5 text-[var(--lkv-text-secondary)] text-xs font-semibold uppercase tracking-wider mb-1">
+        <Card variant="compact" className="p-[var(--space-4)]">
+          <div className="mb-1 flex items-center gap-[var(--space-2)] text-[length:var(--lkv-text-footnote)] font-semibold uppercase tracking-wider text-[color:var(--lkv-text-secondary)]">
             <Icon name="credit-card" size={13} />
             <span>Budget</span>
           </div>
-          <div className="text-xl sm:text-2xl font-bold text-[var(--lkv-text-primary)]">
+          <div className="text-[length:var(--lkv-text-title-sm)] font-bold text-[color:var(--lkv-text-primary)] sm:text-[length:var(--lkv-text-title-lg)]">
             {stats.total_spent} €
           </div>
-          <div className="text-xs text-[var(--lkv-text-secondary)] mt-0.5">
+          <div className="mt-0.5 text-[length:var(--lkv-text-footnote)] text-[color:var(--lkv-text-secondary)]">
             sur {stats.estimated_budget > 0 ? `${stats.estimated_budget} €` : 'non défini'}
           </div>
-        </GlassSubCard>
+        </Card>
       </div>
 
       {/* 2. Barre de Préparation Matériel */}
       {kit.total > 0 && (
-        <div className="glass p-5 rounded-[var(--lkv-radius-card)] border border-white/60 shadow-sm">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-semibold text-[var(--lkv-text-primary)]">
+        <Card>
+          <div className="mb-[var(--space-2)] flex items-center justify-between">
+            <span className="text-[length:var(--lkv-text-footnote)] font-semibold text-[color:var(--lkv-text-primary)]">
               Préparation de l’équipement
             </span>
-            <span className="text-xs font-medium text-[var(--lkv-text-secondary)]">
+            <span className="text-[length:var(--lkv-text-footnote)] font-medium text-[color:var(--lkv-text-secondary)]">
               {kit.ready} sur {kit.total} emballés ({packedPercent}%)
             </span>
           </div>
-          <div className="w-full h-2.5 bg-black/5 rounded-full overflow-hidden">
+          <div className="h-2.5 w-full overflow-hidden rounded-full bg-[color:var(--lkv-surface-muted)]">
             <div
-              className="h-full bg-gradient-to-r from-[var(--lkv-secondary)] to-[var(--lkv-primary)] transition-all duration-500 rounded-full"
+              className="h-full rounded-full bg-[linear-gradient(to_right,var(--lkv-secondary),var(--lkv-primary))] transition-all duration-500"
               style={{ width: `${packedPercent}%` }}
             />
           </div>
-        </div>
+        </Card>
       )}
 
       {/* 3. Aperçu Itinéraire & Participants */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 gap-[var(--space-6)] md:grid-cols-2">
         {/* Aperçu Étapes */}
-        <div className="glass p-5 sm:p-6 rounded-[var(--lkv-radius-card)] border border-white/60 shadow-sm flex flex-col justify-between">
+        <Card className="flex flex-col justify-between">
           <div>
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-base sm:text-lg font-bold text-[var(--lkv-text-primary)] flex items-center gap-2">
-                <Icon name="navigation" size={18} className="text-[var(--lkv-text-secondary)]" />
+            <div className="mb-[var(--space-4)] flex items-center justify-between">
+              <h2 className="flex items-center gap-[var(--space-2)] text-[length:var(--lkv-text-subheadline)] font-bold text-[color:var(--lkv-text-primary)]">
+                <Icon name="navigation" size={18} className="text-[color:var(--lkv-text-secondary)]" />
                 <span>Aperçu de l’itinéraire</span>
               </h2>
-              <GlassCapsuleBtn size="xs" onClick={() => onTabChange('itinerary')}>
+              <Button size="sm" variant="secondary" onClick={() => onTabChange('itinerary')}>
                 Voir tout ({steps.length})
-              </GlassCapsuleBtn>
+              </Button>
             </div>
 
             {steps.length === 0 ? (
-              <div className="text-center py-8 text-sm text-[var(--lkv-text-secondary)]">
-                <p>Aucune étape enregistrée pour le moment.</p>
-                <p className="text-xs text-[var(--lkv-text-secondary)]/80 mt-1">
-                  Ajoutez des étapes à votre voyage pour visualiser l’itinéraire détaillé.
-                </p>
-              </div>
+              <EmptyState
+                compact
+                title="Aucune étape enregistrée pour le moment."
+                description="Ajoutez des étapes à votre voyage pour visualiser l’itinéraire détaillé."
+              />
             ) : (
-              <div className="relative pl-6 space-y-4 border-l-2 border-[var(--lkv-secondary)]/30 ml-2">
+              <div className="relative ml-2 space-y-[var(--space-4)] border-l-2 border-[color:var(--lkv-secondary)]/30 pl-[var(--space-6)]">
                 {steps.slice(0, 4).map((step) => (
                   <div key={step.id} className="relative">
-                    <span className="absolute -left-[31px] top-1 w-3.5 h-3.5 rounded-full bg-[var(--lkv-secondary)] border-2 border-white" />
-                    <div className="text-xs font-semibold text-[var(--lkv-text-secondary)] uppercase tracking-wide">
+                    <span className="absolute -left-[31px] top-1 h-3.5 w-3.5 rounded-full border-2 border-white bg-[color:var(--lkv-secondary)]" />
+                    <div className="text-[length:var(--lkv-text-footnote)] font-semibold uppercase tracking-wide text-[color:var(--lkv-text-secondary)]">
                       Jour {step.day_number}
                     </div>
-                    <div className="font-medium text-sm text-[var(--lkv-text-primary)]">
+                    <div className="text-[length:var(--lkv-text-footnote)] font-medium text-[color:var(--lkv-text-primary)]">
                       {step.title}
                     </div>
                     {step.location_name && (
-                      <div className="text-xs text-[var(--lkv-text-secondary)]">
+                      <div className="text-[length:var(--lkv-text-footnote)] text-[color:var(--lkv-text-secondary)]">
                         {step.location_name}
                       </div>
                     )}
@@ -147,67 +146,68 @@ export function TripOverviewTab({ trip, stats, onTabChange }: TripOverviewTabPro
               </div>
             )}
           </div>
-        </div>
+        </Card>
 
         {/* Aperçu Équipe */}
-        <div className="glass p-5 sm:p-6 rounded-[var(--lkv-radius-card)] border border-white/60 shadow-sm flex flex-col justify-between">
+        <Card className="flex flex-col justify-between">
           <div>
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-base sm:text-lg font-bold text-[var(--lkv-text-primary)] flex items-center gap-2">
-                <Icon name="users" size={18} className="text-[var(--lkv-text-secondary)]" />
+            <div className="mb-[var(--space-4)] flex items-center justify-between">
+              <h2 className="flex items-center gap-[var(--space-2)] text-[length:var(--lkv-text-subheadline)] font-bold text-[color:var(--lkv-text-primary)]">
+                <Icon name="users" size={18} className="text-[color:var(--lkv-text-secondary)]" />
                 <span>Équipe d’expédition</span>
               </h2>
-              <GlassCapsuleBtn size="xs" onClick={() => onTabChange('team')}>
+              <Button size="sm" variant="secondary" onClick={() => onTabChange('team')}>
                 Gérer ({participants})
-              </GlassCapsuleBtn>
+              </Button>
             </div>
 
-            <div className="space-y-2.5">
+            <div className="space-y-[var(--space-2)]">
               {trip.collaborators.map((collab) => (
-                <div
+                <Card
                   key={collab.id}
-                  className="glass-sub-card flex items-center justify-between p-3 rounded-[var(--lkv-radius-md)] border border-white/50 shadow-2xs"
+                  variant="compact"
+                  className="flex items-center justify-between"
                 >
-                  <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-full bg-[var(--lkv-primary)] text-white flex items-center justify-center font-bold text-xs uppercase shadow-sm">
+                  <div className="flex items-center gap-[var(--space-3)]">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[color:var(--lkv-action)] text-[length:var(--lkv-text-footnote)] font-bold uppercase text-[color:var(--lkv-on-action)]">
                       {collab.profile?.full_name?.substring(0, 2) || collab.user_id.substring(0, 2)}
                     </div>
                     <div>
-                      <div className="text-sm font-semibold text-[var(--lkv-text-primary)]">
+                      <div className="text-[length:var(--lkv-text-footnote)] font-semibold text-[color:var(--lkv-text-primary)]">
                         {collab.profile?.full_name || 'Membre de l’expédition'}
                       </div>
-                      <div className="text-xs text-[var(--lkv-text-secondary)]">
+                      <div className="text-[length:var(--lkv-text-footnote)] text-[color:var(--lkv-text-secondary)]">
                         {collab.profile?.username ? `@${collab.profile.username}` : 'Voyageur LKDV'}
                       </div>
                     </div>
                   </div>
 
                   <TripBadge type="role" value={collab.role} size="sm" />
-                </div>
+                </Card>
               ))}
             </div>
           </div>
-        </div>
+        </Card>
       </div>
 
       {/* 4. Bloc Conseils de préparation */}
-      <div className="glass p-5 sm:p-6 rounded-[var(--lkv-radius-card)] border border-white/60 shadow-sm">
-        <div className="flex items-start gap-3.5">
-          <div className="p-2.5 rounded-[var(--lkv-radius-md)] glass-sub-card text-[var(--lkv-primary)] shrink-0">
+      <Card>
+        <div className="flex items-start gap-[var(--space-4)]">
+          <div className="shrink-0 rounded-[var(--lkv-radius-md)] bg-[color:var(--lkv-surface-muted)] p-[var(--space-2)] text-[color:var(--lkv-primary)]">
             <Icon name="compass" size={22} />
           </div>
           <div>
-            <h3 className="text-sm font-bold text-[var(--lkv-text-primary)]">
+            <h3 className="text-[length:var(--lkv-text-footnote)] font-bold text-[color:var(--lkv-text-primary)]">
               Conseils pour votre préparation
             </h3>
-            <p className="text-xs sm:text-sm text-[var(--lkv-text-secondary)] mt-1 leading-relaxed">
+            <p className="mt-1 text-[length:var(--lkv-text-footnote)] leading-relaxed text-[color:var(--lkv-text-secondary)] sm:text-[length:var(--lkv-text-body-sm)]">
               Organisez les étapes de votre parcours, invitez vos co-voyageurs pour préparer le
               matériel ensemble, et ajustez votre équipement selon la météo et le terrain pour
               partir l’esprit tranquille.
             </p>
           </div>
         </div>
-      </div>
+      </Card>
     </div>
   );
 }

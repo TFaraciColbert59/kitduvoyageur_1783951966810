@@ -91,7 +91,9 @@ describe('RenameTripModal — formulaire et action', () => {
     expect(src).toMatch(/await submitRenameTrip\(tripId, clean\)/);
     expect(src).toContain('onOpenChange(false)');
     expect(src).toContain('onRenamed?.(clean)');
-    expect(src).toContain('LkvInput');
+    // Champ natif tokenisé (plus de LkvInput) avec la même contrainte de longueur.
+    expect(src).toContain('maxLength={120}');
+    expect(src).toContain('aria-invalid');
     expect(src).toContain('Sheet');
   });
 
@@ -105,7 +107,8 @@ describe('RenameTripModal — formulaire et action', () => {
     // Cible tactile 44px HIG/repo : crayon hero (IconButton canonique) et déclencheur desktop.
     expect(hero).toContain('IconButton');
     expect(hero).toMatch(/h-11 w-11/);
-    expect(desktop).toContain('!h-11');
+    // Déclencheur desktop = Button canonique taille md (44 px), aria conservé.
+    expect(desktop).toContain('aria-label="Renommer l’activité"');
     expect(mobile).toContain('<RenameTripModal');
     expect(desktop).toContain('<RenameTripModal');
     expect(desktop).toMatch(/Icon name="pencil"/);

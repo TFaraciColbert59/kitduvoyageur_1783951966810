@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import type { HumanParticipant } from '../../types/preparation.types';
+import { Badge, Button, Card, Modal } from '@/components/ui';
 
 interface GlassBreakModalProps {
   participant: HumanParticipant | null;
@@ -11,6 +12,11 @@ interface GlassBreakModalProps {
   onLock: (id: string) => void;
 }
 
+/**
+ * GlassBreakModal — accès d'urgence aux données médicales privées.
+ * Overlay spécialisé : consomme les primitives/tokens canoniques, conserve le
+ * verrouillage automatique et la divulgation explicite (Glass Break).
+ */
 export const GlassBreakModal: React.FC<GlassBreakModalProps> = ({
   participant,
   isOpen,
@@ -54,169 +60,148 @@ export const GlassBreakModal: React.FC<GlassBreakModalProps> = ({
   };
 
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="modal-title"
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/70 backdrop-blur-md animate-in fade-in duration-200"
+    <Modal
+      open={isOpen}
+      onOpenChange={(open) => {
+        if (!open) handleClose();
+      }}
+      title={publicData.firstName}
+      size="md"
     >
-      <div
-        className="w-full max-w-lg rounded-t-3xl sm:rounded-3xl p-6 bg-[#17402C] text-[#E7E3D6] border border-white/20 shadow-2xl space-y-5 max-h-[90vh] overflow-y-auto"
-        style={{
-          paddingBottom: 'calc(1.5rem + env(safe-area-inset-bottom, 16px))',
-        }}
-      >
-        {/* Header avec Identité Publique */}
-        <div className="flex items-center justify-between border-b border-white/10 pb-4">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-2xl bg-white/15 text-white font-bold flex items-center justify-center text-lg border border-white/20">
-              {publicData.firstName[0]}
-            </div>
-            <div>
-              <span className="text-[10px] font-mono uppercase tracking-widest text-[#A6C1A0]">
-                FICHE ÉQUIPIER
-              </span>
-              <h3 id="modal-title" className="text-xl font-bold text-white leading-tight">
-                {publicData.firstName}
-              </h3>
-            </div>
+      <div className="space-y-[var(--space-5)]">
+        <div className="flex items-center gap-[var(--space-3)]">
+          <div className="flex h-12 w-12 items-center justify-center rounded-[var(--lkv-radius-md)] bg-[color:var(--lkv-surface-muted)] text-[length:var(--lkv-text-title-sm)] font-bold text-[color:var(--lkv-text-primary)]">
+            {publicData.firstName[0]}
           </div>
-
-          <button
-            onClick={handleClose}
-            className="p-2 rounded-full text-white/60 hover:text-white hover:bg-white/10 text-sm"
-            aria-label="Fermer"
-          >
-            ✕
-          </button>
+          <span className="font-mono text-[10px] uppercase tracking-widest text-[color:var(--lkv-text-muted)]">
+            FICHE ÉQUIPIER
+          </span>
         </div>
 
-        {/* Résumé Public */}
-        <div className="grid grid-cols-2 gap-2 text-xs">
-          <div className="p-3 rounded-xl bg-black/20 border border-white/10">
-            <span className="text-[#9AAD9E] block text-[10px] uppercase font-mono">Poids du Sac</span>
-            <span className="text-base font-extrabold font-mono text-white">
+        <div className="grid grid-cols-2 gap-[var(--space-2)] text-[length:var(--lkv-text-footnote)]">
+          <Card variant="compact" className="flex flex-col">
+            <span className="block font-mono text-[10px] uppercase text-[color:var(--lkv-text-muted)]">
+              Poids du Sac
+            </span>
+            <span className="font-mono text-[length:var(--lkv-text-subheadline)] font-extrabold text-[color:var(--lkv-text-primary)]">
               {publicData.packWeightKg} kg
             </span>
-          </div>
-          <div className="p-3 rounded-xl bg-black/20 border border-white/10">
-            <span className="text-[#9AAD9E] block text-[10px] uppercase font-mono">Score Forme</span>
-            <span className="text-base font-extrabold font-mono text-white">
+          </Card>
+          <Card variant="compact" className="flex flex-col">
+            <span className="block font-mono text-[10px] uppercase text-[color:var(--lkv-text-muted)]">
+              Score Forme
+            </span>
+            <span className="font-mono text-[length:var(--lkv-text-subheadline)] font-extrabold text-[color:var(--lkv-text-primary)]">
               {publicData.fitnessScore} / 100
             </span>
-          </div>
+          </Card>
         </div>
 
-        {/* Zone Sensible — Protection Stricte de la Confidentialité DOM */}
-        <div className="pt-2">
-          {!isUnlocked ? (
-            /* ÉTAT VERROUILLÉ — Zéro donnée privée dans le DOM */
-            <div className="p-5 rounded-2xl bg-black/40 border border-red-500/30 text-center space-y-3">
-              <div className="w-10 h-10 rounded-full bg-red-500/20 text-red-400 flex items-center justify-center text-xl mx-auto">
-                🔒
-              </div>
-              <div>
-                <h4 className="text-sm font-bold text-white">
-                  Données Médicales & ICE Verrouillées
-                </h4>
-                <p className="text-xs text-[#9AAD9E] mt-1 max-w-xs mx-auto leading-relaxed">
-                  Conformément au protocole de sécurité LKDV, les données médicales ne sont pas envoyées au DOM public sans action explicite d'urgence.
-                </p>
-              </div>
-
-              <button
-                onClick={() => onUnlock(participant.id)}
-                className="w-full py-3 rounded-xl bg-red-600 hover:bg-red-500 text-white font-bold text-xs shadow-lg active:scale-98 transition-all flex items-center justify-center gap-2"
-              >
-                <span>⚡ Déverrouiller l'accès d'urgence (Glass Break)</span>
-              </button>
+        {!isUnlocked ? (
+          <Card
+            tone="danger"
+            className="flex flex-col items-center gap-[var(--space-3)] text-center"
+          >
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[color:var(--lkv-danger-bg)] text-[length:var(--lkv-text-title-sm)]">
+              🔒
             </div>
-          ) : (
-            /* ÉTAT DÉVERROUILLÉ — Visible uniquement après accord explicite */
-            <div className="space-y-4 animate-in fade-in zoom-in-95 duration-200">
-              <div className="flex items-center justify-between p-2.5 rounded-xl bg-sand-500/20 border border-sand-500/40 text-sand-200 text-xs">
-                <span className="font-semibold">⚠️ Mode Glass Break Actif</span>
-                <span className="font-mono font-bold">Verrouillage auto : {timeLeft}s</span>
-              </div>
+            <div>
+              <h4 className="text-[length:var(--lkv-text-footnote)] font-bold text-[color:var(--lkv-text-primary)]">
+                Données Médicales & ICE Verrouillées
+              </h4>
+              <p className="mx-auto mt-1 max-w-xs text-[length:var(--lkv-text-footnote)] leading-relaxed text-[color:var(--lkv-text-muted)]">
+                Conformément au protocole de sécurité LKDV, les données médicales ne sont pas
+                envoyées au DOM public sans action explicite d&apos;urgence.
+              </p>
+            </div>
 
-              {/* Fiches Médicales */}
-              <div className="space-y-2.5">
-                <div className="p-3.5 rounded-xl bg-black/30 border border-white/15">
-                  <span className="text-[10px] font-mono uppercase text-[#A6C1A0] block">
-                    Groupe Sanguin
-                  </span>
-                  <span className="text-lg font-mono font-extrabold text-white">
-                    {privateData.bloodType}
-                  </span>
-                </div>
+            <Button
+              variant="destructive"
+              fullWidth
+              onClick={() => onUnlock(participant.id)}
+            >
+              ⚡ Déverrouiller l&apos;accès d&apos;urgence (Glass Break)
+            </Button>
+          </Card>
+        ) : (
+          <div className="space-y-[var(--space-4)] animate-in fade-in zoom-in-95 duration-200">
+            <div className="flex items-center justify-between rounded-[var(--lkv-radius-sm)] border border-[color:var(--lkv-warning)]/40 bg-[color:var(--lkv-warning-bg)] p-[var(--space-3)] text-[length:var(--lkv-text-footnote)] text-[color:var(--lkv-warning-dark)]">
+              <span className="font-semibold">⚠️ Mode Glass Break Actif</span>
+              <span className="font-mono font-bold">Verrouillage auto : {timeLeft}s</span>
+            </div>
 
-                <div className="p-3.5 rounded-xl bg-black/30 border border-white/15">
-                  <span className="text-[10px] font-mono uppercase text-[#A6C1A0] block">
-                    Allergies & Intolérances
-                  </span>
-                  <div className="flex flex-wrap gap-1.5 mt-1.5">
-                    {privateData.allergies.length > 0 ? (
-                      privateData.allergies.map((allergy) => (
-                        <span
-                          key={allergy}
-                          className="px-2 py-0.5 rounded-md bg-red-500/20 text-red-300 text-xs font-semibold border border-red-500/30"
-                        >
-                          {allergy}
-                        </span>
-                      ))
-                    ) : (
-                      <span className="text-xs text-white/70">Aucune allergie connue</span>
-                    )}
-                  </div>
-                </div>
+            <div className="space-y-[var(--space-3)]">
+              <Card variant="compact" className="flex flex-col">
+                <span className="block font-mono text-[10px] uppercase text-[color:var(--lkv-text-muted)]">
+                  Groupe Sanguin
+                </span>
+                <span className="font-mono text-[length:var(--lkv-text-title-sm)] font-extrabold text-[color:var(--lkv-text-primary)]">
+                  {privateData.bloodType}
+                </span>
+              </Card>
 
-                <div className="p-3.5 rounded-xl bg-black/30 border border-white/15">
-                  <span className="text-[10px] font-mono uppercase text-[#A6C1A0] block">
-                    Contact d'Urgence (ICE)
-                  </span>
-                  <div className="mt-1 flex items-center justify-between">
-                    <div>
-                      <span className="text-sm font-bold text-white block">
-                        {privateData.iceContact.name} ({privateData.iceContact.relationship})
-                      </span>
-                      <span className="text-xs font-mono text-[#A6C1A0]">
-                        {privateData.iceContact.phone}
-                      </span>
-                    </div>
-
-                    <a
-                      href={`tel:${privateData.iceContact.phone.replace(/\s+/g, '')}`}
-                      className="px-3 py-1.5 rounded-xl bg-forest-600 hover:bg-forest-500 text-white font-bold text-xs flex items-center gap-1 shadow-sm transition-all"
-                    >
-                      📞 Appeler
-                    </a>
-                  </div>
-                </div>
-
-                {privateData.medications && privateData.medications.length > 0 && (
-                  <div className="p-3.5 rounded-xl bg-black/30 border border-white/15">
-                    <span className="text-[10px] font-mono uppercase text-[#A6C1A0] block">
-                      Traitements / Médicaments
+              <Card variant="compact">
+                <span className="block font-mono text-[10px] uppercase text-[color:var(--lkv-text-muted)]">
+                  Allergies & Intolérances
+                </span>
+                <div className="mt-[var(--space-2)] flex flex-wrap gap-[var(--space-2)]">
+                  {privateData.allergies.length > 0 ? (
+                    privateData.allergies.map((allergy) => (
+                      <Badge key={allergy} tone="danger">
+                        {allergy}
+                      </Badge>
+                    ))
+                  ) : (
+                    <span className="text-[length:var(--lkv-text-footnote)] text-[color:var(--lkv-text-muted)]">
+                      Aucune allergie connue
                     </span>
-                    <ul className="list-disc list-inside text-xs mt-1 text-white/90 space-y-0.5">
-                      {privateData.medications.map((med) => (
-                        <li key={med}>{med}</li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-              </div>
+                  )}
+                </div>
+              </Card>
 
-              <button
-                onClick={() => onLock(participant.id)}
-                className="w-full py-2.5 rounded-xl bg-white/10 text-white hover:bg-white/20 text-xs font-semibold transition-all"
-              >
-                🔒 Re-verrouiller immédiatement
-              </button>
+              <Card variant="compact">
+                <span className="block font-mono text-[10px] uppercase text-[color:var(--lkv-text-muted)]">
+                  Contact d&apos;Urgence (ICE)
+                </span>
+                <div className="mt-[var(--space-2)] flex items-center justify-between gap-[var(--space-2)]">
+                  <div>
+                    <span className="block text-[length:var(--lkv-text-footnote)] font-bold text-[color:var(--lkv-text-primary)]">
+                      {privateData.iceContact.name} ({privateData.iceContact.relationship})
+                    </span>
+                    <span className="font-mono text-[length:var(--lkv-text-footnote)] text-[color:var(--lkv-text-muted)]">
+                      {privateData.iceContact.phone}
+                    </span>
+                  </div>
+
+                  <a
+                    href={`tel:${privateData.iceContact.phone.replace(/\s+/g, '')}`}
+                    className="inline-flex min-h-[var(--control-height-sm)] items-center gap-[var(--space-1)] rounded-full bg-[color:var(--lkv-action)] px-[var(--space-3)] text-[length:var(--lkv-text-footnote)] font-bold text-[color:var(--lkv-on-action)] transition-colors hover:bg-[color:var(--lkv-action-hover)]"
+                  >
+                    📞 Appeler
+                  </a>
+                </div>
+              </Card>
+
+              {privateData.medications && privateData.medications.length > 0 && (
+                <Card variant="compact">
+                  <span className="block font-mono text-[10px] uppercase text-[color:var(--lkv-text-muted)]">
+                    Traitements / Médicaments
+                  </span>
+                  <ul className="mt-[var(--space-1)] list-inside list-disc space-y-0.5 text-[length:var(--lkv-text-footnote)] text-[color:var(--lkv-text-primary)]">
+                    {privateData.medications.map((med) => (
+                      <li key={med}>{med}</li>
+                    ))}
+                  </ul>
+                </Card>
+              )}
             </div>
-          )}
-        </div>
+
+            <Button variant="secondary" fullWidth onClick={() => onLock(participant.id)}>
+              🔒 Re-verrouiller immédiatement
+            </Button>
+          </div>
+        )}
       </div>
-    </div>
+    </Modal>
   );
 };

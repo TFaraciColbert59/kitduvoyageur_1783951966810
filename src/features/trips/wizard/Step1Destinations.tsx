@@ -3,6 +3,7 @@
 import Icon from '@/components/ui/Icon';
 import React, { useState } from 'react';
 import { type SelectedCountry, CURATED_COUNTRIES, OTHER_COUNTRIES } from './wizardTypes';
+import { Badge, Card, IconButton, ListItem, SearchField } from '@/components/ui';
 
 interface Step1DestinationsProps {
   selectedCountries: SelectedCountry[];
@@ -59,16 +60,16 @@ export function Step1Destinations({ selectedCountries, onChange }: Step1Destinat
     : [];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-[var(--space-6)]">
       <div>
-        <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-lkv-secondary mb-1">
+        <div className="mb-1 flex items-center gap-[var(--space-2)] text-[length:var(--lkv-text-footnote)] font-semibold uppercase tracking-wider text-[color:var(--lkv-secondary)]">
           <Icon name="map-pin" size={14} />
           <span>Étape 1 sur 5</span>
         </div>
-        <h2 className="text-2xl sm:text-3xl font-bold text-lkv-primary">
+        <h2 className="text-[length:var(--lkv-text-title-sm)] font-bold text-[color:var(--lkv-text-primary)] sm:text-[length:var(--lkv-text-title-lg)]">
           Où partez-vous à l&apos;aventure ?
         </h2>
-        <p className="text-sm text-[var(--lkv-text-muted)] mt-1">
+        <p className="mt-1 text-[length:var(--lkv-text-footnote)] text-[color:var(--lkv-text-muted)]">
           Choisissez un ou plusieurs pays. Le moteur de répartition distribuera vos journées de
           marche de manière cohérente.
         </p>
@@ -76,29 +77,34 @@ export function Step1Destinations({ selectedCountries, onChange }: Step1Destinat
 
       {/* Destinations phares curées (5 pays réels) */}
       <div>
-        <div className="flex items-center gap-1.5 text-xs font-semibold text-lkv-primary mb-3">
-          <Icon name="sparkles" size={14} className="text-lkv-secondary" />
+        <div className="mb-[var(--space-3)] flex items-center gap-[var(--space-2)] text-[length:var(--lkv-text-footnote)] font-semibold text-[color:var(--lkv-text-primary)]">
+          <Icon name="sparkles" size={14} className="text-[color:var(--lkv-secondary)]" />
           <span>Destinations phares (itinéraires réels sourcés)</span>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 gap-[var(--space-3)] sm:grid-cols-2 lg:grid-cols-3">
           {CURATED_COUNTRIES.map((country) => {
             const active = isSelected(country.code);
             return (
-              <button
+              <Card
                 key={country.code}
-                type="button"
+                variant="interactive"
+                selected={active}
                 onClick={() => toggleCountry(country)}
-                className={`glass-capsule-btn w-full flex items-center justify-between !rounded-2xl !p-3.5 sm:!p-4 text-left transition-all ${
-                  active ? 'primary shadow-md' : ''
-                }`}
+                className="flex items-center justify-between text-left"
               >
-                <div className="flex items-center gap-3">
-                  <span className="text-2xl">{country.flag}</span>
+                <div className="flex items-center gap-[var(--space-3)]">
+                  <span aria-hidden="true" className="text-2xl">
+                    {country.flag}
+                  </span>
                   <div>
-                    <div className="text-sm font-semibold">{country.name}</div>
+                    <div className="text-[length:var(--lkv-text-footnote)] font-semibold text-[color:var(--lkv-text-primary)]">
+                      {country.name}
+                    </div>
                     <div
                       className={`text-[11px] ${
-                        active ? 'text-[var(--sage-300)]' : 'text-lkv-secondary'
+                        active
+                          ? 'text-[color:var(--sage-300)]'
+                          : 'text-[color:var(--lkv-text-secondary)]'
                       }`}
                     >
                       Étapes GPS & refuges vérifiés
@@ -106,13 +112,16 @@ export function Step1Destinations({ selectedCountries, onChange }: Step1Destinat
                   </div>
                 </div>
                 <div
-                  className={`w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold ${
-                    active ? 'bg-white text-lkv-primary' : 'border border-black/20 text-transparent'
+                  aria-hidden="true"
+                  className={`flex h-5 w-5 items-center justify-center rounded-full text-[length:var(--lkv-text-caption-2)] font-bold ${
+                    active
+                      ? 'bg-white text-[color:var(--lkv-primary)]'
+                      : 'border border-[color:var(--lkv-border-strong)] text-transparent'
                   }`}
                 >
                   <Icon name="check" size={12} />
                 </div>
-              </button>
+              </Card>
             );
           })}
         </div>
@@ -120,115 +129,106 @@ export function Step1Destinations({ selectedCountries, onChange }: Step1Destinat
 
       {/* Sélecteur de recherche d'autres destinations */}
       <div>
-        <div className="text-xs font-semibold text-lkv-primary mb-2">
+        <div className="mb-[var(--space-2)] text-[length:var(--lkv-text-footnote)] font-semibold text-[color:var(--lkv-text-primary)]">
           Ajouter une autre destination
         </div>
-        <div className="relative">
-          <Icon
-            name="search"
-            size={16}
-            className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--lkv-text-subtle)]"
-          />
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Rechercher un pays (ex: Norvège, Suisse, Japon...)"
-            className="w-full pl-10 pr-4 py-3 bg-white/90 rounded-xl border border-black/10 text-sm focus:outline-none focus:ring-2 focus:ring-lkv-primary text-lkv-primary"
-          />
-        </div>
+        <SearchField
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          onClear={() => setSearch('')}
+          placeholder="Rechercher un pays (ex: Norvège, Suisse, Japon...)"
+          aria-label="Rechercher un pays"
+        />
 
         {filteredCountries.length > 0 && (
-          <div className="mt-2 p-2 bg-white rounded-xl border border-black/10 shadow-lg space-y-1 max-h-48 overflow-y-auto">
+          <Card className="mt-[var(--space-2)] max-h-48 space-y-[var(--space-1)] overflow-y-auto p-[var(--space-2)] shadow-elevation-2">
             {filteredCountries.map((c) => {
               const active = isSelected(c.code);
               return (
-                <button
+                <ListItem
                   key={c.code}
-                  type="button"
                   onClick={() => {
                     toggleCountry(c);
                     setSearch('');
                   }}
-                  className={`glass-capsule-btn w-full flex items-center !justify-between !rounded-xl !px-3 !py-2 text-left text-xs transition-colors ${
-                    active ? 'primary font-semibold' : ''
-                  }`}
-                >
-                  <span className="flex items-center gap-2">
-                    <span>{c.flag}</span>
-                    <span>{c.name}</span>
-                  </span>
-                  {active ? (
-                    <span className="text-[11px] text-lkv-secondary">Sélectionné</span>
-                  ) : (
-                    <Icon name="plus" size={14} className="text-[var(--lkv-text-subtle)]" />
-                  )}
-                </button>
+                  leading={<span aria-hidden="true">{c.flag}</span>}
+                  title={c.name}
+                  trailing={
+                    active ? (
+                      <Badge tone="sage">Sélectionné</Badge>
+                    ) : (
+                      <Icon name="plus" size={14} className="text-[color:var(--lkv-text-muted)]" />
+                    )
+                  }
+                />
               );
             })}
-          </div>
+          </Card>
         )}
       </div>
 
       {/* Liste des pays sélectionnés avec ordre modifiable */}
-      <div className="pt-2">
-        <div className="text-xs font-semibold text-lkv-primary uppercase tracking-wider mb-2">
+      <div className="pt-[var(--space-2)]">
+        <div className="mb-[var(--space-2)] text-[length:var(--lkv-text-footnote)] font-semibold uppercase tracking-wider text-[color:var(--lkv-text-primary)]">
           Itinéraire multi-destinations ({selectedCountries.length})
         </div>
-        <div className="space-y-2">
+        <ul className="space-y-[var(--space-2)]">
           {selectedCountries.map((country, idx) => (
-            <div
-              key={country.code}
-              className="glass-sub-card flex items-center justify-between p-3 rounded-xl"
-            >
-              <div className="flex items-center gap-3">
-                <span className="w-6 h-6 rounded-full bg-[var(--lkv-surface-paper)] border border-black/10 text-xs font-bold text-lkv-primary flex items-center justify-center">
-                  {idx + 1}
-                </span>
-                <span className="text-xl">{country.flag}</span>
-                <span className="text-sm font-medium text-lkv-primary">{country.name}</span>
-                {country.isCurated && (
-                  <span className="text-[10px] bg-[var(--lkv-success-bg)] text-lkv-primary px-2 py-0.5 rounded-full font-medium hidden sm:inline">
-                    Curé
+            <li key={country.code}>
+              <Card variant="compact" className="flex items-center justify-between">
+                <div className="flex items-center gap-[var(--space-3)]">
+                  <span className="flex h-6 w-6 items-center justify-center rounded-full border border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-paper)] text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-primary)]">
+                    {idx + 1}
                   </span>
-                )}
-              </div>
+                  <span aria-hidden="true" className="text-xl">
+                    {country.flag}
+                  </span>
+                  <span className="text-[length:var(--lkv-text-footnote)] font-medium text-[color:var(--lkv-text-primary)]">
+                    {country.name}
+                  </span>
+                  {country.isCurated && (
+                    <Badge tone="sage" className="hidden sm:inline-flex">
+                      Curé
+                    </Badge>
+                  )}
+                </div>
 
-              <div className="flex items-center gap-1">
-                {selectedCountries.length > 1 && (
-                  <>
-                    <button
-                      type="button"
-                      disabled={idx === 0}
-                      onClick={() => moveUp(idx)}
-                      aria-label="Monter ce pays"
-                      className="glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8 disabled:opacity-30 flex items-center justify-center"
-                    >
-                      <Icon name="arrow-up" size={14} />
-                    </button>
-                    <button
-                      type="button"
-                      disabled={idx === selectedCountries.length - 1}
-                      onClick={() => moveDown(idx)}
-                      aria-label="Descendre ce pays"
-                      className="glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8 disabled:opacity-30 flex items-center justify-center"
-                    >
-                      <Icon name="arrow-down" size={14} />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => removeCountry(country.code)}
-                      aria-label="Retirer ce pays"
-                      className="glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8 flex items-center justify-center"
-                    >
-                      <Icon name="trash2" size={14} />
-                    </button>
-                  </>
-                )}
-              </div>
-            </div>
+                <div className="flex items-center gap-[var(--space-1)]">
+                  {selectedCountries.length > 1 && (
+                    <>
+                      <IconButton
+                        type="button"
+                        size="sm"
+                        disabled={idx === 0}
+                        onClick={() => moveUp(idx)}
+                        aria-label="Monter ce pays"
+                      >
+                        <Icon name="arrow-up" size={14} />
+                      </IconButton>
+                      <IconButton
+                        type="button"
+                        size="sm"
+                        disabled={idx === selectedCountries.length - 1}
+                        onClick={() => moveDown(idx)}
+                        aria-label="Descendre ce pays"
+                      >
+                        <Icon name="arrow-down" size={14} />
+                      </IconButton>
+                      <IconButton
+                        type="button"
+                        size="sm"
+                        onClick={() => removeCountry(country.code)}
+                        aria-label="Retirer ce pays"
+                      >
+                        <Icon name="trash2" size={14} />
+                      </IconButton>
+                    </>
+                  )}
+                </div>
+              </Card>
+            </li>
           ))}
-        </div>
+        </ul>
       </div>
     </div>
   );

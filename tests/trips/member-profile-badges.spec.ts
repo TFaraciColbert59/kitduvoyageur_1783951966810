@@ -45,10 +45,10 @@ describe('MemberProfileBadges (Task 19)', () => {
     expect(html).toContain('Allure · Appris');
     expect(html).toContain('Montée · Estimé');
     expect(html).toContain('Portage · Moyenne');
-    expect(html).toContain('text-[var(--lkv-success)]');
-    expect(html).toContain('text-[var(--lkv-secondary)]');
-    expect(html).toContain('text-[var(--lkv-text-muted)]');
-    expect(html).toContain('glass-pill');
+    // Tons canoniques `Badge` (Lot 6) : learned → sage, estimated → info, average → stone.
+    expect(html).toContain('bg-[color:var(--lkv-success-bg)]');
+    expect(html).toContain('bg-[color:var(--lkv-info-bg)]');
+    expect(html).toContain('bg-[color:var(--lkv-surface-muted)]');
   });
 
   it('accepte un profil membre complet et borne maxFields', () => {
@@ -108,7 +108,8 @@ describe('PartyPreparationBanner (Task 19)', () => {
     );
     expect(html).toContain('data-party-banner');
     expect(html).toContain('Préparation recalculée pour 3 — basée sur les profils.');
-    expect(html).toContain('glass');
+    // Surface canonique `Card` compact (plus de classe `glass` legacy).
+    expect(html).toContain('data-variant="compact"');
   });
 
   it('reste discret (no-op) pour un solo ou une valeur absente', () => {

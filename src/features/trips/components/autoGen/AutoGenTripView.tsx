@@ -8,6 +8,7 @@ import { PersistentMetricsBar } from './PersistentMetricsBar';
 import type { Proposal } from '@/features/trips/schemas/autoGen.schema';
 import { runAutoGenPipeline } from '@/features/trips/engine/autoGenPipeline';
 import type { TripBrief } from '@/features/trips/schemas/autoGen.schema';
+import { Card } from '@/components/ui';
 
 export interface AutoGenTripViewProps {
   initialBriefInput?: string;
@@ -88,9 +89,9 @@ export const AutoGenTripView: React.FC<AutoGenTripViewProps> = ({
   const maxWeightKg = 14.0; // 20% de 70kg
 
   return (
-    <div className="w-full min-h-screen bg-[var(--lkv-surface-paper)]  pb-32">
+    <div className="min-h-screen w-full bg-[color:var(--lkv-surface-paper)] pb-32">
       {/* Barre supérieure : Saisie d'intention */}
-      <div className="sticky top-0 z-30 bg-[var(--lkv-surface-paper)]  backdrop-blur-md border-b border-[var(--lkv-stone-200)]  py-4 px-4">
+      <div className="sticky top-0 z-[var(--z-sticky)] border-b border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-paper)] px-4 py-4 backdrop-blur-[var(--blur-md)]">
         <TripBriefBar
           initialValue={initialBriefInput}
           onGenerate={handleGenerate}
@@ -101,18 +102,18 @@ export const AutoGenTripView: React.FC<AutoGenTripViewProps> = ({
       <div className="max-w-5xl mx-auto px-4 py-6 space-y-6">
         {/* Journal de compromis (Tradeoffs Log) */}
         {tradeoffsLog.length > 0 && (
-          <div className="rounded-2xl p-4 bg-[var(--lkv-success-bg)]  border border-[var(--lkv-success-bg)]  text-xs text-[var(--lkv-primary)]  space-y-1.5">
-            <div className="flex items-center font-semibold text-[var(--lkv-primary-soft)]  gap-1.5 mb-1">
-              <Icon name="sparkles" className="w-4 h-4" />
+          <Card tone="sage" className="space-y-[var(--space-1)] text-[length:var(--lkv-text-footnote)] text-[color:var(--lkv-text-primary)]">
+            <div className="mb-1 flex items-center gap-[var(--space-2)] font-semibold text-[color:var(--lkv-primary-soft)]">
+              <Icon name="sparkles" size={16} />
               <span>Optimisations & Compromis Déterministes Appliqués :</span>
             </div>
             {tradeoffsLog.map((log, idx) => (
-              <div key={idx} className="flex items-start gap-1.5 pl-1">
-                <span className="text-[var(--lkv-secondary)] font-bold">•</span>
+              <div key={idx} className="flex items-start gap-[var(--space-2)] pl-1">
+                <span className="font-bold text-[color:var(--lkv-secondary)]">•</span>
                 <span>{log}</span>
               </div>
             ))}
-          </div>
+          </Card>
         )}
 
         {/* Grille des 12 couches fonctionnelles */}

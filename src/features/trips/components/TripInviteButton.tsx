@@ -3,7 +3,7 @@
 import Icon from '@/components/ui/Icon';
 import React, { useState } from 'react';
 import { Sheet } from '@/components/ui/Sheet';
-import { GlassCapsuleBtn } from '@/components/ui/GlassCapsuleBtn';
+import { Button } from '@/components/ui';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import type { TripFull } from '../types/trip.types';
 
@@ -11,6 +11,9 @@ export interface TripInviteButtonProps {
   trip: TripFull;
   className?: string;
 }
+
+const FIELD_CLASS =
+  'min-h-[var(--control-height-md)] w-full select-all rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] font-mono text-[length:var(--lkv-text-footnote)] text-[var(--lkv-text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]';
 
 /** URL canonique du flux « Rejoindre » (token de partage si disponible). */
 export function buildJoinUrl(
@@ -25,7 +28,7 @@ export function buildJoinUrl(
 
 /**
  * Task 17 — Bouton « Inviter des amis » de l'itinéraire : ouvre une modale
- * glass (patron `TripShareModal`) qui partage le lien `/rejoindre/<slug>`.
+ * (`Sheet` canonique) qui partage le lien `/rejoindre/<slug>`.
  * La personne invitée consent explicitement avant tout snapshot de profil.
  */
 export function TripInviteButton({ trip, className }: TripInviteButtonProps) {
@@ -49,11 +52,12 @@ export function TripInviteButton({ trip, className }: TripInviteButtonProps) {
 
   return (
     <>
-      <GlassCapsuleBtn
+      <Button
         type="button"
         size="sm"
+        variant="secondary"
         className={className}
-        icon={<Icon name="user-plus" className="w-3.5 h-3.5" />}
+        icon={<Icon name="user-plus" size={14} />}
         aria-label="Inviter des amis"
         onClick={() => {
           triggerHaptic('light');
@@ -61,26 +65,22 @@ export function TripInviteButton({ trip, className }: TripInviteButtonProps) {
         }}
       >
         Inviter des amis
-      </GlassCapsuleBtn>
+      </Button>
 
-      <Sheet
-        open={open}
-        onOpenChange={setOpen}
-        title="Inviter des amis"
-      >
-        <div className="space-y-4 pb-2">
-          <p className="text-sm font-bold text-[var(--lkv-text-primary)]">
+      <Sheet open={open} onOpenChange={setOpen} title="Inviter des amis">
+        <div className="space-y-[var(--space-4)] pb-2">
+          <p className="text-[length:var(--lkv-text-footnote)] font-bold text-[color:var(--lkv-text-primary)]">
             Partager ce lien pour préparer à plusieurs
           </p>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-[var(--space-2)]">
             <input
               type="text"
               readOnly
               value={joinUrl}
               aria-label="Lien d'invitation"
-              className="glass-input w-full px-3 py-2 text-xs font-mono text-[var(--lkv-text-primary)] select-all"
+              className={FIELD_CLASS}
             />
-            <GlassCapsuleBtn
+            <Button
               type="button"
               onClick={handleCopy}
               variant="primary"
@@ -89,9 +89,9 @@ export function TripInviteButton({ trip, className }: TripInviteButtonProps) {
               className="shrink-0"
             >
               {copied ? 'Copié !' : 'Copier'}
-            </GlassCapsuleBtn>
+            </Button>
           </div>
-          <p className="text-[11px] leading-relaxed text-[var(--lkv-text-primary)]/70">
+          <p className="text-[11px] leading-relaxed text-[color:var(--lkv-text-primary)]/70">
             Chaque personne qui rejoint choisit explicitement d&apos;utiliser son profil
             d&apos;auto-apprentissage ; sinon la préparation s&apos;appuie sur des moyennes
             population. Les quantités et le budget se recalculent à chaque arrivée.

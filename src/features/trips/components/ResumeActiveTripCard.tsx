@@ -5,6 +5,10 @@ import React from 'react';
 import Link from 'next/link';
 import { useActiveTrip } from '@/features/trips/context/ActiveTripContext';
 import { tripSectionHref } from '@/features/trips/registry/tripSectionRegistry';
+import { IconButton } from '@/components/ui';
+
+const LINK_SECONDARY_CLASS =
+  'inline-flex min-h-[var(--control-height-sm)] items-center gap-[var(--space-2)] rounded-full border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] px-[var(--space-4)] text-[length:var(--lkv-text-footnote)] font-semibold text-[color:var(--card-content)] backdrop-blur-[var(--blur-md)] transition-colors hover:bg-[color:var(--lkv-hover-surface)]';
 
 export function ResumeActiveTripCard() {
   const { activeTrip, clearActiveTrip, isPending } = useActiveTrip();
@@ -12,68 +16,64 @@ export function ResumeActiveTripCard() {
   if (!activeTrip) return null;
 
   return (
-    <section className="relative z-20 max-w-[1200px] mx-auto px-4 pt-24 -mb-16">
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[var(--lkv-primary)] via-[var(--lkv-primary-soft)] to-[var(--lkv-primary-soft)] text-white border border-[var(--lkv-secondary)]/30 p-5 sm:p-6 shadow-xl backdrop-blur-md transition-all hover:border-[var(--lkv-secondary)]/50">
+    <section className="relative z-[var(--z-sticky)] mx-auto -mb-16 max-w-[var(--page-max-w)] px-4 pt-24">
+      <div className="relative overflow-hidden rounded-[var(--lkv-radius-card)] border border-[color:var(--lkv-secondary)]/30 bg-[linear-gradient(to_right,var(--lkv-primary),var(--lkv-primary-soft),var(--lkv-primary-soft))] p-[var(--space-5)] text-[color:var(--lkv-text-inverted)] shadow-elevation-3 backdrop-blur-[var(--blur-md)] transition-all hover:border-[color:var(--lkv-secondary)]/50 sm:p-[var(--space-6)]">
         {/* Glow ambient background */}
-        <div className="absolute -top-24 -right-24 w-72 h-72 bg-[var(--lkv-secondary)]/15 rounded-full blur-3xl pointer-events-none" />
+        <div className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-[color:var(--lkv-secondary)]/15 blur-3xl" />
 
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="space-y-1.5 min-w-0">
-            <div className="flex items-center gap-2">
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider bg-[var(--lkv-secondary)]/20 text-white border border-[var(--lkv-secondary)]/30">
+        <div className="relative z-10 flex flex-col justify-between gap-[var(--space-4)] md:flex-row md:items-center">
+          <div className="min-w-0 space-y-[var(--space-1)]">
+            <div className="flex items-center gap-[var(--space-2)]">
+              <span className="inline-flex items-center gap-[var(--space-2)] rounded-full border border-[color:var(--lkv-secondary)]/30 bg-[color:var(--lkv-secondary)]/20 px-[var(--space-3)] py-0.5 text-[11px] font-bold uppercase tracking-wider text-[color:var(--lkv-text-inverted)]">
                 <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[var(--lkv-secondary)] opacity-75" />
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-[var(--lkv-secondary)]" />
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[color:var(--lkv-secondary)] opacity-75" />
+                  <span className="relative inline-flex h-2 w-2 rounded-full bg-[color:var(--lkv-secondary)]" />
                 </span>
                 Expédition en cours
               </span>
-              <span className="text-xs text-white/50 hidden sm:inline">• Reprise rapide</span>
+              <span className="hidden text-[length:var(--lkv-text-footnote)] text-white/50 sm:inline">
+                • Reprise rapide
+              </span>
             </div>
 
-            <h3 className="text-xl sm:text-2xl font-bold tracking-tight text-white truncate">
+            <h3 className="truncate text-[length:var(--lkv-text-title-sm)] font-bold tracking-tight sm:text-[length:var(--lkv-text-title-lg)]">
               {activeTrip.title}
             </h3>
-            <p className="text-xs sm:text-sm text-white/70">
+            <p className="text-[length:var(--lkv-text-footnote)] text-white/70 sm:text-[length:var(--lkv-text-body-sm)]">
               Votre itinéraire et matériel sont synchronisés sur tout le site.
             </p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2.5 pt-2 md:pt-0">
+          <div className="flex flex-wrap items-center gap-[var(--space-3)] pt-[var(--space-2)] md:pt-0">
             <Link
               href={tripSectionHref(activeTrip.slug, 'overview')}
-              className="glass-capsule-btn primary inline-flex items-center gap-2 !px-4 !py-2.5 font-bold text-xs transition-transform active:scale-95"
+              className="inline-flex min-h-[var(--control-height-sm)] items-center gap-[var(--space-2)] rounded-full bg-[color:var(--lkv-action)] px-[var(--space-4)] text-[length:var(--lkv-text-footnote)] font-bold text-[color:var(--lkv-on-action)] transition-colors hover:bg-[color:var(--lkv-action-hover)]"
             >
               <Icon name="compass" size={14} />
               <span>Reprendre le voyage</span>
               <Icon name="arrow-right" size={13} />
             </Link>
 
-            <Link
-              href={`${tripSectionHref(activeTrip.slug, 'overview')}?phase=live`}
-              className="glass-capsule-btn inline-flex items-center gap-1.5 !px-3.5 !py-2.5 font-semibold text-xs transition-all"
-            >
+            <Link href={`${tripSectionHref(activeTrip.slug, 'overview')}?phase=live`} className={LINK_SECONDARY_CLASS}>
               <Icon name="radio" size={13} />
               <span>Cockpit</span>
             </Link>
 
-            <Link
-              href="/hub"
-              className="glass-capsule-btn inline-flex items-center gap-1.5 !px-3.5 !py-2.5 font-semibold text-xs transition-all"
-            >
+            <Link href="/hub" className={LINK_SECONDARY_CLASS}>
               <Icon name="package" size={13} />
               <span>Mon sac</span>
             </Link>
 
-            <button
+            <IconButton
               type="button"
+              size="sm"
               onClick={() => clearActiveTrip()}
               disabled={isPending}
               aria-label="Fermer l'expédition active"
               title="Désactiver l'expédition active"
-              className="glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8 disabled:opacity-60 transition-colors"
             >
               <Icon name="x" size={14} />
-            </button>
+            </IconButton>
           </div>
         </div>
       </div>

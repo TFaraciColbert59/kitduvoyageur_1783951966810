@@ -5,7 +5,7 @@ import React from 'react';
 import Link from 'next/link';
 import { usePreparationStore } from '../../stores/usePreparationStore';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
-import { ShoppingBagIcon as ShoppingBag } from '@/components/icons/shopping-bag';
+import { Badge, Button, Card } from '@/components/ui';
 
 export function ShakedownTab() {
   const { getShakedownReport, addItem } = usePreparationStore();
@@ -23,11 +23,7 @@ export function ShakedownTab() {
     gearGaps,
   } = report;
 
-  const getScoreColor = (val: number) => {
-    if (val >= 80) return 'text-emerald-800 bg-emerald-100 border-emerald-300';
-    if (val >= 50) return 'text-amber-800 bg-amber-100 border-amber-300';
-    return 'text-rose-800 bg-rose-100 border-rose-300';
-  };
+  const getScoreTone = (val: number) => (val >= 80 ? 'sage' : val >= 50 ? 'warn' : 'danger');
 
   const handleAddMissingItem = (gap: (typeof gearGaps)[0]) => {
     triggerHaptic('success');
@@ -47,210 +43,187 @@ export function ShakedownTab() {
   };
 
   return (
-    <div className="space-y-4 animate-in fade-in duration-200">
-      {/* Shakedown Score Banner */}
-      <div className="p-4 sm:p-5 rounded-3xl bg-white/90 dark:bg-[#17402C]/90 backdrop-blur-xl border border-white/80 dark:border-white/20 shadow-xs flex items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <div
-            className={`w-14 h-14 rounded-2xl flex items-center justify-center font-extrabold text-2xl font-mono shadow-2xs border ${getScoreColor(
-              score
-            )}`}
-          >
+    <div className="space-y-[var(--space-4)] animate-in fade-in duration-200">
+      <Card className="flex items-center justify-between gap-[var(--space-3)]">
+        <div className="flex items-center gap-[var(--space-3)]">
+          <div className="flex h-14 w-14 items-center justify-center rounded-[var(--lkv-radius-md)] border border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-muted)] font-mono text-2xl font-extrabold text-[color:var(--lkv-text-primary)]">
             {score}
           </div>
 
           <div>
-            <span className="text-[10px] font-mono uppercase tracking-widest text-[#5A7064] dark:text-[#9AAD9E]">
+            <span className="font-mono text-[10px] uppercase tracking-widest text-[color:var(--lkv-text-muted)]">
               AUDIT SHAKEDOWN DU SAC
             </span>
-            <h3 className="text-sm sm:text-base font-bold text-[#17402C] dark:text-white">
+            <h3 className="text-[length:var(--lkv-text-subheadline)] font-bold text-[color:var(--lkv-text-primary)]">
               {score >= 80 ? 'Sac Parfaitement Optimisé' : 'Potentiel d’Allègement'}
             </h3>
-            <p className="text-xs text-[#5A7064] dark:text-[#9AAD9E]">
+            <p className="text-[length:var(--lkv-text-footnote)] text-[color:var(--lkv-text-muted)]">
               Gain possible :{' '}
-              <strong className="text-[#17402C] dark:text-white">
+              <strong className="text-[color:var(--lkv-text-primary)]">
                 -{potentialWeightSavedGrams} g (-{potentialPercentageSaved}%)
               </strong>
             </p>
           </div>
         </div>
 
-        <span
-          className={`px-2.5 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider border ${getScoreColor(
-            score
-          )}`}
-        >
+        <Badge tone={getScoreTone(score)}>
           {score >= 80 ? 'Optimal' : score >= 50 ? 'Améliorable' : 'Surchargé'}
-        </span>
-      </div>
+        </Badge>
+      </Card>
 
-      {/* Critical Warnings (Missing Vitals & Duplicates) */}
       {(missingVitalWarnings.length > 0 || duplicateWarnings.length > 0) && (
-        <div className="space-y-2">
-          <h4 className="text-xs font-bold uppercase tracking-wider text-red-700 flex items-center gap-1.5 px-1">
+        <div className="space-y-[var(--space-2)]">
+          <h4 className="flex items-center gap-[var(--space-2)] px-1 text-[length:var(--lkv-text-footnote)] font-bold uppercase tracking-wider text-[color:var(--lkv-danger-dark)]">
             <Icon name="shield-alert" size={14} />
-            <span>Points d'Attention Prioritaires</span>
+            <span>Points d&apos;Attention Prioritaires</span>
           </h4>
 
-          <div className="space-y-1.5">
+          <div className="space-y-[var(--space-2)]">
             {missingVitalWarnings.map((warning, idx) => (
-              <div
+              <Card
                 key={idx}
-                className="p-3.5 rounded-2xl bg-red-100 border border-red-300 flex items-center justify-between gap-2 text-xs shadow-2xs"
+                tone="danger"
+                className="flex items-center justify-between gap-[var(--space-2)] p-[var(--space-3)] text-[length:var(--lkv-text-footnote)]"
               >
-                <div className="flex items-center gap-2 text-red-950 font-bold">
-                  <span className="text-sm">🚨</span>
+                <div className="flex items-center gap-[var(--space-2)] font-bold text-[color:var(--lkv-danger-dark)]">
+                  <span aria-hidden="true">🚨</span>
                   <span>{warning}</span>
                 </div>
-              </div>
+              </Card>
             ))}
 
             {duplicateWarnings.map((warning, idx) => (
-              <div
+              <Card
                 key={idx}
-                className="p-3.5 rounded-2xl bg-sand-100 border border-sand-300 flex items-center gap-2 text-xs text-sand-900 font-bold shadow-2xs"
+                tone="warn"
+                className="flex items-center gap-[var(--space-2)] p-[var(--space-3)] text-[length:var(--lkv-text-footnote)] font-bold text-[color:var(--lkv-warning-dark)]"
               >
-                <span className="text-sm">⚠️</span>
+                <span aria-hidden="true">⚠️</span>
                 <span>{warning}</span>
-              </div>
+              </Card>
             ))}
           </div>
         </div>
       )}
 
-      {/* Gear Gaps — Équipements Manquants */}
       {gearGaps.length > 0 && (
-        <div className="space-y-2">
-          <h4 className="text-xs font-bold uppercase tracking-wider text-[#17402C] dark:text-white flex items-center justify-between px-1">
+        <div className="space-y-[var(--space-2)]">
+          <h4 className="flex items-center justify-between px-1 text-[length:var(--lkv-text-footnote)] font-bold uppercase tracking-wider text-[color:var(--lkv-text-primary)]">
             <span>Équipements Recommandés Manquants ({gearGaps.length})</span>
-            <span className="text-[10px] text-[#5A7064] dark:text-[#9AAD9E] font-normal">
+            <span className="text-[10px] font-normal text-[color:var(--lkv-text-muted)]">
               Discret & non intrusif
             </span>
           </h4>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <div className="grid grid-cols-1 gap-[var(--space-2)] sm:grid-cols-2">
             {gearGaps.map((gap) => (
-              <div
-                key={gap.id}
-                className="p-3.5 rounded-2xl bg-white/90 dark:bg-[#17402C]/90 backdrop-blur-xl border border-white/80 dark:border-white/20 shadow-xs flex flex-col justify-between gap-2"
-              >
+              <Card key={gap.id} className="flex flex-col justify-between gap-[var(--space-2)]">
                 <div>
-                  <div className="flex items-center justify-between gap-1">
-                    <h5 className="text-xs font-bold text-[#17402C] dark:text-white">{gap.name}</h5>
-                    <span
-                      className={`text-[9px] font-bold px-1.5 py-0.2 rounded-md ${
-                        gap.priority === 'vital'
-                          ? 'bg-red-100 text-red-800 border border-red-300'
-                          : 'bg-blue-100 text-blue-800 border border-blue-300'
-                      }`}
-                    >
+                  <div className="flex items-center justify-between gap-[var(--space-2)]">
+                    <h5 className="text-[length:var(--lkv-text-footnote)] font-bold text-[color:var(--lkv-text-primary)]">
+                      {gap.name}
+                    </h5>
+                    <Badge tone={gap.priority === 'vital' ? 'danger' : 'info'}>
                       {gap.priority === 'vital' ? 'VITAL' : 'CONSEILLÉ'}
-                    </span>
+                    </Badge>
                   </div>
-                  <p className="text-[11px] text-[#5A7064] dark:text-[#9AAD9E] mt-0.5 leading-tight">
+                  <p className="mt-0.5 text-[11px] leading-tight text-[color:var(--lkv-text-muted)]">
                     {gap.reason}
                   </p>
                 </div>
 
-                <div className="flex items-center justify-between pt-1 border-t border-black/5 dark:border-white/10">
+                <div className="flex items-center justify-between border-t border-[color:var(--lkv-border-subtle)] pt-[var(--space-1)]">
                   {gap.suggestedProduct && (
-                    <span className="text-[10px] font-mono text-[#365233] dark:text-[#9AAD9E] font-semibold">
+                    <span className="font-mono text-[10px] font-semibold text-[color:var(--lkv-text-secondary)]">
                       ~{gap.suggestedProduct.priceEur}€ · {gap.suggestedProduct.weightGrams}g
                     </span>
                   )}
-                  <button
-                    type="button"
+                  <Button
+                    size="sm"
+                    className="ml-auto"
                     onClick={() => handleAddMissingItem(gap)}
-                    className="ml-auto px-2.5 py-1 rounded-xl bg-[#17402C] hover:bg-[#1f543a] text-white text-[10px] font-bold shadow-2xs active:scale-95 transition-all"
                   >
                     + Ajouter à ma liste
-                  </button>
+                  </Button>
                 </div>
-              </div>
+              </Card>
             ))}
           </div>
         </div>
       )}
 
-      {/* Heavy Items Section */}
       {heavyItemWarnings.length > 0 && (
-        <div className="space-y-2">
-          <h4 className="text-xs font-bold uppercase tracking-wider text-[#17402C] dark:text-white flex items-center gap-1.5 px-1">
+        <div className="space-y-[var(--space-2)]">
+          <h4 className="flex items-center gap-[var(--space-2)] px-1 text-[length:var(--lkv-text-footnote)] font-bold uppercase tracking-wider text-[color:var(--lkv-text-primary)]">
             <Icon name="scale" size={14} />
             <span>Postes Lourds Identifiés ({heavyItemWarnings.length})</span>
           </h4>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <div className="grid grid-cols-1 gap-[var(--space-2)] sm:grid-cols-2">
             {heavyItemWarnings.map((heavy) => (
-              <div
+              <Card
                 key={heavy.itemId}
-                className="p-3.5 rounded-2xl bg-white/90 dark:bg-[#17402C]/90 backdrop-blur-xl border border-white/80 dark:border-white/20 flex items-center justify-between text-xs shadow-xs"
+                className="flex items-center justify-between text-[length:var(--lkv-text-footnote)]"
               >
                 <div>
-                  <span className="font-bold text-[#17402C] dark:text-white block truncate">
+                  <span className="block truncate font-bold text-[color:var(--lkv-text-primary)]">
                     {heavy.name}
                   </span>
-                  <span className="text-[10px] font-mono text-red-700 dark:text-red-400">
+                  <span className="font-mono text-[10px] text-[color:var(--lkv-danger-dark)]">
                     {heavy.weightGrams} g (Seuil : {heavy.thresholdGrams} g)
                   </span>
                 </div>
-                <span className="text-xs font-mono font-bold text-sand-800 dark:text-sand-300">
+                <span className="font-mono text-[length:var(--lkv-text-footnote)] font-bold text-[color:var(--lkv-warning-dark)]">
                   +{heavy.weightGrams - heavy.thresholdGrams} g
                 </span>
-              </div>
+              </Card>
             ))}
           </div>
         </div>
       )}
 
-      {/* Recommendations & Shop Alternatives */}
       {recommendations.length > 0 && (
-        <div className="space-y-2">
-          <h4 className="text-xs font-bold uppercase tracking-wider text-forest-800 dark:text-forest-400 flex items-center gap-1.5 px-1">
+        <div className="space-y-[var(--space-2)]">
+          <h4 className="flex items-center gap-[var(--space-2)] px-1 text-[length:var(--lkv-text-footnote)] font-bold uppercase tracking-wider text-[color:var(--sage-800)]">
             <Icon name="sparkles" size={14} />
-            <span>Opportunités d'Allègement Ultra-Light</span>
+            <span>Opportunités d&apos;Allègement Ultra-Light</span>
           </h4>
 
-          <div className="space-y-2">
+          <div className="space-y-[var(--space-2)]">
             {recommendations.map((rec) => (
-              <div
-                key={rec.itemId}
-                className="p-4 rounded-3xl bg-forest-50 dark:bg-[#17402C]/90 backdrop-blur-xl border border-forest-300 dark:border-forest-500/40 space-y-2.5 shadow-xs"
-              >
-                <div className="flex items-start justify-between gap-2">
+              <Card key={rec.itemId} tone="sage" className="space-y-[var(--space-3)]">
+                <div className="flex items-start justify-between gap-[var(--space-2)]">
                   <div>
-                    <span className="text-[10px] font-mono uppercase text-forest-900 dark:text-forest-300 font-semibold">
+                    <span className="font-mono text-[10px] font-semibold uppercase text-[color:var(--sage-800)]">
                       Remplacer : {rec.itemName} ({rec.currentWeightGrams} g)
                     </span>
-                    <h5 className="text-xs sm:text-sm font-bold text-[#17402C] dark:text-white mt-0.5">
+                    <h5 className="mt-0.5 text-[length:var(--lkv-text-footnote)] font-bold text-[color:var(--lkv-text-primary)]">
                       ✨ {rec.suggestedName}
                     </h5>
-                    <p className="text-[11px] text-[#365233] dark:text-[#9AAD9E] mt-0.5">
+                    <p className="mt-0.5 text-[11px] text-[color:var(--lkv-text-secondary)]">
                       {rec.reason}
                     </p>
                   </div>
 
-                  <span className="px-2.5 py-1 rounded-full bg-forest-800 text-white font-mono font-bold text-xs shrink-0">
-                    -{rec.weightSavedGrams} g
-                  </span>
+                  <Badge tone="sage">-{rec.weightSavedGrams} g</Badge>
                 </div>
 
-                <div className="flex items-center justify-between pt-2 border-t border-forest-200 dark:border-forest-500/20 text-xs">
+                <div className="flex items-center justify-between border-t border-[color:var(--lkv-border-subtle)] pt-[var(--space-2)] text-[length:var(--lkv-text-footnote)]">
                   {rec.estimatedPriceEur && (
-                    <span className="font-bold text-[#17402C] dark:text-white text-[11px]">
+                    <span className="text-[11px] font-bold text-[color:var(--lkv-text-primary)]">
                       Estimé : ~{rec.estimatedPriceEur} €
                     </span>
                   )}
 
                   <Link
                     href={`/produit/${rec.shopSlug || 'equipement-ultralight'}`}
-                    className="px-3 py-1.5 rounded-xl bg-forest-800 hover:bg-forest-700 text-white font-bold text-[11px] shadow-2xs flex items-center gap-1 transition-all"
+                    className="inline-flex min-h-[var(--control-height-sm)] items-center gap-[var(--space-2)] rounded-full border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] px-[var(--space-4)] text-[11px] font-bold text-[color:var(--card-content)] backdrop-blur-[var(--blur-md)] transition-colors hover:bg-[color:var(--lkv-hover-surface)]"
                   >
-                    <span>Voir l'alternative</span>
+                    <span>Voir l&apos;alternative</span>
                     <Icon name="arrow-right" size={12} />
                   </Link>
                 </div>
-              </div>
+              </Card>
             ))}
           </div>
         </div>

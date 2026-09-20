@@ -5,15 +5,16 @@ import { cn } from '@/lib/utils';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import type { FieldSource } from '../domain/memberProfile';
 import type { TripMemberProfile } from '../types/trip.types';
+import { Badge, Card, type BadgeTone } from '@/components/ui';
 
 /**
  * Task 19 — Transparence des données de préparation.
  *
  * `MemberProfileBadges` rend la provenance de chaque champ dérivé (Appris /
- * Estimé / Moyenne) en pastilles `glass-pill` compactes, sans couleur hors
- * tokens. `PartyPreparationBanner` signale discrètement que la préparation a
- * été recalculée pour N et qu'elle repose sur les profils, avec un retour
- * haptique léger à l'affichage.
+ * Estimé / Moyenne) en pastilles compactes `Badge`, sans couleur hors tokens.
+ * `PartyPreparationBanner` signale discrètement que la préparation a été
+ * recalculée pour N et qu'elle repose sur les profils, avec un retour haptique
+ * léger à l'affichage.
  */
 
 export const FIELD_SOURCE_LABELS: Record<FieldSource, string> = {
@@ -33,10 +34,10 @@ export const MEMBER_FIELD_LABELS: Record<string, string> = {
   isChild: 'Enfant',
 };
 
-const SOURCE_TONES: Record<FieldSource, string> = {
-  learned: 'text-[var(--lkv-success)]',
-  estimated: 'text-[var(--lkv-secondary)]',
-  average: 'text-[var(--lkv-text-muted)]',
+const SOURCE_TONES: Record<FieldSource, BadgeTone> = {
+  learned: 'sage',
+  estimated: 'info',
+  average: 'stone',
 };
 
 export interface MemberProfileBadgesProps {
@@ -66,18 +67,13 @@ export function MemberProfileBadges({
     <ul
       data-member-badges=""
       aria-label="Provenance des données de préparation"
-      className={cn('flex flex-wrap gap-1', className)}
+      className={cn('flex flex-wrap gap-[var(--space-1)]', className)}
     >
       {entries.map(([field, source]) => (
         <li key={field}>
-          <span
-            className={cn(
-              'glass-pill shrink-0 !px-1.5 !py-0.5 text-[9px] font-bold uppercase tracking-[0.08em]',
-              SOURCE_TONES[source]
-            )}
-          >
+          <Badge tone={SOURCE_TONES[source]} className="shrink-0 uppercase tracking-[0.08em]">
             {MEMBER_FIELD_LABELS[field]} · {FIELD_SOURCE_LABELS[source]}
-          </span>
+          </Badge>
         </li>
       ))}
     </ul>
@@ -102,16 +98,17 @@ export function PartyPreparationBanner({ partySize, className }: PartyPreparatio
   if (size <= 1) return null;
 
   return (
-    <p
-      data-party-banner=""
+    <Card
+      variant="compact"
       role="status"
+      data-party-banner=""
       className={cn(
-        'glass rounded-2xl px-3 py-2 text-[11px] font-medium text-[var(--lkv-text-primary)]/75',
+        'px-[var(--space-3)] py-[var(--space-2)] text-[11px] font-medium text-[color:var(--lkv-text-primary)]/75',
         className
       )}
     >
       Préparation recalculée pour {size} — basée sur les profils.
-    </p>
+    </Card>
   );
 }
 

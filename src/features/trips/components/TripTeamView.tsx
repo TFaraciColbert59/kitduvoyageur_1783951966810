@@ -3,9 +3,9 @@
 import Icon from '@/components/ui/Icon';
 import React, { useMemo, useState, useTransition } from 'react';
 import Link from 'next/link';
-import { Card } from '@/components/ui';
-import { GlassCapsuleBtn } from '@/components/ui/GlassCapsuleBtn';
-import { EmptyState } from '@/components/ui/EmptyState';
+import { Card, EmptyState, IconButton } from '@/components/ui';
+import { Sheet } from '@/components/ui/Sheet';
+import { Button } from '@/components/ui';
 import { TripBadge } from './TripBadge';
 import { ConfirmDialog } from './ConfirmDialog';
 import { MemberProfileBadges } from './MemberProfileBadges';
@@ -20,6 +20,12 @@ import type { TripFull } from '../types/trip.types';
 interface TripTeamViewProps {
   trip: TripFull;
 }
+
+const FIELD_CLASS =
+  'min-h-[var(--control-height-md)] w-full rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] text-[length:var(--lkv-text-body-sm)] text-[var(--lkv-text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]';
+
+const LABEL_CLASS =
+  'mb-1 block text-[length:var(--lkv-text-footnote)] font-semibold text-[color:var(--lkv-text-primary)]';
 
 export function TripTeamView({ trip }: TripTeamViewProps) {
   const [isInviteOpen, setIsInviteOpen] = useState(false);
@@ -94,38 +100,41 @@ export function TripTeamView({ trip }: TripTeamViewProps) {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-[var(--space-6)]">
       {/* En-tête de section */}
       {actionError && (
-        <div className="p-3 rounded-xl glass tone-danger text-xs text-[var(--lkv-danger)] flex items-center gap-2">
+        <Card
+          role="alert"
+          tone="danger"
+          className="flex items-center gap-[var(--space-2)] text-[length:var(--lkv-text-footnote)] text-[color:var(--lkv-danger-dark)]"
+        >
           <Icon name="alert-circle" size={16} className="shrink-0" />
           <span>{actionError}</span>
-        </div>
+        </Card>
       )}
       <div className="flex items-center justify-end">
         {isOwner && (
-          <GlassCapsuleBtn
-            variant="primary"
+          <Button
             size="sm"
             onClick={() => setIsInviteOpen(true)}
             icon={<Icon name="user-plus" size={16} />}
           >
             Inviter un voyageur
-          </GlassCapsuleBtn>
+          </Button>
         )}
       </div>
 
       {/* Liste des membres */}
       {trip.collaborators.length === 0 ? (
         <EmptyState
-          icon={<Icon name="users" size={32} className="text-lkv-secondary" />}
+          icon={<Icon name="users" size={32} className="text-[color:var(--lkv-secondary)]" />}
           title="Aucun compagnon de route"
           description="Vous préparez actuellement cette expédition en solo. Invitez des coéquipiers pour partager l'itinéraire, le matériel et les dépenses."
           actionLabel={isOwner ? 'Inviter un voyageur' : undefined}
           onAction={isOwner ? () => setIsInviteOpen(true) : undefined}
         />
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-[var(--space-4)] sm:grid-cols-2">
           {trip.collaborators.map((collab) => {
             const isCollabOwner = collab.role === 'owner';
             const name = collab.profile?.full_name || 'Voyageur LKDV';
@@ -138,25 +147,21 @@ export function TripTeamView({ trip }: TripTeamViewProps) {
                 .toUpperCase() || 'V';
 
             return (
-              <Card
-                key={collab.id}
-                tone="neutral"
-                className="p-4 rounded-[var(--lkv-radius-lg)] border border-white/60 flex flex-col justify-between gap-4 shadow-sm"
-              >
-                <div className="flex items-start justify-between gap-3">
+              <Card key={collab.id} className="flex flex-col justify-between gap-[var(--space-4)]">
+                <div className="flex items-start justify-between gap-[var(--space-3)]">
                   <Link
                     href={`/profil/${collab.user_id}`}
-                    className="flex items-center gap-3 min-h-[44px] rounded-xl px-1 -mx-1 transition-colors hover:bg-black/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)]"
+                    className="-mx-1 flex min-h-[44px] items-center gap-[var(--space-3)] rounded-[var(--lkv-radius-sm)] px-1 transition-colors hover:bg-[color:var(--lkv-hover-surface)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]"
                     title={`Voir le profil de ${name}`}
                   >
-                    <div className="w-11 h-11 rounded-full bg-lkv-primary text-white flex items-center justify-center font-bold text-sm shadow-inner shrink-0">
+                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[color:var(--lkv-action)] text-[length:var(--lkv-text-footnote)] font-bold text-[color:var(--lkv-on-action)] shadow-inner">
                       {initials}
                     </div>
                     <div>
-                      <div className="text-sm font-bold text-lkv-primary group-hover:underline decoration-[var(--lkv-secondary)]/60 underline-offset-2">
+                      <div className="text-[length:var(--lkv-text-footnote)] font-bold text-[color:var(--lkv-text-primary)] underline-offset-2 decoration-[color:var(--lkv-secondary)]/60 group-hover:underline">
                         {name}
                       </div>
-                      <div className="text-xs text-lkv-secondary">
+                      <div className="text-[length:var(--lkv-text-footnote)] text-[color:var(--lkv-text-secondary)]">
                         Rejoint le {new Date(collab.joined_at).toLocaleDateString('fr-FR')}
                       </div>
                       <MemberProfileBadges
@@ -172,29 +177,36 @@ export function TripTeamView({ trip }: TripTeamViewProps) {
 
                 {/* Contrôles de rôle & retrait pour l'Owner */}
                 {isOwner && !isCollabOwner && (
-                  <div className="flex items-center justify-between pt-3 border-t border-black/5 gap-2">
-                    <div className="flex items-center gap-1.5 text-xs text-lkv-secondary">
+                  <div className="flex items-center justify-between gap-[var(--space-2)] border-t border-[color:var(--lkv-border-subtle)] pt-[var(--space-3)]">
+                    <div className="flex items-center gap-[var(--space-2)] text-[length:var(--lkv-text-footnote)] text-[color:var(--lkv-text-secondary)]">
                       <span>Rôle :</span>
                       <select
                         value={collab.role}
                         disabled={isPending}
-                        onChange={(e) => handleRoleChange(collab.id, e.target.value as any)}
+                        onChange={(e) =>
+                          handleRoleChange(
+                            collab.id,
+                            e.target.value as 'owner' | 'editor' | 'viewer'
+                          )
+                        }
                         aria-label={`Rôle de ${name}`}
-                        className="glass-input text-xs font-semibold px-2 py-1 text-[var(--lkv-text-primary)]"
+                        className={`${FIELD_CLASS} min-h-0 px-2 py-1 font-semibold`}
                       >
                         <option value="editor">Éditeur</option>
                         <option value="viewer">Lecteur</option>
                       </select>
                     </div>
 
-                    <button
+                    <IconButton
+                      type="button"
+                      size="sm"
                       onClick={() => requestRemove(collab.id, name)}
                       disabled={isPending}
+                      aria-label={`Retirer ${name} de l'expédition`}
                       title="Retirer de l'expédition"
-                      className="glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8 flex items-center justify-center disabled:opacity-60 transition-all"
                     >
                       <Icon name="trash2" size={16} />
-                    </button>
+                    </IconButton>
                   </div>
                 )}
               </Card>
@@ -204,94 +216,80 @@ export function TripTeamView({ trip }: TripTeamViewProps) {
       )}
 
       {/* Modal d'invitation */}
-      {isInviteOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in">
-          <Card
-            tone="neutral"
-            className="w-full max-w-md p-6 rounded-[var(--lkv-radius-xl)] border border-white/80 shadow-2xl space-y-4"
-          >
-            <div className="flex items-center justify-between pb-3 border-b border-white/40">
-              <h4 className="text-base font-bold text-lkv-primary flex items-center gap-2">
-                <Icon name="user-plus" size={18} className="text-lkv-secondary" />
-                <span>Inviter un compagnon</span>
-              </h4>
-              <button
+      <Sheet
+        open={isInviteOpen}
+        onOpenChange={(open) => {
+          if (!open) setIsInviteOpen(false);
+        }}
+        title="Inviter un compagnon"
+      >
+        <div className="space-y-[var(--space-4)] pb-2">
+          {inviteError && (
+            <Card
+              role="alert"
+              tone="danger"
+              className="flex items-center gap-[var(--space-2)] text-[length:var(--lkv-text-footnote)] text-[color:var(--lkv-danger-dark)]"
+            >
+              <Icon name="alert-circle" size={16} className="shrink-0" />
+              <span>{inviteError}</span>
+            </Card>
+          )}
+
+          {inviteSuccess && (
+            <Card
+              tone="sage"
+              className="flex items-center gap-[var(--space-2)] text-[length:var(--lkv-text-footnote)] text-[color:var(--lkv-text-primary)]"
+            >
+              <Icon name="check-circle2" size={16} className="shrink-0" />
+              <span>{inviteSuccess}</span>
+            </Card>
+          )}
+
+          <form onSubmit={handleInviteSubmit} className="space-y-[var(--space-4)]">
+            <label className="block">
+              <span className={LABEL_CLASS}>Email ou Pseudo LKDV du voyageur</span>
+              <span className="relative block">
+                <Icon
+                  name="mail"
+                  size={16}
+                  className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[color:var(--lkv-text-muted)]"
+                />
+                <input
+                  type="text"
+                  name="identifier"
+                  required
+                  placeholder="ex: marie.curie@example.com ou montagnard74"
+                  className={`${FIELD_CLASS} pl-9`}
+                />
+              </span>
+            </label>
+
+            <label className="block">
+              <span className={LABEL_CLASS}>Rôle attribué</span>
+              <select name="role" defaultValue="editor" className={`${FIELD_CLASS} cursor-pointer`}>
+                <option value="editor">
+                  Éditeur (peut modifier l&apos;itinéraire et les listes)
+                </option>
+                <option value="viewer">Lecteur (consultation seule)</option>
+              </select>
+            </label>
+
+            <div className="flex items-center justify-end gap-[var(--space-3)] pt-[var(--space-2)]">
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
                 onClick={() => setIsInviteOpen(false)}
-                aria-label="Fermer"
-                className="glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8 flex items-center justify-center transition-all cursor-pointer"
               >
-                <Icon name="x" size={18} />
-              </button>
+                Annuler
+              </Button>
+              <Button type="submit" size="sm" loading={isPending}>
+                {isPending ? 'Envoi...' : "Envoyer l'invitation"}
+              </Button>
             </div>
-
-            {inviteError && (
-              <div className="p-3 rounded-xl glass tone-danger text-xs text-[var(--lkv-danger)] flex items-center gap-2">
-                <Icon name="alert-circle" size={16} className="shrink-0" />
-                <span>{inviteError}</span>
-              </div>
-            )}
-
-            {inviteSuccess && (
-              <div className="p-3 rounded-xl glass tone-sage text-xs text-[var(--lkv-success)] flex items-center gap-2">
-                <Icon name="check-circle2" size={16} className="shrink-0" />
-                <span>{inviteSuccess}</span>
-              </div>
-            )}
-
-            <form onSubmit={handleInviteSubmit} className="space-y-4">
-              <div>
-                <label className="block text-xs font-semibold text-lkv-primary mb-1">
-                  Email ou Pseudo LKDV du voyageur
-                </label>
-                <div className="relative">
-                  <Icon
-                    name="mail"
-                    size={16}
-                    className="absolute left-3.5 top-3 text-[var(--lkv-text-muted)]"
-                  />
-                  <input
-                    type="text"
-                    name="identifier"
-                    required
-                    placeholder="ex: marie.curie@example.com ou montagnard74"
-                    className="glass-input w-full pl-9 pr-3 py-2 text-sm text-[var(--lkv-text-primary)]"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-lkv-primary mb-1">
-                  Rôle attribué
-                </label>
-                <select
-                  name="role"
-                  defaultValue="editor"
-                  className="glass-input w-full px-3 py-2 text-sm text-[var(--lkv-text-primary)] cursor-pointer"
-                >
-                  <option value="editor">
-                    Éditeur (peut modifier l&apos;itinéraire et les listes)
-                  </option>
-                  <option value="viewer">Lecteur (consultation seule)</option>
-                </select>
-              </div>
-
-              <div className="flex items-center justify-end gap-3 pt-2">
-                <GlassCapsuleBtn
-                  type="button"
-                  variant="default"
-                  size="sm"
-                  onClick={() => setIsInviteOpen(false)}
-                >
-                  Annuler
-                </GlassCapsuleBtn>
-                <GlassCapsuleBtn type="submit" variant="primary" size="sm" disabled={isPending}>
-                  {isPending ? 'Envoi...' : "Envoyer l'invitation"}
-                </GlassCapsuleBtn>
-              </div>
-            </form>
-          </Card>
+          </form>
         </div>
-      )}
+      </Sheet>
 
       {/* Modale de confirmation de retrait */}
       <ConfirmDialog

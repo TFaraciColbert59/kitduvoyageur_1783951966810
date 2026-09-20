@@ -4,6 +4,13 @@ import React, { useState } from 'react';
 import { useParticipantsStore } from '../stores/useParticipantsStore';
 import { HumanParticipantCard } from './HumanParticipantCard';
 import { DogParticipantCard } from './DogParticipantCard';
+import { Button, EmptyState, Modal } from '@/components/ui';
+
+const FIELD_CLASS =
+  'min-h-[var(--control-height-md)] w-full rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] text-[length:var(--lkv-text-body-sm)] text-[var(--lkv-text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]';
+
+const LABEL_CLASS =
+  'flex flex-col gap-1 text-[length:var(--lkv-text-footnote)] font-medium text-[color:var(--lkv-text-secondary)]';
 
 export const ParticipantsManager: React.FC = () => {
   const humans = useParticipantsStore((s) => s.humans);
@@ -48,7 +55,7 @@ export const ParticipantsManager: React.FC = () => {
         role: 'member',
       },
       privateData: {
-        bloodType: newBloodType as any,
+        bloodType: newBloodType,
         allergies: [],
         iceContact: {
           name: newIceName.trim() || 'Contact d’urgence',
@@ -83,30 +90,30 @@ export const ParticipantsManager: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6 pb-24 animate-in fade-in duration-300">
+    <div className="space-y-[var(--space-6)] pb-24 animate-in fade-in duration-300">
       {/* Télémétrie de groupe */}
       <div
         // Calcul hydrique/humain dépendant de la météo live (eau/jour varie) →
         // masque visuel canonique sur la télémétrie (protocole Y0.5).
         data-visual-mask
-        className="p-4 rounded-3xl bg-gradient-to-br from-[var(--lkv-forest-900)] to-[var(--lkv-forest-700)] text-white shadow-xl shadow-md/10 relative overflow-hidden"
+        className="relative overflow-hidden rounded-[var(--lkv-radius-card)] bg-[linear-gradient(135deg,var(--lkv-forest-950),var(--lkv-forest-700))] p-[var(--space-4)] text-[color:var(--lkv-text-inverted)] shadow-elevation-3"
       >
-        <div className="grid grid-cols-3 gap-2 text-center">
-          <div className="p-2 rounded-xl bg-white/5">
-            <span className="text-[9px] uppercase font-mono opacity-75 block">Poids portage</span>
-            <span className="text-base font-extrabold font-mono text-white">
+        <div className="grid grid-cols-3 gap-[var(--space-2)] text-center">
+          <div className="rounded-[var(--lkv-radius-sm)] bg-white/5 p-[var(--space-2)]">
+            <span className="block font-mono text-[9px] uppercase opacity-75">Poids portage</span>
+            <span className="font-mono text-[length:var(--lkv-text-subheadline)] font-extrabold">
               {stats.totalPackWeightKg} kg
             </span>
           </div>
-          <div className="p-2 rounded-xl bg-white/5">
-            <span className="text-[9px] uppercase font-mono opacity-75 block">Eau / jour</span>
-            <span className="text-base font-extrabold font-mono text-white">
+          <div className="rounded-[var(--lkv-radius-sm)] bg-white/5 p-[var(--space-2)]">
+            <span className="block font-mono text-[9px] uppercase opacity-75">Eau / jour</span>
+            <span className="font-mono text-[length:var(--lkv-text-subheadline)] font-extrabold">
               {stats.totalWaterDailyLiters} L
             </span>
           </div>
-          <div className="p-2 rounded-xl bg-white/5">
-            <span className="text-[9px] uppercase font-mono opacity-75 block">Sécurité ICE</span>
-            <span className="text-base font-extrabold font-mono text-[var(--lkv-success)]">
+          <div className="rounded-[var(--lkv-radius-sm)] bg-white/5 p-[var(--space-2)]">
+            <span className="block font-mono text-[9px] uppercase opacity-75">Sécurité ICE</span>
+            <span className="font-mono text-[length:var(--lkv-text-subheadline)] font-extrabold text-[color:var(--lkv-success)]">
               Verrouillée
             </span>
           </div>
@@ -114,20 +121,17 @@ export const ParticipantsManager: React.FC = () => {
       </div>
 
       {/* Human Participants Section */}
-      <div className="space-y-3">
+      <div className="space-y-[var(--space-3)]">
         <div className="flex items-center justify-between">
-          <h3 className="text-xs font-mono uppercase tracking-widest text-[var(--lkv-text-muted)]">
+          <h3 className="font-mono text-[length:var(--lkv-text-footnote)] uppercase tracking-widest text-[color:var(--lkv-text-muted)]">
             Participants Humains ({humans.length})
           </h3>
-          <button
-            onClick={() => setShowAddHuman(true)}
-            className="px-3 py-1 rounded-xl bg-forest-600 hover:bg-forest-500 text-white font-bold text-xs shadow-sm transition-all"
-          >
+          <Button size="sm" onClick={() => setShowAddHuman(true)}>
             + Ajouter un équipier
-          </button>
+          </Button>
         </div>
 
-        <div className="grid grid-cols-1 gap-3">
+        <div className="grid grid-cols-1 gap-[var(--space-3)]">
           {humans.map((human) => (
             <HumanParticipantCard
               key={human.id}
@@ -141,25 +145,20 @@ export const ParticipantsManager: React.FC = () => {
       </div>
 
       {/* Dog Companions Section */}
-      <div className="space-y-3 pt-2">
+      <div className="space-y-[var(--space-3)] pt-[var(--space-2)]">
         <div className="flex items-center justify-between">
-          <h3 className="text-xs font-mono uppercase tracking-widest text-[var(--lkv-text-muted)]">
+          <h3 className="font-mono text-[length:var(--lkv-text-footnote)] uppercase tracking-widest text-[color:var(--lkv-text-muted)]">
             Compagnons Canins ({dogs.length})
           </h3>
-          <button
-            onClick={() => setShowAddDog(true)}
-            className="px-3 py-1 rounded-xl bg-sand-700 hover:bg-sand-600 text-white font-bold text-xs shadow-sm transition-all"
-          >
+          <Button size="sm" variant="secondary" onClick={() => setShowAddDog(true)}>
             + Ajouter un chien
-          </button>
+          </Button>
         </div>
 
         {dogs.length === 0 ? (
-          <div className="p-4 rounded-2xl bg-black/[0.02] dark:bg-white/[0.02] border border-black/5 dark:border-white/5 text-center text-xs text-[var(--lkv-text-muted)]">
-            Aucun chien de randonnée enregistré pour cette expédition.
-          </div>
+          <EmptyState compact title="Aucun chien de randonnée enregistré pour cette expédition." />
         ) : (
-          <div className="grid grid-cols-1 gap-3">
+          <div className="grid grid-cols-1 gap-[var(--space-3)]">
             {dogs.map((dog) => (
               <DogParticipantCard
                 key={dog.id}
@@ -174,156 +173,143 @@ export const ParticipantsManager: React.FC = () => {
         )}
       </div>
 
-      {/* Modal Add Human */}
-      {showAddHuman && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md">
-          <form
-            onSubmit={handleCreateHuman}
-            className="w-full max-w-sm rounded-3xl p-6 bg-[var(--lkv-forest-900)] text-[var(--lkv-text-primary)] border border-white/20 shadow-2xl space-y-4"
-          >
-            <h3 className="text-lg font-bold text-white">Ajouter un équipier</h3>
-            <div className="space-y-3 text-xs">
-              <div>
-                <label className="block text-[var(--lkv-sage-300)] mb-1 font-mono">Prénom</label>
-                <input
-                  type="text"
-                  required
-                  value={newFirstName}
-                  onChange={(e) => setNewFirstName(e.target.value)}
-                  placeholder="Ex: Camille"
-                  className="w-full p-2.5 rounded-xl bg-black/30 border border-white/20 text-white"
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <label className="block text-[var(--lkv-sage-300)] mb-1 font-mono">Poids du sac (kg)</label>
-                  <input
-                    type="number"
-                    step="0.5"
-                    value={newPackWeight}
-                    onChange={(e) => setNewPackWeight(Number(e.target.value))}
-                    className="w-full p-2.5 rounded-xl bg-black/30 border border-white/20 text-white font-mono"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[var(--lkv-sage-300)] mb-1 font-mono">Groupe Sanguin</label>
-                  <select
-                    value={newBloodType}
-                    onChange={(e) => setNewBloodType(e.target.value as any)}
-                    className="w-full p-2.5 rounded-xl bg-black/30 border border-white/20 text-white font-mono"
-                  >
-                    <option value="UNKNOWN">Inconnu</option>
-                    <option value="O+">O+</option>
-                    <option value="O-">O-</option>
-                    <option value="A+">A+</option>
-                    <option value="A-">A-</option>
-                    <option value="B+">B+</option>
-                    <option value="B-">B-</option>
-                    <option value="AB+">AB+</option>
-                    <option value="AB-">AB-</option>
-                  </select>
-                </div>
-              </div>
-              <div>
-                <label className="block text-[var(--lkv-sage-300)] mb-1 font-mono">Contact ICE (Nom & Tel)</label>
-                <input
-                  type="text"
-                  value={newIceName}
-                  onChange={(e) => setNewIceName(e.target.value)}
-                  placeholder="Nom du proche"
-                  className="w-full p-2.5 rounded-xl bg-black/30 border border-white/20 text-white mb-1.5"
-                />
-                <input
-                  type="tel"
-                  value={newIcePhone}
-                  onChange={(e) => setNewIcePhone(e.target.value)}
-                  placeholder="+33 6 00 00 00 00"
-                  className="w-full p-2.5 rounded-xl bg-black/30 border border-white/20 text-white font-mono"
-                />
-              </div>
-            </div>
-            <div className="flex gap-2 pt-2">
-              <button
-                type="button"
-                onClick={() => setShowAddHuman(false)}
-                className="flex-1 py-2.5 rounded-xl bg-white/10 text-white text-xs font-semibold"
+      <Modal
+        open={showAddHuman}
+        onOpenChange={setShowAddHuman}
+        title="Ajouter un équipier"
+        size="md"
+      >
+        <form onSubmit={handleCreateHuman} className="flex flex-col gap-[var(--space-3)]">
+          <label className={LABEL_CLASS}>
+            <span>Prénom</span>
+            <input
+              type="text"
+              required
+              value={newFirstName}
+              onChange={(e) => setNewFirstName(e.target.value)}
+              placeholder="Ex: Camille"
+              className={FIELD_CLASS}
+            />
+          </label>
+          <div className="grid grid-cols-2 gap-[var(--space-2)]">
+            <label className={LABEL_CLASS}>
+              <span>Poids du sac (kg)</span>
+              <input
+                type="number"
+                step="0.5"
+                value={newPackWeight}
+                onChange={(e) => setNewPackWeight(Number(e.target.value))}
+                className={`${FIELD_CLASS} font-mono`}
+              />
+            </label>
+            <label className={LABEL_CLASS}>
+              <span>Groupe Sanguin</span>
+              <select
+                value={newBloodType}
+                onChange={(e) =>
+                  setNewBloodType(e.target.value as 'A+' | 'O+' | 'B+' | 'AB+' | 'UNKNOWN')
+                }
+                className={`${FIELD_CLASS} font-mono`}
               >
-                Annuler
-              </button>
-              <button
-                type="submit"
-                className="flex-1 py-2.5 rounded-xl bg-forest-600 text-white text-xs font-bold shadow-md"
-              >
-                Enregistrer
-              </button>
-            </div>
-          </form>
-        </div>
-      )}
+                <option value="UNKNOWN">Inconnu</option>
+                <option value="O+">O+</option>
+                <option value="O-">O-</option>
+                <option value="A+">A+</option>
+                <option value="A-">A-</option>
+                <option value="B+">B+</option>
+                <option value="B-">B-</option>
+                <option value="AB+">AB+</option>
+                <option value="AB-">AB-</option>
+              </select>
+            </label>
+          </div>
+          <div className="space-y-[var(--space-2)]">
+            <label className={LABEL_CLASS}>
+              <span>Contact ICE (Nom & Tel)</span>
+              <input
+                type="text"
+                value={newIceName}
+                onChange={(e) => setNewIceName(e.target.value)}
+                placeholder="Nom du proche"
+                className={FIELD_CLASS}
+              />
+            </label>
+            <input
+              type="tel"
+              value={newIcePhone}
+              onChange={(e) => setNewIcePhone(e.target.value)}
+              placeholder="+33 6 00 00 00 00"
+              aria-label="Téléphone du contact ICE"
+              className={`${FIELD_CLASS} font-mono`}
+            />
+          </div>
 
-      {/* Modal Add Dog */}
-      {showAddDog && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md">
-          <form
-            onSubmit={handleCreateDog}
-            className="w-full max-w-sm rounded-3xl p-6 bg-[var(--lkv-forest-900)] text-[var(--lkv-text-primary)] border border-white/20 shadow-2xl space-y-4"
-          >
-            <h3 className="text-lg font-bold text-white">Ajouter un compagnon canin</h3>
-            <div className="space-y-3 text-xs">
-              <div>
-                <label className="block text-[var(--lkv-sage-300)] mb-1 font-mono">Nom du Chien</label>
-                <input
-                  type="text"
-                  required
-                  value={newDogName}
-                  onChange={(e) => setNewDogName(e.target.value)}
-                  placeholder="Ex: Maya"
-                  className="w-full p-2.5 rounded-xl bg-black/30 border border-white/20 text-white"
-                />
-              </div>
-              <div>
-                <label className="block text-[var(--lkv-sage-300)] mb-1 font-mono">Race</label>
-                <input
-                  type="text"
-                  value={newDogBreed}
-                  onChange={(e) => setNewDogBreed(e.target.value)}
-                  placeholder="Ex: Border Collie"
-                  className="w-full p-2.5 rounded-xl bg-black/30 border border-white/20 text-white"
-                />
-              </div>
-              <div>
-                <label className="block text-[var(--lkv-sage-300)] mb-1 font-mono">Poids corporel (kg)</label>
-                <input
-                  type="number"
-                  step="1"
-                  required
-                  value={newDogWeight}
-                  onChange={(e) => setNewDogWeight(Number(e.target.value))}
-                  className="w-full p-2.5 rounded-xl bg-black/30 border border-white/20 text-white font-mono"
-                />
-                <span className="text-[10px] text-[var(--lkv-sage-300)] mt-1 block">
-                  Capacité portage max calculée automatiquement : {(Number(newDogWeight) * 0.15).toFixed(1)} kg.
-                </span>
-              </div>
-            </div>
-            <div className="flex gap-2 pt-2">
-              <button
-                type="button"
-                onClick={() => setShowAddDog(false)}
-                className="flex-1 py-2.5 rounded-xl bg-white/10 text-white text-xs font-semibold"
-              >
-                Annuler
-              </button>
-              <button
-                type="submit"
-                className="flex-1 py-2.5 rounded-xl bg-sand-700 text-white text-xs font-bold shadow-md"
-              >
-                Enregistrer
-              </button>
-            </div>
-          </form>
-        </div>
-      )}
+          <div className="flex gap-[var(--space-2)] pt-[var(--space-2)]">
+            <Button type="button" variant="secondary" fullWidth onClick={() => setShowAddHuman(false)}>
+              Annuler
+            </Button>
+            <Button type="submit" fullWidth>
+              Enregistrer
+            </Button>
+          </div>
+        </form>
+      </Modal>
+
+      <Modal
+        open={showAddDog}
+        onOpenChange={setShowAddDog}
+        title="Ajouter un compagnon canin"
+        size="md"
+      >
+        <form onSubmit={handleCreateDog} className="flex flex-col gap-[var(--space-3)]">
+          <label className={LABEL_CLASS}>
+            <span>Nom du Chien</span>
+            <input
+              type="text"
+              required
+              value={newDogName}
+              onChange={(e) => setNewDogName(e.target.value)}
+              placeholder="Ex: Maya"
+              className={FIELD_CLASS}
+            />
+          </label>
+          <label className={LABEL_CLASS}>
+            <span>Race</span>
+            <input
+              type="text"
+              value={newDogBreed}
+              onChange={(e) => setNewDogBreed(e.target.value)}
+              placeholder="Ex: Border Collie"
+              className={FIELD_CLASS}
+            />
+          </label>
+          <div>
+            <label className={LABEL_CLASS}>
+              <span>Poids corporel (kg)</span>
+              <input
+                type="number"
+                step="1"
+                required
+                value={newDogWeight}
+                onChange={(e) => setNewDogWeight(Number(e.target.value))}
+                className={`${FIELD_CLASS} font-mono`}
+              />
+            </label>
+            <span className="mt-1 block text-[10px] text-[color:var(--lkv-text-muted)]">
+              Capacité portage max calculée automatiquement : {(Number(newDogWeight) * 0.15).toFixed(1)} kg.
+            </span>
+          </div>
+
+          <div className="flex gap-[var(--space-2)] pt-[var(--space-2)]">
+            <Button type="button" variant="secondary" fullWidth onClick={() => setShowAddDog(false)}>
+              Annuler
+            </Button>
+            <Button type="submit" fullWidth>
+              Enregistrer
+            </Button>
+          </div>
+        </form>
+      </Modal>
     </div>
   );
 };

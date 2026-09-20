@@ -1,9 +1,7 @@
 'use client';
 
-import Icon from '@/components/ui/Icon';
 import React from 'react';
-import { Sheet } from '@/components/ui/Sheet';
-import { GlassCapsuleBtn } from '@/components/ui/GlassCapsuleBtn';
+import { ConfirmDialog as CanonicalConfirmDialog } from '@/components/ui';
 
 export interface ConfirmDialogProps {
   /** Titre de la boîte de confirmation. */
@@ -22,9 +20,9 @@ export interface ConfirmDialogProps {
 }
 
 /**
- * Y3.5 — Modale de confirmation accessible, remplaçant `window.confirm`.
- * Règle Y-D80 n°5 : aucun dialogue natif (alert/confirm/prompt) dans le module.
- * Radix Dialog (Sheet) : focus trap, Escape, scroll-lock.
+ * Y3.5 — Confirmation accessible du module voyages.
+ * Délègue au contrat canonique `@/components/ui/ConfirmDialog` (API conservée
+ * pour les appelants existants) : focus trap, Escape, z-index tokenisé.
  */
 export function ConfirmDialog({
   title,
@@ -37,52 +35,16 @@ export function ConfirmDialog({
   onCancel,
 }: ConfirmDialogProps) {
   return (
-    <Sheet
+    <CanonicalConfirmDialog
       open={open}
-      onOpenChange={(v) => {
-        if (!v) onCancel();
-      }}
       title={title}
-      hideTitle
-    >
-      <div className="space-y-4 pb-2">
-        <div className="flex items-center gap-3">
-          <div
-            className={`w-10 h-10 rounded-full flex items-center justify-center border border-white/60 shadow-2xs shrink-0 ${
-              danger
-                ? 'bg-[var(--lkv-danger)]/10 text-[var(--lkv-danger)]'
-                : 'bg-[var(--lkv-primary)]/10 text-[var(--lkv-primary)]'
-            }`}
-          >
-            <Icon name="alert-triangle" size={20} aria-hidden="true" />
-          </div>
-          <h4 className="text-base font-bold text-[var(--lkv-text-primary)]">{title}</h4>
-        </div>
-
-        {message && (
-          <p className="text-sm text-[var(--lkv-text-secondary)] leading-relaxed">{message}</p>
-        )}
-
-        <div className="flex items-center justify-end gap-3 pt-2">
-          <GlassCapsuleBtn type="button" variant="default" size="sm" onClick={onCancel}>
-            {cancelLabel}
-          </GlassCapsuleBtn>
-          <GlassCapsuleBtn
-            type="button"
-            variant="primary"
-            size="sm"
-            onClick={onConfirm}
-            className={
-              danger
-                ? 'bg-[var(--lkv-danger)] hover:bg-[var(--lkv-danger)]/90 text-white border-[var(--lkv-danger)]'
-                : ''
-            }
-          >
-            {confirmLabel}
-          </GlassCapsuleBtn>
-        </div>
-      </div>
-    </Sheet>
+      description={message}
+      confirmLabel={confirmLabel}
+      cancelLabel={cancelLabel}
+      variant={danger ? 'destructive' : 'default'}
+      onConfirm={onConfirm}
+      onCancel={onCancel}
+    />
   );
 }
 

@@ -12,12 +12,12 @@ import { LlmSuggestionBadge } from './LlmSuggestionBadge';
  * (`source` ou `metadata.source === 'llm_suggestion'`), une pastille par rangée.
  */
 const SLOT_STYLES: Record<MomentSlot, { Icon: LucideIcon; tone: string }> = {
-  matin: { Icon: Sunrise, tone: 'bg-[var(--sage-50)] text-[var(--sage-700)]' },
+  matin: { Icon: Sunrise, tone: 'bg-[color:var(--sage-50)] text-[color:var(--sage-700)]' },
   'apres-midi': {
     Icon: Sun,
-    tone: 'bg-[var(--lkv-secondary-subtle)] text-[var(--lkv-secondary-hover)]',
+    tone: 'bg-[color:var(--lkv-secondary-subtle)] text-[color:var(--lkv-secondary-hover)]',
   },
-  soir: { Icon: Moon, tone: 'bg-[var(--lkv-warm-300)] text-[var(--lkv-warm-700)]' },
+  soir: { Icon: Moon, tone: 'bg-[color:var(--lkv-warm-300)] text-[color:var(--lkv-warm-700)]' },
 };
 
 export interface MomentRowProps {
@@ -46,7 +46,7 @@ export function MomentRow({
     <div
       data-moment-slot={slot}
       className={cn(
-        'glass flex min-h-[44px] w-full items-center gap-2.5 rounded-[1.4rem] px-3 py-2',
+        'flex min-h-[44px] w-full items-center gap-[var(--space-3)] rounded-[var(--lkv-radius-md)] border border-[color:var(--lkv-border-subtle)] bg-[color:var(--lkv-surface-card)] px-[var(--space-3)] py-[var(--space-2)]',
         className
       )}
     >
@@ -56,16 +56,16 @@ export function MomentRow({
         <Icon size={13} aria-hidden="true" />
       </span>
       <span className="min-w-0 flex-1">
-        <span className="block text-[9.5px] font-bold uppercase tracking-[0.08em] text-[var(--lkv-text-secondary)]">
+        <span className="block text-[9.5px] font-bold uppercase tracking-[0.08em] text-[color:var(--lkv-text-secondary)]">
           {MOMENT_SLOT_LABELS[slot]}
         </span>
-        <span className="block truncate text-[12.5px] font-semibold leading-snug text-[var(--lkv-text-primary)]">
+        <span className="block truncate text-[12.5px] font-semibold leading-snug text-[color:var(--lkv-text-primary)]">
           {momentTitleBody(title)}
         </span>
       </span>
       {showBadge && <LlmSuggestionBadge />}
       {time && (
-        <span className="shrink-0 text-[10px] font-semibold tabular-nums text-[var(--lkv-text-secondary)]">
+        <span className="shrink-0 text-[10px] font-semibold tabular-nums text-[color:var(--lkv-text-secondary)]">
           {time}
         </span>
       )}

@@ -39,7 +39,7 @@ export default function PreparerApercuPage() {
   return (
     <div
       data-testid="preparer-apercu"
-      className="min-h-screen bg-[rgba(238,243,236,0.8)] backdrop-blur-xl px-4 py-6 text-[var(--lkv-text-primary)]"
+      className="min-h-screen bg-[color:var(--lkv-surface)]/80 backdrop-blur-[var(--blur-lg)] px-4 py-6 text-[color:var(--lkv-text-primary)]"
     >
       <PageHeader
         variant="large"
@@ -68,7 +68,7 @@ export default function PreparerApercuPage() {
             <div
               key={variant}
               data-preview-skeleton={variant}
-              className="glass rounded-[1.75rem] p-3"
+              className="rounded-[var(--lkv-radius-card)] border border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-card)] p-3"
             >
               <ActivitySectionSkeleton variant={variant} />
             </div>
@@ -83,7 +83,10 @@ export default function PreparerApercuPage() {
         <ul className="mt-3 space-y-2" data-preview-reveals="">
           {REVEAL_ITEMS.map((label, index) => (
             <li key={label}>
-              <ArrivalReveal index={index} className="glass rounded-2xl px-3 py-3">
+              <ArrivalReveal
+                index={index}
+                className="rounded-[var(--lkv-radius-md)] border border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-card)] px-3 py-3"
+              >
                 <p className="text-sm font-bold text-[var(--lkv-text-primary)]">{label}</p>
                 <p className="mt-0.5 text-[11px] font-medium text-[var(--lkv-text-secondary)]">
                   Arrivée realtime — item {index + 1}

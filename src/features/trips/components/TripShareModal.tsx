@@ -3,11 +3,20 @@
 import Icon from '@/components/ui/Icon';
 import React, { useState, useTransition } from 'react';
 import { Sheet } from '@/components/ui/Sheet';
-import { GlassCapsuleBtn } from '@/components/ui/GlassCapsuleBtn';
+import { Button, Card, Chip } from '@/components/ui';
 import { formatTripShareUrl } from '../engine/exportEngine';
 import { tripSectionHref } from '../registry/tripSectionRegistry';
 import { updateTripVisibilityAction } from '@/app/voyages/share-actions';
 import type { TripFull, TripVisibility } from '../types/trip.types';
+
+const FIELD_CLASS =
+  'min-h-[var(--control-height-md)] w-full select-all rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] font-mono text-[length:var(--lkv-text-footnote)] text-[var(--lkv-text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]';
+
+const LABEL_CLASS =
+  'mb-[var(--space-2)] block text-[length:var(--lkv-text-footnote)] font-semibold text-[color:var(--lkv-text-primary)]';
+
+const EXPORT_LINK_CLASS =
+  'flex min-h-[44px] items-center justify-center gap-[var(--space-2)] rounded-full border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] px-[var(--space-4)] text-[length:var(--lkv-text-footnote)] font-semibold text-[color:var(--lkv-text-primary)] backdrop-blur-[var(--blur-md)] transition-colors hover:bg-[color:var(--lkv-hover-surface)]';
 
 interface TripShareModalProps {
   trip: TripFull;
@@ -59,90 +68,73 @@ export function TripShareModal({ trip, isOpen, onClose }: TripShareModalProps) {
       }}
       title="Partager &amp; Exporter l'Expédition"
     >
-      <div className="space-y-5 pb-2">
+      <div className="space-y-[var(--space-5)] pb-2">
         {/* 1. Visibilité du voyage */}
-        <div className="space-y-2">
-          <label className="block text-xs font-semibold text-lkv-primary">
-            Niveau de confidentialité du voyage
-          </label>
-          <div className="grid grid-cols-3 gap-2">
-            <button
-              type="button"
-              disabled={!isOwner || isPending}
+        <div className="space-y-[var(--space-2)]">
+          <span className={LABEL_CLASS}>Niveau de confidentialité du voyage</span>
+          <div className="grid grid-cols-3 gap-[var(--space-2)]">
+            <Chip
+              selected={visibility === 'private'}
               onClick={() => handleVisibilityChange('private')}
-              className={`glass-capsule-btn w-full !justify-start !rounded-2xl !p-3 text-left transition-all disabled:opacity-60 ${
-                visibility === 'private' ? 'primary shadow-sm' : ''
-              }`}
+              disabled={!isOwner || isPending}
+              className="flex-col items-start !rounded-[var(--lkv-radius-md)] p-[var(--space-3)] text-left"
             >
-              <div className="flex items-center gap-1.5 font-bold text-xs">
+              <span className="flex items-center gap-[var(--space-2)] font-bold">
                 <Icon name="lock" size={14} />
                 <span>Privé</span>
-              </div>
-              <div
-                className={`text-[10px] mt-1 ${visibility === 'private' ? 'text-white/80' : 'text-[var(--lkv-text-muted)]'}`}
-              >
-                Membres seuls
-              </div>
-            </button>
+              </span>
+              <span className="mt-1 text-[10px] opacity-80">Membres seuls</span>
+            </Chip>
 
-            <button
-              type="button"
-              disabled={!isOwner || isPending}
+            <Chip
+              selected={visibility === 'unlisted'}
               onClick={() => handleVisibilityChange('unlisted')}
-              className={`glass-capsule-btn w-full !justify-start !rounded-2xl !p-3 text-left transition-all disabled:opacity-60 ${
-                visibility === 'unlisted' ? 'primary shadow-sm' : ''
-              }`}
+              disabled={!isOwner || isPending}
+              className="flex-col items-start !rounded-[var(--lkv-radius-md)] p-[var(--space-3)] text-left"
             >
-              <div className="flex items-center gap-1.5 font-bold text-xs">
+              <span className="flex items-center gap-[var(--space-2)] font-bold">
                 <Icon name="eye-off" size={14} />
                 <span>Lien secret</span>
-              </div>
-              <div
-                className={`text-[10px] mt-1 ${visibility === 'unlisted' ? 'text-white/80' : 'text-[var(--lkv-text-muted)]'}`}
-              >
-                Ceux avec le lien
-              </div>
-            </button>
+              </span>
+              <span className="mt-1 text-[10px] opacity-80">Ceux avec le lien</span>
+            </Chip>
 
-            <button
-              type="button"
-              disabled={!isOwner || isPending}
+            <Chip
+              selected={visibility === 'public'}
               onClick={() => handleVisibilityChange('public')}
-              className={`glass-capsule-btn w-full !justify-start !rounded-2xl !p-3 text-left transition-all disabled:opacity-60 ${
-                visibility === 'public' ? 'primary shadow-sm' : ''
-              }`}
+              disabled={!isOwner || isPending}
+              className="flex-col items-start !rounded-[var(--lkv-radius-md)] p-[var(--space-3)] text-left"
             >
-              <div className="flex items-center gap-1.5 font-bold text-xs">
+              <span className="flex items-center gap-[var(--space-2)] font-bold">
                 <Icon name="globe" size={14} />
                 <span>Public</span>
-              </div>
-              <div
-                className={`text-[10px] mt-1 ${visibility === 'public' ? 'text-white/80' : 'text-[var(--lkv-text-muted)]'}`}
-              >
-                Visible de tous
-              </div>
-            </button>
+              </span>
+              <span className="mt-1 text-[10px] opacity-80">Visible de tous</span>
+            </Chip>
           </div>
         </div>
         {visError && (
-          <div className="p-3 rounded-xl glass tone-danger text-xs text-[var(--lkv-danger)]">
+          <Card
+            role="alert"
+            tone="danger"
+            className="p-[var(--space-3)] text-[length:var(--lkv-text-footnote)] text-[color:var(--lkv-danger-dark)]"
+          >
             {visError}
-          </div>
+          </Card>
         )}
 
         {/* 2. Lien de partage */}
-        <div className="space-y-1.5">
-          <label className="block text-xs font-semibold text-lkv-primary">
-            Lien d&apos;accès direct
-          </label>
-          <div className="flex items-center gap-2">
+        <div className="space-y-[var(--space-2)]">
+          <span className={LABEL_CLASS}>Lien d&apos;accès direct</span>
+          <div className="flex items-center gap-[var(--space-2)]">
             <input
               type="text"
               readOnly
               value={shareUrl}
-              className="glass-input w-full px-3 py-2 text-xs font-mono text-[var(--lkv-text-primary)] select-all"
+              aria-label="Lien d'accès direct"
+              className={FIELD_CLASS}
             />
-            <GlassCapsuleBtn
+            <Button
               onClick={handleCopy}
               variant="primary"
               size="sm"
@@ -150,28 +142,32 @@ export function TripShareModal({ trip, isOpen, onClose }: TripShareModalProps) {
               className="shrink-0"
             >
               {copied ? 'Copié !' : 'Copier'}
-            </GlassCapsuleBtn>
+            </Button>
           </div>
         </div>
 
         {/* Règle RGPD Documents */}
-        <div className="p-3 rounded-xl glass-sub-card border border-white/60 text-[11px] text-[var(--lkv-text-muted)] flex items-start gap-2 shadow-2xs">
-          <Icon name="shield-alert" size={16} className="text-lkv-secondary shrink-0 mt-0.5" />
+        <Card variant="compact" className="flex items-start gap-[var(--space-2)] text-[11px] text-[color:var(--lkv-text-muted)]">
+          <Icon
+            name="shield-alert"
+            size={16}
+            className="mt-0.5 shrink-0 text-[color:var(--lkv-secondary)]"
+          />
           <span>
             <strong>Sécurité des documents :</strong> Les pièces sensibles (passeports,
             attestations) restent protégées et ne sont jamais partagées via ce lien.
           </span>
-        </div>
+        </Card>
 
         {/* 3. Exports disponibles */}
-        <div className="space-y-2 pt-2 border-t border-white/40">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="space-y-[var(--space-2)] border-t border-[color:var(--lkv-border-subtle)] pt-[var(--space-2)]">
+          <div className="grid grid-cols-1 gap-[var(--space-3)] sm:grid-cols-2">
             <a
               href={`/api/voyages/${trip.slug}/gpx?token=${trip.share_token}`}
               download={`${trip.slug}.gpx`}
-              className="flex items-center justify-center gap-2 p-3 rounded-full glass-capsule-btn text-xs font-semibold text-lkv-primary min-h-[44px]"
+              className={EXPORT_LINK_CLASS}
             >
-              <Icon name="download" size={15} className="text-lkv-secondary" />
+              <Icon name="download" size={15} className="text-[color:var(--lkv-secondary)]" />
               <span>Trace GPX 1.1</span>
             </a>
 
@@ -179,9 +175,9 @@ export function TripShareModal({ trip, isOpen, onClose }: TripShareModalProps) {
               href={tripSectionHref(trip.slug, 'export')}
               target="_blank"
               rel="noopener noreferrer"
-              className="glass-capsule-btn w-full flex items-center gap-1.5 min-h-[44px]"
+              className={`${EXPORT_LINK_CLASS} w-full`}
             >
-              <Icon name="printer" size={15} className="text-lkv-secondary" />
+              <Icon name="printer" size={15} className="text-[color:var(--lkv-secondary)]" />
               <span>Feuille de Route / PDF</span>
             </a>
           </div>

@@ -4,6 +4,13 @@ import React, { useState } from 'react';
 import type { GearCategory, GearStatus } from '../../types/preparation.types';
 import { usePreparationStore } from '../../stores/usePreparationStore';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
+import { Button, Modal } from '@/components/ui';
+
+const FIELD_CLASS =
+  'min-h-[var(--control-height-md)] w-full rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] text-[length:var(--lkv-text-body-sm)] text-[var(--lkv-text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]';
+
+const LABEL_CLASS =
+  'flex flex-col gap-1 text-[length:var(--lkv-text-footnote)] font-medium text-[color:var(--lkv-text-secondary)]';
 
 interface AddGearModalProps {
   isOpen: boolean;
@@ -23,8 +30,6 @@ export const AddGearModal: React.FC<AddGearModalProps> = ({ isOpen, onClose }) =
   const [isVital, setIsVital] = useState(false);
   const [brand, setBrand] = useState('');
   const [assignedParticipantId, setAssignedParticipantId] = useState('');
-
-  if (!isOpen) return null;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -52,169 +57,145 @@ export const AddGearModal: React.FC<AddGearModalProps> = ({ isOpen, onClose }) =
   };
 
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="add-gear-title"
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md animate-in fade-in duration-200"
+    <Modal
+      open={isOpen}
+      onOpenChange={(open) => {
+        if (!open) onClose();
+      }}
+      title="Ajouter un équipement"
+      size="md"
     >
-      <form
-        onSubmit={handleSubmit}
-        className="w-full max-w-sm rounded-3xl p-6 bg-[#17402C] text-[#E7E3D6] border border-white/20 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto"
-      >
-        <div className="flex items-center justify-between border-b border-white/10 pb-3">
-          <h3 id="add-gear-title" className="text-lg font-bold text-white">
-            Ajouter un équipement
-          </h3>
-          <button
-            type="button"
-            onClick={onClose}
-            className="p-1 text-white/60 hover:text-white"
-          >
-            ✕
-          </button>
+      <form onSubmit={handleSubmit} className="flex flex-col gap-[var(--space-3)]">
+        <label className={LABEL_CLASS}>
+          <span>Nom de l&apos;objet</span>
+          <input
+            type="text"
+            required
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Ex: Tente Ultra-Light 2P"
+            className={FIELD_CLASS}
+          />
+        </label>
+
+        <div className="grid grid-cols-2 gap-[var(--space-2)]">
+          <label className={LABEL_CLASS}>
+            <span>Poids (grammes)</span>
+            <input
+              type="number"
+              required
+              min="0"
+              value={weight}
+              onChange={(e) => setWeight(Number(e.target.value))}
+              className={`${FIELD_CLASS} font-mono`}
+            />
+          </label>
+
+          <label className={LABEL_CLASS}>
+            <span>Catégorie</span>
+            <select
+              value={category}
+              onChange={(e) => setCategory(e.target.value as GearCategory)}
+              className={`${FIELD_CLASS} font-mono`}
+            >
+              <option value="shelter">Abri / Bivouac</option>
+              <option value="sleep">Couchage</option>
+              <option value="cook">Cuisine / Popote</option>
+              <option value="clothing">Vêtements</option>
+              <option value="water">Eau & Filtre</option>
+              <option value="safety">Sécurité & Soins</option>
+              <option value="tech">Tech & Énergie</option>
+              <option value="navigation">Navigation</option>
+              <option value="misc">Divers</option>
+            </select>
+          </label>
         </div>
 
-        <div className="space-y-3 text-xs">
-          <div>
-            <label className="block text-[#A6C1A0] mb-1 font-mono">Nom de l'objet</label>
+        <div className="grid grid-cols-2 gap-[var(--space-2)]">
+          <label className={LABEL_CLASS}>
+            <span>Statut initial</span>
+            <select
+              value={status}
+              onChange={(e) => setStatus(e.target.value as GearStatus)}
+              className={`${FIELD_CLASS} font-mono`}
+            >
+              <option value="packed">Dans le sac</option>
+              <option value="owned">Possédé (au camp)</option>
+              <option value="to_buy">À acheter</option>
+            </select>
+          </label>
+
+          <label className={LABEL_CLASS}>
+            <span>Marque / Modèle</span>
             <input
               type="text"
-              required
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Ex: Tente Ultra-Light 2P"
-              className="w-full p-2.5 rounded-xl bg-black/30 border border-white/20 text-white placeholder-white/40"
+              value={brand}
+              onChange={(e) => setBrand(e.target.value)}
+              placeholder="Ex: MSR, Petzl"
+              className={FIELD_CLASS}
             />
-          </div>
-
-          <div className="grid grid-cols-2 gap-2">
-            <div>
-              <label className="block text-[#A6C1A0] mb-1 font-mono">Poids (grammes)</label>
-              <input
-                type="number"
-                required
-                min="0"
-                value={weight}
-                onChange={(e) => setWeight(Number(e.target.value))}
-                className="w-full p-2.5 rounded-xl bg-black/30 border border-white/20 text-white font-mono"
-              />
-            </div>
-
-            <div>
-              <label className="block text-[#A6C1A0] mb-1 font-mono">Catégorie</label>
-              <select
-                value={category}
-                onChange={(e) => setCategory(e.target.value as any)}
-                className="w-full p-2.5 rounded-xl bg-black/30 border border-white/20 text-white font-mono"
-              >
-                <option value="shelter">Abri / Bivouac</option>
-                <option value="sleep">Couchage</option>
-                <option value="cook">Cuisine / Popote</option>
-                <option value="clothing">Vêtements</option>
-                <option value="water">Eau & Filtre</option>
-                <option value="safety">Sécurité & Soins</option>
-                <option value="tech">Tech & Énergie</option>
-                <option value="navigation">Navigation</option>
-                <option value="misc">Divers</option>
-              </select>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-2">
-            <div>
-              <label className="block text-[#A6C1A0] mb-1 font-mono">Statut initial</label>
-              <select
-                value={status}
-                onChange={(e) => setStatus(e.target.value as any)}
-                className="w-full p-2.5 rounded-xl bg-black/30 border border-white/20 text-white font-mono"
-              >
-                <option value="packed">Dans le sac</option>
-                <option value="owned">Possédé (au camp)</option>
-                <option value="to_buy">À acheter</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-[#A6C1A0] mb-1 font-mono">Marque / Modèle</label>
-              <input
-                type="text"
-                value={brand}
-                onChange={(e) => setBrand(e.target.value)}
-                placeholder="Ex: MSR, Petzl"
-                className="w-full p-2.5 rounded-xl bg-black/30 border border-white/20 text-white placeholder-white/40"
-              />
-            </div>
-          </div>
-
-          {humans.length > 0 && (
-            <div>
-              <label className="block text-[#A6C1A0] mb-1 font-mono">Assigné au porteur</label>
-              <select
-                value={assignedParticipantId}
-                onChange={(e) => setAssignedParticipantId(e.target.value)}
-                className="w-full p-2.5 rounded-xl bg-black/30 border border-white/20 text-white font-mono"
-              >
-                <option value="">Non assigné (commun)</option>
-                {humans.map((h) => (
-                  <option key={h.id} value={h.id}>
-                    {h.publicData.firstName}
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
-
-          {/* Toggles fonctionnels */}
-          <div className="space-y-2 pt-1 border-t border-white/10">
-            <label className="flex items-center gap-2 cursor-pointer select-none">
-              <input
-                type="checkbox"
-                checked={isWorn}
-                onChange={(e) => setIsWorn(e.target.checked)}
-                className="rounded text-forest-600 focus:ring-forest-500 cursor-pointer"
-              />
-              <span className="text-white">Porté sur soi (exclu du Base Weight)</span>
-            </label>
-
-            <label className="flex items-center gap-2 cursor-pointer select-none">
-              <input
-                type="checkbox"
-                checked={isConsumable}
-                onChange={(e) => setIsConsumable(e.target.checked)}
-                className="rounded text-forest-600 focus:ring-forest-500 cursor-pointer"
-              />
-              <span className="text-white">Consommable (eau, vivres, gaz)</span>
-            </label>
-
-            <label className="flex items-center gap-2 cursor-pointer select-none">
-              <input
-                type="checkbox"
-                checked={isVital}
-                onChange={(e) => setIsVital(e.target.checked)}
-                className="rounded text-forest-600 focus:ring-forest-500 cursor-pointer"
-              />
-              <span className="text-red-300 font-semibold">Équipement vital de sécurité</span>
-            </label>
-          </div>
+          </label>
         </div>
 
-        <div className="flex gap-2 pt-2">
-          <button
-            type="button"
-            onClick={onClose}
-            className="flex-1 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-semibold transition-all"
-          >
+        {humans.length > 0 && (
+          <label className={LABEL_CLASS}>
+            <span>Assigné au porteur</span>
+            <select
+              value={assignedParticipantId}
+              onChange={(e) => setAssignedParticipantId(e.target.value)}
+              className={`${FIELD_CLASS} font-mono`}
+            >
+              <option value="">Non assigné (commun)</option>
+              {humans.map((h) => (
+                <option key={h.id} value={h.id}>
+                  {h.publicData.firstName}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
+
+        <div className="space-y-[var(--space-2)] border-t border-[color:var(--lkv-border-subtle)] pt-[var(--space-2)]">
+          <label className="flex cursor-pointer select-none items-center gap-[var(--space-2)] text-[length:var(--lkv-text-footnote)] text-[color:var(--lkv-text-primary)]">
+            <input
+              type="checkbox"
+              checked={isWorn}
+              onChange={(e) => setIsWorn(e.target.checked)}
+              className="cursor-pointer rounded accent-[color:var(--sage-600)]"
+            />
+            <span>Porté sur soi (exclu du Base Weight)</span>
+          </label>
+
+          <label className="flex cursor-pointer select-none items-center gap-[var(--space-2)] text-[length:var(--lkv-text-footnote)] text-[color:var(--lkv-text-primary)]">
+            <input
+              type="checkbox"
+              checked={isConsumable}
+              onChange={(e) => setIsConsumable(e.target.checked)}
+              className="cursor-pointer rounded accent-[color:var(--sage-600)]"
+            />
+            <span>Consommable (eau, vivres, gaz)</span>
+          </label>
+
+          <label className="flex cursor-pointer select-none items-center gap-[var(--space-2)] text-[length:var(--lkv-text-footnote)] font-semibold text-[color:var(--lkv-danger-dark)]">
+            <input
+              type="checkbox"
+              checked={isVital}
+              onChange={(e) => setIsVital(e.target.checked)}
+              className="cursor-pointer rounded accent-[color:var(--lkv-danger)]"
+            />
+            <span>Équipement vital de sécurité</span>
+          </label>
+        </div>
+
+        <div className="flex gap-[var(--space-2)] pt-[var(--space-2)]">
+          <Button type="button" variant="secondary" fullWidth onClick={onClose}>
             Annuler
-          </button>
-          <button
-            type="submit"
-            className="flex-1 py-2.5 rounded-xl bg-forest-600 hover:bg-forest-500 text-white text-xs font-bold shadow-md transition-all"
-          >
+          </Button>
+          <Button type="submit" fullWidth>
             Enregistrer
-          </button>
+          </Button>
         </div>
       </form>
-    </div>
+    </Modal>
   );
 };

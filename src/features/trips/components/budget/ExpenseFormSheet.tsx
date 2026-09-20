@@ -1,10 +1,16 @@
 'use client';
 
 import React from 'react';
-import { GlassCapsuleBtn } from '@/components/ui/GlassCapsuleBtn';
 import { Sheet } from '@/components/ui/Sheet';
+import { Button } from '@/components/ui';
 import type { TripFull, TripExpense } from '../../types/trip.types';
 import { BUDGET_CATEGORY_OPTIONS } from './budgetFormat';
+
+const FIELD_CLASS =
+  'min-h-[var(--control-height-md)] w-full rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] text-[length:var(--lkv-text-body-sm)] text-[var(--lkv-text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]';
+
+const LABEL_CLASS =
+  'mb-1 block text-[length:var(--lkv-text-footnote)] font-semibold text-[color:var(--lkv-text-primary)]';
 
 export interface ExpenseFormSheetProps {
   open: boolean;
@@ -37,24 +43,22 @@ export function ExpenseFormSheet({
       title={expense ? 'Modifier la dépense' : 'Nouvelle dépense'}
     >
       <div className="pb-2">
-        <form onSubmit={(e) => onSubmit(e, expense)} className="space-y-4">
+        <form onSubmit={(e) => onSubmit(e, expense)} className="space-y-[var(--space-4)]">
           <div>
-            <label className="block text-xs font-semibold text-lkv-primary mb-1">
-              Intitulé de la dépense
-            </label>
+            <label className={LABEL_CLASS}>Intitulé de la dépense</label>
             <input
               type="text"
               name="title"
               required
               defaultValue={expense?.title ?? ''}
               placeholder="ex : Refuge des Écrins, Ravitaillement bivouac"
-              className="glass-input w-full px-3 py-2 text-sm text-[var(--lkv-text-primary)]"
+              className={FIELD_CLASS}
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-[var(--space-3)]">
             <div>
-              <label className="block text-xs font-semibold text-lkv-primary mb-1">
+              <label className={LABEL_CLASS}>
                 Montant ({trip.budget_currency || 'EUR'})
               </label>
               <input
@@ -65,16 +69,16 @@ export function ExpenseFormSheet({
                 required
                 defaultValue={expense?.amount ?? ''}
                 placeholder="0.00"
-                className="glass-input w-full px-3 py-2 text-sm text-[var(--lkv-text-primary)]"
+                className={FIELD_CLASS}
               />
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-lkv-primary mb-1">Catégorie</label>
+              <label className={LABEL_CLASS}>Catégorie</label>
               <select
                 name="category"
                 defaultValue={expense?.category ?? 'hébergement'}
-                className="glass-input w-full px-3 py-2 text-sm text-[var(--lkv-text-primary)]"
+                className={FIELD_CLASS}
               >
                 {BUDGET_CATEGORY_OPTIONS.map((cat) => (
                   <option key={cat} value={cat}>
@@ -85,27 +89,25 @@ export function ExpenseFormSheet({
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-[var(--space-3)]">
             <div>
-              <label className="block text-xs font-semibold text-lkv-primary mb-1">Date</label>
+              <label className={LABEL_CLASS}>Date</label>
               <input
                 type="date"
                 name="expenseDate"
                 defaultValue={expense?.expense_date ?? initialDate ?? todayStr}
                 required
-                className="glass-input w-full px-3 py-2 text-sm text-[var(--lkv-text-primary)]"
+                className={FIELD_CLASS}
               />
             </div>
 
             {isMulti ? (
               <div>
-                <label className="block text-xs font-semibold text-lkv-primary mb-1">
-                  Répartition
-                </label>
+                <label className={LABEL_CLASS}>Répartition</label>
                 <select
                   name="splitType"
                   defaultValue={expense?.split_type ?? 'equal'}
-                  className="glass-input w-full px-3 py-2 text-sm text-[var(--lkv-text-primary)]"
+                  className={FIELD_CLASS}
                 >
                   <option value="equal">Partagée équitablement</option>
                   <option value="individual">Dépense personnelle</option>
@@ -123,11 +125,11 @@ export function ExpenseFormSheet({
 
           {isMulti && (
             <div>
-              <label className="block text-xs font-semibold text-lkv-primary mb-1">Payé par</label>
+              <label className={LABEL_CLASS}>Payé par</label>
               <select
                 name="payerId"
                 defaultValue={expense?.payer_id ?? trip.user_id}
-                className="glass-input w-full px-3 py-2 text-sm text-[var(--lkv-text-primary)]"
+                className={FIELD_CLASS}
               >
                 {(trip.collaborators || []).map((c) => (
                   <option key={c.user_id} value={c.user_id}>
@@ -138,27 +140,27 @@ export function ExpenseFormSheet({
             </div>
           )}
 
-          <label className="flex items-center gap-2 min-h-[44px] text-xs font-semibold text-lkv-primary cursor-pointer">
+          <label className="flex min-h-[44px] cursor-pointer items-center gap-[var(--space-2)] text-[length:var(--lkv-text-footnote)] font-semibold text-[color:var(--lkv-text-primary)]">
             <input
               type="checkbox"
               name="isPlanned"
               defaultChecked={expense?.is_planned ?? false}
-              className="w-4 h-4 accent-[var(--lkv-primary)]"
+              className="h-4 w-4 accent-[color:var(--lkv-primary)]"
             />
             Dépense prévue (à régler le jour venu)
           </label>
 
-          <div className="flex items-center justify-end gap-3 pt-2">
-            <GlassCapsuleBtn type="button" variant="default" size="sm" onClick={onClose}>
+          <div className="flex items-center justify-end gap-[var(--space-3)] pt-[var(--space-2)]">
+            <Button type="button" variant="secondary" size="sm" onClick={onClose}>
               Annuler
-            </GlassCapsuleBtn>
-            <GlassCapsuleBtn type="submit" variant="primary" size="sm" disabled={isPending}>
+            </Button>
+            <Button type="submit" size="sm" loading={isPending}>
               {isPending
                 ? 'Enregistrement...'
                 : expense
                   ? 'Enregistrer les modifications'
                   : 'Valider la dépense'}
-            </GlassCapsuleBtn>
+            </Button>
           </div>
         </form>
       </div>

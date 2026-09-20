@@ -3,6 +3,7 @@
 import Icon from '@/components/ui/Icon';
 import React, { useState } from 'react';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
+import { Button, Chip, IconButton } from '@/components/ui';
 
 export interface TripBriefBarProps {
   onGenerate: (query: string) => void;
@@ -72,13 +73,13 @@ export const TripBriefBar: React.FC<TripBriefBarProps> = ({
   };
 
   return (
-    <div className="w-full max-w-3xl mx-auto space-y-3">
+    <div className="mx-auto w-full max-w-3xl space-y-[var(--space-3)]">
       <form
         onSubmit={handleSubmit}
-        className="relative flex items-center bg-white/80  backdrop-blur-xl border border-[var(--lkv-stone-200)]  rounded-2xl shadow-lg p-1.5 transition-all focus-within:ring-2 focus-within:ring-[var(--lkv-secondary)]"
+        className="relative flex items-center gap-[var(--space-1)] rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-border)] bg-[color:var(--lkv-field-bg)] p-[3px] transition-all focus-within:ring-2 focus-within:ring-[color:var(--lkv-focus-ring)]"
       >
-        <div className="pl-3 pr-2 text-[var(--lkv-secondary-hover)] ">
-          <Icon name="sparkles" className="w-5 h-5 animate-pulse" />
+        <div className="pl-[var(--space-3)] pr-[var(--space-2)] text-[color:var(--lkv-secondary-hover)]">
+          <Icon name="sparkles" size={20} className="animate-pulse" />
         </div>
 
         <input
@@ -87,55 +88,52 @@ export const TripBriefBar: React.FC<TripBriefBarProps> = ({
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Une phrase en entrée, un voyage complet en sortie..."
           aria-label="Décrivez votre voyage"
-          className="flex-1 bg-transparent border-0 text-[var(--lkv-text-primary)]  placeholder-[var(--lkv-text-subtle)]  text-sm md:text-base focus:outline-none focus:ring-0 px-2 py-3"
+          className="min-w-0 flex-1 border-0 bg-transparent px-[var(--space-2)] py-[var(--space-3)] text-[length:var(--lkv-text-body-sm)] text-[color:var(--lkv-text-primary)] placeholder:text-[color:var(--lkv-text-muted)] focus:outline-none focus:ring-0 md:text-[length:var(--lkv-text-body)]"
           disabled={isGenerating}
         />
 
-        <div className="flex items-center space-x-1 pr-1">
+        <div className="flex items-center gap-[var(--space-1)] pr-[var(--space-1)]">
           {/* Bouton Pièce jointe GPX / Photo */}
-          <button
+          <IconButton
             type="button"
+            variant="ghost"
             onClick={handleAttachment}
             aria-label="Joindre un tracé GPX ou une photo"
-            className="glass-circle-btn flex items-center justify-center transition-colors"
           >
-            <Icon name="paperclip" className="w-5 h-5" />
-          </button>
+            <Icon name="paperclip" size={20} />
+          </IconButton>
 
           {/* Bouton Dictée vocale (Geste 3) */}
-          <button
+          <IconButton
             type="button"
+            variant="ghost"
             onClick={handleVoiceInput}
             aria-label="Dicter une consigne vocale"
-            className="glass-circle-btn flex items-center justify-center transition-colors"
           >
-            <Icon name="mic" className="w-5 h-5" />
-          </button>
+            <Icon name="mic" size={20} />
+          </IconButton>
 
           {/* Bouton Soumettre / Générer */}
-          <button
+          <Button
             type="submit"
             disabled={!query.trim() || isGenerating}
-            className="glass-capsule-btn primary !px-4 !py-2.5 text-sm font-medium flex items-center gap-1.5 disabled:opacity-50 transition-transform active:scale-95"
+            icon={<Icon name="arrow-right" size={16} />}
+            iconPosition="trailing"
           >
-            <span>Générer mon voyage</span>
-            <Icon name="arrow-right" className="w-4 h-4" />
-          </button>
+            Générer mon voyage
+          </Button>
         </div>
       </form>
 
       {/* Puces de suggestion rapides */}
-      <div className="flex flex-wrap items-center gap-2 px-1">
-        <span className="text-xs text-[var(--lkv-text-subtle)] font-medium">Exemples :</span>
+      <div className="flex flex-wrap items-center gap-[var(--space-2)] px-1">
+        <span className="text-[length:var(--lkv-text-footnote)] font-medium text-[color:var(--lkv-text-muted)]">
+          Exemples :
+        </span>
         {SUGGESTIONS.map((sugg) => (
-          <button
-            key={sugg.label}
-            type="button"
-            onClick={() => handleChipClick(sugg.query)}
-            className="glass-capsule-btn !px-3 !py-1 text-xs transition-colors active:scale-95"
-          >
+          <Chip key={sugg.label} onClick={() => handleChipClick(sugg.query)}>
             {sugg.label}
-          </button>
+          </Chip>
         ))}
       </div>
     </div>

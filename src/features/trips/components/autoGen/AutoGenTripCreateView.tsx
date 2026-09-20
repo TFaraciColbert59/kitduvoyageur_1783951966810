@@ -8,6 +8,7 @@ import type { TripBrief } from '@/features/trips/schemas/autoGen.schema';
 import { createTripFromAutogenIntent } from '@/features/trips/server/createTripFromAutogenIntent';
 import { tripSectionHref } from '../../registry/tripSectionRegistry';
 import { useActiveAdventure } from '@/features/hub/context/ActiveAdventureContext';
+import { Card, Spinner } from '@/components/ui';
 
 export interface AutoGenTripCreateViewProps {
   initialBriefInput?: string;
@@ -115,25 +116,26 @@ export function AutoGenTripCreateView({ initialBriefInput = '' }: AutoGenTripCre
   return (
     <div className="relative">
       {error && (
-        <p
+        <Card
           role="alert"
-          className="mx-4 mt-2 p-3 rounded-xl glass tone-danger border text-[var(--lkv-danger)] text-xs font-semibold"
+          tone="danger"
+          className="mx-4 mt-2 p-[var(--space-3)] text-[length:var(--lkv-text-footnote)] font-semibold text-[color:var(--lkv-danger-dark)]"
         >
           {error}
-        </p>
+        </Card>
       )}
       <AutoGenTripView initialBriefInput={initialBriefInput} onCompleteTrip={handleComplete} />
       {isSaving && (
         <div
-          className="fixed inset-0 z-[10001] flex items-center justify-center bg-black/40 backdrop-blur-sm"
+          className="fixed inset-0 z-[var(--z-modal)] flex items-center justify-center bg-[color:var(--lkv-overlay-scrim)] backdrop-blur-[var(--blur-sm)]"
           aria-live="polite"
         >
-          <div className="glass p-6 rounded-[var(--lkv-radius-card)] flex items-center gap-3">
-            <span className="w-6 h-6 rounded-full border-2 border-[var(--lkv-primary)] border-t-transparent animate-spin" />
-            <span className="text-sm font-semibold text-[var(--lkv-text-primary)]">
+          <Card className="flex items-center gap-[var(--space-3)]">
+            <Spinner size="md" label="Création du voyage en cours" />
+            <span className="text-[length:var(--lkv-text-footnote)] font-semibold text-[color:var(--lkv-text-primary)]">
               Création du voyage…
             </span>
-          </div>
+          </Card>
         </div>
       )}
     </div>

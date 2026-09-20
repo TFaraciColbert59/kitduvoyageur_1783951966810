@@ -1,10 +1,9 @@
 'use client';
 
-import Icon from '@/components/ui/Icon';
 import React, { useState, useEffect } from 'react';
 import { Footprints, Car, Bus, Train, Plane, Ship, Bike, Compass } from 'lucide-react';
-import { GlassCapsuleBtn } from '@/components/ui/GlassCapsuleBtn';
 import { Modal } from '@/components/ui/Modal';
+import { Button, Card, Chip } from '@/components/ui';
 import type { PlannerStep } from './plannerEngine';
 
 export interface StepEditModalProps {
@@ -14,6 +13,12 @@ export interface StepEditModalProps {
   initialStep?: PlannerStep | null;
   dayNumber: number;
 }
+
+const FIELD_CLASS =
+  'min-h-[var(--control-height-md)] w-full rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] text-[length:var(--lkv-text-body-sm)] text-[var(--lkv-text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]';
+
+const LABEL_CLASS =
+  'mb-1 block text-[length:var(--lkv-text-footnote)] font-semibold text-[color:var(--lkv-text-primary)]';
 
 const transportModesList = [
   { id: 'walking', label: 'À pied', Icon: Footprints },
@@ -117,163 +122,145 @@ export function StepEditModal({
       }}
       title={`${initialStep ? 'Modifier l’étape' : 'Ajouter une étape'} (Jour ${initialStep ? initialStep.day_number : dayNumber})`}
     >
-      <form onSubmit={handleSubmit} className="space-y-4 max-h-[70vh] overflow-y-auto pr-1">
-          {error && (
-            <div className="p-3 rounded-xl glass tone-danger border text-xs text-[var(--lkv-danger)]">
-              {error}
-            </div>
-          )}
+      <form onSubmit={handleSubmit} className="space-y-[var(--space-4)] pr-1">
+        {error && (
+          <Card
+            tone="danger"
+            className="p-[var(--space-3)] text-[length:var(--lkv-text-footnote)] text-[color:var(--lkv-danger-dark)]"
+          >
+            {error}
+          </Card>
+        )}
 
-          {/* Titre */}
+        {/* Titre */}
+        <div>
+          <label className={LABEL_CLASS}>Titre de l’étape *</label>
+          <input
+            type="text"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="Ex: Montée au refuge du glacier"
+            required
+            className={FIELD_CLASS}
+          />
+        </div>
+
+        {/* Moyen de transport */}
+        <div>
+          <label className={LABEL_CLASS}>Mode de transport / Type</label>
+          <div className="flex flex-wrap gap-[var(--space-2)]">
+            {transportModesList.map(({ id, label, Icon }) => {
+              const isSelected = transportMode === id;
+              return (
+                <Chip
+                  key={id}
+                  selected={isSelected}
+                  icon={<Icon className="h-3.5 w-3.5" />}
+                  onClick={() => setTransportMode(id)}
+                >
+                  {label}
+                </Chip>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Horaires */}
+        <div>
+          <label className={LABEL_CLASS}>Heure de passage (roadbook)</label>
+          <input
+            type="time"
+            value={startTime}
+            onChange={(e) => setStartTime(e.target.value)}
+            aria-label="Heure de passage de l'étape"
+            className={FIELD_CLASS}
+          />
+        </div>
+
+        {/* Lieu & Hébergement */}
+        <div className="grid grid-cols-1 gap-[var(--space-3)] sm:grid-cols-2">
           <div>
-            <label className="block text-xs font-semibold text-[var(--lkv-text-primary)] mb-1">
-              Titre de l’étape *
-            </label>
+            <label className={LABEL_CLASS}>Lieu / Destination</label>
             <input
               type="text"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="Ex: Montée au refuge du glacier"
-              required
-              className="glass-input w-full px-3.5 py-2.5 text-sm text-[var(--lkv-text-primary)]"
+              value={locationName}
+              onChange={(e) => setLocationName(e.target.value)}
+              placeholder="Ex: Refuge des Écrins"
+              className={FIELD_CLASS}
             />
           </div>
-
-          {/* Moyen de transport */}
           <div>
-            <label className="block text-xs font-semibold text-[var(--lkv-text-primary)] mb-1.5">
-              Mode de transport / Type
-            </label>
-            <div className="flex flex-wrap gap-1.5">
-              {transportModesList.map(({ id, label, Icon }) => {
-                const isSelected = transportMode === id;
-                return (
-                  <button
-                    key={id}
-                    type="button"
-                    onClick={() => setTransportMode(id)}
-                    className={`glass-capsule-btn flex items-center gap-1.5 !px-3 !py-1.5 text-xs font-medium transition-all ${
-                      isSelected ? 'primary shadow-sm' : ''
-                    }`}
-                  >
-                    <Icon className="w-3.5 h-3.5" />
-                    <span>{label}</span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Horaires */}
-          <div>
-            <label className="block text-xs font-semibold text-[var(--lkv-text-primary)] mb-1.5">
-              Heure de passage (roadbook)
-            </label>
+            <label className={LABEL_CLASS}>Hébergement</label>
             <input
-              type="time"
-              value={startTime}
-              onChange={(e) => setStartTime(e.target.value)}
-              aria-label="Heure de passage de l'étape"
-              className="glass-input w-full px-3.5 py-2.5 text-sm text-[var(--lkv-text-primary)]"
+              type="text"
+              value={accommodationName}
+              onChange={(e) => setAccommodationName(e.target.value)}
+              placeholder="Ex: Bivouac sous tente"
+              className={FIELD_CLASS}
             />
           </div>
+        </div>
 
-          {/* Lieu & Hébergement */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div>
-              <label className="block text-xs font-semibold text-[var(--lkv-text-primary)] mb-1">
-                Lieu / Destination
-              </label>
-              <input
-                type="text"
-                value={locationName}
-                onChange={(e) => setLocationName(e.target.value)}
-                placeholder="Ex: Refuge des Écrins"
-                className="glass-input w-full px-3 py-2 text-sm text-[var(--lkv-text-primary)]"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-[var(--lkv-text-primary)] mb-1">
-                Hébergement
-              </label>
-              <input
-                type="text"
-                value={accommodationName}
-                onChange={(e) => setAccommodationName(e.target.value)}
-                placeholder="Ex: Bivouac sous tente"
-                className="glass-input w-full px-3 py-2 text-sm text-[var(--lkv-text-primary)]"
-              />
-            </div>
-          </div>
-
-          {/* Distance & Dénivelés */}
-          <div className="grid grid-cols-3 gap-2 sm:gap-3">
-            <div>
-              <label className="block text-xs font-semibold text-[var(--lkv-text-primary)] mb-1">
-                Distance (km)
-              </label>
-              <input
-                type="number"
-                step="0.1"
-                min="0"
-                value={distanceKm}
-                onChange={(e) => setDistanceKm(e.target.value)}
-                placeholder="0"
-                className="glass-input w-full px-3 py-2 text-sm text-[var(--lkv-text-primary)]"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-[var(--lkv-text-primary)] mb-1">
-                D+ (mètres)
-              </label>
-              <input
-                type="number"
-                min="0"
-                value={elevationGainM}
-                onChange={(e) => setElevationGainM(e.target.value)}
-                placeholder="0"
-                className="glass-input w-full px-3 py-2 text-sm text-[var(--lkv-text-primary)]"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-[var(--lkv-text-primary)] mb-1">
-                D- (mètres)
-              </label>
-              <input
-                type="number"
-                min="0"
-                value={elevationLossM}
-                onChange={(e) => setElevationLossM(e.target.value)}
-                placeholder="0"
-                className="glass-input w-full px-3 py-2 text-sm text-[var(--lkv-text-primary)]"
-              />
-            </div>
-          </div>
-
-          {/* Description */}
+        {/* Distance & Dénivelés */}
+        <div className="grid grid-cols-3 gap-[var(--space-2)] sm:gap-[var(--space-3)]">
           <div>
-            <label className="block text-xs font-semibold text-[var(--lkv-text-primary)] mb-1">
-              Description / Conseils
-            </label>
-            <textarea
-              rows={2}
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Conseils d'accès, horaires de départ conseillés..."
-              className="glass-input w-full px-3 py-2 text-sm text-[var(--lkv-text-primary)] resize-none"
+            <label className={LABEL_CLASS}>Distance (km)</label>
+            <input
+              type="number"
+              step="0.1"
+              min="0"
+              value={distanceKm}
+              onChange={(e) => setDistanceKm(e.target.value)}
+              placeholder="0"
+              className={FIELD_CLASS}
             />
           </div>
-
-          {/* Actions */}
-          <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-white/40">
-            <GlassCapsuleBtn variant="default" size="sm" type="button" onClick={onClose}>
-              Annuler
-            </GlassCapsuleBtn>
-            <GlassCapsuleBtn variant="primary" size="sm" type="submit" disabled={isSubmitting}>
-              {isSubmitting ? 'Enregistrement...' : 'Enregistrer'}
-            </GlassCapsuleBtn>
+          <div>
+            <label className={LABEL_CLASS}>D+ (mètres)</label>
+            <input
+              type="number"
+              min="0"
+              value={elevationGainM}
+              onChange={(e) => setElevationGainM(e.target.value)}
+              placeholder="0"
+              className={FIELD_CLASS}
+            />
           </div>
-        </form>
+          <div>
+            <label className={LABEL_CLASS}>D- (mètres)</label>
+            <input
+              type="number"
+              min="0"
+              value={elevationLossM}
+              onChange={(e) => setElevationLossM(e.target.value)}
+              placeholder="0"
+              className={FIELD_CLASS}
+            />
+          </div>
+        </div>
+
+        {/* Description */}
+        <div>
+          <label className={LABEL_CLASS}>Description / Conseils</label>
+          <textarea
+            rows={2}
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder="Conseils d'accès, horaires de départ conseillés..."
+            className={`${FIELD_CLASS} resize-none`}
+          />
+        </div>
+
+        {/* Actions */}
+        <div className="flex items-center justify-end gap-[var(--space-3)] border-t border-[color:var(--lkv-border-subtle)] pt-[var(--space-3)]">
+          <Button variant="secondary" size="sm" type="button" onClick={onClose}>
+            Annuler
+          </Button>
+          <Button variant="primary" size="sm" type="submit" loading={isSubmitting}>
+            Enregistrer
+          </Button>
+        </div>
+      </form>
     </Modal>
   );
 }

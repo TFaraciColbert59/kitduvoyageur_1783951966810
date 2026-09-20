@@ -3,9 +3,7 @@
 import Icon from '@/components/ui/Icon';
 import React, { useState, useTransition } from 'react';
 import { TripFull, TripSafetyCheckpoint } from '../types/trip.types';
-import { Card } from '@/components/ui';
-import { EmptyState } from '@/components/ui/EmptyState';
-import { GlassCapsuleBtn } from '@/components/ui/GlassCapsuleBtn';
+import { Badge, Button, Card, EmptyState, type BadgeTone } from '@/components/ui';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { checkTripSafetyPoint } from '../actions/checkTripSafetyPoint';
 
@@ -15,30 +13,26 @@ interface TripSafetyViewProps {
 
 const STATUS_CONFIG: Record<
   TripSafetyCheckpoint['status'],
-  { label: string; bg: string; text: string; icon: React.ReactNode }
+  { label: string; tone: BadgeTone; icon: React.ReactNode }
 > = {
   pending: {
     label: 'En attente',
-    bg: 'bg-[var(--lkv-warning)]/10 text-[var(--lkv-warning)] border-[var(--lkv-warning)]/20',
-    text: 'text-[var(--lkv-warning)]',
+    tone: 'warn',
     icon: <Icon name="clock" size={14} />,
   },
   checked: {
     label: 'Validé',
-    bg: 'bg-[var(--lkv-success)]/10 text-[var(--lkv-success)] border-[var(--lkv-success)]/20',
-    text: 'text-[var(--lkv-success)]',
+    tone: 'sage',
     icon: <Icon name="check-circle2" size={14} />,
   },
   missed: {
     label: 'En retard',
-    bg: 'bg-[var(--lkv-danger)]/10 text-[var(--lkv-danger)] border-[var(--lkv-danger)]/20',
-    text: 'text-[var(--lkv-danger)]',
+    tone: 'danger',
     icon: <Icon name="alert-triangle" size={14} />,
   },
   alert_sent: {
     label: 'Alerte envoyée',
-    bg: 'bg-[var(--lkv-danger)]/15 text-[var(--lkv-danger)] border-[var(--lkv-danger)]/30',
-    text: 'text-[var(--lkv-danger)]',
+    tone: 'danger',
     icon: <Icon name="radio" size={14} />,
   },
 };
@@ -98,44 +92,45 @@ export function TripSafetyView({ trip }: TripSafetyViewProps) {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-[var(--space-6)]">
       {pointerError && (
-        <p
+        <Card
           role="alert"
-          className="glass rounded-xl border border-[var(--lkv-danger)]/30 bg-[var(--lkv-danger)]/10 px-3 py-2 text-xs font-semibold text-[var(--lkv-danger)]"
+          tone="danger"
+          className="px-[var(--space-3)] py-[var(--space-2)] text-[length:var(--lkv-text-footnote)] font-semibold text-[color:var(--lkv-danger-dark)]"
         >
           {pointerError}
-        </p>
+        </Card>
       )}
       {/* En-tête Sécurité & Checkpoints */}
-      <div className="flex items-center justify-between gap-4">
+      <div className="flex items-center justify-between gap-[var(--space-4)]">
         {trip.permissions.canEdit && (
-          <GlassCapsuleBtn
+          <Button
             variant="secondary"
             size="sm"
             icon={<Icon name="plus" size={16} />}
             onClick={() => setInfoNote(true)}
           >
             Nouveau point
-          </GlassCapsuleBtn>
+          </Button>
         )}
       </div>
       {infoNote && (
-        <div className="p-3 rounded-2xl glass tone-info text-xs text-[var(--lkv-info)] flex items-center gap-2">
+        <Card tone="info" className="flex items-center gap-[var(--space-2)] text-[length:var(--lkv-text-footnote)] text-[color:var(--lkv-info)]">
           <Icon name="shield" size={16} className="shrink-0" />
           <span>
             La configuration de nouveaux points de contrôle sera disponible prochainement.
           </span>
-        </div>
+        </Card>
       )}
 
       {/* Liste des checkpoints ou état vide */}
       {sortedCheckpoints.length > 0 ? (
-        <div className="space-y-3">
-          <h3 className="font-display text-xs font-bold text-lkv-primary px-1">
+        <div className="space-y-[var(--space-3)]">
+          <h3 className="px-1 font-display text-[length:var(--lkv-text-footnote)] font-bold text-[color:var(--lkv-text-primary)]">
             Points de passage programmés ({sortedCheckpoints.length})
           </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-[var(--space-4)] md:grid-cols-2">
             {sortedCheckpoints.map((cp) => {
               const statusCfg = STATUS_CONFIG[cp.status] || STATUS_CONFIG.pending;
               const isCritical = cp.status === 'missed' || cp.status === 'alert_sent';
@@ -143,12 +138,14 @@ export function TripSafetyView({ trip }: TripSafetyViewProps) {
                 <Card
                   key={cp.id}
                   tone={isCritical ? 'danger' : 'neutral'}
-                  className="p-4 rounded-[var(--lkv-radius-lg)] border border-white/60 hover:shadow-md transition-shadow"
+                  className="transition-shadow hover:shadow-elevation-2"
                 >
-                  <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-start justify-between gap-[var(--space-3)]">
                     <div>
-                      <div className="font-semibold text-base text-lkv-primary">{cp.label}</div>
-                      <div className="text-xs text-lkv-secondary mt-1 flex items-center gap-1.5">
+                      <div className="text-[length:var(--lkv-text-subheadline)] font-semibold text-[color:var(--lkv-text-primary)]">
+                        {cp.label}
+                      </div>
+                      <div className="mt-1 flex items-center gap-[var(--space-2)] text-[length:var(--lkv-text-footnote)] text-[color:var(--lkv-text-secondary)]">
                         <Icon name="clock" size={13} />
                         {new Date(cp.scheduled_at).toLocaleString('fr-FR', {
                           day: 'numeric',
@@ -158,37 +155,39 @@ export function TripSafetyView({ trip }: TripSafetyViewProps) {
                         })}
                       </div>
                       {cp.contact_name && (
-                        <div className="text-xs text-lkv-secondary mt-2 flex items-center gap-1.5">
+                        <div className="mt-[var(--space-2)] flex items-center gap-[var(--space-2)] text-[length:var(--lkv-text-footnote)] text-[color:var(--lkv-text-secondary)]">
                           <Icon name="phone-call" size={12} />
                           <span>Contact : {cp.contact_name}</span>
                           {cp.contact_phone && (
-                            <span className="text-lkv-primary font-medium">
+                            <span className="font-medium text-[color:var(--lkv-text-primary)]">
                               ({cp.contact_phone})
                             </span>
                           )}
                         </div>
                       )}
                       {cp.notes && (
-                        <p className="text-xs text-lkv-secondary/90 italic mt-2">« {cp.notes} »</p>
+                        <p className="mt-[var(--space-2)] text-[length:var(--lkv-text-footnote)] italic text-[color:var(--lkv-text-secondary)]/90">
+                          « {cp.notes} »
+                        </p>
                       )}
                     </div>
-                    <div className="flex flex-col items-end gap-2 shrink-0">
-                      <span
-                        className={`text-xs px-2.5 py-1 rounded-full border font-medium flex items-center gap-1 shrink-0 ${statusCfg.bg}`}
-                      >
+                    <div className="flex shrink-0 flex-col items-end gap-[var(--space-2)]">
+                      <Badge tone={statusCfg.tone}>
                         {statusCfg.icon}
                         {statusCfg.label}
-                      </span>
+                      </Badge>
                       {cp.status !== 'checked' && trip.permissions.canEdit && (
-                        <button
+                        <Button
                           type="button"
+                          variant="secondary"
+                          size="sm"
                           onClick={() => handleCheckIn(cp.id)}
-                          className="glass-capsule-btn !px-3 !py-1.5 text-xs font-semibold flex items-center gap-1.5 cursor-pointer active:scale-95 transition-transform"
+                          icon={<Icon name="check-circle2" size={13} />}
+                          disabled={isPending}
                           aria-label={`Pointer le passage : ${cp.label}`}
                         >
-                          <Icon name="check-circle2" size={13} />
-                          <span>Pointer</span>
-                        </button>
+                          Pointer
+                        </Button>
                       )}
                     </div>
                   </div>
@@ -199,26 +198,23 @@ export function TripSafetyView({ trip }: TripSafetyViewProps) {
         </div>
       ) : (
         <EmptyState
-          icon={<Icon name="radio" className="w-8 h-8" />}
+          icon={<Icon name="radio" size={32} />}
           title="Aucun point de contrôle configuré"
           description="Définissez des points de passage clés pour sécuriser votre progression et transmettre vos alertes en cas d'imprévu."
         />
       )}
 
       {/* Rappels de sécurité & Urgences */}
-      <Card
-        tone="neutral"
-        className="p-6 rounded-[var(--lkv-radius-card)] border border-white/60"
-      >
-        <div className="flex items-start gap-3.5">
-          <div className="p-2.5 rounded-xl bg-lkv-primary/10 text-lkv-primary">
+      <Card>
+        <div className="flex items-start gap-[var(--space-4)]">
+          <div className="rounded-[var(--lkv-radius-sm)] bg-[color:var(--lkv-primary)]/10 p-[var(--space-2)] text-[color:var(--lkv-primary)]">
             <Icon name="phone-call" size={20} />
           </div>
           <div>
-            <h3 className="text-sm font-bold text-lkv-primary">
+            <h3 className="text-[length:var(--lkv-text-footnote)] font-bold text-[color:var(--lkv-text-primary)]">
               Numéros d&apos;urgence & Consignes terrain
             </h3>
-            <p className="text-xs sm:text-sm text-lkv-secondary mt-1 leading-relaxed">
+            <p className="mt-1 text-[length:var(--lkv-text-footnote)] leading-relaxed text-[color:var(--lkv-text-secondary)] sm:text-[length:var(--lkv-text-body-sm)]">
               En Europe, composez le <strong>112</strong> en cas d&apos;urgence vitale (accessible
               même sans réseau de votre opérateur). Pour les alertes par SMS en zone blanche ou
               silencieuse, envoyez un message au <strong>114</strong>. En montagne, vérifiez

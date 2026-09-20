@@ -2,6 +2,8 @@
 
 import React from 'react';
 import { DogParticipant } from '../types/participant.types';
+import { Badge, Card, IconButton } from '@/components/ui';
+import Icon from '@/components/ui/Icon';
 
 interface DogParticipantCardProps {
   dog: DogParticipant;
@@ -20,97 +22,97 @@ export const DogParticipantCard: React.FC<DogParticipantCardProps> = ({
     : 0;
 
   return (
-    <div className="p-4 rounded-3xl bg-white/70 dark:bg-white/5 backdrop-blur-xl border border-white/40 dark:border-white/10 shadow-sm hover:shadow-md transition-all space-y-3">
-      {/* Top Identity */}
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl bg-sand-700 text-white font-bold flex items-center justify-center text-lg shadow-sm">
+    <Card className="space-y-[var(--space-3)]">
+      <div className="flex items-start justify-between gap-[var(--space-3)]">
+        <div className="flex items-center gap-[var(--space-3)]">
+          <div className="flex h-10 w-10 items-center justify-center rounded-[var(--lkv-radius-sm)] bg-[color:var(--sand-700)] text-[length:var(--lkv-text-title-sm)] font-bold text-[color:var(--lkv-text-inverted)]">
             🐾
           </div>
           <div>
-            <div className="flex items-center gap-2">
-              <h4 className="text-sm font-bold text-[var(--lkv-forest-900)] dark:text-[var(--lkv-text-primary)]">
+            <div className="flex items-center gap-[var(--space-2)]">
+              <h4 className="text-[length:var(--lkv-text-footnote)] font-bold text-[color:var(--lkv-text-primary)]">
                 {dog.name}
               </h4>
-              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-sand-500/20 text-sand-800 dark:text-sand-300">
-                {dog.breed}
-              </span>
+              <Badge tone="warn">{dog.breed}</Badge>
             </div>
-            <span className="text-[11px] text-[var(--lkv-text-muted)] font-mono">
+            <span className="font-mono text-[11px] text-[color:var(--lkv-text-muted)]">
               Poids : {dog.weightKg} kg · Capacité max (15%) : {dog.maxCarryingCapacityKg} kg
             </span>
           </div>
         </div>
 
         {onRemove && (
-          <button
-            onClick={() => onRemove(dog.id)}
-            className="text-black/30 dark:text-white/30 hover:text-red-500 p-1 text-xs"
+          <IconButton
+            aria-label="Supprimer le compagnon canin"
             title="Supprimer le compagnon canin"
+            size="sm"
+            onClick={() => onRemove(dog.id)}
           >
-            ✕
-          </button>
+            <Icon name="x" size={14} />
+          </IconButton>
         )}
       </div>
 
-      {/* Portage Status & Gauge */}
-      <div className="p-3 rounded-2xl bg-black/[0.02] dark:bg-white/[0.02] border border-black/5 dark:border-white/5 space-y-2">
-        <div className="flex items-center justify-between text-xs">
-          <span className="font-semibold text-[var(--lkv-forest-900)] dark:text-[var(--lkv-text-primary)]">
+      <Card variant="compact" className="space-y-[var(--space-2)]">
+        <div className="flex items-center justify-between text-[length:var(--lkv-text-footnote)]">
+          <span className="font-semibold text-[color:var(--lkv-text-primary)]">
             Sac de bât canin :
           </span>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-[var(--space-2)]">
             <span
-              className={`text-[11px] font-mono font-bold ${
-                isOverloaded ? 'text-red-600 dark:text-red-400' : 'text-emerald-700 dark:text-emerald-300'
+              className={`font-mono text-[11px] font-bold ${
+                isOverloaded
+                  ? 'text-[color:var(--lkv-danger-dark)]'
+                  : 'text-[color:var(--sage-600)]'
               }`}
             >
               {dog.isCarryingPack ? `${dog.packWeightKg} kg (${loadPercentage}%)` : 'Non équipé'}
             </span>
             <input
               type="checkbox"
+              aria-label="Sac de bât canin"
               checked={dog.isCarryingPack}
               onChange={(e) => onToggleCarryingPack(dog.id, e.target.checked)}
-              className="rounded text-forest-600 focus:ring-forest-500 cursor-pointer"
+              className="cursor-pointer rounded accent-[color:var(--sage-600)]"
             />
           </div>
         </div>
 
         {dog.isCarryingPack && (
           <>
-            <div className="w-full bg-black/10 dark:bg-white/10 rounded-full h-2 overflow-hidden">
+            <div className="h-2 w-full overflow-hidden rounded-full bg-[color:var(--lkv-surface-muted)]">
               <div
                 className={`h-full rounded-full transition-all duration-300 ${
-                  isOverloaded ? 'bg-red-500' : 'bg-emerald-500'
+                  isOverloaded ? 'bg-[color:var(--lkv-danger)]' : 'bg-[color:var(--sage-600)]'
                 }`}
                 style={{ width: `${Math.min(100, loadPercentage)}%` }}
               />
             </div>
 
             {isOverloaded && (
-              <p className="text-[10px] text-red-600 dark:text-red-400 font-semibold">
-                ⚠️ Charge excessive ! Dépasse les 15% de portage physiologique recommandés ({dog.maxCarryingCapacityKg} kg max).
+              <p className="text-[10px] font-semibold text-[color:var(--lkv-danger-dark)]">
+                ⚠️ Charge excessive ! Dépasse les 15% de portage physiologique recommandés (
+                {dog.maxCarryingCapacityKg} kg max).
               </p>
             )}
           </>
         )}
-      </div>
+      </Card>
 
-      {/* Daily Needs Grid */}
-      <div className="grid grid-cols-2 gap-2 text-xs pt-1">
-        <div className="p-2 rounded-xl bg-black/[0.02] dark:bg-white/[0.02] flex items-center justify-between">
-          <span className="text-[11px] text-[var(--lkv-text-muted)]">💧 Eau / jour</span>
-          <span className="font-mono font-bold text-[var(--lkv-forest-900)] dark:text-[var(--lkv-text-primary)]">
+      <div className="grid grid-cols-2 gap-[var(--space-2)] pt-[var(--space-1)] text-[length:var(--lkv-text-footnote)]">
+        <Card variant="compact" className="flex items-center justify-between">
+          <span className="text-[11px] text-[color:var(--lkv-text-muted)]">💧 Eau / jour</span>
+          <span className="font-mono font-bold text-[color:var(--lkv-text-primary)]">
             {dog.waterRationLitersPerDay} L
           </span>
-        </div>
-        <div className="p-2 rounded-xl bg-black/[0.02] dark:bg-white/[0.02] flex items-center justify-between">
-          <span className="text-[11px] text-[var(--lkv-text-muted)]">🍖 Croquettes</span>
-          <span className="font-mono font-bold text-[var(--lkv-forest-900)] dark:text-[var(--lkv-text-primary)]">
+        </Card>
+        <Card variant="compact" className="flex items-center justify-between">
+          <span className="text-[11px] text-[color:var(--lkv-text-muted)]">🍖 Croquettes</span>
+          <span className="font-mono font-bold text-[color:var(--lkv-text-primary)]">
             {dog.foodRationGramsPerDay} g
           </span>
-        </div>
+        </Card>
       </div>
-    </div>
+    </Card>
   );
 };

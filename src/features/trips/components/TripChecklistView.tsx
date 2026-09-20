@@ -2,7 +2,7 @@
 
 import Icon from '@/components/ui/Icon';
 import React, { useState } from 'react';
-import { Card } from '@/components/ui';
+import { Badge, Card, EmptyState, ListItem } from '@/components/ui';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { createClient } from '@/lib/supabase/client';
 import { requestChecklistCompletionAward } from '@/lib/progression-award-requests';
@@ -314,51 +314,62 @@ export function TripChecklistView({ tripId, daysUntilStart, items }: TripCheckli
 
   const progress = totalCount > 0 ? Math.min(100, Math.round((doneCount / totalCount) * 100)) : 0;
 
-  const renderSection = (title: string, badgeText: string, items: DatabaseTripChecklistItem[]) => {
+  const renderSection = (title: string, badgeText: string, sectionItems: DatabaseTripChecklistItem[]) => {
     return (
-      <div className="space-y-3">
-        <div className="flex items-center gap-2 px-1">
-          <span className="text-xs font-bold uppercase tracking-wider text-lkv-primary">
+      <div className="space-y-[var(--space-3)]">
+        <div className="flex items-center gap-[var(--space-2)] px-1">
+          <span className="text-[length:var(--lkv-text-footnote)] font-bold uppercase tracking-wider text-[color:var(--lkv-text-primary)]">
             {title}
           </span>
-          <span className="text-[11px] px-2 py-0.5 rounded-full bg-lkv-primary/10 text-lkv-primary font-medium">
-            {badgeText}
-          </span>
+          <Badge tone="sage">{badgeText}</Badge>
         </div>
 
-        <div className="space-y-2">
-          {items.map((item, index) => {
+        <ul className="space-y-[var(--space-2)]">
+          {sectionItems.map((item, index) => {
             const isChecked = item.done;
             return (
-              <LiveArrivalReveal key={item.id} id={item.id} liveIds={liveIds} index={index}>
-                <button
-                  type="button"
-                  onClick={() => toggleItem(item)}
-                  className={`glass-capsule-btn w-full text-left !justify-start !items-start gap-3 !rounded-2xl !p-3.5 sm:!p-4 transition-all duration-150 active:scale-[0.98] ${
-                    isChecked ? 'primary' : ''
-                  }`}
-                >
-                  <div className="mt-0.5 shrink-0">
-                    {isChecked ? (
-                      <Icon name="check-circle2" size={20} className="text-lkv-primary" />
-                    ) : (
-                      <Icon name="circle" size={20} className="text-lkv-secondary/50" />
-                    )}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div
-                      className={`text-sm font-medium ${
-                        isChecked ? 'line-through text-lkv-secondary opacity-75' : 'text-lkv-primary'
-                      }`}
-                    >
-                      {item.label}
-                    </div>
-                  </div>
-                </button>
-              </LiveArrivalReveal>
+              <li key={item.id}>
+                <LiveArrivalReveal id={item.id} liveIds={liveIds} index={index}>
+                  <ListItem
+                    as="div"
+                    onClick={() => toggleItem(item)}
+                    selected={isChecked}
+                    aria-pressed={isChecked}
+                    className={`items-start gap-[var(--space-3)] rounded-[var(--lkv-radius-md)] border p-[var(--space-3)] sm:p-[var(--space-4)] ${
+                      isChecked
+                        ? 'border-[color:var(--lkv-action)]/30 bg-[color:var(--lkv-action-soft)]'
+                        : 'border-[color:var(--lkv-border-subtle)] bg-[color:var(--lkv-surface-card)]'
+                    }`}
+                    leading={
+                      <span className="mt-0.5 shrink-0">
+                        {isChecked ? (
+                          <Icon name="check-circle2" size={20} className="text-[color:var(--lkv-primary)]" />
+                        ) : (
+                          <Icon
+                            name="circle"
+                            size={20}
+                            className="text-[color:var(--lkv-text-secondary)]/50"
+                          />
+                        )}
+                      </span>
+                    }
+                    title={
+                      <span
+                        className={
+                          isChecked
+                            ? 'text-[color:var(--lkv-text-secondary)] line-through opacity-75'
+                            : 'text-[color:var(--lkv-text-primary)]'
+                        }
+                      >
+                        {item.label}
+                      </span>
+                    }
+                  />
+                </LiveArrivalReveal>
+              </li>
             );
           })}
-        </div>
+        </ul>
       </div>
     );
   };
@@ -368,26 +379,26 @@ export function TripChecklistView({ tripId, daysUntilStart, items }: TripCheckli
   const j1 = rows.filter((i) => i.due_offset_days < 8);
 
   return (
-    <div ref={containerRef} className="space-y-6">
+    <div ref={containerRef} className="space-y-[var(--space-6)]">
       {/* Barre de progression */}
-      <Card tone="sage" className="p-5 rounded-[var(--lkv-radius-xl)] border border-white/70">
-        <div className="flex items-center justify-between gap-4 mb-2">
-          <Icon name="shield-check" className="w-5 h-5 text-lkv-primary" aria-hidden="true" />
-          <div className="text-xs font-semibold text-lkv-primary">
+      <Card tone="sage">
+        <div className="mb-[var(--space-2)] flex items-center justify-between gap-[var(--space-4)]">
+          <Icon name="shield-check" size={20} className="text-[color:var(--lkv-primary)]" aria-hidden="true" />
+          <div className="text-[length:var(--lkv-text-footnote)] font-semibold text-[color:var(--lkv-text-primary)]">
             {doneCount} / {totalCount} ({progress}%)
           </div>
         </div>
 
         {/* Barre */}
-        <div className="w-full bg-white/30 rounded-full h-2 overflow-hidden mt-3">
+        <div className="mt-[var(--space-3)] h-2 w-full overflow-hidden rounded-full bg-white/30">
           <div
-            className="bg-lkv-primary h-full transition-all duration-300 rounded-full"
+            className="h-full rounded-full bg-[color:var(--lkv-primary)] transition-all duration-300"
             style={{ width: `${progress}%` }}
           />
         </div>
 
         {daysUntilStart !== null && daysUntilStart !== undefined && (
-          <div className="flex items-center gap-1.5 text-xs text-lkv-secondary mt-3">
+          <div className="mt-[var(--space-3)] flex items-center gap-[var(--space-2)] text-[length:var(--lkv-text-footnote)] text-[color:var(--lkv-text-secondary)]">
             <Icon name="calendar" size={13} />
             <span>
               {daysUntilStart > 0
@@ -399,9 +410,7 @@ export function TripChecklistView({ tripId, daysUntilStart, items }: TripCheckli
       </Card>
 
       {rows.length === 0 ? (
-        <p className="text-center text-sm text-lkv-secondary">
-          Aucune tâche de préparation pour ce voyage.
-        </p>
+        <EmptyState compact title="Aucune tâche de préparation pour ce voyage." />
       ) : (
         <>
           {j30.length > 0 && renderSection('Préparation fondamentale', 'J-30', j30)}

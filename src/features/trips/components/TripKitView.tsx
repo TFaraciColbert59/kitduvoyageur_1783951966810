@@ -5,11 +5,16 @@ import { useMemo, useState, useTransition, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import Link from 'next/link';
-import { Card } from '@/components/ui';
-import { GlassCapsuleBtn } from '@/components/ui/GlassCapsuleBtn';
+import { Badge, Button, Card, EmptyState, IconButton, Spinner } from '@/components/ui';
 import { Sheet } from '@/components/ui/Sheet';
-import { EmptyState } from '@/components/ui/EmptyState';
+import { SearchField } from '@/components/ui';
 import { CheckCircle2, Circle, PackagePlus, Pencil, Plus, X } from 'lucide-react';
+
+const FIELD_CLASS =
+  'min-h-[var(--control-height-md)] w-full rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] text-[length:var(--lkv-text-body-sm)] text-[var(--lkv-text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]';
+
+const LABEL_CLASS =
+  'mb-1 block text-[length:var(--lkv-text-footnote)] font-semibold text-[color:var(--lkv-text-primary)]';
 import type { TripFull, TripItem } from '../types/trip.types';
 import type { TripKitAnalysis, ShopProductReference } from '../types/kit.types';
 import type { InventoryItem } from '@/features/materiel/services/getInventory';
@@ -394,86 +399,76 @@ export function TripKitView({
     <div className="space-y-6 animate-fade-in">
       {/* Toast discret (ajout au matériel) */}
       {infoToast && (
-        <div className="fixed bottom-24 left-1/2 z-50 -translate-x-1/2 rounded-full bg-lkv-primary px-4 py-2 text-xs font-bold text-white shadow-xl">
+        <div className="fixed bottom-24 left-1/2 z-[var(--z-toast)] -translate-x-1/2 rounded-full bg-[color:var(--lkv-primary)] px-[var(--space-4)] py-[var(--space-2)] text-[length:var(--lkv-text-footnote)] font-bold text-[color:var(--lkv-text-inverted)] shadow-elevation-3">
           {infoToast}
         </div>
       )}
 
       {/* Alertes de sécurité & climat */}
       {analysis.climateWarnings.length > 0 && (
-        <div className="p-4 rounded-2xl bg-[var(--lkv-warning)]/10 border border-[var(--lkv-warning)]/20 text-text-primary text-xs sm:text-sm space-y-1.5">
-          <div className="font-bold flex items-center gap-2 text-[var(--lkv-warning-dark)]">
-            <Icon name="alert-triangle" className="w-4 h-4 shrink-0 text-[var(--lkv-warning-dark)]" />
+        <Card tone="warn" className="space-y-[var(--space-2)]">
+          <div className="flex items-center gap-[var(--space-2)] text-[length:var(--lkv-text-footnote)] font-bold text-[color:var(--lkv-warning-dark)] sm:text-[length:var(--lkv-text-body-sm)]">
+            <Icon name="alert-triangle" size={16} className="shrink-0 text-[color:var(--lkv-warning-dark)]" />
             Conditions de terrain identifiées pour votre expédition
           </div>
-          <ul className="list-disc list-inside space-y-0.5 pl-1 text-xs text-text-secondary">
+          <ul className="list-inside list-disc space-y-0.5 pl-1 text-[length:var(--lkv-text-footnote)] text-[color:var(--lkv-text-secondary)]">
             {analysis.climateWarnings.map((w, idx) => (
               <li key={idx}>{w}</li>
             ))}
           </ul>
-        </div>
+        </Card>
       )}
 
       {/* 2. Recommandations : fusionnées dans « Sac & inventaire » (boutique en tête de liste) */}
 
       {/* 3. Sac & inventaire : ce qu'on a + ce qu'on n'a pas (boutique en tête, consommables d'abord) */}
-      <Card
-        tone="neutral"
-        className="p-5 rounded-3xl border border-white/70 shadow-sm space-y-4"
-      >
-        <div className="flex items-center justify-between gap-3">
-          <h3 className="font-display text-lg font-black text-lkv-primary">
+      <Card className="space-y-[var(--space-4)]">
+        <div className="flex items-center justify-between gap-[var(--space-3)]">
+          <h3 className="font-display text-[length:var(--lkv-text-title-sm)] font-black text-[color:var(--lkv-text-primary)]">
             Sac &amp; inventaire du voyage
           </h3>
-          <div className="flex shrink-0 items-center gap-2">
-            <button
+          <div className="flex shrink-0 items-center gap-[var(--space-2)]">
+            <IconButton
               type="button"
               onClick={handleOpenInventory}
               aria-label="Importer depuis mon matériel"
               title="Importer depuis mon matériel"
-              className="glass-circle-btn flex items-center justify-center transition-transform active:scale-95"
             >
-              <Icon name="package" className="w-4 h-4" />
-            </button>
-            <button
+              <Icon name="package" size={16} />
+            </IconButton>
+            <IconButton
               type="button"
+              variant="solid"
               onClick={() => setIsAddModalOpen(true)}
               aria-label="Ajouter un objet"
               title="Ajouter un objet"
-              className="glass-circle-btn primary flex items-center justify-center transition-transform active:scale-95"
             >
-              <Icon name="plus" className="w-4 h-4" />
-            </button>
+              <Icon name="plus" size={16} />
+            </IconButton>
           </div>
         </div>
 
         {/* Phase 5 — complétude réelle du kit : personnel / partagé / manquant */}
-        <div className="flex flex-wrap items-center gap-2 text-[11px]">
-          <span className="rounded-full border border-white/60 bg-white/70 px-2.5 py-1 font-semibold text-[var(--lkv-text-secondary)]">
-            Personnel {completeness.summary.personalCount}
-          </span>
-          <span className="rounded-full border border-white/60 bg-white/70 px-2.5 py-1 font-semibold text-[var(--lkv-text-secondary)]">
-            Partagé {completeness.summary.sharedCount}
-          </span>
+        <div className="flex flex-wrap items-center gap-[var(--space-2)]">
+          <Badge tone="stone">Personnel {completeness.summary.personalCount}</Badge>
+          <Badge tone="stone">Partagé {completeness.summary.sharedCount}</Badge>
           {completeness.summary.missingCount > 0 && (
-            <span className="rounded-full border border-[var(--lkv-warning)]/30 bg-[var(--lkv-warning)]/10 px-2.5 py-1 font-bold text-[var(--lkv-warning-dark)]">
-              Manquant {completeness.summary.missingCount}
-            </span>
+            <Badge tone="warn">Manquant {completeness.summary.missingCount}</Badge>
           )}
-          <span className="rounded-full border border-white/60 bg-white/70 px-2.5 py-1 font-semibold text-[var(--lkv-text-secondary)]">
+          <Badge tone="stone">
             {completeness.summary.knownWeightGrams > 0
               ? `Poids connu ${(completeness.summary.knownWeightGrams / 1000).toFixed(2)} kg`
               : 'Poids non renseigné'}
-          </span>
+          </Badge>
         </div>
 
         {/* Boutique : les plus achetés (consommables d'abord) → boîte-flèche vers Mon Matériel */}
         {visibleShopSuggestions.length > 0 && (
-          <div className="space-y-1">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--lkv-text-secondary)]">
+          <div className="space-y-[var(--space-1)]">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[color:var(--lkv-text-secondary)]">
               À ajouter · les plus achetés
             </p>
-            <div className="divide-y divide-white/40">
+            <div className="divide-y divide-[color:var(--lkv-border-subtle)]">
               {visibleShopSuggestions.map((product) => (
                 <GearShopAddRow
                   key={`shop-${product.id}`}
@@ -488,11 +483,11 @@ export function TripKitView({
 
         {/* Mon matériel : possédé, pas encore dans le sac → + pour l'ajouter */}
         {visibleInventorySuggestions.length > 0 && (
-          <div className="space-y-1">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--lkv-text-secondary)]">
+          <div className="space-y-[var(--space-1)]">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[color:var(--lkv-text-secondary)]">
               Dans mon matériel · à mettre au sac
             </p>
-            <div className="divide-y divide-white/40">
+            <div className="divide-y divide-[color:var(--lkv-border-subtle)]">
               {visibleInventorySuggestions.map((inv) => (
                 <GearInventoryAddRow
                   key={`inv-${inv.id}`}
@@ -506,19 +501,21 @@ export function TripKitView({
         )}
 
         {addRowsCount > 12 && (
-          <button
+          <Button
             type="button"
+            variant="secondary"
+            fullWidth
             onClick={() => setShowAllSuggestions((value) => !value)}
-            className="glass-capsule-btn w-full !py-2 text-xs font-semibold transition-all active:opacity-70"
+            className="text-[length:var(--lkv-text-footnote)]"
           >
             {showAllSuggestions ? 'Voir moins' : `Voir plus d’idées (${addRowsCount})`}
-          </button>
+          </Button>
         )}
 
         {/* Mon sac */}
         {filteredItems.length === 0 ? (
           <EmptyState
-            icon={<Icon name="package" className="w-8 h-8 text-[var(--lkv-text-muted)]" />}
+            icon={<Icon name="package" size={32} className="text-[color:var(--lkv-text-muted)]" />}
             title="Votre sac est vide"
             description="Ajoutez du matériel depuis les idées ci-dessus ou créez votre propre objet."
             actionLabel="+ Ajouter un équipement"
@@ -537,7 +534,7 @@ export function TripKitView({
             containerRef={containerRef}
           />
         ) : (
-          <div ref={containerRef} className="divide-y divide-white/40">
+          <div ref={containerRef} className="divide-y divide-[color:var(--lkv-border-subtle)]">
             {filteredItems.map((item, index) => (
               <LiveArrivalReveal key={item.id} id={item.id} liveIds={liveIds} index={index}>
                 <TripKitItemRow
@@ -570,29 +567,22 @@ export function TripKitView({
                 setIsAddModalOpen(false);
               });
             }}
-            className="space-y-4"
+            className="space-y-[var(--space-4)]"
           >
-            <div>
-              <label className="block text-xs font-semibold text-[var(--lkv-text-primary)] mb-1">
-                Nom de l’équipement *
-              </label>
+            <label className="block">
+              <span className={LABEL_CLASS}>Nom de l’équipement *</span>
               <input
                 name="itemName"
                 required
                 placeholder="ex: Sac de couchage 0°C, Lunettes..."
-                className="glass-input w-full px-3 py-2 text-sm text-[var(--lkv-text-primary)]"
+                className={FIELD_CLASS}
               />
-            </div>
+            </label>
 
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block text-xs font-semibold text-[var(--lkv-text-primary)] mb-1">
-                  Catégorie
-                </label>
-                <select
-                  name="category"
-                  className="w-full px-3 py-2 text-sm rounded-[var(--lkv-radius-md)] border border-white/60 bg-white/70 backdrop-blur-md text-[var(--lkv-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--lkv-primary)]/20 shadow-2xs cursor-pointer"
-                >
+            <div className="grid grid-cols-2 gap-[var(--space-3)]">
+              <label className="block">
+                <span className={LABEL_CLASS}>Catégorie</span>
+                <select name="category" className={`${FIELD_CLASS} cursor-pointer`}>
                   <option value="safety">Sécurité & Secours</option>
                   <option value="shelter">Abri & Tente</option>
                   <option value="sleep">Sommeil</option>
@@ -602,49 +592,47 @@ export function TripKitView({
                   <option value="tech">Énergie & Tech</option>
                   <option value="misc">Matériel divers</option>
                 </select>
-              </div>
+              </label>
 
-              <div>
-                <label className="block text-xs font-semibold text-[var(--lkv-text-primary)] mb-1">
-                  Poids (grammes)
-                </label>
+              <label className="block">
+                <span className={LABEL_CLASS}>Poids (grammes)</span>
                 <input
                   type="number"
                   name="weightGrams"
                   placeholder="ex: 450"
                   min={0}
-                  className="glass-input w-full px-3 py-2 text-sm text-[var(--lkv-text-primary)]"
+                  className={FIELD_CLASS}
                 />
-              </div>
+              </label>
             </div>
 
-            <div className="space-y-2 pt-2 text-xs text-[var(--lkv-text-muted)]">
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input type="checkbox" name="isVital" value="true" className="rounded" />
+            <div className="space-y-[var(--space-2)] pt-[var(--space-2)] text-[length:var(--lkv-text-footnote)] text-[color:var(--lkv-text-muted)]">
+              <label className="flex cursor-pointer items-center gap-[var(--space-2)]">
+                <input type="checkbox" name="isVital" value="true" className="rounded accent-[color:var(--lkv-primary)]" />
                 <span>Équipement vital pour la sécurité ou survie</span>
               </label>
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input type="checkbox" name="isWorn" value="true" className="rounded" />
+              <label className="flex cursor-pointer items-center gap-[var(--space-2)]">
+                <input type="checkbox" name="isWorn" value="true" className="rounded accent-[color:var(--lkv-primary)]" />
                 <span>Porté sur soi (exclu du poids de base du sac)</span>
               </label>
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input type="checkbox" name="isConsumable" value="true" className="rounded" />
+              <label className="flex cursor-pointer items-center gap-[var(--space-2)]">
+                <input type="checkbox" name="isConsumable" value="true" className="rounded accent-[color:var(--lkv-primary)]" />
                 <span>Consommable (eau, vivres, gaz)</span>
               </label>
             </div>
 
-            <div className="flex items-center justify-end gap-3 pt-4 border-t border-white/40">
-              <GlassCapsuleBtn
+            <div className="flex items-center justify-end gap-[var(--space-3)] border-t border-[color:var(--lkv-border-subtle)] pt-[var(--space-4)]">
+              <Button
                 type="button"
-                variant="default"
+                variant="secondary"
                 size="sm"
                 onClick={() => setIsAddModalOpen(false)}
               >
                 Annuler
-              </GlassCapsuleBtn>
-              <GlassCapsuleBtn type="submit" variant="primary" size="sm" disabled={isPending}>
+              </Button>
+              <Button type="submit" size="sm" disabled={isPending}>
                 Ajouter au sac
-              </GlassCapsuleBtn>
+              </Button>
             </div>
           </form>
         </div>
@@ -658,54 +646,58 @@ export function TripKitView({
         hideTitle
       >
         <div className="pb-2">
-          <div className="flex items-center gap-2 mb-1">
+          <div className="mb-1 flex items-center gap-[var(--space-2)]">
             <Icon
               name="package"
-              className="w-5 h-5 text-lkv-secondary shrink-0"
+              size={20}
+              className="shrink-0 text-[color:var(--lkv-secondary)]"
               aria-hidden="true"
             />
-            <h3 className="text-base font-bold text-[var(--lkv-text-primary)]">
+            <h3 className="text-[length:var(--lkv-text-subheadline)] font-bold text-[color:var(--lkv-text-primary)]">
               Importer depuis Mon Matériel
             </h3>
           </div>
 
           {/* Règle Y6.3 : Le stock n'est jamais consommé ni altéré */}
-          <div className="mt-3 p-3 rounded-xl bg-white/70 border border-white/60 text-xs text-[var(--lkv-text-secondary)] flex items-center gap-2 shrink-0">
-            <span className="text-base shrink-0">ℹ️</span>
+          <Card
+            variant="compact"
+            className="mt-[var(--space-3)] flex shrink-0 items-center gap-[var(--space-2)] text-[length:var(--lkv-text-footnote)] text-[color:var(--lkv-text-secondary)]"
+          >
+            <span className="shrink-0 text-base">ℹ️</span>
             <span>
               Votre inventaire personnel reste intact — votre matériel est simplement référencé pour
               cette aventure sans décompte de stock.
             </span>
-          </div>
+          </Card>
 
           {/* Barre de recherche */}
-          <div className="mt-3 shrink-0">
-            <input
-              className="glass-input w-full px-3 py-2 text-xs text-[var(--lkv-text-primary)]"
-              type="text"
-              placeholder="Rechercher dans mon matériel (nom, marque)..."
+          <div className="mt-[var(--space-3)] shrink-0">
+            <SearchField
               value={inventorySearch}
               onChange={(e) => setInventorySearch(e.target.value)}
+              onClear={() => setInventorySearch('')}
+              placeholder="Rechercher dans mon matériel (nom, marque)..."
+              aria-label="Rechercher dans mon matériel"
             />
           </div>
 
           {/* Liste scrollable */}
-          <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar my-4 divide-y divide-white/40 pr-1">
+          <div className="my-[var(--space-4)] min-h-0 flex-1 divide-y divide-[color:var(--lkv-border-subtle)] overflow-y-auto pr-1">
             {isLoadingInventory ? (
-              <div className="py-12 flex flex-col items-center justify-center gap-3">
-                <div className="w-6 h-6 border-2 border-lkv-primary border-t-transparent rounded-full animate-spin" />
-                <span className="text-xs text-[var(--lkv-text-muted)]">
+              <div className="flex flex-col items-center justify-center gap-[var(--space-3)] py-12">
+                <Spinner size="md" label="Chargement de votre matériel" />
+                <span className="text-[length:var(--lkv-text-footnote)] text-[color:var(--lkv-text-muted)]">
                   Chargement de votre matériel...
                 </span>
               </div>
             ) : filteredInventory.length === 0 ? (
-              <div className="py-12 text-center text-xs text-[var(--lkv-text-muted)]">
+              <div className="py-12 text-center text-[length:var(--lkv-text-footnote)] text-[color:var(--lkv-text-muted)]">
                 {userInventory.length === 0 ? (
-                  <div className="space-y-3">
+                  <div className="space-y-[var(--space-3)]">
                     <p>Aucun équipement trouvé dans votre inventaire personnel.</p>
                     <Link
                       href="/hub"
-                      className="inline-block glass-capsule-btn text-xs font-bold px-4 py-2"
+                      className="inline-flex min-h-[var(--control-height-sm)] items-center rounded-full border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] px-[var(--space-4)] text-[length:var(--lkv-text-footnote)] font-bold text-[color:var(--card-content)] backdrop-blur-[var(--blur-md)]"
                     >
                       Gérer mon matériel →
                     </Link>
@@ -724,12 +716,15 @@ export function TripKitView({
                 );
 
                 return (
-                  <div key={item.id} className="py-3 flex items-center justify-between gap-3">
+                  <div
+                    key={item.id}
+                    className="flex items-center justify-between gap-[var(--space-3)] py-[var(--space-3)]"
+                  >
                     <div className="min-w-0">
-                      <p className="text-sm font-semibold text-[var(--lkv-text-primary)] truncate">
+                      <p className="truncate text-[length:var(--lkv-text-footnote)] font-semibold text-[color:var(--lkv-text-primary)]">
                         {item.name}
                       </p>
-                      <div className="flex items-center gap-2 text-[11px] text-[var(--lkv-text-muted)] mt-0.5">
+                      <div className="mt-0.5 flex items-center gap-[var(--space-2)] text-[11px] text-[color:var(--lkv-text-muted)]">
                         {item.brand && <span>{item.brand}</span>}
                         {item.category && <span>· {item.category}</span>}
                         {item.weight_g > 0 && <span>· {item.weight_g} g</span>}
@@ -738,18 +733,16 @@ export function TripKitView({
 
                     <div className="shrink-0">
                       {isAlreadyInTrip ? (
-                        <span className="text-[11px] font-mono text-[var(--lkv-text-muted)] bg-white/80 px-2.5 py-1 rounded-full border border-white/60">
-                          ✓ Dans le sac
-                        </span>
+                        <Badge tone="stone">✓ Dans le sac</Badge>
                       ) : (
-                        <button
+                        <Button
                           type="button"
+                          size="sm"
                           onClick={() => handleImportFromInventory(item)}
                           disabled={isPending}
-                          className="glass-capsule-btn primary text-xs font-bold !py-1.5 !px-3 shadow-2xs min-h-[44px] flex items-center cursor-pointer"
                         >
                           + Dans mon sac
-                        </button>
+                        </Button>
                       )}
                     </div>
                   </div>
@@ -759,8 +752,11 @@ export function TripKitView({
           </div>
 
           {/* Pied de modale */}
-          <div className="pt-3 border-t border-white/40 flex items-center justify-between shrink-0">
-            <Link href="/hub" className="text-xs text-lkv-secondary hover:underline font-medium">
+          <div className="flex shrink-0 items-center justify-between border-t border-[color:var(--lkv-border-subtle)] pt-[var(--space-3)]">
+            <Link
+              href="/hub"
+              className="text-[length:var(--lkv-text-footnote)] font-medium text-[color:var(--lkv-text-secondary)] hover:underline"
+            >
               Ouvrir l'inventaire complet →
             </Link>
           </div>
@@ -831,63 +827,59 @@ function TripKitEditModal({
 
   return (
     <Sheet open={item !== null} onOpenChange={onOpenChange} title="Modifier l’équipement">
-      <div className="space-y-4 pb-2">
-        <p className="text-sm font-semibold text-[var(--lkv-text-primary)] truncate">
+      <div className="space-y-[var(--space-4)] pb-2">
+        <p className="truncate text-[length:var(--lkv-text-body-sm)] font-semibold text-[color:var(--lkv-text-primary)]">
           {item ? cleanItemName(item.item_name) : ''}
         </p>
 
         {error && (
-          <p role="alert" className="rounded-xl border border-[var(--lkv-danger)]/30 bg-[var(--lkv-danger)]/10 px-3 py-2 text-xs font-semibold text-[var(--lkv-danger)]">
+          <Card
+            role="alert"
+            tone="danger"
+            className="text-[length:var(--lkv-text-footnote)] font-semibold text-[color:var(--lkv-danger-dark)]"
+          >
             {error}
-          </p>
+          </Card>
         )}
 
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label className="mb-1 block text-xs font-semibold text-[var(--lkv-text-primary)]">
-              Quantité
-            </label>
+        <div className="grid grid-cols-2 gap-[var(--space-3)]">
+          <label className="block">
+            <span className={LABEL_CLASS}>Quantité</span>
             <input
-              className="glass-input w-full px-3 py-2 text-sm text-[var(--lkv-text-primary)]"
+              className={FIELD_CLASS}
               type="number"
               min={1}
               max={999}
               value={quantity}
               onChange={(event) => setQuantity(event.target.value)}
             />
-          </div>
-          <div>
-            <label className="mb-1 block text-xs font-semibold text-[var(--lkv-text-primary)]">
-              Poids unitaire (g)
-            </label>
+          </label>
+          <label className="block">
+            <span className={LABEL_CLASS}>Poids unitaire (g)</span>
             <input
-              className="glass-input w-full px-3 py-2 text-sm text-[var(--lkv-text-primary)]"
+              className={FIELD_CLASS}
               type="number"
               min={0}
               placeholder="non renseigné"
               value={weightGrams}
               onChange={(event) => setWeightGrams(event.target.value)}
             />
-          </div>
-          <div>
-            <label className="mb-1 block text-xs font-semibold text-[var(--lkv-text-primary)]">
-              Type
-            </label>
+          </label>
+          <label className="block">
+            <span className={LABEL_CLASS}>Type</span>
             <select
-              className="glass-input w-full px-3 py-2 text-sm text-[var(--lkv-text-primary)]"
+              className={FIELD_CLASS}
               value={ownership}
               onChange={(event) => setOwnership(event.target.value as 'personal' | 'shared')}
             >
               <option value="personal">Personnel</option>
               <option value="shared">Partagé (groupe)</option>
             </select>
-          </div>
-          <div>
-            <label className="mb-1 block text-xs font-semibold text-[var(--lkv-text-primary)]">
-              État
-            </label>
+          </label>
+          <label className="block">
+            <span className={LABEL_CLASS}>État</span>
             <select
-              className="glass-input w-full px-3 py-2 text-sm text-[var(--lkv-text-primary)]"
+              className={FIELD_CLASS}
               value={condition}
               onChange={(event) => setCondition(event.target.value)}
             >
@@ -898,13 +890,11 @@ function TripKitEditModal({
               <option value="a_remplacer">À remplacer</option>
               <option value="pour_pieces">Pour pièces</option>
             </select>
-          </div>
-          <div>
-            <label className="mb-1 block text-xs font-semibold text-[var(--lkv-text-primary)]">
-              Propriétaire
-            </label>
+          </label>
+          <label className="block">
+            <span className={LABEL_CLASS}>Propriétaire</span>
             <select
-              className="glass-input w-full px-3 py-2 text-sm text-[var(--lkv-text-primary)]"
+              className={FIELD_CLASS}
               value={ownerId}
               onChange={(event) => setOwnerId(event.target.value)}
             >
@@ -918,13 +908,11 @@ function TripKitEditModal({
                   </option>
                 ))}
             </select>
-          </div>
-          <div>
-            <label className="mb-1 block text-xs font-semibold text-[var(--lkv-text-primary)]">
-              Priorité
-            </label>
+          </label>
+          <label className="block">
+            <span className={LABEL_CLASS}>Priorité</span>
             <select
-              className="glass-input w-full px-3 py-2 text-sm text-[var(--lkv-text-primary)]"
+              className={FIELD_CLASS}
               value={priority}
               onChange={(event) =>
                 setPriority(event.target.value as 'vital' | 'recommended' | 'optional')
@@ -934,22 +922,21 @@ function TripKitEditModal({
               <option value="recommended">Recommandé</option>
               <option value="optional">Optionnel</option>
             </select>
-          </div>
+          </label>
         </div>
 
-        <div className="flex items-center justify-end gap-3 border-t border-white/40 pt-4">
-          <GlassCapsuleBtn
+        <div className="flex items-center justify-end gap-[var(--space-3)] border-t border-[color:var(--lkv-border-subtle)] pt-[var(--space-4)]">
+          <Button
             type="button"
-            variant="default"
+            variant="secondary"
             size="sm"
             onClick={() => onOpenChange(false)}
             disabled={busy}
           >
             Annuler
-          </GlassCapsuleBtn>
-          <GlassCapsuleBtn
+          </Button>
+          <Button
             type="button"
-            variant="primary"
             size="sm"
             disabled={busy}
             onClick={() => {
@@ -972,7 +959,7 @@ function TripKitEditModal({
             }}
           >
             Enregistrer
-          </GlassCapsuleBtn>
+          </Button>
         </div>
       </div>
     </Sheet>
@@ -997,14 +984,14 @@ function GearThumb({ url, name, size = 46 }: { url?: string | null; name: string
         src={url}
         alt=""
         loading="lazy"
-        className="shrink-0 rounded-xl border border-white/60 object-cover"
+        className="shrink-0 rounded-[var(--lkv-radius-sm)] border border-[color:var(--lkv-border-subtle)] object-cover"
         style={{ width: size, height: size }}
       />
     );
   }
   return (
     <span
-      className="flex shrink-0 items-center justify-center rounded-xl border border-white/60 bg-white/70 font-bold text-[var(--lkv-primary)]"
+      className="flex shrink-0 items-center justify-center rounded-[var(--lkv-radius-sm)] border border-[color:var(--lkv-border-subtle)] bg-[color:var(--lkv-surface-muted)] font-bold text-[color:var(--lkv-primary)]"
       style={{ width: size, height: size }}
       aria-hidden="true"
     >
@@ -1017,11 +1004,13 @@ function GearStockBadge({ quantity, stock = false }: { quantity: number; stock?:
   if (quantity <= 1) return null;
   return (
     <span
-      className="shrink-0 rounded-full border border-white/60 bg-white/70 px-1.5 py-0.5 text-[10px] font-semibold tabular-nums text-[var(--lkv-text-secondary)]"
+      className="inline-flex shrink-0"
       title={stock ? `${quantity} en stock` : `${quantity} dans le sac`}
     >
-      ×{quantity}
-      {stock ? ' en stock' : ''}
+      <Badge tone="stone" className="tabular-nums">
+        ×{quantity}
+        {stock ? ' en stock' : ''}
+      </Badge>
     </span>
   );
 }
@@ -1053,56 +1042,44 @@ function TripKitItemRow({
         item.is_packed ? 'opacity-70' : 'opacity-100'
       }`}
     >
-      <div className="flex min-w-0 items-center gap-3">
+      <div className="flex min-w-0 items-center gap-[var(--space-3)]">
         {canEdit ? (
-          <button
+          <IconButton
             type="button"
             onClick={() => onTogglePacked(item)}
             disabled={busyPacked}
             aria-label={item.is_packed ? 'Marquer non emballé' : 'Marquer emballé'}
             aria-pressed={item.is_packed}
-            className="glass-circle-btn shrink-0 flex items-center justify-center transition-transform active:scale-90 disabled:opacity-50"
+            className="shrink-0"
           >
             {item.is_packed ? (
               <CheckCircle2 className="h-5 w-5" aria-hidden="true" />
             ) : (
               <Circle className="h-5 w-5" aria-hidden="true" />
             )}
-          </button>
+          </IconButton>
         ) : (
           <GearThumb url={imageUrl} name={displayName} />
         )}
 
         <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-center gap-[var(--space-2)]">
             <span
-              className={`text-sm font-medium truncate ${
+              className={`truncate text-[length:var(--lkv-text-body-sm)] font-medium ${
                 item.is_packed
-                  ? 'line-through decoration-[var(--lkv-text-muted)]/60 text-[var(--lkv-text-secondary)]'
-                  : 'text-[var(--lkv-text-primary)]'
+                  ? 'text-[color:var(--lkv-text-secondary)] line-through decoration-[color:var(--lkv-text-muted)]/60'
+                  : 'text-[color:var(--lkv-text-primary)]'
               }`}
             >
               {displayName}
             </span>
-            {item.is_packed && (
-              <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-[var(--lkv-success)]/10 text-[var(--lkv-success)] border border-[var(--lkv-success)]/20 shrink-0">
-                emballé
-              </span>
-            )}
-            {isMissing && (
-              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-[var(--lkv-warning)]/10 text-[var(--lkv-warning-dark)] border border-[var(--lkv-warning)]/30 shrink-0">
-                manquant
-              </span>
-            )}
-            {item.ownership === 'shared' && (
-              <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-white/70 text-[var(--lkv-text-secondary)] border border-white/60 shrink-0">
-                partagé
-              </span>
-            )}
+            {item.is_packed && <Badge tone="sage">emballé</Badge>}
+            {isMissing && <Badge tone="warn">manquant</Badge>}
+            {item.ownership === 'shared' && <Badge tone="stone">partagé</Badge>}
             {item.quantity > 1 && item.is_consumable && <GearStockBadge quantity={item.quantity} />}
             {isLlmSuggestion(item.source) && <LlmSuggestionBadge />}
             {item.is_vital && (
-              <span className="text-[10px] font-bold text-[var(--lkv-danger)]">Vital</span>
+              <span className="text-[10px] font-bold text-[color:var(--lkv-danger)]">Vital</span>
             )}
           </div>
 
@@ -1120,27 +1097,25 @@ function TripKitItemRow({
         </div>
       </div>
 
-      <div className="flex shrink-0 items-center gap-1.5">
+      <div className="flex shrink-0 items-center gap-[var(--space-1)]">
         {canEdit && (
-          <button
+          <IconButton
             type="button"
             onClick={() => onEdit(item)}
-            className="glass-circle-btn flex items-center justify-center transition-all active:scale-90"
             title="Modifier l’équipement"
             aria-label="Modifier l’équipement"
           >
             <Pencil className="h-4 w-4" aria-hidden="true" />
-          </button>
+          </IconButton>
         )}
-        <button
+        <IconButton
           type="button"
           onClick={() => onDeleteItem(item.id)}
-          className="glass-circle-btn flex items-center justify-center transition-all active:scale-90"
           title="Retirer du sac"
           aria-label="Retirer du sac"
         >
           <X className="h-4 w-4" aria-hidden="true" />
-        </button>
+        </IconButton>
       </div>
     </div>
   );
@@ -1174,19 +1149,19 @@ function GearInventoryAddRow({
         </div>
       </div>
 
-      <div className="flex shrink-0 items-center gap-1.5">
-        <button
+      <div className="flex shrink-0 items-center gap-[var(--space-1)]">
+        <IconButton
           type="button"
+          variant="solid"
           onClick={() =>
             onAdd({ id: inv.id, name: inv.name, category: inv.category, weight_g: inv.weight_g })
           }
           disabled={busy}
-          className="glass-circle-btn primary flex items-center justify-center transition-transform active:scale-90 disabled:opacity-50"
           title="Ajouter au sac"
           aria-label={`Ajouter ${inv.name} au sac`}
         >
           <Plus className="h-4 w-4" aria-hidden="true" />
-        </button>
+        </IconButton>
       </div>
     </div>
   );
@@ -1217,17 +1192,17 @@ function GearShopAddRow({
         </div>
       </div>
 
-      <div className="flex shrink-0 items-center gap-1.5">
-        <button
+      <div className="flex shrink-0 items-center gap-[var(--space-1)]">
+        <IconButton
           type="button"
+          variant="solid"
           onClick={() => onAddToInventory(product)}
           disabled={busy}
-          className="glass-circle-btn primary flex items-center justify-center transition-transform active:scale-90 disabled:opacity-50"
           title="Ajouter à Mon Matériel"
           aria-label={`Ajouter ${product.name} à mon matériel`}
         >
           <PackagePlus className="h-4 w-4" aria-hidden="true" />
-        </button>
+        </IconButton>
       </div>
     </div>
   );
@@ -1292,7 +1267,7 @@ function VirtualTripKitItemList({
                 width: '100%',
                 transform: `translateY(${virtualRow.start}px)`,
               }}
-              className="border-b border-white/40"
+              className="border-b border-[color:var(--lkv-border-subtle)]"
             >
               {/* Reveal du contenu à l'intérieur du wrapper mesuré : la
                   géométrie du virtualiseur reste inchangée. */}

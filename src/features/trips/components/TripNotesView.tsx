@@ -2,10 +2,8 @@
 
 import Icon from '@/components/ui/Icon';
 import React, { useState, useTransition } from 'react';
-import { Card } from '@/components/ui';
+import { Badge, Button, Card, Chip, EmptyState, IconButton } from '@/components/ui';
 import { Sheet } from '@/components/ui/Sheet';
-import { GlassCapsuleBtn } from '@/components/ui/GlassCapsuleBtn';
-import { EmptyState } from '@/components/ui/EmptyState';
 import { TripCompletionModal } from './TripCompletionModal';
 import { ConfirmDialog } from './ConfirmDialog';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
@@ -13,6 +11,12 @@ import { addTripNoteAction, deleteTripNoteAction } from '@/app/voyages/completio
 import { updateTripNoteAction } from '@/features/trips/actions/updateTripNoteAction';
 import { getTripDuration } from '../hooks/useTripDuration';
 import type { TripFull, TripNote } from '../types/trip.types';
+
+const FIELD_CLASS =
+  'min-h-[var(--control-height-md)] w-full rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] text-[length:var(--lkv-text-body-sm)] text-[var(--lkv-text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]';
+
+const LABEL_CLASS =
+  'mb-1 block text-[length:var(--lkv-text-footnote)] font-semibold text-[color:var(--lkv-text-primary)]';
 
 interface TripNotesViewProps {
   trip: TripFull;
@@ -152,138 +156,127 @@ export function TripNotesView({ trip }: TripNotesViewProps) {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-[var(--space-6)]">
       {/* Panneau « Carnet en création » — stats live dérivées des données réelles */}
-      <section
-        aria-label="Carnet en création"
-        className="glass rounded-[var(--lkv-radius-card)] p-5 space-y-3"
-      >
-        <div className="flex items-center justify-between gap-2 flex-wrap">
-          <h3 className="font-display text-xs font-bold text-lkv-primary flex items-center gap-1.5">
+      <Card as="section" aria-label="Carnet en création" className="space-y-[var(--space-3)]">
+        <div className="flex flex-wrap items-center justify-between gap-[var(--space-2)]">
+          <h3 className="flex items-center gap-[var(--space-2)] font-display text-[length:var(--lkv-text-footnote)] font-bold text-[color:var(--lkv-text-primary)]">
             <Icon
               name="book-open"
               size={14}
-              className="text-lkv-secondary shrink-0"
+              className="shrink-0 text-[color:var(--lkv-secondary)]"
               aria-hidden="true"
             />
             Carnet en création
           </h3>
-          <span className="glass-pill text-[10px] font-semibold text-[var(--lkv-text-secondary)]">
+          <Badge tone="stone">
             {notes.length} {notes.length === 1 ? 'note' : 'notes'} · {notesCreatedToday}{' '}
             aujourd&apos;hui
-          </span>
+          </Badge>
         </div>
 
-        <dl className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <div className="glass-sub-card rounded-xl p-3 flex flex-col gap-1">
-            <dt className="text-[10px] font-semibold text-[var(--lkv-text-muted)]">Jour couvert</dt>
-            <dd className="font-display text-sm font-bold text-[var(--lkv-text-primary)]">
+        <dl className="grid grid-cols-2 gap-[var(--space-3)] sm:grid-cols-4">
+          <Card variant="compact" className="flex flex-col gap-[var(--space-1)]">
+            <dt className="text-[10px] font-semibold text-[color:var(--lkv-text-muted)]">
+              Jour couvert
+            </dt>
+            <dd className="font-display text-[length:var(--lkv-text-footnote)] font-bold text-[color:var(--lkv-text-primary)]">
               {jourCouvert ? `Jour ${jourCouvert}` : '—'}
             </dd>
-            <p className="text-[10px] text-[var(--lkv-text-muted)] leading-tight">
+            <p className="text-[10px] leading-tight text-[color:var(--lkv-text-muted)]">
               {jourCouvert
                 ? `${notesDuJour} ${notesDuJour === 1 ? 'note' : 'notes'} ce jour`
                 : 'Aucun jour raconté'}
             </p>
-          </div>
+          </Card>
 
-          <div className="glass-sub-card rounded-xl p-3 flex flex-col gap-1">
-            <dt className="text-[10px] font-semibold text-[var(--lkv-text-muted)]">
+          <Card variant="compact" className="flex flex-col gap-[var(--space-1)]">
+            <dt className="text-[10px] font-semibold text-[color:var(--lkv-text-muted)]">
               Dernière note
             </dt>
-            <dd className="font-display text-sm font-bold text-[var(--lkv-text-primary)] truncate">
+            <dd className="truncate font-display text-[length:var(--lkv-text-footnote)] font-bold text-[color:var(--lkv-text-primary)]">
               {lastNote ? lastNote.title || 'Sans titre' : '—'}
             </dd>
             <p
-              className="text-[10px] text-[var(--lkv-text-muted)] leading-tight truncate"
+              className="truncate text-[10px] leading-tight text-[color:var(--lkv-text-muted)]"
               suppressHydrationWarning
             >
               {lastNote ? formatRelativeTime(new Date(lastNote.created_at), now) : 'Carnet vierge'}
             </p>
-          </div>
+          </Card>
 
-          <div className="glass-sub-card rounded-xl p-3 flex flex-col gap-1">
-            <dt className="text-[10px] font-semibold text-[var(--lkv-text-muted)]">
+          <Card variant="compact" className="flex flex-col gap-[var(--space-1)]">
+            <dt className="text-[10px] font-semibold text-[color:var(--lkv-text-muted)]">
               Note épinglée
             </dt>
-            <dd className="font-display text-sm font-bold text-[var(--lkv-text-primary)] truncate">
+            <dd className="truncate font-display text-[length:var(--lkv-text-footnote)] font-bold text-[color:var(--lkv-text-primary)]">
               {pinnedNote ? pinnedNote.title || 'Sans titre' : '—'}
             </dd>
-            <p className="text-[10px] text-[var(--lkv-text-muted)] leading-tight">
+            <p className="text-[10px] leading-tight text-[color:var(--lkv-text-muted)]">
               {pinnedNote ? 'Mise en avant' : 'Aucune épinglée'}
             </p>
-          </div>
+          </Card>
 
-          <div className="glass-sub-card rounded-xl p-3 flex flex-col gap-1">
-            <dt className="text-[10px] font-semibold text-[var(--lkv-text-muted)]">Progression</dt>
-            <dd className="font-display text-sm font-bold text-[var(--lkv-text-primary)]">
+          <Card variant="compact" className="flex flex-col gap-[var(--space-1)]">
+            <dt className="text-[10px] font-semibold text-[color:var(--lkv-text-muted)]">
+              Progression
+            </dt>
+            <dd className="font-display text-[length:var(--lkv-text-footnote)] font-bold text-[color:var(--lkv-text-primary)]">
               {daysTold} / {totalTripDays} jours
             </dd>
-            <div className="w-full h-1.5 bg-black/5 rounded-full overflow-hidden">
+            <div className="h-1.5 w-full overflow-hidden rounded-full bg-[color:var(--lkv-surface-muted)]">
               <div
-                className="h-full rounded-full bg-[var(--lkv-primary)] transition-all duration-300"
+                className="h-full rounded-full bg-[color:var(--lkv-primary)] transition-all duration-300"
                 style={{ width: `${progressPct}%` }}
               />
             </div>
-            <p className="text-[10px] text-[var(--lkv-text-muted)] leading-tight">
+            <p className="text-[10px] leading-tight text-[color:var(--lkv-text-muted)]">
               {daysTold} {daysTold === 1 ? 'jour raconté' : 'jours racontés'} / {totalTripDays}{' '}
               {totalTripDays === 1 ? 'jour de voyage' : 'jours de voyage'}
             </p>
-          </div>
+          </Card>
         </dl>
-      </section>
+      </Card>
 
       {/* Bannière de statut & Action Clôture */}
-      <div className="flex items-center justify-between gap-4 flex-wrap">
+      <div className="flex flex-wrap items-center justify-between gap-[var(--space-4)]">
         {trip.status === 'completed' && (
-          <span className="inline-flex items-center gap-1.5 text-[11px] px-2.5 py-1 rounded-full bg-[var(--lkv-primary)]/10 text-lkv-primary font-semibold">
+          <Badge tone="sage">
             <Icon name="check-circle2" size={13} aria-hidden="true" />
             <span>Expédition terminée</span>
-          </span>
+          </Badge>
         )}
         {canEdit && (
-          <div className="flex items-center gap-2 shrink-0">
-            <GlassCapsuleBtn
+          <div className="flex shrink-0 items-center gap-[var(--space-2)]">
+            <Button
               variant="secondary"
               size="sm"
               onClick={() => setIsCompletionOpen(true)}
               icon={<Icon name="award" size={16} />}
             >
               {trip.status === 'completed' ? 'Bilan & Rétrospective' : 'Clôturer le voyage'}
-            </GlassCapsuleBtn>
-            <GlassCapsuleBtn
-              variant="primary"
+            </Button>
+            <Button
               size="sm"
               onClick={() => setIsAddOpen(true)}
               icon={<Icon name="plus" size={16} />}
             >
               Ajouter un récit
-            </GlassCapsuleBtn>
+            </Button>
           </div>
         )}
       </div>
 
       {/* Barre de filtres par jour */}
       {availableDays.length > 0 && (
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
-          <button
-            onClick={() => setSelectedDayFilter('all')}
-            className={`glass-capsule-btn !px-3 !py-1.5 font-medium transition-all ${
-              selectedDayFilter === 'all' ? 'primary shadow-sm' : ''
-            }`}
-          >
+        <div className="flex items-center gap-[var(--space-2)] overflow-x-auto pb-1">
+          <Chip selected={selectedDayFilter === 'all'} onClick={() => setSelectedDayFilter('all')}>
             Toutes ({notes.length})
-          </button>
+          </Chip>
           {availableDays.map((day) => (
-            <button
-              key={day}
-              onClick={() => setSelectedDayFilter(day)}
-              className={`glass-capsule-btn !px-3 !py-1.5 font-medium transition-all ${
-                selectedDayFilter === day ? 'primary shadow-sm' : ''
-              }`}
-            >
+            <Chip key={day} selected={selectedDayFilter === day} onClick={() => setSelectedDayFilter(day)}>
               Jour {day}
-            </button>
+            </Chip>
           ))}
         </div>
       )}
@@ -291,7 +284,7 @@ export function TripNotesView({ trip }: TripNotesViewProps) {
       {/* Liste des notes */}
       {filteredNotes.length === 0 ? (
         <EmptyState
-          icon={<Icon name="book-open" size={36} className="text-lkv-secondary/40" />}
+          icon={<Icon name="book-open" size={36} className="text-[color:var(--lkv-secondary)]/40" />}
           title="Aucune note enregistrée"
           description={
             canEdit
@@ -302,65 +295,64 @@ export function TripNotesView({ trip }: TripNotesViewProps) {
           onAction={canEdit ? () => setIsAddOpen(true) : undefined}
         />
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-[var(--space-4)] md:grid-cols-2">
           {filteredNotes.map((note) => (
             <Card
               key={note.id}
-              tone="neutral"
-              className={`p-5 rounded-[var(--lkv-radius-lg)] border transition-shadow ${
-                note.is_pinned ? 'border-lkv-primary/30 shadow-sm' : 'border-white/60'
+              className={`transition-shadow ${
+                note.is_pinned ? 'shadow-elevation-2' : ''
               }`}
             >
-              <div className="flex items-start justify-between gap-3 mb-2">
-                <div className="flex items-center gap-2 flex-wrap">
-                  {note.day_number && (
-                    <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-lkv-primary/10 text-lkv-primary">
-                      Jour {note.day_number}
-                    </span>
-                  )}
+              <div className="mb-[var(--space-2)] flex items-start justify-between gap-[var(--space-3)]">
+                <div className="flex flex-wrap items-center gap-[var(--space-2)]">
+                  {note.day_number && <Badge tone="sage">Jour {note.day_number}</Badge>}
                   {note.is_pinned && (
-                    <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-[var(--lkv-warning)]/10 text-[var(--lkv-warning)] border border-[var(--lkv-warning)]/20 flex items-center gap-1">
+                    <Badge tone="warn">
                       <Icon name="pin" size={11} /> Épinglé
-                    </span>
+                    </Badge>
                   )}
                 </div>
 
                 {canEdit && (
-                  <div className="flex items-center gap-2 shrink-0">
-                    <button
+                  <div className="flex shrink-0 items-center gap-[var(--space-2)]">
+                    <IconButton
+                      type="button"
+                      size="sm"
                       onClick={() => handleEditOpen(note)}
                       disabled={isPending}
-                      className="glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8 flex items-center justify-center disabled:opacity-60 transition-all"
                       aria-label="Éditer la note"
                     >
                       <Icon name="pencil" size={16} />
-                    </button>
-                    <button
+                    </IconButton>
+                    <IconButton
+                      type="button"
+                      size="sm"
                       onClick={() => handleDelete(note.id, note.title)}
                       disabled={isPending}
-                      className="glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8 flex items-center justify-center disabled:opacity-60 transition-all"
                       aria-label="Supprimer la note"
                     >
                       <Icon name="trash2" size={16} />
-                    </button>
+                    </IconButton>
                   </div>
                 )}
               </div>
 
               {note.title && (
-                <h4 className="font-semibold text-base text-lkv-primary mb-2">{note.title}</h4>
+                <h4 className="mb-[var(--space-2)] text-[length:var(--lkv-text-subheadline)] font-semibold text-[color:var(--lkv-text-primary)]">
+                  {note.title}
+                </h4>
               )}
 
-              <p className="text-sm text-lkv-primary/90 whitespace-pre-wrap leading-relaxed">
+              <p className="whitespace-pre-wrap text-[length:var(--lkv-text-body-sm)] leading-relaxed text-[color:var(--lkv-text-primary)]/90">
                 {note.content}
               </p>
 
-              <div className="mt-4 pt-3 border-t border-white/40 flex items-center justify-between text-[11px] text-lkv-secondary">
-                <div className="flex items-center gap-1.5">
+              <div className="mt-[var(--space-4)] flex items-center justify-between border-t border-[color:var(--lkv-border-subtle)] pt-[var(--space-3)] text-[11px] text-[color:var(--lkv-text-secondary)]">
+                <div className="flex items-center gap-[var(--space-2)]">
                   <Icon name="user" size={12} />
                   <span>{note.author?.full_name || 'Explorateur'}</span>
                 </div>
-                <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-[var(--space-2)]">
                   <Icon name="calendar" size={12} />
                   <span>{new Date(note.created_at).toLocaleDateString('fr-FR')}</span>
                 </div>
@@ -376,80 +368,78 @@ export function TripNotesView({ trip }: TripNotesViewProps) {
         onOpenChange={setIsAddOpen}
         title="Nouvelle page du carnet de bord"
       >
-        <div className="pb-2 space-y-4">
+        <div className="space-y-[var(--space-4)] pb-2">
           {errorMessage && (
-            <div className="p-3 rounded-xl glass tone-danger text-[var(--lkv-danger)] text-xs border">
+            <Card
+              role="alert"
+              tone="danger"
+              className="text-[length:var(--lkv-text-footnote)] text-[color:var(--lkv-danger-dark)]"
+            >
               {errorMessage}
-            </div>
+            </Card>
           )}
 
-          <form onSubmit={handleAddSubmit} className="space-y-4">
-            <div>
-              <label className="block text-xs font-semibold text-lkv-primary mb-1">
-                Titre de la note (optionnel)
-              </label>
+          <form onSubmit={handleAddSubmit} className="space-y-[var(--space-4)]">
+            <label className="block">
+              <span className={LABEL_CLASS}>Titre de la note (optionnel)</span>
               <input
                 type="text"
                 name="title"
                 placeholder="Ex : Sommet atteint au lever du jour"
-                className="glass-input w-full px-3 py-2 text-sm text-[var(--lkv-text-primary)]"
+                className={FIELD_CLASS}
               />
-            </div>
+            </label>
 
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block text-xs font-semibold text-lkv-primary mb-1">
-                  Jour de trek (optionnel)
-                </label>
+            <div className="grid grid-cols-2 gap-[var(--space-3)]">
+              <label className="block">
+                <span className={LABEL_CLASS}>Jour de trek (optionnel)</span>
                 <input
                   type="number"
                   name="dayNumber"
                   min={1}
                   max={60}
                   placeholder="Ex : 1"
-                  className="glass-input w-full px-3 py-2 text-sm text-[var(--lkv-text-primary)]"
+                  className={FIELD_CLASS}
                 />
-              </div>
+              </label>
 
               <div className="flex items-center pt-5">
-                <label className="flex items-center gap-2 cursor-pointer select-none text-xs text-lkv-primary font-medium">
+                <label className="flex cursor-pointer select-none items-center gap-[var(--space-2)] text-[length:var(--lkv-text-footnote)] font-medium text-[color:var(--lkv-text-primary)]">
                   <input
                     type="checkbox"
                     name="isPinned"
                     value="true"
-                    className="w-4 h-4 rounded text-lkv-primary focus:ring-lkv-primary"
+                    className="h-4 w-4 rounded accent-[color:var(--lkv-primary)]"
                   />
                   Épingler en haut
                 </label>
               </div>
             </div>
 
-            <div>
-              <label className="block text-xs font-semibold text-lkv-primary mb-1">
-                Récit & Notes de terrain *
-              </label>
+            <label className="block">
+              <span className={LABEL_CLASS}>Récit & Notes de terrain *</span>
               <textarea
                 name="content"
                 required
                 rows={4}
                 placeholder="Conditions du sentier, faune observée, sensations, astuces..."
-                className="glass-input w-full px-3 py-2 text-sm text-[var(--lkv-text-primary)]"
+                className={FIELD_CLASS}
               />
-            </div>
+            </label>
 
-            <div className="flex items-center justify-end gap-2 pt-2 border-t border-white/40">
-              <GlassCapsuleBtn
+            <div className="flex items-center justify-end gap-[var(--space-2)] border-t border-[color:var(--lkv-border-subtle)] pt-[var(--space-2)]">
+              <Button
                 type="button"
-                variant="default"
+                variant="secondary"
                 size="sm"
                 onClick={() => setIsAddOpen(false)}
                 disabled={isPending}
               >
                 Annuler
-              </GlassCapsuleBtn>
-              <GlassCapsuleBtn type="submit" variant="primary" size="sm" disabled={isPending}>
+              </Button>
+              <Button type="submit" size="sm" loading={isPending}>
                 {isPending ? 'Enregistrement...' : 'Enregistrer la note'}
-              </GlassCapsuleBtn>
+              </Button>
             </div>
           </form>
         </div>
@@ -463,38 +453,44 @@ export function TripNotesView({ trip }: TripNotesViewProps) {
         }}
         title="Éditer la note"
       >
-        <div className="pb-2 space-y-4">
+        <div className="space-y-[var(--space-4)] pb-2">
           {errorMessage && (
-            <div className="p-3 rounded-xl glass tone-danger text-[var(--lkv-danger)] text-xs border">
+            <Card
+              role="alert"
+              tone="danger"
+              className="text-[length:var(--lkv-text-footnote)] text-[color:var(--lkv-danger-dark)]"
+            >
               {errorMessage}
-            </div>
+            </Card>
           )}
 
           {editState?.title && (
-            <p className="text-xs font-semibold text-lkv-secondary">{editState.title}</p>
+            <p className="text-[length:var(--lkv-text-footnote)] font-semibold text-[color:var(--lkv-text-secondary)]">
+              {editState.title}
+            </p>
           )}
 
-          <form onSubmit={handleEditSubmit} className="space-y-4">
+          <form onSubmit={handleEditSubmit} className="space-y-[var(--space-4)]">
             <textarea
               value={editContent}
               onChange={(e) => setEditContent(e.target.value)}
               rows={6}
               aria-label="Contenu de la note"
-              className="glass-input w-full px-3 py-2 text-sm text-[var(--lkv-text-primary)]"
+              className={FIELD_CLASS}
             />
-            <div className="flex items-center justify-end gap-2 pt-2 border-t border-white/40">
-              <GlassCapsuleBtn
+            <div className="flex items-center justify-end gap-[var(--space-2)] border-t border-[color:var(--lkv-border-subtle)] pt-[var(--space-2)]">
+              <Button
                 type="button"
-                variant="default"
+                variant="secondary"
                 size="sm"
                 onClick={() => setEditState(null)}
                 disabled={isPending}
               >
                 Annuler
-              </GlassCapsuleBtn>
-              <GlassCapsuleBtn type="submit" variant="primary" size="sm" disabled={isPending}>
+              </Button>
+              <Button type="submit" size="sm" loading={isPending}>
                 {isPending ? 'Enregistrement...' : 'Enregistrer les modifications'}
-              </GlassCapsuleBtn>
+              </Button>
             </div>
           </form>
         </div>

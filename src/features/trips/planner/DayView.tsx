@@ -4,7 +4,7 @@ import Icon from '@/components/ui/Icon';
 import React, { useState } from 'react';
 import { StepCard } from './StepCard';
 import { recalculateDayMetrics, type PlannerStep } from './plannerEngine';
-import { GlassCapsuleBtn, GlassSubCard } from '@/components/ui';
+import { Badge, Button, Card, EmptyState, IconButton } from '@/components/ui';
 import { formatCivilDayIndex } from '@/lib/dates/tripDates';
 import { ActivitySectionSkeleton } from '@/features/hub/components/live/ActivitySectionSkeleton';
 
@@ -62,98 +62,103 @@ export function DayView({
 
   const fullDate = formatFullDate(dayNumber);
 
+  const menuItems = [
+    {
+      label: 'Ajouter une étape',
+      icon: 'plus',
+      onSelect: () => onAddStep(dayNumber),
+    },
+    {
+      label: 'Insérer un jour après',
+      icon: 'calendar-plus',
+      onSelect: () => onInsertDayAfter(dayNumber),
+    },
+    {
+      label: 'Dupliquer la journée',
+      icon: 'copy',
+      onSelect: () => onDuplicateDay(dayNumber),
+    },
+    {
+      label: 'Supprimer la journée',
+      icon: 'trash2',
+      destructive: true,
+      onSelect: () => onDeleteDay(dayNumber),
+    },
+  ] as const;
+
   return (
-    <div className="space-y-4">
+    <div className="space-y-[var(--space-4)]">
       {/* En-tête de la journée */}
-      <div className="glass rounded-[var(--lkv-radius-card)] p-4 sm:p-6 border border-white/60 shadow-sm">
-        <div className="flex items-start justify-between gap-4">
+      <Card className="sm:p-[var(--space-6)]">
+        <div className="flex items-start justify-between gap-[var(--space-4)]">
           <div>
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[var(--lkv-text-primary)] glass-sub-card px-2.5 py-0.5 rounded-[var(--lkv-radius-full)] border border-white/60">
-                Jour {dayNumber}
-              </span>
+            <div className="flex items-center gap-[var(--space-2)]">
+              <Badge tone="stone">Jour {dayNumber}</Badge>
               {fullDate && (
-                <span className="text-xs font-medium text-[var(--lkv-text-secondary)] capitalize">
+                <span className="text-[length:var(--lkv-text-footnote)] font-medium capitalize text-[color:var(--lkv-text-secondary)]">
                   {fullDate}
                 </span>
               )}
             </div>
-            <h2 className="text-lg sm:text-xl font-bold text-[var(--lkv-text-primary)] mt-1.5 font-display">
+            <h2 className="mt-1.5 font-display text-[length:var(--lkv-text-title-sm)] font-bold text-[color:var(--lkv-text-primary)]">
               Itinéraire de la journée
             </h2>
           </div>
 
           {/* Actions de journée */}
           {canEdit && (
-            <div className="relative flex items-center gap-2">
-              <GlassCapsuleBtn
+            <div className="relative flex items-center gap-[var(--space-2)]">
+              <Button
+                variant="secondary"
                 size="sm"
                 onClick={() => onAddStep(dayNumber)}
-                icon={<Icon name="plus" className="w-3.5 h-3.5" />}
+                icon={<Icon name="plus" size={14} />}
                 className="hidden sm:inline-flex"
               >
-                <span>Ajouter étape</span>
-              </GlassCapsuleBtn>
+                Ajouter étape
+              </Button>
 
-              <button
+              <IconButton
                 type="button"
+                size="sm"
                 onClick={() => setShowMenu(!showMenu)}
                 aria-label="Options de la journée"
-                className="glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8 flex items-center justify-center transition-all cursor-pointer"
+                aria-expanded={showMenu}
               >
-                <Icon name="more-vertical" className="w-4 h-4" />
-              </button>
+                <Icon name="more-vertical" size={16} />
+              </IconButton>
 
               {/* Menu contextuel de la journée */}
               {showMenu && (
                 <>
-                  <div className="fixed inset-0 z-30" onClick={() => setShowMenu(false)} />
-                  <div className="absolute right-0 top-11 z-40 w-56 glass rounded-[var(--lkv-radius-md)] border border-white/80 shadow-xl py-1.5 text-xs text-[var(--lkv-text-primary)] animate-in fade-in zoom-in-95">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setShowMenu(false);
-                        onAddStep(dayNumber);
-                      }}
-                      className="glass-capsule-btn w-full flex items-center gap-2.5 !justify-start !px-3.5 !py-2 !rounded-xl text-left cursor-pointer"
-                    >
-                      <Icon name="plus" className="w-4 h-4" />
-                      <span>Ajouter une étape</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setShowMenu(false);
-                        onInsertDayAfter(dayNumber);
-                      }}
-                      className="glass-capsule-btn w-full flex items-center gap-2.5 !justify-start !px-3.5 !py-2 !rounded-xl text-left cursor-pointer"
-                    >
-                      <Icon name="calendar-plus" className="w-4 h-4" />
-                      <span>Insérer un jour après</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setShowMenu(false);
-                        onDuplicateDay(dayNumber);
-                      }}
-                      className="glass-capsule-btn w-full flex items-center gap-2.5 !justify-start !px-3.5 !py-2 !rounded-xl text-left cursor-pointer"
-                    >
-                      <Icon name="copy" className="w-4 h-4" />
-                      <span>Dupliquer la journée</span>
-                    </button>
-                    <div className="my-1 border-t border-white/40" />
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setShowMenu(false);
-                        onDeleteDay(dayNumber);
-                      }}
-                      className="glass-capsule-btn w-full flex items-center gap-2.5 !justify-start !px-3.5 !py-2 !rounded-xl text-left font-medium cursor-pointer"
-                    >
-                      <Icon name="trash2" className="w-4 h-4" />
-                      <span>Supprimer la journée</span>
-                    </button>
+                  <div
+                    className="fixed inset-0 z-[var(--z-sticky)]"
+                    onClick={() => setShowMenu(false)}
+                    aria-hidden="true"
+                  />
+                  <div
+                    className="absolute right-0 top-11 z-[var(--z-fab)] w-56 rounded-[var(--lkv-radius-md)] border border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-card)] py-1.5 text-[length:var(--lkv-text-footnote)] text-[color:var(--lkv-text-primary)] shadow-elevation-3 animate-in fade-in zoom-in-95"
+                    role="menu"
+                  >
+                    {menuItems.map((item) => (
+                      <Button
+                        key={item.label}
+                        type="button"
+                        variant="ghost"
+                        onClick={() => {
+                          setShowMenu(false);
+                          item.onSelect();
+                        }}
+                        icon={<Icon name={item.icon} size={16} />}
+                        className={`w-full justify-start gap-[var(--space-3)] whitespace-normal rounded-[var(--lkv-radius-sm)] px-[var(--space-3)] font-normal ${
+                          'destructive' in item && item.destructive
+                            ? 'text-[color:var(--lkv-danger)]'
+                            : ''
+                        }`}
+                      >
+                        {item.label}
+                      </Button>
+                    ))}
                   </div>
                 </>
               )}
@@ -162,94 +167,82 @@ export function DayView({
         </div>
 
         {/* Barre de métriques déterministes */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-5 pt-4 border-t border-white/40">
-          <div className="glass-sub-card rounded-[var(--lkv-radius-md)] p-3 flex items-center gap-3 border border-white/50 shadow-2xs">
-            <div className="w-9 h-9 rounded-full bg-[var(--lkv-primary)]/10 text-[var(--lkv-primary)] flex items-center justify-center shrink-0">
-              <Icon name="map-pin" className="w-4 h-4" />
+        <div className="mt-[var(--space-5)] grid grid-cols-2 gap-[var(--space-3)] border-t border-[color:var(--lkv-border-subtle)] pt-[var(--space-4)] sm:grid-cols-4">
+          <Card variant="compact" className="flex items-center gap-[var(--space-3)]">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[color:var(--lkv-primary)]/10 text-[color:var(--lkv-primary)]">
+              <Icon name="map-pin" size={16} />
             </div>
             <div>
-              <span className="text-[10px] font-mono uppercase tracking-[0.12em] text-[var(--lkv-text-secondary)] block">
+              <span className="block font-mono text-[10px] uppercase tracking-[0.12em] text-[color:var(--lkv-text-secondary)]">
                 Distance
               </span>
-              <span className="text-sm font-bold text-[var(--lkv-text-primary)]">
+              <span className="text-[length:var(--lkv-text-footnote)] font-bold text-[color:var(--lkv-text-primary)]">
                 {metrics.totalDistanceKm} km
               </span>
             </div>
-          </div>
+          </Card>
 
-          <div className="glass-sub-card rounded-[var(--lkv-radius-md)] p-3 flex items-center gap-3 border border-white/50 shadow-2xs">
-            <div className="w-9 h-9 rounded-full bg-[var(--lkv-primary)]/10 text-[var(--lkv-primary)] flex items-center justify-center shrink-0">
-              <Icon name="trending-up" className="w-4 h-4" />
+          <Card variant="compact" className="flex items-center gap-[var(--space-3)]">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[color:var(--lkv-primary)]/10 text-[color:var(--lkv-primary)]">
+              <Icon name="trending-up" size={16} />
             </div>
             <div>
-              <span className="text-[10px] font-mono uppercase tracking-[0.12em] text-[var(--lkv-text-secondary)] block">
+              <span className="block font-mono text-[10px] uppercase tracking-[0.12em] text-[color:var(--lkv-text-secondary)]">
                 Dénivelé
               </span>
-              <span className="text-sm font-bold text-[var(--lkv-text-primary)]">
+              <span className="text-[length:var(--lkv-text-footnote)] font-bold text-[color:var(--lkv-text-primary)]">
                 +{metrics.totalElevationGainM}m
               </span>
             </div>
-          </div>
+          </Card>
 
-          <div className="glass-sub-card rounded-[var(--lkv-radius-md)] p-3 flex items-center gap-3 border border-white/50 shadow-2xs">
-            <div className="w-9 h-9 rounded-full bg-[var(--lkv-primary)]/10 text-[var(--lkv-primary)] flex items-center justify-center shrink-0">
-              <Icon name="clock" className="w-4 h-4" />
+          <Card variant="compact" className="flex items-center gap-[var(--space-3)]">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[color:var(--lkv-primary)]/10 text-[color:var(--lkv-primary)]">
+              <Icon name="clock" size={16} />
             </div>
             <div>
-              <span className="text-[10px] font-mono uppercase tracking-[0.12em] text-[var(--lkv-text-secondary)] block">
+              <span className="block font-mono text-[10px] uppercase tracking-[0.12em] text-[color:var(--lkv-text-secondary)]">
                 Durée est.
               </span>
-              <span className="text-sm font-bold text-[var(--lkv-text-primary)]">
+              <span className="text-[length:var(--lkv-text-footnote)] font-bold text-[color:var(--lkv-text-primary)]">
                 {formatDuration(metrics.estimatedDurationMinutes)}
               </span>
             </div>
-          </div>
+          </Card>
 
-          <div className="glass-sub-card rounded-[var(--lkv-radius-md)] p-3 flex items-center gap-3 border border-white/50 shadow-2xs">
-            <div className="w-9 h-9 rounded-full bg-[var(--lkv-primary)]/10 text-[var(--lkv-primary)] flex items-center justify-center shrink-0">
-              <Icon name="footprints" className="w-4 h-4" />
+          <Card variant="compact" className="flex items-center gap-[var(--space-3)]">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[color:var(--lkv-primary)]/10 text-[color:var(--lkv-primary)]">
+              <Icon name="footprints" size={16} />
             </div>
             <div>
-              <span className="text-[10px] font-mono uppercase tracking-[0.12em] text-[var(--lkv-text-secondary)] block">
+              <span className="block font-mono text-[10px] uppercase tracking-[0.12em] text-[color:var(--lkv-text-secondary)]">
                 Étapes
               </span>
-              <span className="text-sm font-bold text-[var(--lkv-text-primary)]">
+              <span className="text-[length:var(--lkv-text-footnote)] font-bold text-[color:var(--lkv-text-primary)]">
                 {metrics.stepsCount}
               </span>
             </div>
-          </div>
+          </Card>
         </div>
-      </div>
+      </Card>
 
       {/* Liste ordonnée des étapes */}
       {steps.length === 0 ? (
         enrichmentPending ? (
           <ActivitySectionSkeleton variant="timeline" />
         ) : (
-        <div className="text-center py-12 px-4 rounded-[var(--lkv-radius-card)] glass border border-dashed border-white/60 shadow-sm">
-          <div className="w-12 h-12 rounded-full glass-sub-card text-[var(--lkv-primary)] flex items-center justify-center mx-auto mb-3 shadow-2xs">
-            <Icon name="footprints" className="w-6 h-6" />
-          </div>
-          <h3 className="font-bold text-[var(--lkv-text-primary)] text-base font-display">
-            Aucune étape pour cette journée
-          </h3>
-          <p className="text-xs text-[var(--lkv-text-secondary)] max-w-sm mx-auto mt-1 mb-4 leading-relaxed">
-            Cette journée peut servir de temps libre, de repos ou d’acclimatation.
-          </p>
-          {canEdit && (
-            <GlassCapsuleBtn
-              variant="primary"
-              size="sm"
-              onClick={() => onAddStep(dayNumber)}
-              icon={<Icon name="plus" className="w-3.5 h-3.5" />}
-            >
-              <span>Ajouter la première étape</span>
-            </GlassCapsuleBtn>
-          )}
-        </div>
+          <Card className="border-dashed">
+            <EmptyState
+              icon={<Icon name="footprints" size={24} />}
+              title="Aucune étape pour cette journée"
+              description="Cette journée peut servir de temps libre, de repos ou d’acclimatation."
+              actionLabel={canEdit ? 'Ajouter la première étape' : undefined}
+              onAction={canEdit ? () => onAddStep(dayNumber) : undefined}
+            />
+          </Card>
         )
       ) : (
-        <div className="space-y-3">
+        <div className="space-y-[var(--space-3)]">
           {steps.map((step, idx) => (
             <StepCard
               key={step.id}
@@ -267,14 +260,16 @@ export function DayView({
 
           {/* Bouton mobile pour ajouter rapidement */}
           {canEdit && (
-            <GlassCapsuleBtn
+            <Button
               size="sm"
+              variant="secondary"
               onClick={() => onAddStep(dayNumber)}
-              icon={<Icon name="plus" className="w-3.5 h-3.5" />}
-              className="sm:hidden w-full !py-2.5"
+              icon={<Icon name="plus" size={14} />}
+              fullWidth
+              className="sm:hidden"
             >
-              <span>Ajouter une étape au Jour {dayNumber}</span>
-            </GlassCapsuleBtn>
+              Ajouter une étape au Jour {dayNumber}
+            </Button>
           )}
         </div>
       )}

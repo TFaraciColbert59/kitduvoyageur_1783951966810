@@ -8,6 +8,7 @@ import {
   checkSeasonality,
   getSeasonalityAdvice,
 } from '../engine/seasonality';
+import { Card, Chip, Tabs, type TabOption } from '@/components/ui';
 
 interface Step2DatesProps {
   countries: SelectedCountry[];
@@ -37,6 +38,9 @@ const MONTH_NAMES = [
   'Novembre',
   'Décembre',
 ];
+
+const DATE_FIELD_CLASS =
+  'min-h-[48px] w-full rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] text-[length:var(--lkv-text-body-sm)] text-[color:var(--lkv-text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]';
 
 export function Step2Dates({
   countries,
@@ -92,102 +96,76 @@ export function Step2Dates({
     return checkSeasonalityForDates(primaryCountry, startDate, endDate);
   }, [primaryCountry, startDate, endDate, countries]);
 
+  const dateModeOptions: readonly TabOption[] = [
+    { id: 'duration', label: 'Durée seule', icon: <Icon name="clock" size={14} /> },
+    { id: 'dates', label: 'Dates précises', icon: <Icon name="calendar" size={14} /> },
+  ];
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-[var(--space-6)]">
       <div>
-        <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-lkv-secondary mb-1">
+        <div className="mb-1 flex items-center gap-[var(--space-2)] text-[length:var(--lkv-text-footnote)] font-semibold uppercase tracking-wider text-[color:var(--lkv-secondary)]">
           <Icon name="calendar" size={14} />
           <span>Étape 2 sur 5</span>
         </div>
-        <h2 className="text-2xl sm:text-3xl font-bold text-lkv-primary">
+        <h2 className="text-[length:var(--lkv-text-title-sm)] font-bold text-[color:var(--lkv-text-primary)] sm:text-[length:var(--lkv-text-title-lg)]">
           Quand et combien de temps partez-vous ?
         </h2>
-        <p className="text-sm text-[var(--lkv-text-muted)] mt-1">
+        <p className="mt-1 text-[length:var(--lkv-text-footnote)] text-[color:var(--lkv-text-muted)]">
           Définissez vos dates précises ou indiquez simplement la durée souhaitée si vos billets ne
           sont pas encore pris.
         </p>
       </div>
 
-      {/* Onglets Dates précises vs Durée seule */}
-      <div className="glass-capsule-bar flex w-full max-w-sm" role="tablist" aria-label="Mode de sélection des dates">
-        <button
-          type="button"
-          role="tab"
-          aria-selected={datesChoice === 'duration'}
-          onClick={() => onDatesChoiceChange('duration')}
-          className={`glass-capsule-segment flex-1 !px-4 text-xs font-semibold ${datesChoice === 'duration' ? 'active' : ''}`}
-        >
-          <div className="flex items-center justify-center gap-1.5">
-            <Icon name="clock" size={14} />
-            <span>Durée seule</span>
-          </div>
-        </button>
-        <button
-          type="button"
-          role="tab"
-          aria-selected={datesChoice === 'dates'}
-          onClick={() => onDatesChoiceChange('dates')}
-          className={`glass-capsule-segment flex-1 !px-4 text-xs font-semibold ${datesChoice === 'dates' ? 'active' : ''}`}
-        >
-          <div className="flex items-center justify-center gap-1.5">
-            <Icon name="calendar" size={14} />
-            <span>Dates précises</span>
-          </div>
-        </button>
-      </div>
+      <Tabs
+        options={dateModeOptions}
+        value={datesChoice}
+        ariaLabel="Mode de sélection des dates"
+        className="max-w-sm"
+        onChange={(choice) => onDatesChoiceChange(choice as DatesChoice)}
+      />
 
       {/* Mode Dates précises */}
       {datesChoice === 'dates' && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-xs font-semibold text-lkv-primary mb-1">
-              Date de départ
-            </label>
+        <div className="grid grid-cols-1 gap-[var(--space-4)] sm:grid-cols-2">
+          <label className="flex flex-col gap-[var(--space-1)] text-[length:var(--lkv-text-footnote)] font-semibold text-[color:var(--lkv-text-primary)]">
+            <span>Date de départ</span>
             <input
               type="date"
               value={startDate}
               onChange={(e) => handleStartDate(e.target.value)}
-              className="w-full px-4 py-3 bg-white rounded-xl border border-black/10 text-sm focus:ring-2 focus:ring-lkv-primary focus:outline-none min-h-[48px]"
+              className={DATE_FIELD_CLASS}
             />
-          </div>
-          <div>
-            <label className="block text-xs font-semibold text-lkv-primary mb-1">
-              Date de retour
-            </label>
+          </label>
+          <label className="flex flex-col gap-[var(--space-1)] text-[length:var(--lkv-text-footnote)] font-semibold text-[color:var(--lkv-text-primary)]">
+            <span>Date de retour</span>
             <input
               type="date"
               value={endDate}
               min={startDate || undefined}
               onChange={(e) => handleEndDate(e.target.value)}
-              className="w-full px-4 py-3 bg-white rounded-xl border border-black/10 text-sm focus:ring-2 focus:ring-lkv-primary focus:outline-none min-h-[48px]"
+              className={DATE_FIELD_CLASS}
             />
-          </div>
+          </label>
         </div>
       )}
 
       {/* Sélecteur de durée (affiché ou ajusté dans les deux modes) */}
-      <div className="glass-sub-card p-4 sm:p-5 rounded-2xl space-y-4">
+      <Card className="space-y-[var(--space-4)]">
         <div className="flex items-center justify-between">
-          <span className="text-xs font-semibold text-lkv-primary uppercase tracking-wider">
+          <span className="text-[length:var(--lkv-text-footnote)] font-semibold uppercase tracking-wider text-[color:var(--lkv-text-primary)]">
             Durée de l&apos;expédition
           </span>
-          <span className="text-lg font-bold text-lkv-primary">
+          <span className="text-[length:var(--lkv-text-subheadline)] font-bold text-[color:var(--lkv-text-primary)]">
             {durationDays} {durationDays > 1 ? 'jours' : 'jour'}
           </span>
         </div>
 
-        <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+        <div className="grid grid-cols-3 gap-[var(--space-2)] sm:grid-cols-6">
           {QUICK_DURATIONS.map((d) => (
-            <button
-              key={d}
-              type="button"
-              onClick={() => onDurationChange(d)}
-              className={`glass-capsule-btn !py-2 !px-3 text-xs font-semibold transition-all ${
-                durationDays === d ? 'primary' : ''
-              }`}
-            >
+            <Chip key={d} selected={durationDays === d} onClick={() => onDurationChange(d)}>
               {d} jours
-            </button>
+            </Chip>
           ))}
         </div>
 
@@ -196,58 +174,58 @@ export function Step2Dates({
           min={1}
           max={30}
           value={durationDays}
+          aria-label="Durée de l'expédition en jours"
           onChange={(e) => onDurationChange(parseInt(e.target.value, 10))}
-          className="w-full accent-var(--lkv-primary) cursor-pointer"
+          className="w-full cursor-pointer accent-[color:var(--lkv-primary)]"
         />
-        <div className="flex justify-between text-[11px] text-[var(--lkv-text-muted)] font-medium">
+        <div className="flex justify-between text-[11px] font-medium text-[color:var(--lkv-text-muted)]">
           <span>1 jour (Micro-aventure)</span>
           <span>15 jours</span>
           <span>30 jours (Grande traversée)</span>
         </div>
-      </div>
+      </Card>
 
       {/* Avertissement de Saisonnalité / Météo en Temps Réel */}
       {seasonalityWarnings.length > 0 ? (
-        <div className="space-y-2">
+        <div className="space-y-[var(--space-2)]">
           {seasonalityWarnings.map((w, i) => (
-            <div
+            <Card
               key={i}
-              className={`p-4 rounded-2xl border flex items-start gap-3 ${
-                w.severity === 'alert'
-                  ? 'bg-rose-50/90 border-rose-200 text-rose-900'
-                  : 'bg-[var(--lkv-warning-bg)] border-[var(--lkv-warning-subtle)] text-[var(--lkv-warning-dark)]'
-              }`}
+              tone={w.severity === 'alert' ? 'danger' : 'warn'}
+              className="flex items-start gap-[var(--space-3)]"
             >
               <Icon
                 name="alert-triangle"
                 size={18}
                 className={
-                  w.severity === 'alert' ? 'text-rose-600' : 'text-[var(--lkv-warning-dark)]'
+                  w.severity === 'alert'
+                    ? 'text-[color:var(--lkv-danger)]'
+                    : 'text-[color:var(--lkv-warning-dark)]'
                 }
               />
-              <div className="text-xs leading-relaxed">
-                <span className="font-semibold block mb-0.5">
+              <div className="text-[length:var(--lkv-text-footnote)] leading-relaxed">
+                <span className="mb-0.5 block font-semibold">
                   {w.severity === 'alert' ? 'Attention saisonnière' : 'Conseil météo & période'}
                 </span>
                 {w.message}
               </div>
-            </div>
+            </Card>
           ))}
         </div>
       ) : (
-        <div className="p-3.5 bg-[var(--lkv-success-bg)] border border-[var(--lkv-success-bg)] rounded-2xl flex items-center gap-3 text-[var(--lkv-primary)]">
+        <Card tone="sage" className="flex items-center gap-[var(--space-3)]">
           <Icon
             name="check-circle2"
             size={16}
-            className="text-[var(--lkv-secondary-hover)] shrink-0"
+            className="shrink-0 text-[color:var(--lkv-secondary-hover)]"
           />
-          <div className="text-xs">
+          <div className="text-[length:var(--lkv-text-footnote)] text-[color:var(--lkv-text-primary)]">
             <span className="font-semibold">
               Période favorable pour {countries[0]?.name || 'cette destination'} :
             </span>{' '}
             les conditions de praticabilité et de météo sont adaptées aux sentiers.
           </div>
-        </div>
+        </Card>
       )}
     </div>
   );

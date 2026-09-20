@@ -2,6 +2,7 @@
 
 import Icon from '@/components/ui/Icon';
 import type { TripExpense } from '../../types/trip.types';
+import { Button, Card, IconButton } from '@/components/ui';
 
 export interface ExpenseRowProps {
   expense: TripExpense;
@@ -26,59 +27,71 @@ export function ExpenseRow({
 }: ExpenseRowProps) {
   const isPlanned = expense.is_planned;
   return (
-    <div
-      className={`glass-sub-card p-2.5 rounded-[var(--lkv-radius-md)] border flex items-center justify-between gap-2 shadow-2xs ${
-        isPlanned ? 'border-dashed border-[var(--lkv-secondary)]/40' : 'border-white/60'
+    <Card
+      variant="compact"
+      className={`flex items-center justify-between gap-[var(--space-2)] ${
+        isPlanned ? 'border-dashed border-[color:var(--lkv-secondary)]/40' : ''
       }`}
     >
       <div className="min-w-0">
-        <div className="text-sm font-bold text-lkv-primary truncate">{expense.title}</div>
-        <div className="text-[10px] text-lkv-secondary truncate">
+        <div className="truncate text-[length:var(--lkv-text-footnote)] font-bold text-[color:var(--lkv-text-primary)]">
+          {expense.title}
+        </div>
+        <div className="truncate text-[10px] text-[color:var(--lkv-text-secondary)]">
           <span className="capitalize">{expense.category || 'divers'}</span>
           {isMulti && expense.payer?.full_name && <> · {expense.payer.full_name}</>}
           {isPlanned && expense.split_type !== 'individual' && ' · partagé'}
         </div>
       </div>
 
-      <div className="flex items-center gap-1.5 shrink-0">
+      <div className="flex shrink-0 items-center gap-[var(--space-2)]">
         <div
-          className={`text-sm font-extrabold ${isPlanned ? 'text-lkv-secondary' : 'text-lkv-primary'}`}
+          className={`text-[length:var(--lkv-text-footnote)] font-extrabold ${
+            isPlanned
+              ? 'text-[color:var(--lkv-text-secondary)]'
+              : 'text-[color:var(--lkv-text-primary)]'
+          }`}
         >
           {expense.amount} {currency}
         </div>
         {canManage && onSettle && (
-          <button
+          <Button
+            type="button"
+            size="sm"
             onClick={onSettle}
             disabled={isPending}
-            className="glass-capsule-btn primary !min-h-[44px] !py-1 !px-2.5 flex items-center justify-center gap-1 text-[11px] font-bold disabled:opacity-60 transition-all"
             title="Régler cette dépense prévue"
+            icon={<Icon name="check-circle" size={14} />}
           >
-            <Icon name="check-circle" size={14} />
             <span className="sr-only sm:inline">Régler</span>
-          </button>
+          </Button>
         )}
         {canManage && (
           <>
-            <button
+            <IconButton
+              type="button"
+              size="sm"
               onClick={onEdit}
               disabled={isPending}
-              className="glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8 flex items-center justify-center disabled:opacity-60 transition-all"
+              aria-label="Modifier la dépense"
               title="Modifier la dépense"
             >
               <Icon name="pencil" size={14} />
-            </button>
-            <button
+            </IconButton>
+            <IconButton
+              type="button"
+              size="sm"
               onClick={onDelete}
               disabled={isPending}
-              className="glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8 flex items-center justify-center disabled:opacity-60 transition-all"
+              aria-label="Supprimer la dépense"
               title="Supprimer la dépense"
             >
               <Icon name="trash2" size={14} />
-            </button>
+            </IconButton>
           </>
         )}
       </div>
-    </div>
+    </Card>
   );
 }
 

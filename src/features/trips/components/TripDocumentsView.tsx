@@ -3,8 +3,7 @@
 import Icon from '@/components/ui/Icon';
 import React, { useState, useTransition } from 'react';
 import { Sheet } from '@/components/ui/Sheet';
-import { GlassCapsuleBtn } from '@/components/ui/GlassCapsuleBtn';
-import { EmptyState } from '@/components/ui/EmptyState';
+import { Badge, Button, Card, EmptyState, IconButton, type BadgeTone } from '@/components/ui';
 import { checkDocumentExpiry } from '../engine/exportEngine';
 import { ConfirmDialog } from './ConfirmDialog';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
@@ -14,6 +13,12 @@ import type { TripFull, TripDocumentCategory, TripDocument } from '../types/trip
 interface TripDocumentsViewProps {
   trip: TripFull;
 }
+
+const FIELD_CLASS =
+  'min-h-[var(--control-height-md)] w-full rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] text-[length:var(--lkv-text-body-sm)] text-[var(--lkv-text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]';
+
+const LABEL_CLASS =
+  'mb-1 block text-[length:var(--lkv-text-footnote)] font-semibold text-[color:var(--lkv-text-primary)]';
 
 const CATEGORY_LABELS: Record<TripDocumentCategory, string> = {
   passport: "Passeport & Pièce d'identité",
@@ -124,30 +129,33 @@ export function TripDocumentsView({ trip }: TripDocumentsViewProps) {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-[var(--space-6)]">
       <div className="flex items-center justify-end">
         {canEdit && (
-          <GlassCapsuleBtn
-            variant="primary"
+          <Button
             size="sm"
             onClick={() => setIsAddOpen(true)}
             icon={<Icon name="plus" size={16} />}
           >
             Attacher un document
-          </GlassCapsuleBtn>
+          </Button>
         )}
       </div>
 
       {errorMsg && (
-        <div className="p-3 rounded-xl glass tone-danger text-[var(--lkv-danger)] text-xs">
+        <Card
+          role="alert"
+          tone="danger"
+          className="text-[length:var(--lkv-text-footnote)] text-[color:var(--lkv-danger-dark)]"
+        >
           {errorMsg}
-        </div>
+        </Card>
       )}
-      <p className="flex items-center gap-2 text-[11px] text-[var(--lkv-text-muted)] px-1">
+      <p className="flex items-center gap-[var(--space-2)] px-1 text-[11px] text-[color:var(--lkv-text-muted)]">
         <Icon
           name="shield-check"
           size={14}
-          className="text-lkv-secondary shrink-0"
+          className="shrink-0 text-[color:var(--lkv-secondary)]"
           aria-hidden="true"
         />
         <span>Chiffrés, jamais exposés aux visiteurs anonymes.</span>
@@ -156,7 +164,7 @@ export function TripDocumentsView({ trip }: TripDocumentsViewProps) {
       {/* Bloc « Documents nécessaires » : sous-ensemble requis, importance-first */}
       {trip.documents.length === 0 ? (
         <EmptyState
-          icon={<Icon name="file-check" size={32} className="text-lkv-secondary" />}
+          icon={<Icon name="file-check" size={32} className="text-[color:var(--lkv-secondary)]" />}
           title="Aucun document attaché"
           description="Attachez vos billets d'avion, réservations de refuges, assurances et passeports pour les garder accessibles partout."
           actionLabel={canEdit ? 'Attacher un document' : undefined}
@@ -165,26 +173,20 @@ export function TripDocumentsView({ trip }: TripDocumentsViewProps) {
       ) : (
         <>
           {topRequired.length > 0 && (
-            <section
-              id="documents-necessaires"
-              aria-label="Documents nécessaires"
-              className="glass rounded-[var(--lkv-radius-card)] p-5 space-y-3"
-            >
-              <div className="flex items-center justify-between gap-2 flex-wrap">
-                <h3 className="font-display text-xs font-bold text-lkv-primary flex items-center gap-1.5">
+            <Card as="section" id="documents-necessaires" aria-label="Documents nécessaires" className="space-y-[var(--space-3)]">
+              <div className="flex flex-wrap items-center justify-between gap-[var(--space-2)]">
+                <h3 className="flex items-center gap-[var(--space-2)] font-display text-[length:var(--lkv-text-footnote)] font-bold text-[color:var(--lkv-text-primary)]">
                   <Icon
                     name="shield-check"
                     size={14}
-                    className="text-lkv-secondary shrink-0"
+                    className="shrink-0 text-[color:var(--lkv-secondary)]"
                     aria-hidden="true"
                   />
                   Documents nécessaires
                 </h3>
-                <span className="glass-pill text-[10px] font-semibold text-[var(--lkv-text-secondary)]">
-                  {requiredDocs.length} requis pour ce voyage
-                </span>
+                <Badge tone="stone">{requiredDocs.length} requis pour ce voyage</Badge>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-[var(--space-4)] sm:grid-cols-2">
                 {topRequired.map((doc) => (
                   <DocCard
                     key={doc.id}
@@ -199,24 +201,24 @@ export function TripDocumentsView({ trip }: TripDocumentsViewProps) {
               {overflowRequiredCount > 0 && (
                 <a
                   href="#tous-les-documents"
-                  className="inline-flex items-center gap-1.5 min-h-[44px] px-3 -mx-1 text-xs font-semibold text-lkv-primary hover:bg-white/40 rounded-xl transition-colors"
+                  className="-mx-1 inline-flex min-h-[44px] items-center gap-[var(--space-2)] rounded-[var(--lkv-radius-sm)] px-[var(--space-3)] text-[length:var(--lkv-text-footnote)] font-semibold text-[color:var(--lkv-text-primary)] transition-colors hover:bg-[color:var(--lkv-hover-surface)]"
                 >
                   +{overflowRequiredCount} autres documents ↓
                 </a>
               )}
-            </section>
+            </Card>
           )}
 
           {/* Suite de la liste : requis restants + documents secondaires */}
           <section
             id="tous-les-documents"
             aria-label="Tous les documents"
-            className="space-y-3 scroll-mt-4"
+            className="space-y-[var(--space-3)] scroll-mt-4"
           >
-            <h3 className="font-display text-xs font-bold text-lkv-primary px-1">
+            <h3 className="px-1 font-display text-[length:var(--lkv-text-footnote)] font-bold text-[color:var(--lkv-text-primary)]">
               Tous les documents ({trip.documents.length})
             </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-[var(--space-4)] sm:grid-cols-2">
               {remainingDocs.map((doc) => (
                 <DocCard
                   key={doc.id}
@@ -239,35 +241,31 @@ export function TripDocumentsView({ trip }: TripDocumentsViewProps) {
       >
         <div className="pb-2">
           {errorMsg && (
-            <div className="p-3 rounded-xl glass tone-danger text-[var(--lkv-danger)] text-xs mb-4">
+            <Card
+              role="alert"
+              tone="danger"
+              className="mb-[var(--space-4)] text-[length:var(--lkv-text-footnote)] text-[color:var(--lkv-danger-dark)]"
+            >
               {errorMsg}
-            </div>
+            </Card>
           )}
 
-          <form onSubmit={handleAddSubmit} className="space-y-4">
-            <div>
-              <label className="block text-xs font-semibold text-lkv-primary mb-1">
-                Nom du document
-              </label>
+          <form onSubmit={handleAddSubmit} className="space-y-[var(--space-4)]">
+            <label className="block">
+              <span className={LABEL_CLASS}>Nom du document</span>
               <input
                 type="text"
                 name="title"
                 required
                 placeholder="ex: Passeport biométrique, Billet Vol AR Lima"
-                className="glass-input w-full px-3 py-2 text-sm text-[var(--lkv-text-primary)]"
+                className={FIELD_CLASS}
               />
-            </div>
+            </label>
 
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block text-xs font-semibold text-lkv-primary mb-1">
-                  Catégorie
-                </label>
-                <select
-                  name="category"
-                  defaultValue="passport"
-                  className="glass-input w-full px-3 py-2 text-sm text-[var(--lkv-text-primary)]"
-                >
+            <div className="grid grid-cols-2 gap-[var(--space-3)]">
+              <label className="block">
+                <span className={LABEL_CLASS}>Catégorie</span>
+                <select name="category" defaultValue="passport" className={FIELD_CLASS}>
                   <option value="passport">Passeport / ID</option>
                   <option value="insurance">Assurance</option>
                   <option value="booking">Réservation</option>
@@ -275,57 +273,47 @@ export function TripDocumentsView({ trip }: TripDocumentsViewProps) {
                   <option value="medical">Médical / Vaccin</option>
                   <option value="other">Autre</option>
                 </select>
-              </div>
+              </label>
 
-              <div>
-                <label className="block text-xs font-semibold text-lkv-primary mb-1">
-                  Date d&apos;expiration (optionnelle)
-                </label>
-                <input
-                  type="date"
-                  name="expiresAt"
-                  className="glass-input w-full px-3 py-2 text-sm text-[var(--lkv-text-primary)]"
-                />
-              </div>
+              <label className="block">
+                <span className={LABEL_CLASS}>Date d&apos;expiration (optionnelle)</span>
+                <input type="date" name="expiresAt" className={FIELD_CLASS} />
+              </label>
             </div>
 
-            <div>
-              <label className="block text-xs font-semibold text-lkv-primary mb-1">
-                Lien sécurisé (URL Cloud / Drive)
-              </label>
+            <label className="block">
+              <span className={LABEL_CLASS}>Lien sécurisé (URL Cloud / Drive)</span>
               <input
                 type="url"
                 name="fileUrl"
                 required
                 placeholder="https://..."
-                className="glass-input w-full px-3 py-2 text-sm text-[var(--lkv-text-primary)]"
+                className={FIELD_CLASS}
               />
-            </div>
+            </label>
 
-            <div>
-              <label className="block text-xs font-semibold text-lkv-primary mb-1">
-                Notes ou consignes particulières
-              </label>
+            <label className="block">
+              <span className={LABEL_CLASS}>Notes ou consignes particulières</span>
               <textarea
                 name="notes"
                 rows={2}
                 placeholder="ex: N° d'assuré 12345, contact d'urgence 24/7"
-                className="glass-input w-full px-3 py-2 text-sm text-[var(--lkv-text-primary)]"
+                className={FIELD_CLASS}
               />
-            </div>
+            </label>
 
-            <div className="flex items-center justify-end gap-3 pt-2">
-              <GlassCapsuleBtn
+            <div className="flex items-center justify-end gap-[var(--space-3)] pt-[var(--space-2)]">
+              <Button
                 type="button"
-                variant="default"
+                variant="secondary"
                 size="sm"
                 onClick={() => setIsAddOpen(false)}
               >
                 Annuler
-              </GlassCapsuleBtn>
-              <GlassCapsuleBtn type="submit" variant="primary" size="sm" disabled={isPending}>
+              </Button>
+              <Button type="submit" size="sm" loading={isPending}>
                 {isPending ? 'Enregistrement...' : 'Attacher le document'}
-              </GlassCapsuleBtn>
+              </Button>
             </div>
           </form>
         </div>
@@ -360,18 +348,22 @@ interface DocCardProps {
 
 function DocCard({ doc, required = false, canEdit, isPending, onDelete }: DocCardProps) {
   const expiryCheck = checkDocumentExpiry(doc);
+  const expiryTone: BadgeTone =
+    expiryCheck.status === 'expired' ? 'danger' : expiryCheck.status === 'warning' ? 'warn' : 'sage';
 
   return (
-    <div className="glass p-4 rounded-[var(--lkv-radius-lg)] border border-white/60 flex flex-col justify-between gap-4">
-      <div className="space-y-2">
-        <div className="flex items-start justify-between gap-2">
-          <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-lkv-primary/10 text-lkv-primary flex items-center justify-center shrink-0">
+    <Card as="article" className="flex flex-col justify-between gap-[var(--space-4)]">
+      <div className="space-y-[var(--space-2)]">
+        <div className="flex items-start justify-between gap-[var(--space-2)]">
+          <div className="flex items-center gap-[var(--space-3)]">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--lkv-radius-sm)] bg-[color:var(--lkv-primary)]/10 text-[color:var(--lkv-primary)]">
               <Icon name="file-text" size={18} />
             </div>
             <div>
-              <div className="text-sm font-bold text-lkv-primary leading-snug">{doc.title}</div>
-              <div className="text-[11px] text-lkv-secondary">
+              <div className="text-[length:var(--lkv-text-footnote)] font-bold leading-snug text-[color:var(--lkv-text-primary)]">
+                {doc.title}
+              </div>
+              <div className="text-[11px] text-[color:var(--lkv-text-secondary)]">
                 {CATEGORY_LABELS[doc.category] || doc.category}
               </div>
             </div>
@@ -379,60 +371,54 @@ function DocCard({ doc, required = false, canEdit, isPending, onDelete }: DocCar
 
           {/* Badge d'échéance (expiré / avertissement en premier) */}
           {expiryCheck.status !== 'none' && (
-            <span
-              className={`text-[10px] font-semibold px-2.5 py-1 rounded-full border flex items-center gap-1 shrink-0 ${
-                expiryCheck.status === 'expired'
-                  ? 'bg-[var(--lkv-danger)]/10 text-[var(--lkv-danger)] border-[var(--lkv-danger)]/20'
-                  : expiryCheck.status === 'warning'
-                    ? 'bg-[var(--lkv-warning)]/10 text-[var(--lkv-warning)] border-[var(--lkv-warning)]/20'
-                    : 'bg-[var(--lkv-success)]/10 text-[var(--lkv-success)] border-[var(--lkv-success)]/20'
-              }`}
-            >
+            <Badge tone={expiryTone} className="shrink-0">
               {expiryCheck.status === 'expired' && <Icon name="alert-triangle" size={10} />}
               {expiryCheck.status === 'warning' && <Icon name="clock" size={10} />}
               {expiryCheck.status === 'valid' && <Icon name="check-circle2" size={10} />}
               <span>{expiryCheck.label}</span>
-            </span>
+            </Badge>
           )}
         </div>
 
         {required && (
-          <span className="glass-pill text-[10px] font-bold text-lkv-primary inline-flex items-center gap-1">
+          <Badge tone="sage">
             <Icon name="shield-check" size={11} aria-hidden="true" />
             requis
-          </span>
+          </Badge>
         )}
 
         {doc.notes && (
-          <p className="text-xs text-[var(--lkv-text-muted)] glass-sub-card p-2 rounded-[var(--lkv-radius-md)] border border-white/60 shadow-2xs">
+          <Card variant="compact" className="text-[length:var(--lkv-text-footnote)] text-[color:var(--lkv-text-muted)]">
             {doc.notes}
-          </p>
+          </Card>
         )}
       </div>
 
       {/* Barre d'action document */}
-      <div className="flex items-center justify-between pt-3 border-t border-white/40 text-xs">
+      <div className="flex items-center justify-between border-t border-[color:var(--lkv-border-subtle)] pt-[var(--space-3)] text-[length:var(--lkv-text-footnote)]">
         <a
           href={doc.file_url}
           target="_blank"
           rel="noreferrer"
-          className="inline-flex items-center gap-1.5 font-semibold text-lkv-primary hover:text-lkv-secondary transition-colors py-1"
+          className="inline-flex items-center gap-[var(--space-2)] py-1 font-semibold text-[color:var(--lkv-text-primary)] transition-colors hover:text-[color:var(--lkv-secondary)]"
         >
           <span>Ouvrir le document</span>
           <Icon name="external-link" size={13} />
         </a>
 
         {canEdit && (
-          <button
+          <IconButton
+            type="button"
+            size="sm"
             onClick={() => onDelete(doc.id)}
             disabled={isPending}
-            className="glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8 flex items-center justify-center disabled:opacity-60 transition-all"
+            aria-label="Supprimer ce document"
             title="Supprimer ce document"
           >
             <Icon name="trash2" size={15} />
-          </button>
+          </IconButton>
         )}
       </div>
-    </div>
+    </Card>
   );
 }

@@ -3,6 +3,8 @@
 import React, { useState } from 'react';
 import { HumanParticipant } from '../types/participant.types';
 import { GlassBreakModal } from './GlassBreakModal';
+import { Badge, Button, Card, IconButton } from '@/components/ui';
+import Icon from '@/components/ui/Icon';
 
 interface HumanParticipantCardProps {
   participant: HumanParticipant;
@@ -23,12 +25,12 @@ export const HumanParticipantCard: React.FC<HumanParticipantCardProps> = ({
   const getRoleBadge = (role: HumanParticipant['publicData']['role']) => {
     switch (role) {
       case 'guide':
-        return { label: 'Guide', bg: 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-300' };
+        return { label: 'Guide', tone: 'sage' as const };
       case 'medic':
-        return { label: 'Secouriste', bg: 'bg-red-500/20 text-red-700 dark:text-red-300' };
+        return { label: 'Secouriste', tone: 'danger' as const };
       case 'member':
       default:
-        return { label: 'Équipier', bg: 'bg-blue-500/20 text-blue-700 dark:text-blue-300' };
+        return { label: 'Équipier', tone: 'info' as const };
     }
   };
 
@@ -36,57 +38,52 @@ export const HumanParticipantCard: React.FC<HumanParticipantCardProps> = ({
 
   return (
     <>
-      <div
-        data-visual-mask
-        className="p-4 rounded-3xl bg-white/70 dark:bg-white/5 backdrop-blur-xl border border-white/40 dark:border-white/10 shadow-sm hover:shadow-md transition-all flex flex-col justify-between gap-3"
-      >
-        {/* Top Info */}
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-[var(--lkv-forest-900)] text-white font-bold flex items-center justify-center text-sm shadow-sm">
+      <Card className="flex flex-col justify-between gap-[var(--space-3)]">
+        <div className="flex items-start justify-between gap-[var(--space-3)]">
+          <div className="flex items-center gap-[var(--space-3)]">
+            <div className="flex h-10 w-10 items-center justify-center rounded-[var(--lkv-radius-sm)] bg-[color:var(--lkv-action)] text-[length:var(--lkv-text-footnote)] font-bold text-[color:var(--lkv-on-action)]">
               {publicData.firstName[0]}
             </div>
             <div>
-              <div className="flex items-center gap-2">
-                <h4 className="text-sm font-bold text-[var(--lkv-forest-900)] dark:text-[var(--lkv-text-primary)]">
+              <div className="flex items-center gap-[var(--space-2)]">
+                <h4 className="text-[length:var(--lkv-text-footnote)] font-bold text-[color:var(--lkv-text-primary)]">
                   {publicData.firstName}
                 </h4>
-                <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${role.bg}`}>
-                  {role.label}
-                </span>
+                <Badge tone={role.tone}>{role.label}</Badge>
               </div>
-              <span className="text-[11px] text-[var(--lkv-text-muted)] font-mono">
+              <span className="font-mono text-[11px] text-[color:var(--lkv-text-muted)]">
                 🎒 Sac : {publicData.packWeightKg} kg · Forme : {publicData.fitnessScore}%
               </span>
             </div>
           </div>
 
           {onRemove && (
-            <button
-              onClick={() => onRemove(participant.id)}
-              className="text-black/30 dark:text-white/30 hover:text-red-500 p-1 text-xs"
+            <IconButton
+              aria-label="Supprimer le participant"
               title="Supprimer le participant"
+              size="sm"
+              onClick={() => onRemove(participant.id)}
             >
-              ✕
-            </button>
+              <Icon name="x" size={14} />
+            </IconButton>
           )}
         </div>
 
-        {/* Action Button */}
-        <div className="flex items-center justify-between pt-2 border-t border-black/5 dark:border-white/5">
-          <span className="text-[10px] font-mono text-[var(--lkv-text-muted)]">
+        <div className="flex items-center justify-between border-t border-[color:var(--lkv-border-subtle)] pt-[var(--space-2)]">
+          <span className="font-mono text-[10px] text-[color:var(--lkv-text-muted)]">
             Matrice Privée
           </span>
 
-          <button
+          <Button
+            size="sm"
+            variant="secondary"
+            icon={<Icon name="shield" size={14} />}
             onClick={() => setIsModalOpen(true)}
-            className="px-3 py-1.5 rounded-xl bg-black/5 dark:bg-white/10 hover:bg-black/10 text-xs font-semibold text-[var(--lkv-forest-900)] dark:text-[var(--lkv-text-primary)] transition-all flex items-center gap-1.5"
           >
-            <span>🛡️ Fiche Médicale / ICE</span>
-            <span aria-hidden="true">→</span>
-          </button>
+            Fiche Médicale / ICE →
+          </Button>
         </div>
-      </div>
+      </Card>
 
       <GlassBreakModal
         participant={participant}

@@ -2,10 +2,8 @@
 
 import Icon from '@/components/ui/Icon';
 import React, { useEffect, useMemo, useState, useTransition } from 'react';
-import { Card } from '@/components/ui';
-import { GlassCapsuleBtn } from '@/components/ui/GlassCapsuleBtn';
+import { Badge, Button, Card, EmptyState, IconButton, ListItem } from '@/components/ui';
 import { Sheet } from '@/components/ui/Sheet';
-import { EmptyState } from '@/components/ui/EmptyState';
 import { calculateBudgetSummary, buildBudgetDayPlan } from '../engine/budgetEngine';
 import {
   addExpenseAction,
@@ -193,512 +191,497 @@ export function TripBudgetView({ trip, initialDay }: TripBudgetViewProps) {
 
   return (
     <>
-      <div className="hidden lg:block space-y-6">
-      {errorMsg && (
-        <div className="p-3 rounded-xl glass tone-danger text-[var(--lkv-danger)] text-xs flex items-center justify-between gap-2">
-          <span>{errorMsg}</span>
-          <button
-            onClick={() => setErrorMsg(null)}
-            className="glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8 flex items-center justify-center"
-            aria-label="Fermer le message"
+      <div className="hidden space-y-[var(--space-6)] lg:block">
+        {errorMsg && (
+          <Card
+            role="alert"
+            tone="danger"
+            className="flex items-center justify-between gap-[var(--space-2)] text-[length:var(--lkv-text-footnote)] text-[color:var(--lkv-danger-dark)]"
           >
-            ×
-          </button>
-        </div>
-      )}
-
-      {/* Bandeau synthèse : prévu vs réel vs reste */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <Card
-          tone="neutral"
-          className="p-4 rounded-[var(--lkv-radius-lg)] border border-white/60 shadow-sm"
-        >
-          <div className="text-xs text-lkv-secondary font-semibold flex items-center gap-1.5">
-            <Icon name="calendar-days" size={13} /> Prévu (prévisionnel)
-          </div>
-          <div className="text-2xl font-extrabold text-lkv-primary mt-1">
-            {budgetSummary.plannedTotal} {budgetSummary.currency}
-          </div>
-          <div className="text-[11px] text-[var(--lkv-text-muted)] mt-1">
-            {pendingExpenses.length} dépense{pendingExpenses.length > 1 ? 's' : ''} à venir
-          </div>
-        </Card>
-
-        <Card
-          tone="neutral"
-          className="p-4 rounded-[var(--lkv-radius-lg)] border border-white/60 shadow-sm"
-        >
-          <div className="text-xs text-lkv-secondary font-semibold flex items-center gap-1.5">
-            <Icon name="banknote" size={13} /> Réel (dépensé)
-          </div>
-          <div className="text-2xl font-extrabold text-lkv-primary mt-1">
-            {budgetSummary.totalSpent} {budgetSummary.currency}
-          </div>
-          <div className="text-[11px] text-[var(--lkv-text-muted)] mt-1">
-            {realExpenses.length} dépense{realExpenses.length > 1 ? 's' : ''} réelle
-            {realExpenses.length > 1 ? 's' : ''}
-          </div>
-        </Card>
-
-        <Card
-          tone="neutral"
-          className="p-4 rounded-[var(--lkv-radius-lg)] border border-white/60 shadow-sm"
-        >
-          <div className="text-xs text-lkv-secondary font-semibold flex items-center gap-1.5">
-            {isMulti ? (
-              <Icon name="trending-up" size={13} />
-            ) : (
-              <Icon name="credit-card" size={13} />
-            )}{' '}
-            Restant à payer
-          </div>
-          <div className="text-2xl font-extrabold text-lkv-primary mt-1">
-            {isMulti
-              ? `${Math.round(outstandingDebts * 100) / 100} ${budgetSummary.currency}`
-              : `${budgetSummary.remainingBudget !== null ? budgetSummary.remainingBudget : budgetSummary.totalSpent} ${budgetSummary.currency}`}
-          </div>
-          <div className="text-[11px] mt-1">
-            {budgetSummary.estimatedBudget !== null ? (
-              <span
-                className={
-                  budgetSummary.isOverBudget
-                    ? 'text-[var(--lkv-danger)] font-semibold flex items-center gap-1'
-                    : 'text-[var(--lkv-success)]'
-                }
-              >
-                {budgetSummary.isOverBudget && <Icon name="alert-triangle" size={12} />}
-                {budgetSummary.isOverBudget
-                  ? `Dépassement de ${Math.abs(budgetSummary.remainingBudget ?? 0)} ${budgetSummary.currency}`
-                  : `Reste du budget : ${budgetSummary.remainingBudget} ${budgetSummary.currency}`}
-              </span>
-            ) : (
-              <span className="text-[var(--lkv-text-muted)]">Aucun budget estimé</span>
-            )}
-          </div>
-        </Card>
-      </div>
-
-      {/* Progression du budget estimé */}
-      {budgetSummary.estimatedBudget !== null && (
-        <Card
-          tone="neutral"
-          className="p-4 rounded-[var(--lkv-radius-lg)] border border-white/60 shadow-sm"
-        >
-          <div className="flex items-center justify-between text-xs mb-2">
-            <span className="font-semibold text-lkv-secondary">
-              Budget estimé : {budgetSummary.estimatedBudget} {budgetSummary.currency}
-            </span>
-            <span
-              className={`font-bold ${budgetSummary.isOverBudget ? 'text-[var(--lkv-danger)]' : 'text-lkv-primary'}`}
-            >
-              {budgetSummary.spentPercentage}%
-            </span>
-          </div>
-          <div className="w-full bg-white/30 h-2.5 rounded-full overflow-hidden">
-            <div
-              className={`h-full rounded-full transition-all duration-500 ${
-                budgetSummary.isOverBudget ? 'bg-[var(--lkv-danger)]' : 'bg-[var(--lkv-primary)]'
-              }`}
-              style={{ width: `${Math.min(budgetSummary.spentPercentage ?? 0, 100)}%` }}
-            />
-          </div>
-        </Card>
-      )}
-
-      {/* Timeline jour par jour : prévu → réel */}
-      <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <h4 className="text-base font-bold text-lkv-primary flex items-center gap-2">
-            <Icon name="calendar-check" size={18} className="text-lkv-secondary" />
-            Jour par jour — prévu vs réel
-          </h4>
-          {canManage && (
-            <GlassCapsuleBtn
-              variant="primary"
+            <span>{errorMsg}</span>
+            <IconButton
               size="sm"
-              onClick={() => {
-                setEditTarget(null);
-                setIsAddOpen(true);
-              }}
-              icon={<Icon name="plus" size={16} />}
+              onClick={() => setErrorMsg(null)}
+              aria-label="Fermer le message"
             >
-              Enregistrer une dépense
-            </GlassCapsuleBtn>
-          )}
-        </div>
-
-        {dayPlan.length === 0 ? (
-          <EmptyState
-            icon={<Icon name="credit-card" size={32} className="text-lkv-secondary" />}
-            title="Aucune dépense"
-            description="Ajoutez des dépenses prévues à venir, ou enregistrez les dépenses réelles au fil du voyage."
-            actionLabel={canManage ? 'Enregistrer une dépense' : undefined}
-            onAction={
-              canManage
-                ? () => {
-                    setEditTarget(null);
-                    setIsAddOpen(true);
-                  }
-                : undefined
-            }
-          />
-        ) : (
-          dayPlan.map((row) => {
-            const isToday = row.isToday;
-            return (
-              <Card
-                key={row.date ?? `day-${row.dayNumber}`}
-                tone={isToday ? 'info' : 'neutral'}
-                className={`p-4 rounded-[var(--lkv-radius-lg)] border shadow-xs ${
-                  isToday
-                    ? 'border-[var(--lkv-primary)]/40 ring-1 ring-[var(--lkv-primary)]/20'
-                    : 'border-white/60'
-                }`}
-              >
-                {/* En-tête du jour */}
-                <div className="flex items-center justify-between gap-2 pb-2 border-b border-white/40">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <span
-                      className={`text-xs font-extrabold px-2 py-0.5 rounded-full ${
-                        isToday
-                          ? 'bg-[var(--lkv-primary)] text-white'
-                          : 'glass-pill text-lkv-secondary'
-                      }`}
-                    >
-                      J{row.dayNumber}
-                    </span>
-                    <span className="text-sm font-bold text-lkv-primary truncate">
-                      {formatDayLabel(row.date)}
-                    </span>
-                    {isToday && (
-                      <span className="text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full bg-[var(--lkv-primary)]/15 text-[var(--lkv-primary)] border border-[var(--lkv-primary)]/30">
-                        Aujourd&apos;hui
-                      </span>
-                    )}
-                  </div>
-                  <div className="text-[11px] text-lkv-secondary shrink-0 font-semibold">
-                    {row.plannedTotal > 0 && (
-                      <span className="mr-2">
-                        Prévu : {row.plannedTotal} {budgetSummary.currency}
-                      </span>
-                    )}
-                    <span
-                      className={
-                        row.realTotal > row.plannedTotal
-                          ? 'text-[var(--lkv-danger)]'
-                          : 'text-lkv-primary'
-                      }
-                    >
-                      Réel : {row.realTotal} {budgetSummary.currency}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Contenu prévu / réel */}
-                {isToday ? (
-                  /* Le jour venu : prévu ET réel côte à côte */
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-3">
-                    <div className="space-y-2">
-                      <div className="text-[10px] font-bold uppercase tracking-wide text-lkv-secondary">
-                        Prévu
-                      </div>
-                      {row.planned.length === 0 ? (
-                        <div className="text-[11px] text-[var(--lkv-text-muted)] italic py-1">
-                          Rien de prévu
-                        </div>
-                      ) : (
-                        row.planned.map((exp) => (
-                          <ExpenseRow
-                            key={exp.id}
-                            expense={exp}
-                            currency={budgetSummary.currency}
-                            isMulti={isMulti}
-                            canManage={canManage}
-                            isPending={isPending}
-                            onEdit={() => setEditTarget(exp)}
-                            onDelete={() =>
-                              setConfirmState({ expenseId: exp.id, title: exp.title })
-                            }
-                            onSettle={() => {
-                              if (isMulti) setSettleTarget(exp);
-                              else handleSettle(exp);
-                            }}
-                          />
-                        ))
-                      )}
-                    </div>
-                    <div className="space-y-2">
-                      <div className="text-[10px] font-bold uppercase tracking-wide text-lkv-secondary">
-                        Réel
-                      </div>
-                      {row.real.length === 0 ? (
-                        <div className="text-[11px] text-[var(--lkv-text-muted)] italic py-1">
-                          Rien encore dépensé
-                        </div>
-                      ) : (
-                        row.real.map((exp) => (
-                          <ExpenseRow
-                            key={exp.id}
-                            expense={exp}
-                            currency={budgetSummary.currency}
-                            isMulti={isMulti}
-                            canManage={canManage}
-                            isPending={isPending}
-                            onEdit={() => setEditTarget(exp)}
-                            onDelete={() =>
-                              setConfirmState({ expenseId: exp.id, title: exp.title })
-                            }
-                          />
-                        ))
-                      )}
-                      {canManage && (
-                        <button
-                          onClick={() => {
-                            setEditTarget(null);
-                            setIsAddOpen(true);
-                          }}
-                          className="glass-capsule-btn w-full flex items-center justify-center gap-2 text-xs font-semibold transition-all"
-                        >
-                          <Icon name="plus" size={14} /> Enregistrer une dépense du jour
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                ) : (
-                  <div className="space-y-2 pt-3">
-                    {row.planned.map((exp) => (
-                      <ExpenseRow
-                        key={exp.id}
-                        expense={exp}
-                        currency={budgetSummary.currency}
-                        isMulti={isMulti}
-                        canManage={canManage}
-                        isPending={isPending}
-                        onEdit={() => setEditTarget(exp)}
-                        onDelete={() => setConfirmState({ expenseId: exp.id, title: exp.title })}
-                        onSettle={canManage ? () => handleSettle(exp) : undefined}
-                      />
-                    ))}
-                    {row.real.map((exp) => (
-                      <ExpenseRow
-                        key={exp.id}
-                        expense={exp}
-                        currency={budgetSummary.currency}
-                        isMulti={isMulti}
-                        canManage={canManage}
-                        isPending={isPending}
-                        onEdit={() => setEditTarget(exp)}
-                        onDelete={() => setConfirmState({ expenseId: exp.id, title: exp.title })}
-                      />
-                    ))}
-                    {row.planned.length === 0 && row.real.length === 0 && (
-                      <div className="text-[11px] text-[var(--lkv-text-muted)] italic py-1">
-                        Aucune dépense ce jour
-                      </div>
-                    )}
-                  </div>
-                )}
-              </Card>
-            );
-          })
+              <Icon name="x" size={16} />
+            </IconButton>
+          </Card>
         )}
-      </div>
 
-      {/* Règlements de compte simplifiés & Balances (multi uniquement) */}
-      {isMulti && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <Card
-            tone="neutral"
-            className="p-5 rounded-[var(--lkv-radius-lg)] border border-white/60 shadow-sm space-y-3"
-          >
-            <div className="flex items-center justify-between border-b border-white/40 pb-2">
-              <h4 className="text-sm font-bold text-lkv-primary flex items-center gap-2">
-                <Icon name="trending-up" size={16} className="text-lkv-secondary" />
-                <span>Règlements de compte optimaux</span>
-              </h4>
-              <span className="text-[11px] text-lkv-secondary">Algorithme de split</span>
+        {/* Bandeau synthèse : prévu vs réel vs reste */}
+        <div className="grid grid-cols-1 gap-[var(--space-4)] sm:grid-cols-3">
+          <Card variant="compact" className="p-[var(--space-4)]">
+            <div className="flex items-center gap-[var(--space-2)] text-[length:var(--lkv-text-footnote)] font-semibold text-[color:var(--lkv-text-secondary)]">
+              <Icon name="calendar-days" size={13} /> Prévu (prévisionnel)
             </div>
-
-            {budgetSummary.settlements.length === 0 ? (
-              <div className="p-4 rounded-xl glass tone-sage text-[var(--lkv-success)] text-xs flex items-center gap-2">
-                <Icon name="check-circle" size={16} className="shrink-0" />
-                <span>Tous les comptes sont équilibrés. Aucun remboursement en attente.</span>
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {budgetSummary.settlements.map((s, idx) => (
-                  <div
-                    key={idx}
-                    className="glass-sub-card p-3 rounded-[var(--lkv-radius-md)] border border-white/60 flex items-center justify-between text-xs gap-2 shadow-2xs"
-                  >
-                    <div className="flex items-center gap-2 truncate">
-                      <span className="font-semibold text-[var(--lkv-text-primary)]">
-                        {s.fromName}
-                      </span>
-                      <Icon name="arrow-right" size={14} className="text-lkv-secondary shrink-0" />
-                      <span className="font-semibold text-lkv-primary">{s.toName}</span>
-                    </div>
-                    <div className="text-sm font-extrabold text-lkv-primary shrink-0">
-                      {s.amount} {budgetSummary.currency}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
+            <div className="mt-1 text-[length:var(--lkv-text-title-sm)] font-extrabold text-[color:var(--lkv-text-primary)]">
+              {budgetSummary.plannedTotal} {budgetSummary.currency}
+            </div>
+            <div className="mt-1 text-[11px] text-[color:var(--lkv-text-muted)]">
+              {pendingExpenses.length} dépense{pendingExpenses.length > 1 ? 's' : ''} à venir
+            </div>
           </Card>
 
-          <Card
-            tone="neutral"
-            className="p-5 rounded-[var(--lkv-radius-lg)] border border-white/60 shadow-sm space-y-3"
-          >
-            <div className="flex items-center justify-between border-b border-white/40 pb-2">
-              <h4 className="text-sm font-bold text-lkv-primary">Solde net par participant</h4>
-              <span className="text-[11px] text-lkv-secondary">
-                {budgetSummary.balances.length} membre{budgetSummary.balances.length > 1 ? 's' : ''}
+          <Card variant="compact" className="p-[var(--space-4)]">
+            <div className="flex items-center gap-[var(--space-2)] text-[length:var(--lkv-text-footnote)] font-semibold text-[color:var(--lkv-text-secondary)]">
+              <Icon name="banknote" size={13} /> Réel (dépensé)
+            </div>
+            <div className="mt-1 text-[length:var(--lkv-text-title-sm)] font-extrabold text-[color:var(--lkv-text-primary)]">
+              {budgetSummary.totalSpent} {budgetSummary.currency}
+            </div>
+            <div className="mt-1 text-[11px] text-[color:var(--lkv-text-muted)]">
+              {realExpenses.length} dépense{realExpenses.length > 1 ? 's' : ''} réelle
+              {realExpenses.length > 1 ? 's' : ''}
+            </div>
+          </Card>
+
+          <Card variant="compact" className="p-[var(--space-4)]">
+            <div className="flex items-center gap-[var(--space-2)] text-[length:var(--lkv-text-footnote)] font-semibold text-[color:var(--lkv-text-secondary)]">
+              {isMulti ? (
+                <Icon name="trending-up" size={13} />
+              ) : (
+                <Icon name="credit-card" size={13} />
+              )}{' '}
+              Restant à payer
+            </div>
+            <div className="mt-1 text-[length:var(--lkv-text-title-sm)] font-extrabold text-[color:var(--lkv-text-primary)]">
+              {isMulti
+                ? `${Math.round(outstandingDebts * 100) / 100} ${budgetSummary.currency}`
+                : `${budgetSummary.remainingBudget !== null ? budgetSummary.remainingBudget : budgetSummary.totalSpent} ${budgetSummary.currency}`}
+            </div>
+            <div className="mt-1 text-[11px]">
+              {budgetSummary.estimatedBudget !== null ? (
+                <span
+                  className={
+                    budgetSummary.isOverBudget
+                      ? 'flex items-center gap-[var(--space-1)] font-semibold text-[color:var(--lkv-danger)]'
+                      : 'text-[color:var(--lkv-success)]'
+                  }
+                >
+                  {budgetSummary.isOverBudget && <Icon name="alert-triangle" size={12} />}
+                  {budgetSummary.isOverBudget
+                    ? `Dépassement de ${Math.abs(budgetSummary.remainingBudget ?? 0)} ${budgetSummary.currency}`
+                    : `Reste du budget : ${budgetSummary.remainingBudget} ${budgetSummary.currency}`}
+                </span>
+              ) : (
+                <span className="text-[color:var(--lkv-text-muted)]">Aucun budget estimé</span>
+              )}
+            </div>
+          </Card>
+        </div>
+
+        {/* Progression du budget estimé */}
+        {budgetSummary.estimatedBudget !== null && (
+          <Card variant="compact" className="p-[var(--space-4)]">
+            <div className="mb-[var(--space-2)] flex items-center justify-between text-[length:var(--lkv-text-footnote)]">
+              <span className="font-semibold text-[color:var(--lkv-text-secondary)]">
+                Budget estimé : {budgetSummary.estimatedBudget} {budgetSummary.currency}
+              </span>
+              <span
+                className={`font-bold ${budgetSummary.isOverBudget ? 'text-[color:var(--lkv-danger)]' : 'text-[color:var(--lkv-text-primary)]'}`}
+              >
+                {budgetSummary.spentPercentage}%
               </span>
             </div>
-
-            <div className="space-y-2">
-              {budgetSummary.balances.map((b) => (
-                <div
-                  key={b.userId}
-                  className="glass-sub-card p-2.5 rounded-[var(--lkv-radius-md)] border border-white/60 flex items-center justify-between text-xs shadow-2xs"
-                >
-                  <div>
-                    <div className="font-semibold text-lkv-primary">{b.name}</div>
-                    <div className="text-[10px] text-[var(--lkv-text-muted)]">
-                      Payé : {b.paid} {budgetSummary.currency} · Part : {b.share}{' '}
-                      {budgetSummary.currency}
-                    </div>
-                  </div>
-                  <div
-                    className={`text-xs font-bold px-2.5 py-1 rounded-full border ${
-                      b.net > 0
-                        ? 'bg-[var(--lkv-primary)]/10 text-[var(--lkv-primary)] border-[var(--lkv-primary)]/20'
-                        : b.net < 0
-                          ? 'bg-[var(--lkv-danger)]/10 text-[var(--lkv-danger)] border-[var(--lkv-danger)]/20'
-                          : 'glass-pill'
-                    }`}
-                  >
-                    {b.net > 0 ? `+${b.net}` : b.net} {budgetSummary.currency}
-                  </div>
-                </div>
-              ))}
+            <div className="h-2.5 w-full overflow-hidden rounded-full bg-[color:var(--lkv-surface-muted)]">
+              <div
+                className={`h-full rounded-full transition-all duration-500 ${
+                  budgetSummary.isOverBudget
+                    ? 'bg-[color:var(--lkv-danger)]'
+                    : 'bg-[color:var(--lkv-primary)]'
+                }`}
+                style={{ width: `${Math.min(budgetSummary.spentPercentage ?? 0, 100)}%` }}
+              />
             </div>
           </Card>
-        </div>
-      )}
+        )}
 
-      {/* Ventilation par catégories (réel uniquement, via le moteur) */}
-      {Object.keys(budgetSummary.categories).length > 0 && (
-        <Card
-          tone="neutral"
-          className="p-5 rounded-[var(--lkv-radius-lg)] border border-white/60 shadow-sm space-y-3"
-        >
-          <h4 className="text-sm font-bold text-lkv-primary">Ventilation par catégorie</h4>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-            {Object.entries(budgetSummary.categories)
-              .sort((a, b) => b[1] - a[1])
-              .map(([cat, amt]) => {
-                const pct =
-                  budgetSummary.totalSpent > 0
-                    ? Math.round((amt / budgetSummary.totalSpent) * 100)
-                    : 0;
-                return (
-                  <div
-                    key={cat}
-                    className="glass-sub-card p-3 rounded-[var(--lkv-radius-md)] border border-white/60 space-y-1 shadow-2xs"
-                  >
-                    <div className="flex justify-between text-xs">
-                      <span className="capitalize font-semibold text-lkv-primary">{cat}</span>
-                      <span className="text-[var(--lkv-text-muted)]">{pct}%</span>
+        {/* Timeline jour par jour : prévu → réel */}
+        <div className="space-y-[var(--space-3)]">
+          <div className="flex items-center justify-between">
+            <h4 className="flex items-center gap-[var(--space-2)] text-[length:var(--lkv-text-subheadline)] font-bold text-[color:var(--lkv-text-primary)]">
+              <Icon name="calendar-check" size={18} className="text-[color:var(--lkv-secondary)]" />
+              Jour par jour — prévu vs réel
+            </h4>
+            {canManage && (
+              <Button
+                size="sm"
+                onClick={() => {
+                  setEditTarget(null);
+                  setIsAddOpen(true);
+                }}
+                icon={<Icon name="plus" size={16} />}
+              >
+                Enregistrer une dépense
+              </Button>
+            )}
+          </div>
+
+          {dayPlan.length === 0 ? (
+            <EmptyState
+              icon={<Icon name="credit-card" size={32} className="text-[color:var(--lkv-secondary)]" />}
+              title="Aucune dépense"
+              description="Ajoutez des dépenses prévues à venir, ou enregistrez les dépenses réelles au fil du voyage."
+              actionLabel={canManage ? 'Enregistrer une dépense' : undefined}
+              onAction={
+                canManage
+                  ? () => {
+                      setEditTarget(null);
+                      setIsAddOpen(true);
+                    }
+                  : undefined
+              }
+            />
+          ) : (
+            dayPlan.map((row) => {
+              const isToday = row.isToday;
+              return (
+                <Card key={row.date ?? `day-${row.dayNumber}`} tone={isToday ? 'info' : 'neutral'}>
+                  {/* En-tête du jour */}
+                  <div className="flex items-center justify-between gap-[var(--space-2)] border-b border-[color:var(--lkv-border-subtle)] pb-[var(--space-2)]">
+                    <div className="flex min-w-0 items-center gap-[var(--space-2)]">
+                      <Badge tone={isToday ? 'sage' : 'stone'}>J{row.dayNumber}</Badge>
+                      <span className="truncate text-[length:var(--lkv-text-footnote)] font-bold text-[color:var(--lkv-text-primary)]">
+                        {formatDayLabel(row.date)}
+                      </span>
+                      {isToday && (
+                        <Badge tone="info" className="uppercase tracking-wide">
+                          Aujourd&apos;hui
+                        </Badge>
+                      )}
                     </div>
-                    <div className="text-sm font-bold text-[var(--lkv-text-primary)]">
-                      {amt} {budgetSummary.currency}
-                    </div>
-                    <div className="w-full bg-white/30 h-1.5 rounded-full overflow-hidden">
-                      <div
-                        className="bg-[var(--lkv-secondary)] h-full rounded-full"
-                        style={{ width: `${pct}%` }}
-                      />
+                    <div className="shrink-0 font-semibold text-[11px] text-[color:var(--lkv-text-secondary)]">
+                      {row.plannedTotal > 0 && (
+                        <span className="mr-2">
+                          Prévu : {row.plannedTotal} {budgetSummary.currency}
+                        </span>
+                      )}
+                      <span
+                        className={
+                          row.realTotal > row.plannedTotal
+                            ? 'text-[color:var(--lkv-danger)]'
+                            : 'text-[color:var(--lkv-text-primary)]'
+                        }
+                      >
+                        Réel : {row.realTotal} {budgetSummary.currency}
+                      </span>
                     </div>
                   </div>
-                );
-              })}
-          </div>
-        </Card>
-      )}
 
-      {/* Modal de saisie / édition de dépense */}
-      <ExpenseFormSheet
-        key={editTarget?.id ?? 'new'}
-        open={isAddOpen || editTarget !== null}
-        trip={trip}
-        expense={editTarget}
-        isMulti={isMulti}
-        isPending={isPending}
-        onSubmit={handleSaveExpense}
-        onClose={() => {
-          setIsAddOpen(false);
-          setEditTarget(null);
-        }}
-      />
-
-      {/* Choix du payeur pour « Régler » une dépense prévue (multi) */}
-      <Sheet
-        open={settleTarget !== null}
-        onOpenChange={(open) => !open && setSettleTarget(null)}
-        title="Régler la dépense prévue"
-      >
-        <div className="pb-2 space-y-4">
-          {settleTarget && (
-            <>
-              <p className="text-xs text-[var(--lkv-text-muted)]">
-                « {settleTarget.title} » ({settleTarget.amount} {budgetSummary.currency}) passe en
-                dépense réelle. Qui a payé ?
-              </p>
-              <div className="space-y-2">
-                {(trip.collaborators || []).map((c) => (
-                  <button
-                    key={c.user_id}
-                    onClick={() => handleSettle(settleTarget, c.user_id)}
-                    disabled={isPending}
-                    className={`glass-capsule-btn w-full !justify-start !rounded-2xl !px-4 !py-2.5 text-sm font-semibold text-left transition-all ${
-                      c.user_id === trip.user_id ? 'primary' : ''
-                    }`}
-                  >
-                    {c.profile?.full_name || `Voyageur (${c.user_id.slice(0, 6)})`}
-                    {c.user_id === trip.user_id && (
-                      <span className="text-[10px] ml-2 text-[var(--lkv-text-muted)]">(moi)</span>
-                    )}
-                  </button>
-                ))}
-              </div>
-              <div className="flex justify-end pt-1">
-                <GlassCapsuleBtn variant="default" size="sm" onClick={() => setSettleTarget(null)}>
-                  Annuler
-                </GlassCapsuleBtn>
-              </div>
-            </>
+                  {/* Contenu prévu / réel */}
+                  {isToday ? (
+                    /* Le jour venu : prévu ET réel côte à côte */
+                    <div className="grid grid-cols-1 gap-[var(--space-3)] pt-[var(--space-3)] sm:grid-cols-2">
+                      <div className="space-y-[var(--space-2)]">
+                        <div className="text-[10px] font-bold uppercase tracking-wide text-[color:var(--lkv-text-secondary)]">
+                          Prévu
+                        </div>
+                        {row.planned.length === 0 ? (
+                          <div className="py-1 text-[11px] italic text-[color:var(--lkv-text-muted)]">
+                            Rien de prévu
+                          </div>
+                        ) : (
+                          row.planned.map((exp) => (
+                            <ExpenseRow
+                              key={exp.id}
+                              expense={exp}
+                              currency={budgetSummary.currency}
+                              isMulti={isMulti}
+                              canManage={canManage}
+                              isPending={isPending}
+                              onEdit={() => setEditTarget(exp)}
+                              onDelete={() =>
+                                setConfirmState({ expenseId: exp.id, title: exp.title })
+                              }
+                              onSettle={() => {
+                                if (isMulti) setSettleTarget(exp);
+                                else handleSettle(exp);
+                              }}
+                            />
+                          ))
+                        )}
+                      </div>
+                      <div className="space-y-[var(--space-2)]">
+                        <div className="text-[10px] font-bold uppercase tracking-wide text-[color:var(--lkv-text-secondary)]">
+                          Réel
+                        </div>
+                        {row.real.length === 0 ? (
+                          <div className="py-1 text-[11px] italic text-[color:var(--lkv-text-muted)]">
+                            Rien encore dépensé
+                          </div>
+                        ) : (
+                          row.real.map((exp) => (
+                            <ExpenseRow
+                              key={exp.id}
+                              expense={exp}
+                              currency={budgetSummary.currency}
+                              isMulti={isMulti}
+                              canManage={canManage}
+                              isPending={isPending}
+                              onEdit={() => setEditTarget(exp)}
+                              onDelete={() =>
+                                setConfirmState({ expenseId: exp.id, title: exp.title })
+                              }
+                            />
+                          ))
+                        )}
+                        {canManage && (
+                          <Button
+                            variant="secondary"
+                            fullWidth
+                            size="sm"
+                            icon={<Icon name="plus" size={14} />}
+                            onClick={() => {
+                              setEditTarget(null);
+                              setIsAddOpen(true);
+                            }}
+                          >
+                            Enregistrer une dépense du jour
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="space-y-[var(--space-2)] pt-[var(--space-3)]">
+                      {row.planned.map((exp) => (
+                        <ExpenseRow
+                          key={exp.id}
+                          expense={exp}
+                          currency={budgetSummary.currency}
+                          isMulti={isMulti}
+                          canManage={canManage}
+                          isPending={isPending}
+                          onEdit={() => setEditTarget(exp)}
+                          onDelete={() => setConfirmState({ expenseId: exp.id, title: exp.title })}
+                          onSettle={canManage ? () => handleSettle(exp) : undefined}
+                        />
+                      ))}
+                      {row.real.map((exp) => (
+                        <ExpenseRow
+                          key={exp.id}
+                          expense={exp}
+                          currency={budgetSummary.currency}
+                          isMulti={isMulti}
+                          canManage={canManage}
+                          isPending={isPending}
+                          onEdit={() => setEditTarget(exp)}
+                          onDelete={() => setConfirmState({ expenseId: exp.id, title: exp.title })}
+                        />
+                      ))}
+                      {row.planned.length === 0 && row.real.length === 0 && (
+                        <div className="py-1 text-[11px] italic text-[color:var(--lkv-text-muted)]">
+                          Aucune dépense ce jour
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </Card>
+              );
+            })
           )}
         </div>
-      </Sheet>
 
-      {/* Modale de confirmation de suppression */}
-      <ConfirmDialog
-        open={confirmState !== null}
-        title="Supprimer la dépense ?"
-        message={
-          confirmState
-            ? `La dépense « ${confirmState.title} » sera définitivement supprimée.`
-            : undefined
-        }
-        confirmLabel="Supprimer"
-        cancelLabel="Annuler"
-        danger
-        onConfirm={confirmDelete}
-        onCancel={() => setConfirmState(null)}
-      />
+        {/* Règlements de compte simplifiés & Balances (multi uniquement) */}
+        {isMulti && (
+          <div className="grid grid-cols-1 gap-[var(--space-6)] md:grid-cols-2">
+            <Card className="space-y-[var(--space-3)]">
+              <div className="flex items-center justify-between border-b border-[color:var(--lkv-border-subtle)] pb-[var(--space-2)]">
+                <h4 className="flex items-center gap-[var(--space-2)] text-[length:var(--lkv-text-footnote)] font-bold text-[color:var(--lkv-text-primary)]">
+                  <Icon name="trending-up" size={16} className="text-[color:var(--lkv-secondary)]" />
+                  <span>Règlements de compte optimaux</span>
+                </h4>
+                <span className="text-[11px] text-[color:var(--lkv-text-secondary)]">
+                  Algorithme de split
+                </span>
+              </div>
+
+              {budgetSummary.settlements.length === 0 ? (
+                <Card
+                  tone="sage"
+                  className="flex items-center gap-[var(--space-2)] p-[var(--space-4)] text-[length:var(--lkv-text-footnote)] text-[color:var(--lkv-text-primary)]"
+                >
+                  <Icon name="check-circle" size={16} className="shrink-0" />
+                  <span>Tous les comptes sont équilibrés. Aucun remboursement en attente.</span>
+                </Card>
+              ) : (
+                <div className="space-y-[var(--space-2)]">
+                  {budgetSummary.settlements.map((s, idx) => (
+                    <Card
+                      key={idx}
+                      variant="compact"
+                      className="flex items-center justify-between gap-[var(--space-2)] text-[length:var(--lkv-text-footnote)]"
+                    >
+                      <div className="flex items-center gap-[var(--space-2)] truncate">
+                        <span className="font-semibold text-[color:var(--lkv-text-primary)]">
+                          {s.fromName}
+                        </span>
+                        <Icon
+                          name="arrow-right"
+                          size={14}
+                          className="shrink-0 text-[color:var(--lkv-secondary)]"
+                        />
+                        <span className="font-semibold text-[color:var(--lkv-text-primary)]">
+                          {s.toName}
+                        </span>
+                      </div>
+                      <div className="shrink-0 text-[length:var(--lkv-text-footnote)] font-extrabold text-[color:var(--lkv-text-primary)]">
+                        {s.amount} {budgetSummary.currency}
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </Card>
+
+            <Card className="space-y-[var(--space-3)]">
+              <div className="flex items-center justify-between border-b border-[color:var(--lkv-border-subtle)] pb-[var(--space-2)]">
+                <h4 className="text-[length:var(--lkv-text-footnote)] font-bold text-[color:var(--lkv-text-primary)]">
+                  Solde net par participant
+                </h4>
+                <span className="text-[11px] text-[color:var(--lkv-text-secondary)]">
+                  {budgetSummary.balances.length} membre
+                  {budgetSummary.balances.length > 1 ? 's' : ''}
+                </span>
+              </div>
+
+              <div className="space-y-[var(--space-2)]">
+                {budgetSummary.balances.map((b) => (
+                  <Card
+                    key={b.userId}
+                    variant="compact"
+                    className="flex items-center justify-between text-[length:var(--lkv-text-footnote)]"
+                  >
+                    <div>
+                      <div className="font-semibold text-[color:var(--lkv-text-primary)]">
+                        {b.name}
+                      </div>
+                      <div className="text-[10px] text-[color:var(--lkv-text-muted)]">
+                        Payé : {b.paid} {budgetSummary.currency} · Part : {b.share}{' '}
+                        {budgetSummary.currency}
+                      </div>
+                    </div>
+                    <Badge tone={b.net > 0 ? 'sage' : b.net < 0 ? 'danger' : 'stone'}>
+                      {b.net > 0 ? `+${b.net}` : b.net} {budgetSummary.currency}
+                    </Badge>
+                  </Card>
+                ))}
+              </div>
+            </Card>
+          </div>
+        )}
+
+        {/* Ventilation par catégories (réel uniquement, via le moteur) */}
+        {Object.keys(budgetSummary.categories).length > 0 && (
+          <Card className="space-y-[var(--space-3)]">
+            <h4 className="text-[length:var(--lkv-text-footnote)] font-bold text-[color:var(--lkv-text-primary)]">
+              Ventilation par catégorie
+            </h4>
+            <div className="grid grid-cols-2 gap-[var(--space-3)] sm:grid-cols-3 md:grid-cols-4">
+              {Object.entries(budgetSummary.categories)
+                .sort((a, b) => b[1] - a[1])
+                .map(([cat, amt]) => {
+                  const pct =
+                    budgetSummary.totalSpent > 0
+                      ? Math.round((amt / budgetSummary.totalSpent) * 100)
+                      : 0;
+                  return (
+                    <Card key={cat} variant="compact" className="space-y-[var(--space-1)]">
+                      <div className="flex justify-between text-[length:var(--lkv-text-footnote)]">
+                        <span className="font-semibold capitalize text-[color:var(--lkv-text-primary)]">
+                          {cat}
+                        </span>
+                        <span className="text-[color:var(--lkv-text-muted)]">{pct}%</span>
+                      </div>
+                      <div className="text-[length:var(--lkv-text-footnote)] font-bold text-[color:var(--lkv-text-primary)]">
+                        {amt} {budgetSummary.currency}
+                      </div>
+                      <div className="h-1.5 w-full overflow-hidden rounded-full bg-[color:var(--lkv-surface-muted)]">
+                        <div
+                          className="h-full rounded-full bg-[color:var(--lkv-secondary)]"
+                          style={{ width: `${pct}%` }}
+                        />
+                      </div>
+                    </Card>
+                  );
+                })}
+            </div>
+          </Card>
+        )}
+
+        {/* Modal de saisie / édition de dépense */}
+        <ExpenseFormSheet
+          key={editTarget?.id ?? 'new'}
+          open={isAddOpen || editTarget !== null}
+          trip={trip}
+          expense={editTarget}
+          isMulti={isMulti}
+          isPending={isPending}
+          onSubmit={handleSaveExpense}
+          onClose={() => {
+            setIsAddOpen(false);
+            setEditTarget(null);
+          }}
+        />
+
+        {/* Choix du payeur pour « Régler » une dépense prévue (multi) */}
+        <Sheet
+          open={settleTarget !== null}
+          onOpenChange={(open) => !open && setSettleTarget(null)}
+          title="Régler la dépense prévue"
+        >
+          <div className="space-y-[var(--space-4)] pb-2">
+            {settleTarget && (
+              <>
+                <p className="text-[length:var(--lkv-text-footnote)] text-[color:var(--lkv-text-muted)]">
+                  « {settleTarget.title} » ({settleTarget.amount} {budgetSummary.currency}) passe en
+                  dépense réelle. Qui a payé ?
+                </p>
+                <ul className="space-y-[var(--space-2)]">
+                  {(trip.collaborators || []).map((c) => (
+                    <li key={c.user_id}>
+                      <ListItem
+                        as="div"
+                        disabled={isPending}
+                        selected={c.user_id === trip.user_id}
+                        onClick={() => handleSettle(settleTarget, c.user_id)}
+                        title={c.profile?.full_name || `Voyageur (${c.user_id.slice(0, 6)})`}
+                        trailing={
+                          c.user_id === trip.user_id ? (
+                            <span className="text-[10px] text-[color:var(--lkv-text-muted)]">
+                              (moi)
+                            </span>
+                          ) : undefined
+                        }
+                      />
+                    </li>
+                  ))}
+                </ul>
+                <div className="flex justify-end pt-[var(--space-1)]">
+                  <Button variant="secondary" size="sm" onClick={() => setSettleTarget(null)}>
+                    Annuler
+                  </Button>
+                </div>
+              </>
+            )}
+          </div>
+        </Sheet>
+
+        {/* Modale de confirmation de suppression */}
+        <ConfirmDialog
+          open={confirmState !== null}
+          title="Supprimer la dépense ?"
+          message={
+            confirmState
+              ? `La dépense « ${confirmState.title} » sera définitivement supprimée.`
+              : undefined
+          }
+          confirmLabel="Supprimer"
+          cancelLabel="Annuler"
+          danger
+          onConfirm={confirmDelete}
+          onCancel={() => setConfirmState(null)}
+        />
       </div>
 
       <BudgetMobileExperience trip={trip} initialDay={initialDay} />

@@ -4,12 +4,17 @@ import Icon from '@/components/ui/Icon';
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Sheet } from '@/components/ui/Sheet';
-import { GlassCapsuleBtn } from '@/components/ui/GlassCapsuleBtn';
-import { LkvInput } from '@/components/ui/LkvInput';
+import { Button, Card } from '@/components/ui';
 import { tripSectionHref } from '../registry/tripSectionRegistry';
 import { setActiveAdventureAction } from '@/features/hub/context/activeAdventureServer';
 import { createTripSchema, type CreateTripInput } from '../schemas/trip.schema';
 import type { TripActivityType, TripDifficulty, TripVisibility } from '../types/trip.types';
+
+const FIELD_CLASS =
+  'min-h-[var(--control-height-md)] w-full rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] text-[length:var(--lkv-text-body-sm)] text-[var(--lkv-text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]';
+
+const LABEL_CLASS =
+  'mb-1.5 block text-[length:var(--lkv-text-footnote)] font-semibold text-[color:var(--lkv-text-primary)]';
 
 export interface QuickCreateTripModalProps {
   isOpen: boolean;
@@ -106,62 +111,82 @@ export function QuickCreateTripModal({ isOpen, onClose, onSubmitTrip }: QuickCre
       <div className="pb-2">
         {/* Error alert */}
         {formError && (
-          <div className="p-3 mb-4 rounded-xl glass tone-danger border text-xs text-[var(--lkv-danger)] flex items-center gap-2">
+          <Card
+            role="alert"
+            tone="danger"
+            className="mb-[var(--space-4)] flex items-center gap-[var(--space-2)] p-[var(--space-3)] text-[length:var(--lkv-text-footnote)] text-[color:var(--lkv-danger-dark)]"
+          >
             <Icon name="alert-circle" size={16} />
             <span>{formError}</span>
-          </div>
+          </Card>
         )}
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <LkvInput
-            label="Titre de l'expédition *"
-            placeholder="ex: Traversée des Pyrénées en autonomie"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            required
-          />
+        <form onSubmit={handleSubmit} className="space-y-[var(--space-4)]">
+          <label className="block">
+            <span className={LABEL_CLASS}>Titre de l&apos;expédition *</span>
+            <input
+              type="text"
+              placeholder="ex: Traversée des Pyrénées en autonomie"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              required
+              className={FIELD_CLASS}
+            />
+          </label>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <LkvInput
-              label="Destination"
-              placeholder="ex: Gavarnie, Hautes-Pyrénées"
-              value={destinationName}
-              onChange={(e) => setDestinationName(e.target.value)}
-            />
-            <LkvInput
-              label="Code Pays (ISO 2 lettres)"
-              placeholder="ex: FR, ES, NO..."
-              maxLength={2}
-              value={countryCode}
-              onChange={(e) => setCountryCode(e.target.value.toUpperCase())}
-            />
+          <div className="grid grid-cols-1 gap-[var(--space-3)] sm:grid-cols-2">
+            <label className="block">
+              <span className={LABEL_CLASS}>Destination</span>
+              <input
+                type="text"
+                placeholder="ex: Gavarnie, Hautes-Pyrénées"
+                value={destinationName}
+                onChange={(e) => setDestinationName(e.target.value)}
+                className={FIELD_CLASS}
+              />
+            </label>
+            <label className="block">
+              <span className={LABEL_CLASS}>Code Pays (ISO 2 lettres)</span>
+              <input
+                type="text"
+                placeholder="ex: FR, ES, NO..."
+                maxLength={2}
+                value={countryCode}
+                onChange={(e) => setCountryCode(e.target.value.toUpperCase())}
+                className={FIELD_CLASS}
+              />
+            </label>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <LkvInput
-              type="date"
-              label="Date de début"
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-            />
-            <LkvInput
-              type="date"
-              label="Date de fin"
-              value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
-            />
+          <div className="grid grid-cols-1 gap-[var(--space-3)] sm:grid-cols-2">
+            <label className="block">
+              <span className={LABEL_CLASS}>Date de début</span>
+              <input
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                className={FIELD_CLASS}
+              />
+            </label>
+            <label className="block">
+              <span className={LABEL_CLASS}>Date de fin</span>
+              <input
+                type="date"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                className={FIELD_CLASS}
+              />
+            </label>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <div>
-              <label className="text-xs font-semibold text-lkv-primary block mb-1.5">
-                Activité
-              </label>
+          <div className="grid grid-cols-1 gap-[var(--space-3)] sm:grid-cols-3">
+            <label className="block">
+              <span className={LABEL_CLASS}>Activité</span>
               <select
                 value={activity}
                 onChange={(e) => setActivity(e.target.value as TripActivityType)}
-                className="glass-input w-full px-3 py-2.5 text-[16px] sm:text-sm text-[var(--lkv-text-primary)] cursor-pointer"
+                className={`${FIELD_CLASS} cursor-pointer`}
               >
                 <option value="hiking">Randonnée</option>
                 <option value="trekking">Trek</option>
@@ -171,58 +196,57 @@ export function QuickCreateTripModal({ isOpen, onClose, onSubmitTrip }: QuickCre
                 <option value="bushcraft">Bushcraft</option>
                 <option value="mixed">Mixte</option>
               </select>
-            </div>
+            </label>
 
-            <div>
-              <label className="text-xs font-semibold text-lkv-primary block mb-1.5">
-                Difficulté
-              </label>
+            <label className="block">
+              <span className={LABEL_CLASS}>Difficulté</span>
               <select
                 value={difficulty}
                 onChange={(e) => setDifficulty(e.target.value as TripDifficulty)}
-                className="glass-input w-full px-3 py-2.5 text-[16px] sm:text-sm text-[var(--lkv-text-primary)] cursor-pointer"
+                className={`${FIELD_CLASS} cursor-pointer`}
               >
                 <option value="easy">Facile</option>
                 <option value="moderate">Modéré</option>
                 <option value="hard">Difficile</option>
                 <option value="expert">Expert</option>
               </select>
-            </div>
+            </label>
 
-            <div>
-              <label className="text-xs font-semibold text-lkv-primary block mb-1.5">
-                Visibilité
-              </label>
+            <label className="block">
+              <span className={LABEL_CLASS}>Visibilité</span>
               <select
                 value={visibility}
                 onChange={(e) => setVisibility(e.target.value as TripVisibility)}
-                className="glass-input w-full px-3 py-2.5 text-[16px] sm:text-sm text-[var(--lkv-text-primary)] cursor-pointer"
+                className={`${FIELD_CLASS} cursor-pointer`}
               >
                 <option value="private">Privé</option>
                 <option value="unlisted">Lien partagé</option>
                 <option value="public">Public</option>
               </select>
-            </div>
+            </label>
           </div>
 
-          <LkvInput
-            type="number"
-            min={0}
-            step="any"
-            label="Budget prévisionnel (€)"
-            placeholder="ex: 350"
-            value={estimatedBudget}
-            onChange={(e) => setEstimatedBudget(e.target.value)}
-          />
+          <label className="block">
+            <span className={LABEL_CLASS}>Budget prévisionnel (€)</span>
+            <input
+              type="number"
+              min={0}
+              step="any"
+              placeholder="ex: 350"
+              value={estimatedBudget}
+              onChange={(e) => setEstimatedBudget(e.target.value)}
+              className={FIELD_CLASS}
+            />
+          </label>
 
           {/* Actions */}
-          <div className="flex items-center justify-end gap-3 pt-4 border-t border-white/40">
-            <GlassCapsuleBtn variant="default" type="button" onClick={onClose} disabled={loading}>
+          <div className="flex items-center justify-end gap-[var(--space-3)] border-t border-[color:var(--lkv-border-subtle)] pt-[var(--space-4)]">
+            <Button variant="secondary" type="button" onClick={onClose} disabled={loading}>
               Annuler
-            </GlassCapsuleBtn>
-            <GlassCapsuleBtn variant="primary" type="submit" disabled={loading}>
+            </Button>
+            <Button variant="primary" type="submit" loading={loading}>
               {loading ? 'Création...' : 'Créer l’expédition'}
-            </GlassCapsuleBtn>
+            </Button>
           </div>
         </form>
       </div>
