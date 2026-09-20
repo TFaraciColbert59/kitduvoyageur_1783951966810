@@ -6,7 +6,7 @@ import { AlertOctagonIcon as AlertOctagon } from '@/components/icons/alert-octag
 import { RadioIcon as Radio } from '@/components/icons/radio';
 import { Share2Icon as Share2 } from '@/components/icons/share-2';
 import { PhoneCallIcon as PhoneCallAnimated } from '@/components/icons/phone-call';
-import { Card } from '@/components/ui';
+import { Badge, Button, Card } from '@/components/ui';
 import type { Participant } from '@/features/materiel/types/trekHub';
 
 interface DepartParticipantsProps {
@@ -58,41 +58,42 @@ export function DepartParticipants({ participants, emergencyContact }: DepartPar
               {participants.length} randonneur{participants.length > 1 ? 's' : ''}
             </span>
 
-            <button
-              type="button"
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={handleShare}
-              className="text-[11px] font-bold text-[var(--lkv-primary-hover)] hover:underline flex items-center gap-1 cursor-pointer"
+              icon={copied ? <Icon name="check" size={11} /> : <Share2 size={11} />}
+              className="h-auto gap-1 px-0 text-[11px] font-bold text-[var(--lkv-primary-hover)] hover:underline"
               title="Partager les coordonnées d’urgence"
             >
-              {copied ? <Icon name="check" size={11} /> : <Share2 size={11} />}
-              <span>{copied ? 'Copié !' : 'Partager'}</span>
-            </button>
+              {copied ? 'Copié !' : 'Partager'}
+            </Button>
           </div>
         </div>
 
         {/* Liste des participants */}
         <div className="flex flex-wrap gap-2">
           {participants.map((p, idx) => (
-            <div key={p.name || idx} className="glass-sub-card px-3 py-1.5 flex items-center gap-2">
-              <div
-                className="w-6 h-6 rounded-full flex items-center justify-center text-white text-[10.5px] font-bold shadow-2xs shrink-0"
+            <Badge key={p.name || idx} tone="stone" className="gap-2 px-3 py-1.5">
+              <span
+                className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[10.5px] font-bold text-white shadow-2xs"
                 style={{ backgroundColor: p.color || 'var(--lkv-primary)' }}
                 aria-hidden="true"
               >
                 {p.initial || p.name.charAt(0).toUpperCase()}
-              </div>
-              <span className="text-xs font-semibold text-[var(--lkv-primary)] truncate max-w-[140px]">
+              </span>
+              <span className="max-w-[140px] truncate text-xs font-semibold text-[var(--lkv-primary)]">
                 {p.name}
               </span>
-            </div>
+            </Badge>
           ))}
         </div>
 
         {/* Contact d'urgence ICE */}
         {emergencyContact && (
-          <div className="glass-sub-card p-3 flex items-center justify-between gap-3 bg-[rgba(168,68,58,0.06)] border-[rgba(168,68,58,0.20)]">
+          <Card tone="danger" className="flex items-center justify-between gap-3 p-3">
             <div className="flex items-center gap-2.5 min-w-0">
-              <div className="w-8 h-8 rounded-full bg-[rgba(168,68,58,0.12)] text-[var(--lkv-danger)] flex items-center justify-center shrink-0">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--lkv-danger-bg)] text-[var(--lkv-danger)]">
                 <Icon name="shield-check" size={16} aria-hidden="true" />
               </div>
               <div className="min-w-0">
@@ -107,13 +108,13 @@ export function DepartParticipants({ participants, emergencyContact }: DepartPar
 
             <a
               href={`tel:${emergencyContact.replace(/\s+/g, '')}`}
-              className="glass-capsule-btn danger px-3 py-1.5 text-xs font-semibold flex items-center gap-1.5 shrink-0"
+              className="inline-flex min-h-[44px] shrink-0 items-center gap-1.5 rounded-full bg-[var(--lkv-danger)] px-3 text-xs font-semibold text-[var(--lkv-text-inverted)] transition-transform active:scale-[var(--motion-press-scale)] motion-reduce:transition-none"
               aria-label={`Appeler le contact d'urgence au ${emergencyContact}`}
             >
               <PhoneCallAnimated size={12} aria-hidden="true" />
               <span>Appeler</span>
             </a>
-          </div>
+          </Card>
         )}
 
         {/* ════ NUMÉROS D'URGENCE & SECOURS MONTAGNE (§Phase 5) ════ */}

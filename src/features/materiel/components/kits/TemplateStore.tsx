@@ -4,8 +4,7 @@ import Icon from '@/components/ui/Icon';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Card } from '@/components/ui';
-import { Badge } from '@/components/ui/Badge';
+import { Badge, Card, IconButton } from '@/components/ui';
 import { useToast } from '@/contexts/ToastContext';
 import { ArrowDownIcon as ArrowDown } from '@/components/icons/arrow-down';
 import type { PublicKit } from '@/features/materiel/services/getPublicKits';
@@ -85,10 +84,12 @@ export function TemplateStore({ kits = [] }: { kits: PublicKit[] }) {
           <span className="hidden sm:inline">Modèles Communautaires</span>
         </p>
         <span
-          className="shrink-0 px-1.5 py-0.2 rounded-full bg-[var(--lkv-primary)]/10 text-[var(--lkv-primary)] text-[8px] sm:text-[9px] md:text-[10px] font-bold"
+          className="shrink-0"
           aria-label={`${displayKits.length} modèles disponibles`}
         >
-          {displayKits.length} mod.
+          <Badge tone="stone" className="text-[8px] font-bold sm:text-[9px] md:text-[10px]">
+            {displayKits.length} mod.
+          </Badge>
         </span>
       </div>
 
@@ -116,7 +117,7 @@ export function TemplateStore({ kits = [] }: { kits: PublicKit[] }) {
               initial={{ opacity: 0, y: 4 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.2, delay: idx * 0.04, ease: 'easeOut' }}
-              className="glass-sub-card p-1 sm:p-1.5 rounded-lg flex items-center justify-between gap-1 text-[10.5px] transition-all hover:border-white/60"
+              className="rounded-lg border border-[color:var(--lkv-border-subtle)] p-1 sm:p-1.5"
             >
               <div className="min-w-0 flex-1">
                 <p className="font-semibold text-[var(--lkv-primary)] truncate leading-tight text-[10px] sm:text-[11px]">
@@ -130,19 +131,17 @@ export function TemplateStore({ kits = [] }: { kits: PublicKit[] }) {
               </div>
 
               {/* Bouton circulaire standardisé avec flèche vers le bas */}
-              <motion.button
-                type="button"
+              <IconButton
+                variant={isImporting || isJustImported ? 'ghost' : 'solid'}
                 onClick={() => fork(k.id, k.name)}
                 disabled={isImporting || isJustImported}
-                whileTap={{ scale: 0.88 }}
-                transition={{ type: 'spring', stiffness: 500, damping: 25 }}
                 aria-label={`Importer le kit ${k.name}`}
-                className={`h-6 w-6 !rounded-full flex items-center justify-center transition-all shrink-0 focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)] ${
+                className={`h-6 w-6 shrink-0 ${
                   isJustImported
                     ? 'bg-[var(--lkv-primary-soft)]/20 text-[var(--lkv-primary-soft)]'
                     : isImporting
                       ? 'bg-white/10 text-[var(--lkv-text-muted)]'
-                      : 'glass interactive text-[var(--lkv-primary)] hover:bg-[var(--lkv-primary)] hover:text-white border border-white/40 shadow-inner'
+                      : ''
                 }`}
               >
                 <AnimatePresence mode="wait" initial={false}>
@@ -157,21 +156,21 @@ export function TemplateStore({ kits = [] }: { kits: PublicKit[] }) {
                     <ArrowDown size={12} strokeWidth={2.5} aria-hidden="true" />
                   )}
                 </AnimatePresence>
-              </motion.button>
+              </IconButton>
             </motion.div>
           );
         })}
       </div>
 
       {/* Capsule inférieure */}
-      <div className="glass-sub-card shrink-0 px-2 py-1 flex items-center justify-between text-[10px]">
+      <Card variant="compact" className="flex shrink-0 items-center justify-between px-2 py-1 text-[10px]">
         <span className="text-[8px] sm:text-[9px] font-semibold uppercase tracking-wider text-[var(--lkv-primary-soft)] truncate">
           Communauté
         </span>
         <span className="text-[8.5px] sm:text-[9px] font-bold text-[var(--lkv-primary)] shrink-0">
           1 clic · Import
         </span>
-      </div>
+      </Card>
     </Card>
   );
 }

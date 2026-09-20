@@ -1,6 +1,6 @@
 'use client';
 import { useState } from 'react';
-import { Card } from '@/components/ui';
+import { Button, Card } from '@/components/ui';
 import { Eyebrow } from '@/components/ui/Eyebrow';
 
 /** W-L-10 ExportShareBar — export (CSV/JSON), partage, calendrier. */
@@ -48,12 +48,12 @@ export function ExportShareBar() {
       <Eyebrow>Export & partage</Eyebrow>
       <h3 id="export-title" className="sr-only">Export et partage</h3>
       <div className="mt-2 flex flex-wrap gap-2">
-        <button type="button" onClick={() => exportInv('csv')} className="glass interactive h-10 px-4 rounded-full text-sm font-medium">Export CSV</button>
-        <button type="button" onClick={() => exportInv('json')} className="glass interactive h-10 px-4 rounded-full text-sm font-medium">Export JSON</button>
-        <button type="button" onClick={share} className="glass interactive h-10 px-4 rounded-full text-sm font-medium">Partager</button>
-        <button type="button" onClick={calendar} className="glass interactive h-10 px-4 rounded-full text-sm font-medium">Calendrier (ICS)</button>
+        <Button variant="secondary" onClick={() => exportInv('csv')}>Export CSV</Button>
+        <Button variant="secondary" onClick={() => exportInv('json')}>Export JSON</Button>
+        <Button variant="secondary" onClick={share}>Partager</Button>
+        <Button variant="secondary" onClick={calendar}>Calendrier (ICS)</Button>
       </div>
-      {status && <p className="mt-2 text-sm text-[color:var(--label-secondary)]">{status}</p>}
+      {status && <p className="mt-2 text-sm text-[color:var(--lkv-text-secondary)]">{status}</p>}
     </Card>
   );
 }

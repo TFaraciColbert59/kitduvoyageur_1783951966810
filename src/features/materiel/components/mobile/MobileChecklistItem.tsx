@@ -2,6 +2,7 @@
 import Icon from '@/components/ui/Icon';
 import React from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
+import { Badge, Button, IconButton } from '@/components/ui';
 import { formatWeight } from '@/features/materiel/domain/departCalculations';
 import { resolveGearImage } from '@/features/materiel/services/gearImageResolver';
 import { cn } from '@/lib/utils';
@@ -83,14 +84,14 @@ export function MobileChecklistItem({
         className={cn(
           'relative z-10 w-full flex items-center justify-between gap-2.5 px-2 py-1.5 rounded-2xl transition-all',
           'bg-white border border-white/90 shadow-2xs',
-          item.is_checked && 'bg-stone-50/95 opacity-80 hover:opacity-100',
+          item.is_checked && 'bg-[color:var(--lkv-surface-muted)] opacity-80 hover:opacity-100',
           isHighlighted &&
             'ring-2 ring-[var(--lkv-danger)] bg-[var(--lkv-danger)]/10 border-[var(--lkv-danger)]/25'
         )}
       >
         {/* ════ GAUCHE : COCHE CIRCULAIRE 32PX DANS HIT-BOX 48PX APPLE HIG ════ */}
-        <button
-          type="button"
+        <Button
+          variant="ghost"
           role="checkbox"
           aria-checked={item.is_checked}
           aria-label={`${item.is_checked ? 'Décocher' : 'Cocher'} : ${item.name}`}
@@ -98,7 +99,7 @@ export function MobileChecklistItem({
             e.stopPropagation();
             handleToggle();
           }}
-          className="shrink-0 min-w-[48px] min-h-[48px] w-12 h-12 flex items-center justify-center cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary-hover)] rounded-full"
+          className="h-12 w-12 min-h-[48px] min-w-[48px] shrink-0 rounded-full p-0 hover:bg-transparent focus-visible:ring-[var(--lkv-primary-hover)]"
         >
           <div
             className={cn(
@@ -118,7 +119,7 @@ export function MobileChecklistItem({
               </motion.span>
             )}
           </div>
-        </button>
+        </Button>
 
         {/* ════ CENTRE : NOM SF PRO, POIDS FORMATÉ ET PASTILLES SÉCURITÉ ════ */}
         <div
@@ -144,21 +145,21 @@ export function MobileChecklistItem({
               </span>
             )}
             {item.is_vital && (
-              <span className="inline-flex items-center gap-0.5 text-[9.5px] font-bold px-1.5 py-0.2 rounded-full bg-[var(--lkv-danger)]/15 text-[var(--lkv-danger)]">
+              <Badge tone="danger" className="gap-0.5 px-1.5 py-0.2 text-[9.5px] font-bold">
                 <Icon name="zap" size={8} aria-hidden="true" />
                 Vital
-              </span>
+              </Badge>
             )}
             {item.is_consumable && (
-              <span className="inline-flex items-center gap-0.5 text-[9.5px] font-semibold px-1.5 py-0.2 rounded-full bg-[var(--lkv-forest-100)]/80 text-[var(--lkv-forest-900)]">
+              <Badge tone="sage" className="gap-0.5 px-1.5 py-0.2 text-[9.5px] font-semibold">
                 <Icon name="sparkles" size={8} aria-hidden="true" />
                 Consommable
-              </span>
+              </Badge>
             )}
             {item.is_worn && (
-              <span className="inline-flex items-center text-[9.5px] font-medium px-1.5 py-0.2 rounded-full bg-black/5 text-[var(--lkv-text-muted)]">
+              <Badge tone="stone" className="px-1.5 py-0.2 text-[9.5px] font-medium">
                 Porté
-              </span>
+              </Badge>
             )}
           </div>
         </div>
@@ -166,17 +167,18 @@ export function MobileChecklistItem({
         {/* ════ DROITE : ACTION SUPPRIMER & MINIATURE 36PX ROUNDED-XL ════ */}
         <div className="flex items-center gap-1 shrink-0">
           {onDelete && (
-            <button
-              type="button"
+            <IconButton
+              variant="ghost"
+              size="lg"
               onClick={(e) => {
                 e.stopPropagation();
                 onDelete(item);
               }}
               aria-label={`Supprimer : ${item.name}`}
-              className="min-w-[48px] min-h-[48px] w-12 h-12 flex items-center justify-center text-[var(--lkv-text-muted)]/60 hover:text-[var(--lkv-danger)] cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lkv-danger)] rounded-full"
+              className="h-12 w-12 min-h-[48px] min-w-[48px] text-[var(--lkv-text-muted)]/60 hover:text-[var(--lkv-danger)] focus-visible:ring-[var(--lkv-danger)]"
             >
               <Icon name="trash2" size={15} aria-hidden="true" />
-            </button>
+            </IconButton>
           )}
           <div className="w-9 h-9 shrink-0 rounded-xl overflow-hidden bg-black/5 border border-black/5 shadow-2xs">
             <img src={imageUrl} alt={item.name} loading="lazy" className="w-9 h-9 object-cover" />

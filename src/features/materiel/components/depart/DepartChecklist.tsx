@@ -13,10 +13,10 @@ import { Volume2Icon as Volume2 } from '@/components/icons/volume-2';
 import { VolumeXIcon as VolumeX } from '@/components/icons/volume-x';
 import { ShoppingBagIcon as ShoppingBag } from '@/components/icons/shopping-bag';
 import { CheckSquareIcon as CheckSquare } from '@/components/icons/check-square';
-import { XIcon as X } from '@/components/icons/x';
 import { ChevronDownIcon as ChevronDown } from '@/components/icons/chevron-down';
 import { RotateCCWIcon as RotateCcwAnimated } from '@/components/icons/rotate-ccw';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
+import { Button, Chip, IconButton, Modal } from '@/components/ui';
 import { cn } from '@/lib/utils';
 import { toggleKitItem } from '@/features/materiel/actions/toggleKitItem';
 import { addDepartItem } from '@/features/materiel/actions/addDepartItem';
@@ -482,7 +482,7 @@ export function DepartChecklist({
       role="complementary"
       aria-label="Checklist du Sac en Direct"
       className={cn(
-        'relative h-full max-h-full w-full flex-1 flex flex-col justify-between glass rounded-[1.5rem] p-3.5 text-[var(--lkv-primary)] font-sans overflow-hidden border border-white/40 shadow-sm select-none',
+        'relative h-full max-h-full w-full flex-1 flex flex-col justify-between glass rounded-[var(--lkv-radius-lg)] p-3.5 text-[var(--lkv-primary)] font-sans overflow-hidden border border-white/40 shadow-sm select-none',
         className
       )}
     >
@@ -509,42 +509,32 @@ export function DepartChecklist({
           {/* Barre d actions droite : Filtres + Audio + Bouton Plus Icône Seule */}
           <div className="flex items-center gap-1 shrink-0">
             {/* Bascule Reste à faire / Tous */}
-            <div className="flex items-center bg-black/5 rounded-xl p-0.5 text-[10px] font-semibold">
-              <button
-                type="button"
+            <div className="flex items-center gap-1" role="group" aria-label="Filtre de la checklist">
+              <Chip
+                selected={filterMode === 'all'}
                 onClick={() => setFilterMode('all')}
-                className={cn(
-                  'px-1.5 py-0.5 rounded-lg transition-colors cursor-pointer',
-                  filterMode === 'all'
-                    ? 'bg-[var(--lkv-primary)] text-white shadow-2xs'
-                    : 'text-[var(--lkv-text-muted)] hover:text-[var(--lkv-primary)]'
-                )}
+                className="px-1.5 text-[10px]"
               >
                 Tous
-              </button>
-              <button
-                type="button"
+              </Chip>
+              <Chip
+                selected={filterMode === 'remaining'}
                 onClick={() => setFilterMode('remaining')}
-                className={cn(
-                  'px-1.5 py-0.5 rounded-lg transition-colors cursor-pointer',
-                  filterMode === 'remaining'
-                    ? 'bg-[var(--lkv-primary)] text-white shadow-2xs'
-                    : 'text-[var(--lkv-text-muted)] hover:text-[var(--lkv-primary)]'
-                )}
+                className="px-1.5 text-[10px]"
               >
                 Restants
-              </button>
+              </Chip>
             </div>
 
             {/* Lecture Audio Text-to-Speech */}
-            <button
-              type="button"
+            <IconButton
+              size="sm"
               onClick={handleToggleSpeak}
               className={cn(
-                'w-6 h-6 rounded-lg flex items-center justify-center transition-all cursor-pointer shadow-2xs shrink-0',
+                'h-6 w-6 rounded-lg shadow-2xs',
                 isSpeaking
                   ? 'bg-[var(--lkv-primary-hover)] text-white animate-pulse'
-                  : 'glass-sub-card text-[var(--lkv-primary)] hover:bg-white'
+                  : 'bg-[color:var(--card-tint-strong)] text-[var(--lkv-primary)] hover:bg-white'
               )}
               title={isSpeaking ? 'Arrêter la lecture' : 'Lire les articles restants à voix haute'}
               aria-label={
@@ -552,18 +542,19 @@ export function DepartChecklist({
               }
             >
               {isSpeaking ? <VolumeX size={12} /> : <Volume2 size={12} />}
-            </button>
+            </IconButton>
 
             {/* Bouton Ajouter un équipement (JUSTE L'ICÔNE PLUS) */}
-            <button
-              type="button"
+            <IconButton
+              size="sm"
+              variant="solid"
               onClick={() => setIsAddModalOpen(true)}
-              className="w-6 h-6 rounded-lg bg-[var(--lkv-primary)] text-white hover:bg-[var(--lkv-primary)]/90 shadow-2xs flex items-center justify-center cursor-pointer shrink-0 transition-transform active:scale-95"
+              className="h-6 w-6 rounded-lg shadow-2xs"
               title="Ajouter un équipement au sac"
               aria-label="Ajouter un équipement au sac"
             >
               <Icon name="plus" size={13} strokeWidth={2.5} />
-            </button>
+            </IconButton>
           </div>
         </div>
 
@@ -576,14 +567,15 @@ export function DepartChecklist({
                 Échec de synchronisation pour <strong>{failedItem.name}</strong>
               </span>
             </div>
-            <button
-              type="button"
+            <Button
+              variant="destructive"
+              size="sm"
               onClick={() => handleToggle(failedItem)}
-              className="px-2 py-1 rounded-lg bg-[var(--lkv-danger)] text-white font-bold text-[11px] flex items-center gap-1 hover:opacity-90"
+              icon={<RotateCcwAnimated size={11} />}
+              className="h-7 rounded-lg px-2 text-[11px]"
             >
-              <RotateCcwAnimated size={11} />
-              <span>Réessayer</span>
-            </button>
+              Réessayer
+            </Button>
           </div>
         )}
 
@@ -722,11 +714,11 @@ export function DepartChecklist({
                                 )}
                               >
                                 {/* Bouton cocher toggle principal */}
-                                <button
-                                  type="button"
+                                <Button
+                                  variant="ghost"
                                   onClick={() => handleToggle(item)}
                                   disabled={isPending}
-                                  className="flex items-center gap-3 min-w-0 flex-1 text-left cursor-pointer focus-visible:outline-none"
+                                  className="h-auto min-h-[44px] min-w-0 flex-1 justify-start gap-3 whitespace-normal rounded-xl px-3 py-2.5 text-left font-normal"
                                   aria-pressed={item.is_checked}
                                   aria-label={`${item.is_checked ? 'Décocher' : 'Cocher'} : ${item.name}`}
                                 >
@@ -795,33 +787,35 @@ export function DepartChecklist({
                                       )}
                                     </div>
                                   </div>
-                                </button>
+                                </Button>
 
                                 {/* Poids, Contrôle Quantité (+/-), Bouton Boutique LKDV */}
                                 <div className="flex items-center gap-2 shrink-0">
                                   {/* Contrôle Quantité (+ / -) */}
                                   {!item.is_consumable && (
                                     <div className="flex items-center bg-black/5 rounded-lg text-xs font-mono">
-                                      <button
-                                        type="button"
+                                      <IconButton
+                                        size="sm"
                                         onClick={() => handleQuantityChange(item, -1)}
                                         disabled={qty <= 1}
-                                        className="px-1.5 py-0.5 text-[var(--lkv-text-muted)] hover:text-[var(--lkv-primary)] disabled:opacity-30 cursor-pointer"
+                                        className="h-6 w-6 rounded-md text-[var(--lkv-text-muted)] hover:text-[var(--lkv-primary)]"
                                         title="Diminuer la quantité"
+                                        aria-label={`Diminuer la quantité de ${item.name}`}
                                       >
                                         -
-                                      </button>
+                                      </IconButton>
                                       <span className="px-1 font-bold text-[11px] text-[var(--lkv-primary)]">
                                         {qty}
                                       </span>
-                                      <button
-                                        type="button"
+                                      <IconButton
+                                        size="sm"
                                         onClick={() => handleQuantityChange(item, 1)}
-                                        className="px-1.5 py-0.5 text-[var(--lkv-text-muted)] hover:text-[var(--lkv-primary)] cursor-pointer"
+                                        className="h-6 w-6 rounded-md text-[var(--lkv-text-muted)] hover:text-[var(--lkv-primary)]"
                                         title="Augmenter la quantité"
+                                        aria-label={`Augmenter la quantité de ${item.name}`}
                                       >
                                         +
-                                      </button>
+                                      </IconButton>
                                     </div>
                                   )}
 
@@ -854,14 +848,15 @@ export function DepartChecklist({
 
                                   {/* Suppression */}
                                   {!item.is_consumable && (
-                                    <button
-                                      type="button"
+                                    <IconButton
+                                      size="sm"
                                       onClick={() => handleDelete(item)}
-                                      className="p-1 rounded-lg text-[var(--lkv-text-muted)]/50 hover:text-[var(--lkv-danger)] hover:bg-[var(--lkv-danger)]/10 cursor-pointer"
+                                      className="h-6 w-6 rounded-lg text-[var(--lkv-text-muted)]/50 hover:bg-[var(--lkv-danger)]/10 hover:text-[var(--lkv-danger)]"
                                       title="Supprimer de ce départ"
+                                      aria-label={`Supprimer ${item.name} de ce départ`}
                                     >
                                       <Icon name="trash2" size={12} />
-                                    </button>
+                                    </IconButton>
                                   )}
                                 </div>
                               </div>
@@ -894,29 +889,13 @@ export function DepartChecklist({
       </div>
 
       {/* ════ MODAL AJOUT D UN ÉQUIPEMENT OUBLIÉ ════ */}
-      <AnimatePresence>
-        {isAddModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              className="glass p-5 rounded-3xl max-w-md w-full border border-white/80 shadow-2xl space-y-4 bg-white/95 text-[var(--lkv-primary)]"
-            >
-              <div className="flex items-center justify-between">
-                <h3 className="font-display font-bold text-base text-[var(--lkv-primary)]">
-                  Ajouter un équipement
-                </h3>
-                <button
-                  type="button"
-                  onClick={() => setIsAddModalOpen(false)}
-                  className="p-1.5 rounded-xl hover:bg-black/5 text-[var(--lkv-text-muted)] cursor-pointer"
-                >
-                  <X size={15} />
-                </button>
-              </div>
-
-              <form onSubmit={handleAddItem} className="space-y-3">
+      <Modal
+        open={isAddModalOpen}
+        onOpenChange={setIsAddModalOpen}
+        title="Ajouter un équipement"
+        size="md"
+      >
+        <form onSubmit={handleAddItem} className="space-y-3">
                 <div>
                   <label className="text-[11px] font-bold uppercase tracking-wider text-[var(--lkv-text-muted)] block mb-1">
                     Nom de l équipement
@@ -987,26 +966,14 @@ export function DepartChecklist({
                   </label>
                 </div>
 
-                <div className="pt-2 flex items-center justify-end gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setIsAddModalOpen(false)}
-                    className="px-3.5 py-2 rounded-xl text-xs font-semibold hover:bg-black/5 text-[var(--lkv-text-muted)] cursor-pointer"
-                  >
-                    Annuler
-                  </button>
-                  <button
-                    type="submit"
-                    className="px-4 py-2 rounded-xl text-xs font-bold bg-[var(--lkv-primary)] text-white hover:bg-[var(--lkv-primary)]/90 shadow-2xs cursor-pointer"
-                  >
-                    Valider l ajout
-                  </button>
-                </div>
-              </form>
-            </motion.div>
+          <div className="pt-2 flex items-center justify-end gap-2">
+            <Button variant="ghost" onClick={() => setIsAddModalOpen(false)}>
+              Annuler
+            </Button>
+            <Button type="submit">Valider l ajout</Button>
           </div>
-        )}
-      </AnimatePresence>
+        </form>
+      </Modal>
     </div>
   );
 }

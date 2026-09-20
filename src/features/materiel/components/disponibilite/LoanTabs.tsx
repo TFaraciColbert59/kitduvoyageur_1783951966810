@@ -1,10 +1,7 @@
 'use client';
 import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Card } from '@/components/ui';
-import { Badge } from '@/components/ui/Badge';
-import { Button } from '@/components/ui';
-import { Tabs } from '@/components/ui/Tabs';
+import { Badge, Button, Card, EmptyState, ListItem, Tabs } from '@/components/ui';
 import { useToast } from '@/contexts/ToastContext';
 import type { LoanItem } from '@/features/materiel/services/getLoans';
 
@@ -52,19 +49,27 @@ export function LoanTabs({ loans, userId }: { loans: LoanItem[]; userId: string 
       />
       <ul className="mt-3 flex flex-col gap-2">
         {filtered.map((l) => (
-          <li key={l.id} className="bg-white/20 rounded-[var(--r-sm)] p-3 flex items-center justify-between gap-2">
-            <span className="text-sm text-[color:var(--label)]">
-              {l.borrower_contact ?? 'Emprunteur'} · {l.due_date ? new Date(l.due_date).toLocaleDateString('fr-FR') : 'sans date'}
-            </span>
-            <div className="flex items-center gap-2 shrink-0">
-              <Badge tone={STATUS_TONE[l.status] ?? 'info'}>{STATUS_LABEL[l.status] ?? l.status}</Badge>
-              {l.status !== 'rendu' && (
-                <Button size="sm" variant="secondary" onClick={() => markReturned(l)}>Rendu</Button>
-              )}
-            </div>
+          <li key={l.id}>
+            <ListItem
+              as="div"
+              className="bg-[color:var(--lkv-surface-muted)]"
+              title={`${l.borrower_contact ?? 'Emprunteur'} · ${l.due_date ? new Date(l.due_date).toLocaleDateString('fr-FR') : 'sans date'}`}
+              trailing={
+                <span className="flex items-center gap-2">
+                  <Badge tone={STATUS_TONE[l.status] ?? 'info'}>{STATUS_LABEL[l.status] ?? l.status}</Badge>
+                  {l.status !== 'rendu' && (
+                    <Button size="sm" variant="secondary" onClick={() => markReturned(l)}>Rendu</Button>
+                  )}
+                </span>
+              }
+            />
           </li>
         ))}
-        {filtered.length === 0 && <li className="text-sm text-[color:var(--label-secondary)]">Aucun prêt.</li>}
+        {filtered.length === 0 && (
+          <li>
+            <EmptyState compact title="Aucun prêt." />
+          </li>
+        )}
       </ul>
     </Card>
   );

@@ -1,4 +1,4 @@
-import { Card } from '@/components/ui';
+import { Card, EmptyState } from '@/components/ui';
 import { Eyebrow } from '@/components/ui/Eyebrow';
 
 /** W-A-6 LoanHeatmap — carte de chaleur des retours (dérivée des prêts). */
@@ -11,11 +11,11 @@ export function LoanHeatmap({ byMonth }: { byMonth: { month: string; count: numb
       <div className="mt-3 flex items-end gap-2">
         {byMonth.map((m) => (
           <div key={m.month} className="flex flex-col items-center gap-1">
-            <div className="w-8 rounded-t-[var(--r-sm)]" style={{ height: `${10 + (m.count / max) * 60}px`, backgroundColor: 'var(--sage-500)' }} />
-            <span className="text-[10px] text-[color:var(--label-tertiary)]">{m.month}</span>
+            <div className="w-8 rounded-t-[var(--lkv-radius-sm)] bg-[var(--sage-500)]" style={{ height: `${10 + (m.count / max) * 60}px` }} />
+            <span className="text-[10px] text-[color:var(--lkv-text-muted)]">{m.month}</span>
           </div>
         ))}
-        {byMonth.length === 0 && <p className="text-sm text-[color:var(--label-secondary)]">Aucune donnée.</p>}
+        {byMonth.length === 0 && <EmptyState compact title="Aucune donnée." />}
       </div>
     </Card>
   );

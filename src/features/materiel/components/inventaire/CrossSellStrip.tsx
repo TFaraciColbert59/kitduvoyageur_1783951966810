@@ -1,4 +1,4 @@
-import { Card } from '@/components/ui';
+import { Card, EmptyState } from '@/components/ui';
 import { Eyebrow } from '@/components/ui/Eyebrow';
 import { ProductGlassCard } from '@/components/ui/ProductGlassCard';
 import type { ProductSuggestion } from '@/features/materiel/services/getProductSuggestions';
@@ -19,7 +19,7 @@ export function CrossSellStrip({ products }: { products: ProductSuggestion[] }) 
             href={`/produit/${p.slug}`}
           />
         ))}
-        {products.length === 0 && <p className="text-sm text-[color:var(--label-secondary)]">Aucune suggestion pour le moment.</p>}
+        {products.length === 0 && <EmptyState compact title="Aucune suggestion pour le moment." />}
       </div>
     </Card>
   );

@@ -3,6 +3,7 @@
 import { useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useReducedMotion } from 'framer-motion';
+import { Card } from '@/components/ui';
 import { DepartHeroCard } from './hero/DepartHeroCard';
 import { DepartAlertsBanner } from './DepartAlertsBanner';
 import { DepartSacSection } from './DepartSacSection';
@@ -158,12 +159,11 @@ export function DepartDesktopView({
       />
 
       {!isOnline && (
-        <p
-          role="status"
-          className="glass-sub-card rounded-2xl px-3 py-2 text-xs font-medium text-[var(--lkv-text-primary)]/70"
-        >
-          Mode hors-ligne — fiche et données en cache, synchronisation automatique.
-        </p>
+        <Card variant="compact" role="status" className="px-3 py-2">
+          <p className="text-xs font-medium text-[var(--lkv-text-primary)]/70">
+            Mode hors-ligne — fiche et données en cache, synchronisation automatique.
+          </p>
+        </Card>
       )}
 
       <DepartAlertsBanner
@@ -181,7 +181,7 @@ export function DepartDesktopView({
         <DepartTerrainSection trail={depart.trail} weather={weather} updatedAt={depart.updatedAt} />
       </div>
 
-      <section id="depart-equipment" className="glass rounded-[1.75rem] p-4" aria-label="Équipement">
+      <Card as="section" id="depart-equipment" className="p-4" aria-label="Équipement">
         <DepartEquipmentHub
           inventory={inventory}
           loans={loans}
@@ -197,7 +197,7 @@ export function DepartDesktopView({
           kitId={depart.id || 'kit-default'}
           isRealKit={isRealKit}
         />
-      </section>
+      </Card>
 
       <DepartEquipeSection depart={depart} onOpenSheet={() => setSheetOpen(true)} />
 

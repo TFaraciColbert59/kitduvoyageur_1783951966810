@@ -1,6 +1,7 @@
 'use client';
 
 import Icon from '@/components/ui/Icon';
+import { Button, IconButton } from '@/components/ui';
 import { motion, useDragControls } from 'framer-motion';
 import type { Variants } from 'framer-motion';
 import { useRef, useState } from 'react';
@@ -115,7 +116,7 @@ export function KitsCockpit({ kits = [], inventory = [], publicKits = [], produc
               value={primaryKit?.id ?? ''}
               onChange={(e) => setSelectedKitId(e.target.value)}
               aria-label="Sélectionner le kit à gérer"
-              className="glass interactive h-7 py-0 px-2.5 text-[11px] sm:text-xs text-[var(--lkv-primary)] font-bold rounded-full cursor-pointer max-w-[170px] sm:max-w-[260px] truncate outline-none border border-white/40 shadow-inner focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)]"
+              className="h-7 max-w-[170px] cursor-pointer truncate rounded-full border border-[color:var(--lkv-border)] bg-[color:var(--lkv-field-bg)] px-2.5 py-0 text-[11px] font-bold text-[var(--lkv-primary)] outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)] sm:max-w-[260px] sm:text-xs"
             >
               {activeKits.map((k) => (
                 <option key={k.id} value={k.id}>
@@ -129,11 +130,10 @@ export function KitsCockpit({ kits = [], inventory = [], publicKits = [], produc
         </div>
 
         <div className="flex items-center gap-1.5 shrink-0">
-          <Link
-            href="/hub"
-            className="glass interactive h-7 px-2.5 rounded-full flex items-center text-xs font-semibold text-[var(--lkv-primary)] shrink-0 border border-white/40 shadow-inner focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)]"
-          >
-            ← Retour
+          <Link href="/hub" className="shrink-0">
+            <Button variant="secondary" size="sm" className="h-7 px-2.5 text-xs font-semibold">
+              ← Retour
+            </Button>
           </Link>
         </div>
       </div>
@@ -234,18 +234,18 @@ function DraggableCard({
       variants={widgetVariants}
       className={`relative w-full h-auto md:w-auto md:h-full ${slotClass}`}
       style={{
-        ...(dragging ? { willChange: 'transform', zIndex: 30 } : {}),
+        ...(dragging ? { willChange: 'transform', zIndex: 'var(--z-fab)' as const } : {}),
       }}
     >
-      <button
-        type="button"
+      <IconButton
+        variant="glass"
         onPointerDown={(e) => controls.start(e)}
-        className="!absolute top-1.5 right-1.5 md:top-2 md:right-2 z-20 h-6 w-6 md:h-8 md:w-8 !rounded-full glass interactive flex items-center justify-center text-[var(--lkv-primary)] cursor-grab touch-none focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)]"
+        className="absolute right-1.5 top-1.5 z-[var(--z-sticky)] h-6 w-6 cursor-grab touch-none text-[var(--lkv-primary)] md:right-2 md:top-2 md:h-8 md:w-8"
         aria-label={`Déplacer le widget ${LABEL[id] ?? id}`}
       >
         <Icon name="grip-vertical" size={12} className="md:hidden" aria-hidden="true" />
         <Icon name="grip-vertical" size={16} className="hidden md:block" aria-hidden="true" />
-      </button>
+      </IconButton>
       <div className="h-full min-h-0 overflow-hidden [&>article]:h-full [&>article]:min-h-0 [&>article]:flex [&>article]:flex-col">
         {children}
       </div>

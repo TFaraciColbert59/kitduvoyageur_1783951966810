@@ -57,9 +57,9 @@ const html = renderToStaticMarkup(
 );
 
 describe('DepartEquipeSection (équipe + accès fiche officielle)', () => {
-  it('rend une unique section racine en verre aux classes canoniques', () => {
+  it('rend une unique section racine aux classes canoniques', () => {
     expect(html.match(/<section/g) ?? []).toHaveLength(1);
-    expect(html).toContain('glass rounded-[1.75rem] p-4');
+    expect(html).toContain('rounded-[var(--lkv-radius-card)]');
     expect(html).toContain('aria-label="Équipe"');
   });
 
@@ -82,7 +82,7 @@ describe('DepartEquipeSection (équipe + accès fiche officielle)', () => {
 
     const findSheetButton = (node: any): any => {
       if (!node || typeof node !== 'object') return null;
-      if (node.type === 'button' && node.props?.['aria-haspopup'] === 'dialog') return node;
+      if (node.props?.['aria-haspopup'] === 'dialog') return node;
       const kids = React.Children.toArray(node.props?.children);
       for (const kid of kids) {
         const found = findSheetButton(kid);

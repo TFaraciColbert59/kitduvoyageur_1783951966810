@@ -54,8 +54,8 @@ describe('DepartTerrainSection', () => {
 
   it('affiche la pastille de distance quand le sentier en fournit une', () => {
     const html = render({ trail, weather: null });
-    expect(html).toContain('glass-pill');
-    expect(html).toContain('42 km');
+    expect(html).toMatch(/>42 km<\/span>/);
+    expect(html).toContain('tabular-nums');
   });
 
   it('rend la météo quand elle est fournie, sans bloc vide sinon', () => {

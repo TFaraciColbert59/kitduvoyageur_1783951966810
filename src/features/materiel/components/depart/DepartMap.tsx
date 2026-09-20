@@ -1,7 +1,6 @@
 'use client';
 import Icon from '@/components/ui/Icon';
 import React, { useEffect, useRef, useState } from 'react';
-import Link from 'next/link';
 import 'leaflet/dist/leaflet.css';
 import { CompassIcon as Compass } from '@/components/icons/compass';
 import { NavigationIcon as Navigation } from '@/components/icons/navigation';
@@ -11,6 +10,7 @@ import { DownloadIcon as DownloadAnimated } from '@/components/icons/download';
 import { Maximize2Icon as Maximize2Animated } from '@/components/icons/maximize-2';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { Sheet } from '@/components/ui/Sheet';
+import { Card, Chip, EmptyState, IconButton } from '@/components/ui';
 import { formatDistanceKm } from '@/features/materiel/domain/departCalculations';
 import { cn } from '@/lib/utils';
 import type { MapTrail } from '@/components/explorer/types';
@@ -196,26 +196,20 @@ export function DepartMap({ trail, height = '240px', className, embedded = false
   // État vide si aucun tracé
   if (!trail) {
     return (
-      <div className="glass rounded-xl p-5 text-center space-y-2.5 border border-white/60">
-        <div className="w-10 h-10 rounded-2xl bg-white/40 border border-white/60 flex items-center justify-center mx-auto text-[var(--lkv-primary)]">
-          <Compass size={20} />
-        </div>
-        <div>
-          <h3 className="text-xs sm:text-[13px] font-bold text-[var(--lkv-primary)]">
-            Aucun tracé associé à ce départ
-          </h3>
-          <p className="text-[11px] text-[var(--lkv-text-muted)] mt-0.5">
-            Liez un itinéraire GPX pour activer la carte interactive.
-          </p>
-        </div>
-        <Link
-          href="/hub/depart"
-          className="glass-capsule-btn primary inline-flex items-center gap-1.5 text-xs py-1.5 px-3 font-semibold mt-1"
-        >
-          <Icon name="map-pin" size={12} />
-          <span>Associer une randonnée</span>
-        </Link>
-      </div>
+      <Card className="p-5 text-center">
+        <EmptyState
+          compact
+          icon={
+            <span className="flex h-10 w-10 items-center justify-center rounded-2xl border border-white/60 bg-white/40 text-[var(--lkv-primary)]">
+              <Compass size={20} />
+            </span>
+          }
+          title="Aucun tracé associé à ce départ"
+          description="Liez un itinéraire GPX pour activer la carte interactive."
+          actionLabel="Associer une randonnée"
+          actionHref="/hub/depart"
+        />
+      </Card>
     );
   }
 
@@ -252,9 +246,9 @@ export function DepartMap({ trail, height = '240px', className, embedded = false
   const actualHeight = embedded ? 'min(72dvh, 560px)' : height;
 
   return (
-    <div
+    <Card
       className={cn(
-        'glass rounded-xl overflow-hidden relative border border-white/60 flex flex-col shadow-xs',
+        'relative flex flex-col overflow-hidden p-0 shadow-xs',
         className
       )}
     >
@@ -272,10 +266,10 @@ export function DepartMap({ trail, height = '240px', className, embedded = false
 
         {/* Contrôles d'action rapide Liquid Glass */}
         <div className="flex items-center gap-1.5 shrink-0">
-          <button
-            type="button"
+          <IconButton
+            variant="glass"
             onClick={handleDownloadGPX}
-            className="glass-circle-btn !w-11 !h-11 text-[var(--lkv-primary)] cursor-pointer"
+            className="text-[var(--lkv-primary)]"
             title="Exporter le tracé"
             aria-label="Exporter le tracé"
           >
@@ -284,19 +278,19 @@ export function DepartMap({ trail, height = '240px', className, embedded = false
             ) : (
               <DownloadAnimated size={14} />
             )}
-          </button>
+          </IconButton>
           {!embedded && (
-            <button
-              type="button"
+            <IconButton
+              variant="glass"
               onClick={() => setIsFullscreen((v) => !v)}
-              className="glass-circle-btn !w-11 !h-11 text-[var(--lkv-primary)] cursor-pointer"
+              className="text-[var(--lkv-primary)]"
               title={isFullscreen ? 'Réduire' : 'Plein écran'}
               aria-label={
                 isFullscreen ? 'Quitter le mode plein écran' : 'Afficher la carte en plein écran'
               }
             >
               {isFullscreen ? <Minimize2 size={14} /> : <Maximize2Animated size={14} />}
-            </button>
+            </IconButton>
           )}
         </div>
       </div>
@@ -318,58 +312,52 @@ export function DepartMap({ trail, height = '240px', className, embedded = false
         />
 
         {/* Boutons flottants de contrôle Liquid Glass */}
-        <div className="absolute top-2.5 right-2.5 z-[400] flex flex-col gap-1.5">
-          <button
-            type="button"
+        <div className="absolute right-2.5 top-2.5 z-[var(--z-fab)] flex flex-col gap-1.5">
+          <IconButton
+            variant="glass"
             onClick={handleRecenter}
-            className="glass-circle-btn !w-11 !h-11 text-[var(--lkv-primary)] cursor-pointer shadow-md"
+            className="text-[var(--lkv-primary)] shadow-md"
             title="Recentrer le tracé"
+            aria-label="Recentrer le tracé"
           >
             <Navigation size={15} />
-          </button>
-          <button
-            type="button"
+          </IconButton>
+          <IconButton
+            variant="glass"
             onClick={() => setShowTilePicker((v) => !v)}
-            className="glass-circle-btn !w-11 !h-11 text-[var(--lkv-primary)] cursor-pointer shadow-md"
+            className="text-[var(--lkv-primary)] shadow-md"
             title="Changer de fond de carte"
+            aria-label="Changer de fond de carte"
+            aria-expanded={showTilePicker}
           >
             <Layers size={15} />
-          </button>
+          </IconButton>
         </div>
 
         {/* Sélecteur de tuiles */}
         {showTilePicker && (
-          <div className="absolute top-2.5 right-14 z-[401] p-1.5 rounded-2xl bg-white/95 shadow-xl border border-black/10 flex flex-col gap-1 text-[11px] font-semibold text-[var(--lkv-primary)]">
-            <button
-              type="button"
+          <div className="absolute right-14 top-2.5 z-[var(--z-drawer)] flex flex-col gap-1 rounded-2xl border border-black/10 bg-white/95 p-1.5 text-[11px] font-semibold text-[var(--lkv-primary)] shadow-xl">
+            <Chip
+              selected={tileMode === 'topo'}
               onClick={() => handleTileChange('topo')}
-              className={cn(
-                'px-2 py-1 rounded-xl text-left cursor-pointer',
-                tileMode === 'topo' && 'bg-[var(--lkv-primary)] text-white'
-              )}
+              className="justify-start text-left"
             >
               IGN Topo
-            </button>
-            <button
-              type="button"
+            </Chip>
+            <Chip
+              selected={tileMode === 'osm'}
               onClick={() => handleTileChange('osm')}
-              className={cn(
-                'px-2 py-1 rounded-xl text-left cursor-pointer',
-                tileMode === 'osm' && 'bg-[var(--lkv-primary)] text-white'
-              )}
+              className="justify-start text-left"
             >
               OpenStreetMap
-            </button>
-            <button
-              type="button"
+            </Chip>
+            <Chip
+              selected={tileMode === 'satellite'}
               onClick={() => handleTileChange('satellite')}
-              className={cn(
-                'px-2 py-1 rounded-xl text-left cursor-pointer',
-                tileMode === 'satellite' && 'bg-[var(--lkv-primary)] text-white'
-              )}
+              className="justify-start text-left"
             >
               Satellite
-            </button>
+            </Chip>
           </div>
         )}
       </div>
@@ -383,6 +371,6 @@ export function DepartMap({ trail, height = '240px', className, embedded = false
           <DepartMap trail={trail} embedded />
         </Sheet>
       )}
-    </div>
+    </Card>
   );
 }

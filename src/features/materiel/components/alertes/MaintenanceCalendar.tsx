@@ -30,9 +30,9 @@ export function MaintenanceCalendar({ events }: { events: MaintenanceEvent[] }) 
       <Eyebrow>Calendrier entretien</Eyebrow>
       <h3 id="cal-title" className="sr-only">Rappels d'entretien du mois</h3>
       <div className="mt-2 grid grid-cols-7 gap-1 text-center">
-        {['D','L','M','M','J','V','S'].map((d, i) => <span key={i} className="text-[10px] text-[color:var(--label-tertiary)]">{d}</span>)}
+        {['D','L','M','M','J','V','S'].map((d, i) => <span key={i} className="text-[10px] text-[color:var(--lkv-text-muted)]">{d}</span>)}
         {cells.map((day, i) => (
-          <div key={i} className={`h-8 flex items-center justify-center text-xs rounded-[var(--r-sm)] ${day === null ? '' : 'bg-stone-100'}`}>
+          <div key={i} className={`h-8 flex items-center justify-center text-xs rounded-[var(--lkv-radius-sm)] ${day === null ? '' : 'bg-[color:var(--lkv-surface-muted)]'}`}>
             {day !== null && (
               byDay.has(day) ? <Badge tone="warn">{day}</Badge> : <span className="text-[color:var(--lkv-primary)]">{day}</span>
             )}

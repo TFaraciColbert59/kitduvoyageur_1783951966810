@@ -3,6 +3,7 @@ import { useRouter } from 'next/navigation';
 import { ChevronDownIcon as ChevronDown } from '@/components/icons/chevron-down';
 import { useState } from 'react';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
+import { Button } from '@/components/ui';
 import { cn } from '@/lib/utils';
 
 interface KitSwitcherProps {
@@ -32,10 +33,12 @@ export function KitSwitcher({ kits, currentId }: KitSwitcherProps) {
 
   return (
     <div className="relative" aria-label="Changer de kit">
-      <button
-        type="button"
+      <Button
+        variant="secondary"
+        size="sm"
+        fullWidth
         onClick={() => setOpen((v) => !v)}
-        className="w-full glass-sub-card flex items-center justify-between gap-2 px-3 py-1.5 rounded-xl text-[11px] font-semibold text-[var(--lkv-primary)] hover:bg-white/40 transition-colors focus-visible:outline-2 focus-visible:outline-[var(--lkv-primary)] cursor-pointer"
+        className="justify-between gap-2 px-3 text-[11px]"
         aria-expanded={open}
         aria-haspopup="listbox"
       >
@@ -43,7 +46,7 @@ export function KitSwitcher({ kits, currentId }: KitSwitcherProps) {
         <motion.span animate={{ rotate: open ? 180 : 0 }} transition={{ duration: 0.18 }}>
           <ChevronDown size={12} aria-hidden="true" className="text-[var(--lkv-text-muted)]" />
         </motion.span>
-      </button>
+      </Button>
 
       <AnimatePresence>
         {open && (
@@ -54,24 +57,24 @@ export function KitSwitcher({ kits, currentId }: KitSwitcherProps) {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -4, scale: 0.97 }}
             transition={{ duration: 0.15 }}
-            className="absolute left-0 top-full mt-1 z-50 glass rounded-2xl shadow-lg w-full min-w-[200px] overflow-hidden border border-white/60"
+            className="absolute left-0 top-full z-[var(--z-fab)] mt-1 w-full min-w-[200px] overflow-hidden rounded-2xl border border-white/60 bg-[color:var(--lkv-surface-card)] shadow-lg"
           >
             {kits.map((kit) => (
               <li key={kit.id}>
-                <button
-                  type="button"
+                <Button
+                  variant="ghost"
                   role="option"
                   aria-selected={kit.id === currentId}
                   onClick={() => handleSelect(kit.id)}
                   className={cn(
-                    'w-full text-left px-3.5 py-2 text-xs font-medium transition-colors cursor-pointer',
+                    'h-auto w-full justify-start whitespace-normal rounded-none px-3.5 py-2 text-left text-xs font-medium',
                     kit.id === currentId
-                      ? 'text-[var(--lkv-primary)] font-semibold bg-white/40'
-                      : 'text-[var(--lkv-text-muted)] hover:bg-white/20 hover:text-[var(--lkv-primary)]'
+                      ? 'bg-[var(--lkv-hover-surface)] font-semibold text-[var(--lkv-primary)]'
+                      : 'text-[var(--lkv-text-muted)] hover:text-[var(--lkv-primary)]'
                   )}
                 >
                   {cleanKitName(kit.name)}
-                </button>
+                </Button>
               </li>
             ))}
           </motion.ul>
@@ -80,7 +83,7 @@ export function KitSwitcher({ kits, currentId }: KitSwitcherProps) {
 
       {open && (
         <div
-          className="fixed inset-0 z-40"
+          className="fixed inset-0 z-[var(--z-sticky)]"
           onClick={() => setOpen(false)}
           aria-hidden="true"
         />

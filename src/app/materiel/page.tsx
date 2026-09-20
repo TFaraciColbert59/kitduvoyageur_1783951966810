@@ -4,7 +4,6 @@ import {
   ArrowRight,
   Backpack,
   CalendarCheck,
-  ChevronRight,
   Package,
   Plus,
   Shield,
@@ -15,7 +14,7 @@ import {
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import AppShell from '@/components/shell/AppShell';
-import { Card, ListItem, PageHeader } from '@/components/ui';
+import { Card, EmptyState, ListItem, PageHeader, Section } from '@/components/ui';
 import { CompteBackground } from '@/components/compte/CompteBackground';
 import {
   getMaterielSummary,
@@ -155,7 +154,7 @@ function MaterielSurface({ summary }: { summary: MaterielSummary }) {
       {/* ── Ajout d'équipement : action immédiatement visible ── */}
       <Link
         href={HREFS.inventaire}
-        className="group flex min-h-[44px] items-center gap-3 rounded-3xl border border-[var(--lkv-forest-900)]/15 bg-[var(--lkv-forest-900)] p-4 text-sage-300 shadow-sm transition-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)] active:scale-[0.99] motion-reduce:transition-none"
+        className="group flex min-h-[44px] items-center gap-3 rounded-3xl border border-[var(--lkv-forest-900)]/15 bg-[var(--lkv-forest-900)] p-4 text-[var(--sage-300)] shadow-sm transition-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)] active:scale-[0.99] motion-reduce:transition-none"
       >
         <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-white/20 bg-white/10">
           <Plus size={19} aria-hidden="true" />
@@ -174,78 +173,59 @@ function MaterielSurface({ summary }: { summary: MaterielSummary }) {
       </Link>
 
       {/* ── Kit actif ── */}
-      <section
+      <Section
         aria-labelledby="materiel-kit-actif"
-        className="glass rounded-3xl border border-white/70 p-4 shadow-sm sm:p-5"
-      >
-        <div className="flex items-center justify-between gap-3">
-          <h2
-            id="materiel-kit-actif"
-            className="font-display text-base font-bold text-[var(--lkv-text-primary)]"
-          >
-            Kit actif
-          </h2>
+        title="Kit actif"
+        actions={
           <Link
             href={HREFS.kits}
             className="rounded-lg text-xs font-bold text-[var(--lkv-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)]"
           >
             Tous les kits →
           </Link>
-        </div>
-
-        {hasActiveKit ? (
-          <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
-            <div className="min-w-0">
-              <p className="truncate text-sm font-bold text-[var(--lkv-text-primary)]">
-                {activeKit.name}
-              </p>
-              <p className="text-xs text-[var(--lkv-text-secondary)]">
-                {hasKitItems
-                  ? `${summary.forget.checkedItems}/${summary.forget.totalItems} éléments cochés`
-                  : 'Aucun élément dans ce kit'}
-              </p>
+        }
+      >
+        <Card variant="compact" className="p-4 sm:p-5">
+          {hasActiveKit ? (
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="min-w-0">
+                <p className="truncate text-sm font-bold text-[var(--lkv-text-primary)]">
+                  {activeKit.name}
+                </p>
+                <p className="text-xs text-[var(--lkv-text-secondary)]">
+                  {hasKitItems
+                    ? `${summary.forget.checkedItems}/${summary.forget.totalItems} éléments cochés`
+                    : 'Aucun élément dans ce kit'}
+                </p>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <StatChip label="Poids" value={`${activeKit.weightKg.toFixed(1)} kg`} />
+                {hasKitItems && (
+                  <StatChip label="Prêt" value={`${activeKit.completionPct} %`} />
+                )}
+              </div>
             </div>
-            <div className="flex flex-wrap items-center gap-2">
-              <StatChip label="Poids" value={`${activeKit.weightKg.toFixed(1)} kg`} />
-              {hasKitItems && (
-                <StatChip label="Prêt" value={`${activeKit.completionPct} %`} />
-              )}
-            </div>
-          </div>
-        ) : (
-          <div className="mt-3 rounded-2xl border border-white/80 bg-white/60 p-4 text-center">
-            <p className="text-sm font-bold text-[var(--lkv-text-primary)]">
-              Aucun kit actif
-            </p>
-            <p className="mt-1 text-xs text-[var(--lkv-text-secondary)]">
-              {hasInventory
-                ? `Composez un kit depuis vos ${plural(summary.inventaire.count, 'équipement')}.`
-                : 'Ajoutez d’abord un équipement, puis composez votre premier kit.'}
-            </p>
-            <Link
-              href={hasInventory ? HREFS.kits : HREFS.inventaire}
-              className="glass-capsule-btn primary mt-3 inline-flex !text-white !bg-[var(--lkv-primary)] hover:opacity-95 shadow-sm font-semibold text-xs px-4 py-2"
-            >
-              {hasInventory ? 'Créer un kit' : 'Ajouter mon premier équipement'}
-            </Link>
-          </div>
-        )}
-      </section>
+          ) : (
+            <EmptyState
+              compact
+              title="Aucun kit actif"
+              description={
+                hasInventory
+                  ? `Composez un kit depuis vos ${plural(summary.inventaire.count, 'équipement')}.`
+                  : 'Ajoutez d’abord un équipement, puis composez votre premier kit.'
+              }
+              actionLabel={hasInventory ? 'Créer un kit' : 'Ajouter mon premier équipement'}
+              actionHref={hasInventory ? HREFS.kits : HREFS.inventaire}
+            />
+          )}
+        </Card>
+      </Section>
 
       {/* ── Éléments à préparer ── */}
-      <section
-        aria-labelledby="materiel-a-preparer"
-        className="glass rounded-3xl border border-white/70 p-4 shadow-sm sm:p-5"
-      >
-        <h2
-          id="materiel-a-preparer"
-          className="font-display text-base font-bold text-[var(--lkv-text-primary)]"
-        >
-          À préparer
-        </h2>
-
+      <Section aria-labelledby="materiel-a-preparer" title="À préparer">
+        <Card variant="compact" className="p-4 sm:p-5">
         {prepRows.length > 0 ? (
-          <ul className="mt-3 space-y-2">
+          <ul className="space-y-2">
             {prepRows.map((row) => (
               <li key={row.label}>
                 <Link
@@ -270,7 +250,7 @@ function MaterielSurface({ summary }: { summary: MaterielSummary }) {
             ))}
           </ul>
         ) : (
-          <p className="mt-3 flex items-center gap-2 text-sm text-[var(--lkv-text-secondary)]">
+          <p className="flex items-center gap-2 text-sm text-[var(--lkv-text-secondary)]">
             <Sparkles size={15} className="shrink-0 text-[var(--lkv-secondary)]" aria-hidden="true" />
             {hasInventory
               ? 'Rien à préparer pour l’instant : aucune alerte, checklist ou prêt en attente.'
@@ -286,37 +266,35 @@ function MaterielSurface({ summary }: { summary: MaterielSummary }) {
             <StatChip label="Fiabilité" value={`${summary.alertes.reliabilityScore} %`} />
           </div>
         )}
-      </section>
+        </Card>
+      </Section>
 
       {/* ── Accès ── */}
-      <nav aria-label="Accès matériel" className="space-y-3">
-        <h2 className="font-display text-base font-bold text-[var(--lkv-text-primary)]">
-          Accès
-        </h2>
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          {ACCESS_LINKS.map(({ label, hint, href, Icon }) => (
-            <Link
-              key={label}
-              href={href}
-              className="glass interactive flex min-h-[44px] items-center gap-3 rounded-2xl border border-white/70 p-3.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)]"
-            >
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/70 text-[var(--lkv-primary)]">
-                <Icon size={16} aria-hidden="true" />
-              </span>
-              <span className="min-w-0 flex-1">
-                <span className="block text-sm font-bold text-[var(--lkv-text-primary)]">
-                  {label}
-                </span>
-                <span className="block text-xs text-[var(--lkv-text-secondary)]">{hint}</span>
-              </span>
-              <ChevronRight
-                size={15}
-                className="shrink-0 text-[var(--lkv-text-muted)]"
-                aria-hidden="true"
-              />
-            </Link>
-          ))}
-        </div>
+      <nav aria-label="Accès matériel">
+        <Section as="div" title="Accès">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            {ACCESS_LINKS.map(({ label, hint, href, Icon }) => (
+              <Card key={label} variant="interactive" className="p-0">
+                <Link
+                  href={href}
+                  className="block rounded-[var(--lkv-radius-card)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)]"
+                >
+                  <ListItem
+                    as="div"
+                    leading={
+                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/70 text-[var(--lkv-primary)]">
+                        <Icon size={16} aria-hidden="true" />
+                      </span>
+                    }
+                    title={label}
+                    subtitle={hint}
+                    chevron
+                  />
+                </Link>
+              </Card>
+            ))}
+          </div>
+        </Section>
       </nav>
     </div>
   );

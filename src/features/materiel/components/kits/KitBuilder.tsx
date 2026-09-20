@@ -5,8 +5,7 @@ import React, { useState, useMemo } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Card } from '@/components/ui';
-import { Badge } from '@/components/ui/Badge';
+import { Badge, Button, Card, EmptyState, IconButton, Tabs } from '@/components/ui';
 import { useToast } from '@/contexts/ToastContext';
 import { addToCart } from '@/lib/cart';
 import { ChevronDownIcon as ChevronDown } from '@/components/icons/chevron-down';
@@ -538,17 +537,15 @@ export function KitBuilder({
       className="p-2.5 sm:p-3 h-full min-h-0 flex flex-col justify-between overflow-y-auto no-scrollbar gap-1.5 relative"
     >
       {/* Bouton IA icône circulaire standardisé en haut à droite avec tap feedback */}
-      <motion.button
-        type="button"
-        whileTap={{ scale: 0.9 }}
-        transition={{ type: 'spring', stiffness: 500, damping: 25 }}
+      <IconButton
+        variant="glass"
         onClick={() => setShowAi(!showAi)}
-        className="!absolute top-1.5 right-8 md:top-2 md:right-11 z-10 glass interactive h-6 w-6 md:h-8 md:w-8 !rounded-full flex items-center justify-center text-[var(--lkv-primary)] focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)] focus-visible:ring-offset-1"
+        className="absolute right-8 top-1.5 z-[var(--z-dropdown)] h-6 w-6 text-[var(--lkv-primary)] md:right-11 md:top-2 md:h-8 md:w-8"
         aria-label={showAi ? 'Fermer l’assistant IA' : 'Ouvrir l’assistant IA'}
       >
         <Icon name="sparkles" size={12} className="md:hidden" aria-hidden="true" />
         <Icon name="sparkles" size={15} className="hidden md:block" aria-hidden="true" />
-      </motion.button>
+      </IconButton>
 
       {/* En-tête compact */}
       <div className="flex items-center justify-between gap-2 pr-16 md:pr-20 shrink-0">
@@ -580,24 +577,23 @@ export function KitBuilder({
                 value={aiGoal}
                 onChange={(e) => setAiGoal(e.target.value)}
                 placeholder="Objectif d’optimisation (ex: Alléger le sac, Randonnée 3j)"
-                className="glass-input flex-1 text-[10px] text-[var(--lkv-primary)] h-6 py-0 px-2"
+                className="h-6 flex-1 rounded-full border border-[color:var(--lkv-border)] bg-[color:var(--lkv-field-bg)] px-2 text-[10px] text-[var(--lkv-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]"
               />
-              <motion.button
-                type="button"
-                whileTap={{ scale: 0.94 }}
-                transition={{ type: 'spring', stiffness: 500, damping: 25 }}
+              <Button
+                size="sm"
                 onClick={runAiOptimization}
                 disabled={aiLoading || kitItems.length === 0}
-                className="glass-capsule-btn primary shrink-0 h-6 text-[9px] font-bold px-2.5 disabled:opacity-40 focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)]"
+                loading={aiLoading}
+                className="h-6 shrink-0 px-2.5 text-[9px] font-bold"
               >
                 {aiLoading ? 'Analyse…' : 'Optimiser ✨'}
-              </motion.button>
+              </Button>
             </div>
 
             {aiError && <p className="text-[9px] text-[var(--lkv-danger)]">{aiError}</p>}
 
             {aiResult && (
-              <div className="glass-sub-card p-2 rounded-lg flex flex-col gap-1.5 text-[10px]">
+              <Card variant="compact" className="flex flex-col gap-1.5 p-2 text-[10px]">
                 <div className="flex items-center justify-between gap-1 flex-wrap">
                   <div className="flex items-center gap-1">
                     <Badge tone="sage">Score {aiResult.score}/100</Badge>
@@ -626,18 +622,18 @@ export function KitBuilder({
                         <span className="truncate">
                           ⚠️ À retirer : <b>{r.item}</b> ({r.reason})
                         </span>
-                        <button
-                          type="button"
+                        <Button
+                          variant="destructive"
                           onClick={() => {
                             const match = kitItems.find((k) =>
                               k.name.toLowerCase().includes(r.item.toLowerCase())
                             );
                             if (match) removeItem(match.id);
                           }}
-                          className="px-1.5 py-0.5 rounded bg-[var(--lkv-danger)]/10 hover:bg-[var(--lkv-danger)]/20 font-bold shrink-0 text-[8.5px]"
+                          className="h-5 shrink-0 rounded px-1.5 text-[8.5px] font-bold"
                         >
                           Retirer
-                        </button>
+                        </Button>
                       </div>
                     ))}
 
@@ -653,38 +649,21 @@ export function KitBuilder({
                     ))}
                   </div>
                 )}
-              </div>
+              </Card>
             )}
           </motion.div>
         )}
       </AnimatePresence>
 
       {/* Sélecteur de catégories par pilules avec accessibilité tab/tabpanel */}
-      <div
-        className="flex items-center gap-1 overflow-x-auto no-scrollbar shrink-0 py-0.5"
-        role="tablist"
-        aria-label="Catégories d'équipement"
-      >
-        {CANONICAL_CATEGORIES.map((cat) => {
-          const isActive = selectedCategory === cat;
-          return (
-            <button
-              key={cat}
-              role="tab"
-              aria-selected={isActive}
-              type="button"
-              onClick={() => setSelectedCategory(cat)}
-              className={`px-2 py-0.5 rounded-full text-[9px] font-bold transition-all shrink-0 focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)] focus-visible:ring-offset-1 ${
-                isActive
-                  ? 'bg-[var(--lkv-primary)] text-white '
-                  : 'bg-white/[0.08] text-[var(--lkv-primary-soft)] hover:bg-white/20 border border-white/20'
-              }`}
-            >
-              {cat}
-            </button>
-          );
-        })}
-      </div>
+      <Tabs
+        variant="scrollable"
+        ariaLabel="Catégories d'équipement"
+        value={selectedCategory}
+        onChange={setSelectedCategory}
+        options={CANONICAL_CATEGORIES.map((cat) => ({ id: cat, label: cat }))}
+        className="shrink-0 py-0.5"
+      />
 
       {/* GRILLE CENTRALE AVEC 2 ÉCRANS CÔTE-À-CÔTE (Hauteur considérablement accrue) */}
       <div className="flex-1 min-h-[220px] md:min-h-[280px] max-h-[380px] md:max-h-[440px] grid grid-cols-1 md:grid-cols-12 gap-2 content-stretch">
@@ -705,9 +684,7 @@ export function KitBuilder({
               className="flex-1"
             >
               {filteredCatalog.length === 0 ? (
-                <p className="text-[10px] text-[var(--lkv-text-muted)] py-4 text-center">
-                  Aucun équipement disponible dans cette catégorie.
-                </p>
+                <EmptyState compact title="Aucun équipement disponible dans cette catégorie." />
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-1.5">
                   {filteredCatalog.map((item) => {
@@ -717,9 +694,10 @@ export function KitBuilder({
                         : false;
 
                     return (
-                      <div
+                      <Card
                         key={item.id}
-                        className="glass-sub-card p-1.5 rounded-xl flex items-center justify-between gap-1.5 text-[11px] transition-all hover:border-white/60 group"
+                        variant="compact"
+                        className="group flex items-center justify-between gap-1.5 p-1.5 text-[11px]"
                       >
                         <div className="flex items-center gap-1.5 min-w-0 flex-1">
                           {/* Image réelle haute qualité */}
@@ -763,17 +741,14 @@ export function KitBuilder({
                         </div>
 
                         {/* Simple bouton plus circulaire avec retour tactile spring */}
-                        <motion.button
-                          type="button"
+                        <IconButton
+                          size="sm"
+                          variant={isAdded ? 'ghost' : 'solid'}
                           onClick={() => handleAddItem(item)}
                           disabled={isAdded}
-                          whileTap={isAdded ? undefined : { scale: 0.86 }}
-                          transition={{ type: 'spring', stiffness: 500, damping: 25 }}
                           aria-label={`Ajouter ${item.name} au kit`}
-                          className={`h-6 w-6 !rounded-full flex items-center justify-center transition-all shrink-0 focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)] focus-visible:ring-offset-1 ${
-                            isAdded
-                              ? 'bg-white/10 text-[var(--lkv-text-muted)] cursor-default'
-                              : 'glass interactive text-[var(--lkv-primary)] hover:bg-[var(--lkv-primary)] hover:text-white border border-white/40 shadow-inner'
+                          className={`h-6 w-6 shrink-0 ${
+                            isAdded ? 'bg-white/10 text-[var(--lkv-text-muted)]' : ''
                           }`}
                         >
                           {isAdded ? (
@@ -781,8 +756,8 @@ export function KitBuilder({
                           ) : (
                             <Icon name="plus" size={12} strokeWidth={2.5} aria-hidden="true" />
                           )}
-                        </motion.button>
-                      </div>
+                        </IconButton>
+                      </Card>
                     );
                   })}
                 </div>
@@ -806,27 +781,20 @@ export function KitBuilder({
             </motion.span>
           </div>
 
-          <div
-            className="glass-sub-card p-1.5 rounded-xl flex-1 min-h-[90px] overflow-y-auto no-scrollbar flex flex-col gap-1"
+          <Card
+            variant="compact"
+            className="flex flex-1 min-h-[90px] flex-col gap-1 overflow-y-auto p-1.5 no-scrollbar"
             role="list"
             aria-label="Articles du kit en cours d'assemblage"
           >
             {kitItems.length === 0 ? (
-              <div
-                role="listitem"
-                className="py-5 text-center text-[10px] text-[var(--lkv-text-muted)] flex flex-col items-center justify-center gap-1.5"
-              >
-                <span className="text-xl opacity-30" aria-hidden="true">
-                  🎒
-                </span>
-                <span className="font-semibold text-[var(--lkv-primary-soft)] text-[10px]">
-                  Kit vide
-                </span>
-                <span className="text-[8.5px] text-[var(--lkv-text-muted)]/80 leading-relaxed">
-                  Cliquez sur «{' '}
-                  <Icon name="plus" size={9} className="inline align-baseline" aria-hidden="true" />{' '}
-                  » à gauche pour assembler.
-                </span>
+              <div role="listitem">
+                <EmptyState
+                  compact
+                  icon={<span aria-hidden="true">🎒</span>}
+                  title="Kit vide"
+                  description="Ajoutez des articles depuis le catalogue à gauche."
+                />
               </div>
             ) : (
               kitItems.map((item, idx) => (
@@ -836,7 +804,7 @@ export function KitBuilder({
                   initial={{ opacity: 0, x: 6 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
-                  className="glass-sub-card p-1 rounded-lg flex items-center justify-between gap-1 text-[10.5px]"
+                  className="flex items-center justify-between gap-1 rounded-lg border border-[color:var(--lkv-border-subtle)] p-1 text-[10.5px]"
                 >
                   <div className="flex items-center gap-1.5 min-w-0 flex-1">
                     <div className="relative h-6 w-6 rounded-md overflow-hidden bg-white/10 shrink-0 border border-white/15">
@@ -863,20 +831,18 @@ export function KitBuilder({
                       </div>
                     </div>
                   </div>
-                  <motion.button
-                    type="button"
-                    whileTap={{ scale: 0.84 }}
-                    transition={{ type: 'spring', stiffness: 500, damping: 25 }}
+                  <IconButton
+                    size="sm"
                     onClick={() => removeItem(item.id)}
                     aria-label={`Retirer ${item.name}`}
-                    className="text-[var(--lkv-text-muted)] hover:text-[var(--lkv-danger)] p-0.5 shrink-0 focus-visible:ring-1 focus-visible:ring-[var(--lkv-danger)] rounded"
+                    className="h-5 w-5 shrink-0 text-[var(--lkv-text-muted)] hover:text-[var(--lkv-danger)]"
                   >
                     <Icon name="trash2" size={10} aria-hidden="true" />
-                  </motion.button>
+                  </IconButton>
                 </motion.div>
               ))
             )}
-          </div>
+          </Card>
         </div>
       </div>
 
@@ -886,14 +852,14 @@ export function KitBuilder({
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="Nom du kit (ex: Bivouac 3j)"
-          className="glass-input text-[10.5px] text-[var(--lkv-primary)] h-7 py-0 px-3 rounded-full flex-1 min-w-[100px] border border-white/30"
+          className="h-7 min-w-[100px] flex-1 rounded-full border border-[color:var(--lkv-border)] bg-[color:var(--lkv-field-bg)] px-3 text-[10.5px] text-[var(--lkv-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]"
         />
         <div className="relative shrink-0">
           <select
             value={season}
             onChange={(e) => setSeason(e.target.value)}
             aria-label="Filtrer par saison"
-            className="glass interactive h-7 py-0 pl-2.5 pr-6 text-[10px] text-[var(--lkv-primary)] font-bold rounded-full cursor-pointer appearance-none outline-none border border-white/40 shadow-inner focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)]"
+            className="h-7 cursor-pointer appearance-none rounded-full border border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-card)] py-0 pl-2.5 pr-6 text-[10px] font-bold text-[var(--lkv-primary)] outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]"
           >
             <option value="toute_saison">🌿 Toutes saisons</option>
             <option value="ete">☀️ Été</option>
@@ -906,16 +872,15 @@ export function KitBuilder({
             className="absolute right-2 top-2.5 pointer-events-none text-[var(--lkv-primary)]"
           />
         </div>
-        <motion.button
-          type="button"
-          whileTap={{ scale: 0.94 }}
-          transition={{ type: 'spring', stiffness: 500, damping: 25 }}
+        <Button
+          size="sm"
           onClick={save}
           disabled={saving || kitItems.length === 0}
-          className="glass-capsule-btn primary h-7 text-[10.5px] font-bold px-3 rounded-full shrink-0 disabled:opacity-40 focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)]"
+          loading={saving}
+          className="h-7 shrink-0 px-3 text-[10.5px] font-bold"
         >
           {saving ? '…' : `Enregistrer (${kitItems.length})`}
-        </motion.button>
+        </Button>
       </div>
     </Card>
   );

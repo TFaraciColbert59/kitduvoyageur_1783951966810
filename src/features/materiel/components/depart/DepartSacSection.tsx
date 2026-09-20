@@ -1,5 +1,6 @@
 'use client';
 
+import { Card, Divider } from '@/components/ui';
 import { DepartWeightBreakdown } from '@/features/materiel/components/depart/DepartWeightBreakdown';
 import { DepartChecklist } from '@/features/materiel/components/depart/DepartChecklist';
 import type { DepartDetail } from '@/features/materiel/services/getDepartDetail';
@@ -18,7 +19,7 @@ export function DepartSacSection({ depart, kitItems, isRealKit }: DepartSacSecti
   );
 
   return (
-    <section className="glass rounded-[1.75rem] p-4 space-y-4" aria-label="Sac">
+    <Card as="section" className="space-y-4 p-4" aria-label="Sac">
       <header className="space-y-2">
         <div className="flex items-center justify-between gap-2">
           <p className="text-[10px] font-medium uppercase tracking-[0.14em] text-[var(--lkv-text-primary)]/70">
@@ -51,7 +52,7 @@ export function DepartSacSection({ depart, kitItems, isRealKit }: DepartSacSecti
         comparableTripName={depart.comparableTrip?.name}
       />
 
-      <hr className="border-t border-[var(--lkv-border-subtle)]" />
+      <Divider spacing="none" />
 
       <DepartChecklist
         items={kitItems}
@@ -60,6 +61,6 @@ export function DepartSacSection({ depart, kitItems, isRealKit }: DepartSacSecti
         kitId={depart.assignedKit.id}
         isRealKit={isRealKit}
       />
-    </section>
+    </Card>
   );
 }

@@ -86,8 +86,9 @@ export function KitsKpiCockpitCard({
             initial={{ opacity: 0, y: 4 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.2, delay: 0.05 + i * 0.04, ease: 'easeOut' }}
-            className={`glass-sub-card p-1 sm:p-1.5 flex flex-col justify-center gap-0.2 ${t.muted ? 'opacity-50' : ''}`}
+            className={t.muted ? 'opacity-50' : ''}
           >
+            <Card variant="compact" className="flex h-full flex-col justify-center gap-0.2 p-1 sm:p-1.5">
             <div className="flex items-center justify-between">
               <span className="text-[7.5px] sm:text-[8.5px] md:text-[9px] font-semibold uppercase tracking-wide text-[var(--lkv-primary-soft)] truncate">
                 {t.label}
@@ -102,6 +103,7 @@ export function KitsKpiCockpitCard({
                 {t.unit}
               </span>
             </span>
+            </Card>
           </motion.div>
         ))}
       </div>

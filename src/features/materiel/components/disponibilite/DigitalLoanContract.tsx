@@ -1,4 +1,4 @@
-import { Card } from '@/components/ui';
+import { Card, EmptyState } from '@/components/ui';
 import { Eyebrow } from '@/components/ui/Eyebrow';
 import type { LoanItem } from '@/features/materiel/services/getLoans';
 
@@ -10,13 +10,13 @@ export function DigitalLoanContract({ loan }: { loan: LoanItem | null }) {
       <h3 id="contract-title" className="sr-only">Contrat de prêt digital</h3>
       {loan ? (
         <dl className="mt-2 flex flex-col gap-2 text-sm">
-          <div className="flex justify-between"><dt className="text-[color:var(--label-tertiary)]">Emprunteur</dt><dd className="text-[color:var(--label)]">{loan.borrower_contact ?? '—'}</dd></div>
-          <div className="flex justify-between"><dt className="text-[color:var(--label-tertiary)]">Prêté le</dt><dd className="text-[color:var(--label)]">{loan.loaned_at ? new Date(loan.loaned_at).toLocaleDateString('fr-FR') : '—'}</dd></div>
-          <div className="flex justify-between"><dt className="text-[color:var(--label-tertiary)]">Retour prévu</dt><dd className="text-[color:var(--label)]">{loan.due_date ? new Date(loan.due_date).toLocaleDateString('fr-FR') : '—'}</dd></div>
-          <div className="flex justify-between"><dt className="text-[color:var(--label-tertiary)]">Statut</dt><dd className="text-[color:var(--label)]">{loan.status}</dd></div>
+          <div className="flex justify-between"><dt className="text-[color:var(--lkv-text-muted)]">Emprunteur</dt><dd className="text-[color:var(--lkv-text-primary)]">{loan.borrower_contact ?? '—'}</dd></div>
+          <div className="flex justify-between"><dt className="text-[color:var(--lkv-text-muted)]">Prêté le</dt><dd className="text-[color:var(--lkv-text-primary)]">{loan.loaned_at ? new Date(loan.loaned_at).toLocaleDateString('fr-FR') : '—'}</dd></div>
+          <div className="flex justify-between"><dt className="text-[color:var(--lkv-text-muted)]">Retour prévu</dt><dd className="text-[color:var(--lkv-text-primary)]">{loan.due_date ? new Date(loan.due_date).toLocaleDateString('fr-FR') : '—'}</dd></div>
+          <div className="flex justify-between"><dt className="text-[color:var(--lkv-text-muted)]">Statut</dt><dd className="text-[color:var(--lkv-text-primary)]">{loan.status}</dd></div>
         </dl>
       ) : (
-        <p className="mt-2 text-sm text-[color:var(--label-secondary)]">Sélectionnez un prêt pour voir son contrat.</p>
+        <EmptyState compact title="Sélectionnez un prêt pour voir son contrat." />
       )}
     </Card>
   );

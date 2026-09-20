@@ -1,30 +1,30 @@
 import Image from 'next/image';
 import type { InventoryItem } from '@/features/materiel/services/getInventory';
-import { Badge } from '@/components/ui/Badge';
+import { Badge, Card } from '@/components/ui';
 
 /** W-I-3 InventoryCard — carte d'objet (96px). */
 export function InventoryCard({ item, onSelect }: { item: InventoryItem; onSelect?: (item: InventoryItem) => void }) {
   return (
-    <button
-      type="button"
+    <Card
+      variant="interactive"
       onClick={() => onSelect?.(item)}
-      className="glass interactive p-2 flex flex-col gap-1 h-full text-left"
+      className="flex h-full flex-col gap-1 p-2 text-left"
     >
-      <div className="relative h-[44px] w-full rounded-[var(--r-sm)] overflow-hidden bg-stone-100">
+      <div className="relative h-[44px] w-full overflow-hidden rounded-[var(--lkv-radius-sm)] bg-[color:var(--lkv-surface-muted)]">
         {item.photo_url ? (
           <Image src={item.photo_url} alt={item.name} fill sizes="200px" className="object-cover" />
         ) : (
-          <div className="h-full w-full flex items-center justify-center text-[color:var(--label-tertiary)] text-[10px]">—</div>
+          <div className="flex h-full w-full items-center justify-center text-[10px] text-[color:var(--lkv-text-muted)]">—</div>
         )}
       </div>
-      <p className="text-[12px] font-medium text-[color:var(--label)] line-clamp-2 leading-tight">{item.name}</p>
+      <p className="line-clamp-2 text-[12px] font-medium leading-tight text-[color:var(--lkv-text-primary)]">{item.name}</p>
       <div className="flex items-center justify-between">
-        <span className="text-[10px] text-[color:var(--label-tertiary)]">
+        <span className="text-[10px] text-[color:var(--lkv-text-muted)]">
           {item.weight_g ? `${(item.weight_g / 1000).toFixed(2)} kg` : item.category}
         </span>
         {item.is_lent && <Badge tone="warn">Prêt</Badge>}
       </div>
-    </button>
+    </Card>
   );
 }
 

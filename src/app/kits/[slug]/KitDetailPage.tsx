@@ -9,7 +9,17 @@ import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
 import WeightGauge from '@/components/WeightGauge';
 import TopoSeparator from '@/components/TopoSeparator';
 import Icon from '@/components/ui/AppIcon';
-import { Card, PageHeader } from '@/components/ui';
+import {
+  Badge,
+  Button,
+  Card,
+  EmptyState,
+  ListItem,
+  LoadingState,
+  PageHeader,
+  Tabs,
+  type BadgeTone,
+} from '@/components/ui';
 import { saveCart, getCart } from '@/lib/cart';
 import { createClient } from '@/lib/supabase/client';
 
@@ -43,11 +53,16 @@ interface KitData {
   items?: KitItem[];
 }
 
-const difficultePill: Record<string, string> = {
-  Débutant: 'glass-pill',
-  Intermédiaire: 'glass-pill pill-warn',
-  Expert: 'glass-pill pill-danger',
+const DIFFICULTE_TONE: Record<string, BadgeTone> = {
+  Débutant: 'sage',
+  Intermédiaire: 'warn',
+  Expert: 'danger',
 };
+
+const TAB_OPTIONS = [
+  { id: 'composition', label: 'Composition' },
+  { id: 'conseils', label: 'Conseils terrain' },
+] as const;
 
 // Aucune donnée fictive : les kits proviennent uniquement de la table Supabase `kits`.
 // En cas d'échec, on affiche un vrai état d'erreur (voir loadKit).
@@ -141,15 +156,7 @@ export default function KitDetailPage() {
           <div data-lkv-material-theme="light" className="h-dvh overflow-hidden bg-transparent">
             <Header />
             <main className="h-full overflow-y-auto pt-20">
-              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-                <div className="glass-sub-card h-72 rounded-2xl animate-pulse mb-8" />
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                  <div className="lg:col-span-2 space-y-4">
-                    {[1, 2, 3, 4].map((i) => <div key={i} className="glass-sub-card h-16 rounded-2xl animate-pulse" />)}
-                  </div>
-                  <div className="glass-sub-card h-64 rounded-2xl animate-pulse" />
-                </div>
-              </div>
+              <LoadingState label="Chargement du kit…" />
             </main>
           </div>
         </div>
@@ -157,12 +164,7 @@ export default function KitDetailPage() {
         {/* ── MOBILE ── */}
         <div className="block md:hidden">
           <MobilePageShell>
-            <div className="px-3 pt-6 pb-24 flex items-center justify-center min-h-[50dvh]">
-              <div className="text-center">
-                <span className="inline-block h-8 w-8 rounded-full border-2 border-white/30 border-t-[#17402C] animate-spin" />
-                <p className="mt-3 text-[13px] text-[#5A7064]">Chargement du kit...</p>
-              </div>
-            </div>
+            <LoadingState label="Chargement du kit…" className="min-h-[50dvh]" />
           </MobilePageShell>
         </div>
       </>
@@ -177,12 +179,21 @@ export default function KitDetailPage() {
           <div data-lkv-material-theme="light" className="h-dvh overflow-hidden bg-transparent">
             <Header />
             <main className="h-full overflow-y-auto pt-20">
-              <div className="min-h-[60dvh] flex items-center justify-center px-4">
-                <Card tone="sage" className="p-8 max-w-md w-full text-center">
-                  <Icon name="ExclamationTriangleIcon" size={40} className="mx-auto mb-4 text-[#C89A3B]" />
-                  <h1 className="font-display font-bold text-2xl text-[#17402C] mb-2">Kit introuvable</h1>
-                  <p className="text-sm text-[#5A7064] mb-6">{error || 'Ce kit n\'existe pas ou a été supprimé.'}</p>
-                  <Link href="/kits" className="glass-capsule-btn primary">Voir tous les kits</Link>
+              <div className="flex min-h-[60dvh] items-center justify-center px-4">
+                <Card tone="sage" className="w-full max-w-md p-8">
+                  <EmptyState
+                    icon={
+                      <Icon
+                        name="ExclamationTriangleIcon"
+                        size={40}
+                        className="text-[var(--lkv-warning)]"
+                      />
+                    }
+                    title="Kit introuvable"
+                    description={error || 'Ce kit n\'existe pas ou a été supprimé.'}
+                    actionLabel="Voir tous les kits"
+                    actionHref="/kits"
+                  />
                 </Card>
               </div>
             </main>
@@ -192,13 +203,22 @@ export default function KitDetailPage() {
         {/* ── MOBILE ── */}
         <div className="block md:hidden">
           <MobilePageShell>
-            <div className="px-3 pt-20 text-center flex flex-col items-center gap-4">
-              <p className="text-[40px] leading-none">🔧</p>
-              <h1 className="font-display font-bold text-[20px] text-[#17402C]">Kit introuvable</h1>
-              <p className="text-sm text-[#5A7064]">{error || 'Ce kit n\'existe pas ou a été supprimé.'}</p>
-              <Link href="/kits" className="glass-capsule-btn primary">
-                <span>Voir tous les kits</span>
-              </Link>
+            <div className="px-3 pt-20">
+              <Card tone="sage" className="p-6">
+                <EmptyState
+                  icon={
+                    <Icon
+                      name="ExclamationTriangleIcon"
+                      size={40}
+                      className="text-[var(--lkv-warning)]"
+                    />
+                  }
+                  title="Kit introuvable"
+                  description={error || 'Ce kit n\'existe pas ou a été supprimé.'}
+                  actionLabel="Voir tous les kits"
+                  actionHref="/kits"
+                />
+              </Card>
             </div>
           </MobilePageShell>
         </div>
@@ -214,34 +234,34 @@ export default function KitDetailPage() {
           <Header />
           <main className="h-full overflow-y-auto">
             {/* Hero */}
-            <section className="relative h-72 md:h-80 overflow-hidden">
+            <section className="relative h-72 overflow-hidden md:h-80">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={kit.image} alt={kit.alt} className="w-full h-full object-cover" />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#1C3B2A] via-[#1C3B2A]/25 to-transparent" />
+              <img src={kit.image} alt={kit.alt} className="h-full w-full object-cover" />
+              <div className="absolute inset-0 bg-gradient-to-t from-[var(--lkv-forest-900)] via-[var(--lkv-forest-900)]/25 to-transparent" />
               <div className="absolute bottom-0 left-0 right-0 p-6 md:p-10">
-                <div className="max-w-7xl mx-auto space-y-2">
+                <div className="mx-auto max-w-7xl space-y-2">
                   <nav
-                    className="inline-flex items-center gap-2 text-xs text-[#17402C]/70 bg-[rgba(255,255,255,0.92)] border border-[rgba(255,255,255,0.60)] rounded-sm px-3 py-2"
+                    className="inline-flex items-center gap-2 rounded-sm border border-white/60 bg-[color:var(--card-tint-strong)] px-3 py-2 text-xs text-[var(--lkv-primary)]"
                     aria-label="Fil d'Ariane"
                   >
-                    <Link href="/" className="hover:text-[#17402C] transition-colors">Accueil</Link>
+                    <Link href="/" className="transition-colors hover:text-[var(--lkv-primary-hover)]">Accueil</Link>
                     <span aria-hidden="true">/</span>
-                    <Link href="/kits" className="hover:text-[#17402C] transition-colors">Kits</Link>
+                    <Link href="/kits" className="transition-colors hover:text-[var(--lkv-primary-hover)]">Kits</Link>
                     <span aria-hidden="true">/</span>
-                    <span className="text-[#17402C] font-medium" aria-current="page">{kit.nom}</span>
+                    <span className="font-medium text-[var(--lkv-text-primary)]" aria-current="page">{kit.nom}</span>
                   </nav>
 
-                  <div className="bg-[rgba(255,255,255,0.92)] border border-[rgba(255,255,255,0.60)] rounded-sm px-3 py-2 max-w-3xl">
-                    <div className="flex flex-wrap items-center gap-2 mb-1">
-                      <span className={`${difficultePill[kit.difficulte] ?? 'glass-pill'}`}>
+                  <div className="max-w-3xl rounded-sm border border-white/60 bg-[color:var(--card-tint-strong)] px-3 py-2">
+                    <div className="mb-1 flex flex-wrap items-center gap-2">
+                      <Badge tone={DIFFICULTE_TONE[kit.difficulte] ?? 'stone'}>
                         {kit.difficulte.toUpperCase()}
-                      </span>
-                      <span className="glass-pill pill-info">{kit.activite.toUpperCase()}</span>
+                      </Badge>
+                      <Badge tone="info">{kit.activite.toUpperCase()}</Badge>
                     </div>
-                    <h1 className="font-display font-bold text-3xl md:text-4xl text-[#17402C] tracking-tight leading-tight">
+                    <h1 className="font-display text-3xl font-bold leading-tight tracking-tight text-[var(--lkv-text-primary)] md:text-4xl">
                       {kit.nom}
                     </h1>
-                    <p className="text-[#365233] mt-1 text-sm">
+                    <p className="mt-1 text-sm text-[var(--lkv-text-secondary)]">
                       📍 {kit.destination} · 🗓 {kit.saison}
                     </p>
                   </div>
@@ -249,80 +269,89 @@ export default function KitDetailPage() {
               </div>
             </section>
 
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+              <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
                 {/* Main Content */}
                 <div className="lg:col-span-2">
-                  <p className="text-[#CCE0D4] mb-6 leading-relaxed text-sm">{kit.description}</p>
+                  <p className="mb-6 text-sm leading-relaxed text-[var(--lkv-forest-100)]">{kit.description}</p>
 
-                  {/* Tabs */}
-                  <div className="glass-capsule-bar w-fit mb-6" role="tablist" aria-label="Contenu du kit">
-                    {(['composition', 'conseils'] as const).map((tab) => (
-                      <button
-                        key={tab}
-                        role="tab"
-                        aria-selected={activeTab === tab}
-                        onClick={() => setActiveTab(tab)}
-                        className={`glass-capsule-btn ${activeTab === tab ? 'primary' : ''}`}
-                      >
-                        {tab === 'composition' ? 'Composition' : 'Conseils terrain'}
-                      </button>
-                    ))}
-                  </div>
+                  <Tabs
+                    options={TAB_OPTIONS}
+                    value={activeTab}
+                    onChange={(id) => setActiveTab(id === 'conseils' ? 'conseils' : 'composition')}
+                    ariaLabel="Contenu du kit"
+                    className="mb-6 max-w-xs"
+                  />
 
                   {activeTab === 'composition' && (
-                    <div className="space-y-3" role="tabpanel" aria-label="Composition du kit">
+                    <div className="space-y-2" role="tabpanel" aria-label="Composition du kit">
                       {(kit.items ?? []).length === 0 ? (
-                        <p className="text-sm text-[#CCE0D4]">Aucun article dans ce kit.</p>
+                        <EmptyState compact title="Aucun article dans ce kit." />
                       ) : (
-                        (kit.items ?? []).map((item) => (
-                          <div
-                            key={item.id}
-                            className={`glass-sub-card p-3 flex items-center gap-3 rounded-2xl transition-all cursor-pointer ${
-                              selectedItems.has(item.id) ? 'border-[#17402C]/40 bg-white/25' : ''
-                            }`}
-                            onClick={() => toggleItem(item.id)}
-                          >
-                            <span className={`glass-check-circle ${selectedItems.has(item.id) ? 'checked' : ''}`}>
-                              {selectedItems.has(item.id) && <Icon name="CheckIcon" size={10} className="text-white" />}
-                            </span>
-                            <div className="relative w-12 h-12 rounded-xl overflow-hidden flex-shrink-0 border border-white/30">
-                              {/* eslint-disable-next-line @next/next/no-img-element */}
-                              <img src={item.image} alt={item.alt} className="w-full h-full object-cover" />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2 flex-wrap">
-                                <p className="font-semibold text-[#17402C] text-sm truncate">{item.nom}</p>
-                                {item.essentiel && (
-                                  <span className="glass-pill">Essentiel</span>
-                                )}
-                                {item.quantite > 1 && (
-                                  <span className="text-[10px] font-mono text-[#5A7064]">×{item.quantite}</span>
-                                )}
-                              </div>
-                              <p className="text-xs text-[#5A7064] mt-0.5">{item.categorie} · {item.poids_g}g</p>
-                            </div>
-                            <div className="text-right flex-shrink-0">
-                              <p className="font-mono font-bold text-[#17402C] text-sm">{(item.prix_cents / 100).toFixed(2)} €</p>
-                            </div>
-                          </div>
-                        ))
+                        (kit.items ?? []).map((item) => {
+                          const selected = selectedItems.has(item.id);
+                          return (
+                            <Card key={item.id} variant="compact" className="p-0">
+                              <ListItem
+                                onClick={() => toggleItem(item.id)}
+                                selected={selected}
+                                leading={
+                                  <span className="flex items-center gap-3">
+                                    <span
+                                      className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border ${
+                                        selected
+                                          ? 'border-[var(--lkv-primary)] bg-[var(--lkv-primary)] text-white'
+                                          : 'border-white/40 bg-white/40'
+                                      }`}
+                                      aria-hidden="true"
+                                    >
+                                      {selected && <Icon name="CheckIcon" size={10} className="text-white" />}
+                                    </span>
+                                    <span className="relative h-12 w-12 flex-shrink-0 overflow-hidden rounded-xl border border-white/30">
+                                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                                      <img src={item.image} alt={item.alt} className="h-full w-full object-cover" />
+                                    </span>
+                                  </span>
+                                }
+                                title={
+                                  <span className="flex flex-wrap items-center gap-2">
+                                    <span className="truncate">{item.nom}</span>
+                                    {item.essentiel && <Badge tone="sage">Essentiel</Badge>}
+                                    {item.quantite > 1 && (
+                                      <span className="font-mono text-[10px] text-[var(--lkv-text-secondary)]">
+                                        ×{item.quantite}
+                                      </span>
+                                    )}
+                                  </span>
+                                }
+                                subtitle={`${item.categorie} · ${item.poids_g}g`}
+                                metadata={
+                                  <span className="font-mono font-bold text-[var(--lkv-text-primary)]">
+                                    {(item.prix_cents / 100).toFixed(2)} €
+                                  </span>
+                                }
+                              />
+                            </Card>
+                          );
+                        })
                       )}
                     </div>
                   )}
 
                   {activeTab === 'conseils' && (
-                    <div className="space-y-3" role="tabpanel" aria-label="Conseils terrain">
+                    <div className="space-y-2" role="tabpanel" aria-label="Conseils terrain">
                       {(kit.conseils ?? []).length === 0 ? (
-                        <p className="text-sm text-[#CCE0D4]">Aucun conseil disponible pour ce kit.</p>
+                        <EmptyState compact title="Aucun conseil disponible pour ce kit." />
                       ) : (
                         (kit.conseils ?? []).map((conseil, i) => (
-                          <div key={i} className="glass-sub-card p-3 rounded-2xl flex items-start gap-3">
-                            <div className="w-6 h-6 rounded-full bg-white/25 border border-white/30 flex items-center justify-center flex-shrink-0">
-                              <span className="font-mono font-bold text-[10px] text-[#17402C]">{String(i + 1).padStart(2, '0')}</span>
+                          <Card key={i} variant="compact" className="flex items-start gap-3 p-3">
+                            <div className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full border border-white/30 bg-white/25">
+                              <span className="font-mono text-[10px] font-bold text-[var(--lkv-text-primary)]">
+                                {String(i + 1).padStart(2, '0')}
+                              </span>
                             </div>
-                            <p className="text-sm text-[#365233] leading-relaxed">{conseil}</p>
-                          </div>
+                            <p className="text-sm leading-relaxed text-[var(--lkv-text-secondary)]">{conseil}</p>
+                          </Card>
                         ))
                       )}
                     </div>
@@ -333,53 +362,53 @@ export default function KitDetailPage() {
                 <div className="lg:col-span-1">
                   <div className="sticky top-24 space-y-4">
                     <Card tone="sage" className="p-5">
-                      <h3 className="font-display font-bold text-[#17402C] mb-4">
+                      <h3 className="mb-4 font-display font-bold text-[var(--lkv-text-primary)]">
                         Récapitulatif
                       </h3>
-                      <div className="space-y-3 mb-4">
+                      <div className="mb-4 space-y-3">
                         <div className="flex justify-between text-sm">
-                          <span className="text-[#5A7064]">Articles sélectionnés</span>
-                          <span className="font-mono font-bold text-[#17402C]">{selectedItemsData.length}</span>
+                          <span className="text-[var(--lkv-text-secondary)]">Articles sélectionnés</span>
+                          <span className="font-mono font-bold text-[var(--lkv-text-primary)]">{selectedItemsData.length}</span>
                         </div>
                         <div className="flex justify-between text-sm">
-                          <span className="text-[#5A7064]">Poids total</span>
-                          <span className="font-mono font-bold text-[#17402C]">{(totalPoids / 1000).toFixed(2)} kg</span>
+                          <span className="text-[var(--lkv-text-secondary)]">Poids total</span>
+                          <span className="font-mono font-bold text-[var(--lkv-text-primary)]">{(totalPoids / 1000).toFixed(2)} kg</span>
                         </div>
                         <WeightGauge weightG={totalPoids} maxG={15000} size="sm" />
-                        <div className="flex justify-between text-base font-bold pt-2 border-t border-white/30">
-                          <span className="text-[#17402C]">Total</span>
-                          <span className="font-mono text-[#17402C]">{(totalPrix / 100).toFixed(2)} €</span>
+                        <div className="flex justify-between border-t border-white/30 pt-2 text-base font-bold">
+                          <span className="text-[var(--lkv-text-primary)]">Total</span>
+                          <span className="font-mono text-[var(--lkv-text-primary)]">{(totalPrix / 100).toFixed(2)} €</span>
                         </div>
                       </div>
-                      <button
+                      <Button
                         onClick={handleAddAllToCart}
                         disabled={selectedItemsData.length === 0}
-                        className="glass-capsule-btn primary w-full justify-center h-11"
+                        fullWidth
                       >
                         {addedToCart ? '✓ Ajouté au panier' : 'Ajouter au panier'}
-                      </button>
+                      </Button>
                     </Card>
 
                     <Card tone="sage" className="p-5">
-                      <h3 className="font-display font-bold text-[#17402C] text-sm mb-3">
+                      <h3 className="mb-3 font-display text-sm font-bold text-[var(--lkv-text-primary)]">
                         Infos kit
                       </h3>
-                      <div className="space-y-2 text-xs text-[#5A7064]">
+                      <div className="space-y-2 text-xs text-[var(--lkv-text-secondary)]">
                         <div className="flex justify-between">
                           <span>Destination</span>
-                          <span className="font-medium text-[#17402C]">{kit.destination}</span>
+                          <span className="font-medium text-[var(--lkv-text-primary)]">{kit.destination}</span>
                         </div>
                         <div className="flex justify-between">
                           <span>Saison</span>
-                          <span className="font-medium text-[#17402C]">{kit.saison}</span>
+                          <span className="font-medium text-[var(--lkv-text-primary)]">{kit.saison}</span>
                         </div>
                         <div className="flex justify-between">
                           <span>Activité</span>
-                          <span className="font-medium text-[#17402C]">{kit.activite}</span>
+                          <span className="font-medium text-[var(--lkv-text-primary)]">{kit.activite}</span>
                         </div>
-                        <div className="flex justify-between items-center">
+                        <div className="flex items-center justify-between">
                           <span>Difficulté</span>
-                          <span className={`${difficultePill[kit.difficulte] ?? 'glass-pill'}`}>{kit.difficulte}</span>
+                          <Badge tone={DIFFICULTE_TONE[kit.difficulte] ?? 'stone'}>{kit.difficulte}</Badge>
                         </div>
                       </div>
                     </Card>
@@ -397,90 +426,85 @@ export default function KitDetailPage() {
       {/* ── MOBILE (COCKPIT LIQUID GLASS) ── */}
       <div className="block md:hidden">
         <MobilePageShell>
-          <div className="px-3 pt-3 pb-24 flex flex-col gap-3.5">
+          <div className="flex flex-col gap-3.5 px-3 pb-24 pt-3">
             <PageHeader
               variant="inline"
               title={kit.nom}
               subtitle={`${kit.difficulte} · ${kit.activite}`}
-              back={
-                <Link
-                  href="/kits"
-                  className="glass interactive h-7.5 px-3 rounded-full flex items-center text-xs font-semibold text-[#17402C] border border-white/40 shadow-inner shrink-0"
-                >
-                  ← Kits
-                </Link>
-              }
+              back
+              backHref="/kits"
+              backLabel="Kits"
             />
 
             {/* Mobile Hero Card */}
-            <Card tone="sage" className="overflow-hidden p-0 border border-white/40">
+            <Card tone="sage" className="overflow-hidden border border-white/40 p-0">
               <div className="relative h-44 w-full">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={kit.image} alt={kit.alt} className="w-full h-full object-cover" />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#1C3B2A]/95 via-[#1C3B2A]/30 to-transparent" />
+                <img src={kit.image} alt={kit.alt} className="h-full w-full object-cover" />
+                <div className="absolute inset-0 bg-gradient-to-t from-[var(--lkv-forest-900)]/95 via-[var(--lkv-forest-900)]/30 to-transparent" />
                 <div className="absolute bottom-3 left-3 right-3">
-                  <p className="text-xs font-medium text-[#17402C] bg-[rgba(255,255,255,0.92)] border border-[rgba(255,255,255,0.60)] rounded-sm px-2 py-1 inline-flex">
+                  <Badge tone="stone" className="border-white/60 bg-[color:var(--card-tint-strong)]">
                     📍 {kit.destination} · 🗓 {kit.saison}
-                  </p>
+                  </Badge>
                 </div>
               </div>
             </Card>
 
-            <p className="text-xs text-[#CCE0D4] leading-relaxed px-1">{kit.description}</p>
+            <p className="px-1 text-xs leading-relaxed text-[var(--lkv-forest-100)]">{kit.description}</p>
 
-            {/* Animated Tab Pill Selector */}
-            <div className="glass-capsule-bar w-full">
-              {(['composition', 'conseils'] as const).map((tab) => {
-                const isActive = activeTab === tab;
-                return (
-                  <button
-                    key={tab}
-                    type="button"
-                    onClick={() => setActiveTab(tab)}
-                    className={`glass-capsule-btn flex-1 ${isActive ? 'primary' : ''}`}
-                  >
-                    {tab === 'composition' ? 'Composition' : 'Conseils'}
-                  </button>
-                );
-              })}
-            </div>
+            <Tabs
+              options={TAB_OPTIONS}
+              value={activeTab}
+              onChange={(id) => setActiveTab(id === 'conseils' ? 'conseils' : 'composition')}
+              ariaLabel="Contenu du kit"
+            />
 
             {activeTab === 'composition' && (
               <div className="flex flex-col gap-2">
                 {(kit.items ?? []).length === 0 ? (
-                  <p className="text-xs text-[#CCE0D4] p-4 text-center">Aucun article dans ce kit.</p>
+                  <EmptyState compact title="Aucun article dans ce kit." />
                 ) : (
-                  (kit.items ?? []).map((item) => (
-                    <div
-                      key={item.id}
-                      onClick={() => toggleItem(item.id)}
-                      className={`glass-sub-card p-3 flex items-center gap-3 cursor-pointer rounded-2xl transition-all ${
-                        selectedItems.has(item.id) ? 'border-[#17402C]/40 bg-white/25' : ''
-                      }`}
-                    >
-                      <span className={`glass-check-circle ${selectedItems.has(item.id) ? 'checked' : ''}`}>
-                        {selectedItems.has(item.id) && <span className="text-[10px] font-bold">✓</span>}
-                      </span>
-                      <div className="w-10 h-10 rounded-xl overflow-hidden shrink-0 border border-white/30">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={item.image} alt={item.alt} className="w-full h-full object-cover" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                          <span className="font-semibold text-xs text-[#17402C] truncate">{item.nom}</span>
-                          {item.essentiel && (
-                            <span className="glass-pill !px-1.5 !py-0.5 !text-[9px]">
-                              Essentiel
+                  (kit.items ?? []).map((item) => {
+                    const selected = selectedItems.has(item.id);
+                    return (
+                      <Card key={item.id} variant="compact" className="p-0">
+                        <ListItem
+                          onClick={() => toggleItem(item.id)}
+                          selected={selected}
+                          leading={
+                            <span className="flex items-center gap-3">
+                              <span
+                                className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border ${
+                                  selected
+                                    ? 'border-[var(--lkv-primary)] bg-[var(--lkv-primary)] text-white'
+                                    : 'border-white/40 bg-white/40'
+                                }`}
+                                aria-hidden="true"
+                              >
+                                {selected && <span className="text-[10px] font-bold">✓</span>}
+                              </span>
+                              <span className="h-10 w-10 shrink-0 overflow-hidden rounded-xl border border-white/30">
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img src={item.image} alt={item.alt} className="h-full w-full object-cover" />
+                              </span>
                             </span>
-                          )}
-                        </div>
-                        <p className="text-[11px] text-[#5A7064] mt-0.5">{item.categorie} · {item.poids_g}g</p>
-                      </div>
-                      <div className="text-right shrink-0">
-                        <span className="text-xs font-mono font-bold text-[#17402C]">{(item.prix_cents / 100).toFixed(2)} €</span>
-                      </div>
-                    </div>
-                  ))
+                          }
+                          title={
+                            <span className="flex flex-wrap items-center gap-1.5">
+                              <span className="truncate">{item.nom}</span>
+                              {item.essentiel && <Badge tone="sage">Essentiel</Badge>}
+                            </span>
+                          }
+                          subtitle={`${item.categorie} · ${item.poids_g}g`}
+                          metadata={
+                            <span className="font-mono font-bold text-[var(--lkv-text-primary)]">
+                              {(item.prix_cents / 100).toFixed(2)} €
+                            </span>
+                          }
+                        />
+                      </Card>
+                    );
+                  })
                 )}
               </div>
             )}
@@ -488,48 +512,51 @@ export default function KitDetailPage() {
             {activeTab === 'conseils' && (
               <div className="flex flex-col gap-2">
                 {(kit.conseils ?? []).length === 0 ? (
-                  <p className="text-xs text-[#CCE0D4] p-4 text-center">Aucun conseil disponible pour ce kit.</p>
+                  <EmptyState compact title="Aucun conseil disponible pour ce kit." />
                 ) : (
                   (kit.conseils ?? []).map((conseil, i) => (
-                    <div key={i} className="glass-sub-card p-3 rounded-2xl flex items-start gap-3">
-                      <div className="w-6 h-6 rounded-full bg-white/25 border border-white/30 flex items-center justify-center shrink-0">
-                        <span className="text-[10px] font-mono font-bold text-[#17402C]">{String(i + 1).padStart(2, '0')}</span>
+                    <Card key={i} variant="compact" className="flex items-start gap-3 p-3">
+                      <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-white/30 bg-white/25">
+                        <span className="font-mono text-[10px] font-bold text-[var(--lkv-text-primary)]">
+                          {String(i + 1).padStart(2, '0')}
+                        </span>
                       </div>
-                      <p className="text-xs text-[#365233] leading-relaxed">{conseil}</p>
-                    </div>
+                      <p className="text-xs leading-relaxed text-[var(--lkv-text-secondary)]">{conseil}</p>
+                    </Card>
                   ))
                 )}
               </div>
             )}
 
             {/* Mobile Summary CTA */}
-            <Card tone="sage" className="p-4 rounded-2xl flex flex-col gap-3 mt-2">
-              <h3 className="font-display font-bold text-sm text-[#17402C]">Récapitulatif</h3>
-              <div className="flex justify-between text-xs text-[#5A7064]">
+            <Card tone="sage" className="mt-2 flex flex-col gap-3 p-4">
+              <h3 className="font-display text-sm font-bold text-[var(--lkv-text-primary)]">Récapitulatif</h3>
+              <div className="flex justify-between text-xs text-[var(--lkv-text-secondary)]">
                 <span>Articles sélectionnés</span>
-                <span className="font-mono font-bold text-[#17402C]">{selectedItemsData.length}</span>
+                <span className="font-mono font-bold text-[var(--lkv-text-primary)]">{selectedItemsData.length}</span>
               </div>
-              <div className="flex justify-between text-xs text-[#5A7064]">
+              <div className="flex justify-between text-xs text-[var(--lkv-text-secondary)]">
                 <span>Poids total</span>
-                <span className="font-mono font-bold text-[#17402C]">{(totalPoids / 1000).toFixed(2)} kg</span>
+                <span className="font-mono font-bold text-[var(--lkv-text-primary)]">{(totalPoids / 1000).toFixed(2)} kg</span>
               </div>
-              <div className="flex justify-between text-sm font-bold pt-2 border-t border-white/30">
-                <span className="text-[#17402C]">Total</span>
-                <span className="font-mono text-[#17402C]">{(totalPrix / 100).toFixed(2)} €</span>
+              <div className="flex justify-between border-t border-white/30 pt-2 text-sm font-bold">
+                <span className="text-[var(--lkv-text-primary)]">Total</span>
+                <span className="font-mono text-[var(--lkv-text-primary)]">{(totalPrix / 100).toFixed(2)} €</span>
               </div>
-              <button
-                type="button"
+              <Button
                 onClick={handleAddAllToCart}
                 disabled={selectedItemsData.length === 0}
-                className="glass-capsule-btn primary w-full justify-center h-11 text-xs mt-1"
+                fullWidth
+                size="lg"
+                className="mt-1"
               >
                 {addedToCart ? '✓ Ajouté au panier' : 'Ajouter au panier'}
-              </button>
+              </Button>
             </Card>
 
             {/* Kit Info */}
-            <Card tone="sage" className="p-4 rounded-2xl flex flex-col gap-2">
-              <h3 className="font-display font-bold text-xs text-[#17402C] mb-1">Détails du kit</h3>
+            <Card tone="sage" className="flex flex-col gap-2 p-4">
+              <h3 className="mb-1 font-display text-xs font-bold text-[var(--lkv-text-primary)]">Détails du kit</h3>
               <div className="flex flex-col gap-1.5 text-xs">
                 {[
                   { label: 'Destination', value: kit.destination },
@@ -538,8 +565,8 @@ export default function KitDetailPage() {
                   { label: 'Difficulté', value: kit.difficulte },
                 ].map((info) => (
                   <div key={info.label} className="flex justify-between py-0.5">
-                    <span className="text-[#5A7064]">{info.label}</span>
-                    <span className="font-medium text-[#17402C]">{info.value}</span>
+                    <span className="text-[var(--lkv-text-secondary)]">{info.label}</span>
+                    <span className="font-medium text-[var(--lkv-text-primary)]">{info.value}</span>
                   </div>
                 ))}
               </div>

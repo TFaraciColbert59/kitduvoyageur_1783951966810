@@ -19,17 +19,17 @@ function getWeatherIcon(code: number, size = 16) {
   if (code <= 2)
     return <Icon name="cloud-sun" size={size} className="text-[var(--lkv-warning)]/80" aria-hidden="true" />;
   if (code === 3)
-    return <Icon name="cloud" size={size} className="text-stone-500" aria-hidden="true" />;
+    return <Icon name="cloud" size={size} className="text-[var(--stone-500)]" aria-hidden="true" />;
   if (code <= 48)
-    return <Icon name="cloud-fog" size={size} className="text-stone-400" aria-hidden="true" />;
+    return <Icon name="cloud-fog" size={size} className="text-[var(--stone-400)]" aria-hidden="true" />;
   if (code <= 57)
-    return <Icon name="cloud-drizzle" size={size} className="text-sky-600" aria-hidden="true" />;
+    return <Icon name="cloud-drizzle" size={size} className="text-[var(--lkv-info)]" aria-hidden="true" />;
   if (code <= 67)
-    return <Icon name="cloud-rain" size={size} className="text-sky-600" aria-hidden="true" />;
+    return <Icon name="cloud-rain" size={size} className="text-[var(--lkv-info)]" aria-hidden="true" />;
   if (code <= 77)
-    return <Icon name="cloud-snow" size={size} className="text-indigo-400" aria-hidden="true" />;
+    return <Icon name="cloud-snow" size={size} className="text-[var(--lkv-info)]" aria-hidden="true" />;
   if (code <= 86)
-    return <Icon name="cloud-rain" size={size} className="text-sky-700" aria-hidden="true" />;
+    return <Icon name="cloud-rain" size={size} className="text-[var(--lkv-info)]" aria-hidden="true" />;
   return <Icon name="cloud-lightning" size={size} className="text-[var(--lkv-warning)]" aria-hidden="true" />;
 }
 
@@ -107,7 +107,7 @@ export function DepartWeather({ weather, updatedAt }: DepartWeatherProps) {
                 </span>
               </div>
               {day.precipPct > 0 && (
-                <div className="flex items-center justify-center gap-0.5 text-[9px] text-sky-700 font-medium">
+                <div className="flex items-center justify-center gap-0.5 text-[9px] text-[var(--lkv-info)] font-medium">
                   <Icon name="droplets" size={8.5} />
                   <span>{day.precipPct}%</span>
                 </div>

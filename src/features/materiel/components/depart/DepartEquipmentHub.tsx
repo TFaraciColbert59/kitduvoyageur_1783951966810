@@ -10,11 +10,9 @@ import { ArrowUpRightIcon as ArrowUpRight } from '@/components/icons/arrow-up-ri
 import { BoxIcon as Boxes } from '@/components/icons/box';
 import { ExternalLinkIcon as ExternalLink } from '@/components/icons/external-link';
 import { CheckSquareIcon as CheckSquare } from '@/components/icons/check-square';
-import { SearchIcon as SearchAnimated } from '@/components/icons/search';
 import { LayoutGridIcon as LayoutGridAnimated } from '@/components/icons/layout-grid';
-import { XIcon as XAnimated } from '@/components/icons/x';
 import { RotateCCWIcon as RotateCcwAnimated } from '@/components/icons/rotate-ccw';
-import { motion, AnimatePresence } from 'framer-motion';
+import { Badge, Button, Card, Chip, EmptyState, IconButton, Modal, SearchField, Tabs } from '@/components/ui';
 import { formatWeight } from '@/features/materiel/domain/departCalculations';
 import { addInventoryItem } from '@/features/materiel/actions/addInventoryItem';
 import { deleteInventoryItem } from '@/features/materiel/actions/deleteInventoryItem';
@@ -500,36 +498,24 @@ export function DepartEquipmentHub({
   return (
     <div className="w-full space-y-4 font-sans">
       {/* ════ BASCULE MOBILE (Segmented Control iOS) ════ */}
-      <div className="flex md:hidden items-center p-1 bg-black/5 rounded-2xl gap-1">
-        <button
-          type="button"
-          onClick={() => setMobileTab('catalog')}
-          className={cn(
-            'flex-1 py-2 rounded-xl text-xs font-semibold transition-all text-center flex items-center justify-center gap-1.5 cursor-pointer',
-            mobileTab === 'catalog'
-              ? 'bg-[var(--lkv-primary)] text-white shadow-xs'
-              : 'text-[var(--lkv-text-muted)] hover:text-[var(--lkv-primary)]'
-          )}
-        >
-          <Boxes size={14} />
-          <span>Parc Matériel ({filteredItems.length})</span>
-        </button>
-        <button
-          type="button"
-          onClick={() => setMobileTab('bag')}
-          className={cn(
-            'flex-1 py-2 rounded-xl text-xs font-semibold transition-all text-center flex items-center justify-center gap-1.5 cursor-pointer',
-            mobileTab === 'bag'
-              ? 'bg-[var(--lkv-primary)] text-white shadow-xs'
-              : 'text-[var(--lkv-text-muted)] hover:text-[var(--lkv-primary)]'
-          )}
-        >
-          <CheckSquare size={14} />
-          <span>
-            Sac Actif ({kitItems.filter((i) => i.is_checked).length}/{kitItems.length})
-          </span>
-        </button>
-      </div>
+      <Tabs
+        className="md:hidden"
+        ariaLabel="Vue matériel"
+        value={mobileTab}
+        onChange={(id) => setMobileTab(id === 'bag' ? 'bag' : 'catalog')}
+        options={[
+          {
+            id: 'catalog',
+            label: `Parc Matériel (${filteredItems.length})`,
+            icon: <Boxes size={14} />,
+          },
+          {
+            id: 'bag',
+            label: `Sac Actif (${kitItems.filter((i) => i.is_checked).length}/${kitItems.length})`,
+            icon: <CheckSquare size={14} />,
+          },
+        ]}
+      />
 
       {/* ════ CONTENU DU PARC MATÉRIEL (Plein format sur Desktop, avec bascule sur Mobile) ════ */}
       <div className="w-full space-y-4">
@@ -569,7 +555,7 @@ export function DepartEquipmentHub({
             </div>
           )}
 
-          <div className="glass rounded-2xl sm:rounded-card p-3 sm:p-5 space-y-2.5 sm:space-y-3.5 border border-white/80 shadow-xs backdrop-blur-md">
+          <Card className="space-y-2.5 p-3 sm:space-y-3.5 sm:p-5">
             {/* Top Header Compact Apple */}
             <div className="flex items-center justify-between gap-2 border-b border-black/5 pb-2">
               <div className="flex items-center gap-2 min-w-0">
@@ -583,142 +569,107 @@ export function DepartEquipmentHub({
                 </div>
               </div>
 
-              <button
-                type="button"
+              <Button
+                size="sm"
                 onClick={() => setIsAddModalOpen(true)}
-                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-[11px] font-bold bg-[var(--lkv-primary)] text-white hover:bg-[var(--lkv-primary)]/90 shadow-2xs cursor-pointer transition-all active:scale-95 shrink-0"
+                icon={<Icon name="plus" size={12} />}
+                className="h-7 shrink-0 rounded-xl px-2.5 text-[11px]"
               >
-                <Icon name="plus" size={12} />
-                <span>Ajouter</span>
-              </button>
+                Ajouter
+              </Button>
             </div>
 
             {/* Barre de recherche & Bascule Grille / Liste */}
             <div className="flex items-center gap-2">
-              <div className="relative flex-1 min-w-0">
-                <SearchAnimated
-                  size={13}
-                  className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--lkv-text-muted)]"
-                />
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Rechercher un équipement..."
-                  className="w-full pl-8 pr-7 py-1.5 rounded-xl text-xs bg-white/70 border border-white/90 focus:outline-none focus:ring-2 focus:ring-[var(--lkv-primary)]/25 text-[var(--lkv-primary)] placeholder-[var(--lkv-text-muted)]"
-                />
-                {searchQuery && (
-                  <button
-                    type="button"
-                    onClick={() => setSearchQuery('')}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 text-[var(--lkv-text-muted)] hover:text-[var(--lkv-primary)] p-0.5 cursor-pointer"
-                  >
-                    <XAnimated size={12} />
-                  </button>
-                )}
-              </div>
+              <SearchField
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onClear={() => setSearchQuery('')}
+                placeholder="Rechercher un équipement..."
+                className="text-xs"
+                containerClassName="h-8 flex-1"
+              />
 
               {/* Bascule Grille 2 colonnes / Liste */}
-              <div className="flex items-center p-0.5 bg-black/5 rounded-xl gap-0.5 shrink-0">
-                <button
-                  type="button"
+              <div className="flex shrink-0 items-center gap-0.5 rounded-xl bg-black/5 p-0.5">
+                <IconButton
+                  size="sm"
                   onClick={() => setViewMode('grid')}
                   className={cn(
-                    'p-1.5 rounded-lg transition-colors cursor-pointer',
+                    'h-7 w-7 rounded-lg',
                     viewMode === 'grid'
                       ? 'bg-[var(--lkv-primary)] text-white shadow-2xs'
                       : 'text-[var(--lkv-text-muted)] hover:text-[var(--lkv-primary)]'
                   )}
                   title="Vue Grille 3 colonnes"
                   aria-label="Vue Grille"
+                  aria-pressed={viewMode === 'grid'}
                 >
                   <LayoutGridAnimated size={13} />
-                </button>
-                <button
-                  type="button"
+                </IconButton>
+                <IconButton
+                  size="sm"
                   onClick={() => setViewMode('list')}
                   className={cn(
-                    'p-1.5 rounded-lg transition-colors cursor-pointer',
+                    'h-7 w-7 rounded-lg',
                     viewMode === 'list'
                       ? 'bg-[var(--lkv-primary)] text-white shadow-2xs'
                       : 'text-[var(--lkv-text-muted)] hover:text-[var(--lkv-primary)]'
                   )}
                   title="Vue Liste compacte"
                   aria-label="Vue Liste"
+                  aria-pressed={viewMode === 'list'}
                 >
                   <List size={13} />
-                </button>
+                </IconButton>
               </div>
             </div>
 
             {/* Filtres de statuts & Catégories (Défilement Horizontal Unique) */}
-            <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-0.5">
-              <button
-                type="button"
+            <div className="no-scrollbar flex items-center gap-1.5 overflow-x-auto pb-0.5">
+              <Chip
+                selected={statusFilter === 'all'}
                 onClick={() => setStatusFilter('all')}
-                className={cn(
-                  'px-2.5 py-1 rounded-xl text-[10.5px] font-semibold whitespace-nowrap transition-all cursor-pointer shrink-0',
-                  statusFilter === 'all'
-                    ? 'bg-[var(--lkv-primary)] text-white shadow-xs'
-                    : 'bg-black/5 text-[var(--lkv-text-muted)] hover:text-[var(--lkv-primary)]'
-                )}
+                className="shrink-0 whitespace-nowrap"
               >
                 Tous ({stats.totalCount})
-              </button>
-
-              <button
-                type="button"
+              </Chip>
+              <Chip
+                selected={statusFilter === 'in_bag'}
                 onClick={() => setStatusFilter('in_bag')}
-                className={cn(
-                  'px-2.5 py-1 rounded-xl text-[10.5px] font-semibold whitespace-nowrap transition-all cursor-pointer shrink-0',
-                  statusFilter === 'in_bag'
-                    ? 'bg-[var(--lkv-primary)] text-white shadow-xs'
-                    : 'bg-black/5 text-[var(--lkv-text-muted)] hover:text-[var(--lkv-primary)]'
-                )}
+                className="shrink-0 whitespace-nowrap"
               >
                 Au sac ({stats.inBagCount})
-              </button>
-
-              <button
-                type="button"
+              </Chip>
+              <Chip
+                selected={statusFilter === 'in_inventory'}
                 onClick={() => setStatusFilter('in_inventory')}
-                className={cn(
-                  'px-2.5 py-1 rounded-xl text-[10.5px] font-semibold whitespace-nowrap transition-all cursor-pointer shrink-0',
-                  statusFilter === 'in_inventory'
-                    ? 'bg-[var(--lkv-primary)] text-white shadow-xs'
-                    : 'bg-black/5 text-[var(--lkv-text-muted)] hover:text-[var(--lkv-primary)]'
-                )}
+                className="shrink-0 whitespace-nowrap"
               >
                 Inventaire ({stats.inInventoryCount})
-              </button>
+              </Chip>
 
-              <div className="h-4 w-px bg-black/10 shrink-0 mx-0.5" />
+              <div className="mx-0.5 h-4 w-px shrink-0 bg-black/10" />
 
               {CATEGORIES.filter((c) => c !== 'Toutes').map((cat) => (
-                <button
+                <Chip
                   key={cat}
-                  type="button"
+                  selected={selectedCat === cat}
                   onClick={() => setSelectedCat(selectedCat === cat ? 'Toutes' : cat)}
-                  className={cn(
-                    'px-2.5 py-1 rounded-xl text-[10.5px] font-semibold whitespace-nowrap transition-all cursor-pointer shrink-0',
-                    selectedCat === cat
-                      ? 'bg-[var(--lkv-primary)] text-white shadow-2xs'
-                      : 'bg-white/70 text-[var(--lkv-text-muted)] hover:text-[var(--lkv-primary)]'
-                  )}
+                  className="shrink-0 whitespace-nowrap"
                 >
                   {cat}
-                </button>
+                </Chip>
               ))}
             </div>
 
             {/* ════ CATALOGUE : VUE GRILLE OU LISTE ════ */}
             {filteredItems.length === 0 ? (
-              <div className="col-span-full py-12 px-4 text-center bg-white/40 rounded-3xl border border-dashed border-black/10 text-xs text-[var(--lkv-text-muted)] space-y-2">
-                <Boxes size={24} className="mx-auto text-[var(--lkv-text-muted)]/60" />
-                <p className="font-semibold text-[var(--lkv-primary)]">
-                  Aucun équipement ne correspond à vos filtres.
-                </p>
-              </div>
+              <EmptyState
+                compact
+                icon={<Boxes size={24} className="text-[var(--lkv-text-muted)]/60" />}
+                title="Aucun équipement ne correspond à vos filtres."
+              />
             ) : viewMode === 'grid' ? (
               /* ════ VUE GRILLE 3 COLONNES (Apple Store / Photos Style) ════ */
               <div className="grid grid-cols-3 gap-2 sm:gap-3 pr-0.5">
@@ -816,37 +767,40 @@ export function DepartEquipmentHub({
                         {/* Bouton d'Action 1-tap Compact */}
                         <div className="pt-1 border-t border-black/5">
                           {item.isLent && item.loanId ? (
-                            <button
-                              type="button"
+                            <Button
+                              size="sm"
+                              fullWidth
                               onClick={() => handleReturnLoan(item.loanId!, item.inventoryId)}
-                              className="w-full py-1 rounded-xl text-[10.5px] font-bold bg-[var(--lkv-primary)] text-white hover:bg-[var(--lkv-primary)]/90 shadow-2xs flex items-center justify-center gap-1 cursor-pointer transition-all active:scale-98"
+                              icon={<Icon name="check" size={11} />}
+                              className="h-7 rounded-xl px-1 text-[10.5px]"
                             >
-                              <Icon name="check" size={11} />
-                              <span>Rendu</span>
-                            </button>
+                              Rendu
+                            </Button>
                           ) : isConsumable ? (
-                            <button
-                              type="button"
+                            <Button
+                              size="sm"
+                              fullWidth
                               onClick={() => handleReplenishConsumable(item)}
-                              className="w-full py-1 rounded-xl text-[10.5px] font-bold bg-[var(--lkv-primary)] text-white hover:bg-[var(--lkv-primary)]/90 shadow-2xs flex items-center justify-center gap-1 cursor-pointer transition-all active:scale-98"
+                              icon={<RotateCcwAnimated size={11} />}
+                              className="h-7 rounded-xl px-1 text-[10.5px]"
                             >
-                              <RotateCcwAnimated size={11} />
-                              <span>Recharger</span>
-                            </button>
+                              Recharger
+                            </Button>
                           ) : isItemInBag ? (
-                            <div className="w-full py-1 rounded-xl text-[10.5px] font-bold bg-[var(--lkv-forest-100)] text-[var(--lkv-forest-900)] border border-[var(--lkv-primary)]/30 flex items-center justify-center gap-1">
+                            <Badge tone="sage" className="w-full justify-center gap-1 py-1 text-[10.5px] font-bold">
                               <Icon name="check" size={11} />
-                              <span>Dans le sac</span>
-                            </div>
+                              Dans le sac
+                            </Badge>
                           ) : (
-                            <button
-                              type="button"
+                            <Button
+                              size="sm"
+                              fullWidth
                               onClick={() => handleQuickAddToBag(item)}
-                              className="w-full py-1 rounded-xl text-[10.5px] font-bold bg-[var(--lkv-primary)] text-white hover:bg-[var(--lkv-primary)]/90 shadow-2xs flex items-center justify-center gap-1 cursor-pointer transition-all active:scale-98"
+                              icon={<Icon name="plus" size={11} />}
+                              className="h-7 rounded-xl px-1 text-[10.5px]"
                             >
-                              <Icon name="plus" size={11} />
-                              <span>+ Au sac</span>
-                            </button>
+                              + Au sac
+                            </Button>
                           )}
                         </div>
                       </div>
@@ -872,7 +826,7 @@ export function DepartEquipmentHub({
                         'p-2 rounded-2xl border flex items-center justify-between gap-2.5 transition-all shadow-2xs active:scale-[0.98]',
                         isItemInBag
                           ? 'bg-[var(--lkv-success)]/10 border-[var(--lkv-success)]/30'
-                          : 'glass-sub-card'
+                          : 'border-[color:var(--lkv-border-subtle)] bg-[color:var(--lkv-surface-card)]'
                       )}
                     >
                       <div className="flex items-center gap-2.5 min-w-0 flex-1">
@@ -922,19 +876,19 @@ export function DepartEquipmentHub({
 
                       <div className="shrink-0">
                         {isItemInBag ? (
-                          <div className="px-2.5 py-1 rounded-xl text-[10.5px] font-bold bg-[var(--lkv-forest-100)] text-[var(--lkv-forest-900)] border border-[var(--lkv-primary)]/30 flex items-center gap-1">
+                          <Badge tone="sage" className="gap-1 py-1 text-[10.5px] font-bold">
                             <Icon name="check" size={11} />
-                            <span>Dans le sac</span>
-                          </div>
+                            Dans le sac
+                          </Badge>
                         ) : (
-                          <button
-                            type="button"
+                          <Button
+                            size="sm"
                             onClick={() => handleQuickAddToBag(item)}
-                            className="px-2.5 py-1 rounded-xl text-[10.5px] font-bold bg-[var(--lkv-primary)] text-white hover:bg-[var(--lkv-primary)]/90 shadow-2xs flex items-center gap-1 cursor-pointer"
+                            icon={<Icon name="plus" size={11} />}
+                            className="h-7 rounded-xl px-2.5 text-[10.5px]"
                           >
-                            <Icon name="plus" size={11} />
-                            <span>+ Sac</span>
-                          </button>
+                            + Sac
+                          </Button>
                         )}
                       </div>
                     </div>
@@ -942,35 +896,18 @@ export function DepartEquipmentHub({
                 })}
               </div>
             )}
-          </div>
+          </Card>
         </div>
       </div>
 
       {/* ════ MODALE AJOUT ÉQUIPEMENT ════ */}
-      <AnimatePresence>
-        {isAddModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              className="glass p-6 rounded-3xl max-w-md w-full border border-white/90 shadow-2xl space-y-4 bg-white/95 text-[var(--lkv-primary)]"
-            >
-              <div className="flex items-center justify-between">
-                <h3 className="font-display font-bold text-base text-[var(--lkv-primary)] flex items-center gap-2">
-                  <Boxes size={18} className="text-[var(--lkv-primary-hover)]" />
-                  <span>Ajouter un Équipement</span>
-                </h3>
-                <button
-                  type="button"
-                  onClick={() => setIsAddModalOpen(false)}
-                  className="p-1.5 rounded-xl hover:bg-black/5 text-[var(--lkv-text-muted)] cursor-pointer"
-                >
-                  <Icon name="x" size={16} />
-                </button>
-              </div>
-
-              <form onSubmit={handleAddItem} className="space-y-3.5">
+      <Modal
+        open={isAddModalOpen}
+        onOpenChange={setIsAddModalOpen}
+        title="Ajouter un Équipement"
+        size="md"
+      >
+        <form onSubmit={handleAddItem} className="space-y-3.5">
                 <div>
                   <label className="text-[11px] font-bold uppercase tracking-wider text-[var(--lkv-text-muted)] block mb-1">
                     Nom de l’équipement *
@@ -1065,50 +1002,23 @@ export function DepartEquipmentHub({
                 </div>
 
                 <div className="pt-2 flex items-center justify-end gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setIsAddModalOpen(false)}
-                    className="px-4 py-2 rounded-xl text-xs font-semibold hover:bg-black/5 text-[var(--lkv-text-muted)] cursor-pointer"
-                  >
+                  <Button variant="ghost" onClick={() => setIsAddModalOpen(false)}>
                     Annuler
-                  </button>
-                  <button
-                    type="submit"
-                    className="px-5 py-2 rounded-xl text-xs font-bold bg-[var(--lkv-primary)] text-white hover:bg-[var(--lkv-primary)]/90 shadow-xs cursor-pointer"
-                  >
-                    Enregistrer
-                  </button>
+                  </Button>
+                  <Button type="submit">Enregistrer</Button>
                 </div>
               </form>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
+      </Modal>
 
       {/* ════ MODALE PRÊT ════ */}
-      <AnimatePresence>
-        {isLoanModalOpen && selectedItemForLoan && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              className="glass p-6 rounded-3xl max-w-md w-full border border-white/90 shadow-2xl space-y-4 bg-white/95 text-[var(--lkv-primary)]"
-            >
-              <div className="flex items-center justify-between">
-                <h3 className="font-display font-bold text-base text-[var(--lkv-primary)] flex items-center gap-2">
-                  <Icon name="handshake" size={18} className="text-[var(--lkv-primary-hover)]" />
-                  <span>Prêter un Équipement</span>
-                </h3>
-                <button
-                  type="button"
-                  onClick={() => setIsLoanModalOpen(false)}
-                  className="p-1.5 rounded-xl hover:bg-black/5 text-[var(--lkv-text-muted)] cursor-pointer"
-                >
-                  <Icon name="x" size={16} />
-                </button>
-              </div>
-
+      <Modal
+        open={isLoanModalOpen && Boolean(selectedItemForLoan)}
+        onOpenChange={setIsLoanModalOpen}
+        title="Prêter un Équipement"
+        size="md"
+      >
+        {selectedItemForLoan && (
+          <>
               <div className="p-3 rounded-2xl bg-black/5 text-xs font-semibold flex items-center gap-2">
                 <Boxes size={14} className="text-[var(--lkv-primary-hover)]" />
                 <span>
@@ -1145,25 +1055,15 @@ export function DepartEquipmentHub({
                 </div>
 
                 <div className="pt-2 flex items-center justify-end gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setIsLoanModalOpen(false)}
-                    className="px-4 py-2 rounded-xl text-xs font-semibold hover:bg-black/5 text-[var(--lkv-text-muted)] cursor-pointer"
-                  >
+                  <Button variant="ghost" onClick={() => setIsLoanModalOpen(false)}>
                     Annuler
-                  </button>
-                  <button
-                    type="submit"
-                    className="px-5 py-2 rounded-xl text-xs font-bold bg-[var(--lkv-primary)] text-white hover:bg-[var(--lkv-primary)]/90 shadow-xs cursor-pointer"
-                  >
-                    Confirmer le prêt
-                  </button>
+                  </Button>
+                  <Button type="submit">Confirmer le prêt</Button>
                 </div>
               </form>
-            </motion.div>
-          </div>
+          </>
         )}
-      </AnimatePresence>
+      </Modal>
     </div>
   );
 }

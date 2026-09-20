@@ -80,9 +80,10 @@ const html = renderToStaticMarkup(
 );
 
 describe('DepartSacSection (surface Sac unifiée : poids + checklist)', () => {
-  it('rend un unique section racine en verre aux classes canoniques', () => {
+  it('rend un unique section racine aux classes canoniques', () => {
     expect(html.match(/<section/g) ?? []).toHaveLength(1);
-    expect(html).toContain('glass rounded-[1.75rem] p-4 space-y-4');
+    expect(html).toContain('rounded-[var(--lkv-radius-card)]');
+    expect(html).toContain('space-y-4 p-4');
     expect(html).toContain('aria-label="Sac"');
   });
 
@@ -101,8 +102,8 @@ describe('DepartSacSection (surface Sac unifiée : poids + checklist)', () => {
     expect(html).toContain('width:67%');
   });
 
-  it('sépare poids et checklist par un filet border-subtle', () => {
-    expect(html).toContain('border-t border-[var(--lkv-border-subtle)]');
+  it('sépare poids et checklist par le séparateur canonique', () => {
+    expect(html).toContain('role="separator"');
   });
 
   it('transmet les consommables à DepartChecklist (intégration Vivres & Eau)', () => {

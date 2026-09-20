@@ -4,7 +4,7 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
 import Link from 'next/link';
-import { Card, PageHeader } from '@/components/ui';
+import { Button, Card, PageHeader } from '@/components/ui';
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://lekitduvoyageur.fr';
 
@@ -101,7 +101,7 @@ export default function KitsPage() {
           <Header />
           <main className="h-full overflow-y-auto max-w-[var(--page-max-w)] mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-20">
             <PageHeader variant="large" className="mb-3" title="Kits de voyage" />
-            <p className="mb-8 max-w-2xl text-base text-[#CCE0D4]">
+            <p className="mb-8 max-w-2xl text-base text-[var(--lkv-forest-100)]">
               Découvrez nos kits complets et optimisés pour chaque destination. Équipement
               sélectionné, testé et prêt à partir.
             </p>
@@ -124,9 +124,10 @@ export default function KitsPage() {
                     <span className="text-xs font-mono font-medium text-[var(--lkv-text-muted)]">
                       {kit.weight} · {kit.itemsCount} articles
                     </span>
-                    <Link href={`/kits/${kit.slug}`} className="glass-capsule-btn secondary">
-                      <span>Voir le kit</span>
-                      <Icon name="arrow-right" size={14} />
+                    <Link href={`/kits/${kit.slug}`} className="shrink-0">
+                      <Button variant="secondary" size="sm" icon={<Icon name="arrow-right" size={14} />} iconPosition="trailing">
+                        Voir le kit
+                      </Button>
                     </Link>
                   </div>
                 </Card>
@@ -144,17 +145,12 @@ export default function KitsPage() {
             <PageHeader
               variant="large"
               title="Kits de voyage"
-              back={
-                <Link
-                  href="/hub"
-                  className="glass interactive h-7.5 px-3 rounded-full flex items-center text-xs font-semibold text-[var(--lkv-primary)] border border-white/40 shadow-inner"
-                >
-                  ← Matériel
-                </Link>
-              }
+              back
+              backHref="/hub"
+              backLabel="Matériel"
             />
 
-            <p className="text-xs text-[#CCE0D4] leading-relaxed">
+            <p className="text-xs text-[var(--lkv-forest-100)] leading-relaxed">
               Kits complets et optimisés pour chaque destination. Équipement sélectionné, testé et
               prêt à partir.
             </p>
@@ -177,9 +173,10 @@ export default function KitsPage() {
                     <span className="text-[11px] font-mono text-[var(--lkv-text-muted)]">
                       {kit.weight} · {kit.itemsCount} articles
                     </span>
-                    <Link href={`/kits/${kit.slug}`} className="glass-capsule-btn primary">
-                      <span>Explorer</span>
-                      <Icon name="arrow-right" size={13} />
+                    <Link href={`/kits/${kit.slug}`} className="shrink-0">
+                      <Button size="sm" icon={<Icon name="arrow-right" size={13} />} iconPosition="trailing">
+                        Explorer
+                      </Button>
                     </Link>
                   </div>
                 </Card>

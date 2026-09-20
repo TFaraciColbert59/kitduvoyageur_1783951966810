@@ -1,10 +1,12 @@
 'use client';
 import { useMemo, useState } from 'react';
-import { Card } from '@/components/ui';
+import { Badge, Card } from '@/components/ui';
 import { Eyebrow } from '@/components/ui/Eyebrow';
-import { Badge } from '@/components/ui/Badge';
 import { compareKits } from '@/lib/materiel/comparator';
 import type { KitListItem } from '@/features/materiel/services/getKits';
+
+const FIELD_CLASS =
+  'min-h-[var(--control-height-md)] min-w-[110px] flex-1 rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] text-xs text-[var(--lkv-primary)] sm:text-sm';
 
 /** W-K-6 KitComparator — compare 2 kits réels en Liquid Glass. */
 export function KitComparator({ kits }: { kits: KitListItem[] }) {
@@ -28,7 +30,7 @@ export function KitComparator({ kits }: { kits: KitListItem[] }) {
           value={aId}
           onChange={(e) => setAId(e.target.value)}
           aria-label="Kit A"
-          className="glass-input flex-1 min-w-[110px] text-xs sm:text-sm text-[var(--lkv-primary)]"
+          className={FIELD_CLASS}
         >
           {active.map((k) => <option key={k.id} value={k.id}>{k.name}</option>)}
         </select>
@@ -37,14 +39,14 @@ export function KitComparator({ kits }: { kits: KitListItem[] }) {
           value={bId}
           onChange={(e) => setBId(e.target.value)}
           aria-label="Kit B"
-          className="glass-input flex-1 min-w-[110px] text-xs sm:text-sm text-[var(--lkv-primary)]"
+          className={FIELD_CLASS}
         >
           {active.map((k) => <option key={k.id} value={k.id}>{k.name}</option>)}
         </select>
       </div>
 
       {result && (
-        <div className="mt-3.5 glass-sub-card p-3 rounded-2xl flex flex-col gap-3">
+        <Card variant="compact" className="mt-3.5 flex flex-col gap-3 p-3">
           <div className="flex items-center gap-2 flex-wrap">
             <Badge tone="sage">A: {(result.aTotalG / 1000).toFixed(1)} kg</Badge>
             <Badge tone="info">B: {(result.bTotalG / 1000).toFixed(1)} kg</Badge>
@@ -56,14 +58,14 @@ export function KitComparator({ kits }: { kits: KitListItem[] }) {
             <p className="text-xs font-semibold text-[var(--lkv-primary-soft)] mb-1.5">Poids par catégorie</p>
             <ul tabIndex={0} className="flex flex-col gap-1 max-h-40 overflow-y-auto rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)]">
               {result.categories.map((c) => (
-                <li key={c.category} className="glass-sub-card p-2 flex items-center justify-between text-xs">
+                <li key={c.category} className="flex items-center justify-between rounded-lg border border-[color:var(--lkv-border-subtle)] p-2 text-xs">
                   <span className="font-medium text-[var(--lkv-primary)]">{c.category}</span>
                   <span className="font-mono text-[var(--lkv-primary-soft)]">{(c.aG / 1000).toFixed(2)} vs {(c.bG / 1000).toFixed(2)} kg</span>
                 </li>
               ))}
             </ul>
           </div>
-        </div>
+        </Card>
       )}
       {!result && <p className="mt-3 text-xs text-[var(--lkv-text-muted)]">Sélectionnez deux kits distincts pour afficher la comparaison.</p>}
     </Card>

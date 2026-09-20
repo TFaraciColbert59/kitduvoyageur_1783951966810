@@ -3,7 +3,7 @@ import Icon from '@/components/ui/Icon';
 import { useState, useTransition } from 'react';
 import { PlayIcon as PlayAnimated } from '@/components/icons/play';
 import { RotateCCWIcon as RotateCcwAnimated } from '@/components/icons/rotate-ccw';
-import { Modal, Sheet } from '@/components/ui';
+import { Button, Modal, Sheet } from '@/components/ui';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
 import { formatDistanceKm, formatWeight } from '@/features/materiel/domain/departCalculations';
 import { updateDepartStatus } from '@/features/materiel/actions/updateDepartStatus';
@@ -199,46 +199,44 @@ export function DepartureSheetModal({
         {/* Actions : Imprimer, Partager, Bascule de statut */}
         <div className="pt-2 border-t border-black/10 flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-2">
-            <button
-              type="button"
+            <Button
+              variant="secondary"
+              size="sm"
               onClick={() => window['print']()}
-              className="px-3 py-2 rounded-xl bg-white border border-black/10 text-xs font-semibold flex items-center gap-1.5 hover:bg-black/5 transition-colors cursor-pointer"
+              icon={<Icon name="printer" size={13} />}
             >
-              <Icon name="printer" size={13} />
-              <span>Imprimer</span>
-            </button>
+              Imprimer
+            </Button>
 
-            <button
-              type="button"
+            <Button
+              variant="secondary"
+              size="sm"
               onClick={handleShare}
-              className="px-3 py-2 rounded-xl bg-white border border-black/10 text-xs font-semibold flex items-center gap-1.5 hover:bg-black/5 transition-colors cursor-pointer"
+              icon={copied ? <Icon name="check" size={13} /> : <Icon name="share2" size={13} />}
             >
-              {copied ? <Icon name="check" size={13} /> : <Icon name="share2" size={13} />}
-              <span>{copied ? 'Copié !' : 'Partager'}</span>
-            </button>
+              {copied ? 'Copié !' : 'Partager'}
+            </Button>
           </div>
 
           <div className="flex items-center gap-2">
             {currentStatus !== 'active' ? (
-              <button
-                type="button"
+              <Button
                 onClick={() => handleToggleStatus('active')}
                 disabled={isPending}
-                className="px-4 py-2 rounded-xl bg-[var(--lkv-primary)] text-white text-xs font-bold flex items-center gap-1.5 shadow-xs hover:bg-[var(--lkv-primary)]/90 transition-all cursor-pointer"
+                icon={<PlayAnimated size={12} />}
+                className="text-xs"
               >
-                <PlayAnimated size={12} />
-                <span>Démarrer le trek (Mode Actif)</span>
-              </button>
+                Démarrer le trek (Mode Actif)
+              </Button>
             ) : (
-              <button
-                type="button"
+              <Button
                 onClick={() => handleToggleStatus('done')}
                 disabled={isPending}
-                className="px-4 py-2 rounded-xl bg-[var(--lkv-primary-hover)] text-white text-xs font-bold flex items-center gap-1.5 shadow-xs hover:bg-[var(--lkv-primary-hover)]/90 transition-all cursor-pointer"
+                icon={<RotateCcwAnimated size={12} />}
+                className="text-xs"
               >
-                <RotateCcwAnimated size={12} />
-                <span>Terminer et archiver le trek</span>
-              </button>
+                Terminer et archiver le trek
+              </Button>
             )}
           </div>
         </div>

@@ -2,14 +2,16 @@
 import { lkvConfirm } from '@/components/ui/dialogs';
 import { useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Card, Modal } from '@/components/ui';
+import { Badge, Button, Card, EmptyState, IconButton, LoadingState, Modal, SearchField, Tabs } from '@/components/ui';
 import { Eyebrow } from '@/components/ui/Eyebrow';
-import { Badge } from '@/components/ui/Badge';
 import { useToast } from '@/contexts/ToastContext';
 import type { InventoryItem } from '@/features/materiel/services/getInventory';
 import { InventoryVirtualGrid } from './InventoryVirtualGrid';
 
 type View = 'grid' | 'table';
+
+const FIELD_CLASS =
+  'min-h-[var(--control-height-md)] rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] text-[length:var(--lkv-text-body-sm)] text-[color:var(--lkv-text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]';
 
 interface ItemFormState {
   name: string;
@@ -147,17 +149,32 @@ export function InventoryWorkspace({ items }: { items: InventoryItem[] }) {
       <Card className="p-3" ariaLabelledBy="inv-toolbar">
         <h2 id="inv-toolbar" className="sr-only">Recherche et tri</h2>
         <div className="flex flex-wrap items-center gap-2">
-          <input className="glass-input flex-1 min-w-[160px]" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Rechercher un objet…" aria-label="Rechercher" />
-          <select className="glass-input" value={sort} onChange={(e) => setSort(e.target.value as typeof sort)} aria-label="Trier">
+          <SearchField
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            onClear={() => setQuery('')}
+            placeholder="Rechercher un objet…"
+            aria-label="Rechercher"
+            containerClassName="min-w-[160px] flex-1"
+          />
+          <select className={FIELD_CLASS} value={sort} onChange={(e) => setSort(e.target.value as typeof sort)} aria-label="Trier">
             <option value="recent">Récents</option>
             <option value="weight">Poids</option>
             <option value="price">Prix</option>
           </select>
-          <div className="glass-segmented" role="group" aria-label="Vue">
-            <button type="button" className={`glass-segmented-item ${view === 'grid' ? 'active' : ''}`} onClick={() => setView('grid')}>Cartes</button>
-            <button type="button" className={`glass-segmented-item ${view === 'table' ? 'active' : ''}`} onClick={() => setView('table')}>Table</button>
-          </div>
-          <button type="button" onClick={openCreate} className="glass interactive h-10 px-4 rounded-full text-sm font-medium text-white bg-sage-800">+ Ajouter</button>
+          <Tabs
+            ariaLabel="Vue"
+            value={view}
+            onChange={(id) => setView(id === 'table' ? 'table' : 'grid')}
+            options={[
+              { id: 'grid', label: 'Cartes' },
+              { id: 'table', label: 'Table' },
+            ]}
+            className="w-auto"
+          />
+          <Button onClick={openCreate} icon={<span aria-hidden="true">+</span>}>
+            Ajouter
+          </Button>
         </div>
       </Card>
 
@@ -166,11 +183,11 @@ export function InventoryWorkspace({ items }: { items: InventoryItem[] }) {
           <h2 id="inv-filters" className="sr-only">Filtres</h2>
           <Eyebrow>Filtres</Eyebrow>
           <div className="mt-3 flex flex-col gap-2">
-            <label className="flex items-center gap-2 text-sm text-[color:var(--label)]">
-              <input className="rounded border-white/40" type="checkbox" checked={lentOnly} onChange={(e) => setLentOnly(e.target.checked)} />
+            <label className="flex items-center gap-2 text-sm text-[color:var(--lkv-text-primary)]">
+              <input className="rounded border-[color:var(--lkv-border)]" type="checkbox" checked={lentOnly} onChange={(e) => setLentOnly(e.target.checked)} />
               En prêt uniquement
             </label>
-            <select className="glass-input" value={category} onChange={(e) => setCategory(e.target.value)} aria-label="Filtrer par catégorie">
+            <select className={FIELD_CLASS} value={category} onChange={(e) => setCategory(e.target.value)} aria-label="Filtrer par catégorie">
               <option value="all">Toutes catégories</option>
               {categories.map((c) => <option key={c} value={c}>{c}</option>)}
             </select>
@@ -179,24 +196,24 @@ export function InventoryWorkspace({ items }: { items: InventoryItem[] }) {
 
         <div className="col-span-12 md:col-span-9">
           {view === 'grid' && (filtered.length > 0 ? <InventoryVirtualGrid items={filtered} onSelect={setSelected} /> : (
-            <p className="text-sm text-[color:var(--glass-text-secondary)]">Aucun objet ne correspond.</p>
+            <EmptyState compact title="Aucun objet ne correspond." />
           ))}
           {view === 'table' && (
             <Card className="p-3 overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="text-left text-[color:var(--label-tertiary)]">
+                  <tr className="text-left text-[color:var(--lkv-text-muted)]">
                     <th className="py-2">Nom</th><th className="py-2">Catégorie</th><th className="py-2">Poids</th><th className="py-2">Prix</th><th className="py-2">État</th>
                   </tr>
                 </thead>
                 <tbody>
                   {filtered.map((i) => (
-                    <tr key={i.id} className="border-t border-[var(--separator)] cursor-pointer" onClick={() => setSelected(i)}>
-                      <td className="py-2 text-[color:var(--label)]">{i.name}</td>
-                      <td className="py-2 text-[color:var(--label-secondary)]">{i.category ?? '—'}</td>
+                    <tr key={i.id} className="cursor-pointer border-t border-[color:var(--lkv-border-subtle)]" onClick={() => setSelected(i)}>
+                      <td className="py-2 text-[color:var(--lkv-text-primary)]">{i.name}</td>
+                      <td className="py-2 text-[color:var(--lkv-text-secondary)]">{i.category ?? '—'}</td>
                       <td className="py-2">{i.weight_g ? `${(i.weight_g / 1000).toFixed(2)} kg` : '—'}</td>
                       <td className="py-2">{i.price_cents ? `${(i.price_cents / 100).toFixed(2)} €` : '—'}</td>
-                      <td className="py-2">{i.is_lent ? <Badge tone="warn">Prêt</Badge> : <span className="text-[color:var(--label-secondary)]">{i.condition ?? '—'}</span>}</td>
+                      <td className="py-2">{i.is_lent ? <Badge tone="warn">Prêt</Badge> : <span className="text-[color:var(--lkv-text-secondary)]">{i.condition ?? '—'}</span>}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -211,12 +228,12 @@ export function InventoryWorkspace({ items }: { items: InventoryItem[] }) {
         <h3 id="inv-comparator" className="sr-only">Comparateur d'objets</h3>
         <Eyebrow>Comparateur</Eyebrow>
         <div className="mt-2 flex flex-wrap items-center gap-2">
-          <select className="glass-input flex-1 min-w-[120px]" value={cmpA} onChange={(e) => setCmpA(e.target.value)} aria-label="Objet A">
+          <select className={`${FIELD_CLASS} min-w-[120px] flex-1`} value={cmpA} onChange={(e) => setCmpA(e.target.value)} aria-label="Objet A">
             <option value="">— Objet A —</option>
             {items.map((i) => <option key={i.id} value={i.id}>{i.name}</option>)}
           </select>
-          <span className="text-sm text-[color:var(--label-tertiary)]">vs</span>
-          <select className="glass-input flex-1 min-w-[120px]" value={cmpB} onChange={(e) => setCmpB(e.target.value)} aria-label="Objet B">
+          <span className="text-sm text-[color:var(--lkv-text-muted)]">vs</span>
+          <select className={`${FIELD_CLASS} min-w-[120px] flex-1`} value={cmpB} onChange={(e) => setCmpB(e.target.value)} aria-label="Objet B">
             <option value="">— Objet B —</option>
             {items.map((i) => <option key={i.id} value={i.id}>{i.name}</option>)}
           </select>
@@ -224,13 +241,13 @@ export function InventoryWorkspace({ items }: { items: InventoryItem[] }) {
         {cmpAItem && cmpBItem && (
           <div className="mt-3 grid grid-cols-2 gap-3 text-sm">
             {(['weight_g', 'price_cents', 'condition', 'brand'] as const).map((field) => (
-              <div key={field} className="bg-white/20 rounded-[var(--r-sm)] p-2 flex flex-col gap-1">
-                <span className="text-[10px] uppercase tracking-wider text-[color:var(--label-tertiary)]">{field}</span>
+              <Card key={field} variant="compact" className="flex flex-col gap-1 p-2">
+                <span className="text-[10px] uppercase tracking-wider text-[color:var(--lkv-text-muted)]">{field}</span>
                 <span className="flex justify-between">
-                  <span className="text-[color:var(--label)]">{field === 'weight_g' ? `${(cmpAItem[field] ?? 0) / 1000} kg` : cmpAItem[field] ?? '—'}</span>
-                  <span className="text-[color:var(--label)]">{field === 'weight_g' ? `${(cmpBItem[field] ?? 0) / 1000} kg` : cmpBItem[field] ?? '—'}</span>
+                  <span className="text-[color:var(--lkv-text-primary)]">{field === 'weight_g' ? `${(cmpAItem[field] ?? 0) / 1000} kg` : cmpAItem[field] ?? '—'}</span>
+                  <span className="text-[color:var(--lkv-text-primary)]">{field === 'weight_g' ? `${(cmpBItem[field] ?? 0) / 1000} kg` : cmpBItem[field] ?? '—'}</span>
                 </span>
-              </div>
+              </Card>
             ))}
           </div>
         )}
@@ -238,10 +255,18 @@ export function InventoryWorkspace({ items }: { items: InventoryItem[] }) {
 
       {/* W-I-6 Scan */}
       <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleScan(f); e.target.value = ''; }} aria-label="Scanner un article" />
-      <button type="button" onClick={() => fileRef.current?.click()} className="fixed bottom-24 right-5 z-30 h-14 w-14 rounded-full glass interactive flex items-center justify-center text-[color:var(--label)] shadow-elevation-4" aria-label="Scanner un article (OCR)">📷</button>
-      {scanning && <p className="text-sm text-[color:var(--label-secondary)]">Analyse…</p>}
-      {scanError && <p className="text-sm text-danger">{scanError}</p>}
-      {scanResult && <p className="text-sm text-[color:var(--label-secondary)]">Ajouté : {scanResult}</p>}
+      <IconButton
+        variant="glass"
+        size="lg"
+        onClick={() => fileRef.current?.click()}
+        className="fixed bottom-24 right-5 z-[var(--z-fab)] h-14 w-14 text-[color:var(--lkv-text-primary)] shadow-elevation-4"
+        aria-label="Scanner un article (OCR)"
+      >
+        <span aria-hidden="true">📷</span>
+      </IconButton>
+      {scanning && <LoadingState compact label="Analyse…" />}
+      {scanError && <p className="text-sm text-[var(--lkv-danger)]">{scanError}</p>}
+      {scanResult && <p className="text-sm text-[color:var(--lkv-text-secondary)]">Ajouté : {scanResult}</p>}
 
       {/* Détail */}
       <Modal open={!!selected} onOpenChange={(v) => { if (!v) setSelected(null); }} title={selected?.name ?? 'Détail'}>
@@ -252,14 +277,14 @@ export function InventoryWorkspace({ items }: { items: InventoryItem[] }) {
               {selected.condition && <Badge tone="stone">{selected.condition}</Badge>}
             </div>
             <dl className="flex flex-col gap-2 text-sm">
-              <div className="flex justify-between"><dt className="text-[color:var(--label-tertiary)]">Marque</dt><dd className="text-[color:var(--label)]">{selected.brand ?? '—'}</dd></div>
-              <div className="flex justify-between"><dt className="text-[color:var(--label-tertiary)]">Catégorie</dt><dd className="text-[color:var(--label)]">{selected.category ?? '—'}</dd></div>
-              <div className="flex justify-between"><dt className="text-[color:var(--label-tertiary)]">Poids</dt><dd className="text-[color:var(--label)]">{selected.weight_g ? `${(selected.weight_g / 1000).toFixed(2)} kg` : '—'}</dd></div>
-              <div className="flex justify-between"><dt className="text-[color:var(--label-tertiary)]">Prix</dt><dd className="text-[color:var(--label)]">{selected.price_cents ? `${(selected.price_cents / 100).toFixed(2)} €` : '—'}</dd></div>
+              <div className="flex justify-between"><dt className="text-[color:var(--lkv-text-muted)]">Marque</dt><dd className="text-[color:var(--lkv-text-primary)]">{selected.brand ?? '—'}</dd></div>
+              <div className="flex justify-between"><dt className="text-[color:var(--lkv-text-muted)]">Catégorie</dt><dd className="text-[color:var(--lkv-text-primary)]">{selected.category ?? '—'}</dd></div>
+              <div className="flex justify-between"><dt className="text-[color:var(--lkv-text-muted)]">Poids</dt><dd className="text-[color:var(--lkv-text-primary)]">{selected.weight_g ? `${(selected.weight_g / 1000).toFixed(2)} kg` : '—'}</dd></div>
+              <div className="flex justify-between"><dt className="text-[color:var(--lkv-text-muted)]">Prix</dt><dd className="text-[color:var(--lkv-text-primary)]">{selected.price_cents ? `${(selected.price_cents / 100).toFixed(2)} €` : '—'}</dd></div>
             </dl>
             <div className="flex gap-2">
-              <button type="button" onClick={() => { setSelected(null); openEdit(selected); }} className="glass interactive h-10 px-4 rounded-full text-sm font-medium">Modifier</button>
-              <button type="button" onClick={() => handleDelete(selected)} className="glass interactive h-10 px-4 rounded-full text-sm font-medium text-danger">Supprimer</button>
+              <Button variant="secondary" onClick={() => { setSelected(null); openEdit(selected); }}>Modifier</Button>
+              <Button variant="destructive" onClick={() => handleDelete(selected)}>Supprimer</Button>
             </div>
           </div>
         )}
@@ -269,36 +294,36 @@ export function InventoryWorkspace({ items }: { items: InventoryItem[] }) {
       <Modal open={formOpen} onOpenChange={setFormOpen} title={editing ? 'Modifier l’objet' : 'Ajouter un objet'}>
         <div className="flex flex-col gap-3">
           <label className="flex flex-col gap-1 text-sm">
-            <span className="text-[color:var(--label-secondary)]">Nom *</span>
-            <input className="glass-input" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+            <span className="text-[color:var(--lkv-text-secondary)]">Nom *</span>
+            <input className={FIELD_CLASS} value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
           </label>
           <label className="flex flex-col gap-1 text-sm">
-            <span className="text-[color:var(--label-secondary)]">Marque</span>
-            <input className="glass-input" value={form.brand} onChange={(e) => setForm({ ...form, brand: e.target.value })} />
+            <span className="text-[color:var(--lkv-text-secondary)]">Marque</span>
+            <input className={FIELD_CLASS} value={form.brand} onChange={(e) => setForm({ ...form, brand: e.target.value })} />
           </label>
           <label className="flex flex-col gap-1 text-sm">
-            <span className="text-[color:var(--label-secondary)]">Catégorie</span>
-            <select className="glass-input" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })}>
+            <span className="text-[color:var(--lkv-text-secondary)]">Catégorie</span>
+            <select className={FIELD_CLASS} value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })}>
               {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
             </select>
           </label>
           <label className="flex flex-col gap-1 text-sm">
-            <span className="text-[color:var(--label-secondary)]">Poids (g)</span>
-            <input className="glass-input" type="number" value={form.weight_g} onChange={(e) => setForm({ ...form, weight_g: e.target.value })} />
+            <span className="text-[color:var(--lkv-text-secondary)]">Poids (g)</span>
+            <input className={FIELD_CLASS} type="number" value={form.weight_g} onChange={(e) => setForm({ ...form, weight_g: e.target.value })} />
           </label>
           <label className="flex flex-col gap-1 text-sm">
-            <span className="text-[color:var(--label-secondary)]">Prix (centimes)</span>
-            <input className="glass-input" type="number" value={form.price_cents} onChange={(e) => setForm({ ...form, price_cents: e.target.value })} />
+            <span className="text-[color:var(--lkv-text-secondary)]">Prix (centimes)</span>
+            <input className={FIELD_CLASS} type="number" value={form.price_cents} onChange={(e) => setForm({ ...form, price_cents: e.target.value })} />
           </label>
           <label className="flex flex-col gap-1 text-sm">
-            <span className="text-[color:var(--label-secondary)]">État</span>
-            <select className="glass-input" value={form.condition} onChange={(e) => setForm({ ...form, condition: e.target.value })}>
+            <span className="text-[color:var(--lkv-text-secondary)]">État</span>
+            <select className={FIELD_CLASS} value={form.condition} onChange={(e) => setForm({ ...form, condition: e.target.value })}>
               {CONDITIONS.map((c) => <option key={c} value={c}>{c}</option>)}
             </select>
           </label>
-          <button type="button" onClick={handleSave} disabled={saving} className="glass interactive h-12 rounded-full text-sm font-medium text-white bg-sage-800 disabled:opacity-40">
+          <Button onClick={handleSave} loading={saving} fullWidth size="lg">
             {saving ? 'Enregistrement…' : 'Enregistrer'}
-          </button>
+          </Button>
         </div>
       </Modal>
     </>

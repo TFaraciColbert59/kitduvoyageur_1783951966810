@@ -1,6 +1,6 @@
 'use client';
 import { useState } from 'react';
-import { Card } from '@/components/ui';
+import { Button, Card } from '@/components/ui';
 import { Eyebrow } from '@/components/ui/Eyebrow';
 
 /** W-A-10 CollectiveActions — actions collectives sur les prêts. */
@@ -16,11 +16,11 @@ export function CollectiveActions() {
       <Eyebrow>Actions collectives</Eyebrow>
       <h3 id="actions-title" className="sr-only">Actions collectives sur les prêts</h3>
       <div className="mt-2 flex flex-wrap gap-2">
-        <button type="button" onClick={remind} className="glass interactive h-10 px-4 rounded-full text-sm font-medium">Relancer</button>
-        <button type="button" onClick={extend} className="glass interactive h-10 px-4 rounded-full text-sm font-medium">Prolonger</button>
-        <button type="button" onClick={reload} className="glass interactive h-10 px-4 rounded-full text-sm font-medium">Rafraîchir</button>
+        <Button variant="secondary" onClick={remind}>Relancer</Button>
+        <Button variant="secondary" onClick={extend}>Prolonger</Button>
+        <Button variant="secondary" onClick={reload}>Rafraîchir</Button>
       </div>
-      {status && <p className="mt-2 text-sm text-[color:var(--label-secondary)]">{status}</p>}
+      {status && <p className="mt-2 text-sm text-[color:var(--lkv-text-secondary)]">{status}</p>}
     </Card>
   );
 }

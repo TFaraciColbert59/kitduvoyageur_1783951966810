@@ -1,8 +1,7 @@
 'use client';
 import { useState } from 'react';
-import { Card } from '@/components/ui';
+import { Badge, Button, Card, EmptyState } from '@/components/ui';
 import { Eyebrow } from '@/components/ui/Eyebrow';
-import { Badge } from '@/components/ui/Badge';
 import type { AlertItem } from '@/features/materiel/services/getAlerts';
 
 const TONE: Record<string, 'danger' | 'warn' | 'info'> = { critical: 'danger', warning: 'warn', info: 'info' };
@@ -19,21 +18,21 @@ export function TopAlertsAccordion({ alerts }: { alerts: AlertItem[] }) {
       <h3 id="top-alerts-title" className="sr-only">Top 3 des alertes à surveiller</h3>
       <div className="mt-2 flex flex-col gap-2">
         {top.map((a) => (
-          <button
+          <Button
             key={a.id}
-            type="button"
+            variant="ghost"
             onClick={() => setOpen(open === a.id ? null : a.id)}
             aria-expanded={open === a.id}
-            className="bg-white/20 rounded-[var(--r-sm)] p-3 text-left"
+            className="h-auto w-full flex-col items-stretch justify-start whitespace-normal rounded-[var(--lkv-radius-sm)] bg-[color:var(--lkv-surface-muted)] p-3 text-left font-normal"
           >
             <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-[color:var(--label)]">{a.type}</span>
+              <span className="text-sm font-medium text-[color:var(--lkv-text-primary)]">{a.type}</span>
               <Badge tone={TONE[a.severity]}>{a.severity}</Badge>
             </div>
-            {open === a.id && <p className="mt-2 text-sm text-[color:var(--label-secondary)]">{a.message}</p>}
-          </button>
+            {open === a.id && <p className="mt-2 text-sm text-[color:var(--lkv-text-secondary)]">{a.message}</p>}
+          </Button>
         ))}
-        {top.length === 0 && <p className="text-sm text-[color:var(--label-secondary)]">Aucune alerte active.</p>}
+        {top.length === 0 && <EmptyState compact title="Aucune alerte active." />}
       </div>
     </Card>
   );

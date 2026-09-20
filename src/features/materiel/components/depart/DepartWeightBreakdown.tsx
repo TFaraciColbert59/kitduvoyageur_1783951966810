@@ -3,6 +3,7 @@ import Icon from '@/components/ui/Icon';
 import React, { useState } from 'react';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { ChevronDownIcon as ChevronDown } from '@/components/icons/chevron-down';
+import { Button, Card } from '@/components/ui';
 import { formatWeight } from '@/features/materiel/domain/departCalculations';
 import { cn } from '@/lib/utils';
 
@@ -66,12 +67,12 @@ export function DepartWeightBreakdown({
     : `Sac optimisé : poids de base sous contrôle.`;
 
   return (
-    <div className="glass rounded-card p-4 sm:p-5 space-y-4 border border-white/80 shadow-sm backdrop-blur-md">
+    <Card className="space-y-4 p-4 sm:p-5">
       {/* ════ HEADER : TITRE & POIDS TOTAL ════ */}
-      <button
-        type="button"
+      <Button
+        variant="ghost"
         onClick={() => setIsOpen((v) => !v)}
-        className="w-full flex items-center justify-between gap-3 border-b border-black/5 pb-3 text-left cursor-pointer focus-visible:outline-none"
+        className="h-auto w-full justify-between gap-3 whitespace-normal rounded-none border-b border-black/5 px-0 pb-3 pt-0 text-left font-normal hover:bg-transparent"
         aria-expanded={isOpen}
       >
         <div className="flex items-center gap-2.5">
@@ -99,36 +100,36 @@ export function DepartWeightBreakdown({
             <ChevronDown size={15} className="text-[var(--lkv-text-muted)]" />
           </motion.div>
         </div>
-      </button>
+      </Button>
 
       {/* ════ 3 PILIERS DU POIDS : PASTILLES BLANC ÉCLATANT LIQUID GLASS (Images 1 & 2) ════ */}
       <div className="grid grid-cols-3 gap-2.5 sm:gap-3.5">
-        <div className="py-2.5 px-3 rounded-full bg-white border border-white/90 text-center space-y-0.5 shadow-xs">
-          <span className="text-[8.5px] sm:text-[9.5px] font-mono uppercase tracking-wider text-[var(--lkv-text-muted)] block font-bold">
+        <Card variant="compact" className="space-y-0.5 rounded-full px-3 py-2.5 text-center">
+          <span className="block text-[8.5px] font-mono font-bold uppercase tracking-wider text-[var(--lkv-text-muted)] sm:text-[9.5px]">
             Poids de base
           </span>
-          <span className="text-xs sm:text-sm font-mono font-bold text-[var(--lkv-primary)] block">
+          <span className="block text-xs font-mono font-bold text-[var(--lkv-primary)] sm:text-sm">
             {formatWeight(effectiveBaseG)}
           </span>
-        </div>
+        </Card>
 
-        <div className="py-2.5 px-3 rounded-full bg-white border border-white/90 text-center space-y-0.5 shadow-xs">
-          <span className="text-[8.5px] sm:text-[9.5px] font-mono uppercase tracking-wider text-[var(--lkv-text-muted)] block font-bold">
+        <Card variant="compact" className="space-y-0.5 rounded-full px-3 py-2.5 text-center">
+          <span className="block text-[8.5px] font-mono font-bold uppercase tracking-wider text-[var(--lkv-text-muted)] sm:text-[9.5px]">
             Consommables
           </span>
-          <span className="text-xs sm:text-sm font-mono font-bold text-[var(--lkv-primary)] block">
+          <span className="block text-xs font-mono font-bold text-[var(--lkv-primary)] sm:text-sm">
             {formatWeight(consumablesWeightG)}
           </span>
-        </div>
+        </Card>
 
-        <div className="py-2.5 px-3 rounded-full bg-white border border-white/90 text-center space-y-0.5 shadow-xs">
-          <span className="text-[8.5px] sm:text-[9.5px] font-mono uppercase tracking-wider text-[var(--lkv-text-muted)] block font-bold">
+        <Card variant="compact" className="space-y-0.5 rounded-full px-3 py-2.5 text-center">
+          <span className="block text-[8.5px] font-mono font-bold uppercase tracking-wider text-[var(--lkv-text-muted)] sm:text-[9.5px]">
             Porté sur soi
           </span>
-          <span className="text-xs sm:text-sm font-mono font-bold text-[var(--lkv-primary)] block">
+          <span className="block text-xs font-mono font-bold text-[var(--lkv-primary)] sm:text-sm">
             {formatWeight(wornWeightG)}
           </span>
-        </div>
+        </Card>
       </div>
 
       {/* ════ JAUGE D'ÉVALUATION DU PORTAGE ════ */}
@@ -167,29 +168,30 @@ export function DepartWeightBreakdown({
               {sorted.map((item) => {
                 const color = CATEGORY_COLORS[item.category] || CATEGORY_COLORS.Autre;
                 return (
-                  <div
+                  <Card
                     key={item.category}
-                    className="p-2 rounded-xl bg-white/70 border border-white/80 flex items-center justify-between gap-2 shadow-2xs"
+                    variant="compact"
+                    className="flex items-center justify-between gap-2 p-2"
                   >
-                    <div className="flex items-center gap-1.5 min-w-0">
+                    <div className="flex min-w-0 items-center gap-1.5">
                       <span
-                        className="w-2 h-2 rounded-full shrink-0"
+                        className="h-2 w-2 shrink-0 rounded-full"
                         style={{ backgroundColor: color }}
                       />
-                      <span className="text-[11px] font-medium text-[var(--lkv-primary)] truncate">
+                      <span className="truncate text-[11px] font-medium text-[var(--lkv-primary)]">
                         {item.category}
                       </span>
                     </div>
-                    <span className="text-[11px] font-mono font-bold text-[var(--lkv-text-muted)] shrink-0">
+                    <span className="shrink-0 text-[11px] font-mono font-bold text-[var(--lkv-text-muted)]">
                       {formatWeight(item.value)}
                     </span>
-                  </div>
+                  </Card>
                 );
               })}
             </div>
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
+    </Card>
   );
 }

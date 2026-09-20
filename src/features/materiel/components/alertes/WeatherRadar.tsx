@@ -11,7 +11,7 @@ export function WeatherRadar({ meteoCount, message }: { meteoCount: number; mess
       <div className="mt-2 flex items-center gap-2">
         {meteoCount > 0 ? <Badge tone="warn">{meteoCount} alerte(s) météo</Badge> : <Badge tone="sage">Conditions stables</Badge>}
       </div>
-      <p className="mt-2 text-sm text-[color:var(--label-secondary)]">{message}</p>
+      <p className="mt-2 text-sm text-[color:var(--lkv-text-secondary)]">{message}</p>
     </Card>
   );
 }

@@ -39,7 +39,7 @@ function SvgDonut({ pct }: { pct: number }) {
           cy={size / 2}
           r={radius}
           fill="none"
-          stroke="rgba(23, 64, 44, 0.12)"
+          stroke="var(--lkv-border)"
           strokeWidth={strokeWidth}
         />
         <circle

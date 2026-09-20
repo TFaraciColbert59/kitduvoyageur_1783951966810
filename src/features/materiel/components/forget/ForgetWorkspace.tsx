@@ -1,6 +1,6 @@
 'use client';
 import { useState } from 'react';
-import { Card } from '@/components/ui';
+import { Button, Card } from '@/components/ui';
 import { ForgetChecklist } from './ForgetChecklist';
 import type { ForgetItem } from '@/features/materiel/services/getForgetChecklist';
 
@@ -24,11 +24,11 @@ export function ForgetWorkspace({ items }: { items: ForgetItem[] }) {
   return (
     <>
       <ForgetChecklist items={items} onToggle={handleToggle} />
-      <Card className="p-4 mt-4">
-        <button onClick={validate} className="w-full glass interactive h-12 rounded-full flex items-center justify-center text-sm font-medium text-white bg-sage-800">
+      <Card className="mt-4 p-4">
+        <Button onClick={validate} fullWidth size="lg">
           Valider la préparation
-        </button>
-        {status && <p className="mt-2 text-sm text-[color:var(--label-secondary)]">{status}</p>}
+        </Button>
+        {status && <p className="mt-2 text-sm text-[color:var(--lkv-text-secondary)]">{status}</p>}
       </Card>
     </>
   );

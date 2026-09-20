@@ -1,6 +1,6 @@
 'use client';
 import Icon from '@/components/ui/Icon';
-import { motion } from 'framer-motion';
+import { Button } from '@/components/ui';
 
 export function ForgetChecklistItem({
   label,
@@ -12,24 +12,24 @@ export function ForgetChecklistItem({
   onToggle: () => void;
 }) {
   return (
-    <motion.button
+    <Button
+      variant="ghost"
       onClick={onToggle}
-      whileTap={{ scale: 0.95 }}
       aria-pressed={checked}
-      className="bg-white/20 rounded-[var(--r-sm)] w-full flex items-center gap-3 p-2 text-left"
+      className="h-auto w-full justify-start gap-3 rounded-[var(--lkv-radius-sm)] bg-[color:var(--lkv-surface-muted)] p-2 text-left font-normal"
     >
       <span
-        className={`h-5 w-5 rounded-full flex items-center justify-center shrink-0 ${
-          checked ? 'bg-sage-500' : 'bg-stone-200'
+        className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full ${
+          checked ? 'bg-[var(--sage-500)]' : 'bg-[color:var(--lkv-surface-muted)]'
         }`}
       >
         {checked && <Icon name="check" size={12} className="text-white" aria-hidden="true" />}
       </span>
       <span
-        className={`text-sm ${checked ? 'line-through text-[color:var(--label-quaternary)]' : 'text-[color:var(--label)]'}`}
+        className={`text-sm ${checked ? 'line-through text-[color:var(--lkv-text-muted)]' : 'text-[color:var(--lkv-text-primary)]'}`}
       >
         {label}
       </span>
-    </motion.button>
+    </Button>
   );
 }

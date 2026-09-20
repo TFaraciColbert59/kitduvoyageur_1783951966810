@@ -1,5 +1,4 @@
-import { Card } from '@/components/ui';
-import { Badge } from '@/components/ui/Badge';
+import { Badge, Card, EmptyState } from '@/components/ui';
 
 export interface Insight {
   title: string;
@@ -14,11 +13,11 @@ export function AiInsightBanner({ insights }: { insights: Insight[] }) {
       {insights.map((i) => (
         <div key={i.title} className="flex items-start gap-2">
           <Badge tone={i.tone}>{i.title}</Badge>
-          <p className="text-sm text-[color:var(--label-secondary)]">{i.body}</p>
+          <p className="text-sm text-[color:var(--lkv-text-secondary)]">{i.body}</p>
         </div>
       ))}
       {insights.length === 0 && (
-        <p className="text-sm text-[color:var(--label-secondary)]">Aucun point d'attention particulier.</p>
+        <EmptyState compact title="Aucun point d'attention particulier." />
       )}
     </Card>
   );

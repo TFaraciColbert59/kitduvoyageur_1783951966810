@@ -2,7 +2,7 @@
 
 import Icon from '@/components/ui/Icon';
 import { motion } from 'framer-motion';
-import { Card } from '@/components/ui';
+import { Badge, Card, EmptyState, ListItem } from '@/components/ui';
 import { ShoppingBagIcon as ShoppingBag } from '@/components/icons/shopping-bag';
 import { ClockIcon as Clock } from '@/components/icons/clock';
 import type { KitListItem } from '@/features/materiel/services/getKits';
@@ -50,17 +50,12 @@ export function KitsActiveCockpitCard({ kit }: Props) {
         aria-label="Articles du kit actif"
       >
         {items.length === 0 ? (
-          <div className="flex flex-col items-center justify-center gap-1.5 py-5">
-            <span className="text-xl opacity-30" aria-hidden="true">
-              🎒
-            </span>
-            <p className="text-[10px] text-[var(--lkv-text-muted)] font-medium">Kit vide</p>
-            <p className="text-[8.5px] text-[var(--lkv-text-muted)]/70 text-center leading-relaxed">
-              Utilisez l'Assembleur ci-dessus
-              <br />
-              pour ajouter des articles.
-            </p>
-          </div>
+          <EmptyState
+            compact
+            icon={<span aria-hidden="true">🎒</span>}
+            title="Kit vide"
+            description="Utilisez l'Assembleur ci-dessus pour ajouter des articles."
+          />
         ) : (
           items.map((item, idx) => {
             const isUnowned = !item.product_ownership_id;
@@ -71,47 +66,48 @@ export function KitsActiveCockpitCard({ kit }: Props) {
                 initial={{ opacity: 0, x: -6 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.2, delay: idx * 0.03, ease: [0.16, 1, 0.3, 1] }}
-                className={`p-1.5 rounded-lg flex items-center justify-between gap-1.5 text-[11px] transition-all ${
+                className={
                   isUnowned
-                    ? 'bg-white/[0.04] border border-dashed border-white/30 opacity-70'
-                    : 'glass-sub-card'
-                }`}
+                    ? 'rounded-lg border border-dashed border-white/30 bg-white/[0.04] opacity-70'
+                    : ''
+                }
               >
-                <div className="flex items-center gap-1.5 min-w-0">
-                  <div
-                    className={`w-4 h-4 rounded-md flex items-center justify-center shrink-0 border ${
-                      isUnowned
-                        ? 'border-white/30 bg-white/5 text-[var(--lkv-text-muted)]'
-                        : 'bg-[var(--lkv-primary)]/10 border-[var(--lkv-primary)]/20 text-[var(--lkv-primary)]'
-                    }`}
-                    aria-hidden="true"
-                  >
-                    {isUnowned ? (
-                      <Clock size={9} />
+                <ListItem
+                  as="div"
+                  leading={
+                    <span
+                      className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-md border ${
+                        isUnowned
+                          ? 'border-white/30 bg-white/5 text-[var(--lkv-text-muted)]'
+                          : 'bg-[var(--lkv-primary)]/10 border-[var(--lkv-primary)]/20 text-[var(--lkv-primary)]'
+                      }`}
+                      aria-hidden="true"
+                    >
+                      {isUnowned ? (
+                        <Clock size={9} />
+                      ) : (
+                        <Icon name="check" size={10} strokeWidth={3} />
+                      )}
+                    </span>
+                  }
+                  title={
+                    <span className={isUnowned ? 'italic text-[var(--lkv-text-muted)]' : 'font-semibold text-[var(--lkv-primary)]'}>
+                      {item.name}
+                    </span>
+                  }
+                  metadata={
+                    isUnowned ? (
+                      <Badge tone="info" className="gap-0.5 px-1 py-0.5 text-[8px] font-bold">
+                        <ShoppingBag size={8} aria-hidden="true" />
+                        En commande
+                      </Badge>
                     ) : (
-                      <Icon name="check" size={10} strokeWidth={3} />
-                    )}
-                  </div>
-                  <span
-                    className={`truncate ${isUnowned ? 'text-[var(--lkv-text-muted)] italic' : 'font-semibold text-[var(--lkv-primary)]'}`}
-                    aria-label={`${item.name}${isUnowned ? ' — en commande' : ' — prêt'}`}
-                  >
-                    {item.name}
-                  </span>
-                </div>
-
-                <div className="flex items-center gap-1 shrink-0">
-                  {isUnowned ? (
-                    <span className="text-[8px] font-bold px-1 py-0.5 rounded bg-[var(--lkv-primary)]/10 text-[var(--lkv-primary)] flex items-center gap-0.5">
-                      <ShoppingBag size={8} aria-hidden="true" />
-                      En commande
-                    </span>
-                  ) : (
-                    <span className="text-[9px] text-[var(--lkv-text-muted)] font-mono">
-                      {item.weight_g ? `${item.weight_g}g` : '—'}
-                    </span>
-                  )}
-                </div>
+                      <span className="text-[9px] font-mono text-[var(--lkv-text-muted)]">
+                        {item.weight_g ? `${item.weight_g}g` : '—'}
+                      </span>
+                    )
+                  }
+                />
               </motion.div>
             );
           })
@@ -119,7 +115,7 @@ export function KitsActiveCockpitCard({ kit }: Props) {
       </div>
 
       {/* Capsule inférieure Poids Total */}
-      <div className="glass-sub-card shrink-0 px-2.5 py-1.5 flex items-center justify-between text-[11px]">
+      <Card variant="compact" className="flex shrink-0 items-center justify-between px-2.5 py-1.5 text-[11px]">
         <span className="text-[9px] md:text-[10px] font-semibold uppercase tracking-wider text-[var(--lkv-primary-soft)]">
           Poids total
         </span>
@@ -133,7 +129,7 @@ export function KitsActiveCockpitCard({ kit }: Props) {
         >
           {weightKg} kg
         </motion.span>
-      </div>
+      </Card>
     </Card>
   );
 }

@@ -1,6 +1,6 @@
 'use client';
 import { useState } from 'react';
-import { Card } from '@/components/ui';
+import { Card, EmptyState } from '@/components/ui';
 import { Eyebrow } from '@/components/ui/Eyebrow';
 import { Metric } from '@/components/ui/Metric';
 import { ForgetChecklistItem } from './ForgetChecklistItem';
@@ -35,7 +35,11 @@ export function ForgetChecklist({ items, onToggle }: { items: ForgetItem[]; onTo
             />
           </li>
         ))}
-        {items.length === 0 && <li className="text-sm text-[color:var(--label-secondary)]">Aucun article dans votre kit actif.</li>}
+        {items.length === 0 && (
+          <li>
+            <EmptyState compact title="Aucun article dans votre kit actif." />
+          </li>
+        )}
       </ul>
     </Card>
   );

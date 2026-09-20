@@ -1,7 +1,6 @@
 'use client';
-import { Card } from '@/components/ui';
+import { Badge, Card, EmptyState } from '@/components/ui';
 import { Eyebrow } from '@/components/ui/Eyebrow';
-import { Badge } from '@/components/ui/Badge';
 import { historyLabel, historyTone } from '@/lib/materiel/history';
 import type { KitHistoryEntry } from '@/features/materiel/services/getKitHistory';
 
@@ -14,14 +13,18 @@ export function KitHistoryTimeline({ history }: { history: KitHistoryEntry[] }) 
       <ol className="relative border-l border-white/30 pl-4 flex flex-col gap-2.5">
         {history.map((h) => (
           <li key={h.id} className="relative">
-            <span className="absolute -left-[21px] top-1.5 h-2 w-2 rounded-full bg-[var(--lkv-primary)] " aria-hidden="true" />
-            <div className="glass-sub-card p-2.5 rounded-xl flex items-center justify-between">
+            <span className="absolute -left-[var(--space-5)] top-1.5 h-2 w-2 rounded-full bg-[var(--lkv-primary)]" aria-hidden="true" />
+            <Card variant="compact" className="flex items-center justify-between p-2.5">
               <span className="text-xs font-semibold text-[var(--lkv-primary)]">{historyLabel(h.action)}</span>
               <Badge tone={historyTone(h.action)}>{new Date(h.created_at).toLocaleDateString('fr-FR')}</Badge>
-            </div>
+            </Card>
           </li>
         ))}
-        {history.length === 0 && <li className="text-xs text-[var(--lkv-text-muted)]">Aucun historique pour ce kit.</li>}
+        {history.length === 0 && (
+          <li>
+            <EmptyState compact title="Aucun historique pour ce kit." />
+          </li>
+        )}
       </ol>
     </Card>
   );

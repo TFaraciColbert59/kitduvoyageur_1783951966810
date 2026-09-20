@@ -1,8 +1,7 @@
 'use client';
 import { useState } from 'react';
-import { Card } from '@/components/ui';
+import { Badge, Button, Card } from '@/components/ui';
 import { Eyebrow } from '@/components/ui/Eyebrow';
-import { Badge } from '@/components/ui/Badge';
 import { computeDiff, diffSummary, type OptimizeAction } from '@/lib/materiel/optimizer';
 import type { KitListItem } from '@/features/materiel/services/getKits';
 
@@ -75,7 +74,7 @@ export function KitOptimizer({ kits }: { kits: KitListItem[] }) {
           value={kitId}
           onChange={(e) => setKitId(e.target.value)}
           aria-label="Kit à optimiser"
-          className="glass-input flex-1 min-w-[140px] text-xs sm:text-sm text-[var(--lkv-primary)]"
+          className="min-h-[var(--control-height-md)] min-w-[140px] flex-1 rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] text-xs text-[var(--lkv-primary)] sm:text-sm"
         >
           {active.map((k) => <option key={k.id} value={k.id}>{k.name}</option>)}
         </select>
@@ -84,29 +83,29 @@ export function KitOptimizer({ kits }: { kits: KitListItem[] }) {
           onChange={(e) => setGoal(e.target.value)}
           placeholder="Objectif (ex: alléger le kit)"
           aria-label="Objectif d'optimisation"
-          className="glass-input flex-1 min-w-[140px] text-xs sm:text-sm text-[var(--lkv-primary)]"
+          className="min-h-[var(--control-height-md)] min-w-[140px] flex-1 rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] text-xs text-[var(--lkv-primary)] sm:text-sm"
         />
-        <button
-          type="button"
+        <Button
           onClick={run}
           disabled={loading}
-          className="glass-capsule-btn primary shrink-0 h-10 justify-center"
+          loading={loading}
+          className="h-10 shrink-0"
         >
           {loading ? 'Analyse…' : 'Optimiser ✨'}
-        </button>
+        </Button>
       </div>
 
       {error && <p className="mt-3 text-xs text-[var(--lkv-danger)]">{error}</p>}
 
       {result && diff && (
-        <div className="mt-4 glass-sub-card p-3.5 rounded-2xl flex flex-col gap-2.5">
+        <Card variant="compact" className="mt-4 flex flex-col gap-2.5 p-3.5">
           <div className="flex flex-wrap gap-2">
             <Badge tone="sage">Score {result.score ?? diff.score}/100</Badge>
             <Badge tone="info">{(diff.beforeG / 1000).toFixed(1)} → {(diff.afterG / 1000).toFixed(1)} kg</Badge>
           </div>
           <p className="text-xs sm:text-sm text-[var(--lkv-primary)] leading-relaxed">{result.analysis}</p>
           {diffSummary(diff).map((s) => <p key={s} className="text-xs text-[var(--lkv-primary-soft)] font-medium">{s}</p>)}
-        </div>
+        </Card>
       )}
     </Card>
   );

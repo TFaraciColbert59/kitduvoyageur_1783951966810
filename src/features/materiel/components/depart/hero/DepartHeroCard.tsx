@@ -10,11 +10,11 @@ import {
   Wifi,
   WifiOff,
 } from 'lucide-react';
+import { Badge, Button, Card, type BadgeTone } from '@/components/ui';
 import { BudgetRing } from '@/features/hub/components/mobile/budget/BudgetRing';
 import { CountdownLive } from '@/features/materiel/components/cards/CountdownLive';
 import { formatDistanceKm, formatWeight } from '@/features/materiel/domain/departCalculations';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
-import { cn } from '@/lib/utils';
 import type { DepartIdentity } from '@/features/materiel/domain/departIdentity';
 import type { DepartDetail, DepartStatus } from '@/features/materiel/services/getDepartDetail';
 
@@ -35,11 +35,11 @@ const STATUS_LABELS: Record<DepartStatus, string> = {
   done: 'Terminé',
 };
 
-const STATUS_TONES: Record<DepartStatus, string> = {
-  draft: 'pill-warn',
-  ready: '',
-  active: 'pill-info',
-  done: '',
+const STATUS_TONES: Record<DepartStatus, BadgeTone> = {
+  draft: 'warn',
+  ready: 'sage',
+  active: 'info',
+  done: 'stone',
 };
 
 export function DepartHeroCard({
@@ -80,16 +80,14 @@ export function DepartHeroCard({
   };
 
   return (
-    <section className="glass relative overflow-hidden rounded-[1.75rem] p-4" aria-label="Départ">
+    <Card as="section" aria-label="Départ" className="relative overflow-hidden p-4">
       <header className="flex items-start justify-between gap-2">
         <p className="text-[10px] font-medium uppercase tracking-[0.14em] text-[var(--lkv-text-primary)]/70">
           Départ
         </p>
-        <span
-          className={cn('glass-pill shrink-0 uppercase tracking-[0.08em]', STATUS_TONES[status])}
-        >
+        <Badge tone={STATUS_TONES[status]} className="shrink-0 uppercase tracking-[0.08em]">
           {STATUS_LABELS[status]}
-        </span>
+        </Badge>
       </header>
 
       <div className="mt-2.5">
@@ -133,60 +131,58 @@ export function DepartHeroCard({
         </BudgetRing>
 
         <div className="grid min-w-0 flex-1 grid-cols-3 gap-2">
-          <div className="glass-sub-card rounded-2xl p-2.5 text-center">
+          <Card variant="compact" className="rounded-2xl p-2.5 text-center">
             <p className="truncate font-display text-sm font-extrabold leading-none tabular-nums text-[var(--lkv-text-primary)]">
               {formatWeight(depart?.totalPackWeightG ?? 0)}
             </p>
             <p className="mt-1 text-[9px] font-medium uppercase tracking-[0.12em] text-[var(--lkv-text-primary)]/60">
               Poids
             </p>
-          </div>
-          <div className="glass-sub-card rounded-2xl p-2.5 text-center">
+          </Card>
+          <Card variant="compact" className="rounded-2xl p-2.5 text-center">
             <p className="font-display text-sm font-extrabold leading-none tabular-nums text-[var(--lkv-text-primary)]">
               {missingCount}
             </p>
             <p className="mt-1 text-[9px] font-medium uppercase tracking-[0.12em] text-[var(--lkv-text-primary)]/60">
               Manquants
             </p>
-          </div>
-          <div className="glass-sub-card rounded-2xl p-2.5 text-center">
+          </Card>
+          <Card variant="compact" className="rounded-2xl p-2.5 text-center">
             <p className="truncate font-display text-sm font-extrabold leading-none tabular-nums text-[var(--lkv-text-primary)]">
               {formatDistanceKm(depart?.trail?.distance_km)}
             </p>
             <p className="mt-1 text-[9px] font-medium uppercase tracking-[0.12em] text-[var(--lkv-text-primary)]/60">
               Distance
             </p>
-          </div>
+          </Card>
         </div>
       </div>
 
       <div className="mt-4 flex gap-2">
-        <button
-          type="button"
+        <Button
           onClick={handleOpenSheet}
-          className="glass-capsule-btn primary min-h-[44px] flex-1 !py-3 text-sm font-bold active:scale-[0.97]"
+          icon={<FileText size={15} aria-hidden="true" />}
+          className="min-h-[44px] flex-1 py-3 text-sm font-bold"
         >
-          <FileText size={15} aria-hidden="true" />
           Ouvrir la fiche de départ
-        </button>
-        <button
-          type="button"
+        </Button>
+        <Button
+          variant="secondary"
           onClick={handleShare}
-          className="glass-capsule-btn min-h-[44px] !px-3 text-xs font-bold active:scale-[0.97]"
+          icon={<Share2 size={14} aria-hidden="true" />}
+          className="min-h-[44px] px-3 text-xs font-bold"
         >
-          <Share2 size={14} aria-hidden="true" />
           Partager
-        </button>
+        </Button>
       </div>
 
       <footer className="mt-3 flex flex-wrap items-center gap-2 border-t border-[var(--lkv-primary)]/10 pt-2.5 text-[10px] uppercase tracking-[0.14em] text-[var(--lkv-text-primary)]/60">
         {depart?.status && (
-          <span
-            className="glass-sub-card inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-semibold"
-            title="Mode éco batterie"
-          >
-            <BatteryCharging size={12} aria-hidden="true" />
-            ÉCO
+          <span title="Mode éco batterie">
+            <Badge tone="stone" className="gap-1 px-2 py-0.5 font-semibold">
+              <BatteryCharging size={12} aria-hidden="true" />
+              ÉCO
+            </Badge>
           </span>
         )}
         <span
@@ -201,7 +197,7 @@ export function DepartHeroCard({
             aria-label="Changer de kit"
             defaultValue={depart?.assignedKit?.id}
             onChange={(event) => onSelectKit?.(event.target.value)}
-            className="glass-sub-card ml-auto max-w-[45%] truncate rounded-full px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--lkv-text-primary)] outline-none"
+            className="ml-auto max-w-[45%] truncate rounded-full border border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-card)] px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--lkv-text-primary)] outline-none"
           >
             {selectKits?.map((kit) => (
               <option key={kit.id} value={kit.id}>
@@ -211,6 +207,6 @@ export function DepartHeroCard({
           </select>
         )}
       </footer>
-    </section>
+    </Card>
   );
 }

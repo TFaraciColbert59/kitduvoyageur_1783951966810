@@ -2,6 +2,7 @@
 import Icon from '@/components/ui/Icon';
 import React from 'react';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
+import { Button, IconButton } from '@/components/ui';
 import { ArrowRightIcon as ArrowRightAnimated } from '@/components/icons/arrow-right';
 import { XIcon as XAnimated } from '@/components/icons/x';
 import { cn } from '@/lib/utils';
@@ -113,26 +114,29 @@ export function MobileVitalAlertBanner({
 
           <div className="flex items-center gap-1.5 shrink-0">
             {/* Bouton Action Rapide */}
-            <button
-              type="button"
+            <Button
+              variant="destructive"
+              size="sm"
               data-testid="vital-alert-action"
               onClick={handleAction}
-              className="px-2.5 py-1 rounded-full text-[10.5px] font-bold bg-[var(--lkv-danger)] hover:bg-[var(--lkv-danger)] text-white shadow-2xs flex items-center gap-1 cursor-pointer transition-transform active:scale-95 shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lkv-danger)]"
+              icon={<ArrowRightAnimated size={10} aria-hidden="true" />}
+              iconPosition="trailing"
+              className="h-6 shrink-0 rounded-full px-2.5 text-[10.5px] font-bold shadow-2xs"
             >
-              <span>{currentAlert.actionLabel || 'Régler'}</span>
-              <ArrowRightAnimated size={10} aria-hidden="true" />
-            </button>
+              {currentAlert.actionLabel || 'Régler'}
+            </Button>
 
             {/* Bouton Fermer */}
-            <button
-              type="button"
+            <IconButton
+              variant="ghost"
+              size="sm"
               data-testid="vital-alert-dismiss"
               onClick={handleDismiss}
               aria-label="Masquer l'alerte"
-              className="w-7 h-7 flex items-center justify-center text-[var(--lkv-danger)]/70 hover:text-[var(--lkv-danger)] hover:bg-[var(--lkv-danger)]/10 rounded-full cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lkv-danger)] shrink-0"
+              className="h-7 w-7 shrink-0 rounded-full text-[var(--lkv-danger)]/70 hover:bg-[var(--lkv-danger)]/10 hover:text-[var(--lkv-danger)]"
             >
               <XAnimated size={12} aria-hidden="true" />
-            </button>
+            </IconButton>
           </div>
         </div>
       </motion.aside>
