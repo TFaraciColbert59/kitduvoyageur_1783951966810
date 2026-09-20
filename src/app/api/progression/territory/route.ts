@@ -22,7 +22,7 @@ export async function GET() {
     const state = await getTerritoryState(user.id);
     return NextResponse.json({ success: true, ...state });
   } catch (err) {
-    const message = err instanceof Error ? err.message : 'Erreur lors de la lecture du territoire';
+    const message = 'Erreur lors de la lecture du territoire'; console.error('[API /api/progression/territory]', err);
     console.error('[API /api/progression/territory] Error:', message);
     return NextResponse.json({ success: false, error: message }, { status: 500 });
   }
@@ -86,7 +86,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true, declared: result.declared });
   } catch (err) {
-    const message = err instanceof Error ? err.message : 'Erreur lors de la mise à jour du territoire';
+    const message = 'Erreur lors de la mise à jour du territoire'; console.error('[API /api/progression/territory]', err);
     console.error('[API /api/progression/territory] Error:', message);
     return NextResponse.json({ success: false, error: message }, { status: 500 });
   }

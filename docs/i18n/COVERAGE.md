@@ -1,6 +1,6 @@
 # Rapport de couverture i18n — P6
 
-Généré le 2026-09-19 par `node scripts/i18n/coverage.mjs`.
+Généré le 2026-09-20 par `node scripts/i18n/coverage.mjs`.
 
 ## 1. Portée et méthode
 
@@ -12,7 +12,7 @@ Généré le 2026-09-19 par `node scripts/i18n/coverage.mjs`.
 
 - Fichiers scannés : **668**
 - Fichiers contenant au moins un segment français évident : **459**
-- Segments français détectés : **5529**
+- Segments français détectés : **5535**
 - Clés du dictionnaire FR : **198** — clés EN : **198** — parité FR/EN : **oui**
 
 | Section | Clés |
@@ -200,6 +200,7 @@ Généré le 2026-09-19 par `node scripts/i18n/coverage.mjs`.
 | `src/components/groupes/MobileGroupeView.tsx` | 8 |
 | `src/app/api/materiel/export/route.ts` | 7 |
 | `src/app/api/og-preview/route.ts` | 7 |
+| `src/app/api/progression/territory/route.ts` | 7 |
 | `src/app/components/home/HomepageAIDemoSection.tsx` | 7 |
 | `src/app/kits/[slug]/page.tsx` | 7 |
 | `src/app/not-found.tsx` | 7 |
@@ -245,7 +246,7 @@ Généré le 2026-09-19 par `node scripts/i18n/coverage.mjs`.
 | `src/app/api/materiel/kits/[id]/route.ts` | 5 |
 | `src/app/api/materiel/scan/route.ts` | 5 |
 | `src/app/api/materiel/share/route.ts` | 5 |
-| `src/app/api/progression/territory/route.ts` | 5 |
+| `src/app/api/progression/leaderboard/route.ts` | 5 |
 | `src/app/carnets/[id]/page.tsx` | 5 |
 | `src/app/components/home/HomepageFeaturedProductsSection.tsx` | 5 |
 | `src/app/components/home/HomepageFinalCTASection.tsx` | 5 |
@@ -283,7 +284,8 @@ Généré le 2026-09-19 par `node scripts/i18n/coverage.mjs`.
 | `src/app/api/ai/ping/route.ts` | 4 |
 | `src/app/api/cron/process-adventure-events/route.ts` | 4 |
 | `src/app/api/dev/generate-country-blocks/route.ts` | 4 |
-| `src/app/api/progression/leaderboard/route.ts` | 4 |
+| `src/app/api/progression/route.ts` | 4 |
+| `src/app/api/rewards/claim/route.ts` | 4 |
 | `src/app/api/trips/[id]/checklist/complete/route.ts` | 4 |
 | `src/app/carnets/layout.tsx` | 4 |
 | `src/app/checkout/layout.tsx` | 4 |
@@ -341,7 +343,6 @@ Généré le 2026-09-19 par `node scripts/i18n/coverage.mjs`.
 | `src/app/api/kits/my-royalties/route.ts` | 3 |
 | `src/app/api/materiel/calendar/route.ts` | 3 |
 | `src/app/api/materiel/fork/route.ts` | 3 |
-| `src/app/api/progression/route.ts` | 3 |
 | `src/app/api/voyages/[slug]/gpx/route.ts` | 3 |
 | `src/app/avis/layout.tsx` | 3 |
 | `src/app/carbone/layout.tsx` | 3 |
@@ -396,7 +397,6 @@ Généré le 2026-09-19 par `node scripts/i18n/coverage.mjs`.
 | `src/app/api/notifications/digest/route.ts` | 2 |
 | `src/app/api/produit/trust-score-check/route.ts` | 2 |
 | `src/app/api/progression/challenge/replace/route.ts` | 2 |
-| `src/app/api/rewards/claim/route.ts` | 2 |
 | `src/app/api/rewards/withdraw/route.ts` | 2 |
 | `src/app/auth/callback/route.ts` | 2 |
 | `src/app/carte-interactive/page.tsx` | 2 |

@@ -2,7 +2,7 @@
 -- flag, anti-triangulation, privilèges et pagination keyset.
 BEGIN;
 SET LOCAL search_path = public;
-SELECT plan(46);
+SELECT plan(48);
 
 -- ── Jeu de données : 6 utilisateurs, 3 villes, 2 pays. ──────────────────────
 INSERT INTO auth.users (id, aud, role, email, encrypted_password, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
@@ -123,8 +123,17 @@ SELECT is(
   (SELECT alias FROM public.progression_leaderboard_agg
    WHERE season_id = 'season_2026_s1' AND scope_type = 'world'
      AND user_id = 'aaaaaaaa-0000-4000-8000-000000000001'),
-  'Voyageur ' || substr(md5('aaaaaaaa-0000-4000-8000-000000000001'), 1, 6),
-  '12. alias pseudonyme stable, jamais nom réel ni UUID'
+  public.leaderboard_alias('aaaaaaaa-0000-4000-8000-000000000001', 'world', '', 'season_2026_s1'),
+  '12. alias pseudonyme stable par scope/saison, jamais nom réel ni UUID'
+);
+SELECT isnt(
+  (SELECT alias FROM public.progression_leaderboard_agg
+   WHERE season_id = 'season_2026_s1' AND scope_type = 'world'
+     AND user_id = 'aaaaaaaa-0000-4000-8000-000000000001'),
+  (SELECT alias FROM public.progression_leaderboard_agg
+   WHERE season_id = 'season_2026_s1' AND scope_type = 'city'
+     AND user_id = 'aaaaaaaa-0000-4000-8000-000000000001'),
+  '12b. alias non corrélable entre scopes (sel par scope)'
 );
 SELECT is(
   (SELECT count(*)::int FROM public.progression_leaderboard_agg
@@ -162,9 +171,9 @@ SELECT is(
      public.get_leaderboard('aaaaaaaa-0000-4000-8000-000000000001','world',50)->'rows') r
    WHERE (r->>'is_current_user')::boolean),
   (SELECT r->>'season_points' FROM jsonb_array_elements(
-     public.get_leaderboard('aaaaaaaa-0000-4000-8000-000000000001','city',50)->'rows') r
+     public.get_leaderboard('aaaaaaaa-0000-4000-8000-000000000001','country',50)->'rows') r
    WHERE (r->>'is_current_user')::boolean),
-  '18. score identique entre deux filtres'
+  '18. score identique entre deux filtres au-dessus du seuil'
 );
 SELECT is(
   (public.get_leaderboard('aaaaaaaa-0000-4000-8000-000000000001','world',50))->>'rank',
@@ -172,9 +181,14 @@ SELECT is(
   '19. rang monde = 6'
 );
 SELECT is(
+  (public.get_leaderboard('aaaaaaaa-0000-4000-8000-000000000001','country',50))->>'rank',
+  '5',
+  '20. rang pays = 5 (groupe plus petit)'
+);
+SELECT is(
   (public.get_leaderboard('aaaaaaaa-0000-4000-8000-000000000001','city',50))->>'rank',
-  '3',
-  '20. rang ville = 3'
+  NULL,
+  '20b. sous le seuil : aucun rang divulgué'
 );
 SELECT is(
   strpos(
@@ -207,23 +221,26 @@ UPDATE public.feature_flags SET enabled = true WHERE id = 'local_leaderboard_act
 INSERT INTO public.user_territory_private (user_id, lat, lng, accuracy_m, consent_at, locked_until) VALUES
   ('aaaaaaaa-0000-4000-8000-000000000001', 48.8566, 2.3522, 15, now(), now() + interval '1 day'),
   ('aaaaaaaa-0000-4000-8000-000000000002', 48.8570, 2.3530, 20, now(), now() + interval '1 day'),
-  ('aaaaaaaa-0000-4000-8000-000000000003', 48.9500, 2.5000, 25, now(), now() + interval '1 day')
+  ('aaaaaaaa-0000-4000-8000-000000000003', 48.9500, 2.5000, 25, now(), now() + interval '1 day'),
+  ('aaaaaaaa-0000-4000-8000-000000000004', 48.8568, 2.3525, 10, now(), now() + interval '1 day'),
+  ('aaaaaaaa-0000-4000-8000-000000000005', 48.8564, 2.3519, 12, now(), now() + interval '1 day'),
+  ('aaaaaaaa-0000-4000-8000-000000000006', 48.8572, 2.3528, 18, now(), now() + interval '1 day')
 ON CONFLICT (user_id) DO NOTHING;
 
 SELECT is(
   (public.get_leaderboard('aaaaaaaa-0000-4000-8000-000000000001','local',50))->>'total_participants',
-  '2',
-  '25. seuls les consentis à moins de 1000 m sont candidats'
+  '5',
+  '25. seuls les consentis à moins de 1000 m sont candidats (5 sur 6)'
 );
 SELECT is(
   jsonb_array_length(public.get_leaderboard('aaaaaaaa-0000-4000-8000-000000000001','local',50)->'rows'),
-  2,
-  '26. participants locaux visibles'
+  5,
+  '26. au seuil (5), participants locaux visibles'
 );
 SELECT is(
   (public.get_leaderboard('aaaaaaaa-0000-4000-8000-000000000001','local',50))->>'community_forming',
-  'true',
-  '27. seuil local sous 5 → communauté en formation'
+  'false',
+  '27. seuil local atteint → communauté formée'
 );
 SELECT is(
   (SELECT count(*)::int FROM jsonb_array_elements(

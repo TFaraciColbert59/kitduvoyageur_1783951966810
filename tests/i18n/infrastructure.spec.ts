@@ -3,6 +3,7 @@ import {
   DEFAULT_LOCALE,
   LOCALES,
   LOCALE_COOKIE,
+  isEnglishEnabled,
   isLocale,
   normalizeLocale,
   parseAcceptLanguage,
@@ -54,12 +55,26 @@ describe('P6 — Infrastructure i18n', () => {
       expect(parseAcceptLanguage(null)).toBeNull();
     });
 
-    it('resolveLocale : cookie prioritaire, puis Accept-Language, puis fr', () => {
-      expect(resolveLocale({ cookie: 'en', acceptLanguage: 'fr-FR,fr;q=0.9' })).toBe('en');
-      expect(resolveLocale({ cookie: 'inconnu', acceptLanguage: 'en-GB,en;q=0.9' })).toBe('en');
-      expect(resolveLocale({ cookie: null, acceptLanguage: 'de-DE' })).toBe('fr');
+    it('anglais désactivé par défaut : resolveLocale reste fr même avec un cookie en', () => {
+      delete process.env.NEXT_PUBLIC_I18N_EN_ENABLED;
+      expect(isEnglishEnabled()).toBe(false);
+      expect(resolveLocale({ cookie: 'en', acceptLanguage: 'en-GB,en;q=0.9' })).toBe('fr');
+      expect(resolveLocale('en')).toBe('fr');
       expect(resolveLocale()).toBe('fr');
-      expect(resolveLocale('en')).toBe('en');
+    });
+
+    it('anglais explicitement activé : cookie prioritaire, puis Accept-Language, puis fr', () => {
+      process.env.NEXT_PUBLIC_I18N_EN_ENABLED = '1';
+      try {
+        expect(isEnglishEnabled()).toBe(true);
+        expect(resolveLocale({ cookie: 'en', acceptLanguage: 'fr-FR,fr;q=0.9' })).toBe('en');
+        expect(resolveLocale({ cookie: 'inconnu', acceptLanguage: 'en-GB,en;q=0.9' })).toBe('en');
+        expect(resolveLocale({ cookie: null, acceptLanguage: 'de-DE' })).toBe('fr');
+        expect(resolveLocale()).toBe('fr');
+        expect(resolveLocale('en')).toBe('en');
+      } finally {
+        delete process.env.NEXT_PUBLIC_I18N_EN_ENABLED;
+      }
     });
 
     it('sérialise et relit le cookie de locale (SameSite=Lax, 1 an)', () => {

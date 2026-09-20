@@ -18,7 +18,7 @@ export async function GET() {
     const profile = await getProgressionProfile(user.id);
     return NextResponse.json({ success: true, profile });
   } catch (err) {
-    const message = err instanceof Error ? err.message : 'Erreur interne de progression';
+    const message = 'Erreur interne de progression'; console.error('[API /api/progression]', err);
     console.error('[API /api/progression] Error:', message);
     return NextResponse.json({ success: false, error: message }, { status: 500 });
   }

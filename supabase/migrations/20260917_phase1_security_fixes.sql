@@ -131,7 +131,17 @@ ALTER FUNCTION public.get_occasion_listing_for_product(uuid) SET search_path = p
 ALTER FUNCTION public.increment_stock(uuid, integer, text, text, uuid, text) SET search_path = public, extensions;
 ALTER FUNCTION public.update_order_updated_at() SET search_path = public, extensions;
 ALTER FUNCTION public.update_group_updated_at() SET search_path = public, extensions;
-ALTER FUNCTION public.get_routes_for_map() SET search_path = public, extensions;
+-- Réparation additive : selon l'historique, la fonction existe en 0-arg (prod)
+-- ou en 5-arg (baseline). On sécurise chaque signature présente sans échouer.
+DO $$
+BEGIN
+  IF to_regprocedure('public.get_routes_for_map()') IS NOT NULL THEN
+    ALTER FUNCTION public.get_routes_for_map() SET search_path = public, extensions;
+  END IF;
+  IF to_regprocedure('public.get_routes_for_map(double precision,double precision,double precision,double precision,double precision)') IS NOT NULL THEN
+    ALTER FUNCTION public.get_routes_for_map(double precision,double precision,double precision,double precision,double precision) SET search_path = public, extensions;
+  END IF;
+END $$;
 ALTER FUNCTION public.sync_loyalty_points() SET search_path = public, extensions;
 ALTER FUNCTION public.redeem_reward(uuid, uuid) SET search_path = public, extensions;
 ALTER FUNCTION public.get_user_badges_progress(uuid) SET search_path = public, extensions;
@@ -172,10 +182,22 @@ ALTER FUNCTION public.cleanup_expired_trash_kits() SET search_path = public, ext
 ALTER FUNCTION public.record_hike_gear_usage(uuid[]) SET search_path = public, extensions;
 ALTER FUNCTION public.materiel_kits_search_vector_update() SET search_path = public, extensions;
 ALTER FUNCTION public.product_ownership_search_vector_update() SET search_path = public, extensions;
-ALTER FUNCTION public.get_trail_pois_bbox(double precision, double precision, double precision, double precision) SET search_path = public, extensions;
-ALTER FUNCTION public.generate_trip_slug(text) SET search_path = public, extensions;
+-- Réparations additives : ces signatures peuvent être absentes d'une base fraîche
+-- (objets créés avec d'autres signatures selon l'historique). On sécurise celles
+-- qui existent, sans échouer sur les autres.
+DO $$
+BEGIN
+  IF to_regprocedure('public.get_trail_pois_bbox(double precision, double precision, double precision, double precision)') IS NOT NULL THEN
+    ALTER FUNCTION public.get_trail_pois_bbox(double precision, double precision, double precision, double precision) SET search_path = public, extensions;
+  END IF;
+  IF to_regprocedure('public.generate_trip_slug(text)') IS NOT NULL THEN
+    ALTER FUNCTION public.generate_trip_slug(text) SET search_path = public, extensions;
+  END IF;
+  IF to_regprocedure('public.recalculate_place_rating(uuid)') IS NOT NULL THEN
+    ALTER FUNCTION public.recalculate_place_rating(uuid) SET search_path = public, extensions;
+  END IF;
+END $$;
 ALTER FUNCTION public.sync_place_geom() SET search_path = public, extensions;
-ALTER FUNCTION public.recalculate_place_rating(uuid) SET search_path = public, extensions;
 ALTER FUNCTION public.purge_expired_lkv_events() SET search_path = public, extensions;
 ALTER FUNCTION public.prevent_message_immutable_fields_update() SET search_path = public, extensions;
 ALTER FUNCTION public.enforce_member_role_hierarchy() SET search_path = public, extensions;

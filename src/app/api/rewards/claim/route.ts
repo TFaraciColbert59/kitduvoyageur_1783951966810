@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { getServiceSupabase } from '@/lib/ai/serviceClient';
 import { enforceRateLimit } from '@/lib/rate-limit/routes';
 
 export const runtime = 'nodejs';
@@ -35,8 +36,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Données de contribution incomplètes' }, { status: 400 });
     }
 
-    // Call stored procedure
-    const { data: contributionId, error } = await supabase.rpc('claim_reward_points', {
+    // Phase de stabilisation : la RPC d'attribution est service_role uniquement
+    // (REVOKE authenticated). L'identité vient de la session vérifiée ci-dessus ;
+    // le client ne fournit jamais points ni compétences.
+    const service = getServiceSupabase();
+    if (!service) {
+      return NextResponse.json({ error: 'Service indisponible' }, { status: 503 });
+    }
+    const { data: contributionId, error } = await service.rpc('claim_reward_points', {
       p_user_id: user.id,
       p_action_type: action_type,
       p_target_id: target_id,
@@ -46,7 +53,7 @@ export async function POST(req: NextRequest) {
 
     if (error) {
       console.warn('[rewards/claim] RPC error:', error.message);
-      return NextResponse.json({ error: error.message }, { status: 400 });
+      return NextResponse.json({ error: 'Contribution refusée' }, { status: 400 });
     }
 
     return NextResponse.json({ success: true, contributionId });

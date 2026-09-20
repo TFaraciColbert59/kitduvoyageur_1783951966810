@@ -1,7 +1,12 @@
 /**
  * locale.ts — Locale runtime LKDV (isomorphe : serveur, client, tests).
  *
- * FR est la langue source et le défaut. La locale est résolue dans cet ordre :
+ * FR est la langue source et le défaut. L'ANGLAIS N'EST PAS ACTIVÉ tant que
+ * toutes les surfaces accessibles ne sont pas traduites : tant que
+ * `NEXT_PUBLIC_I18N_EN_ENABLED !== '1'`, la locale résolue est toujours `fr`
+ * (aucun mélange FR/EN possible sur une route servie).
+ * Lorsque l'activation est explicitement activée, la locale est résolue dans
+ * cet ordre :
  *   1. cookie `lkdv_locale` (choix explicite de l'utilisateur) ;
  *   2. en-tête `Accept-Language` ;
  *   3. DEFAULT_LOCALE (`fr`).
@@ -81,12 +86,24 @@ export interface LocaleInput {
 }
 
 /**
+ * L'anglais n'est activable que par une décision explicite de build/déploiement.
+ * Tant qu'il ne l'est pas, aucune surface servie ne peut basculer en anglais :
+ * le mélange FR/EN est impossible.
+ */
+export function isEnglishEnabled(): boolean {
+  return process.env.NEXT_PUBLIC_I18N_EN_ENABLED === '1';
+}
+
+/**
  * Résout la locale courante. Accepte soit l'objet `{ cookie, acceptLanguage }`,
  * soit une chaîne brute (cookie d'abord, en-tête ensuite) pour les appels simples.
+ * Retourne toujours `fr` tant que l'anglais n'est pas explicitement activé.
  */
 export function resolveLocale(
   input?: LocaleInput | string | null
 ): Locale {
+  if (!isEnglishEnabled()) return DEFAULT_LOCALE;
+
   if (typeof input === 'string') {
     return (
       normalizeLocale(input) ?? parseAcceptLanguage(input) ?? DEFAULT_LOCALE

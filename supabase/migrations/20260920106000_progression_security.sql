@@ -9,8 +9,16 @@ DROP POLICY IF EXISTS "Users update own territory" ON public.user_progression;
 REVOKE ALL ON TABLE public.user_progression, public.progression_events, public.progression_decisions FROM anon, authenticated;
 
 -- Fonctions du moteur parallèle de la branche : révoquées puis supprimées.
-REVOKE ALL ON FUNCTION public.apply_progression_points(uuid,text,text,integer,numeric,numeric,numeric,numeric,text) FROM PUBLIC, anon, authenticated;
-REVOKE ALL ON FUNCTION public.reverse_progression_fraud(text,text) FROM PUBLIC, anon, authenticated;
+-- Gardé : une remigration après rollback peut les avoir déjà retirées.
+DO $$
+BEGIN
+  IF to_regprocedure('public.apply_progression_points(uuid,text,text,integer,numeric,numeric,numeric,numeric,text)') IS NOT NULL THEN
+    EXECUTE 'REVOKE ALL ON FUNCTION public.apply_progression_points(uuid,text,text,integer,numeric,numeric,numeric,numeric,text) FROM PUBLIC, anon, authenticated';
+  END IF;
+  IF to_regprocedure('public.reverse_progression_fraud(text,text)') IS NOT NULL THEN
+    EXECUTE 'REVOKE ALL ON FUNCTION public.reverse_progression_fraud(text,text) FROM PUBLIC, anon, authenticated';
+  END IF;
+END $$;
 DROP FUNCTION IF EXISTS public.apply_progression_points(uuid,text,text,integer,numeric,numeric,numeric,numeric,text);
 DROP FUNCTION IF EXISTS public.reverse_progression_fraud(text,text);
 

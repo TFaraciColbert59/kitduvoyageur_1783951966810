@@ -3,23 +3,29 @@
 Mise à jour : 19 septembre 2026 · Branche `feat/mobile-direction-progression` · Worktree `worktrees/lkdv-mobile-direction`.
 Statuts : **vérifié** (preuve locale exécutée), **implémenté** (code livré, non mesuré), **partiel**, **non vérifié** (environnement indisponible), **restant**.
 
-## Preuves exécutées
+## Preuves exécutées (stabilisation du 19/09/2026)
 
 | Preuve | Commande | Résultat |
 |---|---|---|
-| Tests unitaires/intégration | `npm test` | **2919 passés, 27 skipped, 0 échec** (403 fichiers) |
+| Tests unitaires/intégration | `npm test` | **2920 passés, 27 skipped, 0 échec** (403 fichiers) |
 | Types | `npm run type-check` | **0 erreur** |
 | Build production | `npm run build` | **Succès**, First Load JS partagé 104 kB |
-| pgTAP moteur + classement | `npx supabase test db --db-url …` (8 suites) | **93/93** |
+| pgTAP moteur + classement + durcissement | `npx supabase test db --db-url …` (10 suites) | **117/117** sur base neuve **et** base héritée remigrée |
+| Chaîne de migrations complète à froid | baseline + ≈100 migrations post-baseline | **0 erreur** (3 réparations additives), procédure `LOCAL_DB_TESTING.md` |
+| Base héritée : réconciliation + rebuild | fixtures de démo → migrations canoniques | **Vérifié** (archive, purge, solde économique intact, rebuild exact) |
+| Rollback + remigration | 12 descentes inverses puis réapplication | **Vérifié** (objets retirés, remigration fonctionnelle) |
+| Revue de sécurité indépendante | sous-agent sécurité, lecture seule + privilèges réels | Rapport complet ; **1 vulnérabilité HIGH dans la branche corrigée**, 2 CRITIQUES préexistantes neutralisées, durcissements appliqués |
+| Anti-triangulation adversarial | `progression_leaderboard_adversarial.test.sql` (données synthétiques) | **10/10**, flag local OFF par défaut |
 | Contrastes WCAG | `node scripts/audit/visual-contrast.mjs` | **42/42 paires conformes** (4,5:1 texte / 3:1 UI) |
 | Pseudo-localisation | `node scripts/i18n/pseudo-localize.mjs` | 198 clés, **198/198 ≥ +40 %** |
-| Couverture i18n | `node scripts/i18n/coverage.mjs` | 668 fichiers scannés, **198 clés FR/EN à parité**, 459 fichiers restants listés |
+| Couverture i18n | `node scripts/i18n/coverage.mjs` + `critical-paths.mjs` | 198 clés FR/EN à parité ; parcours critiques : 87 fichiers, **0 import EN direct**, anglais **désactivé par défaut** |
 
 ## Domaine par domaine
 
 | Domaine | Exigence | Statut | Preuve / dépendance |
 |---|---|---|---|
-| Moteur de progression | Un seul moteur, une action = un gain, idempotence, outbox atomique | **Vérifié** | pgTAP 93/93 ; aucune écriture cliente (REVOKE + RLS testés) |
+| Moteur de progression | Un seul moteur, une action = un gain, idempotence, outbox atomique | **Vérifié** | pgTAP 117/117 ; aucune écriture cliente (REVOKE + RLS testés) ; refus temporaires réévaluables ; collision de clé inter-utilisateurs corrigée |
+| Sécurité du moteur | RLS inter-comptes, fonctions privilégiées, cron, concurrence, coordonnées | **Vérifié** | Revue indépendante + correctifs : revokes, `search_path`, bornage outbox, purge/rejeu, k-anonymat contraignant, alias scopé |
 | Producteurs | 7 producteurs réels (4 prêts + 3 complétés), désactivés documentés | **Vérifié** (preuve serveur), **implémenté** (non observé en production) | `PRODUCER_MATRIX.md` ; 76 tests progression ; aucun producteur fictif |
 | Classements | 5 filtres, score identique, seuil 5, 1 km confidentiel sous flag | **Vérifié** pgTAP 46/46 | Flag `local_leaderboard_active` OFF par défaut ; anti-triangulation testée (sondage 30/h, seuil, aucune coordonnée) |
 | Navigation et produit | 5 destinations, M01–M10, zéro donnée fictive | **Implémenté + tests** | Registre canonique, `aria-current`, 44 px, z-index unifié ; captures non produites |

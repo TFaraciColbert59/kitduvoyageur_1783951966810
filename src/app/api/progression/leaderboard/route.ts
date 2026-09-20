@@ -55,7 +55,7 @@ export async function GET(request: NextRequest) {
     }
     return NextResponse.json({ success: true, leaderboard });
   } catch (err) {
-    const message = err instanceof Error ? err.message : 'Erreur interne de classement';
+    const message = 'Erreur interne de classement'; console.error('[API /api/progression/leaderboard]', err);
     console.error('[API /api/progression/leaderboard] Error:', message);
     return NextResponse.json({ success: false, error: message }, { status: 500 });
   }

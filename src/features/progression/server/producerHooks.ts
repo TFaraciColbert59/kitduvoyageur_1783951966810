@@ -121,7 +121,9 @@ export async function awardPlaceReview(
     userId,
     action: 'place_review',
     sourceType: 'place_review',
-    sourceId: placeId,
+    // L'auteur fait partie de la clé : un avis par (auteur, lieu) sans
+    // collision entre utilisateurs (le premier avis ne doit pas bloquer les autres).
+    sourceId: `${userId}:${placeId}`,
     effectiveAt: new Date().toISOString(),
   });
 }

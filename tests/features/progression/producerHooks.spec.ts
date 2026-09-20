@@ -145,11 +145,15 @@ describe('producerHooks', () => {
     expect(input.metadata).toEqual({ routeId: '42', tripId: 'trip-1' });
   });
 
-  it('(f) avis de lieu → clé stable (place)', async () => {
+  it('(f) avis de lieu → clé stable (auteur, place), sans collision inter-utilisateurs', async () => {
     await awardPlaceReview('u1', 'place-9');
+    await awardPlaceReview('u2', 'place-9');
 
-    const input = mockedAward.mock.calls[0][0];
-    expect(input.action).toBe('place_review');
-    expect(input.sourceId).toBe('place-9');
+    const first = mockedAward.mock.calls[0][0];
+    const second = mockedAward.mock.calls[1][0];
+    expect(first.action).toBe('place_review');
+    expect(first.sourceId).toBe('u1:place-9');
+    expect(second.sourceId).toBe('u2:place-9');
+    expect(first.sourceId).not.toBe(second.sourceId);
   });
 });

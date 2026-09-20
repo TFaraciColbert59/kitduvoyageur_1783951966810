@@ -50,9 +50,33 @@ npx supabase test db --db-url "postgresql://postgres:postgres@127.0.0.1:55432/po
 | progression_canonique_consumer | 9/9 |
 | progression_canonique_rebuild | 5/5 |
 | progression_canonique_security | 6/6 |
-| **Total** | **50/50** |
+| **Total P1** | **47/47** (le « 50 » annoncé dans les messages de commit P1 était une erreur d'arithmétique, corrigée ici) |
+| progression_leaderboard (P3) | 48/48 (46 + 2 durcissement k-anonymat/alias) |
+| progression_hardening | 12/12 |
+| progression_leaderboard_adversarial | 10/10 |
+| **Total moteur + classement** | **117/117** |
 
-Tests TypeScript du même périmètre : `npm test -- tests/features/progression` → 51/51.
+Tests TypeScript du même périmètre : `npm test -- tests/features/progression` → 97/97.
+
+## Stabilisation — chaîne complète, base neuve, base héritée, rollback
+
+Exécuté le 19/09/2026 sur trois conteneurs indépendants (`public.ecr.aws/supabase/postgres:17.6.1.141`) :
+
+| Scénario | Procédure | Résultat |
+|---|---|---|
+| **Base neuve, chaîne complète** | baseline + auth + grants, puis **toutes** les migrations post-baseline (≈100 fichiers, de `20260911130000` à `20260920111000`) | **0 erreur**, 117/117 pgTAP |
+| **Base héritée (moteur de démo 20260919)** | chaîne jusqu'à `20260919`, injection de projections inventées (Chamonix, rang codé, 380/950 pts) + solde économique, puis migrations canoniques | Migration OK, **réconciliation vérifiée** : archive `progression_legacy_snapshot` (2 lignes), projections démo purgées, journaux sans gain purgés, **solde économique intact (7)**, parcours canonique rejoué (40 pts), **rebuild reproduit 40**, aucun fantôme pour l'utilisateur sans gain |
+| **Rollback** | les 12 descentes `migrations_down/2026092010*` en ordre inverse | **ROLLBACK COMPLET VÉRIFIÉ** : plus aucune table/fonction canonique, colonnes retirées de `reward_transactions`, gains reclassés `ADMIN_ADJUSTMENT` (aucune perte d'audit) |
+| **Remigration** | réapplication des 12 migrations après rollback | **0 erreur**, suites ledger + durcissement vertes |
+
+Précisions d'exécution :
+- La chaîne complète exige le rôle **`supabase_admin`** (le rôle `postgres` du conteneur n'est pas propriétaire de `spatial_ref_sys`).
+- Trois réparations additives de migrations préexistantes ont été nécessaires pour rejouer à froid : `20260713240000` (colonnes `country_sync_log`), `20260715120000` (colonnes `moderation_queue`), `20260917_phase1_security_fixes` (signatures de fonctions absentes + gardes `DO`).
+- Les descentes sont idempotentes (rejouables) : `DROP ... IF EXISTS`, gardes `to_regclass`, `ALTER TABLE IF EXISTS`.
+
+### Scripts de vérification utilisés
+
+`apply-post-cutoff.sh` (chaîne complète), `apply-up-to-20260919.sh` + `apply-canonical.sh` (héritée), `legacy-verify.sql` (réconciliation + rebuild), `rollback-canonical.sh` + `rollback-verify.sql` (rollback). Ces scripts d'exécution ponctuelle n'ont pas été versionnés ; les commandes équivalentes sont ci-dessus et dans `ROLLBACK.md` (migrations_down).
 
 ## Nettoyage
 
