@@ -416,7 +416,41 @@ Sheets sociales détectées hors périmètre (`social/ReportSheet`, `MoreMenuShe
 ### Vérification
 `type-check` ✅ 0 · `lint` ✅ 0 · `vitest` ✅ 407 fichiers / **2 946 tests** · `build` ✅ 17,9 s · **60 captures** `phase2-screenshots/lot6-famille2/`. 3 tests adaptés (classes → tokens, `<hr>` → `Divider`, `glass-pill` → `Badge`), **aucun supprimé**.
 
-### Prochaine famille : **Famille 3 — Voyage / préparation**
+## Lot 6 — Itération 2 · Famille 3 : Voyage / Préparation (TERMINÉE)
+
+### Périmètre et résultat
+155 fichiers live (`app/voyages`, `features/trips`, `features/preparation`, `preparer-sentier`, `features/participants`) ; **70 fichiers modifiés** (66 source + 4 tests), **0 supprimé** (16 fichiers staging non touchés).
+
+| Mesure (périmètre) | Avant | Après |
+|---|---|---|
+| Hex UI | 188 | **0** |
+| `rounded-[…]` littéraux | 3 | **0** |
+| `z-[…]` littéraux | 1 | **0** |
+| `<button>` bruts | 123 | **1** (`TripPhaseController:70`, tabs à double ligne) |
+| `glass-*` legacy | 211 | **0** (7 chaînes = tokens) |
+| Overlays custom | 9 | **2** (scrim/click-catcher tokenisés) |
+| `role="dialog"` maison | 4 | **0** |
+| Headers custom | 3 | **2** (barre sticky autoGen, `<header>` d'impression) |
+| Styles inline | 21 | **18** (dynamiques) |
+
+- 122 boutons → `Button`/`IconButton`/`Chip` ; 4 modales maison → `Modal`/`Sheet`/`ConfirmDialog` ; layouts canoniques (liste → `ListPageLayout`, détail → `DetailPageLayout`, formulaires → `FormPageLayout`) ; formulaires (labels/erreurs/validation/CTA) standardisés ; `Tabs` étendu d'un `badge` rétro-compatible.
+- Exceptions documentées : `TripPhaseController:70`, `AutoGenTripCreateView:130` (scrim tokenisé), `DayView:135` (click-catcher), `TripExportView:39` (feuille imprimée), 18 inline dynamiques.
+- **Logique métier intacte** : aucun fichier actions/domain/services/engine/store/hooks/server/API modifié ; `NATIVE_TABBAR_ENABLED` inchangé.
+
+### Métriques globales après famille 3
+
+| Mesure | Après famille 2 | Après famille 3 |
+|---|---|---|
+| Hex | 5 085 | **4 897** |
+| `role="dialog"` maison | 11 | **7** |
+| Styles inline | 1 489 | **1 486** |
+| Headers custom | 0 | **0** |
+| Bottom bars | 2 | 2 |
+
+### Vérification
+`type-check` ✅ 0 · `lint` ✅ 0 · `vitest` ✅ 407 fichiers / **2 946 tests** · `build` ✅ 14,4 s · **60 captures** `phase2-screenshots/lot6-famille3/`. 4 tests adaptés, **aucun supprimé**.
+
+### Prochaine famille : **Famille 4 — Explorer / carte**
 
 ## Lots suivants
 
