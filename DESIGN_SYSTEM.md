@@ -80,6 +80,10 @@ Toutes les couleurs doivent provenir directement de `src/design/tokens.ts` ou de
 
 ## 5. Procédure avant de créer un composant UI
 
-1. Vérifier si une primitive existe déjà dans `src/components/ui/`.
+> **Règle anti-régression (Phase 2) :** « Existe-t-il déjà une primitive ou un pattern dans `@/design` capable de couvrir ce besoin ? »
+> Si oui : étendre ou réutiliser. **Ne jamais créer une variante uniquement pour reproduire exactement l'ancien écran.**
+
+1. Vérifier si une primitive existe déjà dans `src/components/ui/` (ou via la façade `@/design`).
 2. Si une primitive correspond au besoin, **l'utiliser directement**.
 3. Si une variante manque, l'ajouter de façon générique dans la primitive UI sous `src/components/ui/` après comparaison avec `/materiel`.
+4. Les baselines de validation Phase 2 (mesures avant, captures, protocole) vivent dans `docs/design-system/PHASE2_READINESS.md`.
