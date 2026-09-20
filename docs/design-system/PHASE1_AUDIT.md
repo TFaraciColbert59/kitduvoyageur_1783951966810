@@ -131,7 +131,7 @@ Graphe d'imports : **223 fichiers inatteignables** depuis les 265 points d'entr�
 - **Familles d'alias complétées** : `--lkv-sage-600..900`, `--lkv-stone-300..950`, `--lkv-sand-50..900`, `--lkv-sky-50..900`, `--lkv-ink-100`, `--lkv-overlay` → `--lkv-overlay-scrim`. Effets visibles (restauration de l'intention, pas redesign) : gradients de `clubs/page.tsx`, chip sélectionnée de `MissingItemsDrawer`, palette de `budgetEngine.ts`.
 - **`--lkv-accent` volontairement non défini** : utilisé sur le bandeau cookies à fond sombre ; l'aliasing sur `--lkv-secondary` ferait tomber le contraste à ~3,4:1 (échec WCAG AA). Décision à trancher en Phase 2 (variante claire type `--sage-300`).
 - **Classes CSS mortes supprimées** (`tailwind.css`) : `.badge`, `.badge-primary`, `.badge-dark`, `.btn-ghost-dark`, `.label-eyebrow*`, `.nav-underline`, `.img-hover-zoom`, `.touch-target`, `.content-auto`, `.skeleton`, `.animate-float`, `.animate-slide-down`, `.animate-spring-in`, `.delay-50..500`, `border-radius` invalides de `.btn-primary`/`.btn-ghost` (rendu inchangé).
-- **Bug documenté (Phase 2)** : `font-mono-data` (8 usages) ne correspond à aucune classe générée — la police mono ne s'applique pas. Correctif visible (changement de police) volontairement reporté.
+- **Correction d'audit (2026-09-20, Phase 2)** : `font-mono-data` (8 usages) **existe bien** — classe définie dans `src/styles/tailwind.css` (`@layer utilities`). La mention initiale « classe cassée » était erronée et est retirée.
 - **Docs** : `CLAUDE.md` — références aux composants supprimés corrigées (home, `TerrainHub`, animations legacy) + bannière « palette historique » ; `docs/DESIGN_SYSTEM.md` marqué historique.
 - **DevDep** : `ts-node` retiré (aucun usage).
 

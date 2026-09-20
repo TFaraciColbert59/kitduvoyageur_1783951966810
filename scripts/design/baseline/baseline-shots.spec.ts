@@ -31,7 +31,10 @@ const ROUTES: Array<{ slug: string; route: string }> = [
 
 const FULL_PAGE_ROUTES = new Set(['/', '/materiel']);
 
-const OUT_ROOT = path.join(process.cwd(), 'docs', 'design-system', 'baseline-screenshots');
+const OUT_ROOT = path.join(
+  process.cwd(),
+  process.env.SHOTS_OUT_DIR || path.join('docs', 'design-system', 'baseline-screenshots')
+);
 
 interface Shot {
   slug: string;
