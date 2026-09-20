@@ -1,10 +1,11 @@
-﻿'use client';
+'use client';
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import 'leaflet/dist/leaflet.css';
 import type { Map as LeafletMap } from 'leaflet';
 import type { MapTrail } from './types';
 import { toValidLatLng } from './types';
 import TrailLayer from './TrailLayer';
+import { Card, Divider, IconButton } from '@/components/ui';
 
 import type { UnifiedPOI } from '@/lib/queries/pois';
 import TerrainLiveLayer from '@/features/terrain-live/components/TerrainLiveLayer';
@@ -527,7 +528,7 @@ export default function ExplorerMap({
   };
 
   return (
-    <div className="relative w-full h-full bg-[#EAE6DF] overflow-hidden select-none" style={{ width: '100%', height: '100%', touchAction: 'none' }}>
+    <div className="relative w-full h-full bg-[color:var(--lkv-surface-muted)] overflow-hidden select-none" style={{ width: '100%', height: '100%', touchAction: 'none' }}>
       <div ref={containerRef} className="w-full h-full z-0" style={{ width: '100%', height: '100%', touchAction: 'none' }} />
 
       {mapReady && mapInstance && (trails.length > 0 || (pois && pois.length > 0)) && (
@@ -543,93 +544,98 @@ export default function ExplorerMap({
         />
       )}
 
-      {/* 1. Sélecteur de Calques — capsule bar Liquid Glass (comme le reste du site).
+      {/* 1. Sélecteur de Calques — capsule bar (comme le reste du site).
           Mobile : rangée du haut à DROITE (aligné sur le bouton « rechercher
           cette zone »), jamais sous l'avatar / l'indicateur dev à gauche. */}
       <div
-        className={`absolute z-[400] pointer-events-auto ${
+        className={`absolute z-[var(--z-fab)] pointer-events-auto ${
           isAutoCompact
-            ? 'right-3 top-[calc(env(safe-area-inset-top,0px)+16px)]'
+            ? 'right-3 top-[calc(var(--safe-top)+16px)]'
             : 'left-3.5 bottom-[calc(var(--nav-offset)+16px)] md:bottom-6 md:left-4'
         }`}
       >
-        <div className="glass-capsule-bar gap-0.5">
-          <button
-            type="button"
+        <Card variant="featured" className="flex items-center gap-0.5 rounded-full p-1">
+          <IconButton
+            variant={tileMode === 'osm' ? 'solid' : 'ghost'}
+            size="sm"
             onClick={() => handleTileChange('osm')}
             title="Carte standard (Plan)"
             aria-label="Carte standard (Plan)"
-            className={`glass-capsule-segment !min-w-0 !px-2.5 !py-2 ${tileMode === 'osm' ? 'active' : ''}`}
+            aria-pressed={tileMode === 'osm'}
           >
             <svg width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
               <path d="M3 6l6-3 6 3 6-3v12l-6 3-6-3-6 3V6z"></path>
               <path d="M9 3v12"></path>
               <path d="M15 6v12"></path>
             </svg>
-          </button>
-          <button
-            type="button"
+          </IconButton>
+          <IconButton
+            variant={tileMode === 'topo' ? 'solid' : 'ghost'}
+            size="sm"
             onClick={() => handleTileChange('topo')}
             title="Relief / Topographie"
             aria-label="Relief / Topographie"
-            className={`glass-capsule-segment !min-w-0 !px-2.5 !py-2 ${tileMode === 'topo' ? 'active' : ''}`}
+            aria-pressed={tileMode === 'topo'}
           >
             <svg width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
               <path d="M8 3l4 8 5-5 5 15H2L8 3z"></path>
             </svg>
-          </button>
-          <button
-            type="button"
+          </IconButton>
+          <IconButton
+            variant={tileMode === 'satellite' ? 'solid' : 'ghost'}
+            size="sm"
             onClick={() => handleTileChange('satellite')}
             title="Vue Satellite"
             aria-label="Vue Satellite"
-            className={`glass-capsule-segment !min-w-0 !px-2.5 !py-2 ${tileMode === 'satellite' ? 'active' : ''}`}
+            aria-pressed={tileMode === 'satellite'}
           >
             <svg width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
               <circle cx="12" cy="12" r="10"></circle>
               <line x1="2" y1="12" x2="22" y2="12"></line>
               <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
             </svg>
-          </button>
-        </div>
+          </IconButton>
+        </Card>
       </div>
 
-      {/* 2. Dock de Navigation GPS & Zoom (+ / −) — (EN BAS À DROITE — Canonique Liquid Glass) */}
-      <div className="absolute z-[400] pointer-events-auto right-3.5 bottom-[calc(var(--nav-offset)+16px)] md:bottom-6 md:right-4">
-        <div className="glass flex flex-col gap-1 items-center p-1 rounded-full shadow-md border border-white/80">
-          <button
-            type="button"
+      {/* 2. Dock de Navigation GPS & Zoom (+ / −) — (EN BAS À DROITE — Canonique) */}
+      <div className="absolute z-[var(--z-fab)] pointer-events-auto right-3.5 bottom-[calc(var(--nav-offset)+16px)] md:bottom-6 md:right-4">
+        <Card variant="featured" className="flex flex-col items-center gap-1 rounded-full p-1 shadow-md">
+          <IconButton
+            variant="glass"
+            size="sm"
             onClick={handleRecenter}
             title="Recentrer sur ma position"
             aria-label="Recentrer sur ma position"
-            className="glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8"
           >
             <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
               <circle cx="12" cy="12" r="4" />
               <path d="M12 2v3m0 14v3M2 12h3m14 0h3" />
             </svg>
-          </button>
-          <div className="w-4 h-[1px] bg-[#17402C]/10 my-0.5" />
-          <button
-            type="button"
+          </IconButton>
+          <Divider orientation="vertical" spacing="none" className="h-px w-4" />
+          <IconButton
+            variant="glass"
+            size="sm"
             onClick={handleZoomIn}
             title="Zoom avant"
             aria-label="Zoom avant"
-            className="glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8 font-bold text-sm"
+            className="font-bold"
           >
             +
-          </button>
-          <div className="w-4 h-[1px] bg-[#17402C]/10 my-0.5" />
-          <button
-            type="button"
+          </IconButton>
+          <Divider orientation="vertical" spacing="none" className="h-px w-4" />
+          <IconButton
+            variant="glass"
+            size="sm"
             onClick={handleZoomOut}
             title="Zoom arrière"
             aria-label="Zoom arrière"
-            className="glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8 font-bold text-sm"
+            className="font-bold"
           >
             −
-          </button>
-        </div>
+          </IconButton>
+        </Card>
       </div>
     </div>
   );

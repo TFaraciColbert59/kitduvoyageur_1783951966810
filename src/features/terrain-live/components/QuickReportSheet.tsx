@@ -9,6 +9,7 @@
  */
 import { useCallback, useEffect, useReducer } from 'react';
 import Icon from '@/components/ui/Icon';
+import { Button, Chip } from '@/components/ui';
 import { Sheet } from '@/components/ui/Sheet';
 import type {
   TerrainPassability,
@@ -87,21 +88,21 @@ export default function QuickReportSheet({
             const display = categoryDisplay(category);
             return (
               <li key={category}>
-                <button
-                  type="button"
+                <Button
+                  variant="secondary"
                   onClick={() => dispatch({ type: 'select_category', category })}
-                  className="flex min-h-[72px] w-full flex-col items-start justify-center gap-1 rounded-xl bg-[var(--lkv-surface-raised,#FFFFFF)] px-4 py-3 text-left active:opacity-70"
+                  className="flex min-h-[72px] w-full flex-col items-start justify-center gap-1 rounded-[var(--lkv-radius-md)] px-4 py-3 text-left"
                 >
                   <Icon
                     name={display.icon}
                     size={20}
-                    className="text-[var(--lkv-secondary,#17402C)]"
+                    className="text-[color:var(--lkv-primary)]"
                     aria-hidden="true"
                   />
-                  <span className="text-sm font-medium text-[var(--lkv-text-primary,#0B1F17)]">
+                  <span className="text-[length:var(--lkv-text-body-sm)] font-medium">
                     {display.label}
                   </span>
-                </button>
+                </Button>
               </li>
             );
           })}
@@ -113,36 +114,33 @@ export default function QuickReportSheet({
           <ul className="space-y-2">
             {SEVERITIES.map((severity) => (
               <li key={severity}>
-                <button
-                  type="button"
+                <Button
+                  variant="secondary"
+                  fullWidth
+                  aria-pressed={state.severity === severity}
                   onClick={() => dispatch({ type: 'select_severity', severity })}
-                  className="flex min-h-[48px] w-full items-center justify-between rounded-xl bg-[var(--lkv-surface-raised,#FFFFFF)] px-4 py-2.5 text-left active:opacity-70"
+                  className="justify-between px-4 text-left"
                 >
-                  <span className="text-sm font-medium text-[var(--lkv-text-primary,#0B1F17)]">
+                  <span className="text-[length:var(--lkv-text-body-sm)] font-medium">
                     {SEVERITY_LABELS[severity]}
                   </span>
                   {state.severity === severity && (
-                    <Icon name="check" size={16} className="text-[var(--lkv-secondary,#17402C)]" aria-hidden="true" />
+                    <Icon name="check" size={16} className="text-[color:var(--lkv-primary)]" aria-hidden="true" />
                   )}
-                </button>
+                </Button>
               </li>
             ))}
           </ul>
           <div className="mt-3 flex flex-wrap gap-2" role="group" aria-label="Passabilité">
             {PASSABILITIES.map((passability) => (
-              <button
+              <Chip
                 key={passability}
-                type="button"
+                selected={state.passability === passability}
                 onClick={() => dispatch({ type: 'set_passability', passability })}
-                aria-pressed={state.passability === passability}
-                className={`min-h-[44px] rounded-full px-4 text-[13px] ${
-                  state.passability === passability
-                    ? 'bg-[var(--lkv-secondary,#17402C)] text-white'
-                    : 'bg-[var(--lkv-surface-raised,#FFFFFF)] text-[var(--lkv-text-secondary,#4A5D52)]'
-                }`}
+                className="min-h-[44px] px-4"
               >
                 {PASSABILITY_LABELS[passability]}
-              </button>
+              </Chip>
             ))}
           </div>
         </div>
@@ -150,14 +148,14 @@ export default function QuickReportSheet({
 
       {state.step === 'confirm' && (
         <div className="py-4">
-          <p className="text-sm text-[var(--lkv-text-secondary,#4A5D52)]">
+          <p className="text-[length:var(--lkv-text-body-sm)] text-[color:var(--lkv-text-secondary)]">
             {state.category && categoryDisplay(state.category).label}
             {state.severity ? ` · ${SEVERITY_LABELS[state.severity]}` : ''}
             {state.passability ? ` · ${PASSABILITY_LABELS[state.passability]}` : ''}
           </p>
           <label
             htmlFor="terrain-report-description"
-            className="mt-4 block text-xs font-medium uppercase tracking-[0.12em] text-[var(--lkv-text-muted,#6B7A70)]"
+            className="mt-4 block text-[length:var(--lkv-text-caption-1)] font-medium uppercase tracking-[0.12em] text-[color:var(--lkv-text-muted)]"
           >
             Commentaire (optionnel)
           </label>
@@ -169,34 +167,37 @@ export default function QuickReportSheet({
             }
             maxLength={1000}
             rows={2}
-            className="mt-2 w-full resize-none rounded-xl bg-[var(--lkv-surface-raised,#FFFFFF)] px-4 py-3 text-sm text-[var(--lkv-text-primary,#0B1F17)] outline-none focus-visible:ring-2 focus-visible:ring-[var(--lkv-secondary,#17402C)]"
+            className="mt-2 w-full resize-none rounded-[var(--lkv-radius-md)] border border-[color:var(--lkv-border)] bg-[color:var(--lkv-field-bg)] px-4 py-3 text-[length:var(--lkv-text-body-sm)] text-[color:var(--lkv-text-primary)] outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]"
           />
-          <button
-            type="button"
+          <Button
+            variant="primary"
+            fullWidth
             onClick={submit}
             disabled={busy || !canSubmit(state)}
-            className="mt-4 min-h-[50px] w-full rounded-xl bg-[var(--lkv-secondary,#17402C)] text-[15px] font-semibold text-white active:opacity-80 disabled:opacity-50"
+            className="mt-4 min-h-[50px]"
           >
             {busy ? 'Envoi…' : 'Signaler'}
-          </button>
-          <button
-            type="button"
+          </Button>
+          <Button
+            variant="ghost"
+            fullWidth
             onClick={() => dispatch({ type: 'back' })}
-            className="mt-2 min-h-[44px] w-full text-sm text-[var(--lkv-text-secondary,#4A5D52)]"
+            className="mt-2"
           >
             Retour
-          </button>
+          </Button>
         </div>
       )}
 
       {state.step === 'severity' && (
-        <button
-          type="button"
+        <Button
+          variant="ghost"
+          fullWidth
           onClick={() => dispatch({ type: 'back' })}
-          className="mb-2 min-h-[44px] w-full text-sm text-[var(--lkv-text-secondary,#4A5D52)]"
+          className="mb-2"
         >
           Retour
-        </button>
+        </Button>
       )}
     </Sheet>
   );

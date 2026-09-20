@@ -3,8 +3,7 @@
 import Icon from '@/components/ui/Icon';
 import React, { useState, useTransition } from 'react';
 import Link from 'next/link';
-import { Card } from '@/components/ui';
-import { Button } from '@/components/ui';
+import { Button, Card, Chip, IconButton } from '@/components/ui';
 import { addPlaceToTripAction } from '@/app/lieux/actions';
 import type { PlaceWithDistance } from '../types/place.types';
 
@@ -76,61 +75,62 @@ export function AddPlaceToTripModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-900/60 backdrop-blur-sm animate-fade-in">
+    <div className="fixed inset-0 z-[var(--z-modal)] flex items-center justify-center bg-[color:var(--lkv-overlay-scrim)] p-4 backdrop-blur-[var(--blur-sm)]">
       <div className="w-full max-w-lg">
-        <Card
-          tone="neutral"
-          className="border border-white/70 shadow-2xl rounded-card overflow-hidden p-6 sm:p-7 relative bg-white/95"
-        >
+        <Card className="relative p-6 sm:p-7">
           {/* Close button */}
-          <button
-            type="button"
+          <IconButton
+            variant="ghost"
+            size="md"
             onClick={handleResetAndClose}
-            className="absolute top-5 right-5 p-2 rounded-full text-stone-500 hover:text-stone-900 hover:bg-stone-100 transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
+            className="absolute right-3 top-3"
             aria-label="Fermer"
           >
-            <Icon name="x" className="w-5 h-5" />
-          </button>
+            <Icon name="x" className="h-5 w-5" />
+          </IconButton>
 
           {/* Modal Header */}
-          <div className="mb-5 pr-8">
-            <span className="text-xs font-bold text-[#5B7F55] uppercase tracking-wider">
+          <div className="mb-[var(--space-5)] pr-8">
+            <span className="text-[length:var(--lkv-text-caption-1)] font-bold uppercase tracking-wider text-[color:var(--lkv-secondary)]">
               Intégration d’Itinéraire
             </span>
-            <h2 className="text-xl sm:text-2xl font-black text-stone-900 mt-1">
+            <h2 className="mt-1 font-display text-[length:var(--lkv-text-title-sm)] font-bold text-[color:var(--lkv-text-primary)]">
               Ajouter à un Voyage
             </h2>
-            <p className="text-sm text-stone-600 mt-1">
-              Intégrez <strong className="text-stone-900">{place.name}</strong> comme étape ou point
+            <p className="mt-1 text-[length:var(--lkv-text-body-sm)] text-[color:var(--lkv-text-secondary)]">
+              Intégrez <strong className="text-[color:var(--lkv-text-primary)]">{place.name}</strong> comme étape ou point
               d’intérêt.
             </p>
           </div>
 
           {/* Success State */}
           {successResult ? (
-            <div className="py-4 text-center">
-              <div className="w-12 h-12 rounded-full bg-forest-50 text-forest-700 mx-auto flex items-center justify-center mb-3">
-                <Icon name="check-circle2" className="w-6 h-6" />
+            <div className="py-[var(--space-4)] text-center">
+              <div className="mx-auto mb-[var(--space-3)] flex h-12 w-12 items-center justify-center rounded-full bg-[color:var(--lkv-success-bg)] text-[color:var(--lkv-primary)]">
+                <Icon name="check-circle2" className="h-6 w-6" />
               </div>
-              <h3 className="text-lg font-bold text-stone-900 mb-1">Lieu ajouté avec succès !</h3>
-              <p className="text-sm text-stone-600 mb-6">
+              <h3 className="mb-[var(--space-1)] text-[length:var(--lkv-text-body)] font-bold text-[color:var(--lkv-text-primary)]">
+                Lieu ajouté avec succès !
+              </h3>
+              <p className="mb-[var(--space-6)] text-[length:var(--lkv-text-body-sm)] text-[color:var(--lkv-text-secondary)]">
                 Le lieu a été inséré dans votre journée {selectedDay} et ajouté à votre kit de
                 préparation.
               </p>
 
-              <div className="flex flex-col sm:flex-row gap-3">
-                <Link href={`/voyages/${successResult.tripSlug}/itineraire`} className="flex-1">
+              <div className="flex flex-col gap-3 sm:flex-row">
+                <Link href={`/voyages/${successResult.tripSlug}/itineraire`} className="flex-1 no-underline">
                   <Button
                     variant="primary"
-                    className="w-full flex items-center justify-center gap-2 min-h-[44px]"
+                    fullWidth
+                    className="gap-2"
                   >
                     Voir l’itinéraire
-                    <Icon name="arrow-right" className="w-4 h-4" />
+                    <Icon name="arrow-right" className="h-4 w-4" />
                   </Button>
                 </Link>
                 <Button
                   variant="secondary"
-                  className="flex-1 min-h-[44px]"
+                  className="flex-1"
                   onClick={handleResetAndClose}
                 >
                   Fermer
@@ -138,32 +138,32 @@ export function AddPlaceToTripModal({
               </div>
             </div>
           ) : (
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-[var(--space-4)]">
               {errorMsg && (
-                <div className="p-3.5 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-center gap-2">
-                  <Icon name="alert-circle" className="w-4 h-4 text-rose-700 shrink-0" />
+                <Card tone="danger" className="flex items-center gap-2 p-[var(--space-3)] text-[length:var(--lkv-text-caption-1)]">
+                  <Icon name="alert-circle" className="h-4 w-4 shrink-0" />
                   <span>{errorMsg}</span>
-                </div>
+                </Card>
               )}
 
               {userTrips.length === 0 ? (
-                <div className="p-4 rounded-2xl bg-stone-50 border border-stone-200 text-center">
-                  <p className="text-sm text-stone-600 mb-3">
+                <Card variant="compact" className="p-[var(--space-4)] text-center">
+                  <p className="mb-[var(--space-3)] text-[length:var(--lkv-text-body-sm)] text-[color:var(--lkv-text-secondary)]">
                     Vous n’avez aucun voyage en cours de préparation.
                   </p>
-                  <Link href="/voyages/nouveau">
-                    <Button variant="primary" size="sm" className="min-h-[44px]">
+                  <Link href="/voyages/nouveau" className="no-underline">
+                    <Button variant="primary" size="sm">
                       Créer un nouveau voyage
                     </Button>
                   </Link>
-                </div>
+                </Card>
               ) : (
                 <>
                   {/* Select Trip */}
                   <div>
                     <label
                       htmlFor="trip-select"
-                      className="block text-xs font-bold text-stone-700 uppercase tracking-wider mb-1.5"
+                      className="mb-1.5 block text-[length:var(--lkv-text-caption-1)] font-bold uppercase tracking-wider text-[color:var(--lkv-text-secondary)]"
                     >
                       Choisir le voyage
                     </label>
@@ -171,7 +171,7 @@ export function AddPlaceToTripModal({
                       id="trip-select"
                       value={selectedTripId}
                       onChange={(e) => handleTripChange(e.target.value)}
-                      className="w-full h-11 px-3.5 rounded-2xl border border-stone-200 bg-stone-50/70 text-sm font-medium text-stone-900 focus:outline-none focus:ring-2 focus:ring-[#17402C]/20 focus:border-[#17402C]"
+                      className="h-11 w-full rounded-[var(--lkv-radius-md)] border border-[color:var(--lkv-border)] bg-[color:var(--lkv-field-bg)] px-3.5 text-[length:var(--lkv-text-body-sm)] font-medium text-[color:var(--lkv-text-primary)] focus:outline-none focus:ring-2 focus:ring-[color:var(--lkv-focus-ring)]"
                     >
                       {userTrips.map((t) => (
                         <option key={t.id} value={t.id}>
@@ -183,43 +183,37 @@ export function AddPlaceToTripModal({
 
                   {/* Select Day */}
                   <div>
-                    <label
-                      htmlFor="day-select"
-                      className="block text-xs font-bold text-stone-700 uppercase tracking-wider mb-1.5"
-                    >
+                    <span className="mb-1.5 block text-[length:var(--lkv-text-caption-1)] font-bold uppercase tracking-wider text-[color:var(--lkv-text-secondary)]">
                       Journée de destination
-                    </label>
-                    <div className="grid grid-cols-5 gap-2 max-h-40 overflow-y-auto p-1">
+                    </span>
+                    <div className="grid max-h-40 grid-cols-5 gap-2 overflow-y-auto p-1">
                       {Array.from({ length: maxDays }, (_, i) => i + 1).map((day) => (
-                        <button
+                        <Chip
                           key={day}
-                          type="button"
+                          selected={selectedDay === day}
                           onClick={() => setSelectedDay(day)}
-                          className={`min-h-[44px] rounded-xl text-xs font-bold transition-all border ${
-                            selectedDay === day
-                              ? 'bg-[#17402C] text-white border-[#17402C] shadow-sm'
-                              : 'bg-stone-50 text-stone-700 border-stone-200 hover:bg-stone-100'
-                          }`}
+                          className="w-full justify-center"
                         >
                           Jour {day}
-                        </button>
+                        </Chip>
                       ))}
                     </div>
                   </div>
 
                   {/* Submit Button */}
-                  <div className="pt-3">
+                  <div className="pt-[var(--space-3)]">
                     <Button
                       type="submit"
                       variant="primary"
-                      className="w-full flex items-center justify-center gap-2 min-h-[48px] font-bold"
+                      fullWidth
                       disabled={isPending}
+                      className="gap-2 font-bold"
                     >
                       {isPending ? (
                         <span>Ajout en cours...</span>
                       ) : (
                         <>
-                          <Icon name="plus" className="w-4 h-4" />
+                          <Icon name="plus" className="h-4 w-4" />
                           Confirmer l’ajout au Jour {selectedDay}
                         </>
                       )}

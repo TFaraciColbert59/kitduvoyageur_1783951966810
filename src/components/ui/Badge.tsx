@@ -7,6 +7,8 @@ export interface BadgeProps {
   tone?: BadgeTone;
   children?: React.ReactNode;
   className?: string;
+  /** Teinte dynamique (catégories carte) — prioritaire sur `tone`. */
+  style?: React.CSSProperties;
 }
 
 const TONE: Record<BadgeTone, string> = {
@@ -21,9 +23,10 @@ const TONE: Record<BadgeTone, string> = {
  * Badge — primitive canonique d'information et de statut (Phase 2, Lot 6).
  * Non interactive : pour un filtre ou une sélection, utiliser `Chip`.
  */
-export function Badge({ tone = 'stone', children, className }: BadgeProps) {
+export function Badge({ tone = 'stone', children, className, style }: BadgeProps) {
   return (
     <span
+      style={style}
       className={cn(
         'inline-flex items-center justify-center gap-[6px] rounded-full border border-[color:var(--lkv-border)] px-[var(--space-3)] py-[2px] text-[length:var(--lkv-text-caption-2)] font-medium',
         TONE[tone],

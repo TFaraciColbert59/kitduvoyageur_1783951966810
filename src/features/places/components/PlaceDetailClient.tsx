@@ -3,8 +3,7 @@
 import Icon from '@/components/ui/Icon';
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { Card } from '@/components/ui';
-import { Button } from '@/components/ui';
+import { Badge, Button, Card } from '@/components/ui';
 import { AddPlaceToTripModal, type UserTripOption } from './AddPlaceToTripModal';
 import { ReportPlaceModal } from './ReportPlaceModal';
 import { PlaceReviewSection } from './PlaceReviewSection';
@@ -18,66 +17,81 @@ export interface PlaceDetailClientProps {
   userTrips: UserTripOption[];
 }
 
+interface InfoTileProps {
+  icon: string;
+  label: React.ReactNode;
+  children: React.ReactNode;
+}
+
+function InfoTile({ icon, label, children }: InfoTileProps) {
+  return (
+    <Card variant="compact" className="flex items-start gap-3 p-3.5">
+      <Icon name={icon} className="mt-0.5 h-4 w-4 shrink-0 text-[color:var(--lkv-primary)]" />
+      <div>
+        <span className="block font-semibold text-[color:var(--lkv-text-muted)]">{label}</span>
+        <strong className="text-[length:var(--lkv-text-body-sm)] text-[color:var(--lkv-text-primary)]">
+          {children}
+        </strong>
+      </div>
+    </Card>
+  );
+}
+
 export function PlaceDetailClient({ place, reviews, photos, userTrips }: PlaceDetailClientProps) {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
 
-  const Icon = getCategoryIcon(place.category);
+  const CategoryIcon = getCategoryIcon(place.category);
   const categoryLabel = getCategoryLabel(place.category);
   const info = place.practical_info || {};
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6 pb-16">
+    <div className="mx-auto max-w-4xl space-y-[var(--space-6)] pb-[var(--space-16)]">
       {/* Bouton Retour */}
       <div>
         <Link
           href="/lieux"
-          className="inline-flex items-center gap-2 text-xs font-bold text-stone-600 hover:text-stone-900 transition-colors py-2"
+          className="inline-flex items-center gap-2 py-[var(--space-2)] text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-muted)] no-underline transition-colors hover:text-[color:var(--lkv-text-primary)]"
         >
-          <Icon name="arrow-left" className="w-4 h-4" />
+          <Icon name="arrow-left" className="h-4 w-4" />
           Retour aux lieux et topos
         </Link>
       </div>
 
       {/* Hero du Lieu */}
-      <Card
-        tone="neutral"
-        className="p-6 sm:p-8 rounded-2xl border border-white/70 shadow-sm relative overflow-hidden"
-      >
-        <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+      <Card className="relative overflow-hidden p-6 sm:p-8">
+        <div className="mb-[var(--space-4)] flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-2">
-            <span className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full text-xs font-bold bg-[#17402C]/10 text-[#17402C] border border-[#17402C]/15">
-              <Icon className="w-4 h-4 text-[#5B7F55]" />
+            <Badge tone="sage" className="gap-1.5">
+              <CategoryIcon className="h-4 w-4 text-[color:var(--lkv-primary)]" />
               {categoryLabel}
-            </span>
+            </Badge>
 
             {place.altitude_m && (
-              <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-stone-100 text-stone-700 border border-stone-200">
-                <Icon name="mountain" className="w-3.5 h-3.5 text-stone-500" />
+              <Badge tone="stone" className="gap-1">
+                <Icon name="mountain" className="h-3.5 w-3.5" />
                 {place.altitude_m} m
-              </span>
+              </Badge>
             )}
           </div>
 
           <div className="flex items-center gap-2">
             {place.is_verified && (
-              <span className="inline-flex items-center gap-1 text-xs font-bold text-[#17402C] bg-[#5B7F55]/15 px-3 py-1 rounded-full border border-[#5B7F55]/20">
-                <Icon name="shield-check" className="w-3.5 h-3.5 text-[#17402C]" />
+              <Badge tone="sage" className="gap-1">
+                <Icon name="shield-check" className="h-3.5 w-3.5 text-[color:var(--lkv-primary)]" />
                 Lieu vérifié terrain
-              </span>
+              </Badge>
             )}
-            <span className="text-xs font-black text-stone-600 bg-stone-100 px-2.5 py-1 rounded-full border border-stone-200 uppercase">
-              {place.country_code}
-            </span>
+            <Badge tone="stone" className="uppercase">{place.country_code}</Badge>
           </div>
         </div>
 
-        <h1 className="text-2xl sm:text-4xl font-black text-stone-900 tracking-tight mb-2">
+        <h1 className="mb-[var(--space-2)] font-display text-[length:var(--lkv-text-title-lg)] font-bold tracking-tight text-[color:var(--lkv-text-primary)]">
           {place.name}
         </h1>
 
-        <div className="flex items-center gap-2 text-sm text-stone-600 mb-6">
-          <Icon name="map-pin" className="w-4 h-4 text-[#5B7F55] shrink-0" />
+        <div className="mb-[var(--space-6)] flex items-center gap-2 text-[length:var(--lkv-text-body-sm)] text-[color:var(--lkv-text-muted)]">
+          <Icon name="map-pin" className="h-4 w-4 shrink-0 text-[color:var(--lkv-primary)]" />
           <span>
             {place.city ? `${place.city}, ` : ''}
             {place.region ? `${place.region}, ` : ''}
@@ -87,38 +101,38 @@ export function PlaceDetailClient({ place, reviews, photos, userTrips }: PlaceDe
 
         {/* Alerte Floutage Éthique */}
         {place.is_blurred && (
-          <div className="mb-6 p-4 rounded-2xl bg-sand-50 border border-sand-200/80 text-sand-900 text-xs sm:text-sm flex items-start gap-3">
-            <Icon name="shield-alert" className="w-5 h-5 text-sand-700 shrink-0 mt-0.5" />
+          <Card tone="warn" className="mb-[var(--space-6)] flex items-start gap-3 p-[var(--space-4)]">
+            <Icon name="shield-alert" className="mt-0.5 h-5 w-5 shrink-0 text-[color:var(--lkv-warning-dark)]" />
             <div className="space-y-1">
-              <strong className="font-bold block">
+              <strong className="block font-bold">
                 Préservation de la biodiversité & sécurité physique (Charte LKDV §5.7)
               </strong>
-              <p className="text-xs text-sand-800/90 leading-relaxed">
+              <p className="text-[length:var(--lkv-text-caption)] leading-relaxed text-[color:var(--lkv-text-secondary)]">
                 Ce spot fragile fait l’objet d’un floutage serveur systématique à ~500 m
                 (coordonnées arrondies à 2 décimales) afin de prévenir le surbivouac et protéger les
                 écosystèmes montagnards.
               </p>
             </div>
-          </div>
+          </Card>
         )}
 
         {/* Actions Principales */}
-        <div className="flex flex-col sm:flex-row gap-3 pt-2 border-t border-stone-200/60">
+        <div className="flex flex-col gap-3 border-t border-[color:var(--lkv-border)] pt-[var(--space-2)] sm:flex-row">
           <Button
             variant="primary"
-            className="flex-1 flex items-center justify-center gap-2 min-h-[48px] font-bold"
+            className="min-h-[48px] flex-1 gap-2 font-bold"
             onClick={() => setIsAddModalOpen(true)}
           >
-            <Icon name="plus" className="w-4 h-4" />
+            <Icon name="plus" className="h-4 w-4" />
             Ajouter à mon voyage
           </Button>
 
           <Button
             variant="secondary"
-            className="flex items-center justify-center gap-2 min-h-[48px] text-xs text-stone-600"
+            className="min-h-[48px] gap-2"
             onClick={() => setIsReportModalOpen(true)}
           >
-            <Icon name="alert-triangle" className="w-4 h-4 text-stone-500" />
+            <Icon name="alert-triangle" className="h-4 w-4 text-[color:var(--lkv-warning-dark)]" />
             Signaler un problème
           </Button>
         </div>
@@ -126,162 +140,113 @@ export function PlaceDetailClient({ place, reviews, photos, userTrips }: PlaceDe
 
       {/* Description */}
       {place.description && (
-        <Card
-          tone="neutral"
-          className="p-6 sm:p-7 rounded-card border border-white/60"
-        >
-          <h2 className="text-base font-bold text-stone-900 mb-3 flex items-center gap-2">
-            <Icon name="compass" className="w-4 h-4 text-[#17402C]" />
+        <Card className="p-6 sm:p-7">
+          <h2 className="mb-[var(--space-3)] flex items-center gap-2 text-[length:var(--lkv-text-body)] font-bold text-[color:var(--lkv-text-primary)]">
+            <Icon name="compass" className="h-4 w-4 text-[color:var(--lkv-primary)]" />
             Présentation & Caractéristiques
           </h2>
-          <p className="text-sm text-stone-700 leading-relaxed whitespace-pre-line">
+          <p className="whitespace-pre-line text-[length:var(--lkv-text-body-sm)] leading-relaxed text-[color:var(--lkv-text-secondary)]">
             {place.description}
           </p>
         </Card>
       )}
 
       {/* Informations Pratiques */}
-      <Card
-        tone="neutral"
-        className="p-6 sm:p-7 rounded-card border border-white/60"
-      >
-        <h2 className="text-base font-bold text-stone-900 mb-4 flex items-center gap-2">
-          <Icon name="calendar" className="w-4 h-4 text-[#17402C]" />
+      <Card className="p-6 sm:p-7">
+        <h2 className="mb-[var(--space-4)] flex items-center gap-2 text-[length:var(--lkv-text-body)] font-bold text-[color:var(--lkv-text-primary)]">
+          <Icon name="calendar" className="h-4 w-4 text-[color:var(--lkv-primary)]" />
           Informations Pratiques & Équipements
         </h2>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 text-xs">
+        <div className="grid grid-cols-1 gap-4 text-[length:var(--lkv-text-caption)] sm:grid-cols-2 lg:grid-cols-3">
           {/* Eau */}
-          <div className="glass-sub-card p-3.5 rounded-2xl flex items-start gap-3">
-            <Icon name="droplet" className="w-4 h-4 text-[#5B7F55] shrink-0 mt-0.5" />
-            <div>
-              <span className="text-stone-500 font-semibold block">Eau potable / Source</span>
-              <strong className="text-stone-900 text-sm">
-                {info.waterAvailable === true
-                  ? 'Disponible'
-                  : info.waterAvailable === false
-                    ? 'Non disponible (filtrage requis)'
-                    : 'À vérifier sur place'}
-              </strong>
-            </div>
-          </div>
+          <InfoTile icon="droplet" label="Eau potable / Source">
+            {info.waterAvailable === true
+              ? 'Disponible'
+              : info.waterAvailable === false
+                ? 'Non disponible (filtrage requis)'
+                : 'À vérifier sur place'}
+          </InfoTile>
 
           {/* Accès & Frais */}
-          <div className="glass-sub-card p-3.5 rounded-2xl flex items-start gap-3">
-            <Icon name="users" className="w-4 h-4 text-[#5B7F55] shrink-0 mt-0.5" />
-            <div>
-              <span className="text-stone-500 font-semibold block">Accès / Tarifs</span>
-              <strong className="text-stone-900 text-sm">
-                {info.feesRequired ? 'Payant / Taxe de séjour' : 'Accès libre'}
-                {info.bookingRequired ? ' (Réservation obligatoire)' : ''}
-              </strong>
-            </div>
-          </div>
+          <InfoTile icon="users" label="Accès / Tarifs">
+            {info.feesRequired ? 'Payant / Taxe de séjour' : 'Accès libre'}
+            {info.bookingRequired ? ' (Réservation obligatoire)' : ''}
+          </InfoTile>
 
           {/* Saison */}
           {info.openingSeason && (
-            <div className="glass-sub-card p-3.5 rounded-2xl flex items-start gap-3">
-              <Icon name="calendar" className="w-4 h-4 text-[#5B7F55] shrink-0 mt-0.5" />
-              <div>
-                <span className="text-stone-500 font-semibold block">Période gardée / Saison</span>
-                <strong className="text-stone-900 text-sm">{info.openingSeason}</strong>
-              </div>
-            </div>
+            <InfoTile icon="calendar" label="Période gardée / Saison">
+              {info.openingSeason}
+            </InfoTile>
           )}
 
           {/* Capacité */}
           {info.capacity && (
-            <div className="glass-sub-card p-3.5 rounded-2xl flex items-start gap-3">
-              <Icon name="mountain" className="w-4 h-4 text-[#5B7F55] shrink-0 mt-0.5" />
-              <div>
-                <span className="text-stone-500 font-semibold block">Capacité d’accueil</span>
-                <strong className="text-stone-900 text-sm">{info.capacity} places</strong>
-              </div>
-            </div>
+            <InfoTile icon="mountain" label="Capacité d’accueil">
+              {info.capacity} places
+            </InfoTile>
           )}
 
           {/* Feux */}
-          <div className="glass-sub-card p-3.5 rounded-2xl flex items-start gap-3">
-            <Icon name="flame" className="w-4 h-4 text-[#5B7F55] shrink-0 mt-0.5" />
-            <div>
-              <span className="text-stone-500 font-semibold block">Feux de camp</span>
-              <strong className="text-stone-900 text-sm">
-                {info.fireAllowed ? 'Tolérés avec prudence' : 'Strictement interdits'}
-              </strong>
-            </div>
-          </div>
+          <InfoTile icon="flame" label="Feux de camp">
+            {info.fireAllowed ? 'Tolérés avec prudence' : 'Strictement interdits'}
+          </InfoTile>
 
           {/* Coordonnées */}
-          <div className="glass-sub-card p-3.5 rounded-2xl flex items-start gap-3">
-            <Icon name="map-pin" className="w-4 h-4 text-[#5B7F55] shrink-0 mt-0.5" />
-            <div>
-              <span className="text-stone-500 font-semibold block">
-                Position GPS {place.is_blurred ? '(floutée ~500m)' : '(précise)'}
-              </span>
-              <strong className="text-stone-900 text-xs font-mono">
-                {place.latitude.toFixed(place.is_blurred ? 2 : 5)},{' '}
-                {place.longitude.toFixed(place.is_blurred ? 2 : 5)}
-              </strong>
-            </div>
-          </div>
+          <InfoTile icon="map-pin" label={<>Position GPS {place.is_blurred ? '(floutée ~500m)' : '(précise)'}</>}>
+            <span className="font-mono text-[length:var(--lkv-text-caption)]">
+              {place.latitude.toFixed(place.is_blurred ? 2 : 5)},{' '}
+              {place.longitude.toFixed(place.is_blurred ? 2 : 5)}
+            </span>
+          </InfoTile>
 
           {/* Téléphone si renseigné */}
           {info.phone && (
-            <div className="glass-sub-card p-3.5 rounded-2xl flex items-start gap-3">
-              <Icon name="phone" className="w-4 h-4 text-[#5B7F55] shrink-0 mt-0.5" />
-              <div>
-                <span className="text-stone-500 font-semibold block">Contact téléphonique</span>
-                <a
-                  href={`tel:${info.phone}`}
-                  className="text-stone-900 text-sm font-semibold hover:underline"
-                >
-                  {info.phone}
-                </a>
-              </div>
-            </div>
+            <InfoTile icon="phone" label="Contact téléphonique">
+              <a
+                href={`tel:${info.phone}`}
+                className="font-semibold text-[color:var(--lkv-text-primary)] hover:underline"
+              >
+                {info.phone}
+              </a>
+            </InfoTile>
           )}
 
           {/* Site Web si renseigné */}
           {info.website && (
-            <div className="glass-sub-card p-3.5 rounded-2xl flex items-start gap-3">
-              <Icon name="globe" className="w-4 h-4 text-[#5B7F55] shrink-0 mt-0.5" />
-              <div>
-                <span className="text-stone-500 font-semibold block">Site officiel</span>
-                <a
-                  href={info.website}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-[#17402C] text-sm font-semibold hover:underline truncate block max-w-[200px]"
-                >
-                  Consulter
-                </a>
-              </div>
-            </div>
+            <InfoTile icon="globe" label="Site officiel">
+              <a
+                href={info.website}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block max-w-[200px] truncate font-semibold text-[color:var(--lkv-primary)] hover:underline"
+              >
+                Consulter
+              </a>
+            </InfoTile>
           )}
         </div>
       </Card>
 
       {/* Galerie Photos si présente */}
       {photos.length > 0 && (
-        <Card
-          tone="neutral"
-          className="p-6 sm:p-7 rounded-card border border-white/60"
-        >
-          <h2 className="text-base font-bold text-stone-900 mb-4 flex items-center gap-2">
-            <Icon name="compass" className="w-4 h-4 text-[#17402C]" />
+        <Card className="p-6 sm:p-7">
+          <h2 className="mb-[var(--space-4)] flex items-center gap-2 text-[length:var(--lkv-text-body)] font-bold text-[color:var(--lkv-text-primary)]">
+            <Icon name="compass" className="h-4 w-4 text-[color:var(--lkv-primary)]" />
             Photos Communautaires ({photos.length})
           </h2>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
             {photos.map((photo) => (
               <div
                 key={photo.id}
-                className="relative aspect-video rounded-2xl overflow-hidden bg-stone-100"
+                className="relative aspect-video overflow-hidden rounded-[var(--lkv-radius-md)] bg-[color:var(--lkv-surface-muted)]"
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={photo.url}
                   alt={photo.caption || place.name}
-                  className="w-full h-full object-cover"
+                  className="h-full w-full object-cover"
                 />
               </div>
             ))}

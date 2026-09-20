@@ -7,6 +7,22 @@ import 'leaflet.markercluster/dist/MarkerCluster.css';
 import 'leaflet.markercluster/dist/MarkerCluster.Default.css';
 import type { Map as LeafletMap, LayerGroup } from 'leaflet';
 import type { UnifiedPOI } from '@/lib/queries/pois';
+import { XIcon as XAnimated } from '@/components/icons/x';
+import {
+  Badge,
+  Button,
+  Card,
+  Chip,
+  Divider,
+  EmptyState,
+  IconButton,
+  ListItem,
+  LoadingState,
+  SearchField,
+  Sheet,
+  Spinner,
+  Tabs,
+} from '@/components/ui';
 
 interface MapTrail {
   id: string;
@@ -659,219 +675,201 @@ export default function InteractiveMap() {
     return filteredPois.find(p => p.id === selectedPoiId) || null;
   }, [filteredPois, selectedPoiId]);
 
-  return (
-    <div className="relative w-full h-full flex overflow-hidden font-sans bg-transparent">
-      
-      {/* ── SIDEBAR PANEL (scroll interne) ── */}
-      <div className={`${showMobileFilters ? 'fixed inset-0 z-50 sm:relative sm:inset-auto flex flex-col' : 'hidden'} sm:flex sm:w-[380px] sm:shrink-0 bg-white border-r border-[#E4DED3] overflow-hidden`}>
-        <div className="overflow-y-auto min-h-0 flex-1">
-        
-          {/* Header & Location Banner */}
-          <div className="p-4 border-b border-[#E4DED3] bg-[#EEF3EC] space-y-3">
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="font-display font-bold tracking-tight text-lg text-[#17402C]">Carte Aventure</h2>
-                <p className="text-[11px] text-[#365233] font-semibold flex items-center gap-1">
-                  <span>📍</span>
-                  <span>{locationLabel}</span>
-                </p>
-              </div>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setShowMobileFilters(false)}
-                  className="glass-capsule-btn secondary sm:hidden h-7 px-3 text-[11px] font-bold"
-                >
-                  ✕ Fermer
-                </button>
-                <button
-                  onClick={handleRecenter}
-                  className="glass-capsule-btn secondary h-7 px-3 text-[11px] font-bold"
-                  title="Recentrer sur ma position (10 km)"
-                >
-                  🎯 Ma zone
-                </button>
-              </div>
-            </div>
 
-            {/* Distance Filter Chips */}
-            <div className="space-y-1">
-              <p className="text-[10px] font-mono text-[#5A7064] uppercase font-bold tracking-wider">Distance :</p>
-              {/* data-visual-mask : le rendu backdrop-filter (verre) de la barre
-                  varie d'un run à l'autre en CI (~1,9 k px de diff stable sur
-                  /carte-interactive) alors que la mise en page est identique. */}
-              <div className="glass-capsule-bar w-full overflow-x-auto flex-nowrap" data-visual-mask>
-                {DISTANCE_RANGES.map(r => (
-                  <button
-                    key={r.id}
-                    onClick={() => {
-                      setSelectedDistanceRange(r.id);
-                      if (currentLoadedCenterRef.current) {
-                        load10kmRadiusData(currentLoadedCenterRef.current[0], currentLoadedCenterRef.current[1]);
-                      }
-                    }}
-                    className={`glass-capsule-segment shrink-0 px-3 ${selectedDistanceRange === r.id ? 'active' : ''}`}
-                  >
-                    {r.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Strict POI & Layer Category Checkboxes */}
-            <div className="bg-white p-3 rounded-2xl border border-[#E4DED3] text-xs space-y-2 shadow-xs">
-              <div className="flex items-center justify-between">
-                <span className="text-[10px] font-mono font-bold text-[#5A7064] uppercase tracking-wider">Filtres affichés :</span>
-                <span className="text-[10px] font-mono text-forest-800 font-bold bg-forest-100/80 px-1.5 py-0.5 rounded">
-                  {filteredPois.length} POI{filteredPois.length > 1 ? 's' : ''} actif{filteredPois.length > 1 ? 's' : ''}
-                </span>
-              </div>
-              <div className="grid grid-cols-2 gap-2">
-                <label className="flex items-center gap-2 cursor-pointer select-none">
-                  <input 
-                    type="checkbox" 
-                    checked={showTrails} 
-                    onChange={e => setShowTrails(e.target.checked)} 
-                    className="rounded text-sage-600 focus:ring-0" 
-                  />
-                  <span className="font-semibold text-[#17402C]">🗺️ Sentiers</span>
-                </label>
-
-                <label className="flex items-center gap-2 cursor-pointer select-none">
-                  <input 
-                    type="checkbox" 
-                    checked={showRefuges} 
-                    onChange={e => setShowRefuges(e.target.checked)} 
-                    className="rounded text-sage-600 focus:ring-0" 
-                  />
-                  <span className="font-semibold text-[#17402C]">🏡 Refuges</span>
-                </label>
-
-                <label className="flex items-center gap-2 cursor-pointer select-none">
-                  <input 
-                    type="checkbox" 
-                    checked={showSummits} 
-                    onChange={e => setShowSummits(e.target.checked)} 
-                    className="rounded text-sage-600 focus:ring-0" 
-                  />
-                  <span className="font-semibold text-[#17402C]">⛰️ Sommets</span>
-                </label>
-
-                <label className="flex items-center gap-2 cursor-pointer select-none">
-                  <input 
-                    type="checkbox" 
-                    checked={showWaterPoints} 
-                    onChange={e => setShowWaterPoints(e.target.checked)} 
-                    className="rounded text-sage-600 focus:ring-0" 
-                  />
-                  <span className="font-semibold text-[#17402C]">💧 Points d'eau</span>
-                </label>
-
-                <label className="flex items-center gap-2 cursor-pointer select-none">
-                  <input 
-                    type="checkbox" 
-                    checked={showViewpoints} 
-                    onChange={e => setShowViewpoints(e.target.checked)} 
-                    className="rounded text-sage-600 focus:ring-0" 
-                  />
-                  <span className="font-semibold text-[#17402C]">👁️ Panoramas</span>
-                </label>
-
-                <label className="flex items-center gap-2 cursor-pointer select-none">
-                  <input 
-                    type="checkbox" 
-                    checked={showCampings} 
-                    onChange={e => setShowCampings(e.target.checked)} 
-                    className="rounded text-sage-600 focus:ring-0" 
-                  />
-                  <span className="font-semibold text-[#17402C]">⛺ Bivouacs</span>
-                </label>
-              </div>
-            </div>
-
-            {/* Search Input */}
-            <div className="relative">
-              <input
-                type="text"
-                placeholder="Chercher dans cette zone..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && currentLoadedCenterRef.current) {
-                    load10kmRadiusData(currentLoadedCenterRef.current[0], currentLoadedCenterRef.current[1]);
-                  }
-                }}
-                className="glass-input w-full pl-9 pr-8 py-2 text-xs text-[#17402C]"
-              />
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-[#5A7064]">🔍</span>
-              {searchQuery && (
-                <button onClick={() => setSearchQuery('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-[#5A7064]">✕</button>
-              )}
-            </div>
+// Liens-actions stylés comme les primitives canoniques (pas de <button> imbriqué).
+const LINK_PILL =
+  'inline-flex min-h-[36px] flex-1 select-none items-center justify-center gap-1.5 whitespace-nowrap rounded-full border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] px-[var(--space-4)] text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--card-content)] no-underline transition-transform active:scale-[var(--motion-press-scale)] hover:bg-[color:var(--lkv-hover-surface)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]';
+const LINK_PILL_PRIMARY =
+  'inline-flex min-h-[36px] flex-1 select-none items-center justify-center gap-1.5 whitespace-nowrap rounded-full border border-transparent bg-[color:var(--lkv-action)] px-[var(--space-4)] text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-on-action)] no-underline transition-transform active:scale-[var(--motion-press-scale)] hover:bg-[color:var(--lkv-action-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]';
+const LINK_ICON =
+  'inline-flex h-9 w-9 shrink-0 select-none items-center justify-center rounded-full border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] text-[color:var(--card-content)] no-underline transition-transform active:scale-[var(--motion-press-scale)] hover:bg-[color:var(--lkv-hover-surface)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]';
+  const filterPanel = (
+    <div className="min-h-0 flex-1 overflow-y-auto">
+      {/* Header & Location Banner */}
+      <div className="space-y-3 border-b border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-muted)] p-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="font-display text-[length:var(--lkv-text-title-sm)] font-bold tracking-tight text-[color:var(--lkv-text-primary)]">
+              Carte Aventure
+            </h2>
+            <p className="flex items-center gap-1 text-[length:var(--lkv-text-caption-2)] font-semibold text-[color:var(--lkv-text-secondary)]">
+              <span aria-hidden="true">📍</span>
+              <span>{locationLabel}</span>
+            </p>
           </div>
-
-          {/* Trail Count Banner */}
-          <div className="px-4 py-2 bg-[#F1EDE6] border-b border-[#E4DED3] flex items-center justify-between text-xs text-[#365233]">
-            <span className="font-bold">{filteredTrails.length} randonnée{filteredTrails.length !== 1 ? 's' : ''} (Rayon 10 km)</span>
-            <span className="text-[10px] font-mono text-[#5A7064]">Fluide 60 fps</span>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={handleRecenter}
+              title="Recentrer sur ma position (10 km)"
+            >
+              🎯 Ma zone
+            </Button>
           </div>
-
-          {/* Trail List */}
-          <div className="divide-y divide-[#E4DED3]">
-            {loading ? (
-              <div className="p-8 text-center text-xs text-[#5A7064]">Chargement de votre zone (10 km)...</div>
-            ) : filteredTrails.length === 0 ? (
-              <div className="p-8 text-center text-xs text-[#5A7064]">
-                Aucune randonnée dans ce rayon de 10 km. Déplacez la carte et cliquez sur <strong>« Rechercher dans cette zone »</strong>.
-              </div>
-            ) : (
-              filteredTrails.map(t => {
-                const isSelected = t.id === selectedTrailId;
-                const diffColor = getDifficultyColor(t.difficulty);
-                return (
-                  <div
-                    key={t.id}
-                    onClick={() => handleSelectTrail(t)}
-                    className={`p-4 cursor-pointer transition-colors ${isSelected ? 'bg-[#17402C] text-white' : 'hover:bg-[#EEF3EC] bg-white text-[#17402C]'}`}
-                  >
-                    <div className="flex justify-between items-start mb-1">
-                      <h3 className={`font-bold text-xs leading-snug ${isSelected ? 'text-white' : 'text-[#17402C]'}`}>{t.name}</h3>
-                      <span 
-                        className="text-[9px] font-mono px-2 py-0.5 rounded-full font-bold uppercase tracking-wider ml-2 flex-shrink-0"
-                        style={{ backgroundColor: `${diffColor}20`, color: isSelected ? '#A6C1A0' : diffColor }}
-                      >
-                        {t.difficulty || 'Rando'}
-                      </span>
-                    </div>
-                    
-                    <div className={`flex items-center gap-3 text-[10px] mt-2 font-mono ${isSelected ? 'text-[#A6C1A0]' : 'text-[#5A7064]'}`}>
-                      <span>📏 {t.distance_km ? `${Number(t.distance_km).toFixed(1)} km` : 'N/A'}</span>
-                      {t.duration_hours && <span>⏱️ {t.duration_hours}h</span>}
-                      {t.elevation_gain && <span>📈 +{t.elevation_gain}m</span>}
-                    </div>
-                  </div>
-                );
-              })
-            )}
-          </div>
-
         </div>
+
+        {/* Distance Filter Chips */}
+        <div className="space-y-1">
+          <p className="font-mono text-[length:var(--lkv-text-caption-2)] font-bold uppercase tracking-wider text-[color:var(--lkv-text-muted)]">
+            Distance :
+          </p>
+          {/* data-visual-mask : le rendu backdrop-filter (verre) de la barre
+              varie d'un run à l'autre en CI (~1,9 k px de diff stable sur
+              /carte-interactive) alors que la mise en page est identique. */}
+          <div data-visual-mask>
+            <Tabs
+              variant="scrollable"
+              ariaLabel="Filtrer par distance"
+              options={DISTANCE_RANGES.map((r) => ({ id: r.id, label: r.label }))}
+              value={selectedDistanceRange}
+              onChange={(id) => {
+                setSelectedDistanceRange(id);
+                if (currentLoadedCenterRef.current) {
+                  load10kmRadiusData(currentLoadedCenterRef.current[0], currentLoadedCenterRef.current[1]);
+                }
+              }}
+            />
+          </div>
+        </div>
+
+        {/* Strict POI & Layer Category Chips */}
+        <div className="space-y-2 rounded-[var(--lkv-radius-lg)] border border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-card)] p-3 text-[length:var(--lkv-text-caption)] shadow-xs">
+          <div className="flex items-center justify-between">
+            <span className="font-mono text-[length:var(--lkv-text-caption-2)] font-bold uppercase tracking-wider text-[color:var(--lkv-text-muted)]">
+              Filtres affichés :
+            </span>
+            <Badge tone="sage" className="font-mono">
+              {filteredPois.length} POI{filteredPois.length > 1 ? 's' : ''} actif{filteredPois.length > 1 ? 's' : ''}
+            </Badge>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Chip selected={showTrails} onClick={() => setShowTrails((v) => !v)}>
+              🗺️ Sentiers
+            </Chip>
+            <Chip selected={showRefuges} onClick={() => setShowRefuges((v) => !v)}>
+              🏡 Refuges
+            </Chip>
+            <Chip selected={showSummits} onClick={() => setShowSummits((v) => !v)}>
+              ⛰️ Sommets
+            </Chip>
+            <Chip selected={showWaterPoints} onClick={() => setShowWaterPoints((v) => !v)}>
+              💧 Points d'eau
+            </Chip>
+            <Chip selected={showViewpoints} onClick={() => setShowViewpoints((v) => !v)}>
+              👁️ Panoramas
+            </Chip>
+            <Chip selected={showCampings} onClick={() => setShowCampings((v) => !v)}>
+              ⛺ Bivouacs
+            </Chip>
+          </div>
+        </div>
+
+        {/* Search Input */}
+        <SearchField
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          onClear={() => setSearchQuery('')}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && currentLoadedCenterRef.current) {
+              load10kmRadiusData(currentLoadedCenterRef.current[0], currentLoadedCenterRef.current[1]);
+            }
+          }}
+          placeholder="Chercher dans cette zone..."
+          aria-label="Chercher dans cette zone"
+        />
       </div>
 
+      {/* Trail Count Banner */}
+      <div className="flex items-center justify-between border-b border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-muted)] px-4 py-2 text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-secondary)]">
+        <span className="font-bold">{filteredTrails.length} randonnée{filteredTrails.length !== 1 ? 's' : ''} (Rayon 10 km)</span>
+        <span className="font-mono text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">Fluide 60 fps</span>
+      </div>
+
+      {/* Trail List */}
+      <div className="divide-y divide-[color:var(--lkv-border)]">
+        {loading ? (
+          <LoadingState compact label="Chargement de votre zone (10 km)..." />
+        ) : filteredTrails.length === 0 ? (
+          <EmptyState
+            compact
+            title="Aucune randonnée dans ce rayon de 10 km"
+            description="Déplacez la carte et appuyez sur « Rechercher dans cette zone »."
+          />
+        ) : (
+          filteredTrails.map((t) => {
+            const isSelected = t.id === selectedTrailId;
+            const diffColor = getDifficultyColor(t.difficulty);
+            const stats = [
+              t.distance_km ? `📏 ${Number(t.distance_km).toFixed(1)} km` : '📏 N/A',
+              t.duration_hours ? `⏱️ ${t.duration_hours}h` : null,
+              t.elevation_gain ? `📈 +${t.elevation_gain}m` : null,
+            ]
+              .filter(Boolean)
+              .join('  ·  ');
+            return (
+              <ListItem
+                key={t.id}
+                as="div"
+                selected={isSelected}
+                onClick={() => handleSelectTrail(t)}
+                title={t.name}
+                subtitle={stats}
+                metadata={
+                  <Badge
+                    className="border-transparent uppercase tracking-wider"
+                    style={{ backgroundColor: `${diffColor}20`, color: isSelected ? 'var(--lkv-secondary-subtle)' : diffColor }}
+                  >
+                    {t.difficulty || 'Rando'}
+                  </Badge>
+                }
+                className="px-4 py-3"
+              />
+            );
+          })
+        )}
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="relative flex h-full w-full overflow-hidden font-sans">
+      {/* ── SIDEBAR PANEL (desktop ; mobile = Sheet canonique) ── */}
+      <div className="hidden overflow-hidden border-r border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-card)] sm:flex sm:w-[380px] sm:shrink-0">
+        {filterPanel}
+      </div>
+      {showMobileFilters && (
+        <Sheet
+          open
+          onOpenChange={(open) => {
+            if (!open) setShowMobileFilters(false);
+          }}
+          title="Filtres"
+          detent="large"
+          dragToDismiss
+        >
+          <div className="-mx-[var(--space-5)] -mt-[var(--space-1)] flex min-h-0 flex-col">{filterPanel}</div>
+        </Sheet>
+      )}
+
       {/* ── MAP CONTAINER ── */}
-      <div className="flex-1 h-full relative min-h-[240px]" style={{ touchAction: 'none', overscrollBehavior: 'none' }}>
-        <div ref={containerRef} className="w-full h-full z-0" style={{ width: '100%', height: '100%', touchAction: 'none', overscrollBehavior: 'none' }} />
+      <div className="relative h-full min-h-[240px] flex-1 touch-none overscroll-none">
+        <div ref={containerRef} className="z-0 h-full w-full touch-none overscroll-none" />
 
         {/* ── FLOATING BUTTON : "RECHERCHER DANS CETTE ZONE" (TRIGGERED ONLY ON DEMAND) ── */}
         {hasMovedFromLoadedArea && (
-          <div className="absolute top-[calc(env(safe-area-inset-top,0px)+14px)] left-1/2 -translate-x-1/2 z-[500] pointer-events-auto">
-            <button
+          <div className="pointer-events-auto absolute left-1/2 top-[calc(var(--safe-top)+14px)] z-[var(--z-fab)] -translate-x-1/2">
+            <Button
+              variant="primary"
               onClick={handleSearchThisArea}
               disabled={isSearchingZone}
-              className="glass-capsule-btn primary !min-h-[38px] !px-4 !py-2 text-xs font-bold shadow-lg flex items-center gap-2 active:scale-95 transition-all cursor-pointer"
+              className="min-h-[38px] px-4 shadow-lg"
             >
-              <span className={isSearchingZone ? 'animate-spin' : ''}>🔄</span>
+              <span className={isSearchingZone ? 'inline-flex' : 'inline-flex'}>
+                {isSearchingZone ? <Spinner size="xs" tone="inverted" label="" /> : '🔄'}
+              </span>
               <span>{isSearchingZone ? 'Chargement en cours…' : 'Rechercher dans cette zone'}</span>
-            </button>
+            </Button>
           </div>
         )}
 
@@ -879,229 +877,253 @@ export default function InteractiveMap() {
 
         {/* 1. Mobile Filter Toggle Button (Top Left) */}
         {!showMobileFilters && (
-          <button
-            onClick={() => setShowMobileFilters(true)}
-            className="sm:hidden absolute top-[calc(env(safe-area-inset-top,0px)+14px)] left-3 z-[400] glass-capsule-btn !min-h-[42px] !px-4 !py-1.5 text-[#17402C] font-bold text-sm shadow-lg flex items-center gap-2 active:scale-95 transition-all cursor-pointer"
-            aria-label="Ouvrir les filtres"
-          >
-            <span>🔍</span>
-            <span>Filtres</span>
-            <span className="bg-[#17402C]/10 text-[#17402C] text-[11px] px-2 py-0.5 rounded-full font-mono font-bold">
-              {filteredPois.length}
-            </span>
-          </button>
+          <div className="absolute left-3 top-[calc(var(--safe-top)+14px)] z-[var(--z-fab)] sm:hidden">
+            <Button
+              variant="secondary"
+              onClick={() => setShowMobileFilters(true)}
+              className="min-h-[42px] px-4 shadow-lg"
+              aria-label="Ouvrir les filtres"
+            >
+              <span aria-hidden="true">🔍</span>
+              <span>Filtres</span>
+              <Badge tone="stone">{filteredPois.length}</Badge>
+            </Button>
+          </div>
         )}
 
-        {/* 2. Floating Tile Switcher (EN BAS À GAUCHE — Canonique Liquid Glass) */}
-        <div className="absolute bottom-[calc(var(--nav-offset)+16px)] left-3.5 md:bottom-6 md:left-4 z-[400] glass flex items-center gap-1.5 p-1 rounded-full shadow-md border border-white/80">
-          <button
-            onClick={() => handleTileChange('osm')}
-            className={`glass-circle-btn !w-8 !h-8 ${tileMode === 'osm' ? 'primary' : ''}`}
-            title="Carte Standard (OSM)"
-          >
-            <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
-              <path d="M3 6l6-3 6 3 6-3v12l-6 3-6-3-6 3V6z"></path><path d="M9 3v12"></path><path d="M15 6v12"></path>
-            </svg>
-          </button>
-          <button
-            onClick={() => handleTileChange('topo')}
-            className={`glass-circle-btn !w-8 !h-8 ${tileMode === 'topo' ? 'primary' : ''}`}
-            title="Relief / Topographique"
-          >
-            <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
-              <path d="M8 3l4 8 5-5 5 15H2L8 3z"></path>
-            </svg>
-          </button>
-          <button
-            onClick={() => handleTileChange('satellite')}
-            className={`glass-circle-btn !w-8 !h-8 ${tileMode === 'satellite' ? 'primary' : ''}`}
-            title="Vue Satellite"
-          >
-            <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
-              <circle cx="12" cy="12" r="10"></circle><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"></path><path d="M2 12h20"></path>
-            </svg>
-          </button>
+        {/* 2. Floating Tile Switcher (EN BAS À GAUCHE) */}
+        <div className="absolute bottom-[calc(var(--nav-offset)+16px)] left-3.5 z-[var(--z-fab)] md:bottom-6 md:left-4">
+          <Card variant="featured" className="flex items-center gap-1.5 rounded-full p-1 shadow-md">
+            <IconButton
+              variant={tileMode === 'osm' ? 'solid' : 'ghost'}
+              size="sm"
+              onClick={() => handleTileChange('osm')}
+              title="Carte Standard (OSM)"
+              aria-label="Carte Standard (OSM)"
+              aria-pressed={tileMode === 'osm'}
+            >
+              <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
+                <path d="M3 6l6-3 6 3 6-3v12l-6 3-6-3-6 3V6z"></path><path d="M9 3v12"></path><path d="M15 6v12"></path>
+              </svg>
+            </IconButton>
+            <IconButton
+              variant={tileMode === 'topo' ? 'solid' : 'ghost'}
+              size="sm"
+              onClick={() => handleTileChange('topo')}
+              title="Relief / Topographique"
+              aria-label="Relief / Topographique"
+              aria-pressed={tileMode === 'topo'}
+            >
+              <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
+                <path d="M8 3l4 8 5-5 5 15H2L8 3z"></path>
+              </svg>
+            </IconButton>
+            <IconButton
+              variant={tileMode === 'satellite' ? 'solid' : 'ghost'}
+              size="sm"
+              onClick={() => handleTileChange('satellite')}
+              title="Vue Satellite"
+              aria-label="Vue Satellite"
+              aria-pressed={tileMode === 'satellite'}
+            >
+              <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="10"></circle><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"></path><path d="M2 12h20"></path>
+              </svg>
+            </IconButton>
+          </Card>
         </div>
 
-        {/* 3. Floating Zoom Controls (+ / −) & Recenter (EN BAS À DROITE — Canonique Liquid Glass) */}
-        <div className="absolute bottom-[calc(var(--nav-offset)+16px)] right-3.5 md:bottom-6 md:right-4 z-[400] glass flex flex-col gap-1 items-center p-1 rounded-full shadow-md border border-white/80">
-          <button
-            onClick={handleRecenter}
-            title="Ma position (10 km)"
-            aria-label="Ma position"
-            className="glass-circle-btn !w-8 !h-8"
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#17402C" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="12" r="7" />
-              <line x1="12" y1="1" x2="12" y2="4" />
-              <line x1="12" y1="20" x2="12" y2="23" />
-              <line x1="1" y1="12" x2="4" y2="12" />
-              <line x1="20" y1="12" x2="23" y2="12" />
-            </svg>
-          </button>
-          <div className="w-4 h-[1px] bg-[#17402C]/10 my-0.5" />
-          <button
-            onClick={handleZoomIn}
-            title="Zoom avant"
-            aria-label="Zoom avant"
-            className="glass-circle-btn !w-8 !h-8 font-bold text-sm"
-          >
-            +
-          </button>
-          <div className="w-4 h-[1px] bg-[#17402C]/10 my-0.5" />
-          <button
-            onClick={handleZoomOut}
-            title="Zoom arrière"
-            aria-label="Zoom arrière"
-            className="glass-circle-btn !w-8 !h-8 font-bold text-sm"
-          >
-            −
-          </button>
+        {/* 3. Floating Zoom Controls (+ / −) & Recenter (EN BAS À DROITE) */}
+        <div className="absolute bottom-[calc(var(--nav-offset)+16px)] right-3.5 z-[var(--z-fab)] md:bottom-6 md:right-4">
+          <Card variant="featured" className="flex flex-col items-center gap-1 rounded-full p-1 shadow-md">
+            <IconButton
+              variant="glass"
+              size="sm"
+              onClick={handleRecenter}
+              title="Ma position (10 km)"
+              aria-label="Ma position"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="7" />
+                <line x1="12" y1="1" x2="12" y2="4" />
+                <line x1="12" y1="20" x2="12" y2="23" />
+                <line x1="1" y1="12" x2="4" y2="12" />
+                <line x1="20" y1="12" x2="23" y2="12" />
+              </svg>
+            </IconButton>
+            <Divider orientation="vertical" spacing="none" className="h-px w-4" />
+            <IconButton
+              variant="glass"
+              size="sm"
+              onClick={handleZoomIn}
+              title="Zoom avant"
+              aria-label="Zoom avant"
+              className="font-bold"
+            >
+              +
+            </IconButton>
+            <Divider orientation="vertical" spacing="none" className="h-px w-4" />
+            <IconButton
+              variant="glass"
+              size="sm"
+              onClick={handleZoomOut}
+              title="Zoom arrière"
+              aria-label="Zoom arrière"
+              className="font-bold"
+            >
+              −
+            </IconButton>
+          </Card>
         </div>
 
         {/* Selected Trail Overlay Card (Real GPS Track Loaded) */}
         {selectedTrail && (
-          <div
-            className="absolute left-1/2 -translate-x-1/2 z-[500] w-full max-w-sm px-4 pointer-events-auto"
-            style={{ bottom: 'calc(var(--nav-offset) + 12px)' }}
-          >
-            <div className="glass rounded-xl p-4.5 relative shadow-2xl border border-white/80 backdrop-blur-xl">
-              <button 
+          <div className="pointer-events-auto absolute bottom-[calc(var(--nav-offset)+12px)] left-1/2 z-[var(--z-fab)] w-full max-w-sm -translate-x-1/2 px-4">
+            <Card variant="featured" className="relative p-4">
+              <IconButton
+                variant="glass"
+                size="sm"
                 onClick={() => setSelectedTrailId(null)}
-                className="absolute top-4 right-4 glass-circle-btn !w-6.5 !h-6.5 text-[11px]"
-                aria-label="Fermer"
+                className="absolute right-2 top-2"
+                aria-label="Fermer la fiche du sentier"
               >
-                ✕
-              </button>
-              
-              <div className="flex items-center gap-2 mb-1">
-                <span className="glass-pill text-[9px] font-mono tracking-widest text-[#17402C] uppercase font-bold">Randonnée Sélectionnée</span>
+                <XAnimated size={12} />
+              </IconButton>
+
+              <div className="mb-1 flex flex-wrap items-center gap-2">
+                <Badge tone="sage" className="font-mono uppercase tracking-widest">
+                  Randonnée Sélectionnée
+                </Badge>
                 {selectedTrailGeojson && (
-                  <span className="text-[9px] font-mono font-bold text-forest-800 bg-forest-100/80 px-2 py-0.5 rounded-full border border-forest-200">Tracé GPS Réel ✓</span>
+                  <Badge tone="info" className="font-mono">Tracé GPS Réel ✓</Badge>
                 )}
               </div>
 
-              <h3 className="font-display font-bold text-base leading-tight mt-1 mb-2 pr-6 text-[#17402C]">{selectedTrail.name}</h3>
-              
-              <div className="flex items-center gap-3 text-xs font-mono text-[#17402C] mb-3 p-2.5 rounded-xl bg-white/70 border border-white/60">
+              <h3 className="mb-2 mt-1 pr-6 font-display text-[length:var(--lkv-text-title-sm)] font-bold leading-tight text-[color:var(--lkv-text-primary)]">
+                {selectedTrail.name}
+              </h3>
+
+              <div className="mb-3 flex items-center gap-3 rounded-[var(--lkv-radius-md)] border border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-card)] p-2.5 font-mono text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-primary)]">
                 <div>
-                  <p className="text-[8px] text-[#5A7064] uppercase font-bold">Distance</p>
+                  <p className="text-[length:var(--lkv-text-caption-2)] font-bold uppercase text-[color:var(--lkv-text-muted)]">Distance</p>
                   <p className="font-bold">{selectedTrail.distance_km ? `${Number(selectedTrail.distance_km).toFixed(1)} km` : 'N/A'}</p>
                 </div>
                 {selectedTrail.duration_hours && (
                   <div>
-                    <p className="text-[8px] text-[#5A7064] uppercase font-bold">Durée</p>
+                    <p className="text-[length:var(--lkv-text-caption-2)] font-bold uppercase text-[color:var(--lkv-text-muted)]">Durée</p>
                     <p className="font-bold">{selectedTrail.duration_hours}h</p>
                   </div>
                 )}
                 {selectedTrail.elevation_gain && (
                   <div>
-                    <p className="text-[8px] text-[#5A7064] uppercase font-bold">Dénivelé</p>
+                    <p className="text-[length:var(--lkv-text-caption-2)] font-bold uppercase text-[color:var(--lkv-text-muted)]">Dénivelé</p>
                     <p className="font-bold">+{selectedTrail.elevation_gain}m</p>
                   </div>
                 )}
               </div>
 
-              <div className="flex items-center justify-between gap-2 pt-1 border-t border-[#17402C]/10">
+              <div className="flex items-center justify-between gap-2 border-t border-[color:var(--lkv-border)] pt-1">
                 <a
                   href={`https://www.google.com/maps/dir/?api=1&destination=${selectedTrail.lat},${selectedTrail.lng}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="glass-capsule-btn primary flex-1 !min-h-[36px] text-xs font-bold flex items-center justify-center gap-1.5 shadow-sm active:scale-95 transition-all no-underline"
+                  className={LINK_PILL_PRIMARY}
                 >
-                  <span>🧭</span>
+                  <span aria-hidden="true">🧭</span>
                   <span>Point de départ</span>
                 </a>
                 <Link
                   href={`/preparer-sentier/${selectedTrail.id}`}
                   prefetch={false}
-                  className="glass-capsule-btn flex-1 !min-h-[36px] text-xs font-bold flex items-center justify-center transition-all active:scale-95 no-underline"
+                  className={LINK_PILL}
                 >
                   Préparer
                 </Link>
               </div>
-            </div>
+            </Card>
           </div>
         )}
 
         {/* Selected POI Overlay Card (Rich Information & Actionable Details) */}
         {selectedPoi && (
-          <div
-            className="absolute left-1/2 -translate-x-1/2 z-[500] w-full max-w-sm px-4 pointer-events-auto"
-            style={{ bottom: 'calc(var(--nav-offset) + 12px)' }}
-          >
-            <div className="glass rounded-xl p-4.5 relative shadow-2xl border border-white/80 backdrop-blur-xl">
-              <button 
+          <div className="pointer-events-auto absolute bottom-[calc(var(--nav-offset)+12px)] left-1/2 z-[var(--z-fab)] w-full max-w-sm -translate-x-1/2 px-4">
+            <Card variant="featured" className="relative p-4">
+              <IconButton
+                variant="glass"
+                size="sm"
                 onClick={() => setSelectedPoiId(null)}
-                className="absolute top-4 right-4 glass-circle-btn !w-6.5 !h-6.5 text-[11px]"
-                aria-label="Fermer"
+                className="absolute right-2 top-2"
+                aria-label="Fermer la fiche du point d'intérêt"
               >
-                ✕
-              </button>
-              
-              <div className="flex items-center gap-2 mb-1 flex-wrap">
-                <span className="glass-pill text-[10px] font-mono tracking-wider font-bold text-[#17402C] uppercase">
+                <XAnimated size={12} />
+              </IconButton>
+
+              <div className="mb-1 flex flex-wrap items-center gap-2">
+                <Badge tone="sage" className="font-mono uppercase tracking-wider">
                   {selectedPoi.category === 'refuge' ? '🏡 Refuge' : selectedPoi.category === 'summit' ? '⛰️ Sommet' : selectedPoi.category === 'water' ? '💧 Point d\'eau' : selectedPoi.category === 'viewpoint' ? '👁️ Panorama' : selectedPoi.category === 'camping' ? '⛺ Bivouac / Camping' : selectedPoi.category === 'waterfall' ? '🌊 Cascade' : '⛰️ Col'}
-                </span>
+                </Badge>
                 {selectedPoi.is_verified && (
-                  <span className="text-[9px] font-mono font-bold text-forest-800 bg-forest-100/80 px-2 py-0.5 rounded-full border border-forest-200">Vérifié ✓</span>
+                  <Badge tone="info" className="font-mono">Vérifié ✓</Badge>
                 )}
                 {selectedPoi.altitude_m && (
-                  <span className="glass-pill text-[10px] font-mono font-bold text-[#17402C]">
+                  <Badge tone="stone" className="font-mono">
                     📈 {selectedPoi.altitude_m} m
-                  </span>
+                  </Badge>
                 )}
               </div>
 
-              <h3 className="font-display font-bold text-base leading-tight mt-1 mb-1 pr-6 text-[#17402C]">{selectedPoi.name}</h3>
+              <h3 className="mb-1 mt-1 pr-6 font-display text-[length:var(--lkv-text-title-sm)] font-bold leading-tight text-[color:var(--lkv-text-primary)]">
+                {selectedPoi.name}
+              </h3>
 
               {/* Geographical Massif / Region context */}
               {(selectedPoi.massif || selectedPoi.region) && (
-                <p className="text-[11px] font-medium text-[#5A7064] mb-2">
+                <p className="mb-2 text-[length:var(--lkv-text-caption)] font-medium text-[color:var(--lkv-text-muted)]">
                   📍 {[selectedPoi.massif, selectedPoi.region, selectedPoi.country].filter(Boolean).join(' · ')}
                 </p>
               )}
-              
+
               {/* Detailed Description */}
               {selectedPoi.details && (
-                <p className="text-xs text-[#2D4536] leading-relaxed mb-3 p-2 rounded-xl bg-white/70 border border-white/60">
+                <p className="mb-3 rounded-[var(--lkv-radius-md)] border border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-card)] p-2 text-[length:var(--lkv-text-caption)] leading-relaxed text-[color:var(--lkv-text-secondary)]">
                   {selectedPoi.details}
                 </p>
               )}
 
               {/* Category-specific specs */}
               {selectedPoi.category === 'refuge' && (
-                <div className="grid grid-cols-2 gap-2 text-[11px] font-mono text-[#17402C] mb-3 p-2 rounded-xl bg-white/70 border border-white/60">
+                <div className="mb-3 grid grid-cols-2 gap-2 rounded-[var(--lkv-radius-md)] border border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-card)] p-2 font-mono text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-primary)]">
                   <div>
-                    <span className="text-[#5A7064] block text-[9px] uppercase">Capacité</span>
+                    <span className="block text-[length:var(--lkv-text-caption-2)] uppercase text-[color:var(--lkv-text-muted)]">Capacité</span>
                     <span className="font-bold">{selectedPoi.capacity ? `${selectedPoi.capacity} couchages` : 'Ouvert'}</span>
                   </div>
                   <div>
-                    <span className="text-[#5A7064] block text-[9px] uppercase">Gardiennage</span>
+                    <span className="block text-[length:var(--lkv-text-caption-2)] uppercase text-[color:var(--lkv-text-muted)]">Gardiennage</span>
                     <span className="font-bold">{selectedPoi.is_staffed ? 'Gardé' : 'Libre / Non gardé'}</span>
                   </div>
                 </div>
               )}
 
               {/* Action Buttons */}
-              <div className="flex items-center gap-2 pt-2 border-t border-[#17402C]/10">
+              <div className="flex items-center gap-2 border-t border-[color:var(--lkv-border)] pt-2">
                 <a
                   href={`https://www.google.com/maps/dir/?api=1&destination=${selectedPoi.lat},${selectedPoi.lng}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="glass-capsule-btn primary flex-1 !min-h-[36px] text-xs font-bold flex items-center justify-center gap-1.5 shadow-sm active:scale-95 transition-all no-underline"
+                  className={LINK_PILL_PRIMARY}
                 >
-                  <span>🧭</span>
+                  <span aria-hidden="true">🧭</span>
                   <span>Itinéraire GPS</span>
                 </a>
-                
+
                 {selectedPoi.phone && (
                   <a
                     href={`tel:${selectedPoi.phone}`}
-                    className="glass-circle-btn !w-9 !h-9 flex items-center justify-center"
+                    className={LINK_ICON}
                     title="Appeler"
+                    aria-label="Appeler"
                   >
-                    <span>📞</span>
+                    <span aria-hidden="true">📞</span>
                   </a>
                 )}
 
@@ -1110,18 +1132,18 @@ export default function InteractiveMap() {
                     href={selectedPoi.website.startsWith('http') ? selectedPoi.website : `https://${selectedPoi.website}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="glass-circle-btn !w-9 !h-9 flex items-center justify-center"
+                    className={LINK_ICON}
                     title="Site web officiel"
+                    aria-label="Site web officiel"
                   >
-                    <span>🌐</span>
+                    <span aria-hidden="true">🌐</span>
                   </a>
                 )}
               </div>
-            </div>
+            </Card>
           </div>
         )}
       </div>
-
     </div>
   );
 }

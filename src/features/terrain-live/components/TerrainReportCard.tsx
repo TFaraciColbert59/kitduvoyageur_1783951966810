@@ -7,6 +7,7 @@
  */
 import Icon from '@/components/ui/Icon';
 import type { TerrainConfirmation } from '@/features/adventure-intelligence/schemas/live.schema';
+import { Button, Card } from '@/components/ui';
 import {
   SEVERITY_COLORS,
   categoryDisplay,
@@ -41,10 +42,7 @@ export default function TerrainReportCard({
         : '';
 
   return (
-    <article
-      className="rounded-2xl bg-[var(--lkv-surface-raised,#FFFFFF)] p-4 shadow-sm"
-      aria-label={`Signalement ${display.label}`}
-    >
+    <Card as="article" className="p-4" aria-label={`Signalement ${display.label}`}>
       <header className="flex items-start gap-3">
         <span
           className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full"
@@ -54,16 +52,16 @@ export default function TerrainReportCard({
           <Icon name={display.icon} size={17} />
         </span>
         <div className="min-w-0 flex-1">
-          <h3 className="text-[15px] font-semibold text-[var(--lkv-text-primary,#0B1F17)]">
+          <h3 className="text-[length:var(--lkv-text-body-sm)] font-semibold text-[color:var(--lkv-text-primary)]">
             {display.label}
           </h3>
-          <p className="mt-0.5 text-[12px] text-[var(--lkv-text-secondary,#4A5D52)]">
+          <p className="mt-0.5 text-[length:var(--lkv-text-caption-1)] text-[color:var(--lkv-text-secondary)]">
             {relativeAgeFr(report.createdAt)}
             {corroboration}
             {report.distanceM >= 0 ? ` · à ${Math.round(report.distanceM)} m` : ''}
           </p>
           {report.description ? (
-            <p className="mt-1 line-clamp-2 text-[13px] text-[var(--lkv-text-secondary,#4A5D52)]">
+            <p className="mt-1 line-clamp-2 text-[length:var(--lkv-text-footnote)] text-[color:var(--lkv-text-secondary)]">
               {report.description}
             </p>
           ) : null}
@@ -72,17 +70,18 @@ export default function TerrainReportCard({
 
       <div className="mt-3 flex gap-2" role="group" aria-label="Confirmer ce signalement">
         {CONFIRM_ACTIONS.map((action) => (
-          <button
+          <Button
             key={action.value}
-            type="button"
+            variant="secondary"
+            size="sm"
             disabled={busy}
             onClick={() => onConfirm(action.value)}
-            className="min-h-[44px] flex-1 rounded-xl bg-[var(--lkv-surface,#FBFAF6)] px-2 text-[13px] font-medium text-[var(--lkv-text-primary,#0B1F17)] active:opacity-70 disabled:opacity-50"
+            className="flex-1"
           >
             {action.label}
-          </button>
+          </Button>
         ))}
       </div>
-    </article>
+    </Card>
   );
 }

@@ -4,12 +4,14 @@ import React from 'react';
 import AppShell from '@/components/shell/AppShell';
 
 export interface MapPageLayoutProps {
-  /** La carte occupe tout l'écran, sous les overlays. */
+  /** La carte occupe tout le viewport, sous les overlays. */
   map: React.ReactNode;
-  /** Contrôles flottants (recherche, filtres, boutons carte). */
+  /** Contrôles/overlays ancrés en haut (recherche, filtres, en-têtes). */
   controls?: React.ReactNode;
-  /** Contenu superposé (panneau, sheet, liste). */
+  /** Contenu superposé ancré en bas (carrousel, CTA, feuilles). */
   children?: React.ReactNode;
+  /** Couche superposition plein écran (panneau liste desktop, docks). */
+  overlay?: React.ReactNode;
   header?: React.ReactNode;
   bottomExtra?: React.ReactNode;
   safeTop?: boolean;
@@ -19,13 +21,16 @@ export interface MapPageLayoutProps {
 
 /**
  * MapPageLayout — carte plein écran + overlays.
- * La carte est la couche de base ; header, contrôles et contenu flottent
- * au-dessus avec les tokens de z-index.
+ * La carte est `fixed inset-0` (le viewport entier, y compris sous la nav) ;
+ * les contrôles et contenus flottent au-dessus via les tokens `--z-*`.
+ * Les wrappers d'overlay sont `pointer-events-none` : seuls les éléments
+ * interactifs déclarent `pointer-events-auto`, la carte reste manipulable.
  */
 export function MapPageLayout({
   map,
   controls,
   children,
+  overlay,
   header,
   bottomExtra,
   safeTop = true,
@@ -41,19 +46,20 @@ export function MapPageLayout({
       videoBackground={false}
       className={className}
     >
-      <div className="relative h-[100dvh] w-full">
-        <div className="absolute inset-0 z-[var(--z-base)]">{map}</div>
-        {controls && (
-          <div className="pointer-events-none absolute inset-x-0 top-0 z-[var(--z-sticky)] flex flex-col gap-[var(--space-2)] p-[var(--space-4)]">
-            {controls}
-          </div>
-        )}
-        {children && (
-          <div className="pointer-events-none absolute inset-x-0 bottom-0 z-[var(--z-fab)]">
-            <div className="pointer-events-auto">{children}</div>
-          </div>
-        )}
-      </div>
+      <div className="fixed inset-0 z-[var(--z-base)]">{map}</div>
+      {overlay && (
+        <div className="pointer-events-none fixed inset-0 z-[var(--z-fab)]">{overlay}</div>
+      )}
+      {controls && (
+        <div className="pointer-events-none fixed inset-x-0 top-0 z-[var(--z-sticky)] flex flex-col gap-[var(--space-2)] p-[var(--space-4)]">
+          {controls}
+        </div>
+      )}
+      {children && (
+        <div className="pointer-events-none fixed inset-x-0 bottom-0 z-[var(--z-fab)]">
+          <div className="pointer-events-auto">{children}</div>
+        </div>
+      )}
     </AppShell>
   );
 }

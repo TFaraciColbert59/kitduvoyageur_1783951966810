@@ -1,34 +1,28 @@
 import React from 'react';
+import { Button, Card, EmptyState, Skeleton } from '@/components/ui';
 
 export function DiscoverySkeleton({ count = 3 }: { count?: number }) {
   return (
     <div
-      className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
+      className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3"
       aria-hidden="true"
     >
       {Array.from({ length: count }).map((_, index) => (
-        <div
-          key={index}
-          className="glass rounded-[1.5rem] overflow-hidden border border-white/50 animate-pulse"
-        >
-          <div className="h-40 w-full bg-[#EAE6DF]/70" />
-          <div className="p-4 space-y-2.5">
-            <div className="h-3.5 w-3/4 rounded-full bg-[#EAE6DF]/80" />
-            <div className="h-3 w-1/2 rounded-full bg-[#EAE6DF]/70" />
-            <div className="h-4 w-28 rounded-md bg-white/90" />
+        <Card key={index} className="overflow-hidden p-0">
+          <Skeleton className="h-40 w-full rounded-none" />
+          <div className="space-y-2.5 p-4">
+            <Skeleton className="h-3.5 w-3/4 rounded-full" />
+            <Skeleton className="h-3 w-1/2 rounded-full" />
+            <Skeleton className="h-4 w-28 rounded-md" />
           </div>
-        </div>
+        </Card>
       ))}
     </div>
   );
 }
 
 export function DiscoveryEmpty({ label }: { label: string }) {
-  return (
-    <div className="rounded-2xl border border-white/60 bg-white/60 px-4 py-6 text-center">
-      <p className="text-xs text-[#5A7064] font-mono">{label}</p>
-    </div>
-  );
+  return <EmptyState compact title={label} />;
 }
 
 export function DiscoveryNotice({
@@ -41,24 +35,17 @@ export function DiscoveryNotice({
   onRetry?: () => void;
 }) {
   return (
-    <div
+    <Card
+      tone={tone === 'warn' ? 'warn' : 'neutral'}
       role="status"
-      className={`flex flex-wrap items-center justify-center gap-3 rounded-2xl border px-4 py-4 text-center text-xs font-mono ${
-        tone === 'warn'
-          ? 'border-[rgba(200,154,59,0.35)] bg-[rgba(200,154,59,0.08)] text-[#7A5B1E]'
-          : 'border-white/60 bg-white/60 text-[#5A7064]'
-      }`}
+      className="flex flex-wrap items-center justify-center gap-3 px-4 py-4 text-center text-[length:var(--lkv-text-caption-1)] font-mono"
     >
       <span>{children}</span>
       {onRetry ? (
-        <button
-          type="button"
-          onClick={onRetry}
-          className="min-h-[44px] px-4 rounded-full bg-white/90 border border-white text-[11px] font-bold text-[#17402C] hover:bg-white transition-colors"
-        >
+        <Button variant="secondary" size="sm" onClick={onRetry}>
           Réessayer
-        </button>
+        </Button>
       ) : null}
-    </div>
+    </Card>
   );
 }

@@ -165,7 +165,7 @@ describe('États UI de DiscoverySection (fixtures, aucun réseau)', () => {
   };
 
   it('1. chargement → skeleton', () => {
-    expect(render({ isLoading: true })).toContain('animate-pulse');
+    expect(render({ isLoading: true })).toContain('animate-shimmer');
   });
 
   it('2. résultats → cartes', () => {

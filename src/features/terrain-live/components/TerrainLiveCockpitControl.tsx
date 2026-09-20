@@ -12,6 +12,7 @@
  */
 import { useCallback, useEffect, useState } from 'react';
 import Icon from '@/components/ui/Icon';
+import { Badge, Button, Card, IconButton } from '@/components/ui';
 import { useSheetDrag } from '@/hooks/useSheetDrag';
 import type { TerrainConfirmation } from '@/features/adventure-intelligence/schemas/live.schema';
 import QuickReportSheet, { type QuickReportSubmission } from './QuickReportSheet';
@@ -137,33 +138,32 @@ export default function TerrainLiveCockpitControl({
 
   return (
     <>
-      <button
-        type="button"
+      <IconButton
+        variant="glass"
+        size="lg"
         onClick={() => setOpen(true)}
         aria-label={`Conditions terrain${reports.length > 0 ? ` (${reports.length})` : ''}`}
         aria-haspopup="dialog"
-        className="absolute right-3.5 z-40 flex h-11 w-11 items-center justify-center rounded-full border border-[var(--lkv-border,rgba(23,64,44,0.12))] bg-[var(--lkv-surface-card,#FFFFFF)] text-[var(--lkv-text-primary,#17402C)] shadow-md active:opacity-70 md:right-6"
-        style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 96px)' }}
+        className="absolute right-3.5 bottom-[calc(var(--safe-bottom)+96px)] z-[var(--z-fab)] shadow-md md:right-6"
       >
         <Icon name="radio" size={18} aria-hidden="true" />
         {reports.length > 0 ? (
-          <span
-            aria-hidden="true"
-            className="absolute -top-1 -right-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-[var(--lkv-secondary,#17402C)] px-1 text-[11px] font-semibold text-white"
+          <Badge
+            className="absolute -right-1 -top-1 min-h-0 border-transparent bg-[color:var(--lkv-action)] px-1 font-semibold text-[color:var(--lkv-on-action)]"
           >
             {reports.length > 99 ? '99+' : reports.length}
-          </span>
+          </Badge>
         ) : null}
-      </button>
+      </IconButton>
 
       {render ? (
           <div
-            className={`lkv-fade-in${closing ? ' lkv-fade-in--closing' : ''} fixed inset-0 z-50 flex items-end justify-center`}
+            className={`lkv-fade-in${closing ? ' lkv-fade-in--closing' : ''} fixed inset-0 z-[var(--z-sheet)] flex items-end justify-center`}
           >
             <button
               type="button"
               aria-label="Fermer les conditions terrain"
-              className="absolute inset-0 bg-[var(--lkv-overlay,rgba(11,31,23,0.4))]"
+              className="absolute inset-0 bg-[color:var(--lkv-overlay-scrim)]"
               onClick={() => setOpen(false)}
             />
             <section
@@ -171,46 +171,48 @@ export default function TerrainLiveCockpitControl({
               role="dialog"
               aria-modal="true"
               aria-label="Conditions terrain autour de moi"
-              className={`lkv-sheet-up${closing ? ' lkv-sheet-up--closing' : ''} relative flex max-h-[82dvh] w-full max-w-lg flex-col rounded-t-3xl bg-[var(--lkv-surface,#FBFAF6)] pb-[calc(env(safe-area-inset-bottom)+16px)] shadow-2xl`}
+              className={`lkv-sheet-up${closing ? ' lkv-sheet-up--closing' : ''} relative flex max-h-[82dvh] w-full max-w-lg flex-col rounded-t-[var(--lkv-radius-sheet)] bg-[color:var(--lkv-surface-card)] pb-[calc(var(--safe-bottom)+16px)] shadow-2xl`}
               {...dragHandlers}
             >
               <div
-                className="mx-auto mt-2 h-1 w-9 rounded-full bg-[var(--lkv-border-subtle,#D8D2C4)]"
+                className="mx-auto mt-2 h-1 w-9 rounded-full bg-[color:var(--lkv-border-subtle)]"
                 aria-hidden="true"
               />
               <div className="flex items-center justify-between px-5 pt-3">
-                <h2 className="text-[17px] font-semibold text-[var(--lkv-text-primary,#0B1F17)]">
+                <h2 className="text-[length:var(--lkv-text-title-sm)] font-semibold text-[color:var(--lkv-text-primary)]">
                   Conditions terrain
                 </h2>
-                <button
-                  type="button"
+                <IconButton
+                  variant="ghost"
+                  size="lg"
                   onClick={() => setOpen(false)}
-                  className="flex h-11 w-11 items-center justify-center rounded-full text-[var(--lkv-text-secondary,#4A5D52)] active:opacity-60"
                   aria-label="Fermer"
                 >
                   <Icon name="x" size={18} aria-hidden="true" />
-                </button>
+                </IconButton>
               </div>
 
               <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">
                 {!position ? (
-                  <p
+                  <Card
+                    variant="compact"
                     role="status"
-                    className="mb-3 rounded-xl bg-[var(--lkv-surface-card,#FFFFFF)] px-3 py-2 text-[12px] text-[var(--lkv-text-secondary,#4A5D52)]"
+                    className="mb-3 px-3 py-2 text-[length:var(--lkv-text-caption-1)] text-[color:var(--lkv-text-secondary)]"
                   >
                     Position GPS en attente — les conditions autour de toi arriveront dès le
                     premier point.
-                  </p>
+                  </Card>
                 ) : null}
 
                 {notice ? (
-                  <p
+                  <Card
+                    variant="compact"
                     role="status"
                     aria-live="polite"
-                    className="mb-3 rounded-xl bg-[var(--lkv-secondary-subtle,#D8E5D5)] px-3 py-2 text-[12px] text-[var(--lkv-text-primary,#0B1F17)]"
+                    className="mb-3 bg-[color:var(--lkv-secondary-subtle)] px-3 py-2 text-[length:var(--lkv-text-caption-1)] text-[color:var(--lkv-text-primary)]"
                   >
                     {notice}
-                  </p>
+                  </Card>
                 ) : null}
 
                 <TerrainReportsList
@@ -224,15 +226,16 @@ export default function TerrainLiveCockpitControl({
               </div>
 
               <div className="px-5 pt-2">
-                <button
-                  type="button"
+                <Button
+                  variant="primary"
+                  fullWidth
                   onClick={() => setQuickOpen(true)}
                   disabled={!position}
-                  className="flex min-h-[50px] w-full items-center justify-center gap-2 rounded-xl bg-[var(--lkv-secondary,#17402C)] text-[15px] font-semibold text-white active:opacity-80 disabled:opacity-50"
+                  className="min-h-[50px] gap-2"
                 >
                   <Icon name="plus" size={16} aria-hidden="true" />
                   Signaler un problème
-                </button>
+                </Button>
               </div>
             </section>
         </div>

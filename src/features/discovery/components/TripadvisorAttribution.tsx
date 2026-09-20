@@ -32,7 +32,7 @@ export function TripadvisorAttribution({
       ) : (
         <span
           aria-label="Tripadvisor"
-          className="font-display font-extrabold text-[13px] leading-none text-[#17402C] shrink-0"
+          className="font-display font-extrabold text-[13px] leading-none text-[color:var(--lkv-primary)] shrink-0"
         >
           Tripadvisor
         </span>
@@ -41,7 +41,7 @@ export function TripadvisorAttribution({
         href={TRIPADVISOR_SOURCE_URL}
         target="_blank"
         rel="noopener noreferrer"
-        className="text-[10.5px] font-mono text-[#5A7064] hover:text-[#17402C] transition-colors"
+        className="text-[10.5px] font-mono text-[color:var(--lkv-text-muted)] hover:text-[color:var(--lkv-primary)] transition-colors"
       >
         {TRIPADVISOR_ATTRIBUTION_LABEL}
       </a>

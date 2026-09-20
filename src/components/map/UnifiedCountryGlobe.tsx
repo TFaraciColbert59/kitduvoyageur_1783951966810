@@ -9,6 +9,7 @@ import {
 } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import type { Country } from '@/lib/countries';
+import { Card, Spinner } from '@/components/ui';
 import { getCountryCoordinates } from '@/lib/countryCoordinates';
 import { DANGER_FILL } from '@/lib/pays/danger';
 import { flyToTarget } from '@/components/map/engine/camera';
@@ -342,19 +343,16 @@ export default function UnifiedCountryGlobe({
     <div
       ref={containerRef}
       data-visual-mask
-      className="relative w-full h-full"
-      style={fullscreen ? undefined : { width: '100%', height: '100%' }}
+      data-fullscreen={fullscreen ? 'true' : undefined}
+      className="relative h-full w-full"
       onMouseDown={handleMouseDown}
       onMouseUp={handleMouseUp}
     >
       {/* Spinner pendant le chargement du GeoJSON (parité CountryGlobe) */}
       {!geoLoaded && (
-        <div className="absolute inset-0 z-[5] flex flex-col items-center justify-center gap-3 pointer-events-none">
-          <div
-            className="w-8 h-8 rounded-full border-[3px] border-[#17402C] border-t-transparent animate-spin"
-            style={{ animationDuration: '0.8s' }}
-          />
-          <span className="text-[11px] font-bold tracking-[0.06em] text-[#17402C] font-mono">
+        <div className="pointer-events-none absolute inset-0 z-[var(--z-sticky)] flex flex-col items-center justify-center gap-3">
+          <Spinner size="lg" label="Chargement des pays" />
+          <span className="font-mono text-[length:var(--lkv-text-caption-1)] font-bold tracking-[0.06em] text-[color:var(--lkv-text-primary)]">
             Chargement des pays…
           </span>
         </div>
@@ -362,23 +360,23 @@ export default function UnifiedCountryGlobe({
 
       {/* État d'erreur explicite (jamais un spinner infini) */}
       {geoLoaded && geoError && (
-        <div className="absolute inset-0 z-[5] flex flex-col items-center justify-center gap-2 pointer-events-none">
-          <span className="text-[13px] font-bold text-[#A8443A]">⚠ Impossible de charger la carte</span>
-          <span className="text-[11px] text-[#5A7064]">Vérifiez votre connexion et rechargez la page.</span>
+        <div className="pointer-events-none absolute inset-0 z-[var(--z-sticky)] flex flex-col items-center justify-center gap-2">
+          <span className="text-[length:var(--lkv-text-footnote)] font-bold text-[color:var(--lkv-danger)]">⚠ Impossible de charger la carte</span>
+          <span className="text-[length:var(--lkv-text-caption-1)] text-[color:var(--lkv-text-muted)]">Vérifiez votre connexion et rechargez la page.</span>
         </div>
       )}
 
-      {/* Tooltip pays (desktop) — pilule glass, contenu React échappé */}
+      {/* Tooltip pays (desktop) — pilule canonique, contenu React échappé */}
       {hovered && !uniform && (
         <div
-          className="absolute z-[10] pointer-events-none"
+          className="pointer-events-none absolute z-[var(--z-popover)]"
           style={{ left: hovered.x, top: hovered.y, transform: 'translate(-50%, -150%)' }}
         >
-          <div className="glass rounded-full px-3.5 py-1.5 flex items-center gap-2 whitespace-nowrap shadow-lg">
+          <Card variant="featured" className="flex items-center gap-2 whitespace-nowrap rounded-full px-3.5 py-1.5 shadow-lg">
             <span className="text-[15px] leading-none">{getFlagEmoji(hovered.code)}</span>
-            <span className="text-[12px] font-bold text-[#17402C]">{hovered.nom}</span>
-            <span className="text-[10.5px] font-mono font-semibold text-[#5A7064]">· {hovered.continent}</span>
-          </div>
+            <span className="text-[length:var(--lkv-text-caption-1)] font-bold text-[color:var(--lkv-text-primary)]">{hovered.nom}</span>
+            <span className="font-mono text-[10.5px] font-semibold text-[color:var(--lkv-text-muted)]">· {hovered.continent}</span>
+          </Card>
         </div>
       )}
     </div>

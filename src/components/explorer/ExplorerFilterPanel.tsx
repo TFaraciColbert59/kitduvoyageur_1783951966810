@@ -1,10 +1,8 @@
 'use client';
 
 import React from 'react';
-import { SearchIcon as SearchAnimated } from '@/components/icons/search';
 import { RotateCCWIcon as RotateCcwAnimated } from '@/components/icons/rotate-ccw';
-import { Button } from '@/components/ui';
-import { Chip } from '@/components/ui';
+import { Button, Chip, SearchField } from '@/components/ui';
 
 export interface PoiFilterItem {
   id: string;
@@ -65,32 +63,20 @@ export default function ExplorerFilterPanel({
   onReset,
 }: ExplorerFilterPanelProps) {
   const sectionLabel =
-    'text-[9.5px] font-mono font-bold uppercase tracking-widest text-[#5A7064] px-1';
+    'text-[length:var(--lkv-text-caption-2)] font-mono font-bold uppercase tracking-widest text-[color:var(--lkv-text-muted)] px-1';
 
   return (
     <div className="flex flex-col gap-3 font-sans">
       {/* Recherche intégrée */}
       <div className="flex flex-col gap-1.5">
         <span className={sectionLabel}>Recherche directe</span>
-        <div className="relative w-full">
-          <SearchAnimated size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#5A7064]" />
-          <input
-            type="text"
-            placeholder="Rechercher par nom, lieu…"
-            value={searchQuery || ''}
-            onChange={(e) => onSearchChange?.(e.target.value)}
-            className="w-full h-9 pl-9 pr-8 rounded-full text-xs font-semibold text-[#17402C] placeholder:text-[#5A7064]/70 bg-white/70 hover:bg-white/90 focus:bg-white border border-white/80 shadow-2xs outline-none focus-visible:ring-1.5 focus-visible:ring-[#17402C]/30 transition-all"
-          />
-          {searchQuery && (
-            <button
-              type="button"
-              onClick={() => onSearchChange?.('')}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8 text-[10px] cursor-pointer"
-            >
-              ✕
-            </button>
-          )}
-        </div>
+        <SearchField
+          value={searchQuery ?? ''}
+          onChange={(e) => onSearchChange?.(e.target.value)}
+          onClear={() => onSearchChange?.('')}
+          placeholder="Rechercher par nom, lieu…"
+          aria-label="Rechercher un sentier par nom ou lieu"
+        />
       </div>
 
       {hasFilters && (
@@ -109,21 +95,15 @@ export default function ExplorerFilterPanel({
       <div className="flex flex-col gap-1.5">
         <span className={sectionLabel}>Difficulté</span>
         <div className="flex items-center gap-1.5 flex-wrap">
-          {DIFFICULTY_FILTERS.map((d) => {
-            const active = activeDifficulties.includes(d);
-            return (
-              <button
-                key={d}
-                type="button"
-                onClick={() => onToggleDifficulty(d)}
-                className={`glass-capsule-btn !py-1 !px-3 text-[10.5px] font-bold transition-all cursor-pointer ${
-                  active ? 'primary shadow-xs scale-105' : 'hover:scale-105'
-                }`}
-              >
-                {d}
-              </button>
-            );
-          })}
+          {DIFFICULTY_FILTERS.map((d) => (
+            <Chip
+              key={d}
+              selected={activeDifficulties.includes(d)}
+              onClick={() => onToggleDifficulty(d)}
+            >
+              {d}
+            </Chip>
+          ))}
         </div>
       </div>
 
@@ -150,61 +130,46 @@ export default function ExplorerFilterPanel({
       <div className="flex flex-col gap-1.5">
         <span className={sectionLabel}>Type de parcours</span>
         <div className="flex items-center gap-1.5 flex-wrap">
-          {CATEGORIES.map((c) => {
-            const active = activeCategory === c;
-            return (
-              <Chip
-                key={c}
-                selected={active}
-                onClick={() => onSelectCategory(c)}
-              >
-                {c}
-              </Chip>
-            );
-          })}
+          {CATEGORIES.map((c) => (
+            <Chip
+              key={c}
+              selected={activeCategory === c}
+              onClick={() => onSelectCategory(c)}
+            >
+              {c}
+            </Chip>
+          ))}
         </div>
       </div>
 
       {/* Famille */}
-      <div className="flex flex-col gap-1.5 pt-1 border-t border-[#17402C]/10">
+      <div className="flex flex-col gap-1.5 pt-1 border-t border-[color:var(--lkv-border)]">
         <span className={sectionLabel}>Public</span>
-        <button
-          type="button"
-          onClick={onToggleFamily}
-          className={`self-start glass-capsule-btn !py-1 !px-3 text-[10.5px] font-bold transition-all cursor-pointer ${
-            familyOnly ? 'primary shadow-xs scale-105' : 'hover:scale-105'
-          }`}
-        >
-          <span>Adapté aux familles</span>
-        </button>
+        <Chip selected={familyOnly} onClick={onToggleFamily} className="self-start">
+          Adapté aux familles
+        </Chip>
       </div>
 
       {/* Points d'intérêt (POIs sur la carte) */}
-      <div className="flex flex-col gap-1.5 pt-2 border-t border-[#17402C]/10">
+      <div className="flex flex-col gap-1.5 pt-2 border-t border-[color:var(--lkv-border)]">
         <div className="flex items-center justify-between">
           <span className={sectionLabel}>Points d'intérêt & Équipements</span>
           {activePoiCategories.length > 0 && (
-            <span className="text-[9px] font-mono text-[#5B7F55] font-bold">
+            <span className="text-[length:var(--lkv-text-caption-2)] font-mono text-[color:var(--lkv-secondary)] font-bold">
               {activePoiCategories.length} sélectionné{activePoiCategories.length > 1 ? 's' : ''}
             </span>
           )}
         </div>
         <div className="flex items-center gap-1.5 flex-wrap">
-          {POI_FILTERS.map((poi) => {
-            const active = activePoiCategories.includes(poi.id);
-            return (
-              <button
-                key={poi.id}
-                type="button"
-                onClick={() => onTogglePoiCategory?.(poi.id)}
-                className={`glass-capsule-btn !py-1 !px-3 text-[10.5px] font-bold transition-all cursor-pointer ${
-                  active ? 'primary shadow-xs scale-105' : 'hover:scale-105'
-                }`}
-              >
-                <span>{poi.label}</span>
-              </button>
-            );
-          })}
+          {POI_FILTERS.map((poi) => (
+            <Chip
+              key={poi.id}
+              selected={activePoiCategories.includes(poi.id)}
+              onClick={() => onTogglePoiCategory?.(poi.id)}
+            >
+              {poi.label}
+            </Chip>
+          ))}
         </div>
       </div>
     </div>

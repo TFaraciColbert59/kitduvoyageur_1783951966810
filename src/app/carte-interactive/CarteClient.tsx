@@ -3,29 +3,31 @@
 import React from 'react';
 import dynamic from 'next/dynamic';
 import Header from '@/components/Header';
+import { Spinner } from '@/components/ui';
+import { MapPageLayout } from '@/design';
 
 const InteractiveMap = dynamic(() => import('@/components/map/InteractiveMap'), {
   ssr: false,
   loading: () => (
-    <div className="w-full h-full bg-transparent flex flex-col items-center justify-center">
-      <div className="w-12 h-12 border-4 border-sage-300 border-t-[#EEF3EC] rounded-full animate-spin mb-4" />
-      <p className="font-display font-bold text-[#EEF3EC]">Initialisation de la carte...</p>
+    <div className="flex h-full w-full flex-col items-center justify-center gap-[var(--space-3)]">
+      <Spinner size="lg" label="Initialisation de la carte" />
+      <p className="font-display font-bold text-[color:var(--lkv-text-primary)]">
+        Initialisation de la carte...
+      </p>
     </div>
   ),
 });
 
 export default function CarteClient() {
   return (
-    <div
-      className="h-dvh w-full max-w-full overflow-hidden bg-transparent flex flex-col select-none"
-      style={{ touchAction: 'none', overscrollBehavior: 'none' }}
-    >
-      <div className="hidden md:block">
-        <Header />
-      </div>
-      <main className="flex-1 md:pt-16 flex flex-col relative w-full h-full min-h-0" style={{ touchAction: 'none', overscrollBehavior: 'none' }}>
-        <InteractiveMap />
-      </main>
-    </div>
+    <MapPageLayout
+      hasBottomNav={false}
+      map={<InteractiveMap />}
+      header={
+        <div className="hidden md:block">
+          <Header />
+        </div>
+      }
+    />
   );
 }

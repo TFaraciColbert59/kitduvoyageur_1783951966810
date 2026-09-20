@@ -2,10 +2,18 @@
 import { lkvConfirm } from '@/components/ui/dialogs';
 
 import React, { useEffect, useState, useCallback } from 'react';
-import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
 import { listOfflineRoutes, getOfflineTileSize, formatSize, type OfflineRoute } from '@/lib/offlineStorage';
 import { useOfflineDownload } from '@/hooks/useOfflineDownload';
 import Link from 'next/link';
+import AppShell from '@/components/shell/AppShell';
+import {
+  Badge,
+  Button,
+  Card,
+  EmptyState,
+  PageHeader,
+  Skeleton,
+} from '@/components/ui';
 
 interface RouteWithSize extends OfflineRoute {
   sizeBytes: number;
@@ -65,142 +73,119 @@ export default function HorsLignePage() {
   const totalTiles = routes.reduce((sum, r) => sum + r.tileCount, 0);
 
   return (
-    <MobilePageShell background="transparent">
-      <div className="min-h-screen bg-transparent">
-        {/* Header */}
-        <div className="bg-[#17402C] text-white px-4 pt-8 pb-6">
-          <div className="flex items-center gap-3 mb-1">
-            <Link
-              href="/explorer"
-              className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors"
-              aria-label="Retour"
-            >
-              <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                <polyline points="15 18 9 12 15 6" />
-              </svg>
-            </Link>
-            <h1 className="text-xl font-bold">Hors-ligne</h1>
-          </div>
-          <p className="text-white/55 text-sm ml-11">
-            Randonnées disponibles sans connexion
-          </p>
-        </div>
-
+    <AppShell
+      background="transparent"
+      header={
+        <PageHeader
+          variant="large"
+          back
+          backHref="/explorer"
+          title="Hors-ligne"
+          subtitle="Randonnées disponibles sans connexion"
+        />
+      }
+    >
+      <div className="space-y-[var(--space-3)] px-[var(--space-4)] pb-[var(--space-8)] pt-[var(--space-4)]">
         {/* Résumé stockage */}
         {!loading && routes.length > 0 && (
-          <div className="glass mx-4 mt-4 rounded-2xl p-4 flex items-center gap-4">
-            <div className="w-10 h-10 rounded-xl bg-[#EDF7F0] flex items-center justify-center flex-shrink-0">
-              <span className="text-xl">💾</span>
+          <Card className="flex items-center gap-[var(--space-4)]">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[var(--lkv-radius-sm)] bg-[color:var(--lkv-success-bg)]">
+              <span aria-hidden="true" className="text-xl">💾</span>
             </div>
             <div>
-              <p className="text-sm font-semibold text-[#17402C]">
+              <p className="text-[length:var(--lkv-text-body-sm)] font-semibold text-[color:var(--lkv-text-primary)]">
                 {routes.length} randonnée{routes.length > 1 ? 's' : ''} stockée{routes.length > 1 ? 's' : ''}
               </p>
-              <p className="text-xs text-[#7A8A7D]">
+              <p className="text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-muted)]">
                 {totalTiles} tuiles · {formatSize(totalBytes)}
               </p>
             </div>
-          </div>
+          </Card>
         )}
 
         {/* Contenu */}
-        <div className="px-4 py-4 space-y-3">
-          {loading ? (
-            // Skeletons
-            Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} className="bg-white rounded-2xl p-4 border border-[#E8E4D8] animate-pulse">
-                <div className="h-4 bg-[#E8E4D8] rounded w-3/4 mb-2" />
-                <div className="h-3 bg-[#E8E4D8] rounded w-1/2" />
-              </div>
-            ))
-          ) : routes.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-20 text-center">
-              <div className="w-16 h-16 rounded-full bg-[#E8E4D8] flex items-center justify-center mb-4">
-                <span className="text-3xl">📵</span>
-              </div>
-              <h2 className="text-base font-semibold text-[#EEF3EC] mb-1">
-                Aucune randonnée hors-ligne
-              </h2>
-              <p className="text-sm text-[#CCE0D4] max-w-60">
-                Depuis la page d&apos;une randonnée, appuie sur &ldquo;Télécharger pour hors-ligne&rdquo; avant de partir.
-              </p>
-              <Link
-                href="/explorer"
-                className="mt-6 px-5 py-2.5 bg-[#17402C] text-white text-sm font-semibold rounded-xl hover:bg-[#2D3F35] transition-colors"
-              >
-                Explorer les randonnées
-              </Link>
-            </div>
-          ) : (
-            routes.map((route) => (
-              <div
-                key={route.routeId}
-                className="glass rounded-2xl overflow-hidden"
-              >
-                <div className="p-4">
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="flex-1 min-w-0">
-                      <h3 className="text-sm font-semibold text-[#17402C] leading-tight line-clamp-2">
-                        {route.name}
-                      </h3>
-                      <div className="flex flex-wrap gap-x-3 gap-y-1 mt-1.5">
-                        {route.distanceKm && (
-                          <span className="text-xs text-[#7A8A7D]">
-                            📏 {route.distanceKm.toFixed(1)} km
-                          </span>
-                        )}
-                        {route.difficulty && (
-                          <span className="text-xs text-[#7A8A7D] capitalize">
-                            🎯 {route.difficulty}
-                          </span>
-                        )}
-                        <span className="text-xs text-[#7A8A7D]">
-                          💾 {formatSize(route.sizeBytes)} · {route.tileCount} tuiles
+        {loading ? (
+          <div className="space-y-[var(--space-3)]">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <Card key={i} variant="compact" className="space-y-[var(--space-2)] p-[var(--space-4)]">
+                <Skeleton className="h-4 w-3/4" />
+                <Skeleton className="h-3 w-1/2" />
+              </Card>
+            ))}
+          </div>
+        ) : routes.length === 0 ? (
+          <EmptyState
+            title="Aucune randonnée hors-ligne"
+            description="Depuis la page d'une randonnée, appuie sur « Télécharger pour hors-ligne » avant de partir."
+            actionLabel="Explorer les randonnées"
+            actionHref="/explorer"
+          />
+        ) : (
+          routes.map((route) => (
+            <Card key={route.routeId} className="overflow-hidden p-0">
+              <div className="p-[var(--space-4)]">
+                <div className="flex items-start justify-between gap-[var(--space-2)]">
+                  <div className="min-w-0 flex-1">
+                    <h3 className="text-[length:var(--lkv-text-body-sm)] font-semibold leading-tight text-[color:var(--lkv-text-primary)] line-clamp-2">
+                      {route.name}
+                    </h3>
+                    <div className="mt-1.5 flex flex-wrap gap-x-[var(--space-3)] gap-y-[var(--space-1)]">
+                      {route.distanceKm && (
+                        <span className="text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-muted)]">
+                          📏 {route.distanceKm.toFixed(1)} km
                         </span>
-                      </div>
-                      <p className="text-[11px] text-[#A0A89D] mt-1">
-                        Téléchargé le {formatDate(route.cachedAt)}
-                      </p>
+                      )}
+                      {route.difficulty && (
+                        <span className="text-[length:var(--lkv-text-caption)] capitalize text-[color:var(--lkv-text-muted)]">
+                          🎯 {route.difficulty}
+                        </span>
+                      )}
+                      <span className="text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-muted)]">
+                        💾 {formatSize(route.sizeBytes)} · {route.tileCount} tuiles
+                      </span>
                     </div>
-
-                    {/* Badge offline */}
-                    <span className="flex-shrink-0 px-2 py-1 bg-[#EDF7F0] text-[#2D6A4F] text-[11px] font-semibold rounded-full border border-[#B7E4C7]">
-                      ✅ Hors-ligne
-                    </span>
+                    <p className="mt-[var(--space-1)] text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">
+                      Téléchargé le {formatDate(route.cachedAt)}
+                    </p>
                   </div>
-                </div>
 
-                {/* Actions */}
-                <div className="border-t border-[#F0EDE5] flex">
-                  <Link
-                    href={`/randonnee-active?routeId=${route.routeId}`}
-                    className="flex-1 py-3 text-center text-xs font-semibold text-[#2D5A27] hover:bg-[#EDF7F0] transition-colors"
-                  >
-                    🥾 Démarrer
-                  </Link>
-                  <div className="w-px bg-[#F0EDE5]" />
-                  <button
-                    id={`delete-offline-${route.routeId}`}
-                    onClick={() => handleDelete(route.routeId)}
-                    disabled={deletingId === route.routeId}
-                    className="glass-capsule-btn danger flex-1 text-xs font-semibold disabled:opacity-50"
-                  >
-                    {deletingId === route.routeId ? '⏳ Suppression…' : '🗑 Supprimer'}
-                  </button>
+                  {/* Badge offline */}
+                  <Badge tone="sage" className="shrink-0">
+                    ✅ Hors-ligne
+                  </Badge>
                 </div>
               </div>
-            ))
-          )}
-        </div>
+
+              {/* Actions */}
+              <div className="flex border-t border-[color:var(--lkv-border)]">
+                <Link
+                  href={`/randonnee-active?routeId=${route.routeId}`}
+                  className="flex-1 py-[var(--space-3)] text-center text-[length:var(--lkv-text-caption)] font-semibold text-[color:var(--lkv-primary)] transition-colors hover:bg-[color:var(--lkv-hover-surface)]"
+                >
+                  🥾 Démarrer
+                </Link>
+                <div className="w-px bg-[color:var(--lkv-border)]" aria-hidden="true" />
+                <Button
+                  id={`delete-offline-${route.routeId}`}
+                  variant="destructive"
+                  size="sm"
+                  onClick={() => handleDelete(route.routeId)}
+                  disabled={deletingId === route.routeId}
+                  className="flex-1 rounded-none"
+                >
+                  {deletingId === route.routeId ? '⏳ Suppression…' : '🗑 Supprimer'}
+                </Button>
+              </div>
+            </Card>
+          ))
+        )}
 
         {/* Note légale */}
-        <div className="px-4 pb-8">
-          <p className="text-[11px] text-[#A0A89D] text-center leading-relaxed">
-            Les tuiles de carte sont fournies par CartoDB / OpenStreetMap.
-            Le cache est limité à 400 tuiles par randonnée.
-          </p>
-        </div>
+        <p className="px-[var(--space-1)] pb-[var(--space-4)] text-center text-[length:var(--lkv-text-caption-2)] leading-relaxed text-[color:var(--lkv-text-muted)]">
+          Les tuiles de carte sont fournies par CartoDB / OpenStreetMap.
+          Le cache est limité à 400 tuiles par randonnée.
+        </p>
       </div>
-    </MobilePageShell>
+    </AppShell>
   );
 }

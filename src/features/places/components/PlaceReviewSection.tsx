@@ -2,8 +2,7 @@
 
 import Icon from '@/components/ui/Icon';
 import React, { useState, useTransition } from 'react';
-import { Card } from '@/components/ui';
-import { Button } from '@/components/ui';
+import { Badge, Button, Card, EmptyState, IconButton } from '@/components/ui';
 import { addPlaceReviewAction } from '@/app/lieux/actions';
 import type { PlaceReview } from '../types/place.types';
 
@@ -13,6 +12,9 @@ export interface PlaceReviewSectionProps {
   bayesianRating: number;
   reviewsCount: number;
 }
+
+const INPUT_CLASS =
+  'w-full rounded-[var(--lkv-radius-md)] border border-[color:var(--lkv-border)] bg-[color:var(--lkv-field-bg)] px-3.5 text-[length:var(--lkv-text-body-sm)] text-[color:var(--lkv-text-primary)] focus:outline-none focus:ring-2 focus:ring-[color:var(--lkv-focus-ring)]';
 
 export function PlaceReviewSection({
   placeId,
@@ -73,41 +75,40 @@ export function PlaceReviewSection({
   };
 
   return (
-    <section className="mt-8 space-y-6">
+    <section className="mt-[var(--space-8)] space-y-[var(--space-6)]">
       {/* Score Header */}
-      <Card
-        tone="neutral"
-        className="p-6 rounded-card border border-white/60 flex flex-col sm:flex-row items-center justify-between gap-6"
-      >
+      <Card className="flex flex-col items-center justify-between gap-[var(--space-6)] p-6 sm:flex-row">
         <div className="flex items-center gap-5">
-          <div className="w-16 h-16 rounded-2xl bg-[#17402C] text-white flex flex-col items-center justify-center shadow-md">
-            <span className="text-2xl font-black leading-none">
+          <div className="flex h-16 w-16 flex-col items-center justify-center rounded-[var(--lkv-radius-md)] bg-[color:var(--lkv-primary)] text-[color:var(--lkv-text-inverted)] shadow-md">
+            <span className="text-[length:var(--lkv-text-title-lg)] font-black leading-none">
               {bayesianRating > 0 ? bayesianRating.toFixed(1) : '-'}
             </span>
-            <span className="text-[10px] font-semibold text-stone-300">/ 5.0</span>
+            <span className="text-[length:var(--lkv-text-caption-2)] font-semibold opacity-80">/ 5.0</span>
           </div>
 
           <div>
-            <h3 className="text-lg font-bold text-stone-900">Évaluation Communautaire</h3>
-            <div className="flex items-center gap-2 mt-1">
-              <div className="flex items-center text-sand-500">
+            <h3 className="text-[length:var(--lkv-text-body)] font-bold text-[color:var(--lkv-text-primary)]">
+              Évaluation Communautaire
+            </h3>
+            <div className="mt-[var(--space-1)] flex items-center gap-2">
+              <div className="flex items-center text-[color:var(--lkv-warning-dark)]">
                 {[1, 2, 3, 4, 5].map((star) => (
                   <Icon
                     name="star"
                     key={star}
-                    className={`w-4 h-4 ${
+                    className={`h-4 w-4 ${
                       star <= Math.round(bayesianRating)
-                        ? 'fill-amber-400 text-amber-500'
-                        : 'text-stone-300'
+                        ? 'text-[color:var(--lkv-warning-dark)]'
+                        : 'text-[color:var(--lkv-text-muted)]/40'
                     }`}
                   />
                 ))}
               </div>
-              <span className="text-xs font-semibold text-stone-600">
+              <span className="text-[length:var(--lkv-text-caption-1)] font-semibold text-[color:var(--lkv-text-muted)]">
                 ({reviewsCount} avis recueillis)
               </span>
             </div>
-            <p className="text-xs text-stone-600 mt-1">
+            <p className="mt-[var(--space-1)] text-[length:var(--lkv-text-caption-1)] text-[color:var(--lkv-text-muted)]">
               Moyenne bayésienne pondérée avec doublement du score pour les retours terrain
               certifiés.
             </p>
@@ -117,53 +118,52 @@ export function PlaceReviewSection({
         <Button
           variant="primary"
           size="sm"
-          className="min-h-[44px] flex items-center gap-2 shrink-0"
           onClick={() => setShowForm(!showForm)}
+          className="shrink-0"
+          icon={<Icon name="message-square-plus" className="h-4 w-4" />}
         >
-          <Icon name="message-square-plus" className="w-4 h-4" />
           {showForm ? 'Masquer le formulaire' : 'Donner mon avis'}
         </Button>
       </Card>
 
       {/* Formulaire d'Avis */}
       {showForm && (
-        <Card
-          tone="neutral"
-          className="p-6 rounded-card border border-white/80 animate-fade-in"
-        >
-          <h4 className="text-base font-bold text-stone-900 mb-4 flex items-center gap-2">
-            <Icon name="compass" className="w-4 h-4 text-[#17402C]" />
+        <Card className="p-6">
+          <h4 className="mb-[var(--space-4)] flex items-center gap-2 text-[length:var(--lkv-text-body)] font-bold text-[color:var(--lkv-text-primary)]">
+            <Icon name="compass" className="h-4 w-4 text-[color:var(--lkv-primary)]" />
             Votre retour d’expérience terrain
           </h4>
 
-          <form onSubmit={handleSubmitReview} className="space-y-4">
+          <form onSubmit={handleSubmitReview} className="space-y-[var(--space-4)]">
             {errorMsg && (
-              <div className="p-3.5 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-center gap-2">
-                <Icon name="alert-circle" className="w-4 h-4 text-rose-700 shrink-0" />
+              <Card tone="danger" className="flex items-center gap-2 p-[var(--space-3)] text-[length:var(--lkv-text-caption-1)]">
+                <Icon name="alert-circle" className="h-4 w-4 shrink-0" />
                 <span>{errorMsg}</span>
-              </div>
+              </Card>
             )}
 
             {/* Note en étoiles */}
             <div>
-              <label className="block text-xs font-bold text-stone-700 uppercase tracking-wider mb-1.5">
+              <span className="mb-1.5 block text-[length:var(--lkv-text-caption-1)] font-bold uppercase tracking-wider text-[color:var(--lkv-text-secondary)]">
                 Note globale
-              </label>
+              </span>
               <div className="flex items-center gap-2">
                 {[1, 2, 3, 4, 5].map((s) => (
-                  <button
+                  <IconButton
                     key={s}
-                    type="button"
+                    variant="ghost"
+                    size="md"
+                    aria-label={`Donner la note de ${s} sur 5`}
+                    aria-pressed={s <= rating}
                     onClick={() => setRating(s)}
-                    className="p-2 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl hover:bg-stone-100 transition-colors"
                   >
                     <Icon
                       name="star"
-                      className={`w-6 h-6 ${
-                        s <= rating ? 'fill-amber-400 text-amber-500' : 'text-stone-300'
+                      className={`h-6 w-6 ${
+                        s <= rating ? 'text-[color:var(--lkv-warning-dark)]' : 'text-[color:var(--lkv-text-muted)]/40'
                       }`}
                     />
-                  </button>
+                  </IconButton>
                 ))}
               </div>
             </div>
@@ -172,7 +172,7 @@ export function PlaceReviewSection({
             <div>
               <label
                 htmlFor="visit-date"
-                className="block text-xs font-bold text-stone-700 uppercase tracking-wider mb-1.5"
+                className="mb-1.5 block text-[length:var(--lkv-text-caption-1)] font-bold uppercase tracking-wider text-[color:var(--lkv-text-secondary)]"
               >
                 Date de passage (facultatif)
               </label>
@@ -181,7 +181,7 @@ export function PlaceReviewSection({
                 id="visit-date"
                 value={visitDate}
                 onChange={(e) => setVisitDate(e.target.value)}
-                className="w-full sm:w-64 h-11 px-3.5 rounded-2xl border border-stone-200 bg-stone-50 text-sm text-stone-900 focus:outline-none focus:ring-2 focus:ring-[#17402C]/20"
+                className={`${INPUT_CLASS} h-11 sm:w-64`}
               />
             </div>
 
@@ -189,7 +189,7 @@ export function PlaceReviewSection({
             <div>
               <label
                 htmlFor="review-comment"
-                className="block text-xs font-bold text-stone-700 uppercase tracking-wider mb-1.5"
+                className="mb-1.5 block text-[length:var(--lkv-text-caption-1)] font-bold uppercase tracking-wider text-[color:var(--lkv-text-secondary)]"
               >
                 Observations, état du site, eau, accessibilité
               </label>
@@ -199,22 +199,22 @@ export function PlaceReviewSection({
                 value={comment}
                 onChange={(e) => setComment(e.target.value)}
                 placeholder="Décrivez l'état actuel de la source, la propreté du bivouac, l'accueil du gardien..."
-                className="w-full p-3.5 rounded-2xl border border-stone-200 bg-stone-50 text-sm text-stone-900 focus:outline-none focus:ring-2 focus:ring-[#17402C]/20"
+                className={`${INPUT_CLASS} p-3.5`}
                 required
               />
             </div>
 
             {/* Certification Terrain */}
-            <div className="flex items-start gap-3 p-3.5 rounded-2xl bg-[#5B7F55]/10 border border-[#5B7F55]/20">
+            <div className="flex items-start gap-3 rounded-[var(--lkv-radius-md)] border border-[color:var(--lkv-secondary)]/20 bg-[color:var(--lkv-secondary)]/10 p-3.5">
               <input
                 type="checkbox"
                 id="field-proof"
                 checked={hasFieldProof}
                 onChange={(e) => setHasFieldProof(e.target.checked)}
-                className="mt-1 w-4 h-4 rounded text-[#17402C] focus:ring-[#17402C]"
+                className="mt-1 h-4 w-4 rounded text-[color:var(--lkv-primary)] focus:ring-[color:var(--lkv-focus-ring)]"
               />
-              <label htmlFor="field-proof" className="text-xs text-stone-700 cursor-pointer">
-                <strong className="text-stone-900 font-semibold block">
+              <label htmlFor="field-proof" className="cursor-pointer text-[length:var(--lkv-text-caption-1)] text-[color:var(--lkv-text-secondary)]">
+                <strong className="block font-semibold text-[color:var(--lkv-text-primary)]">
                   Preuve de passage sur le terrain
                 </strong>
                 J’atteste m’être rendu personnellement sur ce site. Mon avis aura un coefficient
@@ -222,12 +222,11 @@ export function PlaceReviewSection({
               </label>
             </div>
 
-            <div className="flex justify-end gap-3 pt-2">
+            <div className="flex justify-end gap-3 pt-[var(--space-2)]">
               <Button
                 type="button"
                 variant="secondary"
                 size="sm"
-                className="min-h-[44px]"
                 onClick={() => setShowForm(false)}
               >
                 Annuler
@@ -236,7 +235,6 @@ export function PlaceReviewSection({
                 type="submit"
                 variant="primary"
                 size="sm"
-                className="min-h-[44px]"
                 disabled={isPending}
               >
                 {isPending ? 'Enregistrement...' : 'Publier mon avis certifié'}
@@ -247,62 +245,58 @@ export function PlaceReviewSection({
       )}
 
       {successMsg && (
-        <div className="p-4 rounded-2xl bg-forest-50 border border-forest-200 text-forest-900 text-xs flex items-center gap-2">
-          <Icon name="check-circle2" className="w-4 h-4 text-forest-600 shrink-0" />
+        <Card tone="sage" className="flex items-center gap-2 p-[var(--space-4)] text-[length:var(--lkv-text-caption-1)]">
+          <Icon name="check-circle2" className="h-4 w-4 shrink-0" />
           <span>{successMsg}</span>
-        </div>
+        </Card>
       )}
 
       {/* Liste des Avis */}
-      <div className="space-y-4">
-        <h4 className="text-sm font-bold text-stone-900 uppercase tracking-wider">
+      <div className="space-y-[var(--space-4)]">
+        <h4 className="text-[length:var(--lkv-text-footnote)] font-bold uppercase tracking-wider text-[color:var(--lkv-text-primary)]">
           Avis des randonneurs ({reviews.length})
         </h4>
 
         {reviews.length === 0 ? (
-          <div className="glass p-8 rounded-xl text-center">
-            <p className="text-sm text-stone-600">
-              Soyez le premier randonneur à certifier les conditions de ce lieu !
-            </p>
-          </div>
+          <EmptyState
+            compact
+            title="Aucun avis pour le moment"
+            description="Soyez le premier randonneur à certifier les conditions de ce lieu !"
+          />
         ) : (
           reviews.map((rev) => (
-            <Card
-              key={rev.id}
-              tone="neutral"
-              className="p-5 rounded-lg border border-stone-200/70"
-            >
-              <div className="flex items-center justify-between gap-3 mb-2">
+            <Card key={rev.id} variant="compact" className="p-5">
+              <div className="mb-[var(--space-2)] flex items-center justify-between gap-3">
                 <div className="flex items-center gap-2">
-                  <div className="flex items-center text-sand-500">
+                  <div className="flex items-center text-[color:var(--lkv-warning-dark)]">
                     {[1, 2, 3, 4, 5].map((s) => (
                       <Icon
                         name="star"
                         key={s}
-                        className={`w-3.5 h-3.5 ${
-                          s <= rev.rating ? 'fill-amber-400 text-amber-500' : 'text-stone-300'
+                        className={`h-3.5 w-3.5 ${
+                          s <= rev.rating ? 'text-[color:var(--lkv-warning-dark)]' : 'text-[color:var(--lkv-text-muted)]/40'
                         }`}
                       />
                     ))}
                   </div>
 
                   {rev.has_field_proof && (
-                    <span className="inline-flex items-center gap-1 text-[11px] font-bold text-[#17402C] bg-[#5B7F55]/15 px-2.5 py-0.5 rounded-full border border-[#5B7F55]/20">
-                      <Icon name="shield-check" className="w-3.5 h-3.5 text-[#17402C]" />
+                    <Badge tone="sage" className="gap-1">
+                      <Icon name="shield-check" className="h-3.5 w-3.5 text-[color:var(--lkv-primary)]" />
                       Preuve terrain certifiée
-                    </span>
+                    </Badge>
                   )}
                 </div>
 
                 {rev.visit_date && (
-                  <span className="text-[11px] text-stone-500 flex items-center gap-1">
-                    <Icon name="calendar" className="w-3 h-3 text-stone-400" />
+                  <span className="flex items-center gap-1 text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">
+                    <Icon name="calendar" className="h-3 w-3" />
                     Visité le {rev.visit_date}
                   </span>
                 )}
               </div>
 
-              <p className="text-xs text-stone-700 leading-relaxed whitespace-pre-line">
+              <p className="whitespace-pre-line text-[length:var(--lkv-text-caption-1)] leading-relaxed text-[color:var(--lkv-text-secondary)]">
                 {rev.comment}
               </p>
             </Card>

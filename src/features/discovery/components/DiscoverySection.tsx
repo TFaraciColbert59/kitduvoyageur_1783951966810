@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { cn } from '@/lib/utils';
+import { Badge } from '@/components/ui';
 import { useDiscovery } from '../hooks/useDiscovery';
 import { DiscoveryCard } from './DiscoveryCard';
 import { DiscoveryEmpty, DiscoveryNotice, DiscoverySkeleton } from './DiscoveryStates';
@@ -62,13 +63,13 @@ export function DiscoverySection({
       }`}
       className={cn('space-y-3', className)}
     >
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-2 border-b border-[#17402C]/10 pb-3">
+      <div className="flex flex-col items-start justify-between gap-2 border-b border-[color:var(--lkv-border)] pb-3 sm:flex-row sm:items-end">
         <div>
-          <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-[#5B7F55] block mb-0.5">
+          <span className="mb-0.5 block font-mono text-[length:var(--lkv-text-caption-2)] font-bold uppercase tracking-widest text-[color:var(--lkv-secondary)]">
             {isViator ? 'Sélection partenaire · Viator' : 'Sélection Tripadvisor'}
           </span>
-          <h3 className="font-display font-bold text-xl sm:text-2xl text-[#17402C]">{title}</h3>
-          {subtitle ? <p className="text-xs text-[#5A7064] mt-0.5 font-mono">{subtitle}</p> : null}
+          <h3 className="font-display text-[length:var(--lkv-text-title-sm)] font-bold text-[color:var(--lkv-text-primary)]">{title}</h3>
+          {subtitle ? <p className="mt-0.5 font-mono text-[length:var(--lkv-text-caption-1)] text-[color:var(--lkv-text-muted)]">{subtitle}</p> : null}
         </div>
       </div>
 
@@ -81,23 +82,23 @@ export function DiscoverySection({
               <DiscoveryCard key={item.id} item={item} />
             ))}
           </div>
-          <div className="pt-1 flex items-center gap-3 flex-wrap">
+          <div className="flex flex-wrap items-center gap-3 pt-1">
             {isViator ? (
               <>
                 <a
                   href={data?.attribution.sourceUrl || 'https://www.viator.com/'}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="font-display font-extrabold text-[13px] leading-none text-[#17402C] hover:text-[#5B7F55] transition-colors"
+                  className="font-display text-[length:var(--lkv-text-footnote)] font-extrabold leading-none text-[color:var(--lkv-text-primary)] no-underline transition-colors hover:text-[color:var(--lkv-secondary)]"
                 >
                   Viator
                 </a>
-                <span className="text-[10.5px] font-mono text-[#5A7064]">
+                <span className="font-mono text-[length:var(--lkv-text-caption-1)] text-[color:var(--lkv-text-muted)]">
                   {data?.attribution.label}
                 </span>
-                <span className="text-[9.5px] font-mono font-bold uppercase tracking-wider text-[#5A7064] bg-white/80 border border-white rounded-full px-2 py-0.5">
+                <Badge tone="stone" className="font-mono uppercase">
                   Lien partenaire
-                </span>
+                </Badge>
               </>
             ) : (
               <TripadvisorAttribution logoUrl={data?.attribution?.logoUrl || undefined} />

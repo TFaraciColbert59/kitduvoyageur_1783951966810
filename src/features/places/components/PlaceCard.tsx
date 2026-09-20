@@ -3,8 +3,7 @@
 import Icon from '@/components/ui/Icon';
 import React from 'react';
 import Link from 'next/link';
-import { Card } from '@/components/ui';
-import { Button } from '@/components/ui';
+import { Badge, Button, Card } from '@/components/ui';
 import type { PlaceWithDistance } from '../types/place.types';
 import { getCategoryIcon, getCategoryLabel } from '../lib/placeCategory';
 
@@ -16,44 +15,39 @@ export interface PlaceCardProps {
 }
 
 export function PlaceCard({ place, onAddToTrip }: PlaceCardProps) {
-  const Icon = getCategoryIcon(place.category);
+  const CategoryIcon = getCategoryIcon(place.category);
   const categoryLabel = getCategoryLabel(place.category);
 
   return (
-    <div className="group relative flex flex-col h-full">
-      <Link href={`/lieux/${place.slug}`} className="block flex-1">
+    <div className="group relative flex h-full flex-col">
+      <Link href={`/lieux/${place.slug}`} className="block flex-1 no-underline">
         <Card
-          tone="neutral"
           variant="interactive"
-          className="h-full border border-white/60 hover:border-[#5B7F55]/40 transition-all duration-300 hover:shadow-lg rounded-xl p-5 flex flex-col justify-between"
+          className="flex h-full flex-col justify-between p-5"
         >
           <div>
             {/* Header badges */}
-            <div className="flex items-center justify-between gap-2 mb-3">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-[#17402C]/10 text-[#17402C] border border-[#17402C]/15">
-                <Icon className="w-3.5 h-3.5 text-[#5B7F55]" />
+            <div className="mb-[var(--space-3)] flex items-center justify-between gap-2">
+              <Badge tone="sage" className="gap-1.5">
+                <CategoryIcon className="h-3.5 w-3.5 text-[color:var(--lkv-primary)]" />
                 {categoryLabel}
-              </span>
+              </Badge>
 
               <div className="flex items-center gap-1.5">
                 {place.altitude_m && (
-                  <span className="text-xs font-medium text-stone-600 bg-stone-100/80 px-2.5 py-0.5 rounded-full border border-stone-200">
-                    {place.altitude_m} m
-                  </span>
+                  <Badge tone="stone">{place.altitude_m} m</Badge>
                 )}
-                <span className="text-xs font-bold text-stone-500 bg-stone-100 px-2 py-0.5 rounded-full uppercase">
-                  {place.country_code}
-                </span>
+                <Badge tone="stone" className="uppercase">{place.country_code}</Badge>
               </div>
             </div>
 
             {/* Titre & Localisation */}
-            <h3 className="text-lg font-bold text-stone-900 group-hover:text-[#17402C] transition-colors line-clamp-1 mb-1">
+            <h3 className="mb-[var(--space-1)] font-display text-[length:var(--lkv-text-title-sm)] font-bold text-[color:var(--lkv-text-primary)] line-clamp-1">
               {place.name}
             </h3>
 
-            <div className="flex items-center gap-1 text-xs text-stone-500 mb-3">
-              <Icon name="map-pin" className="w-3.5 h-3.5 text-[#5B7F55] shrink-0" />
+            <div className="mb-[var(--space-3)] flex items-center gap-1 text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-muted)]">
+              <Icon name="map-pin" className="h-3.5 w-3.5 shrink-0 text-[color:var(--lkv-primary)]" />
               <span className="truncate">
                 {place.city ? `${place.city}, ` : ''}
                 {place.region || place.country_code}
@@ -62,40 +56,42 @@ export function PlaceCard({ place, onAddToTrip }: PlaceCardProps) {
 
             {/* Description */}
             {place.description && (
-              <p className="text-xs text-stone-600 line-clamp-2 leading-relaxed mb-4">
+              <p className="mb-[var(--space-4)] text-[length:var(--lkv-text-caption)] leading-relaxed text-[color:var(--lkv-text-secondary)] line-clamp-2">
                 {place.description}
               </p>
             )}
 
             {/* Alerte éthique si floutage */}
             {place.is_blurred && (
-              <div className="flex items-center gap-1.5 p-2 rounded-xl bg-sand-500/10 border border-sand-500/20 text-sand-900 text-[11px] mb-3">
-                <Icon name="shield-alert" className="w-3.5 h-3.5 text-sand-700 shrink-0" />
-                <span>Zone fragile : coordonnées floutées à ~500m</span>
+              <div className="mb-[var(--space-3)]">
+                <Badge tone="warn" className="w-full gap-1.5 py-[var(--space-2)]">
+                  <Icon name="shield-alert" className="h-3.5 w-3.5 shrink-0" />
+                  <span>Zone fragile : coordonnées floutées à ~500m</span>
+                </Badge>
               </div>
             )}
           </div>
 
           {/* Footer Card */}
-          <div className="pt-3 border-t border-stone-200/60 flex items-center justify-between mt-auto">
+          <div className="mt-auto flex items-center justify-between border-t border-[color:var(--lkv-border)] pt-[var(--space-3)]">
             {/* Note bayésienne */}
             <div className="flex items-center gap-1.5">
-              <div className="flex items-center gap-1 text-sand-500 font-bold text-sm">
-                <Icon name="star" className="w-4 h-4 fill-sand-400 text-sand-500" />
+              <div className="flex items-center gap-1 text-[length:var(--lkv-text-body-sm)] font-bold text-[color:var(--lkv-warning-dark)]">
+                <Icon name="star" className="h-4 w-4" />
                 <span>
                   {place.bayesian_rating > 0 ? place.bayesian_rating.toFixed(1) : 'Nouveau'}
                 </span>
               </div>
-              <span className="text-xs text-stone-600">
+              <span className="text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-muted)]">
                 ({place.reviews_count} {place.reviews_count > 1 ? 'avis' : 'avis'})
               </span>
             </div>
 
             {place.is_verified && (
-              <span className="inline-flex items-center gap-1 text-[11px] font-medium text-[#17402C] bg-[#5B7F55]/15 px-2 py-0.5 rounded-full">
-                <Icon name="check-circle2" className="w-3 h-3 text-[#17402C]" />
+              <Badge tone="sage" className="gap-1">
+                <Icon name="check-circle2" className="h-3 w-3 text-[color:var(--lkv-primary)]" />
                 Vérifié
-              </span>
+              </Badge>
             )}
           </div>
         </Card>
@@ -103,17 +99,18 @@ export function PlaceCard({ place, onAddToTrip }: PlaceCardProps) {
 
       {/* Bouton d'action rapide Ajouter au Voyage */}
       {onAddToTrip && (
-        <div className="mt-2">
+        <div className="mt-[var(--space-2)]">
           <Button
             variant="secondary"
             size="sm"
-            className="w-full flex items-center justify-center gap-1.5 min-h-[44px] text-xs font-semibold"
+            fullWidth
+            className="font-semibold"
             onClick={(e) => {
               e.preventDefault();
               onAddToTrip(place);
             }}
           >
-            <Icon name="plus" className="w-4 h-4 text-[#17402C]" />
+            <Icon name="plus" className="h-4 w-4 text-[color:var(--lkv-primary)]" />
             Ajouter à mon voyage
           </Button>
         </div>

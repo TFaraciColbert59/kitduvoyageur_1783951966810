@@ -12,6 +12,7 @@ import {
 } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import Icon from '@/components/ui/Icon';
+import { Badge, Button, Card, IconButton, Spinner, Tabs } from '@/components/ui';
 import type { MapTrail } from '@/components/explorer/types';
 import { getDifficultyColor, isValidLatLng, sanitizeGeoJSON } from '@/components/explorer/types';
 import type { UnifiedPOI } from '@/lib/queries/pois';
@@ -185,7 +186,7 @@ function openPoiPopup(
   container.className = 'px-1 py-0.5 max-w-[220px]';
 
   const title = document.createElement('p');
-  title.className = 'text-[13px] font-semibold text-[#17402C]';
+  title.className = 'text-[13px] font-semibold text-[color:var(--lkv-text-primary)]';
   title.textContent =
     typeof properties.name === 'string' && properties.name ? properties.name : 'Point d’intérêt';
   container.append(title);
@@ -197,7 +198,7 @@ function openPoiPopup(
   }
   if (parts.length > 0) {
     const meta = document.createElement('p');
-    meta.className = 'text-[11px] text-[#5A7064]';
+    meta.className = 'text-[11px] text-[color:var(--lkv-text-muted)]';
     meta.textContent = parts.join(' · ');
     container.append(meta);
   }
@@ -1117,10 +1118,10 @@ export default function UnifiedExplorerMap({
   // il est visible : les contrôles bas (CTA + zoom) remontent au-dessus de lui.
   // Absente (desktop, zéro sentier) ⇒ 0px, positions historiques inchangées.
   const bottomControlsOffset = safeControls
-    ? 'bottom-[calc(env(safe-area-inset-bottom,0px)+96px+var(--explorer-carousel-height,0px))]'
+    ? 'bottom-[calc(var(--safe-bottom)+96px+var(--explorer-carousel-height,0px))]'
     : 'bottom-4';
   const desktopTilesOffset = safeControls
-    ? 'md:bottom-[calc(env(safe-area-inset-bottom,0px)+96px)]'
+    ? 'md:bottom-[calc(var(--safe-bottom)+96px)]'
     : 'md:bottom-4';
 
   return (
@@ -1133,8 +1134,8 @@ export default function UnifiedExplorerMap({
       <div ref={containerRef} className="absolute inset-0 w-full h-full" />
 
       {!ready && (
-        <div className="absolute inset-0 z-[600] flex items-center justify-center bg-[#FBFAF6]">
-          <div className="w-8 h-8 border-[3px] border-[#17402C] border-t-transparent rounded-full animate-spin" />
+        <div className="absolute inset-0 z-[var(--z-sticky)] flex items-center justify-center bg-[color:var(--lkv-surface-card)]">
+          <Spinner size="lg" label="Chargement de la carte" />
         </div>
       )}
 
@@ -1147,88 +1148,91 @@ export default function UnifiedExplorerMap({
 
       {/* Action principale — mobile (centrée, seule au-dessus de la tab bar) */}
       <div
-        className={`absolute left-1/2 -translate-x-1/2 ${bottomControlsOffset} z-[510] md:hidden`}
+        className={`absolute left-1/2 -translate-x-1/2 ${bottomControlsOffset} z-[var(--z-fab)] md:hidden`}
         data-atlas-primary-cta="mobile"
       >
-        <button
-          type="button"
+        <Button
+          variant="secondary"
           onClick={handleToggleGlobe}
-          className="glass-capsule-btn !min-h-[48px] px-4 flex items-center justify-center gap-2 shadow-lg cursor-pointer active:scale-95"
+          className="min-h-[48px] px-4 shadow-lg"
           aria-label={viewMode === 'globe' ? 'Explorer ma zone (vue locale)' : 'Afficher le globe'}
           aria-pressed={viewMode === 'local'}
         >
           <Icon name="compass" size={15} />
-          <span className="text-[12px] font-bold whitespace-nowrap">
+          <span className="whitespace-nowrap text-[length:var(--lkv-text-caption)] font-bold">
             {viewMode === 'globe' ? 'Explorer ma zone' : 'Vue globe'}
           </span>
-        </button>
+        </Button>
       </div>
 
-      {/* Repli sans GPS — message glass non bloquant (la carte reste interactive). */}
+      {/* Repli sans GPS — message non bloquant (la carte reste interactive). */}
       {globeNotice && (
         <div
-          className={`absolute left-1/2 -translate-x-1/2 z-[560] pointer-events-none w-max max-w-[calc(100vw-32px)] ${
+          className={`absolute left-1/2 -translate-x-1/2 z-[var(--z-toast)] pointer-events-none w-max max-w-[calc(100vw-32px)] ${
             safeControls
-              ? 'bottom-[calc(env(safe-area-inset-bottom,0px)+160px+var(--explorer-carousel-height,0px))]'
+              ? 'bottom-[calc(var(--safe-bottom)+160px+var(--explorer-carousel-height,0px))]'
               : 'bottom-[152px]'
           } md:bottom-24`}
           data-atlas-geoloc-notice="true"
           role="status"
           aria-live="polite"
         >
-          <div className="glass-pill pill-warn text-center">{globeNotice}</div>
+          <Card variant="compact" tone="warn" className="text-center">{globeNotice}</Card>
         </div>
       )}
 
       {/* Zoom (−/+) + recentrage : mobile = zoom seul ; desktop = colonne complète.
           E1 — sur mobile la colonne est décalée de `right-14` pour rester à
-          gauche de l'onglet filtres fixe (`right-0 top-1/2`, z-900) : une fois
+          gauche de l'onglet filtres fixe (`right-0 top-1/2`) : une fois
           remontée au-dessus du carrousel, elle croise sa bande verticale. */}
       <div
-        className={`absolute right-14 md:right-3 ${bottomControlsOffset} z-[500] flex flex-col gap-2`}
+        className={`absolute right-14 md:right-3 ${bottomControlsOffset} z-[var(--z-fab)] flex flex-col gap-2`}
         data-atlas-controls="right"
       >
-        <button
-          type="button"
+        <IconButton
+          variant="glass"
+          size="lg"
           onClick={handleZoomIn}
-          className="glass-circle-btn w-11 h-11 shadow-lg flex items-center justify-center cursor-pointer active:scale-95"
+          className="shadow-lg"
           aria-label="Zoom avant"
           title="Zoom avant"
         >
           <Icon name="plus" size={16} />
-        </button>
-        <button
-          type="button"
+        </IconButton>
+        <IconButton
+          variant="glass"
+          size="lg"
           onClick={handleZoomOut}
-          className="glass-circle-btn w-11 h-11 shadow-lg flex items-center justify-center cursor-pointer active:scale-95"
+          className="shadow-lg"
           aria-label="Zoom arrière"
           title="Zoom arrière"
         >
           <Icon name="minus" size={16} />
-        </button>
+        </IconButton>
         <div className="hidden md:contents">
-          <button
-            type="button"
+          <IconButton
+            variant="glass"
+            size="lg"
             onClick={handleRecenter}
-            className="glass-circle-btn w-11 h-11 shadow-lg flex items-center justify-center cursor-pointer active:scale-95"
+            className="shadow-lg"
             aria-label="Me recentrer"
             title="Me recentrer"
           >
             <Icon name="navigation" size={16} />
-          </button>
-          <button
-            type="button"
+          </IconButton>
+          <Button
+            variant="secondary"
             onClick={handleToggleGlobe}
-            className="glass-capsule-btn !min-h-[44px] px-3 flex items-center justify-center gap-1.5 shadow-lg cursor-pointer active:scale-95"
+            className="min-h-[44px] px-3 shadow-lg"
             aria-label={viewMode === 'globe' ? 'Explorer ma zone (vue locale)' : 'Afficher le globe'}
             title={viewMode === 'globe' ? 'Explorer ma zone' : 'Vue globe'}
             aria-pressed={viewMode === 'local'}
           >
             <Icon name="compass" size={14} />
-            <span className="text-[11px] font-bold whitespace-nowrap">
+            <span className="whitespace-nowrap text-[length:var(--lkv-text-caption-2)] font-bold">
               {viewMode === 'globe' ? 'Explorer ma zone' : 'Vue globe'}
             </span>
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -1236,84 +1240,76 @@ export default function UnifiedExplorerMap({
       {viewport && viewport.zoom > 2.4 && viewport.zoom < 14.4 && (
         <div
           className={`hidden md:block absolute left-3 ${
-            safeControls ? 'bottom-[calc(env(safe-area-inset-bottom,0px)+152px)]' : 'bottom-20'
-          } z-[500] pointer-events-none`}
+            safeControls ? 'bottom-[calc(var(--safe-bottom)+152px)]' : 'bottom-20'
+          } z-[var(--z-fab)] pointer-events-none`}
           data-atlas-density-legend="true"
         >
-          <div className="glass-pill text-[10px] font-semibold" data-atlas-glass="secondary">
+          <Badge tone="stone" className="font-semibold" data-atlas-glass="secondary">
             ● Densité de sentiers — taille ∝ nombre
-          </div>
+          </Badge>
         </div>
       )}
 
       {/* Fond de carte — mobile : icônes en haut à gauche ; desktop : libellés en bas à gauche */}
       <div
-        className={`absolute left-3 top-[calc(env(safe-area-inset-top,0px)+10px)] md:top-auto ${desktopTilesOffset} z-[500] glass-capsule-bar flex items-center`}
+        className={`absolute left-3 top-[calc(var(--safe-top)+10px)] md:top-auto ${desktopTilesOffset} z-[var(--z-fab)]`}
         data-atlas-controls="tiles"
-        role="group"
-        aria-label="Fond de carte"
       >
-        {TILE_MODES.map((mode) => (
-          <button
-            key={mode}
-            type="button"
-            onClick={() => setTileMode(mode)}
-            className={`glass-capsule-segment !w-12 !min-w-0 !px-0 md:!w-auto md:!min-w-[76px] md:!px-[18px] !min-h-[44px] text-[11px] font-semibold cursor-pointer flex items-center justify-center ${
-              tileMode === mode ? 'active' : ''
-            }`}
-            aria-pressed={tileMode === mode}
-            aria-label={mode === 'topo' ? 'Relief' : mode === 'osm' ? 'Plan' : 'Satellite'}
-            title={mode === 'topo' ? 'Relief' : mode === 'osm' ? 'Plan' : 'Satellite'}
-          >
-            <span className="md:hidden inline-flex">
-              <Icon name={mode === 'topo' ? 'mountain' : mode === 'osm' ? 'map' : 'layers'} size={16} />
-            </span>
-            <span className="hidden md:inline">
-              {mode === 'topo' ? 'Relief' : mode === 'osm' ? 'Plan' : 'Satellite'}
-            </span>
-          </button>
-        ))}
+        <Tabs
+          variant="segmented"
+          ariaLabel="Fond de carte"
+          options={TILE_MODES.map((mode) => ({
+            id: mode,
+            label: mode === 'topo' ? 'Relief' : mode === 'osm' ? 'Plan' : 'Satellite',
+            icon: <Icon name={mode === 'topo' ? 'mountain' : mode === 'osm' ? 'map' : 'layers'} size={16} />,
+          }))}
+          value={tileMode}
+          onChange={(id) => setTileMode(id as AtlasTileMode)}
+          className="shadow-lg"
+        />
       </div>
 
       {/* Attribution légère (obligatoire pour les tuiles) — mobile : haut droite ; desktop : bas centre */}
-      <div className="absolute z-[400] right-3 top-[calc(env(safe-area-inset-top,0px)+16px)] md:right-auto md:left-1/2 md:-translate-x-1/2 md:top-auto md:bottom-[calc(env(safe-area-inset-bottom,0px)+2px)] text-[9px] leading-none text-[#5A7064] bg-white/70 px-2 py-1 rounded-full pointer-events-none">
+      <div className="pointer-events-none absolute right-3 top-[calc(var(--safe-top)+16px)] z-[var(--z-sticky)] rounded-full bg-[color:var(--card-tint-strong)] px-2 py-1 text-[9px] leading-none text-[color:var(--lkv-text-muted)] md:right-auto md:left-1/2 md:-translate-x-1/2 md:bottom-[calc(var(--safe-bottom)+2px)] md:top-auto">
         © OpenStreetMap France · Esri
       </div>
 
-      {/* Sélection pays (couche monde) — données réelles, jamais inventées.
-          Wrapper positionné : la classe `.glass` porte `position: relative`. */}
+      {/* Sélection pays (couche monde) — données réelles, jamais inventées. */}
       {selectedCountry && (
         <div
-          className="absolute left-3 top-[calc(env(safe-area-inset-top,0px)+72px)] md:left-auto md:right-3 md:top-20 z-[550] w-[236px]"
+          className="absolute left-3 top-[calc(var(--safe-top)+72px)] md:left-auto md:right-3 md:top-20 z-[var(--z-fab)] w-[236px]"
           data-atlas-country-card="true"
         >
-          <div className="glass rounded-2xl p-3.5" data-atlas-glass="secondary">
-            <p className="glass-eyebrow">Pays</p>
-            <h3 className="font-display font-bold text-[15px] text-[#17402C] mt-0.5">
+          <Card variant="featured" className="p-3.5" data-atlas-glass="secondary">
+            <p className="text-[length:var(--lkv-text-caption-2)] font-semibold uppercase tracking-widest text-[color:var(--lkv-text-muted)]">
+              Pays
+            </p>
+            <h3 className="mt-0.5 font-display text-[15px] font-bold text-[color:var(--lkv-text-primary)]">
               {selectedCountry.name || selectedCountry.iso}
             </h3>
-            <p className="text-[11px] text-[#5A7064] mt-1">
+            <p className="mt-1 text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">
               {selectedCountry.count != null
                 ? `${selectedCountry.count} itinéraire${selectedCountry.count > 1 ? 's' : ''} référencé${selectedCountry.count > 1 ? 's' : ''}`
                 : 'Densité non disponible'}
             </p>
-            <div className="flex items-center gap-2 mt-3">
+            <div className="mt-3 flex items-center gap-2">
               <Link
                 href={`/pays/${selectedCountry.iso.toLowerCase()}`}
-                className="glass-capsule-btn primary flex-1 !min-h-[44px] text-[11px] font-bold text-center"
+                className="inline-flex min-h-[44px] flex-1 select-none items-center justify-center whitespace-nowrap rounded-full bg-[color:var(--lkv-action)] px-[var(--space-4)] text-center text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-on-action)] no-underline transition-transform active:scale-[var(--motion-press-scale)] hover:bg-[color:var(--lkv-action-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]"
               >
                 Explorer le pays
               </Link>
-              <button
-                type="button"
+              <IconButton
+                variant="glass"
+                size="lg"
                 onClick={() => setSelectedCountry(null)}
-                className="glass-circle-btn w-11 h-11 shrink-0"
+                className="shrink-0"
                 aria-label="Fermer la sélection pays"
               >
                 ×
-              </button>
+              </IconButton>
             </div>
-          </div>
+          </Card>
         </div>
       )}
     </div>

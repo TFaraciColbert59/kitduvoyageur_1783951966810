@@ -1,5 +1,6 @@
 import React from 'react';
 import Icon from '@/components/ui/Icon';
+import { Badge, Card } from '@/components/ui';
 import { cn } from '@/lib/utils';
 import type { KlookBlock } from '../providers/klook/klookTypes';
 
@@ -17,25 +18,28 @@ export function KlookCtaBlock({ block, className }: KlookCtaBlockProps) {
   if (!block) return null;
 
   return (
-    <section
+    <Card
+      as="section"
       aria-label={`Klook — ${block.title}`}
       className={cn(
-        'glass rounded-[1.5rem] border border-white/50 shadow-xs p-5 flex flex-col sm:flex-row sm:items-center gap-4 justify-between',
+        'flex flex-col justify-between gap-4 p-5 sm:flex-row sm:items-center',
         className
       )}
     >
-      <div className="space-y-1.5 min-w-0">
-        <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-[#5B7F55] block">
+      <div className="min-w-0 space-y-1.5">
+        <span className="block font-mono text-[length:var(--lkv-text-caption-2)] font-bold uppercase tracking-widest text-[color:var(--lkv-secondary)]">
           Sélection partenaire · Klook
         </span>
-        <h3 className="font-display font-bold text-lg text-[#17402C] leading-snug">
+        <h3 className="font-display text-[length:var(--lkv-text-body)] font-bold leading-snug text-[color:var(--lkv-text-primary)]">
           {block.title}
         </h3>
-        <p className="text-xs text-[#5A7064] leading-relaxed">{block.description}</p>
+        <p className="text-[length:var(--lkv-text-caption-1)] leading-relaxed text-[color:var(--lkv-text-muted)]">
+          {block.description}
+        </p>
         {block.isAffiliate ? (
-          <span className="inline-block mt-1 text-[9.5px] font-mono font-bold uppercase tracking-wider text-[#5A7064] bg-white/80 border border-white rounded-full px-2 py-0.5">
+          <Badge tone="stone" className="mt-1 font-mono uppercase">
             Lien partenaire
-          </span>
+          </Badge>
         ) : null}
       </div>
 
@@ -43,11 +47,11 @@ export function KlookCtaBlock({ block, className }: KlookCtaBlockProps) {
         href={block.url}
         target="_blank"
         rel={block.rel}
-        className="w-full sm:w-auto shrink-0 min-h-[44px] px-5 rounded-xl bg-[#17402C] hover:bg-[#123323] text-white text-xs font-bold transition-all flex items-center justify-center gap-2 shadow-sm"
+        className="flex min-h-[44px] w-full shrink-0 select-none items-center justify-center gap-2 whitespace-nowrap rounded-full bg-[color:var(--lkv-action)] px-5 text-[length:var(--lkv-text-caption-1)] font-bold text-[color:var(--lkv-on-action)] no-underline shadow-sm transition-transform active:scale-[var(--motion-press-scale)] hover:bg-[color:var(--lkv-action-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)] sm:w-auto"
       >
         <span>{block.ctaLabel}</span>
-        <Icon name="external-link" className="w-3.5 h-3.5 text-white/70" />
+        <Icon name="external-link" className="h-3.5 w-3.5 opacity-70" />
       </a>
-    </section>
+    </Card>
   );
 }

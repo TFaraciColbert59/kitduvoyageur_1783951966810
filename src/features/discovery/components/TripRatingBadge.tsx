@@ -25,7 +25,7 @@ export function TripRatingBadge({
 
   if (!hasRating && safeReviewCount == null) {
     return (
-      <span className={cn('text-[11px] font-mono text-[#5A7064]', className)}>
+      <span className={cn('text-[11px] font-mono text-[color:var(--lkv-text-muted)]', className)}>
         Pas encore de note Tripadvisor
       </span>
     );
@@ -48,10 +48,10 @@ export function TripRatingBadge({
         />
       ) : null}
       {safeRating != null ? (
-        <span className="font-mono text-xs font-bold text-[#17402C]">{safeRating.toFixed(1)}</span>
+        <span className="font-mono text-xs font-bold text-[color:var(--lkv-primary)]">{safeRating.toFixed(1)}</span>
       ) : null}
       {safeReviewCount != null ? (
-        <span className="text-[10.5px] font-mono text-[#5A7064]">
+        <span className="text-[10.5px] font-mono text-[color:var(--lkv-text-muted)]">
           ({safeReviewCount.toLocaleString('fr-FR')} avis)
         </span>
       ) : null}

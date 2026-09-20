@@ -16,7 +16,6 @@ import { ChevronDownIcon as ChevronDown } from '@/components/icons/chevron-down'
 import { SlidersHorizontalIcon as SlidersHorizontalAnimated } from '@/components/icons/sliders-horizontal';
 import { XIcon as XAnimated } from '@/components/icons/x';
 import { RotateCCWIcon as RotateCcwAnimated, type RotateCCWIconHandle } from '@/components/icons/rotate-ccw';
-import { SearchIcon as SearchAnimated } from '@/components/icons/search';
 import Icon from '@/components/ui/AppIcon';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -42,15 +41,16 @@ import {
   type LiveMemberPosition,
 } from '@/features/tribu/actions/livePosition';
 import { getCurrentGeoPosition } from '@/lib/native/geolocation';
+import { Badge, Button, Card, EmptyState, IconButton, SearchField, Spinner } from '@/components/ui';
+import { MapPageLayout } from '@/design';
 
 // ── Dynamic (client-only) ─────────────────────────────────────────────────────
 
 const ExplorerMap = dynamic(() => import('@/components/explorer/ExplorerMap'), {
   ssr: false,
   loading: () => (
-    // Icône de chargement seule, centrée (sans texte).
-    <div className="w-full h-full flex items-center justify-center bg-[#EAE6DF]">
-      <div className="w-8 h-8 border-[3px] border-[#17402C] border-t-transparent rounded-full animate-spin" />
+    <div className="flex h-full w-full items-center justify-center bg-[color:var(--lkv-surface-muted)]">
+      <Spinner size="lg" label="Chargement de la carte" />
     </div>
   ),
 });
@@ -63,8 +63,8 @@ const TrailDetailPanel = dynamic(() => import('@/components/explorer/TrailDetail
 const UnifiedExplorerMap = dynamic(() => import('@/components/map/UnifiedExplorerMap'), {
   ssr: false,
   loading: () => (
-    <div className="w-full h-full flex items-center justify-center bg-[#FBFAF6]">
-      <div className="w-8 h-8 border-[3px] border-[#17402C] border-t-transparent rounded-full animate-spin" />
+    <div className="flex h-full w-full items-center justify-center bg-[color:var(--lkv-surface-card)]">
+      <Spinner size="lg" label="Chargement de la carte" />
     </div>
   ),
 });
@@ -93,6 +93,12 @@ import type { UnifiedPOI } from '@/lib/queries/pois';
 // Clé relue par `UnifiedExplorerMap` pour replier « Explorer ma zone » sans GPS.
 
 const LAST_LOCATION_STORAGE_KEY = 'lkdv_last_location';
+
+// Liens-actions stylés comme `Button variant="secondary"` (pas de `<button>` imbriqué).
+const LINK_PILL =
+  'inline-flex shrink-0 select-none items-center justify-center gap-[var(--space-2)] whitespace-nowrap rounded-full border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] px-[var(--space-4)] font-semibold text-[color:var(--card-content)] backdrop-blur-[var(--blur-md)] transition-transform duration-[var(--motion-press-duration)] active:scale-[var(--motion-press-scale)] hover:bg-[color:var(--lkv-hover-surface)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]';
+const LINK_ICON =
+  'inline-flex h-[var(--control-height-md)] w-[var(--control-height-md)] shrink-0 select-none items-center justify-center rounded-full border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] text-[color:var(--card-content)] backdrop-blur-[var(--blur-md)] transition-transform duration-[var(--motion-press-duration)] active:scale-[var(--motion-press-scale)] hover:bg-[color:var(--lkv-hover-surface)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]';
 
 function rememberLastLocation(lat: number, lng: number): void {
   try {
@@ -516,34 +522,58 @@ export default function ExplorerClient({
 
   // ── RENDER ────────────────────────────────────────────────────────────────────
 
-  return (
-    <div className="relative w-full h-[100dvh] overflow-hidden bg-transparent select-none" style={{ minHeight: '100dvh', height: '100dvh', width: '100%' }}>
+  const mapNode = unifiedMap ? (
+    <UnifiedExplorerMap
+      trails={filteredTrails}
+      pois={visiblePois}
+      selectedTrailId={selectedTrailId}
+      selectedTrail={selectedTrail}
+      onTrailClick={handleTrailClick}
+      userLocation={userLocation}
+      onLocationUpdate={handleLocationUpdate}
+      onViewportChange={handleViewportChange}
+      onViewportData={setUnifiedViewportData}
+      countryDensity={atlasDensity?.countries}
+      regionDensity={atlasDensity?.cells}
+      memberPositions={livePositions.map((position) => ({
+        userId: position.userId,
+        name: position.name,
+        lat: position.lat,
+        lng: position.lng,
+      }))}
+      safeControls
+    />
+  ) : (
+    <ExplorerMap
+      trails={filteredTrails}
+      pois={visiblePois}
+      selectedTrailId={selectedTrailId}
+      onTrailClick={handleTrailClick}
+      userLocation={userLocation}
+      onLocationUpdate={handleLocationUpdate}
+      onViewportChange={handleViewportChange}
+      safeControls
+    />
+  );
 
+  const controls = (
+    <>
       {/* ── 1A. HEADER DESKTOP (GRAND ÉCRAN >= 768px) ── */}
-      <header className="hidden md:block fixed top-3 left-1/2 -translate-x-1/2 z-[1000] w-full max-w-[640px] px-3 pointer-events-none">
-        <div
-          className="pointer-events-auto flex items-center justify-between gap-3 px-3.5 py-1 rounded-full w-full"
-          style={{
-            background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.45) 0%, rgba(255, 255, 255, 0.18) 100%)',
-            backdropFilter: 'blur(var(--glass-blur-xl)) saturate(var(--glass-sat))',
-            WebkitBackdropFilter: 'blur(var(--glass-blur-xl)) saturate(var(--glass-sat))',
-            border: '1px solid rgba(255, 255, 255, 0.55)',
-            boxShadow: '0 8px 32px -4px rgba(23, 64, 44, 0.08), inset 0 1px 1.5px rgba(255, 255, 255, 0.85)',
-          }}
-        >
-          {/* Logo Liquid Glass (Icon Only — Sans texte) */}
+      <div className="pointer-events-none fixed left-1/2 top-[calc(var(--safe-top)+12px)] z-[var(--z-sticky)] hidden w-full max-w-[640px] -translate-x-1/2 px-3 md:block">
+        <div className="pointer-events-auto flex w-full items-center justify-between gap-3 rounded-full border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] px-3.5 py-1 backdrop-blur-[var(--blur-xl)]">
+          {/* Logo (Icon Only — Sans texte) */}
           <Link
             href="/"
-            className="flex items-center group shrink-0"
+            className="group flex shrink-0 items-center"
             aria-label="Accueil LKDV"
           >
-            <div className="w-8 h-8 min-w-[32px] min-h-[32px] max-w-[32px] max-h-[32px] rounded-full overflow-hidden border border-white/80 shadow-xs transition-transform group-hover:scale-105 bg-[#17402C]/10 shrink-0">
+            <div className="h-8 w-8 max-h-[32px] min-h-[32px] w-8 min-w-[32px] max-w-[32px] shrink-0 overflow-hidden rounded-full border border-[color:var(--glass-border)] bg-[color:var(--lkv-primary)]/10 shadow-xs transition-transform group-hover:scale-105">
               <img
                 src="/assets/images/app_logo.png"
                 alt="LKDV"
                 width={32}
                 height={32}
-                className="w-full h-full object-cover rounded-full"
+                className="h-full w-full rounded-full object-cover"
               />
             </div>
           </Link>
@@ -556,22 +586,22 @@ export default function ExplorerClient({
                 <Link
                   key={link.href}
                   href={link.href}
-                  className={`relative px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all select-none ${
+                  className={`relative select-none rounded-full px-3.5 py-1.5 text-[length:var(--lkv-text-caption)] font-semibold transition-colors ${
                     isActive
-                      ? 'text-[#17402C]'
-                      : 'text-[#365233]/70 hover:text-[#17402C] hover:bg-white/30'
+                      ? 'text-[color:var(--lkv-primary)]'
+                      : 'text-[color:var(--lkv-text-secondary)]/70 hover:bg-[color:var(--lkv-hover-surface)] hover:text-[color:var(--lkv-primary)]'
                   }`}
                 >
                   {isActive && (
                     <motion.div
                       layoutId="explorerNavActive"
-                      className="absolute inset-0 rounded-full bg-[rgba(255,255,255,0.92)] border border-white/80 shadow-2xs -z-0"
+                      className="absolute inset-0 -z-0 rounded-full border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] shadow-2xs"
                       transition={{ type: 'spring', stiffness: 450, damping: 32 }}
                     />
                   )}
                   <span
                     className={`relative z-10 transition-colors ${
-                      isActive ? 'text-[#17402C] font-extrabold' : 'text-[#365233]/75 hover:text-[#17402C]'
+                      isActive ? 'font-extrabold text-[color:var(--lkv-primary)]' : 'hover:text-[color:var(--lkv-primary)]'
                     }`}
                   >
                     {link.label}
@@ -582,42 +612,43 @@ export default function ExplorerClient({
           </nav>
 
           {/* Actions Desktop */}
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex shrink-0 items-center gap-2">
             <Link
               href="/progression"
-              className="glass-capsule-btn inline-flex items-center gap-1.5 text-[11px] font-bold !py-1.5 !px-3.5 cursor-pointer select-none active:opacity-85"
+              className={`${LINK_PILL} h-[var(--control-height-sm)] text-[length:var(--lkv-text-caption-2)] font-bold`}
               title="Consulter ma progression et mes classements"
             >
-              <span>🧭</span>
+              <span aria-hidden="true">🧭</span>
               <span>Ma progression</span>
             </Link>
-            <button
-              type="button"
+            <Button
+              variant="secondary"
+              size="sm"
               onClick={() => setEphemeralOpen(true)}
-              className="glass-capsule-btn inline-flex items-center gap-1.5 text-[11px] font-bold !py-1.5 !px-3.5 cursor-pointer select-none active:opacity-85"
+              className="text-[length:var(--lkv-text-caption-2)] font-bold"
               title="Créer une sortie éphémère avec des amis"
               data-testid="ephemeral-group-cta-desktop"
             >
-              <span>👥</span>
+              <span aria-hidden="true">👥</span>
               <span>Sortie entre amis</span>
-            </button>
+            </Button>
             <Link
               href="/randonnee-active"
-              className="glass-capsule-btn inline-flex items-center gap-1.5 text-[11px] font-bold !py-1.5 !px-3.5 cursor-pointer select-none active:opacity-85"
+              className={`${LINK_PILL} h-[var(--control-height-sm)] text-[length:var(--lkv-text-caption-2)] font-bold`}
               title="Lancer le mode randonnée GPS"
             >
-              <span>🥾</span>
+              <span aria-hidden="true">🥾</span>
               <span>Lancer rando</span>
             </Link>
           </div>
         </div>
-      </header>
- 
+      </div>
+
       {/* ── 1B. HEADER MOBILE (ÉCRAN < 768px) ── */}
-      <div className="md:hidden fixed top-[calc(env(safe-area-inset-top,0px)+12px)] left-4 right-4 z-[950] pointer-events-none flex items-center justify-between">
+      <div className="pointer-events-none fixed left-4 right-4 top-[calc(var(--safe-top)+12px)] z-[var(--z-sticky)] flex items-center justify-between md:hidden">
         <Link
           href="/"
-          className="pointer-events-auto glass-circle-btn w-11 h-11 shadow-lg flex items-center justify-center cursor-pointer active:scale-95"
+          className="pointer-events-auto flex h-11 w-11 items-center justify-center rounded-full border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] shadow-lg backdrop-blur-[var(--blur-md)] transition-transform active:scale-95"
           aria-label="Retour à l'accueil"
         >
           <img
@@ -625,110 +656,28 @@ export default function ExplorerClient({
             alt="LKDV"
             width={28}
             height={28}
-            className="w-7 h-7 object-cover rounded-full"
+            className="h-7 w-7 rounded-full object-cover"
           />
         </Link>
 
-        <div className="flex items-center gap-2 pointer-events-auto">
+        <div className="pointer-events-auto flex items-center gap-2">
           <Link
             href="/progression"
-            className="glass-capsule-btn !min-h-[44px] px-3.5 flex items-center gap-1.5 shadow-lg text-xs font-bold active:scale-95 cursor-pointer"
+            className={`${LINK_PILL} min-h-[44px] gap-1.5 px-3.5 text-[length:var(--lkv-text-caption)] font-bold shadow-lg`}
             aria-label="Ma progression"
           >
-            <span>🧭</span>
+            <span aria-hidden="true">🧭</span>
             <span>Progression</span>
           </Link>
           <Link
             href="/compte"
-            className="glass-circle-btn w-11 h-11 shadow-lg flex items-center justify-center active:scale-95 cursor-pointer"
+            className={`${LINK_ICON} shadow-lg`}
             aria-label="Mon compte"
           >
             <Icon name="user" size={17} />
           </Link>
         </div>
       </div>
-
-      {/* ── 2. CARTE UNIQUE PLEIN ÉCRAN (100% FLUIDE) ── */}
-      <div className="absolute inset-0 w-full h-full z-0 pointer-events-auto" style={{ width: '100%', height: '100%' }}>
-        {unifiedMap ? (
-          <UnifiedExplorerMap
-            trails={filteredTrails}
-            pois={visiblePois}
-            selectedTrailId={selectedTrailId}
-            selectedTrail={selectedTrail}
-            onTrailClick={handleTrailClick}
-            userLocation={userLocation}
-            onLocationUpdate={handleLocationUpdate}
-            onViewportChange={handleViewportChange}
-            onViewportData={setUnifiedViewportData}
-            countryDensity={atlasDensity?.countries}
-            regionDensity={atlasDensity?.cells}
-            memberPositions={livePositions.map((position) => ({
-              userId: position.userId,
-              name: position.name,
-              lat: position.lat,
-              lng: position.lng,
-            }))}
-            safeControls
-          />
-        ) : (
-          <ExplorerMap
-            trails={filteredTrails}
-            pois={visiblePois}
-            selectedTrailId={selectedTrailId}
-            onTrailClick={handleTrailClick}
-            userLocation={userLocation}
-            onLocationUpdate={handleLocationUpdate}
-            onViewportChange={handleViewportChange}
-            safeControls
-          />
-        )}
-      </div>
-
-      {/* ── 2C. SORTIE ÉCLAIR — mobile : ancre gauche, au-dessus du carrousel ── */}
-      <div className="md:hidden fixed left-4 bottom-[calc(env(safe-area-inset-bottom,0px)+96px+var(--explorer-carousel-height,0px))] z-[860] pointer-events-auto">
-        <button
-          type="button"
-          onClick={() => setEphemeralOpen(true)}
-          className="glass-capsule-btn !min-h-[48px] px-3.5 flex items-center gap-2 shadow-lg cursor-pointer active:scale-95"
-          aria-label="Créer une sortie avec des amis"
-          data-testid="ephemeral-group-cta-mobile"
-        >
-          <span>👥</span>
-          <span className="text-[12px] font-bold whitespace-nowrap">Sortie entre amis</span>
-        </button>
-      </div>
-
-      {/* ── 2D. SESSION LIVE — positions des membres (jamais public) ── */}
-      {liveSessionId && (
-        <div
-          className="fixed left-4 bottom-[calc(env(safe-area-inset-bottom,0px)+156px+var(--explorer-carousel-height,0px))] md:bottom-40 z-[862] pointer-events-auto flex items-center gap-2 glass-pill"
-          data-testid="explorer-live-badge"
-        >
-          <span className="text-[10px] font-mono font-bold text-[var(--lkv-text-primary)] whitespace-nowrap">
-            ● {livePositions.length} position{livePositions.length > 1 ? 's' : ''} du groupe
-          </span>
-          {liveMySharing && (
-            <button
-              type="button"
-              onClick={handleStopLiveSharing}
-              className="glass-capsule-btn !min-h-[28px] !py-0.5 !px-3 text-[10px] font-bold"
-              data-testid="explorer-live-stop"
-            >
-              Arrêter mon partage
-            </button>
-          )}
-          {liveError && (
-            <span
-              role="alert"
-              className="text-[10px] font-bold text-[var(--lkv-danger)] whitespace-nowrap"
-              data-testid="explorer-live-error"
-            >
-              {liveError}
-            </span>
-          )}
-        </div>
-      )}
 
       {/* ── 2B. BOUTON FLOTTANT DYNAMIQUE : « RECHERCHER DANS CETTE ZONE » ── */}
       <AnimatePresence>
@@ -738,18 +687,19 @@ export default function ExplorerClient({
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -16, scale: 0.9 }}
             transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-            className="fixed top-[calc(env(safe-area-inset-top,0px)+16px)] sm:top-[76px] left-1/2 -translate-x-1/2 z-[850] pointer-events-auto"
+            className="pointer-events-auto fixed left-1/2 top-[calc(var(--safe-top)+16px)] z-[var(--z-sticky)] -translate-x-1/2 sm:top-[76px]"
           >
             {/* Icône seule (44px), même verre givré que les autres boutons carte.
                 Animation garantie : rotation continue pendant le fetch +
                 déclenchement impératif au tap (mouseenter ne bulle pas). */}
-            <button
-              type="button"
+            <IconButton
+              variant="glass"
+              size="lg"
               onClick={() => {
                 searchHereIconRef.current?.startAnimation();
                 handleSearchHere();
               }}
-              className="glass-circle-btn w-11 h-11 shadow-lg flex items-center justify-center cursor-pointer active:scale-95"
+              className="shadow-lg"
               title="Rechercher les randonnées dans cette zone"
               aria-label="Rechercher les randonnées dans cette zone"
               aria-busy={trailsFetching}
@@ -759,34 +709,40 @@ export default function ExplorerClient({
                 size={16}
                 className={trailsFetching ? 'animate-spin' : ''}
               />
-            </button>
+            </IconButton>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* ── 3. BOUTON FILTRES SUR LA PAROI DE DROITE (ONGLET RÉTRACTABLE COLLÉ AU REBORD DROIT) ── */}
-      <div className="fixed right-0 top-1/2 -translate-y-1/2 z-[900] pointer-events-none flex items-center justify-end">
+      {/* ── 3. BOUTON FILTRES SUR LA PAROI DE DROITE (ONGLET RÉTRACTABLE) ── */}
+      <div className="pointer-events-none fixed right-0 top-1/2 z-[var(--z-fab)] flex -translate-y-1/2 items-center justify-end">
         <AnimatePresence mode="wait">
           {!filtersOpen ? (
             /* Onglet collé à la paroi droite */
-            <motion.button
+            <motion.div
               key="filter-dock-closed"
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: 20 }}
-              type="button"
-              onClick={() => setFiltersOpen(true)}
-              className="pointer-events-auto glass-circle-btn !rounded-r-none !rounded-l-2xl !w-12 !h-12 cursor-pointer transition-all active:scale-95 group relative flex items-center justify-center"
-              title="Ouvrir la recherche et les filtres"
-              aria-label="Ouvrir la recherche et les filtres"
             >
-              <SlidersHorizontalAnimated size={20} />
-              {(activeFilterCount > 0 || searchQuery.trim().length > 0) && (
-                <span className="absolute top-1 left-1 w-4 h-4 rounded-full bg-[#17402C] text-white text-[9px] font-mono font-bold flex items-center justify-center shadow-xs">
-                  {activeFilterCount + (searchQuery.trim().length > 0 ? 1 : 0)}
-                </span>
-              )}
-            </motion.button>
+              <IconButton
+                variant="glass"
+                size="lg"
+                onClick={() => setFiltersOpen(true)}
+                className="pointer-events-auto relative rounded-r-none rounded-l-2xl shadow-lg"
+                title="Ouvrir la recherche et les filtres"
+                aria-label="Ouvrir la recherche et les filtres"
+              >
+                <SlidersHorizontalAnimated size={20} />
+                {(activeFilterCount > 0 || searchQuery.trim().length > 0) && (
+                  <Badge
+                    className="absolute left-1 top-1 h-4 min-h-0 border-transparent bg-[color:var(--lkv-action)] px-1 text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-on-action)]"
+                  >
+                    {activeFilterCount + (searchQuery.trim().length > 0 ? 1 : 0)}
+                  </Badge>
+                )}
+              </IconButton>
+            </motion.div>
           ) : (
             /* Panneau de filtres complet déployé sur le côté droit */
             <motion.div
@@ -795,91 +751,74 @@ export default function ExplorerClient({
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: 100 }}
               transition={{ type: 'spring', stiffness: 400, damping: 35 }}
-              className="glass pointer-events-auto w-[320px] sm:w-[350px] p-4 !rounded-r-none !rounded-l-3xl space-y-3"
+              className="pointer-events-auto w-[320px] sm:w-[350px]"
             >
-              <div className="flex items-center justify-between pb-2 border-b border-[#17402C]/10">
-                <div className="flex items-center gap-2">
-                  <div className="w-7 h-7 rounded-xl bg-[#5B7F55]/15 text-[#5B7F55] flex items-center justify-center">
-                    <SlidersHorizontalAnimated size={15} />
+              <Card variant="featured" className="space-y-3 rounded-r-none p-4">
+                <div className="flex items-center justify-between border-b border-[color:var(--lkv-border)] pb-2">
+                  <div className="flex items-center gap-2">
+                    <div className="flex h-7 w-7 items-center justify-center rounded-[var(--lkv-radius-sm)] bg-[color:var(--lkv-secondary)]/15 text-[color:var(--lkv-secondary)]">
+                      <SlidersHorizontalAnimated size={15} />
+                    </div>
+                    <div>
+                      <h3 className="font-display text-[length:var(--lkv-text-footnote)] font-bold text-[color:var(--lkv-text-primary)]">
+                        Recherche & Filtres
+                      </h3>
+                      <p className="font-mono text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">
+                        {filteredTrails.length} itinéraire{filteredTrails.length > 1 ? 's' : ''} disponible{filteredTrails.length > 1 ? 's' : ''}
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="font-display font-bold text-xs sm:text-sm text-[#17402C]">
-                      Recherche & Filtres
-                    </h3>
-                    <p className="text-[9px] text-[#5A7064] font-mono">
-                      {filteredTrails.length} itinéraire{filteredTrails.length > 1 ? 's' : ''} disponible{filteredTrails.length > 1 ? 's' : ''}
-                    </p>
-                  </div>
+
+                  <IconButton
+                    variant="glass"
+                    size="sm"
+                    onClick={() => setFiltersOpen(false)}
+                    title="Fermer"
+                    aria-label="Fermer les filtres"
+                  >
+                    <Icon name="x" size={14} />
+                  </IconButton>
                 </div>
 
-                <button
-                  type="button"
-                  onClick={() => setFiltersOpen(false)}
-                  className="glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8 cursor-pointer"
-                  title="Fermer"
-                >
-                  <Icon name="x" size={14} />
-                </button>
-              </div>
-
-              <div className="max-h-[65vh] overflow-y-auto no-scrollbar pr-0.5">
-                <ExplorerFilterPanel
-                  searchQuery={searchQuery}
-                  onSearchChange={handleSearchChange}
-                  activeDifficulties={activeDifficulties}
-                  activeDuration={activeDuration}
-                  activeCategory={activeCategory}
-                  familyOnly={familyOnly}
-                  activePoiCategories={activePoiCategories}
-                  hasFilters={hasFilters || searchQuery.trim().length > 0}
-                  onToggleDifficulty={toggleDifficulty}
-                  onSelectDuration={(label) => setActiveDuration(label)}
-                  onSelectCategory={setActiveCategory}
-                  onToggleFamily={() => setFamilyOnly((v) => !v)}
-                  onTogglePoiCategory={togglePoiCategory}
-                  onReset={() => {
-                    resetFilters();
-                    handleSearchChange('');
-                  }}
-                />
-              </div>
+                <div className="no-scrollbar max-h-[65vh] overflow-y-auto pr-0.5">
+                  <ExplorerFilterPanel
+                    searchQuery={searchQuery}
+                    onSearchChange={handleSearchChange}
+                    activeDifficulties={activeDifficulties}
+                    activeDuration={activeDuration}
+                    activeCategory={activeCategory}
+                    familyOnly={familyOnly}
+                    activePoiCategories={activePoiCategories}
+                    hasFilters={hasFilters || searchQuery.trim().length > 0}
+                    onToggleDifficulty={toggleDifficulty}
+                    onSelectDuration={(label) => setActiveDuration(label)}
+                    onSelectCategory={setActiveCategory}
+                    onToggleFamily={() => setFamilyOnly((v) => !v)}
+                    onTogglePoiCategory={togglePoiCategory}
+                    onReset={() => {
+                      resetFilters();
+                      handleSearchChange('');
+                    }}
+                  />
+                </div>
+              </Card>
             </motion.div>
           )}
         </AnimatePresence>
       </div>
 
       {/* ── 4. DESKTOP : LISTE DES SENTIERS FLOTTANTE (PLEINE HAUTEUR) ── */}
-      <div className="hidden md:flex absolute left-4 top-[84px] bottom-4 z-[900] w-[350px] max-w-[calc(100vw-32px)] pointer-events-none flex-col gap-2">
-        {/* Barre de recherche compacte Liquid Glass */}
-        <div
-          className="pointer-events-auto flex items-center justify-between gap-1.5 p-1.5 rounded-full shrink-0"
-          style={{
-            background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.70) 0%, rgba(251, 250, 246, 0.40) 100%)',
-            backdropFilter: 'blur(var(--glass-blur-xl)) saturate(var(--glass-sat))',
-            WebkitBackdropFilter: 'blur(var(--glass-blur-xl)) saturate(var(--glass-sat))',
-            border: '1px solid rgba(255, 255, 255, 0.75)',
-            boxShadow: '0 8px 32px -4px rgba(23, 64, 44, 0.12), inset 0 1px 1.5px rgba(255, 255, 255, 0.95)',
-          }}
-        >
-          <div className="relative flex-1">
-            <SearchAnimated size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[#5A7064]" />
-            <input
-              type="text"
-              placeholder="Rechercher sentier, massif…"
-              value={searchQuery}
-              onChange={(e) => handleSearchChange(e.target.value)}
-              className="w-full h-8 pl-8 pr-6 rounded-full text-xs font-semibold text-[#17402C] placeholder:text-[#5A7064]/70 bg-[rgba(255,255,255,0.92)] hover:bg-white focus:bg-white border border-white/70 shadow-2xs outline-none focus-visible:ring-1 focus-visible:ring-[#17402C]/40 transition-all"
-            />
-            {searchQuery && (
-              <button
-                type="button"
-                onClick={() => handleSearchChange('')}
-                className="absolute right-2 top-1/2 -translate-y-1/2 glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8"
-              >
-                <XAnimated size={12} />
-              </button>
-            )}
-          </div>
+      <div className="pointer-events-none fixed left-4 top-[84px] bottom-4 z-[var(--z-fab)] hidden w-[350px] max-w-[calc(100vw-32px)] flex-col gap-2 md:flex">
+        {/* Barre de recherche compacte */}
+        <div className="pointer-events-auto shrink-0">
+          <SearchField
+            placeholder="Rechercher sentier, massif…"
+            value={searchQuery}
+            onChange={(e) => handleSearchChange(e.target.value)}
+            onClear={() => handleSearchChange('')}
+            aria-label="Rechercher un sentier"
+            containerClassName="bg-[color:var(--card-tint-strong)] backdrop-blur-[var(--blur-xl)]"
+          />
         </div>
 
         {/* Colonne scrollable complète des sentiers */}
@@ -891,20 +830,18 @@ export default function ExplorerClient({
               setDisplayLimit((prev) => Math.min(prev + 30, filteredTrails.length));
             }
           }}
-          className="flex-1 min-h-0 overflow-y-auto pr-0.5 pb-4 flex flex-col gap-2 pointer-events-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          className="pointer-events-auto flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto pb-4 pr-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         >
           {filteredTrails.length === 0 ? (
-            <div className="glass p-4 rounded-lg text-center flex flex-col items-center gap-2">
-              <Compass size={18} className="text-[#5A7064]" />
-              <p className="text-[12px] font-bold text-[#17402C]">Aucun itinéraire trouvé</p>
-              <button
-                type="button"
-                onClick={resetFilters}
-                className="glass-capsule-btn primary !py-1 !px-3 text-[10px] font-bold shadow-xs active:scale-95 transition-all cursor-pointer"
-              >
-                Effacer les filtres
-              </button>
-            </div>
+            <Card variant="featured" className="p-4">
+              <EmptyState
+                compact
+                icon={<Compass size={18} className="text-[color:var(--lkv-text-muted)]" />}
+                title="Aucun itinéraire trouvé"
+                actionLabel="Effacer les filtres"
+                onAction={resetFilters}
+              />
+            </Card>
           ) : (
             <>
               {filteredTrails.slice(0, displayLimit).map((trail) => (
@@ -916,14 +853,16 @@ export default function ExplorerClient({
                 />
               ))}
               {filteredTrails.length > displayLimit && (
-                <button
-                  type="button"
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  fullWidth
                   onClick={() => setDisplayLimit((p) => Math.min(p + 40, filteredTrails.length))}
-                  className="glass-capsule-btn w-full !py-2.5 text-xs font-bold shadow-xs active:scale-[0.98] transition-all cursor-pointer flex items-center justify-center gap-1.5 shrink-0"
+                  icon={<ChevronDown size={13} />}
+                  className="shrink-0"
                 >
-                  <ChevronDown size={13} />
                   <span>Afficher +{Math.min(40, filteredTrails.length - displayLimit)} sentiers</span>
-                </button>
+                </Button>
               )}
             </>
           )}
@@ -939,55 +878,56 @@ export default function ExplorerClient({
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.96 }}
             transition={{ type: 'spring', stiffness: 400, damping: 38 }}
-            className="hidden md:block absolute z-[950] bottom-4 left-[375px] w-[320px] max-w-[calc(100vw-32px)] pointer-events-auto"
+            className="pointer-events-auto fixed bottom-4 left-[375px] z-[var(--z-fab)] hidden w-[320px] max-w-[calc(100vw-32px)] md:block"
           >
-            <div className="glass rounded-xl overflow-hidden">
+            <Card variant="featured" className="overflow-hidden p-0">
               {/* Photo hero */}
-              <div className="relative h-20 w-full overflow-hidden bg-stone-200">
+              <div className="relative h-20 w-full overflow-hidden bg-[color:var(--lkv-surface-muted)]">
                 <img
                   src={getTrailImage(selectedTrail.id)}
                   alt={selectedTrail.name}
-                  className="w-full h-full object-cover"
+                  className="h-full w-full object-cover"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
                 {selectedTrail.difficulty && (
-                  <span
-                    className="glass-capsule-btn text-[9px] font-bold !py-0.5 !px-2 absolute bottom-2 left-2.5 !text-white !border-transparent shadow-xs"
+                  <Badge
+                    className="absolute bottom-2 left-2.5 border-transparent text-white shadow-xs"
                     style={{ backgroundColor: getDifficultyColor(selectedTrail.difficulty) }}
                   >
                     {selectedTrail.difficulty}
-                  </span>
+                  </Badge>
                 )}
-                <button
-                  type="button"
+                <IconButton
+                  variant="glass"
+                  size="sm"
                   onClick={() => { setSelectedTrailId(null); setSelectedTrail(null); }}
-                  className="glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8 absolute top-2 right-2"
+                  className="absolute right-2 top-2"
                   title="Fermer"
                   aria-label="Fermer"
                 >
                   <XAnimated size={12} />
-                </button>
+                </IconButton>
               </div>
 
               {/* Contenu */}
-              <div className="p-3 flex flex-col gap-2">
-                <h4 className="font-display font-bold text-[13px] text-[#17402C] line-clamp-1">
+              <div className="flex flex-col gap-2 p-3">
+                <h4 className="font-display text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)] line-clamp-1">
                   {selectedTrail.name}
                 </h4>
-                <div className="flex items-center gap-2 text-[10.5px] font-mono text-[#365233]">
+                <div className="flex items-center gap-2 font-mono text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-secondary)]">
                   <span className="flex items-center gap-1 font-semibold">
-                    <Navigation size={9.5} className="text-[#17402C]" />
+                    <Navigation size={9.5} className="text-[color:var(--lkv-primary)]" />
                     {formatDistance(selectedTrail.distance_km)}
                   </span>
-                  <span className="text-[#5A7064]/40">·</span>
+                  <span aria-hidden="true" className="text-[color:var(--lkv-text-muted)]/40">·</span>
                   <span className="flex items-center gap-1 font-semibold">
-                    <Clock size={9.5} className="text-[#5A7064]" />
+                    <Clock size={9.5} className="text-[color:var(--lkv-text-muted)]" />
                     {formatDuration(selectedTrail.duration_hours)}
                   </span>
                   {selectedTrail.elevation_gain != null && (
                     <>
-                      <span className="text-[#5A7064]/40">·</span>
-                      <span className="flex items-center gap-1 font-bold text-[#17402C]">
+                      <span aria-hidden="true" className="text-[color:var(--lkv-text-muted)]/40">·</span>
+                      <span className="flex items-center gap-1 font-bold text-[color:var(--lkv-text-primary)]">
                         <TrendingUp size={9.5} />
                         +{Math.round(selectedTrail.elevation_gain)}m
                       </span>
@@ -995,31 +935,83 @@ export default function ExplorerClient({
                   )}
                 </div>
 
-                <div className="flex items-center gap-2 pt-1 border-t border-[#17402C]/08">
+                <div className="flex items-center gap-2 border-t border-[color:var(--lkv-border)] pt-1">
                   <Link
                     href={`/preparer-sentier/${selectedTrail.id}`}
                     prefetch={false}
-                    className="glass-capsule-btn flex-1 !min-h-[36px] text-xs font-bold shadow-xs active:scale-[0.97] transition-all cursor-pointer"
+                    className={`${LINK_PILL} min-h-[36px] flex-1 text-[length:var(--lkv-text-caption)] font-bold shadow-xs`}
                   >
                     <span>Préparer</span>
                   </Link>
-                  <button
-                    type="button"
+                  <IconButton
+                    variant="glass"
+                    size="sm"
                     onClick={() => setDetailPanelOpen(true)}
-                    className="glass-circle-btn w-9 h-9 shrink-0 active:scale-[0.97] transition-all cursor-pointer shadow-xs"
+                    className="shrink-0"
                     title="Voir la fiche complète"
                     aria-label="Voir la fiche complète"
                   >
                     <FileText size={15} strokeWidth={2.2} />
-                  </button>
+                  </IconButton>
                 </div>
               </div>
-            </div>
+            </Card>
           </motion.div>
         )}
       </AnimatePresence>
+    </>
+  );
 
-      {/* ── 5. MOBILE : HORIZONTAL SWIPEABLE HIKE CAROUSEL (LIQUID GLASS) ── */}
+  const bottomOverlays = (
+    <>
+      {/* ── 2C. SORTIE ÉCLAIR — mobile : ancre gauche, au-dessus du carrousel ── */}
+      <div className="pointer-events-auto fixed left-4 bottom-[calc(var(--safe-bottom)+96px+var(--explorer-carousel-height,0px))] z-[var(--z-fab)] md:hidden">
+        <Button
+          variant="secondary"
+          onClick={() => setEphemeralOpen(true)}
+          className="min-h-[48px] px-3.5 shadow-lg"
+          aria-label="Créer une sortie avec des amis"
+          data-testid="ephemeral-group-cta-mobile"
+        >
+          <span aria-hidden="true">👥</span>
+          <span className="whitespace-nowrap text-[length:var(--lkv-text-caption)] font-bold">Sortie entre amis</span>
+        </Button>
+      </div>
+
+      {/* ── 2D. SESSION LIVE — positions des membres (jamais public) ── */}
+      {liveSessionId && (
+        <Card
+          variant="compact"
+          className="pointer-events-auto fixed left-4 bottom-[calc(var(--safe-bottom)+156px+var(--explorer-carousel-height,0px))] z-[var(--z-fab)] flex items-center gap-2 md:bottom-40"
+          data-testid="explorer-live-badge"
+        >
+          <Badge tone="sage" className="whitespace-nowrap font-mono">
+            ● {livePositions.length} position{livePositions.length > 1 ? 's' : ''} du groupe
+          </Badge>
+          {liveMySharing && (
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={handleStopLiveSharing}
+              className="whitespace-nowrap text-[length:var(--lkv-text-caption-2)] font-bold"
+              data-testid="explorer-live-stop"
+            >
+              Arrêter mon partage
+            </Button>
+          )}
+          {liveError && (
+            <span
+              role="alert"
+              className="whitespace-nowrap text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-danger)]"
+              data-testid="explorer-live-error"
+            >
+              {liveError}
+            </span>
+          )}
+        </Card>
+      )}
+
+      {/* ── 5. MOBILE : HORIZONTAL SWIPEABLE HIKE CAROUSEL ── */}
       <ExplorerMobileHikeCarousel
         trails={filteredTrails}
         selectedTrailId={selectedTrailId}
@@ -1032,14 +1024,19 @@ export default function ExplorerClient({
       />
 
       {/* ── 6. TRAIL DETAIL SLIDING MODAL ── */}
-      <AnimatePresence>
-        {detailPanelOpen && selectedTrail && (
-          <TrailDetailPanel
-            trail={selectedTrail}
-            onClose={() => setDetailPanelOpen(false)}
-          />
-        )}
-      </AnimatePresence>
+      {selectedTrail && (
+        <TrailDetailPanel
+          trail={selectedTrail}
+          open={detailPanelOpen}
+          onClose={() => setDetailPanelOpen(false)}
+        />
+      )}
+    </>
+  );
+
+  return (
+    <MapPageLayout hasBottomNav map={mapNode} controls={controls}>
+      {bottomOverlays}
 
       {/* ── 7. SORTIE ÉCLAIR (groupe éphémère, géré dans le Hub) ── */}
       <EphemeralGroupSheet
@@ -1047,6 +1044,6 @@ export default function ExplorerClient({
         onClose={() => setEphemeralOpen(false)}
         onCreated={handleEphemeralCreated}
       />
-    </div>
+    </MapPageLayout>
   );
 }

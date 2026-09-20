@@ -4,6 +4,7 @@ import Icon from '@/components/ui/Icon';
 import React, { useState, useMemo } from 'react';
 import { PlaceCard } from './PlaceCard';
 import { AddPlaceToTripModal, type UserTripOption } from './AddPlaceToTripModal';
+import { Card, Chip, EmptyState, SearchField, Tabs } from '@/components/ui';
 import type { PlaceWithDistance, PlaceCategory } from '../types/place.types';
 
 export interface PlacesExplorerClientProps {
@@ -60,91 +61,61 @@ export function PlacesExplorerClient({ initialPlaces, userTrips }: PlacesExplore
   }, [initialPlaces, selectedCountry, selectedCategory, searchQuery]);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-[var(--space-6)]">
       {/* Barre de Recherche et Filtres */}
-      <div className="glass rounded-xl p-4 sm:p-5 space-y-4">
+      <Card className="space-y-[var(--space-4)] p-[var(--space-4)] sm:p-[var(--space-5)]">
         {/* Champ de recherche */}
-        <div className="relative">
-          <Icon
-            name="search"
-            className="w-5 h-5 text-stone-600 absolute left-4 top-1/2 -translate-y-1/2"
-          />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Rechercher un refuge, un col, une source d’eau..."
-            className="w-full h-12 pl-12 pr-10 rounded-2xl bg-stone-100/80 border border-stone-200 text-sm text-stone-900 placeholder:text-stone-600 focus:outline-none focus:ring-2 focus:ring-[#17402C]/20 focus:bg-white transition-all"
-          />
-          {searchQuery && (
-            <button
-              onClick={() => setSearchQuery('')}
-              className="absolute right-3.5 top-1/2 -translate-y-1/2 p-1 text-stone-600 hover:text-stone-700"
-            >
-              <Icon name="x" className="w-4 h-4" />
-            </button>
-          )}
-        </div>
+        <SearchField
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          onClear={() => setSearchQuery('')}
+          placeholder="Rechercher un refuge, un col, une source d’eau..."
+          aria-label="Rechercher un lieu"
+        />
 
         {/* Sélecteur de Pays (Tabs horizontaux) */}
-        <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
-          {COUNTRIES.map((c) => (
-            <button
-              key={c.code}
-              onClick={() => setSelectedCountry(c.code)}
-              className={`px-3.5 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all min-h-[40px] border ${
-                selectedCountry === c.code
-                  ? 'bg-[#17402C] text-white border-[#17402C] shadow-sm'
-                  : 'bg-stone-50 text-stone-600 border-stone-200 hover:bg-stone-100'
-              }`}
-            >
-              {c.label}
-            </button>
-          ))}
-        </div>
+        <Tabs
+          variant="scrollable"
+          ariaLabel="Filtrer par pays"
+          options={COUNTRIES.map((c) => ({ id: c.code, label: c.label }))}
+          value={selectedCountry}
+          onChange={setSelectedCountry}
+        />
 
         {/* Sélecteur de Catégorie (Chips) */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+        <div className="flex flex-wrap items-center gap-1.5">
           {CATEGORIES.map((cat) => (
-            <button
+            <Chip
               key={cat.id}
+              selected={selectedCategory === cat.id}
               onClick={() => setSelectedCategory(cat.id)}
-              className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all border ${
-                selectedCategory === cat.id
-                  ? 'bg-[#5B7F55] text-white border-[#5B7F55]'
-                  : 'bg-white text-stone-600 border-stone-200 hover:bg-stone-50'
-              }`}
             >
               {cat.label}
-            </button>
+            </Chip>
           ))}
         </div>
-      </div>
+      </Card>
 
       {/* Résumé des résultats */}
-      <div className="flex items-center justify-between text-xs text-stone-600 px-1">
+      <div className="flex items-center justify-between px-[var(--space-1)] text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-muted)]">
         <span>
-          <strong className="text-stone-900 font-bold">{filteredPlaces.length}</strong> lieux
+          <strong className="font-bold text-[color:var(--lkv-text-primary)]">{filteredPlaces.length}</strong> lieux
           répertoriés
         </span>
         {filteredPlaces.length > 0 && (
-          <span className="text-stone-600">Triés par score bayésien & preuve terrain</span>
+          <span>Triés par score bayésien & preuve terrain</span>
         )}
       </div>
 
       {/* Grille des Lieux */}
       {filteredPlaces.length === 0 ? (
-        <div className="glass p-12 text-center rounded-card">
-          <Icon name="map-pin" className="w-8 h-8 text-stone-600 mx-auto mb-2" />
-          <h3 className="text-base font-bold text-stone-900">
-            Aucun lieu ne correspond à ces critères
-          </h3>
-          <p className="text-xs text-stone-600 mt-1">
-            Essayez d’élargir vos filtres de pays ou de catégorie.
-          </p>
-        </div>
+        <EmptyState
+          icon={<Icon name="map-pin" className="h-8 w-8" />}
+          title="Aucun lieu ne correspond à ces critères"
+          description="Essayez d’élargir vos filtres de pays ou de catégorie."
+        />
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {filteredPlaces.map((place) => (
             <PlaceCard
               key={place.id}

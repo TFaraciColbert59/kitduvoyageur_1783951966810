@@ -2,7 +2,7 @@
 
 import Icon from '@/components/ui/Icon';
 import React, { useEffect, useRef, useState, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { TrendingUpIcon as TrendingUp } from '@/components/icons/trending-up';
 import { NavigationIcon as Navigation } from '@/components/icons/navigation';
 import { DocIcon as FileText } from '@/components/icons/doc';
@@ -10,7 +10,6 @@ import { ListIcon as List } from '@/components/icons/list';
 import { LayersIcon as Layers } from '@/components/icons/layers';
 import { ClockIcon as Clock } from '@/components/icons/clock';
 import { ChevronDownIcon as ChevronDown } from '@/components/icons/chevron-down';
-import { ChevronUpIcon as ChevronUp } from '@/components/icons/chevron-up';
 import Link from 'next/link';
 import type { MapTrail } from './types';
 import {
@@ -21,7 +20,16 @@ import {
   getTrailImage,
 } from './types';
 import ExplorerListCard from './ExplorerListCard';
+import { Badge, Button, Card, IconButton } from '@/components/ui';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
+
+const LINK_PILL = [
+  'inline-flex min-h-[36px] flex-1 select-none items-center justify-center whitespace-nowrap rounded-full',
+  'border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] px-[var(--space-4)]',
+  'text-[length:var(--lkv-text-footnote)] font-bold text-[color:var(--card-content)] no-underline',
+  'transition-transform duration-[var(--motion-press-duration)] active:scale-[var(--motion-press-scale)]',
+  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]',
+].join(' ');
 
 interface ExplorerMobileHikeCarouselProps {
   trails: MapTrail[];
@@ -112,21 +120,16 @@ export default function ExplorerMobileHikeCarousel({
   return (
     <div
       ref={wrapperRef}
-      className="block md:hidden fixed left-0 right-0 z-[800] pointer-events-none"
-      style={{ bottom: 'calc(var(--nav-offset) + 8px)' }}
+      className="pointer-events-none fixed inset-x-0 bottom-[calc(var(--nav-offset)+8px)] z-[var(--z-fab)] block md:hidden"
     >
       {/* ── TOP FLOATING PILL (Mode Switch & Counter) ── */}
-      <div className="flex items-center justify-between px-3.5 mb-1.5 pointer-events-auto">
-        <div className="glass-capsule-btn text-xs font-bold !py-1 !px-3">
-          <Icon name="map-pin" size={12} className="text-[#17402C]" />
+      <div className="pointer-events-auto mb-1.5 flex items-center justify-between px-3.5">
+        <Badge tone="stone" className="gap-1.5">
+          <Icon name="map-pin" size={12} className="text-[color:var(--lkv-primary)]" />
           <span>{count} randonnées</span>
-        </div>
+        </Badge>
 
-        <button
-          type="button"
-          onClick={toggleViewMode}
-          className="glass-capsule-btn text-xs font-bold !py-1 !px-3 active:scale-95 transition-all cursor-pointer"
-        >
+        <Button variant="secondary" size="sm" onClick={toggleViewMode}>
           {viewMode === 'carousel' ? (
             <>
               <List size={12} />
@@ -138,7 +141,7 @@ export default function ExplorerMobileHikeCarousel({
               <span>Mode cartes</span>
             </>
           )}
-        </button>
+        </Button>
       </div>
 
       {/* ── MODE 1: HORIZONTAL SWIPEABLE CAROUSEL (NATIVE APP FEEL) ── */}
@@ -146,70 +149,66 @@ export default function ExplorerMobileHikeCarousel({
         <div
           ref={carouselScrollRef}
           onScroll={handleCarouselScroll}
-          className="flex gap-3 overflow-x-auto snap-x snap-mandatory px-3.5 pb-1 pointer-events-auto no-scrollbar"
-          style={{
-            WebkitOverflowScrolling: 'touch',
-            overscrollBehaviorX: 'contain',
-            scrollPaddingLeft: '14px',
-            scrollPaddingRight: '28px',
-          }}
+          className="no-scrollbar pointer-events-auto flex snap-x snap-mandatory gap-3 overflow-x-auto overscroll-x-contain scroll-pl-[14px] scroll-pr-[28px] px-3.5 pb-1 [-webkit-overflow-scrolling:touch]"
         >
           {trails.slice(0, 40).map((trail) => {
             const isSelected = String(trail.id) === String(selectedTrailId);
 
             return (
-              <div
+              <Card
                 key={trail.id}
+                as="article"
+                variant="standard"
+                selected={isSelected}
                 data-trail-id={trail.id}
-                data-glass-variant={isSelected ? 'selected' : undefined}
                 onClick={() => {
                   triggerHaptic('selection');
                   onSelectTrail(trail);
                 }}
-                className="glass snap-start shrink-0 w-[calc(100vw-68px)] max-w-[290px] rounded-lg overflow-hidden transition-all duration-200 cursor-pointer"
+                className="w-[calc(100vw-68px)] max-w-[290px] shrink-0 snap-start overflow-hidden p-0"
               >
                 {/* Photo Header */}
-                <div className="relative h-20 w-full overflow-hidden bg-stone-200">
+                <div className="relative h-20 w-full overflow-hidden bg-[color:var(--lkv-surface-muted)]">
                   <img
                     src={getTrailImage(trail.id)}
                     alt={trail.name}
-                    className="w-full h-full object-cover"
+                    className="h-full w-full object-cover"
                     loading="lazy"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
 
                   {/* Difficulty Badge */}
                   {trail.difficulty && (
-                    <span
-                      className="absolute bottom-1.5 left-2 px-2 py-0.5 rounded-full text-[9px] font-bold text-white shadow-2xs backdrop-blur-md"
+                    <Badge
+                      className="absolute bottom-1.5 left-2 border-transparent text-white shadow-2xs"
                       style={{ backgroundColor: getDifficultyColor(trail.difficulty) }}
                     >
                       {getDifficultyLabel(trail.difficulty)}
-                    </span>
+                    </Badge>
                   )}
                 </div>
 
                 {/* Body */}
-                <div className="p-2.5 flex flex-col gap-1.5">
-                  <h4 className="font-display font-bold text-xs text-[#17402C] line-clamp-1 leading-snug">
+                <div className="flex flex-col gap-1.5 p-2.5">
+                  <h4 className="font-display text-[length:var(--lkv-text-footnote)] font-bold leading-snug text-[color:var(--lkv-text-primary)] line-clamp-1">
                     {trail.name}
                   </h4>
 
                   {/* Metrics Row */}
-                  <div className="flex items-center gap-2 text-[10px] font-mono text-[#365233]">
+                  <div className="flex items-center gap-2 font-mono text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-secondary)]">
                     <span className="flex items-center gap-0.5 font-semibold">
-                      <Navigation size={9} className="text-[#17402C]" />
+                      <Navigation size={9} className="text-[color:var(--lkv-primary)]" />
                       {formatDistance(trail.distance_km)}
                     </span>
-                    <span className="text-[#5A7064]/40">·</span>
-                    <span className="flex items-center gap-0.5 text-[#5A7064]">
+                    <span aria-hidden="true" className="opacity-40">·</span>
+                    <span className="flex items-center gap-0.5 text-[color:var(--lkv-text-muted)]">
                       <Clock size={9} />
                       {formatDuration(trail.duration_hours)}
                     </span>
                     {trail.elevation_gain != null && (
                       <>
-                        <span className="text-[#5A7064]/40">·</span>
-                        <span className="flex items-center gap-0.5 font-bold text-[#17402C]">
+                        <span aria-hidden="true" className="opacity-40">·</span>
+                        <span className="flex items-center gap-0.5 font-bold text-[color:var(--lkv-text-primary)]">
                           <TrendingUp size={9} />+{Math.round(trail.elevation_gain)}m
                         </span>
                       </>
@@ -217,7 +216,7 @@ export default function ExplorerMobileHikeCarousel({
                   </div>
 
                   {/* Action Buttons */}
-                  <div className="flex items-center gap-2 pt-1.5 border-t border-[#17402C]/08">
+                  <div className="flex items-center gap-2 border-t border-[color:var(--lkv-border)] pt-1.5">
                     <Link
                       href={`/preparer-sentier/${trail.id}`}
                       prefetch={false}
@@ -225,31 +224,31 @@ export default function ExplorerMobileHikeCarousel({
                         e.stopPropagation();
                         triggerHaptic('light');
                       }}
-                      className="glass-capsule-btn flex-1 !min-h-[36px] text-xs font-bold shadow-xs active:scale-[0.97] transition-all cursor-pointer"
+                      className={LINK_PILL}
                     >
                       <span>Préparer</span>
                     </Link>
 
-                    <button
-                      type="button"
+                    <IconButton
+                      variant="glass"
+                      size="sm"
                       onClick={(e) => {
                         e.stopPropagation();
                         triggerHaptic('light');
                         onOpenDetail(trail);
                       }}
-                      className="glass-circle-btn !w-9 !h-9 shrink-0 flex items-center justify-center active:scale-[0.97] transition-all cursor-pointer shadow-xs"
                       title="Voir la fiche complète"
                       aria-label="Voir la fiche complète"
                     >
                       <FileText size={15} strokeWidth={2.2} />
-                    </button>
+                    </IconButton>
                   </div>
                 </div>
-              </div>
+              </Card>
             );
           })}
           {/* Trailing safe spacer so last card is never clipped */}
-          <div className="shrink-0 w-4 h-1 pointer-events-none" aria-hidden="true" />
+          <div className="pointer-events-none h-1 w-4 shrink-0" aria-hidden="true" />
         </div>
       )}
 
@@ -259,43 +258,32 @@ export default function ExplorerMobileHikeCarousel({
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: 16 }}
-          className="mx-3 rounded-xl p-3 pointer-events-auto max-h-[50vh] flex flex-col shadow-2xl"
-          style={{
-            background:
-              'linear-gradient(180deg, rgba(255, 255, 255, 0.70) 0%, rgba(251, 250, 246, 0.40) 100%)',
-            backdropFilter: 'blur(var(--glass-blur-xl)) saturate(var(--glass-sat))',
-            WebkitBackdropFilter: 'blur(var(--glass-blur-xl)) saturate(var(--glass-sat))',
-            border: '1px solid rgba(255, 255, 255, 0.75)',
-            boxShadow:
-              '0 20px 50px -12px rgba(23, 64, 44, 0.2), inset 0 1.5px 2px rgba(255, 255, 255, 0.95)',
-          }}
+          className="pointer-events-auto mx-3 flex max-h-[50vh] flex-col"
         >
-          <div className="flex items-center justify-between pb-2 mb-1 px-1 border-b border-[#17402C]/5">
-            <span className="text-xs font-bold font-mono uppercase tracking-wider text-[#17402C]">
-              Tous les sentiers ({trails.length})
-            </span>
-            <button
-              type="button"
-              onClick={toggleViewMode}
-              className="glass-capsule-btn !min-h-[32px] !py-1 !px-3 text-xs font-bold"
-            >
-              Fermer ✕
-            </button>
-          </div>
+          <Card variant="featured" className="flex max-h-[50vh] flex-col p-3">
+            <div className="mb-1 flex items-center justify-between border-b border-[color:var(--lkv-border)] px-1 pb-2">
+              <span className="font-mono text-[length:var(--lkv-text-caption)] font-bold uppercase tracking-wider text-[color:var(--lkv-text-primary)]">
+                Tous les sentiers ({trails.length})
+              </span>
+              <Button variant="secondary" size="sm" onClick={toggleViewMode} icon={<ChevronDown size={12} />}>
+                Fermer
+              </Button>
+            </div>
 
-          <div className="overflow-y-auto no-scrollbar flex flex-col gap-1.5 pr-0.5">
-            {trails.map((trail) => (
-              <ExplorerListCard
-                key={trail.id}
-                trail={trail}
-                isSelected={String(selectedTrailId) === String(trail.id)}
-                onClick={() => {
-                  onSelectTrail(trail);
-                  onOpenDetail(trail);
-                }}
-              />
-            ))}
-          </div>
+            <div className="no-scrollbar flex flex-col gap-1.5 overflow-y-auto pr-0.5">
+              {trails.map((trail) => (
+                <ExplorerListCard
+                  key={trail.id}
+                  trail={trail}
+                  isSelected={String(selectedTrailId) === String(trail.id)}
+                  onClick={() => {
+                    onSelectTrail(trail);
+                    onOpenDetail(trail);
+                  }}
+                />
+              ))}
+            </div>
+          </Card>
         </motion.div>
       )}
     </div>

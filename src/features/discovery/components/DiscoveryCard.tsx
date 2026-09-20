@@ -3,6 +3,7 @@
 import Icon from '@/components/ui/Icon';
 import React, { useState } from 'react';
 import { TripRatingBadge } from './TripRatingBadge';
+import { Badge, Card } from '@/components/ui';
 import type { DiscoveryItem } from '../types/discovery.types';
 
 export interface DiscoveryCardProps {
@@ -31,6 +32,9 @@ function formatDuration(minutes: number | null | undefined): string | null {
   return `${mins} min`;
 }
 
+const PARTNER_LINK =
+  'flex min-h-[44px] w-full select-none items-center justify-center gap-2 whitespace-nowrap rounded-full bg-[color:var(--lkv-action)] px-[var(--space-4)] text-[length:var(--lkv-text-caption-1)] font-bold text-[color:var(--lkv-on-action)] no-underline shadow-sm transition-transform active:scale-[var(--motion-press-scale)] hover:bg-[color:var(--lkv-action-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]';
+
 /**
  * Carte d'aperçu sobre : image, nom, lieu, description, durée, note/avis et lien
  * partenaire. Aucune fausse disponibilité/prix/note : un champ absent n'est pas
@@ -47,49 +51,49 @@ export function DiscoveryCard({ item }: DiscoveryCardProps) {
   const duration = formatDuration(item.durationMinutes);
 
   return (
-    <article className="glass rounded-[1.5rem] overflow-hidden border border-white/50 shadow-xs hover:border-[#5B7F55]/30 transition-all flex flex-col">
-      <div className="relative h-40 w-full overflow-hidden bg-gradient-to-br from-[#17402C]/10 via-[#EEF3EC] to-[#5B7F55]/15">
+    <Card as="article" className="flex flex-col overflow-hidden p-0">
+      <div className="relative h-40 w-full overflow-hidden bg-gradient-to-br from-[color:var(--lkv-primary)]/10 via-[color:var(--lkv-surface-muted)] to-[color:var(--lkv-secondary)]/15">
         {item.photoUrl && !imageFailed ? (
           /* eslint-disable-next-line @next/next/no-img-element -- images partenaires (Viator/Tripadvisor) servies directement, jamais via next/image */
           <img
             src={item.photoUrl}
             alt={item.name}
-            className="w-full h-full object-cover"
+            className="h-full w-full object-cover"
             loading="lazy"
             onError={() => setImageFailed(true)}
           />
         ) : (
-          <div className="w-full h-full flex flex-col items-center justify-center gap-1.5 text-[#5A7064]">
-            <div className="w-9 h-9 rounded-full bg-white/70 backdrop-blur-md flex items-center justify-center shadow-2xs">
-              <Icon name="mountain" size={16} className="text-[#17402C]" />
+          <div className="flex h-full w-full flex-col items-center justify-center gap-1.5 text-[color:var(--lkv-text-muted)]">
+            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[color:var(--card-tint-strong)] shadow-2xs backdrop-blur-[var(--blur-md)]">
+              <Icon name="mountain" size={16} className="text-[color:var(--lkv-primary)]" />
             </div>
-            <span className="text-[9.5px] font-mono uppercase tracking-wider">Sans photo</span>
+            <span className="font-mono text-[9.5px] uppercase tracking-wider">Sans photo</span>
           </div>
         )}
 
-        <div className="absolute top-2.5 left-2.5 flex flex-wrap gap-1.5">
+        <div className="absolute left-2.5 top-2.5 flex flex-wrap gap-1.5">
           {item.category ? (
-            <span className="glass-pill !bg-white/90 text-[#17402C] text-[9.5px] font-mono font-bold uppercase">
+            <Badge tone="stone" className="bg-[color:var(--card-tint-strong)] font-mono uppercase">
               {item.category}
-            </span>
+            </Badge>
           ) : null}
           {item.freeCancellation ? (
-            <span className="glass-pill !bg-[#E1EBDE] text-[#17402C] text-[9.5px] font-mono font-bold uppercase">
+            <Badge tone="sage" className="font-mono uppercase">
               Annulation gratuite
-            </span>
+            </Badge>
           ) : null}
         </div>
       </div>
 
-      <div className="p-4 flex-1 flex flex-col justify-between gap-3">
+      <div className="flex flex-1 flex-col justify-between gap-3 p-4">
         <div className="space-y-1.5">
-          <h4 className="font-display font-bold text-sm text-[#17402C] leading-snug line-clamp-2">
+          <h4 className="font-display text-[length:var(--lkv-text-body-sm)] font-bold leading-snug text-[color:var(--lkv-text-primary)] line-clamp-2">
             {linkUrl ? (
               <a
                 href={linkUrl}
                 target="_blank"
                 rel={rel}
-                className="hover:text-[#5B7F55] transition-colors"
+                className="transition-colors hover:text-[color:var(--lkv-secondary)]"
               >
                 {item.name}
               </a>
@@ -98,20 +102,20 @@ export function DiscoveryCard({ item }: DiscoveryCardProps) {
             )}
           </h4>
           {location ? (
-            <p className="flex items-center gap-1 text-[11px] text-[#5A7064] font-mono truncate">
-              <Icon name="map-pin" size={12} className="shrink-0 text-[#5B7F55]" />
+            <p className="flex items-center gap-1 truncate font-mono text-[length:var(--lkv-text-caption-1)] text-[color:var(--lkv-text-muted)]">
+              <Icon name="map-pin" size={12} className="shrink-0 text-[color:var(--lkv-secondary)]" />
               <span className="truncate">{location}</span>
             </p>
           ) : null}
           {item.description ? (
-            <p className="text-[11px] text-[#5A7064] leading-relaxed line-clamp-2">
+            <p className="text-[length:var(--lkv-text-caption-1)] leading-relaxed text-[color:var(--lkv-text-muted)] line-clamp-2">
               {item.description}
             </p>
           ) : null}
         </div>
 
         <div className="space-y-3">
-          <div className="flex items-center justify-between gap-2 flex-wrap">
+          <div className="flex flex-wrap items-center justify-between gap-2">
             {linkUrl ? (
               <a
                 href={linkUrl}
@@ -134,12 +138,14 @@ export function DiscoveryCard({ item }: DiscoveryCardProps) {
               />
             )}
             {price ? (
-              <span className="text-[10px] font-mono text-[#5A7064]">
-                dès <span className="font-bold text-[#5B7F55]">{price}</span>
+              <span className="font-mono text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">
+                dès <span className="font-bold text-[color:var(--lkv-secondary)]">{price}</span>
               </span>
             ) : null}
             {duration ? (
-              <span className="text-[10px] font-mono text-[#5A7064]">⏱ {duration}</span>
+              <span className="font-mono text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">
+                ⏱ {duration}
+              </span>
             ) : null}
           </div>
 
@@ -148,14 +154,14 @@ export function DiscoveryCard({ item }: DiscoveryCardProps) {
               href={linkUrl}
               target="_blank"
               rel={rel}
-              className="w-full min-h-[44px] px-4 rounded-xl bg-[#17402C] hover:bg-[#123323] text-white text-xs font-bold transition-all flex items-center justify-center gap-2 shadow-sm"
+              className={PARTNER_LINK}
             >
               <span>{ctaLabel}</span>
-              <Icon name="external-link" className="w-3.5 h-3.5 text-white/70" />
+              <Icon name="external-link" className="h-3.5 w-3.5 opacity-70" />
             </a>
           ) : null}
         </div>
       </div>
-    </article>
+    </Card>
   );
 }

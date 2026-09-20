@@ -1,6 +1,5 @@
 import React from 'react';
 import CarteClient from './CarteClient';
-import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://lekitduvoyageur.fr';
 
@@ -32,17 +31,7 @@ export default function CarteInteractivePage() {
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(webPageSchema) }} suppressHydrationWarning />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} suppressHydrationWarning />
-      {/* DESKTOP */}
-      <div className="hidden md:block">
-        <CarteClient />
-      </div>
-
-      {/* MOBILE */}
-      <div className="block md:hidden">
-        <MobilePageShell safeTop={false} hasBottomNav={false}>
-          <CarteClient />
-        </MobilePageShell>
-      </div>
+      <CarteClient />
     </>
   );
 }

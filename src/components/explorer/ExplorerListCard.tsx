@@ -2,11 +2,11 @@
 
 import Icon from '@/components/ui/Icon';
 import React from 'react';
-import { motion } from 'framer-motion';
 import { TrendingUpIcon as TrendingUp } from '@/components/icons/trending-up';
 import { NavigationIcon as Navigation } from '@/components/icons/navigation';
 import { ClockIcon as Clock } from '@/components/icons/clock';
 import { ChevronRightIcon as ChevronRight } from '@/components/icons/chevron-right';
+import { Badge, Card } from '@/components/ui';
 import type { MapTrail } from './types';
 import {
   getTrailImage,
@@ -32,62 +32,58 @@ export default function ExplorerListCard({ trail, isSelected, onClick }: Props) 
   const score = trail.adventure_score ? Math.round(trail.adventure_score) : null;
 
   return (
-    <motion.article
-      whileHover={{ y: -2, scale: 1.01 }}
-      whileTap={{ scale: 0.985 }}
+    <Card
+      as="article"
+      variant="interactive"
+      selected={isSelected}
       onClick={onClick}
-      data-glass-variant={isSelected ? 'selected' : undefined}
-      className={`glass group relative flex shrink-0 h-[84px] w-full gap-2.5 p-2.5 cursor-pointer transition-all duration-200 select-none ${
-        isSelected ? 'scale-[1.01]' : 'hover:scale-[1.01]'
-      }`}
-      style={{ borderRadius: 22 }}
+      className="group relative flex h-[84px] w-full shrink-0 items-stretch gap-2.5 p-2.5"
     >
-      {/* Vignette Photo Liquid Glass */}
-      <div className="relative w-16 h-16 rounded-md overflow-hidden shrink-0 bg-[#F1EDE6] border border-white/60">
+      {/* Vignette Photo */}
+      <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-[var(--lkv-radius-sm)] bg-[color:var(--lkv-surface-muted)] border border-[color:var(--glass-border)]">
         <img
           src={imgUrl}
           alt={trail.name}
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 ease-out"
+          className="h-full w-full object-cover transition-transform duration-300 ease-out group-hover:scale-105"
           loading="lazy"
           decoding="async"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-transparent to-transparent" />
-        <span
-          className="glass-capsule-btn text-[8.5px] font-bold !py-0 !px-1.5 absolute bottom-1 left-1 !text-white !border-transparent shadow-xs"
+        <Badge
+          className="absolute bottom-1 left-1 border-transparent text-white shadow-xs"
           style={{ backgroundColor: diffColor }}
         >
           {diffLabel}
-        </span>
+        </Badge>
       </div>
 
       {/* Info & Metrics */}
-      <div className="flex-1 min-w-0 flex flex-col justify-between py-0.5">
+      <div className="flex min-w-0 flex-1 flex-col justify-between py-0.5">
         <div>
-          <h3 className="font-display font-bold text-[#17402C] text-[12.5px] leading-tight line-clamp-1 group-hover:text-[#365233] transition-colors">
+          <h3 className="font-display text-[length:var(--lkv-text-body-sm)] font-bold leading-tight text-[color:var(--lkv-text-primary)] line-clamp-1">
             {trail.name}
           </h3>
-          <p className="text-[10.5px] font-medium text-[#5A7064] truncate flex items-center gap-1 mt-0.5">
-            <Icon name="map-pin" size={9.5} className="shrink-0 text-[#17402C]/80" />
+          <p className="mt-0.5 flex items-center gap-1 truncate text-[length:var(--lkv-text-caption)] font-medium text-[color:var(--lkv-text-muted)]">
+            <Icon name="map-pin" size={9.5} className="shrink-0 text-[color:var(--lkv-primary)]/80" />
             <span>{trail.terrain_type || trail.network || 'Massif Alpin'}</span>
           </p>
         </div>
 
-        {/* Stats Row */}
-        <div className="flex items-center justify-between pt-1 border-t border-white/30">
-          <div className="flex items-center gap-2 text-[10.5px] font-mono text-[#365233]">
-            <span className="flex items-center gap-0.5 font-semibold text-[#17402C]">
+        <div className="flex items-center justify-between border-t border-[color:var(--lkv-border)] pt-1">
+          <div className="flex items-center gap-2 font-mono text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-secondary)]">
+            <span className="flex items-center gap-0.5 font-semibold text-[color:var(--lkv-text-primary)]">
               <Navigation size={9} />
               {dist}
             </span>
-            <span className="text-[#5A7064]/40">·</span>
-            <span className="flex items-center gap-0.5 font-medium text-[#5A7064]">
+            <span aria-hidden="true" className="opacity-40">·</span>
+            <span className="flex items-center gap-0.5 font-medium text-[color:var(--lkv-text-muted)]">
               <Clock size={9} />
               {dur}
             </span>
             {trail.elevation_gain !== null && trail.elevation_gain !== undefined && (
               <>
-                <span className="text-[#5A7064]/40">·</span>
-                <span className="flex items-center gap-0.5 font-bold text-[#17402C]">
+                <span aria-hidden="true" className="opacity-40">·</span>
+                <span className="flex items-center gap-0.5 font-bold text-[color:var(--lkv-text-primary)]">
                   <TrendingUp size={9} />+{Math.round(trail.elevation_gain)}m
                 </span>
               </>
@@ -95,17 +91,17 @@ export default function ExplorerListCard({ trail, isSelected, onClick }: Props) 
           </div>
 
           {score !== null ? (
-            <div className="flex items-center gap-0.5 text-[10px] font-mono font-bold text-[#17402C]">
-              <Icon name="star" size={10} className="text-[#C89A3B] fill-[#C89A3B]" />
+            <div className="flex items-center gap-0.5 font-mono text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)]">
+              <Icon name="star" size={10} className="text-[color:var(--lkv-warning)]" />
               <span>{score}</span>
             </div>
           ) : (
-            <div className="text-[9.5px] font-bold text-[#17402C] flex items-center gap-0.5 group-hover:translate-x-0.5 transition-transform">
+            <div className="flex items-center gap-0.5 text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-primary)] transition-transform group-hover:translate-x-0.5">
               <ChevronRight size={11} />
             </div>
           )}
         </div>
       </div>
-    </motion.article>
+    </Card>
   );
 }
