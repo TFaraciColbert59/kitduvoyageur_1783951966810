@@ -23,7 +23,8 @@ export interface GdprUserTable {
 
 /**
  * Registre des tables du domaine liées à un utilisateur (audité sur la base
- * locale le 2026-09-11). Toute table ajoutée au domaine doit être ajoutée ici
+ * locale le 2026-09-11, étendu le 2026-09-21 aux tables progression/territoire).
+ * Toute table ajoutée au domaine doit être ajoutée ici
  * (le test TEST-A14-GDPR-EXPORT-01 verrouille cette liste).
  */
 export const GDPR_USER_TABLES: readonly GdprUserTable[] = [
@@ -45,6 +46,18 @@ export const GDPR_USER_TABLES: readonly GdprUserTable[] = [
   { table: 'saved_adventures', userColumn: 'user_id' },
   { table: 'saved_trails', userColumn: 'user_id' },
   { table: 'adventure_domain_events', userColumn: 'actor_id' },
+  // Progression/classement/territoire (migration 20260921100000 — FK CASCADE
+  // vers auth.users) : exportés au même titre que le reste du domaine.
+  { table: 'user_season_progress', userColumn: 'user_id' },
+  { table: 'progression_outbox', userColumn: 'user_id' },
+  { table: 'progression_decisions', userColumn: 'user_id' },
+  { table: 'progression_legacy_snapshot', userColumn: 'user_id' },
+  { table: 'progression_leaderboard_agg', userColumn: 'user_id' },
+  { table: 'leaderboard_refresh_queue', userColumn: 'user_id' },
+  { table: 'leaderboard_access_log', userColumn: 'user_id' },
+  { table: 'territory_change_log', userColumn: 'user_id' },
+  { table: 'user_territory', userColumn: 'user_id' },
+  { table: 'user_territory_private', userColumn: 'user_id' },
 ] as const;
 
 /** Tables enfants d'un AdventurePlan (liées par `plan_id`). */

@@ -86,6 +86,16 @@ describe('A14 — RGPD export/suppression (TEST-A14-GDPR)', () => {
       'saved_adventures',
       'saved_trails',
       'adventure_domain_events',
+      'user_season_progress',
+      'progression_outbox',
+      'progression_decisions',
+      'progression_legacy_snapshot',
+      'progression_leaderboard_agg',
+      'leaderboard_refresh_queue',
+      'leaderboard_access_log',
+      'territory_change_log',
+      'user_territory',
+      'user_territory_private',
     ]);
     expect(names.some((name) => /sant|health|medical/.test(name))).toBe(false);
   });
