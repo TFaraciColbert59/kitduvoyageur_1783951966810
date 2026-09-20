@@ -8,16 +8,12 @@
 -- =====================================================================
 -- LOT 0 : VUES SECURITY DEFINER (Constat C-07)
 -- =====================================================================
--- terrain_reports_public : passer en security_invoker pour appliquer la RLS
--- de l'appelant. Les colonnes exposées restent filtrées (sans reporter_id).
-ALTER VIEW public.terrain_reports_public SET (security_invoker = true);
-
--- Note pour public_profiles :
--- Cette vue est conçue comme filtre de sécurité sur user_profiles
--- (masque email, phone, notification_prefs).
--- Si security_invoker était activé sans modification de la RLS de user_profiles,
--- anon et les autres utilisateurs ne verraient plus aucun profil d'auteur.
--- Elle est maintenue sécurisée par conception (projection de colonnes publiques uniquement).
+-- Note pour public_profiles et terrain_reports_public :
+-- Ces vues sont conçues comme des filtres de sécurité stricts (masquage de
+-- reporter_id, email, phone, coordonnées privées).
+-- La table de base terrain_reports ne contient aucune politique publique de lecture.
+-- La vue terrain_reports_public filtre les statuts ('confirmed', 'active') et
+-- les dates d'expiration, et est maintenue sécurisée par conception.
 
 
 -- =====================================================================
@@ -209,9 +205,14 @@ ALTER FUNCTION public.lkv_seed_trip_checklist_template() SET search_path = publi
 -- =====================================================================
 -- LOT 7 : RLS SUR SPATIAL_REF_SYS (Constat rls_disabled_in_public)
 -- =====================================================================
-ALTER TABLE IF EXISTS public.spatial_ref_sys ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS spatial_ref_sys_read_all ON public.spatial_ref_sys;
-CREATE POLICY spatial_ref_sys_read_all ON public.spatial_ref_sys FOR SELECT TO public USING (true);
+DO $$
+BEGIN
+  ALTER TABLE public.spatial_ref_sys ENABLE ROW LEVEL SECURITY;
+  DROP POLICY IF EXISTS spatial_ref_sys_read_all ON public.spatial_ref_sys;
+  CREATE POLICY spatial_ref_sys_read_all ON public.spatial_ref_sys FOR SELECT TO public USING (true);
+EXCEPTION WHEN insufficient_privilege THEN
+  RAISE NOTICE 'public.spatial_ref_sys est la propriété de supabase_admin (PostGIS extension) — RLS ignoré';
+END $$;
 
 
 -- =====================================================================

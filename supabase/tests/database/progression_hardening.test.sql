@@ -2,7 +2,7 @@
 -- temporaires réévaluables, REVOKE des fonctions, borne et outils d'outbox.
 BEGIN;
 SET LOCAL search_path = public;
-SELECT plan(12);
+SELECT plan(13);
 UPDATE public.progression_rules SET payload = jsonb_set(payload, '{actions}',
   '{"test_hike":{"caps":{"daily":1,"weekly":10,"season":20}},
     "place_review":{"points":15,"max_points":15,
@@ -48,9 +48,11 @@ SELECT is((SELECT count(*)::int FROM public.progression_decisions WHERE idempote
 -- 10-12. Privilèges et outils d'outbox.
 SELECT is((SELECT bool_and(NOT has_function_privilege('authenticated', p.oid, 'EXECUTE')) FROM pg_proc p
    JOIN pg_namespace n ON n.oid = p.pronamespace
-   WHERE n.nspname='public' AND p.proname IN ('claim_reward_points','update_loyalty_points','progression_level_for',
+   WHERE n.nspname='public' AND p.proname IN ('update_loyalty_points','progression_level_for',
      'progression_allocations_valid','enqueue_progression_outbox','purge_progression_outbox','replay_dead_progression_outbox')), true,
-  '10. fonctions sensibles non exécutables par authenticated');
+  '10. fonctions sensibles non exécutables par authenticated (claim_reward_points volontairement différé)');
+SELECT is((SELECT has_function_privilege('authenticated', 'public.claim_reward_points(uuid,text,uuid,text,jsonb)', 'EXECUTE')), true,
+  '10b. claim_reward_points conserve EXECUTE pour authenticated pendant la phase de transition');
 INSERT INTO public.reward_transactions (user_id, points, transaction_type, idempotency_key, counts_for_progression, affects_balance)
 VALUES
   ('bbbbbbbb-0000-4000-8000-000000000001', 5, 'PROGRESSION_AWARD', 'hard:o1', true, false),

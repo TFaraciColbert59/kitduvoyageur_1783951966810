@@ -103,15 +103,20 @@ if ($notRecorded.Count -gt 0) {
 
 Write-Output "[certify] pgTAP — runner TAP réel (supabase test db)"
 cmd /c "docker exec -i $Container psql -X -U postgres -d postgres -q -c `"CREATE EXTENSION IF NOT EXISTS pgtap;`"" 2>&1 | Out-Null
-$tapOut = cmd /c "npx supabase test db --db-url `"$LocalUrl`"" 2>&1
+$testDbUrl = $LocalUrl
+if ($testDbUrl -notmatch 'sslmode=') {
+  if ($testDbUrl.Contains('?')) { $testDbUrl += '&sslmode=disable' } else { $testDbUrl += '?sslmode=disable' }
+}
+$tapOut = cmd /c "npx supabase test db --db-url `"$testDbUrl`"" 2>&1
 $tapText = ($tapOut | Out-String)
 $notOk = ([regex]::Matches($tapText, '(?m)^\s*not ok')).Count
 $resultLine = ($tapText -split "`n" | Where-Object { $_ -match '^Result:' } | Select-Object -Last 1)
+$summaryStr = if ($resultLine) { $resultLine.Trim() } else { "sortie: $tapText" }
 if ($LASTEXITCODE -ne 0 -or $notOk -gt 0) {
-  Write-Output "  [FAIL] pgTAP ($notOk assertion(s) rouge(s)) — $($resultLine.Trim())"
+  Write-Output "  [FAIL] pgTAP ($notOk assertion(s) rouge(s)) — $summaryStr"
   $failures += 'pgTAP'
 } else {
-  Write-Output "  [ok]   pgTAP ($($resultLine.Trim()))"
+  Write-Output "  [ok]   pgTAP ($summaryStr)"
 }
 
 Write-Output "[certify] F1 — policies larges sur user_profiles (bloquant)"

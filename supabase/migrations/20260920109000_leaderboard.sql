@@ -100,7 +100,7 @@ CREATE INDEX IF NOT EXISTS user_territory_private_geog_idx
 
 -- 4) Flag 1 km — OFF par défaut, table réelle `feature_flags`.
 INSERT INTO public.feature_flags (id, enabled) VALUES ('local_leaderboard_active', false)
-ON CONFLICT (id) DO NOTHING;
+ON CONFLICT (id) DO UPDATE SET enabled = false;
 
 -- 5) Enfilement dédupliqué sur chaque évolution de saison de l'utilisateur.
 --    Un changement arrivé pendant qu'un lot traite la ligne la repasse en
