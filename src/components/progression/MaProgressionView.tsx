@@ -738,7 +738,7 @@ export default function MaProgressionView({ initialProfile, compact = false }: M
         title={t('progression.challenges')}
         summary={
           challenge
-            ? `${t('progression.challengeInProgress')} · +${challenge.pointsReward} ${t('progression.pointsShort')}`
+            ? `${t('progression.challengeInProgress')} · ${challenge.currentProgress}/${challenge.targetProgress} ${challenge.unit}`
             : t('progression.challengeNone')
         }
       >
@@ -748,8 +748,10 @@ export default function MaProgressionView({ initialProfile, compact = false }: M
               <h3 className="text-sm font-bold text-[var(--lkv-text-primary)]">
                 {challenge.title}
               </h3>
+              {/* Aucune promesse de points : un défi est une conséquence de la
+                  progression, jamais une source de gains (règle produit). */}
               <span className="glass-pill text-[10px] font-mono font-bold text-[var(--lkv-primary)]">
-                +{challenge.pointsReward} {t('progression.pointsShort')}
+                {challenge.difficulty}
               </span>
             </div>
             <p className="mt-1 text-xs leading-relaxed text-[var(--lkv-text-secondary)]">
