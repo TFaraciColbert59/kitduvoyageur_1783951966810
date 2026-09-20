@@ -500,7 +500,42 @@ Sheets sociales détectées hors périmètre (`social/ReportSheet`, `MoreMenuShe
 ### Vérification
 `type-check` ✅ 0 · `lint` ✅ 0 · `vitest` ✅ 407 fichiers / **2 946 tests** (27 skipped) · `build` ✅ 14,2 s · **60 captures** `phase2-screenshots/lot6-famille4/` (matrice 4 gabarits). 1 test adapté (`render.spec.tsx` : `animate-pulse` → `animate-shimmer` du `Skeleton` canonique), **aucun supprimé**. Métriques globales revérifiées indépendamment : hex 4 552 · `rounded` littéraux 132 · `z` littéraux 33 · inline 1 460 · paires desktop/mobile 52.
 
-### Prochaine famille : **Famille 5 — Communauté / social**
+## Lot 6 — Itération 2 · Famille 5 : Communauté / Messagerie (TERMINÉE)
+
+### Périmètre et résultat
+55 fichiers live (`app/communaute`, `app/messagerie`, `app/feed`, `app/publier`, `components/communaute`, `components/social`, `features/messaging`) ; **42 fichiers modifiés**, **0 supprimé**, **0 test modifié**. Hors Groupes/Clubs/Carnets (famille 6).
+
+| Mesure (périmètre) | Avant | Après |
+|---|---|---|
+| Hex UI | 842 | **0** |
+| `rounded-[…]` littéraux | 12 | **0** |
+| `z-[…]` littéraux | 4 | **0** |
+| Styles inline | 109 | **10** (dynamiques) |
+| `<button>` bruts | 157 | **6** (5 boutons réels tokenisés + 1 calque) |
+| `glass-*` legacy | 124 | **0** |
+| Overlays custom | 1 | 1 (calque conversation mobile, z de l'échelle partagée) |
+| `env(safe-area-*)` directs | 8 | **0** |
+| Paires desktop/mobile | 5 | **3** (documentées) |
+| Composants UI sociaux spécifiques | 4 | **0** |
+
+- Feed/publications : `Card`/`Button`/`Badge`/`Chip` ; actions sociales (like/commentaire/partager/enregistrer/menu/supprimer/signaler) uniformisées ; messagerie : header `PageHeader`, listes `ListItem`, recherche `SearchField`, états canoniques, composer avec `--safe-bottom` − `--kb-inset` (aucun double inset) ; `MessageBubble` 100 % tokens ; 3 sheets sociales vérifiées non cassées ; `/publier` + `/communaute/publier` + `/feed` fusionnés en arbre responsive.
+- Exceptions : 4 tuiles d'action swipe (`ConversationRow`, gestes conservés, tokenisées), calque conversation mobile, `StoriesViewer` (gestes plein écran tokenisé), 10 inline dynamiques.
+- **Logique métier intacte** : realtime/Supabase, typing/présence, read receipts, uploads, pagination, ranking, gestes et clavier inchangés ; `NATIVE_TABBAR_ENABLED` inchangé.
+
+### Métriques globales après famille 5
+
+| Mesure | Après famille 4 | Après famille 5 |
+|---|---|---|
+| Hex | 4 552 | **3 710** |
+| `rounded-[…]` littéraux | 132 | **120** |
+| `z-[…]` littéraux | 33 | **29** |
+| Styles inline | 1 460 | **1 361** |
+| Paires desktop/mobile | 52 | **50** |
+
+### Vérification
+`type-check` ✅ 0 · `lint` ✅ 0 · `vitest` ✅ 407 fichiers / **2 946 tests** · `build` ✅ 17,1 s · **60 captures** `phase2-screenshots/lot6-famille5/`. Métriques revérifiées indépendamment.
+
+### Prochaine famille : **Famille 6 — Groupes / Clubs / Carnets**
 
 ## Lots suivants
 
