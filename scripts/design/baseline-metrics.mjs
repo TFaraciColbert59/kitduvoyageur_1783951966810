@@ -55,6 +55,10 @@ function filesMatching(files, regex) {
 
 const hex = countMatches(tsFiles, /#[0-9A-Fa-f]{3,8}\b/g);
 const rounded = countMatches(tsFiles, /rounded-\[/g);
+// Phase 2 : distinguer les valeurs ARBITRAIRES LITTÉRALES (à migrer) des
+// valeurs tokenisées `rounded-[var(--…)]` (approche cible).
+const roundedLiteral = countMatches(tsFiles, /rounded-\[(?!var\()[^\]]*\]/g);
+const zLiteral = countMatches(tsFiles, /z-\[(?!var\()[^\]]*\]/g);
 const textArb = countMatches(tsFiles, /text-\[/g);
 const zArb = countMatches(tsFiles, /z-\[/g);
 const inlineStyles = countMatches(tsFiles, /style=\{\{/g);
@@ -108,8 +112,10 @@ const metrics = {
   scope: 'src/**/*.{ts,tsx}',
   hardcodedHex: hex.total,
   roundedArbitrary: rounded.total,
+  roundedArbitraryLiteral: roundedLiteral.total,
   textArbitrary: textArb.total,
   zIndexArbitrary: zArb.total,
+  zIndexArbitraryLiteral: zLiteral.total,
   inlineStyles: inlineStyles.total,
   windowConfirmAlertPrompt: windowDialogs.total,
   lkvDialogCalls: lkvDialogs.total,
@@ -134,9 +140,11 @@ if (process.argv.includes('--json')) {
   console.log('| Mesure | Avant (Phase 1) |');
   console.log('|---|---|');
   console.log(`| Couleurs hex codées en dur (\`src/**/*.{ts,tsx}\`) | ${hex.total} |`);
-  console.log(`| \`rounded-[...]\` | ${rounded.total} |`);
+  console.log(`| \`rounded-[...]\` (total) | ${rounded.total} |`);
+  console.log(`| \`rounded-[...]\` **littéraux** (hors var) | ${roundedLiteral.total} |`);
   console.log(`| \`text-[...]\` | ${textArb.total} |`);
-  console.log(`| \`z-[...]\` | ${zArb.total} |`);
+  console.log(`| \`z-[...]\` (total) | ${zArb.total} |`);
+  console.log(`| \`z-[...]\` **littéraux** (hors var) | ${zLiteral.total} |`);
   console.log(`| Styles inline (\`style={{...}}\`) | ${inlineStyles.total} |`);
   console.log(`| \`window.confirm/alert/prompt\` | ${windowDialogs.total} |`);
   console.log(`| Appels \`lkvConfirm/Alert/Prompt\` | ${lkvDialogs.total} |`);

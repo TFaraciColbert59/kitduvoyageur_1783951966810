@@ -115,12 +115,79 @@ AppShell (unique shell de page)
 4. Écouteur clavier : contrat posé, aucune implémentation JS (pas de double compensation) ; à valider sur appareil.
 5. `AppShellDesktop` non unifié avec le nouveau shell (desktop hors périmètre mobile).
 
-## Lots suivants (socle puis familles)
+## Lot 3 — Primitives et composants canoniques (TERMINÉ)
+
+### Primitives finales et variantes autorisées
+
+| Primitive | Variantes | États / options |
+|---|---|---|
+| `Button` | `primary`, `secondary`, `ghost`, `destructive` | tailles sm/md/lg, loading, icône leading/trailing, icon-only (aria-label typé obligatoire), fullWidth, pressed/focus/disabled |
+| `IconButton` | `ghost`, `glass`, `solid` | tailles sm/md/lg, `aria-label` obligatoire, 44×44 par défaut |
+| `Card` | `standard`, `interactive`, `featured`, `compact` | surfaces calmes (pas de verre par défaut), `selected`, actionnable clavier |
+| `ListItem` | — | leading, title, subtitle, metadata, trailing, chevron, selected, disabled |
+| `ConfirmDialog` | `default`, `destructive` | Radix Dialog (focus trap, Escape/overlay), loading |
+| `LoadingState` | — | label, compact |
+| `SearchField` | — | icône, clear, focus, `--lkv-field-*` |
+| `Tabs` | `segmented`, `scrollable` | icône, compteur, aria tablist |
+
+Toutes les valeurs viennent des tokens (contrôles, radius, typographie, couleurs, motion, opacité) ; `prefers-reduced-motion` respecté ; focus visible ; cibles ≥ 44 px.
+
+### Composants supprimés (0 consommateur restant)
+
+- `ScrollableTabs.tsx` (remplacé par `Tabs variant="scrollable"`).
+- `IOSSegmentedControl.tsx` (2 usages migrés vers `Tabs variant="segmented"`).
+- Ancien `Tabs` dispatcher remplacé par l'implémentation canonique.
+
+### Usages migrés (preuve de viabilité)
+
+| Zone | Migration |
+|---|---|
+| `window.confirm` | **`lkvConfirm` réécrit en promesse** + hôte global `ConfirmHost` (Radix) monté dans le layout → **17 flux destructifs** (13 fichiers : groupes, compte, messagerie, matériel, pays, hors-ligne…) passent au dialogue accessible **sans toucher aux appelants** (ajout d'`await`) |
+| Home (`src/app/page.tsx`) | 2 CTA migrés vers `Button` (liens conservés) |
+| Matériel (`src/app/materiel/page.tsx`) | `StatChip` ×5 → `Card variant="compact"` ; lignes « À préparer » → `ListItem` (routes conservées) |
+| Messagerie (`src/app/messagerie/page.tsx`) | spinner maison → `LoadingState` |
+| Recherche (`SearchOverlay`) | input maison → `SearchField` ; fermeture → `IconButton` (nouvelle affordance accessible) |
+| Hub budget + Prêts matériel | `IOSSegmentedControl` → `Tabs` |
+
+### Exceptions documentées
+
+- `lkvPrompt` conserve `window.prompt` (saisie de texte sans hôte canonique) — dette lot 4.
+- `LkvButton` (17 importeurs), `GlassCard` (89), `GlassIconButton`, `Badge`/`LkvChip`, `Sheet`, `PremiumBottomSheet` : encore utilisés → migration lot 4, aucune suppression prématurée.
+- 17 overlays `role="dialog"` maison : migration lot 4.
+
+### Métriques avant / après
+
+| Mesure | Avant Phase 2 | Après lot 3 |
+|---|---|---|
+| Hex codés en dur | 5 203 | **5 192** |
+| `rounded-[...]` littéraux (hors `var()`) | non mesuré (342 au total) | **218** (131 tokenisés dont primitives) |
+| `z-[...]` littéraux (hors `var()`) | non mesuré (86 au total) | **80** |
+| Styles inline | 1 529 | **1 525** |
+| `window.confirm` | 2 | **1** (`lkvPrompt` seul) |
+| Primitives `src/components/ui` | 49 | **56** |
+| Fichiers `*Tabs.tsx` | 7 | **6** |
+| Fichiers `*Button.tsx` | 6 | 9 (ajout `Button` + `IconButton` canoniques) |
+| Headers custom / `role="dialog"` | 13 / 17 | 13 / 17 (lot 4) |
+
+### Captures et tests
+
+- Captures : `docs/design-system/phase2-screenshots/lot3/` (60 fichiers) — Matériel vérifié après migration Card/ListItem : contenu et actions intacts, aucune régression responsive.
+- `type-check` ✅ · `lint` ✅ · `vitest` ✅ 407 fichiers / **2 946 tests** · `tests/design`+`design-system` ✅ 18 fichiers / 161 tests · `build` ✅ 19,9 s.
+
+### Dette restante (lot 4)
+
+1. Migrer `LkvButton` → `Button`, `GlassCard` → `Card` (89 importeurs), `Badge`/`LkvChip`, `GlassIconButton` → `IconButton`.
+2. Unifier `Modal`/`Sheet`/`ConfirmDialog` : 5 primitives modales encore présentes, 17 overlays maison.
+3. Purger les 218 `rounded-[…]` littéraux et 80 `z-[…]` littéraux restants par feature.
+4. Migrer les 13 headers custom vers `PageHeader`.
+5. `lkvPrompt` : hôte canonique de saisie à créer.
+6. Découper `BottomTabBar` (975 lignes) et migrer les formulaires (`LkvInput` & co) par famille.
+
+## Lots suivants
 
 | Lot | Contenu | Statut |
 |---|---|---|
-| 3 | Composants canoniques (Button, Card, Input, Sheet, Modal, Tabs, EmptyState, Spinner) | à faire |
-| 4+ | Migration des pages par familles, avec comparaison baseline à chaque famille | à faire |
+| 4+ | Migration des pages par familles (avec bascule des primitives legacy), comparaison baseline à chaque famille | à faire |
 
 ## Risques / points ouverts
 
