@@ -298,11 +298,56 @@ Sheets sociales détectées hors périmètre (`social/ReportSheet`, `MoreMenuShe
 5. Drag/snap de la Sheet, animations de sortie, `GlassDrawer` (10 importeurs) à trancher.
 6. Formulaires legacy (`LkvInput` & co).
 
+## Lot 6 — Itération 1 : dette structurelle prioritaire (TERMINÉE)
+
+### Livré
+
+| Chantier | Avant | Après |
+|---|---|---|
+| Headers custom (`src/app`) | 13 | **2** (exceptions documentées : `hub/error.tsx`, `hub/[section]/error.tsx` — message d'erreur multi-lignes incompatible avec `subtitle` truncate) |
+| `LkvChip` | 6 importeurs | **0 — supprimé** ; `Chip` canonique créé (sélection/filtre, `aria-pressed`, tokens) ; `Badge` reste information/statut (standalone) |
+| `GlassDrawer` | 9 fichiers / 10 usages | **0 — supprimé** (mobile → `Sheet`, desktop/édition → `Modal`, dual → responsive via `useMediaQuery`) |
+| Sheets sociales legacy | 3 | **0** — `CommentsSheet`, `MoreMenuSheet`, `ReportSheet` migrées vers `Sheet` canonique |
+| `Sheet.dragToDismiss` | absent | **implémenté** (pointer events, seuil 25 %, snap retour, `prefers-reduced-motion` désactive le geste) et utilisé sur 4 écrans |
+| Animations de sortie | absentes | ajoutées sur `Modal`/`Sheet`/overlays via `data-[state=closed]` + keyframes existantes |
+| `KitSheetModal` desktop | centrage perdu | **restauré** via `Modal size="lg"` (md+) / `Sheet detent="large"` (mobile) |
+
+- **Fichiers créés** : `src/components/ui/Chip.tsx`. **Supprimés** : `LkvChip.tsx`, `GlassDrawer.tsx`.
+- 11 headers migrés vers `PageHeader` (actions de droite conservées à l'identique) ; normalisations assumées : headers admin en matériau tokenisé, overlines `Eyebrow` retirées des hero, titres de modales `location`/`occasion` en tokens.
+- 2 tests adaptés (aucun supprimé) : `glass-controls.spec.tsx`, `depart-equipe-section.spec.ts`.
+
+### Métriques avant / après (itération 1)
+
+| Mesure | Avant lot 6 | Après itération 1 |
+|---|---|---|
+| Headers custom | 13 | **2** |
+| `GlassDrawer` | 10 | **0** |
+| `LkvChip` | 6 | **0** |
+| Hex | 5 188 | **5 171** |
+| `z-[…]` littéraux | 77 | **74** |
+| Styles inline | 1 513 | **1 498** |
+| Primitives `ui/` | 51 | **50** |
+| `role="dialog"` maison | 11 | 11 (exceptions) |
+| `rounded-[…]` littéraux | 217 | 217 |
+| Paires desktop/mobile | 54 | 54 |
+
+### Vérification
+
+`type-check` ✅ 0 · `lint` ✅ 0 · `vitest` ✅ 407 fichiers / **2 946 tests** · `build` ✅ 11,7 s · **60 captures** `phase2-screenshots/lot6/`.
+
+### Reste du Lot 6 (itérations suivantes)
+
+1. Migration des familles de pages (Home/hubs → Matériel → Voyage → Explorer → Communauté → Groupes → Compte → Boutique → secondaires) : adoption `PageHeader`/`Button`/`Card`/`ListItem`/états, tokenisation hex/inline au passage.
+2. Purge `rounded-[…]` (217) par fréquence → tokens `control/card/surface/sheet/pill/circle` ; `z-[…]` littéraux (74) → échelle centrale.
+3. 11 overlays `role="dialog"` exceptions (média, cockpits, urgence, formulaires préparation) : tokeniser surface/radius/z/boutons même sans changer de moteur.
+4. 54 paires desktop/mobile (cas simples d'abord) ; 2 bottom bars → 1 contrat + adapters.
+5. Hex (5 171) et styles inline (1 498) des pages non encore migrées.
+
 ## Lots suivants
 
 | Lot | Contenu | Statut |
 |---|---|---|
-| 6 | Headers, Badge/Chip, purge rounded/z/hex/inline, paires desktop-mobile, finitions Sheet | à faire |
+| 6 (suite) | Familles de pages + purge rounded/z/hex/inline + paires desktop-mobile | en cours |
 
 ## Risques / points ouverts
 
