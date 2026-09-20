@@ -1,4 +1,4 @@
-import { GlassCard } from '@/components/ui/GlassCard';
+import { Card } from '@/components/ui';
 import { Eyebrow } from '@/components/ui/Eyebrow';
 import { Badge } from '@/components/ui/Badge';
 
@@ -26,7 +26,7 @@ export function MaintenanceCalendar({ events }: { events: MaintenanceEvent[] }) 
   ];
 
   return (
-    <GlassCard as="article" ariaLabelledBy="cal-title" className="p-4">
+    <Card as="article" ariaLabelledBy="cal-title" className="p-4">
       <Eyebrow>Calendrier entretien</Eyebrow>
       <h3 id="cal-title" className="sr-only">Rappels d'entretien du mois</h3>
       <div className="mt-2 grid grid-cols-7 gap-1 text-center">
@@ -39,6 +39,6 @@ export function MaintenanceCalendar({ events }: { events: MaintenanceEvent[] }) 
           </div>
         ))}
       </div>
-    </GlassCard>
+    </Card>
   );
 }

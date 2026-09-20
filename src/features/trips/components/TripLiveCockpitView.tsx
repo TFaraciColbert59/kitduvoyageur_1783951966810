@@ -3,7 +3,7 @@
 import Icon from '@/components/ui/Icon';
 import Link from 'next/link';
 import React, { useState, useTransition } from 'react';
-import { GlassCard } from '@/components/ui/GlassCard';
+import { Card } from '@/components/ui';
 import { GlassCapsuleBtn } from '@/components/ui/GlassCapsuleBtn';
 import type { TripFull, TripStep, TripStats } from '../types/trip.types';
 import { addExpenseAction } from '@/app/voyages/budget-actions';
@@ -174,7 +174,7 @@ export function TripLiveCockpitView({
       </div>
 
       {/* 2. Sélecteur de Jour & Progression de l'étape */}
-      <GlassCard
+      <Card
         tone={isSunMode ? 'neutral' : 'sage'}
         className={`p-4 sm:p-6 rounded-3xl border transition-all ${
           isSunMode ? 'bg-black/90 border-white/20 text-white' : 'border-white/70'
@@ -388,12 +388,12 @@ export function TripLiveCockpitView({
             </p>
           </div>
         )}
-      </GlassCard>
+      </Card>
 
       {/* 3. Actions Rapides Terrain (Dépense en 2 taps & Secours) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {/* Saisie rapide de dépense en 2 clics */}
-        <GlassCard
+        <Card
           tone="neutral"
           className={`p-5 rounded-3xl border ${
             isSunMode ? 'bg-black/80 border-white/20 text-white' : 'border-white/60'
@@ -522,10 +522,10 @@ export function TripLiveCockpitView({
               </div>
             </form>
           )}
-        </GlassCard>
+        </Card>
 
         {/* Urgence & Secours Montagne Hors-Ligne */}
-        <GlassCard
+        <Card
           tone="neutral"
           className={`p-5 rounded-3xl border ${
             isSunMode ? 'bg-black/80 border-white/20 text-white' : 'border-white/60'
@@ -595,7 +595,7 @@ export function TripLiveCockpitView({
               En cas d’urgence vitale, composez immédiatement le 112 ou envoyez un SMS au 114.
             </p>
           </div>
-        </GlassCard>
+        </Card>
       </div>
 
       {/* 4. Points de contrôle & Tracé détaillé (Extensible) */}

@@ -4,12 +4,24 @@ import React from 'react';
 import { cn } from '@/lib/utils';
 
 export type CardVariant = 'standard' | 'interactive' | 'featured' | 'compact';
+export type CardTone = 'neutral' | 'sage' | 'warn' | 'danger' | 'info';
 
 export interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
   variant?: CardVariant;
+  tone?: CardTone;
   as?: 'div' | 'article' | 'section';
   selected?: boolean;
+  /** Raccourci a11y : id du titre qui nomme la carte. */
+  ariaLabelledBy?: string;
 }
+
+const TONE: Record<CardTone, string> = {
+  neutral: '',
+  sage: 'border-[color:var(--lkv-secondary)]/30 bg-[color:var(--lkv-secondary-subtle)]',
+  warn: 'border-[color:var(--lkv-warning)]/40 bg-[color:var(--lkv-warning-bg)]',
+  danger: 'border-[color:var(--lkv-danger)]/40 bg-[color:var(--lkv-danger-bg)]',
+  info: 'border-[color:var(--lkv-info)]/40 bg-[color:var(--lkv-info-bg)]',
+};
 
 const VARIANT: Record<CardVariant, string> = {
   standard:
@@ -29,8 +41,10 @@ const VARIANT: Record<CardVariant, string> = {
  */
 export function Card({
   variant = 'standard',
+  tone = 'neutral',
   as: Component = 'div',
   selected = false,
+  ariaLabelledBy,
   className,
   children,
   onClick,
@@ -61,11 +75,14 @@ export function Card({
       role={role ?? (actionable ? 'button' : undefined)}
       tabIndex={tabIndex ?? (actionable ? 0 : undefined)}
       aria-pressed={selected || undefined}
+      aria-labelledby={ariaLabelledBy}
       data-variant={variant}
+      data-tone={tone}
       onClick={onClick}
       onKeyDown={handleKeyDown}
       className={cn(
         VARIANT[variant],
+        TONE[tone],
         interactive &&
           'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]',
         selected && 'ring-2 ring-[color:var(--lkv-action)]',

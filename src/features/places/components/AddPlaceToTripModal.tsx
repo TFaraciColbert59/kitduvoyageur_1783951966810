@@ -3,8 +3,8 @@
 import Icon from '@/components/ui/Icon';
 import React, { useState, useTransition } from 'react';
 import Link from 'next/link';
-import { GlassCard } from '@/components/ui/GlassCard';
-import { LkvButton } from '@/components/ui/LkvButton';
+import { Card } from '@/components/ui';
+import { Button } from '@/components/ui';
 import { addPlaceToTripAction } from '@/app/lieux/actions';
 import type { PlaceWithDistance } from '../types/place.types';
 
@@ -78,9 +78,8 @@ export function AddPlaceToTripModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-900/60 backdrop-blur-sm animate-fade-in">
       <div className="w-full max-w-lg">
-        <GlassCard
+        <Card
           tone="neutral"
-          blur="lg"
           className="border border-white/70 shadow-2xl rounded-card overflow-hidden p-6 sm:p-7 relative bg-white/95"
         >
           {/* Close button */}
@@ -121,21 +120,21 @@ export function AddPlaceToTripModal({
 
               <div className="flex flex-col sm:flex-row gap-3">
                 <Link href={`/voyages/${successResult.tripSlug}/itineraire`} className="flex-1">
-                  <LkvButton
+                  <Button
                     variant="primary"
                     className="w-full flex items-center justify-center gap-2 min-h-[44px]"
                   >
                     Voir l’itinéraire
                     <Icon name="arrow-right" className="w-4 h-4" />
-                  </LkvButton>
+                  </Button>
                 </Link>
-                <LkvButton
+                <Button
                   variant="secondary"
                   className="flex-1 min-h-[44px]"
                   onClick={handleResetAndClose}
                 >
                   Fermer
-                </LkvButton>
+                </Button>
               </div>
             </div>
           ) : (
@@ -153,9 +152,9 @@ export function AddPlaceToTripModal({
                     Vous n’avez aucun voyage en cours de préparation.
                   </p>
                   <Link href="/voyages/nouveau">
-                    <LkvButton variant="primary" size="sm" className="min-h-[44px]">
+                    <Button variant="primary" size="sm" className="min-h-[44px]">
                       Créer un nouveau voyage
-                    </LkvButton>
+                    </Button>
                   </Link>
                 </div>
               ) : (
@@ -210,7 +209,7 @@ export function AddPlaceToTripModal({
 
                   {/* Submit Button */}
                   <div className="pt-3">
-                    <LkvButton
+                    <Button
                       type="submit"
                       variant="primary"
                       className="w-full flex items-center justify-center gap-2 min-h-[48px] font-bold"
@@ -224,13 +223,13 @@ export function AddPlaceToTripModal({
                           Confirmer l’ajout au Jour {selectedDay}
                         </>
                       )}
-                    </LkvButton>
+                    </Button>
                   </div>
                 </>
               )}
             </form>
           )}
-        </GlassCard>
+        </Card>
       </div>
     </div>
   );

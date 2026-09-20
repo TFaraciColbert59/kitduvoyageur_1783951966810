@@ -9,7 +9,7 @@ import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
 import WeightGauge from '@/components/WeightGauge';
 import TopoSeparator from '@/components/TopoSeparator';
 import Icon from '@/components/ui/AppIcon';
-import { GlassCard } from '@/components/ui/GlassCard';
+import { Card } from '@/components/ui';
 import { saveCart, getCart } from '@/lib/cart';
 import { createClient } from '@/lib/supabase/client';
 
@@ -178,12 +178,12 @@ export default function KitDetailPage() {
             <Header />
             <main className="h-full overflow-y-auto pt-20">
               <div className="min-h-[60dvh] flex items-center justify-center px-4">
-                <GlassCard tone="sage" className="p-8 max-w-md w-full text-center">
+                <Card tone="sage" className="p-8 max-w-md w-full text-center">
                   <Icon name="ExclamationTriangleIcon" size={40} className="mx-auto mb-4 text-[#C89A3B]" />
                   <h1 className="font-display font-bold text-2xl text-[#17402C] mb-2">Kit introuvable</h1>
                   <p className="text-sm text-[#5A7064] mb-6">{error || 'Ce kit n\'existe pas ou a été supprimé.'}</p>
                   <Link href="/kits" className="glass-capsule-btn primary">Voir tous les kits</Link>
-                </GlassCard>
+                </Card>
               </div>
             </main>
           </div>
@@ -332,7 +332,7 @@ export default function KitDetailPage() {
                 {/* Sidebar */}
                 <div className="lg:col-span-1">
                   <div className="sticky top-24 space-y-4">
-                    <GlassCard tone="sage" className="p-5">
+                    <Card tone="sage" className="p-5">
                       <h3 className="font-display font-bold text-[#17402C] mb-4">
                         Récapitulatif
                       </h3>
@@ -358,9 +358,9 @@ export default function KitDetailPage() {
                       >
                         {addedToCart ? '✓ Ajouté au panier' : 'Ajouter au panier'}
                       </button>
-                    </GlassCard>
+                    </Card>
 
-                    <GlassCard tone="sage" className="p-5">
+                    <Card tone="sage" className="p-5">
                       <h3 className="font-display font-bold text-[#17402C] text-sm mb-3">
                         Infos kit
                       </h3>
@@ -382,7 +382,7 @@ export default function KitDetailPage() {
                           <span className={`${difficultePill[kit.difficulte] ?? 'glass-pill'}`}>{kit.difficulte}</span>
                         </div>
                       </div>
-                    </GlassCard>
+                    </Card>
                   </div>
                 </div>
               </div>
@@ -417,7 +417,7 @@ export default function KitDetailPage() {
             </header>
 
             {/* Mobile Hero Card */}
-            <GlassCard tone="sage" className="overflow-hidden p-0 border border-white/40">
+            <Card tone="sage" className="overflow-hidden p-0 border border-white/40">
               <div className="relative h-44 w-full">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={kit.image} alt={kit.alt} className="w-full h-full object-cover" />
@@ -428,7 +428,7 @@ export default function KitDetailPage() {
                   </p>
                 </div>
               </div>
-            </GlassCard>
+            </Card>
 
             <p className="text-xs text-[#CCE0D4] leading-relaxed px-1">{kit.description}</p>
 
@@ -507,7 +507,7 @@ export default function KitDetailPage() {
             )}
 
             {/* Mobile Summary CTA */}
-            <GlassCard tone="sage" className="p-4 rounded-2xl flex flex-col gap-3 mt-2">
+            <Card tone="sage" className="p-4 rounded-2xl flex flex-col gap-3 mt-2">
               <h3 className="font-display font-bold text-sm text-[#17402C]">Récapitulatif</h3>
               <div className="flex justify-between text-xs text-[#5A7064]">
                 <span>Articles sélectionnés</span>
@@ -529,10 +529,10 @@ export default function KitDetailPage() {
               >
                 {addedToCart ? '✓ Ajouté au panier' : 'Ajouter au panier'}
               </button>
-            </GlassCard>
+            </Card>
 
             {/* Kit Info */}
-            <GlassCard tone="sage" className="p-4 rounded-2xl flex flex-col gap-2">
+            <Card tone="sage" className="p-4 rounded-2xl flex flex-col gap-2">
               <h3 className="font-display font-bold text-xs text-[#17402C] mb-1">Détails du kit</h3>
               <div className="flex flex-col gap-1.5 text-xs">
                 {[
@@ -547,7 +547,7 @@ export default function KitDetailPage() {
                   </div>
                 ))}
               </div>
-            </GlassCard>
+            </Card>
           </div>
         </MobilePageShell>
       </div>

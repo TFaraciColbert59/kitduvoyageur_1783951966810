@@ -2,7 +2,7 @@
 
 import Icon from '@/components/ui/Icon';
 import React, { useState } from 'react';
-import { GlassCard } from '@/components/ui/GlassCard';
+import { Card } from '@/components/ui';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { createClient } from '@/lib/supabase/client';
 import { requestChecklistCompletionAward } from '@/lib/progression-award-requests';
@@ -370,7 +370,7 @@ export function TripChecklistView({ tripId, daysUntilStart, items }: TripCheckli
   return (
     <div ref={containerRef} className="space-y-6">
       {/* Barre de progression */}
-      <GlassCard tone="sage" className="p-5 rounded-[var(--lkv-radius-xl)] border border-white/70">
+      <Card tone="sage" className="p-5 rounded-[var(--lkv-radius-xl)] border border-white/70">
         <div className="flex items-center justify-between gap-4 mb-2">
           <Icon name="shield-check" className="w-5 h-5 text-lkv-primary" aria-hidden="true" />
           <div className="text-xs font-semibold text-lkv-primary">
@@ -396,7 +396,7 @@ export function TripChecklistView({ tripId, daysUntilStart, items }: TripCheckli
             </span>
           </div>
         )}
-      </GlassCard>
+      </Card>
 
       {rows.length === 0 ? (
         <p className="text-center text-sm text-lkv-secondary">

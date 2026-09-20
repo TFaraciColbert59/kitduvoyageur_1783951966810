@@ -1,6 +1,6 @@
 'use client';
 import { useState } from 'react';
-import { GlassCard } from '@/components/ui/GlassCard';
+import { Card } from '@/components/ui';
 import { Eyebrow } from '@/components/ui/Eyebrow';
 
 /** W-L-10 ExportShareBar — export (CSV/JSON), partage, calendrier. */
@@ -44,7 +44,7 @@ export function ExportShareBar() {
   const calendar = () => { window.location.href = '/api/materiel/calendar'; };
 
   return (
-    <GlassCard as="article" ariaLabelledBy="export-title" className="p-4">
+    <Card as="article" ariaLabelledBy="export-title" className="p-4">
       <Eyebrow>Export & partage</Eyebrow>
       <h3 id="export-title" className="sr-only">Export et partage</h3>
       <div className="mt-2 flex flex-wrap gap-2">
@@ -54,6 +54,6 @@ export function ExportShareBar() {
         <button type="button" onClick={calendar} className="glass interactive h-10 px-4 rounded-full text-sm font-medium">Calendrier (ICS)</button>
       </div>
       {status && <p className="mt-2 text-sm text-[color:var(--label-secondary)]">{status}</p>}
-    </GlassCard>
+    </Card>
   );
 }

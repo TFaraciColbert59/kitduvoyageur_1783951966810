@@ -1,6 +1,6 @@
 'use client';
 import { useState } from 'react';
-import { GlassCard } from '@/components/ui/GlassCard';
+import { Card } from '@/components/ui';
 import { Eyebrow } from '@/components/ui/Eyebrow';
 import { Metric } from '@/components/ui/Metric';
 import { ForgetChecklistItem } from './ForgetChecklistItem';
@@ -20,7 +20,7 @@ export function ForgetChecklist({ items, onToggle }: { items: ForgetItem[]; onTo
   };
 
   return (
-    <GlassCard className="p-4" aria-labelledby="forget-checklist">
+    <Card className="p-4" ariaLabelledBy="forget-checklist">
       <div className="flex items-center justify-between mb-3">
         <Eyebrow>À ne pas oublier</Eyebrow>
         <Metric value={`${checkedCount}/${items.length}`} size="md" />
@@ -37,6 +37,6 @@ export function ForgetChecklist({ items, onToggle }: { items: ForgetItem[]; onTo
         ))}
         {items.length === 0 && <li className="text-sm text-[color:var(--label-secondary)]">Aucun article dans votre kit actif.</li>}
       </ul>
-    </GlassCard>
+    </Card>
   );
 }

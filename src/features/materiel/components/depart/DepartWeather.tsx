@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { ClockIcon as Clock } from '@/components/icons/clock';
 import { ChevronDownIcon as ChevronDown } from '@/components/icons/chevron-down';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
-import { GlassCard } from '@/components/ui/GlassCard';
+import { Card } from '@/components/ui';
 import { weatherLabel, type WeatherForecast } from '@/features/materiel/services/getWeather';
 import { cn } from '@/lib/utils';
 
@@ -48,7 +48,7 @@ export function DepartWeather({ weather, updatedAt }: DepartWeatherProps) {
   const daylightHours = '13h45';
 
   return (
-    <GlassCard tone="neutral" as="article" ariaLabelledBy="weather-heading">
+    <Card tone="neutral" as="article" ariaLabelledBy="weather-heading">
       <div className="p-3.5 sm:p-4 space-y-2.5">
         {/* Header : Temp actuelle + lieu + fraîcheur */}
         <div className="flex items-start justify-between gap-2">
@@ -162,6 +162,6 @@ export function DepartWeather({ weather, updatedAt }: DepartWeatherProps) {
             ))}
         </div>
       </div>
-    </GlassCard>
+    </Card>
   );
 }

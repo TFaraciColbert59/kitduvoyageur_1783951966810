@@ -4,7 +4,7 @@ import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import Icon from '@/components/ui/AppIcon';
-import { GlassCard } from '@/components/ui/GlassCard';
+import { Card } from '@/components/ui';
 import { UserProfile } from '@/lib/types/profile';
 import UserFieldSignature from '@/components/identity/UserFieldSignature';
 
@@ -60,13 +60,9 @@ export default function HeroProfil({ profile, onEditProfile, onShareProfile }: H
       </div>
 
       {/* Bottom Main Identity Card — MÊME STYLE que le bouton unique, posée sur la photo */}
-      <GlassCard
-        tier="premium"
-        variant="base"
-        interactive={false}
-        glassTint="var(--btn-tint)"
+      <Card
         className="relative z-10 mt-6"
-        padding="20px 24px"
+        style={{ padding: "20px 24px" }}
       >
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-5">
           
@@ -148,7 +144,7 @@ export default function HeroProfil({ profile, onEditProfile, onShareProfile }: H
           </div>
 
         </div>
-      </GlassCard>
+      </Card>
     </div>
   );
 }

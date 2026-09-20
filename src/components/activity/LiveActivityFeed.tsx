@@ -9,7 +9,7 @@ import {
   handleActivityFeedEvent,
   type ActivityFeedItem,
 } from '@/lib/events/handlers/activityFeedHandler';
-import { GlassCard } from '@/components/ui/GlassCard';
+import { Card } from '@/components/ui';
 
 interface LiveActivityFeedProps {
   crewId?: string;
@@ -73,7 +73,7 @@ export function LiveActivityFeed({
   };
 
   return (
-    <GlassCard className="p-5 sm:p-6 space-y-4">
+    <Card className="p-5 sm:p-6 space-y-4">
       <div className="flex items-center justify-between border-b border-black/5 pb-3">
         <div className="flex items-center gap-2">
           <span className="relative flex h-2 w-2">
@@ -144,6 +144,6 @@ export function LiveActivityFeed({
           ))}
         </div>
       )}
-    </GlassCard>
+    </Card>
   );
 }

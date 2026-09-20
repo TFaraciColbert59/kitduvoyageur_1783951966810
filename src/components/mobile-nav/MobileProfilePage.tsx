@@ -4,8 +4,8 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import HikingProfileCard from '@/components/profile/HikingProfileCard';
-import LkvButton from '@/components/ui/LkvButton';
-import { GlassCard } from '@/components/ui/GlassCard';
+import { Button } from '@/components/ui';
+import { Card } from '@/components/ui';
 import Icon from '@/components/ui/AppIcon';
 
 
@@ -95,14 +95,14 @@ function LoggedOutProfile() {
 
           <div className="flex gap-3 w-full">
             <Link href="/connexion" className="flex-1">
-              <LkvButton variant="primary" size="lg" fullWidth>
+              <Button variant="primary" size="lg" fullWidth>
                 Se connecter
-              </LkvButton>
+              </Button>
             </Link>
             <Link href="/inscription" className="flex-1">
-              <LkvButton variant="ghost-light" size="lg" fullWidth>
+              <Button variant="ghost" size="lg" fullWidth>
                 Créer un compte
-              </LkvButton>
+              </Button>
             </Link>
           </div>
         </div>
@@ -249,10 +249,7 @@ function LoggedInProfile() {
         />
 
         {/* Carte identité voyageur — Liquid Glass premium (référence rdev) */}
-        <GlassCard
-          tier="premium"
-          variant="elevated"
-          overLight
+        <Card
           className="relative z-10 mb-6"
           style={{ padding: '16px 18px' }}
         >
@@ -315,7 +312,7 @@ function LoggedInProfile() {
               <Icon name="pencil" size={16} />
             </Link>
           </div>
-        </GlassCard>
+        </Card>
 
         {/* Stats row */}
         <div
@@ -428,8 +425,8 @@ function LoggedInProfile() {
 
       {/* Sign out */}
       <div className="px-5 pb-6">
-        <LkvButton
-          variant="glass-pill"
+        <Button
+          variant="secondary"
           fullWidth
           icon={
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
@@ -442,7 +439,7 @@ function LoggedInProfile() {
           className="haptic-press"
         >
           Se déconnecter
-        </LkvButton>
+        </Button>
       </div>
 
       <div style={{ height: 'calc(var(--nav-offset) + var(--space-4))' }} aria-hidden="true" />

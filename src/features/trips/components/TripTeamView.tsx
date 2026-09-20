@@ -3,7 +3,7 @@
 import Icon from '@/components/ui/Icon';
 import React, { useMemo, useState, useTransition } from 'react';
 import Link from 'next/link';
-import { GlassCard } from '@/components/ui/GlassCard';
+import { Card } from '@/components/ui';
 import { GlassCapsuleBtn } from '@/components/ui/GlassCapsuleBtn';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { TripBadge } from './TripBadge';
@@ -138,7 +138,7 @@ export function TripTeamView({ trip }: TripTeamViewProps) {
                 .toUpperCase() || 'V';
 
             return (
-              <GlassCard
+              <Card
                 key={collab.id}
                 tone="neutral"
                 className="p-4 rounded-[var(--lkv-radius-lg)] border border-white/60 flex flex-col justify-between gap-4 shadow-sm"
@@ -197,7 +197,7 @@ export function TripTeamView({ trip }: TripTeamViewProps) {
                     </button>
                   </div>
                 )}
-              </GlassCard>
+              </Card>
             );
           })}
         </div>
@@ -206,7 +206,7 @@ export function TripTeamView({ trip }: TripTeamViewProps) {
       {/* Modal d'invitation */}
       {isInviteOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in">
-          <GlassCard
+          <Card
             tone="neutral"
             className="w-full max-w-md p-6 rounded-[var(--lkv-radius-xl)] border border-white/80 shadow-2xl space-y-4"
           >
@@ -289,7 +289,7 @@ export function TripTeamView({ trip }: TripTeamViewProps) {
                 </GlassCapsuleBtn>
               </div>
             </form>
-          </GlassCard>
+          </Card>
         </div>
       )}
 

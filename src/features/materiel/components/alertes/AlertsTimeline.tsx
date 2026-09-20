@@ -1,4 +1,4 @@
-import { GlassCard } from '@/components/ui/GlassCard';
+import { Card } from '@/components/ui';
 import { Badge } from '@/components/ui/Badge';
 
 interface AlertEntry { id: string; date: string; message: string; severity: 'info' | 'warning' | 'critical' }
@@ -8,7 +8,7 @@ const severityTone = { info: 'info', warning: 'warn', critical: 'danger' } as co
 /** W-L-5 AlertsTimeline — chrono verticale des alertes. */
 export function AlertsTimeline({ entries }: { entries: AlertEntry[] }) {
   return (
-    <GlassCard className="p-4">
+    <Card className="p-4">
       <ol className="relative border-l border-glass-border pl-4 flex flex-col gap-4">
         {entries.map((e) => (
           <li key={e.id} className="relative">
@@ -20,6 +20,6 @@ export function AlertsTimeline({ entries }: { entries: AlertEntry[] }) {
         ))}
         {entries.length === 0 && <li className="text-sm text-[color:var(--label-secondary)]">Aucune alerte.</li>}
       </ol>
-    </GlassCard>
+    </Card>
   );
 }

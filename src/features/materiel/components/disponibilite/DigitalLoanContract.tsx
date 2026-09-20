@@ -1,11 +1,11 @@
-import { GlassCard } from '@/components/ui/GlassCard';
+import { Card } from '@/components/ui';
 import { Eyebrow } from '@/components/ui/Eyebrow';
 import type { LoanItem } from '@/features/materiel/services/getLoans';
 
 /** W-A-7 DigitalLoanContract — contrat de prêt digital. */
 export function DigitalLoanContract({ loan }: { loan: LoanItem | null }) {
   return (
-    <GlassCard as="article" ariaLabelledBy="contract-title" className="p-4">
+    <Card as="article" ariaLabelledBy="contract-title" className="p-4">
       <Eyebrow>Contrat de prêt</Eyebrow>
       <h3 id="contract-title" className="sr-only">Contrat de prêt digital</h3>
       {loan ? (
@@ -18,6 +18,6 @@ export function DigitalLoanContract({ loan }: { loan: LoanItem | null }) {
       ) : (
         <p className="mt-2 text-sm text-[color:var(--label-secondary)]">Sélectionnez un prêt pour voir son contrat.</p>
       )}
-    </GlassCard>
+    </Card>
   );
 }

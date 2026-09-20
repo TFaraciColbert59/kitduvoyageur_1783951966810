@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import Icon from '@/components/ui/AppIcon';
-import GlassIconButton from '@/components/ui/GlassIconButton';
+import { IconButton } from '@/components/ui';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 
 export interface MobileCarnetItem {
@@ -118,52 +118,56 @@ export default function MobileCarnetCard({
       <div className="pt-2.5 border-t border-[#17402C]/10 flex items-center justify-between">
         {/* Left: Like & Bookmark Image 3 buttons */}
         <div className="flex items-center gap-1.5">
-          <GlassIconButton
+          <IconButton
             size="sm"
             onClick={() => {
               triggerHaptic('selection');
               if (onLike) onLike(carnet.id, !carnet.user_liked);
             }}
             title="Aimer ce carnet"
-            count={carnet.likes_count || 0}
-            active={carnet.user_liked}
-            activeClassName="!bg-rose-50 !border-rose-200 !text-rose-600"
-            icon={
-              <Icon
+            aria-label="Aimer ce carnet"
+            variant={carnet.user_liked ? 'solid' : 'glass'}
+            aria-pressed={carnet.user_liked || undefined}
+            className={carnet.user_liked ? "!bg-rose-50 !border-rose-200 !text-rose-600" : undefined}
+            style={{ width: 'auto', paddingInline: '10px' }}
+          >
+            <span className="inline-flex items-center gap-1.5"><Icon
                 name="HeartIcon"
                 size={13}
                 className={carnet.user_liked ? 'text-rose-600 fill-rose-600' : ''}
-              />
-            }
-          />
+              /><span className="tabular-nums">{carnet.likes_count || 0}</span></span>
+          </IconButton>
 
-          <GlassIconButton
+          <IconButton
             size="sm"
             onClick={() => {
               triggerHaptic('selection');
               if (onFavorite) onFavorite(carnet.id, !carnet.user_favorited);
             }}
             title="Enregistrer dans ma collection"
-            active={carnet.user_favorited}
-            activeClassName="!bg-amber-50 !border-amber-200 !text-amber-700"
-            icon={
-              <Icon
+            aria-label="Enregistrer dans ma collection"
+            variant={carnet.user_favorited ? 'solid' : 'glass'}
+            aria-pressed={carnet.user_favorited || undefined}
+            className={carnet.user_favorited ? "!bg-amber-50 !border-amber-200 !text-amber-700" : undefined}
+          >
+            <Icon
                 name="BookmarkIcon"
                 size={13}
                 className={carnet.user_favorited ? 'text-amber-700 fill-amber-700' : ''}
               />
-            }
-          />
+          </IconButton>
 
-          <GlassIconButton
+          <IconButton
             size="sm"
             onClick={() => {
               triggerHaptic('light');
               if (onShare) onShare(carnet);
             }}
             title="Partager"
-            icon={<Icon name="ShareIcon" size={13} />}
-          />
+            aria-label="Partager"
+          >
+            <Icon name="ShareIcon" size={13} />
+          </IconButton>
         </div>
 
         {/* Right: Open Carnet Liquid Glass button */}

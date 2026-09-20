@@ -3,7 +3,6 @@
 import React from 'react';
 import Link from 'next/link';
 import Icon from '@/components/ui/AppIcon';
-import GlassIconButton from '@/components/ui/GlassIconButton';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 
 export interface ClubCardItem {

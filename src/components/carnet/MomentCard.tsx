@@ -3,7 +3,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import Icon from '@/components/ui/AppIcon';
-import GlassIconButton from '@/components/ui/GlassIconButton';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import type { CarnetMoment } from '@/lib/mock/carnet-chartreuse';
 

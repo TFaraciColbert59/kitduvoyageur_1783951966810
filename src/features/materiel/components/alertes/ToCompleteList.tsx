@@ -1,4 +1,4 @@
-import { GlassCard } from '@/components/ui/GlassCard';
+import { Card } from '@/components/ui';
 import { Eyebrow } from '@/components/ui/Eyebrow';
 import { Badge } from '@/components/ui/Badge';
 import type { InventoryItem } from '@/features/materiel/services/getInventory';
@@ -15,7 +15,7 @@ function dueLabel(date: string | null): string {
 export function ToCompleteList({ items }: { items: InventoryItem[] }) {
   const due = items.filter((i) => i.maintenance_due_at || i.expiry_date);
   return (
-    <GlassCard as="article" ariaLabelledBy="tocomplete-title" className="p-4">
+    <Card as="article" ariaLabelledBy="tocomplete-title" className="p-4">
       <Eyebrow>À compléter</Eyebrow>
       <h3 id="tocomplete-title" className="sr-only">Objets à entretenir ou à surveiller</h3>
       <ul className="mt-2 flex flex-col gap-2">
@@ -27,6 +27,6 @@ export function ToCompleteList({ items }: { items: InventoryItem[] }) {
         ))}
         {due.length === 0 && <li className="text-sm text-[color:var(--label-secondary)]">Aucun objet à entretenir.</li>}
       </ul>
-    </GlassCard>
+    </Card>
   );
 }

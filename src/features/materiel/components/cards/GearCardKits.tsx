@@ -1,7 +1,7 @@
 'use client';
 import Icon from '@/components/ui/Icon';
 import Link from 'next/link';
-import { GlassCard } from '@/components/ui/GlassCard';
+import { Card } from '@/components/ui';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 
 interface KitsData {
@@ -17,7 +17,7 @@ export function GearCardKits({ data, className }: { data: KitsData; className?: 
   const kits = data.topKits || [];
 
   return (
-    <GlassCard as="article" interactive ariaLabelledBy="kits-title" className={className}>
+    <Card as="article" variant="interactive" ariaLabelledBy="kits-title" className={className}>
       <div className="p-2.5 sm:p-5 flex flex-col justify-between h-full gap-1.5 sm:gap-4">
         {/* Header with Title & Large Metric */}
         <div className="flex items-start justify-between pr-7 md:pr-10">
@@ -117,6 +117,6 @@ export function GearCardKits({ data, className }: { data: KitsData; className?: 
           )}
         </div>
       </div>
-    </GlassCard>
+    </Card>
   );
 }

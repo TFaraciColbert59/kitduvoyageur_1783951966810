@@ -1,7 +1,7 @@
 import React from 'react';
 import Link from 'next/link';
 import AppShell from '@/components/shell/AppShell';
-import { GlassCard } from '@/components/ui/GlassCard';
+import { Card } from '@/components/ui';
 import { GlassCapsuleBtn } from '@/components/ui/GlassCapsuleBtn';
 import LkvIcon from '@/components/ui/LkvIcon';
 
@@ -9,7 +9,7 @@ export default function TripNotFound() {
   return (
     <AppShell safeTop={true} hasBottomNav={true}>
       <div className="max-w-xl mx-auto px-4 py-20 text-center">
-        <GlassCard tone="neutral" blur="md" className="p-8 rounded-[var(--lkv-radius-2xl)] border border-white/70 shadow-lg">
+        <Card tone="neutral" className="p-8 rounded-[var(--lkv-radius-2xl)] border border-white/70 shadow-lg">
           <div className="inline-flex p-4 rounded-full bg-lkv-secondary/10 text-lkv-primary mb-4">
             <LkvIcon name="compass" size={40} />
           </div>
@@ -24,7 +24,7 @@ export default function TripNotFound() {
               Retourner aux voyages
             </GlassCapsuleBtn>
           </div>
-        </GlassCard>
+        </Card>
       </div>
     </AppShell>
   );

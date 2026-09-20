@@ -2,7 +2,7 @@
 
 import Icon from '@/components/ui/Icon';
 import React from 'react';
-import { GlassCard } from '@/components/ui/GlassCard';
+import { Card } from '@/components/ui';
 import { AffiliateDisclosure } from './AffiliateDisclosure';
 import { AffiliateLinkCard } from './AffiliateLinkCard';
 import type { AffiliateLink } from '../types/affiliate.types';
@@ -32,9 +32,8 @@ export function TripAffiliateSection({
       {/* Disclosure légal obligatoire en amont */}
       <AffiliateDisclosure />
 
-      <GlassCard
+      <Card
         tone="neutral"
-        blur="md"
         className="p-6 sm:p-7 rounded-card border border-white/70 shadow-sm space-y-6"
       >
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-4 border-b border-stone-200/60">
@@ -59,7 +58,7 @@ export function TripAffiliateSection({
             <AffiliateLinkCard key={link.id} link={link} tripId={tripId} />
           ))}
         </div>
-      </GlassCard>
+      </Card>
     </section>
   );
 }

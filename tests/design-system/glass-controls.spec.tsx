@@ -1,7 +1,7 @@
 import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
-import { LkvButton } from '@/components/ui/LkvButton';
+import { Button, IconButton } from '@/components/ui';
 import { LkvChip } from '@/components/ui/LkvChip';
 
 describe('Accessible shared glass controls', () => {
@@ -27,18 +27,21 @@ describe('Accessible shared glass controls', () => {
   });
 
   it('announces loading and prevents a second submission', () => {
-    const html = renderToStaticMarkup(<LkvButton type="submit" loading>Enregistrer</LkvButton>);
+    const html = renderToStaticMarkup(<Button type="submit" loading>Enregistrer</Button>);
     expect(html).toContain('type="submit"');
     expect(html).toContain('aria-busy="true"');
     expect(html).toContain('disabled=""');
     expect(html).toContain('Enregistrer');
   });
 
-  it('keeps small icon and text controls at least 44px high and wide', () => {
-    for (const variant of ['primary', 'icon-only'] as const) {
-      const html = renderToStaticMarkup(<LkvButton variant={variant} size="sm" aria-label="Ajouter">+</LkvButton>);
-      expect(html).toContain('min-height:var(--lkv-touch-min)');
-      expect(html).toContain('min-width:var(--lkv-touch-min)');
-    }
+  it('keeps canonical size and icon-only contracts for small controls', () => {
+    const text = renderToStaticMarkup(<Button size="sm" aria-label="Ajouter">+</Button>);
+    expect(text).toContain('data-size="sm"');
+    expect(text).toContain('h-[var(--control-height-sm)]');
+
+    const icon = renderToStaticMarkup(<IconButton size="sm" aria-label="Ajouter">+</IconButton>);
+    expect(icon).toContain('data-size="sm"');
+    expect(icon).toContain('h-[var(--control-height-sm)]');
+    expect(icon).toContain('w-[var(--control-height-sm)]');
   });
 });

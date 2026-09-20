@@ -5,7 +5,7 @@ import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import { motion, AnimatePresence } from 'framer-motion';
 import Icon from '@/components/ui/AppIcon';
-import GlassIconButton from '@/components/ui/GlassIconButton';
+import { IconButton } from '@/components/ui';
 import LiquidGlass from '@/components/glass/LiquidGlass';
 import SmartImage from '@/components/ui/SmartImage';
 import ReportSheet from '@/components/social/ReportSheet';
@@ -923,26 +923,32 @@ export default function CommunityPostCard({
                           <div className="flex items-center gap-1 opacity-70 group-hover:opacity-100 transition-opacity">
                             {rootComment.isOwner ? (
                               <>
-                                <GlassIconButton
+                                <IconButton
                                   size="sm"
                                   title="Modifier"
                                   onClick={() => handleStartEditComment(rootComment)}
-                                  icon={<Icon name="pencil" size={11} />}
-                                />
-                                <GlassIconButton
+                                  aria-label="Modifier"
+                                >
+                                  <Icon name="pencil" size={11} />
+                                </IconButton>
+                                <IconButton
                                   size="sm"
                                   title="Supprimer"
                                   onClick={() => handleDeleteComment(rootComment.id)}
-                                  icon={<Icon name="trash2" size={11} className="text-red-600" />}
-                                />
+                                  aria-label="Supprimer"
+                                >
+                                  <Icon name="trash2" size={11} className="text-red-600" />
+                                </IconButton>
                               </>
                             ) : (
-                              <GlassIconButton
+                              <IconButton
                                 size="sm"
                                 title="Signaler"
                                 onClick={() => handleReportComment(rootComment.id)}
-                                icon={<Icon name="flag" size={11} />}
-                              />
+                                aria-label="Signaler"
+                              >
+                                <Icon name="flag" size={11} />
+                              </IconButton>
                             )}
                           </div>
                         </div>
@@ -994,21 +1000,26 @@ export default function CommunityPostCard({
 
                         {/* Footer Reply & Like Buttons */}
                         <div className="flex items-center justify-between pl-9 pt-1 text-[11px]">
-                          <GlassIconButton
+                          <IconButton
                             size="sm"
                             title={`Répondre à ${rootComment.author?.full_name || 'ce message'}`}
                             onClick={() => handleReplyTo(rootComment.author?.full_name || 'Voyageur', rootComment.id)}
-                            icon={<Icon name="reply" size={12} />}
-                          />
+                            aria-label={`Répondre à ${rootComment.author?.full_name || 'ce message'}`}
+                          >
+                            <Icon name="reply" size={12} />
+                          </IconButton>
 
-                          <GlassIconButton
+                          <IconButton
                             size="sm"
-                            active={rootComment.userLiked}
-                            count={rootComment.likes || 0}
                             onClick={() => handleLikeComment(rootComment.id)}
                             title="Aimer ce commentaire"
-                            icon={<HeartSvg filled={rootComment.userLiked} className="w-3 h-3" />}
-                          />
+                            aria-label="Aimer ce commentaire"
+                            variant={rootComment.userLiked ? 'solid' : 'glass'}
+                            aria-pressed={rootComment.userLiked || undefined}
+                            style={{ width: 'auto', paddingInline: '10px' }}
+                          >
+                            <span className="inline-flex items-center gap-1.5"><HeartSvg filled={rootComment.userLiked} className="w-3 h-3" /><span className="tabular-nums">{rootComment.likes || 0}</span></span>
+                          </IconButton>
                         </div>
                       </div>
 
@@ -1044,19 +1055,23 @@ export default function CommunityPostCard({
 
                                   <div className="flex items-center gap-1 opacity-70 group-hover:opacity-100 transition-opacity">
                                     {reply.isOwner ? (
-                                      <GlassIconButton
+                                      <IconButton
                                         size="sm"
                                         title="Supprimer"
                                         onClick={() => handleDeleteComment(reply.id)}
-                                        icon={<Icon name="trash2" size={11} className="text-red-600" />}
-                                      />
+                                        aria-label="Supprimer"
+                                      >
+                                        <Icon name="trash2" size={11} className="text-red-600" />
+                                      </IconButton>
                                     ) : (
-                                      <GlassIconButton
+                                      <IconButton
                                         size="sm"
                                         title="Signaler"
                                         onClick={() => handleReportComment(reply.id)}
-                                        icon={<Icon name="flag" size={11} />}
-                                      />
+                                        aria-label="Signaler"
+                                      >
+                                        <Icon name="flag" size={11} />
+                                      </IconButton>
                                     )}
                                   </div>
                                 </div>
@@ -1066,14 +1081,17 @@ export default function CommunityPostCard({
                                 </p>
 
                                 <div className="flex items-center justify-end pl-7 pt-0.5">
-                                  <GlassIconButton
+                                  <IconButton
                                     size="sm"
-                                    active={reply.userLiked}
-                                    count={reply.likes || 0}
                                     onClick={() => handleLikeComment(reply.id)}
                                     title="Aimer cette réponse"
-                                    icon={<HeartSvg filled={reply.userLiked} className="w-2.5 h-2.5" />}
-                                  />
+                                    aria-label="Aimer cette réponse"
+                                    variant={reply.userLiked ? 'solid' : 'glass'}
+                                    aria-pressed={reply.userLiked || undefined}
+                                    style={{ width: 'auto', paddingInline: '10px' }}
+                                  >
+                                    <span className="inline-flex items-center gap-1.5"><HeartSvg filled={reply.userLiked} className="w-2.5 h-2.5" /><span className="tabular-nums">{reply.likes || 0}</span></span>
+                                  </IconButton>
                                 </div>
                               </div>
                             </div>
@@ -1134,31 +1152,39 @@ export default function CommunityPostCard({
                 />
 
                 {/* Attachment & Action Buttons (Image 3 Style) */}
-                <GlassIconButton
+                <IconButton
                   size="sm"
                   title="Joindre une photo"
                   onClick={() => fileInputRef.current?.click()}
-                  icon={<Icon name="image-plus" size={13} />}
-                />
-                <GlassIconButton
+                  aria-label="Joindre une photo"
+                >
+                  <Icon name="image-plus" size={13} />
+                </IconButton>
+                <IconButton
                   size="sm"
                   title="Partager un GPX"
                   onClick={() => gpxInputRef.current?.click()}
-                  icon={<span className="text-[11px] leading-none">🗺️</span>}
-                />
-                <GlassIconButton
+                  aria-label="Partager un GPX"
+                >
+                  <span className="text-[11px] leading-none">🗺️</span>
+                </IconButton>
+                <IconButton
                   size="sm"
                   title="Partager ma position"
                   onClick={handleShareLocation}
-                  icon={<Icon name="map-pin" size={13} />}
-                />
+                  aria-label="Partager ma position"
+                >
+                  <Icon name="map-pin" size={13} />
+                </IconButton>
 
-                <GlassIconButton
+                <IconButton
                   size="md"
                   title="Publier le commentaire"
                   onClick={() => handleSendComment()}
-                  icon={<Icon name="send" size={13} />}
-                />
+                  aria-label="Publier le commentaire"
+                >
+                  <Icon name="send" size={13} />
+                </IconButton>
               </div>
             </div>
           </motion.div>

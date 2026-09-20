@@ -14,7 +14,7 @@ import { Step4Travelers } from './Step4Travelers';
 import { Step5Preview } from './Step5Preview';
 import AppShellDesktop from '@/components/shell/AppShellDesktop';
 import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
-import { GlassCard, GlassSubCard, GlassPill, GlassCapsuleBtn } from '@/components/ui';
+import { Card, GlassSubCard, GlassPill, GlassCapsuleBtn } from '@/components/ui';
 import { MapPin, Calendar, Compass, Users, Eye } from 'lucide-react';
 
 const STEP_LABELS = [
@@ -213,7 +213,7 @@ export function TripWizard() {
   // Colonne Droite Desktop (300px) : Résumé du projet
   const renderSidebarRight = () => (
     <div className="w-full shrink-0 h-full overflow-y-auto custom-scrollbar flex flex-col gap-3 pb-6 font-sans">
-      <GlassCard className="p-3.5 space-y-2.5 text-forest-900">
+      <Card className="p-3.5 space-y-2.5 text-forest-900">
         <span className="text-xs font-bold uppercase tracking-wider text-sage-800 flex items-center gap-1.5">
           <Icon name="sparkles" size={13} />
           <span>Brouillon en cours</span>
@@ -238,7 +238,7 @@ export function TripWizard() {
             </span>
           </div>
         </div>
-      </GlassCard>
+      </Card>
     </div>
   );
 

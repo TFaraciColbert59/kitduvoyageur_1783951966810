@@ -2,7 +2,7 @@
 
 import Icon from '@/components/ui/Icon';
 import React, { useState, useTransition } from 'react';
-import { GlassCard } from '@/components/ui/GlassCard';
+import { Card } from '@/components/ui';
 import { GlassModal } from '@/components/ui/GlassModal';
 import { GlassCapsuleBtn } from '@/components/ui/GlassCapsuleBtn';
 import { EmptyState } from '@/components/ui/EmptyState';
@@ -304,7 +304,7 @@ export function TripNotesView({ trip }: TripNotesViewProps) {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {filteredNotes.map((note) => (
-            <GlassCard
+            <Card
               key={note.id}
               tone="neutral"
               className={`p-5 rounded-[var(--lkv-radius-lg)] border transition-shadow ${
@@ -365,7 +365,7 @@ export function TripNotesView({ trip }: TripNotesViewProps) {
                   <span>{new Date(note.created_at).toLocaleDateString('fr-FR')}</span>
                 </div>
               </div>
-            </GlassCard>
+            </Card>
           ))}
         </div>
       )}

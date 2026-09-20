@@ -1,6 +1,6 @@
 'use client';
 import { useState } from 'react';
-import { GlassCard } from '@/components/ui/GlassCard';
+import { Card } from '@/components/ui';
 import { Eyebrow } from '@/components/ui/Eyebrow';
 import { Badge } from '@/components/ui/Badge';
 import type { AlertItem } from '@/features/materiel/services/getAlerts';
@@ -14,7 +14,7 @@ export function TopAlertsAccordion({ alerts }: { alerts: AlertItem[] }) {
   const [open, setOpen] = useState<string | null>(top[0]?.id ?? null);
 
   return (
-    <GlassCard as="article" ariaLabelledBy="top-alerts-title" className="p-4">
+    <Card as="article" ariaLabelledBy="top-alerts-title" className="p-4">
       <Eyebrow>Top à surveiller</Eyebrow>
       <h3 id="top-alerts-title" className="sr-only">Top 3 des alertes à surveiller</h3>
       <div className="mt-2 flex flex-col gap-2">
@@ -35,6 +35,6 @@ export function TopAlertsAccordion({ alerts }: { alerts: AlertItem[] }) {
         ))}
         {top.length === 0 && <p className="text-sm text-[color:var(--label-secondary)]">Aucune alerte active.</p>}
       </div>
-    </GlassCard>
+    </Card>
   );
 }

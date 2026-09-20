@@ -2,7 +2,7 @@
 import { lkvConfirm } from '@/components/ui/dialogs';
 import { useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { GlassCard } from '@/components/ui/GlassCard';
+import { Card } from '@/components/ui';
 import { Eyebrow } from '@/components/ui/Eyebrow';
 import { Badge } from '@/components/ui/Badge';
 import { GlassDrawer } from '@/components/ui/GlassDrawer';
@@ -145,7 +145,7 @@ export function InventoryWorkspace({ items }: { items: InventoryItem[] }) {
 
   return (
     <>
-      <GlassCard className="p-3" aria-labelledby="inv-toolbar">
+      <Card className="p-3" ariaLabelledBy="inv-toolbar">
         <h2 id="inv-toolbar" className="sr-only">Recherche et tri</h2>
         <div className="flex flex-wrap items-center gap-2">
           <input className="glass-input flex-1 min-w-[160px]" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Rechercher un objet…" aria-label="Rechercher" />
@@ -160,10 +160,10 @@ export function InventoryWorkspace({ items }: { items: InventoryItem[] }) {
           </div>
           <button type="button" onClick={openCreate} className="glass interactive h-10 px-4 rounded-full text-sm font-medium text-white bg-sage-800">+ Ajouter</button>
         </div>
-      </GlassCard>
+      </Card>
 
       <div className="grid grid-cols-12 gap-4">
-        <GlassCard className="col-span-12 md:col-span-3 p-4 self-start" aria-labelledby="inv-filters">
+        <Card className="col-span-12 md:col-span-3 p-4 self-start" ariaLabelledBy="inv-filters">
           <h2 id="inv-filters" className="sr-only">Filtres</h2>
           <Eyebrow>Filtres</Eyebrow>
           <div className="mt-3 flex flex-col gap-2">
@@ -176,14 +176,14 @@ export function InventoryWorkspace({ items }: { items: InventoryItem[] }) {
               {categories.map((c) => <option key={c} value={c}>{c}</option>)}
             </select>
           </div>
-        </GlassCard>
+        </Card>
 
         <div className="col-span-12 md:col-span-9">
           {view === 'grid' && (filtered.length > 0 ? <InventoryVirtualGrid items={filtered} onSelect={setSelected} /> : (
             <p className="text-sm text-[color:var(--glass-text-secondary)]">Aucun objet ne correspond.</p>
           ))}
           {view === 'table' && (
-            <GlassCard className="p-3 overflow-x-auto">
+            <Card className="p-3 overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="text-left text-[color:var(--label-tertiary)]">
@@ -202,13 +202,13 @@ export function InventoryWorkspace({ items }: { items: InventoryItem[] }) {
                   ))}
                 </tbody>
               </table>
-            </GlassCard>
+            </Card>
           )}
         </div>
       </div>
 
       {/* W-I-7 Comparateur */}
-      <GlassCard className="p-4" aria-labelledby="inv-comparator">
+      <Card className="p-4" ariaLabelledBy="inv-comparator">
         <h3 id="inv-comparator" className="sr-only">Comparateur d'objets</h3>
         <Eyebrow>Comparateur</Eyebrow>
         <div className="mt-2 flex flex-wrap items-center gap-2">
@@ -235,7 +235,7 @@ export function InventoryWorkspace({ items }: { items: InventoryItem[] }) {
             ))}
           </div>
         )}
-      </GlassCard>
+      </Card>
 
       {/* W-I-6 Scan */}
       <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleScan(f); e.target.value = ''; }} aria-label="Scanner un article" />

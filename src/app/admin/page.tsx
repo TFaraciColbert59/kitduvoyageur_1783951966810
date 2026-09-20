@@ -1,5 +1,5 @@
 ﻿'use client';
-import { lkvPrompt } from '@/components/ui/dialogs';
+import { lkvPromptAsync } from '@/components/ui/dialogs';
 
 import React, { useState, useEffect, useMemo } from 'react';
 import Icon from '@/components/ui/AppIcon';
@@ -1042,14 +1042,14 @@ function RewardsSection() {
   };
 
   const handleProcessWithdrawal = async (withdrawalId: string, approve: boolean) => {
-    let reference = null;
-    let reason = null;
+    let reference: string | null = null;
+    let reason: string | null = null;
 
     if (approve) {
-      reference = lkvPrompt('Entrez la référence de transaction bancaire (ex: TXN123456) :');
+      reference = await lkvPromptAsync({ title: 'Entrez la référence de transaction bancaire (ex: TXN123456) :' });
       if (reference === null) return;
     } else {
-      reason = lkvPrompt('Entrez le motif du rejet :');
+      reason = await lkvPromptAsync({ title: 'Entrez le motif du rejet :' });
       if (reason === null) return;
     }
 

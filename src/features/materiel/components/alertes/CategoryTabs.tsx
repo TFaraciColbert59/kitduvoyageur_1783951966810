@@ -1,7 +1,7 @@
 'use client';
 import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { GlassCard } from '@/components/ui/GlassCard';
+import { Card } from '@/components/ui';
 import { Badge } from '@/components/ui/Badge';
 import { useToast } from '@/contexts/ToastContext';
 import type { AlertItem } from '@/features/materiel/services/getAlerts';
@@ -25,7 +25,7 @@ export function CategoryTabs({ alerts }: { alerts: AlertItem[] }) {
   };
 
   return (
-    <GlassCard as="article" ariaLabelledBy="cat-tabs-title" className="p-4">
+    <Card as="article" ariaLabelledBy="cat-tabs-title" className="p-4">
       <h3 id="cat-tabs-title" className="sr-only">Alertes par catégorie</h3>
       <div className="flex md:flex-col gap-1 overflow-x-auto">
         <button type="button" onClick={() => setActive('all')} className={`glass-segmented-item whitespace-nowrap ${active === 'all' ? 'active' : ''}`}>
@@ -49,6 +49,6 @@ export function CategoryTabs({ alerts }: { alerts: AlertItem[] }) {
         ))}
         {filtered.length === 0 && <li className="text-sm text-[color:var(--label-secondary)]">Aucune alerte dans cette catégorie.</li>}
       </ul>
-    </GlassCard>
+    </Card>
   );
 }

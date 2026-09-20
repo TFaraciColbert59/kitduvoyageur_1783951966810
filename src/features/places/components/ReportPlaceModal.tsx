@@ -2,8 +2,8 @@
 
 import Icon from '@/components/ui/Icon';
 import React, { useState, useTransition } from 'react';
-import { GlassCard } from '@/components/ui/GlassCard';
-import { LkvButton } from '@/components/ui/LkvButton';
+import { Card } from '@/components/ui';
+import { Button } from '@/components/ui';
 import { reportPlaceAction } from '@/app/lieux/actions';
 import type { PlaceReportReason } from '../types/place.types';
 
@@ -56,9 +56,8 @@ export function ReportPlaceModal({ placeId, placeName, isOpen, onClose }: Report
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-900/60 backdrop-blur-sm animate-fade-in">
       <div className="w-full max-w-md">
-        <GlassCard
+        <Card
           tone="neutral"
-          blur="lg"
           className="border border-white/70 shadow-2xl rounded-card overflow-hidden p-6 relative bg-white/95"
         >
           <button
@@ -91,9 +90,9 @@ export function ReportPlaceModal({ placeId, placeName, isOpen, onClose }: Report
                 Notre équipe de modération et les référents parcs examineront ce lieu sous 24h pour
                 adapter le floutage ou la sensibilité.
               </p>
-              <LkvButton variant="primary" className="w-full min-h-[44px]" onClick={handleClose}>
+              <Button variant="primary" className="w-full min-h-[44px]" onClick={handleClose}>
                 Compris
-              </LkvButton>
+              </Button>
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -153,7 +152,7 @@ export function ReportPlaceModal({ placeId, placeName, isOpen, onClose }: Report
               </div>
 
               <div className="flex gap-3 pt-2">
-                <LkvButton
+                <Button
                   type="button"
                   variant="secondary"
                   size="sm"
@@ -161,8 +160,8 @@ export function ReportPlaceModal({ placeId, placeName, isOpen, onClose }: Report
                   onClick={handleClose}
                 >
                   Annuler
-                </LkvButton>
-                <LkvButton
+                </Button>
+                <Button
                   type="submit"
                   variant="primary"
                   size="sm"
@@ -170,11 +169,11 @@ export function ReportPlaceModal({ placeId, placeName, isOpen, onClose }: Report
                   disabled={isPending}
                 >
                   {isPending ? 'Envoi...' : 'Transmettre'}
-                </LkvButton>
+                </Button>
               </div>
             </form>
           )}
-        </GlassCard>
+        </Card>
       </div>
     </div>
   );

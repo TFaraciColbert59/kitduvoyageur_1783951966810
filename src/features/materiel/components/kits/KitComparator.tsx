@@ -1,6 +1,6 @@
 'use client';
 import { useMemo, useState } from 'react';
-import { GlassCard } from '@/components/ui/GlassCard';
+import { Card } from '@/components/ui';
 import { Eyebrow } from '@/components/ui/Eyebrow';
 import { Badge } from '@/components/ui/Badge';
 import { compareKits } from '@/lib/materiel/comparator';
@@ -20,7 +20,7 @@ export function KitComparator({ kits }: { kits: KitListItem[] }) {
   }, [active, aId, bId]);
 
   return (
-    <GlassCard as="article" tone="sage" ariaLabelledBy="comparator-title" className="p-4 sm:p-5">
+    <Card as="article" tone="sage" ariaLabelledBy="comparator-title" className="p-4 sm:p-5">
       <Eyebrow>Comparateur de kits</Eyebrow>
       <h3 id="comparator-title" className="font-display font-bold text-[20px] text-[var(--lkv-primary)] mt-0.5 mb-3">Différentiel de poids</h3>
       <div className="flex items-center gap-2">
@@ -66,6 +66,6 @@ export function KitComparator({ kits }: { kits: KitListItem[] }) {
         </div>
       )}
       {!result && <p className="mt-3 text-xs text-[var(--lkv-text-muted)]">Sélectionnez deux kits distincts pour afficher la comparaison.</p>}
-    </GlassCard>
+    </Card>
   );
 }

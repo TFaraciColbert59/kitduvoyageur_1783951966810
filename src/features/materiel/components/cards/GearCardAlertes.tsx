@@ -2,7 +2,7 @@
 import Icon from '@/components/ui/Icon';
 import Link from 'next/link';
 import { ArrowRightIcon as ArrowRightAnimated } from '@/components/icons/arrow-right';
-import { GlassCard } from '@/components/ui/GlassCard';
+import { Card } from '@/components/ui';
 import { Badge } from '@/components/ui/Badge';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 
@@ -18,9 +18,9 @@ export function GearCardAlertes({ data, className }: { data: AlertesData; classN
   const tone = data.criticalCount > 0 ? 'danger' : data.warningCount > 0 ? 'warn' : 'sage';
 
   return (
-    <GlassCard
+    <Card
       as="article"
-      interactive
+      variant="interactive"
       tone={data.criticalCount > 0 ? 'danger' : 'neutral'}
       ariaLabelledBy="alertes-title"
       className={className}
@@ -96,6 +96,6 @@ export function GearCardAlertes({ data, className }: { data: AlertesData; classN
           </Link>
         </div>
       </div>
-    </GlassCard>
+    </Card>
   );
 }

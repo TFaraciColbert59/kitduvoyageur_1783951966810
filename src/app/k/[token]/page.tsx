@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { GlassCard } from '@/components/ui/GlassCard';
+import { Card } from '@/components/ui';
 import { Eyebrow } from '@/components/ui/Eyebrow';
 import { Badge } from '@/components/ui/Badge';
 
@@ -29,7 +29,7 @@ export default function SharedKitPage({ params }: { params: { token: string } })
 
   return (
     <main className="max-w-[720px] mx-auto px-4 py-10">
-      <GlassCard className="p-6">
+      <Card className="p-6">
         {error && <p className="text-sm text-danger">{error}</p>}
         {!data && !error && <p className="text-sm text-[color:var(--label-secondary)]">Chargement…</p>}
         {data && (
@@ -53,7 +53,7 @@ export default function SharedKitPage({ params }: { params: { token: string } })
             </ul>
           </div>
         )}
-      </GlassCard>
+      </Card>
     </main>
   );
 }

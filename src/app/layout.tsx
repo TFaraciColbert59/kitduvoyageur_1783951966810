@@ -16,6 +16,7 @@ import GoogleAnalytics from '@/components/GoogleAnalytics';
 import MobileNavWrapper from '@/components/mobile-nav/MobileNavWrapper';
 import CookieConsentBanner from '@/components/CookieConsentBanner';
 import ConfirmHost from '@/components/ui/ConfirmHost';
+import PromptHost from '@/components/ui/PromptHost';
 import RocketConsentScripts from '@/components/RocketConsentScripts';
 import TravelpayoutsDrive from '@/components/TravelpayoutsDrive';
 import MigrationEffect from '@/lib/storage/MigrationEffect';
@@ -300,6 +301,7 @@ export default async function RootLayout({
                       </main>
                       <CookieConsentBanner />
                       <ConfirmHost />
+                      <PromptHost />
                       <ConditionalCursor />
                       {/* Migration Mon Matériel — exécutée UNE SEULE FOIS au montage */}
                       <MigrationEffect />

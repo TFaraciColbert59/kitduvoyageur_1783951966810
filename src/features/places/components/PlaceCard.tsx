@@ -3,8 +3,8 @@
 import Icon from '@/components/ui/Icon';
 import React from 'react';
 import Link from 'next/link';
-import { GlassCard } from '@/components/ui/GlassCard';
-import { LkvButton } from '@/components/ui/LkvButton';
+import { Card } from '@/components/ui';
+import { Button } from '@/components/ui';
 import type { PlaceWithDistance } from '../types/place.types';
 import { getCategoryIcon, getCategoryLabel } from '../lib/placeCategory';
 
@@ -22,10 +22,9 @@ export function PlaceCard({ place, onAddToTrip }: PlaceCardProps) {
   return (
     <div className="group relative flex flex-col h-full">
       <Link href={`/lieux/${place.slug}`} className="block flex-1">
-        <GlassCard
+        <Card
           tone="neutral"
-          blur="md"
-          interactive
+          variant="interactive"
           className="h-full border border-white/60 hover:border-[#5B7F55]/40 transition-all duration-300 hover:shadow-lg rounded-xl p-5 flex flex-col justify-between"
         >
           <div>
@@ -99,13 +98,13 @@ export function PlaceCard({ place, onAddToTrip }: PlaceCardProps) {
               </span>
             )}
           </div>
-        </GlassCard>
+        </Card>
       </Link>
 
       {/* Bouton d'action rapide Ajouter au Voyage */}
       {onAddToTrip && (
         <div className="mt-2">
-          <LkvButton
+          <Button
             variant="secondary"
             size="sm"
             className="w-full flex items-center justify-center gap-1.5 min-h-[44px] text-xs font-semibold"
@@ -116,7 +115,7 @@ export function PlaceCard({ place, onAddToTrip }: PlaceCardProps) {
           >
             <Icon name="plus" className="w-4 h-4 text-[#17402C]" />
             Ajouter à mon voyage
-          </LkvButton>
+          </Button>
         </div>
       )}
     </div>

@@ -1,4 +1,4 @@
-import { GlassCard } from '@/components/ui/GlassCard';
+import { Card } from '@/components/ui';
 import { Badge } from '@/components/ui/Badge';
 
 export interface Insight {
@@ -10,7 +10,7 @@ export interface Insight {
 /** W-I-9 AiInsightBanner — bandeau d'insight IA (dérivé des données réelles). */
 export function AiInsightBanner({ insights }: { insights: Insight[] }) {
   return (
-    <GlassCard className="p-4 flex flex-col gap-2" aria-live="polite">
+    <Card className="p-4 flex flex-col gap-2" aria-live="polite">
       {insights.map((i) => (
         <div key={i.title} className="flex items-start gap-2">
           <Badge tone={i.tone}>{i.title}</Badge>
@@ -20,6 +20,6 @@ export function AiInsightBanner({ insights }: { insights: Insight[] }) {
       {insights.length === 0 && (
         <p className="text-sm text-[color:var(--label-secondary)]">Aucun point d'attention particulier.</p>
       )}
-    </GlassCard>
+    </Card>
   );
 }

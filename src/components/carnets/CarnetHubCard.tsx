@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import Icon from '@/components/ui/AppIcon';
-import GlassIconButton from '@/components/ui/GlassIconButton';
+import { IconButton } from '@/components/ui';
 import SmartImage from '@/components/ui/SmartImage';
 
 export interface CarnetItem {
@@ -157,14 +157,17 @@ export default function CarnetHubCard({
 
         {/* Top Right Save Action with Image 3 GlassIconButton */}
         <div className="absolute top-3 right-3 flex items-center gap-1">
-          <GlassIconButton
+          <IconButton
             size="sm"
-            active={isSaved}
-            activeClassName="!bg-amber-400 !text-amber-950 !border-amber-300"
             onClick={handleSaveClick}
             title={isSaved ? "Retirer des favoris" : "Enregistrer dans mes favoris"}
-            icon={<Icon name={isSaved ? 'BookmarkSolidIcon' : 'BookmarkIcon'} size={13} />}
-          />
+            aria-label={isSaved ? "Retirer des favoris" : "Enregistrer dans mes favoris"}
+            variant={isSaved ? 'solid' : 'glass'}
+            aria-pressed={isSaved || undefined}
+            className={isSaved ? "!bg-amber-400 !text-amber-950 !border-amber-300" : undefined}
+          >
+            <Icon name={isSaved ? 'BookmarkSolidIcon' : 'BookmarkIcon'} size={13} />
+          </IconButton>
         </div>
 
         {/* Metrics overlay on bottom of image */}
@@ -227,20 +230,25 @@ export default function CarnetHubCard({
           </div>
 
           <div className="flex items-center gap-2">
-            <GlassIconButton
+            <IconButton
               size="sm"
-              active={isLiked}
-              count={likesCount}
               onClick={handleLikeClick}
               title="J'aime ce récit"
-              icon={<HeartSvg filled={isLiked} />}
-            />
+              aria-label="J'aime ce récit"
+              variant={isLiked ? 'solid' : 'glass'}
+              aria-pressed={isLiked || undefined}
+              style={{ width: 'auto', paddingInline: '10px' }}
+            >
+              <span className="inline-flex items-center gap-1.5"><HeartSvg filled={isLiked} /><span className="tabular-nums">{likesCount}</span></span>
+            </IconButton>
 
-            <GlassIconButton
+            <IconButton
               size="sm"
               title="Lire le carnet d'expédition"
-              icon={<Icon name="ArrowRightIcon" size={13} />}
-            />
+              aria-label="Lire le carnet d'expédition"
+            >
+              <Icon name="ArrowRightIcon" size={13} />
+            </IconButton>
           </div>
         </div>
       </div>

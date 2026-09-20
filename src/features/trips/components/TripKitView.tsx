@@ -5,7 +5,7 @@ import { useMemo, useState, useTransition, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import Link from 'next/link';
-import { GlassCard } from '@/components/ui/GlassCard';
+import { Card } from '@/components/ui';
 import { GlassCapsuleBtn } from '@/components/ui/GlassCapsuleBtn';
 import { GlassModal } from '@/components/ui/GlassModal';
 import { EmptyState } from '@/components/ui/EmptyState';
@@ -417,9 +417,8 @@ export function TripKitView({
       {/* 2. Recommandations : fusionnées dans « Sac & inventaire » (boutique en tête de liste) */}
 
       {/* 3. Sac & inventaire : ce qu'on a + ce qu'on n'a pas (boutique en tête, consommables d'abord) */}
-      <GlassCard
+      <Card
         tone="neutral"
-        blur="md"
         className="p-5 rounded-3xl border border-white/70 shadow-sm space-y-4"
       >
         <div className="flex items-center justify-between gap-3">
@@ -555,7 +554,7 @@ export function TripKitView({
             ))}
           </div>
         )}
-      </GlassCard>
+      </Card>
 
       {/* Modal Ajout Rapide d'Équipement */}
       <GlassModal

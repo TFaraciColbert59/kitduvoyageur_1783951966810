@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import Icon from '@/components/ui/AppIcon';
-import LkvButton from '@/components/ui/LkvButton';
+import { Button } from '@/components/ui';
 import { getCart, getCartTotals, clearCart, CartItem } from '@/lib/cart';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -460,9 +460,9 @@ export default function CheckoutPage() {
                       </div>
 
                       {step === 'livraison' && (
-                        <LkvButton onClick={handleShippingSubmit} variant="primary" size="lg" fullWidth className="mt-8">
+                        <Button onClick={handleShippingSubmit} variant="primary" size="lg" fullWidth className="mt-8">
                           Continuer vers le paiement →
-                        </LkvButton>
+                        </Button>
                       )}
                     </div>
 
@@ -548,7 +548,7 @@ export default function CheckoutPage() {
                             </label>
                           </div>
 
-                          <LkvButton
+                          <Button
                             onClick={handleStripeCheckout}
                             disabled={processing}
                             loading={processing}
@@ -557,7 +557,7 @@ export default function CheckoutPage() {
                             fullWidth
                           >
                             Payer {grandTotal.toFixed(2)} €
-                          </LkvButton>
+                          </Button>
                         </>
                       )}
                     </div>

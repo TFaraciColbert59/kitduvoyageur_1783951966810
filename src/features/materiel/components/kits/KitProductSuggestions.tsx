@@ -4,7 +4,7 @@ import Icon from '@/components/ui/Icon';
 import React, { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { GlassCard } from '@/components/ui/GlassCard';
+import { Card } from '@/components/ui';
 import { Eyebrow } from '@/components/ui/Eyebrow';
 import { useToast } from '@/contexts/ToastContext';
 import { addToCart } from '@/lib/cart';
@@ -152,7 +152,7 @@ export function KitProductSuggestions({ products = [] }: { products?: ProductSug
   };
 
   return (
-    <GlassCard
+    <Card
       as="article"
       tone="sage"
       ariaLabelledBy="suggestions-title"
@@ -280,6 +280,6 @@ export function KitProductSuggestions({ products = [] }: { products?: ProductSug
           </button>
         </div>
       )}
-    </GlassCard>
+    </Card>
   );
 }

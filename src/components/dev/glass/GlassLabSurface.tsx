@@ -2,7 +2,7 @@
 
 import dynamic from 'next/dynamic';
 import { Component, type ReactNode } from 'react';
-import { GlassCard } from '@/components/ui/GlassCard';
+import { Card } from '@/components/ui';
 import type { GlassEngine } from './glassLabPolicy';
 import styles from './glassLab.module.css';
 
@@ -26,10 +26,10 @@ export function GlassLabSurface({ engine, children, onError, selected, critical 
   critical?: boolean;
 }) {
   return (
-    <GlassCard
+    <Card
       as="article"
-      variant={critical ? 'critical' : selected ? 'selected' : 'base'}
-      tier={engine === 'rdev' ? 'premium' : 'standard'}
+      selected={selected}
+      tone={critical ? 'danger' : 'neutral'}
       className={styles.surface}
       data-lab-surface=""
       data-lab-engine={engine}
@@ -42,6 +42,6 @@ export function GlassLabSurface({ engine, children, onError, selected, critical 
         </div>
       )}
       <div className={styles.content}>{children}</div>
-    </GlassCard>
+    </Card>
   );
 }

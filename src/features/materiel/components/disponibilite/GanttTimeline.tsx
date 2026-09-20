@@ -1,4 +1,4 @@
-import { GlassCard } from '@/components/ui/GlassCard';
+import { Card } from '@/components/ui';
 import { Eyebrow } from '@/components/ui/Eyebrow';
 
 export interface GanttLoan { id: string; label: string; start: string; end: string }
@@ -12,7 +12,7 @@ export function GanttTimeline({ loans, days = 30 }: { loans: GanttLoan[]; days?:
   const anchor = new Date();
   const cols = Array.from({ length: days }, (_, i) => i);
   return (
-    <GlassCard as="article" ariaLabelledBy="gantt-title" className="p-4">
+    <Card as="article" ariaLabelledBy="gantt-title" className="p-4">
       <Eyebrow>Timeline prêts (30 j)</Eyebrow>
       <h3 id="gantt-title" className="sr-only">Timeline des prêts sur 30 jours</h3>
       <div className="mt-3 flex flex-col gap-2">
@@ -37,6 +37,6 @@ export function GanttTimeline({ loans, days = 30 }: { loans: GanttLoan[]; days?:
         })}
         {loans.length === 0 && <p className="text-sm text-[color:var(--label-secondary)]">Aucun prêt sur la période.</p>}
       </div>
-    </GlassCard>
+    </Card>
   );
 }

@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import Icon from '@/components/ui/AppIcon';
-import GlassIconButton from '@/components/ui/GlassIconButton';
+import { IconButton } from '@/components/ui';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 
 interface TeamMember {
@@ -95,15 +95,17 @@ export default function ClubTeamCard({
               </div>
 
               {onContact && (
-                <GlassIconButton
+                <IconButton
                   size="sm"
                   onClick={() => {
                     triggerHaptic('selection');
                     onContact(admin.user?.full_name || "l'organisateur");
                   }}
                   title="Envoyer un message"
-                  icon={<Icon name="ChatBubbleLeftIcon" size={12} />}
-                />
+                  aria-label="Envoyer un message"
+                >
+                  <Icon name="ChatBubbleLeftIcon" size={12} />
+                </IconButton>
               )}
             </div>
           ))

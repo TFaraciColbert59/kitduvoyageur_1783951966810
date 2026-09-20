@@ -9,7 +9,7 @@ import { DigitalLoanContract } from '@/features/materiel/components/disponibilit
 import { AutoReminders } from '@/features/materiel/components/disponibilite/AutoReminders';
 import { DispoScore } from '@/features/materiel/components/disponibilite/DispoScore';
 import { CollectiveActions } from '@/features/materiel/components/disponibilite/CollectiveActions';
-import { GlassCard } from '@/components/ui/GlassCard';
+import { Card } from '@/components/ui';
 import { getLoans } from '@/features/materiel/services/getLoans';
 import { getInventory } from '@/features/materiel/services/getInventory';
 import { detectConflicts } from '@/lib/materiel/conflicts';
@@ -53,14 +53,14 @@ export async function HubDisponibiliteSection() {
 
   return (
     <div className="grid grid-cols-12 gap-[var(--grid-gap)]">
-      <GlassCard className="col-span-12 md:col-span-4 p-4 flex items-center gap-4" aria-labelledby="hub-gauge-title">
+      <Card className="col-span-12 md:col-span-4 p-4 flex items-center gap-4" ariaLabelledBy="hub-gauge-title">
         <AvailabilityGauge availableCount={Math.max(0, available)} total={inventory.length} />
         <div>
           <h2 id="hub-gauge-title" className="sr-only">Disponibilité</h2>
           <p className="text-[10px] font-medium uppercase tracking-[0.14em] text-[var(--lkv-text-muted)]">Objets disponibles</p>
           <p className="text-sm text-[color:var(--label-secondary)]">{active.length} en prêt</p>
         </div>
-      </GlassCard>
+      </Card>
       <div className="col-span-12 md:col-span-8">
         <DispoKpis data={{ active: active.length, overdue, returned, totalObjects: inventory.length }} />
       </div>

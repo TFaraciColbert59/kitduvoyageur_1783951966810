@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import Icon from '@/components/ui/AppIcon';
-import { GlassCard } from '@/components/ui/GlassCard';
+import { Card } from '@/components/ui';
 import { createClient } from '@/lib/supabase/client';
 import { fetchPublicProfilesWith } from '@/lib/queries/publicProfilesCore';
 import { useAuth } from '@/contexts/AuthContext';
@@ -51,7 +51,7 @@ function ReviewCard({ review, onHelpful }: { review: Review; onHelpful: (id: str
   const type = typeConfig[review.type] ?? typeConfig['produit'];
   const authorName = review.author?.full_name ?? 'Membre';
   return (
-    <GlassCard as="article" tone="sage" className="p-5 flex flex-col">
+    <Card as="article" tone="sage" className="p-5 flex flex-col">
       <div className="flex items-start gap-3 mb-4">
         <Link
           href={review.user_id ? `/profil/${review.user_id}` : '/communaute'}
@@ -79,7 +79,7 @@ function ReviewCard({ review, onHelpful }: { review: Review; onHelpful: (id: str
         <button onClick={() => { if (!voted) { onHelpful(review.id); setVoted(true); } }} className={`glass-capsule-btn !min-h-0 !py-1 !px-3 !text-xs ${voted ? 'primary' : ''}`}><Icon name="HandThumbUpIcon" size={14} />Utile ({review.helpful_count + (voted ? 1 : 0)})</button>
         <button className="glass-capsule-btn !min-h-0 !py-1 !px-3 !text-xs"><Icon name="FlagIcon" size={12} />Signaler</button>
       </div>
-    </GlassCard>
+    </Card>
   );
 }
 

@@ -4,7 +4,7 @@ import Icon from '@/components/ui/Icon';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { GlassCard } from '@/components/ui/GlassCard';
+import { Card } from '@/components/ui';
 import { Badge } from '@/components/ui/Badge';
 import { useToast } from '@/contexts/ToastContext';
 import { ArrowDownIcon as ArrowDown } from '@/components/icons/arrow-down';
@@ -72,7 +72,7 @@ export function TemplateStore({ kits = [] }: { kits: PublicKit[] }) {
   };
 
   return (
-    <GlassCard
+    <Card
       as="article"
       tone="sage"
       ariaLabelledBy="templates-title"
@@ -172,6 +172,6 @@ export function TemplateStore({ kits = [] }: { kits: PublicKit[] }) {
           1 clic · Import
         </span>
       </div>
-    </GlassCard>
+    </Card>
   );
 }

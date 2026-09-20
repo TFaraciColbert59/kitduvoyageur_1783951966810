@@ -60,14 +60,48 @@ export function lkvConfirm(messageOrOptions: string | ConfirmOptions): Promise<b
   });
 }
 
-export function lkvAlert(message: string): void {
-  toast(message);
+export interface PromptOptions {
+  title: string;
+  defaultValue?: string;
+  placeholder?: string;
+  confirmLabel?: string;
 }
 
-/** Exception documentée : la saisie de texte n'a pas encore d'hôte canonique. */
-export function lkvPrompt(message: string, defaultValue?: string): string | null {
-  if (typeof window !== 'undefined') {
-    return window.prompt(message, defaultValue);
-  }
-  return null;
+export type PromptRequest = PromptOptions & {
+  resolve: (value: string | null) => void;
+};
+
+let pendingPrompt: PromptRequest | null = null;
+const promptListeners = new Set<(request: PromptRequest | null) => void>();
+
+function emitPrompt(): void {
+  for (const listener of promptListeners) listener(pendingPrompt);
+}
+
+export function subscribePrompt(
+  listener: (request: PromptRequest | null) => void
+): () => void {
+  promptListeners.add(listener);
+  listener(pendingPrompt);
+  return () => {
+    promptListeners.delete(listener);
+  };
+}
+
+export function resolvePrompt(value: string | null): void {
+  const current = pendingPrompt;
+  pendingPrompt = null;
+  emitPrompt();
+  current?.resolve(value);
+}
+
+export function lkvPromptAsync(options: PromptOptions): Promise<string | null> {
+  return new Promise((resolve) => {
+    pendingPrompt = { ...options, resolve };
+    emitPrompt();
+  });
+}
+
+export function lkvAlert(message: string): void {
+  toast(message);
 }

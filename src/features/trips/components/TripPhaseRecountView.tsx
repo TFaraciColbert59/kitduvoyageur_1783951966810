@@ -2,7 +2,7 @@
 
 import Icon from '@/components/ui/Icon';
 import React, { useState } from 'react';
-import { GlassCard, GlassCapsuleBtn } from '@/components/ui';
+import { Card, GlassCapsuleBtn } from '@/components/ui';
 import type { TripFull } from '../types/trip.types';
 import { TripNotesView } from './TripNotesView';
 import { TripBudgetView } from './TripBudgetView';
@@ -21,7 +21,7 @@ export function TripPhaseRecountView({ trip }: TripPhaseRecountViewProps) {
   return (
     <div className="space-y-6">
       {/* 1. Bannière d'accomplissement & Export */}
-      <GlassCard tone="sage" className="p-5 sm:p-6 rounded-3xl border border-white/70">
+      <Card tone="sage" className="p-5 sm:p-6 rounded-3xl border border-white/70">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-start sm:items-center gap-3.5">
             <div className="w-12 h-12 rounded-2xl bg-lkv-primary text-white flex items-center justify-center shrink-0 shadow-md">
@@ -50,7 +50,7 @@ export function TripPhaseRecountView({ trip }: TripPhaseRecountViewProps) {
             Partager / Exporter GPX
           </GlassCapsuleBtn>
         </div>
-      </GlassCard>
+      </Card>
 
       {/* 2. Sous-onglets de la phase Raconter */}
       <div className="flex items-center gap-2">

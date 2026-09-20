@@ -1,7 +1,7 @@
 ﻿'use client';
 import Icon from '@/components/ui/Icon';
 import Link from 'next/link';
-import { GlassCard } from '@/components/ui/GlassCard';
+import { Card } from '@/components/ui';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 
 interface ForgetData {
@@ -24,7 +24,7 @@ export function GearCardForget({ data, className }: { data: ForgetData; classNam
         ];
 
   return (
-    <GlassCard as="article" interactive ariaLabelledBy="forget-title" className={className}>
+    <Card as="article" variant="interactive" ariaLabelledBy="forget-title" className={className}>
       <div className="p-2.5 sm:p-5 flex flex-col justify-between h-full gap-1.5 sm:gap-4">
         {/* Header with Title & Large Metric */}
         <div className="flex items-start justify-between pr-7 md:pr-10 gap-1">
@@ -96,6 +96,6 @@ export function GearCardForget({ data, className }: { data: ForgetData; classNam
           </Link>
         </div>
       </div>
-    </GlassCard>
+    </Card>
   );
 }

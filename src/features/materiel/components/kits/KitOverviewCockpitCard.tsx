@@ -1,6 +1,6 @@
 'use client';
 
-import { GlassCard } from '@/components/ui/GlassCard';
+import { Card } from '@/components/ui';
 import { Badge } from '@/components/ui/Badge';
 import { Calendar, ShieldCheck } from 'lucide-react';
 import { CompassIcon as Compass } from '@/components/icons/compass';
@@ -17,7 +17,7 @@ export function KitOverviewCockpitCard({ kit }: Props) {
   const season = kit?.season ? kit.season.replace('_', ' ') : 'Toute saison';
 
   return (
-    <GlassCard as="article" tone="sage" ariaLabelledBy="overview-title" className="p-3 md:p-4 flex flex-col justify-between h-full min-h-0">
+    <Card as="article" tone="sage" ariaLabelledBy="overview-title" className="p-3 md:p-4 flex flex-col justify-between h-full min-h-0">
       <div className="flex items-center gap-1.5 pr-12 md:pr-14 shrink-0">
         <p className="truncate text-[10px] md:text-sm font-semibold text-[var(--lkv-primary)] font-body">
           Kit Actif · Synthèse
@@ -39,6 +39,6 @@ export function KitOverviewCockpitCard({ kit }: Props) {
         <span className="text-[var(--lkv-primary-soft)] font-semibold">Poids du kit</span>
         <span className="font-bold text-[var(--lkv-primary)]">{weightKg} kg</span>
       </div>
-    </GlassCard>
+    </Card>
   );
 }

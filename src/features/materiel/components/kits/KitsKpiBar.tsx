@@ -1,6 +1,6 @@
 'use client';
 import Icon from '@/components/ui/Icon';
-import { GlassCard } from '@/components/ui/GlassCard';
+import { Card } from '@/components/ui';
 import { Eyebrow } from '@/components/ui/Eyebrow';
 
 export interface KitsKpi {
@@ -12,7 +12,7 @@ export interface KitsKpi {
 export function KitsKpiBar({ kpi }: { kpi: KitsKpi }) {
   return (
     <section aria-label="Indicateurs clés">
-      <GlassCard tone="sage" className="p-3.5 sm:p-4 flex items-center justify-between gap-4">
+      <Card tone="sage" className="p-3.5 sm:p-4 flex items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-2xl bg-[var(--lkv-primary)]/10 border border-[var(--lkv-primary)]/20 flex items-center justify-center text-[var(--lkv-primary)]">
             <Icon name="package" size={20} />
@@ -40,7 +40,7 @@ export function KitsKpiBar({ kpi }: { kpi: KitsKpi }) {
             <Icon name="scale" size={16} />
           </div>
         </div>
-      </GlassCard>
+      </Card>
     </section>
   );
 }

@@ -3,7 +3,7 @@
 import Icon from '@/components/ui/Icon';
 import React, { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
-import { GlassCard } from '@/components/ui/GlassCard';
+import { Card } from '@/components/ui';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { TrendingUpIcon as TrendingUp } from '@/components/icons/trending-up';
@@ -179,9 +179,7 @@ export default function TrailDetailPanel({ trail, onClose }: Props) {
 
           {/* Title on Hero */}
           <div className="absolute bottom-3 left-3.5 right-3.5">
-            <GlassCard
-              tier="premium"
-              variant="elevated"
+            <Card
               className="rounded-md px-3.5 py-2.5 shadow-xs"
             >
               <p className="text-[10px] font-semibold uppercase tracking-wider text-[#365233] flex items-center gap-1 mb-0.5">
@@ -191,7 +189,7 @@ export default function TrailDetailPanel({ trail, onClose }: Props) {
               <h2 className="text-lg sm:text-xl font-display font-bold leading-tight line-clamp-2 text-[#17402C]">
                 {trail.name}
               </h2>
-            </GlassCard>
+            </Card>
           </div>
         </div>
 

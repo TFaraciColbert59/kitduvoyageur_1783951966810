@@ -4,7 +4,7 @@ import Icon from '@/components/ui/Icon';
 import React from 'react';
 import Link from 'next/link';
 import AppImage from '@/components/ui/AppImage';
-import { GlassCard } from '@/components/ui/GlassCard';
+import { Card } from '@/components/ui';
 import { TripBadge } from './TripBadge';
 import { tripSwitchHref } from '../registry/tripSectionRegistry';
 import { deriveScale, deriveParty, getProfileBadgeLabel } from '../engine/tripProfileEngine';
@@ -38,10 +38,9 @@ export function TripCard({ trip, showRole = true }: TripCardProps) {
 
   return (
     <Link href={tripSwitchHref(trip.slug)} className="block group">
-      <GlassCard
+      <Card
         tone="neutral"
-        blur="md"
-        interactive
+        variant="interactive"
         className="h-full border border-white/60 hover:border-lkv-secondary/40 transition-all duration-300 hover:shadow-lg rounded-2xl overflow-hidden"
       >
         {/* Cover Image (D32 : fallback onError vers no_image si URL cassée) */}
@@ -117,7 +116,7 @@ export function TripCard({ trip, showRole = true }: TripCardProps) {
             </div>
           </div>
         </div>
-      </GlassCard>
+      </Card>
     </Link>
   );
 }

@@ -1,17 +1,16 @@
 import { describe, it, expect } from 'vitest';
 import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { GlassCard, Tabs, Sheet, Badge, EmptyState } from '@/components/ui';
+import { Card, Tabs, Sheet, Badge, EmptyState } from '@/components/ui';
 
 describe('Sous-phase 2.3 — Primitives Partagées UI (TDD)', () => {
-  it('TEST-PRIM-01: GlassCard renders with Apple backdrop blur and tone styles', () => {
+  it('TEST-PRIM-01: Card renders canonical surface with tone styles', () => {
     const html = renderToStaticMarkup(
-      React.createElement(GlassCard, { tone: 'sage', blur: 'md' }, 'Contenu carte')
+      React.createElement(Card, { tone: 'sage' }, 'Contenu carte')
     );
-    expect(html).toContain('glass');
+    expect(html).toContain('data-variant="standard"');
     expect(html).toContain('Contenu carte');
-    expect(html).toContain('data-glass-variant="base"');
-    expect(html).toContain('tone-sage');
+    expect(html).toContain('data-tone="sage"');
   });
 
   it('TEST-PRIM-02: Tabs (API canonique Lot 3) rend options, état actif et compteur', () => {

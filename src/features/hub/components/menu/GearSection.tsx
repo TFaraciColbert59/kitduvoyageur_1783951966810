@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { GlassCard } from '@/components/ui/GlassCard';
+import { Card } from '@/components/ui';
 import { Eyebrow } from '@/components/ui/Eyebrow';
 import { Badge } from '@/components/ui/Badge';
 import { TripKitSelector } from './TripKitSelector';
@@ -87,7 +87,7 @@ export async function GearSection({
     <div className="space-y-4">
       <div className="hidden lg:block space-y-4">
       <GearCarouselBlock tripSlug={trip.slug} cards={gearCards} />
-      <GlassCard className="rounded-2xl border border-white p-4 sm:p-5">
+      <Card className="rounded-2xl border border-white p-4 sm:p-5">
         <div className="flex items-start justify-between gap-3 flex-wrap">
           <Eyebrow>Kit sélectionné</Eyebrow>
           <TripKitSelector
@@ -167,7 +167,7 @@ export async function GearSection({
             </Link>
           </div>
         )}
-      </GlassCard>
+      </Card>
 
       <section aria-label="Infos importantes" className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {/* Verre simple (pas de GlassCard) : la hauteur suit le contenu, les

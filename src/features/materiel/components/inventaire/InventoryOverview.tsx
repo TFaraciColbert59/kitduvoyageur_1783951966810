@@ -1,4 +1,4 @@
-import { GlassCard } from '@/components/ui/GlassCard';
+import { Card } from '@/components/ui';
 import { Metric } from '@/components/ui/Metric';
 import { Eyebrow } from '@/components/ui/Eyebrow';
 import { ProgressBar } from '@/components/ui/ProgressBar';
@@ -13,7 +13,7 @@ export interface InventoryOverviewData {
 /** W-I-1 InventoryOverview — 3 KPI + barre de fiabilité (product_ownership). */
 export function InventoryOverview({ data }: { data: InventoryOverviewData }) {
   return (
-    <GlassCard className="p-4" aria-labelledby="inv-overview">
+    <Card className="p-4" ariaLabelledBy="inv-overview">
       <h2 id="inv-overview" className="sr-only">Vue d'ensemble de l'inventaire</h2>
       <div className="grid grid-cols-2 md:grid-cols-3 gap-6 items-center">
         <div>
@@ -33,6 +33,6 @@ export function InventoryOverview({ data }: { data: InventoryOverviewData }) {
         <Eyebrow>Fiabilité</Eyebrow>
         <ProgressBar value={data.reliabilityPct} label="Fiabilité de l'équipement" tone={data.reliabilityPct >= 80 ? 'sage' : 'warn'} />
       </div>
-    </GlassCard>
+    </Card>
   );
 }

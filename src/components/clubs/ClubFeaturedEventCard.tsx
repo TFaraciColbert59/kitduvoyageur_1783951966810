@@ -2,7 +2,6 @@
 
 import React from 'react';
 import Icon from '@/components/ui/AppIcon';
-import GlassIconButton from '@/components/ui/GlassIconButton';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 
 interface ClubFeaturedEventCardProps {

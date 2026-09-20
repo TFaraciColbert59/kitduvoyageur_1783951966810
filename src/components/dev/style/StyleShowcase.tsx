@@ -1,8 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import LkvButton from '@/components/ui/LkvButton';
-import GlassIconButton from '@/components/ui/GlassIconButton';
+import { Button, IconButton } from '@/components/ui';
 import { LkvChip } from '@/components/ui/LkvChip';
 import Icon from '@/components/ui/AppIcon';
 import LiquidGlass from '@/components/glass/LiquidGlass';
@@ -231,15 +230,29 @@ export default function StyleShowcase() {
         <VariablePanel />
 
         {/* 1 — Composants de l'app (pile LiquidGlass) */}
-        <Section title="1 · Composants de l'app" hint="LkvButton · GlassIconButton · LkvChip — tous sur la même pile, contenu blanc, actif = forêt plein">
-          <LkvButton variant="primary">Action principale</LkvButton>
-          <LkvButton variant="secondary">Action secondaire</LkvButton>
-          <LkvButton variant="ghost">Discret</LkvButton>
-          <LkvButton variant="danger">Destructif</LkvButton>
-          <LkvButton variant="icon-only" aria-label="Plus"><Icon name="plus" size={18} /></LkvButton>
-          <GlassIconButton title="J'aime" count={128} active icon={<Icon name="heart" size={14} />} />
-          <GlassIconButton title="Commenter" count={24} icon={<Icon name="message-square" size={14} />} />
-          <LkvButton variant="primary" disabled>Désactivé</LkvButton>
+        <Section title="1 · Composants de l'app" hint="Button · IconButton · LkvChip — tous sur la même pile, contenu blanc, actif = forêt plein">
+          <Button variant="primary">Action principale</Button>
+          <Button variant="secondary">Action secondaire</Button>
+          <Button variant="ghost">Discret</Button>
+          <Button variant="destructive">Destructif</Button>
+          <IconButton aria-label="Plus"><Icon name="plus" size={18} /></IconButton>
+          <IconButton
+            title="J'aime"
+            aria-label="J'aime"
+            variant="solid"
+            aria-pressed
+            style={{ width: 'auto', paddingInline: '10px' }}
+          >
+            <span className="inline-flex items-center gap-1.5"><Icon name="heart" size={14} /><span className="tabular-nums">{128}</span></span>
+          </IconButton>
+          <IconButton
+            title="Commenter"
+            aria-label="Commenter"
+            style={{ width: 'auto', paddingInline: '10px' }}
+          >
+            <span className="inline-flex items-center gap-1.5"><Icon name="message-square" size={14} /><span className="tabular-nums">{24}</span></span>
+          </IconButton>
+          <Button variant="primary" disabled>Désactivé</Button>
         </Section>
 
         {/* 2 — Chips & filtres (même pile) */}
@@ -260,7 +273,7 @@ export default function StyleShowcase() {
           <RefPill label="Commenter" width={84}>
             <Icon name="message-square" size={15} color="#ffffff" /> 7
           </RefPill>
-          <LkvButton variant="glass-pill-primary" icon={<Icon name="plus" size={15} />}>Participer</LkvButton>
+          <Button variant="primary" icon={<Icon name="plus" size={15} />}>Participer</Button>
           <span className="glass-pill text-[10px] font-mono font-bold text-white border border-white/40" style={{ background: 'var(--btn-tint)' }}>
             Il y a 32 j
           </span>

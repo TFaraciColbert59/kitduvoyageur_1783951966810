@@ -3,7 +3,7 @@
 import React from 'react';
 import { SearchIcon as SearchAnimated } from '@/components/icons/search';
 import { RotateCCWIcon as RotateCcwAnimated } from '@/components/icons/rotate-ccw';
-import LkvButton from '@/components/ui/LkvButton';
+import { Button } from '@/components/ui';
 import LkvChip from '@/components/ui/LkvChip';
 
 export interface PoiFilterItem {
@@ -94,7 +94,7 @@ export default function ExplorerFilterPanel({
       </div>
 
       {hasFilters && (
-        <LkvButton
+        <Button
           variant="secondary"
           size="sm"
           onClick={onReset}
@@ -102,7 +102,7 @@ export default function ExplorerFilterPanel({
           className="self-start"
         >
           Réinitialiser les filtres
-        </LkvButton>
+        </Button>
       )}
 
       {/* Difficulté */}

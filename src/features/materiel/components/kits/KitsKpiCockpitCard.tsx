@@ -2,7 +2,7 @@
 
 import Icon from '@/components/ui/Icon';
 import { motion } from 'framer-motion';
-import { GlassCard } from '@/components/ui/GlassCard';
+import { Card } from '@/components/ui';
 import { ShoppingBagIcon as ShoppingBag } from '@/components/icons/shopping-bag';
 import { LayersIcon as Layers } from '@/components/icons/layers';
 
@@ -59,7 +59,7 @@ export function KitsKpiCockpitCard({
   ];
 
   return (
-    <GlassCard
+    <Card
       as="article"
       tone="sage"
       ariaLabelledBy="kpi-title"
@@ -105,6 +105,6 @@ export function KitsKpiCockpitCard({
           </motion.div>
         ))}
       </div>
-    </GlassCard>
+    </Card>
   );
 }

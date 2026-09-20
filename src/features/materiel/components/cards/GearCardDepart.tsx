@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ClockIcon as Clock } from '@/components/icons/clock';
 import { ArrowRightIcon as ArrowRightAnimated } from '@/components/icons/arrow-right';
-import { GlassCard } from '@/components/ui/GlassCard';
+import { Card } from '@/components/ui';
 import { Badge } from '@/components/ui/Badge';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 import { CountdownLive } from './CountdownLive';
@@ -25,9 +25,9 @@ export function GearCardDepart({ data, className }: { data: DepartData; classNam
   const go = () => router.push(href);
 
   return (
-    <GlassCard
+    <Card
       as="article"
-      interactive
+      variant="interactive"
       tone="sage"
       ariaLabelledBy="depart-title"
       className={className}
@@ -136,6 +136,6 @@ export function GearCardDepart({ data, className }: { data: DepartData; classNam
           )}
         </div>
       </div>
-    </GlassCard>
+    </Card>
   );
 }

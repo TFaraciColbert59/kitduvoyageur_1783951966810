@@ -1,4 +1,4 @@
-import { GlassCard } from '@/components/ui/GlassCard';
+import { Card } from '@/components/ui';
 import { Eyebrow } from '@/components/ui/Eyebrow';
 import { ProductGlassCard } from '@/components/ui/ProductGlassCard';
 import type { ProductSuggestion } from '@/features/materiel/services/getProductSuggestions';
@@ -6,7 +6,7 @@ import type { ProductSuggestion } from '@/features/materiel/services/getProductS
 /** W-I-10 CrossSellStrip — cross-sell IA boutique (ProductGlassCard). */
 export function CrossSellStrip({ products }: { products: ProductSuggestion[] }) {
   return (
-    <GlassCard as="article" ariaLabelledBy="cross-sell-title" className="p-4">
+    <Card as="article" ariaLabelledBy="cross-sell-title" className="p-4">
       <Eyebrow>Suggestions pour compléter</Eyebrow>
       <h3 id="cross-sell-title" className="sr-only">Produits suggérés pour votre inventaire</h3>
       <div className="mt-3 flex gap-3 overflow-x-auto no-scrollbar">
@@ -21,6 +21,6 @@ export function CrossSellStrip({ products }: { products: ProductSuggestion[] }) 
         ))}
         {products.length === 0 && <p className="text-sm text-[color:var(--label-secondary)]">Aucune suggestion pour le moment.</p>}
       </div>
-    </GlassCard>
+    </Card>
   );
 }

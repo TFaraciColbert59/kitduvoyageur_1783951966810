@@ -4,7 +4,6 @@ import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import Icon from '@/components/ui/AppIcon';
-import GlassIconButton from '@/components/ui/GlassIconButton';
 import ClubDiscussionCard from '@/components/clubs/ClubDiscussionCard';
 import ClubFeaturedEventCard from '@/components/clubs/ClubFeaturedEventCard';
 import ClubTeamCard from '@/components/clubs/ClubTeamCard';

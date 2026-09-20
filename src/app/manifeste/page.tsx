@@ -4,7 +4,7 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
 import Link from 'next/link';
-import { GlassCard } from '@/components/ui/GlassCard';
+import { Card } from '@/components/ui';
 import { Eyebrow } from '@/components/ui/Eyebrow';
 import { FlaskConical, Mountain, Users } from 'lucide-react';
 
@@ -88,17 +88,17 @@ export default function ManifestePage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {PRINCIPES.map((principe) => (
-                <GlassCard
+                <Card
                   key={principe.nom}
                   as="article"
-                  interactive
+                  variant="interactive"
                   tone="sage"
                   className="p-6 flex flex-col gap-4"
                 >
                   <principe.icone size={22} className="text-[#17402C]" aria-hidden />
                   <h2 className="font-display font-bold text-xl text-[#17402C]">{principe.nom}</h2>
                   <p className="text-sm text-[#365233] leading-relaxed">{principe.description}</p>
-                </GlassCard>
+                </Card>
               ))}
             </div>
 
@@ -130,10 +130,10 @@ export default function ManifestePage() {
 
             <div className="flex flex-col gap-3">
               {PRINCIPES.map((principe) => (
-                <GlassCard
+                <Card
                   key={principe.nom}
                   as="article"
-                  interactive
+                  variant="interactive"
                   tone="sage"
                   className="p-4 flex flex-col gap-3"
                 >
@@ -144,7 +144,7 @@ export default function ManifestePage() {
                     </h2>
                   </div>
                   <p className="text-xs text-[#365233] leading-relaxed">{principe.description}</p>
-                </GlassCard>
+                </Card>
               ))}
             </div>
 

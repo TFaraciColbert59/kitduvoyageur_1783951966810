@@ -2,7 +2,7 @@
 
 import Icon from '@/components/ui/Icon';
 import React, { useEffect, useMemo, useState, useTransition } from 'react';
-import { GlassCard } from '@/components/ui/GlassCard';
+import { Card } from '@/components/ui';
 import { GlassCapsuleBtn } from '@/components/ui/GlassCapsuleBtn';
 import { GlassModal } from '@/components/ui/GlassModal';
 import { EmptyState } from '@/components/ui/EmptyState';
@@ -209,7 +209,7 @@ export function TripBudgetView({ trip, initialDay }: TripBudgetViewProps) {
 
       {/* Bandeau synthèse : prévu vs réel vs reste */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <GlassCard
+        <Card
           tone="neutral"
           className="p-4 rounded-[var(--lkv-radius-lg)] border border-white/60 shadow-sm"
         >
@@ -222,9 +222,9 @@ export function TripBudgetView({ trip, initialDay }: TripBudgetViewProps) {
           <div className="text-[11px] text-[var(--lkv-text-muted)] mt-1">
             {pendingExpenses.length} dépense{pendingExpenses.length > 1 ? 's' : ''} à venir
           </div>
-        </GlassCard>
+        </Card>
 
-        <GlassCard
+        <Card
           tone="neutral"
           className="p-4 rounded-[var(--lkv-radius-lg)] border border-white/60 shadow-sm"
         >
@@ -238,9 +238,9 @@ export function TripBudgetView({ trip, initialDay }: TripBudgetViewProps) {
             {realExpenses.length} dépense{realExpenses.length > 1 ? 's' : ''} réelle
             {realExpenses.length > 1 ? 's' : ''}
           </div>
-        </GlassCard>
+        </Card>
 
-        <GlassCard
+        <Card
           tone="neutral"
           className="p-4 rounded-[var(--lkv-radius-lg)] border border-white/60 shadow-sm"
         >
@@ -275,12 +275,12 @@ export function TripBudgetView({ trip, initialDay }: TripBudgetViewProps) {
               <span className="text-[var(--lkv-text-muted)]">Aucun budget estimé</span>
             )}
           </div>
-        </GlassCard>
+        </Card>
       </div>
 
       {/* Progression du budget estimé */}
       {budgetSummary.estimatedBudget !== null && (
-        <GlassCard
+        <Card
           tone="neutral"
           className="p-4 rounded-[var(--lkv-radius-lg)] border border-white/60 shadow-sm"
         >
@@ -302,7 +302,7 @@ export function TripBudgetView({ trip, initialDay }: TripBudgetViewProps) {
               style={{ width: `${Math.min(budgetSummary.spentPercentage ?? 0, 100)}%` }}
             />
           </div>
-        </GlassCard>
+        </Card>
       )}
 
       {/* Timeline jour par jour : prévu → réel */}
@@ -346,7 +346,7 @@ export function TripBudgetView({ trip, initialDay }: TripBudgetViewProps) {
           dayPlan.map((row) => {
             const isToday = row.isToday;
             return (
-              <GlassCard
+              <Card
                 key={row.date ?? `day-${row.dayNumber}`}
                 tone={isToday ? 'info' : 'neutral'}
                 className={`p-4 rounded-[var(--lkv-radius-lg)] border shadow-xs ${
@@ -498,7 +498,7 @@ export function TripBudgetView({ trip, initialDay }: TripBudgetViewProps) {
                     )}
                   </div>
                 )}
-              </GlassCard>
+              </Card>
             );
           })
         )}
@@ -507,7 +507,7 @@ export function TripBudgetView({ trip, initialDay }: TripBudgetViewProps) {
       {/* Règlements de compte simplifiés & Balances (multi uniquement) */}
       {isMulti && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <GlassCard
+          <Card
             tone="neutral"
             className="p-5 rounded-[var(--lkv-radius-lg)] border border-white/60 shadow-sm space-y-3"
           >
@@ -545,9 +545,9 @@ export function TripBudgetView({ trip, initialDay }: TripBudgetViewProps) {
                 ))}
               </div>
             )}
-          </GlassCard>
+          </Card>
 
-          <GlassCard
+          <Card
             tone="neutral"
             className="p-5 rounded-[var(--lkv-radius-lg)] border border-white/60 shadow-sm space-y-3"
           >
@@ -585,13 +585,13 @@ export function TripBudgetView({ trip, initialDay }: TripBudgetViewProps) {
                 </div>
               ))}
             </div>
-          </GlassCard>
+          </Card>
         </div>
       )}
 
       {/* Ventilation par catégories (réel uniquement, via le moteur) */}
       {Object.keys(budgetSummary.categories).length > 0 && (
-        <GlassCard
+        <Card
           tone="neutral"
           className="p-5 rounded-[var(--lkv-radius-lg)] border border-white/60 shadow-sm space-y-3"
         >
@@ -626,7 +626,7 @@ export function TripBudgetView({ trip, initialDay }: TripBudgetViewProps) {
                 );
               })}
           </div>
-        </GlassCard>
+        </Card>
       )}
 
       {/* Modal de saisie / édition de dépense */}

@@ -5,7 +5,7 @@ import React, { useState, useMemo } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { GlassCard } from '@/components/ui/GlassCard';
+import { Card } from '@/components/ui';
 import { Badge } from '@/components/ui/Badge';
 import { useToast } from '@/contexts/ToastContext';
 import { addToCart } from '@/lib/cart';
@@ -531,7 +531,7 @@ export function KitBuilder({
   const totalWeightG = kitItems.reduce((s, i) => s + i.weight_g, 0);
 
   return (
-    <GlassCard
+    <Card
       as="article"
       tone="sage"
       ariaLabelledBy="kit-builder-title"
@@ -917,6 +917,6 @@ export function KitBuilder({
           {saving ? '…' : `Enregistrer (${kitItems.length})`}
         </motion.button>
       </div>
-    </GlassCard>
+    </Card>
   );
 }

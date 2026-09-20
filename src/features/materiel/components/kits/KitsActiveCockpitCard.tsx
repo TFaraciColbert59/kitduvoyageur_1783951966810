@@ -2,7 +2,7 @@
 
 import Icon from '@/components/ui/Icon';
 import { motion } from 'framer-motion';
-import { GlassCard } from '@/components/ui/GlassCard';
+import { Card } from '@/components/ui';
 import { ShoppingBagIcon as ShoppingBag } from '@/components/icons/shopping-bag';
 import { ClockIcon as Clock } from '@/components/icons/clock';
 import type { KitListItem } from '@/features/materiel/services/getKits';
@@ -17,7 +17,7 @@ export function KitsActiveCockpitCard({ kit }: Props) {
   const weightKg = kit ? (kit.total_weight_g / 1000).toFixed(1) : '0.0';
 
   return (
-    <GlassCard
+    <Card
       as="article"
       tone="sage"
       ariaLabelledBy="active-kit-title"
@@ -134,6 +134,6 @@ export function KitsActiveCockpitCard({ kit }: Props) {
           {weightKg} kg
         </motion.span>
       </div>
-    </GlassCard>
+    </Card>
   );
 }

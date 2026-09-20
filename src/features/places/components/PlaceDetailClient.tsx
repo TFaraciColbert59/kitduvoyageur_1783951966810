@@ -3,8 +3,8 @@
 import Icon from '@/components/ui/Icon';
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { GlassCard } from '@/components/ui/GlassCard';
-import { LkvButton } from '@/components/ui/LkvButton';
+import { Card } from '@/components/ui';
+import { Button } from '@/components/ui';
 import { AddPlaceToTripModal, type UserTripOption } from './AddPlaceToTripModal';
 import { ReportPlaceModal } from './ReportPlaceModal';
 import { PlaceReviewSection } from './PlaceReviewSection';
@@ -40,9 +40,8 @@ export function PlaceDetailClient({ place, reviews, photos, userTrips }: PlaceDe
       </div>
 
       {/* Hero du Lieu */}
-      <GlassCard
+      <Card
         tone="neutral"
-        blur="md"
         className="p-6 sm:p-8 rounded-2xl border border-white/70 shadow-sm relative overflow-hidden"
       >
         <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
@@ -105,31 +104,30 @@ export function PlaceDetailClient({ place, reviews, photos, userTrips }: PlaceDe
 
         {/* Actions Principales */}
         <div className="flex flex-col sm:flex-row gap-3 pt-2 border-t border-stone-200/60">
-          <LkvButton
+          <Button
             variant="primary"
             className="flex-1 flex items-center justify-center gap-2 min-h-[48px] font-bold"
             onClick={() => setIsAddModalOpen(true)}
           >
             <Icon name="plus" className="w-4 h-4" />
             Ajouter à mon voyage
-          </LkvButton>
+          </Button>
 
-          <LkvButton
+          <Button
             variant="secondary"
             className="flex items-center justify-center gap-2 min-h-[48px] text-xs text-stone-600"
             onClick={() => setIsReportModalOpen(true)}
           >
             <Icon name="alert-triangle" className="w-4 h-4 text-stone-500" />
             Signaler un problème
-          </LkvButton>
+          </Button>
         </div>
-      </GlassCard>
+      </Card>
 
       {/* Description */}
       {place.description && (
-        <GlassCard
+        <Card
           tone="neutral"
-          blur="sm"
           className="p-6 sm:p-7 rounded-card border border-white/60"
         >
           <h2 className="text-base font-bold text-stone-900 mb-3 flex items-center gap-2">
@@ -139,13 +137,12 @@ export function PlaceDetailClient({ place, reviews, photos, userTrips }: PlaceDe
           <p className="text-sm text-stone-700 leading-relaxed whitespace-pre-line">
             {place.description}
           </p>
-        </GlassCard>
+        </Card>
       )}
 
       {/* Informations Pratiques */}
-      <GlassCard
+      <Card
         tone="neutral"
-        blur="sm"
         className="p-6 sm:p-7 rounded-card border border-white/60"
       >
         <h2 className="text-base font-bold text-stone-900 mb-4 flex items-center gap-2">
@@ -262,13 +259,12 @@ export function PlaceDetailClient({ place, reviews, photos, userTrips }: PlaceDe
             </div>
           )}
         </div>
-      </GlassCard>
+      </Card>
 
       {/* Galerie Photos si présente */}
       {photos.length > 0 && (
-        <GlassCard
+        <Card
           tone="neutral"
-          blur="sm"
           className="p-6 sm:p-7 rounded-card border border-white/60"
         >
           <h2 className="text-base font-bold text-stone-900 mb-4 flex items-center gap-2">
@@ -290,7 +286,7 @@ export function PlaceDetailClient({ place, reviews, photos, userTrips }: PlaceDe
               </div>
             ))}
           </div>
-        </GlassCard>
+        </Card>
       )}
 
       {/* Avis & Preuve de Terrain */}

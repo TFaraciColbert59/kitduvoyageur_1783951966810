@@ -8,7 +8,7 @@ import { createClient } from '@/lib/supabase/client';
 import { fetchPublicProfilesWith } from '@/lib/queries/publicProfilesCore';
 import { useAuth } from '@/contexts/AuthContext';
 import ReportBlockModal, { ReportTarget } from '@/components/ui/ReportBlockModal';
-import { GlassCard } from '@/components/ui/GlassCard';
+import { Card } from '@/components/ui';
 import { Badge } from '@/components/ui/Badge';
 import { GlassSheet } from '@/components/ui/GlassSheet';
 import Icon from '@/components/ui/AppIcon';
@@ -443,7 +443,7 @@ export default function BouteilleALaMer({ countryIso, countryName }: Props) {
 
   return (
     <>
-      <GlassCard tier="premium" tone="sage" className="mt-6 p-6 md:p-8 relative">
+      <Card tone="sage" className="mt-6 p-6 md:p-8 relative">
       {/* Background Decorative */}
       <div className="absolute top-0 right-0 w-[300px] h-[300px] bg-[#A6C1A0] rounded-full mix-blend-screen filter blur-[80px] opacity-40 -translate-y-1/2 translate-x-1/2 pointer-events-none"></div>
       <div className="absolute bottom-0 left-0 w-[200px] h-[200px] bg-[#C89A3B] rounded-full mix-blend-screen filter blur-[80px] opacity-20 translate-y-1/2 -translate-x-1/2 pointer-events-none"></div>
@@ -883,7 +883,7 @@ export default function BouteilleALaMer({ countryIso, countryName }: Props) {
         </GlassSheet>
       )}
 
-      </GlassCard>
+      </Card>
 
       {/* ── MODAL: Signalement & Blocage ── */}
       <ReportBlockModal

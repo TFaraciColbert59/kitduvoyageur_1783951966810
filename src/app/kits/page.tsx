@@ -4,7 +4,7 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
 import Link from 'next/link';
-import { GlassCard } from '@/components/ui/GlassCard';
+import { Card } from '@/components/ui';
 import { Eyebrow } from '@/components/ui/Eyebrow';
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://lekitduvoyageur.fr';
@@ -114,10 +114,10 @@ export default function KitsPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {KITS.map((kit) => (
-                <GlassCard
+                <Card
                   key={kit.slug}
                   as="article"
-                  interactive
+                  variant="interactive"
                   tone="sage"
                   className="p-6 flex flex-col justify-between gap-4"
                 >
@@ -135,7 +135,7 @@ export default function KitsPage() {
                       <Icon name="arrow-right" size={14} />
                     </Link>
                   </div>
-                </GlassCard>
+                </Card>
               ))}
             </div>
           </main>
@@ -169,10 +169,10 @@ export default function KitsPage() {
 
             <div className="flex flex-col gap-3">
               {KITS.map((kit) => (
-                <GlassCard
+                <Card
                   key={kit.slug}
                   as="article"
-                  interactive
+                  variant="interactive"
                   tone="sage"
                   className="p-4 flex flex-col gap-3"
                 >
@@ -190,7 +190,7 @@ export default function KitsPage() {
                       <Icon name="arrow-right" size={13} />
                     </Link>
                   </div>
-                </GlassCard>
+                </Card>
               ))}
             </div>
           </div>

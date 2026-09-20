@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { GlassCard } from '@/components/ui/GlassCard';
+import { Card } from '@/components/ui';
 import type { KitListItem } from '@/features/materiel/services/getKits';
 
 /** Donut SVG animé à l'entrée via strokeDashoffset (GPU-only, transform + opacity). */
@@ -78,7 +78,7 @@ export function KitPreparationCockpitCard({ kit }: Props) {
   const isComplete = pct >= 100;
 
   return (
-    <GlassCard as="article" tone="sage" ariaLabelledBy="prep-title" className="p-2.5 sm:p-3 flex flex-col items-center justify-between text-center h-full min-h-0">
+    <Card as="article" tone="sage" ariaLabelledBy="prep-title" className="p-2.5 sm:p-3 flex flex-col items-center justify-between text-center h-full min-h-0">
       <div className="w-full flex items-center justify-center pr-8 md:pr-10 shrink-0 mb-0.5">
         <p className="truncate text-[10px] md:text-xs font-semibold text-[var(--lkv-primary)] font-body text-center">
           Statut · Préparation
@@ -106,6 +106,6 @@ export function KitPreparationCockpitCard({ kit }: Props) {
       <div className="text-[8px] md:text-[9px] font-semibold uppercase tracking-wider text-[var(--lkv-primary-soft)] text-center shrink-0">
         {readyCount}/{items.length} équipement(s)
       </div>
-    </GlassCard>
+    </Card>
   );
 }

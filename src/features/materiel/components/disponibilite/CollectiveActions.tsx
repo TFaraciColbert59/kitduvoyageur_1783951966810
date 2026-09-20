@@ -1,6 +1,6 @@
 'use client';
 import { useState } from 'react';
-import { GlassCard } from '@/components/ui/GlassCard';
+import { Card } from '@/components/ui';
 import { Eyebrow } from '@/components/ui/Eyebrow';
 
 /** W-A-10 CollectiveActions — actions collectives sur les prêts. */
@@ -12,7 +12,7 @@ export function CollectiveActions() {
   const reload = () => { window.location.reload(); };
 
   return (
-    <GlassCard as="article" ariaLabelledBy="actions-title" className="p-4">
+    <Card as="article" ariaLabelledBy="actions-title" className="p-4">
       <Eyebrow>Actions collectives</Eyebrow>
       <h3 id="actions-title" className="sr-only">Actions collectives sur les prêts</h3>
       <div className="mt-2 flex flex-wrap gap-2">
@@ -21,6 +21,6 @@ export function CollectiveActions() {
         <button type="button" onClick={reload} className="glass interactive h-10 px-4 rounded-full text-sm font-medium">Rafraîchir</button>
       </div>
       {status && <p className="mt-2 text-sm text-[color:var(--label-secondary)]">{status}</p>}
-    </GlassCard>
+    </Card>
   );
 }

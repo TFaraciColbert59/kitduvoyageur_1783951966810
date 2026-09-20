@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import Icon from '@/components/ui/AppIcon';
-import GlassIconButton from '@/components/ui/GlassIconButton';
+import { IconButton } from '@/components/ui';
 import CarnetMap from '@/components/carnet/CarnetMap';
 import TimelineJours from '@/components/carnet/TimelineJours';
 import MomentCard from '@/components/carnet/MomentCard';
@@ -233,15 +233,17 @@ export default function MobileCarnetDetailView({
             {/* Social & Action Button Group Image 3 */}
             <div className="flex items-center gap-1 shrink-0">
               {/* Like Button */}
-              <GlassIconButton
+              <IconButton
                 size="sm"
                 onClick={handleToggleLike}
                 title="Aimer ce carnet"
-                count={likesCount}
-                active={hasLiked}
-                activeClassName="!bg-rose-50 !border-rose-200 !text-rose-600"
-                icon={
-                  <motion.svg
+                aria-label="Aimer ce carnet"
+                variant={hasLiked ? 'solid' : 'glass'}
+                aria-pressed={hasLiked || undefined}
+                className={hasLiked ? "!bg-rose-50 !border-rose-200 !text-rose-600" : undefined}
+                style={{ width: 'auto', paddingInline: '10px' }}
+              >
+                <span className="inline-flex items-center gap-1.5"><motion.svg
                     whileTap={{ scale: 1.3 }}
                     viewBox="0 0 24 24"
                     className="w-3.5 h-3.5"
@@ -250,48 +252,52 @@ export default function MobileCarnetDetailView({
                     strokeWidth="2"
                   >
                     <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
-                  </motion.svg>
-                }
-              />
+                  </motion.svg><span className="tabular-nums">{likesCount}</span></span>
+              </IconButton>
 
               {/* Comment Button */}
-              <GlassIconButton
+              <IconButton
                 size="sm"
                 onClick={() => {
                   triggerHaptic('selection');
                   setIsCommentsOpen(true);
                 }}
                 title="Commentaires"
-                count={comments.length}
-                icon={<Icon name="ChatBubbleLeftIcon" size={13} />}
-              />
+                aria-label="Commentaires"
+                style={{ width: 'auto', paddingInline: '10px' }}
+              >
+                <span className="inline-flex items-center gap-1.5"><Icon name="ChatBubbleLeftIcon" size={13} /><span className="tabular-nums">{comments.length}</span></span>
+              </IconButton>
 
               {/* Bookmark Button */}
-              <GlassIconButton
+              <IconButton
                 size="sm"
                 onClick={handleToggleSave}
                 title="Enregistrer"
-                active={isSaved}
-                activeClassName="!bg-amber-50 !border-amber-200 !text-amber-700"
-                icon={
-                  <Icon
+                aria-label="Enregistrer"
+                variant={isSaved ? 'solid' : 'glass'}
+                aria-pressed={isSaved || undefined}
+                className={isSaved ? "!bg-amber-50 !border-amber-200 !text-amber-700" : undefined}
+              >
+                <Icon
                     name="BookmarkIcon"
                     size={13}
                     className={isSaved ? 'text-amber-700 fill-amber-700' : ''}
                   />
-                }
-              />
+              </IconButton>
 
               {/* Share Button */}
-              <GlassIconButton
+              <IconButton
                 size="sm"
                 onClick={() => {
                   triggerHaptic('light');
                   onExport();
                 }}
                 title="Partager"
-                icon={<Icon name="ShareIcon" size={13} />}
-              />
+                aria-label="Partager"
+              >
+                <Icon name="ShareIcon" size={13} />
+              </IconButton>
             </div>
           </div>
 

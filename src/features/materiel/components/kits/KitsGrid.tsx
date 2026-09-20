@@ -2,7 +2,7 @@
 
 import Icon from '@/components/ui/Icon';
 import { useState } from 'react';
-import { GlassCard } from '@/components/ui/GlassCard';
+import { Card } from '@/components/ui';
 import { Eyebrow } from '@/components/ui/Eyebrow';
 import { Badge } from '@/components/ui/Badge';
 import { ShoppingBagIcon as ShoppingBag } from '@/components/icons/shopping-bag';
@@ -23,13 +23,13 @@ export function KitsGrid({ kits, onSelect }: Props) {
 
   if (!currentKit) {
     return (
-      <GlassCard tone="sage" className="p-5 text-center">
+      <Card tone="sage" className="p-5 text-center">
         <Eyebrow>Mon Kit</Eyebrow>
         <p className="text-sm text-[var(--lkv-text-muted)] mt-2 mb-3">
           Aucun kit créé pour le moment. Utilisez l&apos;assembleur ci-dessous pour composer votre
           premier kit sur-mesure.
         </p>
-      </GlassCard>
+      </Card>
     );
   }
 
@@ -38,7 +38,7 @@ export function KitsGrid({ kits, onSelect }: Props) {
     : 100;
 
   return (
-    <GlassCard tone="sage" className="p-4 sm:p-5 flex flex-col gap-4">
+    <Card tone="sage" className="p-4 sm:p-5 flex flex-col gap-4">
       {/* Header avec sélecteur si plusieurs kits */}
       <div className="flex items-center justify-between gap-2 flex-wrap">
         <div>
@@ -181,6 +181,6 @@ export function KitsGrid({ kits, onSelect }: Props) {
           </div>
         )}
       </div>
-    </GlassCard>
+    </Card>
   );
 }

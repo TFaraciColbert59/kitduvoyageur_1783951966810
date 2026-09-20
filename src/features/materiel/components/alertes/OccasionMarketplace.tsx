@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { GlassCard } from '@/components/ui/GlassCard';
+import { Card } from '@/components/ui';
 import { Eyebrow } from '@/components/ui/Eyebrow';
 import { Badge } from '@/components/ui/Badge';
 import type { OccasionProduct } from '@/features/materiel/services/getOccasionProducts';
@@ -7,7 +7,7 @@ import type { OccasionProduct } from '@/features/materiel/services/getOccasionPr
 /** W-L-9 OccasionMarketplace — marketplace occasion. */
 export function OccasionMarketplace({ products }: { products: OccasionProduct[] }) {
   return (
-    <GlassCard as="article" ariaLabelledBy="occasion-title" className="p-4">
+    <Card as="article" ariaLabelledBy="occasion-title" className="p-4">
       <Eyebrow>Occasion</Eyebrow>
       <h3 id="occasion-title" className="sr-only">Marketplace occasion</h3>
       <div className="mt-3 flex gap-3 overflow-x-auto no-scrollbar">
@@ -22,6 +22,6 @@ export function OccasionMarketplace({ products }: { products: OccasionProduct[] 
         ))}
         {products.length === 0 && <p className="text-sm text-[color:var(--label-secondary)]">Aucune annonce d'occasion disponible.</p>}
       </div>
-    </GlassCard>
+    </Card>
   );
 }

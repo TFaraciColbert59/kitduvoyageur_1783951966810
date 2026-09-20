@@ -1,4 +1,4 @@
-import { GlassCard } from '@/components/ui/GlassCard';
+import { Card } from '@/components/ui';
 import { Eyebrow } from '@/components/ui/Eyebrow';
 
 export interface Conflict { itemId: string; itemName: string; details: string }
@@ -6,7 +6,7 @@ export interface Conflict { itemId: string; itemName: string; details: string }
 /** W-A-5 ConflictDetector — conflits kit vs prêt (logique serveur). */
 export function ConflictDetector({ conflicts }: { conflicts: Conflict[] }) {
   return (
-    <GlassCard as="article" ariaLabelledBy="conflicts-title" className="p-4">
+    <Card as="article" ariaLabelledBy="conflicts-title" className="p-4">
       <Eyebrow>Détecteur de conflits</Eyebrow>
       <h3 id="conflicts-title" className="sr-only">Conflits d'équipement</h3>
       {conflicts.length === 0 ? (
@@ -21,6 +21,6 @@ export function ConflictDetector({ conflicts }: { conflicts: Conflict[] }) {
           ))}
         </ul>
       )}
-    </GlassCard>
+    </Card>
   );
 }

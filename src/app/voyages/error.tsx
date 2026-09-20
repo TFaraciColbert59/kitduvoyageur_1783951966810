@@ -3,7 +3,7 @@
 import Icon from '@/components/ui/Icon';
 import React from 'react';
 import AppShell from '@/components/shell/AppShell';
-import { GlassCard } from '@/components/ui/GlassCard';
+import { Card } from '@/components/ui';
 import { GlassCapsuleBtn } from '@/components/ui/GlassCapsuleBtn';
 
 export default function VoyagesError({
@@ -16,9 +16,8 @@ export default function VoyagesError({
   return (
     <AppShell safeTop={true} hasBottomNav={true}>
       <div className="max-w-xl mx-auto px-4 py-16 text-center">
-        <GlassCard
+        <Card
           tone="danger"
-          blur="md"
           className="p-8 rounded-[var(--lkv-radius-2xl)] border border-[var(--lkv-danger)]/30"
         >
           <div className="inline-flex p-3 rounded-full bg-[var(--lkv-danger)]/10 text-[var(--lkv-danger)] mb-4">
@@ -44,7 +43,7 @@ export default function VoyagesError({
               Réessayer
             </GlassCapsuleBtn>
           </div>
-        </GlassCard>
+        </Card>
       </div>
     </AppShell>
   );

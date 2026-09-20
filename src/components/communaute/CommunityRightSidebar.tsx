@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import Icon from '@/components/ui/AppIcon';
-import GlassIconButton from '@/components/ui/GlassIconButton';
+import { IconButton } from '@/components/ui';
 import { LiveActivityFeed } from '@/components/activity/LiveActivityFeed';
 
 interface CommunityRightSidebarProps {
@@ -74,11 +74,13 @@ export default function CommunityRightSidebar({ clubs = [], events = [] }: Commu
         <div className="flex items-center justify-between">
           <h3 className="font-display font-bold text-xs text-[#17402C]">Clubs populaires</h3>
           <Link href="/communaute?tab=clubs">
-            <GlassIconButton
+            <IconButton
               size="sm"
               title="Voir tous les clubs"
-              icon={<Icon name="arrow-right" size={12} />}
-            />
+              aria-label="Voir tous les clubs"
+            >
+              <Icon name="arrow-right" size={12} />
+            </IconButton>
           </Link>
         </div>
 

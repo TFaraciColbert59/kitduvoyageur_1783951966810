@@ -2,7 +2,7 @@
 
 import Icon from '@/components/ui/Icon';
 import React, { useState, useTransition } from 'react';
-import { GlassCard } from '@/components/ui/GlassCard';
+import { Card } from '@/components/ui';
 import { GlassModal } from '@/components/ui/GlassModal';
 import { GlassCapsuleBtn } from '@/components/ui/GlassCapsuleBtn';
 import {
@@ -137,16 +137,16 @@ export function TripCompletionModal({ trip, isOpen, onClose }: TripCompletionMod
 
         {/* Métriques d'aventure */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <GlassCard
+          <Card
             tone="neutral"
             className="p-3.5 rounded-[var(--lkv-radius-lg)] border border-white/60 text-center"
           >
             <Icon name="navigation" size={18} className="mx-auto text-lkv-primary mb-1" />
             <div className="text-lg font-bold text-lkv-primary">{metrics.totalKm} km</div>
             <div className="text-[11px] text-lkv-secondary">Distance totale</div>
-          </GlassCard>
+          </Card>
 
-          <GlassCard
+          <Card
             tone="neutral"
             className="p-3.5 rounded-[var(--lkv-radius-lg)] border border-white/60 text-center"
           >
@@ -155,9 +155,9 @@ export function TripCompletionModal({ trip, isOpen, onClose }: TripCompletionMod
               +{metrics.totalElevationGainM} m
             </div>
             <div className="text-[11px] text-lkv-secondary">Dénivelé positif</div>
-          </GlassCard>
+          </Card>
 
-          <GlassCard
+          <Card
             tone="neutral"
             className="p-3.5 rounded-[var(--lkv-radius-lg)] border border-white/60 text-center"
           >
@@ -166,16 +166,16 @@ export function TripCompletionModal({ trip, isOpen, onClose }: TripCompletionMod
             <div className="text-[11px] text-lkv-secondary">
               {metrics.packedGearCount} items emportés
             </div>
-          </GlassCard>
+          </Card>
 
-          <GlassCard
+          <Card
             tone="neutral"
             className="p-3.5 rounded-[var(--lkv-radius-lg)] border border-white/60 text-center"
           >
             <Icon name="award" size={18} className="mx-auto text-lkv-primary mb-1" />
             <div className="text-lg font-bold text-lkv-primary">{metrics.durationDays} jours</div>
             <div className="text-[11px] text-lkv-secondary">{metrics.nbNuits} nuits vécues</div>
-          </GlassCard>
+          </Card>
         </div>
 
         {/* Formulaire REX */}

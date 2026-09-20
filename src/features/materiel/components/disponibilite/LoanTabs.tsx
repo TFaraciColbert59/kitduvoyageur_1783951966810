@@ -1,9 +1,9 @@
 'use client';
 import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { GlassCard } from '@/components/ui/GlassCard';
+import { Card } from '@/components/ui';
 import { Badge } from '@/components/ui/Badge';
-import LkvButton from '@/components/ui/LkvButton';
+import { Button } from '@/components/ui';
 import { Tabs } from '@/components/ui/Tabs';
 import { useToast } from '@/contexts/ToastContext';
 import type { LoanItem } from '@/features/materiel/services/getLoans';
@@ -43,7 +43,7 @@ export function LoanTabs({ loans, userId }: { loans: LoanItem[]; userId: string 
   };
 
   return (
-    <GlassCard as="article" ariaLabelledBy="loans-tabs-title" className="p-4">
+    <Card as="article" ariaLabelledBy="loans-tabs-title" className="p-4">
       <h3 id="loans-tabs-title" className="sr-only">Liste des prêts</h3>
       <Tabs
         options={TAB_OPTIONS}
@@ -59,13 +59,13 @@ export function LoanTabs({ loans, userId }: { loans: LoanItem[]; userId: string 
             <div className="flex items-center gap-2 shrink-0">
               <Badge tone={STATUS_TONE[l.status] ?? 'info'}>{STATUS_LABEL[l.status] ?? l.status}</Badge>
               {l.status !== 'rendu' && (
-                <LkvButton size="sm" variant="secondary" onClick={() => markReturned(l)}>Rendu</LkvButton>
+                <Button size="sm" variant="secondary" onClick={() => markReturned(l)}>Rendu</Button>
               )}
             </div>
           </li>
         ))}
         {filtered.length === 0 && <li className="text-sm text-[color:var(--label-secondary)]">Aucun prêt.</li>}
       </ul>
-    </GlassCard>
+    </Card>
   );
 }

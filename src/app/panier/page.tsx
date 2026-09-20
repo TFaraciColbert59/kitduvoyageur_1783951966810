@@ -6,7 +6,7 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import WeightGauge from '@/components/WeightGauge';
 import Icon from '@/components/ui/AppIcon';
-import LkvButton from '@/components/ui/LkvButton';
+import { Button } from '@/components/ui';
 import { getCart, updateQuantity, removeFromCart, getCartTotals, applyLoyaltyFree, removeLoyaltyFree, CartItem } from '@/lib/cart';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -287,7 +287,7 @@ export default function PanierPage() {
 
                       <div className="flex gap-2 mb-8">
                         <input type="text" placeholder="Code promo" className="glass-input flex-1 min-w-0" />
-                        <LkvButton variant="secondary" size="sm">Appliquer</LkvButton>
+                        <Button variant="secondary" size="sm">Appliquer</Button>
                       </div>
 
                       <div className="flex justify-between items-end font-display font-800 text-2xl pt-6 border-t border-white/50 mb-6">
@@ -296,9 +296,9 @@ export default function PanierPage() {
                       </div>
 
                       <Link href="/checkout" className="block w-full mb-4">
-                        <LkvButton variant="primary" size="lg" fullWidth>
+                        <Button variant="primary" size="lg" fullWidth>
                           Passer au paiement →
-                        </LkvButton>
+                        </Button>
                       </Link>
                       <p className="text-center text-[10px] text-[var(--lkv-text-muted)] flex items-center justify-center gap-1.5 mb-8">
                         <Icon name="LockClosedIcon" size={12} /> Paiement sécurisé Stripe

@@ -6,7 +6,7 @@ import { AlertOctagonIcon as AlertOctagon } from '@/components/icons/alert-octag
 import { RadioIcon as Radio } from '@/components/icons/radio';
 import { Share2Icon as Share2 } from '@/components/icons/share-2';
 import { PhoneCallIcon as PhoneCallAnimated } from '@/components/icons/phone-call';
-import { GlassCard } from '@/components/ui/GlassCard';
+import { Card } from '@/components/ui';
 import type { Participant } from '@/features/materiel/types/trekHub';
 
 interface DepartParticipantsProps {
@@ -41,7 +41,7 @@ export function DepartParticipants({ participants, emergencyContact }: DepartPar
   };
 
   return (
-    <GlassCard tone="neutral" as="article" ariaLabelledBy="participants-heading">
+    <Card tone="neutral" as="article" ariaLabelledBy="participants-heading">
       <div className="p-4 sm:p-5 space-y-3.5">
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -146,6 +146,6 @@ export function DepartParticipants({ participants, emergencyContact }: DepartPar
           </div>
         </div>
       </div>
-    </GlassCard>
+    </Card>
   );
 }

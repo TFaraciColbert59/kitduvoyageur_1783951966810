@@ -1,5 +1,5 @@
 'use client';
-import { GlassCard } from '@/components/ui/GlassCard';
+import { Card } from '@/components/ui';
 import { Eyebrow } from '@/components/ui/Eyebrow';
 import { Metric } from '@/components/ui/Metric';
 
@@ -10,7 +10,7 @@ export function PurchasesInvest({ series, totalEur }: { series: PurchasePoint[];
   const maxVal = Math.max(...series.map((s) => s.valueEur), 50);
 
   return (
-    <GlassCard as="article" ariaLabelledBy="purchases-title" className="p-4">
+    <Card as="article" ariaLabelledBy="purchases-title" className="p-4">
       <Eyebrow>Achats & investissement</Eyebrow>
       <h3 id="purchases-title" className="sr-only">Achats et investissement total</h3>
       <Metric value={`${totalEur.toFixed(0)} €`} size="md" tone="sage" />
@@ -53,6 +53,6 @@ export function PurchasesInvest({ series, totalEur }: { series: PurchasePoint[];
           </div>
         )}
       </div>
-    </GlassCard>
+    </Card>
   );
 }

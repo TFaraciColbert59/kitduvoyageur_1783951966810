@@ -4,7 +4,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import LkvIcon, { type LkvIconName } from '@/components/ui/LkvIcon';
-import LkvButton from '@/components/ui/LkvButton';
+import { Button } from '@/components/ui';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCartCount } from '@/hooks/useCartCount';
 import { zIndex } from '@/lib/ui/zIndex';
@@ -364,9 +364,9 @@ export default function MobileDrawer({ isOpen, onClose, onSearchOpen }: MobileDr
                 ) : (
                   <div style={{ position: 'relative', zIndex: 2 }}>
                     <Link href="/connexion" onClick={onClose}>
-                      <LkvButton variant="secondary" size="sm">
+                      <Button variant="secondary" size="sm">
                         Se connecter
-                      </LkvButton>
+                      </Button>
                     </Link>
                   </div>
                 )}

@@ -1,7 +1,7 @@
 ﻿'use client';
 import Icon from '@/components/ui/Icon';
 import Link from 'next/link';
-import { GlassCard } from '@/components/ui/GlassCard';
+import { Card } from '@/components/ui';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 
 interface InventaireData {
@@ -25,7 +25,7 @@ export function GearCardInventaire({
       : Math.round((data.goodConditionPct / 100) * data.count);
 
   return (
-    <GlassCard as="article" interactive ariaLabelledBy="inv-title" className={className}>
+    <Card as="article" variant="interactive" ariaLabelledBy="inv-title" className={className}>
       <div className="p-5 flex flex-col justify-between h-full gap-4">
         {/* Header with Title & Large Metric */}
         <div className="flex items-start justify-between">
@@ -101,6 +101,6 @@ export function GearCardInventaire({
           </Link>
         </div>
       </div>
-    </GlassCard>
+    </Card>
   );
 }

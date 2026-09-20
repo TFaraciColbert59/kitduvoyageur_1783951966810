@@ -1,8 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { GlassCard } from '@/components/ui/GlassCard';
-import { LkvButton } from '@/components/ui/LkvButton';
+import { Card } from '@/components/ui';
+import { Button, IconButton } from '@/components/ui';
 import { LkvChip } from '@/components/ui/LkvChip';
 import CommunityPostCard, { type CommunityPostItem } from '@/components/communaute/CommunityPostCard';
 import { GlassLabSurface } from './GlassLabSurface';
@@ -127,8 +127,8 @@ export default function GlassLab() {
           <p className={styles.eyebrow}>Pastille réfractive · référence rdev</p>
           <h2>Log Out</h2>
           <p>Liseré spéculaire, réfraction du fond et élasticité au pointeur.</p>
-          <LkvButton
-            variant="glass-pill"
+          <Button
+            variant="secondary"
             onClick={increment}
             icon={
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
@@ -139,22 +139,22 @@ export default function GlassLab() {
             }
           >
             Se déconnecter
-          </LkvButton>
-          <LkvButton variant="glass-pill-primary" onClick={increment}>Choisir cet exemple</LkvButton>
+          </Button>
+          <Button variant="primary" onClick={increment}>Choisir cet exemple</Button>
         </div>
       </section>
       <section className={styles.stage} data-fixture="controls" aria-label="Tous les contrôles" style={{ maxWidth: 720, margin: '0 auto' }}>
         <div className={styles.content} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           <p className={styles.eyebrow}>Toutes les variantes · même pile optique</p>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'center' }}>
-            <LkvButton variant="primary" onClick={increment}>primary</LkvButton>
-            <LkvButton variant="secondary" onClick={increment}>secondary</LkvButton>
-            <LkvButton variant="light" onClick={increment}>light</LkvButton>
-            <LkvButton variant="ghost" onClick={increment}>ghost</LkvButton>
-            <LkvButton variant="danger" onClick={increment}>danger</LkvButton>
-            <LkvButton variant="icon-only" aria-label="icône seule" onClick={increment}>★</LkvButton>
-            <LkvButton variant="glass-pill" onClick={increment}>glass-pill</LkvButton>
-            <LkvButton variant="glass-pill-primary" onClick={increment}>pill-primary</LkvButton>
+            <Button variant="primary" onClick={increment}>primary</Button>
+            <Button variant="secondary" onClick={increment}>secondary</Button>
+            <Button variant="secondary" onClick={increment}>light</Button>
+            <Button variant="ghost" onClick={increment}>ghost</Button>
+            <Button variant="destructive" onClick={increment}>danger</Button>
+            <IconButton aria-label="icône seule" onClick={increment}>★</IconButton>
+            <Button variant="secondary" onClick={increment}>glass-pill</Button>
+            <Button variant="primary" onClick={increment}>pill-primary</Button>
           </div>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'center' }}>
             <LkvChip label="sage" tone="sage" onClick={increment} />
@@ -183,18 +183,18 @@ export default function GlassLab() {
         <h2 id="interaction-heading">Contrat clavier et états canoniques</h2>
         <p role="status" data-testid="glass-action-count">Actions : {count}</p>
         <div className={styles.variants}>
-          <GlassCard tier="standard" interactive onClick={increment} className={styles.example} aria-label="Action de carte">Activer avec Entrée ou Espace</GlassCard>
-          <GlassCard tier="standard" interactive disabled onClick={increment} className={styles.example} aria-label="Carte désactivée">Carte désactivée</GlassCard>
-          <GlassCard tier="standard" interactive onClick={increment} className={styles.example} aria-label="Carte avec lien">
+          <Card variant="interactive" onClick={increment} className={styles.example} aria-label="Action de carte">Activer avec Entrée ou Espace</Card>
+          <Card variant="interactive" aria-disabled="true" className={styles.example} aria-label="Carte désactivée">Carte désactivée</Card>
+          <Card variant="interactive" onClick={increment} className={styles.example} aria-label="Carte avec lien">
             <span>Une action imbriquée ne doit pas activer la carte.</span>
             <a href="#interaction-heading" className={styles.link}>Lien interne de démonstration</a>
             <button type="button" className="glass-capsule-btn" onClick={() => setCount(previous => previous + 10)}>Action imbriquée (+10)</button>
-          </GlassCard>
-          {(['base', 'elevated', 'selected', 'overlay', 'critical'] as const).map(variant => <GlassCard key={variant} tier="standard" variant={variant} className={styles.example}>{variant}</GlassCard>)}
+          </Card>
+          {(['standard', 'interactive', 'featured', 'compact'] as const).map(variant => <Card key={variant} variant={variant} className={styles.example}>{variant}</Card>)}
         </div>
       </section>
       {longList && <section aria-label="Liste longue de test" className={styles.longList}>
-        {Array.from({ length: 60 }, (_, index) => <GlassCard key={index} as="article" className={styles.example}><h3>Étape de démonstration {index + 1}</h3><p>Surface standard · contenu dense · sans réfraction supplémentaire.</p></GlassCard>)}
+        {Array.from({ length: 60 }, (_, index) => <Card key={index} as="article" className={styles.example}><h3>Étape de démonstration {index + 1}</h3><p>Surface standard · contenu dense · sans réfraction supplémentaire.</p></Card>)}
       </section>}
     </main>
   );

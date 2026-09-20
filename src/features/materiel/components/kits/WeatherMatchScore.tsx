@@ -1,5 +1,5 @@
 'use client';
-import { GlassCard } from '@/components/ui/GlassCard';
+import { Card } from '@/components/ui';
 import { Eyebrow } from '@/components/ui/Eyebrow';
 import { Metric } from '@/components/ui/Metric';
 import { currentSeason } from '@/lib/materiel/season';
@@ -14,11 +14,11 @@ export function WeatherMatchScore({ season }: { season: string | null }) {
   const match = season ? (SCORE[season] ?? 60) : 60;
   const label = season ? `${season} vs ${now}` : 'Saison non renseignée';
   return (
-    <GlassCard as="article" tone="sage" ariaLabelledBy="weather-match-title" className="p-4 sm:p-5">
+    <Card as="article" tone="sage" ariaLabelledBy="weather-match-title" className="p-4 sm:p-5">
       <Eyebrow>Weather Match Score</Eyebrow>
       <h3 id="weather-match-title" className="font-display font-bold text-[20px] text-[var(--lkv-primary)] mt-0.5 mb-2">Correspondance météo</h3>
       <Metric value={`${match}/100`} tone={match >= 75 ? 'sage' : match >= 60 ? 'default' : 'danger'} />
       <p className="mt-2 text-xs text-[var(--lkv-text-muted)] font-medium">{label}</p>
-    </GlassCard>
+    </Card>
   );
 }

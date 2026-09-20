@@ -6,7 +6,7 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
 import AppImage from '@/components/ui/AppImage';
-import { GlassCard } from '@/components/ui/GlassCard';
+import { Card } from '@/components/ui';
 import type { BlogPost } from './page';
 
 const CATEGORIES = ['Tous', 'Conseils', 'Destinations', 'Comparatifs', 'Guides d\'achat', 'Lifestyle'];
@@ -23,7 +23,7 @@ function formatDate(dateStr: string): string {
 function FeaturedCard({ post }: { post: BlogPost }) {
   return (
     <Link href={`/guides/${post.slug}`} className="group block h-full">
-      <GlassCard as="article" tone="sage" interactive className="h-full">
+      <Card as="article" tone="sage" variant="interactive" className="h-full">
         <div className="relative h-72 md:h-80 overflow-hidden">
           <AppImage
             src={post.image}
@@ -57,7 +57,7 @@ function FeaturedCard({ post }: { post: BlogPost }) {
             </div>
           </div>
         </div>
-      </GlassCard>
+      </Card>
     </Link>
   );
 }
@@ -65,7 +65,7 @@ function FeaturedCard({ post }: { post: BlogPost }) {
 function PostCard({ post }: { post: BlogPost }) {
   return (
     <Link href={`/guides/${post.slug}`} className="group block h-full">
-      <GlassCard as="article" tone="sage" interactive className="h-full flex flex-col">
+      <Card as="article" tone="sage" variant="interactive" className="h-full flex flex-col">
         <div className="relative aspect-[16/9] overflow-hidden flex-shrink-0">
           <AppImage
             src={post.image}
@@ -98,7 +98,7 @@ function PostCard({ post }: { post: BlogPost }) {
             <span>{post.read_time} min</span>
           </div>
         </div>
-      </GlassCard>
+      </Card>
     </Link>
   );
 }

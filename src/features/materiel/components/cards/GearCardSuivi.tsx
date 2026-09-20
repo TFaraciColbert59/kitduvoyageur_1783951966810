@@ -3,7 +3,7 @@
 import Icon from '@/components/ui/Icon';
 import Link from 'next/link';
 import { ClockIcon as Clock } from '@/components/icons/clock';
-import { GlassCard } from '@/components/ui/GlassCard';
+import { Card } from '@/components/ui';
 import { Eyebrow } from '@/components/ui/Eyebrow';
 import { Badge } from '@/components/ui/Badge';
 import { ProgressBar } from '@/components/ui/ProgressBar';
@@ -32,7 +32,7 @@ export function GearCardSuivi({ alertes, dispo, forget, className }: Props) {
   const availablePct = dispo.total > 0 ? Math.round((available / dispo.total) * 100) : 100;
 
   return (
-    <GlassCard as="article" interactive ariaLabelledBy="suivi-title" className={className}>
+    <Card as="article" variant="interactive" ariaLabelledBy="suivi-title" className={className}>
       <div className="p-4 sm:p-5 flex flex-col justify-between h-full gap-4">
         {/* Header Principal */}
         <div className="flex items-start justify-between pr-10 md:pr-12">
@@ -180,6 +180,6 @@ export function GearCardSuivi({ alertes, dispo, forget, className }: Props) {
           </div>
         </div>
       </div>
-    </GlassCard>
+    </Card>
   );
 }

@@ -2,7 +2,7 @@
 
 import Icon from '@/components/ui/Icon';
 import React from 'react';
-import { GlassCard } from '@/components/ui/GlassCard';
+import { Card } from '@/components/ui';
 import { Plane, Building2, Ticket, Shield, Wifi, ExternalLink } from 'lucide-react';
 import type { AffiliateLink, AffiliateCategory } from '../types/affiliate.types';
 
@@ -51,10 +51,9 @@ export function AffiliateLinkCard({ link, tripId }: AffiliateLinkCardProps) {
   const href = tripId ? `/go/${link.slug}?trip_id=${tripId}` : `/go/${link.slug}`;
 
   return (
-    <GlassCard
+    <Card
       tone="neutral"
-      blur="sm"
-      interactive
+      variant="interactive"
       className="p-4 rounded-lg border border-stone-200/80 hover:border-[#5B7F55]/40 transition-all flex flex-col justify-between h-full bg-white/80"
     >
       <div>
@@ -96,6 +95,6 @@ export function AffiliateLinkCard({ link, tripId }: AffiliateLinkCardProps) {
           <Icon name="external-link" className="w-3.5 h-3.5 text-stone-300" />
         </a>
       </div>
-    </GlassCard>
+    </Card>
   );
 }

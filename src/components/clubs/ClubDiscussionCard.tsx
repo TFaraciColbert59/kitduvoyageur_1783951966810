@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { createClient } from '@/lib/supabase/client';
 import Icon from '@/components/ui/AppIcon';
-import GlassIconButton from '@/components/ui/GlassIconButton';
+import { IconButton } from '@/components/ui';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 
 export interface ClubMessage {
@@ -490,39 +490,44 @@ export default function ClubDiscussionCard({
           className="glass-input w-full pl-13 pr-[140px] text-xs text-[#17402C] min-h-[44px] rounded-full bg-white/80 border border-white focus:outline-none focus:ring-1 focus:ring-[#17402C]"
         />
         <div className="absolute inset-y-0 right-0 pr-1.5 flex items-center gap-1">
-          <GlassIconButton
+          <IconButton
             size="sm"
             onClick={() => gpxInputRef.current?.click()}
             disabled={uploading || loading}
             title="Partager une trace GPX"
             aria-label="Partager une trace GPX"
-            icon={<span className="text-[11px]">🗺️</span>}
-          />
-          <GlassIconButton
+          >
+            <span className="text-[11px]">🗺️</span>
+          </IconButton>
+          <IconButton
             size="sm"
             onClick={() => fileInputRef.current?.click()}
             disabled={uploading || loading}
             title="Envoyer une photo"
             aria-label="Envoyer une photo"
-            icon={<Icon name="PhotoIcon" size={13} />}
-          />
-          <GlassIconButton
+          >
+            <Icon name="PhotoIcon" size={13} />
+          </IconButton>
+          <IconButton
             size="sm"
             onClick={handleShareLocation}
             disabled={locating || loading}
             title="Partager ma position"
             aria-label="Partager ma position"
-            icon={<Icon name="MapPinIcon" size={13} />}
-          />
-          <GlassIconButton
+          >
+            <Icon name="MapPinIcon" size={13} />
+          </IconButton>
+          <IconButton
             size="sm"
             onClick={() => handleSendMessage()}
             disabled={!newMessage.trim() || loading}
-            active={Boolean(newMessage.trim())}
             title="Envoyer"
             aria-label="Envoyer"
-            icon={<Icon name="PaperAirplaneIcon" size={13} className={Boolean(newMessage.trim()) ? 'text-white' : ''} />}
-          />
+            variant={Boolean(newMessage.trim()) ? 'solid' : 'glass'}
+            aria-pressed={Boolean(newMessage.trim()) || undefined}
+          >
+            <Icon name="PaperAirplaneIcon" size={13} className={Boolean(newMessage.trim()) ? 'text-white' : ''} />
+          </IconButton>
         </div>
       </div>
     </div>

@@ -1,6 +1,6 @@
 import React from 'react';
 import AppShell from '@/components/shell/AppShell';
-import { GlassCard } from '@/components/ui/GlassCard';
+import { Card } from '@/components/ui';
 
 export default function VoyagesLoading() {
   return (
@@ -22,7 +22,7 @@ export default function VoyagesLoading() {
         {/* Cards Grid Skeletons */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {[1, 2, 3, 4, 5, 6].map(idx => (
-            <GlassCard
+            <Card
               key={idx}
               tone="neutral"
               className="h-80 rounded-[var(--lkv-radius-xl)] overflow-hidden border border-white/40"
@@ -36,7 +36,7 @@ export default function VoyagesLoading() {
                   <div className="w-16 h-4 bg-black/5 rounded-full animate-pulse" />
                 </div>
               </div>
-            </GlassCard>
+            </Card>
           ))}
         </div>
       </div>

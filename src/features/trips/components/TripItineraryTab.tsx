@@ -4,7 +4,7 @@ import Icon from '@/components/ui/Icon';
 import React, { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import type { TripFull, TripStats, TripStep } from '../types/trip.types';
-import { GlassCard } from '@/components/ui/GlassCard';
+import { Card } from '@/components/ui';
 import { GlassCapsuleBtn } from '@/components/ui/GlassCapsuleBtn';
 import { GlassModal } from '@/components/ui/GlassModal';
 import { EmptyState } from '@/components/ui/EmptyState';
@@ -254,7 +254,7 @@ export function TripItineraryTab({ trip }: TripItineraryTabProps) {
             );
             return (
               <LiveArrivalReveal key={step.id} id={step.id} liveIds={liveIds} index={stepIndex}>
-                <GlassCard
+                <Card
                   tone="neutral"
                   className="p-4 sm:p-5 rounded-[var(--lkv-radius-lg)] border border-white/60"
                 >
@@ -368,7 +368,7 @@ export function TripItineraryTab({ trip }: TripItineraryTabProps) {
                     })}
                   </ul>
                 )}
-                </GlassCard>
+                </Card>
               </LiveArrivalReveal>
             );
           })}

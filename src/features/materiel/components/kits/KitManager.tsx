@@ -2,7 +2,7 @@
 import { lkvConfirm } from '@/components/ui/dialogs';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { GlassCard } from '@/components/ui/GlassCard';
+import { Card } from '@/components/ui';
 import { Eyebrow } from '@/components/ui/Eyebrow';
 import { GlassDrawer } from '@/components/ui/GlassDrawer';
 import { useToast } from '@/contexts/ToastContext';
@@ -79,7 +79,7 @@ export function KitManager({ kits, inventory }: { kits: KitListItem[]; inventory
   };
 
   return (
-    <GlassCard tone="sage" className="p-4 sm:p-5" aria-labelledby="kit-manager-title">
+    <Card tone="sage" className="p-4 sm:p-5" ariaLabelledBy="kit-manager-title">
       <div className="flex items-center justify-between">
         <Eyebrow>Gestion des kits</Eyebrow>
         <button
@@ -130,6 +130,6 @@ export function KitManager({ kits, inventory }: { kits: KitListItem[]; inventory
           </button>
         </div>
       </GlassDrawer>
-    </GlassCard>
+    </Card>
   );
 }

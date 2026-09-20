@@ -2,7 +2,7 @@
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
-import { GlassCard } from '@/components/ui/GlassCard';
+import { Card } from '@/components/ui';
 import Link from 'next/link';
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://lekitduvoyageur.fr';
@@ -50,7 +50,7 @@ export default function GuidesPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {GUIDES.map((guide) => (
                 <Link key={guide.slug} href={`/guides/${guide.slug}`} className="group block h-full">
-                  <GlassCard as="article" tone="sage" interactive className="p-6 flex flex-col justify-between gap-4 h-full">
+                  <Card as="article" tone="sage" variant="interactive" className="p-6 flex flex-col justify-between gap-4 h-full">
                     <div>
                       <h2 className="font-display font-bold text-xl text-[#17402C] mb-2 group-hover:text-[#365233] transition-colors">
                         {guide.title}
@@ -60,7 +60,7 @@ export default function GuidesPage() {
                     <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#5A7064] transition-colors group-hover:text-[#17402C]">
                       Lire le guide →
                     </span>
-                  </GlassCard>
+                  </Card>
                 </Link>
               ))}
             </div>

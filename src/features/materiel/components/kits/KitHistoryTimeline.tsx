@@ -1,5 +1,5 @@
 'use client';
-import { GlassCard } from '@/components/ui/GlassCard';
+import { Card } from '@/components/ui';
 import { Eyebrow } from '@/components/ui/Eyebrow';
 import { Badge } from '@/components/ui/Badge';
 import { historyLabel, historyTone } from '@/lib/materiel/history';
@@ -8,7 +8,7 @@ import type { KitHistoryEntry } from '@/features/materiel/services/getKitHistory
 /** W-K-8 KitHistoryTimeline — historique des versions d'un kit en Liquid Glass. */
 export function KitHistoryTimeline({ history }: { history: KitHistoryEntry[] }) {
   return (
-    <GlassCard as="article" tone="sage" ariaLabelledBy="history-title" className="p-4 sm:p-5">
+    <Card as="article" tone="sage" ariaLabelledBy="history-title" className="p-4 sm:p-5">
       <Eyebrow>Historique des versions</Eyebrow>
       <h3 id="history-title" className="font-display font-bold text-[20px] text-[var(--lkv-primary)] mt-0.5 mb-3">Évolution du kit</h3>
       <ol className="relative border-l border-white/30 pl-4 flex flex-col gap-2.5">
@@ -23,6 +23,6 @@ export function KitHistoryTimeline({ history }: { history: KitHistoryEntry[] }) 
         ))}
         {history.length === 0 && <li className="text-xs text-[var(--lkv-text-muted)]">Aucun historique pour ce kit.</li>}
       </ol>
-    </GlassCard>
+    </Card>
   );
 }

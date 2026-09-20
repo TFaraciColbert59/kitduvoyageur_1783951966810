@@ -1,6 +1,6 @@
 'use client';
 import { useState } from 'react';
-import { GlassCard } from '@/components/ui/GlassCard';
+import { Card } from '@/components/ui';
 import { Eyebrow } from '@/components/ui/Eyebrow';
 import { Badge } from '@/components/ui/Badge';
 import { computeDiff, diffSummary, type OptimizeAction } from '@/lib/materiel/optimizer';
@@ -67,7 +67,7 @@ export function KitOptimizer({ kits }: { kits: KitListItem[] }) {
   }) : null;
 
   return (
-    <GlassCard as="article" tone="sage" ariaLabelledBy="optimizer-title" className="p-4 sm:p-5">
+    <Card as="article" tone="sage" ariaLabelledBy="optimizer-title" className="p-4 sm:p-5">
       <Eyebrow>Optimiseur IA</Eyebrow>
       <h3 id="optimizer-title" className="font-display font-bold text-[20px] text-[var(--lkv-primary)] mt-0.5 mb-3">Optimisation intelligente</h3>
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
@@ -108,6 +108,6 @@ export function KitOptimizer({ kits }: { kits: KitListItem[] }) {
           {diffSummary(diff).map((s) => <p key={s} className="text-xs text-[var(--lkv-primary-soft)] font-medium">{s}</p>)}
         </div>
       )}
-    </GlassCard>
+    </Card>
   );
 }

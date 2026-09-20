@@ -2,7 +2,7 @@
 import Icon from '@/components/ui/Icon';
 import Link from 'next/link';
 import { ClockIcon as Clock } from '@/components/icons/clock';
-import { GlassCard } from '@/components/ui/GlassCard';
+import { Card } from '@/components/ui';
 import { Badge } from '@/components/ui/Badge';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 
@@ -23,7 +23,7 @@ export function GearCardDispo({ data, className }: { data: DispoData; className?
   const tone = availablePct === 100 ? 'sage' : data.unavailableCount <= 2 ? 'warn' : 'danger';
 
   return (
-    <GlassCard as="article" interactive ariaLabelledBy="dispo-title" className={className}>
+    <Card as="article" variant="interactive" ariaLabelledBy="dispo-title" className={className}>
       <div className="p-2.5 sm:p-5 flex flex-col justify-between h-full gap-1.5 sm:gap-4">
         {/* Header with Title & KPIs */}
         <div className="flex items-start justify-between pr-7 md:pr-10 gap-1.5">
@@ -93,6 +93,6 @@ export function GearCardDispo({ data, className }: { data: DispoData; className?
           </Link>
         </div>
       </div>
-    </GlassCard>
+    </Card>
   );
 }

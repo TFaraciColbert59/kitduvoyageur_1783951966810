@@ -3,7 +3,7 @@
 import Icon from '@/components/ui/Icon';
 import React, { useState, useTransition } from 'react';
 import { TripFull, TripSafetyCheckpoint } from '../types/trip.types';
-import { GlassCard } from '@/components/ui/GlassCard';
+import { Card } from '@/components/ui';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { GlassCapsuleBtn } from '@/components/ui/GlassCapsuleBtn';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
@@ -140,7 +140,7 @@ export function TripSafetyView({ trip }: TripSafetyViewProps) {
               const statusCfg = STATUS_CONFIG[cp.status] || STATUS_CONFIG.pending;
               const isCritical = cp.status === 'missed' || cp.status === 'alert_sent';
               return (
-                <GlassCard
+                <Card
                   key={cp.id}
                   tone={isCritical ? 'danger' : 'neutral'}
                   className="p-4 rounded-[var(--lkv-radius-lg)] border border-white/60 hover:shadow-md transition-shadow"
@@ -192,7 +192,7 @@ export function TripSafetyView({ trip }: TripSafetyViewProps) {
                       )}
                     </div>
                   </div>
-                </GlassCard>
+                </Card>
               );
             })}
           </div>
@@ -206,9 +206,8 @@ export function TripSafetyView({ trip }: TripSafetyViewProps) {
       )}
 
       {/* Rappels de sécurité & Urgences */}
-      <GlassCard
+      <Card
         tone="neutral"
-        blur="sm"
         className="p-6 rounded-[var(--lkv-radius-card)] border border-white/60"
       >
         <div className="flex items-start gap-3.5">
@@ -227,7 +226,7 @@ export function TripSafetyView({ trip }: TripSafetyViewProps) {
             </p>
           </div>
         </div>
-      </GlassCard>
+      </Card>
     </div>
   );
 }

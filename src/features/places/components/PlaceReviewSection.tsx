@@ -2,8 +2,8 @@
 
 import Icon from '@/components/ui/Icon';
 import React, { useState, useTransition } from 'react';
-import { GlassCard } from '@/components/ui/GlassCard';
-import { LkvButton } from '@/components/ui/LkvButton';
+import { Card } from '@/components/ui';
+import { Button } from '@/components/ui';
 import { addPlaceReviewAction } from '@/app/lieux/actions';
 import type { PlaceReview } from '../types/place.types';
 
@@ -75,9 +75,8 @@ export function PlaceReviewSection({
   return (
     <section className="mt-8 space-y-6">
       {/* Score Header */}
-      <GlassCard
+      <Card
         tone="neutral"
-        blur="md"
         className="p-6 rounded-card border border-white/60 flex flex-col sm:flex-row items-center justify-between gap-6"
       >
         <div className="flex items-center gap-5">
@@ -115,7 +114,7 @@ export function PlaceReviewSection({
           </div>
         </div>
 
-        <LkvButton
+        <Button
           variant="primary"
           size="sm"
           className="min-h-[44px] flex items-center gap-2 shrink-0"
@@ -123,14 +122,13 @@ export function PlaceReviewSection({
         >
           <Icon name="message-square-plus" className="w-4 h-4" />
           {showForm ? 'Masquer le formulaire' : 'Donner mon avis'}
-        </LkvButton>
-      </GlassCard>
+        </Button>
+      </Card>
 
       {/* Formulaire d'Avis */}
       {showForm && (
-        <GlassCard
+        <Card
           tone="neutral"
-          blur="lg"
           className="p-6 rounded-card border border-white/80 animate-fade-in"
         >
           <h4 className="text-base font-bold text-stone-900 mb-4 flex items-center gap-2">
@@ -225,7 +223,7 @@ export function PlaceReviewSection({
             </div>
 
             <div className="flex justify-end gap-3 pt-2">
-              <LkvButton
+              <Button
                 type="button"
                 variant="secondary"
                 size="sm"
@@ -233,8 +231,8 @@ export function PlaceReviewSection({
                 onClick={() => setShowForm(false)}
               >
                 Annuler
-              </LkvButton>
-              <LkvButton
+              </Button>
+              <Button
                 type="submit"
                 variant="primary"
                 size="sm"
@@ -242,10 +240,10 @@ export function PlaceReviewSection({
                 disabled={isPending}
               >
                 {isPending ? 'Enregistrement...' : 'Publier mon avis certifié'}
-              </LkvButton>
+              </Button>
             </div>
           </form>
-        </GlassCard>
+        </Card>
       )}
 
       {successMsg && (
@@ -269,10 +267,9 @@ export function PlaceReviewSection({
           </div>
         ) : (
           reviews.map((rev) => (
-            <GlassCard
+            <Card
               key={rev.id}
               tone="neutral"
-              blur="sm"
               className="p-5 rounded-lg border border-stone-200/70"
             >
               <div className="flex items-center justify-between gap-3 mb-2">
@@ -308,7 +305,7 @@ export function PlaceReviewSection({
               <p className="text-xs text-stone-700 leading-relaxed whitespace-pre-line">
                 {rev.comment}
               </p>
-            </GlassCard>
+            </Card>
           ))
         )}
       </div>
