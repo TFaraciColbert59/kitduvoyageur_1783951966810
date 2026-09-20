@@ -452,11 +452,61 @@ Sheets sociales détectées hors périmètre (`social/ReportSheet`, `MoreMenuShe
 
 ### Prochaine famille : **Famille 4 — Explorer / carte**
 
+## Lot 6 — Itération 2 · Famille 4 : Explorer / Carte (TERMINÉE)
+
+### Périmètre et résultat
+37 fichiers live (`app/explorer`, `app/carte-interactive`, `app/hors-ligne`, `components/explorer`, `components/map` UI, `features/places`, `features/discovery`, `features/terrain-live`) ; **33 fichiers modifiés** (32 source + 1 test), **0 supprimé**. Moteur carte non touché (Leaflet/MapLibre, clustering, géométrie, POI data, bbox offline, tuiles, géocodage).
+
+| Mesure (périmètre) | Avant | Après |
+|---|---|---|
+| Hex UI | 420 | **75** (100 % exceptions moteur/données documentées) |
+| `rounded-[…]` littéraux | 3 | **0** |
+| `z-[…]` littéraux | 32 | **0** |
+| Styles inline | 38 | **12** (dynamiques + Leaflet) |
+| `<button>` bruts | 70 | **3** (1 scrim click-catcher + 2 faux positifs commentaire) |
+| Classes `glass-*` legacy (`.glass`, `glass-capsule-btn`, `glass-pill`, `glass-circle-btn`, `glass-sub-card`, `glass-input`) | 157 | **0** (restent `--glass-border`, `variant="glass"`, `glass-progress` contractuel) |
+| Overlays custom `fixed inset-0` | 7 | **3** (loading plein écran, cockpit drag, overlay modal testé SSR) |
+| `env(safe-area-*)` | 19 | **0** |
+| Paires desktop/mobile | 1 (carte-interactive : rendu doublé) | **0** |
+| Écrans carte migrés vers `MapPageLayout` | 0 | **2** (`/explorer`, `/carte-interactive`) |
+
+- `MapPageLayout` étendu (slot `overlay`, carte `fixed inset-0`, wrappers `pointer-events-none` + `--z-*`) ; ExplorerClient et CarteClient convergent dessus sans recréer la structure.
+- Contrôles → `IconButton`/`Button`/`Tabs`/`Chip`/`SearchField` ; panneau filtres mobile d'`InteractiveMap` → `Sheet` ; fiche sentier (`TrailDetailPanel`) → `Sheet` (`dragToDismiss`, safe-area, footer d'actions) ; `ReportPlaceModal` → `Modal` ; états → `EmptyState`/`LoadingState`/`Skeleton`/`Spinner` ; POI/cartes → `Card`/`Badge`/`ListItem`.
+- `Badge` étendu d'un `style?` (teinte dynamique des catégories, rétro-compatible).
+- **Aucune régression d'interaction carte** : wrappers d'overlays en `pointer-events-none`, seuls les contrôles déclarent `pointer-events-auto` ; `TestResult` terrain/atlas inchangés.
+- **Logique métier intacte** : aucun fichier hooks/engine/queries/services/actions/store/API/PostGIS modifié ; `NATIVE_TABBAR_ENABLED` inchangé.
+
+### Exceptions documentées
+1. `components/explorer/TrailLayer.tsx` (21 hex) et `components/map/InteractiveMap.tsx` (31 hex) : markup Leaflet des marqueurs/clusters/popups (moteur carte).
+2. `components/explorer/ExplorerMap.tsx` (11 hex + 2 styles inline) : couleurs Path Leaflet (`preferCanvas` ne résout pas `var()`) + `touchAction` des gestes.
+3. `components/explorer/types.ts` (5 hex) et `ExplorerFilterPanel.tsx` (7 hex) : palettes de données difficulté/POI (non peintes directement).
+4. `features/terrain-live/components/TerrainLiveCockpitControl.tsx:163` : scrim click-catcher + panneau drag maison (exception lot 5) — surface/z/boutons tokenisés.
+5. `features/places/components/AddPlaceToTripModal.tsx:78` : overlay conservé pour rester rendu par `renderToStaticMarkup` (`tests/places/placeComponents.spec.ts`) — scrim/z/radius canoniques.
+6. `TripRatingBadge.tsx:46`, `TripadvisorAttribution.tsx:28` : dimensions imposées par les Display Requirements Tripadvisor.
+7. `UnifiedCountryGlobe.tsx:373` : coordonnées dynamiques du tooltip (souris).
+8. Styles inline dynamiques restants : couleurs runtime et largeurs de progression (5 fichiers).
+
+### Métriques globales après famille 4
+
+| Mesure | Après famille 3 | Après famille 4 |
+|---|---|---|
+| Hex | 4 897 | **4 552** |
+| `rounded-[…]` littéraux | 138 | **132** |
+| `z-[…]` littéraux | 66 | **33** |
+| Styles inline | 1 486 | **1 460** |
+| `role="dialog"` maison | 7 | 7 |
+| Pages desktop/mobile séparées | 54 | **52** |
+
+### Vérification
+`type-check` ✅ 0 · `lint` ✅ 0 · `vitest` ✅ 407 fichiers / **2 946 tests** (27 skipped) · `build` ✅ 14,2 s · **60 captures** `phase2-screenshots/lot6-famille4/` (matrice 4 gabarits). 1 test adapté (`render.spec.tsx` : `animate-pulse` → `animate-shimmer` du `Skeleton` canonique), **aucun supprimé**. Métriques globales revérifiées indépendamment : hex 4 552 · `rounded` littéraux 132 · `z` littéraux 33 · inline 1 460 · paires desktop/mobile 52.
+
+### Prochaine famille : **Famille 5 — Communauté / social**
+
 ## Lots suivants
 
 | Lot | Contenu | Statut |
 |---|---|---|
-| 6 (suite) | Famille 3 Voyage/préparation → … → famille 9 secondaires | en cours |
+| 6 (suite) | Famille 4 Explorer/carte → Famille 5 Communauté → … → famille 9 secondaires | en cours |
 
 ## Risques / points ouverts
 
