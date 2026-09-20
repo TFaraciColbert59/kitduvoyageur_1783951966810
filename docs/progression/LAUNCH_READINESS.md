@@ -7,10 +7,10 @@ Statuts : **vérifié** (preuve locale exécutée), **implémenté** (code livr�
 
 | Preuve | Commande | Résultat |
 |---|---|---|
-| Tests unitaires/intégration | `npm test` | **2920 passés, 27 skipped, 0 échec** (403 fichiers) |
+| Tests unitaires/intégration | `npm test` | **2936 passés, 27 skipped, 0 échec** (406 fichiers) |
 | Types | `npm run type-check` | **0 erreur** |
 | Build production | `npm run build` | **Succès**, First Load JS partagé 104 kB |
-| pgTAP moteur + classement + durcissement | `npx supabase test db --db-url …` (10 suites) | **117/117** sur base neuve **et** base héritée remigrée |
+| pgTAP moteur + classement + durcissement + saisons/défis + sécurité + perf | `npx supabase test db --db-url …` (15 suites) | **195/195** sur base de travail **et** base neuve |
 | Chaîne de migrations complète à froid | baseline + ≈100 migrations post-baseline | **0 erreur** (3 réparations additives), procédure `LOCAL_DB_TESTING.md` |
 | Base héritée : réconciliation + rebuild | fixtures de démo → migrations canoniques | **Vérifié** (archive, purge, solde économique intact, rebuild exact) |
 | Rollback + remigration | 12 descentes inverses puis réapplication | **Vérifié** (objets retirés, remigration fonctionnelle) |
@@ -26,6 +26,10 @@ Statuts : **vérifié** (preuve locale exécutée), **implémenté** (code livr�
 |---|---|---|---|
 | Moteur de progression | Un seul moteur, une action = un gain, idempotence, outbox atomique | **Vérifié** | pgTAP 117/117 ; aucune écriture cliente (REVOKE + RLS testés) ; refus temporaires réévaluables ; collision de clé inter-utilisateurs corrigée |
 | Sécurité du moteur | RLS inter-comptes, fonctions privilégiées, cron, concurrence, coordonnées | **Vérifié** | Revue indépendante + correctifs : revokes, `search_path`, bornage outbox, purge/rejeu, k-anonymat contraignant, alias scopé |
+| Fonctions héritées (85) | Aucune fonction `SECURITY DEFINER` dangereuse exécutable par un client | **Vérifié** | `20260921100000` : catégorisation (85), 3 gardes ajoutées, 50+ révoquées, `CREATE`/`TRUNCATE`/`TRIGGER` retirés à `anon`/`authenticated` — pgTAP 20/20 |
+| RGPD | Suppression de compte sans orphelins ; export article 20 complet | **Vérifié** | 11 FK `ON DELETE CASCADE` (dont mapping) + tables ajoutées à `gdprExport` ; test a14 vert |
+| Saisons et défis | Clôture reproductible, progression dérivée, remplacement réel | **Vérifié** | pgTAP 43/43 ; route 501 supprimée ; mapping hérité livré non branché (à activer après revue) |
+| Performance moteur | Index des requêtes chaudes, rétention, cache, rate-limits | **Vérifié localement** | `20260921200000` + `docs/progression/PERFORMANCE.md` (plans EXPLAIN locaux) ; planification des crons documentée, non activée |
 | Producteurs | 7 producteurs réels (4 prêts + 3 complétés), désactivés documentés | **Vérifié** (preuve serveur), **implémenté** (non observé en production) | `PRODUCER_MATRIX.md` ; 76 tests progression ; aucun producteur fictif |
 | Classements | 5 filtres, score identique, seuil 5, 1 km confidentiel sous flag | **Vérifié** pgTAP 46/46 | Flag `local_leaderboard_active` OFF par défaut ; anti-triangulation testée (sondage 30/h, seuil, aucune coordonnée) |
 | Navigation et produit | 5 destinations, M01–M10, zéro donnée fictive | **Implémenté + tests** | Registre canonique, `aria-current`, 44 px, z-index unifié ; captures non produites |

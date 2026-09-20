@@ -183,6 +183,30 @@ export async function updateDeclaredTerritory(
 
   if (error) throw error;
 
+  // Un territoire déclaré modifié change le groupe comparé : le classement de
+  // l'utilisateur doit être recalculé (les anciennes lignes de scope sont
+  // supprimées par le rafraîchissement). Non bloquant pour l'écriture.
+  if (!unchanged) {
+    try {
+      const { data: season } = await supabase
+        .from('progression_seasons')
+        .select('id')
+        .eq('status', 'active')
+        .order('starts_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      const seasonId = (season as { id: string } | null)?.id;
+      if (seasonId) {
+        await supabase.from('leaderboard_refresh_queue').upsert(
+          { user_id: userId, season_id: seasonId, status: 'pending' },
+          { onConflict: 'user_id,season_id' }
+        );
+      }
+    } catch (enqueueError) {
+      console.warn('[territory] rafraîchissement du classement non enfilé:', enqueueError);
+    }
+  }
+
   const row = data as {
     city_name: string | null;
     city_code: string | null;

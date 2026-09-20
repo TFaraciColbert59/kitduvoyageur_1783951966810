@@ -177,6 +177,26 @@ Snippet pour un futur `vercel.json` (format standard, non créé ici) :
 }
 ```
 
+Alternative GitHub Actions (workflow non créé ici) :
+
+```yaml
+name: progression-crons
+on:
+  schedule:
+    - cron: '*/5 * * * *'
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          curl -fsS -X POST "${{ vars.LKDV_APP_URL }}/api/cron/progression-outbox" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}"
+```
+
+Alternative `pg_cron` + `pg_net` (activée seulement si l'extension est disponible
+et si le secret est stocké dans Vault — non appliquée ici) : planifier un
+`net.http_post` vers les deux routes avec l'en-tête `Authorization`.
+
 ---
 
 ## 7. Exploitation

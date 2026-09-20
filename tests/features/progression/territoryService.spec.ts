@@ -31,6 +31,9 @@ function createSupabaseMock(options: MockOptions) {
         if (table === 'user_territory') {
           return Promise.resolve({ data: options.current ?? null, error: null });
         }
+        if (table === 'progression_seasons') {
+          return Promise.resolve({ data: { id: 'season_2026_s1' }, error: null });
+        }
         return Promise.resolve({ data: options.lastChange ?? null, error: null });
       };
       builder.upsert = (payload: unknown) => {
@@ -54,6 +57,26 @@ function createSupabaseMock(options: MockOptions) {
       builder.insert = (payload: unknown) => {
         calls.push(['insert', table, payload]);
         return Promise.resolve({ error: null });
+      };
+      builder.upsert = (payload: unknown) => {
+        calls.push(['upsert', table, payload]);
+        const chain: Record<string, unknown> = {};
+        chain.select = () => chain;
+        chain.maybeSingle = () =>
+          Promise.resolve({
+            data: {
+              city_name: 'Grenoble',
+              city_code: '38185',
+              region_code: '84',
+              country_code: 'FR',
+              source: 'manual',
+              updated_at: '2026-09-19T10:00:00.000Z',
+            },
+            error: null,
+          });
+        chain.then = (resolve: (value: unknown) => unknown) =>
+          resolve({ error: null });
+        return chain;
       };
       return builder;
     },
@@ -89,6 +112,9 @@ describe('updateDeclaredTerritory — verrou 24 h', () => {
 
     expect(result.ok).toBe(true);
     expect(calls.some(([op, table]) => op === 'insert' && table === 'territory_change_log')).toBe(false);
+    expect(
+      calls.some(([op, table]) => op === 'upsert' && table === 'leaderboard_refresh_queue')
+    ).toBe(false);
   });
 
   it('(b) changement réel dans les 24 h : refusé', async () => {
@@ -122,6 +148,9 @@ describe('updateDeclaredTerritory — verrou 24 h', () => {
     expect(result.ok).toBe(true);
     expect(
       calls.some(([op, table]) => op === 'insert' && table === 'territory_change_log')
+    ).toBe(true);
+    expect(
+      calls.some(([op, table]) => op === 'upsert' && table === 'leaderboard_refresh_queue')
     ).toBe(true);
   });
 });

@@ -52,6 +52,7 @@ export const GDPR_USER_TABLES: readonly GdprUserTable[] = [
   { table: 'progression_outbox', userColumn: 'user_id' },
   { table: 'progression_decisions', userColumn: 'user_id' },
   { table: 'progression_legacy_snapshot', userColumn: 'user_id' },
+  { table: 'progression_legacy_mapping', userColumn: 'user_id' },
   { table: 'progression_leaderboard_agg', userColumn: 'user_id' },
   { table: 'leaderboard_refresh_queue', userColumn: 'user_id' },
   { table: 'leaderboard_access_log', userColumn: 'user_id' },
