@@ -207,8 +207,11 @@ REVOKE ALL ON FUNCTION public.enqueue_progression_outbox() FROM PUBLIC, anon, au
 REVOKE ALL ON FUNCTION public.progression_level_for(integer) FROM PUBLIC, anon, authenticated;
 REVOKE ALL ON FUNCTION public.progression_allocations_valid(integer, jsonb) FROM PUBLIC, anon, authenticated;
 REVOKE ALL ON FUNCTION public.update_loyalty_points(uuid, integer, text, text) FROM PUBLIC, anon, authenticated;
-REVOKE ALL ON FUNCTION public.claim_reward_points(uuid, text, uuid, text, jsonb) FROM PUBLIC, anon, authenticated;
-GRANT EXECUTE ON FUNCTION public.claim_reward_points(uuid, text, uuid, text, jsonb) TO service_role;
+-- NOTE séquencement : le REVOKE de `claim_reward_points` est volontairement
+-- différé dans `20260922000000_claim_revoke_after_app_deploy.sql`. L'ancienne
+-- route `/api/rewards/claim` (app déployée) l'appelle avec une session
+-- utilisateur ; la révocation doit suivre le déploiement de la nouvelle route
+-- (service role) pour ne pas interrompre les récompenses pendant la fenêtre.
 
 -- ── 4. search_path figé sur les triggers du reward engine ────────────────────
 CREATE OR REPLACE FUNCTION public.handle_new_user_reward_account()

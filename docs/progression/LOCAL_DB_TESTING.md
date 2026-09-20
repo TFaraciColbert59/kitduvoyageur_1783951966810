@@ -22,7 +22,7 @@ docker exec lkdv-test-db psql -U postgres -d postgres -v ON_ERROR_STOP=1 -f /tmp
 docker exec lkdv-test-db psql -U postgres -d postgres -v ON_ERROR_STOP=1 -f /tmp/grants.sql
 
 # 3. Migrations post-baseline utiles (dans l'ordre), dont la progression
-docker cp supabase/migrations/20260919_unified_progression_rankings.sql lkdv-test-db:/tmp/progression.sql
+docker cp supabase/migrations/20260919010000_unified_progression_rankings.sql lkdv-test-db:/tmp/progression.sql
 docker exec lkdv-test-db psql -U postgres -d postgres -v ON_ERROR_STOP=1 -f /tmp/progression.sql
 # puis 20260920100000 → 20260920106000 de la même façon
 
@@ -71,7 +71,7 @@ Exécuté le 19/09/2026 sur trois conteneurs indépendants (`public.ecr.aws/supa
 
 Précisions d'exécution :
 - La chaîne complète exige le rôle **`supabase_admin`** (le rôle `postgres` du conteneur n'est pas propriétaire de `spatial_ref_sys`).
-- Trois réparations additives de migrations préexistantes ont été nécessaires pour rejouer à froid : `20260713240000` (colonnes `country_sync_log`), `20260715120000` (colonnes `moderation_queue`), `20260917_phase1_security_fixes` (signatures de fonctions absentes + gardes `DO`).
+- Trois réparations additives de migrations préexistantes ont été nécessaires pour rejouer à froid : `20260713240000` (colonnes `country_sync_log`), `20260715120000` (colonnes `moderation_queue`), `20260917010000_phase1_security_fixes` (signatures de fonctions absentes + gardes `DO`).
 - Les descentes sont idempotentes (rejouables) : `DROP ... IF EXISTS`, gardes `to_regclass`, `ALTER TABLE IF EXISTS`.
 
 ### Scripts de vérification utilisés
