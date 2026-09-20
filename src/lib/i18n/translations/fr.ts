@@ -84,6 +84,11 @@ export const fr = {
     challengeNoneBody:
       'Aucun défi en cours. Les défis sont attribués avec la saison et progressent à partir de vos événements validés — aucune sanction d’absence.',
     challengeCompleted: 'Objectif atteint.',
+    challengeReplace: 'Remplacer (1/semaine)',
+    challengeReplaceCooldown: 'Remplacer (disponible après 7 jours)',
+    challengeReplaceLoading: 'Remplacement…',
+    challengeReplaceError: 'Remplacement impossible pour le moment.',
+    challengeReplaceAria: 'Remplacer le défi du moment (1 par semaine)',
     distinctionNone: 'Aucune distinction obtenue',
     distinctionsDefault: 'Vos badges obtenus',
     distinctionEmpty:

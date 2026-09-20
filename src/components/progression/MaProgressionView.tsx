@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Award, ChevronDown, Gift, Target, Trophy } from 'lucide-react';
+import { Award, ChevronDown, Gift, RefreshCw, Target, Trophy } from 'lucide-react';
 import Icon from '@/components/ui/AppIcon';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { createClient } from '@/lib/supabase/client';
@@ -182,6 +182,8 @@ export default function MaProgressionView({ initialProfile, compact = false }: M
     items: [],
   });
   const [gains, setGains] = useState<GainsState>({ status: 'loading', items: [] });
+  const [replacingChallenge, setReplacingChallenge] = useState(false);
+  const [replaceChallengeError, setReplaceChallengeError] = useState(false);
 
   // Charger le profil si non fourni en SSR
   useEffect(() => {
@@ -328,6 +330,51 @@ export default function MaProgressionView({ initialProfile, compact = false }: M
   const handleFilterChange = (filter: TerritoryFilter) => {
     triggerHaptic('selection');
     setSelectedFilter(filter);
+  };
+
+  const handleReplaceChallenge = async () => {
+    if (!profile?.challenge || !profile.challenge.canBeReplaced || replacingChallenge) return;
+    triggerHaptic('selection');
+    setReplacingChallenge(true);
+    setReplaceChallengeError(false);
+    try {
+      const response = await fetch('/api/progression/challenge/replace', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({}),
+      });
+      const data = await response.json().catch(() => null);
+      if (response.ok && data?.success && typeof data.challengeId === 'string') {
+        const refreshed = await fetch('/api/progression')
+          .then((res) => res.json())
+          .catch(() => null);
+        if (refreshed?.success && refreshed.profile) {
+          setProfile(refreshed.profile);
+        } else {
+          // Rechargement impossible : ne jamais laisser un bouton actif alors
+          // que le remplacement serveur a bien consommé le cooldown.
+          setProfile((current) =>
+            current?.challenge
+              ? {
+                  ...current,
+                  challenge: {
+                    ...current.challenge,
+                    currentProgress: 0,
+                    canBeReplaced: false,
+                  },
+                }
+              : current
+          );
+        }
+        return;
+      }
+      setReplaceChallengeError(true);
+    } catch (err) {
+      console.error('Erreur remplacement de défi:', err);
+      setReplaceChallengeError(true);
+    } finally {
+      setReplacingChallenge(false);
+    }
   };
 
   if (!profile) {
@@ -732,9 +779,36 @@ export default function MaProgressionView({ initialProfile, compact = false }: M
                 {t('progression.challengeCompleted')}
               </p>
             )}
-            {/* Le remplacement 1/semaine n'est pas disponible : la route
-                /api/progression/challenge/replace répond 501 (non implémentée P3).
-                Aucun bouton factice n'est affiché tant qu'elle ne répond pas. */}
+            {/* Remplacement réel (1/semaine) : affiché uniquement pour un défi
+                réel et un cooldown écoulé ; sinon désactivé avec libellé
+                explicite. Jamais de bouton factice. */}
+            <div className="mt-3">
+              <button
+                type="button"
+                onClick={handleReplaceChallenge}
+                disabled={!challenge.canBeReplaced || replacingChallenge}
+                aria-label={t('progression.challengeReplaceAria')}
+                className="glass-capsule-btn secondary min-h-[44px] w-full justify-center disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+              >
+                <RefreshCw
+                  size={14}
+                  aria-hidden="true"
+                  className={replacingChallenge ? 'animate-spin motion-reduce:animate-none' : ''}
+                />
+                <span>
+                  {replacingChallenge
+                    ? t('progression.challengeReplaceLoading')
+                    : challenge.canBeReplaced
+                      ? t('progression.challengeReplace')
+                      : t('progression.challengeReplaceCooldown')}
+                </span>
+              </button>
+              {replaceChallengeError && (
+                <p role="status" className="mt-2 text-xs text-[var(--lkv-text-secondary)]">
+                  {t('progression.challengeReplaceError')}
+                </p>
+              )}
+            </div>
           </div>
         ) : (
           <p className="text-xs leading-relaxed text-[var(--lkv-text-secondary)]">

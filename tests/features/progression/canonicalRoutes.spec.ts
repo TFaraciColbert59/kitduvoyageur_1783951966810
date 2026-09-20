@@ -11,6 +11,9 @@ vi.mock('@/features/progression/server/territoryService', () => ({
   updateDeclaredTerritory: vi.fn(),
   updatePrivateAttachment: vi.fn(),
 }));
+vi.mock('@/features/progression/server/challengeService', () => ({
+  replaceProgressionChallenge: vi.fn(),
+}));
 
 import { createClient } from '@/lib/supabase/server';
 import {
@@ -18,6 +21,7 @@ import {
   getTerritorialLeaderboard,
 } from '@/features/progression/server/progressionService';
 import { updateDeclaredTerritory } from '@/features/progression/server/territoryService';
+import { replaceProgressionChallenge } from '@/features/progression/server/challengeService';
 import { GET as progressionGET } from '@/app/api/progression/route';
 import { GET as leaderboardGET } from '@/app/api/progression/leaderboard/route';
 import { POST as territoryPOST } from '@/app/api/progression/territory/route';
@@ -34,6 +38,7 @@ const mockedCreateClient = vi.mocked(createClient);
 const mockedProfile = vi.mocked(getProgressionProfile);
 const mockedLeaderboard = vi.mocked(getTerritorialLeaderboard);
 const mockedDeclared = vi.mocked(updateDeclaredTerritory);
+const mockedReplace = vi.mocked(replaceProgressionChallenge);
 
 function sessionClient(user: { id: string } | null) {
   return { auth: { getUser: async () => ({ data: { user } }) } } as never;
@@ -175,13 +180,20 @@ describe('routes API progression — session et périmètre P1', () => {
     });
   });
 
-  it('POST /api/progression/challenge/replace authentifié → 501 not_implemented_p3', async () => {
+  it('POST /api/progression/challenge/replace authentifié → 200 via le service serveur', async () => {
     mockedCreateClient.mockResolvedValue(sessionClient({ id: USER_ID }));
+    mockedReplace.mockResolvedValue({ ok: true, challengeId: 'catalogue-defi-reel' });
 
-    const response = await challengePOST();
+    const response = await challengePOST(
+      jsonRequest('http://localhost/api/progression/challenge/replace')
+    );
 
-    expect(response.status).toBe(501);
-    expect(await response.json()).toEqual({ success: false, error: 'not_implemented_p3' });
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({
+      success: true,
+      challengeId: 'catalogue-defi-reel',
+    });
+    expect(mockedReplace).toHaveBeenCalledWith(USER_ID);
   });
 
   it('GET /api/progression authentifié → 200 avec le profil canonique', async () => {
@@ -193,6 +205,10 @@ describe('routes API progression — session et périmètre P1', () => {
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual({ success: true, profile: PROFILE });
     expect(mockedProfile).toHaveBeenCalledWith(USER_ID);
+    expect(response.headers.get('Cache-Control')).toBe(
+      'private, max-age=30, stale-while-revalidate=60'
+    );
+    expect(response.headers.get('Vary')).toBe('Cookie');
   });
 
   it('GET /api/progression/leaderboard authentifié → 200 et filtre transmis', async () => {
@@ -212,6 +228,10 @@ describe('routes API progression — session et périmètre P1', () => {
       limit: 50,
       cursor: null,
     });
+    expect(response.headers.get('Cache-Control')).toBe(
+      'private, max-age=30, stale-while-revalidate=60'
+    );
+    expect(response.headers.get('Vary')).toBe('Cookie');
   });
 
   it('GET /api/progression/leaderboard authentifié → filtre invalide ramené à world', async () => {

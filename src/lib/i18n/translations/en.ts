@@ -84,6 +84,11 @@ export const en: TranslationKeys = {
     challengeNoneBody:
       'No challenge in progress. Challenges are assigned with the season and progress from your validated events — no penalty for absence.',
     challengeCompleted: 'Goal reached.',
+    challengeReplace: 'Replace (1/week)',
+    challengeReplaceCooldown: 'Replace (available after 7 days)',
+    challengeReplaceLoading: 'Replacing…',
+    challengeReplaceError: 'Replacement unavailable right now.',
+    challengeReplaceAria: 'Replace the current challenge (once per week)',
     distinctionNone: 'No distinction earned',
     distinctionsDefault: 'Your earned badges',
     distinctionEmpty:

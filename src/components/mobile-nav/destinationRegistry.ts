@@ -13,10 +13,8 @@ import type { Locale } from '@/lib/i18n/locale';
  * - labels FR/EN statiques portés par le registre ; le helper
  *   `getDestinationLabel(id, locale)` lit la locale demandée ;
  *
- * Note : `/materiel` est aujourd'hui un alias 307 → `/hub` (hubRedirects).
- * La destination Matériel existe dans le registre pour la direction produit ;
- * tant que le middleware redirige, un tap Matériel retombe sur la surface
- * Aventures (/hub). Voir rapport M02.
+ * Note : `/materiel` est une surface réelle et autonome (plus aucun alias 307
+ * vers /hub) ; la destination Matériel ouvre directement cette surface.
  */
 export type DestinationId =
   | 'adventures'
