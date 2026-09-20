@@ -43,7 +43,7 @@ BEGIN
   END IF;
 
   -- Si products existe encore comme table physique, on migre et on la convertit en vue
-  IF to_regclass('public.products') IS NOT NULL AND (SELECT relkind FROM pg_class WHERE oid = 'public.products'::regclass) = 'r' THEN
+  IF to_regclass('public.products') IS NOT NULL AND (SELECT relkind FROM pg_class WHERE oid = to_regclass('public.products')) = 'r' THEN
     INSERT INTO public.shop_products (
       id, slug, name, brand, category, price_eur, weight_g,
       image, image_alt, stock, available, created_at
@@ -183,7 +183,7 @@ BEGIN
     DROP TABLE public._deprecated_gear_items CASCADE;
   END IF;
 
-  IF to_regclass('public.gear_items') IS NOT NULL AND (SELECT relkind FROM pg_class WHERE oid = 'public.gear_items'::regclass) = 'r' THEN
+  IF to_regclass('public.gear_items') IS NOT NULL AND (SELECT relkind FROM pg_class WHERE oid = to_regclass('public.gear_items')) = 'r' THEN
     INSERT INTO public.product_ownership (
       id, user_id, name, brand, category, weight_g, price_cents, condition, tags, quantity, created_at
     )
@@ -410,7 +410,7 @@ BEGIN
     DROP TABLE public._deprecated_loans CASCADE;
   END IF;
 
-  IF to_regclass('public.loans') IS NOT NULL AND (SELECT relkind FROM pg_class WHERE oid = 'public.loans'::regclass) = 'r' THEN
+  IF to_regclass('public.loans') IS NOT NULL AND (SELECT relkind FROM pg_class WHERE oid = to_regclass('public.loans')) = 'r' THEN
     DROP TABLE public.loans CASCADE;
   END IF;
 END $$;
@@ -524,7 +524,7 @@ BEGIN
     DROP TABLE public._deprecated_groupes CASCADE;
   END IF;
 
-  IF to_regclass('public.groupes') IS NOT NULL AND (SELECT relkind FROM pg_class WHERE oid = 'public.groupes'::regclass) = 'r' THEN
+  IF to_regclass('public.groupes') IS NOT NULL AND (SELECT relkind FROM pg_class WHERE oid = to_regclass('public.groupes')) = 'r' THEN
     DROP TABLE public.groupes CASCADE;
   END IF;
 END $$;
