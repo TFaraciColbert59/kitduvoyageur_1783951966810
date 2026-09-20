@@ -183,11 +183,60 @@ Toutes les valeurs viennent des tokens (contrôles, radius, typographie, couleur
 5. `lkvPrompt` : hôte canonique de saisie à créer.
 6. Découper `BottomTabBar` (975 lignes) et migrer les formulaires (`LkvInput` & co) par famille.
 
+## Lot 4 — Migration massive des UI legacy (TERMINÉ pour le périmètre composants)
+
+### Migrations réalisées
+
+| Legacy | Avant | Après | Traitement |
+|---|---|---|---|
+| `LkvButton` | 15 importeurs | **0** | → `Button` / `IconButton` (mapping variantes/taille/icône), **fichier supprimé** |
+| `GlassIconButton` | 13 importeurs | **0** | → `IconButton` (aria-label, badge en children), **fichier supprimé** |
+| `GlassCard` | 90 importeurs | **0** | → `Card` (variants standard/interactive/featured/compact, `tone` absorbé), **fichier supprimé** |
+| `PremiumGlassCard(.client)` | 0 consommateur | **0** | **supprimés** (dépendaient de GlassCard) |
+| `lkvPrompt` | 3 usages | **0** | `PromptDialog` + `PromptHost` créés (pattern Radix identique à ConfirmDialog), `lkvPromptAsync` prometteuse, hôte monté dans le layout, admin migré, `window.prompt` **supprimé** |
+
+- **120 fichiers touchés** (113 modifiés, 5 supprimés, 2 créés) : **+715 / −1180 lignes**.
+- Migrations par lots de ~15 fichiers avec `type-check` intermédiaire.
+
+### Exceptions documentées
+
+1. `src/components/ui/ReportBlockModal.tsx:106` — `confirm()` natif conservé (hors périmètre des étapes ; à migrer en Lot 5).
+2. `src/components/dev/glass/GlassLab.tsx` / `GlassLabSurface.tsx` — fixtures de démo adaptées aux variants canoniques (`disabled` → `aria-disabled`, `selected`/`critical` → `selected`/`tone="danger"`).
+3. Tests recablés sur le contrat canonique : `tests/ui/glass-card.spec.tsx`, `tests/design-system/glass-controls.spec.ts`, `tests/design-system/primitives.spec.ts`.
+
+### Métriques avant / après
+
+| Mesure | Avant Phase 2 | Après lot 3 | Après lot 4 |
+|---|---|---|---|
+| `window.confirm/alert/prompt` | 2 | 1 | **0** |
+| Styles inline | 1 529 | 1 525 | **1 522** |
+| `z-[...]` littéraux | n/m | 80 | **79** |
+| `rounded-[...]` littéraux | n/m | 218 | 218 (pages non encore migrées) |
+| Primitives `src/components/ui` | 49 | 56 | **53** (4 supprimées, 2 créées) |
+| Fichiers `*Button.tsx` | 6 | 9 | **7** (legacy supprimés) |
+| `LkvButton` / `GlassCard` / `GlassIconButton` | 15 / 90 / 13 | idem | **0 / 0 / 0** |
+
+### Captures et tests
+
+- Captures : `docs/design-system/phase2-screenshots/lot4/` (60 fichiers). Vérification visuelle Compte (mobile) + Home (desktop) : contenu, CTA, header, navigation intacts, aucune perte.
+- `type-check` ✅ 0 · `lint` ✅ 0 · `vitest` ✅ 407 fichiers / **2 946 tests** · `build` ✅ 12,1 s.
+
+### Dette restante (Lot 5)
+
+1. **13 headers custom** → `PageHeader` ; **17 overlays `role="dialog"`** maison + 5 primitives modales (`GlassModal` 23 importeurs, `GlassSheet` 5, `GlassDrawer` 10, `Sheet` 2, `PremiumBottomSheet` 2) → cible `Modal`/`Sheet`/`ConfirmDialog`.
+2. **218 `rounded-[…]` littéraux** et **79 `z-[…]` littéraux** à purger par feature (tokens).
+3. **5 192 hex** et **1 522 styles inline** restants dans les pages.
+4. **54 pages desktop/mobile séparées** à fusionner quand données/structure/actions sont communes.
+5. `BottomTabBar` (975 lignes) à découper (NavigationBar/TabItem/plateau/modèle/adaptateurs).
+6. Consolidation `Badge`/`LkvChip` (information/statut vs action/sélection) et `ProductGlassCard`.
+7. `ReportBlockModal` : dernier `confirm()` natif.
+8. Formulaires legacy (`LkvInput` & co) à généraliser.
+
 ## Lots suivants
 
 | Lot | Contenu | Statut |
 |---|---|---|
-| 4+ | Migration des pages par familles (avec bascule des primitives legacy), comparaison baseline à chaque famille | à faire |
+| 5 | Headers, overlays/modales canoniques, purge rounded/z, pages desktop/mobile, découpage BottomTabBar | à faire |
 
 ## Risques / points ouverts
 
