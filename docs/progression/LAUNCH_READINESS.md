@@ -10,7 +10,7 @@ Statuts : **vérifié** (preuve locale exécutée), **implémenté** (code livr�
 | Tests unitaires/intégration | `npm test` | **2936 passés, 27 skipped, 0 échec** (406 fichiers) |
 | Types | `npm run type-check` | **0 erreur** |
 | Build production | `npm run build` | **Succès**, First Load JS partagé 104 kB |
-| pgTAP moteur + classement + durcissement + saisons/défis + sécurité + perf | `npx supabase test db --db-url …` (15 suites) | **195/195** sur base de travail **et** base neuve |
+| pgTAP moteur + classement + durcissement + saisons/défis + sécurité + perf | `npx supabase test db --db-url …` (16 suites) | **204/204** sur base de travail **et** base neuve |
 | Chaîne de migrations complète à froid | baseline + ≈100 migrations post-baseline | **0 erreur** (3 réparations additives), procédure `LOCAL_DB_TESTING.md` |
 | Base héritée : réconciliation + rebuild | fixtures de démo → migrations canoniques | **Vérifié** (archive, purge, solde économique intact, rebuild exact) |
 | Rollback + remigration | 12 descentes inverses puis réapplication | **Vérifié** (objets retirés, remigration fonctionnelle) |
@@ -28,7 +28,7 @@ Statuts : **vérifié** (preuve locale exécutée), **implémenté** (code livr�
 | Sécurité du moteur | RLS inter-comptes, fonctions privilégiées, cron, concurrence, coordonnées | **Vérifié** | Revue indépendante + correctifs : revokes, `search_path`, bornage outbox, purge/rejeu, k-anonymat contraignant, alias scopé |
 | Fonctions héritées (85) | Aucune fonction `SECURITY DEFINER` dangereuse exécutable par un client | **Vérifié** | `20260921100000` : catégorisation (85), 3 gardes ajoutées, 50+ révoquées, `CREATE`/`TRUNCATE`/`TRIGGER` retirés à `anon`/`authenticated` — pgTAP 20/20 |
 | RGPD | Suppression de compte sans orphelins ; export article 20 complet | **Vérifié** | 11 FK `ON DELETE CASCADE` (dont mapping) + tables ajoutées à `gdprExport` ; test a14 vert |
-| Saisons et défis | Clôture reproductible, progression dérivée, remplacement réel | **Vérifié** | pgTAP 43/43 ; route 501 supprimée ; mapping hérité livré non branché (à activer après revue) |
+| Saisons et défis | Ouverture/clôture reproductibles, progression dérivée, remplacement réel | **Vérifié** | pgTAP 52/52 ; route 501 supprimée ; cycle de vie manuel documenté (`OPERATIONS.md` §2bis) ; mapping hérité livré non branché |
 | Performance moteur | Index des requêtes chaudes, rétention, cache, rate-limits | **Vérifié localement** | `20260921200000` + `docs/progression/PERFORMANCE.md` (plans EXPLAIN locaux) ; planification des crons documentée, non activée |
 | Producteurs | 7 producteurs réels (4 prêts + 3 complétés), désactivés documentés | **Vérifié** (preuve serveur), **implémenté** (non observé en production) | `PRODUCER_MATRIX.md` ; 76 tests progression ; aucun producteur fictif |
 | Classements | 5 filtres, score identique, seuil 5, 1 km confidentiel sous flag | **Vérifié** pgTAP 46/46 | Flag `local_leaderboard_active` OFF par défaut ; anti-triangulation testée (sondage 30/h, seuil, aucune coordonnée) |
@@ -43,6 +43,15 @@ Statuts : **vérifié** (preuve locale exécutée), **implémenté** (code livr�
 | Confidentialité | Position exacte exclue, consentement, export/suppression | **Vérifié localement** | `user_territory_private` inaccessible aux clients (pgTAP) ; parcours de consentement implémenté ; export/suppression existants |
 | Stores | Règles, permissions, confidentialité, suppression de compte | **Restant** | `docs/mobile/STORES_CHECKLIST.md` à actualiser ; aucun build store produit |
 | Déploiement | Flags, migration additive, restauration testée, retour arrière | **Partiel** | Migrations additives appliquées en base locale ; restauration non exécutée ; aucun déploiement |
+
+## Résidus de sécurité connus (documentés, non bloquants)
+
+| Résidu | Portée | Recommandation |
+|---|---|---|
+| `npm audit` : 5 vulnérabilités (4 modérées, 1 haute) | Chaîne d'outillage `@capacitor/cli → xcode → uuid`, non embarquée dans le bundle web | Montée majeure de la CLI Capacitor à planifier séparément (correctif `--force` interdit en l'état) |
+| `get_kit_journal` reste exécutable par `anon` | Agrégats anonymisés d'un kit public ; identifiants UUID non énumérables | Ajouter un contrôle de visibilité du kit dans la fonction lors d'un prochain lot |
+| `reward_withdrawals.idempotency_key` UNIQUE global | Une clé partagée entre comptes renvoie 23505 (plus de fuite) | Migrer vers `UNIQUE(user_id, idempotency_key)` (changement de schéma) |
+| Planification des crons non activée | Routes prêtes et protégées ; aucun `vercel.json`/workflow dans le dépôt | Configurer côté plateforme (`PERFORMANCE.md` §6 : Vercel, GitHub Actions ou pg_cron) |
 
 ## Limites déclarées
 

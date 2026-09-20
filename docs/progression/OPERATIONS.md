@@ -45,6 +45,26 @@ Les deux exigent `Authorization: Bearer ${CRON_SECRET}`. La planification
 plateforme n'est pas encore configurée dans le dépôt : voir
 `docs/progression/PERFORMANCE.md` §6.
 
+## 2bis. Cycle de vie des saisons (service_role uniquement)
+
+Aucune saison n'est créée ou clôturée implicitement par le moteur.
+
+```sql
+-- Ouvrir la saison suivante (statut upcoming, chevauchement refusé)
+SELECT public.open_progression_season(
+  'season_2027_s2', 2, 'Saison 2 · titre interne',
+  '2026-11-14T00:00:00Z', '2027-01-09T00:00:00Z'
+);
+
+-- Clôturer reproductiblement (idempotent, ne supprime rien)
+SELECT public.close_progression_season('season_2026_s1');
+```
+
+À planifier côté exploitation : ouvrir la saison N+1 quelques jours avant la fin
+de la saison N ; clôturer après la fenêtre de grâce (14 jours par défaut).
+Les classements ne lisent que la saison `active` ; une saison `upcoming` n'est
+jamais exposée tant que le statut n'est pas basculé manuellement.
+
 ## 3. Rétention
 
 | Table | Fenêtre par défaut | Mécanisme |
