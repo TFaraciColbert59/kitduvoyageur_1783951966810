@@ -203,7 +203,6 @@
     background: var(--primary);
     color: var(--primary-foreground);
     padding: 0.875rem 1.75rem;
-    border-radius: var(--radius-sm);
     font-weight: 600;
     font-size: 0.9375rem;
     transition: all 200ms var(--spring-smooth);
@@ -248,7 +247,7 @@
   *:focus-visible {
     outline: 2px solid var(--primary);
     outline-offset: 2px;
-    border-radius: var(--radius-xs, 2px);
+    border-radius: 2px;
   }
 
   button:focus-visible:not(:focus-visible) {
@@ -265,7 +264,6 @@
     background: transparent;
     color: var(--foreground);
     padding: 0.75rem 1.5rem;
-    border-radius: var(--radius-sm);
     font-weight: 500;
     font-size: 0.875rem;
     transition: all 200ms var(--spring-smooth);
@@ -278,91 +276,9 @@
     background: var(--muted);
   }
 
-  .btn-ghost-dark {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-    background: transparent;
-    color: rgba(245,243,238,0.75);
-    padding: 0.875rem 1.75rem;
-    border-radius: var(--radius-sm);
-    font-weight: 500;
-    font-size: 0.9375rem;
-    transition: all 200ms var(--spring-smooth);
-    border: 1.5px solid rgba(245,243,238,0.2);
-    cursor: pointer;
-    min-height: 44px;
-  }
-
-  .btn-ghost-dark:hover {
-    background: rgba(255,255,255,0.06);
-    color: rgba(245,243,238,0.95);
-  }
-
   /* Cards */
 
   /* Badges */
-  .badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    padding: 3px 10px;
-    border-radius: var(--radius-full);
-    font-size: 10px;
-    font-weight: 600;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-  }
-
-  .badge-primary {
-    background: var(--primary-subtle);
-    color: var(--primary);
-    border: 1px solid var(--border);
-  }
-
-  .badge-dark {
-    background: rgba(255,255,255,0.1);
-    color: rgba(245,243,238,0.7);
-    border: 1px solid rgba(255,255,255,0.12);
-  }
-
-  /* Eyebrow labels */
-  .label-eyebrow {
-    font-family: var(--font-mono);
-    font-size: 10px;
-    font-weight: 500;
-    letter-spacing: 0.18em;
-    text-transform: uppercase;
-    color: var(--primary);
-  }
-
-  .label-eyebrow-muted {
-    font-family: var(--font-mono);
-    font-size: 10px;
-    font-weight: 500;
-    letter-spacing: 0.18em;
-    text-transform: uppercase;
-    color: var(--muted-foreground);
-  }
-
-  .label-eyebrow-dark {
-    font-family: var(--font-mono);
-    font-size: 10px;
-    font-weight: 500;
-    letter-spacing: 0.18em;
-    text-transform: uppercase;
-    color: rgba(245,243,238,0.35);
-  }
-
-  /* Skeletons */
-  .skeleton {
-    background: linear-gradient(90deg, var(--muted) 25%, var(--card) 50%, var(--muted) 75%);
-    background-size: 200% 100%;
-    animation: shimmer 1.5s ease-in-out infinite;
-    border-radius: var(--radius-sm);
-  }
-
   @keyframes shimmer {
     0% { background-position: 200% 0; }
     100% { background-position: -200% 0; }
@@ -679,30 +595,10 @@
   }
 
   .animate-slide-up { animation: slideUp 500ms var(--spring-smooth) both; }
-  .animate-slide-down { animation: slideDown 300ms var(--spring-smooth) both; }
   .animate-fade-in { animation: fadeIn 400ms ease both; }
   .animate-scale-in { animation: scaleIn 300ms var(--spring-bounce) both; }
-  .animate-spring-in { animation: springIn 600ms var(--spring-bounce) both; }
-  .animate-float { animation: float 3s ease-in-out infinite; }
-
-  .delay-50 { animation-delay: 50ms; }
-  .delay-100 { animation-delay: 100ms; }
-  .delay-150 { animation-delay: 150ms; }
-  .delay-200 { animation-delay: 200ms; }
-  .delay-300 { animation-delay: 300ms; }
-  .delay-400 { animation-delay: 400ms; }
-  .delay-500 { animation-delay: 500ms; }
 
   /* Safe Areas — définitions canoniques plus bas (§5, .pt-safe/.pb-safe) */
-
-  /* Touch Targets */
-  .touch-target {
-    min-width: 44px;
-    min-height: 44px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
 
   /* Scrollbars */
   .scrollbar-hide {
@@ -718,24 +614,6 @@
     letter-spacing: 0.02em;
     font-variant-numeric: var(--lkv-font-numeric);
   }
-
-  .nav-underline { position: relative; }
-
-  .nav-underline::after {
-    content: '';
-    position: absolute;
-    bottom: -3px;
-    left: 0;
-    width: 0;
-    height: 1.5px;
-    background-color: var(--primary);
-    transition: width 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-  }
-
-  .nav-underline:hover::after,
-  .nav-underline.active::after { width: 100%; }
-
-  .img-hover-zoom { overflow: hidden; }
 
   .haptic-press:active {
     transform: scale(0.96);
@@ -891,12 +769,6 @@ body {
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
   perspective: 1000px;
-}
-
-/* 4. Optimisation de rendu hors-champ pour les longues listes */
-.content-auto {
-  content-visibility: auto;
-  contain-intrinsic-size: 0 110px;
 }
 
 /* 5. Safe Area Insets iOS Dynamic Island & Android Navigation Bar */

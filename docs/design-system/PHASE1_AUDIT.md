@@ -125,6 +125,16 @@ Graphe d'imports : **223 fichiers inatteignables** depuis les 265 points d'entr�
 | `refactor(ui)` nettoyage | 114 fichiers supprimés (−17 792 lignes) : home legacy ×30, preparer-randonnee ×13, UI mortes ×15, icônes legacy ×16, groupes ×9, compte ×8, animations ×5, mobile-nav ×5, divers ; `LkvCheckbox` migré vers l'icône canonique ; test de migration profils mis à jour |
 | `chore(deps)` | Retrait de `vaul`, `@headlessui/react`, `@radix-ui/react-toast`, `class-variance-authority`, `@tailwindcss/forms` (0 import) + nettoyage `next.config.mjs` et `NOTICE` |
 
+### Passe 2 — finitions (même phase)
+
+- **Variables non définies : 27 → 9.** Les 9 restantes sont runtime/optionnelles et documentées : `--bottom-nav-height`, `--shell-top-padding` (définis inline par `AppShell`), `--bottom-tab-base/extended-height`, `--explorer-carousel-height`, `--kb-inset`, `--lkv-sheet-from` (valeurs de repli), `--font-serif` (next/font), `--lkv-accent`.
+- **Familles d'alias complétées** : `--lkv-sage-600..900`, `--lkv-stone-300..950`, `--lkv-sand-50..900`, `--lkv-sky-50..900`, `--lkv-ink-100`, `--lkv-overlay` → `--lkv-overlay-scrim`. Effets visibles (restauration de l'intention, pas redesign) : gradients de `clubs/page.tsx`, chip sélectionnée de `MissingItemsDrawer`, palette de `budgetEngine.ts`.
+- **`--lkv-accent` volontairement non défini** : utilisé sur le bandeau cookies à fond sombre ; l'aliasing sur `--lkv-secondary` ferait tomber le contraste à ~3,4:1 (échec WCAG AA). Décision à trancher en Phase 2 (variante claire type `--sage-300`).
+- **Classes CSS mortes supprimées** (`tailwind.css`) : `.badge`, `.badge-primary`, `.badge-dark`, `.btn-ghost-dark`, `.label-eyebrow*`, `.nav-underline`, `.img-hover-zoom`, `.touch-target`, `.content-auto`, `.skeleton`, `.animate-float`, `.animate-slide-down`, `.animate-spring-in`, `.delay-50..500`, `border-radius` invalides de `.btn-primary`/`.btn-ghost` (rendu inchangé).
+- **Bug documenté (Phase 2)** : `font-mono-data` (8 usages) ne correspond à aucune classe générée — la police mono ne s'applique pas. Correctif visible (changement de police) volontairement reporté.
+- **Docs** : `CLAUDE.md` — références aux composants supprimés corrigées (home, `TerrainHub`, animations legacy) + bannière « palette historique » ; `docs/DESIGN_SYSTEM.md` marqué historique.
+- **DevDep** : `ts-node` retiré (aucun usage).
+
 Outils et gouvernance :
 - `scripts/design/find-dead-code.mjs` : reconstruit le graphe d'imports et liste le code mort (reproductible, `--json`). État après nettoyage : 102 fichiers inatteignables, dont 89 métier protégés (staging) et 13 primitives/layouts Phase 1 volontairement non encore consommés.
 - `DESIGN_SYSTEM.md` (racine) mis à jour ; `docs/DESIGN_SYSTEM.md` marqué historique (valeurs obsolètes) pour supprimer la contradiction entre les deux documents.

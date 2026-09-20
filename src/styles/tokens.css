@@ -358,8 +358,44 @@
   --border-width-medium: 1.5px;
   --border-width-thick: 2px;
 
+  /* ├─ Alias de familles complémentaires (complètent forest/sage/stone) */
+  --lkv-sage-600: var(--sage-600);
+  --lkv-sage-700: var(--sage-700);
+  --lkv-sage-800: var(--sage-800);
+  --lkv-sage-900: var(--sage-900);
+  --lkv-stone-300: var(--stone-300);
+  --lkv-stone-400: var(--stone-400);
+  --lkv-stone-500: var(--stone-500);
+  --lkv-stone-600: var(--stone-600);
+  --lkv-stone-700: var(--stone-700);
+  --lkv-stone-800: var(--stone-800);
+  --lkv-stone-900: var(--stone-900);
+  --lkv-stone-950: var(--stone-950);
+  --lkv-sand-50: var(--sand-50);
+  --lkv-sand-100: var(--sand-100);
+  --lkv-sand-200: var(--sand-200);
+  --lkv-sand-300: var(--sand-300);
+  --lkv-sand-400: var(--sand-400);
+  --lkv-sand-500: var(--sand-500);
+  --lkv-sand-600: var(--sand-600);
+  --lkv-sand-700: var(--sand-700);
+  --lkv-sand-800: var(--sand-800);
+  --lkv-sand-900: var(--sand-900);
+  --lkv-sky-50: var(--sky-50);
+  --lkv-sky-100: var(--sky-100);
+  --lkv-sky-200: var(--sky-200);
+  --lkv-sky-300: var(--sky-300);
+  --lkv-sky-400: var(--sky-400);
+  --lkv-sky-500: var(--sky-500);
+  --lkv-sky-600: var(--sky-600);
+  --lkv-sky-700: var(--sky-700);
+  --lkv-sky-800: var(--sky-800);
+  --lkv-sky-900: var(--sky-900);
+  --lkv-ink-100: var(--ink-100);
+
   /* ├─ Surfaces complémentaires */
   --lkv-surface-raised: var(--lkv-surface-card);
+  --lkv-overlay: var(--lkv-overlay-scrim);
 
   /* ├─ Motion (alias canoniques des easings historiques) */
   --dur-instant: 80ms;

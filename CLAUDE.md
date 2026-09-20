@@ -160,6 +160,10 @@ composant public hors `src/components/identity`, aucun hex hors palette dans les
 
 ## 🎨 Design Système — Mobile Redesign (v2)
 
+> **⚠ Palette ci-dessous historique (v2).** Source de vérité : `src/styles/tokens.css`,
+> `DESIGN_SYSTEM.md` (racine) et `src/design/README.md`. Ne pas réintroduire ces hex dans
+> du code neuf ; consommer les tokens `--lkv-*` (ou la façade `@/design`).
+
 ### Palette
 | Rôle | Hex | Usage |
 |------|------|------|
@@ -300,7 +304,7 @@ transpilePackages: ['react-globe.gl', 'three', 'lucide-react']
 ### Pages référencées (mobile)
 | Page | Fichier | Sections mobiles |
 |------|--------|-----------------|
-| Accueil | `MobileHomePage.tsx` + HeroSection, QuickGrid, EditorialCard, StatsRow, StripCTA | Hero 460px foreground-900, 2-col grid, carte éditoriale, stats, CTA stripe |
+| Accueil | `src/app/page.tsx` (Header + ResumeActiveTripCard) | Refonte Phase 2 prévue ; les anciennes sections `MobileHomePage` / `components/home` ont été supprimées en Phase 1 (code mort) |
 | Explorer | `explorer/page.tsx` | AventuresHero, MiniMap 900×250px (coins arrondis 16px), AventureCards, FAB Navigator |
 | Fiche Produit | `produit/[slug]/ProductDetailClient.tsx` | Gallery 380px gradient, attributs 2×3, couleurs 5 swatches, ProductBuyBar |
 | Panier | `panier/page.tsx` | Items 77×92px images, qty selector, promo banner dashed, summary card |
@@ -329,7 +333,7 @@ Grille 2×3 : Capacité/Poids/Matière/Origine — icône 3×30px, font `#EAF1E5
 
 ### Page /terrain
 - Page statique mobile-only. Desktop redirect vers `/explorer`.
-- `TerrainHub.tsx` — header avec badge GPS actif/hors ligne, hero card "Navigateur", grille AventureCards, CTA "Mode hors ligne".
+- `TerrainHub.tsx` — **supprimé en Phase 1** (code mort) ; le terrain live est porté par `src/features/terrain-live/`.
 - `OfflineBanner` — bannière sticky (z-index 55, sous safe-area) quand `navigator.onLine` est faux, toast "Connexion rétablie" au retour.
 
 ### Offline
@@ -346,7 +350,7 @@ Grille 2×3 : Capacité/Poids/Matière/Origine — icône 3×30px, font `#EAF1E5
 ### Haptique
 - `useHapticFeedback` (`navigator.vibrate`) — **API mise à jour (PR #14)** : retourne `{ haptic }` au lieu de `{ haptic: haptic() }`. Utiliser `haptic('light')` ou `haptic('medium')` au lieu de `light()` / `medium()`.
 - Branches sur : `BottomTabBar` (tab switch, light/medium), `SearchOverlay` (ouvert = selection, submit = success, recent click = light), `TopBar` (back = selection, search = light).
-- `GestureCard` utilise `haptic('light')` et `haptic('medium')` via callbacks.
+- Les composants `GestureCard` / `AnimatedPage` / `ScrollReveal` / `StaggerGrid` ont été supprimés en Phase 1 (code mort) ; utiliser `framer-motion` directement.
 
 ---
 
@@ -438,12 +442,9 @@ Pattern :
 
 ## 🎭 Animation Components
 
-`AnimatedPage`, `ScrollReveal`, `StaggerGrid` exportent maintenant en default ET named (backward compatibility) :
-```tsx
-// Les deux fonctionnent :
-import AnimatedPage from '@/components/animation/AnimatedPage';
-import { AnimatedPage } from '@/components/animation/AnimatedPage';
-```
+Les composants legacy `AnimatedPage`, `ScrollReveal`, `StaggerGrid`, `GestureCard` ont été
+supprimés en Phase 1 (code mort). Utiliser `framer-motion` directement, les keyframes de
+`src/styles/tailwind.css` (`.animate-*`) et `PageTransition` (`src/components/ui/PageTransition.tsx`).
 
 ---
 
