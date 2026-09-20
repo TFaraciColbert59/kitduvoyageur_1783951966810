@@ -37,34 +37,34 @@ export default function HomePage() {
           <ResumeActiveTripCard />
           
           {/* ── HERO ── */}
-          <section className="relative min-h-[90vh] flex flex-col pt-40 px-4 pb-12 overflow-hidden">
+          <section className="relative min-h-[85vh] flex flex-col pt-24 sm:pt-32 lg:pt-40 px-4 pb-16 overflow-hidden">
             {/* Fond applicatif visible — voile radial sombre léger pour la profondeur */}
             <div className="absolute inset-0 z-0">
-              <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(11,31,23,0.18),rgba(11,31,23,0.45))]" />
+              <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(11,31,23,0.22),rgba(11,31,23,0.52))]" />
             </div>
 
             <div className="relative z-10 max-w-[1200px] mx-auto w-full flex flex-col lg:flex-row items-center gap-12 lg:gap-20 flex-1">
               {/* Left Text */}
-              <div className="flex-1 max-w-2xl pt-10">
-                <p className="text-[10px] font-mono tracking-[0.2em] uppercase text-[#CCE0D4] mb-4">ÉDITION AUTOMNE - ET REFUGES PARTENAIRES</p>
+              <div className="flex-1 max-w-2xl pt-4 sm:pt-8">
+                <p className="text-[11px] font-mono tracking-[0.2em] uppercase text-[#E2EBE0] font-semibold mb-4">ÉDITION AUTOMNE - ET REFUGES PARTENAIRES</p>
                 <h1 className="text-5xl sm:text-6xl lg:text-7xl font-semibold text-[#EEF3EC] leading-[1.1] mb-6">
                   Là où la carte<br />
-                  <span className="font-serif italic text-[#A9C6B0] font-normal">se termine.</span>
+                  <span className="font-serif italic text-white drop-shadow-sm font-normal">se termine.</span>
                 </h1>
-                <p className="text-[#D8E5D5] text-base lg:text-lg mb-10 max-w-md leading-relaxed">
-                  Refuges bruts, sentiers oubliés, matériel choisi à la main. Le Kit du Voyageur assemble ce qu'il faut, exactement, pour partir léger — sans rien laisser au hasard.
+                <p className="text-[#F0F5EE] text-base lg:text-lg mb-10 max-w-md leading-relaxed font-normal">
+                  Refuges bruts, sentiers oubliés, matériel choisi à la main. Le Kit du Voyageur assemble ce qu&apos;il faut, exactement, pour partir léger — sans rien laisser au hasard.
                 </p>
-                <div className="flex flex-col sm:flex-row items-center gap-4 mb-16">
+                <div className="flex flex-col sm:flex-row items-center gap-4 mb-14">
                   <Link
                     href="/ai-configurator"
-                    className="glass-capsule-btn primary inline-flex items-center gap-2 px-6 py-3.5 text-sm"
+                    className="glass-capsule-btn primary inline-flex items-center justify-center gap-2 px-7 py-3.5 text-sm font-semibold shadow-md w-full sm:w-auto"
                   >
                     Composer mon sac 
                     <Icon name="arrow-right" size={14} />
                   </Link>
                   <Link
                     href="/explorer"
-                    className="inline-flex items-center gap-2 px-6 py-3.5 text-[#EEF3EC] font-medium rounded-full hover:bg-white/10 transition-all text-sm"
+                    className="glass-capsule-btn secondary inline-flex items-center justify-center gap-2 px-7 py-3.5 text-sm font-semibold !text-[#EEF3EC] !border-white/30 !bg-white/10 hover:!bg-white/20 w-full sm:w-auto"
                   >
                     Voir les aventures
                   </Link>
@@ -76,7 +76,7 @@ export default function HomePage() {
                     <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
                     <span className="text-3xl font-bold text-[#EEF3EC] leading-none ml-1">4,9</span>
                   </div>
-                  <p className="text-[10px] uppercase font-mono tracking-widest text-[#CCE0D4] leading-tight">
+                  <p className="text-[11px] uppercase font-mono tracking-widest text-[#E2EBE0] leading-tight font-medium">
                     1 350+ VOYAGEURS RECOMMANDENT<br/>LEUR SÉJOUR
                   </p>
                 </div>
@@ -84,32 +84,31 @@ export default function HomePage() {
 
               {/* Right Card */}
               <div className="w-full max-w-[340px] flex-shrink-0">
-                <div className="bg-[var(--lkv-primary)]/5 backdrop-blur-xl border border-white/20 rounded-[var(--lkv-radius-lg)] p-6  shadow-black/5 relative overflow-hidden">
-                  <div className="absolute inset-0 bg-gradient-to-br from-white/40 to-white/10" />
+                <div className="bg-white/80 dark:bg-[#10241A]/80 backdrop-blur-2xl border border-white/60 dark:border-white/20 rounded-[var(--lkv-radius-lg)] p-6 shadow-2xl relative overflow-hidden">
                   <div className="relative z-10">
-                    <p className="text-[9px] font-mono tracking-widest text-[var(--lkv-text-muted)] uppercase mb-1">ESPACE DE RÉSERVE</p>
+                    <p className="text-[10px] font-mono tracking-widest text-[var(--lkv-primary)] font-bold uppercase mb-1">ESPACE DE RÉSERVE</p>
                     <h3 className="text-xl font-bold text-[var(--lkv-primary)] mb-6">Cabane du Grand Vaneau</h3>
                     
                     <div className="flex items-center gap-4 mb-8">
-                      <div className="flex-1 bg-white/50 rounded-xl p-3 border border-white/40">
-                        <p className="text-[9px] uppercase tracking-widest text-[var(--lkv-text-muted)] mb-0.5">Arrivée</p>
-                        <p className="text-sm font-semibold text-[var(--lkv-primary)]">Ven. 24 sept.</p>
+                      <div className="flex-1 bg-white/90 dark:bg-white/10 rounded-xl p-3 border border-white/60 dark:border-white/10 shadow-xs">
+                        <p className="text-[10px] uppercase tracking-widest text-[var(--lkv-text-muted)] font-semibold mb-0.5">Arrivée</p>
+                        <p className="text-sm font-bold text-[var(--lkv-primary)]">Ven. 24 sept.</p>
                       </div>
-                      <div className="flex-1 bg-white/50 rounded-xl p-3 border border-white/40">
-                        <p className="text-[9px] uppercase tracking-widest text-[var(--lkv-text-muted)] mb-0.5">Départ</p>
-                        <p className="text-sm font-semibold text-[var(--lkv-primary)]">Lun. 27 sept.</p>
+                      <div className="flex-1 bg-white/90 dark:bg-white/10 rounded-xl p-3 border border-white/60 dark:border-white/10 shadow-xs">
+                        <p className="text-[10px] uppercase tracking-widest text-[var(--lkv-text-muted)] font-semibold mb-0.5">Départ</p>
+                        <p className="text-sm font-bold text-[var(--lkv-primary)]">Lun. 27 sept.</p>
                       </div>
                     </div>
 
                     <div className="flex items-end justify-between mb-6">
                       <div>
                         <span className="text-2xl font-bold text-[var(--lkv-primary)]">248 €</span>
-                        <span className="text-[var(--lkv-text-muted)] text-xs"> / nuit</span>
+                        <span className="text-[var(--lkv-text-muted)] text-xs font-medium"> / nuit</span>
                       </div>
-                      <span className="text-[10px] text-[var(--lkv-text-muted)]">Taxes comprises</span>
+                      <span className="text-xs text-[var(--lkv-text-muted)] font-medium">Taxes comprises</span>
                     </div>
 
-                    <Link href="/explorer" className="glass-capsule-btn primary block w-full text-center py-3.5 text-sm">
+                    <Link href="/explorer" className="glass-capsule-btn primary block w-full text-center py-3.5 text-sm font-semibold shadow-sm">
                       Découvrir ce refuge
                     </Link>
                   </div>

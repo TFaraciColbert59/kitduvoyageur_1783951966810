@@ -71,10 +71,10 @@ export default function AppShell({
     pathname === '/messagerie';
 
   const bottomNavHeight = !hasBottomNav
-    ? 'calc(12px + env(safe-area-inset-bottom, 0px))'
+    ? 'calc(16px + env(safe-area-inset-bottom, 0px))'
     : hasUpperExtension
-    ? 'var(--bottom-tab-extended-height, calc(92px + env(safe-area-inset-bottom, 0px)))'
-    : 'var(--bottom-tab-base-height, calc(52px + env(safe-area-inset-bottom, 0px)))';
+    ? 'var(--bottom-tab-extended-height, calc(112px + env(safe-area-inset-bottom, 0px)))'
+    : 'var(--bottom-tab-base-height, calc(80px + env(safe-area-inset-bottom, 0px)))';
 
   // TOILE UNIQUE : le fond applicatif (image marbrée) est global et fixe.
   // Le shell est transparent par défaut pour le laisser traverser sur toutes

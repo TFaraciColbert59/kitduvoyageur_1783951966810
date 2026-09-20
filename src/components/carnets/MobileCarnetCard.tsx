@@ -61,12 +61,12 @@ export default function MobileCarnetCard({
 
         {/* Top Badges */}
         <div className="absolute top-2.5 left-2.5 right-2.5 flex items-center justify-between z-10">
-          <span className="glass-pill text-white border-white/30 font-mono text-[9.5px] bg-black/40 backdrop-blur-md">
+          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-white font-mono text-[10px] font-semibold bg-black/60 backdrop-blur-md border border-white/25 shadow-xs">
             📍 {carnet.destination || 'Massif & Randonnée'}
           </span>
 
           {carnet.route_rating !== undefined && (
-            <span className="glass-pill text-sand-200 border-sand-300/30 font-mono font-bold text-[9.5px] bg-black/40 backdrop-blur-md">
+            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-sand-200 font-mono font-bold text-[10px] bg-black/60 backdrop-blur-md border border-white/25 shadow-xs">
               ★ {carnet.route_rating}/10
             </span>
           )}
@@ -170,7 +170,7 @@ export default function MobileCarnetCard({
         <Link
           href={carnetHref}
           onClick={() => triggerHaptic('light')}
-          className="glass-capsule-btn !min-h-[34px] !py-1 !px-3.5 !text-xs !gap-1.5 !font-bold"
+          className="glass-capsule-btn primary !min-h-[36px] !py-1.5 !px-4 !text-xs !gap-1.5 !font-bold"
         >
           <span>Lire le récit</span>
           <Icon name="ArrowRightIcon" size={12} />

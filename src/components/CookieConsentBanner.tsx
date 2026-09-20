@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { getStoredConsent, storeConsent, CONSENT_VERSION } from '@/lib/cookieConsent';
+import { isNative } from '@/lib/native/platform';
 
 export { useCookieConsent } from '@/lib/cookieConsent';
 
@@ -13,9 +14,12 @@ export default function CookieConsentBanner() {
   const [marketing, setMarketing] = useState(false);
 
   useEffect(() => {
+    // Dans l'application mobile native (iOS / Android), aucune bannière cookie web
+    if (isNative()) return;
+
     const stored = getStoredConsent();
     if (!stored || stored.version !== CONSENT_VERSION) {
-      const timer = setTimeout(() => setVisible(true), 800);
+      const timer = setTimeout(() => setVisible(true), 1000);
       return () => clearTimeout(timer);
     }
   }, []);
@@ -37,59 +41,59 @@ export default function CookieConsentBanner() {
 
   if (!visible) return null;
 
-return (
-    // Non-modal: no aria-modal, no backdrop overlay, pointer-events only on the banner itself
+  return (
+    // Non-modal: pas de blocage du reste de l'écran
     <div
       role="region"
       aria-label="Gestion des cookies"
       aria-describedby="cookie-banner-desc"
-      className="fixed bottom-0 left-0 right-0 z-[60] pointer-events-none"
-      style={{ paddingBottom: 'max(0px, env(safe-area-inset-bottom))' }}
+      className="fixed bottom-0 left-0 right-0 z-[60] pointer-events-none px-3"
+      style={{ paddingBottom: 'max(8px, env(safe-area-inset-bottom))' }}
     >
       <div
-        className="pointer-events-none max-w-[min(42rem,calc(100vw-24px))] mx-auto bg-[#17402C] border border-white/10 rounded-2xl  overflow-hidden transition-all duration-300"
+        className="pointer-events-auto max-w-[min(38rem,calc(100vw-24px))] mx-auto bg-[#10241A]/95 backdrop-blur-xl border border-white/20 rounded-2xl shadow-2xl overflow-hidden transition-all duration-300"
         style={{
           margin: '0 auto',
-          marginBottom: 'calc(68px + env(safe-area-inset-bottom))',
+          marginBottom: 'calc(72px + env(safe-area-inset-bottom))',
         }}
       >
         <style jsx>{`
           @media (min-width: 640px) {
             div {
-              margin-bottom: calc(16px + env(safe-area-inset-bottom)) !important;
+              margin-bottom: calc(20px + env(safe-area-inset-bottom)) !important;
             }
           }
         `}</style>
         {!showDetails ? (
           <div className="px-4 py-3 sm:p-5">
             <div className="flex items-center gap-3">
-              <div className="w-7 h-7 rounded-lg bg-[#17402C]/15 flex items-center justify-center flex-shrink-0">
-                <svg className="w-3.5 h-3.5 text-[#17402C]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <div className="w-8 h-8 rounded-xl bg-[var(--lkv-primary)]/20 flex items-center justify-center flex-shrink-0 text-[var(--lkv-accent)]">
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.955 11.955 0 013.598 6 11.955 11.955 0 003 12c0 6.627 5.373 12 12 12s12-5.373 12-12c0-2.017-.5-3.92-1.382-5.593" />
                 </svg>
               </div>
-              <p id="cookie-banner-desc" className="flex-1 min-w-0 text-white/60 text-[11px] leading-snug pointer-events-auto">
-                Cookies nécessaires + analytiques avec votre accord.{' '}
-                <Link href="/cookies" className="text-[#A8C8A0] hover:text-white hover:underline underline-offset-2">
+              <p id="cookie-banner-desc" className="flex-1 min-w-0 text-white/80 text-xs leading-snug">
+                Cookies nécessaires et analytiques pour votre cordée.{' '}
+                <Link href="/cookies" className="text-[var(--lkv-accent)] hover:text-white hover:underline underline-offset-2 font-medium">
                   En savoir plus
                 </Link>
               </p>
-              <div className="flex items-center gap-2 flex-shrink-0 pointer-events-auto">
+              <div className="flex items-center gap-2 flex-shrink-0">
                 <button
                   onClick={acceptAll}
-                  className="bg-[#17402C] hover:bg-[#113021] text-white px-3 py-2 rounded-xl text-[11px] font-semibold transition-all focus:outline-none focus:ring-2 focus:ring-[#17402C] min-h-[36px] flex items-center justify-center"
+                  className="bg-[var(--lkv-primary)] hover:opacity-90 text-white px-3.5 py-2 rounded-xl text-xs font-semibold transition-all shadow-sm active:scale-95 min-h-[38px] flex items-center justify-center"
                 >
                   Tout accepter
                 </button>
                 <button
                   onClick={rejectAll}
-                  className="bg-white/[0.08] hover:bg-white/15 text-white/85 px-3 py-2 rounded-xl text-[11px] font-medium transition-all focus:outline-none focus:ring-2 focus:ring-white/30 min-h-[36px] flex items-center justify-center"
+                  className="bg-white/10 hover:bg-white/20 text-white px-3 py-2 rounded-xl text-xs font-medium transition-all border border-white/10 active:scale-95 min-h-[38px] flex items-center justify-center"
                 >
                   Refuser
                 </button>
                 <button
                   onClick={() => setShowDetails(true)}
-                  className="border border-white/15 hover:border-white/30 text-white/60 hover:text-white/90 px-2.5 py-2 rounded-xl text-[11px] transition-all focus:outline-none focus:ring-2 focus:ring-white/30 min-h-[36px] flex items-center justify-center"
+                  className="border border-white/20 hover:border-white/40 text-white/80 hover:text-white px-2.5 py-2 rounded-xl text-xs transition-all active:scale-95 min-h-[38px] flex items-center justify-center"
                   aria-label="Gérer mes préférences cookies"
                 >
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">

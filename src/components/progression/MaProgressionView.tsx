@@ -184,18 +184,27 @@ export default function MaProgressionView({ initialProfile, compact = false }: M
   const [gains, setGains] = useState<GainsState>({ status: 'loading', items: [] });
   const [replacingChallenge, setReplacingChallenge] = useState(false);
   const [replaceChallengeError, setReplaceChallengeError] = useState(false);
+  const [profileUnavailable, setProfileUnavailable] = useState(false);
 
   // Charger le profil si non fourni en SSR
   useEffect(() => {
     if (!profile) {
       fetch('/api/progression')
-        .then((res) => res.json())
+        .then(async (res) => {
+          if (!res.ok) throw new Error(`status_${res.status}`);
+          return res.json();
+        })
         .then((data) => {
           if (data.success && data.profile) {
             setProfile(data.profile);
+          } else {
+            setProfileUnavailable(true);
           }
         })
-        .catch((err) => console.error('Erreur chargement progression:', err));
+        .catch((err) => {
+          console.warn('Visiteur non authentifié ou profil indisponible:', err);
+          setProfileUnavailable(true);
+        });
     }
   }, [profile]);
 
@@ -378,6 +387,38 @@ export default function MaProgressionView({ initialProfile, compact = false }: M
   };
 
   if (!profile) {
+    if (profileUnavailable) {
+      return (
+        <div className="w-full space-y-6">
+          <div className="glass rounded-3xl p-6 sm:p-8 text-center border border-white/60 shadow-lg">
+            <div className="w-14 h-14 rounded-2xl bg-[#17402C] text-white flex items-center justify-center mx-auto mb-4 shadow-md">
+              <Trophy size={28} className="text-sand-200" />
+            </div>
+            <h2 className="font-display font-bold text-2xl text-[var(--lkv-primary)] mb-2">
+              Votre Cordée & Progression
+            </h2>
+            <p className="text-sm text-[var(--lkv-text-muted)] max-w-md mx-auto mb-6 leading-relaxed">
+              Connectez-vous pour mesurer vos compétences d&apos;expédition, accumuler vos points de saison et participer aux classements territoriaux officiels.
+            </p>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+              <Link
+                href="/connexion"
+                className="glass-capsule-btn primary w-full sm:w-auto px-6 py-3 text-sm font-semibold inline-flex items-center justify-center gap-2 shadow-sm"
+              >
+                Se connecter / Créer un compte
+              </Link>
+              <Link
+                href="/explorer"
+                className="glass-capsule-btn secondary w-full sm:w-auto px-6 py-3 text-sm font-semibold inline-flex items-center justify-center gap-2"
+              >
+                Découvrir les sentiers
+              </Link>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div className="flex min-h-[320px] flex-col items-center justify-center p-8 text-center">
         <div className="mb-3 h-8 w-8 animate-spin rounded-full border-2 border-[var(--lkv-primary)] border-t-transparent motion-reduce:animate-none" />

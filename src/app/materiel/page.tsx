@@ -229,7 +229,7 @@ function MaterielSurface({ summary }: { summary: MaterielSummary }) {
             </p>
             <Link
               href={hasInventory ? HREFS.kits : HREFS.inventaire}
-              className="glass-capsule-btn secondary mt-3 inline-flex"
+              className="glass-capsule-btn primary mt-3 inline-flex !text-white !bg-[var(--lkv-primary)] hover:opacity-95 shadow-sm font-semibold text-xs px-4 py-2"
             >
               {hasInventory ? 'Créer un kit' : 'Ajouter mon premier équipement'}
             </Link>

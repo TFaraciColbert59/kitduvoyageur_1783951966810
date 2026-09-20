@@ -107,20 +107,43 @@ function AuthForm() {
   };
 
   return (
-    <div style={{ paddingTop: '80px', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '80px 16px 32px' }}>
-      <div style={{ width: '100%', maxWidth: '400px' }}>
-        <div style={{ textAlign: 'center', marginBottom: '24px' }}>
-          <h1 style={{ fontSize: '24px', fontWeight: 700, color: 'var(--lkv-primary)' }}>{t(mode === 'connexion' ? 'auth.signInTitle' : 'auth.signUpTitle')}</h1>
-          <p style={{ color: 'var(--lkv-text-muted)', fontSize: '14px', marginTop: '4px' }}>{t(mode === 'connexion' ? 'auth.signInSubtitle' : 'auth.signUpSubtitle')}</p>
+    <div className="pt-20 sm:pt-24 min-h-[100dvh] flex items-center justify-center px-4 pb-24">
+      <div className="w-full max-w-[420px]">
+        <div className="text-center mb-6">
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[var(--lkv-primary)]">
+            {t(mode === 'connexion' ? 'auth.signInTitle' : 'auth.signUpTitle')}
+          </h1>
+          <p className="text-[var(--lkv-text-muted)] text-sm mt-1">
+            {t(mode === 'connexion' ? 'auth.signInSubtitle' : 'auth.signUpSubtitle')}
+          </p>
         </div>
 
-        <div style={{ display: 'flex', borderRadius: '40px', border: '1px solid rgba(23,64,44,0.06)', background: 'var(--lkv-surface-hover)', padding: '4px', marginBottom: '20px' }}>
-          {(['connexion', 'inscription'] as const).map((m) => (
-            <button key={m} onClick={() => { setMode(m); setError(''); setConfirmationSent(false); setForgotPasswordOpen(false); }} className={`glass-capsule-btn flex-1 !text-sm !font-semibold ${mode === m && !forgotPasswordOpen ? 'primary' : ''}`}>{t(m === 'connexion' ? 'auth.signIn' : 'auth.signUp')}</button>
-          ))}
+        {/* Segmented Control iOS fluide */}
+        <div className="flex p-1 bg-black/5 dark:bg-white/10 backdrop-blur-md rounded-2xl mb-6 border border-black/5 dark:border-white/10">
+          {(['connexion', 'inscription'] as const).map((m) => {
+            const isActive = mode === m && !forgotPasswordOpen;
+            return (
+              <button
+                key={m}
+                onClick={() => {
+                  setMode(m);
+                  setError('');
+                  setConfirmationSent(false);
+                  setForgotPasswordOpen(false);
+                }}
+                className={`flex-1 py-2.5 text-sm font-semibold rounded-xl transition-all duration-200 ${
+                  isActive
+                    ? 'bg-[#17402C] text-white shadow-sm'
+                    : 'text-[var(--lkv-text-muted)] hover:text-[var(--lkv-text-primary)]'
+                }`}
+              >
+                {t(m === 'connexion' ? 'auth.signIn' : 'auth.signUp')}
+              </button>
+            );
+          })}
         </div>
 
-        <div className="glass" style={{ padding: '24px' }}>
+        <div className="glass rounded-3xl p-6 sm:p-8 border border-white/60 shadow-lg">
           {confirmationSent ? (
             <div style={{ textAlign: 'center' }}>
               <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: 'rgba(16,185,129,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px' }}><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--lkv-primary)" strokeWidth="2"><polyline points="20 6 9 17 4 12" /></svg></div>

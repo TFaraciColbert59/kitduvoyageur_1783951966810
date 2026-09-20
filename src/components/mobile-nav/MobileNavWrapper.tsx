@@ -19,6 +19,15 @@ export default function MobileNavWrapper() {
   const { openSearch } = useSearchContext();
   const pathname = usePathname();
 
+  // Masquer la navigation mobile sur les pages d'authentification pour éviter tout chevauchement avec le clavier ou le formulaire
+  const isAuthRoute =
+    pathname?.startsWith('/connexion') ||
+    pathname?.startsWith('/inscription');
+
+  if (isAuthRoute) {
+    return <OfflineBanner />;
+  }
+
   // Hide general top site navigation on map-heavy views to allow full-screen map focus
   const isMapHeavyRoute = 
     pathname?.startsWith('/randonnee-active') || 
