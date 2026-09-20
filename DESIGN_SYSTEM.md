@@ -31,14 +31,26 @@ Toutes les couleurs doivent provenir directement de `src/design/tokens.ts` ou de
 ## 3. Primitives UI Canoniques (`src/components/ui/`)
 
 ### Boutons (`LkvButton.tsx`)
-* **Façade officielle** : `LkvButton` (ou `Button` pour rétrocompatibilité).
+* **Façade officielle** : `LkvButton` — l'alias `Button` a été supprimé en Phase 1 (doublon d'exacte délégation).
 * **Variantes autorisées** : `primary`, `secondary` / `light`, `ghost`, `danger`, `icon-only`.
 * **Interdictions** : Interdiction absolue de styliser des éléments `<button>` bruts avec des couleurs ou gradients ad hoc dans les pages.
 
 ### Cartes (`GlassCard.tsx`)
-* **Primitive officielle** : `GlassCard`.
+* **Primitive officielle** : `GlassCard` — l'alias `Card` a été supprimé en Phase 1.
 * **Tons autorisés** : `neutral`, `sage`, `warn`, `danger`, `info`.
 * **Cartes métier** : Les cartes spécialisées (ex: cartes produits) doivent utiliser `GlassCard` comme wrapper visuel.
+
+### Structure de page (Phase 1)
+* **Primitives** : `Page`, `PageHeader`, `PageContent`, `PageActions`, `Section`, `Divider`.
+* **Layouts** : `src/design/layouts/` — `PageLayout`, `ListPageLayout`, `DetailPageLayout`, `FormPageLayout`, `DashboardPageLayout`, `MapPageLayout` (composés au-dessus d'`AppShell`).
+* **Règle d'emplacement** : retour à gauche du header, actions à droite, action principale en bas de page — mêmes emplacements partout.
+
+### Chargement
+* **Primitive officielle** : `Spinner` (indicateurs) et `Skeleton*` (contenus). Les spinners artisanaux (`rounded-full animate-spin` recopiés) sont proscrits pour les nouveaux écrans.
+
+### État des primitives (Phase 1)
+* **Conservées non adoptées** (cibles de migration, pas encore utilisées) : `LkvInput`, `LkvTextarea`, `LkvSelect`, `LkvCheckbox`, `LkvSwitch`, `Tabs`/`ScrollableTabs`, `PremiumGlassCard`, `MediaUpload`.
+* **Façade d'import unique** : `@/design` réexporte tokens + primitives + layouts (aucune duplication d'implémentation).
 
 ### Badges & Chips (`LkvChip.tsx`)
 * **Primitive officielle** : `LkvChip` (et `Badge` en rétrocompatibilité).

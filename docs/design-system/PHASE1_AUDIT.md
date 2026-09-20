@@ -76,7 +76,7 @@ Familles dupliquées sans socle commun (classes `glass`/`glass-sub-card` recopi�
 
 Graphe d'imports : **223 fichiers inatteignables** depuis les 265 points d'entrée.
 
-- **120 fichiers non métier** = ancien design inutilisé, supprimables sans risque :
+- **120 fichiers non métier** = ancien design inutilisé, supprimables sans risque (→ 114 supprimés en Phase 1, §8 ; 6 conservés intentionnellement : primitives form canoniques, `MediaUpload`, test vitest) :
   - 30 composants home legacy (`src/app/components/home/*`, `src/components/home/*`) orphelins depuis la suppression de `HomepageV1` ;
   - 13 fichiers `src/app/preparer-randonnee/*` (route remplacée par redirection vers `/preparer-sentier` et `/hub`) ;
   - 15 primitives/utilitaires `src/components/ui/*` ;
@@ -110,4 +110,21 @@ Graphe d'imports : **223 fichiers inatteignables** depuis les 265 points d'entr�
 ## 7. Vérifications
 
 - Baseline : `npm run type-check` ✅ · `npm run lint` ✅ · `npm test` ✅ (406 fichiers / 2 936 tests).
-- Après chaque lot de modifications : mêmes commandes + `npm run build` en clôture de phase.
+- Après chaque lot de modifications : mêmes commandes.
+- **Clôture Phase 1** : `type-check` ✅ 0 erreur · `lint` ✅ 0 erreur · `vitest` ✅ 406 fichiers / 2 936 tests · `next build` ✅ (production, après suppressions et retrait des dépendances).
+
+---
+
+## 8. Livrable Phase 1 — réalisé
+
+| Commit | Contenu |
+|---|---|
+| `docs(design)` audit | `docs/design-system/PHASE1_AUDIT.md` (ce document) |
+| `refactor(design)` tokens | Catégories complémentaires (`controlSizes`, `iconSizes`, `opacity`, `zIndex` overlay, `safeArea`, `breakpoints`, `blur`, `borders`, `motion`, leading/tracking) ; `--lkv-surface-raised` défini ; easings `--spring-*` réparés ; doublons `.pt-safe/.pb-safe` supprimés ; règles CSS mortes (`dark-surface`, `gradient-text-green`) retirées |
+| `feat(design)` primitives | `Spinner`, `Divider`, `Section`, `Page`, `PageHeader`, `PageContent`, `PageActions` ; layouts `PageLayout`, `ListPageLayout`, `DetailPageLayout`, `FormPageLayout`, `DashboardPageLayout`, `MapPageLayout` ; façade unique `@/design` + `src/design/README.md` |
+| `refactor(ui)` nettoyage | 114 fichiers supprimés (−17 792 lignes) : home legacy ×30, preparer-randonnee ×13, UI mortes ×15, icônes legacy ×16, groupes ×9, compte ×8, animations ×5, mobile-nav ×5, divers ; `LkvCheckbox` migré vers l'icône canonique ; test de migration profils mis à jour |
+| `chore(deps)` | Retrait de `vaul`, `@headlessui/react`, `@radix-ui/react-toast`, `class-variance-authority`, `@tailwindcss/forms` (0 import) + nettoyage `next.config.mjs` et `NOTICE` |
+
+Outils et gouvernance :
+- `scripts/design/find-dead-code.mjs` : reconstruit le graphe d'imports et liste le code mort (reproductible, `--json`). État après nettoyage : 102 fichiers inatteignables, dont 89 métier protégés (staging) et 13 primitives/layouts Phase 1 volontairement non encore consommés.
+- `DESIGN_SYSTEM.md` (racine) mis à jour ; `docs/DESIGN_SYSTEM.md` marqué historique (valeurs obsolètes) pour supprimer la contradiction entre les deux documents.

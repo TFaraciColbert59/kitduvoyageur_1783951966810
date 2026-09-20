@@ -1,3 +1,10 @@
+> **⚠ DOCUMENT HISTORIQUE (Chantier U) — valeurs obsolètes.**
+> La source de vérité est désormais :
+> - `DESIGN_SYSTEM.md` (racine) pour la gouvernance et les primitives ;
+> - `src/styles/tokens.css` pour toutes les valeurs (rayons 12/16/24, palette actuelle) ;
+> - `src/design/README.md` pour l'architecture et la migration progressive.
+> Les tables de rayons/palette ci-dessous (28/32/26/20px, `#FBFAF6`…) ne sont plus applicables.
+
 # Design System Unifié — Le Kit du Voyageur (LKDV)
 Dernière révision : Chantier U (Gouvernance exécutable & Source Unique)
 
