@@ -893,7 +893,7 @@ export default function InteractiveMap() {
         )}
 
         {/* 2. Floating Tile Switcher (EN BAS À GAUCHE — Canonique Liquid Glass) */}
-        <div className="absolute bottom-[calc(var(--bottom-tab-base-height,68px)+16px)] left-3.5 md:bottom-6 md:left-4 z-[400] glass flex items-center gap-1.5 p-1 rounded-full shadow-md border border-white/80">
+        <div className="absolute bottom-[calc(var(--nav-offset)+16px)] left-3.5 md:bottom-6 md:left-4 z-[400] glass flex items-center gap-1.5 p-1 rounded-full shadow-md border border-white/80">
           <button
             onClick={() => handleTileChange('osm')}
             className={`glass-circle-btn !w-8 !h-8 ${tileMode === 'osm' ? 'primary' : ''}`}
@@ -924,7 +924,7 @@ export default function InteractiveMap() {
         </div>
 
         {/* 3. Floating Zoom Controls (+ / −) & Recenter (EN BAS À DROITE — Canonique Liquid Glass) */}
-        <div className="absolute bottom-[calc(var(--bottom-tab-base-height,68px)+16px)] right-3.5 md:bottom-6 md:right-4 z-[400] glass flex flex-col gap-1 items-center p-1 rounded-full shadow-md border border-white/80">
+        <div className="absolute bottom-[calc(var(--nav-offset)+16px)] right-3.5 md:bottom-6 md:right-4 z-[400] glass flex flex-col gap-1 items-center p-1 rounded-full shadow-md border border-white/80">
           <button
             onClick={handleRecenter}
             title="Ma position (10 km)"
@@ -963,7 +963,7 @@ export default function InteractiveMap() {
         {selectedTrail && (
           <div
             className="absolute left-1/2 -translate-x-1/2 z-[500] w-full max-w-sm px-4 pointer-events-auto"
-            style={{ bottom: 'calc(var(--bottom-tab-base-height, 68px) + 12px)' }}
+            style={{ bottom: 'calc(var(--nav-offset) + 12px)' }}
           >
             <div className="glass rounded-xl p-4.5 relative shadow-2xl border border-white/80 backdrop-blur-xl">
               <button 
@@ -1028,7 +1028,7 @@ export default function InteractiveMap() {
         {selectedPoi && (
           <div
             className="absolute left-1/2 -translate-x-1/2 z-[500] w-full max-w-sm px-4 pointer-events-auto"
-            style={{ bottom: 'calc(var(--bottom-tab-base-height, 68px) + 12px)' }}
+            style={{ bottom: 'calc(var(--nav-offset) + 12px)' }}
           >
             <div className="glass rounded-xl p-4.5 relative shadow-2xl border border-white/80 backdrop-blur-xl">
               <button 

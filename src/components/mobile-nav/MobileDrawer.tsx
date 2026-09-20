@@ -128,7 +128,7 @@ const panelStyle: React.CSSProperties = {
   display: 'flex',
   flexDirection: 'column',
   overflow: 'hidden',
-  paddingLeft: 'env(safe-area-inset-left, 0px)',
+  paddingLeft: 'var(--safe-left)',
 };
 
 const scrollableContentStyle: React.CSSProperties = {
@@ -251,7 +251,7 @@ export default function MobileDrawer({ isOpen, onClose, onSearchOpen }: MobileDr
                 style={{
                   background: '#17402C',
                   color: '#fff',
-                  padding: 'calc(40px + env(safe-area-inset-top)) 20px 22px',
+                  padding: 'calc(40px + var(--safe-top)) 20px 22px',
                   position: 'relative',
                   overflow: 'hidden',
                 }}
@@ -277,7 +277,7 @@ export default function MobileDrawer({ isOpen, onClose, onSearchOpen }: MobileDr
                   className="glass-circle-btn"
                   style={{
                     position: 'absolute',
-                    top: 'calc(env(safe-area-inset-top, 0px) + 12px)',
+                    top: 'calc(var(--safe-top) + var(--space-3))',
                     right: '12px',
                     width: '44px',
                     height: '44px',
@@ -457,7 +457,7 @@ export default function MobileDrawer({ isOpen, onClose, onSearchOpen }: MobileDr
               {/* Footer */}
               <footer
                 style={{
-                  padding: '14px 16px calc(20px + env(safe-area-inset-bottom))',
+                  padding: '14px 16px calc(20px + var(--safe-bottom))',
                   borderTop: '1px solid rgba(23,64,44,0.06)',
                   background: '#F4F1EA',
                 }}

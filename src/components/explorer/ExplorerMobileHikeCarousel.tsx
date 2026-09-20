@@ -113,7 +113,7 @@ export default function ExplorerMobileHikeCarousel({
     <div
       ref={wrapperRef}
       className="block md:hidden fixed left-0 right-0 z-[800] pointer-events-none"
-      style={{ bottom: 'calc(var(--bottom-tab-base-height, 68px) + 8px)' }}
+      style={{ bottom: 'calc(var(--nav-offset) + 8px)' }}
     >
       {/* ── TOP FLOATING PILL (Mode Switch & Counter) ── */}
       <div className="flex items-center justify-between px-3.5 mb-1.5 pointer-events-auto">

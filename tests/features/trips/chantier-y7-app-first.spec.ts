@@ -186,14 +186,23 @@ describe('Chantier Y7 — App-First, Cibles Tactiles, Haptique et Offline Dexie'
       expect(violations, `Violations de zone sûre calculée manuellement : ${violations.join(', ')}`).toEqual([]);
     });
 
-    it('AppShell applique les 4 côtés de zone sûre pour mobile portrait et paysage', () => {
+    it('AppShell applique les 4 côtés de zone sûre (source unique tokens + shell)', () => {
       const appShellPath = path.join(process.cwd(), 'src', 'components', 'shell', 'AppShell.tsx');
       const content = fs.readFileSync(appShellPath, 'utf8');
+      const tokens = fs.readFileSync(path.join(process.cwd(), 'src', 'styles', 'tokens.css'), 'utf8');
+      const tailwind = fs.readFileSync(path.join(process.cwd(), 'src', 'styles', 'tailwind.css'), 'utf8');
 
-      expect(content).toContain('env(safe-area-inset-top');
-      expect(content).toContain('env(safe-area-inset-bottom');
-      expect(content).toContain('env(safe-area-inset-left');
-      expect(content).toContain('env(safe-area-inset-right');
+      // Phase 2 (Lot 2) — les 4 côtés sont déclarés UNE fois (tokens.css)…
+      expect(tokens).toContain('env(safe-area-inset-top');
+      expect(tokens).toContain('env(safe-area-inset-bottom');
+      expect(tokens).toContain('env(safe-area-inset-left');
+      expect(tokens).toContain('env(safe-area-inset-right');
+
+      // …consommés par AppShell (haut/bas via offsets) et par .lkv-shell (côtés).
+      expect(content).toContain('var(--page-top-inset)');
+      expect(content).toContain('var(--bottom-nav-height)');
+      expect(tailwind).toContain('padding-left: var(--safe-left)');
+      expect(tailwind).toContain('padding-right: var(--safe-right)');
     });
   });
 

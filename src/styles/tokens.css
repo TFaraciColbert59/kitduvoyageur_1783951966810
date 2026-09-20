@@ -358,6 +358,23 @@
   --safe-bottom: env(safe-area-inset-bottom, 0px);
   --safe-left: env(safe-area-inset-left, 0px);
 
+  /* ├─ Shell & navigation — SOURCE UNIQUE des offsets (Phase 2, Lot 2).
+     Aucune page ne recalcule le bas d'écran : hauteur barre 52, plateau
+     secondaire 48, offsets = hauteur(s) + safe area. */
+  --nav-height: 52px;
+  --nav-plateau-height: 48px;
+  --nav-offset: calc(var(--nav-height) + var(--safe-bottom));
+  --nav-offset-extended: calc(var(--nav-height) + var(--nav-plateau-height) + var(--space-2) + var(--safe-bottom));
+  --header-height: 44px;
+  --header-height-large: 96px;
+  --page-top-inset: calc(var(--safe-top) + var(--space-2));
+  --page-bottom-inset: calc(var(--nav-offset) + var(--space-4));
+  --page-bottom-inset-extended: calc(var(--nav-offset-extended) + var(--space-4));
+  --page-bottom-inset-bare: calc(var(--safe-bottom) + var(--space-4));
+  --overlay-inset-top: var(--safe-top);
+  --overlay-inset-bottom: var(--safe-bottom);
+  --keyboard-inset: 0px;
+
   /* ├─ Breakpoints (miroir Tailwind, utilisables en JS) */
   --bp-sm: 640px;
   --bp-md: 768px;

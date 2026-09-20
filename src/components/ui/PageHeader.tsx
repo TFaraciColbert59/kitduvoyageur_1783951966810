@@ -1,53 +1,111 @@
+'use client';
+
 import React from 'react';
 import { cn } from '@/lib/utils';
+import HeaderBackButton from './HeaderBackButton';
+import { useScrolled } from './useScrolled';
 
-export interface PageHeaderProps extends Omit<React.HTMLAttributes<HTMLElement>, 'title'> {
+export type PageHeaderVariant = 'inline' | 'large';
+
+export interface PageHeaderProps
+  extends Omit<React.HTMLAttributes<HTMLElement>, 'title'> {
   title: React.ReactNode;
   subtitle?: React.ReactNode;
-  /** Slot retour — toujours rendu à gauche, au même emplacement. */
-  back?: React.ReactNode;
-  /** Slot actions — toujours aligné à droite. */
+  /** Slot retour, ou `true` pour le contrôle canonique HeaderBackButton. */
+  back?: React.ReactNode | boolean;
+  backHref?: string;
+  backLabel?: string;
+  /** Action contextuelle — toujours alignée à droite. */
   actions?: React.ReactNode;
+  /** `inline` = barre 44 ; `large` = titre large iOS sous la barre. */
+  variant?: PageHeaderVariant;
   /**
-   * Header collant. Réservé aux pages hors AppShell : dans AppShell, utiliser
-   * le slot `header` du shell (qui gère déjà le safe-area).
+   * Header collant. Dans AppShell, préférer le slot `header` du shell
+   * (il gère déjà le safe-area).
    */
   sticky?: boolean;
+  /** Fond transparent au repos (devient matériau au scroll si `scrollAware`). */
+  transparent?: boolean;
+  /** Active l'état transparent → matériau selon le scroll. */
+  scrollAware?: boolean;
 }
 
-/* Header de page canonique : retour à gauche, titre au même niveau,
- * actions à droite — mémoire musculaire identique sur toutes les pages. */
+/**
+ * PageHeader — header de page canonique (Phase 2, Lot 2).
+ * Structure invariable : [Back / Leading] — Titre — [Trailing action].
+ */
 export function PageHeader({
   title,
   subtitle,
   back,
+  backHref,
+  backLabel,
   actions,
+  variant = 'inline',
   sticky = false,
+  transparent = false,
+  scrollAware = false,
   className,
   ...props
 }: PageHeaderProps) {
+  const scrolled = useScrolled();
+  const showMaterial = !transparent || (scrollAware && scrolled);
+
+  const backNode =
+    back === true ? (
+      <HeaderBackButton fallbackHref={backHref} label={backLabel} />
+    ) : back ? (
+      <div className="flex shrink-0 items-center">{back}</div>
+    ) : null;
+
+  const titleNode = (size: 'inline' | 'large') => (
+    <h1
+      className={cn(
+        'min-w-0 truncate font-bold text-[color:var(--lkv-text-primary)]',
+        size === 'inline'
+          ? 'text-[length:var(--lkv-text-headline)] leading-[var(--leading-tight)]'
+          : 'text-[length:var(--lkv-text-title-lg)] leading-[var(--lkv-line-title)] tracking-[var(--lkv-tracking-title)]'
+      )}
+    >
+      {title}
+    </h1>
+  );
+
+  const subtitleNode = subtitle ? (
+    <p className="min-w-0 truncate text-[length:var(--lkv-text-footnote)] text-[color:var(--lkv-text-secondary)]">
+      {subtitle}
+    </p>
+  ) : null;
+
   return (
     <header
       {...props}
+      data-variant={variant}
+      data-scrolled={showMaterial ? 'true' : 'false'}
       className={cn(
-        'flex min-h-[var(--control-height-md)] items-center gap-[var(--space-3)]',
-        sticky &&
-          'sticky top-0 z-[var(--z-sticky)] bg-[color:var(--lkv-surface)]/85 backdrop-blur-[var(--blur-lg)]',
+        'flex w-full flex-col gap-[var(--space-1)]',
+        sticky && 'sticky top-0 z-[var(--z-sticky)]',
+        sticky && showMaterial && 'lkv-material-header',
         className
       )}
     >
-      {back && <div className="flex shrink-0 items-center">{back}</div>}
-      <div className="min-w-0 flex-1">
-        <h1 className="truncate text-[length:var(--lkv-text-title-sm)] font-bold leading-[var(--leading-snug)] text-[color:var(--lkv-text-primary)]">
-          {title}
-        </h1>
-        {subtitle && (
-          <p className="truncate text-[length:var(--lkv-text-body-sm)] text-[color:var(--lkv-text-secondary)]">
-            {subtitle}
-          </p>
+      <div className="flex min-h-[var(--header-height)] items-center gap-[var(--space-2)]">
+        {backNode}
+        <div className="min-w-0 flex-1">
+          {variant === 'inline' && titleNode('inline')}
+          {variant === 'inline' && subtitleNode}
+        </div>
+        {actions && (
+          <div className="flex shrink-0 items-center gap-[var(--space-2)]">{actions}</div>
         )}
       </div>
-      {actions && <div className="flex shrink-0 items-center gap-[var(--space-2)]">{actions}</div>}
+
+      {variant === 'large' && (
+        <div className="min-w-0 pb-[var(--space-2)]">
+          {titleNode('large')}
+          {subtitleNode}
+        </div>
+      )}
     </header>
   );
 }

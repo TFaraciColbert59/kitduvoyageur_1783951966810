@@ -550,7 +550,7 @@ export default function ExplorerMap({
         className={`absolute z-[400] pointer-events-auto ${
           isAutoCompact
             ? 'right-3 top-[calc(env(safe-area-inset-top,0px)+16px)]'
-            : 'left-3.5 bottom-[calc(var(--bottom-tab-base-height,68px)+16px)] md:bottom-6 md:left-4'
+            : 'left-3.5 bottom-[calc(var(--nav-offset)+16px)] md:bottom-6 md:left-4'
         }`}
       >
         <div className="glass-capsule-bar gap-0.5">
@@ -595,7 +595,7 @@ export default function ExplorerMap({
       </div>
 
       {/* 2. Dock de Navigation GPS & Zoom (+ / −) — (EN BAS À DROITE — Canonique Liquid Glass) */}
-      <div className="absolute z-[400] pointer-events-auto right-3.5 bottom-[calc(var(--bottom-tab-base-height,68px)+16px)] md:bottom-6 md:right-4">
+      <div className="absolute z-[400] pointer-events-auto right-3.5 bottom-[calc(var(--nav-offset)+16px)] md:bottom-6 md:right-4">
         <div className="glass flex flex-col gap-1 items-center p-1 rounded-full shadow-md border border-white/80">
           <button
             type="button"

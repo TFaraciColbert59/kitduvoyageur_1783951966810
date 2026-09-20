@@ -21,6 +21,7 @@ import {
   DESTINATIONS,
   getActiveDestinationId,
   getDestinationByHref,
+  hasExtendedNav,
   type Destination,
 } from '@/components/mobile-nav/destinationRegistry';
 
@@ -175,7 +176,7 @@ const TabLink = memo(function TabLink({
         flex: '1 1 0',
         minWidth: 44,
         maxWidth: 76,
-        height: 52,
+        height: 'var(--nav-height)',
       }}
     >
       {isActive && (
@@ -430,20 +431,12 @@ function BottomTabBar() {
   const isCarnetDetail = Boolean(pathname && pathname.startsWith('/carnets/') && pathname !== '/carnets' && pathname !== '/carnets/nouveau');
   const isPaysHub = pathname === '/pays';
   const isPaysDetail = Boolean(pathname && pathname.startsWith('/pays/') && pathname !== '/pays');
-  const isCommunityPage = Boolean(
-    pathname && (
-      pathname.startsWith('/communaute') ||
-      pathname.startsWith('/entraide') ||
-      pathname.startsWith('/evenements')
-    )
-  );
   const isMessageriePage = pathname === '/messagerie';
   const isVoyagesHub = pathname === '/voyages';
 
-  // H5 : les surfaces hub (/hub, /voyages/[slug], /groupes/*, /equipages/*)
-  // sont couvertes par le HubShell (nav registre + AdventureSwitcher) —
-  // plus d'upper extension dupliquée pour elles.
-  const hasUpperExtension = isClubsHub || isClubDetail || isCarnetsHub || isCarnetDetail || isPaysHub || isPaysDetail || isCommunityPage || isMessageriePage || isVoyagesHub;
+  // Source unique (destinationRegistry) — strictement alignée sur l'offset
+  // réservé par AppShell : le plateau et le padding ne peuvent plus diverger.
+  const hasUpperExtension = hasExtendedNav(pathname);
 
   const [activeClubsTab, setActiveClubsTab] = useState<'decouvrir' | 'mes-clubs'>('decouvrir');
   const [activeClubDetailTab, setActiveClubDetailTab] = useState<string>('overview');
@@ -755,15 +748,11 @@ function BottomTabBar() {
 
   if (!mounted) {
     return (
-      <nav role="navigation" aria-label="Chargement de la navigation" className="md:hidden flex items-center justify-center" style={{ position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: zIndex.nav, pointerEvents: 'none', paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
-        <div style={{
-          height: 52,
-          background: 'linear-gradient(180deg, rgba(255,255,255,0.72) 0%, rgba(255,255,255,0.38) 100%)',
-          backdropFilter: 'blur(var(--glass-blur-xl)) saturate(var(--glass-sat))',
-          WebkitBackdropFilter: 'blur(var(--glass-blur-xl)) saturate(var(--glass-sat))',
+      <nav role="navigation" aria-label="Chargement de la navigation" className="md:hidden flex items-center justify-center" style={{ position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: zIndex.nav, pointerEvents: 'none', paddingBottom: 'var(--safe-bottom)' }}>
+        <div className="lkv-material-bar" style={{
+          height: 'var(--nav-height)',
           borderRadius: 999,
-          border: '1px solid rgba(255,255,255,0.75)',
-          boxShadow: 'inset 0 1px 1.5px rgba(255,255,255,0.9)',
+          boxShadow: 'var(--card-shadow)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -794,7 +783,7 @@ function BottomTabBar() {
         touchAction: 'manipulation',
         userSelect: 'none',
         WebkitUserSelect: 'none',
-        paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+        paddingBottom: 'var(--safe-bottom)',
         // Masquage par glissement (lkdv-toggle-bottom-bar) plutôt que return
         // null : translate + visibility évitent le saut de ~40px quand
         // --bottom-nav-height bascule entre 52px et 12px (cf. audit 1.8).
@@ -960,19 +949,16 @@ function BottomTabBar() {
           )}
         </AnimatePresence>
 
-        {/* Lower main bottom bar — hauteur ultra-compacte 52px pour laisser l'écran respirer */}
+        {/* Barre principale — hauteur canonique et matériau par tokens (Lot 2) */}
         <div
+          className="lkv-material-bar"
           style={{
             position: 'relative',
             zIndex: 2,
             width: '100%',
-            height: 52,
-            background: 'linear-gradient(180deg, rgba(255,255,255,0.78) 0%, rgba(255,255,255,0.48) 100%)',
-            backdropFilter: 'blur(var(--glass-blur-xl)) saturate(var(--glass-sat))',
-            WebkitBackdropFilter: 'blur(var(--glass-blur-xl)) saturate(var(--glass-sat))',
+            height: 'var(--nav-height)',
             borderRadius: 999,
-            border: '1px solid rgba(255, 255, 255, 0.85)',
-            boxShadow: 'inset 0 1px 1.5px rgba(255,255,255,0.95), inset 0 -1px 1px rgba(255,255,255,0.25), 0 10px 28px rgba(23, 64, 44, 0.12)',
+            boxShadow: 'var(--card-shadow)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',

@@ -10,7 +10,7 @@ import SearchOverlay from '@/components/search/SearchOverlay';
 import { HUB_DEPART_HREF } from '@/features/hub/registry/hubSectionRegistry';
 import { useSearchContext } from '@/contexts/SearchContext';
 
-const BottomTabBar = dynamic(() => import('@/components/mobile-nav/BottomTabBar'), {
+const NavigationBar = dynamic(() => import('@/components/mobile-nav/NavigationBar'), {
   ssr: false,
 });
 
@@ -37,7 +37,7 @@ export default function MobileNavWrapper() {
   if (isMapHeavyRoute) {
     return (
       <>
-        <BottomTabBar />
+        <NavigationBar />
         <OfflineBanner />
       </>
     );
@@ -46,7 +46,7 @@ export default function MobileNavWrapper() {
   return (
     <>
       <MobileDrawer isOpen={drawerOpen} onClose={() => setDrawerOpen(false)} onSearchOpen={openSearch} />
-      <BottomTabBar />
+      <NavigationBar />
       <SearchOverlay />
       <OfflineBanner />
     </>

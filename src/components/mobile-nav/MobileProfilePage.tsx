@@ -160,7 +160,7 @@ function LoggedOutProfile() {
         ))}
       </div>
 
-      <div style={{ height: 'calc(60px + env(safe-area-inset-bottom) + 16px)' }} aria-hidden="true" />
+      <div style={{ height: 'calc(var(--nav-offset) + var(--space-4))' }} aria-hidden="true" />
     </div>
   );
 }
@@ -445,7 +445,7 @@ function LoggedInProfile() {
         </LkvButton>
       </div>
 
-      <div style={{ height: 'calc(60px + env(safe-area-inset-bottom) + 16px)' }} aria-hidden="true" />
+      <div style={{ height: 'calc(var(--nav-offset) + var(--space-4))' }} aria-hidden="true" />
     </div>
   );
 }

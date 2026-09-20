@@ -25,6 +25,8 @@ export { Spinner, type SpinnerProps, type SpinnerSize, type SpinnerTone } from '
 export { Divider, type DividerProps, type DividerOrientation, type DividerSpacing } from './Divider';
 export { Section, type SectionProps, type SectionSpacing } from './Section';
 export { Page, type PageProps, type PageWidth } from './Page';
-export { PageHeader, type PageHeaderProps } from './PageHeader';
+export { PageHeader, type PageHeaderProps, type PageHeaderVariant } from './PageHeader';
+export { default as HeaderBackButton, type HeaderBackButtonProps } from './HeaderBackButton';
+export { useScrolled } from './useScrolled';
 export { PageContent, type PageContentProps, type PageContentSpacing } from './PageContent';
 export { PageActions, type PageActionsProps, type PageActionsVariant, type PageActionsAlign } from './PageActions';

@@ -3,6 +3,7 @@
 import React from 'react';
 import { usePathname } from 'next/navigation';
 import CompteBackground from '@/components/compte/CompteBackground';
+import { hasExtendedNav } from '@/components/mobile-nav/destinationRegistry';
 
 export interface AppShellProps {
   children?: React.ReactNode;
@@ -57,24 +58,16 @@ export default function AppShell({
 }: AppShellProps) {
   const pathname = usePathname();
 
-  // Routes avec plateau de navigation secondaire au-dessus de la bottom bar
-  const hasUpperExtension =
-    pathname?.startsWith('/communaute') ||
-    pathname?.startsWith('/pays') ||
-    pathname?.startsWith('/carnets') ||
-    pathname?.startsWith('/groupes') ||
-    pathname?.startsWith('/equipages') ||
-    pathname?.startsWith('/clubs') ||
-    pathname?.startsWith('/entraide') ||
-    pathname?.startsWith('/evenements') ||
-    pathname?.startsWith('/alertes') ||
-    pathname === '/messagerie';
+  // Source unique du plateau secondaire (destinationRegistry) — plus de liste
+  // de routes dupliquée ici.
+  const hasUpperExtension = hasExtendedNav(pathname);
 
+  // Offsets canoniques (tokens.css) : plus aucune valeur 80/68/52 locale.
   const bottomNavHeight = !hasBottomNav
-    ? 'calc(16px + env(safe-area-inset-bottom, 0px))'
+    ? 'var(--page-bottom-inset-bare)'
     : hasUpperExtension
-    ? 'var(--bottom-tab-extended-height, calc(112px + env(safe-area-inset-bottom, 0px)))'
-    : 'var(--bottom-tab-base-height, calc(80px + env(safe-area-inset-bottom, 0px)))';
+    ? 'var(--nav-offset-extended)'
+    : 'var(--nav-offset)';
 
   // TOILE UNIQUE : le fond applicatif (image marbrée) est global et fixe.
   // Le shell est transparent par défaut pour le laisser traverser sur toutes
@@ -84,28 +77,17 @@ export default function AppShell({
 
   return (
     <div
-      className={`app-shell mobile-page-shell ${containerBgClass} ${className}`}
+      className={`app-shell mobile-page-shell lkv-shell ${containerBgClass} ${className}`}
       style={{
         ['--bottom-nav-height' as any]: bottomNavHeight,
-        ['--shell-top-padding' as any]: safeTop
-          ? 'calc(env(safe-area-inset-top, 0px) + 8px)'
-          : '0px',
+        ['--shell-top-padding' as any]: safeTop ? 'var(--page-top-inset)' : '0px',
         ...(containerBgStyle ? { background: containerBgStyle } : {}),
-        paddingTop: safeTop ? 'calc(env(safe-area-inset-top, 0px) + 8px)' : '0px',
-        // Quand bottomExtra est présent, pas de padding-bottom sur le conteneur principal
-        // (le bottomExtra lui-même gère son spacing via padding-bottom: var(--bottom-nav-height))
+        position: 'relative',
+        paddingTop: safeTop ? 'var(--page-top-inset)' : '0px',
+        // Le shell réserve la place de la navigation (offset canonique) ;
+        // bottomExtra se cale au-dessus via --bottom-nav-height.
         paddingBottom: 'var(--bottom-nav-height)',
         scrollPaddingBottom: 'var(--bottom-nav-height)',
-        paddingLeft: 'env(safe-area-inset-left, 0px)',
-        paddingRight: 'env(safe-area-inset-right, 0px)',
-        minHeight: '100dvh',
-        position: 'relative',
-        overflowX: 'clip',
-        overscrollBehavior: 'none',
-        overscrollBehaviorY: 'none',
-        width: '100%',
-        maxWidth: '100vw',
-        boxSizing: 'border-box',
       }}
     >
       {/* Skip Link pour navigation clavier et lecteurs d'écran (WCAG AA 2.4.1) */}

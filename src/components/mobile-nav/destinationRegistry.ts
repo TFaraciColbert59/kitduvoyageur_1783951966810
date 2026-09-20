@@ -120,6 +120,33 @@ export function getDestinationLabel(id: DestinationId, locale: Locale): string {
 }
 
 /**
+ * Phase 2 (Lot 2) — SOURCE UNIQUE du plateau secondaire au-dessus de la barre.
+ * Remplace les listes de routes dupliquées entre AppShell et BottomTabBar :
+ * toute page qui affiche un plateau de sous-navigation doit être déclarée ici.
+ */
+const EXTENDED_NAV_PREFIXES: readonly string[] = [
+  '/clubs',
+  '/carnets',
+  '/pays',
+  '/communaute',
+  '/entraide',
+  '/evenements',
+  '/messagerie',
+  '/voyages',
+];
+
+const EXTENDED_NAV_EXCLUSIONS: readonly string[] = ['/carnets/nouveau'];
+
+/** Vrai si la route possède un plateau de navigation secondaire. */
+export function hasExtendedNav(pathname: string | null | undefined): boolean {
+  if (!pathname) return false;
+  const isUnder = (prefix: string) =>
+    pathname === prefix || pathname.startsWith(prefix + '/');
+  if (EXTENDED_NAV_EXCLUSIONS.some(isUnder)) return false;
+  return EXTENDED_NAV_PREFIXES.some(isUnder);
+}
+
+/**
  * Résout l'unique destination active pour un pathname :
  * correspondance exacte d'abord, puis préfixe le plus long.
  */

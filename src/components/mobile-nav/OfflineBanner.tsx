@@ -83,9 +83,9 @@ export default function OfflineBanner() {
         className="lkv-offline-in flex pointer-events-none"
         style={{
             position: 'fixed',
-            top: 'calc(env(safe-area-inset-top, 0px) + 8px)',
-            left: 'max(12px, env(safe-area-inset-left, 0px))',
-            right: 'max(12px, env(safe-area-inset-right, 0px))',
+            top: 'var(--page-top-inset)',
+            left: 'max(var(--space-3), var(--safe-left))',
+            right: 'max(var(--space-3), var(--safe-right))',
             maxWidth: '460px',
             margin: '0 auto',
             zIndex: zIndex.toast,

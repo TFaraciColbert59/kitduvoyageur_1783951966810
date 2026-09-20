@@ -28,7 +28,7 @@ export function SosFloatingButton({ safetyHref }: SosFloatingButtonProps) {
         }}
         aria-label="Urgence — secours et contacts"
         style={{
-          bottom: 'calc(var(--bottom-nav-height, 52px) + 12px + env(safe-area-inset-bottom, 0px))',
+          bottom: 'calc(var(--bottom-nav-height) + 12px)',
         }} // lkdv-safe-area-ok
         className="glass-circle-btn danger fixed right-4 z-[900] md:bottom-6 md:right-6 md:!bottom-6 flex h-14 w-14 items-center justify-center transition-transform active:scale-90 cursor-pointer"
       >
