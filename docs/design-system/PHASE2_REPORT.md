@@ -535,7 +535,41 @@ Sheets sociales détectées hors périmètre (`social/ReportSheet`, `MoreMenuShe
 ### Vérification
 `type-check` ✅ 0 · `lint` ✅ 0 · `vitest` ✅ 407 fichiers / **2 946 tests** · `build` ✅ 17,1 s · **60 captures** `phase2-screenshots/lot6-famille5/`. Métriques revérifiées indépendamment.
 
-### Prochaine famille : **Famille 6 — Groupes / Clubs / Carnets**
+## Lot 6 — Itération 2 · Famille 6 : Groupes / Clubs / Carnets (TERMINÉE)
+
+### Périmètre et résultat
+75 fichiers live (`app/nouveau-groupe`, `app/clubs`, `app/carnets`, `components/groupes`, `components/clubs`, `components/carnets`, `components/carnet`, `features/tribu`) ; **56 fichiers modifiés**, **0 supprimé**. Hors `features/crews/{actions,types,schemas}` et `features/tribu/{actions,hooks,lib}` (métier intact).
+
+| Mesure (périmètre) | Avant | Après |
+|---|---|---|
+| Hex | 682 | **23** (Leaflet/data persistée) |
+| `rounded-[…]` littéraux | 14 | **0** |
+| `z-[…]` littéraux | 10 | **0** |
+| Styles inline | 27 | **8** (dynamiques) |
+| `<button>` bruts | 231 | **4** (exceptions sémantiques) |
+| `glass-*` legacy | 524 | **0** |
+| Overlays custom | 12 | **0** |
+| `env(safe-area-*)` directs | 4 | **0** |
+| Composants sociaux/overlays spécialisés | 7 | **0** |
+
+- Listes → `Card`/`ListItem`/`Badge`/`Chip` ; détails groupe/club → `PageHeader` + structure identité/actions/infos/membres/activité ; carnets : identité éditoriale conservée, fondations `@/design` ; formulaires canoniques ; membres/rôles en `ListItem`+`Badge` ; actions destructives → `ConfirmDialog`/`lkvConfirm` ; états canoniques.
+- Corrections incluses : `IconButton variant="glass"`, `Badge title` sur span, `shadow-[var(--elevation-N)]` → `shadow-elevation-N` (garde-fou U-D62 de nouveau vert), imports inutiles.
+- Exceptions : couleurs Leaflet (`CarnetMap`, `ParcoursCard`, `nouveau-groupe`), palette `ACCENT_COLORS` consommée par Leaflet, `couleur_tag` persistée en base, 4 boutons sémantiques (`role="radio"`/`switch`/checkbox/emoji), 8 inline dynamiques, table de correspondance legacy DB (jamais rendue).
+
+### Métriques globales après famille 6
+
+| Mesure | Après famille 5 | Après famille 6 |
+|---|---|---|
+| Hex | 3 710 | **3 051** |
+| `rounded-[…]` littéraux | 120 | **106** |
+| `z-[…]` littéraux | 29 | **19** |
+| Styles inline | 1 361 | **1 342** |
+| Paires desktop/mobile | 50 | **50** (4 paires clubs/carnets conservées, UX distincte) |
+
+### Vérification
+`type-check` ✅ 0 · `lint` ✅ 0 · `vitest` ✅ 407 fichiers / **2 946 tests** · `build` ✅ 14,2 s · **60 captures** `phase2-screenshots/lot6-famille6/`. Aucun test modifié ni supprimé. Métriques revérifiées indépendamment.
+
+### Prochaine famille : **Famille 7 — Compte / Profil**
 
 ## Lots suivants
 
