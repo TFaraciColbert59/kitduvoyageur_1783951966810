@@ -32,7 +32,7 @@ export default function DesktopDockBar({
 }: DesktopDockBarProps) {
   return (
     <div
-      className="absolute left-1/2 -translate-x-1/2 max-w-[95vw] h-[68px] md:h-[82px] px-2.5 md:px-4 bg-[#06120C]/90 backdrop-blur-3xl border border-white/12 rounded-full shadow-lg flex items-center gap-1.5 md:gap-3 z-40 select-none transition-all duration-300 overflow-x-auto no-scrollbar"
+      className="absolute left-1/2 -translate-x-1/2 max-w-[95vw] h-[68px] md:h-[82px] px-2.5 md:px-4 bg-[color:var(--lkv-forest-950)]/90 backdrop-blur-3xl border border-white/12 rounded-full shadow-lg flex items-center gap-1.5 md:gap-3 z-40 select-none transition-all duration-300 overflow-x-auto no-scrollbar"
       style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 12px)' }}
     >
       
@@ -44,7 +44,7 @@ export default function DesktopDockBar({
         </div>
         
         <div className="flex flex-col leading-none">
-          <div className="font-mono text-[9px] tracking-widest text-[#C6DCBE]/70 font-semibold uppercase flex items-center gap-1.5">
+          <div className="font-mono text-[9px] tracking-widest text-[color:var(--lkv-forest-100)]/70 font-semibold uppercase flex items-center gap-1.5">
             <span>{isPaused ? 'EN PAUSE' : 'GPS · LIVE'}</span>
           </div>
           <div className="text-xl font-medium tracking-tight text-white font-mono tabular-nums mt-1 drop-shadow-sm">
@@ -59,7 +59,7 @@ export default function DesktopDockBar({
           onClick={() => onTabSelect('stats')}
           className={`h-[58px] px-3.5 rounded-2xl flex items-center gap-2 transition-all duration-200 ${
             activeTab === 'stats'
-              ? 'bg-[#17402C] text-[#C6DCBE] border border-[#C6DCBE]/30 shadow-lg font-semibold scale-[1.02]'
+              ? 'bg-[color:var(--lkv-primary)] text-[color:var(--lkv-forest-100)] border border-[color:var(--lkv-forest-100)]/30 shadow-lg font-semibold scale-[1.02]'
               : 'text-white/70 hover:text-white hover:bg-white/06'
           }`}
         >
@@ -73,7 +73,7 @@ export default function DesktopDockBar({
           onClick={() => onTabSelect('carnet')}
           className={`h-[58px] px-3.5 rounded-2xl flex items-center gap-2 transition-all duration-200 ${
             activeTab === 'carnet'
-              ? 'bg-[#17402C] text-[#C6DCBE] border border-[#C6DCBE]/30 shadow-lg font-semibold scale-[1.02]'
+              ? 'bg-[color:var(--lkv-primary)] text-[color:var(--lkv-forest-100)] border border-[color:var(--lkv-forest-100)]/30 shadow-lg font-semibold scale-[1.02]'
               : 'text-white/70 hover:text-white hover:bg-white/06'
           }`}
         >
@@ -93,10 +93,10 @@ export default function DesktopDockBar({
           onClick={onToggleHike}
           className={`h-[58px] px-5 rounded-2xl flex items-center gap-2.5 font-mono text-[11px] font-semibold tracking-widest uppercase  transition-all duration-200 active:scale-95 ${
             isPaused
-              ? 'bg-gradient-to-r from-[#A8C8A0] to-[#88B080] text-[#06120C] shadow-emerald-950/40 hover:brightness-110'
+              ? 'bg-gradient-to-r from-[color:var(--lkv-forest-200)] to-[var(--lkv-secondary)] text-[color:var(--lkv-forest-950)] shadow-emerald-950/40 hover:brightness-110'
               : isActive
-              ? 'bg-gradient-to-r from-[#E8B87A] to-[#D4A05E] text-[#2A1804] shadow-amber-950/40 hover:brightness-110'
-              : 'bg-gradient-to-r from-[#17402C] to-[#365233] text-white border border-emerald-500/30 shadow-emerald-950/60 hover:brightness-110'
+              ? 'bg-gradient-to-r from-[var(--lkv-warning)] to-[var(--lkv-warning-dark)] text-[var(--lkv-warning-dark)] shadow-amber-950/40 hover:brightness-110'
+              : 'bg-gradient-to-r from-[color:var(--lkv-primary)] to-[color:var(--lkv-primary-soft)] text-white border border-emerald-500/30 shadow-emerald-950/60 hover:brightness-110'
           }`}
         >
           <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
@@ -113,7 +113,7 @@ export default function DesktopDockBar({
 
         <button
           onClick={onStopHike}
-          className="h-[58px] px-4 rounded-2xl bg-gradient-to-r from-[#B85838] to-[#963F22] text-white border border-rose-400/20  shadow-rose-950/50 hover:brightness-110 active:scale-95 transition-all duration-200 flex items-center gap-2 font-mono text-[11px] font-semibold tracking-widest uppercase"
+          className="h-[58px] px-4 rounded-2xl bg-gradient-to-r from-[color:var(--lkv-danger)] to-[var(--lkv-danger-dark)] text-white border border-rose-400/20  shadow-rose-950/50 hover:brightness-110 active:scale-95 transition-all duration-200 flex items-center gap-2 font-mono text-[11px] font-semibold tracking-widest uppercase"
         >
           <span className="w-3 h-3 rounded-sm bg-white " />
           <span>TERMINER</span>
@@ -128,7 +128,7 @@ export default function DesktopDockBar({
           onClick={() => onTabSelect('capture')}
           className={`h-[58px] px-3.5 rounded-2xl flex items-center gap-2 transition-all duration-200 ${
             activeTab === 'capture'
-              ? 'bg-[#17402C] text-[#C6DCBE] border border-[#C6DCBE]/30 shadow-lg font-semibold scale-[1.02]'
+              ? 'bg-[color:var(--lkv-primary)] text-[color:var(--lkv-forest-100)] border border-[color:var(--lkv-forest-100)]/30 shadow-lg font-semibold scale-[1.02]'
               : 'text-white/70 hover:text-white hover:bg-white/06'
           }`}
           title="Capture photo / note"
@@ -145,7 +145,7 @@ export default function DesktopDockBar({
           onClick={() => onTabSelect('moment')}
           className={`h-[58px] px-3.5 rounded-2xl flex items-center gap-2 transition-all duration-200 ${
             activeTab === 'moment'
-              ? 'bg-[#17402C] text-[#C6DCBE] border border-[#C6DCBE]/30 shadow-lg font-semibold scale-[1.02]'
+              ? 'bg-[color:var(--lkv-primary)] text-[color:var(--lkv-forest-100)] border border-[color:var(--lkv-forest-100)]/30 shadow-lg font-semibold scale-[1.02]'
               : 'text-white/70 hover:text-white hover:bg-white/06'
           }`}
           title="Ajouter un moment fort"
@@ -160,7 +160,7 @@ export default function DesktopDockBar({
           onClick={() => onTabSelect('more')}
           className={`h-[58px] px-3 rounded-2xl flex items-center justify-center transition-all duration-200 ${
             activeTab === 'more'
-              ? 'bg-[#17402C] text-[#C6DCBE] border border-[#C6DCBE]/30 shadow-lg font-semibold scale-[1.02]'
+              ? 'bg-[color:var(--lkv-primary)] text-[color:var(--lkv-forest-100)] border border-[color:var(--lkv-forest-100)]/30 shadow-lg font-semibold scale-[1.02]'
               : 'text-white/70 hover:text-white hover:bg-white/06'
           }`}
           title="Plus d'actions"

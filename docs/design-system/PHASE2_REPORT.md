@@ -652,11 +652,177 @@ Sheets sociales détectées hors périmètre (`social/ReportSheet`, `MoreMenuShe
 
 ### Prochaine famille : **Famille 9 — Pages secondaires + purge finale Lot 6**
 
+## Lot 6 — Itération 2 · Famille 9 : Pages secondaires + purge finale (TERMINÉE)
+
+### Baseline recalculée (avant modifications)
+
+`node scripts/design/baseline-metrics.mjs --json` : hex **2 033** · `rounded-[…]` littéraux **36** ·
+`z-[…]` littéraux **12** · styles inline **1 010** (statiques **464** / dynamiques **546**) ·
+`<button>` bruts **395** · classes `glass-*` legacy **546** · `env(safe-area-*)` directs **21** ·
+`role="dialog"` **7** · bottom bars **2** · paires desktop/mobile **48** · headers custom `src/app` **0**.
+
+### Périmètre et résultat
+109 fichiers modifiés, **13 supprimés** (0 consommateur prouvé), 0 créé. Les pages secondaires migrées :
+`/connexion`, `/inscription`, `/cgu`, `/cgv`, `/cookies`, `/mentions-legales`,
+`/politique-confidentialite`, `/not-found`, `/global-error`, `/faq`, `/contact`, `/entraide`,
+`/copilote`, `/experts`, `/createurs`, `/ambassadeurs`, `/carbone`, `/guides`, `/guides/[slug]`,
+`/avis`, `/rapport-expedition`, `/outils`, plus tokenisation transverse de
+`/evenements`, `/blog`, `/outils/[slug]`, `/pro`, `/communaute-pro`, `/recompenses`, `/pays` et des
+cockpits `features/hiking`. Routes `notifications`/`favoris`/`feedback` inexistantes dans `src/app`
+(les notifications vivent dans `/compte`) ; `/admin` (back-office) et `/dev/*` (staging) hors périmètre.
+
+| Mesure (globale, `src/**/*.{ts,tsx}`) | Baseline famille 9 | Après famille 9 |
+|---|---|---|
+| Hex codés en dur | 2 033 | **251** (100 % technique/données — UI live **0**) |
+| `rounded-[…]` littéraux | 36 | **5** (`CountryFlag`, géométrie) |
+| `z-[…]` littéraux | 12 | **0** |
+| Styles inline | 1 010 | **440** (statiques **125** / dynamiques **315**) |
+| `<button>` bruts | 395 | **297** |
+| Classes `glass-*` legacy | 546 | **458** |
+| `env(safe-area-*)` directs | 21 | **14** |
+| Switches custom `role="switch"` live | 3 | **0** |
+| Overlays spécialisés hors primitives | 7 | **6** (tous tokenisés, `role="dialog"`/`aria-modal`) |
+| Paires desktop/mobile | 48 | **47** |
+| Code mort « deletable » | 12 | **0** (88 protégés staging, 0 supprimable) |
+
+### 1. Pages secondaires
+Layouts canoniques (`AppShell`/`PageLayout`), `PageHeader`/`HeaderBackButton`, primitives
+(`Button`/`IconButton`/`Card`/`Chip`/`Badge`/`Tabs`/`SearchField`), états canoniques
+(`EmptyState`/`ErrorState`/`LoadingState`/`Skeleton`/`Spinner`) et tokens partout. Fusions notables :
+`/not-found` (une seule arborescence responsive, paire 48→47), `/faq` (accordéon unique desktop/mobile),
+`/contact` (liste + formulaire partagés), `/inscription` (formulaire unique avec labels associés).
+
+### 2. Switches custom → `Switch` canonique
+`TeamMobileExperience.tsx` (sac du chien), `ItineraryDrawers.tsx` (matériel du jour) et les 2 switches
+`aria-pressed` de `/cookies` migrés ; `HubSectionPicker.tsx` (0 importeur vérifié) **supprimé**.
+`role="switch"` live restant : **0** (uniquement la primitive `Switch.tsx`).
+
+### 3. Overlays
+`ImageViewer`, `StoriesViewer`, `MobileDrawer`, `SearchOverlay`, `AdventureCockpitControl` migrés aux
+tokens (scrim `--lkv-overlay-scrim`, surface, radius, `--z-*`, typographie, `Button`/`IconButton`,
+motion réduite) ; `TerrainLiveCockpitControl` déjà conforme ; `GlassBreakModal` ×2,
+`AddParticipantModal`, `AddGearModal` déjà canoniques (constat, aucune modification) ;
+`useHubSwipeNav` = sélecteur CSS `[role="dialog"]` (pas un overlay). Les modales maison
+`NewReportModal`/`ReportDetailModal` (rapport-expédition) et `WriteReviewModal` (avis) migrées vers
+`Modal`. Correction incluse : les classes `story-*` n'existaient plus dans le CSS — `StoriesViewer`
+était non stylé ; reconstruit en utilitaires Tailwind + keyframes `lkv-story-progress`
+(`src/styles/tailwind.css`).
+
+### 4. Bottom bars
+`MobileNavWrapper` = unique assemblage de navigation (contrat `NavigationBar`,
+`NATIVE_TABBAR_ENABLED = false` inchangé) ; `DesktopDockBar` (randonnée active) reclassé **dock
+d'actions local** (hors `NavigationModel`), documenté. Aucune implémentation UIKit.
+
+### 5. Purge `rounded-[…]` / `z-[…]`
+Tous les littéraux live mappés (`0.75rem→--lkv-radius-sm`, `1.5rem→--lkv-radius-lg`,
+`1.75rem→--lkv-radius-card`, `2rem→--lkv-radius-card`) et `z` vers `--z-*` (`--z-emergency`,
+`--z-command`, `--z-sticky`, `--z-toast`, `--z-modal`). Restent 5 `rounded-[2..6px]` dans
+`src/components/ui/CountryFlag.tsx:13-17` (rayons proportionnels au drapeau, exception géométrique).
+
+### 6. Hex — UI vs technique
+UI live : **2 033 → 0**. Les 251 restants sont classés :
+- **Leaflet/moteur carte (119)** : `components/map/InteractiveMap.tsx` (31), `TrailLayer` (21),
+  `ExplorerMap` (11), `map/engine/mapTheme.ts` (11), `HubMiniMap` (8), `HubRouteMap` (8),
+  `CarnetMap` (8), `ExplorerFilterPanel` (7), `ParcoursCard` (6), `explorer/types.ts` (5),
+  `DayTraceMap` (2), `ItineraryMapSection` (1).
+- **Données/palettes persistées (60)** : `constants/equipmentCategories.ts` (28),
+  `features/hub/mobile/mobileHubEngine.ts` (7), `lib/pays/danger.ts` (6), `lib/mock/carnet-chartreuse.ts` (4),
+  `terrainDisplay.ts` (3), `app/carbone/page.tsx` (3, série de graphe non rendue), `lib/queries/carnet.ts` (1,
+  `couleur_tag`), `app/nouveau-groupe/page.tsx` (8, accents persistés).
+- **Technique** : PDF `HikeReportPDFService.ts` (19), HTML email `api/notifications/process/route.ts` (9),
+  natif/`themeColor` (`lib/native/status-bar.ts` 3, `NativeAppBootstrap.tsx` 1, `app/layout.tsx` 2),
+  dataviz `ElevationProfileChart.tsx` (12), back-office `app/admin` (14), staging dev
+  `components/dev/style/StyleShowcase.tsx` (12).
+
+### 7. Inline styles
+Statiques **464 → 125**, dynamiques **546 → 315** (total **1 010 → 440**). Les 125 statiques restants
+sont concentrés dans les pages non réécrites intégralement (dette documentée) : `blog/BlogClient.tsx` (21),
+`evenements/page.tsx` (19), `dev/glass/GlassLab.tsx` (9), `outils/[slug]/page.tsx` (7),
+`pro/page.tsx` (7), `dev/style/StyleShowcase.tsx` (5), `ui/Icon/Icon.tsx` (4).
+Dynamiques justifiés : jauges/progressions, transforms de gestes, couleurs runtime, virtualisation, carte.
+
+### 8. Paires desktop/mobile
+**48 → 47** : `/not-found` fusionné (arborescence responsive unique). Les 46 autres sont conservées et
+justifiées : shells distincts (Header/Footer desktop vs `AppShell` mobile) et/ou contenus/UX distincts ;
+là où le contenu était dupliqué (`/faq`, `/contact`, `/inscription`, `/avis`), il est désormais partagé
+entre les deux shells.
+
+### 9. Code mort / staging
+`find-dead-code.mjs` : 100 morts / 12 supprimables en début de famille → **88 morts / 0 supprimable**
+en fin (88 protégés staging métier). 13 fichiers UI supprimés avec preuve 0 consommateur :
+`icons/chevron-up.tsx`, `materiel/BackgroundVideo.tsx`, `mobile-nav/MobileProfilePage.tsx`,
+`profile/HikingProfileCard.tsx`, `social/MoreMenuSheet.tsx`, `social/SocialActions.tsx`,
+`ui/BackButton.tsx`, `ui/LkvCheckbox.tsx`, `ui/LkvInput.tsx`, `ui/LkvSelect.tsx`,
+`ui/LkvTextarea.tsx`, `ui/MediaUpload.tsx`, `features/hub/components/HubSectionPicker.tsx`.
+
+### 10. Mémoire musculaire & accessibilité
+`aria-expanded` sur les accordéons FAQ, `aria-pressed` sur les bascules restantes, `aria-label`
+obligatoire sur tous les `IconButton` introduits, labels associés (`htmlFor`/`id`) sur les
+formulaires migrés, `role="status"`/`aria-live` sur les retours, cibles ≥ 44 px, focus visible via
+tokens, `prefers-reduced-motion` conservé, statuts jamais portés uniquement par la couleur.
+
+### Exceptions documentées
+1. `CountryFlag.tsx:13-17` — rayons 2–6 px proportionnels au drapeau (géométrie).
+2. `useHubSwipeNav.ts:21` — `[role="dialog"]` est un sélecteur d'exclusion de geste.
+3. Overlays spécialisés conservés (gestes plein écran / panneaux) mais 100 % tokenisés :
+   `ImageViewer.tsx:163`, `StoriesViewer.tsx:142`, `MobileDrawer.tsx:195`, `SearchOverlay.tsx:104`,
+   `TerrainLiveCockpitControl.tsx:171`, `AdventureCockpitControl.tsx:86`.
+4. 251 hex techniques/données (détail §6) ; `app/layout.tsx:73-74` et
+   `NativeAppBootstrap.tsx:44` exigent des littéraux (meta/natif).
+5. 125 inline statiques restants dans les pages non réécrites (détail §7).
+6. `app/admin/**` (back-office) : 14 hex, 46 inline, 66 `<button>` — hors front utilisateur.
+7. `features/hiking/**` : hex de classes purgés (443 → 0) ; boutons bruts résiduels hors périmètre.
+
+### Vérification
+`type-check` ✅ 0 · `lint` ✅ 0 · `vitest` ✅ 407 fichiers / **2 947 tests** (27 skipped) ·
+`build` ✅ · `verify:invariants` ✅ 6/6. Aucun test supprimé ni adapté. Métriques recalculées via
+`baseline-metrics.mjs --write` (JSON à jour) et classification par scripts d'audit.
+
+# Lot 6 — Final
+
+## Familles migrées (9/9)
+1. Home / hubs · 2. Matériel / kits / départ · 3. Voyage / préparation · 4. Explorer / carte · 5. Communauté / messagerie · 6. Groupes / clubs / carnets · 7. Compte / profil · 8. Boutique · 9. Pages secondaires + purge finale.
+
+## Métriques globales — Phase 1 → fin Lot 6
+
+| Mesure | Baseline Phase 1 | Fin Lot 6 |
+|---|---|---|
+| Hex `src/**/*.{ts,tsx}` | 5 808 | **251** — dont **UI live 0**, 251 techniques/données (Leaflet 119, palettes/persisté 60, PDF 19, emails 9, natif/meta 6, admin 14, dev 12, dataviz 12) |
+| Styles inline | 1 529 | **440** — statiques **125** / dynamiques justifiés **315** |
+| `rounded-[…]` littéraux | 342 (total) | **5** (`CountryFlag`, géométrie) |
+| `z-[…]` littéraux | 88 | **0** |
+| Headers custom | 13 | **0** |
+| Switches custom | 5 | **0** (primitive `Switch` canonique) |
+| `window.confirm/alert/prompt` | 2 | **0** |
+| Overlays `role="dialog"` maison | 17 | **7** (spécialisés gestes, 100 % tokenisés) |
+| Paires desktop/mobile | 54 | **47** (1 fusionnée, 46 justifiées : shells Header/Footer vs AppShell, split views, cockpits) |
+| Bottom bars | 3 implémentations | **2** : 1 contrat `NavigationBar` (`NATIVE_TABBAR_ENABLED=false`) + 1 dock local reclassé (`DesktopDockBar`) |
+| Boutons bruts | 395 | **297** (admin back-office 66, staging/dev, pages non réécrites) |
+
+## Legacy supprimé (0 consommateur, preuves `find-dead-code.mjs` + `rg`)
+`LkvButton`, `GlassCard`, `GlassIconButton`, `GlassModal`, `GlassSheet`, `PremiumBottomSheet`, `GlassDrawer`, `LkvChip`, `LkvSwitch`, `LkvInput`, `LkvCheckbox`, `LkvSelect`, `LkvTextarea`, `MediaUpload`, `BackButton`, `ScrollableTabs`, `IOSSegmentedControl`, `Sheet` legacy, `HubSectionPicker`, `BackgroundVideo`, `MobileProfilePage`, `HikingProfileCard`, `MoreMenuSheet`, `SocialActions`, `chevron-up` + 2 composants morts antérieurs.
+
+## Exceptions (chemin + raison)
+1. `CountryFlag.tsx:13-17` — rayons 2–6 px proportionnels (géométrie).
+2. `useHubSwipeNav.ts:21` — `[role="dialog"]` = sélecteur d'exclusion de geste.
+3. Overlays spécialisés tokenisés : `ImageViewer`, `StoriesViewer`, `MobileDrawer`, `SearchOverlay`, `TerrainLiveCockpitControl`, `AdventureCockpitControl`.
+4. 251 hex techniques/données + `app/layout.tsx` / `NativeAppBootstrap` (meta/natif).
+5. 125 inline statiques dans pages non réécrites (blog 21, evenements 19, dev 14, outils 7, pro 7…) — dette Lot 7.
+6. `app/admin/**` back-office : 14 hex, 46 inline, 66 `<button>` — hors front utilisateur.
+7. 46 paires desktop/mobile justifiées (UX réellement distincte).
+
+## Tests
+`type-check` ✅ 0 · `lint` ✅ 0 · `vitest` ✅ 407 fichiers / **2 947 tests** (27 skipped) · `build` ✅ 11,0 s · `verify:invariants` ✅ 6/6 · **captures** : 60 par famille (`phase2-screenshots/lot6-famille1..9`). Aucun test supprimé.
+
+## Dette Lot 7 (polish uniquement — aucune migration structurelle restante)
+Polish visuel · motion/micro-interactions · QA fine (états, clavier, overlays) · accessibilité fine · validation iOS native/macOS (`IOS27_REFERENCE.md` §6) · performance · préparation prod · captures authentifiées (seed démo) · 125 inline statiques + back-office admin.
+
 ## Lots suivants
 
 | Lot | Contenu | Statut |
 |---|---|---|
-| 6 (suite) | Famille 9 secondaires + purge finale → clôture Lot 6 | en cours |
+| 6 | Familles 1-9 migrées + purge finale | **terminé** |
+| 7 | Polish visuel, motion, QA fine, validation native | à faire |
 
 ## Risques / points ouverts
 

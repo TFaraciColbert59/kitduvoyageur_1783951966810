@@ -5,12 +5,12 @@ export function BlockMarkdown({ text, className = '' }: { text: string; classNam
   const paragraphs = text.split('\n\n').filter((paragraph) => paragraph.trim().length > 0);
 
   return (
-    <div className={`space-y-2 text-xs text-[#2D4536] leading-relaxed ${className}`}>
+    <div className={`space-y-2 text-xs text-[color:var(--lkv-primary-soft)] leading-relaxed ${className}`}>
       {paragraphs.map((paragraph, paragraphIndex) => (
         <p key={paragraphIndex}>
           {paragraph.split(/(\*\*.*?\*\*)/g).map((part, partIndex) =>
             part.startsWith('**') && part.endsWith('**') ? (
-              <strong key={partIndex} className="font-bold text-[#17402C]">
+              <strong key={partIndex} className="font-bold text-[color:var(--lkv-primary)]">
                 {part.slice(2, -2)}
               </strong>
             ) : (

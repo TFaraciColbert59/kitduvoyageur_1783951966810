@@ -46,13 +46,13 @@ export function PaysRecommendations({
   return (
     <section
       aria-label="Recommandations personnalisées"
-      className={cn('glass rounded-[1.5rem] p-5 border border-white/50 shadow-xs space-y-3', className)}
+      className={cn('glass rounded-[var(--lkv-radius-lg)] p-5 border border-white/50 shadow-xs space-y-3', className)}
     >
       <div className="flex items-center justify-between gap-2">
-        <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-[#5B7F55]">
+        <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-[color:var(--lkv-secondary)]">
           Recommandé pour vous
         </span>
-        <span className="text-[9.5px] font-mono text-[#5A7064]">Selon votre profil</span>
+        <span className="text-[9.5px] font-mono text-[color:var(--lkv-text-secondary)]">Selon votre profil</span>
       </div>
 
       <div className="space-y-2">
@@ -98,21 +98,21 @@ export function PaysRecommendations({
           className="space-y-2"
           aria-hidden="true"
         >
-          <div className="h-3 w-3/4 rounded-full bg-[#EAE6DF]/80 animate-pulse" />
-          <div className="h-3 w-2/3 rounded-full bg-[#EAE6DF]/70 animate-pulse" />
+          <div className="h-3 w-3/4 rounded-full bg-[color:var(--stone-200)]/80 animate-pulse" />
+          <div className="h-3 w-2/3 rounded-full bg-[color:var(--stone-200)]/70 animate-pulse" />
         </div>
       ) : isError || data?.status === 'error' ? (
-        <p className="text-xs text-[#5A7064] font-mono">
+        <p className="text-xs text-[color:var(--lkv-text-secondary)] font-mono">
           Recommandations momentanément indisponibles.
         </p>
       ) : !data || data.status === 'empty' || data.recommendations.length === 0 ? (
-        <p className="text-xs text-[#5A7064] font-mono">
+        <p className="text-xs text-[color:var(--lkv-text-secondary)] font-mono">
           Aucune recommandation disponible pour ce pays pour l’instant.
         </p>
       ) : (
         <div className="space-y-2.5">
           {data.synthesis ? (
-            <p className="font-serif italic text-sm text-[#2D4536] leading-relaxed">{data.synthesis}</p>
+            <p className="font-serif italic text-sm text-[color:var(--lkv-primary-soft)] leading-relaxed">{data.synthesis}</p>
           ) : null}
 
           <ul className="space-y-2">
@@ -122,15 +122,15 @@ export function PaysRecommendations({
                 className="rounded-2xl border border-white/60 bg-white/70 p-3.5 space-y-1"
               >
                 <div className="flex items-center justify-between gap-2">
-                  <span className="text-[9px] font-mono font-bold uppercase tracking-wider text-[#5B7F55]">
+                  <span className="text-[9px] font-mono font-bold uppercase tracking-wider text-[color:var(--lkv-secondary)]">
                     {KIND_LABEL[recommendation.kind]}
                   </span>
                   {recommendation.meta ? (
-                    <span className="text-[9.5px] font-mono text-[#5A7064]">{recommendation.meta}</span>
+                    <span className="text-[9.5px] font-mono text-[color:var(--lkv-text-secondary)]">{recommendation.meta}</span>
                   ) : null}
                 </div>
-                <h4 className="font-display font-bold text-sm text-[#17402C]">{recommendation.title}</h4>
-                <p className="text-[11px] text-[#5A7064] leading-relaxed">{recommendation.reason}</p>
+                <h4 className="font-display font-bold text-sm text-[color:var(--lkv-primary)]">{recommendation.title}</h4>
+                <p className="text-[11px] text-[color:var(--lkv-text-secondary)] leading-relaxed">{recommendation.reason}</p>
               </li>
             ))}
           </ul>

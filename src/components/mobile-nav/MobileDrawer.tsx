@@ -4,10 +4,9 @@ import React, { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import LkvIcon, { type LkvIconName } from '@/components/ui/LkvIcon';
-import { Button } from '@/components/ui';
+import { Button, IconButton } from '@/components/ui';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCartCount } from '@/hooks/useCartCount';
-import { zIndex } from '@/lib/ui/zIndex';
 import { DESTINATIONS } from '@/components/mobile-nav/destinationRegistry';
 
 interface MobileDrawerProps {
@@ -81,75 +80,24 @@ const SECTIONS: NavSection[] = [
   },
 ];
 
-const sectionLabelStyle: React.CSSProperties = {
-  fontSize: '11px',
-  fontWeight: 600,
-  color: '#8B978F',
-  letterSpacing: '0.04em',
-  textTransform: 'uppercase',
-  padding: '16px 20px 8px',
-};
+const SECTION_LABEL_CLASS =
+  'px-[var(--space-5)] pb-[var(--space-2)] pt-[var(--space-4)] text-[length:var(--lkv-text-caption-2)] font-semibold uppercase tracking-[0.04em] text-[color:var(--lkv-ink-300)]';
 
-const itemStyle: React.CSSProperties = {
-  padding: '8px 20px',
-  display: 'flex',
-  alignItems: 'center',
-  gap: '12px',
-  color: '#17402C',
-  fontSize: '15px',
-  fontWeight: 400,
-  textDecoration: 'none',
-  cursor: 'pointer',
-  transition: 'background 0.15s ease',
-};
-
-const scrimStyle: React.CSSProperties = {
-  position: 'fixed',
-  inset: 0,
-  background: 'rgba(23,64,44,0.55)',
-  backdropFilter: 'blur(2px)',
-  WebkitBackdropFilter: 'blur(2px)',
-  touchAction: 'none',
-  overscrollBehavior: 'none',
-  zIndex: zIndex.sheet,
-};
-
-const panelStyle: React.CSSProperties = {
-  position: 'fixed',
-  top: 0,
-  left: 0,
-  bottom: 0,
-  width: '88%',
-  maxWidth: '360px',
-  background: '#EEF3EC',
-  // Même couche que le scrim : le panneau suit le scrim dans le DOM.
-  zIndex: zIndex.sheet,
-  boxShadow: '20px 0 60px rgba(23,64,44,0.25)',
-  display: 'flex',
-  flexDirection: 'column',
-  overflow: 'hidden',
-  paddingLeft: 'var(--safe-left)',
-};
-
-const scrollableContentStyle: React.CSSProperties = {
-  flex: 1,
-  overflowY: 'auto',
-  WebkitOverflowScrolling: 'touch',
-};
+const ITEM_CLASS =
+  'flex min-h-[var(--lkv-touch-min)] items-center gap-[var(--space-3)] px-[var(--space-5)] text-[length:var(--lkv-text-subheadline)] text-[color:var(--lkv-primary)] no-underline transition-colors hover:bg-[color:var(--lkv-hover-surface)]';
 
 export default function MobileDrawer({ isOpen, onClose, onSearchOpen }: MobileDrawerProps) {
   const pathname = usePathname();
   const { user, profile } = useAuth();
   const cartCount = useCartCount();
-  
-  const [hoveredItem, setHoveredItem] = useState<string | null>(null);
+
+  const [visible, setVisible] = useState(isOpen);
+  const [closing, setClosing] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
   const previousFocusRef = useRef<HTMLElement | null>(null);
 
-  // P1-3 (C-17 suite) — sortie animée sans framer-motion : le panneau reste
+  // P1-3 (C-17 suite) — sortie animée sans framer : le panneau reste
   // monté le temps de l'animation CSS de fermeture (--closing), puis unmount.
-  const [visible, setVisible] = useState(isOpen);
-  const [closing, setClosing] = useState(false);
   useEffect(() => {
     if (isOpen) {
       setVisible(true);
@@ -171,14 +119,14 @@ export default function MobileDrawer({ isOpen, onClose, onSearchOpen }: MobileDr
     : currentMonth >= 5 && currentMonth <= 7 ? 'été'
     : currentMonth >= 8 && currentMonth <= 10 ? 'automne'
     : 'hiver';
-  const version = 'v0.1.0'; // Should ideally come from package.json but hardcoded to package.json version for simplicity
+  const version = 'v0.1.0';
 
   // Lock body scroll and handle focus trap / escape key
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
       previousFocusRef.current = document.activeElement as HTMLElement;
-      
+
       const handleKeyDown = (e: KeyboardEvent) => {
         if (e.key === 'Escape') {
           onClose();
@@ -188,10 +136,10 @@ export default function MobileDrawer({ isOpen, onClose, onSearchOpen }: MobileDr
             'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
           );
           if (focusable.length === 0) return;
-          
+
           const first = focusable[0] as HTMLElement;
           const last = focusable[focusable.length - 1] as HTMLElement;
-          
+
           if (e.shiftKey && document.activeElement === first) {
             e.preventDefault();
             last.focus();
@@ -201,9 +149,9 @@ export default function MobileDrawer({ isOpen, onClose, onSearchOpen }: MobileDr
           }
         }
       };
-      
+
       document.addEventListener('keydown', handleKeyDown);
-      
+
       // Focus close button or panel
       setTimeout(() => {
         if (panelRef.current) {
@@ -228,8 +176,7 @@ export default function MobileDrawer({ isOpen, onClose, onSearchOpen }: MobileDr
         {/* Scrim */}
         <div
           key="drawer-scrim"
-          className={`lkv-drawer-scrim${closing ? ' lkv-drawer-scrim--closing' : ''}`}
-          style={scrimStyle}
+          className={`lkv-drawer-scrim fixed inset-0 z-[var(--z-sheet)] touch-none overscroll-none bg-[color:var(--lkv-overlay-scrim)] backdrop-blur-[var(--blur-sm)]${closing ? ' lkv-drawer-scrim--closing' : ''}`}
           onClick={onClose}
           aria-hidden="true"
         />
@@ -239,79 +186,37 @@ export default function MobileDrawer({ isOpen, onClose, onSearchOpen }: MobileDr
           key="drawer-panel"
           id="mobile-drawer"
           ref={panelRef}
-          className={`lkv-drawer-panel${closing ? ' lkv-drawer-panel--closing' : ''}`}
-          style={panelStyle}
+          className={`lkv-drawer-panel fixed inset-y-0 left-0 z-[var(--z-sheet)] flex w-[88%] max-w-[360px] flex-col overflow-hidden bg-[color:var(--lkv-surface)] pl-[var(--safe-left)] shadow-elevation-5${closing ? ' lkv-drawer-panel--closing' : ''}`}
           role="dialog"
           aria-modal="true"
           aria-label="Navigation principale"
         >
-            <div style={scrollableContentStyle}>
+            <div className="flex-1 overflow-y-auto overscroll-contain">
               {/* Header */}
-              <header
-                style={{
-                  background: '#17402C',
-                  color: '#fff',
-                  padding: 'calc(40px + var(--safe-top)) 20px 22px',
-                  position: 'relative',
-                  overflow: 'hidden',
-                }}
-              >
+              <header className="relative overflow-hidden bg-[color:var(--lkv-primary)] px-[var(--space-5)] pb-[22px] pt-[calc(40px+var(--safe-top))] text-[color:var(--lkv-text-inverted)]">
                 {/* Glow circle decoration */}
                 <div
-                  style={{
-                    position: 'absolute',
-                    bottom: '-50px',
-                    right: '-30px',
-                    width: '180px',
-                    height: '180px',
-                    borderRadius: '50%',
-                    background:
-                      'radial-gradient(circle, rgba(168,200,160,0.4) 0%, transparent 65%)',
-                  }}
+                  className="absolute -bottom-[50px] -right-[30px] h-[180px] w-[180px] rounded-full bg-[radial-gradient(circle,var(--sage-300)_0%,transparent_65%)] opacity-40"
                   aria-hidden="true"
                 />
 
                 {/* Close button */}
-                <button
+                <IconButton
                   onClick={onClose}
-                  className="glass-circle-btn"
-                  style={{
-                    position: 'absolute',
-                    top: 'calc(var(--safe-top) + var(--space-3))',
-                    right: '12px',
-                    width: '44px',
-                    height: '44px',
-                  }}
                   aria-label="Fermer le menu"
+                  className="absolute right-[var(--space-3)] top-[calc(var(--safe-top)+var(--space-3))] bg-[color:var(--lkv-surface-card)] text-[color:var(--lkv-primary)]"
                 >
-                  <LkvIcon name="close" size={14} color="#17402C" />
-                </button>
+                  <LkvIcon name="close" size={14} />
+                </IconButton>
 
                 {/* Logo + Brand */}
-                <div
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '10px',
-                    marginBottom: '22px',
-                    position: 'relative',
-                    zIndex: 2,
-                  }}
-                >
-                  <LkvIcon name="mountain" size={28} color="#A8C8A0" />
+                <div className="relative z-[var(--z-dropdown)] mb-[22px] flex items-center gap-[10px]">
+                  <LkvIcon name="mountain" size={28} className="text-[color:var(--sage-300)]" />
                   <div>
-                    <div style={{ fontSize: '14px', fontWeight: 500 }}>
+                    <div className="text-[length:var(--lkv-text-footnote)] font-medium">
                       Le Kit du Voyageur
                     </div>
-                    <em
-                      style={{
-                        display: 'block',
-                        fontFamily: 'var(--font-serif)',
-                        fontStyle: 'italic',
-                        color: '#C6DCBE',
-                        fontSize: '12px',
-                      }}
-                    >
+                    <em className="block font-serif text-[length:var(--lkv-text-caption-1)] italic text-[color:var(--lkv-forest-100)]">
                       édition {season} · {currentYear}
                     </em>
                   </div>
@@ -319,50 +224,21 @@ export default function MobileDrawer({ isOpen, onClose, onSearchOpen }: MobileDr
 
                 {/* User section */}
                 {user ? (
-                  <div
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '12px',
-                      position: 'relative',
-                      zIndex: 2,
-                    }}
-                  >
-                    <div
-                      style={{
-                        width: '44px',
-                        height: '44px',
-                        borderRadius: '999px',
-                        background: '#A8C8A0',
-                        color: '#06120C',
-                        fontFamily: 'var(--font-serif)',
-                        fontStyle: 'italic',
-                        fontSize: '18px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        border: '2px solid rgba(255,255,255,0.2)',
-                      }}
-                    >
+                  <div className="relative z-[var(--z-dropdown)] flex items-center gap-[var(--space-3)]">
+                    <div className="flex h-11 w-11 items-center justify-center rounded-full border-2 border-white/20 bg-[color:var(--lkv-secondary)] font-serif text-[length:var(--lkv-text-title-sm)] italic text-[color:var(--lkv-forest-950)]">
                       {(profile?.full_name?.[0] || user?.email?.[0] || '?').toUpperCase()}
                     </div>
                     <div>
-                      <div style={{ fontSize: '15px', fontWeight: 500 }}>
+                      <div className="text-[length:var(--lkv-text-subheadline)] font-medium">
                         {profile?.full_name || 'Voyageur'}
                       </div>
-                      <div
-                        style={{
-                          fontSize: '11px',
-                          color: 'rgba(255,255,255,0.6)',
-                          fontFamily: 'var(--font-mono)',
-                        }}
-                      >
+                      <div className="font-mono text-[length:var(--lkv-text-caption-2)] text-white/60">
                         MEMBRE · NIVEAU {profile?.level || 1}
                       </div>
                     </div>
                   </div>
                 ) : (
-                  <div style={{ position: 'relative', zIndex: 2 }}>
+                  <div className="relative z-[var(--z-dropdown)]">
                     <Link href="/connexion" onClick={onClose}>
                       <Button variant="secondary" size="sm">
                         Se connecter
@@ -376,7 +252,7 @@ export default function MobileDrawer({ isOpen, onClose, onSearchOpen }: MobileDr
               <nav>
                 {SECTIONS.map((section) => (
                   <div key={section.label}>
-                    <div style={sectionLabelStyle}>{section.label}</div>
+                    <div className={SECTION_LABEL_CLASS}>{section.label}</div>
                     {section.items.map((item) => {
                       const isActive =
                         pathname === item.href ||
@@ -391,60 +267,32 @@ export default function MobileDrawer({ isOpen, onClose, onSearchOpen }: MobileDr
                               onClose();
                               onSearchOpen?.();
                             }}
-                            style={{
-                              ...itemStyle,
-                              width: '100%',
-                              border: 'none',
-                              background: 'transparent',
-                              fontFamily: 'inherit',
-                              textAlign: 'left',
-                            }}
+                            className={`${ITEM_CLASS} w-full border-none bg-transparent text-left`}
                           >
-                            <LkvIcon name="search" size={20} color="#17402C" />
-                            <span style={{ flex: 1 }}>{item.label}</span>
-                            <LkvIcon name="chevron-right" size={16} color="#AEB7B1" />
+                            <LkvIcon name="search" size={20} />
+                            <span className="flex-1">{item.label}</span>
+                            <LkvIcon name="chevron-right" size={16} className="text-[color:var(--ink-300)]" />
                           </button>
                         ) : (
                         <Link
                           key={item.href + item.label}
                           href={item.href}
                           onClick={onClose}
-                          style={{
-                            ...itemStyle,
-                            background: isActive
-                              ? 'rgba(23,64,44,0.04)'
-                              : hoveredItem === item.href
-                              ? 'rgba(23,64,44,0.03)'
-                              : 'transparent',
-                            fontWeight: isActive ? 500 : 400,
-                          }}
-                          onMouseEnter={() => setHoveredItem(item.href)}
-                          onMouseLeave={() => setHoveredItem(null)}
+                          className={`${ITEM_CLASS} ${
+                            isActive ? 'bg-[color:var(--lkv-hover-surface)] font-medium' : ''
+                          }`}
                         >
-                          <LkvIcon
-                            name={item.icon}
-                            size={20}
-                            color={isActive ? '#17402C' : '#17402C'}
-                          />
-                          <span style={{ flex: 1 }}>{item.label}</span>
+                          <LkvIcon name={item.icon} size={20} />
+                          <span className="flex-1">{item.label}</span>
                           {item.href === '/panier' && cartCount > 0 && (
-                            <span style={{
-                              background: '#5B7F55',
-                              color: '#fff',
-                              fontSize: '10px',
-                              fontWeight: 700,
-                              padding: '1px 6px',
-                              borderRadius: '999px',
-                              fontFamily: 'monospace',
-                              marginRight: '4px',
-                            }}>
+                            <span className="mr-1 rounded-full bg-[color:var(--lkv-secondary)] px-1.5 py-px font-mono text-[10px] font-bold text-[color:var(--lkv-text-inverted)]">
                               {cartCount > 9 ? '9+' : cartCount}
                             </span>
                           )}
                           <LkvIcon
                             name="chevron-right"
                             size={16}
-                            color="#AEB7B1"
+                            className="text-[color:var(--ink-300)]"
                           />
                         </Link>
                         )
@@ -455,50 +303,24 @@ export default function MobileDrawer({ isOpen, onClose, onSearchOpen }: MobileDr
               </nav>
 
               {/* Footer */}
-              <footer
-                style={{
-                  padding: '14px 16px calc(20px + var(--safe-bottom))',
-                  borderTop: '1px solid rgba(23,64,44,0.06)',
-                  background: '#F4F1EA',
-                }}
-              >
+              <footer className="border-t border-[color:var(--lkv-border-subtle)] bg-[color:var(--stone-100)] px-[var(--space-4)] pb-[calc(var(--safe-bottom)+20px)] pt-[14px]">
                 <Link
                   href="/abonnements"
                   onClick={onClose}
-                  className="glass"
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '12px',
-                    padding: '12px',
-                    borderRadius: '14px',
-                    textDecoration: 'none',
-                  }}
+                  className="flex items-center gap-[var(--space-3)] rounded-[var(--lkv-radius-control)] border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] p-[var(--space-3)] no-underline backdrop-blur-[var(--blur-md)]"
                 >
-                  <LkvIcon name="star" size={20} color="#17402C" />
+                  <LkvIcon name="star" size={20} />
                   <div>
-                    <div style={{ fontSize: '13px', fontWeight: 600, color: '#17402C' }}>
+                    <div className="text-[length:var(--lkv-text-caption-1)] font-semibold text-[color:var(--lkv-primary)]">
                       Premium Voyageur
                     </div>
-                    <div style={{ fontSize: '11px', color: '#6B7A72' }}>
+                    <div className="text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">
                       Débloquez toutes les fonctionnalités
                     </div>
                   </div>
-                  <LkvIcon
-                    name="arrow-right"
-                    size={16}
-                    color="#17402C"
-                  />
+                  <LkvIcon name="arrow-right" size={16} className="text-[color:var(--lkv-primary)]" />
                 </Link>
-                <div
-                  style={{
-                    fontSize: '10px',
-                    color: '#8B978F',
-                    textAlign: 'center',
-                    marginTop: '14px',
-                    fontFamily: 'var(--font-mono)',
-                  }}
-                >
+                <div className="mt-[14px] text-center font-mono text-[10px] text-[color:var(--ink-300)]">
                   {version} · GRENOBLE · FR
                 </div>
               </footer>

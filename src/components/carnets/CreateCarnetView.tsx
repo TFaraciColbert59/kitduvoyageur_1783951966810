@@ -166,7 +166,7 @@ export default function CreateCarnetView({ onCloseModal }: { onCloseModal?: () =
       name: '',
       detail: '',
       weight: '',
-      color: '#17402C'
+      color: 'var(--lkv-primary)'
     };
     setForm(prev => ({ ...prev, kitItems: [...prev.kitItems, newItem] }));
   };

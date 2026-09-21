@@ -466,6 +466,19 @@
   .lkv-fade-in { animation: lkv-fade-in 0.2s ease both; }
   .lkv-fade-in--closing { animation: lkv-fade-out 0.2s ease both; }
 
+  .lkv-story-progress-fill {
+    animation: lkv-story-progress 5s linear both;
+  }
+
+  @keyframes lkv-story-progress {
+    from { transform: scaleX(0); }
+    to { transform: scaleX(1); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .lkv-story-progress-fill { animation: none; }
+  }
+
   @media (prefers-reduced-motion: reduce) {
     .lkv-sheet-up, .lkv-sheet-up--closing,
     .lkv-sheet-full, .lkv-sheet-full--closing,

@@ -48,22 +48,22 @@ export default function ContextualInsight({
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: 10 }}
-        className={`absolute left-3 right-3 bottom-[100px] z-20 p-3.5 rounded-[0.75rem] backdrop-blur-2xl border  flex items-center gap-3 select-none ${
+        className={`absolute left-3 right-3 bottom-[100px] z-20 p-3.5 rounded-[var(--lkv-radius-sm)] backdrop-blur-2xl border  flex items-center gap-3 select-none ${
           priorityType === 'off-route'
-            ? 'bg-[#E8B87A]/95 text-[#4A2E0E] border-[#7A4A15]/20 shadow-amber-900/20'
+            ? 'bg-[var(--lkv-warning)]/95 text-[var(--lkv-warning-dark)] border-[color:var(--lkv-warning-dark)]/20 shadow-amber-900/20'
             : priorityType === 'weather'
-            ? 'bg-[#3B5678]/95 text-white border-white/20 shadow-blue-950/30'
-            : 'bg-[#17402C]/95 text-white border-[#C6DCBE]/20'
+            ? 'bg-[color:var(--sky-500)]/95 text-white border-white/20 shadow-blue-950/30'
+            : 'bg-[color:var(--lkv-primary)]/95 text-white border-[color:var(--lkv-forest-100)]/20'
         }`}
       >
         {/* Icon Box */}
         <div
           className={`w-10 h-10 rounded-2xl flex items-center justify-center text-xl flex-shrink-0 ${
             priorityType === 'off-route'
-              ? 'bg-[#7A4A15]/15 text-[#7A4A15]'
+              ? 'bg-[color:var(--lkv-warning-dark)]/15 text-[color:var(--lkv-warning-dark)]'
               : priorityType === 'weather'
               ? 'bg-white/15 text-white'
-              : 'bg-[#C6DCBE]/20 text-[#C6DCBE]'
+              : 'bg-[color:var(--lkv-forest-100)]/20 text-[color:var(--lkv-forest-100)]'
           }`}
         >
           {priorityType === 'off-route' ? '⚠️' : priorityType === 'weather' ? '🌧️' : priorityType === 'paused' ? '⏸️' : '📍'}
@@ -104,13 +104,13 @@ export default function ContextualInsight({
             <>
               <button
                 onClick={onReturnToPath}
-                className="px-3 py-1.5 rounded-full text-xs font-semibold bg-[#7A4A15] text-white  active:scale-95 transition-transform"
+                className="px-3 py-1.5 rounded-full text-xs font-semibold bg-[color:var(--lkv-warning-dark)] text-white  active:scale-95 transition-transform"
               >
                 REVENIR
               </button>
               <button
                 onClick={onDismissOffRoute}
-                className="px-3 py-1.5 rounded-full text-xs font-semibold bg-[#17402C]/14 text-inherit active:scale-95 transition-transform"
+                className="px-3 py-1.5 rounded-full text-xs font-semibold bg-[color:var(--lkv-primary)]/14 text-inherit active:scale-95 transition-transform"
               >
                 IGNORER
               </button>

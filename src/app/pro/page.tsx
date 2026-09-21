@@ -52,7 +52,7 @@ export default function B2BPage() {
       <div className="block md:hidden">
         <MobilePageShell>
           <div style={{ padding: '16px' }}>
-            <h1 style={{ fontSize: '20px', fontWeight: 800, color: '#17402C', marginBottom: '16px' }}>Espace Pro B2B</h1>
+            <h1 style={{ fontSize: '20px', fontWeight: 800, color: 'var(--lkv-primary)', marginBottom: '16px' }}>Espace Pro B2B</h1>
             <p style={{ fontSize: '13px', color: 'rgba(23,64,44,0.6)', marginBottom: '20px' }}>Tarifs préférentiels pour les professionnels.</p>
             <div style={{ display: 'flex', gap: '8px', marginBottom: '20px' }}>
               <button onClick={() => setActiveTab('plans')} className={`glass-capsule-btn ${activeTab === 'plans' ? 'primary' : ''}`}>Offres</button>
@@ -60,9 +60,9 @@ export default function B2BPage() {
             </div>
             {activeTab === 'plans' && PRO_PLANS.map((plan) => (
               <div key={plan.id} className="glass" style={{ borderRadius: '12px', padding: '16px', marginBottom: '12px' }}>
-                <h3 style={{ fontSize: '16px', fontWeight: 700, color: '#17402C', marginBottom: '4px' }}>{plan.name}</h3>
+                <h3 style={{ fontSize: '16px', fontWeight: 700, color: 'var(--lkv-primary)', marginBottom: '4px' }}>{plan.name}</h3>
                 <p style={{ fontSize: '13px', color: 'rgba(23,64,44,0.5)', marginBottom: '8px' }}>{plan.description}</p>
-                <p style={{ fontSize: '28px', fontWeight: 800, color: '#17402C', marginBottom: '12px' }}>{plan.price}€<span style={{ fontSize: '13px', fontWeight: 400 }}>/{plan.period}</span></p>
+                <p style={{ fontSize: '28px', fontWeight: 800, color: 'var(--lkv-primary)', marginBottom: '12px' }}>{plan.price}€<span style={{ fontSize: '13px', fontWeight: 400 }}>/{plan.period}</span></p>
                 <ul style={{ marginBottom: '12px' }}>{plan.features.map((f) => <li key={f} style={{ fontSize: '13px', color: 'rgba(23,64,44,0.7)', padding: '3px 0' }}>✓ {f}</li>)}</ul>
                 <button onClick={() => setShowContactModal(true)} className="glass-capsule-btn primary" style={{ width: '100%' }}>Choisir cette offre</button>
               </div>

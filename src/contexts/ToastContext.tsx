@@ -52,8 +52,8 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   const colors: Record<ToastType, string> = {
     success: 'bg-green-600',
     error: 'bg-red-600',
-    info: 'bg-[#3E6B7A]',
-    warning: 'bg-[#B5652D]',
+    info: 'bg-[color:var(--sky-500)]',
+    warning: 'bg-[color:var(--lkv-warning-dark)]',
   };
 
   return (
@@ -63,7 +63,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
       <div
         aria-live="polite"
         aria-atomic="false"
-        className="fixed bottom-4 right-4 z-[9999] flex flex-col gap-2 pointer-events-none"
+        className="fixed bottom-4 right-4 z-[var(--z-toast)] flex flex-col gap-2 pointer-events-none"
       >
         {toasts.map((t) => (
           <div

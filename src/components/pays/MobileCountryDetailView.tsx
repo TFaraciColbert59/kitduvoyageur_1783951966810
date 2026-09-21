@@ -69,7 +69,7 @@ export default function MobileCountryDetailView({
 
   return (
     <div
-      className="md:hidden min-h-screen bg-transparent pb-[calc(175px+env(safe-area-inset-bottom,0px))] text-[#17402C] font-sans [overscroll-behavior-y:none]"
+      className="md:hidden min-h-screen bg-transparent pb-[calc(175px+env(safe-area-inset-bottom,0px))] text-[color:var(--lkv-primary)] font-sans [overscroll-behavior-y:none]"
     >
       
       {/* ── 1. FLOATING TOP CONTROLS (Apple HIG Rigor) ── */}
@@ -84,7 +84,7 @@ export default function MobileCountryDetailView({
         </Link>
 
         <div className="flex items-center gap-2">
-          <div className="glass-pill !px-3 !py-1 text-[11px] font-mono font-bold text-[#17402C] flex items-center gap-1.5 shadow-2xs">
+          <div className="glass-pill !px-3 !py-1 text-[11px] font-mono font-bold text-[color:var(--lkv-primary)] flex items-center gap-1.5 shadow-2xs">
             <CountryFlag code={country.code} name={country.nom} size="xs" />
             <span>{country.continent}</span>
           </div>
@@ -111,7 +111,7 @@ export default function MobileCountryDetailView({
             alt={country.nom}
             className="w-full h-full object-cover"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-[#17402C]/90 via-[#17402C]/35 to-transparent pointer-events-none" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[color:var(--lkv-primary)]/90 via-[color:var(--lkv-primary)]/35 to-transparent pointer-events-none" />
 
           {/* Slogan & Destination Details */}
           <div className="absolute bottom-3.5 left-4 right-4 z-10 text-white">
@@ -149,28 +149,28 @@ export default function MobileCountryDetailView({
         <div className="glass p-2.5">
           <div className="grid grid-cols-4 gap-1.5 text-center">
             <div className="glass-sub-card p-2">
-              <span className="block font-mono font-bold text-[11px] sm:text-xs text-[#17402C] truncate" title={country.superficie_detail}>
+              <span className="block font-mono font-bold text-[11px] sm:text-xs text-[color:var(--lkv-primary)] truncate" title={country.superficie_detail}>
                 {country.superficie_court === '—' ? '—' : (country.superficie_court.includes('km') ? country.superficie_court : `${country.superficie_court} km²`)}
               </span>
-              <span className="text-[8px] text-[#5A7064] uppercase font-mono font-bold">
+              <span className="text-[8px] text-[color:var(--lkv-text-secondary)] uppercase font-mono font-bold">
                 Superficie
               </span>
             </div>
 
             <div className="glass-sub-card p-2">
-              <span className="block font-mono font-bold text-xs text-[#17402C] truncate" title={country.capitale}>
+              <span className="block font-mono font-bold text-xs text-[color:var(--lkv-primary)] truncate" title={country.capitale}>
                 {country.capitale}
               </span>
-              <span className="text-[8px] text-[#5A7064] uppercase font-mono font-bold">
+              <span className="text-[8px] text-[color:var(--lkv-text-secondary)] uppercase font-mono font-bold">
                 Capitale
               </span>
             </div>
 
             <div className="glass-sub-card p-2">
-              <span className="block font-mono font-bold text-xs text-[#5B7F55] truncate" title={country.monnaie || country.monnaie_nom}>
+              <span className="block font-mono font-bold text-xs text-[color:var(--lkv-secondary)] truncate" title={country.monnaie || country.monnaie_nom}>
                 {country.monnaie_code || country.monnaie}
               </span>
-              <span className="text-[8px] text-[#5A7064] uppercase font-mono font-bold">
+              <span className="text-[8px] text-[color:var(--lkv-text-secondary)] uppercase font-mono font-bold">
                 Monnaie
               </span>
             </div>
@@ -179,7 +179,7 @@ export default function MobileCountryDetailView({
               <span className="block font-mono font-bold text-xs text-sand-800 truncate" title={country.fuseau}>
                 {country.fuseau}
               </span>
-              <span className="text-[8px] text-[#5A7064] uppercase font-mono font-bold">
+              <span className="text-[8px] text-[color:var(--lkv-text-secondary)] uppercase font-mono font-bold">
                 Fuseau
               </span>
             </div>
@@ -209,22 +209,22 @@ export default function MobileCountryDetailView({
 
                 <div className="glass p-4 sm:p-5 space-y-3">
                   <div className="flex items-center justify-between">
-                    <span className="glass-pill text-[9.5px] font-mono font-bold text-[#5B7F55] bg-white/90 border border-white">
+                    <span className="glass-pill text-[9.5px] font-mono font-bold text-[color:var(--lkv-secondary)] bg-white/90 border border-white">
                       01 · Panorama Général
                     </span>
                   </div>
 
-                  <h3 className="font-display font-bold text-base text-[#17402C] leading-snug">
+                  <h3 className="font-display font-bold text-base text-[color:var(--lkv-primary)] leading-snug">
                     {country.presentation_titre}
                   </h3>
 
-                  <div className="space-y-2 text-xs text-[#2D4536] leading-relaxed font-sans">
+                  <div className="space-y-2 text-xs text-[color:var(--lkv-primary-soft)] leading-relaxed font-sans">
                     {country.presentation_paragraphes.map((p, idx) => (
                       <p key={idx}>{p}</p>
                     ))}
                   </div>
 
-                  <div className="pt-2.5 border-t border-[#17402C]/10 flex items-center justify-between gap-2">
+                  <div className="pt-2.5 border-t border-[color:var(--lkv-primary)]/10 flex items-center justify-between gap-2">
                     <button
                       type="button"
                       onClick={() => handleSectionSwitch('destinations')}
@@ -244,54 +244,54 @@ export default function MobileCountryDetailView({
 
                 {/* ── FICHE D'IDENTITÉ OFFICIELLE (11 Données Clés CSV) ── */}
                 <div className="glass p-4 space-y-2.5">
-                  <div className="flex items-center justify-between pb-1.5 border-b border-[#17402C]/5">
-                    <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#5B7F55] flex items-center gap-1.5">
+                  <div className="flex items-center justify-between pb-1.5 border-b border-[color:var(--lkv-primary)]/5">
+                    <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[color:var(--lkv-secondary)] flex items-center gap-1.5">
                       <span>📋</span> Fiche d'identité officielle
                     </span>
-                    <span className="glass-pill !px-1.5 !py-0.5 text-[8.5px] font-mono font-bold text-[#17402C]">
+                    <span className="glass-pill !px-1.5 !py-0.5 text-[8.5px] font-mono font-bold text-[color:var(--lkv-primary)]">
                       ISO {country.code} {country.iso_a3 ? `· ${country.iso_a3}` : ''}
                     </span>
                   </div>
 
                   <div className="grid grid-cols-2 gap-1.5 text-[11px]">
                     <div className="p-2 rounded-xl bg-white/70 border border-white/60">
-                      <span className="text-[8.5px] font-semibold text-[#5A7064] uppercase block">Continent</span>
-                      <span className="font-bold text-[#17402C] truncate block">{country.continent}</span>
+                      <span className="text-[8.5px] font-semibold text-[color:var(--lkv-text-secondary)] uppercase block">Continent</span>
+                      <span className="font-bold text-[color:var(--lkv-primary)] truncate block">{country.continent}</span>
                     </div>
 
                     <div className="p-2 rounded-xl bg-white/70 border border-white/60">
-                      <span className="text-[8.5px] font-semibold text-[#5A7064] uppercase block">Région</span>
-                      <span className="font-bold text-[#17402C] truncate block">{country.region}</span>
+                      <span className="text-[8.5px] font-semibold text-[color:var(--lkv-text-secondary)] uppercase block">Région</span>
+                      <span className="font-bold text-[color:var(--lkv-primary)] truncate block">{country.region}</span>
                     </div>
 
                     <div className="p-2 rounded-xl bg-white/70 border border-white/60">
-                      <span className="text-[8.5px] font-semibold text-[#5A7064] uppercase block">Capitale</span>
-                      <span className="font-bold text-[#17402C] truncate block" title={country.capitale}>{country.capitale}</span>
+                      <span className="text-[8.5px] font-semibold text-[color:var(--lkv-text-secondary)] uppercase block">Capitale</span>
+                      <span className="font-bold text-[color:var(--lkv-primary)] truncate block" title={country.capitale}>{country.capitale}</span>
                     </div>
 
                     <div className="p-2 rounded-xl bg-white/70 border border-white/60">
-                      <span className="text-[8.5px] font-semibold text-[#5A7064] uppercase block">Langues</span>
-                      <span className="font-bold text-[#17402C] truncate block" title={country.langue}>{country.langue}</span>
+                      <span className="text-[8.5px] font-semibold text-[color:var(--lkv-text-secondary)] uppercase block">Langues</span>
+                      <span className="font-bold text-[color:var(--lkv-primary)] truncate block" title={country.langue}>{country.langue}</span>
                     </div>
 
                     <div className="p-2 rounded-xl bg-white/70 border border-white/60">
-                      <span className="text-[8.5px] font-semibold text-[#5A7064] uppercase block">Superficie</span>
-                      <span className="font-mono font-bold text-[#17402C] truncate block">{country.superficie_detail}</span>
+                      <span className="text-[8.5px] font-semibold text-[color:var(--lkv-text-secondary)] uppercase block">Superficie</span>
+                      <span className="font-mono font-bold text-[color:var(--lkv-primary)] truncate block">{country.superficie_detail}</span>
                     </div>
 
                     <div className="p-2 rounded-xl bg-white/70 border border-white/60">
-                      <span className="text-[8.5px] font-semibold text-[#5A7064] uppercase block">Fuseau horaire</span>
-                      <span className="font-mono font-bold text-[#17402C] truncate block">{country.fuseau}</span>
+                      <span className="text-[8.5px] font-semibold text-[color:var(--lkv-text-secondary)] uppercase block">Fuseau horaire</span>
+                      <span className="font-mono font-bold text-[color:var(--lkv-primary)] truncate block">{country.fuseau}</span>
                     </div>
 
                     <div className="col-span-2 p-2 rounded-xl bg-white/70 border border-white/60">
-                      <span className="text-[8.5px] font-semibold text-[#5A7064] uppercase block">Monnaie</span>
-                      <span className="font-bold text-[#17402C] truncate block">{country.monnaie || country.monnaie_nom}</span>
+                      <span className="text-[8.5px] font-semibold text-[color:var(--lkv-text-secondary)] uppercase block">Monnaie</span>
+                      <span className="font-bold text-[color:var(--lkv-primary)] truncate block">{country.monnaie || country.monnaie_nom}</span>
                     </div>
 
                     {country.sources_list && country.sources_list.length > 0 && (
                       <div className="col-span-2 p-2 rounded-xl bg-white/70 border border-white/60 space-y-1">
-                        <span className="text-[8.5px] font-semibold text-[#5A7064] uppercase block">Sources &amp; Références documentaires</span>
+                        <span className="text-[8.5px] font-semibold text-[color:var(--lkv-text-secondary)] uppercase block">Sources &amp; Références documentaires</span>
                         <div className="flex flex-wrap gap-1 pt-0.5">
                           {country.sources_list.map((src, i) => (
                             <a
@@ -299,7 +299,7 @@ export default function MobileCountryDetailView({
                               href={src.url}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="glass-pill !px-2 !py-0.5 text-[8.5px] font-mono text-[#17402C] hover:text-[#5B7F55]"
+                              className="glass-pill !px-2 !py-0.5 text-[8.5px] font-mono text-[color:var(--lkv-primary)] hover:text-[color:var(--lkv-secondary)]"
                             >
                               {src.label} ↗
                             </a>
@@ -314,13 +314,13 @@ export default function MobileCountryDetailView({
                 {country.destinations && country.destinations.length > 0 && (
                   <div className="space-y-2 pt-1">
                     <div className="flex items-center justify-between px-1">
-                      <h4 className="font-display font-bold text-xs text-[#17402C] uppercase tracking-wider">
+                      <h4 className="font-display font-bold text-xs text-[color:var(--lkv-primary)] uppercase tracking-wider">
                         Incontournables en bref
                       </h4>
                       <button
                         type="button"
                         onClick={() => handleSectionSwitch('destinations')}
-                        className="text-[10.5px] font-bold text-[#5B7F55] hover:text-[#17402C]"
+                        className="text-[10.5px] font-bold text-[color:var(--lkv-secondary)] hover:text-[color:var(--lkv-primary)]"
                       >
                         Tout voir ({country.destinations.length}) →
                       </button>
@@ -333,7 +333,7 @@ export default function MobileCountryDetailView({
                           onClick={() => handleSectionSwitch('destinations')}
                           className="w-52 shrink-0 glass overflow-hidden cursor-pointer group snap-start"
                         >
-                          <div className="h-26 relative overflow-hidden bg-[#17402C]">
+                          <div className="h-26 relative overflow-hidden bg-[color:var(--lkv-primary)]">
                             <img
                               src={d.image_url}
                               alt={d.titre}
@@ -346,9 +346,9 @@ export default function MobileCountryDetailView({
                             </span>
                           </div>
                           <div className="p-2.5">
-                            <h5 className="font-bold text-xs text-[#17402C] truncate">{d.titre}</h5>
+                            <h5 className="font-bold text-xs text-[color:var(--lkv-primary)] truncate">{d.titre}</h5>
                             {d.titre_em && (
-                              <p className="font-serif italic text-[10.5px] text-[#5A7064] truncate">
+                              <p className="font-serif italic text-[10.5px] text-[color:var(--lkv-text-secondary)] truncate">
                                 {d.titre_em}
                               </p>
                             )}
@@ -407,10 +407,10 @@ export default function MobileCountryDetailView({
             {activeSection === 'culture' && (
               <div className="space-y-3">
                 <div className="px-1">
-                  <h3 className="font-display font-bold text-sm text-[#17402C] uppercase tracking-wider">
+                  <h3 className="font-display font-bold text-sm text-[color:var(--lkv-primary)] uppercase tracking-wider">
                     Culture &amp; Société
                   </h3>
-                  <p className="text-[10.5px] text-[#5A7064]">
+                  <p className="text-[10.5px] text-[color:var(--lkv-text-secondary)]">
                     Usages, traditions et savoir-vivre en {country.nom}
                   </p>
                 </div>
@@ -423,10 +423,10 @@ export default function MobileCountryDetailView({
             {activeSection === 'gastronomie' && (
               <div className="space-y-3">
                 <div className="px-1">
-                  <h3 className="font-display font-bold text-sm text-[#17402C] uppercase tracking-wider">
+                  <h3 className="font-display font-bold text-sm text-[color:var(--lkv-primary)] uppercase tracking-wider">
                     Gastronomie & Restaurants
                   </h3>
-                  <p className="text-[10.5px] text-[#5A7064]">
+                  <p className="text-[10.5px] text-[color:var(--lkv-text-secondary)]">
                     Adresses et avis de voyageurs en {country.nom}
                   </p>
                 </div>
@@ -447,10 +447,10 @@ export default function MobileCountryDetailView({
             {activeSection === 'hebergements' && (
               <div className="space-y-3">
                 <div className="px-1">
-                  <h3 className="font-display font-bold text-sm text-[#17402C] uppercase tracking-wider">
+                  <h3 className="font-display font-bold text-sm text-[color:var(--lkv-primary)] uppercase tracking-wider">
                     Hébergements
                   </h3>
-                  <p className="text-[10.5px] text-[#5A7064]">
+                  <p className="text-[10.5px] text-[color:var(--lkv-text-secondary)]">
                     Hôtels et hébergements notés par les voyageurs
                   </p>
                 </div>
@@ -474,28 +474,28 @@ export default function MobileCountryDetailView({
                 {country.meteo && (
                 <div className="glass p-4 space-y-2.5">
                   <div className="flex items-center justify-between">
-                    <span className="glass-pill text-[9.5px] font-mono font-bold text-[#5B7F55] bg-white">
+                    <span className="glass-pill text-[9.5px] font-mono font-bold text-[color:var(--lkv-secondary)] bg-white">
                       ⛅ Météo en direct · {country.meteo.ville}
                     </span>
-                    <span className="inline-flex items-center gap-1.5 text-[9.5px] font-mono text-[#5B7F55] font-bold">
-                      <span className="w-2 h-2 rounded-full bg-[#5B7F55] animate-pulse" />
+                    <span className="inline-flex items-center gap-1.5 text-[9.5px] font-mono text-[color:var(--lkv-secondary)] font-bold">
+                      <span className="w-2 h-2 rounded-full bg-[color:var(--lkv-secondary)] animate-pulse" />
                       Live
                     </span>
                   </div>
 
                   <div className="flex items-center justify-between pt-0.5">
                     <div>
-                      <div className="font-mono font-extrabold text-3xl text-[#17402C]">
+                      <div className="font-mono font-extrabold text-3xl text-[color:var(--lkv-primary)]">
                         {country.meteo.temperature_actuelle}°C
                       </div>
-                      <p className="text-xs font-bold text-[#17402C] mt-0.5">
+                      <p className="text-xs font-bold text-[color:var(--lkv-primary)] mt-0.5">
                         {country.meteo.conditions}
                       </p>
                     </div>
                     <span className="text-3xl">🌤️</span>
                   </div>
 
-                  <p className="text-xs text-[#5A7064] leading-relaxed">
+                  <p className="text-xs text-[color:var(--lkv-text-secondary)] leading-relaxed">
                     {country.meteo.details}
                   </p>
                 </div>
@@ -510,10 +510,10 @@ export default function MobileCountryDetailView({
             {activeSection === 'communaute' && (
               <div className="space-y-3">
                 <div className="px-1">
-                  <h3 className="font-display font-bold text-sm text-[#17402C] uppercase tracking-wider">
+                  <h3 className="font-display font-bold text-sm text-[color:var(--lkv-primary)] uppercase tracking-wider">
                     Communauté & Expéditions
                   </h3>
-                  <p className="text-[10.5px] text-[#5A7064]">
+                  <p className="text-[10.5px] text-[color:var(--lkv-text-secondary)]">
                     Échangez avec les marcheurs et découvrez les récits en {country.nom}
                   </p>
                 </div>
@@ -532,11 +532,11 @@ export default function MobileCountryDetailView({
         <div className="glass p-4 sm:p-5 space-y-2 mt-4">
           <div className="flex items-center gap-2">
             <span className="text-xl">🎒</span>
-            <h4 className="font-display font-bold text-sm text-[#17402C]">
+            <h4 className="font-display font-bold text-sm text-[color:var(--lkv-primary)]">
               Composer votre aventure {country.nom}
             </h4>
           </div>
-          <p className="text-xs text-[#5A7064] leading-relaxed">
+          <p className="text-xs text-[color:var(--lkv-text-secondary)] leading-relaxed">
             Kit recommandé, check-list matériel et prévisions météo adaptées à la saison.
           </p>
           <div className="pt-1">

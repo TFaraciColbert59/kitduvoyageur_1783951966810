@@ -37,24 +37,24 @@ export default function MoreSheet({
         animate={{ y: 0 }}
         exit={{ y: '100%' }}
         transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-        className="w-full max-w-md bg-[#EEF3EC] text-[#17402C] rounded-t-[34px] pt-3 pb-10 px-4  max-h-[85vh] overflow-y-auto space-y-4"
+        className="w-full max-w-md bg-[color:var(--lkv-surface)] text-[color:var(--lkv-primary)] rounded-t-[34px] pt-3 pb-10 px-4  max-h-[85vh] overflow-y-auto space-y-4"
       >
         {/* Grabber */}
-        <div className="w-10 h-1 bg-[#17402C]/14 rounded-full mx-auto" />
+        <div className="w-10 h-1 bg-[color:var(--lkv-primary)]/14 rounded-full mx-auto" />
 
         {/* Sheet Header */}
         <div className="flex items-center justify-between px-2">
           <div>
             <h2 className="text-2xl font-medium tracking-tight">
-              Menu <em className="font-serif italic text-[#17402C]">Cockpit</em>
+              Menu <em className="font-serif italic text-[color:var(--lkv-primary)]">Cockpit</em>
             </h2>
-            <p className="text-[11px] font-mono text-[#6B7A72] tracking-wider mt-0.5">
+            <p className="text-[11px] font-mono text-[color:var(--lkv-text-muted)] tracking-wider mt-0.5">
               OUTILS TERRAIN & RÉGLAGES
             </p>
           </div>
           <button
             onClick={onClose}
-            className="w-8 h-8 rounded-full bg-[#E9E4D9] flex items-center justify-center text-[#6B7A72] hover:text-[#17402C]"
+            className="w-8 h-8 rounded-full bg-[color:var(--stone-200)] flex items-center justify-center text-[color:var(--lkv-text-muted)] hover:text-[color:var(--lkv-primary)]"
           >
             ✕
           </button>
@@ -68,12 +68,12 @@ export default function MoreSheet({
               onClose();
               if (onOpen3DTerrain) onOpen3DTerrain();
             }}
-            className="p-3.5 bg-[#F4F1EA] hover:bg-[#E9E4D9] rounded-2xl flex items-center gap-3 text-left transition-colors active:scale-95 border border-[#17402C]/10"
+            className="p-3.5 bg-[color:var(--stone-100)] hover:bg-[color:var(--stone-200)] rounded-2xl flex items-center gap-3 text-left transition-colors active:scale-95 border border-[color:var(--lkv-primary)]/10"
           >
             <span className="text-2xl">🏔️</span>
             <div>
-              <div className="text-xs font-bold text-[#17402C]">Vue 3D Relief</div>
-              <div className="text-[10px] font-mono text-[#6B7A72]">Digital Twin terrain</div>
+              <div className="text-xs font-bold text-[color:var(--lkv-primary)]">Vue 3D Relief</div>
+              <div className="text-[10px] font-mono text-[color:var(--lkv-text-muted)]">Digital Twin terrain</div>
             </div>
           </button>
 
@@ -83,12 +83,12 @@ export default function MoreSheet({
               onClose();
               if (onOpenGPXModal) onOpenGPXModal();
             }}
-            className="p-3.5 bg-[#F4F1EA] hover:bg-[#E9E4D9] rounded-2xl flex items-center gap-3 text-left transition-colors active:scale-95 border border-[#17402C]/10"
+            className="p-3.5 bg-[color:var(--stone-100)] hover:bg-[color:var(--stone-200)] rounded-2xl flex items-center gap-3 text-left transition-colors active:scale-95 border border-[color:var(--lkv-primary)]/10"
           >
             <span className="text-2xl">📥</span>
             <div>
-              <div className="text-xs font-bold text-[#17402C]">Fichiers GPX</div>
-              <div className="text-[10px] font-mono text-[#6B7A72]">Import & Export</div>
+              <div className="text-xs font-bold text-[color:var(--lkv-primary)]">Fichiers GPX</div>
+              <div className="text-[10px] font-mono text-[color:var(--lkv-text-muted)]">Import & Export</div>
             </div>
           </button>
 
@@ -98,12 +98,12 @@ export default function MoreSheet({
               onClose();
               onOpenARCompass();
             }}
-            className="p-3.5 bg-[#F4F1EA] hover:bg-[#E9E4D9] rounded-2xl flex items-center gap-3 text-left transition-colors active:scale-95"
+            className="p-3.5 bg-[color:var(--stone-100)] hover:bg-[color:var(--stone-200)] rounded-2xl flex items-center gap-3 text-left transition-colors active:scale-95"
           >
             <span className="text-2xl">🧭</span>
             <div>
-              <div className="text-xs font-bold text-[#17402C]">Boussole AR</div>
-              <div className="text-[10px] font-mono text-[#6B7A72]">Caméra directionnelle</div>
+              <div className="text-xs font-bold text-[color:var(--lkv-primary)]">Boussole AR</div>
+              <div className="text-[10px] font-mono text-[color:var(--lkv-text-muted)]">Caméra directionnelle</div>
             </div>
           </button>
 
@@ -126,7 +126,7 @@ export default function MoreSheet({
           <button
             onClick={onToggleNightMode}
             className={`p-3.5 rounded-2xl flex items-center gap-3 text-left transition-colors active:scale-95 col-span-2 ${
-              isNightMode ? 'bg-[#06120C] text-white' : 'bg-[#F4F1EA] text-[#17402C]'
+              isNightMode ? 'bg-[color:var(--lkv-forest-950)] text-white' : 'bg-[color:var(--stone-100)] text-[color:var(--lkv-primary)]'
             }`}
           >
             <span className="text-2xl">{isNightMode ? '🌙' : '☀️'}</span>

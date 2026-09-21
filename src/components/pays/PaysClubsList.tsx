@@ -41,7 +41,7 @@ export default function PaysClubsList({ countryIso, countryName }: Props) {
   if (loading) {
     return (
       <div className="py-6 flex justify-center">
-        <div className="w-7 h-7 border-2 border-[#17402C]/20 border-t-[#17402C] rounded-full animate-spin" />
+        <div className="w-7 h-7 border-2 border-[color:var(--lkv-primary)]/20 border-t-[color:var(--lkv-primary)] rounded-full animate-spin" />
       </div>
     );
   }
@@ -50,10 +50,10 @@ export default function PaysClubsList({ countryIso, countryName }: Props) {
     <div className="space-y-3">
       <div className="flex items-center justify-between gap-3 px-1">
         <div>
-          <h3 className="text-base font-bold font-display text-[#17402C] leading-tight">
+          <h3 className="text-base font-bold font-display text-[color:var(--lkv-primary)] leading-tight">
             Clubs outdoor <em className="font-serif italic text-forest-800 font-normal">en {countryName}</em>
           </h3>
-          <p className="text-[10px] text-[#5C6B5E]">Communautés locales et sorties collectives.</p>
+          <p className="text-[10px] text-[color:var(--lkv-text-secondary)]">Communautés locales et sorties collectives.</p>
         </div>
         <Link
           href="/clubs"
@@ -90,16 +90,16 @@ export default function PaysClubsList({ countryIso, countryName }: Props) {
                   )}
                 </div>
 
-                <h4 className="font-bold text-xs text-[#17402C] mb-0.5 truncate group-hover:text-[#17402C]">
+                <h4 className="font-bold text-xs text-[color:var(--lkv-primary)] mb-0.5 truncate group-hover:text-[color:var(--lkv-primary)]">
                   {club.name}
                 </h4>
-                <p className="text-[#5C6B5E] text-[11px] line-clamp-2 leading-relaxed">
+                <p className="text-[color:var(--lkv-text-secondary)] text-[11px] line-clamp-2 leading-relaxed">
                   {club.description || "Club de passionnés d'aventure outdoor."}
                 </p>
               </div>
 
-              <div className="flex items-center justify-between text-[10px] font-mono text-[#5C6B5E] pt-2 border-t border-[#17402C]/10">
-                <span className="bg-[#17402C]/5 px-2 py-0.5 rounded-md font-bold text-[#17402C]">
+              <div className="flex items-center justify-between text-[10px] font-mono text-[color:var(--lkv-text-secondary)] pt-2 border-t border-[color:var(--lkv-primary)]/10">
+                <span className="bg-[color:var(--lkv-primary)]/5 px-2 py-0.5 rounded-md font-bold text-[color:var(--lkv-primary)]">
                   {club.members_count || 0} membres
                 </span>
                 {club.active_this_month > 0 && (
@@ -115,8 +115,8 @@ export default function PaysClubsList({ countryIso, countryName }: Props) {
       ) : (
         <div className="glass-sub-card p-5 text-center space-y-2">
           <span className="text-3xl block">🏔️</span>
-          <h4 className="font-bold text-xs text-[#17402C]">Aucun club dédié à {countryName}</h4>
-          <p className="text-[11px] text-[#5C6B5E] max-w-xs mx-auto">
+          <h4 className="font-bold text-xs text-[color:var(--lkv-primary)]">Aucun club dédié à {countryName}</h4>
+          <p className="text-[11px] text-[color:var(--lkv-text-secondary)] max-w-xs mx-auto">
             Rejoignez les clubs régionaux ou fondez votre communauté.
           </p>
           <div className="pt-1">

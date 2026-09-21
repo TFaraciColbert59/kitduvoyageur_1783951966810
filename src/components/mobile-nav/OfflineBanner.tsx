@@ -107,7 +107,7 @@ export default function OfflineBanner() {
               width: '8px',
               height: '8px',
               borderRadius: '50%',
-              background: '#A6C1A0',
+              background: 'var(--sage-400)',
               boxShadow: '0 0 0 3px rgba(163,196,163,0.2)',
               flexShrink: 0,
             }}
@@ -118,7 +118,7 @@ export default function OfflineBanner() {
               flex: 1,
               fontSize: '13px',
               fontWeight: 600,
-              color: '#EEF3EC',
+              color: 'var(--lkv-surface)',
               fontFamily: 'var(--font-sans)',
               lineHeight: 1.35,
             }}
@@ -130,7 +130,7 @@ export default function OfflineBanner() {
             height="16"
             viewBox="0 0 24 24"
             fill="none"
-            stroke="#EEF3EC"
+            stroke="var(--lkv-surface)"
             strokeWidth="1.8"
             strokeLinecap="round"
             strokeLinejoin="round"

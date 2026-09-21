@@ -13,6 +13,7 @@
  */
 import { useEffect, useState } from 'react';
 import Icon from '@/components/ui/Icon';
+import { IconButton } from '@/components/ui';
 import AdventureCockpit from './AdventureCockpit';
 import {
   useAdventureCockpit,
@@ -66,22 +67,22 @@ export default function AdventureCockpitControl({
 
   return (
     <>
-      <button
-        type="button"
+      <IconButton
+        variant="glass"
+        size="lg"
         onClick={() => setOpen(true)}
         aria-label="Ouvrir le cockpit de l’aventure"
         aria-haspopup="dialog"
-        className="absolute right-3.5 z-40 flex h-11 w-11 items-center justify-center rounded-full border border-[var(--lkv-border,rgba(23,64,44,0.12))] bg-[var(--lkv-surface-card,#FFFFFF)] text-[var(--lkv-text-primary,#17402C)] shadow-md active:opacity-70 md:right-6"
-        style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 152px)' }}
+        className="absolute right-3.5 bottom-[calc(var(--safe-bottom)+152px)] z-[var(--z-fab)] shadow-md md:right-6"
       >
         <Icon name="compass" size={18} aria-hidden="true" />
         {error ? (
           <span
             aria-hidden="true"
-            className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-[var(--lkv-danger)]"
+            className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-[color:var(--lkv-danger)]"
           />
         ) : null}
-      </button>
+      </IconButton>
 
       {render ? (
           <div
@@ -89,19 +90,18 @@ export default function AdventureCockpitControl({
             role="dialog"
             aria-modal="true"
             aria-label="Cockpit aventure"
-            className={`lkv-sheet-up${closing ? ' lkv-sheet-up--closing' : ''} absolute inset-x-0 bottom-0 z-50 max-h-[82dvh] overflow-y-auto rounded-t-3xl border-t border-[var(--lkv-border,rgba(23,64,44,0.12))] bg-[var(--lkv-surface,#F7F8F6)] px-4 pt-3 shadow-lg`}
-            style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 16px)' }}
+            className={`lkv-sheet-up${closing ? ' lkv-sheet-up--closing' : ''} absolute inset-x-0 bottom-0 z-[var(--z-sheet)] max-h-[82dvh] overflow-y-auto rounded-t-[var(--lkv-radius-sheet)] border-t border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface)] px-4 pt-3 pb-[calc(var(--safe-bottom)+var(--space-4))] shadow-elevation-4`}
           >
-            <div className="mx-auto mb-3 h-1 w-9 rounded-full bg-[var(--lkv-text-subtle)]" aria-hidden="true" />
+            <div className="mx-auto mb-3 h-1 w-9 rounded-full bg-[color:var(--lkv-text-subtle)]" aria-hidden="true" />
             <div className="mb-2 flex items-center justify-end">
-              <button
-                type="button"
+              <IconButton
+                variant="ghost"
+                size="lg"
                 onClick={() => setOpen(false)}
                 aria-label="Fermer le cockpit"
-                className="flex h-11 w-11 items-center justify-center rounded-full text-[var(--lkv-text-secondary)] active:opacity-70"
               >
                 <Icon name="x" size={18} aria-hidden="true" />
-              </button>
+              </IconButton>
             </div>
 
             {input ? (
@@ -114,7 +114,7 @@ export default function AdventureCockpitControl({
               <p
                 role="status"
                 aria-live="polite"
-                className="py-10 text-center text-[13px] text-[var(--lkv-text-secondary)]"
+                className="py-10 text-center text-[length:var(--lkv-text-footnote)] text-[color:var(--lkv-text-secondary)]"
               >
                 {loading
                   ? 'Assemblage du cockpit réel…'
@@ -123,7 +123,7 @@ export default function AdventureCockpitControl({
             )}
 
             {warnings.length > 0 ? (
-              <p className="mt-2 text-center text-[11px] text-[var(--lkv-text-muted)]">
+              <p className="mt-2 text-center text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">
                 {warnings.length} avertissement{warnings.length > 1 ? 's' : ''} — données partielles.
               </p>
             ) : null}

@@ -14,7 +14,7 @@ interface PaysActivitesViewProps {
 
 export default function PaysActivitesView({ country, klookBlock }: PaysActivitesViewProps) {
   return (
-    <div className="space-y-4 font-sans text-[#17402C]">
+    <div className="space-y-4 font-sans text-[color:var(--lkv-primary)]">
       <SectionBlocks countryCode={country.code} sectionId="activites" countryContent={country.country_content ?? null} />
 
       <PaysTrailsList countryCode={country.code} />

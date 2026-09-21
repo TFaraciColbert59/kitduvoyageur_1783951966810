@@ -7,6 +7,7 @@ import Icon from '@/components/ui/AppIcon';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
+import { EmptyState } from '@/components/ui';
 
 export default function ExpertsPage() {
   const [bookingOpen, setBookingOpen] = useState(false);
@@ -31,13 +32,12 @@ export default function ExpertsPage() {
       {/* MOBILE */}
       <div className="block md:hidden">
         <MobilePageShell>
-          <div style={{ padding: '16px' }}>
-            <h1 style={{ fontSize: '20px', fontWeight: 800, color: '#17402C', marginBottom: '8px' }}>Experts</h1>
-            <p style={{ fontSize: '13px', color: 'rgba(23,64,44,0.6)', marginBottom: '16px' }}>Consultez des guides certifiés.</p>
-            <p style={{ textAlign: 'center', color: 'rgba(23,64,44,0.5)', padding: '20px' }}>Contenu à venir.</p>
+          <div className="p-[var(--space-4)]">
+            <h1 className="mb-[var(--space-2)] text-[length:var(--lkv-text-title-sm)] font-extrabold text-[color:var(--lkv-primary)]">Experts</h1>
+            <p className="mb-[var(--space-4)] text-[length:var(--lkv-text-caption-1)] text-[color:var(--lkv-primary)]/60">Consultez des guides certifiés.</p>
+            <EmptyState title="Contenu à venir" description="Le réseau d'experts sera disponible prochainement." />
           </div>
         </MobilePageShell>
-        
       </div>
     </>
   );

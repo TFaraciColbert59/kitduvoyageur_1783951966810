@@ -28,13 +28,13 @@ export function EditorialBlockCard({ block, className }: { block: SectionBlock; 
   const freshness = freshnessLabel(block.generatedAt);
 
   return (
-    <article className={cn('glass rounded-[1.5rem] p-5 border border-white/50 shadow-xs space-y-3', className)}>
+    <article className={cn('glass rounded-[var(--lkv-radius-lg)] p-5 border border-white/50 shadow-xs space-y-3', className)}>
       <div className="flex items-center justify-between gap-2">
-        <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-[#5B7F55]">
+        <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-[color:var(--lkv-secondary)]">
           {label}
         </span>
         {freshness ? (
-          <span className="text-[9.5px] font-mono text-[#5A7064]">{freshness}</span>
+          <span className="text-[9.5px] font-mono text-[color:var(--lkv-text-secondary)]">{freshness}</span>
         ) : null}
       </div>
 
@@ -45,14 +45,14 @@ export function EditorialBlockCard({ block, className }: { block: SectionBlock; 
       ) : null}
 
       {block.sources.length > 0 ? (
-        <div className="pt-2 border-t border-[#17402C]/5 flex flex-wrap gap-1.5">
+        <div className="pt-2 border-t border-[color:var(--lkv-primary)]/5 flex flex-wrap gap-1.5">
           {block.sources.map((source, index) => (
             <a
               key={`${source.url}-${index}`}
               href={source.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="glass-pill !px-2 !py-0.5 text-[8.5px] font-mono text-[#17402C] hover:text-[#5B7F55]"
+              className="glass-pill !px-2 !py-0.5 text-[8.5px] font-mono text-[color:var(--lkv-primary)] hover:text-[color:var(--lkv-secondary)]"
             >
               {source.title} ↗
             </a>

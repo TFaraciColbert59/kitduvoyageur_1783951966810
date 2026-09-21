@@ -60,28 +60,28 @@ export default function CompletionView({
       initial={{ opacity: 0, scale: 0.98 }}
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.98 }}
-      className="fixed inset-0 z-50 bg-gradient-to-b from-[#17402C] via-[#365233] to-[#06120C] text-white overflow-y-auto select-none flex flex-col items-center py-10 px-4"
+      className="fixed inset-0 z-50 bg-gradient-to-b from-[color:var(--lkv-primary)] via-[color:var(--lkv-primary-soft)] to-[color:var(--lkv-forest-950)] text-white overflow-y-auto select-none flex flex-col items-center py-10 px-4"
     >
       {/* Background glow effects */}
       <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(ellipse_at_50%_20%,rgba(168,200,160,0.25)_0%,transparent_60%)]" />
 
       <div className="relative z-10 w-full max-w-md space-y-6 my-auto">
         {/* Celebration Badge Icon */}
-        <div className="relative w-24 h-24 rounded-full mx-auto bg-gradient-to-br from-[#A8C8A0] to-[#C6DCBE] text-[#06120C] flex items-center justify-center shadow-md">
+        <div className="relative w-24 h-24 rounded-full mx-auto bg-gradient-to-br from-[color:var(--lkv-forest-200)] to-[color:var(--lkv-forest-100)] text-[color:var(--lkv-forest-950)] flex items-center justify-center shadow-md">
           <svg className="w-11 h-11 fill-none stroke-current stroke-[2]" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M3 21l3-9h12l3 9M6 12l6-8 6 8M9 17l2 2 4-4" />
           </svg>
-          <div className="absolute -inset-1.5 rounded-full border-2 border-dashed border-[#C6DCBE]/40" />
+          <div className="absolute -inset-1.5 rounded-full border-2 border-dashed border-[color:var(--lkv-forest-100)]/40" />
         </div>
 
         {/* Header Titles */}
         <div className="text-center space-y-1">
-          <div className="font-mono text-[10px] tracking-[0.24em] uppercase text-[#C6DCBE]">
+          <div className="font-mono text-[10px] tracking-[0.24em] uppercase text-[color:var(--lkv-forest-100)]">
             Randonnée · terminée
           </div>
           <h1 className="text-3xl font-medium tracking-tight leading-tight">
             {routeName || 'Randonnée'} <br />
-            <em className="font-serif italic font-normal text-[#C6DCBE]">c&apos;est fait.</em>
+            <em className="font-serif italic font-normal text-[color:var(--lkv-forest-100)]">c&apos;est fait.</em>
           </h1>
           <p className="font-mono text-xs text-white/70 tracking-wider">
             {displayDate}
@@ -90,33 +90,33 @@ export default function CompletionView({
         </div>
 
         {/* 4-Stat Overview Grid */}
-        <div className="bg-white/5 border border-[#C6DCBE]/15 rounded-2xl p-1 grid grid-cols-2 gap-[1px]">
-          <div className="p-3.5 border-r border-b border-[#C6DCBE]/10">
-            <div className="font-mono text-[9px] uppercase tracking-widest text-[#C6DCBE]/70">
+        <div className="bg-white/5 border border-[color:var(--lkv-forest-100)]/15 rounded-2xl p-1 grid grid-cols-2 gap-[1px]">
+          <div className="p-3.5 border-r border-b border-[color:var(--lkv-forest-100)]/10">
+            <div className="font-mono text-[9px] uppercase tracking-widest text-[color:var(--lkv-forest-100)]/70">
               Distance
             </div>
             <div className="text-2xl font-medium tracking-tight mt-1">
               {distanceKm != null ? distanceKm.toFixed(1) : '—'}{' '}
-              <em className="font-serif italic font-normal text-sm text-[#A8C8A0]">km</em>
+              <em className="font-serif italic font-normal text-sm text-[color:var(--lkv-forest-200)]">km</em>
             </div>
             <div className="font-mono text-[9px] text-white/50 mt-0.5">Parcours complet</div>
           </div>
 
-          <div className="p-3.5 border-b border-[#C6DCBE]/10">
-            <div className="font-mono text-[9px] uppercase tracking-widest text-[#C6DCBE]/70">
+          <div className="p-3.5 border-b border-[color:var(--lkv-forest-100)]/10">
+            <div className="font-mono text-[9px] uppercase tracking-widest text-[color:var(--lkv-forest-100)]/70">
               Dénivelé +
             </div>
             <div className="text-2xl font-medium tracking-tight mt-1">
               +{elevationGainM != null ? Math.round(elevationGainM) : '—'}{' '}
-              <em className="font-serif italic font-normal text-sm text-[#A8C8A0]">m</em>
+              <em className="font-serif italic font-normal text-sm text-[color:var(--lkv-forest-200)]">m</em>
             </div>
             <div className="font-mono text-[9px] text-white/50 mt-0.5">
               Max · {maxAltitudeM != null ? Math.round(maxAltitudeM) : '—'} m
             </div>
           </div>
 
-          <div className="p-3.5 border-r border-[#C6DCBE]/10">
-            <div className="font-mono text-[9px] uppercase tracking-widest text-[#C6DCBE]/70">
+          <div className="p-3.5 border-r border-[color:var(--lkv-forest-100)]/10">
+            <div className="font-mono text-[9px] uppercase tracking-widest text-[color:var(--lkv-forest-100)]/70">
               Durée
             </div>
             <div className="text-2xl font-medium tracking-tight mt-1">
@@ -126,35 +126,35 @@ export default function CompletionView({
           </div>
 
           <div className="p-3.5">
-            <div className="font-mono text-[9px] uppercase tracking-widest text-[#C6DCBE]/70">
+            <div className="font-mono text-[9px] uppercase tracking-widest text-[color:var(--lkv-forest-100)]/70">
               Allure moyenne
             </div>
             <div className="text-2xl font-medium tracking-tight mt-1">
               {(averageSpeedKmH != null && averageSpeedKmH > 0 ? averageSpeedKmH : 0).toFixed(1)}{' '}
-              <em className="font-serif italic font-normal text-sm text-[#A8C8A0]">km/h</em>
+              <em className="font-serif italic font-normal text-sm text-[color:var(--lkv-forest-200)]">km/h</em>
             </div>
             <div className="font-mono text-[9px] text-white/50 mt-0.5">Rythme régulier</div>
           </div>
         </div>
 
         {/* Mini Elevation Track Card */}
-        <div className="h-32 rounded-2xl border border-[#C6DCBE]/15 bg-gradient-to-br from-[#365233]/40 to-[#06120C]/60 relative overflow-hidden p-3 flex flex-col justify-between">
+        <div className="h-32 rounded-2xl border border-[color:var(--lkv-forest-100)]/15 bg-gradient-to-br from-[color:var(--lkv-primary-soft)]/40 to-[color:var(--lkv-forest-950)]/60 relative overflow-hidden p-3 flex flex-col justify-between">
           <svg className="absolute inset-0 w-full h-full" viewBox="0 0 380 140" preserveAspectRatio="none">
-            <g fill="none" stroke="#C6DCBE" strokeWidth="0.5" opacity="0.25">
+            <g fill="none" stroke="var(--lkv-forest-100)" strokeWidth="0.5" opacity="0.25">
               <path d="M0,120 Q80,80 160,90 T340,60 T400,50" />
               <ellipse cx="200" cy="70" rx="120" ry="35" />
             </g>
             <path
               d="M30,120 Q80,90 130,80 T220,55 T290,35 L340,25"
               fill="none"
-              stroke="#A8C8A0"
+              stroke="var(--lkv-forest-200)"
               strokeWidth="3.5"
               strokeLinecap="round"
             />
-            <circle cx="30" cy="120" r="4" fill="#C6DCBE" />
-            <circle cx="340" cy="25" r="5" fill="#A8C8A0" stroke="#06120C" strokeWidth="2" />
+            <circle cx="30" cy="120" r="4" fill="var(--lkv-forest-100)" />
+            <circle cx="340" cy="25" r="5" fill="var(--lkv-forest-200)" stroke="var(--lkv-forest-950)" strokeWidth="2" />
           </svg>
-          <div className="relative z-10 self-start px-2.5 py-1 rounded-full bg-[#06120C]/80 backdrop-blur-md font-mono text-[10px] text-[#A8C8A0] tracking-wider border border-[#C6DCBE]/10">
+          <div className="relative z-10 self-start px-2.5 py-1 rounded-full bg-[color:var(--lkv-forest-950)]/80 backdrop-blur-md font-mono text-[10px] text-[color:var(--lkv-forest-200)] tracking-wider border border-[color:var(--lkv-forest-100)]/10">
             {maxAltitudeM != null ? `${Math.round(maxAltitudeM)} M · ` : ''}{(routeName || 'RANDONNÉE').toUpperCase()}
           </div>
         </div>
@@ -162,16 +162,16 @@ export default function CompletionView({
         {/* Highlights Section */}
         {highlights && highlights.length > 0 && (
           <div className="space-y-2">
-            <h3 className="font-mono text-[10px] tracking-[0.16em] uppercase text-[#A8C8A0]">
+            <h3 className="font-mono text-[10px] tracking-[0.16em] uppercase text-[color:var(--lkv-forest-200)]">
               Moments forts · {highlights.length}
             </h3>
             <div className="space-y-2">
               {highlights.map((hl, idx) => (
                 <div
                   key={idx}
-                  className="p-3 bg-white/5 border border-[#C6DCBE]/10 rounded-2xl flex items-center gap-3"
+                  className="p-3 bg-white/5 border border-[color:var(--lkv-forest-100)]/10 rounded-2xl flex items-center gap-3"
                 >
-                  <div className="w-10 h-10 rounded-xl bg-[#A8C8A0] text-[#06120C] flex items-center justify-center text-lg flex-shrink-0 font-bold">
+                  <div className="w-10 h-10 rounded-xl bg-[color:var(--lkv-forest-200)] text-[color:var(--lkv-forest-950)] flex items-center justify-center text-lg flex-shrink-0 font-bold">
                     {hl.icon}
                   </div>
                   <div className="flex-1 min-w-0">
@@ -194,15 +194,15 @@ export default function CompletionView({
         )}
 
         {/* Points LKDV & Progression Reward */}
-        <div className="p-4 rounded-2xl bg-white/10 border border-[#C6DCBE]/25 backdrop-blur-md">
+        <div className="p-4 rounded-2xl bg-white/10 border border-[color:var(--lkv-forest-100)]/25 backdrop-blur-md">
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
               <span className="text-xl">🏆</span>
-              <span className="font-mono text-xs font-bold uppercase tracking-wider text-[#C6DCBE]">
+              <span className="font-mono text-xs font-bold uppercase tracking-wider text-[color:var(--lkv-forest-100)]">
                 Points LKDV Validés
               </span>
             </div>
-            <span className="font-mono text-sm font-bold text-[#A8C8A0]">
+            <span className="font-mono text-sm font-bold text-[color:var(--lkv-forest-200)]">
               +{Math.max(30, Math.round(30 + (distanceKm || 0) * 4))} pts
             </span>
           </div>
@@ -211,7 +211,7 @@ export default function CompletionView({
           </p>
           <Link
             href="/progression"
-            className="mt-3 flex items-center justify-between text-xs font-semibold text-[#A8C8A0] hover:text-[#C6DCBE] transition-colors pt-2 border-t border-white/10"
+            className="mt-3 flex items-center justify-between text-xs font-semibold text-[color:var(--lkv-forest-200)] hover:text-[color:var(--lkv-forest-100)] transition-colors pt-2 border-t border-white/10"
           >
             <span>Consulter mon niveau et mes classements</span>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
@@ -223,10 +223,10 @@ export default function CompletionView({
         {/* Main CTA Button: Voir mon aventure */}
         <button
           onClick={onViewCarnet}
-          className="w-full py-4 bg-[#A8C8A0] text-[#06120C] font-semibold text-sm rounded-2xl  flex items-center justify-between px-5 transition-transform active:scale-98"
+          className="w-full py-4 bg-[color:var(--lkv-forest-200)] text-[color:var(--lkv-forest-950)] font-semibold text-sm rounded-2xl  flex items-center justify-between px-5 transition-transform active:scale-98"
         >
           <span>
-            Voir mon <em className="font-serif italic font-normal text-[#17402C]">aventure</em>
+            Voir mon <em className="font-serif italic font-normal text-[color:var(--lkv-primary)]">aventure</em>
           </span>
           <span className="flex items-center gap-2">
             <span className="font-mono text-[11px] opacity-75 uppercase">CARNET GÉNÉRÉ</span>
@@ -240,13 +240,13 @@ export default function CompletionView({
         <div className="grid grid-cols-2 gap-2 pt-1">
           <button
             onClick={onShare}
-            className="py-3 px-4 bg-white/5 hover:bg-white/10 border border-[#C6DCBE]/15 rounded-xl font-medium text-xs text-white flex items-center justify-center gap-2 active:scale-95 transition-transform"
+            className="py-3 px-4 bg-white/5 hover:bg-white/10 border border-[color:var(--lkv-forest-100)]/15 rounded-xl font-medium text-xs text-white flex items-center justify-center gap-2 active:scale-95 transition-transform"
           >
             <span>🔗</span> Partager
           </button>
           <button
             onClick={onEditCarnet || onViewCarnet}
-            className="py-3 px-4 bg-white/5 hover:bg-white/10 border border-[#C6DCBE]/15 rounded-xl font-medium text-xs text-white flex items-center justify-center gap-2 active:scale-95 transition-transform"
+            className="py-3 px-4 bg-white/5 hover:bg-white/10 border border-[color:var(--lkv-forest-100)]/15 rounded-xl font-medium text-xs text-white flex items-center justify-center gap-2 active:scale-95 transition-transform"
           >
             <span>📝</span> Éditer le carnet
           </button>

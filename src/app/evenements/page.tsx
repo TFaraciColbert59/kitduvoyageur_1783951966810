@@ -49,18 +49,18 @@ const typeConfig: Record<string, { color: string; label: string }> = {
 };
 
 const mobileTypeColors: Record<string, string> = {
-  rando: '#365233',
-  bushcraft: '#5A7064',
-  vanlife: '#8C6418',
-  alpinisme: '#4B6B7C',
-  photo: '#4B6B7C',
+  rando: 'var(--lkv-primary-soft)',
+  bushcraft: 'var(--lkv-text-secondary)',
+  vanlife: 'var(--lkv-warning-dark)',
+  alpinisme: 'var(--lkv-info)',
+  photo: 'var(--lkv-info)',
 };
 
 function TrustRing({ score, size = 36 }: { score: number; size?: number }) {
   const r = (size - 5) / 2;
   const circ = 2 * Math.PI * r;
   const offset = circ - (score / 100) * circ;
-  const color = score >= 90 ? '#5B7F55' : score >= 75 ? '#4B6B7C' : score >= 60 ? '#C89A3B' : '#A8443A';
+  const color = score >= 90 ? 'var(--lkv-secondary)' : score >= 75 ? 'var(--lkv-info)' : score >= 60 ? 'var(--lkv-warning)' : 'var(--lkv-danger)';
   return (
     <div className="relative flex items-center justify-center flex-shrink-0" style={{ width: size, height: size }}>
       <svg width={size} height={size} className="-rotate-90">
@@ -179,7 +179,7 @@ function EventDetailModal({
             <div className="p-4 glass-sub-card rounded-xl">
               <div className="flex items-center justify-between mb-2">
                 <p className="text-[10px] text-muted-foreground uppercase tracking-wide font-600">Places disponibles</p>
-                <span className={`text-xs font-700 ${spotsLeft <= 2 ? 'text-[#A8443A]' : 'text-[#5B7F55]'}`}>
+                <span className={`text-xs font-700 ${spotsLeft <= 2 ? 'text-[color:var(--lkv-danger)]' : 'text-[color:var(--lkv-secondary)]'}`}>
                   {event.status === 'full' ? 'Complet' : `${spotsLeft} place${spotsLeft > 1 ? 's' : ''} restante${spotsLeft > 1 ? 's' : ''}`}
                 </span>
               </div>
@@ -227,7 +227,7 @@ function EventDetailModal({
                   {event.expenses.map((exp) => (
                     <div key={exp.id} className="flex items-center justify-between text-sm">
                       <div className="flex items-center gap-2">
-                        <span className={`w-2 h-2 rounded-full flex-shrink-0 ${exp.paid ? 'bg-[#5B7F55]' : 'bg-[#C89A3B]'}`} />
+                        <span className={`w-2 h-2 rounded-full flex-shrink-0 ${exp.paid ? 'bg-[color:var(--lkv-secondary)]' : 'bg-[color:var(--lkv-warning)]'}`} />
                         <span className="text-foreground">{exp.label}</span>
                       </div>
                       <div className="flex items-center gap-2">
@@ -333,7 +333,7 @@ function EventCard({ event, onToggleRegister, onViewDetail }: { event: Event; on
           <div className="glass-sub-card rounded-xl p-3">
             <p className="text-[10px] text-muted-foreground uppercase tracking-wide font-600 mb-1">Places</p>
             <p className="font-display font-700 text-foreground text-sm">{event.current_participants}/{event.max_participants}</p>
-            <p className={`text-xs ${spotsLeft <= 2 ? 'text-[#A8443A]' : 'text-muted-foreground'}`}>
+            <p className={`text-xs ${spotsLeft <= 2 ? 'text-[color:var(--lkv-danger)]' : 'text-muted-foreground'}`}>
               {event.status === 'full' ? 'Complet' : `${spotsLeft} place${spotsLeft > 1 ? 's' : ''} restante${spotsLeft > 1 ? 's' : ''}`}
             </p>
           </div>
@@ -365,7 +365,7 @@ function EventCard({ event, onToggleRegister, onViewDetail }: { event: Event; on
               {event.expenses.map((exp) => (
                 <div key={exp.id} className="flex items-center justify-between text-xs">
                   <div className="flex items-center gap-2">
-                    <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${exp.paid ? 'bg-[#5B7F55]' : 'bg-[#C89A3B]'}`} />
+                    <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${exp.paid ? 'bg-[color:var(--lkv-secondary)]' : 'bg-[color:var(--lkv-warning)]'}`} />
                     <span className="text-foreground">{exp.label}</span>
                   </div>
                   <div className="flex items-center gap-2">
@@ -407,7 +407,7 @@ function EventCard({ event, onToggleRegister, onViewDetail }: { event: Event; on
 function MobileEventCard({ event, onToggleRegister, onViewDetail }: { event: Event; onToggleRegister: (eventId: string, isRegistered: boolean) => void; onViewDetail: (event: Event) => void }) {
   const [registering, setRegistering] = useState(false);
   const spotsLeft = event.max_participants - event.current_participants;
-  const typeBg = mobileTypeColors[event.type] || '#5A7064';
+  const typeBg = mobileTypeColors[event.type] || 'var(--lkv-text-secondary)';
 
   const formatDate = (d: string) => {
     const [_y, m, day] = d.split('-');
@@ -427,27 +427,27 @@ function MobileEventCard({ event, onToggleRegister, onViewDetail }: { event: Eve
         <img src={event.cover_image || '/assets/images/no_image.png'} alt={event.cover_alt} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.7), transparent)' }} />
         <div style={{ position: 'absolute', top: '8px', left: '8px', display: 'flex', gap: '4px' }}>
-          <span style={{ fontSize: '10px', fontWeight: 700, padding: '2px 8px', borderRadius: '6px', background: typeBg, color: '#fff' }}>
+          <span style={{ fontSize: '10px', fontWeight: 700, padding: '2px 8px', borderRadius: '6px', background: typeBg, color: 'var(--lkv-text-inverted)' }}>
             {event.emoji} {typeConfig[event.type]?.label || event.type}
           </span>
           {event.status === 'full' && (
-            <span style={{ fontSize: '10px', fontWeight: 700, padding: '2px 8px', borderRadius: '6px', background: '#A8443A', color: '#fff' }}>Complet</span>
+            <span style={{ fontSize: '10px', fontWeight: 700, padding: '2px 8px', borderRadius: '6px', background: 'var(--lkv-danger)', color: 'var(--lkv-text-inverted)' }}>Complet</span>
           )}
         </div>
         <div style={{ position: 'absolute', bottom: '12px', left: '12px', right: '12px', textAlign: 'left' }}>
-          <h3 style={{ fontSize: '16px', fontWeight: 700, color: '#fff', margin: '0 0 2px 0', lineHeight: 1.2 }}>{event.title}</h3>
+          <h3 style={{ fontSize: '16px', fontWeight: 700, color: 'var(--lkv-text-inverted)', margin: '0 0 2px 0', lineHeight: 1.2 }}>{event.title}</h3>
           <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.6)', margin: 0 }}>{event.location} · {event.duration}</p>
         </div>
       </button>
       <div style={{ padding: '12px' }}>
         <div style={{ display: 'flex', gap: '8px', marginBottom: '10px' }}>
           <div className="glass-sub-card" style={{ flex: 1, padding: '8px', borderRadius: '8px' }}>
-            <p style={{ fontSize: '9px', color: '#5A7064', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600, margin: '0 0 2px 0' }}>Date</p>
-            <p style={{ fontSize: '13px', fontWeight: 700, color: '#17402C', margin: 0 }}>{formatDate(event.event_date)}</p>
+            <p style={{ fontSize: '9px', color: 'var(--lkv-text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600, margin: '0 0 2px 0' }}>Date</p>
+            <p style={{ fontSize: '13px', fontWeight: 700, color: 'var(--lkv-primary)', margin: 0 }}>{formatDate(event.event_date)}</p>
           </div>
           <div className="glass-sub-card" style={{ flex: 1, padding: '8px', borderRadius: '8px' }}>
-            <p style={{ fontSize: '9px', color: '#5A7064', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600, margin: '0 0 2px 0' }}>Places</p>
-            <p style={{ fontSize: '13px', fontWeight: 700, color: '#17402C', margin: 0 }}>{event.current_participants}/{event.max_participants}</p>
+            <p style={{ fontSize: '9px', color: 'var(--lkv-text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600, margin: '0 0 2px 0' }}>Places</p>
+            <p style={{ fontSize: '13px', fontWeight: 700, color: 'var(--lkv-primary)', margin: 0 }}>{event.current_participants}/{event.max_participants}</p>
           </div>
         </div>
         <div style={{ display: 'flex', gap: '8px' }}>
@@ -596,7 +596,7 @@ export default function EvenementsPage() {
             <div>
               <h1 className="text-section-title text-white mb-3">
                 Sorties organisées<br />
-                <span className="text-[#A6C1A0]">par des membres vérifiés</span>
+                <span className="text-[color:var(--sage-400)]">par des membres vérifiés</span>
               </h1>
               <p className="text-white/60 text-base max-w-xl">
                 Chaque organisateur affiche son Trust Score avant votre inscription. Cagnotte de groupe intégrée, location de matériel partagée.
@@ -633,7 +633,7 @@ export default function EvenementsPage() {
       </section>
 
       <div className="max-w-7xl mx-auto px-4 py-10">
-        {error && <div className="mb-6 p-4 bg-[#A8443A]/10 border border-[#A8443A]/30 rounded-xl text-[#A8443A] text-sm">{error}</div>}
+        {error && <div className="mb-6 p-4 bg-[color:var(--lkv-danger)]/10 border border-[color:var(--lkv-danger)]/30 rounded-xl text-[color:var(--lkv-danger)] text-sm">{error}</div>}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2">
@@ -661,7 +661,7 @@ export default function EvenementsPage() {
           <aside className="space-y-6">
             <div className="glass p-5">
               <h3 className="font-display font-700 text-foreground text-base mb-3 flex items-center gap-2">
-                <Icon name="ShieldCheckIcon" size={16} className="text-[#5B7F55]" />
+                <Icon name="ShieldCheckIcon" size={16} className="text-[color:var(--lkv-secondary)]" />
                 Trust Score & sécurité
               </h3>
               <p className="text-xs text-muted-foreground mb-3 leading-relaxed">
@@ -669,9 +669,9 @@ export default function EvenementsPage() {
               </p>
               <div className="space-y-2">
                 {[
-                  { score: '90+', label: 'Ambassadeur — Organisateur confirmé', color: 'text-[#5B7F55]' },
-                  { score: '75–89', label: 'Expert — Plusieurs sorties réussies', color: 'text-[#4B6B7C]' },
-                  { score: '60–74', label: 'Confirmé — Premières sorties', color: 'text-[#8C6418]' },
+                  { score: '90+', label: 'Ambassadeur — Organisateur confirmé', color: 'text-[color:var(--lkv-secondary)]' },
+                  { score: '75–89', label: 'Expert — Plusieurs sorties réussies', color: 'text-[var(--lkv-info)]' },
+                  { score: '60–74', label: 'Confirmé — Premières sorties', color: 'text-[color:var(--lkv-warning-dark)]' },
                 ].map((s) => (
                   <div key={s.score} className="flex items-center gap-2 text-xs">
                     <span className={`font-mono font-700 ${s.color} w-12`}>{s.score}</span>
@@ -682,7 +682,7 @@ export default function EvenementsPage() {
             </div>
             <div className="glass p-5">
               <h3 className="font-display font-700 text-foreground text-base mb-3 flex items-center gap-2">
-                <Icon name="BanknotesIcon" size={16} className="text-[#5B7F55]" />
+                <Icon name="BanknotesIcon" size={16} className="text-[color:var(--lkv-secondary)]" />
                 Cagnotte intégrée
               </h3>
               <p className="text-xs text-muted-foreground leading-relaxed">
@@ -698,13 +698,13 @@ export default function EvenementsPage() {
   const mobileContent = (
     <div style={{ padding: '16px' }}>
       {/* Hero */}
-      <div style={{ background: '#17402C', color: '#fff', borderRadius: '12px', padding: '20px', marginBottom: '16px', position: 'relative', overflow: 'hidden' }}>
+      <div style={{ background: 'var(--lkv-primary)', color: 'var(--lkv-text-inverted)', borderRadius: '12px', padding: '20px', marginBottom: '16px', position: 'relative', overflow: 'hidden' }}>
         <div style={{ position: 'absolute', top: '-40px', right: '-40px', width: '160px', height: '160px', borderRadius: '50%', background: 'rgba(23,64,44,0.30)', pointerEvents: 'none' }} />
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-          <span style={{ fontSize: '9px', fontWeight: 700, padding: '3px 8px', borderRadius: '6px', background: 'rgba(166,193,160,0.2)', color: '#A6C1A0', border: '1px solid rgba(166,193,160,0.3)' }}>COMMUNAUTE</span>
+          <span style={{ fontSize: '9px', fontWeight: 700, padding: '3px 8px', borderRadius: '6px', background: 'rgba(166,193,160,0.2)', color: 'var(--sage-400)', border: '1px solid rgba(166,193,160,0.3)' }}>COMMUNAUTE</span>
           <span style={{ fontSize: '9px', color: 'rgba(255,255,255,0.5)', fontFamily: 'ui-monospace, monospace' }}>EVENEMENTS</span>
         </div>
-        <h1 style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '20px', color: '#fff', margin: '0 0 4px 0' }}>
+        <h1 style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '20px', color: 'var(--lkv-text-inverted)', margin: '0 0 4px 0' }}>
           Sorties organisees
         </h1>
         <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.6)', margin: '0 0 12px 0', lineHeight: 1.4 }}>
@@ -733,13 +733,13 @@ export default function EvenementsPage() {
 
       {/* Error */}
       {error && (
-        <div style={{ padding: '12px', background: 'rgba(168,68,58,0.10)', border: '1px solid rgba(168,68,58,0.30)', borderRadius: '10px', color: '#8A241B', fontSize: '13px', marginBottom: '12px' }}>{error}</div>
+        <div style={{ padding: '12px', background: 'rgba(168,68,58,0.10)', border: '1px solid rgba(168,68,58,0.30)', borderRadius: '10px', color: 'var(--lkv-danger-dark)', fontSize: '13px', marginBottom: '12px' }}>{error}</div>
       )}
 
       {/* Events list */}
       {loading ? (
         <div style={{ display: 'flex', justifyContent: 'center', padding: '40px 0' }}>
-          <div style={{ width: '28px', height: '28px', borderRadius: '50%', border: '2px solid rgba(23,64,44,0.12)', borderTopColor: '#17402C', animation: 'lkdv-spin 0.8s linear infinite' }} />
+          <div style={{ width: '28px', height: '28px', borderRadius: '50%', border: '2px solid rgba(23,64,44,0.12)', borderTopColor: 'var(--lkv-primary)', animation: 'lkdv-spin 0.8s linear infinite' }} />
           <style jsx>{`
             @keyframes lkdv-spin {
               to { transform: rotate(360deg); }
@@ -747,16 +747,16 @@ export default function EvenementsPage() {
           `}</style>
         </div>
       ) : filtered.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '40px 0', color: '#5A7064' }}>
+        <div style={{ textAlign: 'center', padding: '40px 0', color: 'var(--lkv-text-secondary)' }}>
           <p style={{ fontSize: '36px', marginBottom: '8px' }}>📅</p>
-          <p style={{ fontWeight: 700, fontSize: '16px', color: '#17402C', marginBottom: '4px' }}>Aucun evenement</p>
+          <p style={{ fontWeight: 700, fontSize: '16px', color: 'var(--lkv-primary)', marginBottom: '4px' }}>Aucun evenement</p>
           <p style={{ fontSize: '13px' }}>Soyez le premier a organiser une sortie !</p>
         </div>
       ) : (
         <div>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
-            <h2 style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '16px', color: '#17402C', margin: 0 }}>Prochaines sorties</h2>
-            <span style={{ fontSize: '13px', color: '#5A7064' }}>{filtered.length} evenements</span>
+            <h2 style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '16px', color: 'var(--lkv-primary)', margin: 0 }}>Prochaines sorties</h2>
+            <span style={{ fontSize: '13px', color: 'var(--lkv-text-secondary)' }}>{filtered.length} evenements</span>
           </div>
           {filtered.map((e) => <MobileEventCard key={e.id} event={e} onToggleRegister={handleToggleRegister} onViewDetail={(event) => setDetailEvent(event)} />)}
         </div>

@@ -1,5 +1,7 @@
 'use client';
 
+import { Button, Card } from '@/components/ui';
+
 export default function GlobalError({
   error,
   reset,
@@ -10,26 +12,36 @@ export default function GlobalError({
   return (
     <html lang="fr">
       <body>
-        <div className="min-h-screen bg-[var(--lkv-surface,#FBFAF6)] flex flex-col items-center justify-center p-4 font-sans">
-          <div className="bg-white rounded-[var(--lkv-radius-lg,1.25rem)] p-8 max-w-md w-full text-center space-y-6 active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
-            <div className="w-16 h-16 bg-[var(--lkv-surface-muted,#F1EDE6)] rounded-2xl flex items-center justify-center mx-auto mb-4">
-              <svg className="w-8 h-8 text-[var(--lkv-primary,#17402C)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+        <div className="flex min-h-screen flex-col items-center justify-center bg-[color:var(--lkv-surface)] p-[var(--space-4)] font-sans">
+          <Card variant="standard" className="w-full max-w-md space-y-[var(--space-6)] p-8 text-center">
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-[var(--lkv-radius-control)] bg-[color:var(--lkv-surface-muted)]">
+              <svg
+                className="h-8 w-8 text-[color:var(--lkv-primary)]"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                aria-hidden="true"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                />
               </svg>
             </div>
-            <h2 className="text-2xl font-serif text-[var(--lkv-primary,#17402C)] font-bold">Erreur Critique</h2>
-            <p className="text-[var(--lkv-text-muted)]">
+            <h2 className="font-serif text-[length:var(--lkv-text-title-lg)] font-bold text-[color:var(--lkv-primary)]">
+              Erreur Critique
+            </h2>
+            <p className="text-[color:var(--lkv-text-muted)]">
               Une erreur inattendue s&apos;est produite. L&apos;équipe technique a été notifiée.
             </p>
-            <div className="pt-4">
-              <button
-                onClick={() => reset()}
-                className="w-full bg-[var(--lkv-primary,#17402C)] text-white px-6 py-3 rounded-xl font-medium hover:bg-[var(--lkv-primary-hover,#205238)] transition-colors"
-              >
+            <div className="pt-[var(--space-4)]">
+              <Button onClick={() => reset()} fullWidth size="lg">
                 Recharger l&apos;application
-              </button>
+              </Button>
             </div>
-          </div>
+          </Card>
         </div>
       </body>
     </html>

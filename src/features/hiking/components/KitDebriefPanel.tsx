@@ -111,13 +111,13 @@ export default function KitDebriefPanel({ kitId, sessionId }: KitDebriefPanelPro
   };
 
   return (
-    <div className="bg-white/5 border border-[#C6DCBE]/15 rounded-2xl overflow-hidden">
+    <div className="bg-white/5 border border-[color:var(--lkv-forest-100)]/15 rounded-2xl overflow-hidden">
       <button
         onClick={() => setOpen((o) => !o)}
         className="w-full flex items-center justify-between px-4 py-3 text-left"
       >
         <div>
-          <div className="font-mono text-[10px] tracking-[0.16em] uppercase text-[#A8C8A0]">
+          <div className="font-mono text-[10px] tracking-[0.16em] uppercase text-[color:var(--lkv-forest-200)]">
             Kit emporté · débriefing
           </div>
           <div className="text-xs text-white/70 mt-0.5">
@@ -136,7 +136,7 @@ export default function KitDebriefPanel({ kitId, sessionId }: KitDebriefPanelPro
             {items.map((item) => {
               const chosen = verdicts[item.key];
               return (
-                <div key={item.key} className="p-2.5 bg-[#06120C]/50 rounded-xl">
+                <div key={item.key} className="p-2.5 bg-[color:var(--lkv-forest-950)]/50 rounded-xl">
                   <div className="text-xs font-medium flex items-center justify-between gap-2">
                     <span className="truncate">{item.name}</span>
                     <span className="font-mono text-[9px] text-white/40 shrink-0">
@@ -150,7 +150,7 @@ export default function KitDebriefPanel({ kitId, sessionId }: KitDebriefPanelPro
                         onClick={() => tapVerdict(item, v)}
                         className={`flex-1 py-1.5 rounded-lg text-[10px] font-medium transition-colors ${
                           chosen === v
-                            ? 'bg-[#A8C8A0] text-[#06120C]'
+                            ? 'bg-[color:var(--lkv-forest-200)] text-[color:var(--lkv-forest-950)]'
                             : 'bg-white/5 text-white/70 hover:bg-white/10'
                         }`}
                       >
@@ -165,7 +165,7 @@ export default function KitDebriefPanel({ kitId, sessionId }: KitDebriefPanelPro
 
           {/* Ce qui manquait */}
           <div className="mt-3">
-            <div className="font-mono text-[9px] tracking-[0.14em] uppercase text-[#A8C8A0]/80 mb-1.5">
+            <div className="font-mono text-[9px] tracking-[0.14em] uppercase text-[color:var(--lkv-forest-200)]/80 mb-1.5">
               Ce qui manquait
             </div>
             <div className="flex gap-2">
@@ -176,11 +176,11 @@ export default function KitDebriefPanel({ kitId, sessionId }: KitDebriefPanelPro
                   if (e.key === 'Enter') submitMissing();
                 }}
                 placeholder="ex. un couteau multi-usages"
-                className="flex-1 bg-white/5 border border-[#C6DCBE]/15 rounded-lg px-3 py-2 text-xs text-white placeholder:text-white/35 focus:outline-none focus:border-[#A8C8A0]/50"
+                className="flex-1 bg-white/5 border border-[color:var(--lkv-forest-100)]/15 rounded-lg px-3 py-2 text-xs text-white placeholder:text-white/35 focus:outline-none focus:border-[color:var(--lkv-forest-200)]/50"
               />
               <button
                 onClick={submitMissing}
-                className="px-3 py-2 rounded-lg bg-[#A8C8A0] text-[#06120C] text-xs font-semibold"
+                className="px-3 py-2 rounded-lg bg-[color:var(--lkv-forest-200)] text-[color:var(--lkv-forest-950)] text-xs font-semibold"
               >
                 + Ajouter
               </button>

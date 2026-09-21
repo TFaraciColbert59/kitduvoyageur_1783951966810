@@ -9,7 +9,7 @@ export default function CountryLoading() {
     >
       {/* Header skeleton */}
       <div
-        className="absolute top-2.5 left-2.5 right-2.5 z-[900] h-12 rounded-full border border-white/60 animate-pulse"
+        className="absolute top-2.5 left-2.5 right-2.5 z-[var(--z-sticky)] h-12 rounded-full border border-white/60 animate-pulse"
         style={{
           background: 'linear-gradient(180deg, rgba(255,255,255,0.72) 0%, rgba(255,255,255,0.38) 100%)',
           backdropFilter: 'blur(var(--glass-blur-xl))',
@@ -31,8 +31,8 @@ export default function CountryLoading() {
 
       {/* Spinner */}
       <div className="absolute inset-x-0 top-[38vh] flex flex-col items-center gap-2">
-        <div className="w-8 h-8 rounded-full border-[3px] border-[#EEF3EC] border-t-transparent animate-spin" />
-        <span className="text-[11px] font-mono font-bold text-[#EEF3EC]">Chargement des pays…</span>
+        <div className="w-8 h-8 rounded-full border-[3px] border-[color:var(--lkv-surface)] border-t-transparent animate-spin" />
+        <span className="text-[11px] font-mono font-bold text-[color:var(--lkv-surface)]">Chargement des pays…</span>
       </div>
 
       {/* Continents strip skeleton */}

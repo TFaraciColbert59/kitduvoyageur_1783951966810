@@ -9,6 +9,12 @@ import Icon from '@/components/ui/AppIcon';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
+import { Button, Card } from '@/components/ui';
+
+const FIELD_CLASS =
+  'min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-sm)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-2.5 text-[length:var(--lkv-text-body-sm)] text-[color:var(--lkv-text-primary)] placeholder:text-[color:var(--lkv-text-muted)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]';
+const LABEL_CLASS =
+  'mb-1.5 block text-[length:var(--lkv-text-caption-1)] font-medium text-[color:var(--lkv-text-secondary)]';
 
 export default function InscriptionPage() {
   const router = useRouter();
@@ -36,83 +42,99 @@ export default function InscriptionPage() {
     } finally { setLoading(false); }
   };
 
-  const desktopContent = (
-    <div className="min-h-screen bg-background text-foreground">
-      <Header />
-      <main className="flex items-center justify-center min-h-screen px-4 pt-16 pb-16">
-        <div className="w-full max-w-md">
-          {success ? (
-            <div className="glass rounded-2xl p-8 text-center">
-              <div className="w-16 h-16 rounded-full bg-[var(--lkv-secondary)]/15 flex items-center justify-center mx-auto mb-4">
-                <Icon name="CheckCircleIcon" size={32} style={{ color: 'var(--lkv-secondary)' }} variant="outline" />
-              </div>
-              <h2 className="font-display text-xl text-foreground mb-2" style={{ fontFamily: 'var(--font-display)', fontWeight: 800 }}>Compte créé !</h2>
-              <p className="text-sm text-foreground/60 mb-6">Un email de confirmation a été envoyé à <strong className="text-foreground">{form.email}</strong>.</p>
-              <Link href="/connexion" className="glass-capsule-btn primary !px-6 !py-3 !text-sm !font-semibold"><Icon name="ArrowRightIcon" size={14} variant="outline" />Se connecter</Link>
-            </div>
-          ) : (
-            <div className="glass rounded-2xl p-8">
-              <div className="text-center mb-8">
-                <p className="text-xs font-mono text-[var(--lkv-secondary)] tracking-widest uppercase mb-2" style={{ fontFamily: 'var(--font-mono)' }}>Rejoindre la communauté</p>
-                <h1 className="font-display text-2xl text-foreground" style={{ fontFamily: 'var(--font-display)', fontWeight: 800 }}>Créer un compte</h1>
-                <p className="text-sm text-foreground/50 mt-2">Configurez vos kits, sauvegardez vos aventures</p>
-              </div>
-              {error && <div className="mb-4 p-3 bg-[var(--lkv-danger-bg,rgba(168,68,58,0.08))] border border-[var(--lkv-danger)]/25 rounded-xl text-[var(--lkv-danger)] text-sm flex items-center gap-2"><Icon name="ExclamationCircleIcon" size={16} style={{ color: 'var(--lkv-danger)' }} className="flex-shrink-0" variant="outline" />{error}</div>}
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div><label className="block text-xs font-medium text-foreground/70 mb-1.5">Nom complet *</label><input type="text" required autoComplete="name" value={form.fullName} onChange={(e) => setForm({ ...form, fullName: e.target.value })} placeholder="Jean Dupont" className="w-full px-3 py-2.5 bg-background border border-border rounded-lg text-sm text-foreground placeholder:text-foreground/30 focus:outline-none focus:border-[var(--lkv-secondary)]/60 transition-colors" /></div>
-                <div><label className="block text-xs font-medium text-foreground/70 mb-1.5">Email *</label><input type="email" required autoComplete="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="jean@exemple.fr" className="w-full px-3 py-2.5 bg-background border border-border rounded-lg text-sm text-foreground placeholder:text-foreground/30 focus:outline-none focus:border-[var(--lkv-secondary)]/60 transition-colors" /></div>
-                <div><label className="block text-xs font-medium text-foreground/70 mb-1.5">Mot de passe *</label><input type="password" required autoComplete="new-password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} placeholder="8 caractères minimum" className="w-full px-3 py-2.5 bg-background border border-border rounded-lg text-sm text-foreground placeholder:text-foreground/30 focus:outline-none focus:border-[var(--lkv-secondary)]/60 transition-colors" /></div>
-                <div><label className="block text-xs font-medium text-foreground/70 mb-1.5">Confirmer le mot de passe *</label><input type="password" required autoComplete="new-password" value={form.confirm} onChange={(e) => setForm({ ...form, confirm: e.target.value })} placeholder="Répéter le mot de passe" className="w-full px-3 py-2.5 bg-background border border-border rounded-lg text-sm text-foreground placeholder:text-foreground/30 focus:outline-none focus:border-[var(--lkv-secondary)]/60 transition-colors" /></div>
-                <button type="submit" disabled={loading} className="glass-capsule-btn primary w-full flex items-center justify-center gap-2 !px-6 !py-3 !text-sm !font-semibold mt-2">
-                  {loading ? <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />Création en cours…</> : <><Icon name="UserPlusIcon" size={16} variant="outline" />Créer mon compte</>}
-                </button>
-              </form>
-              <p className="text-center text-xs text-foreground/50 mt-6">Déjà un compte ? <Link href="/connexion" className="text-[var(--lkv-primary)] hover:underline font-medium">Se connecter</Link></p>
-              <p className="text-center text-[10px] text-foreground/30 mt-3">En créant un compte, vous acceptez nos <Link href="/cgu" className="hover:underline">CGU</Link> et notre <Link href="/politique-confidentialite" className="hover:underline">politique de confidentialité</Link>.</p>
-            </div>
-          )}
-        </div>
-      </main>
-      <Footer />
-    </div>
-  );
-
-  const mobileContent = (
-    <div style={{ padding: '16px' }}>
-      {success ? (
-        <div className="glass" style={{ textAlign: 'center', padding: '24px 16px' }}>
-          <p style={{ fontSize: '32px', marginBottom: '12px', color: 'var(--lkv-secondary)' }}>✓</p>
-          <h2 style={{ fontSize: '20px', fontWeight: 800, color: 'var(--lkv-primary)', marginBottom: '8px' }}>Compte créé !</h2>
-          <p style={{ fontSize: '13px', color: 'rgba(23,64,44,0.6)', marginBottom: '16px' }}>Un email de confirmation a été envoyé à <strong>{form.email}</strong>.</p>
-          <Link href="/connexion" className="glass-capsule-btn primary !px-6 !py-2.5 !text-sm !font-semibold">Se connecter</Link>
-        </div>
-      ) : (
-        <div>
-          <p style={{ fontSize: '11px', fontFamily: 'var(--font-mono)', color: 'var(--lkv-primary)', letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: '8px', textAlign: 'center' }}>Rejoindre la communauté</p>
-          <h1 style={{ fontSize: '24px', fontWeight: 800, color: 'var(--lkv-primary)', textAlign: 'center', marginBottom: '4px' }}>Créer un compte</h1>
-          <p style={{ fontSize: '13px', color: 'rgba(23,64,44,0.5)', textAlign: 'center', marginBottom: '24px' }}>Configurez vos kits, sauvegardez vos aventures</p>
-          {error && <div style={{ background: 'var(--lkv-danger-bg, rgba(168,68,58,0.08))', border: '1px solid var(--lkv-danger)', borderRadius: '10px', padding: '10px 14px', marginBottom: '16px', fontSize: '13px', color: 'var(--lkv-danger)' }}>{error}</div>}
-          <form onSubmit={handleSubmit} className="glass" style={{ display: 'flex', flexDirection: 'column', gap: '12px', padding: '20px' }}>
-            <input type="text" required autoComplete="name" value={form.fullName} onChange={(e) => setForm({ ...form, fullName: e.target.value })} placeholder="Nom complet *" style={{ padding: '10px 12px', borderRadius: '10px', border: '1px solid rgba(23,64,44,0.06)', background: 'var(--lkv-surface)', fontSize: '14px', color: 'var(--lkv-primary)' }} />
-            <input type="email" required autoComplete="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="Email *" style={{ padding: '10px 12px', borderRadius: '10px', border: '1px solid rgba(23,64,44,0.06)', background: 'var(--lkv-surface)', fontSize: '14px', color: 'var(--lkv-primary)' }} />
-            <input type="password" required autoComplete="new-password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} placeholder="Mot de passe *" style={{ padding: '10px 12px', borderRadius: '10px', border: '1px solid rgba(23,64,44,0.06)', background: 'var(--lkv-surface)', fontSize: '14px', color: 'var(--lkv-primary)' }} />
-            <input type="password" required autoComplete="new-password" value={form.confirm} onChange={(e) => setForm({ ...form, confirm: e.target.value })} placeholder="Confirmer le mot de passe *" style={{ padding: '10px 12px', borderRadius: '10px', border: '1px solid rgba(23,64,44,0.06)', background: 'var(--lkv-surface)', fontSize: '14px', color: 'var(--lkv-primary)' }} />
-            <button type="submit" disabled={loading} className="glass-capsule-btn primary w-full !py-3 !text-sm !font-semibold mt-1">
-              {loading ? 'Création en cours…' : 'Créer mon compte'}
-            </button>
-          </form>
-          <p style={{ textAlign: 'center', fontSize: '12px', color: 'rgba(23,64,44,0.5)', marginTop: '16px' }}>Déjà un compte ? <Link href="/connexion" style={{ color: 'var(--lkv-primary)' }}>Se connecter</Link></p>
+  const content = success ? (
+    <Card variant="featured" className="p-[var(--space-8)] text-center">
+      <div className="mx-auto mb-[var(--space-4)] flex h-16 w-16 items-center justify-center rounded-full bg-[color:var(--lkv-secondary)]/15">
+        <Icon name="CheckCircleIcon" size={32} className="text-[color:var(--lkv-secondary)]" variant="outline" />
+      </div>
+      <h2 className="mb-2 font-display text-[length:var(--lkv-text-title-sm)] font-extrabold text-[color:var(--lkv-text-primary)]">
+        Compte créé !
+      </h2>
+      <p className="mb-[var(--space-6)] text-[length:var(--lkv-text-footnote)] text-[color:var(--lkv-text-secondary)]">
+        Un email de confirmation a été envoyé à <strong className="text-[color:var(--lkv-text-primary)]">{form.email}</strong>.
+      </p>
+      <Link href="/connexion">
+        <Button icon={<Icon name="ArrowRightIcon" size={14} variant="outline" />}>
+          Se connecter
+        </Button>
+      </Link>
+    </Card>
+  ) : (
+    <Card variant="featured" className="p-[var(--space-8)]">
+      <div className="mb-[var(--space-8)] text-center">
+        <p className="mb-2 font-mono text-[length:var(--lkv-text-caption-2)] uppercase tracking-widest text-[color:var(--lkv-secondary)]">
+          Rejoindre la communauté
+        </p>
+        <h1 className="font-display text-[length:var(--lkv-text-title-lg)] font-extrabold text-[color:var(--lkv-text-primary)]">
+          Créer un compte
+        </h1>
+        <p className="mt-2 text-[length:var(--lkv-text-footnote)] text-[color:var(--lkv-text-muted)]">
+          Configurez vos kits, sauvegardez vos aventures
+        </p>
+      </div>
+      {error && (
+        <div role="alert" className="mb-[var(--space-4)] flex items-center gap-[var(--space-2)] rounded-[var(--lkv-radius-sm)] border border-[color:var(--lkv-danger)]/25 bg-[color:var(--lkv-danger-bg)] p-[var(--space-3)] text-[length:var(--lkv-text-footnote)] text-[color:var(--lkv-danger)]">
+          <Icon name="ExclamationCircleIcon" size={16} className="shrink-0 text-[color:var(--lkv-danger)]" variant="outline" />
+          {error}
         </div>
       )}
-    </div>
+      <form onSubmit={handleSubmit} className="space-y-[var(--space-4)]">
+        <div>
+          <label htmlFor="signup-name" className={LABEL_CLASS}>Nom complet *</label>
+          <input id="signup-name" type="text" required autoComplete="name" value={form.fullName} onChange={(e) => setForm({ ...form, fullName: e.target.value })} placeholder="Jean Dupont" className={FIELD_CLASS} />
+        </div>
+        <div>
+          <label htmlFor="signup-email" className={LABEL_CLASS}>Email *</label>
+          <input id="signup-email" type="email" required autoComplete="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="jean@exemple.fr" className={FIELD_CLASS} />
+        </div>
+        <div>
+          <label htmlFor="signup-password" className={LABEL_CLASS}>Mot de passe *</label>
+          <input id="signup-password" type="password" required autoComplete="new-password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} placeholder="8 caractères minimum" className={FIELD_CLASS} />
+        </div>
+        <div>
+          <label htmlFor="signup-confirm" className={LABEL_CLASS}>Confirmer le mot de passe *</label>
+          <input id="signup-confirm" type="password" required autoComplete="new-password" value={form.confirm} onChange={(e) => setForm({ ...form, confirm: e.target.value })} placeholder="Répéter le mot de passe" className={FIELD_CLASS} />
+        </div>
+        <Button
+          type="submit"
+          loading={loading}
+          fullWidth
+          icon={!loading ? <Icon name="UserPlusIcon" size={16} variant="outline" /> : undefined}
+        >
+          {loading ? 'Création en cours…' : 'Créer mon compte'}
+        </Button>
+      </form>
+      <p className="mt-[var(--space-6)] text-center text-[length:var(--lkv-text-caption-1)] text-[color:var(--lkv-text-muted)]">
+        Déjà un compte ?{' '}
+        <Link href="/connexion" className="font-medium text-[color:var(--lkv-primary)] hover:underline">
+          Se connecter
+        </Link>
+      </p>
+      <p className="mt-[var(--space-3)] text-center text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">
+        En créant un compte, vous acceptez nos <Link href="/cgu" className="hover:underline">CGU</Link> et notre{' '}
+        <Link href="/politique-confidentialite" className="hover:underline">politique de confidentialité</Link>.
+      </p>
+    </Card>
   );
 
   return (
     <>
-      <div className="hidden md:block">{desktopContent}</div>
+      {/* DESKTOP */}
+      <div className="hidden md:block">
+        <div className="min-h-screen bg-background text-foreground">
+          <Header />
+          <main className="flex min-h-screen items-center justify-center px-[var(--space-4)] py-[var(--space-16)]">
+            <div className="w-full max-w-md">{content}</div>
+          </main>
+          <Footer />
+        </div>
+      </div>
+
+      {/* MOBILE */}
       <div className="block md:hidden">
-        <MobilePageShell>{mobileContent}</MobilePageShell>
-        
+        <MobilePageShell>
+          <div className="p-[var(--space-4)]">{content}</div>
+        </MobilePageShell>
       </div>
     </>
   );

@@ -8,6 +8,7 @@ import { useChat } from '@/lib/hooks/useChat';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
+import { Badge, Button, Card, Chip, EmptyState, IconButton, Modal, Skeleton, Tabs } from '@/components/ui';
 
 interface GearItem {
   name: string;
@@ -50,20 +51,28 @@ const EXPEDITION_TYPES = ['Trekking', 'Randonnée', 'Alpinisme', 'Vanlife', 'Cyc
 
 function StarRating({ value, onChange }: { value: number; onChange: (v: number) => void }) {
   return (
-    <div className="flex gap-1">
+    <div className="flex gap-1" role="group" aria-label="Note globale">
       {[1, 2, 3, 4, 5].map((star) => (
-        <button
+        <IconButton
           key={star}
           type="button"
+          size="sm"
+          aria-label={`Note ${star} sur 5`}
+          aria-pressed={star <= value}
           onClick={() => onChange(star)}
-          className={`glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8 ${star <= value ? 'primary' : ''}`}
+          className={star <= value ? 'bg-[color:var(--lkv-warning)] text-[color:var(--lkv-text-inverted)]' : 'text-[color:var(--lkv-text-muted)]'}
         >
-          <Icon name="StarIcon" size={20} variant="solid" />
-        </button>
+          <Icon name="StarIcon" size={18} variant="solid" />
+        </IconButton>
       ))}
     </div>
   );
 }
+
+const FIELD_CLASS =
+  'min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-sm)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-2.5 text-[length:var(--lkv-text-body-sm)] text-[color:var(--lkv-text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]';
+const LABEL_CLASS =
+  'mb-1.5 block text-[length:var(--lkv-text-caption-1)] font-semibold uppercase tracking-wider text-[color:var(--lkv-text-muted)]';
 
 function NewReportModal({ onClose, onSave }: { onClose: () => void; onSave: (f: NewReportForm) => void }) {
   const [form, setForm] = useState<NewReportForm>({
@@ -78,165 +87,173 @@ function NewReportModal({ onClose, onSave }: { onClose: () => void; onSave: (f: 
   const canNext = step === 1 ? form.destination && form.country : step === 2 ? form.startDate && form.endDate : true;
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4" onClick={onClose}>
-      <div className="bg-card border border-border rounded-2xl w-full max-w-lg overflow-hidden " onClick={(e) => e.stopPropagation()}>
-        <div className="flex items-center justify-between p-5 border-b border-border">
-          <div>
-            <h2 className="font-display font-700 text-foreground text-lg">Nouveau rapport d&apos;expédition</h2>
-            <p className="text-xs text-muted-foreground mt-0.5">Étape {step} / 3</p>
-          </div>
-          <button onClick={onClose} className="glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8">
-            <Icon name="XMarkIcon" size={18} />
-          </button>
+    <Modal
+      open
+      onOpenChange={(open) => {
+        if (!open) onClose();
+      }}
+      title="Nouveau rapport d'expédition"
+      description={`Étape ${step} / 3`}
+      size="lg"
+      footer={
+        <div className="flex gap-[var(--space-3)]">
+          {step > 1 && (
+            <Button variant="secondary" fullWidth onClick={() => setStep(step - 1)}>
+              Retour
+            </Button>
+          )}
+          {step < 3 ? (
+            <Button fullWidth onClick={() => setStep(step + 1)} disabled={!canNext}>
+              Suivant
+            </Button>
+          ) : (
+            <Button fullWidth onClick={() => onSave(form)} icon={<Icon name="CheckIcon" size={16} />}>
+              Créer le rapport
+            </Button>
+          )}
         </div>
-
-        <div className="flex gap-1 px-5 pt-4">
+      }
+    >
+      <div className="space-y-[var(--space-4)]">
+        <div className="flex gap-1">
           {[1, 2, 3].map((s) => (
-            <div key={s} className={`h-1 flex-1 rounded-full transition-all ${s <= step ? 'bg-cyan-500' : 'bg-white/10'}`} />
+            <div
+              key={s}
+              className={`h-1 flex-1 rounded-full transition-colors ${
+                s <= step ? 'bg-[color:var(--lkv-primary)]' : 'bg-[color:var(--lkv-border)]'
+              }`}
+            />
           ))}
         </div>
 
-        <div className="p-5 space-y-4">
-          {step === 1 && (
-            <>
-              <div>
-                <label className="text-xs font-600 text-muted-foreground uppercase tracking-wider block mb-1.5">Destination *</label>
-                <input type="text" className="input-field w-full" placeholder="ex: Circuit des Annapurnas" value={form.destination} onChange={(e) => update('destination', e.target.value)} />
+        {step === 1 && (
+          <>
+            <div>
+              <label htmlFor="report-destination" className={LABEL_CLASS}>Destination *</label>
+              <input id="report-destination" type="text" className={FIELD_CLASS} placeholder="ex: Circuit des Annapurnas" value={form.destination} onChange={(e) => update('destination', e.target.value)} />
+            </div>
+            <div>
+              <label htmlFor="report-country" className={LABEL_CLASS}>Pays *</label>
+              <input id="report-country" type="text" className={FIELD_CLASS} placeholder="ex: Népal" value={form.country} onChange={(e) => update('country', e.target.value)} />
+            </div>
+            <div>
+              <span className={LABEL_CLASS}>Type d&apos;expédition</span>
+              <div className="flex flex-wrap gap-[var(--space-2)]">
+                {EXPEDITION_TYPES.map((t) => (
+                  <Chip key={t} selected={form.type === t} onClick={() => update('type', t)}>
+                    {t}
+                  </Chip>
+                ))}
               </div>
-              <div>
-                <label className="text-xs font-600 text-muted-foreground uppercase tracking-wider block mb-1.5">Pays *</label>
-                <input type="text" className="input-field w-full" placeholder="ex: Népal" value={form.country} onChange={(e) => update('country', e.target.value)} />
-              </div>
-              <div>
-                <label className="text-xs font-600 text-muted-foreground uppercase tracking-wider block mb-1.5">Type d&apos;expédition</label>
-                <div className="flex flex-wrap gap-2">
-                  {EXPEDITION_TYPES.map((t) => (
-                    <button key={t} type="button" onClick={() => update('type', t)} className={`glass-capsule-btn text-xs font-medium ${form.type === t ? 'primary' : ''}`}>{t}</button>
-                  ))}
-                </div>
-              </div>
-            </>
-          )}
+            </div>
+          </>
+        )}
 
-          {step === 2 && (
-            <>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-xs font-600 text-muted-foreground uppercase tracking-wider block mb-1.5">Date de départ *</label>
-                  <input type="date" className="input-field w-full" value={form.startDate} onChange={(e) => update('startDate', e.target.value)} />
-                </div>
-                <div>
-                  <label className="text-xs font-600 text-muted-foreground uppercase tracking-wider block mb-1.5">Date de retour *</label>
-                  <input type="date" className="input-field w-full" value={form.endDate} onChange={(e) => update('endDate', e.target.value)} />
-                </div>
+        {step === 2 && (
+          <>
+            <div className="grid grid-cols-2 gap-[var(--space-4)]">
+              <div>
+                <label htmlFor="report-start" className={LABEL_CLASS}>Date de départ *</label>
+                <input id="report-start" type="date" className={FIELD_CLASS} value={form.startDate} onChange={(e) => update('startDate', e.target.value)} />
               </div>
               <div>
-                <label className="text-xs font-600 text-muted-foreground uppercase tracking-wider block mb-2">Note globale</label>
-                <StarRating value={form.score} onChange={(v) => update('score', v)} />
+                <label htmlFor="report-end" className={LABEL_CLASS}>Date de retour *</label>
+                <input id="report-end" type="date" className={FIELD_CLASS} value={form.endDate} onChange={(e) => update('endDate', e.target.value)} />
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-xs font-600 text-muted-foreground uppercase tracking-wider block mb-1.5">Budget estimé (€)</label>
-                  <input type="number" min={0} className="input-field w-full" value={form.budget_estimated} onChange={(e) => update('budget_estimated', Number(e.target.value))} />
-                </div>
-                <div>
-                  <label className="text-xs font-600 text-muted-foreground uppercase tracking-wider block mb-1.5">Budget réel (€)</label>
-                  <input type="number" min={0} className="input-field w-full" value={form.budget_real} onChange={(e) => update('budget_real', Number(e.target.value))} />
-                </div>
-              </div>
-            </>
-          )}
-
-          {step === 3 && (
-            <>
+            </div>
+            <div>
+              <span className={`${LABEL_CLASS} mb-2`}>Note globale</span>
+              <StarRating value={form.score} onChange={(v) => update('score', v)} />
+            </div>
+            <div className="grid grid-cols-2 gap-[var(--space-4)]">
               <div>
-                <label className="text-xs font-600 text-muted-foreground uppercase tracking-wider block mb-1.5">Notes & impressions</label>
-                <textarea className="input-field w-full resize-none" rows={5} placeholder="Décrivez votre expédition, les points forts, les difficultés rencontrées..." value={form.notes} onChange={(e) => update('notes', e.target.value)} />
+                <label htmlFor="report-budget-est" className={LABEL_CLASS}>Budget estimé (€)</label>
+                <input id="report-budget-est" type="number" min={0} className={FIELD_CLASS} value={form.budget_estimated} onChange={(e) => update('budget_estimated', Number(e.target.value))} />
               </div>
-              <div className="bg-cyan-500/5 border border-cyan-500/20 rounded-xl p-4">
-                <p className="text-xs text-cyan-400 font-medium mb-2">📊 Résumé du rapport</p>
-                <div className="space-y-1 text-sm text-white/70">
-                  <p><span className="text-white/40">Destination :</span> {form.destination}, {form.country}</p>
-                  <p><span className="text-white/40">Type :</span> {form.type}</p>
-                  <p><span className="text-white/40">Dates :</span> {form.startDate} → {form.endDate}</p>
-                  <p><span className="text-white/40">Note :</span> {'⭐'.repeat(form.score)}</p>
-                  {form.budget_estimated > 0 && <p><span className="text-white/40">Budget :</span> {form.budget_estimated}€ estimé / {form.budget_real}€ réel</p>}
-                </div>
+              <div>
+                <label htmlFor="report-budget-real" className={LABEL_CLASS}>Budget réel (€)</label>
+                <input id="report-budget-real" type="number" min={0} className={FIELD_CLASS} value={form.budget_real} onChange={(e) => update('budget_real', Number(e.target.value))} />
               </div>
-            </>
-          )}
-        </div>
+            </div>
+          </>
+        )}
 
-        <div className="flex gap-3 p-5 border-t border-border">
-          {step > 1 && (
-            <button onClick={() => setStep(step - 1)} className="glass-capsule-btn secondary flex-1 justify-center py-3">Retour</button>
-          )}
-          {step < 3 ? (
-            <button onClick={() => setStep(step + 1)} disabled={!canNext} className="glass-capsule-btn primary flex-1 justify-center py-3 disabled:opacity-40 disabled:cursor-not-allowed">Suivant</button>
-          ) : (
-            <button onClick={() => onSave(form)} className="glass-capsule-btn primary flex-1 justify-center py-3">
-              <Icon name="CheckIcon" size={16} />
-              Créer le rapport
-            </button>
-          )}
-        </div>
+        {step === 3 && (
+          <>
+            <div>
+              <label htmlFor="report-notes" className={LABEL_CLASS}>Notes &amp; impressions</label>
+              <textarea id="report-notes" className={`${FIELD_CLASS} resize-none`} rows={5} placeholder="Décrivez votre expédition, les points forts, les difficultés rencontrées..." value={form.notes} onChange={(e) => update('notes', e.target.value)} />
+            </div>
+            <Card variant="compact" tone="info" className="p-[var(--space-4)]">
+              <p className="mb-[var(--space-2)] text-[length:var(--lkv-text-caption-1)] font-medium text-[color:var(--lkv-info)]">Résumé du rapport</p>
+              <div className="space-y-1 text-[length:var(--lkv-text-body-sm)] text-[color:var(--lkv-text-secondary)]">
+                <p><span className="text-[color:var(--lkv-text-muted)]">Destination :</span> {form.destination}, {form.country}</p>
+                <p><span className="text-[color:var(--lkv-text-muted)]">Type :</span> {form.type}</p>
+                <p><span className="text-[color:var(--lkv-text-muted)]">Dates :</span> {form.startDate} → {form.endDate}</p>
+                <p><span className="text-[color:var(--lkv-text-muted)]">Note :</span> {'⭐'.repeat(form.score)}</p>
+                {form.budget_estimated > 0 && <p><span className="text-[color:var(--lkv-text-muted)]">Budget :</span> {form.budget_estimated}€ estimé / {form.budget_real}€ réel</p>}
+              </div>
+            </Card>
+          </>
+        )}
       </div>
-    </div>
+    </Modal>
   );
 }
 
 function ReportDetailModal({ report, onClose }: { report: PastReport; onClose: () => void }) {
   const budgetDelta = (report.budget_real || 0) - (report.budget_estimated || 0);
   return (
-    <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4" onClick={onClose}>
-      <div className="bg-card border border-border rounded-2xl w-full max-w-lg overflow-hidden  max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-        <div className="relative h-48">
+    <Modal
+      open
+      onOpenChange={(open) => {
+        if (!open) onClose();
+      }}
+      title={report.destination}
+      description={`${report.country} · ${report.date} · ${report.duration}`}
+      size="lg"
+    >
+      <div className="space-y-[var(--space-4)]">
+        <div className="relative h-48 overflow-hidden rounded-[var(--lkv-radius-sm)]">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={report.image} alt={report.alt} className="w-full h-full object-cover" />
+          <img src={report.image} alt={report.alt} className="h-full w-full object-cover" />
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
-          <button onClick={onClose} className="glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8 absolute top-3 right-3">
-            <Icon name="XMarkIcon" size={18} />
-          </button>
-          <div className="absolute bottom-3 left-4 right-4">
-            <span className="px-2 py-0.5 bg-cyan-500 rounded-full text-xs font-bold text-white">{report.type}</span>
-            <h2 className="font-display font-700 text-white text-xl mt-1">{report.destination}</h2>
-            <p className="text-white/60 text-xs">{report.country} · {report.date} · {report.duration}</p>
+          <div className="absolute bottom-[var(--space-3)] left-[var(--space-4)] right-[var(--space-4)]">
+            <Badge tone="info" className="bg-[color:var(--lkv-primary)] text-[color:var(--lkv-text-inverted)]">{report.type}</Badge>
           </div>
         </div>
-        <div className="p-5 space-y-4">
-          <div className="grid grid-cols-3 gap-3">
-            <div className="bg-white/5 rounded-xl p-3 text-center">
-              <p className="font-display font-700 text-2xl text-cyan-400">{report.score}</p>
-              <p className="text-xs text-white/40">Score</p>
-            </div>
-            {report.budget_estimated ? (
-              <>
-                <div className="bg-white/5 rounded-xl p-3 text-center">
-                  <p className="font-mono font-700 text-lg text-white/70">{report.budget_estimated}€</p>
-                  <p className="text-xs text-white/40">Budget estimé</p>
-                </div>
-                <div className="bg-white/5 rounded-xl p-3 text-center">
-                  <p className={`font-mono font-700 text-lg ${budgetDelta > 0 ? 'text-red-400' : 'text-green-400'}`}>
-                    {budgetDelta > 0 ? '+' : ''}{budgetDelta}€
-                  </p>
-                  <p className="text-xs text-white/40">Delta budget</p>
-                </div>
-              </>
-            ) : (
-              <div className="col-span-2 bg-white/5 rounded-xl p-3 text-center">
-                <p className="text-xs text-white/40">Budget non renseigné</p>
-              </div>
-            )}
-          </div>
-          {report.notes && (
-            <div className="bg-white/5 rounded-xl p-4">
-              <p className="text-xs text-white/40 uppercase tracking-wider mb-2">Notes</p>
-              <p className="text-sm text-white/70 leading-relaxed">{report.notes}</p>
-            </div>
+        <div className="grid grid-cols-3 gap-[var(--space-3)]">
+          <Card variant="compact" className="text-center">
+            <p className="font-display text-[length:var(--lkv-text-title-sm)] font-bold text-[color:var(--lkv-primary)]">{report.score}</p>
+            <p className="text-[length:var(--lkv-text-caption-1)] text-[color:var(--lkv-text-muted)]">Score</p>
+          </Card>
+          {report.budget_estimated ? (
+            <>
+              <Card variant="compact" className="text-center">
+                <p className="font-mono text-[length:var(--lkv-text-body-sm)] font-bold text-[color:var(--lkv-text-secondary)]">{report.budget_estimated}€</p>
+                <p className="text-[length:var(--lkv-text-caption-1)] text-[color:var(--lkv-text-muted)]">Budget estimé</p>
+              </Card>
+              <Card variant="compact" className="text-center">
+                <p className={`font-mono text-[length:var(--lkv-text-body-sm)] font-bold ${budgetDelta > 0 ? 'text-[color:var(--lkv-danger)]' : 'text-[color:var(--lkv-success)]'}`}>
+                  {budgetDelta > 0 ? '+' : ''}{budgetDelta}€
+                </p>
+                <p className="text-[length:var(--lkv-text-caption-1)] text-[color:var(--lkv-text-muted)]">Delta budget</p>
+              </Card>
+            </>
+          ) : (
+            <Card variant="compact" className="col-span-2 text-center">
+              <p className="text-[length:var(--lkv-text-caption-1)] text-[color:var(--lkv-text-muted)]">Budget non renseigné</p>
+            </Card>
           )}
         </div>
+        {report.notes && (
+          <Card variant="compact" className="p-[var(--space-4)]">
+            <p className="mb-[var(--space-2)] text-[length:var(--lkv-text-caption-1)] uppercase tracking-wider text-[color:var(--lkv-text-muted)]">Notes</p>
+            <p className="text-[length:var(--lkv-text-body-sm)] leading-[var(--leading-relaxed)] text-[color:var(--lkv-text-secondary)]">{report.notes}</p>
+          </Card>
+        )}
       </div>
-    </div>
+    </Modal>
   );
 }
 
@@ -446,22 +463,22 @@ export default function RapportExpeditionPage() {
                   Équipement utilisé, budget réel vs estimé, retour IA personnalisé. Chaque expédition devient une leçon pour la suivante.
                 </p>
               </div>
-              <button
+              <Button
                 onClick={() => setShowNewReportModal(true)}
-                className="glass-capsule-btn primary px-5 py-3 font-medium whitespace-nowrap flex-shrink-0"
+                icon={<Icon name="PlusIcon" size={18} variant="outline" />}
+                className="shrink-0 whitespace-nowrap"
               >
-                <Icon name="PlusIcon" size={18} variant="outline" />
                 Nouveau rapport
-              </button>
+              </Button>
             </div>
 
             {/* Stats */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-8">
               {[
-                { label: 'Expéditions', value: reports.length.toString(), icon: 'MapIcon', color: 'text-cyan-400' },
-                { label: 'Score moyen', value: reports.length > 0 ? `${avgScore}/100` : '—', icon: 'TrophyIcon', color: 'text-amber-400' },
-                { label: 'Budget total', value: totalBudgetDelta !== 0 ? `${totalBudgetDelta > 0 ? '+' : ''}${totalBudgetDelta}€` : '—', icon: 'BanknotesIcon', color: totalBudgetDelta > 0 ? 'text-red-400' : 'text-green-400' },
-                { label: 'Équipements', value: userGear.length > 0 ? `${(totalWeight / 1000).toFixed(1)} kg` : '—', icon: 'ArchiveBoxIcon', color: 'text-primary' },
+                { label: 'Expéditions', value: reports.length.toString(), icon: 'MapIcon', color: 'text-[color:var(--lkv-info)]' },
+                { label: 'Score moyen', value: reports.length > 0 ? `${avgScore}/100` : '—', icon: 'TrophyIcon', color: 'text-[color:var(--lkv-warning)]' },
+                { label: 'Budget total', value: totalBudgetDelta !== 0 ? `${totalBudgetDelta > 0 ? '+' : ''}${totalBudgetDelta}€` : '—', icon: 'BanknotesIcon', color: totalBudgetDelta > 0 ? 'text-[color:var(--lkv-danger)]' : 'text-[color:var(--lkv-success)]' },
+                { label: 'Équipements', value: userGear.length > 0 ? `${(totalWeight / 1000).toFixed(1)} kg` : '—', icon: 'ArchiveBoxIcon', color: 'text-[color:var(--lkv-primary)]' },
               ].map((stat) => (
                 <div key={stat.label} className="bg-white/5 border border-white/8 rounded-xl p-4">
                   <div className="flex items-center gap-2 mb-2">
@@ -478,20 +495,16 @@ export default function RapportExpeditionPage() {
         {/* Tabs */}
         <section className="px-4 pb-4">
           <div className="max-w-5xl mx-auto">
-            <div className="flex gap-1 bg-card border border-border rounded-xl p-1 w-fit">
-              {([
-                { id: 'historique', label: '📁 Mes expéditions' },
-                { id: 'ia', label: '🤖 Analyse IA' },
-              ] as const).map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`glass-capsule-btn px-5 py-2 text-sm font-medium ${activeTab === tab.id ? 'primary' : ''}`}
-                >
-                  {tab.label}
-                </button>
-              ))}
-            </div>
+            <Tabs
+              options={[
+                { id: 'historique', label: 'Mes expéditions' },
+                { id: 'ia', label: 'Analyse IA' },
+              ]}
+              value={activeTab}
+              onChange={(id) => setActiveTab(id as 'historique' | 'ia')}
+              ariaLabel="Sections du rapport"
+              className="w-fit"
+            />
           </div>
         </section>
 
@@ -500,20 +513,21 @@ export default function RapportExpeditionPage() {
           <section className="px-4 py-6">
             <div className="max-w-5xl mx-auto">
               {savedSuccess && (
-                <div className="mb-4 flex items-center gap-3 px-4 py-3 bg-green-500/10 border border-green-500/20 rounded-xl text-green-400 text-sm">
+                <div className="mb-4 flex items-center gap-3 rounded-xl border border-[color:var(--lkv-success)]/30 bg-[color:var(--lkv-success-bg)] px-4 py-3 text-[length:var(--lkv-text-footnote)] text-[color:var(--lkv-primary)]">
                   <Icon name="CheckCircleIcon" size={16} variant="outline" />
                   Rapport créé avec succès ! +75 points fidélité gagnés.
                 </div>
               )}
               <div className="flex items-center justify-between mb-5">
                 <h2 className="font-display font-700 text-xl text-white">Mes expéditions ({reports.length})</h2>
-                <button
+                <Button
+                  size="sm"
+                  variant="secondary"
                   onClick={() => setShowNewReportModal(true)}
-                  className="glass-capsule-btn px-4 py-2 text-sm"
+                  icon={<Icon name="PlusIcon" size={14} variant="outline" />}
                 >
-                  <Icon name="PlusIcon" size={14} variant="outline" />
                   Nouveau
-                </button>
+                </Button>
               </div>
 
               {!user ? (
@@ -532,13 +546,12 @@ export default function RapportExpeditionPage() {
                     <p className="font-display font-700 text-white/60 text-lg mb-1">Aucune expédition enregistrée</p>
                     <p className="text-sm">Créez votre premier rapport pour commencer à analyser vos aventures.</p>
                   </div>
-                  <button
+                  <Button
                     onClick={() => setShowNewReportModal(true)}
-                    className="glass-capsule-btn primary px-5 py-3 font-medium"
+                    icon={<Icon name="PlusIcon" size={16} variant="outline" />}
                   >
-                    <Icon name="PlusIcon" size={16} variant="outline" />
                     Créer mon premier rapport
-                  </button>
+                  </Button>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -669,23 +682,20 @@ export default function RapportExpeditionPage() {
                       placeholder="Posez une question sur vos expéditions..."
                       className="flex-1 bg-dark-bg border border-border rounded-xl px-4 py-2.5 text-sm text-white placeholder-white/30 focus:outline-none focus:border-cyan-500/50"
                     />
-                    <button
+                    <IconButton
                       onClick={handleSend}
                       disabled={isLoading || !userInput.trim()}
-                      className="glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8 disabled:opacity-40 disabled:cursor-not-allowed"
+                      aria-label="Envoyer la question"
+                      className="bg-[color:var(--lkv-primary)] text-[color:var(--lkv-text-inverted)]"
                     >
                       <Icon name="PaperAirplaneIcon" size={16} variant="outline" />
-                    </button>
+                    </IconButton>
                   </div>
                   <div className="flex flex-wrap gap-2 mt-3">
                     {['Que retirer de mon kit ?', 'Quelle destination ensuite ?', 'Comment optimiser mon budget ?', 'Analyse mes expéditions'].map((prompt) => (
-                      <button
-                        key={prompt}
-                        onClick={() => setUserInput(prompt)}
-                        className="glass-capsule-btn px-3 py-1.5 text-xs"
-                      >
+                      <Chip key={prompt} onClick={() => setUserInput(prompt)}>
                         {prompt}
-                      </button>
+                      </Chip>
                     ))}
                   </div>
                 </div>
@@ -711,153 +721,150 @@ export default function RapportExpeditionPage() {
       <div className="block md:hidden">
         <MobilePageShell>
           {/* Hero */}
-          <div style={{ padding: '16px', borderBottom: '1px solid rgba(23,64,44,0.06)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '4px 10px', background: 'rgba(23,64,44,0.08)', borderRadius: '999px', width: 'fit-content', marginBottom: '10px' }}>
-              <span style={{ fontSize: '10px', color: '#17402C', fontFamily: 'ui-monospace, monospace', letterSpacing: '0.05em' }}>PHASE 5 &mdash; RAPPORT POST-EXP&Eacute;DITION</span>
+          <div className="border-b border-[color:var(--lkv-border-subtle)] p-[var(--space-4)]">
+            <div className="mb-[10px] flex w-fit items-center gap-[6px] rounded-full bg-[color:var(--lkv-primary)]/8 px-[10px] py-1">
+              <span className="font-mono text-[10px] tracking-[0.05em] text-[color:var(--lkv-primary)]">
+                PHASE 5 &mdash; RAPPORT POST-EXPÉDITION
+              </span>
             </div>
-            <h1 style={{ fontSize: '22px', fontWeight: 700, color: '#17402C', margin: '0 0 4px 0', lineHeight: 1.2 }}>
+            <h1 className="mb-1 text-[22px] font-bold leading-[var(--leading-tight)] text-[color:var(--lkv-primary)]">
               Bilan automatique de chaque aventure
             </h1>
-            <p style={{ fontSize: '13px', color: '#6B7A72', margin: '0 0 16px 0', lineHeight: 1.4 }}>
-              &Eacute;quipement utilis&eacute;, budget r&eacute;el vs estim&eacute;, retour IA personnalis&eacute;.
+            <p className="mb-[var(--space-4)] text-[length:var(--lkv-text-caption-1)] leading-[var(--leading-snug)] text-[color:var(--lkv-text-muted)]">
+              Équipement utilisé, budget réel vs estimé, retour IA personnalisé.
             </p>
-            <button
-              onClick={() => setShowNewReportModal(true)}
-              className="glass-capsule-btn primary"
-              style={{ width: '100%' }}
-            >
+            <Button fullWidth onClick={() => setShowNewReportModal(true)}>
               + Nouveau rapport
-            </button>
+            </Button>
           </div>
 
           {/* Stats */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', padding: '12px 16px' }}>
-            <div className="glass" style={{ padding: '12px', borderRadius: '10px' }}>
-              <p style={{ fontSize: '10px', color: '#6B7A72', margin: '0 0 2px 0' }}>Exp&eacute;ditions</p>
-              <p style={{ fontSize: '20px', fontWeight: 700, color: '#17402C', margin: 0, fontFamily: 'ui-monospace, monospace' }}>{reports.length}</p>
-            </div>
-            <div className="glass" style={{ padding: '12px', borderRadius: '10px' }}>
-              <p style={{ fontSize: '10px', color: '#6B7A72', margin: '0 0 2px 0' }}>Score moyen</p>
-              <p style={{ fontSize: '20px', fontWeight: 700, color: '#17402C', margin: 0, fontFamily: 'ui-monospace, monospace' }}>{reports.length > 0 ? `${avgScore}/100` : '\u2014'}</p>
-            </div>
-            <div className="glass" style={{ padding: '12px', borderRadius: '10px' }}>
-              <p style={{ fontSize: '10px', color: '#6B7A72', margin: '0 0 2px 0' }}>Budget total</p>
-              <p style={{ fontSize: '20px', fontWeight: 700, color: totalBudgetDelta > 0 ? '#DC2626' : '#059669', margin: 0, fontFamily: 'ui-monospace, monospace' }}>
-                {totalBudgetDelta !== 0 ? `${totalBudgetDelta > 0 ? '+' : ''}${totalBudgetDelta}\u20ac` : '\u2014'}
+          <div className="grid grid-cols-2 gap-[var(--space-2)] px-[var(--space-4)] py-[var(--space-3)]">
+            <Card variant="standard" className="p-[var(--space-3)]">
+              <p className="mb-0.5 text-[10px] text-[color:var(--lkv-text-muted)]">Expéditions</p>
+              <p className="m-0 font-mono text-[20px] font-bold text-[color:var(--lkv-primary)]">{reports.length}</p>
+            </Card>
+            <Card variant="standard" className="p-[var(--space-3)]">
+              <p className="mb-0.5 text-[10px] text-[color:var(--lkv-text-muted)]">Score moyen</p>
+              <p className="m-0 font-mono text-[20px] font-bold text-[color:var(--lkv-primary)]">{reports.length > 0 ? `${avgScore}/100` : '—'}</p>
+            </Card>
+            <Card variant="standard" className="p-[var(--space-3)]">
+              <p className="mb-0.5 text-[10px] text-[color:var(--lkv-text-muted)]">Budget total</p>
+              <p className={`m-0 font-mono text-[20px] font-bold ${totalBudgetDelta > 0 ? 'text-[color:var(--lkv-danger)]' : 'text-[color:var(--lkv-success)]'}`}>
+                {totalBudgetDelta !== 0 ? `${totalBudgetDelta > 0 ? '+' : ''}${totalBudgetDelta}€` : '—'}
               </p>
-            </div>
-            <div className="glass" style={{ padding: '12px', borderRadius: '10px' }}>
-              <p style={{ fontSize: '10px', color: '#6B7A72', margin: '0 0 2px 0' }}>&Eacute;quipements</p>
-              <p style={{ fontSize: '20px', fontWeight: 700, color: '#17402C', margin: 0, fontFamily: 'ui-monospace, monospace' }}>
-                {userGear.length > 0 ? `${(totalWeight / 1000).toFixed(1)} kg` : '\u2014'}
+            </Card>
+            <Card variant="standard" className="p-[var(--space-3)]">
+              <p className="mb-0.5 text-[10px] text-[color:var(--lkv-text-muted)]">Équipements</p>
+              <p className="m-0 font-mono text-[20px] font-bold text-[color:var(--lkv-primary)]">
+                {userGear.length > 0 ? `${(totalWeight / 1000).toFixed(1)} kg` : '—'}
               </p>
-            </div>
+            </Card>
           </div>
 
           {/* Tabs */}
-          <div style={{ display: 'flex', gap: '4px', padding: '0 16px' }}>
-            <button
-              onClick={() => setActiveTab('historique')}
-              className={`glass-capsule-btn flex-1 text-xs font-medium ${activeTab === 'historique' ? 'primary' : ''}`}
-            >
-              Mes exp&eacute;ditions
-            </button>
-            <button
-              onClick={() => setActiveTab('ia')}
-              className={`glass-capsule-btn flex-1 text-xs font-medium ${activeTab === 'ia' ? 'primary' : ''}`}
-            >
-              Analyse IA
-            </button>
+          <div className="px-[var(--space-4)]">
+            <Tabs
+              options={[
+                { id: 'historique', label: 'Mes expéditions' },
+                { id: 'ia', label: 'Analyse IA' },
+              ]}
+              value={activeTab}
+              onChange={(id) => setActiveTab(id as 'historique' | 'ia')}
+              ariaLabel="Sections du rapport"
+            />
           </div>
 
           {/* ── HISTORIQUE TAB (Mobile) ── */}
           {activeTab === 'historique' && (
-            <div style={{ padding: '16px' }}>
+            <div className="p-[var(--space-4)]">
               {savedSuccess && (
-                <div style={{ marginBottom: '12px', padding: '10px', background: '#ECFDF5', borderRadius: '10px', border: '1px solid #A7F3D0', display: 'flex', gap: '8px', alignItems: 'center' }}>
-                  <span style={{ fontSize: '14px', color: '#059669' }}>&#10003;</span>
-                  <p style={{ fontSize: '12px', color: '#065F46', margin: 0 }}>Rapport cr&eacute;&eacute; avec succ&egrave;s ! +75 points fid&eacute;lit&eacute;.</p>
-                </div>
+                <Card variant="compact" role="status" aria-live="polite" className="mb-[var(--space-3)] flex items-center gap-[var(--space-2)] border-[color:var(--lkv-success)]/40 bg-[color:var(--lkv-success-bg)]">
+                  <span className="text-[14px] text-[color:var(--lkv-success)]" aria-hidden="true">✓</span>
+                  <p className="m-0 text-[length:var(--lkv-text-caption-1)] text-[color:var(--lkv-primary)]">
+                    Rapport créé avec succès ! +75 points fidélité.
+                  </p>
+                </Card>
               )}
 
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
-                <p style={{ fontSize: '15px', fontWeight: 600, color: '#17402C', margin: 0 }}>
-                  Mes exp&eacute;ditions ({reports.length})
+              <div className="mb-[var(--space-3)] flex items-center justify-between">
+                <p className="m-0 text-[length:var(--lkv-text-subheadline)] font-semibold text-[color:var(--lkv-primary)]">
+                  Mes expéditions ({reports.length})
                 </p>
-                <button
-                  onClick={() => setShowNewReportModal(true)}
-                  className="glass-capsule-btn primary text-xs font-medium"
-                >
+                <Button size="sm" onClick={() => setShowNewReportModal(true)}>
                   + Nouveau
-                </button>
+                </Button>
               </div>
 
               {!user && (
-                <div style={{ textAlign: 'center', padding: '32px 16px' }}>
-                  <p style={{ fontSize: '13px', color: '#6B7A72', margin: 0 }}>Connectez-vous pour voir vos rapports d&apos;exp&eacute;dition.</p>
-                </div>
+                <EmptyState
+                  title="Connectez-vous"
+                  description="Connectez-vous pour voir vos rapports d'expédition."
+                />
               )}
 
               {loadingReports && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                  {[1, 2].map(i => (
-                    <div key={i} style={{ height: '120px', background: '#F4F1EA', borderRadius: '12px', animation: 'pulse 2s infinite' }} />
-                  ))}
+                <div className="flex flex-col gap-[var(--space-3)]">
+                  <Skeleton className="h-[120px] rounded-[var(--lkv-radius-sm)]" />
+                  <Skeleton className="h-[120px] rounded-[var(--lkv-radius-sm)]" />
                 </div>
               )}
 
               {!loadingReports && user && reports.length === 0 && (
-                <div style={{ textAlign: 'center', padding: '32px 16px' }}>
-                  <p style={{ fontSize: '16px', fontWeight: 600, color: '#17402C', margin: '0 0 4px 0' }}>Aucune exp&eacute;dition enregistr&eacute;e</p>
-                  <p style={{ fontSize: '12px', color: '#6B7A72', margin: '0 0 16px 0' }}>Cr&eacute;ez votre premier rapport.</p>
-                  <button
-                    onClick={() => setShowNewReportModal(true)}
-                    className="glass-capsule-btn primary"
-                  >
-                    Cr&eacute;er mon premier rapport
-                  </button>
-                </div>
+                <EmptyState
+                  title="Aucune expédition enregistrée"
+                  description="Créez votre premier rapport."
+                  actionLabel="Créer mon premier rapport"
+                  onAction={() => setShowNewReportModal(true)}
+                />
               )}
 
               {!loadingReports && user && reports.length > 0 && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <div className="flex flex-col gap-[var(--space-3)]">
                   {reports.slice(0, 10).map((report) => (
-                    <div
+                    <Card
                       key={report.id}
+                      variant="interactive"
+                      className="overflow-hidden p-0"
                       onClick={() => setSelectedReport(report)}
-                      className="glass"
-                      style={{
-                        borderRadius: '12px',
-                        overflow: 'hidden',
-                        cursor: 'pointer',
-                      }}
                     >
-                      <div style={{ height: '120px', background: `url(${report.image}) center/cover`, position: 'relative' }}>
-                        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.7), transparent)' }} />
-                        <div style={{ position: 'absolute', top: '8px', right: '8px', padding: '2px 8px', background: 'rgba(0,0,0,0.5)', borderRadius: '999px' }}>
-                          <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.7)' }}>{report.type}</span>
+                      <div
+                        className="relative h-[120px]"
+                        style={{ background: `url(${report.image}) center/cover` }}
+                      >
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
+                        <div className="absolute right-[var(--space-2)] top-[var(--space-2)] rounded-full bg-black/50 px-[var(--space-2)] py-0.5">
+                          <span className="text-[10px] text-white/70">{report.type}</span>
                         </div>
-                        <div style={{ position: 'absolute', bottom: '8px', left: '12px', right: '12px' }}>
-                          <p style={{ fontSize: '14px', fontWeight: 700, color: '#fff', margin: '0 0 2px 0' }}>{report.destination}</p>
-                          <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.6)', margin: 0 }}>{report.country} &middot; {report.date} &middot; {report.duration}</p>
+                        <div className="absolute inset-x-[var(--space-3)] bottom-[var(--space-2)]">
+                          <p className="mb-0.5 text-[14px] font-bold text-white">{report.destination}</p>
+                          <p className="m-0 text-[11px] text-white/60">{report.country} · {report.date} · {report.duration}</p>
                         </div>
                       </div>
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 12px' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          <div style={{ width: '28px', height: '28px', borderRadius: '8px', background: 'rgba(23,64,44,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                            <span style={{ fontSize: '12px', fontWeight: 700, color: '#17402C' }}>{report.score}</span>
+                      <div className="flex items-center justify-between px-[var(--space-3)] py-[10px]">
+                        <div className="flex items-center gap-[var(--space-2)]">
+                          <div className="flex h-7 w-7 items-center justify-center rounded-[var(--lkv-radius-xs)] bg-[color:var(--lkv-primary)]/10">
+                            <span className="text-[12px] font-bold text-[color:var(--lkv-primary)]">{report.score}</span>
                           </div>
-                          <span style={{ fontSize: '10px', color: '#6B7A72' }}>Score</span>
+                          <span className="text-[10px] text-[color:var(--lkv-text-muted)]">Score</span>
                         </div>
-                        <span style={{ fontSize: '11px', fontWeight: 500, color: report.budgetDelta > 0 ? '#DC2626' : report.budgetDelta < 0 ? '#059669' : '#6B7A72' }}>
-                          {report.budgetDelta !== 0 ? `${report.budgetDelta > 0 ? '+' : ''}${report.budgetDelta}\u20ac vs budget` : 'Budget non renseign\u00e9'}
+                        <span
+                          className={`text-[11px] font-medium ${
+                            report.budgetDelta > 0
+                              ? 'text-[color:var(--lkv-danger)]'
+                              : report.budgetDelta < 0
+                              ? 'text-[color:var(--lkv-success)]'
+                              : 'text-[color:var(--lkv-text-muted)]'
+                          }`}
+                        >
+                          {report.budgetDelta !== 0 ? `${report.budgetDelta > 0 ? '+' : ''}${report.budgetDelta}€ vs budget` : 'Budget non renseigné'}
                         </span>
                       </div>
-                    </div>
+                    </Card>
                   ))}
                   {reports.length > 10 && (
-                    <p style={{ fontSize: '11px', color: '#6B7A72', textAlign: 'center', fontFamily: 'Georgia, serif', fontStyle: 'italic', margin: 0 }}>
-                      +{reports.length - 10} autre(s) exp&eacute;dition(s)
+                    <p className="m-0 text-center font-serif text-[11px] italic text-[color:var(--lkv-text-muted)]">
+                      +{reports.length - 10} autre(s) expédition(s)
                     </p>
                   )}
                 </div>
@@ -867,82 +874,76 @@ export default function RapportExpeditionPage() {
 
           {/* ── IA TAB (Mobile) ── */}
           {activeTab === 'ia' && (
-            <div style={{ padding: '16px' }}>
-              <div className="glass" style={{ borderRadius: '12px', overflow: 'hidden' }}>
+            <div className="p-[var(--space-4)]">
+              <Card variant="standard" className="overflow-hidden p-0">
                 {/* Header */}
-                <div style={{ padding: '12px', borderBottom: '1px solid rgba(23,64,44,0.06)', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <div style={{ width: '28px', height: '28px', borderRadius: '8px', background: '#17402C', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: '13px' }}>
-                    &#10024;
+                <div className="flex items-center gap-[10px] border-b border-[color:var(--lkv-border-subtle)] p-[var(--space-3)]">
+                  <div className="flex h-7 w-7 items-center justify-center rounded-[var(--lkv-radius-xs)] bg-[color:var(--lkv-primary)] text-[13px] text-[color:var(--lkv-text-inverted)]" aria-hidden="true">
+                    ✨
                   </div>
-                  <div style={{ flex: 1 }}>
-                    <p style={{ fontSize: '13px', fontWeight: 600, color: '#17402C', margin: 0 }}>Analyse IA</p>
-                    <p style={{ fontSize: '10px', color: '#6B7A72', margin: '1px 0 0 0' }}>Gemini &middot; Analyse personnalis&eacute;e</p>
+                  <div className="flex-1">
+                    <p className="m-0 text-[13px] font-semibold text-[color:var(--lkv-primary)]">Analyse IA</p>
+                    <p className="m-0 mt-px text-[10px] text-[color:var(--lkv-text-muted)]">Gemini · Analyse personnalisée</p>
                   </div>
-                  <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#059669', flexShrink: 0 }} />
+                  <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-[color:var(--lkv-success)]" aria-hidden="true" />
                 </div>
 
                 {/* Profile context */}
-                <div style={{ padding: '12px', borderBottom: '1px solid rgba(23,64,44,0.06)' }}>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px' }}>
-                    <div className="glass-sub-card" style={{ padding: '8px', borderRadius: '8px', textAlign: 'center' }}>
-                      <p style={{ fontSize: '16px', fontWeight: 700, color: '#17402C', margin: '0 0 2px 0', fontFamily: 'ui-monospace, monospace' }}>{reports.length}</p>
-                      <p style={{ fontSize: '9px', color: '#6B7A72', margin: 0 }}>Exp&eacute;ditions</p>
+                <div className="border-b border-[color:var(--lkv-border-subtle)] p-[var(--space-3)]">
+                  <div className="grid grid-cols-3 gap-[var(--space-2)]">
+                    <div className="rounded-[var(--lkv-radius-xs)] bg-[color:var(--lkv-surface-muted)] p-[var(--space-2)] text-center">
+                      <p className="mb-0.5 font-mono text-[16px] font-bold text-[color:var(--lkv-primary)]">{reports.length}</p>
+                      <p className="m-0 text-[9px] text-[color:var(--lkv-text-muted)]">Expéditions</p>
                     </div>
-                    <div className="glass-sub-card" style={{ padding: '8px', borderRadius: '8px', textAlign: 'center' }}>
-                      <p style={{ fontSize: '16px', fontWeight: 700, color: '#17402C', margin: '0 0 2px 0', fontFamily: 'ui-monospace, monospace' }}>{avgScore > 0 ? `${avgScore}/100` : '\u2014'}</p>
-                      <p style={{ fontSize: '9px', color: '#6B7A72', margin: 0 }}>Score</p>
+                    <div className="rounded-[var(--lkv-radius-xs)] bg-[color:var(--lkv-surface-muted)] p-[var(--space-2)] text-center">
+                      <p className="mb-0.5 font-mono text-[16px] font-bold text-[color:var(--lkv-primary)]">{avgScore > 0 ? `${avgScore}/100` : '—'}</p>
+                      <p className="m-0 text-[9px] text-[color:var(--lkv-text-muted)]">Score</p>
                     </div>
-                    <div className="glass-sub-card" style={{ padding: '8px', borderRadius: '8px', textAlign: 'center' }}>
-                      <p style={{ fontSize: '16px', fontWeight: 700, color: '#17402C', margin: '0 0 2px 0', fontFamily: 'ui-monospace, monospace' }}>{userGear.length}</p>
-                      <p style={{ fontSize: '9px', color: '#6B7A72', margin: 0 }}>&Eacute;quipements</p>
+                    <div className="rounded-[var(--lkv-radius-xs)] bg-[color:var(--lkv-surface-muted)] p-[var(--space-2)] text-center">
+                      <p className="mb-0.5 font-mono text-[16px] font-bold text-[color:var(--lkv-primary)]">{userGear.length}</p>
+                      <p className="m-0 text-[9px] text-[color:var(--lkv-text-muted)]">Équipements</p>
                     </div>
                   </div>
                   {reports.length === 0 && (
-                    <div style={{ marginTop: '8px', padding: '8px', background: '#FEF3C7', borderRadius: '8px', border: '1px solid #FDE68A' }}>
-                      <p style={{ fontSize: '11px', color: '#92400E', margin: 0 }}>Cr&eacute;ez votre premier rapport pour obtenir une analyse personnalis&eacute;e.</p>
+                    <div className="mt-[var(--space-2)] rounded-[var(--lkv-radius-xs)] border border-[color:var(--lkv-warning)]/40 bg-[color:var(--lkv-warning-bg)] p-[var(--space-2)]">
+                      <p className="m-0 text-[11px] text-[color:var(--lkv-warning-dark)]">Créez votre premier rapport pour obtenir une analyse personnalisée.</p>
                     </div>
                   )}
                 </div>
 
                 {/* Chat messages */}
                 {chatMessages.length > 0 && (
-                  <div style={{ padding: '12px', maxHeight: '240px', overflowY: 'auto', borderBottom: '1px solid rgba(23,64,44,0.06)', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  <div className="flex max-h-[240px] flex-col gap-[10px] overflow-y-auto border-b border-[color:var(--lkv-border-subtle)] p-[var(--space-3)]">
                     {chatMessages.map((msg, i) => (
-                      <div key={i} style={{ display: 'flex', gap: '8px', flexDirection: msg.role === 'user' ? 'row-reverse' : 'row' }}>
-                        <div style={{
-                          width: '24px',
-                          height: '24px',
-                          borderRadius: '6px',
-                          background: msg.role === 'user' ? '#17402C' : 'rgba(23,64,44,0.1)',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          flexShrink: 0,
-                          fontSize: '10px',
-                          color: msg.role === 'user' ? '#fff' : '#17402C',
-                        }}>
+                      <div key={i} className={`flex gap-[var(--space-2)] ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
+                        <div
+                          className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-[var(--lkv-radius-xs)] text-[10px] ${
+                            msg.role === 'user'
+                              ? 'bg-[color:var(--lkv-primary)] text-[color:var(--lkv-text-inverted)]'
+                              : 'bg-[color:var(--lkv-primary)]/10 text-[color:var(--lkv-primary)]'
+                          }`}
+                          aria-hidden="true"
+                        >
                           {msg.role === 'user' ? 'U' : 'AI'}
                         </div>
-                        <div style={{
-                          maxWidth: '75%',
-                          padding: '8px 12px',
-                          borderRadius: '10px',
-                          fontSize: '12px',
-                          lineHeight: 1.4,
-                          background: msg.role === 'user' ? '#17402C' : '#F4F1EA',
-                          color: msg.role === 'user' ? '#fff' : '#17402C',
-                        }}>
+                        <div
+                          className={`max-w-[75%] rounded-[var(--lkv-radius-sm)] px-[var(--space-3)] py-[var(--space-2)] text-[12px] leading-[var(--leading-snug)] ${
+                            msg.role === 'user'
+                              ? 'bg-[color:var(--lkv-primary)] text-[color:var(--lkv-text-inverted)]'
+                              : 'bg-[color:var(--stone-100)] text-[color:var(--lkv-primary)]'
+                          }`}
+                        >
                           {msg.content}
                         </div>
                       </div>
                     ))}
                     {isLoading && (
-                      <div style={{ display: 'flex', gap: '8px' }}>
-                        <div style={{ width: '24px', height: '24px', borderRadius: '6px', background: 'rgba(23,64,44,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', color: '#17402C' }}>AI</div>
-                        <div style={{ padding: '8px 12px', borderRadius: '10px', background: '#F4F1EA', display: 'flex', gap: '3px', alignItems: 'center' }}>
-                          <span style={{ width: '5px', height: '5px', background: '#17402C', borderRadius: '50%', animation: 'bounce 1s infinite' }} />
-                          <span style={{ width: '5px', height: '5px', background: '#17402C', borderRadius: '50%', animation: 'bounce 1s infinite 150ms' }} />
-                          <span style={{ width: '5px', height: '5px', background: '#17402C', borderRadius: '50%', animation: 'bounce 1s infinite 300ms' }} />
+                      <div className="flex gap-[var(--space-2)]">
+                        <div className="flex h-6 w-6 items-center justify-center rounded-[var(--lkv-radius-xs)] bg-[color:var(--lkv-primary)]/10 text-[10px] text-[color:var(--lkv-primary)]" aria-hidden="true">AI</div>
+                        <div className="flex items-center gap-[3px] rounded-[var(--lkv-radius-sm)] bg-[color:var(--stone-100)] px-[var(--space-3)] py-[var(--space-2)]" role="status" aria-label="Analyse en cours">
+                          <span className="h-[5px] w-[5px] animate-pulse rounded-full bg-[color:var(--lkv-primary)]" />
+                          <span className="h-[5px] w-[5px] animate-pulse rounded-full bg-[color:var(--lkv-primary)]" />
+                          <span className="h-[5px] w-[5px] animate-pulse rounded-full bg-[color:var(--lkv-primary)]" />
                         </div>
                       </div>
                     )}
@@ -950,51 +951,40 @@ export default function RapportExpeditionPage() {
                 )}
 
                 {/* Input */}
-                <div style={{ padding: '12px' }}>
-                  <div style={{ display: 'flex', gap: '8px' }}>
+                <div className="p-[var(--space-3)]">
+                  <div className="flex gap-[var(--space-2)]">
                     <input
                       type="text"
                       value={userInput}
                       onChange={(e) => setUserInput(e.target.value)}
                       onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleSend()}
                       placeholder="Posez une question..."
-                      style={{
-                        flex: 1,
-                        padding: '10px 12px',
-                        background: '#F4F1EA',
-                        border: '1px solid rgba(23,64,44,0.06)',
-                        borderRadius: '10px',
-                        fontSize: '12px',
-                        color: '#17402C',
-                        outline: 'none',
-                      }}
+                      aria-label="Votre question à l'analyse IA"
+                      className="min-h-[var(--lkv-touch-min)] flex-1 rounded-[var(--lkv-radius-sm)] border border-[color:var(--lkv-border-subtle)] bg-[color:var(--stone-100)] px-[var(--space-3)] py-[10px] text-[12px] text-[color:var(--lkv-primary)] outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]"
                     />
-                    <button
+                    <IconButton
                       onClick={handleSend}
                       disabled={isLoading || !userInput.trim()}
-                      className="glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8 disabled:opacity-50"
+                      aria-label="Envoyer la question"
+                      className="bg-[color:var(--lkv-primary)] text-[color:var(--lkv-text-inverted)]"
                     >
-                      &#10148;
-                    </button>
+                      ➤
+                    </IconButton>
                   </div>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '8px' }}>
+                  <div className="mt-[var(--space-2)] flex flex-wrap gap-[6px]">
                     {['Que retirer de mon kit ?', 'Quelle destination ensuite ?', 'Comment optimiser mon budget ?'].map((prompt) => (
-                      <button
-                        key={prompt}
-                        onClick={() => setUserInput(prompt)}
-                        className="glass-capsule-btn text-[10px]"
-                      >
+                      <Chip key={prompt} onClick={() => setUserInput(prompt)} className="text-[10px]">
                         {prompt}
-                      </button>
+                      </Chip>
                     ))}
                   </div>
                 </div>
-              </div>
+              </Card>
             </div>
           )}
 
           {/* Footer spacer */}
-          <div style={{ height: 'calc(62px + 12px + 12px + env(safe-area-inset-bottom))' }} />
+          <div className="h-[calc(var(--nav-height)+var(--space-6)+var(--safe-bottom))]" />
         </MobilePageShell>
       </div>
 

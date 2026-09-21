@@ -6,6 +6,7 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import Icon from '@/components/ui/AppIcon';
 import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
+import { Button, Card, Chip } from '@/components/ui';
 
 interface FAQItem {
   q: string;
@@ -71,131 +72,92 @@ const FAQ_DATA: FAQCategory[] = [
 function FAQAccordion({ items }: { items: FAQItem[] }) {
   const [open, setOpen] = useState<number | null>(null);
   return (
-    <div className="flex flex-col gap-2.5">
+    <div className="flex flex-col gap-[var(--space-2)]">
       {items.map((item, i) => (
-        <div key={i} className="glass-sub-card overflow-hidden">
-          <button onClick={() => setOpen(open === i ? null : i)} className="w-full flex items-center justify-between gap-3 min-h-[44px] px-4 py-2.5 text-left text-[#17402C]">
-            <span className="font-medium text-sm">{item.q}</span>
-            <Icon name="ChevronDownIcon" size={16} variant="outline" className={`flex-shrink-0 transition-transform duration-200 ${open === i ? 'rotate-180' : ''}`} />
+        <Card key={i} variant="standard" className="overflow-hidden p-0">
+          <button
+            type="button"
+            onClick={() => setOpen(open === i ? null : i)}
+            aria-expanded={open === i}
+            className="flex min-h-[var(--lkv-touch-min)] w-full items-center justify-between gap-[var(--space-3)] px-[var(--space-4)] py-[10px] text-left text-[color:var(--lkv-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]"
+          >
+            <span className="text-[length:var(--lkv-text-body-sm)] font-medium">{item.q}</span>
+            <Icon name="ChevronDownIcon" size={16} variant="outline" className={`shrink-0 transition-transform duration-200 ${open === i ? 'rotate-180' : ''}`} />
           </button>
           {open === i && (
-            <div className="px-5 pb-4 text-sm text-[#365233] leading-relaxed border-t border-white/40" style={{ background: 'rgba(255,255,255,0.06)', paddingTop: 12 }}>
+            <div className="border-t border-[color:var(--lkv-border-subtle)] bg-[color:var(--lkv-surface-muted)] px-[var(--space-5)] pb-[var(--space-4)] pt-[var(--space-3)] text-[length:var(--lkv-text-body-sm)] leading-[var(--leading-relaxed)] text-[color:var(--lkv-text-secondary)]">
               {item.a}
             </div>
           )}
-        </div>
+        </Card>
       ))}
     </div>
   );
 }
 
-function FAQAccordionMobile({ items }: { items: FAQItem[] }) {
-  const [open, setOpen] = useState<number | null>(null);
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-      {items.map((item, i) => (
-        <div key={i} className="glass-sub-card overflow-hidden">
-          <button onClick={() => setOpen(open === i ? null : i)} className="w-full flex items-center justify-between gap-3 min-h-[44px] px-4 py-2.5 text-left text-[#17402C]">
-            <span style={{ fontSize: '13px', fontWeight: 500, flex: 1 }}>{item.q}</span>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#17402C" strokeWidth="2" style={{ flexShrink: 0, transform: open === i ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}>
-              <polyline points="6 9 12 15 18 9" />
-            </svg>
-          </button>
-          {open === i && <div style={{ padding: '0 16px 12px 16px', fontSize: '13px', color: '#365233', lineHeight: '1.6', borderTop: '1px solid rgba(255,255,255,0.40)', paddingTop: '12px' }}>{item.a}</div>}
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function FAQPageContent() {
+function FAQContent({ mobile = false }: { mobile?: boolean }) {
   const [activeCategory, setActiveCategory] = useState(0);
+
+  const categories = (
+    <div className={`flex flex-wrap gap-[var(--space-2)] ${mobile ? 'mb-[var(--space-5)]' : 'shrink-0'}`}>
+      {FAQ_DATA.map((cat, i) => (
+        <Chip key={i} selected={activeCategory === i} onClick={() => setActiveCategory(i)} icon={<Icon name={cat.icon} size={14} variant="outline" />}>
+          {cat.title}
+        </Chip>
+      ))}
+    </div>
+  );
+
+  const helpCard = (
+    <Card variant="standard" className="flex flex-col items-center gap-[var(--space-4)] p-[var(--space-5)] text-center sm:flex-row sm:text-left">
+      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[var(--lkv-radius-sm)] bg-[color:var(--lkv-surface-muted)]">
+        <Icon name="ChatBubbleLeftRightIcon" size={22} className="text-[color:var(--lkv-secondary)]" variant="outline" />
+      </div>
+      <div className="flex-1">
+        <p className="font-semibold text-[color:var(--lkv-primary)]">Vous n&apos;avez pas trouvé votre réponse ?</p>
+        <p className="text-[length:var(--lkv-text-body-sm)] text-[color:var(--lkv-text-secondary)]">Notre équipe répond sous 48 heures ouvrées.</p>
+      </div>
+      <Link href="/contact">
+        <Button variant="secondary" icon={<Icon name="EnvelopeIcon" size={14} variant="outline" />}>
+          Nous contacter
+        </Button>
+      </Link>
+    </Card>
+  );
+
+  if (mobile) {
+    return (
+      <div className="p-[var(--space-4)]">
+        <p className="mb-[var(--space-3)] font-mono text-[length:var(--lkv-text-caption-2)] uppercase tracking-[0.14em] text-[color:var(--sage-100)]">Centre d&apos;aide</p>
+        <h1 className="mb-[var(--space-2)] font-display text-[24px] font-extrabold text-[color:var(--lkv-surface)]">Questions fréquentes</h1>
+        <p className="mb-[var(--space-5)] text-[length:var(--lkv-text-caption-1)] text-[color:var(--lkv-forest-100)]">Trouvez rapidement une réponse à votre question.</p>
+        {categories}
+        <FAQAccordion items={FAQ_DATA[activeCategory].items} />
+        <div className="mt-[var(--space-6)]">{helpCard}</div>
+      </div>
+    );
+  }
 
   return (
     <div data-lkv-material-theme="light" className="h-dvh overflow-hidden bg-transparent">
       <Header />
       <main className="h-full overflow-hidden pt-20">
-        <div className="w-full max-w-4xl mx-auto px-6 pb-6 h-full flex flex-col gap-5">
-          <div className="flex-shrink-0">
-            <p className="glass-eyebrow mb-2" style={{ color: '#D8E5D5' }}>Centre d&apos;aide</p>
-            <h1 className="font-display text-3xl md:text-4xl font-bold tracking-tight text-[#EEF3EC] mb-2">Questions fréquentes</h1>
-            <p className="text-[#CCE0D4] text-sm max-w-xl leading-relaxed">
+        <div className="mx-auto flex h-full w-full max-w-4xl flex-col gap-[var(--space-5)] px-[var(--space-6)] pb-[var(--space-6)]">
+          <div className="shrink-0">
+            <p className="mb-2 font-mono text-[length:var(--lkv-text-caption-1)] uppercase tracking-widest text-[color:var(--sage-100)]">Centre d&apos;aide</p>
+            <h1 className="mb-2 font-display text-[length:var(--lkv-text-title-lg)] font-bold tracking-tight text-[color:var(--lkv-surface)]">Questions fréquentes</h1>
+            <p className="max-w-xl text-[length:var(--lkv-text-footnote)] leading-[var(--leading-relaxed)] text-[color:var(--lkv-forest-100)]">
               Trouvez rapidement une réponse à votre question. Si vous ne trouvez pas ce que vous cherchez,{' '}
-              <Link href="/contact" className="text-[#A9C6B0] font-medium underline">contactez-nous</Link>.
+              <Link href="/contact" className="font-medium text-[color:var(--lkv-forest-200)] underline">contactez-nous</Link>.
             </p>
           </div>
-
-          {/* Pills catégories */}
-          <div className="flex-shrink-0 flex flex-wrap gap-2">
-            {FAQ_DATA.map((cat, i) => (
-              <button
-                key={i}
-                onClick={() => setActiveCategory(i)}
-                className={`glass-capsule-btn ${activeCategory === i ? 'primary' : ''}`}
-                aria-pressed={activeCategory === i}
-              >
-                <Icon name={cat.icon} size={14} variant="outline" />
-                {cat.title}
-              </button>
-            ))}
-          </div>
-
-          {/* Accordéons — scroll interne uniquement */}
-          <div className="flex-1 min-h-0 overflow-y-auto pr-1 pb-2">
+          {categories}
+          <div className="min-h-0 flex-1 overflow-y-auto pb-2 pr-1">
             <FAQAccordion items={FAQ_DATA[activeCategory].items} />
           </div>
-
-          {/* Card d'aide complémentaire */}
-          <div className="glass flex-shrink-0 flex flex-col sm:flex-row items-center gap-4 p-5">
-            <div className="w-12 h-12 rounded-xl bg-white/10 border border-white/40 flex items-center justify-center flex-shrink-0">
-              <Icon name="ChatBubbleLeftRightIcon" size={22} className="text-[#5B7F55]" variant="outline" />
-            </div>
-            <div className="flex-1 text-center sm:text-left">
-              <p className="font-semibold text-[#17402C]">Vous n&apos;avez pas trouvé votre réponse ?</p>
-              <p className="text-sm text-[#5A7064]">Notre équipe répond sous 48 heures ouvrées.</p>
-            </div>
-            <Link href="/contact" className="glass-capsule-btn">
-              <Icon name="EnvelopeIcon" size={14} variant="outline" />
-              Nous contacter
-            </Link>
-          </div>
+          <div className="shrink-0">{helpCard}</div>
         </div>
       </main>
-    </div>
-  );
-}
-
-function MobileFAQContent() {
-  const [activeCategory, setActiveCategory] = useState(0);
-
-  return (
-    <div style={{ padding: '16px' }}>
-      <p style={{ fontSize: '11px', fontFamily: 'var(--font-mono)', color: '#D8E5D5', letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: '12px' }}>Centre d&apos;aide</p>
-      <h1 style={{ fontSize: '24px', fontWeight: 800, color: '#EEF3EC', marginBottom: '8px', fontFamily: 'var(--font-display)' }}>Questions fréquentes</h1>
-      <p style={{ fontSize: '13px', color: '#CCE0D4', marginBottom: '20px' }}>Trouvez rapidement une réponse à votre question.</p>
-
-      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '20px' }}>
-        {FAQ_DATA.map((cat, i) => (
-          <button
-            key={i}
-            onClick={() => setActiveCategory(i)}
-            className={`glass-capsule-btn ${activeCategory === i ? 'primary' : ''}`}
-            aria-pressed={activeCategory === i}
-          >
-            {cat.title}
-          </button>
-        ))}
-      </div>
-
-      <FAQAccordionMobile items={FAQ_DATA[activeCategory].items} />
-
-      <div className="glass-sub-card" style={{ marginTop: '24px', padding: '16px' }}>
-        <p style={{ fontSize: '14px', fontWeight: 600, color: '#17402C', marginBottom: '4px' }}>Vous n&apos;avez pas trouvé votre réponse ?</p>
-        <p style={{ fontSize: '13px', color: '#5A7064', marginBottom: '12px' }}>Notre équipe répond sous 48 heures.</p>
-        <Link href="/contact" className="glass-capsule-btn" style={{ textDecoration: 'none' }}>
-          Nous contacter
-        </Link>
-      </div>
     </div>
   );
 }
@@ -215,13 +177,13 @@ export default function FAQPage() {
 
       {/* DESKTOP */}
       <div className="hidden md:block">
-        <FAQPageContent />
+        <FAQContent />
       </div>
 
       {/* MOBILE */}
       <div className="block md:hidden">
         <MobilePageShell>
-          <MobileFAQContent />
+          <FAQContent mobile />
         </MobilePageShell>
       </div>
     </>

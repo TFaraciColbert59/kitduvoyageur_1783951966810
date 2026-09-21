@@ -114,7 +114,7 @@ export default function Header() {
   return (
     <>
       <div className="hidden md:block">
-        <header className="fixed top-3 left-1/2 -translate-x-1/2 z-[1000] w-full max-w-[880px] lg:max-w-[940px] px-3 pointer-events-none transition-all duration-300">
+        <header className="fixed top-3 left-1/2 -translate-x-1/2 z-[var(--z-sticky)] w-full max-w-[880px] lg:max-w-[940px] px-3 pointer-events-none transition-all duration-300">
           <div
             className={`w-full rounded-full px-4 py-1.5 transition-all duration-300 flex items-center justify-between gap-3 pointer-events-auto cursor-default ${
               scrolled ? 'shadow-md bg-white/90' : 'shadow-xs'
@@ -135,7 +135,7 @@ export default function Header() {
               className="flex items-center group focus-visible:outline-none opacity-100 hover:opacity-90 active:scale-95 transition-all cursor-pointer touch-manipulation py-0.5 shrink-0"
               aria-label="Accueil LKDV"
             >
-              <div className="w-8 h-8 min-w-[32px] min-h-[32px] max-w-[32px] max-h-[32px] rounded-full overflow-hidden border border-white/80 shadow-xs flex items-center justify-center bg-[#17402C]/10 group-hover:scale-105 transition-transform shrink-0">
+              <div className="w-8 h-8 min-w-[32px] min-h-[32px] max-w-[32px] max-h-[32px] rounded-full overflow-hidden border border-white/80 shadow-xs flex items-center justify-center bg-[color:var(--lkv-primary)]/10 group-hover:scale-105 transition-transform shrink-0">
                 <img
                   src="/assets/images/app_logo.png"
                   alt="LKDV"
@@ -155,7 +155,7 @@ export default function Header() {
               {pill && (
                 <span
                   aria-hidden="true"
-                  className="absolute top-0.5 bottom-0.5 rounded-full bg-[#17402C]/10 border border-[#17402C]/15 shadow-inner transition-all duration-300 ease-out"
+                  className="absolute top-0.5 bottom-0.5 rounded-full bg-[color:var(--lkv-primary)]/10 border border-[color:var(--lkv-primary)]/15 shadow-inner transition-all duration-300 ease-out"
                   style={{ left: pill.left, width: pill.width }}
                 />
               )}
@@ -181,8 +181,8 @@ export default function Header() {
                     <span
                       className={`relative z-10 transition-colors ${
                         isActive
-                          ? 'text-[#17402C] font-extrabold'
-                          : 'text-[#365233]/80 hover:text-[#17402C]'
+                          ? 'text-[color:var(--lkv-primary)] font-extrabold'
+                          : 'text-[color:var(--lkv-primary-soft)]/80 hover:text-[color:var(--lkv-primary)]'
                       }`}
                     >
                       {link.label}
@@ -198,7 +198,7 @@ export default function Header() {
                 {/* Panier */}
                 <Link
                   href="/panier"
-                  className="w-7 h-7 rounded-full hover:bg-white/30 text-[#17402C] active:opacity-70 transition-colors flex items-center justify-center relative cursor-pointer touch-manipulation"
+                  className="w-7 h-7 rounded-full hover:bg-white/30 text-[color:var(--lkv-primary)] active:opacity-70 transition-colors flex items-center justify-center relative cursor-pointer touch-manipulation"
                   aria-label="Panier"
                   title={
                     cartCount > 0
@@ -209,7 +209,7 @@ export default function Header() {
                   <LkvIcon name="bag" size={14} />
                   {cartCount > 0 && (
                     <span
-                      className="absolute top-1 right-1 w-2 h-2 rounded-full bg-[#5B7F55] ring-2 ring-white"
+                      className="absolute top-1 right-1 w-2 h-2 rounded-full bg-[color:var(--lkv-secondary)] ring-2 ring-white"
                       title={`${cartCount} article(s)`}
                     />
                   )}
@@ -218,7 +218,7 @@ export default function Header() {
                 {/* Notifications Button — hub alertes (D4) */}
                 <Link
                   href="/hub/alertes"
-                  className="w-7 h-7 rounded-full hover:bg-white/30 text-[#17402C] active:opacity-70 transition-colors flex items-center justify-center cursor-pointer touch-manipulation relative"
+                  className="w-7 h-7 rounded-full hover:bg-white/30 text-[color:var(--lkv-primary)] active:opacity-70 transition-colors flex items-center justify-center cursor-pointer touch-manipulation relative"
                   aria-label="Notifications"
                   title={
                     unreadCount > 0
@@ -229,7 +229,7 @@ export default function Header() {
                   <LkvIcon name="bell" size={14} />
                   {unreadCount > 0 && (
                     <span
-                      className="absolute top-1 right-1 w-2 h-2 rounded-full bg-[#5B7F55] ring-2 ring-white animate-pulse"
+                      className="absolute top-1 right-1 w-2 h-2 rounded-full bg-[color:var(--lkv-secondary)] ring-2 ring-white animate-pulse"
                       title={`${unreadCount} notification(s)`}
                     />
                   )}
@@ -238,7 +238,7 @@ export default function Header() {
                 {/* Messagerie Button */}
                 <Link
                   href="/messagerie"
-                  className="w-7 h-7 rounded-full hover:bg-white/30 text-[#17402C] active:opacity-70 transition-colors flex items-center justify-center cursor-pointer touch-manipulation relative"
+                  className="w-7 h-7 rounded-full hover:bg-white/30 text-[color:var(--lkv-primary)] active:opacity-70 transition-colors flex items-center justify-center cursor-pointer touch-manipulation relative"
                   aria-label="Messagerie"
                   title={
                     unreadMessagesCount > 0
@@ -258,7 +258,7 @@ export default function Header() {
                 {/* Recherche Button */}
                 <button
                   onClick={() => setSearchOpen(true)}
-                  className="w-7 h-7 rounded-full hover:bg-white/30 text-[#17402C] active:opacity-70 transition-colors flex items-center justify-center cursor-pointer touch-manipulation"
+                  className="w-7 h-7 rounded-full hover:bg-white/30 text-[color:var(--lkv-primary)] active:opacity-70 transition-colors flex items-center justify-center cursor-pointer touch-manipulation"
                   aria-label="Rechercher sur tout le site"
                   title="Rechercher sur tout le site"
                 >

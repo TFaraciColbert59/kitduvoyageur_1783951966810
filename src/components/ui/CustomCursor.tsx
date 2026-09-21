@@ -110,15 +110,15 @@ export default function CustomCursor() {
   if (isTouchDevice || !isVisible || position.x < 0 || position.y < 0) return null;
 
   return (
-    <div className="pointer-events-none fixed inset-0 z-[9999] overflow-hidden select-none">
+    <div className="pointer-events-none fixed inset-0 z-[var(--z-emergency)] overflow-hidden select-none">
       {/* Outer Smooth Lag Ring */}
       <div
         className={`fixed top-0 left-0 rounded-full border transition-all duration-200 ease-out ${
           isHovered
-            ? 'w-11 h-11 bg-[#2D6A4F]/15 border-[#2D6A4F]/60 backdrop-blur-[1px] scale-110'
+            ? 'w-11 h-11 bg-[color:var(--lkv-forest-500)]/15 border-[color:var(--lkv-forest-500)]/60 backdrop-blur-[1px] scale-110'
             : isClicked
-            ? 'w-7 h-7 bg-[#2D6A4F]/30 border-[#2D6A4F]/80 scale-90'
-            : 'w-8 h-8 bg-[#2D6A4F]/08 border-[#2D6A4F]/35'
+            ? 'w-7 h-7 bg-[color:var(--lkv-forest-500)]/30 border-[color:var(--lkv-forest-500)]/80 scale-90'
+            : 'w-8 h-8 bg-[color:var(--lkv-forest-500)]/08 border-[color:var(--lkv-forest-500)]/35'
         }`}
         style={{
           transform: `translate3d(${ringPosition.x}px, ${ringPosition.y}px, 0) translate(-50%, -50%)`,
@@ -127,11 +127,11 @@ export default function CustomCursor() {
 
       {/* Inner Precision Center Dot */}
       <div
-        className={`fixed top-0 left-0 rounded-full bg-[#17402C] transition-transform duration-100 ease-out  ${
+        className={`fixed top-0 left-0 rounded-full bg-[color:var(--lkv-primary)] transition-transform duration-100 ease-out  ${
           isHovered
-            ? 'w-2.5 h-2.5 bg-[#2D6A4F] scale-125'
+            ? 'w-2.5 h-2.5 bg-[color:var(--lkv-forest-500)] scale-125'
             : isClicked
-            ? 'w-1.5 h-1.5 bg-[#17402C] scale-75'
+            ? 'w-1.5 h-1.5 bg-[color:var(--lkv-primary)] scale-75'
             : 'w-2 h-2'
         }`}
         style={{

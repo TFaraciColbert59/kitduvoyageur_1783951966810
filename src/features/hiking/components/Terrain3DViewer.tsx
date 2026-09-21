@@ -19,11 +19,11 @@ export default function Terrain3DViewer({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-[#06120C] text-white flex flex-col justify-between select-none">
+    <div className="fixed inset-0 z-50 bg-[color:var(--lkv-forest-950)] text-white flex flex-col justify-between select-none">
       {/* Top Bar */}
-      <div className="p-4 flex items-center justify-between bg-[#17402C]/80 backdrop-blur-xl border-b border-white/10 z-10">
+      <div className="p-4 flex items-center justify-between bg-[color:var(--lkv-primary)]/80 backdrop-blur-xl border-b border-white/10 z-10">
         <div>
-          <div className="text-xs font-mono tracking-widest text-[#A8C8A0] uppercase">
+          <div className="text-xs font-mono tracking-widest text-[color:var(--lkv-forest-200)] uppercase">
             VUE 3D RELIEF · DIGITAL TWIN
           </div>
           <h2 className="text-lg font-bold">Relief Topographique 3D</h2>
@@ -37,28 +37,28 @@ export default function Terrain3DViewer({
       </div>
 
       {/* 3D Simulated Mesh Canvas Box */}
-      <div className="flex-1 relative flex items-center justify-center overflow-hidden bg-gradient-to-b from-[#17402C] via-[#06120C] to-[#06120C]">
+      <div className="flex-1 relative flex items-center justify-center overflow-hidden bg-gradient-to-b from-[color:var(--lkv-primary)] via-[color:var(--lkv-forest-950)] to-[color:var(--lkv-forest-950)]">
         {/* Animated Grid & Terrain Contours */}
         <motion.div
           animate={{ rotateX: [60, 65, 60], rotateZ: [0, 10, 0] }}
           transition={{ duration: 12, repeat: Infinity, ease: 'easeInOut' }}
-          className="w-[600px] h-[600px] rounded-full border border-[#A8C8A0]/20 flex items-center justify-center relative "
+          className="w-[600px] h-[600px] rounded-full border border-[color:var(--lkv-forest-200)]/20 flex items-center justify-center relative "
           style={{ transformStyle: 'preserve-3d', perspective: 1000 }}
         >
           {/* Concentric Wireframe Terrain Rings */}
-          <div className="absolute inset-10 rounded-full border border-[#A8C8A0]/30 border-dashed animate-spin" style={{ animationDuration: '40s' }} />
-          <div className="absolute inset-24 rounded-full border border-[#C6DCBE]/40" />
-          <div className="absolute inset-40 rounded-full border-2 border-[#E8B87A]" />
+          <div className="absolute inset-10 rounded-full border border-[color:var(--lkv-forest-200)]/30 border-dashed animate-spin" style={{ animationDuration: '40s' }} />
+          <div className="absolute inset-24 rounded-full border border-[color:var(--lkv-forest-100)]/40" />
+          <div className="absolute inset-40 rounded-full border-2 border-[var(--lkv-warning)]" />
 
           {/* User Location Pulse Marker */}
-          <div className="w-8 h-8 rounded-full bg-[#E8B87A] border-4 border-white  flex items-center justify-center animate-bounce z-20">
+          <div className="w-8 h-8 rounded-full bg-[var(--lkv-warning)] border-4 border-white  flex items-center justify-center animate-bounce z-20">
             <span className="text-xs">🥾</span>
           </div>
         </motion.div>
 
         {/* Floating Info Overlay */}
-        <div className="absolute bottom-6 left-6 right-6 p-4 bg-[#17402C]/90 backdrop-blur-2xl border border-white/15 rounded-[0.75rem] space-y-1.5 ">
-          <div className="flex justify-between items-center text-xs font-mono text-[#A8C8A0]">
+        <div className="absolute bottom-6 left-6 right-6 p-4 bg-[color:var(--lkv-primary)]/90 backdrop-blur-2xl border border-white/15 rounded-[var(--lkv-radius-sm)] space-y-1.5 ">
+          <div className="flex justify-between items-center text-xs font-mono text-[color:var(--lkv-forest-200)]">
             <span>DÉNIVELÉ +: +{elevationGainM != null ? Math.round(elevationGainM) : '—'} m</span>
           </div>
           <div className="text-sm font-medium">

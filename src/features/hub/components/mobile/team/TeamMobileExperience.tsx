@@ -4,7 +4,7 @@ import { useMemo, useState, useTransition, type FormEvent } from 'react';
 import { Dog, HeartPulse, Plus, UserPlus, X } from 'lucide-react';
 import { ConfirmDialog } from '@/features/trips/components/ConfirmDialog';
 import { MemberProfileBadges } from '@/features/trips/components/MemberProfileBadges';
-import { Badge, Button, IconButton, type BadgeTone } from '@/components/ui';
+import { Badge, Button, IconButton, Switch, type BadgeTone } from '@/components/ui';
 import type { TripFull } from '@/features/trips/types/trip.types';
 import type { HumanParticipant } from '@/features/participants/types/participant.types';
 import { useParticipantsStore } from '@/features/participants/stores/useParticipantsStore';
@@ -395,19 +395,25 @@ export function TeamMobileExperience({ trip }: TeamMobileExperienceProps) {
                       style={{ width: `${Math.min(100, Math.max(0, load.pct))}%` }}
                     />
                   </div>
-                  <Button
-                    variant={dog.isCarryingPack ? 'primary' : 'secondary'}
-                    role="switch"
-                    aria-checked={dog.isCarryingPack}
-                    aria-label={`${dog.name} porte le sac`}
-                    onClick={() => {
-                      triggerHaptic('selection');
-                      updateDog(dog.id, { isCarryingPack: !dog.isCarryingPack });
-                    }}
-                    className="mt-auto min-h-[44px] !py-2 text-[10.5px] font-bold"
-                  >
-                    {dog.isCarryingPack ? 'Porte le sac ✓' : 'Sac au repos'}
-                  </Button>
+                  <div className="mt-auto flex items-center justify-between gap-2">
+                    <span
+                      className={`text-[10.5px] font-bold ${
+                        dog.isCarryingPack
+                          ? 'text-[var(--lkv-primary)]'
+                          : 'text-[var(--lkv-text-primary)]/75'
+                      }`}
+                    >
+                      {dog.isCarryingPack ? 'Porte le sac' : 'Sac au repos'}
+                    </span>
+                    <Switch
+                      checked={dog.isCarryingPack}
+                      aria-label={`${dog.name} porte le sac`}
+                      onCheckedChange={(next) => {
+                        triggerHaptic('selection');
+                        updateDog(dog.id, { isCarryingPack: next });
+                      }}
+                    />
+                  </div>
                 </div>
               </li>
             );

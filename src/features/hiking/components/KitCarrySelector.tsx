@@ -56,8 +56,8 @@ export default function KitCarrySelector({ kitId, onSelect, disabled }: KitCarry
   if (kits.length === 0) return null;
 
   return (
-    <div className="fixed top-24 left-4 z-20 w-72 rounded-2xl bg-[#EEF3EC]/95 backdrop-blur-md border border-[#A3C4A3]/40 shadow-lg p-4">
-      <div className="font-mono text-[10px] tracking-[0.18em] uppercase text-[#6B7A72]">
+    <div className="fixed top-24 left-4 z-20 w-72 rounded-2xl bg-[color:var(--lkv-surface)]/95 backdrop-blur-md border border-[color:var(--lkv-forest-200)]/40 shadow-lg p-4">
+      <div className="font-mono text-[10px] tracking-[0.18em] uppercase text-[color:var(--lkv-text-muted)]">
         Emporter un kit ?
       </div>
       <div className="flex flex-col gap-1.5 mt-2.5 max-h-52 overflow-y-auto pr-0.5">
@@ -69,13 +69,13 @@ export default function KitCarrySelector({ kitId, onSelect, disabled }: KitCarry
               onClick={() => onSelect(selected ? null : k.id)}
               className={`text-left px-3 py-2 rounded-xl border transition-colors ${
                 selected
-                  ? 'bg-[#17402C] border-[#17402C] text-white'
-                  : 'bg-white border-[#A3C4A3]/50 text-[#0B1F17] hover:border-[#17402C]'
+                  ? 'bg-[color:var(--lkv-primary)] border-[color:var(--lkv-primary)] text-white'
+                  : 'bg-white border-[color:var(--lkv-forest-200)]/50 text-[color:var(--lkv-forest-950)] hover:border-[color:var(--lkv-primary)]'
               }`}
             >
               <div className="flex items-center justify-between gap-2">
                 <span className="text-xs font-medium truncate">{k.name}</span>
-                <span className={`font-mono text-[10px] ${selected ? 'text-[#A3C4A3]' : 'text-[#6B7A72]'}`}>
+                <span className={`font-mono text-[10px] ${selected ? 'text-[color:var(--lkv-forest-200)]' : 'text-[color:var(--lkv-text-muted)]'}`}>
                   {(k.total_weight_g / 1000).toFixed(1)} kg · {k.item_count}
                 </span>
               </div>
@@ -87,13 +87,13 @@ export default function KitCarrySelector({ kitId, onSelect, disabled }: KitCarry
         <div className="mt-2 flex items-center justify-between gap-2">
           <button
             onClick={() => openKit(kitId, 'cockpit')}
-            className="flex-1 py-1.5 rounded-lg text-[11px] font-medium text-[#17402C] hover:bg-[#EDF3ED] transition-colors"
+            className="flex-1 py-1.5 rounded-lg text-[11px] font-medium text-[color:var(--lkv-primary)] hover:bg-[color:var(--lkv-surface-muted)] transition-colors"
           >
             Voir la fiche →
           </button>
           <button
             onClick={() => onSelect(null)}
-            className="flex-1 py-1.5 rounded-lg text-[11px] font-medium text-[#6B7A72] hover:text-[#17402C] transition-colors"
+            className="flex-1 py-1.5 rounded-lg text-[11px] font-medium text-[color:var(--lkv-text-muted)] hover:text-[color:var(--lkv-primary)] transition-colors"
           >
             Retirer le kit
           </button>

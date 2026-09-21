@@ -71,13 +71,13 @@ export default function SmartImage({
   if (hasError || !imgSrc) {
     return (
       <div
-        className={`relative flex flex-col items-center justify-center bg-gradient-to-br from-[#17402C]/10 via-[#EEF3EC] to-[#5B7F55]/15 border border-white/60 text-[#17402C] overflow-hidden ${className}`}
+        className={`relative flex flex-col items-center justify-center bg-gradient-to-br from-[color:var(--lkv-primary)]/10 via-[color:var(--lkv-surface)] to-[color:var(--lkv-secondary)]/15 border border-white/60 text-[color:var(--lkv-primary)] overflow-hidden ${className}`}
         style={aspectRatio ? { aspectRatio } : undefined}
       >
         <div className="w-10 h-10 rounded-full bg-white/70 backdrop-blur-md flex items-center justify-center shadow-2xs mb-1">
-          {fallbackIcon || <Icon name="mountain" size={18} className="text-[#17402C]" />}
+          {fallbackIcon || <Icon name="mountain" size={18} className="text-[color:var(--lkv-primary)]" />}
         </div>
-        <span className="text-[10px] font-mono font-bold tracking-wider uppercase text-[#5A7064]">
+        <span className="text-[10px] font-mono font-bold tracking-wider uppercase text-[color:var(--lkv-text-secondary)]">
           {alt || 'LKDV Expédition'}
         </span>
       </div>
@@ -90,7 +90,7 @@ export default function SmartImage({
       style={aspectRatio ? { aspectRatio } : undefined}
     >
       {isLoading && (
-        <div className="absolute inset-0 bg-[#EAE6DF]/60 backdrop-blur-xs animate-pulse z-10" />
+        <div className="absolute inset-0 bg-[color:var(--stone-200)]/60 backdrop-blur-xs animate-pulse z-10" />
       )}
       <img
         ref={imgRef}

@@ -15,7 +15,7 @@ interface PaysDestinationsViewProps {
 
 export default function PaysDestinationsView({ country, klookBlock }: PaysDestinationsViewProps) {
   return (
-    <div className="space-y-4 font-sans text-[#17402C]">
+    <div className="space-y-4 font-sans text-[color:var(--lkv-primary)]">
       <PaysRegionsList countryCode={country.code} />
 
       <SectionBlocks countryCode={country.code} sectionId="destinations" countryContent={country.country_content ?? null} />

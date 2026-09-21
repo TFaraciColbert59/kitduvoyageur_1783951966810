@@ -24,18 +24,18 @@ const STATIC_DISPLACEMENT_MAP =
     `<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
       <defs>
         <linearGradient id="rx" x1="0" y1="0" x2="1" y2="0">
-          <stop offset="0%" stop-color="#ff8080"/><stop offset="50%" stop-color="#808080"/><stop offset="100%" stop-color="#ff8080"/>
+          <stop offset="0%" stop-color="var(--lkv-danger)"/><stop offset="50%" stop-color="var(--lkv-text-muted)"/><stop offset="100%" stop-color="var(--lkv-danger)"/>
         </linearGradient>
         <linearGradient id="by" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stop-color="#8080ff"/><stop offset="50%" stop-color="#808080"/><stop offset="100%" stop-color="#8080ff"/>
+          <stop offset="0%" stop-color="var(--lkv-info)"/><stop offset="50%" stop-color="var(--lkv-text-muted)"/><stop offset="100%" stop-color="var(--lkv-info)"/>
         </linearGradient>
         <filter id="soft"><feGaussianBlur stdDeviation="30"/></filter>
         <mask id="edge">
-          <rect width="512" height="512" fill="#000"/>
-          <rect x="26" y="26" width="460" height="460" rx="120" fill="none" stroke="#fff" stroke-width="66" filter="url(#soft)"/>
+          <rect width="512" height="512" fill="var(--lkv-forest-950)"/>
+          <rect x="26" y="26" width="460" height="460" rx="120" fill="none" stroke="var(--lkv-text-inverted)" stroke-width="66" filter="url(#soft)"/>
         </mask>
       </defs>
-      <rect width="512" height="512" fill="#808080"/>
+      <rect width="512" height="512" fill="var(--lkv-text-muted)"/>
       <rect width="512" height="512" fill="url(#rx)" mask="url(#edge)"/>
       <rect width="512" height="512" fill="url(#by)" mask="url(#edge)" style="mix-blend-mode:screen"/>
     </svg>`
@@ -517,7 +517,7 @@ const LiquidGlass = forwardRef<HTMLElement, LiquidGlassProps>(function LiquidGla
             pointerEvents: "none",
             mixBlendMode: "screen",
             opacity: 0.85,
-            WebkitMask: "linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0)",
+            WebkitMask: "linear-gradient(var(--lkv-forest-950) 0 0) content-box, linear-gradient(var(--lkv-forest-950) 0 0)",
             WebkitMaskComposite: "xor",
             maskComposite: "exclude",
             boxShadow:
@@ -540,7 +540,7 @@ const LiquidGlass = forwardRef<HTMLElement, LiquidGlassProps>(function LiquidGla
             pointerEvents: "none",
             mixBlendMode: "overlay",
             opacity: 0.6,
-            WebkitMask: "linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0)",
+            WebkitMask: "linear-gradient(var(--lkv-forest-950) 0 0) content-box, linear-gradient(var(--lkv-forest-950) 0 0)",
             WebkitMaskComposite: "xor",
             maskComposite: "exclude",
             boxShadow:

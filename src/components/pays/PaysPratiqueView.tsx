@@ -25,12 +25,12 @@ function FormattedContent({ text, className = '' }: { text: string; className?: 
   const paragraphs = text.split('\n\n').filter(Boolean);
 
   return (
-    <div className={`space-y-2 text-xs text-[#2D4536] leading-relaxed ${className}`}>
+    <div className={`space-y-2 text-xs text-[color:var(--lkv-primary-soft)] leading-relaxed ${className}`}>
       {paragraphs.map((p, pIdx) => (
         <p key={pIdx}>
           {p.split(/(\*\*.*?\*\*)/g).map((part, i) =>
             part.startsWith('**') && part.endsWith('**') ? (
-              <strong key={i} className="font-bold text-[#17402C]">
+              <strong key={i} className="font-bold text-[color:var(--lkv-primary)]">
                 {part.slice(2, -2)}
               </strong>
             ) : (
@@ -104,75 +104,75 @@ export default function PaysPratiqueView({ country, isMobile = false }: PaysPrat
   const hasPracticalSection = (transport && transport.content_md) || (budget && budget.content_md) || (sante && sante.content_md) || (etiquette && etiquette.content_md);
 
   return (
-    <div className="space-y-6 font-sans text-[#17402C]">
+    <div className="space-y-6 font-sans text-[color:var(--lkv-primary)]">
       {/* ══════════════════════════════════════════════════════════════════
           1. FICHE D'IDENTITÉ & REPÈRES OFFICIELS (Territoire certifié)
          ══════════════════════════════════════════════════════════════════ */}
       <div className="glass p-4 sm:p-5 space-y-3">
-        <div className="flex items-center justify-between pb-2.5 border-b border-[#17402C]/10">
+        <div className="flex items-center justify-between pb-2.5 border-b border-[color:var(--lkv-primary)]/10">
           <div className="flex items-center gap-2.5">
-            <div className="w-7 h-7 rounded-lg bg-[#5B7F55]/15 text-[#5B7F55] flex items-center justify-center font-bold text-xs shadow-2xs">
+            <div className="w-7 h-7 rounded-lg bg-[color:var(--lkv-secondary)]/15 text-[color:var(--lkv-secondary)] flex items-center justify-center font-bold text-xs shadow-2xs">
               🌍
             </div>
             <div>
-              <h3 className="font-display font-bold text-sm sm:text-base text-[#17402C]">
+              <h3 className="font-display font-bold text-sm sm:text-base text-[color:var(--lkv-primary)]">
                 Fiche d'identité &amp; Repères officiels
               </h3>
-              <p className="text-[9.5px] text-[#5A7064] font-mono">Données géographiques et territoriales certifiées</p>
+              <p className="text-[9.5px] text-[color:var(--lkv-text-secondary)] font-mono">Données géographiques et territoriales certifiées</p>
             </div>
           </div>
-          <span className="glass-pill text-[9px] font-mono font-bold text-[#17402C]">
+          <span className="glass-pill text-[9px] font-mono font-bold text-[color:var(--lkv-primary)]">
             ISO {country.code} {country.iso_a3 ? `· ${country.iso_a3}` : ''}
           </span>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 text-xs">
           <div className="glass-sub-card p-3 space-y-1">
-            <span className="text-[#5A7064] text-[9.5px] font-semibold uppercase tracking-wider block">Nom officiel</span>
-            <span className="font-bold text-[#17402C] text-sm block truncate">
+            <span className="text-[color:var(--lkv-text-secondary)] text-[9.5px] font-semibold uppercase tracking-wider block">Nom officiel</span>
+            <span className="font-bold text-[color:var(--lkv-primary)] text-sm block truncate">
               {country.nom} {country.nom_en && country.nom_en.toLowerCase() !== country.nom.toLowerCase() ? `(${country.nom_en})` : ''}
             </span>
           </div>
 
           <div className="glass-sub-card p-3 space-y-1">
-            <span className="text-[#5A7064] text-[9.5px] font-semibold uppercase tracking-wider block">Capitale</span>
-            <span className="font-bold text-[#17402C] text-sm block truncate" title={country.capitale}>
+            <span className="text-[color:var(--lkv-text-secondary)] text-[9.5px] font-semibold uppercase tracking-wider block">Capitale</span>
+            <span className="font-bold text-[color:var(--lkv-primary)] text-sm block truncate" title={country.capitale}>
               {country.capitale}
             </span>
           </div>
 
           <div className="glass-sub-card p-3 space-y-1">
-            <span className="text-[#5A7064] text-[9.5px] font-semibold uppercase tracking-wider block">Continent &amp; Région</span>
-            <span className="font-bold text-[#17402C] text-sm block truncate">
+            <span className="text-[color:var(--lkv-text-secondary)] text-[9.5px] font-semibold uppercase tracking-wider block">Continent &amp; Région</span>
+            <span className="font-bold text-[color:var(--lkv-primary)] text-sm block truncate">
               {country.continent} · {country.region}
             </span>
           </div>
 
           <div className="glass-sub-card p-3 space-y-1">
-            <span className="text-[#5A7064] text-[9.5px] font-semibold uppercase tracking-wider block">Langues</span>
-            <span className="font-bold text-[#17402C] text-sm block truncate" title={country.langue}>
+            <span className="text-[color:var(--lkv-text-secondary)] text-[9.5px] font-semibold uppercase tracking-wider block">Langues</span>
+            <span className="font-bold text-[color:var(--lkv-primary)] text-sm block truncate" title={country.langue}>
               {country.langue}
             </span>
           </div>
 
           <div className="glass-sub-card p-3 space-y-1">
-            <span className="text-[#5A7064] text-[9.5px] font-semibold uppercase tracking-wider block">Superficie</span>
-            <span className="font-mono font-bold text-[#17402C] text-sm block">
+            <span className="text-[color:var(--lkv-text-secondary)] text-[9.5px] font-semibold uppercase tracking-wider block">Superficie</span>
+            <span className="font-mono font-bold text-[color:var(--lkv-primary)] text-sm block">
               {country.superficie_detail}
             </span>
           </div>
 
           <div className="glass-sub-card p-3 space-y-1">
-            <span className="text-[#5A7064] text-[9.5px] font-semibold uppercase tracking-wider block">Devise &amp; Fuseau</span>
-            <span className="font-bold text-[#17402C] text-sm block truncate">
+            <span className="text-[color:var(--lkv-text-secondary)] text-[9.5px] font-semibold uppercase tracking-wider block">Devise &amp; Fuseau</span>
+            <span className="font-bold text-[color:var(--lkv-primary)] text-sm block truncate">
               {country.monnaie || country.monnaie_nom} · {country.fuseau}
             </span>
           </div>
         </div>
 
         {country.sources_list && country.sources_list.length > 0 && (
-          <div className="pt-2.5 border-t border-[#17402C]/10 flex flex-wrap items-center justify-between gap-2 text-xs">
-            <div className="flex items-center gap-1.5 text-[10px] font-semibold text-[#5A7064]">
+          <div className="pt-2.5 border-t border-[color:var(--lkv-primary)]/10 flex flex-wrap items-center justify-between gap-2 text-xs">
+            <div className="flex items-center gap-1.5 text-[10px] font-semibold text-[color:var(--lkv-text-secondary)]">
               <span>📚</span>
               <span>Sources documentaires certifiées :</span>
             </div>
@@ -183,7 +183,7 @@ export default function PaysPratiqueView({ country, isMobile = false }: PaysPrat
                   href={src.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="glass-pill !px-2.5 !py-0.5 text-[9.5px] font-mono font-bold text-[#17402C] hover:text-[#5B7F55] inline-flex items-center gap-1 shadow-2xs"
+                  className="glass-pill !px-2.5 !py-0.5 text-[9.5px] font-mono font-bold text-[color:var(--lkv-primary)] hover:text-[color:var(--lkv-secondary)] inline-flex items-center gap-1 shadow-2xs"
                 >
                   <span>{src.label}</span>
                   <span className="text-[8.5px]">↗</span>
@@ -199,14 +199,14 @@ export default function PaysPratiqueView({ country, isMobile = false }: PaysPrat
          ══════════════════════════════════════════════════════════════════ */}
       {vueEnsemble && vueEnsemble.content_md && (
         <div className="glass p-5 sm:p-6 space-y-3.5">
-          <div className="flex items-center justify-between pb-2 border-b border-[#17402C]/10">
+          <div className="flex items-center justify-between pb-2 border-b border-[color:var(--lkv-primary)]/10">
             <div className="flex items-center gap-2">
               <span className="text-lg">🧭</span>
-              <h3 className="font-display font-bold text-base sm:text-lg text-[#17402C]">
-                Identité Outdoor &amp; <span className="font-serif italic font-normal text-[#5B7F55]">Géographie Vivante</span>
+              <h3 className="font-display font-bold text-base sm:text-lg text-[color:var(--lkv-primary)]">
+                Identité Outdoor &amp; <span className="font-serif italic font-normal text-[color:var(--lkv-secondary)]">Géographie Vivante</span>
               </h3>
             </div>
-            <span className="glass-pill text-[9px] font-mono font-bold text-[#5B7F55]">
+            <span className="glass-pill text-[9px] font-mono font-bold text-[color:var(--lkv-secondary)]">
               Guide Terrain
             </span>
           </div>
@@ -214,7 +214,7 @@ export default function PaysPratiqueView({ country, isMobile = false }: PaysPrat
           <FormattedContent text={vueEnsemble.content_md} className="text-xs sm:text-[13px] leading-relaxed" />
 
           {vueEnsemble.sources && vueEnsemble.sources.length > 0 && (
-            <div className="pt-2 border-t border-[#17402C]/10 flex flex-wrap items-center gap-1.5 text-[9.5px] text-[#5A7064] font-mono">
+            <div className="pt-2 border-t border-[color:var(--lkv-primary)]/10 flex flex-wrap items-center gap-1.5 text-[9.5px] text-[color:var(--lkv-text-secondary)] font-mono">
               <span>Sources :</span>
               {vueEnsemble.sources.map((s, idx) => (
                 <a
@@ -222,7 +222,7 @@ export default function PaysPratiqueView({ country, isMobile = false }: PaysPrat
                   href={s.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="hover:underline text-[#17402C] font-semibold"
+                  className="hover:underline text-[color:var(--lkv-primary)] font-semibold"
                 >
                   {s.title} ↗
                 </a>
@@ -240,11 +240,11 @@ export default function PaysPratiqueView({ country, isMobile = false }: PaysPrat
           <div className="flex items-center justify-between px-1">
             <div className="flex items-center gap-2">
               <span className="w-2.5 h-2.5 rounded-full bg-forest-600 animate-pulse" />
-              <h3 className="font-display font-bold text-base sm:text-lg text-[#17402C]">
+              <h3 className="font-display font-bold text-base sm:text-lg text-[color:var(--lkv-primary)]">
                 À savoir avant de partir
               </h3>
             </div>
-            <span className="glass-pill text-[9px] font-mono font-bold text-[#5B7F55]">
+            <span className="glass-pill text-[9px] font-mono font-bold text-[color:var(--lkv-secondary)]">
               🛡️ Fraîcheur &amp; Sécurité
             </span>
           </div>
@@ -254,26 +254,26 @@ export default function PaysPratiqueView({ country, isMobile = false }: PaysPrat
             {formalites && formalites.content_md && (
               <div className="glass p-5 space-y-3.5 flex flex-col justify-between">
                 <div className="space-y-2.5">
-                  <div className="flex items-center justify-between pb-2 border-b border-[#17402C]/10">
+                  <div className="flex items-center justify-between pb-2 border-b border-[color:var(--lkv-primary)]/10">
                     <div className="flex items-center gap-2">
                       <div className="w-8 h-8 rounded-xl bg-forest-500/15 text-forest-700 flex items-center justify-center font-bold text-sm">
                         🛂
                       </div>
-                      <h4 className="font-display font-bold text-sm text-[#17402C]">
+                      <h4 className="font-display font-bold text-sm text-[color:var(--lkv-primary)]">
                         Formalités d'entrée &amp; Visas
                       </h4>
                     </div>
-                    <span className="glass-pill text-[8.5px] font-mono font-bold text-[#5A7064]">
+                    <span className="glass-pill text-[8.5px] font-mono font-bold text-[color:var(--lkv-text-secondary)]">
                       Consulaire
                     </span>
                   </div>
                   <FormattedContent text={formalites.content_md} />
                 </div>
 
-                <div className="pt-2.5 border-t border-[#17402C]/10 space-y-1.5 text-[9.5px] font-mono text-[#5A7064]">
+                <div className="pt-2.5 border-t border-[color:var(--lkv-primary)]/10 space-y-1.5 text-[9.5px] font-mono text-[color:var(--lkv-text-secondary)]">
                   {formalites.generated_at && (
                     <div className="flex items-center justify-between">
-                      <span className="text-[#5B7F55] font-semibold">✓ Vérifié par nos équipes</span>
+                      <span className="text-[color:var(--lkv-secondary)] font-semibold">✓ Vérifié par nos équipes</span>
                       <span>Mise à jour : {formatDate(formalites.generated_at)}</span>
                     </div>
                   )}
@@ -286,7 +286,7 @@ export default function PaysPratiqueView({ country, isMobile = false }: PaysPrat
                           href={src.url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="glass-pill !px-2 !py-0.5 text-[8.5px] font-mono text-[#17402C] hover:text-[#5B7F55]"
+                          className="glass-pill !px-2 !py-0.5 text-[8.5px] font-mono text-[color:var(--lkv-primary)] hover:text-[color:var(--lkv-secondary)]"
                           title={src.title}
                         >
                           <span className="truncate max-w-[140px]">{src.title}</span> ↗
@@ -302,12 +302,12 @@ export default function PaysPratiqueView({ country, isMobile = false }: PaysPrat
             {securite && securite.content_md && (
               <div className="glass p-5 space-y-3.5 flex flex-col justify-between">
                 <div className="space-y-2.5">
-                  <div className="flex items-center justify-between pb-2 border-b border-[#17402C]/10">
+                  <div className="flex items-center justify-between pb-2 border-b border-[color:var(--lkv-primary)]/10">
                     <div className="flex items-center gap-2">
                       <div className="w-8 h-8 rounded-xl bg-sand-500/15 text-sand-800 flex items-center justify-center font-bold text-sm">
                         🛡️
                       </div>
-                      <h4 className="font-display font-bold text-sm text-[#17402C]">
+                      <h4 className="font-display font-bold text-sm text-[color:var(--lkv-primary)]">
                         Vigilance &amp; Alertes terrain
                       </h4>
                     </div>
@@ -318,7 +318,7 @@ export default function PaysPratiqueView({ country, isMobile = false }: PaysPrat
                   <FormattedContent text={securite.content_md} />
                 </div>
 
-                <div className="pt-2.5 border-t border-[#17402C]/10 space-y-1.5 text-[9.5px] font-mono text-[#5A7064]">
+                <div className="pt-2.5 border-t border-[color:var(--lkv-primary)]/10 space-y-1.5 text-[9.5px] font-mono text-[color:var(--lkv-text-secondary)]">
                   {securite.generated_at && (
                     <div className="flex items-center justify-between">
                       <span className="text-forest-700 font-semibold">✓ France Diplomatie live</span>
@@ -334,7 +334,7 @@ export default function PaysPratiqueView({ country, isMobile = false }: PaysPrat
                           href={src.url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="glass-pill !px-2 !py-0.5 text-[8.5px] font-mono text-[#17402C] hover:text-[#5B7F55]"
+                          className="glass-pill !px-2 !py-0.5 text-[8.5px] font-mono text-[color:var(--lkv-primary)] hover:text-[color:var(--lkv-secondary)]"
                           title={src.title}
                         >
                           <span className="truncate max-w-[140px]">{src.title}</span> ↗
@@ -356,10 +356,10 @@ export default function PaysPratiqueView({ country, isMobile = false }: PaysPrat
             <div className="flex items-center gap-2.5">
               <span className="text-base sm:text-lg">🚨</span>
               <div>
-                <span className="text-xs font-bold text-[#17402C] block">
+                <span className="text-xs font-bold text-[color:var(--lkv-primary)] block">
                   Numéro d'urgence international
                 </span>
-                <span className="text-[10px] text-[#5A7064]">
+                <span className="text-[10px] text-[color:var(--lkv-text-secondary)]">
                   Accessible 24h/24, appel gratuit depuis tout mobile
                 </span>
               </div>
@@ -377,10 +377,10 @@ export default function PaysPratiqueView({ country, isMobile = false }: PaysPrat
       {hasPracticalSection && (
         <div className="space-y-4">
           <div className="flex items-center justify-between px-1">
-            <h3 className="font-display font-bold text-base sm:text-lg text-[#17402C]">
+            <h3 className="font-display font-bold text-base sm:text-lg text-[color:var(--lkv-primary)]">
               Guide pratique terrain
             </h3>
-            <span className="glass-pill text-[9px] font-mono font-bold text-[#5A7064]">
+            <span className="glass-pill text-[9px] font-mono font-bold text-[color:var(--lkv-text-secondary)]">
               Logistique &amp; Séjour
             </span>
           </div>
@@ -390,26 +390,26 @@ export default function PaysPratiqueView({ country, isMobile = false }: PaysPrat
             {transport && transport.content_md && (
               <div className="glass p-5 space-y-3.5 flex flex-col justify-between">
                 <div className="space-y-2.5">
-                  <div className="flex items-center justify-between pb-2 border-b border-[#17402C]/10">
+                  <div className="flex items-center justify-between pb-2 border-b border-[color:var(--lkv-primary)]/10">
                     <div className="flex items-center gap-2">
                       <div className="w-8 h-8 rounded-xl bg-sky-500/15 text-sky-700 flex items-center justify-center font-bold text-sm">
                         🚆
                       </div>
-                      <h4 className="font-display font-bold text-sm text-[#17402C]">
+                      <h4 className="font-display font-bold text-sm text-[color:var(--lkv-primary)]">
                         Transports &amp; Mobilité
                       </h4>
                     </div>
-                    <span className="glass-pill text-[8.5px] font-mono font-bold text-[#5A7064]">
+                    <span className="glass-pill text-[8.5px] font-mono font-bold text-[color:var(--lkv-text-secondary)]">
                       Réseaux &amp; Pistes
                     </span>
                   </div>
                   <FormattedContent text={transport.content_md} />
                 </div>
                 {transport.sources && transport.sources.length > 0 && (
-                  <div className="pt-2 border-t border-[#17402C]/10 flex flex-wrap items-center gap-1 text-[9px] font-mono text-[#5A7064]">
+                  <div className="pt-2 border-t border-[color:var(--lkv-primary)]/10 flex flex-wrap items-center gap-1 text-[9px] font-mono text-[color:var(--lkv-text-secondary)]">
                     <span>Sources :</span>
                     {transport.sources.map((s, idx) => (
-                      <a key={idx} href={s.url} target="_blank" rel="noopener noreferrer" className="hover:underline text-[#17402C]">
+                      <a key={idx} href={s.url} target="_blank" rel="noopener noreferrer" className="hover:underline text-[color:var(--lkv-primary)]">
                         {s.title} ↗
                       </a>
                     ))}
@@ -422,26 +422,26 @@ export default function PaysPratiqueView({ country, isMobile = false }: PaysPrat
             {budget && budget.content_md && (
               <div className="glass p-5 space-y-3.5 flex flex-col justify-between">
                 <div className="space-y-2.5">
-                  <div className="flex items-center justify-between pb-2 border-b border-[#17402C]/10">
+                  <div className="flex items-center justify-between pb-2 border-b border-[color:var(--lkv-primary)]/10">
                     <div className="flex items-center gap-2">
                       <div className="w-8 h-8 rounded-xl bg-sand-500/15 text-sand-700 flex items-center justify-center font-bold text-sm">
                         💶
                       </div>
-                      <h4 className="font-display font-bold text-sm text-[#17402C]">
+                      <h4 className="font-display font-bold text-sm text-[color:var(--lkv-primary)]">
                         Budget &amp; Moyens de paiement
                       </h4>
                     </div>
-                    <span className="glass-pill text-[8.5px] font-mono font-bold text-[#5A7064]">
+                    <span className="glass-pill text-[8.5px] font-mono font-bold text-[color:var(--lkv-text-secondary)]">
                       Dépenses réelles
                     </span>
                   </div>
                   <FormattedContent text={budget.content_md} />
                 </div>
                 {budget.sources && budget.sources.length > 0 && (
-                  <div className="pt-2 border-t border-[#17402C]/10 flex flex-wrap items-center gap-1 text-[9px] font-mono text-[#5A7064]">
+                  <div className="pt-2 border-t border-[color:var(--lkv-primary)]/10 flex flex-wrap items-center gap-1 text-[9px] font-mono text-[color:var(--lkv-text-secondary)]">
                     <span>Sources :</span>
                     {budget.sources.map((s, idx) => (
-                      <a key={idx} href={s.url} target="_blank" rel="noopener noreferrer" className="hover:underline text-[#17402C]">
+                      <a key={idx} href={s.url} target="_blank" rel="noopener noreferrer" className="hover:underline text-[color:var(--lkv-primary)]">
                         {s.title} ↗
                       </a>
                     ))}
@@ -454,26 +454,26 @@ export default function PaysPratiqueView({ country, isMobile = false }: PaysPrat
             {sante && sante.content_md && (
               <div className="glass p-5 space-y-3.5 flex flex-col justify-between">
                 <div className="space-y-2.5">
-                  <div className="flex items-center justify-between pb-2 border-b border-[#17402C]/10">
+                  <div className="flex items-center justify-between pb-2 border-b border-[color:var(--lkv-primary)]/10">
                     <div className="flex items-center gap-2">
                       <div className="w-8 h-8 rounded-xl bg-rose-500/15 text-rose-700 flex items-center justify-center font-bold text-sm">
                         🏥
                       </div>
-                      <h4 className="font-display font-bold text-sm text-[#17402C]">
+                      <h4 className="font-display font-bold text-sm text-[color:var(--lkv-primary)]">
                         Santé, Eau &amp; Secours
                       </h4>
                     </div>
-                    <span className="glass-pill text-[8.5px] font-mono font-bold text-[#5A7064]">
+                    <span className="glass-pill text-[8.5px] font-mono font-bold text-[color:var(--lkv-text-secondary)]">
                       Précautions
                     </span>
                   </div>
                   <FormattedContent text={sante.content_md} />
                 </div>
                 {sante.sources && sante.sources.length > 0 && (
-                  <div className="pt-2 border-t border-[#17402C]/10 flex flex-wrap items-center gap-1 text-[9px] font-mono text-[#5A7064]">
+                  <div className="pt-2 border-t border-[color:var(--lkv-primary)]/10 flex flex-wrap items-center gap-1 text-[9px] font-mono text-[color:var(--lkv-text-secondary)]">
                     <span>Sources :</span>
                     {sante.sources.map((s, idx) => (
-                      <a key={idx} href={s.url} target="_blank" rel="noopener noreferrer" className="hover:underline text-[#17402C]">
+                      <a key={idx} href={s.url} target="_blank" rel="noopener noreferrer" className="hover:underline text-[color:var(--lkv-primary)]">
                         {s.title} ↗
                       </a>
                     ))}
@@ -486,26 +486,26 @@ export default function PaysPratiqueView({ country, isMobile = false }: PaysPrat
             {etiquette && etiquette.content_md && (
               <div className="glass p-5 space-y-3.5 flex flex-col justify-between">
                 <div className="space-y-2.5">
-                  <div className="flex items-center justify-between pb-2 border-b border-[#17402C]/10">
+                  <div className="flex items-center justify-between pb-2 border-b border-[color:var(--lkv-primary)]/10">
                     <div className="flex items-center gap-2">
                       <div className="w-8 h-8 rounded-xl bg-forest-500/15 text-forest-700 flex items-center justify-center font-bold text-sm">
                         🌿
                       </div>
-                      <h4 className="font-display font-bold text-sm text-[#17402C]">
+                      <h4 className="font-display font-bold text-sm text-[color:var(--lkv-primary)]">
                         Étiquette culturelle &amp; Nature
                       </h4>
                     </div>
-                    <span className="glass-pill text-[8.5px] font-mono font-bold text-[#5A7064]">
+                    <span className="glass-pill text-[8.5px] font-mono font-bold text-[color:var(--lkv-text-secondary)]">
                       Leave No Trace
                     </span>
                   </div>
                   <FormattedContent text={etiquette.content_md} />
                 </div>
                 {etiquette.sources && etiquette.sources.length > 0 && (
-                  <div className="pt-2 border-t border-[#17402C]/10 flex flex-wrap items-center gap-1 text-[9px] font-mono text-[#5A7064]">
+                  <div className="pt-2 border-t border-[color:var(--lkv-primary)]/10 flex flex-wrap items-center gap-1 text-[9px] font-mono text-[color:var(--lkv-text-secondary)]">
                     <span>Sources :</span>
                     {etiquette.sources.map((s, idx) => (
-                      <a key={idx} href={s.url} target="_blank" rel="noopener noreferrer" className="hover:underline text-[#17402C]">
+                      <a key={idx} href={s.url} target="_blank" rel="noopener noreferrer" className="hover:underline text-[color:var(--lkv-primary)]">
                         {s.title} ↗
                       </a>
                     ))}
@@ -523,14 +523,14 @@ export default function PaysPratiqueView({ country, isMobile = false }: PaysPrat
       {/* Périodes par activité */}
       {periodes && (
         <div className="glass p-5 space-y-3.5">
-          <div className="flex items-center justify-between pb-2 border-b border-[#17402C]/10">
+          <div className="flex items-center justify-between pb-2 border-b border-[color:var(--lkv-primary)]/10">
             <div className="flex items-center gap-2">
               <span className="text-lg">☀️</span>
-              <h4 className="font-display font-bold text-base text-[#17402C]">
+              <h4 className="font-display font-bold text-base text-[color:var(--lkv-primary)]">
                 Meilleures périodes par activité outdoor
               </h4>
             </div>
-            <span className="glass-pill text-[9px] font-mono font-bold text-[#5A7064]">
+            <span className="glass-pill text-[9px] font-mono font-bold text-[color:var(--lkv-text-secondary)]">
               Météo &amp; Saisons
             </span>
           </div>
@@ -542,12 +542,12 @@ export default function PaysPratiqueView({ country, isMobile = false }: PaysPrat
               {(periodes.content_json as PeriodeActiviteItem[]).map((item, i) => (
                 <div key={i} className="glass-sub-card p-3.5 space-y-1.5">
                   <div className="flex items-center justify-between">
-                    <span className="font-bold text-xs text-[#17402C]">{item.activite}</span>
-                    <span className="text-[9.5px] font-mono font-semibold px-2 py-0.5 rounded-full bg-[#5B7F55]/15 text-[#17402C]">
+                    <span className="font-bold text-xs text-[color:var(--lkv-primary)]">{item.activite}</span>
+                    <span className="text-[9.5px] font-mono font-semibold px-2 py-0.5 rounded-full bg-[color:var(--lkv-secondary)]/15 text-[color:var(--lkv-primary)]">
                       {item.mois_favorables}
                     </span>
                   </div>
-                  <p className="text-[11px] text-[#2D4536] leading-relaxed">{item.conditions}</p>
+                  <p className="text-[11px] text-[color:var(--lkv-primary-soft)] leading-relaxed">{item.conditions}</p>
                   {item.points_vigilance && (
                     <p className="text-[10px] text-sand-800 font-mono">⚠️ {item.points_vigilance}</p>
                   )}
@@ -561,14 +561,14 @@ export default function PaysPratiqueView({ country, isMobile = false }: PaysPrat
       {/* Itinéraires outdoor suggérés */}
       {itineraires && (
         <div className="glass p-5 space-y-4">
-          <div className="flex items-center justify-between pb-2 border-b border-[#17402C]/10">
+          <div className="flex items-center justify-between pb-2 border-b border-[color:var(--lkv-primary)]/10">
             <div className="flex items-center gap-2">
               <span className="text-lg">🥾</span>
-              <h4 className="font-display font-bold text-base text-[#17402C]">
+              <h4 className="font-display font-bold text-base text-[color:var(--lkv-primary)]">
                 Itinéraires d'aventure suggérés
               </h4>
             </div>
-            <span className="glass-pill text-[9px] font-mono font-bold text-[#5B7F55]">
+            <span className="glass-pill text-[9px] font-mono font-bold text-[color:var(--lkv-secondary)]">
               Trekking &amp; Bivouac
             </span>
           </div>
@@ -580,25 +580,25 @@ export default function PaysPratiqueView({ country, isMobile = false }: PaysPrat
               {(itineraires.content_json as ItineraireItem[]).map((it, idx) => (
                 <div key={idx} className="glass-sub-card p-4 space-y-2.5">
                   <div className="flex items-start justify-between gap-2">
-                    <h5 className="font-display font-bold text-sm text-[#17402C]">{it.nom}</h5>
+                    <h5 className="font-display font-bold text-sm text-[color:var(--lkv-primary)]">{it.nom}</h5>
                     <div className="flex items-center gap-1.5 shrink-0">
-                      <span className="glass-pill !px-2 !py-0.5 text-[9px] font-mono font-bold text-[#17402C]">
+                      <span className="glass-pill !px-2 !py-0.5 text-[9px] font-mono font-bold text-[color:var(--lkv-primary)]">
                         {it.duree_jours} jours
                       </span>
-                      <span className="glass-pill !px-2 !py-0.5 text-[9px] font-mono font-bold text-[#5B7F55]">
+                      <span className="glass-pill !px-2 !py-0.5 text-[9px] font-mono font-bold text-[color:var(--lkv-secondary)]">
                         {it.difficulte}
                       </span>
                     </div>
                   </div>
 
-                  <p className="text-xs text-[#2D4536] leading-relaxed">{it.description}</p>
+                  <p className="text-xs text-[color:var(--lkv-primary-soft)] leading-relaxed">{it.description}</p>
 
                   {it.etapes && it.etapes.length > 0 && (
-                    <div className="space-y-1 pt-1 border-t border-[#17402C]/10 text-[11px]">
-                      <span className="text-[9.5px] font-semibold text-[#5A7064] uppercase tracking-wider block">
+                    <div className="space-y-1 pt-1 border-t border-[color:var(--lkv-primary)]/10 text-[11px]">
+                      <span className="text-[9.5px] font-semibold text-[color:var(--lkv-text-secondary)] uppercase tracking-wider block">
                         Étapes clés :
                       </span>
-                      <ul className="space-y-0.5 pl-3 list-disc text-[#2D4536]">
+                      <ul className="space-y-0.5 pl-3 list-disc text-[color:var(--lkv-primary-soft)]">
                         {it.etapes.map((step, sIdx) => (
                           <li key={sIdx}>{step}</li>
                         ))}
@@ -615,14 +615,14 @@ export default function PaysPratiqueView({ country, isMobile = false }: PaysPrat
       {/* Spots incontournables */}
       {spots && Array.isArray(spots.content_json) && spots.content_json.length > 0 && (
         <div className="glass p-5 space-y-3.5">
-          <div className="flex items-center justify-between pb-2 border-b border-[#17402C]/10">
+          <div className="flex items-center justify-between pb-2 border-b border-[color:var(--lkv-primary)]/10">
             <div className="flex items-center gap-2">
               <span className="text-lg">🏔️</span>
-              <h4 className="font-display font-bold text-base text-[#17402C]">
+              <h4 className="font-display font-bold text-base text-[color:var(--lkv-primary)]">
                 Spots d'aventure incontournables
               </h4>
             </div>
-            <span className="glass-pill text-[9px] font-mono font-bold text-[#5A7064]">
+            <span className="glass-pill text-[9px] font-mono font-bold text-[color:var(--lkv-text-secondary)]">
               Espaces sauvages
             </span>
           </div>
@@ -631,13 +631,13 @@ export default function PaysPratiqueView({ country, isMobile = false }: PaysPrat
             {(spots.content_json as SpotItem[]).map((spot, i) => (
               <div key={i} className="glass-sub-card p-3.5 space-y-1.5">
                 <div className="flex items-center justify-between">
-                  <h5 className="font-bold text-xs text-[#17402C] truncate">{spot.nom}</h5>
-                  <span className="text-[9px] font-mono font-semibold text-[#5B7F55]">
+                  <h5 className="font-bold text-xs text-[color:var(--lkv-primary)] truncate">{spot.nom}</h5>
+                  <span className="text-[9px] font-mono font-semibold text-[color:var(--lkv-secondary)]">
                     {spot.type_outdoor}
                   </span>
                 </div>
-                <span className="text-[9.5px] text-[#5A7064] font-mono block">📍 {spot.localisation}</span>
-                <p className="text-[11px] text-[#2D4536] leading-relaxed">{spot.description}</p>
+                <span className="text-[9.5px] text-[color:var(--lkv-text-secondary)] font-mono block">📍 {spot.localisation}</span>
+                <p className="text-[11px] text-[color:var(--lkv-primary-soft)] leading-relaxed">{spot.description}</p>
               </div>
             ))}
           </div>
@@ -647,14 +647,14 @@ export default function PaysPratiqueView({ country, isMobile = false }: PaysPrat
       {/* FAQ Voyageur Outdoor */}
       {faq && (
         <div className="glass p-5 space-y-3.5">
-          <div className="flex items-center justify-between pb-2 border-b border-[#17402C]/10">
+          <div className="flex items-center justify-between pb-2 border-b border-[color:var(--lkv-primary)]/10">
             <div className="flex items-center gap-2">
               <span className="text-lg">❓</span>
-              <h4 className="font-display font-bold text-base text-[#17402C]">
+              <h4 className="font-display font-bold text-base text-[color:var(--lkv-primary)]">
                 Foire aux Questions Voyageur Outdoor
               </h4>
             </div>
-            <span className="glass-pill text-[9px] font-mono font-bold text-[#5A7064]">
+            <span className="glass-pill text-[9px] font-mono font-bold text-[color:var(--lkv-text-secondary)]">
               Conseils concrets
             </span>
           </div>
@@ -676,10 +676,10 @@ export default function PaysPratiqueView({ country, isMobile = false }: PaysPrat
                       }}
                       className="w-full px-4 py-3 text-left flex items-center justify-between gap-3 cursor-pointer hover:bg-white/80 transition-colors"
                     >
-                      <span className="font-bold text-xs text-[#17402C]">
+                      <span className="font-bold text-xs text-[color:var(--lkv-primary)]">
                         {item.question}
                       </span>
-                      <span className="text-xs font-mono text-[#5B7F55] shrink-0">
+                      <span className="text-xs font-mono text-[color:var(--lkv-secondary)] shrink-0">
                         {isOpen ? '−' : '+'}
                       </span>
                     </button>
@@ -691,7 +691,7 @@ export default function PaysPratiqueView({ country, isMobile = false }: PaysPrat
                           exit={{ height: 0, opacity: 0 }}
                           transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
                         >
-                          <div className="px-4 pb-3 pt-1 text-xs text-[#2D4536] leading-relaxed border-t border-[#17402C]/5">
+                          <div className="px-4 pb-3 pt-1 text-xs text-[color:var(--lkv-primary-soft)] leading-relaxed border-t border-[color:var(--lkv-primary)]/5">
                             {item.reponse}
                           </div>
                         </motion.div>
@@ -712,16 +712,16 @@ export default function PaysPratiqueView({ country, isMobile = false }: PaysPrat
          ══════════════════════════════════════════════════════════════════ */}
       {kits && (
         <div className="glass p-5 sm:p-6 space-y-4">
-          <div className="flex items-center justify-between pb-2.5 border-b border-[#17402C]/10">
+          <div className="flex items-center justify-between pb-2.5 border-b border-[color:var(--lkv-primary)]/10">
             <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-xl bg-[#17402C] text-white flex items-center justify-center font-bold text-sm shadow-xs">
+              <div className="w-8 h-8 rounded-xl bg-[color:var(--lkv-primary)] text-white flex items-center justify-center font-bold text-sm shadow-xs">
                 🎒
               </div>
               <div>
-                <h3 className="font-display font-bold text-base sm:text-lg text-[#17402C]">
+                <h3 className="font-display font-bold text-base sm:text-lg text-[color:var(--lkv-primary)]">
                   Votre Kit Recommandé pour {country.nom}
                 </h3>
-                <p className="text-[10px] text-[#5A7064] font-mono">
+                <p className="text-[10px] text-[color:var(--lkv-text-secondary)] font-mono">
                   Sélection officielle issue de notre catalogue réel
                 </p>
               </div>
@@ -743,21 +743,21 @@ export default function PaysPratiqueView({ country, isMobile = false }: PaysPrat
                   <div className="space-y-2">
                     <div className="flex items-start justify-between gap-2">
                       <div>
-                        <h4 className="font-display font-bold text-sm sm:text-base text-[#17402C]">
+                        <h4 className="font-display font-bold text-sm sm:text-base text-[color:var(--lkv-primary)]">
                           {rec.kit_nom}
                         </h4>
-                        <div className="flex items-center gap-2 mt-0.5 text-[11px] font-mono text-[#5A7064]">
-                          <span className="font-bold text-[#17402C]">{rec.prix_eur} €</span>
+                        <div className="flex items-center gap-2 mt-0.5 text-[11px] font-mono text-[color:var(--lkv-text-secondary)]">
+                          <span className="font-bold text-[color:var(--lkv-primary)]">{rec.prix_eur} €</span>
                           <span>·</span>
                           <span>{(rec.poids_g / 1000).toFixed(1)} kg</span>
                         </div>
                       </div>
-                      <span className="glass-pill !px-2 !py-0.5 text-[9px] font-mono font-bold text-[#5B7F55]">
+                      <span className="glass-pill !px-2 !py-0.5 text-[9px] font-mono font-bold text-[color:var(--lkv-secondary)]">
                         Outdoor
                       </span>
                     </div>
 
-                    <p className="text-xs text-[#2D4536] leading-relaxed">
+                    <p className="text-xs text-[color:var(--lkv-primary-soft)] leading-relaxed">
                       {rec.argumentaire}
                     </p>
 
@@ -766,7 +766,7 @@ export default function PaysPratiqueView({ country, isMobile = false }: PaysPrat
                         {rec.equipements_clefs.map((eq, eIdx) => (
                           <span
                             key={eIdx}
-                            className="text-[9.5px] font-mono px-2 py-0.5 rounded-full bg-[#17402C]/5 text-[#17402C] border border-[#17402C]/10"
+                            className="text-[9.5px] font-mono px-2 py-0.5 rounded-full bg-[color:var(--lkv-primary)]/5 text-[color:var(--lkv-primary)] border border-[color:var(--lkv-primary)]/10"
                           >
                             ✓ {eq}
                           </span>
@@ -775,7 +775,7 @@ export default function PaysPratiqueView({ country, isMobile = false }: PaysPrat
                     )}
                   </div>
 
-                  <div className="pt-3 border-t border-[#17402C]/10 flex items-center gap-2">
+                  <div className="pt-3 border-t border-[color:var(--lkv-primary)]/10 flex items-center gap-2">
                     <Link
                       href={`/kits/${rec.kit_slug}`}
                       onClick={() => triggerHaptic('selection')}

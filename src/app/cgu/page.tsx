@@ -119,64 +119,66 @@ function CGUSections() {
 }
 
 function MobileCGUSections() {
-  const sectionStyle: React.CSSProperties = { marginBottom: '24px' };
-  const h2Style: React.CSSProperties = { fontSize: '14px', fontWeight: 600, color: '#17402C', marginBottom: '8px', paddingBottom: '6px', borderBottom: '1px solid rgba(23,64,44,0.06)' };
-  const pStyle: React.CSSProperties = { fontSize: '13px', color: 'rgba(23,64,44,0.8)', lineHeight: '1.6' };
-  const linkStyle: React.CSSProperties = { color: '#17402C', textDecoration: 'underline' };
+  const sectionClass = 'mb-[var(--space-6)]';
+  const h2Class =
+    'mb-[var(--space-2)] border-b border-[color:var(--lkv-border-subtle)] pb-1.5 text-[length:var(--lkv-text-footnote)] font-semibold text-[color:var(--lkv-primary)]';
+  const pClass =
+    'text-[length:var(--lkv-text-caption-1)] leading-[var(--leading-relaxed)] text-[color:var(--lkv-primary)]/80';
+  const linkClass = 'text-[color:var(--lkv-primary)] underline';
 
   return (
-    <div style={{ padding: '16px' }}>
-      <p style={{ fontSize: '11px', fontFamily: 'var(--font-mono)', color: '#17402C', letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: '12px' }}>
+    <div className="p-[var(--space-4)]">
+      <p className="mb-[var(--space-3)] font-mono text-[length:var(--lkv-text-caption-2)] uppercase tracking-[0.14em] text-[color:var(--lkv-primary)]">
         Conditions d&apos;utilisation
       </p>
-      <h1 style={{ fontSize: '24px', fontWeight: 800, color: '#17402C', marginBottom: '8px', fontFamily: 'var(--font-display)' }}>
+      <h1 className="mb-[var(--space-2)] font-display text-[length:var(--lkv-text-title-lg)] font-extrabold text-[color:var(--lkv-primary)]">
         Conditions Générales d&apos;Utilisation
       </h1>
-      <p style={{ fontSize: '12px', color: 'rgba(23,64,44,0.5)', marginBottom: '24px' }}>
+      <p className="mb-[var(--space-6)] text-[length:var(--lkv-text-caption-1)] text-[color:var(--lkv-primary)]/50">
         En vigueur au 1er juillet 2026
       </p>
 
-      <section style={sectionStyle}>
-        <h2 style={h2Style}>1. Objet et champ d&apos;application</h2>
-        <p style={pStyle}>Les présentes CGU régissent l&apos;accès et l&apos;utilisation de la plateforme Le Kit du Voyageur. En utilisant la Plateforme, l&apos;Utilisateur accepte sans réserve les présentes CGU.</p>
+      <section className={sectionClass}>
+        <h2 className={h2Class}>1. Objet et champ d&apos;application</h2>
+        <p className={pClass}>Les présentes CGU régissent l&apos;accès et l&apos;utilisation de la plateforme Le Kit du Voyageur. En utilisant la Plateforme, l&apos;Utilisateur accepte sans réserve les présentes CGU.</p>
       </section>
 
-      <section style={sectionStyle}>
-        <h2 style={h2Style}>2. Description des services</h2>
-        <p style={pStyle}>La Plateforme propose : configurateur IA, boutique e-commerce, marketplace occasion, inventaire personnel, fiches destinations, espace communautaire.</p>
+      <section className={sectionClass}>
+        <h2 className={h2Class}>2. Description des services</h2>
+        <p className={pClass}>La Plateforme propose : configurateur IA, boutique e-commerce, marketplace occasion, inventaire personnel, fiches destinations, espace communautaire.</p>
       </section>
 
-      <section style={sectionStyle}>
-        <h2 style={h2Style}>3. Création et gestion du compte</h2>
-        <p style={pStyle}>L&apos;accès à la majorité des fonctionnalités nécessite un compte. L&apos;Utilisateur est seul responsable de son compte et de son utilisation.</p>
+      <section className={sectionClass}>
+        <h2 className={h2Class}>3. Création et gestion du compte</h2>
+        <p className={pClass}>L&apos;accès à la majorité des fonctionnalités nécessite un compte. L&apos;Utilisateur est seul responsable de son compte et de son utilisation.</p>
       </section>
 
-      <section style={sectionStyle}>
-        <h2 style={h2Style}>4. Utilisation acceptable</h2>
-        <p style={pStyle}>Il est interdit de publier des contenus illicites, usurper une identité, utiliser des robots ou effectuer des transactions frauduleuses.</p>
+      <section className={sectionClass}>
+        <h2 className={h2Class}>4. Utilisation acceptable</h2>
+        <p className={pClass}>Il est interdit de publier des contenus illicites, usurper une identité, utiliser des robots ou effectuer des transactions frauduleuses.</p>
       </section>
 
-      <section style={sectionStyle}>
-        <h2 style={h2Style}>5. Contenu généré par les utilisateurs</h2>
-        <p style={pStyle}>En publiant du contenu, l&apos;Utilisateur accorde une licence à Le Kit du Voyageur. Pour signaler un contenu illicite : <a href="mailto:signalement@lekitduvoyageur.fr" style={linkStyle}>signalement@lekitduvoyageur.fr</a>.</p>
+      <section className={sectionClass}>
+        <h2 className={h2Class}>5. Contenu généré par les utilisateurs</h2>
+        <p className={pClass}>En publiant du contenu, l&apos;Utilisateur accorde une licence à Le Kit du Voyageur. Pour signaler un contenu illicite : <a href="mailto:signalement@lekitduvoyageur.fr" className={linkClass}>signalement@lekitduvoyageur.fr</a>.</p>
       </section>
 
-      <section style={sectionStyle}>
-        <h2 style={h2Style}>6. Propriété intellectuelle</h2>
-        <p style={pStyle}>La Plateforme et son contenu sont la propriété exclusive de Le Kit du Voyageur.</p>
+      <section className={sectionClass}>
+        <h2 className={h2Class}>6. Propriété intellectuelle</h2>
+        <p className={pClass}>La Plateforme et son contenu sont la propriété exclusive de Le Kit du Voyageur.</p>
       </section>
 
-      <section style={sectionStyle}>
-        <h2 style={h2Style}>7. Droit applicable</h2>
-        <p style={pStyle}>Les CGU sont soumises au droit français.</p>
+      <section className={sectionClass}>
+        <h2 className={h2Class}>7. Droit applicable</h2>
+        <p className={pClass}>Les CGU sont soumises au droit français.</p>
       </section>
 
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', paddingTop: '16px', borderTop: '1px solid rgba(23,64,44,0.06)', marginTop: '24px' }}>
-        <Link href="/cgv" style={linkStyle}>CGV</Link>
-        <span style={{ color: 'rgba(23,64,44,0.2)', fontSize: '12px' }}>·</span>
-        <Link href="/politique-confidentialite" style={linkStyle}>Confidentialité</Link>
-        <span style={{ color: 'rgba(23,64,44,0.2)', fontSize: '12px' }}>·</span>
-        <Link href="/mentions-legales" style={linkStyle}>Mentions légales</Link>
+      <div className="mt-[var(--space-6)] flex flex-wrap gap-[var(--space-2)] border-t border-[color:var(--lkv-border-subtle)] pt-[var(--space-4)]">
+        <Link href="/cgv" className={linkClass}>CGV</Link>
+        <span className="text-[length:var(--lkv-text-caption-1)] text-[color:var(--lkv-primary)]/20">·</span>
+        <Link href="/politique-confidentialite" className={linkClass}>Confidentialité</Link>
+        <span className="text-[length:var(--lkv-text-caption-1)] text-[color:var(--lkv-primary)]/20">·</span>
+        <Link href="/mentions-legales" className={linkClass}>Mentions légales</Link>
       </div>
     </div>
   );
@@ -210,10 +212,10 @@ export default function CGUPage() {
         <div className="min-h-screen bg-background text-foreground">
           <Header />
           <main className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 pt-28 pb-16">
-            <p className="text-xs font-mono text-primary tracking-widest uppercase mb-3" style={{ fontFamily: 'var(--font-mono)' }}>
+            <p className="text-xs font-mono text-primary tracking-widest uppercase mb-3">
               Conditions d&apos;utilisation
             </p>
-            <h1 className="font-display text-3xl text-foreground mb-2" style={{ fontFamily: 'var(--font-display)', fontWeight: 800 }}>
+            <h1 className="font-display text-3xl text-foreground mb-2 font-extrabold">
               Conditions Générales d&apos;Utilisation
             </h1>
             <p className="text-sm text-foreground/50 mb-10">

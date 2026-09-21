@@ -12,33 +12,35 @@ export const metadata = {
 };
 
 function MobileCGVContent() {
-  const s: React.CSSProperties = { marginBottom: '24px' };
-  const h2: React.CSSProperties = { fontSize: '14px', fontWeight: 600, color: '#17402C', marginBottom: '8px', paddingBottom: '6px', borderBottom: '1px solid rgba(23,64,44,0.06)' };
-  const p: React.CSSProperties = { fontSize: '13px', color: 'rgba(23,64,44,0.8)', lineHeight: '1.6' };
+  const s = 'mb-[var(--space-6)]';
+  const h2 =
+    'mb-[var(--space-2)] border-b border-[color:var(--lkv-border-subtle)] pb-1.5 text-[length:var(--lkv-text-footnote)] font-semibold text-[color:var(--lkv-primary)]';
+  const p = 'text-[length:var(--lkv-text-caption-1)] leading-[var(--leading-relaxed)] text-[color:var(--lkv-primary)]/80';
+  const link = 'text-[color:var(--lkv-primary)] underline';
   return (
-    <div style={{ padding: '16px' }}>
-      <p style={{ fontSize: '11px', fontFamily: 'var(--font-mono)', color: '#17402C', letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: '12px' }}>Conditions de vente</p>
-      <h1 style={{ fontSize: '24px', fontWeight: 800, color: '#17402C', marginBottom: '8px', fontFamily: 'var(--font-display)' }}>Conditions Générales de Vente</h1>
-      <p style={{ fontSize: '12px', color: 'rgba(23,64,44,0.5)', marginBottom: '24px' }}>Conformément aux articles L221-1 et suivants du Code de la consommation</p>
+    <div className="p-[var(--space-4)]">
+      <p className="mb-[var(--space-3)] font-mono text-[length:var(--lkv-text-caption-2)] uppercase tracking-[0.14em] text-[color:var(--lkv-primary)]">Conditions de vente</p>
+      <h1 className="mb-[var(--space-2)] font-display text-[length:var(--lkv-text-title-lg)] font-extrabold text-[color:var(--lkv-primary)]">Conditions Générales de Vente</h1>
+      <p className="mb-[var(--space-6)] text-[length:var(--lkv-text-caption-1)] text-[color:var(--lkv-primary)]/50">Conformément aux articles L221-1 et suivants du Code de la consommation</p>
 
-      <section style={s}><h2 style={h2}>1. Objet</h2><p style={p}>Les présentes CGV s&apos;appliquent à toutes les ventes de produits conclues sur le site entre Le Kit du Voyageur (SAS) et tout consommateur.</p></section>
-      <section style={s}><h2 style={h2}>2. Produits</h2><p style={p}>Les produits sont décrits avec la plus grande exactitude possible. Les offres sont valables dans la limite des stocks disponibles.</p></section>
-      <section style={s}><h2 style={h2}>3. Prix</h2><p style={p}>Les prix sont indiqués en euros TTC, hors frais de livraison. Le prix applicable est celui affiché au moment de la validation de la commande.</p></section>
-      <section style={s}><h2 style={h2}>4. Commande</h2><p style={p}>La commande est définitivement validée à réception de la confirmation de paiement. Un email de confirmation est envoyé.</p></section>
-      <section style={s}><h2 style={h2}>5. Paiement</h2><p style={p}>Paiement sécurisé par carte bancaire (Visa, Mastercard, American Express) via Stripe — certifié PCI-DSS niveau 1.</p></section>
-      <section style={s}><h2 style={h2}>6. Livraison</h2><p style={p}>Livraison en France et UE. Standard (3-5j), Express (1-2j) ou Point relais (2-4j). Offerte dès 99€.</p></section>
-      <section style={s}><h2 style={h2}>7. Droit de rétractation</h2><p style={p}>14 jours calendaires à compter de la réception pour exercer votre droit de rétractation, sans pénalités. Remboursement sous 14 jours.</p></section>
-      <section style={s}><h2 style={h2}>8. Garanties</h2><p style={p}>Garantie légale de conformité (2 ans) et garantie contre les vices cachés (2 ans). Contact : <a href="mailto:sav@lekitduvoyageur.fr" style={{ color: '#17402C', textDecoration: 'underline' }}>sav@lekitduvoyageur.fr</a>.</p></section>
-      <section style={s}><h2 style={h2}>9. Droit applicable</h2><p style={p}>Les CGV sont soumises au droit français.</p></section>
+      <section className={s}><h2 className={h2}>1. Objet</h2><p className={p}>Les présentes CGV s&apos;appliquent à toutes les ventes de produits conclues sur le site entre Le Kit du Voyageur (SAS) et tout consommateur.</p></section>
+      <section className={s}><h2 className={h2}>2. Produits</h2><p className={p}>Les produits sont décrits avec la plus grande exactitude possible. Les offres sont valables dans la limite des stocks disponibles.</p></section>
+      <section className={s}><h2 className={h2}>3. Prix</h2><p className={p}>Les prix sont indiqués en euros TTC, hors frais de livraison. Le prix applicable est celui affiché au moment de la validation de la commande.</p></section>
+      <section className={s}><h2 className={h2}>4. Commande</h2><p className={p}>La commande est définitivement validée à réception de la confirmation de paiement. Un email de confirmation est envoyé.</p></section>
+      <section className={s}><h2 className={h2}>5. Paiement</h2><p className={p}>Paiement sécurisé par carte bancaire (Visa, Mastercard, American Express) via Stripe — certifié PCI-DSS niveau 1.</p></section>
+      <section className={s}><h2 className={h2}>6. Livraison</h2><p className={p}>Livraison en France et UE. Standard (3-5j), Express (1-2j) ou Point relais (2-4j). Offerte dès 99€.</p></section>
+      <section className={s}><h2 className={h2}>7. Droit de rétractation</h2><p className={p}>14 jours calendaires à compter de la réception pour exercer votre droit de rétractation, sans pénalités. Remboursement sous 14 jours.</p></section>
+      <section className={s}><h2 className={h2}>8. Garanties</h2><p className={p}>Garantie légale de conformité (2 ans) et garantie contre les vices cachés (2 ans). Contact : <a href="mailto:sav@lekitduvoyageur.fr" className={link}>sav@lekitduvoyageur.fr</a>.</p></section>
+      <section className={s}><h2 className={h2}>9. Droit applicable</h2><p className={p}>Les CGV sont soumises au droit français.</p></section>
 
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', paddingTop: '16px', borderTop: '1px solid rgba(23,64,44,0.06)' }}>
-        <Link href="/cgu" style={{ color: '#17402C', textDecoration: 'underline', fontSize: '12px' }}>CGU</Link>
-        <span style={{ color: 'rgba(23,64,44,0.2)', fontSize: '12px' }}>·</span>
-        <Link href="/politique-confidentialite" style={{ color: '#17402C', textDecoration: 'underline', fontSize: '12px' }}>Confidentialité</Link>
-        <span style={{ color: 'rgba(23,64,44,0.2)', fontSize: '12px' }}>·</span>
-        <Link href="/mentions-legales" style={{ color: '#17402C', textDecoration: 'underline', fontSize: '12px' }}>Mentions légales</Link>
-        <span style={{ color: 'rgba(23,64,44,0.2)', fontSize: '12px' }}>·</span>
-        <Link href="/cookies" style={{ color: '#17402C', textDecoration: 'underline', fontSize: '12px' }}>Cookies</Link>
+      <div className="flex flex-wrap gap-[var(--space-2)] border-t border-[color:var(--lkv-border-subtle)] pt-[var(--space-4)]">
+        <Link href="/cgu" className={`${link} text-[length:var(--lkv-text-caption-1)]`}>CGU</Link>
+        <span className="text-[length:var(--lkv-text-caption-1)] text-[color:var(--lkv-primary)]/20">·</span>
+        <Link href="/politique-confidentialite" className={`${link} text-[length:var(--lkv-text-caption-1)]`}>Confidentialité</Link>
+        <span className="text-[length:var(--lkv-text-caption-1)] text-[color:var(--lkv-primary)]/20">·</span>
+        <Link href="/mentions-legales" className={`${link} text-[length:var(--lkv-text-caption-1)]`}>Mentions légales</Link>
+        <span className="text-[length:var(--lkv-text-caption-1)] text-[color:var(--lkv-primary)]/20">·</span>
+        <Link href="/cookies" className={`${link} text-[length:var(--lkv-text-caption-1)]`}>Cookies</Link>
       </div>
     </div>
   );
@@ -72,8 +74,8 @@ export default function CGVPage() {
         <div className="min-h-screen bg-background text-foreground">
           <Header />
           <main className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 pt-28 pb-16">
-            <p className="text-xs font-mono text-primary tracking-widest uppercase mb-3" style={{ fontFamily: 'var(--font-mono)' }}>Conditions de vente</p>
-            <h1 className="font-display text-3xl text-foreground mb-2" style={{ fontFamily: 'var(--font-display)', fontWeight: 800 }}>Conditions Générales de Vente</h1>
+            <p className="text-xs font-mono text-primary tracking-widest uppercase mb-3">Conditions de vente</p>
+            <h1 className="font-display text-3xl text-foreground mb-2 font-extrabold">Conditions Générales de Vente</h1>
             <p className="text-sm text-foreground/50 mb-10">Conformément aux articles L221-1 et suivants du Code de la consommation — En vigueur au 1er juillet 2026</p>
             <div className="space-y-10 text-sm text-foreground/80 leading-relaxed">
               <section><h2 className="text-base font-semibold text-foreground mb-4 pb-2 border-b border-border">1. Objet et champ d&apos;application</h2><p>Les présentes Conditions Générales de Vente (ci-après « CGV ») s&apos;appliquent à toutes les ventes de produits conclues sur le site <strong>lekitduvoyageur.fr</strong> entre la société Le Kit du Voyageur (SAS, ci-après « Le Vendeur ») et tout consommateur non professionnel (ci-après « l&apos;Acheteur »), conformément aux articles L221-1 et suivants du Code de la consommation.</p></section>

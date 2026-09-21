@@ -142,7 +142,7 @@ export default function StoriesViewer({
       role="dialog"
       aria-modal="true"
       aria-label={`Story de ${user.name}`}
-      className="story-viewer"
+      className="fixed inset-0 z-[var(--z-modal)] touch-none select-none bg-black"
       style={{ opacity: dragOpacity }}
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
@@ -154,46 +154,69 @@ export default function StoriesViewer({
         setDragOpacity(1);
       }}
     >
-      <div className="story-stage" style={{ transform: `translateY(${dragY}px)` }}>
+      <div className="absolute inset-0" style={{ transform: `translateY(${dragY}px)` }}>
         <img
           key={`${userIndex}-${slideIndex}`}
           src={slide.image}
           alt=""
           draggable={false}
-          className="story-media-img"
+          className="h-full w-full object-cover"
         />
 
         {/* Voiles de lisibilité */}
-        <div className="story-scrim story-scrim--top" aria-hidden="true" />
-        <div className="story-scrim story-scrim--bottom" aria-hidden="true" />
+        <div
+          className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-black/70 to-transparent"
+          aria-hidden="true"
+        />
+        <div
+          className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-black/70 to-transparent"
+          aria-hidden="true"
+        />
 
         {/* Progression */}
-        <div className="story-progress" aria-hidden="true">
+        <div
+          className="absolute inset-x-0 top-0 z-[var(--z-sticky)] flex gap-1 px-[var(--space-3)] pt-[max(var(--space-3),var(--safe-top))]"
+          aria-hidden="true"
+        >
           {user.slides.map((_, i) => (
-            <span key={`${userIndex}-${i}`} className={`story-progress-seg ${i < slideIndex ? 'story-progress-seg--done' : ''}`}>
+            <span
+              key={`${userIndex}-${i}`}
+              className="relative h-[3px] flex-1 overflow-hidden rounded-full bg-white/30"
+            >
               {i === slideIndex && !reducedMotion && (
                 <span
                   key={`fill-${userIndex}-${slideIndex}`}
-                  className="story-progress-fill"
+                  className="lkv-story-progress-fill absolute inset-y-0 left-0 w-full origin-left bg-white"
                   style={{ animationPlayState: holding ? 'paused' : 'running' }}
                   onAnimationEnd={next}
                 />
+              )}
+              {i < slideIndex && (
+                <span className="absolute inset-y-0 left-0 w-full bg-white" />
               )}
             </span>
           ))}
         </div>
 
         {/* En-tête : auteur + fermeture */}
-        <div className="story-header">
-          <span className="story-header-user">
-            <span className="story-avatar story-avatar--sm">{user.name.charAt(0)}</span>
-            <span className="story-header-name">{user.name}</span>
-            {user.time && <span className="story-header-time">{user.time}</span>}
+        <div className="absolute inset-x-0 top-0 z-[var(--z-sticky)] flex items-center justify-between gap-[var(--space-3)] px-[var(--space-4)] pt-[max(var(--space-6),calc(var(--safe-top)+var(--space-4)))]">
+          <span className="flex min-w-0 items-center gap-[var(--space-2)]">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/20 text-[length:var(--lkv-text-subheadline)] font-semibold text-white">
+              {user.name.charAt(0)}
+            </span>
+            <span className="truncate text-[length:var(--lkv-text-subheadline)] font-semibold text-white">
+              {user.name}
+            </span>
+            {user.time && (
+              <span className="shrink-0 text-[length:var(--lkv-text-caption-1)] text-white/70">
+                {user.time}
+              </span>
+            )}
           </span>
           <IconButton
             type="button"
             variant="glass"
-            className="absolute right-[var(--space-4)] top-[var(--space-4)] z-[var(--z-sticky)] bg-black/40 text-white active:scale-[var(--motion-press-scale)]"
+            className="bg-black/40 text-white active:scale-[var(--motion-press-scale)]"
             aria-label="Fermer les stories"
             onPointerDown={(e) => e.stopPropagation()}
             onClick={(e) => {
@@ -207,7 +230,7 @@ export default function StoriesViewer({
 
         {/* Légende */}
         {slide.caption && (
-          <p className="story-caption">
+          <p className="absolute inset-x-0 bottom-0 z-[var(--z-sticky)] px-[var(--space-4)] pb-[max(var(--space-8),calc(var(--safe-bottom)+var(--space-6)))] text-[length:var(--lkv-text-body-sm)] leading-[var(--leading-snug)] text-white">
             <strong>{user.name}</strong> {slide.caption}
           </p>
         )}

@@ -38,48 +38,48 @@ export default function DesktopLeftPanel({
   return (
     <div className="hidden md:flex absolute top-[96px] left-5 w-[320px] max-h-[calc(100%-180px)] flex-col gap-3.5 z-30 select-none overflow-y-auto custom-scrollbar">
       {/* 1. Progression Panel */}
-      <div className="bg-[#EEF3EC]/92 backdrop-blur-2xl border border-[#17402C]/07 rounded-2xl shadow-xl overflow-hidden p-4">
+      <div className="bg-[color:var(--lkv-surface)]/92 backdrop-blur-2xl border border-[color:var(--lkv-primary)]/07 rounded-2xl shadow-xl overflow-hidden p-4">
         <div className="flex justify-between items-baseline mb-2">
-          <span className="text-[11px] uppercase tracking-widest text-[#6B7A72] font-semibold">
+          <span className="text-[11px] uppercase tracking-widest text-[color:var(--lkv-text-muted)] font-semibold">
             Progression
           </span>
-          <span className="font-mono text-[10px] text-[#8B978F] tracking-wide">
-            <em className="font-serif italic font-normal text-[#17402C] text-xs">{elapsedTimeStr}</em> écoulées
+          <span className="font-mono text-[10px] text-[color:var(--lkv-ink-300)] tracking-wide">
+            <em className="font-serif italic font-normal text-[color:var(--lkv-primary)] text-xs">{elapsedTimeStr}</em> écoulées
           </span>
         </div>
 
         <div className="flex justify-between items-baseline mb-2">
-          <div className="text-2xl font-medium tracking-tight text-[#17402C]">
+          <div className="text-2xl font-medium tracking-tight text-[color:var(--lkv-primary)]">
             {distanceKm.toFixed(1)}
-            <em className="font-serif italic font-normal text-sm text-[#17402C] ml-0.5">
+            <em className="font-serif italic font-normal text-sm text-[color:var(--lkv-primary)] ml-0.5">
               / {totalDistanceKm.toFixed(1)} km
             </em>
           </div>
-          <div className="font-mono text-[11px] font-semibold text-[#17402C] tracking-wide px-2 py-0.5 bg-[#C6DCBE]/40 rounded">
+          <div className="font-mono text-[11px] font-semibold text-[color:var(--lkv-primary)] tracking-wide px-2 py-0.5 bg-[color:var(--lkv-forest-100)]/40 rounded">
             {Math.round(pct)} %
           </div>
         </div>
 
         {/* Progress Bar with End Glow Dot */}
-        <div className="h-1 bg-[#17402C]/08 rounded-full overflow-hidden relative">
+        <div className="h-1 bg-[color:var(--lkv-primary)]/08 rounded-full overflow-hidden relative">
           <div
-            className="h-full bg-[#17402C] rounded-full relative transition-all duration-500"
+            className="h-full bg-[color:var(--lkv-primary)] rounded-full relative transition-all duration-500"
             style={{ width: `${pct}%` }}
           >
-            <div className="absolute -right-1.5 -top-0.5 w-2 h-2 rounded-full bg-[#17402C] shadow-md" />
+            <div className="absolute -right-1.5 -top-0.5 w-2 h-2 rounded-full bg-[color:var(--lkv-primary)] shadow-md" />
           </div>
         </div>
 
-        <div className="mt-2.5 flex justify-between font-mono text-[10px] text-[#6B7A72] tracking-wide">
+        <div className="mt-2.5 flex justify-between font-mono text-[10px] text-[color:var(--lkv-text-muted)] tracking-wide">
           <span>DÉPART · {startTime}</span>
           <span>ETA · {etaTime}</span>
         </div>
       </div>
 
       {/* 2. Waypoints List Panel */}
-      <div className="bg-[#EEF3EC]/92 backdrop-blur-2xl border border-[#17402C]/07 rounded-2xl shadow-xl overflow-hidden p-4 space-y-3">
+      <div className="bg-[color:var(--lkv-surface)]/92 backdrop-blur-2xl border border-[color:var(--lkv-primary)]/07 rounded-2xl shadow-xl overflow-hidden p-4 space-y-3">
         <div className="flex justify-between items-baseline">
-          <span className="text-[11px] uppercase tracking-widest text-[#6B7A72] font-semibold">
+          <span className="text-[11px] uppercase tracking-widest text-[color:var(--lkv-text-muted)] font-semibold">
             Itinéraire · {waypoints.length} étapes
           </span>
         </div>
@@ -87,23 +87,23 @@ export default function DesktopLeftPanel({
         {/* Waypoints Timeline */}
         <div className="relative pl-1 space-y-2">
           {/* Connecting Vertical Line */}
-          <div className="absolute left-[19px] top-3 bottom-5 w-[2px] bg-gradient-to-b from-[#17402C] via-[#17402C] to-[#17402C]/15" />
+          <div className="absolute left-[19px] top-3 bottom-5 w-[2px] bg-gradient-to-b from-[color:var(--lkv-primary)] via-[color:var(--lkv-primary)] to-[color:var(--lkv-primary)]/15" />
 
           {waypoints.map((wp) => (
             <div
               key={wp.id}
               className={`flex items-start gap-3 p-2 rounded-xl relative z-10 transition-colors ${
-                wp.status === 'current' ? 'bg-[#A8C8A0]/20' : ''
+                wp.status === 'current' ? 'bg-[color:var(--lkv-forest-200)]/20' : ''
               }`}
             >
               {/* Dot Icon */}
               <div
                 className={`w-5.5 h-5.5 rounded-full border-2 flex items-center justify-center flex-shrink-0 text-xs z-10 ${
                   wp.status === 'done'
-                    ? 'bg-[#17402C] border-[#17402C] text-[#C6DCBE]'
+                    ? 'bg-[color:var(--lkv-primary)] border-[color:var(--lkv-primary)] text-[color:var(--lkv-forest-100)]'
                     : wp.status === 'current'
-                    ? 'bg-[#A8C8A0] border-[#17402C] text-[#06120C] shadow-sm'
-                    : 'bg-[#EEF3EC] border-[#17402C]/20 text-[#8B978F]'
+                    ? 'bg-[color:var(--lkv-forest-200)] border-[color:var(--lkv-primary)] text-[color:var(--lkv-forest-950)] shadow-sm'
+                    : 'bg-[color:var(--lkv-surface)] border-[color:var(--lkv-primary)]/20 text-[color:var(--lkv-ink-300)]'
                 }`}
               >
                 {wp.status === 'done' ? (
@@ -111,7 +111,7 @@ export default function DesktopLeftPanel({
                     <path strokeLinecap="round" strokeLinejoin="round" d="M5 12l5 5L20 7" />
                   </svg>
                 ) : wp.status === 'current' ? (
-                  <div className="w-1.5 h-1.5 rounded-full bg-[#06120C]" />
+                  <div className="w-1.5 h-1.5 rounded-full bg-[color:var(--lkv-forest-950)]" />
                 ) : wp.iconType === 'photo' ? (
                   <svg className="w-2.5 h-2.5 stroke-current stroke-[1.8] fill-none" viewBox="0 0 24 24">
                     <rect x="3" y="5" width="18" height="14" rx="2" />
@@ -128,17 +128,17 @@ export default function DesktopLeftPanel({
               <div className="flex-1 min-w-0 pt-0.5">
                 <div
                   className={`text-xs font-medium leading-tight ${
-                    wp.status === 'future' ? 'text-[#6B7A72]' : 'text-[#17402C]'
+                    wp.status === 'future' ? 'text-[color:var(--lkv-text-muted)]' : 'text-[color:var(--lkv-primary)]'
                   }`}
                 >
                   {wp.name}{' '}
                   {wp.italicPart && (
-                    <em className="font-serif italic font-normal text-[#17402C]">{wp.italicPart}</em>
+                    <em className="font-serif italic font-normal text-[color:var(--lkv-primary)]">{wp.italicPart}</em>
                   )}
                 </div>
                 <div
                   className={`font-mono text-[10px] tracking-wide mt-0.5 ${
-                    wp.status === 'current' ? 'text-[#17402C] font-semibold' : 'text-[#6B7A72]'
+                    wp.status === 'current' ? 'text-[color:var(--lkv-primary)] font-semibold' : 'text-[color:var(--lkv-text-muted)]'
                   }`}
                 >
                   {wp.meta}

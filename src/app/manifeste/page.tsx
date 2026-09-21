@@ -79,7 +79,7 @@ export default function ManifestePage() {
               className="mb-3"
               title="Un sac. Une carte. Le reste vient de vous."
             />
-            <p className="mb-8 max-w-2xl text-base text-[#5A7064]">
+            <p className="mb-8 max-w-2xl text-base text-[color:var(--lkv-text-secondary)]">
               Le Kit du Voyageur est né à Grenoble, entre les massifs et les gares : aider chacun
               à partir mieux équipé, plus léger, et entouré.
             </p>
@@ -93,9 +93,9 @@ export default function ManifestePage() {
                   tone="sage"
                   className="p-6 flex flex-col gap-4"
                 >
-                  <principe.icone size={22} className="text-[#17402C]" aria-hidden />
-                  <h2 className="font-display font-bold text-xl text-[#17402C]">{principe.nom}</h2>
-                  <p className="text-sm text-[#365233] leading-relaxed">{principe.description}</p>
+                  <principe.icone size={22} className="text-[color:var(--lkv-primary)]" aria-hidden />
+                  <h2 className="font-display font-bold text-xl text-[color:var(--lkv-primary)]">{principe.nom}</h2>
+                  <p className="text-sm text-[color:var(--lkv-primary-soft)] leading-relaxed">{principe.description}</p>
                 </Card>
               ))}
             </div>
@@ -134,12 +134,12 @@ export default function ManifestePage() {
                   className="p-4 flex flex-col gap-3"
                 >
                   <div className="flex items-center gap-2">
-                    <principe.icone size={18} className="text-[#17402C]" aria-hidden />
-                    <h2 className="font-display font-bold text-[17px] text-[#17402C]">
+                    <principe.icone size={18} className="text-[color:var(--lkv-primary)]" aria-hidden />
+                    <h2 className="font-display font-bold text-[17px] text-[color:var(--lkv-primary)]">
                       {principe.nom}
                     </h2>
                   </div>
-                  <p className="text-xs text-[#365233] leading-relaxed">{principe.description}</p>
+                  <p className="text-xs text-[color:var(--lkv-primary-soft)] leading-relaxed">{principe.description}</p>
                 </Card>
               ))}
             </div>

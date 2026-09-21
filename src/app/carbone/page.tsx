@@ -5,6 +5,7 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import Icon from '@/components/ui/AppIcon';
 import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
+import { Button, Card, Chip } from '@/components/ui';
 
 const TRANSPORT_EMISSIONS: Record<string, number> = { 'avion-court': 255, 'avion-long': 195, train: 14, voiture: 171, bus: 89 };
 const ACCOMMODATION_EMISSIONS: Record<string, number> = { hotel: 31, camping: 4, refuge: 8, airbnb: 22 };
@@ -43,7 +44,12 @@ export default function CarbonePage() {
   ];
 
   const toggleActivity = (a: string) => { setTrip(prev => ({ ...prev, activities: prev.activities.includes(a) ? prev.activities.filter(x => x !== a) : [...prev.activities, a] })); };
-  const getCarbonLevel = (tons: number) => { if (tons < 0.5) return { label: 'Faible', color: 'text-emerald-600', bg: 'bg-emerald-100' }; if (tons < 1.5) return { label: 'Modéré', color: 'text-amber-600', bg: 'bg-amber-100' }; if (tons < 3) return { label: 'Élevé', color: 'text-orange-600', bg: 'bg-orange-100' }; return { label: 'Très élevé', color: 'text-red-600', bg: 'bg-red-100' }; };
+  const getCarbonLevel = (tons: number) => {
+    if (tons < 0.5) return { label: 'Faible', className: 'bg-[color:var(--lkv-success-bg)] text-[color:var(--lkv-success)]' };
+    if (tons < 1.5) return { label: 'Modéré', className: 'bg-[color:var(--lkv-warning-bg)] text-[color:var(--lkv-warning-dark)]' };
+    if (tons < 3) return { label: 'Élevé', className: 'bg-[color:var(--lkv-warning-bg)] text-[color:var(--lkv-warning-dark)]' };
+    return { label: 'Très élevé', className: 'bg-[color:var(--lkv-danger-bg)] text-[color:var(--lkv-danger-dark)]' };
+  };
   const level = getCarbonLevel(emissions.total);
   const selectedProject = OFFSET_PROJECTS.find(p => p.id === selectedOffset);
   const offsetCost = selectedProject ? Math.ceil(emissions.total * offsetQty) * selectedProject.pricePerTon : 0;
@@ -84,14 +90,14 @@ export default function CarbonePage() {
                       </select>
                     </div>
                     <div><label className="block text-xs font-mono text-muted-foreground uppercase tracking-wider mb-2">Activités</label>
-                      <div className="flex flex-wrap gap-1.5">{ACTIVITIES_LIST.map(a => (<button key={a} onClick={() => toggleActivity(a)} className={`glass-capsule-btn text-xs ${trip.activities.includes(a) ? 'primary' : ''}`}>{a}</button>))}</div>
+                      <div className="flex flex-wrap gap-[var(--space-2)]">{ACTIVITIES_LIST.map(a => (<Chip key={a} selected={trip.activities.includes(a)} onClick={() => toggleActivity(a)}>{a}</Chip>))}</div>
                     </div>
                   </div>
                 </div>
               </div>
               <div className="lg:col-span-2 space-y-5">
                 <div className="glass p-6">
-                  <div className="flex items-center justify-between mb-4"><h2 className="font-display font-700 text-xl text-foreground">Bilan carbone estimé</h2><span className={`text-sm px-3 py-1 rounded-full font-medium ${level.color} ${level.bg}`}>{level.label}</span></div>
+                  <div className="flex items-center justify-between mb-4"><h2 className="font-display font-700 text-xl text-foreground">Bilan carbone estimé</h2><span className={`text-sm px-3 py-1 rounded-full font-medium ${level.className}`}>{level.label}</span></div>
                   <div className="flex items-end gap-3 mb-6"><div className="font-mono text-5xl font-700 text-foreground">{emissions.total}</div><div className="text-muted-foreground mb-2">tonnes CO₂e / personne</div></div>
                 </div>
               </div>
@@ -104,30 +110,33 @@ export default function CarbonePage() {
       {/* MOBILE */}
       <div className="block md:hidden">
         <MobilePageShell>
-          <div style={{ padding: '16px' }}>
-            <h1 style={{ fontSize: '20px', fontWeight: 800, color: '#17402C', marginBottom: '12px', fontFamily: 'var(--font-display)' }}>Bilan carbone</h1>
-            <p style={{ fontSize: '13px', color: 'rgba(23,64,44,0.6)', marginBottom: '16px' }}>Calculez l&apos;impact CO₂ de votre voyage.</p>
-            <div className="glass" style={{ borderRadius: '12px', padding: '16px', marginBottom: '16px' }}>
-              <h2 style={{ fontSize: '14px', fontWeight: 700, color: '#17402C', marginBottom: '12px' }}>Paramètres du voyage</h2>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-                  <input type="text" value={trip.origin} onChange={e => setTrip({ ...trip, origin: e.target.value })} placeholder="Départ" style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid rgba(23,64,44,0.06)', fontSize: '13px' }} />
-                  <input type="text" value={trip.destination} onChange={e => setTrip({ ...trip, destination: e.target.value })} placeholder="Destination" style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid rgba(23,64,44,0.06)', fontSize: '13px' }} />
+          <div className="p-[var(--space-4)]">
+            <h1 className="mb-[var(--space-3)] font-display text-[length:var(--lkv-text-title-sm)] font-extrabold text-[color:var(--lkv-primary)]">Bilan carbone</h1>
+            <p className="mb-[var(--space-4)] text-[length:var(--lkv-text-caption-1)] text-[color:var(--lkv-text-muted)]">Calculez l&apos;impact CO₂ de votre voyage.</p>
+            <Card variant="standard" className="mb-[var(--space-4)] p-[var(--space-4)]">
+              <h2 className="mb-[var(--space-3)] text-[length:var(--lkv-text-footnote)] font-bold text-[color:var(--lkv-primary)]">Paramètres du voyage</h2>
+              <div className="flex flex-col gap-[var(--space-3)]">
+                <div className="grid grid-cols-2 gap-[var(--space-2)]">
+                  <input type="text" value={trip.origin} onChange={e => setTrip({ ...trip, origin: e.target.value })} placeholder="Départ" aria-label="Ville de départ" className="min-h-[var(--lkv-touch-min)] rounded-[var(--lkv-radius-sm)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-2 text-[length:var(--lkv-text-caption-1)] text-[color:var(--lkv-text-primary)]" />
+                  <input type="text" value={trip.destination} onChange={e => setTrip({ ...trip, destination: e.target.value })} placeholder="Destination" aria-label="Destination" className="min-h-[var(--lkv-touch-min)] rounded-[var(--lkv-radius-sm)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-2 text-[length:var(--lkv-text-caption-1)] text-[color:var(--lkv-text-primary)]" />
                 </div>
-                <select value={trip.transport} onChange={e => setTrip({ ...trip, transport: e.target.value })} style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid rgba(23,64,44,0.06)', fontSize: '13px' }}>
+                <select value={trip.transport} onChange={e => setTrip({ ...trip, transport: e.target.value })} aria-label="Mode de transport" className="min-h-[var(--lkv-touch-min)] rounded-[var(--lkv-radius-sm)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-2 text-[length:var(--lkv-text-caption-1)] text-[color:var(--lkv-text-primary)]">
                   <option value="avion-long">Avion long-courrier</option><option value="avion-court">Avion court-courrier</option><option value="train">Train</option><option value="voiture">Voiture</option><option value="bus">Bus</option>
                 </select>
               </div>
-            </div>
-            <div className="glass" style={{ borderRadius: '12px', padding: '16px', textAlign: 'center' }}>
-              <p style={{ fontSize: '11px', color: 'rgba(23,64,44,0.5)', marginBottom: '4px' }}>Bilan carbone estimé</p>
-              <p style={{ fontSize: '32px', fontWeight: 700, color: '#17402C', fontFamily: 'monospace' }}>{emissions.total}</p>
-              <p style={{ fontSize: '12px', color: 'rgba(23,64,44,0.5)' }}>tonnes CO₂e / personne</p>
-            </div>
-            {selectedProject && <button onClick={() => setOffsetDone(true)} className="glass-capsule-btn primary" style={{ width: '100%', marginTop: '16px' }}>{offsetDone ? 'Compensé !' : `Compenser — ${offsetCost}€`}</button>}
+            </Card>
+            <Card variant="standard" className="p-[var(--space-4)] text-center">
+              <p className="mb-1 text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">Bilan carbone estimé</p>
+              <p className="font-mono text-[32px] font-bold text-[color:var(--lkv-primary)]">{emissions.total}</p>
+              <p className="text-[length:var(--lkv-text-caption-1)] text-[color:var(--lkv-text-muted)]">tonnes CO₂e / personne</p>
+            </Card>
+            {selectedProject && (
+              <Button fullWidth className="mt-[var(--space-4)]" onClick={() => setOffsetDone(true)}>
+                {offsetDone ? 'Compensé !' : `Compenser — ${offsetCost}€`}
+              </Button>
+            )}
           </div>
         </MobilePageShell>
-        
       </div>
     </>
   );

@@ -262,12 +262,12 @@ export default function GlobalSearchModal({ isOpen, onClose }: GlobalSearchModal
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-start justify-center pt-16 sm:pt-24 px-4 bg-black/60 backdrop-blur-md animate-fade-in">
+    <div className="fixed inset-0 z-[var(--z-command)] flex items-start justify-center pt-16 sm:pt-24 px-4 bg-black/60 backdrop-blur-md animate-fade-in">
       {/* Click outside backdrop */}
       <div className="absolute inset-0" onClick={onClose} />
 
       {/* Search Container Card */}
-      <div className="relative z-10 w-full max-w-2xl bg-[#17402C] text-white rounded-[0.75rem]  border border-white/10 overflow-hidden flex flex-col max-h-[85vh] animate-slide-up">
+      <div className="relative z-10 w-full max-w-2xl bg-[color:var(--lkv-primary)] text-white rounded-[var(--lkv-radius-sm)]  border border-white/10 overflow-hidden flex flex-col max-h-[85vh] animate-slide-up">
         
         {/* Search Header Input */}
         <form onSubmit={handleFormSubmit} className="p-4 sm:p-5 border-b border-white/10 flex items-center gap-3">

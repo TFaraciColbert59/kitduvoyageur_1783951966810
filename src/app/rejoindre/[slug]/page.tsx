@@ -20,7 +20,7 @@ function formatCivilDate(value: string | null): string | null {
 function HonestUnavailable() {
   return (
     <main className="mx-auto flex min-h-dvh w-full max-w-lg flex-col justify-center gap-4 px-4 py-10">
-      <section className="glass rounded-[1.75rem] p-5" aria-label="Invitation indisponible">
+      <section className="glass rounded-[var(--lkv-radius-card)] p-5" aria-label="Invitation indisponible">
         <p className="text-[10px] font-medium uppercase tracking-[0.14em] text-[var(--lkv-text-primary)]/70">
           Invitation
         </p>
@@ -85,7 +85,7 @@ export default async function RejoindrePage({ params, searchParams }: RejoindreP
         </div>
       )}
 
-      <section className="glass rounded-[1.75rem] p-5" aria-label="Activité à rejoindre">
+      <section className="glass rounded-[var(--lkv-radius-card)] p-5" aria-label="Activité à rejoindre">
         <p className="text-[10px] font-medium uppercase tracking-[0.14em] text-[var(--lkv-text-primary)]/70">
           Invitation à préparer à plusieurs
         </p>
@@ -129,7 +129,7 @@ export default async function RejoindrePage({ params, searchParams }: RejoindreP
       <form
         action={`/rejoindre/${slug}/accepter`}
         method="post"
-        className="glass space-y-4 rounded-[1.75rem] p-5"
+        className="glass space-y-4 rounded-[var(--lkv-radius-card)] p-5"
       >
         <input type="hidden" name="token" value={token ?? ''} />
         <label className="flex items-start gap-3 rounded-2xl">

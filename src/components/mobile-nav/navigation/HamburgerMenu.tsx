@@ -38,7 +38,7 @@ function HamburgerMenu({
           outline: 'none',
         }}
       >
-        <LkvIcon name="menu" size={18} color="#17402C" />
+        <LkvIcon name="menu" size={18} color="var(--lkv-primary)" />
       </motion.button>
       <AnimatePresence>
         {menuOpen && (
@@ -91,13 +91,13 @@ function HamburgerMenu({
                   borderRadius: '10px',
                   background: 'rgba(23, 64, 44, 0.06)',
                   textDecoration: 'none',
-                  color: '#17402C',
+                  color: 'var(--lkv-primary)',
                   fontSize: '13px',
                   fontWeight: 600,
                   position: 'relative',
                 }}
               >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#17402C" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--lkv-primary)" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                   <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
                 </svg>
                 Messages
@@ -106,8 +106,8 @@ function HamburgerMenu({
                     position: 'absolute',
                     top: '8px',
                     right: '8px',
-                    background: '#5B7F55',
-                    color: '#fff',
+                    background: 'var(--lkv-secondary)',
+                    color: 'var(--lkv-text-inverted)',
                     fontSize: '9px',
                     fontWeight: 700,
                     padding: '1px 5px',
@@ -135,18 +135,18 @@ function HamburgerMenu({
                   borderRadius: '10px',
                   background: 'rgba(23, 64, 44, 0.06)',
                   textDecoration: 'none',
-                  color: '#17402C',
+                  color: 'var(--lkv-primary)',
                   fontSize: '13px',
                   fontWeight: 600,
                   position: 'relative',
                 }}
               >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#17402C" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--lkv-primary)" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                   <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
                   <path d="M13.7 21a2 2 0 0 1-3.4 0" />
                 </svg>
                 Alertes
-                <span style={{ position: 'absolute', top: '10px', right: '10px', width: '6px', height: '6px', borderRadius: '50%', background: '#5B7F55' }} aria-hidden="true" />
+                <span style={{ position: 'absolute', top: '10px', right: '10px', width: '6px', height: '6px', borderRadius: '50%', background: 'var(--lkv-secondary)' }} aria-hidden="true" />
               </Link>
               {/* Cart */}
               <Link
@@ -164,21 +164,21 @@ function HamburgerMenu({
                   borderRadius: '10px',
                   background: 'rgba(23, 64, 44, 0.06)',
                   textDecoration: 'none',
-                  color: '#17402C',
+                  color: 'var(--lkv-primary)',
                   fontSize: '13px',
                   fontWeight: 600,
                   position: 'relative',
                 }}
               >
-                <LkvIcon name="bag" size={16} color="#17402C" />
+                <LkvIcon name="bag" size={16} color="var(--lkv-primary)" />
                 Panier
                 {cartCount > 0 && (
                   <span style={{
                     position: 'absolute',
                     top: '8px',
                     right: '8px',
-                    background: '#5B7F55',
-                    color: '#fff',
+                    background: 'var(--lkv-secondary)',
+                    color: 'var(--lkv-text-inverted)',
                     fontSize: '9px',
                     fontWeight: 700,
                     padding: '1px 5px',

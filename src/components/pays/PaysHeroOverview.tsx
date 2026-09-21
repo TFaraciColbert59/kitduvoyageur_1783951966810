@@ -30,7 +30,7 @@ export default function PaysHeroOverview({
   const heroImg = country.hero_image_url || country.destinations?.[0]?.image_url;
 
   return (
-    <div className="space-y-4 font-sans text-[#17402C]">
+    <div className="space-y-4 font-sans text-[color:var(--lkv-primary)]">
       {/* 1. HERO PAYS UNIFIÉ — PURE LIQUID GLASS */}
       <div className="glass p-5 sm:p-6 overflow-hidden">
         <div className="flex flex-col lg:flex-row items-center justify-between gap-5">
@@ -38,10 +38,10 @@ export default function PaysHeroOverview({
             {/* Meta Tags Row */}
             <div className="flex flex-wrap items-center gap-2">
               <CountryFlag code={country.code} name={country.nom} size="md" className="rounded-md shadow-xs" />
-              <span className="glass-pill text-[9.5px] font-mono font-bold text-[#17402C]">
+              <span className="glass-pill text-[9.5px] font-mono font-bold text-[color:var(--lkv-primary)]">
                 {country.code}{country.iso_a3 ? ` · ${country.iso_a3}` : ''}
               </span>
-              <span className="glass-pill text-[9.5px] font-mono font-bold text-[#17402C]">
+              <span className="glass-pill text-[9.5px] font-mono font-bold text-[color:var(--lkv-primary)]">
                 📍 {country.region} · {country.continent}
               </span>
             </div>
@@ -49,22 +49,22 @@ export default function PaysHeroOverview({
             {/* Title & Slogan */}
             <div>
               <div className="flex flex-wrap items-baseline gap-2">
-                <h1 className="font-display font-bold text-3xl sm:text-4xl text-[#17402C] tracking-tight leading-tight">
+                <h1 className="font-display font-bold text-3xl sm:text-4xl text-[color:var(--lkv-primary)] tracking-tight leading-tight">
                   {country.nom}
                 </h1>
                 {country.nom_en && country.nom_en.toLowerCase() !== country.nom.toLowerCase() && (
-                  <span className="font-mono text-xs text-[#5A7064] font-medium bg-white/70 px-2 py-0.5 rounded-md border border-white/60">
+                  <span className="font-mono text-xs text-[color:var(--lkv-text-secondary)] font-medium bg-white/70 px-2 py-0.5 rounded-md border border-white/60">
                     {country.nom_en}
                   </span>
                 )}
                 {country.slogan && country.slogan !== 'nature & sentiers' && (
-                <span className="font-serif italic font-normal text-[#8C6418] text-xl sm:text-2xl">
+                <span className="font-serif italic font-normal text-[color:var(--lkv-warning-dark)] text-xl sm:text-2xl">
                   — {country.slogan}
                 </span>
                 )}
               </div>
               {country.subtitle_is_custom && (
-              <p className="font-serif italic text-[#5A7064] text-base sm:text-lg mt-2 leading-relaxed">
+              <p className="font-serif italic text-[color:var(--lkv-text-secondary)] text-base sm:text-lg mt-2 leading-relaxed">
                 {country.subtitle}
               </p>
               )}
@@ -109,7 +109,7 @@ export default function PaysHeroOverview({
                 <span className="text-[10px] font-mono font-bold tracking-wider uppercase drop-shadow-xs">
                   {country.nom} · Terrains
                 </span>
-                <span className="glass-pill !bg-white/85 text-[#17402C] text-[8.5px] font-mono font-bold !py-0.5 !px-1.5">
+                <span className="glass-pill !bg-white/85 text-[color:var(--lkv-primary)] text-[8.5px] font-mono font-bold !py-0.5 !px-1.5">
                   Panorama
                 </span>
               </div>
@@ -118,16 +118,16 @@ export default function PaysHeroOverview({
         </div>
 
         {/* 2. STATS STRIP — 5 MÉTRIQUES CLÉS */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 pt-6 mt-6 border-t border-[#17402C]/5">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 pt-6 mt-6 border-t border-[color:var(--lkv-primary)]/5">
           {stats.map((s, idx) => (
             <div key={idx} className="glass-sub-card p-3 space-y-1">
-              <span className="text-[9px] font-mono font-bold text-[#5A7064] tracking-widest uppercase block">
+              <span className="text-[9px] font-mono font-bold text-[color:var(--lkv-text-secondary)] tracking-widest uppercase block">
                 {s.label}
               </span>
-              <div className="font-mono font-bold text-base sm:text-lg text-[#17402C] leading-none">
-                {s.val} {s.unit && <span className="text-xs font-normal text-[#5A7064]">{s.unit}</span>}
+              <div className="font-mono font-bold text-base sm:text-lg text-[color:var(--lkv-primary)] leading-none">
+                {s.val} {s.unit && <span className="text-xs font-normal text-[color:var(--lkv-text-secondary)]">{s.unit}</span>}
               </div>
-              <span className="text-[10px] text-[#5A7064] block truncate">
+              <span className="text-[10px] text-[color:var(--lkv-text-secondary)] block truncate">
                 {s.sub}
               </span>
             </div>
@@ -144,27 +144,27 @@ export default function PaysHeroOverview({
             : 'lg:col-span-12'
         } glass p-6 space-y-4`}>
           <div>
-            <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-[#5B7F55] block mb-1">
+            <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-[color:var(--lkv-secondary)] block mb-1">
               Édition LKDV
             </span>
-            <h3 className="font-display font-bold text-xl text-[#17402C]">
+            <h3 className="font-display font-bold text-xl text-[color:var(--lkv-primary)]">
               {country.presentation_titre}
             </h3>
           </div>
 
-          <div className="space-y-3 text-xs sm:text-sm text-[#365233] leading-relaxed">
+          <div className="space-y-3 text-xs sm:text-sm text-[color:var(--lkv-primary-soft)] leading-relaxed">
             {country.presentation_paragraphes.map((p, i) => (
               <p key={i}>{p}</p>
             ))}
           </div>
 
           {country.citation_texte && (
-            <div className="glass-sub-card p-4 border-l-4 border-[#8C6418] mt-4 space-y-1">
-              <p className="font-serif italic text-xs sm:text-sm text-[#17402C] leading-snug">
+            <div className="glass-sub-card p-4 border-l-4 border-[color:var(--lkv-warning-dark)] mt-4 space-y-1">
+              <p className="font-serif italic text-xs sm:text-sm text-[color:var(--lkv-primary)] leading-snug">
                 « {country.citation_texte} »
               </p>
               {country.citation_auteur && (
-                <cite className="text-[10px] font-mono text-[#5A7064] block not-italic">
+                <cite className="text-[10px] font-mono text-[color:var(--lkv-text-secondary)] block not-italic">
                   — {country.citation_auteur}
                 </cite>
               )}
@@ -176,10 +176,10 @@ export default function PaysHeroOverview({
         {country.points_interet_carte && country.points_interet_carte.length > 0 && (
         <div className={`lg:col-span-5 glass p-6 space-y-4`}>
           <div>
-            <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-[#5B7F55] block mb-1">
+            <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-[color:var(--lkv-secondary)] block mb-1">
               Géographie
             </span>
-            <h3 className="font-display font-bold text-lg text-[#17402C]">
+            <h3 className="font-display font-bold text-lg text-[color:var(--lkv-primary)]">
               Repères &amp; Relief
             </h3>
           </div>
@@ -195,11 +195,11 @@ export default function PaysHeroOverview({
               <path
                 d="M150 70 L210 62 L270 78 L300 110 L320 155 L335 200 L325 250 L295 285 L255 305 L210 318 L165 312 L130 292 L100 262 L85 225 L88 185 L100 140 L120 95 Z"
                 fill="rgba(91,127,85,0.15)"
-                stroke="#17402C"
+                stroke="var(--lkv-primary)"
                 strokeWidth="1.8"
               />
-              <text x="10" y="20" fontFamily="monospace" fontSize="10" fill="#5A7064">{country.latitude}</text>
-              <text x="320" y="390" fontFamily="monospace" fontSize="10" fill="#5A7064">{country.longitude}</text>
+              <text x="10" y="20" fontFamily="monospace" fontSize="10" fill="var(--lkv-text-secondary)">{country.latitude}</text>
+              <text x="320" y="390" fontFamily="monospace" fontSize="10" fill="var(--lkv-text-secondary)">{country.longitude}</text>
             </svg>
 
             {/* Pins */}
@@ -209,15 +209,15 @@ export default function PaysHeroOverview({
                 className={`absolute -translate-x-1/2 -translate-y-1/2 flex items-center gap-1 group cursor-pointer`}
                 style={{ top: pt.top, left: pt.left }}
               >
-                <span className={`w-2.5 h-2.5 rounded-full ${pt.isCapital ? 'bg-[#8C6418] ring-4 ring-[#8C6418]/20 animate-pulse' : 'bg-[#17402C] ring-2 ring-white'}`} />
-                <span className="text-[9px] font-mono font-bold bg-white/90 px-1.5 py-0.5 rounded shadow-2xs text-[#17402C] whitespace-nowrap opacity-90 group-hover:opacity-100">
+                <span className={`w-2.5 h-2.5 rounded-full ${pt.isCapital ? 'bg-[color:var(--lkv-warning-dark)] ring-4 ring-[color:var(--lkv-warning-dark)]/20 animate-pulse' : 'bg-[color:var(--lkv-primary)] ring-2 ring-white'}`} />
+                <span className="text-[9px] font-mono font-bold bg-white/90 px-1.5 py-0.5 rounded shadow-2xs text-[color:var(--lkv-primary)] whitespace-nowrap opacity-90 group-hover:opacity-100">
                   {pt.nom}
                 </span>
               </div>
             ))}
           </div>
 
-          <div className="flex items-center justify-between text-[10px] font-mono text-[#5A7064] pt-1">
+          <div className="flex items-center justify-between text-[10px] font-mono text-[color:var(--lkv-text-secondary)] pt-1">
             <span>Repère : {country.carte_repere}</span>
             <span>Échelle : {country.carte_echelle}</span>
           </div>
@@ -228,20 +228,20 @@ export default function PaysHeroOverview({
       {/* 4. HIGHLIGHTS / POINTS FORTS */}
       {country.highlights && country.highlights.length > 0 && (
       <div className="space-y-3">
-        <h3 className="font-display font-bold text-lg text-[#17402C]">
-          Points forts <span className="font-serif italic font-normal text-[#5B7F55]">du voyage</span>
+        <h3 className="font-display font-bold text-lg text-[color:var(--lkv-primary)]">
+          Points forts <span className="font-serif italic font-normal text-[color:var(--lkv-secondary)]">du voyage</span>
         </h3>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           {country.highlights.map((h, i) => (
-            <div key={i} className="glass p-4 space-y-2 hover:border-[#5B7F55]/30 transition-colors">
-              <div className="w-8 h-8 rounded-xl bg-[#5B7F55]/15 text-[#5B7F55] flex items-center justify-center">
+            <div key={i} className="glass p-4 space-y-2 hover:border-[color:var(--lkv-secondary)]/30 transition-colors">
+              <div className="w-8 h-8 rounded-xl bg-[color:var(--lkv-secondary)]/15 text-[color:var(--lkv-secondary)] flex items-center justify-center">
                 <Icon name="SparklesIcon" size={16} />
               </div>
-              <h4 className="font-bold text-sm text-[#17402C]">
-                {h.titre} <span className="font-serif italic font-normal text-[#5B7F55]">{h.sous_titre}</span>
+              <h4 className="font-bold text-sm text-[color:var(--lkv-primary)]">
+                {h.titre} <span className="font-serif italic font-normal text-[color:var(--lkv-secondary)]">{h.sous_titre}</span>
               </h4>
-              <p className="text-xs text-[#5A7064] leading-relaxed">
+              <p className="text-xs text-[color:var(--lkv-text-secondary)] leading-relaxed">
                 {h.description}
               </p>
             </div>

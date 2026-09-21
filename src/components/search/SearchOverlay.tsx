@@ -3,7 +3,7 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import LkvIcon from '@/components/ui/LkvIcon';
-import { IconButton, SearchField } from '@/components/ui';
+import { Button, Chip, IconButton, SearchField } from '@/components/ui';
 import { useRecentSearches } from '@/components/search/useRecentSearches';
 import { useSearchContext } from '@/contexts/SearchContext';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
@@ -84,15 +84,7 @@ export default function SearchOverlay() {
         {/* Scrim with deep frosted blur — completely masks underlying content */}
         <div
           key="search-scrim"
-          className={`lkv-drawer-scrim${closing ? ' lkv-drawer-scrim--closing' : ''}`}
-          style={{
-            position: 'fixed',
-            inset: 0,
-            background: 'rgba(11, 28, 19, 0.85)',
-            backdropFilter: 'blur(var(--glass-blur-xl)) saturate(var(--glass-sat))',
-            WebkitBackdropFilter: 'blur(var(--glass-blur-xl)) saturate(var(--glass-sat))',
-            zIndex: 99990,
-          }}
+          className={`lkv-drawer-scrim fixed inset-0 z-[var(--z-sheet)] bg-[color:var(--lkv-primary)]/85 backdrop-blur-[var(--blur-xl)] backdrop-saturate-[var(--glass-sat)]${closing ? ' lkv-drawer-scrim--closing' : ''}`}
           onClick={closeSearch}
           aria-hidden="true"
         />
@@ -100,30 +92,13 @@ export default function SearchOverlay() {
         {/* Panel */}
         <div
           key="search-panel"
-          className={`lkv-search-panel${closing ? ' lkv-search-panel--closing' : ''}`}
-          style={{
-              position: 'fixed',
-              top: 0,
-              left: 0,
-              right: 0,
-              zIndex: 99991,
-              background: '#EEF3EC',
-              paddingTop: 'calc(env(safe-area-inset-top, 0px) + 16px)',
-              paddingLeft: '16px',
-              paddingRight: '16px',
-              paddingBottom: '20px',
-              borderBottomLeftRadius: '24px',
-              borderBottomRightRadius: '24px',
-              border: '1px solid rgba(255, 255, 255, 0.9)',
-              borderTop: 'none',
-              boxShadow: '0 20px 48px rgba(11, 28, 19, 0.35)',
-            }}
-            role="dialog"
-            aria-modal="true"
-            aria-label="Recherche"
-          >
+          className={`lkv-search-panel fixed inset-x-0 top-0 z-[var(--z-sheet)] rounded-b-[var(--lkv-radius-card)] border border-t-0 border-white/90 bg-[color:var(--lkv-surface)] px-[var(--space-4)] pb-[var(--space-5)] pt-[calc(var(--safe-top)+var(--space-4))] shadow-elevation-5${closing ? ' lkv-search-panel--closing' : ''}`}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Recherche"
+        >
             {/* Search form */}
-            <form ref={formRef} onSubmit={handleSubmit} className="flex items-center gap-3">
+            <form ref={formRef} onSubmit={handleSubmit} className="flex items-center gap-[var(--space-3)]">
               <SearchField
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
@@ -140,72 +115,35 @@ export default function SearchOverlay() {
 
             {/* Recent searches */}
             {recentSearches.length > 0 && (
-              <div style={{ marginTop: '16px' }}>
-                <div
-                  style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    marginBottom: '10px',
-                  }}
-                >
-                  <span
-                    style={{
-                      fontSize: '13px',
-                      fontWeight: 600,
-                      color: '#6B7A72',
-                      letterSpacing: '0.05em',
-                      textTransform: 'uppercase',
-                    }}
-                  >
+              <div className="mt-[var(--space-4)]">
+                <div className="mb-[var(--space-3)] flex items-center justify-between">
+                  <span className="text-[length:var(--lkv-text-caption-1)] font-semibold uppercase tracking-[0.05em] text-[color:var(--lkv-text-muted)]">
                     Recherches récentes
                   </span>
-                  <button
-                    onClick={clearSearches}
-                    style={{
-                      background: 'none',
-                      border: 'none',
-                      fontSize: '12px',
-                      color: '#6B7A72',
-                      cursor: 'pointer',
-                      textDecoration: 'underline',
-                      fontFamily: 'var(--font-sans)',
-                    }}
-                  >
+                  <Button variant="ghost" size="sm" onClick={clearSearches} className="underline">
                     Effacer
-                  </button>
+                  </Button>
                 </div>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                <div className="flex flex-wrap items-center gap-[var(--space-2)]">
                   {recentSearches.map((entry) => (
-                    <button
+                    <span
                       key={entry.query}
-                      onClick={() => handleRecentClick(entry.query)}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '6px',
-                        padding: '6px 14px',
-                        borderRadius: '999px',
-                        background: '#EDF3ED',
-                        border: 'none',
-                        fontSize: '14px',
-                        color: '#17402C',
-                        cursor: 'pointer',
-                        fontFamily: 'var(--font-sans)',
-                      }}
+                      className="inline-flex items-center rounded-full border border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-muted)] pl-1 pr-0.5"
                     >
-                      {entry.query}
-                      <span
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          removeSearch(entry.query);
-                        }}
-                        style={{ color: '#6B7A72', marginLeft: '2px' }}
+                      <Chip
+                        onClick={() => handleRecentClick(entry.query)}
+                        className="border-transparent bg-transparent px-[var(--space-2)]"
+                      >
+                        {entry.query}
+                      </Chip>
+                      <IconButton
+                        size="sm"
                         aria-label={`Supprimer ${entry.query}`}
+                        onClick={() => removeSearch(entry.query)}
                       >
                         <LkvIcon name="close" size={12} />
-                      </span>
-                    </button>
+                      </IconButton>
+                    </span>
                   ))}
                 </div>
               </div>
@@ -213,15 +151,7 @@ export default function SearchOverlay() {
 
             {/* Suggestions when no recent searches */}
             {recentSearches.length === 0 && (
-              <div
-                style={{
-                  marginTop: '24px',
-                  textAlign: 'center',
-                  color: '#6B7A72',
-                  fontSize: '14px',
-                  lineHeight: 1.5,
-                }}
-              >
+              <div className="mt-[var(--space-6)] text-center text-[length:var(--lkv-text-body-sm)] leading-[var(--leading-snug)] text-[color:var(--lkv-text-muted)]">
                 Ex&nbsp;: «&nbsp;tente&nbsp;», «&nbsp;Islande&nbsp;», «&nbsp;sac à dos randonnée&nbsp;»
               </div>
             )}

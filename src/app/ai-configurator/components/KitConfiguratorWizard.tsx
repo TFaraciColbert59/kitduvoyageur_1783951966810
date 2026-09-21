@@ -604,7 +604,7 @@ export default function KitConfiguratorWizard({
       </div>
 
       {/* ── MAIN 2-COLUMN COCKPIT CARD (Liquid Glass) ── */}
-      <div className="glass rounded-[2rem] overflow-hidden grid grid-cols-1 lg:grid-cols-12 flex-1 min-h-0 border border-white/60 shadow-lg">
+      <div className="glass rounded-[var(--lkv-radius-card)] overflow-hidden grid grid-cols-1 lg:grid-cols-12 flex-1 min-h-0 border border-white/60 shadow-lg">
 
         {/* ── LEFT PANEL: STEPPER & CHOICES (7 Cols) ── */}
         <div className="lg:col-span-7 flex flex-col p-5 sm:p-8 lg:p-10 border-b lg:border-b-0 lg:border-r border-white/40 overflow-hidden">
@@ -1006,7 +1006,7 @@ export default function KitConfiguratorWizard({
       {/* ── MOBILE STICKY BOTTOM ACTION BAR (Liquid Glass) ── */}
       {report && (
         <div
-          className="lg:hidden fixed left-2.5 right-2.5 z-[90] glass border border-white/80 p-3 px-4 flex items-center justify-between shadow-xl rounded-2xl"
+          className="lg:hidden fixed left-2.5 right-2.5 z-[var(--z-command)] glass border border-white/80 p-3 px-4 flex items-center justify-between shadow-xl rounded-2xl"
           style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 84px)' }}
         >
           <div>

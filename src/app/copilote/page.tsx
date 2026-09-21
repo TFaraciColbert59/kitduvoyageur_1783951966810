@@ -6,6 +6,7 @@ import Footer from '@/components/Footer';
 import Icon from '@/components/ui/AppIcon';
 import { useChat } from '@/lib/hooks/useChat';
 import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
+import { Button, Card } from '@/components/ui';
 import { useActiveTrip } from '@/features/trips/context/ActiveTripContext';
 
 export default function CopilotePage() {
@@ -64,24 +65,60 @@ export default function CopilotePage() {
       {/* MOBILE */}
       <div className="block md:hidden">
         <MobilePageShell>
-          <div style={{ padding: '16px' }}>
-            <h1 style={{ fontSize: '20px', fontWeight: 800, color: '#17402C', marginBottom: '8px' }}>Copilote IA</h1>
-            <p style={{ fontSize: '13px', color: 'rgba(23,64,44,0.6)', marginBottom: '16px' }}>Assistant d&apos;expédition intelligent.</p>
-            <div className="glass" style={{ borderRadius: '12px', marginBottom: '12px', padding: '16px', minHeight: '200px' }}>
+          <div className="p-[var(--space-4)]">
+            <h1 className="mb-[var(--space-2)] text-[length:var(--lkv-text-title-sm)] font-extrabold text-[color:var(--lkv-primary)]">Copilote IA</h1>
+            <p className="mb-[var(--space-4)] text-[length:var(--lkv-text-caption-1)] text-[color:var(--lkv-text-muted)]">Assistant d&apos;expédition intelligent.</p>
+            <Card variant="standard" className="mb-[var(--space-3)] min-h-[200px] p-[var(--space-4)]" aria-live="polite">
               {messages.map((msg, i) => (
-                <div key={i} style={{ display: 'flex', gap: '8px', marginBottom: '10px', flexDirection: msg.role === 'user' ? 'row-reverse' : 'row' }}>
-                  <div style={{ width: '28px', height: '28px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: msg.role === 'assistant' ? '#17402C' : '#5C8A3A', color: 'white', fontSize: '10px', fontWeight: 700 }}>{msg.role === 'assistant' ? 'IA' : 'M'}</div>
-                  <div style={{ background: msg.role === 'assistant' ? '#F4F1EA' : '#17402C', color: msg.role === 'assistant' ? '#17402C' : 'white', padding: '8px 12px', borderRadius: '12px', fontSize: '13px', maxWidth: '80%' }}>{msg.content}</div>
+                <div
+                  key={i}
+                  className={`mb-[10px] flex gap-[var(--space-2)] ${
+                    msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'
+                  }`}
+                >
+                  <div
+                    aria-hidden="true"
+                    className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[10px] font-bold text-[color:var(--lkv-text-inverted)] ${
+                      msg.role === 'assistant'
+                        ? 'bg-[color:var(--lkv-primary)]'
+                        : 'bg-[color:var(--lkv-secondary)]'
+                    }`}
+                  >
+                    {msg.role === 'assistant' ? 'IA' : 'M'}
+                  </div>
+                  <div
+                    className={`max-w-[80%] rounded-[var(--lkv-radius-sm)] px-[var(--space-3)] py-[var(--space-2)] text-[length:var(--lkv-text-caption-1)] ${
+                      msg.role === 'assistant'
+                        ? 'bg-[color:var(--lkv-surface-muted)] text-[color:var(--lkv-primary)]'
+                        : 'bg-[color:var(--lkv-primary)] text-[color:var(--lkv-text-inverted)]'
+                    }`}
+                  >
+                    {msg.content}
+                  </div>
                 </div>
               ))}
-            </div>
-            <div style={{ display: 'flex', gap: '8px' }}>
-              <input type="text" value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleSend()} placeholder="Posez votre question..." style={{ flex: 1, padding: '10px 14px', borderRadius: '10px', border: '1px solid rgba(23,64,44,0.06)', fontSize: '13px' }} />
-              <button onClick={() => handleSend()} disabled={isLoading || !input.trim()} className="glass-capsule-btn primary flex-shrink-0">Envoyer</button>
+            </Card>
+            <div className="flex gap-[var(--space-2)]">
+              <input
+                type="text"
+                value={input}
+                onChange={e => setInput(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && handleSend()}
+                placeholder="Posez votre question..."
+                aria-label="Votre question au copilote"
+                className="min-h-[var(--lkv-touch-min)] flex-1 rounded-[var(--lkv-radius-sm)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-[14px] py-2.5 text-[length:var(--lkv-text-caption-1)] text-[color:var(--lkv-text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]"
+              />
+              <Button
+                onClick={() => handleSend()}
+                disabled={isLoading || !input.trim()}
+                loading={isLoading}
+                className="shrink-0"
+              >
+                Envoyer
+              </Button>
             </div>
           </div>
         </MobilePageShell>
-        
       </div>
     </>
   );

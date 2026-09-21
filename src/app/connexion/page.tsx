@@ -3,14 +3,13 @@
 import React, { useState, Suspense } from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import Icon from '@/components/ui/AppIcon';
-import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
 import { trackEvent } from '@/lib/analytics';
 import { createClient } from '@/lib/supabase/client';
 import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
+import { Button } from '@/components/ui';
 import { useTranslation } from '@/lib/i18n/context';
 
 type AuthMode = 'connexion' | 'inscription';
@@ -107,34 +106,36 @@ function AuthForm() {
   };
 
   return (
-    <div className="pt-20 sm:pt-24 min-h-[100dvh] flex items-center justify-center px-4 pb-24">
+    <div className="flex min-h-[100dvh] items-center justify-center px-[var(--space-4)] pb-[var(--space-12)] pt-20 sm:pt-24">
       <div className="w-full max-w-[420px]">
-        <div className="text-center mb-6">
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[var(--lkv-primary)]">
+        <div className="mb-[var(--space-6)] text-center">
+          <h1 className="text-[length:var(--lkv-text-title-sm)] font-bold tracking-tight text-[color:var(--lkv-primary)] sm:text-[length:var(--lkv-text-title-lg)]">
             {t(mode === 'connexion' ? 'auth.signInTitle' : 'auth.signUpTitle')}
           </h1>
-          <p className="text-[var(--lkv-text-muted)] text-sm mt-1">
+          <p className="mt-1 text-[length:var(--lkv-text-footnote)] text-[color:var(--lkv-text-muted)]">
             {t(mode === 'connexion' ? 'auth.signInSubtitle' : 'auth.signUpSubtitle')}
           </p>
         </div>
 
         {/* Segmented Control iOS fluide */}
-        <div className="flex p-1 bg-black/5 dark:bg-white/10 backdrop-blur-md rounded-2xl mb-6 border border-black/5 dark:border-white/10">
+        <div className="mb-[var(--space-6)] flex rounded-[var(--lkv-radius-md)] border border-[color:var(--lkv-border-subtle)] bg-black/5 p-1 backdrop-blur-[var(--blur-md)] dark:bg-white/10">
           {(['connexion', 'inscription'] as const).map((m) => {
             const isActive = mode === m && !forgotPasswordOpen;
             return (
               <button
                 key={m}
+                type="button"
+                aria-pressed={isActive}
                 onClick={() => {
                   setMode(m);
                   setError('');
                   setConfirmationSent(false);
                   setForgotPasswordOpen(false);
                 }}
-                className={`flex-1 py-2.5 text-sm font-semibold rounded-xl transition-all duration-200 ${
+                className={`flex-1 rounded-[var(--lkv-radius-control)] py-2.5 text-[length:var(--lkv-text-footnote)] font-semibold transition-colors duration-[var(--motion-control-duration)] ${
                   isActive
-                    ? 'bg-[#17402C] text-white shadow-sm'
-                    : 'text-[var(--lkv-text-muted)] hover:text-[var(--lkv-text-primary)]'
+                    ? 'bg-[color:var(--lkv-primary)] text-[color:var(--lkv-text-inverted)] shadow-elevation-1'
+                    : 'text-[color:var(--lkv-text-muted)] hover:text-[color:var(--lkv-text-primary)]'
                 }`}
               >
                 {t(m === 'connexion' ? 'auth.signIn' : 'auth.signUp')}
@@ -143,28 +144,45 @@ function AuthForm() {
           })}
         </div>
 
-        <div className="glass rounded-3xl p-6 sm:p-8 border border-white/60 shadow-lg">
+        <div className="rounded-[var(--lkv-radius-card)] border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] p-[var(--space-6)] shadow-elevation-2 backdrop-blur-[var(--blur-lg)] sm:p-[var(--space-8)]">
           {confirmationSent ? (
-            <div style={{ textAlign: 'center' }}>
-              <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: 'rgba(16,185,129,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px' }}><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--lkv-primary)" strokeWidth="2"><polyline points="20 6 9 17 4 12" /></svg></div>
-              <p style={{ fontWeight: 700, color: 'var(--lkv-primary)', marginBottom: '8px' }}>{t('auth.confirmationTitle')}</p>
-              <p style={{ fontSize: '13px', color: 'var(--lkv-text-muted)', marginBottom: '16px' }}>{t('auth.confirmationBodyPrefix')} <strong>{email}</strong>{t('auth.confirmationBodySuffix')}</p>
-              <button onClick={() => { setMode('connexion'); setConfirmationSent(false); }} className="glass-capsule-btn primary w-full !py-3 !text-sm !font-semibold">{t('auth.goToSignIn')}</button>
+            <div className="text-center">
+              <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-[color:var(--lkv-success-bg)]">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--lkv-primary)" strokeWidth="2" aria-hidden="true">
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+              </div>
+              <p className="mb-2 font-bold text-[color:var(--lkv-primary)]">{t('auth.confirmationTitle')}</p>
+              <p className="mb-[var(--space-4)] text-[length:var(--lkv-text-caption-1)] text-[color:var(--lkv-text-muted)]">
+                {t('auth.confirmationBodyPrefix')} <strong>{email}</strong>{t('auth.confirmationBodySuffix')}
+              </p>
+              <Button
+                fullWidth
+                size="lg"
+                onClick={() => {
+                  setMode('connexion');
+                  setConfirmationSent(false);
+                }}
+              >
+                {t('auth.goToSignIn')}
+              </Button>
             </div>
           ) : forgotPasswordOpen ? (
-            <form onSubmit={handleResetPassword} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-              <h2 style={{ fontSize: '16px', fontWeight: 700, color: 'var(--lkv-primary)' }}>{t('auth.forgotPassword')}</h2>
-              <p style={{ fontSize: '13px', color: 'var(--lkv-text-muted)' }}>
+            <form onSubmit={handleResetPassword} className="flex flex-col gap-[14px]">
+              <h2 className="text-[length:var(--lkv-text-body-sm)] font-bold text-[color:var(--lkv-primary)]">
+                {t('auth.forgotPassword')}
+              </h2>
+              <p className="text-[length:var(--lkv-text-caption-1)] text-[color:var(--lkv-text-muted)]">
                 {t('auth.forgotPasswordHint')}
               </p>
               {resetSent ? (
-                <div style={{ background: 'var(--lkv-success-bg, rgba(16,185,129,0.1))', border: '1px solid var(--lkv-success)', padding: '12px', borderRadius: '10px', fontSize: '13px', color: 'var(--lkv-primary)' }}>
+                <div className="rounded-[var(--lkv-radius-sm)] border border-[color:var(--lkv-success)] bg-[color:var(--lkv-success-bg)] p-[var(--space-3)] text-[length:var(--lkv-text-caption-1)] text-[color:var(--lkv-primary)]">
                   {t('auth.resetSentBody')}
                 </div>
               ) : (
                 <>
                   <div>
-                    <label htmlFor="reset-email" style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--lkv-text-primary)', marginBottom: '4px' }}>
+                    <label htmlFor="reset-email" className="mb-1 block text-[length:var(--lkv-text-caption-1)] font-semibold text-[color:var(--lkv-text-primary)]">
                       {t('auth.email')}
                     </label>
                     <input
@@ -175,56 +193,60 @@ function AuthForm() {
                       placeholder={t('auth.emailPlaceholder')}
                       autoComplete="email"
                       required
-                      style={{ width: '100%', padding: '10px 14px', minHeight: '44px', borderRadius: '10px', border: '1px solid rgba(23,64,44,0.1)', background: 'var(--lkv-surface)', fontSize: '14px', color: 'var(--lkv-primary)' }}
+                      className="min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-sm)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-[14px] py-2.5 text-[length:var(--lkv-text-body-sm)] text-[color:var(--lkv-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]"
                     />
                   </div>
-                  {error && <div style={{ background: 'var(--lkv-danger-bg)', border: '1px solid var(--lkv-danger)', padding: '10px', borderRadius: '10px', fontSize: '13px', color: 'var(--lkv-danger)' }}>{error}</div>}
-                  <button type="submit" disabled={loading} className="glass-capsule-btn primary w-full !min-h-[44px] !py-3 !text-[15px] !font-semibold">
+                  {error && (
+                    <div className="rounded-[var(--lkv-radius-sm)] border border-[color:var(--lkv-danger)] bg-[color:var(--lkv-danger-bg)] p-[10px] text-[length:var(--lkv-text-caption-1)] text-[color:var(--lkv-danger)]" role="alert">
+                      {error}
+                    </div>
+                  )}
+                  <Button type="submit" loading={loading} fullWidth size="lg">
                     {loading ? t('auth.resetSubmitting') : t('auth.resetSubmit')}
-                  </button>
+                  </Button>
                 </>
               )}
               <button
                 type="button"
                 onClick={() => { setForgotPasswordOpen(false); setError(''); }}
-                className="text-xs text-[var(--lkv-text-muted)] hover:text-[var(--lkv-primary)] underline text-center cursor-pointer mt-2"
+                className="mt-2 min-h-[var(--lkv-touch-min)] cursor-pointer text-center text-[length:var(--lkv-text-caption-1)] text-[color:var(--lkv-text-muted)] underline hover:text-[color:var(--lkv-primary)]"
               >
                 {t('auth.backToSignIn')}
               </button>
             </form>
           ) : (
-            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+            <form onSubmit={handleSubmit} className="flex flex-col gap-[14px]">
               {mode === 'inscription' && (
                 <div>
-                  <label htmlFor="name" style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--lkv-text-primary)', marginBottom: '4px' }}>
+                  <label htmlFor="name" className="mb-1 block text-[length:var(--lkv-text-caption-1)] font-semibold text-[color:var(--lkv-text-primary)]">
                     {t('auth.name')}
                   </label>
-                  <input id="name" type="text" autoComplete="name" value={name} onChange={(e) => setName(e.target.value)} placeholder={t('auth.namePlaceholder')} style={{ width: '100%', padding: '10px 14px', minHeight: '44px', borderRadius: '10px', border: '1px solid rgba(23,64,44,0.1)', background: 'var(--lkv-surface)', fontSize: '14px', color: 'var(--lkv-primary)' }} />
+                  <input id="name" type="text" autoComplete="name" value={name} onChange={(e) => setName(e.target.value)} placeholder={t('auth.namePlaceholder')} className="min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-sm)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-[14px] py-2.5 text-[length:var(--lkv-text-body-sm)] text-[color:var(--lkv-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]" />
                 </div>
               )}
               <div>
-                <label htmlFor="email" style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--lkv-text-primary)', marginBottom: '4px' }}>
+                <label htmlFor="email" className="mb-1 block text-[length:var(--lkv-text-caption-1)] font-semibold text-[color:var(--lkv-text-primary)]">
                   {t('auth.email')}
                 </label>
-                <input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder={t('auth.emailPlaceholder')} autoComplete="email" required style={{ width: '100%', padding: '10px 14px', minHeight: '44px', borderRadius: '10px', border: '1px solid rgba(23,64,44,0.1)', background: 'var(--lkv-surface)', fontSize: '14px', color: 'var(--lkv-primary)' }} />
+                <input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder={t('auth.emailPlaceholder')} autoComplete="email" required className="min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-sm)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-[14px] py-2.5 text-[length:var(--lkv-text-body-sm)] text-[color:var(--lkv-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]" />
               </div>
 
               <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
-                  <label htmlFor="password" style={{ fontSize: '12px', fontWeight: 600, color: 'var(--lkv-text-primary)' }}>
+                <div className="mb-1 flex items-center justify-between">
+                  <label htmlFor="password" className="text-[length:var(--lkv-text-caption-1)] font-semibold text-[color:var(--lkv-text-primary)]">
                     {mode === 'inscription' ? t('auth.passwordWithMin') : t('auth.password')}
                   </label>
                   {mode === 'connexion' && (
                     <button
                       type="button"
                       onClick={() => { setForgotPasswordOpen(true); setError(''); }}
-                      className="text-[11px] text-[var(--lkv-text-muted)] hover:text-[var(--lkv-primary)] underline cursor-pointer"
+                      className="cursor-pointer text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)] underline hover:text-[color:var(--lkv-primary)]"
                     >
                       {t('auth.forgotPasswordLink')}
                     </button>
                   )}
                 </div>
-                <div style={{ position: 'relative' }}>
+                <div className="relative">
                   <input
                     id="password"
                     type={showPassword ? 'text' : 'password'}
@@ -233,33 +255,46 @@ function AuthForm() {
                     placeholder={mode === 'inscription' ? t('auth.passwordMinPlaceholder') : t('auth.passwordPlaceholder')}
                     autoComplete={mode === 'inscription' ? 'new-password' : 'current-password'}
                     required
-                    style={{ width: '100%', padding: '10px 44px 10px 14px', minHeight: '44px', borderRadius: '10px', border: '1px solid rgba(23,64,44,0.1)', background: 'var(--lkv-surface)', fontSize: '14px', color: 'var(--lkv-primary)' }}
+                    className="min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-sm)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] py-2.5 pl-[14px] pr-11 text-[length:var(--lkv-text-body-sm)] text-[color:var(--lkv-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
                     aria-label={showPassword ? t('auth.hidePassword') : t('auth.showPassword')}
-                    style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--lkv-text-muted)' }}
+                    className="absolute right-2 top-1/2 flex h-8 w-8 -translate-y-1/2 cursor-pointer items-center justify-center border-none bg-transparent text-[color:var(--lkv-text-muted)]"
                   >
                     {showPassword ? (
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" /><line x1="1" y1="1" x2="23" y2="23" /></svg>
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" /><line x1="1" y1="1" x2="23" y2="23" /></svg>
                     ) : (
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></svg>
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></svg>
                     )}
                   </button>
                 </div>
               </div>
 
-              {error && <div style={{ background: 'var(--lkv-danger-bg)', border: '1px solid var(--lkv-danger)', padding: '10px', borderRadius: '10px', fontSize: '13px', color: 'var(--lkv-danger)' }}>{error}</div>}
-              <button type="submit" disabled={loading} className="glass-capsule-btn primary w-full !min-h-[44px] !py-3.5 !text-[15px] !font-semibold">
+              {error && (
+                <div className="rounded-[var(--lkv-radius-sm)] border border-[color:var(--lkv-danger)] bg-[color:var(--lkv-danger-bg)] p-[10px] text-[length:var(--lkv-text-caption-1)] text-[color:var(--lkv-danger)]" role="alert">
+                  {error}
+                </div>
+              )}
+              <Button type="submit" loading={loading} fullWidth size="lg">
                 {loading ? t(mode === 'connexion' ? 'auth.submittingSignIn' : 'auth.submittingSignUp') : t(mode === 'connexion' ? 'auth.submitSignIn' : 'auth.submitSignUp')}
-              </button>
+              </Button>
             </form>
           )}
-          <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid rgba(23,64,44,0.06)', textAlign: 'center' }}>
-            <p style={{ fontSize: '12px', color: 'rgba(23,64,44,0.5)' }}>
+          <div className="mt-[var(--space-4)] border-t border-[color:var(--lkv-border-subtle)] pt-[var(--space-4)] text-center">
+            <p className="text-[length:var(--lkv-text-caption-1)] text-[color:var(--lkv-text-muted)]">
               {mode === 'connexion' ? t('auth.noAccount') : t('auth.haveAccount')}{' '}
-              <button type="button" onClick={() => { setMode(mode === 'connexion' ? 'inscription' : 'connexion'); setError(''); setConfirmationSent(false); setForgotPasswordOpen(false); }} className="glass-capsule-btn !min-h-0 !py-1 !px-3 !text-xs !font-semibold">
+              <button
+                type="button"
+                onClick={() => {
+                  setMode(mode === 'connexion' ? 'inscription' : 'connexion');
+                  setError('');
+                  setConfirmationSent(false);
+                  setForgotPasswordOpen(false);
+                }}
+                className="cursor-pointer px-[var(--space-3)] py-1 text-[length:var(--lkv-text-caption-1)] font-semibold text-[color:var(--lkv-primary)] underline"
+              >
                 {mode === 'connexion' ? t('auth.registerLink') : t('auth.signIn')}
               </button>
             </p>

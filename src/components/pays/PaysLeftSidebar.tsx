@@ -67,7 +67,7 @@ export default function PaysLeftSidebar({
   ];
 
   return (
-    <aside className="h-full max-h-full w-full flex-1 flex flex-col justify-between glass p-3.5 text-[#17402C] font-sans overflow-hidden select-none">
+    <aside className="h-full max-h-full w-full flex-1 flex flex-col justify-between glass p-3.5 text-[color:var(--lkv-primary)] font-sans overflow-hidden select-none">
       {/* ── 1. ZONE HAUTE FIXE (Identité du Pays & Actions Rapides) ── */}
       <div className="shrink-0 space-y-2.5">
         {/* Country Mini Header */}
@@ -76,19 +76,19 @@ export default function PaysLeftSidebar({
             <CountryFlag code={country.code} name={country.nom} size="lg" className="rounded-lg shadow-sm" />
           </div>
           <div className="min-w-0 flex-1">
-            <h4 className="font-display font-bold text-xs sm:text-sm text-[#17402C] truncate leading-tight">
+            <h4 className="font-display font-bold text-xs sm:text-sm text-[color:var(--lkv-primary)] truncate leading-tight">
               {country.nom}
             </h4>
             {country.nom_en && country.nom_en.toLowerCase() !== country.nom.toLowerCase() && (
-              <span className="text-[10px] font-mono text-[#5A7064] block truncate">
+              <span className="text-[10px] font-mono text-[color:var(--lkv-text-secondary)] block truncate">
                 {country.nom_en}
               </span>
             )}
             <div className="flex items-center gap-1.5 mt-1">
-              <span className="glass-pill !px-1.5 !py-0.5 text-[8.5px] font-mono font-bold text-[#17402C]">
+              <span className="glass-pill !px-1.5 !py-0.5 text-[8.5px] font-mono font-bold text-[color:var(--lkv-primary)]">
                 {country.code}{country.iso_a3 ? ` · ${country.iso_a3}` : ''}
               </span>
-              <span className="text-[9.5px] text-[#5A7064] truncate">
+              <span className="text-[9.5px] text-[color:var(--lkv-text-secondary)] truncate">
                 {country.region || country.continent}
               </span>
             </div>
@@ -116,7 +116,7 @@ export default function PaysLeftSidebar({
 
       {/* ── 2. ZONE CENTRALE SCROLLABLE À L'INTÉRIEUR (Navigation par sections) ── */}
       <nav className="flex-1 min-h-0 overflow-y-auto no-scrollbar py-2 space-y-1.5" aria-label="Navigation de la fiche pays">
-        <p className="text-[9.5px] font-mono font-bold uppercase tracking-widest text-[#5A7064] px-2 mb-1">
+        <p className="text-[9.5px] font-mono font-bold uppercase tracking-widest text-[color:var(--lkv-text-secondary)] px-2 mb-1">
           Navigation
         </p>
 
@@ -139,20 +139,20 @@ export default function PaysLeftSidebar({
       </nav>
 
       {/* ── 3. ZONE BASSE FIXE (Raccourci carte & Footer) ── */}
-      <div className="shrink-0 pt-2 border-t border-[#17402C]/5 space-y-1.5">
+      <div className="shrink-0 pt-2 border-t border-[color:var(--lkv-primary)]/5 space-y-1.5">
         <Link
           href="/explorer"
-          className="w-full glass-sub-card text-xs font-semibold text-[#365233] p-2 flex items-center justify-between hover:bg-white/80 transition-colors cursor-pointer"
+          className="w-full glass-sub-card text-xs font-semibold text-[color:var(--lkv-primary-soft)] p-2 flex items-center justify-between hover:bg-white/80 transition-colors cursor-pointer"
         >
           <span className="flex items-center gap-1.5">
             <span>←</span>
             <span>Explorer tous les pays</span>
           </span>
-          <span className="text-[9px] font-mono text-[#5A7064]">Carte LKDV</span>
+          <span className="text-[9px] font-mono text-[color:var(--lkv-text-secondary)]">Carte LKDV</span>
         </Link>
 
         <div className="text-center">
-          <span className="text-[8.5px] font-mono text-[#5A7064] tracking-wider uppercase">
+          <span className="text-[8.5px] font-mono text-[color:var(--lkv-text-secondary)] tracking-wider uppercase">
             Le Kit du Voyageur · Pays v2.0
           </span>
         </div>

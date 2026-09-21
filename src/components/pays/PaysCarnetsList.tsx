@@ -59,7 +59,7 @@ export default function PaysCarnetsList({ countryIso, countryName }: Props) {
   if (loading) {
     return (
       <div className="py-6 flex justify-center">
-        <div className="w-7 h-7 border-2 border-[#17402C]/20 border-t-[#17402C] rounded-full animate-spin" />
+        <div className="w-7 h-7 border-2 border-[color:var(--lkv-primary)]/20 border-t-[color:var(--lkv-primary)] rounded-full animate-spin" />
       </div>
     );
   }
@@ -68,10 +68,10 @@ export default function PaysCarnetsList({ countryIso, countryName }: Props) {
     <div className="space-y-3">
       <div className="flex items-center justify-between gap-3 px-1">
         <div>
-          <h3 className="text-base font-bold font-display text-[#17402C] leading-tight">
+          <h3 className="text-base font-bold font-display text-[color:var(--lkv-primary)] leading-tight">
             Carnets d’expédition <em className="font-serif italic text-forest-800 font-normal">en {countryName}</em>
           </h3>
-          <p className="text-[10px] text-[#5C6B5E]">Récits vécus, traces et retours de marcheurs.</p>
+          <p className="text-[10px] text-[color:var(--lkv-text-secondary)]">Récits vécus, traces et retours de marcheurs.</p>
         </div>
         <Link
           href="/carnets"
@@ -94,7 +94,7 @@ export default function PaysCarnetsList({ countryIso, countryName }: Props) {
               className="glass-sub-card group cursor-pointer overflow-hidden flex flex-col justify-between p-3 space-y-2.5"
             >
               <div className="space-y-2">
-                <div className="aspect-[16/10] rounded-2xl relative overflow-hidden bg-[#17402C]">
+                <div className="aspect-[16/10] rounded-2xl relative overflow-hidden bg-[color:var(--lkv-primary)]">
                   <img
                     src={
                       carnet.cover_image ||
@@ -110,22 +110,22 @@ export default function PaysCarnetsList({ countryIso, countryName }: Props) {
                 </div>
 
                 <div>
-                  <h4 className="font-bold text-xs text-[#17402C] leading-snug line-clamp-2">
+                  <h4 className="font-bold text-xs text-[color:var(--lkv-primary)] leading-snug line-clamp-2">
                     {carnet.title}
                   </h4>
                 </div>
               </div>
 
-              <div className="flex items-center justify-between pt-2 border-t border-[#17402C]/10 text-xs">
+              <div className="flex items-center justify-between pt-2 border-t border-[color:var(--lkv-primary)]/10 text-xs">
                 <div className="flex items-center gap-2 min-w-0">
-                  <div className="w-5 h-5 rounded-full bg-[#17402C] text-white flex items-center justify-center font-bold text-[9px] overflow-hidden shrink-0">
+                  <div className="w-5 h-5 rounded-full bg-[color:var(--lkv-primary)] text-white flex items-center justify-center font-bold text-[9px] overflow-hidden shrink-0">
                     {carnet.author?.avatar_url ? (
                       <img src={carnet.author.avatar_url} alt="" className="w-full h-full object-cover" />
                     ) : (
                       carnet.author?.full_name?.charAt(0) || '👤'
                     )}
                   </div>
-                  <span className="font-medium text-[11px] text-[#17402C] truncate">
+                  <span className="font-medium text-[11px] text-[color:var(--lkv-primary)] truncate">
                     {carnet.author?.full_name || 'Voyageur'}
                   </span>
                 </div>
@@ -140,8 +140,8 @@ export default function PaysCarnetsList({ countryIso, countryName }: Props) {
       ) : (
         <div className="glass-sub-card p-5 text-center space-y-2">
           <span className="text-3xl block">📖</span>
-          <h4 className="font-bold text-xs text-[#17402C]">Aucun carnet publié en {countryName}</h4>
-          <p className="text-[11px] text-[#5C6B5E] max-w-xs mx-auto">
+          <h4 className="font-bold text-xs text-[color:var(--lkv-primary)]">Aucun carnet publié en {countryName}</h4>
+          <p className="text-[11px] text-[color:var(--lkv-text-secondary)] max-w-xs mx-auto">
             Soyez le premier à partager votre trace et inspirer la communauté.
           </p>
           <div className="pt-1">

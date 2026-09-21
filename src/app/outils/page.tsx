@@ -5,6 +5,7 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
 import TopoSeparator from '@/components/TopoSeparator';
+import { Badge, Card } from '@/components/ui';
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://lekitduvoyageur.fr';
 
@@ -249,10 +250,10 @@ export default function OutilsPage() {
               <div className="flex items-start gap-4 mb-6">
                 <div className="w-1 h-12 bg-info flex-shrink-0 mt-1" />
                 <div>
-                  <p className="font-mono text-xs text-info tracking-widest uppercase mb-2" style={{ fontFamily: 'var(--font-mono)' }}>
+                  <p className="font-mono text-xs text-info tracking-widest uppercase mb-2">
                     BOÎTE À OUTILS — {tools.length} OUTILS GRATUITS
                   </p>
-                  <h1 className="font-display font-800 text-4xl md:text-5xl text-white tracking-tight leading-none" style={{ fontFamily: 'var(--font-display)', fontWeight: 800 }}>
+                  <h1 className="font-display font-800 text-4xl md:text-5xl text-white tracking-tight leading-none" font-extrabold>
                     OUTILS TERRAIN
                   </h1>
                   <p className="mt-3 text-white/60 text-lg max-w-2xl">
@@ -270,13 +271,13 @@ export default function OutilsPage() {
                   { label: 'GRATUITS', value: '100%' },
                 ].map((stat) => (
                   <div key={stat.label} className="flex flex-col">
-                    <span className="font-mono text-[10px] text-white/40 tracking-widest uppercase" style={{ fontFamily: 'var(--font-mono)' }}>{stat.label}</span>
-                    <span className="font-mono text-2xl font-700 text-white" style={{ fontFamily: 'var(--font-mono)' }}>{stat.value}</span>
+                    <span className="font-mono text-[10px] text-white/40 tracking-widest uppercase">{stat.label}</span>
+                    <span className="font-mono text-2xl font-700 text-white">{stat.value}</span>
                   </div>
                 ))}
               </div>
             </div>
-            <TopoSeparator color="#E7E3D6" />
+            <TopoSeparator color="var(--stone-200)" />
           </section>
 
           {/* Tools Grid */}
@@ -304,17 +305,17 @@ export default function OutilsPage() {
                       <div className="flex items-start justify-between mb-4">
                         <div className="text-4xl" role="img" aria-label={tool.nom}>{tool.icon}</div>
                         <div className="flex flex-col items-end gap-1.5">
-                          <span className={`text-[9px] font-mono px-2 py-0.5 rounded border ${categorieColor[tool.categorie]}`} style={{ fontFamily: 'var(--font-mono)' }}>
+                          <span className={`text-[9px] font-mono px-2 py-0.5 rounded border ${categorieColor[tool.categorie]}`}>
                             {tool.categorie.toUpperCase()}
                           </span>
                           {tool.offline && (
-                            <span className="text-[9px] font-mono px-2 py-0.5 rounded border border-forest-400/30 text-forest-400 bg-forest-400/10" style={{ fontFamily: 'var(--font-mono)' }}>
+                            <span className="text-[9px] font-mono px-2 py-0.5 rounded border border-forest-400/30 text-forest-400 bg-forest-400/10">
                               OFFLINE
                             </span>
                           )}
                         </div>
                       </div>
-                      <h2 className="font-display font-700 text-lg text-foreground tracking-tight mb-2 group-hover:text-info transition-colors" style={{ fontFamily: 'var(--font-display)' }}>
+                      <h2 className="font-display font-700 text-lg text-foreground tracking-tight mb-2 group-hover:text-info transition-colors">
                         {tool.nom}
                       </h2>
                       <p className="text-sm text-muted-foreground leading-relaxed flex-1">{tool.description}</p>
@@ -334,11 +335,11 @@ export default function OutilsPage() {
           </section>
 
           {/* CTA */}
-          <TopoSeparator inverted color="#17402C" />
+          <TopoSeparator inverted color="var(--lkv-primary)" />
           <section className="py-16 bg-dark-bg">
             <div className="max-w-3xl mx-auto px-4 text-center">
-              <p className="font-mono text-xs text-info tracking-widest uppercase mb-3" style={{ fontFamily: 'var(--font-mono)' }}>CONFIGURATEUR IA</p>
-              <h2 className="font-display font-800 text-3xl text-white tracking-tight mb-4" style={{ fontFamily: 'var(--font-display)', fontWeight: 800 }}>
+              <p className="font-mono text-xs text-info tracking-widest uppercase mb-3">CONFIGURATEUR IA</p>
+              <h2 className="font-display font-800 text-3xl text-white tracking-tight mb-4" font-extrabold>
                 Préparez votre voyage avec l&apos;IA
               </h2>
               <p className="text-white/60 mb-8">Destination, saison, profil — notre IA génère votre liste d&apos;équipement complète en quelques secondes.</p>
@@ -348,7 +349,7 @@ export default function OutilsPage() {
               </Link>
             </div>
           </section>
-          <TopoSeparator color="#E7E3D6" />
+          <TopoSeparator color="var(--stone-200)" />
 
           <Footer />
         </div>
@@ -357,73 +358,42 @@ export default function OutilsPage() {
       {/* ── MOBILE ── */}
       <div className="block md:hidden">
         <MobilePageShell>
-          <div style={{ padding: '16px' }}>
+          <div className="p-[var(--space-4)]">
             {/* Mobile Hero */}
-            <div style={{ marginBottom: '24px' }}>
-              <p style={{ fontSize: '10px', fontFamily: 'ui-monospace, monospace', color: '#6B7A72', letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: '8px' }}>
+            <div className="mb-[var(--space-6)]">
+              <p className="mb-[var(--space-2)] font-mono text-[10px] uppercase tracking-[0.14em] text-[color:var(--lkv-text-muted)]">
                 BOÎTE À OUTILS — {tools.length} OUTILS
               </p>
-              <h1 style={{ fontSize: '28px', fontWeight: 800, color: '#17402C', lineHeight: '1.1', marginBottom: '8px' }}>
+              <h1 className="mb-[var(--space-2)] text-[28px] font-extrabold leading-[1.1] text-[color:var(--lkv-primary)]">
                 Outils terrain
               </h1>
-              <p style={{ fontSize: '14px', color: '#6B7A72', lineHeight: '1.5' }}>
+              <p className="text-[14px] leading-[var(--leading-normal)] text-[color:var(--lkv-text-muted)]">
                 Des outils sobres et rapides, conçus pour le terrain.
               </p>
             </div>
 
             {/* Tools List */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <div className="flex flex-col gap-[var(--space-3)]">
               {tools.map((tool) => (
-                <Link
-                  key={tool.slug}
-                  href={`/outils/${tool.slug}`}
-                  style={{ textDecoration: 'none' }}
-                >
-                  <div className="glass" style={{
-                    display: 'flex',
-                    alignItems: 'flex-start',
-                    gap: '14px',
-                    padding: '14px',
-                    borderRadius: '16px',
-                  }}>
-                    <span style={{ fontSize: '28px', flexShrink: 0 }} role="img" aria-label={tool.nom}>{tool.icon}</span>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px', flexWrap: 'wrap' }}>
-                        <span style={{ fontSize: '15px', fontWeight: 700, color: '#17402C' }}>{tool.nom}</span>
-                        <span style={{
-                          fontSize: '9px',
-                          fontFamily: 'ui-monospace, monospace',
-                          padding: '1px 6px',
-                          borderRadius: '4px',
-                          border: '1px solid rgba(23,64,44,0.06)',
-                          color: '#6B7A72',
-                          background: '#EEF3EC',
-                        }}>
-                          {tool.categorie.toUpperCase()}
-                        </span>
+                <Link key={tool.slug} href={`/outils/${tool.slug}`} className="block no-underline">
+                  <Card variant="interactive" className="flex items-start gap-[14px] p-[14px]">
+                    <span className="shrink-0 text-[28px]" role="img" aria-label={tool.nom}>{tool.icon}</span>
+                    <div className="min-w-0 flex-1">
+                      <div className="mb-1 flex flex-wrap items-center gap-[6px]">
+                        <span className="text-[15px] font-bold text-[color:var(--lkv-primary)]">{tool.nom}</span>
+                        <Badge className="font-mono text-[9px]">{tool.categorie.toUpperCase()}</Badge>
                         {tool.offline && (
-                          <span style={{
-                            fontSize: '9px',
-                            fontFamily: 'ui-monospace, monospace',
-                            padding: '1px 6px',
-                            borderRadius: '4px',
-                            border: '1px solid rgba(0,168,107,0.2)',
-                            color: '#00A86B',
-                            background: 'rgba(0,168,107,0.05)',
-                          }}>
-                            OFFLINE
-                          </span>
+                          <Badge tone="sage" className="font-mono text-[9px]">OFFLINE</Badge>
                         )}
                       </div>
-                      <p style={{ fontSize: '12px', color: '#6B7A72', lineHeight: '1.4' }}>{tool.description}</p>
+                      <p className="text-[12px] leading-[var(--leading-snug)] text-[color:var(--lkv-text-muted)]">{tool.description}</p>
                     </div>
-                  </div>
+                  </Card>
                 </Link>
               ))}
             </div>
           </div>
         </MobilePageShell>
-        
       </div>
     </>
   );

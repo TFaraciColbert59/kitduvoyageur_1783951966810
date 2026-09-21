@@ -4,6 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import Icon from '@/components/ui/AppIcon';
 import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
+import { Button, Card } from '@/components/ui';
 
 const POPULAR_PAGES = [
   { label: 'Explorer', href: '/explorer', icon: 'GlobeAltIcon' },
@@ -38,155 +39,73 @@ export default function NotFound() {
         suppressHydrationWarning
       />
 
-      {/* DESKTOP */}
-      <div className="hidden md:flex min-h-screen flex-col items-center justify-center bg-[var(--lkv-surface,var(--lkv-surface-muted))] p-6">
-        <div className="text-center max-w-md w-full glass p-8 rounded-[1.75rem] border border-[var(--lkv-primary)]/10 shadow-elevation-2">
-          <div className="flex justify-center mb-4">
+      <MobilePageShell background="transparent">
+        <div className="flex min-h-[calc(100dvh-120px)] flex-col items-center justify-center px-[var(--space-5)] py-[var(--space-10)] text-center">
+          <Card variant="featured" className="w-full max-w-sm p-6 md:max-w-md md:p-8">
             <span
-              className="text-8xl font-extrabold leading-none tracking-tight font-display select-none"
-              style={{
-                fontFamily: 'var(--font-display)',
-                color: 'var(--lkv-primary, var(--lkv-primary))',
-                opacity: 0.25,
-              }}
+              aria-hidden="true"
+              className="mb-3 block select-none font-display text-[length:var(--lkv-text-title-lg)] font-extrabold leading-none tracking-tight text-[color:var(--lkv-primary)] opacity-25 md:text-8xl"
             >
               404
             </span>
-          </div>
 
-          <p
-            className="text-xs font-mono font-semibold tracking-[0.2em] uppercase text-[var(--lkv-secondary,var(--lkv-secondary))] mb-2"
-            style={{ fontFamily: 'var(--font-mono)' }}
-          >
-            Sentier introuvable
-          </p>
-
-          <h1
-            className="text-2xl font-bold text-[var(--lkv-text-primary,var(--lkv-primary))] mb-3 font-display"
-            style={{ fontFamily: 'var(--font-display)' }}
-          >
-            Cette page n&apos;existe pas
-          </h1>
-
-          <p className="text-[var(--lkv-text-secondary,var(--lkv-secondary))] mb-8 text-sm leading-relaxed font-sans">
-            Le sentier que vous cherchez a peut-être été balisé ailleurs, renommé ou n&apos;existe plus.
-          </p>
-
-          <div className="flex flex-col sm:flex-row gap-3 justify-center mb-8">
-            <button
-              onClick={handleGoBack}
-              className="inline-flex items-center justify-center gap-2 bg-white/70 hover:bg-white text-[var(--lkv-primary,var(--lkv-primary))] border border-[var(--lkv-primary)]/12 px-5 py-3 rounded-full font-medium text-sm transition-all active:scale-[0.98] min-h-[44px]"
-            >
-              <Icon name="ArrowLeftIcon" size={16} variant="outline" />
-              Retour
-            </button>
-            <Link
-              href="/hub"
-              className="inline-flex items-center justify-center gap-2 bg-[var(--lkv-primary,var(--lkv-primary))] hover:bg-[var(--lkv-primary-hover,var(--lkv-primary-hover))] text-white px-6 py-3 rounded-full font-semibold text-sm transition-all shadow-green active:scale-[0.98] min-h-[44px]"
-            >
-              <Icon name="HomeIcon" size={16} variant="outline" />
-              Aller au Hub
-            </Link>
-          </div>
-
-          <div className="pt-6 border-t border-[var(--lkv-primary)]/8">
-            <p
-              className="text-[11px] text-[var(--lkv-text-muted,var(--lkv-text-muted))] font-mono tracking-widest uppercase mb-3"
-              style={{ fontFamily: 'var(--font-mono)' }}
-            >
-              Points de repère
+            <p className="mb-2 font-mono text-[length:var(--lkv-text-caption-2)] font-semibold uppercase tracking-[0.2em] text-[color:var(--lkv-secondary)] md:text-[length:var(--lkv-text-caption-1)]">
+              Sentier introuvable
             </p>
-            <div className="grid grid-cols-2 gap-2">
-              {POPULAR_PAGES.map((page) => (
-                <Link
-                  key={page.href}
-                  href={page.href}
-                  className="flex items-center gap-2.5 bg-white/60 hover:bg-white border border-[var(--lkv-primary)]/10 rounded-xl px-3.5 py-2.5 text-xs font-medium text-[var(--lkv-primary,var(--lkv-primary))] transition-all active:scale-[0.98] min-h-[40px]"
+
+            <h1 className="mb-2 font-display text-[length:var(--lkv-text-title-sm)] font-bold text-[color:var(--lkv-text-primary)] md:mb-3 md:text-[length:var(--lkv-text-title-lg)]">
+              Cette page n&apos;existe pas
+            </h1>
+
+            <p className="mb-6 text-[length:var(--lkv-text-caption-1)] leading-[var(--leading-relaxed)] text-[color:var(--lkv-text-secondary)] md:mb-8 md:text-[length:var(--lkv-text-footnote)]">
+              Le sentier que vous cherchez a peut-être été balisé ailleurs, renommé ou n&apos;existe
+              plus.
+            </p>
+
+            <div className="mb-6 flex justify-center gap-[var(--space-2)] md:mb-8 md:gap-[var(--space-3)]">
+              <Button
+                variant="secondary"
+                icon={<Icon name="ArrowLeftIcon" size={16} variant="outline" />}
+                onClick={handleGoBack}
+                className="flex-1 md:flex-none"
+              >
+                Retour
+              </Button>
+              <Link href="/hub" className="flex-1 md:flex-none">
+                <Button
+                  icon={<Icon name="HomeIcon" size={16} variant="outline" />}
+                  fullWidth
                 >
-                  <Icon name={page.icon} size={14} variant="outline" className="text-[var(--lkv-secondary,var(--lkv-secondary))]" />
-                  {page.label}
-                </Link>
-              ))}
+                  Aller au Hub
+                </Button>
+              </Link>
             </div>
-          </div>
+
+            <div className="border-t border-[color:var(--lkv-border-subtle)] pt-[var(--space-5)]">
+              <p className="mb-[var(--space-3)] font-mono text-[length:var(--lkv-text-caption-2)] uppercase tracking-widest text-[color:var(--lkv-text-muted)]">
+                Points de repère
+              </p>
+              <div className="grid grid-cols-2 gap-[var(--space-2)]">
+                {POPULAR_PAGES.map((page) => (
+                  <Link
+                    key={page.href}
+                    href={page.href}
+                    className="flex min-h-[var(--lkv-touch-min)] items-center gap-[var(--space-2)] rounded-[var(--lkv-radius-sm)] border border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-card)] px-[var(--space-3)] py-[var(--space-2)] text-[length:var(--lkv-text-caption-1)] font-medium text-[color:var(--lkv-primary)] transition-colors hover:bg-[color:var(--lkv-hover-surface)]"
+                  >
+                    <Icon
+                      name={page.icon}
+                      size={14}
+                      variant="outline"
+                      className="text-[color:var(--lkv-secondary)]"
+                    />
+                    <span className="truncate">{page.label}</span>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          </Card>
         </div>
-      </div>
-
-      {/* MOBILE */}
-      <div className="block md:hidden">
-        <MobilePageShell background="transparent">
-          <div className="px-5 py-10 text-center flex flex-col items-center justify-center min-h-[calc(100dvh-120px)]">
-            <div className="glass p-6 rounded-[1.75rem] border border-[var(--lkv-primary)]/10 w-full max-w-sm shadow-elevation-1">
-              <span
-                className="text-7xl font-extrabold leading-none font-display block mb-3 select-none"
-                style={{
-                  fontFamily: 'var(--font-display)',
-                  color: 'var(--lkv-primary, var(--lkv-primary))',
-                  opacity: 0.25,
-                }}
-              >
-                404
-              </span>
-
-              <p
-                className="text-[10px] font-mono font-semibold tracking-[0.2em] uppercase text-[var(--lkv-secondary,var(--lkv-secondary))] mb-2"
-                style={{ fontFamily: 'var(--font-mono)' }}
-              >
-                Sentier introuvable
-              </p>
-
-              <h1
-                className="text-xl font-bold text-[var(--lkv-text-primary,var(--lkv-primary))] mb-2 font-display"
-                style={{ fontFamily: 'var(--font-display)' }}
-              >
-                Cette page n&apos;existe pas
-              </h1>
-
-              <p className="text-[var(--lkv-text-secondary,var(--lkv-secondary))] mb-6 text-xs leading-relaxed font-sans">
-                Le sentier que vous cherchez a peut-être été déplacé ou n&apos;existe plus.
-              </p>
-
-              <div className="flex gap-2.5 justify-center mb-6">
-                <button
-                  onClick={handleGoBack}
-                  className="flex-1 inline-flex items-center justify-center gap-1.5 bg-white/70 active:bg-white text-[var(--lkv-primary,var(--lkv-primary))] border border-[var(--lkv-primary)]/12 px-4 py-3 rounded-full font-medium text-xs transition-all min-h-[44px]"
-                >
-                  <Icon name="ArrowLeftIcon" size={14} variant="outline" />
-                  Retour
-                </button>
-                <Link
-                  href="/hub"
-                  className="flex-1 inline-flex items-center justify-center gap-1.5 bg-[var(--lkv-primary,var(--lkv-primary))] active:bg-[var(--lkv-primary-hover,var(--lkv-primary-hover))] text-white px-4 py-3 rounded-full font-semibold text-xs transition-all shadow-green min-h-[44px]"
-                >
-                  <Icon name="HomeIcon" size={14} variant="outline" />
-                  Hub
-                </Link>
-              </div>
-
-              <div className="pt-4 border-t border-[var(--lkv-primary)]/8">
-                <p
-                  className="text-[10px] text-[var(--lkv-text-muted,var(--lkv-text-muted))] font-mono tracking-widest uppercase mb-2.5"
-                  style={{ fontFamily: 'var(--font-mono)' }}
-                >
-                  Points de repère
-                </p>
-                <div className="grid grid-cols-2 gap-2">
-                  {POPULAR_PAGES.map((page) => (
-                    <Link
-                      key={page.href}
-                      href={page.href}
-                      className="flex items-center gap-2 bg-white/60 active:bg-white border border-[var(--lkv-primary)]/10 rounded-xl px-3 py-2 text-[11px] font-medium text-[var(--lkv-primary,var(--lkv-primary))] transition-all min-h-[40px]"
-                    >
-                      <Icon name={page.icon} size={13} variant="outline" className="text-[var(--lkv-secondary,var(--lkv-secondary))]" />
-                      <span className="truncate">{page.label}</span>
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        </MobilePageShell>
-      </div>
+      </MobilePageShell>
     </>
   );
 }

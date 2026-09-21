@@ -158,7 +158,7 @@ export default function NavigationPlateau({ controller }: { controller: Navigati
               cursor: 'pointer',
               fontSize: '12px',
               fontWeight: isSelected ? 700 : 500,
-              color: isSelected ? '#17402C' : 'var(--lkv-text-muted)',
+              color: isSelected ? 'var(--lkv-primary)' : 'var(--lkv-text-muted)',
               fontFamily: 'inherit',
               padding: isWide ? '0 12px' : '0 4px',
               whiteSpace: 'nowrap',

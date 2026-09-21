@@ -158,10 +158,10 @@ export default function ReportBlockModal({ target, onClose, onSuccess }: Props) 
 
         {submitted ? (
           <div className="py-6 text-center">
-            <div className="w-12 h-12 rounded-full bg-[#17402C] text-[#A6C1A0] flex items-center justify-center text-xl mx-auto mb-3">✓</div>
+            <div className="w-12 h-12 rounded-full bg-[color:var(--lkv-primary)] text-[color:var(--sage-400)] flex items-center justify-center text-xl mx-auto mb-3">✓</div>
             <h4 className="font-bold text-lg mb-2">Action confirmée</h4>
             <p className="text-sm text-white/70 mb-6 max-w-sm mx-auto">{actionDoneMsg}</p>
-            <button onClick={onClose} className="px-6 py-2.5 bg-white text-[#17402C] rounded-full font-bold text-xs hover:bg-[#EAE6DF] transition-colors">
+            <button onClick={onClose} className="px-6 py-2.5 bg-white text-[color:var(--lkv-primary)] rounded-full font-bold text-xs hover:bg-[color:var(--stone-200)] transition-colors">
               Fermer
             </button>
           </div>
@@ -199,7 +199,7 @@ export default function ReportBlockModal({ target, onClose, onSuccess }: Props) 
                         key={cat.id}
                         className={`flex items-center justify-between p-2.5 rounded-xl border text-xs cursor-pointer transition-colors ${
                           selectedCategory === cat.id
-                            ? 'bg-[#17402C] border-[#A6C1A0] text-white'
+                            ? 'bg-[color:var(--lkv-primary)] border-[color:var(--sage-400)] text-white'
                             : 'bg-black/20 border-white/10 text-white/70 hover:border-white/20'
                         }`}
                       >
@@ -210,7 +210,7 @@ export default function ReportBlockModal({ target, onClose, onSuccess }: Props) 
                             value={cat.id}
                             checked={selectedCategory === cat.id}
                             onChange={() => setSelectedCategory(cat.id)}
-                            className="text-[#17402C]"
+                            className="text-[color:var(--lkv-primary)]"
                           />
                           <span>{cat.label}</span>
                         </div>
@@ -231,7 +231,7 @@ export default function ReportBlockModal({ target, onClose, onSuccess }: Props) 
                     value={reason}
                     onChange={e => setReason(e.target.value)}
                     placeholder="Expliquez ce qui s'est passé de manière factuelle..."
-                    className="w-full bg-black/25 border border-white/15 rounded-xl p-3 text-xs text-white placeholder-white/40 focus:outline-none focus:border-[#A6C1A0] resize-none"
+                    className="w-full bg-black/25 border border-white/15 rounded-xl p-3 text-xs text-white placeholder-white/40 focus:outline-none focus:border-[color:var(--sage-400)] resize-none"
                   ></textarea>
                 </div>
 

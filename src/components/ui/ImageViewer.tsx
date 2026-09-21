@@ -5,6 +5,8 @@ import { motion } from 'framer-motion';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { useSwipe } from '@/hooks/useSwipe';
 import { useDragDismiss, useDoubleTap } from '@/hooks/gestures';
+import Icon from './Icon';
+import { IconButton } from './IconButton';
 
 export interface ImageViewerProps {
   /** Images du carrousel (une seule = pas de navigation horizontale). */
@@ -156,8 +158,8 @@ export default function ImageViewer({
   return (
     <motion.div
       ref={containerRef}
-      className="fixed inset-0 z-[300] bg-black/95 flex items-center justify-center select-none"
-      style={{ y, touchAction: 'none' }}
+      className="fixed inset-0 z-[var(--z-modal)] flex touch-none select-none items-center justify-center bg-black/95"
+      style={{ y }}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       role="dialog"
@@ -191,25 +193,24 @@ export default function ImageViewer({
 
       {/* Compteur carrousel */}
       {multi && (
-        <div className="absolute top-4 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-black/50 backdrop-blur-md text-[11px] font-mono text-white" style={{ top: 'max(16px, env(safe-area-inset-top))' }}>
+        <div className="absolute left-1/2 top-[max(var(--space-4),var(--safe-top))] -translate-x-1/2 rounded-full bg-black/50 px-3 py-1 font-mono text-[length:var(--lkv-text-caption-2)] text-white backdrop-blur-[var(--blur-md)]">
           {index + 1} / {images.length}
         </div>
       )}
 
       {/* Fermer */}
-      <button
+      <IconButton
         type="button"
         onClick={onClose}
-        className="absolute w-10 h-10 rounded-full bg-black/50 text-white flex items-center justify-center text-sm font-bold hover:bg-black/70 transition-colors"
-        style={{ top: 'max(12px, env(safe-area-inset-top))', right: 16 }}
         aria-label="Fermer la visionneuse"
+        className="absolute right-[var(--space-4)] top-[max(var(--space-3),var(--safe-top))] h-11 w-11 rounded-full bg-black/50 text-white backdrop-blur-[var(--blur-sm)] hover:bg-black/70"
       >
-        ✕
-      </button>
+        <Icon name="x" size={16} aria-hidden="true" />
+      </IconButton>
 
       {/* Indicateur zoom */}
       {scale > MIN_SCALE && (
-        <div className="absolute bottom-5 left-1/2 -translate-x-1/2 px-2.5 py-1 rounded-full bg-white/15 backdrop-blur-md text-[10px] font-mono font-bold text-white" style={{ paddingBottom: 'max(20px, env(safe-area-inset-bottom))' }}>
+        <div className="absolute bottom-[max(var(--space-5),var(--safe-bottom))] left-1/2 -translate-x-1/2 rounded-full bg-white/15 px-2.5 py-1 font-mono text-[length:var(--lkv-text-caption-2)] font-bold text-white backdrop-blur-[var(--blur-md)]">
           ×{scale.toFixed(1)}
           <span className="ml-2 text-white/70">double-tap = ×1</span>
         </div>

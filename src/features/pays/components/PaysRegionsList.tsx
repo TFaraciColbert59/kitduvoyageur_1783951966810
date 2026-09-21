@@ -22,14 +22,14 @@ export function PaysRegionsList({
 
   return (
     <section aria-label="Régions et zones" className={cn('space-y-2', className)}>
-      <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-[#5B7F55]">
+      <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-[color:var(--lkv-secondary)]">
         Régions & zones
       </span>
       <div className="flex flex-wrap gap-1.5">
         {data.items.map((region) => (
           <span
             key={region.id}
-            className="glass-pill !px-2.5 !py-1 text-[10.5px] font-mono text-[#17402C]"
+            className="glass-pill !px-2.5 !py-1 text-[10.5px] font-mono text-[color:var(--lkv-primary)]"
           >
             {region.name}
           </span>

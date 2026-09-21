@@ -166,7 +166,7 @@ export async function getGroupeComplet(groupeId: string) {
     is_shared: !!e.is_shared,
     status: e.is_shared ? 'Confirmé' : 'À affecter',
     notes: e.notes || '',
-    statusColor: e.is_shared ? 'bg-[#E7E3D6] text-[#5C6B5E]' : 'bg-amber-100 text-amber-700',
+    statusColor: e.is_shared ? 'bg-[color:var(--stone-200)] text-[color:var(--lkv-text-secondary)]' : 'bg-amber-100 text-amber-700',
   }));
 
   // Format expenses (amount stocké en euros)

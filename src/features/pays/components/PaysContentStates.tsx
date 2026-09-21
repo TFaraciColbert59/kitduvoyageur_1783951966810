@@ -7,12 +7,12 @@ export function PaysSectionSkeleton({ count = 2 }: { count?: number }) {
       {Array.from({ length: count }).map((_, index) => (
         <div
           key={index}
-          className="glass rounded-[1.5rem] p-5 border border-white/50 shadow-xs animate-pulse space-y-3"
+          className="glass rounded-[var(--lkv-radius-lg)] p-5 border border-white/50 shadow-xs animate-pulse space-y-3"
         >
-          <div className="h-3 w-32 rounded-full bg-[#EAE6DF]/80" />
-          <div className="h-3 w-full rounded-full bg-[#EAE6DF]/70" />
-          <div className="h-3 w-5/6 rounded-full bg-[#EAE6DF]/70" />
-          <div className="h-3 w-2/3 rounded-full bg-[#EAE6DF]/60" />
+          <div className="h-3 w-32 rounded-full bg-[color:var(--stone-200)]/80" />
+          <div className="h-3 w-full rounded-full bg-[color:var(--stone-200)]/70" />
+          <div className="h-3 w-5/6 rounded-full bg-[color:var(--stone-200)]/70" />
+          <div className="h-3 w-2/3 rounded-full bg-[color:var(--stone-200)]/60" />
         </div>
       ))}
     </div>
@@ -23,7 +23,7 @@ export function PaysSectionSkeleton({ count = 2 }: { count?: number }) {
 export function PaysSectionEmpty({ label }: { label: string }) {
   return (
     <div className="rounded-2xl border border-white/60 bg-white/60 px-4 py-5 text-center">
-      <p className="text-xs text-[#5A7064] font-mono">{label}</p>
+      <p className="text-xs text-[color:var(--lkv-text-secondary)] font-mono">{label}</p>
     </div>
   );
 }
@@ -33,7 +33,7 @@ export function PaysSectionNotice({ children }: { children: React.ReactNode }) {
   return (
     <div
       role="status"
-      className="rounded-2xl border border-white/60 bg-white/60 px-4 py-4 text-center text-xs font-mono text-[#5A7064]"
+      className="rounded-2xl border border-white/60 bg-white/60 px-4 py-4 text-center text-xs font-mono text-[color:var(--lkv-text-secondary)]"
     >
       {children}
     </div>

@@ -133,7 +133,7 @@ function ConfirmModal({ title, message, onConfirm, onCancel }: {
 }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-      <div className="bg-[#1E2B25] border border-white/10 rounded-2xl p-6 max-w-sm w-full mx-4 ">
+      <div className="bg-[color:var(--lkv-forest-900)] border border-white/10 rounded-2xl p-6 max-w-sm w-full mx-4 ">
         <div className="flex items-center gap-3 mb-4">
           <div className="w-9 h-9 rounded-xl bg-red-500/15 flex items-center justify-center">
             <Icon name="ExclamationTriangleIcon" size={18} variant="outline" className="text-red-400" />
@@ -225,12 +225,12 @@ function OverviewSection() {
     <div className="space-y-5">
       {loadingStats ? (
         <div className="grid grid-cols-2 xl:grid-cols-3 gap-3">
-          {[1, 2, 3, 4, 5, 6].map((i) => <div key={i} className="bg-[#1E2B25] border border-white/8 rounded-xl p-4 h-24 animate-pulse" />)}
+          {[1, 2, 3, 4, 5, 6].map((i) => <div key={i} className="bg-[color:var(--lkv-forest-900)] border border-white/8 rounded-xl p-4 h-24 animate-pulse" />)}
         </div>
       ) : (
         <div className="grid grid-cols-2 xl:grid-cols-3 gap-3">
           {KPI_LIVE.map(kpi => (
-            <div key={kpi.label} className="bg-[#1E2B25] border border-white/8 rounded-xl p-4">
+            <div key={kpi.label} className="bg-[color:var(--lkv-forest-900)] border border-white/8 rounded-xl p-4">
               <div className="flex items-center justify-between mb-3">
                 <Icon name={kpi.icon as string} size={16} variant="outline" className={kpi.color} />
                 <span className="text-[10px] font-mono text-white/30 uppercase tracking-wider" style={{ fontFamily: 'var(--font-mono)' }}>Live</span>
@@ -243,7 +243,7 @@ function OverviewSection() {
       )}
 
       {/* Top products from DB */}
-      <div className="bg-[#1E2B25] border border-white/8 rounded-xl p-4">
+      <div className="bg-[color:var(--lkv-forest-900)] border border-white/8 rounded-xl p-4">
         <h3 className="text-sm font-semibold text-white mb-3">Top produits (par prix)</h3>
         {topProducts.length === 0 ? (
           <p className="text-xs text-white/30 text-center py-4">Aucun produit</p>
@@ -255,10 +255,10 @@ function OverviewSection() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between mb-1">
                     <span className="text-xs text-white/70 truncate">{p.name}</span>
-                    <span className="font-mono text-xs text-[#17402C] ml-2" style={{ fontFamily: 'var(--font-mono)' }}>{p.price_eur}€</span>
+                    <span className="font-mono text-xs text-[color:var(--lkv-primary)] ml-2" style={{ fontFamily: 'var(--font-mono)' }}>{p.price_eur}€</span>
                   </div>
                   <div className="h-1 bg-white/8 rounded-full overflow-hidden">
-                    <div className="h-full bg-[#17402C] rounded-full" style={{ width: `${Math.max(20, 100 - i * 18)}%` }} />
+                    <div className="h-full bg-[color:var(--lkv-primary)] rounded-full" style={{ width: `${Math.max(20, 100 - i * 18)}%` }} />
                   </div>
                 </div>
                 <span className={`text-[10px] px-1.5 py-0.5 rounded font-mono ${p.stock > 0 ? 'text-emerald-400 bg-emerald-400/10' : 'text-red-400 bg-red-400/10'}`}>
@@ -271,7 +271,7 @@ function OverviewSection() {
       </div>
 
       {/* Recent members from DB */}
-      <div className="bg-[#1E2B25] border border-white/8 rounded-xl p-4">
+      <div className="bg-[color:var(--lkv-forest-900)] border border-white/8 rounded-xl p-4">
         <h3 className="text-sm font-semibold text-white mb-3">Membres récents</h3>
         {recentUsers.length === 0 ? (
           <p className="text-xs text-white/30 text-center py-4">Aucun membre</p>
@@ -307,16 +307,16 @@ function OverviewSection() {
 function ProductsSection() {
   return (
     <div className="space-y-4">
-      <div className="bg-[#1E2B25] border border-white/8 rounded-xl p-6 text-center">
-        <div className="w-12 h-12 rounded-2xl bg-[#17402C]/15 flex items-center justify-center mx-auto mb-4">
-          <Icon name="ArchiveBoxIcon" size={22} variant="outline" className="text-[#17402C]" />
+      <div className="bg-[color:var(--lkv-forest-900)] border border-white/8 rounded-xl p-6 text-center">
+        <div className="w-12 h-12 rounded-2xl bg-[color:var(--lkv-primary)]/15 flex items-center justify-center mx-auto mb-4">
+          <Icon name="ArchiveBoxIcon" size={22} variant="outline" className="text-[color:var(--lkv-primary)]" />
         </div>
         <h3 className="font-semibold text-white mb-2">Gestion complète des produits</h3>
         <p className="text-sm text-white/40 mb-5 max-w-sm mx-auto">
           Vue liste, formulaire 29 champs, IA Gemini, médias, relations, import/export CSV, logs d&apos;audit.
         </p>
         <Link href="/admin/produits"
-          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#17402C] text-white text-sm font-medium hover:bg-[#cc3d10] transition-all">
+          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[color:var(--lkv-primary)] text-white text-sm font-medium hover:bg-[color:var(--lkv-danger)] transition-all">
           <Icon name="ArrowTopRightOnSquareIcon" size={14} variant="outline" />
           Ouvrir la gestion produits
         </Link>
@@ -389,7 +389,7 @@ function OrdersSection() {
           <button
             key={s}
             onClick={() => setStatusFilter(s)}
-            className={`px-3 py-1.5 rounded-xl text-xs font-medium transition-all ${statusFilter === s ? 'bg-[#17402C] text-white' : 'bg-white/5 border border-white/10 text-white/50 hover:text-white'}`}
+            className={`px-3 py-1.5 rounded-xl text-xs font-medium transition-all ${statusFilter === s ? 'bg-[color:var(--lkv-primary)] text-white' : 'bg-white/5 border border-white/10 text-white/50 hover:text-white'}`}
           >
             {s === 'all' ? 'Toutes' : s.replace('_', ' ')}
           </button>
@@ -400,7 +400,7 @@ function OrdersSection() {
         </button>
       </div>
 
-      <div className="bg-[#1E2B25] border border-white/8 rounded-xl overflow-hidden">
+      <div className="bg-[color:var(--lkv-forest-900)] border border-white/8 rounded-xl overflow-hidden">
         <table className="w-full text-xs">
           <thead className="bg-white/3 border-b border-white/8">
             <tr>
@@ -461,12 +461,12 @@ function CountriesSection() {
       )}
       <div className="flex items-center justify-between">
         <p className="text-sm text-white/50">{COUNTRIES_DATA.length} pays configurés</p>
-        <button className="flex items-center gap-2 bg-[#17402C] hover:bg-[#cc3d10] text-white px-4 py-2 rounded-xl text-sm font-medium transition-all">
+        <button className="flex items-center gap-2 bg-[color:var(--lkv-primary)] hover:bg-[color:var(--lkv-danger)] text-white px-4 py-2 rounded-xl text-sm font-medium transition-all">
           <Icon name="PlusIcon" size={14} variant="outline" />
           Nouveau pays
         </button>
       </div>
-      <div className="bg-[#1E2B25] border border-white/8 rounded-xl overflow-hidden">
+      <div className="bg-[color:var(--lkv-forest-900)] border border-white/8 rounded-xl overflow-hidden">
         <table className="w-full text-xs">
           <thead className="bg-white/3 border-b border-white/8">
             <tr>
@@ -537,15 +537,15 @@ function UsersSection() {
             placeholder="Rechercher un utilisateur..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full bg-[#1E2B25] border border-white/10 rounded-xl pl-9 pr-4 py-2.5 text-sm text-white placeholder-white/25 focus:outline-none focus:border-[#17402C]/50 transition-colors"
+            className="w-full bg-[color:var(--lkv-forest-900)] border border-white/10 rounded-xl pl-9 pr-4 py-2.5 text-sm text-white placeholder-white/25 focus:outline-none focus:border-[color:var(--lkv-primary)]/50 transition-colors"
           />
         </div>
         <span className="text-xs text-white/30 font-mono px-3">{users.length} membres</span>
       </div>
       {loading ? (
-        <div className="space-y-2">{[1, 2, 3].map((i) => <div key={i} className="bg-[#1E2B25] border border-white/8 rounded-xl h-12 animate-pulse" />)}</div>
+        <div className="space-y-2">{[1, 2, 3].map((i) => <div key={i} className="bg-[color:var(--lkv-forest-900)] border border-white/8 rounded-xl h-12 animate-pulse" />)}</div>
       ) : (
-        <div className="bg-[#1E2B25] border border-white/8 rounded-xl overflow-hidden">
+        <div className="bg-[color:var(--lkv-forest-900)] border border-white/8 rounded-xl overflow-hidden">
           <table className="w-full text-xs">
             <thead className="bg-white/3 border-b border-white/8">
               <tr>
@@ -565,7 +565,7 @@ function UsersSection() {
                     <td className="px-4 py-3">
                       <span className="text-[10px] px-2 py-0.5 rounded-full bg-white/10 text-white/60">{u.loyalty_level}</span>
                     </td>
-                    <td className="px-4 py-3 font-mono text-[#17402C]" style={{ fontFamily: 'var(--font-mono)' }}>{u.trust_score}</td>
+                    <td className="px-4 py-3 font-mono text-[color:var(--lkv-primary)]" style={{ fontFamily: 'var(--font-mono)' }}>{u.trust_score}</td>
                     <td className="px-4 py-3 text-white/35">{new Date(u.created_at).toLocaleDateString('fr-FR')}</td>
                   </tr>
                 ))
@@ -591,7 +591,7 @@ function ModerationSection() {
       </div>
       <div className="space-y-3">
         {queue.map(item => (
-          <div key={item.id} className="bg-[#1E2B25] border border-white/8 rounded-xl p-4">
+          <div key={item.id} className="bg-[color:var(--lkv-forest-900)] border border-white/8 rounded-xl p-4">
             <div className="flex items-start justify-between gap-4">
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1.5">
@@ -624,7 +624,7 @@ function ModerationSection() {
           </div>
         ))}
         {queue.length === 0 && (
-          <div className="bg-[#1E2B25] border border-white/8 rounded-xl p-8 text-center">
+          <div className="bg-[color:var(--lkv-forest-900)] border border-white/8 rounded-xl p-8 text-center">
             <Icon name="CheckCircleIcon" size={32} variant="outline" className="text-forest-400 mx-auto mb-3" />
             <p className="text-sm text-white/50">File de modération vide — tout est à jour.</p>
           </div>
@@ -640,9 +640,9 @@ function ToolboxSection() {
   return (
     <div className="space-y-3">
       {tools.map(tool => (
-        <div key={tool.id} className="bg-[#1E2B25] border border-white/8 rounded-xl p-4 flex items-center gap-4">
-          <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${tool.active ? 'bg-[#17402C]/15' : 'bg-white/5'}`}>
-            <Icon name="WrenchScrewdriverIcon" size={16} variant="outline" className={tool.active ? 'text-[#17402C]' : 'text-white/25'} />
+        <div key={tool.id} className="bg-[color:var(--lkv-forest-900)] border border-white/8 rounded-xl p-4 flex items-center gap-4">
+          <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${tool.active ? 'bg-[color:var(--lkv-primary)]/15' : 'bg-white/5'}`}>
+            <Icon name="WrenchScrewdriverIcon" size={16} variant="outline" className={tool.active ? 'text-[color:var(--lkv-primary)]' : 'text-white/25'} />
           </div>
           <div className="flex-1">
             <p className="text-sm font-medium text-white/80">{tool.name}</p>
@@ -650,7 +650,7 @@ function ToolboxSection() {
           </div>
           <button
             onClick={() => setTools(ts => ts.map(t => t.id === tool.id ? { ...t, active: !t.active } : t))}
-            className={`relative w-11 h-6 rounded-full transition-colors ${tool.active ? 'bg-[#17402C]' : 'bg-white/10'}`}
+            className={`relative w-11 h-6 rounded-full transition-colors ${tool.active ? 'bg-[color:var(--lkv-primary)]' : 'bg-white/10'}`}
           >
             <div className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${tool.active ? 'translate-x-5' : 'translate-x-0.5'}`} />
           </button>
@@ -668,30 +668,30 @@ function ContentSection() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <p className="text-sm text-white/50">{GUIDES_DATA.length} guides</p>
-        <button onClick={() => setEditing('new')} className="flex items-center gap-2 bg-[#17402C] hover:bg-[#cc3d10] text-white px-4 py-2 rounded-xl text-sm font-medium transition-all">
+        <button onClick={() => setEditing('new')} className="flex items-center gap-2 bg-[color:var(--lkv-primary)] hover:bg-[color:var(--lkv-danger)] text-white px-4 py-2 rounded-xl text-sm font-medium transition-all">
           <Icon name="PlusIcon" size={14} variant="outline" />
           Nouvel article
         </button>
       </div>
 
       {editing ? (
-        <div className="bg-[#1E2B25] border border-white/8 rounded-xl p-5 space-y-4">
+        <div className="bg-[color:var(--lkv-forest-900)] border border-white/8 rounded-xl p-5 space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-semibold text-white">Éditeur Markdown</h3>
             <button onClick={() => setEditing(null)} className="text-white/40 hover:text-white transition-colors">
               <Icon name="XMarkIcon" size={16} variant="outline" />
             </button>
           </div>
-          <input type="text" placeholder="Titre de l'article" className="w-full bg-[#243028] border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder-white/25 focus:outline-none focus:border-[#17402C]/50" />
+          <input type="text" placeholder="Titre de l'article" className="w-full bg-[color:var(--lkv-forest-900)] border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder-white/25 focus:outline-none focus:border-[color:var(--lkv-primary)]/50" />
           <textarea
             value={mdContent}
             onChange={e => setMdContent(e.target.value)}
             rows={12}
-            className="w-full bg-[#243028] border border-white/10 rounded-xl px-4 py-3 text-sm text-white/80 font-mono placeholder-white/25 focus:outline-none focus:border-[#17402C]/50 resize-none"
+            className="w-full bg-[color:var(--lkv-forest-900)] border border-white/10 rounded-xl px-4 py-3 text-sm text-white/80 font-mono placeholder-white/25 focus:outline-none focus:border-[color:var(--lkv-primary)]/50 resize-none"
             style={{ fontFamily: 'var(--font-mono)' }}
           />
           <div className="flex gap-3">
-            <button className="flex items-center gap-2 bg-[#17402C] text-white px-4 py-2 rounded-xl text-sm font-medium hover:bg-[#cc3d10] transition-all">
+            <button className="flex items-center gap-2 bg-[color:var(--lkv-primary)] text-white px-4 py-2 rounded-xl text-sm font-medium hover:bg-[color:var(--lkv-danger)] transition-all">
               <Icon name="CheckIcon" size={14} variant="outline" />
               Publier
             </button>
@@ -701,7 +701,7 @@ function ContentSection() {
           </div>
         </div>
       ) : (
-        <div className="bg-[#1E2B25] border border-white/8 rounded-xl overflow-hidden">
+        <div className="bg-[color:var(--lkv-forest-900)] border border-white/8 rounded-xl overflow-hidden">
           <table className="w-full text-xs">
             <thead className="bg-white/3 border-b border-white/8">
               <tr>
@@ -740,7 +740,7 @@ function ContentSection() {
 function AuditSection() {
   return (
     <div className="space-y-5">
-      <div className="bg-[#1E2B25] border border-white/8 rounded-xl p-4">
+      <div className="bg-[color:var(--lkv-forest-900)] border border-white/8 rounded-xl p-4">
         <h3 className="text-sm font-semibold text-white mb-3">Journal d&apos;audit</h3>
         <div className="space-y-2">
           {AUDIT_LOG.map(log => (
@@ -755,7 +755,7 @@ function AuditSection() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="bg-[#1E2B25] border border-white/8 rounded-xl p-4">
+        <div className="bg-[color:var(--lkv-forest-900)] border border-white/8 rounded-xl p-4">
           <h3 className="text-sm font-semibold text-white mb-4">Paramètres généraux</h3>
           <div className="space-y-3">
             {[
@@ -768,7 +768,7 @@ function AuditSection() {
                 <span className="text-xs text-white/50">{item.label}</span>
                 <input
                   defaultValue={item.value}
-                  className="bg-[#243028] border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white font-mono w-24 text-right focus:outline-none focus:border-[#17402C]/50"
+                  className="bg-[color:var(--lkv-forest-900)] border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white font-mono w-24 text-right focus:outline-none focus:border-[color:var(--lkv-primary)]/50"
                   style={{ fontFamily: 'var(--font-mono)' }}
                 />
               </div>
@@ -776,7 +776,7 @@ function AuditSection() {
           </div>
         </div>
 
-        <div className="bg-[#1E2B25] border border-white/8 rounded-xl p-4">
+        <div className="bg-[color:var(--lkv-forest-900)] border border-white/8 rounded-xl p-4">
           <h3 className="text-sm font-semibold text-white mb-4">Intégrations</h3>
           <div className="space-y-3">
             {[
@@ -787,7 +787,7 @@ function AuditSection() {
               <div key={item.label}>
                 <p className="text-[10px] font-mono text-white/30 uppercase tracking-wider mb-1" style={{ fontFamily: 'var(--font-mono)' }}>{item.label}</p>
                 <div className="flex items-center gap-2">
-                  <code className="flex-1 bg-[#243028] border border-white/8 rounded-lg px-3 py-1.5 text-xs text-white/40 font-mono truncate" style={{ fontFamily: 'var(--font-mono)' }}>
+                  <code className="flex-1 bg-[color:var(--lkv-forest-900)] border border-white/8 rounded-lg px-3 py-1.5 text-xs text-white/40 font-mono truncate" style={{ fontFamily: 'var(--font-mono)' }}>
                     {item.value}
                   </code>
                   <button className="p-1.5 rounded-lg hover:bg-white/8 text-white/30 hover:text-white transition-all flex-shrink-0">
@@ -817,15 +817,15 @@ function ConfiguratorSection() {
           { label: 'Taux d\'abandon', value: '28.4%', icon: 'ArrowTrendingDownIcon' },
           { label: 'Config → Achat', value: '34.2%', icon: 'ShoppingBagIcon' },
         ].map(kpi => (
-          <div key={kpi.label} className="bg-[#1E2B25] border border-white/8 rounded-xl p-4">
-            <Icon name={kpi.icon as string} size={16} variant="outline" className="text-[#17402C] mb-2" />
+          <div key={kpi.label} className="bg-[color:var(--lkv-forest-900)] border border-white/8 rounded-xl p-4">
+            <Icon name={kpi.icon as string} size={16} variant="outline" className="text-[color:var(--lkv-primary)] mb-2" />
             <div className="font-mono text-xl font-700 text-white" style={{ fontFamily: 'var(--font-mono)' }}>{kpi.value}</div>
             <div className="text-xs text-white/40 mt-0.5">{kpi.label}</div>
           </div>
         ))}
       </div>
 
-      <div className="bg-[#1E2B25] border border-white/8 rounded-xl p-5">
+      <div className="bg-[color:var(--lkv-forest-900)] border border-white/8 rounded-xl p-5">
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-sm font-semibold text-white">Prompt système Claude</h3>
           <span className="text-[10px] font-mono text-white/30 bg-white/5 px-2 py-1 rounded-lg" style={{ fontFamily: 'var(--font-mono)' }}>Stocké en base — jamais en dur</span>
@@ -834,11 +834,11 @@ function ConfiguratorSection() {
           value={prompt}
           onChange={e => setPrompt(e.target.value)}
           rows={6}
-          className="w-full bg-[#243028] border border-white/10 rounded-xl px-4 py-3 text-sm text-white/70 font-mono focus:outline-none focus:border-[#17402C]/50 resize-none"
+          className="w-full bg-[color:var(--lkv-forest-900)] border border-white/10 rounded-xl px-4 py-3 text-sm text-white/70 font-mono focus:outline-none focus:border-[color:var(--lkv-primary)]/50 resize-none"
           style={{ fontFamily: 'var(--font-mono)' }}
         />
         <div className="flex gap-3 mt-3">
-          <button className="flex items-center gap-2 bg-[#17402C] text-white px-4 py-2 rounded-xl text-sm font-medium hover:bg-[#cc3d10] transition-all">
+          <button className="flex items-center gap-2 bg-[color:var(--lkv-primary)] text-white px-4 py-2 rounded-xl text-sm font-medium hover:bg-[color:var(--lkv-danger)] transition-all">
             <Icon name="CheckIcon" size={14} variant="outline" />
             Sauvegarder le prompt
           </button>
@@ -863,12 +863,12 @@ function KitsSection() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <p className="text-sm text-white/50">{KITS.length} kits</p>
-        <button className="flex items-center gap-2 bg-[#17402C] hover:bg-[#cc3d10] text-white px-4 py-2 rounded-xl text-sm font-medium transition-all">
+        <button className="flex items-center gap-2 bg-[color:var(--lkv-primary)] hover:bg-[color:var(--lkv-danger)] text-white px-4 py-2 rounded-xl text-sm font-medium transition-all">
           <Icon name="PlusIcon" size={14} variant="outline" />
           Nouveau kit
         </button>
       </div>
-      <div className="bg-[#1E2B25] border border-white/8 rounded-xl overflow-hidden">
+      <div className="bg-[color:var(--lkv-forest-900)] border border-white/8 rounded-xl overflow-hidden">
         <table className="w-full text-xs">
           <thead className="bg-white/3 border-b border-white/8">
             <tr>
@@ -883,7 +883,7 @@ function KitsSection() {
                 <td className="px-4 py-3 text-white/80 font-medium">{k.name}</td>
                 <td className="px-4 py-3 font-mono text-white/50" style={{ fontFamily: 'var(--font-mono)' }}>{k.products}</td>
                 <td className="px-4 py-3 font-mono text-white/50" style={{ fontFamily: 'var(--font-mono)' }}>{(k.weight / 1000).toFixed(1)} kg</td>
-                <td className="px-4 py-3 font-mono font-700 text-[#17402C]" style={{ fontFamily: 'var(--font-mono)' }}>{k.price}€</td>
+                <td className="px-4 py-3 font-mono font-700 text-[color:var(--lkv-primary)]" style={{ fontFamily: 'var(--font-mono)' }}>{k.price}€</td>
                 <td className="px-4 py-3">
                   <span className={`text-[10px] px-2 py-0.5 rounded-full border font-medium ${STATUS_COLORS[k.status]}`}>{k.status}</span>
                 </td>
@@ -919,14 +919,14 @@ function CategoriesSection() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <p className="text-sm text-white/50">{CATS.length} catégories</p>
-        <button className="flex items-center gap-2 bg-[#17402C] hover:bg-[#cc3d10] text-white px-4 py-2 rounded-xl text-sm font-medium transition-all">
+        <button className="flex items-center gap-2 bg-[color:var(--lkv-primary)] hover:bg-[color:var(--lkv-danger)] text-white px-4 py-2 rounded-xl text-sm font-medium transition-all">
           <Icon name="PlusIcon" size={14} variant="outline" />
           Nouvelle catégorie
         </button>
       </div>
       <div className="space-y-2">
         {CATS.map(cat => (
-          <div key={cat.id} className="bg-[#1E2B25] border border-white/8 rounded-xl p-4 flex items-center gap-4">
+          <div key={cat.id} className="bg-[color:var(--lkv-forest-900)] border border-white/8 rounded-xl p-4 flex items-center gap-4">
             <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center flex-shrink-0">
               <Icon name="TagIcon" size={14} variant="outline" className="text-white/40" />
             </div>
@@ -1097,9 +1097,9 @@ function RewardsSection() {
       {/* Row 1: Kill Switches & Active Period */}
       <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
         {/* Kill Switches */}
-        <div className="md:col-span-5 bg-[#1E2B25] border border-white/8 rounded-2xl p-5 space-y-4">
+        <div className="md:col-span-5 bg-[color:var(--lkv-forest-900)] border border-white/8 rounded-2xl p-5 space-y-4">
           <h3 className="text-xs font-mono uppercase tracking-wider text-white/50 flex items-center gap-1.5">
-            <Icon name="WrenchScrewdriverIcon" size={14} className="text-[#A3C4A3]" />
+            <Icon name="WrenchScrewdriverIcon" size={14} className="text-[color:var(--lkv-forest-200)]" />
             Arrêt d&apos;urgence (Kill Switches)
           </h3>
           <div className="space-y-3">
@@ -1140,9 +1140,9 @@ function RewardsSection() {
         </div>
 
         {/* Active Period Finalizer */}
-        <div className="md:col-span-7 bg-[#1E2B25] border border-white/8 rounded-2xl p-5 space-y-4">
+        <div className="md:col-span-7 bg-[color:var(--lkv-forest-900)] border border-white/8 rounded-2xl p-5 space-y-4">
           <h3 className="text-xs font-mono uppercase tracking-wider text-white/50 flex items-center gap-1.5">
-            <Icon name="CalendarIcon" size={14} className="text-[#A3C4A3]" />
+            <Icon name="CalendarIcon" size={14} className="text-[color:var(--lkv-forest-200)]" />
             Clôture de la période active
           </h3>
           {activePeriod ? (
@@ -1159,7 +1159,7 @@ function RewardsSection() {
                     type="number"
                     value={finalizeRevenue}
                     onChange={(e) => setFinalizeRevenue(e.target.value)}
-                    className="w-full bg-black/20 border border-white/10 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-[#A3C4A3]"
+                    className="w-full bg-black/20 border border-white/10 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-[color:var(--lkv-forest-200)]"
                     placeholder="15000"
                   />
                 </div>
@@ -1167,7 +1167,7 @@ function RewardsSection() {
                   <button
                     onClick={handleFinalizePeriod}
                     disabled={finalizing || !finalizeRevenue}
-                    className="w-full py-2 bg-[#17402C] hover:bg-[#365233] disabled:opacity-50 text-white rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5"
+                    className="w-full py-2 bg-[color:var(--lkv-primary)] hover:bg-[color:var(--lkv-primary-soft)] disabled:opacity-50 text-white rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5"
                   >
                     {finalizing ? 'Finalisation...' : 'Clôturer la Période & Distribuer'}
                   </button>
@@ -1181,9 +1181,9 @@ function RewardsSection() {
       </div>
 
       {/* Row 2: Economic Simulator */}
-      <div className="bg-[#1E2B25] border border-white/8 rounded-2xl p-6 space-y-6">
+      <div className="bg-[color:var(--lkv-forest-900)] border border-white/8 rounded-2xl p-6 space-y-6">
         <h3 className="text-xs font-mono uppercase tracking-wider text-white/50 flex items-center gap-1.5">
-          <Icon name="ArrowTrendingUpIcon" size={14} className="text-[#A3C4A3]" />
+          <Icon name="ArrowTrendingUpIcon" size={14} className="text-[color:var(--lkv-forest-200)]" />
           Simulateur Économique (Modélisation de scénarios)
         </h3>
 
@@ -1201,7 +1201,7 @@ function RewardsSection() {
                 step="1000"
                 value={simRevenue}
                 onChange={(e) => setSimRevenue(parseInt(e.target.value))}
-                className="w-full accent-[#A3C4A3] bg-black/20 h-1 rounded-lg"
+                className="w-full accent-[color:var(--lkv-forest-200)] bg-black/20 h-1 rounded-lg"
               />
             </div>
 
@@ -1216,7 +1216,7 @@ function RewardsSection() {
                 step="10"
                 value={simActiveEarners}
                 onChange={(e) => setSimActiveEarners(parseInt(e.target.value))}
-                className="w-full accent-[#A3C4A3] bg-black/20 h-1 rounded-lg"
+                className="w-full accent-[color:var(--lkv-forest-200)] bg-black/20 h-1 rounded-lg"
               />
             </div>
 
@@ -1285,9 +1285,9 @@ function RewardsSection() {
       </div>
 
       {/* Row 3: Pending Withdrawals Moderation */}
-      <div className="bg-[#1E2B25] border border-white/8 rounded-2xl p-6 space-y-4">
+      <div className="bg-[color:var(--lkv-forest-900)] border border-white/8 rounded-2xl p-6 space-y-4">
         <h3 className="text-xs font-mono uppercase tracking-wider text-white/50 flex items-center gap-1.5">
-          <Icon name="WrenchScrewdriverIcon" size={14} className="text-[#A3C4A3]" />
+          <Icon name="WrenchScrewdriverIcon" size={14} className="text-[color:var(--lkv-forest-200)]" />
           Demandes de retraits en attente de validation
         </h3>
 
@@ -1351,9 +1351,9 @@ function RewardsSection() {
       </div>
 
       {/* Row 4: Suspect Users List */}
-      <div className="bg-[#1E2B25] border border-white/8 rounded-2xl p-6 space-y-4">
+      <div className="bg-[color:var(--lkv-forest-900)] border border-white/8 rounded-2xl p-6 space-y-4">
         <h3 className="text-xs font-mono uppercase tracking-wider text-white/50 flex items-center gap-1.5">
-          <Icon name="ShieldCheckIcon" size={14} className="text-[#A3C4A3]" />
+          <Icon name="ShieldCheckIcon" size={14} className="text-[color:var(--lkv-forest-200)]" />
           Utilisateurs sous surveillance (Spam / Triche)
         </h3>
 
@@ -1430,8 +1430,8 @@ export default function AdminPage() {
 
   if (authState !== 'authorized') {
     return (
-      <div className="min-h-screen bg-[#151F1A] flex items-center justify-center">
-        <div className="w-6 h-6 border-2 border-[#17402C] border-t-transparent rounded-full animate-spin" />
+      <div className="min-h-screen bg-[color:var(--lkv-forest-950)] flex items-center justify-center">
+        <div className="w-6 h-6 border-2 border-[color:var(--lkv-primary)] border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
@@ -1458,7 +1458,7 @@ export default function AdminPage() {
     <>
       {/* ── DESKTOP ── */}
       <div className="hidden md:block">
-        <div className="min-h-screen bg-[#151F1A] text-white flex" style={{ paddingTop: 0 }}>
+        <div className="min-h-screen bg-[color:var(--lkv-forest-950)] text-white flex" style={{ paddingTop: 0 }}>
           {/* Mobile sidebar overlay */}
           {mobileSidebarOpen && (
             <div
@@ -1470,13 +1470,13 @@ export default function AdminPage() {
 
           {/* Fixed Sidebar */}
           <aside
-            className={`fixed top-0 left-0 h-full bg-[#17402C] border-r border-white/8 flex flex-col z-50 transition-all duration-300
+            className={`fixed top-0 left-0 h-full bg-[color:var(--lkv-primary)] border-r border-white/8 flex flex-col z-50 transition-all duration-300
               ${mobileSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
               ${sidebarCollapsed ? 'lg:w-14' : 'lg:w-56'} w-64`}
           >
             {/* Logo */}
             <div className="flex items-center gap-2.5 px-4 py-4 border-b border-white/8 flex-shrink-0">
-              <div className="w-7 h-7 rounded-lg bg-[#17402C] flex items-center justify-center flex-shrink-0">
+              <div className="w-7 h-7 rounded-lg bg-[color:var(--lkv-primary)] flex items-center justify-center flex-shrink-0">
                 <Icon name="ShieldCheckIcon" size={14} variant="outline" className="text-white" />
               </div>
               {!sidebarCollapsed && (
@@ -1501,7 +1501,7 @@ export default function AdminPage() {
                         onClick={() => setActiveSection(item.id)}
                         className={`w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-xs font-medium transition-all ${
                           activeSection === item.id
-                            ? 'bg-[#17402C]/15 text-[#17402C]'
+                            ? 'bg-[color:var(--lkv-primary)]/15 text-[color:var(--lkv-primary)]'
                             : 'text-white/45 hover:text-white hover:bg-white/6'
                         }`}
                         title={sidebarCollapsed ? item.label : undefined}
@@ -1511,7 +1511,7 @@ export default function AdminPage() {
                           <>
                             <span className="flex-1 text-left truncate">{item.label}</span>
                             {item.badge && (
-                              <span className="w-4 h-4 rounded-full bg-[#17402C] text-white text-[9px] font-700 flex items-center justify-center flex-shrink-0">
+                              <span className="w-4 h-4 rounded-full bg-[color:var(--lkv-primary)] text-white text-[9px] font-700 flex items-center justify-center flex-shrink-0">
                                 {item.badge}
                               </span>
                             )}
@@ -1566,8 +1566,8 @@ export default function AdminPage() {
                     <div className="w-1.5 h-1.5 rounded-full bg-forest-400 animate-pulse" />
                     <span className="text-[10px] font-mono text-white/30" style={{ fontFamily: 'var(--font-mono)' }}>Live</span>
                   </div>
-                  <div className="w-7 h-7 rounded-lg bg-[#17402C]/20 flex items-center justify-center">
-                    <span className="text-[10px] font-mono font-700 text-[#17402C]" style={{ fontFamily: 'var(--font-mono)' }}>JA</span>
+                  <div className="w-7 h-7 rounded-lg bg-[color:var(--lkv-primary)]/20 flex items-center justify-center">
+                    <span className="text-[10px] font-mono font-700 text-[color:var(--lkv-primary)]" style={{ fontFamily: 'var(--font-mono)' }}>JA</span>
                   </div>
                 </>
               }
@@ -1600,11 +1600,11 @@ export default function AdminPage() {
             sticky
             transparent
             variant="inline"
-            className="bg-[#17402C] px-4 py-3"
-            title={<span className="text-[#EDF3ED]">Admin</span>}
+            className="bg-[color:var(--lkv-primary)] px-4 py-3"
+            title={<span className="text-[color:var(--lkv-surface-muted)]">Admin</span>}
             actions={
               <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-[rgba(163,196,163,0.15)]">
-                <span className="text-[10px] font-mono font-bold text-[#A3C4A3]">JA</span>
+                <span className="text-[10px] font-mono font-bold text-[color:var(--lkv-forest-200)]">JA</span>
               </div>
             }
           />

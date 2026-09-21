@@ -89,19 +89,19 @@ export default function ElevationProfileChart({
   };
 
   return (
-    <div className="bg-[#F4F1EA] rounded-2xl p-4 border border-[#17402C]/10 space-y-3">
+    <div className="bg-[color:var(--stone-100)] rounded-2xl p-4 border border-[color:var(--lkv-primary)]/10 space-y-3">
       {/* Header & Badges */}
       <div className="flex items-center justify-between">
         <div>
-          <h4 className="text-xs font-bold text-[#17402C] uppercase tracking-wider flex items-center gap-1.5 font-mono">
+          <h4 className="text-xs font-bold text-[color:var(--lkv-primary)] uppercase tracking-wider flex items-center gap-1.5 font-mono">
             <span>📈 Profil d'Altitudes</span>
           </h4>
-          <p className="text-[10px] font-mono text-[#5C6B5E]">
+          <p className="text-[10px] font-mono text-[color:var(--lkv-text-secondary)]">
             Point d'orgue : {maxElev}m · Altitude min : {minElev}m
           </p>
         </div>
         <div className="flex items-center gap-2 text-[10px] font-mono font-bold">
-          <span className="bg-[#17402C]/10 text-[#17402C] px-2 py-0.5 rounded-full">
+          <span className="bg-[color:var(--lkv-primary)]/10 text-[color:var(--lkv-primary)] px-2 py-0.5 rounded-full">
             ▲ +{totalElevationGainM}m
           </span>
           <span className="bg-sand-500/10 text-sand-800 px-2 py-0.5 rounded-full">
@@ -114,11 +114,11 @@ export default function ElevationProfileChart({
       <div className="relative pt-6">
         {/* Hover Readout Tooltip */}
         {hoverPoint ? (
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 bg-[#17402C] text-white text-[10px] font-mono px-2.5 py-1 rounded-full  border border-white/20 z-10 transition-all">
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 bg-[color:var(--lkv-primary)] text-white text-[10px] font-mono px-2.5 py-1 rounded-full  border border-white/20 z-10 transition-all">
             📍 {hoverPoint.distanceKm.toFixed(1)} km · ⛰️ {hoverPoint.elevationM} m
           </div>
         ) : (
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 text-[#5C6B5E] text-[9px] font-mono opacity-60">
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 text-[color:var(--lkv-text-secondary)] text-[9px] font-mono opacity-60">
             Glissez sur la courbe pour explorer les altitudes
           </div>
         )}
@@ -160,11 +160,11 @@ export default function ElevationProfileChart({
           )}
 
           {/* Axis Labels */}
-          <text x={padding.left - 5} y={padding.top + 4} textAnchor="end" className="text-[8px] font-mono fill-[#5C6B5E]">{maxElev}m</text>
-          <text x={padding.left - 5} y={padding.top + graphH} textAnchor="end" className="text-[8px] font-mono fill-[#5C6B5E]">{minElev}m</text>
+          <text x={padding.left - 5} y={padding.top + 4} textAnchor="end" className="text-[8px] font-mono fill-[color:var(--lkv-text-secondary)]">{maxElev}m</text>
+          <text x={padding.left - 5} y={padding.top + graphH} textAnchor="end" className="text-[8px] font-mono fill-[color:var(--lkv-text-secondary)]">{minElev}m</text>
 
-          <text x={padding.left} y={svgHeight - 5} textAnchor="start" className="text-[8px] font-mono fill-[#5C6B5E]">0km</text>
-          <text x={svgWidth - padding.right} y={svgHeight - 5} textAnchor="end" className="text-[8px] font-mono fill-[#5C6B5E]">{totalDistanceKm}km</text>
+          <text x={padding.left} y={svgHeight - 5} textAnchor="start" className="text-[8px] font-mono fill-[color:var(--lkv-text-secondary)]">0km</text>
+          <text x={svgWidth - padding.right} y={svgHeight - 5} textAnchor="end" className="text-[8px] font-mono fill-[color:var(--lkv-text-secondary)]">{totalDistanceKm}km</text>
         </svg>
       </div>
     </div>

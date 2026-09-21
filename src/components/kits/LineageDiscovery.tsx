@@ -59,7 +59,7 @@ export default function LineageDiscovery() {
     <section className="flex flex-col gap-5">
       {items.length > 0 && (
         <div>
-          <div className="font-mono text-[10px] tracking-[0.18em] uppercase mb-2" style={{ color: '#17402C' }}>
+          <div className="font-mono text-[10px] tracking-[0.18em] uppercase mb-2" style={{ color: 'var(--lkv-primary)' }}>
             Ce qui revient du terrain
           </div>
           <div className="flex flex-wrap gap-2">
@@ -69,7 +69,7 @@ export default function LineageDiscovery() {
                 <span
                   key={i.item_key}
                   className="px-3 py-1.5 rounded-full text-[12px]"
-                  style={{ background: '#EDF3ED', border: '1px solid rgba(166,193,160,0.6)', color: '#17402C' }}
+                  style={{ background: 'var(--lkv-surface-muted)', border: '1px solid rgba(166,193,160,0.6)', color: 'var(--lkv-primary)' }}
                   title={i.item_key}
                 >
                   {conservationPhrase(rate)} · {i.item_key.slice(0, 24)}
@@ -82,7 +82,7 @@ export default function LineageDiscovery() {
 
       {lineages.length > 0 && (
         <div>
-          <div className="font-mono text-[10px] tracking-[0.18em] uppercase mb-2" style={{ color: '#17402C' }}>
+          <div className="font-mono text-[10px] tracking-[0.18em] uppercase mb-2" style={{ color: 'var(--lkv-primary)' }}>
             Lignées endurantes
           </div>
           <div className="grid gap-2 sm:grid-cols-2">
@@ -91,15 +91,15 @@ export default function LineageDiscovery() {
                 key={l.kit_id}
                 type="button"
                 onClick={() => openKit(l.kit_id, 'discovery')}
-                className="text-left p-3.5 rounded-2xl border transition-colors hover:border-[#17402C]/40"
-                style={{ background: '#EEF3EC', borderColor: 'rgba(166,193,160,0.5)' }}
+                className="text-left p-3.5 rounded-2xl border transition-colors hover:border-[color:var(--lkv-primary)]/40"
+                style={{ background: 'var(--lkv-surface)', borderColor: 'rgba(166,193,160,0.5)' }}
               >
-                <div className="text-[14px] font-medium truncate" style={{ color: '#17402C' }}>
+                <div className="text-[14px] font-medium truncate" style={{ color: 'var(--lkv-primary)' }}>
                   {l.kit_name}
                 </div>
-                <div className="mt-1 flex items-center justify-between font-mono text-[11px]" style={{ color: '#6B7A72' }}>
+                <div className="mt-1 flex items-center justify-between font-mono text-[11px]" style={{ color: 'var(--lkv-text-muted)' }}>
                   <span>{l.sessions_count} sorties terrain</span>
-                  <span style={{ color: '#17402C' }}>Endurance {l.endurance_score.toFixed(2)}</span>
+                  <span style={{ color: 'var(--lkv-primary)' }}>Endurance {l.endurance_score.toFixed(2)}</span>
                 </div>
               </button>
             ))}

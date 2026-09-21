@@ -1,28 +1,32 @@
 {
-  "generatedAt": "2026-09-20T11:47:49.081Z",
+  "generatedAt": "2026-09-21T20:14:34.682Z",
   "scope": "src/**/*.{ts,tsx}",
-  "hardcodedHex": 5203,
-  "roundedArbitrary": 342,
-  "textArbitrary": 8030,
-  "zIndexArbitrary": 86,
-  "inlineStyles": 1529,
-  "windowConfirmAlertPrompt": 2,
-  "lkvDialogCalls": 74,
+  "hardcodedHex": 251,
+  "roundedArbitrary": 681,
+  "roundedArbitraryLiteral": 5,
+  "textArbitrary": 10047,
+  "zIndexArbitrary": 146,
+  "zIndexArbitraryLiteral": 0,
+  "inlineStyles": 440,
+  "windowConfirmAlertPrompt": 0,
+  "lkvDialogCalls": 77,
+  "safeAreaEnvDirect": 14,
+  "legacyNavHeightVars": 0,
   "modalPrimitiveImporters": {
-    "GlassModal": 23,
-    "Sheet": 2,
-    "GlassSheet": 5,
-    "PremiumBottomSheet": 2,
-    "GlassDrawer": 10
+    "GlassModal": 0,
+    "Sheet": 25,
+    "GlassSheet": 0,
+    "PremiumBottomSheet": 0,
+    "GlassDrawer": 0
   },
-  "roleDialogFiles": 17,
-  "bottomBarFiles": 3,
+  "roleDialogFiles": 7,
+  "bottomBarFiles": 2,
   "fixedBottom0": 3,
-  "appFilesWithCustomHeader": 13,
-  "uiPrimitiveFiles": 49,
+  "appFilesWithCustomHeader": 0,
+  "uiPrimitiveFiles": 44,
   "roleDuplicates": {
     "Card": {
-      "count": 73,
+      "count": 72,
       "files": [
         "src/components/carnet/HebergementCard.tsx",
         "src/components/carnet/JourCard.tsx",
@@ -59,11 +63,10 @@
         "src/components/groupes/VoyageursCard.tsx",
         "src/components/identity/OrientationCard.tsx",
         "src/components/kits/ProductLineageCard.tsx",
-        "src/components/profile/HikingProfileCard.tsx",
+        "src/components/produit/ProductCard.tsx",
         "src/components/progression/ProgressionCompactCard.tsx",
-        "src/components/ui/GlassCard.tsx",
+        "src/components/ui/Card.tsx",
         "src/components/ui/GlassSubCard.tsx",
-        "src/components/ui/PremiumGlassCard.tsx",
         "src/components/ui/ProductGlassCard.tsx",
         "src/features/affiliation/components/AffiliateLinkCard.tsx",
         "src/features/discovery/components/DiscoveryCard.tsx",
@@ -103,8 +106,8 @@
       "count": 23,
       "files": [
         "src/components/compte/EditProfileModal.tsx",
-        "src/components/ui/GlassModal.tsx",
         "src/components/ui/GlobalSearchModal.tsx",
+        "src/components/ui/Modal.tsx",
         "src/components/ui/ReportBlockModal.tsx",
         "src/features/hiking/components/GPXImportExportModal.tsx",
         "src/features/hiking/components/SafetyCenterModal.tsx",
@@ -128,13 +131,10 @@
       ]
     },
     "Sheet": {
-      "count": 19,
+      "count": 16,
       "files": [
         "src/components/social/CommentsSheet.tsx",
-        "src/components/social/MoreMenuSheet.tsx",
         "src/components/social/ReportSheet.tsx",
-        "src/components/ui/GlassSheet.tsx",
-        "src/components/ui/PremiumBottomSheet.tsx",
         "src/components/ui/Sheet.tsx",
         "src/features/hiking/components/sheets/CaptureSheet.tsx",
         "src/features/hiking/components/sheets/CopilotSheet.tsx",
@@ -163,68 +163,67 @@
     "Button": {
       "count": 6,
       "files": [
-        "src/components/ui/BackButton.tsx",
-        "src/components/ui/GlassIconButton.tsx",
-        "src/components/ui/LkvButton.tsx",
+        "src/components/ui/Button.tsx",
+        "src/components/ui/HeaderBackButton.tsx",
+        "src/components/ui/IconButton.tsx",
         "src/features/hub/components/menu/SosFloatingButton.tsx",
         "src/features/materiel/components/DemoLoginButton.tsx",
         "src/features/trips/components/TripInviteButton.tsx"
       ]
     },
     "Tabs": {
-      "count": 7,
+      "count": 6,
       "files": [
         "src/components/carnet/CarnetDetailVerticalTabs.tsx",
         "src/components/carnets/CarnetVerticalTabs.tsx",
         "src/components/clubs/ClubVerticalTabs.tsx",
-        "src/components/ui/ScrollableTabs.tsx",
         "src/components/ui/Tabs.tsx",
         "src/features/materiel/components/alertes/CategoryTabs.tsx",
         "src/features/materiel/components/disponibilite/LoanTabs.tsx"
       ]
     }
   },
-  "appPagesDualDesktopMobile": 54,
+  "appPagesDualDesktopMobile": 47,
   "top10FilesByHardcodedHex": [
     [
-      "src/app/communaute/publier/page.tsx",
-      311
+      "src/components/map/InteractiveMap.tsx",
+      31
     ],
     [
-      "src/components/carnets/CreateCarnetView.tsx",
-      135
+      "src/constants/equipmentCategories.ts",
+      28
     ],
     [
-      "src/components/pays/PaysPratiqueView.tsx",
-      120
+      "src/components/explorer/TrailLayer.tsx",
+      21
     ],
     [
-      "src/components/compte/FideliteTab.tsx",
-      117
+      "src/features/hiking/gpx/HikeReportPDFService.ts",
+      19
     ],
     [
-      "src/components/clubs/CreateClubView.tsx",
-      105
+      "src/components/dev/style/StyleShowcase.tsx",
+      12
+    ],
+    [
+      "src/components/hiking/ElevationProfileChart.tsx",
+      12
     ],
     [
       "src/app/admin/page.tsx",
-      98
+      11
     ],
     [
-      "src/components/compte/ParametresCompteCard.tsx",
-      98
+      "src/components/explorer/ExplorerMap.tsx",
+      11
     ],
     [
-      "src/app/admin/produits/AdminProductsManager.tsx",
-      96
+      "src/components/map/engine/mapTheme.ts",
+      11
     ],
     [
-      "src/components/compte/CommandesTab.tsx",
-      89
-    ],
-    [
-      "src/app/produit/[slug]/ProductDetailClient.tsx",
-      87
+      "src/app/api/notifications/process/route.ts",
+      9
     ]
   ]
 }

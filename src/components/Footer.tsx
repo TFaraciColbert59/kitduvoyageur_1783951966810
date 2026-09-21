@@ -44,13 +44,13 @@ export default function Footer() {
 
       {/* NEWSLETTER CAPSULE (Pill shape like header) */}
       <div className="w-full rounded-full px-5 py-2.5 flex flex-col sm:flex-row items-center justify-between gap-3 transition-all" style={glassCapsule}>
-        <div className="flex items-center gap-2 text-[#17402C] text-xs font-semibold px-1">
-          <span className="w-2 h-2 rounded-full bg-[#17402C] animate-pulse" />
+        <div className="flex items-center gap-2 text-[color:var(--lkv-primary)] text-xs font-semibold px-1">
+          <span className="w-2 h-2 rounded-full bg-[color:var(--lkv-primary)] animate-pulse" />
           <span>Restez informé des meilleures sorties & équipements</span>
         </div>
 
         {subscribed ? (
-          <div className="text-xs font-bold text-[#17402C] px-3 py-1 flex items-center gap-1.5 animate-fade-in">
+          <div className="text-xs font-bold text-[color:var(--lkv-primary)] px-3 py-1 flex items-center gap-1.5 animate-fade-in">
             <Icon name="CheckCircleIcon" size={14} />
             <span>Bienvenue dans l'aventure !</span>
           </div>
@@ -62,7 +62,7 @@ export default function Footer() {
               onChange={(e) => setEmail(e.target.value)}
               placeholder="Votre email..."
               required
-              className="text-[#17402C] text-[11px] font-medium px-3.5 py-1.5 rounded-full border outline-none placeholder-[#5A7064] w-full sm:w-48"
+              className="text-[color:var(--lkv-primary)] text-[11px] font-medium px-3.5 py-1.5 rounded-full border outline-none placeholder-[color:var(--lkv-text-secondary)] w-full sm:w-48"
               style={{ background: 'rgba(255,255,255,0.92)', borderColor: 'rgba(255,255,255,0.60)', boxShadow: 'inset 0 1px 1px rgba(255,255,255,0.8)' }}
             />
             <button
@@ -81,7 +81,7 @@ export default function Footer() {
 
         {/* Left: Brand Logo (Sans texte) */}
         <Link href="/" className="flex items-center group focus-visible:outline-none shrink-0" aria-label="Accueil LKDV">
-          <div className="w-8 h-8 min-w-[32px] min-h-[32px] max-w-[32px] max-h-[32px] rounded-full overflow-hidden border border-white/80 shadow-xs group-hover:scale-105 transition-transform bg-[#17402C]/10 shrink-0">
+          <div className="w-8 h-8 min-w-[32px] min-h-[32px] max-w-[32px] max-h-[32px] rounded-full overflow-hidden border border-white/80 shadow-xs group-hover:scale-105 transition-transform bg-[color:var(--lkv-primary)]/10 shrink-0">
             <img
               src="/assets/images/app_logo.png"
               alt="LKDV"
@@ -98,7 +98,7 @@ export default function Footer() {
             <Link
               key={link.label}
               href={link.href}
-              className="text-[11px] font-semibold tracking-wide uppercase transition-colors text-[#5A7064] hover:text-[#17402C]"
+              className="text-[11px] font-semibold tracking-wide uppercase transition-colors text-[color:var(--lkv-text-secondary)] hover:text-[color:var(--lkv-primary)]"
             >
               {link.label}
             </Link>
@@ -107,11 +107,11 @@ export default function Footer() {
 
         {/* Right: Copyright & Security badge */}
         <div className="flex items-center gap-3 shrink-0">
-          <span className="text-[10px] font-semibold text-[#5A7064]">
+          <span className="text-[10px] font-semibold text-[color:var(--lkv-text-secondary)]">
             © {new Date().getFullYear()}
           </span>
-          <div className="glass-pill flex items-center gap-1 text-[10px] font-semibold text-[#17402C] px-3 py-1.5">
-            <Icon name="ShieldCheckIcon" size={12} className="text-[#17402C]" />
+          <div className="glass-pill flex items-center gap-1 text-[10px] font-semibold text-[color:var(--lkv-primary)] px-3 py-1.5">
+            <Icon name="ShieldCheckIcon" size={12} className="text-[color:var(--lkv-primary)]" />
             <span>100% Sécurisé</span>
           </div>
         </div>
@@ -119,9 +119,9 @@ export default function Footer() {
       </div>
 
       {/* SUB-BAR: LEGAL LINKS */}
-      <div className="flex flex-wrap items-center justify-center gap-4 text-[10px] font-semibold text-[#5A7064] px-4 pt-1">
+      <div className="flex flex-wrap items-center justify-center gap-4 text-[10px] font-semibold text-[color:var(--lkv-text-secondary)] px-4 pt-1">
         {LEGAL_LINKS.map((link) => (
-          <Link key={link.label} href={link.href} className="hover:text-[#17402C] transition-colors">
+          <Link key={link.label} href={link.href} className="hover:text-[color:var(--lkv-primary)] transition-colors">
             {link.label}
           </Link>
         ))}

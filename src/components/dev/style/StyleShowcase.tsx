@@ -86,13 +86,13 @@ function VariablePanel() {
   return (
     <section className="glass rounded-3xl overflow-hidden">
       <div className="px-5 pt-5 pb-3">
-        <p className="text-[10px] font-mono font-bold tracking-[0.18em] uppercase text-[#17402C]">0 · Variables — change ici, tout le site change</p>
-        <p className="text-[12px] text-[#5C6B5E] mt-1">
+        <p className="text-[10px] font-mono font-bold tracking-[0.18em] uppercase text-[color:var(--lkv-primary)]">0 · Variables — change ici, tout le site change</p>
+        <p className="text-[12px] text-[color:var(--lkv-text-secondary)] mt-1">
           Curseurs <b>--btn-*</b> (boutons) et <b>--card-*</b> (cards) écrits sur <code>:root</code> : classes CSS <b>et</b> composants React de tout le site suivent en direct.
         </p>
       </div>
       <div className="px-5 pb-5 space-y-3 text-[12px]">
-        <p className="font-bold text-[11px] uppercase tracking-wider text-[#5A7064] pt-1">Boutons</p>
+        <p className="font-bold text-[11px] uppercase tracking-wider text-[color:var(--lkv-text-secondary)] pt-1">Boutons</p>
         <label className="flex items-center gap-3">
           <span className="w-[170px] font-semibold">Teinte du verre (alpha)</span>
           <input type="range" min={0} max={1} step={0.05} value={tintAlpha} onChange={(e) => setTintAlpha(Number(e.target.value))} className="flex-1" />
@@ -119,7 +119,7 @@ function VariablePanel() {
           <span className="font-mono">{solid}</span>
         </label>
 
-        <p className="font-bold text-[11px] uppercase tracking-wider text-[#5A7064] pt-2">Cards</p>
+        <p className="font-bold text-[11px] uppercase tracking-wider text-[color:var(--lkv-text-secondary)] pt-2">Cards</p>
         <label className="flex items-center gap-3">
           <span className="w-[170px] font-semibold">Teinte des cards (alpha)</span>
           <input type="range" min={0} max={1} step={0.02} value={cardAlpha} onChange={(e) => setCardAlpha(Number(e.target.value))} className="flex-1" />
@@ -140,8 +140,8 @@ function VariablePanel() {
           <button type="button" className="glass-capsule-btn" onClick={copy}>{copied ? 'Copié ✓' : 'Copier le bloc CSS'}</button>
           <button type="button" className="glass-capsule-btn" onClick={reset}>Réinitialiser</button>
         </div>
-        <pre className="text-[10.5px] font-mono text-[#5C6B5E] whitespace-pre-wrap bg-white/40 rounded-xl p-3">{cssBlock}</pre>
-        <p className="text-[11px] text-[#5C6B5E]">Pour figer le style : colle ce bloc dans <b>src/styles/tokens.css</b> (sections BOUTONS / CARDS).</p>
+        <pre className="text-[10.5px] font-mono text-[color:var(--lkv-text-secondary)] whitespace-pre-wrap bg-white/40 rounded-xl p-3">{cssBlock}</pre>
+        <p className="text-[11px] text-[color:var(--lkv-text-secondary)]">Pour figer le style : colle ce bloc dans <b>src/styles/tokens.css</b> (sections BOUTONS / CARDS).</p>
       </div>
     </section>
   );
@@ -201,8 +201,8 @@ function Section({ title, hint, children, photo = false }: {
   return (
     <section className="glass rounded-3xl overflow-hidden">
       <div className="px-5 pt-5 pb-3">
-        <p className="text-[10px] font-mono font-bold tracking-[0.18em] uppercase text-[#5A7064]">{title}</p>
-        <p className="text-[12px] text-[#5C6B5E] mt-1">{hint}</p>
+        <p className="text-[10px] font-mono font-bold tracking-[0.18em] uppercase text-[color:var(--lkv-text-secondary)]">{title}</p>
+        <p className="text-[12px] text-[color:var(--lkv-text-secondary)] mt-1">{hint}</p>
       </div>
       <div
         className="px-5 pb-6 flex flex-wrap items-center gap-3"
@@ -216,12 +216,12 @@ function Section({ title, hint, children, photo = false }: {
 
 export default function StyleShowcase() {
   return (
-    <main className="min-h-screen bg-[#EEF3EC] px-4 py-8 text-[#17402C] selection:bg-[#17402C]/10 font-sans">
+    <main className="min-h-screen bg-[color:var(--lkv-surface)] px-4 py-8 text-[color:var(--lkv-primary)] selection:bg-[color:var(--lkv-primary)]/10 font-sans">
       <div className="max-w-[720px] mx-auto space-y-4">
         <header className="px-1">
-          <p className="text-[10px] font-mono font-bold tracking-[0.18em] uppercase text-[#5A7064]">LKDV · planche de style</p>
+          <p className="text-[10px] font-mono font-bold tracking-[0.18em] uppercase text-[color:var(--lkv-text-secondary)]">LKDV · planche de style</p>
           <h1 className="text-[30px] font-bold tracking-[-0.04em] mt-1">Un seul bouton. La référence photo, partout.</h1>
-          <p className="text-[13px] text-[#5C6B5E] mt-1">
+          <p className="text-[13px] text-[color:var(--lkv-text-secondary)] mt-1">
             La même pile LiquidGlass dans tous les contextes · tokens --btn-* (tokens.css) = source unique.
           </p>
         </header>

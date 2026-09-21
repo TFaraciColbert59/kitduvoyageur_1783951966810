@@ -5,6 +5,7 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import Icon from '@/components/ui/AppIcon';
 import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
+import { Chip, EmptyState } from '@/components/ui';
 
 export default function CreateursPage() {
   const [activeTab, setActiveTab] = useState<'produits' | 'créateurs' | 'devenir'>('produits');
@@ -30,17 +31,16 @@ export default function CreateursPage() {
       {/* MOBILE */}
       <div className="block md:hidden">
         <MobilePageShell>
-          <div style={{ padding: '16px' }}>
-            <h1 style={{ fontSize: '20px', fontWeight: 800, color: '#17402C', marginBottom: '8px' }}>Espace Créateurs</h1>
-            <p style={{ fontSize: '13px', color: 'rgba(23,64,44,0.6)', marginBottom: '16px' }}>Guides, photographes et créateurs vérifiés.</p>
-            <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
-              <button onClick={() => setActiveTab('produits')} className={`glass-capsule-btn ${activeTab === 'produits' ? 'primary' : ''}`}>Catalogue</button>
-              <button onClick={() => setActiveTab('créateurs')} className={`glass-capsule-btn ${activeTab === 'créateurs' ? 'primary' : ''}`}>Créateurs</button>
+          <div className="p-[var(--space-4)]">
+            <h1 className="mb-[var(--space-2)] text-[length:var(--lkv-text-title-sm)] font-extrabold text-[color:var(--lkv-primary)]">Espace Créateurs</h1>
+            <p className="mb-[var(--space-4)] text-[length:var(--lkv-text-caption-1)] text-[color:var(--lkv-primary)]/60">Guides, photographes et créateurs vérifiés.</p>
+            <div className="mb-[var(--space-4)] flex flex-wrap gap-[var(--space-2)]">
+              <Chip selected={activeTab === 'produits'} onClick={() => setActiveTab('produits')}>Catalogue</Chip>
+              <Chip selected={activeTab === 'créateurs'} onClick={() => setActiveTab('créateurs')}>Créateurs</Chip>
             </div>
-            <p style={{ textAlign: 'center', color: 'rgba(23,64,44,0.5)', padding: '20px' }}>Contenu à venir.</p>
+            <EmptyState title="Contenu à venir" description="L'espace créateurs sera disponible prochainement." />
           </div>
         </MobilePageShell>
-        
       </div>
     </>
   );

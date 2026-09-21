@@ -187,7 +187,7 @@ const TabItem = memo(function TabItem({
         style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', zIndex: 1 }}
       >
         {/* Aventures : icône 24 + anneau, pilule layoutId conservée. */}
-        <LkvIcon name={destination.iconName} size={onLongPress ? 24 : 22} color={isActive ? '#17402C' : '#365233'} />
+        <LkvIcon name={destination.iconName} size={onLongPress ? 24 : 22} color={isActive ? 'var(--lkv-primary)' : 'var(--lkv-primary-soft)'} />
       </motion.span>
       <span
         style={{
@@ -197,7 +197,7 @@ const TabItem = memo(function TabItem({
           lineHeight: '11px',
           fontWeight: isActive ? 700 : 600,
           letterSpacing: '0.01em',
-          color: isActive ? '#17402C' : '#365233',
+          color: isActive ? 'var(--lkv-primary)' : 'var(--lkv-primary-soft)',
           whiteSpace: 'nowrap',
         }}
       >

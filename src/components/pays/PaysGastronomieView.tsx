@@ -10,7 +10,7 @@ interface PaysGastronomieViewProps {
 
 export default function PaysGastronomieView({ country }: PaysGastronomieViewProps) {
   return (
-    <div className="space-y-4 font-sans text-[#17402C]">
+    <div className="space-y-4 font-sans text-[color:var(--lkv-primary)]">
       <DiscoverySection
         countryCode={country.code}
         category="restaurants"

@@ -7,6 +7,7 @@ import Icon from '@/components/ui/AppIcon';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { AppShell } from '@/components/shell';
+import { Button, Chip } from '@/components/ui';
 
 export default function AmbassadeursPage() {
   const [activeTab, setActiveTab] = useState<'programme' | 'dashboard' | 'codes'>('programme');
@@ -34,17 +35,23 @@ export default function AmbassadeursPage() {
       {/* MOBILE */}
       <div className="block md:hidden">
         <AppShell>
-          <div style={{ padding: '16px' }}>
-            <h1 style={{ fontSize: '20px', fontWeight: 800, color: '#17402C', marginBottom: '8px', fontFamily: 'var(--font-display)' }}>Ambassadeurs</h1>
-            <p style={{ fontSize: '13px', color: 'rgba(23,64,44,0.6)', marginBottom: '16px' }}>Partagez votre passion, gagnez des commissions.</p>
-            <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
-              <button onClick={() => setActiveTab('programme')} className={`glass-capsule-btn ${activeTab === 'programme' ? 'primary' : ''}`}>Programme</button>
-              <button onClick={() => setActiveTab('dashboard')} className={`glass-capsule-btn ${activeTab === 'dashboard' ? 'primary' : ''}`}>Dashboard</button>
+          <div className="p-[var(--space-4)]">
+            <h1 className="mb-[var(--space-2)] font-display text-[length:var(--lkv-text-title-sm)] font-extrabold text-[color:var(--lkv-primary)]">Ambassadeurs</h1>
+            <p className="mb-[var(--space-4)] text-[length:var(--lkv-text-caption-1)] text-[color:var(--lkv-primary)]/60">Partagez votre passion, gagnez des commissions.</p>
+            <div className="mb-[var(--space-4)] flex flex-wrap gap-[var(--space-2)]">
+              <Chip selected={activeTab === 'programme'} onClick={() => setActiveTab('programme')}>Programme</Chip>
+              <Chip selected={activeTab === 'dashboard'} onClick={() => setActiveTab('dashboard')}>Dashboard</Chip>
             </div>
-            <button onClick={() => setApplyOpen(true)} className="glass-capsule-btn primary" style={{ width: '100%', marginTop: '12px' }}>Devenir ambassadeur</button>
+            <Button
+              fullWidth
+              className="mt-[var(--space-3)]"
+              onClick={() => setApplyOpen(true)}
+              icon={<Icon name="UserPlusIcon" size={16} variant="outline" />}
+            >
+              Devenir ambassadeur
+            </Button>
           </div>
         </AppShell>
-        
       </div>
     </>
   );

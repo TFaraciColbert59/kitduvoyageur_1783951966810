@@ -36,13 +36,13 @@ export default function GuidesPage() {
         <main className="flex-1 min-h-0 overflow-y-auto">
           <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-12">
             <div className="mb-8">
-              <p className="text-[11px] font-mono uppercase tracking-[0.14em] text-[#CCE0D4] mb-2" style={{ fontFamily: 'var(--font-mono)' }}>
+              <p className="text-[11px] font-mono uppercase tracking-[0.14em] text-[color:var(--lkv-forest-100)] mb-2" style={{ fontFamily: 'var(--font-mono)' }}>
                 GUIDES &amp; CHECKLISTS
               </p>
-              <h1 className="font-display font-bold text-3xl tracking-tight text-[#EEF3EC]">
+              <h1 className="font-display font-bold text-3xl tracking-tight text-[color:var(--lkv-surface)]">
                 Guides de voyage
               </h1>
-              <p className="mt-1.5 text-sm text-[#CCE0D4] max-w-2xl">
+              <p className="mt-1.5 text-sm text-[color:var(--lkv-forest-100)] max-w-2xl">
                 Découvrez nos guides complets pour préparer chaque aventure. Conseils d&apos;experts, checklists et équipement recommandé.
               </p>
             </div>
@@ -52,12 +52,12 @@ export default function GuidesPage() {
                 <Link key={guide.slug} href={`/guides/${guide.slug}`} className="group block h-full">
                   <Card as="article" tone="sage" variant="interactive" className="p-6 flex flex-col justify-between gap-4 h-full">
                     <div>
-                      <h2 className="font-display font-bold text-xl text-[#17402C] mb-2 group-hover:text-[#365233] transition-colors">
+                      <h2 className="font-display font-bold text-xl text-[color:var(--lkv-primary)] mb-2 group-hover:text-[color:var(--lkv-primary-soft)] transition-colors">
                         {guide.title}
                       </h2>
-                      <p className="text-sm text-[#365233]">{guide.description}</p>
+                      <p className="text-sm text-[color:var(--lkv-primary-soft)]">{guide.description}</p>
                     </div>
-                    <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#5A7064] transition-colors group-hover:text-[#17402C]">
+                    <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-[color:var(--lkv-text-secondary)] transition-colors group-hover:text-[color:var(--lkv-primary)]">
                       Lire le guide →
                     </span>
                   </Card>
@@ -72,25 +72,22 @@ export default function GuidesPage() {
       {/* ── MOBILE ── */}
       <div className="block md:hidden">
         <MobilePageShell>
-          <div style={{ padding: '16px' }}>
-            <h1 style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '24px', color: '#EEF3EC', marginBottom: '8px' }}>
+          <div className="p-[var(--space-4)]">
+            <h1 className="mb-[var(--space-2)] font-display text-[24px] font-extrabold text-[color:var(--lkv-forest-50)]">
               Guides de voyage
             </h1>
-            <p style={{ color: '#CCE0D4', fontSize: '14px', marginBottom: '24px', lineHeight: 1.5 }}>
-              Decouvrez nos guides complets pour preparer chaque aventure.
+            <p className="mb-[var(--space-6)] text-[14px] leading-[var(--leading-normal)] text-[color:var(--lkv-forest-100)]">
+              Découvrez nos guides complets pour préparer chaque aventure.
             </p>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <div className="flex flex-col gap-[var(--space-3)]">
               {GUIDES.map((guide) => (
-                <Link
-                  key={guide.slug}
-                  href={`/guides/${guide.slug}`}
-                  className="glass"
-                  style={{ display: 'block', padding: '16px', borderRadius: '12px', textDecoration: 'none' }}
-                >
-                  <h2 style={{ fontWeight: 600, fontSize: '16px', color: '#17402C', marginBottom: '4px' }}>
-                    {guide.title}
-                  </h2>
-                  <p style={{ fontSize: '13px', color: '#5A7064' }}>{guide.description}</p>
+                <Link key={guide.slug} href={`/guides/${guide.slug}`} className="block">
+                  <Card as="article" tone="sage" variant="interactive" className="p-[var(--space-4)]">
+                    <h2 className="mb-1 text-[16px] font-semibold text-[color:var(--lkv-primary)]">
+                      {guide.title}
+                    </h2>
+                    <p className="text-[13px] text-[color:var(--lkv-text-secondary)]">{guide.description}</p>
+                  </Card>
                 </Link>
               ))}
             </div>

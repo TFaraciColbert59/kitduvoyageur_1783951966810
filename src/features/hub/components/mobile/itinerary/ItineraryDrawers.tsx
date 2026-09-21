@@ -32,6 +32,7 @@ import {
   type DaySummary,
 } from '../../../mobile/itineraryEngine';
 import { GroupeDrawer } from '../groupe/GroupeDrawer';
+import { Switch } from '@/components/ui';
 
 export const POI_CATEGORY_LABELS: Record<string, string> = {
   water: 'Point d’eau',
@@ -779,23 +780,12 @@ export function ItineraryItemsDrawer({
                     {item.is_packed ? ' · Emballé' : ''}
                   </span>
                 </span>
-                <button
-                  type="button"
-                  role="switch"
-                  aria-checked={assigned}
-                  aria-label={`${item.item_name} requis le jour ${day}`}
-                  onClick={() => onToggle(item.id, !assigned)}
+                <Switch
+                  checked={assigned}
                   disabled={isPending}
-                  className={`relative inline-flex h-7 w-12 shrink-0 items-center rounded-full transition-colors disabled:opacity-50 ${
-                    assigned ? 'bg-[var(--lkv-primary)]' : 'bg-black/15'
-                  }`}
-                >
-                  <span
-                    className={`block h-5 w-5 rounded-full bg-white shadow transition-transform ${
-                      assigned ? 'translate-x-6' : 'translate-x-1'
-                    }`}
-                  />
-                </button>
+                  aria-label={`${item.item_name} requis le jour ${day}`}
+                  onCheckedChange={(next) => onToggle(item.id, next)}
+                />
               </li>
             );
           })}

@@ -35,7 +35,7 @@ export function ItineraryMapSection({
     : points;
 
   return (
-    <section className="glass rounded-[1.75rem] p-4" aria-label="Carte et points d'intérêt">
+    <section className="glass rounded-[var(--lkv-radius-card)] p-4" aria-label="Carte et points d'intérêt">
       <header className="flex items-start justify-between gap-2">
         <p className="text-[10px] font-medium uppercase tracking-[0.14em] text-[var(--lkv-text-primary)]/70">
           Carte & POI

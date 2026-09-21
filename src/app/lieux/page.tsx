@@ -70,8 +70,8 @@ export default async function LieuxPage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-6">
         {/* Header de la Page */}
         <div className="space-y-2">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#17402C]/10 text-[#17402C] text-xs font-bold uppercase tracking-wider">
-            <Icon name="compass" className="w-3.5 h-3.5 text-[#5B7F55]" />
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[color:var(--lkv-primary)]/10 text-[color:var(--lkv-primary)] text-xs font-bold uppercase tracking-wider">
+            <Icon name="compass" className="w-3.5 h-3.5 text-[color:var(--lkv-secondary)]" />
             Communauté & Topos Outdoor
           </div>
 

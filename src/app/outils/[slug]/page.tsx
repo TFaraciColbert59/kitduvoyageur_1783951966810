@@ -55,27 +55,27 @@ function ToolPoidssSac() {
   return (
     <div className="space-y-6">
       <div className="glass rounded-2xl p-6">
-        <p className="font-mono text-[10px] text-muted-foreground uppercase tracking-widest mb-2" style={{ fontFamily: 'var(--font-mono)' }}>POIDS TOTAL DU SAC</p>
+        <p className="font-mono text-[10px] text-muted-foreground uppercase tracking-widest mb-2">POIDS TOTAL DU SAC</p>
         <WeightGauge weightG={totalG} maxG={20000} size="lg" />
         <div className="mt-3 grid grid-cols-3 gap-3 text-center">
           <div className="glass-sub-card rounded-lg p-2">
-            <p className="font-mono text-[10px] text-muted-foreground" style={{ fontFamily: 'var(--font-mono)' }}>TOTAL</p>
-            <p className="font-mono font-700 text-info" style={{ fontFamily: 'var(--font-mono)' }}>{totalG >= 1000 ? `${(totalG / 1000).toFixed(2)} kg` : `${totalG} g`}</p>
+            <p className="font-mono text-[10px] text-muted-foreground">TOTAL</p>
+            <p className="font-mono font-700 text-info">{totalG >= 1000 ? `${(totalG / 1000).toFixed(2)} kg` : `${totalG} g`}</p>
           </div>
           <div className="glass-sub-card rounded-lg p-2">
-            <p className="font-mono text-[10px] text-muted-foreground" style={{ fontFamily: 'var(--font-mono)' }}>ARTICLES</p>
-            <p className="font-mono font-700 text-foreground" style={{ fontFamily: 'var(--font-mono)' }}>{categories.flatMap((c) => c.items).length}</p>
+            <p className="font-mono text-[10px] text-muted-foreground">ARTICLES</p>
+            <p className="font-mono font-700 text-foreground">{categories.flatMap((c) => c.items).length}</p>
           </div>
           <div className="glass-sub-card rounded-lg p-2">
-            <p className="font-mono text-[10px] text-muted-foreground" style={{ fontFamily: 'var(--font-mono)' }}>CATÉGORIES</p>
-            <p className="font-mono font-700 text-foreground" style={{ fontFamily: 'var(--font-mono)' }}>{categories.filter((c) => c.items.length > 0).length}</p>
+            <p className="font-mono text-[10px] text-muted-foreground">CATÉGORIES</p>
+            <p className="font-mono font-700 text-foreground">{categories.filter((c) => c.items.length > 0).length}</p>
           </div>
         </div>
       </div>
 
       {/* Add item */}
       <div className="glass rounded-2xl p-5">
-        <h3 className="font-display font-700 text-base mb-4" style={{ fontFamily: 'var(--font-display)' }}>Ajouter un article</h3>
+        <h3 className="font-display font-700 text-base mb-4">Ajouter un article</h3>
         <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
           <select
             value={selectedCat}
@@ -102,7 +102,7 @@ function ToolPoidssSac() {
               onChange={(e) => setNewItemWeight(e.target.value)}
               className="flex-1 px-3 py-2.5 rounded-lg bg-background border border-border text-sm focus:outline-none focus:border-primary font-mono"
               aria-label="Poids en grammes"
-              style={{ fontFamily: 'var(--font-mono)' }}
+             
               onKeyDown={(e) => e.key === 'Enter' && addItem()}
             />
             <button onClick={addItem} className="glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8" aria-label="Ajouter">+</button>
@@ -118,7 +118,7 @@ function ToolPoidssSac() {
             <div key={cat.id} className="glass rounded-xl p-4">
               <div className="flex items-center justify-between mb-3">
                 <span className="font-medium text-sm">{cat.icon} {cat.nom}</span>
-                <span className="font-mono text-xs text-info" style={{ fontFamily: 'var(--font-mono)' }}>{catTotal} g</span>
+                <span className="font-mono text-xs text-info">{catTotal} g</span>
               </div>
               <WeightGauge weightG={catTotal} maxG={totalG || 1} showLabel={false} size="sm" />
               <div className="mt-3 space-y-1.5">
@@ -126,7 +126,7 @@ function ToolPoidssSac() {
                   <div key={idx} className="flex items-center justify-between text-xs py-1 border-b border-border/50 last:border-0">
                     <span className="text-muted-foreground">{item.nom}</span>
                     <div className="flex items-center gap-3">
-                      <span className="font-mono text-info" style={{ fontFamily: 'var(--font-mono)' }}>{item.poids_g} g</span>
+                      <span className="font-mono text-info">{item.poids_g} g</span>
                       <button onClick={() => removeItem(cat.id, idx)} className="glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8" aria-label={`Supprimer ${item.nom}`}>×</button>
                     </div>
                   </div>
@@ -166,19 +166,19 @@ function ToolBudget() {
     <div className="space-y-6">
       <div className="grid grid-cols-2 gap-4">
         <div className="glass rounded-xl p-4">
-          <label className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider block mb-2" style={{ fontFamily: 'var(--font-mono)' }}>DURÉE (jours)</label>
+          <label className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider block mb-2">DURÉE (jours)</label>
           <input type="number" min={1} max={365} value={jours} onChange={(e) => setJours(Math.max(1, parseInt(e.target.value) || 1))}
-            className="w-full px-3 py-2 rounded-lg bg-background border border-border font-mono text-lg font-700 focus:outline-none focus:border-primary" style={{ fontFamily: 'var(--font-mono)' }} />
+            className="w-full px-3 py-2 rounded-lg bg-background border border-border font-mono text-lg font-700 focus:outline-none focus:border-primary" />
         </div>
         <div className="glass rounded-xl p-4">
-          <label className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider block mb-2" style={{ fontFamily: 'var(--font-mono)' }}>PERSONNES</label>
+          <label className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider block mb-2">PERSONNES</label>
           <input type="number" min={1} max={20} value={personnes} onChange={(e) => setPersonnes(Math.max(1, parseInt(e.target.value) || 1))}
-            className="w-full px-3 py-2 rounded-lg bg-background border border-border font-mono text-lg font-700 focus:outline-none focus:border-primary" style={{ fontFamily: 'var(--font-mono)' }} />
+            className="w-full px-3 py-2 rounded-lg bg-background border border-border font-mono text-lg font-700 focus:outline-none focus:border-primary" />
         </div>
       </div>
 
       <div className="glass rounded-2xl p-6">
-        <h3 className="font-display font-700 text-base mb-4" style={{ fontFamily: 'var(--font-display)' }}>Budget par jour / personne (€)</h3>
+        <h3 className="font-display font-700 text-base mb-4">Budget par jour / personne (€)</h3>
         <div className="space-y-3">
           {postes.map((poste, idx) => (
             <div key={idx} className="flex items-center gap-3">
@@ -189,10 +189,10 @@ function ToolBudget() {
                   type="number" min={0} value={poste.montant}
                   onChange={(e) => setPostes((prev) => prev.map((p, i) => i === idx ? { ...p, montant: Math.max(0, parseFloat(e.target.value) || 0) } : p))}
                   className="w-24 px-2 py-1.5 rounded-lg bg-background border border-border font-mono text-sm text-right focus:outline-none focus:border-primary"
-                  style={{ fontFamily: 'var(--font-mono)' }}
+                 
                   aria-label={`Budget ${poste.nom}`}
                 />
-                <span className="font-mono text-xs text-muted-foreground" style={{ fontFamily: 'var(--font-mono)' }}>€/j</span>
+                <span className="font-mono text-xs text-muted-foreground">€/j</span>
               </div>
             </div>
           ))}
@@ -206,8 +206,8 @@ function ToolBudget() {
           { label: `TOTAL ${jours}J`, value: `${totalVoyage.toFixed(0)} €`, color: 'text-primary' },
         ].map((stat) => (
           <div key={stat.label} className="glass rounded-xl p-4 text-center">
-            <p className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider mb-1" style={{ fontFamily: 'var(--font-mono)' }}>{stat.label}</p>
-            <p className={`font-mono font-700 text-2xl ${stat.color}`} style={{ fontFamily: 'var(--font-mono)' }}>{stat.value}</p>
+            <p className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider mb-1">{stat.label}</p>
+            <p className={`font-mono font-700 text-2xl ${stat.color}`}>{stat.value}</p>
           </div>
         ))}
       </div>
@@ -272,10 +272,10 @@ function ToolConvertisseur() {
       </div>
 
       <div className="glass rounded-xl p-4">
-        <label className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider block mb-2" style={{ fontFamily: 'var(--font-mono)' }}>VALEUR À CONVERTIR</label>
+        <label className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider block mb-2">VALEUR À CONVERTIR</label>
         <input type="number" value={value} onChange={(e) => setValue(e.target.value)}
           className="w-full px-4 py-3 rounded-lg bg-background border border-border font-mono text-xl font-700 focus:outline-none focus:border-primary"
-          style={{ fontFamily: 'var(--font-mono)' }} aria-label="Valeur à convertir" />
+          aria-label="Valeur à convertir" />
       </div>
 
       <div className="space-y-3">
@@ -286,10 +286,10 @@ function ToolConvertisseur() {
           return (
             <div key={idx} className="flex items-center justify-between glass rounded-xl p-4">
               <div className="flex items-center gap-3">
-                <span className="font-mono text-sm text-muted-foreground" style={{ fontFamily: 'var(--font-mono)' }}>{num} {conv.from}</span>
+                <span className="font-mono text-sm text-muted-foreground">{num} {conv.from}</span>
                 <span className="text-muted-foreground">→</span>
               </div>
-              <span className="font-mono font-700 text-lg text-info" style={{ fontFamily: 'var(--font-mono)' }}>
+              <span className="font-mono font-700 text-lg text-info">
                 {result.toFixed(3)} {conv.to}
               </span>
             </div>
@@ -348,8 +348,8 @@ function ToolChecklist() {
     <div className="space-y-5">
       <div className="flex items-center justify-between glass rounded-xl p-4">
         <div>
-          <p className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider" style={{ fontFamily: 'var(--font-mono)' }}>PROGRESSION</p>
-          <p className="font-mono font-700 text-xl text-foreground" style={{ fontFamily: 'var(--font-mono)' }}>{checked}/{items.length}</p>
+          <p className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider">PROGRESSION</p>
+          <p className="font-mono font-700 text-xl text-foreground">{checked}/{items.length}</p>
         </div>
         <div className="flex-1 mx-6">
           <div className="h-2 bg-border rounded-full overflow-hidden">
@@ -379,7 +379,7 @@ function ToolChecklist() {
       {cats.map((cat) => (
         <div key={cat} className="glass rounded-xl overflow-hidden">
           <div className="px-4 py-2.5 bg-muted/30 border-b border-border">
-            <span className="font-mono text-xs text-muted-foreground uppercase tracking-wider" style={{ fontFamily: 'var(--font-mono)' }}>{cat}</span>
+            <span className="font-mono text-xs text-muted-foreground uppercase tracking-wider">{cat}</span>
           </div>
           <div className="divide-y divide-border">
             {items.filter((i) => i.categorie === cat).map((item) => (
@@ -443,14 +443,14 @@ function ToolTailles() {
       </div>
 
       <div className="glass rounded-xl p-4">
-        <label className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider block mb-3" style={{ fontFamily: 'var(--font-mono)' }}>
+        <label className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider block mb-3">
           TAILLE FR / EU
         </label>
         <div className="flex flex-wrap gap-2">
           {keys.map((k) => (
             <button key={k} onClick={() => setTailleFR(k)}
               className={`glass-capsule-btn font-mono text-sm font-600 ${tailleFR === k ? 'primary' : ''}`}
-              style={{ fontFamily: 'var(--font-mono)' }}>
+             >
               {k}
             </button>
           ))}
@@ -461,8 +461,8 @@ function ToolTailles() {
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
           {Object.entries(currentData).map(([country, size]) => (
             <div key={country} className="glass rounded-xl p-4 text-center">
-              <p className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider mb-1" style={{ fontFamily: 'var(--font-mono)' }}>{country}</p>
-              <p className="font-mono font-700 text-2xl text-foreground" style={{ fontFamily: 'var(--font-mono)' }}>{size}</p>
+              <p className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider mb-1">{country}</p>
+              <p className="font-mono font-700 text-2xl text-foreground">{size}</p>
             </div>
           ))}
         </div>
@@ -518,21 +518,21 @@ function ToolFuseaux() {
       <div className="grid grid-cols-2 gap-4">
         {[{ label: 'VOTRE VILLE', value: baseCity, setter: setBaseCity }, { label: 'DESTINATION', value: targetCity, setter: setTargetCity }].map(({ label, value, setter }) => (
           <div key={label} className="glass rounded-xl p-4">
-            <label className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider block mb-2" style={{ fontFamily: 'var(--font-mono)' }}>{label}</label>
+            <label className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider block mb-2">{label}</label>
             <select value={value} onChange={(e) => setter(e.target.value)}
               className="w-full px-3 py-2 rounded-lg bg-background border border-border text-sm focus:outline-none focus:border-primary"
               aria-label={label}>
               {Object.keys(cities).map((c) => <option key={c}>{c}</option>)}
             </select>
-            <p className="font-mono font-700 text-3xl text-info mt-3" style={{ fontFamily: 'var(--font-mono)' }}>{getLocalTime(value)}</p>
+            <p className="font-mono font-700 text-3xl text-info mt-3">{getLocalTime(value)}</p>
             <p className="text-xs text-muted-foreground mt-1">{cities[value]?.flag} UTC{cities[value]?.offset >= 0 ? '+' : ''}{cities[value]?.offset}</p>
           </div>
         ))}
       </div>
 
       <div className="glass rounded-xl p-4 text-center">
-        <p className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider mb-2" style={{ fontFamily: 'var(--font-mono)' }}>DÉCALAGE HORAIRE</p>
-        <p className="font-mono font-700 text-4xl text-primary" style={{ fontFamily: 'var(--font-mono)' }}>
+        <p className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider mb-2">DÉCALAGE HORAIRE</p>
+        <p className="font-mono font-700 text-4xl text-primary">
           {diff >= 0 ? '+' : ''}{diff}h
         </p>
         <p className="text-sm text-muted-foreground mt-2">
@@ -545,7 +545,7 @@ function ToolFuseaux() {
           <div key={city} className="glass rounded-lg p-3 text-center">
             <p className="text-lg mb-1">{data.flag}</p>
             <p className="text-xs text-muted-foreground mb-1">{city}</p>
-            <p className="font-mono font-600 text-sm text-foreground" style={{ fontFamily: 'var(--font-mono)' }}>{getLocalTime(city)}</p>
+            <p className="font-mono font-600 text-sm text-foreground">{getLocalTime(city)}</p>
           </div>
         ))}
       </div>
@@ -599,7 +599,7 @@ function ToolBoussole() {
 
           {/* Compass */}
           <div className="glass rounded-2xl p-6 text-center">
-            <p className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider mb-4" style={{ fontFamily: 'var(--font-mono)' }}>BOUSSOLE</p>
+            <p className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider mb-4">BOUSSOLE</p>
             <div className="relative w-40 h-40 mx-auto mb-4">
               <div className="absolute inset-0 rounded-full border-2 border-border flex items-center justify-center bg-background">
                 <div className="relative w-full h-full" style={{ transform: `rotate(${heading ?? 0}deg)`, transition: 'transform 0.3s ease' }}>
@@ -607,16 +607,16 @@ function ToolBoussole() {
                   <div className="absolute bottom-2 left-1/2 -translate-x-1/2 w-1 h-16 bg-muted rounded-full" />
                 </div>
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <span className="font-mono font-700 text-2xl text-foreground" style={{ fontFamily: 'var(--font-mono)' }}>{dirLabel}</span>
+                  <span className="font-mono font-700 text-2xl text-foreground">{dirLabel}</span>
                 </div>
               </div>
             </div>
-            <p className="font-mono font-700 text-3xl text-info" style={{ fontFamily: 'var(--font-mono)' }}>{heading ?? '--'}°</p>
+            <p className="font-mono font-700 text-3xl text-info">{heading ?? '--'}°</p>
           </div>
 
           {/* Level */}
           <div className="glass rounded-2xl p-6">
-            <p className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider mb-4 text-center" style={{ fontFamily: 'var(--font-mono)' }}>NIVEAU À BULLE</p>
+            <p className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider mb-4 text-center">NIVEAU À BULLE</p>
             <div className={`w-32 h-32 mx-auto rounded-full border-4 flex items-center justify-center relative ${isLevel ? 'border-emerald-400' : 'border-border'}`}>
               <div
                 className={`w-8 h-8 rounded-full transition-all duration-200 ${isLevel ? 'bg-emerald-400' : 'bg-primary'}`}
@@ -628,12 +628,12 @@ function ToolBoussole() {
             <p className="text-center mt-3 text-sm font-medium">{isLevel ? '✅ Niveau' : '⚠️ Incliner pour niveler'}</p>
             <div className="grid grid-cols-2 gap-3 mt-3">
               <div className="text-center">
-                <p className="font-mono text-[10px] text-muted-foreground" style={{ fontFamily: 'var(--font-mono)' }}>INCLINAISON X</p>
-                <p className="font-mono font-600 text-foreground" style={{ fontFamily: 'var(--font-mono)' }}>{beta ?? '--'}°</p>
+                <p className="font-mono text-[10px] text-muted-foreground">INCLINAISON X</p>
+                <p className="font-mono font-600 text-foreground">{beta ?? '--'}°</p>
               </div>
               <div className="text-center">
-                <p className="font-mono text-[10px] text-muted-foreground" style={{ fontFamily: 'var(--font-mono)' }}>INCLINAISON Y</p>
-                <p className="font-mono font-600 text-foreground" style={{ fontFamily: 'var(--font-mono)' }}>{gamma ?? '--'}°</p>
+                <p className="font-mono text-[10px] text-muted-foreground">INCLINAISON Y</p>
+                <p className="font-mono font-600 text-foreground">{gamma ?? '--'}°</p>
               </div>
             </div>
           </div>
@@ -683,12 +683,12 @@ function ToolChronometre() {
   return (
     <div className="space-y-5">
       <div className="glass rounded-2xl p-8 text-center">
-        <p className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider mb-4" style={{ fontFamily: 'var(--font-mono)' }}>CHRONOMÈTRE</p>
-        <p className="font-mono font-700 text-5xl md:text-6xl text-foreground tabular-nums" style={{ fontFamily: 'var(--font-mono)' }}>
+        <p className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider mb-4">CHRONOMÈTRE</p>
+        <p className="font-mono font-700 text-5xl md:text-6xl text-foreground tabular-nums">
           {fmt(elapsed)}
         </p>
         {laps.length > 0 && (
-          <p className="font-mono text-sm text-muted-foreground mt-2" style={{ fontFamily: 'var(--font-mono)' }}>
+          <p className="font-mono text-sm text-muted-foreground mt-2">
             Tour actuel : {fmt(elapsed - lastLap)}
           </p>
         )}
@@ -714,13 +714,13 @@ function ToolChronometre() {
       {laps.length > 0 && (
         <div className="glass rounded-xl overflow-hidden">
           <div className="px-4 py-2.5 bg-muted/30 border-b border-border">
-            <span className="font-mono text-xs text-muted-foreground uppercase tracking-wider" style={{ fontFamily: 'var(--font-mono)' }}>TOURS</span>
+            <span className="font-mono text-xs text-muted-foreground uppercase tracking-wider">TOURS</span>
           </div>
           <div className="divide-y divide-border max-h-48 overflow-y-auto">
             {[...laps].reverse().map((lap, idx) => (
               <div key={idx} className="flex items-center justify-between px-4 py-2.5">
-                <span className="font-mono text-xs text-muted-foreground" style={{ fontFamily: 'var(--font-mono)' }}>Tour {laps.length - idx}</span>
-                <span className="font-mono font-600 text-sm text-foreground" style={{ fontFamily: 'var(--font-mono)' }}>{fmt(lap)}</span>
+                <span className="font-mono text-xs text-muted-foreground">Tour {laps.length - idx}</span>
+                <span className="font-mono font-600 text-sm text-foreground">{fmt(lap)}</span>
               </div>
             ))}
           </div>
@@ -756,20 +756,20 @@ function ToolRations() {
     <div className="space-y-5">
       <div className="grid grid-cols-2 gap-4">
         <div className="glass rounded-xl p-4">
-          <label className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider block mb-2" style={{ fontFamily: 'var(--font-mono)' }}>PERSONNES</label>
+          <label className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider block mb-2">PERSONNES</label>
           <input type="number" min={1} max={20} value={personnes} onChange={(e) => setPersonnes(Math.max(1, parseInt(e.target.value) || 1))}
-            className="w-full px-3 py-2 rounded-lg bg-background border border-border font-mono text-xl font-700 focus:outline-none focus:border-primary" style={{ fontFamily: 'var(--font-mono)' }} />
+            className="w-full px-3 py-2 rounded-lg bg-background border border-border font-mono text-xl font-700 focus:outline-none focus:border-primary" />
         </div>
         <div className="glass rounded-xl p-4">
-          <label className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider block mb-2" style={{ fontFamily: 'var(--font-mono)' }}>JOURS</label>
+          <label className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider block mb-2">JOURS</label>
           <input type="number" min={1} max={30} value={jours} onChange={(e) => setJours(Math.max(1, parseInt(e.target.value) || 1))}
-            className="w-full px-3 py-2 rounded-lg bg-background border border-border font-mono text-xl font-700 focus:outline-none focus:border-primary" style={{ fontFamily: 'var(--font-mono)' }} />
+            className="w-full px-3 py-2 rounded-lg bg-background border border-border font-mono text-xl font-700 focus:outline-none focus:border-primary" />
         </div>
       </div>
 
       <div className="grid grid-cols-2 gap-4">
         <div className="glass rounded-xl p-4">
-          <p className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider mb-3" style={{ fontFamily: 'var(--font-mono)' }}>EFFORT</p>
+          <p className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider mb-3">EFFORT</p>
           <div className="flex flex-col gap-2">
             {(['léger', 'modéré', 'intense'] as const).map((e) => (
               <button key={e} onClick={() => setEffort(e)}
@@ -780,7 +780,7 @@ function ToolRations() {
           </div>
         </div>
         <div className="glass rounded-xl p-4">
-          <p className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider mb-3" style={{ fontFamily: 'var(--font-mono)' }}>CLIMAT</p>
+          <p className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider mb-3">CLIMAT</p>
           <div className="flex flex-col gap-2">
             {(['froid', 'tempéré', 'chaud'] as const).map((c) => (
               <button key={c} onClick={() => setChaleur(c)}
@@ -800,28 +800,28 @@ function ToolRations() {
         ].map((stat) => (
           <div key={stat.label} className="glass rounded-xl p-4 text-center">
             <p className="text-2xl mb-1">{stat.icon}</p>
-            <p className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider mb-1" style={{ fontFamily: 'var(--font-mono)' }}>{stat.label}</p>
-            <p className={`font-mono font-700 text-xl ${stat.color}`} style={{ fontFamily: 'var(--font-mono)' }}>{stat.value}</p>
+            <p className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider mb-1">{stat.label}</p>
+            <p className={`font-mono font-700 text-xl ${stat.color}`}>{stat.value}</p>
           </div>
         ))}
       </div>
 
       <div className="bg-info/5 border border-info/20 rounded-xl p-4">
-        <p className="font-mono text-[10px] text-info uppercase tracking-wider mb-3" style={{ fontFamily: 'var(--font-mono)' }}>
+        <p className="font-mono text-[10px] text-info uppercase tracking-wider mb-3">
           TOTAUX — {jours} JOUR{jours > 1 ? 'S' : ''} × {personnes} PERSONNE{personnes > 1 ? 'S' : ''}
         </p>
         <div className="grid grid-cols-3 gap-3 text-center">
           <div>
-            <p className="font-mono text-xs text-muted-foreground" style={{ fontFamily: 'var(--font-mono)' }}>EAU TOTALE</p>
-            <p className="font-mono font-700 text-lg text-info" style={{ fontFamily: 'var(--font-mono)' }}>{totalEau.toFixed(1)} L</p>
+            <p className="font-mono text-xs text-muted-foreground">EAU TOTALE</p>
+            <p className="font-mono font-700 text-lg text-info">{totalEau.toFixed(1)} L</p>
           </div>
           <div>
-            <p className="font-mono text-xs text-muted-foreground" style={{ fontFamily: 'var(--font-mono)' }}>NOURRITURE</p>
-            <p className="font-mono font-700 text-lg text-accent" style={{ fontFamily: 'var(--font-mono)' }}>{(totalNourriture / 1000).toFixed(1)} kg</p>
+            <p className="font-mono text-xs text-muted-foreground">NOURRITURE</p>
+            <p className="font-mono font-700 text-lg text-accent">{(totalNourriture / 1000).toFixed(1)} kg</p>
           </div>
           <div>
-            <p className="font-mono text-xs text-muted-foreground" style={{ fontFamily: 'var(--font-mono)' }}>CALORIES</p>
-            <p className="font-mono font-700 text-lg text-primary" style={{ fontFamily: 'var(--font-mono)' }}>{totalCalories.toLocaleString()} kcal</p>
+            <p className="font-mono text-xs text-muted-foreground">CALORIES</p>
+            <p className="font-mono font-700 text-lg text-primary">{totalCalories.toLocaleString()} kcal</p>
           </div>
         </div>
       </div>
@@ -899,7 +899,7 @@ function ToolPlanificateur() {
     <div className="space-y-6">
       <div className="glass rounded-2xl p-5 space-y-4">
         <div>
-          <label className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider block mb-2" style={{ fontFamily: 'var(--font-mono)' }}>DESTINATION</label>
+          <label className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider block mb-2">DESTINATION</label>
           <input
             type="text"
             placeholder="Ex : Islande, Japon, Maroc..."
@@ -912,16 +912,16 @@ function ToolPlanificateur() {
 
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider block mb-2" style={{ fontFamily: 'var(--font-mono)' }}>DURÉE (jours)</label>
+            <label className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider block mb-2">DURÉE (jours)</label>
             <input
               type="number" min={1} max={30} value={duree}
               onChange={(e) => setDuree(Math.max(1, Math.min(30, parseInt(e.target.value) || 7)))}
               className="w-full px-3 py-2 rounded-lg bg-background border border-border font-mono text-xl font-700 focus:outline-none focus:border-primary"
-              style={{ fontFamily: 'var(--font-mono)' }}
+             
             />
           </div>
           <div>
-            <label className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider block mb-2" style={{ fontFamily: 'var(--font-mono)' }}>BUDGET</label>
+            <label className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider block mb-2">BUDGET</label>
             <select value={budget} onChange={(e) => setBudget(e.target.value as 'petit' | 'moyen' | 'grand')}
               className="w-full px-3 py-2.5 rounded-lg bg-background border border-border text-sm focus:outline-none focus:border-primary"
               aria-label="Budget">
@@ -931,7 +931,7 @@ function ToolPlanificateur() {
         </div>
 
         <div>
-          <label className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider block mb-2" style={{ fontFamily: 'var(--font-mono)' }}>STYLE DE VOYAGE</label>
+          <label className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider block mb-2">STYLE DE VOYAGE</label>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
             {(Object.entries(styleLabels) as [string, string][]).map(([k, v]) => (
               <button key={k} onClick={() => setStyle(k as 'aventure' | 'culture' | 'detente' | 'mixte')}
@@ -950,7 +950,7 @@ function ToolPlanificateur() {
       {generated && etapes.length > 0 && (
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <p className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider" style={{ fontFamily: 'var(--font-mono)' }}>
+            <p className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider">
               ITINÉRAIRE — {duree} JOUR{duree > 1 ? 'S' : ''}{destination ? ` · ${destination.toUpperCase()}` : ''}
             </p>
             <span className="text-xs text-muted-foreground">{budgetLabels[budget]}</span>
@@ -958,7 +958,7 @@ function ToolPlanificateur() {
           {etapes.map((etape) => (
             <div key={etape.jour} className="glass rounded-xl p-4 flex gap-4">
               <div className="flex-shrink-0 w-10 h-10 rounded-full bg-primary/10 border border-primary/30 flex items-center justify-center">
-                <span className="font-mono font-700 text-sm text-primary" style={{ fontFamily: 'var(--font-mono)' }}>J{etape.jour}</span>
+                <span className="font-mono font-700 text-sm text-primary">J{etape.jour}</span>
               </div>
               <div className="flex-1 min-w-0">
                 <p className="font-medium text-sm text-foreground">{etape.activite}</p>
@@ -1025,7 +1025,7 @@ export default function OutilSlugPage() {
             <Header />
             <div className="max-w-2xl mx-auto px-4 pt-32 text-center">
               <p className="text-6xl mb-4">🔧</p>
-              <h1 className="font-display font-700 text-2xl mb-4" style={{ fontFamily: 'var(--font-display)' }}>Outil introuvable</h1>
+              <h1 className="font-display font-700 text-2xl mb-4">Outil introuvable</h1>
               <Link href="/outils" className="btn-primary">← Retour aux outils</Link>
             </div>
             <Footer />
@@ -1037,8 +1037,8 @@ export default function OutilSlugPage() {
           <MobilePageShell>
             <div style={{ padding: '16px', textAlign: 'center', paddingTop: '80px' }}>
               <p style={{ fontSize: '40px', marginBottom: '16px' }}>🔧</p>
-              <h1 style={{ fontSize: '20px', fontWeight: 700, color: '#17402C', marginBottom: '12px' }}>Outil introuvable</h1>
-              <Link href="/outils" style={{ display: 'inline-block', padding: '12px 24px', background: '#17402C', color: 'white', borderRadius: '999px', fontSize: '14px', fontWeight: 700, textDecoration: 'none' }}>← Retour aux outils</Link>
+              <h1 style={{ fontSize: '20px', fontWeight: 700, color: 'var(--lkv-primary)', marginBottom: '12px' }}>Outil introuvable</h1>
+              <Link href="/outils" style={{ display: 'inline-block', padding: '12px 24px', background: 'var(--lkv-primary)', color: 'white', borderRadius: '999px', fontSize: '14px', fontWeight: 700, textDecoration: 'none' }}>← Retour aux outils</Link>
             </div>
           </MobilePageShell>
           
@@ -1069,7 +1069,7 @@ export default function OutilSlugPage() {
               <div className="flex items-center gap-4">
                 <span className="text-5xl" role="img" aria-label={tool.nom}>{tool.icon}</span>
                 <div>
-                  <h1 className="font-display font-800 text-2xl md:text-3xl text-white tracking-tight" style={{ fontFamily: 'var(--font-display)', fontWeight: 800 }}>
+                  <h1 className="font-display font-800 text-2xl md:text-3xl text-white tracking-tight" font-extrabold>
                     {tool.nom}
                   </h1>
                   <p className="text-white/60 text-sm mt-1">{tool.description}</p>
@@ -1088,7 +1088,7 @@ export default function OutilSlugPage() {
           {/* Nav between tools */}
           <section className="py-8 border-t border-border">
             <div className="max-w-3xl mx-auto px-4 sm:px-6">
-              <p className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider mb-4" style={{ fontFamily: 'var(--font-mono)' }}>AUTRES OUTILS</p>
+              <p className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider mb-4">AUTRES OUTILS</p>
               <div className="flex flex-wrap gap-2">
                 {Object.entries(toolRegistry)
                   .filter(([s]) => s !== slug)
@@ -1113,16 +1113,16 @@ export default function OutilSlugPage() {
           <div style={{ padding: '16px' }}>
             {/* Tool Header */}
             <div style={{ marginBottom: '20px' }}>
-              <nav style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: '#6B7A72', marginBottom: '12px' }}>
-                <Link href="/outils" style={{ color: '#6B7A72', textDecoration: 'none' }}>Outils</Link>
+              <nav style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: 'var(--lkv-text-muted)', marginBottom: '12px' }}>
+                <Link href="/outils" style={{ color: 'var(--lkv-text-muted)', textDecoration: 'none' }}>Outils</Link>
                 <span>/</span>
-                <span style={{ color: '#17402C' }}>{tool.nom}</span>
+                <span style={{ color: 'var(--lkv-primary)' }}>{tool.nom}</span>
               </nav>
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                 <span style={{ fontSize: '36px' }} role="img" aria-label={tool.nom}>{tool.icon}</span>
                 <div>
-                  <h1 style={{ fontSize: '22px', fontWeight: 800, color: '#17402C', lineHeight: '1.2', marginBottom: '4px' }}>{tool.nom}</h1>
-                  <p style={{ fontSize: '13px', color: '#6B7A72', lineHeight: '1.4' }}>{tool.description}</p>
+                  <h1 style={{ fontSize: '22px', fontWeight: 800, color: 'var(--lkv-primary)', lineHeight: '1.2', marginBottom: '4px' }}>{tool.nom}</h1>
+                  <p style={{ fontSize: '13px', color: 'var(--lkv-text-muted)', lineHeight: '1.4' }}>{tool.description}</p>
                 </div>
               </div>
             </div>
@@ -1132,7 +1132,7 @@ export default function OutilSlugPage() {
 
             {/* Other tools */}
             <div style={{ marginTop: '32px', paddingTop: '20px', borderTop: '1px solid rgba(23,64,44,0.06)' }}>
-              <p style={{ fontSize: '10px', fontFamily: 'ui-monospace, monospace', color: '#6B7A72', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '12px' }}>AUTRES OUTILS</p>
+              <p style={{ fontSize: '10px', fontFamily: 'ui-monospace, monospace', color: 'var(--lkv-text-muted)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '12px' }}>AUTRES OUTILS</p>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
                 {Object.entries(toolRegistry)
                   .filter(([s]) => s !== slug)
@@ -1148,7 +1148,7 @@ export default function OutilSlugPage() {
                         padding: '8px 14px',
                         borderRadius: '10px',
                         fontSize: '13px',
-                        color: '#6B7A72',
+                        color: 'var(--lkv-text-muted)',
                         textDecoration: 'none',
                       }}
                     >

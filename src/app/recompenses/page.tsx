@@ -282,8 +282,8 @@ export default function RecompensesPage() {
       return (
         <div className="flex flex-col items-center justify-center py-20 text-center px-6">
           <p className="text-5xl mb-4">🔐</p>
-          <h2 className="font-display font-800 text-xl text-[#17402C] mb-2">Authentification requise</h2>
-          <p className="text-xs text-[#6B7A72] mb-6 max-w-sm">Vous devez vous connecter à votre compte Le Kit du Voyageur pour voir et gérer vos récompenses.</p>
+          <h2 className="font-display font-800 text-xl text-[color:var(--lkv-primary)] mb-2">Authentification requise</h2>
+          <p className="text-xs text-[color:var(--lkv-text-muted)] mb-6 max-w-sm">Vous devez vous connecter à votre compte Le Kit du Voyageur pour voir et gérer vos récompenses.</p>
           <Link href="/connexion?mode=connexion" className="glass-capsule-btn primary !px-6 !py-2.5 !text-xs !font-bold">
             Se connecter
           </Link>
@@ -294,8 +294,8 @@ export default function RecompensesPage() {
     if (loading && !account) {
       return (
         <div className="flex flex-col items-center justify-center py-20 text-center">
-          <div className="w-8 h-8 border-2 border-[#17402C] border-t-transparent rounded-full animate-spin mb-3" />
-          <p className="text-xs text-[#6B7A72]">Chargement de votre économie de récompenses...</p>
+          <div className="w-8 h-8 border-2 border-[color:var(--lkv-primary)] border-t-transparent rounded-full animate-spin mb-3" />
+          <p className="text-xs text-[color:var(--lkv-text-muted)]">Chargement de votre économie de récompenses...</p>
         </div>
       );
     }
@@ -305,14 +305,14 @@ export default function RecompensesPage() {
         {/* Header Section */}
         <div className="flex flex-col gap-2">
           <div className="flex items-center gap-2">
-            <span className="px-2 py-0.5 text-[10px] font-mono font-bold tracking-wider uppercase bg-[#A3C4A3]/25 text-[#17402C] border border-[#A3C4A3]/40 rounded-full">
+            <span className="px-2 py-0.5 text-[10px] font-mono font-bold tracking-wider uppercase bg-[color:var(--lkv-forest-200)]/25 text-[color:var(--lkv-primary)] border border-[color:var(--lkv-forest-200)]/40 rounded-full">
               Récompenses communautaires
             </span>
           </div>
-          <h1 className="font-display font-900 text-2xl sm:text-3xl text-[#17402C] tracking-tight">
+          <h1 className="font-display font-900 text-2xl sm:text-3xl text-[color:var(--lkv-primary)] tracking-tight">
             Partage de Valeur LKDV
           </h1>
-          <p className="text-xs text-[#6B7A72] max-w-2xl">
+          <p className="text-xs text-[color:var(--lkv-text-muted)] max-w-2xl">
             La plateforme partage la valeur réelle qu&apos;elle génère. Accumulez des points d&apos;activité chaque mois en faisant vivre la communauté et recevez votre part du Reward Pool.
           </p>
         </div>
@@ -334,19 +334,19 @@ export default function RecompensesPage() {
         {/* Dashboard Grid Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div className="glass rounded-2xl p-4 ">
-            <p className="text-[10px] font-mono tracking-wider text-[#6B7A72] uppercase">Mes points actifs</p>
-            <p className="text-xl font-display font-900 text-[#17402C] mt-1">
+            <p className="text-[10px] font-mono tracking-wider text-[color:var(--lkv-text-muted)] uppercase">Mes points actifs</p>
+            <p className="text-xl font-display font-900 text-[color:var(--lkv-primary)] mt-1">
               {account?.eligible_points || 0} pts
             </p>
-            <p className="text-[9px] text-[#6B7A72] mt-0.5">Pour la période en cours</p>
+            <p className="text-[9px] text-[color:var(--lkv-text-muted)] mt-0.5">Pour la période en cours</p>
           </div>
 
           <div className="glass rounded-2xl p-4 ">
-            <p className="text-[10px] font-mono tracking-wider text-[#6B7A72] uppercase">Ma contribution</p>
-            <p className="text-sm font-bold text-[#17402C] mt-2 truncate">
+            <p className="text-[10px] font-mono tracking-wider text-[color:var(--lkv-text-muted)] uppercase">Ma contribution</p>
+            <p className="text-sm font-bold text-[color:var(--lkv-primary)] mt-2 truncate">
               {getContributionRating()}
             </p>
-            <p className="text-[9px] text-[#6B7A72] mt-0.5">
+            <p className="text-[9px] text-[color:var(--lkv-text-muted)] mt-0.5">
               {trustScore === null
                 ? 'Score de confiance indisponible'
                 : `Score confiance : ${trustScore}/100`}
@@ -354,40 +354,40 @@ export default function RecompensesPage() {
           </div>
 
           <div className="glass rounded-2xl p-4  relative overflow-hidden">
-            <div className="absolute right-3 top-3 text-[#17402C]/10 text-2xl font-bold">€</div>
-            <p className="text-[10px] font-mono tracking-wider text-[#6B7A72] uppercase">Disponibles</p>
-            <p className="text-xl font-display font-900 text-[#17402C] mt-1">
+            <div className="absolute right-3 top-3 text-[color:var(--lkv-primary)]/10 text-2xl font-bold">€</div>
+            <p className="text-[10px] font-mono tracking-wider text-[color:var(--lkv-text-muted)] uppercase">Disponibles</p>
+            <p className="text-xl font-display font-900 text-[color:var(--lkv-primary)] mt-1">
               {account?.available_cash ? account.available_cash.toFixed(2) : '0.00'} €
             </p>
-            <p className="text-[9px] text-[#6B7A72] mt-0.5">Prêts au retrait</p>
+            <p className="text-[9px] text-[color:var(--lkv-text-muted)] mt-0.5">Prêts au retrait</p>
           </div>
 
           <div className="glass rounded-2xl p-4 ">
-            <p className="text-[10px] font-mono tracking-wider text-[#6B7A72] uppercase">En cours / en attente</p>
-            <p className="text-xl font-display font-900 text-[#17402C]/70 mt-1">
+            <p className="text-[10px] font-mono tracking-wider text-[color:var(--lkv-text-muted)] uppercase">En cours / en attente</p>
+            <p className="text-xl font-display font-900 text-[color:var(--lkv-primary)]/70 mt-1">
               {account?.pending_cash ? account.pending_cash.toFixed(2) : '0.00'} €
             </p>
-            <p className="text-[9px] text-[#6B7A72] mt-0.5">Virement en traitement</p>
+            <p className="text-[9px] text-[color:var(--lkv-text-muted)] mt-0.5">Virement en traitement</p>
           </div>
         </div>
 
         {/* Withdrawal Section & Guide */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
           {/* Cash-out Form */}
-          <div className="glass lg:col-span-7 rounded-[0.75rem] p-6  space-y-6">
+          <div className="glass lg:col-span-7 rounded-[var(--lkv-radius-sm)] p-6  space-y-6">
             <div className="flex items-center justify-between border-b border-stone-200/60 pb-3">
-              <h3 className="font-display font-800 text-[#17402C] text-sm tracking-tight flex items-center gap-1.5">
-                <Icon name="CurrencyEuroIcon" size={18} className="text-[#17402C]" />
+              <h3 className="font-display font-800 text-[color:var(--lkv-primary)] text-sm tracking-tight flex items-center gap-1.5">
+                <Icon name="CurrencyEuroIcon" size={18} className="text-[color:var(--lkv-primary)]" />
                 Demande de retrait de fonds
               </h3>
-              <span className="text-[11px] font-mono text-[#6B7A72]">
+              <span className="text-[11px] font-mono text-[color:var(--lkv-text-muted)]">
                 Solde : {account?.available_cash ? account.available_cash.toFixed(2) : '0.00'} €
               </span>
             </div>
 
             <form onSubmit={handleWithdrawSubmit} className="space-y-4">
               <div>
-                <label htmlFor="amount" className="block text-[11px] font-bold text-[#17402C] mb-1.5 uppercase tracking-wider">Montant (EUR)</label>
+                <label htmlFor="amount" className="block text-[11px] font-bold text-[color:var(--lkv-primary)] mb-1.5 uppercase tracking-wider">Montant (EUR)</label>
                 <div className="relative rounded-xl ">
                   <input
                     type="number"
@@ -396,21 +396,21 @@ export default function RecompensesPage() {
                     id="amount"
                     value={withdrawAmount}
                     onChange={(e) => setWithdrawAmount(e.target.value)}
-                    className="block w-full rounded-xl border border-stone-200/80 pl-4 pr-12 py-2.5 text-xs text-[#17402C] focus:outline-none focus:ring-1 focus:ring-[#17402C] focus:border-[#17402C] bg-[#EEF3EC]"
+                    className="block w-full rounded-xl border border-stone-200/80 pl-4 pr-12 py-2.5 text-xs text-[color:var(--lkv-primary)] focus:outline-none focus:ring-1 focus:ring-[color:var(--lkv-primary)] focus:border-[color:var(--lkv-primary)] bg-[color:var(--lkv-surface)]"
                     placeholder="20.00"
                     required
                   />
-                  <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-xs text-[#6B7A72] font-semibold">
+                  <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-xs text-[color:var(--lkv-text-muted)] font-semibold">
                     EUR
                   </div>
                 </div>
-                <p className="text-[9px] text-[#6B7A72] mt-1">
+                <p className="text-[9px] text-[color:var(--lkv-text-muted)] mt-1">
                   Seuil de retrait minimum : {config.cashout_min_threshold ? parseFloat(config.cashout_min_threshold).toFixed(2) : '20.00'} €
                 </p>
               </div>
 
               <div>
-                <label className="block text-[11px] font-bold text-[#17402C] mb-1.5 uppercase tracking-wider">Méthode de virement</label>
+                <label className="block text-[11px] font-bold text-[color:var(--lkv-primary)] mb-1.5 uppercase tracking-wider">Méthode de virement</label>
                 <div className="grid grid-cols-2 gap-3">
                   <button
                     type="button"
@@ -434,26 +434,26 @@ export default function RecompensesPage() {
               {paymentProvider === 'bank_transfer' && (
                 <div className="glass-sub-card space-y-3 p-4 rounded-2xl">
                   <div>
-                    <label htmlFor="iban" className="block text-[10px] text-[#6B7A72] mb-1 uppercase font-semibold">IBAN</label>
+                    <label htmlFor="iban" className="block text-[10px] text-[color:var(--lkv-text-muted)] mb-1 uppercase font-semibold">IBAN</label>
                     <input
                       type="text"
                       id="iban"
                       value={iban}
                       onChange={(e) => setIban(e.target.value)}
                       placeholder="FR76 3000 6000 0123 4567 8901 234"
-                      className="block w-full rounded-lg border border-stone-200 text-[11px] px-3 py-2 text-[#17402C] focus:outline-none focus:ring-1 focus:ring-[#17402C] bg-stone-50/50"
+                      className="block w-full rounded-lg border border-stone-200 text-[11px] px-3 py-2 text-[color:var(--lkv-primary)] focus:outline-none focus:ring-1 focus:ring-[color:var(--lkv-primary)] bg-stone-50/50"
                       required
                     />
                   </div>
                   <div>
-                    <label htmlFor="bic" className="block text-[10px] text-[#6B7A72] mb-1 uppercase font-semibold">BIC / SWIFT</label>
+                    <label htmlFor="bic" className="block text-[10px] text-[color:var(--lkv-text-muted)] mb-1 uppercase font-semibold">BIC / SWIFT</label>
                     <input
                       type="text"
                       id="bic"
                       value={bic}
                       onChange={(e) => setBic(e.target.value)}
                       placeholder="BCDEFR2X"
-                      className="block w-full rounded-lg border border-stone-200 text-[11px] px-3 py-2 text-[#17402C] focus:outline-none focus:ring-1 focus:ring-[#17402C] bg-stone-50/50"
+                      className="block w-full rounded-lg border border-stone-200 text-[11px] px-3 py-2 text-[color:var(--lkv-primary)] focus:outline-none focus:ring-1 focus:ring-[color:var(--lkv-primary)] bg-stone-50/50"
                       required
                     />
                   </div>
@@ -462,14 +462,14 @@ export default function RecompensesPage() {
 
               {paymentProvider === 'paypal' && (
                 <div className="glass-sub-card p-4 rounded-2xl">
-                  <label htmlFor="paypalEmail" className="block text-[10px] text-[#6B7A72] mb-1 uppercase font-semibold">Adresse email Paypal</label>
+                  <label htmlFor="paypalEmail" className="block text-[10px] text-[color:var(--lkv-text-muted)] mb-1 uppercase font-semibold">Adresse email Paypal</label>
                   <input
                     type="email"
                     id="paypalEmail"
                     value={paypalEmail}
                     onChange={(e) => setPaypalEmail(e.target.value)}
                     placeholder="nom@exemple.com"
-                    className="block w-full rounded-lg border border-stone-200 text-[11px] px-3 py-2 text-[#17402C] focus:outline-none focus:ring-1 focus:ring-[#17402C] bg-stone-50/50"
+                    className="block w-full rounded-lg border border-stone-200 text-[11px] px-3 py-2 text-[color:var(--lkv-primary)] focus:outline-none focus:ring-1 focus:ring-[color:var(--lkv-primary)] bg-stone-50/50"
                     required
                   />
                 </div>
@@ -493,12 +493,12 @@ export default function RecompensesPage() {
           </div>
 
           {/* Guide Section */}
-          <div className="glass lg:col-span-5 rounded-[0.75rem] p-6  space-y-4">
-            <h3 className="font-display font-800 text-[#17402C] text-sm tracking-tight flex items-center gap-1.5">
-              <Icon name="BookOpenIcon" size={18} className="text-[#17402C]" />
+          <div className="glass lg:col-span-5 rounded-[var(--lkv-radius-sm)] p-6  space-y-4">
+            <h3 className="font-display font-800 text-[color:var(--lkv-primary)] text-sm tracking-tight flex items-center gap-1.5">
+              <Icon name="BookOpenIcon" size={18} className="text-[color:var(--lkv-primary)]" />
               Règles et Fonctionnement
             </h3>
-            <div className="text-[11px] text-[#6B7A72] space-y-3 leading-relaxed">
+            <div className="text-[11px] text-[color:var(--lkv-text-muted)] space-y-3 leading-relaxed">
               <p>
                 <strong>1. Économie Solvable :</strong> La valeur du point dépend directement des revenus réels du mois (affiliation, ventes, boutique). Plus le volume global d&apos;activité est fort pour un revenu donné, plus le poids du point s&apos;ajuste automatiquement.
               </p>
@@ -518,18 +518,18 @@ export default function RecompensesPage() {
         {/* Ledger & Withdrawals lists */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
           {/* Ledger of points transactions */}
-          <div className="glass rounded-[0.75rem] p-6  space-y-4">
-            <h3 className="font-display font-800 text-[#17402C] text-sm tracking-tight flex items-center gap-1.5">
-              <Icon name="ClipboardDocumentListIcon" size={18} className="text-[#17402C]" />
+          <div className="glass rounded-[var(--lkv-radius-sm)] p-6  space-y-4">
+            <h3 className="font-display font-800 text-[color:var(--lkv-primary)] text-sm tracking-tight flex items-center gap-1.5">
+              <Icon name="ClipboardDocumentListIcon" size={18} className="text-[color:var(--lkv-primary)]" />
               Historique de points (Ledger)
             </h3>
             <div className="glass-sub-card overflow-hidden rounded-2xl max-h-96 overflow-y-auto">
               {transactions.length === 0 ? (
-                <div className="p-6 text-center text-xs text-[#6B7A72]">Aucune transaction enregistrée.</div>
+                <div className="p-6 text-center text-xs text-[color:var(--lkv-text-muted)]">Aucune transaction enregistrée.</div>
               ) : (
                 <table className="w-full text-left text-[11px] border-collapse">
                   <thead>
-                    <tr className="bg-stone-50 border-b border-stone-200/60 text-[#6B7A72] uppercase font-mono tracking-wider">
+                    <tr className="bg-stone-50 border-b border-stone-200/60 text-[color:var(--lkv-text-muted)] uppercase font-mono tracking-wider">
                       <th className="p-3">Type</th>
                       <th className="p-3 text-right">Points</th>
                       <th className="p-3 text-right">Date</th>
@@ -538,11 +538,11 @@ export default function RecompensesPage() {
                   <tbody className="divide-y divide-stone-100">
                     {transactions.map((tx) => (
                       <tr key={tx.id} className="hover:bg-stone-50/50">
-                        <td className="p-3 text-[#17402C] font-semibold">{translateTxType(tx.transaction_type)}</td>
+                        <td className="p-3 text-[color:var(--lkv-primary)] font-semibold">{translateTxType(tx.transaction_type)}</td>
                         <td className={`p-3 text-right font-bold ${tx.points >= 0 ? 'text-emerald-700' : 'text-rose-700'}`}>
                           {tx.points >= 0 ? `+${tx.points}` : tx.points}
                         </td>
-                        <td className="p-3 text-right text-[#6B7A72]">
+                        <td className="p-3 text-right text-[color:var(--lkv-text-muted)]">
                           {new Date(tx.created_at).toLocaleDateString('fr-FR')}
                         </td>
                       </tr>
@@ -554,18 +554,18 @@ export default function RecompensesPage() {
           </div>
 
           {/* History of Cash-out withdrawals */}
-          <div className="glass rounded-[0.75rem] p-6  space-y-4">
-            <h3 className="font-display font-800 text-[#17402C] text-sm tracking-tight flex items-center gap-1.5">
-              <Icon name="WrenchScrewdriverIcon" size={18} className="text-[#17402C]" />
+          <div className="glass rounded-[var(--lkv-radius-sm)] p-6  space-y-4">
+            <h3 className="font-display font-800 text-[color:var(--lkv-primary)] text-sm tracking-tight flex items-center gap-1.5">
+              <Icon name="WrenchScrewdriverIcon" size={18} className="text-[color:var(--lkv-primary)]" />
               Demandes de virements
             </h3>
             <div className="glass-sub-card overflow-hidden rounded-2xl max-h-96 overflow-y-auto">
               {withdrawals.length === 0 ? (
-                <div className="p-6 text-center text-xs text-[#6B7A72]">Aucun virement demandé.</div>
+                <div className="p-6 text-center text-xs text-[color:var(--lkv-text-muted)]">Aucun virement demandé.</div>
               ) : (
                 <table className="w-full text-left text-[11px] border-collapse">
                   <thead>
-                    <tr className="bg-stone-50 border-b border-stone-200/60 text-[#6B7A72] uppercase font-mono tracking-wider">
+                    <tr className="bg-stone-50 border-b border-stone-200/60 text-[color:var(--lkv-text-muted)] uppercase font-mono tracking-wider">
                       <th className="p-3">Montant</th>
                       <th className="p-3">Méthode</th>
                       <th className="p-3 text-center">Statut</th>
@@ -575,8 +575,8 @@ export default function RecompensesPage() {
                   <tbody className="divide-y divide-stone-100">
                     {withdrawals.map((w) => (
                       <tr key={w.id} className="hover:bg-stone-50/50">
-                        <td className="p-3 text-[#17402C] font-semibold">{w.amount.toFixed(2)} €</td>
-                        <td className="p-3 text-[#6B7A72] font-mono">
+                        <td className="p-3 text-[color:var(--lkv-primary)] font-semibold">{w.amount.toFixed(2)} €</td>
+                        <td className="p-3 text-[color:var(--lkv-text-muted)] font-mono">
                           {w.payment_provider === 'bank_transfer' ? 'Banque' : 'Paypal'}
                         </td>
                         <td className="p-3 text-center">
@@ -584,7 +584,7 @@ export default function RecompensesPage() {
                             {translateWithdrawalStatus(w.status)}
                           </span>
                         </td>
-                        <td className="p-3 text-right text-[#6B7A72]">
+                        <td className="p-3 text-right text-[color:var(--lkv-text-muted)]">
                           {new Date(w.requested_at).toLocaleDateString('fr-FR')}
                         </td>
                       </tr>
@@ -600,7 +600,7 @@ export default function RecompensesPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F5F3ED] text-[#17402C] selection:bg-[#17402C]/20 font-sans">
+    <div className="min-h-screen bg-[color:var(--stone-100)] text-[color:var(--lkv-primary)] selection:bg-[color:var(--lkv-primary)]/20 font-sans">
       {/* Mobile Shell */}
       <div className="block md:hidden">
         <MobilePageShell background="transparent">

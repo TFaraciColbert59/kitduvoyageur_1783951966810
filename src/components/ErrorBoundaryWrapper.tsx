@@ -27,12 +27,12 @@ export default class ErrorBoundaryWrapper extends Component<Props, State> {
   render() {
     if (this.state.hasError) {
       return (
-        <div style={{ padding: '2rem', textAlign: 'center', backgroundColor: '#17402C', color: '#F8F9FA', minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ padding: '2rem', textAlign: 'center', backgroundColor: 'var(--lkv-primary)', color: 'var(--lkv-surface)', minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
           <h1 style={{ marginBottom: '1rem' }}>Une erreur est survenue</h1>
-          <p style={{ marginBottom: '2rem', color: '#A0AAB2' }}>L'application a rencontré un problème inattendu.</p>
+          <p style={{ marginBottom: '2rem', color: 'var(--lkv-text-muted)' }}>L'application a rencontré un problème inattendu.</p>
           <button 
             onClick={() => window.location.reload()}
-            style={{ backgroundColor: '#17402C', color: 'white', border: 'none', padding: '0.75rem 1.5rem', borderRadius: '8px', cursor: 'pointer' }}
+            style={{ backgroundColor: 'var(--lkv-primary)', color: 'white', border: 'none', padding: '0.75rem 1.5rem', borderRadius: '8px', cursor: 'pointer' }}
           >
             Réessayer
           </button>
