@@ -617,11 +617,46 @@ Sheets sociales détectées hors périmètre (`social/ReportSheet`, `MoreMenuShe
 
 `type-check` ✅ 0 · `lint` ✅ 0 erreur · `vitest` ✅ 407 fichiers / **2 947 tests** · `build` ✅ · `verify:invariants` ✅ 0. Aucun test supprimé ; 1 test ajouté (`Switch`).
 
+## Lot 6 — Itération 2 · Famille 8 : Boutique (TERMINÉE)
+
+### Périmètre et résultat
+23 fichiers modifiés + **1 créé** (`src/components/produit/ProductCard.tsx` — pattern produit unique) ; 0 supprimé. `app/admin/produits` non touché (hors front utilisateur).
+
+| Mesure (périmètre) | Avant | Après |
+|---|---|---|
+| Hex UI | 189 | **0** |
+| `rounded-[…]` littéraux | 5 | **0** |
+| `<button>` bruts | 79 | **0** |
+| `glass-*` legacy | 145 | **0** |
+| Overlays custom | 6 | **0** |
+| `env(safe-area-*)` directs | 1 | **0** |
+| Styles inline | 236 | **7** (dynamiques : jauges, progression, nuancier) |
+| Composants produit spécifiques | 4 patterns | **1** (`ProductCard`) |
+
+- Catalogue → `Card`/`Badge`/`Chip`/`Tabs`/`SearchField` ; fiche produit → `PageHeader` (mobile) + primitives ; **pattern prix unique** (mono, promo `-X%` textuel, ancien prix barré, caution) ; location claire ; affiliation : mêmes composants, **mentions légales conservées** ; overlays → `Modal` ; panier/checkout → primitives + `lkvConfirm` ; états canoniques.
+- **Dette `Switch` absorbée (2/2)** : `TeamDrawers.tsx` (« sac de bât ») et `app/carnets/page.tsx` migrés vers la primitive canonique, comportement identique. Restent 3 `role="switch"` hors mandat (`HubSectionPicker` non importé, `TeamMobileExperience`, `ItineraryDrawers`) → Famille 9.
+- Exception assumée : correction de contraste des héros sombres (`bg-dark-bg` inexistant → `--lkv-primary` tokenisé).
+
+### Métriques globales après famille 8
+
+| Mesure | Après famille 7 | Après famille 8 |
+|---|---|---|
+| Hex | 2 222 | **2 033** |
+| `rounded-[…]` littéraux | 41 | **36** |
+| `z-[…]` littéraux | 12 | 12 |
+| Styles inline | 1 239 | **1 010** |
+| Paires desktop/mobile | 50 | **48** |
+
+### Vérification
+`type-check` ✅ 0 · `lint` ✅ 0 · `vitest` ✅ 407 fichiers / **2 947 tests** · `build` ✅ 11,0 s · `verify:invariants` ✅ 6/6 · **60 captures** `phase2-screenshots/lot6-famille8/`. Aucun test supprimé ni adapté. Métriques revérifiées indépendamment.
+
+### Prochaine famille : **Famille 9 — Pages secondaires + purge finale Lot 6**
+
 ## Lots suivants
 
 | Lot | Contenu | Statut |
 |---|---|---|
-| 6 (suite) | Famille 4 Explorer/carte → Famille 5 Communauté → … → famille 9 secondaires | en cours |
+| 6 (suite) | Famille 9 secondaires + purge finale → clôture Lot 6 | en cours |
 
 ## Risques / points ouverts
 
