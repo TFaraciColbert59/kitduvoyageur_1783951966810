@@ -7,7 +7,8 @@ import Icon from '@/components/ui/AppIcon';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
-import { PageHeader } from '@/components/ui';
+import { Badge, Button, Card, EmptyState, Modal, SearchField, Tabs, type BadgeTone } from '@/components/ui';
+import ProductCard from '@/components/produit/ProductCard';
 
 interface RentalListing {
   id: string;
@@ -35,12 +36,15 @@ interface RentalListing {
 
 const CATEGORIES = ['Tout', 'Tentes', 'Sacs à dos', 'Couchage', 'Cuisine', 'Escalade', 'Eau', 'Vêtements', 'Chaussures', 'Bâtons', 'Éclairage', 'Sécurité'];
 
-const conditionConfig = {
-  neuf: { label: 'Neuf', color: 'text-emerald-700 bg-emerald-50 border-emerald-200' },
-  excellent: { label: 'Excellent', color: 'text-blue-700 bg-blue-50 border-blue-200' },
-  bon: { label: 'Bon état', color: 'text-amber-700 bg-amber-50 border-amber-200' },
-  correct: { label: 'Correct', color: 'text-gray-600 bg-gray-50 border-gray-200' },
+const conditionConfig: Record<RentalListing['condition'], { label: string; tone: BadgeTone }> = {
+  neuf: { label: 'Neuf', tone: 'sage' },
+  excellent: { label: 'Excellent', tone: 'info' },
+  bon: { label: 'Bon état', tone: 'warn' },
+  correct: { label: 'Correct', tone: 'stone' },
 };
+
+const FIELD_CLASS =
+  'w-full rounded-[var(--lkv-radius-md)] border border-[color:var(--lkv-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[var(--space-2)] text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-primary)] placeholder:text-[color:var(--lkv-text-muted)] focus:outline-none focus:ring-2 focus:ring-[color:var(--lkv-focus-ring)]';
 
 const STATIC_LISTINGS: RentalListing[] = [
   {
@@ -193,25 +197,25 @@ function MiniCalendar({ available }: { available: boolean }) {
   for (let d = 1; d <= daysInMonth; d++) cells.push(d);
 
   return (
-    <div className="bg-background rounded-xl border border-border p-4">
-      <div className="flex items-center justify-between mb-3">
-        <span className="font-display font-700 text-sm text-foreground">Juillet 2026</span>
-        <div className="flex gap-3 text-xs">
-          <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm bg-forest-100 border border-forest-300 inline-block" />Dispo</span>
-          <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm bg-red-100 border border-red-300 inline-block" />Réservé</span>
+    <div className="rounded-[var(--lkv-radius-lg)] border border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface)] p-[var(--space-4)]">
+      <div className="mb-[var(--space-3)] flex items-center justify-between">
+        <span className="font-display text-[length:var(--lkv-text-body-sm)] font-bold text-[color:var(--lkv-text-primary)]">Juillet 2026</span>
+        <div className="flex gap-[var(--space-3)] text-[length:var(--lkv-text-caption)]">
+          <span className="flex items-center gap-[var(--space-1)]"><span className="inline-block h-2.5 w-2.5 rounded-[var(--lkv-radius-xs)] border border-[color:var(--lkv-success)] bg-[color:var(--lkv-success-bg)]" />Dispo</span>
+          <span className="flex items-center gap-[var(--space-1)]"><span className="inline-block h-2.5 w-2.5 rounded-[var(--lkv-radius-xs)] border border-[color:var(--lkv-danger)] bg-[color:var(--lkv-danger-bg)]" />Réservé</span>
         </div>
       </div>
       <div className="grid grid-cols-7 gap-0.5">
         {DAYS_OF_WEEK.map((d, i) => (
-          <div key={i} className="text-center text-[10px] font-mono text-muted-foreground py-1">{d}</div>
+          <div key={i} className="py-[var(--space-1)] text-center font-mono text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">{d}</div>
         ))}
         {cells.map((day, i) => (
           <div
             key={i}
-            className={`text-center text-xs py-1 rounded-md transition-colors ${
+            className={`rounded-[var(--lkv-radius-xs)] py-[var(--space-1)] text-center text-[length:var(--lkv-text-caption)] transition-colors ${
               day === null ? '' : bookedDays.includes(day)
-                ? 'bg-red-50 text-red-400 border border-red-100'
-                : day < 10 ? 'text-muted-foreground/40' : 'bg-emerald-50 text-emerald-700 border border-emerald-100 cursor-pointer hover:bg-emerald-100'
+                ? 'border border-[color:var(--lkv-danger-bg)] bg-[color:var(--lkv-danger-bg)] text-[color:var(--lkv-danger)]'
+                : day < 10 ? 'text-[color:var(--lkv-text-muted)] opacity-40' : 'cursor-pointer border border-[color:var(--lkv-success-bg)] bg-[color:var(--lkv-success-bg)] text-[color:var(--lkv-text-primary)] hover:border-[color:var(--lkv-success)]'
             }`}
           >
             {day || ''}
@@ -235,149 +239,141 @@ function RentalDetailModal({ listing, onClose }: { listing: RentalListing; onClo
   const totalPrice = days > 0 ? (days >= 7 ? listing.pricePerWeek * Math.ceil(days / 7) : listing.pricePerDay * days) : 0;
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4" onClick={onClose}>
-      <div className="bg-card border border-border rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-        <PageHeader
-          sticky
-          variant="inline"
-          className="border-b border-border bg-card px-5"
-          title={listing.title}
-          actions={
-            <button onClick={onClose} className="glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8 flex-shrink-0">
-              <Icon name="XMarkIcon" size={18} />
-            </button>
-          }
-        />
-
-        {!reserved ? (
-          <div className="p-5 space-y-5">
-            <div className="relative rounded-xl overflow-hidden aspect-video">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={listing.image || '/assets/images/no_image.png'} alt={listing.alt} className="w-full h-full object-cover" />
-              <div className="absolute top-3 left-3 flex gap-2">
-                <span className={`text-xs font-600 px-2 py-1 rounded-full border ${cond.color}`}>{cond.label}</span>
-                {!listing.available && (
-                  <span className="text-xs font-600 px-2 py-1 rounded-full border text-red-600 bg-red-50 border-red-200">Indisponible</span>
-                )}
-              </div>
+    <Modal
+      open
+      onOpenChange={(open) => {
+        if (!open) onClose();
+      }}
+      title={listing.title}
+      size="lg"
+    >
+      {!reserved ? (
+        <div className="space-y-[var(--space-5)]">
+          <div className="relative aspect-video overflow-hidden rounded-[var(--lkv-radius-lg)]">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={listing.image || '/assets/images/no_image.png'} alt={listing.alt} className="h-full w-full object-cover" />
+            <div className="absolute left-[var(--space-3)] top-[var(--space-3)] flex gap-[var(--space-2)]">
+              <Badge tone={cond.tone}>{cond.label}</Badge>
+              {!listing.available && <Badge tone="danger">Indisponible</Badge>}
             </div>
-
-            <div className="grid grid-cols-3 gap-3">
-              <div className="bg-background rounded-xl p-3 border border-border text-center">
-                <p className="font-display font-700 text-foreground text-xl">{listing.pricePerDay}€</p>
-                <p className="text-xs text-muted-foreground">par jour</p>
-              </div>
-              <div className="bg-background rounded-xl p-3 border border-border text-center">
-                <p className="font-display font-700 text-foreground text-xl">{listing.pricePerWeek}€</p>
-                <p className="text-xs text-muted-foreground">par semaine</p>
-              </div>
-              <div className="bg-background rounded-xl p-3 border border-border text-center">
-                <p className="font-display font-700 text-sand-500 text-xl">{listing.deposit}€</p>
-                <p className="text-xs text-muted-foreground">caution</p>
-              </div>
-            </div>
-
-            {listing.tags.length > 0 && (
-              <div className="flex flex-wrap gap-2">
-                {listing.tags.map((tag) => (
-                  <span key={tag} className="px-2.5 py-1 bg-muted rounded-full text-xs text-muted-foreground border border-border">{tag}</span>
-                ))}
-              </div>
-            )}
-
-            <div className="flex items-center gap-2">
-              <div className="flex gap-0.5">
-                {Array.from({ length: 5 }).map((_, i) => (
-                  <Icon key={i} name="StarIcon" size={14} variant={i < Math.floor(listing.rating) ? 'solid' : 'outline'} className={i < Math.floor(listing.rating) ? 'text-amber-400' : 'text-muted-foreground'} />
-                ))}
-              </div>
-              <span className="font-semibold text-foreground text-sm">{listing.rating}</span>
-              <span className="text-muted-foreground text-sm">({listing.reviewCount} avis)</span>
-            </div>
-
-            {listing.available && (
-              <div>
-                <h3 className="font-semibold text-foreground mb-3 text-sm">Choisir les dates</h3>
-                <div className="grid grid-cols-2 gap-3 mb-3">
-                  <div>
-                    <label className="text-xs text-muted-foreground block mb-1">Date de début</label>
-                    <input type="date" className="input-field w-full" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
-                  </div>
-                  <div>
-                    <label className="text-xs text-muted-foreground block mb-1">Date de fin</label>
-                    <input type="date" className="input-field w-full" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
-                  </div>
-                </div>
-                {days > 0 && (
-                  <div className="bg-primary/5 border border-primary/20 rounded-xl p-3 flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-foreground">{days} jour{days > 1 ? 's' : ''} de location</p>
-                      <p className="text-xs text-muted-foreground">+ {listing.deposit}€ de caution (remboursée)</p>
-                    </div>
-                    <p className="font-display font-700 text-primary text-xl">{totalPrice}€</p>
-                  </div>
-                )}
-              </div>
-            )}
-
-            <button
-              onClick={() => setShowCalendar(!showCalendar)}
-              className="glass-capsule-btn w-full !text-xs flex items-center justify-center gap-1.5 !py-2"
-            >
-              <Icon name="CalendarIcon" size={12} />
-              {showCalendar ? 'Masquer le calendrier' : 'Voir les disponibilités'}
-            </button>
-            {showCalendar && <MiniCalendar available={listing.available} />}
-
-            <div className="bg-background rounded-xl p-4 border border-border">
-              <h3 className="font-semibold text-foreground mb-3 text-sm">Propriétaire</h3>
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-secondary/20 text-secondary flex items-center justify-center font-700 text-sm flex-shrink-0">
-                  {listing.ownerAvatar}
-                </div>
-                <div className="flex-1">
-                  <p className="font-medium text-foreground text-sm">{listing.owner}</p>
-                  <p className="text-xs text-muted-foreground">{listing.location}</p>
-                </div>
-                <div className="flex items-center gap-1 bg-primary/10 rounded-lg px-2 py-1">
-                  <Icon name="ShieldCheckIcon" size={12} className="text-primary" />
-                  <span className="text-xs font-700 text-primary">{listing.ownerTrustScore}%</span>
-                </div>
-              </div>
-            </div>
-
-            <button
-              disabled={!listing.available}
-              onClick={() => listing.available && setReserved(true)}
-              className={`glass-capsule-btn w-full !py-3 !text-sm !font-semibold ${listing.available ? 'primary' : ''}`}
-            >
-              {listing.available
-                ? days > 0 ? `Réserver — ${totalPrice}€ + ${listing.deposit}€ caution` : 'Réserver'
-                : `Indisponible${listing.nextAvailable ? ` — Dispo le ${new Date(listing.nextAvailable).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}` : ''}`
-              }
-            </button>
-
-            <Link
-              href={`/produit/${listing.slug}?type=location`}
-              className="w-full py-2.5 rounded-xl border border-primary/40 text-primary text-sm font-medium hover:bg-primary/5 transition-colors flex items-center justify-center gap-1.5"
-            >
-              <Icon name="ArrowTopRightOnSquareIcon" size={14} variant="outline" />
-              Voir la fiche location complète
-            </Link>
           </div>
-        ) : (
-          <div className="p-8 text-center">
-            <div className="w-16 h-16 rounded-full bg-forest-100 flex items-center justify-center mx-auto mb-4">
-              <Icon name="CheckIcon" size={28} className="text-forest-600" />
-            </div>
-            <h3 className="font-display font-700 text-foreground text-xl mb-2">Réservation confirmée !</h3>
-            <p className="text-sm text-muted-foreground mb-2">{listing.title}</p>
-            <p className="text-sm text-muted-foreground mb-6">{listing.owner} vous contactera pour organiser la remise du matériel.</p>
-            <button onClick={onClose} className="glass-capsule-btn primary justify-center px-8 py-3">Fermer</button>
+
+          <div className="grid grid-cols-3 gap-[var(--space-3)]">
+            <Card variant="compact" className="p-[var(--space-3)] text-center">
+              <p className="font-display text-[length:var(--lkv-text-headline)] font-bold text-[color:var(--lkv-text-primary)]">{listing.pricePerDay}€</p>
+              <p className="text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-muted)]">par jour</p>
+            </Card>
+            <Card variant="compact" className="p-[var(--space-3)] text-center">
+              <p className="font-display text-[length:var(--lkv-text-headline)] font-bold text-[color:var(--lkv-text-primary)]">{listing.pricePerWeek}€</p>
+              <p className="text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-muted)]">par semaine</p>
+            </Card>
+            <Card variant="compact" className="p-[var(--space-3)] text-center">
+              <p className="font-display text-[length:var(--lkv-text-headline)] font-bold text-[color:var(--lkv-warning-dark)]">{listing.deposit}€</p>
+              <p className="text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-muted)]">caution</p>
+            </Card>
           </div>
-        )}
-      </div>
-    </div>
+
+          {listing.tags.length > 0 && (
+            <div className="flex flex-wrap gap-[var(--space-2)]">
+              {listing.tags.map((tag) => (
+                <Badge key={tag} tone="stone">{tag}</Badge>
+              ))}
+            </div>
+          )}
+
+          <div className="flex items-center gap-[var(--space-2)]">
+            <div className="flex gap-0.5">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <Icon key={i} name="StarIcon" size={14} variant={i < Math.floor(listing.rating) ? 'solid' : 'outline'} className={i < Math.floor(listing.rating) ? 'text-[color:var(--lkv-warning)]' : 'text-[color:var(--lkv-text-muted)]'} />
+              ))}
+            </div>
+            <span className="text-[length:var(--lkv-text-body-sm)] font-semibold text-[color:var(--lkv-text-primary)]">{listing.rating}</span>
+            <span className="text-[length:var(--lkv-text-body-sm)] text-[color:var(--lkv-text-muted)]">({listing.reviewCount} avis)</span>
+          </div>
+
+          {listing.available && (
+            <div>
+              <h3 className="mb-[var(--space-3)] text-[length:var(--lkv-text-body-sm)] font-semibold text-[color:var(--lkv-text-primary)]">Choisir les dates</h3>
+              <div className="mb-[var(--space-3)] grid grid-cols-2 gap-[var(--space-3)]">
+                <div>
+                  <label htmlFor="rental-start" className="mb-[var(--space-1)] block text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-muted)]">Date de début</label>
+                  <input id="rental-start" type="date" className={FIELD_CLASS} value={startDate} onChange={(e) => setStartDate(e.target.value)} />
+                </div>
+                <div>
+                  <label htmlFor="rental-end" className="mb-[var(--space-1)] block text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-muted)]">Date de fin</label>
+                  <input id="rental-end" type="date" className={FIELD_CLASS} value={endDate} onChange={(e) => setEndDate(e.target.value)} />
+                </div>
+              </div>
+              {days > 0 && (
+                <div className="flex items-center justify-between rounded-[var(--lkv-radius-lg)] border border-[color:var(--lkv-primary-subtle)] bg-[color:var(--lkv-primary-subtle)] p-[var(--space-3)]">
+                  <div>
+                    <p className="text-[length:var(--lkv-text-body-sm)] font-medium text-[color:var(--lkv-text-primary)]">{days} jour{days > 1 ? 's' : ''} de location</p>
+                    <p className="text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-muted)]">+ {listing.deposit}€ de caution (remboursée)</p>
+                  </div>
+                  <p className="font-display text-[length:var(--lkv-text-headline)] font-bold text-[color:var(--lkv-primary)]">{totalPrice}€</p>
+                </div>
+              )}
+            </div>
+          )}
+
+          <Button
+            variant="secondary"
+            fullWidth
+            icon={<Icon name="CalendarIcon" size={12} />}
+            onClick={() => setShowCalendar(!showCalendar)}
+          >
+            {showCalendar ? 'Masquer le calendrier' : 'Voir les disponibilités'}
+          </Button>
+          {showCalendar && <MiniCalendar available={listing.available} />}
+
+          <Card variant="compact" className="p-[var(--space-4)]">
+            <h3 className="mb-[var(--space-3)] text-[length:var(--lkv-text-body-sm)] font-semibold text-[color:var(--lkv-text-primary)]">Propriétaire</h3>
+            <div className="flex items-center gap-[var(--space-3)]">
+              <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-[color:var(--lkv-secondary-subtle)] text-[length:var(--lkv-text-body-sm)] font-bold text-[color:var(--lkv-secondary)]">
+                {listing.ownerAvatar}
+              </div>
+              <div className="flex-1">
+                <p className="text-[length:var(--lkv-text-body-sm)] font-medium text-[color:var(--lkv-text-primary)]">{listing.owner}</p>
+                <p className="text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-muted)]">{listing.location}</p>
+              </div>
+              <Badge tone="sage" className="gap-[var(--space-1)]">
+                <Icon name="ShieldCheckIcon" size={12} className="text-[color:var(--lkv-primary)]" />
+                <span className="font-bold text-[color:var(--lkv-primary)]">{listing.ownerTrustScore}%</span>
+              </Badge>
+            </div>
+          </Card>
+
+          <Button
+            disabled={!listing.available}
+            onClick={() => listing.available && setReserved(true)}
+            fullWidth
+          >
+            {listing.available
+              ? days > 0 ? `Réserver — ${totalPrice}€ + ${listing.deposit}€ caution` : 'Réserver'
+              : `Indisponible${listing.nextAvailable ? ` — Dispo le ${new Date(listing.nextAvailable).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}` : ''}`
+            }
+          </Button>
+
+          <Link
+            href={`/produit/${listing.slug}?type=location`}
+            className="flex w-full items-center justify-center gap-[var(--space-1)] rounded-[var(--lkv-radius-md)] border border-[color:var(--lkv-secondary)] py-[var(--space-2)] text-[length:var(--lkv-text-body-sm)] font-medium text-[color:var(--lkv-primary)] transition-colors hover:bg-[color:var(--lkv-primary-subtle)]"
+          >
+            <Icon name="ArrowTopRightOnSquareIcon" size={14} variant="outline" />
+            Voir la fiche location complète
+          </Link>
+        </div>
+      ) : (
+        <div className="py-[var(--space-6)] text-center">
+          <div className="mx-auto mb-[var(--space-4)] flex h-16 w-16 items-center justify-center rounded-full bg-[color:var(--lkv-success-bg)]">
+            <Icon name="CheckIcon" size={28} className="text-[color:var(--lkv-text-secondary)]" />
+          </div>
+          <h3 className="mb-[var(--space-2)] font-display text-[length:var(--lkv-text-headline)] font-bold text-[color:var(--lkv-text-primary)]">Réservation confirmée !</h3>
+          <p className="mb-[var(--space-2)] text-[length:var(--lkv-text-body-sm)] text-[color:var(--lkv-text-muted)]">{listing.title}</p>
+          <p className="mb-[var(--space-6)] text-[length:var(--lkv-text-body-sm)] text-[color:var(--lkv-text-muted)]">{listing.owner} vous contactera pour organiser la remise du matériel.</p>
+          <Button onClick={onClose} className="px-[var(--space-8)]">Fermer</Button>
+        </div>
+      )}
+    </Modal>
   );
 }
 
@@ -385,58 +381,44 @@ function RentalCard({ listing, onClick }: { listing: RentalListing; onClick: () 
   const cond = conditionConfig[listing.condition];
 
   return (
-    <div className="glass group flex flex-col cursor-pointer hover:border-primary/20 transition-all" onClick={onClick}>
-      <div className="relative overflow-hidden aspect-[4/3] rounded-t-xl">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={listing.image || '/assets/images/no_image.png'} alt={listing.alt} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
-        <div className="absolute top-2 left-2 flex gap-1.5">
-          <span className={`text-xs font-600 px-2 py-0.5 rounded-full border ${cond.color}`}>{cond.label}</span>
-          {!listing.available && (
-            <span className="text-xs font-600 px-2 py-0.5 rounded-full border text-red-600 bg-red-50 border-red-200">Indisponible</span>
-          )}
-        </div>
-        <div className="absolute top-2 right-2 bg-dark-bg/70 text-white text-xs font-mono px-2 py-1 rounded-lg">
-          {listing.distance} km
-        </div>
-      </div>
-
-      <div className="p-4 flex flex-col flex-1">
-        <h3 className="font-display font-700 text-foreground text-sm mb-1 line-clamp-2">{listing.title}</h3>
-
-        <div className="flex flex-wrap gap-1 mb-3">
-          {listing.tags.slice(0, 3).map((tag) => (
-            <span key={tag} className="px-1.5 py-0.5 bg-muted rounded text-[10px] text-muted-foreground">{tag}</span>
-          ))}
-        </div>
-
-        <div className="mt-auto space-y-2">
-          <div className="flex items-center justify-between">
-            <div>
-              <span className="font-display font-800 text-foreground text-xl">{listing.pricePerDay}€</span>
-              <span className="text-xs text-muted-foreground ml-1">/jour</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <Icon name="StarIcon" size={12} variant="solid" className="text-sand-400" />
-              <span className="text-xs font-600 text-foreground">{listing.rating}</span>
-              <span className="text-xs text-muted-foreground">({listing.reviewCount})</span>
-            </div>
-          </div>
-
-          <div className="flex items-center justify-between text-xs text-muted-foreground">
-            <span className="flex items-center gap-1">
-              <Icon name="MapPinIcon" size={10} />
-              {listing.location}
+    <ProductCard
+      image={listing.image || '/assets/images/no_image.png'}
+      imageAlt={listing.alt}
+      badges={
+        <>
+          <Badge tone={cond.tone}>{cond.label}</Badge>
+          {!listing.available && <Badge tone="danger">Indisponible</Badge>}
+        </>
+      }
+      corner={<Badge tone="stone" className="font-mono">{listing.distance} km</Badge>}
+      title={listing.title}
+      tags={listing.tags}
+      price={`${listing.pricePerDay}€`}
+      priceSuffix="/jour"
+      aside={
+        <>
+          <Icon name="StarIcon" size={12} variant="solid" className="text-[color:var(--lkv-warning)]" />
+          <span className="text-[length:var(--lkv-text-caption)] font-semibold text-[color:var(--lkv-text-primary)]">{listing.rating}</span>
+          <span className="text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-muted)]">({listing.reviewCount})</span>
+        </>
+      }
+      meta={
+        <>
+          <span className="flex items-center gap-[var(--space-1)]">
+            <Icon name="MapPinIcon" size={10} />
+            {listing.location}
+          </span>
+          <span className="flex items-center gap-[var(--space-1)]">
+            <span className="flex h-4 w-4 items-center justify-center rounded-full bg-[color:var(--lkv-secondary-subtle)] text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-secondary)]">
+              {listing.ownerAvatar}
             </span>
-            <span className="flex items-center gap-1">
-              <div className="w-4 h-4 rounded-full bg-secondary/20 text-secondary flex items-center justify-center text-[9px] font-700">
-                {listing.ownerAvatar}
-              </div>
-              {listing.owner}
-            </span>
-          </div>
-        </div>
-      </div>
-    </div>
+            {listing.owner}
+          </span>
+        </>
+      }
+      ctaLabel="Voir l'annonce"
+      onClick={onClick}
+    />
   );
 }
 
@@ -509,318 +491,241 @@ export default function LocationPage() {
       return 0;
     });
 
+  const sortOptions = (
+    <select
+      value={sortBy}
+      onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
+      aria-label="Trier les locations"
+      className={`${FIELD_CLASS} w-auto shrink-0`}
+    >
+      <option value="distance">Plus proche</option>
+      <option value="price">Prix croissant</option>
+      <option value="rating">Mieux notés</option>
+    </select>
+  );
+
+  const proposeButton = (
+    <Button
+      onClick={() => setShowListModal(true)}
+      icon={<Icon name="PlusIcon" size={16} />}
+      className="whitespace-nowrap"
+    >
+      Proposer du matériel
+    </Button>
+  );
+
+  const statsRow = (
+    <div className="grid max-w-sm grid-cols-3 gap-[var(--space-3)]">
+      <Card variant="compact" className="p-[var(--space-3)] text-center">
+        <p className="font-display text-[length:var(--lkv-text-headline)] font-bold text-[color:var(--lkv-secondary)]">{listings.length}</p>
+        <p className="text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">Articles disponibles</p>
+      </Card>
+      <Card variant="compact" className="p-[var(--space-3)] text-center">
+        <p className="font-display text-[length:var(--lkv-text-headline)] font-bold text-[color:var(--lkv-warning)]">{listings.filter((l) => l.available).length}</p>
+        <p className="text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">Disponibles maintenant</p>
+      </Card>
+      <Card variant="compact" className="p-[var(--space-3)] text-center">
+        <p className="font-display text-[length:var(--lkv-text-headline)] font-bold text-[color:var(--lkv-text-primary)]">
+          {listings.length > 0 ? Math.round(listings.reduce((s, l) => s + l.pricePerDay, 0) / listings.length) : 0}€
+        </p>
+        <p className="text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">Prix moyen/jour</p>
+      </Card>
+    </div>
+  );
+
+  const listModal = showListModal && (
+    <Modal
+      open
+      onOpenChange={(open) => {
+        if (!open) setShowListModal(false);
+      }}
+      title="Proposer du matériel"
+    >
+      {!listSent ? (
+        <>
+          <p className="mb-[var(--space-4)] text-[length:var(--lkv-text-body-sm)] text-[color:var(--lkv-text-muted)]">Partagez votre matériel avec la communauté et générez des revenus supplémentaires.</p>
+          <div className="space-y-[var(--space-3)]">
+            <input type="text" placeholder="Nom du matériel" aria-label="Nom du matériel" className={FIELD_CLASS} value={listForm.title} onChange={e => setListForm(p => ({ ...p, title: e.target.value }))} />
+            <input type="number" placeholder="Prix par jour (€)" aria-label="Prix par jour" className={FIELD_CLASS} value={listForm.pricePerDay} onChange={e => setListForm(p => ({ ...p, pricePerDay: e.target.value }))} />
+            <input type="text" placeholder="Votre ville" aria-label="Votre ville" className={FIELD_CLASS} value={listForm.location} onChange={e => setListForm(p => ({ ...p, location: e.target.value }))} />
+            <textarea placeholder="Description et état du matériel..." aria-label="Description" className={`${FIELD_CLASS} resize-none`} rows={3} value={listForm.description} onChange={e => setListForm(p => ({ ...p, description: e.target.value }))} />
+          </div>
+          <div className="mt-[var(--space-4)] flex gap-[var(--space-3)]">
+            <Button variant="secondary" className="flex-1" onClick={() => setShowListModal(false)}>Annuler</Button>
+            <Button
+              className="flex-1"
+              disabled={listSaving || !listForm.title.trim()}
+              loading={listSaving}
+              onClick={async () => {
+                setListSaving(true);
+                try {
+                  const supabase = createClient();
+                  const { data: { user } } = await supabase.auth.getUser();
+                  await supabase.from('rental_items').insert({
+                    owner_id: user?.id ?? null,
+                    title: listForm.title.trim(),
+                    description: listForm.description.trim(),
+                    price_per_day: Number(listForm.pricePerDay) || 0,
+                    price_per_week: (Number(listForm.pricePerDay) || 0) * 6,
+                    location: listForm.location.trim(),
+                    status: 'available',
+                    available: true,
+                  });
+                  setListSent(true);
+                } catch (_e) {
+                  setListSent(true);
+                } finally {
+                  setListSaving(false);
+                }
+              }}
+            >
+              {listSaving ? 'Envoi...' : 'Soumettre'}
+            </Button>
+          </div>
+        </>
+      ) : (
+        <div className="py-[var(--space-6)] text-center">
+          <div className="mx-auto mb-[var(--space-4)] flex h-16 w-16 items-center justify-center rounded-full bg-[color:var(--lkv-success-bg)]">
+            <Icon name="CheckIcon" size={28} className="text-[color:var(--lkv-text-secondary)]" />
+          </div>
+          <h3 className="mb-[var(--space-2)] font-display text-[length:var(--lkv-text-headline)] font-bold text-[color:var(--lkv-text-primary)]">Demande envoyée !</h3>
+          <p className="mb-[var(--space-6)] text-[length:var(--lkv-text-body-sm)] text-[color:var(--lkv-text-muted)]">Notre équipe validera votre annonce sous 24h.</p>
+          <Button onClick={() => { setListSent(false); setShowListModal(false); }} className="px-[var(--space-8)]">Fermer</Button>
+        </div>
+      )}
+    </Modal>
+  );
+
   return (
     <>
       {/* ── DESKTOP ── */}
       <div className="hidden md:block">
-    <div className="min-h-screen bg-background">
-      <Header />
-      <main className="pt-20">
-        {/* Hero */}
-        <section className="bg-dark-bg text-white py-10 px-4">
-          <div className="max-w-7xl mx-auto">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="w-10 h-10 rounded-xl bg-secondary/20 flex items-center justify-center">
-                <Icon name="CalendarDaysIcon" size={22} variant="outline" className="text-secondary" />
+        <div className="min-h-screen bg-transparent">
+          <Header />
+          <main className="pt-20">
+            {/* Hero */}
+            <section className="bg-[color:var(--lkv-primary)] px-[var(--space-4)] py-[var(--space-10)] text-[color:var(--lkv-text-inverted)]">
+              <div className="mx-auto max-w-7xl">
+                <div className="mb-[var(--space-3)] flex items-center gap-[var(--space-3)]">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-[var(--lkv-radius-md)] bg-[color:var(--lkv-secondary-subtle)]">
+                    <Icon name="CalendarDaysIcon" size={22} variant="outline" className="text-[color:var(--lkv-secondary)]" />
+                  </div>
+                  <div>
+                    <p className="font-mono text-[length:var(--lkv-text-caption)] uppercase tracking-[var(--tracking-wide)] text-[color:var(--lkv-secondary)]">Phase 3 · Marketplace</p>
+                    <h1 className="font-display text-[length:var(--lkv-text-title-sm)] font-extrabold tracking-[var(--lkv-tracking-title)]">Location de Matériel</h1>
+                  </div>
+                </div>
+                <p className="max-w-xl text-[length:var(--lkv-text-body-sm)] text-[color:var(--lkv-text-inverted)] opacity-60">Louez du matériel outdoor de qualité près de chez vous. Testez avant d&apos;acheter, économisez sur vos aventures.</p>
+                <div className="mt-[var(--space-4)]">{statsRow}</div>
               </div>
-              <div>
-                <p className="text-xs font-mono text-secondary/80 tracking-widest uppercase">Phase 3 · Marketplace</p>
-                <h1 className="text-2xl font-display font-800 tracking-tight">Location de Matériel</h1>
-              </div>
-            </div>
-            <p className="text-white/60 text-sm max-w-xl">Louez du matériel outdoor de qualité près de chez vous. Testez avant d&apos;acheter, économisez sur vos aventures.</p>
-            <div className="grid grid-cols-3 gap-3 max-w-sm mt-4">
-              <div className="bg-white/5 border border-white/10 rounded-xl p-3 text-center">
-                <p className="text-xl font-display font-700 text-secondary">{listings.length}</p>
-                <p className="text-xs text-white/50">Articles disponibles</p>
-              </div>
-              <div className="bg-white/5 border border-white/10 rounded-xl p-3 text-center">
-                <p className="text-xl font-display font-700 text-sand-400">{listings.filter((l) => l.available).length}</p>
-                <p className="text-xs text-white/50">Disponibles maintenant</p>
-              </div>
-              <div className="bg-white/5 border border-white/10 rounded-xl p-3 text-center">
-                <p className="text-xl font-display font-700 text-forest-400">
-                  {listings.length > 0 ? Math.round(listings.reduce((s, l) => s + l.pricePerDay, 0) / listings.length) : 0}€
-                </p>
-                <p className="text-xs text-white/50">Prix moyen/jour</p>
-              </div>
-            </div>
-          </div>
-        </section>
+            </section>
 
-        <div className="max-w-7xl mx-auto px-4 py-8">
-          {/* Search & Filters */}
-          <div className="flex flex-col sm:flex-row gap-3 mb-6">
-            <div className="relative flex-1">
-              <Icon name="MagnifyingGlassIcon" size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-              <input
-                type="text"
-                placeholder="Rechercher du matériel..."
-                className="input-field pl-9 w-full"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
+            <div className="mx-auto max-w-7xl px-[var(--space-4)] py-[var(--space-8)]">
+              {/* Search & Filters */}
+              <div className="mb-[var(--space-6)] flex flex-col gap-[var(--space-3)] sm:flex-row">
+                <SearchField
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  onClear={() => setSearch('')}
+                  placeholder="Rechercher du matériel..."
+                  containerClassName="flex-1"
+                />
+                {sortOptions}
+                {proposeButton}
+              </div>
+
+              {/* Category Filters */}
+              <Tabs
+                options={CATEGORIES.map((cat) => ({ id: cat, label: cat }))}
+                value={category}
+                onChange={setCategory}
+                variant="scrollable"
+                ariaLabel="Catégories de location"
+                className="mb-[var(--space-6)]"
               />
-            </div>
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
-              className="px-3 py-2 rounded-lg border border-border bg-card text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
-            >
-              <option value="distance">Plus proche</option>
-              <option value="price">Prix croissant</option>
-              <option value="rating">Mieux notés</option>
-            </select>
-            <button
-              onClick={() => setShowListModal(true)}
-              className="glass-capsule-btn primary flex items-center gap-2 whitespace-nowrap"
-            >
-              <Icon name="PlusIcon" size={16} />
-              Proposer du matériel
-            </button>
-          </div>
 
-          {/* Category Filters */}
-          <div className="flex flex-wrap gap-2 mb-6">
-            {CATEGORIES.map((cat) => (
-              <button
-                key={cat}
-                onClick={() => setCategory(cat)}
-                className={`glass-capsule-btn !px-3 !py-1.5 !text-sm !font-medium ${category === cat ? 'primary' : ''}`}
-              >
-                {cat}
-              </button>
-            ))}
-          </div>
+              {/* Grid */}
+              {filtered.length === 0 ? (
+                <EmptyState
+                  icon={<Icon name="CalendarDaysIcon" size={32} variant="outline" />}
+                  title="Aucun article trouvé"
+                  description="Modifiez votre recherche ou choisissez une autre catégorie."
+                />
+              ) : (
+                <div className="grid grid-cols-1 gap-[var(--space-4)] sm:grid-cols-2 lg:grid-cols-3">
+                  {filtered.map((listing) => (
+                    <RentalCard key={listing.id} listing={listing} onClick={() => setSelectedListing(listing)} />
+                  ))}
+                </div>
+              )}
+            </div>
+          </main>
 
-          {/* Grid */}
-          {filtered.length === 0 ? (
-            <div className="text-center py-16 text-muted-foreground">
-              <Icon name="CalendarDaysIcon" size={32} variant="outline" className="mx-auto mb-3 opacity-30" />
-              <p>Aucun article trouvé</p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {filtered.map((listing) => (
-                <RentalCard key={listing.id} listing={listing} onClick={() => setSelectedListing(listing)} />
-              ))}
-            </div>
-          )}
+          {selectedListing && <RentalDetailModal listing={selectedListing} onClose={() => setSelectedListing(null)} />}
+
+          {listModal}
+
+          <Footer />
         </div>
-      </main>
-
-      {selectedListing && <RentalDetailModal listing={selectedListing} onClose={() => setSelectedListing(null)} />}
-
-      {/* List Modal */}
-      {showListModal && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setShowListModal(false)}>
-          <div className="bg-card border border-border rounded-2xl p-6 max-w-md w-full" onClick={(e) => e.stopPropagation()}>
-            {!listSent ? (
-              <>
-                <div className="flex items-center justify-between mb-5">
-                  <h3 className="font-display font-700 text-foreground text-lg">Proposer du matériel</h3>
-                  <button onClick={() => setShowListModal(false)} className="glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8">
-                    <Icon name="XMarkIcon" size={18} />
-                  </button>
-                </div>
-                <p className="text-sm text-muted-foreground mb-4">Partagez votre matériel avec la communauté et générez des revenus supplémentaires.</p>
-                <div className="space-y-3">
-                  <input type="text" placeholder="Nom du matériel" className="input-field w-full" value={listForm.title} onChange={e => setListForm(p => ({ ...p, title: e.target.value }))} />
-                  <input type="number" placeholder="Prix par jour (€)" className="input-field w-full" value={listForm.pricePerDay} onChange={e => setListForm(p => ({ ...p, pricePerDay: e.target.value }))} />
-                  <input type="text" placeholder="Votre ville" className="input-field w-full" value={listForm.location} onChange={e => setListForm(p => ({ ...p, location: e.target.value }))} />
-                  <textarea placeholder="Description et état du matériel..." className="input-field resize-none w-full" rows={3} value={listForm.description} onChange={e => setListForm(p => ({ ...p, description: e.target.value }))} />
-                </div>
-                <div className="flex gap-3 mt-4">
-                  <button onClick={() => setShowListModal(false)} className="glass-capsule-btn flex-1 justify-center py-3">Annuler</button>
-                  <button
-                    disabled={listSaving || !listForm.title.trim()}
-                    onClick={async () => {
-                      setListSaving(true);
-                      try {
-                        const supabase = createClient();
-                        const { data: { user } } = await supabase.auth.getUser();
-                        await supabase.from('rental_items').insert({
-                          owner_id: user?.id ?? null,
-                          title: listForm.title.trim(),
-                          description: listForm.description.trim(),
-                          price_per_day: Number(listForm.pricePerDay) || 0,
-                          price_per_week: (Number(listForm.pricePerDay) || 0) * 6,
-                          location: listForm.location.trim(),
-                          status: 'available',
-                          available: true,
-                        });
-                        setListSent(true);
-                      } catch (_e) {
-                        setListSent(true);
-                      } finally {
-                        setListSaving(false);
-                      }
-                    }}
-                    className="glass-capsule-btn primary flex-1 justify-center py-3"
-                  >
-                    {listSaving ? 'Envoi...' : 'Soumettre'}
-                  </button>
-                </div>
-              </>
-            ) : (
-              <div className="text-center py-6">
-                <div className="w-16 h-16 rounded-full bg-forest-100 flex items-center justify-center mx-auto mb-4">
-                  <Icon name="CheckIcon" size={28} className="text-forest-600" />
-                </div>
-                <h3 className="font-display font-700 text-foreground text-lg mb-2">Demande envoyée !</h3>
-                <p className="text-sm text-muted-foreground mb-6">Notre équipe validera votre annonce sous 24h.</p>
-                <button onClick={() => { setListSent(false); setShowListModal(false); }} className="glass-capsule-btn primary justify-center px-8 py-3">Fermer</button>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      <Footer />
-    </div>
       </div>
 
       {/* ── MOBILE ── */}
       <div className="block md:hidden">
         <MobilePageShell>
-          <div style={{ padding: '16px 16px calc(62px + 12px + 12px + env(safe-area-inset-bottom))' }}>
+          <div className="px-[var(--space-4)] pb-[var(--space-4)] pt-[var(--space-4)]">
             {/* Header */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
-              <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: '#17402C', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: '16px' }}>📅</div>
+            <div className="mb-[var(--space-4)] flex items-center gap-[var(--space-3)]">
+              <div className="flex h-9 w-9 items-center justify-center rounded-[var(--lkv-radius-md)] bg-[color:var(--lkv-primary)] text-[color:var(--lkv-text-inverted)]">
+                <Icon name="CalendarDaysIcon" size={16} variant="outline" />
+              </div>
               <div>
-                <p style={{ fontSize: '9px', fontFamily: 'ui-monospace, monospace', letterSpacing: '0.15em', textTransform: 'uppercase', color: '#7A8A7D', margin: '0 0 2px' }}>Location</p>
-                <h1 style={{ fontSize: '20px', fontWeight: '700', color: '#17402C', margin: 0 }}>Location de Matériel</h1>
+                <p className="m-0 mb-0.5 font-mono text-[length:var(--lkv-text-caption-2)] uppercase tracking-[var(--tracking-caps)] text-[color:var(--lkv-text-muted)]">Location</p>
+                <h1 className="m-0 text-[length:var(--lkv-text-headline)] font-bold text-[color:var(--lkv-text-primary)]">Location de Matériel</h1>
               </div>
             </div>
 
             {/* Search + Sort row */}
-            <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
-              <div style={{ flex: 1, position: 'relative' }}>
-                <input
-                  type="text"
-                  placeholder="Rechercher..."
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '10px 12px',
-                    borderRadius: '12px',
-                    border: '1px solid #E4E0D4',
-                    fontSize: '13px',
-                    background: '#fff',
-                    color: '#17402C',
-                    outline: 'none',
-                    boxSizing: 'border-box',
-                  }}
-                />
-              </div>
-              <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
-                style={{
-                  padding: '8px 12px',
-                  borderRadius: '12px',
-                  border: '1px solid #E4E0D4',
-                  fontSize: '12px',
-                  background: '#fff',
-                  color: '#17402C',
-                  fontWeight: '600',
-                  outline: 'none',
-                }}
-              >
-                <option value="distance">📍 Distance</option>
-                <option value="price">💰 Prix</option>
-                <option value="rating">⭐ Note</option>
-              </select>
+            <div className="mb-[var(--space-4)] flex gap-[var(--space-2)]">
+              <SearchField
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                onClear={() => setSearch('')}
+                placeholder="Rechercher..."
+                containerClassName="flex-1"
+              />
+              {sortOptions}
             </div>
 
             {/* Stats row */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px', marginBottom: '16px' }}>
-              <div style={{ background: '#17402C', borderRadius: '12px', padding: '12px 8px', textAlign: 'center', color: '#fff' }}>
-                <span style={{ fontSize: '18px', fontWeight: '700', display: 'block' }}>{listings.length}</span>
-                <span style={{ fontSize: '9px', opacity: 0.7, fontFamily: 'ui-monospace, monospace' }}>Articles</span>
-              </div>
-              <div style={{ background: '#17402C', borderRadius: '12px', padding: '12px 8px', textAlign: 'center', color: '#fff' }}>
-                <span style={{ fontSize: '18px', fontWeight: '700', display: 'block', color: '#FCD34D' }}>{listings.filter(l => l.available).length}</span>
-                <span style={{ fontSize: '9px', opacity: 0.7, fontFamily: 'ui-monospace, monospace' }}>Disponibles</span>
-              </div>
-              <div style={{ background: '#17402C', borderRadius: '12px', padding: '12px 8px', textAlign: 'center', color: '#fff' }}>
-                <span style={{ fontSize: '18px', fontWeight: '700', display: 'block', color: '#6EE7B7' }}>
-                  {listings.length > 0 ? Math.round(listings.reduce((s, l) => s + l.pricePerDay, 0) / listings.length) : 0}€
-                </span>
-                <span style={{ fontSize: '9px', opacity: 0.7, fontFamily: 'ui-monospace, monospace' }}>Prix moy./j</span>
-              </div>
-            </div>
+            <div className="mb-[var(--space-4)]">{statsRow}</div>
 
             {/* Category scrollable */}
-            <div style={{ display: 'flex', gap: '6px', overflowX: 'auto', paddingBottom: '12px', marginBottom: '12px', scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' }}>
-              {CATEGORIES.map((cat) => (
-                <button
-                  key={cat}
-                  onClick={() => setCategory(cat)}
-                  className={`glass-capsule-btn flex-shrink-0 !px-3.5 !py-1.5 !text-xs !font-semibold ${category === cat ? 'primary' : ''}`}
-                >
-                  {cat}
-                </button>
-              ))}
-            </div>
+            <Tabs
+              options={CATEGORIES.map((cat) => ({ id: cat, label: cat }))}
+              value={category}
+              onChange={setCategory}
+              variant="scrollable"
+              ariaLabel="Catégories de location"
+              className="mb-[var(--space-3)]"
+            />
 
             {/* Results */}
             {filtered.length === 0 ? (
-              <div className="glass" style={{ textAlign: 'center', padding: '40px 16px' }}>
-                <p style={{ fontSize: '14px', color: '#7A8A7D' }}>Aucun article trouvé</p>
-              </div>
+              <Card className="p-[var(--space-10)] text-center">
+                <p className="text-[length:var(--lkv-text-body-sm)] text-[color:var(--lkv-text-muted)]">Aucun article trouvé</p>
+              </Card>
             ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                {filtered.slice(0, 20).map((listing) => {
-                  const cond = conditionConfig[listing.condition];
-                  return (
-                    <div
-                      key={listing.id}
-                      onClick={() => setSelectedListing(listing)}
-                      className="glass"
-                      style={{
-                        display: 'flex',
-                        gap: '12px',
-                        overflow: 'hidden',
-                        cursor: 'pointer',
-                      }}
-                    >
-                      <div style={{ width: '100px', height: '100px', flexShrink: 0, background: '#E7E3D6', overflow: 'hidden' }}>
-                        <img src={listing.image || '/assets/images/no_image.png'} alt={listing.alt} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                      </div>
-                      <div style={{ flex: 1, padding: '10px 10px 10px 0', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-                        <div>
-                          <h3 style={{ fontSize: '13px', fontWeight: '700', color: '#17402C', margin: '0 0 4px', lineHeight: 1.3 }}>{listing.title}</h3>
-                          <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', marginBottom: '4px' }}>
-                            <span className={cond.color} style={{ padding: '1px 6px', borderRadius: '4px', fontSize: '9px', fontWeight: '600', border: '1px solid' }}>
-                              {cond.label}
-                            </span>
-                            {listing.tags.slice(0, 2).map((tag) => (
-                              <span key={tag} style={{ padding: '1px 6px', background: '#F5F2EA', fontSize: '9px', borderRadius: '4px', border: '1px solid #E4E0D4', color: '#3A4A3D' }}>{tag}</span>
-                            ))}
-                          </div>
-                        </div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <span style={{ fontSize: '16px', fontWeight: '800', color: '#17402C' }}>{listing.pricePerDay}€<span style={{ fontSize: '10px', fontWeight: '400', color: '#7A8A7D' }}>/j</span></span>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
-                            <svg width="10" height="10" fill="#F59E0B" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-                            <span style={{ fontSize: '11px', fontWeight: '600', color: '#17402C' }}>{listing.rating}</span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
+              <div className="flex flex-col gap-[var(--space-3)]">
+                {filtered.slice(0, 20).map((listing) => (
+                  <RentalCard key={listing.id} listing={listing} onClick={() => setSelectedListing(listing)} />
+                ))}
               </div>
             )}
 
             {/* Propose CTA */}
-            <button
-              onClick={() => setShowListModal(true)}
-              className="glass-capsule-btn primary w-full !mt-4 !py-3.5 !text-[13px] !font-bold flex items-center justify-center gap-2"
-            >
+            <Button fullWidth className="mt-[var(--space-4)]" onClick={() => setShowListModal(true)}>
               + Proposer du matériel
-            </button>
+            </Button>
           </div>
         </MobilePageShell>
       </div>

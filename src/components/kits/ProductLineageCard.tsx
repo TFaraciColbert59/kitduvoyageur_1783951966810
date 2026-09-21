@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { Card } from '@/components/ui';
 import { useKitSheet } from '@/features/kits/KitSheetContext';
 
 interface LineageStats {
@@ -39,30 +40,34 @@ export default function ProductLineageCard({ productId }: { productId: string })
   const totalPairs = stats.kept_count + stats.dropped_count;
   const rate = totalPairs > 0 ? Math.round((stats.kept_count / totalPairs) * 10) : 0;
   const phrase = `gardé par ${rate} voyageur${rate > 1 ? 's' : ''} sur 10`;
+  const actionable = Boolean(stats.lineage_root_id);
 
   return (
-    <button
-      type="button"
-      onClick={() => {
-        if (stats.lineage_root_id) {
-          openKit(stats.lineage_root_id, 'product');
-        }
-      }}
-      disabled={!stats.lineage_root_id}
-      className="block w-full mt-4 rounded-2xl px-4 py-3 border transition-colors hover:border-[#17402C]/40 disabled:opacity-80 disabled:cursor-default text-left"
-      style={{ background: '#EDF3ED', borderColor: 'rgba(166,193,160,0.6)' }}
+    <Card
+      tone="sage"
+      variant={actionable ? 'interactive' : 'standard'}
+      onClick={
+        actionable
+          ? () => {
+              if (stats.lineage_root_id) {
+                openKit(stats.lineage_root_id, 'product');
+              }
+            }
+          : undefined
+      }
+      className="mt-[var(--space-4)] p-[var(--space-4)] text-left"
     >
-      <span className="font-mono text-[10px] tracking-[0.16em] uppercase" style={{ color: '#17402C' }}>
+      <span className="font-mono text-[length:var(--lkv-text-caption-2)] uppercase tracking-[var(--tracking-caps)] text-[color:var(--lkv-text-primary)]">
         Éprouvé par les lignées
       </span>
-      <span className="block mt-1 text-[13px]" style={{ color: '#17402C' }}>
+      <span className="mt-[var(--space-1)] block text-[length:var(--lkv-text-footnote)] text-[color:var(--lkv-text-primary)]">
         Présent dans <strong>{stats.lineages_count}</strong> lignée{stats.lineages_count > 1 ? 's' : ''}
       </span>
       {totalPairs > 0 && (
-        <span className="block mt-0.5 text-[12px]" style={{ color: '#6B7A72' }}>
+        <span className="mt-0.5 block text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-secondary)]">
           {phrase} {stats.lineage_root_id ? '· voir la lignée →' : ''}
         </span>
       )}
-    </button>
+    </Card>
   );
 }

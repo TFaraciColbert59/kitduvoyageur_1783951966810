@@ -5,9 +5,9 @@ import ProductLineageCard from '@/components/kits/ProductLineageCard';
 import React, { useState, useEffect } from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import LkvIcon from '@/components/ui/LkvIcon';
 import Icon from '@/components/ui/AppIcon';
 import { Metric } from '@/components/ui/Metric';
+import { Badge, Button, Card, Chip, IconButton, LoadingState, PageHeader } from '@/components/ui';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import { addToCart } from '@/lib/cart';
@@ -150,8 +150,8 @@ export default function ProductDetailClient({ slug, initialProduct }: { slug: st
     return (
       <div className="min-h-dvh bg-transparent">
         <Header />
-        <div className="pt-24 max-w-[1120px] mx-auto px-4 flex items-center justify-center min-h-[60vh]">
-          <div className="w-8 h-8 rounded-full border-2 border-[#EEF3EC] border-t-transparent animate-spin" />
+        <div className="mx-auto max-w-[1120px] px-4 pt-24">
+          <LoadingState label="Chargement du produit…" />
         </div>
       </div>
     );
@@ -161,28 +161,29 @@ export default function ProductDetailClient({ slug, initialProduct }: { slug: st
     return (
       <div className="min-h-dvh bg-transparent">
         <Header />
-        <div className="pt-24 pb-16 max-w-[1120px] mx-auto px-4">
-          <div className="glass rounded-lg max-w-[32rem] mx-auto p-10 text-center">
-            <div className="text-[3rem] mb-4">⚠️</div>
-            <h1 className="font-display font-bold text-3xl text-[#17402C] mb-2">Produit introuvable</h1>
-            <p className="text-sm text-[#5A7064] mb-6">
+        <div className="mx-auto max-w-[1120px] px-4 pt-24 pb-16">
+          <Card className="mx-auto max-w-[32rem] p-[var(--space-8)] text-center">
+            <div className="mb-[var(--space-4)] flex justify-center">
+              <span className="flex h-14 w-14 items-center justify-center rounded-[var(--lkv-radius-lg)] bg-[color:var(--lkv-danger-bg)] text-[color:var(--lkv-danger)]">
+                <Icon name="ExclamationTriangleIcon" size={26} variant="outline" />
+              </span>
+            </div>
+            <h1 className="font-display text-[length:var(--lkv-text-title-sm)] font-bold text-[color:var(--lkv-text-primary)]">
+              Produit introuvable
+            </h1>
+            <p className="mb-[var(--space-6)] mt-[var(--space-2)] text-[length:var(--lkv-text-body-sm)] text-[color:var(--lkv-text-muted)]">
               Impossible de charger ce produit. Il a peut-être été retiré du catalogue.
             </p>
-            <div className="flex items-center justify-center gap-3">
-              <button
-                onClick={() => setRetryKey((k) => k + 1)}
-                className="glass-capsule-btn primary px-5"
-              >
-                Réessayer
-              </button>
+            <div className="flex items-center justify-center gap-[var(--space-3)]">
+              <Button onClick={() => setRetryKey((k) => k + 1)}>Réessayer</Button>
               <Link
                 href="/boutique"
-                className="glass-capsule-btn secondary px-5"
+                className="inline-flex min-h-[var(--control-height-md)] items-center justify-center rounded-full border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] px-[var(--space-5)] text-[length:var(--lkv-text-subheadline)] font-semibold text-[color:var(--card-content)] transition-colors hover:bg-[color:var(--lkv-hover-surface)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]"
               >
                 Retour à la boutique
               </Link>
             </div>
-          </div>
+          </Card>
         </div>
       </div>
     );
@@ -211,61 +212,64 @@ export default function ProductDetailClient({ slug, initialProduct }: { slug: st
   const firstWords = titleWords.slice(0, -2).join(' ');
 
   const COLORS = [
-    { id: 'vert', color: '#445749' },
-    { id: 'moutarde', color: '#B89B60' },
-    { id: 'noir', color: '#2B302C' },
-    { id: 'bleu', color: '#A1B2BA' },
-    { id: 'terre', color: '#8B6D5C' },
+    { id: 'vert', color: 'var(--lkv-forest-600)' },
+    { id: 'moutarde', color: 'var(--lkv-warning)' },
+    { id: 'noir', color: 'var(--lkv-text-primary)' },
+    { id: 'bleu', color: 'var(--lkv-info)' },
+    { id: 'terre', color: 'var(--stone-600)' },
   ];
 
   return (
     <>
       {/* ── DESKTOP VIEW ── */}
       <div className="hidden md:block">
-        <div data-lkv-material-theme="light" className="h-dvh overflow-hidden bg-transparent text-[#17402C]">
+        <div data-lkv-material-theme="light" className="h-dvh overflow-hidden bg-transparent text-[color:var(--lkv-text-primary)]">
           <Header />
 
-          <div className="h-full overflow-y-auto pt-20 pb-16 bg-[rgba(238,243,236,0.78)] backdrop-blur-xl">
+          <div className="h-full overflow-y-auto bg-transparent pb-16 pt-20">
 
             {/* BREADCRUMB */}
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-6">
-              <nav className="flex items-center gap-2 text-[11px] text-[#5A7064] font-medium tracking-wide">
-                <Link href="/" className="cursor-pointer hover:text-[#17402C] transition-colors">Accueil</Link>
+            <div className="mx-auto mb-[var(--space-6)] max-w-7xl px-4 sm:px-6 lg:px-8">
+              <nav className="flex items-center gap-[var(--space-2)] text-[length:var(--lkv-text-caption-2)] font-medium tracking-[var(--tracking-wide)] text-[color:var(--lkv-text-muted)]">
+                <Link href="/" className="transition-colors hover:text-[color:var(--lkv-text-primary)]">Accueil</Link>
                 <Icon name="ChevronRightIcon" size={10} variant="outline" className="opacity-50" />
-                <Link href="/boutique" className="hover:text-[#17402C] transition-colors">Boutique</Link>
+                <Link href="/boutique" className="transition-colors hover:text-[color:var(--lkv-text-primary)]">Boutique</Link>
                 <Icon name="ChevronRightIcon" size={10} variant="outline" className="opacity-50" />
-                <Link href="/boutique" className="hover:text-[#17402C] transition-colors">{product.categorie}</Link>
+                <Link href="/boutique" className="transition-colors hover:text-[color:var(--lkv-text-primary)]">{product.categorie}</Link>
                 <Icon name="ChevronRightIcon" size={10} variant="outline" className="opacity-50" />
-                <span className="text-[#17402C]">{product.nom}</span>
+                <span className="text-[color:var(--lkv-text-primary)]">{product.nom}</span>
               </nav>
             </div>
 
             {/* HERO SECTION */}
-            <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-16">
+            <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+              <div className="grid grid-cols-1 gap-10 lg:grid-cols-12 lg:gap-16">
 
                 {/* GALLERY (Left) */}
-                <div className="col-span-12 lg:col-span-7 flex flex-col-reverse md:flex-row gap-4 h-auto md:h-[650px]">
+                <div className="col-span-12 flex h-auto flex-col-reverse gap-[var(--space-4)] md:h-[650px] md:flex-row lg:col-span-7">
 
                   {/* Thumbnails */}
-                  <div className="flex flex-col gap-3 overflow-x-auto md:overflow-y-auto w-full md:w-24 flex-shrink-0 pt-1 pb-1">
+                  <div className="flex w-full flex-shrink-0 flex-col gap-[var(--space-3)] overflow-x-auto pb-1 pt-1 md:w-24 md:overflow-y-auto">
                     {product.images.map((img, i) => (
-                      <button
+                      <IconButton
                         key={i}
+                        variant={i === activeImage ? 'solid' : 'glass'}
+                        aria-label={`Afficher l'image ${i + 1} sur ${product.images.length}`}
+                        aria-pressed={i === activeImage}
                         onClick={() => setActiveImage(i)}
-                        className={`glass-circle-btn !w-20 !h-20 !min-w-20 !min-h-20 !p-0 overflow-hidden cursor-pointer ${i === activeImage ? 'primary' : 'opacity-70 hover:opacity-100'}`}
+                        className={`h-20 w-20 shrink-0 overflow-hidden !rounded-[var(--lkv-radius-md)] p-0 ${i === activeImage ? '' : 'opacity-70 hover:opacity-100'}`}
                       >
-                        <img src={img.url} alt={`Miniature ${i+1}`} className="w-full h-full object-cover mix-blend-multiply opacity-90" />
-                      </button>
+                        <img src={img.url} alt={`Miniature ${i + 1}`} className="h-full w-full object-cover mix-blend-multiply opacity-90" />
+                      </IconButton>
                     ))}
                   </div>
 
                   {/* Main Image */}
-                  <div className="group glass-sub-card rounded-[1.5rem]" style={{ position: 'relative', flex: 1, overflow: 'hidden', background: '#E1EBDE' }}>
-                    <div className="absolute top-4 left-4 z-10 bg-[rgba(255,255,255,0.92)] backdrop-blur-sm text-[10px] font-semibold text-[#17402C] px-3 py-1.5 rounded-full border border-[rgba(255,255,255,0.60)] flex items-center gap-1.5">
-                      <span className="w-1.5 h-1.5 bg-[#C89A3B] rounded-full"></span>
+                  <div className="group relative flex-1 overflow-hidden rounded-[var(--lkv-radius-card)] bg-[color:var(--lkv-success-bg)]">
+                    <Badge tone="warn" className="absolute left-[var(--space-4)] top-[var(--space-4)] z-[var(--z-sticky)]">
+                      <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-[color:var(--lkv-warning)]" />
                       Édition automne
-                    </div>
+                    </Badge>
 
                     <AnimatePresence mode="wait">
                       <motion.img
@@ -276,120 +280,122 @@ export default function ProductDetailClient({ slug, initialProduct }: { slug: st
                         transition={{ duration: 0.3 }}
                         src={product.images[activeImage]?.url || '/assets/images/no_image.png'}
                         alt={product.images[activeImage]?.alt}
-                        className="w-full h-full object-cover mix-blend-multiply"
+                        className="h-full w-full object-cover mix-blend-multiply"
                       />
                     </AnimatePresence>
 
-                    <button className="glass-circle-btn absolute bottom-4 right-4 !w-10 !h-10 !min-w-10 !min-h-10 hover:scale-105 transition-opacity duration-200 opacity-0 group-hover:opacity-100">
+                    <IconButton
+                      variant="glass"
+                      aria-label="Agrandir l'image"
+                      className="absolute bottom-[var(--space-4)] right-[var(--space-4)] opacity-0 transition-opacity duration-200 group-hover:opacity-100"
+                    >
                       <Icon name="ArrowsPointingOutIcon" size={16} variant="outline" />
-                    </button>
+                    </IconButton>
                   </div>
                 </div>
 
                 {/* PRODUCT INFO (Right) */}
                 <div className="flex flex-col justify-center lg:col-span-5">
 
-                  <div style={{ marginBottom: '1rem' }}>
-                    <span className="glass-pill mb-4" style={{ fontFamily: 'var(--font-mono)' }}>
+                  <div className="mb-[var(--space-4)]">
+                    <Badge tone="sage" className="mb-[var(--space-4)] font-mono">
                       Le sac essentiel
-                    </span>
-                    <h1 className="font-display font-extrabold text-2xl lg:text-[44px] leading-[1.1] tracking-[-0.02em] mb-3" style={{ color: '#17402C' }}>
-                      {firstWords} <em style={{ fontFamily: 'var(--font-serif)', fontStyle: 'italic', fontWeight: 'normal', color: '#5A7064' }}>{lastWords}</em>.
+                    </Badge>
+                    <h1 className="mb-[var(--space-3)] font-display text-[length:var(--lkv-text-title-xl)] font-extrabold leading-[var(--leading-tight)] tracking-[var(--lkv-tracking-title)] text-[color:var(--lkv-text-primary)]">
+                      {firstWords} <em className="font-serif font-normal italic text-[color:var(--lkv-text-secondary)]">{lastWords}</em>.
                     </h1>
-                    <div className="flex items-center gap-2 text-xs font-medium text-[#5A7064]">
-                      <span className="flex items-center gap-1 text-[#C89A3B]"><Icon name="StarIcon" size={12} /> 4.9</span>
-                      <span className="w-1 h-1 bg-[#C8C3B0] rounded-full"></span>
+                    <div className="flex items-center gap-[var(--space-2)] text-[length:var(--lkv-text-caption)] font-medium text-[color:var(--lkv-text-muted)]">
+                      <span className="flex items-center gap-[var(--space-1)] text-[color:var(--lkv-warning)]"><Icon name="StarIcon" size={12} /> 4.9</span>
+                      <span className="h-1 w-1 rounded-full bg-[color:var(--lkv-border-strong)]" />
                       <span>125 avis</span>
-                      <span className="w-1 h-1 bg-[#C8C3B0] rounded-full"></span>
+                      <span className="h-1 w-1 rounded-full bg-[color:var(--lkv-border-strong)]" />
                       <span>47 testeurs terrain</span>
                     </div>
                   </div>
 
-                  <p className="text-sm text-[#365233] leading-relaxed mb-8">
+                  <p className="mb-[var(--space-8)] text-[length:var(--lkv-text-body-sm)] leading-[var(--leading-relaxed)] text-[color:var(--lkv-text-secondary)]">
                     {product.description}
                   </p>
 
                   {/* VARIANTS */}
-                  <div className="space-y-6 mb-10">
+                  <div className="mb-[var(--space-10)] space-y-[var(--space-6)]">
                     {/* Coloris */}
                     <div>
-                      <div className="flex justify-between items-baseline mb-3">
-                        <span className="text-xs font-semibold text-[#17402C]">Coloris</span>
-                        <span className="text-xs text-[#5A7064]">{selectedColor === 'vert' ? 'Vert forêt' : 'Autre'}</span>
+                      <div className="mb-[var(--space-3)] flex items-baseline justify-between">
+                        <span className="text-[length:var(--lkv-text-caption)] font-semibold text-[color:var(--lkv-text-primary)]">Coloris</span>
+                        <span className="text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-muted)]">{selectedColor === 'vert' ? 'Vert forêt' : 'Autre'}</span>
                       </div>
-                      <div className="flex gap-3">
+                      <div className="flex gap-[var(--space-3)]">
                         {COLORS.slice(0, 4).map(c => (
-                          <button
+                          <IconButton
                             key={c.id}
+                            variant="ghost"
+                            size="sm"
                             onClick={() => setSelectedColor(c.id)}
-                            className={`relative w-8 h-8 rounded-full flex items-center justify-center transition-all ${selectedColor === c.id ? 'ring-2 ring-offset-2 ring-offset-[#EEF3EC] ring-[#17402C]' : 'hover:scale-110'}`}
+                            aria-label={`Coloris ${c.id}`}
+                            aria-pressed={selectedColor === c.id}
+                            className={`h-8 w-8 transition-transform ${selectedColor === c.id ? 'ring-2 ring-[color:var(--lkv-text-primary)] ring-offset-2 ring-offset-[color:var(--lkv-surface)]' : 'hover:scale-110'}`}
                           >
-                            <span className="w-full h-full rounded-full border border-black/10" style={{ backgroundColor: c.color }}></span>
-                          </button>
+                            <span className="h-full w-full rounded-full border border-[color:var(--lkv-border)]" style={{ backgroundColor: c.color }} />
+                          </IconButton>
                         ))}
                       </div>
                     </div>
 
                     {/* Volume */}
                     <div>
-                      <div className="flex justify-between items-baseline mb-3">
-                        <span className="text-xs font-semibold text-[#17402C]">Volume</span>
-                        <span className="text-xs text-[#5A7064]">{selectedVolume} - idéal 3-5 jours</span>
+                      <div className="mb-[var(--space-3)] flex items-baseline justify-between">
+                        <span className="text-[length:var(--lkv-text-caption)] font-semibold text-[color:var(--lkv-text-primary)]">Volume</span>
+                        <span className="text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-muted)]">{selectedVolume} - idéal 3-5 jours</span>
                       </div>
-                      <div className="flex gap-2 flex-wrap">
+                      <div className="flex flex-wrap gap-[var(--space-2)]">
                         {['30 L', '45 L', '60 L', '75 L'].map(vol => (
-                          <button
-                            key={vol}
-                            onClick={() => setSelectedVolume(vol)}
-                            className={`glass-capsule-btn !px-4 !py-2 !text-xs !font-semibold ${selectedVolume === vol ? 'primary' : 'secondary'}`}
-                          >
+                          <Chip key={vol} selected={selectedVolume === vol} onClick={() => setSelectedVolume(vol)}>
                             {vol}
-                          </button>
+                          </Chip>
                         ))}
                       </div>
                     </div>
 
                     {/* Sangles */}
                     <div>
-                      <div className="flex justify-between items-baseline mb-3">
-                        <span className="text-xs font-semibold text-[#17402C]">Sangles</span>
-                        <span className="text-xs text-[#5A7064]">{selectedStrap}</span>
+                      <div className="mb-[var(--space-3)] flex items-baseline justify-between">
+                        <span className="text-[length:var(--lkv-text-caption)] font-semibold text-[color:var(--lkv-text-primary)]">Sangles</span>
+                        <span className="text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-muted)]">{selectedStrap}</span>
                       </div>
-                      <div className="flex gap-2 flex-wrap">
+                      <div className="flex flex-wrap gap-[var(--space-2)]">
                         {['Basique', 'Ventrale + poitrine', 'Ventrale + poitrine + porte-piolet'].map(strap => (
-                          <button
-                            key={strap}
-                            onClick={() => setSelectedStrap(strap)}
-                            className={`glass-capsule-btn !px-4 !py-2 !text-xs !font-semibold ${selectedStrap === strap ? 'primary' : 'secondary'}`}
-                          >
+                          <Chip key={strap} selected={selectedStrap === strap} onClick={() => setSelectedStrap(strap)}>
                             {strap}
-                          </button>
+                          </Chip>
                         ))}
                       </div>
                     </div>
                   </div>
 
                   {/* PRICE & CTA */}
-                  <div className="border-t border-[#E4DED3] pt-6 mb-8">
-                    <div className="flex justify-between items-end mb-5">
-                      <div className="flex items-baseline gap-2">
-                        <span className="font-mono font-bold text-[28px] text-[#17402C]">{product.prix_cents > 0 ? `${(product.prix_cents / 100).toFixed(0)} €` : '—'}</span>
-                        {product.prix_cents > 0 && <span className="text-xs text-[#5A7064]">- TVA incluse</span>}
+                  <div className="mb-[var(--space-8)] border-t border-[color:var(--lkv-border)] pt-[var(--space-6)]">
+                    <div className="mb-[var(--space-5)] flex items-end justify-between">
+                      <div className="flex items-baseline gap-[var(--space-2)]">
+                        <span className="font-mono text-[length:var(--lkv-text-title-sm)] font-bold text-[color:var(--lkv-text-primary)]">{product.prix_cents > 0 ? `${(product.prix_cents / 100).toFixed(0)} €` : '—'}</span>
+                        {product.prix_cents > 0 && <span className="text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-muted)]">- TVA incluse</span>}
                       </div>
-                      <div className="flex items-center gap-1.5 text-[10px] font-medium text-[#365233]">
-                        <span className="w-1.5 h-1.5 bg-[#5B7F55] rounded-full"></span>
+                      <div className="flex items-center gap-[var(--space-1)] text-[length:var(--lkv-text-caption-2)] font-medium text-[color:var(--lkv-text-secondary)]">
+                        <span className="h-1.5 w-1.5 rounded-full bg-[color:var(--lkv-success)]" />
                         En stock - expédié sous 48 h
                       </div>
                     </div>
 
                     {owned && (
-                      <div className="mb-4 glass-pill !px-4 !py-2.5 rounded-2xl text-xs font-bold text-[#17402C] flex items-center gap-2">
-                        <span>✓</span> Cet article est déjà enregistré dans votre sac / équipement
-                      </div>
+                      <Card variant="compact" tone="sage" className="mb-[var(--space-4)] flex items-center gap-[var(--space-2)] text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)]">
+                        <span aria-hidden="true">✓</span> Cet article est déjà enregistré dans votre sac / équipement
+                      </Card>
                     )}
 
-                    <div className="flex gap-3">
-                      <button
+                    <div className="flex gap-[var(--space-3)]">
+                      <Button
+                        size="lg"
+                        className="flex-1"
                         onClick={() => {
                           addToCart({
                             id: product.id,
@@ -404,54 +410,56 @@ export default function ProductDetailClient({ slug, initialProduct }: { slug: st
                           setCartAdded(true);
                           setTimeout(() => setCartAdded(false), 2500);
                         }}
-                        className="glass-capsule-btn primary flex-1 justify-center h-[52px] font-bold text-sm flex items-center gap-2"
+                        icon={cartAdded ? <Icon name="CheckCircleIcon" size={18} /> : <Icon name="ShoppingBagIcon" size={18} />}
                       >
-                        {cartAdded ? (
-                          <><Icon name="CheckCircleIcon" size={18} /> Ajouté au panier !</>
-                        ) : inCart ? (
-                          <><Icon name="ShoppingBagIcon" size={18} /> ✓ Dans le panier ({cartQty}) — Ajouter +1</>
-                        ) : (
-                          <><Icon name="ShoppingBagIcon" size={18} /> Ajouter au panier</>
-                        )}
-                      </button>
+                        {cartAdded
+                          ? 'Ajouté au panier !'
+                          : inCart
+                            ? `Dans le panier (${cartQty}) — Ajouter +1`
+                            : 'Ajouter au panier'}
+                      </Button>
 
-                      <motion.button
-                        whileTap={{ scale: 0.8 }}
+                      <IconButton
+                        variant={isFavorite ? 'solid' : 'glass'}
+                        size="lg"
+                        aria-label={isFavorite ? 'Retirer des favoris' : 'Ajouter aux favoris'}
+                        aria-pressed={isFavorite}
                         onClick={() => setIsFavorite(!isFavorite)}
-                        className={`glass-circle-btn !w-[52px] !h-[52px] !min-w-[52px] !min-h-[52px] !p-0 flex-shrink-0 ${isFavorite ? 'primary' : ''}`}
+                        className="h-[52px] w-[52px] shrink-0"
                       >
-                        <AnimatePresence mode="wait">
-                          <motion.div
+                        <AnimatePresence mode="wait" initial={false}>
+                          <motion.span
                             key={isFavorite ? 'filled' : 'outline'}
                             initial={{ scale: 0.5, opacity: 0 }}
                             animate={{ scale: 1, opacity: 1 }}
                             exit={{ scale: 0.5, opacity: 0 }}
                             transition={{ duration: 0.15 }}
+                            className="inline-flex"
                           >
                             <Icon name="HeartIcon" size={20} variant={isFavorite ? "solid" : "outline"} className={isFavorite ? "fill-current" : ""} />
-                          </motion.div>
+                          </motion.span>
                         </AnimatePresence>
-                      </motion.button>
+                      </IconButton>
                     </div>
                   </div>
 
                   {/* TRUST BADGES */}
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-2 gap-[var(--space-3)]">
                     {[
                       { icon: 'ShieldCheckIcon', title: 'Garantie à vie', sub: 'Réparable 1x/an gratuit' },
                       { icon: 'TruckIcon', title: 'Livraison offerte', sub: 'Dès 100€' },
                       { icon: 'ArrowPathIcon', title: 'Retour 30 jours', sub: 'Sans motifs' },
                       { icon: 'GlobeAltIcon', title: '100% Europe', sub: 'Alpes-de-Haute-Provence' },
                     ].map(badge => (
-                      <div key={badge.title} className="glass-sub-card p-3 flex items-start gap-3">
-                        <div className="w-8 h-8 rounded-full bg-[#E1EBDE] flex items-center justify-center flex-shrink-0 text-[#365233]">
+                      <Card key={badge.title} variant="compact" className="flex items-start gap-[var(--space-3)] p-[var(--space-3)]">
+                        <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-[color:var(--lkv-success-bg)] text-[color:var(--lkv-text-secondary)]">
                           <Icon name={badge.icon as any} size={16} variant="outline" />
                         </div>
                         <div>
-                          <div className="text-[11px] font-bold text-[#17402C] mb-0.5">{badge.title}</div>
-                          <div className="text-[9px] text-[#5A7064] leading-tight">{badge.sub}</div>
+                          <div className="mb-0.5 text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-primary)]">{badge.title}</div>
+                          <div className="text-[length:var(--lkv-text-caption-2)] leading-[var(--leading-tight)] text-[color:var(--lkv-text-muted)]">{badge.sub}</div>
                         </div>
-                      </div>
+                      </Card>
                     ))}
                   </div>
 
@@ -460,32 +468,32 @@ export default function ProductDetailClient({ slug, initialProduct }: { slug: st
             </section>
 
             {/* FABRICATION SECTION */}
-            <section className="mt-24 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-10 lg:gap-20 items-center">
-                <div className="aspect-[4/5] rounded-[0.75rem] overflow-hidden">
-                  <img src="https://images.unsplash.com/photo-1544735716-392fe2489ffa?w=800&q=80" alt="Atelier de fabrication" className="w-full h-full object-cover grayscale-[30%]" />
+            <section className="mx-auto mt-24 max-w-7xl px-4 sm:px-6 lg:px-8">
+              <div className="grid grid-cols-1 items-center gap-10 md:grid-cols-2 lg:gap-20">
+                <div className="aspect-[4/5] overflow-hidden rounded-[var(--lkv-radius-md)]">
+                  <img src="https://images.unsplash.com/photo-1544735716-392fe2489ffa?w=800&q=80" alt="Atelier de fabrication" className="h-full w-full object-cover grayscale-[30%]" />
                 </div>
                 <div>
-                  <span className="text-[9px] font-mono tracking-[0.2em] text-[#5A7064] uppercase mb-4 block">Fabrication</span>
-                  <h2 className="font-display font-bold text-[32px] md:text-[40px] leading-[1.1] text-[#17402C] mb-6">
-                    Cousu à <em className="font-serif italic text-[#365233] font-normal">Manosque,</em><br /> par cinq mains.
+                  <span className="mb-[var(--space-4)] block font-mono text-[length:var(--lkv-text-caption-2)] uppercase tracking-[var(--tracking-caps)] text-[color:var(--lkv-text-muted)]">Fabrication</span>
+                  <h2 className="mb-[var(--space-6)] font-display text-[length:var(--lkv-text-title-xl)] font-bold leading-[var(--leading-tight)] text-[color:var(--lkv-text-primary)]">
+                    Cousu à <em className="font-serif font-normal italic text-[color:var(--lkv-text-secondary)]">Manosque,</em><br /> par cinq mains.
                   </h2>
-                  <p className="text-sm text-[#5A7064] leading-relaxed mb-12 max-w-md">
+                  <p className="mb-[var(--space-12)] max-w-md text-[length:var(--lkv-text-body-sm)] leading-[var(--leading-relaxed)] text-[color:var(--lkv-text-muted)]">
                     Cinq artisanes travaillent le cuir chaque semaine dans un atelier des Alpes-de-Haute-Provence. Un sac demande six heures de couture, une heure d'huilage, une nuit de séchage.
                   </p>
 
-                  <div className="grid grid-cols-3 gap-6 border-t border-[#E4DED3] pt-6">
+                  <div className="grid grid-cols-3 gap-[var(--space-6)] border-t border-[color:var(--lkv-border)] pt-[var(--space-6)]">
                     <div>
                       <Metric value="6" unit="h" size="md" />
-                      <div className="text-[9px] font-mono uppercase tracking-wider text-[#5A7064] mt-1">Couture</div>
+                      <div className="mt-[var(--space-1)] font-mono text-[length:var(--lkv-text-caption-2)] uppercase tracking-[var(--tracking-wide)] text-[color:var(--lkv-text-muted)]">Couture</div>
                     </div>
                     <div>
                       <Metric value="1 200" unit="g" size="md" />
-                      <div className="text-[9px] font-mono uppercase tracking-wider text-[#5A7064] mt-1">Poids à sec</div>
+                      <div className="mt-[var(--space-1)] font-mono text-[length:var(--lkv-text-caption-2)] uppercase tracking-[var(--tracking-wide)] text-[color:var(--lkv-text-muted)]">Poids à sec</div>
                     </div>
                     <div>
                       <Metric value="45" unit="L" size="md" />
-                      <div className="text-[9px] font-mono uppercase tracking-wider text-[#5A7064] mt-1">Volume utile</div>
+                      <div className="mt-[var(--space-1)] font-mono text-[length:var(--lkv-text-caption-2)] uppercase tracking-[var(--tracking-wide)] text-[color:var(--lkv-text-muted)]">Volume utile</div>
                     </div>
                   </div>
                 </div>
@@ -493,52 +501,58 @@ export default function ProductDetailClient({ slug, initialProduct }: { slug: st
             </section>
 
             {/* SPECS SECTION */}
-            <section className="mt-24 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 glass rounded-[1.25rem] p-8 md:p-12">
-              <h3 className="font-display font-bold text-2xl mb-8">Spécifications <em className="font-serif italic font-normal text-[#365233]">techniques.</em></h3>
+            <section className="mx-auto mt-24 max-w-4xl px-4 sm:px-6 lg:px-8">
+              <Card className="p-[var(--space-8)] md:p-[var(--space-12)]">
+                <h3 className="mb-[var(--space-8)] font-display text-[length:var(--lkv-text-title-sm)] font-bold text-[color:var(--lkv-text-primary)]">
+                  Spécifications <em className="font-serif font-normal italic text-[color:var(--lkv-text-secondary)]">techniques.</em>
+                </h3>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-16 gap-y-4 text-xs">
-                {[
-                  { label: 'Volume utile', value: '45 litres' },
-                  { label: 'Poids à sec', value: '1,4 kg' },
-                  { label: 'Toile principale', value: 'Coton huilé 12 oz' },
-                  { label: 'Doublure', value: 'Lin biologique 400 g/m²' },
-                  { label: 'Boucles', value: 'Laiton brossé, France' },
-                  { label: 'Couture', value: 'Point sellier, fil ciré' },
-                  { label: 'Dos', value: 'Ergonomique 4 zones' },
-                  { label: 'Ceinture ventrale', value: 'Réglable, amovible' },
-                  { label: 'Compartiments', value: '3 - dont 1 rabat + 1 poche sécurisée' },
-                  { label: 'Accroches', value: 'Tapis, piolet, gourde' },
-                  { label: 'Imperméabilité', value: 'IP54 - pluie fine' },
-                  { label: 'Garantie', value: 'À vie - réparable' },
-                ].map(spec => (
-                  <div key={spec.label} className="flex justify-between items-center py-2 border-b border-white/40 last:border-0 md:last:border-b">
-                    <span className="text-[#5A7064]">{spec.label}</span>
-                    <span className="font-medium text-[#17402C] text-right">{spec.value}</span>
-                  </div>
-                ))}
-              </div>
+                <div className="grid grid-cols-1 gap-x-16 gap-y-[var(--space-1)] text-[length:var(--lkv-text-caption)] md:grid-cols-2">
+                  {[
+                    { label: 'Volume utile', value: '45 litres' },
+                    { label: 'Poids à sec', value: '1,4 kg' },
+                    { label: 'Toile principale', value: 'Coton huilé 12 oz' },
+                    { label: 'Doublure', value: 'Lin biologique 400 g/m²' },
+                    { label: 'Boucles', value: 'Laiton brossé, France' },
+                    { label: 'Couture', value: 'Point sellier, fil ciré' },
+                    { label: 'Dos', value: 'Ergonomique 4 zones' },
+                    { label: 'Ceinture ventrale', value: 'Réglable, amovible' },
+                    { label: 'Compartiments', value: '3 - dont 1 rabat + 1 poche sécurisée' },
+                    { label: 'Accroches', value: 'Tapis, piolet, gourde' },
+                    { label: 'Imperméabilité', value: 'IP54 - pluie fine' },
+                    { label: 'Garantie', value: 'À vie - réparable' },
+                  ].map(spec => (
+                    <div key={spec.label} className="flex items-center justify-between border-b border-[color:var(--lkv-border-subtle)] py-[var(--space-2)] last:border-0">
+                      <span className="text-[color:var(--lkv-text-muted)]">{spec.label}</span>
+                      <span className="text-right font-medium text-[color:var(--lkv-text-primary)]">{spec.value}</span>
+                    </div>
+                  ))}
+                </div>
+              </Card>
             </section>
 
             {/* CROSS SELL */}
-            <section className="mt-24 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-10">
-              <h3 className="font-display font-bold text-2xl mb-8">Ils vont <em className="font-serif italic font-normal text-[#365233]">avec.</em></h3>
+            <section className="mx-auto mb-10 mt-24 max-w-7xl px-4 sm:px-6 lg:px-8">
+              <h3 className="mb-[var(--space-8)] font-display text-[length:var(--lkv-text-title-sm)] font-bold text-[color:var(--lkv-text-primary)]">
+                Ils vont <em className="font-serif font-normal italic text-[color:var(--lkv-text-secondary)]">avec.</em>
+              </h3>
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 gap-[var(--space-6)] sm:grid-cols-3">
                 {[
                   { label: 'COUCHAGE', title: 'Duvet 3 saisons', price: '240 €', img: 'https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?w=200&q=80' },
                   { label: 'HYDRATATION', title: 'Gourde titane 1 L', price: '68 €', img: 'https://images.unsplash.com/photo-1523362628745-0c100150b504?w=200&q=80' },
                   { label: 'VÊTEMENTS', title: 'Veste 3 couches', price: '212 €', img: 'https://images.unsplash.com/photo-1551632811-561732d1e306?w=200&q=80' },
                 ].map(item => (
-                  <div key={item.title} className="glass-sub-card rounded-2xl p-3 flex items-center gap-4 cursor-pointer hover:border-[#17402C] transition-colors group">
-                    <div className="w-16 h-16 rounded-xl bg-[#E1EBDE] overflow-hidden flex-shrink-0">
-                      <img src={item.img} alt={item.title} style={{ width: '100%', height: '100%', objectFit: 'cover', mixBlendMode: 'multiply', opacity: 0.9 }} className="group-hover:scale-110 transition-transform duration-500" />
+                  <Card key={item.title} variant="compact" className="group flex items-center gap-[var(--space-4)]">
+                    <div className="h-16 w-16 flex-shrink-0 overflow-hidden rounded-[var(--lkv-radius-md)] bg-[color:var(--lkv-success-bg)]">
+                      <img src={item.img} alt={item.title} className="h-full w-full object-cover opacity-90 mix-blend-multiply transition-transform duration-500 group-hover:scale-110" />
                     </div>
                     <div>
-                      <div className="text-[10px] font-mono tracking-wider text-[#5A7064] uppercase mb-0.5">{item.label}</div>
-                      <div className="text-xs font-bold text-[#17402C]">{item.title}</div>
-                      <div className="text-xs font-mono font-bold text-[#17402C] mt-0.5">{item.price}</div>
+                      <div className="mb-0.5 font-mono text-[length:var(--lkv-text-caption-2)] uppercase tracking-[var(--tracking-wide)] text-[color:var(--lkv-text-muted)]">{item.label}</div>
+                      <div className="text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)]">{item.title}</div>
+                      <div className="mt-0.5 font-mono text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)]">{item.price}</div>
                     </div>
-                  </div>
+                  </Card>
                 ))}
               </div>
             </section>
@@ -551,47 +565,45 @@ export default function ProductDetailClient({ slug, initialProduct }: { slug: st
       {/* ── MOBILE VIEW ── */}
       <div className="block md:hidden">
         <MobilePageShell background="transparent">
+          <div className="px-[var(--space-4)] pt-[var(--space-2)]">
+            <PageHeader
+              variant="inline"
+              back
+              backHref="/boutique"
+              backLabel="Retour à la boutique"
+              title={product.nom}
+              actions={
+                <IconButton
+                  variant={isFavorite ? 'solid' : 'glass'}
+                  aria-label={isFavorite ? 'Retirer des favoris' : 'Ajouter aux favoris'}
+                  aria-pressed={isFavorite}
+                  onClick={() => setIsFavorite(!isFavorite)}
+                >
+                  <Icon name="HeartIcon" size={18} variant={isFavorite ? 'solid' : 'outline'} />
+                </IconButton>
+              }
+            />
+          </div>
+
           {/* Gallery */}
-          <div style={{ position: 'relative', width: '100%', aspectRatio: '1/1', background: '#E1EBDE', overflow: 'hidden' }}>
-            {/* Back button */}
-            <div style={{ position: 'absolute', top: '16px', left: '16px', zIndex: 20, display: 'flex', gap: '8px' }}>
-              <Link href="/boutique" className="glass-circle-btn !w-9 !h-9 !min-w-9 !min-h-9">
-                <LkvIcon name="chevron-left" size={18} />
-              </Link>
-            </div>
-
-            {/* Favorite button */}
-            <button
-              onClick={() => setIsFavorite(!isFavorite)}
-              className={`glass-circle-btn absolute top-4 right-4 z-20 !w-9 !h-9 !min-w-9 !min-h-9 ${isFavorite ? 'primary' : ''}`}
-            >
-              <LkvIcon name="heart" size={18} color={isFavorite ? '#A8443A' : 'inherit'} />
-            </button>
-
+          <div className="relative aspect-square w-full overflow-hidden bg-[color:var(--lkv-success-bg)]">
             {/* Image Slider */}
-            <div 
+            <div
               id="mobile-gallery"
               onScroll={(e) => {
                 const target = e.currentTarget;
                 const index = Math.round(target.scrollLeft / target.clientWidth);
                 if (index !== activeImage) setActiveImage(index);
               }}
-              style={{
-                width: '100%',
-                height: '100%',
-                display: 'flex',
-                overflowX: 'auto',
-                scrollSnapType: 'x mandatory',
-                scrollbarWidth: 'none',
-              }}
+              className="flex h-full w-full snap-x snap-mandatory overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
             >
               {product.images.map((img, i) => (
-                <div key={i} style={{ width: '100%', height: '100%', flexShrink: 0, scrollSnapAlign: 'start', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#E1EBDE' }}>
-                  <img src={img.url} alt={img.alt || product.nom} style={{ width: '100%', height: '100%', objectFit: 'cover', mixBlendMode: 'multiply' }} />
+                <div key={i} className="flex h-full w-full flex-shrink-0 snap-start items-center justify-center bg-[color:var(--lkv-success-bg)]">
+                  <img src={img.url} alt={img.alt || product.nom} className="h-full w-full object-cover mix-blend-multiply" />
                 </div>
               ))}
               {product.images.length === 0 && (
-                <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#E1EBDE', fontSize: '13px', color: '#5A7064' }}>
+                <div className="flex h-full w-full items-center justify-center bg-[color:var(--lkv-success-bg)] text-[length:var(--lkv-text-footnote)] text-[color:var(--lkv-text-muted)]">
                   Aucune image disponible
                 </div>
               )}
@@ -599,17 +611,11 @@ export default function ProductDetailClient({ slug, initialProduct }: { slug: st
 
             {/* Paging indicators */}
             {product.images.length > 1 && (
-              <div style={{ position: 'absolute', bottom: '16px', left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: '6px', zIndex: 10, background: 'rgba(0,0,0,0.1)', backdropFilter: 'blur(var(--glass-blur-xs))', WebkitBackdropFilter: 'blur(var(--glass-blur-xs))', padding: '4px 10px', borderRadius: '999px' }}>
+              <div className="absolute bottom-[var(--space-4)] left-1/2 z-[var(--z-sticky)] flex -translate-x-1/2 gap-[6px] rounded-full bg-[color:var(--lkv-overlay-scrim)] px-[10px] py-[4px] backdrop-blur-[var(--blur-sm)]">
                 {product.images.map((_, i) => (
                   <span
                     key={i}
-                    style={{
-                      width: i === activeImage ? '16px' : '6px',
-                      height: '6px',
-                      borderRadius: '999px',
-                      background: i === activeImage ? '#fff' : 'rgba(255,255,255,0.4)',
-                      transition: 'all 0.2s ease',
-                    }}
+                    className={`h-1.5 rounded-full transition-all ${i === activeImage ? 'w-4 bg-[color:var(--lkv-text-inverted)]' : 'w-1.5 bg-[color:var(--lkv-text-inverted)] opacity-40'}`}
                   />
                 ))}
               </div>
@@ -618,10 +624,13 @@ export default function ProductDetailClient({ slug, initialProduct }: { slug: st
 
           {/* Thumbnails list */}
           {product.images.length > 1 && (
-            <div style={{ display: 'flex', gap: '8px', padding: '8px 16px', overflowX: 'auto', background: 'transparent', scrollbarWidth: 'none' }}>
+            <div className="flex gap-[var(--space-2)] overflow-x-auto px-[var(--space-4)] py-[var(--space-2)] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               {product.images.map((img, i) => (
-                <button
+                <IconButton
                   key={i}
+                  variant={i === activeImage ? 'solid' : 'glass'}
+                  aria-label={`Afficher l'image ${i + 1} sur ${product.images.length}`}
+                  aria-pressed={i === activeImage}
                   onClick={() => {
                     setActiveImage(i);
                     const gallery = document.getElementById('mobile-gallery');
@@ -629,40 +638,35 @@ export default function ProductDetailClient({ slug, initialProduct }: { slug: st
                       gallery.scrollTo({ left: gallery.clientWidth * i, behavior: 'smooth' });
                     }
                   }}
-                  className={`glass-circle-btn !w-12 !h-12 !min-w-12 !min-h-12 !p-0 overflow-hidden flex-shrink-0 cursor-pointer ${i === activeImage ? 'primary' : 'opacity-70 hover:opacity-100'}`}
+                  className={`h-12 w-12 shrink-0 overflow-hidden !rounded-[var(--lkv-radius-md)] p-0 ${i === activeImage ? '' : 'opacity-70 hover:opacity-100'}`}
                 >
-                  <img src={img.url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', mixBlendMode: 'multiply' }} />
-                </button>
+                  <img src={img.url} alt="" className="h-full w-full object-cover mix-blend-multiply" />
+                </IconButton>
               ))}
             </div>
           )}
 
           {/* Info section */}
-          <div style={{ padding: '24px 20px 16px' }}>
-            <span className="glass-pill" style={{ fontFamily: 'var(--font-mono)', marginBottom: '8px' }}>
+          <div className="px-[var(--space-5)] pb-[var(--space-4)] pt-[var(--space-6)]">
+            <Badge tone="sage" className="mb-[var(--space-2)] font-mono">
               {product.categorie}
-            </span>
-            <h1 style={{ fontSize: '24px', fontWeight: 600, color: '#EEF3EC', margin: 0, letterSpacing: '-0.02em', lineHeight: 1.2 }}>
-              {product.nom}
-            </h1>
-            <div style={{ fontSize: '12px', color: '#CCE0D4', marginTop: '4px', fontWeight: 500 }}>
-              Par <span style={{ fontWeight: 600, color: '#EEF3EC' }}>{product.marque}</span>
+            </Badge>
+            <div className="text-[length:var(--lkv-text-caption)] font-medium text-[color:var(--lkv-text-secondary)]">
+              Par <span className="font-semibold text-[color:var(--lkv-text-primary)]">{product.marque}</span>
             </div>
 
             {/* Price & Rating */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '16px', paddingBottom: '16px', borderBottom: '1px solid rgba(255,255,255,0.18)' }}>
+            <div className="mt-[var(--space-4)] flex items-center justify-between border-b border-[color:var(--lkv-border)] pb-[var(--space-4)]">
               <div>
-                <span style={{ fontSize: '24px', fontWeight: 700, fontFamily: 'var(--font-mono)', color: '#EEF3EC' }}>
+                <span className="font-mono text-[length:var(--lkv-text-title-sm)] font-bold text-[color:var(--lkv-text-primary)]">
                   {product.prix_cents > 0 ? `${(product.prix_cents / 100).toFixed(2)} €` : '—'}
                 </span>
-                <span style={{ fontSize: '10px', color: '#CCE0D4', display: 'block', marginTop: '2px' }}>TVA incluse</span>
+                <span className="mt-0.5 block text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-secondary)]">TVA incluse</span>
               </div>
               
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: '#5A7064', background: '#E1EBDE', padding: '6px 12px', borderRadius: '12px' }}>
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="#17402C" stroke="#17402C">
-                  <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-                </svg>
-                <span style={{ fontWeight: 700, color: '#17402C' }}>{product.rating}</span>
+              <div className="flex items-center gap-[6px] rounded-[var(--lkv-radius-md)] bg-[color:var(--lkv-success-bg)] px-[var(--space-3)] py-[6px] text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-muted)]">
+                <Icon name="StarIcon" size={12} variant="solid" className="text-[color:var(--lkv-warning)]" />
+                <span className="font-bold text-[color:var(--lkv-text-primary)]">{product.rating}</span>
                 <span>({product.review_count || 12} avis)</span>
               </div>
             </div>
@@ -670,63 +674,58 @@ export default function ProductDetailClient({ slug, initialProduct }: { slug: st
 
           {/* Présence dans les lignées — encart Lignées de kits (Lot 5) */}
           {product.id && (
-            <div style={{ padding: '8px 20px' }}>
+            <div className="px-[var(--space-5)] py-[var(--space-2)]">
               <ProductLineageCard productId={product.id} />
             </div>
           )}
 
           {/* Specifications Grid */}
-          <div style={{ padding: '8px 20px' }}>
-            <h3 className="text-[11px] font-bold uppercase tracking-wider text-[#EEF3EC] mb-3">Caractéristiques</h3>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-              <div className="glass-sub-card p-3">
-                <div className="text-[10px] uppercase text-[#5A7064] tracking-wide">Poids</div>
-                <div className="text-sm font-semibold text-[#17402C] mt-0.5">
+          <div className="px-[var(--space-5)] py-[var(--space-2)]">
+            <h3 className="mb-[var(--space-3)] text-[length:var(--lkv-text-caption-2)] font-bold uppercase tracking-[var(--tracking-wide)] text-[color:var(--lkv-text-primary)]">Caractéristiques</h3>
+            <div className="grid grid-cols-2 gap-[var(--space-3)]">
+              <Card variant="compact" className="p-[var(--space-3)]">
+                <div className="text-[length:var(--lkv-text-caption-2)] uppercase tracking-[var(--tracking-wide)] text-[color:var(--lkv-text-muted)]">Poids</div>
+                <div className="mt-0.5 text-[length:var(--lkv-text-body-sm)] font-semibold text-[color:var(--lkv-text-primary)]">
                   {product.poids_g > 0 ? `${(product.poids_g / 1000).toFixed(2)} kg` : '—'}
                 </div>
-              </div>
-              <div className="glass-sub-card p-3">
-                <div className="text-[10px] uppercase text-[#5A7064] tracking-wide">Matière</div>
-                <div className="text-sm font-semibold text-[#17402C] mt-0.5" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={product.materials || '—'}>
+              </Card>
+              <Card variant="compact" className="p-[var(--space-3)]">
+                <div className="text-[length:var(--lkv-text-caption-2)] uppercase tracking-[var(--tracking-wide)] text-[color:var(--lkv-text-muted)]">Matière</div>
+                <div className="mt-0.5 truncate text-[length:var(--lkv-text-body-sm)] font-semibold text-[color:var(--lkv-text-primary)]" title={product.materials || '—'}>
                   {product.materials || 'Non spécifiée'}
                 </div>
-              </div>
-              <div className="glass-sub-card p-3">
-                <div className="text-[10px] uppercase text-[#5A7064] tracking-wide">Dimensions</div>
-                <div className="text-sm font-semibold text-[#17402C] mt-0.5" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={product.dimensions || '—'}>
+              </Card>
+              <Card variant="compact" className="p-[var(--space-3)]">
+                <div className="text-[length:var(--lkv-text-caption-2)] uppercase tracking-[var(--tracking-wide)] text-[color:var(--lkv-text-muted)]">Dimensions</div>
+                <div className="mt-0.5 truncate text-[length:var(--lkv-text-body-sm)] font-semibold text-[color:var(--lkv-text-primary)]" title={product.dimensions || '—'}>
                   {product.dimensions || 'Non spécifiées'}
                 </div>
-              </div>
-              <div className="glass-sub-card p-3">
-                <div className="text-[10px] uppercase text-[#5A7064] tracking-wide">Garantie</div>
-                <div className="text-sm font-semibold text-[#17402C] mt-0.5">
+              </Card>
+              <Card variant="compact" className="p-[var(--space-3)]">
+                <div className="text-[length:var(--lkv-text-caption-2)] uppercase tracking-[var(--tracking-wide)] text-[color:var(--lkv-text-muted)]">Garantie</div>
+                <div className="mt-0.5 text-[length:var(--lkv-text-body-sm)] font-semibold text-[color:var(--lkv-text-primary)]">
                   {product.warranty || '2 ans'}
                 </div>
-              </div>
+              </Card>
             </div>
           </div>
 
           {/* Dynamic variants */}
           {product.variants && product.variants.length > 0 && (
-            <div style={{ padding: '16px 20px' }}>
-              <h3 className="text-[11px] font-bold uppercase tracking-wider text-[#EEF3EC] mb-2.5">Options</h3>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+            <div className="px-[var(--space-5)] py-[var(--space-4)]">
+              <h3 className="mb-[var(--space-2)] text-[length:var(--lkv-text-caption-2)] font-bold uppercase tracking-[var(--tracking-wide)] text-[color:var(--lkv-text-primary)]">Options</h3>
+              <div className="flex flex-wrap gap-[var(--space-2)]">
                 {product.variants.map((v: any, i: number) => (
-                  <button
-                    key={i}
-                    className="glass-capsule-btn secondary !px-3.5 !py-2 !text-xs !font-semibold"
-                  >
-                    {v.size || v.name || v.sku}
-                  </button>
+                  <Chip key={i}>{v.size || v.name || v.sku}</Chip>
                 ))}
               </div>
             </div>
           )}
 
           {/* Description */}
-          <div style={{ padding: '16px 20px 100px' }}>
-            <h3 className="text-[11px] font-bold uppercase tracking-wider text-[#EEF3EC] mb-2">Présentation</h3>
-            <p style={{ fontSize: '14px', color: '#CCE0D4', lineHeight: 1.5, margin: 0, whiteSpace: 'pre-line' }}>
+          <div className="px-[var(--space-5)] pb-[100px] pt-[var(--space-4)]">
+            <h3 className="mb-[var(--space-2)] text-[length:var(--lkv-text-caption-2)] font-bold uppercase tracking-[var(--tracking-wide)] text-[color:var(--lkv-text-primary)]">Présentation</h3>
+            <p className="m-0 whitespace-pre-line text-[length:var(--lkv-text-body-sm)] leading-[var(--leading-relaxed)] text-[color:var(--lkv-text-secondary)]">
               {product.description}
             </p>
           </div>

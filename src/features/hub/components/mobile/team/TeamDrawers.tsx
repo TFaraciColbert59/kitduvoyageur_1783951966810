@@ -3,7 +3,7 @@
 import { useState, type FormEvent } from 'react';
 import { Dog, HeartPulse, Plus, Trash2, UserPlus } from 'lucide-react';
 import Icon from '@/components/ui/Icon';
-import { Badge, Button, IconButton, type BadgeTone } from '@/components/ui';
+import { Badge, Button, IconButton, Switch, type BadgeTone } from '@/components/ui';
 import type { HumanParticipant, DogParticipant } from '@/features/participants/types/participant.types';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { carnetRoleLabel, dogLoadView, formatJoinDate, personInitials, teamRoleLabel } from '../../../mobile/teamEngine';
@@ -421,22 +421,11 @@ export function TeamDogsDrawer({
                 <span className="text-[11px] font-semibold text-[var(--lkv-text-primary)]/70">
                   Sac de bât · {load.label}
                 </span>
-                <button
-                  type="button"
-                  role="switch"
-                  aria-checked={dog.isCarryingPack}
+                <Switch
+                  checked={dog.isCarryingPack}
+                  onCheckedChange={(checked) => onToggleCarrying(dog.id, checked)}
                   aria-label={`${dog.name} porte le sac`}
-                  onClick={() => onToggleCarrying(dog.id, !dog.isCarryingPack)}
-                  className={`relative inline-flex h-7 w-12 shrink-0 items-center rounded-full transition-colors ${
-                    dog.isCarryingPack ? 'bg-[var(--lkv-primary)]' : 'bg-black/15'
-                  }`}
-                >
-                  <span
-                    className={`block h-5 w-5 rounded-full bg-white shadow transition-transform ${
-                      dog.isCarryingPack ? 'translate-x-6' : 'translate-x-1'
-                    }`}
-                  />
-                </button>
+                />
               </div>
               <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-[var(--lkv-forest-100)]">
                 <div

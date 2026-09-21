@@ -9,7 +9,8 @@ import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
-import { PageHeader } from '@/components/ui';
+import { Badge, Button, Card, EmptyState, Modal, SearchField, Tabs, type BadgeTone } from '@/components/ui';
+import ProductCard from '@/components/produit/ProductCard';
 
 interface OccasionItem {
   id: string;
@@ -41,12 +42,15 @@ interface OccasionItem {
   gearItemSource?: string;
 }
 
-const conditionConfig = {
-  comme_neuf: { label: 'Comme neuf', pill: 'glass-pill' },
-  tres_bon: { label: 'Très bon état', pill: 'glass-pill pill-info' },
-  bon: { label: 'Bon état', pill: 'glass-pill pill-warn' },
-  acceptable: { label: 'Acceptable', pill: 'glass-pill pill-danger' },
+const conditionConfig: Record<OccasionItem['condition'], { label: string; tone: BadgeTone }> = {
+  comme_neuf: { label: 'Comme neuf', tone: 'sage' },
+  tres_bon: { label: 'Très bon état', tone: 'info' },
+  bon: { label: 'Bon état', tone: 'warn' },
+  acceptable: { label: 'Acceptable', tone: 'danger' },
 };
+
+const FIELD_CLASS =
+  'w-full rounded-[var(--lkv-radius-md)] border border-[color:var(--lkv-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[var(--space-2)] text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-primary)] placeholder:text-[color:var(--lkv-text-muted)] focus:outline-none focus:ring-2 focus:ring-[color:var(--lkv-focus-ring)]';
 
 const STATIC_LISTINGS: OccasionItem[] = [
   {
@@ -148,48 +152,49 @@ function MakeOfferModal({ item, onClose }: { item: OccasionItem; onClose: () => 
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4" onClick={onClose}>
-      <div className="bg-[rgba(255,255,255,0.92)] border border-[rgba(255,255,255,0.60)] rounded-2xl p-6 max-w-sm w-full" onClick={(e) => e.stopPropagation()}>
-        {!sent ? (
-          <>
-            <div className="flex items-center justify-between mb-5">
-              <h3 className="font-display font-bold text-foreground text-lg text-[var(--lkv-primary)]">Faire une offre</h3>
-              <button onClick={onClose} className="glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8"><Icon name="XMarkIcon" size={18} /></button>
-            </div>
-            <div className="glass-sub-card rounded-xl p-3 mb-4">
-              <p className="text-xs text-[var(--lkv-text-muted)] mb-0.5">Article</p>
-              <p className="text-sm font-semibold text-[var(--lkv-primary)]">{item.title}</p>
-              <p className="text-sm text-[var(--lkv-secondary)] font-bold">{item.price} € (prix affiché)</p>
-            </div>
-            <div className="mb-4">
-              <label className="block text-xs font-medium text-[var(--lkv-text-muted)] mb-1">Votre offre (€)</label>
-              <input
-                type="number" min={1} value={amount} onChange={(e) => setAmount(e.target.value)}
-                className="glass-input w-full text-lg font-bold"
-              />
-              <p className="text-xs text-[var(--lkv-text-muted)] mt-1">
-                Le vendeur pourra accepter ou refuser votre offre en 1 tap.
-              </p>
-            </div>
-            <div className="flex gap-3">
-              <button onClick={onClose} className="glass-capsule-btn secondary flex-1 justify-center py-3">Annuler</button>
-              <button onClick={handleSubmit} disabled={saving || !amount} className="glass-capsule-btn primary flex-1 justify-center py-3 disabled:opacity-50">
-                {saving ? 'Envoi…' : 'Envoyer l\'offre'}
-              </button>
-            </div>
-          </>
-        ) : (
-          <div className="text-center py-6">
-            <div className="w-16 h-16 rounded-full bg-[var(--lkv-surface-muted)] flex items-center justify-center mx-auto mb-4">
-              <Icon name="CheckIcon" size={28} className="text-[var(--lkv-secondary)]" />
-            </div>
-            <h3 className="font-display font-bold text-lg text-[var(--lkv-primary)] mb-2">Offre envoyée !</h3>
-            <p className="text-sm text-[var(--lkv-text-muted)] mb-6">Le vendeur vous répondra rapidement.</p>
-            <button onClick={onClose} className="glass-capsule-btn primary justify-center px-8 py-3">Fermer</button>
+    <Modal
+      open
+      onOpenChange={(open) => {
+        if (!open) onClose();
+      }}
+      title="Faire une offre"
+    >
+      {!sent ? (
+        <>
+          <Card variant="compact" className="mb-[var(--space-4)] p-[var(--space-3)]">
+            <p className="mb-0.5 text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-muted)]">Article</p>
+            <p className="text-[length:var(--lkv-text-body-sm)] font-semibold text-[color:var(--lkv-text-primary)]">{item.title}</p>
+            <p className="text-[length:var(--lkv-text-body-sm)] font-bold text-[color:var(--lkv-secondary)]">{item.price} € (prix affiché)</p>
+          </Card>
+          <div className="mb-[var(--space-4)]">
+            <label htmlFor="offer-amount" className="mb-[var(--space-1)] block text-[length:var(--lkv-text-caption)] font-medium text-[color:var(--lkv-text-muted)]">Votre offre (€)</label>
+            <input
+              id="offer-amount"
+              type="number" min={1} value={amount} onChange={(e) => setAmount(e.target.value)}
+              className={`${FIELD_CLASS} text-[length:var(--lkv-text-headline)] font-bold`}
+            />
+            <p className="mt-[var(--space-1)] text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-muted)]">
+              Le vendeur pourra accepter ou refuser votre offre en 1 tap.
+            </p>
           </div>
-        )}
-      </div>
-    </div>
+          <div className="flex gap-[var(--space-3)]">
+            <Button variant="secondary" className="flex-1" onClick={onClose}>Annuler</Button>
+            <Button className="flex-1" onClick={handleSubmit} disabled={saving || !amount} loading={saving}>
+              {saving ? 'Envoi…' : 'Envoyer l\'offre'}
+            </Button>
+          </div>
+        </>
+      ) : (
+        <div className="py-[var(--space-6)] text-center">
+          <div className="mx-auto mb-[var(--space-4)] flex h-16 w-16 items-center justify-center rounded-full bg-[color:var(--lkv-surface-muted)]">
+            <Icon name="CheckIcon" size={28} className="text-[color:var(--lkv-secondary)]" />
+          </div>
+          <h3 className="mb-[var(--space-2)] font-display text-[length:var(--lkv-text-headline)] font-bold text-[color:var(--lkv-text-primary)]">Offre envoyée !</h3>
+          <p className="mb-[var(--space-6)] text-[length:var(--lkv-text-body-sm)] text-[color:var(--lkv-text-muted)]">Le vendeur vous répondra rapidement.</p>
+          <Button onClick={onClose} className="px-[var(--space-8)]">Fermer</Button>
+        </div>
+      )}
+    </Modal>
   );
 }
 
@@ -199,43 +204,41 @@ function ContactModal({ item, onClose }: { item: OccasionItem; onClose: () => vo
   const [message, setMessage] = useState(`Bonjour ${item.seller.split(' ')[0]}, je suis intéressé(e) par votre annonce "${item.title}". Est-il toujours disponible ?`);
   const [sent, setSent] = useState(false);
   return (
-    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4" onClick={onClose}>
-      <div className="bg-[rgba(255,255,255,0.92)] border border-[rgba(255,255,255,0.60)] rounded-2xl p-6 max-w-md w-full" onClick={(e) => e.stopPropagation()}>
-        {!sent ? (
-          <>
-            <div className="flex items-center justify-between mb-5">
-              <div>
-                <h3 className="font-display font-bold text-lg text-[var(--lkv-primary)]">Contacter le vendeur</h3>
-                <p className="text-sm text-[var(--lkv-text-muted)]">{item.seller}</p>
-              </div>
-              <button onClick={onClose} className="glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8"><Icon name="XMarkIcon" size={18} /></button>
-            </div>
-            <div className="glass-sub-card rounded-xl border-white/40 p-3 mb-4">
-              <p className="text-xs font-semibold text-[var(--lkv-text-muted)] mb-1">Annonce</p>
-              <p className="text-sm font-semibold text-[var(--lkv-primary)]">{item.title}</p>
-              <p className="text-sm text-[var(--lkv-secondary)] font-bold">{item.price}€</p>
-            </div>
-            <label className="text-xs font-semibold text-[var(--lkv-text-muted)] uppercase tracking-wider block mb-1.5">Votre message</label>
-            <textarea className="glass-input resize-none w-full" rows={4} value={message} onChange={(e) => setMessage(e.target.value)} />
-            <div className="flex gap-3 mt-4">
-              <button onClick={onClose} className="glass-capsule-btn secondary flex-1 justify-center py-3">Annuler</button>
-              <button onClick={() => setSent(true)} className="glass-capsule-btn primary flex-1 justify-center py-3">
-                <Icon name="PaperAirplaneIcon" size={16} />Envoyer
-              </button>
-            </div>
-          </>
-        ) : (
-          <div className="text-center py-6">
-            <div className="w-16 h-16 rounded-full bg-[var(--lkv-surface-muted)] flex items-center justify-center mx-auto mb-4">
-              <Icon name="CheckIcon" size={28} className="text-[var(--lkv-secondary)]" />
-            </div>
-            <h3 className="font-display font-bold text-lg text-[var(--lkv-primary)] mb-2">Message envoyé !</h3>
-            <p className="text-sm text-[var(--lkv-text-muted)] mb-6">{item.seller.split(' ')[0]} vous répondra par email.</p>
-            <button onClick={onClose} className="glass-capsule-btn primary justify-center px-8 py-3">Fermer</button>
+    <Modal
+      open
+      onOpenChange={(open) => {
+        if (!open) onClose();
+      }}
+      title="Contacter le vendeur"
+      description={item.seller}
+    >
+      {!sent ? (
+        <>
+          <Card variant="compact" className="mb-[var(--space-4)] p-[var(--space-3)]">
+            <p className="mb-[var(--space-1)] text-[length:var(--lkv-text-caption)] font-semibold text-[color:var(--lkv-text-muted)]">Annonce</p>
+            <p className="text-[length:var(--lkv-text-body-sm)] font-semibold text-[color:var(--lkv-text-primary)]">{item.title}</p>
+            <p className="text-[length:var(--lkv-text-body-sm)] font-bold text-[color:var(--lkv-secondary)]">{item.price}€</p>
+          </Card>
+          <label htmlFor="contact-message" className="mb-[var(--space-2)] block text-[length:var(--lkv-text-caption-2)] font-semibold uppercase tracking-[var(--tracking-wide)] text-[color:var(--lkv-text-muted)]">Votre message</label>
+          <textarea id="contact-message" className={`${FIELD_CLASS} resize-none`} rows={4} value={message} onChange={(e) => setMessage(e.target.value)} />
+          <div className="mt-[var(--space-4)] flex gap-[var(--space-3)]">
+            <Button variant="secondary" className="flex-1" onClick={onClose}>Annuler</Button>
+            <Button className="flex-1" onClick={() => setSent(true)} icon={<Icon name="PaperAirplaneIcon" size={16} />}>
+              Envoyer
+            </Button>
           </div>
-        )}
-      </div>
-    </div>
+        </>
+      ) : (
+        <div className="py-[var(--space-6)] text-center">
+          <div className="mx-auto mb-[var(--space-4)] flex h-16 w-16 items-center justify-center rounded-full bg-[color:var(--lkv-surface-muted)]">
+            <Icon name="CheckIcon" size={28} className="text-[color:var(--lkv-secondary)]" />
+          </div>
+          <h3 className="mb-[var(--space-2)] font-display text-[length:var(--lkv-text-headline)] font-bold text-[color:var(--lkv-text-primary)]">Message envoyé !</h3>
+          <p className="mb-[var(--space-6)] text-[length:var(--lkv-text-body-sm)] text-[color:var(--lkv-text-muted)]">{item.seller.split(' ')[0]} vous répondra par email.</p>
+          <Button onClick={onClose} className="px-[var(--space-8)]">Fermer</Button>
+        </div>
+      )}
+    </Modal>
   );
 }
 
@@ -303,151 +306,142 @@ function ItemDetailModal({ item, onClose }: { item: OccasionItem; onClose: () =>
 
   return (
     <>
-      <div className="fixed inset-0 z-40 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4" onClick={onClose}>
-        <div className="bg-[rgba(255,255,255,0.92)] border border-[rgba(255,255,255,0.60)] rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-          <PageHeader
-            sticky
-            variant="inline"
-            className="border-b border-white/40 bg-[rgba(255,255,255,0.85)] px-5 backdrop-blur-xl"
-            title={item.title}
-            actions={
-              <button onClick={onClose} className="glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8 flex-shrink-0"><Icon name="XMarkIcon" size={18} /></button>
-            }
-          />
-
-          <div className="p-5 space-y-5">
-            <div className="relative rounded-xl overflow-hidden aspect-video">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={item.image} alt={item.alt} className="w-full h-full object-cover" />
-              <div className="absolute top-3 left-3 flex gap-2">
-                <span className={cond.pill}>{cond.label}</span>
-              </div>
-              {discount > 0 && (
-                <div className="absolute top-3 right-3 glass-pill pill-warn">
-                  <span className="text-xs font-bold">-{discount}%</span>
-                </div>
-              )}
+      <Modal
+        open
+        onOpenChange={(open) => {
+          if (!open) onClose();
+        }}
+        title={item.title}
+        size="lg"
+      >
+        <div className="space-y-[var(--space-5)]">
+          <div className="relative aspect-video overflow-hidden rounded-[var(--lkv-radius-lg)]">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={item.image} alt={item.alt} className="h-full w-full object-cover" />
+            <div className="absolute left-[var(--space-3)] top-[var(--space-3)] flex gap-[var(--space-2)]">
+              <Badge tone={cond.tone}>{cond.label}</Badge>
             </div>
-
-            {/* Trust badges */}
-            <div className="flex flex-wrap gap-2">
-              {isVerifiedPurchase && (
-                <span className="glass-pill pill-info flex items-center gap-1.5">
-                  <Icon name="ShieldCheckIcon" size={12} variant="outline" />
-                  Acheté sur Le Kit du Voyageur
-                </span>
-              )}
-              {item.sellerTrustScore >= 90 && (
-                <span className="glass-pill flex items-center gap-1.5">
-                  <Icon name="StarIcon" size={12} variant="outline" />
-                  Vendeur de confiance
-                </span>
-              )}
-            </div>
-
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="flex items-baseline gap-2">
-                  <span className="font-mono font-bold text-3xl text-[var(--lkv-primary)]">{item.price}€</span>
-                  {item.originalPrice > 0 && <span className="text-[var(--lkv-text-muted)] line-through text-sm">{item.originalPrice}€</span>}
-                </div>
-                {item.negotiable && <p className="text-xs text-[var(--lkv-secondary)] mt-0.5">Prix négociable — offres acceptées</p>}
-              </div>
-              <div className="flex gap-2">
-                {item.negotiable && (
-                  <button onClick={() => setShowOffer(true)} className="glass-capsule-btn secondary flex items-center gap-2">
-                    <Icon name="ChatBubbleLeftRightIcon" size={16} variant="outline" />
-                    Faire une offre
-                  </button>
-                )}
-                <button onClick={() => setShowContact(true)} className="glass-capsule-btn primary flex items-center gap-2">
-                  <Icon name="ChatBubbleLeftIcon" size={16} variant="outline" />
-                  Contacter
-                </button>
-              </div>
-            </div>
-
-            {item.tags.length > 0 && (
-              <div className="flex flex-wrap gap-2">
-                {item.tags.map((tag) => (
-                  <span key={tag} className="glass-pill">{tag}</span>
-                ))}
-              </div>
-            )}
-
-            <div>
-              <h3 className="font-semibold text-[var(--lkv-primary)] mb-2 text-sm">Description</h3>
-              <p className="text-sm text-[var(--lkv-text-muted)] leading-relaxed">{item.description}</p>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              {[
-                { label: 'Marque', value: item.brand },
-                { label: "Année d'achat", value: item.purchaseYear },
-                { label: 'Poids', value: item.weight },
-                { label: 'Dimensions', value: item.dimensions },
-                { label: 'Livraison', value: item.shippingAvailable ? `Disponible${item.shippingCost ? ` (${item.shippingCost}€)` : ''}` : 'Remise en main propre' },
-                { label: 'Localisation', value: item.location },
-              ].filter((d) => d.value).map((detail) => (
-                <div key={detail.label} className="glass-sub-card rounded-xl p-3">
-                  <p className="text-[10px] text-[var(--lkv-text-muted)] mb-0.5">{detail.label}</p>
-                  <p className="text-sm font-medium text-[var(--lkv-primary)]">{detail.value}</p>
-                </div>
-              ))}
-            </div>
-
-            <div className="glass-sub-card rounded-xl p-4">
-              <h3 className="font-semibold text-[var(--lkv-primary)] mb-3 text-sm">Vendeur</h3>
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-sage-500/20 text-[var(--lkv-secondary)] flex items-center justify-center font-bold text-sm flex-shrink-0">
-                  {item.sellerAvatar}
-                </div>
-                <div className="flex-1">
-                  <p className="font-medium text-[var(--lkv-primary)] text-sm">{item.seller}</p>
-                  <p className="text-xs text-[var(--lkv-text-muted)]">{item.sellerSales} ventes · {item.location}</p>
-                </div>
-                <div className="text-right">
-                  <p className="font-bold text-[var(--lkv-primary)] text-sm">{item.sellerTrustScore}%</p>
-                  <p className="text-[10px] text-[var(--lkv-text-muted)]">Fiabilité</p>
-                </div>
-              </div>
-            </div>
-
-            {/* F6/F7: Confirm receipt button (shown to logged-in buyers) */}
-            {user && user.id !== item.sellerId && (
-              <div className="glass-sub-card rounded-xl p-4 border-[rgba(91,127,85,0.35)] bg-[rgba(91,127,85,0.12)]">
-                {receiptConfirmed ? (
-                  <div className="flex items-center gap-3">
-                    <Icon name="CheckCircleIcon" size={20} variant="outline" className="text-[var(--lkv-secondary)] flex-shrink-0" />
-                    <div>
-                      <p className="font-semibold text-[var(--lkv-forest-600)] text-sm">Réception confirmée !</p>
-                      <p className="text-xs text-[var(--lkv-forest-600)]/80">L&apos;article a été ajouté à votre inventaire. Le vendeur sera payé dans 48h.</p>
-                    </div>
-                  </div>
-                ) : (
-                  <div>
-                    <p className="font-semibold text-[var(--lkv-forest-600)] text-sm mb-1">Avez-vous reçu cet article ?</p>
-                    <p className="text-xs text-[var(--lkv-forest-600)]/80 mb-3">
-                      En confirmant la réception, l&apos;article sera ajouté à votre inventaire et le vendeur sera payé dans 48h.
-                    </p>
-                    <button
-                      onClick={handleConfirmReceipt}
-                      disabled={confirmingReceipt}
-                      className="glass-capsule-btn primary w-full justify-center py-2.5 text-sm disabled:opacity-50"
-                    >
-                      {confirmingReceipt ? (
-                        <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> Confirmation…</>
-                      ) : (
-                        <><Icon name="CheckCircleIcon" size={16} variant="outline" /> Confirmer la réception</>
-                      )}
-                    </button>
-                  </div>
-                )}
+            {discount > 0 && (
+              <div className="absolute right-[var(--space-3)] top-[var(--space-3)]">
+                <Badge tone="warn"><span className="font-bold">-{discount}%</span></Badge>
               </div>
             )}
           </div>
+
+          {/* Trust badges */}
+          <div className="flex flex-wrap gap-[var(--space-2)]">
+            {isVerifiedPurchase && (
+              <Badge tone="info" className="gap-[var(--space-1)]">
+                <Icon name="ShieldCheckIcon" size={12} variant="outline" />
+                Acheté sur Le Kit du Voyageur
+              </Badge>
+            )}
+            {item.sellerTrustScore >= 90 && (
+              <Badge tone="stone" className="gap-[var(--space-1)]">
+                <Icon name="StarIcon" size={12} variant="outline" />
+                Vendeur de confiance
+              </Badge>
+            )}
+          </div>
+
+          <div className="flex items-center justify-between gap-[var(--space-3)]">
+            <div>
+              <div className="flex items-baseline gap-[var(--space-2)]">
+                <span className="font-mono text-[length:var(--lkv-text-title-sm)] font-bold text-[color:var(--lkv-text-primary)]">{item.price}€</span>
+                {item.originalPrice > 0 && <span className="text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-muted)] line-through">{item.originalPrice}€</span>}
+              </div>
+              {item.negotiable && <p className="mt-0.5 text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-secondary)]">Prix négociable — offres acceptées</p>}
+            </div>
+            <div className="flex flex-wrap justify-end gap-[var(--space-2)]">
+              {item.negotiable && (
+                <Button variant="secondary" onClick={() => setShowOffer(true)} icon={<Icon name="ChatBubbleLeftRightIcon" size={16} variant="outline" />}>
+                  Faire une offre
+                </Button>
+              )}
+              <Button onClick={() => setShowContact(true)} icon={<Icon name="ChatBubbleLeftIcon" size={16} variant="outline" />}>
+                Contacter
+              </Button>
+            </div>
+          </div>
+
+          {item.tags.length > 0 && (
+            <div className="flex flex-wrap gap-[var(--space-2)]">
+              {item.tags.map((tag) => (
+                <Badge key={tag} tone="stone">{tag}</Badge>
+              ))}
+            </div>
+          )}
+
+          <div>
+            <h3 className="mb-[var(--space-2)] text-[length:var(--lkv-text-body-sm)] font-semibold text-[color:var(--lkv-text-primary)]">Description</h3>
+            <p className="text-[length:var(--lkv-text-body-sm)] leading-[var(--leading-relaxed)] text-[color:var(--lkv-text-muted)]">{item.description}</p>
+          </div>
+
+          <div className="grid grid-cols-2 gap-[var(--space-3)]">
+            {[
+              { label: 'Marque', value: item.brand },
+              { label: "Année d'achat", value: item.purchaseYear },
+              { label: 'Poids', value: item.weight },
+              { label: 'Dimensions', value: item.dimensions },
+              { label: 'Livraison', value: item.shippingAvailable ? `Disponible${item.shippingCost ? ` (${item.shippingCost}€)` : ''}` : 'Remise en main propre' },
+              { label: 'Localisation', value: item.location },
+            ].filter((d) => d.value).map((detail) => (
+              <Card key={detail.label} variant="compact" className="p-[var(--space-3)]">
+                <p className="mb-0.5 text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">{detail.label}</p>
+                <p className="text-[length:var(--lkv-text-body-sm)] font-medium text-[color:var(--lkv-text-primary)]">{detail.value}</p>
+              </Card>
+            ))}
+          </div>
+
+          <Card variant="compact" className="p-[var(--space-4)]">
+            <h3 className="mb-[var(--space-3)] text-[length:var(--lkv-text-body-sm)] font-semibold text-[color:var(--lkv-text-primary)]">Vendeur</h3>
+            <div className="flex items-center gap-[var(--space-3)]">
+              <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-[color:var(--lkv-secondary-subtle)] text-[length:var(--lkv-text-body-sm)] font-bold text-[color:var(--lkv-secondary)]">
+                {item.sellerAvatar}
+              </div>
+              <div className="flex-1">
+                <p className="text-[length:var(--lkv-text-body-sm)] font-medium text-[color:var(--lkv-text-primary)]">{item.seller}</p>
+                <p className="text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-muted)]">{item.sellerSales} ventes · {item.location}</p>
+              </div>
+              <div className="text-right">
+                <p className="text-[length:var(--lkv-text-body-sm)] font-bold text-[color:var(--lkv-text-primary)]">{item.sellerTrustScore}%</p>
+                <p className="text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">Fiabilité</p>
+              </div>
+            </div>
+          </Card>
+
+          {/* F6/F7: Confirm receipt button (shown to logged-in buyers) */}
+          {user && user.id !== item.sellerId && (
+            <Card tone="sage" className="p-[var(--space-4)]">
+              {receiptConfirmed ? (
+                <div className="flex items-center gap-[var(--space-3)]">
+                  <Icon name="CheckCircleIcon" size={20} variant="outline" className="flex-shrink-0 text-[color:var(--lkv-secondary)]" />
+                  <div>
+                    <p className="text-[length:var(--lkv-text-body-sm)] font-semibold text-[color:var(--lkv-text-primary)]">Réception confirmée !</p>
+                    <p className="text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-muted)]">L&apos;article a été ajouté à votre inventaire. Le vendeur sera payé dans 48h.</p>
+                  </div>
+                </div>
+              ) : (
+                <div>
+                  <p className="mb-[var(--space-1)] text-[length:var(--lkv-text-body-sm)] font-semibold text-[color:var(--lkv-text-primary)]">Avez-vous reçu cet article ?</p>
+                  <p className="mb-[var(--space-3)] text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-muted)]">
+                    En confirmant la réception, l&apos;article sera ajouté à votre inventaire et le vendeur sera payé dans 48h.
+                  </p>
+                  <Button
+                    onClick={handleConfirmReceipt}
+                    disabled={confirmingReceipt}
+                    loading={confirmingReceipt}
+                    fullWidth
+                    icon={<Icon name="CheckCircleIcon" size={16} variant="outline" />}
+                  >
+                    {confirmingReceipt ? 'Confirmation…' : 'Confirmer la réception'}
+                  </Button>
+                </div>
+              )}
+            </Card>
+          )}
         </div>
-      </div>
+      </Modal>
       {showContact && <ContactModal item={item} onClose={() => setShowContact(false)} />}
       {showOffer && <MakeOfferModal item={item} onClose={() => setShowOffer(false)} />}
     </>
@@ -525,265 +519,356 @@ export default function OccasionPage() {
       return 0;
     });
 
-  const pageContent = (
-    <>
-      <Header />
-      <main className="pt-20">
-        {/* Hero */}
-        <section className="bg-dark-bg text-white py-10 px-4">
-          <div className="max-w-7xl mx-auto">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="w-10 h-10 rounded-xl bg-secondary/20 flex items-center justify-center">
-                <Icon name="TagIcon" size={22} variant="outline" className="text-secondary" />
-              </div>
-              <div>
-                <p className="text-xs font-mono text-secondary/80 tracking-widest uppercase">Marketplace · Seconde main</p>
-                <h1 className="text-2xl font-display font-800 tracking-tight">Matériel d&apos;Occasion</h1>
-              </div>
-            </div>
-            <p className="text-white/60 text-sm max-w-xl">Achetez et vendez du matériel outdoor de seconde main. Offres directes, sans enchères.</p>
-            <div className="grid grid-cols-3 gap-3 max-w-sm mt-4">
-              <div className="bg-white/5 border border-white/10 rounded-xl p-3 text-center">
-                <p className="text-xl font-display font-700 text-secondary">{listings.length}</p>
-                <p className="text-xs text-white/50">Annonces actives</p>
-              </div>
-              <div className="bg-white/5 border border-white/10 rounded-xl p-3 text-center">
-                <p className="text-xl font-display font-700 text-sand-400">
-                  {listings.filter((l) => l.condition === 'comme_neuf' || l.condition === 'tres_bon').length}
-                </p>
-                <p className="text-xs text-white/50">Très bon état</p>
-              </div>
-              <div className="bg-white/5 border border-white/10 rounded-xl p-3 text-center">
-                <p className="text-xl font-display font-700 text-forest-400">{listings.filter((l) => l.negotiable).length}</p>
-                <p className="text-xs text-white/50">Négociables</p>
-              </div>
-            </div>
-          </div>
-        </section>
+  const sortOptions = (
+    <select
+      value={sortBy}
+      onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
+      aria-label="Trier les annonces"
+      className={`${FIELD_CLASS} w-auto shrink-0`}
+    >
+      <option value="recent">Plus récents</option>
+      <option value="price_asc">Prix croissant</option>
+      <option value="price_desc">Prix décroissant</option>
+      <option value="discount">Meilleures remises</option>
+    </select>
+  );
 
-        <div className="max-w-7xl mx-auto px-4 py-8">
-          {/* Search & Filters */}
-          <div className="flex flex-col sm:flex-row gap-3 mb-6">
-            <div className="relative flex-1">
-              <Icon name="MagnifyingGlassIcon" size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-              <input
-                type="text" placeholder="Rechercher un article..."
-                className="input-field pl-9 w-full" value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
-            </div>
-            <select
-              value={sortBy} onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
-              className="px-3 py-2 rounded-lg border border-border bg-card text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
-            >
-              <option value="recent">Plus récents</option>
-              <option value="price_asc">Prix croissant</option>
-              <option value="price_desc">Prix décroissant</option>
-              <option value="discount">Meilleures remises</option>
-            </select>
-            <button onClick={() => setShowSellModal(true)} className="glass-capsule-btn primary flex items-center gap-2 whitespace-nowrap">
-              <Icon name="PlusIcon" size={16} />
-              Vendre un article
-            </button>
-            {user && (
-              <Link href="/compte" className="glass-capsule-btn flex items-center gap-2 whitespace-nowrap">
-                <Icon name="ArchiveBoxIcon" size={16} variant="outline" />
-                Depuis mon compte
-              </Link>
-            )}
-          </div>
+  const sellButton = (
+    <Button
+      onClick={() => setShowSellModal(true)}
+      icon={<Icon name="PlusIcon" size={16} />}
+      className="whitespace-nowrap"
+    >
+      Vendre un article
+    </Button>
+  );
 
-          {/* Category Filters */}
-          <div className="flex flex-wrap gap-2 mb-6">
-            {CATEGORIES.map((cat) => (
-              <button
-                key={cat} onClick={() => setCategory(cat)}
-                className={`glass-capsule-btn !px-3 !py-1.5 !text-sm !font-medium ${category === cat ? 'primary' : ''}`}
-              >
-                {cat}
-              </button>
-            ))}
-          </div>
+  const statsRow = (
+    <div className="grid max-w-sm grid-cols-3 gap-[var(--space-3)]">
+      <Card variant="compact" className="p-[var(--space-3)] text-center">
+        <p className="font-display text-[length:var(--lkv-text-headline)] font-bold text-[color:var(--lkv-secondary)]">{listings.length}</p>
+        <p className="text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">Annonces actives</p>
+      </Card>
+      <Card variant="compact" className="p-[var(--space-3)] text-center">
+        <p className="font-display text-[length:var(--lkv-text-headline)] font-bold text-[color:var(--lkv-warning)]">
+          {listings.filter((l) => l.condition === 'comme_neuf' || l.condition === 'tres_bon').length}
+        </p>
+        <p className="text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">Très bon état</p>
+      </Card>
+      <Card variant="compact" className="p-[var(--space-3)] text-center">
+        <p className="font-display text-[length:var(--lkv-text-headline)] font-bold text-[color:var(--lkv-text-primary)]">{listings.filter((l) => l.negotiable).length}</p>
+        <p className="text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">Négociables</p>
+      </Card>
+    </div>
+  );
 
-          {/* Grid */}
-          {filtered.length === 0 ? (
-            <div className="text-center py-16 text-muted-foreground">
-              <Icon name="TagIcon" size={32} variant="outline" className="mx-auto mb-3 opacity-30" />
-              <p>Aucune annonce trouvée</p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {filtered.map((item) => {
-                const cond = conditionConfig[item.condition];
-                const discount = item.originalPrice > 0 ? Math.round((1 - item.price / item.originalPrice) * 100) : 0;
-                const isVerifiedPurchase = item.gearItemSource === 'achat' || item.gearItemSource === 'kit';
-                return (
-                  <div
-                    key={item.id}
-                    className="glass group flex flex-col cursor-pointer hover:border-primary/20 transition-all"
-                    onClick={() => setSelectedItem(item)}
-                  >
-                    <div className="relative overflow-hidden aspect-[4/3] rounded-t-xl">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={item.image} alt={item.alt} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
-                      <div className="absolute top-2 left-2 flex gap-1.5 flex-wrap">
-                        <span className={cond.pill}>{cond.label}</span>
-                        {isVerifiedPurchase && (
-                          <span className="text-xs px-2 py-0.5 rounded-full bg-sky-500 text-white font-medium flex items-center gap-1">
-                            <Icon name="ShieldCheckIcon" size={10} variant="outline" />
-                            Ajouter
-                          </span>
-                        )}
-                      </div>
-                      {discount > 0 && (
-                        <div className="absolute top-2 right-2 bg-primary rounded-lg px-2 py-1">
-                          <span className="text-white text-xs font-700">-{discount}%</span>
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="p-4 flex flex-col flex-1">
-                      <h3 className="font-display font-700 text-foreground text-sm mb-1 line-clamp-2">{item.title}</h3>
-                      <p className="text-xs text-muted-foreground mb-3 line-clamp-2">{item.description}</p>
-
-                      <div className="flex flex-wrap gap-1 mb-3">
-                        {item.tags.slice(0, 3).map((tag) => (
-                          <span key={tag} className="px-1.5 py-0.5 bg-muted rounded text-[10px] text-muted-foreground">{tag}</span>
-                        ))}
-                      </div>
-
-                      <div className="mt-auto">
-                        <div className="flex items-center justify-between mb-2">
-                          <div className="flex items-baseline gap-2">
-                            <span className="font-display font-800 text-foreground text-xl">{item.price}€</span>
-                            {item.originalPrice > 0 && (
-                              <span className="text-muted-foreground line-through text-xs">{item.originalPrice}€</span>
-                            )}
-                          </div>
-                          <div className="flex items-center gap-1.5">
-                            <div className="w-6 h-6 rounded-full bg-primary/20 text-primary flex items-center justify-center text-xs font-700">
-                              {item.sellerAvatar}
-                            </div>
-                            <div className="text-right">
-                              <p className="text-xs text-muted-foreground">{item.seller}</p>
-                              <p className="text-[10px] text-muted-foreground">{item.sellerTrustScore}% fiabilité</p>
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="flex items-center justify-between text-xs text-muted-foreground">
-                          <span className="flex items-center gap-1">
-                            <Icon name="MapPinIcon" size={10} />
-                            {item.location}
-                          </span>
-                          {item.negotiable && (
-                            <span className="text-green-500 font-500 flex items-center gap-1">
-                              <Icon name="ChatBubbleLeftRightIcon" size={10} variant="outline" />
-                              Offres acceptées
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
+  const sellModal = showSellModal && (
+    <Modal
+      open
+      onOpenChange={(open) => {
+        if (!open) setShowSellModal(false);
+      }}
+      title="Vendre un article"
+    >
+      {!sellSent ? (
+        <>
+          {user && (
+            <div className="mb-[var(--space-4)] flex items-center gap-[var(--space-2)] rounded-[var(--lkv-radius-md)] border border-[color:var(--lkv-info-bg)] bg-[color:var(--lkv-info-bg)] p-[var(--space-3)] text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-info)]">
+              <Icon name="LightBulbIcon" size={14} variant="outline" />
+              Astuce : vendez directement depuis votre{' '}
+              <Link href="/compte" className="font-semibold underline" onClick={() => setShowSellModal(false)}>compte</Link>
+              {' '}pour un prix suggéré automatique.
             </div>
           )}
-        </div>
-      </main>
-
-      {selectedItem && <ItemDetailModal item={selectedItem} onClose={() => setSelectedItem(null)} />}
-
-      {/* Sell Modal */}
-      {showSellModal && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setShowSellModal(false)}>
-          <div className="bg-card border border-border rounded-2xl p-6 max-w-md w-full" onClick={(e) => e.stopPropagation()}>
-            {!sellSent ? (
-              <>
-                <div className="flex items-center justify-between mb-5">
-                  <h3 className="font-display font-700 text-foreground text-lg">Vendre un article</h3>
-                  <button onClick={() => setShowSellModal(false)} className="glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8">
-                    <Icon name="XMarkIcon" size={18} />
-                  </button>
-                </div>
-                {user && (
-                  <div className="mb-4 p-3 bg-sky-50 border border-sky-200 rounded-xl text-sky-700 text-xs flex items-center gap-2">
-                    <Icon name="LightBulbIcon" size={14} variant="outline" />
-                    Astuce : vendez directement depuis votre{' '}
-                    <Link href="/compte" className="font-600 underline" onClick={() => setShowSellModal(false)}>compte</Link>
-                    {' '}pour un prix suggéré automatique.
-                  </div>
-                )}
-                <div className="space-y-3">
-                  <input type="text" placeholder="Titre de l'annonce" className="input-field w-full" value={sellForm.title} onChange={e => setSellForm(p => ({ ...p, title: e.target.value }))} />
-                  <input type="number" placeholder="Prix (€)" className="input-field w-full" value={sellForm.price} onChange={e => setSellForm(p => ({ ...p, price: e.target.value }))} />
-                  <textarea placeholder="Description de l'article..." className="input-field resize-none w-full" rows={3} value={sellForm.description} onChange={e => setSellForm(p => ({ ...p, description: e.target.value }))} />
-                </div>
-                <div className="flex gap-3 mt-4">
-                  <button onClick={() => setShowSellModal(false)} className="glass-capsule-btn flex-1 justify-center py-3">Annuler</button>
-                  <button
-                    disabled={sellSaving || !sellForm.title.trim()}
-                    onClick={async () => {
-                      setSellSaving(true);
-                      try {
-                        const supabase = createClient();
-                        const { data: { user: authUser } } = await supabase.auth.getUser();
-                        await supabase.from('occasion_items').insert({
-                          seller_id: authUser?.id ?? null,
-                          title: sellForm.title.trim(),
-                          description: sellForm.description.trim(),
-                          price: Number(sellForm.price) || 0,
-                          status: 'active',
-                        });
-                        setSellSent(true);
-                      } catch {
-                        setSellSent(true);
-                      } finally {
-                        setSellSaving(false);
-                      }
-                    }}
-                    className="glass-capsule-btn primary flex-1 justify-center py-3"
-                  >
-                    {sellSaving ? 'Publication...' : 'Publier'}
-                  </button>
-                </div>
-              </>
-            ) : (
-              <div className="text-center py-6">
-                <div className="w-16 h-16 rounded-full bg-forest-100 flex items-center justify-center mx-auto mb-4">
-                  <Icon name="CheckIcon" size={28} className="text-forest-600" />
-                </div>
-                <h3 className="font-display font-700 text-foreground text-lg mb-2">Annonce publiée !</h3>
-                <p className="text-sm text-muted-foreground mb-6">Votre annonce est maintenant visible.</p>
-                <button onClick={() => { setSellSent(false); setShowSellModal(false); }} className="glass-capsule-btn primary justify-center px-8 py-3">Fermer</button>
-              </div>
-            )}
+          <div className="space-y-[var(--space-3)]">
+            <input type="text" placeholder="Titre de l'annonce" aria-label="Titre de l'annonce" className={FIELD_CLASS} value={sellForm.title} onChange={e => setSellForm(p => ({ ...p, title: e.target.value }))} />
+            <input type="number" placeholder="Prix (€)" aria-label="Prix" className={FIELD_CLASS} value={sellForm.price} onChange={e => setSellForm(p => ({ ...p, price: e.target.value }))} />
+            <textarea placeholder="Description de l'article..." aria-label="Description" className={`${FIELD_CLASS} resize-none`} rows={3} value={sellForm.description} onChange={e => setSellForm(p => ({ ...p, description: e.target.value }))} />
           </div>
+          <div className="mt-[var(--space-4)] flex gap-[var(--space-3)]">
+            <Button variant="secondary" className="flex-1" onClick={() => setShowSellModal(false)}>Annuler</Button>
+            <Button
+              className="flex-1"
+              disabled={sellSaving || !sellForm.title.trim()}
+              loading={sellSaving}
+              onClick={async () => {
+                setSellSaving(true);
+                try {
+                  const supabase = createClient();
+                  const { data: { user: authUser } } = await supabase.auth.getUser();
+                  await supabase.from('occasion_items').insert({
+                    seller_id: authUser?.id ?? null,
+                    title: sellForm.title.trim(),
+                    description: sellForm.description.trim(),
+                    price: Number(sellForm.price) || 0,
+                    status: 'active',
+                  });
+                  setSellSent(true);
+                } catch {
+                  setSellSent(true);
+                } finally {
+                  setSellSaving(false);
+                }
+              }}
+            >
+              {sellSaving ? 'Publication...' : 'Publier'}
+            </Button>
+          </div>
+        </>
+      ) : (
+        <div className="py-[var(--space-6)] text-center">
+          <div className="mx-auto mb-[var(--space-4)] flex h-16 w-16 items-center justify-center rounded-full bg-[color:var(--lkv-success-bg)]">
+            <Icon name="CheckIcon" size={28} className="text-[color:var(--lkv-text-secondary)]" />
+          </div>
+          <h3 className="mb-[var(--space-2)] font-display text-[length:var(--lkv-text-headline)] font-bold text-[color:var(--lkv-text-primary)]">Annonce publiée !</h3>
+          <p className="mb-[var(--space-6)] text-[length:var(--lkv-text-body-sm)] text-[color:var(--lkv-text-muted)]">Votre annonce est maintenant visible.</p>
+          <Button onClick={() => { setSellSent(false); setShowSellModal(false); }} className="px-[var(--space-8)]">Fermer</Button>
         </div>
       )}
-
-      <Footer />
-    </>
+    </Modal>
   );
 
   return (
     <>
-      {/* DESKTOP */}
+      {/* ── DESKTOP ── */}
       <div className="hidden md:block">
-        <div className="min-h-screen bg-background">
-          {pageContent}
+        <div className="min-h-screen bg-transparent">
+          <Header />
+          <main className="pt-20">
+            {/* Hero */}
+            <section className="bg-[color:var(--lkv-primary)] px-[var(--space-4)] py-[var(--space-10)] text-[color:var(--lkv-text-inverted)]">
+              <div className="mx-auto max-w-7xl">
+                <div className="mb-[var(--space-3)] flex items-center gap-[var(--space-3)]">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-[var(--lkv-radius-md)] bg-[color:var(--lkv-secondary-subtle)]">
+                    <Icon name="TagIcon" size={22} variant="outline" className="text-[color:var(--lkv-secondary)]" />
+                  </div>
+                  <div>
+                    <p className="font-mono text-[length:var(--lkv-text-caption)] uppercase tracking-[var(--tracking-wide)] text-[color:var(--lkv-secondary)]">Marketplace · Seconde main</p>
+                    <h1 className="font-display text-[length:var(--lkv-text-title-sm)] font-extrabold tracking-[var(--lkv-tracking-title)]">Matériel d&apos;Occasion</h1>
+                  </div>
+                </div>
+                <p className="max-w-xl text-[length:var(--lkv-text-body-sm)] text-[color:var(--lkv-text-inverted)] opacity-60">Achetez et vendez du matériel outdoor de seconde main. Offres directes, sans enchères.</p>
+                <div className="mt-[var(--space-4)]">{statsRow}</div>
+              </div>
+            </section>
+
+            <div className="mx-auto max-w-7xl px-[var(--space-4)] py-[var(--space-8)]">
+              {/* Search & Filters */}
+              <div className="mb-[var(--space-6)] flex flex-col gap-[var(--space-3)] sm:flex-row">
+                <SearchField
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  onClear={() => setSearch('')}
+                  placeholder="Rechercher un article..."
+                  containerClassName="flex-1"
+                />
+                {sortOptions}
+                {sellButton}
+                {user && (
+                  <Link
+                    href="/compte"
+                    className="inline-flex min-h-[var(--control-height-md)] items-center gap-[var(--space-2)] whitespace-nowrap rounded-full border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] px-[var(--space-4)] text-[length:var(--lkv-text-body-sm)] font-semibold text-[color:var(--card-content)] transition-colors hover:bg-[color:var(--lkv-hover-surface)]"
+                  >
+                    <Icon name="ArchiveBoxIcon" size={16} variant="outline" />
+                    Depuis mon compte
+                  </Link>
+                )}
+              </div>
+
+              {/* Category Filters */}
+              <Tabs
+                options={CATEGORIES.map((cat) => ({ id: cat, label: cat }))}
+                value={category}
+                onChange={setCategory}
+                variant="scrollable"
+                ariaLabel="Catégories d'occasion"
+                className="mb-[var(--space-6)]"
+              />
+
+              {/* Grid */}
+              {filtered.length === 0 ? (
+                <EmptyState
+                  icon={<Icon name="TagIcon" size={32} variant="outline" />}
+                  title="Aucune annonce trouvée"
+                  description="Modifiez votre recherche ou choisissez une autre catégorie."
+                />
+              ) : (
+                <div className="grid grid-cols-1 gap-[var(--space-4)] sm:grid-cols-2 lg:grid-cols-3">
+                  {filtered.map((item) => {
+                    const cond = conditionConfig[item.condition];
+                    const discount = item.originalPrice > 0 ? Math.round((1 - item.price / item.originalPrice) * 100) : 0;
+                    const isVerifiedPurchase = item.gearItemSource === 'achat' || item.gearItemSource === 'kit';
+                    return (
+                      <ProductCard
+                        key={item.id}
+                        image={item.image}
+                        imageAlt={item.alt}
+                        badges={
+                          <>
+                            <Badge tone={cond.tone}>{cond.label}</Badge>
+                            {isVerifiedPurchase && (
+                              <Badge tone="info" className="gap-[var(--space-1)]">
+                                <Icon name="ShieldCheckIcon" size={10} variant="outline" />
+                                Acheté sur Le Kit du Voyageur
+                              </Badge>
+                            )}
+                          </>
+                        }
+                        corner={discount > 0 ? <Badge tone="warn"><span className="font-bold">-{discount}%</span></Badge> : undefined}
+                        title={item.title}
+                        secondary={item.description}
+                        tags={item.tags}
+                        price={`${item.price}€`}
+                        aside={
+                          <>
+                            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[color:var(--lkv-primary-subtle)] text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-primary)]">
+                              {item.sellerAvatar}
+                            </span>
+                            <span className="text-right">
+                              <span className="block text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-muted)]">{item.seller}</span>
+                              <span className="block text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">{item.sellerTrustScore}% fiabilité</span>
+                            </span>
+                          </>
+                        }
+                        meta={
+                          <>
+                            <span className="flex items-center gap-[var(--space-1)]">
+                              <Icon name="MapPinIcon" size={10} />
+                              {item.location}
+                            </span>
+                            {item.negotiable && (
+                              <span className="flex items-center gap-[var(--space-1)] font-medium text-[color:var(--lkv-success)]">
+                                <Icon name="ChatBubbleLeftRightIcon" size={10} variant="outline" />
+                                Offres acceptées
+                              </span>
+                            )}
+                          </>
+                        }
+                        ctaLabel="Voir l'annonce"
+                        onClick={() => setSelectedItem(item)}
+                      />
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </main>
+
+          {selectedItem && <ItemDetailModal item={selectedItem} onClose={() => setSelectedItem(null)} />}
+
+          {sellModal}
+
+          <Footer />
         </div>
       </div>
 
-      {/* MOBILE */}
+      {/* ── MOBILE ── */}
       <div className="block md:hidden">
         <MobilePageShell>
-          <div className="min-h-screen bg-background">
-            {pageContent}
+          <div className="min-h-screen bg-transparent">
+            <div className="px-[var(--space-4)] pb-[var(--space-4)] pt-[var(--space-4)]">
+              <div className="mb-[var(--space-4)] flex items-center gap-[var(--space-3)]">
+                <div className="flex h-9 w-9 items-center justify-center rounded-[var(--lkv-radius-md)] bg-[color:var(--lkv-primary)] text-[color:var(--lkv-text-inverted)]">
+                  <Icon name="TagIcon" size={16} variant="outline" />
+                </div>
+                <div>
+                  <p className="m-0 mb-0.5 font-mono text-[length:var(--lkv-text-caption-2)] uppercase tracking-[var(--tracking-caps)] text-[color:var(--lkv-text-muted)]">Occasion</p>
+                  <h1 className="m-0 text-[length:var(--lkv-text-headline)] font-bold text-[color:var(--lkv-text-primary)]">Matériel d&apos;Occasion</h1>
+                </div>
+              </div>
+
+              <div className="mb-[var(--space-4)] flex gap-[var(--space-2)]">
+                <SearchField
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  onClear={() => setSearch('')}
+                  placeholder="Rechercher..."
+                  containerClassName="flex-1"
+                />
+                {sortOptions}
+              </div>
+
+              <div className="mb-[var(--space-4)]">{statsRow}</div>
+
+              <Tabs
+                options={CATEGORIES.map((cat) => ({ id: cat, label: cat }))}
+                value={category}
+                onChange={setCategory}
+                variant="scrollable"
+                ariaLabel="Catégories d'occasion"
+                className="mb-[var(--space-3)]"
+              />
+
+              {filtered.length === 0 ? (
+                <Card className="p-[var(--space-10)] text-center">
+                  <p className="text-[length:var(--lkv-text-body-sm)] text-[color:var(--lkv-text-muted)]">Aucune annonce trouvée</p>
+                </Card>
+              ) : (
+                <div className="flex flex-col gap-[var(--space-3)]">
+                  {filtered.map((item) => {
+                    const cond = conditionConfig[item.condition];
+                    const discount = item.originalPrice > 0 ? Math.round((1 - item.price / item.originalPrice) * 100) : 0;
+                    const isVerifiedPurchase = item.gearItemSource === 'achat' || item.gearItemSource === 'kit';
+                    return (
+                      <ProductCard
+                        key={item.id}
+                        image={item.image}
+                        imageAlt={item.alt}
+                        badges={
+                          <>
+                            <Badge tone={cond.tone}>{cond.label}</Badge>
+                            {isVerifiedPurchase && (
+                              <Badge tone="info" className="gap-[var(--space-1)]">
+                                <Icon name="ShieldCheckIcon" size={10} variant="outline" />
+                                Acheté sur Le Kit du Voyageur
+                              </Badge>
+                            )}
+                          </>
+                        }
+                        corner={discount > 0 ? <Badge tone="warn"><span className="font-bold">-{discount}%</span></Badge> : undefined}
+                        title={item.title}
+                        secondary={item.description}
+                        tags={item.tags}
+                        price={`${item.price}€`}
+                        aside={
+                          <>
+                            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[color:var(--lkv-primary-subtle)] text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-primary)]">
+                              {item.sellerAvatar}
+                            </span>
+                            <span className="text-right">
+                              <span className="block text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-muted)]">{item.seller}</span>
+                              <span className="block text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">{item.sellerTrustScore}% fiabilité</span>
+                            </span>
+                          </>
+                        }
+                        meta={
+                          <>
+                            <span className="flex items-center gap-[var(--space-1)]">
+                              <Icon name="MapPinIcon" size={10} />
+                              {item.location}
+                            </span>
+                            {item.negotiable && (
+                              <span className="flex items-center gap-[var(--space-1)] font-medium text-[color:var(--lkv-success)]">
+                                <Icon name="ChatBubbleLeftRightIcon" size={10} variant="outline" />
+                                Offres acceptées
+                              </span>
+                            )}
+                          </>
+                        }
+                        ctaLabel="Voir l'annonce"
+                        onClick={() => setSelectedItem(item)}
+                      />
+                    );
+                  })}
+                </div>
+              )}
+
+              <Button fullWidth className="mt-[var(--space-4)]" onClick={() => setShowSellModal(true)}>
+                + Vendre un article
+              </Button>
+            </div>
           </div>
         </MobilePageShell>
-        
       </div>
     </>
   );

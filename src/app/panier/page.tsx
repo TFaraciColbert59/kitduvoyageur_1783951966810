@@ -4,14 +4,16 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import WeightGauge from '@/components/WeightGauge';
 import Icon from '@/components/ui/AppIcon';
-import { Button } from '@/components/ui';
+import { Badge, Button, Card, Divider, EmptyState, IconButton, LoadingState } from '@/components/ui';
 import { lkvConfirm } from '@/components/ui/dialogs';
 import { getCart, updateQuantity, removeFromCart, getCartTotals, applyLoyaltyFree, removeLoyaltyFree, CartItem } from '@/lib/cart';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
+
+const FIELD_CLASS =
+  'w-full rounded-[var(--lkv-radius-md)] border border-[color:var(--lkv-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[var(--space-2)] text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-primary)] placeholder:text-[color:var(--lkv-text-muted)] focus:outline-none focus:ring-2 focus:ring-[color:var(--lkv-focus-ring)]';
 
 export default function PanierPage() {
   const [items, setItems] = useState<CartItem[]>([]);
@@ -124,9 +126,7 @@ export default function PanierPage() {
     return (
       <div className="min-h-screen bg-transparent">
         <Header />
-        <div className="pt-24 flex items-center justify-center min-h-[60vh]">
-          <div className="w-8 h-8 border-2 border-[var(--lkv-primary)] border-t-transparent rounded-full animate-spin" aria-label="Chargement du panier" />
-        </div>
+        <LoadingState label="Chargement du panier…" />
         <Footer />
       </div>
     );
@@ -135,179 +135,175 @@ export default function PanierPage() {
   return (
     <>
       {/* ── DESKTOP VIEW (fullscreen : page = 100dvh, scroll interne) ── */}
-      <div className="hidden md:flex flex-col h-[100dvh] overflow-hidden bg-transparent text-[#EEF3EC]">
+      <div className="hidden h-[100dvh] flex-col overflow-hidden bg-transparent md:flex">
         <Header />
 
-        <div className="flex-1 min-h-0 overflow-y-auto w-full pt-24 pb-6">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
+        <div className="min-h-0 w-full flex-1 overflow-y-auto pb-6 pt-24">
+          <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
             {items.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-20 gap-6 text-center">
-                <div className="w-20 h-20 rounded-full glass flex items-center justify-center">
-                  <Icon name="ShoppingBagIcon" size={36} className="text-[var(--lkv-primary)]/40" />
-                </div>
-                <div>
-                  <p className="font-display font-800 text-3xl text-[#EEF3EC] mb-2">Votre <em className="italic font-400 text-[#A9C6B0]">panier.</em> est vide</p>
-                  <p className="text-[#CCE0D4]">Explorez notre catalogue pour trouver votre équipement.</p>
-                </div>
-                <Link href="/boutique" className="glass-capsule-btn mt-4">
-                  Voir le catalogue
-                </Link>
-              </div>
+              <EmptyState
+                icon={<Icon name="ShoppingBagIcon" size={36} />}
+                title="Votre panier est vide"
+                description="Explorez notre catalogue pour trouver votre équipement."
+                actionLabel="Voir le catalogue"
+                actionHref="/boutique"
+              />
             ) : (
               <>
-                <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-4">
-                  <h1 className="font-display font-800 text-4xl text-[#EEF3EC]">
-                    Votre <em className="italic font-400 text-[#A9C6B0]">panier.</em>
+                <div className="mb-[var(--space-8)] flex flex-col justify-between gap-[var(--space-4)] md:flex-row md:items-end">
+                  <h1 className="font-display text-[length:var(--lkv-text-title-lg)] font-extrabold text-[color:var(--lkv-text-primary)]">
+                    Votre <em className="font-normal italic text-[color:var(--lkv-secondary)]">panier.</em>
                   </h1>
-                  <p className="text-[10px] font-semibold uppercase tracking-wider text-[#CCE0D4]">
-                    {totalItems} article{totalItems > 1 ? 's' : ''} · {totalWeightG >= 1000 ? `${(totalWeightG / 1000).toFixed(1).replace('.', ',')} kg` : `${totalWeightG} g`} · sous-total <span className="font-mono font-bold text-[#EEF3EC]">{totalPriceEur.toFixed(0)} €</span>
+                  <p className="text-[length:var(--lkv-text-caption-2)] font-semibold uppercase tracking-[var(--tracking-wide)] text-[color:var(--lkv-text-muted)]">
+                    {totalItems} article{totalItems > 1 ? 's' : ''} · {totalWeightG >= 1000 ? `${(totalWeightG / 1000).toFixed(1).replace('.', ',')} kg` : `${totalWeightG} g`} · sous-total <span className="font-mono font-bold text-[color:var(--lkv-text-primary)]">{totalPriceEur.toFixed(0)} €</span>
                   </p>
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                  <div className="lg:col-span-7 xl:col-span-8 flex flex-col gap-4">
+                <div className="grid grid-cols-1 gap-[var(--space-6)] lg:grid-cols-12">
+                  <div className="flex flex-col gap-[var(--space-4)] lg:col-span-7 xl:col-span-8">
 
                     {/* Cart items */}
                     {items.map((item) => (
-                      <div key={item.id} className={`glass p-6 flex gap-6 transition-all duration-300 ${removingId === item.id ? 'opacity-0 scale-95' : 'opacity-100 scale-100'}`}>
-                        <div className="w-32 h-32 flex-shrink-0 rounded-2xl overflow-hidden bg-white/40 border border-white/60">
+                      <Card
+                        key={item.id}
+                        className={`flex gap-[var(--space-6)] p-[var(--space-6)] transition-all duration-300 ${removingId === item.id ? 'scale-95 opacity-0' : 'scale-100 opacity-100'}`}
+                      >
+                        <div className="h-32 w-32 flex-shrink-0 overflow-hidden rounded-[var(--lkv-radius-lg)] border border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-muted)]">
                           {/* eslint-disable-next-line @next/next/no-img-element */}
-                          {item.image ? <img src={item.image} alt={item.name} className="w-full h-full object-cover mix-blend-multiply" /> : null}
+                          {item.image ? <img src={item.image} alt={item.name} className="h-full w-full object-cover mix-blend-multiply" /> : null}
                         </div>
 
-                        <div className="flex-1 flex flex-col justify-between min-w-0">
-                          <div className="flex justify-between items-start gap-4">
+                        <div className="flex min-w-0 flex-1 flex-col justify-between">
+                          <div className="flex items-start justify-between gap-[var(--space-4)]">
                             <div>
-                              <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--lkv-text-muted)] mb-1">{item.category || 'PORTAGE'}</p>
-                              <Link href={`/produit/${item.slug}`} className="font-display font-700 text-[var(--lkv-primary)] text-xl hover:text-[var(--lkv-forest-600)] transition-colors line-clamp-2">
+                              <p className="mb-[var(--space-1)] text-[length:var(--lkv-text-caption-2)] font-semibold uppercase tracking-[var(--tracking-wide)] text-[color:var(--lkv-text-muted)]">{item.category || 'PORTAGE'}</p>
+                              <Link href={`/produit/${item.slug}`} className="font-display text-[length:var(--lkv-text-headline)] font-bold text-[color:var(--lkv-text-primary)] transition-colors hover:text-[color:var(--lkv-secondary)]">
                                 {item.name.split(' ').map((word, i, arr) =>
-                                  i >= arr.length - 2 ? <em key={i} className="italic font-400 text-[var(--lkv-forest-600)] ml-1">{word}</em> : <span key={i} className="mr-1">{word}</span>
+                                  i >= arr.length - 2 ? <em key={i} className="ml-[var(--space-1)] font-normal italic text-[color:var(--lkv-text-secondary)]">{word}</em> : <span key={i} className="mr-[var(--space-1)]">{word}</span>
                                 )}
                               </Link>
-                              <div className="flex items-center gap-2 mt-2">
-                                <span className="glass-pill">
-                                  <span className="w-2 h-2 rounded-full bg-[var(--lkv-primary)] inline-block" />
+                              <div className="mt-[var(--space-2)] flex items-center gap-[var(--space-2)]">
+                                <Badge tone="sage">
+                                  <span className="inline-block h-2 w-2 rounded-full bg-[color:var(--lkv-primary)]" />
                                   {item.weightG >= 1000 ? `${(item.weightG / 1000).toFixed(1).replace('.', ',')} kg` : `${item.weightG} g`}
-                                </span>
+                                </Badge>
                               </div>
                             </div>
 
                             <div className="flex flex-col items-end">
-                              <div className="glass-capsule-bar">
-                                <button onClick={() => handleQuantity(item.id, item.quantity - 1)} aria-label="Réduire la quantité" className="glass-circle-btn !w-7 !h-7 !min-w-7 !min-h-7">
+                              <div className="flex items-center gap-[var(--space-1)] rounded-full border border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-muted)] p-[var(--space-1)]">
+                                <IconButton variant="ghost" onClick={() => handleQuantity(item.id, item.quantity - 1)} aria-label="Réduire la quantité">
                                   <Icon name="MinusIcon" size={12} />
-                                </button>
-                                <span className="w-4 text-center font-600 text-sm text-[var(--lkv-primary)]">{item.quantity}</span>
-                                <button onClick={() => handleQuantity(item.id, item.quantity + 1)} aria-label="Augmenter la quantité" className="glass-circle-btn !w-7 !h-7 !min-w-7 !min-h-7">
+                                </IconButton>
+                                <span className="w-4 text-center text-[length:var(--lkv-text-body-sm)] font-semibold text-[color:var(--lkv-text-primary)]">{item.quantity}</span>
+                                <IconButton variant="ghost" onClick={() => handleQuantity(item.id, item.quantity + 1)} aria-label="Augmenter la quantité">
                                   <Icon name="PlusIcon" size={12} />
-                                </button>
+                                </IconButton>
                               </div>
                             </div>
                           </div>
 
-                          <div className="flex justify-between items-end mt-4">
-                            <div className="flex gap-4">
-                              <button className="glass-capsule-btn !min-h-[34px] !py-1 !px-3 !text-xs !font-bold">
-                                <Icon name="BookmarkIcon" size={14} variant="outline" />
+                          <div className="mt-[var(--space-4)] flex items-end justify-between">
+                            <div className="flex gap-[var(--space-4)]">
+                              <Button variant="secondary" size="sm" icon={<Icon name="BookmarkIcon" size={14} variant="outline" />}>
                                 Enregistrer
-                              </button>
-                              <button onClick={() => handleRemoveRequest(item.id)} className="glass-capsule-btn !min-h-[34px] !py-1 !px-3 !text-xs !font-bold">
-                                <Icon name="TrashIcon" size={14} variant="outline" />
+                              </Button>
+                              <Button variant="secondary" size="sm" onClick={() => handleRemoveRequest(item.id)} icon={<Icon name="TrashIcon" size={14} variant="outline" />}>
                                 Retirer
-                              </button>
+                              </Button>
                             </div>
 
                             <div className="text-right">
-                              <p className="font-mono font-bold text-[var(--lkv-primary)] text-xl">{(item.priceEur * item.quantity).toFixed(0)} €</p>
-                              <p className="text-[10px] text-[var(--lkv-text-muted)]">TVA incluse</p>
+                              <p className="font-mono text-[length:var(--lkv-text-headline)] font-bold text-[color:var(--lkv-text-primary)]">{(item.priceEur * item.quantity).toFixed(0)} €</p>
+                              <p className="text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">TVA incluse</p>
                             </div>
                           </div>
                         </div>
-                      </div>
+                      </Card>
                     ))}
 
                     {/* Upsell Section */}
-                    <div className="glass-sub-card p-6 flex items-center justify-between gap-6" style={{ boxShadow: 'none' }}>
-                      <div className="flex items-center gap-6 min-w-0">
-                        <div className="w-20 h-20 flex-shrink-0 rounded-2xl bg-white/50 mix-blend-multiply overflow-hidden flex items-center justify-center p-2">
-                          <img src="https://images.unsplash.com/photo-1572007886481-64539dc31d04?w=400&q=80" alt="Lampe" className="w-full h-full object-cover rounded-xl" />
+                    <Card variant="compact" className="flex items-center justify-between gap-[var(--space-6)] p-[var(--space-6)]">
+                      <div className="flex min-w-0 items-center gap-[var(--space-6)]">
+                        <div className="flex h-20 w-20 flex-shrink-0 items-center justify-center overflow-hidden rounded-[var(--lkv-radius-lg)] bg-[color:var(--lkv-surface-muted)] p-[var(--space-2)]">
+                          <img src="https://images.unsplash.com/photo-1572007886481-64539dc31d04?w=400&q=80" alt="Lampe" className="h-full w-full rounded-[var(--lkv-radius-md)] object-cover" />
                         </div>
                         <div className="min-w-0">
-                          <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--lkv-text-muted)] mb-1">ON A PENSÉ POUR VOUS</p>
-                          <p className="font-display font-700 text-lg text-[var(--lkv-primary)]">Lampe frontale <em className="italic font-400 text-[var(--lkv-forest-600)]">350 lumens.</em></p>
-                          <p className="text-xs text-[var(--lkv-text-muted)] mt-1">Autonomie 45 h, batterie rechargeable. Souvent oubliée, jamais regrettée.</p>
+                          <p className="mb-[var(--space-1)] text-[length:var(--lkv-text-caption-2)] font-semibold uppercase tracking-[var(--tracking-wide)] text-[color:var(--lkv-text-muted)]">ON A PENSÉ POUR VOUS</p>
+                          <p className="font-display text-[length:var(--lkv-text-headline)] font-bold text-[color:var(--lkv-text-primary)]">Lampe frontale <em className="font-normal italic text-[color:var(--lkv-text-secondary)]">350 lumens.</em></p>
+                          <p className="mt-[var(--space-1)] text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-muted)]">Autonomie 45 h, batterie rechargeable. Souvent oubliée, jamais regrettée.</p>
                         </div>
                       </div>
-                      <button className="glass-capsule-btn flex-shrink-0">
-                        84 € <Icon name="PlusIcon" size={14} />
-                      </button>
-                    </div>
+                      <Button variant="secondary" size="sm" className="flex-shrink-0" icon={<Icon name="PlusIcon" size={14} />} iconPosition="trailing">
+                        84 €
+                      </Button>
+                    </Card>
                   </div>
 
                   {/* Order summary */}
                   <div className="lg:col-span-5 xl:col-span-4">
-                    <div className="glass p-8">
-                      <h3 className="font-display font-700 text-xl text-[var(--lkv-primary)] mb-6">Récapitulatif</h3>
+                    <Card className="p-[var(--space-8)]">
+                      <h3 className="mb-[var(--space-6)] font-display text-[length:var(--lkv-text-headline)] font-bold text-[color:var(--lkv-text-primary)]">Récapitulatif</h3>
 
-                      <div className="space-y-4 mb-8">
-                        <div className="flex justify-between text-sm">
-                          <span className="text-[var(--lkv-text-muted)]">Sous-total ({totalItems} articles)</span>
-                          <span className="font-mono font-bold text-[var(--lkv-primary)]">{totalPriceEur.toFixed(0)} €</span>
+                      <div className="mb-[var(--space-8)] space-y-[var(--space-4)]">
+                        <div className="flex justify-between text-[length:var(--lkv-text-body-sm)]">
+                          <span className="text-[color:var(--lkv-text-muted)]">Sous-total ({totalItems} articles)</span>
+                          <span className="font-mono font-bold text-[color:var(--lkv-text-primary)]">{totalPriceEur.toFixed(0)} €</span>
                         </div>
-                        <div className="flex justify-between text-sm">
-                          <span className="text-[var(--lkv-text-muted)]">Poids total</span>
-                          <span className="font-mono font-bold text-[var(--lkv-primary)]">{totalWeightG >= 1000 ? `${(totalWeightG / 1000).toFixed(1).replace('.', ',')} kg` : `${totalWeightG} g`}</span>
+                        <div className="flex justify-between text-[length:var(--lkv-text-body-sm)]">
+                          <span className="text-[color:var(--lkv-text-muted)]">Poids total</span>
+                          <span className="font-mono font-bold text-[color:var(--lkv-text-primary)]">{totalWeightG >= 1000 ? `${(totalWeightG / 1000).toFixed(1).replace('.', ',')} kg` : `${totalWeightG} g`}</span>
                         </div>
-                        <div className="flex justify-between text-sm">
-                          <span className="text-[var(--lkv-text-muted)]">Livraison suivie</span>
-                          <span className="font-mono font-bold text-[var(--lkv-primary)]">{shippingEur === 0 ? 'Offerte' : `${shippingEur.toFixed(2)} €`}</span>
+                        <div className="flex justify-between text-[length:var(--lkv-text-body-sm)]">
+                          <span className="text-[color:var(--lkv-text-muted)]">Livraison suivie</span>
+                          <span className="font-mono font-bold text-[color:var(--lkv-text-primary)]">{shippingEur === 0 ? 'Offerte' : `${shippingEur.toFixed(2)} €`}</span>
                         </div>
-                        <div className="flex justify-between text-sm">
-                          <span className="text-[var(--lkv-text-muted)]">Estimation TVA</span>
-                          <span className="font-600 text-[var(--lkv-text-muted)]">Incluse</span>
+                        <div className="flex justify-between text-[length:var(--lkv-text-body-sm)]">
+                          <span className="text-[color:var(--lkv-text-muted)]">Estimation TVA</span>
+                          <span className="font-semibold text-[color:var(--lkv-text-muted)]">Incluse</span>
                         </div>
                       </div>
 
-                      <div className="flex gap-2 mb-8">
-                        <input type="text" placeholder="Code promo" className="glass-input flex-1 min-w-0" />
+                      <div className="mb-[var(--space-8)] flex gap-[var(--space-2)]">
+                        <input type="text" placeholder="Code promo" aria-label="Code promo" className={`${FIELD_CLASS} min-w-0 flex-1`} />
                         <Button variant="secondary" size="sm">Appliquer</Button>
                       </div>
 
-                      <div className="flex justify-between items-end font-display font-800 text-2xl pt-6 border-t border-white/50 mb-6">
-                        <span className="text-xl text-[var(--lkv-primary)]">Total à payer</span>
-                        <span className="font-mono font-bold text-[var(--lkv-primary)]">{grandTotal.toFixed(0)} €</span>
+                      <div className="mb-[var(--space-6)] flex items-end justify-between border-t border-[color:var(--lkv-border)] pt-[var(--space-6)] font-display text-[length:var(--lkv-text-title-sm)] font-extrabold">
+                        <span className="text-[length:var(--lkv-text-headline)] text-[color:var(--lkv-text-primary)]">Total à payer</span>
+                        <span className="font-mono font-bold text-[color:var(--lkv-text-primary)]">{grandTotal.toFixed(0)} €</span>
                       </div>
 
-                      <Link href="/checkout" className="block w-full mb-4">
+                      <Link href="/checkout" className="mb-[var(--space-4)] block w-full">
                         <Button variant="primary" size="lg" fullWidth>
                           Passer au paiement →
                         </Button>
                       </Link>
-                      <p className="text-center text-[10px] text-[var(--lkv-text-muted)] flex items-center justify-center gap-1.5 mb-8">
+                      <p className="mb-[var(--space-8)] flex items-center justify-center gap-[var(--space-1)] text-center text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">
                         <Icon name="LockClosedIcon" size={12} /> Paiement sécurisé Stripe
                       </p>
 
-                      <div className="flex justify-center gap-2 mb-6 opacity-60">
+                      <div className="mb-[var(--space-6)] flex justify-center gap-[var(--space-2)] opacity-60">
                         {/* Fake payment logos */}
-                        <div className="glass-pill px-3 py-1.5 text-[10px] font-600 font-mono">VISA</div>
-                        <div className="glass-pill px-3 py-1.5 text-[10px] font-600 font-mono">MC</div>
-                        <div className="glass-pill px-3 py-1.5 text-[10px] font-600 font-mono">AMEX</div>
-                        <div className="glass-pill px-3 py-1.5 text-[10px] font-600 font-mono">Apple Pay</div>
+                        <Badge tone="stone" className="font-mono">VISA</Badge>
+                        <Badge tone="stone" className="font-mono">MC</Badge>
+                        <Badge tone="stone" className="font-mono">AMEX</Badge>
+                        <Badge tone="stone" className="font-mono">Apple Pay</Badge>
                       </div>
 
-                      <div className="glass-sub-card rounded-md p-4 flex justify-between gap-2 text-center text-[10px] font-600 text-[var(--lkv-text-muted)]" style={{ boxShadow: 'none' }}>
-                        <div className="flex flex-col items-center gap-2 flex-1">
+                      <Card variant="compact" className="flex justify-between gap-[var(--space-2)] text-center text-[length:var(--lkv-text-caption-2)] font-semibold text-[color:var(--lkv-text-muted)]">
+                        <div className="flex flex-1 flex-col items-center gap-[var(--space-2)]">
                           <Icon name="StarIcon" size={16} /> Garantie à vie
                         </div>
-                        <div className="flex flex-col items-center gap-2 flex-1">
+                        <div className="flex flex-1 flex-col items-center gap-[var(--space-2)]">
                           <Icon name="ArrowPathIcon" size={16} /> Retour 30 j.
                         </div>
-                        <div className="flex flex-col items-center gap-2 flex-1">
+                        <div className="flex flex-1 flex-col items-center gap-[var(--space-2)]">
                           <Icon name="MapPinIcon" size={16} /> 100 % Europe
                         </div>
-                      </div>
+                      </Card>
 
-                    </div>
+                    </Card>
                   </div>
                 </div>
               </>
@@ -322,55 +318,58 @@ export default function PanierPage() {
       <div className="block md:hidden">
         <MobilePageShell background="transparent">
           {items.length === 0 ? (
-            <div style={{ padding: '60px 20px', textAlign: 'center' }}>
-              <div style={{ fontSize: '22px', fontWeight: 500, color: '#EEF3EC', marginBottom: '8px' }}>
-                Votre <em style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic', color: '#A9C6B0', fontWeight: 400 }}>panier</em> est vide
-              </div>
-              <Link href="/boutique" className="glass-capsule-btn" style={{ marginTop: '16px', textDecoration: 'none' }}>
-                Voir le catalogue
-              </Link>
-            </div>
+            <EmptyState
+              icon={<Icon name="ShoppingBagIcon" size={32} />}
+              title="Votre panier est vide"
+              description="Explorez notre catalogue pour trouver votre équipement."
+              actionLabel="Voir le catalogue"
+              actionHref="/boutique"
+            />
           ) : (
             <>
               {/* Cart header */}
-              <div style={{ padding: '12px 16px 16px', borderBottom: '1px solid rgba(255,255,255,0.18)' }}>
-                <h1 style={{ fontSize: '28px', letterSpacing: '-0.025em', margin: 0, color: '#EEF3EC' }}>
+              <div className="border-b border-[color:var(--lkv-border)] px-[var(--space-4)] pb-[var(--space-4)] pt-[var(--space-3)]">
+                <h1 className="m-0 text-[length:var(--lkv-text-title-sm)] tracking-[var(--lkv-tracking-title)] text-[color:var(--lkv-text-primary)]">
                   {totalItems} pièce{totalItems > 1 ? 's' : ''}<br/>
-                  <em style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic', color: '#A9C6B0', fontWeight: 400 }}>prêtes à partir.</em>
+                  <em className="font-normal italic text-[color:var(--lkv-secondary)]">prêtes à partir.</em>
                 </h1>
-                <div style={{ fontSize: '12px', color: '#CCE0D4', fontFamily: 'ui-monospace, monospace', marginTop: '2px' }}>
+                <div className="mt-0.5 font-mono text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-muted)]">
                   MSA-CH-2026-047 · panier ouvert
                 </div>
               </div>
 
               {/* Cart items */}
               {items.map((item) => (
-                <div key={item.id} style={{ display: 'flex', gap: '12px', padding: '16px', borderBottom: '1px solid rgba(23,64,44,0.05)' }}>
-                  <Link href={`/produit/${item.slug}`} aria-label={item.name} style={{ textDecoration: 'none' }}>
-                    <div style={{ width: '76px', height: '92px', borderRadius: '12px', background: 'linear-gradient(135deg, var(--lkv-primary) 0%, var(--lkv-secondary) 100%)', flexShrink: 0, overflow: 'hidden' }}>
-                      {item.image ? <img src={item.image} alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'cover', mixBlendMode: 'multiply' }} /> : null}
+                <div key={item.id} className="flex gap-[var(--space-3)] border-b border-[color:var(--lkv-border-subtle)] p-[var(--space-4)]">
+                  <Link href={`/produit/${item.slug}`} aria-label={item.name} className="no-underline">
+                    <div className="h-[92px] w-[76px] flex-shrink-0 overflow-hidden rounded-[var(--lkv-radius-md)] bg-[color:var(--lkv-surface-muted)]">
+                      {item.image ? <img src={item.image} alt={item.name} className="h-full w-full object-cover mix-blend-multiply" /> : null}
                     </div>
                   </Link>
-                  <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                  <div className="flex flex-1 flex-col justify-between">
                     <div>
-                      <div style={{ fontSize: '10px', color: 'var(--lkv-text-muted)', fontFamily: 'ui-monospace, monospace', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                      <div className="font-mono text-[length:var(--lkv-text-caption-2)] uppercase tracking-[var(--tracking-wide)] text-[color:var(--lkv-text-muted)]">
                         {item.category || 'PORTAGE'}
                       </div>
-                      <Link href={`/produit/${item.slug}`} style={{ textDecoration: 'none' }}>
-                        <div style={{ fontSize: '14px', fontWeight: 500, color: 'var(--lkv-primary)', marginTop: '2px' }}>
+                      <Link href={`/produit/${item.slug}`} className="no-underline">
+                        <div className="mt-0.5 text-[length:var(--lkv-text-body-sm)] font-medium text-[color:var(--lkv-text-primary)]">
                           {item.name}
                         </div>
                       </Link>
                     </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '3px 6px', background: 'var(--lkv-surface-muted)', borderRadius: '999px', border: '1px solid rgba(23,64,44,0.06)' }}>
-                        <button onClick={() => handleQuantity(item.id, Math.max(1, item.quantity - 1))} aria-label="Diminuer la quantité" className="glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8 !text-[15px] !font-semibold">−</button>
-                        <span style={{ minWidth: '22px', textAlign: 'center', fontSize: '14px', fontWeight: 600, fontFamily: 'ui-monospace, monospace', color: 'var(--lkv-primary)' }}>{item.quantity}</span>
-                        <button onClick={() => handleQuantity(item.id, item.quantity + 1)} aria-label="Augmenter la quantité" className="glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8 !text-[15px] !font-semibold">+</button>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-[6px] rounded-full border border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-muted)] px-[6px] py-[3px]">
+                        <IconButton variant="ghost" onClick={() => handleQuantity(item.id, Math.max(1, item.quantity - 1))} aria-label="Diminuer la quantité">
+                          <Icon name="MinusIcon" size={12} />
+                        </IconButton>
+                        <span className="min-w-[22px] text-center font-mono text-[length:var(--lkv-text-body-sm)] font-semibold text-[color:var(--lkv-text-primary)]">{item.quantity}</span>
+                        <IconButton variant="ghost" onClick={() => handleQuantity(item.id, item.quantity + 1)} aria-label="Augmenter la quantité">
+                          <Icon name="PlusIcon" size={12} />
+                        </IconButton>
                       </div>
-                      <div style={{ textAlign: 'right' }}>
-                        <div style={{ fontSize: '15px', fontWeight: 700, fontFamily: 'ui-monospace, monospace', color: 'var(--lkv-primary)' }}>{(item.priceEur * item.quantity).toFixed(0)} €</div>
-                        <button onClick={() => handleRemoveRequest(item.id)} className="glass-capsule-btn !min-h-0 !py-1 !px-3 !text-[11px] !font-semibold">Retirer</button>
+                      <div className="text-right">
+                        <div className="font-mono text-[length:var(--lkv-text-subheadline)] font-bold text-[color:var(--lkv-text-primary)]">{(item.priceEur * item.quantity).toFixed(0)} €</div>
+                        <Button variant="ghost" size="sm" className="px-[var(--space-2)]" onClick={() => handleRemoveRequest(item.id)}>Retirer</Button>
                       </div>
                     </div>
                   </div>
@@ -378,38 +377,41 @@ export default function PanierPage() {
               ))}
 
               {/* Promo banner */}
-              <div className="glass-sub-card" style={{ margin: '16px', padding: '12px 16px', borderRadius: '14px', border: '1.5px dashed var(--lkv-secondary-subtle)', boxShadow: 'none' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <Card variant="compact" className="mx-[var(--space-4)] my-[var(--space-4)] border-dashed border-[color:var(--lkv-secondary-subtle)] px-[var(--space-4)] py-[var(--space-3)]">
+                <div className="flex items-center justify-between">
                   <div>
-                    <div style={{ fontSize: '10px', fontFamily: 'ui-monospace, monospace', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--lkv-text-muted)' }}>Code promo</div>
-                    <div style={{ fontSize: '13px', fontWeight: 500, color: 'var(--lkv-primary)', marginTop: '2px' }}>BIENVENUE10</div>
+                    <div className="font-mono text-[length:var(--lkv-text-caption-2)] uppercase tracking-[var(--tracking-wide)] text-[color:var(--lkv-text-muted)]">Code promo</div>
+                    <div className="mt-0.5 text-[length:var(--lkv-text-footnote)] font-medium text-[color:var(--lkv-text-primary)]">BIENVENUE10</div>
                   </div>
-                  <button className="glass-capsule-btn !min-h-0 !py-1.5 !px-3.5 !text-xs !font-semibold">Appliquer →</button>
+                  <Button variant="secondary" size="sm">Appliquer →</Button>
                 </div>
-              </div>
+              </Card>
 
               {/* Summary card */}
-              <div className="glass" style={{ margin: '0 16px', padding: '16px', borderRadius: '16px', boxShadow: 'none' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                  <span style={{ fontSize: '13px', color: 'var(--lkv-text-muted)' }}>Sous-total</span>
-                  <span style={{ fontSize: '13px', fontWeight: 700, fontFamily: 'ui-monospace, monospace', color: 'var(--lkv-primary)' }}>{totalPriceEur.toFixed(0)} €</span>
+              <Card className="mx-[var(--space-4)] p-[var(--space-4)]">
+                <div className="mb-[var(--space-2)] flex justify-between">
+                  <span className="text-[length:var(--lkv-text-footnote)] text-[color:var(--lkv-text-muted)]">Sous-total</span>
+                  <span className="font-mono text-[length:var(--lkv-text-footnote)] font-bold text-[color:var(--lkv-text-primary)]">{totalPriceEur.toFixed(0)} €</span>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                  <span style={{ fontSize: '13px', color: 'var(--lkv-text-muted)' }}>Livraison</span>
-                  <span style={{ fontSize: '13px', fontWeight: 700, fontFamily: 'ui-monospace, monospace', color: 'var(--lkv-primary)' }}>{shippingEur === 0 ? 'Offerte' : `${shippingEur.toFixed(2)} €`}</span>
+                <div className="mb-[var(--space-2)] flex justify-between">
+                  <span className="text-[length:var(--lkv-text-footnote)] text-[color:var(--lkv-text-muted)]">Livraison</span>
+                  <span className="font-mono text-[length:var(--lkv-text-footnote)] font-bold text-[color:var(--lkv-text-primary)]">{shippingEur === 0 ? 'Offerte' : `${shippingEur.toFixed(2)} €`}</span>
                 </div>
-                <div style={{ height: '1px', background: 'rgba(23,64,44,0.08)', margin: '12px 0' }} />
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span style={{ fontSize: '16px', fontWeight: 700, color: 'var(--lkv-primary)' }}>Total</span>
-                  <span style={{ fontSize: '16px', fontWeight: 700, fontFamily: 'ui-monospace, monospace', color: 'var(--lkv-primary)' }}>{grandTotal.toFixed(0)} €</span>
+                <Divider spacing="sm" />
+                <div className="flex justify-between">
+                  <span className="text-[length:var(--lkv-text-subheadline)] font-bold text-[color:var(--lkv-text-primary)]">Total</span>
+                  <span className="font-mono text-[length:var(--lkv-text-subheadline)] font-bold text-[color:var(--lkv-text-primary)]">{grandTotal.toFixed(0)} €</span>
                 </div>
-              </div>
+              </Card>
 
               {/* CTA */}
-              <div style={{ padding: '16px' }}>
-                <Link href="/checkout" className="glass-capsule-btn w-full" style={{ textDecoration: 'none', justifyContent: 'space-between' }}>
+              <div className="p-[var(--space-4)]">
+                <Link
+                  href="/checkout"
+                  className="flex min-h-[var(--control-height-lg)] w-full items-center justify-between rounded-full bg-[color:var(--lkv-action)] px-[var(--space-5)] font-semibold text-[color:var(--lkv-on-action)] no-underline transition-transform active:scale-[var(--motion-press-scale)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)] motion-reduce:transition-none"
+                >
                   <span>Suivant</span>
-                  <span style={{ fontSize: '12px', opacity: 0.75, fontFamily: 'ui-monospace, monospace', background: 'rgba(255,255,255,0.35)', padding: '2px 10px', borderRadius: '999px' }}>{grandTotal.toFixed(0)} €</span>
+                  <span className="font-mono text-[length:var(--lkv-text-caption)] opacity-75">{grandTotal.toFixed(0)} €</span>
                 </Link>
               </div>
 

@@ -30,6 +30,7 @@ import {
   LoadingState,
   Modal,
   SearchField,
+  Switch,
 } from '@/components/ui';
 
 interface Carnet {
@@ -226,16 +227,11 @@ function CarnetModal({
             <p className="text-[length:var(--lkv-text-caption-2)] font-semibold text-[color:var(--lkv-text-primary)]">Carnet collaboratif</p>
             <p className="text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">Permettre à d&apos;autres membres de contribuer</p>
           </div>
-          <button
-            type="button"
-            role="switch"
-            aria-checked={form.is_collaborative}
+          <Switch
+            checked={form.is_collaborative}
+            onCheckedChange={(checked) => set('is_collaborative', checked)}
             aria-label="Carnet collaboratif"
-            onClick={() => set('is_collaborative', !form.is_collaborative)}
-            className={`relative h-6 w-12 rounded-full transition-colors ${form.is_collaborative ? 'bg-[color:var(--lkv-primary)]' : 'bg-[color:var(--lkv-border)]'}`}
-          >
-            <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-[color:var(--lkv-surface-card)] shadow transition-all ${form.is_collaborative ? 'left-6' : 'left-0.5'}`} />
-          </button>
+          />
         </Card>
       </div>
     </Modal>

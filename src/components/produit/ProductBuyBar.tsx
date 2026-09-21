@@ -1,6 +1,8 @@
 'use client';
 
 import React, { useState } from 'react';
+import { Button, Card, IconButton } from '@/components/ui';
+import Icon from '@/components/ui/AppIcon';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 
 interface ProductBuyBarProps {
@@ -9,14 +11,9 @@ interface ProductBuyBarProps {
   onAddToCart?: (qty: number) => void;
 }
 
-export default function ProductBuyBar({
-  price,
-  isOwned = false,
-  onAddToCart,
-}: ProductBuyBarProps) {
+export default function ProductBuyBar({ price, onAddToCart }: ProductBuyBarProps) {
   const [qty, setQty] = useState(1);
   const [added, setAdded] = useState(false);
-  const [isPressed, setIsPressed] = useState(false);
   const { haptic } = useHapticFeedback();
 
   const handleAdd = () => {
@@ -29,125 +26,48 @@ export default function ProductBuyBar({
   };
 
   return (
-    <div
-      style={{
-        position: 'sticky',
-        bottom: 0,
-        padding: '10px 14px',
-        background: 'rgba(255,255,255,0.96)',
-        backdropFilter: 'blur(var(--glass-blur-xl)) saturate(var(--glass-sat))',
-        WebkitBackdropFilter: 'blur(var(--glass-blur-xl)) saturate(var(--glass-sat))',
-        borderRadius: '22px',
-        border: '1px solid rgba(23,64,44,0.08)',
-        display: 'flex',
-        alignItems: 'center',
-        gap: '8px',
-        zIndex: 30,
-        margin: '0 10px 10px',
-      }}
+    <Card
+      variant="featured"
+      className="sticky bottom-0 z-[var(--z-sticky)] mx-[var(--space-2)] mb-[var(--space-2)] flex items-center gap-[var(--space-2)] p-[var(--space-2)]"
     >
-      {/* Qty selector */}
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '4px',
-          padding: '6px',
-          background: '#F1EDE6',
-          borderRadius: '999px',
-        }}
-      >
-        <button
-          type="button"
+      <div className="flex items-center gap-[var(--space-1)] rounded-full bg-[color:var(--lkv-surface-muted)] p-[var(--space-1)]">
+        <IconButton
+          variant="ghost"
           aria-label="Diminuer la quantité"
           onClick={() => {
             haptic('selection');
             setQty(Math.max(1, qty - 1));
           }}
-          style={{
-            width: '28px',
-            height: '28px',
-            borderRadius: '999px',
-            background: '#EEF3EC',
-            border: 'none',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: '14px',
-            color: '#17402C',
-          }}
         >
-          −
-        </button>
+          <Icon name="MinusIcon" size={14} />
+        </IconButton>
         <span
-          style={{
-            minWidth: '18px',
-            textAlign: 'center',
-            fontSize: '13px',
-            fontWeight: 700,
-            fontFamily: 'var(--font-mono)',
-            color: '#17402C',
-          }}
+          aria-live="polite"
+          className="min-w-[18px] text-center font-mono text-[length:var(--lkv-text-subheadline)] font-bold text-[color:var(--lkv-text-primary)]"
         >
           {qty}
         </span>
-        <button
-          type="button"
+        <IconButton
+          variant="ghost"
           aria-label="Augmenter la quantité"
           onClick={() => {
             haptic('selection');
             setQty(qty + 1);
           }}
-          style={{
-            width: '28px',
-            height: '28px',
-            borderRadius: '999px',
-            background: '#EEF3EC',
-            border: 'none',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: '14px',
-            color: '#17402C',
-          }}
         >
-          +
-        </button>
+          <Icon name="PlusIcon" size={14} />
+        </IconButton>
       </div>
 
-      {/* Add to cart button */}
-      <button
-        type="button"
+      <Button
+        variant="primary"
+        size="md"
+        className="flex-1 justify-between"
         onClick={handleAdd}
-        onMouseDown={() => setIsPressed(true)}
-        onMouseUp={() => setIsPressed(false)}
-        onTouchStart={() => setIsPressed(true)}
-        onTouchEnd={() => setIsPressed(false)}
-        className={`glass-capsule-btn primary ${added ? '!bg-[#5B7F55] !text-white' : ''}`}
-        style={{
-          flex: 1,
-          padding: '13px 18px',
-          borderRadius: '999px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          fontSize: '13px',
-          fontWeight: 700,
-          border: 'none',
-          cursor: 'pointer',
-          transform: isPressed ? 'scale(0.97)' : 'scale(1)',
-          transition: 'transform 120ms cubic-bezier(0.16, 1, 0.3, 1), background-color 200ms ease',
-          userSelect: 'none',
-          WebkitTapHighlightColor: 'transparent',
-        }}
       >
-        <span>{added ? 'Ajouté ✓' : 'Ajouter au panier'}</span>
-        <span style={{ fontFamily: 'var(--font-mono)', opacity: 0.9 }}>
-          {(price * qty).toFixed(0)} €
-        </span>
-      </button>
-    </div>
+        <span>{added ? 'Ajouté' : 'Ajouter au panier'}</span>
+        <span className="font-mono font-bold">{(price * qty).toFixed(0)} €</span>
+      </Button>
+    </Card>
   );
 }

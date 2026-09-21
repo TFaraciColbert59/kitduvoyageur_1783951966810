@@ -2,6 +2,7 @@
 
 import { useMemo } from 'react';
 import { Sparkles } from 'lucide-react';
+import { Card } from '@/components/ui';
 import { useTripAffiliate } from './TripAffiliateProvider';
 import { StepBookingLinkCta } from './StepBookingLinkCta';
 import {
@@ -40,16 +41,17 @@ export function TripSuggestionSection({
   if (resolved.length === 0) return null;
 
   return (
-    <section
+    <Card
+      as="section"
       data-testid="trip-suggestion-section"
       aria-label="Suggestions de réservation"
-      className={`glass rounded-[var(--lkv-radius-lg)] border border-white/60 p-3.5 ${className}`}
+      className={`p-[var(--space-4)] ${className}`}
     >
-      <p className="flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-[0.14em] text-[var(--lkv-text-primary)]/70">
+      <p className="flex items-center gap-[var(--space-1)] text-[length:var(--lkv-text-caption-2)] font-medium uppercase tracking-[var(--tracking-caps)] text-[color:var(--lkv-text-secondary)]">
         <Sparkles size={12} aria-hidden="true" />
         Suggestions de réservation
       </p>
-      <ul className="mt-2 space-y-2">
+      <ul className="mt-[var(--space-2)] space-y-[var(--space-2)]">
         {resolved.map((suggestion) => (
           <li key={`${suggestion.category}:${suggestion.label}`}>
             <StepBookingLinkCta
@@ -62,7 +64,7 @@ export function TripSuggestionSection({
           </li>
         ))}
       </ul>
-    </section>
+    </Card>
   );
 }
 

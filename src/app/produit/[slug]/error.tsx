@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react';
 import Link from 'next/link';
+import { Card, ErrorState } from '@/components/ui';
 
 export default function Error({
   error,
@@ -16,32 +17,20 @@ export default function Error({
   }, [error]);
 
   return (
-    <div className="min-h-dvh bg-transparent flex flex-col items-center justify-center p-4">
-      <div className="glass rounded-[1.25rem] p-8 max-w-md w-full text-center">
-        <div className="w-16 h-16 bg-[#E1EBDE] rounded-2xl flex items-center justify-center mx-auto mb-4">
-          <svg className="w-8 h-8 text-[#17402C]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-          </svg>
-        </div>
-        <h2 className="text-2xl font-display font-bold text-[#17402C]">Une erreur est survenue</h2>
-        <p className="text-[#5A7064] mt-3">
-          Nous n'avons pas pu charger cette page. Veuillez réessayer.
-        </p>
-        <div className="flex flex-col gap-3 pt-6">
-          <button
-            onClick={() => reset()}
-            className="glass-capsule-btn primary w-full justify-center px-6 py-3"
-          >
-            Réessayer
-          </button>
-          <Link
-            href="/"
-            className="glass-capsule-btn secondary w-full justify-center px-6 py-3"
-          >
-            Retour à l'accueil
-          </Link>
-        </div>
-      </div>
+    <div className="flex min-h-dvh flex-col items-center justify-center bg-transparent p-4">
+      <Card className="w-full max-w-md p-[var(--space-8)] text-center">
+        <ErrorState
+          title="Une erreur est survenue"
+          message="Nous n'avons pas pu charger cette page. Veuillez réessayer."
+          onRetry={() => reset()}
+        />
+        <Link
+          href="/"
+          className="mt-[var(--space-3)] inline-flex min-h-[var(--control-height-md)] w-full items-center justify-center rounded-full border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] px-[var(--space-6)] text-[length:var(--lkv-text-subheadline)] font-semibold text-[color:var(--card-content)] transition-colors hover:bg-[color:var(--lkv-hover-surface)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]"
+        >
+          Retour à l&apos;accueil
+        </Link>
+      </Card>
     </div>
   );
 }

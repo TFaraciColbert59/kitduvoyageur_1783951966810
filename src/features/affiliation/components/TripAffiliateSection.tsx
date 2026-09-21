@@ -2,7 +2,7 @@
 
 import Icon from '@/components/ui/Icon';
 import React from 'react';
-import { Card } from '@/components/ui';
+import { Badge, Card } from '@/components/ui';
 import { AffiliateDisclosure } from './AffiliateDisclosure';
 import { AffiliateLinkCard } from './AffiliateLinkCard';
 import type { AffiliateLink } from '../types/affiliate.types';
@@ -26,7 +26,7 @@ export function TripAffiliateSection({
 
   return (
     <section
-      className="space-y-4 my-8 animate-fade-in"
+      className="my-[var(--space-8)] animate-fade-in space-y-[var(--space-4)]"
       aria-label="Réservations et services partenaires"
     >
       {/* Disclosure légal obligatoire en amont */}
@@ -34,26 +34,26 @@ export function TripAffiliateSection({
 
       <Card
         tone="neutral"
-        className="p-6 sm:p-7 rounded-card border border-white/70 shadow-sm space-y-6"
+        className="space-y-[var(--space-6)] p-[var(--space-6)]"
       >
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-4 border-b border-stone-200/60">
+        <div className="flex flex-col justify-between gap-[var(--space-2)] border-b border-[color:var(--lkv-border-subtle)] pb-[var(--space-4)] sm:flex-row sm:items-center">
           <div>
-            <span className="text-xs font-bold text-[#5B7F55] uppercase tracking-wider flex items-center gap-1.5">
-              <Icon name="compass" className="w-3.5 h-3.5" />
+            <span className="flex items-center gap-[var(--space-1)] text-[length:var(--lkv-text-caption)] font-bold uppercase tracking-[var(--tracking-wide)] text-[color:var(--lkv-secondary)]">
+              <Icon name="compass" className="h-3.5 w-3.5" />
               Réservations & Préparation Logistique
             </span>
-            <h3 className="text-lg sm:text-xl font-black text-stone-900 mt-1">
+            <h3 className="mt-[var(--space-1)] text-[length:var(--lkv-text-title-sm)] font-extrabold text-[color:var(--lkv-text-primary)]">
               Services et partenaires pour {destinationLabel}
             </h3>
           </div>
 
-          <span className="text-xs font-semibold text-stone-500 bg-stone-100 px-3 py-1 rounded-full self-start sm:self-auto">
+          <Badge tone="stone" className="self-start sm:self-auto">
             {links.length} offres disponibles
-          </span>
+          </Badge>
         </div>
 
         {/* Grille des offres partenaires */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 gap-[var(--space-4)] sm:grid-cols-2 lg:grid-cols-3">
           {links.map((link) => (
             <AffiliateLinkCard key={link.id} link={link} tripId={tripId} />
           ))}

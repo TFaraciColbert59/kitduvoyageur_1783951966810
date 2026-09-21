@@ -2,7 +2,7 @@
 
 import Icon from '@/components/ui/Icon';
 import React from 'react';
-import { Card } from '@/components/ui';
+import { Badge, Card } from '@/components/ui';
 import { Plane, Building2, Ticket, Shield, Wifi, ExternalLink } from 'lucide-react';
 import type { AffiliateLink, AffiliateCategory } from '../types/affiliate.types';
 
@@ -46,7 +46,7 @@ export function getAffiliateCategoryLabel(category: AffiliateCategory): string {
 }
 
 export function AffiliateLinkCard({ link, tripId }: AffiliateLinkCardProps) {
-  const Icon = getAffiliateCategoryIcon(link.category);
+  const CategoryIcon = getAffiliateCategoryIcon(link.category);
   const categoryLabel = getAffiliateCategoryLabel(link.category);
   const href = tripId ? `/go/${link.slug}?trip_id=${tripId}` : `/go/${link.slug}`;
 
@@ -54,45 +54,41 @@ export function AffiliateLinkCard({ link, tripId }: AffiliateLinkCardProps) {
     <Card
       tone="neutral"
       variant="interactive"
-      className="p-4 rounded-lg border border-stone-200/80 hover:border-[#5B7F55]/40 transition-all flex flex-col justify-between h-full bg-white/80"
+      className="flex h-full flex-col justify-between p-[var(--space-4)]"
     >
       <div>
-        <div className="flex items-center justify-between gap-2 mb-2.5">
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#17402C]/10 text-[#17402C]">
-            <Icon className="w-3 h-3 text-[#5B7F55]" />
+        <div className="mb-[var(--space-3)] flex items-center justify-between gap-[var(--space-2)]">
+          <Badge tone="sage" className="gap-[var(--space-1)]">
+            <CategoryIcon className="h-3 w-3 text-[color:var(--lkv-secondary)]" aria-hidden="true" />
             {categoryLabel}
-          </span>
+          </Badge>
 
-          <div className="flex items-center gap-1.5 flex-wrap justify-end">
-            {link.partner && (
-              <span className="text-[10px] font-semibold text-stone-500 bg-stone-100 px-2 py-0.5 rounded-full">
-                {link.partner.name}
-              </span>
-            )}
-            <span className="text-[9.5px] font-mono font-bold text-sand-900 bg-sand-100/90 border border-sand-300/60 px-2 py-0.5 rounded-full">
-              Sponsorisé
-            </span>
+          <div className="flex flex-wrap items-center justify-end gap-[var(--space-1)]">
+            {link.partner && <Badge tone="stone">{link.partner.name}</Badge>}
+            <Badge tone="warn">Sponsorisé</Badge>
           </div>
         </div>
 
-        <h4 className="text-sm font-bold text-stone-900 line-clamp-2 mb-1">{link.title}</h4>
+        <h4 className="mb-[var(--space-1)] line-clamp-2 text-[length:var(--lkv-text-body-sm)] font-bold text-[color:var(--lkv-text-primary)]">
+          {link.title}
+        </h4>
 
         {link.destination_name && (
-          <p className="text-xs text-stone-500 mb-3 truncate">
+          <p className="mb-[var(--space-3)] truncate text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-muted)]">
             Destination : {link.destination_name}
           </p>
         )}
       </div>
 
-      <div className="pt-3 border-t border-stone-100 mt-2">
+      <div className="mt-[var(--space-2)] border-t border-[color:var(--lkv-border-subtle)] pt-[var(--space-3)]">
         <a
           href={href}
           target="_blank"
           rel="sponsored nofollow"
-          className="w-full min-h-[44px] px-4 rounded-xl bg-[#17402C] hover:bg-[#123323] text-white text-xs font-bold transition-all flex items-center justify-center gap-2 shadow-sm"
+          className="inline-flex min-h-[var(--lkv-touch-min)] w-full items-center justify-center gap-[var(--space-2)] rounded-full bg-[color:var(--lkv-action)] px-[var(--space-4)] text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-on-action)] shadow-elevation-1 transition-transform hover:bg-[color:var(--lkv-action-hover)] active:scale-[var(--motion-press-scale)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)] motion-reduce:transition-none"
         >
           <span>Consulter l’offre</span>
-          <Icon name="external-link" className="w-3.5 h-3.5 text-stone-300" />
+          <Icon name="external-link" className="h-3.5 w-3.5" />
         </a>
       </div>
     </Card>

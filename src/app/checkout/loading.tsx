@@ -1,49 +1,50 @@
 import React from 'react';
 import { Skeleton } from '@/components/ui/Skeleton';
+import { Card } from '@/components/ui';
 
 export default function CheckoutLoading() {
   return (
-    <div className="min-h-screen bg-transparent pb-24 lg:pb-12 pt-24 lg:pt-32">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <Skeleton className="h-10 w-48 mb-8" />
+    <div className="min-h-screen bg-transparent pb-24 pt-24 lg:pb-12 lg:pt-32">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <Skeleton className="mb-[var(--space-8)] h-10 w-48" />
 
-        <div className="flex flex-col lg:flex-row gap-12">
+        <div className="flex flex-col gap-12 lg:flex-row">
           {/* Form */}
-          <div className="w-full lg:w-2/3 space-y-8">
-            <div className="glass p-6 sm:p-8 space-y-6">
-              <Skeleton className="h-8 w-40 mb-6" />
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+          <div className="w-full space-y-[var(--space-8)] lg:w-2/3">
+            <Card className="space-y-[var(--space-6)] p-[var(--space-6)] sm:p-[var(--space-8)]">
+              <Skeleton className="mb-[var(--space-6)] h-8 w-40" />
+              <div className="grid grid-cols-1 gap-[var(--space-6)] sm:grid-cols-2">
                 <Skeleton className="h-14 w-full rounded-full" />
                 <Skeleton className="h-14 w-full rounded-full" />
-                <Skeleton className="h-14 w-full rounded-full col-span-1 sm:col-span-2" />
+                <Skeleton className="col-span-1 h-14 w-full rounded-full sm:col-span-2" />
               </div>
-            </div>
-            <div className="glass p-6 sm:p-8 space-y-6">
-              <Skeleton className="h-8 w-48 mb-6" />
+            </Card>
+            <Card className="space-y-[var(--space-6)] p-[var(--space-6)] sm:p-[var(--space-8)]">
+              <Skeleton className="mb-[var(--space-6)] h-8 w-48" />
               <Skeleton className="h-14 w-full rounded-full" />
               <Skeleton className="h-14 w-full rounded-full" />
-            </div>
+            </Card>
           </div>
 
           {/* Order Summary */}
           <div className="w-full lg:w-1/3">
-            <div className="glass p-6 space-y-6">
+            <Card className="space-y-[var(--space-6)] p-[var(--space-6)]">
               <Skeleton className="h-8 w-48" />
-              <div className="space-y-4 pt-4 border-t border-white/50">
-                <div className="flex gap-4">
-                  <Skeleton className="h-16 w-16 rounded-xl flex-shrink-0" />
-                  <div className="space-y-2 flex-grow">
+              <div className="space-y-[var(--space-4)] border-t border-[color:var(--lkv-border)] pt-[var(--space-4)]">
+                <div className="flex gap-[var(--space-4)]">
+                  <Skeleton className="h-16 w-16 flex-shrink-0 rounded-[var(--lkv-radius-md)]" />
+                  <div className="flex-grow space-y-[var(--space-2)]">
                     <Skeleton className="h-4 w-full" />
                     <Skeleton className="h-4 w-1/2" />
                   </div>
                 </div>
-                <div className="pt-4 border-t border-white/50 space-y-3">
+                <div className="space-y-[var(--space-3)] border-t border-[color:var(--lkv-border)] pt-[var(--space-4)]">
                   <Skeleton className="h-5 w-full" />
                   <Skeleton className="h-6 w-full" />
                 </div>
               </div>
-              <Skeleton className="h-14 w-full rounded-full mt-8" />
-            </div>
+              <Skeleton className="mt-[var(--space-8)] h-14 w-full rounded-full" />
+            </Card>
           </div>
         </div>
       </div>

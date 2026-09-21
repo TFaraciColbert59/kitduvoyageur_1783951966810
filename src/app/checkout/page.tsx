@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import Icon from '@/components/ui/AppIcon';
-import { Button } from '@/components/ui';
+import { Badge, Button, Card, Divider, LoadingState } from '@/components/ui';
 import { getCart, getCartTotals, clearCart, CartItem } from '@/lib/cart';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -13,6 +13,15 @@ import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
 
 type Step = 'livraison' | 'paiement' | 'confirmation';
 type PaymentMethod = 'card' | 'paypal' | 'apple_pay' | 'google_pay' | 'virement';
+
+const FIELD_CLASS =
+  'w-full rounded-[var(--lkv-radius-md)] border border-[color:var(--lkv-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[var(--space-2)] text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-primary)] placeholder:text-[color:var(--lkv-text-muted)] focus:outline-none focus:ring-2 focus:ring-[color:var(--lkv-focus-ring)]';
+
+const LABEL_CLASS =
+  'mb-[var(--space-2)] block text-[length:var(--lkv-text-caption-2)] font-semibold uppercase tracking-[var(--tracking-wide)] text-[color:var(--lkv-text-muted)]';
+
+const SECONDARY_LINK_CLASS =
+  'inline-flex min-h-[var(--control-height-md)] w-full items-center justify-center gap-[var(--space-2)] rounded-full border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] px-[var(--space-6)] text-[length:var(--lkv-text-subheadline)] font-semibold text-[color:var(--card-content)] transition-colors hover:bg-[color:var(--lkv-hover-surface)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]';
 
 export default function CheckoutPage() {
   const [step, setStep] = useState<Step>('livraison');
@@ -287,9 +296,7 @@ export default function CheckoutPage() {
     return (
       <div className="min-h-screen bg-transparent">
         <Header />
-        <div className="pt-24 flex items-center justify-center min-h-[60vh]">
-          <div className="w-8 h-8 border-2 border-[#EEF3EC] border-t-transparent rounded-full animate-spin" />
-        </div>
+        <LoadingState label="Chargement de la commande…" />
         <Footer />
       </div>
     );
@@ -298,253 +305,264 @@ export default function CheckoutPage() {
   return (
     <>
       {/* ── DESKTOP VIEW (fullscreen : page = 100dvh, scroll interne) ── */}
-      <div className="hidden md:flex flex-col h-[100dvh] overflow-hidden bg-transparent text-[#EEF3EC]">
+      <div className="hidden h-[100dvh] flex-col overflow-hidden bg-transparent md:flex">
         <Header />
 
-        <div className="flex-1 min-h-0 overflow-y-auto w-full pt-24 pb-6">
-          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
+        <div className="min-h-0 w-full flex-1 overflow-y-auto pb-6 pt-24">
+          <div className="mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8">
             {step !== 'confirmation' && (
-              <h1 className="font-display font-800 text-4xl text-[#EEF3EC] mb-8">
-                Presque <em className="italic font-400 text-[#A9C6B0]">parti.</em>
+              <h1 className="mb-[var(--space-8)] font-display text-[length:var(--lkv-text-title-lg)] font-extrabold text-[color:var(--lkv-text-primary)]">
+                Presque <em className="font-normal italic text-[color:var(--lkv-secondary)]">parti.</em>
               </h1>
             )}
 
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <div className="grid grid-cols-1 gap-[var(--space-6)] lg:grid-cols-12">
               {/* Main content */}
               <div className="lg:col-span-7 xl:col-span-8">
 
                 {step !== 'confirmation' ? (
-                  <div className="space-y-6">
+                  <div className="space-y-[var(--space-6)]">
 
                     {/* ── STEP 1: Vos coordonnées ── */}
-                    <div className={`glass p-8 transition-opacity ${step !== 'livraison' ? 'opacity-50 pointer-events-none' : ''}`}>
-                      <div className="flex items-center justify-between mb-6">
-                        <h2 className="font-display font-700 text-xl flex items-center gap-3 text-[var(--lkv-primary)]">
-                          <span className="font-400 italic text-[var(--lkv-forest-600)]">01</span> Vos coordonnées
+                    <Card className={`p-[var(--space-8)] transition-opacity ${step !== 'livraison' ? 'pointer-events-none opacity-50' : ''}`}>
+                      <div className="mb-[var(--space-6)] flex items-center justify-between">
+                        <h2 className="flex items-center gap-[var(--space-3)] font-display text-[length:var(--lkv-text-headline)] font-bold text-[color:var(--lkv-text-primary)]">
+                          <span className="font-normal italic text-[color:var(--lkv-text-secondary)]">01</span> Vos coordonnées
                         </h2>
-                        <button className="glass-capsule-btn !min-h-0 !py-1.5 !px-3.5 !text-xs !font-semibold">Se connecter</button>
+                        <Button variant="secondary" size="sm">Se connecter</Button>
                       </div>
 
-                      <div className="space-y-4">
+                      <div className="space-y-[var(--space-4)]">
                         <div>
-                          <label className="block text-[10px] font-semibold uppercase tracking-wider text-[var(--lkv-text-muted)] mb-1.5">Email</label>
+                          <label htmlFor="checkout-email" className={LABEL_CLASS}>Email</label>
                           <input
+                            id="checkout-email"
                             type="email"
                             autoComplete="email"
                             value={shipping.email}
                             onChange={(e) => setShipping(prev => ({ ...prev, email: e.target.value }))}
-                            className={`glass-input w-full ${errors.email ? 'ring-1 ring-[var(--lkv-danger)]' : ''}`}
+                            className={`${FIELD_CLASS} ${errors.email ? 'ring-1 ring-[color:var(--lkv-danger)]' : ''}`}
                           />
                         </div>
-                        <label className="flex items-center gap-3 cursor-pointer mt-2">
-                          <div className="glass-check-circle checked">
+                        <label className="mt-[var(--space-2)] flex cursor-pointer items-center gap-[var(--space-3)]">
+                          <span aria-hidden="true" className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-[color:var(--lkv-action)] text-[color:var(--lkv-on-action)]">
                             <Icon name="CheckIcon" size={10} />
-                          </div>
-                          <span className="text-xs text-[var(--lkv-primary)]">Recevoir le journal du Kit — un envoi par saison, refuges et sentiers uniquement.</span>
+                          </span>
+                          <span className="text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-primary)]">Recevoir le journal du Kit — un envoi par saison, refuges et sentiers uniquement.</span>
                         </label>
                       </div>
-                    </div>
+                    </Card>
 
                     {/* ── STEP 2: Livraison ── */}
-                    <div className={`glass p-8 transition-opacity ${step !== 'livraison' ? 'opacity-50 pointer-events-none' : ''}`}>
-                      <h2 className="font-display font-700 text-xl flex items-center gap-3 mb-6 text-[var(--lkv-primary)]">
-                        <span className="font-400 italic text-[var(--lkv-forest-600)]">02</span> Livraison
+                    <Card className={`p-[var(--space-8)] transition-opacity ${step !== 'livraison' ? 'pointer-events-none opacity-50' : ''}`}>
+                      <h2 className="mb-[var(--space-6)] flex items-center gap-[var(--space-3)] font-display text-[length:var(--lkv-text-headline)] font-bold text-[color:var(--lkv-text-primary)]">
+                        <span className="font-normal italic text-[color:var(--lkv-text-secondary)]">02</span> Livraison
                       </h2>
 
-                      <div className="grid grid-cols-2 gap-4 mb-8">
+                      <div className="mb-[var(--space-8)] grid grid-cols-2 gap-[var(--space-4)]">
                         <div>
-                          <label className="block text-[10px] font-semibold uppercase tracking-wider text-[var(--lkv-text-muted)] mb-1.5">Prénom</label>
+                          <label htmlFor="checkout-prenom" className={LABEL_CLASS}>Prénom</label>
                           <input
+                            id="checkout-prenom"
                             type="text"
                             autoComplete="given-name"
                             value={shipping.prenom}
                             onChange={(e) => setShipping(prev => ({ ...prev, prenom: e.target.value }))}
-                            className={`glass-input w-full ${errors.prenom ? 'ring-1 ring-[var(--lkv-danger)]' : ''}`}
+                            className={`${FIELD_CLASS} ${errors.prenom ? 'ring-1 ring-[color:var(--lkv-danger)]' : ''}`}
                           />
                         </div>
                         <div>
-                          <label className="block text-[10px] font-semibold uppercase tracking-wider text-[var(--lkv-text-muted)] mb-1.5">Nom</label>
+                          <label htmlFor="checkout-nom" className={LABEL_CLASS}>Nom</label>
                           <input
+                            id="checkout-nom"
                             type="text"
                             autoComplete="family-name"
                             value={shipping.nom}
                             onChange={(e) => setShipping(prev => ({ ...prev, nom: e.target.value }))}
-                            className={`glass-input w-full ${errors.nom ? 'ring-1 ring-[var(--lkv-danger)]' : ''}`}
+                            className={`${FIELD_CLASS} ${errors.nom ? 'ring-1 ring-[color:var(--lkv-danger)]' : ''}`}
                           />
                         </div>
                         <div className="col-span-2">
-                          <label className="block text-[10px] font-semibold uppercase tracking-wider text-[var(--lkv-text-muted)] mb-1.5">Adresse</label>
+                          <label htmlFor="checkout-adresse" className={LABEL_CLASS}>Adresse</label>
                           <input
+                            id="checkout-adresse"
                             type="text"
                             autoComplete="street-address"
                             value={shipping.adresse}
                             onChange={(e) => setShipping(prev => ({ ...prev, adresse: e.target.value }))}
-                            className={`glass-input w-full ${errors.adresse ? 'ring-1 ring-[var(--lkv-danger)]' : ''}`}
+                            className={`${FIELD_CLASS} ${errors.adresse ? 'ring-1 ring-[color:var(--lkv-danger)]' : ''}`}
                           />
                         </div>
                         <div className="col-span-2">
-                          <label className="block text-[10px] font-semibold uppercase tracking-wider text-[var(--lkv-text-muted)] mb-1.5">Complément (Optionnel)</label>
+                          <label htmlFor="checkout-complement" className={LABEL_CLASS}>Complément (Optionnel)</label>
                           <input
+                            id="checkout-complement"
                             type="text"
                             autoComplete="address-line2"
                             value={shipping.complement}
                             onChange={(e) => setShipping(prev => ({ ...prev, complement: e.target.value }))}
                             placeholder="Bâtiment - étage - digicode"
-                            className="glass-input w-full"
+                            className={FIELD_CLASS}
                           />
                         </div>
                         <div>
-                          <label className="block text-[10px] font-semibold uppercase tracking-wider text-[var(--lkv-text-muted)] mb-1.5">Code postal</label>
+                          <label htmlFor="checkout-code-postal" className={LABEL_CLASS}>Code postal</label>
                           <input
+                            id="checkout-code-postal"
                             type="text"
                             autoComplete="postal-code"
                             inputMode="numeric"
                             value={shipping.codePostal}
                             onChange={(e) => setShipping(prev => ({ ...prev, codePostal: e.target.value }))}
-                            className={`glass-input w-full ${errors.codePostal ? 'ring-1 ring-[var(--lkv-danger)]' : ''}`}
+                            className={`${FIELD_CLASS} ${errors.codePostal ? 'ring-1 ring-[color:var(--lkv-danger)]' : ''}`}
                           />
                         </div>
                         <div>
-                          <label className="block text-[10px] font-semibold uppercase tracking-wider text-[var(--lkv-text-muted)] mb-1.5">Ville</label>
+                          <label htmlFor="checkout-ville" className={LABEL_CLASS}>Ville</label>
                           <input
+                            id="checkout-ville"
                             type="text"
                             autoComplete="address-level2"
                             value={shipping.ville}
                             onChange={(e) => setShipping(prev => ({ ...prev, ville: e.target.value }))}
-                            className={`glass-input w-full ${errors.ville ? 'ring-1 ring-[var(--lkv-danger)]' : ''}`}
+                            className={`${FIELD_CLASS} ${errors.ville ? 'ring-1 ring-[color:var(--lkv-danger)]' : ''}`}
                           />
                         </div>
                         <div>
-                          <label className="block text-[10px] font-semibold uppercase tracking-wider text-[var(--lkv-text-muted)] mb-1.5">Pays</label>
-                          <select autoComplete="country" className="glass-input w-full appearance-none">
+                          <label htmlFor="checkout-pays" className={LABEL_CLASS}>Pays</label>
+                          <select id="checkout-pays" autoComplete="country" className={`${FIELD_CLASS} appearance-none`}>
                             <option>France</option>
                             <option>Belgique</option>
                             <option>Suisse</option>
                           </select>
                         </div>
                         <div>
-                          <label className="block text-[10px] font-semibold uppercase tracking-wider text-[var(--lkv-text-muted)] mb-1.5">Téléphone</label>
+                          <label htmlFor="checkout-telephone" className={LABEL_CLASS}>Téléphone</label>
                           <input
+                            id="checkout-telephone"
                             type="tel"
                             autoComplete="tel"
                             value={shipping.telephone}
                             onChange={(e) => setShipping(prev => ({ ...prev, telephone: e.target.value }))}
                             placeholder="+33 6 12 34 56 78"
-                            className="glass-input w-full"
+                            className={FIELD_CLASS}
                           />
                         </div>
                       </div>
 
                       <div>
-                        <label className="block text-[10px] font-semibold uppercase tracking-wider text-[var(--lkv-text-muted)] mb-3">Mode d'expédition</label>
-                        <div className="space-y-3">
+                        <span className={`${LABEL_CLASS} mb-[var(--space-3)]`}>Mode d&apos;expédition</span>
+                        <div className="space-y-[var(--space-3)]">
                           {[
                             { id: 'standard', label: 'Livraison suivie', desc: 'Colis relais ou domicile - 3 à 5 jours ouvrés - CO2 compensé', price: totalPriceEur >= 99 ? 'Offerte' : '5,90 €' },
                             { id: 'express', label: 'Express 48h', desc: 'Livré à domicile en 48 h - sur créneau choisi', price: '14 €' },
                             { id: 'relay', label: 'Retrait en atelier', desc: 'Manosque, Alpes-de-Haute-Provence - disponible dès demain', price: 'Offerte' },
                           ].map((opt) => (
-                            <label key={opt.id} className="glass p-4 flex items-center justify-between rounded-md cursor-pointer transition-all" style={shippingOption === opt.id ? { borderColor: 'rgba(91,127,85,0.85)' } : undefined}>
-                              <div className="flex items-center gap-4">
-                                <div className={`w-4 h-4 rounded-full border flex items-center justify-center flex-shrink-0 ${shippingOption === opt.id ? 'border-[var(--lkv-primary)]' : 'border-[var(--lkv-forest-600)]'}`}>
-                                  {shippingOption === opt.id && <div className="w-2 h-2 bg-[var(--lkv-primary)] rounded-full" />}
-                                </div>
+                            <label
+                              key={opt.id}
+                              className={`flex cursor-pointer items-center justify-between rounded-[var(--lkv-radius-md)] border bg-[color:var(--lkv-surface-card)] p-[var(--space-4)] transition-colors ${shippingOption === opt.id ? 'border-[color:var(--lkv-secondary)]' : 'border-[color:var(--lkv-border)]'}`}
+                            >
+                              <div className="flex items-center gap-[var(--space-4)]">
+                                <span className={`flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-full border ${shippingOption === opt.id ? 'border-[color:var(--lkv-primary)]' : 'border-[color:var(--lkv-text-secondary)]'}`}>
+                                  {shippingOption === opt.id && <span className="h-2 w-2 rounded-full bg-[color:var(--lkv-primary)]" />}
+                                </span>
                                 <div>
-                                  <p className="font-600 text-sm text-[var(--lkv-primary)]">{opt.label}</p>
-                                  <p className="text-[10px] text-[var(--lkv-text-muted)] mt-0.5">{opt.desc}</p>
+                                  <p className="text-[length:var(--lkv-text-body-sm)] font-semibold text-[color:var(--lkv-text-primary)]">{opt.label}</p>
+                                  <p className="mt-0.5 text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">{opt.desc}</p>
                                 </div>
                               </div>
-                              <span className={`font-bold font-mono text-sm ${opt.price === 'Offerte' ? 'text-[var(--lkv-primary)]' : 'text-[var(--lkv-primary)]'}`}>{opt.price}</span>
+                              <span className="font-mono text-[length:var(--lkv-text-body-sm)] font-bold text-[color:var(--lkv-text-primary)]">{opt.price}</span>
                             </label>
                           ))}
                         </div>
                       </div>
 
                       {step === 'livraison' && (
-                        <Button onClick={handleShippingSubmit} variant="primary" size="lg" fullWidth className="mt-8">
+                        <Button onClick={handleShippingSubmit} variant="primary" size="lg" fullWidth className="mt-[var(--space-8)]">
                           Continuer vers le paiement →
                         </Button>
                       )}
-                    </div>
+                    </Card>
 
                     {/* ── STEP 3: Paiement ── */}
-                    <div className={`glass p-8 transition-opacity ${step !== 'paiement' ? 'opacity-50 pointer-events-none' : ''}`}>
-                      <h2 className="font-display font-700 text-xl flex items-center gap-3 mb-6 text-[var(--lkv-primary)]">
-                        <span className="font-400 italic text-[var(--lkv-forest-600)]">03</span> Paiement
+                    <Card className={`p-[var(--space-8)] transition-opacity ${step !== 'paiement' ? 'pointer-events-none opacity-50' : ''}`}>
+                      <h2 className="mb-[var(--space-6)] flex items-center gap-[var(--space-3)] font-display text-[length:var(--lkv-text-headline)] font-bold text-[color:var(--lkv-text-primary)]">
+                        <span className="font-normal italic text-[color:var(--lkv-text-secondary)]">03</span> Paiement
                       </h2>
 
                       {step === 'paiement' && (
                         <>
                           {error && (
-                            <div className="mb-8 p-4 rounded-md bg-[var(--lkv-surface-muted)] border border-[var(--lkv-danger)]/30 text-[var(--lkv-danger)] text-sm leading-relaxed">
+                            <div className="mb-[var(--space-8)] rounded-[var(--lkv-radius-md)] border border-[color:var(--lkv-danger)] bg-[color:var(--lkv-danger-bg)] p-[var(--space-4)] text-[length:var(--lkv-text-body-sm)] leading-[var(--leading-relaxed)] text-[color:var(--lkv-danger-dark)]">
                               {error}
                             </div>
                           )}
-                          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-8">
-                            <button className="glass-capsule-btn primary p-3 flex flex-col items-center justify-center">
-                              <Icon name="CreditCardIcon" size={24} className="mb-1" />
-                              <span className="text-[10px] font-600 font-mono tracking-widest uppercase">Carte</span>
-                            </button>
-                            <button className="glass-capsule-btn p-3 flex flex-col items-center justify-center">
-                              <span className="text-xl mb-1">🍎</span>
-                              <span className="text-[10px] font-600 font-mono tracking-widest uppercase">Apple Pay</span>
-                            </button>
-                            <button className="glass-capsule-btn p-3 flex flex-col items-center justify-center">
-                              <span className="text-xl mb-1 font-bold">P</span>
-                              <span className="text-[10px] font-600 font-mono tracking-widest uppercase">Compte</span>
-                            </button>
-                            <button className="glass-capsule-btn p-3 flex flex-col items-center justify-center">
-                              <span className="text-xs font-700 italic mb-1">3× sans frais</span>
-                              <span className="text-[10px] font-600 font-mono tracking-widest uppercase">Alma</span>
-                            </button>
+                          <div className="mb-[var(--space-8)] grid grid-cols-2 gap-[var(--space-2)] sm:grid-cols-4">
+                            <Button variant="primary" className="h-auto flex-col gap-[var(--space-1)] p-[var(--space-3)]">
+                              <Icon name="CreditCardIcon" size={24} className="mb-[var(--space-1)]" />
+                              <span className="font-mono text-[length:var(--lkv-text-caption-2)] font-semibold uppercase tracking-[var(--tracking-caps)]">Carte</span>
+                            </Button>
+                            <Button variant="secondary" className="h-auto flex-col gap-[var(--space-1)] p-[var(--space-3)]">
+                              <span className="mb-[var(--space-1)] text-[length:var(--lkv-text-title-sm)]">🍎</span>
+                              <span className="font-mono text-[length:var(--lkv-text-caption-2)] font-semibold uppercase tracking-[var(--tracking-caps)]">Apple Pay</span>
+                            </Button>
+                            <Button variant="secondary" className="h-auto flex-col gap-[var(--space-1)] p-[var(--space-3)]">
+                              <span className="mb-[var(--space-1)] text-[length:var(--lkv-text-title-sm)] font-bold">P</span>
+                              <span className="font-mono text-[length:var(--lkv-text-caption-2)] font-semibold uppercase tracking-[var(--tracking-caps)]">Compte</span>
+                            </Button>
+                            <Button variant="secondary" className="h-auto flex-col gap-[var(--space-1)] p-[var(--space-3)]">
+                              <span className="mb-[var(--space-1)] text-[length:var(--lkv-text-caption)] font-bold italic">3× sans frais</span>
+                              <span className="font-mono text-[length:var(--lkv-text-caption-2)] font-semibold uppercase tracking-[var(--tracking-caps)]">Alma</span>
+                            </Button>
                           </div>
 
-                          <div className="flex justify-center mb-8">
+                          <div className="mb-[var(--space-8)] flex justify-center">
                             {/* Fake Credit Card visual */}
-                            <div className="w-full max-w-[320px] aspect-[1.586] bg-gradient-to-br from-[var(--lkv-primary)] to-[var(--lkv-forest-600)] rounded-2xl p-6 text-white relative overflow-hidden">
-                              <div className="absolute right-[-20px] top-[-20px] w-40 h-40 bg-white/5 rounded-full blur-2xl pointer-events-none" />
-                              <div className="w-12 h-8 bg-[var(--lkv-surface)] rounded bg-gradient-to-br from-[var(--lkv-surface)] to-[var(--lkv-border)] mb-8" />
-                              <div className="font-mono text-xl tracking-[0.2em] mb-6 flex justify-between">
+                            <div className="relative aspect-[1.586] w-full max-w-[320px] overflow-hidden rounded-[var(--lkv-radius-lg)] bg-gradient-to-br from-[var(--lkv-primary)] to-[var(--lkv-forest-600)] p-[var(--space-6)] text-[color:var(--lkv-text-inverted)]">
+                              <div className="pointer-events-none absolute right-[-20px] top-[-20px] h-40 w-40 rounded-full bg-white/5 blur-2xl" />
+                              <div className="mb-[var(--space-8)] h-8 w-12 rounded bg-gradient-to-br from-[var(--lkv-surface)] to-[var(--lkv-border)]" />
+                              <div className="mb-[var(--space-6)] flex justify-between font-mono text-[length:var(--lkv-text-headline)] tracking-[var(--tracking-caps)]">
                                 <span>••••</span><span>••••</span><span>••••</span><span>4242</span>
                               </div>
-                              <div className="flex justify-between items-end">
+                              <div className="flex items-end justify-between">
                                 <div>
-                                  <p className="text-[8px] font-mono tracking-widest uppercase opacity-60 mb-1">Titulaire</p>
-                                  <p className="text-sm font-600 uppercase truncate max-w-[120px]">{shipping.prenom ? `${shipping.prenom[0]}. ${shipping.nom}` : 'M. Chevrier'}</p>
+                                  <p className="mb-[var(--space-1)] font-mono text-[length:var(--lkv-text-caption-2)] uppercase tracking-[var(--tracking-caps)] opacity-60">Titulaire</p>
+                                  <p className="max-w-[120px] truncate text-[length:var(--lkv-text-body-sm)] font-semibold uppercase">{shipping.prenom ? `${shipping.prenom[0]}. ${shipping.nom}` : 'M. Chevrier'}</p>
                                 </div>
                                 <div>
-                                  <p className="text-[8px] font-mono tracking-widest uppercase opacity-60 mb-1">Expire</p>
-                                  <p className="text-sm font-600 font-mono">09/28</p>
+                                  <p className="mb-[var(--space-1)] font-mono text-[length:var(--lkv-text-caption-2)] uppercase tracking-[var(--tracking-caps)] opacity-60">Expire</p>
+                                  <p className="font-mono text-[length:var(--lkv-text-body-sm)] font-semibold">09/28</p>
                                 </div>
-                                <div className="text-2xl font-bold italic opacity-80">VISA</div>
+                                <div className="text-[length:var(--lkv-text-title-sm)] font-bold italic opacity-80">VISA</div>
                               </div>
                             </div>
                           </div>
 
-                          <div className="space-y-4">
+                          <div className="space-y-[var(--space-4)]">
                             <div>
-                              <label className="block text-[10px] font-semibold uppercase tracking-wider text-[var(--lkv-text-muted)] mb-1.5">Numéro de carte</label>
-                              <input type="text" autoComplete="cc-number" inputMode="numeric" placeholder="1234 1234 1234 1234" className="glass-input w-full font-mono" />
+                              <label htmlFor="checkout-card-number" className={LABEL_CLASS}>Numéro de carte</label>
+                              <input id="checkout-card-number" type="text" autoComplete="cc-number" inputMode="numeric" placeholder="1234 1234 1234 1234" className={`${FIELD_CLASS} font-mono`} />
                             </div>
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-2 gap-[var(--space-4)]">
                               <div>
-                                <label className="block text-[10px] font-semibold uppercase tracking-wider text-[var(--lkv-text-muted)] mb-1.5">Expiration</label>
-                                <input type="text" autoComplete="cc-exp" placeholder="MM / AA" className="glass-input w-full font-mono" />
+                                <label htmlFor="checkout-card-exp" className={LABEL_CLASS}>Expiration</label>
+                                <input id="checkout-card-exp" type="text" autoComplete="cc-exp" placeholder="MM / AA" className={`${FIELD_CLASS} font-mono`} />
                               </div>
                               <div>
-                                <label className="block text-[10px] font-semibold uppercase tracking-wider text-[var(--lkv-text-muted)] mb-1.5">Cryptogramme</label>
-                                <input type="text" autoComplete="cc-csc" inputMode="numeric" placeholder="CVC" className="glass-input w-full font-mono" />
+                                <label htmlFor="checkout-card-cvc" className={LABEL_CLASS}>Cryptogramme</label>
+                                <input id="checkout-card-cvc" type="text" autoComplete="cc-csc" inputMode="numeric" placeholder="CVC" className={`${FIELD_CLASS} font-mono`} />
                               </div>
                             </div>
                             <div>
-                              <label className="block text-[10px] font-semibold uppercase tracking-wider text-[var(--lkv-text-muted)] mb-1.5">Nom du titulaire</label>
-                              <input type="text" autoComplete="cc-name" placeholder="Comme écrit sur la carte" className="glass-input w-full uppercase" />
+                              <label htmlFor="checkout-card-name" className={LABEL_CLASS}>Nom du titulaire</label>
+                              <input id="checkout-card-name" type="text" autoComplete="cc-name" placeholder="Comme écrit sur la carte" className={`${FIELD_CLASS} uppercase`} />
                             </div>
 
-                            <label className="flex items-center gap-3 cursor-pointer mt-4 mb-6">
-                              <div className="glass-check-circle checked">
+                            <label className="mb-[var(--space-6)] mt-[var(--space-4)] flex cursor-pointer items-center gap-[var(--space-3)]">
+                              <span aria-hidden="true" className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-[color:var(--lkv-action)] text-[color:var(--lkv-on-action)]">
                                 <Icon name="CheckIcon" size={10} />
-                              </div>
-                              <span className="text-xs text-[var(--lkv-text-muted)]">Enregistrer cette carte pour un futur achat (chiffrée par Stripe).</span>
+                              </span>
+                              <span className="text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-muted)]">Enregistrer cette carte pour un futur achat (chiffrée par Stripe).</span>
                             </label>
                           </div>
 
@@ -560,94 +578,97 @@ export default function CheckoutPage() {
                           </Button>
                         </>
                       )}
-                    </div>
+                    </Card>
 
                   </div>
                 ) : (
                   /* ── STEP 3: Confirmation ── */
-                  <div className="glass p-12 text-center h-full flex flex-col items-center justify-center min-h-[420px]">
-                    <div className="w-20 h-20 glass rounded-full flex items-center justify-center mb-6">
-                      <Icon name="CheckIcon" size={32} className="text-[var(--lkv-primary)]" />
+                  <Card className="flex h-full min-h-[420px] flex-col items-center justify-center p-[var(--space-12)] text-center">
+                    <div className="mb-[var(--space-6)] flex h-20 w-20 items-center justify-center rounded-full bg-[color:var(--lkv-success-bg)]">
+                      <Icon name="CheckIcon" size={32} className="text-[color:var(--lkv-primary)]" />
                     </div>
-                    <h2 className="font-display font-800 text-3xl text-[var(--lkv-primary)] mb-4">Commande confirmée.</h2>
-                    <p className="text-[var(--lkv-text-muted)] mb-2">
+                    <h2 className="mb-[var(--space-4)] font-display text-[length:var(--lkv-text-title-sm)] font-extrabold text-[color:var(--lkv-text-primary)]">Commande confirmée.</h2>
+                    <p className="mb-[var(--space-2)] text-[color:var(--lkv-text-muted)]">
                       {orderNumber ? (
-                        <>Numéro de commande : <span className="font-mono font-600 text-[var(--lkv-primary)]">{orderNumber}</span></>
+                        <>Numéro de commande : <span className="font-mono font-semibold text-[color:var(--lkv-text-primary)]">{orderNumber}</span></>
                       ) : (
                         'Votre numéro de commande vous sera envoyé par email.'
                       )}
                     </p>
-                    <p className="text-sm text-[var(--lkv-text-muted)] mb-8 max-w-sm mx-auto leading-relaxed">
+                    <p className="mx-auto mb-[var(--space-8)] max-w-sm text-[length:var(--lkv-text-body-sm)] leading-[var(--leading-relaxed)] text-[color:var(--lkv-text-muted)]">
                       Merci ! Un email de confirmation vous a été envoyé. Préparez-vous pour l'aventure.
                     </p>
-                    <Link href="/explorer" className="glass-capsule-btn">
+                    <Link
+                      href="/explorer"
+                      className="inline-flex min-h-[var(--control-height-md)] items-center justify-center rounded-full border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] px-[var(--space-6)] text-[length:var(--lkv-text-subheadline)] font-semibold text-[color:var(--card-content)] transition-colors hover:bg-[color:var(--lkv-hover-surface)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]"
+                    >
                       Voir les aventures
                     </Link>
-                  </div>
+                  </Card>
                 )}
               </div>
 
               {/* Order summary sidebar */}
               <div className="lg:col-span-5 xl:col-span-4">
-                <div className="glass p-8">
-                  <h3 className="font-display font-700 text-lg text-[var(--lkv-primary)] mb-6">Votre commande</h3>
-                  <div className="space-y-4 mb-6">
+                <Card className="p-[var(--space-8)]">
+                  <h3 className="mb-[var(--space-6)] font-display text-[length:var(--lkv-text-headline)] font-bold text-[color:var(--lkv-text-primary)]">Votre commande</h3>
+                  <div className="mb-[var(--space-6)] space-y-[var(--space-4)]">
                     {items.map((item) => (
-                      <div key={item.slug} className="flex items-center gap-4">
-                        <div className="w-12 h-12 bg-white/40 rounded-xl flex-shrink-0 overflow-hidden border border-white/60">
+                      <div key={item.slug} className="flex items-center gap-[var(--space-4)]">
+                        <div className="h-12 w-12 flex-shrink-0 overflow-hidden rounded-[var(--lkv-radius-md)] border border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-muted)]">
                           {item.image ? (
                             // eslint-disable-next-line @next/next/no-img-element
-                            <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                            <img src={item.image} alt={item.name} className="h-full w-full object-cover" />
                           ) : (
-                            <div className="w-full h-full flex items-center justify-center bg-white/40">
-                              <Icon name="PhotoIcon" size={16} className="text-[var(--lkv-text-muted)]/40" />
+                            <div className="flex h-full w-full items-center justify-center bg-[color:var(--lkv-surface-muted)]">
+                              <Icon name="PhotoIcon" size={16} className="text-[color:var(--lkv-text-muted)]" />
                             </div>
                           )}
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-xs font-600 text-[var(--lkv-primary)] truncate pr-2">{item.name}</p>
-                          <p className="text-[10px] text-[var(--lkv-text-muted)] mt-0.5">Quantité : {item.quantity}</p>
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate pr-[var(--space-2)] text-[length:var(--lkv-text-caption)] font-semibold text-[color:var(--lkv-text-primary)]">{item.name}</p>
+                          <p className="mt-0.5 text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">Quantité : {item.quantity}</p>
                         </div>
-                        <p className="text-xs font-bold font-mono whitespace-nowrap text-[var(--lkv-primary)]">{(item.priceEur * item.quantity).toFixed(2)} €</p>
+                        <p className="whitespace-nowrap font-mono text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)]">{(item.priceEur * item.quantity).toFixed(2)} €</p>
                       </div>
                     ))}
                   </div>
 
-                  <div className="border-t border-white/50 pt-5 space-y-2 mb-5">
-                    <div className="flex justify-between text-xs">
-                      <span className="text-[var(--lkv-text-muted)]">Sous-total</span>
-                      <span className="font-mono font-bold text-[var(--lkv-primary)]">{totalPriceEur.toFixed(2)} €</span>
+                  <div className="mb-[var(--space-5)] space-y-[var(--space-2)] border-t border-[color:var(--lkv-border)] pt-[var(--space-5)]">
+                    <div className="flex justify-between text-[length:var(--lkv-text-caption)]">
+                      <span className="text-[color:var(--lkv-text-muted)]">Sous-total</span>
+                      <span className="font-mono font-bold text-[color:var(--lkv-text-primary)]">{totalPriceEur.toFixed(2)} €</span>
                     </div>
-                    <div className="flex justify-between text-xs">
-                      <span className="text-[var(--lkv-text-muted)]">Livraison suivie</span>
-                      <span className="font-mono font-bold text-[var(--lkv-primary)]">{shippingEur === 0 ? 'Offerte' : `${shippingEur.toFixed(2)} €`}</span>
+                    <div className="flex justify-between text-[length:var(--lkv-text-caption)]">
+                      <span className="text-[color:var(--lkv-text-muted)]">Livraison suivie</span>
+                      <span className="font-mono font-bold text-[color:var(--lkv-text-primary)]">{shippingEur === 0 ? 'Offerte' : `${shippingEur.toFixed(2)} €`}</span>
                     </div>
-                    <div className="flex justify-between text-xs">
-                      <span className="text-[var(--lkv-text-muted)]">TVA (20 %, incluse)</span>
-                      <span className="font-mono font-bold text-[var(--lkv-primary)]">{(totalPriceEur * 0.2).toFixed(2)} €</span>
+                    <div className="flex justify-between text-[length:var(--lkv-text-caption)]">
+                      <span className="text-[color:var(--lkv-text-muted)]">TVA (20 %, incluse)</span>
+                      <span className="font-mono font-bold text-[color:var(--lkv-text-primary)]">{(totalPriceEur * 0.2).toFixed(2)} €</span>
                     </div>
                   </div>
 
-                  <div className="flex justify-between items-end font-display font-800 text-2xl pt-5 border-t border-white/50">
-                    <span className="text-lg text-[var(--lkv-primary)]">Total</span>
-                    <span className="font-mono font-bold text-[var(--lkv-primary)]">{grandTotal.toFixed(2)} €</span>
+                  <div className="flex items-end justify-between border-t border-[color:var(--lkv-border)] pt-[var(--space-5)] font-display text-[length:var(--lkv-text-title-sm)] font-extrabold">
+                    <span className="text-[length:var(--lkv-text-headline)] text-[color:var(--lkv-text-primary)]">Total</span>
+                    <span className="font-mono font-bold text-[color:var(--lkv-text-primary)]">{grandTotal.toFixed(2)} €</span>
                   </div>
 
                   {step === 'livraison' && (
-                    <button onClick={handleShippingSubmit} className="glass-capsule-btn primary w-full mt-6">
+                    <Button onClick={handleShippingSubmit} fullWidth className="mt-[var(--space-6)]">
                       Payer {grandTotal.toFixed(2)} € par carte
-                    </button>
+                    </Button>
                   )}
                   {step === 'paiement' && (
-                    <button onClick={handleStripeCheckout} disabled={processing} className="glass-capsule-btn primary w-full mt-6">
+                    <Button onClick={handleStripeCheckout} disabled={processing} loading={processing} fullWidth className="mt-[var(--space-6)]">
                       {processing ? 'Traitement...' : `Payer ${grandTotal.toFixed(2)} € par carte`}
-                    </button>
+                    </Button>
                   )}
 
-                  <p className="text-center text-[10px] text-[var(--lkv-text-muted)] mt-4 max-w-[250px] mx-auto leading-relaxed">
+                  <p className="mx-auto mt-[var(--space-4)] max-w-[250px] text-center text-[length:var(--lkv-text-caption-2)] leading-[var(--leading-relaxed)] text-[color:var(--lkv-text-muted)]">
                     En passant commande, vous acceptez les <Link href="/cgv" target="_blank" className="underline">CGV</Link> et notre <Link href="/politique-confidentialite" target="_blank" className="underline">politique de retour</Link>. Vous ne serez débité qu'à l'expédition.
                   </p>
-                </div>
+                </Card>
               </div>
             </div>
           </div>
@@ -659,84 +680,81 @@ export default function CheckoutPage() {
       {/* ── MOBILE VIEW (scroll natif) ── */}
       <div className="block md:hidden">
         <MobilePageShell background="transparent">
-          <div style={{ padding: '12px 16px 20px' }}>
-            <div style={{ display: 'flex', gap: '6px', marginBottom: '16px' }}>
-              {[0,1,2,3].map(i => (
-                <div key={i} style={{ flex: 1, height: '3px', borderRadius: '999px', background: i < 2 ? 'var(--lkv-secondary-subtle)' : i === 2 ? 'var(--lkv-primary)' : 'rgba(23,64,44,0.08)' }} />
+          <div className="px-[var(--space-4)] pb-[var(--space-5)] pt-[var(--space-3)]">
+            <div className="mb-[var(--space-4)] flex gap-[6px]">
+              {[0, 1, 2, 3].map(i => (
+                <div key={i} className={`h-[3px] flex-1 rounded-full ${i < 2 ? 'bg-[color:var(--lkv-secondary-subtle)]' : i === 2 ? 'bg-[color:var(--lkv-primary)]' : 'bg-[color:var(--lkv-border)]'}`} />
               ))}
             </div>
-            <div style={{ fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.14em', color: '#CCE0D4' }}>Étape 3 · 4 · Paiement</div>
-            <h1 style={{ fontSize: '26px', letterSpacing: '-0.025em', margin: 0, color: '#EEF3EC' }}>
-              Un dernier <em style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic', color: '#A9C6B0', fontWeight: 400 }}>geste.</em>
+            <div className="text-[length:var(--lkv-text-caption-2)] uppercase tracking-[var(--tracking-caps)] text-[color:var(--lkv-text-muted)]">Étape 3 · 4 · Paiement</div>
+            <h1 className="m-0 text-[length:var(--lkv-text-title-sm)] tracking-[var(--lkv-tracking-title)] text-[color:var(--lkv-text-primary)]">
+              Un dernier <em className="font-normal italic text-[color:var(--lkv-secondary)]">geste.</em>
             </h1>
           </div>
 
-          <div className="glass" style={{ margin: '0 16px 12px', padding: '14px', borderRadius: '14px', boxShadow: 'none' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'var(--lkv-surface-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--lkv-primary)" strokeWidth="1.5"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+          <Card variant="compact" className="mx-[var(--space-4)] mb-[var(--space-3)] p-[var(--space-4)]">
+            <div className="flex items-center gap-[var(--space-3)]">
+              <div className="flex h-9 w-9 items-center justify-center rounded-[var(--lkv-radius-md)] bg-[color:var(--lkv-surface-muted)]">
+                <Icon name="MapPinIcon" size={16} variant="outline" className="text-[color:var(--lkv-primary)]" />
               </div>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: '13px', fontWeight: 500, color: 'var(--lkv-primary)' }}>{shipping.prenom || 'Mathieu'} {shipping.nom || 'Chevrier'}</div>
-                <div style={{ fontSize: '11px', color: 'var(--lkv-text-muted)' }}>{shipping.adresse || '42 Rue de la République'} · {shipping.codePostal || '38000'} {shipping.ville || 'Grenoble'}</div>
+              <div className="flex-1">
+                <div className="text-[length:var(--lkv-text-footnote)] font-medium text-[color:var(--lkv-text-primary)]">{shipping.prenom || 'Mathieu'} {shipping.nom || 'Chevrier'}</div>
+                <div className="text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-muted)]">{shipping.adresse || '42 Rue de la République'} · {shipping.codePostal || '38000'} {shipping.ville || 'Grenoble'}</div>
               </div>
-              <div className="glass-pill" style={{ fontSize: '9px', fontWeight: 600, padding: '2px 8px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Maison</div>
+              <Badge tone="stone" className="uppercase">Maison</Badge>
             </div>
-          </div>
+          </Card>
 
-          <div className="glass" style={{ margin: '0 16px 12px', padding: '14px', borderRadius: '14px', boxShadow: 'none' }}>
-            <div style={{ fontSize: '11px', fontWeight: 500, color: 'var(--lkv-primary)', marginBottom: '10px' }}>Mode d'expédition</div>
+          <Card variant="compact" className="mx-[var(--space-4)] mb-[var(--space-3)] p-[var(--space-4)]">
+            <div className="mb-[var(--space-2)] text-[length:var(--lkv-text-caption)] font-medium text-[color:var(--lkv-text-primary)]">Mode d&apos;expédition</div>
             {[{ id: 'standard', label: 'Livraison suivie', price: 'Offerte', desc: '3-5 jours ouvrés' }, { id: 'express', label: 'Express 48h', price: '9,90 €', desc: 'Livré à domicile' }].map(opt => (
-              <label key={opt.id} onClick={() => setShippingOption(opt.id)} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 0', borderTop: '1px solid rgba(23,64,44,0.08)', cursor: 'pointer' }}>
-                <div style={{ width: '18px', height: '18px', borderRadius: '999px', border: '1.5px solid', borderColor: shippingOption === opt.id ? 'var(--lkv-primary)' : 'var(--lkv-secondary-subtle)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  {shippingOption === opt.id && <div style={{ width: '10px', height: '10px', borderRadius: '999px', background: 'var(--lkv-primary)' }} />}
-                </div>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: '13px', fontWeight: 500, color: 'var(--lkv-primary)' }}>{opt.label}</div>
-                  <div style={{ fontSize: '10px', color: 'var(--lkv-text-muted)' }}>{opt.desc}</div>
-                </div>
-                <div style={{ fontSize: '13px', fontWeight: 700, fontFamily: 'ui-monospace, monospace', color: 'var(--lkv-primary)' }}>{opt.price}</div>
+              <label key={opt.id} onClick={() => setShippingOption(opt.id)} className="flex cursor-pointer items-center gap-[var(--space-3)] border-t border-[color:var(--lkv-border-subtle)] py-[var(--space-3)]">
+                <span className={`flex h-[18px] w-[18px] flex-shrink-0 items-center justify-center rounded-full border-[1.5px] ${shippingOption === opt.id ? 'border-[color:var(--lkv-primary)]' : 'border-[color:var(--lkv-secondary-subtle)]'}`}>
+                  {shippingOption === opt.id && <span className="h-[10px] w-[10px] rounded-full bg-[color:var(--lkv-primary)]" />}
+                </span>
+                <span className="flex-1">
+                  <span className="block text-[length:var(--lkv-text-footnote)] font-medium text-[color:var(--lkv-text-primary)]">{opt.label}</span>
+                  <span className="block text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">{opt.desc}</span>
+                </span>
+                <span className="font-mono text-[length:var(--lkv-text-footnote)] font-bold text-[color:var(--lkv-text-primary)]">{opt.price}</span>
               </label>
             ))}
-          </div>
+          </Card>
 
-          <div className="glass" style={{ margin: '0 16px 12px', padding: '14px', borderRadius: '14px', boxShadow: 'none' }}>
-            <div style={{ fontSize: '11px', fontWeight: 500, color: 'var(--lkv-primary)', marginBottom: '10px' }}>Moyen de paiement</div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+          <Card variant="compact" className="mx-[var(--space-4)] mb-[var(--space-3)] p-[var(--space-4)]">
+            <div className="mb-[var(--space-2)] text-[length:var(--lkv-text-caption)] font-medium text-[color:var(--lkv-text-primary)]">Moyen de paiement</div>
+            <div className="grid grid-cols-2 gap-[var(--space-2)]">
               {['Carte', 'Apple Pay', 'PayPal', "3× sans frais"].map(m => (
-                <button key={m} className="glass-capsule-btn !p-2.5 !text-[11px] !font-semibold">
-                  {m}
-                </button>
+                <Button key={m} variant="secondary" size="sm" className="h-auto py-[var(--space-3)]">{m}</Button>
               ))}
             </div>
-          </div>
+          </Card>
 
           {error && (
-            <div style={{ margin: '0 16px 12px', padding: '12px 14px', background: 'var(--lkv-surface-muted)', border: '1px solid rgba(168,68,58,0.4)', borderRadius: '12px', color: 'var(--lkv-danger)', fontSize: '12px', lineHeight: 1.5 }}>
+            <div className="mx-[var(--space-4)] mb-[var(--space-3)] rounded-[var(--lkv-radius-md)] border border-[color:var(--lkv-danger)] bg-[color:var(--lkv-danger-bg)] p-[var(--space-3)] text-[length:var(--lkv-text-caption)] leading-[var(--leading-relaxed)] text-[color:var(--lkv-danger-dark)]">
               {error}
             </div>
           )}
 
-          <div className="glass" style={{ margin: '12px 16px', padding: '16px', borderRadius: '16px', boxShadow: 'none' }}>
-            <div style={{ fontSize: '11px', fontWeight: 500, marginBottom: '12px', opacity: 0.8, color: 'var(--lkv-primary)' }}>Récapitulatif</div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '12px', opacity: 0.7 }}>
-              <span style={{ color: 'var(--lkv-text-muted)' }}>Sous-total</span>
-              <span style={{ fontWeight: 700, fontFamily: 'ui-monospace, monospace', color: 'var(--lkv-primary)' }}>{totalPriceEur.toFixed(0)} €</span>
+          <Card className="mx-[var(--space-4)] my-[var(--space-3)] p-[var(--space-4)]">
+            <div className="mb-[var(--space-3)] text-[length:var(--lkv-text-caption)] font-medium text-[color:var(--lkv-text-primary)]">Récapitulatif</div>
+            <div className="mb-[var(--space-2)] flex justify-between text-[length:var(--lkv-text-caption)]">
+              <span className="text-[color:var(--lkv-text-muted)]">Sous-total</span>
+              <span className="font-mono font-bold text-[color:var(--lkv-text-primary)]">{totalPriceEur.toFixed(0)} €</span>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px', fontSize: '12px', opacity: 0.7 }}>
-              <span style={{ color: 'var(--lkv-text-muted)' }}>Livraison</span>
-              <span style={{ fontWeight: 700, fontFamily: 'ui-monospace, monospace', color: 'var(--lkv-primary)' }}>{shippingEur === 0 ? 'Offerte' : `${shippingEur.toFixed(2)} €`}</span>
+            <div className="mb-[var(--space-3)] flex justify-between text-[length:var(--lkv-text-caption)]">
+              <span className="text-[color:var(--lkv-text-muted)]">Livraison</span>
+              <span className="font-mono font-bold text-[color:var(--lkv-text-primary)]">{shippingEur === 0 ? 'Offerte' : `${shippingEur.toFixed(2)} €`}</span>
             </div>
-            <div style={{ height: '1px', background: 'rgba(255,255,255,0.35)', margin: '12px 0' }} />
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '14px' }}>
-              <span style={{ fontSize: '15px', fontWeight: 700, color: 'var(--lkv-primary)' }}>Total</span>
-              <span style={{ fontSize: '15px', fontWeight: 700, fontFamily: 'ui-monospace, monospace', color: 'var(--lkv-primary)' }}>{grandTotal.toFixed(0)} €</span>
+            <Divider spacing="sm" />
+            <div className="mb-[var(--space-4)] flex justify-between">
+              <span className="text-[length:var(--lkv-text-subheadline)] font-bold text-[color:var(--lkv-text-primary)]">Total</span>
+              <span className="font-mono text-[length:var(--lkv-text-subheadline)] font-bold text-[color:var(--lkv-text-primary)]">{grandTotal.toFixed(0)} €</span>
             </div>
-            <button onClick={handleStripeCheckout} disabled={processing} className="glass-capsule-btn primary w-full">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="1" y="11" width="22" height="10" rx="2"/><path d="M6 11V7a6 6 0 0 1 12 0v4"/></svg>
+            <Button onClick={handleStripeCheckout} disabled={processing} loading={processing} fullWidth icon={<Icon name="LockClosedIcon" size={14} />}>
               Payer {grandTotal.toFixed(0)} €
-            </button>
-          </div>
+            </Button>
+          </Card>
         </MobilePageShell>
       </div>
     </>

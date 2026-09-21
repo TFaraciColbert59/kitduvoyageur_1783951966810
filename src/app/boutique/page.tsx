@@ -48,6 +48,9 @@ const RAYONS = [
   },
 ];
 
+const CTA_CLASS =
+  'inline-flex min-h-[var(--control-height-md)] items-center justify-center gap-[var(--space-1)] rounded-full bg-[color:var(--lkv-action)] px-[var(--space-5)] text-[length:var(--lkv-text-footnote)] font-semibold text-[color:var(--lkv-on-action)] transition-transform hover:bg-[color:var(--lkv-action-hover)] active:scale-[var(--motion-press-scale)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)] motion-reduce:transition-none';
+
 export default function BoutiquePage() {
   const webPageSchema = {
     '@context': 'https://schema.org',
@@ -73,32 +76,32 @@ export default function BoutiquePage() {
 
       {/* ── DESKTOP ── */}
       <div className="hidden md:block">
-        <div data-lkv-material-theme="light" className="h-dvh overflow-hidden relative">
+        <div data-lkv-material-theme="light" className="relative h-dvh overflow-hidden">
           <Header />
-          <main className="h-full overflow-y-auto max-w-[var(--page-max-w)] mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-20">
-            <PageHeader variant="large" className="mb-3" title="La boutique" />
-            <p className="mb-8 max-w-2xl text-base text-[var(--lkv-text-muted)]">
+          <main className="mx-auto h-full max-w-[var(--page-max-w)] overflow-y-auto px-4 pb-20 pt-24 sm:px-6 lg:px-8">
+            <PageHeader variant="large" className="mb-[var(--space-3)]" title="La boutique" />
+            <p className="mb-[var(--space-8)] max-w-2xl text-[length:var(--lkv-text-body)] text-[color:var(--lkv-text-muted)]">
               Chaque objet est testé en conditions réelles pendant six semaines minimum. Ceux qui
               restent trouvent leur place ici.
             </p>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 gap-[var(--space-6)] md:grid-cols-2 lg:grid-cols-3">
               {RAYONS.map((rayon) => (
                 <Card
                   key={rayon.href}
                   as="article"
                   variant="interactive"
                   tone="sage"
-                  className="p-6 flex flex-col justify-between gap-4"
+                  className="flex flex-col justify-between gap-[var(--space-4)] p-[var(--space-6)]"
                 >
-                  <div className="space-y-2">
-                    <rayon.icone size={22} className="text-[var(--lkv-primary)]" aria-hidden />
-                    <h2 className="font-display font-bold text-xl text-[var(--lkv-primary)]">{rayon.nom}</h2>
-                    <p className="text-sm text-[var(--lkv-forest-600)] leading-relaxed">{rayon.description}</p>
+                  <div className="space-y-[var(--space-2)]">
+                    <rayon.icone size={22} className="text-[color:var(--lkv-primary)]" aria-hidden />
+                    <h2 className="font-display text-[length:var(--lkv-text-title-sm)] font-bold text-[color:var(--lkv-primary)]">{rayon.nom}</h2>
+                    <p className="text-[length:var(--lkv-text-body-sm)] leading-[var(--leading-relaxed)] text-[color:var(--lkv-text-secondary)]">{rayon.description}</p>
                   </div>
 
-                  <div className="flex items-center justify-end pt-2 border-t border-white/20">
-                    <Link href={rayon.href} className="glass-capsule-btn secondary">
+                  <div className="flex items-center justify-end border-t border-[color:var(--lkv-border)] pt-[var(--space-2)]">
+                    <Link href={rayon.href} className={CTA_CLASS}>
                       <span>Explorer</span>
                       <Icon name="arrow-right" size={14} />
                     </Link>
@@ -114,33 +117,33 @@ export default function BoutiquePage() {
       {/* ── MOBILE (COCKPIT LIQUID GLASS) ── */}
       <div className="block md:hidden">
         <MobilePageShell>
-          <div className="px-3 pt-3 pb-24 flex flex-col gap-4">
+          <div className="flex flex-col gap-[var(--space-4)] px-[var(--space-3)] pb-24 pt-[var(--space-3)]">
             <PageHeader variant="large" title="La boutique" />
 
-            <p className="text-xs text-[var(--lkv-text-muted)] leading-relaxed">
+            <p className="text-[length:var(--lkv-text-caption)] leading-[var(--leading-relaxed)] text-[color:var(--lkv-text-muted)]">
               Chaque objet est testé en conditions réelles pendant six semaines minimum. Ceux qui
               restent trouvent leur place ici.
             </p>
 
-            <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-[var(--space-3)]">
               {RAYONS.map((rayon) => (
                 <Card
                   key={rayon.href}
                   as="article"
                   variant="interactive"
                   tone="sage"
-                  className="p-4 flex flex-col gap-3"
+                  className="flex flex-col gap-[var(--space-3)] p-[var(--space-4)]"
                 >
-                  <div className="flex items-center gap-2">
-                    <rayon.icone size={18} className="text-[var(--lkv-primary)]" aria-hidden />
-                    <h2 className="font-display font-bold text-[17px] text-[var(--lkv-primary)]">
+                  <div className="flex items-center gap-[var(--space-2)]">
+                    <rayon.icone size={18} className="text-[color:var(--lkv-primary)]" aria-hidden />
+                    <h2 className="font-display text-[length:var(--lkv-text-headline)] font-bold text-[color:var(--lkv-primary)]">
                       {rayon.nom}
                     </h2>
                   </div>
-                  <p className="text-xs text-[var(--lkv-forest-600)] leading-relaxed">{rayon.description}</p>
+                  <p className="text-[length:var(--lkv-text-caption)] leading-[var(--leading-relaxed)] text-[color:var(--lkv-text-secondary)]">{rayon.description}</p>
 
-                  <div className="flex items-center justify-end pt-1">
-                    <Link href={rayon.href} className="glass-capsule-btn primary">
+                  <div className="flex items-center justify-end pt-[var(--space-1)]">
+                    <Link href={rayon.href} className={CTA_CLASS}>
                       <span>Explorer</span>
                       <Icon name="arrow-right" size={13} />
                     </Link>

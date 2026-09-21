@@ -7,12 +7,14 @@ import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
 import Icon from '@/components/ui/AppIcon';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { Badge, Button, Card, Chip, EmptyState, ErrorState, ListItem, LoadingState, Skeleton, Tabs, type BadgeTone } from '@/components/ui';
 
 interface LoyaltyLevel {
   name: string;
   minPoints: number;
   color: string;
   bg: string;
+  tone: BadgeTone;
   perks: string[];
   badge: string;
 }
@@ -39,11 +41,11 @@ interface PointsHistory {
 }
 
 const LEVELS: LoyaltyLevel[] = [
-  { name: 'Explorateur', minPoints: 0, color: 'text-stone-600', bg: 'bg-stone-100 border-stone-300', badge: '🥾', perks: ['Accès au programme de fidélité', 'Newsletter exclusive'] },
-  { name: 'Aventurier', minPoints: 500, color: 'text-emerald-700', bg: 'bg-emerald-50 border-emerald-300', badge: '🏕️', perks: ['5% de réduction sur les kits', 'Accès prioritaire aux ventes flash', 'Badge profil'] },
-  { name: 'Randonneur Expert', minPoints: 1500, color: 'text-blue-700', bg: 'bg-blue-50 border-blue-300', badge: '🧗', perks: ['10% de réduction permanente', 'Livraison gratuite', 'Accès bêta nouvelles fonctionnalités'] },
-  { name: 'Guide de Montagne', minPoints: 3500, color: 'text-purple-700', bg: 'bg-purple-50 border-purple-300', badge: '🏔️', perks: ['15% de réduction', 'Accès partenaires exclusifs', 'Consultation équipement gratuite', 'Invitation événements'] },
-  { name: 'Légende du Voyage', minPoints: 7500, color: 'text-amber-700', bg: 'bg-amber-50 border-amber-300', badge: '🌍', perks: ['20% de réduction', 'Accès VIP toutes fonctionnalités', 'Cadeaux anniversaire', 'Partenariats exclusifs', 'Profil vérifié'] },
+  { name: 'Explorateur', minPoints: 0, color: 'text-[color:var(--lkv-text-secondary)]', bg: 'bg-[color:var(--lkv-surface-muted)] border-[color:var(--lkv-border)]', tone: 'stone', badge: '🥾', perks: ['Accès au programme de fidélité', 'Newsletter exclusive'] },
+  { name: 'Aventurier', minPoints: 500, color: 'text-[color:var(--lkv-success)]', bg: 'bg-[color:var(--lkv-success-bg)] border-[color:var(--lkv-success)]', tone: 'sage', badge: '🏕️', perks: ['5% de réduction sur les kits', 'Accès prioritaire aux ventes flash', 'Badge profil'] },
+  { name: 'Randonneur Expert', minPoints: 1500, color: 'text-[color:var(--lkv-info)]', bg: 'bg-[color:var(--lkv-info-bg)] border-[color:var(--lkv-info)]', tone: 'info', badge: '🧗', perks: ['10% de réduction permanente', 'Livraison gratuite', 'Accès bêta nouvelles fonctionnalités'] },
+  { name: 'Guide de Montagne', minPoints: 3500, color: 'text-[color:var(--sage-700)]', bg: 'bg-[color:var(--sage-50)] border-[color:var(--sage-300)]', tone: 'sage', badge: '🏔️', perks: ['15% de réduction', 'Accès partenaires exclusifs', 'Consultation équipement gratuite', 'Invitation événements'] },
+  { name: 'Légende du Voyage', minPoints: 7500, color: 'text-[color:var(--lkv-warning-dark)]', bg: 'bg-[color:var(--lkv-warning-bg)] border-[color:var(--lkv-warning)]', tone: 'warn', badge: '🌍', perks: ['20% de réduction', 'Accès VIP toutes fonctionnalités', 'Cadeaux anniversaire', 'Partenariats exclusifs', 'Profil vérifié'] },
 ];
 
 const EARN_ACTIONS = [
@@ -131,344 +133,339 @@ export default function FidelitePage() {
     }
   };
 
-  const pageContent = (isMobile: boolean) => {
-    const s = (mobile: any, desktop: any) => isMobile ? mobile : desktop;
-
-    return (
-      <>
-        {error && !loading && (
-          <div className={s('', 'max-w-7xl mx-auto px-4 mb-6')} style={s({ textAlign: 'center', padding: '40px 0' }, {})}>
-            <p className={s('text-3xl mb-3', 'text-4xl mb-3')}>⚠️</p>
-            <p className={s('text-xs text-muted-foreground mb-4', 'text-sm text-muted-foreground mb-4')}>{error}</p>
-            <button onClick={() => loadData()} className={s('glass-capsule-btn primary !px-4 !py-2 !text-xs !font-semibold', 'glass-capsule-btn primary !px-5 !py-2.5 !text-sm !font-semibold')}>Réessayer</button>
-          </div>
-        )}
-        {!error && (
+  const pageContent = (
+    <>
+      {error && !loading && (
+        <Card className="mx-auto mb-[var(--space-6)] max-w-7xl p-[var(--space-8)]">
+          <ErrorState
+            title="Impossible de charger la fidélité"
+            message={error}
+            onRetry={() => loadData()}
+          />
+        </Card>
+      )}
+      {!error && (
         <>
-        <section className={s('', 'bg-dark-bg text-white py-12 px-4 relative overflow-hidden')} style={s({ background: '#17402C', color: '#fff', padding: '20px', borderRadius: '12px', marginBottom: '16px' }, {})}>
-          <div className={s('', 'absolute inset-0 opacity-5')}>
-            {!isMobile && Array.from({ length: 20 }).map((_, i) => (
-              <div key={i} className="absolute text-4xl" style={{ left: `${i * 17 % 100}%`, top: `${i * 23 % 100}%`, transform: 'rotate(15deg)' }}>⭐</div>
-            ))}
-          </div>
-          <div className={s('', 'max-w-7xl mx-auto relative')}>
-            <div className={s('', 'flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6')}>
-              <div>
-                <div className={s('flex items-center gap-2 mb-2', 'flex items-center gap-3 mb-3')}>
-                  <div className={s('w-8 h-8 rounded-lg bg-amber-500/20 flex items-center justify-center', 'w-10 h-10 rounded-xl bg-amber-500/20 flex items-center justify-center')}>
-                    <Icon name="StarIcon" size={s(16, 22)} variant="solid" className="text-sand-400" />
+          <section className="relative overflow-hidden bg-[color:var(--lkv-primary)] px-[var(--space-4)] py-[var(--space-12)] text-[color:var(--lkv-text-inverted)]">
+            <div className="relative z-[var(--z-sticky)] mx-auto max-w-7xl">
+              <div className="flex flex-col items-start justify-between gap-[var(--space-6)] lg:flex-row lg:items-center">
+                <div>
+                  <div className="mb-[var(--space-3)] flex items-center gap-[var(--space-3)]">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-[var(--lkv-radius-md)] bg-[color:var(--lkv-warning-bg)]">
+                      <Icon name="StarIcon" size={22} variant="solid" className="text-[color:var(--lkv-warning)]" />
+                    </div>
+                    <div>
+                      <p className="font-mono text-[length:var(--lkv-text-caption)] uppercase tracking-[var(--tracking-wide)] text-[color:var(--lkv-warning)]">Phase 3 · Programme Fidélité</p>
+                      <h1 className="font-display text-[length:var(--lkv-text-title-sm)] font-extrabold tracking-[var(--lkv-tracking-title)]">Programme Voyageur</h1>
+                    </div>
                   </div>
-                  <div>
-                    <p className={s('text-[9px] font-mono text-amber-400/80 tracking-widest uppercase', 'text-xs font-mono text-amber-400/80 tracking-widest uppercase')}>Phase 3 · Programme Fidélité</p>
-                    <h1 className={s('text-lg font-display font-800 tracking-tight', 'text-2xl font-display font-800 tracking-tight')}>Programme Voyageur</h1>
-                  </div>
+                  <p className="max-w-lg text-[length:var(--lkv-text-body-sm)] text-[color:var(--lkv-text-inverted)] opacity-60">Gagnez des points à chaque achat, partagez vos aventures et débloquez des récompenses exclusives.</p>
                 </div>
-                <p className={s('text-xs text-white/60 max-w-xs', 'text-white/60 text-sm max-w-lg')}>Gagnez des points à chaque achat, partagez vos aventures et débloquez des récompenses exclusives.</p>
-              </div>
 
-              <div className={s('w-full mt-3', 'bg-gradient-to-br from-amber-500/20 to-amber-600/10 border border-amber-500/30 rounded-2xl p-5 min-w-64')}>
-                <div className={s('flex items-center justify-between mb-2', 'flex items-center justify-between mb-2')}>
-                  <span className={s('text-[10px] text-white/60 uppercase tracking-wider font-mono', 'text-xs text-white/60 uppercase tracking-wider font-mono')}>Vos points</span>
-                  <span className={s('text-xl', 'text-2xl')}>{currentLevel.badge}</span>
-                </div>
-                {!user ? (
-                  <p className={s('text-xs text-white/60', 'text-white/60 text-sm')}>Connectez-vous pour voir vos points</p>
-                ) : loading ? (
-                  <div className={s('h-8 bg-white/10 rounded animate-pulse', 'h-10 bg-white/10 rounded animate-pulse')} />
-                ) : (
-                  <>
-                    <p className={s('text-2xl font-display font-800 text-amber-400', 'text-4xl font-display font-800 text-amber-400')}>{formatPoints(userPoints)}</p>
-                    <p className={s('text-xs text-white/70 mt-0.5', 'text-sm text-white/70 mt-1')}>{currentLevel.name}</p>
-                    {nextLevel && (
-                      <div className={s('mt-2', 'mt-3')}>
-                        <div className={s('flex justify-between text-[10px] text-white/50 mb-0.5', 'flex justify-between text-xs text-white/50 mb-1')}>
-                          <span>{formatPoints(userPoints)} pts</span>
-                          <span>{formatPoints(nextLevel.minPoints)} pts</span>
+                <Card tone="warn" className="w-full min-w-64 p-[var(--space-5)] lg:w-auto">
+                  <div className="mb-[var(--space-2)] flex items-center justify-between">
+                    <span className="font-mono text-[length:var(--lkv-text-caption)] uppercase tracking-[var(--tracking-wide)] text-[color:var(--lkv-warning-dark)]">Vos points</span>
+                    <span className="text-[length:var(--lkv-text-title-sm)]">{currentLevel.badge}</span>
+                  </div>
+                  {!user ? (
+                    <p className="text-[length:var(--lkv-text-body-sm)] text-[color:var(--lkv-warning-dark)]">Connectez-vous pour voir vos points</p>
+                  ) : loading ? (
+                    <Skeleton className="h-10 w-32" />
+                  ) : (
+                    <>
+                      <p className="font-display text-[length:var(--lkv-text-title-xl)] font-extrabold text-[color:var(--lkv-warning-dark)]">{formatPoints(userPoints)}</p>
+                      <p className="mt-[var(--space-1)] text-[length:var(--lkv-text-body-sm)] text-[color:var(--lkv-warning-dark)]">{currentLevel.name}</p>
+                      {nextLevel && (
+                        <div className="mt-[var(--space-3)]">
+                          <div className="mb-[var(--space-1)] flex justify-between text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-warning-dark)]">
+                            <span>{formatPoints(userPoints)} pts</span>
+                            <span>{formatPoints(nextLevel.minPoints)} pts</span>
+                          </div>
+                          <div className="h-1.5 overflow-hidden rounded-full bg-[color:var(--lkv-border)]">
+                            <div className="h-full rounded-full bg-[color:var(--lkv-warning)] transition-all" style={{ width: `${progressToNext}%` }} />
+                          </div>
+                          <p className="mt-[var(--space-1)] text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-warning-dark)]">{formatPoints(nextLevel.minPoints - userPoints)} pts pour {nextLevel.name}</p>
                         </div>
-                        <div className={s('h-1 bg-white/10 rounded-full overflow-hidden', 'h-1.5 bg-white/10 rounded-full overflow-hidden')}>
-                          <div className="h-full bg-sand-400 rounded-full transition-all" style={{ width: `${progressToNext}%` }} />
-                        </div>
-                        <p className={s('text-[10px] text-white/50 mt-0.5', 'text-xs text-white/50 mt-1')}>{formatPoints(nextLevel.minPoints - userPoints)} pts pour {nextLevel.name}</p>
-                      </div>
-                    )}
-                  </>
-                )}
+                      )}
+                    </>
+                  )}
+                </Card>
               </div>
             </div>
-          </div>
-        </section>
+          </section>
 
-        <div className={s('', 'max-w-7xl mx-auto px-4 py-8')}>
-          {/* Tabs */}
-          <div className={s('flex gap-1 mb-4 overflow-x-auto scrollbar-hide', 'flex gap-2 mb-6 border-b border-border pb-4 overflow-x-auto scrollbar-hide')}>
-            {[
-              { id: 'overview', label: "Vue d'ensemble", icon: 'HomeIcon' },
-              { id: 'rewards', label: 'Récompenses', icon: 'GiftIcon' },
-              { id: 'history', label: 'Historique', icon: 'ClockIcon' },
-              { id: 'earn', label: 'Gagner des points', icon: 'PlusCircleIcon' },
-            ].map((tab) => (
-              <button key={tab.id} onClick={() => setActiveTab(tab.id as typeof activeTab)}
-                className={s(
-                  `glass-capsule-btn !px-3 !py-1.5 !text-xs !font-medium whitespace-nowrap flex-shrink-0 ${activeTab === tab.id ? 'primary' : ''}`,
-                  `glass-capsule-btn !px-4 !py-2 !text-sm !font-medium whitespace-nowrap ${activeTab === tab.id ? 'primary' : ''}`
-                )}>
-                <Icon name={tab.icon as string} size={isMobile ? 14 : 16} variant="outline" />
-                {tab.label}
-              </button>
-            ))}
-          </div>
+          <div className="mx-auto max-w-7xl px-[var(--space-4)] py-[var(--space-8)]">
+            {/* Tabs */}
+            <Tabs
+              options={[
+                { id: 'overview', label: "Vue d'ensemble", icon: <Icon name="HomeIcon" size={16} variant="outline" /> },
+                { id: 'rewards', label: 'Récompenses', icon: <Icon name="GiftIcon" size={16} variant="outline" /> },
+                { id: 'history', label: 'Historique', icon: <Icon name="ClockIcon" size={16} variant="outline" /> },
+                { id: 'earn', label: 'Gagner des points', icon: <Icon name="PlusCircleIcon" size={16} variant="outline" /> },
+              ]}
+              value={activeTab}
+              onChange={(id) => setActiveTab(id as typeof activeTab)}
+              variant="scrollable"
+              ariaLabel="Sections fidélité"
+              className="mb-[var(--space-4)]"
+            />
 
-          {/* Overview Tab */}
-          {activeTab === 'overview' && (
-            <div className={s('space-y-4', 'space-y-6')}>
-              <div className={s('glass rounded-xl p-4', 'glass rounded-2xl p-6')}>
-                <h2 className={s('text-base font-display font-700 mb-4', 'text-lg font-display font-700 mb-5')}>Niveaux voyageur</h2>
-                <div className="relative">
-                  <div className={s('absolute top-4 left-4 right-4 h-0.5 bg-border', 'absolute top-6 left-6 right-6 h-0.5 bg-border')} />
-                  <div className={s('absolute top-4 left-4 h-0.5 bg-primary transition-all', 'absolute top-6 left-6 h-0.5 bg-primary transition-all')} style={{ width: `${LEVELS.findIndex((l) => l.name === currentLevel.name) / (LEVELS.length - 1) * 100}%` }} />
-                  <div className={s('flex justify-between relative', 'flex justify-between relative')}>
-                    {LEVELS.map((level) => {
-                      const isUnlocked = userPoints >= level.minPoints;
-                      const isCurrent = level.name === currentLevel.name;
-                      return (
-                        <div key={level.name} className={s('flex flex-col items-center gap-1 w-16', 'flex flex-col items-center gap-2 w-24')}>
-                          <div className={s(`w-8 h-8 rounded-full flex items-center justify-center text-sm border-2 transition-all ${isCurrent ? 'border-primary bg-primary/10  shadow-primary/20 scale-110' : isUnlocked ? 'border-emerald-400 bg-emerald-50' : 'border-border bg-card opacity-40'}`, `w-12 h-12 rounded-full flex items-center justify-center text-xl border-2 transition-all ${isCurrent ? 'border-primary bg-primary/10  shadow-primary/20 scale-110' : isUnlocked ? 'border-emerald-400 bg-emerald-50' : 'border-border bg-card opacity-40'}`)}>
-                            {level.badge}
+            {/* Overview Tab */}
+            {activeTab === 'overview' && (
+              <div className="space-y-[var(--space-4)] md:space-y-[var(--space-6)]">
+                <Card className="p-[var(--space-4)] md:p-[var(--space-6)]">
+                  <h2 className="mb-[var(--space-4)] font-display text-[length:var(--lkv-text-headline)] font-bold text-[color:var(--lkv-text-primary)] md:mb-[var(--space-5)]">Niveaux voyageur</h2>
+                  <div className="relative">
+                    <div className="absolute left-[var(--space-4)] right-[var(--space-4)] top-4 h-0.5 bg-[color:var(--lkv-border)] md:left-[var(--space-6)] md:right-[var(--space-6)] md:top-6" />
+                    <div
+                      className="absolute left-[var(--space-4)] top-4 h-0.5 bg-[color:var(--lkv-primary)] transition-all md:left-[var(--space-6)] md:top-6"
+                      style={{ width: `${LEVELS.findIndex((l) => l.name === currentLevel.name) / (LEVELS.length - 1) * 100}%` }}
+                    />
+                    <div className="relative flex justify-between">
+                      {LEVELS.map((level) => {
+                        const isUnlocked = userPoints >= level.minPoints;
+                        const isCurrent = level.name === currentLevel.name;
+                        return (
+                          <div key={level.name} className="flex w-16 flex-col items-center gap-[var(--space-1)] md:w-24 md:gap-[var(--space-2)]">
+                            <div className={`flex h-8 w-8 items-center justify-center rounded-full border-2 text-[length:var(--lkv-text-body-sm)] transition-all md:h-12 md:w-12 md:text-[length:var(--lkv-text-headline)] ${isCurrent ? 'scale-110 border-[color:var(--lkv-primary)] bg-[color:var(--lkv-primary-subtle)]' : isUnlocked ? 'border-[color:var(--lkv-success)] bg-[color:var(--lkv-success-bg)]' : 'border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-card)] opacity-40'}`}>
+                              {level.badge}
+                            </div>
+                            <div className="text-center">
+                              <p className={`text-[length:var(--lkv-text-caption-2)] font-semibold md:text-[length:var(--lkv-text-caption)] ${isCurrent ? 'text-[color:var(--lkv-primary)]' : isUnlocked ? 'text-[color:var(--lkv-text-primary)]' : 'text-[color:var(--lkv-text-muted)]'}`}>{level.name}</p>
+                              <p className="font-mono text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">{formatPoints(level.minPoints)} pts</p>
+                            </div>
                           </div>
-                          <div className="text-center">
-                            <p className={s(`text-[9px] font-semibold ${isCurrent ? 'text-primary' : isUnlocked ? 'text-foreground' : 'text-muted-foreground'}`, `text-xs font-semibold ${isCurrent ? 'text-primary' : isUnlocked ? 'text-foreground' : 'text-muted-foreground'}`)}>{level.name}</p>
-                            <p className={s('text-[9px] text-muted-foreground font-mono', 'text-xs text-muted-foreground font-mono')}>{formatPoints(level.minPoints)} pts</p>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
-
-              <div className={s('grid grid-cols-1 gap-3', 'grid grid-cols-1 md:grid-cols-2 gap-4')}>
-                <div className={s(`rounded-xl border p-4 ${currentLevel.bg}`, `rounded-xl border p-5 ${currentLevel.bg}`)}>
-                  <div className={s('flex items-center gap-2 mb-2', 'flex items-center gap-3 mb-3')}>
-                    <span className={s('text-2xl', 'text-3xl')}>{currentLevel.badge}</span>
-                    <div>
-                      <p className={s('text-[10px] text-muted-foreground', 'text-xs text-muted-foreground')}>Niveau actuel</p>
-                      <h3 className={s(`font-display font-700 text-base ${currentLevel.color}`, `font-display font-700 text-lg ${currentLevel.color}`)}>{currentLevel.name}</h3>
+                        );
+                      })}
                     </div>
                   </div>
-                  <ul className={s('space-y-1', 'space-y-1.5')}>
-                    {currentLevel.perks.map((perk) => (
-                      <li key={perk} className={s('flex items-center gap-1.5 text-xs', 'flex items-center gap-2 text-sm')}>
-                        <Icon name="CheckCircleIcon" size={s(14, 16)} variant="solid" className="text-forest-500 flex-shrink-0" />
-                        {perk}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-                {nextLevel && (
-                  <div className={s('glass rounded-xl p-4 opacity-70', 'glass rounded-xl p-5 opacity-70')}>
-                    <div className={s('flex items-center gap-2 mb-2', 'flex items-center gap-3 mb-3')}>
-                      <span className={s('text-2xl grayscale', 'text-3xl grayscale')}>{nextLevel.badge}</span>
+                </Card>
+
+                <div className="grid grid-cols-1 gap-[var(--space-3)] md:grid-cols-2 md:gap-[var(--space-4)]">
+                  <div className={`rounded-[var(--lkv-radius-card)] border p-[var(--space-4)] md:p-[var(--space-5)] ${currentLevel.bg}`}>
+                    <div className="mb-[var(--space-2)] flex items-center gap-[var(--space-2)] md:mb-[var(--space-3)] md:gap-[var(--space-3)]">
+                      <span className="text-[length:var(--lkv-text-title-sm)] md:text-[length:var(--lkv-text-title-xl)]">{currentLevel.badge}</span>
                       <div>
-                        <p className={s('text-[10px] text-muted-foreground', 'text-xs text-muted-foreground')}>Prochain niveau</p>
-                        <h3 className={s('font-display font-700 text-base text-muted-foreground', 'font-display font-700 text-lg text-muted-foreground')}>{nextLevel.name}</h3>
-                        <p className={s('text-[10px] text-primary font-mono', 'text-xs text-primary font-mono')}>{formatPoints(nextLevel.minPoints - userPoints)} pts manquants</p>
+                        <p className="text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)] md:text-[length:var(--lkv-text-caption)]">Niveau actuel</p>
+                        <h3 className={`font-display text-[length:var(--lkv-text-headline)] font-bold md:text-[length:var(--lkv-text-title-sm)] ${currentLevel.color}`}>{currentLevel.name}</h3>
                       </div>
                     </div>
-                    <ul className={s('space-y-1', 'space-y-1.5')}>
-                      {nextLevel.perks.map((perk) => (
-                        <li key={perk} className={s('flex items-center gap-1.5 text-xs text-muted-foreground', 'flex items-center gap-2 text-sm text-muted-foreground')}>
-                          <Icon name="LockClosedIcon" size={s(12, 14)} variant="outline" className="flex-shrink-0" />
+                    <ul className="space-y-[var(--space-1)] md:space-y-[var(--space-2)]">
+                      {currentLevel.perks.map((perk) => (
+                        <li key={perk} className="flex items-center gap-[var(--space-1)] text-[length:var(--lkv-text-caption)] md:gap-[var(--space-2)] md:text-[length:var(--lkv-text-body-sm)]">
+                          <Icon name="CheckCircleIcon" size={14} variant="solid" className="flex-shrink-0 text-[color:var(--lkv-success)]" />
                           {perk}
                         </li>
                       ))}
                     </ul>
                   </div>
-                )}
-              </div>
-
-              <div className={s('grid grid-cols-2 gap-2', 'grid grid-cols-2 sm:grid-cols-4 gap-3')}>
-                {[
-                  { label: 'Points gagnés', value: formatPoints(history.filter((h) => h.type === 'earned').reduce((s, h) => s + h.points, 0)), icon: 'ArrowTrendingUpIcon', color: 'text-emerald-600' },
-                  { label: 'Points dépensés', value: formatPoints(Math.abs(history.filter((h) => h.type === 'spent').reduce((s, h) => s + h.points, 0))), icon: 'GiftIcon', color: 'text-primary' },
-                  { label: 'Récompenses', value: String(redeemedIds.length), icon: 'TrophyIcon', color: 'text-amber-600' },
-                  { label: 'Solde actuel', value: formatPoints(userPoints), icon: 'StarIcon', color: 'text-blue-600' },
-                ].map((stat) => (
-                  <div key={stat.label} className={s('glass rounded-xl p-3', 'glass rounded-xl p-4')}>
-                    <Icon name={stat.icon as string} size={s(16, 20)} variant="outline" className={`${stat.color} mb-1`} />
-                    <p className={s('text-base font-display font-700', 'text-xl font-display font-700')}>{stat.value}</p>
-                    <p className={s('text-[10px] text-muted-foreground', 'text-xs text-muted-foreground')}>{stat.label}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Rewards Tab */}
-          {activeTab === 'rewards' && (
-            <div>
-              <div className={s('flex flex-wrap gap-1.5 mb-4', 'flex flex-wrap gap-2 mb-5')}>
-                {[
-                  { id: 'all', label: 'Toutes' },
-                  { id: 'discount', label: '🏷️ Réductions' },
-                  { id: 'shipping', label: '📦 Livraison' },
-                  { id: 'gear', label: '🎒 Matériel' },
-                  { id: 'experience', label: '🌟 Expériences' },
-                  { id: 'partner', label: '🤝 Partenaires' },
-                ].map((cat) => (
-                  <button key={cat.id} onClick={() => setFilterCategory(cat.id)}
-                    className={s(
-                      `glass-capsule-btn !px-2.5 !py-1 !text-xs !font-medium ${filterCategory === cat.id ? 'primary' : ''}`,
-                      `glass-capsule-btn !px-3 !py-1.5 !text-sm !font-medium ${filterCategory === cat.id ? 'primary' : ''}`
-                    )}>
-                    {cat.label}
-                  </button>
-                ))}
-              </div>
-
-              {loading ? (
-                <div className={s('grid grid-cols-1 gap-3', 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4')}>
-                  {[1, 2, 3].map((i) => <div key={i} className={s('h-48 rounded-xl bg-muted animate-pulse', 'h-64 rounded-xl bg-muted animate-pulse')} />)}
-                </div>
-              ) : (
-                <div className={s('grid grid-cols-1 gap-3', 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4')}>
-                  {filteredRewards.map((reward) => {
-                    const canAfford = userPoints >= reward.points_cost;
-                    const isRedeemed = redeemedIds.includes(reward.id);
-                    const isRedeeming = redeemingId === reward.id;
-                    return (
-                      <div key={reward.id} className={s(`glass rounded-xl overflow-hidden transition-all ${isRedeemed ? 'border-emerald-300 opacity-70' : canAfford ? 'hover:border-primary/40' : 'opacity-60'}`, `glass rounded-xl overflow-hidden transition-all ${isRedeemed ? 'border-emerald-300 opacity-70' : canAfford ? 'hover:border-primary/40 hover:' : 'opacity-60'}`)}>
-                        <div className={s('relative h-28 overflow-hidden', 'relative h-36 overflow-hidden')}>
-                          <img src={reward.image} alt={reward.alt} className="w-full h-full object-cover" />
-                          <div className={s('absolute top-1.5 right-1.5 bg-amber-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-lg font-mono', 'absolute top-2 right-2 bg-amber-500 text-white text-xs font-bold px-2 py-1 rounded-lg font-mono')}>
-                            {formatPoints(reward.points_cost)} pts
-                          </div>
-                          {reward.expires_at && (
-                            <div className={s('absolute bottom-1.5 left-1.5 bg-black/60 text-white text-[10px] px-1.5 py-0.5 rounded-lg', 'absolute bottom-2 left-2 bg-black/60 text-white text-xs px-2 py-0.5 rounded-lg')}>
-                              Expire le {formatDate(reward.expires_at)}
-                            </div>
-                          )}
-                        </div>
-                        <div className={s('p-3', 'p-4')}>
-                          <h3 className={s('font-semibold text-xs mb-0.5', 'font-semibold text-sm mb-1')}>{reward.title}</h3>
-                          <p className={s('text-[10px] text-muted-foreground mb-2 leading-relaxed', 'text-xs text-muted-foreground mb-3 leading-relaxed')}>{reward.description}</p>
-                          <div className={s('flex items-center justify-between', 'flex items-center justify-between')}>
-                            <span className={s('text-[10px] font-mono font-bold text-primary', 'text-xs font-mono font-bold text-primary')}>Valeur: {reward.value}</span>
-                            <button
-                              onClick={() => handleRedeem(reward)}
-                              disabled={!canAfford || isRedeemed || isRedeeming || !user}
-                              className={s(
-                                `glass-capsule-btn !px-2 !py-1 !text-[10px] !font-medium ${canAfford && user && !isRedeemed && !isRedeeming ? 'primary' : ''}`,
-                                `glass-capsule-btn !px-3 !py-1.5 !text-xs !font-medium ${canAfford && user && !isRedeemed && !isRedeeming ? 'primary' : ''}`
-                              )}>
-                              {isRedeemed ? '✅ Obtenu' : isRedeeming ? '⏳...' : !user ? 'Connectez-vous' : canAfford ? 'Échanger' : 'Points insuffisants'}
-                            </button>
-                          </div>
+                  {nextLevel && (
+                    <Card className="p-[var(--space-4)] opacity-70 md:p-[var(--space-5)]">
+                      <div className="mb-[var(--space-2)] flex items-center gap-[var(--space-2)] md:mb-[var(--space-3)] md:gap-[var(--space-3)]">
+                        <span className="text-[length:var(--lkv-text-title-sm)] grayscale md:text-[length:var(--lkv-text-title-xl)]">{nextLevel.badge}</span>
+                        <div>
+                          <p className="text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)] md:text-[length:var(--lkv-text-caption)]">Prochain niveau</p>
+                          <h3 className="font-display text-[length:var(--lkv-text-headline)] font-bold text-[color:var(--lkv-text-muted)] md:text-[length:var(--lkv-text-title-sm)]">{nextLevel.name}</h3>
+                          <p className="font-mono text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-primary)] md:text-[length:var(--lkv-text-caption)]">{formatPoints(nextLevel.minPoints - userPoints)} pts manquants</p>
                         </div>
                       </div>
-                    );
-                  })}
+                      <ul className="space-y-[var(--space-1)] md:space-y-[var(--space-2)]">
+                        {nextLevel.perks.map((perk) => (
+                          <li key={perk} className="flex items-center gap-[var(--space-1)] text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-muted)] md:gap-[var(--space-2)] md:text-[length:var(--lkv-text-body-sm)]">
+                            <Icon name="LockClosedIcon" size={12} variant="outline" className="flex-shrink-0" />
+                            {perk}
+                          </li>
+                        ))}
+                      </ul>
+                    </Card>
+                  )}
                 </div>
-              )}
-            </div>
-          )}
 
-          {/* History Tab */}
-          {activeTab === 'history' && (
-            <div className={s('space-y-1.5', 'max-w-2xl space-y-2')}>
-              {!user ? (
-                <p className={s('text-center py-6 text-muted-foreground text-xs', 'text-center py-8 text-muted-foreground')}>Connectez-vous pour voir votre historique.</p>
-              ) : loading ? (
-                <div className={s('space-y-1.5', 'space-y-2')}>{[1, 2, 3].map((i) => <div key={i} className={s('h-10 rounded-xl bg-muted animate-pulse', 'h-14 rounded-xl bg-muted animate-pulse')} />)}</div>
-              ) : history.length === 0 ? (
-                <p className={s('text-center py-6 text-muted-foreground text-xs', 'text-center py-8 text-muted-foreground')}>Aucun historique de points pour l&apos;instant.</p>
-              ) : (
-                history.map((entry) => (
-                  <div key={entry.id} className={s('glass flex items-center gap-2 p-2.5 rounded-xl', 'glass flex items-center gap-3 p-3 rounded-xl')}>
-                    <div className={s(`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 ${entry.type === 'earned' ? 'bg-emerald-50 border border-emerald-200' : 'bg-red-50 border border-red-200'}`, `w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${entry.type === 'earned' ? 'bg-emerald-50 border border-emerald-200' : 'bg-red-50 border border-red-200'}`)}>
-                      <Icon name={entry.type === 'earned' ? 'ArrowTrendingUpIcon' : 'ArrowTrendingDownIcon'} size={s(12, 16)} variant="outline" className={entry.type === 'earned' ? 'text-emerald-600' : 'text-red-500'} />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className={s('text-xs font-medium truncate', 'text-sm font-medium truncate')}>{entry.action}</p>
-                      <p className={s('text-[10px] text-muted-foreground', 'text-xs text-muted-foreground')}>{formatDate(entry.created_at)}</p>
-                    </div>
-                    <span className={s(`text-xs font-mono font-bold flex-shrink-0 ${entry.type === 'earned' ? 'text-emerald-600' : 'text-red-500'}`, `text-sm font-mono font-bold flex-shrink-0 ${entry.type === 'earned' ? 'text-emerald-600' : 'text-red-500'}`)}>
-                      {entry.type === 'earned' ? '+' : ''}{entry.points} pts
-                    </span>
-                  </div>
-                ))
-              )}
-            </div>
-          )}
-
-          {/* Earn Tab */}
-          {activeTab === 'earn' && (
-            <div className={s('space-y-4', 'space-y-6')}>
-              <div className={s('grid grid-cols-1 gap-2', 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4')}>
-                {EARN_ACTIONS.map((action) => (
-                  <div key={action.action} className={s('glass rounded-xl p-3 flex items-center gap-2', 'glass rounded-xl p-4 flex items-center gap-3')}>
-                    <span className={s('text-2xl', 'text-3xl')}>{action.icon}</span>
-                    <div>
-                      <p className={s('font-semibold text-xs', 'font-semibold text-sm')}>{action.action}</p>
-                      <p className={s('text-[10px] text-primary font-mono font-semibold', 'text-xs text-primary font-mono font-semibold')}>{action.points}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <div className={s('bg-gradient-to-br from-secondary to-secondary/80 rounded-xl p-4 text-secondary-foreground', 'bg-gradient-to-br from-secondary to-secondary/80 rounded-2xl p-6 text-secondary-foreground')}>
-                <h3 className={s('font-display font-700 text-base mb-1', 'font-display font-700 text-lg mb-2')}>🤝 Parrainez un ami</h3>
-                <p className={s('text-xs opacity-80 mb-3', 'text-sm opacity-80 mb-4')}>Invitez un ami à rejoindre Kit du Voyageur et gagnez 200 points chacun dès son premier achat.</p>
-                <div className={s('flex gap-1.5', 'flex gap-2')}>
-                  <div className={s('flex-1 bg-white/10 rounded-lg px-2.5 py-1.5 text-xs font-mono', 'flex-1 bg-white/10 rounded-lg px-3 py-2 text-sm font-mono')}>
-                    KDV-REF-{user?.id?.slice(0, 8).toUpperCase() ?? 'XXXXXXXX'}
-                  </div>
-                  <button
-                    onClick={() => {
-                      const code = `KDV-REF-${user?.id?.slice(0, 8).toUpperCase() ?? 'XXXXXXXX'}`;
-                      navigator.clipboard?.writeText(code);
-                    }}
-                    className={s('glass-capsule-btn !px-3 !py-1.5 !text-xs !font-medium', 'glass-capsule-btn !px-4 !py-2 !text-sm !font-medium')}>
-                    Copier
-                  </button>
+                <div className="grid grid-cols-2 gap-[var(--space-2)] sm:grid-cols-4 md:gap-[var(--space-3)]">
+                  {[
+                    { label: 'Points gagnés', value: formatPoints(history.filter((h) => h.type === 'earned').reduce((s, h) => s + h.points, 0)), icon: 'ArrowTrendingUpIcon', color: 'text-[color:var(--lkv-success)]' },
+                    { label: 'Points dépensés', value: formatPoints(Math.abs(history.filter((h) => h.type === 'spent').reduce((s, h) => s + h.points, 0))), icon: 'GiftIcon', color: 'text-[color:var(--lkv-primary)]' },
+                    { label: 'Récompenses', value: String(redeemedIds.length), icon: 'TrophyIcon', color: 'text-[color:var(--lkv-warning-dark)]' },
+                    { label: 'Solde actuel', value: formatPoints(userPoints), icon: 'StarIcon', color: 'text-[color:var(--lkv-info)]' },
+                  ].map((stat) => (
+                    <Card key={stat.label} className="p-[var(--space-3)] md:p-[var(--space-4)]">
+                      <Icon name={stat.icon as string} size={16} variant="outline" className={`mb-[var(--space-1)] ${stat.color}`} />
+                      <p className="font-display text-[length:var(--lkv-text-headline)] font-bold text-[color:var(--lkv-text-primary)] md:text-[length:var(--lkv-text-title-sm)]">{stat.value}</p>
+                      <p className="text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)] md:text-[length:var(--lkv-text-caption)]">{stat.label}</p>
+                    </Card>
+                  ))}
                 </div>
               </div>
-            </div>
-          )}
-        </div>
-      </>
+            )}
+
+            {/* Rewards Tab */}
+            {activeTab === 'rewards' && (
+              <div>
+                <div className="mb-[var(--space-4)] flex flex-wrap gap-[var(--space-1)] md:mb-[var(--space-5)] md:gap-[var(--space-2)]">
+                  {[
+                    { id: 'all', label: 'Toutes' },
+                    { id: 'discount', label: '🏷️ Réductions' },
+                    { id: 'shipping', label: '📦 Livraison' },
+                    { id: 'gear', label: '🎒 Matériel' },
+                    { id: 'experience', label: '🌟 Expériences' },
+                    { id: 'partner', label: '🤝 Partenaires' },
+                  ].map((cat) => (
+                    <Chip key={cat.id} selected={filterCategory === cat.id} onClick={() => setFilterCategory(cat.id)}>
+                      {cat.label}
+                    </Chip>
+                  ))}
+                </div>
+
+                {loading ? (
+                  <div className="grid grid-cols-1 gap-[var(--space-3)] sm:grid-cols-2 lg:grid-cols-3 md:gap-[var(--space-4)]">
+                    {[1, 2, 3].map((i) => <Skeleton key={i} className="h-48 rounded-[var(--lkv-radius-lg)] md:h-64" />)}
+                  </div>
+                ) : filteredRewards.length === 0 ? (
+                  <EmptyState
+                    icon={<Icon name="GiftIcon" size={32} variant="outline" />}
+                    title="Aucune récompense disponible"
+                    description="Les récompenses de cette catégorie arrivent bientôt."
+                  />
+                ) : (
+                  <div className="grid grid-cols-1 gap-[var(--space-3)] sm:grid-cols-2 lg:grid-cols-3 md:gap-[var(--space-4)]">
+                    {filteredRewards.map((reward) => {
+                      const canAfford = userPoints >= reward.points_cost;
+                      const isRedeemed = redeemedIds.includes(reward.id);
+                      const isRedeeming = redeemingId === reward.id;
+                      return (
+                        <Card
+                          key={reward.id}
+                          className={`overflow-hidden p-0 transition-all ${isRedeemed ? 'border-[color:var(--lkv-success)] opacity-70' : canAfford ? 'hover:border-[color:var(--lkv-primary)]' : 'opacity-60'}`}
+                        >
+                          <div className="relative h-28 overflow-hidden md:h-36">
+                            <img src={reward.image} alt={reward.alt} className="h-full w-full object-cover" />
+                            <div className="absolute right-[var(--space-2)] top-[var(--space-2)]">
+                              <Badge tone="warn" className="font-mono font-bold">
+                                {formatPoints(reward.points_cost)} pts
+                              </Badge>
+                            </div>
+                            {reward.expires_at && (
+                              <div className="absolute bottom-[var(--space-2)] left-[var(--space-2)]">
+                                <Badge tone="stone" className="bg-[color:var(--lkv-overlay-scrim)] text-[color:var(--lkv-text-inverted)]">
+                                  Expire le {formatDate(reward.expires_at)}
+                                </Badge>
+                              </div>
+                            )}
+                          </div>
+                          <div className="p-[var(--space-3)] md:p-[var(--space-4)]">
+                            <h3 className="mb-0.5 text-[length:var(--lkv-text-caption)] font-semibold text-[color:var(--lkv-text-primary)] md:mb-[var(--space-1)] md:text-[length:var(--lkv-text-body-sm)]">{reward.title}</h3>
+                            <p className="mb-[var(--space-2)] text-[length:var(--lkv-text-caption-2)] leading-[var(--leading-relaxed)] text-[color:var(--lkv-text-muted)] md:mb-[var(--space-3)] md:text-[length:var(--lkv-text-caption)]">{reward.description}</p>
+                            <div className="flex items-center justify-between gap-[var(--space-2)]">
+                              <span className="font-mono text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-primary)] md:text-[length:var(--lkv-text-caption)]">Valeur: {reward.value}</span>
+                              <Button
+                                size="sm"
+                                variant={canAfford && user && !isRedeemed && !isRedeeming ? 'primary' : 'secondary'}
+                                onClick={() => handleRedeem(reward)}
+                                disabled={!canAfford || isRedeemed || isRedeeming || !user}
+                              >
+                                {isRedeemed ? '✅ Obtenu' : isRedeeming ? '⏳...' : !user ? 'Connectez-vous' : canAfford ? 'Échanger' : 'Points insuffisants'}
+                              </Button>
+                            </div>
+                          </div>
+                        </Card>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* History Tab */}
+            {activeTab === 'history' && (
+              <div className="max-w-2xl space-y-[var(--space-2)]">
+                {!user ? (
+                  <p className="py-[var(--space-8)] text-center text-[length:var(--lkv-text-body-sm)] text-[color:var(--lkv-text-muted)]">Connectez-vous pour voir votre historique.</p>
+                ) : loading ? (
+                  <LoadingState label="Chargement de l'historique…" compact />
+                ) : history.length === 0 ? (
+                  <p className="py-[var(--space-8)] text-center text-[length:var(--lkv-text-body-sm)] text-[color:var(--lkv-text-muted)]">Aucun historique de points pour l&apos;instant.</p>
+                ) : (
+                  history.map((entry) => (
+                    <ListItem
+                      key={entry.id}
+                      as="div"
+                      leading={
+                        <span className={`flex h-8 w-8 items-center justify-center rounded-full border ${entry.type === 'earned' ? 'border-[color:var(--lkv-success)] bg-[color:var(--lkv-success-bg)] text-[color:var(--lkv-success)]' : 'border-[color:var(--lkv-danger)] bg-[color:var(--lkv-danger-bg)] text-[color:var(--lkv-danger)]'}`}>
+                          <Icon name={entry.type === 'earned' ? 'ArrowTrendingUpIcon' : 'ArrowTrendingDownIcon'} size={16} variant="outline" />
+                        </span>
+                      }
+                      title={entry.action}
+                      subtitle={formatDate(entry.created_at)}
+                      trailing={
+                        <span className={`font-mono text-[length:var(--lkv-text-body-sm)] font-bold ${entry.type === 'earned' ? 'text-[color:var(--lkv-success)]' : 'text-[color:var(--lkv-danger)]'}`}>
+                          {entry.type === 'earned' ? '+' : ''}{entry.points} pts
+                        </span>
+                      }
+                    />
+                  ))
+                )}
+              </div>
+            )}
+
+            {/* Earn Tab */}
+            {activeTab === 'earn' && (
+              <div className="space-y-[var(--space-4)] md:space-y-[var(--space-6)]">
+                <div className="grid grid-cols-1 gap-[var(--space-2)] sm:grid-cols-2 lg:grid-cols-3 md:gap-[var(--space-4)]">
+                  {EARN_ACTIONS.map((action) => (
+                    <Card key={action.action} className="flex items-center gap-[var(--space-2)] p-[var(--space-3)] md:gap-[var(--space-3)] md:p-[var(--space-4)]">
+                      <span className="text-[length:var(--lkv-text-title-sm)] md:text-[length:var(--lkv-text-title-xl)]">{action.icon}</span>
+                      <div>
+                        <p className="text-[length:var(--lkv-text-caption)] font-semibold text-[color:var(--lkv-text-primary)] md:text-[length:var(--lkv-text-body-sm)]">{action.action}</p>
+                        <p className="font-mono text-[length:var(--lkv-text-caption-2)] font-semibold text-[color:var(--lkv-primary)] md:text-[length:var(--lkv-text-caption)]">{action.points}</p>
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+                <Card className="bg-[color:var(--lkv-secondary)] p-[var(--space-4)] text-[color:var(--lkv-text-inverted)] md:p-[var(--space-6)]">
+                  <h3 className="mb-[var(--space-1)] font-display text-[length:var(--lkv-text-headline)] font-bold md:mb-[var(--space-2)] md:text-[length:var(--lkv-text-title-sm)]">🤝 Parrainez un ami</h3>
+                  <p className="mb-[var(--space-3)] text-[length:var(--lkv-text-caption)] opacity-80 md:mb-[var(--space-4)] md:text-[length:var(--lkv-text-body-sm)]">Invitez un ami à rejoindre Kit du Voyageur et gagnez 200 points chacun dès son premier achat.</p>
+                  <div className="flex gap-[var(--space-1)] md:gap-[var(--space-2)]">
+                    <div className="flex-1 rounded-[var(--lkv-radius-md)] bg-white/10 px-[var(--space-3)] py-[var(--space-2)] font-mono text-[length:var(--lkv-text-caption)] md:text-[length:var(--lkv-text-body-sm)]">
+                      KDV-REF-{user?.id?.slice(0, 8).toUpperCase() ?? 'XXXXXXXX'}
+                    </div>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => {
+                        const code = `KDV-REF-${user?.id?.slice(0, 8).toUpperCase() ?? 'XXXXXXXX'}`;
+                        navigator.clipboard?.writeText(code);
+                      }}
+                    >
+                      Copier
+                    </Button>
+                  </div>
+                </Card>
+              </div>
+            )}
+          </div>
+        </>
       )}
-      </>
-    );
-  };
-
-  const desktopContent = (
-    <div className="min-h-screen bg-background">
-      <Header />
-      <main className="pt-20">
-        {pageContent(false)}
-      </main>
-      <Footer />
-    </div>
-  );
-
-  const mobileContent = (
-    <div style={{ padding: '16px' }}>
-      {pageContent(true)}
-    </div>
+    </>
   );
 
   return (
     <>
       {/* ── DESKTOP ── */}
       <div className="hidden md:block">
-        {desktopContent}
+        <div className="min-h-screen bg-transparent">
+          <Header />
+          <main className="pt-20">
+            {pageContent}
+          </main>
+          <Footer />
+        </div>
       </div>
 
       {/* ── MOBILE ── */}
       <div className="block md:hidden">
         <MobilePageShell>
-          {mobileContent}
+          {pageContent}
         </MobilePageShell>
-        
       </div>
     </>
   );

@@ -31,7 +31,7 @@ const CATEGORY_ICONS = {
  * (`bookingByStepId` / suggestions) : aucun rapprochement de lien n'est refait
  * côté client. L'URL passe par la redirection trackée `/go/<slug>` de l'engine
  * existant — jamais d'URL partenaire brute — et conserve `rel="sponsored
- * nofollow"`. Aucun nouveau vocabulaire visuel : surface `glass-sub-card`.
+ * nofollow"`. Aucun nouveau vocabulaire visuel : surface canonique tokenisée.
  */
 export function StepBookingLinkCta({
   booking,
@@ -50,7 +50,7 @@ export function StepBookingLinkCta({
       target="_blank"
       rel="sponsored nofollow"
       title={`Suggestion partenaire — recherche : ${booking.searchTerms}`}
-      className={`glass-sub-card flex min-h-[44px] w-full items-center gap-2 rounded-2xl px-3 py-2 text-left transition-transform active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)] ${className}`}
+      className={`flex min-h-[var(--lkv-touch-min)] w-full items-center gap-[var(--space-2)] rounded-[var(--lkv-radius-lg)] border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] px-[var(--space-3)] py-[var(--space-2)] text-left backdrop-blur-[var(--blur-md)] transition-transform active:scale-[var(--motion-press-scale)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)] motion-reduce:transition-none ${className}`}
     >
       <CategoryIcon size={14} className="shrink-0 text-[var(--lkv-primary)]" aria-hidden="true" />
       <span className="min-w-0 flex-1">

@@ -10,6 +10,18 @@ interface WeightGaugeProps {
   recommendedG?: number;
 }
 
+const SIZE_CLASS: Record<NonNullable<WeightGaugeProps['size']>, string> = {
+  sm: 'h-[3px]',
+  md: 'h-[4px]',
+  lg: 'h-[6px]',
+};
+
+const TEXT_CLASS: Record<NonNullable<WeightGaugeProps['size']>, string> = {
+  sm: 'text-[length:var(--lkv-text-caption-2)]',
+  md: 'text-[length:var(--lkv-text-caption)]',
+  lg: 'text-[length:var(--lkv-text-footnote)]',
+};
+
 export default function WeightGauge({
   weightG,
   maxG = 2000,
@@ -22,23 +34,16 @@ export default function WeightGauge({
     ? `${(weightG / 1000).toFixed(2)} kg`
     : `${weightG} g`;
 
-  const heights = { sm: 'h-[3px]', md: 'h-[4px]', lg: 'h-[6px]' };
-  const textSizes = { sm: 'text-[10px]', md: 'text-[11px]', lg: 'text-xs' };
+  const color = pct < 60 ? 'var(--lkv-success)' : pct < 85 ? 'var(--lkv-warning)' : 'var(--lkv-danger)';
 
-  // Color based on threshold
-  const color = pct < 60 ? '#22c55e' : pct < 85 ? '#f59e0b' : '#ef4444';
-
-  // Describe weight level for screen readers
   const weightLevel = pct < 33 ? 'léger' : pct < 66 ? 'moyen' : 'lourd';
   const ariaDescription = `Poids ${displayWeight}, ${weightLevel} (${Math.round(pct)}% du maximum de référence ${maxG >= 1000 ? `${(maxG / 1000).toFixed(1)} kg` : `${maxG} g`})`;
 
   const fillRef = useRef<HTMLDivElement>(null);
 
-  // Animate on mount and value change
   useEffect(() => {
     const el = fillRef.current;
     if (!el) return;
-    // Start from 0 then animate to target
     el.style.width = '0%';
     const raf = requestAnimationFrame(() => {
       el.style.transition = 'width 400ms cubic-bezier(0.34, 1.56, 0.64, 1), background-color 300ms ease';
@@ -61,43 +66,41 @@ export default function WeightGauge({
       aria-valuetext={displayWeight}
     >
       {showLabel && (
-        <div className="flex items-center justify-between mb-1.5">
+        <div className="mb-[var(--space-2)] flex items-center justify-between">
           <span
-            className={`font-mono-data ${textSizes[size]} text-muted-foreground uppercase tracking-wider`}
-            style={{ fontFamily: 'var(--font-mono)' }}
+            className={`font-mono ${TEXT_CLASS[size]} uppercase tracking-[var(--tracking-wide)] text-[color:var(--lkv-text-muted)]`}
             aria-hidden="true"
           >
             POIDS
           </span>
           <span
-            className={`font-mono-data ${textSizes[size]} font-600`}
-            style={{ fontFamily: 'var(--font-mono)', color }}
+            className={`font-mono ${TEXT_CLASS[size]} font-semibold`}
+            style={{ color }}
             aria-hidden="true"
           >
             {displayWeight}
           </span>
         </div>
       )}
-      <div className={`relative weight-gauge ${heights[size]} bg-muted rounded-full overflow-visible`} aria-hidden="true">
+      <div className={`relative overflow-visible rounded-full bg-[color:var(--lkv-surface-muted)] ${SIZE_CLASS[size]}`} aria-hidden="true">
         <div
           ref={fillRef}
-          className={`absolute left-0 top-0 h-full rounded-full`}
-          style={{ width: `${pct}%`, backgroundColor: color, transition: 'width 400ms cubic-bezier(0.34, 1.56, 0.64, 1), background-color 300ms ease' }}
+          className="absolute left-0 top-0 h-full rounded-full"
+          style={{ width: `${pct}%`, backgroundColor: color }}
         />
-        {/* Recommended marker */}
         {recommendedPct !== null && (
           <div
-            className="absolute top-1/2 -translate-y-1/2 w-0.5 h-4 rounded-full bg-info opacity-60"
+            className="absolute top-1/2 h-4 w-0.5 -translate-y-1/2 rounded-full bg-[color:var(--lkv-info)] opacity-60"
             style={{ left: `${recommendedPct}%` }}
             title={`Recommandé: ${recommendedG}g`}
           />
         )}
       </div>
       {size === 'lg' && (
-        <div className="flex justify-between mt-1">
-          <span className="font-mono-data text-[10px] text-muted-foreground" style={{ fontFamily: 'var(--font-mono)' }}>0</span>
-          <span className="font-mono-data text-[10px]" style={{ fontFamily: 'var(--font-mono)', color }}>{Math.round(pct)}%</span>
-          <span className="font-mono-data text-[10px] text-muted-foreground" style={{ fontFamily: 'var(--font-mono)' }}>
+        <div className="mt-[var(--space-1)] flex justify-between">
+          <span className={`font-mono ${TEXT_CLASS[size]} text-[color:var(--lkv-text-muted)]`}>0</span>
+          <span className={`font-mono ${TEXT_CLASS[size]} font-semibold`} style={{ color }}>{Math.round(pct)}%</span>
+          <span className={`font-mono ${TEXT_CLASS[size]} text-[color:var(--lkv-text-muted)]`}>
             {maxG >= 1000 ? `${(maxG / 1000).toFixed(1)} kg` : `${maxG} g`}
           </span>
         </div>
