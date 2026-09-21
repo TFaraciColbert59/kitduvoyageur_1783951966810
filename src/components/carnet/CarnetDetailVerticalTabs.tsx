@@ -4,6 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import Icon from '@/components/ui/AppIcon';
 import { ChevronRightIcon as ChevronRightAnimated } from '@/components/icons/chevron-right';
+import { Button, Card } from '@/components/ui';
 
 interface CarnetDetailVerticalTabsProps {
   activeTab: string;
@@ -25,74 +26,72 @@ export default function CarnetDetailVerticalTabs({
   ];
 
   return (
-    <aside className="h-full max-h-full w-full flex-1 flex flex-col justify-between glass rounded-[1.5rem] p-3.5 text-[#17402C] font-sans overflow-hidden border border-white/40 shadow-sm select-none">
-      {/* ── 1. ZONE HAUTE FIXE (Identité Récit & Actions Rapides) ── */}
-      <div className="shrink-0 space-y-2.5">
-        <div className="p-3 rounded-2xl glass-sub-card flex items-center gap-3 relative overflow-hidden border border-white/50">
-          <div className="w-10 h-10 rounded-full flex items-center justify-center text-xl shrink-0 bg-white/80 border border-white shadow-xs">
+    <aside className="flex h-full max-h-full w-full select-none flex-1 flex-col justify-between overflow-hidden rounded-[var(--lkv-radius-2xl)] border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] p-[var(--space-3)] font-sans text-[color:var(--lkv-text-primary)] shadow-elevation-1 backdrop-blur-[var(--blur-lg)]">
+      <div className="shrink-0 space-y-[var(--space-2)]">
+        <Card variant="compact" className="flex items-center gap-[var(--space-3)] border-[color:var(--glass-border)]">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[color:var(--glass-border)] bg-[color:var(--lkv-surface-card)] text-xl" aria-hidden>
             📖
           </div>
           <div className="min-w-0 flex-1">
-            <h4 className="font-display font-bold text-xs sm:text-sm text-[#17402C] truncate leading-tight">
+            <h4 className="truncate font-display text-[length:var(--lkv-text-caption)] font-bold leading-tight text-[color:var(--lkv-text-primary)] sm:text-[length:var(--lkv-text-subheadline)]">
               Récit{' '}
-              <span className="font-serif italic font-normal text-[#5B7F55] text-xs">
+              <span className="font-serif text-[length:var(--lkv-text-caption)] font-normal italic text-[color:var(--lkv-secondary)]">
                 LKDV
               </span>
             </h4>
-            <p className="text-[10px] font-mono text-[#5A7064] truncate mt-0.5">
+            <p className="mt-[var(--space-1)] truncate font-mono text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">
               Fiche Détaillée
             </p>
           </div>
-        </div>
+        </Card>
 
-        <div className="grid grid-cols-2 gap-1.5">
+        <div className="grid grid-cols-2 gap-[var(--space-1)]">
           <Link
             href="/carnets"
-            className="glass-capsule-btn primary text-[10.5px] font-bold !py-1.5 !px-2 flex items-center justify-center gap-1 shadow-none cursor-pointer"
+            className="inline-flex items-center justify-center gap-[var(--space-1)] rounded-full bg-[color:var(--lkv-action)] px-[var(--space-2)] py-[var(--space-1)] text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-on-action)]"
           >
-            <Icon name="ArrowLeftIcon" size={12} />
+            <Icon name="ArrowLeftIcon" size={12} aria-hidden="true" />
             <span>Récits</span>
           </Link>
 
-          <button
+          <Button
             type="button"
+            variant="secondary"
+            size="sm"
             onClick={() => window.print()}
-            className="glass-capsule-btn text-[10.5px] font-bold !py-1.5 !px-2 flex items-center justify-center gap-1 shadow-none cursor-pointer"
+            icon={<Icon name="PrinterIcon" size={12} aria-hidden="true" />}
+            className="px-[var(--space-2)]"
           >
-            <Icon name="PrinterIcon" size={12} />
-            <span>Imprimer</span>
-          </button>
+            Imprimer
+          </Button>
         </div>
       </div>
 
-      {/* ── 2. ZONE CENTRALE SCROLLABLE À L'INTÉRIEUR (Navigation) ── */}
-      <nav className="flex-1 min-h-0 overflow-y-auto no-scrollbar py-2 space-y-1.5" aria-label="Sections du récit">
-        <p className="text-[9.5px] font-mono font-bold uppercase tracking-widest text-[#5A7064] px-2 mb-1">
+      <nav className="min-h-0 flex-1 space-y-[var(--space-1)] overflow-y-auto py-[var(--space-2)] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" aria-label="Sections du récit">
+        <p className="mb-[var(--space-1)] px-[var(--space-2)] font-mono text-[length:var(--lkv-text-caption-2)] font-bold uppercase tracking-widest text-[color:var(--lkv-text-muted)]">
           Sections Récit
         </p>
         {tabs.map((tab) => {
           const isActive = activeTab === tab.id;
           return (
-            <button
+            <Button
               key={tab.id}
               type="button"
+              variant={isActive ? 'primary' : 'secondary'}
+              fullWidth
               onClick={() => setActiveTab(tab.id)}
-              className={`w-full px-3 py-2.5 rounded-xl font-bold text-xs transition-all flex items-center justify-between group cursor-pointer border ${
-                isActive
-                  ? 'bg-[#17402C] text-white border-[#17402C] shadow-sm'
-                  : 'bg-white/80 hover:bg-white text-[#17402C] border-white/80 shadow-2xs'
-              }`}
+              className="justify-between rounded-[var(--lkv-radius-md)] text-[length:var(--lkv-text-caption)]"
+              aria-pressed={isActive}
             >
               <span className="truncate text-left">{tab.label}</span>
-              {isActive && <ChevronRightAnimated size={13} className="text-white/70 shrink-0" />}
-            </button>
+              {isActive && <ChevronRightAnimated size={13} className="shrink-0 text-[color:var(--lkv-text-inverted)]/70" aria-hidden />}
+            </Button>
           );
         })}
       </nav>
 
-      {/* ── 3. ZONE BASSE FIXE (Footer) ── */}
-      <div className="shrink-0 pt-2 border-t border-[#17402C]/5 text-center">
-        <span className="text-[8.5px] font-mono text-[#5A7064] tracking-wider uppercase">
+      <div className="shrink-0 border-t border-[color:var(--lkv-primary)]/5 pt-[var(--space-2)] text-center">
+        <span className="font-mono text-[length:var(--lkv-text-caption-2)] uppercase tracking-wider text-[color:var(--lkv-text-muted)]">
           Le Kit du Voyageur · Récit v2.0
         </span>
       </div>

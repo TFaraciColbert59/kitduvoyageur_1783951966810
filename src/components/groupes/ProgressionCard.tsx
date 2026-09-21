@@ -2,6 +2,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import Icon from '@/components/ui/AppIcon';
+import { Card } from '@/components/ui';
 
 interface ProgressionCardProps {
   progression: number;
@@ -18,41 +19,56 @@ export default function ProgressionCard({ progression }: ProgressionCardProps) {
   ];
 
   return (
-    <div className="glass p-6 text-lkv-primary relative overflow-hidden">
-      <div className="flex justify-between items-start mb-2">
-        <h2 className="font-display font-bold text-xl text-lkv-primary">Progression <span className="font-serif italic font-normal text-lkv-primary">du voyage</span></h2>
-        <span className="font-display font-bold text-2xl text-lkv-primary font-mono">{progression}%</span>
+    <Card className="relative overflow-hidden p-[var(--space-6)] text-[color:var(--lkv-text-primary)]">
+      <div className="mb-[var(--space-2)] flex items-start justify-between">
+        <h2 className="font-display text-[length:var(--lkv-text-title-sm)] font-bold text-[color:var(--lkv-text-primary)]">
+          Progression <span className="font-serif font-normal italic text-[color:var(--lkv-text-primary)]">du voyage</span>
+        </h2>
+        <span className="font-mono text-[length:var(--lkv-text-title-sm)] font-bold text-[color:var(--lkv-text-primary)]">{progression}%</span>
       </div>
-      
-      <p className="text-sm text-lkv-text-muted mb-6 font-sans">
+
+      <p className="mb-[var(--space-6)] font-sans text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-muted)]">
         Étape en cours : équipement partagé — il reste 3 tâches à valider avant réservation des refuges.
       </p>
-      
-      <div className="glass-progress mb-8">
-        <motion.div 
-          className="glass-progress-fill"
+
+      <div
+        role="progressbar"
+        aria-valuenow={Math.round(progression)}
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-label="Progression du voyage"
+        className="mb-[var(--space-8)] h-2 w-full overflow-hidden rounded-full border border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-muted)]"
+      >
+        <motion.div
+          className="h-full rounded-full bg-[color:var(--lkv-primary)]"
           initial={{ width: 0 }}
           animate={{ width: `${progression}%` }}
-          transition={{ duration: 1, ease: "easeOut" }}
+          transition={{ duration: 1, ease: 'easeOut' }}
         />
       </div>
-      
-      <div className="flex justify-between relative">
-        <div className="absolute top-3 left-0 right-0 h-[1px] bg-lkv-primary/10 -z-10" />
-        
+
+      <div className="relative flex justify-between">
+        <div aria-hidden className="absolute left-0 right-0 top-3 -z-10 h-px bg-[color:var(--lkv-primary)]/10" />
+
         {steps.map((step) => (
-          <div key={step.id} className="flex flex-col items-center gap-2">
-            <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold z-10 transition-colors
-              ${step.completed ? 'bg-lkv-primary text-white' : step.active ? 'bg-white text-lkv-primary ring-4 ring-lkv-primary/20 border border-lkv-primary' : 'glass-sub-card text-lkv-text-muted'}`}
+          <div key={step.id} className="flex flex-col items-center gap-[var(--space-2)]">
+            <div
+              className={`z-10 flex h-6 w-6 items-center justify-center rounded-full text-[length:var(--lkv-text-caption-2)] font-bold transition-colors ${
+                step.completed
+                  ? 'bg-[color:var(--lkv-primary)] text-[color:var(--lkv-text-inverted)]'
+                  : step.active
+                    ? 'border border-[color:var(--lkv-primary)] bg-[color:var(--lkv-surface-card)] text-[color:var(--lkv-text-primary)] ring-4 ring-[color:var(--lkv-primary)]/20'
+                    : 'bg-[color:var(--lkv-surface-muted)] text-[color:var(--lkv-text-muted)]'
+              }`}
             >
-              {step.completed ? <Icon name="CheckIcon" size={12} className="relative z-10" /> : step.id}
+              {step.completed ? <Icon name="CheckIcon" size={12} aria-hidden="true" /> : step.id}
             </div>
-            <span className={`text-[10px] font-mono uppercase tracking-widest text-center hidden sm:block font-bold ${step.active ? 'text-lkv-primary' : 'text-lkv-text-muted/50'}`}>
+            <span className={`hidden text-center font-mono text-[length:var(--lkv-text-caption-2)] font-bold uppercase tracking-widest sm:block ${step.active ? 'text-[color:var(--lkv-text-primary)]' : 'text-[color:var(--lkv-text-muted)]/50'}`}>
               {step.label}
             </span>
           </div>
         ))}
       </div>
-    </div>
+    </Card>
   );
 }

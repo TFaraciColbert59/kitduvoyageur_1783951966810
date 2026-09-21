@@ -6,9 +6,9 @@ import { useRouter } from 'next/navigation';
 import Header from '@/components/Header';
 import Icon from '@/components/ui/AppIcon';
 import { ChevronRightIcon as ChevronRightAnimated } from '@/components/icons/chevron-right';
-import CommunityHubNav from '@/components/social/CommunityHubNav';
 import CompteBackground from '@/components/compte/CompteBackground';
 import { createClient } from '@/lib/supabase/client';
+import { Badge, Button, Card, IconButton } from '@/components/ui';
 
 export interface ClubRule {
   id: string;
@@ -17,6 +17,16 @@ export interface ClubRule {
   icon: string;
 }
 
+const FIELD_CLASS =
+  'w-full rounded-[var(--lkv-radius-md)] border border-[color:var(--lkv-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[var(--space-2)] text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-primary)] placeholder:text-[color:var(--lkv-text-muted)] focus:outline-none focus:ring-2 focus:ring-[color:var(--lkv-focus-ring)]';
+
+const OPTION_CARD_CLASS = (selected: boolean) =>
+  `flex cursor-pointer items-start gap-[var(--space-2)] rounded-[var(--lkv-radius-md)] border p-[var(--space-3)] transition-colors ${
+    selected
+      ? 'border-[color:var(--lkv-primary)] bg-[color:var(--lkv-surface-card)]'
+      : 'border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-muted)]'
+  }`;
+
 export default function CreateClubView() {
   const router = useRouter();
   const [saving, setSaving] = useState(false);
@@ -24,7 +34,6 @@ export default function CreateClubView() {
   const [saveError, setSaveError] = useState<string | null>(null);
   const [user, setUser] = useState<any>(null);
 
-  // Form State — vide par défaut : aucun contenu fictif.
   const [form, setForm] = useState({
     title: '',
     slogan: '',
@@ -38,20 +47,19 @@ export default function CreateClubView() {
     maxMembers: 20,
     zones: [] as string[],
     rules: [] as ClubRule[],
-    membershipType: 'validation', // 'open' | 'validation'
-    feeType: 'gratuit', // 'gratuit' | 'annuel'
+    membershipType: 'validation',
+    feeType: 'gratuit',
     feeAmount: 0,
     whatsappUrl: '',
     instagramUrl: '',
     stravaUrl: '',
     websiteUrl: '',
-    visibility: 'public', // 'public' | 'invite'
+    visibility: 'public',
   });
 
   const availableZones = ['Chartreuse', 'Vercors', 'Belledonne', 'Écrins', 'Mont-Blanc', 'Aravis', 'Beaufortain', 'Queyras', 'Bauges'];
   const availableLevels = ['Tous niveaux bienvenus', 'Débutant motivé', 'Intermédiaire régulier', 'Sportif & engagé', 'Expert haute montagne'];
 
-  // Navigation sections à gauche
   const [activeSection, setActiveSection] = useState<'identite' | 'thematique' | 'regles' | 'adhesion' | 'reseaux'>('identite');
   const SECTIONS = [
     { id: 'identite' as const, label: 'Identité & Visuels', short: '01', desc: 'Nom, logo & couverture' },
@@ -160,206 +168,207 @@ export default function CreateClubView() {
   const doneCount = checklistItems.filter(i => i.done).length;
 
   return (
-    <div className="h-[100dvh] max-h-[100dvh] overflow-hidden bg-transparent font-sans text-[#17402C] relative flex flex-col">
+    <div className="relative flex h-[100dvh] max-h-[100dvh] flex-col overflow-hidden bg-transparent font-sans text-[color:var(--lkv-text-primary)]">
       <CompteBackground />
       <Header />
 
-      <main className="flex-1 min-h-0 overflow-hidden w-full max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-4 flex gap-5">
-        {/* COLONNE GAUCHE (Nav & Stepper) - 230px */}
-        <aside className="w-[230px] shrink-0 h-full max-h-full flex flex-col justify-between glass rounded-[1.5rem] p-3.5 text-[#17402C] font-sans overflow-hidden border border-white/40 shadow-sm select-none">
-          {/* ── 1. ZONE HAUTE FIXE (Identité & Actions) ── */}
-          <div className="shrink-0 space-y-2.5">
-            <div className="p-3 rounded-2xl glass-sub-card flex items-center gap-3 relative overflow-hidden border border-white/50">
-              <div className="w-10 h-10 rounded-full flex items-center justify-center text-xl shrink-0 bg-white/80 border border-white shadow-xs">
+      <main className="mx-auto flex min-h-0 w-full max-w-[1440px] flex-1 gap-[var(--space-5)] overflow-hidden px-[var(--space-4)] pb-[var(--space-4)] pt-24 sm:px-[var(--space-6)] lg:px-[var(--space-8)]">
+        <aside className="flex h-full max-h-full w-[230px] shrink-0 select-none flex-col justify-between overflow-hidden rounded-[var(--lkv-radius-2xl)] border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] p-[var(--space-3)] font-sans text-[color:var(--lkv-text-primary)] shadow-elevation-1 backdrop-blur-[var(--blur-lg)]">
+          <div className="shrink-0 space-y-[var(--space-2)]">
+            <Card variant="compact" className="flex items-center gap-[var(--space-3)] border-[color:var(--glass-border)]">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[color:var(--glass-border)] bg-[color:var(--lkv-surface-card)] text-xl" aria-hidden>
                 🎪
               </div>
               <div className="min-w-0 flex-1">
-                <h4 className="font-display font-bold text-xs sm:text-sm text-[#17402C] truncate leading-tight">
+                <h4 className="truncate font-display text-[length:var(--lkv-text-caption)] font-bold leading-tight text-[color:var(--lkv-text-primary)] sm:text-[length:var(--lkv-text-subheadline)]">
                   Création{' '}
-                  <span className="font-serif italic font-normal text-[#5B7F55] text-xs">
+                  <span className="font-serif text-[length:var(--lkv-text-caption)] font-normal italic text-[color:var(--lkv-secondary)]">
                     Club
                   </span>
                 </h4>
-                <p className="text-[10px] font-mono text-[#5A7064] truncate mt-0.5">
+                <p className="mt-[var(--space-1)] truncate font-mono text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">
                   Studio Collectif
                 </p>
               </div>
-            </div>
+            </Card>
 
-            <div className="grid grid-cols-2 gap-1.5">
+            <div className="grid grid-cols-2 gap-[var(--space-1)]">
               <Link
                 href="/clubs"
-                className="glass-capsule-btn primary text-[10.5px] font-bold !py-1.5 !px-2 flex items-center justify-center gap-1 shadow-none cursor-pointer"
+                className="inline-flex items-center justify-center gap-[var(--space-1)] rounded-full bg-[color:var(--lkv-action)] px-[var(--space-2)] py-[var(--space-1)] text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-on-action)]"
               >
-                <Icon name="ArrowLeftIcon" size={12} />
+                <Icon name="ArrowLeftIcon" size={12} aria-hidden="true" />
                 <span>Retour</span>
               </Link>
 
-              <button
+              <Button
                 type="button"
+                variant="secondary"
+                size="sm"
                 onClick={() => window.print()}
-                className="glass-capsule-btn text-[10.5px] font-bold !py-1.5 !px-2 flex items-center justify-center gap-1 shadow-none cursor-pointer"
+                icon={<Icon name="PrinterIcon" size={12} aria-hidden="true" />}
+                className="px-[var(--space-2)]"
               >
-                <Icon name="PrinterIcon" size={12} />
-                <span>Imprimer</span>
-              </button>
+                Imprimer
+              </Button>
             </div>
           </div>
 
-          {/* ── 2. ZONE CENTRALE SCROLLABLE À L'INTÉRIEUR (Stepper sans numéros/icônes) ── */}
-          <nav className="flex-1 min-h-0 overflow-y-auto no-scrollbar py-2 space-y-1.5" aria-label="Étapes de création du club">
-            <p className="text-[9.5px] font-mono font-bold uppercase tracking-widest text-[#5A7064] px-2 mb-1">
+          <nav className="min-h-0 flex-1 space-y-[var(--space-1)] overflow-y-auto py-[var(--space-2)] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" aria-label="Étapes de création du club">
+            <p className="mb-[var(--space-1)] px-[var(--space-2)] font-mono text-[length:var(--lkv-text-caption-2)] font-bold uppercase tracking-widest text-[color:var(--lkv-text-muted)]">
               Étapes de création
             </p>
             {SECTIONS.map((sec) => {
               const isActive = activeSection === sec.id;
               return (
-                <button
+                <Button
                   key={sec.id}
                   type="button"
+                  variant={isActive ? 'primary' : 'secondary'}
+                  fullWidth
                   onClick={() => setActiveSection(sec.id)}
-                  className={`w-full glass-capsule-btn font-bold text-xs flex items-center justify-between group cursor-pointer ${
-                    isActive ? 'primary' : ''
-                  }`}
+                  className="justify-between rounded-[var(--lkv-radius-md)] text-[length:var(--lkv-text-caption)]"
+                  aria-pressed={isActive}
                 >
                   <span className="truncate text-left">{sec.label}</span>
-                  {isActive && <ChevronRightAnimated size={13} className="text-white/70 shrink-0" />}
-                </button>
+                  {isActive && <ChevronRightAnimated size={13} className="shrink-0 text-[color:var(--lkv-text-inverted)]/70" aria-hidden />}
+                </Button>
               );
             })}
           </nav>
 
-          {/* ── 3. ZONE BASSE FIXE (Footer) ── */}
-          <div className="shrink-0 pt-2 border-t border-[#17402C]/5 text-center">
-            <span className="text-[8.5px] font-mono text-[#5A7064] tracking-wider uppercase">
+          <div className="shrink-0 border-t border-[color:var(--lkv-primary)]/5 pt-[var(--space-2)] text-center">
+            <span className="font-mono text-[length:var(--lkv-text-caption-2)] uppercase tracking-wider text-[color:var(--lkv-text-muted)]">
               Le Kit du Voyageur · Studio Club
             </span>
           </div>
         </aside>
 
-        {/* COLONNE CENTRALE (Formulaire dynamique) */}
-        <div className="flex-1 min-w-0 h-full overflow-y-auto custom-scrollbar pr-2 space-y-4">
-          {/* Breadcrumbs */}
-          <div className="flex items-center gap-2 text-xs font-medium text-[#5C6B5E]">
-            <Link href="/communaute" className="hover:text-[#17402C] transition-colors">Communauté</Link>
-            <Icon name="ChevronRightIcon" size={12} className="text-[#5C6B5E]" />
-            <Link href="/communaute?tab=clubs" className="hover:text-[#17402C] transition-colors">Clubs</Link>
-            <Icon name="ChevronRightIcon" size={12} className="text-[#5C6B5E]" />
-            <span className="text-[#17402C] font-semibold">Créer un club</span>
+        <div className="h-full min-w-0 flex-1 space-y-[var(--space-4)] overflow-y-auto pr-[var(--space-2)]">
+          <div className="flex items-center gap-[var(--space-2)] text-[length:var(--lkv-text-caption-2)] font-medium text-[color:var(--lkv-text-muted)]">
+            <Link href="/communaute" className="transition-colors hover:text-[color:var(--lkv-text-primary)]">Communauté</Link>
+            <Icon name="ChevronRightIcon" size={12} className="text-[color:var(--lkv-text-muted)]" aria-hidden="true" />
+            <Link href="/communaute?tab=clubs" className="transition-colors hover:text-[color:var(--lkv-text-primary)]">Clubs</Link>
+            <Icon name="ChevronRightIcon" size={12} className="text-[color:var(--lkv-text-muted)]" aria-hidden="true" />
+            <span className="font-semibold text-[color:var(--lkv-text-primary)]">Créer un club</span>
           </div>
 
-          {/* ÉTAPE 1: IDENTITÉ */}
           {activeSection === 'identite' && (
-            <div className="glass rounded-2xl p-6 space-y-5">
-              <div className="flex items-center justify-between pb-3 border-b border-[#17402C]/10">
+            <Card className="space-y-[var(--space-5)] p-[var(--space-6)]">
+              <div className="flex items-center justify-between border-b border-[color:var(--lkv-primary)]/10 pb-[var(--space-3)]">
                 <div>
-                  <h2 className="font-display font-bold text-lg text-[#17402C]">Identité, Visuels &amp; Ville</h2>
-                  <p className="text-xs text-[#5C6B5E]">Définissez le nom, l’emblème, la couverture et le camp de base du club.</p>
+                  <h2 className="font-display text-[length:var(--lkv-text-subheadline)] font-bold text-[color:var(--lkv-text-primary)]">Identité, Visuels &amp; Ville</h2>
+                  <p className="text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">Définissez le nom, l’emblème, la couverture et le camp de base du club.</p>
                 </div>
-                <span className="glass-pill text-[9px] font-mono font-bold">01 · IDENTITÉ</span>
+                <Badge className="font-mono font-bold">01 · IDENTITÉ</Badge>
               </div>
 
-              <div className="space-y-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="space-y-[var(--space-4)]">
+                <div className="grid grid-cols-1 gap-[var(--space-3)] sm:grid-cols-2">
                   <div>
-                    <label className="block text-xs font-bold text-[#17402C] mb-1">Nom du club *</label>
+                    <label htmlFor="club-title" className="mb-[var(--space-1)] block text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-primary)]">Nom du club *</label>
                     <input
+                      id="club-title"
                       type="text"
                       value={form.title}
                       onChange={(e) => setField('title', e.target.value)}
                       placeholder="Ex : Les Cimes Sauvages"
-                      className="w-full bg-white/90 border border-[#17402C]/15 rounded-xl px-3.5 py-2.5 text-xs text-[#17402C] focus:outline-none focus:ring-2 focus:ring-[#17402C]/20"
+                      className={FIELD_CLASS}
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-[#17402C] mb-1">Ville / Camp de base *</label>
+                    <label htmlFor="club-location" className="mb-[var(--space-1)] block text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-primary)]">Ville / Camp de base *</label>
                     <input
+                      id="club-location"
                       type="text"
                       value={form.location}
                       onChange={(e) => setField('location', e.target.value)}
                       placeholder="Ex : Grenoble · Isère"
-                      className="w-full bg-white/90 border border-[#17402C]/15 rounded-xl px-3.5 py-2.5 text-xs text-[#17402C]"
+                      className={FIELD_CLASS}
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-[#17402C] mb-1">Slogan ou promesse en une phrase</label>
+                  <label htmlFor="club-slogan" className="mb-[var(--space-1)] block text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-primary)]">Slogan ou promesse en une phrase</label>
                   <input
+                    id="club-slogan"
                     type="text"
                     value={form.slogan}
                     onChange={(e) => setField('slogan', e.target.value)}
                     placeholder="Ex : Marcher ensemble en Chartreuse, sans se précipiter."
-                    className="w-full bg-white/90 border border-[#17402C]/15 rounded-xl px-3.5 py-2.5 text-xs text-[#17402C]"
+                    className={FIELD_CLASS}
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-[#17402C] mb-1">Description détaillée &amp; Esprit du club</label>
+                  <label htmlFor="club-description" className="mb-[var(--space-1)] block text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-primary)]">Description détaillée &amp; Esprit du club</label>
                   <textarea
+                    id="club-description"
                     rows={4}
                     value={form.description}
                     onChange={(e) => setField('description', e.target.value)}
                     placeholder="Décrivez les objectifs, le profil des membres, la philosophie des sorties..."
-                    className="w-full bg-white/90 border border-[#17402C]/15 rounded-xl p-3 text-xs text-[#17402C] focus:outline-none focus:ring-2 focus:ring-[#17402C]/20"
+                    className={`${FIELD_CLASS} resize-y`}
                   />
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 gap-[var(--space-3)] sm:grid-cols-2">
                   <div>
-                    <label className="block text-xs font-bold text-[#17402C] mb-1">Photo de couverture (URL)</label>
+                    <label htmlFor="club-cover" className="mb-[var(--space-1)] block text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-primary)]">Photo de couverture (URL)</label>
                     <input
+                      id="club-cover"
                       type="text"
                       value={form.coverImage}
                       onChange={(e) => setField('coverImage', e.target.value)}
                       placeholder="https://images.unsplash.com/..."
-                      className="w-full bg-white/90 border border-[#17402C]/15 rounded-xl px-3 py-2 text-xs text-[#17402C]"
+                      className={FIELD_CLASS}
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-[#17402C] mb-1">Logo / Avatar du club (URL)</label>
+                    <label htmlFor="club-logo" className="mb-[var(--space-1)] block text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-primary)]">Logo / Avatar du club (URL)</label>
                     <input
+                      id="club-logo"
                       type="text"
                       value={form.logoImage}
                       onChange={(e) => setField('logoImage', e.target.value)}
                       placeholder="https://..."
-                      className="w-full bg-white/90 border border-[#17402C]/15 rounded-xl px-3 py-2 text-xs text-[#17402C]"
+                      className={FIELD_CLASS}
                     />
                   </div>
                 </div>
               </div>
 
-              <div className="flex justify-end pt-2">
-                <button
+              <div className="flex justify-end pt-[var(--space-2)]">
+                <Button
                   type="button"
                   onClick={() => setActiveSection('thematique')}
-                  className="glass-capsule-btn primary py-2 px-5 text-xs font-bold flex items-center gap-1"
                 >
-                  <span>Suivant : Thématique &amp; Niveau →</span>
-                </button>
+                  Suivant : Thématique &amp; Niveau →
+                </Button>
               </div>
-            </div>
+            </Card>
           )}
 
-          {/* ÉTAPE 2: THÉMATIQUE */}
           {activeSection === 'thematique' && (
-            <div className="glass rounded-2xl p-6 space-y-5">
-              <div className="flex items-center justify-between pb-3 border-b border-[#17402C]/10">
+            <Card className="space-y-[var(--space-5)] p-[var(--space-6)]">
+              <div className="flex items-center justify-between border-b border-[color:var(--lkv-primary)]/10 pb-[var(--space-3)]">
                 <div>
-                  <h2 className="font-display font-bold text-lg text-[#17402C]">Pratique, Niveau &amp; Massifs</h2>
-                  <p className="text-xs text-[#5C6B5E]">Précisez le cadre sportif, le rythme et les terrains explorés.</p>
+                  <h2 className="font-display text-[length:var(--lkv-text-subheadline)] font-bold text-[color:var(--lkv-text-primary)]">Pratique, Niveau &amp; Massifs</h2>
+                  <p className="text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">Précisez le cadre sportif, le rythme et les terrains explorés.</p>
                 </div>
-                <span className="glass-pill text-[9px] font-mono font-bold">02 · CADRE</span>
+                <Badge className="font-mono font-bold">02 · CADRE</Badge>
               </div>
 
-              <div className="space-y-4">
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="space-y-[var(--space-4)]">
+                <div className="grid grid-cols-1 gap-[var(--space-3)] sm:grid-cols-3">
                   <div>
-                    <label className="block text-xs font-bold text-[#17402C] mb-1">Discipline principale</label>
+                    <label htmlFor="club-category" className="mb-[var(--space-1)] block text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-primary)]">Discipline principale</label>
                     <select
+                      id="club-category"
                       value={form.category}
                       onChange={(e) => setField('category', e.target.value)}
-                      className="w-full bg-white/90 border border-[#17402C]/15 rounded-xl px-3 py-2 text-xs text-[#17402C]"
+                      className={FIELD_CLASS}
                     >
                       <option>Randonnée &amp; bivouac</option>
                       <option>Alpinisme &amp; haute montagne</option>
@@ -370,11 +379,12 @@ export default function CreateClubView() {
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-[#17402C] mb-1">Niveau requis</label>
+                    <label htmlFor="club-level" className="mb-[var(--space-1)] block text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-primary)]">Niveau requis</label>
                     <select
+                      id="club-level"
                       value={form.level}
                       onChange={(e) => setField('level', e.target.value)}
-                      className="w-full bg-white/90 border border-[#17402C]/15 rounded-xl px-3 py-2 text-xs text-[#17402C]"
+                      className={FIELD_CLASS}
                     >
                       {availableLevels.map(lvl => (
                         <option key={lvl} value={lvl}>{lvl}</option>
@@ -383,91 +393,91 @@ export default function CreateClubView() {
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-[#17402C] mb-1">Rythme des sorties</label>
+                    <label htmlFor="club-rhythm" className="mb-[var(--space-1)] block text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-primary)]">Rythme des sorties</label>
                     <input
+                      id="club-rhythm"
                       type="text"
                       value={form.rhythm}
                       onChange={(e) => setField('rhythm', e.target.value)}
                       placeholder="Ex : 1 à 2 sorties/mois"
-                      className="w-full bg-white/90 border border-[#17402C]/15 rounded-xl px-3 py-2 text-xs text-[#17402C]"
+                      className={FIELD_CLASS}
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-[#17402C] mb-2">Massifs de prédilection</label>
-                  <div className="flex flex-wrap gap-2">
+                  <span className="mb-[var(--space-2)] block text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-primary)]">Massifs de prédilection</span>
+                  <div className="flex flex-wrap gap-[var(--space-2)]">
                     {availableZones.map((z) => {
                       const isSelected = form.zones.includes(z);
                       return (
-                        <button
+                        <Button
                           key={z}
                           type="button"
+                          variant={isSelected ? 'primary' : 'secondary'}
+                          size="sm"
                           onClick={() => toggleZone(z)}
-                          className={`glass-capsule-btn !py-1.5 !px-3 !text-xs font-semibold ${
-                            isSelected ? 'primary' : ''
-                          }`}
+                          aria-pressed={isSelected}
                         >
                           {isSelected ? '✓ ' : '+ '} {z}
-                        </button>
+                        </Button>
                       );
                     })}
                   </div>
                 </div>
 
-                <div className="pt-2">
-                  <label className="block text-xs font-bold text-[#17402C] mb-1">Capacité maximale du club</label>
-                  <div className="flex items-center gap-3">
+                <div className="pt-[var(--space-2)]">
+                  <label htmlFor="club-max-members" className="mb-[var(--space-1)] block text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-primary)]">Capacité maximale du club</label>
+                  <div className="flex items-center gap-[var(--space-3)]">
                     <input
+                      id="club-max-members"
                       type="range"
                       min={10}
                       max={200}
                       step={10}
                       value={form.maxMembers}
                       onChange={(e) => setField('maxMembers', parseInt(e.target.value))}
-                      className="flex-1 accent-[#17402C]"
+                      className="flex-1 accent-[var(--lkv-primary)]"
                     />
-                    <span className="font-mono text-xs font-bold text-[#17402C] w-24 text-right">
+                    <span className="w-24 text-right font-mono text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-primary)]">
                       {form.maxMembers} membres
                     </span>
                   </div>
                 </div>
               </div>
 
-              <div className="flex justify-between pt-2">
-                <button
+              <div className="flex justify-between pt-[var(--space-2)]">
+                <Button
                   type="button"
+                  variant="secondary"
                   onClick={() => setActiveSection('identite')}
-                  className="glass-capsule-btn py-2 px-4 text-xs font-bold"
                 >
                   ← Précédent
-                </button>
-                <button
+                </Button>
+                <Button
                   type="button"
                   onClick={() => setActiveSection('regles')}
-                  className="glass-capsule-btn primary py-2 px-5 text-xs font-bold"
                 >
                   Suivant : Charte &amp; Règles →
-                </button>
+                </Button>
               </div>
-            </div>
+            </Card>
           )}
 
-          {/* ÉTAPE 3: RÈGLES */}
           {activeSection === 'regles' && (
-            <div className="glass rounded-2xl p-6 space-y-5">
-              <div className="flex items-center justify-between pb-3 border-b border-[#17402C]/10">
+            <Card className="space-y-[var(--space-5)] p-[var(--space-6)]">
+              <div className="flex items-center justify-between border-b border-[color:var(--lkv-primary)]/10 pb-[var(--space-3)]">
                 <div>
-                  <h2 className="font-display font-bold text-lg text-[#17402C]">Charte &amp; Règles du club</h2>
-                  <p className="text-xs text-[#5C6B5E]">Chaque membre s’y engage à l’adhésion pour garantir l'esprit d'équipe.</p>
+                  <h2 className="font-display text-[length:var(--lkv-text-subheadline)] font-bold text-[color:var(--lkv-text-primary)]">Charte &amp; Règles du club</h2>
+                  <p className="text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">Chaque membre s’y engage à l’adhésion pour garantir l&apos;esprit d&apos;équipe.</p>
                 </div>
-                <span className="glass-pill text-[9px] font-mono font-bold">03 · CHARTE</span>
+                <Badge className="font-mono font-bold">03 · CHARTE</Badge>
               </div>
 
-              <div className="space-y-3">
+              <div className="space-y-[var(--space-3)]">
                 {form.rules.map((rule) => (
-                  <div key={rule.id} className="p-3.5 glass-sub-card rounded-xl flex items-center gap-3 bg-white/90">
-                    <span className="text-xl">🛡️</span>
+                  <Card key={rule.id} variant="compact" className="flex items-center gap-[var(--space-3)]">
+                    <span className="text-[length:var(--lkv-text-subheadline)]" aria-hidden>🛡️</span>
                     <div className="min-w-0 flex-1">
                       <input
                         type="text"
@@ -476,7 +486,8 @@ export default function CreateClubView() {
                           ...prev,
                           rules: prev.rules.map(r => r.id === rule.id ? { ...r, title: e.target.value } : r)
                         }))}
-                        className="bg-transparent border-none text-xs font-bold text-[#17402C] focus:ring-0 p-0 w-full"
+                        aria-label="Titre de la règle"
+                        className="w-full border-none bg-transparent p-0 text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-primary)] focus:outline-none focus:ring-0"
                       />
                       <input
                         type="text"
@@ -485,73 +496,73 @@ export default function CreateClubView() {
                           ...prev,
                           rules: prev.rules.map(r => r.id === rule.id ? { ...r, description: e.target.value } : r)
                         }))}
-                        className="bg-transparent border-none text-[11px] text-[#5C6B5E] focus:ring-0 p-0 w-full"
+                        aria-label="Description de la règle"
+                        className="w-full border-none bg-transparent p-0 text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)] focus:outline-none focus:ring-0"
                       />
                     </div>
-                    <button
+                    <IconButton
                       type="button"
+                      variant="ghost"
+                      size="sm"
                       onClick={() => removeRule(rule.id)}
-                      className="glass-circle-btn shrink-0"
+                      aria-label={`Supprimer la règle ${rule.title}`}
+                      className="shrink-0"
                     >
-                      <Icon name="x" size={14} />
-                    </button>
-                  </div>
+                      <Icon name="x" size={14} aria-hidden="true" />
+                    </IconButton>
+                  </Card>
                 ))}
 
-                <button
+                <Button
                   type="button"
+                  variant="secondary"
+                  fullWidth
                   onClick={addRule}
-                  className="w-full glass-capsule-btn text-xs font-bold"
+                  icon={<Icon name="plus" size={14} aria-hidden="true" />}
                 >
-                  <Icon name="plus" size={14} /> Ajouter une règle à la charte
-                </button>
+                  Ajouter une règle à la charte
+                </Button>
               </div>
 
-              <div className="flex justify-between pt-2">
-                <button
+              <div className="flex justify-between pt-[var(--space-2)]">
+                <Button
                   type="button"
+                  variant="secondary"
                   onClick={() => setActiveSection('thematique')}
-                  className="glass-capsule-btn py-2 px-4 text-xs font-bold"
                 >
                   ← Précédent
-                </button>
-                <button
+                </Button>
+                <Button
                   type="button"
                   onClick={() => setActiveSection('adhesion')}
-                  className="glass-capsule-btn primary py-2 px-5 text-xs font-bold"
                 >
                   Suivant : Adhésion &amp; Équipe →
-                </button>
+                </Button>
               </div>
-            </div>
+            </Card>
           )}
 
-          {/* ÉTAPE 4: ADHÉSION & ÉQUIPE */}
           {activeSection === 'adhesion' && (
-            <div className="glass rounded-2xl p-6 space-y-5">
-              <div className="flex items-center justify-between pb-3 border-b border-[#17402C]/10">
+            <Card className="space-y-[var(--space-5)] p-[var(--space-6)]">
+              <div className="flex items-center justify-between border-b border-[color:var(--lkv-primary)]/10 pb-[var(--space-3)]">
                 <div>
-                  <h2 className="font-display font-bold text-lg text-[#17402C]">Adhésion &amp; Cotisation</h2>
-                  <p className="text-xs text-[#5C6B5E]">Paramétrez l’accès des membres et la gestion des sorties.</p>
+                  <h2 className="font-display text-[length:var(--lkv-text-subheadline)] font-bold text-[color:var(--lkv-text-primary)]">Adhésion &amp; Cotisation</h2>
+                  <p className="text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">Paramétrez l’accès des membres et la gestion des sorties.</p>
                 </div>
-                <span className="glass-pill text-[9px] font-mono font-bold">04 · ADHÉSION</span>
+                <Badge className="font-mono font-bold">04 · ADHÉSION</Badge>
               </div>
 
-              <div className="space-y-4">
+              <div className="space-y-[var(--space-4)]">
                 <div>
-                  <label className="block text-xs font-bold text-[#17402C] mb-2">Modalité d'inscription</label>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <span className="mb-[var(--space-2)] block text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-primary)]">Modalité d&apos;inscription</span>
+                  <div className="grid grid-cols-1 gap-[var(--space-3)] sm:grid-cols-2">
                     {[
                       { id: 'validation', label: '🛡️ Sur validation', desc: 'Le fondateur ou les modérateurs valident chaque demande.' },
                       { id: 'open', label: '⚡ Inscription libre', desc: 'Tout membre de la communauté peut rejoindre directement.' },
                     ].map((m) => (
                       <label
                         key={m.id}
-                        className={`p-3.5 rounded-xl cursor-pointer flex items-start gap-2.5 transition-all ${
-                          form.membershipType === m.id
-                            ? 'bg-white border-2 border-[#17402C] shadow-xs'
-                            : 'bg-white/60 border border-[#17402C]/10'
-                        }`}
+                        className={OPTION_CARD_CLASS(form.membershipType === m.id)}
                       >
                         <input
                           type="radio"
@@ -559,113 +570,109 @@ export default function CreateClubView() {
                           value={m.id}
                           checked={form.membershipType === m.id}
                           onChange={() => setField('membershipType', m.id)}
-                          className="mt-0.5 text-[#17402C]"
+                          className="mt-[2px] accent-[var(--lkv-primary)]"
                         />
                         <div>
-                          <span className="text-xs font-bold text-[#17402C] block">{m.label}</span>
-                          <span className="text-[10.5px] text-[#5C6B5E] block">{m.desc}</span>
+                          <span className="block text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-primary)]">{m.label}</span>
+                          <span className="block text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">{m.desc}</span>
                         </div>
                       </label>
                     ))}
                   </div>
                 </div>
 
-                <div className="pt-2">
-                  <label className="block text-xs font-bold text-[#17402C] mb-2">Cotisation</label>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <label className={`p-3 rounded-xl cursor-pointer flex items-center gap-2 ${form.feeType === 'gratuit' ? 'bg-white border-2 border-[#17402C]' : 'bg-white/60 border border-[#17402C]/10'}`}>
+                <div className="pt-[var(--space-2)]">
+                  <span className="mb-[var(--space-2)] block text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-primary)]">Cotisation</span>
+                  <div className="grid grid-cols-1 gap-[var(--space-3)] sm:grid-cols-2">
+                    <label className={OPTION_CARD_CLASS(form.feeType === 'gratuit')}>
                       <input
                         type="radio"
                         name="fee_type"
                         checked={form.feeType === 'gratuit'}
                         onChange={() => setField('feeType', 'gratuit')}
-                        className="text-[#17402C]"
+                        className="accent-[var(--lkv-primary)]"
                       />
-                      <span className="text-xs font-bold text-[#17402C]">🎁 Gratuit (100% bénévole)</span>
+                      <span className="text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-primary)]">🎁 Gratuit (100% bénévole)</span>
                     </label>
 
-                    <label className={`p-3 rounded-xl cursor-pointer flex items-center gap-2 ${form.feeType === 'annuel' ? 'bg-white border-2 border-[#17402C]' : 'bg-white/60 border border-[#17402C]/10'}`}>
+                    <label className={OPTION_CARD_CLASS(form.feeType === 'annuel')}>
                       <input
                         type="radio"
                         name="fee_type"
                         checked={form.feeType === 'annuel'}
                         onChange={() => setField('feeType', 'annuel')}
-                        className="text-[#17402C]"
+                        className="accent-[var(--lkv-primary)]"
                       />
-                      <span className="text-xs font-bold text-[#17402C]">💶 Adhésion annuelle club</span>
+                      <span className="text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-primary)]">💶 Adhésion annuelle club</span>
                     </label>
                   </div>
                 </div>
               </div>
 
-              <div className="flex justify-between pt-2">
-                <button
+              <div className="flex justify-between pt-[var(--space-2)]">
+                <Button
                   type="button"
+                  variant="secondary"
                   onClick={() => setActiveSection('regles')}
-                  className="glass-capsule-btn py-2 px-4 text-xs font-bold"
                 >
                   ← Précédent
-                </button>
-                <button
+                </Button>
+                <Button
                   type="button"
                   onClick={() => setActiveSection('reseaux')}
-                  className="glass-capsule-btn primary py-2 px-5 text-xs font-bold"
                 >
                   Suivant : Réseaux &amp; Visibilité →
-                </button>
+                </Button>
               </div>
-            </div>
+            </Card>
           )}
 
-          {/* ÉTAPE 5: RÉSEAUX & VISIBILITÉ */}
           {activeSection === 'reseaux' && (
-            <div className="glass rounded-2xl p-6 space-y-5">
-              <div className="flex items-center justify-between pb-3 border-b border-[#17402C]/10">
+            <Card className="space-y-[var(--space-5)] p-[var(--space-6)]">
+              <div className="flex items-center justify-between border-b border-[color:var(--lkv-primary)]/10 pb-[var(--space-3)]">
                 <div>
-                  <h2 className="font-display font-bold text-lg text-[#17402C]">Réseaux &amp; Visibilité du Club</h2>
-                  <p className="text-xs text-[#5C6B5E]">Liez vos canaux externes (WhatsApp, Strava, Instagram) et publiez le club.</p>
+                  <h2 className="font-display text-[length:var(--lkv-text-subheadline)] font-bold text-[color:var(--lkv-text-primary)]">Réseaux &amp; Visibilité du Club</h2>
+                  <p className="text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">Liez vos canaux externes (WhatsApp, Strava, Instagram) et publiez le club.</p>
                 </div>
-                <span className="glass-pill text-[9px] font-mono font-bold">05 · RÉSEAUX</span>
+                <Badge className="font-mono font-bold">05 · RÉSEAUX</Badge>
               </div>
 
-              <div className="space-y-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="space-y-[var(--space-4)]">
+                <div className="grid grid-cols-1 gap-[var(--space-3)] sm:grid-cols-2">
                   <div>
-                    <label className="block text-xs font-bold text-[#17402C] mb-1">Lien Groupe WhatsApp / Discord</label>
+                    <label htmlFor="club-whatsapp" className="mb-[var(--space-1)] block text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-primary)]">Lien Groupe WhatsApp / Discord</label>
                     <input
+                      id="club-whatsapp"
                       type="text"
                       value={form.whatsappUrl}
                       onChange={(e) => setField('whatsappUrl', e.target.value)}
                       placeholder="https://chat.whatsapp.com/..."
-                      className="w-full bg-white/90 border border-[#17402C]/15 rounded-xl px-3 py-2 text-xs text-[#17402C]"
+                      className={FIELD_CLASS}
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-[#17402C] mb-1">Compte Instagram / Strava</label>
+                    <label htmlFor="club-instagram" className="mb-[var(--space-1)] block text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-primary)]">Compte Instagram / Strava</label>
                     <input
+                      id="club-instagram"
                       type="text"
                       value={form.instagramUrl}
                       onChange={(e) => setField('instagramUrl', e.target.value)}
                       placeholder="https://instagram.com/..."
-                      className="w-full bg-white/90 border border-[#17402C]/15 rounded-xl px-3 py-2 text-xs text-[#17402C]"
+                      className={FIELD_CLASS}
                     />
                   </div>
                 </div>
 
-                <div className="pt-2">
-                  <label className="block text-xs font-bold text-[#17402C] mb-2">Visibilité du club</label>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="pt-[var(--space-2)]">
+                  <span className="mb-[var(--space-2)] block text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-primary)]">Visibilité du club</span>
+                  <div className="grid grid-cols-1 gap-[var(--space-3)] sm:grid-cols-2">
                     {[
                       { id: 'public', label: '🌍 Public LKDV', desc: 'Visible dans l’annuaire communautaire et sur la carte.' },
                       { id: 'invite', label: '🔗 Privé / Sur invitation', desc: 'Accessible uniquement via lien de parrainage.' },
                     ].map((vis) => (
                       <label
                         key={vis.id}
-                        className={`p-3.5 rounded-xl cursor-pointer flex items-start gap-2.5 transition-all ${
-                          form.visibility === vis.id
-                            ? 'bg-white border-2 border-[#17402C] shadow-xs'
-                            : 'bg-white/60 border border-[#17402C]/10'
-                        }`}
+                        className={OPTION_CARD_CLASS(form.visibility === vis.id)}
                       >
                         <input
                           type="radio"
@@ -673,11 +680,11 @@ export default function CreateClubView() {
                           value={vis.id}
                           checked={form.visibility === vis.id}
                           onChange={() => setField('visibility', vis.id)}
-                          className="mt-0.5 text-[#17402C]"
+                          className="mt-[2px] accent-[var(--lkv-primary)]"
                         />
                         <div>
-                          <span className="text-xs font-bold text-[#17402C] block">{vis.label}</span>
-                          <span className="text-[10.5px] text-[#5C6B5E] block">{vis.desc}</span>
+                          <span className="block text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-primary)]">{vis.label}</span>
+                          <span className="block text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">{vis.desc}</span>
                         </div>
                       </label>
                     ))}
@@ -685,116 +692,115 @@ export default function CreateClubView() {
                 </div>
               </div>
 
-              <div className="flex justify-between items-center gap-3 pt-2">
-                <button
+              <div className="flex items-center justify-between gap-[var(--space-3)] pt-[var(--space-2)]">
+                <Button
                   type="button"
+                  variant="secondary"
                   onClick={() => setActiveSection('adhesion')}
-                  className="glass-capsule-btn py-2 px-4 text-xs font-bold"
                 >
                   ← Précédent
-                </button>
-                <div className="flex items-center gap-3">
+                </Button>
+                <div className="flex items-center gap-[var(--space-3)]">
                   {saveError && (
-                    <p role="alert" className="text-[11px] font-semibold text-red-700">
+                    <p role="alert" className="text-[length:var(--lkv-text-caption-2)] font-semibold text-[color:var(--lkv-danger)]">
                       {saveError}
                     </p>
                   )}
-                  <button
+                  <Button
                     type="button"
                     onClick={handlePublish}
                     disabled={saving || !form.title.trim()}
-                    className="glass-capsule-btn primary py-2.5 px-6 text-xs font-bold flex items-center gap-1.5"
+                    loading={saving}
+                    icon={<Icon name="CheckIcon" size={14} aria-hidden="true" />}
                   >
-                    <Icon name="CheckIcon" size={14} className="relative z-10" />
-                    <span className="relative z-10">{saving ? 'Création...' : saveSuccess ? '✓ Créé !' : 'Fonder le club'}</span>
-                  </button>
+                    {saving ? 'Création...' : saveSuccess ? '✓ Créé !' : 'Fonder le club'}
+                  </Button>
                 </div>
               </div>
-            </div>
+            </Card>
           )}
         </div>
 
-        {/* COLONNE DROITE (Live Preview & Validation Checklist) - 300px */}
-        <aside className="w-[300px] shrink-0 h-full overflow-y-auto custom-scrollbar flex flex-col gap-4 pb-8">
-          {/* Live Preview Mini Card */}
-          <div className="glass p-3.5 space-y-3 rounded-2xl">
+        <aside className="flex h-full w-[300px] shrink-0 flex-col gap-[var(--space-4)] overflow-y-auto pb-[var(--space-8)]">
+          <Card className="space-y-[var(--space-3)] p-[var(--space-3)]">
             <div className="flex items-center justify-between">
-              <h3 className="font-display font-bold text-xs text-[#17402C]">Aperçu en direct</h3>
-              <span className="glass-pill text-[9px] font-mono font-bold">Live</span>
+              <h3 className="font-display text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)]">Aperçu en direct</h3>
+              <Badge className="font-mono font-bold">Live</Badge>
             </div>
 
-            <div className="glass-sub-card rounded-xl overflow-hidden flex flex-col">
-              <div className="h-28 relative bg-[#17402C]">
+            <Card variant="compact" className="flex flex-col overflow-hidden p-0">
+              <div className="relative h-28 bg-[color:var(--lkv-primary)]">
                 {form.coverImage && (
-                  <img src={form.coverImage} alt="Cover" className="w-full h-full object-cover" />
+                  <img src={form.coverImage} alt="" className="h-full w-full object-cover" />
                 )}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                <span className="absolute bottom-2 left-2 px-2 py-0.5 bg-black/40 backdrop-blur-md rounded-full text-[9px] font-mono text-white font-bold">
+                <div aria-hidden className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                <Badge className="absolute bottom-2 left-2 border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] font-mono font-bold text-[color:var(--lkv-text-inverted)] backdrop-blur-[var(--blur-md)]">
                   {form.category}
-                </span>
+                </Badge>
               </div>
-              <div className="p-3 space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <h4 className="font-display font-bold text-sm text-[#17402C] leading-snug">
-                    {form.title || 'Nom du club'}
-                  </h4>
-                </div>
-                <span className="text-[10px] font-mono font-semibold text-[#17402C] block">
+              <div className="space-y-[var(--space-1)] p-[var(--space-3)]">
+                <h4 className="font-display text-[length:var(--lkv-text-caption)] font-bold leading-snug text-[color:var(--lkv-text-primary)]">
+                  {form.title || 'Nom du club'}
+                </h4>
+                <span className="block font-mono text-[length:var(--lkv-text-caption-2)] font-semibold text-[color:var(--lkv-text-primary)]">
                   📍 {form.location}
                 </span>
-                <p className="text-[10px] text-[#5C6B5E] line-clamp-2">
+                <p className="line-clamp-2 text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">
                   {form.slogan || form.description}
                 </p>
-                <div className="flex items-center justify-between pt-1 border-t border-[#17402C]/10 text-[9px] font-mono text-[#5C6B5E]">
+                <div className="flex items-center justify-between border-t border-[color:var(--lkv-primary)]/10 pt-[var(--space-1)] font-mono text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">
                   <span>{form.level}</span>
                   <span>{form.rules.length} règles</span>
                 </div>
               </div>
-            </div>
-          </div>
+            </Card>
+          </Card>
 
-          {/* Checklist avant publication */}
-          <div className="glass p-3.5 space-y-2.5 rounded-2xl text-[#17402C]">
+          <Card className="space-y-[var(--space-2)] p-[var(--space-3)]">
             <div className="flex items-center justify-between">
-              <h3 className="font-display font-bold text-xs text-[#17402C]">Checklist Club</h3>
-              <span className="font-mono text-[9px] font-bold text-[#17402C]">{doneCount}/4</span>
+              <h3 className="font-display text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)]">Checklist Club</h3>
+              <span className="font-mono text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-primary)]">{doneCount}/4</span>
             </div>
 
-            <div className="space-y-1.5 text-xs">
+            <div className="space-y-[var(--space-1)] text-[length:var(--lkv-text-caption-2)]">
               {checklistItems.map((item) => (
-                <div key={item.label} className="flex items-center justify-between text-[11px]">
-                  <span className="flex items-center gap-1.5 text-[#17402C]">
-                    <span className={`w-3.5 h-3.5 rounded-full flex items-center justify-center text-[9px] ${
-                      item.done ? 'bg-[#17402C] text-white' : 'bg-black/10 text-transparent'
-                    }`}>
+                <div key={item.label} className="flex items-center justify-between">
+                  <span className="flex items-center gap-[var(--space-1)] text-[color:var(--lkv-text-primary)]">
+                    <span
+                      aria-hidden
+                      className={`flex h-3.5 w-3.5 items-center justify-center rounded-full text-[length:var(--lkv-text-caption-2)] ${
+                        item.done ? 'bg-[color:var(--lkv-primary)] text-[color:var(--lkv-text-inverted)]' : 'bg-[color:var(--lkv-primary)]/10 text-transparent'
+                      }`}
+                    >
                       {item.done && '✓'}
                     </span>
                     {item.label}
                   </span>
-                  <span className="font-mono text-[9px] text-[#5C6B5E]">
+                  <span className="font-mono text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">
                     {item.done ? 'OK' : 'À faire'}
                   </span>
                 </div>
               ))}
             </div>
 
-            <div className="pt-2 border-t border-[#17402C]/10 space-y-2">
+            <div className="space-y-[var(--space-2)] border-t border-[color:var(--lkv-primary)]/10 pt-[var(--space-2)]">
               {saveError && (
-                <p role="alert" className="text-[11px] font-semibold text-red-700">
+                <p role="alert" className="text-[length:var(--lkv-text-caption-2)] font-semibold text-[color:var(--lkv-danger)]">
                   {saveError}
                 </p>
               )}
-              <button
+              <Button
                 type="button"
                 onClick={handlePublish}
                 disabled={saving || !form.title.trim()}
-                className="w-full glass-capsule-btn primary py-2 text-xs font-bold flex items-center justify-center gap-1.5"
+                loading={saving}
+                fullWidth
+                icon={<Icon name="PlusIcon" size={13} aria-hidden="true" />}
               >
-                <Icon name="PlusIcon" size={13} className="relative z-10" />
-                <span className="relative z-10">{saving ? 'Création...' : 'Fonder le club'}</span>
-              </button>
+                {saving ? 'Création...' : 'Fonder le club'}
+              </Button>
             </div>
-          </div>
+          </Card>
         </aside>
       </main>
     </div>

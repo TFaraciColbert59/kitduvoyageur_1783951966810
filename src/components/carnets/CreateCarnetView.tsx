@@ -6,11 +6,11 @@ import { useRouter } from 'next/navigation';
 import Header from '@/components/Header';
 import Icon from '@/components/ui/AppIcon';
 import { ChevronRightIcon as ChevronRightAnimated } from '@/components/icons/chevron-right';
-import CommunityHubNav from '@/components/social/CommunityHubNav';
 import CompteBackground from '@/components/compte/CompteBackground';
 import { createClient } from '@/lib/supabase/client';
 import { requestCarnetPublicationAward } from '@/lib/progression-award-requests';
 import { CarnetKitItem, CarnetMoment } from '@/types/carnet';
+import { Badge, Button, Card, Chip, IconButton } from '@/components/ui';
 
 export interface ChapterItem {
   id: string;
@@ -26,18 +26,27 @@ export interface ChapterItem {
   content: string;
 }
 
+const FIELD_CLASS =
+  'w-full rounded-[var(--lkv-radius-md)] border border-[color:var(--lkv-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[var(--space-2)] text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-primary)] placeholder:text-[color:var(--lkv-text-muted)] focus:outline-none focus:ring-2 focus:ring-[color:var(--lkv-focus-ring)]';
+
+const LABEL_CLASS = 'mb-[var(--space-1)] block text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-primary)]';
+
+const OPTION_CARD_CLASS = (selected: boolean) =>
+  `flex cursor-pointer items-start gap-[var(--space-2)] rounded-[var(--lkv-radius-md)] border p-[var(--space-3)] transition-colors ${
+    selected
+      ? 'border-[color:var(--lkv-primary)] bg-[color:var(--lkv-surface-card)]'
+      : 'border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-muted)]'
+  }`;
+
 export default function CreateCarnetView({ onCloseModal }: { onCloseModal?: () => void } = {}) {
   const router = useRouter();
   const [saving, setSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [user, setUser] = useState<any>(null);
 
-  // Stepper state
   const [activeStep, setActiveStep] = useState<'general' | 'etapes' | 'moments' | 'sac' | 'tags'>('general');
 
-  // Form State — démarre vide : aucun contenu fictif ne peut être publié.
   const [form, setForm] = useState({
-    // 1. Général
     title: '',
     subtitle: '',
     destination: '',
@@ -53,7 +62,6 @@ export default function CreateCarnetView({ onCloseModal }: { onCloseModal?: () =
     distance_km: 0,
     elevation_m: 0,
 
-    // 2. Étapes / Chapitres
     chapters: [
       {
         id: 'ch-1',
@@ -70,14 +78,11 @@ export default function CreateCarnetView({ onCloseModal }: { onCloseModal?: () =
       }
     ] as ChapterItem[],
 
-    // 3. Moments forts & Citations
     moments: [] as CarnetMoment[],
 
-    // 4. Sac & Matériel
     kitIntro: '',
     kitItems: [] as CarnetKitItem[],
 
-    // 5. Thématiques & Visibilité
     selectedThemes: [] as string[],
     customTags: [] as string[],
     visibility: 'private' as 'public' | 'private',
@@ -116,7 +121,6 @@ export default function CreateCarnetView({ onCloseModal }: { onCloseModal?: () =
     });
   };
 
-  // Chapter Handlers
   const addChapter = () => {
     const nextNum = form.chapters.length + 1;
     const roman = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII'][nextNum - 1] || `${nextNum}`;
@@ -141,7 +145,6 @@ export default function CreateCarnetView({ onCloseModal }: { onCloseModal?: () =
     setForm(prev => ({ ...prev, chapters: prev.chapters.filter(c => c.id !== id) }));
   };
 
-  // Moment Handlers
   const addMoment = () => {
     const newMoment: CarnetMoment = {
       id: `m-${Date.now()}`,
@@ -157,7 +160,6 @@ export default function CreateCarnetView({ onCloseModal }: { onCloseModal?: () =
     setForm(prev => ({ ...prev, moments: prev.moments.filter(m => m.id !== id) }));
   };
 
-  // Kit Items Handlers
   const addKitItem = () => {
     const newItem: CarnetKitItem = {
       id: `k-${Date.now()}`,
@@ -284,269 +286,272 @@ export default function CreateCarnetView({ onCloseModal }: { onCloseModal?: () =
   ];
 
   return (
-    <div className="h-[100dvh] max-h-[100dvh] overflow-hidden bg-transparent font-sans text-[#17402C] relative flex flex-col">
+    <div className="relative flex h-[100dvh] max-h-[100dvh] flex-col overflow-hidden bg-transparent font-sans text-[color:var(--lkv-text-primary)]">
       <CompteBackground />
       <Header />
 
-      <main className="flex-1 min-h-0 overflow-hidden w-full max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-4 flex gap-5">
-        {/* COLONNE GAUCHE (Nav & Stepper) - 230px */}
-        <aside className="w-[230px] shrink-0 h-full max-h-full flex flex-col justify-between glass rounded-[1.5rem] p-3.5 text-[#17402C] font-sans overflow-hidden border border-white/40 shadow-sm select-none">
-          {/* ── 1. ZONE HAUTE FIXE (Identité & Actions) ── */}
-          <div className="shrink-0 space-y-2.5">
-            <div className="p-3 rounded-2xl glass-sub-card flex items-center gap-3 relative overflow-hidden border border-white/50">
-              <div className="w-10 h-10 rounded-full flex items-center justify-center text-xl shrink-0 bg-white/80 border border-white shadow-xs">
+      <main className="mx-auto flex min-h-0 w-full max-w-[1440px] flex-1 gap-[var(--space-5)] overflow-hidden px-[var(--space-4)] pb-[var(--space-4)] pt-24 sm:px-[var(--space-6)] lg:px-[var(--space-8)]">
+        <aside className="flex h-full max-h-full w-[230px] shrink-0 select-none flex-col justify-between overflow-hidden rounded-[var(--lkv-radius-2xl)] border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] p-[var(--space-3)] font-sans text-[color:var(--lkv-text-primary)] shadow-elevation-1 backdrop-blur-[var(--blur-lg)]">
+          <div className="shrink-0 space-y-[var(--space-2)]">
+            <Card variant="compact" className="flex items-center gap-[var(--space-3)] border-[color:var(--glass-border)]">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[color:var(--glass-border)] bg-[color:var(--lkv-surface-card)] text-xl" aria-hidden>
                 ✍️
               </div>
               <div className="min-w-0 flex-1">
-                <h4 className="font-display font-bold text-xs sm:text-sm text-[#17402C] truncate leading-tight">
+                <h4 className="truncate font-display text-[length:var(--lkv-text-caption)] font-bold leading-tight text-[color:var(--lkv-text-primary)] sm:text-[length:var(--lkv-text-subheadline)]">
                   Création{' '}
-                  <span className="font-serif italic font-normal text-[#5B7F55] text-xs">
+                  <span className="font-serif text-[length:var(--lkv-text-caption)] font-normal italic text-[color:var(--lkv-secondary)]">
                     Carnet
                   </span>
                 </h4>
-                <p className="text-[10px] font-mono text-[#5A7064] truncate mt-0.5">
+                <p className="mt-[var(--space-1)] truncate font-mono text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">
                   Studio Récit
                 </p>
               </div>
-            </div>
+            </Card>
 
-            <div className="grid grid-cols-2 gap-1.5">
+            <div className="grid grid-cols-2 gap-[var(--space-1)]">
               <Link
                 href="/carnets"
-                className="glass-capsule-btn primary text-[10.5px] font-bold !py-1.5 !px-2 flex items-center justify-center gap-1 shadow-none cursor-pointer"
+                className="inline-flex items-center justify-center gap-[var(--space-1)] rounded-full bg-[color:var(--lkv-action)] px-[var(--space-2)] py-[var(--space-1)] text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-on-action)]"
               >
-                <Icon name="ArrowLeftIcon" size={12} />
+                <Icon name="ArrowLeftIcon" size={12} aria-hidden="true" />
                 <span>Retour</span>
               </Link>
 
-              <button
+              <Button
                 type="button"
+                variant="secondary"
+                size="sm"
                 onClick={() => window.print()}
-                className="glass-capsule-btn text-[10.5px] font-bold !py-1.5 !px-2 flex items-center justify-center gap-1 shadow-none cursor-pointer"
+                icon={<Icon name="PrinterIcon" size={12} aria-hidden="true" />}
+                className="px-[var(--space-2)]"
               >
-                <Icon name="PrinterIcon" size={12} />
-                <span>Imprimer</span>
-              </button>
+                Imprimer
+              </Button>
             </div>
           </div>
 
-          {/* ── 2. ZONE CENTRALE SCROLLABLE À L'INTÉRIEUR (Stepper sans numéros/icônes) ── */}
-          <nav className="flex-1 min-h-0 overflow-y-auto no-scrollbar py-2 space-y-1.5" aria-label="Étapes de création">
-            <p className="text-[9.5px] font-mono font-bold uppercase tracking-widest text-[#5A7064] px-2 mb-1">
+          <nav className="min-h-0 flex-1 space-y-[var(--space-1)] overflow-y-auto py-[var(--space-2)] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" aria-label="Étapes de création">
+            <p className="mb-[var(--space-1)] px-[var(--space-2)] font-mono text-[length:var(--lkv-text-caption-2)] font-bold uppercase tracking-widest text-[color:var(--lkv-text-muted)]">
               Étapes de création
             </p>
             {STEPS.map((st) => {
               const isActive = activeStep === st.id;
               return (
-                <button
+                <Button
                   key={st.id}
                   type="button"
+                  variant={isActive ? 'primary' : 'secondary'}
+                  fullWidth
                   onClick={() => setActiveStep(st.id)}
-                  className={`w-full px-3 py-2.5 rounded-xl font-bold text-xs transition-all flex items-center justify-between group cursor-pointer border ${
-                    isActive
-                      ? 'bg-[#17402C] text-white border-[#17402C] shadow-sm'
-                      : 'bg-white/80 hover:bg-white text-[#17402C] border-white/80 shadow-2xs'
-                  }`}
+                  className="justify-between rounded-[var(--lkv-radius-md)] text-[length:var(--lkv-text-caption)]"
+                  aria-pressed={isActive}
                 >
                   <span className="truncate text-left">{st.label}</span>
-                  {isActive && <ChevronRightAnimated size={13} className="text-white/70 shrink-0" />}
-                </button>
+                  {isActive && <ChevronRightAnimated size={13} className="shrink-0 text-[color:var(--lkv-text-inverted)]/70" aria-hidden />}
+                </Button>
               );
             })}
           </nav>
 
-          {/* ── 3. ZONE BASSE FIXE (Footer) ── */}
-          <div className="shrink-0 pt-2 border-t border-[#17402C]/5 text-center">
-            <span className="text-[8.5px] font-mono text-[#5A7064] tracking-wider uppercase">
+          <div className="shrink-0 border-t border-[color:var(--lkv-primary)]/5 pt-[var(--space-2)] text-center">
+            <span className="font-mono text-[length:var(--lkv-text-caption-2)] uppercase tracking-wider text-[color:var(--lkv-text-muted)]">
               Le Kit du Voyageur · Studio Carnet
             </span>
           </div>
         </aside>
 
-        {/* COLONNE CENTRALE (Formulaire dynamique par étape) */}
-        <div className="flex-1 min-w-0 h-full overflow-y-auto custom-scrollbar pr-2 space-y-4">
-          {/* Breadcrumbs */}
-          <div className="flex items-center gap-2 text-xs font-medium text-[#5C6B5E]">
-            <Link href="/communaute" className="hover:text-[#17402C] transition-colors">Communauté</Link>
-            <Icon name="ChevronRightIcon" size={12} className="text-[#5C6B5E]" />
-            <Link href="/carnets" className="hover:text-[#17402C] transition-colors">Carnets</Link>
-            <Icon name="ChevronRightIcon" size={12} className="text-[#5C6B5E]" />
-            <span className="text-[#17402C] font-semibold">Publier un carnet de voyage</span>
+        <div className="h-full min-w-0 flex-1 space-y-[var(--space-4)] overflow-y-auto pr-[var(--space-2)]">
+          <div className="flex items-center gap-[var(--space-2)] text-[length:var(--lkv-text-caption-2)] font-medium text-[color:var(--lkv-text-muted)]">
+            <Link href="/communaute" className="transition-colors hover:text-[color:var(--lkv-text-primary)]">Communauté</Link>
+            <Icon name="ChevronRightIcon" size={12} className="text-[color:var(--lkv-text-muted)]" aria-hidden="true" />
+            <Link href="/carnets" className="transition-colors hover:text-[color:var(--lkv-text-primary)]">Carnets</Link>
+            <Icon name="ChevronRightIcon" size={12} className="text-[color:var(--lkv-text-muted)]" aria-hidden="true" />
+            <span className="font-semibold text-[color:var(--lkv-text-primary)]">Publier un carnet de voyage</span>
           </div>
 
-          {/* ÉTAPE 1: GÉNÉRAL & MÉTRIQUES */}
           {activeStep === 'general' && (
-            <div className="glass rounded-2xl p-6 space-y-5">
-              <div className="flex items-center justify-between pb-3 border-b border-[#17402C]/10">
+            <Card className="space-y-[var(--space-5)] p-[var(--space-6)]">
+              <div className="flex items-center justify-between border-b border-[color:var(--lkv-primary)]/10 pb-[var(--space-3)]">
                 <div>
-                  <h2 className="font-display font-bold text-lg text-[#17402C]">Informations Générales &amp; Métriques</h2>
-                  <p className="text-xs text-[#5C6B5E]">Posez les bases de votre expédition : destination, dates, météo et statistiques.</p>
+                  <h2 className="font-display text-[length:var(--lkv-text-subheadline)] font-bold text-[color:var(--lkv-text-primary)]">Informations Générales &amp; Métriques</h2>
+                  <p className="text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">Posez les bases de votre expédition : destination, dates, météo et statistiques.</p>
                 </div>
-                <span className="glass-pill text-[9px] font-mono font-bold">01 · INFOS</span>
+                <Badge className="font-mono font-bold">01 · INFOS</Badge>
               </div>
 
-              <div className="space-y-4">
+              <div className="space-y-[var(--space-4)]">
                 <div>
-                  <label className="block text-xs font-bold text-[#17402C] mb-1">Titre du carnet *</label>
+                  <label htmlFor="carnet-title" className={LABEL_CLASS}>Titre du carnet *</label>
                   <input
+                    id="carnet-title"
                     type="text"
                     value={form.title}
                     onChange={(e) => setField('title', e.target.value)}
                     placeholder="Ex : Traversée des crêtes en Chartreuse"
-                    className="w-full bg-white/90 border border-[#17402C]/15 rounded-xl px-3.5 py-2.5 text-sm font-bold text-[#17402C] focus:outline-none focus:ring-2 focus:ring-[#17402C]/20"
+                    className={`${FIELD_CLASS} font-bold`}
                   />
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 gap-[var(--space-3)] sm:grid-cols-2">
                   <div>
-                    <label className="block text-xs font-bold text-[#17402C] mb-1">Massif / Destination *</label>
+                    <label htmlFor="carnet-destination" className={LABEL_CLASS}>Massif / Destination *</label>
                     <input
+                      id="carnet-destination"
                       type="text"
                       value={form.destination}
                       onChange={(e) => setField('destination', e.target.value)}
                       placeholder="Ex : Chartreuse · Alpes"
-                      className="w-full bg-white/90 border border-[#17402C]/15 rounded-xl px-3.5 py-2 text-xs text-[#17402C]"
+                      className={FIELD_CLASS}
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-[#17402C] mb-1">Photo de couverture (URL)</label>
+                    <label htmlFor="carnet-cover" className={LABEL_CLASS}>Photo de couverture (URL)</label>
                     <input
+                      id="carnet-cover"
                       type="text"
                       value={form.coverImage}
                       onChange={(e) => setField('coverImage', e.target.value)}
                       placeholder="https://images.unsplash.com/..."
-                      className="w-full bg-white/90 border border-[#17402C]/15 rounded-xl px-3.5 py-2 text-xs text-[#17402C]"
+                      className={FIELD_CLASS}
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-[#17402C] mb-1">Chapeau d’accroche / Citation de départ</label>
+                  <label htmlFor="carnet-chapeau" className={LABEL_CLASS}>Chapeau d’accroche / Citation de départ</label>
                   <textarea
+                    id="carnet-chapeau"
                     rows={2}
                     value={form.chapeau}
                     onChange={(e) => setField('chapeau', e.target.value)}
                     placeholder="Une phrase pour résumer l’ambiance et l’esprit..."
-                    className="w-full bg-white/90 border border-[#17402C]/15 rounded-xl p-3 text-xs text-[#17402C] font-serif italic"
+                    className={`${FIELD_CLASS} resize-y font-serif italic`}
                   />
                 </div>
 
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
+                <div className="grid grid-cols-2 gap-[var(--space-3)] pt-[var(--space-2)] sm:grid-cols-4">
                   <div>
-                    <label className="block text-xs font-bold text-[#17402C] mb-1">Distance totale</label>
+                    <label htmlFor="carnet-distance" className={LABEL_CLASS}>Distance totale</label>
                     <div className="relative">
                       <input
+                        id="carnet-distance"
                         type="number"
                         step="0.1"
                         value={form.distance_km}
                         onChange={(e) => setField('distance_km', parseFloat(e.target.value))}
-                        className="w-full bg-white/90 border border-[#17402C]/15 rounded-xl px-3 py-2 text-xs text-[#17402C] font-mono font-bold"
+                        className={`${FIELD_CLASS} font-mono font-bold`}
                       />
-                      <span className="absolute right-3 top-2 text-[10px] text-[#5C6B5E] font-mono">km</span>
+                      <span className="absolute right-[var(--space-3)] top-[var(--space-2)] font-mono text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">km</span>
                     </div>
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-[#17402C] mb-1">Dénivelé +</label>
+                    <label htmlFor="carnet-elevation" className={LABEL_CLASS}>Dénivelé +</label>
                     <div className="relative">
                       <input
+                        id="carnet-elevation"
                         type="number"
                         value={form.elevation_m}
                         onChange={(e) => setField('elevation_m', parseInt(e.target.value))}
-                        className="w-full bg-white/90 border border-[#17402C]/15 rounded-xl px-3 py-2 text-xs text-[#17402C] font-mono font-bold"
+                        className={`${FIELD_CLASS} font-mono font-bold`}
                       />
-                      <span className="absolute right-3 top-2 text-[10px] text-[#5C6B5E] font-mono">m</span>
+                      <span className="absolute right-[var(--space-3)] top-[var(--space-2)] font-mono text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">m</span>
                     </div>
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-[#17402C] mb-1">Voyageurs</label>
+                    <label htmlFor="carnet-voyageurs" className={LABEL_CLASS}>Voyageurs</label>
                     <input
+                      id="carnet-voyageurs"
                       type="number"
                       min={1}
                       value={form.voyageurs}
                       onChange={(e) => setField('voyageurs', parseInt(e.target.value))}
-                      className="w-full bg-white/90 border border-[#17402C]/15 rounded-xl px-3 py-2 text-xs text-[#17402C] font-mono font-bold"
+                      className={`${FIELD_CLASS} font-mono font-bold`}
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-[#17402C] mb-1">Note globale</label>
+                    <label htmlFor="carnet-rating" className={LABEL_CLASS}>Note globale</label>
                     <div className="relative">
                       <input
+                        id="carnet-rating"
                         type="number"
                         min={1}
                         max={10}
                         value={form.routeRating}
                         onChange={(e) => setField('routeRating', parseInt(e.target.value))}
-                        className="w-full bg-white/90 border border-[#17402C]/15 rounded-xl px-3 py-2 text-xs text-[#17402C] font-mono font-bold"
+                        className={`${FIELD_CLASS} font-mono font-bold`}
                       />
-                      <span className="absolute right-3 top-2 text-[10px] text-sand-600 font-bold">/10</span>
+                      <span className="absolute right-[var(--space-3)] top-[var(--space-2)] text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--sand-600)]">/10</span>
                     </div>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 gap-[var(--space-3)] sm:grid-cols-2">
                   <div>
-                    <label className="block text-xs font-bold text-[#17402C] mb-1">Période du voyage</label>
-                    <div className="flex gap-2">
+                    <span className={LABEL_CLASS}>Période du voyage</span>
+                    <div className="flex gap-[var(--space-2)]">
                       <input
                         type="date"
                         value={form.startDate}
                         onChange={(e) => setField('startDate', e.target.value)}
-                        className="w-full bg-white/90 border border-[#17402C]/15 rounded-xl px-2.5 py-1.5 text-xs text-[#17402C]"
+                        aria-label="Date de début"
+                        className={FIELD_CLASS}
                       />
                       <input
                         type="date"
                         value={form.endDate}
                         onChange={(e) => setField('endDate', e.target.value)}
-                        className="w-full bg-white/90 border border-[#17402C]/15 rounded-xl px-2.5 py-1.5 text-xs text-[#17402C]"
+                        aria-label="Date de fin"
+                        className={FIELD_CLASS}
                       />
                     </div>
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-[#17402C] mb-1">Météo &amp; Température</label>
+                    <label htmlFor="carnet-weather" className={LABEL_CLASS}>Météo &amp; Température</label>
                     <input
+                      id="carnet-weather"
                       type="text"
                       value={form.weather}
                       onChange={(e) => setField('weather', e.target.value)}
                       placeholder="Ex : Grand soleil en journée, 4°C la nuit"
-                      className="w-full bg-white/90 border border-[#17402C]/15 rounded-xl px-3 py-1.5 text-xs text-[#17402C]"
+                      className={FIELD_CLASS}
                     />
                   </div>
                 </div>
               </div>
 
-              <div className="flex justify-end pt-2">
-                <button
+              <div className="flex justify-end pt-[var(--space-2)]">
+                <Button
                   type="button"
                   onClick={() => setActiveStep('etapes')}
-                  className="glass-capsule-btn primary py-2 px-5 text-xs font-bold flex items-center gap-1"
                 >
-                  <span>Suivant : Étapes &amp; Récit →</span>
-                </button>
+                  Suivant : Étapes &amp; Récit →
+                </Button>
               </div>
-            </div>
+            </Card>
           )}
 
-          {/* ÉTAPE 2: ÉTAPES & RÉCIT */}
           {activeStep === 'etapes' && (
-            <div className="glass rounded-2xl p-6 space-y-5">
-              <div className="flex items-center justify-between pb-3 border-b border-[#17402C]/10">
+            <Card className="space-y-[var(--space-5)] p-[var(--space-6)]">
+              <div className="flex items-center justify-between border-b border-[color:var(--lkv-primary)]/10 pb-[var(--space-3)]">
                 <div>
-                  <h2 className="font-display font-bold text-lg text-[#17402C]">Étapes &amp; Récit de marche</h2>
-                  <p className="text-xs text-[#5C6B5E]">Détaillez le déroulé jour par jour avec les anecdotes, le bivouac et les refuges.</p>
+                  <h2 className="font-display text-[length:var(--lkv-text-subheadline)] font-bold text-[color:var(--lkv-text-primary)]">Étapes &amp; Récit de marche</h2>
+                  <p className="text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">Détaillez le déroulé jour par jour avec les anecdotes, le bivouac et les refuges.</p>
                 </div>
-                <span className="glass-pill text-[9px] font-mono font-bold">02 · ÉTAPES</span>
+                <Badge className="font-mono font-bold">02 · ÉTAPES</Badge>
               </div>
 
-              <div className="space-y-5">
+              <div className="space-y-[var(--space-5)]">
                 {form.chapters.map((ch, idx) => (
-                  <div key={ch.id} className="p-4 glass-sub-card rounded-2xl space-y-3 relative border border-white/60 bg-white/90">
+                  <Card key={ch.id} variant="compact" className="space-y-[var(--space-3)] p-[var(--space-4)]">
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <span className="w-6 h-6 rounded-full bg-[#17402C] text-white flex items-center justify-center text-xs font-mono font-bold">
+                      <div className="flex items-center gap-[var(--space-2)]">
+                        <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[color:var(--lkv-primary)] font-mono text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-inverted)]">
                           {ch.num}
                         </span>
                         <input
@@ -558,24 +563,27 @@ export default function CreateCarnetView({ onCloseModal }: { onCloseModal?: () =
                             setField('chapters', updated);
                           }}
                           placeholder={`Titre du Jour ${idx + 1}`}
-                          className="bg-transparent border-none text-sm font-bold text-[#17402C] focus:ring-0 p-0"
+                          aria-label={`Titre du jour ${idx + 1}`}
+                          className="border-none bg-transparent p-0 text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)] focus:outline-none focus:ring-0"
                         />
                       </div>
 
                       {form.chapters.length > 1 && (
-                        <button
+                        <Button
                           type="button"
+                          variant="ghost"
+                          size="sm"
                           onClick={() => removeChapter(ch.id)}
-                          className="text-[#5C6B5E] hover:text-red-600 text-xs font-semibold"
+                          className="text-[color:var(--lkv-danger)]"
                         >
-                          Supprimer l'étape
-                        </button>
+                          Supprimer l&apos;étape
+                        </Button>
                       )}
                     </div>
 
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+                    <div className="grid grid-cols-2 gap-[var(--space-2)] text-[length:var(--lkv-text-caption-2)] sm:grid-cols-4">
                       <div>
-                        <label className="text-[10px] text-[#5C6B5E] block font-bold">Départ</label>
+                        <label className="mb-[var(--space-1)] block font-bold text-[color:var(--lkv-text-muted)]">Départ</label>
                         <input
                           type="text"
                           value={ch.lieu_depart || ''}
@@ -585,11 +593,12 @@ export default function CreateCarnetView({ onCloseModal }: { onCloseModal?: () =
                             setField('chapters', updated);
                           }}
                           placeholder="Lieu de départ"
-                          className="w-full bg-white border border-[#17402C]/10 rounded-lg p-1.5 text-xs text-[#17402C]"
+                          aria-label="Lieu de départ"
+                          className={`${FIELD_CLASS} py-[var(--space-1)]`}
                         />
                       </div>
                       <div>
-                        <label className="text-[10px] text-[#5C6B5E] block font-bold">Arrivée</label>
+                        <label className="mb-[var(--space-1)] block font-bold text-[color:var(--lkv-text-muted)]">Arrivée</label>
                         <input
                           type="text"
                           value={ch.lieu_arrivee || ''}
@@ -599,12 +608,13 @@ export default function CreateCarnetView({ onCloseModal }: { onCloseModal?: () =
                             setField('chapters', updated);
                           }}
                           placeholder="Lieu d'arrivée"
-                          className="w-full bg-white border border-[#17402C]/10 rounded-lg p-1.5 text-xs text-[#17402C]"
+                          aria-label="Lieu d'arrivée"
+                          className={`${FIELD_CLASS} py-[var(--space-1)]`}
                         />
                       </div>
                       <div>
-                        <label className="text-[10px] text-[#5C6B5E] block font-bold">Distance &amp; D+</label>
-                        <div className="flex gap-1">
+                        <span className="mb-[var(--space-1)] block font-bold text-[color:var(--lkv-text-muted)]">Distance &amp; D+</span>
+                        <div className="flex gap-[var(--space-1)]">
                           <input
                             type="number"
                             value={ch.distance_km || 10}
@@ -613,7 +623,8 @@ export default function CreateCarnetView({ onCloseModal }: { onCloseModal?: () =
                               updated[idx].distance_km = parseFloat(e.target.value);
                               setField('chapters', updated);
                             }}
-                            className="w-1/2 bg-white border border-[#17402C]/10 rounded-lg p-1.5 text-xs font-mono"
+                            aria-label="Distance en kilomètres"
+                            className={`${FIELD_CLASS} w-1/2 py-[var(--space-1)] font-mono`}
                           />
                           <input
                             type="number"
@@ -623,12 +634,13 @@ export default function CreateCarnetView({ onCloseModal }: { onCloseModal?: () =
                               updated[idx].denivele_m = parseInt(e.target.value);
                               setField('chapters', updated);
                             }}
-                            className="w-1/2 bg-white border border-[#17402C]/10 rounded-lg p-1.5 text-xs font-mono"
+                            aria-label="Dénivelé en mètres"
+                            className={`${FIELD_CLASS} w-1/2 py-[var(--space-1)] font-mono`}
                           />
                         </div>
                       </div>
                       <div>
-                        <label className="text-[10px] text-[#5C6B5E] block font-bold">Hébergement</label>
+                        <label className="mb-[var(--space-1)] block font-bold text-[color:var(--lkv-text-muted)]">Hébergement</label>
                         <input
                           type="text"
                           value={ch.hebergement_nom || ''}
@@ -638,7 +650,8 @@ export default function CreateCarnetView({ onCloseModal }: { onCloseModal?: () =
                             setField('chapters', updated);
                           }}
                           placeholder="Nom du refuge/bivouac"
-                          className="w-full bg-white border border-[#17402C]/10 rounded-lg p-1.5 text-xs text-[#17402C]"
+                          aria-label="Nom de l'hébergement"
+                          className={`${FIELD_CLASS} py-[var(--space-1)]`}
                         />
                       </div>
                     </div>
@@ -653,68 +666,72 @@ export default function CreateCarnetView({ onCloseModal }: { onCloseModal?: () =
                           setField('chapters', updated);
                         }}
                         placeholder="Récit de l’étape : sensations, rencontres, météo..."
-                        className="w-full bg-white border border-[#17402C]/10 rounded-xl p-3 text-xs text-[#17402C] leading-relaxed"
+                        aria-label="Récit de l'étape"
+                        className={`${FIELD_CLASS} resize-y leading-relaxed`}
                       />
                     </div>
-                  </div>
+                  </Card>
                 ))}
 
-                <button
+                <Button
                   type="button"
+                  variant="secondary"
+                  fullWidth
                   onClick={addChapter}
-                  className="w-full py-2.5 rounded-xl border border-dashed border-[#17402C]/20 hover:border-[#17402C] text-xs font-bold text-[#17402C] flex items-center justify-center gap-1.5 transition-colors"
+                  icon={<Icon name="PlusIcon" size={14} aria-hidden="true" />}
+                  className="border-dashed"
                 >
-                  <Icon name="PlusIcon" size={14} /> Ajouter une journée de marche
-                </button>
+                  Ajouter une journée de marche
+                </Button>
               </div>
 
-              <div className="flex justify-between pt-2">
-                <button
+              <div className="flex justify-between pt-[var(--space-2)]">
+                <Button
                   type="button"
+                  variant="secondary"
                   onClick={() => setActiveStep('general')}
-                  className="glass-capsule-btn py-2 px-4 text-xs font-bold"
                 >
                   ← Précédent
-                </button>
-                <button
+                </Button>
+                <Button
                   type="button"
                   onClick={() => setActiveStep('moments')}
-                  className="glass-capsule-btn primary py-2 px-5 text-xs font-bold"
                 >
                   Suivant : Moments &amp; Photos →
-                </button>
+                </Button>
               </div>
-            </div>
+            </Card>
           )}
 
-          {/* ÉTAPE 3: MOMENTS & PHOTOS */}
           {activeStep === 'moments' && (
-            <div className="glass rounded-2xl p-6 space-y-5">
-              <div className="flex items-center justify-between pb-3 border-b border-[#17402C]/10">
+            <Card className="space-y-[var(--space-5)] p-[var(--space-6)]">
+              <div className="flex items-center justify-between border-b border-[color:var(--lkv-primary)]/10 pb-[var(--space-3)]">
                 <div>
-                  <h2 className="font-display font-bold text-lg text-[#17402C]">Moments &amp; Photos Phares</h2>
-                  <p className="text-xs text-[#5C6B5E]">Archivage des citations, des panoramas et des anecdotes marquantes.</p>
+                  <h2 className="font-display text-[length:var(--lkv-text-subheadline)] font-bold text-[color:var(--lkv-text-primary)]">Moments &amp; Photos Phares</h2>
+                  <p className="text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">Archivage des citations, des panoramas et des anecdotes marquantes.</p>
                 </div>
-                <span className="glass-pill text-[9px] font-mono font-bold">03 · SOUVENIRS</span>
+                <Badge className="font-mono font-bold">03 · SOUVENIRS</Badge>
               </div>
 
-              <div className="space-y-4">
+              <div className="space-y-[var(--space-4)]">
                 {form.moments.map((m, idx) => (
-                  <div key={m.id} className="p-4 glass-sub-card rounded-2xl space-y-3 bg-white/90 border border-white/60">
+                  <Card key={m.id} variant="compact" className="space-y-[var(--space-3)] p-[var(--space-4)]">
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-mono font-bold text-[#17402C]">Moment #{idx + 1}</span>
-                      <button
+                      <span className="font-mono text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-primary)]">Moment #{idx + 1}</span>
+                      <Button
                         type="button"
+                        variant="ghost"
+                        size="sm"
                         onClick={() => removeMoment(m.id)}
-                        className="text-[#5C6B5E] hover:text-red-600 text-xs font-semibold"
+                        className="text-[color:var(--lkv-danger)]"
                       >
                         Retirer
-                      </button>
+                      </Button>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
+                    <div className="grid grid-cols-1 gap-[var(--space-2)] text-[length:var(--lkv-text-caption-2)] sm:grid-cols-3">
                       <div>
-                        <label className="text-[10px] text-[#5C6B5E] block font-bold">Horodatage / Label</label>
+                        <label className="mb-[var(--space-1)] block font-bold text-[color:var(--lkv-text-muted)]">Horodatage / Label</label>
                         <input
                           type="text"
                           value={m.label}
@@ -724,11 +741,12 @@ export default function CreateCarnetView({ onCloseModal }: { onCloseModal?: () =
                             setField('moments', updated);
                           }}
                           placeholder="Ex : JOUR 1 · 18H30"
-                          className="w-full bg-white border border-[#17402C]/10 rounded-lg p-1.5 text-xs"
+                          aria-label="Horodatage du moment"
+                          className={`${FIELD_CLASS} py-[var(--space-1)]`}
                         />
                       </div>
                       <div>
-                        <label className="text-[10px] text-[#5C6B5E] block font-bold">Lieu précis</label>
+                        <label className="mb-[var(--space-1)] block font-bold text-[color:var(--lkv-text-muted)]">Lieu précis</label>
                         <input
                           type="text"
                           value={m.location}
@@ -738,11 +756,12 @@ export default function CreateCarnetView({ onCloseModal }: { onCloseModal?: () =
                             setField('moments', updated);
                           }}
                           placeholder="Ex : Charmant Som"
-                          className="w-full bg-white border border-[#17402C]/10 rounded-lg p-1.5 text-xs"
+                          aria-label="Lieu du moment"
+                          className={`${FIELD_CLASS} py-[var(--space-1)]`}
                         />
                       </div>
                       <div>
-                        <label className="text-[10px] text-[#5C6B5E] block font-bold">Auteur</label>
+                        <label className="mb-[var(--space-1)] block font-bold text-[color:var(--lkv-text-muted)]">Auteur</label>
                         <input
                           type="text"
                           value={m.author}
@@ -752,13 +771,14 @@ export default function CreateCarnetView({ onCloseModal }: { onCloseModal?: () =
                             setField('moments', updated);
                           }}
                           placeholder="Ex : Marceline"
-                          className="w-full bg-white border border-[#17402C]/10 rounded-lg p-1.5 text-xs"
+                          aria-label="Auteur du moment"
+                          className={`${FIELD_CLASS} py-[var(--space-1)]`}
                         />
                       </div>
                     </div>
 
                     <div>
-                      <label className="text-[10px] text-[#5C6B5E] block font-bold mb-0.5">Citation / Anecdote</label>
+                      <label className="mb-[var(--space-1)] block font-bold text-[color:var(--lkv-text-muted)]">Citation / Anecdote</label>
                       <input
                         type="text"
                         value={m.citation}
@@ -768,67 +788,70 @@ export default function CreateCarnetView({ onCloseModal }: { onCloseModal?: () =
                           setField('moments', updated);
                         }}
                         placeholder="« Phrase mémorable prononcée ou pensée... »"
-                        className="w-full bg-white border border-[#17402C]/10 rounded-lg p-2 text-xs font-serif italic"
+                        aria-label="Citation du moment"
+                        className={`${FIELD_CLASS} font-serif italic`}
                       />
                     </div>
-                  </div>
+                  </Card>
                 ))}
 
-                <button
+                <Button
                   type="button"
+                  variant="secondary"
+                  fullWidth
                   onClick={addMoment}
-                  className="w-full py-2.5 rounded-xl border border-dashed border-[#17402C]/20 hover:border-[#17402C] text-xs font-bold text-[#17402C] flex items-center justify-center gap-1.5 transition-colors"
+                  icon={<Icon name="PlusIcon" size={14} aria-hidden="true" />}
+                  className="border-dashed"
                 >
-                  <Icon name="PlusIcon" size={14} /> Ajouter un souvenir / photo
-                </button>
+                  Ajouter un souvenir / photo
+                </Button>
               </div>
 
-              <div className="flex justify-between pt-2">
-                <button
+              <div className="flex justify-between pt-[var(--space-2)]">
+                <Button
                   type="button"
+                  variant="secondary"
                   onClick={() => setActiveStep('etapes')}
-                  className="glass-capsule-btn py-2 px-4 text-xs font-bold"
                 >
                   ← Précédent
-                </button>
-                <button
+                </Button>
+                <Button
                   type="button"
                   onClick={() => setActiveStep('sac')}
-                  className="glass-capsule-btn primary py-2 px-5 text-xs font-bold"
                 >
                   Suivant : Dans le sac →
-                </button>
+                </Button>
               </div>
-            </div>
+            </Card>
           )}
 
-          {/* ÉTAPE 4: DANS LE SAC */}
           {activeStep === 'sac' && (
-            <div className="glass rounded-2xl p-6 space-y-5">
-              <div className="flex items-center justify-between pb-3 border-b border-[#17402C]/10">
+            <Card className="space-y-[var(--space-5)] p-[var(--space-6)]">
+              <div className="flex items-center justify-between border-b border-[color:var(--lkv-primary)]/10 pb-[var(--space-3)]">
                 <div>
-                  <h2 className="font-display font-bold text-lg text-[#17402C]">Ce que vous aviez dans le sac</h2>
-                  <p className="text-xs text-[#5C6B5E]">Partagez le matériel testé pour aider la communauté à préparer leur sac.</p>
+                  <h2 className="font-display text-[length:var(--lkv-text-subheadline)] font-bold text-[color:var(--lkv-text-primary)]">Ce que vous aviez dans le sac</h2>
+                  <p className="text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">Partagez le matériel testé pour aider la communauté à préparer leur sac.</p>
                 </div>
-                <span className="glass-pill text-[9px] font-mono font-bold">04 · MATÉRIEL</span>
+                <Badge className="font-mono font-bold">04 · MATÉRIEL</Badge>
               </div>
 
-              <div className="space-y-4">
+              <div className="space-y-[var(--space-4)]">
                 <div>
-                  <label className="block text-xs font-bold text-[#17402C] mb-1">Commentaire global sur le portage</label>
+                  <label htmlFor="carnet-kit-intro" className={LABEL_CLASS}>Commentaire global sur le portage</label>
                   <input
+                    id="carnet-kit-intro"
                     type="text"
                     value={form.kitIntro}
                     onChange={(e) => setField('kitIntro', e.target.value)}
                     placeholder="Ex : Sac 45L configuré pour 3 jours d'autonomie complète."
-                    className="w-full bg-white/90 border border-[#17402C]/15 rounded-xl px-3.5 py-2 text-xs text-[#17402C]"
+                    className={FIELD_CLASS}
                   />
                 </div>
 
-                <div className="space-y-2">
+                <div className="space-y-[var(--space-2)]">
                   {form.kitItems.map((item, idx) => (
-                    <div key={item.id} className="flex items-center gap-2 p-2.5 glass-sub-card rounded-xl bg-white/90">
-                      <div className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: item.color || '#17402C' }} />
+                    <Card key={item.id} variant="compact" className="flex items-center gap-[var(--space-2)] p-[var(--space-3)]">
+                      <div className="h-3 w-3 shrink-0 rounded-full" style={{ backgroundColor: item.color || 'var(--lkv-primary)' }} />
                       <input
                         type="text"
                         value={item.name}
@@ -838,7 +861,8 @@ export default function CreateCarnetView({ onCloseModal }: { onCloseModal?: () =
                           setField('kitItems', updated);
                         }}
                         placeholder="Nom de l'équipement"
-                        className="flex-1 bg-transparent border-none text-xs font-bold text-[#17402C] p-0 focus:ring-0"
+                        aria-label="Nom de l'équipement"
+                        className="flex-1 border-none bg-transparent p-0 text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-primary)] focus:outline-none focus:ring-0"
                       />
                       <input
                         type="text"
@@ -849,7 +873,8 @@ export default function CreateCarnetView({ onCloseModal }: { onCloseModal?: () =
                           setField('kitItems', updated);
                         }}
                         placeholder="Détail / Marque"
-                        className="w-1/3 bg-transparent border-none text-[11px] text-[#5C6B5E] p-0 focus:ring-0"
+                        aria-label="Détail de l'équipement"
+                        className="w-1/3 border-none bg-transparent p-0 text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)] focus:outline-none focus:ring-0"
                       />
                       <input
                         type="text"
@@ -860,96 +885,91 @@ export default function CreateCarnetView({ onCloseModal }: { onCloseModal?: () =
                           setField('kitItems', updated);
                         }}
                         placeholder="Poids"
-                        className="w-16 bg-white border border-[#17402C]/10 rounded px-1.5 py-0.5 text-[10.5px] font-mono text-center font-bold text-[#17402C]"
+                        aria-label="Poids de l'équipement"
+                        className={`${FIELD_CLASS} w-16 py-[2px] text-center font-mono font-bold`}
                       />
-                      <button
+                      <IconButton
                         type="button"
+                        variant="ghost"
+                        size="sm"
                         onClick={() => removeKitItem(item.id)}
-                        className="text-[#5C6B5E] hover:text-red-600 p-1"
+                        aria-label={`Retirer ${item.name || "l'équipement"}`}
                       >
-                        ✕
-                      </button>
-                    </div>
+                        <Icon name="XMarkIcon" size={14} aria-hidden="true" />
+                      </IconButton>
+                    </Card>
                   ))}
 
-                  <button
+                  <Button
                     type="button"
+                    variant="secondary"
+                    fullWidth
                     onClick={addKitItem}
-                    className="w-full py-2 rounded-xl border border-dashed border-[#17402C]/20 hover:border-[#17402C] text-xs font-bold text-[#17402C] flex items-center justify-center gap-1.5 transition-colors"
+                    icon={<Icon name="PlusIcon" size={14} aria-hidden="true" />}
+                    className="border-dashed"
                   >
-                    <Icon name="PlusIcon" size={14} /> Ajouter un équipement
-                  </button>
+                    Ajouter un équipement
+                  </Button>
                 </div>
               </div>
 
-              <div className="flex justify-between pt-2">
-                <button
+              <div className="flex justify-between pt-[var(--space-2)]">
+                <Button
                   type="button"
+                  variant="secondary"
                   onClick={() => setActiveStep('moments')}
-                  className="glass-capsule-btn py-2 px-4 text-xs font-bold"
                 >
                   ← Précédent
-                </button>
-                <button
+                </Button>
+                <Button
                   type="button"
                   onClick={() => setActiveStep('tags')}
-                  className="glass-capsule-btn primary py-2 px-5 text-xs font-bold"
                 >
                   Suivant : Thématiques →
-                </button>
+                </Button>
               </div>
-            </div>
+            </Card>
           )}
 
-          {/* ÉTAPE 5: THÈMES & PUBLICATION */}
           {activeStep === 'tags' && (
-            <div className="glass rounded-2xl p-6 space-y-5">
-              <div className="flex items-center justify-between pb-3 border-b border-[#17402C]/10">
+            <Card className="space-y-[var(--space-5)] p-[var(--space-6)]">
+              <div className="flex items-center justify-between border-b border-[color:var(--lkv-primary)]/10 pb-[var(--space-3)]">
                 <div>
-                  <h2 className="font-display font-bold text-lg text-[#17402C]">Thématiques &amp; Visibilité</h2>
-                  <p className="text-xs text-[#5C6B5E]">Choisissez les étiquettes de référencement et les droits d'accès.</p>
+                  <h2 className="font-display text-[length:var(--lkv-text-subheadline)] font-bold text-[color:var(--lkv-text-primary)]">Thématiques &amp; Visibilité</h2>
+                  <p className="text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">Choisissez les étiquettes de référencement et les droits d&apos;accès.</p>
                 </div>
-                <span className="glass-pill text-[9px] font-mono font-bold">05 · PUBLICATION</span>
+                <Badge className="font-mono font-bold">05 · PUBLICATION</Badge>
               </div>
 
-              <div className="space-y-4">
+              <div className="space-y-[var(--space-4)]">
                 <div>
-                  <label className="block text-xs font-bold text-[#17402C] mb-2">Thématiques de l’expédition</label>
-                  <div className="flex flex-wrap gap-2">
+                  <span className="mb-[var(--space-2)] block text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-primary)]">Thématiques de l’expédition</span>
+                  <div className="flex flex-wrap gap-[var(--space-2)]">
                     {availableThemes.map((th) => {
                       const isSelected = form.selectedThemes.includes(th);
                       return (
-                        <button
+                        <Chip
                           key={th}
-                          type="button"
+                          selected={isSelected}
                           onClick={() => toggleTheme(th)}
-                          className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${
-                            isSelected
-                              ? 'bg-[#17402C] text-white shadow-xs'
-                              : 'bg-white/80 text-[#5C6B5E] border border-[#17402C]/10 hover:border-[#17402C]/30'
-                          }`}
                         >
                           {isSelected ? '✓ ' : '+ '} {th}
-                        </button>
+                        </Chip>
                       );
                     })}
                   </div>
                 </div>
 
-                <div className="pt-2">
-                  <label className="block text-xs font-bold text-[#17402C] mb-2">Visibilité du carnet</label>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="pt-[var(--space-2)]">
+                  <span className="mb-[var(--space-2)] block text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-primary)]">Visibilité du carnet</span>
+                  <div className="grid grid-cols-1 gap-[var(--space-3)] sm:grid-cols-2">
                     {[
                       { id: 'public', label: '🌍 Public', desc: 'Visible par toute la communauté LKDV et indexé dans le hub.' },
                       { id: 'private', label: '🔒 Privé', desc: 'Accessible uniquement par vous et vos proches via lien secret.' },
                     ].map((vis) => (
                       <label
                         key={vis.id}
-                        className={`p-3.5 rounded-xl cursor-pointer flex items-start gap-2.5 transition-all ${
-                          form.visibility === vis.id
-                            ? 'bg-white border-2 border-[#17402C] shadow-xs'
-                            : 'bg-white/60 border border-[#17402C]/10'
-                        }`}
+                        className={OPTION_CARD_CLASS(form.visibility === vis.id)}
                       >
                         <input
                           type="radio"
@@ -957,11 +977,11 @@ export default function CreateCarnetView({ onCloseModal }: { onCloseModal?: () =
                           value={vis.id}
                           checked={form.visibility === vis.id}
                           onChange={() => setField('visibility', vis.id)}
-                          className="mt-0.5 text-[#17402C]"
+                          className="mt-[2px] accent-[var(--lkv-primary)]"
                         />
                         <div>
-                          <span className="text-xs font-bold text-[#17402C] block">{vis.label}</span>
-                          <span className="text-[10.5px] text-[#5C6B5E] leading-tight block">{vis.desc}</span>
+                          <span className="block text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-primary)]">{vis.label}</span>
+                          <span className="block text-[length:var(--lkv-text-caption-2)] leading-tight text-[color:var(--lkv-text-muted)]">{vis.desc}</span>
                         </div>
                       </label>
                     ))}
@@ -969,98 +989,96 @@ export default function CreateCarnetView({ onCloseModal }: { onCloseModal?: () =
                 </div>
               </div>
 
-              <div className="flex justify-between items-center gap-3 pt-2">
-                <button
+              <div className="flex items-center justify-between gap-[var(--space-3)] pt-[var(--space-2)]">
+                <Button
                   type="button"
+                  variant="secondary"
                   onClick={() => setActiveStep('sac')}
-                  className="glass-capsule-btn py-2 px-4 text-xs font-bold"
                 >
                   ← Précédent
-                </button>
-                <div className="flex items-center gap-3">
+                </Button>
+                <div className="flex items-center gap-[var(--space-3)]">
                   {saveError && (
-                    <p role="alert" className="text-[11px] font-semibold text-red-700">
+                    <p role="alert" className="text-[length:var(--lkv-text-caption-2)] font-semibold text-[color:var(--lkv-danger)]">
                       {saveError}
                     </p>
                   )}
-                  <button
+                  <Button
                     type="button"
                     onClick={handlePublish}
                     disabled={saving || !form.title.trim()}
-                    className="glass-capsule-btn primary py-2.5 px-6 text-xs font-bold flex items-center gap-1.5"
+                    loading={saving}
+                    icon={<Icon name="CheckIcon" size={14} aria-hidden="true" />}
                   >
-                    <Icon name="CheckIcon" size={14} className="relative z-10" />
-                    <span className="relative z-10">{saving ? 'Publication...' : saveSuccess ? '✓ Publié !' : 'Publier le carnet'}</span>
-                  </button>
+                    {saving ? 'Publication...' : saveSuccess ? '✓ Publié !' : 'Publier le carnet'}
+                  </Button>
                 </div>
               </div>
-            </div>
+            </Card>
           )}
         </div>
 
-        {/* COLONNE DROITE (Live Carnet Preview & Actions) - 300px */}
-        <aside className="w-[300px] shrink-0 h-full overflow-y-auto custom-scrollbar flex flex-col gap-4 pb-8">
-          {/* Live Preview Card */}
-          <div className="glass p-3.5 space-y-3 rounded-2xl">
+        <aside className="flex h-full w-[300px] shrink-0 flex-col gap-[var(--space-4)] overflow-y-auto pb-[var(--space-8)]">
+          <Card className="space-y-[var(--space-3)] p-[var(--space-3)]">
             <div className="flex items-center justify-between">
-              <h3 className="font-display font-bold text-xs text-[#17402C]">Aperçu du carnet</h3>
-              <span className="glass-pill text-[9px] font-mono font-bold">Live</span>
+              <h3 className="font-display text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)]">Aperçu du carnet</h3>
+              <Badge className="font-mono font-bold">Live</Badge>
             </div>
 
-            <div className="rounded-xl overflow-hidden bg-white border border-[#17402C]/10 shadow-xs flex flex-col">
-              <div className="h-28 relative bg-[#17402C]">
+            <Card variant="compact" className="flex flex-col overflow-hidden p-0">
+              <div className="relative h-28 bg-[color:var(--lkv-primary)]">
                 {form.coverImage && (
-                  <img src={form.coverImage} alt="Cover" className="w-full h-full object-cover" />
+                  <img src={form.coverImage} alt="" className="h-full w-full object-cover" />
                 )}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                <span className="absolute bottom-2 left-2 px-2 py-0.5 bg-black/40 backdrop-blur-md rounded-full text-[9px] font-mono text-white font-bold">
+                <div aria-hidden className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                <Badge className="absolute bottom-[var(--space-2)] left-[var(--space-2)] border-[color:var(--glass-border)] bg-[color:var(--lkv-primary)]/40 font-mono font-bold text-[color:var(--lkv-text-inverted)] backdrop-blur-[var(--blur-md)]">
                   {form.destination}
-                </span>
+                </Badge>
               </div>
-              <div className="p-3 space-y-1.5">
-                <h4 className="font-display font-bold text-sm text-[#17402C] leading-snug">
+              <div className="space-y-[var(--space-1)] p-[var(--space-3)]">
+                <h4 className="font-display text-[length:var(--lkv-text-caption)] font-bold leading-snug text-[color:var(--lkv-text-primary)]">
                   {form.title || 'Titre du carnet'}
                 </h4>
-                <p className="text-[10px] text-[#5C6B5E] font-serif italic line-clamp-2">
+                <p className="line-clamp-2 font-serif text-[length:var(--lkv-text-caption-2)] italic text-[color:var(--lkv-text-muted)]">
                   {form.chapeau}
                 </p>
-                <div className="flex items-center justify-between pt-2 border-t border-[#17402C]/10 text-[10px] font-mono text-[#5C6B5E]">
+                <div className="flex items-center justify-between border-t border-[color:var(--lkv-primary)]/10 pt-[var(--space-2)] font-mono text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">
                   <span>📏 {form.distance_km} km</span>
                   <span>⛰️ +{form.elevation_m} m</span>
                   <span>★ {form.routeRating}/10</span>
                 </div>
               </div>
-            </div>
-          </div>
+            </Card>
+          </Card>
 
-          {/* CTA Publication */}
-          <div className="glass tone-sand p-3.5 space-y-2 rounded-2xl text-[#17402C]">
-            <span className="glass-pill text-[9px] font-mono font-bold text-[#8C6418]">
+          <Card tone="warn" className="space-y-[var(--space-2)] p-[var(--space-3)]">
+            <Badge tone="warn" className="font-mono font-bold">
               🌟 CERTIFICATION LKDV
-            </span>
-            <h3 className="font-display font-bold text-xs text-[#17402C]">
+            </Badge>
+            <h3 className="font-display text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)]">
               Prêt à inspirer la communauté ?
             </h3>
-            <p className="text-[11px] text-[#5C6B5E] leading-relaxed">
+            <p className="text-[length:var(--lkv-text-caption-2)] leading-relaxed text-[color:var(--lkv-text-muted)]">
               Votre carnet est privé par défaut. Vous pourrez le partager explicitement avec la communauté plus tard.
             </p>
-            <div className="pt-1 space-y-2">
+            <div className="space-y-[var(--space-2)] pt-[var(--space-1)]">
               {saveError && (
-                <p role="alert" className="text-[11px] font-semibold text-red-700">
+                <p role="alert" className="text-[length:var(--lkv-text-caption-2)] font-semibold text-[color:var(--lkv-danger)]">
                   {saveError}
                 </p>
               )}
-              <button
+              <Button
                 type="button"
                 onClick={handlePublish}
                 disabled={saving || !form.title.trim()}
-                className="w-full glass-capsule-btn primary py-2.5 text-xs font-bold flex items-center justify-center gap-1.5"
+                loading={saving}
+                fullWidth
+                icon={<Icon name="CheckIcon" size={14} aria-hidden="true" />}
               >
-                <Icon name="CheckIcon" size={14} className="relative z-10" />
-                <span className="relative z-10">{saving ? 'Publication...' : saveSuccess ? '✓ Publié !' : 'Publier le carnet'}</span>
-              </button>
+                {saving ? 'Publication...' : saveSuccess ? '✓ Publié !' : 'Publier le carnet'}
+              </Button>
             </div>
-          </div>
+          </Card>
         </aside>
       </main>
     </div>

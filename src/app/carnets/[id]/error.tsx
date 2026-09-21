@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
+import { ErrorState } from '@/components/ui';
 
 export default function CarnetError({
   error,
@@ -11,36 +12,19 @@ export default function CarnetError({
   reset: () => void;
 }) {
   return (
-    <div className="min-h-screen bg-transparent flex flex-col items-center justify-center p-6 text-center">
-      <div className="glass-sub-card flex flex-col items-center rounded-xl p-8">
-      <div className="w-16 h-16 rounded-full bg-[var(--lkv-primary)]/5 flex items-center justify-center mb-6">
-        <span className="text-3xl">⚠️</span>
-      </div>
+    <div className="flex min-h-screen flex-col items-center justify-center bg-transparent p-[var(--space-6)] text-center">
+      <ErrorState
+        title="Erreur de chargement du carnet"
+        message="Une erreur est survenue lors de la récupération de ce carnet de voyage. Il est possible que le carnet ait été retiré ou soit momentanément indisponible."
+        onRetry={() => reset()}
+      />
 
-      <h1 className="font-display font-bold text-2xl md:text-3xl text-[var(--lkv-primary)] mb-3">
-        Erreur de chargement du carnet
-      </h1>
-      
-      <p className="text-sm text-[var(--lkv-text-muted)] max-w-md mb-8">
-        Une erreur est survenue lors de la récupération de ce carnet de voyage. Il est possible que le carnet ait été retiré ou soit momentanément indisponible.
-      </p>
-
-      <div className="flex flex-wrap items-center justify-center gap-4">
-        <button
-          onClick={() => reset()}
-          className="glass-capsule-btn primary px-6 text-xs font-bold uppercase tracking-wider"
-        >
-          Réessayer
-        </button>
-
-        <Link
-          href="/carnets"
-          className="glass-capsule-btn px-6 text-xs font-bold uppercase tracking-wider"
-        >
-          Retour aux carnets
-        </Link>
-      </div>
-      </div>
+      <Link
+        href="/carnets"
+        className="mt-[var(--space-4)] inline-flex min-h-[var(--control-height-md)] items-center rounded-full border border-[color:var(--lkv-border)] bg-[color:var(--card-tint-strong)] px-[var(--space-6)] text-[length:var(--lkv-text-caption-2)] font-bold uppercase tracking-wider text-[color:var(--lkv-text-primary)]"
+      >
+        Retour aux carnets
+      </Link>
     </div>
   );
 }

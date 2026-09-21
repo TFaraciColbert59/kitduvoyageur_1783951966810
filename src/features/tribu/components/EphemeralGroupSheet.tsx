@@ -1,8 +1,7 @@
 'use client';
 
 import React, { useEffect, useMemo, useState } from 'react';
-import Icon from '@/components/ui/AppIcon';
-import { Sheet } from '@/components/ui/Sheet';
+import { Button, Card, EmptyState, LoadingState, SearchField, Sheet } from '@/components/ui';
 import {
   getSocialSuggestions,
   searchTripPartners,
@@ -15,6 +14,9 @@ interface EphemeralGroupSheetProps {
   onClose: () => void;
   onCreated: (result: { groupId: string; name: string }) => void | Promise<void>;
 }
+
+const FIELD_CLASS =
+  'min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-md)] border border-[color:var(--lkv-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[var(--space-2)] text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-primary)] placeholder:text-[color:var(--lkv-text-muted)] focus:outline-none focus:ring-2 focus:ring-[color:var(--lkv-focus-ring)]';
 
 /**
  * Sortie eclair (Phase 2 TRIBU) — selection dans le cercle existant :
@@ -115,68 +117,71 @@ export default function EphemeralGroupSheet({ open, onClose, onCreated }: Epheme
       title="Sortie avec des amis"
       description="Un groupe éclair, à gérer dans le Hub — dissous automatiquement après la sortie."
     >
-      <div data-testid="ephemeral-group-sheet" className="space-y-4">
-        <label className="block space-y-1.5">
-          <span className="text-xs font-bold text-[var(--lkv-text-secondary)]">Nom de la sortie</span>
+      <div data-testid="ephemeral-group-sheet" className="space-y-[var(--space-4)]">
+        <label className="block space-y-[var(--space-2)]">
+          <span className="text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-secondary)]">
+            Nom de la sortie
+          </span>
           <input
             type="text"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             maxLength={80}
             placeholder="Sortie du jour"
-            className="w-full glass-input rounded-xl px-3 py-2.5 text-sm min-h-[44px]"
+            className={FIELD_CLASS}
             data-testid="ephemeral-group-title"
           />
         </label>
 
-        <label className="block space-y-1.5">
-          <span className="text-xs font-bold text-[var(--lkv-text-secondary)]">
+        <label className="block space-y-[var(--space-2)]">
+          <span className="text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-secondary)]">
             Rechercher un voyageur
           </span>
-          <input
-            type="text"
+          <SearchField
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Nom…"
-            className="w-full glass-input rounded-xl px-3 py-2.5 text-sm min-h-[44px]"
+            aria-label="Rechercher un voyageur"
             data-testid="ephemeral-group-search"
           />
         </label>
 
-        <div className="space-y-1.5">
-          <span className="text-xs font-bold text-[var(--lkv-text-secondary)]">
+        <div className="space-y-[var(--space-2)]">
+          <span className="text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-secondary)]">
             Compagnons ({selected.size})
           </span>
           {loading ? (
-            <p className="text-xs text-[var(--lkv-text-muted)] py-3">Chargement des suggestions…</p>
+            <LoadingState compact label="Chargement des suggestions…" />
           ) : visibleSuggestions.length === 0 ? (
-            <p className="text-xs text-[var(--lkv-text-muted)] py-3">
-              Aucune suggestion — cherchez un nom pour inviter quelqu’un.
-            </p>
+            <EmptyState
+              compact
+              title="Aucune suggestion"
+              description="Cherchez un nom pour inviter quelqu’un."
+            />
           ) : (
-            <div className="max-h-56 overflow-y-auto space-y-1 pr-1">
+            <div className="max-h-56 space-y-[var(--space-1)] overflow-y-auto pr-[var(--space-1)]">
               {visibleSuggestions.map((suggestion) => {
                 const checked = selected.has(suggestion.id);
                 return (
-                  <button
+                  <Card
                     key={suggestion.id}
-                    type="button"
+                    variant="compact"
+                    selected={checked}
                     onClick={() => toggle(suggestion.id)}
-                    aria-pressed={checked}
-                    className={`w-full flex items-center justify-between gap-2 rounded-xl px-3 py-2.5 text-xs font-bold transition-all min-h-[44px] ${
-                      checked
-                        ? 'bg-lkv-primary/10 text-lkv-primary border border-lkv-primary'
-                        : 'glass-sub-card text-[var(--lkv-text-secondary)] border border-transparent'
-                    }`}
+                    className="flex min-h-[var(--lkv-touch-min)] items-center justify-between gap-[var(--space-2)]"
                   >
-                    <span className="truncate">{suggestion.name}</span>
-                    <span className="flex items-center gap-2 shrink-0">
-                      <span className="text-[9px] font-mono uppercase tracking-wide opacity-70">
+                    <span className="truncate text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)]">
+                      {suggestion.name}
+                    </span>
+                    <span className="flex shrink-0 items-center gap-[var(--space-2)]">
+                      <span className="font-mono text-[length:var(--lkv-text-caption-2)] uppercase tracking-wide text-[color:var(--lkv-text-muted)]">
                         {suggestion.hint}
                       </span>
-                      <span aria-hidden>{checked ? '✓' : '+'}</span>
+                      <span aria-hidden className="text-[color:var(--lkv-text-secondary)]">
+                        {checked ? '✓' : '+'}
+                      </span>
                     </span>
-                  </button>
+                  </Card>
                 );
               })}
             </div>
@@ -184,22 +189,24 @@ export default function EphemeralGroupSheet({ open, onClose, onCreated }: Epheme
         </div>
 
         {error && (
-          <p className="text-xs font-bold text-[var(--lkv-danger)]" role="alert">
+          <p
+            className="text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-danger)]"
+            role="alert"
+          >
             {error}
           </p>
         )}
 
-        <button
-          type="button"
+        <Button
+          variant="primary"
+          size="lg"
+          fullWidth
           onClick={handleSubmit}
           disabled={submitting}
-          className="glass-capsule-btn primary w-full py-3 text-sm font-bold min-h-[44px] disabled:opacity-60"
           data-testid="ephemeral-group-submit"
         >
-          <span className="relative z-10">
-            {submitting ? 'Création…' : 'Créer la sortie et ouvrir le Hub'}
-          </span>
-        </button>
+          {submitting ? 'Création…' : 'Créer la sortie et ouvrir le Hub'}
+        </Button>
       </div>
     </Sheet>
   );

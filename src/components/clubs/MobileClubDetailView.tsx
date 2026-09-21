@@ -10,6 +10,7 @@ import ClubTeamCard from '@/components/clubs/ClubTeamCard';
 import ClubAboutCard from '@/components/clubs/ClubAboutCard';
 import ClubGroupsTab from '@/components/clubs/ClubGroupsTab';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
+import { Badge, Button, Card, EmptyState } from '@/components/ui';
 
 interface MobileClubDetailViewProps {
   club: any;
@@ -54,7 +55,7 @@ export default function MobileClubDetailView({
     window.addEventListener('club-detail-tab-change', handler);
     return () => window.removeEventListener('club-detail-tab-change', handler);
   }, []);
-  
+
   const validEvents = useMemo(() => {
     const future = events.filter((e: any) => {
       if (!e.date) return true;
@@ -88,110 +89,100 @@ export default function MobileClubDetailView({
   const coverUrl = club.cover_image || 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=1200&q=80';
 
   return (
-    <div className="md:hidden min-h-full bg-transparent text-[#17402C]">
-      {/* IMMERSIVE HERO COVER */}
-      <div className="relative w-full h-64 sm:h-72 overflow-hidden bg-[#17402C]">
+    <div className="min-h-full bg-transparent text-[color:var(--lkv-text-primary)] md:hidden">
+      <div className="relative h-64 w-full overflow-hidden bg-[color:var(--lkv-primary)] sm:h-72">
         <img
           src={coverUrl}
           alt={club.name}
-          className="w-full h-full object-cover opacity-60"
+          className="h-full w-full object-cover opacity-60"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#17402C] via-[#17402C]/60 to-transparent" />
+        <div aria-hidden className="absolute inset-0 bg-gradient-to-t from-[color:var(--lkv-primary)] via-[color:var(--lkv-primary)]/60 to-transparent" />
 
-        {/* Top Controls with safe-area top */}
-        <div
-          className="absolute left-4 right-4 flex items-center justify-between z-10"
-          style={{ top: 'calc(max(env(safe-area-inset-top, 0px), 12px) + 6px)' }}
-        >
+        <div className="absolute left-4 right-4 top-[calc(max(var(--safe-top),12px)+6px)] z-10 flex items-center justify-between">
           <Link
             href="/clubs"
             onClick={() => triggerHaptic('light')}
-            className="glass-circle-btn !w-9 !h-9 !text-white !bg-black/30 !border-white/30"
+            className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[color:var(--glass-border)] bg-[color:var(--lkv-primary)]/30 text-[length:var(--lkv-text-title-sm)] text-[color:var(--lkv-text-inverted)] backdrop-blur-[var(--blur-md)]"
             aria-label="Retour aux clubs"
           >
             ‹
           </Link>
-          <div className="flex items-center gap-2">
-            <span className="glass-pill text-white border-white/20 font-mono text-[10px] bg-white/10 backdrop-blur-md">
+          <div className="flex items-center gap-[var(--space-2)]">
+            <Badge className="border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] font-mono text-[color:var(--lkv-text-inverted)] backdrop-blur-[var(--blur-md)]">
               {club.category || 'Collectif'} · {club.type === 'activite' ? '⚡ Activité' : '🌍 Région'}
-            </span>
+            </Badge>
           </div>
         </div>
 
-        {/* Hero Title & Emoji */}
         <div className="absolute bottom-4 left-4 right-4 z-10">
-          <span className="text-[10px] font-mono uppercase tracking-widest text-forest-300 block mb-1 font-bold">
+          <span className="mb-[var(--space-1)] block font-mono text-[length:var(--lkv-text-caption-2)] font-bold uppercase tracking-widest text-[color:var(--lkv-forest-300)]">
             {club.emoji || '🏕️'} COLLECTIF OFFICIEL
           </span>
-          <h1 className="font-display font-extrabold text-2xl sm:text-3xl text-white leading-tight">
+          <h1 className="font-display text-[length:var(--lkv-text-title-sm)] font-extrabold leading-tight text-[color:var(--lkv-text-inverted)] sm:text-[length:var(--lkv-text-title-lg)]">
             {club.name}
           </h1>
         </div>
       </div>
 
-      {/* STATS & MEMBERS SUMMARY CARD (Liquid Glass) */}
-      <div className="px-4 -mt-3 relative z-20">
-        <div className="glass bg-white/90 backdrop-blur-xl p-4 rounded-3xl border border-white shadow-xs flex flex-col gap-3">
+      <div className="relative z-20 -mt-[var(--space-3)] px-[var(--space-4)]">
+        <Card className="flex flex-col gap-[var(--space-3)] p-[var(--space-4)]">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              {/* Stacked Member Avatars */}
+            <div className="flex items-center gap-[var(--space-3)]">
               <div className="flex -space-x-2">
                 {members.slice(0, 4).map((m: any, i: number) => (
                   <div
                     key={m.id || i}
-                    className="w-8 h-8 rounded-full border-2 border-white bg-[#17402C] text-white flex items-center justify-center font-serif italic text-xs font-bold shadow-2xs overflow-hidden"
+                    className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full border-2 border-[color:var(--lkv-surface-card)] bg-[color:var(--lkv-primary)] font-serif text-[length:var(--lkv-text-caption-2)] font-bold italic text-[color:var(--lkv-text-inverted)]"
                     style={{ zIndex: 10 - i }}
                   >
                     {m.user?.avatar_url ? (
-                      <img src={m.user.avatar_url} alt="" className="w-full h-full object-cover" />
+                      <img src={m.user.avatar_url} alt="" className="h-full w-full object-cover" />
                     ) : (
                       m.user?.full_name?.charAt(0) || '👤'
                     )}
                   </div>
                 ))}
                 {members.length > 4 && (
-                  <div className="w-8 h-8 rounded-full border-2 border-white bg-[#5C6B5E] text-white flex items-center justify-center font-mono font-bold text-[10px]">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-[color:var(--lkv-surface-card)] bg-[color:var(--lkv-secondary)] font-mono text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-inverted)]">
                     +{members.length - 4}
                   </div>
                 )}
               </div>
 
               <div>
-                <h4 className="font-bold text-xs text-[#17402C]">
+                <h4 className="text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)]">
                   {club.members_count || members.length || 1} membres
                 </h4>
-                <span className="text-[10px] font-mono text-[#5C6B5E]">
+                <span className="font-mono text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">
                   {club.active_this_month || 12} actifs ce mois-ci
                 </span>
               </div>
             </div>
 
-            {/* Quick Action: Join / Member in Liquid Glass */}
-            <button
+            <Button
               type="button"
+              size="sm"
+              variant={isMember ? 'secondary' : 'primary'}
               disabled={joining}
+              loading={joining}
               onClick={() => {
                 triggerHaptic('selection');
                 onJoinToggle();
               }}
-              className={`glass-capsule-btn !min-h-[36px] !py-1.5 !px-4 !text-xs !font-bold ${
-                isMember ? '' : 'primary'
-              }`}
             >
-              <span>{joining ? '...' : isMember ? '✓ Membre' : '+ Rejoindre'}</span>
-            </button>
+              {joining ? '...' : isMember ? '✓ Membre' : '+ Rejoindre'}
+            </Button>
           </div>
 
           {club.description && (
-            <p className="text-xs text-[#5C6B5E] leading-relaxed pt-1 border-t border-[#17402C]/10">
+            <p className="border-t border-[color:var(--lkv-primary)]/10 pt-[var(--space-1)] text-[length:var(--lkv-text-caption)] leading-relaxed text-[color:var(--lkv-text-muted)]">
               {club.description}
             </p>
           )}
-        </div>
+        </Card>
       </div>
 
-      {/* SECTION CONTENT WITH ANIMATED TRANSITIONS */}
-      <div className="p-4 pt-4">
+      <div className="p-[var(--space-4)]">
         <AnimatePresence mode="wait">
           <motion.div
             key={activeSection}
@@ -199,45 +190,42 @@ export default function MobileClubDetailView({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
             transition={{ duration: 0.18, ease: 'easeOut' }}
-            className="space-y-4"
+            className="space-y-[var(--space-4)]"
           >
-            {/* OVERVIEW */}
             {activeSection === 'overview' && (
-              <div className="space-y-4">
-                {/* Quick Metrics */}
-                <div className="grid grid-cols-3 gap-2.5">
-                  <div className="glass bg-white/80 p-3 rounded-2xl text-center border border-white">
-                    <p className="font-mono text-[9px] uppercase tracking-widest text-[#5C6B5E] mb-1 font-bold">Sorties</p>
-                    <p className="font-mono font-bold text-xl text-[#17402C]">{validEvents.length}</p>
-                    <p className="text-[9px] text-[#5C6B5E] font-mono">programmées</p>
-                  </div>
-                  <div className="glass bg-white/80 p-3 rounded-2xl text-center border border-white">
-                    <p className="font-mono text-[9px] uppercase tracking-widest text-[#5C6B5E] mb-1 font-bold">Échanges</p>
-                    <p className="font-mono font-bold text-xl text-[#17402C]">{topics.length}</p>
-                    <p className="text-[9px] text-[#5C6B5E] font-mono">sujets</p>
-                  </div>
-                  <div className="glass bg-white/80 p-3 rounded-2xl text-center border border-white">
-                    <p className="font-mono text-[9px] uppercase tracking-widest text-[#5C6B5E] mb-1 font-bold">Collectif</p>
-                    <p className="font-mono font-bold text-xl text-[#17402C]">{members.length}</p>
-                    <p className="text-[9px] text-[#5C6B5E] font-mono">aventuriers</p>
-                  </div>
+              <div className="space-y-[var(--space-4)]">
+                <div className="grid grid-cols-3 gap-[var(--space-2)]">
+                  <Card variant="compact" className="text-center">
+                    <p className="mb-[var(--space-1)] font-mono text-[length:var(--lkv-text-caption-2)] font-bold uppercase tracking-widest text-[color:var(--lkv-text-muted)]">Sorties</p>
+                    <p className="font-mono text-[length:var(--lkv-text-subheadline)] font-bold text-[color:var(--lkv-text-primary)]">{validEvents.length}</p>
+                    <p className="font-mono text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">programmées</p>
+                  </Card>
+                  <Card variant="compact" className="text-center">
+                    <p className="mb-[var(--space-1)] font-mono text-[length:var(--lkv-text-caption-2)] font-bold uppercase tracking-widest text-[color:var(--lkv-text-muted)]">Échanges</p>
+                    <p className="font-mono text-[length:var(--lkv-text-subheadline)] font-bold text-[color:var(--lkv-text-primary)]">{topics.length}</p>
+                    <p className="font-mono text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">sujets</p>
+                  </Card>
+                  <Card variant="compact" className="text-center">
+                    <p className="mb-[var(--space-1)] font-mono text-[length:var(--lkv-text-caption-2)] font-bold uppercase tracking-widest text-[color:var(--lkv-text-muted)]">Collectif</p>
+                    <p className="font-mono text-[length:var(--lkv-text-subheadline)] font-bold text-[color:var(--lkv-text-primary)]">{members.length}</p>
+                    <p className="font-mono text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">aventuriers</p>
+                  </Card>
                 </div>
 
-                {/* About Card */}
                 <ClubAboutCard club={club} />
 
-                {/* Prochains Événements Preview */}
                 {validEvents.length > 0 && (
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between px-1">
-                      <h3 className="font-display font-bold text-sm text-[#17402C]">Prochaines sorties</h3>
-                      <button
+                  <div className="space-y-[var(--space-2)]">
+                    <div className="flex items-center justify-between px-[var(--space-1)]">
+                      <h3 className="font-display text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)]">Prochaines sorties</h3>
+                      <Button
                         type="button"
+                        variant="secondary"
+                        size="sm"
                         onClick={() => setActiveSection('events')}
-                        className="glass-capsule-btn !min-h-[28px] !py-1 !px-2.5 !text-[10px] !font-bold"
                       >
-                        <span>Voir tout →</span>
-                      </button>
+                        Voir tout →
+                      </Button>
                     </div>
                     {validEvents.slice(0, 2).map((ev: any) => (
                       <ClubFeaturedEventCard key={ev.id} event={ev} />
@@ -245,7 +233,6 @@ export default function MobileClubDetailView({
                   </div>
                 )}
 
-                {/* Discussions Preview */}
                 <ClubDiscussionCard
                   clubId={club.id}
                   clubName={club.name}
@@ -257,18 +244,20 @@ export default function MobileClubDetailView({
               </div>
             )}
 
-            {/* SORTIES / EVENTS */}
             {activeSection === 'events' && (
-              <div className="space-y-3">
-                <div className="flex items-center justify-between px-1">
-                  <h3 className="font-display font-bold text-sm text-[#17402C]">Sorties & Rassemblements</h3>
-                  <span className="text-[10px] font-mono text-[#5C6B5E]">{validEvents.length} sorties</span>
+              <div className="space-y-[var(--space-3)]">
+                <div className="flex items-center justify-between px-[var(--space-1)]">
+                  <h3 className="font-display text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)]">Sorties & Rassemblements</h3>
+                  <span className="font-mono text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">{validEvents.length} sorties</span>
                 </div>
                 {validEvents.length === 0 ? (
-                  <div className="py-10 text-center glass bg-white/80 p-6 rounded-3xl border border-white">
-                    <span className="text-3xl block mb-1">📅</span>
-                    <p className="text-xs text-[#5C6B5E]">Aucune sortie programmée pour le moment.</p>
-                  </div>
+                  <Card className="p-[var(--space-6)]">
+                    <EmptyState
+                      icon={<span className="text-[length:var(--lkv-text-title-sm)]" aria-hidden>📅</span>}
+                      title="Aucune sortie programmée"
+                      description="Aucune sortie programmée pour le moment."
+                    />
+                  </Card>
                 ) : (
                   validEvents.map((ev: any) => (
                     <ClubFeaturedEventCard key={ev.id} event={ev} />
@@ -277,7 +266,6 @@ export default function MobileClubDetailView({
               </div>
             )}
 
-            {/* GROUPES DE VOYAGE (pont vers le Hub, TRIBU-R1) */}
             {activeSection === 'groups' && (
               <ClubGroupsTab
                 club={club}
@@ -291,7 +279,6 @@ export default function MobileClubDetailView({
               />
             )}
 
-            {/* DISCUSSIONS */}
             {activeSection === 'discussions' && (
               <ClubDiscussionCard
                 clubId={club.id}
@@ -303,18 +290,16 @@ export default function MobileClubDetailView({
               />
             )}
 
-            {/* MEMBRES */}
             {activeSection === 'members' && (
-              <div className="space-y-3">
-                <div className="flex items-center justify-between px-1">
-                  <h3 className="font-display font-bold text-sm text-[#17402C]">Membres du collectif</h3>
-                  <span className="text-[10px] font-mono text-[#5C6B5E]">{members.length} membres</span>
+              <div className="space-y-[var(--space-3)]">
+                <div className="flex items-center justify-between px-[var(--space-1)]">
+                  <h3 className="font-display text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)]">Membres du collectif</h3>
+                  <span className="font-mono text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">{members.length} membres</span>
                 </div>
                 <ClubTeamCard admins={admins} />
               </div>
             )}
 
-            {/* GUIDES */}
             {activeSection === 'guides' && (
               <ClubDiscussionCard
                 clubId={club.id}

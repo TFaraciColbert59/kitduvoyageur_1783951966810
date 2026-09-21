@@ -5,7 +5,6 @@ import Link from 'next/link';
 import Header from '@/components/Header';
 import Icon from '@/components/ui/AppIcon';
 import CompteBackground from '@/components/compte/CompteBackground';
-import CommunityHubNav from '@/components/social/CommunityHubNav';
 import CarnetHero from '@/components/carnet/CarnetHero';
 import StatsBar from '@/components/carnet/StatsBar';
 import CarnetMap from '@/components/carnet/CarnetMap';
@@ -19,6 +18,7 @@ import SpeciesIdentifier from '@/components/carnet/SpeciesIdentifier';
 import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
 import MobileCarnetDetailView from '@/components/carnet/MobileCarnetDetailView';
 import type { CarnetData } from '@/lib/mock/carnet-chartreuse';
+import { Badge } from '@/components/ui';
 
 function downloadGPX(name: string, traceGeojson?: any) {
   let gpxContent = `<?xml version="1.0" encoding="UTF-8"?>\n<gpx version="1.1" creator="Le Kit du Voyageur"><metadata><name>${name}</name></metadata><trk><name>${name}</name><trkseg>`;
@@ -76,33 +76,28 @@ export default function CarnetView({ data }: CarnetViewProps) {
 
   return (
     <>
-      {/* ── DESKTOP (3-Column Fullscreen 100dvh + CompteBackground) ── */}
       <div className="hidden md:block">
-        <div className="h-[100dvh] max-h-[100dvh] overflow-hidden bg-transparent font-sans text-[#17402C] relative flex flex-col">
+        <div className="relative flex h-[100dvh] max-h-[100dvh] flex-col overflow-hidden bg-transparent font-sans text-[color:var(--lkv-text-primary)]">
           <CompteBackground />
           <Header />
 
-          <main className="flex-1 min-h-0 overflow-hidden w-full max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-4 flex gap-5">
-            {/* COLONNE GAUCHE (Nav & Vertical Cockpit Tabs) - 230px */}
-            <div className="w-[230px] shrink-0 h-full overflow-hidden">
+          <main className="mx-auto flex min-h-0 w-full max-w-[1440px] flex-1 gap-[var(--space-5)] overflow-hidden px-[var(--space-4)] pb-[var(--space-4)] pt-24 sm:px-[var(--space-6)] lg:px-[var(--space-8)]">
+            <div className="h-full w-[230px] shrink-0 overflow-hidden">
               <CarnetDetailVerticalTabs
                 activeTab={activeTab}
                 setActiveTab={setActiveTab}
               />
             </div>
 
-            {/* COLONNE CENTRALE (Scrollable Unique) */}
-            <div className="flex-1 min-w-0 h-full overflow-y-auto custom-scrollbar pr-2 space-y-5">
-              {/* Breadcrumbs */}
-              <div className="flex items-center gap-2 text-xs font-medium text-[#5C6B5E]">
-                <Link href="/communaute" className="hover:text-[#17402C] transition-colors">Communauté</Link>
-                <Icon name="ChevronRightIcon" size={12} className="text-[#5C6B5E]" />
-                <Link href="/carnets" className="hover:text-[#17402C] transition-colors">Carnets</Link>
-                <Icon name="ChevronRightIcon" size={12} className="text-[#5C6B5E]" />
-                <span className="text-[#17402C] font-semibold truncate max-w-[200px]">{data.meta.titleLine1}</span>
+            <div className="h-full min-w-0 flex-1 space-y-[var(--space-5)] overflow-y-auto pr-[var(--space-2)]">
+              <div className="flex items-center gap-[var(--space-2)] text-[length:var(--lkv-text-caption-2)] font-medium text-[color:var(--lkv-text-muted)]">
+                <Link href="/communaute" className="transition-colors hover:text-[color:var(--lkv-text-primary)]">Communauté</Link>
+                <Icon name="ChevronRightIcon" size={12} className="text-[color:var(--lkv-text-muted)]" aria-hidden="true" />
+                <Link href="/carnets" className="transition-colors hover:text-[color:var(--lkv-text-primary)]">Carnets</Link>
+                <Icon name="ChevronRightIcon" size={12} className="text-[color:var(--lkv-text-muted)]" aria-hidden="true" />
+                <span className="max-w-[200px] truncate font-semibold text-[color:var(--lkv-text-primary)]">{data.meta.titleLine1}</span>
               </div>
 
-              {/* OVERVIEW TAB ONLY: Hero */}
               {activeTab === 'overview' && (
                 <>
                   <CarnetHero
@@ -115,19 +110,18 @@ export default function CarnetView({ data }: CarnetViewProps) {
                 </>
               )}
 
-              {/* SECTION: Parcours & Carte (Overview / Tab) */}
               {(activeTab === 'overview' || activeTab === 'parcours') && (
-                <section className="space-y-4">
+                <section className="space-y-[var(--space-4)]">
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <h2 className="font-display font-bold text-lg text-[#17402C]">
-                        Le <span className="font-serif italic text-[#17402C]">parcours</span>
+                    <div className="flex items-center gap-[var(--space-2)]">
+                      <h2 className="font-display text-[length:var(--lkv-text-subheadline)] font-bold text-[color:var(--lkv-text-primary)]">
+                        Le <span className="font-serif italic text-[color:var(--lkv-text-primary)]">parcours</span>
                       </h2>
-                      <span className="glass-pill text-[10px] font-mono font-bold">Trace GPX &amp; Étapes</span>
+                      <Badge className="font-mono font-bold">Trace GPX &amp; Étapes</Badge>
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 gap-[var(--space-4)] lg:grid-cols-2">
                     <CarnetMap
                       traceGeojson={data.traceGeojson}
                       distanceKm={distVal}
@@ -140,19 +134,18 @@ export default function CarnetView({ data }: CarnetViewProps) {
                 </section>
               )}
 
-              {/* SECTION: Moments & Récits */}
               {(activeTab === 'overview' || activeTab === 'moments') && moments.length > 0 && (
-                <section id="carnet-moments-section" className="space-y-4">
+                <section id="carnet-moments-section" className="space-y-[var(--space-4)]">
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <h2 className="font-display font-bold text-lg text-[#17402C]">
-                        Les <span className="font-serif italic text-[#17402C]">moments</span>
+                    <div className="flex items-center gap-[var(--space-2)]">
+                      <h2 className="font-display text-[length:var(--lkv-text-subheadline)] font-bold text-[color:var(--lkv-text-primary)]">
+                        Les <span className="font-serif italic text-[color:var(--lkv-text-primary)]">moments</span>
                       </h2>
-                      <span className="glass-pill text-[10px] font-mono font-bold">{moments.length} souvenirs</span>
+                      <Badge className="font-mono font-bold">{moments.length} souvenirs</Badge>
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 gap-[var(--space-4)] md:grid-cols-2 xl:grid-cols-3">
                     {moments.map((m) => (
                       <MomentCard key={m.id} moment={m} />
                     ))}
@@ -160,10 +153,9 @@ export default function CarnetView({ data }: CarnetViewProps) {
                 </section>
               )}
 
-              {/* SECTION: Dans le sac & Souvenirs */}
               {(activeTab === 'overview' || activeTab === 'materiel') && kitItems.length > 0 && (
-                <section className="space-y-4">
-                  <div className="grid grid-cols-1 gap-4">
+                <section className="space-y-[var(--space-4)]">
+                  <div className="grid grid-cols-1 gap-[var(--space-4)]">
                     <KitSouvenirCard intro={kitIntro} items={kitItems} />
                     {data.randonnees && data.randonnees.length > 0 && (
                       <RandonneesSouvenirCard randonnees={data.randonnees} />
@@ -172,15 +164,14 @@ export default function CarnetView({ data }: CarnetViewProps) {
                 </section>
               )}
 
-              {/* SECTION: Faune & Flore IA */}
               {activeTab === 'faune-flore' && (
-                <section className="space-y-4">
+                <section className="space-y-[var(--space-4)]">
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <h2 className="font-display font-bold text-lg text-[#17402C]">
-                        Identification <span className="font-serif italic text-[#17402C]">Faune &amp; Flore IA</span>
+                    <div className="flex items-center gap-[var(--space-2)]">
+                      <h2 className="font-display text-[length:var(--lkv-text-subheadline)] font-bold text-[color:var(--lkv-text-primary)]">
+                        Identification <span className="font-serif italic text-[color:var(--lkv-text-primary)]">Faune &amp; Flore IA</span>
                       </h2>
-                      <span className="glass-pill text-[10px] font-mono font-bold">Nature Scanner</span>
+                      <Badge className="font-mono font-bold">Nature Scanner</Badge>
                     </div>
                   </div>
                   <SpeciesIdentifier />
@@ -188,7 +179,6 @@ export default function CarnetView({ data }: CarnetViewProps) {
               )}
             </div>
 
-            {/* COLONNE DROITE (Widgets Sidebar) - 300px */}
             <CarnetDetailRightSidebar
               meta={data.meta}
               stats={data.stats}
@@ -199,7 +189,6 @@ export default function CarnetView({ data }: CarnetViewProps) {
         </div>
       </div>
 
-      {/* ── MOBILE ── */}
       <div className="block md:hidden">
         <MobilePageShell>
           <MobileCarnetDetailView

@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import Icon from '@/components/ui/AppIcon';
-import { IconButton } from '@/components/ui';
+import { Badge, Card, IconButton } from '@/components/ui';
 import SmartImage from '@/components/ui/SmartImage';
 
 export interface CarnetItem {
@@ -48,14 +48,14 @@ interface CarnetHubCardProps {
   onShare?: (carnet: any) => void;
 }
 
-// Heart SVG Icon helper for crisp rendering
 function HeartSvg({ filled = false, className = '' }: { filled?: boolean; className?: string }) {
   if (filled) {
     return (
       <svg
         viewBox="0 0 24 24"
         fill="currentColor"
-        className={`w-3.5 h-3.5 text-rose-500 transition-transform duration-200 scale-110 ${className}`}
+        aria-hidden="true"
+        className={`h-3.5 w-3.5 scale-110 text-[color:var(--lkv-danger)] transition-transform duration-200 motion-reduce:transition-none ${className}`}
       >
         <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
       </svg>
@@ -69,7 +69,8 @@ function HeartSvg({ filled = false, className = '' }: { filled?: boolean; classN
       strokeWidth="2"
       strokeLinecap="round"
       strokeLinejoin="round"
-      className={`w-3.5 h-3.5 text-[#17402C] hover:text-rose-600 transition-colors ${className}`}
+      aria-hidden="true"
+      className={`h-3.5 w-3.5 text-[color:var(--lkv-text-primary)] transition-colors hover:text-[color:var(--lkv-danger)] ${className}`}
     >
       <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
     </svg>
@@ -99,7 +100,7 @@ export default function CarnetHubCard({
   const authorName = carnet.author?.full_name || 'Auteur non renseigné';
   const avatarUrl = carnet.author?.avatar_url || null;
 
-  const handleAuthorClick = (e: React.MouseEvent) => {
+  const handleAuthorClick = (e: React.MouseEvent | React.KeyboardEvent) => {
     e.preventDefault();
     e.stopPropagation();
     router.push(carnet.author_id ? `/profil/${carnet.author_id}` : '/communaute');
@@ -126,132 +127,129 @@ export default function CarnetHubCard({
   return (
     <Link
       href={carnetHref}
-      className="glass bg-white/90 backdrop-blur-xl rounded-2xl overflow-hidden flex flex-col group transition-all duration-300 hover:-translate-y-1 hover:shadow-xl border border-white relative cursor-pointer"
+      className="group relative block h-full"
     >
-      {/* Cover Image Container */}
-      <div className="w-full aspect-[16/10] relative overflow-hidden bg-[#17402C]">
-        {coverUrl ? (
-          <SmartImage
-            src={coverUrl}
-            alt={carnet.title}
-            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center text-4xl text-white/70">📖</div>
-        )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-transparent pointer-events-none" />
-
-        {/* Top Badges */}
-        <div className="absolute top-3 left-3 flex items-center gap-1.5 flex-wrap pointer-events-none">
-          {destinationStr && (
-            <span className="glass-pill px-2.5 py-1 text-[9.5px] font-mono font-bold text-white bg-black/40 backdrop-blur-md border-white/20 flex items-center gap-1">
-              📍 {destinationStr}
-            </span>
-          )}
-          {dateStr && (
-            <span className="glass-pill px-2 py-1 text-[9.5px] font-mono text-white bg-black/40 backdrop-blur-md border-white/20">
-              {dateStr}
-            </span>
-          )}
-        </div>
-
-        {/* Top Right Save Action with Image 3 GlassIconButton */}
-        <div className="absolute top-3 right-3 flex items-center gap-1">
-          <IconButton
-            size="sm"
-            onClick={handleSaveClick}
-            title={isSaved ? "Retirer des favoris" : "Enregistrer dans mes favoris"}
-            aria-label={isSaved ? "Retirer des favoris" : "Enregistrer dans mes favoris"}
-            variant={isSaved ? 'solid' : 'glass'}
-            aria-pressed={isSaved || undefined}
-            className={isSaved ? "!bg-amber-400 !text-amber-950 !border-amber-300" : undefined}
-          >
-            <Icon name={isSaved ? 'BookmarkSolidIcon' : 'BookmarkIcon'} size={13} />
-          </IconButton>
-        </div>
-
-        {/* Metrics overlay on bottom of image */}
-        <div className="absolute bottom-2.5 left-3 right-3 flex items-center justify-between text-white text-[10.5px] font-mono pointer-events-none">
-          <div className="flex items-center gap-2">
-            {carnet.distance_km && <span>📏 {carnet.distance_km} km</span>}
-            {carnet.elevation_m && <span>⛰️ +{carnet.elevation_m} m</span>}
-          </div>
-          {Number(carnet.route_rating) > 0 ? (
-            <span className="font-bold text-sand-300">★ {carnet.route_rating}/10</span>
+      <Card className="flex h-full flex-col overflow-hidden p-0 transition-transform duration-[var(--motion-control-duration)] group-hover:-translate-y-1 group-hover:shadow-elevation-3 motion-reduce:transition-none">
+        <div className="relative aspect-[16/10] w-full overflow-hidden bg-[color:var(--lkv-primary)]">
+          {coverUrl ? (
+            <SmartImage
+              src={coverUrl}
+              alt={carnet.title}
+              className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105 motion-reduce:transition-none"
+            />
           ) : (
-            <span className="font-bold text-white/90 bg-white/20 backdrop-blur-md px-2 py-0.5 rounded-full text-[9px]">Nouveau</span>
+            <div className="flex h-full w-full items-center justify-center text-[length:var(--lkv-text-title-lg)] text-[color:var(--lkv-text-inverted)]/70" aria-hidden>📖</div>
           )}
-        </div>
-      </div>
+          <div aria-hidden className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-transparent" />
 
-      {/* Body Content */}
-      <div className="p-4 sm:p-5 flex-1 flex flex-col justify-between space-y-3">
-        <div className="space-y-1.5">
-          <h3 className="font-display font-bold text-base text-[#17402C] leading-snug group-hover:text-forest-800 transition-colors line-clamp-2">
-            {carnet.title}
-          </h3>
-
-          {carnet.description && (
-            <p className="text-xs text-[#5C6B5E] line-clamp-2 leading-relaxed">
-              {carnet.description}
-            </p>
-          )}
-        </div>
-
-        {/* Tags */}
-        {carnet.tags && Array.isArray(carnet.tags) && carnet.tags.length > 0 && (
-          <div className="flex flex-wrap gap-1">
-            {carnet.tags.slice(0, 3).map((t: string) => (
-              <span key={t} className="text-[9px] font-mono font-bold text-[#17402C] bg-[#17402C]/5 px-2 py-0.5 rounded-md">
-                #{t}
-              </span>
-            ))}
-          </div>
-        )}
-
-        {/* Footer info: Author & Circular Icon Buttons without text */}
-        <div className="pt-2.5 border-t border-[#17402C]/10 flex items-center justify-between gap-2 text-xs">
-          <div
-            onClick={handleAuthorClick}
-            className="flex items-center gap-2 min-w-0 group/author cursor-pointer hover:opacity-80 transition-opacity"
-          >
-            {avatarUrl ? (
-              <img
-                src={avatarUrl}
-                alt={authorName}
-                className="w-6 h-6 rounded-full object-cover border border-[#17402C]/15 shrink-0 group-hover/author:scale-105 transition-transform"
-              />
-            ) : (
-              <span className="w-6 h-6 rounded-full bg-[#17402C] text-white flex items-center justify-center text-[10px] font-bold border border-[#17402C]/15 shrink-0">
-                {authorName.charAt(0).toUpperCase()}
-              </span>
+          <div className="pointer-events-none absolute left-[var(--space-3)] top-[var(--space-3)] flex flex-wrap items-center gap-[var(--space-1)]">
+            {destinationStr && (
+              <Badge className="border-[color:var(--glass-border)] bg-[color:var(--lkv-primary)]/40 font-mono font-bold text-[color:var(--lkv-text-inverted)] backdrop-blur-[var(--blur-md)]">
+                📍 {destinationStr}
+              </Badge>
             )}
-            <span className="font-bold text-xs text-[#17402C] truncate group-hover/author:underline">{authorName}</span>
+            {dateStr && (
+              <Badge className="border-[color:var(--glass-border)] bg-[color:var(--lkv-primary)]/40 font-mono text-[color:var(--lkv-text-inverted)] backdrop-blur-[var(--blur-md)]">
+                {dateStr}
+              </Badge>
+            )}
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="absolute right-[var(--space-3)] top-[var(--space-3)] flex items-center gap-[var(--space-1)]">
             <IconButton
               size="sm"
-              onClick={handleLikeClick}
-              title="J'aime ce récit"
-              aria-label="J'aime ce récit"
-              variant={isLiked ? 'solid' : 'glass'}
-              aria-pressed={isLiked || undefined}
-              style={{ width: 'auto', paddingInline: '10px' }}
+              onClick={handleSaveClick}
+              aria-label={isSaved ? "Retirer des favoris" : "Enregistrer dans mes favoris"}
+              variant={isSaved ? 'solid' : 'glass'}
+              aria-pressed={isSaved || undefined}
+              className={isSaved ? 'bg-[color:var(--lkv-warning)] text-[color:var(--lkv-warning-dark)]' : undefined}
             >
-              <span className="inline-flex items-center gap-1.5"><HeartSvg filled={isLiked} /><span className="tabular-nums">{likesCount}</span></span>
+              <Icon name={isSaved ? 'BookmarkSolidIcon' : 'BookmarkIcon'} size={13} aria-hidden="true" />
             </IconButton>
+          </div>
 
-            <IconButton
-              size="sm"
-              title="Lire le carnet d'expédition"
-              aria-label="Lire le carnet d'expédition"
-            >
-              <Icon name="ArrowRightIcon" size={13} />
-            </IconButton>
+          <div className="pointer-events-none absolute bottom-[var(--space-2)] left-[var(--space-3)] right-[var(--space-3)] flex items-center justify-between font-mono text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-inverted)]">
+            <div className="flex items-center gap-[var(--space-2)]">
+              {carnet.distance_km && <span>📏 {carnet.distance_km} km</span>}
+              {carnet.elevation_m && <span>⛰️ +{carnet.elevation_m} m</span>}
+            </div>
+            {Number(carnet.route_rating) > 0 ? (
+              <span className="font-bold text-[color:var(--sand-300)]">★ {carnet.route_rating}/10</span>
+            ) : (
+              <Badge className="border-[color:var(--glass-border)] bg-[color:var(--lkv-primary)]/20 font-mono font-bold text-[color:var(--lkv-text-inverted)] backdrop-blur-[var(--blur-md)]">Nouveau</Badge>
+            )}
           </div>
         </div>
-      </div>
+
+        <div className="flex flex-1 flex-col justify-between space-y-[var(--space-3)] p-[var(--space-4)] sm:p-[var(--space-5)]">
+          <div className="space-y-[var(--space-1)]">
+            <h3 className="line-clamp-2 font-display text-[length:var(--lkv-text-caption)] font-bold leading-snug text-[color:var(--lkv-text-primary)] transition-colors group-hover:text-[color:var(--lkv-forest-800)]">
+              {carnet.title}
+            </h3>
+
+            {carnet.description && (
+              <p className="line-clamp-2 text-[length:var(--lkv-text-caption-2)] leading-relaxed text-[color:var(--lkv-text-muted)]">
+                {carnet.description}
+              </p>
+            )}
+          </div>
+
+          {carnet.tags && Array.isArray(carnet.tags) && carnet.tags.length > 0 && (
+            <div className="flex flex-wrap gap-[var(--space-1)]">
+              {carnet.tags.slice(0, 3).map((t: string) => (
+                <Badge key={t} className="font-mono font-bold">
+                  #{t}
+                </Badge>
+              ))}
+            </div>
+          )}
+
+          <div className="flex items-center justify-between gap-[var(--space-2)] border-t border-[color:var(--lkv-primary)]/10 pt-[var(--space-2)]">
+            <span
+              role="link"
+              tabIndex={0}
+              onClick={handleAuthorClick}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') handleAuthorClick(e);
+              }}
+              className="group/author flex min-w-0 cursor-pointer items-center gap-[var(--space-2)] transition-opacity hover:opacity-80"
+            >
+              {avatarUrl ? (
+                <img
+                  src={avatarUrl}
+                  alt=""
+                  className="h-6 w-6 shrink-0 rounded-full border border-[color:var(--lkv-primary)]/15 object-cover transition-transform group-hover/author:scale-105 motion-reduce:transition-none"
+                />
+              ) : (
+                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-[color:var(--lkv-primary)]/15 bg-[color:var(--lkv-primary)] text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-inverted)]">
+                  {authorName.charAt(0).toUpperCase()}
+                </span>
+              )}
+              <span className="truncate text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-primary)] group-hover/author:underline">{authorName}</span>
+            </span>
+
+            <div className="flex items-center gap-[var(--space-2)]">
+              <IconButton
+                size="sm"
+                onClick={handleLikeClick}
+                aria-label="J'aime ce récit"
+                variant={isLiked ? 'solid' : 'glass'}
+                aria-pressed={isLiked || undefined}
+                className="w-auto px-[10px]"
+              >
+                <span className="inline-flex items-center gap-[var(--space-1)]"><HeartSvg filled={isLiked} /><span className="tabular-nums">{likesCount}</span></span>
+              </IconButton>
+
+              <IconButton
+                size="sm"
+                aria-label="Lire le carnet d'expédition"
+              >
+                <Icon name="ArrowRightIcon" size={13} aria-hidden="true" />
+              </IconButton>
+            </div>
+          </div>
+        </div>
+      </Card>
     </Link>
   );
 }

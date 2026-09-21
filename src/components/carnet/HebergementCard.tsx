@@ -2,6 +2,7 @@
 
 import React from 'react';
 import type { CarnetHebergement } from '@/lib/mock/carnet-chartreuse';
+import { Badge, Card } from '@/components/ui';
 
 interface HebergementCardProps {
   hebergement: CarnetHebergement;
@@ -9,27 +10,27 @@ interface HebergementCardProps {
 
 export default function HebergementCard({ hebergement }: HebergementCardProps) {
   return (
-    <div className="glass bg-white/90 backdrop-blur-xl rounded-3xl p-4 sm:p-5 border border-white shadow-xs space-y-2.5 text-[#17402C]">
+    <Card className="space-y-[var(--space-2)] p-[var(--space-4)] sm:p-[var(--space-5)]">
       <div className="flex items-center justify-between">
-        <span className="font-mono text-[9px] uppercase tracking-[0.18em] text-forest-800 font-bold">
+        <span className="font-mono text-[length:var(--lkv-text-caption-2)] font-bold uppercase tracking-[0.18em] text-[color:var(--lkv-forest-800)]">
           🏕️ NUIT {hebergement.nightNumber} · HÉBERGEMENT
         </span>
-        <span className="font-mono font-bold text-xs text-[#17402C] bg-forest-50 px-2 py-0.5 rounded-full border border-forest-200/50">
+        <Badge tone="sage" className="font-mono font-bold">
           {hebergement.price}€
-        </span>
+        </Badge>
       </div>
 
-      <div className="flex items-start justify-between gap-3">
+      <div className="flex items-start justify-between gap-[var(--space-3)]">
         <div>
-          <h4 className="font-display text-sm font-bold text-[#17402C]">
-            {hebergement.name}{hebergement.nameItalic && <em className="italic font-serif font-normal text-forest-800 ml-1">{hebergement.nameItalic}</em>}
+          <h4 className="font-display text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)]">
+            {hebergement.name}{hebergement.nameItalic && <em className="ml-[var(--space-1)] font-serif font-normal italic text-[color:var(--lkv-forest-800)]">{hebergement.nameItalic}</em>}
           </h4>
-          <p className="text-[11px] text-[#5C6B5E] font-mono mt-0.5">{hebergement.detail}</p>
+          <p className="mt-[var(--space-1)] font-mono text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">{hebergement.detail}</p>
         </div>
-        <span className="text-[10px] italic text-[#5C6B5E] font-mono shrink-0">
+        <span className="shrink-0 font-mono text-[length:var(--lkv-text-caption-2)] italic text-[color:var(--lkv-text-muted)]">
           {hebergement.priceLabel}
         </span>
       </div>
-    </div>
+    </Card>
   );
 }

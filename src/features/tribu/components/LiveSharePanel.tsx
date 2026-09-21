@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useCallback, useEffect, useState } from 'react';
+import { Badge, Button, Card, LoadingState } from '@/components/ui';
 import {
   startLiveSession,
   stopLiveSession,
@@ -44,51 +45,52 @@ export function LiveSharePanelView({
   const [consentOpen, setConsentOpen] = useState(false);
 
   return (
-    <div
-      className="glass rounded-2xl p-4 space-y-3"
+    <Card
+      className="space-y-[var(--space-3)] p-[var(--space-4)]"
       data-testid="live-share-panel"
       data-live-active={session ? 'true' : 'false'}
     >
       {!session ? (
         <>
-          <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center justify-between gap-[var(--space-3)]">
             <div>
-              <h3 className="font-display font-bold text-sm text-[var(--lkv-text-primary)]">
+              <h3 className="font-display text-[length:var(--lkv-text-subheadline)] font-bold text-[color:var(--lkv-text-primary)]">
                 Position live
               </h3>
-              <p className="text-xs text-[var(--lkv-text-secondary)] mt-0.5">
+              <p className="mt-0.5 text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-secondary)]">
                 Désactivé par défaut — démarrage explicite uniquement.
               </p>
             </div>
-            <button
-              type="button"
+            <Button
+              variant="primary"
+              size="sm"
               onClick={() => setConsentOpen((open) => !open)}
               disabled={busy}
-              className="glass-capsule-btn primary text-xs font-bold px-4 min-h-[44px] disabled:opacity-60 shrink-0"
+              className="shrink-0"
               data-testid="live-start-open"
             >
-              <span className="relative z-10">Démarrer une sortie live</span>
-            </button>
+              Démarrer une sortie live
+            </Button>
           </div>
           {consentOpen && (
-            <div className="space-y-2 border-t border-white/40 pt-3">
-              <p className="text-xs text-[var(--lkv-text-secondary)] leading-relaxed">
+            <div className="space-y-[var(--space-2)] border-t border-[color:var(--lkv-border)] pt-[var(--space-3)]">
+              <p className="text-[length:var(--lkv-text-caption)] leading-relaxed text-[color:var(--lkv-text-secondary)]">
                 Votre position ne sera visible que par les membres de ce groupe, pendant la
                 session. Elle n’est jamais publique, jamais conservée après l’arrêt (une seule
                 position, la dernière), et vous pouvez l’arrêter à tout moment.
               </p>
-              <div className="flex gap-2 flex-wrap">
+              <div className="flex flex-wrap gap-[var(--space-2)]">
                 {DURATIONS.map((duration) => (
-                  <button
+                  <Button
                     key={duration.hours}
-                    type="button"
+                    variant="secondary"
+                    size="sm"
                     onClick={() => onStart(duration.hours)}
                     disabled={busy}
-                    className="glass-capsule-btn text-xs font-bold px-4 min-h-[44px] disabled:opacity-60"
                     data-testid={`live-start-${duration.hours}`}
                   >
-                    <span className="relative z-10">{duration.label}</span>
-                  </button>
+                    {duration.label}
+                  </Button>
                 ))}
               </div>
             </div>
@@ -96,66 +98,68 @@ export function LiveSharePanelView({
         </>
       ) : (
         <>
-          <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center justify-between gap-[var(--space-3)]">
             <div className="min-w-0">
-              <span className="flex items-center gap-2">
+              <span className="flex items-center gap-[var(--space-2)]">
                 <span
-                  className="inline-block w-2 h-2 rounded-full bg-lkv-primary animate-pulse"
+                  className="inline-block h-2 w-2 animate-pulse rounded-full bg-[color:var(--lkv-primary)]"
                   aria-hidden
                 />
-                <h3 className="font-display font-bold text-sm text-[var(--lkv-text-primary)]">
+                <h3 className="font-display text-[length:var(--lkv-text-subheadline)] font-bold text-[color:var(--lkv-text-primary)]">
                   Sortie live en cours
                 </h3>
               </span>
-              <p className="text-xs text-[var(--lkv-text-secondary)] mt-0.5" data-testid="live-remaining">
+              <p
+                className="mt-0.5 text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-secondary)]"
+                data-testid="live-remaining"
+              >
                 {formatSessionRemaining(session.expiresAt) ?? 'Session ouverte'} ·{' '}
                 {positions.length} membre{positions.length > 1 ? 's' : ''} sur la carte
               </p>
             </div>
-            <div className="flex items-center gap-2 shrink-0">
-              <button
-                type="button"
+            <div className="flex shrink-0 items-center gap-[var(--space-2)]">
+              <Button
+                variant={mySharing ? 'secondary' : 'primary'}
+                size="sm"
                 onClick={onToggleSharing}
                 disabled={busy}
                 aria-pressed={mySharing}
-                className={`glass-capsule-btn text-xs font-bold px-4 min-h-[44px] disabled:opacity-60 ${
-                  mySharing ? '' : 'primary'
-                }`}
                 data-testid="live-toggle-sharing"
               >
-                <span className="relative z-10">
-                  {busy ? '…' : mySharing ? 'Arrêter mon partage' : 'Partager ma position'}
-                </span>
-              </button>
+                {busy ? '…' : mySharing ? 'Arrêter mon partage' : 'Partager ma position'}
+              </Button>
               {isOrganizer && (
-                <button
-                  type="button"
+                <Button
+                  variant="secondary"
+                  size="sm"
                   onClick={onCloseSession}
                   disabled={busy}
-                  className="glass-capsule-btn text-xs font-bold px-4 min-h-[44px] disabled:opacity-60"
                   data-testid="live-close-session"
                 >
-                  <span className="relative z-10">Clôturer</span>
-                </button>
+                  Clôturer
+                </Button>
               )}
             </div>
           </div>
           {mySharing && (
-            <p
-              className="glass-pill pill-danger text-[10px] font-mono font-bold inline-flex"
-              data-testid="live-sharing-indicator"
-            >
-              PARTAGE ACTIF — arrêt à un tap
-            </p>
+            <span data-testid="live-sharing-indicator" className="inline-flex">
+              <Badge tone="danger" className="font-mono font-bold">
+                PARTAGE ACTIF — arrêt à un tap
+              </Badge>
+            </span>
           )}
         </>
       )}
       {error && (
-        <p role="alert" className="text-xs font-bold text-[var(--lkv-danger)]" data-testid="live-error">
+        <p
+          role="alert"
+          className="text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-danger)]"
+          data-testid="live-error"
+        >
           {error}
         </p>
       )}
-    </div>
+    </Card>
   );
 }
 
@@ -261,9 +265,9 @@ export default function LiveSharePanel({ groupId, isOrganizer }: LiveSharePanelP
 
   if (!loaded) {
     return (
-      <div className="glass rounded-2xl p-4" data-testid="live-share-panel-loading">
-        <p className="text-xs text-[var(--lkv-text-muted)]">Position live…</p>
-      </div>
+      <Card className="p-[var(--space-4)]" data-testid="live-share-panel-loading">
+        <LoadingState compact label="Position live…" />
+      </Card>
     );
   }
 

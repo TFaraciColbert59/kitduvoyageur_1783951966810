@@ -1,8 +1,8 @@
 'use client';
 
 import React from 'react';
-import Icon from '@/components/ui/AppIcon';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
+import { Button, Card } from '@/components/ui';
 
 interface ClubFeaturedEventCardProps {
   event: {
@@ -37,87 +37,91 @@ export default function ClubFeaturedEventCard({
   const progressPercent = Math.min(100, Math.round((currentParticipants / maxParticipants) * 100));
 
   return (
-    <div className="glass bg-white/90 backdrop-blur-xl p-4 text-[#17402C] relative overflow-hidden transition-all duration-300 space-y-3 rounded-3xl border border-white shadow-xs">
-      <div className="flex items-start gap-3">
-        {/* Calendar Badge */}
-        <div className="w-12 h-12 rounded-2xl bg-[#17402C] text-white flex flex-col items-center justify-center shrink-0 shadow-2xs">
-          <span className="text-[8.5px] font-bold uppercase tracking-wider text-[#A6C1A0] leading-none">
+    <Card className="relative space-y-[var(--space-3)] overflow-hidden p-[var(--space-4)] transition-all duration-[var(--motion-control-duration)]">
+      <div className="flex items-start gap-[var(--space-3)]">
+        <div className="flex h-12 w-12 shrink-0 flex-col items-center justify-center rounded-[var(--lkv-radius-2xl)] bg-[color:var(--lkv-primary)] text-[color:var(--lkv-text-inverted)]">
+          <span className="text-[length:var(--lkv-text-caption-2)] font-bold uppercase leading-none tracking-wider text-[color:var(--lkv-forest-200)]">
             {monthStr}
           </span>
-          <span className="text-base font-display font-extrabold leading-none mt-0.5">
+          <span className="mt-[var(--space-1)] font-display text-[length:var(--lkv-text-subheadline)] font-extrabold leading-none">
             {dayStr}
           </span>
         </div>
 
-        {/* Title & Location */}
-        <div className="min-w-0 flex-1 space-y-0.5">
+        <div className="min-w-0 flex-1 space-y-[2px]">
           <div className="flex items-center justify-between">
-            <span className="text-[10px] font-mono text-forest-800 font-bold uppercase tracking-wide">
+            <span className="font-mono text-[length:var(--lkv-text-caption-2)] font-bold uppercase tracking-wide text-[color:var(--lkv-text-primary)]">
               🏕️ Sortie Collective
             </span>
-            <span className="w-2 h-2 rounded-full bg-forest-500 animate-pulse" title="Sortie active" />
+            <span aria-hidden className="h-2 w-2 animate-pulse rounded-full bg-[var(--lkv-forest-500)]" title="Sortie active" />
           </div>
-          <h3 className="font-display font-bold text-sm text-[#17402C] truncate">
+          <h3 className="truncate font-display text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)]">
             {event.title}
           </h3>
-          <p className="text-[11px] text-[#5C6B5E] font-mono flex items-center gap-1 truncate">
-            <span>📍</span>
+          <p className="flex items-center gap-[var(--space-1)] truncate font-mono text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">
+            <span aria-hidden>📍</span>
             <span>{event.location || 'Lieu à définir'}</span>
           </p>
         </div>
       </div>
 
       {event.description && (
-        <p className="text-xs text-[#5C6B5E] line-clamp-2 leading-relaxed pl-1">
+        <p className="line-clamp-2 pl-[var(--space-1)] text-[length:var(--lkv-text-caption)] leading-relaxed text-[color:var(--lkv-text-muted)]">
           {event.description}
         </p>
       )}
 
-      {/* Participants gauge */}
-      <div className="space-y-1.5 pt-1">
-        <div className="flex items-center justify-between text-[10.5px] font-mono text-[#5C6B5E]">
+      <div className="space-y-[var(--space-1)] pt-[var(--space-1)]">
+        <div className="flex items-center justify-between font-mono text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">
           <span>Places réservées</span>
-          <span className="font-bold text-[#17402C]">
+          <span className="font-bold text-[color:var(--lkv-text-primary)]">
             {currentParticipants} / {maxParticipants}
           </span>
         </div>
-        <div className="w-full h-1.5 bg-[#17402C]/10 rounded-full overflow-hidden">
+        <div
+          role="progressbar"
+          aria-valuenow={progressPercent}
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-label="Places réservées"
+          className="h-1.5 w-full overflow-hidden rounded-full bg-[color:var(--lkv-primary)]/10"
+        >
           <div
-            className="h-full bg-forest-600 rounded-full transition-all duration-500"
+            className="h-full rounded-full bg-[color:var(--lkv-forest-600)] transition-all duration-500 motion-reduce:transition-none"
             style={{ width: `${progressPercent}%` }}
           />
         </div>
       </div>
 
-      {/* Action Button */}
-      <div className="pt-2 border-t border-[#17402C]/10 flex items-center justify-between gap-2">
+      <div className="flex items-center justify-between gap-[var(--space-2)] border-t border-[color:var(--lkv-primary)]/10 pt-[var(--space-2)]">
         {onViewParticipants ? (
-          <button
+          <Button
             type="button"
+            variant="secondary"
+            size="sm"
             onClick={onViewParticipants}
-            className="glass-capsule-btn sm font-medium"
+            className="font-medium"
           >
             Participants ({currentParticipants})
-          </button>
+          </Button>
         ) : (
-          <span className="text-[11px] font-mono text-[#5C6B5E]">
+          <span className="font-mono text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">
             {maxParticipants - currentParticipants} places restantes
           </span>
         )}
 
-        <button
+        <Button
           type="button"
+          variant={isRegistered ? 'secondary' : 'primary'}
+          size="sm"
           onClick={() => {
             triggerHaptic('selection');
             if (onRegister) onRegister();
           }}
-          className={`glass-capsule-btn !min-h-[36px] !py-1.5 !px-4 !text-xs !font-bold ${
-            isRegistered ? '' : 'primary'
-          }`}
         >
-          <span>{isRegistered ? '✓ Inscrit(e)' : "S'inscrire"}</span>
-        </button>
+          {isRegistered ? '✓ Inscrit(e)' : "S'inscrire"}
+        </Button>
       </div>
-    </div>
+    </Card>
   );
 }

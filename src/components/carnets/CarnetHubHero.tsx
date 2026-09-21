@@ -1,8 +1,9 @@
-﻿'use client';
+'use client';
 
 import React from 'react';
 import Link from 'next/link';
 import Icon from '@/components/ui/AppIcon';
+import { Badge } from '@/components/ui';
 
 interface CarnetHubHeroProps {
   totalCarnets?: number;
@@ -16,53 +17,52 @@ export default function CarnetHubHero({
   onCreateClick,
 }: CarnetHubHeroProps) {
   return (
-    <div className="glass bg-gradient-to-br from-[#17402C]/95 via-[#17402C]/85 to-[#33463C]/90 rounded-card p-7 sm:p-8 text-[#EEF3EC] relative overflow-hidden flex flex-col md:flex-row justify-between items-start md:items-end gap-6 border border-white/20">
-      {/* Background Glow */}
-      <div className="absolute top-0 right-0 w-[35rem] h-[35rem] bg-white opacity-5 blur-[90px] rounded-full pointer-events-none" />
+    <div className="relative flex flex-col items-start justify-between gap-[var(--space-6)] overflow-hidden rounded-[var(--lkv-radius-card)] border border-[color:var(--glass-border)] bg-gradient-to-br from-[color:var(--lkv-primary)]/95 via-[color:var(--lkv-primary)]/85 to-[color:var(--lkv-forest-600)]/90 p-[var(--space-6)] text-[color:var(--stone-50)] sm:p-[var(--space-8)] md:flex-row md:items-end">
+      <div aria-hidden className="pointer-events-none absolute right-0 top-0 h-[35rem] w-[35rem] rounded-full bg-[color:var(--lkv-text-inverted)] opacity-5 blur-[90px]" />
 
       <div className="relative z-10 max-w-xl">
-        <div className="inline-flex items-center gap-2 px-3 py-1 glass-pill mb-4 text-white border-white/20">
-          <span className="w-1.5 h-1.5 rounded-full bg-forest-400 animate-pulse" />
-          <span className="font-mono text-[10px] uppercase tracking-widest text-[#EEF3EC] font-bold">
+        <Badge className="mb-[var(--space-4)] border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] text-[color:var(--lkv-text-inverted)]">
+          <span aria-hidden className="h-1.5 w-1.5 animate-pulse rounded-full bg-[var(--lkv-forest-400)]" />
+          <span className="font-mono text-[length:var(--lkv-text-caption-2)] font-bold uppercase tracking-widest">
             MÉMOIRE OUTDOOR · {totalCarnets} EXPÉDITIONS
           </span>
-        </div>
+        </Badge>
 
-        <h1 className="text-3xl sm:text-4xl md:text-5xl mb-4 leading-[1.15] text-white">
-          <span className="font-display font-bold block">Carnets d&apos;expédition</span>
-          <span className="font-serif italic font-normal text-[#A6C1A0]">Récits, traces et mémoires</span>
+        <h1 className="mb-[var(--space-4)] text-[length:var(--lkv-text-title-lg)] leading-[1.15] text-[color:var(--lkv-text-inverted)] sm:text-[length:var(--lkv-text-title-xl)] md:text-5xl">
+          <span className="block font-display font-bold">Carnets d&apos;expédition</span>
+          <span className="font-serif font-normal italic text-[color:var(--lkv-forest-200)]">Récits, traces et mémoires</span>
         </h1>
 
-        <p className="text-white/80 font-sans text-xs sm:text-sm leading-relaxed mb-6 max-w-lg">
+        <p className="mb-[var(--space-6)] max-w-lg font-sans text-[length:var(--lkv-text-caption)] leading-relaxed text-[color:var(--lkv-text-inverted)]/80 sm:text-[length:var(--lkv-text-caption)]">
           Explorez les aventures vécues par la communauté LKDV. Traces GPX, hébergements, retours d&apos;équipement et photos de bivouac.
         </p>
 
-        <div className="flex items-center gap-4 sm:gap-6 font-mono text-xs flex-wrap">
+        <div className="flex flex-wrap items-center gap-[var(--space-4)] font-mono text-[length:var(--lkv-text-caption-2)] sm:gap-[var(--space-6)]">
           <div className="flex flex-col">
-            <span className="text-white/60 text-[9px] uppercase tracking-widest mb-0.5 font-bold">Récits</span>
-            <span className="font-bold text-white text-sm">{totalCarnets}</span>
+            <span className="mb-[var(--space-1)] text-[length:var(--lkv-text-caption-2)] font-bold uppercase tracking-widest text-[color:var(--lkv-text-inverted)]/60">Récits</span>
+            <span className="text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-inverted)]">{totalCarnets}</span>
           </div>
-          <div className="w-px h-6 bg-white/20" />
+          <div aria-hidden className="h-6 w-px bg-[color:var(--lkv-text-inverted)]/20" />
           <div className="flex flex-col">
-            <span className="text-white/60 text-[9px] uppercase tracking-widest mb-0.5 font-bold">Distance totale</span>
-            <span className="font-bold text-forest-400 text-sm">{totalKm} km</span>
+            <span className="mb-[var(--space-1)] text-[length:var(--lkv-text-caption-2)] font-bold uppercase tracking-widest text-[color:var(--lkv-text-inverted)]/60">Distance totale</span>
+            <span className="text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-forest-400)]">{totalKm} km</span>
           </div>
-          <div className="w-px h-6 bg-white/20" />
+          <div aria-hidden className="h-6 w-px bg-[color:var(--lkv-text-inverted)]/20" />
           <div className="flex flex-col">
-            <span className="text-white/60 text-[9px] uppercase tracking-widest mb-0.5 font-bold">Traces GPX</span>
-            <span className="font-bold text-white text-sm">100% Libres</span>
+            <span className="mb-[var(--space-1)] text-[length:var(--lkv-text-caption-2)] font-bold uppercase tracking-widest text-[color:var(--lkv-text-inverted)]/60">Traces GPX</span>
+            <span className="text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-inverted)]">100% Libres</span>
           </div>
         </div>
       </div>
 
-      <div className="relative z-10 flex flex-col items-end gap-3 w-full md:w-auto">
+      <div className="relative z-10 flex w-full flex-col items-end gap-[var(--space-3)] md:w-auto">
         <Link
           href="/carnets/nouveau"
           onClick={onCreateClick}
-          className="w-full md:w-auto glass-capsule-btn primary py-3 px-6 text-sm font-bold flex items-center justify-center gap-2 shadow-lg"
+          className="inline-flex min-h-[var(--control-height-lg)] w-full items-center justify-center gap-[var(--space-2)] rounded-full bg-[color:var(--lkv-action)] px-[var(--space-6)] text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-on-action)] shadow-elevation-2 md:w-auto"
         >
-          <Icon name="PlusIcon" size={16} className="relative z-10" />
-          <span className="relative z-10">Créer un carnet</span>
+          <Icon name="PlusIcon" size={16} aria-hidden="true" />
+          <span>Créer un carnet</span>
         </Link>
       </div>
     </div>

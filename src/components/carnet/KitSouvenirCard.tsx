@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Icon from '@/components/ui/AppIcon';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import type { CarnetKitItem } from '@/lib/mock/carnet-chartreuse';
+import { Badge, Card, Chip } from '@/components/ui';
 
 interface KitSouvenirCardProps {
   intro?: string;
@@ -35,107 +36,102 @@ export default function KitSouvenirCard({ intro, items }: KitSouvenirCardProps) 
   });
 
   return (
-    <div className="glass bg-white/90 backdrop-blur-xl rounded-3xl p-4 sm:p-6 space-y-4 border border-white shadow-xs">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#17402C]/10">
-        <div className="flex items-center gap-2.5">
-          <span className="text-2xl">🎒</span>
+    <Card className="space-y-[var(--space-4)] p-[var(--space-4)] sm:p-[var(--space-6)]">
+      <div className="flex flex-col justify-between gap-[var(--space-3)] border-b border-[color:var(--lkv-primary)]/10 pb-[var(--space-3)] sm:flex-row sm:items-center">
+        <div className="flex items-center gap-[var(--space-2)]">
+          <span className="text-[length:var(--lkv-text-title-sm)]" aria-hidden>🎒</span>
           <div>
-            <h3 className="font-display font-bold text-base sm:text-lg text-[#17402C]">
-              Dans le sac <span className="font-serif italic text-forest-800 font-normal">de l’expédition</span>
+            <h3 className="font-display text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)] sm:text-[length:var(--lkv-text-subheadline)]">
+              Dans le sac <span className="font-serif font-normal italic text-[color:var(--lkv-forest-800)]">de l’expédition</span>
             </h3>
-            <span className="text-[10px] font-mono text-[#5C6B5E]">
+            <span className="font-mono text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">
               {items.length} indispensables archivés · Poids estimé 4.8 kg
             </span>
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-[var(--space-2)]">
           <Link
             href="/ai-configurator"
             onClick={() => triggerHaptic('light')}
-            className="glass-capsule-btn primary !min-h-[34px] !py-1 !px-3.5 !text-xs !font-bold !gap-1.5"
+            className="inline-flex min-h-[var(--control-height-sm)] items-center gap-[var(--space-1)] rounded-full bg-[color:var(--lkv-action)] px-[var(--space-3)] text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-on-action)]"
           >
-            <Icon name="SparklesIcon" size={13} className="relative z-10" />
-            <span className="relative z-10">Reconfigurer IA</span>
+            <Icon name="SparklesIcon" size={13} aria-hidden="true" />
+            <span>Reconfigurer IA</span>
           </Link>
         </div>
       </div>
 
       {intro && (
-        <p className="text-xs text-[#365233] leading-relaxed font-sans italic bg-[#17402C]/5 p-3 rounded-2xl border border-[#17402C]/5">
+        <p className="rounded-[var(--lkv-radius-2xl)] border border-[color:var(--lkv-primary)]/5 bg-[color:var(--lkv-primary)]/5 p-[var(--space-3)] font-sans text-[length:var(--lkv-text-caption-2)] italic leading-relaxed text-[color:var(--lkv-text-secondary)]">
           {intro}
         </p>
       )}
 
-      {/* Category Pills */}
-      <div className="flex flex-wrap gap-1.5">
-        {categories.map((cat) => {
-          const isSelected = selectedFilter === cat;
+      <div className="flex flex-wrap gap-[var(--space-1)]">
+        {categories.map((cat) => (
+          <Chip
+            key={cat}
+            selected={selectedFilter === cat}
+            onClick={() => {
+              triggerHaptic('light');
+              setSelectedFilter(cat);
+            }}
+          >
+            {cat === 'all' ? 'Tout le sac' : cat}
+          </Chip>
+        ))}
+      </div>
+
+      <div className="grid grid-cols-1 gap-[var(--space-2)] pt-[var(--space-1)] sm:grid-cols-2">
+        {filteredItems.map((item) => {
+          const isChecked = checkedItems[item.id];
           return (
             <button
-              key={cat}
+              key={item.id}
               type="button"
-              onClick={() => {
-                triggerHaptic('light');
-                setSelectedFilter(cat);
-              }}
-              className={`glass-capsule-btn !min-h-[30px] !py-1 !px-3 !text-[11px] !font-bold transition-all ${
-                isSelected ? 'primary' : ''
+              role="checkbox"
+              aria-checked={!!isChecked}
+              onClick={() => toggleCheck(item.id)}
+              className={`flex cursor-pointer items-center gap-[var(--space-3)] rounded-[var(--lkv-radius-2xl)] border p-[var(--space-3)] text-left transition-colors ${
+                isChecked
+                  ? 'border-[color:var(--lkv-success)]/40 bg-[color:var(--lkv-success-bg)]'
+                  : 'border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-muted)] hover:bg-[color:var(--lkv-hover-surface)]'
               }`}
             >
-              <span>{cat === 'all' ? 'Tout le sac' : cat}</span>
+              <span
+                aria-hidden
+                className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-[var(--lkv-radius-sm)] text-[length:var(--lkv-text-caption-2)] font-bold transition-colors ${
+                  isChecked ? 'bg-[color:var(--lkv-primary)] text-[color:var(--lkv-text-inverted)]' : 'border border-[color:var(--lkv-border-strong)] bg-[color:var(--lkv-field-bg)]'
+                }`}
+              >
+                {isChecked && '✓'}
+              </span>
+
+              <span
+                className="h-3 w-3 shrink-0 rounded-full"
+                style={{ backgroundColor: item.color || 'var(--lkv-primary)' }}
+                aria-hidden="true"
+              />
+
+              <span className="min-w-0 flex-1">
+                <p className={`truncate text-[length:var(--lkv-text-caption-2)] font-bold ${isChecked ? 'text-[color:var(--lkv-text-muted)] line-through' : 'text-[color:var(--lkv-text-primary)]'}`}>
+                  {item.name}
+                </p>
+                {item.detail && (
+                  <p className="truncate font-mono text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">{item.detail}</p>
+                )}
+              </span>
+
+              {item.weight && (
+                <Badge className="shrink-0 font-mono font-bold">
+                  {item.weight}
+                </Badge>
+              )}
             </button>
           );
         })}
       </div>
-
-      {/* Items Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
-        {filteredItems.map((item) => {
-          const isChecked = checkedItems[item.id];
-          return (
-            <div
-              key={item.id}
-              onClick={() => toggleCheck(item.id)}
-              className={`flex items-center gap-3 p-3 rounded-2xl border transition-all cursor-pointer ${
-                isChecked
-                  ? 'bg-emerald-50/90 border-emerald-300 shadow-2xs'
-                  : 'bg-white/80 border-white/80 hover:bg-white shadow-2xs'
-              }`}
-            >
-              <div
-                className={`w-5 h-5 rounded-lg flex items-center justify-center text-xs font-bold shrink-0 transition-colors ${
-                  isChecked ? 'bg-[#17402C] text-white shadow-2xs' : 'border border-[#17402C]/20 bg-white'
-                }`}
-              >
-                {isChecked && '✓'}
-              </div>
-
-              <div
-                className="w-3 h-3 rounded-full shrink-0 shadow-2xs"
-                style={{ backgroundColor: item.color || '#17402C' }}
-                aria-hidden="true"
-              />
-
-              <div className="flex-1 min-w-0">
-                <p className={`text-xs font-bold truncate ${isChecked ? 'text-emerald-950 line-through opacity-80' : 'text-[#17402C]'}`}>
-                  {item.name}
-                </p>
-                {item.detail && (
-                  <p className="text-[10px] text-[#5C6B5E] truncate font-mono">{item.detail}</p>
-                )}
-              </div>
-
-              {item.weight && (
-                <span className="font-mono text-[10px] font-bold text-[#17402C] shrink-0 bg-[#17402C]/5 px-2 py-0.5 rounded-lg border border-[#17402C]/5">
-                  {item.weight}
-                </span>
-              )}
-            </div>
-          );
-        })}
-      </div>
-    </div>
+    </Card>
   );
 }

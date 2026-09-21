@@ -6,6 +6,7 @@ import Icon from '@/components/ui/AppIcon';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
 import { createClient } from '@/lib/supabase/client';
+import { Badge, Button, Card, IconButton } from '@/components/ui';
 
 interface CarnetHeroProps {
   meta: {
@@ -93,7 +94,6 @@ export default function CarnetHero({ meta, onExport, carnetId, onOpenComments }:
     }
   };
 
-  // Format title gracefully
   let displayTitle1 = meta.titleLine1 || 'Trek & Récit';
   let displayTitle2 = meta.titleLine2 || '';
 
@@ -109,135 +109,127 @@ export default function CarnetHero({ meta, onExport, carnetId, onOpenComments }:
   const descriptionText = [meta.subtitleLine1, meta.subtitleLine2].filter(Boolean).join(' ');
 
   return (
-    <div className="glass bg-gradient-to-br from-[#17402C]/95 via-[#17402C]/85 to-[#33463C]/90 rounded-card p-8 sm:p-10 text-[#EEF3EC] relative overflow-hidden flex flex-col md:flex-row justify-between items-start md:items-end gap-6 border border-white/20">
-      {/* Subtle glowing orb */}
-      <div className="absolute top-0 right-0 w-[40rem] h-[40rem] bg-white opacity-5 blur-[100px] rounded-full pointer-events-none" />
+    <div className="relative flex flex-col items-start justify-between gap-[var(--space-6)] overflow-hidden rounded-[var(--lkv-radius-card)] border border-[color:var(--glass-border)] bg-gradient-to-br from-[color:var(--lkv-primary)]/95 via-[color:var(--lkv-primary)]/85 to-[color:var(--lkv-forest-600)]/90 p-[var(--space-8)] text-[color:var(--stone-50)] sm:p-[var(--space-10)] md:flex-row md:items-end">
+      <div aria-hidden className="pointer-events-none absolute right-0 top-0 h-[40rem] w-[40rem] rounded-full bg-[color:var(--lkv-text-inverted)] opacity-5 blur-[100px]" />
 
-      {/* Main Left Content */}
       <div className="relative z-10 max-w-2xl">
-        <div className="flex items-center gap-2 flex-wrap mb-6">
-          <div className="inline-flex items-center gap-2 px-3 py-1 glass-pill text-white border-white/20">
-            <span className="w-1.5 h-1.5 rounded-full bg-forest-400 animate-pulse" />
-            <span className="font-mono text-[10px] uppercase tracking-widest text-[#EEF3EC] font-bold">
+        <div className="mb-[var(--space-6)] flex flex-wrap items-center gap-[var(--space-2)]">
+          <Badge className="border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] text-[color:var(--lkv-text-inverted)]">
+            <span aria-hidden className="h-1.5 w-1.5 animate-pulse rounded-full bg-[var(--lkv-forest-400)]" />
+            <span className="font-mono text-[length:var(--lkv-text-caption-2)] font-bold uppercase tracking-widest">
               {meta.badge || 'CARNET D’EXPÉDITION'} · {voyageursCount} {voyageursCount > 1 ? 'VOYAGEURS' : 'VOYAGEUR'} {meta.dateRange ? `· ${meta.dateRange}` : ''}
             </span>
-          </div>
+          </Badge>
 
           {meta.authorName && (
             <Link
               href={meta.authorId ? `/profil/${meta.authorId}` : '/communaute'}
-              className="inline-flex items-center gap-1.5 px-3 py-1 glass-pill text-white border-white/30 bg-black/30 hover:bg-black/50 transition-colors cursor-pointer group"
+              className="group inline-flex items-center gap-[var(--space-1)] rounded-full border border-[color:var(--glass-border)] bg-[color:var(--lkv-primary)]/30 px-[var(--space-3)] py-[var(--space-1)] transition-colors hover:bg-[color:var(--lkv-primary)]/50"
             >
-              <span className="text-[10px] font-mono text-forest-300 font-bold">Par</span>
-              <span className="text-xs font-bold text-white group-hover:underline">{meta.authorName}</span>
+              <span className="font-mono text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-forest-300)]">Par</span>
+              <span className="text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-inverted)] group-hover:underline">{meta.authorName}</span>
             </Link>
           )}
         </div>
 
-        <h1 className="text-4xl sm:text-5xl md:text-6xl mb-6 leading-[1.1] text-white">
-          <span className="font-display font-bold block">{displayTitle1}</span>
+        <h1 className="mb-[var(--space-6)] text-[length:var(--lkv-text-title-xl)] leading-[1.1] text-[color:var(--lkv-text-inverted)]">
+          <span className="block font-display font-bold">{displayTitle1}</span>
           {displayTitle2 && (
-            <span className="font-serif italic font-normal text-[#A6C1A0]">{displayTitle2}</span>
+            <span className="font-serif font-normal italic text-[color:var(--lkv-forest-200)]">{displayTitle2}</span>
           )}
         </h1>
 
         {descriptionText && (
-          <p className="text-white/80 font-sans text-sm md:text-base leading-relaxed mb-8 max-w-xl">
+          <p className="mb-[var(--space-8)] max-w-xl font-sans text-[length:var(--lkv-text-caption)] leading-relaxed text-[color:var(--lkv-text-inverted)]/80 md:text-[length:var(--lkv-text-body-sm)]">
             {descriptionText}
           </p>
         )}
 
-        <div className="flex items-center gap-4 sm:gap-6 font-mono text-sm flex-wrap">
+        <div className="flex flex-wrap items-center gap-[var(--space-4)] font-mono text-[length:var(--lkv-text-caption)] sm:gap-[var(--space-6)]">
           {meta.itineraire && (
             <div className="flex flex-col">
-              <span className="text-white/60 text-[10px] uppercase tracking-widest mb-1 font-bold">Itinéraire</span>
-              <span className="font-bold text-white truncate max-w-[200px]">{meta.itineraire}</span>
+              <span className="mb-[var(--space-1)] text-[length:var(--lkv-text-caption-2)] font-bold uppercase tracking-widest text-[color:var(--lkv-text-inverted)]/60">Itinéraire</span>
+              <span className="max-w-[200px] truncate font-bold text-[color:var(--lkv-text-inverted)]">{meta.itineraire}</span>
             </div>
           )}
           {meta.dateRange && (
             <>
-              <div className="w-px h-8 bg-white/20" />
+              <div aria-hidden className="h-8 w-px bg-[color:var(--lkv-text-inverted)]/20" />
               <div className="flex flex-col">
-                <span className="text-white/60 text-[10px] uppercase tracking-widest mb-1 font-bold">Période</span>
-                <span className="font-bold text-white">{meta.dateRange}</span>
+                <span className="mb-[var(--space-1)] text-[length:var(--lkv-text-caption-2)] font-bold uppercase tracking-widest text-[color:var(--lkv-text-inverted)]/60">Période</span>
+                <span className="font-bold text-[color:var(--lkv-text-inverted)]">{meta.dateRange}</span>
               </div>
             </>
           )}
-          <div className="w-px h-8 bg-white/20" />
+          <div aria-hidden className="h-8 w-px bg-[color:var(--lkv-text-inverted)]/20" />
           <div className="flex flex-col">
-            <span className="text-white/60 text-[10px] uppercase tracking-widest mb-1 font-bold">Équipe</span>
-            <span className="font-bold text-white">{voyageursCount} pers.</span>
+            <span className="mb-[var(--space-1)] text-[length:var(--lkv-text-caption-2)] font-bold uppercase tracking-widest text-[color:var(--lkv-text-inverted)]/60">Équipe</span>
+            <span className="font-bold text-[color:var(--lkv-text-inverted)]">{voyageursCount} pers.</span>
           </div>
         </div>
       </div>
 
-      {/* Right Actions & Badge */}
-      <div className="relative z-10 flex flex-col items-end gap-4 w-full md:w-auto mt-8 md:mt-0">
-        <div className="glass-sub-card rounded-2xl w-28 h-28 flex flex-col items-center justify-center mb-2 border-white/25 text-center px-2">
-          <span className="text-3xl mb-1">📖</span>
-          <span className="font-mono text-[9px] uppercase tracking-widest text-white/80 font-bold leading-tight">
+      <div className="relative z-10 mt-[var(--space-8)] flex w-full flex-col items-end gap-[var(--space-4)] md:mt-0 md:w-auto">
+        <Card variant="compact" className="mb-[var(--space-2)] flex h-28 w-28 flex-col items-center justify-center border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] px-[var(--space-2)] text-center">
+          <span className="mb-[var(--space-1)] text-[length:var(--lkv-text-title-sm)]" aria-hidden>📖</span>
+          <span className="font-mono text-[length:var(--lkv-text-caption-2)] font-bold uppercase leading-tight tracking-widest text-[color:var(--lkv-text-inverted)]/80">
             Récit Vérifié
           </span>
-          <span className="text-[10px] text-forest-300 font-bold mt-0.5">Certifié LKDV</span>
-        </div>
+          <span className="mt-[var(--space-1)] text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-forest-300)]">Certifié LKDV</span>
+        </Card>
 
-        {/* Primary CTA button */}
-        <button
+        <Button
           type="button"
           onClick={onExport}
-          className="w-full md:w-auto glass-capsule-btn primary py-3 px-6 text-sm font-bold flex items-center justify-center gap-2"
+          icon={<Icon name="ArrowDownTrayIcon" size={16} aria-hidden="true" />}
+          className="w-full md:w-auto"
         >
-          <Icon name="ArrowDownTrayIcon" size={16} className="relative z-10" />
-          <span className="relative z-10">Exporter le carnet</span>
-        </button>
+          Exporter le carnet
+        </Button>
 
-        {/* Social Reactions & Actions Bar */}
-        <div className="flex items-center gap-2 mt-1 flex-wrap justify-end">
-          {/* Reaction Likes */}
-          <button
+        <div className="mt-[var(--space-1)] flex flex-wrap items-center justify-end gap-[var(--space-2)]">
+          <Button
             type="button"
+            variant={hasLiked ? 'primary' : 'secondary'}
             onClick={handleToggleLike}
-            className={`glass-capsule-btn px-3 py-2 flex items-center gap-1.5 text-xs font-bold transition-all ${
-              hasLiked ? 'bg-emerald-600/40 text-emerald-300 border-emerald-400/50' : 'text-white'
-            }`}
-            title="Réagir au carnet"
+            aria-label="Réagir au carnet"
+            aria-pressed={hasLiked}
+            icon={<span aria-hidden>🎒</span>}
+            className="px-[var(--space-3)]"
           >
-            <span className="text-sm relative z-10">🎒</span>
-            <span className="relative z-10 font-mono">{likesCount}</span>
-          </button>
+            <span className="font-mono">{likesCount}</span>
+          </Button>
 
-          {/* Comments count & open */}
-          <button
+          <Button
             type="button"
+            variant="secondary"
             onClick={onOpenComments}
-            className="glass-capsule-btn px-3 py-2 flex items-center gap-1.5 text-xs font-bold text-white"
-            title="Commentaires du carnet"
+            aria-label="Commentaires du carnet"
+            icon={<Icon name="ChatBubbleLeftIcon" size={14} aria-hidden="true" />}
+            className="px-[var(--space-3)]"
           >
-            <Icon name="ChatBubbleLeftIcon" size={14} className="relative z-10" />
-            <span className="relative z-10 font-mono">{commentsCount}</span>
-          </button>
+            <span className="font-mono">{commentsCount}</span>
+          </Button>
 
-          {/* Share */}
-          <button
+          <IconButton
             type="button"
+            variant="glass"
             onClick={handleShare}
-            className="glass-capsule-btn p-2.5 text-white"
-            title="Partager le carnet"
+            aria-label="Partager le carnet"
           >
-            <Icon name="ShareIcon" size={15} className="relative z-10" />
-          </button>
+            <Icon name="ShareIcon" size={15} aria-hidden="true" />
+          </IconButton>
 
-          {/* Save / Favorite */}
-          <button
+          <IconButton
             type="button"
+            variant={isSaved ? 'solid' : 'glass'}
             onClick={handleToggleSave}
-            className={`glass-capsule-btn p-2.5 transition-colors ${
-              isSaved ? 'bg-amber-500/30 text-amber-300 border-amber-300/40' : 'text-white'
-            }`}
-            title="Enregistrer dans les favoris"
+            aria-label="Enregistrer dans les favoris"
+            aria-pressed={isSaved}
+            className={isSaved ? 'bg-[color:var(--lkv-warning)] text-[color:var(--lkv-warning-dark)]' : ''}
           >
-            <Icon name={isSaved ? 'BookmarkSolidIcon' : 'BookmarkIcon'} size={15} className="relative z-10" />
-          </button>
+            <Icon name={isSaved ? 'BookmarkSolidIcon' : 'BookmarkIcon'} size={15} aria-hidden="true" />
+          </IconButton>
         </div>
       </div>
     </div>

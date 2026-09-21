@@ -3,10 +3,10 @@ import { lkvAlert } from '@/components/ui/dialogs';
 
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import Link from 'next/link';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { createClient } from '@/lib/supabase/client';
 import Icon from '@/components/ui/AppIcon';
-import { IconButton } from '@/components/ui';
+import { Badge, Button, Card, EmptyState, IconButton, Tabs } from '@/components/ui';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 
 export interface ClubMessage {
@@ -89,7 +89,6 @@ export default function ClubDiscussionCard({
 
     try {
       if (replyingTo) {
-        // It's a reply to a topic
         const { error } = await supabase.from('club_topic_replies').insert({
           topic_id: replyingTo.id,
           author_id: user.id,
@@ -98,14 +97,12 @@ export default function ClubDiscussionCard({
         });
 
         if (!error) {
-          // Increment reply counter on the parent topic
           await supabase
             .from('club_topics')
             .update({ replies_count: (replyingTo.replies || 0) + 1 })
             .eq('id', replyingTo.id);
         }
       } else {
-        // It's a new topic / discussion post
         const titleText = newTitle.trim() || msg.slice(0, 50) || (gpxAttachment ? 'Trace GPX partagée' : 'Message');
         await supabase.from('club_topics').insert({
           club_id: clubId,
@@ -232,45 +229,38 @@ export default function ClubDiscussionCard({
     : safeDiscussions;
 
   return (
-    <div className="glass p-6 rounded-2xl flex flex-col h-[640px] transition-all duration-300">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-4 flex-shrink-0">
+    <Card className="flex h-[640px] flex-col p-[var(--space-6)] transition-all duration-[var(--motion-control-duration)]">
+      <div className="mb-[var(--space-4)] flex shrink-0 items-center justify-between">
         <div>
-          <h2 className="font-display font-bold text-xl text-[#17402C]">
-            Discussions <span className="font-serif italic font-normal text-[#17402C]">du club</span>
+          <h2 className="font-display text-[length:var(--lkv-text-title-sm)] font-bold text-[color:var(--lkv-text-primary)]">
+            Discussions <span className="font-serif font-normal italic text-[color:var(--lkv-text-primary)]">du club</span>
           </h2>
-          <p className="text-xs text-[#5C6B5E]">Échanges, conseils et partages dans {clubName}</p>
+          <p className="text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">Échanges, conseils et partages dans {clubName}</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-[var(--space-2)]">
           {onFilterChange && (
-            <div className="glass-capsule-bar p-1 flex items-center gap-1">
-              <button
-                type="button"
-                onClick={() => onFilterChange('all')}
-                className={`glass-capsule-segment !py-1 !px-2.5 text-xs font-bold ${filterType === 'all' ? 'active' : ''}`}
-              >
-                Tous ({safeDiscussions.length})
-              </button>
-              <button
-                type="button"
-                onClick={() => onFilterChange('guides')}
-                className={`glass-capsule-segment !py-1 !px-2.5 text-xs font-bold ${filterType === 'guides' ? 'active' : ''}`}
-              >
-                📌 Guides & Astuces
-              </button>
-            </div>
+            <Tabs
+              variant="segmented"
+              ariaLabel="Filtrer les discussions"
+              value={filterType}
+              onChange={(id) => onFilterChange(id as 'all' | 'guides')}
+              options={[
+                { id: 'all', label: `Tous (${safeDiscussions.length})` },
+                { id: 'guides', label: '📌 Guides & Astuces' },
+              ]}
+              className="w-auto"
+            />
           )}
         </div>
       </div>
 
-      {/* Messages Feed */}
-      <div className="flex-1 overflow-y-auto space-y-4 pr-2 mb-4 custom-scrollbar">
+      <div className="mb-[var(--space-4)] flex-1 space-y-[var(--space-4)] overflow-y-auto pr-[var(--space-2)]">
         {filteredDiscussions.length === 0 ? (
-          <div className="text-center py-16 text-[#5C6B5E] text-xs">
-            <span className="text-3xl block mb-2">💬</span>
-            <p className="font-bold text-[#17402C] text-sm">Aucun message pour le moment</p>
-            <p className="mt-1">Lancez la première discussion dans le club !</p>
-          </div>
+          <EmptyState
+            icon={<Icon name="ChatBubbleLeftRightIcon" size={22} aria-hidden="true" />}
+            title="Aucun message pour le moment"
+            description="Lancez la première discussion dans le club !"
+          />
         ) : (
           filteredDiscussions.map((msg) => {
             const isUserLiked = !!likedMap[msg.id];
@@ -279,62 +269,66 @@ export default function ClubDiscussionCard({
             const msgTitle = msg.title || '';
 
             return (
-              <div key={msg.id} className="flex gap-3 items-start group">
+              <div key={msg.id} className="group flex items-start gap-[var(--space-3)]">
                 <Link
                   href={msg.author_id ? `/profil/${msg.author_id}` : '/communaute'}
                   onClick={() => triggerHaptic('light')}
-                  className="w-10 h-10 rounded-full bg-gradient-to-br from-[#17402C] to-[#1E5238] text-white flex items-center justify-center font-bold text-sm flex-shrink-0 overflow-hidden border border-white/20 hover:scale-105 transition-transform cursor-pointer"
+                  className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full border border-[color:var(--glass-border)] bg-[color:var(--lkv-primary)] text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-inverted)] transition-transform hover:scale-105"
+                  aria-label={`Voir le profil de ${msgAuthor}`}
                 >
                   {msg.author_avatar ? (
-                    <img src={msg.author_avatar} alt={msgAuthor} className="w-full h-full object-cover" />
+                    <img src={msg.author_avatar} alt="" className="h-full w-full object-cover" />
                   ) : (
                     (msgAuthor.charAt(0) || 'V').toUpperCase()
                   )}
                 </Link>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1 flex-wrap">
+                <div className="min-w-0 flex-1">
+                  <div className="mb-[var(--space-1)] flex flex-wrap items-center gap-[var(--space-2)]">
                     <Link
                       href={msg.author_id ? `/profil/${msg.author_id}` : '/communaute'}
                       onClick={() => triggerHaptic('light')}
-                      className="font-bold text-sm text-[#17402C] hover:underline cursor-pointer"
+                      className="text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)] hover:underline"
                     >
                       {msgAuthor}
                     </Link>
                     {msg.tag && (
-                      <span className="glass-pill text-[9px] font-mono uppercase">{msg.tag}</span>
+                      <Badge className="font-mono uppercase">{msg.tag}</Badge>
                     )}
                     {msg.is_pinned && (
-                      <span className="glass-pill text-[9px] bg-sand-500/10 text-sand-800 font-mono">📌 ÉPINGLÉ</span>
+                      <Badge tone="warn" className="font-mono">📌 ÉPINGLÉ</Badge>
                     )}
-                    <button
+                    <Button
                       type="button"
+                      variant="ghost"
+                      size="sm"
                       onClick={() => {
                         triggerHaptic('light');
                         setReplyingTo(replyingTo?.id === msg.id ? null : msg);
                         setNewMessage('');
                         composerInputRef.current?.focus();
                       }}
-                      className="glass-capsule-btn !min-h-[26px] !py-0.5 !px-2 !text-[10px] font-bold ml-1"
+                      className="ml-[var(--space-1)] px-[var(--space-2)] text-[length:var(--lkv-text-caption-2)]"
+                      aria-pressed={replyingTo?.id === msg.id}
                     >
                       Répondre
-                    </button>
-                    <span className="text-xs text-[#5C6B5E] font-mono ml-auto">{msg.time || ''}</span>
+                    </Button>
+                    <span className="ml-auto font-mono text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">{msg.time || ''}</span>
                   </div>
 
                   {msg.reply_to && (
-                    <p className="text-[10px] text-[#5C6B5E] italic mb-1">
+                    <p className="mb-[var(--space-1)] text-[length:var(--lkv-text-caption-2)] italic text-[color:var(--lkv-text-muted)]">
                       ↩ en réponse à {msg.reply_to_author || 'un message'}
                     </p>
                   )}
 
-                  <div className="glass-sub-card p-4 rounded-2xl rounded-tl-none mb-2">
+                  <div className="mb-[var(--space-2)] rounded-[var(--lkv-radius-md)] rounded-tl-none bg-[color:var(--lkv-surface-muted)] p-[var(--space-4)]">
                     {msgTitle && msgTitle !== msgContent.slice(0, 50) && (
-                      <h4 className="font-bold text-sm text-[#17402C] mb-1">{msgTitle}</h4>
+                      <h4 className="mb-[var(--space-1)] text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)]">{msgTitle}</h4>
                     )}
-                    <p className="text-sm text-[#17402C] font-sans leading-relaxed whitespace-pre-wrap">
+                    <p className="whitespace-pre-wrap font-sans text-[length:var(--lkv-text-caption)] leading-relaxed text-[color:var(--lkv-text-primary)]">
                       {msgContent.split(/(#\w+)/g).map((part, i) =>
                         part.startsWith('#') ? (
-                          <span key={i} className="text-[#3A63B2] font-semibold">
+                          <span key={i} className="font-semibold text-[color:var(--lkv-info)]">
                             {part}
                           </span>
                         ) : (
@@ -343,19 +337,17 @@ export default function ClubDiscussionCard({
                       )}
                     </p>
 
-                    {/* Image / Media attachment */}
                     {msg.attachment && (
-                      <div className="mt-3 rounded-xl overflow-hidden max-h-60 bg-black/5 border border-[#17402C]/10">
+                      <div className="mt-[var(--space-3)] max-h-60 overflow-hidden rounded-[var(--lkv-radius-md)] border border-[color:var(--lkv-primary)]/10 bg-[color:var(--lkv-primary)]/5">
                         <img
                           src={msg.attachment}
                           alt="Pièce jointe"
-                          className="w-full h-auto max-h-60 object-cover rounded-xl"
+                          className="h-auto max-h-60 w-full rounded-[var(--lkv-radius-md)] object-cover"
                           loading="lazy"
                         />
                       </div>
                     )}
 
-                    {/* Geolocation Pin */}
                     {msg.location && (
                       <a
                         href={`https://www.google.com/maps?q=${
@@ -365,10 +357,10 @@ export default function ClubDiscussionCard({
                         }`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="mt-3 inline-flex items-center gap-2 glass-capsule-btn py-1.5 px-3 text-xs font-semibold"
+                        className="mt-[var(--space-3)] inline-flex items-center gap-[var(--space-2)] rounded-full border border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-card)] px-[var(--space-3)] py-[var(--space-2)] text-[length:var(--lkv-text-caption-2)] font-semibold text-[color:var(--lkv-text-primary)]"
                       >
-                        <Icon name="MapPinIcon" size={14} className="relative z-10 text-forest-700" />
-                        <span className="relative z-10">
+                        <Icon name="MapPinIcon" size={14} className="text-[color:var(--lkv-forest-700)]" aria-hidden="true" />
+                        <span>
                           {typeof msg.location === 'string'
                             ? msg.location
                             : `📍 ${(msg.location as any).lat?.toFixed(5)}, ${(msg.location as any).lng?.toFixed(5)}`}
@@ -376,41 +368,46 @@ export default function ClubDiscussionCard({
                       </a>
                     )}
 
-                    {/* Footer Actions (Likes & Replies count) */}
-                    <div className="mt-3 pt-2 border-t border-[#17402C]/6 flex items-center gap-2 text-xs font-medium text-[#5C6B5E]">
-                      <button
+                    <div className="mt-[var(--space-3)] flex items-center gap-[var(--space-2)] border-t border-[color:var(--lkv-primary)]/5 pt-[var(--space-2)] text-[length:var(--lkv-text-caption-2)] font-medium text-[color:var(--lkv-text-muted)]">
+                      <Button
                         type="button"
+                        variant="ghost"
+                        size="sm"
                         aria-label={isUserLiked ? "Je n'aime plus" : "J'aime"}
                         onClick={() => handleToggleLike(msg)}
-                        className="glass-capsule-btn !py-1 !px-3"
+                        aria-pressed={isUserLiked}
+                        className="px-[var(--space-3)]"
                       >
                         <motion.svg
                           whileTap={{ scale: 1.3 }}
                           transition={{ type: 'spring', stiffness: 500, damping: 15 }}
                           viewBox="0 0 24 24"
-                          className="w-4 h-4 transition-transform relative z-10"
-                          fill={isUserLiked ? '#E11D48' : 'none'}
-                          stroke={isUserLiked ? '#E11D48' : 'currentColor'}
+                          className="h-4 w-4 transition-transform motion-reduce:transition-none"
+                          fill={isUserLiked ? 'var(--lkv-danger)' : 'none'}
+                          stroke={isUserLiked ? 'var(--lkv-danger)' : 'currentColor'}
                           strokeWidth="1.8"
                           strokeLinecap="round"
                           strokeLinejoin="round"
+                          aria-hidden="true"
                         >
                           <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
                         </motion.svg>
-                        <span className="font-mono text-xs relative z-10">{msg.likes || 0}</span>
-                      </button>
-                      <button
+                        <span className="font-mono">{msg.likes || 0}</span>
+                      </Button>
+                      <Button
                         type="button"
+                        variant="ghost"
+                        size="sm"
                         aria-label="Répondre au message"
                         onClick={() => {
                           setReplyingTo(msg);
                           composerInputRef.current?.focus();
                         }}
-                        className="glass-capsule-btn !py-1 !px-3"
+                        className="px-[var(--space-3)]"
                       >
-                        <Icon name="message-square" size={13} className="relative z-10" />
-                        <span className="relative z-10">{msg.replies || 0} réponses</span>
-                      </button>
+                        <Icon name="message-square" size={13} aria-hidden="true" />
+                        <span>{msg.replies || 0} réponses</span>
+                      </Button>
                     </div>
                   </div>
                 </div>
@@ -421,12 +418,12 @@ export default function ClubDiscussionCard({
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Hidden File Inputs */}
       <input
         ref={fileInputRef}
         type="file"
         accept="image/*,video/*"
         className="hidden"
+        aria-label="Envoyer une photo ou vidéo"
         onChange={handleFileUpload}
       />
       <input
@@ -434,6 +431,7 @@ export default function ClubDiscussionCard({
         type="file"
         accept=".gpx,application/gpx+xml"
         className="hidden"
+        aria-label="Partager une trace GPX"
         onChange={async (e) => {
           const file = e.target.files?.[0];
           if (!file || !clubId || !user) return;
@@ -442,28 +440,27 @@ export default function ClubDiscussionCard({
         }}
       />
 
-      {/* Interactive Replying Banner */}
       {replyingTo && (
-        <div className="flex items-center gap-2 mb-2 px-3 py-2 glass-sub-card rounded-xl text-xs text-[#17402C] flex-shrink-0 animate-fade-in">
+        <div className="mb-[var(--space-2)] flex shrink-0 items-center gap-[var(--space-2)] rounded-[var(--lkv-radius-md)] bg-[color:var(--lkv-surface-muted)] px-[var(--space-3)] py-[var(--space-2)] text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-primary)]">
           <span className="font-bold">↩ Répondre à {replyingTo.author || 'Voyageur'}</span>
-          <span className="text-[#5C6B5E] truncate flex-1">
+          <span className="flex-1 truncate text-[color:var(--lkv-text-muted)]">
             « {(replyingTo.content || '').slice(0, 60)}{(replyingTo.content || '').length > 60 ? '…' : ''} »
           </span>
-          <button
+          <IconButton
             type="button"
+            variant="ghost"
+            size="sm"
             aria-label="Annuler la réponse"
             onClick={() => setReplyingTo(null)}
-            className="glass-circle-btn !w-7 !h-7 !min-w-7 !min-h-7 font-bold"
           >
-            ✕
-          </button>
+            <Icon name="XMarkIcon" size={14} aria-hidden="true" />
+          </IconButton>
         </div>
       )}
 
-      {/* Composer Input Bar in Liquid Glass */}
-      <div className="relative flex-shrink-0">
-        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none z-10">
-          <div className="w-8 h-8 rounded-full bg-[#17402C] flex items-center justify-center text-white text-xs font-bold shadow-2xs">
+      <div className="relative shrink-0">
+        <div className="pointer-events-none absolute inset-y-0 left-0 z-10 flex items-center pl-[var(--space-3)]">
+          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[color:var(--lkv-primary)] text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-inverted)]">
             {user?.user_metadata?.first_name
               ? user.user_metadata.first_name.charAt(0)
               : user?.user_metadata?.full_name
@@ -487,49 +484,48 @@ export default function ClubDiscussionCard({
               ? `Répondre à ${replyingTo.author || 'Voyageur'}...`
               : 'Ajouter un message pour le club...'
           }
-          className="glass-input w-full pl-13 pr-[140px] text-xs text-[#17402C] min-h-[44px] rounded-full bg-white/80 border border-white focus:outline-none focus:ring-1 focus:ring-[#17402C]"
+          aria-label="Ajouter un message pour le club"
+          className="min-h-[44px] w-full rounded-full border border-[color:var(--lkv-border)] bg-[color:var(--lkv-field-bg)] pl-14 pr-[140px] text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-primary)] placeholder:text-[color:var(--lkv-text-muted)] focus:outline-none focus:ring-2 focus:ring-[color:var(--lkv-focus-ring)]"
         />
-        <div className="absolute inset-y-0 right-0 pr-1.5 flex items-center gap-1">
+        <div className="absolute inset-y-0 right-0 flex items-center gap-[var(--space-1)] pr-[var(--space-2)]">
           <IconButton
             size="sm"
+            variant="glass"
             onClick={() => gpxInputRef.current?.click()}
             disabled={uploading || loading}
-            title="Partager une trace GPX"
             aria-label="Partager une trace GPX"
           >
-            <span className="text-[11px]">🗺️</span>
+            <span className="text-[length:var(--lkv-text-caption-2)]" aria-hidden>🗺️</span>
           </IconButton>
           <IconButton
             size="sm"
+            variant="glass"
             onClick={() => fileInputRef.current?.click()}
             disabled={uploading || loading}
-            title="Envoyer une photo"
             aria-label="Envoyer une photo"
           >
-            <Icon name="PhotoIcon" size={13} />
+            <Icon name="PhotoIcon" size={13} aria-hidden="true" />
           </IconButton>
           <IconButton
             size="sm"
+            variant="glass"
             onClick={handleShareLocation}
             disabled={locating || loading}
-            title="Partager ma position"
             aria-label="Partager ma position"
           >
-            <Icon name="MapPinIcon" size={13} />
+            <Icon name="MapPinIcon" size={13} aria-hidden="true" />
           </IconButton>
           <IconButton
             size="sm"
             onClick={() => handleSendMessage()}
             disabled={!newMessage.trim() || loading}
-            title="Envoyer"
             aria-label="Envoyer"
             variant={Boolean(newMessage.trim()) ? 'solid' : 'glass'}
-            aria-pressed={Boolean(newMessage.trim()) || undefined}
           >
-            <Icon name="PaperAirplaneIcon" size={13} className={Boolean(newMessage.trim()) ? 'text-white' : ''} />
+            <Icon name="PaperAirplaneIcon" size={13} aria-hidden="true" />
           </IconButton>
         </div>
       </div>
-    </div>
+    </Card>
   );
 }

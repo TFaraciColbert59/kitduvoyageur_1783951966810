@@ -3,6 +3,7 @@
 import React, { useEffect, useRef } from 'react';
 import Link from 'next/link';
 import Icon from '@/components/ui/AppIcon';
+import { Badge, Button, Card } from '@/components/ui';
 import 'leaflet/dist/leaflet.css';
 
 interface ParcoursCardProps {
@@ -75,7 +76,6 @@ export default function ParcoursCard({ groupId, trail, meta }: ParcoursCardProps
           [startLat, startLng],
         ];
       }
-
       L.polyline(routeCoords, {
         color: '#FFFFFF',
         weight: 8,
@@ -163,66 +163,56 @@ export default function ParcoursCard({ groupId, trail, meta }: ParcoursCardProps
   };
 
   return (
-    <div className="glass bg-white/90 backdrop-blur-xl p-4 sm:p-6 rounded-3xl border border-white shadow-xs relative overflow-hidden transition-all duration-300">
-      <div className="flex justify-between items-start mb-3">
+    <Card className="relative overflow-hidden p-[var(--space-4)] transition-all duration-[var(--motion-control-duration)] sm:p-[var(--space-6)]">
+      <div className="mb-[var(--space-3)] flex items-start justify-between">
         <div>
-          <h2 className="font-display font-bold text-lg sm:text-xl text-lkv-primary">
-            Le <span className="font-serif italic font-normal text-lkv-primary">parcours GPS</span>
+          <h2 className="font-display text-[length:var(--lkv-text-subheadline)] font-bold text-[color:var(--lkv-text-primary)] sm:text-[length:var(--lkv-text-title-sm)]">
+            Le <span className="font-serif font-normal italic text-[color:var(--lkv-text-primary)]">parcours GPS</span>
           </h2>
-          <div className="flex items-center gap-1.5 mt-1">
-            <span className="glass-pill text-[10px] font-mono font-bold text-lkv-primary">
-              {meta?.durationDays || 3} jours
-            </span>
-            <span className="glass-pill text-[10px] font-mono font-bold text-lkv-primary">
-              {distanceKm} km
-            </span>
+          <div className="mt-[var(--space-1)] flex items-center gap-[var(--space-1)]">
+            <Badge>{meta?.durationDays || 3} jours</Badge>
+            <Badge>{distanceKm} km</Badge>
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          <button
+        <div className="flex items-center gap-[var(--space-2)]">
+          <Button
             type="button"
+            variant="secondary"
+            size="sm"
             onClick={handleDownloadGpx}
-            className="flex items-center gap-1.5 text-xs font-bold text-lkv-primary hover:opacity-80"
-            title="Télécharger la trace GPX"
+            icon={<Icon name="ArrowDownTrayIcon" size={12} aria-hidden="true" />}
           >
-            <span className="text-[11px] font-bold">GPX</span>
-            <span className="glass-circle-btn w-7 h-7 text-xs flex items-center justify-center pointer-events-none">
-              <Icon name="ArrowDownTrayIcon" size={12} />
-            </span>
-          </button>
+            GPX
+          </Button>
           <Link
             href="/explorer"
-            className="flex items-center gap-1.5 text-xs font-bold text-lkv-primary hover:opacity-80"
-            title="Ouvrir la carte interactive"
+            className="inline-flex min-h-[var(--control-height-sm)] items-center gap-[var(--space-1)] rounded-full border border-[color:var(--lkv-border)] bg-[color:var(--card-tint-strong)] px-[var(--space-3)] text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-primary)] backdrop-blur-[var(--blur-md)]"
           >
-            <span className="text-[11px] font-bold">Carte</span>
-            <span className="glass-circle-btn w-7 h-7 text-xs flex items-center justify-center pointer-events-none">
-              <Icon name="ArrowRightIcon" size={12} />
-            </span>
+            Carte
+            <Icon name="ArrowRightIcon" size={12} aria-hidden="true" />
           </Link>
         </div>
       </div>
-      
-      <p className="text-xs text-lkv-text-muted mb-4 font-normal leading-relaxed">
+
+      <p className="mb-[var(--space-4)] text-[length:var(--lkv-text-caption)] font-normal leading-relaxed text-[color:var(--lkv-text-muted)]">
         {meta?.description || `Tracé de ${trailName} avec dénivelé cumulé de +${elevationGain} m.`}
       </p>
-      
-      {/* Real Interactive Leaflet Map */}
-      <div className="h-48 sm:h-56 glass-sub-card rounded-2xl relative overflow-hidden mb-3 z-0">
-        <div ref={containerRef} className="w-full h-full z-0" />
+
+      <div className="relative mb-[var(--space-3)] h-48 overflow-hidden rounded-[var(--lkv-radius-md)] bg-[color:var(--lkv-surface-muted)] sm:h-56">
+        <div ref={containerRef} className="z-0 h-full w-full" />
       </div>
-      
-      <div className="flex flex-wrap items-center gap-4 text-[10px] font-mono uppercase tracking-widest text-lkv-text-muted">
-        <span className="flex items-center gap-1.5 font-bold text-lkv-primary">
-          <span className="w-3 h-[2px] bg-lkv-primary" /> Tracé GPS actif
+
+      <div className="flex flex-wrap items-center gap-[var(--space-4)] font-mono text-[length:var(--lkv-text-caption-2)] uppercase tracking-widest text-[color:var(--lkv-text-muted)]">
+        <span className="flex items-center gap-[var(--space-1)] font-bold text-[color:var(--lkv-text-primary)]">
+          <span aria-hidden className="h-[2px] w-3 bg-[color:var(--lkv-primary)]" /> Tracé GPS actif
         </span>
-        <span className="flex items-center gap-1.5 font-bold text-lkv-primary">
-          <Icon name="ArrowTrendingUpIcon" size={12} className="relative z-10" /> +{elevationGain} m D+
+        <span className="flex items-center gap-[var(--space-1)] font-bold text-[color:var(--lkv-text-primary)]">
+          <Icon name="ArrowTrendingUpIcon" size={12} aria-hidden="true" /> +{elevationGain} m D+
         </span>
-        <span className="flex items-center gap-1.5 font-semibold">
-          <Icon name="MapPinIcon" size={12} className="relative z-10" /> {trailName}
+        <span className="flex items-center gap-[var(--space-1)] font-semibold">
+          <Icon name="MapPinIcon" size={12} aria-hidden="true" /> {trailName}
         </span>
       </div>
-    </div>
+    </Card>
   );
 }

@@ -1,4 +1,5 @@
 import React from 'react';
+import { Card } from '@/components/ui';
 
 interface Stat {
   value: string;
@@ -16,22 +17,22 @@ export default function StatsBar({ stats }: StatsBarProps) {
   if (visibleStats.length === 0) return null;
 
   return (
-    <div className="glass bg-white/90 backdrop-blur-xl rounded-2xl p-4 sm:p-5 border border-white shadow-sm">
-      <div className="flex flex-wrap items-center justify-around gap-4 md:gap-2 divide-y md:divide-y-0 md:divide-x divide-[#17402C]/10">
+    <Card className="p-[var(--space-4)] sm:p-[var(--space-5)]">
+      <div className="flex flex-wrap items-center justify-around gap-[var(--space-4)] divide-y divide-[color:var(--lkv-primary)]/10 md:gap-[var(--space-2)] md:divide-x md:divide-y-0">
         {visibleStats.map((stat, i) => (
-          <div key={i} className="text-center flex-1 min-w-[100px] pt-2 md:pt-0">
-            <p className="font-mono text-2xl sm:text-3xl font-bold text-[#17402C] tracking-tight">
+          <div key={i} className="min-w-[100px] flex-1 pt-[var(--space-2)] text-center md:pt-0">
+            <p className="font-mono text-[length:var(--lkv-text-title-sm)] font-bold tracking-tight text-[color:var(--lkv-text-primary)] sm:text-[length:var(--lkv-text-title-lg)]">
               {stat.value}
             </p>
-            <p className="font-mono text-[9.5px] uppercase tracking-[0.18em] text-[#5C6B5E] font-bold mt-1">
+            <p className="mt-[var(--space-1)] font-mono text-[length:var(--lkv-text-caption-2)] font-bold uppercase tracking-[0.18em] text-[color:var(--lkv-text-muted)]">
               {stat.label}
             </p>
             {stat.sublabel && (
-              <p className="text-[10px] text-[#5C6B5E]/80 mt-0.5">{stat.sublabel}</p>
+              <p className="mt-[var(--space-1)] text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]/80">{stat.sublabel}</p>
             )}
           </div>
         ))}
       </div>
-    </div>
+    </Card>
   );
 }

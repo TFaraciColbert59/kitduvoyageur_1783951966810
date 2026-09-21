@@ -2,6 +2,7 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
 import Icon from '@/components/ui/AppIcon';
+import { Badge, Button, Card, EmptyState, ListItem } from '@/components/ui';
 import { Sheet } from '@/components/ui/Sheet';
 import {
   publishTaskTemplate,
@@ -26,6 +27,9 @@ function formatShortDate(value?: string | null) {
   if (Number.isNaN(date.getTime())) return null;
   return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
 }
+
+const FIELD_CLASS =
+  'w-full rounded-[var(--lkv-radius-md)] border border-[color:var(--lkv-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[var(--space-2)] text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-primary)] placeholder:text-[color:var(--lkv-text-muted)] focus:outline-none focus:ring-2 focus:ring-[color:var(--lkv-focus-ring)]';
 
 export default function ClubGroupsTab({
   club,
@@ -124,55 +128,50 @@ export default function ClubGroupsTab({
   };
 
   return (
-    <section className="space-y-4" data-testid="club-groups-tab">
-      <div className="flex items-center justify-between gap-3 flex-wrap">
+    <section className="space-y-[var(--space-4)]" data-testid="club-groups-tab">
+      <div className="flex flex-wrap items-center justify-between gap-[var(--space-3)]">
         <div>
-          <h2 className="font-display font-bold text-lg text-[var(--lkv-text-primary)]">
+          <h2 className="font-display text-[length:var(--lkv-text-subheadline)] font-bold text-[color:var(--lkv-text-primary)]">
             Groupes du club
           </h2>
-          <p className="text-xs text-[var(--lkv-text-secondary)] mt-0.5">
+          <p className="mt-[var(--space-1)] text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-secondary)]">
             Les groupes de voyage nés de {club?.name || 'ce club'} se gèrent dans le Hub.
           </p>
         </div>
         {isMember && (
-          <button
+          <Button
             type="button"
             onClick={() => setModalOpen(true)}
-            className="glass-capsule-btn primary py-2 px-4 text-xs font-bold min-h-[44px]"
+            icon={<Icon name="PlusIcon" size={14} aria-hidden="true" />}
             data-testid="club-groups-create-cta"
           >
-            <Icon name="PlusIcon" size={14} className="inline mr-1 relative z-10" />
-            <span className="relative z-10">Créer un groupe de voyage</span>
-          </button>
+            Créer un groupe de voyage
+          </Button>
         )}
       </div>
 
       {!isMember && (
-        <div className="glass rounded-2xl p-6 text-center">
-          <span className="text-2xl block mb-1">🔒</span>
-          <p className="text-sm font-bold text-[var(--lkv-text-primary)]">
-            Réservé aux membres du club
-          </p>
-          <p className="text-xs text-[var(--lkv-text-secondary)] mt-1">
-            Rejoignez le club pour voir ses groupes de voyage et en créer.
-          </p>
-        </div>
+        <Card className="text-center">
+          <EmptyState
+            icon={<span className="text-[length:var(--lkv-text-title-sm)]" aria-hidden>🔒</span>}
+            title="Réservé aux membres du club"
+            description="Rejoignez le club pour voir ses groupes de voyage et en créer."
+          />
+        </Card>
       )}
 
       {isMember && groups.length === 0 && (
-        <div className="glass rounded-2xl p-8 text-center">
-          <span className="text-2xl block mb-1">🎒</span>
-          <p className="text-sm font-bold text-[var(--lkv-text-primary)]">
-            Aucun groupe de voyage pour le moment
-          </p>
-          <p className="text-xs text-[var(--lkv-text-secondary)] mt-1">
-            Lancez le premier groupe du club et invitez vos compagnons.
-          </p>
-        </div>
+        <Card className="text-center">
+          <EmptyState
+            icon={<span className="text-[length:var(--lkv-text-title-sm)]" aria-hidden>🎒</span>}
+            title="Aucun groupe de voyage pour le moment"
+            description="Lancez le premier groupe du club et invitez vos compagnons."
+          />
+        </Card>
       )}
 
       {groups.length > 0 && (
-        <div className={compact ? 'space-y-3' : 'grid gap-3 sm:grid-cols-2'}>
+        <div className={compact ? 'space-y-[var(--space-3)]' : 'grid gap-[var(--space-3)] sm:grid-cols-2'}>
           {groups.map((group: any) => {
             const departure = formatShortDate(group.departure_date);
             const ret = formatShortDate(group.return_date);
@@ -182,59 +181,54 @@ export default function ClubGroupsTab({
                 : departure
               : null;
             return (
-              <button
+              <Card
                 key={group.id}
-                type="button"
+                variant="interactive"
+                as="article"
                 onClick={() => onOpenGroup(group)}
-                className="glass-capsule-btn w-full !p-4 text-left flex flex-col !items-stretch gap-2 min-h-[44px]"
+                className="flex flex-col gap-[var(--space-2)] p-[var(--space-4)] text-left"
                 data-testid="club-group-card"
               >
-                <div className="flex items-start justify-between gap-2">
-                  <h3 className="font-display font-bold text-sm text-[var(--lkv-text-primary)] truncate">
+                <div className="flex items-start justify-between gap-[var(--space-2)]">
+                  <h3 className="truncate font-display text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)]">
                     {group.name}
                   </h3>
-                  <span className="glass-pill text-[9px] font-mono font-bold shrink-0">
+                  <Badge className="shrink-0 font-mono font-bold">
                     {group.visibility === 'club_only' ? 'Club' : 'Public'}
-                  </span>
+                  </Badge>
                 </div>
-                <div className="flex items-center gap-2 text-xs text-[var(--lkv-text-secondary)] flex-wrap">
+                <div className="flex flex-wrap items-center gap-[var(--space-2)] text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-secondary)]">
                   {group.destination && <span>📍 {group.destination}</span>}
                   {dates && <span className="font-mono">🗓️ {dates}</span>}
                 </div>
-                <span className="text-xs font-bold text-[var(--lkv-text-primary)] mt-auto">
+                <span className="mt-auto text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-primary)]">
                   Ouvrir dans le Hub →
                 </span>
-              </button>
+              </Card>
             );
           })}
         </div>
       )}
 
       {isMember && (
-        <div className="glass rounded-2xl p-4 space-y-3" data-testid="club-task-templates">
+        <Card className="space-y-[var(--space-3)] p-[var(--space-4)]" data-testid="club-task-templates">
           <div>
-            <h3 className="font-display font-bold text-sm text-[var(--lkv-text-primary)]">
+            <h3 className="font-display text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)]">
               Check-lists du club
             </h3>
-            <p className="text-xs text-[var(--lkv-text-secondary)] mt-0.5">
+            <p className="mt-[var(--space-1)] text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-secondary)]">
               Des modèles réutilisables, applicables en un tap dans les groupes du club.
             </p>
           </div>
 
           {templates.length > 0 && (
-            <ul className="space-y-1.5">
+            <ul className="space-y-[var(--space-1)]">
               {templates.map((template) => (
-                <li
+                <ListItem
                   key={template.id}
-                  className="flex items-center justify-between gap-3 text-xs text-[var(--lkv-text-secondary)]"
-                >
-                  <span className="font-bold text-[var(--lkv-text-primary)] truncate">
-                    {template.title}
-                  </span>
-                  <span className="font-mono text-[10px] shrink-0">
-                    {template.items.length} éléments
-                  </span>
-                </li>
+                  title={<span className="text-[length:var(--lkv-text-caption-2)] font-bold">{template.title}</span>}
+                  metadata={<span className="font-mono text-[length:var(--lkv-text-caption-2)]">{template.items.length} éléments</span>}
+                />
               ))}
             </ul>
           )}
@@ -245,7 +239,8 @@ export default function ClubGroupsTab({
             onChange={(e) => setTemplateTitle(e.target.value)}
             maxLength={80}
             placeholder="Titre du modèle (ex. Bivouac été)"
-            className="w-full glass-input rounded-xl px-3 py-2.5 text-sm min-h-[44px]"
+            aria-label="Titre du modèle de check-list"
+            className={FIELD_CLASS}
             data-testid="club-template-title"
           />
           <textarea
@@ -253,26 +248,25 @@ export default function ClubGroupsTab({
             onChange={(e) => setTemplateItems(e.target.value)}
             rows={3}
             placeholder={'Un élément par ligne\nRéserver les refuges\nVérifier la météo'}
-            className="w-full glass-input rounded-xl px-3 py-2.5 text-sm"
+            aria-label="Éléments du modèle de check-list"
+            className={`${FIELD_CLASS} resize-y`}
             data-testid="club-template-items"
           />
-          <button
+          <Button
             type="button"
             onClick={handlePublishTemplate}
             disabled={templateBusy}
-            className="glass-capsule-btn py-2.5 px-4 text-xs font-bold min-h-[44px] disabled:opacity-60"
+            loading={templateBusy}
             data-testid="club-template-publish"
           >
-            <span className="relative z-10">
-              {templateBusy ? 'Publication…' : 'Publier le modèle'}
-            </span>
-          </button>
+            {templateBusy ? 'Publication…' : 'Publier le modèle'}
+          </Button>
           {templateError && (
-            <p role="alert" className="text-xs font-bold text-[var(--lkv-danger)]">
+            <p role="alert" className="text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-danger)]">
               {templateError}
             </p>
           )}
-        </div>
+        </Card>
       )}
 
       <Sheet
@@ -282,9 +276,9 @@ export default function ClubGroupsTab({
         }}
         title="Nouveau groupe de voyage"
       >
-        <div className="space-y-4">
-          <label className="block space-y-1.5">
-            <span className="text-xs font-bold text-[var(--lkv-text-secondary)]">
+        <div className="space-y-[var(--space-4)]">
+          <label className="block space-y-[var(--space-1)]">
+            <span className="text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-secondary)]">
               Nom du groupe
             </span>
             <input
@@ -293,33 +287,33 @@ export default function ClubGroupsTab({
               onChange={(e) => setName(e.target.value)}
               maxLength={80}
               placeholder={`Ex. Traversée des Écrins — ${club?.name || 'club'}`}
-              className="w-full glass-input rounded-xl px-3 py-2.5 text-sm min-h-[44px]"
+              className={FIELD_CLASS}
               data-testid="club-group-name-input"
             />
           </label>
 
           {invitableMembers.length > 0 && (
-            <div className="space-y-1.5">
-              <span className="text-xs font-bold text-[var(--lkv-text-secondary)]">
+            <div className="space-y-[var(--space-1)]">
+              <span className="text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-secondary)]">
                 Inviter des membres ({selected.size})
               </span>
-              <div className="max-h-56 overflow-y-auto space-y-1 pr-1">
+              <div className="max-h-56 space-y-[var(--space-1)] overflow-y-auto pr-[var(--space-1)]">
                 {invitableMembers.map((member: any) => {
                   const label = member.user?.full_name || 'Membre du club';
                   const checked = selected.has(member.user_id);
                   return (
-                    <button
+                    <Button
                       key={member.user_id}
                       type="button"
+                      variant={checked ? 'primary' : 'secondary'}
+                      fullWidth
                       onClick={() => toggleMember(member.user_id)}
-                      className={`w-full justify-between gap-2 glass-capsule-btn text-xs font-bold min-h-[44px] ${
-                        checked ? 'primary' : ''
-                      }`}
+                      className="justify-between"
                       aria-pressed={checked}
                     >
                       <span className="truncate">{label}</span>
                       <span aria-hidden>{checked ? '✓' : '+'}</span>
-                    </button>
+                    </Button>
                   );
                 })}
               </div>
@@ -327,22 +321,21 @@ export default function ClubGroupsTab({
           )}
 
           {error && (
-            <p className="text-xs font-bold text-[var(--lkv-danger)]" role="alert">
+            <p className="text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-danger)]" role="alert">
               {error}
             </p>
           )}
 
-          <button
+          <Button
             type="button"
             onClick={handleCreate}
             disabled={submitting}
-            className="glass-capsule-btn primary w-full py-3 text-sm font-bold min-h-[44px] disabled:opacity-60"
+            loading={submitting}
+            fullWidth
             data-testid="club-group-submit"
           >
-            <span className="relative z-10">
-              {submitting ? 'Création…' : 'Créer et ouvrir dans le Hub'}
-            </span>
-          </button>
+            {submitting ? 'Création…' : 'Créer et ouvrir dans le Hub'}
+          </Button>
         </div>
       </Sheet>
     </section>

@@ -3,6 +3,7 @@
 import React, { useState, useCallback, useRef } from 'react';
 import Icon from '@/components/ui/AppIcon';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
+import { Badge, Button, Card, ErrorState, LoadingState } from '@/components/ui';
 
 interface SpeciesResult {
   name: string;
@@ -18,10 +19,10 @@ interface Props {
   onIdentified?: (species: SpeciesResult) => void;
 }
 
-const CONFIDENCE_COLORS: Record<SpeciesResult['confidence'], string> = {
-  haute: 'text-emerald-900 bg-emerald-50 border-emerald-200',
-  moyenne: 'text-amber-900 bg-amber-50 border-amber-200',
-  faible: 'text-rose-900 bg-rose-50 border-rose-200',
+const CONFIDENCE_TONE: Record<SpeciesResult['confidence'], 'sage' | 'warn' | 'danger'> = {
+  haute: 'sage',
+  moyenne: 'warn',
+  faible: 'danger',
 };
 
 const GROUP_ICONS: Record<SpeciesResult['group'], string> = {
@@ -95,8 +96,7 @@ export default function SpeciesIdentifier({ momentId, onIdentified }: Props) {
   }, []);
 
   return (
-    <div className="glass bg-white/90 backdrop-blur-xl p-4 rounded-3xl border border-white shadow-xs space-y-3">
-      {/* Input caché */}
+    <Card className="space-y-[var(--space-3)] p-[var(--space-4)]">
       <input
         ref={inputRef}
         type="file"
@@ -104,6 +104,7 @@ export default function SpeciesIdentifier({ momentId, onIdentified }: Props) {
         capture="environment"
         className="hidden"
         id="species-photo-input"
+        aria-label="Photo d'une espèce à identifier"
         onChange={(e) => {
           const file = e.target.files?.[0];
           if (file) handleFile(file);
@@ -111,101 +112,81 @@ export default function SpeciesIdentifier({ momentId, onIdentified }: Props) {
       />
 
       {state === 'idle' && (
-        <div className="text-center py-4 space-y-3">
-          <span className="text-3xl block">🌿</span>
+        <div className="space-y-[var(--space-3)] py-[var(--space-4)] text-center">
+          <span className="block text-[length:var(--lkv-text-title-sm)]" aria-hidden>🌿</span>
           <div>
-            <h4 className="font-display font-bold text-sm text-[#17402C]">
+            <h4 className="font-display text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)]">
               Identifier une espèce sur votre parcours
             </h4>
-            <p className="text-xs text-[#5C6B5E] max-w-xs mx-auto leading-relaxed mt-0.5">
+            <p className="mx-auto mt-[var(--space-1)] max-w-xs text-[length:var(--lkv-text-caption-2)] leading-relaxed text-[color:var(--lkv-text-muted)]">
               Prenez une photo de fleur, champignon, arbre ou animal rencontré pour analyse IA instantanée.
             </p>
           </div>
-          <button
+          <Button
             type="button"
             onClick={() => {
               triggerHaptic('selection');
               inputRef.current?.click();
             }}
-            className="glass-capsule-btn primary !min-h-[38px] !py-2 !px-5 !text-xs !font-bold !gap-2"
+            icon={<span aria-hidden>📸</span>}
           >
-            <span>📸</span>
-            <span>Prendre une photo</span>
-          </button>
+            Prendre une photo
+          </Button>
         </div>
       )}
 
       {state === 'loading' && (
-        <div className="text-center py-6 space-y-3">
-          <div className="w-8 h-8 rounded-full border-2 border-[#17402C] border-t-transparent animate-spin mx-auto" />
-          <p className="text-xs font-mono font-bold text-[#17402C]">
-            Analyse taxonomique IA en cours...
-          </p>
-        </div>
+        <LoadingState compact label="Analyse taxonomique IA en cours..." />
       )}
 
       {state === 'done' && species && (
-        <div className="space-y-3 animate-fade-in">
-          <div className="flex items-start justify-between gap-3">
-            <div className="flex items-center gap-2.5">
-              <div className="w-10 h-10 rounded-2xl bg-forest-50 border border-forest-200 flex items-center justify-center text-xl shrink-0">
+        <div className="space-y-[var(--space-3)]">
+          <div className="flex items-start justify-between gap-[var(--space-3)]">
+            <div className="flex items-center gap-[var(--space-2)]">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[var(--lkv-radius-2xl)] border border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-muted)] text-[length:var(--lkv-text-title-sm)]" aria-hidden>
                 {GROUP_ICONS[species.group] || '🌿'}
               </div>
               <div>
-                <h4 className="font-display font-bold text-sm text-[#17402C]">
+                <h4 className="font-display text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)]">
                   {species.common_name || species.name}
                 </h4>
-                <p className="text-[10px] font-mono italic text-[#5C6B5E]">
+                <p className="font-mono text-[length:var(--lkv-text-caption-2)] italic text-[color:var(--lkv-text-muted)]">
                   {species.name}
                 </p>
               </div>
             </div>
 
-            <span
-              className={`glass-pill text-[9px] font-mono font-bold shrink-0 border ${
-                CONFIDENCE_COLORS[species.confidence]
-              }`}
-            >
+            <Badge tone={CONFIDENCE_TONE[species.confidence]} className="shrink-0 font-mono font-bold">
               Confiance {species.confidence}
-            </span>
+            </Badge>
           </div>
 
-          <p className="text-xs text-[#2D4536] leading-relaxed pl-1">
+          <p className="pl-[var(--space-1)] text-[length:var(--lkv-text-caption-2)] leading-relaxed text-[color:var(--lkv-text-secondary)]">
             {species.description}
           </p>
 
           {species.is_protected && (
-            <div className="p-2 rounded-2xl bg-sand-50 border border-sand-200/60 flex items-center gap-2 text-xs text-sand-900 font-medium">
-              <span>⚠️</span>
+            <div className="flex items-center gap-[var(--space-2)] rounded-[var(--lkv-radius-2xl)] border border-[color:var(--sand-200)]/60 bg-[color:var(--sand-50)] p-[var(--space-2)] text-[length:var(--lkv-text-caption-2)] font-medium text-[color:var(--sand-900)]">
+              <span aria-hidden>⚠️</span>
               <span>Espèce protégée — Ne pas cueillir ni déranger.</span>
             </div>
           )}
 
-          <div className="pt-2 border-t border-[#17402C]/10 flex justify-end">
-            <button
-              type="button"
-              onClick={reset}
-              className="glass-capsule-btn !min-h-[30px] !py-1 !px-3 !text-xs !font-bold"
-            >
-              <span>Nouvelle analyse</span>
-            </button>
+          <div className="flex justify-end border-t border-[color:var(--lkv-primary)]/10 pt-[var(--space-2)]">
+            <Button type="button" variant="secondary" size="sm" onClick={reset}>
+              Nouvelle analyse
+            </Button>
           </div>
         </div>
       )}
 
       {state === 'error' && (
-        <div className="text-center py-4 space-y-2 text-rose-700">
-          <span className="text-2xl block">⚠️</span>
-          <p className="text-xs font-bold">Impossible d'identifier cette photo.</p>
-          <button
-            type="button"
-            onClick={reset}
-            className="glass-capsule-btn !min-h-[30px] !py-1 !px-3 !text-xs !font-bold"
-          >
-            <span>Réessayer</span>
-          </button>
-        </div>
+        <ErrorState
+          title="Identification impossible"
+          message="Impossible d'identifier cette photo."
+          onRetry={reset}
+        />
       )}
-    </div>
+    </Card>
   );
 }

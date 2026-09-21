@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import Icon from '@/components/ui/AppIcon';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
+import { Badge, Button, Card } from '@/components/ui';
 
 interface ClubAboutCardProps {
   club: {
@@ -25,67 +26,68 @@ export default function ClubAboutCard({ club }: ClubAboutCardProps) {
     : '2024';
 
   return (
-    <div className="glass bg-white/90 backdrop-blur-xl p-4 text-[#17402C] space-y-3 transition-all duration-300 rounded-3xl border border-white shadow-xs">
+    <Card className="space-y-[var(--space-3)] p-[var(--space-4)] transition-all duration-[var(--motion-control-duration)]">
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <span className="text-sm">ℹ️</span>
-          <h2 className="font-display font-bold text-xs text-[#17402C]">
+        <div className="flex items-center gap-[var(--space-2)]">
+          <span className="text-[length:var(--lkv-text-caption)]" aria-hidden>ℹ️</span>
+          <h2 className="font-display text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)]">
             Infos &amp; Charte du Collectif
           </h2>
         </div>
-        <span className="glass-pill text-[9px] py-0.5 px-2 font-mono font-bold">
+        <Badge className="py-[2px] font-mono font-bold">
           {club.privacy === 'open' ? 'Public' : 'Privé'}
-        </span>
+        </Badge>
       </div>
 
-      {/* Paramètres clés */}
-      <div className="grid grid-cols-2 gap-2 text-[10.5px]">
-        <div className="glass-sub-card p-2.5 rounded-2xl">
-          <span className="font-mono uppercase text-[#5C6B5E] block text-[8.5px] font-bold">Catégorie</span>
-          <span className="font-bold text-[#17402C] truncate block mt-0.5">{club.category || 'Outdoor'}</span>
-        </div>
+      <div className="grid grid-cols-2 gap-[var(--space-2)] text-[length:var(--lkv-text-caption-2)]">
+        <Card variant="compact">
+          <span className="block font-mono text-[length:var(--lkv-text-caption-2)] font-bold uppercase text-[color:var(--lkv-text-muted)]">Catégorie</span>
+          <span className="mt-[var(--space-1)] block truncate font-bold text-[color:var(--lkv-text-primary)]">{club.category || 'Outdoor'}</span>
+        </Card>
 
-        <div className="glass-sub-card p-2.5 rounded-2xl">
-          <span className="font-mono uppercase text-[#5C6B5E] block text-[8.5px] font-bold">Localisation</span>
-          <span className="font-bold text-[#17402C] truncate block mt-0.5">{club.location || 'France'}</span>
-        </div>
+        <Card variant="compact">
+          <span className="block font-mono text-[length:var(--lkv-text-caption-2)] font-bold uppercase text-[color:var(--lkv-text-muted)]">Localisation</span>
+          <span className="mt-[var(--space-1)] block truncate font-bold text-[color:var(--lkv-text-primary)]">{club.location || 'France'}</span>
+        </Card>
 
-        <div className="glass-sub-card p-2.5 rounded-2xl">
-          <span className="font-mono uppercase text-[#5C6B5E] block text-[8.5px] font-bold">Membres</span>
-          <span className="font-bold text-[#17402C] truncate block mt-0.5">{club.members_count || 1} inscrits</span>
-        </div>
+        <Card variant="compact">
+          <span className="block font-mono text-[length:var(--lkv-text-caption-2)] font-bold uppercase text-[color:var(--lkv-text-muted)]">Membres</span>
+          <span className="mt-[var(--space-1)] block truncate font-bold text-[color:var(--lkv-text-primary)]">{club.members_count || 1} inscrits</span>
+        </Card>
 
-        <div className="glass-sub-card p-2.5 rounded-2xl">
-          <span className="font-mono uppercase text-[#5C6B5E] block text-[8.5px] font-bold">Créé en</span>
-          <span className="font-bold text-[#17402C] truncate block mt-0.5">{createdYear}</span>
-        </div>
+        <Card variant="compact">
+          <span className="block font-mono text-[length:var(--lkv-text-caption-2)] font-bold uppercase text-[color:var(--lkv-text-muted)]">Créé en</span>
+          <span className="mt-[var(--space-1)] block truncate font-bold text-[color:var(--lkv-text-primary)]">{createdYear}</span>
+        </Card>
       </div>
 
-      {/* Charte & Règles repliables */}
       {(club.rules || club.description) && (
-        <div className="pt-2 border-t border-[#17402C]/10">
-          <button
+        <div className="border-t border-[color:var(--lkv-primary)]/10 pt-[var(--space-2)]">
+          <Button
             type="button"
+            variant="secondary"
+            fullWidth
+            aria-expanded={showRules}
             onClick={() => {
               triggerHaptic('light');
               setShowRules(!showRules);
             }}
-            className="w-full glass-capsule-btn !min-h-[36px] !py-1.5 !px-3 !justify-between !text-xs !font-bold"
+            className="justify-between"
           >
-            <div className="flex items-center gap-2">
-              <span className="text-xs">📜</span>
-              <span>Charte d'engagement</span>
-            </div>
-            <span className="text-[10px] font-mono">{showRules ? '▲ Fermer' : '▼ Lire'}</span>
-          </button>
+            <span className="flex items-center gap-[var(--space-2)]">
+              <span aria-hidden>📜</span>
+              <span>Charte d&apos;engagement</span>
+            </span>
+            <span className="font-mono text-[length:var(--lkv-text-caption-2)]">{showRules ? '▲ Fermer' : '▼ Lire'}</span>
+          </Button>
 
           {showRules && (
-            <div className="glass-sub-card mt-2 p-3 rounded-2xl text-xs text-[#17402C] leading-relaxed whitespace-pre-wrap">
+            <Card variant="compact" className="mt-[var(--space-2)] whitespace-pre-wrap text-[length:var(--lkv-text-caption)] leading-relaxed text-[color:var(--lkv-text-primary)]">
               {club.rules || club.description}
-            </div>
+            </Card>
           )}
         </div>
       )}
-    </div>
+    </Card>
   );
 }

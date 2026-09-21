@@ -3,8 +3,8 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import { PUBLIC_PROFILES_VIEW, fetchPublicProfilesWith } from '@/lib/queries/publicProfilesCore';
-import Icon from '@/components/ui/AppIcon';
 import { useToast } from '@/contexts/ToastContext';
+import { Badge, Button, Card, ListItem, Modal, SearchField, Spinner } from '@/components/ui';
 import {
   createRoleDelegation,
   revokeRoleDelegation,
@@ -30,6 +30,9 @@ interface VoyageursCardProps {
   group?: any;
   isOrganizer?: boolean;
 }
+
+const FIELD_CLASS =
+  'w-full rounded-[var(--lkv-radius-md)] border border-[color:var(--lkv-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[var(--space-2)] text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-primary)] placeholder:text-[color:var(--lkv-text-muted)] focus:outline-none focus:ring-2 focus:ring-[color:var(--lkv-focus-ring)]';
 
 export default function VoyageursCard({ travelers, groupId, onRefresh, user, members, group, isOrganizer }: VoyageursCardProps) {
   const supabase = createClient();
@@ -170,13 +173,13 @@ export default function VoyageursCard({ travelers, groupId, onRefresh, user, mem
   const handleRemoveMember = async (memberId: string) => {
     if (!groupId || !isOrganizer) return;
     if (!(await lkvConfirm('Êtes-vous sûr de vouloir retirer ce membre du groupe ?'))) return;
-    
+
     setLoadingId(memberId);
     const { error } = await supabase
       .from('group_members')
       .delete()
       .eq('id', memberId);
-      
+
     if (!error && onRefresh) onRefresh();
     setLoadingId(null);
   };
@@ -184,13 +187,13 @@ export default function VoyageursCard({ travelers, groupId, onRefresh, user, mem
   const handleChangeRole = async (memberId: string, currentRole: string) => {
     if (!groupId || !isOrganizer) return;
     const newRole = currentRole === 'organizer' ? 'member' : 'organizer';
-    
+
     setLoadingId(memberId);
     const { error } = await supabase
       .from('group_members')
       .update({ role: newRole })
       .eq('id', memberId);
-      
+
     if (!error && onRefresh) onRefresh();
     setLoadingId(null);
   };
@@ -218,7 +221,7 @@ export default function VoyageursCard({ travelers, groupId, onRefresh, user, mem
   const handleJoinByCode = async () => {
     if (!user) { toast('Connectez-vous pour rejoindre', 'error'); return; }
     if (!joinCode.trim()) return;
-    
+
     setJoining(true);
     try {
       const { data: targetGroup } = await supabase
@@ -226,27 +229,27 @@ export default function VoyageursCard({ travelers, groupId, onRefresh, user, mem
         .select('*')
         .eq('invite_code', joinCode.trim().toUpperCase())
         .maybeSingle();
-        
+
       if (!targetGroup) {
         toast('Code invalide', 'error');
         setJoining(false);
         return;
       }
-      
+
       const { error } = await supabase.from('group_members').insert({
         group_id: targetGroup.id,
         user_id: user.id,
         role: 'member',
         status: 'active'
       });
-      
+
       if (error && error.code === '42501') {
         toast('Ce groupe est privé — une invitation de l’organisateur est requise.', 'error');
         setJoining(false);
         return;
       }
       if (error && error.code !== '23505') throw error;
-      
+
       toast(`Vous avez rejoint "${targetGroup.name}" !`, 'success');
       setJoinCode('');
       if (targetGroup.id === groupId && onRefresh) onRefresh();
@@ -257,249 +260,261 @@ export default function VoyageursCard({ travelers, groupId, onRefresh, user, mem
   };
 
   return (
-    <div className="glass p-3.5 transition-all duration-300 space-y-2.5">
-      <div className="flex justify-between items-center">
-        <h2 className="font-display font-bold text-xs text-lkv-primary">
+    <Card className="space-y-[var(--space-2)] p-[var(--space-3)] transition-all duration-[var(--motion-control-duration)]">
+      <div className="flex items-center justify-between">
+        <h2 className="font-display text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)]">
           Voyageurs ({travelers.length})
         </h2>
         {isOrganizer && (
-          <button 
-            onClick={openManage}
-            className="glass-capsule-btn py-0.5 px-2 text-[10px] font-bold"
-          >
-            <span className="relative z-10">Gérer →</span>
-          </button>
+          <Button variant="secondary" size="sm" onClick={openManage}>
+            Gérer →
+          </Button>
         )}
       </div>
-      
-      <div className="space-y-1.5">
+
+      <div className="space-y-[var(--space-1)]">
         {travelers.slice(0, 3).map(t => (
-          <div key={t.id} className="flex items-center gap-2 glass-sub-card p-2 rounded-xl">
-            <Link href={t.user_id ? `/profil/${t.user_id}` : '#'} className="relative shrink-0">
-              <div className="w-6 h-6 rounded-full bg-lkv-primary/10 flex items-center justify-center text-lkv-primary font-bold text-[10px]">
+          <ListItem
+            key={t.id}
+            as="div"
+            className="bg-[color:var(--lkv-surface-muted)] p-[var(--space-2)]"
+            leading={
+              <Link
+                href={t.user_id ? `/profil/${t.user_id}` : '#'}
+                className="flex h-6 w-6 items-center justify-center rounded-full bg-[color:var(--lkv-primary)]/10 text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-primary)]"
+                aria-label={`Voir le profil de ${t.name}`}
+              >
                 {t.name.charAt(0)}
-              </div>
-            </Link>
-            
-            <div className="flex-1 min-w-0">
-              <span className="font-sans font-bold text-xs text-lkv-primary truncate block leading-tight">
-                {t.name}
-              </span>
-            </div>
-            
-            {t.status ? (
-              <span className="glass-pill text-[9px] py-0.2 px-1.5 shrink-0">
-                {t.status}
-              </span>
-            ) : (
-              <span className="text-[9px] font-mono font-bold text-lkv-primary shrink-0">
-                {t.progress}%
-              </span>
-            )}
-          </div>
+              </Link>
+            }
+            title={<span className="text-[length:var(--lkv-text-caption)] font-bold">{t.name}</span>}
+            trailing={
+              t.status ? (
+                <Badge>{t.status}</Badge>
+              ) : (
+                <span className="font-mono text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-primary)]">
+                  {t.progress}%
+                </span>
+              )
+            }
+          />
         ))}
         {travelers.length > 3 && (
-          <button onClick={openManage} className="text-[10px] text-lkv-text-muted font-medium text-center w-full block hover:underline pt-0.5">
+          <Button variant="ghost" size="sm" fullWidth onClick={openManage} className="text-[length:var(--lkv-text-caption-2)]">
             + {travelers.length - 3} autre{travelers.length - 3 > 1 ? 's' : ''} voyageur{travelers.length - 3 > 1 ? 's' : ''}
-          </button>
+          </Button>
         )}
       </div>
 
       {group?.invite_code && (
-        <div className="flex items-center justify-between p-2 glass-sub-card rounded-xl text-[10px] text-lkv-text-muted border-t border-lkv-primary/10">
+        <div className="flex items-center justify-between rounded-[var(--lkv-radius-md)] border-t border-[color:var(--lkv-primary)]/10 bg-[color:var(--lkv-surface-muted)] p-[var(--space-2)] text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">
           <span>Code invitation :</span>
-          <strong className="font-mono text-lkv-primary font-bold tracking-widest">{group.invite_code}</strong>
+          <strong className="font-mono font-bold tracking-widest text-[color:var(--lkv-text-primary)]">{group.invite_code}</strong>
         </div>
       )}
 
-      {/* Modal de gestion (Admin Only) */}
-      {showManageModal && isOrganizer && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-md z-[100] flex items-center justify-center p-4">
-          <div className="glass rounded-2xl p-6 max-w-md w-full relative">
-            <button 
-              onClick={() => setShowManageModal(false)}
-              className="glass-capsule-btn p-2 absolute top-6 right-6"
-            >
-              <Icon name="XMarkIcon" size={18} className="relative z-10" />
-            </button>
-            <h2 className="font-display font-bold text-xl text-lkv-primary mb-4">Gérer les <span className="font-serif italic font-normal text-lkv-primary">membres</span></h2>
-            
-            <div className="mb-4 p-3 glass-sub-card rounded-xl">
-              <p className="text-xs font-bold text-lkv-primary mb-2">Code d'invitation secret :</p>
-              <div className="flex gap-2">
-                <input type="text" readOnly value={group?.invite_code || ''} className="glass-input flex-1 font-mono tracking-widest font-bold text-xs text-lkv-primary text-center min-h-[36px]" />
-                <button 
-                  onClick={() => {
-                    navigator.clipboard.writeText(group?.invite_code || '');
-                    toast('Code copié !', 'success');
-                  }}
-                  className="glass-capsule-btn primary px-4 text-xs font-bold"
-                >
-                  <span className="relative z-10">Copier</span>
-                </button>
-              </div>
+      <Modal
+        open={showManageModal && !!isOrganizer}
+        onOpenChange={(next) => { if (!next) setShowManageModal(false); }}
+        title="Gérer les membres"
+        size="md"
+        footer={
+          <Button fullWidth onClick={() => setShowManageModal(false)}>
+            Terminé
+          </Button>
+        }
+      >
+        <div className="space-y-[var(--space-4)]">
+          <Card variant="compact">
+            <p className="mb-[var(--space-2)] text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)]">Code d&apos;invitation secret :</p>
+            <div className="flex gap-[var(--space-2)]">
+              <input
+                type="text"
+                readOnly
+                value={group?.invite_code || ''}
+                aria-label="Code d'invitation secret"
+                className={`${FIELD_CLASS} text-center font-mono font-bold tracking-widest`}
+              />
+              <Button
+                onClick={() => {
+                  navigator.clipboard.writeText(group?.invite_code || '');
+                  toast('Code copié !', 'success');
+                }}
+              >
+                Copier
+              </Button>
             </div>
+          </Card>
 
-            <div className="space-y-2 mb-4 max-h-52 overflow-y-auto pr-1">
-              {members?.map(m => {
-                const name = m.user_profiles ? (m.user_profiles.full_name || m.user_profiles.first_name || 'Membre') : 'Utilisateur';
-                const isMe = m.user_id === user?.id;
-                
-                return (
-                <div key={m.id} className="flex items-center justify-between p-2.5 glass-sub-card rounded-xl">
-                  <div>
-                    {m.user_id ? (
-                      <Link href={`/profil/${m.user_id}`} className="text-xs font-bold text-lkv-primary hover:underline">
+          <div className="max-h-52 space-y-[var(--space-1)] overflow-y-auto pr-[var(--space-1)]">
+            {members?.map(m => {
+              const name = m.user_profiles ? (m.user_profiles.full_name || m.user_profiles.first_name || 'Membre') : 'Utilisateur';
+              const isMe = m.user_id === user?.id;
+
+              return (
+                <ListItem
+                  key={m.id}
+                  as="div"
+                  className="bg-[color:var(--lkv-surface-muted)]"
+                  title={
+                    m.user_id ? (
+                      <Link href={`/profil/${m.user_id}`} className="text-[length:var(--lkv-text-caption)] font-bold hover:underline">
                         {name} {isMe && '(Vous)'}
                       </Link>
                     ) : (
-                      <p className="text-xs font-bold text-lkv-primary">{name} {isMe && '(Vous)'}</p>
-                    )}
-                    <p className="text-[10px] text-lkv-text-muted">{m.role === 'organizer' ? 'Organisateur' : 'Membre'}</p>
-                  </div>
-                  {!isMe && (
-                    <div className="flex gap-1.5">
-                      <button 
-                        onClick={() => handleChangeRole(m.id, m.role)}
-                        disabled={loadingId === m.id}
-                        className="glass-capsule-btn py-1 px-2 text-[10px] font-semibold disabled:opacity-50"
-                      >
-                        <span className="relative z-10">{m.role === 'organizer' ? 'Rétrograder' : 'Promouvoir'}</span>
-                      </button>
-                      <button 
-                        onClick={() => handleRemoveMember(m.id)}
-                        disabled={loadingId === m.id}
-                        className="glass-capsule-btn py-1 px-2 text-[10px] font-semibold text-red-600 disabled:opacity-50"
-                      >
-                        <span className="relative z-10">{loadingId === m.id ? '...' : 'Retirer'}</span>
-                      </button>
-                    </div>
-                  )}
-                </div>
-              )})}
-            </div>
-
-            {/* Inviter un membre */}
-            {isOrganizer && (
-              <div className="mb-4">
-                <p className="text-xs font-bold text-lkv-primary mb-2">Inviter un membre</p>
-                <div className="relative">
-                  <input
-                    type="text"
-                    value={memberQuery}
-                    onChange={e => searchMembers(e.target.value)}
-                    placeholder="Rechercher par nom..."
-                    className="glass-input w-full text-xs min-h-[36px]"
-                  />
-                  {memberSearchBusy && (
-                    <div className="absolute right-3 top-1/2 -translate-y-1/2 w-3 h-3 border-2 border-lkv-primary border-t-transparent rounded-full animate-spin" />
-                  )}
-                </div>
-                {memberResults.length > 0 && (
-                  <div className="mt-2 space-y-1 max-h-36 overflow-y-auto">
-                    {memberResults.map(p => (
-                      <div key={p.id} className="flex items-center justify-between glass-sub-card p-2 rounded-xl">
-                        <div className="flex items-center gap-2 min-w-0">
-                          <div className="w-6 h-6 rounded-full bg-lkv-primary/10 flex items-center justify-center text-[10px] font-bold text-lkv-primary shrink-0">
-                            {p.full_name?.charAt(0) || '?'}
-                          </div>
-                          <span className="text-xs font-semibold text-lkv-primary truncate">{p.full_name}</span>
-                        </div>
-                        <button
-                          onClick={() => addMember(p)}
-                          disabled={addingId === p.id}
-                          className="glass-capsule-btn primary py-1 px-2.5 text-[10px] font-bold disabled:opacity-50 shrink-0"
+                      <span className="text-[length:var(--lkv-text-caption)] font-bold">{name} {isMe && '(Vous)'}</span>
+                    )
+                  }
+                  subtitle={m.role === 'organizer' ? 'Organisateur' : 'Membre'}
+                  trailing={
+                    !isMe && (
+                      <span className="flex gap-[var(--space-1)]">
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          onClick={() => handleChangeRole(m.id, m.role)}
+                          disabled={loadingId === m.id}
                         >
-                          <span className="relative z-10">{addingId === p.id ? '...' : '+ Inviter'}</span>
-                        </button>
-                      </div>
-                    ))}
-                  </div>
+                          {m.role === 'organizer' ? 'Rétrograder' : 'Promouvoir'}
+                        </Button>
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          onClick={() => handleRemoveMember(m.id)}
+                          disabled={loadingId === m.id}
+                          className="text-[color:var(--lkv-danger)]"
+                        >
+                          {loadingId === m.id ? '...' : 'Retirer'}
+                        </Button>
+                      </span>
+                    )
+                  }
+                />
+              );
+            })}
+          </div>
+
+          {isOrganizer && (
+            <div>
+              <p className="mb-[var(--space-2)] text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)]">Inviter un membre</p>
+              <div className="relative">
+                <SearchField
+                  value={memberQuery}
+                  onChange={e => searchMembers(e.target.value)}
+                  onClear={() => searchMembers('')}
+                  placeholder="Rechercher par nom..."
+                  aria-label="Rechercher un membre à inviter"
+                />
+                {memberSearchBusy && (
+                  <span className="absolute right-[var(--space-3)] top-1/2 -translate-y-1/2">
+                    <Spinner size="xs" label="Recherche" />
+                  </span>
                 )}
               </div>
-            )}
-
-            {/* Delegation temporaire de role (Phase 3 TRIBU) */}
-            <div className="mb-4 p-3 glass-sub-card rounded-xl" data-testid="delegation-block">
-              <p className="text-xs font-bold text-lkv-primary mb-2">
-                Déléguer mon rôle (temporaire)
-              </p>
-              <div className="flex gap-2 items-center">
-                <select
-                  value={delegateTo}
-                  onChange={(e) => setDelegateTo(e.target.value)}
-                  className="glass-input flex-1 text-xs min-h-[36px]"
-                  aria-label="Membre à qui déléguer"
-                >
-                  <option value="">Choisir un membre…</option>
-                  {(members || [])
-                    .filter(
-                      (m: any) =>
-                        m.user_id && m.user_id !== user?.id && m.status !== 'pending' && m.status !== 'banned'
-                    )
-                    .map((m: any) => (
-                      <option key={m.user_id} value={m.user_id}>
-                        {m.user_profiles?.full_name || m.user_profiles?.first_name || 'Membre'}
-                      </option>
-                    ))}
-                </select>
-                <select
-                  value={delegateHours}
-                  onChange={(e) => setDelegateHours(Number(e.target.value))}
-                  className="glass-input text-xs min-h-[36px]"
-                  aria-label="Durée de la délégation"
-                >
-                  <option value={24}>24 h</option>
-                  <option value={72}>3 j</option>
-                  <option value={168}>7 j</option>
-                </select>
-                <button
-                  onClick={handleDelegate}
-                  disabled={!delegateTo || delegationBusy}
-                  className="glass-capsule-btn primary px-3 text-[10px] font-bold disabled:opacity-50 min-h-[36px]"
-                >
-                  <span className="relative z-10">Déléguer</span>
-                </button>
-              </div>
-              {delegations.length > 0 && (
-                <div className="mt-2 space-y-1">
-                  {delegations.map((delegation) => (
-                    <div
-                      key={delegation.id}
-                      className="flex items-center justify-between gap-2 text-[10px] text-lkv-text-muted"
-                    >
-                      <span className="truncate">
-                        {delegation.fromUserId === user?.id ? 'Vers' : 'De'}{' '}
-                        {memberName(
-                          delegation.fromUserId === user?.id
-                            ? delegation.toUserId
-                            : delegation.fromUserId
-                        )}{' '}
-                        · {delegation.delegatedRole} · fin{' '}
-                        {new Date(delegation.endsAt).toLocaleDateString('fr-FR')}
-                      </span>
-                      <button
-                        onClick={() => handleRevokeDelegation(delegation.id)}
-                        disabled={delegationBusy}
-                        className="font-bold text-red-600 disabled:opacity-50 shrink-0"
-                      >
-                        Reprendre
-                      </button>
-                    </div>
+              {memberResults.length > 0 && (
+                <div className="mt-[var(--space-2)] max-h-36 space-y-[var(--space-1)] overflow-y-auto">
+                  {memberResults.map(p => (
+                    <ListItem
+                      key={p.id}
+                      as="div"
+                      className="bg-[color:var(--lkv-surface-muted)]"
+                      leading={
+                        <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[color:var(--lkv-primary)]/10 text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-primary)]">
+                          {p.full_name?.charAt(0) || '?'}
+                        </span>
+                      }
+                      title={<span className="text-[length:var(--lkv-text-caption)] font-semibold">{p.full_name}</span>}
+                      trailing={
+                        <Button
+                          size="sm"
+                          onClick={() => addMember(p)}
+                          disabled={addingId === p.id}
+                          loading={addingId === p.id}
+                        >
+                          {addingId === p.id ? '...' : '+ Inviter'}
+                        </Button>
+                      }
+                    />
                   ))}
                 </div>
               )}
             </div>
+          )}
 
-            <button 
-              onClick={() => setShowManageModal(false)}
-              className="w-full glass-capsule-btn primary py-2.5 text-xs font-bold"
-            >
-              <span className="relative z-10">Terminé</span>
-            </button>
-          </div>
+          <Card variant="compact" data-testid="delegation-block">
+            <p className="mb-[var(--space-2)] text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)]">
+              Déléguer mon rôle (temporaire)
+            </p>
+            <div className="flex items-center gap-[var(--space-2)]">
+              <select
+                value={delegateTo}
+                onChange={(e) => setDelegateTo(e.target.value)}
+                aria-label="Membre à qui déléguer"
+                className={`${FIELD_CLASS} flex-1`}
+              >
+                <option value="">Choisir un membre…</option>
+                {(members || [])
+                  .filter(
+                    (m: any) =>
+                      m.user_id && m.user_id !== user?.id && m.status !== 'pending' && m.status !== 'banned'
+                  )
+                  .map((m: any) => (
+                    <option key={m.user_id} value={m.user_id}>
+                      {m.user_profiles?.full_name || m.user_profiles?.first_name || 'Membre'}
+                    </option>
+                  ))}
+              </select>
+              <select
+                value={delegateHours}
+                onChange={(e) => setDelegateHours(Number(e.target.value))}
+                aria-label="Durée de la délégation"
+                className={FIELD_CLASS}
+              >
+                <option value={24}>24 h</option>
+                <option value={72}>3 j</option>
+                <option value={168}>7 j</option>
+              </select>
+              <Button
+                onClick={handleDelegate}
+                disabled={!delegateTo || delegationBusy}
+                loading={delegationBusy}
+              >
+                Déléguer
+              </Button>
+            </div>
+            {delegations.length > 0 && (
+              <div className="mt-[var(--space-2)] space-y-[var(--space-1)]">
+                {delegations.map((delegation) => (
+                  <div
+                    key={delegation.id}
+                    className="flex items-center justify-between gap-[var(--space-2)] text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]"
+                  >
+                    <span className="truncate">
+                      {delegation.fromUserId === user?.id ? 'Vers' : 'De'}{' '}
+                      {memberName(
+                        delegation.fromUserId === user?.id
+                          ? delegation.toUserId
+                          : delegation.fromUserId
+                      )}{' '}
+                      · {delegation.delegatedRole} · fin{' '}
+                      {new Date(delegation.endsAt).toLocaleDateString('fr-FR')}
+                    </span>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleRevokeDelegation(delegation.id)}
+                      disabled={delegationBusy}
+                      className="shrink-0 text-[color:var(--lkv-danger)]"
+                    >
+                      Reprendre
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </Card>
         </div>
-      )}
-    </div>
+      </Modal>
+    </Card>
   );
 }

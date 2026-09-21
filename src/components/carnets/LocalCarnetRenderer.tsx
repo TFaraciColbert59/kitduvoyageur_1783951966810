@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import CarnetView from '@/components/carnet/CarnetView';
 import { CarnetData } from '@/lib/mock/carnet-chartreuse';
 import Link from 'next/link';
+import { EmptyState, LoadingState } from '@/components/ui';
 
 /**
  * Ancien rendu des brouillons stockés localement avant la Phase 7.
@@ -72,24 +73,24 @@ export default function LocalCarnetRenderer({ id }: { id: string }) {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-transparent flex flex-col items-center justify-center p-6 space-y-4">
-        <div className="w-10 h-10 border-3 border-[#17402C]/20 border-t-[#17402C] rounded-full animate-spin"></div>
-        <p className="text-xs font-mono font-bold text-[#5C6B5E] uppercase tracking-widest">Chargement du carnet...</p>
+      <div className="flex min-h-screen flex-col items-center justify-center bg-transparent p-[var(--space-6)]">
+        <LoadingState label="Chargement du carnet..." />
       </div>
     );
   }
 
   if (!data) {
     return (
-      <div className="min-h-screen bg-transparent flex flex-col items-center justify-center p-6 text-center space-y-6">
-        <div className="text-6xl">🏔️</div>
-        <div className="space-y-2">
-          <h1 className="font-display font-800 text-3xl text-[#17402C]">Carnet introuvable</h1>
-          <p className="text-sm text-[#5C6B5E] max-w-md mx-auto">
-            Ce carnet n&apos;existe pas ou n&apos;est plus disponible.
-          </p>
-        </div>
-        <Link href="/carnets" className="px-6 py-3 bg-[#17402C] text-white rounded-full text-xs font-bold transition-colors">
+      <div className="flex min-h-screen flex-col items-center justify-center bg-transparent p-[var(--space-6)] text-center">
+        <EmptyState
+          icon={<span className="text-[length:var(--lkv-text-title-lg)]" aria-hidden>🏔️</span>}
+          title="Carnet introuvable"
+          description="Ce carnet n'existe pas ou n'est plus disponible."
+        />
+        <Link
+          href="/carnets"
+          className="mt-[var(--space-4)] inline-flex min-h-[var(--control-height-md)] items-center rounded-full bg-[color:var(--lkv-primary)] px-[var(--space-6)] text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-inverted)]"
+        >
           Retour aux carnets
         </Link>
       </div>
@@ -98,7 +99,7 @@ export default function LocalCarnetRenderer({ id }: { id: string }) {
 
   return (
     <div className="relative">
-      <div className="sticky top-0 z-50 bg-[#8C6418] text-white text-[11px] font-bold text-center py-2 px-4">
+      <div className="sticky top-0 z-[var(--z-sticky)] bg-[color:var(--lkv-warning-dark)] px-[var(--space-4)] py-[var(--space-2)] text-center text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-inverted)]">
         Brouillon local non publié — ce contenu n&apos;est pas enregistré sur le serveur LKDV.
       </div>
       <CarnetView data={data} />

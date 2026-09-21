@@ -2,6 +2,7 @@ import { lkvAlert, lkvConfirm } from '@/components/ui/dialogs';
 import React, { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import Icon from '@/components/ui/AppIcon';
+import { Badge, Button, Card, EmptyState, IconButton, Spinner } from '@/components/ui';
 
 interface Tache {
   id: string;
@@ -20,6 +21,9 @@ interface TachesCardProps {
   user?: any;
   members?: any[];
 }
+
+const FIELD_CLASS =
+  'rounded-[var(--lkv-radius-md)] border border-[color:var(--lkv-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[var(--space-2)] text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-primary)] placeholder:text-[color:var(--lkv-text-muted)] focus:outline-none focus:ring-2 focus:ring-[color:var(--lkv-focus-ring)]';
 
 export default function TachesCard({ tasks: initialTasks, groupId, onRefresh, user, members }: TachesCardProps) {
   const supabase = createClient();
@@ -45,7 +49,7 @@ export default function TachesCard({ tasks: initialTasks, groupId, onRefresh, us
       lkvAlert("Vous devez être connecté pour modifier une tâche.");
       return;
     }
-    
+
     setTogglingId(id);
     const newStatus = currentCompleted ? 'todo' : 'done';
 
@@ -54,12 +58,12 @@ export default function TachesCard({ tasks: initialTasks, groupId, onRefresh, us
       completed: !currentCompleted,
       tags: !currentCompleted ? ['Fait'] : ['À faire']
     } : t));
-    
+
     const { error } = await supabase
       .from('group_tasks')
       .update({ status: newStatus })
       .eq('id', id);
-      
+
     if (error) {
       console.error('Task toggle error:', error);
       lkvAlert('Erreur lors de la modification de la tâche : ' + error.message);
@@ -135,14 +139,14 @@ export default function TachesCard({ tasks: initialTasks, groupId, onRefresh, us
       })
       .select('*')
       .single();
-    
+
     if (error) {
       console.error('Task insert error:', error);
       lkvAlert('Erreur lors de la sauvegarde de la tâche : ' + error.message);
     } else {
       const assignedMember = members?.find(m => m.user_id === assignedTo);
       const assigneeName = assignedMember?.user_profiles?.full_name || (assignedTo ? 'Membre' : 'Non attribué');
-      
+
       const createdTaskObj: Tache = {
         id: newTask?.id || `temp-${Date.now()}`,
         title: newTaskTitle.trim(),
@@ -159,7 +163,7 @@ export default function TachesCard({ tasks: initialTasks, groupId, onRefresh, us
       setIsAdding(false);
       if (onRefresh) onRefresh();
     }
-    
+
     setLoading(false);
   };
 
@@ -192,127 +196,141 @@ export default function TachesCard({ tasks: initialTasks, groupId, onRefresh, us
   });
 
   return (
-    <div className="glass p-6 transition-all duration-300">
-      <div className="flex justify-between items-start mb-2">
-        <h2 className="font-display font-bold text-xl text-lkv-primary">Tâches <span className="font-serif italic font-normal text-lkv-primary">à faire</span></h2>
-        <div className="flex items-center gap-2">
-          <span className="glass-pill">{remainingCount} restantes</span>
-          <span className="glass-pill">{completedCount} terminées</span>
+    <Card className="p-[var(--space-6)] transition-all duration-[var(--motion-control-duration)]">
+      <div className="mb-[var(--space-2)] flex items-start justify-between">
+        <h2 className="font-display text-[length:var(--lkv-text-title-sm)] font-bold text-[color:var(--lkv-text-primary)]">
+          Tâches <span className="font-serif font-normal italic text-[color:var(--lkv-text-primary)]">à faire</span>
+        </h2>
+        <div className="flex items-center gap-[var(--space-2)]">
+          <Badge>{remainingCount} restantes</Badge>
+          <Badge>{completedCount} terminées</Badge>
         </div>
       </div>
-      
-      <div className="flex justify-between items-center mb-6">
-        <p className="text-sm text-lkv-text-muted font-sans max-w-sm hidden sm:block">
-          Chacun s'attribue une tâche. Les rappels partent 48h avant l'échéance.
+
+      <div className="mb-[var(--space-6)] flex items-center justify-between">
+        <p className="hidden max-w-sm font-sans text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-muted)] sm:block">
+          Chacun s&apos;attribue une tâche. Les rappels partent 48h avant l&apos;échéance.
         </p>
-        <div className="flex gap-2 w-full sm:w-auto justify-end flex-wrap">
-          <button
+        <div className="flex w-full flex-wrap justify-end gap-[var(--space-2)] sm:w-auto">
+          <Button
+            variant="secondary"
+            size="sm"
             onClick={handleSelectAll}
             disabled={selectingAll || tasks.length === 0}
-            className="glass-capsule-btn py-1.5 px-3 text-xs font-semibold disabled:opacity-50"
+            loading={selectingAll}
           >
-            <span className="relative z-10">{selectingAll ? '...' : 'Tout →'}</span>
-          </button>
-          <select 
+            {selectingAll ? '...' : 'Tout →'}
+          </Button>
+          <select
             value={filter}
             onChange={(e) => setFilter(e.target.value as any)}
             aria-label="Filtrer les tâches"
-            className="glass-input py-1.5 px-3 text-xs font-semibold cursor-pointer min-h-[36px]"
+            className={`${FIELD_CLASS} min-h-[var(--control-height-sm)] cursor-pointer font-semibold`}
           >
             <option value="all">Filtrer (Tout)</option>
             <option value="todo">À faire</option>
             <option value="done">Terminées</option>
           </select>
-          <button 
+          <Button
+            variant={isAdding ? 'secondary' : 'primary'}
+            size="sm"
             onClick={() => setIsAdding(!isAdding)}
-            className="glass-capsule-btn primary py-1.5 px-3 text-xs font-bold flex items-center gap-1"
+            icon={<Icon name={isAdding ? 'XMarkIcon' : 'PlusIcon'} size={12} aria-hidden="true" />}
           >
-            <Icon name={isAdding ? "XMarkIcon" : "PlusIcon"} size={12} className="relative z-10" />
-            <span className="relative z-10">{isAdding ? 'Annuler' : 'Ajouter une tâche'}</span>
-          </button>
+            {isAdding ? 'Annuler' : 'Ajouter une tâche'}
+          </Button>
         </div>
       </div>
-      
+
       {isAdding && (
-        <form onSubmit={handleAddTask} className="mb-6 flex flex-wrap gap-2 glass-sub-card p-4 rounded-2xl">
-          <input 
-            type="text" 
-            autoFocus
-            value={newTaskTitle}
-            onChange={e => setNewTaskTitle(e.target.value)}
-            placeholder="Titre de la nouvelle tâche..." 
-            className="glass-input flex-1 min-w-[200px] text-xs"
-            disabled={loading}
-          />
-          <select 
-            value={assignedTo}
-            onChange={e => setAssignedTo(e.target.value)}
-            className="glass-input text-xs max-w-[170px]"
-            disabled={loading}
-          >
-            <option value="">Attribuer à...</option>
-            {members?.map(m => (
-              <option key={m.user_id} value={m.user_id}>
-                {m.user_profiles?.full_name || 'Membre'}
-              </option>
-            ))}
-          </select>
-          <button 
-            type="submit"
-            disabled={!newTaskTitle.trim() || loading}
-            className="glass-capsule-btn primary py-2 px-4 text-xs font-bold disabled:opacity-50"
-          >
-            <span className="relative z-10">{loading ? 'Enregistrement...' : 'Sauvegarder'}</span>
-          </button>
-        </form>
+        <Card variant="compact" className="mb-[var(--space-6)] p-[var(--space-4)]">
+          <form onSubmit={handleAddTask} className="flex flex-wrap gap-[var(--space-2)]">
+            <input
+              type="text"
+              autoFocus
+              value={newTaskTitle}
+              onChange={e => setNewTaskTitle(e.target.value)}
+              placeholder="Titre de la nouvelle tâche..."
+              aria-label="Titre de la nouvelle tâche"
+              className={`${FIELD_CLASS} min-w-[200px] flex-1`}
+              disabled={loading}
+            />
+            <select
+              value={assignedTo}
+              onChange={e => setAssignedTo(e.target.value)}
+              aria-label="Attribuer la tâche à"
+              className={`${FIELD_CLASS} max-w-[170px]`}
+              disabled={loading}
+            >
+              <option value="">Attribuer à...</option>
+              {members?.map(m => (
+                <option key={m.user_id} value={m.user_id}>
+                  {m.user_profiles?.full_name || 'Membre'}
+                </option>
+              ))}
+            </select>
+            <Button type="submit" disabled={!newTaskTitle.trim() || loading} loading={loading}>
+              {loading ? 'Enregistrement...' : 'Sauvegarder'}
+            </Button>
+          </form>
+        </Card>
       )}
-      
-      <div className="space-y-3 mb-6">
+
+      <div className="mb-[var(--space-6)] space-y-[var(--space-2)]">
         {filteredTasks.length === 0 && (
-          <p className="text-center text-sm text-lkv-text-muted py-4">Aucune tâche trouvée.</p>
+          <EmptyState
+            compact
+            icon={<Icon name="CheckCircleIcon" size={22} aria-hidden="true" />}
+            title="Aucune tâche trouvée"
+            description="Ajustez le filtre ou ajoutez une nouvelle tâche au groupe."
+          />
         )}
         {filteredTasks.map((task) => (
-          <div key={task.id} className="glass-sub-card p-3 rounded-xl flex gap-4 items-center group">
-            <button 
+          <Card key={task.id} variant="compact" className="group flex items-center gap-[var(--space-3)] p-[var(--space-3)]">
+            <Button
               type="button"
+              variant={task.completed ? 'primary' : 'secondary'}
+              iconOnly
+              aria-label={task.completed ? `Rouvrir la tâche ${task.title}` : `Marquer la tâche ${task.title} comme terminée`}
+              aria-pressed={task.completed}
               onClick={() => toggleTask(task.id, task.completed)}
               disabled={togglingId === task.id}
-              aria-label={task.completed ? `Rouvrir la tâche ${task.title}` : `Marquer la tâche ${task.title} comme terminée`}
-              className={`glass-check-circle ${task.completed ? 'checked' : ''} disabled:opacity-50`}
-            >
-              {togglingId === task.id ? (
-                <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
-              ) : task.completed ? (
-                <Icon name="CheckIcon" size={12} className="relative z-10" />
-              ) : null}
-            </button>
-            <div className="flex-1 min-w-0">
-              <div className="flex flex-wrap items-center gap-2">
-                <h3 className={`font-sans font-semibold text-sm ${task.completed ? 'text-lkv-text-muted line-through' : 'text-lkv-primary'}`}>
+              icon={
+                togglingId === task.id ? (
+                  <Spinner size="xs" label="" />
+                ) : task.completed ? (
+                  <Icon name="CheckIcon" size={12} aria-hidden="true" />
+                ) : undefined
+              }
+            />
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-center gap-[var(--space-2)]">
+                <h3 className={`font-sans text-[length:var(--lkv-text-caption)] font-semibold ${task.completed ? 'text-[color:var(--lkv-text-muted)] line-through' : 'text-[color:var(--lkv-text-primary)]'}`}>
                   {task.title}
                 </h3>
-                <span className="text-xs text-[#D97746] font-medium">— {task.assignee}</span>
-                <div className="flex gap-1 ml-auto items-center">
+                <span className="text-[length:var(--lkv-text-caption-2)] font-medium text-[color:var(--lkv-warning-dark)]">— {task.assignee}</span>
+                <div className="ml-auto flex items-center gap-[var(--space-1)]">
                   {task.tags.map(tag => (
-                    <span key={tag} className={`glass-pill ${tag === 'Fait' ? '' : 'pill-info'}`}>
+                    <Badge key={tag} tone={tag === 'Fait' ? 'sage' : 'info'}>
                       {tag}
-                    </span>
+                    </Badge>
                   ))}
-                  <button
+                  <IconButton
+                    variant="ghost"
+                    size="sm"
                     onClick={() => handleDeleteTask(task.id)}
-                    className="p-1 text-lkv-text-muted hover:text-red-600 transition-colors ml-2 opacity-0 group-hover:opacity-100"
-                    title="Supprimer la tâche"
                     aria-label={`Supprimer la tâche ${task.title}`}
+                    className="ml-[var(--space-2)] text-[color:var(--lkv-danger)] opacity-0 group-hover:opacity-100"
                   >
-                    <Icon name="TrashIcon" size={14} className="relative z-10" />
-                  </button>
+                    <Icon name="TrashIcon" size={14} aria-hidden="true" />
+                  </IconButton>
                 </div>
               </div>
-              {task.details && <p className="text-xs text-lkv-text-muted font-sans mt-0.5">{task.details}</p>}
+              {task.details && <p className="mt-[var(--space-1)] font-sans text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">{task.details}</p>}
             </div>
-          </div>
+          </Card>
         ))}
       </div>
-    </div>
+    </Card>
   );
 }

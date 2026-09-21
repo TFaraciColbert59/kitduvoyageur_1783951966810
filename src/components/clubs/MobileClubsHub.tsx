@@ -1,12 +1,10 @@
 'use client';
 
 import React, { useState, useMemo, useEffect } from 'react';
-import Link from 'next/link';
-import { motion, AnimatePresence } from 'framer-motion';
-import Icon from '@/components/ui/AppIcon';
 import MobileClubCard, { ClubCardItem } from '@/components/clubs/MobileClubCard';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
+import { Button, Card, Chip, EmptyState, SearchField, SkeletonClubCard, Spinner } from '@/components/ui';
 
 interface MobileClubsHubProps {
   clubs: ClubCardItem[];
@@ -79,125 +77,86 @@ export default function MobileClubsHub({
   };
 
   return (
-    <div className="w-full min-h-full bg-transparent pb-6 relative font-sans text-[#17402C]">
-      {/* Pull to refresh visual indicator */}
+    <div className="relative min-h-full w-full bg-transparent pb-[var(--space-6)] font-sans text-[color:var(--lkv-text-primary)]">
       {(pullProgress > 0 || isRefreshing) && (
         <div
-          className="w-full flex items-center justify-center py-2 transition-all overflow-hidden"
+          className="flex w-full items-center justify-center overflow-hidden py-[var(--space-2)] transition-all motion-reduce:transition-none"
           style={{ height: isRefreshing ? '44px' : `${Math.min(pullProgress * 44, 44)}px` }}
         >
-          <div className="flex items-center gap-2 px-3 py-1 rounded-full glass-pill text-xs font-medium text-[#17402C] shadow-2xs">
-            <div
-              className={`w-3.5 h-3.5 rounded-full border-2 border-[#17402C] border-t-transparent ${
-                isRefreshing ? 'animate-spin' : ''
-              }`}
-            />
-            <span className="text-[11px] font-mono">
+          <div className="flex items-center gap-[var(--space-2)] rounded-full border border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-card)] px-[var(--space-3)] py-[var(--space-1)] text-[length:var(--lkv-text-caption-2)] font-medium text-[color:var(--lkv-text-primary)] shadow-elevation-1">
+            <Spinner size="xs" label="" className={isRefreshing ? '' : 'opacity-0'} />
+            <span className="font-mono text-[length:var(--lkv-text-caption-2)]">
               {isRefreshing ? 'Actualisation...' : 'Tirer pour rafraîchir'}
             </span>
           </div>
         </div>
       )}
 
-      {/* Top Search & Actions Bar */}
-      <div className="px-3.5 pt-3 pb-1 space-y-2.5">
-        <div className="flex items-center gap-2">
-          {/* Search Bar Capsule */}
-          <div className="relative flex-1 flex items-center">
-            <Icon name="MagnifyingGlassIcon" size={14} className="absolute left-3.5 text-[#5A7064] z-10" />
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Rechercher un club, massif, pratique..."
-              className="glass w-full pl-9 pr-8 py-2 rounded-full text-xs text-[#17402C] placeholder-[#5A7064] border border-white/80 bg-white/80 focus:outline-none focus:ring-1 focus:ring-[#17402C] shadow-2xs"
-            />
-            {search && (
-              <button
-                type="button"
-                onClick={() => setSearch('')}
-                aria-label="Effacer la recherche"
-                className="!absolute right-2 glass-circle-btn !w-6 !h-6 !min-w-6 !min-h-6 text-xs font-bold"
-              >
-                ✕
-              </button>
-            )}
-          </div>
+      <div className="space-y-[var(--space-2)] px-[var(--space-3)] pb-[var(--space-1)] pt-[var(--space-3)]">
+        <div className="flex items-center gap-[var(--space-2)]">
+          <SearchField
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            onClear={() => setSearch('')}
+            placeholder="Rechercher un club, massif, pratique..."
+            aria-label="Rechercher un club"
+            containerClassName="flex-1"
+          />
 
-          <button
+          <Button
             type="button"
             onClick={() => {
               triggerHaptic('selection');
               onOpenCreateModal();
             }}
-            className="glass-capsule-btn primary !py-1.5 !px-3 !text-xs !font-bold flex items-center gap-1 shrink-0"
+            icon={<span aria-hidden>➕</span>}
+            className="shrink-0"
           >
-            <span>➕</span>
-            <span>Créer</span>
-          </button>
+            Créer
+          </Button>
         </div>
 
-        {/* Category filter chips in Liquid Glass */}
-        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-0.5">
+        <div className="flex items-center gap-[var(--space-1)] overflow-x-auto pb-[2px] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {CATEGORIES.map((cat) => {
             const isSelected = selectedCategory === cat;
             return (
-              <button
+              <Chip
                 key={cat}
-                type="button"
+                selected={isSelected}
                 onClick={() => {
                   triggerHaptic('light');
                   setSelectedCategory(cat);
                 }}
-                className={`glass-capsule-btn !py-1.5 !px-3 !text-xs font-bold whitespace-nowrap ${
-                  isSelected ? 'primary' : ''
-                }`}
+                className="whitespace-nowrap"
               >
-                <span>{cat}</span>
-              </button>
+                {cat}
+              </Chip>
             );
           })}
         </div>
       </div>
 
-      {/* Clubs List */}
-      <div className="px-3.5 space-y-3 pt-1">
+      <div className="space-y-[var(--space-3)] px-[var(--space-3)] pt-[var(--space-1)]">
         {loading ? (
-          <div className="space-y-3">
+          <div className="space-y-[var(--space-3)]">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="glass p-4 rounded-3xl animate-pulse space-y-3 bg-white/70">
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-2xl bg-[#17402C]/10" />
-                  <div className="space-y-1.5 flex-1">
-                    <div className="w-32 h-3.5 bg-[#17402C]/10 rounded" />
-                    <div className="w-20 h-2.5 bg-[#17402C]/5 rounded" />
-                  </div>
-                </div>
-                <div className="w-full h-10 bg-[#17402C]/5 rounded-xl" />
-              </div>
+              <SkeletonClubCard key={i} />
             ))}
           </div>
         ) : filteredClubs.length === 0 ? (
-          <div className="py-12 text-center glass bg-white/80 p-6 rounded-3xl space-y-3 border border-white">
-            <span className="text-3xl block">🏕️</span>
-            <h3 className="font-display font-bold text-[#17402C] text-sm">
-              {tab === 'mes-clubs' ? 'Vous n’avez rejoint aucun club' : 'Aucun club trouvé'}
-            </h3>
-            <p className="text-xs text-[#5C6B5E] max-w-xs mx-auto leading-relaxed">
-              {tab === 'mes-clubs'
-                ? 'Explorez les clubs disponibles et rejoignez votre premier collectif d’aventuriers.'
-                : 'Essayez un autre mot-clé ou créez votre propre club.'}
-            </p>
-            <div className="pt-2">
-              <button
-                type="button"
-                onClick={onOpenCreateModal}
-                className="glass-capsule-btn primary !min-h-[38px] !py-2 !px-5 !text-xs !font-bold"
-              >
-                <span>+ Créer un club</span>
-              </button>
-            </div>
-          </div>
+          <Card className="p-[var(--space-6)]">
+            <EmptyState
+              icon={<span className="text-[length:var(--lkv-text-title-sm)]" aria-hidden>🏕️</span>}
+              title={tab === 'mes-clubs' ? 'Vous n’avez rejoint aucun club' : 'Aucun club trouvé'}
+              description={
+                tab === 'mes-clubs'
+                  ? 'Explorez les clubs disponibles et rejoignez votre premier collectif d’aventuriers.'
+                  : 'Essayez un autre mot-clé ou créez votre propre club.'
+              }
+              actionLabel="Créer un club"
+              onAction={onOpenCreateModal}
+            />
+          </Card>
         ) : (
           filteredClubs.map((club) => {
             const isMember = tab === 'mes-clubs' || myClubs.some((mc) => mc.id === club.id);

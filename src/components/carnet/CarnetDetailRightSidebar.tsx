@@ -3,6 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import Icon from '@/components/ui/AppIcon';
+import { Badge, Button, Card } from '@/components/ui';
 
 interface CarnetDetailRightSidebarProps {
   meta: {
@@ -27,99 +28,92 @@ export default function CarnetDetailRightSidebar({
   const elevStat = stats.find(s => s.label.includes('DÉNIV') || s.label.includes('D+'))?.value || '1620 m D+';
 
   return (
-    <aside className="w-[300px] shrink-0 h-full overflow-y-auto custom-scrollbar flex flex-col gap-4 pb-8">
-      {/* Carte Auteur & Certification */}
-      <div className="glass p-3.5 text-[#17402C] space-y-2.5 rounded-2xl">
+    <aside className="flex h-full w-[300px] shrink-0 flex-col gap-[var(--space-4)] overflow-y-auto pb-[var(--space-8)]">
+      <Card className="space-y-[var(--space-2)] p-[var(--space-3)]">
         <div className="flex items-center justify-between">
-          <h2 className="font-display font-bold text-xs text-[#17402C]">
+          <h2 className="font-display text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)]">
             Expédition Certifiée
           </h2>
-          <span className="glass-pill text-[9px] py-0.2 px-1.5 font-mono font-bold">
-            ✓ LKDV
-          </span>
+          <Badge className="font-mono font-bold">✓ LKDV</Badge>
         </div>
 
-        <div className="flex items-center gap-2 glass-sub-card p-2 rounded-xl">
-          <div className="w-6 h-6 rounded-full bg-[#17402C]/10 text-[#17402C] flex items-center justify-center font-bold text-[10px] shrink-0">
+        <Card variant="compact" className="flex items-center gap-[var(--space-2)] p-[var(--space-2)]">
+          <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[color:var(--lkv-primary)]/10 text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-primary)]" aria-hidden>
             👤
           </div>
           <div className="min-w-0 flex-1">
-            <h4 className="font-sans font-bold text-xs text-[#17402C] truncate">Membre Explorateur</h4>
-            <span className="text-[9.5px] text-[#5C6B5E] block leading-tight">Guide Certifié LKDV</span>
+            <h4 className="truncate font-sans text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-primary)]">Membre Explorateur</h4>
+            <span className="block text-[length:var(--lkv-text-caption-2)] leading-tight text-[color:var(--lkv-text-muted)]">Guide Certifié LKDV</span>
           </div>
-        </div>
+        </Card>
 
-        <p className="text-[11px] text-[#5C6B5E] leading-relaxed">
+        <p className="text-[length:var(--lkv-text-caption-2)] leading-relaxed text-[color:var(--lkv-text-muted)]">
           Récit vérifié et tracé GPS enregistré sur le terrain en conditions réelles.
         </p>
-      </div>
+      </Card>
 
-      {/* Spécifications du parcours */}
-      <div className="glass p-3.5 text-[#17402C] space-y-2.5 rounded-2xl">
+      <Card className="space-y-[var(--space-2)] p-[var(--space-3)]">
         <div className="flex items-center justify-between">
-          <h3 className="font-display font-bold text-xs text-[#17402C]">Fiche Technique</h3>
-          <span className="glass-pill text-[9px] py-0.2 px-1.5 font-mono font-bold">Trace 3D</span>
+          <h3 className="font-display text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)]">Fiche Technique</h3>
+          <Badge className="font-mono font-bold">Trace 3D</Badge>
         </div>
 
-        <div className="grid grid-cols-2 gap-1.5 text-[10px]">
-          <div className="glass-sub-card p-2 rounded-lg">
-            <span className="font-mono uppercase text-[#5C6B5E] block text-[8.5px] font-bold">Massif</span>
-            <span className="font-bold text-[#17402C] truncate block">{meta.itineraire || 'Alpes'}</span>
-          </div>
+        <div className="grid grid-cols-2 gap-[var(--space-1)] text-[length:var(--lkv-text-caption-2)]">
+          <Card variant="compact" className="p-[var(--space-2)]">
+            <span className="block font-mono text-[length:var(--lkv-text-caption-2)] font-bold uppercase text-[color:var(--lkv-text-muted)]">Massif</span>
+            <span className="block truncate font-bold text-[color:var(--lkv-text-primary)]">{meta.itineraire || 'Alpes'}</span>
+          </Card>
 
-          <div className="glass-sub-card p-2 rounded-lg">
-            <span className="font-mono uppercase text-[#5C6B5E] block text-[8.5px] font-bold">Distance</span>
-            <span className="font-bold text-[#17402C] truncate block">{distStat}</span>
-          </div>
+          <Card variant="compact" className="p-[var(--space-2)]">
+            <span className="block font-mono text-[length:var(--lkv-text-caption-2)] font-bold uppercase text-[color:var(--lkv-text-muted)]">Distance</span>
+            <span className="block truncate font-bold text-[color:var(--lkv-text-primary)]">{distStat}</span>
+          </Card>
 
-          <div className="glass-sub-card p-2 rounded-lg">
-            <span className="font-mono uppercase text-[#5C6B5E] block text-[8.5px] font-bold">Dénivelé +</span>
-            <span className="font-bold text-[#17402C] truncate block">{elevStat}</span>
-          </div>
+          <Card variant="compact" className="p-[var(--space-2)]">
+            <span className="block font-mono text-[length:var(--lkv-text-caption-2)] font-bold uppercase text-[color:var(--lkv-text-muted)]">Dénivelé +</span>
+            <span className="block truncate font-bold text-[color:var(--lkv-text-primary)]">{elevStat}</span>
+          </Card>
 
-          <div className="glass-sub-card p-2 rounded-lg">
-            <span className="font-mono uppercase text-[#5C6B5E] block text-[8.5px] font-bold">Période</span>
-            <span className="font-bold text-[#17402C] truncate block">{meta.dateRange || 'Été 2026'}</span>
-          </div>
+          <Card variant="compact" className="p-[var(--space-2)]">
+            <span className="block font-mono text-[length:var(--lkv-text-caption-2)] font-bold uppercase text-[color:var(--lkv-text-muted)]">Période</span>
+            <span className="block truncate font-bold text-[color:var(--lkv-text-primary)]">{meta.dateRange || 'Été 2026'}</span>
+          </Card>
         </div>
-      </div>
+      </Card>
 
-      {/* CTA Téléchargement & Reconfiguration IA */}
-      <div className="glass tone-sand p-3.5 text-[#17402C] space-y-2 rounded-2xl transition-all duration-300">
-        <div className="inline-block glass-pill py-0.5 px-2">
-          <span className="font-mono text-[9px] uppercase tracking-widest text-[#8C6418] font-bold">
-            🎒 SOUVENIR &amp; MATÉRIEL
-          </span>
-        </div>
+      <Card tone="warn" className="space-y-[var(--space-2)] p-[var(--space-3)] transition-all duration-[var(--motion-control-duration)]">
+        <Badge tone="warn" className="font-mono font-bold uppercase tracking-widest">
+          🎒 SOUVENIR &amp; MATÉRIEL
+        </Badge>
 
-        <h3 className="font-display font-bold text-xs text-[#17402C] leading-snug">
+        <h3 className="font-display text-[length:var(--lkv-text-caption)] font-bold leading-snug text-[color:var(--lkv-text-primary)]">
           Partir sur les mêmes traces ?
         </h3>
 
-        <p className="text-[11px] text-[#5C6B5E] leading-relaxed">
+        <p className="text-[length:var(--lkv-text-caption-2)] leading-relaxed text-[color:var(--lkv-text-muted)]">
           Téléchargez la trace GPX ou réadaptez la checklist du sac pour votre propre expédition.
         </p>
 
-        <div className="flex flex-col gap-1.5 pt-1">
+        <div className="flex flex-col gap-[var(--space-1)] pt-[var(--space-1)]">
           {onDownloadGPX && (
-            <button
+            <Button
               type="button"
               onClick={onDownloadGPX}
-              className="w-full glass-capsule-btn primary py-2 text-xs font-bold flex items-center justify-center gap-1.5"
+              fullWidth
+              icon={<Icon name="ArrowDownTrayIcon" size={13} aria-hidden="true" />}
             >
-              <Icon name="ArrowDownTrayIcon" size={13} className="relative z-10" />
-              <span className="relative z-10">Télécharger le GPX</span>
-            </button>
+              Télécharger le GPX
+            </Button>
           )}
 
           <Link
             href="/ai-configurator"
-            className="w-full glass-capsule-btn py-2 text-xs font-bold text-center text-[#17402C] flex items-center justify-center gap-1"
+            className="inline-flex min-h-[var(--control-height-md)] w-full items-center justify-center gap-[var(--space-1)] rounded-full border border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-card)] px-[var(--space-4)] text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-primary)]"
           >
-            <span className="relative z-10">🤖 Configurer mon sac</span>
+            <span aria-hidden>🤖</span> Configurer mon sac
           </Link>
         </div>
-      </div>
+      </Card>
     </aside>
   );
 }

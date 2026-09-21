@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { Card, EmptyState } from '@/components/ui';
 
 export interface ActivityLogEntry {
   id: string;
@@ -32,28 +33,31 @@ function formatWhen(value: string): string {
 
 export default function GroupActivityLog({ entries, compact = false }: GroupActivityLogProps) {
   return (
-    <div className="glass rounded-2xl p-5" data-testid="group-activity-log">
-      <h3 className="font-display font-bold text-sm text-[var(--lkv-text-primary)] mb-3">
+    <Card className="p-[var(--space-5)]" data-testid="group-activity-log">
+      <h3 className="mb-[var(--space-3)] font-display text-[length:var(--lkv-text-subheadline)] font-bold text-[color:var(--lkv-text-primary)]">
         Journal du groupe
       </h3>
       {entries.length === 0 ? (
-        <p className="text-xs text-[var(--lkv-text-muted)]">
-          Aucune activité pour le moment.
-        </p>
+        <EmptyState compact title="Aucune activité pour le moment." />
       ) : (
-        <ol className={`space-y-2 ${compact ? 'max-h-64' : 'max-h-80'} overflow-y-auto pr-1`}>
+        <ol
+          className={`space-y-[var(--space-2)] ${compact ? 'max-h-64' : 'max-h-80'} overflow-y-auto pr-[var(--space-1)]`}
+        >
           {entries.map((entry) => (
-            <li key={entry.id} className="flex items-start justify-between gap-3">
-              <span className="text-xs text-[var(--lkv-text-secondary)] leading-snug">
+            <li
+              key={entry.id}
+              className="flex items-start justify-between gap-[var(--space-3)]"
+            >
+              <span className="text-[length:var(--lkv-text-caption)] leading-snug text-[color:var(--lkv-text-secondary)]">
                 {entry.summary}
               </span>
-              <span className="text-[10px] font-mono text-[var(--lkv-text-muted)] shrink-0">
+              <span className="shrink-0 font-mono text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">
                 {formatWhen(entry.createdAt)}
               </span>
             </li>
           ))}
         </ol>
       )}
-    </div>
+    </Card>
   );
 }

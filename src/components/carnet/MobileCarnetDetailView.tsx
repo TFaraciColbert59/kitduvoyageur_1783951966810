@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import Icon from '@/components/ui/AppIcon';
-import { IconButton } from '@/components/ui';
+import { Badge, Button, Card, EmptyState, IconButton } from '@/components/ui';
 import CarnetMap from '@/components/carnet/CarnetMap';
 import TimelineJours from '@/components/carnet/TimelineJours';
 import MomentCard from '@/components/carnet/MomentCard';
@@ -155,176 +155,163 @@ export default function MobileCarnetDetailView({
   };
 
   return (
-    <div className="md:hidden min-h-screen bg-transparent pb-[calc(140px+env(safe-area-inset-bottom,0px))] text-[#17402C]">
-      {/* IMMERSIVE COVER HERO */}
-      <div className="relative w-full h-64 sm:h-72 overflow-hidden bg-[#17402C]">
+    <div className="min-h-screen bg-transparent pb-[calc(140px+var(--safe-bottom))] text-[color:var(--lkv-text-primary)] md:hidden">
+      <div className="relative h-64 w-full overflow-hidden bg-[color:var(--lkv-primary)] sm:h-72">
         <img
           src={coverUrl}
           alt={data.meta?.titleLine1 || 'Carnet'}
-          className="w-full h-full object-cover opacity-70"
+          className="h-full w-full object-cover opacity-70"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#17402C] via-[#17402C]/60 to-black/30" />
+        <div aria-hidden className="absolute inset-0 bg-gradient-to-t from-[color:var(--lkv-primary)] via-[color:var(--lkv-primary)]/60 to-black/30" />
 
-        {/* Top Controls */}
-        <div
-          className="absolute left-4 right-4 flex items-center justify-between z-10"
-          style={{ top: 'calc(max(env(safe-area-inset-top, 0px), 14px) + 8px)' }}
-        >
+        <div className="absolute left-4 right-4 top-[calc(max(var(--safe-top),14px)+8px)] z-10 flex items-center justify-between">
           <Link
             href="/carnets"
             onClick={() => triggerHaptic('light')}
-            className="glass-circle-btn !w-10 !h-10 !text-[#17402C] !bg-white/95 !border-white shadow-md flex items-center justify-center font-bold text-lg active:scale-95 transition-transform"
+            className="flex h-10 w-10 items-center justify-center rounded-full border border-[color:var(--glass-border)] bg-[color:var(--lkv-surface-card)]/95 text-[length:var(--lkv-text-subheadline)] font-bold text-[color:var(--lkv-text-primary)] shadow-elevation-2 transition-transform active:scale-95 motion-reduce:transition-none"
             aria-label="Retour aux carnets"
           >
             ‹
           </Link>
 
-          <div className="flex items-center gap-1.5 max-w-[78%]">
-            <span
-              className="glass-pill text-[#17402C] font-semibold border-white/90 font-mono text-[10.5px] bg-white/90 backdrop-blur-xl shadow-xs truncate px-3 py-1.5"
-              title={data.meta?.itineraire}
-            >
-              📍 {data.meta?.itineraire || 'Expédition outdoor'}
+          <div className="flex max-w-[78%] items-center gap-[var(--space-1)]">
+            <span className="min-w-0" title={data.meta?.itineraire}>
+              <Badge className="truncate border-[color:var(--glass-border)] bg-[color:var(--lkv-surface-card)]/90 px-[var(--space-3)] py-[var(--space-1)] font-mono font-semibold text-[color:var(--lkv-text-primary)] backdrop-blur-[var(--blur-xl)]">
+                📍 {data.meta?.itineraire || 'Expédition outdoor'}
+              </Badge>
             </span>
           </div>
         </div>
 
-        {/* Hero Title & Destination */}
         <div className="absolute bottom-4 left-4 right-4 z-10">
-          <div className="flex items-center gap-2 mb-1">
-            <span className="text-[10px] font-mono uppercase tracking-widest text-forest-300 font-bold flex items-center gap-1">
-              <span>📖</span> CARNET DE TERRAIN
+          <div className="mb-[var(--space-1)] flex items-center gap-[var(--space-2)]">
+            <span className="flex items-center gap-[var(--space-1)] font-mono text-[length:var(--lkv-text-caption-2)] font-bold uppercase tracking-widest text-[color:var(--lkv-forest-300)]">
+              <span aria-hidden>📖</span> CARNET DE TERRAIN
             </span>
-            <span className="text-white/70 font-mono text-[10px]">· {dateRange}</span>
+            <span className="font-mono text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-inverted)]/70">· {dateRange}</span>
           </div>
-          <h1 className="font-display font-extrabold text-2xl sm:text-3xl text-white leading-tight drop-shadow-md">
+          <h1 className="font-display text-[length:var(--lkv-text-title-sm)] font-extrabold leading-tight text-[color:var(--lkv-text-inverted)] drop-shadow-md sm:text-[length:var(--lkv-text-title-lg)]">
             {data.meta?.titleLine1} {data.meta?.titleLine2}
           </h1>
         </div>
       </div>
 
-      {/* STATS & AUTHOR BAR (Liquid Glass) */}
-      <div className="px-4 -mt-3 relative z-20">
-        <div className="glass bg-white/90 backdrop-blur-xl p-4 rounded-3xl border border-white shadow-xs flex flex-col gap-3">
-          {/* Author & Full Interactive Social Actions */}
-          <div className="flex items-center justify-between gap-2">
+      <div className="relative z-20 -mt-[var(--space-3)] px-[var(--space-4)]">
+        <Card className="flex flex-col gap-[var(--space-3)] p-[var(--space-4)]">
+          <div className="flex items-center justify-between gap-[var(--space-2)]">
             <Link
               href={metaAny.authorId ? `/profil/${metaAny.authorId}` : '/communaute'}
               onClick={() => triggerHaptic('light')}
-              className="flex items-center gap-2.5 min-w-0 group/author cursor-pointer"
+              className="group/author flex min-w-0 cursor-pointer items-center gap-[var(--space-2)]"
             >
-              <div className="w-10 h-10 rounded-full bg-[#17402C] text-white flex items-center justify-center font-serif italic text-sm font-bold shadow-xs overflow-hidden shrink-0 group-hover/author:scale-105 transition-transform">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[color:var(--lkv-primary)] font-serif text-[length:var(--lkv-text-caption)] font-bold italic text-[color:var(--lkv-text-inverted)] transition-transform group-hover/author:scale-105 motion-reduce:transition-none">
                 <img
                   src={metaAny.authorAvatar || (data.meta?.titleLine1?.includes('Ring Road') ? 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&q=80' : 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&q=80')}
                   alt=""
-                  className="w-full h-full object-cover"
+                  className="h-full w-full object-cover"
                 />
-              </div>
-              <div className="min-w-0">
-                <h4 className="font-bold text-xs text-[#17402C] truncate group-hover/author:underline">
+              </span>
+              <span className="min-w-0">
+                <h4 className="truncate text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-primary)] group-hover/author:underline">
                   {metaAny.authorName || (data.meta?.titleLine1?.includes('Ring Road') ? 'Marie Dupont' : 'Antoine Duprès')}
                 </h4>
-                <p className="text-[9.5px] font-mono text-[#5C6B5E] truncate">
+                <p className="truncate font-mono text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">
                   {metaAny.authorTitle || 'Guide & Explorateur LKDV'}
                 </p>
-              </div>
+              </span>
             </Link>
 
-            {/* Social & Action Button Group Image 3 */}
-            <div className="flex items-center gap-1 shrink-0">
-              {/* Like Button */}
+            <div className="flex shrink-0 items-center gap-[var(--space-1)]">
               <IconButton
                 size="sm"
                 onClick={handleToggleLike}
-                title="Aimer ce carnet"
                 aria-label="Aimer ce carnet"
                 variant={hasLiked ? 'solid' : 'glass'}
                 aria-pressed={hasLiked || undefined}
-                className={hasLiked ? "!bg-rose-50 !border-rose-200 !text-rose-600" : undefined}
-                style={{ width: 'auto', paddingInline: '10px' }}
+                className={`w-auto px-[10px] ${hasLiked ? 'bg-[color:var(--lkv-danger-bg)] text-[color:var(--lkv-danger)]' : ''}`}
               >
-                <span className="inline-flex items-center gap-1.5"><motion.svg
+                <span className="inline-flex items-center gap-[var(--space-1)]">
+                  <motion.svg
                     whileTap={{ scale: 1.3 }}
                     viewBox="0 0 24 24"
-                    className="w-3.5 h-3.5"
-                    fill={hasLiked ? '#E11D48' : 'none'}
-                    stroke={hasLiked ? '#E11D48' : 'currentColor'}
+                    className="h-3.5 w-3.5"
+                    fill={hasLiked ? 'var(--lkv-danger)' : 'none'}
+                    stroke={hasLiked ? 'var(--lkv-danger)' : 'currentColor'}
                     strokeWidth="2"
+                    aria-hidden="true"
                   >
                     <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
-                  </motion.svg><span className="tabular-nums">{likesCount}</span></span>
+                  </motion.svg>
+                  <span className="tabular-nums">{likesCount}</span>
+                </span>
               </IconButton>
 
-              {/* Comment Button */}
               <IconButton
                 size="sm"
                 onClick={() => {
                   triggerHaptic('selection');
                   setIsCommentsOpen(true);
                 }}
-                title="Commentaires"
                 aria-label="Commentaires"
-                style={{ width: 'auto', paddingInline: '10px' }}
+                className="w-auto px-[10px]"
               >
-                <span className="inline-flex items-center gap-1.5"><Icon name="ChatBubbleLeftIcon" size={13} /><span className="tabular-nums">{comments.length}</span></span>
+                <span className="inline-flex items-center gap-[var(--space-1)]">
+                  <Icon name="ChatBubbleLeftIcon" size={13} aria-hidden="true" />
+                  <span className="tabular-nums">{comments.length}</span>
+                </span>
               </IconButton>
 
-              {/* Bookmark Button */}
               <IconButton
                 size="sm"
                 onClick={handleToggleSave}
-                title="Enregistrer"
                 aria-label="Enregistrer"
                 variant={isSaved ? 'solid' : 'glass'}
                 aria-pressed={isSaved || undefined}
-                className={isSaved ? "!bg-amber-50 !border-amber-200 !text-amber-700" : undefined}
+                className={isSaved ? 'bg-[color:var(--lkv-warning-bg)] text-[color:var(--lkv-warning-dark)]' : undefined}
               >
                 <Icon
-                    name="BookmarkIcon"
-                    size={13}
-                    className={isSaved ? 'text-amber-700 fill-amber-700' : ''}
-                  />
+                  name="BookmarkIcon"
+                  size={13}
+                  className={isSaved ? 'fill-[color:var(--lkv-warning-dark)] text-[color:var(--lkv-warning-dark)]' : ''}
+                  aria-hidden="true"
+                />
               </IconButton>
 
-              {/* Share Button */}
               <IconButton
                 size="sm"
                 onClick={() => {
                   triggerHaptic('light');
                   onExport();
                 }}
-                title="Partager"
                 aria-label="Partager"
               >
-                <Icon name="ShareIcon" size={13} />
+                <Icon name="ShareIcon" size={13} aria-hidden="true" />
               </IconButton>
             </div>
           </div>
 
-          {/* Quick Metrics Grid */}
-          <div className="grid grid-cols-4 gap-1.5 pt-2 border-t border-[#17402C]/10 text-center">
-            <div className="p-2 rounded-2xl bg-white/70 border border-white/80">
-              <span className="block font-mono font-bold text-xs text-[#17402C]">{distVal != null ? `${distVal} km` : '—'}</span>
-              <span className="text-[8.5px] text-[#5C6B5E] uppercase font-mono font-bold">Distance</span>
-            </div>
-            <div className="p-2 rounded-2xl bg-white/70 border border-white/80">
-              <span className="block font-mono font-bold text-xs text-forest-800">{elevVal != null ? `+${elevVal} m` : '—'}</span>
-              <span className="text-[8.5px] text-[#5C6B5E] uppercase font-mono font-bold">Dénivelé</span>
-            </div>
-            <div className="p-2 rounded-2xl bg-white/70 border border-white/80">
-              <span className="block font-mono font-bold text-xs text-[#17402C]">{jours.length} jours</span>
-              <span className="text-[8.5px] text-[#5C6B5E] uppercase font-mono font-bold">Durée</span>
-            </div>
-            <div className="p-2 rounded-2xl bg-white/70 border border-white/80">
-              <span className="block font-mono font-bold text-xs text-[#5C6B5E]">—</span>
-              <span className="text-[8.5px] text-[#5C6B5E] uppercase font-mono font-bold">Note</span>
-            </div>
+          <div className="grid grid-cols-4 gap-[var(--space-1)] border-t border-[color:var(--lkv-primary)]/10 pt-[var(--space-2)] text-center">
+            <Card variant="compact" className="p-[var(--space-2)]">
+              <span className="block font-mono text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-primary)]">{distVal != null ? `${distVal} km` : '—'}</span>
+              <span className="font-mono text-[length:var(--lkv-text-caption-2)] font-bold uppercase text-[color:var(--lkv-text-muted)]">Distance</span>
+            </Card>
+            <Card variant="compact" className="p-[var(--space-2)]">
+              <span className="block font-mono text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-forest-800)]">{elevVal != null ? `+${elevVal} m` : '—'}</span>
+              <span className="font-mono text-[length:var(--lkv-text-caption-2)] font-bold uppercase text-[color:var(--lkv-text-muted)]">Dénivelé</span>
+            </Card>
+            <Card variant="compact" className="p-[var(--space-2)]">
+              <span className="block font-mono text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-primary)]">{jours.length} jours</span>
+              <span className="font-mono text-[length:var(--lkv-text-caption-2)] font-bold uppercase text-[color:var(--lkv-text-muted)]">Durée</span>
+            </Card>
+            <Card variant="compact" className="p-[var(--space-2)]">
+              <span className="block font-mono text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-muted)]">—</span>
+              <span className="font-mono text-[length:var(--lkv-text-caption-2)] font-bold uppercase text-[color:var(--lkv-text-muted)]">Note</span>
+            </Card>
           </div>
-        </div>
+        </Card>
       </div>
 
-      {/* SECTION CONTENT WITH ANIMATED TRANSITIONS */}
-      <div className="p-4 pt-4">
+      <div className="p-[var(--space-4)]">
         <AnimatePresence mode="wait">
           <motion.div
             key={activeTab}
@@ -332,132 +319,126 @@ export default function MobileCarnetDetailView({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
             transition={{ duration: 0.18, ease: 'easeOut' }}
-            className="space-y-4"
+            className="space-y-[var(--space-4)]"
           >
-            {/* RÉCIT / OVERVIEW */}
             {activeTab === 'overview' && (
-              <div className="space-y-4">
-                {/* Récit intro */}
-                <div className="glass bg-white/90 backdrop-blur-xl p-4 rounded-3xl border border-white shadow-xs space-y-3">
+              <div className="space-y-[var(--space-4)]">
+                <Card className="space-y-[var(--space-3)] p-[var(--space-4)]">
                   <div className="flex items-center justify-between">
-                    <span className="glass-pill text-[9.5px] font-mono font-bold text-forest-900 bg-forest-50">
-                      🌿 Carnet d'expédition
-                    </span>
-                    <span className="text-[10px] font-mono text-[#5C6B5E]">
+                    <Badge tone="sage" className="font-mono font-bold">
+                      🌿 Carnet d&apos;expédition
+                    </Badge>
+                    <span className="font-mono text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">
                       {metaAny.difficulty || 'Moyen'}
                     </span>
                   </div>
 
-                  <p className="text-xs text-[#17402C] leading-relaxed font-sans">
+                  <p className="font-sans text-[length:var(--lkv-text-caption-2)] leading-relaxed text-[color:var(--lkv-text-primary)]">
                     {data.meta?.subtitleLine1
                       ? `${data.meta.subtitleLine1} ${data.meta.subtitleLine2 || ''}`
                       : "Une traversée immersive à travers des crêtes panoramiques, des nuits en bivouac sous les étoiles et la découverte d'une faune alpine préservée."}
                   </p>
 
-                  <div className="pt-2.5 border-t border-[#17402C]/10 flex items-center justify-between gap-2">
-                    <button
+                  <div className="flex items-center justify-between gap-[var(--space-2)] border-t border-[color:var(--lkv-primary)]/10 pt-[var(--space-2)]">
+                    <Button
                       type="button"
                       onClick={() => {
                         triggerHaptic('selection');
                         setActiveTab('map');
                       }}
-                      className="flex-1 glass-capsule-btn primary !min-h-[34px] !py-1 !px-3 !text-xs !font-bold !gap-1.5"
+                      className="flex-1"
                     >
-                      <span>🗺️ Carte & GPX</span>
-                    </button>
-                    <button
+                      🗺️ Carte &amp; GPX
+                    </Button>
+                    <Button
                       type="button"
+                      variant="secondary"
                       onClick={() => {
                         triggerHaptic('selection');
                         setActiveTab('moments');
                       }}
-                      className="flex-1 glass-capsule-btn !min-h-[34px] !py-1 !px-3 !text-xs !font-bold !gap-1.5"
+                      className="flex-1"
                     >
-                      <span>📷 Moments ({moments.length})</span>
-                    </button>
+                      📷 Moments ({moments.length})
+                    </Button>
                   </div>
-                </div>
+                </Card>
 
-                {/* Direct Discussion & Comment Posting Card */}
-                <div className="glass bg-white/90 backdrop-blur-xl p-4 rounded-3xl border border-white shadow-xs space-y-3">
+                <Card className="space-y-[var(--space-3)] p-[var(--space-4)]">
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2.5">
-                      <span className="text-lg">💬</span>
+                    <div className="flex items-center gap-[var(--space-2)]">
+                      <span className="text-[length:var(--lkv-text-subheadline)]" aria-hidden>💬</span>
                       <div>
-                        <h4 className="font-display font-bold text-xs text-[#17402C]">
-                          Discussions & Retours de terrain
+                        <h4 className="font-display text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-primary)]">
+                          Discussions &amp; Retours de terrain
                         </h4>
-                        <p className="text-[10px] text-[#5C6B5E]">
+                        <p className="text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">
                           {comments.length} retours de la communauté
                         </p>
                       </div>
                     </div>
-                    <button
+                    <Button
                       type="button"
+                      variant="secondary"
+                      size="sm"
                       onClick={() => {
                         triggerHaptic('selection');
                         setIsCommentsOpen(true);
                       }}
-                      className="glass-capsule-btn !min-h-[28px] !py-0.5 !px-3 !text-[11px] !font-bold"
                     >
-                      <span>Voir tout ({comments.length}) →</span>
-                    </button>
+                      Voir tout ({comments.length}) →
+                    </Button>
                   </div>
 
-                  {/* Direct Inline Comment Form */}
-                  <form onSubmit={handleInlineSubmit} className="flex items-center gap-2 pt-1">
+                  <form onSubmit={handleInlineSubmit} className="flex items-center gap-[var(--space-2)] pt-[var(--space-1)]">
                     <input
                       type="text"
                       value={inlineComment}
                       onChange={(e) => setInlineComment(e.target.value)}
                       placeholder="Poser une question à l'auteur..."
-                      className="flex-1 glass bg-white/90 border border-white/80 rounded-full px-3.5 py-2 text-xs text-[#17402C] placeholder-[#5C6B5E] focus:outline-none focus:ring-1 focus:ring-[#17402C] shadow-2xs font-medium"
+                      aria-label="Poser une question à l'auteur"
+                      className="min-h-[var(--control-height-md)] flex-1 rounded-full border border-[color:var(--lkv-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] text-[length:var(--lkv-text-caption-2)] font-medium text-[color:var(--lkv-text-primary)] placeholder:text-[color:var(--lkv-text-muted)] focus:outline-none focus:ring-2 focus:ring-[color:var(--lkv-focus-ring)]"
                     />
-                    <button
-                      type="submit"
-                      disabled={!inlineComment.trim()}
-                      className="glass-capsule-btn primary !min-h-[34px] !py-1 !px-3.5 !text-xs !font-bold disabled:opacity-40"
-                    >
-                      <span>Publier</span>
-                    </button>
+                    <Button type="submit" size="sm" disabled={!inlineComment.trim()}>
+                      Publier
+                    </Button>
                   </form>
-                </div>
+                </Card>
 
-                {/* Timeline Preview */}
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between px-1">
-                    <h3 className="font-display font-bold text-sm text-[#17402C]">Étapes du parcours</h3>
-                    <button
+                <div className="space-y-[var(--space-2)]">
+                  <div className="flex items-center justify-between px-[var(--space-1)]">
+                    <h3 className="font-display text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)]">Étapes du parcours</h3>
+                    <Button
                       type="button"
+                      variant="secondary"
+                      size="sm"
                       onClick={() => setActiveTab('map')}
-                      className="glass-capsule-btn !min-h-[28px] !py-1 !px-2.5 !text-[10px] !font-bold"
                     >
-                      <span>Carte complète →</span>
-                    </button>
+                      Carte complète →
+                    </Button>
                   </div>
                   <TimelineJours jours={jours} hebergements={hebergements} />
                 </div>
               </div>
             )}
 
-            {/* CARTE & GPX */}
             {activeTab === 'map' && (
-              <div className="space-y-4">
-                <div className="flex items-center justify-between px-1">
-                  <h3 className="font-display font-bold text-sm text-[#17402C]">Trace GPS & Relief</h3>
-                  <button
+              <div className="space-y-[var(--space-4)]">
+                <div className="flex items-center justify-between px-[var(--space-1)]">
+                  <h3 className="font-display text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)]">Trace GPS &amp; Relief</h3>
+                  <Button
                     type="button"
+                    size="sm"
                     onClick={() => {
                       triggerHaptic('selection');
                       onDownloadGPX();
                     }}
-                    className="glass-capsule-btn primary !min-h-[32px] !py-1 !px-3 !text-[11px] !font-bold !gap-1.5"
                   >
-                    <span>⬇ GPX</span>
-                  </button>
+                    ⬇ GPX
+                  </Button>
                 </div>
 
-                <div className="glass bg-white/90 backdrop-blur-xl p-3 rounded-3xl border border-white shadow-xs overflow-hidden">
+                <Card className="overflow-hidden p-[var(--space-3)]">
                   <CarnetMap
                     traceGeojson={data.traceGeojson}
                     distanceKm={distVal}
@@ -465,48 +446,48 @@ export default function MobileCarnetDetailView({
                     destination={data.meta?.itineraire || data.meta?.titleLine1}
                     onDownloadGPX={onDownloadGPX}
                   />
-                </div>
+                </Card>
 
                 <TimelineJours jours={jours} hebergements={hebergements} />
               </div>
             )}
 
-            {/* MOMENTS & PHOTOS */}
             {activeTab === 'moments' && (
-              <div className="space-y-3">
-                <div className="flex items-center justify-between px-1">
-                  <h3 className="font-display font-bold text-sm text-[#17402C]">Moments &amp; Photographies</h3>
-                  <span className="text-[10px] font-mono text-[#5C6B5E]">{moments.length} moments</span>
+              <div className="space-y-[var(--space-3)]">
+                <div className="flex items-center justify-between px-[var(--space-1)]">
+                  <h3 className="font-display text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)]">Moments &amp; Photographies</h3>
+                  <span className="font-mono text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">{moments.length} moments</span>
                 </div>
 
                 {moments.length === 0 ? (
-                  <div className="py-10 text-center glass bg-white/80 p-6 rounded-3xl border border-white">
-                    <span className="text-3xl block mb-1">📷</span>
-                    <p className="text-xs text-[#5C6B5E]">Aucun moment photo enregistré.</p>
-                  </div>
+                  <Card className="p-[var(--space-6)]">
+                    <EmptyState
+                      icon={<Icon name="PhotoIcon" size={22} aria-hidden="true" />}
+                      title="Aucun moment photo"
+                      description="Aucun moment photo enregistré."
+                    />
+                  </Card>
                 ) : (
                   moments.map((m) => <MomentCard key={m.id} moment={m} />)
                 )}
               </div>
             )}
 
-            {/* MATÉRIEL */}
             {activeTab === 'kit' && (
-              <div className="space-y-3">
-                <div className="flex items-center justify-between px-1">
-                  <h3 className="font-display font-bold text-sm text-[#17402C]">Équipement emporté</h3>
-                  <span className="text-[10px] font-mono text-[#5C6B5E]">{kitItems.length} articles</span>
+              <div className="space-y-[var(--space-3)]">
+                <div className="flex items-center justify-between px-[var(--space-1)]">
+                  <h3 className="font-display text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)]">Équipement emporté</h3>
+                  <span className="font-mono text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">{kitItems.length} articles</span>
                 </div>
                 <KitSouvenirCard intro={kitIntro} items={kitItems} />
               </div>
             )}
 
-            {/* NATURE & SCANNER */}
             {activeTab === 'nature' && (
-              <div className="space-y-3">
-                <div className="flex items-center justify-between px-1">
-                  <h3 className="font-display font-bold text-sm text-[#17402C]">Biodiversité & Nature</h3>
-                  <span className="glass-pill text-[9.5px] font-mono font-bold">Nature Scanner IA</span>
+              <div className="space-y-[var(--space-3)]">
+                <div className="flex items-center justify-between px-[var(--space-1)]">
+                  <h3 className="font-display text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)]">Biodiversité &amp; Nature</h3>
+                  <Badge className="font-mono font-bold">Nature Scanner IA</Badge>
                 </div>
                 <SpeciesIdentifier />
               </div>
@@ -515,7 +496,6 @@ export default function MobileCarnetDetailView({
         </AnimatePresence>
       </div>
 
-      {/* COMMENTS BOTTOM SHEET DRAWER */}
       <CommentsSheet
         isOpen={isCommentsOpen}
         onClose={() => setIsCommentsOpen(false)}

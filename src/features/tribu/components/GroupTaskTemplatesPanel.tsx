@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import { Button, Card } from '@/components/ui';
 import {
   listGroupTaskTemplates,
   applyTaskTemplate,
@@ -49,38 +50,43 @@ export default function GroupTaskTemplatesPanel({
   if (templates.length === 0) return null;
 
   return (
-    <div className="glass rounded-2xl p-4" data-testid="group-task-templates">
-      <p className="text-[10px] font-mono font-bold uppercase tracking-widest text-[var(--lkv-text-secondary)]">
+    <Card className="p-[var(--space-4)]" data-testid="group-task-templates">
+      <p className="font-mono text-[length:var(--lkv-text-caption-2)] font-bold uppercase tracking-widest text-[color:var(--lkv-text-secondary)]">
         Modèles de checklist du club
       </p>
-      <div className="space-y-2 mt-3">
+      <div className="mt-[var(--space-3)] space-y-[var(--space-2)]">
         {templates.map((template) => (
-          <div key={template.id} className="flex items-center justify-between gap-3">
-            <span className="text-xs font-bold text-[var(--lkv-text-primary)] truncate">
+          <div
+            key={template.id}
+            className="flex items-center justify-between gap-[var(--space-3)]"
+          >
+            <span className="truncate text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)]">
               {template.title}
-              <span className="ml-1 opacity-60 font-mono font-normal">
+              <span className="ml-[var(--space-1)] font-mono font-normal opacity-60">
                 ({template.items.length})
               </span>
             </span>
-            <button
-              type="button"
+            <Button
+              variant="secondary"
+              size="sm"
               onClick={() => handleApply(template.id)}
               disabled={busyId === template.id}
-              className="glass-capsule-btn text-[10px] font-bold px-3 min-h-[36px] disabled:opacity-60 shrink-0"
+              className="shrink-0"
               data-testid="group-task-template-apply"
             >
-              <span className="relative z-10">
-                {busyId === template.id ? '…' : 'Appliquer'}
-              </span>
-            </button>
+              {busyId === template.id ? '…' : 'Appliquer'}
+            </Button>
           </div>
         ))}
       </div>
       {error && (
-        <p role="alert" className="text-[10px] font-bold text-[var(--lkv-danger)] mt-2">
+        <p
+          role="alert"
+          className="mt-[var(--space-2)] text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-danger)]"
+        >
           {error}
         </p>
       )}
-    </div>
+    </Card>
   );
 }

@@ -3,10 +3,10 @@ import { lkvConfirm } from '@/components/ui/dialogs';
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import Icon from '@/components/ui/AppIcon';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
+import { Badge, Button, Card, Chip, EmptyState, IconButton, Modal, SearchField } from '@/components/ui';
 
 interface EquipementItem {
   id: string;
@@ -50,9 +50,11 @@ const CATEGORY_EMOJI: Record<string, string> = {
   'Divers': '🎒',
 };
 
+const FIELD_CLASS =
+  'w-full rounded-[var(--lkv-radius-md)] border border-[color:var(--lkv-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[var(--space-2)] text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-primary)] placeholder:text-[color:var(--lkv-text-muted)] focus:outline-none focus:ring-2 focus:ring-[color:var(--lkv-focus-ring)]';
+
 export default function EquipementCard({ equipment, groupId, onRefresh, user, members }: EquipementCardProps) {
   const supabase = createClient();
-  const router = useRouter();
   const { triggerHaptic } = useHapticFeedback();
 
   const [items, setItems] = useState<EquipementItem[]>(equipment);
@@ -100,7 +102,7 @@ export default function EquipementCard({ equipment, groupId, onRefresh, user, me
     triggerHaptic('selection');
     setLoading(true);
     const weightGrams = parseInt(newItemWeight) || 0;
-    const ok = await runOp(
+    await runOp(
       supabase.from('group_kit_items').insert({
         group_id: groupId,
         name: newItemName.trim(),
@@ -154,7 +156,7 @@ export default function EquipementCard({ equipment, groupId, onRefresh, user, me
     if (!editForm.name.trim()) return;
     triggerHaptic('selection');
     setBusyId(itemId);
-    const ok = await runOp(
+    await runOp(
       supabase.from('group_kit_items').update({
         name: editForm.name.trim(),
         weight_grams: parseInt(editForm.weightGrams) || 0,
@@ -247,200 +249,196 @@ export default function EquipementCard({ equipment, groupId, onRefresh, user, me
   };
 
   return (
-    <div className="glass p-4 sm:p-6 transition-all duration-300">
-      <div className="flex flex-col gap-2 mb-4">
+    <Card className="p-[var(--space-4)] transition-all duration-[var(--motion-control-duration)] sm:p-[var(--space-6)]">
+      <div className="mb-[var(--space-4)] flex flex-col gap-[var(--space-2)]">
         <div className="flex items-center justify-between">
           <div>
-            <span className="text-[10px] font-mono uppercase tracking-widest text-lkv-text-muted font-bold">Kit collaboratif</span>
-            <h2 className="font-display text-lg sm:text-xl text-lkv-primary font-bold">
-              Équipement <em className="font-serif italic font-normal text-lkv-primary">partagé</em>
+            <span className="font-mono text-[length:var(--lkv-text-caption-2)] font-bold uppercase tracking-widest text-[color:var(--lkv-text-muted)]">Kit collaboratif</span>
+            <h2 className="font-display text-[length:var(--lkv-text-subheadline)] font-bold text-[color:var(--lkv-text-primary)] sm:text-[length:var(--lkv-text-title-sm)]">
+              Équipement <em className="font-serif italic font-normal text-[color:var(--lkv-text-primary)]">partagé</em>
             </h2>
           </div>
 
-          <div className="flex items-center gap-1.5">
-            <span className="glass-pill">{items.length} items</span>
-            <span className="glass-pill pill-warn">{unassignedCount} libres</span>
+          <div className="flex items-center gap-[var(--space-1)]">
+            <Badge>{items.length} items</Badge>
+            <Badge tone="warn">{unassignedCount} libres</Badge>
           </div>
         </div>
 
         {groupId && (
           <Link
             href={`/ai-configurator?groupId=${groupId}`}
-            className="w-full mt-1 p-3 rounded-2xl glass-sub-card text-lkv-primary text-xs font-bold flex items-center justify-between transition-transform"
+            className="mt-[var(--space-1)] flex w-full items-center justify-between rounded-[var(--lkv-radius-md)] border border-[color:var(--lkv-border-subtle)] bg-[color:var(--lkv-surface-muted)] p-[var(--space-3)] text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)]"
           >
-            <span className="flex items-center gap-2">
-              <span>🎒</span>
-              <span>Optimiser le sac avec l'IA</span>
+            <span className="flex items-center gap-[var(--space-2)]">
+              <span aria-hidden>🎒</span>
+              <span>Optimiser le sac avec l&apos;IA</span>
             </span>
-            <span className="text-lkv-primary text-xs">Configurer →</span>
+            <span className="text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-primary)]">Configurer →</span>
           </Link>
         )}
       </div>
 
-      <div className="flex items-center gap-2 mb-3">
-        <div className="flex-1 relative flex items-center">
-          <Icon name="MagnifyingGlassIcon" size={14} className="absolute left-3 text-lkv-text-muted shrink-0 relative z-10" />
-          <input
-            type="text"
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            placeholder="Chercher un objet, un porteur..."
-            className="glass-input w-full pl-9 pr-8 text-xs min-h-[36px]"
-          />
-          {search && (
-            <button onClick={() => setSearch('')} className="absolute right-2 text-xs text-lkv-text-muted px-1">✕</button>
-          )}
-        </div>
+      <div className="mb-[var(--space-3)] flex items-center gap-[var(--space-2)]">
+        <SearchField
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          onClear={() => setSearch('')}
+          placeholder="Chercher un objet, un porteur..."
+          aria-label="Chercher un objet ou un porteur"
+          containerClassName="flex-1"
+        />
 
-        <button
+        <Button
+          variant="secondary"
           onClick={openImport}
-          className="glass-capsule-btn py-2 px-3 text-xs font-bold flex items-center gap-1 shrink-0"
-          title="Importer depuis mon kit"
+          icon={<Icon name="ArrowDownTrayIcon" size={12} aria-hidden="true" />}
+          className="shrink-0"
         >
-          <Icon name="ArrowDownTrayIcon" size={12} className="relative z-10" />
-          <span className="hidden sm:inline relative z-10">Mon kit</span>
-        </button>
+          <span className="hidden sm:inline">Mon kit</span>
+        </Button>
 
-        <button
+        <Button
+          variant={isAdding ? 'secondary' : 'primary'}
           onClick={() => {
             triggerHaptic('light');
             setIsAdding(!isAdding);
           }}
-          className="glass-capsule-btn primary py-2 px-3 text-xs font-bold flex items-center gap-1 shrink-0"
+          className="shrink-0"
         >
-          <span className="relative z-10">{isAdding ? '✕' : '+'}</span>
-          <span className="relative z-10">{isAdding ? 'Fermer' : 'Ajouter'}</span>
-        </button>
+          {isAdding ? 'Fermer' : 'Ajouter'}
+        </Button>
       </div>
 
-      <div className="overflow-x-auto scrollbar-none flex items-center gap-1.5 pb-2 mb-3">
-        {categories.map(cat => {
-          const isSelected = selectedCategory === cat;
-          return (
-            <button
-              key={cat}
-              onClick={() => {
-                triggerHaptic('light');
-                setSelectedCategory(cat);
-              }}
-              className={`glass-pill cursor-pointer whitespace-nowrap ${isSelected ? 'bg-lkv-primary text-white' : ''}`}
-            >
-              <span>{CATEGORY_EMOJI[cat] || '🎒'}</span>
-              <span>{cat}</span>
-            </button>
-          );
-        })}
+      <div className="mb-[var(--space-3)] flex items-center gap-[var(--space-2)] overflow-x-auto pb-[var(--space-2)] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        {categories.map(cat => (
+          <Chip
+            key={cat}
+            selected={selectedCategory === cat}
+            onClick={() => {
+              triggerHaptic('light');
+              setSelectedCategory(cat);
+            }}
+            icon={<span aria-hidden>{CATEGORY_EMOJI[cat] || '🎒'}</span>}
+            className="whitespace-nowrap"
+          >
+            {cat}
+          </Chip>
+        ))}
       </div>
 
       {error && (
-        <div className="mb-3 p-2.5 glass-sub-card rounded-xl text-xs text-red-700 flex items-center gap-2">
-          <Icon name="ExclamationTriangleIcon" size={14} className="relative z-10" /> {error}
+        <div className="mb-[var(--space-3)] flex items-center gap-[var(--space-2)] rounded-[var(--lkv-radius-md)] bg-[color:var(--lkv-danger-bg)] p-[var(--space-3)] text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-danger-dark)]" role="alert">
+          <Icon name="ExclamationTriangleIcon" size={14} aria-hidden="true" /> {error}
         </div>
       )}
       {notice && (
-        <div className="mb-3 p-2.5 glass-sub-card rounded-xl text-xs text-forest-800 font-semibold">
+        <div className="mb-[var(--space-3)] rounded-[var(--lkv-radius-md)] bg-[color:var(--lkv-success-bg)] p-[var(--space-3)] text-[length:var(--lkv-text-caption)] font-semibold text-[color:var(--lkv-text-primary)]" role="status">
           {notice}
         </div>
       )}
 
       {isAdding && (
-        <form onSubmit={handleAddItem} className="mb-4 glass-sub-card p-4 rounded-2xl space-y-3">
-          <div className="flex items-center justify-between">
-            <h4 className="text-xs font-bold text-lkv-primary">Ajouter un équipement commun</h4>
-            <span className="text-[10px] font-mono text-lkv-text-muted font-bold">Kit partagé</span>
-          </div>
+        <Card variant="compact" className="mb-[var(--space-4)] space-y-[var(--space-3)] p-[var(--space-4)]">
+          <form onSubmit={handleAddItem} className="space-y-[var(--space-3)]">
+            <div className="flex items-center justify-between">
+              <h4 className="text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)]">Ajouter un équipement commun</h4>
+              <span className="font-mono text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-muted)]">Kit partagé</span>
+            </div>
 
-          <div className="space-y-2">
-            <input
-              type="text"
-              autoFocus
-              value={newItemName}
-              onChange={e => setNewItemName(e.target.value)}
-              placeholder="Ex: Tente MSR Hubba Hubba 2P..."
-              className="glass-input w-full text-xs"
-            />
+            <div className="space-y-[var(--space-2)]">
+              <input
+                type="text"
+                autoFocus
+                value={newItemName}
+                onChange={e => setNewItemName(e.target.value)}
+                placeholder="Ex: Tente MSR Hubba Hubba 2P..."
+                aria-label="Nom de l'équipement"
+                className={FIELD_CLASS}
+              />
 
-            <div className="grid grid-cols-3 gap-2">
-              <input
-                type="number"
-                value={newItemWeight}
-                onChange={e => setNewItemWeight(e.target.value)}
-                placeholder="Poids (g)"
-                className="glass-input text-xs min-h-[36px]"
-              />
-              <input
-                type="number"
-                min={1}
-                value={newQuantity}
-                onChange={e => setNewQuantity(Math.max(1, parseInt(e.target.value) || 1))}
-                placeholder="Qté"
-                className="glass-input text-xs min-h-[36px]"
-              />
+              <div className="grid grid-cols-3 gap-[var(--space-2)]">
+                <input
+                  type="number"
+                  value={newItemWeight}
+                  onChange={e => setNewItemWeight(e.target.value)}
+                  placeholder="Poids (g)"
+                  aria-label="Poids en grammes"
+                  className={FIELD_CLASS}
+                />
+                <input
+                  type="number"
+                  min={1}
+                  value={newQuantity}
+                  onChange={e => setNewQuantity(Math.max(1, parseInt(e.target.value) || 1))}
+                  placeholder="Qté"
+                  aria-label="Quantité"
+                  className={FIELD_CLASS}
+                />
+                <select
+                  value={newCategory}
+                  onChange={e => setNewCategory(e.target.value)}
+                  aria-label="Catégorie"
+                  className={FIELD_CLASS}
+                >
+                  {categories.filter(c => c !== 'Tout').map(c => (
+                    <option key={c} value={c}>{c}</option>
+                  ))}
+                </select>
+              </div>
+
               <select
-                value={newCategory}
-                onChange={e => setNewCategory(e.target.value)}
-                className="glass-input text-xs min-h-[36px]"
+                value={assignedTo}
+                onChange={e => setAssignedTo(e.target.value)}
+                aria-label="Qui porte cet objet"
+                className={FIELD_CLASS}
               >
-                {categories.filter(c => c !== 'Tout').map(c => (
-                  <option key={c} value={c}>{c}</option>
+                <option value="">👤 Qui porte cet objet ? (Non attribué)</option>
+                {members?.map(m => (
+                  <option key={m.user_id} value={m.user_id}>
+                    {m.user_profiles?.full_name || 'Membre'}
+                  </option>
                 ))}
               </select>
             </div>
 
-            <select
-              value={assignedTo}
-              onChange={e => setAssignedTo(e.target.value)}
-              className="glass-input w-full text-xs"
-            >
-              <option value="">👤 Qui porte cet objet ? (Non attribué)</option>
-              {members?.map(m => (
-                <option key={m.user_id} value={m.user_id}>
-                  {m.user_profiles?.full_name || 'Membre'}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="flex justify-end gap-2 pt-1">
-            <button
-              type="button"
-              onClick={() => setIsAdding(false)}
-              className="glass-capsule-btn text-xs font-semibold py-1.5 px-3"
-            >
-              <span className="relative z-10">Annuler</span>
-            </button>
-            <button
-              type="submit"
-              disabled={!newItemName.trim() || loading}
-              className="glass-capsule-btn primary text-xs font-bold py-1.5 px-4 disabled:opacity-50"
-            >
-              <span className="relative z-10">{loading ? 'Ajout...' : 'Sauvegarder'}</span>
-            </button>
-          </div>
-        </form>
+            <div className="flex justify-end gap-[var(--space-2)] pt-[var(--space-1)]">
+              <Button type="button" variant="secondary" size="sm" onClick={() => setIsAdding(false)}>
+                Annuler
+              </Button>
+              <Button type="submit" size="sm" disabled={!newItemName.trim() || loading} loading={loading}>
+                {loading ? 'Ajout...' : 'Sauvegarder'}
+              </Button>
+            </div>
+          </form>
+        </Card>
       )}
 
       {editingId && (
-        <div className="mb-4 glass-sub-card p-4 rounded-2xl space-y-3">
+        <Card variant="compact" className="mb-[var(--space-4)] space-y-[var(--space-3)] p-[var(--space-4)]">
           <div className="flex items-center justify-between">
-            <h4 className="text-xs font-bold text-lkv-primary">Modifier l'équipement</h4>
-            <button onClick={() => setEditingId(null)} className="text-xs text-lkv-text-muted">✕</button>
+            <h4 className="text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)]">Modifier l&apos;équipement</h4>
+            <IconButton variant="ghost" size="sm" aria-label="Fermer l'édition" onClick={() => setEditingId(null)}>
+              <Icon name="XMarkIcon" size={14} aria-hidden="true" />
+            </IconButton>
           </div>
 
           <input
             type="text"
             value={editForm.name}
             onChange={e => setEditForm(f => ({ ...f, name: e.target.value }))}
-            className="glass-input w-full text-xs"
+            aria-label="Nom de l'équipement"
+            className={FIELD_CLASS}
           />
 
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-3 gap-[var(--space-2)]">
             <input
               type="number"
               value={editForm.weightGrams}
               onChange={e => setEditForm(f => ({ ...f, weightGrams: e.target.value }))}
               placeholder="Poids (g)"
-              className="glass-input text-xs min-h-[36px]"
+              aria-label="Poids en grammes"
+              className={FIELD_CLASS}
             />
             <input
               type="number"
@@ -448,12 +446,14 @@ export default function EquipementCard({ equipment, groupId, onRefresh, user, me
               value={editForm.quantity}
               onChange={e => setEditForm(f => ({ ...f, quantity: Math.max(1, parseInt(e.target.value) || 1) }))}
               placeholder="Qté"
-              className="glass-input text-xs min-h-[36px]"
+              aria-label="Quantité"
+              className={FIELD_CLASS}
             />
             <select
               value={editForm.assigned_to}
               onChange={e => setEditForm(f => ({ ...f, assigned_to: e.target.value }))}
-              className="glass-input text-xs min-h-[36px]"
+              aria-label="Porteur de l'objet"
+              className={FIELD_CLASS}
             >
               <option value="">Non attribué</option>
               {members?.map(m => (
@@ -462,177 +462,170 @@ export default function EquipementCard({ equipment, groupId, onRefresh, user, me
             </select>
           </div>
 
-          <div className="flex justify-end gap-2">
-            <button onClick={() => setEditingId(null)} className="glass-capsule-btn py-1.5 px-3 text-xs font-semibold">
-              <span className="relative z-10">Annuler</span>
-            </button>
-            <button onClick={() => handleUpdateItem(editingId)} className="glass-capsule-btn primary py-1.5 px-4 text-xs font-bold">
-              <span className="relative z-10">Enregistrer</span>
-            </button>
+          <div className="flex justify-end gap-[var(--space-2)]">
+            <Button type="button" variant="secondary" size="sm" onClick={() => setEditingId(null)}>
+              Annuler
+            </Button>
+            <Button type="button" size="sm" onClick={() => handleUpdateItem(editingId)}>
+              Enregistrer
+            </Button>
           </div>
-        </div>
+        </Card>
       )}
 
-      <div className="space-y-2.5">
+      <div className="space-y-[var(--space-2)]">
         {filteredItems.length === 0 ? (
-          <div className="py-8 text-center glass-sub-card rounded-2xl p-4">
-            <span className="text-3xl block mb-1">🎒</span>
-            <p className="text-xs font-bold text-lkv-primary">
-              {search ? 'Aucun objet trouvé' : 'Aucun équipement dans cette catégorie'}
-            </p>
-            <p className="text-[11px] text-lkv-text-muted mt-0.5">
-              Ajoutez les éléments clés du bivouac pour équilibrer les sacs.
-            </p>
-            {!search && (
-              <button
-                onClick={() => setIsAdding(true)}
-                className="mt-3 glass-capsule-btn primary py-1.5 px-4 text-xs font-bold"
-              >
-                <span className="relative z-10">+ Ajouter un objet</span>
-              </button>
-            )}
-          </div>
+          <EmptyState
+            compact
+            icon={<span className="text-2xl" aria-hidden>🎒</span>}
+            title={search ? 'Aucun objet trouvé' : 'Aucun équipement dans cette catégorie'}
+            description="Ajoutez les éléments clés du bivouac pour équilibrer les sacs."
+            actionLabel={!search ? 'Ajouter un objet' : undefined}
+            onAction={!search ? () => setIsAdding(true) : undefined}
+          />
         ) : (
           filteredItems.map(item => {
             const isAssigned = !!item.assigneeId && item.assignee !== 'Non attribué';
             const isMyAssignment = isAssigned && item.assigneeId === user?.id;
 
             return (
-              <div
+              <Card
                 key={item.id}
-                className="glass-sub-card rounded-2xl p-3 flex items-center justify-between gap-3 transition-all"
+                variant="compact"
+                className="flex items-center justify-between gap-[var(--space-3)]"
               >
-                <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                  <div className="w-9 h-9 rounded-xl glass-sub-card flex items-center justify-center text-base shrink-0">
+                <div className="flex min-w-0 flex-1 items-center gap-[var(--space-2)]">
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--lkv-radius-md)] bg-[color:var(--lkv-surface-muted)] text-base" aria-hidden>
                     {CATEGORY_EMOJI[item.category || 'Divers'] || '🎒'}
                   </div>
 
                   <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-1.5">
-                      <h4 className="font-bold text-xs text-lkv-primary truncate">
+                    <div className="flex items-center gap-[var(--space-1)]">
+                      <h4 className="truncate text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)]">
                         {item.item}
                       </h4>
                       {item.quantity && item.quantity > 1 && (
-                        <span className="glass-pill text-[10px]">
-                          ×{item.quantity}
-                        </span>
+                        <Badge>×{item.quantity}</Badge>
                       )}
                     </div>
 
-                    <div className="flex items-center gap-2 text-[10px] font-mono text-lkv-text-muted mt-0.5">
-                      <span className="font-bold text-lkv-primary">
+                    <div className="mt-[var(--space-1)] flex items-center gap-[var(--space-2)] font-mono text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">
+                      <span className="font-bold text-[color:var(--lkv-text-primary)]">
                         {item.weightGrams ? `${item.weightGrams}g` : item.weight || '—'}
                       </span>
-                      <span>·</span>
-                      <button
+                      <span aria-hidden>·</span>
+                      <Button
+                        variant="ghost"
+                        size="sm"
                         onClick={() => handleAssignToMe(item)}
                         disabled={busyId === item.id}
-                        className={`truncate underline decoration-dotted ${
-                          isMyAssignment ? 'text-emerald-700 font-bold' : isAssigned ? 'text-lkv-primary' : 'text-[#D97746] font-semibold'
+                        aria-pressed={isMyAssignment}
+                        className={`h-auto min-h-0 truncate px-0 underline decoration-dotted ${
+                          isMyAssignment
+                            ? 'font-bold text-[color:var(--lkv-success)]'
+                            : isAssigned
+                              ? 'text-[color:var(--lkv-text-primary)]'
+                              : 'font-semibold text-[color:var(--lkv-warning-dark)]'
                         }`}
-                        title="Cliquer pour changer l'attribution"
                       >
                         {isMyAssignment ? '👤 Porté par vous' : isAssigned ? `👤 ${item.assignee}` : '⚠️ Non attribué'}
-                      </button>
+                      </Button>
                     </div>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-1 shrink-0">
-                  <button
+                <div className="flex shrink-0 items-center gap-[var(--space-1)]">
+                  <IconButton
+                    variant="glass"
+                    size="sm"
                     onClick={() => startEdit(item)}
-                    className="glass-capsule-btn p-1.5"
-                    title="Modifier"
+                    aria-label={`Modifier ${item.item}`}
                   >
-                    <Icon name="PencilSquareIcon" size={14} className="relative z-10" />
-                  </button>
-                  <button
+                    <Icon name="PencilSquareIcon" size={14} aria-hidden="true" />
+                  </IconButton>
+                  <IconButton
+                    variant="glass"
+                    size="sm"
                     onClick={() => handleDeleteItem(item.id)}
                     disabled={busyId === item.id}
-                    className="glass-capsule-btn p-1.5 text-red-600"
-                    title="Supprimer"
+                    aria-label={`Supprimer ${item.item}`}
+                    className="text-[color:var(--lkv-danger)]"
                   >
-                    <Icon name="TrashIcon" size={14} className="relative z-10" />
-                  </button>
+                    <Icon name="TrashIcon" size={14} aria-hidden="true" />
+                  </IconButton>
                 </div>
-              </div>
+              </Card>
             );
           })
         )}
       </div>
 
-      <div className="mt-4 pt-3 border-t border-lkv-primary/10 flex items-center justify-between">
-        <span className="text-[11px] font-mono text-lkv-text-muted font-bold">Poids total du matériel partagé</span>
-        <span className="font-mono font-bold text-sm text-lkv-primary">{totalKg} kg</span>
+      <div className="mt-[var(--space-4)] flex items-center justify-between border-t border-[color:var(--lkv-border)] pt-[var(--space-3)]">
+        <span className="font-mono text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-muted)]">Poids total du matériel partagé</span>
+        <span className="font-mono text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)]">{totalKg} kg</span>
       </div>
 
-      {isImporting && (
-        <div className="fixed inset-0 z-[100] bg-black/50 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="glass w-full max-w-lg p-5 max-h-[85vh] flex flex-col">
-            <div className="flex items-center justify-between pb-3 border-b border-lkv-primary/10">
-              <div>
-                <h3 className="font-display font-bold text-base text-lkv-primary">Importer depuis mon kit</h3>
-                <p className="text-[11px] text-lkv-text-muted">Sélectionnez les objets à partager avec l'équipe</p>
-              </div>
-              <button onClick={() => setIsImporting(false)} className="glass-capsule-btn p-2 text-xs font-bold">
-                <span className="relative z-10">✕</span>
-              </button>
-            </div>
+      <Modal
+        open={isImporting}
+        onOpenChange={(next) => { if (!next) setIsImporting(false); }}
+        title="Importer depuis mon kit"
+        description="Sélectionnez les objets à partager avec l'équipe"
+        size="lg"
+        footer={
+          <div className="flex justify-end gap-[var(--space-2)]">
+            <Button variant="secondary" onClick={() => setIsImporting(false)}>Annuler</Button>
+            <Button onClick={executeImport} disabled={importingNow} loading={importingNow}>
+              {importingNow ? 'Importation...' : 'Importer la sélection'}
+            </Button>
+          </div>
+        }
+      >
+        <div className="space-y-[var(--space-3)]">
+          <SearchField
+            value={personalSearch}
+            onChange={e => setPersonalSearch(e.target.value)}
+            onClear={() => setPersonalSearch('')}
+            placeholder="Filtrer mes équipements..."
+            aria-label="Filtrer mes équipements"
+          />
 
-            <div className="my-2.5">
-              <input
-                type="text"
-                value={personalSearch}
-                onChange={e => setPersonalSearch(e.target.value)}
-                placeholder="Filtrer mes équipements..."
-                className="glass-input w-full text-xs"
-              />
-            </div>
-
-            <div className="flex-1 overflow-y-auto space-y-2 pr-1 my-1">
-              {personalItems
-                .filter(g => !personalSearch || g.name.toLowerCase().includes(personalSearch.toLowerCase()))
-                .map(gear => {
-                  const isChecked = !!selectedGear[gear.id];
-                  return (
-                    <div
-                      key={gear.id}
-                      onClick={() => setSelectedGear(s => ({ ...s, [gear.id]: !s[gear.id] }))}
-                      className={`p-2.5 rounded-xl border transition-all cursor-pointer flex items-center justify-between gap-2 ${
-                        isChecked ? 'bg-lkv-primary text-white border-lkv-primary' : 'glass-sub-card text-lkv-primary'
+          <div className="max-h-[50vh] space-y-[var(--space-2)] overflow-y-auto pr-[var(--space-1)]">
+            {personalItems
+              .filter(g => !personalSearch || g.name.toLowerCase().includes(personalSearch.toLowerCase()))
+              .map(gear => {
+                const isChecked = !!selectedGear[gear.id];
+                return (
+                  <Card
+                    key={gear.id}
+                    variant="compact"
+                    selected={isChecked}
+                    onClick={() => setSelectedGear(s => ({ ...s, [gear.id]: !s[gear.id] }))}
+                    className={`flex w-full items-center justify-between gap-[var(--space-2)] p-[var(--space-3)] text-left ${
+                      isChecked
+                        ? 'border-[color:var(--lkv-primary)] bg-[color:var(--lkv-primary)] text-[color:var(--lkv-text-inverted)]'
+                        : 'text-[color:var(--lkv-text-primary)]'
+                    }`}
+                  >
+                    <div>
+                      <h5 className="truncate text-[length:var(--lkv-text-caption)] font-bold">{gear.name}</h5>
+                      <p className={`font-mono text-[length:var(--lkv-text-caption-2)] ${isChecked ? 'text-[color:var(--lkv-text-inverted)]/80' : 'text-[color:var(--lkv-text-muted)]'}`}>
+                        {gear.weight_g ? `${gear.weight_g}g` : '—'} · {gear.category || 'Divers'}
+                      </p>
+                    </div>
+                    <span
+                      aria-hidden
+                      className={`flex h-5 w-5 items-center justify-center rounded-[var(--lkv-radius-sm)] text-[length:var(--lkv-text-caption-2)] font-bold ${
+                        isChecked ? 'bg-[color:var(--lkv-surface-card)] text-[color:var(--lkv-text-primary)]' : 'border border-[color:var(--lkv-border-strong)]'
                       }`}
                     >
-                      <div>
-                        <h5 className="font-bold text-xs truncate">{gear.name}</h5>
-                        <p className={`text-[10px] font-mono ${isChecked ? 'text-white/80' : 'text-lkv-text-muted'}`}>
-                          {gear.weight_g ? `${gear.weight_g}g` : '—'} · {gear.category || 'Divers'}
-                        </p>
-                      </div>
-                      <span className={`w-5 h-5 rounded-md flex items-center justify-center text-xs font-bold ${
-                        isChecked ? 'bg-white text-lkv-primary' : 'border border-lkv-primary/20'
-                      }`}>
-                        {isChecked ? '✓' : ''}
-                      </span>
-                    </div>
-                  );
-                })}
-            </div>
-
-            <div className="pt-3 border-t border-lkv-primary/10 flex justify-end gap-2">
-              <button onClick={() => setIsImporting(false)} className="glass-capsule-btn py-1.5 px-3 text-xs font-semibold">
-                <span className="relative z-10">Annuler</span>
-              </button>
-              <button
-                onClick={executeImport}
-                disabled={importingNow}
-                className="glass-capsule-btn primary py-1.5 px-4 text-xs font-bold"
-              >
-                <span className="relative z-10">{importingNow ? 'Importation...' : 'Importer la sélection'}</span>
-              </button>
-            </div>
+                      {isChecked ? '✓' : ''}
+                    </span>
+                  </Card>
+                );
+              })}
           </div>
         </div>
-      )}
-    </div>
+      </Modal>
+    </Card>
   );
 }

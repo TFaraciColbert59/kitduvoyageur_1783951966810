@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import Header from '@/components/Header';
 import Icon from '@/components/ui/AppIcon';
+import { Badge, Button, Card, Chip, IconButton } from '@/components/ui';
 import { ChevronRightIcon as ChevronRightAnimated } from '@/components/icons/chevron-right';
 import CommunityHubNav from '@/components/social/CommunityHubNav';
 import CompteBackground from '@/components/compte/CompteBackground';
@@ -12,6 +13,16 @@ import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
 import 'leaflet/dist/leaflet.css';
+
+const FIELD_CLASS =
+  'w-full rounded-[var(--lkv-radius-md)] border border-[color:var(--lkv-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[var(--space-2)] text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-primary)] placeholder:text-[color:var(--lkv-text-muted)] focus:outline-none focus:ring-2 focus:ring-[color:var(--lkv-focus-ring)]';
+
+const OPTION_CARD_CLASS = (selected: boolean) =>
+  `flex cursor-pointer items-start gap-[var(--space-2)] rounded-[var(--lkv-radius-md)] border p-[var(--space-3)] transition-colors ${
+    selected
+      ? 'border-[color:var(--lkv-primary)] bg-[color:var(--lkv-surface-card)]'
+      : 'border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-muted)]'
+  }`;
 
 // Color Palette
 const ACCENT_COLORS = [
@@ -202,72 +213,75 @@ export default function NouveauGroupePage() {
 
       <main className="flex-1 min-h-0 overflow-hidden w-full max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-4 flex gap-5">
         {/* COLONNE GAUCHE (Nav & Stepper) - 230px */}
-        <aside className="w-[230px] shrink-0 h-full max-h-full flex flex-col justify-between glass rounded-[1.5rem] p-3.5 text-[var(--lkv-primary)] font-sans overflow-hidden border border-white/40 shadow-sm select-none">
+        <aside className="flex h-full max-h-full w-[230px] shrink-0 select-none flex-col justify-between overflow-hidden rounded-[var(--lkv-radius-2xl)] border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] p-[var(--space-3)] font-sans text-[color:var(--lkv-text-primary)] shadow-elevation-1 backdrop-blur-[var(--blur-lg)]">
           {/* ── 1. ZONE HAUTE FIXE (Identité & Actions) ── */}
-          <div className="shrink-0 space-y-2.5">
-            <div className="p-3 rounded-2xl glass-sub-card flex items-center gap-3 relative overflow-hidden border border-white/50">
-              <div className="w-10 h-10 rounded-full flex items-center justify-center text-xl shrink-0 bg-white/80 border border-white shadow-xs">
+          <div className="shrink-0 space-y-[var(--space-2)]">
+            <Card variant="compact" className="flex items-center gap-[var(--space-3)] border-[color:var(--glass-border)]">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[color:var(--glass-border)] bg-[color:var(--lkv-surface-card)] text-xl" aria-hidden>
                 ⛺
               </div>
               <div className="min-w-0 flex-1">
-                <h4 className="font-display font-bold text-xs sm:text-sm text-[var(--lkv-primary)] truncate leading-tight">
+                <h4 className="truncate font-display text-[length:var(--lkv-text-caption)] font-bold leading-tight text-[color:var(--lkv-text-primary)] sm:text-[length:var(--lkv-text-subheadline)]">
                   Nouvelle{' '}
-                  <span className="font-serif italic font-normal text-[var(--lkv-secondary)] text-xs">
+                  <span className="font-serif text-[length:var(--lkv-text-caption)] font-normal italic text-[color:var(--lkv-secondary)]">
                     Expédition
                   </span>
                 </h4>
-                <p className="text-[10px] font-mono text-[var(--lkv-text-muted)] truncate mt-0.5">
+                <p className="mt-[var(--space-1)] truncate font-mono text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">
                   Studio Groupe
                 </p>
               </div>
-            </div>
+            </Card>
 
-            <div className="grid grid-cols-2 gap-1.5">
+            <div className="grid grid-cols-2 gap-[var(--space-1)]">
               <Link
                 href="/groupes"
-                className="glass-capsule-btn primary text-[10.5px] font-bold !py-1.5 !px-2 flex items-center justify-center gap-1 shadow-none cursor-pointer"
+                className="inline-flex items-center justify-center gap-[var(--space-1)] rounded-full bg-[color:var(--lkv-action)] px-[var(--space-2)] py-[var(--space-1)] text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-on-action)]"
               >
-                <Icon name="ArrowLeftIcon" size={12} />
+                <Icon name="ArrowLeftIcon" size={12} aria-hidden="true" />
                 <span>Groupes</span>
               </Link>
 
-              <button
+              <Button
                 type="button"
+                variant="secondary"
+                size="sm"
                 onClick={() => window.print()}
-                className="glass-capsule-btn text-[10.5px] font-bold !py-1.5 !px-2 flex items-center justify-center gap-1 shadow-none cursor-pointer"
+                icon={<Icon name="PrinterIcon" size={12} aria-hidden="true" />}
+                className="px-[var(--space-2)]"
               >
-                <Icon name="PrinterIcon" size={12} />
-                <span>Imprimer</span>
-              </button>
+                Imprimer
+              </Button>
             </div>
           </div>
 
           {/* ── 2. ZONE CENTRALE SCROLLABLE À L'INTÉRIEUR (Stepper sans numéros/icônes) ── */}
-          <nav className="flex-1 min-h-0 overflow-y-auto no-scrollbar py-2 space-y-1.5" aria-label="Étapes de création du groupe">
-            <p className="text-[9.5px] font-mono font-bold uppercase tracking-widest text-[var(--lkv-text-muted)] px-2 mb-1">
+          <nav className="min-h-0 flex-1 space-y-[var(--space-1)] overflow-y-auto py-[var(--space-2)] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" aria-label="Étapes de création du groupe">
+            <p className="mb-[var(--space-1)] px-[var(--space-2)] font-mono text-[length:var(--lkv-text-caption-2)] font-bold uppercase tracking-widest text-[color:var(--lkv-text-muted)]">
               Étapes de création
             </p>
             {STEPS.map((st) => {
               const isActive = activeStep === st.id;
               return (
-                <button
+                <Button
                   key={st.id}
                   type="button"
+                  variant={isActive ? 'primary' : 'secondary'}
+                  fullWidth
                   onClick={() => setActiveStep(st.id)}
-                  className={`glass-capsule-btn w-full !px-3 !py-2.5 font-bold text-xs justify-between ${
-                    isActive ? 'primary' : ''
-                  }`}
+                  className="justify-between rounded-[var(--lkv-radius-md)] text-[length:var(--lkv-text-caption)]"
+                  aria-pressed={isActive}
                 >
                   <span className="truncate text-left">{st.label}</span>
-                  {isActive && <ChevronRightAnimated size={13} className="text-white/70 shrink-0" />}
-                </button>
+                  {isActive && <ChevronRightAnimated size={13} className="shrink-0 text-[color:var(--lkv-text-inverted)]/70" aria-hidden />}
+                </Button>
               );
             })}
           </nav>
 
           {/* ── 3. ZONE BASSE FIXE (Footer) ── */}
-          <div className="shrink-0 pt-2 border-t border-[var(--lkv-primary)]/5 text-center">
-            <span className="text-[8.5px] font-mono text-[var(--lkv-text-muted)] tracking-wider uppercase">
+          <div className="shrink-0 border-t border-[color:var(--lkv-primary)]/5 pt-[var(--space-2)] text-center">
+            <span className="font-mono text-[length:var(--lkv-text-caption-2)] uppercase tracking-wider text-[color:var(--lkv-text-muted)]">
               Le Kit du Voyageur · Studio Groupe
             </span>
           </div>
@@ -276,44 +290,46 @@ export default function NouveauGroupePage() {
         {/* COLONNE CENTRALE (Formulaire dynamique) */}
         <div className="flex-1 min-w-0 h-full overflow-y-auto custom-scrollbar pr-2 space-y-4">
           {/* Breadcrumbs */}
-          <div className="flex items-center gap-2 text-xs font-medium text-[var(--lkv-text-muted)]">
-            <Link href="/communaute" className="hover:text-[var(--lkv-primary)] transition-colors">Communauté</Link>
-            <Icon name="ChevronRightIcon" size={12} className="text-[var(--lkv-text-muted)]" />
-            <Link href="/communaute?tab=groupes" className="hover:text-[var(--lkv-primary)] transition-colors">Groupes</Link>
-            <Icon name="ChevronRightIcon" size={12} className="text-[var(--lkv-text-muted)]" />
-            <span className="text-[var(--lkv-primary)] font-semibold">Créer une expédition</span>
+          <div className="flex items-center gap-[var(--space-2)] text-[length:var(--lkv-text-caption-2)] font-medium text-[color:var(--lkv-text-muted)]">
+            <Link href="/communaute" className="transition-colors hover:text-[color:var(--lkv-text-primary)]">Communauté</Link>
+            <Icon name="ChevronRightIcon" size={12} className="text-[color:var(--lkv-text-muted)]" aria-hidden="true" />
+            <Link href="/communaute?tab=groupes" className="transition-colors hover:text-[color:var(--lkv-text-primary)]">Groupes</Link>
+            <Icon name="ChevronRightIcon" size={12} className="text-[color:var(--lkv-text-muted)]" aria-hidden="true" />
+            <span className="font-semibold text-[color:var(--lkv-text-primary)]">Créer une expédition</span>
           </div>
 
           {/* STEP 1: INFOS */}
           {activeStep === 'infos' && (
-            <div className="glass rounded-2xl p-6 space-y-5">
-              <div className="flex items-center justify-between pb-3 border-b border-[var(--lkv-primary)]/10">
+            <Card className="space-y-[var(--space-5)] p-[var(--space-6)]">
+              <div className="flex items-center justify-between border-b border-[color:var(--lkv-primary)]/10 pb-[var(--space-3)]">
                 <div>
-                  <h2 className="font-display font-bold text-lg text-[var(--lkv-primary)]">Objectif, Esprit &amp; Niveau</h2>
-                  <p className="text-xs text-[var(--lkv-text-muted)]">Donnez un titre percutant, décrivez le projet et fixez l’engagement requis.</p>
+                  <h2 className="font-display text-[length:var(--lkv-text-subheadline)] font-bold text-[color:var(--lkv-text-primary)]">Objectif, Esprit &amp; Niveau</h2>
+                  <p className="text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">Donnez un titre percutant, décrivez le projet et fixez l’engagement requis.</p>
                 </div>
-                <span className="glass-pill text-[9px] font-mono font-bold">01 · OBJECTIF</span>
+                <Badge className="font-mono font-bold">01 · OBJECTIF</Badge>
               </div>
 
-              <div className="space-y-4">
+              <div className="space-y-[var(--space-4)]">
                 <div>
-                  <label className="block text-xs font-bold text-[var(--lkv-primary)] mb-1">Nom de l’expédition *</label>
+                  <label htmlFor="group-name" className="mb-[var(--space-1)] block text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-primary)]">Nom de l’expédition *</label>
                   <input
+                    id="group-name"
                     type="text"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="Ex : Traversée de la Chartreuse en automne"
-                    className="w-full bg-white/90 border border-[var(--lkv-primary)]/15 rounded-xl px-3.5 py-2.5 text-xs text-[var(--lkv-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--lkv-primary)]/20 font-bold"
+                    className={FIELD_CLASS}
                   />
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 gap-[var(--space-3)] sm:grid-cols-2">
                   <div>
-                    <label className="block text-xs font-bold text-[var(--lkv-primary)] mb-1">Type d'aventure</label>
+                    <label htmlFor="group-type" className="mb-[var(--space-1)] block text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-primary)]">Type d&apos;aventure</label>
                     <select
+                      id="group-type"
                       value={groupType}
                       onChange={(e) => setGroupType(e.target.value)}
-                      className="w-full bg-white/90 border border-[var(--lkv-primary)]/15 rounded-xl px-3 py-2 text-xs text-[var(--lkv-primary)]"
+                      className={FIELD_CLASS}
                     >
                       <option>Traversée en autonomie</option>
                       <option>Week-end bivouac &amp; sommet</option>
@@ -324,11 +340,12 @@ export default function NouveauGroupePage() {
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-[var(--lkv-primary)] mb-1">Niveau d'engagement requis</label>
+                    <label htmlFor="group-level" className="mb-[var(--space-1)] block text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-primary)]">Niveau d&apos;engagement requis</label>
                     <select
+                      id="group-level"
                       value={level}
                       onChange={(e) => setLevel(e.target.value)}
-                      className="w-full bg-white/90 border border-[var(--lkv-primary)]/15 rounded-xl px-3 py-2 text-xs text-[var(--lkv-primary)]"
+                      className={FIELD_CLASS}
                     >
                       <option>Tranquille &amp; contemplatif</option>
                       <option>Rythme moyen régulier (4-6h/j)</option>
@@ -339,127 +356,130 @@ export default function NouveauGroupePage() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-[var(--lkv-primary)] mb-1">Description du projet &amp; ambiance recherchée</label>
+                  <label htmlFor="group-description" className="mb-[var(--space-1)] block text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-primary)]">Description du projet &amp; ambiance recherchée</label>
                   <textarea
+                    id="group-description"
                     rows={4}
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
                     placeholder="Précisez la philosophie du groupe, les pauses prévues, le portage..."
-                    className="w-full bg-white/90 border border-[var(--lkv-primary)]/15 rounded-xl p-3 text-xs text-[var(--lkv-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--lkv-primary)]/20 leading-relaxed"
+                    className={`${FIELD_CLASS} leading-relaxed`}
                   />
                 </div>
               </div>
 
-              <div className="flex justify-end pt-2">
-                <button
+              <div className="flex justify-end pt-[var(--space-2)]">
+                <Button
                   type="button"
+                  variant="primary"
                   onClick={() => setActiveStep('sentier')}
-                  className="glass-capsule-btn primary py-2 px-5 text-xs font-bold"
                 >
                   Suivant : Sentier &amp; GPX →
-                </button>
+                </Button>
               </div>
-            </div>
+            </Card>
           )}
 
           {/* STEP 2: SENTIER & TRACE */}
           {activeStep === 'sentier' && (
-            <div className="glass rounded-2xl p-6 space-y-5">
-              <div className="flex items-center justify-between pb-3 border-b border-[var(--lkv-primary)]/10">
+            <Card className="space-y-[var(--space-5)] p-[var(--space-6)]">
+              <div className="flex items-center justify-between border-b border-[color:var(--lkv-primary)]/10 pb-[var(--space-3)]">
                 <div>
-                  <h2 className="font-display font-bold text-lg text-[var(--lkv-primary)]">Sentier &amp; Trace GPX</h2>
-                  <p className="text-xs text-[var(--lkv-text-muted)]">Choisissez un itinéraire certifié pour générer le profil 3D en direct.</p>
+                  <h2 className="font-display text-[length:var(--lkv-text-subheadline)] font-bold text-[color:var(--lkv-text-primary)]">Sentier &amp; Trace GPX</h2>
+                  <p className="text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">Choisissez un itinéraire certifié pour générer le profil 3D en direct.</p>
                 </div>
-                <span className="glass-pill text-[9px] font-mono font-bold">02 · SENTIER</span>
+                <Badge className="font-mono font-bold">02 · SENTIER</Badge>
               </div>
 
-              <div className="space-y-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+              <div className="space-y-[var(--space-4)]">
+                <div className="grid grid-cols-1 gap-[var(--space-2)] sm:grid-cols-2">
                   {DEFAULT_TRAILS.map((tr) => {
                     const isSelected = selectedTrail.id === tr.id;
                     return (
-                      <button
+                      <Card
                         key={tr.id}
-                        type="button"
+                        variant="compact"
+                        selected={isSelected}
                         onClick={() => {
                           setSelectedTrail(tr);
                           setName(tr.name);
                         }}
-                        className={`glass-capsule-btn flex-col !items-start !p-3 text-left ${
-                          isSelected ? 'primary' : ''
-                        }`}
+                        className="text-left"
                       >
-                        <h4 className="font-bold text-xs truncate">{tr.name}</h4>
-                        <p className="text-[10px] mt-0.5">
+                        <h4 className="truncate text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)]">{tr.name}</h4>
+                        <p className="mt-[var(--space-1)] text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-secondary)]">
                           {tr.region} · {tr.distance_km} km · +{tr.elevation_gain} m D+
                         </p>
-                      </button>
+                      </Card>
                     );
                   })}
                 </div>
 
                 {/* Leaflet Live Trail Preview */}
-                <div className="rounded-xl overflow-hidden border border-[var(--lkv-primary)]/10 relative h-[220px] bg-[var(--lkv-surface)]">
-                  <div ref={mapContainerRef} className="w-full h-full" />
+                <div className="relative h-[220px] overflow-hidden rounded-[var(--lkv-radius-md)] border border-[color:var(--lkv-primary)]/10 bg-[color:var(--lkv-surface-muted)]">
+                  <div ref={mapContainerRef} className="h-full w-full" />
                 </div>
               </div>
 
-              <div className="flex justify-between pt-2">
-                <button
+              <div className="flex justify-between pt-[var(--space-2)]">
+                <Button
                   type="button"
+                  variant="secondary"
                   onClick={() => setActiveStep('infos')}
-                  className="glass-capsule-btn py-2 px-4 text-xs font-bold"
                 >
                   ← Précédent
-                </button>
-                <button
+                </Button>
+                <Button
                   type="button"
+                  variant="primary"
                   onClick={() => setActiveStep('logistique')}
-                  className="glass-capsule-btn primary py-2 px-5 text-xs font-bold"
                 >
                   Suivant : Dates &amp; Logistique →
-                </button>
+                </Button>
               </div>
-            </div>
+            </Card>
           )}
 
           {/* STEP 3: DATES & LOGISTIQUE */}
           {activeStep === 'logistique' && (
-            <div className="glass rounded-2xl p-6 space-y-5">
-              <div className="flex items-center justify-between pb-3 border-b border-[var(--lkv-primary)]/10">
+            <Card className="space-y-[var(--space-5)] p-[var(--space-6)]">
+              <div className="flex items-center justify-between border-b border-[color:var(--lkv-primary)]/10 pb-[var(--space-3)]">
                 <div>
-                  <h2 className="font-display font-bold text-lg text-[var(--lkv-primary)]">Calendrier, Hébergement &amp; Budget</h2>
-                  <p className="text-xs text-[var(--lkv-text-muted)]">Fixez les dates, la flexibilité météo et les estimations de frais partagés.</p>
+                  <h2 className="font-display text-[length:var(--lkv-text-subheadline)] font-bold text-[color:var(--lkv-text-primary)]">Calendrier, Hébergement &amp; Budget</h2>
+                  <p className="text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">Fixez les dates, la flexibilité météo et les estimations de frais partagés.</p>
                 </div>
-                <span className="glass-pill text-[9px] font-mono font-bold">03 · LOGISTIQUE</span>
+                <Badge className="font-mono font-bold">03 · LOGISTIQUE</Badge>
               </div>
 
-              <div className="space-y-4">
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="space-y-[var(--space-4)]">
+                <div className="grid grid-cols-1 gap-[var(--space-3)] sm:grid-cols-3">
                   <div>
-                    <label className="block text-xs font-bold text-[var(--lkv-primary)] mb-1">Date de départ</label>
+                    <label htmlFor="group-start-date" className="mb-[var(--space-1)] block text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-primary)]">Date de départ</label>
                     <input
+                      id="group-start-date"
                       type="date"
                       value={startDate}
                       onChange={(e) => setStartDate(e.target.value)}
-                      className="w-full bg-white/90 border border-[var(--lkv-primary)]/15 rounded-xl px-3 py-2 text-xs text-[var(--lkv-primary)]"
+                      className={FIELD_CLASS}
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-[var(--lkv-primary)] mb-1">Date de retour</label>
+                    <label htmlFor="group-end-date" className="mb-[var(--space-1)] block text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-primary)]">Date de retour</label>
                     <input
+                      id="group-end-date"
                       type="date"
                       value={endDate}
                       onChange={(e) => setEndDate(e.target.value)}
-                      className="w-full bg-white/90 border border-[var(--lkv-primary)]/15 rounded-xl px-3 py-2 text-xs text-[var(--lkv-primary)]"
+                      className={FIELD_CLASS}
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-[var(--lkv-primary)] mb-1">Flexibilité météo</label>
+                    <label htmlFor="group-flexibility" className="mb-[var(--space-1)] block text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-primary)]">Flexibilité météo</label>
                     <select
+                      id="group-flexibility"
                       value={dateFlexibility}
                       onChange={(e) => setDateFlexibility(e.target.value)}
-                      className="w-full bg-white/90 border border-[var(--lkv-primary)]/15 rounded-xl px-3 py-2 text-xs text-[var(--lkv-primary)]"
+                      className={FIELD_CLASS}
                     >
                       <option>Dates fermes</option>
                       <option>± 1 jour selon météo</option>
@@ -469,42 +489,45 @@ export default function NouveauGroupePage() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                <div className="grid grid-cols-1 gap-[var(--space-3)] pt-[var(--space-1)] sm:grid-cols-2">
                   <div>
-                    <label className="block text-xs font-bold text-[var(--lkv-primary)] mb-1">Type d'hébergement</label>
+                    <label htmlFor="group-lodging" className="mb-[var(--space-1)] block text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-primary)]">Type d&apos;hébergement</label>
                     <select
+                      id="group-lodging"
                       value={hebergementType}
                       onChange={(e) => setHebergementType(e.target.value)}
-                      className="w-full bg-white/90 border border-[var(--lkv-primary)]/15 rounded-xl px-3 py-2 text-xs text-[var(--lkv-primary)]"
+                      className={FIELD_CLASS}
                     >
                       <option>Bivouac &amp; Refuges</option>
                       <option>100% Bivouac sous tente</option>
                       <option>Refuges gardés demi-pension</option>
                       <option>Cabanes libres &amp; abris</option>
-                      <option>Gîte d'étape</option>
+                      <option>Gîte d&apos;étape</option>
                     </select>
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-[var(--lkv-primary)] mb-1">Budget estimé / pers.</label>
+                    <label htmlFor="group-budget" className="mb-[var(--space-1)] block text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-primary)]">Budget estimé / pers.</label>
                     <div className="relative">
                       <input
+                        id="group-budget"
                         type="number"
                         value={estimatedBudget}
                         onChange={(e) => setEstimatedBudget(parseInt(e.target.value))}
-                        className="w-full bg-white/90 border border-[var(--lkv-primary)]/15 rounded-xl px-3 py-2 text-xs font-mono font-bold text-[var(--lkv-primary)]"
+                        className={`${FIELD_CLASS} font-mono font-bold`}
                       />
-                      <span className="absolute right-3 top-2 text-xs text-[var(--lkv-text-muted)] font-bold">€</span>
+                      <span className="absolute right-[var(--space-3)] top-[var(--space-2)] text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-muted)]">€</span>
                     </div>
                   </div>
                 </div>
 
-                <div className="pt-2">
-                  <div className="flex items-center justify-between mb-1">
-                    <label className="text-xs font-bold text-[var(--lkv-primary)]">Capacité maximale du groupe</label>
-                    <span className="font-bold text-xs text-[var(--lkv-primary)] font-mono">{maxMembers} équipiers max</span>
+                <div className="pt-[var(--space-2)]">
+                  <div className="mb-[var(--space-1)] flex items-center justify-between">
+                    <label htmlFor="group-max-members" className="text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-primary)]">Capacité maximale du groupe</label>
+                    <span className="font-mono text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-primary)]">{maxMembers} équipiers max</span>
                   </div>
                   <input
+                    id="group-max-members"
                     type="range"
                     min={2}
                     max={15}
@@ -512,7 +535,7 @@ export default function NouveauGroupePage() {
                     onChange={(e) => setMaxMembers(parseInt(e.target.value))}
                     className="w-full accent-[var(--lkv-primary)]"
                   />
-                  <div className="flex justify-between text-[10px] text-[var(--lkv-text-muted)] font-mono mt-1">
+                  <div className="mt-[var(--space-1)] flex justify-between font-mono text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">
                     <span>2 pers. (Duo)</span>
                     <span>6 pers. (Équilibre idéal)</span>
                     <span>15 pers. (Max)</span>
@@ -520,51 +543,47 @@ export default function NouveauGroupePage() {
                 </div>
               </div>
 
-              <div className="flex justify-between pt-2">
-                <button
+              <div className="flex justify-between pt-[var(--space-2)]">
+                <Button
                   type="button"
+                  variant="secondary"
                   onClick={() => setActiveStep('sentier')}
-                  className="glass-capsule-btn py-2 px-4 text-xs font-bold"
                 >
                   ← Précédent
-                </button>
-                <button
+                </Button>
+                <Button
                   type="button"
+                  variant="primary"
                   onClick={() => setActiveStep('materiel')}
-                  className="glass-capsule-btn primary py-2 px-5 text-xs font-bold"
                 >
                   Suivant : Équipiers &amp; Sac requis →
-                </button>
+                </Button>
               </div>
-            </div>
+            </Card>
           )}
 
           {/* STEP 4: ÉQUIPIERS & MATÉRIEL REQUIS */}
           {activeStep === 'materiel' && (
-            <div className="glass rounded-2xl p-6 space-y-5">
-              <div className="flex items-center justify-between pb-3 border-b border-[var(--lkv-primary)]/10">
+            <Card className="space-y-[var(--space-5)] p-[var(--space-6)]">
+              <div className="flex items-center justify-between border-b border-[color:var(--lkv-primary)]/10 pb-[var(--space-3)]">
                 <div>
-                  <h2 className="font-display font-bold text-lg text-[var(--lkv-primary)]">Matériel Requis &amp; Sélection</h2>
-                  <p className="text-xs text-[var(--lkv-text-muted)]">Listez les équipements indispensables que chaque participant doit posséder.</p>
+                  <h2 className="font-display text-[length:var(--lkv-text-subheadline)] font-bold text-[color:var(--lkv-text-primary)]">Matériel Requis &amp; Sélection</h2>
+                  <p className="text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">Listez les équipements indispensables que chaque participant doit posséder.</p>
                 </div>
-                <span className="glass-pill text-[9px] font-mono font-bold">04 · MATÉRIEL</span>
+                <Badge className="font-mono font-bold">04 · MATÉRIEL</Badge>
               </div>
 
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-xs font-bold text-[var(--lkv-primary)] mb-2">Mode de recrutement</label>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="space-y-[var(--space-4)]">
+                <fieldset>
+                  <legend className="mb-[var(--space-2)] block text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-primary)]">Mode de recrutement</legend>
+                  <div className="grid grid-cols-1 gap-[var(--space-3)] sm:grid-cols-2">
                     {[
                       { id: 'validation', label: '🛡️ Sur validation', desc: 'Les équipiers postulent avec un message sur leur expérience.' },
                       { id: 'open', label: '⚡ Inscription libre', desc: 'Les places sont attribuées aux premiers inscrits.' },
                     ].map((mode) => (
                       <label
                         key={mode.id}
-                        className={`glass-sub-card p-3.5 rounded-xl cursor-pointer flex items-start gap-2.5 transition-all ${
-                          recruitmentMode === mode.id
-                            ? 'border-2 border-[var(--lkv-primary)] shadow-xs'
-                            : ''
-                        }`}
+                        className={OPTION_CARD_CLASS(recruitmentMode === mode.id)}
                       >
                         <input
                           type="radio"
@@ -572,208 +591,221 @@ export default function NouveauGroupePage() {
                           value={mode.id}
                           checked={recruitmentMode === mode.id}
                           onChange={() => setRecruitmentMode(mode.id)}
-                          className="mt-0.5 text-[var(--lkv-primary)]"
+                          className="mt-0.5 accent-[var(--lkv-primary)]"
                         />
-                        <div>
-                          <span className="text-xs font-bold text-[var(--lkv-primary)] block">{mode.label}</span>
-                          <span className="text-[10.5px] text-[var(--lkv-text-muted)] block">{mode.desc}</span>
-                        </div>
+                        <span>
+                          <span className="block text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)]">{mode.label}</span>
+                          <span className="block text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">{mode.desc}</span>
+                        </span>
                       </label>
                     ))}
                   </div>
-                </div>
+                </fieldset>
 
-                <div className="pt-2">
-                  <label className="block text-xs font-bold text-[var(--lkv-primary)] mb-2">Checklist matériel exigée des participants</label>
-                  <div className="space-y-2">
+                <div className="pt-[var(--space-2)]">
+                  <p className="mb-[var(--space-2)] text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-primary)]">Checklist matériel exigée des participants</p>
+                  <ul className="space-y-[var(--space-2)]">
                     {requiredGear.map((gear) => (
-                      <div key={gear.id} className="glass-sub-card flex items-center justify-between p-2.5 rounded-xl text-xs">
-                        <span className="font-bold text-[var(--lkv-primary)] flex items-center gap-2">
-                          <span className="text-forest-700">✓</span> {gear.name}
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveGear(gear.id)}
-                          className="glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8"
+                      <li key={gear.id}>
+                        <Card
+                          variant="compact"
+                          className="flex items-center justify-between text-[length:var(--lkv-text-caption)]"
                         >
-                          ✕
-                        </button>
-                      </div>
+                          <span className="flex items-center gap-[var(--space-2)] font-bold text-[color:var(--lkv-text-primary)]">
+                            <span className="text-[color:var(--lkv-success)]" aria-hidden>✓</span> {gear.name}
+                          </span>
+                          <IconButton
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleRemoveGear(gear.id)}
+                            aria-label={`Retirer ${gear.name}`}
+                          >
+                            <Icon name="XMarkIcon" size={14} aria-hidden="true" />
+                          </IconButton>
+                        </Card>
+                      </li>
                     ))}
+                  </ul>
 
-                    <div className="flex gap-2 pt-1">
-                      <input
-                        type="text"
-                        value={newGearInput}
-                        onChange={(e) => setNewGearInput(e.target.value)}
-                        placeholder="Ex : DVA + Pelle + Sonde si hivernale..."
-                        className="flex-1 bg-white/90 border border-[var(--lkv-primary)]/15 rounded-xl px-3 py-2 text-xs text-[var(--lkv-primary)]"
-                      />
-                      <button
-                        type="button"
-                        onClick={handleAddGear}
-                        className="glass-capsule-btn primary text-xs font-bold shrink-0"
-                      >
-                        Ajouter
-                      </button>
-                    </div>
+                  <div className="flex gap-[var(--space-2)] pt-[var(--space-2)]">
+                    <label htmlFor="group-new-gear" className="sr-only">Nouvel équipement requis</label>
+                    <input
+                      id="group-new-gear"
+                      type="text"
+                      value={newGearInput}
+                      onChange={(e) => setNewGearInput(e.target.value)}
+                      placeholder="Ex : DVA + Pelle + Sonde si hivernale..."
+                      className={`${FIELD_CLASS} flex-1`}
+                    />
+                    <Button
+                      type="button"
+                      variant="primary"
+                      onClick={handleAddGear}
+                      className="shrink-0"
+                    >
+                      Ajouter
+                    </Button>
                   </div>
                 </div>
               </div>
 
-              <div className="flex justify-between pt-2">
-                <button
+              <div className="flex justify-between pt-[var(--space-2)]">
+                <Button
                   type="button"
+                  variant="secondary"
                   onClick={() => setActiveStep('logistique')}
-                  className="glass-capsule-btn py-2 px-4 text-xs font-bold"
                 >
                   ← Précédent
-                </button>
-                <button
+                </Button>
+                <Button
                   type="button"
+                  variant="primary"
                   onClick={() => setActiveStep('style')}
-                  className="glass-capsule-btn primary py-2 px-5 text-xs font-bold"
                 >
                   Suivant : Personnalisation →
-                </button>
+                </Button>
               </div>
-            </div>
+            </Card>
           )}
 
           {/* STEP 5: STYLE & PICTOGRAMME */}
           {activeStep === 'style' && (
-            <div className="glass rounded-2xl p-6 space-y-5">
-              <div className="flex items-center justify-between pb-3 border-b border-[var(--lkv-primary)]/10">
+            <Card className="space-y-[var(--space-5)] p-[var(--space-6)]">
+              <div className="flex items-center justify-between border-b border-[color:var(--lkv-primary)]/10 pb-[var(--space-3)]">
                 <div>
-                  <h2 className="font-display font-bold text-lg text-[var(--lkv-primary)]">Personnalisation visuelle du Cockpit</h2>
-                  <p className="text-xs text-[var(--lkv-text-muted)]">Choisissez un emblème et une couleur d’accent pour le cockpit d'expédition.</p>
+                  <h2 className="font-display text-[length:var(--lkv-text-subheadline)] font-bold text-[color:var(--lkv-text-primary)]">Personnalisation visuelle du Cockpit</h2>
+                  <p className="text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">Choisissez un emblème et une couleur d’accent pour le cockpit d&apos;expédition.</p>
                 </div>
-                <span className="glass-pill text-[9px] font-mono font-bold">05 · STYLE</span>
+                <Badge className="font-mono font-bold">05 · STYLE</Badge>
               </div>
 
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-xs font-bold text-[var(--lkv-primary)] mb-2">Pictogramme de l’expédition</label>
-                  <div className="flex flex-wrap gap-2">
+              <div className="space-y-[var(--space-4)]">
+                <fieldset>
+                  <legend className="mb-[var(--space-2)] block text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-primary)]">Pictogramme de l’expédition</legend>
+                  <div className="flex flex-wrap gap-[var(--space-2)]">
                     {PICTOGRAMS.map((pic) => (
-                      <button
+                      <IconButton
                         key={pic}
-                        type="button"
+                        variant={pictogram === pic ? 'solid' : 'glass'}
                         onClick={() => setPictogram(pic)}
-                        className={`glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8 text-xl ${
-                          pictogram === pic ? 'primary' : ''
-                        }`}
+                        aria-label={`Choisir le pictogramme ${pic}`}
+                        aria-pressed={pictogram === pic}
+                        className="text-[length:var(--lkv-text-title-sm)]"
                       >
-                        {pic}
-                      </button>
+                        <span aria-hidden>{pic}</span>
+                      </IconButton>
                     ))}
                   </div>
-                </div>
+                </fieldset>
 
-                <div>
-                  <label className="block text-xs font-bold text-[var(--lkv-primary)] mb-2">Couleur thématique du Hero</label>
-                  <div className="flex flex-wrap gap-2.5">
+                <fieldset>
+                  <legend className="mb-[var(--space-2)] block text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-primary)]">Couleur thématique du Hero</legend>
+                  <div className="flex flex-wrap gap-[var(--space-2)]">
                     {ACCENT_COLORS.map((col) => (
-                      <button
+                      <Chip
                         key={col.id}
-                        type="button"
+                        selected={accentColor === col.value}
                         onClick={() => setAccentColor(col.value)}
-                        className={`glass-capsule-btn text-xs font-bold ${
-                          accentColor === col.value ? 'primary' : ''
-                        }`}
+                        icon={
+                          <span
+                            className="h-3 w-3 shrink-0 rounded-full border border-[color:var(--lkv-border)]"
+                            style={{ backgroundColor: col.value }}
+                            aria-hidden
+                          />
+                        }
                       >
-                        <span className="w-3 h-3 rounded-full shrink-0 shadow-xs" style={{ backgroundColor: col.value }} />
-                        <span>{col.label}</span>
-                      </button>
+                        {col.label}
+                      </Chip>
                     ))}
                   </div>
-                </div>
+                </fieldset>
               </div>
 
-              <div className="flex justify-between pt-2">
-                <button
+              <div className="flex justify-between pt-[var(--space-2)]">
+                <Button
                   type="button"
+                  variant="secondary"
                   onClick={() => setActiveStep('materiel')}
-                  className="glass-capsule-btn py-2 px-4 text-xs font-bold"
                 >
                   ← Précédent
-                </button>
-                <button
+                </Button>
+                <Button
                   type="button"
+                  variant="primary"
                   onClick={handleCreateGroup}
                   disabled={saving || !name.trim()}
-                  className="glass-capsule-btn primary py-2.5 px-6 text-xs font-bold flex items-center gap-1.5"
+                  icon={<Icon name="CheckIcon" size={14} aria-hidden="true" />}
                 >
-                  <Icon name="CheckIcon" size={14} className="relative z-10" />
-                  <span className="relative z-10">{saving ? 'Lancement...' : 'Créer l’expédition'}</span>
-                </button>
+                  {saving ? 'Lancement...' : 'Créer l’expédition'}
+                </Button>
               </div>
-            </div>
+            </Card>
           )}
         </div>
 
         {/* COLONNE DROITE (Live Hero Preview) - 300px */}
         <aside className="w-[300px] shrink-0 h-full overflow-y-auto custom-scrollbar flex flex-col gap-4 pb-8">
           {/* Live Cockpit Hero Mini Preview */}
-          <div className="glass p-3.5 space-y-3 rounded-2xl">
+          <Card className="space-y-[var(--space-3)] p-[var(--space-4)]">
             <div className="flex items-center justify-between">
-              <h3 className="font-display font-bold text-xs text-[var(--lkv-primary)]">Aperçu du Cockpit</h3>
-              <span className="glass-pill text-[9px] font-mono font-bold">Live</span>
+              <h3 className="font-display text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)]">Aperçu du Cockpit</h3>
+              <Badge className="font-mono font-bold">Live</Badge>
             </div>
 
             <div
-              className="rounded-2xl p-4 text-white relative overflow-hidden shadow-sm flex flex-col justify-between min-h-[220px]"
+              className="relative flex min-h-[220px] flex-col justify-between overflow-hidden rounded-[var(--lkv-radius-md)] p-[var(--space-4)] text-[color:var(--lkv-text-inverted)]"
               style={{
                 background: `linear-gradient(135deg, ${accentColor} 0%, var(--lkv-forest-950) 100%)`
               }}
             >
               <div>
-                <div className="flex items-center justify-between mb-3">
-                  <span className="text-2xl">{pictogram}</span>
-                  <span className="px-2 py-0.5 bg-white/15 backdrop-blur-md rounded-full text-[9px] font-mono font-bold text-white">
+                <div className="mb-[var(--space-3)] flex items-center justify-between">
+                  <span className="text-[length:var(--lkv-text-title-lg)]" aria-hidden>{pictogram}</span>
+                  <Badge className="border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] font-mono font-bold text-[color:var(--lkv-text-inverted)] backdrop-blur-[var(--blur-md)]">
                     {maxMembers} PLACES
-                  </span>
+                  </Badge>
                 </div>
 
-                <h4 className="font-display font-bold text-base leading-snug text-white">
+                <h4 className="font-display text-[length:var(--lkv-text-body)] font-bold leading-snug text-[color:var(--lkv-text-inverted)]">
                   {name || 'Nom de l’expédition'}
                 </h4>
-                <p className="text-[10px] text-white/80 line-clamp-2 mt-1">
+                <p className="mt-[var(--space-1)] line-clamp-2 text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-inverted)]/80">
                   {description}
                 </p>
               </div>
 
-              <div className="pt-3 border-t border-white/20 flex items-center justify-between text-[10px] font-mono">
+              <div className="flex items-center justify-between border-t border-[color:var(--glass-border)] pt-[var(--space-3)] font-mono text-[length:var(--lkv-text-caption-2)]">
                 <span>📏 {selectedTrail.distance_km} km</span>
                 <span>⛰️ +{selectedTrail.elevation_gain} m</span>
                 <span>💶 ~{estimatedBudget}€</span>
               </div>
             </div>
-          </div>
+          </Card>
 
           {/* CTA Final */}
-          <div className="glass tone-sand p-3.5 space-y-2 rounded-2xl text-[var(--lkv-primary)]">
-            <span className="glass-pill text-[9px] font-mono font-bold text-[var(--lkv-warning)]">
-              🎒 PRÉPARATION D'EXPÉDITION
-            </span>
-            <h3 className="font-display font-bold text-xs text-[var(--lkv-primary)]">
+          <Card tone="warn" className="space-y-[var(--space-2)] p-[var(--space-4)] text-[color:var(--lkv-text-primary)]">
+            <Badge tone="warn" className="font-mono font-bold">
+              🎒 PRÉPARATION D&apos;EXPÉDITION
+            </Badge>
+            <h3 className="font-display text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)]">
               Lancer le cockpit de voyage
             </h3>
-            <p className="text-[11px] text-[var(--lkv-text-muted)] leading-relaxed">
+            <p className="text-[length:var(--lkv-text-caption)] leading-relaxed text-[color:var(--lkv-text-muted)]">
               Vos équipiers recevront la liste de matériel exigé, les dates et la trace GPS officielle.
             </p>
-            <div className="pt-1">
-              <button
+            <div className="pt-[var(--space-1)]">
+              <Button
                 type="button"
+                variant="primary"
+                fullWidth
                 onClick={handleCreateGroup}
                 disabled={saving || !name.trim()}
-                className="w-full glass-capsule-btn primary py-2.5 text-xs font-bold flex items-center justify-center gap-1.5"
+                icon={<Icon name="PlusIcon" size={14} aria-hidden="true" />}
               >
-                <Icon name="PlusIcon" size={14} className="relative z-10" />
-                <span className="relative z-10">{saving ? 'Création...' : 'Lancer l’expédition'}</span>
-              </button>
+                {saving ? 'Création...' : 'Lancer l’expédition'}
+              </Button>
             </div>
-          </div>
+          </Card>
         </aside>
       </main>
     </div>

@@ -3,6 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import Icon from '@/components/ui/AppIcon';
+import { Badge, Card } from '@/components/ui';
 
 interface CarnetRightSidebarProps {
   totalCarnets?: number;
@@ -20,91 +21,84 @@ export default function CarnetRightSidebar({
   featuredCarnet,
 }: CarnetRightSidebarProps) {
   return (
-    <aside className="w-[300px] shrink-0 h-full overflow-y-auto custom-scrollbar flex flex-col gap-4 pb-8">
-      {/* Coup de cœur de la rédaction / Communauté */}
-      <div className="glass tone-sand p-3.5 text-[#17402C] space-y-2.5 rounded-2xl relative overflow-hidden">
+    <aside className="flex h-full w-[300px] shrink-0 flex-col gap-[var(--space-4)] overflow-y-auto pb-[var(--space-8)]">
+      <Card tone="warn" className="relative space-y-[var(--space-2)] overflow-hidden p-[var(--space-3)]">
         <div className="flex items-center justify-between">
-          <span className="glass-pill text-[9.5px] font-mono font-bold text-[#8C6418] uppercase">
+          <Badge tone="warn" className="font-mono font-bold uppercase">
             ⭐ COUP DE CŒUR
-          </span>
-          <span className="w-1.5 h-1.5 rounded-full bg-sand-500 animate-pulse" />
+          </Badge>
+          <span aria-hidden className="h-1.5 w-1.5 animate-pulse rounded-full bg-[var(--sand-500)]" />
         </div>
 
         <div>
-          <h3 className="font-display font-bold text-xs text-[#17402C] leading-snug">
+          <h3 className="font-display text-[length:var(--lkv-text-caption)] font-bold leading-snug text-[color:var(--lkv-text-primary)]">
             {featuredCarnet?.title || 'Traversée de la Chartreuse en bivouac'}
           </h3>
-          <p className="text-[11px] text-[#5C6B5E] mt-0.5">
+          <p className="mt-[var(--space-1)] text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">
             📍 {featuredCarnet?.destination || 'Massif de la Chartreuse'} · Par {featuredCarnet?.author_name || 'Julien M.'}
           </p>
         </div>
 
         <Link
           href={`/carnets/${featuredCarnet?.id || 'exemple'}`}
-          className="w-full glass-capsule-btn primary py-2 text-xs font-bold flex items-center justify-center gap-1.5"
+          className="inline-flex min-h-[var(--control-height-md)] w-full items-center justify-center gap-[var(--space-1)] rounded-full bg-[color:var(--lkv-action)] px-[var(--space-4)] text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-on-action)]"
         >
-          <span className="relative z-10">Découvrir le récit →</span>
+          Découvrir le récit →
         </Link>
-      </div>
+      </Card>
 
-      {/* Statistiques globales */}
-      <div className="glass p-3.5 text-[#17402C] space-y-2.5 rounded-2xl">
+      <Card className="space-y-[var(--space-2)] p-[var(--space-3)]">
         <div className="flex items-center justify-between">
-          <h2 className="font-display font-bold text-xs text-[#17402C]">
+          <h2 className="font-display text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)]">
             Statistiques Communauté
           </h2>
-          <span className="glass-pill text-[9px] py-0.2 px-1.5 font-mono font-bold">
-            Live
-          </span>
+          <Badge className="font-mono font-bold">Live</Badge>
         </div>
 
-        <div className="grid grid-cols-2 gap-1.5 text-[10px]">
-          <div className="glass-sub-card p-2 rounded-lg">
-            <span className="font-mono uppercase text-[#5C6B5E] block text-[8.5px] font-bold">Carnets</span>
-            <span className="font-bold text-[#17402C] truncate block">{totalCarnets || 24} publiés</span>
-          </div>
+        <div className="grid grid-cols-2 gap-[var(--space-1)] text-[length:var(--lkv-text-caption-2)]">
+          <Card variant="compact" className="p-[var(--space-2)]">
+            <span className="block font-mono text-[length:var(--lkv-text-caption-2)] font-bold uppercase text-[color:var(--lkv-text-muted)]">Carnets</span>
+            <span className="block truncate font-bold text-[color:var(--lkv-text-primary)]">{totalCarnets || 24} publiés</span>
+          </Card>
 
-          <div className="glass-sub-card p-2 rounded-lg">
-            <span className="font-mono uppercase text-[#5C6B5E] block text-[8.5px] font-bold">Distance</span>
-            <span className="font-bold text-[#17402C] truncate block">+4 280 km</span>
-          </div>
+          <Card variant="compact" className="p-[var(--space-2)]">
+            <span className="block font-mono text-[length:var(--lkv-text-caption-2)] font-bold uppercase text-[color:var(--lkv-text-muted)]">Distance</span>
+            <span className="block truncate font-bold text-[color:var(--lkv-text-primary)]">+4 280 km</span>
+          </Card>
 
-          <div className="glass-sub-card p-2 rounded-lg">
-            <span className="font-mono uppercase text-[#5C6B5E] block text-[8.5px] font-bold">Dénivelé +</span>
-            <span className="font-bold text-[#17402C] truncate block">+185 000 m</span>
-          </div>
+          <Card variant="compact" className="p-[var(--space-2)]">
+            <span className="block font-mono text-[length:var(--lkv-text-caption-2)] font-bold uppercase text-[color:var(--lkv-text-muted)]">Dénivelé +</span>
+            <span className="block truncate font-bold text-[color:var(--lkv-text-primary)]">+185 000 m</span>
+          </Card>
 
-          <div className="glass-sub-card p-2 rounded-lg">
-            <span className="font-mono uppercase text-[#5C6B5E] block text-[8.5px] font-bold">Traces GPX</span>
-            <span className="font-bold text-[#17402C] truncate block">100% Vérifiées</span>
-          </div>
+          <Card variant="compact" className="p-[var(--space-2)]">
+            <span className="block font-mono text-[length:var(--lkv-text-caption-2)] font-bold uppercase text-[color:var(--lkv-text-muted)]">Traces GPX</span>
+            <span className="block truncate font-bold text-[color:var(--lkv-text-primary)]">100% Vérifiées</span>
+          </Card>
         </div>
-      </div>
+      </Card>
 
-      {/* CTA Création rapide */}
-      <div className="glass tone-sage p-3.5 text-[#17402C] space-y-2 rounded-2xl transition-all duration-300">
-        <div className="inline-block glass-pill py-0.5 px-2">
-          <span className="font-mono text-[9px] uppercase tracking-widest text-[#17402C] font-bold">
-            🎒 RETOUR D&apos;AVENTURE
-          </span>
-        </div>
+      <Card tone="sage" className="space-y-[var(--space-2)] p-[var(--space-3)] transition-all duration-[var(--motion-control-duration)]">
+        <Badge className="font-mono uppercase tracking-widest">
+          🎒 RETOUR D&apos;AVENTURE
+        </Badge>
 
-        <h3 className="font-display font-bold text-xs text-[#17402C] leading-snug">
+        <h3 className="font-display text-[length:var(--lkv-text-caption)] font-bold leading-snug text-[color:var(--lkv-text-primary)]">
           Vous revenez d&apos;expédition ?
         </h3>
 
-        <p className="text-[11px] text-[#5C6B5E] leading-relaxed">
+        <p className="text-[length:var(--lkv-text-caption-2)] leading-relaxed text-[color:var(--lkv-text-muted)]">
           Importez votre fichier GPX et vos photos pour archiver votre aventure dans un carnet souvenir.
         </p>
 
         <Link
           href="/carnets/nouveau"
-          className="w-full glass-capsule-btn primary py-2 text-xs font-bold flex items-center justify-center gap-1.5 mt-1"
+          className="mt-[var(--space-1)] inline-flex min-h-[var(--control-height-md)] w-full items-center justify-center gap-[var(--space-1)] rounded-full bg-[color:var(--lkv-action)] px-[var(--space-4)] text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-on-action)]"
         >
-          <Icon name="PlusIcon" size={14} className="relative z-10" />
-          <span className="relative z-10">Créer mon carnet</span>
+          <Icon name="PlusIcon" size={14} aria-hidden="true" />
+          <span>Créer mon carnet</span>
         </Link>
-      </div>
+      </Card>
     </aside>
   );
 }

@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import Icon from '@/components/ui/AppIcon';
+import { Badge, Button, Card, IconButton } from '@/components/ui';
 import 'leaflet/dist/leaflet.css';
 
 interface CarnetMapProps {
@@ -24,12 +25,11 @@ export default function CarnetMap({
   const [mapLoaded, setMapLoaded] = useState(false);
   const [hasRoute, setHasRoute] = useState(false);
 
-  // Default coordinate centers
   const defaultLat = destination?.toLowerCase().includes('islande') || destination?.toLowerCase().includes('iceland')
     ? 64.96
     : destination?.toLowerCase().includes('vercors')
     ? 44.98
-    : 45.33; // Alpes
+    : 45.33;
   const defaultLng = destination?.toLowerCase().includes('islande') || destination?.toLowerCase().includes('iceland')
     ? -19.02
     : destination?.toLowerCase().includes('vercors')
@@ -42,7 +42,6 @@ export default function CarnetMap({
     let isMounted = true;
     const container = containerRef.current;
 
-    // Clean any prior instance
     if (mapInstance.current) {
       try {
         mapInstance.current.remove();
@@ -72,7 +71,6 @@ export default function CarnetMap({
 
       mapInstance.current = map;
 
-      // OpenStreetMap France tiles (Zero watermark, high resolution)
       L.tileLayer('https://{s}.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png', {
         maxZoom: 19,
         maxNativeZoom: 18,
@@ -95,7 +93,6 @@ export default function CarnetMap({
       setHasRoute(routeCoords.length > 0);
 
       if (routeCoords.length > 0) {
-        // Outer glow
         L.polyline(routeCoords, {
           color: '#FFFFFF',
           weight: 7,
@@ -104,7 +101,6 @@ export default function CarnetMap({
           lineJoin: 'round',
         }).addTo(map);
 
-        // Core line
         const polyline = L.polyline(routeCoords, {
           color: '#17402C',
           weight: 4.5,
@@ -117,7 +113,6 @@ export default function CarnetMap({
           map.fitBounds(polyline.getBounds(), { padding: [35, 35] });
         } catch {}
 
-        // Start marker
         L.circleMarker(routeCoords[0], {
           radius: 7,
           color: '#FFFFFF',
@@ -126,7 +121,6 @@ export default function CarnetMap({
           weight: 2.5,
         }).addTo(map).bindPopup('🟢 <strong>Départ de l’étape</strong>');
 
-        // High point marker
         const midIndex = Math.floor(routeCoords.length / 2);
         if (midIndex > 0 && midIndex < routeCoords.length - 1) {
           L.circleMarker(routeCoords[midIndex], {
@@ -138,7 +132,6 @@ export default function CarnetMap({
           }).addTo(map).bindPopup(elevationM ? `⛰️ <strong>Point culminant (+${elevationM}m)</strong>` : '⛰️ <strong>Point culminant</strong>');
         }
 
-        // Finish marker
         L.circleMarker(routeCoords[routeCoords.length - 1], {
           radius: 7,
           color: '#FFFFFF',
@@ -148,7 +141,6 @@ export default function CarnetMap({
         }).addTo(map).bindPopup('🏁 <strong>Arrivée</strong>');
       }
 
-      // Invalidate sizes repeatedly on render ticks
       setTimeout(() => {
         try { map.invalidateSize(); } catch {}
       }, 100);
@@ -159,7 +151,6 @@ export default function CarnetMap({
       setMapLoaded(true);
     });
 
-    // ResizeObserver to automatically resize map when container shifts
     const observer = new ResizeObserver(() => {
       if (mapInstance.current) {
         try {
@@ -190,64 +181,65 @@ export default function CarnetMap({
   };
 
   return (
-    <div className="glass bg-white/90 backdrop-blur-xl rounded-2xl overflow-hidden flex flex-col border border-white shadow-sm w-full">
-      {/* Header bar above map */}
-      <div className="flex items-center justify-between px-4 py-2.5 bg-white/80 border-b border-[#17402C]/10 text-xs shrink-0">
-        <div className="flex items-center gap-2">
-          <span className="w-2 h-2 rounded-full bg-forest-500 animate-pulse" />
-          <span className="font-display font-bold text-[#17402C]">Trace GPS &amp; Relief 3D</span>
+    <Card className="flex w-full flex-col overflow-hidden p-0">
+      <div className="flex shrink-0 items-center justify-between border-b border-[color:var(--lkv-primary)]/10 px-[var(--space-4)] py-[var(--space-2)]">
+        <div className="flex items-center gap-[var(--space-2)]">
+          <span aria-hidden className="h-2 w-2 animate-pulse rounded-full bg-[var(--lkv-forest-500)]" />
+          <span className="font-display text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-primary)]">Trace GPS &amp; Relief 3D</span>
         </div>
-        <div className="flex items-center gap-1">
-          <button
+        <div className="flex items-center gap-[var(--space-1)]">
+          <IconButton
             type="button"
+            variant="glass"
+            size="sm"
             onClick={handleZoomIn}
-            className="w-6 h-6 rounded-md bg-white border border-[#17402C]/15 flex items-center justify-center text-xs font-bold text-[#17402C] hover:bg-forest-50 active:scale-95"
-            title="Zoom avant"
+            aria-label="Zoom avant"
+            className="h-6 w-6 min-h-0 text-[length:var(--lkv-text-caption-2)] font-bold"
           >
             +
-          </button>
-          <button
+          </IconButton>
+          <IconButton
             type="button"
+            variant="glass"
+            size="sm"
             onClick={handleZoomOut}
-            className="w-6 h-6 rounded-md bg-white border border-[#17402C]/15 flex items-center justify-center text-xs font-bold text-[#17402C] hover:bg-forest-50 active:scale-95"
-            title="Zoom arrière"
+            aria-label="Zoom arrière"
+            className="h-6 w-6 min-h-0 text-[length:var(--lkv-text-caption-2)] font-bold"
           >
             -
-          </button>
+          </IconButton>
         </div>
       </div>
 
-      {/* Map Container with explicit pixel height */}
-      <div className="relative w-full h-[360px] bg-[#E7E3D6] overflow-hidden">
-        <div ref={containerRef} className="w-full h-full" style={{ width: '100%', height: '100%' }} />
+      <div className="relative h-[360px] w-full overflow-hidden bg-[color:var(--stone-200)]">
+        <div ref={containerRef} className="h-full w-full" />
         {mapLoaded && !hasRoute && (
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <span className="glass-pill text-[10px] font-mono font-bold text-[#5C6B5E]">
+          <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+            <Badge className="font-mono font-bold text-[color:var(--lkv-text-muted)]">
               Aucune trace GPS enregistrée
-            </span>
+            </Badge>
           </div>
         )}
       </div>
 
-      {/* Footer */}
-      <div className="flex items-center justify-between px-4 py-2.5 border-t border-[#17402C]/10 bg-white/80 shrink-0">
-        <p className="font-mono text-xs text-[#17402C] font-semibold">
+      <div className="flex shrink-0 items-center justify-between border-t border-[color:var(--lkv-primary)]/10 px-[var(--space-4)] py-[var(--space-2)]">
+        <p className="font-mono text-[length:var(--lkv-text-caption-2)] font-semibold text-[color:var(--lkv-text-primary)]">
           {[
             distanceKm != null && distanceKm > 0 ? `${distanceKm} km` : null,
             elevationM != null && elevationM > 0 ? `${elevationM} m D+` : null,
           ].filter(Boolean).join(' · ') || 'Métriques indisponibles'}
         </p>
         {onDownloadGPX && (
-          <button
+          <Button
             type="button"
+            size="sm"
             onClick={onDownloadGPX}
-            className="glass-capsule-btn primary py-1 px-3 text-xs font-bold flex items-center gap-1.5"
+            icon={<Icon name="ArrowDownTrayIcon" size={13} aria-hidden="true" />}
           >
-            <Icon name="ArrowDownTrayIcon" size={13} className="relative z-10" />
-            <span className="relative z-10">Télécharger GPX</span>
-          </button>
+            Télécharger GPX
+          </Button>
         )}
       </div>
-    </div>
+    </Card>
   );
 }

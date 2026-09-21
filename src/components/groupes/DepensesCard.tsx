@@ -2,6 +2,7 @@ import { lkvAlert, lkvConfirm } from '@/components/ui/dialogs';
 import React, { useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import Icon from '@/components/ui/AppIcon';
+import { Badge, Button, Card, EmptyState, IconButton, ListItem, Modal } from '@/components/ui';
 
 interface Expense {
   id: string;
@@ -25,6 +26,9 @@ interface DepensesCardProps {
   user?: any;
   members?: any[];
 }
+
+const FIELD_CLASS =
+  'w-full rounded-[var(--lkv-radius-md)] border border-[color:var(--lkv-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[var(--space-2)] text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-primary)] placeholder:text-[color:var(--lkv-text-muted)] focus:outline-none focus:ring-2 focus:ring-[color:var(--lkv-focus-ring)]';
 
 export default function DepensesCard({ expenses, groupId, onRefresh, user, members }: DepensesCardProps) {
   const supabase = createClient();
@@ -52,7 +56,7 @@ export default function DepensesCard({ expenses, groupId, onRefresh, user, membe
       split_between: members?.map(m => m.user_id) || [user.id],
       status: 'pending'
     });
-    
+
     if (error) {
       console.error(error);
       lkvAlert('Erreur: ' + error.message);
@@ -63,7 +67,7 @@ export default function DepensesCard({ expenses, groupId, onRefresh, user, membe
       setIsAdding(false);
       if (onRefresh) onRefresh();
     }
-    
+
     setLoading(false);
   };
 
@@ -78,170 +82,164 @@ export default function DepensesCard({ expenses, groupId, onRefresh, user, membe
   };
 
   return (
-    <div className="glass p-6 relative transition-all duration-300">
-      <div className="flex justify-between items-start mb-2">
-        <h2 className="font-display font-bold text-xl text-lkv-primary">Dépenses <span className="font-serif italic font-normal text-lkv-primary">du voyage</span></h2>
-        <div className="flex items-center gap-2">
-          <span className="glass-pill">{expenses.total}€</span>
-        </div>
+    <Card className="relative p-[var(--space-6)] transition-all duration-[var(--motion-control-duration)]">
+      <div className="mb-[var(--space-2)] flex items-start justify-between">
+        <h2 className="font-display text-[length:var(--lkv-text-title-sm)] font-bold text-[color:var(--lkv-text-primary)]">
+          Dépenses <span className="font-serif italic font-normal text-[color:var(--lkv-text-primary)]">du voyage</span>
+        </h2>
+        <Badge>{expenses.total}€</Badge>
       </div>
-      
-      <div className="flex justify-between items-center mb-6">
-        <button
-          onClick={() => setShowBalanceModal(true)}
-          className="glass-capsule-btn py-1 px-3 text-xs font-semibold"
-        >
-          <span className="relative z-10">Historique</span>
-        </button>
-        <button 
+
+      <div className="mb-[var(--space-6)] flex items-center justify-between">
+        <Button variant="secondary" size="sm" onClick={() => setShowBalanceModal(true)}>
+          Historique
+        </Button>
+        <Button
+          variant={isAdding ? 'secondary' : 'primary'}
+          size="sm"
           onClick={() => setIsAdding(!isAdding)}
-          className="glass-capsule-btn primary py-1.5 px-3 text-xs font-bold flex items-center gap-1"
+          icon={<Icon name={isAdding ? 'XMarkIcon' : 'PlusIcon'} size={12} aria-hidden="true" />}
         >
-          <Icon name={isAdding ? "XMarkIcon" : "PlusIcon"} size={12} className="relative z-10" />
-          <span className="relative z-10">{isAdding ? 'Annuler' : 'Ajouter'}</span>
-        </button>
+          {isAdding ? 'Annuler' : 'Ajouter'}
+        </Button>
       </div>
 
       {isAdding && (
-        <form onSubmit={handleAddExpense} className="mb-6 glass-sub-card p-4 rounded-2xl">
-          <div className="flex flex-wrap gap-3 mb-3">
-            <div className="flex-1 min-w-[200px]">
-              <label className="block text-[10px] font-mono text-lkv-text-muted uppercase tracking-widest mb-1.5 font-bold">Titre</label>
-              <input 
-                type="text" 
-                autoFocus
-                value={newTitle}
-                onChange={e => setNewTitle(e.target.value)}
-                placeholder="Ex: Plein d'essence..." 
-                className="glass-input w-full text-xs"
-                disabled={loading}
-              />
+        <Card variant="compact" className="mb-[var(--space-6)] p-[var(--space-4)]">
+          <form onSubmit={handleAddExpense} className="space-y-[var(--space-3)]">
+            <div className="flex flex-wrap gap-[var(--space-3)]">
+              <div className="min-w-[200px] flex-1">
+                <label htmlFor="expense-title" className="mb-[var(--space-1)] block font-mono text-[length:var(--lkv-text-caption-2)] font-bold uppercase tracking-widest text-[color:var(--lkv-text-muted)]">Titre</label>
+                <input
+                  id="expense-title"
+                  type="text"
+                  autoFocus
+                  value={newTitle}
+                  onChange={e => setNewTitle(e.target.value)}
+                  placeholder="Ex: Plein d'essence..."
+                  className={FIELD_CLASS}
+                  disabled={loading}
+                />
+              </div>
+              <div className="w-24">
+                <label htmlFor="expense-amount" className="mb-[var(--space-1)] block font-mono text-[length:var(--lkv-text-caption-2)] font-bold uppercase tracking-widest text-[color:var(--lkv-text-muted)]">Montant (€)</label>
+                <input
+                  id="expense-amount"
+                  type="number"
+                  step="0.01"
+                  value={newAmount}
+                  onChange={e => setNewAmount(e.target.value)}
+                  placeholder="Ex: 45.50"
+                  className={FIELD_CLASS}
+                  disabled={loading}
+                />
+              </div>
+              <div className="w-full sm:w-40">
+                <label htmlFor="expense-payer" className="mb-[var(--space-1)] block font-mono text-[length:var(--lkv-text-caption-2)] font-bold uppercase tracking-widest text-[color:var(--lkv-text-muted)]">Payé par</label>
+                <select
+                  id="expense-payer"
+                  value={paidBy}
+                  onChange={e => setPaidBy(e.target.value)}
+                  className={`${FIELD_CLASS} min-h-[var(--control-height-md)]`}
+                  disabled={loading}
+                >
+                  <option value="">(Moi-même)</option>
+                  {members?.map(m => (
+                    <option key={m.user_id} value={m.user_id}>
+                      {m.user_profiles?.full_name || 'Membre'}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
-            <div className="w-24">
-              <label className="block text-[10px] font-mono text-lkv-text-muted uppercase tracking-widest mb-1.5 font-bold">Montant (€)</label>
-              <input 
-                type="number" 
-                step="0.01"
-                value={newAmount}
-                onChange={e => setNewAmount(e.target.value)}
-                placeholder="Ex: 45.50" 
-                className="glass-input w-full text-xs"
-                disabled={loading}
-              />
+            <div className="flex justify-end">
+              <Button type="submit" disabled={!newTitle.trim() || !newAmount || loading} loading={loading}>
+                Enregistrer
+              </Button>
             </div>
-            <div className="w-full sm:w-40">
-              <label className="block text-[10px] font-mono text-lkv-text-muted uppercase tracking-widest mb-1.5 font-bold">Payé par</label>
-              <select 
-                value={paidBy}
-                onChange={e => setPaidBy(e.target.value)}
-                className="glass-input w-full text-xs"
-                disabled={loading}
-              >
-                <option value="">(Moi-même)</option>
-                {members?.map(m => (
-                  <option key={m.user_id} value={m.user_id}>
-                    {m.user_profiles?.full_name || 'Membre'}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-          <div className="flex justify-end mt-2">
-            <button 
-              type="submit"
-              disabled={!newTitle.trim() || !newAmount || loading}
-              className="glass-capsule-btn primary py-2 px-5 text-xs font-bold disabled:opacity-50"
-            >
-              <span className="relative z-10">Enregistrer</span>
-            </button>
-          </div>
-        </form>
+          </form>
+        </Card>
       )}
-      
-      <div className="grid grid-cols-3 gap-2 mb-6">
-        <div className="glass-sub-card p-3 rounded-xl">
-          <p className="font-mono text-[9px] uppercase tracking-widest text-lkv-text-muted mb-1 font-bold">Total engagé</p>
-          <p className="font-mono font-bold text-lg text-lkv-primary">{expenses.total}€</p>
-        </div>
-        <div className="glass-sub-card p-3 rounded-xl">
-          <p className="font-mono text-[9px] uppercase tracking-widest text-lkv-text-muted mb-1 font-bold">Par personne</p>
-          <p className="font-mono font-bold text-lg text-lkv-primary">{expenses.perPerson}€</p>
-        </div>
-        <div className="glass-sub-card p-3 rounded-xl">
-          <p className="font-mono text-[9px] uppercase tracking-widest text-lkv-text-muted mb-1 font-bold">Vous devez</p>
-          <p className="font-mono font-bold text-lg text-lkv-primary">{expenses.userBalance}€</p>
-        </div>
-      </div>
-      
-      <div className="space-y-3 mb-6">
-        {expenses.items.length === 0 && (
-          <p className="text-center text-sm text-lkv-text-muted py-2">Aucune dépense enregistrée.</p>
-        )}
-        {expenses.items.map((item) => (
-          <div key={item.id} className="flex items-center justify-between group p-3 glass-sub-card rounded-xl">
-            <div className="flex items-start gap-3">
-              <div className="w-8 h-8 rounded-full glass-sub-card flex items-center justify-center text-lkv-primary flex-shrink-0 mt-0.5">
-                <Icon name="CurrencyEuroIcon" size={14} className="relative z-10" />
-              </div>
-              <div>
-                <h3 className="font-sans font-bold text-sm text-lkv-primary">{item.title}</h3>
-                <p className="text-[11px] text-lkv-text-muted font-sans">{item.payer}</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-4">
-              <div className="text-right">
-                <p className="font-mono font-bold text-sm text-lkv-primary">{item.amount}€</p>
-                <p className="font-mono text-[9px] uppercase tracking-widest text-lkv-text-muted">{item.parts} parts</p>
-              </div>
-              <button 
-                onClick={() => handleDeleteExpense(item.id)}
-                className="glass-capsule-btn p-1.5 text-red-600 opacity-0 group-hover:opacity-100"
-                title="Supprimer"
-              >
-                <Icon name="TrashIcon" size={14} className="relative z-10" />
-              </button>
-            </div>
-          </div>
-        ))}
-      </div>
-      
-      <div className="glass-sub-card rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
-        <p className="text-xs text-lkv-text-muted font-sans leading-relaxed">
-          {expenses.userDebts}
-        </p>
-        <button 
-          onClick={handleEquilibrer}
-          className="w-full sm:w-auto glass-capsule-btn primary py-2 px-4 text-xs font-bold whitespace-nowrap"
-        >
-          <span className="relative z-10">Équilibrer les comptes</span>
-        </button>
+
+      <div className="mb-[var(--space-6)] grid grid-cols-3 gap-[var(--space-2)]">
+        <Card variant="compact">
+          <p className="mb-[var(--space-1)] font-mono text-[length:var(--lkv-text-caption-2)] font-bold uppercase tracking-widest text-[color:var(--lkv-text-muted)]">Total engagé</p>
+          <p className="font-mono text-[length:var(--lkv-text-subheadline)] font-bold text-[color:var(--lkv-text-primary)]">{expenses.total}€</p>
+        </Card>
+        <Card variant="compact">
+          <p className="mb-[var(--space-1)] font-mono text-[length:var(--lkv-text-caption-2)] font-bold uppercase tracking-widest text-[color:var(--lkv-text-muted)]">Par personne</p>
+          <p className="font-mono text-[length:var(--lkv-text-subheadline)] font-bold text-[color:var(--lkv-text-primary)]">{expenses.perPerson}€</p>
+        </Card>
+        <Card variant="compact">
+          <p className="mb-[var(--space-1)] font-mono text-[length:var(--lkv-text-caption-2)] font-bold uppercase tracking-widest text-[color:var(--lkv-text-muted)]">Vous devez</p>
+          <p className="font-mono text-[length:var(--lkv-text-subheadline)] font-bold text-[color:var(--lkv-text-primary)]">{expenses.userBalance}€</p>
+        </Card>
       </div>
 
-      {showBalanceModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-md z-[100] flex items-center justify-center p-4">
-          <div className="glass rounded-2xl p-6 sm:p-8 max-w-md w-full relative">
-            <button 
-              onClick={() => setShowBalanceModal(false)}
-              className="glass-capsule-btn p-2 absolute top-6 right-6"
-            >
-              <Icon name="XMarkIcon" size={18} className="relative z-10" />
-            </button>
-            <h2 className="font-display font-bold text-2xl text-lkv-primary mb-4">Équilibre <span className="font-serif italic font-normal text-lkv-primary">des comptes</span></h2>
-            <p className="text-sm text-lkv-text-muted mb-6">
-              Simulation du calcul des dettes pour {expenses.items.length > 0 ? expenses.items.length : 0} dépenses.
+      <div className="mb-[var(--space-6)] space-y-[var(--space-1)]">
+        {expenses.items.length === 0 && (
+          <EmptyState compact icon={<Icon name="CurrencyEuroIcon" size={22} aria-hidden="true" />} title="Aucune dépense enregistrée" />
+        )}
+        {expenses.items.map((item) => (
+          <ListItem
+            key={item.id}
+            as="div"
+            className="group bg-[color:var(--lkv-surface-muted)]"
+            leading={
+              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[color:var(--lkv-surface-card)] text-[color:var(--lkv-text-primary)]">
+                <Icon name="CurrencyEuroIcon" size={14} aria-hidden="true" />
+              </span>
+            }
+            title={item.title}
+            subtitle={item.payer}
+            metadata={
+              <span className="text-right">
+                <span className="block font-mono font-bold text-[color:var(--lkv-text-primary)]">{item.amount}€</span>
+                <span className="block font-mono text-[length:var(--lkv-text-caption-2)] uppercase tracking-widest">{item.parts} parts</span>
+              </span>
+            }
+            trailing={
+              <IconButton
+                variant="ghost"
+                size="sm"
+                onClick={() => handleDeleteExpense(item.id)}
+                aria-label={`Supprimer la dépense ${item.title}`}
+                className="opacity-0 group-hover:opacity-100 text-[color:var(--lkv-danger)]"
+              >
+                <Icon name="TrashIcon" size={14} aria-hidden="true" />
+              </IconButton>
+            }
+          />
+        ))}
+      </div>
+
+      <Card variant="compact" className="flex flex-col items-center justify-between gap-[var(--space-4)] sm:flex-row">
+        <p className="font-sans text-[length:var(--lkv-text-caption)] leading-relaxed text-[color:var(--lkv-text-muted)]">
+          {expenses.userDebts}
+        </p>
+        <Button onClick={handleEquilibrer} className="w-full whitespace-nowrap sm:w-auto">
+          Équilibrer les comptes
+        </Button>
+      </Card>
+
+      <Modal
+        open={showBalanceModal}
+        onOpenChange={setShowBalanceModal}
+        title="Équilibre des comptes"
+        description={`Simulation du calcul des dettes pour ${expenses.items.length} dépenses.`}
+        size="sm"
+      >
+        <div className="space-y-[var(--space-4)]">
+          <Card variant="compact">
+            <p className="text-center font-mono text-[length:var(--lkv-text-caption)] font-semibold text-[color:var(--lkv-text-primary)]">
+              Vous ne devez rien à personne pour l&apos;instant (démo statique).
             </p>
-            <div className="glass-sub-card p-4 rounded-xl mb-6">
-              <p className="text-center font-mono text-sm text-lkv-primary font-semibold">Vous ne devez rien à personne pour l'instant (démo statique).</p>
-            </div>
-            <button 
-              onClick={() => setShowBalanceModal(false)}
-              className="w-full glass-capsule-btn primary py-3 text-xs font-bold"
-            >
-              <span className="relative z-10">Fermer</span>
-            </button>
-          </div>
+          </Card>
+          <Button fullWidth onClick={() => setShowBalanceModal(false)}>
+            Fermer
+          </Button>
         </div>
-      )}
-    </div>
+      </Modal>
+    </Card>
   );
 }

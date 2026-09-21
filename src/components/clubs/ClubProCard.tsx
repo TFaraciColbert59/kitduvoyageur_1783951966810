@@ -2,31 +2,29 @@
 
 import React from 'react';
 import Link from 'next/link';
-import Icon from '@/components/ui/AppIcon';
+import { Badge, Card } from '@/components/ui';
 
 export default function ClubProCard() {
   return (
-    <div className="glass tone-sand p-3.5 text-[#17402C] space-y-2 rounded-2xl transition-all duration-300">
-      <div className="inline-block glass-pill py-0.5 px-2">
-        <span className="font-mono text-[9px] uppercase tracking-widest text-[#8C6418] font-bold">
-          ⭐ OFFRE PRO
-        </span>
-      </div>
+    <Card tone="warn" className="space-y-[var(--space-2)] p-[var(--space-3)] transition-all duration-[var(--motion-control-duration)]">
+      <Badge tone="warn" className="font-mono uppercase tracking-widest">
+        ⭐ OFFRE PRO
+      </Badge>
 
-      <h3 className="font-display font-bold text-xs text-[#17402C] leading-snug">
-        Gérer votre club en <span className="font-serif italic font-normal text-[#17402C]">professionnel.</span>
+      <h3 className="font-display text-[length:var(--lkv-text-caption)] font-bold leading-snug text-[color:var(--lkv-text-primary)]">
+        Gérer votre club en <span className="font-serif font-normal italic text-[color:var(--lkv-text-primary)]">professionnel.</span>
       </h3>
 
-      <p className="text-[11px] text-[#5C6B5E] leading-relaxed">
+      <p className="text-[length:var(--lkv-text-caption-2)] leading-relaxed text-[color:var(--lkv-text-muted)]">
         Statistiques avancées, billetterie d&apos;événements et outils de modération pour vos sorties.
       </p>
 
       <Link
         href="/abonnements"
-        className="w-full glass-capsule-btn primary py-2 text-xs font-bold flex items-center justify-center gap-1.5 mt-1"
+        className="mt-[var(--space-1)] inline-flex min-h-[var(--control-height-md)] w-full items-center justify-center gap-[var(--space-1)] rounded-full bg-[color:var(--lkv-action)] px-[var(--space-4)] text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-on-action)]"
       >
-        <span className="relative z-10">Découvrir l&apos;offre Club</span>
+        Découvrir l&apos;offre Club
       </Link>
-    </div>
+    </Card>
   );
 }

@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { createClient } from '@/lib/supabase/client';
 import Icon from '@/components/ui/AppIcon';
+import { Badge, Button, Card, EmptyState, Spinner } from '@/components/ui';
 
 interface Option {
   id: string;
@@ -38,6 +39,9 @@ interface DecisionsCardProps {
   onRefresh?: () => void;
   user?: any;
 }
+
+const FIELD_CLASS =
+  'w-full rounded-[var(--lkv-radius-md)] border border-[color:var(--lkv-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[var(--space-2)] text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-primary)] placeholder:text-[color:var(--lkv-text-muted)] focus:outline-none focus:ring-2 focus:ring-[color:var(--lkv-focus-ring)]';
 
 export default function DecisionsCard({ decisions: initialDecisions, groupId, onRefresh, user }: DecisionsCardProps) {
   const supabase = createClient();
@@ -166,7 +170,7 @@ export default function DecisionsCard({ decisions: initialDecisions, groupId, on
     e.preventDefault();
     const validOptions = newOptions.filter(o => o.trim() !== '');
     if (!newQuestion.trim() || validOptions.length < 2 || !groupId || !user) return;
-    
+
     setLoading(true);
     const formattedOptions = validOptions.map((label, i) => ({
       id: `o${i}`,
@@ -197,152 +201,181 @@ export default function DecisionsCard({ decisions: initialDecisions, groupId, on
   };
 
   return (
-    <div className="glass p-6 transition-all duration-300">
-      <div className="flex justify-between items-start mb-2">
-        <h2 className="font-display font-bold text-xl text-lkv-primary">Décisions <span className="font-serif italic font-normal text-lkv-primary">en cours</span></h2>
-        <div className="flex items-center gap-2">
-          <span className="glass-pill">{decisions.length} actifs</span>
+    <Card className="p-[var(--space-6)] transition-all duration-[var(--motion-control-duration)]">
+      <div className="mb-[var(--space-2)] flex items-start justify-between">
+        <h2 className="font-display text-[length:var(--lkv-text-title-sm)] font-bold text-[color:var(--lkv-text-primary)]">
+          Décisions <span className="font-serif italic font-normal text-[color:var(--lkv-text-primary)]">en cours</span>
+        </h2>
+        <div className="flex items-center gap-[var(--space-2)]">
+          <Badge>{decisions.length} actifs</Badge>
         </div>
       </div>
-      
-      <div className="flex justify-between items-center mb-6">
+
+      <div className="mb-[var(--space-6)] flex items-center justify-between">
         <span />
-        <button 
+        <Button
+          variant={isAdding ? 'secondary' : 'primary'}
+          size="sm"
           onClick={() => setIsAdding(!isAdding)}
-          className="glass-capsule-btn primary py-1.5 px-3 text-xs font-bold flex items-center gap-1"
+          icon={<Icon name={isAdding ? 'XMarkIcon' : 'PlusIcon'} size={12} aria-hidden="true" />}
         >
-          <Icon name={isAdding ? "XMarkIcon" : "PlusIcon"} size={12} className="relative z-10" />
-          <span className="relative z-10">{isAdding ? 'Annuler' : 'Lancer un vote'}</span>
-        </button>
+          {isAdding ? 'Annuler' : 'Lancer un vote'}
+        </Button>
       </div>
 
       {isAdding && (
-        <form onSubmit={handleCreatePoll} className="mb-8 glass-sub-card p-5 rounded-2xl">
-          <div className="mb-4">
-            <label className="block text-xs font-bold text-lkv-primary mb-2">La question à trancher :</label>
-            <input 
-              type="text" 
+        <Card variant="compact" className="mb-[var(--space-8)] p-[var(--space-5)]">
+        <form onSubmit={handleCreatePoll} className="space-y-[var(--space-4)]">
+          <div>
+            <label htmlFor="poll-question" className="mb-[var(--space-2)] block text-[length:var(--lkv-text-caption)] font-semibold text-[color:var(--lkv-text-primary)]">
+              La question à trancher :
+            </label>
+            <input
+              id="poll-question"
+              type="text"
               autoFocus
               value={newQuestion}
               onChange={e => setNewQuestion(e.target.value)}
-              placeholder="Ex: Quel itinéraire prendre ?" 
-              className="glass-input w-full text-xs"
+              placeholder="Ex: Quel itinéraire prendre ?"
+              className={FIELD_CLASS}
               disabled={loading}
             />
           </div>
-          
-          <div className="space-y-3 mb-4">
-            <label className="block text-xs font-bold text-lkv-primary">Les options (minimum 2) :</label>
+
+          <div className="space-y-[var(--space-3)]">
+            <span className="block text-[length:var(--lkv-text-caption)] font-semibold text-[color:var(--lkv-text-primary)]">
+              Les options (minimum 2) :
+            </span>
             {newOptions.map((opt, i) => (
-              <div key={i} className="flex gap-2">
-                <input 
-                  type="text" 
+              <div key={i} className="flex gap-[var(--space-2)]">
+                <input
+                  type="text"
                   value={opt}
                   onChange={e => handleOptionChange(i, e.target.value)}
-                  placeholder={`Option ${i + 1}`} 
-                  className="glass-input flex-1 text-xs"
+                  placeholder={`Option ${i + 1}`}
+                  aria-label={`Option ${i + 1}`}
+                  className={`${FIELD_CLASS} flex-1`}
                   disabled={loading}
                 />
               </div>
             ))}
           </div>
 
-          <button
+          <Button
             type="button"
+            variant={importantDecision ? 'primary' : 'secondary'}
+            fullWidth
             onClick={() => setImportantDecision(!importantDecision)}
             aria-pressed={importantDecision}
-            className={`w-full flex items-center justify-between gap-3 rounded-xl px-3 py-2.5 text-xs font-bold transition-all min-h-[44px] mb-2 ${
-              importantDecision
-                ? 'bg-lkv-primary/10 border border-lkv-primary text-lkv-primary'
-                : 'glass-sub-card text-lkv-text-muted border border-transparent'
-            }`}
+            className="justify-between rounded-[var(--lkv-radius-md)]"
             data-testid="decision-important-toggle"
           >
             <span>Décision importante (quorum requis)</span>
             <span aria-hidden>{importantDecision ? '✓' : '○'}</span>
-          </button>
-          
-          <div className="flex justify-between items-center mt-6">
-            <button 
-              type="button" 
+          </Button>
+
+          <div className="flex items-center justify-between">
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
               onClick={handleAddOption}
-              className="glass-capsule-btn py-1.5 px-3 text-xs font-semibold"
               disabled={loading}
             >
-              <span className="relative z-10">+ Ajouter une option</span>
-            </button>
-            <button 
+              + Ajouter une option
+            </Button>
+            <Button
               type="submit"
+              size="sm"
+              onClick={handleCreatePoll}
               disabled={!newQuestion.trim() || newOptions.filter(o => o.trim() !== '').length < 2 || loading}
-              className="glass-capsule-btn primary py-2 px-4 text-xs font-bold disabled:opacity-50"
+              loading={loading}
             >
-              <span className="relative z-10">Créer le sondage</span>
-            </button>
+              Créer le sondage
+            </Button>
           </div>
         </form>
+        </Card>
       )}
 
-      <div className="space-y-6">
+      <div className="space-y-[var(--space-6)]">
         {decisions.length === 0 && !isAdding && (
-          <p className="text-center text-sm text-lkv-text-muted py-4">Aucun sondage en cours.</p>
+          <EmptyState
+            compact
+            icon={<Icon name="ChatBubbleLeftRightIcon" size={22} aria-hidden="true" />}
+            title="Aucun sondage en cours"
+            description="Lancez un vote pour trancher les décisions du groupe."
+          />
         )}
-        
+
         {decisions.map(decision => {
           const totalVotes = decision.options.reduce((acc, opt) => acc + (opt.votes || 0), 0);
-          
+
           return (
-          <div key={decision.id} className="glass-sub-card rounded-2xl p-5">
-            <div className="flex items-center gap-2 mb-3">
-              <span className="font-bold text-sm text-lkv-primary">{decision.author}</span>
-              <span className="glass-pill text-[9px]">{decision.tag}</span>
-              <span className="text-xs text-lkv-text-muted ml-auto font-mono">{decision.meta}</span>
+          <Card key={decision.id} variant="compact" className="space-y-[var(--space-3)] p-[var(--space-5)]">
+            <div className="flex items-center gap-[var(--space-2)]">
+              <span className="text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)]">{decision.author}</span>
+              <Badge>{decision.tag}</Badge>
+              <span className="ml-auto font-mono text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">{decision.meta}</span>
             </div>
-            
-            <p className="text-sm text-lkv-primary mb-5 font-sans leading-relaxed">
+
+            <p className="font-sans text-[length:var(--lkv-text-caption)] leading-relaxed text-[color:var(--lkv-text-primary)]">
               {decision.question}
             </p>
-            
-            <div className="space-y-3 mb-5">
+
+            <div className="space-y-[var(--space-3)]" role="radiogroup" aria-label={decision.question}>
               {decision.options.map(option => {
                 const pct = totalVotes > 0 ? Math.round((option.votes / totalVotes) * 100) : 0;
-                
+
                 return (
-                <button 
+                <button
                   type="button"
+                  role="radio"
+                  aria-checked={option.selected}
                   key={option.index}
                   onClick={() => handleVote(decision.id, option.index)}
                   disabled={savingVoteId === decision.id}
-                  className={`group w-full relative overflow-hidden rounded-xl border text-left transition-colors disabled:opacity-70 cursor-pointer
-                    ${option.selected ? 'border-lkv-primary bg-white' : 'glass-sub-card'}`}
+                  className={`group relative w-full cursor-pointer overflow-hidden rounded-[var(--lkv-radius-md)] border text-left transition-colors disabled:opacity-[var(--opacity-disabled)] ${
+                    option.selected
+                      ? 'border-[color:var(--lkv-primary)] bg-[color:var(--lkv-surface-card)]'
+                      : 'border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-muted)]'
+                  }`}
                 >
-                  <motion.div 
-                    className={`absolute inset-y-0 left-0 ${option.selected ? 'bg-lkv-primary/20' : 'bg-lkv-primary/10'}`}
+                  <motion.div
+                    aria-hidden="true"
+                    className={`absolute inset-y-0 left-0 ${option.selected ? 'bg-[color:var(--lkv-primary)]/20' : 'bg-[color:var(--lkv-primary)]/10'}`}
                     initial={{ width: 0 }}
                     animate={{ width: `${pct}%` }}
                     transition={{ duration: 0.5 }}
                   />
-                  
-                  <div className="relative p-3 flex items-center justify-between z-10">
-                    <div className="flex items-center gap-3">
-                      <div className={`glass-check-circle ${option.selected ? 'checked' : ''}`}>
-                        {option.selected && <Icon name="CheckIcon" size={12} className="relative z-10" />}
-                      </div>
-                      <div>
-                        <p className={`text-sm font-semibold ${option.selected ? 'text-lkv-primary' : 'text-lkv-text-muted'}`}>{option.label}</p>
-                      </div>
+
+                  <div className="relative z-10 flex items-center justify-between p-[var(--space-3)]">
+                    <div className="flex items-center gap-[var(--space-3)]">
+                      <span
+                        className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border ${
+                          option.selected
+                            ? 'border-[color:var(--lkv-primary)] bg-[color:var(--lkv-primary)] text-[color:var(--lkv-text-inverted)]'
+                            : 'border-[color:var(--lkv-border-strong)] bg-[color:var(--lkv-field-bg)]'
+                        }`}
+                      >
+                        {option.selected && <Icon name="CheckIcon" size={12} aria-hidden="true" />}
+                      </span>
+                      <p className={`text-[length:var(--lkv-text-caption)] font-semibold ${option.selected ? 'text-[color:var(--lkv-text-primary)]' : 'text-[color:var(--lkv-text-muted)]'}`}>
+                        {option.label}
+                      </p>
                     </div>
-                    <span className={`font-mono font-bold text-sm ${option.selected ? 'text-lkv-primary' : 'text-lkv-text-muted'}`}>
+                    <span className={`font-mono text-[length:var(--lkv-text-caption)] font-bold ${option.selected ? 'text-[color:var(--lkv-text-primary)]' : 'text-[color:var(--lkv-text-muted)]'}`}>
                       {pct}%
                     </span>
                   </div>
                 </button>
               )})}
             </div>
-            
+
             {decision.pollType && decision.pollType !== 'simple' && decision.resolution && (
               <p
-                className={`text-[10px] font-mono font-bold uppercase tracking-widest mb-2 ${
-                  decision.resolution.adopted ? 'text-lkv-primary' : 'text-lkv-text-muted'
+                className={`font-mono text-[length:var(--lkv-text-caption-2)] font-bold uppercase tracking-widest ${
+                  decision.resolution.adopted ? 'text-[color:var(--lkv-text-primary)]' : 'text-[color:var(--lkv-text-muted)]'
                 }`}
                 data-testid="decision-resolution"
               >
@@ -350,12 +383,13 @@ export default function DecisionsCard({ decisions: initialDecisions, groupId, on
               </p>
             )}
 
-            <div className="flex justify-between items-center text-[10px] font-mono uppercase tracking-widest text-lkv-text-muted pt-3 border-t border-lkv-primary/10 font-bold">
+            <div className="flex items-center justify-between border-t border-[color:var(--lkv-border)] pt-[var(--space-3)] font-mono text-[length:var(--lkv-text-caption-2)] font-bold uppercase tracking-widest text-[color:var(--lkv-text-muted)]">
               <span>{totalVotes} votes exprimés</span>
+              {savingVoteId === decision.id && <Spinner size="xs" label="Enregistrement du vote" />}
             </div>
-          </div>
+          </Card>
         )})}
       </div>
-    </div>
+    </Card>
   );
 }

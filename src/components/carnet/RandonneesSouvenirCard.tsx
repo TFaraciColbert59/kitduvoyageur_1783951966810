@@ -1,6 +1,7 @@
 import React from 'react';
 import Link from 'next/link';
 import type { CarnetRandonnee } from '@/lib/mock/carnet-chartreuse';
+import { Button, Card, ListItem } from '@/components/ui';
 
 interface RandonneesSouvenirCardProps {
   randonnees: CarnetRandonnee[];
@@ -19,33 +20,41 @@ function handleDownloadGPX(title: string) {
 
 export default function RandonneesSouvenirCard({ randonnees }: RandonneesSouvenirCardProps) {
   return (
-    <div className="bg-white rounded-[0.75rem] p-6 md:p-8 border border-[#17402C]/10  active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
-      <div className="flex items-start justify-between mb-2">
-        <h3 className="font-display text-lg text-[#17402C]">
+    <Card className="p-[var(--space-6)] transition-transform duration-150 active:scale-[0.99] md:p-[var(--space-8)]">
+      <div className="mb-[var(--space-2)] flex items-start justify-between">
+        <h3 className="font-display text-[length:var(--lkv-text-subheadline)] text-[color:var(--lkv-text-primary)]">
           Randonnées <em className="font-serif italic">parcourues</em>
         </h3>
-        <Link href="/carnets" className="text-xs font-medium text-[#17402C] hover:underline whitespace-nowrap">Tout →</Link>
+        <Link href="/carnets" className="whitespace-nowrap text-[length:var(--lkv-text-caption-2)] font-medium text-[color:var(--lkv-text-primary)] hover:underline">Tout →</Link>
       </div>
-      <p className="text-sm text-[#17402C]/60 mb-6 font-sans">Trois traces enregistrées, trois exportables au format GPX pour la fois prochaine.</p>
-      <div className="space-y-3">
+      <p className="mb-[var(--space-6)] font-sans text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-primary)]/60">Trois traces enregistrées, trois exportables au format GPX pour la fois prochaine.</p>
+      <div className="space-y-[var(--space-2)]">
         {randonnees.map(r => (
-          <div key={r.id} className="flex items-center gap-3 group/rando hover:bg-[#E7E3D6]/30 -mx-3 px-3 py-3 rounded-xl transition-colors">
-            <div className="w-8 h-8 rounded-lg bg-[#33463C]/10 flex items-center justify-center flex-shrink-0" aria-hidden="true">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#33463C" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-[#17402C] truncate">{r.title}</p>
-              <p className="font-mono text-[10px] text-[#17402C]/50">{r.stats}</p>
-            </div>
-            <button
-              onClick={() => handleDownloadGPX(r.title)}
-              className="flex-shrink-0 font-mono text-[10px] uppercase tracking-widest text-[#33463C] bg-[#33463C]/5 hover:bg-[#33463C]/10 px-3 py-1.5 rounded-full transition-colors font-semibold"
-            >
-              GPX ↓
-            </button>
-          </div>
+          <ListItem
+            key={r.id}
+            as="div"
+            className="group/rando -mx-[var(--space-3)] hover:bg-[color:var(--lkv-hover-surface)]"
+            leading={
+              <span className="flex h-8 w-8 items-center justify-center rounded-[var(--lkv-radius-md)] bg-[color:var(--lkv-forest-600)]/10" aria-hidden="true">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--lkv-forest-600)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+              </span>
+            }
+            title={<span className="text-[length:var(--lkv-text-caption)] font-semibold">{r.title}</span>}
+            subtitle={<span className="font-mono text-[length:var(--lkv-text-caption-2)]">{r.stats}</span>}
+            trailing={
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => handleDownloadGPX(r.title)}
+                className="shrink-0 font-mono uppercase tracking-widest"
+                aria-label={`Télécharger le GPX de ${r.title}`}
+              >
+                GPX ↓
+              </Button>
+            }
+          />
         ))}
       </div>
-    </div>
+    </Card>
   );
 }

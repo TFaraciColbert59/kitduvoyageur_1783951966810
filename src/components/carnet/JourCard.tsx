@@ -2,6 +2,7 @@
 
 import React from 'react';
 import type { CarnetJour } from '@/lib/mock/carnet-chartreuse';
+import { Badge, Card } from '@/components/ui';
 
 interface JourCardProps {
   jour: CarnetJour;
@@ -9,38 +10,35 @@ interface JourCardProps {
 
 export default function JourCard({ jour }: JourCardProps) {
   return (
-    <div className="glass bg-white/90 backdrop-blur-xl rounded-3xl p-4 sm:p-5 border border-white shadow-xs space-y-3 text-[#17402C]">
+    <Card className="space-y-[var(--space-3)] p-[var(--space-4)] sm:p-[var(--space-5)]">
       <div className="flex items-center justify-between">
-        <span className="font-mono text-[9px] uppercase tracking-[0.18em] text-[#5C6B5E] font-bold">
+        <span className="font-mono text-[length:var(--lkv-text-caption-2)] font-bold uppercase tracking-[0.18em] text-[color:var(--lkv-text-muted)]">
           {jour.label}
         </span>
         {jour.titleItalic && (
-          <span className="glass-pill text-[9px] font-mono font-bold text-forest-900 bg-forest-50">
+          <Badge tone="sage" className="font-mono font-bold">
             {jour.titleItalic}
-          </span>
+          </Badge>
         )}
       </div>
 
-      <h3 className="font-display font-bold text-sm sm:text-base text-[#17402C] leading-snug">
-        {jour.title} <span className="font-serif italic text-forest-800 font-normal">{jour.titleItalic}</span>
+      <h3 className="font-display text-[length:var(--lkv-text-caption)] font-bold leading-snug text-[color:var(--lkv-text-primary)] sm:text-[length:var(--lkv-text-subheadline)]">
+        {jour.title} <span className="font-serif font-normal italic text-[color:var(--lkv-forest-800)]">{jour.titleItalic}</span>
       </h3>
 
-      <p className="text-xs text-[#2D4536] leading-relaxed font-sans pl-0.5">
+      <p className="pl-[2px] font-sans text-[length:var(--lkv-text-caption-2)] leading-relaxed text-[color:var(--lkv-text-secondary)]">
         {jour.recit}
       </p>
 
       {jour.stats && jour.stats.length > 0 && (
-        <div className="flex flex-wrap gap-1.5 pt-2 border-t border-[#17402C]/8">
+        <div className="flex flex-wrap gap-[var(--space-1)] border-t border-[color:var(--lkv-primary)]/5 pt-[var(--space-2)]">
           {jour.stats.map((s, i) => (
-            <span
-              key={i}
-              className="inline-flex items-center gap-1 bg-white/80 border border-white/80 rounded-xl px-2.5 py-1 font-mono text-[10px] text-[#17402C] font-semibold shadow-2xs"
-            >
-              <span>{s.icon}</span> {s.label}
-            </span>
+            <Badge key={i} className="font-mono font-semibold">
+              <span aria-hidden>{s.icon}</span> {s.label}
+            </Badge>
           ))}
         </div>
       )}
-    </div>
+    </Card>
   );
 }

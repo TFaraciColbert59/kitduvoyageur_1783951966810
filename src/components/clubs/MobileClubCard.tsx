@@ -4,6 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import Icon from '@/components/ui/AppIcon';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
+import { Badge, Button, Card } from '@/components/ui';
 
 export interface ClubCardItem {
   id: string;
@@ -38,42 +39,41 @@ export default function MobileClubCard({
   const clubHref = `/clubs/${club.slug || club.id}`;
 
   return (
-    <div className="glass rounded-3xl p-4 border border-white/60 shadow-xs flex flex-col justify-between space-y-3 relative transition-all active:scale-[0.99]">
-      {/* Top Row: Avatar/Emoji + Title + Verified / Privacy Badge */}
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex items-center gap-3 min-w-0">
-          <div className="w-12 h-12 rounded-2xl bg-[#17402C]/5 border border-[#17402C]/10 flex items-center justify-center text-2xl shrink-0 overflow-hidden relative shadow-2xs">
+    <Card className="relative flex flex-col justify-between space-y-[var(--space-3)] p-[var(--space-4)] transition-transform active:scale-[0.99] motion-reduce:transition-none">
+      <div className="flex items-start justify-between gap-[var(--space-3)]">
+        <div className="flex min-w-0 items-center gap-[var(--space-3)]">
+          <div className="relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-[var(--lkv-radius-2xl)] border border-[color:var(--lkv-primary)]/10 bg-[color:var(--lkv-primary)]/5 text-[length:var(--lkv-text-title-sm)]">
             {club.cover_image ? (
               <img
                 src={club.cover_image}
                 alt={club.name}
-                className="w-full h-full object-cover"
+                className="h-full w-full object-cover"
               />
             ) : (
-              <span>{club.emoji || '🏕️'}</span>
+              <span aria-hidden>{club.emoji || '🏕️'}</span>
             )}
           </div>
 
-          <div className="min-w-0 space-y-0.5">
-            <div className="flex items-center gap-1.5 flex-wrap">
+          <div className="min-w-0 space-y-[2px]">
+            <div className="flex flex-wrap items-center gap-[var(--space-1)]">
               {club.category && (
-                <span className="glass-pill text-[9px] font-mono font-bold text-[#17402C] shrink-0">
+                <Badge className="shrink-0 font-mono font-bold">
                   {club.category}
-                </span>
+                </Badge>
               )}
               {club.type && (
-                <span className="text-[9.5px] font-mono text-[#5C6B5E]">
+                <span className="font-mono text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">
                   {club.type === 'activite' ? '⚡ Activité' : '🌍 Pays'}
                 </span>
               )}
             </div>
 
-            <div className="flex items-center gap-1.5">
-              <h3 className="font-display font-bold text-sm text-[#17402C] leading-snug truncate">
+            <div className="flex items-center gap-[var(--space-1)]">
+              <h3 className="truncate font-display text-[length:var(--lkv-text-caption)] font-bold leading-snug text-[color:var(--lkv-text-primary)]">
                 {club.name}
               </h3>
               {club.is_verified && (
-                <span className="text-forest-700 text-xs shrink-0" title="Club vérifié">
+                <span className="shrink-0 text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-forest-700)]" title="Club vérifié">
                   ✓
                 </span>
               )}
@@ -82,36 +82,34 @@ export default function MobileClubCard({
         </div>
 
         {isMember ? (
-          <span className="glass-pill text-[9px] font-mono font-bold text-forest-900 bg-forest-50 shrink-0">
+          <Badge tone="sage" className="shrink-0 font-mono font-bold">
             ✓ Membre
-          </span>
+          </Badge>
         ) : (
-          <span className="glass-pill text-[9px] font-mono text-[#5C6B5E] shrink-0">
+          <Badge className="shrink-0 font-mono">
             Collectif
-          </span>
+          </Badge>
         )}
       </div>
 
-      {/* Description */}
       {club.description && (
-        <p className="text-xs text-[#5C6B5E] line-clamp-2 leading-relaxed pl-1">
+        <p className="line-clamp-2 pl-[var(--space-1)] text-[length:var(--lkv-text-caption)] leading-relaxed text-[color:var(--lkv-text-muted)]">
           {club.description}
         </p>
       )}
 
-      {/* Footer: Member stats & Liquid Glass Action buttons */}
-      <div className="pt-2.5 border-t border-[#17402C]/10 flex items-center justify-between">
-        <div className="flex items-center gap-3 text-[11px] font-mono text-[#5C6B5E]">
-          <div className="flex items-center gap-1">
-            <span>👥</span>
-            <span className="font-bold text-[#17402C]">{club.members_count || 1}</span>
-            <span className="text-[10px]">membres</span>
+      <div className="flex items-center justify-between border-t border-[color:var(--lkv-primary)]/10 pt-[var(--space-2)]">
+        <div className="flex items-center gap-[var(--space-3)] font-mono text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">
+          <div className="flex items-center gap-[var(--space-1)]">
+            <span aria-hidden>👥</span>
+            <span className="font-bold text-[color:var(--lkv-text-primary)]">{club.members_count || 1}</span>
+            <span className="text-[length:var(--lkv-text-caption-2)]">membres</span>
           </div>
 
           {club.active_this_month !== undefined && club.active_this_month > 0 && (
-            <span className="text-[9.5px] font-mono font-bold px-2 py-0.5 rounded-full bg-forest-50 text-forest-900 border border-forest-200/50">
+            <Badge tone="sage" className="font-mono font-bold">
               🔥 {club.active_this_month} actifs/mois
-            </span>
+            </Badge>
           )}
         </div>
 
@@ -119,34 +117,35 @@ export default function MobileClubCard({
           <Link
             href={clubHref}
             onClick={() => triggerHaptic('light')}
-            className="glass-capsule-btn !min-h-[34px] !py-1 !px-3.5 !text-xs !gap-1.5 !font-bold"
+            className="inline-flex min-h-[var(--control-height-sm)] items-center gap-[var(--space-1)] rounded-full border border-[color:var(--lkv-border)] bg-[color:var(--card-tint-strong)] px-[var(--space-3)] text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-primary)] backdrop-blur-[var(--blur-md)]"
           >
             <span>Ouvrir</span>
-            <Icon name="ArrowRightIcon" size={12} />
+            <Icon name="ArrowRightIcon" size={12} aria-hidden="true" />
           </Link>
         ) : (
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-[var(--space-2)]">
             <Link
               href={clubHref}
               onClick={() => triggerHaptic('light')}
-              className="glass-capsule-btn !min-h-[34px] !py-1 !px-3 !text-xs !font-bold"
+              className="inline-flex min-h-[var(--control-height-sm)] items-center rounded-full border border-[color:var(--lkv-border)] bg-[color:var(--card-tint-strong)] px-[var(--space-3)] text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-primary)] backdrop-blur-[var(--blur-md)]"
             >
               <span>Détails</span>
             </Link>
-            <button
+            <Button
               type="button"
+              size="sm"
               disabled={joining}
+              loading={joining}
               onClick={() => {
                 triggerHaptic('selection');
                 if (onJoin) onJoin(club.id);
               }}
-              className="glass-capsule-btn primary !min-h-[34px] !py-1 !px-3.5 !text-xs !gap-1 !font-bold disabled:opacity-50"
             >
-              <span>{joining ? '...' : '+ Rejoindre'}</span>
-            </button>
+              {joining ? '...' : '+ Rejoindre'}
+            </Button>
           </div>
         )}
       </div>
-    </div>
+    </Card>
   );
 }

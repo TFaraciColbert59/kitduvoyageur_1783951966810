@@ -11,8 +11,20 @@ import Icon from '@/components/ui/AppIcon';
 import { createClient } from '@/lib/supabase/client';
 import { fetchPublicProfilesWith } from '@/lib/queries/publicProfilesCore';
 import { useAuth } from '@/contexts/AuthContext';
+import {
+  Badge,
+  Button,
+  Card,
+  Chip,
+  ConfirmDialog,
+  EmptyState,
+  IconButton,
+  LoadingState,
+  Modal,
+  SkeletonClubCard,
+  Tabs,
+} from '@/components/ui';
 
-// ─── Types ────────────────────────────────────────────────────────────────────
 interface Club {
   id: string;
   slug: string;
@@ -103,7 +115,6 @@ const EMPTY_CLUB_FORM: ClubForm = {
   privacy: 'open',
 };
 
-// Dégradés officiels (tokens sage / warn / info / stone) — remplace les classes Tailwind legacy
 const COVER_GRADIENTS: Record<string, string> = {
   'from-emerald-600 to-teal-700': 'from-[var(--lkv-forest-600)] to-[var(--lkv-primary)]',
   'from-blue-600 to-indigo-700': 'from-[var(--lkv-info)] to-[var(--lkv-sky-600)]',
@@ -123,7 +134,11 @@ const _COVER_COLORS: { label: string; value: string }[] = [
   { label: 'Ardoise', value: 'from-[var(--lkv-text-muted)] to-[var(--lkv-text-primary)]' },
 ];
 
-// ─── Club Create/Edit Modal ───────────────────────────────────────────────────
+const FIELD_CLASS =
+  'w-full rounded-[var(--lkv-radius-md)] border border-[color:var(--lkv-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[var(--space-2)] text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-primary)] placeholder:text-[color:var(--lkv-text-muted)] focus:outline-none focus:ring-2 focus:ring-[color:var(--lkv-focus-ring)]';
+
+const LABEL_CLASS = 'mb-[var(--space-2)] block font-mono text-[length:var(--lkv-text-caption-2)] font-bold uppercase tracking-widest text-[color:var(--lkv-text-muted)]';
+
 function ClubFormModal({
   open,
   onClose,
@@ -139,139 +154,131 @@ function ClubFormModal({
 }) {
   const [form, setForm] = useState<ClubForm>(initial ?? EMPTY_CLUB_FORM);
   useEffect(() => { setForm(initial ?? EMPTY_CLUB_FORM); }, [initial, open]);
-  if (!open) return null;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const set = (k: keyof ClubForm, v: any) => setForm((f) => ({ ...f, [k]: v }));
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-md flex items-center justify-center p-4 sm:p-6 overflow-y-auto transition-opacity duration-300">
-      <div className="glass rounded-2xl w-full max-w-xl my-4 overflow-hidden flex flex-col transform transition-transform duration-300 scale-100">
-        
-        {/* Header */}
-        <div className="flex items-center justify-between p-6 sm:px-8 pt-8 pb-4 relative z-10">
-          <div>
-            <h2 className="font-display font-800 text-[var(--lkv-primary)] text-2xl tracking-tight">
-              {initial ? 'Modifier le club' : 'Créer un club'}
-            </h2>
-            <p className="text-[var(--lkv-forest-600)] text-sm mt-1">Configurez l&apos;espace de votre communauté.</p>
-          </div>
-          <button onClick={onClose} className="glass-circle-btn self-start">
-            <Icon name="XMarkIcon" size={20} />
-          </button>
-        </div>
-
-        {/* Form Body */}
-        <div className="p-6 sm:px-8 space-y-6 max-h-[60vh] overflow-y-auto custom-scrollbar relative z-10">
-          <div className="flex gap-4">
-            <div className="w-24">
-              <label className="text-[11px] font-700 text-[var(--lkv-text-muted)] uppercase tracking-widest block mb-2">Emoji</label>
-              <input 
-                className="glass-input w-full text-center text-3xl" 
-                value={form.emoji} 
-                onChange={(e) => set('emoji', e.target.value)} 
-              />
-            </div>
-            <div className="flex-1">
-              <label className="text-[11px] font-700 text-[var(--lkv-text-muted)] uppercase tracking-widest block mb-2">Nom du club <span className="text-[var(--lkv-secondary)]">*</span></label>
-              <input 
-                className="glass-input w-full text-base" 
-                placeholder="Ex: Club Sahara" 
-                value={form.name} 
-                onChange={(e) => set('name', e.target.value)} 
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            <div>
-              <label className="text-[11px] font-700 text-[var(--lkv-text-muted)] uppercase tracking-widest block mb-2">Type</label>
-              <div className="glass-capsule-bar w-full p-1.5">
-                {[{ v: 'activite', l: '🎯 Activité' }, { v: 'pays', l: '🌍 Pays' }].map((opt) => (
-                  <button 
-                    key={opt.v} 
-                    type="button" 
-                    onClick={() => set('type', opt.v)} 
-                    className={`glass-capsule-segment flex-1 ${form.type === opt.v ? 'active' : ''}`}
-                  >
-                    {opt.l}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <div>
-              <label className="text-[11px] font-700 text-[var(--lkv-text-muted)] uppercase tracking-widest block mb-2">Catégorie</label>
-              <input 
-                className="glass-input w-full text-sm" 
-                placeholder="Ex: Randonnée, Islande..." 
-                value={form.category} 
-                onChange={(e) => set('category', e.target.value)} 
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="text-[11px] font-700 text-[var(--lkv-text-muted)] uppercase tracking-widest block mb-2">Description</label>
-            <textarea 
-              rows={3} 
-              className="glass-input w-full text-sm resize-none" 
-              placeholder="Décrivez l'objectif et l'ambiance du club..." 
-              value={form.description} 
-              onChange={(e) => set('description', e.target.value)} 
-            />
-          </div>
-
-          <div>
-            <label className="text-[11px] font-700 text-[var(--lkv-text-muted)] uppercase tracking-widest block mb-2">Règles du club</label>
-            <textarea 
-              rows={2} 
-              className="glass-input w-full text-sm resize-none" 
-              placeholder="Règles de bonne conduite (optionnel)..." 
-              value={form.rules} 
-              onChange={(e) => set('rules', e.target.value)} 
-            />
-          </div>
-
-          <div>
-            <label className="text-[11px] font-700 text-[var(--lkv-text-muted)] uppercase tracking-widest block mb-3">Confidentialité</label>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              {[
-                { v: 'open', l: '🌍 Ouvert', d: 'Tout le monde' },
-                { v: 'closed', l: '🔒 Fermé', d: 'Sur demande' },
-                { v: 'secret', l: '🕵️ Secret', d: 'Sur invitation' },
-              ].map((opt) => (
-                <button 
-                  key={opt.v} 
-                  type="button" 
-                  onClick={() => set('privacy', opt.v)} 
-                  className={`w-full !p-4 text-left flex flex-col items-start glass-capsule-btn ${form.privacy === opt.v ? 'primary' : ''}`}
-                >
-                  <p className="text-sm font-700 text-[var(--lkv-primary)] mb-1">{opt.l}</p>
-                  <p className="text-[11px] text-[var(--lkv-text-muted)]">{opt.d}</p>
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Footer */}
-        <div className="flex items-center gap-3 p-6 sm:px-8 border-t border-border bg-white/40 relative z-10">
-          <button onClick={onClose} className="px-6 py-3 glass-capsule-btn secondary text-sm">
+    <Modal
+      open={open}
+      onOpenChange={(next) => { if (!next) onClose(); }}
+      title={initial ? 'Modifier le club' : 'Créer un club'}
+      description="Configurez l'espace de votre communauté."
+      size="lg"
+      loading={saving}
+      footer={
+        <div className="flex w-full items-center gap-[var(--space-3)]">
+          <Button variant="secondary" onClick={onClose} disabled={saving}>
             Annuler
-          </button>
-          <button 
-            onClick={() => onSave(form)} 
-            disabled={saving || !form.name.trim()} 
-            className="flex-1 glass-capsule-btn primary text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+          </Button>
+          <Button
+            onClick={() => onSave(form)}
+            disabled={saving || !form.name.trim()}
+            loading={saving}
+            fullWidth
           >
             {saving ? 'Enregistrement...' : initial ? 'Mettre à jour le club' : 'Créer le club'}
-          </button>
+          </Button>
+        </div>
+      }
+    >
+      <div className="space-y-[var(--space-5)]">
+        <div className="flex gap-[var(--space-4)]">
+          <div className="w-24">
+            <label htmlFor="club-form-emoji" className={LABEL_CLASS}>Emoji</label>
+            <input
+              id="club-form-emoji"
+              className={`${FIELD_CLASS} text-center text-[length:var(--lkv-text-title-sm)]`}
+              value={form.emoji}
+              onChange={(e) => set('emoji', e.target.value)}
+            />
+          </div>
+          <div className="flex-1">
+            <label htmlFor="club-form-name" className={LABEL_CLASS}>Nom du club <span className="text-[color:var(--lkv-secondary)]">*</span></label>
+            <input
+              id="club-form-name"
+              className={FIELD_CLASS}
+              placeholder="Ex: Club Sahara"
+              value={form.name}
+              onChange={(e) => set('name', e.target.value)}
+            />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 gap-[var(--space-4)] sm:grid-cols-2">
+          <div>
+            <span className={LABEL_CLASS}>Type</span>
+            <Tabs
+              variant="segmented"
+              ariaLabel="Type de club"
+              value={form.type}
+              onChange={(id) => set('type', id)}
+              options={[
+                { id: 'activite', label: '🎯 Activité' },
+                { id: 'pays', label: '🌍 Pays' },
+              ]}
+            />
+          </div>
+          <div>
+            <label htmlFor="club-form-category" className={LABEL_CLASS}>Catégorie</label>
+            <input
+              id="club-form-category"
+              className={FIELD_CLASS}
+              placeholder="Ex: Randonnée, Islande..."
+              value={form.category}
+              onChange={(e) => set('category', e.target.value)}
+            />
+          </div>
+        </div>
+
+        <div>
+          <label htmlFor="club-form-description" className={LABEL_CLASS}>Description</label>
+          <textarea
+            id="club-form-description"
+            rows={3}
+            className={`${FIELD_CLASS} resize-none`}
+            placeholder="Décrivez l'objectif et l'ambiance du club..."
+            value={form.description}
+            onChange={(e) => set('description', e.target.value)}
+          />
+        </div>
+
+        <div>
+          <label htmlFor="club-form-rules" className={LABEL_CLASS}>Règles du club</label>
+          <textarea
+            id="club-form-rules"
+            rows={2}
+            className={`${FIELD_CLASS} resize-none`}
+            placeholder="Règles de bonne conduite (optionnel)..."
+            value={form.rules}
+            onChange={(e) => set('rules', e.target.value)}
+          />
+        </div>
+
+        <div>
+          <span className={LABEL_CLASS}>Confidentialité</span>
+          <div className="grid grid-cols-1 gap-[var(--space-3)] sm:grid-cols-3">
+            {[
+              { v: 'open', l: '🌍 Ouvert', d: 'Tout le monde' },
+              { v: 'closed', l: '🔒 Fermé', d: 'Sur demande' },
+              { v: 'secret', l: '🕵️ Secret', d: 'Sur invitation' },
+            ].map((opt) => (
+              <Chip
+                key={opt.v}
+                selected={form.privacy === opt.v}
+                onClick={() => set('privacy', opt.v)}
+                className="h-auto flex-col items-start justify-start gap-[var(--space-1)] px-[var(--space-4)] py-[var(--space-3)]"
+              >
+                <span className="text-[length:var(--lkv-text-caption)] font-bold">{opt.l}</span>
+                <span className="text-[length:var(--lkv-text-caption-2)] font-normal">{opt.d}</span>
+              </Chip>
+            ))}
+          </div>
         </div>
       </div>
-    </div>
+    </Modal>
   );
 }
 
-// ─── Club Detail Modal ────────────────────────────────────────────────────────
 function ClubDetailModal({
   club,
   onClose,
@@ -468,188 +475,204 @@ function ClubDetailModal({
     }
   };
 
-  if (!club) return null;
-
   const tabs = [
-    { id: 'topics', label: 'Discussions', icon: 'ChatBubbleLeftRightIcon' },
-    { id: 'members', label: `Membres (${members.length})`, icon: 'UsersIcon' },
-    { id: 'challenges', label: 'Défis', icon: 'TrophyIcon' },
-    { id: 'events', label: 'Agenda', icon: 'CalendarIcon' },
-    ...(isAdmin ? [{ id: 'moderation', label: `Modération${pendingRequests.length > 0 ? ` (${pendingRequests.length})` : ''}`, icon: 'ShieldCheckIcon' }] : []),
+    { id: 'topics', label: 'Discussions', icon: <Icon name="ChatBubbleLeftRightIcon" size={15} aria-hidden="true" /> },
+    { id: 'members', label: `Membres (${members.length})`, icon: <Icon name="UsersIcon" size={15} aria-hidden="true" /> },
+    { id: 'challenges', label: 'Défis', icon: <Icon name="TrophyIcon" size={15} aria-hidden="true" /> },
+    { id: 'events', label: 'Agenda', icon: <Icon name="CalendarIcon" size={15} aria-hidden="true" /> },
+    ...(isAdmin ? [{ id: 'moderation', label: `Modération${pendingRequests.length > 0 ? ` (${pendingRequests.length})` : ''}`, icon: <Icon name="ShieldCheckIcon" size={15} aria-hidden="true" /> }] : []),
   ];
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-md flex items-center justify-center p-4 transition-opacity duration-300">
-      <div className="glass rounded-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden">
-        {/* Header - Immersive */}
-        <div className={`bg-gradient-to-br ${normalizeCover(club.cover_color)} p-8 relative overflow-hidden shrink-0`}>
-          <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 blur-[80px] rounded-full pointer-events-none" />
-          <div className="relative z-10 flex items-start justify-between">
-            <div className="flex items-start gap-5">
-              <div className="w-16 h-16 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center text-4xl border border-white/20">
-                {club.emoji}
-              </div>
-              <div className="mt-1">
-                <div className="flex items-center gap-3 flex-wrap mb-1">
-                  <h2 className="font-display font-800 text-white text-3xl tracking-tight">{club.name}</h2>
-                  {club.is_verified && <span className="text-[10px] bg-white/20 text-white px-2.5 py-1 rounded-full font-700 tracking-wider">✓ VÉRIFIÉ</span>}
+    <Modal
+      open={!!club}
+      onOpenChange={(next) => { if (!next) onClose(); }}
+      title={club?.name ?? 'Club'}
+      size="lg"
+      hideTitle
+      footer={
+        toast ? (
+          <p role="status" className="text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)]">{toast}</p>
+        ) : undefined
+      }
+    >
+      {!club ? null : (
+        <div className="space-y-[var(--space-5)]">
+          <div className={`relative overflow-hidden rounded-[var(--lkv-radius-md)] bg-gradient-to-br ${normalizeCover(club.cover_color)} p-[var(--space-6)]`}>
+            <div aria-hidden className="pointer-events-none absolute right-0 top-0 h-64 w-64 rounded-full bg-[color:var(--lkv-text-inverted)]/10 blur-[80px]" />
+            <div className="relative z-10 flex items-start justify-between">
+              <div className="flex items-start gap-[var(--space-5)]">
+                <div className="flex h-16 w-16 items-center justify-center rounded-[var(--lkv-radius-2xl)] border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] text-[length:var(--lkv-text-title-lg)] backdrop-blur-[var(--blur-md)]" aria-hidden>
+                  {club.emoji}
                 </div>
-                <p className="text-white/70 text-sm font-500">
-                  {club.members_count.toLocaleString()} membres · {club.type === 'activite' ? 'Activité' : 'Destination'} · {club.privacy}
-                </p>
+                <div className="mt-[var(--space-1)]">
+                  <div className="mb-[var(--space-1)] flex flex-wrap items-center gap-[var(--space-3)]">
+                    <h2 className="font-display text-[length:var(--lkv-text-title-sm)] font-extrabold tracking-tight text-[color:var(--lkv-text-inverted)]">{club.name}</h2>
+                    {club.is_verified && (
+                      <Badge className="border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] font-mono font-bold text-[color:var(--lkv-text-inverted)]">✓ VÉRIFIÉ</Badge>
+                    )}
+                  </div>
+                  <p className="text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-inverted)]/70">
+                    {club.members_count.toLocaleString()} membres · {club.type === 'activite' ? 'Activité' : 'Destination'} · {club.privacy}
+                  </p>
+                </div>
               </div>
+              <IconButton variant="glass" onClick={onClose} aria-label="Fermer le club">
+                <Icon name="XMarkIcon" size={18} aria-hidden="true" />
+              </IconButton>
             </div>
-            <button onClick={onClose} className="glass-circle-btn">
-              <Icon name="XMarkIcon" size={18} />
-            </button>
-          </div>
-          {club.rules && (
-            <div className="mt-6 bg-black/20 backdrop-blur-sm border border-white/10 rounded-xl px-4 py-3 relative z-10 flex items-start gap-3">
-              <Icon name="ShieldCheckIcon" size={16} className="text-white/80 shrink-0 mt-0.5" />
-              <div>
-                <p className="text-[10px] text-white/50 font-700 uppercase tracking-widest mb-1">Règles du club</p>
-                <p className="text-sm text-white/90 leading-relaxed">{club.rules}</p>
+            {club.rules && (
+              <div className="relative z-10 mt-[var(--space-5)] flex items-start gap-[var(--space-3)] rounded-[var(--lkv-radius-md)] border border-[color:var(--glass-border)] bg-[color:var(--lkv-primary)]/20 px-[var(--space-4)] py-[var(--space-3)] backdrop-blur-[var(--blur-sm)]">
+                <Icon name="ShieldCheckIcon" size={16} className="mt-[2px] shrink-0 text-[color:var(--lkv-text-inverted)]/80" aria-hidden="true" />
+                <div>
+                  <p className="mb-[var(--space-1)] font-mono text-[length:var(--lkv-text-caption-2)] font-bold uppercase tracking-widest text-[color:var(--lkv-text-inverted)]/50">Règles du club</p>
+                  <p className="text-[length:var(--lkv-text-caption)] leading-relaxed text-[color:var(--lkv-text-inverted)]/90">{club.rules}</p>
+                </div>
               </div>
-            </div>
-          )}
-        </div>
-
-        {/* Tabs - Liquid Glass Capsule Bar */}
-        <div className="px-6 py-4 border-b border-border bg-white/40 shrink-0">
-          <div className="glass-capsule-bar">
-            {tabs.map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id as typeof activeTab)}
-                className={`glass-capsule-segment ${activeTab === tab.id ? 'active' : ''}`}
-              >
-                <Icon name={tab.icon} size={15} className="relative z-10" />
-                <span className="relative z-10">{tab.label}</span>
-              </button>
-            ))}
+            )}
           </div>
-        </div>
 
-        {/* Content */}
-        <div className="flex-1 overflow-y-auto p-6 sm:p-8 custom-scrollbar bg-white/40">
+          <Tabs
+            variant="scrollable"
+            ariaLabel="Sections du club"
+            value={activeTab}
+            onChange={(id) => setActiveTab(id as typeof activeTab)}
+            options={tabs}
+          />
+
           {loading ? (
-            <div className="flex flex-col items-center justify-center py-20 opacity-50">
-              <div className="w-8 h-8 border-4 border-[var(--lkv-secondary)] border-t-transparent rounded-full animate-spin mb-4" />
-              <p className="text-sm text-[var(--lkv-text-muted)] font-500">Chargement des données du club...</p>
-            </div>
+            <LoadingState label="Chargement des données du club..." />
           ) : (
-            <div className="max-w-3xl mx-auto">
-              {/* Topics */}
+            <div className="mx-auto max-w-3xl">
               {activeTab === 'topics' && (
-                <div className="space-y-6">
+                <div className="space-y-[var(--space-5)]">
                   {club.is_member && (
-                    <div className="glass p-5 space-y-4">
-                      <div className="flex items-center gap-3 mb-2">
-                        <div className="w-8 h-8 rounded-full bg-[var(--lkv-secondary)]/10 flex items-center justify-center text-[var(--lkv-secondary)]">
-                          <Icon name="PencilIcon" size={14} />
-                        </div>
-                        <h3 className="font-700 text-[var(--lkv-primary)] text-base">Lancer une discussion</h3>
+                    <Card className="space-y-[var(--space-4)]">
+                      <div className="flex items-center gap-[var(--space-3)]">
+                        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[color:var(--lkv-secondary)]/10 text-[color:var(--lkv-secondary)]">
+                          <Icon name="PencilIcon" size={14} aria-hidden="true" />
+                        </span>
+                        <h3 className="text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)]">Lancer une discussion</h3>
                       </div>
-                      <input 
-                        className="glass-input w-full text-sm" 
-                        placeholder="De quoi voulez-vous parler ?" 
-                        value={newTopic.title} 
-                        onChange={(e) => setNewTopic((f) => ({ ...f, title: e.target.value }))} 
+                      <input
+                        className={FIELD_CLASS}
+                        placeholder="De quoi voulez-vous parler ?"
+                        aria-label="Titre de la discussion"
+                        value={newTopic.title}
+                        onChange={(e) => setNewTopic((f) => ({ ...f, title: e.target.value }))}
                       />
-                      <textarea 
-                        rows={3} 
-                        className="glass-input w-full text-sm resize-none" 
-                        placeholder="Détaillez votre sujet (optionnel)..." 
-                        value={newTopic.content} 
-                        onChange={(e) => setNewTopic((f) => ({ ...f, content: e.target.value }))} 
+                      <textarea
+                        rows={3}
+                        className={`${FIELD_CLASS} resize-none`}
+                        placeholder="Détaillez votre sujet (optionnel)..."
+                        aria-label="Contenu de la discussion"
+                        value={newTopic.content}
+                        onChange={(e) => setNewTopic((f) => ({ ...f, content: e.target.value }))}
                       />
                       <div className="flex justify-end">
-                        <button 
-                          onClick={handlePostTopic} 
-                          disabled={postingTopic || !newTopic.title.trim()} 
-                          className="px-6 py-2.5 glass-capsule-btn primary text-sm disabled:opacity-50"
+                        <Button
+                          onClick={handlePostTopic}
+                          disabled={postingTopic || !newTopic.title.trim()}
+                          loading={postingTopic}
                         >
                           {postingTopic ? 'Publication...' : 'Publier'}
-                        </button>
+                        </Button>
                       </div>
-                    </div>
+                    </Card>
                   )}
                   {topics.length === 0 ? (
-                    <div className="glass-sub-card text-center py-16 rounded-2xl">
-                      <div className="text-5xl mb-4 opacity-50">💬</div>
-                      <p className="text-[var(--lkv-primary)] font-700 text-lg mb-1">Aucune discussion</p>
-                      <p className="text-[var(--lkv-text-muted)] text-sm">Soyez le premier à lancer un sujet !</p>
-                    </div>
+                    <EmptyState
+                      icon={<span className="text-[length:var(--lkv-text-title-lg)]" aria-hidden>💬</span>}
+                      title="Aucune discussion"
+                      description="Soyez le premier à lancer un sujet !"
+                    />
                   ) : (
                     topics.map((topic) => (
-                      <div key={topic.id} className={`group glass p-5 transition-all hover:interactive ${topic.is_pinned ? '!border-[var(--lkv-secondary)]/40' : ''}`}>
-                        <div className="flex items-start justify-between gap-4">
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 flex-wrap mb-2">
-                              {topic.is_pinned && <span className="glass-pill">📌 ÉPINGLÉ</span>}
-                              {topic.is_announcement && <span className="glass-pill pill-warn">📢 ANNONCE</span>}
-                              <h4 className="font-700 text-[var(--lkv-primary)] text-base group-hover:text-[var(--lkv-secondary)] transition-colors">{topic.title}</h4>
+                      <Card key={topic.id} className={`group transition-all ${topic.is_pinned ? 'border-[color:var(--lkv-secondary)]/40' : ''}`}>
+                        <div className="flex items-start justify-between gap-[var(--space-4)]">
+                          <div className="min-w-0 flex-1">
+                            <div className="mb-[var(--space-2)] flex flex-wrap items-center gap-[var(--space-2)]">
+                              {topic.is_pinned && <Badge>📌 ÉPINGLÉ</Badge>}
+                              {topic.is_announcement && <Badge tone="warn">📢 ANNONCE</Badge>}
+                              <h4 className="text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)] transition-colors group-hover:text-[color:var(--lkv-secondary)]">{topic.title}</h4>
                             </div>
-                            {topic.content && <p className="text-sm text-[var(--lkv-text-muted)] mb-4 line-clamp-2 leading-relaxed">{topic.content}</p>}
-                            <div className="flex items-center gap-4 text-xs font-500 text-[var(--lkv-text-muted)]">
-                              <span className="flex items-center gap-1.5 bg-white/40 px-2 py-1 rounded-md">
-                                <Icon name="UserIcon" size={12} /> {topic.author?.full_name ?? 'Anonyme'}
+                            {topic.content && <p className="mb-[var(--space-4)] line-clamp-2 text-[length:var(--lkv-text-caption)] leading-relaxed text-[color:var(--lkv-text-muted)]">{topic.content}</p>}
+                            <div className="flex items-center gap-[var(--space-4)] text-[length:var(--lkv-text-caption-2)] font-medium text-[color:var(--lkv-text-muted)]">
+                              <span className="flex items-center gap-[var(--space-1)] rounded-[var(--lkv-radius-sm)] bg-[color:var(--lkv-surface-muted)] px-[var(--space-2)] py-[var(--space-1)]">
+                                <Icon name="UserIcon" size={12} aria-hidden="true" /> {topic.author?.full_name ?? 'Anonyme'}
                               </span>
-                              <span className="flex items-center gap-1.5">
-                                <Icon name="HeartIcon" size={14} className="text-[var(--lkv-danger)]/70" /> {topic.likes_count}
+                              <span className="flex items-center gap-[var(--space-1)]">
+                                <Icon name="HeartIcon" size={14} className="text-[color:var(--lkv-danger)]/70" aria-hidden="true" /> {topic.likes_count}
                               </span>
-                              <span className="flex items-center gap-1.5">
-                                <Icon name="ChatBubbleLeftIcon" size={14} className="text-[var(--lkv-info)]/70" /> {topic.replies_count}
+                              <span className="flex items-center gap-[var(--space-1)]">
+                                <Icon name="ChatBubbleLeftIcon" size={14} className="text-[color:var(--lkv-info)]/70" aria-hidden="true" /> {topic.replies_count}
                               </span>
                             </div>
                           </div>
                           {isAdmin && (
-                            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 bg-white/50 rounded-xl p-1">
-                              <button onClick={() => handlePinTopic(topic)} title={topic.is_pinned ? 'Désépingler' : 'Épingler'} className="glass-circle-btn">
-                                <Icon name="bookmark" size={15} className={topic.is_pinned ? 'text-[var(--lkv-secondary)]' : 'text-[var(--lkv-text-muted)]'} />
-                              </button>
-                              <button onClick={() => handleDeleteTopic(topic.id)} title="Supprimer" className="glass-circle-btn hover:bg-[var(--lkv-danger)]/15">
-                                <Icon name="trash2" size={15} className="text-[var(--lkv-danger)]" />
-                              </button>
+                            <div className="flex shrink-0 items-center gap-[var(--space-1)] rounded-[var(--lkv-radius-md)] bg-[color:var(--lkv-surface-muted)] p-[var(--space-1)] opacity-0 transition-opacity group-hover:opacity-100">
+                              <IconButton
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handlePinTopic(topic)}
+                                aria-label={topic.is_pinned ? 'Désépingler la discussion' : 'Épingler la discussion'}
+                              >
+                                <Icon name="bookmark" size={15} className={topic.is_pinned ? 'text-[color:var(--lkv-secondary)]' : 'text-[color:var(--lkv-text-muted)]'} aria-hidden="true" />
+                              </IconButton>
+                              <IconButton
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleDeleteTopic(topic.id)}
+                                aria-label="Supprimer la discussion"
+                                className="text-[color:var(--lkv-danger)]"
+                              >
+                                <Icon name="trash2" size={15} aria-hidden="true" />
+                              </IconButton>
                             </div>
                           )}
                         </div>
-                      </div>
+                      </Card>
                     ))
                   )}
                 </div>
               )}
 
-              {/* Members */}
               {activeTab === 'members' && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 gap-[var(--space-4)] sm:grid-cols-2">
                   {members.map((m) => (
-                    <div key={m.id} className="flex flex-col gap-3 p-4 glass hover:interactive">
+                    <Card key={m.id} className="flex flex-col gap-[var(--space-3)]">
                       <div className="flex items-start justify-between">
-                        <div className="flex items-center gap-3">
-                          <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[var(--lkv-secondary)]/20 to-[var(--lkv-secondary)]/5 flex items-center justify-center font-800 text-[var(--lkv-secondary)] text-lg">
+                        <div className="flex items-center gap-[var(--space-3)]">
+                          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[color:var(--lkv-secondary)]/10 text-[length:var(--lkv-text-subheadline)] font-extrabold text-[color:var(--lkv-secondary)]" aria-hidden>
                             {m.user?.full_name?.[0] ?? '?'}
                           </div>
                           <div>
-                            <p className="font-700 text-[var(--lkv-primary)] text-sm truncate">{m.user?.full_name ?? 'Anonyme'}</p>
-                            <span className={`glass-pill mt-1 ${m.role === 'admin' ? 'pill-warn' : m.role === 'moderator' ? 'pill-info' : ''}`}>
+                            <p className="truncate text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)]">{m.user?.full_name ?? 'Anonyme'}</p>
+                            <Badge tone={m.role === 'admin' ? 'warn' : m.role === 'moderator' ? 'info' : 'stone'} className="mt-[var(--space-1)]">
                               {m.role === 'admin' ? '👑 ADMIN' : m.role === 'moderator' ? '🛡️ MODO' : '👤 MEMBRE'}
-                            </span>
+                            </Badge>
                           </div>
                         </div>
                         {isAdmin && m.user_id !== currentUserId && (
-                          <button onClick={() => handleBanMember(m)} className="glass-circle-btn hover:bg-[var(--lkv-danger)]/15 text-[var(--lkv-text-muted)] hover:text-[var(--lkv-danger)]" title="Bannir">
-                            <Icon name="NoSymbolIcon" size={15} />
-                          </button>
+                          <IconButton
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleBanMember(m)}
+                            aria-label={`Bannir ${m.user?.full_name ?? 'ce membre'}`}
+                            className="text-[color:var(--lkv-text-muted)] hover:text-[color:var(--lkv-danger)]"
+                          >
+                            <Icon name="NoSymbolIcon" size={15} aria-hidden="true" />
+                          </IconButton>
                         )}
                       </div>
-                      <div className="flex items-center justify-between mt-2 pt-3 border-t border-border">
-                        <p className="text-[11px] text-[var(--lkv-text-muted)] font-600">Trust Score: {m.user?.trust_score ?? 0}</p>
+                      <div className="mt-[var(--space-2)] flex items-center justify-between border-t border-[color:var(--lkv-border)] pt-[var(--space-3)]">
+                        <p className="text-[length:var(--lkv-text-caption-2)] font-semibold text-[color:var(--lkv-text-muted)]">Trust Score: {m.user?.trust_score ?? 0}</p>
                         {isAdmin && m.user_id !== currentUserId && (
                           <select
                             value={m.role}
                             onChange={(e) => handlePromoteMember(m, e.target.value as 'admin' | 'moderator' | 'member')}
-                            className="text-[11px] font-600 glass-input !min-h-0 py-1.5 px-2"
+                            aria-label={`Rôle de ${m.user?.full_name ?? 'ce membre'}`}
+                            className={`${FIELD_CLASS} w-auto py-[var(--space-1)] text-[length:var(--lkv-text-caption-2)] font-semibold`}
                           >
                             <option value="member">Membre</option>
                             <option value="moderator">Modérateur</option>
@@ -657,160 +680,171 @@ function ClubDetailModal({
                           </select>
                         )}
                       </div>
-                    </div>
+                    </Card>
                   ))}
                 </div>
               )}
 
-              {/* Challenges */}
               {activeTab === 'challenges' && (
-                <div className="space-y-4">
+                <div className="space-y-[var(--space-4)]">
                   {challenges.length === 0 ? (
-                    <div className="glass-sub-card text-center py-16 rounded-2xl">
-                      <div className="text-5xl mb-4 opacity-50">🏆</div>
-                      <p className="text-[var(--lkv-primary)] font-700 text-lg mb-1">Aucun défi en cours</p>
-                    </div>
+                    <EmptyState
+                      icon={<span className="text-[length:var(--lkv-text-title-lg)]" aria-hidden>🏆</span>}
+                      title="Aucun défi en cours"
+                    />
                   ) : (
                     challenges.map((ch) => (
-                      <div key={ch.id} className="glass p-6 transition-all relative overflow-hidden group hover:interactive">
-                        <div className="absolute -right-10 -top-10 w-40 h-40 bg-[var(--lkv-warning)]/10 rounded-full blur-3xl group-hover:bg-[var(--lkv-warning)]/20 transition-colors" />
-                        <div className="relative z-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
+                      <Card key={ch.id} className="group relative overflow-hidden">
+                        <div aria-hidden className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-[color:var(--lkv-warning)]/10 blur-3xl transition-colors group-hover:bg-[color:var(--lkv-warning)]/20" />
+                        <div className="relative z-10 flex flex-col items-start justify-between gap-[var(--space-6)] sm:flex-row sm:items-center">
                           <div>
-                            <div className="flex items-center gap-3 mb-2">
-                              <span className="p-2 bg-[var(--lkv-warning)]/20 text-[var(--lkv-warning)] rounded-xl"><Icon name="TrophyIcon" size={16} /></span>
-                              <h4 className="font-800 text-[var(--lkv-primary)] text-lg">{ch.title}</h4>
+                            <div className="mb-[var(--space-2)] flex items-center gap-[var(--space-3)]">
+                              <span className="rounded-[var(--lkv-radius-md)] bg-[color:var(--lkv-warning)]/20 p-[var(--space-2)] text-[color:var(--lkv-warning-dark)]">
+                                <Icon name="TrophyIcon" size={16} aria-hidden="true" />
+                              </span>
+                              <h4 className="text-[length:var(--lkv-text-subheadline)] font-extrabold text-[color:var(--lkv-text-primary)]">{ch.title}</h4>
                             </div>
-                            <p className="text-sm text-[var(--lkv-text-muted)] mb-4 max-w-xl">{ch.description}</p>
-                            <div className="flex items-center gap-4 text-xs font-600">
-                              <span className="glass-pill pill-warn">+{ch.xp} XP à gagner</span>
-                              {ch.deadline && <span className="text-[var(--lkv-text-muted)] flex items-center gap-1.5"><Icon name="ClockIcon" size={14} /> Fin le {new Date(ch.deadline).toLocaleDateString('fr-FR')}</span>}
+                            <p className="mb-[var(--space-4)] max-w-xl text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-muted)]">{ch.description}</p>
+                            <div className="flex items-center gap-[var(--space-4)] text-[length:var(--lkv-text-caption-2)] font-semibold">
+                              <Badge tone="warn">+{ch.xp} XP à gagner</Badge>
+                              {ch.deadline && (
+                                <span className="flex items-center gap-[var(--space-1)] text-[color:var(--lkv-text-muted)]">
+                                  <Icon name="ClockIcon" size={14} aria-hidden="true" /> Fin le {new Date(ch.deadline).toLocaleDateString('fr-FR')}
+                                </span>
+                              )}
                             </div>
                           </div>
-                          <button
+                          <Button
                             onClick={() => handleJoinChallenge(ch.id)}
-                            className={`w-full sm:w-auto px-6 py-3 glass-capsule-btn text-sm ${joinedChallenges[ch.id] ? 'secondary' : 'primary'}`}
+                            variant={joinedChallenges[ch.id] ? 'secondary' : 'primary'}
+                            className="w-full sm:w-auto"
                           >
                             {joinedChallenges[ch.id] ? '✓ Vous participez' : 'Participer'}
-                          </button>
+                          </Button>
                         </div>
-                      </div>
+                      </Card>
                     ))
                   )}
                 </div>
               )}
 
-              {/* Events / Agenda */}
               {activeTab === 'events' && (
-                <div className="space-y-6">
+                <div className="space-y-[var(--space-5)]">
                   {isAdmin && (
-                    <div className="glass p-6 space-y-4">
-                      <div className="flex items-center gap-3 mb-4">
-                        <div className="w-8 h-8 rounded-full bg-[var(--lkv-secondary)]/10 flex items-center justify-center text-[var(--lkv-secondary)]">
-                          <Icon name="CalendarIcon" size={14} />
-                        </div>
-                        <h3 className="font-700 text-[var(--lkv-primary)] text-base">Planifier un événement</h3>
+                    <Card className="space-y-[var(--space-4)]">
+                      <div className="flex items-center gap-[var(--space-3)]">
+                        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[color:var(--lkv-secondary)]/10 text-[color:var(--lkv-secondary)]">
+                          <Icon name="CalendarIcon" size={14} aria-hidden="true" />
+                        </span>
+                        <h3 className="text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)]">Planifier un événement</h3>
                       </div>
-                      
-                      <div className="space-y-4">
+
+                      <div className="space-y-[var(--space-4)]">
                         <div>
-                          <label className="text-[11px] font-700 text-[var(--lkv-text-muted)] uppercase tracking-widest block mb-2">Titre</label>
-                          <input className="glass-input w-full text-sm" placeholder="Titre de l'événement..." value={newEvent.title} onChange={(e) => setNewEvent((f) => ({ ...f, title: e.target.value }))} />
+                          <label htmlFor="club-event-title" className={LABEL_CLASS}>Titre</label>
+                          <input id="club-event-title" className={FIELD_CLASS} placeholder="Titre de l'événement..." value={newEvent.title} onChange={(e) => setNewEvent((f) => ({ ...f, title: e.target.value }))} />
                         </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 gap-[var(--space-4)] sm:grid-cols-2">
                           <div>
-                            <label className="text-[11px] font-700 text-[var(--lkv-text-muted)] uppercase tracking-widest block mb-2">Date et Heure</label>
-                            <input type="datetime-local" className="glass-input w-full text-sm text-[var(--lkv-primary)]" value={newEvent.event_date} onChange={(e) => setNewEvent((f) => ({ ...f, event_date: e.target.value }))} />
+                            <label htmlFor="club-event-date" className={LABEL_CLASS}>Date et Heure</label>
+                            <input id="club-event-date" type="datetime-local" className={FIELD_CLASS} value={newEvent.event_date} onChange={(e) => setNewEvent((f) => ({ ...f, event_date: e.target.value }))} />
                           </div>
                           <div>
-                            <label className="text-[11px] font-700 text-[var(--lkv-text-muted)] uppercase tracking-widest block mb-2">Lieu / Lien</label>
-                            <input className="glass-input w-full text-sm" placeholder="Chamonix ou Lien Zoom..." value={newEvent.location} onChange={(e) => setNewEvent((f) => ({ ...f, location: e.target.value }))} />
+                            <label htmlFor="club-event-location" className={LABEL_CLASS}>Lieu / Lien</label>
+                            <input id="club-event-location" className={FIELD_CLASS} placeholder="Chamonix ou Lien Zoom..." value={newEvent.location} onChange={(e) => setNewEvent((f) => ({ ...f, location: e.target.value }))} />
                           </div>
                         </div>
                         <div>
-                          <label className="text-[11px] font-700 text-[var(--lkv-text-muted)] uppercase tracking-widest block mb-2">Description</label>
-                          <textarea rows={2} className="glass-input w-full text-sm resize-none" placeholder="Détails de l'événement..." value={newEvent.description} onChange={(e) => setNewEvent((f) => ({ ...f, description: e.target.value }))} />
+                          <label htmlFor="club-event-description" className={LABEL_CLASS}>Description</label>
+                          <textarea id="club-event-description" rows={2} className={`${FIELD_CLASS} resize-none`} placeholder="Détails de l'événement..." value={newEvent.description} onChange={(e) => setNewEvent((f) => ({ ...f, description: e.target.value }))} />
                         </div>
-                        <div className="flex justify-end pt-2">
-                          <button onClick={handlePostEvent} disabled={postingEvent || !newEvent.title.trim()} className="px-6 py-2.5 glass-capsule-btn primary text-sm disabled:opacity-50">
+                        <div className="flex justify-end pt-[var(--space-2)]">
+                          <Button onClick={handlePostEvent} disabled={postingEvent || !newEvent.title.trim()} loading={postingEvent}>
                             {postingEvent ? 'Création...' : 'Créer l\'événement'}
-                          </button>
+                          </Button>
                         </div>
                       </div>
-                    </div>
+                    </Card>
                   )}
                   {events.length === 0 ? (
-                    <div className="glass-sub-card text-center py-16 rounded-2xl">
-                      <div className="text-5xl mb-4 opacity-50">📅</div>
-                      <p className="text-[var(--lkv-primary)] font-700 text-lg mb-1">Aucun événement planifié</p>
-                    </div>
+                    <EmptyState
+                      icon={<span className="text-[length:var(--lkv-text-title-lg)]" aria-hidden>📅</span>}
+                      title="Aucun événement planifié"
+                    />
                   ) : (
                     events.map((ev) => (
-                      <div key={ev.id} className="glass p-5 transition-colors flex flex-col sm:flex-row gap-6">
-                        <div className="glass-sub-card rounded-xl p-4 flex flex-col items-center justify-center min-w-[100px]">
+                      <Card key={ev.id} className="flex flex-col gap-[var(--space-6)] sm:flex-row">
+                        <Card variant="compact" className="flex min-w-[100px] flex-col items-center justify-center">
                           {ev.event_date ? (
                             <>
-                              <span className="text-sm font-800 text-[var(--lkv-secondary)] uppercase">{new Date(ev.event_date).toLocaleDateString('fr-FR', { month: 'short' })}</span>
-                              <span className="text-3xl font-900 text-[var(--lkv-primary)]">{new Date(ev.event_date).getDate()}</span>
+                              <span className="text-[length:var(--lkv-text-caption)] font-extrabold uppercase text-[color:var(--lkv-secondary)]">{new Date(ev.event_date).toLocaleDateString('fr-FR', { month: 'short' })}</span>
+                              <span className="text-[length:var(--lkv-text-title-sm)] font-extrabold text-[color:var(--lkv-text-primary)]">{new Date(ev.event_date).getDate()}</span>
                             </>
                           ) : (
-                            <span className="text-sm font-700 text-[var(--lkv-text-muted)]">À DÉFINIR</span>
+                            <span className="text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-muted)]">À DÉFINIR</span>
                           )}
-                        </div>
-                        <div className="flex-1 flex flex-col justify-center">
-                          <h4 className="font-800 text-[var(--lkv-primary)] text-lg mb-1">{ev.title}</h4>
-                          {ev.description && <p className="text-sm text-[var(--lkv-text-muted)] mb-4 line-clamp-2">{ev.description}</p>}
-                          <div className="flex items-center gap-4 text-xs font-600 text-[var(--lkv-text-muted)] flex-wrap mt-auto">
-                            {ev.location && <span className="flex items-center gap-1.5 bg-white/40 px-2.5 py-1 rounded-md"><Icon name="MapPinIcon" size={14} />{ev.location}</span>}
-                            <span className="flex items-center gap-1.5 bg-white/40 px-2.5 py-1 rounded-md">
-                              <Icon name="UsersIcon" size={14} />{ev.participants_count} / {ev.max_participants} inscrits
+                        </Card>
+                        <div className="flex flex-1 flex-col justify-center">
+                          <h4 className="mb-[var(--space-1)] text-[length:var(--lkv-text-subheadline)] font-extrabold text-[color:var(--lkv-text-primary)]">{ev.title}</h4>
+                          {ev.description && <p className="mb-[var(--space-4)] line-clamp-2 text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-muted)]">{ev.description}</p>}
+                          <div className="mt-auto flex flex-wrap items-center gap-[var(--space-4)] text-[length:var(--lkv-text-caption-2)] font-semibold text-[color:var(--lkv-text-muted)]">
+                            {ev.location && (
+                              <span className="flex items-center gap-[var(--space-1)] rounded-[var(--lkv-radius-sm)] bg-[color:var(--lkv-surface-muted)] px-[var(--space-2)] py-[var(--space-1)]">
+                                <Icon name="MapPinIcon" size={14} aria-hidden="true" />{ev.location}
+                              </span>
+                            )}
+                            <span className="flex items-center gap-[var(--space-1)] rounded-[var(--lkv-radius-sm)] bg-[color:var(--lkv-surface-muted)] px-[var(--space-2)] py-[var(--space-1)]">
+                              <Icon name="UsersIcon" size={14} aria-hidden="true" />{ev.participants_count} / {ev.max_participants} inscrits
                             </span>
                           </div>
                         </div>
-                        <div className="flex items-center sm:border-l sm:border-border sm:pl-6">
-                          <button
+                        <div className="flex items-center sm:border-l sm:border-[color:var(--lkv-border)] sm:pl-[var(--space-6)]">
+                          <Button
                             onClick={() => handleToggleEventRegistration(ev.id)}
-                            className={`w-full sm:w-auto px-6 py-3 glass-capsule-btn text-sm ${registeredEvents[ev.id] ? 'secondary' : 'primary'}`}
+                            variant={registeredEvents[ev.id] ? 'secondary' : 'primary'}
+                            className="w-full sm:w-auto"
                           >
                             {registeredEvents[ev.id] ? '✓ Inscrit' : 'S&apos;inscrire'}
-                          </button>
+                          </Button>
                         </div>
-                      </div>
+                      </Card>
                     ))
                   )}
                 </div>
               )}
 
-              {/* Moderation */}
               {activeTab === 'moderation' && isAdmin && (
-                <div className="space-y-6">
+                <div className="space-y-[var(--space-5)]">
                   <div>
-                    <h3 className="font-700 text-[var(--lkv-primary)] text-lg mb-4 flex items-center gap-2">
-                      <Icon name="ShieldCheckIcon" size={20} className="text-[var(--lkv-warning)]" />
+                    <h3 className="mb-[var(--space-4)] flex items-center gap-[var(--space-2)] text-[length:var(--lkv-text-subheadline)] font-bold text-[color:var(--lkv-text-primary)]">
+                      <Icon name="ShieldCheckIcon" size={20} className="text-[color:var(--lkv-warning-dark)]" aria-hidden="true" />
                       Demandes d&apos;adhésion en attente
-                      <span className="glass-pill pill-warn">{pendingRequests.length}</span>
+                      <Badge tone="warn">{pendingRequests.length}</Badge>
                     </h3>
                     {pendingRequests.length === 0 ? (
-                      <div className="glass-sub-card text-center py-12 rounded-2xl">
-                        <p className="text-[var(--lkv-text-muted)] text-sm font-500">Aucune demande en attente pour le moment.</p>
-                      </div>
+                      <EmptyState
+                        icon={<Icon name="ShieldCheckIcon" size={22} aria-hidden="true" />}
+                        title="Aucune demande en attente"
+                        description="Aucune demande en attente pour le moment."
+                      />
                     ) : (
-                      <div className="space-y-3">
+                      <div className="space-y-[var(--space-3)]">
                         {pendingRequests.map((req) => (
-                          <div key={req.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 glass hover:interactive">
-                            <div className="flex items-center gap-4">
-                              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-white/50 to-white/20 flex items-center justify-center font-800 text-[var(--lkv-primary)] text-lg border border-border">
+                          <Card key={req.id} className="flex flex-col items-start justify-between gap-[var(--space-4)] sm:flex-row sm:items-center">
+                            <div className="flex items-center gap-[var(--space-4)]">
+                              <div className="flex h-12 w-12 items-center justify-center rounded-full border border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-muted)] text-[length:var(--lkv-text-subheadline)] font-extrabold text-[color:var(--lkv-text-primary)]" aria-hidden>
                                 {(req as unknown as { user?: { full_name: string } }).user?.full_name?.[0] ?? '?'}
                               </div>
                               <div>
-                                <p className="font-700 text-[var(--lkv-primary)] text-base">{(req as unknown as { user?: { full_name: string } }).user?.full_name ?? 'Anonyme'}</p>
-                                <p className="text-xs text-[var(--lkv-text-muted)] font-600 mt-0.5">Trust Score: {(req as unknown as { user?: { trust_score: number } }).user?.trust_score ?? 0}</p>
+                                <p className="text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)]">{(req as unknown as { user?: { full_name: string } }).user?.full_name ?? 'Anonyme'}</p>
+                                <p className="mt-[var(--space-1)] text-[length:var(--lkv-text-caption-2)] font-semibold text-[color:var(--lkv-text-muted)]">Trust Score: {(req as unknown as { user?: { trust_score: number } }).user?.trust_score ?? 0}</p>
                               </div>
                             </div>
-                            <div className="flex gap-2 w-full sm:w-auto">
-                              <button onClick={() => handleApproveRequest(req.id, req.user_id, true)} className="flex-1 sm:flex-none px-4 py-2 glass-capsule-btn primary text-sm">Accepter</button>
-                              <button onClick={() => handleApproveRequest(req.id, req.user_id, false)} className="flex-1 sm:flex-none px-4 py-2 glass-capsule-btn secondary text-sm text-[var(--lkv-danger)]">Refuser</button>
+                            <div className="flex w-full gap-[var(--space-2)] sm:w-auto">
+                              <Button onClick={() => handleApproveRequest(req.id, req.user_id, true)} className="flex-1 sm:flex-none">Accepter</Button>
+                              <Button onClick={() => handleApproveRequest(req.id, req.user_id, false)} variant="secondary" className="flex-1 text-[color:var(--lkv-danger)] sm:flex-none">Refuser</Button>
                             </div>
-                          </div>
+                          </Card>
                         ))}
                       </div>
                     )}
@@ -820,19 +854,11 @@ function ClubDetailModal({
             </div>
           )}
         </div>
-
-        {/* Modal Toast Overlay */}
-        {toast && (
-          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-[100] bg-[var(--lkv-primary)] text-[var(--lkv-surface-muted)] px-6 py-3 rounded-full text-sm font-700  animate-fade-in-up">
-            {toast}
-          </div>
-        )}
-      </div>
-    </div>
+      )}
+    </Modal>
   );
 }
 
-// ─── Club Card ────────────────────────────────────────────────────────────────
 function ClubCard({
   club,
   onToggleMember,
@@ -852,108 +878,108 @@ function ClubCard({
   const isOwner = currentUserId === club.created_by;
 
   const handleToggle = async (e: React.MouseEvent) => {
-    e.stopPropagation(); // prevent opening modal if clicking join
+    e.stopPropagation();
     setJoining(true);
     await onToggleMember(club.id, !!club.is_member);
     setJoining(false);
   };
 
   return (
-    <Link 
+    <Link
       href={`/clubs/${club.slug}`}
-      className="group relative flex flex-col glass rounded-[1.25rem] hover:interactive transition-all duration-300 overflow-hidden cursor-pointer h-full block"
+      className="group relative block h-full"
     >
-      {/* Decorative Blur Background */}
-      <div className={`absolute -top-32 -right-32 w-64 h-64 bg-gradient-to-br ${normalizeCover(club.cover_color)} rounded-full blur-[80px] opacity-20 group-hover:opacity-40 transition-opacity duration-500 pointer-events-none`} />
+      <Card className="relative flex h-full flex-col overflow-hidden transition-all duration-[var(--motion-control-duration)] group-hover:shadow-elevation-2">
+        <div aria-hidden className={`pointer-events-none absolute -right-32 -top-32 h-64 w-64 rounded-full bg-gradient-to-br ${normalizeCover(club.cover_color)} opacity-20 blur-[80px] transition-opacity duration-500 group-hover:opacity-40`} />
 
-      <div className="p-6 relative z-10 flex flex-col h-full">
-        {/* Card Header */}
-        <div className="flex items-start justify-between mb-5">
-          <div className="w-16 h-16 rounded-2xl glass-sub-card flex items-center justify-center text-3xl group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300">
-            {club.emoji}
+        <div className="relative z-10 flex h-full flex-col">
+          <div className="mb-[var(--space-5)] flex items-start justify-between">
+            <div className="flex h-16 w-16 items-center justify-center rounded-[var(--lkv-radius-2xl)] bg-[color:var(--lkv-surface-muted)] text-[length:var(--lkv-text-title-lg)] transition-transform duration-300 group-hover:rotate-3 group-hover:scale-110" aria-hidden>
+              {club.emoji}
+            </div>
+
+            <div className="flex items-center gap-[var(--space-1)]">
+              {isOwner && (
+                <div className="flex items-center gap-[var(--space-1)] opacity-0 transition-opacity group-hover:opacity-100">
+                  <IconButton
+                    variant="ghost"
+                    size="sm"
+                    onClick={(e) => { e.stopPropagation(); onEdit(club); }}
+                    aria-label={`Modifier ${club.name}`}
+                    className="text-[color:var(--lkv-text-muted)] hover:text-[color:var(--lkv-text-primary)]"
+                  >
+                    <Icon name="pencil" size={14} aria-hidden="true" />
+                  </IconButton>
+                  <IconButton
+                    variant="ghost"
+                    size="sm"
+                    onClick={(e) => { e.stopPropagation(); onDelete(club); }}
+                    aria-label={`Supprimer ${club.name}`}
+                    className="text-[color:var(--lkv-danger)]"
+                  >
+                    <Icon name="trash2" size={14} aria-hidden="true" />
+                  </IconButton>
+                </div>
+              )}
+              {club.is_member && (
+                <span className="rounded-full border border-[color:var(--lkv-secondary)]/30 bg-[color:var(--lkv-secondary)]/20 p-[var(--space-2)] text-[color:var(--lkv-secondary)]" title="Vous êtes membre">
+                  <Icon name="CheckIcon" size={14} aria-hidden="true" />
+                </span>
+              )}
+            </div>
           </div>
-          
-          <div className="flex items-center gap-1.5">
-            {isOwner && (
-              <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                <button 
-                  onClick={(e) => { e.stopPropagation(); onEdit(club); }} 
-                  className="glass-circle-btn text-[var(--lkv-text-muted)] hover:text-[var(--lkv-primary)]"
-                  title="Modifier"
-                >
-                  <Icon name="pencil" size={14} />
-                </button>
-                <button 
-                  onClick={(e) => { e.stopPropagation(); onDelete(club); }} 
-                  className="glass-circle-btn text-[var(--lkv-danger)] hover:bg-[var(--lkv-danger)]/15"
-                  title="Supprimer"
-                >
-                  <Icon name="trash2" size={14} />
-                </button>
-              </div>
-            )}
-            {club.is_member && (
-              <span className="bg-[var(--lkv-secondary)]/20 text-[var(--lkv-secondary)] border border-[var(--lkv-secondary)]/30 p-2 rounded-full" title="Vous êtes membre">
-                <Icon name="CheckIcon" size={14} />
+
+          <div className="mb-[var(--space-4)]">
+            <div className="mb-[var(--space-1)] flex items-center gap-[var(--space-2)]">
+              <span className="font-mono text-[length:var(--lkv-text-caption-2)] font-extrabold uppercase tracking-widest text-[color:var(--lkv-text-muted)]">
+                {club.type === 'activite' ? 'Activité' : 'Destination'}
               </span>
-            )}
+              {club.privacy !== 'open' && (
+                <Badge>
+                  <Icon name={club.privacy === 'closed' ? 'LockClosedIcon' : 'EyeSlashIcon'} size={10} aria-hidden="true" />
+                  {club.privacy === 'closed' ? 'Fermé' : 'Secret'}
+                </Badge>
+              )}
+            </div>
+            <h3 className="flex items-center gap-[var(--space-2)] font-display text-[length:var(--lkv-text-subheadline)] font-extrabold leading-tight text-[color:var(--lkv-text-primary)] transition-colors group-hover:text-[color:var(--lkv-secondary)]">
+              {club.name}
+              {club.is_verified && <Icon name="CheckBadgeIcon" size={18} className="text-[color:var(--lkv-info)]" aria-hidden="true" />}
+            </h3>
           </div>
-        </div>
 
-        {/* Content */}
-        <div className="mb-4">
-          <div className="flex items-center gap-2 mb-1.5">
-            <span className="text-[10px] font-800 tracking-widest uppercase text-[var(--lkv-text-muted)]">
-              {club.type === 'activite' ? 'Activité' : 'Destination'}
-            </span>
-            {club.privacy !== 'open' && (
-              <span className="glass-pill">
-                <Icon name={club.privacy === 'closed' ? 'LockClosedIcon' : 'EyeSlashIcon'} size={10} />
-                {club.privacy === 'closed' ? 'Fermé' : 'Secret'}
+          <p className="mb-[var(--space-6)] line-clamp-3 flex-1 text-[length:var(--lkv-text-caption)] leading-relaxed text-[color:var(--lkv-text-muted)]">
+            {club.description}
+          </p>
+
+          <div className="mt-auto flex items-center justify-between border-t border-[color:var(--lkv-border)] pt-[var(--space-5)]">
+            <div className="flex flex-col gap-[var(--space-1)]">
+              <span className="flex items-center gap-[var(--space-1)] text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-primary)]">
+                <Icon name="UsersIcon" size={14} className="text-[color:var(--lkv-text-muted)]" aria-hidden="true" />
+                {club.members_count.toLocaleString()} membres
               </span>
-            )}
+              <span className="flex items-center gap-[var(--space-1)] text-[length:var(--lkv-text-caption-2)] font-semibold text-[color:var(--lkv-text-muted)]">
+                <Icon name="BoltIcon" size={12} className="text-[color:var(--lkv-warning-dark)]/70" aria-hidden="true" />
+                {club.active_this_month} actifs ce mois
+              </span>
+            </div>
+
+            <Button
+              onClick={handleToggle}
+              disabled={joining}
+              loading={joining}
+              variant={club.is_member ? 'secondary' : 'primary'}
+              size="sm"
+              className={club.is_member ? 'text-[color:var(--lkv-danger)]' : ''}
+            >
+              {joining ? '...' : club.is_member ? 'Quitter' : 'Rejoindre'}
+            </Button>
           </div>
-          <h3 className="font-display font-800 text-[var(--lkv-primary)] text-xl leading-tight flex items-center gap-2 group-hover:text-[var(--lkv-secondary)] transition-colors">
-            {club.name}
-            {club.is_verified && <Icon name="CheckBadgeIcon" size={18} className="text-[var(--lkv-info)]" />}
-          </h3>
         </div>
-
-        <p className="text-sm text-[var(--lkv-text-muted)] leading-relaxed line-clamp-3 mb-6 flex-1">
-          {club.description}
-        </p>
-
-        {/* Footer Stats & Action */}
-        <div className="mt-auto pt-5 border-t border-border flex items-center justify-between">
-          <div className="flex flex-col gap-1">
-            <span className="text-xs font-700 text-[var(--lkv-primary)] flex items-center gap-1.5">
-              <Icon name="UsersIcon" size={14} className="text-[var(--lkv-text-muted)]" />
-              {club.members_count.toLocaleString()} membres
-            </span>
-            <span className="text-[11px] font-600 text-[var(--lkv-text-muted)] flex items-center gap-1.5">
-              <Icon name="BoltIcon" size={12} className="text-[var(--lkv-warning)]/70" />
-              {club.active_this_month} actifs ce mois
-            </span>
-          </div>
-
-          <button
-            onClick={handleToggle}
-            disabled={joining}
-            className={`px-4 py-2.5 glass-capsule-btn text-xs font-800 ${
-              club.is_member 
-                ? 'secondary text-[var(--lkv-danger)]' 
-                : 'primary'
-            }`}
-          >
-            {joining ? '...' : club.is_member ? 'Quitter' : 'Rejoindre'}
-          </button>
-        </div>
-      </div>
+      </Card>
     </Link>
   );
 }
 
-// ─── Main Page ────────────────────────────────────────────────────────────────
 export default function ClubsPage() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<'activite' | 'pays' | 'mes-clubs'>('activite');
@@ -1009,7 +1035,6 @@ export default function ClubsPage() {
             member_status: 'active',
             is_verified: false,
           }));
-          // Merge avoiding duplicates by id or name
           const existingIds = new Set(finalClubs.map(c => c.id));
           const existingNames = new Set(finalClubs.map(c => c.name));
           const uniqueLocals = localFormatted.filter((lc: any) => !existingIds.has(lc.id) && !existingNames.has(lc.name));
@@ -1027,9 +1052,9 @@ export default function ClubsPage() {
     }
   }, [user, supabase]);
 
-  useEffect(() => { 
-    loadClubs(); 
-    
+  useEffect(() => {
+    loadClubs();
+
     const handleClubCreated = () => {
       loadClubs();
     };
@@ -1053,7 +1078,6 @@ export default function ClubsPage() {
       setClubs((prev) => prev.map((c) => c.id === clubId ? { ...c, is_member: true, member_role: 'member', members_count: c.members_count + 1 } : c));
       showToast('Bienvenue dans le club !');
     } else {
-      // Closed/secret: send join request
       await supabase.from('club_join_requests').upsert({ club_id: clubId, user_id: user.id, status: 'pending' }, { onConflict: 'club_id,user_id' });
       showToast("Demande d'adhésion envoyée !");
     }
@@ -1087,7 +1111,6 @@ export default function ClubsPage() {
         const slug = `c-${form.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')}-${Date.now()}`;
         const { data: newClub, error: iErr } = await supabase.from('clubs').insert({ ...payload, slug, members_count: 1, active_this_month: 0 }).select().single();
         if (iErr) throw iErr;
-        // Auto-join as admin
         if (newClub) {
           await supabase.from('club_members').insert({ club_id: newClub.id, user_id: user.id, role: 'admin', status: 'active' });
         }
@@ -1129,150 +1152,114 @@ export default function ClubsPage() {
 
   const displayedClubs = activeTab === 'activite' ? activityClubs : activeTab === 'pays' ? countryClubs : myClubs;
 
+  const tabOptions = [
+    { id: 'activite', label: 'Par Activité', count: activityClubs.length },
+    { id: 'pays', label: 'Par Destination', count: countryClubs.length },
+    { id: 'mes-clubs', label: 'Mes Clubs', count: myClubs.length },
+  ];
+
   return (
     <>
-      {/* ── DESKTOP ── */}
       <div className="hidden md:block">
-        <main className="h-dvh overflow-hidden bg-[rgba(238,243,236,0.74)] backdrop-blur-xl flex flex-col">
+        <main className="flex h-dvh flex-col overflow-hidden bg-[color:var(--lkv-surface)]/75 backdrop-blur-[var(--blur-xl)]">
           <Header />
-          <div className="flex-1 min-h-0 overflow-y-auto">
-          {/* Immersive Hero Section */}
-          <section className="relative pt-32 pb-20 lg:pt-40 lg:pb-32 overflow-hidden border-b border-white/5">
-            <div className="absolute inset-0 bg-transparent pointer-events-none" />
-            <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-[var(--lkv-secondary)]/20 rounded-full blur-[120px] opacity-60 mix-blend-screen pointer-events-none animate-pulse-slow" />
-            <div className="absolute -bottom-40 -left-40 w-[600px] h-[600px] bg-[var(--lkv-info)]/10 rounded-full blur-[120px] opacity-50 mix-blend-screen pointer-events-none" />
+          <div className="min-h-0 flex-1 overflow-y-auto">
+            <section className="relative overflow-hidden border-b border-[color:var(--glass-border)] pb-[var(--space-16)] pt-32 lg:pb-24 lg:pt-40">
+              <div aria-hidden className="pointer-events-none absolute right-0 top-0 h-[500px] w-[500px] animate-pulse rounded-full bg-[color:var(--lkv-secondary)]/20 opacity-60 mix-blend-screen blur-[120px]" />
+              <div aria-hidden className="pointer-events-none absolute -bottom-40 -left-40 h-[600px] w-[600px] rounded-full bg-[color:var(--lkv-info)]/10 opacity-50 mix-blend-screen blur-[120px]" />
 
-            <div className="max-w-7xl mx-auto px-6 relative z-10">
-              <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-10">
-                <div className="max-w-3xl">
-                  <div className="inline-flex items-center gap-2 mb-6 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 backdrop-blur-md">
-                    <span className="w-2 h-2 rounded-full bg-[var(--lkv-secondary)] animate-pulse" />
-                    <span className="text-xs font-700 tracking-widest uppercase text-[var(--lkv-primary)]/80">Espaces Communautaires</span>
+              <div className="relative z-10 mx-auto max-w-7xl px-[var(--space-6)]">
+                <div className="flex flex-col justify-between gap-[var(--space-10)] lg:flex-row lg:items-end">
+                  <div className="max-w-3xl">
+                    <Badge className="mb-[var(--space-6)] border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] px-[var(--space-3)] py-[var(--space-1)] backdrop-blur-[var(--blur-md)]">
+                      <span aria-hidden className="h-2 w-2 animate-pulse rounded-full bg-[var(--lkv-secondary)]" />
+                      <span className="text-[length:var(--lkv-text-caption-2)] font-bold uppercase tracking-widest text-[color:var(--lkv-text-primary)]/80">Espaces Communautaires</span>
+                    </Badge>
+                    <h1 className="mb-[var(--space-6)] font-display text-[length:var(--lkv-text-title-xl)] font-extrabold leading-[1.1] tracking-tight text-[color:var(--lkv-text-primary)] lg:text-6xl">
+                      Rejoignez le <span className="bg-gradient-to-r from-[color:var(--lkv-secondary)] to-[color:var(--lkv-secondary-subtle)] bg-clip-text text-transparent">Club.</span><br />
+                      Vivez l&apos;aventure.
+                    </h1>
+                    <p className="max-w-2xl text-[length:var(--lkv-text-body)] font-medium leading-relaxed text-[color:var(--lkv-text-muted)] lg:text-[length:var(--lkv-text-title-sm)]">
+                      Trouvez vos compagnons de route, échangez sur votre matériel favori et participez aux défis thématiques de la communauté Le Kit du Voyageur.
+                    </p>
                   </div>
-                  <h1 className="font-display font-900 text-5xl lg:text-7xl text-[var(--lkv-primary)] tracking-tight leading-[1.1] mb-6">
-                    Rejoignez le <span className="text-transparent bg-clip-text bg-gradient-to-r from-[var(--lkv-secondary)] to-[var(--lkv-secondary-subtle)]">Club.</span><br />
-                    Vivez l&apos;aventure.
-                  </h1>
-                  <p className="text-lg lg:text-xl text-[var(--lkv-text-muted)] font-500 leading-relaxed max-w-2xl">
-                    Trouvez vos compagnons de route, échangez sur votre matériel favori et participez aux défis thématiques de la communauté Le Kit du Voyageur.
-                  </p>
-                </div>
 
-                <div className="flex-shrink-0">
-                  <Link
-                    href="/clubs/nouveau"
-                    className="glass-capsule-btn primary px-8 py-4 text-sm"
-                  >
-                    <Icon name="PlusIcon" size={18} className="relative z-10 transition-transform group-hover:rotate-90 duration-300" />
-                    <span className="relative z-10">Fonder un Club</span>
-                  </Link>
-                </div>
-              </div>
-            </div>
-          </section>
-
-          {/* Main Content Area */}
-          <section className="relative z-20 -mt-8 px-6 pb-32">
-            <div className="max-w-7xl mx-auto">
-
-              {/* Floating Navigation Tabs */}
-              <div className="flex justify-center mb-12">
-                <div className="glass-capsule-bar p-1.5">
-                  {[
-                    { id: 'activite', label: 'Par Activité', icon: 'BoltIcon', count: activityClubs.length },
-                    { id: 'pays', label: 'Par Destination', icon: 'GlobeAltIcon', count: countryClubs.length },
-                    { id: 'mes-clubs', label: 'Mes Clubs', icon: 'UserGroupIcon', count: myClubs.length },
-                  ].map((tab) => (
-                    <button
-                      key={tab.id}
-                      onClick={() => setActiveTab(tab.id as typeof activeTab)}
-                      className={`glass-capsule-segment flex items-center gap-2 ${activeTab === tab.id ? 'active' : ''}`}
+                  <div className="shrink-0">
+                    <Link
+                      href="/clubs/nouveau"
+                      className="inline-flex min-h-[var(--control-height-lg)] items-center gap-[var(--space-2)] rounded-full bg-[color:var(--lkv-action)] px-[var(--space-8)] text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-on-action)]"
                     >
-                      <Icon name={tab.icon} size={16} className="relative z-10" />
-                      <span className="relative z-10">{tab.label}</span>
-                      {tab.count > 0 && (
-                        <span className="ml-1 glass-pill text-[10px] px-2 py-0.5 font-800 relative z-10">
-                          {tab.count}
-                        </span>
-                      )}
-                    </button>
-                  ))}
+                      <Icon name="PlusIcon" size={18} aria-hidden="true" />
+                      <span>Fonder un Club</span>
+                    </Link>
+                  </div>
                 </div>
               </div>
+            </section>
 
-              {error && (
-                <div className="mb-10 p-5 bg-[var(--lkv-danger)]/10 border border-[var(--lkv-danger)]/25 rounded-2xl flex items-center gap-3 text-[var(--lkv-danger)]">
-                  <Icon name="ExclamationTriangleIcon" size={20} />
-                  <p className="font-600 text-sm">{error}</p>
+            <section className="relative z-20 -mt-[var(--space-8)] px-[var(--space-6)] pb-32">
+              <div className="mx-auto max-w-7xl">
+                <div className="mb-[var(--space-12)] flex justify-center">
+                  <Tabs
+                    variant="segmented"
+                    ariaLabel="Catégories de clubs"
+                    value={activeTab}
+                    onChange={(id) => setActiveTab(id as typeof activeTab)}
+                    options={tabOptions}
+                    className="w-auto"
+                  />
                 </div>
-              )}
 
-              {/* Grid Content */}
-              {loading ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                  {[1, 2, 3, 4, 5, 6].map((i) => (
-                    <div key={i} className="h-80 rounded-[1.25rem] glass animate-pulse flex flex-col p-6">
-                      <div className="w-16 h-16 rounded-2xl bg-white/40 mb-6" />
-                      <div className="w-1/3 h-4 bg-white/40 rounded-full mb-3" />
-                      <div className="w-2/3 h-6 bg-white/40 rounded-full mb-6" />
-                      <div className="w-full h-16 bg-white/40 rounded-xl mt-auto" />
-                    </div>
-                  ))}
-                </div>
-              ) : displayedClubs.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-20 px-4 text-center glass rounded-[3rem] border-dashed">
-                  <div className="w-24 h-24 bg-white/50 rounded-full flex items-center justify-center text-4xl mb-6">
-                    {activeTab === 'mes-clubs' ? '🏕️' : '✨'}
+                {error && (
+                  <div className="mb-[var(--space-10)] flex items-center gap-[var(--space-3)] rounded-[var(--lkv-radius-md)] border border-[color:var(--lkv-danger)]/25 bg-[color:var(--lkv-danger-bg)] p-[var(--space-5)] text-[color:var(--lkv-danger-dark)]" role="alert">
+                    <Icon name="ExclamationTriangleIcon" size={20} aria-hidden="true" />
+                    <p className="text-[length:var(--lkv-text-caption)] font-semibold">{error}</p>
                   </div>
-                  <h3 className="font-display font-800 text-2xl text-[var(--lkv-primary)] mb-3">
-                    {activeTab === 'mes-clubs' ? "Vous n'avez rejoint aucun club" : 'Espace encore vierge'}
-                  </h3>
-                  <p className="text-[var(--lkv-text-muted)] text-base max-w-md mb-8">
-                    {activeTab === 'mes-clubs'
-                      ? 'Explorez les clubs existants et trouvez votre prochaine équipe de choc pour vos aventures.'
-                      : "Il n'y a pas encore de club dans cette catégorie. Soyez le pionnier et créez le vôtre !"}
-                  </p>
+                )}
 
-                  {activeTab === 'mes-clubs' ? (
-                    user ? (
-                      <button onClick={() => setActiveTab('activite')} className="px-8 py-3.5 glass-capsule-btn primary text-sm">
-                        Explorer les clubs
-                      </button>
-                    ) : (
-                      <Link href="/connexion" className="px-8 py-3.5 glass-capsule-btn primary text-sm">
-                        Se connecter pour rejoindre
-                      </Link>
-                    )
-                  ) : (
-                    <Link href="/clubs/nouveau" className="glass-capsule-btn primary px-8 py-3.5 text-sm items-center gap-2">
-                      <Icon name="PlusIcon" size={16} /> Fonder le premier club
-                    </Link>
-                  )}
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                  {displayedClubs.map((c) => (
-                    <ClubCard
-                      key={c.id}
-                      club={c}
-                      onToggleMember={handleToggleMember}
-                      onOpenDetail={setDetailClub}
-                      onEdit={(club) => { setEditClub(club); setShowCreateModal(true); }}
-                      onDelete={setDeleteClub}
-                      currentUserId={user?.id}
+                {loading ? (
+                  <div className="grid grid-cols-1 gap-[var(--space-8)] md:grid-cols-2 lg:grid-cols-3">
+                    {[1, 2, 3, 4, 5, 6].map((i) => (
+                      <SkeletonClubCard key={i} />
+                    ))}
+                  </div>
+                ) : displayedClubs.length === 0 ? (
+                  <Card className="p-[var(--space-12)]">
+                    <EmptyState
+                      icon={<span className="text-[length:var(--lkv-text-title-xl)]" aria-hidden>{activeTab === 'mes-clubs' ? '🏕️' : '✨'}</span>}
+                      title={activeTab === 'mes-clubs' ? "Vous n'avez rejoint aucun club" : 'Espace encore vierge'}
+                      description={
+                        activeTab === 'mes-clubs'
+                          ? 'Explorez les clubs existants et trouvez votre prochaine équipe de choc pour vos aventures.'
+                          : "Il n'y a pas encore de club dans cette catégorie. Soyez le pionnier et créez le vôtre !"
+                      }
+                      actionLabel={activeTab === 'mes-clubs' ? (user ? 'Explorer les clubs' : 'Se connecter pour rejoindre') : 'Fonder le premier club'}
+                      actionHref={activeTab === 'mes-clubs' && !user ? '/connexion' : activeTab === 'mes-clubs' ? undefined : '/clubs/nouveau'}
+                      onAction={activeTab === 'mes-clubs' && user ? () => setActiveTab('activite') : undefined}
                     />
-                  ))}
-                </div>
-              )}
-            </div>
-          </section>
-
+                  </Card>
+                ) : (
+                  <div className="grid grid-cols-1 gap-[var(--space-8)] md:grid-cols-2 lg:grid-cols-3">
+                    {displayedClubs.map((c) => (
+                      <ClubCard
+                        key={c.id}
+                        club={c}
+                        onToggleMember={handleToggleMember}
+                        onOpenDetail={setDetailClub}
+                        onEdit={(club) => { setEditClub(club); setShowCreateModal(true); }}
+                        onDelete={setDeleteClub}
+                        currentUserId={user?.id}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+            </section>
           </div>
         </main>
       </div>
 
-      {/* ── MOBILE VIEW ── */}
-      <div className="block md:hidden min-h-screen relative font-sans text-[var(--lkv-primary)]">
+      <div className="relative block min-h-screen font-sans text-[color:var(--lkv-text-primary)] md:hidden">
         <MobilePageShell videoBackground={true} background="transparent">
           <MobileClubsHub
             clubs={clubs}
@@ -1296,7 +1283,6 @@ export default function ClubsPage() {
         </MobilePageShell>
       </div>
 
-      {/* Modals */}
       <ClubFormModal
         open={showCreateModal}
         onClose={() => { setShowCreateModal(false); setEditClub(null); }}
@@ -1312,39 +1298,21 @@ export default function ClubsPage() {
         onRefresh={loadClubs}
       />
 
-      {/* Delete confirm Modal */}
-      {deleteClub && (
-        <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="glass rounded-2xl p-8 max-w-sm w-full text-center transform transition-all scale-100">
-            <div className="w-20 h-20 rounded-full bg-[var(--lkv-danger)]/10 flex items-center justify-center mx-auto mb-5">
-              <Icon name="ExclamationTriangleIcon" size={32} className="text-[var(--lkv-danger)]" />
-            </div>
-            <h3 className="font-display font-800 text-[var(--lkv-primary)] text-xl mb-2">Supprimer le club ?</h3>
-            <p className="text-sm text-[var(--lkv-text-muted)] mb-8">Cette action est irréversible. Toutes les données, membres et discussions de &quot;{deleteClub.name}&quot; seront perdus à jamais.</p>
+      <ConfirmDialog
+        open={!!deleteClub}
+        title="Supprimer le club ?"
+        description={deleteClub ? `Cette action est irréversible. Toutes les données, membres et discussions de "${deleteClub.name}" seront perdus à jamais.` : undefined}
+        confirmLabel={deleting ? 'Destruction en cours...' : 'Oui, supprimer définitivement'}
+        cancelLabel="Annuler"
+        variant="destructive"
+        loading={deleting}
+        onConfirm={handleDeleteClub}
+        onCancel={() => setDeleteClub(null)}
+      />
 
-            <div className="flex flex-col gap-3">
-              <button
-                onClick={handleDeleteClub}
-                disabled={deleting}
-                className="w-full py-3.5 glass-capsule-btn glass-btn-danger text-sm disabled:opacity-50"
-              >
-                {deleting ? 'Destruction en cours...' : 'Oui, supprimer définitivement'}
-              </button>
-              <button
-                onClick={() => setDeleteClub(null)}
-                className="w-full py-3.5 glass-capsule-btn secondary text-sm"
-              >
-                Annuler
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Global Toast */}
       {toast && (
-        <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[110] bg-[var(--lkv-primary)] text-[var(--lkv-surface-muted)] px-8 py-4 rounded-full text-sm font-700  animate-fade-in-up flex items-center gap-3">
-          <Icon name="CheckCircleIcon" size={18} className="text-[var(--lkv-surface-muted)]/70" />
+        <div className="fixed bottom-10 left-1/2 z-[var(--z-toast)] flex -translate-x-1/2 items-center gap-[var(--space-3)] rounded-full bg-[color:var(--lkv-primary)] px-[var(--space-8)] py-[var(--space-4)] text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-inverted)] shadow-elevation-4">
+          <Icon name="CheckCircleIcon" size={18} className="text-[color:var(--lkv-text-inverted)]/70" aria-hidden="true" />
           {toast}
         </div>
       )}

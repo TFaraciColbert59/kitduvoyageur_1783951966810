@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import Icon from '@/components/ui/AppIcon';
-import { IconButton } from '@/components/ui';
+import { Badge, Card, IconButton } from '@/components/ui';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 
 export interface MobileCarnetItem {
@@ -41,101 +41,97 @@ export default function MobileCarnetCard({
   const { triggerHaptic } = useHapticFeedback();
   const carnetHref = `/carnets/${carnet.id}`;
 
-  const dateRangeStr = useMemoDateRange(carnet.start_date, carnet.end_date);
+  const dateRangeStr = formatDateRange(carnet.start_date, carnet.end_date);
 
   return (
-    <div className="glass rounded-3xl p-4 border border-white/60 shadow-xs flex flex-col justify-between space-y-3 relative transition-all active:scale-[0.99]">
-      {/* Cover Image & Destination Tag */}
+    <Card className="relative flex flex-col justify-between space-y-[var(--space-3)] p-[var(--space-4)] transition-transform active:scale-[0.99] motion-reduce:transition-none">
       <Link
         href={carnetHref}
         onClick={() => triggerHaptic('light')}
-        className="relative w-full h-44 rounded-2xl overflow-hidden bg-[#17402C] block group"
+        className="group relative block h-44 w-full overflow-hidden rounded-[var(--lkv-radius-2xl)] bg-[color:var(--lkv-primary)]"
       >
         <img
           src={carnet.cover_image || 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=800&q=80'}
           alt={carnet.title}
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105 motion-reduce:transition-none"
           loading="lazy"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#17402C]/80 via-transparent to-black/30" />
+        <div aria-hidden className="absolute inset-0 bg-gradient-to-t from-[color:var(--lkv-primary)]/80 via-transparent to-black/30" />
 
-        {/* Top Badges */}
-        <div className="absolute top-2.5 left-2.5 right-2.5 flex items-center justify-between z-10">
-          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-white font-mono text-[10px] font-semibold bg-black/60 backdrop-blur-md border border-white/25 shadow-xs">
+        <div className="absolute left-[var(--space-2)] right-[var(--space-2)] top-[var(--space-2)] z-10 flex items-center justify-between">
+          <Badge className="border-[color:var(--glass-border)] bg-[color:var(--lkv-primary)]/60 font-mono font-semibold text-[color:var(--lkv-text-inverted)] backdrop-blur-[var(--blur-md)]">
             📍 {carnet.destination || 'Massif & Randonnée'}
-          </span>
+          </Badge>
 
           {carnet.route_rating !== undefined && (
-            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-sand-200 font-mono font-bold text-[10px] bg-black/60 backdrop-blur-md border border-white/25 shadow-xs">
+            <Badge className="border-[color:var(--glass-border)] bg-[color:var(--lkv-primary)]/60 font-mono font-bold text-[color:var(--sand-200)] backdrop-blur-[var(--blur-md)]">
               ★ {carnet.route_rating}/10
-            </span>
+            </Badge>
           )}
         </div>
 
-        {/* Bottom Title on Image */}
-        <div className="absolute bottom-2.5 left-2.5 right-2.5 z-10">
+        <div className="absolute bottom-[var(--space-2)] left-[var(--space-2)] right-[var(--space-2)] z-10">
           {dateRangeStr && (
-            <span className="text-[9.5px] font-mono text-forest-200 uppercase tracking-widest block mb-0.5 font-bold">
+            <span className="mb-[var(--space-1)] block font-mono text-[length:var(--lkv-text-caption-2)] font-bold uppercase tracking-widest text-[color:var(--lkv-forest-200)]">
               {dateRangeStr}
             </span>
           )}
-          <h3 className="font-display font-bold text-base text-white leading-snug line-clamp-2">
+          <h3 className="line-clamp-2 font-display text-[length:var(--lkv-text-caption)] font-bold leading-snug text-[color:var(--lkv-text-inverted)]">
             {carnet.title}
           </h3>
         </div>
       </Link>
 
-      {/* Author & Description */}
-      <div className="space-y-2">
+      <div className="space-y-[var(--space-2)]">
         <Link
           href={carnet.author_id ? `/profil/${carnet.author_id}` : '/communaute'}
           onClick={() => triggerHaptic('light')}
-          className="flex items-center gap-2.5 group/author cursor-pointer"
+          className="group/author flex cursor-pointer items-center gap-[var(--space-2)]"
         >
-          <div className="w-8 h-8 rounded-full bg-[#17402C] text-white flex items-center justify-center font-serif italic text-xs font-bold shadow-2xs overflow-hidden shrink-0 group-hover/author:scale-105 transition-transform">
+          <span className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[color:var(--lkv-primary)] font-serif text-[length:var(--lkv-text-caption-2)] font-bold italic text-[color:var(--lkv-text-inverted)] transition-transform group-hover/author:scale-105 motion-reduce:transition-none">
             {carnet.author?.avatar_url ? (
-              <img src={carnet.author.avatar_url} alt="" className="w-full h-full object-cover" />
+              <img src={carnet.author.avatar_url} alt="" className="h-full w-full object-cover" />
             ) : (
               carnet.author?.full_name?.charAt(0) || '👤'
             )}
-          </div>
-          <div className="min-w-0 flex-1">
-            <h4 className="font-bold text-xs text-[#17402C] truncate group-hover/author:underline">
+          </span>
+          <span className="min-w-0 flex-1">
+            <h4 className="truncate text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-primary)] group-hover/author:underline">
               {carnet.author?.full_name || 'Voyageur passionné'}
             </h4>
-            <p className="text-[9.5px] font-mono text-[#5C6B5E]">Récit de terrain vérifié</p>
-          </div>
+            <p className="font-mono text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">Récit de terrain vérifié</p>
+          </span>
         </Link>
 
         {carnet.description && (
-          <p className="text-xs text-[#5C6B5E] line-clamp-2 leading-relaxed pl-1">
+          <p className="line-clamp-2 pl-[var(--space-1)] text-[length:var(--lkv-text-caption-2)] leading-relaxed text-[color:var(--lkv-text-muted)]">
             {carnet.description}
           </p>
         )}
       </div>
 
-      {/* Footer: Stats & Liquid Glass Buttons */}
-      <div className="pt-2.5 border-t border-[#17402C]/10 flex items-center justify-between">
-        {/* Left: Like & Bookmark Image 3 buttons */}
-        <div className="flex items-center gap-1.5">
+      <div className="flex items-center justify-between border-t border-[color:var(--lkv-primary)]/10 pt-[var(--space-2)]">
+        <div className="flex items-center gap-[var(--space-1)]">
           <IconButton
             size="sm"
             onClick={() => {
               triggerHaptic('selection');
               if (onLike) onLike(carnet.id, !carnet.user_liked);
             }}
-            title="Aimer ce carnet"
             aria-label="Aimer ce carnet"
             variant={carnet.user_liked ? 'solid' : 'glass'}
             aria-pressed={carnet.user_liked || undefined}
-            className={carnet.user_liked ? "!bg-rose-50 !border-rose-200 !text-rose-600" : undefined}
-            style={{ width: 'auto', paddingInline: '10px' }}
+            className={`w-auto px-[10px] ${carnet.user_liked ? 'bg-[color:var(--lkv-danger-bg)] text-[color:var(--lkv-danger)]' : ''}`}
           >
-            <span className="inline-flex items-center gap-1.5"><Icon
+            <span className="inline-flex items-center gap-[var(--space-1)]">
+              <Icon
                 name="HeartIcon"
                 size={13}
-                className={carnet.user_liked ? 'text-rose-600 fill-rose-600' : ''}
-              /><span className="tabular-nums">{carnet.likes_count || 0}</span></span>
+                className={carnet.user_liked ? 'fill-[color:var(--lkv-danger)] text-[color:var(--lkv-danger)]' : ''}
+                aria-hidden="true"
+              />
+              <span className="tabular-nums">{carnet.likes_count || 0}</span>
+            </span>
           </IconButton>
 
           <IconButton
@@ -144,17 +140,17 @@ export default function MobileCarnetCard({
               triggerHaptic('selection');
               if (onFavorite) onFavorite(carnet.id, !carnet.user_favorited);
             }}
-            title="Enregistrer dans ma collection"
             aria-label="Enregistrer dans ma collection"
             variant={carnet.user_favorited ? 'solid' : 'glass'}
             aria-pressed={carnet.user_favorited || undefined}
-            className={carnet.user_favorited ? "!bg-amber-50 !border-amber-200 !text-amber-700" : undefined}
+            className={carnet.user_favorited ? 'bg-[color:var(--lkv-warning-bg)] text-[color:var(--lkv-warning-dark)]' : undefined}
           >
             <Icon
-                name="BookmarkIcon"
-                size={13}
-                className={carnet.user_favorited ? 'text-amber-700 fill-amber-700' : ''}
-              />
+              name="BookmarkIcon"
+              size={13}
+              className={carnet.user_favorited ? 'fill-[color:var(--lkv-warning-dark)] text-[color:var(--lkv-warning-dark)]' : ''}
+              aria-hidden="true"
+            />
           </IconButton>
 
           <IconButton
@@ -163,28 +159,26 @@ export default function MobileCarnetCard({
               triggerHaptic('light');
               if (onShare) onShare(carnet);
             }}
-            title="Partager"
             aria-label="Partager"
           >
-            <Icon name="ShareIcon" size={13} />
+            <Icon name="ShareIcon" size={13} aria-hidden="true" />
           </IconButton>
         </div>
 
-        {/* Right: Open Carnet Liquid Glass button */}
         <Link
           href={carnetHref}
           onClick={() => triggerHaptic('light')}
-          className="glass-capsule-btn primary !min-h-[36px] !py-1.5 !px-4 !text-xs !gap-1.5 !font-bold"
+          className="inline-flex min-h-[var(--control-height-sm)] items-center gap-[var(--space-1)] rounded-full bg-[color:var(--lkv-action)] px-[var(--space-4)] text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-on-action)]"
         >
           <span>Lire le récit</span>
-          <Icon name="ArrowRightIcon" size={12} />
+          <Icon name="ArrowRightIcon" size={12} aria-hidden="true" />
         </Link>
       </div>
-    </div>
+    </Card>
   );
 }
 
-function useMemoDateRange(start: string | null, end: string | null): string {
+function formatDateRange(start: string | null, end: string | null): string {
   if (!start) return '';
   const d1 = new Date(start);
   const d1Str = d1.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
