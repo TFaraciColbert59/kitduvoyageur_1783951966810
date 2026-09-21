@@ -569,7 +569,53 @@ Sheets sociales détectées hors périmètre (`social/ReportSheet`, `MoreMenuShe
 ### Vérification
 `type-check` ✅ 0 · `lint` ✅ 0 · `vitest` ✅ 407 fichiers / **2 946 tests** · `build` ✅ 14,2 s · **60 captures** `phase2-screenshots/lot6-famille6/`. Aucun test modifié ni supprimé. Métriques revérifiées indépendamment.
 
-### Prochaine famille : **Famille 7 — Compte / Profil**
+### Prochaine famille : **Famille 8 — Boutique / Commandes**
+
+## Lot 6 — Itération 2 · Famille 7 : Compte / Profil (TERMINÉE)
+
+### Périmètre et résultat
+
+45 entrées (42 modifiés, 1 supprimé `LkvSwitch.tsx`, 1 créé `Switch.tsx`) : `app/compte`, `app/profil`, `app/progression`, `components/compte`, `components/profile`, `components/identity`, `components/progression`, `features/identity`. Reprise d'un run interrompu : **31 fichiers du run précédent complétés/corrigés**, 8 déjà conformes conservés, **3 fichiers progression ajoutés** (`app/progression/page.tsx`, `MaProgressionView`, `ProgressionCompactCard`), **`Switch` finalisé**. Aucune logique métier touchée (auth, Supabase, sessions, profils, RLS, upload avatar, notifications, préférences, API, hooks, services, stores).
+
+| Mesure (périmètre) | Avant | Après |
+|---|---|---|
+| Hex | 820 | **0** |
+| `rounded-[…]` littéraux (toutes variantes) | 66 | **0** |
+| `z-[…]` littéraux (hors `var()`) | 5 | **0** |
+| `z-10…z-90` numériques | 34 | **0** |
+| Styles inline | 116 | **13** (dynamiques) |
+| `<button>` bruts | 125 | **1** (dans la primitive `Switch`) |
+| `glass-*` legacy | 336 | **0** |
+| `glass-modal` / overlays custom | 10 / 4 | **0 / 1** (éditeur plein écran) |
+| `env(safe-area-*)` directs | 4 | **0** |
+| Switches custom (`role="switch"`) | 2 | **0** (`Switch` canonique ×6) |
+| Paires desktop/mobile | 4 | **4** (cockpit vs app mobile, UX distincte) |
+
+### Primitive `Switch` canonique
+
+`src/components/ui/Switch.tsx` (créé/finalisé, exporté depuis `index.ts`) : `{ checked, onCheckedChange, disabled?, label?, id?, className?, aria-label? }`, `role="switch"` + `aria-checked`, label associé (`aria-labelledby`) ou `aria-label` obligatoire, clavier natif Espace/Entrée, focus visible, cible ≥ 44 px, `prefers-reduced-motion`, tokens uniquement. Remplace `LkvSwitch.tsx` (0 importeur, **supprimé**) et le switch maison de `ParametresCompteCard` ; 6 usages (ParametresCompteCard ×5, EditProfileView ×1). Test `TEST-PRIM-06` ajouté à `tests/design-system/primitives.spec.ts`.
+
+### Migrations
+
+- **Modales** : `glass-modal` → `Modal` canonique (AddressModal, CardModal, modale badges) ; actions sensibles → `lkvConfirm`/`lkvAlert` (déconnexion, annulation commande, suppression brouillon, sessions).
+- **Navigation/filtres** → `Tabs` (TabsCompte, historique commandes, badges, tri carnets, filtre clubs, métriques/années/statuts aventures, classements progression).
+- **Surfaces** → `Card` (identité compte, cartes compte, stats, profil public, profil randonneur, progression) ; **lignes** → `ListItem` (notifications, confidentialité, 2FA/passkeys, activité).
+- **Pastilles** → `Badge`/`Chip` ; **états** → `EmptyState`/`ErrorState`/`LoadingState`/`Skeleton` ; **headers** → `PageHeader` + `HeaderBackButton` (profil public, édition profil).
+- Formulaires tokenisés (`lkv-field-*`), libellés/erreurs standardisés ; avatar/upload conservés à l'identique.
+
+### Exceptions documentées
+
+1. `src/components/compte/EditProfileModal.tsx:17` — overlay plein écran d'édition au-dessus du cockpit desktop (z tokenisé, `--z-modal`) : pas d'équivalent plein écran dans `Modal`.
+2. 13 styles inline **dynamiques** (largeurs de progression, couleurs runtime de graphiques, URL de couverture) : `AventuresTab`, `CarnetsTab` ×2, `CommandesTab`, `EditProfileView`, `FideliteTab`, `MobileCompteV2` ×2, `ProchainVoyageCard`, `StatsBandeau`, `MaProgressionView` ×3.
+3. `src/components/ui/Switch.tsx:58` — le `<button role="switch">` est la primitive elle-même.
+4. 4 paires desktop/mobile conservées (compte, profil public, progression, édition) : structures et actions distinctes.
+5. Header applicatif de `MobileCompteV2` (`<header>` sticky, bouton-titre interactif + actions) conservé : hors contrat `PageHeader` (titre `h1` non interactif) ; actions passées en `Button`/`IconButton`.
+6. Champs natifs tokenisés (`input`/`textarea`/`select`) : aucune primitive `Input` canonique (`LkvInput` legacy sans consommateur).
+7. `MobilePageShell` conservé sur les pages existantes (règle shell tolérée).
+
+### Vérification
+
+`type-check` ✅ 0 · `lint` ✅ 0 erreur · `vitest` ✅ 407 fichiers / **2 947 tests** · `build` ✅ · `verify:invariants` ✅ 0. Aucun test supprimé ; 1 test ajouté (`Switch`).
 
 ## Lots suivants
 
