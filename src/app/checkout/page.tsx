@@ -493,7 +493,7 @@ export default function CheckoutPage() {
                       {step === 'paiement' && (
                         <>
                           {error && (
-                            <div className="mb-[var(--space-8)] rounded-[var(--lkv-radius-md)] border border-[color:var(--lkv-danger)] bg-[color:var(--lkv-danger-bg)] p-[var(--space-4)] text-[length:var(--lkv-text-body-sm)] leading-[var(--leading-relaxed)] text-[color:var(--lkv-danger-dark)]">
+                            <div role="alert" className="mb-[var(--space-8)] rounded-[var(--lkv-radius-md)] border border-[color:var(--lkv-danger)] bg-[color:var(--lkv-danger-bg)] p-[var(--space-4)] text-[length:var(--lkv-text-body-sm)] leading-[var(--leading-relaxed)] text-[color:var(--lkv-danger-dark)]">
                               {error}
                             </div>
                           )}
@@ -731,7 +731,7 @@ export default function CheckoutPage() {
           </Card>
 
           {error && (
-            <div className="mx-[var(--space-4)] mb-[var(--space-3)] rounded-[var(--lkv-radius-md)] border border-[color:var(--lkv-danger)] bg-[color:var(--lkv-danger-bg)] p-[var(--space-3)] text-[length:var(--lkv-text-caption)] leading-[var(--leading-relaxed)] text-[color:var(--lkv-danger-dark)]">
+            <div role="alert" className="mx-[var(--space-4)] mb-[var(--space-3)] rounded-[var(--lkv-radius-md)] border border-[color:var(--lkv-danger)] bg-[color:var(--lkv-danger-bg)] p-[var(--space-3)] text-[length:var(--lkv-text-caption)] leading-[var(--leading-relaxed)] text-[color:var(--lkv-danger-dark)]">
               {error}
             </div>
           )}

@@ -95,7 +95,7 @@ export function Sheet({
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
-        <Dialog.Overlay className="lkv-fade-in fixed inset-0 z-[var(--z-sheet)] bg-[color:var(--lkv-overlay-scrim)] backdrop-blur-[var(--blur-sm)] data-[state=closed]:[animation:lkv-fade-out_0.2s_ease_both] motion-reduce:[animation:none]" />
+        <Dialog.Overlay className="lkv-fade-in fixed inset-0 z-[var(--z-sheet)] bg-[color:var(--lkv-overlay-scrim)] backdrop-blur-[var(--blur-sm)] data-[state=closed]:[animation:lkv-fade-out_var(--motion-control-duration)_var(--lkv-ease)_both] motion-reduce:[animation:none]" />
         <Dialog.Content
           onEscapeKeyDown={blockDismiss}
           onPointerDownOutside={blockDismiss}
@@ -103,7 +103,7 @@ export function Sheet({
           {...(description ? {} : { 'aria-describedby': undefined })}
           className={cn(
             'fixed inset-x-0 bottom-0 z-[var(--z-sheet)] flex flex-col focus:outline-none',
-            'data-[state=closed]:[animation:lkv-sheet-down_0.2s_cubic-bezier(0.4,0,1,1)_both] motion-reduce:[animation:none]',
+            'data-[state=closed]:[animation:lkv-sheet-down_var(--motion-control-duration)_var(--motion-ease-accelerate)_both] motion-reduce:[animation:none]',
             DETENT[detent]
           )}
         >

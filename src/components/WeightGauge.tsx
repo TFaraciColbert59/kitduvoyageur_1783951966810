@@ -46,7 +46,7 @@ export default function WeightGauge({
     if (!el) return;
     el.style.width = '0%';
     const raf = requestAnimationFrame(() => {
-      el.style.transition = 'width 400ms cubic-bezier(0.34, 1.56, 0.64, 1), background-color 300ms ease';
+      el.style.transition = 'width var(--dur-slow) var(--ease-spring), background-color var(--dur-med) var(--lkv-ease)';
       el.style.width = `${pct}%`;
       el.style.backgroundColor = color;
     });

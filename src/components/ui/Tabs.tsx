@@ -43,6 +43,17 @@ export function Tabs({
   const baseItem =
     'inline-flex shrink-0 items-center justify-center gap-[var(--space-1)] font-semibold transition-colors duration-[var(--motion-control-duration)] ease-[var(--motion-ease-standard)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]';
 
+  // Navigation clavier WAI-ARIA : flèches gauche/droite dans la tablist.
+  const handleArrowKeys = (event: React.KeyboardEvent<HTMLButtonElement>, index: number) => {
+    if (event.key !== 'ArrowRight' && event.key !== 'ArrowLeft') return;
+    event.preventDefault();
+    const dir = event.key === 'ArrowRight' ? 1 : -1;
+    const next = (index + dir + options.length) % options.length;
+    onChange(options[next].id);
+    const buttons = event.currentTarget.parentElement?.querySelectorAll<HTMLButtonElement>('[role="tab"]');
+    buttons?.[next]?.focus();
+  };
+
   if (variant === 'scrollable') {
     return (
       <div
@@ -54,7 +65,7 @@ export function Tabs({
           className
         )}
       >
-        {options.map((option) => {
+        {options.map((option, index) => {
           const active = option.id === value;
           return (
             <button
@@ -62,6 +73,7 @@ export function Tabs({
               type="button"
               role="tab"
               aria-selected={active}
+              onKeyDown={(event) => handleArrowKeys(event, index)}
               onClick={() => onChange(option.id)}
               className={cn(
                 baseItem,
@@ -94,7 +106,7 @@ export function Tabs({
         className
       )}
     >
-      {options.map((option) => {
+      {options.map((option, index) => {
         const active = option.id === value;
         return (
           <button
@@ -102,6 +114,7 @@ export function Tabs({
             type="button"
             role="tab"
             aria-selected={active}
+            onKeyDown={(event) => handleArrowKeys(event, index)}
             onClick={() => onChange(option.id)}
             className={cn(
               baseItem,

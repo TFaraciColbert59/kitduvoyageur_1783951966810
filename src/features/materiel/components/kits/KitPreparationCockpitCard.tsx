@@ -4,6 +4,7 @@ import { useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { Card } from '@/components/ui';
 import type { KitListItem } from '@/features/materiel/services/getKits';
+import { EASE_DECELERATE } from '@/lib/animations/constants';
 
 /** Donut SVG animé à l'entrée via strokeDashoffset (GPU-only, transform + opacity). */
 function SvgDonut({ pct }: { pct: number }) {
@@ -23,7 +24,7 @@ function SvgDonut({ pct }: { pct: number }) {
     el.style.strokeDashoffset = String(circumference);
     // Force reflow pour que la transition démarre bien
     void el.getBoundingClientRect();
-    el.style.transition = 'stroke-dashoffset 0.65s cubic-bezier(0.16, 1, 0.3, 1)';
+    el.style.transition = 'stroke-dashoffset var(--dur-slow) var(--motion-ease-decelerate)';
     el.style.strokeDashoffset = String(offset);
   }, [circumference, offset]);
 
@@ -92,7 +93,7 @@ export function KitPreparationCockpitCard({ kit }: Props) {
             key={readyCount}
             initial={{ opacity: 0, y: -4 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+            transition={{ duration: 0.2, ease: EASE_DECELERATE }}
             className="text-[11px] font-bold text-[var(--lkv-primary)] truncate leading-tight"
           >
             {readyCount} prêt(s)

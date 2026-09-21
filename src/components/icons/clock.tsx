@@ -6,6 +6,7 @@ import type { HTMLAttributes } from "react";
 import { forwardRef, useCallback, useImperativeHandle, useRef } from "react";
 
 import { cn } from "@/lib/utils";
+import { EASE_STANDARD } from '@/lib/animations/constants';
 
 export interface ClockIconHandle {
   startAnimation: () => void;
@@ -19,7 +20,7 @@ interface ClockIconProps extends HTMLAttributes<HTMLDivElement> {
 
 const HAND_TRANSITION: Transition = {
   duration: 0.6,
-  ease: [0.4, 0, 0.2, 1],
+  ease: EASE_STANDARD,
 };
 
 const HAND_VARIANTS: Variants = {

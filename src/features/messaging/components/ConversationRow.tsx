@@ -245,7 +245,7 @@ export const ConversationRow: React.FC<ConversationRowProps> = ({
         }`}
         style={{
           transform: `translate3d(${dx}px,0,0)`,
-          transition: dx === 0 ? 'transform 220ms cubic-bezier(0.22,1,0.36,1)' : 'none',
+          transition: dx === 0 ? 'transform var(--motion-control-duration) var(--ease-glass)' : 'none',
         }}
       >
         <div className="relative shrink-0">

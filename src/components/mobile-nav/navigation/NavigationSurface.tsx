@@ -82,8 +82,8 @@ export default function NavigationSurface({
         // visibility ne passe en hidden qu'après les 220ms de translation.
         transform: hidden ? 'translate3d(0,120%,0)' : 'translate3d(0,0,0)',
         transition: hidden
-          ? 'transform 220ms cubic-bezier(0.32,0.72,0,1), visibility 0s linear 220ms'
-          : 'transform 220ms cubic-bezier(0.32,0.72,0,1)',
+          ? 'transform var(--motion-control-duration) var(--motion-ease-standard), visibility 0s linear var(--motion-control-duration)'
+          : 'transform var(--motion-control-duration) var(--motion-ease-standard)',
         visibility: hidden ? 'hidden' : 'visible',
       }}
     >

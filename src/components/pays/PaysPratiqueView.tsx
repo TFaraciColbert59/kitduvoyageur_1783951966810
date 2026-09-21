@@ -7,6 +7,7 @@ import Icon from '@/components/ui/AppIcon';
 import { CountryDetail } from '@/lib/countryDetails';
 import { useCountryPracticalGuide, BlockGuideData } from '@/hooks/useCountryPracticalGuide';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
+import { EASE_DECELERATE } from '@/lib/animations/constants';
 import type {
   FAQItem,
   ItineraireItem,
@@ -689,7 +690,7 @@ export default function PaysPratiqueView({ country, isMobile = false }: PaysPrat
                           initial={{ height: 0, opacity: 0 }}
                           animate={{ height: 'auto', opacity: 1 }}
                           exit={{ height: 0, opacity: 0 }}
-                          transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+                          transition={{ duration: 0.2, ease: EASE_DECELERATE }}
                         >
                           <div className="px-4 pb-3 pt-1 text-xs text-[color:var(--lkv-primary-soft)] leading-relaxed border-t border-[color:var(--lkv-primary)]/5">
                             {item.reponse}

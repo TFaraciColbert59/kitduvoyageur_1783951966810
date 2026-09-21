@@ -6,6 +6,7 @@ import Link from 'next/link';
 import AppImage from '@/components/ui/AppImage';
 import { GlassCapsuleBtn } from '@/components/ui/GlassCapsuleBtn';
 import { motion, useReducedMotion } from 'framer-motion';
+import { EASE_GLASS } from '@/lib/animations/constants';
 
 /**
  * UX Hub — Hero de l'activité active. Même langage que TripHero (cover,
@@ -69,7 +70,7 @@ export function HubActivityHero({
     <motion.section
       initial={reduceMotion ? false : { opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: reduceMotion ? 0 : 0.24, ease: [0.22, 1, 0.36, 1] }}
+      transition={{ duration: reduceMotion ? 0 : 0.24, ease: EASE_GLASS }}
       className="relative w-full min-h-[190px] sm:min-h-[230px] rounded-2xl overflow-hidden shadow-xl"
       aria-label="Activité active"
     >

@@ -6,6 +6,11 @@ import { useEffect, useState } from 'react';
  * Hauteur réellement masquée par le clavier virtuel (px).
  * iOS Safari ne redimensionne pas le layout viewport : seul visualViewport bouge.
  * Le seuil de 60px évite de réagir à la rétractation de la barre d'URL.
+ *
+ * Natif (Capacitor `Keyboard.resize: "body"`) : le body est redimensionné mais
+ * PAS le viewport — les unités `dvh`/`fixed inset-0` ne bougent pas. L'inset
+ * reste donc nécessaire pour garder le composer visible : ce n'est PAS une
+ * double compensation (aucun autre mécanisme ne remonte le composer fixe).
  */
 export function useKeyboardInset(): number {
   const [inset, setInset] = useState(0);

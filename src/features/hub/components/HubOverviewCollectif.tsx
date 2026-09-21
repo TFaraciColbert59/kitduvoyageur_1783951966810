@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import Icon from '@/components/ui/Icon';
 import Link from 'next/link';
@@ -7,6 +7,7 @@ import { motion, useReducedMotion } from 'framer-motion';
 import { HUB_COLLECTIF_HREFS, hubSectionHref } from '../registry/hubSectionRegistry';
 import { tripSwitchHref } from '@/features/trips/registry/tripSectionRegistry';
 import { HubActivityHero } from './HubActivityHero';
+import { EASE_GLASS } from '@/lib/animations/constants';
 
 export interface HubOverviewCollectifProps {
   groupLabel: string;
@@ -29,7 +30,7 @@ export function HubOverviewCollectif({
   const fade = {
     initial: reduceMotion ? false : { opacity: 0, y: 6 },
     animate: { opacity: 1, y: 0 },
-    transition: { duration: reduceMotion ? 0 : 0.22, ease: [0.22, 1, 0.36, 1] as const },
+    transition: { duration: reduceMotion ? 0 : 0.22, ease: EASE_GLASS },
   };
 
   const cards: Array<{ href: string; label: string; Icon: typeof Users; count?: number }> = [

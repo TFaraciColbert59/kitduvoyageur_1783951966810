@@ -1,10 +1,11 @@
 'use client';
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { motion } from 'framer-motion';
+import { motion, useReducedMotion } from 'framer-motion';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { useSwipe } from '@/hooks/useSwipe';
 import { useDragDismiss, useDoubleTap } from '@/hooks/gestures';
+import { EASE_DECELERATE } from '@/lib/animations/constants';
 import Icon from './Icon';
 import { IconButton } from './IconButton';
 
@@ -41,6 +42,7 @@ export default function ImageViewer({
   onClose,
 }: ImageViewerProps) {
   const { haptic } = useHapticFeedback();
+  const reduceMotion = useReducedMotion();
   const [scale, setScale] = useState(1);
   const [offset, setOffset] = useState({ x: 0, y: 0 });
   const [isPinching, setIsPinching] = useState(false);
@@ -106,6 +108,30 @@ export default function ImageViewer({
     };
   }, [onClose, goTo, index]);
 
+  // ── Focus : entrée dans le dialogue, restitution au déclencheur ──
+  useEffect(() => {
+    const previous = document.activeElement as HTMLElement | null;
+    containerRef.current?.focus();
+    return () => previous?.focus?.();
+  }, []);
+
+  const handleTabTrap = (event: React.KeyboardEvent) => {
+    if (event.key !== 'Tab') return;
+    const focusables = containerRef.current?.querySelectorAll<HTMLElement>(
+      'button, [href], [tabindex]:not([tabindex="-1"])'
+    );
+    if (!focusables || focusables.length === 0) return;
+    const first = focusables[0];
+    const last = focusables[focusables.length - 1];
+    if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault();
+      first.focus();
+    }
+  };
+
   // ── Pinch (2 doigts) ──
   const handleTouchStart = (e: React.TouchEvent) => {
     if (e.touches.length === 2) {
@@ -160,11 +186,14 @@ export default function ImageViewer({
       ref={containerRef}
       className="fixed inset-0 z-[var(--z-modal)] flex touch-none select-none items-center justify-center bg-black/95"
       style={{ y }}
-      initial={{ opacity: 0 }}
+      initial={reduceMotion ? false : { opacity: 0 }}
       animate={{ opacity: 1 }}
+      transition={{ duration: reduceMotion ? 0 : 0.2, ease: EASE_DECELERATE }}
       role="dialog"
       aria-modal="true"
       aria-label="Visionneuse d'image"
+      tabIndex={-1}
+      onKeyDown={handleTabTrap}
       {...(scale === MIN_SCALE ? dragProps : {})}
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
@@ -181,7 +210,7 @@ export default function ImageViewer({
         className="max-w-full max-h-full object-contain"
         style={{
           transform: `translate3d(${offset.x}px, ${offset.y}px, 0) scale(${scale})`,
-          transition: isPinching ? 'none' : 'transform 220ms cubic-bezier(0.22,1,0.36,1)',
+          transition: isPinching ? 'none' : 'transform var(--motion-control-duration) var(--ease-glass)',
           willChange: 'transform',
         }}
       />

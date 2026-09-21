@@ -51,30 +51,36 @@ export default function B2BPage() {
       {/* MOBILE */}
       <div className="block md:hidden">
         <MobilePageShell>
-          <div style={{ padding: '16px' }}>
-            <h1 style={{ fontSize: '20px', fontWeight: 800, color: 'var(--lkv-primary)', marginBottom: '16px' }}>Espace Pro B2B</h1>
-            <p style={{ fontSize: '13px', color: 'rgba(23,64,44,0.6)', marginBottom: '20px' }}>Tarifs préférentiels pour les professionnels.</p>
-            <div style={{ display: 'flex', gap: '8px', marginBottom: '20px' }}>
+          <div className="p-[var(--space-4)]">
+            <h1 className="mb-[var(--space-4)] text-[20px] font-extrabold text-[color:var(--lkv-primary)]">Espace Pro B2B</h1>
+            <p className="mb-[var(--space-5)] text-[13px] text-[color:var(--lkv-text-secondary)]">Tarifs préférentiels pour les professionnels.</p>
+            <div className="mb-[var(--space-5)] flex gap-[var(--space-2)]">
               <button onClick={() => setActiveTab('plans')} className={`glass-capsule-btn ${activeTab === 'plans' ? 'primary' : ''}`}>Offres</button>
               <button onClick={() => setActiveTab('catalogue')} className={`glass-capsule-btn ${activeTab === 'catalogue' ? 'primary' : ''}`}>Catalogue</button>
             </div>
             {activeTab === 'plans' && PRO_PLANS.map((plan) => (
-              <div key={plan.id} className="glass" style={{ borderRadius: '12px', padding: '16px', marginBottom: '12px' }}>
-                <h3 style={{ fontSize: '16px', fontWeight: 700, color: 'var(--lkv-primary)', marginBottom: '4px' }}>{plan.name}</h3>
-                <p style={{ fontSize: '13px', color: 'rgba(23,64,44,0.5)', marginBottom: '8px' }}>{plan.description}</p>
-                <p style={{ fontSize: '28px', fontWeight: 800, color: 'var(--lkv-primary)', marginBottom: '12px' }}>{plan.price}€<span style={{ fontSize: '13px', fontWeight: 400 }}>/{plan.period}</span></p>
-                <ul style={{ marginBottom: '12px' }}>{plan.features.map((f) => <li key={f} style={{ fontSize: '13px', color: 'rgba(23,64,44,0.7)', padding: '3px 0' }}>✓ {f}</li>)}</ul>
-                <button onClick={() => setShowContactModal(true)} className="glass-capsule-btn primary" style={{ width: '100%' }}>Choisir cette offre</button>
+              <div key={plan.id} className="glass mb-[var(--space-3)] rounded-[var(--lkv-radius-sm)] p-[var(--space-4)]">
+                <h3 className="mb-1 text-[16px] font-bold text-[color:var(--lkv-primary)]">{plan.name}</h3>
+                <p className="mb-[var(--space-2)] text-[13px] text-[color:var(--lkv-text-muted)]">{plan.description}</p>
+                <p className="mb-[var(--space-3)] text-[28px] font-extrabold text-[color:var(--lkv-primary)]">{plan.price}€<span className="text-[13px] font-normal">/{plan.period}</span></p>
+                <ul className="mb-[var(--space-3)]">{plan.features.map((f) => <li key={f} className="py-0.5 text-[13px] text-[color:var(--lkv-text-secondary)]">✓ {f}</li>)}</ul>
+                <button onClick={() => setShowContactModal(true)} className="glass-capsule-btn primary w-full">Choisir cette offre</button>
               </div>
             ))}
-            <button onClick={() => setShowContactModal(true)} className="glass-capsule-btn primary" style={{ width: '100%' }}>Demander un accès pro</button>
+            <button onClick={() => setShowContactModal(true)} className="glass-capsule-btn primary w-full">Demander un accès pro</button>
           </div>
         </MobilePageShell>
         
 
         {showContactModal && (
-          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setShowContactModal(false)}>
-            <div className="bg-card rounded-2xl border border-border p-6 max-w-md w-full" onClick={(e) => e.stopPropagation()}>
+          <div className="fixed inset-0 z-[var(--z-modal)] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setShowContactModal(false)}>
+            <div
+              role="dialog"
+              aria-modal="true"
+              aria-label="Demande d'accès professionnel"
+              className="bg-card rounded-2xl border border-border p-6 max-w-md w-full"
+              onClick={(e) => e.stopPropagation()}
+            >
               {!contactSent ? <>
                 <h3 className="font-display font-700 text-foreground text-lg mb-4">Demande d&apos;accès professionnel</h3>
                 <button onClick={() => setContactSent(true)} className="glass-capsule-btn primary w-full justify-center py-3">Envoyer la demande</button>

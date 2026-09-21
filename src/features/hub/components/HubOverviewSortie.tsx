@@ -14,6 +14,7 @@ import { TripShareModal } from '@/features/trips/components/TripShareModal';
 import type { AdventureProfile } from '../engine/hubProfileEngine';
 import type { TripFull, TripStats } from '@/features/trips/types/trip.types';
 import type { HubCrewBlock, HubHikingContext } from '../server/getHubAdventureData';
+import { EASE_GLASS } from '@/lib/animations/constants';
 
 export interface HubOverviewSortieProps {
   profile: AdventureProfile;
@@ -66,7 +67,7 @@ export function HubOverviewSortie({ profile, trip, stats, countdown, group, hiki
       <motion.div
         initial={reduceMotion ? false : { opacity: 0, y: 6 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: reduceMotion ? 0 : 0.22, ease: [0.22, 1, 0.36, 1] }}
+        transition={{ duration: reduceMotion ? 0 : 0.22, ease: EASE_GLASS }}
       >
         <TripPhaseController
           activePhase={activePhase}
@@ -82,7 +83,7 @@ export function HubOverviewSortie({ profile, trip, stats, countdown, group, hiki
         <motion.div
           initial={reduceMotion ? false : { opacity: 0, y: 6 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: reduceMotion ? 0 : 0.22, ease: [0.22, 1, 0.36, 1] }}
+          transition={{ duration: reduceMotion ? 0 : 0.22, ease: EASE_GLASS }}
         >
           <TripLiveCockpitView
             trip={trip}
@@ -95,7 +96,7 @@ export function HubOverviewSortie({ profile, trip, stats, countdown, group, hiki
         <motion.div
           initial={reduceMotion ? false : { opacity: 0, y: 6 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: reduceMotion ? 0 : 0.22, ease: [0.22, 1, 0.36, 1] }}
+          transition={{ duration: reduceMotion ? 0 : 0.22, ease: EASE_GLASS }}
         >
           <TripPhaseRecountView trip={trip} />
         </motion.div>
@@ -107,7 +108,7 @@ export function HubOverviewSortie({ profile, trip, stats, countdown, group, hiki
                 key={block.id}
                 initial={reduceMotion ? false : { opacity: 0, y: 6 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: reduceMotion ? 0 : 0.22, delay: reduceMotion ? 0 : 0.05, ease: [0.22, 1, 0.36, 1] }}
+                transition={{ duration: reduceMotion ? 0 : 0.22, delay: reduceMotion ? 0 : 0.05, ease: EASE_GLASS }}
                 className="sm:col-span-2"
               >
                 <OverviewBlocks blocks={[block]} trip={trip} group={group} hiking={hiking} stats={stats} />
@@ -117,7 +118,7 @@ export function HubOverviewSortie({ profile, trip, stats, countdown, group, hiki
                 key={block.id}
                 initial={reduceMotion ? false : { opacity: 0, y: 6 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: reduceMotion ? 0 : 0.22, ease: [0.22, 1, 0.36, 1] }}
+                transition={{ duration: reduceMotion ? 0 : 0.22, ease: EASE_GLASS }}
               >
                 <OverviewBlocks blocks={[block]} trip={trip} group={group} hiking={hiking} stats={stats} />
               </motion.div>

@@ -445,7 +445,7 @@ const LiquidGlass = forwardRef<HTMLElement, LiquidGlassProps>(function LiquidGla
         position: "relative",
         cursor: onClick && !disabled ? "pointer" : undefined,
         transform: elasticActive ? transform : undefined,
-        transition: elasticActive && motionSafe ? "transform 0.2s cubic-bezier(0.16, 1, 0.3, 1)" : undefined,
+        transition: elasticActive && motionSafe ? "transform var(--motion-control-duration) var(--motion-ease-decelerate)" : undefined,
         willChange: elasticActive ? "transform" : undefined,
         borderRadius: cornerRadius,
         ...style,

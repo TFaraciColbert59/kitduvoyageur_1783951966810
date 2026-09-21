@@ -225,8 +225,7 @@ export default function PublicMobileProfileView({
 
             <Link
               href={`/messagerie?dest=${profile.id}`}
-              onClick={() => triggerHaptic('selection')}
-              className="inline-flex flex-1 items-center justify-center gap-[var(--space-2)] min-h-[var(--control-height-sm)] rounded-full px-[var(--space-4)] text-[length:var(--lkv-text-footnote)] font-semibold border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] text-[color:var(--card-content)] backdrop-blur-[var(--blur-md)]"
+                  className="inline-flex flex-1 items-center justify-center gap-[var(--space-2)] min-h-[var(--control-height-sm)] rounded-full px-[var(--space-4)] text-[length:var(--lkv-text-footnote)] font-semibold border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] text-[color:var(--card-content)] backdrop-blur-[var(--blur-md)]"
             >
               <Icon name="message-square" size={13} />
               Message
@@ -255,8 +254,7 @@ export default function PublicMobileProfileView({
                 <Link
                   key={h.id}
                   href={`/carnets/${h.id}`}
-                  onClick={() => triggerHaptic('light')}
-                  className="flex w-[62px] flex-col items-center gap-1 shrink-0 snap-start active:scale-95 transition-transform cursor-pointer"
+                        className="flex w-[62px] flex-col items-center gap-1 shrink-0 snap-start active:scale-95 transition-transform cursor-pointer"
                 >
                   <div className="w-[54px] h-[54px] rounded-full p-[2px] relative flex items-center justify-center shadow-2xs bg-gradient-to-br from-[color:var(--sage-300)] to-[color:var(--lkv-primary)]">
                     <div className="w-full h-full rounded-full overflow-hidden border border-[color:var(--lkv-surface-card)]">
@@ -393,8 +391,7 @@ export default function PublicMobileProfileView({
               <Link
                 key={club.id}
                 href={`/clubs/${club.slug || club.id}`}
-                onClick={() => triggerHaptic('light')}
-                className="block active:scale-[0.98] transition-transform"
+                    className="block active:scale-[0.98] transition-transform"
               >
                 <Card variant="featured" className="flex items-center gap-3.5 p-3">
                   <div className="w-12 h-12 rounded-xl shrink-0 overflow-hidden border border-[color:var(--lkv-border)] shadow-2xs">
@@ -435,8 +432,7 @@ export default function PublicMobileProfileView({
                 <Link
                   key={c.id}
                   href={`/carnets/${c.id}`}
-                  onClick={() => triggerHaptic('light')}
-                  className="aspect-square relative overflow-hidden rounded-2xl border border-[color:var(--lkv-border)] shadow-2xs block active:scale-95 transition-transform cursor-pointer"
+                        className="aspect-square relative overflow-hidden rounded-2xl border border-[color:var(--lkv-border)] shadow-2xs block active:scale-95 transition-transform cursor-pointer"
                 >
                   <SmartImage
                     src={c.image_url}
@@ -460,8 +456,7 @@ export default function PublicMobileProfileView({
                 <Link
                   key={c.id}
                   href={`/carnets/${c.id}`}
-                  onClick={() => triggerHaptic('light')}
-                  className="block active:scale-[0.98] transition-transform"
+                        className="block active:scale-[0.98] transition-transform"
                 >
                   <Card variant="featured" className="flex gap-3.5 p-3">
                     <div className="w-20 h-20 rounded-xl shrink-0 overflow-hidden border border-[color:var(--lkv-border)] shadow-2xs">

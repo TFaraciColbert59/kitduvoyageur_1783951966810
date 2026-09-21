@@ -58,7 +58,7 @@ export function useSheetDrag({
         el.style.transform = '';
         onDismiss();
       } else {
-        el.style.transition = 'transform 0.2s cubic-bezier(0.22, 1, 0.36, 1)';
+        el.style.transition = 'transform var(--motion-control-duration) var(--ease-glass)';
         el.style.transform = '';
         window.setTimeout(() => {
           if (el) el.style.transition = '';

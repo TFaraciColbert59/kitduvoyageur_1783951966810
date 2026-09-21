@@ -346,7 +346,6 @@ export default function MobileCompteV2() {
         </p>
         <Link
           href="/connexion?mode=connexion"
-          onClick={() => triggerHaptic('selection')}
           className="inline-flex items-center justify-center gap-[var(--space-2)] min-h-[var(--lkv-touch-min)] rounded-full px-[var(--space-4)] py-[var(--space-2)] text-[length:var(--lkv-text-footnote)] font-semibold backdrop-blur-[var(--blur-md)] border border-transparent bg-[color:var(--lkv-action)] text-[color:var(--lkv-on-action)] shadow-elevation-1"
         >
           Se connecter
@@ -451,7 +450,6 @@ export default function MobileCompteV2() {
         <div className="flex items-center gap-1">
           <Link
             href="/hub/alertes"
-            onClick={() => triggerHaptic('light')}
             aria-label="Alertes et notifications"
             className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] text-[color:var(--card-content)] backdrop-blur-[var(--blur-md)]"
           >
@@ -596,7 +594,6 @@ export default function MobileCompteV2() {
               )}
               <Link
                 href={`/profil/${user?.id}`}
-                onClick={() => triggerHaptic('light')}
                 className="font-bold hover:underline inline-flex items-center gap-1 transition-all text-[color:var(--lkv-primary)]"
                 
               >
@@ -611,7 +608,6 @@ export default function MobileCompteV2() {
           {/* Bannière Ma Progression & Classements */}
           <Link
             href="/progression"
-            onClick={() => triggerHaptic('selection')}
             className="mt-3 flex items-center justify-between p-3 rounded-2xl border border-[color:var(--lkv-primary)]/10 bg-white/75 hover:bg-white/95 transition-all active:scale-[0.98] shadow-2xs cursor-pointer min-h-[52px]"
           >
             <div className="flex items-center gap-3 min-w-0">
@@ -641,7 +637,6 @@ export default function MobileCompteV2() {
           <div className="flex items-center gap-2 pt-4">
             <Link
               href="/compte/modifier"
-              onClick={() => triggerHaptic('light')}
               className="inline-flex items-center justify-center gap-[var(--space-2)] min-h-[var(--lkv-touch-min)] rounded-full px-[var(--space-4)] py-[var(--space-2)] text-[length:var(--lkv-text-footnote)] font-semibold backdrop-blur-[var(--blur-md)] border border-transparent bg-[color:var(--lkv-action)] text-[color:var(--lkv-on-action)] shadow-elevation-1 flex-1 !py-2.5 text-xs font-bold"
             >
               <Icon name="pencil" size={13} />
@@ -683,7 +678,6 @@ export default function MobileCompteV2() {
               <Link
                 key={h.id}
                 href={`/groupes/${h.id}`}
-                onClick={() => triggerHaptic('light')}
                 className="flex w-[62px] shrink-0 snap-start flex-col items-center gap-1 transition-transform active:scale-95"
               >
                 <div className="relative flex h-[54px] w-[54px] items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-[color:var(--sage-300)] to-[color:var(--lkv-primary)] p-[2px]">
@@ -706,7 +700,6 @@ export default function MobileCompteV2() {
             {/* Bouton Nouveau voyage */}
             <Link
               href="/nouveau-groupe"
-              onClick={() => triggerHaptic('selection')}
               className="flex w-[62px] shrink-0 snap-start flex-col items-center gap-1 transition-transform active:scale-95"
             >
               <div className="flex h-[54px] w-[54px] items-center justify-center rounded-full border-2 border-dashed border-[color:var(--lkv-primary)]/30 bg-[color:var(--lkv-surface-card)]/90 backdrop-blur-[var(--blur-md)]">
@@ -815,7 +808,6 @@ export default function MobileCompteV2() {
             </div>
             <Link
               href="/compte"
-              onClick={() => triggerHaptic('selection')}
               className="inline-flex items-center justify-center gap-[var(--space-2)] min-h-[var(--lkv-touch-min)] rounded-full px-[var(--space-4)] py-[var(--space-2)] text-[length:var(--lkv-text-footnote)] font-semibold backdrop-blur-[var(--blur-md)] border border-transparent bg-[color:var(--lkv-action)] text-[color:var(--lkv-on-action)] shadow-elevation-1 !py-2 !px-3.5 text-xs font-bold"
             >
               <span>Détails</span>
@@ -931,7 +923,6 @@ export default function MobileCompteV2() {
                     <Link
                       key={c.id}
                       href={c.kind === 'carnet' ? `/carnets/${c.id}` : `/groupes/${c.id}`}
-                      onClick={() => triggerHaptic('light')}
                       className="col-span-2 aspect-[2/1] relative bg-cover bg-center overflow-hidden rounded-2xl border border-white/70 shadow-2xs block active:scale-[0.98] transition-all cursor-pointer"
                       style={{ backgroundImage: `url(${c.cover})` }}
                     >
@@ -953,7 +944,6 @@ export default function MobileCompteV2() {
                   <Link
                     key={`${c.kind}-${c.id}`}
                     href={c.kind === 'carnet' ? `/carnets/${c.id}` : c.kind === 'groupe' ? `/groupes/${c.id}` : `/clubs/${c.slug || c.id}`}
-                    onClick={() => triggerHaptic('light')}
                     className="aspect-square relative overflow-hidden rounded-2xl border border-white/70 shadow-2xs block active:scale-95 transition-all cursor-pointer bg-[color:var(--lkv-primary)]/10"
                   >
                     <SmartImage
@@ -1000,7 +990,6 @@ export default function MobileCompteV2() {
                   <Link
                     key={`${c.kind}-${c.id}`}
                     href={c.kind === 'carnet' ? `/carnets/${c.id}` : c.kind === 'groupe' ? `/groupes/${c.id}` : `/clubs/${c.slug || c.id}`}
-                    onClick={() => triggerHaptic('light')}
                     className="bg-[color:var(--card-tint-strong)] border border-[color:var(--glass-border)] shadow-elevation-1 backdrop-blur-[var(--blur-lg)] flex gap-3.5 p-3 rounded-2xl active:scale-[0.98] transition-all cursor-pointer"
                   >
                     <div className="w-22 h-22 rounded-xl shrink-0 overflow-hidden border border-white/60 shadow-2xs relative bg-[color:var(--lkv-primary)]/10">
@@ -1157,7 +1146,6 @@ export default function MobileCompteV2() {
               key={item.label}
               href={item.href}
               onClick={() => {
-                triggerHaptic('light');
                 setMenuOpen(false);
               }}
               className="flex min-h-[var(--lkv-touch-min)] items-center justify-between rounded-[var(--lkv-radius-sm)] p-[var(--space-3)] text-[color:var(--lkv-text-primary)] transition-colors hover:bg-[color:var(--lkv-hover-surface)] active:bg-[color:var(--lkv-primary)]/5"

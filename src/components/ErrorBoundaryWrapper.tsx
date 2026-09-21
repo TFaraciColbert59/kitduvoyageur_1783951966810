@@ -27,12 +27,12 @@ export default class ErrorBoundaryWrapper extends Component<Props, State> {
   render() {
     if (this.state.hasError) {
       return (
-        <div style={{ padding: '2rem', textAlign: 'center', backgroundColor: 'var(--lkv-primary)', color: 'var(--lkv-surface)', minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-          <h1 style={{ marginBottom: '1rem' }}>Une erreur est survenue</h1>
-          <p style={{ marginBottom: '2rem', color: 'var(--lkv-text-muted)' }}>L'application a rencontré un problème inattendu.</p>
-          <button 
+        <div className="flex min-h-screen flex-col items-center justify-center bg-[color:var(--lkv-primary)] p-[var(--space-8)] text-center text-[color:var(--lkv-text-inverted)]">
+          <h1 className="mb-[var(--space-4)]">Une erreur est survenue</h1>
+          <p className="mb-[var(--space-8)] text-[color:var(--lkv-forest-100)]">L'application a rencontré un problème inattendu.</p>
+          <button
             onClick={() => window.location.reload()}
-            style={{ backgroundColor: 'var(--lkv-primary)', color: 'white', border: 'none', padding: '0.75rem 1.5rem', borderRadius: '8px', cursor: 'pointer' }}
+            className="min-h-[var(--lkv-touch-min)] cursor-pointer rounded-[var(--lkv-radius-sm)] border-none bg-[color:var(--lkv-surface-paper)] px-[var(--space-6)] py-3 font-semibold text-[color:var(--lkv-primary)]"
           >
             Réessayer
           </button>

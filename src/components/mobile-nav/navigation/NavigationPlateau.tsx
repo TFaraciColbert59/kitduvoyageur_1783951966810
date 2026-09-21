@@ -192,7 +192,7 @@ export default function NavigationPlateau({ controller }: { controller: Navigati
                 zIndex: 2,
                 lineHeight: 1,
                 transform: isSelected ? 'scale(1.04)' : 'scale(1)',
-                transition: 'transform 0.2s ease',
+                transition: 'transform var(--motion-control-duration) var(--lkv-ease)',
                 display: 'flex',
                 alignItems: 'center',
                 gap: 5,

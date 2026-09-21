@@ -6,6 +6,7 @@ import { Badge, Card, EmptyState, ListItem } from '@/components/ui';
 import { ShoppingBagIcon as ShoppingBag } from '@/components/icons/shopping-bag';
 import { ClockIcon as Clock } from '@/components/icons/clock';
 import type { KitListItem } from '@/features/materiel/services/getKits';
+import { EASE_DECELERATE } from '@/lib/animations/constants';
 
 interface Props {
   kit: KitListItem | null;
@@ -65,7 +66,7 @@ export function KitsActiveCockpitCard({ kit }: Props) {
                 role="listitem"
                 initial={{ opacity: 0, x: -6 }}
                 animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.2, delay: idx * 0.03, ease: [0.16, 1, 0.3, 1] }}
+                transition={{ duration: 0.2, delay: idx * 0.03, ease: EASE_DECELERATE }}
                 className={
                   isUnowned
                     ? 'rounded-lg border border-dashed border-white/30 bg-white/[0.04] opacity-70'
@@ -123,7 +124,7 @@ export function KitsActiveCockpitCard({ kit }: Props) {
           key={weightKg}
           initial={{ opacity: 0, y: -4 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+          transition={{ duration: 0.25, ease: EASE_DECELERATE }}
           className="font-mono font-bold text-[var(--lkv-primary)]"
           aria-label={`Poids total : ${weightKg} kg`}
         >

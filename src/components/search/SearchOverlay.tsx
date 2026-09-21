@@ -12,6 +12,7 @@ export default function SearchOverlay() {
   const { isSearchOpen, closeSearch } = useSearchContext();
   const router = useRouter();
   const formRef = useRef<HTMLFormElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
   const [query, setQuery] = useState('');
   const { haptic } = useHapticFeedback();
   const { recentSearches, addSearch, clearSearches, removeSearch } = useRecentSearches();
@@ -68,15 +69,36 @@ export default function SearchOverlay() {
     [addSearch, closeSearch, router, haptic]
   );
 
-  // Close on Escape
+  // Close on Escape + restitution du focus au déclencheur
   useEffect(() => {
     if (!isSearchOpen) return;
+    const previous = document.activeElement as HTMLElement | null;
     const handler = (e: KeyboardEvent) => {
       if (e.key === 'Escape') closeSearch();
     };
     window.addEventListener('keydown', handler);
-    return () => window.removeEventListener('keydown', handler);
+    return () => {
+      window.removeEventListener('keydown', handler);
+      previous?.focus?.();
+    };
   }, [isSearchOpen, closeSearch]);
+
+  const handleTabTrap = (event: React.KeyboardEvent) => {
+    if (event.key !== 'Tab') return;
+    const focusables = panelRef.current?.querySelectorAll<HTMLElement>(
+      'button, [href], input, [tabindex]:not([tabindex="-1"])'
+    );
+    if (!focusables || focusables.length === 0) return;
+    const first = focusables[0];
+    const last = focusables[focusables.length - 1];
+    if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault();
+      first.focus();
+    }
+  };
 
   return (
     visible && (
@@ -92,6 +114,8 @@ export default function SearchOverlay() {
         {/* Panel */}
         <div
           key="search-panel"
+          ref={panelRef}
+          onKeyDown={handleTabTrap}
           className={`lkv-search-panel fixed inset-x-0 top-0 z-[var(--z-sheet)] rounded-b-[var(--lkv-radius-card)] border border-t-0 border-white/90 bg-[color:var(--lkv-surface)] px-[var(--space-4)] pb-[var(--space-5)] pt-[calc(var(--safe-top)+var(--space-4))] shadow-elevation-5${closing ? ' lkv-search-panel--closing' : ''}`}
           role="dialog"
           aria-modal="true"

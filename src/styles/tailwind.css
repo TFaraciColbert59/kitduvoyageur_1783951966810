@@ -346,7 +346,7 @@
   /* P1-3 (C-17) — transition de page CSS pur (PageTransition) : courbe/durée
      identiques à l'ancienne version framer-motion. */
   .lkv-page-fade {
-    animation: lkv-page-fade 0.08s cubic-bezier(0.16, 1, 0.3, 1) both;
+    animation: lkv-page-fade var(--dur-instant) var(--motion-ease-decelerate) both;
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -357,7 +357,7 @@
   /* P1-3 (C-17 suite) — OfflineBanner en CSS pur (mêmes courbe/durée que
      l'ancienne version framer-motion : 250 ms, ease [0.32,0.72,0,1]). */
   .lkv-offline-in {
-    animation: lkv-offline-in 0.25s cubic-bezier(0.32, 0.72, 0, 1) both;
+    animation: lkv-offline-in var(--motion-control-duration) var(--motion-ease-standard) both;
   }
 
   @keyframes lkv-offline-in {
@@ -368,16 +368,16 @@
   /* P1-3 (C-17 suite) — MobileDrawer en CSS pur (entrée/sortie préservées,
      remplace framer-motion dans le graphe racine). */
   .lkv-drawer-scrim {
-    animation: lkv-fade-in 0.2s ease both;
+    animation: lkv-fade-in var(--motion-control-duration) var(--lkv-ease) both;
   }
   .lkv-drawer-scrim--closing {
-    animation: lkv-fade-out 0.2s ease both;
+    animation: lkv-fade-out var(--dur-fast) var(--motion-ease-accelerate) both;
   }
   .lkv-drawer-panel {
-    animation: lkv-drawer-in 0.24s cubic-bezier(0.16, 1, 0.3, 1) both;
+    animation: lkv-drawer-in var(--motion-control-duration) var(--motion-ease-decelerate) both;
   }
   .lkv-drawer-panel--closing {
-    animation: lkv-drawer-out 0.22s cubic-bezier(0.5, 0, 0.75, 0) both;
+    animation: lkv-drawer-out var(--motion-control-duration) var(--motion-ease-accelerate) both;
   }
   @keyframes lkv-drawer-in {
     from { transform: translateX(-100%); }
@@ -390,10 +390,10 @@
 
   /* P1-3 (C-17 suite) — SearchOverlay en CSS pur (fade + descente + scale). */
   .lkv-search-panel {
-    animation: lkv-search-in 0.22s cubic-bezier(0.16, 1, 0.3, 1) both;
+    animation: lkv-search-in var(--motion-control-duration) var(--motion-ease-decelerate) both;
   }
   .lkv-search-panel--closing {
-    animation: lkv-search-out 0.2s cubic-bezier(0.5, 0, 0.75, 0) both;
+    animation: lkv-search-out var(--motion-control-duration) var(--motion-ease-accelerate) both;
   }
   @keyframes lkv-search-in {
     from { opacity: 0; transform: translateY(-20px) scale(0.98); }
@@ -425,7 +425,7 @@
   /* P1-3 (fin) — apparition standard des blocs (remplace les fades framer) :
      opacity 0→1 + y 6→0, 220 ms, même courbe. */
   .lkv-appear {
-    animation: lkv-appear 0.22s cubic-bezier(0.22, 1, 0.36, 1) both;
+    animation: lkv-appear var(--motion-control-duration) var(--ease-glass) both;
   }
 
   @keyframes lkv-appear {
@@ -440,8 +440,8 @@
   /* P1-3 (fin) — bottom-sheets (remplace framer AnimatePresence + motion) :
      entrée y 100%→0 + fondu, sortie inverse. Les composants gardent leur état
      de fermeture (--closing) le temps de l'animation. */
-  .lkv-sheet-up { animation: lkv-sheet-up 0.22s cubic-bezier(0.22, 1, 0.36, 1) both; }
-  .lkv-sheet-up--closing { animation: lkv-sheet-down 0.2s cubic-bezier(0.4, 0, 1, 1) both; }
+  .lkv-sheet-up { animation: lkv-sheet-up var(--motion-control-duration) var(--ease-glass) both; }
+  .lkv-sheet-up--closing { animation: lkv-sheet-down var(--motion-control-duration) var(--motion-ease-accelerate) both; }
   /* Plein écran (GlassSheet) : 320 ms, courbe [0.32,0.72,0,1] (parité framer). */
   .lkv-sheet-full { animation: lkv-sheet-up 0.32s cubic-bezier(0.32, 0.72, 0, 1) both; }
   .lkv-sheet-full--closing { animation: lkv-sheet-down 0.3s cubic-bezier(0.4, 0, 1, 1) both; }
@@ -453,8 +453,8 @@
     from { transform: translateY(var(--lkv-sheet-from, 0)); opacity: 1; }
     to { transform: translateY(100%); opacity: 0; }
   }
-  .lkv-modal-in { animation: lkv-modal-in 0.2s cubic-bezier(0.16, 1, 0.3, 1) both; }
-  .lkv-modal-in--closing { animation: lkv-modal-out 0.18s cubic-bezier(0.4, 0, 1, 1) both; }
+  .lkv-modal-in { animation: lkv-modal-in var(--motion-control-duration) var(--motion-ease-decelerate) both; }
+  .lkv-modal-in--closing { animation: lkv-modal-out var(--dur-fast) var(--motion-ease-accelerate) both; }
   @keyframes lkv-modal-in {
     from { opacity: 0; transform: scale(0.97); }
     to { opacity: 1; transform: scale(1); }
@@ -463,8 +463,8 @@
     from { opacity: 1; transform: scale(1); }
     to { opacity: 0; transform: scale(0.97); }
   }
-  .lkv-fade-in { animation: lkv-fade-in 0.2s ease both; }
-  .lkv-fade-in--closing { animation: lkv-fade-out 0.2s ease both; }
+  .lkv-fade-in { animation: lkv-fade-in var(--motion-control-duration) var(--lkv-ease) both; }
+  .lkv-fade-in--closing { animation: lkv-fade-out var(--motion-control-duration) var(--lkv-ease) both; }
 
   .lkv-story-progress-fill {
     animation: lkv-story-progress 5s linear both;

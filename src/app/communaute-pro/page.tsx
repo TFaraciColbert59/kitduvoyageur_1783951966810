@@ -54,15 +54,15 @@ export default function CommunauteProPage() {
       {/* MOBILE */}
       <div className="block md:hidden">
         <MobilePageShell>
-          <div style={{ padding: '16px' }}>
-            <h1 style={{ fontSize: '20px', fontWeight: 800, color: 'var(--lkv-primary)', marginBottom: '8px' }}>Communauté Pro</h1>
-            <p style={{ fontSize: '13px', color: 'rgba(23,64,44,0.6)', marginBottom: '16px' }}>Forum, Q&amp;A et fiches d&apos;expédition.</p>
-            <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
+          <div className="p-[var(--space-4)]">
+            <h1 className="mb-[var(--space-2)] text-[20px] font-extrabold text-[color:var(--lkv-primary)]">Communauté Pro</h1>
+            <p className="mb-[var(--space-4)] text-[13px] text-[color:var(--lkv-text-secondary)]">Forum, Q&amp;A et fiches d&apos;expédition.</p>
+            <div className="mb-[var(--space-4)] flex gap-[var(--space-2)]">
               <button onClick={() => setActiveTab('forum')} className={`glass-capsule-btn ${activeTab === 'forum' ? 'primary' : ''}`}>Forum</button>
               <button onClick={() => setActiveTab('qa')} className={`glass-capsule-btn ${activeTab === 'qa' ? 'primary' : ''}`}>Q&A</button>
               <button onClick={() => setActiveTab('fiches')} className={`glass-capsule-btn ${activeTab === 'fiches' ? 'primary' : ''}`}>Fiches</button>
             </div>
-            <p style={{ textAlign: 'center', color: 'rgba(23,64,44,0.5)', padding: '20px' }}>Contenu à venir.</p>
+            <p className="p-[var(--space-5)] text-center text-[color:var(--lkv-text-muted)]">Contenu à venir.</p>
           </div>
         </MobilePageShell>
         

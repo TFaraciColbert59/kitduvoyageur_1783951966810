@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
+import { EASE_GLASS } from '@/lib/animations/constants';
 
 /**
  * Hub V4 — Grille du MENU : entrée en cascade légère (respectueuse du
@@ -19,7 +20,7 @@ export function HubMenuGrid({ children }: { children: React.ReactNode }) {
           transition={{
             duration: reduceMotion ? 0 : 0.24,
             delay: reduceMotion ? 0 : Math.min(i * 0.04, 0.3),
-            ease: [0.22, 1, 0.36, 1],
+            ease: EASE_GLASS,
           }}
           className={child && React.isValidElement(child) && (child.props as { wide?: boolean }).wide ? 'sm:col-span-2' : ''}
         >

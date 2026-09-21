@@ -46,6 +46,7 @@ export default function StoriesViewer({
   const [dragY, setDragY] = useState(0);
   const [dragOpacity, setDragOpacity] = useState(1);
   const dragRef = useRef({ active: false, startX: 0, startY: 0, startT: 0 });
+  const viewerRef = useRef<HTMLDivElement>(null);
 
   const user = users[userIndex];
   const slide = user?.slides[slideIndex];
@@ -88,6 +89,30 @@ export default function StoriesViewer({
       document.body.style.overflow = prevOverflow;
     };
   }, [next, prev, onClose]);
+
+  /* Focus : entrée dans le dialogue, restitution au déclencheur */
+  useEffect(() => {
+    const previous = document.activeElement as HTMLElement | null;
+    viewerRef.current?.focus();
+    return () => previous?.focus?.();
+  }, []);
+
+  const handleTabTrap = (event: React.KeyboardEvent) => {
+    if (event.key !== 'Tab') return;
+    const focusables = viewerRef.current?.querySelectorAll<HTMLElement>(
+      'button, [href], [tabindex]:not([tabindex="-1"])'
+    );
+    if (!focusables || focusables.length === 0) return;
+    const first = focusables[0];
+    const last = focusables[focusables.length - 1];
+    if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault();
+      first.focus();
+    }
+  };
 
   if (!user || !slide) return null;
 
@@ -139,9 +164,12 @@ export default function StoriesViewer({
 
   const viewer = (
     <div
+      ref={viewerRef}
       role="dialog"
       aria-modal="true"
       aria-label={`Story de ${user.name}`}
+      tabIndex={-1}
+      onKeyDown={handleTabTrap}
       className="fixed inset-0 z-[var(--z-modal)] touch-none select-none bg-black"
       style={{ opacity: dragOpacity }}
       onPointerDown={onPointerDown}

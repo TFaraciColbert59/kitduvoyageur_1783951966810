@@ -12,6 +12,7 @@ import { ChevronDownIcon as ChevronDown } from '@/components/icons/chevron-down'
 import type { InventoryItem } from '@/features/materiel/services/getInventory';
 import type { ProductSuggestion } from '@/features/materiel/services/getProductSuggestions';
 import type { KitListItem } from '@/features/materiel/services/getKits';
+import { EASE_DECELERATE } from '@/lib/animations/constants';
 
 export interface KitBuilderItem {
   id: string;
@@ -569,7 +570,7 @@ export function KitBuilder({
             initial={{ opacity: 0, height: 0, y: -6 }}
             animate={{ opacity: 1, height: 'auto', y: 0 }}
             exit={{ opacity: 0, height: 0, y: -6 }}
-            transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+            transition={{ duration: 0.22, ease: EASE_DECELERATE }}
             className="p-2 rounded-xl bg-white/[0.08] border border-[var(--lkv-primary)]/20 flex flex-col gap-1.5 shrink-0 overflow-hidden"
           >
             <div className="flex items-center gap-1.5">
@@ -680,7 +681,7 @@ export function KitBuilder({
               initial={{ opacity: 0, y: 4 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -4 }}
-              transition={{ duration: 0.16, ease: [0.16, 1, 0.3, 1] }}
+              transition={{ duration: 0.16, ease: EASE_DECELERATE }}
               className="flex-1"
             >
               {filteredCatalog.length === 0 ? (
@@ -774,7 +775,7 @@ export function KitBuilder({
               key={totalWeightG}
               initial={{ opacity: 0, y: -3 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+              transition={{ duration: 0.2, ease: EASE_DECELERATE }}
               className="font-mono font-bold text-[var(--lkv-primary)]"
             >
               {(totalWeightG / 1000).toFixed(2)} kg
@@ -803,7 +804,7 @@ export function KitBuilder({
                   role="listitem"
                   initial={{ opacity: 0, x: 6 }}
                   animate={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
+                  transition={{ duration: 0.18, ease: EASE_DECELERATE }}
                   className="flex items-center justify-between gap-1 rounded-lg border border-[color:var(--lkv-border-subtle)] p-1 text-[10.5px]"
                 >
                   <div className="flex items-center gap-1.5 min-w-0 flex-1">

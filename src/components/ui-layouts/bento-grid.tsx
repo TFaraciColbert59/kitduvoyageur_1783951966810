@@ -5,6 +5,7 @@
 import React from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import { EASE_GLASS } from '@/lib/animations/constants';
 import { SpotlightCard } from './spotlight-card';
 
 export type BentoSpan = 3 | 4 | 6 | 8;
@@ -58,7 +59,7 @@ export function BentoGrid({ cells, className, fitRows }: BentoGridProps) {
           transition={{
             duration: reduceMotion ? 0 : 0.24,
             delay: reduceMotion ? 0 : Math.min(i * 0.04, 0.3),
-            ease: [0.22, 1, 0.36, 1],
+            ease: EASE_GLASS,
           }}
           className={cn('h-full min-h-0', SPAN_CLASS[cell.span])}
         >

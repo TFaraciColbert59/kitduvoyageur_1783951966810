@@ -11,7 +11,7 @@
  * Tokens `--lkv-*`, safe-area, `prefers-reduced-motion`, zéro orange, aucun
  * dialogue natif ; sans plan aventure identifié, rien n'est monté.
  */
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Icon from '@/components/ui/Icon';
 import { IconButton } from '@/components/ui';
 import AdventureCockpit from './AdventureCockpit';
@@ -37,6 +37,7 @@ export default function AdventureCockpitControl({
   remainingDistanceKm = null,
 }: AdventureCockpitControlProps) {
   const [open, setOpen] = useState(false);
+  const panelRef = useRef<HTMLDivElement>(null);
   const { input, warnings, loading, error, refresh } = useAdventureCockpit({
     adventureId,
     fixes,
@@ -63,6 +64,38 @@ export default function AdventureCockpitControl({
     return () => clearTimeout(timer);
   }, [open, render]);
 
+  // Focus + Escape : entrée dans le dialogue, restitution au déclencheur.
+  useEffect(() => {
+    if (!open) return;
+    const previous = document.activeElement as HTMLElement | null;
+    panelRef.current?.focus();
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setOpen(false);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      previous?.focus?.();
+    };
+  }, [open]);
+
+  const handleTabTrap = (event: React.KeyboardEvent) => {
+    if (event.key !== 'Tab') return;
+    const focusables = panelRef.current?.querySelectorAll<HTMLElement>(
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+    );
+    if (!focusables || focusables.length === 0) return;
+    const first = focusables[0];
+    const last = focusables[focusables.length - 1];
+    if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault();
+      first.focus();
+    }
+  };
+
   if (!adventureId) return null;
 
   return (
@@ -87,9 +120,12 @@ export default function AdventureCockpitControl({
       {render ? (
           <div
             key="adventure-cockpit-sheet"
+            ref={panelRef}
             role="dialog"
             aria-modal="true"
             aria-label="Cockpit aventure"
+            tabIndex={-1}
+            onKeyDown={handleTabTrap}
             className={`lkv-sheet-up${closing ? ' lkv-sheet-up--closing' : ''} absolute inset-x-0 bottom-0 z-[var(--z-sheet)] max-h-[82dvh] overflow-y-auto rounded-t-[var(--lkv-radius-sheet)] border-t border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface)] px-4 pt-3 pb-[calc(var(--safe-bottom)+var(--space-4))] shadow-elevation-4`}
           >
             <div className="mx-auto mb-3 h-1 w-9 rounded-full bg-[color:var(--lkv-text-subtle)]" aria-hidden="true" />

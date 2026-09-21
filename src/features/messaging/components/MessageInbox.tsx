@@ -104,7 +104,7 @@ export const MessageInbox: React.FC<MessageInboxProps> = ({
       */}
       {selectedConversation && (
         <div
-          className={`fixed inset-0 h-[calc(100dvh-var(--kb-inset,0px))] bg-[color:var(--lkv-surface)]/95 pl-[var(--safe-left)] pr-[var(--safe-right)] backdrop-blur-xl md:hidden ${
+          className={`fixed inset-0 h-[calc(100dvh-var(--kb-inset,0px))] bg-[color:var(--lkv-surface)]/95 pl-[var(--safe-left)] pr-[var(--safe-right)] backdrop-blur-[var(--blur-md)] md:hidden ${
             isClosing ? 'msg-sheet-out' : 'msg-sheet-in'
           }`}
           style={{

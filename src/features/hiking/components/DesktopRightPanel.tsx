@@ -276,6 +276,7 @@ export default function DesktopRightPanel({
           />
           <button
             type="submit"
+            aria-label="Envoyer la question"
             className="w-8 h-8 rounded-full bg-[color:var(--lkv-primary)] text-white flex items-center justify-center active:scale-95 transition-transform"
           >
             <svg className="w-3.5 h-3.5 fill-none stroke-current stroke-[2]" viewBox="0 0 24 24">

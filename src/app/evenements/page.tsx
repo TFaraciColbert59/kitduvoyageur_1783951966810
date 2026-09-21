@@ -1,10 +1,12 @@
-﻿'use client';
+'use client';
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
 import Icon from '@/components/ui/AppIcon';
+import AppImage from '@/components/ui/AppImage';
+import { Spinner } from '@/components/ui';
 import { createClient } from '@/lib/supabase/client';
 import { fetchPublicProfilesWith } from '@/lib/queries/publicProfilesCore';
 import { useAuth } from '@/contexts/AuthContext';
@@ -86,6 +88,16 @@ function EventDetailModal({
   const [registering, setRegistering] = useState(false);
   const [showKitty, setShowKitty] = useState(false);
 
+  // Échap ferme la fiche (dialogue modal) — cohérent avec les overlays canoniques.
+  useEffect(() => {
+    if (!event) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [event, onClose]);
+
   if (!event) return null;
 
   const cfg = typeConfig[event.type] ?? { color: 'glass-pill', label: event.type };
@@ -104,14 +116,19 @@ function EventDetailModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
-      <div className="glass rounded-2xl w-full max-w-2xl my-4 overflow-hidden">
+    <div className="fixed inset-0 z-[var(--z-modal)] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label={event.title}
+        className="glass rounded-2xl w-full max-w-2xl my-4 overflow-hidden"
+      >
         {/* Cover */}
         <div className="relative h-56 overflow-hidden">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={event.cover_image || '/assets/images/no_image.png'} alt={event.cover_alt} className="w-full h-full object-cover" />
           <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
-          <button onClick={onClose} className="glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8 absolute top-4 right-4">
+          <button onClick={onClose} aria-label="Fermer" className="glass-circle-btn !w-11 !h-11 !min-w-11 !min-h-11 absolute top-4 right-4">
             <Icon name="XMarkIcon" size={18} className="text-white" />
           </button>
           <div className="absolute top-4 left-4 flex gap-2">
@@ -422,35 +439,35 @@ function MobileEventCard({ event, onToggleRegister, onViewDetail }: { event: Eve
   };
 
   return (
-    <div className="glass" style={{ borderRadius: '12px', overflow: 'hidden', marginBottom: '12px' }}>
-      <button onClick={() => onViewDetail(event)} className="glass-capsule-btn !p-0 !rounded-none !block" style={{ width: '100%', position: 'relative', height: '160px', overflow: 'hidden' }}>
-        <img src={event.cover_image || '/assets/images/no_image.png'} alt={event.cover_alt} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.7), transparent)' }} />
-        <div style={{ position: 'absolute', top: '8px', left: '8px', display: 'flex', gap: '4px' }}>
-          <span style={{ fontSize: '10px', fontWeight: 700, padding: '2px 8px', borderRadius: '6px', background: typeBg, color: 'var(--lkv-text-inverted)' }}>
+    <div className="glass mb-[var(--space-3)] overflow-hidden rounded-[var(--lkv-radius-sm)]">
+      <button onClick={() => onViewDetail(event)} className="glass-capsule-btn !p-0 !rounded-none !block relative h-40 w-full overflow-hidden">
+        <AppImage src={event.cover_image || '/assets/images/no_image.png'} alt={event.cover_alt} fill sizes="100vw" className="object-cover" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
+        <div className="absolute left-2 top-2 flex gap-1">
+          <span className="rounded-[var(--lkv-radius-xs)] px-2 py-0.5 text-[10px] font-bold text-[color:var(--lkv-text-inverted)]" style={{ background: typeBg }}>
             {event.emoji} {typeConfig[event.type]?.label || event.type}
           </span>
           {event.status === 'full' && (
-            <span style={{ fontSize: '10px', fontWeight: 700, padding: '2px 8px', borderRadius: '6px', background: 'var(--lkv-danger)', color: 'var(--lkv-text-inverted)' }}>Complet</span>
+            <span className="rounded-[var(--lkv-radius-xs)] bg-[color:var(--lkv-danger)] px-2 py-0.5 text-[10px] font-bold text-[color:var(--lkv-text-inverted)]">Complet</span>
           )}
         </div>
-        <div style={{ position: 'absolute', bottom: '12px', left: '12px', right: '12px', textAlign: 'left' }}>
-          <h3 style={{ fontSize: '16px', fontWeight: 700, color: 'var(--lkv-text-inverted)', margin: '0 0 2px 0', lineHeight: 1.2 }}>{event.title}</h3>
-          <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.6)', margin: 0 }}>{event.location} · {event.duration}</p>
+        <div className="absolute bottom-3 left-3 right-3 text-left">
+          <h3 className="mb-0.5 text-[16px] font-bold leading-[1.2] text-[color:var(--lkv-text-inverted)]">{event.title}</h3>
+          <p className="m-0 text-[12px] text-white/60">{event.location} · {event.duration}</p>
         </div>
       </button>
-      <div style={{ padding: '12px' }}>
-        <div style={{ display: 'flex', gap: '8px', marginBottom: '10px' }}>
-          <div className="glass-sub-card" style={{ flex: 1, padding: '8px', borderRadius: '8px' }}>
-            <p style={{ fontSize: '9px', color: 'var(--lkv-text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600, margin: '0 0 2px 0' }}>Date</p>
-            <p style={{ fontSize: '13px', fontWeight: 700, color: 'var(--lkv-primary)', margin: 0 }}>{formatDate(event.event_date)}</p>
+      <div className="p-[var(--space-3)]">
+        <div className="mb-2.5 flex gap-[var(--space-2)]">
+          <div className="glass-sub-card flex-1 rounded-[var(--lkv-radius-xs)] p-[var(--space-2)]">
+            <p className="m-0 mb-0.5 text-[9px] font-semibold uppercase tracking-[0.05em] text-[color:var(--lkv-text-secondary)]">Date</p>
+            <p className="m-0 text-[13px] font-bold text-[color:var(--lkv-primary)]">{formatDate(event.event_date)}</p>
           </div>
-          <div className="glass-sub-card" style={{ flex: 1, padding: '8px', borderRadius: '8px' }}>
-            <p style={{ fontSize: '9px', color: 'var(--lkv-text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600, margin: '0 0 2px 0' }}>Places</p>
-            <p style={{ fontSize: '13px', fontWeight: 700, color: 'var(--lkv-primary)', margin: 0 }}>{event.current_participants}/{event.max_participants}</p>
+          <div className="glass-sub-card flex-1 rounded-[var(--lkv-radius-xs)] p-[var(--space-2)]">
+            <p className="m-0 mb-0.5 text-[9px] font-semibold uppercase tracking-[0.05em] text-[color:var(--lkv-text-secondary)]">Places</p>
+            <p className="m-0 text-[13px] font-bold text-[color:var(--lkv-primary)]">{event.current_participants}/{event.max_participants}</p>
           </div>
         </div>
-        <div style={{ display: 'flex', gap: '8px' }}>
+        <div className="flex gap-[var(--space-2)]">
           <button onClick={() => onViewDetail(event)}
             className="glass-capsule-btn flex-1 text-xs font-semibold">
             Details
@@ -696,18 +713,18 @@ export default function EvenementsPage() {
   );
 
   const mobileContent = (
-    <div style={{ padding: '16px' }}>
+    <div className="p-[var(--space-4)]">
       {/* Hero */}
-      <div style={{ background: 'var(--lkv-primary)', color: 'var(--lkv-text-inverted)', borderRadius: '12px', padding: '20px', marginBottom: '16px', position: 'relative', overflow: 'hidden' }}>
-        <div style={{ position: 'absolute', top: '-40px', right: '-40px', width: '160px', height: '160px', borderRadius: '50%', background: 'rgba(23,64,44,0.30)', pointerEvents: 'none' }} />
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-          <span style={{ fontSize: '9px', fontWeight: 700, padding: '3px 8px', borderRadius: '6px', background: 'rgba(166,193,160,0.2)', color: 'var(--sage-400)', border: '1px solid rgba(166,193,160,0.3)' }}>COMMUNAUTE</span>
-          <span style={{ fontSize: '9px', color: 'rgba(255,255,255,0.5)', fontFamily: 'ui-monospace, monospace' }}>EVENEMENTS</span>
+      <div className="relative mb-[var(--space-4)] overflow-hidden rounded-[var(--lkv-radius-sm)] bg-[color:var(--lkv-primary)] p-[var(--space-5)] text-[color:var(--lkv-text-inverted)]">
+        <div className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-[rgba(23,64,44,0.30)]" />
+        <div className="mb-[var(--space-2)] flex items-center gap-[var(--space-2)]">
+          <span className="rounded-[var(--lkv-radius-xs)] border border-[rgba(166,193,160,0.3)] bg-[rgba(166,193,160,0.2)] px-2 py-0.5 text-[9px] font-bold text-[color:var(--sage-400)]">COMMUNAUTE</span>
+          <span className="font-mono text-[9px] text-white/50">EVENEMENTS</span>
         </div>
-        <h1 style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '20px', color: 'var(--lkv-text-inverted)', margin: '0 0 4px 0' }}>
+        <h1 className="mb-1 font-display text-[20px] font-extrabold text-[color:var(--lkv-text-inverted)]">
           Sorties organisees
         </h1>
-        <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.6)', margin: '0 0 12px 0', lineHeight: 1.4 }}>
+        <p className="mb-[var(--space-3)] text-[13px] leading-[1.4] text-white/60">
           Par des membres verifies avec Trust Score et cagnotte integree.
         </p>
         <button onClick={() => setShowCreateModal(true)} className="glass-capsule-btn primary text-xs font-bold">
@@ -716,7 +733,7 @@ export default function EvenementsPage() {
       </div>
 
       {/* Filters */}
-      <div style={{ display: 'flex', gap: '6px', overflowX: 'auto', paddingBottom: '8px', marginBottom: '16px', scrollbarWidth: 'none' }}>
+      <div className="scrollbar-hide mb-[var(--space-4)] flex gap-1.5 overflow-x-auto pb-[var(--space-2)]">
         {[
           { id: 'all', label: 'Toutes' },
           { id: 'rando', label: '🥾 Rando' },
@@ -733,30 +750,25 @@ export default function EvenementsPage() {
 
       {/* Error */}
       {error && (
-        <div style={{ padding: '12px', background: 'rgba(168,68,58,0.10)', border: '1px solid rgba(168,68,58,0.30)', borderRadius: '10px', color: 'var(--lkv-danger-dark)', fontSize: '13px', marginBottom: '12px' }}>{error}</div>
+        <div role="alert" className="mb-[var(--space-3)] rounded-[var(--lkv-radius-sm)] border border-[rgba(168,68,58,0.30)] bg-[rgba(168,68,58,0.10)] p-[var(--space-3)] text-[13px] text-[color:var(--lkv-danger-dark)]">{error}</div>
       )}
 
       {/* Events list */}
       {loading ? (
-        <div style={{ display: 'flex', justifyContent: 'center', padding: '40px 0' }}>
-          <div style={{ width: '28px', height: '28px', borderRadius: '50%', border: '2px solid rgba(23,64,44,0.12)', borderTopColor: 'var(--lkv-primary)', animation: 'lkdv-spin 0.8s linear infinite' }} />
-          <style jsx>{`
-            @keyframes lkdv-spin {
-              to { transform: rotate(360deg); }
-            }
-          `}</style>
+        <div className="flex justify-center py-10">
+          <Spinner size="lg" />
         </div>
       ) : filtered.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '40px 0', color: 'var(--lkv-text-secondary)' }}>
-          <p style={{ fontSize: '36px', marginBottom: '8px' }}>📅</p>
-          <p style={{ fontWeight: 700, fontSize: '16px', color: 'var(--lkv-primary)', marginBottom: '4px' }}>Aucun evenement</p>
-          <p style={{ fontSize: '13px' }}>Soyez le premier a organiser une sortie !</p>
+        <div className="py-10 text-center text-[color:var(--lkv-text-secondary)]">
+          <p className="mb-[var(--space-2)] text-[36px]">📅</p>
+          <p className="mb-1 text-[16px] font-bold text-[color:var(--lkv-primary)]">Aucun evenement</p>
+          <p className="text-[13px]">Soyez le premier a organiser une sortie !</p>
         </div>
       ) : (
         <div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
-            <h2 style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '16px', color: 'var(--lkv-primary)', margin: 0 }}>Prochaines sorties</h2>
-            <span style={{ fontSize: '13px', color: 'var(--lkv-text-secondary)' }}>{filtered.length} evenements</span>
+          <div className="mb-[var(--space-3)] flex justify-between">
+            <h2 className="m-0 font-display text-[16px] font-bold text-[color:var(--lkv-primary)]">Prochaines sorties</h2>
+            <span className="text-[13px] text-[color:var(--lkv-text-secondary)]">{filtered.length} evenements</span>
           </div>
           {filtered.map((e) => <MobileEventCard key={e.id} event={e} onToggleRegister={handleToggleRegister} onViewDetail={(event) => setDetailEvent(event)} />)}
         </div>
@@ -787,11 +799,11 @@ export default function EvenementsPage() {
 
       {/* Shared: Create event modal */}
       {showCreateModal && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
-          <div className="glass rounded-2xl p-6 max-w-lg w-full my-4">
+        <div className="fixed inset-0 z-[var(--z-modal)] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+          <div role="dialog" aria-modal="true" aria-label="Organiser une sortie" className="glass rounded-2xl p-6 max-w-lg w-full my-4">
             <div className="flex items-center justify-between mb-5">
               <h2 className="font-display font-700 text-foreground text-lg">Organiser une sortie</h2>
-              <button onClick={() => setShowCreateModal(false)} className="glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8">
+              <button onClick={() => setShowCreateModal(false)} aria-label="Fermer" className="glass-circle-btn !w-11 !h-11 !min-w-11 !min-h-11">
                 <Icon name="XMarkIcon" size={18} />
               </button>
             </div>

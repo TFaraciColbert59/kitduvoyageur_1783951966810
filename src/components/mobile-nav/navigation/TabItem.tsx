@@ -145,7 +145,11 @@ const TabItem = memo(function TabItem({
       aria-haspopup={onLongPress ? 'dialog' : undefined}
       aria-current={isActive ? 'page' : undefined}
       title={onLongPress ? 'Appui long : changer d’aventure' : undefined}
-      aria-label={destination.ariaLabel}
+      aria-label={
+        badge > 0
+          ? `${destination.ariaLabel} — ${badge} notification${badge > 1 ? 's' : ''}`
+          : destination.ariaLabel
+      }
       style={{
         display: 'flex',
         flexDirection: 'column',

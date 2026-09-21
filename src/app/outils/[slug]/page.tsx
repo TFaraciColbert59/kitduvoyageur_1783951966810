@@ -105,7 +105,7 @@ function ToolPoidssSac() {
              
               onKeyDown={(e) => e.key === 'Enter' && addItem()}
             />
-            <button onClick={addItem} className="glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8" aria-label="Ajouter">+</button>
+            <button onClick={addItem} className="glass-circle-btn !w-11 !h-11 !min-w-11 !min-h-11" aria-label="Ajouter">+</button>
           </div>
         </div>
       </div>
@@ -127,7 +127,7 @@ function ToolPoidssSac() {
                     <span className="text-muted-foreground">{item.nom}</span>
                     <div className="flex items-center gap-3">
                       <span className="font-mono text-info">{item.poids_g} g</span>
-                      <button onClick={() => removeItem(cat.id, idx)} className="glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8" aria-label={`Supprimer ${item.nom}`}>×</button>
+                      <button onClick={() => removeItem(cat.id, idx)} className="glass-circle-btn !w-11 !h-11 !min-w-11 !min-h-11" aria-label={`Supprimer ${item.nom}`}>×</button>
                     </div>
                   </div>
                 ))}
@@ -372,7 +372,7 @@ function ToolChecklist() {
           aria-label="Catégorie">
           {[...cats, 'Divers'].map((c) => <option key={c}>{c}</option>)}
         </select>
-        <button onClick={addItem} className="glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8">+</button>
+        <button onClick={addItem} aria-label="Ajouter un article" className="glass-circle-btn !w-11 !h-11 !min-w-11 !min-h-11">+</button>
       </div>
 
       {/* Items by category */}
@@ -386,13 +386,13 @@ function ToolChecklist() {
               <div key={item.id} className={`flex items-center gap-3 px-4 py-3 transition-colors ${item.checked ? 'opacity-50' : ''}`}>
                 <button
                   onClick={() => toggleItem(item.id)}
-                  className={`glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8 flex-shrink-0 ${item.checked ? 'primary' : ''}`}
+                  className={`glass-circle-btn !w-11 !h-11 !min-w-11 !min-h-11 flex-shrink-0 ${item.checked ? 'primary' : ''}`}
                   aria-label={`${item.checked ? 'Décocher' : 'Cocher'} ${item.text}`}
                 >
                   {item.checked && <span className="text-white text-[10px]">✓</span>}
                 </button>
                 <span className={`flex-1 text-sm ${item.checked ? 'line-through text-muted-foreground' : 'text-foreground'}`}>{item.text}</span>
-                <button onClick={() => removeItem(item.id)} className="glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8" aria-label={`Supprimer ${item.text}`}>×</button>
+                <button onClick={() => removeItem(item.id)} className="glass-circle-btn !w-11 !h-11 !min-w-11 !min-h-11" aria-label={`Supprimer ${item.text}`}>×</button>
               </div>
             ))}
           </div>
@@ -1035,10 +1035,10 @@ export default function OutilSlugPage() {
         {/* ── MOBILE ── */}
         <div className="block md:hidden">
           <MobilePageShell>
-            <div style={{ padding: '16px', textAlign: 'center', paddingTop: '80px' }}>
-              <p style={{ fontSize: '40px', marginBottom: '16px' }}>🔧</p>
-              <h1 style={{ fontSize: '20px', fontWeight: 700, color: 'var(--lkv-primary)', marginBottom: '12px' }}>Outil introuvable</h1>
-              <Link href="/outils" style={{ display: 'inline-block', padding: '12px 24px', background: 'var(--lkv-primary)', color: 'white', borderRadius: '999px', fontSize: '14px', fontWeight: 700, textDecoration: 'none' }}>← Retour aux outils</Link>
+            <div className="p-[var(--space-4)] pt-20 text-center">
+              <p className="mb-[var(--space-4)] text-[40px]">🔧</p>
+              <h1 className="mb-[var(--space-3)] text-[20px] font-bold text-[color:var(--lkv-primary)]">Outil introuvable</h1>
+              <Link href="/outils" className="inline-block rounded-full bg-[color:var(--lkv-primary)] px-6 py-3 text-[14px] font-bold text-white no-underline">← Retour aux outils</Link>
             </div>
           </MobilePageShell>
           
@@ -1110,19 +1110,19 @@ export default function OutilSlugPage() {
       {/* ── MOBILE ── */}
       <div className="block md:hidden">
         <MobilePageShell>
-          <div style={{ padding: '16px' }}>
+          <div className="p-[var(--space-4)]">
             {/* Tool Header */}
-            <div style={{ marginBottom: '20px' }}>
-              <nav style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: 'var(--lkv-text-muted)', marginBottom: '12px' }}>
-                <Link href="/outils" style={{ color: 'var(--lkv-text-muted)', textDecoration: 'none' }}>Outils</Link>
+            <div className="mb-[var(--space-5)]">
+              <nav className="mb-[var(--space-3)] flex items-center gap-1.5 text-[12px] text-[color:var(--lkv-text-muted)]" aria-label="Fil d'Ariane">
+                <Link href="/outils" className="text-[color:var(--lkv-text-muted)] no-underline">Outils</Link>
                 <span>/</span>
-                <span style={{ color: 'var(--lkv-primary)' }}>{tool.nom}</span>
+                <span className="text-[color:var(--lkv-primary)]">{tool.nom}</span>
               </nav>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <span style={{ fontSize: '36px' }} role="img" aria-label={tool.nom}>{tool.icon}</span>
+              <div className="flex items-center gap-[var(--space-3)]">
+                <span className="text-[36px]" role="img" aria-label={tool.nom}>{tool.icon}</span>
                 <div>
-                  <h1 style={{ fontSize: '22px', fontWeight: 800, color: 'var(--lkv-primary)', lineHeight: '1.2', marginBottom: '4px' }}>{tool.nom}</h1>
-                  <p style={{ fontSize: '13px', color: 'var(--lkv-text-muted)', lineHeight: '1.4' }}>{tool.description}</p>
+                  <h1 className="mb-1 text-[22px] font-extrabold leading-[1.2] text-[color:var(--lkv-primary)]">{tool.nom}</h1>
+                  <p className="text-[13px] leading-[1.4] text-[color:var(--lkv-text-muted)]">{tool.description}</p>
                 </div>
               </div>
             </div>
@@ -1131,26 +1131,16 @@ export default function OutilSlugPage() {
             <ToolComponent />
 
             {/* Other tools */}
-            <div style={{ marginTop: '32px', paddingTop: '20px', borderTop: '1px solid rgba(23,64,44,0.06)' }}>
-              <p style={{ fontSize: '10px', fontFamily: 'ui-monospace, monospace', color: 'var(--lkv-text-muted)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '12px' }}>AUTRES OUTILS</p>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+            <div className="mt-[var(--space-8)] border-t border-[color:var(--lkv-border-subtle)] pt-[var(--space-5)]">
+              <p className="mb-[var(--space-3)] font-mono text-[10px] uppercase tracking-[0.1em] text-[color:var(--lkv-text-muted)]">AUTRES OUTILS</p>
+              <div className="flex flex-wrap gap-[var(--space-2)]">
                 {Object.entries(toolRegistry)
                   .filter(([s]) => s !== slug)
                   .map(([s, t]) => (
                     <Link
                       key={s}
                       href={`/outils/${s}`}
-                      className="glass-sub-card"
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '6px',
-                        padding: '8px 14px',
-                        borderRadius: '10px',
-                        fontSize: '13px',
-                        color: 'var(--lkv-text-muted)',
-                        textDecoration: 'none',
-                      }}
+                      className="glass-sub-card flex items-center gap-1.5 rounded-[var(--lkv-radius-sm)] px-3.5 py-2 text-[13px] text-[color:var(--lkv-text-muted)] no-underline"
                     >
                       <span>{t.icon}</span>
                       <span>{t.nom}</span>

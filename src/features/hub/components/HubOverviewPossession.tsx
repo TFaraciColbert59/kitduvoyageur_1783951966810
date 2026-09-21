@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import Icon from '@/components/ui/Icon';
 import Link from 'next/link';
@@ -12,6 +12,7 @@ import { GearCardForget } from '@/features/materiel/components/cards/GearCardFor
 import { GearCardAlertes } from '@/features/materiel/components/cards/GearCardAlertes';
 import { GearCardDispo } from '@/features/materiel/components/cards/GearCardDispo';
 import type { MaterielSummary } from '@/features/materiel/services/getMaterielSummary';
+import { EASE_GLASS } from '@/lib/animations/constants';
 
 export interface HubOverviewPossessionProps {
   items: number;
@@ -35,7 +36,7 @@ export function HubOverviewPossession({
   const fade = {
     initial: reduceMotion ? false : { opacity: 0, y: 6 },
     animate: { opacity: 1, y: 0 },
-    transition: { duration: reduceMotion ? 0 : 0.22, ease: [0.22, 1, 0.36, 1] as const },
+    transition: { duration: reduceMotion ? 0 : 0.22, ease: EASE_GLASS },
   };
   const stats: Array<{
     href: string;

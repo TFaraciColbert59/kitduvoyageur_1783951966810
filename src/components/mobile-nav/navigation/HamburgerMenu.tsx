@@ -1,9 +1,10 @@
 'use client';
 
-import type { Dispatch, SetStateAction } from 'react';
+import { useEffect, type Dispatch, type SetStateAction } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
+import { EASE_DECELERATE } from '@/lib/animations/constants';
 import LkvIcon from '@/components/ui/LkvIcon';
 import { HUB_ALERTES_HREF } from '@/features/hub/registry/hubSectionRegistry';
 import { zIndex } from '@/lib/ui/zIndex';
@@ -20,6 +21,17 @@ function HamburgerMenu({
   cartCount: number;
 }) {
   const { triggerHaptic } = useHapticFeedback();
+
+  // Fermeture clavier du menu (Échap) — cohérent avec les autres overlays.
+  useEffect(() => {
+    if (!menuOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setMenuOpen(false);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [menuOpen, setMenuOpen]);
+
   return (
     <div style={{ position: 'relative' }}>
       <motion.button
@@ -30,12 +42,13 @@ function HamburgerMenu({
           setMenuOpen(!menuOpen);
         }}
         aria-label="Menu actions"
+        aria-haspopup="true"
+        aria-expanded={menuOpen}
         className="glass-circle-btn"
         style={{
           width: '44px',
           height: '44px',
           cursor: 'pointer',
-          outline: 'none',
         }}
       >
         <LkvIcon name="menu" size={18} color="var(--lkv-primary)" />
@@ -56,7 +69,7 @@ function HamburgerMenu({
               initial={{ opacity: 0, scale: 0.9, y: 8 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 8 }}
-              transition={{ duration: 0.16, ease: [0.16, 1, 0.3, 1] }}
+              transition={{ duration: 0.16, ease: EASE_DECELERATE }}
               style={{
                 position: 'absolute',
                 right: 0,
@@ -88,6 +101,7 @@ function HamburgerMenu({
                   alignItems: 'center',
                   gap: '8px',
                   padding: '8px 10px',
+                  minHeight: '44px',
                   borderRadius: '10px',
                   background: 'rgba(23, 64, 44, 0.06)',
                   textDecoration: 'none',
@@ -132,6 +146,7 @@ function HamburgerMenu({
                   alignItems: 'center',
                   gap: '8px',
                   padding: '8px 10px',
+                  minHeight: '44px',
                   borderRadius: '10px',
                   background: 'rgba(23, 64, 44, 0.06)',
                   textDecoration: 'none',
@@ -161,6 +176,7 @@ function HamburgerMenu({
                   alignItems: 'center',
                   gap: '8px',
                   padding: '8px 10px',
+                  minHeight: '44px',
                   borderRadius: '10px',
                   background: 'rgba(23, 64, 44, 0.06)',
                   textDecoration: 'none',

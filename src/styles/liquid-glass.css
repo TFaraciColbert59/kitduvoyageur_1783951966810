@@ -702,13 +702,13 @@
   to   { opacity: 1; transform: translate3d(0, 0, 0); }
 }
 
-.msg-sheet-in       { animation: msgSheetIn   240ms var(--ease-emphasis) both; }
-.msg-sheet-out      { animation: msgSheetOut  180ms var(--ease-emphasis) both; }
-.msg-sheet-up-in    { animation: msgSheetUp   240ms var(--ease-emphasis) both; }
-.msg-sheet-down-out { animation: msgSheetDown 200ms var(--ease-emphasis) both; }
-.msg-fade-in        { animation: msgFadeIn    180ms var(--ease-glass) both; }
-.msg-fade-out       { animation: msgFadeOut   160ms var(--ease-glass) both; }
-.msg-pill-in        { animation: msgPillIn    200ms var(--ease-glass) both; }
+.msg-sheet-in       { animation: msgSheetIn   var(--motion-control-duration) var(--ease-emphasis) both; }
+.msg-sheet-out      { animation: msgSheetOut  var(--dur-fast) var(--ease-emphasis) both; }
+.msg-sheet-up-in    { animation: msgSheetUp   var(--motion-control-duration) var(--ease-emphasis) both; }
+.msg-sheet-down-out { animation: msgSheetDown var(--dur-fast) var(--ease-emphasis) both; }
+.msg-fade-in        { animation: msgFadeIn    var(--dur-fast) var(--ease-glass) both; }
+.msg-fade-out       { animation: msgFadeOut   var(--dur-fast) var(--ease-glass) both; }
+.msg-pill-in        { animation: msgPillIn    var(--motion-control-duration) var(--ease-glass) both; }
 
 /* Paysage bas de plafond : on comprime le chrome plutôt que les messages. */
 @media (orientation: landscape) and (max-height: 480px) {

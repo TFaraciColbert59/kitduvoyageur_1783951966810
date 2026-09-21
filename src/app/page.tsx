@@ -151,7 +151,6 @@ export default function HomePage() {
                     alt="Chartreuse sentier des balcons" 
                     fill 
                     sizes="(max-width: 768px) 100vw, 33vw"
-                    priority
                     className="object-cover transition-transform duration-700 group-hover:scale-105" 
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
@@ -176,7 +175,6 @@ export default function HomePage() {
                     alt="Bivouac étoilé Vercors" 
                     fill 
                     sizes="(max-width: 768px) 100vw, 33vw"
-                    priority
                     className="object-cover transition-transform duration-700 group-hover:scale-105" 
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
@@ -200,7 +198,6 @@ export default function HomePage() {
                     alt="Kayak Sans-Rançon" 
                     fill 
                     sizes="(max-width: 768px) 100vw, 33vw"
-                    priority
                     className="object-cover transition-transform duration-700 group-hover:scale-105" 
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
@@ -265,7 +262,13 @@ export default function HomePage() {
               
               <div className="flex-1 w-full">
                 <div className="relative rounded-[var(--lkv-radius-lg)] overflow-hidden aspect-[4/5] lg:aspect-auto lg:h-[700px]">
-                  <img src="https://images.unsplash.com/photo-1454496522488-7a8e488e8606?w=1000&q=80" alt="Montagne" className="w-full h-full object-cover" />
+                  <Image
+                    src="https://images.unsplash.com/photo-1454496522488-7a8e488e8606?w=1000&q=80"
+                    alt="Montagne"
+                    fill
+                    sizes="(max-width: 1024px) 100vw, 50vw"
+                    className="object-cover"
+                  />
                   <div className="absolute inset-0 bg-gradient-to-t from-[var(--lkv-primary)] via-transparent to-transparent opacity-80" />
                   <div className="absolute bottom-8 left-8 right-8">
                     <p className="text-[9px] font-mono tracking-widest uppercase text-[var(--lkv-secondary)] mb-2">ALPES FRANÇAISES</p>
@@ -281,7 +284,13 @@ export default function HomePage() {
             <div className="max-w-[1200px] mx-auto flex flex-col lg:flex-row items-center gap-16">
               <div className="flex-1 w-full">
                 <div className="relative rounded-[var(--lkv-radius-lg)] overflow-hidden aspect-square bg-[var(--stone-200)]">
-                  <img src="https://images.unsplash.com/photo-1550ed4e1b-3b47bd21096a?w=1000&q=80" alt="Sac à dos en toile cirée" className="w-full h-full object-cover" />
+                  <Image
+                    src="https://images.unsplash.com/photo-1550ed4e1b-3b47bd21096a?w=1000&q=80"
+                    alt="Sac à dos en toile cirée"
+                    fill
+                    sizes="(max-width: 1024px) 100vw, 50vw"
+                    className="object-cover"
+                  />
                   <div className="absolute top-6 left-6">
                     <Badge className="bg-[var(--lkv-surface)] py-1.5 text-[10px] font-bold uppercase tracking-wide backdrop-blur">
                       Édition artisanale
@@ -345,7 +354,7 @@ export default function HomePage() {
                   <p className="text-[10px] font-mono tracking-widest uppercase text-white/50 mb-4">RECEVEZ LE JOURNAL</p>
                   <p className="text-white/70 text-xs mb-4">Un email par saison. Refuges, matériel, récit d'abris.</p>
                   <div className="flex gap-2">
-                    <input type="email" placeholder="votre@email.fr" className="bg-white/5 border border-white/10 rounded-full px-4 py-2 text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-[var(--lkv-secondary)] w-full" />
+                    <input type="email" placeholder="votre@email.fr" aria-label="Votre adresse email" className="bg-white/5 border border-white/10 rounded-full px-4 py-2 text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-[var(--lkv-secondary)] w-full" />
                     <Button variant="primary" size="sm">S'inscrire</Button>
                   </div>
                 </div>

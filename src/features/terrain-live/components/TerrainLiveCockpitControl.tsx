@@ -67,6 +67,38 @@ export default function TerrainLiveCockpitControl({
 
   const { panelRef, dragHandlers } = useSheetDrag({ onDismiss: () => setOpen(false) });
 
+  // Focus + Escape : entrée dans le dialogue, restitution au déclencheur.
+  useEffect(() => {
+    if (!open) return;
+    const previous = document.activeElement as HTMLElement | null;
+    panelRef.current?.focus();
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setOpen(false);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      previous?.focus?.();
+    };
+  }, [open, panelRef]);
+
+  const handleTabTrap = (event: React.KeyboardEvent) => {
+    if (event.key !== 'Tab') return;
+    const focusables = panelRef.current?.querySelectorAll<HTMLElement>(
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+    );
+    if (!focusables || focusables.length === 0) return;
+    const first = focusables[0];
+    const last = focusables[focusables.length - 1];
+    if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault();
+      first.focus();
+    }
+  };
+
   const handleConfirm = useCallback(
     async (reportId: string, confirmation: TerrainConfirmation) => {
       setConfirmingId(reportId);
@@ -171,6 +203,8 @@ export default function TerrainLiveCockpitControl({
               role="dialog"
               aria-modal="true"
               aria-label="Conditions terrain autour de moi"
+              tabIndex={-1}
+              onKeyDown={handleTabTrap}
               className={`lkv-sheet-up${closing ? ' lkv-sheet-up--closing' : ''} relative flex max-h-[82dvh] w-full max-w-lg flex-col rounded-t-[var(--lkv-radius-sheet)] bg-[color:var(--lkv-surface-card)] pb-[calc(var(--safe-bottom)+16px)] shadow-2xl`}
               {...dragHandlers}
             >

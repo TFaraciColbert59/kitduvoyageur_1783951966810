@@ -42,6 +42,7 @@ export default function KitSheetModal({ kitId, context: _context, onClose }: Kit
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
   const mounted = useRef(true);
 
   useEffect(() => {
@@ -102,6 +103,7 @@ export default function KitSheetModal({ kitId, context: _context, onClose }: Kit
     if (!data) return;
     haptic('medium');
     setBusy(true);
+    setNotice(null);
     try {
       const res = await fetch('/api/materiel/share', {
         method: 'POST',
@@ -112,6 +114,10 @@ export default function KitSheetModal({ kitId, context: _context, onClose }: Kit
       const { url } = (await res.json()) as { url: string };
       const full = `${window.location.origin}${url}`;
       await navigator.clipboard?.writeText(full).catch(() => {});
+      if (mounted.current) {
+        haptic('success');
+        setNotice('Lien de partage copié dans le presse-papier.');
+      }
       if (mounted.current) setBusy(false);
     } catch (e) {
       if (mounted.current) setError(e instanceof Error ? e.message : 'Erreur');
@@ -140,7 +146,7 @@ export default function KitSheetModal({ kitId, context: _context, onClose }: Kit
     return renderShell(
       'Lignée de kit',
       <div className="py-12 text-center">
-        <p style={{ color: 'var(--lkv-text-muted)', fontSize: 14 }}>Chargement de la lignée…</p>
+        <p className="text-[14px] text-[color:var(--lkv-text-muted)]">Chargement de la lignée…</p>
       </div>
     );
   }
@@ -149,8 +155,8 @@ export default function KitSheetModal({ kitId, context: _context, onClose }: Kit
     return renderShell(
       'Lignée de kit',
       <div className="py-8 text-center">
-        <p style={{ color: 'var(--lkv-primary)' }}>⚠️ {error ?? 'Kit introuvable'}</p>
-        <button onClick={close} className="mt-4 w-full py-3 rounded-xl font-semibold text-sm" style={{ background: 'var(--lkv-primary)', color: 'var(--lkv-surface)' }}>
+        <p className="text-[color:var(--lkv-primary)]">⚠️ {error ?? 'Kit introuvable'}</p>
+        <button onClick={close} className="mt-4 w-full rounded-xl bg-[color:var(--lkv-primary)] py-3 text-sm font-semibold text-[color:var(--lkv-surface)]">
           Fermer
         </button>
       </div>
@@ -181,31 +187,31 @@ export default function KitSheetModal({ kitId, context: _context, onClose }: Kit
             {!status.displayScore && <Badge tone="stone">{status.label}</Badge>}
           </div>
           {kit.parent_name && (
-            <p className="mt-2 text-[13px]" style={{ color: 'var(--lkv-text-muted)' }}>
-              Issu de <em className="font-serif italic" style={{ color: 'var(--lkv-primary)' }}>{kit.parent_name}</em>
+            <p className="mt-2 text-[13px] text-[color:var(--lkv-text-muted)]">
+              Issu de <em className="font-serif italic text-[color:var(--lkv-primary)]">{kit.parent_name}</em>
             </p>
           )}
         </div>
 
         {/* Description */}
         {kit.description && (
-          <p className="text-[13px] leading-relaxed" style={{ color: 'var(--lkv-text-secondary)' }}>{kit.description}</p>
+          <p className="text-[13px] leading-relaxed text-[color:var(--lkv-text-secondary)]">{kit.description}</p>
         )}
 
         {/* État terrain */}
-        <div className="rounded-2xl p-4" style={{ background: 'var(--lkv-surface-muted)', border: '1px solid rgba(163,196,163,0.5)' }}>
-          <div className="font-mono text-[10px] tracking-[0.16em] uppercase" style={{ color: 'var(--lkv-primary)' }}>
+        <div className="rounded-2xl border border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-muted)] p-4">
+          <div className="font-mono text-[10px] uppercase tracking-[0.16em] text-[color:var(--lkv-primary)]">
             Épreuve du terrain
           </div>
           <div className="mt-2 flex items-baseline gap-2">
-            <span className="font-display text-[26px] font-semibold" style={{ color: 'var(--lkv-primary)' }}>
+            <span className="font-display text-[26px] font-semibold text-[color:var(--lkv-primary)]">
               {fieldKm > 0 ? `${fieldKm.toLocaleString('fr-FR')} km` : '—'}
             </span>
-            <span className="text-[12px]" style={{ color: 'var(--lkv-text-muted)' }}>
+            <span className="text-[12px] text-[color:var(--lkv-text-muted)]">
               {fieldSessions} sortie{fieldSessions > 1 ? 's' : ''}
             </span>
           </div>
-          <div className="mt-1.5 flex flex-wrap gap-x-3 gap-y-1 text-[11px]" style={{ color: 'var(--lkv-text-muted)' }}>
+          <div className="mt-1.5 flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-[color:var(--lkv-text-muted)]">
             {fieldRegions && fieldRegions.length > 0 && (
               <span>Massifs : {fieldRegions.map((r) => r.region).slice(0, 3).join(', ')}</span>
             )}
@@ -214,13 +220,13 @@ export default function KitSheetModal({ kitId, context: _context, onClose }: Kit
             )}
           </div>
           {showScore && trust && (
-            <div className="mt-3 grid grid-cols-2 gap-2 text-[12px]" style={{ color: 'var(--lkv-primary)' }}>
+            <div className="mt-3 grid grid-cols-2 gap-2 text-[12px] text-[color:var(--lkv-primary)]">
               <div>
-                <div className="font-mono text-[10px] uppercase" style={{ opacity: 0.7 }}>Endurance</div>
+                <div className="font-mono text-[10px] uppercase opacity-70">Endurance</div>
                 <div className="font-semibold">{trust.endurance_score.toFixed(2)}</div>
               </div>
               <div>
-                <div className="font-mono text-[10px] uppercase" style={{ opacity: 0.7 }}>Propagation</div>
+                <div className="font-mono text-[10px] uppercase opacity-70">Propagation</div>
                 <div className="font-semibold">{trust.propagation_score.toFixed(2)}</div>
               </div>
             </div>
@@ -230,7 +236,7 @@ export default function KitSheetModal({ kitId, context: _context, onClose }: Kit
         {/* Conservation par item */}
         {hasItems ? (
           <div>
-            <div className="font-mono text-[10px] tracking-[0.16em] uppercase mb-2" style={{ color: 'var(--lkv-primary)' }}>
+            <div className="mb-2 font-mono text-[10px] uppercase tracking-[0.16em] text-[color:var(--lkv-primary)]">
               Ce que la lignée garde
             </div>
             <div className="flex flex-col gap-2">
@@ -238,9 +244,9 @@ export default function KitSheetModal({ kitId, context: _context, onClose }: Kit
                 const rate = survivalRate(row.kept_count, row.dropped_count);
                 return (
                   <div key={row.item_key} className="flex items-center justify-between text-[13px]">
-                    <span style={{ color: 'var(--lkv-primary)' }}>{row.item_key.slice(0, 28)}</span>
+                    <span className="text-[color:var(--lkv-primary)]">{row.item_key.slice(0, 28)}</span>
                     {rate != null && (
-                      <span className="font-mono text-[11px]" style={{ color: 'var(--lkv-primary)' }}>
+                      <span className="font-mono text-[11px] text-[color:var(--lkv-primary)]">
                         {conservationPhrase(rate)}
                       </span>
                     )}
@@ -250,49 +256,58 @@ export default function KitSheetModal({ kitId, context: _context, onClose }: Kit
             </div>
           </div>
         ) : (
-          <p className="text-[12px]" style={{ color: 'var(--lkv-text-muted)' }}>
+          <p className="text-[12px] text-[color:var(--lkv-text-muted)]">
             Pas encore de descendance pour mesurer la conservation. Ce kit est le début d’une lignée.
           </p>
         )}
 
         {best && best.total_pairs > 0 && (
-          <p className="text-[12px]" style={{ color: 'var(--lkv-text-muted)' }}>
-            Le plus conservé : <em className="font-serif italic" style={{ color: 'var(--lkv-primary)' }}>{best.item_key.slice(0, 32)}</em> —{' '}
+          <p className="text-[12px] text-[color:var(--lkv-text-muted)]">
+            Le plus conservé : <em className="font-serif italic text-[color:var(--lkv-primary)]">{best.item_key.slice(0, 32)}</em> —{' '}
             {conservationPhrase(survivalRate(best.kept_count, best.dropped_count) ?? 0)}
           </p>
         )}
 
         {/* Actions */}
-        <div className="grid grid-cols-3 gap-2 mt-2">
+        <div className="mt-2 grid grid-cols-3 gap-2">
           <button
             onClick={carryKit}
-            className="py-2.5 px-2 rounded-xl text-[12px] font-semibold"
-            style={{ background: 'var(--lkv-primary)', color: 'var(--lkv-surface)' }}
+            className="rounded-xl bg-[color:var(--lkv-primary)] px-2 py-2.5 text-[12px] font-semibold text-[color:var(--lkv-surface)]"
           >
             Emporter
           </button>
           <button
             onClick={forkKit}
             disabled={busy}
-            className="py-2.5 px-2 rounded-xl text-[12px] font-medium border"
-            style={{ borderColor: 'rgba(163,196,163,0.8)', color: 'var(--lkv-primary)' }}
+            className="rounded-xl border border-[color:var(--lkv-border)] px-2 py-2.5 text-[12px] font-medium text-[color:var(--lkv-primary)]"
           >
             {busy ? '…' : 'Forker'}
           </button>
           <button
             onClick={shareKit}
             disabled={busy}
-            className="py-2.5 px-2 rounded-xl text-[12px] font-medium border"
-            style={{ borderColor: 'rgba(163,196,163,0.8)', color: 'var(--lkv-primary)' }}
+            className="rounded-xl border border-[color:var(--lkv-border)] px-2 py-2.5 text-[12px] font-medium text-[color:var(--lkv-primary)]"
           >
             {busy ? '…' : 'Envoyer'}
           </button>
         </div>
 
+        {error && (
+          <p role="alert" className="text-center text-[12px] text-[color:var(--lkv-danger)]">
+            {error}
+          </p>
+        )}
+
+        {notice && (
+          <p role="status" aria-live="polite" className="text-center text-[12px] text-[color:var(--lkv-success)]">
+            {notice}
+          </p>
+        )}
+
         {/* Transparence — mention obligatoire de la part créateur (Lot 6,
             affichée UNIQUEMENT quand la feature est active : KIT_ROYALTY_ENABLED) */}
         {royaltyEnabled && (
-          <p className="text-[10px] leading-relaxed" style={{ color: 'var(--lkv-text-muted)' }}>
+          <p className="text-[10px] leading-relaxed text-[color:var(--lkv-text-muted)]">
             Transparence : les créateurs de cette lignée perçoivent une part sur les commandes
             issues de leur kit. LKDV reste le vendeur unique.
           </p>

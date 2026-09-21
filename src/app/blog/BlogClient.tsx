@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState, useMemo } from 'react';
 import Link from 'next/link';
@@ -105,32 +105,32 @@ function PostCard({ post }: { post: BlogPost }) {
 
 function MobilePostCard({ post }: { post: BlogPost }) {
   return (
-    <Link href={`/guides/${post.slug}`} style={{ display: 'block', textDecoration: 'none' }}>
-      <article className="glass" style={{ overflow: 'hidden', marginBottom: '12px' }}>
-        <div style={{ display: 'flex', gap: '12px', padding: '12px' }}>
-          <div style={{ width: '80px', height: '90px', borderRadius: '8px', overflow: 'hidden', flexShrink: 0, position: 'relative', background: 'var(--stone-200)' }}>
+    <Link href={`/guides/${post.slug}`} className="block no-underline">
+      <article className="glass mb-[var(--space-3)] overflow-hidden">
+        <div className="flex gap-[var(--space-3)] p-[var(--space-3)]">
+          <div className="relative h-[90px] w-20 shrink-0 overflow-hidden rounded-[var(--lkv-radius-xs)] bg-[color:var(--stone-200)]">
             {post.image && (
-              <img src={post.image} alt={post.image_alt} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              <AppImage src={post.image} alt={post.image_alt} fill sizes="80px" className="object-cover" />
             )}
           </div>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
-              <span style={{ fontSize: '10px', color: 'var(--lkv-primary)', fontFamily: 'ui-monospace, monospace', fontWeight: 700 }}>
+          <div className="min-w-0 flex-1">
+            <div className="mb-1 flex items-center gap-1.5">
+              <span className="font-mono text-[10px] font-bold text-[color:var(--lkv-primary)]">
                 {post.category}
               </span>
               {post.featured && (
-                <span style={{ fontSize: '9px', padding: '1px 5px', borderRadius: '4px', background: 'var(--lkv-surface-muted)', color: 'var(--lkv-primary)' }}>
+                <span className="rounded-[var(--lkv-radius-xs)] bg-[color:var(--lkv-surface-muted)] px-1.5 py-px text-[9px] text-[color:var(--lkv-primary)]">
                   A la une
                 </span>
               )}
             </div>
-            <h3 style={{ fontSize: '14px', fontWeight: 700, color: 'var(--lkv-primary)', margin: 0, lineHeight: 1.3, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+            <h3 className="m-0 line-clamp-2 text-[14px] font-bold leading-[1.3] text-[color:var(--lkv-primary)]">
               {post.title}
             </h3>
-            <p style={{ fontSize: '12px', color: 'var(--lkv-text-secondary)', margin: '4px 0 0 0', lineHeight: 1.4, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+            <p className="m-0 mt-1 line-clamp-2 text-[12px] leading-[1.4] text-[color:var(--lkv-text-secondary)]">
               {post.excerpt}
             </p>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '6px', fontSize: '10px', color: 'var(--lkv-text-secondary)', fontFamily: 'ui-monospace, monospace' }}>
+            <div className="mt-1.5 flex items-center gap-[var(--space-2)] font-mono text-[10px] text-[color:var(--lkv-text-secondary)]">
               <span>{formatDate(post.published_at)}</span>
               <span>·</span>
               <span>{post.read_time} min</span>
@@ -144,26 +144,26 @@ function MobilePostCard({ post }: { post: BlogPost }) {
 
 function MobileFeaturedCard({ post }: { post: BlogPost }) {
   return (
-    <Link href={`/guides/${post.slug}`} style={{ display: 'block', textDecoration: 'none', marginBottom: '16px' }}>
-      <article className="glass" style={{ overflow: 'hidden' }}>
-        <div style={{ position: 'relative', height: '180px', overflow: 'hidden', background: 'var(--stone-200)' }}>
+    <Link href={`/guides/${post.slug}`} className="mb-[var(--space-4)] block no-underline">
+      <article className="glass overflow-hidden">
+        <div className="relative h-[180px] overflow-hidden bg-[color:var(--stone-200)]">
           {post.image && (
-            <img src={post.image} alt={post.image_alt} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            <AppImage src={post.image} alt={post.image_alt} fill sizes="100vw" className="object-cover" />
           )}
-          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.7), transparent)' }} />
-          <div style={{ position: 'absolute', top: '8px', left: '8px' }}>
-            <span style={{ padding: '3px 8px', borderRadius: '6px', fontSize: '10px', fontWeight: 700, background: 'var(--lkv-primary)', color: 'var(--lkv-text-inverted)' }}>
+          <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
+          <div className="absolute left-2 top-2">
+            <span className="rounded-[var(--lkv-radius-xs)] bg-[color:var(--lkv-primary)] px-2 py-0.5 text-[10px] font-bold text-[color:var(--lkv-text-inverted)]">
               A la une
             </span>
           </div>
-          <div style={{ position: 'absolute', bottom: '12px', left: '12px', right: '12px' }}>
-            <span style={{ padding: '2px 6px', borderRadius: '4px', fontSize: '9px', background: 'rgba(255,255,255,0.92)', border: '1px solid rgba(255,255,255,0.60)', color: 'var(--lkv-primary)', fontFamily: 'ui-monospace, monospace' }}>
+          <div className="absolute bottom-3 left-3 right-3">
+            <span className="rounded-[var(--lkv-radius-xs)] border border-white/60 bg-white/90 px-1.5 py-0.5 font-mono text-[9px] text-[color:var(--lkv-primary)]">
               {post.category}
             </span>
-            <h3 style={{ fontSize: '16px', fontWeight: 800, color: 'var(--lkv-text-inverted)', margin: '6px 0 2px 0', lineHeight: 1.2, fontFamily: 'var(--font-display)' }}>
+            <h3 className="mb-0.5 mt-1.5 font-display text-[16px] font-extrabold leading-[1.2] text-[color:var(--lkv-text-inverted)]">
               {post.title}
             </h3>
-            <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.7)', margin: 0, lineHeight: 1.4, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+            <p className="m-0 line-clamp-2 text-[12px] leading-[1.4] text-white/70">
               {post.excerpt}
             </p>
           </div>
@@ -286,7 +286,8 @@ export default function BlogClient({ posts }: { posts: BlogPost[] }) {
           <input
             type="email"
             placeholder="votre@email.fr"
-            className="glass-input flex-1"
+            aria-label="Votre adresse email"
+            className="min-w-0 flex-1 rounded-[var(--lkv-radius-sm)] border border-[color:var(--lkv-border-subtle)] bg-[color:var(--lkv-surface)] px-3.5 py-2.5 text-[13px] text-[color:var(--lkv-primary)] outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]"
           />
           <button className="glass-capsule-btn primary whitespace-nowrap">
             S&apos;abonner
@@ -297,33 +298,33 @@ export default function BlogClient({ posts }: { posts: BlogPost[] }) {
   );
 
   const mobileContent = (
-    <div style={{ padding: '16px' }}>
+    <div className="p-[var(--space-4)]">
       {/* Hero */}
-      <div style={{ marginBottom: '24px' }}>
-        <p style={{ fontFamily: 'ui-monospace, monospace', fontSize: '11px', color: 'var(--sage-100)', letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: '4px' }}>
+      <div className="mb-[var(--space-6)]">
+        <p className="mb-1 font-mono text-[11px] uppercase tracking-[0.14em] text-[color:var(--sage-100)]">
           BLOG — {posts.length} ARTICLES
         </p>
-        <h1 style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '22px', color: 'var(--lkv-surface)', margin: 0 }}>
+        <h1 className="m-0 font-display text-[22px] font-extrabold text-[color:var(--lkv-surface)]">
           Conseils & Guides
         </h1>
-        <p style={{ fontSize: '13px', color: 'var(--lkv-forest-100)', marginTop: '6px', lineHeight: 1.5 }}>
+        <p className="mt-1.5 text-[13px] leading-normal text-[color:var(--lkv-forest-100)]">
           Expertise terrain, comparatifs honnetes et inspirations pour voyager mieux, plus leger et plus loin.
         </p>
       </div>
 
       {/* Search */}
-      <div style={{ marginBottom: '16px' }}>
+      <div className="mb-[var(--space-4)]">
         <input
           type="text"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           placeholder="Rechercher un article..."
-          style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', border: '1px solid rgba(23,64,44,0.08)', background: 'var(--stone-100)', color: 'var(--lkv-primary)', fontSize: '14px', outline: 'none', boxSizing: 'border-box' }}
+          className="box-border w-full rounded-[var(--lkv-radius-sm)] border border-[color:var(--lkv-border-subtle)] bg-[color:var(--stone-100)] px-3.5 py-2.5 text-[14px] text-[color:var(--lkv-primary)] outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]"
         />
       </div>
 
       {/* Category filters */}
-      <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '8px', marginBottom: '20px', scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+      <div className="scrollbar-hide mb-[var(--space-5)] flex gap-[var(--space-2)] overflow-x-auto pb-[var(--space-2)]">
         {CATEGORIES.map((cat) => (
           <button
             key={cat}
@@ -337,8 +338,8 @@ export default function BlogClient({ posts }: { posts: BlogPost[] }) {
 
       {/* Featured */}
       {featured.length > 0 && activeCategory === 'Tous' && !searchQuery && (
-        <div style={{ marginBottom: '20px' }}>
-          <h2 style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '16px', color: 'var(--lkv-surface)', marginBottom: '12px' }}>
+        <div className="mb-[var(--space-5)]">
+          <h2 className="mb-[var(--space-3)] font-display text-[16px] font-bold text-[color:var(--lkv-surface)]">
             A la une
           </h2>
           {featured.slice(0, 1).map((post) => (
@@ -349,10 +350,10 @@ export default function BlogClient({ posts }: { posts: BlogPost[] }) {
 
       {/* Posts list */}
       {filtered.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '40px 0' }}>
-          <p style={{ fontSize: '32px', marginBottom: '8px' }}>📝</p>
-          <p style={{ fontWeight: 700, fontSize: '16px', color: 'var(--lkv-surface)', marginBottom: '4px' }}>Aucun article trouve</p>
-          <p style={{ fontSize: '13px', color: 'var(--lkv-forest-100)', marginBottom: '16px' }}>Essayez une autre categorie ou un autre terme de recherche.</p>
+        <div className="py-10 text-center">
+          <p className="mb-[var(--space-2)] text-[32px]">📝</p>
+          <p className="mb-1 text-[16px] font-bold text-[color:var(--lkv-surface)]">Aucun article trouve</p>
+          <p className="mb-[var(--space-4)] text-[13px] text-[color:var(--lkv-forest-100)]">Essayez une autre categorie ou un autre terme de recherche.</p>
           <button onClick={() => { setActiveCategory('Tous'); setSearchQuery(''); }}
             className="glass-capsule-btn primary !px-6 !py-2.5 !text-[13px]">
             Voir tous les articles
@@ -361,12 +362,12 @@ export default function BlogClient({ posts }: { posts: BlogPost[] }) {
       ) : (
         <>
           {(activeCategory !== 'Tous' || searchQuery) && (
-            <p style={{ fontFamily: 'ui-monospace, monospace', fontSize: '13px', color: 'var(--lkv-forest-100)', marginBottom: '12px' }}>
-              <strong style={{ color: 'var(--lkv-surface)' }}>{filtered.length}</strong> article{filtered.length > 1 ? 's' : ''}
+            <p className="mb-[var(--space-3)] font-mono text-[13px] text-[color:var(--lkv-forest-100)]">
+              <strong className="text-[color:var(--lkv-surface)]">{filtered.length}</strong> article{filtered.length > 1 ? 's' : ''}
             </p>
           )}
           {(!searchQuery && activeCategory === 'Tous') && nonFeaturedFiltered.length > 0 && (
-            <h2 style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '16px', color: 'var(--lkv-surface)', marginBottom: '12px' }}>
+            <h2 className="mb-[var(--space-3)] font-display text-[16px] font-bold text-[color:var(--lkv-surface)]">
               Tous les articles
             </h2>
           )}
@@ -379,19 +380,20 @@ export default function BlogClient({ posts }: { posts: BlogPost[] }) {
       )}
 
       {/* Newsletter */}
-      <div className="glass" style={{ marginTop: '24px', padding: '20px', textAlign: 'center' }}>
-        <p style={{ fontSize: '28px', marginBottom: '8px' }}>📬</p>
-        <h3 style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '16px', color: 'var(--lkv-primary)', margin: '0 0 8px 0' }}>
+      <div className="glass mt-[var(--space-6)] p-[var(--space-5)] text-center">
+        <p className="mb-[var(--space-2)] text-[28px]">📬</p>
+        <h3 className="mb-[var(--space-2)] font-display text-[16px] font-bold text-[color:var(--lkv-primary)]">
           Restez informe
         </h3>
-        <p style={{ fontSize: '13px', color: 'var(--lkv-text-secondary)', marginBottom: '16px', lineHeight: 1.5 }}>
+        <p className="mb-[var(--space-4)] text-[13px] leading-normal text-[color:var(--lkv-text-secondary)]">
           Recevez nos meilleurs articles, comparatifs et bons plans equipement directement dans votre boite mail.
         </p>
-        <div style={{ display: 'flex', gap: '8px' }}>
+        <div className="flex gap-[var(--space-2)]">
           <input
             type="email"
             placeholder="votre@email.fr"
-            style={{ flex: 1, padding: '10px 14px', borderRadius: '10px', border: '1px solid rgba(23,64,44,0.08)', background: 'var(--lkv-surface)', color: 'var(--lkv-primary)', fontSize: '13px', outline: 'none' }}
+            aria-label="Votre adresse email"
+            className="min-w-0 flex-1 rounded-[var(--lkv-radius-sm)] border border-[color:var(--lkv-border-subtle)] bg-[color:var(--lkv-surface)] px-3.5 py-2.5 text-[13px] text-[color:var(--lkv-primary)] outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]"
           />
           <button className="glass-capsule-btn primary !px-4 !py-2.5 !text-[13px] whitespace-nowrap">
             S&apos;abonner
