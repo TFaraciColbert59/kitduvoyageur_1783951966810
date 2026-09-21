@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { Tabs } from '@/components/ui';
 import { useTranslation } from '@/lib/i18n/context';
 
 export type CompteTab = 'vue-d-ensemble' | 'progression' | 'aventures' | 'carnets' | 'clubs' | 'commandes' | 'fidelite' | 'parametres';
@@ -32,24 +33,24 @@ export default function TabsCompte({ activeTab, onTabChange, counts }: TabsCompt
 
   return (
     <div className="w-full my-5 font-sans">
-      <div className="glass-capsule-bar overflow-x-auto no-scrollbar">
-        <div className="flex items-center gap-1 min-w-max p-1">
-          {tabs.map((t) => {
-            const isActive = activeTab === t.id;
-            return (
-              <button
-                key={t.id}
-                onClick={() => onTabChange(t.id)}
-                className={`glass-capsule-segment whitespace-nowrap ${isActive ? 'active' : ''}`}
-              >
-                <span>{t.label}</span>
-                {t.hasDot && (
-                  <span className={`w-2 h-2 rounded-full ${isActive ? 'bg-[#C89A3B]' : 'bg-[#5B7F55]'}`} />
-                )}
-              </button>
-            );
-          })}
-        </div>
+      <div className="inline-flex max-w-full gap-[var(--space-1)] rounded-full border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] p-[var(--space-1)] backdrop-blur-[var(--blur-md)] overflow-x-auto no-scrollbar">
+        <Tabs
+          options={tabs.map((tab) => ({
+            id: tab.id,
+            label: tab.label,
+            badge: tab.hasDot ? (
+              <span
+                aria-hidden="true"
+                className={`h-2 w-2 rounded-full ${activeTab === tab.id ? 'bg-[color:var(--lkv-warning)]' : 'bg-[color:var(--lkv-secondary)]'}`}
+              />
+            ) : undefined,
+          }))}
+          value={activeTab}
+          onChange={(id) => onTabChange(id as CompteTab)}
+          variant="scrollable"
+          ariaLabel="Sections du compte"
+          className="min-w-max pb-0"
+        />
       </div>
     </div>
   );

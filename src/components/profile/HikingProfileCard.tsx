@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
+import { Card } from '@/components/ui';
 
 interface HikingStats {
   total_sessions: number;
@@ -80,15 +81,15 @@ export default function HikingProfileCard() {
   // Seuil minimum : 3 sorties pour avoir du sens statistiquement
   if (stats.total_sessions < 3) {
     return (
-      <div className="glass rounded-3xl p-4 mb-2">
-        <p style={{ fontSize: '11px', fontWeight: 700, color: '#9AAD9E', fontFamily: 'var(--font-mono)', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: '8px' }}>
+      <Card className="p-4 mb-2">
+        <p className="mb-[var(--space-2)] font-mono text-[11px] font-bold uppercase tracking-[0.12em] text-[color:var(--lkv-text-subtle)]">
           🥾 Profil Randonneur
         </p>
-        <p style={{ fontSize: '13px', color: '#5C6B5E' }}>
+        <p className="text-[13px] text-[color:var(--lkv-text-muted)]">
           Fais encore quelques randonnées pour débloquer ton profil.{' '}
-          <span style={{ color: '#9AAD9E' }}>({stats.total_sessions}/3 sorties)</span>
+          <span className="text-[color:var(--lkv-text-subtle)]">({stats.total_sessions}/3 sorties)</span>
         </p>
-      </div>
+      </Card>
     );
   }
 
@@ -101,13 +102,13 @@ export default function HikingProfileCard() {
   ].filter(Boolean).join(', ') + '.';
 
   return (
-    <div className="glass rounded-3xl p-4.5 border border-white/80 bg-white/85 backdrop-blur-xl shadow-xs mb-3">
-      <p className="text-[11px] font-mono uppercase tracking-wider font-bold text-[#17402C] mb-2">
+    <Card className="p-4.5 mb-3">
+      <p className="text-[11px] font-mono uppercase tracking-wider font-bold text-[color:var(--lkv-primary)] mb-2">
         🥾 Ton profil randonneur
       </p>
 
       {/* Phrase naturelle */}
-      <p className="text-sm font-serif italic leading-relaxed text-[#17402C] mb-3">
+      <p className="text-sm font-serif italic leading-relaxed text-[color:var(--lkv-primary)] mb-3">
         {phrase}
       </p>
 
@@ -118,16 +119,13 @@ export default function HikingProfileCard() {
           { icon: '⏱', value: formatPace(Number(stats.avg_pace_min_per_km)), label: 'Allure moy.' },
           { icon: '↑', value: stats.avg_elevation_gain_m ? `${Math.round(Number(stats.avg_elevation_gain_m))} m` : '—', label: 'D+ moy.' },
         ].map((s) => (
-          <div
-            key={s.label}
-            className="glass-sub-card p-2.5 rounded-2xl text-center"
-          >
+          <Card key={s.label} variant="compact" className="p-2.5 text-center">
             <div className="text-base mb-0.5">{s.icon}</div>
-            <div className="text-xs font-bold text-[#17402C]">{s.value}</div>
-            <div className="text-[10px] text-[#5A7064] mt-0.5 font-medium">{s.label}</div>
-          </div>
+            <div className="text-xs font-bold text-[color:var(--lkv-primary)]">{s.value}</div>
+            <div className="text-[10px] text-[color:var(--lkv-text-muted)] mt-0.5 font-medium">{s.label}</div>
+          </Card>
         ))}
       </div>
-    </div>
+    </Card>
   );
 }

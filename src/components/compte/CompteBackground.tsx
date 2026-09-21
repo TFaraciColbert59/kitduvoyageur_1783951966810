@@ -11,8 +11,7 @@ import React from 'react';
 export function CompteBackground() {
   return (
     <div
-      className="lkv-app-background"
-      style={{ zIndex: 0 }}
+      className="lkv-app-background z-[var(--z-base)]"
       aria-hidden="true"
     />
   );

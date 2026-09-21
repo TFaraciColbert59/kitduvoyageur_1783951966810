@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { Badge, Button } from '@/components/ui';
 import { UserProfile } from '@/lib/mock/compte-marceline';
 
 interface ConstanceCardProps {
@@ -21,15 +22,15 @@ export default function ConstanceCard({ constance }: ConstanceCardProps) {
   ];
 
   return (
-    <div className="glass p-3.5 space-y-2.5 rounded-2xl border border-white/70 shadow-xs text-[#17402C] font-sans">
+    <div className="bg-[color:var(--card-tint-strong)] border border-[color:var(--glass-border)] shadow-elevation-1 backdrop-blur-[var(--blur-lg)] p-3.5 space-y-2.5 rounded-2xl text-[color:var(--lkv-primary)] font-sans">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-1.5">
-          <h3 className="font-display font-bold text-xs text-[#17402C]">Constance &amp; Rythme</h3>
+          <h3 className="font-display font-bold text-xs text-[color:var(--lkv-primary)]">Constance &amp; Rythme</h3>
         </div>
-        <span className="glass-pill pill-warn text-[9px] font-mono font-bold">
+        <Badge tone="warn" className="text-[9px] font-mono font-bold">
           🔥 6 sem.
-        </span>
+        </Badge>
       </div>
 
       {/* 7 Days in compact row */}
@@ -39,35 +40,36 @@ export default function ConstanceCard({ constance }: ConstanceCardProps) {
           const hasActivity = d.count > 0;
 
           return (
-            <button
+            <Button
               key={d.name + idx}
+              variant={isSelected ? 'primary' : 'secondary'}
+              size="sm"
+              aria-pressed={isSelected}
               onClick={() => setActiveDayIndex(idx)}
-              className={`glass-capsule-btn flex flex-col items-center justify-between !py-1.5 !px-0.5 !min-w-0 !min-h-0 transition-all cursor-pointer ${
-                isSelected ? 'primary' : ''
-              }`}
               title={`${d.label} : ${d.count} sortie(s)`}
+              className="h-auto min-h-[var(--control-height-xs)] flex-col items-center justify-between gap-0 px-0.5 py-1.5"
             >
               <span className="text-[9.5px] font-mono font-bold">{d.name}</span>
               <div className="mt-1 flex items-center justify-center">
                 {hasActivity ? (
-                  <span className={`w-1.5 h-1.5 rounded-full ${isSelected ? 'bg-[#A6C1A0]' : 'bg-[#5B7F55]'}`} />
+                  <span className={`w-1.5 h-1.5 rounded-full ${isSelected ? 'bg-[color:var(--sage-300)]' : 'bg-[color:var(--lkv-secondary)]'}`} />
                 ) : (
-                  <span className="w-1 h-1 rounded-full bg-[#17402C]/15" />
+                  <span className="w-1 h-1 rounded-full bg-[color:var(--lkv-primary)]/15" />
                 )}
               </div>
-            </button>
+            </Button>
           );
         })}
       </div>
 
       {/* Info footer */}
-      <div className="flex items-center justify-between text-[9.5px] font-mono pt-1 border-t border-[#17402C]/5">
-        <span className="text-[#5A7064]">
+      <div className="flex items-center justify-between text-[9.5px] font-mono pt-1 border-t border-[color:var(--lkv-primary)]/5">
+        <span className="text-[color:var(--lkv-text-muted)]">
           {activeDayIndex !== null && days[activeDayIndex].count > 0
             ? `${days[activeDayIndex].label}: ${days[activeDayIndex].count} sortie(s)`
             : '3 sorties cette semaine'}
         </span>
-        <span className="text-[#5B7F55] font-bold">Objectif atteint ✓</span>
+        <span className="text-[color:var(--lkv-secondary)] font-bold">Objectif atteint ✓</span>
       </div>
     </div>
   );

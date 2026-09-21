@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { Card, Tabs, Sheet, Badge, EmptyState } from '@/components/ui';
+import { Card, Tabs, Sheet, Badge, EmptyState, Switch } from '@/components/ui';
 
 const read = (relative: string) =>
   fs.readFileSync(path.join(process.cwd(), relative), 'utf8');
@@ -69,5 +69,32 @@ describe('Sous-phase 2.3 — Primitives Partagées UI (TDD)', () => {
     expect(html).toContain('Commencez par planifier votre première expédition.');
     expect(html).toContain('Créer un voyage');
     expect(html).toContain('/voyages/nouveau');
+  });
+
+  it('TEST-PRIM-06: Switch expose role/aria-checked, label associé et tokens de motion', () => {
+    const withLabel = renderToStaticMarkup(
+      React.createElement(Switch, {
+        checked: true,
+        onCheckedChange: () => {},
+        label: 'Notifications de sortie',
+      })
+    );
+    expect(withLabel).toContain('role="switch"');
+    expect(withLabel).toContain('aria-checked="true"');
+    expect(withLabel).toContain('aria-labelledby=');
+    expect(withLabel).toContain('Notifications de sortie');
+    expect(withLabel).toContain('type="button"');
+
+    const withoutLabel = renderToStaticMarkup(
+      React.createElement(Switch, {
+        checked: false,
+        onCheckedChange: () => {},
+        'aria-label': 'Partage de la position',
+      })
+    );
+    expect(withoutLabel).toContain('aria-checked="false"');
+    expect(withoutLabel).toContain('aria-label="Partage de la position"');
+    expect(withoutLabel).toContain('--lkv-touch-min');
+    expect(withoutLabel).toContain('--motion-control-duration');
   });
 });

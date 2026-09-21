@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Award, ChevronDown, Gift, RefreshCw, Target, Trophy } from 'lucide-react';
 import Icon from '@/components/ui/AppIcon';
+import { Badge, Button, Card, LoadingState, Tabs } from '@/components/ui';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { createClient } from '@/lib/supabase/client';
 import { useTranslation, type LocaleContextValue } from '@/lib/i18n/context';
@@ -390,8 +391,8 @@ export default function MaProgressionView({ initialProfile, compact = false }: M
     if (profileUnavailable) {
       return (
         <div className="w-full space-y-6">
-          <div className="glass rounded-3xl p-6 sm:p-8 text-center border border-white/60 shadow-lg">
-            <div className="w-14 h-14 rounded-2xl bg-[#17402C] text-white flex items-center justify-center mx-auto mb-4 shadow-md">
+          <Card variant="featured" className="p-6 sm:p-8 text-center">
+            <div className="w-14 h-14 rounded-2xl bg-[color:var(--lkv-primary)] text-[color:var(--lkv-text-inverted)] flex items-center justify-center mx-auto mb-4 shadow-md">
               <Trophy size={28} className="text-sand-200" />
             </div>
             <h2 className="font-display font-bold text-2xl text-[var(--lkv-primary)] mb-2">
@@ -403,28 +404,25 @@ export default function MaProgressionView({ initialProfile, compact = false }: M
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
               <Link
                 href="/connexion"
-                className="glass-capsule-btn primary w-full sm:w-auto px-6 py-3 text-sm font-semibold inline-flex items-center justify-center gap-2 shadow-sm"
+                className="inline-flex w-full items-center justify-center gap-[var(--space-2)] min-h-[var(--control-height-md)] rounded-full px-[var(--space-5)] text-[length:var(--lkv-text-body-sm)] font-semibold bg-[color:var(--lkv-action)] text-[color:var(--lkv-on-action)] shadow-elevation-1 sm:w-auto"
               >
                 Se connecter / Créer un compte
               </Link>
               <Link
                 href="/explorer"
-                className="glass-capsule-btn secondary w-full sm:w-auto px-6 py-3 text-sm font-semibold inline-flex items-center justify-center gap-2"
+                className="inline-flex w-full items-center justify-center gap-[var(--space-2)] min-h-[var(--control-height-md)] rounded-full px-[var(--space-5)] text-[length:var(--lkv-text-body-sm)] font-semibold border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] text-[color:var(--card-content)] backdrop-blur-[var(--blur-md)] sm:w-auto"
               >
                 Découvrir les sentiers
               </Link>
             </div>
-          </div>
+          </Card>
         </div>
       );
     }
 
     return (
-      <div className="flex min-h-[320px] flex-col items-center justify-center p-8 text-center">
-        <div className="mb-3 h-8 w-8 animate-spin rounded-full border-2 border-[var(--lkv-primary)] border-t-transparent motion-reduce:animate-none" />
-        <p className="text-sm font-semibold text-[var(--lkv-text-primary)]">
-          {t('progression.loadingProfile')}
-        </p>
+      <div className="flex min-h-[320px] items-center justify-center">
+        <LoadingState label={t('progression.loadingProfile')} />
       </div>
     );
   }
@@ -648,31 +646,18 @@ export default function MaProgressionView({ initialProfile, compact = false }: M
             : t('progression.leaderboardFiltersSummary')
         }
       >
-        <div
-          role="tablist"
-          aria-label={t('progression.leaderboardFiltersAria')}
-          className="glass-capsule-bar no-scrollbar mb-4 overflow-x-auto p-1"
-        >
-          <div className="flex min-w-max items-center gap-1">
-            {TERRITORY_FILTERS.map((f) => {
-              const isSelected = selectedFilter === f.id;
-              return (
-                <button
-                  key={f.id}
-                  role="tab"
-                  aria-selected={isSelected}
-                  onClick={() => handleFilterChange(f.id)}
-                  className={`glass-capsule-segment !min-h-[44px] cursor-pointer px-3.5 text-xs font-bold transition-all ${
-                    isSelected ? 'active text-white' : 'text-[var(--lkv-text-secondary)]'
-                  }`}
-                >
-                  <Icon name={f.icon} size={13} />
-                  <span>{t(f.labelKey)}</span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
+        <Tabs
+          options={TERRITORY_FILTERS.map((f) => ({
+            id: f.id,
+            label: t(f.labelKey),
+            icon: <Icon name={f.icon} size={13} />,
+          }))}
+          value={selectedFilter}
+          onChange={(id) => handleFilterChange(id as TerritoryFilter)}
+          variant="scrollable"
+          ariaLabel={t('progression.leaderboardFiltersAria')}
+          className="mb-4"
+        />
 
         {leaderboardUnavailable && (
           <p className="mb-4 rounded-2xl border border-white/80 bg-white/60 p-3 text-xs text-[var(--lkv-text-secondary)]">
@@ -791,9 +776,9 @@ export default function MaProgressionView({ initialProfile, compact = false }: M
               </h3>
               {/* Aucune promesse de points : un défi est une conséquence de la
                   progression, jamais une source de gains (règle produit). */}
-              <span className="glass-pill text-[10px] font-mono font-bold text-[var(--lkv-primary)]">
+              <Badge tone="stone" className="text-[10px] font-mono font-bold">
                 {challenge.difficulty}
-              </span>
+              </Badge>
             </div>
             <p className="mt-1 text-xs leading-relaxed text-[var(--lkv-text-secondary)]">
               {challenge.description}
@@ -826,26 +811,27 @@ export default function MaProgressionView({ initialProfile, compact = false }: M
                 réel et un cooldown écoulé ; sinon désactivé avec libellé
                 explicite. Jamais de bouton factice. */}
             <div className="mt-3">
-              <button
-                type="button"
+              <Button
+                variant="secondary"
+                size="sm"
                 onClick={handleReplaceChallenge}
                 disabled={!challenge.canBeReplaced || replacingChallenge}
                 aria-label={t('progression.challengeReplaceAria')}
-                className="glass-capsule-btn secondary min-h-[44px] w-full justify-center disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+                icon={
+                  <RefreshCw
+                    size={14}
+                    aria-hidden="true"
+                    className={replacingChallenge ? 'animate-spin motion-reduce:animate-none' : ''}
+                  />
+                }
+                className="w-full justify-center font-bold sm:w-auto"
               >
-                <RefreshCw
-                  size={14}
-                  aria-hidden="true"
-                  className={replacingChallenge ? 'animate-spin motion-reduce:animate-none' : ''}
-                />
-                <span>
-                  {replacingChallenge
-                    ? t('progression.challengeReplaceLoading')
-                    : challenge.canBeReplaced
-                      ? t('progression.challengeReplace')
-                      : t('progression.challengeReplaceCooldown')}
-                </span>
-              </button>
+                {replacingChallenge
+                  ? t('progression.challengeReplaceLoading')
+                  : challenge.canBeReplaced
+                    ? t('progression.challengeReplace')
+                    : t('progression.challengeReplaceCooldown')}
+              </Button>
               {replaceChallengeError && (
                 <p role="status" className="mt-2 text-xs text-[var(--lkv-text-secondary)]">
                   {t('progression.challengeReplaceError')}
@@ -978,11 +964,17 @@ export default function MaProgressionView({ initialProfile, compact = false }: M
 
       {/* Liens économiques distincts : récompenses utilisables et fidélité historique. */}
       <section aria-label={t('progression.rewardsAndLoyaltyAria')} className="flex flex-wrap gap-2">
-        <Link href="/recompenses" className="glass-capsule-btn secondary">
+        <Link
+          href="/recompenses"
+          className="inline-flex items-center justify-center gap-[var(--space-2)] min-h-[var(--control-height-sm)] rounded-full px-[var(--space-4)] text-[length:var(--lkv-text-footnote)] font-semibold border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] text-[color:var(--card-content)] backdrop-blur-[var(--blur-md)]"
+        >
           <Gift size={14} aria-hidden="true" />
           <span>{t('progression.rewards')}</span>
         </Link>
-        <Link href="/fidelite" className="glass-capsule-btn secondary">
+        <Link
+          href="/fidelite"
+          className="inline-flex items-center justify-center gap-[var(--space-2)] min-h-[var(--control-height-sm)] rounded-full px-[var(--space-4)] text-[length:var(--lkv-text-footnote)] font-semibold border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] text-[color:var(--card-content)] backdrop-blur-[var(--blur-md)]"
+        >
           <Award size={14} aria-hidden="true" />
           <span>{t('progression.loyalty')}</span>
         </Link>

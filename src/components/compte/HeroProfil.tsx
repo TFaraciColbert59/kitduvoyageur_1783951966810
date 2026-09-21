@@ -4,7 +4,7 @@ import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import Icon from '@/components/ui/AppIcon';
-import { Card } from '@/components/ui';
+import { Button, Card, IconButton } from '@/components/ui';
 import { UserProfile } from '@/lib/types/profile';
 import UserFieldSignature from '@/components/identity/UserFieldSignature';
 
@@ -16,7 +16,7 @@ interface HeroProfilProps {
 
 export default function HeroProfil({ profile, onEditProfile, onShareProfile }: HeroProfilProps) {
   return (
-    <div className="relative w-full rounded-[1.75rem] overflow-hidden border border-white/50 shadow-md min-h-[300px] flex flex-col justify-between p-5 sm:p-7 font-sans">
+    <div className="relative w-full rounded-[var(--lkv-radius-card)] overflow-hidden border border-white/50 shadow-md min-h-[300px] flex flex-col justify-between p-5 sm:p-7 font-sans">
       {/* Photographic Mountain Hero Background */}
       <div className="absolute inset-0 z-0">
         <Image
@@ -28,48 +28,46 @@ export default function HeroProfil({ profile, onEditProfile, onShareProfile }: H
           className="object-cover"
         />
         {/* Soft Multi-stop Gradient Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-[#17402C]/90 via-[#17402C]/40 to-black/20" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[color:var(--lkv-primary)]/90 via-[color:var(--lkv-primary)]/40 to-black/20" />
       </div>
 
       {/* Top Header Row inside Hero */}
-      <div className="relative z-10 flex items-center justify-between gap-4">
+      <div className="relative z-[var(--z-dropdown)] flex items-center justify-between gap-4">
         {/* Badge Pill — pill verre */}
-        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/85 backdrop-blur-md border border-white/60 text-[10px] font-mono font-bold uppercase tracking-widest text-[#17402C] shadow-sm">
-          <span className="w-2 h-2 rounded-full bg-[#C89A3B]" />
+        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/85 backdrop-blur-md border border-white/60 text-[10px] font-mono font-bold uppercase tracking-widest text-[color:var(--lkv-primary)] shadow-sm">
+          <span className="w-2 h-2 rounded-full bg-[color:var(--lkv-warning)]" />
           <span>{profile.role_badge}</span>
         </div>
 
         {/* Action Buttons Top Right */}
         <div className="flex items-center gap-2.5">
-          <button
+          <Button
+            variant="secondary"
+            size="sm"
             onClick={onEditProfile}
-            className="glass-capsule-btn text-xs font-bold !py-1.5 !px-3.5 cursor-pointer"
+            icon={<Icon name="PencilSquareIcon" size={14} aria-hidden="true" />}
           >
-            <Icon name="PencilSquareIcon" size={14} />
-            <span>Modifier profil</span>
-          </button>
+            Modifier profil
+          </Button>
 
-          <button
+          <Button
+            size="sm"
             onClick={onShareProfile}
-            className="glass-capsule-btn primary text-xs font-bold !py-1.5 !px-3.5 cursor-pointer"
+            icon={<Icon name="ShareIcon" size={14} aria-hidden="true" />}
           >
-            <Icon name="ShareIcon" size={14} />
-            <span>Partager</span>
-          </button>
+            Partager
+          </Button>
         </div>
       </div>
 
       {/* Bottom Main Identity Card — MÊME STYLE que le bouton unique, posée sur la photo */}
-      <Card
-        className="relative z-10 mt-6"
-        style={{ padding: "20px 24px" }}
-      >
+      <Card className="relative z-[var(--z-dropdown)] mt-6 px-[var(--space-6)] py-[20px]">
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-5">
           
           <div className="flex items-start sm:items-center gap-4.5 max-w-2xl">
             {/* Avatar with Camera action */}
             <div className="relative shrink-0">
-              <div className="w-18 h-18 sm:w-20 sm:h-20 rounded-full overflow-hidden border-2 border-white shadow-md bg-[#17402C] relative">
+              <div className="w-18 h-18 sm:w-20 sm:h-20 rounded-full overflow-hidden border-2 border-white shadow-md bg-[color:var(--lkv-primary)] relative">
                 <Image
                   src={profile.avatar_url || '/assets/images/no_image.png'}
                   alt={`${profile.first_name} ${profile.last_name}`}
@@ -78,25 +76,27 @@ export default function HeroProfil({ profile, onEditProfile, onShareProfile }: H
                   className="object-cover"
                 />
               </div>
-              <button
+              <IconButton
+                variant="glass"
+                size="sm"
                 onClick={onEditProfile}
-                className="absolute -bottom-1 -right-1 glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8 !p-0 cursor-pointer"
-                title="Changer de photo"
+                aria-label="Changer de photo"
+                className="absolute -bottom-1 -right-1"
               >
-                <Icon name="image-plus" size={12} />
-              </button>
+                <Icon name="image-plus" size={12} aria-hidden="true" />
+              </IconButton>
             </div>
 
             {/* Names & Bio */}
             <div className="space-y-1.5">
-              <h1 className="font-display font-bold text-2xl sm:text-3xl tracking-tight text-white leading-tight" style={{ textShadow: 'var(--btn-text-shadow)' }}>
+              <h1 className="font-display font-bold text-2xl sm:text-3xl tracking-tight text-white leading-tight [text-shadow:var(--btn-text-shadow)]">
                 {profile.first_name}{' '}
-                <span className="font-serif italic font-normal text-[#F5D9A8]">
+                <span className="font-serif italic font-normal text-[color:var(--lkv-warm-300)]">
                   {profile.last_name}
                 </span>
               </h1>
 
-              <p className="text-xs sm:text-sm text-white/85 leading-relaxed font-medium" style={{ textShadow: 'var(--btn-text-shadow)' }}>
+              <p className="text-xs sm:text-sm text-white/85 leading-relaxed font-medium [text-shadow:var(--btn-text-shadow)]">
                 {profile.bio}
               </p>
 
@@ -110,18 +110,18 @@ export default function HeroProfil({ profile, onEditProfile, onShareProfile }: H
               </div>
 
               {/* Meta tags */}
-              <div className="flex flex-wrap items-center gap-2 pt-1 text-[11px] font-mono text-[#5A7064]">
-                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg bg-[#17402C]/5 border border-[#17402C]/5 font-sans font-medium text-xs text-[#365233]">
-                  <Icon name="MapPinIcon" size={12} className="text-[#8C6418]" />
+              <div className="flex flex-wrap items-center gap-2 pt-1 text-[11px] font-mono text-[color:var(--lkv-text-muted)]">
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg bg-[color:var(--lkv-primary)]/5 border border-[color:var(--lkv-primary)]/5 font-sans font-medium text-xs text-[color:var(--lkv-forest-600)]">
+                  <Icon name="MapPinIcon" size={12} className="text-[color:var(--lkv-warning-dark)]" />
                   {profile.location}
                 </span>
-                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg bg-[#17402C]/5 border border-[#17402C]/5 font-sans font-medium text-xs text-[#365233]">
-                  <Icon name="CalendarIcon" size={12} className="text-[#5B7F55]" />
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg bg-[color:var(--lkv-primary)]/5 border border-[color:var(--lkv-primary)]/5 font-sans font-medium text-xs text-[color:var(--lkv-forest-600)]">
+                  <Icon name="CalendarIcon" size={12} className="text-[color:var(--lkv-secondary)]" />
                   {profile.tenure}
                 </span>
                 <Link
                   href="/profil"
-                  className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg bg-[#5B7F55]/10 border border-[#5B7F55]/20 hover:bg-[#5B7F55]/20 transition-colors text-xs font-bold text-[#17402C] cursor-pointer"
+                  className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg bg-[color:var(--lkv-secondary)]/10 border border-[color:var(--lkv-secondary)]/20 hover:bg-[color:var(--lkv-secondary)]/20 transition-colors text-xs font-bold text-[color:var(--lkv-primary)] cursor-pointer"
                   title="Trust Score de confiance certifié LKDV"
                 >
                   <span>🛡️</span>
@@ -135,7 +135,7 @@ export default function HeroProfil({ profile, onEditProfile, onShareProfile }: H
           <div className="shrink-0 self-end md:self-center">
             <Link
               href="/hub"
-              className="glass-capsule-btn primary text-xs font-bold !py-2.5 !px-4 flex items-center gap-2 shadow-sm"
+              className="inline-flex items-center justify-center gap-[var(--space-2)] min-h-[var(--lkv-touch-min)] rounded-full px-[var(--space-4)] py-[var(--space-2)] text-[length:var(--lkv-text-footnote)] font-semibold backdrop-blur-[var(--blur-md)] border border-transparent bg-[color:var(--lkv-action)] text-[color:var(--lkv-on-action)] shadow-elevation-1 text-xs font-bold !py-2.5 !px-4 flex items-center gap-2 shadow-sm"
             >
               <span>🎒</span>
               <span>Mon Matériel</span>

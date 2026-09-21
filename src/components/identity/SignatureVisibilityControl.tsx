@@ -12,6 +12,7 @@
 import React, { useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { Card, Chip, LoadingState } from '@/components/ui';
 import type { SignatureVisibility } from '@/features/identity/fieldSignature';
 
 const OPTIONS: { value: SignatureVisibility; title: string; desc: string }[] = [
@@ -63,61 +64,46 @@ export default function SignatureVisibilityControl() {
   };
 
   return (
-    <div className="glass glass-sub-card p-5 rounded-2xl">
-      <p className="glass-eyebrow mb-1">Ton empreinte</p>
-      <h3 className="font-display font-bold text-[#17402C] text-lg tracking-tight mb-2">
+    <Card variant="featured" className="p-5">
+      <p className="font-mono text-[length:var(--lkv-text-caption-2)] uppercase tracking-[0.18em] text-[color:var(--lkv-text-muted)] mb-1">Ton empreinte</p>
+      <h3 className="font-display font-bold text-[color:var(--lkv-primary)] text-lg tracking-tight mb-2">
         Qui peut voir ta trace ?
       </h3>
-      <p className="text-sm text-[#5A7064] mb-4">
+      <p className="text-sm text-[color:var(--lkv-text-muted)] mb-4">
         Ton empreinte est dérivée de tes sorties (nombre, saisons, régions). Aucune coordonnée,
         aucun nom — mais c’est ta donnée : choisis qui la voit. Réversible à tout moment.
       </p>
 
       {!loaded ? (
-        <div className="flex justify-center py-6" role="status" aria-live="polite">
-          <div className="w-6 h-6 border-2 border-[#17402C] border-t-transparent rounded-full animate-spin" />
-        </div>
+        <LoadingState compact label="" />
       ) : (
-        <div className="glass-capsule-bar flex flex-wrap gap-1 p-1">
-          {OPTIONS.map((opt) => {
-            const active = value === opt.value;
-            return (
-              <button
-                key={opt.value}
-                type="button"
-                onClick={() => choose(opt.value)}
-                aria-pressed={active}
-                aria-label={`${opt.title} — ${opt.desc}`}
-                className="glass-capsule-segment text-sm font-medium transition-colors"
-                style={{
-                  minHeight: 44,
-                  padding: '10px 14px',
-                  borderRadius: 999,
-                  color: active ? '#17402C' : '#365233',
-                  background: active ? 'rgba(255,255,255,0.75)' : 'transparent',
-                  border: active ? '1px solid rgba(23,64,44,0.25)' : '1px solid transparent',
-                }}
-              >
-                {opt.title}
-              </button>
-            );
-          })}
+        <div className="flex flex-wrap gap-[var(--space-1)]">
+          {OPTIONS.map((opt) => (
+            <Chip
+              key={opt.value}
+              selected={value === opt.value}
+              onClick={() => choose(opt.value)}
+              aria-label={`${opt.title} — ${opt.desc}`}
+            >
+              {opt.title}
+            </Chip>
+          ))}
         </div>
       )}
 
       {loaded && (
-        <p className="text-xs text-[#5A7064] mt-3">
+        <p className="text-xs text-[color:var(--lkv-text-muted)] mt-3">
           {OPTIONS.find((o) => o.value === value)?.desc}
         </p>
       )}
       {saved && (
-        <p className="text-xs text-[#365233] font-medium mt-2" role="status" aria-live="polite">
+        <p className="text-xs text-[color:var(--lkv-forest-600)] font-medium mt-2" role="status" aria-live="polite">
           ✓ Préférence enregistrée
         </p>
       )}
       {error && (
-        <p className="text-xs text-[#8A241B] mt-2" role="alert">{error}</p>
+        <p className="text-xs text-[color:var(--lkv-danger-dark)] mt-2" role="alert">{error}</p>
       )}
-    </div>
+    </Card>
   );
 }

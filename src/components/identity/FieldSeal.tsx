@@ -7,7 +7,7 @@
  * l'empreinte (branches ~ saisons, densité ~ km, amplitude ~ D+).
  *
  * Contraintes dures :
- *  - UNIQUEMENT ink #17402C + sage-500 #5B7F55 + sage-300 #A6C1A0 sur verre —
+ *  - UNIQUEMENT ink var(--lkv-primary) + sage-500 var(--lkv-secondary) + sage-300 var(--sage-300) sur verre —
  *    AUCUN autre token, AUCUN hex nouveau.
  *  - Lisible en niveaux de gris : la FORME suffit toujours (WCAG 1.4.1), jamais
  *    d'information portée par la couleur seule.
@@ -20,9 +20,9 @@
 import React from 'react';
 import { fieldSealSeed, sealGeometry, type FieldSignatureRow } from '@/features/identity/fieldSignature';
 
-const INK = '#17402C';
-const SAGE_500 = '#5B7F55';
-const SAGE_300 = '#A6C1A0';
+const INK = 'var(--lkv-primary)';
+const SAGE_500 = 'var(--lkv-secondary)';
+const SAGE_300 = 'var(--sage-300)';
 
 interface FieldSealProps {
   userId: string;
@@ -100,7 +100,7 @@ export default function FieldSeal({ userId, signature, size = 48, ariaLabel }: F
       role={ariaLabel ? 'img' : 'presentation'}
       aria-hidden={ariaLabel ? undefined : true}
       aria-label={ariaLabel}
-      style={{ borderRadius: '50%', background: 'rgba(255,255,255,0.10)' }}
+      className="rounded-full bg-[color:var(--lkv-surface-card)]/10"
     >
       {rings}
       {spokes}

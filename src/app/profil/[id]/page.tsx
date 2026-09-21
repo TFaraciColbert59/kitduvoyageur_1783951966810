@@ -15,6 +15,7 @@ import CompteBackground from '@/components/compte/CompteBackground';
 import { MarbleZone } from '@/components/glass/MarbleZone';
 import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
 import PublicMobileProfileView from '@/components/profile/PublicMobileProfileView';
+import { EmptyState, LoadingState } from '@/components/ui';
 import {
   fetchFullProfile,
   fetchUserCarnets,
@@ -88,10 +89,7 @@ export default function PublicProfilePage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-transparent flex items-center justify-center">
-        <div className="flex flex-col items-center gap-3">
-          <div className="w-8 h-8 border-2 border-[#EEF3EC] border-t-transparent rounded-full animate-spin" />
-          <p className="text-sm text-[#CCE0D4] font-medium">Chargement du profil voyageur...</p>
-        </div>
+        <LoadingState label="Chargement du profil voyageur…" />
       </div>
     );
   }
@@ -99,16 +97,14 @@ export default function PublicProfilePage() {
   if (notFound || !profile) {
     return (
       <div className="min-h-screen bg-transparent flex items-center justify-center p-6">
-        <div className="glass text-center max-w-md p-8 rounded-3xl">
-          <p className="text-5xl mb-4">🧭</p>
-          <h2 className="font-display font-800 text-2xl text-[var(--lkv-primary)] mb-2">Profil introuvable</h2>
-          <p className="text-sm text-[var(--lkv-text-muted)] mb-6">Ce voyageur n&apos;existe pas ou son profil est indisponible.</p>
-          <Link
-            href="/communaute"
-            className="glass-capsule-btn primary text-xs font-bold"
-          >
-            Explorer la communauté
-          </Link>
+        <div className="bg-[color:var(--card-tint-strong)] border border-[color:var(--glass-border)] shadow-elevation-1 backdrop-blur-[var(--blur-lg)] text-center max-w-md p-8 rounded-3xl">
+          <EmptyState
+            icon={<span className="text-5xl">🧭</span>}
+            title="Profil introuvable"
+            description="Ce voyageur n'existe pas ou son profil est indisponible."
+            actionLabel="Explorer la communauté"
+            actionHref="/communaute"
+          />
         </div>
       </div>
     );
@@ -118,7 +114,7 @@ export default function PublicProfilePage() {
     <>
       {/* DESKTOP */}
       <div className="hidden md:block">
-        <div className="min-h-screen bg-transparent text-[var(--lkv-primary)] selection:bg-forest-900/20 font-sans relative">
+        <div className="min-h-screen bg-transparent text-[var(--lkv-primary)] selection:bg-[color:var(--lkv-primary)]/20 font-sans relative">
           <CompteBackground />
           <MarbleZone />
           <Header />
@@ -137,7 +133,7 @@ export default function PublicProfilePage() {
                 </div>
                 
                 <div className="flex items-center gap-3">
-                  <span className="px-3 py-1 bg-forest-100 text-forest-900 rounded-full text-xs font-bold border border-forest-300 flex items-center gap-1.5">
+                  <span className="px-3 py-1 bg-[color:var(--lkv-success-bg)] text-[color:var(--lkv-primary)] rounded-full text-xs font-bold border border-[color:var(--lkv-secondary)]/40 flex items-center gap-1.5">
                     <span>✓</span> Profil vérifié
                   </span>
                 </div>
@@ -193,7 +189,7 @@ export default function PublicProfilePage() {
 
           {/* Toast */}
           {toast && (
-            <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[110] bg-[var(--lkv-primary)] text-white px-6 py-3 rounded-full text-xs font-bold  flex items-center gap-2 border border-[var(--lkv-primary)]">
+            <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[var(--z-toast)] bg-[var(--lkv-primary)] text-white px-6 py-3 rounded-full text-xs font-bold  flex items-center gap-2 border border-[var(--lkv-primary)]">
               <span>✨</span>
               <span>{toast}</span>
             </div>
@@ -204,7 +200,7 @@ export default function PublicProfilePage() {
       {/* MOBILE */}
       <div className="block md:hidden">
         {/* safeTop=false: PublicMobileProfileView embarque son propre header sticky (PublicMobileProfileView.tsx:67)
-            qui calcule pt-[max(10px,env(safe-area-inset-top))] */}
+            qui calcule pt-[max(10px,var(--safe-top))] */}
         <MobilePageShell safeTop={false} background="transparent">
           <PublicMobileProfileView
             profile={profile as any}
@@ -221,7 +217,7 @@ export default function PublicProfilePage() {
           />
 
           {toast && (
-            <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-[110] bg-[var(--lkv-primary)] text-white px-5 py-2.5 rounded-full text-xs font-bold flex items-center gap-2 border border-white/20 shadow-xl">
+            <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-[var(--z-toast)] bg-[var(--lkv-primary)] text-white px-5 py-2.5 rounded-full text-xs font-bold flex items-center gap-2 border border-white/20 shadow-xl">
               <span>✨</span>
               <span>{toast}</span>
             </div>

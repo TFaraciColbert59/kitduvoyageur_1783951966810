@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import Icon from '@/components/ui/AppIcon';
+import { Button, Chip, Modal, Tabs } from '@/components/ui';
 import { createClient } from '@/lib/supabase/client';
 import { UserProfile } from '@/lib/mock/compte-marceline';
 import { newId } from '@/lib/uuid';
@@ -109,25 +110,25 @@ function translateWithdrawalStatus(status: string) {
 function getStatusBadgeStyle(status: string) {
   switch (status) {
     case 'paid':
-      return 'glass-pill';
+      return 'inline-flex items-center justify-center gap-[6px] rounded-full border border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-muted)] px-[var(--space-3)] py-[2px] text-[length:var(--lkv-text-caption-2)] font-medium text-[color:var(--lkv-text-primary)]';
     case 'rejected':
-      return 'glass-pill pill-danger';
+      return 'inline-flex items-center justify-center gap-[6px] rounded-full border border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-muted)] px-[var(--space-3)] py-[2px] text-[length:var(--lkv-text-caption-2)] font-medium text-[color:var(--lkv-text-primary)] pill-danger';
     case 'approved':
     case 'processing':
-      return 'glass-pill pill-info';
+      return 'inline-flex items-center justify-center gap-[6px] rounded-full border border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-muted)] px-[var(--space-3)] py-[2px] text-[length:var(--lkv-text-caption-2)] font-medium text-[color:var(--lkv-text-primary)] pill-info';
     case 'pending':
     case 'under_review':
     default:
-      return 'glass-pill pill-warn';
+      return 'inline-flex items-center justify-center gap-[6px] rounded-full border border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-muted)] px-[var(--space-3)] py-[2px] text-[length:var(--lkv-text-caption-2)] font-medium text-[color:var(--lkv-text-primary)] pill-warn';
   }
 }
 
 function getRarityColor(rarity: string) {
   switch (rarity?.toLowerCase()) {
-    case 'légendaire': return 'text-[#C89A3B]';
-    case 'épique': return 'text-[#4B6B7C]';
-    case 'rare': return 'text-[#5B7F55]';
-    default: return 'text-[#5A7064]';
+    case 'légendaire': return 'text-[color:var(--lkv-warning)]';
+    case 'épique': return 'text-[color:var(--lkv-info)]';
+    case 'rare': return 'text-[color:var(--lkv-secondary)]';
+    default: return 'text-[color:var(--lkv-text-muted)]';
   }
 }
 
@@ -454,170 +455,169 @@ export default function FideliteTab({ profile: initialProfile }: FideliteTabProp
     if (modalFilter === 'locked') modalBadges = badgesProgress.filter((b) => !b.is_unlocked && b.percentage === 0);
 
     return (
-      <div className="glass-modal-overlay">
-        <div className="glass-modal max-w-4xl w-full max-h-[90vh] flex flex-col p-7 space-y-6">
-          <div className="flex items-center justify-between border-b border-[#17402C]/5 pb-4">
-            <div>
-              <h3 className="font-display font-bold text-2xl text-[#17402C]">
-                Tous les <span className="font-serif italic font-normal text-[#365233]">badges</span>
-              </h3>
-              <p className="text-xs text-[#5A7064] font-mono mt-0.5">{unlockedBadges.length} / {totalBadges} débloqués</p>
-            </div>
-            <button onClick={() => setShowAllBadgesModal(false)} className="glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8 !p-0 transition-colors">
-              <Icon name="XMarkIcon" size={24} />
-            </button>
-          </div>
+      <Modal
+        open
+        onOpenChange={(next) => {
+          if (!next) setShowAllBadgesModal(false);
+        }}
+        title="Tous les badges"
+        description={`${unlockedBadges.length} / ${totalBadges} débloqués`}
+        size="lg"
+      >
+        <Tabs
+          options={[
+            { id: 'all', label: 'Tous les badges' },
+            { id: 'unlocked', label: 'Débloqués ✅' },
+            { id: 'in_progress', label: 'En cours 🔄' },
+            { id: 'locked', label: 'Verrouillés 🔒' },
+          ]}
+          value={modalFilter}
+          onChange={(id) => setModalFilter(id as 'all' | 'unlocked' | 'in_progress' | 'locked')}
+          variant="scrollable"
+          ariaLabel="Filtrer les badges"
+          className="mb-[var(--space-4)]"
+        />
 
-          <div className="glass-capsule-bar">
-            <div className="flex items-center gap-1 p-0.5 overflow-x-auto hide-scrollbar">
-              <button onClick={() => setModalFilter('all')} className={`glass-capsule-segment !px-3 !py-1 text-xs whitespace-nowrap ${modalFilter === 'all' ? 'active' : ''}`}>Tous les badges</button>
-              <button onClick={() => setModalFilter('unlocked')} className={`glass-capsule-segment !px-3 !py-1 text-xs whitespace-nowrap ${modalFilter === 'unlocked' ? 'active' : ''}`}>Débloqués ✅</button>
-              <button onClick={() => setModalFilter('in_progress')} className={`glass-capsule-segment !px-3 !py-1 text-xs whitespace-nowrap ${modalFilter === 'in_progress' ? 'active' : ''}`}>En cours 🔄</button>
-              <button onClick={() => setModalFilter('locked')} className={`glass-capsule-segment !px-3 !py-1 text-xs whitespace-nowrap ${modalFilter === 'locked' ? 'active' : ''}`}>Verrouillés 🔒</button>
-            </div>
-          </div>
-
-          <div className="flex-1 overflow-y-auto pr-1">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {modalBadges.map((badge) => (
-                <div key={badge.id} className="glass-sub-card rounded-2xl p-5 flex gap-4 items-start">
-                  <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 text-2xl ${badge.is_unlocked ? 'bg-white/60 border border-[#17402C]/10' : 'bg-black/5 opacity-50 grayscale'}`}>
+                <div key={badge.id} className="rounded-[var(--lkv-radius-md)] border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] backdrop-blur-[var(--blur-md)] p-5 flex gap-4 items-start">
+                  <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 text-2xl ${badge.is_unlocked ? 'bg-white/60 border border-[color:var(--lkv-primary)]/10' : 'bg-black/5 opacity-50 grayscale'}`}>
                     {badge.is_unlocked ? '🏆' : '🔒'}
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex justify-between items-start mb-1">
-                      <h4 className="font-bold text-[#17402C] text-sm truncate">{badge.name}</h4>
-                      <span className={`text-[10px] font-mono tracking-wide px-2 py-0.5 rounded-full bg-white/60 border border-[#17402C]/10 ${getRarityColor(badge.rarity)}`}>{badge.rarity}</span>
+                      <h4 className="font-bold text-[color:var(--lkv-primary)] text-sm truncate">{badge.name}</h4>
+                      <span className={`text-[10px] font-mono tracking-wide px-2 py-0.5 rounded-full bg-white/60 border border-[color:var(--lkv-primary)]/10 ${getRarityColor(badge.rarity)}`}>{badge.rarity}</span>
                     </div>
-                    <p className="text-xs text-[#5A7064] mb-3 line-clamp-2">{badge.description}</p>
+                    <p className="text-xs text-[color:var(--lkv-text-muted)] mb-3 line-clamp-2">{badge.description}</p>
 
                     <div className="space-y-1">
-                      <div className="flex justify-between text-[10px] font-mono font-bold text-[#5A7064]">
+                      <div className="flex justify-between text-[10px] font-mono font-bold text-[color:var(--lkv-text-muted)]">
                         <span>Progression : {badge.current_value} / {badge.requirement_value}</span>
                         <span>{badge.percentage} %</span>
                       </div>
-                      <div className="w-full h-1.5 bg-[#17402C]/10 rounded-full overflow-hidden">
+                      <div className="w-full h-1.5 bg-[color:var(--lkv-primary)]/10 rounded-full overflow-hidden">
                         <div
-                          className={`h-full rounded-full transition-all duration-500 ${badge.is_unlocked ? 'bg-[#17402C]' : badge.percentage > 0 ? 'bg-[#C89A3B]' : 'bg-[#5A7064]/30'}`}
+                          className={`h-full rounded-full transition-all duration-500 ${badge.is_unlocked ? 'bg-[color:var(--lkv-primary)]' : badge.percentage > 0 ? 'bg-[color:var(--lkv-warning)]' : 'bg-[color:var(--lkv-text-muted)]/30'}`}
                           style={{ width: `${badge.percentage}%` }}
                         />
                       </div>
                     </div>
 
-                    <div className="mt-3 pt-2.5 border-t border-[#17402C]/5 flex justify-between items-center text-[10px] font-bold">
+                    <div className="mt-3 pt-2.5 border-t border-[color:var(--lkv-primary)]/5 flex justify-between items-center text-[10px] font-bold">
                       {badge.is_unlocked ? (
-                        <span className="text-[#5B7F55]">✅ Débloqué</span>
+                        <span className="text-[color:var(--lkv-secondary)]">✅ Débloqué</span>
                       ) : badge.percentage > 0 ? (
-                        <span className="text-[#C89A3B]">🔄 En progression</span>
+                        <span className="text-[color:var(--lkv-warning)]">🔄 En progression</span>
                       ) : (
-                        <span className="text-[#5A7064]">🔒 Verrouillé</span>
+                        <span className="text-[color:var(--lkv-text-muted)]">🔒 Verrouillé</span>
                       )}
-                      <span className="text-[#17402C] font-mono">+{badge.points_reward} pts</span>
+                      <span className="text-[color:var(--lkv-primary)] font-mono">+{badge.points_reward} pts</span>
                     </div>
                   </div>
                 </div>
               ))}
 
               {modalBadges.length === 0 && (
-                <div className="col-span-1 md:col-span-2 py-12 text-center text-sm text-[#5A7064]">
+                <div className="col-span-1 md:col-span-2 py-12 text-center text-sm text-[color:var(--lkv-text-muted)]">
                   Aucun badge ne correspond à ce filtre.
                 </div>
               )}
-            </div>
-          </div>
         </div>
-      </div>
+      </Modal>
     );
   };
 
   if (loading && !account) {
     return (
       <div className="animate-pulse space-y-6">
-        <div className="h-44 glass rounded-[1.25rem]" />
+        <div className="h-44 bg-[color:var(--card-tint-strong)] border border-[color:var(--glass-border)] shadow-elevation-1 backdrop-blur-[var(--blur-lg)] rounded-[var(--lkv-radius-md)]" />
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="h-28 glass rounded-2xl" />
-          <div className="h-28 glass rounded-2xl" />
-          <div className="h-28 glass rounded-2xl" />
-          <div className="h-28 glass rounded-2xl" />
+          <div className="h-28 bg-[color:var(--card-tint-strong)] border border-[color:var(--glass-border)] shadow-elevation-1 backdrop-blur-[var(--blur-lg)] rounded-2xl" />
+          <div className="h-28 bg-[color:var(--card-tint-strong)] border border-[color:var(--glass-border)] shadow-elevation-1 backdrop-blur-[var(--blur-lg)] rounded-2xl" />
+          <div className="h-28 bg-[color:var(--card-tint-strong)] border border-[color:var(--glass-border)] shadow-elevation-1 backdrop-blur-[var(--blur-lg)] rounded-2xl" />
+          <div className="h-28 bg-[color:var(--card-tint-strong)] border border-[color:var(--glass-border)] shadow-elevation-1 backdrop-blur-[var(--blur-lg)] rounded-2xl" />
         </div>
-        <div className="h-96 glass rounded-[1.25rem]" />
+        <div className="h-96 bg-[color:var(--card-tint-strong)] border border-[color:var(--glass-border)] shadow-elevation-1 backdrop-blur-[var(--blur-lg)] rounded-[var(--lkv-radius-md)]" />
       </div>
     );
   }
 
   return (
     <>
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start relative pb-20 font-sans text-[#17402C]">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start relative pb-20 font-sans text-[color:var(--lkv-primary)]">
         {/* ════════════════ MAIN COLUMN ════════════════ */}
         <div className="lg:col-span-8 space-y-8">
           {/* ── Header ── */}
-          <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 border-b border-[#17402C]/5 pb-5">
+          <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 border-b border-[color:var(--lkv-primary)]/5 pb-5">
             <div>
               <div className="flex items-center gap-2 mb-1.5">
-                <span className="glass-pill !bg-[#17402C] !text-white text-[10px] font-mono uppercase tracking-wider">
+                <span className="inline-flex items-center justify-center gap-[6px] rounded-full border border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-muted)] px-[var(--space-3)] py-[2px] text-[length:var(--lkv-text-caption-2)] font-medium text-[color:var(--lkv-text-primary)] !bg-[color:var(--lkv-primary)] !text-white text-[10px] font-mono uppercase tracking-wider">
                   Partage de Valeur LKDV
                 </span>
               </div>
-              <h2 className="font-display font-bold text-3xl sm:text-4xl text-[#17402C] tracking-tight">
-                Gains <span className="font-serif italic font-normal text-[#365233]">&amp; Récompenses</span>
+              <h2 className="font-display font-bold text-3xl sm:text-4xl text-[color:var(--lkv-primary)] tracking-tight">
+                Gains <span className="font-serif italic font-normal text-[color:var(--lkv-forest-600)]">&amp; Récompenses</span>
               </h2>
-              <p className="text-xs text-[#5A7064] mt-1 max-w-xl">
+              <p className="text-xs text-[color:var(--lkv-text-muted)] mt-1 max-w-xl">
                 Gagnez des points grâce à vos carnets, likes et participations, et convertissez vos points en argent réel par virement bancaire ou PayPal.
               </p>
             </div>
             <div className="flex items-center gap-2 shrink-0">
-              <button
+              <Button
+                variant="primary"
+                size="sm"
+                icon={<Icon name="CurrencyEuroIcon" size={15} />}
                 onClick={() => {
                   const withdrawSection = document.getElementById('retrait-section');
                   withdrawSection?.scrollIntoView({ behavior: 'smooth' });
                 }}
-                className="glass-capsule-btn primary text-xs font-bold"
+                className="font-bold"
               >
-                <Icon name="CurrencyEuroIcon" size={15} />
-                <span>Demander un virement</span>
-              </button>
+                Demander un virement
+              </Button>
             </div>
           </div>
 
           {/* ── 4 Stats Grid ── */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="glass rounded-[1.25rem] p-4 flex flex-col justify-between">
-              <p className="text-[10px] font-mono tracking-widest text-[#5A7064] uppercase font-bold">Points actifs</p>
-              <p className="glass-metric text-2xl sm:text-3xl text-[#17402C] mt-1">
-                {currentPoints} <span className="text-xs font-normal font-mono text-[#5A7064]">PTS</span>
+            <div className="bg-[color:var(--card-tint-strong)] border border-[color:var(--glass-border)] shadow-elevation-1 backdrop-blur-[var(--blur-lg)] rounded-[var(--lkv-radius-md)] p-4 flex flex-col justify-between">
+              <p className="text-[10px] font-mono tracking-widest text-[color:var(--lkv-text-muted)] uppercase font-bold">Points actifs</p>
+              <p className="rounded-[var(--lkv-radius-lg)] border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] p-[var(--space-3)] backdrop-blur-[var(--blur-md)] text-2xl sm:text-3xl text-[color:var(--lkv-primary)] mt-1">
+                {currentPoints} <span className="text-xs font-normal font-mono text-[color:var(--lkv-text-muted)]">PTS</span>
               </p>
-              <p className="text-[10px] text-[#5A7064] mt-0.5 font-mono">Niveau {currentLevel.num} · {currentLevel.name}</p>
+              <p className="text-[10px] text-[color:var(--lkv-text-muted)] mt-0.5 font-mono">Niveau {currentLevel.num} · {currentLevel.name}</p>
             </div>
 
-            <div className="glass rounded-[1.25rem] p-4 flex flex-col justify-between">
-              <p className="text-[10px] font-mono tracking-widest text-[#5A7064] uppercase font-bold">Indice Confiance</p>
-              <p className="text-sm font-bold text-[#17402C] mt-2 truncate">
+            <div className="bg-[color:var(--card-tint-strong)] border border-[color:var(--glass-border)] shadow-elevation-1 backdrop-blur-[var(--blur-lg)] rounded-[var(--lkv-radius-md)] p-4 flex flex-col justify-between">
+              <p className="text-[10px] font-mono tracking-widest text-[color:var(--lkv-text-muted)] uppercase font-bold">Indice Confiance</p>
+              <p className="text-sm font-bold text-[color:var(--lkv-primary)] mt-2 truncate">
                 {getTrustLabel(trustScore)}
               </p>
-              <p className="text-[10px] text-[#5A7064] mt-0.5 font-mono">Score : {trustScore}/100</p>
+              <p className="text-[10px] text-[color:var(--lkv-text-muted)] mt-0.5 font-mono">Score : {trustScore}/100</p>
             </div>
 
-            <div className="glass rounded-[1.25rem] p-4 flex flex-col justify-between relative overflow-hidden">
-              <div className="absolute right-2 top-2 text-[#17402C]/10 text-3xl font-bold font-mono">€</div>
-              <p className="text-[10px] font-mono tracking-widest text-[#17402C] uppercase font-bold">Solde Disponible</p>
-              <p className="glass-metric text-2xl sm:text-3xl text-[#17402C] mt-1">
+            <div className="bg-[color:var(--card-tint-strong)] border border-[color:var(--glass-border)] shadow-elevation-1 backdrop-blur-[var(--blur-lg)] rounded-[var(--lkv-radius-md)] p-4 flex flex-col justify-between relative overflow-hidden">
+              <div className="absolute right-2 top-2 text-[color:var(--lkv-primary)]/10 text-3xl font-bold font-mono">€</div>
+              <p className="text-[10px] font-mono tracking-widest text-[color:var(--lkv-primary)] uppercase font-bold">Solde Disponible</p>
+              <p className="rounded-[var(--lkv-radius-lg)] border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] p-[var(--space-3)] backdrop-blur-[var(--blur-md)] text-2xl sm:text-3xl text-[color:var(--lkv-primary)] mt-1">
                 {availableCash.toFixed(2)} €
               </p>
-              <p className="text-[10px] text-[#5B7F55] mt-0.5 font-mono font-bold">Prêt au virement</p>
+              <p className="text-[10px] text-[color:var(--lkv-secondary)] mt-0.5 font-mono font-bold">Prêt au virement</p>
             </div>
 
-            <div className="glass rounded-[1.25rem] p-4 flex flex-col justify-between">
-              <p className="text-[10px] font-mono tracking-widest text-[#5A7064] uppercase font-bold">En cours de virement</p>
-              <p className="glass-metric text-2xl sm:text-3xl text-[#17402C]/70 mt-1">
+            <div className="bg-[color:var(--card-tint-strong)] border border-[color:var(--glass-border)] shadow-elevation-1 backdrop-blur-[var(--blur-lg)] rounded-[var(--lkv-radius-md)] p-4 flex flex-col justify-between">
+              <p className="text-[10px] font-mono tracking-widest text-[color:var(--lkv-text-muted)] uppercase font-bold">En cours de virement</p>
+              <p className="rounded-[var(--lkv-radius-lg)] border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] p-[var(--space-3)] backdrop-blur-[var(--blur-md)] text-2xl sm:text-3xl text-[color:var(--lkv-primary)]/70 mt-1">
                 {pendingCash.toFixed(2)} €
               </p>
-              <p className="text-[10px] text-[#5A7064] mt-0.5 font-mono">Traitement sous 5j</p>
+              <p className="text-[10px] text-[color:var(--lkv-text-muted)] mt-0.5 font-mono">Traitement sous 5j</p>
             </div>
           </div>
 
           {/* ── Hero Card (Progression Niveau) ── */}
-          <div className="bg-[#17402C] rounded-[1.5rem] p-6 sm:p-8 text-white relative overflow-hidden flex flex-col sm:flex-row items-center gap-8 border border-white/10 shadow-lg">
-            <div className="absolute top-0 right-0 w-96 h-96 bg-[#5B7F55]/20 rounded-full blur-[80px] -translate-y-1/2 translate-x-1/3 pointer-events-none" />
+          <div className="bg-[color:var(--lkv-primary)] rounded-[var(--lkv-radius-lg)] p-6 sm:p-8 text-white relative overflow-hidden flex flex-col sm:flex-row items-center gap-8 border border-white/10 shadow-lg">
+            <div className="absolute top-0 right-0 w-96 h-96 bg-[color:var(--lkv-secondary)]/20 rounded-full blur-[80px] -translate-y-1/2 translate-x-1/3 pointer-events-none" />
 
             {/* Left: Circle Gauge */}
             <div className="relative w-36 h-36 shrink-0">
@@ -628,7 +628,7 @@ export default function FideliteTab({ profile: initialProfile }: FideliteTabProp
                   cy="50"
                   r="45"
                   fill="transparent"
-                  stroke="#A6C1A0"
+                  stroke="var(--sage-300)"
                   strokeWidth="4"
                   strokeDasharray={`${progressPercent * 2.827} 282.7`}
                   strokeLinecap="round"
@@ -636,20 +636,20 @@ export default function FideliteTab({ profile: initialProfile }: FideliteTabProp
                 />
               </svg>
               <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <span className="text-[9px] font-mono tracking-widest text-[#A6C1A0] mb-0.5">NIVEAU</span>
+                <span className="text-[9px] font-mono tracking-widest text-[color:var(--sage-300)] mb-0.5">NIVEAU</span>
                 <span className="font-mono font-bold text-3xl leading-none mb-0.5">{currentLevel.num}</span>
                 <span className="font-mono font-bold text-base text-white">{currentPoints}</span>
-                <span className="text-[8px] text-[#A6C1A0]/70 font-mono">/ {currentLevel.max} pts</span>
+                <span className="text-[8px] text-[color:var(--sage-300)]/70 font-mono">/ {currentLevel.max} pts</span>
               </div>
             </div>
 
             {/* Middle: Text */}
-            <div className="flex-1 relative z-10 text-center sm:text-left">
-              <p className="text-[10px] font-mono tracking-widest text-[#A6C1A0] uppercase mb-1 font-bold">
+            <div className="flex-1 relative z-[var(--z-dropdown)] text-center sm:text-left">
+              <p className="text-[10px] font-mono tracking-widest text-[color:var(--sage-300)] uppercase mb-1 font-bold">
                 Statut Voyageur — {currentLevel.name}
               </p>
               <h3 className="font-display font-bold text-2xl text-white mb-2">
-                {progressPercent} % vers <span className="font-serif italic font-normal text-[#A6C1A0]">{nextLevel?.name || 'Palier Maximum'}</span>
+                {progressPercent} % vers <span className="font-serif italic font-normal text-[color:var(--sage-300)]">{nextLevel?.name || 'Palier Maximum'}</span>
               </h3>
               <p className="text-xs text-white/80 leading-relaxed max-w-md mx-auto sm:mx-0 font-serif italic">
                 {pointsToNext > 0
@@ -659,39 +659,39 @@ export default function FideliteTab({ profile: initialProfile }: FideliteTabProp
             </div>
 
             {/* Right: Badges Stat */}
-            <div className="shrink-0 relative z-10 bg-white/10 backdrop-blur-md rounded-2xl p-4 text-center border border-white/15 min-w-[120px]">
+            <div className="shrink-0 relative z-[var(--z-dropdown)] bg-white/10 backdrop-blur-md rounded-2xl p-4 text-center border border-white/15 min-w-[120px]">
               <p className="text-[9px] font-mono tracking-widest uppercase text-white/70 mb-1">Badges Débloqués</p>
               <p className="font-mono font-bold text-2xl text-white">{unlockedBadges.length} <span className="text-xs font-normal text-white/50">/ {totalBadges}</span></p>
             </div>
           </div>
 
           {/* ── CASH-OUT WITHDRAWAL SECTION ── */}
-          <div id="retrait-section" className="glass rounded-[1.25rem] p-6 sm:p-8 space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-[#17402C]/5 pb-4 gap-2">
+          <div id="retrait-section" className="bg-[color:var(--card-tint-strong)] border border-[color:var(--glass-border)] shadow-elevation-1 backdrop-blur-[var(--blur-lg)] rounded-[var(--lkv-radius-md)] p-6 sm:p-8 space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-[color:var(--lkv-primary)]/5 pb-4 gap-2">
               <div>
-                <h3 className="font-display font-bold text-[#17402C] text-lg flex items-center gap-2">
-                  <Icon name="CurrencyEuroIcon" size={20} className="text-[#17402C]" />
+                <h3 className="font-display font-bold text-[color:var(--lkv-primary)] text-lg flex items-center gap-2">
+                  <Icon name="CurrencyEuroIcon" size={20} className="text-[color:var(--lkv-primary)]" />
                   Demande de virement de vos gains
                 </h3>
-                <p className="text-xs text-[#5A7064] mt-0.5">
+                <p className="text-xs text-[color:var(--lkv-text-muted)] mt-0.5">
                   Convertissez vos points en cash et recevez votre argent directement sur votre compte bancaire ou PayPal.
                 </p>
               </div>
               <div className="text-right">
-                <span className="text-[10px] font-mono text-[#5A7064] uppercase block">Disponible</span>
-                <span className="font-mono font-bold text-xl text-[#17402C]">{availableCash.toFixed(2)} €</span>
+                <span className="text-[10px] font-mono text-[color:var(--lkv-text-muted)] uppercase block">Disponible</span>
+                <span className="font-mono font-bold text-xl text-[color:var(--lkv-primary)]">{availableCash.toFixed(2)} €</span>
               </div>
             </div>
 
             {withdrawError && (
-              <div className="p-4 bg-[#A8443A]/10 border border-[#A8443A]/20 text-[#A8443A] rounded-xl text-xs flex gap-2 items-center">
+              <div className="p-4 bg-[color:var(--lkv-danger)]/10 border border-[color:var(--lkv-danger)]/20 text-[color:var(--lkv-danger)] rounded-xl text-xs flex gap-2 items-center">
                 <span className="text-base">⚠️</span>
                 <span>{withdrawError}</span>
               </div>
             )}
 
             {withdrawSuccess && (
-              <div className="p-4 bg-[#5B7F55]/10 border border-[#5B7F55]/20 text-[#17402C] rounded-xl text-xs flex gap-2 items-center">
+              <div className="p-4 bg-[color:var(--lkv-secondary)]/10 border border-[color:var(--lkv-secondary)]/20 text-[color:var(--lkv-primary)] rounded-xl text-xs flex gap-2 items-center">
                 <span className="text-base">✅</span>
                 <span>{withdrawSuccess}</span>
               </div>
@@ -699,7 +699,7 @@ export default function FideliteTab({ profile: initialProfile }: FideliteTabProp
 
             <form onSubmit={handleWithdrawSubmit} className="space-y-5">
               <div>
-                <label htmlFor="amount" className="block text-xs font-mono font-bold text-[#17402C] mb-1.5 uppercase tracking-wider">
+                <label htmlFor="amount" className="block text-xs font-mono font-bold text-[color:var(--lkv-primary)] mb-1.5 uppercase tracking-wider">
                   Montant à retirer (€)
                 </label>
                 <div className="relative rounded-xl max-w-md">
@@ -710,58 +710,54 @@ export default function FideliteTab({ profile: initialProfile }: FideliteTabProp
                     id="amount"
                     value={withdrawAmount}
                     onChange={(e) => setWithdrawAmount(e.target.value)}
-                    className="glass-input w-full pr-14"
+                    className="min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[10px] text-[16px] text-[color:var(--lkv-text-primary)] outline-none transition-colors duration-[var(--motion-control-duration)] placeholder:text-[color:var(--lkv-text-muted)] focus:border-[color:var(--lkv-action)] focus:ring-[3px] focus:ring-[color:var(--lkv-focus-ring)] disabled:cursor-not-allowed disabled:bg-[color:var(--lkv-disabled-bg)] disabled:text-[color:var(--lkv-disabled-text)] sm:text-[length:var(--lkv-text-body-sm)] w-full pr-14"
                     placeholder={`Min. ${minThreshold.toFixed(2)}`}
                     required
                   />
-                  <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none text-xs text-[#5A7064] font-mono font-bold">
+                  <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none text-xs text-[color:var(--lkv-text-muted)] font-mono font-bold">
                     EUR (€)
                   </div>
                 </div>
-                <p className="text-[10px] text-[#5A7064] mt-1.5 font-mono">
+                <p className="text-[10px] text-[color:var(--lkv-text-muted)] mt-1.5 font-mono">
                   Seuil minimum de retrait : <strong>{minThreshold.toFixed(2)} €</strong> · Vos points sont débités instantanément.
                 </p>
               </div>
 
               <div>
-                <label className="block text-xs font-mono font-bold text-[#17402C] mb-1.5 uppercase tracking-wider">
+                <label className="block text-xs font-mono font-bold text-[color:var(--lkv-primary)] mb-1.5 uppercase tracking-wider">
                   Mode de versement
                 </label>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-md">
-                  <button
-                    type="button"
+                  <Chip
+                    selected={paymentProvider === 'bank_transfer'}
                     onClick={() => setPaymentProvider('bank_transfer')}
-                    className={`glass-capsule-btn flex items-center gap-3 !min-h-0 !p-3.5 transition-all text-left ${
-                      paymentProvider === 'bank_transfer' ? 'primary' : ''
-                    }`}
+                    className="min-h-[var(--lkv-touch-min)] w-full justify-start gap-3 px-[var(--space-4)] py-3 text-left"
                   >
-                    <span className="text-xl">🏦</span>
-                    <div>
-                      <p className="text-xs font-bold">Virement Bancaire (SEPA)</p>
-                      <p className="text-[10px] opacity-80">RIB / IBAN européen</p>
-                    </div>
-                  </button>
+                    <span className="text-xl" aria-hidden="true">🏦</span>
+                    <span>
+                      <span className="block text-xs font-bold">Virement Bancaire (SEPA)</span>
+                      <span className="block text-[10px] opacity-80">RIB / IBAN européen</span>
+                    </span>
+                  </Chip>
 
-                  <button
-                    type="button"
+                  <Chip
+                    selected={paymentProvider === 'paypal'}
                     onClick={() => setPaymentProvider('paypal')}
-                    className={`glass-capsule-btn flex items-center gap-3 !min-h-0 !p-3.5 transition-all text-left ${
-                      paymentProvider === 'paypal' ? 'primary' : ''
-                    }`}
+                    className="min-h-[var(--lkv-touch-min)] w-full justify-start gap-3 px-[var(--space-4)] py-3 text-left"
                   >
-                    <span className="text-xl">💳</span>
-                    <div>
-                      <p className="text-xs font-bold">PayPal</p>
-                      <p className="text-[10px] opacity-80">Virement direct par email</p>
-                    </div>
-                  </button>
+                    <span className="text-xl" aria-hidden="true">💳</span>
+                    <span>
+                      <span className="block text-xs font-bold">PayPal</span>
+                      <span className="block text-[10px] opacity-80">Virement direct par email</span>
+                    </span>
+                  </Chip>
                 </div>
               </div>
 
               {paymentProvider === 'bank_transfer' && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 glass-sub-card p-5 rounded-2xl">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 rounded-[var(--lkv-radius-md)] border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] backdrop-blur-[var(--blur-md)] p-5">
                   <div>
-                    <label htmlFor="iban" className="block text-[11px] text-[#17402C] mb-1 font-bold font-mono">
+                    <label htmlFor="iban" className="block text-[11px] text-[color:var(--lkv-primary)] mb-1 font-bold font-mono">
                       IBAN
                     </label>
                     <input
@@ -770,12 +766,12 @@ export default function FideliteTab({ profile: initialProfile }: FideliteTabProp
                       value={iban}
                       onChange={(e) => setIban(e.target.value)}
                       placeholder="FR76 3000 6000 0123 4567 8901 234"
-                      className="glass-input w-full font-mono text-xs"
+                      className="min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[10px] text-[16px] text-[color:var(--lkv-text-primary)] outline-none transition-colors duration-[var(--motion-control-duration)] placeholder:text-[color:var(--lkv-text-muted)] focus:border-[color:var(--lkv-action)] focus:ring-[3px] focus:ring-[color:var(--lkv-focus-ring)] disabled:cursor-not-allowed disabled:bg-[color:var(--lkv-disabled-bg)] disabled:text-[color:var(--lkv-disabled-text)] sm:text-[length:var(--lkv-text-body-sm)] w-full font-mono text-xs"
                       required
                     />
                   </div>
                   <div>
-                    <label htmlFor="bic" className="block text-[11px] text-[#17402C] mb-1 font-bold font-mono">
+                    <label htmlFor="bic" className="block text-[11px] text-[color:var(--lkv-primary)] mb-1 font-bold font-mono">
                       BIC / SWIFT
                     </label>
                     <input
@@ -784,7 +780,7 @@ export default function FideliteTab({ profile: initialProfile }: FideliteTabProp
                       value={bic}
                       onChange={(e) => setBic(e.target.value)}
                       placeholder="BNPAFRPPXXX"
-                      className="glass-input w-full font-mono text-xs"
+                      className="min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[10px] text-[16px] text-[color:var(--lkv-text-primary)] outline-none transition-colors duration-[var(--motion-control-duration)] placeholder:text-[color:var(--lkv-text-muted)] focus:border-[color:var(--lkv-action)] focus:ring-[3px] focus:ring-[color:var(--lkv-focus-ring)] disabled:cursor-not-allowed disabled:bg-[color:var(--lkv-disabled-bg)] disabled:text-[color:var(--lkv-disabled-text)] sm:text-[length:var(--lkv-text-body-sm)] w-full font-mono text-xs"
                       required
                     />
                   </div>
@@ -792,8 +788,8 @@ export default function FideliteTab({ profile: initialProfile }: FideliteTabProp
               )}
 
               {paymentProvider === 'paypal' && (
-                <div className="glass-sub-card p-5 rounded-2xl">
-                  <label htmlFor="paypalEmail" className="block text-[11px] text-[#17402C] mb-1 font-bold font-mono">
+                <div className="rounded-[var(--lkv-radius-md)] border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] backdrop-blur-[var(--blur-md)] p-5">
+                  <label htmlFor="paypalEmail" className="block text-[11px] text-[color:var(--lkv-primary)] mb-1 font-bold font-mono">
                     Adresse email du compte PayPal
                   </label>
                   <input
@@ -802,64 +798,58 @@ export default function FideliteTab({ profile: initialProfile }: FideliteTabProp
                     value={paypalEmail}
                     onChange={(e) => setPaypalEmail(e.target.value)}
                     placeholder="votre-email@domaine.com"
-                    className="glass-input w-full max-w-md font-mono text-xs"
+                    className="min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[10px] text-[16px] text-[color:var(--lkv-text-primary)] outline-none transition-colors duration-[var(--motion-control-duration)] placeholder:text-[color:var(--lkv-text-muted)] focus:border-[color:var(--lkv-action)] focus:ring-[3px] focus:ring-[color:var(--lkv-focus-ring)] disabled:cursor-not-allowed disabled:bg-[color:var(--lkv-disabled-bg)] disabled:text-[color:var(--lkv-disabled-text)] sm:text-[length:var(--lkv-text-body-sm)] w-full max-w-md font-mono text-xs"
                     required
                   />
                 </div>
               )}
 
-              <button
+              <Button
+                variant="primary"
+                size="sm"
                 type="submit"
-                disabled={submittingWithdraw || availableCash < minThreshold}
-                className="glass-capsule-btn primary text-xs font-bold disabled:opacity-40 disabled:cursor-not-allowed"
+                loading={submittingWithdraw}
+                disabled={availableCash < minThreshold}
+                icon={<Icon name="ArrowRightIcon" size={14} />}
+                className="font-bold"
               >
-                {submittingWithdraw ? (
-                  <>
-                    <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    <span>Enregistrement...</span>
-                  </>
-                ) : (
-                  <>
-                    <Icon name="ArrowRightIcon" size={14} />
-                    <span>Confirmer la demande de virement</span>
-                  </>
-                )}
-              </button>
+                {submittingWithdraw ? 'Enregistrement...' : 'Confirmer la demande de virement'}
+              </Button>
             </form>
           </div>
 
           {/* ── DEMANDES DE VIREMENTS & HISTORIQUE DES POINTS ── */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Withdrawals Table */}
-            <div className="glass rounded-[1.25rem] p-6 space-y-4">
-              <div className="flex items-center justify-between border-b border-[#17402C]/5 pb-3">
-                <h3 className="font-display font-bold text-[#17402C] text-sm flex items-center gap-1.5">
-                  <Icon name="CurrencyEuroIcon" size={16} className="text-[#17402C]" />
+            <div className="bg-[color:var(--card-tint-strong)] border border-[color:var(--glass-border)] shadow-elevation-1 backdrop-blur-[var(--blur-lg)] rounded-[var(--lkv-radius-md)] p-6 space-y-4">
+              <div className="flex items-center justify-between border-b border-[color:var(--lkv-primary)]/5 pb-3">
+                <h3 className="font-display font-bold text-[color:var(--lkv-primary)] text-sm flex items-center gap-1.5">
+                  <Icon name="CurrencyEuroIcon" size={16} className="text-[color:var(--lkv-primary)]" />
                   Demandes de virements
                 </h3>
-                <span className="text-[10px] font-mono text-[#5A7064]">{withdrawals.length} demandes</span>
+                <span className="text-[10px] font-mono text-[color:var(--lkv-text-muted)]">{withdrawals.length} demandes</span>
               </div>
 
               <div className="overflow-hidden rounded-xl max-h-80 overflow-y-auto">
                 {withdrawals.length === 0 ? (
-                  <div className="p-6 text-center text-xs text-[#5A7064] glass-sub-card rounded-xl">
+                  <div className="p-6 text-center text-xs text-[color:var(--lkv-text-muted)] rounded-[var(--lkv-radius-md)] border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] backdrop-blur-[var(--blur-md)]">
                     Aucune demande de virement.
                   </div>
                 ) : (
                   <table className="w-full text-left text-[11px] border-collapse">
                     <thead>
-                      <tr className="border-b border-[#17402C]/5 text-[#5A7064] uppercase font-mono text-[9px] tracking-wider">
+                      <tr className="border-b border-[color:var(--lkv-primary)]/5 text-[color:var(--lkv-text-muted)] uppercase font-mono text-[9px] tracking-wider">
                         <th className="p-2.5">Montant</th>
                         <th className="p-2.5">Méthode</th>
                         <th className="p-2.5 text-center">Statut</th>
                         <th className="p-2.5 text-right">Date</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-[#17402C]/5">
+                    <tbody className="divide-y divide-[color:var(--lkv-primary)]/5">
                       {withdrawals.map((w) => (
                         <tr key={w.id} className="hover:bg-white/40 transition-colors">
-                          <td className="p-2.5 font-bold font-mono text-[#17402C]">{w.amount.toFixed(2)} €</td>
-                          <td className="p-2.5 text-[#5A7064] font-mono text-[10px]">
+                          <td className="p-2.5 font-bold font-mono text-[color:var(--lkv-primary)]">{w.amount.toFixed(2)} €</td>
+                          <td className="p-2.5 text-[color:var(--lkv-text-muted)] font-mono text-[10px]">
                             {w.payment_provider === 'bank_transfer' ? 'Banque' : 'PayPal'}
                           </td>
                           <td className="p-2.5 text-center">
@@ -867,7 +857,7 @@ export default function FideliteTab({ profile: initialProfile }: FideliteTabProp
                               {translateWithdrawalStatus(w.status)}
                             </span>
                           </td>
-                          <td className="p-2.5 text-right text-[#5A7064] font-mono text-[10px]">
+                          <td className="p-2.5 text-right text-[color:var(--lkv-text-muted)] font-mono text-[10px]">
                             {formatDateShort(w.requested_at)}
                           </td>
                         </tr>
@@ -879,37 +869,37 @@ export default function FideliteTab({ profile: initialProfile }: FideliteTabProp
             </div>
 
             {/* Points Transactions Ledger */}
-            <div className="glass rounded-[1.25rem] p-6 space-y-4">
-              <div className="flex items-center justify-between border-b border-[#17402C]/5 pb-3">
-                <h3 className="font-display font-bold text-[#17402C] text-sm flex items-center gap-1.5">
-                  <Icon name="ClipboardDocumentListIcon" size={16} className="text-[#17402C]" />
+            <div className="bg-[color:var(--card-tint-strong)] border border-[color:var(--glass-border)] shadow-elevation-1 backdrop-blur-[var(--blur-lg)] rounded-[var(--lkv-radius-md)] p-6 space-y-4">
+              <div className="flex items-center justify-between border-b border-[color:var(--lkv-primary)]/5 pb-3">
+                <h3 className="font-display font-bold text-[color:var(--lkv-primary)] text-sm flex items-center gap-1.5">
+                  <Icon name="ClipboardDocumentListIcon" size={16} className="text-[color:var(--lkv-primary)]" />
                   Historique des gains
                 </h3>
-                <span className="text-[10px] font-mono text-[#5A7064]">{transactions.length} entrées</span>
+                <span className="text-[10px] font-mono text-[color:var(--lkv-text-muted)]">{transactions.length} entrées</span>
               </div>
 
               <div className="overflow-hidden rounded-xl max-h-80 overflow-y-auto">
                 {transactions.length === 0 ? (
-                  <div className="p-6 text-center text-xs text-[#5A7064] glass-sub-card rounded-xl">
+                  <div className="p-6 text-center text-xs text-[color:var(--lkv-text-muted)] rounded-[var(--lkv-radius-md)] border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] backdrop-blur-[var(--blur-md)]">
                     Aucune transaction de points.
                   </div>
                 ) : (
                   <table className="w-full text-left text-[11px] border-collapse">
                     <thead>
-                      <tr className="border-b border-[#17402C]/5 text-[#5A7064] uppercase font-mono text-[9px] tracking-wider">
+                      <tr className="border-b border-[color:var(--lkv-primary)]/5 text-[color:var(--lkv-text-muted)] uppercase font-mono text-[9px] tracking-wider">
                         <th className="p-2.5">Type</th>
                         <th className="p-2.5 text-right">Points</th>
                         <th className="p-2.5 text-right">Date</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-[#17402C]/5">
+                    <tbody className="divide-y divide-[color:var(--lkv-primary)]/5">
                       {transactions.map((tx) => (
                         <tr key={tx.id} className="hover:bg-white/40 transition-colors">
-                          <td className="p-2.5 text-[#17402C] font-semibold">{translateTxType(tx.transaction_type)}</td>
-                          <td className={`p-2.5 text-right font-mono font-bold ${tx.points >= 0 ? 'text-[#5B7F55]' : 'text-[#A8443A]'}`}>
+                          <td className="p-2.5 text-[color:var(--lkv-primary)] font-semibold">{translateTxType(tx.transaction_type)}</td>
+                          <td className={`p-2.5 text-right font-mono font-bold ${tx.points >= 0 ? 'text-[color:var(--lkv-secondary)]' : 'text-[color:var(--lkv-danger)]'}`}>
                             {tx.points >= 0 ? `+${tx.points}` : tx.points} PTS
                           </td>
-                          <td className="p-2.5 text-right text-[#5A7064] font-mono text-[10px]">
+                          <td className="p-2.5 text-right text-[color:var(--lkv-text-muted)] font-mono text-[10px]">
                             {formatDateShort(tx.created_at)}
                           </td>
                         </tr>
@@ -922,22 +912,28 @@ export default function FideliteTab({ profile: initialProfile }: FideliteTabProp
           </div>
 
           {/* ── Vos Badges de Voyageur ── */}
-          <div className="glass rounded-[1.25rem] p-6 sm:p-8 space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-[#17402C]/5 pb-4">
+          <div className="bg-[color:var(--card-tint-strong)] border border-[color:var(--glass-border)] shadow-elevation-1 backdrop-blur-[var(--blur-lg)] rounded-[var(--lkv-radius-md)] p-6 sm:p-8 space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-[color:var(--lkv-primary)]/5 pb-4">
               <div>
-                <h3 className="font-display font-bold text-xl text-[#17402C]">
-                  Vos <span className="font-serif italic font-normal text-[#365233]">badges &amp; exploits</span>
+                <h3 className="font-display font-bold text-xl text-[color:var(--lkv-primary)]">
+                  Vos <span className="font-serif italic font-normal text-[color:var(--lkv-forest-600)]">badges &amp; exploits</span>
                 </h3>
-                <p className="text-xs text-[#5A7064] mt-0.5">
+                <p className="text-xs text-[color:var(--lkv-text-muted)] mt-0.5">
                   {unlockedBadges.length} badges gagnés sur {totalBadges}. Chaque étape débloque des points d'activité.
                 </p>
               </div>
-              <div className="glass-capsule-bar shrink-0">
-                <div className="flex items-center gap-1 p-0.5">
-                  <button onClick={() => setBadgeFilter('all')} className={`glass-capsule-segment !px-3 !py-1 text-xs ${badgeFilter === 'all' ? 'active' : ''}`}>Tous ({totalBadges})</button>
-                  <button onClick={() => setBadgeFilter('earned')} className={`glass-capsule-segment !px-3 !py-1 text-xs ${badgeFilter === 'earned' ? 'active' : ''}`}>Gagnés ({unlockedBadges.length})</button>
-                  <button onClick={() => setBadgeFilter('locked')} className={`glass-capsule-segment !px-3 !py-1 text-xs ${badgeFilter === 'locked' ? 'active' : ''}`}>À débloquer</button>
-                </div>
+              <div className="inline-flex gap-[var(--space-1)] rounded-full border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] p-[var(--space-1)] backdrop-blur-[var(--blur-md)] shrink-0">
+                <Tabs
+                  options={[
+                    { id: 'all', label: `Tous (${totalBadges})` },
+                    { id: 'earned', label: `Gagnés (${unlockedBadges.length})` },
+                    { id: 'locked', label: 'À débloquer' },
+                  ]}
+                  value={badgeFilter}
+                  onChange={(id) => setBadgeFilter(id as 'all' | 'earned' | 'locked')}
+                  ariaLabel="Filtrer les badges"
+                  className="w-auto"
+                />
               </div>
             </div>
 
@@ -945,14 +941,10 @@ export default function FideliteTab({ profile: initialProfile }: FideliteTabProp
               {filteredBadges.slice(0, 12).map((badge) => (
                 <div
                   key={badge.id}
-                  className={`glass-sub-card flex flex-col items-center justify-center p-3.5 rounded-2xl transition-all ${
-                    badge.is_unlocked
-                      ? ''
-                      : 'opacity-50 grayscale'
-                  }`}
+                  className={`rounded-[var(--lkv-radius-md)] border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] backdrop-blur-[var(--blur-md)] flex flex-col items-center justify-center p-3.5 transition-all ${ badge.is_unlocked ? '' : 'opacity-50 grayscale' }`}
                 >
                   <span className="text-2xl mb-1.5">{badge.is_unlocked ? '🏆' : '🔒'}</span>
-                  <span className="text-[11px] font-bold text-[#17402C] text-center leading-tight mb-1 truncate w-full">{badge.name}</span>
+                  <span className="text-[11px] font-bold text-[color:var(--lkv-primary)] text-center leading-tight mb-1 truncate w-full">{badge.name}</span>
                   <span className={`text-[9px] font-mono tracking-wide ${getRarityColor(badge.rarity)}`}>
                     +{badge.points_reward} pts
                   </span>
@@ -961,12 +953,9 @@ export default function FideliteTab({ profile: initialProfile }: FideliteTabProp
             </div>
 
             <div className="text-center pt-2">
-              <button
-                onClick={() => setShowAllBadgesModal(true)}
-                className="glass-capsule-btn text-xs font-bold"
-              >
+              <Button variant="secondary" size="sm" onClick={() => setShowAllBadgesModal(true)} className="font-bold">
                 Voir tous les {totalBadges} badges en détail
-              </button>
+              </Button>
             </div>
           </div>
         </div>
@@ -974,12 +963,12 @@ export default function FideliteTab({ profile: initialProfile }: FideliteTabProp
         {/* ════════════════ SIDEBAR ════════════════ */}
         <div className="lg:col-span-4 space-y-6">
           {/* ── Échelle des niveaux ── */}
-          <div className="glass rounded-[1.25rem] p-6 space-y-4">
+          <div className="bg-[color:var(--card-tint-strong)] border border-[color:var(--glass-border)] shadow-elevation-1 backdrop-blur-[var(--blur-lg)] rounded-[var(--lkv-radius-md)] p-6 space-y-4">
             <div>
-              <h4 className="font-display font-bold text-[#17402C] text-base">
-                Échelle <span className="font-serif italic font-normal text-[#365233]">des niveaux</span>
+              <h4 className="font-display font-bold text-[color:var(--lkv-primary)] text-base">
+                Échelle <span className="font-serif italic font-normal text-[color:var(--lkv-forest-600)]">des niveaux</span>
               </h4>
-              <p className="text-[11px] text-[#5A7064]">
+              <p className="text-[11px] text-[color:var(--lkv-text-muted)]">
                 Le chemin depuis Curieux jusqu&apos;à Ambassadeur.
               </p>
             </div>
@@ -992,39 +981,33 @@ export default function FideliteTab({ profile: initialProfile }: FideliteTabProp
                 return (
                   <div
                     key={lvl.num}
-                    className={`flex items-start gap-3.5 p-3 rounded-2xl transition-all ${
-                      isCurrent
-                        ? 'bg-[#17402C] text-white shadow-md'
-                        : isPassed
-                        ? 'glass-sub-card opacity-70'
-                        : 'glass-sub-card'
-                    }`}
+                    className={`flex items-start gap-3.5 p-3 transition-all ${ isCurrent ? 'bg-[color:var(--lkv-primary)] text-white shadow-md' : isPassed ? 'rounded-[var(--lkv-radius-md)] border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] backdrop-blur-[var(--blur-md)] opacity-70' : 'rounded-[var(--lkv-radius-md)] border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] backdrop-blur-[var(--blur-md)]' }`}
                   >
                     <div
                       className={`w-7 h-7 rounded-full flex items-center justify-center font-mono font-bold text-xs shrink-0 ${
                         isCurrent
-                          ? 'bg-white/20 text-[#A6C1A0]'
+                          ? 'bg-white/20 text-[color:var(--sage-300)]'
                           : isPassed
-                          ? 'bg-[#17402C]/10 text-[#17402C]'
-                          : 'bg-white text-[#5A7064]'
+                          ? 'bg-[color:var(--lkv-primary)]/10 text-[color:var(--lkv-primary)]'
+                          : 'bg-white text-[color:var(--lkv-text-muted)]'
                       }`}
                     >
                       {lvl.num}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex justify-between items-center">
-                        <p className={`font-bold text-xs ${isCurrent ? 'text-white' : 'text-[#17402C]'}`}>{lvl.name}</p>
-                        <span className={`text-[10px] font-mono ${isCurrent ? 'text-[#A6C1A0]' : 'text-[#5A7064]'}`}>
+                        <p className={`font-bold text-xs ${isCurrent ? 'text-white' : 'text-[color:var(--lkv-primary)]'}`}>{lvl.name}</p>
+                        <span className={`text-[10px] font-mono ${isCurrent ? 'text-[color:var(--sage-300)]' : 'text-[color:var(--lkv-text-muted)]'}`}>
                           {lvl.min === 4000 ? '4 000+ pts' : `${lvl.min} - ${lvl.max} pts`}
                         </span>
                       </div>
                       {isCurrent && pointsToNext > 0 && (
-                        <p className="text-[11px] text-[#A6C1A0] mt-1 font-serif italic leading-tight">
+                        <p className="text-[11px] text-[color:var(--sage-300)] mt-1 font-serif italic leading-tight">
                           Encore {pointsToNext} pts → niveau {nextLevel?.num}
                         </p>
                       )}
                       {isPassed && (
-                        <p className="text-[10px] text-[#5B7F55] font-bold mt-0.5 flex items-center gap-1">
+                        <p className="text-[10px] text-[color:var(--lkv-secondary)] font-bold mt-0.5 flex items-center gap-1">
                           <Icon name="CheckIcon" size={11} />
                           Niveau atteint
                         </p>
@@ -1037,20 +1020,20 @@ export default function FideliteTab({ profile: initialProfile }: FideliteTabProp
           </div>
 
           {/* ── Guide & Règles de rémunération ── */}
-          <div className="glass rounded-[1.25rem] p-6 space-y-4">
-            <h4 className="font-display font-bold text-[#17402C] text-base flex items-center gap-1.5">
-              <Icon name="BookOpenIcon" size={18} className="text-[#17402C]" />
+          <div className="bg-[color:var(--card-tint-strong)] border border-[color:var(--glass-border)] shadow-elevation-1 backdrop-blur-[var(--blur-lg)] rounded-[var(--lkv-radius-md)] p-6 space-y-4">
+            <h4 className="font-display font-bold text-[color:var(--lkv-primary)] text-base flex items-center gap-1.5">
+              <Icon name="BookOpenIcon" size={18} className="text-[color:var(--lkv-primary)]" />
               Règles et Fonctionnement
             </h4>
-            <div className="text-[11px] text-[#5A7064] space-y-3 leading-relaxed">
+            <div className="text-[11px] text-[color:var(--lkv-text-muted)] space-y-3 leading-relaxed">
               <p>
-                <strong className="text-[#17402C]">1. Économie Solvable :</strong> La valeur du point est adossée aux revenus réels générés par la plateforme. Plus la communauté grandit, plus le pool de récompenses distribué augmente.
+                <strong className="text-[color:var(--lkv-primary)]">1. Économie Solvable :</strong> La valeur du point est adossée aux revenus réels générés par la plateforme. Plus la communauté grandit, plus le pool de récompenses distribué augmente.
               </p>
               <p>
-                <strong className="text-[#17402C]">2. Qualité du Contenu :</strong> Les carnets détaillés, photos et commentaires utiles reçoivent des multiplicateurs de points. Les messages génériques (&quot;super&quot;, &quot;cool&quot;) sont filtrés.
+                <strong className="text-[color:var(--lkv-primary)]">2. Qualité du Contenu :</strong> Les carnets détaillés, photos et commentaires utiles reçoivent des multiplicateurs de points. Les messages génériques (&quot;super&quot;, &quot;cool&quot;) sont filtrés.
               </p>
               <p>
-                <strong className="text-[#17402C]">3. Délais de Virement :</strong> Les virements sont vérifiés et émis par notre équipe sous 5 jours ouvrés par virement SEPA ou PayPal.
+                <strong className="text-[color:var(--lkv-primary)]">3. Délais de Virement :</strong> Les virements sont vérifiés et émis par notre équipe sous 5 jours ouvrés par virement SEPA ou PayPal.
               </p>
             </div>
           </div>
@@ -1063,7 +1046,7 @@ export default function FideliteTab({ profile: initialProfile }: FideliteTabProp
 
       {/* Global Toast */}
       {toast && (
-        <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[300] bg-[#17402C] text-white px-6 py-3 rounded-full text-xs font-extrabold  animate-fade-in-up flex items-center gap-2 border border-white/20">
+        <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[var(--z-toast)] bg-[color:var(--lkv-primary)] text-white px-6 py-3 rounded-full text-xs font-extrabold  animate-fade-in-up flex items-center gap-2 border border-white/20">
           <Icon name="CheckIcon" size={14} />
           <span>{toast}</span>
         </div>

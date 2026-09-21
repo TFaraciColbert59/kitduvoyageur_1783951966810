@@ -1,11 +1,11 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import Header from '@/components/Header';
 import { CompteBackground } from '@/components/compte/CompteBackground';
 import { MarbleZone } from '@/components/glass/MarbleZone';
+import { EmptyState, LoadingState } from '@/components/ui';
 import HeroProfil from '@/components/compte/HeroProfil';
 import StatsBandeau from '@/components/compte/StatsBandeau';
 import { CompteTab } from '@/components/compte/TabsCompte';
@@ -86,10 +86,7 @@ export default function ComptePage() {
     return (
       <div className="h-dvh flex items-center justify-center font-sans relative">
         <CompteBackground />
-        <div className="glass rounded-2xl p-6 flex flex-col items-center gap-3">
-          <div className="w-8 h-8 border-2 border-[var(--card-content)] border-t-transparent rounded-full animate-spin" />
-          <p className="text-sm text-[var(--card-content)] font-semibold">{t('account.loadingDashboard')}</p>
-        </div>
+        <LoadingState label={t('account.loadingDashboard')} />
       </div>
     );
   }
@@ -98,13 +95,14 @@ export default function ComptePage() {
     return (
       <AppShell>
         <div className="min-h-[70vh] flex items-center justify-center font-sans relative p-4">
-          <div className="glass rounded-3xl p-8 text-center max-w-md shadow-xl">
-            <p className="text-5xl mb-4">🔐</p>
-            <h2 className="font-display font-bold text-2xl text-[var(--card-content)] mb-2 tracking-tight">{t('account.signInRequired')}</h2>
-            <p className="text-sm text-[var(--glass-text-secondary)] mb-6">{t('account.signInRequiredBody')}</p>
-            <Link href="/connexion?mode=connexion" className="glass-capsule-btn primary">
-              {t('auth.submitSignIn')}
-            </Link>
+          <div className="bg-[color:var(--card-tint-strong)] border border-[color:var(--glass-border)] shadow-elevation-1 backdrop-blur-[var(--blur-lg)] rounded-3xl p-8 max-w-md w-full">
+            <EmptyState
+              icon={<span className="text-5xl">🔐</span>}
+              title={t('account.signInRequired')}
+              description={t('account.signInRequiredBody')}
+              actionLabel={t('auth.submitSignIn')}
+              actionHref="/connexion?mode=connexion"
+            />
           </div>
         </div>
       </AppShell>
@@ -182,7 +180,7 @@ export default function ComptePage() {
       {/* Mobile-only app-like view */}
       <div className="block md:hidden min-h-screen">
         {/* safeTop=false: MobileCompteV2 embarque son propre header sticky (MobileCompteV2.tsx:460)
-            qui calcule pt-[calc(max(env(safe-area-inset-top,0px),10px)+6px)] */}
+            qui calcule pt-[calc(max(var(--safe-top),10px)+6px)] */}
         <MobilePageShell safeTop={false} background="transparent">
           <MobileCompteV2 />
         </MobilePageShell>
@@ -253,7 +251,7 @@ export default function ComptePage() {
 
       {/* Global Toast */}
       {toast && (
-        <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[300] bg-[var(--lkv-primary)] text-white px-6 py-3 rounded-full text-xs font-extrabold animate-fade-in-up flex items-center gap-2 border border-white/20 shadow-2xl">
+        <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[var(--z-toast)] bg-[var(--lkv-primary)] text-white px-6 py-3 rounded-full text-xs font-extrabold animate-fade-in-up flex items-center gap-2 border border-white/20 shadow-2xl">
           <span>{toast}</span>
         </div>
       )}

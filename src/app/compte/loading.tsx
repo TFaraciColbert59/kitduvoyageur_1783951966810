@@ -6,8 +6,8 @@ export default function AccountLoading() {
     <div className="min-h-screen bg-transparent pb-24 md:pb-12 pt-2 md:pt-24" aria-busy="true" aria-label="Chargement du compte…">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 space-y-4">
         {/* Mobile profile card */}
-        <div className="bg-white/40 backdrop-blur-md rounded-[1.25rem] p-5 border border-white/60  space-y-4">
-          <div className="flex items-center gap-4 border-b border-[#F0ECE1] pb-4">
+        <div className="bg-white/40 backdrop-blur-md rounded-[var(--lkv-radius-md)] p-5 border border-white/60 space-y-4">
+          <div className="flex items-center gap-4 border-b border-[color:var(--sand-200)] pb-4">
             <Skeleton className="h-16 w-16 md:h-20 md:w-20 rounded-full flex-shrink-0" />
             <div className="space-y-2 flex-1 min-w-0">
               <Skeleton className="h-6 w-36" />

@@ -2,9 +2,21 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { motion, AnimatePresence } from 'framer-motion';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import Icon from '@/components/ui/AppIcon';
+import {
+  Badge,
+  Button,
+  Card,
+  Chip,
+  EmptyState,
+  IconButton,
+  ListItem,
+  PageHeader,
+  Sheet,
+  Tabs,
+} from '@/components/ui';
+import SmartImage from '@/components/ui/SmartImage';
 import {
   type CompteUserProfile,
   type CompteCarnet,
@@ -24,6 +36,14 @@ interface PublicMobileProfileViewProps {
 
 type TabKey = 'tout' | 'carnets' | 'clubs' | 'badges';
 type ViewMode = 'grid' | 'list';
+
+const ACTIVITY_ICONS: Record<CompteActiviteItem['icon_type'], string> = {
+  like: 'heart',
+  badge: 'award',
+  order: 'shopping-bag',
+  comment: 'message-square',
+  follow: 'user-plus',
+};
 
 export default function PublicMobileProfileView({
   profile,
@@ -48,7 +68,6 @@ export default function PublicMobileProfileView({
   const carnetsCount = carnets.length || (profile.stats?.carnets ?? 0);
   const clubsCount = clubs.length || (profile.stats?.clubs ?? 0);
 
-  // Story Highlights basés sur les carnets ou clubs du profil
   const highlights = carnets.slice(0, 5).map((c, i) => ({
     id: c.id,
     label: c.title?.split(' ')[0] || `Étape 0${i + 1}`,
@@ -61,61 +80,46 @@ export default function PublicMobileProfileView({
   };
 
   return (
-    <div className="min-h-screen pb-36 font-sans selection:bg-[#17402C]/10 bg-transparent">
-      {/* ══════════════════════════════════════════════════════════════════════
-          1. HEADER COMPACT & STATUT (Frosted Liquid Glass)
-         ══════════════════════════════════════════════════════════════════════ */}
-      <header className="sticky top-0 z-30 px-4 pt-[max(10px,env(safe-area-inset-top))] pb-2.5 flex items-center justify-between backdrop-blur-xl border-b border-white/70 bg-white/80 shadow-2xs">
-        <Link
-          href="/communaute"
-          onClick={() => triggerHaptic('light')}
-          className="glass-capsule-btn text-xs font-bold !py-1.5 !px-3 cursor-pointer"
-        >
-          <span className="text-sm font-bold">‹</span>
-          <span>Communauté</span>
-        </Link>
+    <div className="min-h-screen pb-36 font-sans selection:bg-[color:var(--lkv-primary)]/10 bg-transparent">
+      <PageHeader
+        sticky
+        back
+        backHref="/communaute"
+        backLabel="Communauté"
+        title={handleName}
+        subtitle={`Niv.${levelNum} · ${levelTitle}`}
+        className="px-4 pt-[var(--safe-top)] pb-2.5"
+        actions={
+          <IconButton
+            variant="glass"
+            size="sm"
+            aria-label="Partager ce profil"
+            onClick={() => {
+              triggerHaptic('light');
+              onShare();
+            }}
+          >
+            <Icon name="share2" size={15} />
+          </IconButton>
+        }
+      />
 
-        <div className="flex items-center gap-1.5">
-          <span className="font-display font-extrabold text-sm text-[#17402C] truncate max-w-[140px]">
-            {handleName}
-          </span>
-          <span className="glass-pill font-mono text-[10px]">
-            Niv.{levelNum}
-          </span>
-        </div>
-
-        <button
-          onClick={() => {
-            triggerHaptic('light');
-            onShare();
-          }}
-          aria-label="Partager ce profil"
-          className="glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8 cursor-pointer"
-        >
-          <Icon name="share2" size={15} />
-        </button>
-      </header>
-
-      {/* ══════════════════════════════════════════════════════════════════════
-          2. COCKPIT IDENTITÉ (Liquid Glass)
-         ══════════════════════════════════════════════════════════════════════ */}
       <section className="px-3 pt-3 pb-1">
-        <div className="glass rounded-3xl p-4 sm:p-5 border border-white/80 bg-white/85 backdrop-blur-xl shadow-xs">
+        <Card variant="featured" className="p-4 sm:p-5">
           <div className="flex items-center gap-4 mb-3">
-            {/* Avatar 76px */}
             <div className="relative shrink-0">
-              <div
-                className="w-[76px] h-[76px] rounded-full overflow-hidden flex items-center justify-center p-[2px] relative shadow-xs"
-                style={{
-                  background: 'linear-gradient(135deg, #A6C1A0, #17402C)',
-                }}
-              >
-                <div className="w-full h-full rounded-full overflow-hidden bg-white/90 flex items-center justify-center">
+              <div className="w-[76px] h-[76px] rounded-full overflow-hidden flex items-center justify-center p-[2px] relative shadow-xs bg-gradient-to-br from-[color:var(--sage-300)] to-[color:var(--lkv-primary)]">
+                <div className="w-full h-full rounded-full overflow-hidden bg-[color:var(--lkv-surface-card)] flex items-center justify-center">
                   {profile.avatar_url ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={profile.avatar_url} alt={fullName} className="w-full h-full object-cover" />
+                    <SmartImage
+                      src={profile.avatar_url}
+                      alt={fullName}
+                      fill
+                      className="w-full h-full"
+                      fallbackIcon={<Icon name="user" size={22} />}
+                    />
                   ) : (
-                    <span className="text-2xl font-bold font-serif text-[#17402C]">
+                    <span className="text-2xl font-bold font-serif text-[color:var(--lkv-primary)]">
                       {profile.first_name?.charAt(0) || 'V'}
                     </span>
                   )}
@@ -123,84 +127,84 @@ export default function PublicMobileProfileView({
               </div>
             </div>
 
-            {/* Statistiques Profil */}
             <div className="flex-1 grid grid-cols-3 gap-1 text-center">
-              <button
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={() => {
                   triggerHaptic('selection');
                   setTab('carnets');
                 }}
-                className="flex flex-col items-center py-1.5 rounded-xl transition-all active:scale-95 hover:bg-white/60 cursor-pointer"
+                className="h-auto flex-col gap-0 py-1.5"
               >
-                <span className="text-lg font-bold tracking-tight leading-none text-[#17402C]">
+                <span className="text-lg font-bold tracking-tight leading-none text-[color:var(--lkv-primary)]">
                   {carnetsCount}
                 </span>
-                <span className="text-[11px] mt-1 font-medium text-[#5A7064]">
+                <span className="text-[11px] mt-1 font-medium text-[color:var(--lkv-text-muted)]">
                   Carnets
                 </span>
-              </button>
+              </Button>
 
-              <button
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={() => {
                   triggerHaptic('selection');
                   setTab('clubs');
                 }}
-                className="flex flex-col items-center py-1.5 rounded-xl transition-all active:scale-95 hover:bg-white/60 cursor-pointer"
+                className="h-auto flex-col gap-0 py-1.5"
               >
-                <span className="text-lg font-bold tracking-tight leading-none text-[#17402C]">
+                <span className="text-lg font-bold tracking-tight leading-none text-[color:var(--lkv-primary)]">
                   {sortiesCount || clubsCount}
                 </span>
-                <span className="text-[11px] mt-1 font-medium text-[#5A7064]">
+                <span className="text-[11px] mt-1 font-medium text-[color:var(--lkv-text-muted)]">
                   Sorties
                 </span>
-              </button>
+              </Button>
 
               <div className="flex flex-col items-center py-1.5">
-                <span className="text-lg font-bold tracking-tight leading-none text-[#17402C]">
+                <span className="text-lg font-bold tracking-tight leading-none text-[color:var(--lkv-primary)]">
                   {badges.length}
                 </span>
-                <span className="text-[11px] mt-1 font-medium text-[#5A7064]">
+                <span className="text-[11px] mt-1 font-medium text-[color:var(--lkv-text-muted)]">
                   Badges
                 </span>
               </div>
             </div>
           </div>
 
-          {/* Nom & Badges de statut */}
           <div className="space-y-1">
             <div className="flex items-center gap-1.5 flex-wrap">
-              <h1 className="text-[19px] font-display font-bold tracking-tight text-[#17402C]">
+              <h2 className="text-[19px] font-display font-bold tracking-tight text-[color:var(--lkv-primary)]">
                 {fullName}
-              </h1>
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="#17402C">
+              </h2>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="var(--lkv-primary)" aria-hidden="true">
                 <path d="M12 1l2.4 2.2 3.2-.4.8 3.2 3 1.4-1.2 3 1.2 3-3 1.4-.8 3.2-3.2-.4L12 20l-2.4-1.4-3.2.4-.8-3.2-3-1.4 1.2-3-1.2-3 3-1.4.8-3.2 3.2.4L12 1zm-1.2 12.6l6-6-1.4-1.4-4.6 4.6-2-2-1.4 1.4 3.4 3.4z" />
               </svg>
-              <button
+              <Chip
                 onClick={() => {
                   triggerHaptic('light');
                   setTrustModalOpen(true);
                 }}
-                className="glass-capsule-btn !min-h-0 !min-w-0 !py-1 !px-2.5 text-[10px] font-mono font-bold cursor-pointer transition-all active:scale-95"
+                className="px-2.5 text-[10px] font-mono font-bold"
               >
                 🛡️ Trust {trustScore}/100
-              </button>
+              </Chip>
             </div>
 
-            <p className="text-xs font-mono text-[#5A7064]">
+            <p className="text-xs font-mono text-[color:var(--lkv-text-muted)]">
               {handleName} · {levelTitle}
             </p>
 
-            {/* Bio poétique */}
             {profile.bio && (
-              <p className="text-sm font-serif italic leading-snug pt-1 text-[#17402C]">
+              <p className="text-sm font-serif italic leading-snug pt-1 text-[color:var(--lkv-primary)]">
                 {profile.bio}
               </p>
             )}
 
-            {/* Localisation */}
             {profile.location && (
-              <div className="flex items-center gap-1 text-xs pt-1 text-[#5A7064] font-medium">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+              <div className="flex items-center gap-1 text-xs pt-1 text-[color:var(--lkv-text-muted)] font-medium">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
                   <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z" />
                   <circle cx="12" cy="10" r="3" />
                 </svg>
@@ -209,147 +213,123 @@ export default function PublicMobileProfileView({
             )}
           </div>
 
-          {/* Boutons d'Action Publics : Suivre & Message & Partager */}
           <div className="flex items-center gap-2 pt-4">
-            <button
+            <Button
+              variant={following ? 'secondary' : 'primary'}
+              size="sm"
               onClick={handleFollowToggle}
-              className={`glass-capsule-btn flex-1 !py-2.5 text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer ${
-                following ? '' : 'primary'
-              }`}
+              className="flex-1 font-bold"
             >
-              <span>{following ? '✓ Abonné' : '+ S\'abonner'}</span>
-            </button>
+              {following ? '✓ Abonné' : "+ S'abonner"}
+            </Button>
 
             <Link
               href={`/messagerie?dest=${profile.id}`}
               onClick={() => triggerHaptic('selection')}
-              className="glass-capsule-btn secondary flex-1 !py-2.5 text-xs font-bold"
+              className="inline-flex flex-1 items-center justify-center gap-[var(--space-2)] min-h-[var(--control-height-sm)] rounded-full px-[var(--space-4)] text-[length:var(--lkv-text-footnote)] font-semibold border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] text-[color:var(--card-content)] backdrop-blur-[var(--blur-md)]"
             >
               <Icon name="message-square" size={13} />
               Message
             </Link>
 
-            <button
+            <IconButton
+              variant="glass"
+              size="md"
+              aria-label="Partager"
               onClick={() => {
                 triggerHaptic('light');
                 onShare();
               }}
-              aria-label="Partager"
-              className="glass-circle-btn !w-10 !h-10 !min-w-10 !min-h-10 !p-0"
             >
               <Icon name="share2" size={14} />
-            </button>
+            </IconButton>
           </div>
-        </div>
+        </Card>
       </section>
 
-      {/* ══════════════════════════════════════════════════════════════════════
-          3. RAIL HIGHLIGHTS (Stories / Récits Récents)
-         ══════════════════════════════════════════════════════════════════════ */}
       {highlights.length > 0 && (
         <section className="px-3 py-1.5">
-          <div className="glass rounded-3xl p-3 border border-white/80 bg-white/80 backdrop-blur-xl shadow-xs">
+          <Card variant="featured" className="p-3">
             <div className="flex gap-3 overflow-x-auto scrollbar-none snap-x">
               {highlights.map((h) => (
                 <Link
                   key={h.id}
                   href={`/carnets/${h.id}`}
                   onClick={() => triggerHaptic('light')}
-                  className="flex flex-col items-center gap-1 shrink-0 snap-start active:scale-95 transition-transform cursor-pointer"
-                  style={{ width: 62 }}
+                  className="flex w-[62px] flex-col items-center gap-1 shrink-0 snap-start active:scale-95 transition-transform cursor-pointer"
                 >
-                  <div
-                    className="w-[54px] h-[54px] rounded-full p-[2px] relative flex items-center justify-center shadow-2xs"
-                    style={{
-                      background: 'linear-gradient(145deg, #A6C1A0, #17402C)',
-                    }}
-                  >
-                    <div
-                      className="w-full h-full rounded-full bg-cover bg-center border border-white"
-                      style={{
-                        backgroundImage: h.cover ? `url(${h.cover})` : 'linear-gradient(135deg, #17402C, #365233)',
-                      }}
-                    />
+                  <div className="w-[54px] h-[54px] rounded-full p-[2px] relative flex items-center justify-center shadow-2xs bg-gradient-to-br from-[color:var(--sage-300)] to-[color:var(--lkv-primary)]">
+                    <div className="w-full h-full rounded-full overflow-hidden border border-[color:var(--lkv-surface-card)]">
+                      <SmartImage
+                        src={h.cover}
+                        alt={h.label}
+                        fill
+                        className="w-full h-full"
+                        fallbackIcon={<Icon name="book-open" size={16} />}
+                      />
+                    </div>
                   </div>
-                  <span className="text-[10px] font-bold truncate w-full text-center text-[#17402C]">
+                  <span className="text-[10px] font-bold truncate w-full text-center text-[color:var(--lkv-primary)]">
                     {h.label}
                   </span>
                 </Link>
               ))}
             </div>
-          </div>
+          </Card>
         </section>
       )}
 
-      {/* ══════════════════════════════════════════════════════════════════════
-          4. ONGLETS FLOTTANTS & TOGGLE VUE (Segmented Capsule Liquid Glass)
-         ══════════════════════════════════════════════════════════════════════ */}
-      <div className="sticky top-[48px] z-20 px-3 py-1.5">
-        <div className="glass rounded-2xl p-1 border border-white/80 bg-white/85 backdrop-blur-2xl shadow-xs flex items-center justify-between gap-1">
-          <div className="flex items-center gap-1 flex-1 overflow-x-auto scrollbar-none">
-            {([
-              { id: 'tout', label: 'Récits', icon: '⚡' },
-              { id: 'carnets', label: 'Carnets', icon: '📖' },
-              { id: 'clubs', label: 'Clubs', icon: '⛺' },
-              { id: 'badges', label: 'Badges', icon: '🛡️' },
-            ] as { id: TabKey; label: string; icon: string }[]).map((t) => {
-              const isActive = tab === t.id;
-              return (
-                <button
-                  key={t.id}
-                  onClick={() => {
-                    triggerHaptic('selection');
-                    setTab(t.id);
-                  }}
-                  className={`glass-capsule-btn !min-w-0 !min-h-0 !py-1.5 !px-3 text-xs font-extrabold whitespace-nowrap transition-all cursor-pointer z-10 ${
-                    isActive ? 'primary' : ''
-                  }`}
-                >
-                  {isActive && (
-                    <motion.div
-                      layoutId="public-tab-active"
-                      transition={{ type: 'spring', stiffness: 500, damping: 35 }}
-                      className="absolute inset-0 rounded-full bg-[#17402C] shadow-xs -z-10"
-                    />
-                  )}
-                  <span className="text-[11px]">{t.icon}</span>
-                  <span>{t.label}</span>
-                </button>
-              );
-            })}
+      <div className="sticky top-[var(--safe-top)] z-[var(--z-sticky)] px-3 py-1.5">
+        <Card variant="featured" className="p-1 flex items-center justify-between gap-1">
+          <div className="flex min-w-0 flex-1 items-center">
+            <Tabs
+              options={[
+                { id: 'tout', label: 'Récits', icon: '⚡' },
+                { id: 'carnets', label: 'Carnets', icon: '📖' },
+                { id: 'clubs', label: 'Clubs', icon: '⛺' },
+                { id: 'badges', label: 'Badges', icon: '🛡️' },
+              ]}
+              value={tab}
+              onChange={(id) => {
+                triggerHaptic('selection');
+                setTab(id as TabKey);
+              }}
+              variant="scrollable"
+              ariaLabel="Sections du profil"
+              className="w-auto pb-0"
+            />
           </div>
 
-          {/* Toggle Grille / Liste */}
           {tab !== 'badges' && (
-            <div className="flex items-center gap-0.5 pl-1.5 pr-0.5 border-l border-[#17402C]/10">
-              <button
+            <div className="flex items-center gap-0.5 pl-1.5 pr-0.5 border-l border-[color:var(--lkv-primary)]/10">
+              <IconButton
+                variant={viewMode === 'grid' ? 'solid' : 'ghost'}
+                size="sm"
+                aria-label="Vue Grille"
+                aria-pressed={viewMode === 'grid'}
                 onClick={() => {
                   triggerHaptic('light');
                   setViewMode('grid');
                 }}
-                aria-label="Vue Grille"
-                className={`glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8 !p-0 transition-all cursor-pointer ${
-                  viewMode === 'grid' ? 'primary' : ''
-                }`}
               >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden="true">
                   <rect x="3" y="3" width="7" height="7" rx="1.5" />
                   <rect x="14" y="3" width="7" height="7" rx="1.5" />
                   <rect x="3" y="14" width="7" height="7" rx="1.5" />
                   <rect x="14" y="14" width="7" height="7" rx="1.5" />
                 </svg>
-              </button>
-              <button
+              </IconButton>
+              <IconButton
+                variant={viewMode === 'list' ? 'solid' : 'ghost'}
+                size="sm"
+                aria-label="Vue Liste"
+                aria-pressed={viewMode === 'list'}
                 onClick={() => {
                   triggerHaptic('light');
                   setViewMode('list');
                 }}
-                aria-label="Vue Liste"
-                className={`glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8 !p-0 transition-all cursor-pointer ${
-                  viewMode === 'list' ? 'primary' : ''
-                }`}
               >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" aria-hidden="true">
                   <line x1="8" y1="6" x2="21" y2="6" />
                   <line x1="8" y1="12" x2="21" y2="12" />
                   <line x1="8" y1="18" x2="21" y2="18" />
@@ -357,110 +337,97 @@ export default function PublicMobileProfileView({
                   <circle cx="4" cy="12" r="1.2" fill="currentColor" />
                   <circle cx="4" cy="18" r="1.2" fill="currentColor" />
                 </svg>
-              </button>
+              </IconButton>
             </div>
           )}
-        </div>
+        </Card>
       </div>
 
-      {/* ══════════════════════════════════════════════════════════════════════
-          5. CONTENU DES ONGLETS
-         ══════════════════════════════════════════════════════════════════════ */}
-
-      {/* ── ONGLET : BADGES & CONFIANCE ── */}
       {tab === 'badges' && (
         <section className="p-3 space-y-3">
-          {/* Trust Score Card */}
-          <div className="glass p-4 rounded-3xl border border-white/80 bg-white/85 backdrop-blur-xl flex items-center justify-between shadow-xs">
+          <Card variant="featured" className="p-4 flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <span className="text-3xl">🛡️</span>
+              <span className="text-3xl" aria-hidden="true">🛡️</span>
               <div>
-                <h3 className="text-sm font-bold text-[#17402C]">
+                <h3 className="text-sm font-bold text-[color:var(--lkv-primary)]">
                   Indice de Confiance Voyageur
                 </h3>
-                <p className="text-xs text-[#5A7064]">
-                  Vérification d'identité et sorties certifiées.
+                <p className="text-xs text-[color:var(--lkv-text-muted)]">
+                  Vérification d&apos;identité et sorties certifiées.
                 </p>
               </div>
             </div>
-            <span className="font-mono text-base font-bold text-[#17402C]">
+            <span className="font-mono text-base font-bold text-[color:var(--lkv-primary)]">
               {trustScore}/100
             </span>
-          </div>
+          </Card>
 
-          {/* Grille des badges */}
           <div className="grid grid-cols-3 gap-2">
             {badges.length === 0 ? (
-              <div className="col-span-3 glass p-6 text-center rounded-2xl bg-white/70 border border-white/70">
-                <p className="text-xs text-[#5A7064]">Aucun badge débloqué pour le moment.</p>
+              <div className="col-span-3">
+                <EmptyState compact title="Aucun badge" description="Aucun badge débloqué pour le moment." />
               </div>
             ) : (
               badges.map((b) => (
-                <div
-                  key={b.id}
-                  className="glass p-3 rounded-2xl border border-white/80 bg-white/85 backdrop-blur-xl text-center shadow-2xs"
-                >
-                  <span className="text-2xl">🏅</span>
-                  <p className="text-[11px] font-bold mt-1 text-[#17402C] truncate">
+                <Card key={b.id} variant="featured" className="p-3 text-center">
+                  <span className="text-2xl" aria-hidden="true">🏅</span>
+                  <p className="text-[11px] font-bold mt-1 text-[color:var(--lkv-primary)] truncate">
                     {b.title}
                   </p>
-                  <p className="text-[9px] text-[#5A7064] truncate">
+                  <p className="text-[9px] text-[color:var(--lkv-text-muted)] truncate">
                     Badge certifié
                   </p>
-                </div>
+                </Card>
               ))
             )}
           </div>
         </section>
       )}
 
-      {/* ── ONGLET : CLUBS & GROUPES ── */}
       {tab === 'clubs' && (
         <section className="p-3 space-y-2.5">
           {clubs.length === 0 ? (
-            <div className="glass p-8 text-center rounded-3xl border border-white/80 bg-white/80 backdrop-blur-xl shadow-xs">
-              <p className="text-3xl mb-2">⛺</p>
-              <p className="text-xs text-[#5A7064]">Aucun club rejoint pour le moment.</p>
-            </div>
+            <EmptyState compact title="Aucun club" description="Aucun club rejoint pour le moment." />
           ) : (
             clubs.map((club) => (
               <Link
                 key={club.id}
                 href={`/clubs/${club.slug || club.id}`}
                 onClick={() => triggerHaptic('light')}
-                className="glass flex items-center gap-3.5 p-3 rounded-2xl border border-white/80 bg-white/85 backdrop-blur-xl active:scale-[0.98] transition-all shadow-xs cursor-pointer"
+                className="block active:scale-[0.98] transition-transform"
               >
-                <div
-                  className="w-12 h-12 rounded-xl shrink-0 bg-cover bg-center border border-white/60 shadow-2xs"
-                  style={{
-                    backgroundImage: club.logo_url ? `url(${club.logo_url})` : 'linear-gradient(135deg, #17402C, #365233)',
-                  }}
-                />
-                <div className="flex-1 min-w-0">
-                  <h4 className="text-xs font-bold text-[#17402C] truncate">{club.name}</h4>
-                  <p className="text-[11px] text-[#5A7064] truncate">📍 {club.detail || 'Outdoor Club'}</p>
-                </div>
-                <span className="glass-pill bg-white/90 border-white text-[10px]">
-                  {club.members_count ?? 1} membres
-                </span>
+                <Card variant="featured" className="flex items-center gap-3.5 p-3">
+                  <div className="w-12 h-12 rounded-xl shrink-0 overflow-hidden border border-[color:var(--lkv-border)] shadow-2xs">
+                    <SmartImage
+                      src={club.logo_url}
+                      alt={club.name}
+                      fill
+                      className="w-full h-full"
+                      fallbackIcon={<Icon name="tent" size={16} />}
+                    />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h4 className="text-xs font-bold text-[color:var(--lkv-primary)] truncate">{club.name}</h4>
+                    <p className="text-[11px] text-[color:var(--lkv-text-muted)] truncate">📍 {club.detail || 'Outdoor Club'}</p>
+                  </div>
+                  <Badge tone="stone" className="text-[10px]">
+                    {club.members_count ?? 1} membres
+                  </Badge>
+                </Card>
               </Link>
             ))
           )}
         </section>
       )}
 
-      {/* ── ONGLET : CARNETS & RÉCITS (VUE GRILLE OU LISTE) ── */}
       {(tab === 'tout' || tab === 'carnets') && (
         <section>
           {carnets.length === 0 ? (
-            <div className="glass m-3 p-10 text-center rounded-3xl border border-white/80 bg-white/80 backdrop-blur-xl shadow-xs">
-              <p className="text-4xl mb-2">📖</p>
-              <h3 className="font-serif text-base font-bold mb-1 text-[#17402C]">
-                Aucun carnet public
-              </h3>
-              <p className="text-xs text-[#5A7064]">
-                Ce voyageur n'a pas encore publié d'expédition publique.
-              </p>
+            <div className="m-3">
+              <EmptyState
+                title="Aucun carnet public"
+                description="Ce voyageur n'a pas encore publié d'expédition publique."
+              />
             </div>
           ) : viewMode === 'grid' ? (
             <div className="grid grid-cols-3 gap-2.5 p-3">
@@ -469,12 +436,15 @@ export default function PublicMobileProfileView({
                   key={c.id}
                   href={`/carnets/${c.id}`}
                   onClick={() => triggerHaptic('light')}
-                  className="aspect-square relative bg-cover bg-center overflow-hidden rounded-2xl border border-white/70 shadow-2xs block active:scale-95 transition-all cursor-pointer"
-                  style={{
-                    backgroundImage: c.image_url ? `url(${c.image_url})` : 'linear-gradient(135deg, #17402C, #365233)',
-                    backgroundColor: 'rgba(255,255,255,0.7)',
-                  }}
+                  className="aspect-square relative overflow-hidden rounded-2xl border border-[color:var(--lkv-border)] shadow-2xs block active:scale-95 transition-transform cursor-pointer"
                 >
+                  <SmartImage
+                    src={c.image_url}
+                    alt={c.title}
+                    fill
+                    className="absolute inset-0"
+                    fallbackIcon={<Icon name="book-open" size={16} />}
+                  />
                   <div className="absolute top-2 right-2 w-5 h-5 rounded-md bg-black/40 backdrop-blur-md flex items-center justify-center text-white text-[10px]">
                     📖
                   </div>
@@ -491,92 +461,101 @@ export default function PublicMobileProfileView({
                   key={c.id}
                   href={`/carnets/${c.id}`}
                   onClick={() => triggerHaptic('light')}
-                  className="glass flex gap-3.5 p-3 rounded-2xl border border-white/80 bg-white/85 backdrop-blur-xl active:scale-[0.98] transition-all shadow-xs cursor-pointer"
+                  className="block active:scale-[0.98] transition-transform"
                 >
-                  <div
-                    className="w-22 h-22 rounded-xl shrink-0 bg-cover bg-center border border-white/60 shadow-2xs"
-                    style={{
-                      backgroundImage: c.image_url ? `url(${c.image_url})` : 'linear-gradient(135deg, #17402C, #365233)',
-                    }}
-                  />
-                  <div className="flex-1 flex flex-col justify-between py-0.5">
-                    <div>
-                      <span className="text-[10px] font-mono uppercase tracking-wider font-bold text-[#17402C]">
-                        Carnet d'aventure
-                      </span>
-                      <h4 className="text-sm font-bold leading-tight mt-0.5 text-[#17402C]">
-                        {c.title}
-                      </h4>
-                      <p className="text-xs mt-0.5 font-medium text-[#5A7064]">
-                        📍 Expédition outdoor
-                      </p>
+                  <Card variant="featured" className="flex gap-3.5 p-3">
+                    <div className="w-20 h-20 rounded-xl shrink-0 overflow-hidden border border-[color:var(--lkv-border)] shadow-2xs">
+                      <SmartImage
+                        src={c.image_url}
+                        alt={c.title}
+                        fill
+                        className="w-full h-full"
+                        fallbackIcon={<Icon name="book-open" size={16} />}
+                      />
                     </div>
-                    <div className="flex items-center gap-2 mt-2">
-                      <span className="glass-pill bg-white/90 border-white text-[10px]">
-                        {c.status || 'Publié'}
-                      </span>
+                    <div className="flex-1 flex flex-col justify-between py-0.5">
+                      <div>
+                        <span className="text-[10px] font-mono uppercase tracking-wider font-bold text-[color:var(--lkv-primary)]">
+                          Carnet d&apos;aventure
+                        </span>
+                        <h4 className="text-sm font-bold leading-tight mt-0.5 text-[color:var(--lkv-primary)]">
+                          {c.title}
+                        </h4>
+                        <p className="text-xs mt-0.5 font-medium text-[color:var(--lkv-text-muted)]">
+                          📍 Expédition outdoor
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2 mt-2">
+                        <Badge tone="stone" className="text-[10px]">
+                          {c.status || 'Publié'}
+                        </Badge>
+                      </div>
                     </div>
-                  </div>
+                  </Card>
                 </Link>
               ))}
             </div>
           )}
 
-          <div className="py-8 text-center font-mono text-[10px] uppercase tracking-widest text-[#8FA396]">
+          {tab === 'tout' && (
+            <div className="p-3">
+              <h3 className="mb-[var(--space-2)] text-[length:var(--lkv-text-title-sm)] font-bold text-[color:var(--lkv-text-primary)]">
+                Activité récente
+              </h3>
+              {activite.length === 0 ? (
+                <EmptyState compact title="Aucune activité" description="Ce voyageur n'a pas encore d'activité publique." />
+              ) : (
+                <Card variant="standard" className="p-0 divide-y divide-[color:var(--lkv-border)]">
+                  {activite.slice(0, 5).map((item) => (
+                    <ListItem
+                      key={item.id}
+                      leading={
+                        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[color:var(--lkv-surface-muted)] text-[color:var(--lkv-primary)]">
+                          <Icon name={ACTIVITY_ICONS[item.icon_type] ?? 'compass'} size={14} />
+                        </span>
+                      }
+                      title={item.text}
+                      subtitle={item.highlight}
+                      metadata={item.time}
+                    />
+                  ))}
+                </Card>
+              )}
+            </div>
+          )}
+
+          <div className="py-8 text-center font-mono text-[10px] uppercase tracking-widest text-[color:var(--lkv-text-subtle)]">
             — fin · {carnets.length} carnet{carnets.length > 1 ? 's' : ''} —
           </div>
         </section>
       )}
 
-      {/* ══════════════════════════════════════════════════════════════════════
-          6. MODALE TRUST SCORE / CONFIANCE
-         ══════════════════════════════════════════════════════════════════════ */}
-      <AnimatePresence>
-        {trustModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-end justify-center">
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
+      {trustModalOpen && (
+        <Sheet
+          open
+          onOpenChange={(next) => {
+            if (!next) setTrustModalOpen(false);
+          }}
+          title="Indice de Confiance"
+          description={`Score de Confiance : ${trustScore}/100`}
+          detent="medium"
+        >
+          <div className="space-y-4">
+            <p className="text-xs text-[color:var(--lkv-text-muted)] leading-relaxed">
+              Ce score certifie la fiabilité de <strong>{fullName}</strong> au sein de la communauté Le Kit du Voyageur (sorties réalisées, avis vérifiés et respect de la charte outdoor).
+            </p>
+
+            <Button
+              variant="primary"
+              fullWidth
               onClick={() => setTrustModalOpen(false)}
-              className="absolute inset-0 bg-black/40 backdrop-blur-xs"
-            />
-            <motion.div
-              initial={{ y: '100%' }}
-              animate={{ y: 0 }}
-              exit={{ y: '100%' }}
-              transition={{ type: 'spring', damping: 30, stiffness: 350 }}
-              className="relative w-full max-w-lg rounded-t-3xl p-6 z-10 space-y-4 backdrop-blur-2xl bg-white/95 border-t border-white shadow-2xl"
+              className="font-bold"
             >
-              <div className="w-12 h-1.5 rounded-full mx-auto -mt-2 mb-2 bg-[#17402C]/15" />
-              <div className="flex items-center justify-between">
-                <div>
-                  <span className="text-[10px] font-mono uppercase tracking-wider font-bold text-[#17402C]">
-                    Indice de Confiance
-                  </span>
-                  <h3 className="text-lg font-bold text-[#17402C]">
-                    Score de Confiance : {trustScore}/100
-                  </h3>
-                </div>
-                <button onClick={() => setTrustModalOpen(false)} className="glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8 !p-0">
-                  ✕
-                </button>
-              </div>
-
-              <p className="text-xs text-[#5A7064] leading-relaxed">
-                Ce score certifie la fiabilité de <strong>{fullName}</strong> au sein de la communauté Le Kit du Voyageur (sorties réalisées, avis vérifiés et respect de la charte outdoor).
-              </p>
-
-              <button
-                onClick={() => setTrustModalOpen(false)}
-                className="glass-capsule-btn primary w-full !py-3 text-xs font-bold"
-              >
-                Fermer
-              </button>
-            </motion.div>
+              Fermer
+            </Button>
           </div>
-        )}
-      </AnimatePresence>
+        </Sheet>
+      )}
     </div>
   );
 }

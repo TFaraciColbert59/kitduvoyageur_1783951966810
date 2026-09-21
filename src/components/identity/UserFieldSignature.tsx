@@ -13,6 +13,7 @@
 
 import React, { useEffect, useState } from 'react';
 import FieldSeal from './FieldSeal';
+import { Spinner } from '@/components/ui';
 import type { FieldSignatureRow } from '@/features/identity/fieldSignature';
 
 interface UserFieldSignatureProps {
@@ -51,26 +52,26 @@ export default function UserFieldSignature({ userId, sealSize = 40, ariaLabel }:
 
   if (state.kind === 'loading') {
     return (
-      <span className="inline-flex items-center gap-2 text-[#5A7064]" role="status">
-        <span className="w-5 h-5 border-2 border-[#17402C]/30 border-t-[#17402C] rounded-full animate-spin" />
-        <span className="text-xs" aria-live="polite">…</span>
+      <span className="inline-flex items-center gap-[var(--space-2)] text-[color:var(--lkv-text-muted)]" role="status">
+        <Spinner size="sm" label="" />
+        <span className="text-[length:var(--lkv-text-caption)]" aria-live="polite">…</span>
       </span>
     );
   }
 
   if (state.kind === 'empty') {
     return (
-      <span className="inline-flex items-center gap-2 text-[#5A7064]">
+      <span className="inline-flex items-center gap-[var(--space-2)] text-[color:var(--lkv-text-muted)]">
         <FieldSeal userId={userId} size={Math.min(sealSize, 32)} />
-        <span className="text-xs" style={{ fontStyle: 'italic' }}>{state.label}</span>
+        <span className="text-[length:var(--lkv-text-caption)] italic">{state.label}</span>
       </span>
     );
   }
 
   return (
-    <span className="inline-flex items-center gap-2">
+    <span className="inline-flex items-center gap-[var(--space-2)]">
       <FieldSeal userId={userId} signature={state.sig} size={sealSize} ariaLabel={ariaLabel} />
-      <span className="text-sm text-[#365233]">{state.text}</span>
+      <span className="text-[length:var(--lkv-text-body-sm)] text-[color:var(--lkv-forest-600)]">{state.text}</span>
     </span>
   );
 }

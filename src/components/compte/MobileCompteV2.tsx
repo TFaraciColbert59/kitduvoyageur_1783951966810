@@ -10,24 +10,8 @@ import { createClient } from '@/lib/supabase/client';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import SmartImage from '@/components/ui/SmartImage';
 import Icon from '@/components/ui/AppIcon';
+import { Button, Card, Chip, EmptyState, ErrorState, IconButton, Sheet, Tabs } from '@/components/ui';
 import { calculateLevel } from '@/features/progression/domain/rules';
-
-/* ─── Tokens Design System LKDV (palette officielle Liquid Glass v2.0) ─── */
-const C = {
-  paper: 'transparent',
-  paperCard: 'rgba(255, 255, 255, 0.90)',
-  stone: 'rgba(255, 255, 255, 0.65)',
-  ink900: '#17402C',
-  ink700: '#365233',
-  ink500: '#5A7064',
-  ink300: '#8FA396',
-  forest800: '#17402C',
-  forest900: '#365233',
-  sage100: '#E1EBDD',
-  sage300: '#A6C1A0',
-  sage500: '#5B7F55',
-  white: 'rgba(255, 255, 255, 0.85)',
-};
 
 /* ─── Types ────────────────────────────────────────────────────────────── */
 type ContentKind = 'carnet' | 'groupe' | 'club' | 'note';
@@ -61,17 +45,6 @@ interface GearItem {
 
 type TabKey = 'tout' | 'carnets' | 'voyages' | 'materiel';
 type ViewMode = 'grid' | 'list';
-
-const LEVEL_NAMES: Record<number, string> = {
-  1: 'Novice',
-  2: 'Apprenti',
-  3: 'Explorateur',
-  4: 'Aventurier',
-  5: 'Guide',
-  6: 'Expert',
-  7: 'Maître',
-  8: 'Légende',
-};
 
 const GEAR_CATEGORIES: { key: string; label: string; icon: string }[] = [
   { key: 'all', label: 'Tout', icon: '🎒' },
@@ -361,20 +334,20 @@ export default function MobileCompteV2() {
      ────────────────────────────────────────────────────────────────────────── */
   if (!user && !loading) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center p-6 text-center" style={{ background: C.paper }}>
-        <div className="w-20 h-20 rounded-full flex items-center justify-center mb-4 text-3xl" style={{ background: C.stone }}>
+      <div className="min-h-screen flex flex-col items-center justify-center p-6 text-center" >
+        <div className="w-20 h-20 rounded-full flex items-center justify-center mb-4 text-3xl bg-[color:var(--lkv-surface-card)]/65" >
           🧭
         </div>
-        <h2 className="text-2xl font-display font-bold tracking-tight mb-2" style={{ color: C.ink900 }}>
+        <h2 className="text-2xl font-display font-bold tracking-tight mb-2 text-[color:var(--lkv-text-primary)]" >
           Votre Carnet Personnel
         </h2>
-        <p className="text-sm max-w-xs mb-6 font-serif italic" style={{ color: C.ink500 }}>
+        <p className="text-sm max-w-xs mb-6 font-serif italic text-[color:var(--lkv-text-muted)]" >
           Connectez-vous pour retrouver vos expéditions, carnets de route et inventaire matériel.
         </p>
         <Link
           href="/connexion?mode=connexion"
           onClick={() => triggerHaptic('selection')}
-          className="glass-capsule-btn primary"
+          className="inline-flex items-center justify-center gap-[var(--space-2)] min-h-[var(--lkv-touch-min)] rounded-full px-[var(--space-4)] py-[var(--space-2)] text-[length:var(--lkv-text-footnote)] font-semibold backdrop-blur-[var(--blur-md)] border border-transparent bg-[color:var(--lkv-action)] text-[color:var(--lkv-on-action)] shadow-elevation-1"
         >
           Se connecter
         </Link>
@@ -387,44 +360,44 @@ export default function MobileCompteV2() {
      ────────────────────────────────────────────────────────────────────────── */
   if (loading) {
     return (
-      <div className="min-h-screen p-4 pb-28 animate-pulse font-sans" style={{ background: C.paper }}>
+      <div className="min-h-screen p-4 pb-28 animate-pulse font-sans" >
         {/* Header Skeleton */}
         <div className="flex items-center justify-between py-3 mb-3">
-          <div className="h-5 w-28 rounded-full" style={{ background: C.stone }} />
+          <div className="h-5 w-28 rounded-full bg-[color:var(--lkv-surface-card)]/65"  />
           <div className="flex gap-2">
-            <div className="w-8 h-8 rounded-full" style={{ background: C.stone }} />
-            <div className="w-8 h-8 rounded-full" style={{ background: C.stone }} />
+            <div className="w-8 h-8 rounded-full bg-[color:var(--lkv-surface-card)]/65"  />
+            <div className="w-8 h-8 rounded-full bg-[color:var(--lkv-surface-card)]/65"  />
           </div>
         </div>
 
         {/* Identity Skeleton */}
         <div className="flex items-start gap-4 mb-4">
-          <div className="w-20 h-20 rounded-full shrink-0" style={{ background: C.stone }} />
+          <div className="w-20 h-20 rounded-full shrink-0 bg-[color:var(--lkv-surface-card)]/65"  />
           <div className="flex-1 grid grid-cols-3 gap-2 pt-2">
-            <div className="h-10 rounded-xl" style={{ background: C.stone }} />
-            <div className="h-10 rounded-xl" style={{ background: C.stone }} />
-            <div className="h-10 rounded-xl" style={{ background: C.stone }} />
+            <div className="h-10 rounded-xl bg-[color:var(--lkv-surface-card)]/65"  />
+            <div className="h-10 rounded-xl bg-[color:var(--lkv-surface-card)]/65"  />
+            <div className="h-10 rounded-xl bg-[color:var(--lkv-surface-card)]/65"  />
           </div>
         </div>
 
         {/* Text lines */}
         <div className="space-y-2 mb-6">
-          <div className="h-5 w-40 rounded-md" style={{ background: C.stone }} />
-          <div className="h-4 w-28 rounded-md" style={{ background: C.stone }} />
-          <div className="h-12 w-full rounded-md" style={{ background: C.stone }} />
+          <div className="h-5 w-40 rounded-md bg-[color:var(--lkv-surface-card)]/65"  />
+          <div className="h-4 w-28 rounded-md bg-[color:var(--lkv-surface-card)]/65"  />
+          <div className="h-12 w-full rounded-md bg-[color:var(--lkv-surface-card)]/65"  />
         </div>
 
         {/* Action buttons */}
         <div className="flex gap-2 mb-6">
-          <div className="h-10 flex-1 rounded-xl" style={{ background: C.stone }} />
-          <div className="h-10 flex-1 rounded-xl" style={{ background: C.stone }} />
-          <div className="h-10 w-10 rounded-xl" style={{ background: C.stone }} />
+          <div className="h-10 flex-1 rounded-xl bg-[color:var(--lkv-surface-card)]/65"  />
+          <div className="h-10 flex-1 rounded-xl bg-[color:var(--lkv-surface-card)]/65"  />
+          <div className="h-10 w-10 rounded-xl bg-[color:var(--lkv-surface-card)]/65"  />
         </div>
 
         {/* Grid Skeleton */}
         <div className="grid grid-cols-3 gap-1">
           {[...Array(6)].map((_, i) => (
-            <div key={i} className="aspect-square rounded-lg" style={{ background: C.stone }} />
+            <div key={i} className="aspect-square rounded-lg bg-[color:var(--lkv-surface-card)]/65"  />
           ))}
         </div>
       </div>
@@ -436,49 +409,43 @@ export default function MobileCompteV2() {
      ────────────────────────────────────────────────────────────────────────── */
   if (error) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center p-6 text-center" style={{ background: C.paper }}>
-        <p className="text-4xl mb-3">⚠️</p>
-        <h3 className="font-serif text-lg font-semibold mb-2" style={{ color: C.ink900 }}>
-          Synchronisation interrompue
-        </h3>
-        <p className="text-xs mb-6" style={{ color: C.ink500 }}>
-          {error}
-        </p>
-        <button
-          onClick={() => {
+      <div className="min-h-screen flex items-center justify-center p-6">
+        <ErrorState
+          title="Synchronisation interrompue"
+          message={error}
+          onRetry={() => {
             triggerHaptic('selection');
             window.location.reload();
           }}
-          className="glass-capsule-btn primary"
-        >
-          Réessayer
-        </button>
+        />
       </div>
     );
   }
 
   return (
-    <div className="min-h-full font-sans selection:bg-[#17402C]/10 bg-transparent">
+    <div className="min-h-full font-sans selection:bg-[color:var(--lkv-primary)]/10 bg-transparent">
       {/* ══════════════════════════════════════════════════════════════════════
           1. HEADER COMPACT & STATUT (Frosted Liquid Glass)
          ══════════════════════════════════════════════════════════════════════ */}
-      <header className="sticky top-0 z-30 px-4 pt-[calc(max(env(safe-area-inset-top,0px),10px)+6px)] pb-2.5 flex items-center justify-between backdrop-blur-xl border-b border-white/70 bg-white/85 shadow-2xs">
+      <header className="lkv-material-header sticky top-0 z-[var(--z-sticky)] flex items-center justify-between px-4 pb-2.5 pt-[calc(max(var(--safe-top),10px)+6px)]">
         {/* User Handle avec dropdown indicator */}
-        <button
+        <Button
+          variant="secondary"
+          size="sm"
           onClick={() => {
             triggerHaptic('light');
             setRewardModalOpen(true);
           }}
-          className="glass-capsule-btn !min-w-0 !min-h-0 !py-1.5 !px-3 text-base font-bold tracking-tight text-left cursor-pointer"
+          className="min-h-0 px-[var(--space-3)] py-[var(--space-1)] text-[length:var(--lkv-text-body-sm)]"
         >
           <span>{handleName}</span>
-          <span className="glass-pill font-mono">
+          <span className="inline-flex items-center justify-center gap-[6px] rounded-full border border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-muted)] px-[var(--space-3)] py-[2px] font-mono text-[length:var(--lkv-text-caption-2)] font-medium text-[color:var(--lkv-text-primary)]">
             Niv.{String(levelNum).padStart(2, '0')}
           </span>
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden="true">
             <path d="M6 9l6 6 6-6" />
           </svg>
-        </button>
+        </Button>
 
         {/* Actions : Notifications + Paramètres Menu */}
         <div className="flex items-center gap-1">
@@ -486,21 +453,21 @@ export default function MobileCompteV2() {
             href="/hub/alertes"
             onClick={() => triggerHaptic('light')}
             aria-label="Alertes et notifications"
-            className="glass-circle-btn !w-9 !h-9 !min-w-9 !min-h-9 cursor-pointer"
-            style={{ color: C.ink900 }}
+            className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] text-[color:var(--card-content)] backdrop-blur-[var(--blur-md)]"
           >
             <Icon name="bell" size={18} />
           </Link>
-          <button
+          <IconButton
+            variant="glass"
+            size="sm"
+            aria-label="Options et paramètres"
             onClick={() => {
               triggerHaptic('selection');
               setMenuOpen(true);
             }}
-            aria-label="Options et paramètres"
-            className="glass-circle-btn !w-9 !h-9 !min-w-9 !min-h-9 cursor-pointer"
           >
-            <Icon name="ellipsis" size={18} />
-          </button>
+            <Icon name="ellipsis" size={18} aria-hidden="true" />
+          </IconButton>
         </div>
       </header>
 
@@ -508,15 +475,12 @@ export default function MobileCompteV2() {
           2. IDENTITÉ & STATISTIQUES (Cockpit Liquid Glass)
          ══════════════════════════════════════════════════════════════════════ */}
       <section className="px-3 pt-3 pb-1">
-        <div className="glass rounded-3xl p-4 sm:p-5 border border-white/80 bg-white/85 backdrop-blur-xl shadow-xs">
+        <Card variant="featured" className="p-4 sm:p-5">
           <div className="flex items-center gap-4 mb-3">
             {/* Avatar 84px avec anneau actif et bouton édition */}
             <div className="relative shrink-0">
               <div
-                className="w-[78px] h-[78px] rounded-full overflow-hidden flex items-center justify-center p-[2px] relative cursor-pointer active:scale-95 transition-transform shadow-xs"
-                style={{
-                  background: `linear-gradient(135deg, ${C.sage300}, ${C.forest800})`,
-                }}
+                className="relative flex h-[78px] w-[78px] cursor-pointer items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-[color:var(--sage-300)] to-[color:var(--lkv-primary)] p-[2px] transition-transform active:scale-95"
                 onClick={() => {
                   triggerHaptic('light');
                   router.push('/compte/modifier');
@@ -527,60 +491,64 @@ export default function MobileCompteV2() {
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={avatarUrl} alt={fullName} className="w-full h-full object-cover" />
                   ) : (
-                    <span className="text-2xl font-bold font-serif" style={{ color: C.forest800 }}>
+                    <span className="text-2xl font-bold font-serif text-[color:var(--lkv-primary)]" >
                       {firstName.charAt(0)}
                     </span>
                   )}
                 </div>
               </div>
               {/* Badge caméra */}
-              <button
+              <IconButton
+                variant="glass"
+                size="sm"
+                aria-label="Modifier la photo"
                 onClick={() => {
                   triggerHaptic('light');
                   router.push('/compte/modifier');
                 }}
-                aria-label="Modifier la photo"
-                className="absolute bottom-0 right-0 glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8 !p-0 cursor-pointer"
+                className="absolute bottom-0 right-0"
               >
-                <Icon name="image-plus" size={10} />
-              </button>
+                <Icon name="image-plus" size={10} aria-hidden="true" />
+              </IconButton>
             </div>
 
             {/* Statistiques épurées */}
             <div className="flex-1 grid grid-cols-3 gap-1 text-center">
-              <button
+              <Button
+                variant="ghost"
                 onClick={() => {
                   triggerHaptic('selection');
                   setTab('voyages');
                 }}
-                className="flex flex-col items-center py-1.5 rounded-xl transition-all active:scale-95 hover:bg-white/60 cursor-pointer"
+                className="flex-col gap-0 py-1.5"
               >
-                <span className="text-lg font-bold tracking-tight leading-none" style={{ color: C.ink900 }}>
+                <span className="text-lg font-bold leading-none tracking-tight text-[color:var(--lkv-text-primary)]">
                   {totalVoyages}
                 </span>
-                <span className="text-[11px] mt-1 font-medium" style={{ color: C.ink500 }}>
+                <span className="mt-1 text-[11px] font-medium text-[color:var(--lkv-text-muted)]">
                   Voyages
                 </span>
-              </button>
-              <button
+              </Button>
+              <Button
+                variant="ghost"
                 onClick={() => {
                   triggerHaptic('selection');
                   setTab('carnets');
                 }}
-                className="flex flex-col items-center py-1.5 rounded-xl transition-all active:scale-95 hover:bg-white/60 cursor-pointer"
+                className="flex-col gap-0 py-1.5"
               >
-                <span className="text-lg font-bold tracking-tight leading-none" style={{ color: C.ink900 }}>
+                <span className="text-lg font-bold leading-none tracking-tight text-[color:var(--lkv-text-primary)]">
                   {totalCarnets}
                 </span>
-                <span className="text-[11px] mt-1 font-medium" style={{ color: C.ink500 }}>
+                <span className="mt-1 text-[11px] font-medium text-[color:var(--lkv-text-muted)]">
                   Carnets
                 </span>
-              </button>
+              </Button>
               <div className="flex flex-col items-center py-1.5">
-                <span className="text-lg font-bold tracking-tight leading-none" style={{ color: C.ink900 }}>
+                <span className="text-lg font-bold tracking-tight leading-none text-[color:var(--lkv-text-primary)]" >
                   {formatCount(followers)}
                 </span>
-                <span className="text-[11px] mt-1 font-medium" style={{ color: C.ink500 }}>
+                <span className="text-[11px] mt-1 font-medium text-[color:var(--lkv-text-muted)]" >
                   Abonnés
                 </span>
               </div>
@@ -590,33 +558,33 @@ export default function MobileCompteV2() {
           {/* Nom & Badges de statut */}
           <div className="space-y-1">
             <div className="flex items-center gap-1.5 flex-wrap">
-              <h1 className="text-[19px] font-display font-bold tracking-tight" style={{ color: C.ink900 }}>
+              <h1 className="text-[19px] font-display font-bold tracking-tight text-[color:var(--lkv-text-primary)]" >
                 {fullName}
               </h1>
-              <svg width="15" height="15" viewBox="0 0 24 24" fill={C.forest800}>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="var(--lkv-primary)">
                 <path d="M12 1l2.4 2.2 3.2-.4.8 3.2 3 1.4-1.2 3 1.2 3-3 1.4-.8 3.2-3.2-.4L12 20l-2.4-1.4-3.2.4-.8-3.2-3-1.4 1.2-3-1.2-3 3-1.4.8-3.2 3.2.4L12 1zm-1.2 12.6l6-6-1.4-1.4-4.6 4.6-2-2-1.4 1.4 3.4 3.4z" />
               </svg>
-              <span
+              <Chip
                 onClick={() => setRewardModalOpen(true)}
-                className="glass-capsule-btn !min-h-0 !min-w-0 !py-1 !px-2.5 text-[10px] font-mono font-bold cursor-pointer transition-all active:scale-95"
+                className="font-mono text-[10px] font-bold"
               >
                 🛡️ Trust {trustScore}/100
-              </span>
+              </Chip>
             </div>
 
-            <p className="text-xs font-mono" style={{ color: C.ink500 }}>
+            <p className="text-xs font-mono text-[color:var(--lkv-text-muted)]" >
               {handle} · {levelTitle}
             </p>
 
             {/* Bio poétique en typographie sérif italique */}
             {bio && (
-              <p className="text-sm font-serif italic leading-snug pt-1" style={{ color: C.ink900 }}>
+              <p className="text-sm font-serif italic leading-snug pt-1 text-[color:var(--lkv-text-primary)]" >
                 {bio}
               </p>
             )}
 
             {/* Localisation & Page publique */}
-            <div className="flex items-center gap-3 text-xs pt-1.5 flex-wrap" style={{ color: C.ink500 }}>
+            <div className="flex items-center gap-3 text-xs pt-1.5 flex-wrap text-[color:var(--lkv-text-muted)]" >
               {location && (
                 <span className="inline-flex items-center gap-1 font-medium">
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
@@ -629,8 +597,8 @@ export default function MobileCompteV2() {
               <Link
                 href={`/profil/${user?.id}`}
                 onClick={() => triggerHaptic('light')}
-                className="font-bold hover:underline inline-flex items-center gap-1 transition-all"
-                style={{ color: C.forest800 }}
+                className="font-bold hover:underline inline-flex items-center gap-1 transition-all text-[color:var(--lkv-primary)]"
+                
               >
                 <span>Page publique</span>
                 <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
@@ -644,27 +612,27 @@ export default function MobileCompteV2() {
           <Link
             href="/progression"
             onClick={() => triggerHaptic('selection')}
-            className="mt-3 flex items-center justify-between p-3 rounded-2xl border border-[#17402C]/10 bg-white/75 hover:bg-white/95 transition-all active:scale-[0.98] shadow-2xs cursor-pointer min-h-[52px]"
+            className="mt-3 flex items-center justify-between p-3 rounded-2xl border border-[color:var(--lkv-primary)]/10 bg-white/75 hover:bg-white/95 transition-all active:scale-[0.98] shadow-2xs cursor-pointer min-h-[52px]"
           >
             <div className="flex items-center gap-3 min-w-0">
-              <div className="w-10 h-10 rounded-xl bg-[#17402C] text-white flex items-center justify-center text-lg shrink-0 shadow-2xs">
+              <div className="w-10 h-10 rounded-xl bg-[color:var(--lkv-primary)] text-white flex items-center justify-center text-lg shrink-0 shadow-2xs">
                 {calculatedLevel.badge || '🏆'}
               </div>
               <div className="min-w-0">
                 <div className="flex items-center gap-1.5 flex-wrap">
-                  <span className="text-xs font-bold truncate" style={{ color: C.ink900 }}>
+                  <span className="text-xs font-bold truncate text-[color:var(--lkv-text-primary)]" >
                     Ma progression & classements
                   </span>
-                  <span className="text-[10px] font-mono px-1.5 py-0.2 rounded-full bg-[#17402C]/10 text-[#17402C] font-semibold">
+                  <span className="text-[10px] font-mono px-1.5 py-0.2 rounded-full bg-[color:var(--lkv-primary)]/10 text-[color:var(--lkv-primary)] font-semibold">
                     Niv. {calculatedLevel.level}
                   </span>
                 </div>
-                <p className="text-[11px] truncate" style={{ color: C.ink500 }}>
+                <p className="text-[11px] truncate text-[color:var(--lkv-text-muted)]" >
                   {currentPoints.toLocaleString('fr-FR')} Points LKDV · {calculatedLevel.title}
                 </p>
               </div>
             </div>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={C.forest800} strokeWidth="2.5" strokeLinecap="round" className="shrink-0 ml-1">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--lkv-primary)" strokeWidth="2.5" strokeLinecap="round" className="shrink-0 ml-1">
               <path d="M9 18l6-6-6-6" />
             </svg>
           </Link>
@@ -674,55 +642,51 @@ export default function MobileCompteV2() {
             <Link
               href="/compte/modifier"
               onClick={() => triggerHaptic('light')}
-              className="glass-capsule-btn primary flex-1 !py-2.5 text-xs font-bold"
+              className="inline-flex items-center justify-center gap-[var(--space-2)] min-h-[var(--lkv-touch-min)] rounded-full px-[var(--space-4)] py-[var(--space-2)] text-[length:var(--lkv-text-footnote)] font-semibold backdrop-blur-[var(--blur-md)] border border-transparent bg-[color:var(--lkv-action)] text-[color:var(--lkv-on-action)] shadow-elevation-1 flex-1 !py-2.5 text-xs font-bold"
             >
               <Icon name="pencil" size={13} />
               Modifier
             </Link>
-            <button
+            <Button
+              variant="secondary"
+              fullWidth
               onClick={handleShareProfile}
-              className="glass-capsule-btn flex-1 !py-2.5 text-xs font-bold"
+              icon={<Icon name="share2" size={13} aria-hidden="true" />}
+              className="flex-1"
             >
-              <Icon name="share2" size={13} />
               Partager
-            </button>
-            <button
+            </Button>
+            <IconButton
+              variant="glass"
+              aria-label="Options"
               onClick={() => {
                 triggerHaptic('selection');
                 setMenuOpen(true);
               }}
-              aria-label="Options"
-              className="glass-circle-btn !w-10 !h-10 !min-w-10 !min-h-10 !p-0"
             >
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
                 <circle cx="12" cy="12" r="3" />
                 <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
               </svg>
-            </button>
+            </IconButton>
           </div>
-        </div>
+        </Card>
       </section>
 
       {/* ══════════════════════════════════════════════════════════════════════
           3. RAIL HIGHLIGHTS (Stories / Voyages Épinglés — Frosted Glass Tray)
          ══════════════════════════════════════════════════════════════════════ */}
       <section className="px-3 py-1.5">
-        <div className="glass rounded-3xl p-3 border border-white/80 bg-white/80 backdrop-blur-xl shadow-xs">
+        <div className="bg-[color:var(--card-tint-strong)] border border-[color:var(--glass-border)] shadow-elevation-1 backdrop-blur-[var(--blur-lg)] rounded-3xl p-3">
           <div className="flex gap-3 overflow-x-auto scrollbar-none snap-x">
             {highlights.map((h) => (
               <Link
                 key={h.id}
                 href={`/groupes/${h.id}`}
                 onClick={() => triggerHaptic('light')}
-                className="flex flex-col items-center gap-1 shrink-0 snap-start active:scale-95 transition-transform cursor-pointer"
-                style={{ width: 62 }}
+                className="flex w-[62px] shrink-0 snap-start flex-col items-center gap-1 transition-transform active:scale-95"
               >
-                <div
-                  className="w-[54px] h-[54px] rounded-full p-[2px] relative flex items-center justify-center shadow-2xs overflow-hidden"
-                  style={{
-                    background: `linear-gradient(145deg, ${C.sage300}, ${C.forest800})`,
-                  }}
-                >
+                <div className="relative flex h-[54px] w-[54px] items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-[color:var(--sage-300)] to-[color:var(--lkv-primary)] p-[2px]">
                   <div className="w-full h-full rounded-full overflow-hidden border border-white relative">
                     <SmartImage
                       src={h.cover}
@@ -733,7 +697,7 @@ export default function MobileCompteV2() {
                     />
                   </div>
                 </div>
-                <span className="text-[10px] font-bold truncate w-full text-center" style={{ color: C.ink900 }}>
+                <span className="text-[10px] font-bold truncate w-full text-center text-[color:var(--lkv-text-primary)]" >
                   {h.label}
                 </span>
               </Link>
@@ -743,15 +707,14 @@ export default function MobileCompteV2() {
             <Link
               href="/nouveau-groupe"
               onClick={() => triggerHaptic('selection')}
-              className="flex flex-col items-center gap-1 shrink-0 snap-start active:scale-95 transition-transform cursor-pointer"
-              style={{ width: 62 }}
+              className="flex w-[62px] shrink-0 snap-start flex-col items-center gap-1 transition-transform active:scale-95"
             >
-              <div className="w-[54px] h-[54px] rounded-full border-2 border-dashed border-[#17402C]/30 flex items-center justify-center bg-white/90 backdrop-blur-md shadow-2xs">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={C.forest800} strokeWidth="2.5" strokeLinecap="round">
+              <div className="flex h-[54px] w-[54px] items-center justify-center rounded-full border-2 border-dashed border-[color:var(--lkv-primary)]/30 bg-[color:var(--lkv-surface-card)]/90 backdrop-blur-[var(--blur-md)]">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--lkv-primary)" strokeWidth="2.5" strokeLinecap="round" aria-hidden="true">
                   <path d="M12 5v14M5 12h14" />
                 </svg>
               </div>
-              <span className="text-[10px] font-bold" style={{ color: C.forest800 }}>
+              <span className="text-[10px] font-bold text-[color:var(--lkv-primary)]" >
                 Nouveau
               </span>
             </Link>
@@ -762,72 +725,61 @@ export default function MobileCompteV2() {
       {/* ══════════════════════════════════════════════════════════════════════
           4. ONGLETS FLOTTANTS & TOGGLE VUE (Segmented Capsule Liquid Glass)
          ══════════════════════════════════════════════════════════════════════ */}
-      <div className="sticky top-[48px] z-20 px-3 py-1.5">
-        <div className="glass rounded-2xl p-1 border border-white/80 bg-white/85 backdrop-blur-2xl shadow-xs flex items-center justify-between gap-1">
-          <div className="flex items-center gap-1 flex-1 overflow-x-auto scrollbar-none">
-            {([
-              { id: 'tout', label: 'Activité', icon: '⚡' },
-              { id: 'carnets', label: 'Carnets', icon: '📖' },
-              { id: 'voyages', label: 'Voyages', icon: '⛺' },
-              { id: 'materiel', label: 'Équipement', icon: '🎒' },
-            ] as { id: TabKey; label: string; icon: string }[]).map((t) => {
-              const isActive = tab === t.id;
-              return (
-                <button
-                  key={t.id}
-                  onClick={() => {
-                    triggerHaptic('selection');
-                    setTab(t.id);
-                  }}
-                  className={`glass-capsule-btn !min-w-0 !min-h-0 !py-1.5 !px-3 text-xs font-extrabold whitespace-nowrap transition-all cursor-pointer z-10 ${
-                    isActive ? 'primary' : ''
-                  }`}
-                >
-                  {isActive && (
-                    <motion.div
-                      layoutId="compte-tab-active"
-                      transition={{ type: 'spring', stiffness: 500, damping: 35 }}
-                      className="absolute inset-0 rounded-full bg-[#17402C] shadow-xs -z-10"
-                    />
-                  )}
-                  <span className="text-[11px]">{t.icon}</span>
-                  <span>{t.label}</span>
-                </button>
-              );
-            })}
+      <div className="sticky top-[48px] z-[var(--z-sticky)] px-3 py-1.5">
+        <div className="bg-[color:var(--card-tint-strong)] border border-[color:var(--glass-border)] shadow-elevation-1 backdrop-blur-[var(--blur-lg)] rounded-2xl p-1 flex items-center justify-between gap-1">
+          <div className="min-w-0 flex-1">
+            <Tabs
+              variant="segmented"
+              ariaLabel="Sections du compte"
+              value={tab}
+              onChange={(id) => {
+                triggerHaptic('selection');
+                setTab(id as TabKey);
+              }}
+              options={([
+                { id: 'tout', label: 'Activité', icon: '⚡' },
+                { id: 'carnets', label: 'Carnets', icon: '📖' },
+                { id: 'voyages', label: 'Voyages', icon: '⛺' },
+                { id: 'materiel', label: 'Équipement', icon: '🎒' },
+              ] as { id: TabKey; label: string; icon: string }[]).map((t) => ({
+                id: t.id,
+                label: t.label,
+                icon: <span aria-hidden="true">{t.icon}</span>,
+              }))}
+            />
           </div>
 
           {/* Toggle Grille / Liste (pour carnets et voyages) */}
           {tab !== 'materiel' && (
-            <div className="flex items-center gap-0.5 pl-1.5 pr-0.5 border-l border-[#17402C]/10">
-              <button
+            <div className="flex items-center gap-0.5 border-l border-[color:var(--lkv-primary)]/10 pl-1.5 pr-0.5">
+              <IconButton
+                variant={viewMode === 'grid' ? 'solid' : 'glass'}
+                size="sm"
+                aria-label="Vue Grille"
+                aria-pressed={viewMode === 'grid'}
                 onClick={() => {
                   triggerHaptic('light');
                   setViewMode('grid');
                 }}
-                aria-label="Vue Grille"
-                className={`glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8 !p-0 transition-all cursor-pointer ${
-                  viewMode === 'grid' ? 'primary' : ''
-                }`}
               >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden="true">
                   <rect x="3" y="3" width="7" height="7" rx="1.5" />
                   <rect x="14" y="3" width="7" height="7" rx="1.5" />
                   <rect x="3" y="14" width="7" height="7" rx="1.5" />
                   <rect x="14" y="14" width="7" height="7" rx="1.5" />
                 </svg>
-              </button>
-              <button
+              </IconButton>
+              <IconButton
+                variant={viewMode === 'list' ? 'solid' : 'glass'}
+                size="sm"
+                aria-label="Vue Liste"
+                aria-pressed={viewMode === 'list'}
                 onClick={() => {
                   triggerHaptic('light');
                   setViewMode('list');
                 }}
-                aria-label="Vue Liste"
-                className={`glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8 !p-0 transition-all cursor-pointer ${
-                  viewMode === 'list' ? 'primary' : ''
-                }`}
               >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" aria-hidden="true">
                   <line x1="8" y1="6" x2="21" y2="6" />
                   <line x1="8" y1="12" x2="21" y2="12" />
                   <line x1="8" y1="18" x2="21" y2="18" />
@@ -835,7 +787,7 @@ export default function MobileCompteV2() {
                   <circle cx="4" cy="12" r="1.2" fill="currentColor" />
                   <circle cx="4" cy="18" r="1.2" fill="currentColor" />
                 </svg>
-              </button>
+              </IconButton>
             </div>
           )}
         </div>
@@ -849,22 +801,22 @@ export default function MobileCompteV2() {
       {tab === 'materiel' && (
         <section className="p-3 space-y-3">
           {/* Synthèse du pack */}
-          <div className="glass p-4 rounded-3xl border border-white/80 bg-white/85 backdrop-blur-xl flex items-center justify-between shadow-xs">
+          <div className="bg-[color:var(--card-tint-strong)] border border-[color:var(--glass-border)] shadow-elevation-1 backdrop-blur-[var(--blur-lg)] p-4 rounded-3xl flex items-center justify-between">
             <div>
-              <span className="text-[10px] font-mono uppercase tracking-wider font-bold" style={{ color: C.forest800 }}>
+              <span className="text-[10px] font-mono uppercase tracking-wider font-bold text-[color:var(--lkv-primary)]" >
                 🎒 Mon Matériel de Randonnée
               </span>
-              <h3 className="text-base font-bold" style={{ color: C.ink900 }}>
+              <h3 className="text-base font-bold text-[color:var(--lkv-text-primary)]" >
                 {gearItems.length} équipement{gearItems.length > 1 ? 's' : ''} possédé{gearItems.length > 1 ? 's' : ''}
               </h3>
-              <p className="text-xs font-mono" style={{ color: C.ink500 }}>
+              <p className="text-xs font-mono text-[color:var(--lkv-text-muted)]" >
                 Poids estimé du fond de sac : <strong>{formatWeight(totalGearWeight)}</strong>
               </p>
             </div>
             <Link
               href="/compte"
               onClick={() => triggerHaptic('selection')}
-              className="glass-capsule-btn primary !py-2 !px-3.5 text-xs font-bold"
+              className="inline-flex items-center justify-center gap-[var(--space-2)] min-h-[var(--lkv-touch-min)] rounded-full px-[var(--space-4)] py-[var(--space-2)] text-[length:var(--lkv-text-footnote)] font-semibold backdrop-blur-[var(--blur-md)] border border-transparent bg-[color:var(--lkv-action)] text-[color:var(--lkv-on-action)] shadow-elevation-1 !py-2 !px-3.5 text-xs font-bold"
             >
               <span>Détails</span>
               <Icon name="arrow-right" size={12} />
@@ -872,62 +824,55 @@ export default function MobileCompteV2() {
           </div>
 
           {/* Filtres par catégorie */}
-          <div className="flex gap-2 overflow-x-auto scrollbar-none pb-1">
+          <div className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {GEAR_CATEGORIES.map((cat) => (
-              <button
+              <Chip
                 key={cat.key}
+                selected={selectedGearCat === cat.key}
                 onClick={() => {
                   triggerHaptic('light');
                   setSelectedGearCat(cat.key);
                 }}
-                className={`glass-capsule-btn whitespace-nowrap !py-1.5 !min-h-0 cursor-pointer ${
-                  selectedGearCat === cat.key ? 'primary' : ''
-                }`}
+                icon={<span aria-hidden="true">{cat.icon}</span>}
+                className="shrink-0"
               >
-                <span>{cat.icon}</span>
-                <span>{cat.label}</span>
-              </button>
+                {cat.label}
+              </Chip>
             ))}
           </div>
 
           {/* Liste des équipements */}
           {filteredGear.length === 0 ? (
-            <div className="glass p-8 text-center rounded-3xl border border-dashed border-[#17402C]/20 bg-white/70 backdrop-blur-xl shadow-xs">
-              <p className="text-3xl mb-2">🎒</p>
-              <h4 className="font-serif text-sm font-bold" style={{ color: C.ink900 }}>
-                Aucun équipement dans cette catégorie
-              </h4>
-              <p className="text-xs max-w-xs mx-auto mt-1 mb-4" style={{ color: C.ink500 }}>
-                Ajoutez vos tentes, duvets et réchauds pour générer des checklists précises.
-              </p>
-              <Link
-                href="/compte"
-                className="glass-capsule-btn primary inline-flex"
-              >
-                + Ajouter du matériel
-              </Link>
+            <div className="rounded-3xl border border-dashed border-[color:var(--lkv-primary)]/20 bg-[color:var(--card-tint-strong)] backdrop-blur-[var(--blur-lg)]">
+              <EmptyState
+                icon={<span className="text-3xl">🎒</span>}
+                title="Aucun équipement dans cette catégorie"
+                description="Ajoutez vos tentes, duvets et réchauds pour générer des checklists précises."
+                actionLabel="+ Ajouter du matériel"
+                actionHref="/compte"
+              />
             </div>
           ) : (
             <div className="space-y-2">
               {filteredGear.map((item) => (
                 <div
                   key={item.id}
-                  className="glass p-3.5 rounded-2xl border border-white/80 bg-white/85 backdrop-blur-xl flex items-center justify-between shadow-2xs transition-all active:scale-[0.99]"
+                  className="bg-[color:var(--card-tint-strong)] border border-[color:var(--glass-border)] shadow-elevation-1 backdrop-blur-[var(--blur-lg)] p-3.5 rounded-2xl flex items-center justify-between transition-all active:scale-[0.99]"
                 >
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-xl flex items-center justify-center text-lg bg-white/90 border border-white shadow-2xs">
                       {item.category?.toLowerCase() === 'couchage' ? '🛏' : item.category?.toLowerCase() === 'navigation' ? '🗺️' : '📦'}
                     </div>
                     <div>
-                      <h4 className="text-xs font-bold" style={{ color: C.ink900 }}>
+                      <h4 className="text-xs font-bold text-[color:var(--lkv-text-primary)]" >
                         {item.name}
                       </h4>
-                      <p className="text-[11px]" style={{ color: C.ink500 }}>
+                      <p className="text-[11px] text-[color:var(--lkv-text-muted)]" >
                         {item.brand || 'Matériel certifié'} · <span className="font-mono">{formatWeight(item.weight_g)}</span>
                       </p>
                     </div>
                   </div>
-                  <span className="glass-pill bg-forest-50 text-forest-800 border-forest-200">
+                  <span className="inline-flex items-center justify-center gap-[6px] rounded-full border border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-muted)] px-[var(--space-3)] py-[2px] text-[length:var(--lkv-text-caption-2)] font-medium text-[color:var(--lkv-text-primary)] bg-forest-50 text-forest-800 border-forest-200">
                     Possédé
                   </span>
                 </div>
@@ -936,12 +881,12 @@ export default function MobileCompteV2() {
           )}
 
           {/* Raccourci Boutique pour compléter */}
-          <div className="glass p-4 rounded-3xl border border-white/80 bg-white/85 backdrop-blur-xl flex items-center justify-between shadow-xs">
+          <div className="bg-[color:var(--card-tint-strong)] border border-[color:var(--glass-border)] shadow-elevation-1 backdrop-blur-[var(--blur-lg)] p-4 rounded-3xl flex items-center justify-between">
             <div>
-              <h4 className="text-sm font-bold" style={{ color: C.ink900 }}>Compléter mon sac</h4>
-              <p className="text-xs" style={{ color: C.ink500 }}>Trouver les équipements ultralégers manquants.</p>
+              <h4 className="text-sm font-bold text-[color:var(--lkv-text-primary)]" >Compléter mon sac</h4>
+              <p className="text-xs text-[color:var(--lkv-text-muted)]" >Trouver les équipements ultralégers manquants.</p>
             </div>
-            <Link href="/boutique" className="glass-capsule-btn primary text-xs font-bold">
+            <Link href="/boutique" className="inline-flex items-center justify-center gap-[var(--space-2)] min-h-[var(--lkv-touch-min)] rounded-full px-[var(--space-4)] py-[var(--space-2)] text-[length:var(--lkv-text-footnote)] font-semibold backdrop-blur-[var(--blur-md)] border border-transparent bg-[color:var(--lkv-action)] text-[color:var(--lkv-on-action)] shadow-elevation-1 text-xs font-bold">
               Boutique →
             </Link>
           </div>
@@ -952,22 +897,14 @@ export default function MobileCompteV2() {
       {tab !== 'materiel' && (
         <section>
           {filteredContent.length === 0 ? (
-            <div className="glass m-3 p-10 text-center rounded-3xl border border-white/80 bg-white/80 backdrop-blur-xl shadow-xs">
-              <p className="text-4xl mb-3">🏔️</p>
-              <h3 className="font-serif text-base font-bold mb-1" style={{ color: C.ink900 }}>
-                {tab === 'carnets' ? 'Aucun carnet rédigé' : 'Aucun voyage enregistré'}
-              </h3>
-              <p className="text-xs max-w-xs mx-auto mb-5" style={{ color: C.ink500 }}>
-                Partagez vos récits de randonnée et vos expéditions avec la communauté.
-              </p>
-              <Link
-                href={tab === 'carnets' ? '/carnets/nouveau' : '/nouveau-groupe'}
-                onClick={() => triggerHaptic('selection')}
-                className="glass-capsule-btn primary inline-flex !py-2.5 text-xs font-bold"
-              >
-                <span>{tab === 'carnets' ? 'Écrire un carnet' : 'Créer un voyage'}</span>
-                <Icon name="arrow-right" size={12} />
-              </Link>
+            <div className="m-3 rounded-3xl bg-[color:var(--card-tint-strong)] backdrop-blur-[var(--blur-lg)]">
+              <EmptyState
+                icon={<span className="text-4xl">🏔️</span>}
+                title={tab === 'carnets' ? 'Aucun carnet rédigé' : 'Aucun voyage enregistré'}
+                description="Partagez vos récits de randonnée et vos expéditions avec la communauté."
+                actionLabel={tab === 'carnets' ? 'Écrire un carnet' : 'Créer un voyage'}
+                actionHref={tab === 'carnets' ? '/carnets/nouveau' : '/nouveau-groupe'}
+              />
             </div>
           ) : viewMode === 'grid' ? (
             /* VUE GRILLE 3 COLONNES LIQUID GLASS AVEC COINS ARRONDIS */
@@ -977,13 +914,12 @@ export default function MobileCompteV2() {
                   return (
                     <div
                       key={c.id}
-                      className="aspect-square p-3 flex flex-col justify-between rounded-2xl border border-white/40 shadow-2xs backdrop-blur-xl active:scale-95 transition-all"
-                      style={{ background: 'rgba(23, 64, 44, 0.90)', color: C.white }}
+                      className="flex aspect-square flex-col justify-between rounded-[var(--lkv-radius-md)] border border-[color:var(--glass-border)] bg-[color:var(--lkv-primary)]/90 p-[var(--space-3)] text-[color:var(--lkv-text-inverted)] backdrop-blur-[var(--blur-md)] transition-transform active:scale-95"
                     >
-                      <p className="font-serif italic text-xs leading-snug text-white/95 line-clamp-4">
+                      <p className="font-serif text-[length:var(--lkv-text-caption)] italic leading-snug text-[color:var(--lkv-text-inverted)]/95 line-clamp-4">
                         {c.quote}
                       </p>
-                      <span className="font-mono text-[9px] uppercase tracking-wider" style={{ color: C.sage300 }}>
+                      <span className="font-mono text-[9px] uppercase tracking-wider text-[color:var(--sage-300)]">
                         Carnet · J.04
                       </span>
                     </div>
@@ -1018,7 +954,7 @@ export default function MobileCompteV2() {
                     key={`${c.kind}-${c.id}`}
                     href={c.kind === 'carnet' ? `/carnets/${c.id}` : c.kind === 'groupe' ? `/groupes/${c.id}` : `/clubs/${c.slug || c.id}`}
                     onClick={() => triggerHaptic('light')}
-                    className="aspect-square relative overflow-hidden rounded-2xl border border-white/70 shadow-2xs block active:scale-95 transition-all cursor-pointer bg-[#17402C]/10"
+                    className="aspect-square relative overflow-hidden rounded-2xl border border-white/70 shadow-2xs block active:scale-95 transition-all cursor-pointer bg-[color:var(--lkv-primary)]/10"
                   >
                     <SmartImage
                       src={c.cover}
@@ -1029,7 +965,7 @@ export default function MobileCompteV2() {
                     />
 
                     {/* Badge de Type en haut à droite */}
-                    <div className="absolute top-2 right-2 w-5 h-5 rounded-md bg-black/40 backdrop-blur-md flex items-center justify-center text-white text-[10px] z-10">
+                    <div className="absolute top-2 right-2 w-5 h-5 rounded-md bg-black/40 backdrop-blur-md flex items-center justify-center text-white text-[10px] z-[var(--z-dropdown)]">
                       {c.kind === 'carnet' ? (
                         <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                           <rect x="4" y="5" width="16" height="14" rx="2" />
@@ -1044,7 +980,7 @@ export default function MobileCompteV2() {
 
                     {/* Likes ou Nombre de membres en bas à gauche */}
                     {c.likes > 0 && (
-                      <div className="absolute bottom-1.5 left-1.5 flex items-center gap-1 text-[10px] font-bold text-white drop-shadow-sm z-10">
+                      <div className="absolute bottom-1.5 left-1.5 flex items-center gap-1 text-[10px] font-bold text-white drop-shadow-sm z-[var(--z-dropdown)]">
                         <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor">
                           <path d="M12 21s-8-5-8-11a5 5 0 0 1 9-3 5 5 0 0 1 9 3c0 6-8 11-8 11h-2z" />
                         </svg>
@@ -1065,9 +1001,9 @@ export default function MobileCompteV2() {
                     key={`${c.kind}-${c.id}`}
                     href={c.kind === 'carnet' ? `/carnets/${c.id}` : c.kind === 'groupe' ? `/groupes/${c.id}` : `/clubs/${c.slug || c.id}`}
                     onClick={() => triggerHaptic('light')}
-                    className="glass flex gap-3.5 p-3 rounded-2xl border border-white/80 bg-white/85 backdrop-blur-xl active:scale-[0.98] transition-all shadow-xs cursor-pointer"
+                    className="bg-[color:var(--card-tint-strong)] border border-[color:var(--glass-border)] shadow-elevation-1 backdrop-blur-[var(--blur-lg)] flex gap-3.5 p-3 rounded-2xl active:scale-[0.98] transition-all cursor-pointer"
                   >
-                    <div className="w-22 h-22 rounded-xl shrink-0 overflow-hidden border border-white/60 shadow-2xs relative bg-[#17402C]/10">
+                    <div className="w-22 h-22 rounded-xl shrink-0 overflow-hidden border border-white/60 shadow-2xs relative bg-[color:var(--lkv-primary)]/10">
                       <SmartImage
                         src={c.cover}
                         alt={c.title}
@@ -1078,22 +1014,22 @@ export default function MobileCompteV2() {
                     </div>
                     <div className="flex-1 flex flex-col justify-between py-0.5">
                       <div>
-                        <span className="text-[10px] font-mono uppercase tracking-wider font-bold" style={{ color: C.forest800 }}>
+                        <span className="text-[10px] font-mono uppercase tracking-wider font-bold text-[color:var(--lkv-primary)]" >
                           {c.kind === 'carnet' ? 'Récit d\'aventure' : 'Expédition'}
                         </span>
-                        <h4 className="text-sm font-bold leading-tight mt-0.5" style={{ color: C.ink900 }}>
+                        <h4 className="text-sm font-bold leading-tight mt-0.5 text-[color:var(--lkv-text-primary)]" >
                           {c.title}
                         </h4>
-                        <p className="text-xs mt-0.5 font-medium" style={{ color: C.ink500 }}>
+                        <p className="text-xs mt-0.5 font-medium text-[color:var(--lkv-text-muted)]" >
                           📍 {c.sub}
                         </p>
                       </div>
                       <div className="flex items-center gap-2 mt-2">
-                        <span className="glass-pill bg-white/90 border-white">
+                        <span className="inline-flex items-center justify-center gap-[6px] rounded-full border border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-muted)] px-[var(--space-3)] py-[2px] text-[length:var(--lkv-text-caption-2)] font-medium text-[color:var(--lkv-text-primary)] bg-white/90 border-white">
                           {c.status || 'Publié'}
                         </span>
                         {c.likes > 0 && (
-                          <span className="text-[11px] font-bold flex items-center gap-1" style={{ color: C.ink500 }}>
+                          <span className="text-[11px] font-bold flex items-center gap-1 text-[color:var(--lkv-text-muted)]" >
                             ❤️ {c.likes}
                           </span>
                         )}
@@ -1106,214 +1042,153 @@ export default function MobileCompteV2() {
           )}
 
           {/* Sceau de fin de page */}
-          <div className="py-8 text-center font-mono text-[10px] uppercase tracking-widest" style={{ color: C.ink300 }}>
+          <div className="py-8 text-center font-mono text-[10px] uppercase tracking-widest text-[color:var(--lkv-text-subtle)]" >
             — fin · {filteredContent.length} publication{filteredContent.length > 1 ? 's' : ''} —
           </div>
         </section>
       )}
 
       {/* ══════════════════════════════════════════════════════════════════════
-          6. MODALE / SHEET REWARD ENGINE & NIVEAU VOYAGEUR
+          6. SHEET REWARD ENGINE & NIVEAU VOYAGEUR
          ══════════════════════════════════════════════════════════════════════ */}
-      <AnimatePresence>
-        {rewardModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-end justify-center">
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setRewardModalOpen(false)}
-              className="absolute inset-0 bg-black/40 backdrop-blur-xs"
-            />
-            <motion.div
-              initial={{ y: '100%' }}
-              animate={{ y: 0 }}
-              exit={{ y: '100%' }}
-              transition={{ type: 'spring', damping: 30, stiffness: 350 }}
-              className="relative w-full max-w-lg rounded-t-3xl p-6 z-10 space-y-4 backdrop-blur-2xl bg-white/95 border-t border-white shadow-2xl"
-            >
-              <div className="w-12 h-1.5 rounded-full mx-auto -mt-2 mb-2 bg-[#17402C]/15" />
-              <div className="flex items-center justify-between">
-                <div>
-                  <span className="text-[10px] font-mono uppercase tracking-wider font-semibold" style={{ color: C.forest800 }}>
-                    Programme Fidélité LKDV
-                  </span>
-                  <h3 className="text-lg font-bold" style={{ color: C.ink900 }}>
-                    Niveau {levelNum} · {levelTitle}
-                  </h3>
-                </div>
-                <button onClick={() => setRewardModalOpen(false)} className="glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8 !p-0">
-                  ✕
-                </button>
-              </div>
+      <Sheet
+        open={rewardModalOpen}
+        onOpenChange={setRewardModalOpen}
+        title={`Niveau ${levelNum} · ${levelTitle}`}
+        description="Programme Fidélité LKDV"
+        dragToDismiss
+      >
+        <div className="space-y-[var(--space-4)]">
+          {/* Jauge de Points LKDV */}
+          <div className="rounded-[var(--lkv-radius-md)] bg-[color:var(--lkv-surface-muted)] p-[var(--space-4)]">
+            <div className="mb-[var(--space-2)] flex justify-between font-mono text-[length:var(--lkv-text-caption)] font-semibold">
+              <span className="text-[color:var(--lkv-primary)]">{currentPoints.toLocaleString('fr-FR')} pts LKDV</span>
+              <span className="text-[color:var(--lkv-text-muted)]">
+                {nextLevelPoints ? `Objectif : ${nextLevelPoints.toLocaleString('fr-FR')} pts` : 'Niveau Max'}
+              </span>
+            </div>
+            <div className="h-2.5 w-full overflow-hidden rounded-full bg-[color:var(--lkv-primary)]/10">
+              <div
+                className="h-full rounded-full bg-gradient-to-r from-[color:var(--lkv-primary)] to-[color:var(--lkv-secondary)]"
+                style={{ width: `${progressPct}%` }}
+              />
+            </div>
+            <p className="mt-[var(--space-2)] font-serif text-[length:var(--lkv-text-caption)] italic text-[color:var(--lkv-text-secondary)]">
+              {nextLevelPoints
+                ? `Plus que ${Math.max(0, nextLevelPoints - currentPoints).toLocaleString('fr-FR')} points LKDV pour débloquer le rang supérieur.`
+                : 'Félicitations, vous avez atteint le niveau maximal de progression permanente !'}
+            </p>
+          </div>
 
-              {/* Jauge de Points LKDV */}
-              <div className="p-4 rounded-2xl" style={{ background: C.stone }}>
-                <div className="flex justify-between text-xs font-mono mb-1.5 font-semibold">
-                  <span style={{ color: C.forest800 }}>{currentPoints.toLocaleString('fr-FR')} pts LKDV</span>
-                  <span style={{ color: C.ink500 }}>
-                    {nextLevelPoints ? `Objectif : ${nextLevelPoints.toLocaleString('fr-FR')} pts` : 'Niveau Max'}
-                  </span>
-                </div>
-                <div className="w-full h-2.5 rounded-full overflow-hidden bg-[#17402C]/10">
-                  <div
-                    className="h-full rounded-full"
-                    style={{
-                      width: `${progressPct}%`,
-                      background: `linear-gradient(90deg, ${C.forest800}, ${C.sage500})`,
-                    }}
-                  />
-                </div>
-                <p className="text-[11px] font-serif italic mt-2" style={{ color: C.ink700 }}>
-                  {nextLevelPoints
-                    ? `Plus que ${Math.max(0, nextLevelPoints - currentPoints).toLocaleString('fr-FR')} points LKDV pour débloquer le rang supérieur.`
-                    : 'Félicitations, vous avez atteint le niveau maximal de progression permanente !'}
+          {/* Trust Score */}
+          <div className="flex items-center justify-between rounded-[var(--lkv-radius-md)] border border-[color:var(--lkv-primary)]/10 bg-[color:var(--lkv-surface-card)] p-[var(--space-4)]">
+            <div className="flex items-center gap-[var(--space-3)]">
+              <span className="text-2xl">🛡️</span>
+              <div>
+                <h4 className="text-[length:var(--lkv-text-body-sm)] font-bold text-[color:var(--lkv-text-primary)]">
+                  Indice de Confiance Voyageur
+                </h4>
+                <p className="text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-muted)]">
+                  Calculé sur vos avis vérifiés et vos sorties.
                 </p>
               </div>
-
-              {/* Trust Score */}
-              <div className="p-3.5 rounded-2xl flex items-center justify-between border border-[#17402C]/10" style={{ background: C.white }}>
-                <div className="flex items-center gap-3">
-                  <span className="text-2xl">🛡️</span>
-                  <div>
-                    <h4 className="text-xs font-bold" style={{ color: C.ink900 }}>
-                      Indice de Confiance Voyageur
-                    </h4>
-                    <p className="text-[11px]" style={{ color: C.ink500 }}>
-                      Calculé sur vos avis vérifiés et vos sorties.
-                    </p>
-                  </div>
-                </div>
-                <span className="font-mono text-sm font-bold" style={{ color: C.forest800 }}>
-                  {trustScore}/100
-                </span>
-              </div>
-
-              {/* Badges d'exploration */}
-              <div className="space-y-2">
-                <h4 className="text-xs font-bold uppercase tracking-wider font-mono" style={{ color: C.ink500 }}>
-                  Badges débloqués
-                </h4>
-                <div className="flex gap-2">
-                  <div className="flex-1 p-2.5 rounded-xl border border-[#17402C]/10 text-center" style={{ background: C.white }}>
-                    <span className="text-xl">🏔️</span>
-                    <p className="text-[10px] font-bold mt-1" style={{ color: C.ink900 }}>Sommets 3000</p>
-                  </div>
-                  <div className="flex-1 p-2.5 rounded-xl border border-[#17402C]/10 text-center" style={{ background: C.white }}>
-                    <span className="text-xl">⛺</span>
-                    <p className="text-[10px] font-bold mt-1" style={{ color: C.ink900 }}>Bivouac Master</p>
-                  </div>
-                  <div className="flex-1 p-2.5 rounded-xl border border-[#17402C]/10 text-center" style={{ background: C.white }}>
-                    <span className="text-xl">✍️</span>
-                    <p className="text-[10px] font-bold mt-1" style={{ color: C.ink900 }}>Auteur Pro</p>
-                  </div>
-                </div>
-              </div>
-
-              <Link
-                href="/progression"
-                onClick={() => {
-                  triggerHaptic('selection');
-                  setRewardModalOpen(false);
-                }}
-                className="glass-capsule-btn primary w-full"
-              >
-                Voir ma progression & les classements
-              </Link>
-            </motion.div>
+            </div>
+            <span className="font-mono text-[length:var(--lkv-text-body-sm)] font-bold text-[color:var(--lkv-primary)]">
+              {trustScore}/100
+            </span>
           </div>
-        )}
-      </AnimatePresence>
+
+          {/* Badges d'exploration */}
+          <div className="space-y-[var(--space-2)]">
+            <h4 className="font-mono text-[length:var(--lkv-text-caption)] font-bold uppercase tracking-wider text-[color:var(--lkv-text-muted)]">
+              Badges débloqués
+            </h4>
+            <div className="flex gap-[var(--space-2)]">
+              <div className="flex-1 rounded-[var(--lkv-radius-sm)] border border-[color:var(--lkv-primary)]/10 bg-[color:var(--lkv-surface-card)] p-[var(--space-3)] text-center">
+                <span className="text-xl">🏔️</span>
+                <p className="mt-[var(--space-1)] text-[10px] font-bold text-[color:var(--lkv-text-primary)]">Sommets 3000</p>
+              </div>
+              <div className="flex-1 rounded-[var(--lkv-radius-sm)] border border-[color:var(--lkv-primary)]/10 bg-[color:var(--lkv-surface-card)] p-[var(--space-3)] text-center">
+                <span className="text-xl">⛺</span>
+                <p className="mt-[var(--space-1)] text-[10px] font-bold text-[color:var(--lkv-text-primary)]">Bivouac Master</p>
+              </div>
+              <div className="flex-1 rounded-[var(--lkv-radius-sm)] border border-[color:var(--lkv-primary)]/10 bg-[color:var(--lkv-surface-card)] p-[var(--space-3)] text-center">
+                <span className="text-xl">✍️</span>
+                <p className="mt-[var(--space-1)] text-[10px] font-bold text-[color:var(--lkv-text-primary)]">Auteur Pro</p>
+              </div>
+            </div>
+          </div>
+
+          <Button
+            fullWidth
+            onClick={() => {
+              triggerHaptic('selection');
+              setRewardModalOpen(false);
+              router.push('/progression');
+            }}
+          >
+            Voir ma progression &amp; les classements
+          </Button>
+        </div>
+      </Sheet>
 
       {/* ══════════════════════════════════════════════════════════════════════
-          7. BOTTOM SHEET : PARAMÈTRES & OPTIONS COMPLÈTES
+          7. SHEET : PARAMÈTRES & OPTIONS COMPLÈTES
          ══════════════════════════════════════════════════════════════════════ */}
-      <AnimatePresence>
-        {menuOpen && (
-          <div className="fixed inset-0 z-50 flex items-end justify-center">
-            {/* Scrim Overlay */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setMenuOpen(false)}
-              className="absolute inset-0 bg-black/40 backdrop-blur-xs"
-            />
-
-            {/* Sheet Container avec spring physics */}
-            <motion.div
-              initial={{ y: '100%' }}
-              animate={{ y: 0 }}
-              exit={{ y: '100%' }}
-              transition={{ type: 'spring', damping: 30, stiffness: 350 }}
-              className="relative w-full max-w-lg rounded-t-3xl p-5 z-10 max-h-[85vh] overflow-y-auto backdrop-blur-2xl bg-white/95 border-t border-white shadow-2xl"
+      <Sheet
+        open={menuOpen}
+        onOpenChange={setMenuOpen}
+        title="Paramètres & Navigation"
+        dragToDismiss
+      >
+        <div className="space-y-[var(--space-1)]">
+          {([
+            { label: 'Modifier mon profil', icon: '👤', href: '/compte/modifier' },
+            { label: 'Ma progression & classements', icon: '🏆', href: '/progression' },
+            { label: 'Mon Compte', icon: '🎒', href: '/compte' },
+            { label: 'Mes commandes & factures', icon: '📦', href: '/boutique' },
+            { label: 'Programme Fidélité & Récompenses', icon: '✨', href: '/fidelite' },
+            { label: 'Gains & Parrainage', icon: '💎', href: '/recompenses' },
+            { label: 'Mes alertes & notifications', icon: '🔔', href: '/hub/alertes' },
+            { label: 'Confidentialité & Données', icon: '🔒', href: '/politique-confidentialite' },
+            { label: 'Aide & Support voyageur', icon: '💬', href: '/contact' },
+          ] as { label: string; icon: string; href: string }[]).map((item) => (
+            <Link
+              key={item.label}
+              href={item.href}
+              onClick={() => {
+                triggerHaptic('light');
+                setMenuOpen(false);
+              }}
+              className="flex min-h-[var(--lkv-touch-min)] items-center justify-between rounded-[var(--lkv-radius-sm)] p-[var(--space-3)] text-[color:var(--lkv-text-primary)] transition-colors hover:bg-[color:var(--lkv-hover-surface)] active:bg-[color:var(--lkv-primary)]/5"
             >
-              <div className="w-12 h-1.5 rounded-full mx-auto -mt-1 mb-4 bg-[#17402C]/15" />
+              <span className="flex items-center gap-[var(--space-3)]">
+                <span className="text-base" aria-hidden="true">{item.icon}</span>
+                <span className="text-[length:var(--lkv-text-caption)] font-semibold">{item.label}</span>
+              </span>
+              <span className="text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-primary)]/30">›</span>
+            </Link>
+          ))}
 
-              <div className="flex items-center justify-between pb-3 border-b border-[#17402C]/10 mb-3">
-                <h3 className="text-base font-bold" style={{ color: C.ink900 }}>
-                  Paramètres & Navigation
-                </h3>
-                <button
-                  onClick={() => setMenuOpen(false)}
-                  className="glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8 !p-0"
-                >
-                  ✕
-                </button>
-              </div>
-
-              <div className="space-y-1">
-                {([
-                  { label: 'Modifier mon profil', icon: '👤', href: '/compte/modifier' },
-                  { label: 'Ma progression & classements', icon: '🏆', href: '/progression' },
-                  { label: 'Mon Compte', icon: '🎒', href: '/compte' },
-                  { label: 'Mes commandes & factures', icon: '📦', href: '/boutique' },
-                  { label: 'Programme Fidélité & Récompenses', icon: '✨', href: '/fidelite' },
-                  { label: 'Gains & Parrainage', icon: '💎', href: '/recompenses' },
-                  { label: 'Mes alertes & notifications', icon: '🔔', href: '/hub/alertes' },
-                  { label: 'Confidentialité & Données', icon: '🔒', href: '/politique-confidentialite' },
-                  { label: 'Aide & Support voyageur', icon: '💬', href: '/contact' },
-                ] as { label: string; icon: string; href: string }[]).map((item) => (
-                  <Link
-                    key={item.label}
-                    href={item.href}
-                    onClick={() => {
-                      triggerHaptic('light');
-                      setMenuOpen(false);
-                    }}
-                    className="flex items-center justify-between p-3 rounded-xl transition-colors active:bg-[#17402C]/5"
-                    style={{ color: C.ink900 }}
-                  >
-                    <div className="flex items-center gap-3">
-                      <span className="text-base">{item.icon}</span>
-                      <span className="text-xs font-semibold">{item.label}</span>
-                    </div>
-                    <span className="text-xs text-[#17402C]/30 font-bold">›</span>
-                  </Link>
-                ))}
-
-                {/* Séparateur & Déconnexion */}
-                <div className="pt-3 mt-2 border-t border-[#17402C]/10">
-                  <button
-                    onClick={async () => {
-                      triggerHaptic('warning');
-                      setMenuOpen(false);
-                      if (await lkvConfirm('Voulez-vous vraiment vous déconnecter ?')) {
-                        await signOut();
-                        router.push('/connexion');
-                      }
-                    }}
-                    className="glass-capsule-btn danger w-full text-xs font-bold"
-                  >
-                    <span>🚪</span>
-                    <span>Se déconnecter</span>
-                  </button>
-                </div>
-              </div>
-            </motion.div>
+          <div className="mt-[var(--space-2)] border-t border-[color:var(--lkv-primary)]/10 pt-[var(--space-3)]">
+            <Button
+              variant="destructive"
+              fullWidth
+              icon={<span aria-hidden="true">🚪</span>}
+              onClick={async () => {
+                triggerHaptic('warning');
+                setMenuOpen(false);
+                if (await lkvConfirm('Voulez-vous vraiment vous déconnecter ?')) {
+                  await signOut();
+                  router.push('/connexion');
+                }
+              }}
+            >
+              Se déconnecter
+            </Button>
           </div>
-        )}
-      </AnimatePresence>
+        </div>
+      </Sheet>
 
       {/* Toast Feedback */}
       <AnimatePresence>
@@ -1322,10 +1197,9 @@ export default function MobileCompteV2() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 20 }}
-            className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 rounded-full text-xs font-bold text-white  flex items-center gap-2 border border-white/20"
-            style={{ background: C.forest900 }}
+            className="fixed bottom-24 left-1/2 z-[var(--z-toast)] flex -translate-x-1/2 items-center gap-[var(--space-2)] rounded-full border border-[color:var(--lkv-border)] bg-[color:var(--lkv-primary)] px-[var(--space-4)] py-[10px] text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-inverted)]"
           >
-            <span>✓</span>
+            <span aria-hidden="true">✓</span>
             <span>{toastMessage}</span>
           </motion.div>
         )}

@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import Icon from '@/components/ui/AppIcon';
+import { Badge, Button, Card, Chip, Switch } from '@/components/ui';
 import { createClient } from '@/lib/supabase/client';
 
 export default function EditProfileView({ onCloseModal, onSave }: { onCloseModal?: () => void; onSave?: (updatedProfile: any) => void }) {
@@ -213,52 +214,48 @@ export default function EditProfileView({ onCloseModal, onSave }: { onCloseModal
   };
 
   return (
-    <div className="min-h-screen bg-[rgba(238,243,236,0.8)] backdrop-blur-xl font-sans text-[#17402C] pb-28">
+    <div className="min-h-screen bg-[color:var(--stone-50)]/80 pb-28 font-sans text-[color:var(--lkv-text-primary)] backdrop-blur-[var(--blur-lg)]">
       {/* 1. TOP STICKY NAVBAR — desktop uniquement */}
-      <header className="hidden md:flex sticky top-0 z-40 glass border-b border-[#17402C]/5 px-4 sm:px-8 py-3.5 items-center justify-between">
+      <header className="lkv-material-header sticky top-0 z-[var(--z-sticky)] hidden items-center justify-between border-b border-[color:var(--lkv-primary)]/5 px-4 py-3.5 sm:px-8 md:flex">
         <div className="flex items-center gap-4">
-          <Link href="/compte" className="glass-capsule-btn text-xs font-bold !py-1.5 !px-3">
+          <Link href="/compte" className="inline-flex items-center justify-center gap-[var(--space-2)] min-h-[var(--lkv-touch-min)] rounded-full px-[var(--space-4)] py-[var(--space-2)] text-[length:var(--lkv-text-footnote)] font-semibold backdrop-blur-[var(--blur-md)] border border-[color:var(--glass-border)] bg-[color:var(--btn-tint)] text-[color:var(--btn-content)] shadow-elevation-1 text-xs font-bold !py-1.5 !px-3">
             <Icon name="ArrowLeftIcon" size={14} />
             <span>Mon compte</span>
           </Link>
-          <span className="text-[#17402C]/10">|</span>
-          <span className="text-xs font-mono font-bold text-[#17402C] uppercase tracking-wider">Modifier mon profil</span>
+          <span className="text-[color:var(--lkv-primary)]/10">|</span>
+          <span className="text-xs font-mono font-bold text-[color:var(--lkv-primary)] uppercase tracking-wider">Modifier mon profil</span>
         </div>
 
         <div className="flex items-center gap-3">
-          <span className="glass-pill text-[10px] font-mono">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#5B7F55] animate-pulse mr-1"></span>
+          <span className="inline-flex items-center justify-center gap-[6px] rounded-full border border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-muted)] px-[var(--space-3)] py-[2px] text-[length:var(--lkv-text-caption-2)] font-medium text-[color:var(--lkv-text-primary)] text-[10px] font-mono">
+            <span className="w-1.5 h-1.5 rounded-full bg-[color:var(--lkv-secondary)] animate-pulse mr-1"></span>
             ⚡ Modifications synchronisées
           </span>
 
           <Link
             href="/compte"
-            className="glass-capsule-btn text-xs font-bold"
+            className="inline-flex items-center justify-center gap-[var(--space-2)] min-h-[var(--lkv-touch-min)] rounded-full px-[var(--space-4)] py-[var(--space-2)] text-[length:var(--lkv-text-footnote)] font-semibold backdrop-blur-[var(--blur-md)] border border-[color:var(--glass-border)] bg-[color:var(--btn-tint)] text-[color:var(--btn-content)] shadow-elevation-1 text-xs font-bold"
           >
             <Icon name="EyeIcon" size={14} />
             <span>Aperçu public</span>
           </Link>
 
-          <button
-            onClick={handleSave}
-            disabled={saving}
-            className="glass-capsule-btn primary text-xs font-bold disabled:opacity-50"
-          >
-            <span>{saving ? 'Enregistrement...' : 'Enregistrer'}</span>
-          </button>
+          <Button onClick={handleSave} disabled={saving} loading={saving}>
+            {saving ? 'Enregistrement...' : 'Enregistrer'}
+          </Button>
         </div>
       </header>
 
       {/* 2. HERO TITLE SECTION */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-6">
-        <div className="text-[10px] font-mono tracking-widest text-[#5A7064] uppercase font-bold mb-2">
+        <div className="text-[10px] font-mono tracking-widest text-[color:var(--lkv-text-muted)] uppercase font-bold mb-2">
           — ÉDITION PROFIL · {form.firstName} {form.lastName}
         </div>
-        <h1 className="font-display font-bold text-3xl sm:text-4xl text-[#17402C] tracking-tight mb-2">
+        <h1 className="font-display font-bold text-3xl sm:text-4xl text-[color:var(--lkv-primary)] tracking-tight mb-2">
           Racontez qui vous êtes, <br className="hidden sm:inline" />
-          <span className="font-serif italic font-normal text-[#365233]">et où vous allez.</span>
+          <span className="font-serif italic font-normal text-[color:var(--lkv-forest-600)]">et où vous allez.</span>
         </h1>
-        <p className="text-xs sm:text-sm text-[#5A7064] max-w-2xl leading-relaxed">
+        <p className="text-xs sm:text-sm text-[color:var(--lkv-text-muted)] max-w-2xl leading-relaxed">
           Votre profil apparaît sur vos carnets, dans les clubs et à côté de vos aventures. Prenez le temps — les meilleures histoires ont de bons auteurs.
         </p>
       </div>
@@ -268,23 +265,23 @@ export default function EditProfileView({ onCloseModal, onSave }: { onCloseModal
         {/* LEFT COLUMN: FORM SECTIONS (8 COLS) */}
         <div className="lg:col-span-8 space-y-8">
           {/* ─── SECTION 01: IDENTITÉ PUBLIQUE ──────────────────────── */}
-          <div className="glass rounded-[1.25rem] p-6 sm:p-8 space-y-6">
-            <div className="flex flex-wrap items-center justify-between gap-2 pb-4 border-b border-[#17402C]/5">
+          <div className="bg-[color:var(--card-tint-strong)] border border-[color:var(--glass-border)] shadow-elevation-1 backdrop-blur-[var(--blur-lg)] rounded-[var(--lkv-radius-md)] p-6 sm:p-8 space-y-6">
+            <div className="flex flex-wrap items-center justify-between gap-2 pb-4 border-b border-[color:var(--lkv-primary)]/5">
               <div>
-                <h2 className="font-display font-bold text-lg sm:text-xl text-[#17402C]">Identité publique</h2>
-                <p className="text-xs text-[#5A7064] mt-0.5">Nom, avatar, couverture. Ce que la communauté voit en premier.</p>
+                <h2 className="font-display font-bold text-lg sm:text-xl text-[color:var(--lkv-primary)]">Identité publique</h2>
+                <p className="text-xs text-[color:var(--lkv-text-muted)] mt-0.5">Nom, avatar, couverture. Ce que la communauté voit en premier.</p>
               </div>
-              <span className="glass-pill text-[10px] font-mono">
+              <span className="inline-flex items-center justify-center gap-[6px] rounded-full border border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-muted)] px-[var(--space-3)] py-[2px] text-[length:var(--lkv-text-caption-2)] font-medium text-[color:var(--lkv-text-primary)] text-[10px] font-mono">
                 01 · VISIBILITÉ
               </span>
             </div>
 
             {/* Cover Photo Header */}
-            <div className="relative rounded-2xl overflow-hidden h-44 sm:h-52 bg-[#17402C] group border border-white/10">
+            <div className="relative rounded-2xl overflow-hidden h-44 sm:h-52 bg-[color:var(--lkv-primary)] group border border-white/10">
               <img src={form.heroUrl} alt="Photo de couverture" className="w-full h-full object-cover" />
               <div className="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-colors" />
               <div className="absolute top-4 right-4 flex gap-2">
-                <label className="glass-capsule-btn text-xs font-bold cursor-pointer">
+                <label className="inline-flex items-center justify-center gap-[var(--space-2)] min-h-[var(--lkv-touch-min)] rounded-full px-[var(--space-4)] py-[var(--space-2)] text-[length:var(--lkv-text-footnote)] font-semibold backdrop-blur-[var(--blur-md)] border border-[color:var(--glass-border)] bg-[color:var(--btn-tint)] text-[color:var(--btn-content)] shadow-elevation-1 text-xs font-bold cursor-pointer">
                   <Icon name="CameraIcon" size={14} /> Changer
                   <input
                     type="file"
@@ -297,17 +294,18 @@ export default function EditProfileView({ onCloseModal, onSave }: { onCloseModal
                     }}
                   />
                 </label>
-                <button
+                <Button
+                  variant="secondary"
+                  size="sm"
                   onClick={() => setField('heroUrl', 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?q=80&w=1200')}
-                  className="glass-capsule-btn text-xs font-bold"
                 >
                   Réinitialiser
-                </button>
+                </Button>
               </div>
             </div>
 
             {/* Avatar & Subtitle Row */}
-            <div className="flex flex-col sm:flex-row items-start sm:items-end justify-between gap-4 -mt-12 sm:-mt-14 relative z-10 px-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-end justify-between gap-4 -mt-12 sm:-mt-14 relative z-[var(--z-dropdown)] px-4">
               <div className="flex items-end gap-4">
                 <div className="relative w-24 h-24 sm:w-28 sm:h-28 rounded-full border-4 border-white shadow-md overflow-hidden bg-white shrink-0">
                   <img src={form.avatarUrl || '/assets/images/no_image.png'} alt={form.publicName} className="w-full h-full object-cover" />
@@ -326,13 +324,13 @@ export default function EditProfileView({ onCloseModal, onSave }: { onCloseModal
                   </label>
                 </div>
                 <div className="mb-2">
-                  <h3 className="font-display font-bold text-lg sm:text-xl text-[#17402C]">{form.firstName} {form.lastName}</h3>
-                  <p className="text-xs text-[#5A7064] font-mono">Membre depuis mars 2023 · 12 carnets publiés</p>
+                  <h3 className="font-display font-bold text-lg sm:text-xl text-[color:var(--lkv-primary)]">{form.firstName} {form.lastName}</h3>
+                  <p className="text-xs text-[color:var(--lkv-text-muted)] font-mono">Membre depuis mars 2023 · 12 carnets publiés</p>
                 </div>
               </div>
 
               <div className="flex items-center gap-2 mb-2">
-                <label className="glass-capsule-btn text-xs font-bold cursor-pointer">
+                <label className="inline-flex items-center justify-center gap-[var(--space-2)] min-h-[var(--lkv-touch-min)] rounded-full px-[var(--space-4)] py-[var(--space-2)] text-[length:var(--lkv-text-footnote)] font-semibold backdrop-blur-[var(--blur-md)] border border-[color:var(--glass-border)] bg-[color:var(--btn-tint)] text-[color:var(--btn-content)] shadow-elevation-1 text-xs font-bold cursor-pointer">
                   Changer photo
                   <input
                     type="file"
@@ -352,7 +350,7 @@ export default function EditProfileView({ onCloseModal, onSave }: { onCloseModal
             <div className="space-y-4 pt-2">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="text-[10px] font-mono tracking-widest uppercase text-[#5A7064] block mb-1.5 font-bold">Prénom *</label>
+                  <label className="text-[10px] font-mono tracking-widest uppercase text-[color:var(--lkv-text-muted)] block mb-1.5 font-bold">Prénom *</label>
                   <input
                     type="text"
                     value={form.firstName}
@@ -360,11 +358,11 @@ export default function EditProfileView({ onCloseModal, onSave }: { onCloseModal
                       setField('firstName', e.target.value);
                       setField('publicName', `${e.target.value} ${form.lastName}`);
                     }}
-                    className="glass-input w-full"
+                    className="min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[10px] text-[16px] text-[color:var(--lkv-text-primary)] outline-none transition-colors duration-[var(--motion-control-duration)] placeholder:text-[color:var(--lkv-text-muted)] focus:border-[color:var(--lkv-action)] focus:ring-[3px] focus:ring-[color:var(--lkv-focus-ring)] disabled:cursor-not-allowed disabled:bg-[color:var(--lkv-disabled-bg)] disabled:text-[color:var(--lkv-disabled-text)] sm:text-[length:var(--lkv-text-body-sm)] w-full"
                   />
                 </div>
                 <div>
-                  <label className="text-[10px] font-mono tracking-widest uppercase text-[#5A7064] block mb-1.5 font-bold">Nom *</label>
+                  <label className="text-[10px] font-mono tracking-widest uppercase text-[color:var(--lkv-text-muted)] block mb-1.5 font-bold">Nom *</label>
                   <input
                     type="text"
                     value={form.lastName}
@@ -372,33 +370,33 @@ export default function EditProfileView({ onCloseModal, onSave }: { onCloseModal
                       setField('lastName', e.target.value);
                       setField('publicName', `${form.firstName} ${e.target.value}`);
                     }}
-                    className="glass-input w-full"
+                    className="min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[10px] text-[16px] text-[color:var(--lkv-text-primary)] outline-none transition-colors duration-[var(--motion-control-duration)] placeholder:text-[color:var(--lkv-text-muted)] focus:border-[color:var(--lkv-action)] focus:ring-[3px] focus:ring-[color:var(--lkv-focus-ring)] disabled:cursor-not-allowed disabled:bg-[color:var(--lkv-disabled-bg)] disabled:text-[color:var(--lkv-disabled-text)] sm:text-[length:var(--lkv-text-body-sm)] w-full"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="text-[10px] font-mono tracking-widest uppercase text-[#5A7064] block mb-1.5 font-bold">Nom d'usage public</label>
+                  <label className="text-[10px] font-mono tracking-widest uppercase text-[color:var(--lkv-text-muted)] block mb-1.5 font-bold">Nom d'usage public</label>
                   <input
                     type="text"
                     value={form.publicName}
                     onChange={(e) => setField('publicName', e.target.value)}
-                    className="glass-input w-full"
+                    className="min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[10px] text-[16px] text-[color:var(--lkv-text-primary)] outline-none transition-colors duration-[var(--motion-control-duration)] placeholder:text-[color:var(--lkv-text-muted)] focus:border-[color:var(--lkv-action)] focus:ring-[3px] focus:ring-[color:var(--lkv-focus-ring)] disabled:cursor-not-allowed disabled:bg-[color:var(--lkv-disabled-bg)] disabled:text-[color:var(--lkv-disabled-text)] sm:text-[length:var(--lkv-text-body-sm)] w-full"
                   />
                 </div>
                 <div>
                   <div className="flex items-center justify-between mb-1.5">
-                    <label className="text-[10px] font-mono tracking-widest uppercase text-[#5A7064] block font-bold">Nom d'utilisateur *</label>
-                    <span className="text-[10px] font-mono text-[#5B7F55] font-bold">✓ Disponible</span>
+                    <label className="text-[10px] font-mono tracking-widest uppercase text-[color:var(--lkv-text-muted)] block font-bold">Nom d'utilisateur *</label>
+                    <span className="text-[10px] font-mono text-[color:var(--lkv-secondary)] font-bold">✓ Disponible</span>
                   </div>
                   <div className="relative">
-                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-xs font-mono text-[#5A7064]">@</span>
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-xs font-mono text-[color:var(--lkv-text-muted)]">@</span>
                     <input
                       type="text"
                       value={form.username}
                       onChange={(e) => setField('username', e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''))}
-                      className="glass-input w-full pl-8"
+                      className="min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[10px] text-[16px] text-[color:var(--lkv-text-primary)] outline-none transition-colors duration-[var(--motion-control-duration)] placeholder:text-[color:var(--lkv-text-muted)] focus:border-[color:var(--lkv-action)] focus:ring-[3px] focus:ring-[color:var(--lkv-focus-ring)] disabled:cursor-not-allowed disabled:bg-[color:var(--lkv-disabled-bg)] disabled:text-[color:var(--lkv-disabled-text)] sm:text-[length:var(--lkv-text-body-sm)] w-full pl-8"
                     />
                   </div>
                 </div>
@@ -406,8 +404,8 @@ export default function EditProfileView({ onCloseModal, onSave }: { onCloseModal
 
               <div>
                 <div className="flex items-center justify-between mb-1.5">
-                  <label className="text-[10px] font-mono tracking-widest uppercase text-[#5A7064] block font-bold">Bio courte (Signature)</label>
-                  <span className="text-[10px] font-mono text-[#5A7064]">{form.shortBio.length} / 120</span>
+                  <label className="text-[10px] font-mono tracking-widest uppercase text-[color:var(--lkv-text-muted)] block font-bold">Bio courte (Signature)</label>
+                  <span className="text-[10px] font-mono text-[color:var(--lkv-text-muted)]">{form.shortBio.length} / 120</span>
                 </div>
                 <input
                   type="text"
@@ -415,14 +413,14 @@ export default function EditProfileView({ onCloseModal, onSave }: { onCloseModal
                   value={form.shortBio}
                   onChange={(e) => setField('shortBio', e.target.value)}
                   placeholder="Randonneuse babillarde & Cannelle. Je marche pour retrouver le silence..."
-                  className="glass-input w-full font-serif italic"
+                  className="min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[10px] text-[16px] text-[color:var(--lkv-text-primary)] outline-none transition-colors duration-[var(--motion-control-duration)] placeholder:text-[color:var(--lkv-text-muted)] focus:border-[color:var(--lkv-action)] focus:ring-[3px] focus:ring-[color:var(--lkv-focus-ring)] disabled:cursor-not-allowed disabled:bg-[color:var(--lkv-disabled-bg)] disabled:text-[color:var(--lkv-disabled-text)] sm:text-[length:var(--lkv-text-body-sm)] w-full font-serif italic"
                 />
               </div>
 
               <div>
                 <div className="flex items-center justify-between mb-1.5">
-                  <label className="text-[10px] font-mono tracking-widest uppercase text-[#5A7064] block font-bold">À propos (Description complète)</label>
-                  <span className="text-[10px] font-mono text-[#5A7064]">{form.bio.length} / 500</span>
+                  <label className="text-[10px] font-mono tracking-widest uppercase text-[color:var(--lkv-text-muted)] block font-bold">À propos (Description complète)</label>
+                  <span className="text-[10px] font-mono text-[color:var(--lkv-text-muted)]">{form.bio.length} / 500</span>
                 </div>
                 <textarea
                   rows={4}
@@ -430,45 +428,45 @@ export default function EditProfileView({ onCloseModal, onSave }: { onCloseModal
                   value={form.bio}
                   onChange={(e) => setField('bio', e.target.value)}
                   placeholder="Racontez vos expéditions, vos massifs favoris et votre approche de la randonnée..."
-                  className="glass-input w-full leading-relaxed resize-none font-serif italic"
+                  className="min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[10px] text-[16px] text-[color:var(--lkv-text-primary)] outline-none transition-colors duration-[var(--motion-control-duration)] placeholder:text-[color:var(--lkv-text-muted)] focus:border-[color:var(--lkv-action)] focus:ring-[3px] focus:ring-[color:var(--lkv-focus-ring)] disabled:cursor-not-allowed disabled:bg-[color:var(--lkv-disabled-bg)] disabled:text-[color:var(--lkv-disabled-text)] sm:text-[length:var(--lkv-text-body-sm)] w-full leading-relaxed resize-none font-serif italic"
                 />
               </div>
             </div>
           </div>
 
           {/* ─── SECTION 02: ANCRAGE GÉOGRAPHIQUE ───────────────────── */}
-          <div className="glass rounded-[1.25rem] p-6 sm:p-8 space-y-6">
-            <div className="flex flex-wrap items-center justify-between gap-2 pb-4 border-b border-[#17402C]/5">
+          <div className="bg-[color:var(--card-tint-strong)] border border-[color:var(--glass-border)] shadow-elevation-1 backdrop-blur-[var(--blur-lg)] rounded-[var(--lkv-radius-md)] p-6 sm:p-8 space-y-6">
+            <div className="flex flex-wrap items-center justify-between gap-2 pb-4 border-b border-[color:var(--lkv-primary)]/5">
               <div>
-                <h2 className="font-display font-bold text-lg sm:text-xl text-[#17402C]">Ancrage géographique</h2>
-                <p className="text-xs text-[#5A7064] mt-0.5">Pour proposer les bons refuges, les clubs proches et suggérer votre profil aux voyageurs.</p>
+                <h2 className="font-display font-bold text-lg sm:text-xl text-[color:var(--lkv-primary)]">Ancrage géographique</h2>
+                <p className="text-xs text-[color:var(--lkv-text-muted)] mt-0.5">Pour proposer les bons refuges, les clubs proches et suggérer votre profil aux voyageurs.</p>
               </div>
-              <span className="glass-pill text-[10px] font-mono">
+              <span className="inline-flex items-center justify-center gap-[6px] rounded-full border border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-muted)] px-[var(--space-3)] py-[2px] text-[length:var(--lkv-text-caption-2)] font-medium text-[color:var(--lkv-text-primary)] text-[10px] font-mono">
                 02 · OÙ VOUS ÊTES
               </span>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="text-[10px] font-mono tracking-widest uppercase text-[#5A7064] block mb-1.5 font-bold">Ville de résidence</label>
+                <label className="text-[10px] font-mono tracking-widest uppercase text-[color:var(--lkv-text-muted)] block mb-1.5 font-bold">Ville de résidence</label>
                 <div className="relative">
-                  <Icon name="MapPinIcon" size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#5A7064]" />
+                  <Icon name="MapPinIcon" size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[color:var(--lkv-text-muted)]" />
                   <input
                     type="text"
                     value={form.city}
                     onChange={(e) => setField('city', e.target.value)}
                     placeholder="Ex: Grenoble, Isère"
-                    className="glass-input w-full pl-9"
+                    className="min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[10px] text-[16px] text-[color:var(--lkv-text-primary)] outline-none transition-colors duration-[var(--motion-control-duration)] placeholder:text-[color:var(--lkv-text-muted)] focus:border-[color:var(--lkv-action)] focus:ring-[3px] focus:ring-[color:var(--lkv-focus-ring)] disabled:cursor-not-allowed disabled:bg-[color:var(--lkv-disabled-bg)] disabled:text-[color:var(--lkv-disabled-text)] sm:text-[length:var(--lkv-text-body-sm)] w-full pl-9"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="text-[10px] font-mono tracking-widest uppercase text-[#5A7064] block mb-1.5 font-bold">Pays</label>
+                <label className="text-[10px] font-mono tracking-widest uppercase text-[color:var(--lkv-text-muted)] block mb-1.5 font-bold">Pays</label>
                 <select
                   value={form.country}
                   onChange={(e) => setField('country', e.target.value)}
-                  className="glass-input w-full"
+                  className="min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[10px] text-[16px] text-[color:var(--lkv-text-primary)] outline-none transition-colors duration-[var(--motion-control-duration)] placeholder:text-[color:var(--lkv-text-muted)] focus:border-[color:var(--lkv-action)] focus:ring-[3px] focus:ring-[color:var(--lkv-focus-ring)] disabled:cursor-not-allowed disabled:bg-[color:var(--lkv-disabled-bg)] disabled:text-[color:var(--lkv-disabled-text)] sm:text-[length:var(--lkv-text-body-sm)] w-full"
                 >
                   <option value="France">France</option>
                   <option value="Suisse">Suisse</option>
@@ -482,21 +480,19 @@ export default function EditProfileView({ onCloseModal, onSave }: { onCloseModal
 
             {/* Massifs De Prédilection Tags */}
             <div>
-              <label className="text-[10px] font-mono tracking-widest uppercase text-[#5A7064] block mb-2 font-bold">Massifs de prédilection (Sélection multiple)</label>
+              <label className="text-[10px] font-mono tracking-widest uppercase text-[color:var(--lkv-text-muted)] block mb-2 font-bold">Massifs de prédilection (Sélection multiple)</label>
               <div className="flex flex-wrap gap-2">
                 {availableMassifs.map((massif) => {
                   const isSelected = form.selectedMassifs.includes(massif);
                   return (
-                    <button
+                    <Chip
                       key={massif}
-                      type="button"
+                      selected={isSelected}
                       onClick={() => toggleArrayItem('selectedMassifs', massif)}
-                      className={`glass-capsule-btn !py-1.5 !px-3.5 !min-h-0 text-xs font-bold transition-all ${
-                        isSelected ? 'primary' : ''
-                      }`}
+                      className="font-bold"
                     >
                       {isSelected ? `✓ ${massif}` : massif}
-                    </button>
+                    </Chip>
                   );
                 })}
               </div>
@@ -505,11 +501,11 @@ export default function EditProfileView({ onCloseModal, onSave }: { onCloseModal
             {/* Timezone & Languages */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
               <div>
-                <label className="text-[10px] font-mono tracking-widest uppercase text-[#5A7064] block mb-1.5 font-bold">Fuseau horaire</label>
+                <label className="text-[10px] font-mono tracking-widest uppercase text-[color:var(--lkv-text-muted)] block mb-1.5 font-bold">Fuseau horaire</label>
                 <select
                   value={form.timezone}
                   onChange={(e) => setField('timezone', e.target.value)}
-                  className="glass-input w-full text-xs font-semibold"
+                  className="min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[10px] text-[16px] text-[color:var(--lkv-text-primary)] outline-none transition-colors duration-[var(--motion-control-duration)] placeholder:text-[color:var(--lkv-text-muted)] focus:border-[color:var(--lkv-action)] focus:ring-[3px] focus:ring-[color:var(--lkv-focus-ring)] disabled:cursor-not-allowed disabled:bg-[color:var(--lkv-disabled-bg)] disabled:text-[color:var(--lkv-disabled-text)] sm:text-[length:var(--lkv-text-body-sm)] w-full text-xs font-semibold"
                 >
                   <option value="Europe/Paris (UTC+01:00)">Europe / Paris (UTC+01:00)</option>
                   <option value="Europe/London (UTC+00:00)">Europe / London (UTC+00:00)</option>
@@ -518,13 +514,17 @@ export default function EditProfileView({ onCloseModal, onSave }: { onCloseModal
               </div>
 
               <div>
-                <label className="text-[10px] font-mono tracking-widest uppercase text-[#5A7064] block mb-2 font-bold">Langues parlées</label>
+                <label className="text-[10px] font-mono tracking-widest uppercase text-[color:var(--lkv-text-muted)] block mb-2 font-bold">Langues parlées</label>
                 <div className="flex flex-wrap gap-2">
                   {form.languages.map((lang) => (
-                    <span key={lang} className="glass-pill text-xs font-bold flex items-center gap-1.5">
-                      <span>✓ {lang}</span>
-                      <button type="button" onClick={() => toggleArrayItem('languages', lang)} className="glass-circle-btn !w-5 !h-5 !min-w-5 !min-h-5 !p-0 transition-colors">✕</button>
-                    </span>
+                    <Chip
+                      key={lang}
+                      onClick={() => toggleArrayItem('languages', lang)}
+                      icon={<span aria-hidden="true">✕</span>}
+                      className="font-bold"
+                    >
+                      ✓ {lang}
+                    </Chip>
                   ))}
                 </div>
               </div>
@@ -532,34 +532,32 @@ export default function EditProfileView({ onCloseModal, onSave }: { onCloseModal
           </div>
 
           {/* ─── SECTION 03: PRATIQUE & NIVEAU ──────────────────────── */}
-          <div className="glass rounded-[1.25rem] p-6 sm:p-8 space-y-6">
-            <div className="flex flex-wrap items-center justify-between gap-2 pb-4 border-b border-[#17402C]/5">
+          <div className="bg-[color:var(--card-tint-strong)] border border-[color:var(--glass-border)] shadow-elevation-1 backdrop-blur-[var(--blur-lg)] rounded-[var(--lkv-radius-md)] p-6 sm:p-8 space-y-6">
+            <div className="flex flex-wrap items-center justify-between gap-2 pb-4 border-b border-[color:var(--lkv-primary)]/5">
               <div>
-                <h2 className="font-display font-bold text-lg sm:text-xl text-[#17402C]">Pratique &amp; niveau</h2>
-                <p className="text-xs text-[#5A7064] mt-0.5">Ces informations aident à me mettre en relation avec des personnes d'expérience compatible.</p>
+                <h2 className="font-display font-bold text-lg sm:text-xl text-[color:var(--lkv-primary)]">Pratique &amp; niveau</h2>
+                <p className="text-xs text-[color:var(--lkv-text-muted)] mt-0.5">Ces informations aident à me mettre en relation avec des personnes d'expérience compatible.</p>
               </div>
-              <span className="glass-pill text-[10px] font-mono">
+              <span className="inline-flex items-center justify-center gap-[6px] rounded-full border border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-muted)] px-[var(--space-3)] py-[2px] text-[length:var(--lkv-text-caption-2)] font-medium text-[color:var(--lkv-text-primary)] text-[10px] font-mono">
                 03 · VOS COMPÉTENCES
               </span>
             </div>
 
             {/* Disciplines Selection Grid */}
             <div>
-              <label className="text-[10px] font-mono tracking-widest uppercase text-[#5A7064] block mb-3 font-bold">Disciplines pratiquées</label>
+              <label className="text-[10px] font-mono tracking-widest uppercase text-[color:var(--lkv-text-muted)] block mb-3 font-bold">Disciplines pratiquées</label>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
                 {availableDisciplines.map((d) => {
                   const isSelected = form.disciplines.includes(d.id);
                   return (
-                    <button
+                    <Chip
                       key={d.id}
-                      type="button"
+                      selected={isSelected}
                       onClick={() => toggleArrayItem('disciplines', d.id)}
-                      className={`glass-capsule-btn !min-h-0 !min-w-0 w-full !p-3 text-xs font-bold transition-all text-center ${
-                        isSelected ? 'primary' : ''
-                      }`}
+                      className="w-full font-bold"
                     >
                       {d.label}
-                    </button>
+                    </Chip>
                   );
                 })}
               </div>
@@ -567,7 +565,7 @@ export default function EditProfileView({ onCloseModal, onSave }: { onCloseModal
 
             {/* Niveau d'expérience selector */}
             <div>
-              <label className="text-[10px] font-mono tracking-widest uppercase text-[#5A7064] block mb-3 font-bold">Niveau d'expérience globale</label>
+              <label className="text-[10px] font-mono tracking-widest uppercase text-[color:var(--lkv-text-muted)] block mb-3 font-bold">Niveau d'expérience globale</label>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 {[
                   { id: 'I', label: 'I · Débutant', sub: '1-2 ans' },
@@ -577,17 +575,15 @@ export default function EditProfileView({ onCloseModal, onSave }: { onCloseModal
                 ].map((lvl) => {
                   const isActive = form.experienceLevel === lvl.id;
                   return (
-                    <button
+                    <Chip
                       key={lvl.id}
-                      type="button"
+                      selected={isActive}
                       onClick={() => setField('experienceLevel', lvl.id)}
-                      className={`glass-capsule-btn !min-h-0 !min-w-0 w-full !p-3.5 text-center transition-all ${
-                        isActive ? 'primary' : ''
-                      }`}
+                      className="h-auto w-full flex-col px-[var(--space-3)] py-[var(--space-2)]"
                     >
-                      <div className="font-bold text-xs">{lvl.label}</div>
-                      <div className="text-[10px] font-mono mt-0.5 opacity-80">{lvl.sub}</div>
-                    </button>
+                      <span className="text-[length:var(--lkv-text-caption)] font-bold">{lvl.label}</span>
+                      <span className="mt-0.5 font-mono text-[10px] opacity-80">{lvl.sub}</span>
+                    </Chip>
                   );
                 })}
               </div>
@@ -596,48 +592,48 @@ export default function EditProfileView({ onCloseModal, onSave }: { onCloseModal
             {/* Metric Inputs */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
               <div>
-                <label className="text-[10px] font-mono tracking-widest uppercase text-[#5A7064] block mb-1.5 font-bold">Distance moy. / sortie</label>
+                <label className="text-[10px] font-mono tracking-widest uppercase text-[color:var(--lkv-text-muted)] block mb-1.5 font-bold">Distance moy. / sortie</label>
                 <input
                   type="text"
                   value={form.avgDistance}
                   onChange={(e) => setField('avgDistance', e.target.value)}
                   placeholder="18 km"
-                  className="glass-input w-full text-xs font-mono font-bold"
+                  className="min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[10px] text-[16px] text-[color:var(--lkv-text-primary)] outline-none transition-colors duration-[var(--motion-control-duration)] placeholder:text-[color:var(--lkv-text-muted)] focus:border-[color:var(--lkv-action)] focus:ring-[3px] focus:ring-[color:var(--lkv-focus-ring)] disabled:cursor-not-allowed disabled:bg-[color:var(--lkv-disabled-bg)] disabled:text-[color:var(--lkv-disabled-text)] sm:text-[length:var(--lkv-text-body-sm)] w-full text-xs font-mono font-bold"
                 />
               </div>
 
               <div>
-                <label className="text-[10px] font-mono tracking-widest uppercase text-[#5A7064] block mb-1.5 font-bold">Dénivelé moy. / sortie</label>
+                <label className="text-[10px] font-mono tracking-widest uppercase text-[color:var(--lkv-text-muted)] block mb-1.5 font-bold">Dénivelé moy. / sortie</label>
                 <input
                   type="text"
                   value={form.avgElevation}
                   onChange={(e) => setField('avgElevation', e.target.value)}
                   placeholder="1200 m D+"
-                  className="glass-input w-full text-xs font-mono font-bold"
+                  className="min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[10px] text-[16px] text-[color:var(--lkv-text-primary)] outline-none transition-colors duration-[var(--motion-control-duration)] placeholder:text-[color:var(--lkv-text-muted)] focus:border-[color:var(--lkv-action)] focus:ring-[3px] focus:ring-[color:var(--lkv-focus-ring)] disabled:cursor-not-allowed disabled:bg-[color:var(--lkv-disabled-bg)] disabled:text-[color:var(--lkv-disabled-text)] sm:text-[length:var(--lkv-text-body-sm)] w-full text-xs font-mono font-bold"
                 />
               </div>
 
               <div>
-                <label className="text-[10px] font-mono tracking-widest uppercase text-[#5A7064] block mb-1.5 font-bold">Rythme en effort</label>
+                <label className="text-[10px] font-mono tracking-widest uppercase text-[color:var(--lkv-text-muted)] block mb-1.5 font-bold">Rythme en effort</label>
                 <input
                   type="text"
                   value={form.pace}
                   onChange={(e) => setField('pace', e.target.value)}
                   placeholder="3.5 à 4 km/h"
-                  className="glass-input w-full text-xs font-mono font-bold"
+                  className="min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[10px] text-[16px] text-[color:var(--lkv-text-primary)] outline-none transition-colors duration-[var(--motion-control-duration)] placeholder:text-[color:var(--lkv-text-muted)] focus:border-[color:var(--lkv-action)] focus:ring-[3px] focus:ring-[color:var(--lkv-focus-ring)] disabled:cursor-not-allowed disabled:bg-[color:var(--lkv-disabled-bg)] disabled:text-[color:var(--lkv-disabled-text)] sm:text-[length:var(--lkv-text-body-sm)] w-full text-xs font-mono font-bold"
                 />
               </div>
             </div>
           </div>
 
           {/* ─── SECTION 04: COMPTES LIÉS ───────────────────────────── */}
-          <div className="glass rounded-[1.25rem] p-6 sm:p-8 space-y-6">
-            <div className="flex flex-wrap items-center justify-between gap-2 pb-4 border-b border-[#17402C]/5">
+          <div className="bg-[color:var(--card-tint-strong)] border border-[color:var(--glass-border)] shadow-elevation-1 backdrop-blur-[var(--blur-lg)] rounded-[var(--lkv-radius-md)] p-6 sm:p-8 space-y-6">
+            <div className="flex flex-wrap items-center justify-between gap-2 pb-4 border-b border-[color:var(--lkv-primary)]/5">
               <div>
-                <h2 className="font-display font-bold text-lg sm:text-xl text-[#17402C]">Comptes liés</h2>
-                <p className="text-xs text-[#5A7064] mt-0.5">Importez vos traces depuis les plateformes que vous utilisez déjà.</p>
+                <h2 className="font-display font-bold text-lg sm:text-xl text-[color:var(--lkv-primary)]">Comptes liés</h2>
+                <p className="text-xs text-[color:var(--lkv-text-muted)] mt-0.5">Importez vos traces depuis les plateformes que vous utilisez déjà.</p>
               </div>
-              <span className="glass-pill text-[10px] font-mono">
+              <span className="inline-flex items-center justify-center gap-[6px] rounded-full border border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-muted)] px-[var(--space-3)] py-[2px] text-[length:var(--lkv-text-caption-2)] font-medium text-[color:var(--lkv-text-primary)] text-[10px] font-mono">
                 04 · IMPORT &amp; PARTAGE
               </span>
             </div>
@@ -649,35 +645,36 @@ export default function EditProfileView({ onCloseModal, onSave }: { onCloseModal
                 { name: 'Komoot', handle: 'Non connecté', connected: form.komootConnected, key: 'komootConnected', icon: '💚' },
                 { name: 'Wikiloc', handle: 'Non connecté', connected: form.wikilocConnected, key: 'wikilocConnected', icon: '🟢' },
               ].map((app) => (
-                <div key={app.name} className="glass-sub-card p-4 rounded-2xl flex items-center justify-between gap-4">
+                <div key={app.name} className="rounded-[var(--lkv-radius-md)] border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] backdrop-blur-[var(--blur-md)] p-4 flex items-center justify-between gap-4">
                   <div className="flex items-center gap-3">
                     <span className="text-xl">{app.icon}</span>
                     <div>
-                      <div className="font-bold text-xs text-[#17402C]">{app.name}</div>
-                      <div className="text-[10px] text-[#5A7064] font-mono mt-0.5">{app.handle}</div>
+                      <div className="font-bold text-xs text-[color:var(--lkv-primary)]">{app.name}</div>
+                      <div className="text-[10px] text-[color:var(--lkv-text-muted)] font-mono mt-0.5">{app.handle}</div>
                     </div>
                   </div>
 
                   <div className="flex items-center gap-2">
                     {app.connected ? (
                       <>
-                        <span className="glass-pill text-[10px] font-mono">Connecté</span>
-                        <button
+                        <Badge tone="sage" className="font-mono text-[10px]">Connecté</Badge>
+                        <Button
                           type="button"
+                          variant="destructive"
+                          size="sm"
                           onClick={() => setField(app.key, false)}
-                          className="glass-capsule-btn danger !py-1.5 !px-3 !min-h-0 text-xs font-semibold transition-colors"
                         >
                           Déconnecter
-                        </button>
+                        </Button>
                       </>
                     ) : (
-                      <button
+                      <Button
                         type="button"
+                        size="sm"
                         onClick={() => setField(app.key, true)}
-                        className="glass-capsule-btn primary text-xs font-bold !py-1.5 !px-4"
                       >
                         Connecter
-                      </button>
+                      </Button>
                     )}
                   </div>
                 </div>
@@ -686,13 +683,13 @@ export default function EditProfileView({ onCloseModal, onSave }: { onCloseModal
           </div>
 
           {/* ─── SECTION 05: CONFIDENTIALITÉ ────────────────────────── */}
-          <div className="glass rounded-[1.25rem] p-6 sm:p-8 space-y-6">
-            <div className="flex flex-wrap items-center justify-between gap-2 pb-4 border-b border-[#17402C]/5">
+          <div className="bg-[color:var(--card-tint-strong)] border border-[color:var(--glass-border)] shadow-elevation-1 backdrop-blur-[var(--blur-lg)] rounded-[var(--lkv-radius-md)] p-6 sm:p-8 space-y-6">
+            <div className="flex flex-wrap items-center justify-between gap-2 pb-4 border-b border-[color:var(--lkv-primary)]/5">
               <div>
-                <h2 className="font-display font-bold text-lg sm:text-xl text-[#17402C]">Qui peut voir quoi</h2>
-                <p className="text-xs text-[#5A7064] mt-0.5">Et avec qui vous partagez vos traces. Vos carnets peuvent être publics, tout en gardant vos sorties privées.</p>
+                <h2 className="font-display font-bold text-lg sm:text-xl text-[color:var(--lkv-primary)]">Qui peut voir quoi</h2>
+                <p className="text-xs text-[color:var(--lkv-text-muted)] mt-0.5">Et avec qui vous partagez vos traces. Vos carnets peuvent être publics, tout en gardant vos sorties privées.</p>
               </div>
-              <span className="glass-pill text-[10px] font-mono">
+              <span className="inline-flex items-center justify-center gap-[6px] rounded-full border border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-muted)] px-[var(--space-3)] py-[2px] text-[length:var(--lkv-text-caption-2)] font-medium text-[color:var(--lkv-text-primary)] text-[10px] font-mono">
                 05 · CONFIDENTIALITÉ
               </span>
             </div>
@@ -707,25 +704,21 @@ export default function EditProfileView({ onCloseModal, onSave }: { onCloseModal
               ].map((item) => {
                 const val = (form as any)[item.key];
                 return (
-                  <div key={item.key} className="glass-sub-card p-4 rounded-2xl flex items-center justify-between gap-4">
-                    <div>
-                      <h4 className="font-bold text-xs text-[#17402C]">{item.title}</h4>
-                      <p className="text-[11px] text-[#5A7064] mt-0.5">{item.desc}</p>
+                  <Card
+                    key={item.key}
+                    variant="compact"
+                    className="flex items-center justify-between gap-[var(--space-4)]"
+                  >
+                    <div className="min-w-0">
+                      <h4 className="text-[length:var(--lkv-text-body-sm)] font-bold text-[color:var(--lkv-text-primary)]">{item.title}</h4>
+                      <p className="mt-0.5 text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-muted)]">{item.desc}</p>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => setField(item.key, !val)}
-                      className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out ${
-                        val ? 'bg-[#17402C]' : 'bg-[#17402C]/15'
-                      }`}
-                    >
-                      <span
-                        className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                          val ? 'translate-x-5' : 'translate-x-0'
-                        }`}
-                      />
-                    </button>
-                  </div>
+                    <Switch
+                      checked={Boolean(val)}
+                      onCheckedChange={(next) => setField(item.key, next)}
+                      aria-label={item.title}
+                    />
+                  </Card>
                 );
               })}
             </div>
@@ -735,8 +728,8 @@ export default function EditProfileView({ onCloseModal, onSave }: { onCloseModal
         {/* RIGHT COLUMN: SIDEBAR WIDGETS (4 COLS) */}
         <div className="lg:col-span-4 space-y-6 sticky top-20">
           {/* WIDGET 1: APERÇU PROFIL PUBLIC (Live Card) */}
-          <div className="bg-[#17402C] rounded-[1.5rem] p-6 text-white relative overflow-hidden space-y-4 shadow-xl border border-white/10">
-            <div className="text-[9px] font-mono tracking-widest text-[#A6C1A0] uppercase font-bold">APERÇU · PROFIL PUBLIC</div>
+          <div className="bg-[color:var(--lkv-primary)] rounded-[var(--lkv-radius-lg)] p-6 text-white relative overflow-hidden space-y-4 shadow-xl border border-white/10">
+            <div className="text-[9px] font-mono tracking-widest text-[color:var(--sage-300)] uppercase font-bold">APERÇU · PROFIL PUBLIC</div>
 
             <div className="flex items-center gap-4">
               <img src={form.avatarUrl || '/assets/images/no_image.png'} alt={form.publicName} className="w-14 h-14 rounded-full object-cover border-2 border-white/20" />
@@ -756,21 +749,21 @@ export default function EditProfileView({ onCloseModal, onSave }: { onCloseModal
                   {m}
                 </span>
               ))}
-              <span className="bg-[#5B7F55] text-white text-[10px] font-mono px-2.5 py-1 rounded-full font-bold">
+              <span className="bg-[color:var(--lkv-secondary)] text-white text-[10px] font-mono px-2.5 py-1 rounded-full font-bold">
                 Niveau {form.experienceLevel}
               </span>
             </div>
           </div>
 
           {/* WIDGET 2: PROFIL COMPLÉTÉ À X% */}
-          <div className="glass rounded-[1.25rem] p-6 space-y-4">
+          <div className="bg-[color:var(--card-tint-strong)] border border-[color:var(--glass-border)] shadow-elevation-1 backdrop-blur-[var(--blur-lg)] rounded-[var(--lkv-radius-md)] p-6 space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="font-display font-bold text-sm text-[#17402C]">Profil complété à {completionScore}%</h3>
-              <span className="text-xs font-mono font-bold text-[#5B7F55]">{completionScore}/100</span>
+              <h3 className="font-display font-bold text-sm text-[color:var(--lkv-primary)]">Profil complété à {completionScore}%</h3>
+              <span className="text-xs font-mono font-bold text-[color:var(--lkv-secondary)]">{completionScore}/100</span>
             </div>
 
-            <div className="w-full bg-[#17402C]/10 h-2 rounded-full overflow-hidden">
-              <div className="bg-[#17402C] h-full transition-all duration-500 rounded-full" style={{ width: `${completionScore}%` }} />
+            <div className="w-full bg-[color:var(--lkv-primary)]/10 h-2 rounded-full overflow-hidden">
+              <div className="bg-[color:var(--lkv-primary)] h-full transition-all duration-500 rounded-full" style={{ width: `${completionScore}%` }} />
             </div>
 
             <div className="space-y-2 pt-2">
@@ -783,20 +776,20 @@ export default function EditProfileView({ onCloseModal, onSave }: { onCloseModal
                 { label: 'Strava / Garmin connecté', done: form.stravaConnected || form.garminConnected },
               ].map((item) => (
                 <div key={item.label} className="flex items-center justify-between text-xs">
-                  <span className={item.done ? 'text-[#17402C] font-semibold' : 'text-[#5A7064]'}>
+                  <span className={item.done ? 'text-[color:var(--lkv-primary)] font-semibold' : 'text-[color:var(--lkv-text-muted)]'}>
                     {item.done ? '✓ ' : '⭕ '}{item.label}
                   </span>
-                  <span className="text-[10px] font-mono text-[#5A7064]">{item.done ? 'Fait' : 'À faire'}</span>
+                  <span className="text-[10px] font-mono text-[color:var(--lkv-text-muted)]">{item.done ? 'Fait' : 'À faire'}</span>
                 </div>
               ))}
             </div>
           </div>
 
           {/* WIDGET 3: ASTUCES & CONSEILS */}
-          <div className="glass-sub-card rounded-[1.25rem] p-6 text-[#17402C] space-y-2 !border-[#5B7F55]/30">
-            <div className="text-[10px] font-mono tracking-widest text-[#5B7F55] uppercase font-bold">CONSEIL DE LA COMMUNAUTÉ</div>
+          <div className="rounded-[var(--lkv-radius-md)] border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] backdrop-blur-[var(--blur-md)] p-6 text-[color:var(--lkv-primary)] space-y-2 !border-[color:var(--lkv-secondary)]/30">
+            <div className="text-[10px] font-mono tracking-widest text-[color:var(--lkv-secondary)] uppercase font-bold">CONSEIL DE LA COMMUNAUTÉ</div>
             <h4 className="font-display font-bold text-sm">Une bio qui inspire.</h4>
-            <p className="text-xs text-[#5A7064] leading-relaxed font-serif italic">
+            <p className="text-xs text-[color:var(--lkv-text-muted)] leading-relaxed font-serif italic">
               Faites des liens entre vos massifs de prédilection et vos disciplines favorites. C'est plus facile pour vous contacter et partir ensemble !
             </p>
           </div>
@@ -805,26 +798,28 @@ export default function EditProfileView({ onCloseModal, onSave }: { onCloseModal
 
       {/* 4. FLOATING BOTTOM BAR */}
       <div
-        className="fixed z-50 bg-[#17402C] text-white px-4 py-3 rounded-full flex items-center justify-between gap-3 border border-white/20 left-2 right-2 bottom-[calc(env(safe-area-inset-bottom)+62px+8px)] md:left-1/2 md:right-auto md:-translate-x-1/2 md:bottom-6 md:max-w-xl md:w-11/12 md:px-6 md:py-3.5 shadow-2xl"
+        className="fixed bottom-[calc(var(--safe-bottom)+62px+8px)] left-2 right-2 z-[var(--z-fab)] flex items-center justify-between gap-[var(--space-3)] rounded-full border border-[color:var(--lkv-border)] bg-[color:var(--lkv-primary)] px-[var(--space-4)] py-[var(--space-3)] text-[color:var(--lkv-text-inverted)] md:bottom-6 md:left-1/2 md:right-auto md:w-11/12 md:max-w-xl md:-translate-x-1/2 md:px-[var(--space-6)] md:py-[14px]"
       >
-        <div className="text-xs text-white/80 hidden md:flex items-center gap-2 font-mono">
-          <span>⚡</span>
+        <div className="hidden items-center gap-[var(--space-2)] font-mono text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-inverted)]/80 md:flex">
+          <span aria-hidden="true">⚡</span>
           <span>Brouillon synchronisé</span>
         </div>
 
-        <div className="flex items-center gap-2 md:gap-3 w-full md:w-auto justify-end">
-          <Link href="/compte" className="glass-capsule-btn !py-2 !px-4 text-xs font-bold whitespace-nowrap">
+        <div className="flex w-full items-center justify-end gap-[var(--space-2)] md:w-auto md:gap-[var(--space-3)]">
+          <Button variant="secondary" size="sm" onClick={() => router.push('/compte')} className="whitespace-nowrap">
             Annuler
-          </Link>
+          </Button>
 
-          <button
+          <Button
+            variant="primary"
+            size="sm"
+            loading={saving}
             onClick={handleSave}
-            disabled={saving}
-            className="glass-capsule-btn text-xs font-bold whitespace-nowrap"
+            className="whitespace-nowrap"
           >
             {saving ? 'Enregistrement…' : saveSuccess ? '✓ Enregistré !' : 'Enregistrer'}
             <span className="hidden md:inline"> les changements</span>
-          </button>
+          </Button>
         </div>
       </div>
     </div>

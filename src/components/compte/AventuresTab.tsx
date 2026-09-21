@@ -4,9 +4,9 @@ import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import Icon from '@/components/ui/AppIcon';
+import { Button, EmptyState, LoadingState, Tabs } from '@/components/ui';
 import Link from 'next/link';
 import { UserProfile, Aventure } from '@/lib/mock/compte-marceline';
-import ProchainVoyageCard from '@/components/compte/ProchainVoyageCard';
 import { createClient } from '@/lib/supabase/client';
 
 interface AventuresTabProps {
@@ -171,26 +171,28 @@ export default function AventuresTab({ profile }: AventuresTabProps) {
   return (
     <div className="space-y-8 pb-16 font-sans">
       {/* HEADER */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4 border-b border-[#17402C]/5 pb-5">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4 border-b border-[color:var(--lkv-primary)]/5 pb-5">
         <div>
-          <h2 className="font-display font-bold text-3xl sm:text-4xl text-[#17402C] tracking-tight">
-            Tous vos <span className="font-serif italic font-normal text-[#365233]">groupes &amp; sorties</span>
+          <h2 className="font-display font-bold text-3xl sm:text-4xl text-[color:var(--lkv-primary)] tracking-tight">
+            Tous vos <span className="font-serif italic font-normal text-[color:var(--lkv-forest-600)]">groupes &amp; sorties</span>
           </h2>
-          <p className="text-xs text-[#5A7064] mt-1 font-mono">
+          <p className="text-xs text-[color:var(--lkv-text-muted)] mt-1 font-mono">
             42 sorties enregistrées · 2 584 km cumulés · 148 000 m de D+
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <button
+          <Button
+            variant="secondary"
+            size="sm"
+            icon={<Icon name="ArrowDownTrayIcon" size={14} />}
             onClick={handleExport}
-            className="glass-capsule-btn !py-2 !px-4 text-xs font-bold"
+            className="font-bold"
           >
-            <Icon name="ArrowDownTrayIcon" size={14} />
-            <span>Exporter CSV</span>
-          </button>
+            Exporter CSV
+          </Button>
           <Link
             href="/groupes"
-            className="glass-capsule-btn primary !py-2 !px-4 text-xs font-bold"
+            className="inline-flex items-center justify-center gap-[var(--space-2)] min-h-[var(--lkv-touch-min)] rounded-full px-[var(--space-4)] py-[var(--space-2)] text-[length:var(--lkv-text-footnote)] font-semibold backdrop-blur-[var(--blur-md)] border border-transparent bg-[color:var(--lkv-action)] text-[color:var(--lkv-on-action)] shadow-elevation-1 !py-2 !px-4 text-xs font-bold"
           >
             <Icon name="PlusIcon" size={14} />
             <span>Nouveau groupe</span>
@@ -200,47 +202,47 @@ export default function AventuresTab({ profile }: AventuresTabProps) {
 
       {/* STATS ROW (Liquid Glass Cards) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="glass rounded-[1.25rem] p-5 flex flex-col justify-between">
-          <span className="text-[10px] font-mono tracking-widest text-[#5A7064] uppercase mb-2">DISTANCE 2026</span>
+        <div className="bg-[color:var(--card-tint-strong)] border border-[color:var(--glass-border)] shadow-elevation-1 backdrop-blur-[var(--blur-lg)] rounded-[var(--lkv-radius-md)] p-5 flex flex-col justify-between">
+          <span className="text-[10px] font-mono tracking-widest text-[color:var(--lkv-text-muted)] uppercase mb-2">DISTANCE 2026</span>
           <div className="flex items-baseline gap-1 mb-1">
-            <span className="glass-metric text-3xl sm:text-4xl text-[#17402C]">786</span>
-            <span className="text-sm font-bold text-[#5A7064] font-mono">km</span>
+            <span className="rounded-[var(--lkv-radius-lg)] border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] p-[var(--space-3)] backdrop-blur-[var(--blur-md)] text-3xl sm:text-4xl text-[color:var(--lkv-primary)]">786</span>
+            <span className="text-sm font-bold text-[color:var(--lkv-text-muted)] font-mono">km</span>
           </div>
-          <p className="text-[10px] text-[#5B7F55] font-semibold flex items-center gap-1">
+          <p className="text-[10px] text-[color:var(--lkv-secondary)] font-semibold flex items-center gap-1">
             <Icon name="ArrowTrendingUpIcon" size={12} />
             <span>+15% vs 2025 · 89% objectif annuel</span>
           </p>
         </div>
 
-        <div className="glass rounded-[1.25rem] p-5 flex flex-col justify-between">
-          <span className="text-[10px] font-mono tracking-widest text-[#5A7064] uppercase mb-2">DÉNIVELÉ POSITIF</span>
+        <div className="bg-[color:var(--card-tint-strong)] border border-[color:var(--glass-border)] shadow-elevation-1 backdrop-blur-[var(--blur-lg)] rounded-[var(--lkv-radius-md)] p-5 flex flex-col justify-between">
+          <span className="text-[10px] font-mono tracking-widest text-[color:var(--lkv-text-muted)] uppercase mb-2">DÉNIVELÉ POSITIF</span>
           <div className="flex items-baseline gap-1 mb-1">
-            <span className="glass-metric text-3xl sm:text-4xl text-[#17402C]">32,4</span>
-            <span className="text-sm font-bold text-[#5A7064] font-mono">km D+</span>
+            <span className="rounded-[var(--lkv-radius-lg)] border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] p-[var(--space-3)] backdrop-blur-[var(--blur-md)] text-3xl sm:text-4xl text-[color:var(--lkv-primary)]">32,4</span>
+            <span className="text-sm font-bold text-[color:var(--lkv-text-muted)] font-mono">km D+</span>
           </div>
-          <p className="text-[10px] text-[#5A7064] font-mono">
+          <p className="text-[10px] text-[color:var(--lkv-text-muted)] font-mono">
             +2 400 m ce mois · 12 sommets &gt; 2000m
           </p>
         </div>
 
-        <div className="glass rounded-[1.25rem] p-5 flex flex-col justify-between">
-          <span className="text-[10px] font-mono tracking-widest text-[#5A7064] uppercase mb-2">NUITS EN REFUGE</span>
+        <div className="bg-[color:var(--card-tint-strong)] border border-[color:var(--glass-border)] shadow-elevation-1 backdrop-blur-[var(--blur-lg)] rounded-[var(--lkv-radius-md)] p-5 flex flex-col justify-between">
+          <span className="text-[10px] font-mono tracking-widest text-[color:var(--lkv-text-muted)] uppercase mb-2">NUITS EN REFUGE</span>
           <div className="flex items-baseline gap-1 mb-1">
-            <span className="glass-metric text-3xl sm:text-4xl text-[#17402C]">28</span>
-            <span className="text-sm font-bold text-[#5A7064] font-mono">nuits</span>
+            <span className="rounded-[var(--lkv-radius-lg)] border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] p-[var(--space-3)] backdrop-blur-[var(--blur-md)] text-3xl sm:text-4xl text-[color:var(--lkv-primary)]">28</span>
+            <span className="text-sm font-bold text-[color:var(--lkv-text-muted)] font-mono">nuits</span>
           </div>
-          <p className="text-[10px] text-[#5A7064] font-mono">
+          <p className="text-[10px] text-[color:var(--lkv-text-muted)] font-mono">
             12 refuges différents · 5 bivouacs
           </p>
         </div>
 
-        <div className="glass rounded-[1.25rem] p-5 flex flex-col justify-between">
-          <span className="text-[10px] font-mono tracking-widest text-[#5A7064] uppercase mb-2">CO₂ ÉCONOMISÉ</span>
+        <div className="bg-[color:var(--card-tint-strong)] border border-[color:var(--glass-border)] shadow-elevation-1 backdrop-blur-[var(--blur-lg)] rounded-[var(--lkv-radius-md)] p-5 flex flex-col justify-between">
+          <span className="text-[10px] font-mono tracking-widest text-[color:var(--lkv-text-muted)] uppercase mb-2">CO₂ ÉCONOMISÉ</span>
           <div className="flex items-baseline gap-1 mb-1">
-            <span className="glass-metric text-3xl sm:text-4xl text-[#17402C]">142</span>
-            <span className="text-sm font-bold text-[#5A7064] font-mono">kg</span>
+            <span className="rounded-[var(--lkv-radius-lg)] border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] p-[var(--space-3)] backdrop-blur-[var(--blur-md)] text-3xl sm:text-4xl text-[color:var(--lkv-primary)]">142</span>
+            <span className="text-sm font-bold text-[color:var(--lkv-text-muted)] font-mono">kg</span>
           </div>
-          <p className="text-[10px] text-[#365233] font-medium">
+          <p className="text-[10px] text-[color:var(--lkv-forest-600)] font-medium">
             Équivalent mobilité douce vs avion
           </p>
         </div>
@@ -249,69 +251,67 @@ export default function AventuresTab({ profile }: AventuresTabProps) {
       {/* MAIN CONTENT STACK */}
       <div className="space-y-6">
         {/* ACTIVITY CHART */}
-        <div className="glass rounded-[1.5rem] p-5 sm:p-6 space-y-5 border border-white/50 shadow-sm">
+        <div className="bg-[color:var(--card-tint-strong)] border border-[color:var(--glass-border)] shadow-elevation-1 backdrop-blur-[var(--blur-lg)] rounded-[var(--lkv-radius-lg)] p-5 sm:p-6 space-y-5">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
-              <h3 className="font-display font-bold text-lg sm:text-xl text-[#17402C]">
-                Activité <span className="font-serif italic font-normal text-[#5B7F55]">2026</span>
+              <h3 className="font-display font-bold text-lg sm:text-xl text-[color:var(--lkv-primary)]">
+                Activité <span className="font-serif italic font-normal text-[color:var(--lkv-secondary)]">2026</span>
               </h3>
-              <p className="text-xs text-[#5A7064] mt-0.5">
+              <p className="text-xs text-[color:var(--lkv-text-muted)] mt-0.5">
                 42 sorties réparties sur l'année · pic d'activité en septembre &amp; octobre
               </p>
             </div>
 
             {/* Segmented Metric Switcher */}
-            <div className="glass-capsule-bar">
-              <div className="flex items-center gap-1 p-0.5">
-                {(['Sorties', 'Distance', 'D+'] as const).map((metric) => (
-                  <button
-                    key={metric}
-                    onClick={() => setActivityMetric(metric)}
-                    className={`glass-capsule-segment !px-3 !py-1 text-xs ${
-                      activityMetric === metric ? 'active' : ''
-                    }`}
-                  >
-                    {metric}
-                  </button>
-                ))}
-              </div>
+            <div className="inline-flex gap-[var(--space-1)] rounded-full border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] p-[var(--space-1)] backdrop-blur-[var(--blur-md)]">
+              <Tabs
+                options={[
+                  { id: 'Sorties', label: 'Sorties' },
+                  { id: 'Distance', label: 'Distance' },
+                  { id: 'D+', label: 'D+' },
+                ]}
+                value={activityMetric}
+                onChange={(id) => setActivityMetric(id as 'Sorties' | 'Distance' | 'D+')}
+                ariaLabel="Métrique d'activité"
+                className="w-auto"
+              />
             </div>
           </div>
 
           {/* Bars Chart */}
           <div className="h-40 relative flex items-end justify-between px-2 pt-6">
             <div className="absolute inset-0 flex flex-col justify-between pointer-events-none pb-6">
-              <div className="border-b border-[#17402C]/5 w-full" />
-              <div className="border-b border-[#17402C]/5 w-full" />
-              <div className="border-b border-[#17402C]/5 w-full" />
+              <div className="border-b border-[color:var(--lkv-primary)]/5 w-full" />
+              <div className="border-b border-[color:var(--lkv-primary)]/5 w-full" />
+              <div className="border-b border-[color:var(--lkv-primary)]/5 w-full" />
             </div>
 
             {[
-              { label: 'JAN', val: activityMetric === 'Sorties' ? 15 : activityMetric === 'Distance' ? 25 : 10, color: '#C8DAC3' },
-              { label: 'FÉV', val: activityMetric === 'Sorties' ? 20 : activityMetric === 'Distance' ? 30 : 15, color: '#C8DAC3' },
-              { label: 'MAR', val: activityMetric === 'Sorties' ? 35 : activityMetric === 'Distance' ? 50 : 25, color: '#A6C1A0' },
-              { label: 'AVR', val: activityMetric === 'Sorties' ? 45 : activityMetric === 'Distance' ? 65 : 35, color: '#A6C1A0' },
-              { label: 'MAI', val: activityMetric === 'Sorties' ? 55 : activityMetric === 'Distance' ? 80 : 45, color: '#5B7F55' },
-              { label: 'JUN', val: activityMetric === 'Sorties' ? 60 : activityMetric === 'Distance' ? 85 : 50, color: '#5B7F55' },
-              { label: 'JUL', val: activityMetric === 'Sorties' ? 55 : activityMetric === 'Distance' ? 75 : 45, color: '#5B7F55' },
-              { label: 'AOÛ', val: activityMetric === 'Sorties' ? 65 : activityMetric === 'Distance' ? 90 : 55, color: '#5B7F55' },
-              { label: 'SEP', val: activityMetric === 'Sorties' ? 80 : activityMetric === 'Distance' ? 100 : 70, color: '#365233' },
-              { label: 'OCT', val: activityMetric === 'Sorties' ? 85 : activityMetric === 'Distance' ? 120 : 80, color: '#17402C' },
-              { label: 'NOV', val: 0, color: '#E4DED3' },
-              { label: 'DÉC', val: 0, color: '#E4DED3' },
+              { label: 'JAN', val: activityMetric === 'Sorties' ? 15 : activityMetric === 'Distance' ? 25 : 10, color: 'var(--sage-200)' },
+              { label: 'FÉV', val: activityMetric === 'Sorties' ? 20 : activityMetric === 'Distance' ? 30 : 15, color: 'var(--sage-200)' },
+              { label: 'MAR', val: activityMetric === 'Sorties' ? 35 : activityMetric === 'Distance' ? 50 : 25, color: 'var(--sage-300)' },
+              { label: 'AVR', val: activityMetric === 'Sorties' ? 45 : activityMetric === 'Distance' ? 65 : 35, color: 'var(--sage-300)' },
+              { label: 'MAI', val: activityMetric === 'Sorties' ? 55 : activityMetric === 'Distance' ? 80 : 45, color: 'var(--lkv-secondary)' },
+              { label: 'JUN', val: activityMetric === 'Sorties' ? 60 : activityMetric === 'Distance' ? 85 : 50, color: 'var(--lkv-secondary)' },
+              { label: 'JUL', val: activityMetric === 'Sorties' ? 55 : activityMetric === 'Distance' ? 75 : 45, color: 'var(--lkv-secondary)' },
+              { label: 'AOÛ', val: activityMetric === 'Sorties' ? 65 : activityMetric === 'Distance' ? 90 : 55, color: 'var(--lkv-secondary)' },
+              { label: 'SEP', val: activityMetric === 'Sorties' ? 80 : activityMetric === 'Distance' ? 100 : 70, color: 'var(--lkv-forest-600)' },
+              { label: 'OCT', val: activityMetric === 'Sorties' ? 85 : activityMetric === 'Distance' ? 120 : 80, color: 'var(--lkv-primary)' },
+              { label: 'NOV', val: 0, color: 'var(--sand-300)' },
+              { label: 'DÉC', val: 0, color: 'var(--sand-300)' },
             ].map((month, idx) => {
               const normalizedVal = month.val > 100 ? 100 : month.val;
               return (
-                <div key={idx} className="flex flex-col items-center gap-1.5 relative z-10 w-full group">
+                <div key={idx} className="flex flex-col items-center gap-1.5 relative z-[var(--z-dropdown)] w-full group">
                   <div className="w-full flex justify-center items-end h-28">
                     <div
                       className="w-4 sm:w-6 rounded-t-md transition-all duration-300 group-hover:brightness-110"
                       style={{ height: `${normalizedVal}%`, backgroundColor: month.color }}
                     />
                   </div>
-                  <span className="text-[9px] font-mono font-bold text-[#5A7064]">{month.label}</span>
+                  <span className="text-[9px] font-mono font-bold text-[color:var(--lkv-text-muted)]">{month.label}</span>
                   {month.val > 0 && (
-                    <span className="absolute -top-3 text-[9px] font-mono font-bold text-[#17402C] opacity-0 group-hover:opacity-100 transition-opacity">
+                    <span className="absolute -top-3 text-[9px] font-mono font-bold text-[color:var(--lkv-primary)] opacity-0 group-hover:opacity-100 transition-opacity">
                       {month.val}
                     </span>
                   )}
@@ -322,65 +322,55 @@ export default function AventuresTab({ profile }: AventuresTabProps) {
         </div>
 
         {/* HISTORIQUE COMPLET */}
-        <div className="glass rounded-[1.5rem] p-5 sm:p-6 space-y-5 border border-white/50 shadow-sm">
+        <div className="bg-[color:var(--card-tint-strong)] border border-[color:var(--glass-border)] shadow-elevation-1 backdrop-blur-[var(--blur-lg)] rounded-[var(--lkv-radius-lg)] p-5 sm:p-6 space-y-5">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
-              <h3 className="font-display font-bold text-lg sm:text-xl text-[#17402C]">
-                Historique <span className="font-serif italic font-normal text-[#5B7F55]">des sorties</span>
+              <h3 className="font-display font-bold text-lg sm:text-xl text-[color:var(--lkv-primary)]">
+                Historique <span className="font-serif italic font-normal text-[color:var(--lkv-secondary)]">des sorties</span>
               </h3>
             </div>
-            <div className="text-[11px] text-[#5A7064] font-mono">
+            <div className="text-[11px] text-[color:var(--lkv-text-muted)] font-mono">
               {aventures.length} résultats · triés par date
             </div>
           </div>
 
           {/* Filter Tabs */}
-          <div className="flex flex-wrap items-center gap-2 border-b border-[#17402C]/5 pb-3">
-            <span className="text-[10px] font-mono text-[#5A7064] mr-1 uppercase font-bold">Année</span>
-            {['Toutes', '2026', '2025', '2024'].map((year) => (
-              <button
-                key={year}
-                onClick={() => setActiveYear(year)}
-                className={`glass-capsule-btn !py-1 !px-3 !min-h-0 text-xs font-mono font-bold transition-colors ${
-                  activeYear === year ? 'primary' : ''
-                }`}
-              >
-                {year}
-              </button>
-            ))}
+          <div className="flex flex-wrap items-center gap-2 border-b border-[color:var(--lkv-primary)]/5 pb-3">
+            <span className="text-[10px] font-mono text-[color:var(--lkv-text-muted)] mr-1 uppercase font-bold">Année</span>
+            <Tabs
+              options={['Toutes', '2026', '2025', '2024'].map((year) => ({ id: year, label: year }))}
+              value={activeYear}
+              onChange={setActiveYear}
+              variant="scrollable"
+              ariaLabel="Filtrer par année"
+              className="w-auto"
+            />
 
-            <div className="w-[1px] h-4 bg-[#17402C]/10 mx-2" />
+            <div className="w-[1px] h-4 bg-[color:var(--lkv-primary)]/10 mx-2" />
 
-            <span className="text-[10px] font-mono text-[#5A7064] mr-1 uppercase font-bold">Statut</span>
-            {['Toutes', 'Terminées', 'Planifiées', 'Brouillons'].map((tab) => (
-              <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
-                className={`glass-capsule-btn !py-1 !px-3 !min-h-0 text-xs font-bold transition-colors ${
-                  activeTab === tab ? 'primary' : ''
-                }`}
-              >
-                {tab}
-              </button>
-            ))}
+            <span className="text-[10px] font-mono text-[color:var(--lkv-text-muted)] mr-1 uppercase font-bold">Statut</span>
+            <Tabs
+              options={['Toutes', 'Terminées', 'Planifiées', 'Brouillons'].map((tab) => ({ id: tab, label: tab }))}
+              value={activeTab}
+              onChange={setActiveTab}
+              variant="scrollable"
+              ariaLabel="Filtrer par statut"
+              className="w-auto"
+            />
           </div>
 
           {/* List */}
           <div className="space-y-3">
             {loading ? (
-              <div className="text-center py-8 text-[#5A7064] text-xs font-mono">
-                Chargement des groupes...
-              </div>
+              <LoadingState label="Chargement des sorties…" compact />
             ) : filteredAventures.length === 0 ? (
-              <div className="text-center py-8 text-[#5A7064] text-xs">
-                Aucune sortie trouvée pour ces critères.
-              </div>
+              <EmptyState compact title="Aucune sortie trouvée" description="Aucune sortie ne correspond à ces critères." />
             ) : (
               filteredAventures.slice(0, visibleCount).map((av) => (
                 <div
                   key={av.id}
                   onClick={() => router.push(`/groupes/${av.id}`)}
-                  className="glass-sub-card rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 cursor-pointer hover:bg-white/80 transition-all border border-white/40 group"
+                  className="rounded-[var(--lkv-radius-md)] border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] backdrop-blur-[var(--blur-md)] p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 cursor-pointer hover:bg-white/80 transition-all border border-white/40 group"
                 >
                   <div className="flex items-center gap-3.5 min-w-0">
                     <div className="relative w-14 h-14 rounded-xl overflow-hidden shrink-0 border border-white bg-stone-200">
@@ -393,34 +383,34 @@ export default function AventuresTab({ profile }: AventuresTabProps) {
                       />
                     </div>
                     <div className="min-w-0">
-                      <h4 className="font-bold text-sm text-[#17402C] truncate group-hover:text-[#5B7F55] transition-colors">
+                      <h4 className="font-bold text-sm text-[color:var(--lkv-primary)] truncate group-hover:text-[color:var(--lkv-secondary)] transition-colors">
                         {av.title}
                       </h4>
-                      <p className="text-[11px] text-[#5A7064] font-mono mt-0.5">
+                      <p className="text-[11px] text-[color:var(--lkv-text-muted)] font-mono mt-0.5">
                         {av.date_detail} · {av.duration}
                       </p>
-                      <div className="flex items-center gap-1.5 mt-1 text-[10px] text-[#5A7064]">
+                      <div className="flex items-center gap-1.5 mt-1 text-[10px] text-[color:var(--lkv-text-muted)]">
                         <span>👥 {av.companions.join(', ')}</span>
                       </div>
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between sm:justify-end gap-4 w-full sm:w-auto shrink-0 border-t sm:border-t-0 border-[#17402C]/5 pt-2 sm:pt-0">
+                  <div className="flex items-center justify-between sm:justify-end gap-4 w-full sm:w-auto shrink-0 border-t sm:border-t-0 border-[color:var(--lkv-primary)]/5 pt-2 sm:pt-0">
                     <div className="text-right">
-                      <div className="font-mono font-bold text-xs text-[#17402C]">{av.distance}</div>
-                      <div className="text-[10px] text-[#5A7064] font-mono">{av.elevation}</div>
+                      <div className="font-mono font-bold text-xs text-[color:var(--lkv-primary)]">{av.distance}</div>
+                      <div className="text-[10px] text-[color:var(--lkv-text-muted)] font-mono">{av.elevation}</div>
                     </div>
 
                     <div className="flex items-center gap-2">
                       <span
-                        className={`glass-pill text-[9.5px] font-bold ${
+                        className={`inline-flex items-center justify-center gap-[6px] rounded-full border border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-muted)] px-[var(--space-3)] py-[2px] text-[length:var(--lkv-text-caption-2)] font-medium text-[color:var(--lkv-text-primary)] text-[9.5px] font-bold ${
                           av.status === 'En cours' ? 'pill-warn' : ''
                         }`}
                       >
                         {av.status}
                       </span>
 
-                      <div className="w-7 h-7 rounded-full bg-white/60 border border-[#17402C]/10 flex items-center justify-center text-[#5A7064] group-hover:text-[#17402C] group-hover:bg-white transition-colors">
+                      <div className="w-7 h-7 rounded-full bg-white/60 border border-[color:var(--lkv-primary)]/10 flex items-center justify-center text-[color:var(--lkv-text-muted)] group-hover:text-[color:var(--lkv-primary)] group-hover:bg-white transition-colors">
                         <Icon name="ArrowRightIcon" size={12} />
                       </div>
                     </div>
@@ -432,12 +422,14 @@ export default function AventuresTab({ profile }: AventuresTabProps) {
 
           {visibleCount < filteredAventures.length && (
             <div className="mt-4 flex justify-center">
-              <button
+              <Button
+                variant="secondary"
+                size="sm"
                 onClick={() => setVisibleCount((prev) => prev + 5)}
-                className="glass-capsule-btn text-xs font-bold"
+                className="font-bold"
               >
                 Charger {filteredAventures.length - visibleCount} groupes supplémentaires
-              </button>
+              </Button>
             </div>
           )}
         </div>

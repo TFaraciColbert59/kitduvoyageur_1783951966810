@@ -18,6 +18,7 @@
 import React, { useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { Button, Card, Chip, LoadingState } from '@/components/ui';
 import {
   AUTONOMIES,
   EXPERIENCES,
@@ -153,84 +154,66 @@ export default function OrientationCard({ mode = 'collect', onSaved, onPasser }:
   const allAnswered = SECTIONS.every(({ key }) => Boolean(values[key]));
 
   return (
-    <div className="glass glass-sub-card p-5 sm:p-6 rounded-2xl">
-      <p className="glass-eyebrow mb-1">Ta pratique</p>
-      <h3 className="font-display font-bold text-[#17402C] text-lg tracking-tight mb-1">
+    <Card variant="featured" className="p-5 sm:p-6">
+      <p className="font-mono text-[length:var(--lkv-text-caption-2)] uppercase tracking-[0.18em] text-[color:var(--lkv-text-muted)] mb-1">Ta pratique</p>
+      <h3 className="font-display font-bold text-[color:var(--lkv-primary)] text-lg tracking-tight mb-1">
         Comment tu marches ?
       </h3>
-      <p className="text-sm text-[#5A7064] mb-5">
+      <p className="text-sm text-[color:var(--lkv-text-muted)] mb-5">
         Quatre questions factuelles — privées, jamais affichées. Elles pré-remplissent tes
         prochains kits, tu restes libre de tout changer.
       </p>
 
       {loading ? (
-        <div className="flex justify-center py-8" role="status" aria-live="polite">
-          <div className="w-6 h-6 border-2 border-[#17402C] border-t-transparent rounded-full animate-spin" />
-        </div>
+        <LoadingState compact label="" />
       ) : (
         <div className="space-y-6">
           {SECTIONS.map(({ key, values: sectionValues }) => (
             <div key={key} role="group" aria-label={SECTION_QUESTIONS[key]}>
-              <p className="text-xs font-semibold text-[#17402C] mb-2">{SECTION_QUESTIONS[key]}</p>
-              <div className="glass-capsule-bar flex flex-wrap gap-1 p-1">
+              <p className="mb-[var(--space-2)] text-[length:var(--lkv-text-caption)] font-semibold text-[color:var(--lkv-text-primary)]">{SECTION_QUESTIONS[key]}</p>
+              <div className="flex flex-wrap gap-[var(--space-1)]">
                 {sectionValues.map((v) => {
                   const isActive = values[key] === v;
                   return (
-                    <button
+                    <Chip
                       key={v}
-                      type="button"
+                      selected={isActive}
                       onClick={() => toggle(key, v)}
-                      aria-pressed={isActive}
-                      className={`glass-capsule-segment text-sm font-medium transition-colors ${isActive ? 'active' : ''}`}
-                      style={{
-                        minHeight: 44,
-                        padding: '10px 14px',
-                        borderRadius: 999,
-                        color: isActive ? '#17402C' : '#365233',
-                        background: isActive ? 'rgba(255,255,255,0.75)' : 'transparent',
-                        border: isActive ? '1px solid rgba(23,64,44,0.25)' : '1px solid transparent',
-                      }}
                     >
                       {SEGMENT_LABELS[key as keyof typeof SEGMENT_LABELS][v]}
-                    </button>
+                    </Chip>
                   );
                 })}
               </div>
             </div>
           ))}
 
-          <div className="flex flex-wrap items-center gap-3 pt-2">
-            <button
+          <div className="flex flex-wrap items-center gap-[var(--space-3)] pt-[var(--space-2)]">
+            <Button
               type="button"
+              loading={saving}
+              disabled={!user || !allAnswered}
               onClick={persist}
-              disabled={!user || saving || !allAnswered}
-              className="glass-capsule-btn primary text-sm font-bold disabled:opacity-40 disabled:cursor-not-allowed"
-              style={{ minHeight: 44 }}
             >
               {saving ? 'Enregistrement…' : 'Enregistrer ma pratique'}
-            </button>
-            <button
-              type="button"
-              onClick={onPasser}
-              className="glass-capsule-btn secondary text-sm font-medium"
-              style={{ minHeight: 44 }}
-            >
+            </Button>
+            <Button type="button" variant="secondary" onClick={onPasser}>
               Passer
-            </button>
+            </Button>
           </div>
 
           {saved && (
-            <p className="text-sm text-[#365233] font-medium" role="status" aria-live="polite">
+            <p className="text-sm text-[color:var(--lkv-forest-600)] font-medium" role="status" aria-live="polite">
               ✓ {saved}
             </p>
           )}
           {error && (
-            <p className="text-sm text-[#8A241B]" role="alert">
+            <p className="text-sm text-[color:var(--lkv-danger-dark)]" role="alert">
               {error}
             </p>
           )}
         </div>
       )}
-    </div>
+    </Card>
   );
 }

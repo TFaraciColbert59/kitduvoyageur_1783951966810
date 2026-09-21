@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { Card } from '@/components/ui';
 import { UserProfile } from '@/lib/types/profile';
 
 interface StatsGridProps {
@@ -35,22 +36,23 @@ export default function StatsGrid({ stats }: StatsGridProps) {
   return (
     <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5 my-4">
       {items.map((item) => (
-        <div
+        <Card
           key={item.label}
-          className="glass rounded-[1.25rem] p-4 flex flex-col justify-between border border-white/50 shadow-xs hover:border-[#5B7F55]/30 transition-all duration-150 cursor-pointer"
+          variant="compact"
+          className="p-4 flex flex-col justify-between hover:border-[color:var(--lkv-secondary)]/30 transition-all duration-150"
         >
-          <span className="text-[9px] font-mono font-bold text-[#5A7064] tracking-widest uppercase mb-1.5">
+          <span className="text-[9px] font-mono font-bold text-[color:var(--lkv-text-muted)] tracking-widest uppercase mb-1.5">
             {item.label}
           </span>
           <div className="space-y-0.5">
-            <span className="font-mono font-bold text-xl sm:text-2xl text-[#17402C] block">
+            <span className="font-mono font-bold text-xl sm:text-2xl text-[color:var(--lkv-primary)] block">
               {item.value}
             </span>
-            <span className={`text-[11px] font-medium block ${item.positive ? 'text-[#5B7F55]' : 'text-[#5A7064]'}`}>
+            <span className={`text-[11px] font-medium block ${item.positive ? 'text-[color:var(--lkv-secondary)]' : 'text-[color:var(--lkv-text-muted)]'}`}>
               {item.sub}
             </span>
           </div>
-        </div>
+        </Card>
       ))}
     </div>
   );

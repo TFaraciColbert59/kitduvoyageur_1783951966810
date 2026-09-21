@@ -6,6 +6,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import Icon from '@/components/ui/AppIcon';
+import { Button, EmptyState, IconButton, Tabs } from '@/components/ui';
 import { createClient } from '@/lib/supabase/client';
 import { requestCarnetPublicationAward } from '@/lib/progression-award-requests';
 import { fetchPublicProfilesWith } from '@/lib/queries/publicProfilesCore';
@@ -83,20 +84,10 @@ function fmtNum(n: number) {
   return n >= 1000 ? `${(n / 1000).toFixed(1).replace('.0', '')} k` : String(n);
 }
 
-const FALLBACK_COVERS = [
-  'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=600&q=80',
-  'https://images.unsplash.com/photo-1510312305653-8ed496efae75?auto=format&fit=crop&w=600&q=80',
-  'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=600&q=80',
-  'https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=600&q=80',
-  'https://images.unsplash.com/photo-1486870591958-9b9d0d1dda99?auto=format&fit=crop&w=600&q=80',
-  'https://images.unsplash.com/photo-1533240332313-0db49b459ad6?auto=format&fit=crop&w=600&q=80',
-];
-
 // ─────────────────────────────────────────────
 // CarnetsTab
 // ─────────────────────────────────────────────
 export default function CarnetsTab({ profile }: CarnetsTabProps) {
-  const router = useRouter();
   const supabase = createClient();
 
   // --- state ---
@@ -248,10 +239,10 @@ export default function CarnetsTab({ profile }: CarnetsTabProps) {
   // Render helpers
   // ─────────────────────────────────────────
   const StatPill = ({ label, value, sub }: { label: string; value: string | number; sub?: string }) => (
-    <div className="glass rounded-[1.25rem] p-5 flex flex-col gap-1">
-      <p className="text-[10px] font-mono uppercase tracking-widest text-[#5A7064]">{label}</p>
-      <p className="glass-metric text-3xl sm:text-4xl text-[#17402C] leading-none">{value}</p>
-      {sub && <p className="text-[11px] text-[#5A7064] font-medium mt-0.5">{sub}</p>}
+    <div className="bg-[color:var(--card-tint-strong)] border border-[color:var(--glass-border)] shadow-elevation-1 backdrop-blur-[var(--blur-lg)] rounded-[var(--lkv-radius-md)] p-5 flex flex-col gap-1">
+      <p className="text-[10px] font-mono uppercase tracking-widest text-[color:var(--lkv-text-muted)]">{label}</p>
+      <p className="rounded-[var(--lkv-radius-lg)] border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] p-[var(--space-3)] backdrop-blur-[var(--blur-md)] text-3xl sm:text-4xl text-[color:var(--lkv-primary)] leading-none">{value}</p>
+      {sub && <p className="text-[11px] text-[color:var(--lkv-text-muted)] font-medium mt-0.5">{sub}</p>}
     </div>
   );
 
@@ -261,12 +252,12 @@ export default function CarnetsTab({ profile }: CarnetsTabProps) {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         <div className="lg:col-span-8 space-y-6">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="glass rounded-2xl h-40 animate-pulse" />
+            <div key={i} className="bg-[color:var(--card-tint-strong)] border border-[color:var(--glass-border)] shadow-elevation-1 backdrop-blur-[var(--blur-lg)] rounded-2xl h-40 animate-pulse" />
           ))}
         </div>
         <div className="lg:col-span-4 space-y-6">
-          <div className="glass rounded-2xl h-48 animate-pulse" />
-          <div className="glass rounded-2xl h-48 animate-pulse" />
+          <div className="bg-[color:var(--card-tint-strong)] border border-[color:var(--glass-border)] shadow-elevation-1 backdrop-blur-[var(--blur-lg)] rounded-2xl h-48 animate-pulse" />
+          <div className="bg-[color:var(--card-tint-strong)] border border-[color:var(--glass-border)] shadow-elevation-1 backdrop-blur-[var(--blur-lg)] rounded-2xl h-48 animate-pulse" />
         </div>
       </div>
     );
@@ -275,12 +266,12 @@ export default function CarnetsTab({ profile }: CarnetsTabProps) {
   return (
     <div className="space-y-8 pb-16 font-sans">
       {/* ── Section Header ── */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4 border-b border-[#17402C]/5 pb-5">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4 border-b border-[color:var(--lkv-primary)]/5 pb-5">
         <div>
-          <h2 className="font-display font-bold text-3xl sm:text-4xl text-[#17402C] tracking-tight">
-            Carnets <span className="font-serif italic font-normal text-[#365233]">de route</span>
+          <h2 className="font-display font-bold text-3xl sm:text-4xl text-[color:var(--lkv-primary)] tracking-tight">
+            Carnets <span className="font-serif italic font-normal text-[color:var(--lkv-forest-600)]">de route</span>
           </h2>
-          <p className="text-xs text-[#5A7064] mt-1 font-mono">
+          <p className="text-xs text-[color:var(--lkv-text-muted)] mt-1 font-mono">
             {published.length} récits publiés · {fmtNum(totalViews)} lectures · {totalLikes} mentions j'aime
           </p>
         </div>
@@ -288,14 +279,14 @@ export default function CarnetsTab({ profile }: CarnetsTabProps) {
         <div className="flex items-center gap-3">
           <Link
             href="/carnets/brouillons"
-            className="glass-capsule-btn text-xs font-bold"
+            className="inline-flex items-center justify-center gap-[var(--space-2)] min-h-[var(--lkv-touch-min)] rounded-full px-[var(--space-4)] py-[var(--space-2)] text-[length:var(--lkv-text-footnote)] font-semibold backdrop-blur-[var(--blur-md)] border border-[color:var(--glass-border)] bg-[color:var(--btn-tint)] text-[color:var(--btn-content)] shadow-elevation-1 text-xs font-bold"
           >
             <Icon name="DocumentTextIcon" size={14} />
             <span>Brouillons ({drafts.length})</span>
           </Link>
           <Link
             href="/carnets/nouveau"
-            className="glass-capsule-btn primary text-xs font-bold"
+            className="inline-flex items-center justify-center gap-[var(--space-2)] min-h-[var(--lkv-touch-min)] rounded-full px-[var(--space-4)] py-[var(--space-2)] text-[length:var(--lkv-text-footnote)] font-semibold backdrop-blur-[var(--blur-md)] border border-transparent bg-[color:var(--lkv-action)] text-[color:var(--lkv-on-action)] shadow-elevation-1 text-xs font-bold"
           >
             <Icon name="PlusIcon" size={14} />
             <span>+ Rédiger un carnet</span>
@@ -314,45 +305,39 @@ export default function CarnetsTab({ profile }: CarnetsTabProps) {
       {/* ── Main Layout Stack ── */}
       <div className="space-y-6">
         {/* ── Publications Grille ── */}
-        <div className="glass rounded-[1.5rem] p-5 sm:p-6 space-y-5 border border-white/50 shadow-sm">
+        <div className="bg-[color:var(--card-tint-strong)] border border-[color:var(--glass-border)] shadow-elevation-1 backdrop-blur-[var(--blur-lg)] rounded-[var(--lkv-radius-lg)] p-5 sm:p-6 space-y-5">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
             <div>
-              <h3 className="font-display font-bold text-lg sm:text-xl text-[#17402C]">
-                Récits <span className="font-serif italic font-normal text-[#5B7F55]">publiés</span>
+              <h3 className="font-display font-bold text-lg sm:text-xl text-[color:var(--lkv-primary)]">
+                Récits <span className="font-serif italic font-normal text-[color:var(--lkv-secondary)]">publiés</span>
               </h3>
-              <p className="text-xs text-[#5A7064] mt-0.5">Visibles par les membres de la communauté</p>
+              <p className="text-xs text-[color:var(--lkv-text-muted)] mt-0.5">Visibles par les membres de la communauté</p>
             </div>
 
             {/* Sort pills */}
-            <div className="glass-capsule-bar">
-              <div className="flex items-center gap-1 p-0.5">
-                {(['recent', 'vues', 'aimes'] as SortMode[]).map((mode) => (
-                  <button
-                    key={mode}
-                    onClick={() => setSortMode(mode)}
-                    className={`glass-capsule-segment !px-3 !py-1 text-xs ${sortMode === mode ? 'active' : ''}`}
-                  >
-                    {mode === 'recent' ? 'Récents' : mode === 'vues' ? 'Plus lus' : 'Plus aimés'}
-                  </button>
-                ))}
-              </div>
+            <div className="inline-flex gap-[var(--space-1)] rounded-full border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] p-[var(--space-1)] backdrop-blur-[var(--blur-md)]">
+              <Tabs
+                options={[
+                  { id: 'recent', label: 'Récents' },
+                  { id: 'vues', label: 'Plus lus' },
+                  { id: 'aimes', label: 'Plus aimés' },
+                ]}
+                value={sortMode}
+                onChange={(id) => setSortMode(id as SortMode)}
+                ariaLabel="Trier les carnets"
+                className="w-auto"
+              />
             </div>
           </div>
 
           {sortedPublished.length === 0 ? (
-            <div className="text-center py-10 space-y-3">
-              <div className="w-12 h-12 rounded-full bg-white/40 flex items-center justify-center mx-auto text-xl">
-                📖
-              </div>
-              <p className="text-sm font-bold text-[#17402C]">Aucun carnet publié</p>
-              <p className="text-xs text-[#5A7064]">Partagez votre première aventure avec la communauté.</p>
-              <Link
-                href="/carnets/nouveau"
-                className="glass-capsule-btn primary inline-flex text-xs font-bold mt-2"
-              >
-                Commencer à écrire
-              </Link>
-            </div>
+            <EmptyState
+              compact
+              title="Aucun carnet publié"
+              description="Partagez votre première aventure avec la communauté."
+              actionLabel="Commencer à écrire"
+              actionHref="/carnets/nouveau"
+            />
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {sortedPublished.map((carnet, i) => (
@@ -364,15 +349,15 @@ export default function CarnetsTab({ profile }: CarnetsTabProps) {
 
         {/* ── Brouillons Section ── */}
         {drafts.length > 0 && (
-          <div className="glass rounded-[1.5rem] p-5 sm:p-6 space-y-4 border border-white/50 shadow-sm">
+          <div className="bg-[color:var(--card-tint-strong)] border border-[color:var(--glass-border)] shadow-elevation-1 backdrop-blur-[var(--blur-lg)] rounded-[var(--lkv-radius-lg)] p-5 sm:p-6 space-y-4">
             <div className="flex justify-between items-center">
               <div>
-                <h3 className="font-display font-bold text-lg sm:text-xl text-[#17402C]">
-                  Brouillons <span className="font-serif italic font-normal text-[#5B7F55]">en cours</span>
+                <h3 className="font-display font-bold text-lg sm:text-xl text-[color:var(--lkv-primary)]">
+                  Brouillons <span className="font-serif italic font-normal text-[color:var(--lkv-secondary)]">en cours</span>
                 </h3>
-                <p className="text-xs text-[#5A7064] mt-0.5">Privés — vous seul pouvez les voir</p>
+                <p className="text-xs text-[color:var(--lkv-text-muted)] mt-0.5">Privés — vous seul pouvez les voir</p>
               </div>
-              <span className="glass-pill pill-warn text-xs font-mono font-bold">
+              <span className="inline-flex items-center justify-center gap-[6px] rounded-full border border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-muted)] px-[var(--space-3)] py-[2px] text-[length:var(--lkv-text-caption-2)] font-medium text-[color:var(--lkv-text-primary)] pill-warn text-xs font-mono font-bold">
                 {drafts.length} en cours
               </span>
             </div>
@@ -394,12 +379,12 @@ export default function CarnetsTab({ profile }: CarnetsTabProps) {
         {/* ── Insights Row: Rythme + Lecteurs fidèles ── */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
           {/* ── Rythme de publication ── */}
-          <div className="glass rounded-[1.5rem] p-5 space-y-3.5 border border-white/50 shadow-sm">
+          <div className="bg-[color:var(--card-tint-strong)] border border-[color:var(--glass-border)] shadow-elevation-1 backdrop-blur-[var(--blur-lg)] rounded-[var(--lkv-radius-lg)] p-5 space-y-3.5">
             <div>
-              <h3 className="font-display font-bold text-base text-[#17402C]">
-                Rythme <span className="font-serif italic font-normal text-[#5B7F55]">de publication</span>
+              <h3 className="font-display font-bold text-base text-[color:var(--lkv-primary)]">
+                Rythme <span className="font-serif italic font-normal text-[color:var(--lkv-secondary)]">de publication</span>
               </h3>
-              <p className="text-[11px] text-[#5A7064]">Activité sur 12 mois</p>
+              <p className="text-[11px] text-[color:var(--lkv-text-muted)]">Activité sur 12 mois</p>
             </div>
 
             <div className="flex items-end justify-between gap-1.5 h-20 pt-2">
@@ -411,18 +396,18 @@ export default function CarnetsTab({ profile }: CarnetsTabProps) {
                     <div
                       className={`w-full rounded-t-sm transition-all ${
                         m.current
-                          ? 'bg-[#17402C]'
+                          ? 'bg-[color:var(--lkv-primary)]'
                           : m.count > 0
-                          ? 'bg-[#5B7F55]'
-                          : 'bg-[#17402C]/10'
+                          ? 'bg-[color:var(--lkv-secondary)]'
+                          : 'bg-[color:var(--lkv-primary)]/10'
                       }`}
                       style={{ height: `${h}px` }}
                     />
-                    <span className={`text-[8px] font-mono ${m.current ? 'font-bold text-[#17402C]' : 'text-[#5A7064]'}`}>
+                    <span className={`text-[8px] font-mono ${m.current ? 'font-bold text-[color:var(--lkv-primary)]' : 'text-[color:var(--lkv-text-muted)]'}`}>
                       {m.short}
                     </span>
                     {m.count > 0 && (
-                      <span className="absolute -top-4 text-[9px] font-mono font-bold text-[#17402C] opacity-0 group-hover:opacity-100 transition-opacity">
+                      <span className="absolute -top-4 text-[9px] font-mono font-bold text-[color:var(--lkv-primary)] opacity-0 group-hover:opacity-100 transition-opacity">
                         {m.count}
                       </span>
                     )}
@@ -433,30 +418,30 @@ export default function CarnetsTab({ profile }: CarnetsTabProps) {
           </div>
 
           {/* ── Lecteurs fidèles ── */}
-          <div className="glass rounded-[1.5rem] p-5 space-y-3.5 border border-white/50 shadow-sm">
+          <div className="bg-[color:var(--card-tint-strong)] border border-[color:var(--glass-border)] shadow-elevation-1 backdrop-blur-[var(--blur-lg)] rounded-[var(--lkv-radius-lg)] p-5 space-y-3.5">
             <div>
-              <h3 className="font-display font-bold text-base text-[#17402C]">
-                Lecteurs <span className="font-serif italic font-normal text-[#5B7F55]">fidèles</span>
+              <h3 className="font-display font-bold text-base text-[color:var(--lkv-primary)]">
+                Lecteurs <span className="font-serif italic font-normal text-[color:var(--lkv-secondary)]">fidèles</span>
               </h3>
-              <p className="text-[11px] text-[#5A7064]">Membres les plus engagés</p>
+              <p className="text-[11px] text-[color:var(--lkv-text-muted)]">Membres les plus engagés</p>
             </div>
 
             {fideles.length === 0 ? (
-              <p className="text-xs text-[#5A7064] text-center py-4">Pas encore d'abonnés enregistrés.</p>
+              <p className="text-xs text-[color:var(--lkv-text-muted)] text-center py-4">Pas encore d'abonnés enregistrés.</p>
             ) : (
               <div className="space-y-2">
                 {fideles.slice(0, 3).map((f) => (
-                  <div key={f.id} className="glass-sub-card flex items-center justify-between p-2 rounded-xl border border-white/40">
+                  <div key={f.id} className="rounded-[var(--lkv-radius-md)] border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] backdrop-blur-[var(--blur-md)] flex items-center justify-between p-2 border border-white/40">
                     <div className="flex items-center gap-2.5 min-w-0">
-                      <div className="w-7 h-7 rounded-full bg-[#17402C] text-white flex items-center justify-center text-xs font-bold shrink-0">
+                      <div className="w-7 h-7 rounded-full bg-[color:var(--lkv-primary)] text-white flex items-center justify-center text-xs font-bold shrink-0">
                         {f.full_name.charAt(0)}
                       </div>
                       <div className="min-w-0">
-                        <p className="text-xs font-bold text-[#17402C] truncate">{f.full_name}</p>
-                        <p className="text-[9.5px] text-[#5A7064] truncate">{f.location || 'Alpes françaises'}</p>
+                        <p className="text-xs font-bold text-[color:var(--lkv-primary)] truncate">{f.full_name}</p>
+                        <p className="text-[9.5px] text-[color:var(--lkv-text-muted)] truncate">{f.location || 'Alpes françaises'}</p>
                       </div>
                     </div>
-                    <span className="glass-pill text-[8.5px] font-mono font-bold">Fidèle</span>
+                    <span className="inline-flex items-center justify-center gap-[6px] rounded-full border border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-muted)] px-[var(--space-3)] py-[2px] text-[length:var(--lkv-text-caption-2)] font-medium text-[color:var(--lkv-text-primary)] text-[8.5px] font-mono font-bold">Fidèle</span>
                   </div>
                 ))}
               </div>
@@ -478,7 +463,7 @@ function CarnetCard({ carnet, isNew }: { carnet: CarnetDB; isNew: boolean }) {
   return (
     <div
       onClick={() => router.push(`/carnets/${carnet.slug || carnet.id}`)}
-      className="glass-sub-card rounded-2xl overflow-hidden transition-all cursor-pointer flex flex-col hover:border-[#17402C]/20"
+      className="rounded-[var(--lkv-radius-md)] border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] backdrop-blur-[var(--blur-md)] overflow-hidden transition-all cursor-pointer flex flex-col hover:border-[color:var(--lkv-primary)]/20"
     >
       {/* Cover */}
       <div className="relative h-44 overflow-hidden">
@@ -492,11 +477,11 @@ function CarnetCard({ carnet, isNew }: { carnet: CarnetDB; isNew: boolean }) {
         {/* Status badge */}
         <div className="absolute top-3 left-3">
           {isNew ? (
-            <span className="glass-pill !bg-[#17402C] !text-white text-[10px] font-bold uppercase tracking-wider">
+            <span className="inline-flex items-center justify-center gap-[6px] rounded-full border border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-muted)] px-[var(--space-3)] py-[2px] text-[length:var(--lkv-text-caption-2)] font-medium text-[color:var(--lkv-text-primary)] !bg-[color:var(--lkv-primary)] !text-white text-[10px] font-bold uppercase tracking-wider">
               Nouveau
             </span>
           ) : (
-            <span className="glass-pill text-[10px] font-bold uppercase tracking-wider">
+            <span className="inline-flex items-center justify-center gap-[6px] rounded-full border border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-muted)] px-[var(--space-3)] py-[2px] text-[length:var(--lkv-text-caption-2)] font-medium text-[color:var(--lkv-text-primary)] text-[10px] font-bold uppercase tracking-wider">
               Publié
             </span>
           )}
@@ -516,16 +501,16 @@ function CarnetCard({ carnet, isNew }: { carnet: CarnetDB; isNew: boolean }) {
       </div>
 
       {/* Stats footer */}
-      <div className="px-4 py-3 flex items-center justify-between text-xs font-mono font-bold text-[#5A7064]">
-        <span className="flex items-center gap-1.5 text-[#5B7F55]">
+      <div className="px-4 py-3 flex items-center justify-between text-xs font-mono font-bold text-[color:var(--lkv-text-muted)]">
+        <span className="flex items-center gap-1.5 text-[color:var(--lkv-secondary)]">
           <Icon name="HeartIcon" size={13} />
           {fmtNum(carnet.likes_count || 0)}
         </span>
-        <span className="flex items-center gap-1.5 text-[#5A7064]">
+        <span className="flex items-center gap-1.5 text-[color:var(--lkv-text-muted)]">
           <Icon name="EyeIcon" size={13} />
           {fmtNum(carnet.views_count || 0)}
         </span>
-        <span className="flex items-center gap-1.5 text-[#4B6B7C]">
+        <span className="flex items-center gap-1.5 text-[color:var(--lkv-info)]">
           <Icon name="ChatBubbleLeftIcon" size={13} />
           {fmtNum(carnet.comments_count || 0)}
         </span>
@@ -545,24 +530,24 @@ function DraftRow({
   const router = useRouter();
   // No real progress source exists for drafts yet: only render the bar when real data is present
   const progress = typeof draft.draft_progress === 'number' ? draft.draft_progress : null;
-  const progressColor = progress !== null ? (progress >= 80 ? '#22C55E' : progress >= 50 ? '#17402C' : '#C8C3B0') : '#C8C3B0';
+  const progressColor = progress !== null ? (progress >= 80 ? 'var(--lkv-success)' : progress >= 50 ? 'var(--lkv-primary)' : 'var(--sand-300)') : 'var(--sand-300)';
   const roman = ['I', 'II', 'III', 'IV', 'V'][idx] || String(idx + 1);
 
   return (
-    <div className="px-5 py-4 hover:bg-[#FAFAF7] transition-colors group">
+    <div className="px-5 py-4 hover:bg-[color:var(--lkv-surface-card)] transition-colors group">
       <div className="flex items-start gap-4">
         {/* Roman numeral */}
-        <span className="font-serif italic text-[#C8C3B0] text-lg leading-none mt-0.5 flex-shrink-0 w-6 text-center">
+        <span className="font-serif italic text-[color:var(--sand-300)] text-lg leading-none mt-0.5 flex-shrink-0 w-6 text-center">
           {roman}
         </span>
         {/* Content */}
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <h5 className="font-600 text-sm text-[#17402C] truncate group-hover:text-[#17402C] transition-colors">
+              <h5 className="font-600 text-sm text-[color:var(--lkv-primary)] truncate group-hover:text-[color:var(--lkv-primary)] transition-colors">
                 {draft.title || 'Brouillon sans titre'}
               </h5>
-              <p className="text-[11px] text-[#5A7064] mt-0.5">
+              <p className="text-[11px] text-[color:var(--lkv-text-muted)] mt-0.5">
                 {(draft as any).travel_group && `Groupe · ${((draft as any).travel_group as any).name} · `}
                 {draft.chapters_count ? `${draft.chapters_count} chapitres` : 'En cours de rédaction'}
                 {draft.word_count ? ` · ${draft.word_count.toLocaleString('fr')} mots` : ''}
@@ -570,38 +555,44 @@ function DraftRow({
             </div>
             {/* Actions */}
             <div className="flex items-center gap-1.5 flex-shrink-0">
-              <button
+              <Button
+                variant="primary"
+                size="sm"
                 onClick={() => router.push(`/carnets/${draft.slug || draft.id}/edit`)}
-                className="glass-capsule-btn primary !py-1.5 !px-3 !min-h-0 text-xs font-bold transition-colors"
+                className="h-auto min-h-[var(--control-height-xs)] px-[var(--space-3)] py-1.5 font-bold"
               >
                 Reprendre
-              </button>
-              <button
-                onClick={() => onPublish(draft.id)}
+              </Button>
+              <IconButton
+                variant="glass"
+                size="sm"
+                aria-label="Publier"
                 title="Publier"
-                className="glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8 !p-0 transition-colors"
+                onClick={() => onPublish(draft.id)}
               >
                 <Icon name="ArrowUpOnSquareIcon" size={14} />
-              </button>
-              <button
-                onClick={() => onDelete(draft.id)}
+              </IconButton>
+              <IconButton
+                variant="glass"
+                size="sm"
+                aria-label="Supprimer"
                 title="Supprimer"
-                className="glass-circle-btn !w-8 !h-8 !min-w-8 !min-h-8 !p-0 transition-colors"
+                onClick={() => onDelete(draft.id)}
               >
                 <Icon name="TrashIcon" size={14} />
-              </button>
+              </IconButton>
             </div>
           </div>
           {/* Progress bar (only shown when real progress data exists) */}
           {progress !== null && (
             <div className="mt-2.5 flex items-center gap-3">
-              <div className="flex-1 h-1.5 bg-[#EDEAE0] rounded-full overflow-hidden">
+              <div className="flex-1 h-1.5 bg-[color:var(--sand-100)] rounded-full overflow-hidden">
                 <div
                   className="h-full rounded-full transition-all"
                   style={{ width: `${progress}%`, backgroundColor: progressColor }}
                 />
               </div>
-              <span className="text-[10px] font-mono font-700 text-[#5A7064] flex-shrink-0">{progress}%</span>
+              <span className="text-[10px] font-mono font-700 text-[color:var(--lkv-text-muted)] flex-shrink-0">{progress}%</span>
             </div>
           )}
         </div>

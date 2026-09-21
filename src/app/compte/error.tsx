@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react';
 import Link from 'next/link';
+import { Button } from '@/components/ui';
 
 export default function Error({
   error,
@@ -17,7 +18,7 @@ export default function Error({
 
   return (
     <div className="min-h-screen bg-transparent flex flex-col items-center justify-center p-4 font-sans">
-      <div className="glass rounded-[var(--lkv-radius-lg,1.25rem)] p-8 max-w-md w-full text-center space-y-6">
+      <div className="bg-[color:var(--card-tint-strong)] border border-[color:var(--glass-border)] shadow-elevation-1 backdrop-blur-[var(--blur-lg)] rounded-[var(--lkv-radius-lg)] p-8 max-w-md w-full text-center space-y-6">
         <div className="w-16 h-16 bg-[var(--lkv-surface)] rounded-2xl flex items-center justify-center mx-auto mb-4">
           <svg className="w-8 h-8 text-[var(--lkv-primary)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
@@ -28,15 +29,12 @@ export default function Error({
           Nous n&apos;avons pas pu charger cette page. Veuillez réessayer.
         </p>
         <div className="flex flex-col gap-3 pt-4">
-          <button
-            onClick={() => reset()}
-            className="glass-capsule-btn primary"
-          >
+          <Button variant="primary" onClick={() => reset()}>
             Réessayer
-          </button>
+          </Button>
           <Link
             href="/"
-            className="glass-capsule-btn secondary"
+            className="inline-flex items-center justify-center gap-[var(--space-2)] min-h-[var(--lkv-touch-min)] rounded-full px-[var(--space-4)] py-[var(--space-2)] text-[length:var(--lkv-text-footnote)] font-semibold backdrop-blur-[var(--blur-md)] border border-[color:var(--glass-border)] bg-[color:var(--btn-tint)] text-[color:var(--btn-content)] shadow-elevation-1"
           >
             Retour à l&apos;accueil
           </Link>

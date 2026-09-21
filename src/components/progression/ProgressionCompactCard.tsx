@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { ChevronRight, Flame, Target, Trophy } from 'lucide-react';
+import { Badge } from '@/components/ui';
 import type {
   TerritorialLeaderboard,
   UserProgressionProfile,
@@ -150,12 +151,12 @@ export function ProgressionCompactCard({ className = '' }: ProgressionCompactCar
     <section aria-label="Progression" className={className}>
       <Link
         href="/progression"
-        className="glass interactive block min-h-[44px] rounded-2xl border border-white/70 px-3.5 py-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)]"
+        className="block min-h-[44px] rounded-2xl border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] backdrop-blur-[var(--blur-md)] px-3.5 py-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lkv-focus-ring)]"
       >
         <span className="flex items-center gap-3">
           <span
             aria-hidden="true"
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-white/70 bg-white/70 text-[var(--lkv-primary)]"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-card)] text-[var(--lkv-primary)]"
           >
             <Trophy size={16} />
           </span>
@@ -182,22 +183,22 @@ export function ProgressionCompactCard({ className = '' }: ProgressionCompactCar
         {hasData && (seasonPoints !== null || rank !== null || challenge !== null) && (
           <span className="mt-2 flex flex-wrap gap-1.5">
             {seasonPoints !== null && (
-              <span className="glass-pill inline-flex items-center gap-1 text-[10px] font-mono font-bold text-[var(--lkv-text-secondary)]">
+              <Badge tone="stone" className="gap-1 text-[10px] font-mono font-bold">
                 <Flame size={11} aria-hidden="true" />
                 {seasonPoints.toLocaleString('fr-FR')} pts saison
-              </span>
+              </Badge>
             )}
             {rank !== null && (
-              <span className="glass-pill inline-flex items-center gap-1 text-[10px] font-mono font-bold text-[var(--lkv-text-secondary)]">
+              <Badge tone="stone" className="gap-1 text-[10px] font-mono font-bold">
                 <Trophy size={11} aria-hidden="true" />
                 Rang #{rank}
-              </span>
+              </Badge>
             )}
             {challenge !== null && (
-              <span className="glass-pill inline-flex min-w-0 items-center gap-1 text-[10px] font-mono font-bold text-[var(--lkv-text-secondary)]">
+              <Badge tone="stone" className="min-w-0 gap-1 text-[10px] font-mono font-bold">
                 <Target size={11} className="shrink-0" aria-hidden="true" />
                 <span className="truncate">{challenge.title}</span>
-              </span>
+              </Badge>
             )}
           </span>
         )}

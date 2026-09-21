@@ -1,10 +1,11 @@
 'use client';
-import { lkvAlert } from '@/components/ui/dialogs';
+import { lkvAlert, lkvConfirm } from '@/components/ui/dialogs';
 // src/components/compte/ParametresCompteCard.tsx
 
 import React, { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import Icon from '@/components/ui/AppIcon';
+import { Badge, Button, Chip, ListItem, Modal, Switch } from '@/components/ui';
 import { UserProfile } from '@/lib/mock/compte-marceline';
 import SignatureVisibilityControl from '@/components/identity/SignatureVisibilityControl';
 import OrientationCard from '@/components/identity/OrientationCard';
@@ -271,7 +272,8 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
     if (onSave) onSave('Session déconnectée.');
   };
 
-  const handleDisconnectAllOthers = () => {
+  const handleDisconnectAllOthers = async () => {
+    if (!(await lkvConfirm({ message: 'Se déconnecter de tous les autres appareils ?', variant: 'destructive', confirmLabel: 'Déconnecter' }))) return;
     setActiveSessions((prev) => prev.filter((s) => s.isCurrent));
     if (onSave) onSave('Toutes les autres sessions ont été fermées.');
   };
@@ -286,7 +288,7 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
   ];
 
   return (
-    <div className="space-y-8 font-sans text-[#17402C]">
+    <div className="space-y-8 font-sans text-[color:var(--lkv-primary)]">
       {/* Hidden File Input for Real Photo Upload */}
       <input
         type="file"
@@ -297,46 +299,47 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
       />
 
       {/* 1. Header Block */}
-      <div className="glass rounded-[1.25rem] p-6 sm:p-8 flex flex-col md:flex-row md:items-center justify-between gap-6">
+      <div className="bg-[color:var(--card-tint-strong)] border border-[color:var(--glass-border)] shadow-elevation-1 backdrop-blur-[var(--blur-lg)] rounded-[var(--lkv-radius-md)] p-6 sm:p-8 flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
-          <h2 className="text-2xl sm:text-3xl font-bold text-[#17402C] font-display tracking-tight">
-            Réglages <span className="font-serif italic font-normal text-[#365233]">du compte.</span>
+          <h2 className="text-2xl sm:text-3xl font-bold text-[color:var(--lkv-primary)] font-display tracking-tight">
+            Réglages <span className="font-serif italic font-normal text-[color:var(--lkv-forest-600)]">du compte.</span>
           </h2>
-          <p className="text-xs sm:text-sm text-[#5A7064] mt-1 max-w-2xl leading-relaxed">
+          <p className="text-xs sm:text-sm text-[color:var(--lkv-text-muted)] mt-1 max-w-2xl leading-relaxed">
             Gérez vos informations personnelles, vos préférences de notification, votre sécurité et vos caractéristiques d'aventure.
           </p>
         </div>
 
         <div className="flex items-center gap-3 shrink-0">
           {isDirty && (
-            <span className="glass-pill pill-warn animate-pulse text-[11px] font-bold">
+            <span className="inline-flex items-center justify-center gap-[6px] rounded-full border border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-muted)] px-[var(--space-3)] py-[2px] text-[length:var(--lkv-text-caption-2)] font-medium text-[color:var(--lkv-text-primary)] pill-warn animate-pulse text-[11px] font-bold">
               Modifications ({dirtyCount})
             </span>
           )}
-          <button
+          <Button
+            variant="secondary"
+            size="sm"
             onClick={handleExportData}
-            className="glass-capsule-btn text-xs font-bold"
+            icon={<Icon name="ArrowDownTrayIcon" size={14} aria-hidden="true" />}
           >
-            <Icon name="ArrowDownTrayIcon" size={14} />
-            <span>Exporter mes données</span>
-          </button>
+            Exporter mes données
+          </Button>
         </div>
       </div>
 
       {/* 2. Main Layout (Left Navigation + Right Cards Grid) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         {/* Left Navigation Sidebar */}
-        <aside className="lg:col-span-4 glass rounded-[1.25rem] p-4 space-y-3 lg:sticky lg:top-24">
+        <aside className="lg:col-span-4 bg-[color:var(--card-tint-strong)] border border-[color:var(--glass-border)] shadow-elevation-1 backdrop-blur-[var(--blur-lg)] rounded-[var(--lkv-radius-md)] p-4 space-y-3 lg:sticky lg:top-24">
           {/* User mini badge top */}
-          <div className="p-3 rounded-2xl glass-sub-card flex items-center gap-3">
-            <div className="relative w-10 h-10 rounded-full overflow-hidden border border-[#17402C]/20 shrink-0">
+          <div className="p-3 rounded-[var(--lkv-radius-md)] border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] backdrop-blur-[var(--blur-md)] flex items-center gap-3">
+            <div className="relative w-10 h-10 rounded-full overflow-hidden border border-[color:var(--lkv-primary)]/20 shrink-0">
               <Image src={avatarUrl || '/assets/images/no_image.png'} alt={firstName} fill className="object-cover" />
             </div>
             <div className="min-w-0">
-              <span className="font-bold text-[#17402C] text-xs block truncate">
+              <span className="font-bold text-[color:var(--lkv-primary)] text-xs block truncate">
                 {firstName} {lastName}
               </span>
-              <span className="text-[11px] text-[#5A7064] font-mono truncate block">{username}</span>
+              <span className="text-[11px] text-[color:var(--lkv-text-muted)] font-mono truncate block">{username}</span>
             </div>
           </div>
 
@@ -344,44 +347,27 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
             {navItems.map((item) => {
               const isActive = activeSection === item.id;
               return (
-                <button
+                <Button
                   key={item.id}
+                  variant={item.danger ? 'destructive' : isActive ? 'primary' : 'secondary'}
+                  fullWidth
                   onClick={() => setActiveSection(item.id as typeof activeSection)}
-                  className={`w-full text-xs font-semibold transition-all flex items-center justify-between glass-capsule-btn ${
-                    isActive
-                      ? 'primary'
-                      : item.danger
-                      ? 'danger'
-                      : ''
-                  }`}
+                  className="justify-between px-[var(--space-4)] text-[length:var(--lkv-text-footnote)]"
                 >
-                  <div className="flex items-center gap-3">
-                    <span>
-                      <Icon name={item.icon as any} size={16} />
-                    </span>
+                  <span className="flex items-center gap-[var(--space-3)]">
+                    <Icon name={item.icon as any} size={16} aria-hidden="true" />
                     <span>{item.label}</span>
-                  </div>
-                  {item.badge && (
-                    <span
-                      className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-full ${
-                        isActive ? 'bg-white/20 text-white' : 'glass-pill pill-warn'
-                      }`}
-                    >
-                      {item.badge}
-                    </span>
-                  )}
-                </button>
+                  </span>
+                  {item.badge && <Badge tone="warn" className="text-[10px]">{item.badge}</Badge>}
+                </Button>
               );
             })}
           </nav>
 
-          <div className="pt-3 border-t border-[#17402C]/5 text-center">
-            <button
-              onClick={handleExportData}
-              className="glass-capsule-btn !py-1.5 !px-3 !min-h-0 text-xs font-mono font-bold"
-            >
+          <div className="pt-3 border-t border-[color:var(--lkv-primary)]/5 text-center">
+            <Button variant="ghost" size="sm" onClick={handleExportData} className="font-mono text-[length:var(--lkv-text-caption)]">
               Export des données (.JSON)
-            </button>
+            </Button>
           </div>
         </aside>
 
@@ -389,17 +375,17 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
         <div className="lg:col-span-8 space-y-8">
           {/* SECTION 1: PROFIL & IDENTITÉ */}
           {(activeSection === 'profil' || activeSection === 'danger') && (
-            <div className="glass rounded-[1.25rem] p-6 lg:p-8 space-y-6">
-              <div className="flex items-center justify-between border-b border-[#17402C]/5 pb-4">
+            <div className="bg-[color:var(--card-tint-strong)] border border-[color:var(--glass-border)] shadow-elevation-1 backdrop-blur-[var(--blur-lg)] rounded-[var(--lkv-radius-md)] p-6 lg:p-8 space-y-6">
+              <div className="flex items-center justify-between border-b border-[color:var(--lkv-primary)]/5 pb-4">
                 <div>
-                  <h3 className="text-xl font-bold text-[#17402C] font-display">
-                    Profil <span className="font-serif italic font-normal text-[#365233]">&amp; identité</span>
+                  <h3 className="text-xl font-bold text-[color:var(--lkv-primary)] font-display">
+                    Profil <span className="font-serif italic font-normal text-[color:var(--lkv-forest-600)]">&amp; identité</span>
                   </h3>
-                  <p className="text-xs text-[#5A7064] mt-0.5">
+                  <p className="text-xs text-[color:var(--lkv-text-muted)] mt-0.5">
                     Informations visibles sur votre profil et dans le réseau des voyageurs.
                   </p>
                 </div>
-                <span className="glass-pill text-[10px] font-mono">
+                <span className="inline-flex items-center justify-center gap-[6px] rounded-full border border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-muted)] px-[var(--space-3)] py-[2px] text-[length:var(--lkv-text-caption-2)] font-medium text-[color:var(--lkv-text-primary)] text-[10px] font-mono">
                   Mis à jour le 5 oct. 2026
                 </span>
               </div>
@@ -408,38 +394,39 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
               <OrientationCard mode="edit" />
 
               {/* Photo Upload Block */}
-              <div className="flex items-center gap-5 p-4 rounded-2xl glass-sub-card">
-                <div className="relative w-16 h-16 rounded-full overflow-hidden border-2 border-[#17402C]/20 shrink-0">
+              <div className="flex items-center gap-5 p-4 rounded-[var(--lkv-radius-md)] border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] backdrop-blur-[var(--blur-md)]">
+                <div className="relative w-16 h-16 rounded-full overflow-hidden border-2 border-[color:var(--lkv-primary)]/20 shrink-0">
                   <Image src={avatarUrl || '/assets/images/no_image.png'} alt={firstName} fill className="object-cover" />
                 </div>
                 <div className="space-y-1.5">
                   <div className="flex items-center gap-3">
-                    <button
+                    <Button
                       type="button"
+                      size="sm"
                       onClick={handlePhotoUploadClick}
-                      className="glass-capsule-btn primary text-xs font-bold"
                     >
                       Changer la photo
-                    </button>
-                    <button
+                    </Button>
+                    <Button
                       type="button"
+                      size="sm"
+                      variant="destructive"
                       onClick={() => {
                         setAvatarUrl('https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80');
                         markDirty();
                       }}
-                      className="glass-capsule-btn danger !py-1.5 !px-3 !min-h-0 text-xs font-semibold"
                     >
                       Réinitialiser
-                    </button>
+                    </Button>
                   </div>
-                  <p className="text-[11px] text-[#5A7064] font-mono">JPG, PNG, WEBP ou GIF. Taille max 5 Mo.</p>
+                  <p className="text-[11px] text-[color:var(--lkv-text-muted)] font-mono">JPG, PNG, WEBP ou GIF. Taille max 5 Mo.</p>
                 </div>
               </div>
 
               {/* Form Fields */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs sm:text-sm">
                 <div>
-                  <label className="block font-mono text-[10px] uppercase tracking-widest text-[#5A7064] font-bold mb-1.5">Prénom *</label>
+                  <label className="block font-mono text-[10px] uppercase tracking-widest text-[color:var(--lkv-text-muted)] font-bold mb-1.5">Prénom *</label>
                   <input
                     type="text"
                     value={firstName}
@@ -447,12 +434,12 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
                       setFirstName(e.target.value);
                       markDirty();
                     }}
-                    className="glass-input w-full"
+                    className="min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[10px] text-[16px] text-[color:var(--lkv-text-primary)] outline-none transition-colors duration-[var(--motion-control-duration)] placeholder:text-[color:var(--lkv-text-muted)] focus:border-[color:var(--lkv-action)] focus:ring-[3px] focus:ring-[color:var(--lkv-focus-ring)] disabled:cursor-not-allowed disabled:bg-[color:var(--lkv-disabled-bg)] disabled:text-[color:var(--lkv-disabled-text)] sm:text-[length:var(--lkv-text-body-sm)] w-full"
                   />
                 </div>
 
                 <div>
-                  <label className="block font-mono text-[10px] uppercase tracking-widest text-[#5A7064] font-bold mb-1.5">Nom *</label>
+                  <label className="block font-mono text-[10px] uppercase tracking-widest text-[color:var(--lkv-text-muted)] font-bold mb-1.5">Nom *</label>
                   <input
                     type="text"
                     value={lastName}
@@ -460,14 +447,14 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
                       setLastName(e.target.value);
                       markDirty();
                     }}
-                    className="glass-input w-full"
+                    className="min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[10px] text-[16px] text-[color:var(--lkv-text-primary)] outline-none transition-colors duration-[var(--motion-control-duration)] placeholder:text-[color:var(--lkv-text-muted)] focus:border-[color:var(--lkv-action)] focus:ring-[3px] focus:ring-[color:var(--lkv-focus-ring)] disabled:cursor-not-allowed disabled:bg-[color:var(--lkv-disabled-bg)] disabled:text-[color:var(--lkv-disabled-text)] sm:text-[length:var(--lkv-text-body-sm)] w-full"
                   />
                 </div>
 
                 <div>
-                  <label className="block font-mono text-[10px] uppercase tracking-widest text-[#5A7064] font-bold mb-1.5">Nom d'utilisateur public *</label>
+                  <label className="block font-mono text-[10px] uppercase tracking-widest text-[color:var(--lkv-text-muted)] font-bold mb-1.5">Nom d'utilisateur public *</label>
                   <div className="relative">
-                    <span className="absolute left-3.5 top-2.5 text-[#5A7064] font-bold font-mono">@</span>
+                    <span className="absolute left-3.5 top-2.5 text-[color:var(--lkv-text-muted)] font-bold font-mono">@</span>
                     <input
                       type="text"
                       value={username.replace('@', '')}
@@ -475,20 +462,20 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
                         setUsername(`@${e.target.value}`);
                         markDirty();
                       }}
-                      className="glass-input w-full pl-8"
+                      className="min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[10px] text-[16px] text-[color:var(--lkv-text-primary)] outline-none transition-colors duration-[var(--motion-control-duration)] placeholder:text-[color:var(--lkv-text-muted)] focus:border-[color:var(--lkv-action)] focus:ring-[3px] focus:ring-[color:var(--lkv-focus-ring)] disabled:cursor-not-allowed disabled:bg-[color:var(--lkv-disabled-bg)] disabled:text-[color:var(--lkv-disabled-text)] sm:text-[length:var(--lkv-text-body-sm)] w-full pl-8"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block font-mono text-[10px] uppercase tracking-widest text-[#5A7064] font-bold mb-1.5">Pronoms</label>
+                  <label className="block font-mono text-[10px] uppercase tracking-widest text-[color:var(--lkv-text-muted)] font-bold mb-1.5">Pronoms</label>
                   <select
                     value={pronouns}
                     onChange={(e) => {
                       setPronouns(e.target.value);
                       markDirty();
                     }}
-                    className="glass-input w-full"
+                    className="min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[10px] text-[16px] text-[color:var(--lkv-text-primary)] outline-none transition-colors duration-[var(--motion-control-duration)] placeholder:text-[color:var(--lkv-text-muted)] focus:border-[color:var(--lkv-action)] focus:ring-[3px] focus:ring-[color:var(--lkv-focus-ring)] disabled:cursor-not-allowed disabled:bg-[color:var(--lkv-disabled-bg)] disabled:text-[color:var(--lkv-disabled-text)] sm:text-[length:var(--lkv-text-body-sm)] w-full"
                   >
                     <option value="Elle / her">Elle / her</option>
                     <option value="Il / him">Il / him</option>
@@ -498,7 +485,7 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
                 </div>
 
                 <div className="sm:col-span-2">
-                  <label className="block font-mono text-[10px] uppercase tracking-widest text-[#5A7064] font-bold mb-1.5">Bio / Présentation</label>
+                  <label className="block font-mono text-[10px] uppercase tracking-widest text-[color:var(--lkv-text-muted)] font-bold mb-1.5">Bio / Présentation</label>
                   <textarea
                     value={bio}
                     onChange={(e) => {
@@ -506,12 +493,12 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
                       markDirty();
                     }}
                     rows={3}
-                    className="glass-input w-full resize-none font-serif italic"
+                    className="min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[10px] text-[16px] text-[color:var(--lkv-text-primary)] outline-none transition-colors duration-[var(--motion-control-duration)] placeholder:text-[color:var(--lkv-text-muted)] focus:border-[color:var(--lkv-action)] focus:ring-[3px] focus:ring-[color:var(--lkv-focus-ring)] disabled:cursor-not-allowed disabled:bg-[color:var(--lkv-disabled-bg)] disabled:text-[color:var(--lkv-disabled-text)] sm:text-[length:var(--lkv-text-body-sm)] w-full resize-none font-serif italic"
                   />
                 </div>
 
                 <div>
-                  <label className="block font-mono text-[10px] uppercase tracking-widest text-[#5A7064] font-bold mb-1.5">Ville / Localisation</label>
+                  <label className="block font-mono text-[10px] uppercase tracking-widest text-[color:var(--lkv-text-muted)] font-bold mb-1.5">Ville / Localisation</label>
                   <input
                     type="text"
                     value={location}
@@ -519,19 +506,19 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
                       setLocation(e.target.value);
                       markDirty();
                     }}
-                    className="glass-input w-full"
+                    className="min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[10px] text-[16px] text-[color:var(--lkv-text-primary)] outline-none transition-colors duration-[var(--motion-control-duration)] placeholder:text-[color:var(--lkv-text-muted)] focus:border-[color:var(--lkv-action)] focus:ring-[3px] focus:ring-[color:var(--lkv-focus-ring)] disabled:cursor-not-allowed disabled:bg-[color:var(--lkv-disabled-bg)] disabled:text-[color:var(--lkv-disabled-text)] sm:text-[length:var(--lkv-text-body-sm)] w-full"
                   />
                 </div>
 
                 <div>
-                  <label className="block font-mono text-[10px] uppercase tracking-widest text-[#5A7064] font-bold mb-1.5">Pratiques principales</label>
+                  <label className="block font-mono text-[10px] uppercase tracking-widest text-[color:var(--lkv-text-muted)] font-bold mb-1.5">Pratiques principales</label>
                   <select
                     value={primaryActivity}
                     onChange={(e) => {
                       setPrimaryActivity(e.target.value);
                       markDirty();
                     }}
-                    className="glass-input w-full"
+                    className="min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[10px] text-[16px] text-[color:var(--lkv-text-primary)] outline-none transition-colors duration-[var(--motion-control-duration)] placeholder:text-[color:var(--lkv-text-muted)] focus:border-[color:var(--lkv-action)] focus:ring-[3px] focus:ring-[color:var(--lkv-focus-ring)] disabled:cursor-not-allowed disabled:bg-[color:var(--lkv-disabled-bg)] disabled:text-[color:var(--lkv-disabled-text)] sm:text-[length:var(--lkv-text-body-sm)] w-full"
                   >
                     <option value="Randonnée & Bivouac (GR, alpages)">Randonnée & Bivouac (GR, alpages)</option>
                     <option value="Alpinisme & Hivernal">Alpinisme & Hivernal</option>
@@ -545,17 +532,17 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
 
           {/* SECTION 2: NOTIFICATIONS & RAPPELS */}
           {(activeSection === 'notifications' || activeSection === 'danger') && (
-            <div className="glass rounded-[1.25rem] p-6 lg:p-8 space-y-6">
-              <div className="flex items-center justify-between border-b border-[#17402C]/5 pb-4">
+            <div className="bg-[color:var(--card-tint-strong)] border border-[color:var(--glass-border)] shadow-elevation-1 backdrop-blur-[var(--blur-lg)] rounded-[var(--lkv-radius-md)] p-6 lg:p-8 space-y-6">
+              <div className="flex items-center justify-between border-b border-[color:var(--lkv-primary)]/5 pb-4">
                 <div>
-                  <h3 className="text-xl font-bold text-[#17402C] font-display">
-                    Notifications <span className="font-serif italic font-normal text-[#365233]">&amp; rappels</span>
+                  <h3 className="text-xl font-bold text-[color:var(--lkv-primary)] font-display">
+                    Notifications <span className="font-serif italic font-normal text-[color:var(--lkv-forest-600)]">&amp; rappels</span>
                   </h3>
-                  <p className="text-xs text-[#5A7064] mt-0.5">
+                  <p className="text-xs text-[color:var(--lkv-text-muted)] mt-0.5">
                     Choisissez où et quand être notifié (Application, Email, SMS).
                   </p>
                 </div>
-                <span className="glass-pill text-[10px] font-mono">
+                <span className="inline-flex items-center justify-center gap-[6px] rounded-full border border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-muted)] px-[var(--space-3)] py-[2px] text-[length:var(--lkv-text-caption-2)] font-medium text-[color:var(--lkv-text-primary)] text-[10px] font-mono">
                   10 types configurés
                 </span>
               </div>
@@ -607,41 +594,28 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
                 ].map((item) => {
                   const isChecked = notifs[item.key as keyof typeof notifs];
                   return (
-                    <div
+                    <ListItem
                       key={item.key}
-                      className="p-4 rounded-2xl glass-sub-card flex items-center justify-between gap-4 transition-all"
-                    >
-                      <div className="space-y-0.5 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <span className="font-bold text-[#17402C] text-xs sm:text-sm truncate">
-                            {item.label}
-                          </span>
-                          <span className="text-[9px] font-mono font-bold bg-[#17402C]/10 text-[#17402C] px-2 py-0.5 rounded-full">
+                      title={
+                        <span className="flex items-center gap-[var(--space-2)]">
+                          <span className="truncate">{item.label}</span>
+                          <Badge tone="sage" className="text-[9px]">
                             {item.badge}
-                          </span>
-                        </div>
-                        <p className="text-xs text-[#5A7064] truncate">{item.desc}</p>
-                      </div>
-
-                      {/* Switch */}
-                      <button
-                        onClick={() => {
-                          setNotifs((prev) => ({ ...prev, [item.key]: !isChecked }));
-                          markDirty();
-                        }}
-                        className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out ${
-                          isChecked ? 'bg-[#17402C]' : 'bg-[#17402C]/15'
-                        }`}
-                        role="switch"
-                        aria-checked={isChecked}
-                      >
-                        <span
-                          className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                            isChecked ? 'translate-x-5' : 'translate-x-0'
-                          }`}
+                          </Badge>
+                        </span>
+                      }
+                      subtitle={item.desc}
+                      trailing={
+                        <Switch
+                          checked={isChecked}
+                          onCheckedChange={(next) => {
+                            setNotifs((prev) => ({ ...prev, [item.key]: next }));
+                            markDirty();
+                          }}
+                          aria-label={item.label}
                         />
-                      </button>
-                    </div>
+                      }
+                    />
                   );
                 })}
               </div>
@@ -650,17 +624,17 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
 
           {/* SECTION 3: CONFIDENTIALITÉ & VISIBILITÉ */}
           {(activeSection === 'confidentialite' || activeSection === 'danger') && (
-            <div className="glass rounded-[1.25rem] p-6 lg:p-8 space-y-6">
-              <div className="flex items-center justify-between border-b border-[#17402C]/5 pb-4">
+            <div className="bg-[color:var(--card-tint-strong)] border border-[color:var(--glass-border)] shadow-elevation-1 backdrop-blur-[var(--blur-lg)] rounded-[var(--lkv-radius-md)] p-6 lg:p-8 space-y-6">
+              <div className="flex items-center justify-between border-b border-[color:var(--lkv-primary)]/5 pb-4">
                 <div>
-                  <h3 className="text-xl font-bold text-[#17402C] font-display">
-                    Confidentialité <span className="font-serif italic font-normal text-[#365233]">&amp; visibilité</span>
+                  <h3 className="text-xl font-bold text-[color:var(--lkv-primary)] font-display">
+                    Confidentialité <span className="font-serif italic font-normal text-[color:var(--lkv-forest-600)]">&amp; visibilité</span>
                   </h3>
-                  <p className="text-xs text-[#5A7064] mt-0.5">
+                  <p className="text-xs text-[color:var(--lkv-text-muted)] mt-0.5">
                     Contrôlez la visibilité de votre profil, de vos sorties et de votre matériel.
                   </p>
                 </div>
-                <span className="glass-pill text-[10px] font-mono">
+                <span className="inline-flex items-center justify-center gap-[6px] rounded-full border border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-muted)] px-[var(--space-3)] py-[2px] text-[length:var(--lkv-text-caption-2)] font-medium text-[color:var(--lkv-text-primary)] text-[10px] font-mono">
                   3 modes d'accès
                 </span>
               </div>
@@ -671,64 +645,58 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
               {/* Radio options */}
               <div className="space-y-4 text-xs sm:text-sm">
                 <div>
-                  <label className="block font-mono text-[10px] uppercase tracking-widest text-[#5A7064] font-bold mb-2">Visibilité du profil</label>
+                  <label className="block font-mono text-[10px] uppercase tracking-widest text-[color:var(--lkv-text-muted)] font-bold mb-2">Visibilité du profil</label>
                   <div className="grid grid-cols-3 gap-2">
                     {(['public', 'membres', 'prive'] as const).map((mode) => (
-                      <button
+                      <Chip
                         key={mode}
-                        type="button"
+                        selected={profileVisibility === mode}
                         onClick={() => {
                           setProfileVisibility(mode);
                           markDirty();
                         }}
-                        className={`glass-capsule-btn !min-h-0 !min-w-0 w-full !p-3 text-center font-bold capitalize transition-all ${
-                          profileVisibility === mode ? 'primary' : ''
-                        }`}
+                        className="w-full capitalize"
                       >
                         {mode === 'public' ? '🌐 Public' : mode === 'membres' ? '👥 Membres' : '🔒 Privé'}
-                      </button>
+                      </Chip>
                     ))}
                   </div>
                 </div>
 
                 <div>
-                  <label className="block font-mono text-[10px] uppercase tracking-widest text-[#5A7064] font-bold mb-2">Visibilité de vos sorties &amp; rando</label>
+                  <label className="block font-mono text-[10px] uppercase tracking-widest text-[color:var(--lkv-text-muted)] font-bold mb-2">Visibilité de vos sorties &amp; rando</label>
                   <div className="grid grid-cols-3 gap-2">
                     {(['public', 'membres', 'prive'] as const).map((mode) => (
-                      <button
+                      <Chip
                         key={mode}
-                        type="button"
+                        selected={tripsVisibility === mode}
                         onClick={() => {
                           setTripsVisibility(mode);
                           markDirty();
                         }}
-                        className={`glass-capsule-btn !min-h-0 !min-w-0 w-full !p-3 text-center font-bold capitalize transition-all ${
-                          tripsVisibility === mode ? 'primary' : ''
-                        }`}
+                        className="w-full capitalize"
                       >
                         {mode === 'public' ? '🌐 Public' : mode === 'membres' ? '👥 Membres' : '🔒 Privé'}
-                      </button>
+                      </Chip>
                     ))}
                   </div>
                 </div>
 
                 <div>
-                  <label className="block font-mono text-[10px] uppercase tracking-widest text-[#5A7064] font-bold mb-2">Visibilité de votre inventaire</label>
+                  <label className="block font-mono text-[10px] uppercase tracking-widest text-[color:var(--lkv-text-muted)] font-bold mb-2">Visibilité de votre inventaire</label>
                   <div className="grid grid-cols-3 gap-2">
                     {(['public', 'membres', 'prive'] as const).map((mode) => (
-                      <button
+                      <Chip
                         key={mode}
-                        type="button"
+                        selected={gearVisibility === mode}
                         onClick={() => {
                           setGearVisibility(mode);
                           markDirty();
                         }}
-                        className={`glass-capsule-btn !min-h-0 !min-w-0 w-full !p-3 text-center font-bold capitalize transition-all ${
-                          gearVisibility === mode ? 'primary' : ''
-                        }`}
+                        className="w-full capitalize"
                       >
                         {mode === 'public' ? '🌐 Public' : mode === 'membres' ? '👥 Membres' : '🔒 Privé'}
-                      </button>
+                      </Chip>
                     ))}
                   </div>
                 </div>
@@ -736,77 +704,59 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
 
               {/* Switches */}
               <div className="pt-2 space-y-3">
-                <div className="p-4 rounded-2xl glass-sub-card flex items-center justify-between gap-4">
-                  <div>
-                    <span className="font-bold text-[#17402C] text-xs sm:text-sm block">
-                      Autoriser l'indexation par les moteurs de recherche
-                    </span>
-                    <p className="text-xs text-[#5A7064]">Permet à Google de référencer votre profil public.</p>
-                  </div>
-                  <button
-                    onClick={() => {
-                      setSearchIndexing(!searchIndexing);
-                      markDirty();
-                    }}
-                    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${
-                      searchIndexing ? 'bg-[#17402C]' : 'bg-[#17402C]/15'
-                    }`}
-                  >
-                    <span
-                      className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow transition ${
-                        searchIndexing ? 'translate-x-5' : 'translate-x-0'
-                      }`}
+                <ListItem
+                  title="Autoriser l'indexation par les moteurs de recherche"
+                  subtitle="Permet à Google de référencer votre profil public."
+                  trailing={
+                    <Switch
+                      checked={searchIndexing}
+                      onCheckedChange={(next) => {
+                        setSearchIndexing(next);
+                        markDirty();
+                      }}
+                      aria-label="Autoriser l'indexation par les moteurs de recherche"
                     />
-                  </button>
-                </div>
+                  }
+                />
 
-                <div className="p-4 rounded-2xl glass-sub-card flex items-center justify-between gap-4">
-                  <div>
-                    <span className="font-bold text-[#17402C] text-xs sm:text-sm block">
-                      Partage de votre position géographique approximative
-                    </span>
-                    <p className="text-xs text-[#5A7064]">Montre uniquement votre département/ville sur la carte.</p>
-                  </div>
-                  <button
-                    onClick={() => {
-                      setShareLocation(!shareLocation);
-                      markDirty();
-                    }}
-                    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${
-                      shareLocation ? 'bg-[#17402C]' : 'bg-[#17402C]/15'
-                    }`}
-                  >
-                    <span
-                      className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow transition ${
-                        shareLocation ? 'translate-x-5' : 'translate-x-0'
-                      }`}
+                <ListItem
+                  title="Partage de votre position géographique approximative"
+                  subtitle="Montre uniquement votre département/ville sur la carte."
+                  trailing={
+                    <Switch
+                      checked={shareLocation}
+                      onCheckedChange={(next) => {
+                        setShareLocation(next);
+                        markDirty();
+                      }}
+                      aria-label="Partage de votre position géographique approximative"
                     />
-                  </button>
-                </div>
+                  }
+                />
               </div>
             </div>
           )}
 
           {/* SECTION 4: LANGUE & RÉGION */}
           {(activeSection === 'langue' || activeSection === 'danger') && (
-            <div className="glass rounded-[1.25rem] p-6 lg:p-8 space-y-6">
-              <div className="flex items-center justify-between border-b border-[#17402C]/5 pb-4">
+            <div className="bg-[color:var(--card-tint-strong)] border border-[color:var(--glass-border)] shadow-elevation-1 backdrop-blur-[var(--blur-lg)] rounded-[var(--lkv-radius-md)] p-6 lg:p-8 space-y-6">
+              <div className="flex items-center justify-between border-b border-[color:var(--lkv-primary)]/5 pb-4">
                 <div>
-                  <h3 className="text-xl font-bold text-[#17402C] font-display">
-                    Langue <span className="font-serif italic font-normal text-[#365233]">&amp; région</span>
+                  <h3 className="text-xl font-bold text-[color:var(--lkv-primary)] font-display">
+                    Langue <span className="font-serif italic font-normal text-[color:var(--lkv-forest-600)]">&amp; région</span>
                   </h3>
-                  <p className="text-xs text-[#5A7064] mt-0.5">
+                  <p className="text-xs text-[color:var(--lkv-text-muted)] mt-0.5">
                     Paramétrez la langue d'affichage, les unités et la devise.
                   </p>
                 </div>
-                <span className="glass-pill text-[10px] font-mono">
+                <span className="inline-flex items-center justify-center gap-[6px] rounded-full border border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-muted)] px-[var(--space-3)] py-[2px] text-[length:var(--lkv-text-caption-2)] font-medium text-[color:var(--lkv-text-primary)] text-[10px] font-mono">
                   6 langues disponibles
                 </span>
               </div>
 
               {/* Languages Grid */}
               <div>
-                <label className="block font-mono text-[10px] uppercase tracking-widest text-[#5A7064] font-bold mb-3">Langue de l'interface</label>
+                <label className="block font-mono text-[10px] uppercase tracking-widest text-[color:var(--lkv-text-muted)] font-bold mb-3">Langue de l'interface</label>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                   {[
                     { code: 'FR', name: 'Français', sub: 'France, Suisse' },
@@ -816,20 +766,18 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
                     { code: 'ES', name: 'Español', sub: 'España' },
                     { code: 'CA', name: 'Català', sub: 'Catalunya' },
                   ].map((lang) => (
-                    <button
+                    <Chip
                       key={lang.code}
-                      type="button"
+                      selected={language === lang.code}
                       onClick={() => {
                         setLanguage(lang.code as typeof language);
                         markDirty();
                       }}
-                      className={`glass-capsule-btn !min-h-0 !min-w-0 w-full !p-3.5 text-left transition-all ${
-                        language === lang.code ? 'primary' : ''
-                      }`}
+                      className="h-auto w-full flex-col items-start px-[var(--space-4)] py-[var(--space-3)]"
                     >
-                      <span className="font-bold text-sm block">{lang.code} • {lang.name}</span>
-                      <span className="text-[11px] block mt-0.5 opacity-80">{lang.sub}</span>
-                    </button>
+                      <span className="block text-[length:var(--lkv-text-body-sm)] font-bold">{lang.code} • {lang.name}</span>
+                      <span className="mt-[2px] block text-[length:var(--lkv-text-caption)] opacity-80">{lang.sub}</span>
+                    </Chip>
                   ))}
                 </div>
               </div>
@@ -837,14 +785,14 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
               {/* Units & Currency */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs sm:text-sm pt-2">
                 <div>
-                  <label className="block font-mono text-[10px] uppercase tracking-widest text-[#5A7064] font-bold mb-1.5">Système de mesure</label>
+                  <label className="block font-mono text-[10px] uppercase tracking-widest text-[color:var(--lkv-text-muted)] font-bold mb-1.5">Système de mesure</label>
                   <select
                     value={unitSystem}
                     onChange={(e) => {
                       setUnitSystem(e.target.value);
                       markDirty();
                     }}
-                    className="glass-input w-full"
+                    className="min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[10px] text-[16px] text-[color:var(--lkv-text-primary)] outline-none transition-colors duration-[var(--motion-control-duration)] placeholder:text-[color:var(--lkv-text-muted)] focus:border-[color:var(--lkv-action)] focus:ring-[3px] focus:ring-[color:var(--lkv-focus-ring)] disabled:cursor-not-allowed disabled:bg-[color:var(--lkv-disabled-bg)] disabled:text-[color:var(--lkv-disabled-text)] sm:text-[length:var(--lkv-text-body-sm)] w-full"
                   >
                     <option value="metric">Métrique (m, km, kg, g)</option>
                     <option value="imperial">Impérial (ft, mi, lbs, oz)</option>
@@ -852,14 +800,14 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
                 </div>
 
                 <div>
-                  <label className="block font-mono text-[10px] uppercase tracking-widest text-[#5A7064] font-bold mb-1.5">Devise</label>
+                  <label className="block font-mono text-[10px] uppercase tracking-widest text-[color:var(--lkv-text-muted)] font-bold mb-1.5">Devise</label>
                   <select
                     value={currency}
                     onChange={(e) => {
                       setCurrency(e.target.value);
                       markDirty();
                     }}
-                    className="glass-input w-full"
+                    className="min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[10px] text-[16px] text-[color:var(--lkv-text-primary)] outline-none transition-colors duration-[var(--motion-control-duration)] placeholder:text-[color:var(--lkv-text-muted)] focus:border-[color:var(--lkv-action)] focus:ring-[3px] focus:ring-[color:var(--lkv-focus-ring)] disabled:cursor-not-allowed disabled:bg-[color:var(--lkv-disabled-bg)] disabled:text-[color:var(--lkv-disabled-text)] sm:text-[length:var(--lkv-text-body-sm)] w-full"
                   >
                     <option value="EUR">Euro (€ EUR)</option>
                     <option value="USD">US Dollar ($ USD)</option>
@@ -869,14 +817,14 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
                 </div>
 
                 <div>
-                  <label className="block font-mono text-[10px] uppercase tracking-widest text-[#5A7064] font-bold mb-1.5">Fuseau horaire</label>
+                  <label className="block font-mono text-[10px] uppercase tracking-widest text-[color:var(--lkv-text-muted)] font-bold mb-1.5">Fuseau horaire</label>
                   <select
                     value={timezone}
                     onChange={(e) => {
                       setTimezone(e.target.value);
                       markDirty();
                     }}
-                    className="glass-input w-full"
+                    className="min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[10px] text-[16px] text-[color:var(--lkv-text-primary)] outline-none transition-colors duration-[var(--motion-control-duration)] placeholder:text-[color:var(--lkv-text-muted)] focus:border-[color:var(--lkv-action)] focus:ring-[3px] focus:ring-[color:var(--lkv-focus-ring)] disabled:cursor-not-allowed disabled:bg-[color:var(--lkv-disabled-bg)] disabled:text-[color:var(--lkv-disabled-text)] sm:text-[length:var(--lkv-text-body-sm)] w-full"
                   >
                     <option value="Europe/Paris">Europe/Paris (UTC+1)</option>
                     <option value="Europe/London">Europe/London (UTC+0)</option>
@@ -885,14 +833,14 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
                 </div>
 
                 <div>
-                  <label className="block font-mono text-[10px] uppercase tracking-widest text-[#5A7064] font-bold mb-1.5">Premier jour de la semaine</label>
+                  <label className="block font-mono text-[10px] uppercase tracking-widest text-[color:var(--lkv-text-muted)] font-bold mb-1.5">Premier jour de la semaine</label>
                   <select
                     value={firstDayOfWeek}
                     onChange={(e) => {
                       setFirstDayOfWeek(e.target.value);
                       markDirty();
                     }}
-                    className="glass-input w-full"
+                    className="min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[10px] text-[16px] text-[color:var(--lkv-text-primary)] outline-none transition-colors duration-[var(--motion-control-duration)] placeholder:text-[color:var(--lkv-text-muted)] focus:border-[color:var(--lkv-action)] focus:ring-[3px] focus:ring-[color:var(--lkv-focus-ring)] disabled:cursor-not-allowed disabled:bg-[color:var(--lkv-disabled-bg)] disabled:text-[color:var(--lkv-disabled-text)] sm:text-[length:var(--lkv-text-body-sm)] w-full"
                   >
                     <option value="monday">Lundi</option>
                     <option value="sunday">Dimanche</option>
@@ -904,17 +852,17 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
 
           {/* SECTION 5: SÉCURITÉ & SESSIONS */}
           {(activeSection === 'securite' || activeSection === 'danger') && (
-            <div className="glass rounded-[1.25rem] p-6 lg:p-8 space-y-6">
-              <div className="flex items-center justify-between border-b border-[#17402C]/5 pb-4">
+            <div className="bg-[color:var(--card-tint-strong)] border border-[color:var(--glass-border)] shadow-elevation-1 backdrop-blur-[var(--blur-lg)] rounded-[var(--lkv-radius-md)] p-6 lg:p-8 space-y-6">
+              <div className="flex items-center justify-between border-b border-[color:var(--lkv-primary)]/5 pb-4">
                 <div>
-                  <h3 className="text-xl font-bold text-[#17402C] font-display">
-                    Sécurité <span className="font-serif italic font-normal text-[#365233]">&amp; sessions</span>
+                  <h3 className="text-xl font-bold text-[color:var(--lkv-primary)] font-display">
+                    Sécurité <span className="font-serif italic font-normal text-[color:var(--lkv-forest-600)]">&amp; sessions</span>
                   </h3>
-                  <p className="text-xs text-[#5A7064] mt-0.5">
+                  <p className="text-xs text-[color:var(--lkv-text-muted)] mt-0.5">
                     Protégez votre compte, modifiez votre mot de passe et gérez vos connexions actives.
                   </p>
                 </div>
-                <span className="glass-pill pill-info text-[10px] font-mono">
+                <span className="inline-flex items-center justify-center gap-[6px] rounded-full border border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-muted)] px-[var(--space-3)] py-[2px] text-[length:var(--lkv-text-caption-2)] font-medium text-[color:var(--lkv-text-primary)] pill-info text-[10px] font-mono">
                   Double facteur recommandé
                 </span>
               </div>
@@ -922,7 +870,7 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
               {/* Email & Password Form */}
               <form onSubmit={handleChangePassword} className="space-y-4 text-xs sm:text-sm">
                 <div>
-                  <label className="block font-mono text-[10px] uppercase tracking-widest text-[#5A7064] font-bold mb-1.5">Adresse e-mail du compte</label>
+                  <label className="block font-mono text-[10px] uppercase tracking-widest text-[color:var(--lkv-text-muted)] font-bold mb-1.5">Adresse e-mail du compte</label>
                   <input
                     type="email"
                     value={email}
@@ -930,123 +878,99 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
                       setEmail(e.target.value);
                       markDirty();
                     }}
-                    className="glass-input w-full"
+                    className="min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[10px] text-[16px] text-[color:var(--lkv-text-primary)] outline-none transition-colors duration-[var(--motion-control-duration)] placeholder:text-[color:var(--lkv-text-muted)] focus:border-[color:var(--lkv-action)] focus:ring-[3px] focus:ring-[color:var(--lkv-focus-ring)] disabled:cursor-not-allowed disabled:bg-[color:var(--lkv-disabled-bg)] disabled:text-[color:var(--lkv-disabled-text)] sm:text-[length:var(--lkv-text-body-sm)] w-full"
                   />
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block font-mono text-[10px] uppercase tracking-widest text-[#5A7064] font-bold mb-1.5">Nouveau mot de passe</label>
+                    <label className="block font-mono text-[10px] uppercase tracking-widest text-[color:var(--lkv-text-muted)] font-bold mb-1.5">Nouveau mot de passe</label>
                     <input
                       type="password"
                       value={newPassword}
                       onChange={(e) => setNewPassword(e.target.value)}
                       placeholder="••••••••••••"
-                      className="glass-input w-full"
+                      className="min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[10px] text-[16px] text-[color:var(--lkv-text-primary)] outline-none transition-colors duration-[var(--motion-control-duration)] placeholder:text-[color:var(--lkv-text-muted)] focus:border-[color:var(--lkv-action)] focus:ring-[3px] focus:ring-[color:var(--lkv-focus-ring)] disabled:cursor-not-allowed disabled:bg-[color:var(--lkv-disabled-bg)] disabled:text-[color:var(--lkv-disabled-text)] sm:text-[length:var(--lkv-text-body-sm)] w-full"
                     />
                   </div>
 
                   <div>
-                    <label className="block font-mono text-[10px] uppercase tracking-widest text-[#5A7064] font-bold mb-1.5">Confirmer le mot de passe</label>
+                    <label className="block font-mono text-[10px] uppercase tracking-widest text-[color:var(--lkv-text-muted)] font-bold mb-1.5">Confirmer le mot de passe</label>
                     <input
                       type="password"
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
                       placeholder="••••••••••••"
-                      className="glass-input w-full"
+                      className="min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[10px] text-[16px] text-[color:var(--lkv-text-primary)] outline-none transition-colors duration-[var(--motion-control-duration)] placeholder:text-[color:var(--lkv-text-muted)] focus:border-[color:var(--lkv-action)] focus:ring-[3px] focus:ring-[color:var(--lkv-focus-ring)] disabled:cursor-not-allowed disabled:bg-[color:var(--lkv-disabled-bg)] disabled:text-[color:var(--lkv-disabled-text)] sm:text-[length:var(--lkv-text-body-sm)] w-full"
                     />
                   </div>
                 </div>
 
                 {passwordError && (
-                  <p className="text-xs font-bold text-[#A8443A] bg-[#A8443A]/10 p-3 rounded-xl border border-[#A8443A]/20">
+                  <p className="text-xs font-bold text-[color:var(--lkv-danger)] bg-[color:var(--lkv-danger)]/10 p-3 rounded-xl border border-[color:var(--lkv-danger)]/20">
                     ⚠️ {passwordError}
                   </p>
                 )}
 
                 {passwordSuccess && (
-                  <p className="text-xs font-bold text-[#5B7F55] bg-[#5B7F55]/10 p-3 rounded-xl border border-[#5B7F55]/20">
+                  <p className="text-xs font-bold text-[color:var(--lkv-secondary)] bg-[color:var(--lkv-secondary)]/10 p-3 rounded-xl border border-[color:var(--lkv-secondary)]/20">
                     ✓ {passwordSuccess}
                   </p>
                 )}
 
                 <div className="flex justify-end pt-1">
-                  <button
-                    type="submit"
-                    className="glass-capsule-btn primary text-xs font-bold"
-                  >
-                    Changer le mot de passe
-                  </button>
+                  <Button type="submit">Changer le mot de passe</Button>
                 </div>
               </form>
 
               {/* 2FA & Passkey Switches */}
               <div className="space-y-3 pt-2">
-                <div className="p-4 rounded-2xl glass-sub-card flex items-center justify-between gap-4">
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="font-bold text-[#17402C] text-xs sm:text-sm">
-                        Authentification à deux facteurs (2FA)
-                      </span>
-                      <span className="glass-pill pill-info text-[9px]">
+                <ListItem
+                  title={
+                    <span className="flex items-center gap-[var(--space-2)]">
+                      <span className="truncate">Authentification à deux facteurs (2FA)</span>
+                      <Badge tone="info" className="text-[9px]">
                         RECOMMANDÉ
-                      </span>
-                    </div>
-                    <p className="text-xs text-[#5A7064]">Ajoute une couche de sécurité supplémentaire lors de la connexion.</p>
-                  </div>
-                  <button
-                    onClick={() => {
-                      setTwoFactorAuth(!twoFactorAuth);
-                      markDirty();
-                    }}
-                    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${
-                      twoFactorAuth ? 'bg-[#17402C]' : 'bg-[#17402C]/15'
-                    }`}
-                  >
-                    <span
-                      className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow transition ${
-                        twoFactorAuth ? 'translate-x-5' : 'translate-x-0'
-                      }`}
-                    />
-                  </button>
-                </div>
-
-                <div className="p-4 rounded-2xl glass-sub-card flex items-center justify-between gap-4">
-                  <div>
-                    <span className="font-bold text-[#17402C] text-xs sm:text-sm block">
-                      Clés de sécurité / Passkeys (WebAuthn)
+                      </Badge>
                     </span>
-                    <p className="text-xs text-[#5A7064]">Se connecter avec TouchID, FaceID ou votre clé USB YubiKey.</p>
-                  </div>
-                  <button
-                    onClick={() => {
-                      setPasskeysEnabled(!passkeysEnabled);
-                      markDirty();
-                    }}
-                    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${
-                      passkeysEnabled ? 'bg-[#17402C]' : 'bg-[#17402C]/15'
-                    }`}
-                  >
-                    <span
-                      className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow transition ${
-                        passkeysEnabled ? 'translate-x-5' : 'translate-x-0'
-                      }`}
+                  }
+                  subtitle="Ajoute une couche de sécurité supplémentaire lors de la connexion."
+                  trailing={
+                    <Switch
+                      checked={twoFactorAuth}
+                      onCheckedChange={(next) => {
+                        setTwoFactorAuth(next);
+                        markDirty();
+                      }}
+                      aria-label="Authentification à deux facteurs (2FA)"
                     />
-                  </button>
-                </div>
+                  }
+                />
+
+                <ListItem
+                  title="Clés de sécurité / Passkeys (WebAuthn)"
+                  subtitle="Se connecter avec TouchID, FaceID ou votre clé USB YubiKey."
+                  trailing={
+                    <Switch
+                      checked={passkeysEnabled}
+                      onCheckedChange={(next) => {
+                        setPasskeysEnabled(next);
+                        markDirty();
+                      }}
+                      aria-label="Clés de sécurité / Passkeys (WebAuthn)"
+                    />
+                  }
+                />
               </div>
 
               {/* Active Sessions List */}
-              <div className="pt-4 border-t border-[#17402C]/5 space-y-3">
+              <div className="pt-4 border-t border-[color:var(--lkv-primary)]/5 space-y-3">
                 <div className="flex items-center justify-between">
-                  <h4 className="font-bold text-[#17402C] text-xs sm:text-sm">Sessions actives</h4>
+                  <h4 className="font-bold text-[color:var(--lkv-primary)] text-xs sm:text-sm">Sessions actives</h4>
                   {activeSessions.length > 1 && (
-                    <button
-                      onClick={handleDisconnectAllOthers}
-                      className="glass-capsule-btn danger !py-1.5 !px-3 !min-h-0 text-xs font-semibold"
-                    >
+                    <Button variant="destructive" size="sm" onClick={handleDisconnectAllOthers}>
                       Se déconnecter de tous les autres appareils
-                    </button>
+                    </Button>
                   )}
                 </div>
 
@@ -1054,34 +978,31 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
                   {activeSessions.map((sess) => (
                     <div
                       key={sess.id}
-                      className="p-3.5 rounded-2xl glass-sub-card flex items-center justify-between gap-3 text-xs"
+                      className="p-3.5 rounded-[var(--lkv-radius-md)] border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] backdrop-blur-[var(--blur-md)] flex items-center justify-between gap-3 text-xs"
                     >
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-[#17402C]/10 flex items-center justify-center text-[#17402C]">
+                        <div className="w-8 h-8 rounded-full bg-[color:var(--lkv-primary)]/10 flex items-center justify-center text-[color:var(--lkv-primary)]">
                           💻
                         </div>
                         <div>
                           <div className="flex items-center gap-2">
-                            <span className="font-bold text-[#17402C]">{sess.device}</span>
+                            <span className="font-bold text-[color:var(--lkv-primary)]">{sess.device}</span>
                             {sess.isCurrent && (
-                              <span className="glass-pill text-[9px]">
+                              <span className="inline-flex items-center justify-center gap-[6px] rounded-full border border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-muted)] px-[var(--space-3)] py-[2px] text-[length:var(--lkv-text-caption-2)] font-medium text-[color:var(--lkv-text-primary)] text-[9px]">
                                 CET APPAREIL
                               </span>
                             )}
                           </div>
-                          <p className="text-[#5A7064] text-[11px] font-mono">
+                          <p className="text-[color:var(--lkv-text-muted)] text-[11px] font-mono">
                             {sess.location} • {sess.lastActive}
                           </p>
                         </div>
                       </div>
 
                       {!sess.isCurrent && (
-                        <button
-                          onClick={() => handleDisconnectSession(sess.id)}
-                          className="glass-capsule-btn danger !py-1.5 !px-3 !min-h-0 text-xs font-bold transition-colors"
-                        >
+                        <Button variant="destructive" size="sm" onClick={() => handleDisconnectSession(sess.id)}>
                           Déconnecter
-                        </button>
+                        </Button>
                       )}
                     </div>
                   ))}
@@ -1091,45 +1012,39 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
           )}
 
           {/* SECTION 6: ZONE DE DANGER */}
-          <div className="glass rounded-[1.25rem] p-6 lg:p-8 space-y-6 !border-[#A8443A]/30">
+          <div className="bg-[color:var(--card-tint-strong)] border border-[color:var(--glass-border)] shadow-elevation-1 backdrop-blur-[var(--blur-lg)] rounded-[var(--lkv-radius-md)] p-6 lg:p-8 space-y-6 !border-[color:var(--lkv-danger)]/30">
             <div>
-              <h3 className="text-xl font-bold text-[#A8443A] font-display">
+              <h3 className="text-xl font-bold text-[color:var(--lkv-danger)] font-display">
                 Zone <span className="font-serif italic font-normal">de danger</span>
               </h3>
-              <p className="text-xs text-[#5A7064] mt-0.5">
+              <p className="text-xs text-[color:var(--lkv-text-muted)] mt-0.5">
                 Actions irréversibles ou impactant l'accès à votre compte.
               </p>
             </div>
 
             <div className="space-y-4 pt-2">
-              <div className="p-4 rounded-2xl glass-sub-card flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="p-4 rounded-[var(--lkv-radius-md)] border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] backdrop-blur-[var(--blur-md)] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                  <h4 className="font-bold text-[#17402C] text-xs sm:text-sm">Mettre le compte en pause</h4>
-                  <p className="text-xs text-[#5A7064] mt-0.5">
+                  <h4 className="font-bold text-[color:var(--lkv-primary)] text-xs sm:text-sm">Mettre le compte en pause</h4>
+                  <p className="text-xs text-[color:var(--lkv-text-muted)] mt-0.5">
                     Désactive temporairement votre profil sans tout supprimer. Vos données restent conservées.
                   </p>
                 </div>
-                <button
-                  onClick={() => setPauseModalOpen(true)}
-                  className="glass-capsule-btn text-xs font-bold whitespace-nowrap"
-                >
+                <Button variant="secondary" size="sm" onClick={() => setPauseModalOpen(true)}>
                   Mettre en pause
-                </button>
+                </Button>
               </div>
 
-              <div className="p-4 rounded-2xl glass-sub-card flex flex-col sm:flex-row sm:items-center justify-between gap-4 !border-[#A8443A]/30">
+              <div className="p-4 rounded-[var(--lkv-radius-md)] border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] backdrop-blur-[var(--blur-md)] flex flex-col sm:flex-row sm:items-center justify-between gap-4 !border-[color:var(--lkv-danger)]/30">
                 <div>
-                  <h4 className="font-bold text-[#A8443A] text-xs sm:text-sm">Supprimer définitivement le compte</h4>
-                  <p className="text-xs text-[#5A7064] mt-0.5">
+                  <h4 className="font-bold text-[color:var(--lkv-danger)] text-xs sm:text-sm">Supprimer définitivement le compte</h4>
+                  <p className="text-xs text-[color:var(--lkv-text-muted)] mt-0.5">
                     Action définitive : effacement immédiat et irréversible de tous vos kits, aventures et données.
                   </p>
                 </div>
-                <button
-                  onClick={() => setDeleteModalOpen(true)}
-                  className="glass-capsule-btn danger text-xs font-bold whitespace-nowrap"
-                >
+                <Button variant="destructive" size="sm" onClick={() => setDeleteModalOpen(true)}>
                   Supprimer le compte
-                </button>
+                </Button>
               </div>
             </div>
           </div>
@@ -1138,103 +1053,104 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
 
       {/* 3. Sticky Bottom Save Bar */}
       {isDirty && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[250] bg-[#17402C] text-white px-6 py-4 rounded-full border border-white/20 flex items-center gap-6 animate-slide-up max-w-xl w-[92%] justify-between shadow-2xl">
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[var(--z-toast)] bg-[color:var(--lkv-primary)] text-white px-6 py-4 rounded-full border border-white/20 flex items-center gap-6 animate-slide-up max-w-xl w-[92%] justify-between shadow-2xl">
           <div className="flex items-center gap-3">
-            <span className="w-3 h-3 rounded-full bg-[#C89A3B] animate-ping" />
+            <span className="w-3 h-3 rounded-full bg-[color:var(--lkv-warning)] animate-ping" />
             <span className="text-xs font-bold font-mono">
               {dirtyCount} modification(s) non enregistrée(s)
             </span>
           </div>
 
           <div className="flex items-center gap-3">
-            <button
+            <Button
+              variant="secondary"
+              size="sm"
               onClick={() => {
                 setIsDirty(false);
                 setDirtyCount(0);
               }}
-              className="glass-capsule-btn !py-1.5 !px-3 !min-h-0 text-xs font-bold"
             >
               Annuler
-            </button>
-            <button
-              onClick={handleSaveAll}
-              disabled={saving}
-              className="glass-capsule-btn text-xs font-bold"
-            >
+            </Button>
+            <Button variant="primary" size="sm" loading={saving} onClick={handleSaveAll}>
               {saving ? 'Enregistrement…' : 'Enregistrer tout'}
-            </button>
+            </Button>
           </div>
         </div>
       )}
 
       {/* 4. Pause Account Modal */}
-      {pauseModalOpen && (
-        <div className="glass-modal-overlay">
-          <div className="glass-modal max-w-md w-full p-7 space-y-4">
-            <h3 className="font-bold text-[#17402C] text-xl font-display">Mettre le compte en pause ?</h3>
-            <p className="text-xs text-[#5A7064] leading-relaxed">
-              Votre profil sera masqué et vous ne recevrez plus de notifications. Vous pourrez le réactiver à tout moment en vous reconnectant.
-            </p>
-            <div className="flex justify-end gap-3 pt-2">
-              <button
-                onClick={() => setPauseModalOpen(false)}
-                className="glass-capsule-btn text-xs font-bold"
-              >
-                Annuler
-              </button>
-              <button
-                onClick={() => {
-                  setPauseModalOpen(false);
-                  if (onSave) onSave('Compte mis en pause.');
-                }}
-                className="glass-capsule-btn primary text-xs font-bold"
-              >
-                Confirmer la pause
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <Modal
+        open={pauseModalOpen}
+        onOpenChange={setPauseModalOpen}
+        title="Mettre le compte en pause ?"
+        size="sm"
+        footer={
+          <>
+            <Button variant="secondary" onClick={() => setPauseModalOpen(false)}>
+              Annuler
+            </Button>
+            <Button
+              onClick={() => {
+                setPauseModalOpen(false);
+                if (onSave) onSave('Compte mis en pause.');
+              }}
+            >
+              Confirmer la pause
+            </Button>
+          </>
+        }
+      >
+        <p className="text-[length:var(--lkv-text-body-sm)] leading-[var(--leading-normal)] text-[color:var(--lkv-text-muted)]">
+          Votre profil sera masqué et vous ne recevrez plus de notifications. Vous pourrez le réactiver à tout moment en vous reconnectant.
+        </p>
+      </Modal>
 
       {/* 5. Delete Account Modal */}
-      {deleteModalOpen && (
-        <div className="glass-modal-overlay">
-          <div className="glass-modal max-w-md w-full p-7 space-y-4">
-            <h3 className="font-bold text-[#A8443A] text-xl font-display">Suppression définitive</h3>
-            <p className="text-xs text-[#5A7064] leading-relaxed">
-              Cette action est <strong className="text-[#A8443A]">irréversible</strong>. Pour confirmer la suppression, tapez <strong>SUPPRIMER</strong> ci-dessous :
-            </p>
-            <input
-              type="text"
-              value={deleteConfirmationText}
-              onChange={(e) => setDeleteConfirmationText(e.target.value)}
-              placeholder="SUPPRIMER"
-              className="glass-input w-full font-mono font-bold text-xs uppercase"
-            />
-            <div className="flex justify-end gap-3 pt-2">
-              <button
-                onClick={() => {
-                  setDeleteModalOpen(false);
-                  setDeleteConfirmationText('');
-                }}
-                className="glass-capsule-btn text-xs font-bold"
-              >
-                Annuler
-              </button>
-              <button
-                disabled={deleteConfirmationText !== 'SUPPRIMER'}
-                onClick={() => {
-                  setDeleteModalOpen(false);
-                  if (onSave) onSave('Compte supprimé.');
-                }}
-                className="glass-capsule-btn danger text-xs font-bold disabled:opacity-40"
-              >
-                Supprimer définitivement
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <Modal
+        open={deleteModalOpen}
+        onOpenChange={(open) => {
+          setDeleteModalOpen(open);
+          if (!open) setDeleteConfirmationText('');
+        }}
+        title="Suppression définitive"
+        size="sm"
+        footer={
+          <>
+            <Button
+              variant="secondary"
+              onClick={() => {
+                setDeleteModalOpen(false);
+                setDeleteConfirmationText('');
+              }}
+            >
+              Annuler
+            </Button>
+            <Button
+              variant="destructive"
+              disabled={deleteConfirmationText !== 'SUPPRIMER'}
+              onClick={() => {
+                setDeleteModalOpen(false);
+                if (onSave) onSave('Compte supprimé.');
+              }}
+            >
+              Supprimer définitivement
+            </Button>
+          </>
+        }
+      >
+        <p className="text-[length:var(--lkv-text-body-sm)] leading-[var(--leading-normal)] text-[color:var(--lkv-text-muted)]">
+          Cette action est <strong className="text-[color:var(--lkv-danger)]">irréversible</strong>. Pour confirmer la suppression, tapez <strong>SUPPRIMER</strong> ci-dessous :
+        </p>
+        <input
+          type="text"
+          value={deleteConfirmationText}
+          onChange={(e) => setDeleteConfirmationText(e.target.value)}
+          placeholder="SUPPRIMER"
+          aria-label="Confirmation de suppression"
+          className="mt-[var(--space-3)] min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[10px] font-mono text-[length:var(--lkv-text-body-sm)] font-bold uppercase text-[color:var(--lkv-text-primary)] outline-none transition-colors duration-[var(--motion-control-duration)] placeholder:text-[color:var(--lkv-text-muted)] focus:border-[color:var(--lkv-action)] focus:ring-[3px] focus:ring-[color:var(--lkv-focus-ring)]"
+        />
+      </Modal>
     </div>
   );
 }

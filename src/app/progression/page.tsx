@@ -5,6 +5,7 @@ import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
 import { CompteBackground } from '@/components/compte/CompteBackground';
 import { MarbleZone } from '@/components/glass/MarbleZone';
 import MaProgressionView from '@/components/progression/MaProgressionView';
+import { LoadingState } from '@/components/ui';
 
 export const metadata = {
   title: 'Ma Progression & Classements — Le Kit du Voyageur',
@@ -20,10 +21,10 @@ export default function ProgressionPage() {
         <Header />
         {/* M04 — le landmark `main#main-content` unique est porté par src/app/layout.tsx.
             Ici un simple conteneur de section pour ne jamais dupliquer le repère principal. */}
-        <section aria-label="Ma progression" className="relative z-10 max-w-4xl mx-auto px-4 pt-24 pb-16">
+        <section aria-label="Ma progression" className="relative z-[var(--z-dropdown)] max-w-4xl mx-auto px-4 pt-24 pb-16">
           <MarbleZone />
           <div className="p-2 sm:p-4">
-            <Suspense fallback={<div className="h-64 flex items-center justify-center text-xs">Chargement...</div>}>
+            <Suspense fallback={<LoadingState label="Chargement de la progression…" />}>
               <MaProgressionView />
             </Suspense>
           </div>
@@ -35,7 +36,7 @@ export default function ProgressionPage() {
       <div className="block md:hidden">
         <MobilePageShell>
           <div className="relative font-sans px-3.5 pt-4 pb-24">
-            <Suspense fallback={<div className="h-64 flex items-center justify-center text-xs">Chargement...</div>}>
+            <Suspense fallback={<LoadingState label="Chargement de la progression…" />}>
               <MaProgressionView />
             </Suspense>
           </div>

@@ -3,6 +3,7 @@
 import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { Badge, Card } from '@/components/ui';
 import { Commande } from '@/lib/mock/compte-marceline';
 
 interface CommandesCardProps {
@@ -13,36 +14,36 @@ export default function CommandesCard({ commandes }: CommandesCardProps) {
   const getStatusBadge = (status: Commande['status']) => {
     switch (status) {
       case 'Expédiée':
-        return <span className="glass-pill">Expédiée</span>;
+        return <Badge tone="info">Expédiée</Badge>;
       case 'Préparation':
-        return <span className="glass-pill pill-warn">Préparation</span>;
+        return <Badge tone="warn">Préparation</Badge>;
       case 'Livrée':
-        return <span className="glass-pill">Livrée</span>;
+        return <Badge tone="sage">Livrée</Badge>;
       default:
-        return <span className="glass-pill" style={{ background: 'rgba(90,112,100,0.10)', color: '#5A7064', borderColor: 'rgba(90,112,100,0.25)' }}>{status}</span>;
+        return <Badge tone="stone">{status}</Badge>;
     }
   };
 
   return (
-    <div className="glass rounded-[1.25rem] p-6 space-y-6 my-6 active:scale-[0.98] active:opacity-95 transition-all duration-150 cursor-pointer">
+    <Card className="p-6 space-y-6 my-6">
 
       {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-[#17402C]/5 pb-4">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-[color:var(--lkv-primary)]/5 pb-4">
         <div>
-          <h3 className="font-display font-bold text-2xl text-[#17402C] tracking-tight">
+          <h3 className="font-display font-bold text-2xl text-[color:var(--lkv-primary)] tracking-tight">
             Commandes <span className="font-serif italic font-normal">& abonnements</span>
           </h3>
-          <p className="text-xs font-mono text-[#5A7064] mt-0.5">
+          <p className="text-xs font-mono text-[color:var(--lkv-text-muted)] mt-0.5">
             3 en cours · abonnement Guide
           </p>
         </div>
 
-        <Link href="/compte/commandes" className="text-xs font-bold text-[#365233] hover:text-[#17402C] transition-colors">
+        <Link href="/compte/commandes" className="text-xs font-bold text-[color:var(--lkv-forest-600)] hover:text-[color:var(--lkv-primary)] transition-colors">
           Historique complet →
         </Link>
       </div>
 
-      <p className="text-xs text-[#365233]/70 leading-relaxed">
+      <p className="text-xs text-[color:var(--lkv-forest-600)]/70 leading-relaxed">
         Les dernières commandes passées sur la boutique, plus l'état de votre abonnement premium.
       </p>
 
@@ -51,10 +52,10 @@ export default function CommandesCard({ commandes }: CommandesCardProps) {
         {commandes.map((item) => (
           <div
             key={item.id}
-            className="glass-sub-card flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 rounded-2xl transition-all gap-4"
+            className="rounded-[var(--lkv-radius-md)] border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] backdrop-blur-[var(--blur-md)] flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 transition-all gap-4"
           >
             <div className="flex items-center gap-4 min-w-0">
-              <div className="w-12 h-12 rounded-xl overflow-hidden relative shrink-0 border border-[#17402C]/10 bg-white">
+              <div className="w-12 h-12 rounded-xl overflow-hidden relative shrink-0 border border-[color:var(--lkv-primary)]/10 bg-white">
                 <Image
                   src={item.image_url || '/assets/images/no_image.png'}
                   alt={item.product_name}
@@ -64,11 +65,11 @@ export default function CommandesCard({ commandes }: CommandesCardProps) {
                 />
               </div>
               <div className="min-w-0">
-                <h4 className="font-bold text-sm sm:text-base text-[#17402C] truncate">
+                <h4 className="font-bold text-sm sm:text-base text-[color:var(--lkv-primary)] truncate">
                   {item.product_name}
                 </h4>
-                <p className="text-xs font-mono text-[#365233]/60 mt-0.5">
-                  {item.order_number} · <span className="font-bold text-[#17402C]">{item.price}</span>
+                <p className="text-xs font-mono text-[color:var(--lkv-forest-600)]/60 mt-0.5">
+                  {item.order_number} · <span className="font-bold text-[color:var(--lkv-primary)]">{item.price}</span>
                 </p>
               </div>
             </div>
@@ -80,6 +81,6 @@ export default function CommandesCard({ commandes }: CommandesCardProps) {
         ))}
       </div>
 
-    </div>
+    </Card>
   );
 }
