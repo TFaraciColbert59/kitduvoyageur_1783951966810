@@ -16,8 +16,8 @@ export default async function RandonneeActivePage() {
 
   return (
     <Suspense fallback={
-      <div style={{ width: '100%', height: '100dvh', background: 'var(--lkv-forest-950)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <span style={{ color: 'var(--sage-400)', fontFamily: 'monospace', fontSize: 12 }}>Chargement...</span>
+      <div className="flex h-dvh w-full items-center justify-center bg-[var(--lkv-forest-950)]">
+        <span className="font-mono text-xs text-[var(--sage-400)]">Chargement...</span>
       </div>
     }>
       <RandonneeActiveContent terrainEnabled={terrainEnabled} />

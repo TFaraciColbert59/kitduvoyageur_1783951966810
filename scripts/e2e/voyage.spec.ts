@@ -185,7 +185,9 @@ test.describe('Module Voyage E2E Suite — Parcours Utilisateur & Ergonomie (C1-
 
   test('TEST-E2E-VOYAGE-12: Carnet public indexable & Métadonnées Schema.org', async ({ page }) => {
     await page.goto('/carnets', { waitUntil: 'domcontentloaded' });
-    const heading = page.locator('h1, h2').first();
+    // Double arbre desktop/mobile (Phase 2) : le premier h1/h2 du DOM peut être
+    // la variante masquée — cibler le heading réellement visible.
+    const heading = page.locator('h1, h2').filter({ visible: true }).first();
     await expect(heading).toBeVisible();
 
     // Vérifie les balises meta de base (OpenGraph)

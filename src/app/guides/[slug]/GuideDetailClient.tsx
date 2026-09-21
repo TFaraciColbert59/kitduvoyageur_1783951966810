@@ -94,7 +94,7 @@ export default function GuideDetailClient({ slug }: { slug: string }) {
     <div className="max-w-[820px] mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-12 text-center">
       <div className="py-16 glass rounded-xl">
         <Icon name="BookOpenIcon" size={48} className="mx-auto mb-4 text-[color:var(--lkv-text-secondary)]" variant="outline" />
-        <h1 className="font-display font-bold text-2xl text-[color:var(--lkv-primary)] mb-3" style={{ fontFamily: 'var(--font-display)' }}>
+        <h1 className="font-display font-bold text-2xl text-[color:var(--lkv-primary)] mb-3">
           Guide introuvable
         </h1>
         <p className="text-[color:var(--lkv-text-secondary)] mb-6">Ce guide n&apos;existe pas ou a été supprimé.</p>
@@ -142,7 +142,7 @@ export default function GuideDetailClient({ slug }: { slug: string }) {
       </div>
 
       {/* Title */}
-      <h1 className="font-display font-bold text-3xl md:text-4xl text-[color:var(--lkv-primary)] mb-4 leading-tight" style={{ fontFamily: 'var(--font-display)' }}>
+      <h1 className="font-display font-bold text-3xl md:text-4xl text-[color:var(--lkv-primary)] mb-4 leading-tight">
         {guide.title}
       </h1>
 

@@ -262,7 +262,6 @@ export default async function RootLayout({
       </head>
       <body
         className={`${manrope.variable} ${ibmPlexMono.variable} ${instrumentSerif.variable} bg-transparent min-h-[100dvh]`}
-        style={{ backgroundColor: 'transparent' }}
       >
         {/* Toile unique LKDV — fond d'écran de toutes les routes */}
         <div className="lkv-app-background" aria-hidden="true" />

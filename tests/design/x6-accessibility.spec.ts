@@ -1,9 +1,11 @@
 import { describe, it, expect } from 'vitest';
+import { readFileSync } from 'fs';
 
 /**
  * Calcul rigoureux de contraste WCAG 2.1
  * Formule : (L1 + 0.05) / (L2 + 0.05)
- * Source unique de vérité : src/styles/tokens.css
+ * Source unique de vérité : src/styles/tokens.css — les valeurs sont LUES
+ * depuis le fichier (light `:root`, premier bloc), jamais dupliquées ici.
  */
 function sRGBtoLin(c: number): number {
   return c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
@@ -25,67 +27,91 @@ function getContrastRatio(hex1: string, hex2: string): number {
   return (lighter + 0.05) / (darker + 0.05);
 }
 
-describe('CHANTIER X6 — VALIDATION DES CONTRASTES WCAG AA (VRAIS TOKENS LKDV)', () => {
-  const CANVAS = '#FAF8F5'; // --lkv-surface-paper
-  const WHITE = '#FFFFFF';  // --lkv-surface-card / --lkv-text-inverted
-  const PRIMARY = '#17402C'; // --lkv-primary / --lkv-text-primary
-  const SECONDARY = '#5B7F55'; // --lkv-secondary / --lkv-text-secondary / --lkv-success
-  const MUTED = '#6B7568'; // --lkv-text-muted
-  const DANGER = '#A8443A'; // --lkv-danger
-  const WARNING = '#C89A3B'; // --lkv-warning
-  const WARNING_DARK = '#8C6418'; // --lkv-warning-dark (pour le texte d'alerte lisible)
-  const INFO = '#4B6B7C'; // --lkv-info
+const TOKENS_PATH = 'src/styles/tokens.css';
 
-  it('Texte primaire (#17402C) sur fond Canvas (#FAF8F5) ≥ 7.0:1 (dépasse WCAG AAA)', () => {
-    const ratio = getContrastRatio(PRIMARY, CANVAS);
+/**
+ * Parse le premier bloc `:root` de tokens.css (thème clair).
+ * Les blocs `.dark` ultérieurs sont ignorés : ce spec valide le thème clair.
+ */
+function parseLightTokens(): Record<string, string> {
+  const css = readFileSync(TOKENS_PATH, 'utf8');
+  const firstRoot = css.match(/:root\s*\{([\s\S]*?)\n\}/);
+  if (!firstRoot) throw new Error(`Bloc :root introuvable dans ${TOKENS_PATH}`);
+  const withoutComments = firstRoot[1].replace(/\/\*[\s\S]*?\*\//g, '');
+  const tokens: Record<string, string> = {};
+  for (const line of withoutComments.split('\n')) {
+    const m = line.match(/^\s*(--[\w-]+)\s*:\s*([^;]+);/);
+    if (m) tokens[m[1]] = m[2].trim();
+  }
+  return tokens;
+}
+
+const TOKENS = parseLightTokens();
+
+function token(name: string): string {
+  const value = TOKENS[name];
+  expect(value, `Token ${name} absent du bloc :root de ${TOKENS_PATH}`).toBeDefined();
+  expect(value, `Token ${name} non hexadécimal (lu : ${value})`).toMatch(/^#[0-9A-Fa-f]{6}$/);
+  return value;
+}
+
+describe('CHANTIER X6 — VALIDATION DES CONTRASTES WCAG AA (TOKENS LKDV RÉELS)', () => {
+  it('Texte primaire (--lkv-text-primary) sur fond --lkv-surface ≥ 7.0:1 (dépasse WCAG AAA)', () => {
+    const ratio = getContrastRatio(token('--lkv-text-primary'), token('--lkv-surface'));
     expect(ratio).toBeGreaterThanOrEqual(7.0);
   });
 
-  it('Texte primaire (#17402C) sur fond blanc (#FFFFFF) ≥ 7.0:1 (dépasse WCAG AAA)', () => {
-    const ratio = getContrastRatio(PRIMARY, WHITE);
+  it('Texte primaire (--lkv-text-primary) sur fond --lkv-surface-card ≥ 7.0:1 (dépasse WCAG AAA)', () => {
+    const ratio = getContrastRatio(token('--lkv-text-primary'), token('--lkv-surface-card'));
     expect(ratio).toBeGreaterThanOrEqual(7.0);
   });
 
-  it('Bouton primaire : Texte blanc sur fond primaire (#17402C) ≥ 7.0:1 (WCAG AAA)', () => {
-    const ratio = getContrastRatio(WHITE, PRIMARY);
+  it('Bouton d’action : --lkv-on-action (blanc) sur fond --lkv-action ≥ 7.0:1 (WCAG AAA)', () => {
+    // Les éléments d'ACTION utilisent --lkv-action (cf. tokens.css §1), pas --lkv-primary.
+    const ratio = getContrastRatio(token('--lkv-on-action'), token('--lkv-action'));
     expect(ratio).toBeGreaterThanOrEqual(7.0);
   });
 
-  it('Texte danger (#A8443A) sur fond Canvas (#FAF8F5) ≥ 4.5:1 (conforme WCAG AA normal)', () => {
-    const ratio = getContrastRatio(DANGER, CANVAS);
+  it('Texte danger (--lkv-danger) sur fond --lkv-surface ≥ 4.5:1 (conforme WCAG AA normal)', () => {
+    const ratio = getContrastRatio(token('--lkv-danger'), token('--lkv-surface'));
     expect(ratio).toBeGreaterThanOrEqual(4.5);
   });
 
-  it('Texte danger (#A8443A) sur fond blanc (#FFFFFF) ≥ 4.5:1 (conforme WCAG AA normal)', () => {
-    const ratio = getContrastRatio(DANGER, WHITE);
+  it('Texte danger (--lkv-danger) sur fond --lkv-surface-card ≥ 4.5:1 (conforme WCAG AA normal)', () => {
+    const ratio = getContrastRatio(token('--lkv-danger'), token('--lkv-surface-card'));
     expect(ratio).toBeGreaterThanOrEqual(4.5);
   });
 
-  it('Texte info (#4B6B7C) sur fond blanc (#FFFFFF) ≥ 4.5:1 (conforme WCAG AA normal)', () => {
-    const ratio = getContrastRatio(INFO, WHITE);
+  it('Texte info (--lkv-info) sur fond --lkv-surface-card ≥ 4.5:1 (conforme WCAG AA normal)', () => {
+    const ratio = getContrastRatio(token('--lkv-info'), token('--lkv-surface-card'));
     expect(ratio).toBeGreaterThanOrEqual(4.5);
   });
 
-  it('Texte muted (#6B7568) sur fond Canvas (#FAF8F5) ≥ 4.0:1', () => {
-    const ratio = getContrastRatio(MUTED, CANVAS);
-    expect(ratio).toBeGreaterThanOrEqual(4.0);
-  });
-
-  it('Texte secondaire / Sauge (#5B7F55) sur fond Canvas (#FAF8F5) ≥ 3.0:1 (WCAG AA Large / UI Components)', () => {
-    const ratio = getContrastRatio(SECONDARY, CANVAS);
-    // Arbitrage documenté : ratio ~3.5:1, conforme WCAG AA pour texte large (>= 18.66px gras)
-    // et composants graphiques d'interface (WCAG 1.4.11 seuil 3:1). Non utilisé pour le corps de texte.
-    expect(ratio).toBeGreaterThanOrEqual(3.0);
-    expect(ratio).toBeLessThan(4.5);
-  });
-
-  it('Texte alerte warning foncé (#8C6418) sur fond Canvas (#FAF8F5) ≥ 4.5:1 (conforme WCAG AA texte normal)', () => {
-    const ratio = getContrastRatio(WARNING_DARK, CANVAS);
+  it('Texte muted (--lkv-text-muted) sur fond --lkv-surface ≥ 4.5:1 (conforme WCAG AA normal)', () => {
+    // Ancien seuil d'arbitrage 4.0 ; le token réel atteint AA normal (≥ 4.5).
+    const ratio = getContrastRatio(token('--lkv-text-muted'), token('--lkv-surface'));
     expect(ratio).toBeGreaterThanOrEqual(4.5);
   });
 
-  it('Warning graphique (#C89A3B) sur fond Canvas (#FAF8F5) : usage réservé aux pastilles/badges graphiques', () => {
-    const ratio = getContrastRatio(WARNING, CANVAS);
+  it('Texte secondaire (--lkv-text-secondary) sur fond --lkv-surface ≥ 4.5:1 (conforme WCAG AA normal)', () => {
+    // L'ancien arbitrage « ~3.5:1, texte large uniquement » portait sur l'ancien
+    // token sauge #5B7F55. Le token Phase 2 --lkv-text-secondary est un neutre
+    // foncé : il atteint AA normal et n'est plus restreint au texte large.
+    const ratio = getContrastRatio(token('--lkv-text-secondary'), token('--lkv-surface'));
+    expect(ratio).toBeGreaterThanOrEqual(4.5);
+  });
+
+  it('Texte alerte warning foncé (--lkv-warning-dark) sur fond --lkv-surface ≥ 4.5:1 (conforme WCAG AA texte normal)', () => {
+    const ratio = getContrastRatio(token('--lkv-warning-dark'), token('--lkv-surface'));
+    expect(ratio).toBeGreaterThanOrEqual(4.5);
+  });
+
+  it('Warning graphique (--lkv-warning) sur fond --lkv-surface : usage réservé aux pastilles/badges graphiques', () => {
+    // Dette documentée : le ratio réel (~2.4:1) est inférieur au seuil WCAG 1.4.11
+    // (3:1) des composants d'interface. --lkv-warning n'est donc PAS utilisable
+    // seul pour un texte ou un contrôle : utiliser --lkv-warning-dark (≥ 4.5:1)
+    // pour le texte. Le présent test gèle uniquement son usage décoratif (≥ 2:1).
+    const ratio = getContrastRatio(token('--lkv-warning'), token('--lkv-surface'));
     expect(ratio).toBeGreaterThanOrEqual(2.0);
   });
 });

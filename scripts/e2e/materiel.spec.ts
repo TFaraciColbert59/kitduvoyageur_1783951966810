@@ -42,7 +42,8 @@ test('hub possession — navigation vers la section kits', async ({ page, contex
   await page.goto('/hub');
   await page.getByRole('link', { name: 'Kits' }).first().click();
   await expect(page).toHaveURL(/\/hub\/kit/);
-  await expect(page.getByRole('heading', { name: 'Kits', exact: true })).toBeVisible();
+  // Phase 2 : le titre de section vit en `sr-only` dans PageHeader.
+  await expect(page.getByRole('heading', { name: 'Kits', exact: true })).toBeAttached();
   await expect(page.getByText(/Nouveau kit/i).filter({ visible: true }).first()).toBeVisible();
 });
 
@@ -58,17 +59,18 @@ test('hub depart — cockpit plein écran avec widgets réels (pas l\'état vide
 test('hub sections inventaire / alertes — données présentes', async ({ page, context }) => {
   await loginDemo(page, context);
   await page.goto('/hub/inventaire');
-  await expect(page.getByRole('heading', { name: 'Inventaire', exact: true })).toBeVisible();
+  // Phase 2 : titres de section en `sr-only` (nom accessible conservé).
+  await expect(page.getByRole('heading', { name: 'Inventaire', exact: true })).toBeAttached();
   await expect(page.getByRole('button', { name: /Ajouter/i }).first()).toBeVisible();
   await page.goto('/hub/alertes');
-  await expect(page.getByRole('heading', { name: 'Alertes', exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Alertes', exact: true })).toBeAttached();
 });
 
 test('redirections 307 des routes héritées /materiel/*', async ({ page, context }) => {
   await loginDemo(page, context);
   await page.goto('/materiel/inventaire');
   await expect(page).toHaveURL(/\/hub\/inventaire/);
-  await expect(page.getByRole('heading', { name: 'Inventaire', exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Inventaire', exact: true })).toBeAttached();
   await page.goto('/materiel/kits');
   await expect(page).toHaveURL(/\/hub\/kit/);
 });

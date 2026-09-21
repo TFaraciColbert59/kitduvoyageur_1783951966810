@@ -67,8 +67,7 @@ export const AnimatedIconBase = forwardRef<
   return (
     <div
       ref={containerRef}
-      className={cn('lkv-ia', className)}
-      style={{ display: 'inline-flex' }}
+      className={cn('lkv-ia inline-flex', className)}
       {...props}
       onClick={handleClick}
     >

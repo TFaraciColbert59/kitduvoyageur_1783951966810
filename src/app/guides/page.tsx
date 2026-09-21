@@ -36,7 +36,7 @@ export default function GuidesPage() {
         <main className="flex-1 min-h-0 overflow-y-auto">
           <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-12">
             <div className="mb-8">
-              <p className="text-[11px] font-mono uppercase tracking-[0.14em] text-[color:var(--lkv-forest-100)] mb-2" style={{ fontFamily: 'var(--font-mono)' }}>
+              <p className="text-[11px] font-mono uppercase tracking-[0.14em] text-[color:var(--lkv-forest-100)] mb-2">
                 GUIDES &amp; CHECKLISTS
               </p>
               <h1 className="font-display font-bold text-3xl tracking-tight text-[color:var(--lkv-surface)]">

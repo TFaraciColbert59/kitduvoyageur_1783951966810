@@ -104,7 +104,7 @@ export default function AppShell({
 
       {/* Slot header sticky (optionnel) */}
       {header && (
-        <header style={{ position: 'sticky', top: 0, zIndex: 40, width: '100%' }}>
+        <header className="sticky top-0 z-40 w-full">
           {header}
         </header>
       )}

@@ -18,6 +18,8 @@ const IGNORED_CONSOLE_PATTERNS = [
   /net::ERR_/i,
   /speed-insights/i,
   /Download the React DevTools/i,
+  // WebKit : avertissement viewport interne (attribut non reconnu, ignoré).
+  /interactive-widget/i,
 ];
 
 test.describe('Adventure Intelligence — montage hub', () => {

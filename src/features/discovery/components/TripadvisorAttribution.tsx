@@ -25,7 +25,6 @@ export function TripadvisorAttribution({
           src={logoUrl}
           alt="Tripadvisor"
           height={20}
-          style={{ height: 20, width: 'auto' }}
           className="h-5 w-auto shrink-0"
           loading="lazy"
         />

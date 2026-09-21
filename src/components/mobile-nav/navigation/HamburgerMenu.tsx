@@ -33,7 +33,7 @@ function HamburgerMenu({
   }, [menuOpen, setMenuOpen]);
 
   return (
-    <div style={{ position: 'relative' }}>
+    <div className="relative">
       <motion.button
         type="button"
         whileTap={{ scale: 0.9 }}
@@ -44,12 +44,7 @@ function HamburgerMenu({
         aria-label="Menu actions"
         aria-haspopup="true"
         aria-expanded={menuOpen}
-        className="glass-circle-btn"
-        style={{
-          width: '44px',
-          height: '44px',
-          cursor: 'pointer',
-        }}
+        className="glass-circle-btn w-11 h-11 cursor-pointer"
       >
         <LkvIcon name="menu" size={18} color="var(--lkv-primary)" />
       </motion.button>

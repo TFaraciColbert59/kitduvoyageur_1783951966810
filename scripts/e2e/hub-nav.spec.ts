@@ -13,15 +13,19 @@ const MOBILE = { viewport: { width: 390, height: 844 } };
 test.describe('Bottom bar mobile — 5 entrées + bouton Hub central', () => {
   test.use(MOBILE);
 
-  test('BAR-1: 4 tabs canoniques + hub central explicite', async ({ page }) => {
+  test('BAR-1: 5 destinations canoniques, hub central explicite', async ({ page }) => {
     await page.goto('/explorer');
     const nav = page.locator('nav[aria-label="Navigation principale"]');
     await expect(nav).toBeVisible();
-    // UI actuelle : Explorer, Hub (central), Communauté, Profil.
+    // UI actuelle (Phase 2, registre DESTINATIONS) : Aventures, Explorer,
+    // Matériel, Communauté, Moi.
     const links = nav.locator('a');
-    await expect(links).toHaveCount(4);
+    await expect(links).toHaveCount(5);
     const hubTab = nav.locator('a[href="/hub"]');
-    await expect(hubTab).toHaveAttribute('aria-label', 'Hub, mon aventure active');
+    await expect(hubTab).toHaveAttribute(
+      'aria-label',
+      'Aventures : aventure active, préparation et voyages',
+    );
     await expect(hubTab).toHaveAttribute('aria-haspopup', 'dialog');
   });
 
@@ -95,7 +99,6 @@ test.describe('Bottom bar mobile — 5 entrées + bouton Hub central', () => {
 
 test.describe('Redirections 307 des routes héritées (middleware)', () => {
   const CASES: Array<[string, RegExp]> = [
-    ['/materiel', /\/hub$/],
     ['/materiel/inventaire', /\/hub\/inventaire/],
     ['/materiel/kits', /\/hub\/kit/],
     ['/materiel/preparation', /\/hub\/preparation/],
@@ -127,6 +130,13 @@ test.describe('Redirections 307 des routes héritées (middleware)', () => {
       await expect(page).toHaveURL(target);
     });
   }
+
+  // Phase 2 : `/materiel` est devenu une surface autonome (destination du
+  // registre), plus un alias 307 vers /hub — les sous-routes restent redirigées.
+  test('SURFACE /materiel — surface autonome (fin de l’alias 307 vers /hub)', async ({ request }) => {
+    const response = await request.get('/materiel', { maxRedirects: 0 });
+    expect(response.status()).toBe(200);
+  });
 });
 
 test.describe('/hub sans session', () => {
@@ -142,11 +152,14 @@ test.describe('/hub sans session', () => {
 
   test('HUB-2: URL profonde de section rechargeable sans contexte local', async ({ page }) => {
     await page.goto('/hub/inventaire');
-    await expect(page.getByRole('heading', { name: 'Inventaire', exact: true })).toBeVisible();
+    // Phase 2 : PageHeader porte le titre de section en `sr-only` (nom accessible
+    // conservé, aucun impact visuel) — l'invariant vérifié est la présence du
+    // heading accessible, pas sa boîte visuelle.
+    await expect(page.getByRole('heading', { name: 'Inventaire', exact: true })).toBeAttached();
     // Rechargement direct (partage d'URL) — le serveur re-résout, pas de
     // dépendance à localStorage pour interpréter la section.
     await page.reload();
-    await expect(page.getByRole('heading', { name: 'Inventaire', exact: true })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Inventaire', exact: true })).toBeAttached();
   });
 
   test('HUB-3: section collectif sans session (repli possession) → 404 déterministe', async ({ page }) => {

@@ -22,8 +22,7 @@ export function ShimmerBlock({ className, h = 'h-4' }: ShimmerBlockProps) {
       )}
     >
       <div
-        className="absolute inset-0 -translate-x-full animate-[shimmer_1.6s_infinite] bg-gradient-to-r from-transparent via-white/70 to-transparent"
-        style={{ willChange: 'transform' }}
+        className="absolute inset-0 -translate-x-full animate-[shimmer_1.6s_infinite] bg-gradient-to-r from-transparent via-white/70 to-transparent will-change-transform"
       />
     </div>
   );

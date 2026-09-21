@@ -68,7 +68,7 @@ function GlassFilter({ id, mode, displacementScale, aberrationIntensity, width, 
       focusable="false"
       width={width}
       height={height}
-      style={{ position: "absolute", inset: 0, pointerEvents: "none" }}
+      className="absolute inset-0 pointer-events-none"
     >
       <defs>
         <filter id={id} x="-35%" y="-35%" width="170%" height="170%" colorInterpolationFilters="sRGB">

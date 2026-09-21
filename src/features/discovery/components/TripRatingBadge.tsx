@@ -43,7 +43,7 @@ export function TripRatingBadge({
         <img
           src={ratingImageUrl}
           alt={`Note Tripadvisor ${safeRating!.toFixed(1)} sur 5`}
-          style={{ minWidth: 55, height: 16, width: 'auto' }}
+          className="h-4 w-auto min-w-[55px]"
           loading="lazy"
         />
       ) : null}

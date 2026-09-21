@@ -33,6 +33,17 @@ async function waitForUnifiedMap(page: import('@playwright/test').Page) {
 }
 
 test.describe('ATLAS — explorateur unifié, palier local', () => {
+  // Même protocole consentement que voyage.spec.ts / a11y : sans lui, la
+  // bannière cookies recouvre les CTA bas de page et intercepte les clics.
+  test.beforeEach(async ({ page }) => {
+    await page.addInitScript(() => {
+      window.localStorage.setItem(
+        'lkdv_cookie_consent',
+        JSON.stringify({ necessary: true, analytics: false, marketing: false, version: '1' })
+      );
+    });
+  });
+
   test('pan/zoom annule les requêtes viewport obsolètes', async ({ page }) => {
     // Réponses volontairement lentes : garantit des requêtes en vol à superséder.
     await page.route('**/api/hikes*', async (route) => {
