@@ -30,7 +30,7 @@ export function SosFloatingButton({ safetyHref }: SosFloatingButtonProps) {
         }}
         aria-label="Urgence — secours et contacts"
         style={{
-          bottom: 'calc(var(--bottom-nav-height) + 12px)',
+          bottom: 'calc(var(--map-control-bottom) - var(--space-1))',
         }} // lkdv-safe-area-ok
         className="fixed right-4 z-[var(--z-drawer)] !bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[color:var(--lkv-danger)] hover:!brightness-[1.05] md:bottom-6 md:right-6 md:!bottom-6 flex h-14 w-14 items-center justify-center transition-transform active:scale-90 cursor-pointer"
       >

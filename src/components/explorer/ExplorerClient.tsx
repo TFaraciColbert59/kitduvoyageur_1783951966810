@@ -679,8 +679,8 @@ export default function ExplorerClient({
         )}
       </AnimatePresence>
 
-      {/* ── 3. BOUTON FILTRES SUR LA PAROI DE DROITE (ONGLET RÉTRACTABLE) ── */}
-      <div className="pointer-events-none fixed right-0 top-1/2 z-[var(--z-fab)] flex -translate-y-1/2 items-center justify-end">
+      {/* ── 3. BOUTON FILTRES FLOTTANT (bord droit, jamais coupé) ── */}
+      <div className="pointer-events-none fixed right-[var(--map-control-inset-x)] top-1/2 z-[var(--z-fab)] flex -translate-y-1/2 items-center justify-end">
         <AnimatePresence mode="wait">
           {!filtersOpen ? (
             /* Onglet collé à la paroi droite */
@@ -694,7 +694,7 @@ export default function ExplorerClient({
                 variant="glass"
                 size="lg"
                 onClick={() => setFiltersOpen(true)}
-                className="pointer-events-auto relative rounded-r-none rounded-l-2xl shadow-lg"
+                className="pointer-events-auto relative shadow-lg"
                 title="Ouvrir la recherche et les filtres"
                 aria-label="Ouvrir la recherche et les filtres"
               >

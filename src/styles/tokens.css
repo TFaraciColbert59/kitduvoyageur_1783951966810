@@ -377,6 +377,13 @@
   --overlay-inset-bottom: var(--safe-bottom);
   --keyboard-inset: 0px;
 
+  /* Phase 3 — zones de placement des contrôles carte : aucun composant
+     n'invente son propre offset sous la navigation. */
+  --map-control-inset-x: 12px;
+  --map-control-top: calc(var(--safe-top) + 16px);
+  --map-control-bottom: calc(var(--nav-offset) + 16px);
+  --map-local-nav-bottom: calc(var(--nav-offset) + var(--nav-plateau-height) + 12px);
+
   /* ├─ Breakpoints (miroir Tailwind, utilisables en JS) */
   --bp-sm: 640px;
   --bp-md: 768px;

@@ -892,7 +892,7 @@ const LINK_ICON =
         )}
 
         {/* 2. Floating Tile Switcher (EN BAS À GAUCHE) */}
-        <div className="absolute bottom-[calc(var(--nav-offset)+16px)] left-3.5 z-[var(--z-fab)] md:bottom-6 md:left-4">
+        <div className="absolute bottom-[var(--map-control-bottom)] left-3.5 z-[var(--z-fab)] md:bottom-6 md:left-4">
           <Card variant="featured" className="flex items-center gap-1.5 rounded-full p-1 shadow-md">
             <IconButton
               variant={tileMode === 'osm' ? 'solid' : 'ghost'}
@@ -934,7 +934,7 @@ const LINK_ICON =
         </div>
 
         {/* 3. Floating Zoom Controls (+ / −) & Recenter (EN BAS À DROITE) */}
-        <div className="absolute bottom-[calc(var(--nav-offset)+16px)] right-3.5 z-[var(--z-fab)] md:bottom-6 md:right-4">
+        <div className="absolute bottom-[var(--map-control-bottom)] right-3.5 z-[var(--z-fab)] md:bottom-6 md:right-4">
           <Card variant="featured" className="flex flex-col items-center gap-1 rounded-full p-1 shadow-md">
             <IconButton
               variant="glass"
@@ -978,7 +978,7 @@ const LINK_ICON =
 
         {/* Selected Trail Overlay Card (Real GPS Track Loaded) */}
         {selectedTrail && (
-          <div className="pointer-events-auto absolute bottom-[calc(var(--nav-offset)+12px)] left-1/2 z-[var(--z-fab)] w-full max-w-sm -translate-x-1/2 px-4">
+          <div className="pointer-events-auto absolute bottom-[calc(var(--map-control-bottom)-var(--space-1))] left-1/2 z-[var(--z-fab)] w-full max-w-sm -translate-x-1/2 px-4">
             <Card variant="featured" className="relative p-4">
               <IconButton
                 variant="glass"
@@ -1046,7 +1046,7 @@ const LINK_ICON =
 
         {/* Selected POI Overlay Card (Rich Information & Actionable Details) */}
         {selectedPoi && (
-          <div className="pointer-events-auto absolute bottom-[calc(var(--nav-offset)+12px)] left-1/2 z-[var(--z-fab)] w-full max-w-sm -translate-x-1/2 px-4">
+          <div className="pointer-events-auto absolute bottom-[calc(var(--map-control-bottom)-var(--space-1))] left-1/2 z-[var(--z-fab)] w-full max-w-sm -translate-x-1/2 px-4">
             <Card variant="featured" className="relative p-4">
               <IconButton
                 variant="glass"

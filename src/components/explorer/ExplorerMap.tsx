@@ -551,7 +551,7 @@ export default function ExplorerMap({
         className={`absolute z-[var(--z-fab)] pointer-events-auto ${
           isAutoCompact
             ? 'right-3 top-[calc(var(--safe-top)+16px)]'
-            : 'left-3.5 bottom-[calc(var(--nav-offset)+16px)] md:bottom-6 md:left-4'
+            : 'left-3.5 bottom-[var(--map-control-bottom)] md:bottom-6 md:left-4'
         }`}
       >
         <Card variant="featured" className="flex items-center gap-0.5 rounded-full p-1">
@@ -599,7 +599,7 @@ export default function ExplorerMap({
       </div>
 
       {/* 2. Dock de Navigation GPS & Zoom (+ / −) — (EN BAS À DROITE — Canonique) */}
-      <div className="absolute z-[var(--z-fab)] pointer-events-auto right-3.5 bottom-[calc(var(--nav-offset)+16px)] md:bottom-6 md:right-4">
+      <div className="absolute z-[var(--z-fab)] pointer-events-auto right-3.5 bottom-[var(--map-control-bottom)] md:bottom-6 md:right-4">
         <Card variant="featured" className="flex flex-col items-center gap-1 rounded-full p-1 shadow-md">
           <IconButton
             variant="glass"
