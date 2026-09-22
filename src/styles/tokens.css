@@ -35,14 +35,12 @@
      appliqué à toutes les routes via .lkv-app-background (cf. tailwind.css).
      La teinte --lkv-app-bg-tint atténue la topographie décorative pour que le
      texte essentiel ne repose jamais sur un contraste variable (spec §6). */
-  /* Phase 2 — background LKDV : brume sauge/forêt en couches CSS pures
-     (calme, sans photo), le contenu repose sur des surfaces lisibles. */
-  --lkv-app-bg-fallback: #EDF1EA;
-  --lkv-app-bg-top: #F5F8F3;
-  --lkv-app-bg-mid: #EDF2EA;
-  --lkv-app-bg-bottom: #E4EBE4;
-  --lkv-app-bg-glow-sage: rgba(91, 127, 85, 0.12);
-  --lkv-app-bg-glow-forest: rgba(23, 64, 44, 0.07);
+  /* Phase 3 — background LKDV UNIQUE : paysage forêt/montagne (image),
+     décliné portrait (mobile) / paysage (large), voilé pour la lisibilité. */
+  --lkv-app-bg-image-portrait: url('/assets/images/lkdv-bg-portrait.webp');
+  --lkv-app-bg-image-landscape: url('/assets/images/lkdv-bg-landscape.webp');
+  --lkv-app-bg-scrim: rgba(6, 18, 12, 0.30);
+  --lkv-app-bg-fallback: #0B1510;
 
   --lkv-surface: #F5F7F3;
   --lkv-surface-paper: #FFFFFF;
@@ -512,6 +510,11 @@
      TOUS les boutons du site (classes CSS + composants React).
      ════════════════════════════════════════════════════════════════ */
   --btn-tint: rgba(255, 255, 255, 0.78);            /* verre clair (Phase 2) */
+  /* Phase 3 — « rien de plein » : les boutons/pills sont du verre teinté. */
+  --btn-tint-action: rgba(34, 97, 72, 0.20);
+  --btn-tint-danger: rgba(168, 68, 58, 0.18);
+  --btn-glass-border: rgba(255, 255, 255, 0.55);
+  --btn-rim: inset 0 1px 1px rgba(255, 255, 255, 0.72);
   --btn-tint-solid: var(--lkv-action);              /* primaire / actif / publier */
   --btn-blur: 10px;                                 /* flou du verre (Phase 2) */
   --btn-saturate: 160%;                             /* saturation du verre */
@@ -578,12 +581,8 @@
   --lkv-secondary-hover: #B8CDB4;
   --lkv-secondary-subtle: #24382C;
 
-  --lkv-app-bg-fallback: #0B1510;
-  --lkv-app-bg-top: #111E17;
-  --lkv-app-bg-mid: #0E1A14;
-  --lkv-app-bg-bottom: #0A130E;
-  --lkv-app-bg-glow-sage: rgba(127, 196, 154, 0.10);
-  --lkv-app-bg-glow-forest: rgba(0, 0, 0, 0.35);
+  --lkv-app-bg-scrim: rgba(4, 12, 8, 0.46);
+  --lkv-app-bg-fallback: #08110C;
 
   --lkv-surface: #101C17;
   --lkv-surface-paper: #1B2D24;
@@ -638,6 +637,10 @@
   --glass-shadow-sheet: inset 0 1px 0 var(--glass-rim), 0 -4px 24px -8px rgba(0, 0, 0, 0.3);
 
   --btn-tint: rgba(255, 255, 255, 0.14);
+  --btn-tint-action: rgba(127, 196, 154, 0.26);
+  --btn-tint-danger: rgba(239, 160, 150, 0.22);
+  --btn-glass-border: rgba(255, 255, 255, 0.14);
+  --btn-rim: inset 0 1px 1px rgba(255, 255, 255, 0.12);
   --btn-tint-solid: #7FC49A;
   --btn-content: #F1F5F1;
   --btn-on-solid: #08150F;

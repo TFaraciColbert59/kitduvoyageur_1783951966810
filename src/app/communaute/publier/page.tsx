@@ -940,7 +940,7 @@ function PublierPostContent() {
       </div>
 
       {/* BOTTOM STICKY ACTION BAR */}
-      <div className="fixed bottom-0 left-0 right-0 z-[var(--z-sticky)] border-t border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-paper)]/95 px-[var(--space-6)] py-[var(--space-3)] pb-[max(var(--safe-bottom),var(--space-3))] backdrop-blur-[var(--blur-md)]">
+      <div className="fixed bottom-[var(--nav-offset)] left-0 right-0 z-[var(--z-sticky)] border-t border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-paper)]/95 px-[var(--space-6)] py-[var(--space-3)] backdrop-blur-[var(--blur-md)]">
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-[var(--space-4)] sm:flex-row">
           <div className="flex flex-wrap items-center gap-[var(--space-2)] text-[length:var(--lkv-text-caption)] font-semibold text-[color:var(--lkv-text-primary)]">
             <span className="size-2 animate-pulse rounded-full bg-[color:var(--lkv-secondary)]" />

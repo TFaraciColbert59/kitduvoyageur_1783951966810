@@ -15,12 +15,13 @@ export interface ChipProps {
   className?: string;
 }
 
+/* Phase 3 — « rien de plein » : les tons colorent le TEXTE, jamais un aplat. */
 const TONE: Record<ChipTone, string> = {
-  neutral: 'bg-[color:var(--lkv-surface-muted)] text-[color:var(--lkv-text-primary)]',
-  sage: 'bg-[color:var(--lkv-success-bg)] text-[color:var(--lkv-text-primary)]',
-  info: 'bg-[color:var(--lkv-info-bg)] text-[color:var(--lkv-info)]',
-  warn: 'bg-[color:var(--lkv-warning-bg)] text-[color:var(--lkv-warning-dark)]',
-  danger: 'bg-[color:var(--lkv-danger-bg)] text-[color:var(--lkv-danger-dark)]',
+  neutral: 'text-[color:var(--lkv-text-primary)]',
+  sage: 'text-[color:var(--lkv-success)]',
+  info: 'text-[color:var(--lkv-info)]',
+  warn: 'text-[color:var(--lkv-warning-dark)]',
+  danger: 'text-[color:var(--lkv-danger-dark)]',
 };
 
 /**
@@ -49,9 +50,10 @@ export function Chip({
       !disabled &&
       'active:scale-[var(--motion-press-scale)] motion-reduce:active:scale-100',
     disabled && 'pointer-events-none opacity-[var(--opacity-disabled)]',
+    'border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] shadow-[var(--btn-rim)]',
     selected
-      ? 'border-transparent bg-[color:var(--lkv-action)] font-bold text-[color:var(--btn-on-solid)]'
-      : cn(TONE[tone], 'border-[color:var(--lkv-border)]'),
+      ? 'bg-[color:var(--btn-tint-action)] font-bold text-[color:var(--lkv-action)]'
+      : cn('bg-[color:var(--btn-tint)]', TONE[tone]),
     className
   );
 

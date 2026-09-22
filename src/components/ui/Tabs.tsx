@@ -79,8 +79,8 @@ export function Tabs({
                 baseItem,
                 'min-h-[var(--control-height-sm)] rounded-full px-[var(--space-4)] text-[length:var(--lkv-text-footnote)]',
                 active
-                  ? 'bg-[color:var(--lkv-action)] text-[color:var(--lkv-on-action)]'
-                  : 'bg-[color:var(--card-tint-strong)] text-[color:var(--card-content)] border border-[color:var(--glass-border)]'
+                  ? 'border border-[color:var(--btn-glass-border)] bg-[color:var(--btn-tint-action)] text-[color:var(--lkv-action)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] shadow-[var(--btn-rim)]'
+                  : 'border border-[color:var(--glass-border)] bg-[color:var(--btn-tint)] text-[color:var(--btn-content)] backdrop-blur-[var(--btn-blur)]'
               )}
             >
               {option.icon}
@@ -120,8 +120,8 @@ export function Tabs({
               baseItem,
               'min-h-[var(--control-height-sm)] flex-1 rounded-full px-[var(--space-3)] text-[length:var(--lkv-text-footnote)]',
               active
-                ? 'bg-[color:var(--lkv-surface-card)] text-[color:var(--lkv-text-primary)] shadow-[var(--elevation-1)]'
-                : 'text-[color:var(--lkv-text-secondary)]'
+                ? 'border border-[color:var(--btn-glass-border)] bg-[color:var(--btn-tint)] text-[color:var(--lkv-text-primary)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] shadow-[var(--btn-rim)]'
+                : 'border border-transparent text-[color:var(--lkv-text-secondary)]'
             )}
           >
             {option.icon}

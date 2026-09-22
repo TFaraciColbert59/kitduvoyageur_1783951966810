@@ -176,6 +176,7 @@
   .lkv-material-bar {
     background-color: var(--material-bar-bg);
     border: 1px solid var(--material-bar-border);
+    box-shadow: var(--btn-rim);
     -webkit-backdrop-filter: blur(var(--material-bar-blur)) saturate(var(--material-bar-saturate));
     backdrop-filter: blur(var(--material-bar-blur)) saturate(var(--material-bar-saturate));
   }
@@ -808,13 +809,22 @@ body {
   pointer-events: none;
   user-select: none;
   background-color: var(--lkv-app-bg-fallback);
-  /* Phase 2 — brume LKDV en couches : halos sauge/forêt + dégradé vertical.
-     Aucune photo : le contraste du texte reste stable sur toutes les pages. */
-  background-image:
-    radial-gradient(120% 80% at 12% -10%, var(--lkv-app-bg-glow-sage) 0%, transparent 62%),
-    radial-gradient(110% 70% at 100% 108%, var(--lkv-app-bg-glow-forest) 0%, transparent 60%),
-    linear-gradient(180deg, var(--lkv-app-bg-top) 0%, var(--lkv-app-bg-mid) 46%, var(--lkv-app-bg-bottom) 100%);
+  /* Phase 3 — TOILE UNIQUE : paysage forêt/montagne, portrait sur mobile et
+     paysage dès que l'écran est plus large que haut. Voile sombre pour que le
+     verre clair et le texte gardent un contraste stable. */
+  background-image: linear-gradient(var(--lkv-app-bg-scrim), var(--lkv-app-bg-scrim)),
+    var(--lkv-app-bg-image-portrait);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
   background-attachment: fixed;
+}
+
+@media (min-aspect-ratio: 1 / 1) {
+  .lkv-app-background {
+    background-image: linear-gradient(var(--lkv-app-bg-scrim), var(--lkv-app-bg-scrim)),
+      var(--lkv-app-bg-image-landscape);
+  }
 }
 
 /* Phase 2 (Lot 2) — shell canonique : viewport stable (svh/dvh), safe areas

@@ -65,7 +65,7 @@ export const DESTINATIONS: readonly Destination[] = [
     href: '/explorer',
     label: { fr: 'Explorer', en: 'Explore' },
     ariaLabel: 'Explorer les sentiers, pays et destinations',
-    iconName: 'mountain',
+    iconName: 'compass',
     matchPaths: ['/explorer', '/hors-ligne', '/pays'],
   },
   {

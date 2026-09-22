@@ -30,7 +30,7 @@ export function ListPageLayout({
     <PageLayout {...props} contentClassName={contentClassName}>
       {toolbar && <div className="w-full">{toolbar}</div>}
       <div className={listClassName}>{children}</div>
-      {floatingAction && <div className="pointer-events-none fixed bottom-0 right-0 z-[var(--z-fab)] p-[var(--space-4)]">{floatingAction}</div>}
+      {floatingAction && <div className="pointer-events-none fixed bottom-[var(--nav-offset)] right-0 z-[var(--z-fab)] p-[var(--space-4)]">{floatingAction}</div>}
     </PageLayout>
   );
 }

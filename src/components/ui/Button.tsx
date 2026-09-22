@@ -43,15 +43,17 @@ const ICON_SIZE: Record<ButtonSize, string> = {
   lg: 'h-[var(--control-height-lg)] w-[var(--control-height-lg)]',
 };
 
+/* Phase 3 — « rien de plein » : tous les boutons sont du verre (teinté pour
+   les variantes sémantiques), jamais un aplat de couleur. */
+const GLASS_BASE =
+  'border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] shadow-[var(--btn-rim)] hover:brightness-[1.05]';
+
 const VARIANT: Record<ButtonVariant, string> = {
-  primary:
-    'bg-[color:var(--lkv-action)] text-[color:var(--lkv-on-action)] hover:bg-[color:var(--lkv-action-hover)]',
-  secondary:
-    'bg-[color:var(--card-tint-strong)] text-[color:var(--card-content)] border border-[color:var(--glass-border)] backdrop-blur-[var(--blur-md)] hover:bg-[color:var(--lkv-hover-surface)]',
+  primary: `bg-[color:var(--btn-tint-action)] text-[color:var(--lkv-action)] ${GLASS_BASE}`,
+  secondary: `bg-[color:var(--btn-tint)] text-[color:var(--btn-content)] ${GLASS_BASE}`,
   ghost:
     'bg-transparent text-[color:var(--lkv-text-primary)] hover:bg-[color:var(--lkv-hover-surface)]',
-  destructive:
-    'bg-[color:var(--lkv-danger)] text-[color:var(--lkv-text-inverted)] hover:bg-[color:var(--lkv-danger-dark)]',
+  destructive: `bg-[color:var(--btn-tint-danger)] text-[color:var(--lkv-danger-dark)] ${GLASS_BASE}`,
 };
 
 /**

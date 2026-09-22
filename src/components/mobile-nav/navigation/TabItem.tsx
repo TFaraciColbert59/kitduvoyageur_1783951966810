@@ -7,7 +7,18 @@ import { motion } from 'framer-motion';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { evaluateCurrentPrefetchPolicy } from '@/lib/perf/networkPrefs';
 import { isMoveBeyondTolerance } from '@/hooks/gestures/gestureMath';
-import LkvIcon from '@/components/ui/LkvIcon';
+import Icon from '@/components/ui/Icon';
+import type { DestinationId } from '@/components/mobile-nav/destinationRegistry';
+
+/* Phase 3 — glyphes SF-like (pack masque) pour la bottom bar, plus modernes
+   que les pictos legacy du drawer. */
+const TAB_ICON: Record<DestinationId, string> = {
+  adventures: 'tent',
+  explorer: 'compass',
+  gear: 'backpack',
+  community: 'users',
+  me: 'user',
+};
 import type { Destination } from '@/components/mobile-nav/destinationRegistry';
 
 // Badge de notification (style DS glass-pill) — affiché seulement si count > 0
@@ -190,23 +201,13 @@ const TabItem = memo(function TabItem({
         transition={{ type: 'spring', stiffness: 500, damping: 25 }}
         style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', zIndex: 1 }}
       >
-        {/* Aventures : icône 24 + anneau, pilule layoutId conservée. */}
-        <LkvIcon name={destination.iconName} size={onLongPress ? 24 : 22} color={isActive ? 'var(--lkv-primary)' : 'var(--lkv-primary-soft)'} />
+        {/* Icône seule (labels retirés) — glyphes SF-like, cible tactile conservée. */}
+        <Icon
+          name={TAB_ICON[destination.id]}
+          size={onLongPress ? 28 : 26}
+          color={isActive ? 'var(--lkv-primary)' : 'var(--lkv-text-secondary)'}
+        />
       </motion.span>
-      <span
-        style={{
-          position: 'relative',
-          zIndex: 1,
-          fontSize: 10,
-          lineHeight: '11px',
-          fontWeight: isActive ? 700 : 600,
-          letterSpacing: '0.01em',
-          color: isActive ? 'var(--lkv-primary)' : 'var(--lkv-primary-soft)',
-          whiteSpace: 'nowrap',
-        }}
-      >
-        {destination.label.fr}
-      </span>
       {badge > 0 && <BadgeDot count={badge} />}
     </Link>
   );

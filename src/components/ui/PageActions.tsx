@@ -40,7 +40,7 @@ export function PageActions({
         ALIGN[align],
         fullWidth && '[&>*]:flex-1',
         variant === 'sticky' &&
-          'sticky bottom-0 z-[var(--z-sticky)] bg-[color:var(--lkv-surface)]/85 pb-[calc(var(--safe-bottom)+var(--space-3))] pt-[var(--space-3)] backdrop-blur-[var(--blur-lg)]',
+          'sticky bottom-[var(--nav-offset)] z-[var(--z-sticky)] bg-[color:var(--lkv-surface)]/85 pb-[var(--space-3)] pt-[var(--space-3)] backdrop-blur-[var(--blur-lg)]',
         className
       )}
     >

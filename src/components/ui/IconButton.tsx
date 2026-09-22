@@ -26,7 +26,7 @@ const VARIANT: Record<IconButtonVariant, string> = {
   glass:
     'bg-[color:var(--card-tint-strong)] text-[color:var(--card-content)] border border-[color:var(--glass-border)] backdrop-blur-[var(--blur-md)] hover:bg-[color:var(--lkv-hover-surface)]',
   solid:
-    'bg-[color:var(--lkv-action)] text-[color:var(--lkv-on-action)] hover:bg-[color:var(--lkv-action-hover)]',
+    'bg-[color:var(--btn-tint-action)] text-[color:var(--lkv-action)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] shadow-[var(--btn-rim)] hover:brightness-[1.05]',
 };
 
 /**

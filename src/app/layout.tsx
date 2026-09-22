@@ -68,10 +68,10 @@ export const viewport: Viewport = {
   viewportFit: 'cover',
   interactiveWidget: 'resizes-visual',
   // Direction P5 §6 : plus de verrouillage clair — les deux schémas sont déclarés.
-  colorScheme: 'light dark',
+  colorScheme: 'dark',
   themeColor: [
-    { media: '(prefers-color-scheme: light)', color: '#EDF1EA' },
-    { media: '(prefers-color-scheme: dark)', color: '#0B1510' },
+    { media: '(prefers-color-scheme: light)', color: '#0B1510' },
+    { media: '(prefers-color-scheme: dark)', color: '#08110C' },
   ],
 };
 
@@ -184,7 +184,7 @@ export default async function RootLayout({
           id="lkdv-theme-init"
           suppressHydrationWarning
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var t=window.localStorage.getItem('theme');var d=t==='dark'||(t!=='light'&&window.matchMedia('(prefers-color-scheme: dark)').matches);var r=document.documentElement;r.classList.toggle('dark',d);r.setAttribute('data-theme',d?'dark':'light');r.style.colorScheme=d?'dark':'light';}catch(e){}})();`,
+            __html: `(function(){try{var r=document.documentElement;r.classList.add('dark');r.setAttribute('data-theme','dark');r.style.colorScheme='dark';}catch(e){}})();`,
           }}
         />
         {/* Preload critical images for LCP optimization */}

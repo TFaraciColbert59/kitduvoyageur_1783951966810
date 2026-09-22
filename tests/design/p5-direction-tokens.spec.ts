@@ -101,11 +101,10 @@ describe('P5 — échelles espacements, rayons et typographie', () => {
 });
 
 describe('P5 — câblage du mode sombre et topographie', () => {
-  it('layout.tsx honore prefers-color-scheme et applique .dark (plus de verrou clair)', () => {
-    expect(layout).not.toContain("colorScheme: 'light'");
-    expect(layout).toContain('prefers-color-scheme: dark');
-    expect(layout).toContain("classList.toggle('dark'");
-    expect(layout).toContain("colorScheme: 'light dark'");
+  it('layout.tsx applique le thème sombre en permanence (fond image sombre unique)', () => {
+    expect(layout).toContain("classList.add('dark')");
+    expect(layout).toContain("colorScheme: 'dark'");
+    expect(layout).toContain("setAttribute('data-theme','dark')");
   });
 
   it('tailwind.css mappe le clair sur les tokens et ne fige plus de couleurs .dark', () => {
@@ -116,10 +115,12 @@ describe('P5 — câblage du mode sombre et topographie', () => {
     expect(tailwind).toContain('color-scheme: dark;');
   });
 
-  it('background LKDV Phase 2 : brume CSS en couches (halos + dégradé)', () => {
-    expect(tokens).toContain('--lkv-app-bg-glow-sage:');
-    expect(tokens).toContain('--lkv-app-bg-top:');
-    expect(tailwind).toContain('radial-gradient(120% 80% at 12% -10%, var(--lkv-app-bg-glow-sage)');
-    expect(tailwind).toContain('linear-gradient(180deg, var(--lkv-app-bg-top)');
+  it('background LKDV Phase 3 : toile unique portrait/paysage + voile', () => {
+    expect(tokens).toContain('--lkv-app-bg-image-portrait:');
+    expect(tokens).toContain('--lkv-app-bg-image-landscape:');
+    expect(tokens).toContain('--lkv-app-bg-scrim:');
+    expect(tailwind).toContain('var(--lkv-app-bg-image-portrait)');
+    expect(tailwind).toContain('@media (min-aspect-ratio: 1 / 1)');
+    expect(tailwind).toContain('var(--lkv-app-bg-image-landscape)');
   });
 });
