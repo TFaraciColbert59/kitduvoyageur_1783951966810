@@ -217,7 +217,7 @@ export default function CarnetHubCard({
               {avatarUrl ? (
                 <img
                   src={avatarUrl}
-                  alt=""
+                  alt={authorName}
                   className="h-6 w-6 shrink-0 rounded-full border border-[color:var(--lkv-primary)]/15 object-cover transition-transform group-hover/author:scale-105 motion-reduce:transition-none"
                 />
               ) : (

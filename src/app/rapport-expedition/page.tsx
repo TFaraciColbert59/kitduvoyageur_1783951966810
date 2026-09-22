@@ -480,7 +480,7 @@ export default function RapportExpeditionPage() {
                 { label: 'Budget total', value: totalBudgetDelta !== 0 ? `${totalBudgetDelta > 0 ? '+' : ''}${totalBudgetDelta}€` : '—', icon: 'BanknotesIcon', color: totalBudgetDelta > 0 ? 'text-[color:var(--lkv-danger)]' : 'text-[color:var(--lkv-success)]' },
                 { label: 'Équipements', value: userGear.length > 0 ? `${(totalWeight / 1000).toFixed(1)} kg` : '—', icon: 'ArchiveBoxIcon', color: 'text-[color:var(--lkv-primary)]' },
               ].map((stat) => (
-                <div key={stat.label} className="bg-white/5 border border-white/8 rounded-xl p-4">
+                <div key={stat.label} className="bg-white/5 border border-white/8 rounded-[var(--lkv-radius-md)] p-4">
                   <div className="flex items-center gap-2 mb-2">
                     <Icon name={stat.icon as never} size={14} variant="outline" className={stat.color} />
                     <span className="text-xs text-white/40">{stat.label}</span>
@@ -513,7 +513,7 @@ export default function RapportExpeditionPage() {
           <section className="px-4 py-6">
             <div className="max-w-5xl mx-auto">
               {savedSuccess && (
-                <div className="mb-4 flex items-center gap-3 rounded-xl border border-[color:var(--lkv-success)]/30 bg-[color:var(--lkv-success-bg)] px-4 py-3 text-[length:var(--lkv-text-footnote)] text-[color:var(--lkv-primary)]">
+                <div className="mb-4 flex items-center gap-3 rounded-[var(--lkv-radius-md)] border border-[color:var(--lkv-success)]/30 bg-[color:var(--lkv-success-bg)] px-4 py-3 text-[length:var(--lkv-text-footnote)] text-[color:var(--lkv-primary)]">
                   <Icon name="CheckCircleIcon" size={16} variant="outline" />
                   Rapport créé avec succès ! +75 points fidélité gagnés.
                 </div>
@@ -537,7 +537,7 @@ export default function RapportExpeditionPage() {
                 </div>
               ) : loadingReports ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-                  {[1, 2, 3].map((i) => <div key={i} className="h-64 rounded-2xl bg-white/5 animate-pulse" />)}
+                  {[1, 2, 3].map((i) => <div key={i} className="h-64 rounded-[var(--lkv-radius-lg)] bg-white/5 animate-pulse" />)}
                 </div>
               ) : reports.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-16 text-white/40 gap-4">
@@ -558,7 +558,7 @@ export default function RapportExpeditionPage() {
                   {reports.map((report) => (
                     <div
                       key={report.id}
-                      className="bg-card border border-border rounded-2xl overflow-hidden hover:border-cyan-500/20 transition-all cursor-pointer group"
+                      className="bg-card border border-border rounded-[var(--lkv-radius-lg)] overflow-hidden hover:border-cyan-500/20 transition-all cursor-pointer group"
                       onClick={() => setSelectedReport(report)}
                     >
                       <div className="relative h-44">
@@ -575,7 +575,7 @@ export default function RapportExpeditionPage() {
                       </div>
                       <div className="p-4 flex items-center justify-between">
                         <div className="flex items-center gap-2">
-                          <div className="w-10 h-10 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center">
+                          <div className="w-10 h-10 rounded-[var(--lkv-radius-md)] bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center">
                             <span className="font-display font-700 text-cyan-400 text-sm">{report.score}</span>
                           </div>
                           <span className="text-xs text-white/40">Score global</span>
@@ -603,9 +603,9 @@ export default function RapportExpeditionPage() {
         {activeTab === 'ia' && (
           <section className="px-4 py-6">
             <div className="max-w-3xl mx-auto">
-              <div className="bg-card border border-cyan-500/20 rounded-2xl overflow-hidden">
+              <div className="bg-card border border-cyan-500/20 rounded-[var(--lkv-radius-lg)] overflow-hidden">
                 <div className="flex items-center gap-3 p-4 border-b border-border bg-gradient-to-r from-cyan-500/5 to-transparent">
-                  <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-cyan-500 to-primary flex items-center justify-center">
+                  <div className="w-9 h-9 rounded-[var(--lkv-radius-md)] bg-gradient-to-br from-cyan-500 to-primary flex items-center justify-center">
                     <Icon name="SparklesIcon" size={16} variant="outline" className="text-white" />
                   </div>
                   <div>
@@ -622,21 +622,21 @@ export default function RapportExpeditionPage() {
                 <div className="p-5 border-b border-border bg-white/2">
                   <p className="text-xs text-white/40 mb-3 uppercase tracking-wider font-mono">Contexte de votre profil</p>
                   <div className="grid grid-cols-3 gap-3">
-                    <div className="bg-white/5 rounded-xl p-3 text-center">
+                    <div className="bg-white/5 rounded-[var(--lkv-radius-md)] p-3 text-center">
                       <p className="font-display font-700 text-xl text-cyan-400">{reports.length}</p>
                       <p className="text-[10px] text-white/40">Expéditions</p>
                     </div>
-                    <div className="bg-white/5 rounded-xl p-3 text-center">
+                    <div className="bg-white/5 rounded-[var(--lkv-radius-md)] p-3 text-center">
                       <p className="font-display font-700 text-xl text-sand-400">{avgScore > 0 ? `${avgScore}/100` : '—'}</p>
                       <p className="text-[10px] text-white/40">Score moyen</p>
                     </div>
-                    <div className="bg-white/5 rounded-xl p-3 text-center">
+                    <div className="bg-white/5 rounded-[var(--lkv-radius-md)] p-3 text-center">
                       <p className="font-display font-700 text-xl text-white">{userGear.length}</p>
                       <p className="text-[10px] text-white/40">Équipements</p>
                     </div>
                   </div>
                   {reports.length === 0 && (
-                    <div className="mt-3 p-3 bg-sand-500/10 border border-sand-500/20 rounded-xl">
+                    <div className="mt-3 p-3 bg-[color:var(--lkv-sand-500)]/10 border border-[color:var(--lkv-sand-500)]/20 rounded-[var(--lkv-radius-md)]">
                       <p className="text-xs text-sand-400">💡 Créez votre premier rapport d&apos;expédition pour obtenir une analyse personnalisée.</p>
                     </div>
                   )}
@@ -647,20 +647,20 @@ export default function RapportExpeditionPage() {
                   <div className="p-5 space-y-4 max-h-80 overflow-y-auto border-b border-border">
                     {chatMessages.map((msg, i) => (
                       <div key={i} className={`flex gap-3 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
-                        <div className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 ${msg.role === 'user' ? 'bg-primary' : 'bg-cyan-500/20'}`}>
+                        <div className={`w-7 h-7 rounded-[var(--lkv-radius-sm)] flex items-center justify-center flex-shrink-0 ${msg.role === 'user' ? 'bg-primary' : 'bg-cyan-500/20'}`}>
                           <Icon name={msg.role === 'user' ? 'UserIcon' : 'SparklesIcon'} size={12} variant="outline" className={msg.role === 'user' ? 'text-white' : 'text-cyan-400'} />
                         </div>
-                        <div className={`max-w-[80%] px-4 py-2.5 rounded-xl text-sm ${msg.role === 'user' ? 'bg-primary/20 text-white' : 'bg-white/5 text-white/80'}`}>
+                        <div className={`max-w-[80%] px-4 py-2.5 rounded-[var(--lkv-radius-md)] text-sm ${msg.role === 'user' ? 'bg-primary/20 text-white' : 'bg-white/5 text-white/80'}`}>
                           {msg.content}
                         </div>
                       </div>
                     ))}
                     {isLoading && (
                       <div className="flex gap-3">
-                        <div className="w-7 h-7 rounded-lg bg-cyan-500/20 flex items-center justify-center">
+                        <div className="w-7 h-7 rounded-[var(--lkv-radius-sm)] bg-cyan-500/20 flex items-center justify-center">
                           <Icon name="SparklesIcon" size={12} variant="outline" className="text-cyan-400" />
                         </div>
-                        <div className="px-4 py-2.5 rounded-xl bg-white/5 flex items-center gap-1">
+                        <div className="px-4 py-2.5 rounded-[var(--lkv-radius-md)] bg-white/5 flex items-center gap-1">
                           <span className="w-1.5 h-1.5 bg-cyan-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
                           <span className="w-1.5 h-1.5 bg-cyan-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
                           <span className="w-1.5 h-1.5 bg-cyan-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
@@ -680,7 +680,7 @@ export default function RapportExpeditionPage() {
                       onChange={(e) => setUserInput(e.target.value)}
                       onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleSend()}
                       placeholder="Posez une question sur vos expéditions..."
-                      className="flex-1 bg-dark-bg border border-border rounded-xl px-4 py-2.5 text-sm text-white placeholder-white/30 focus:outline-none focus:border-cyan-500/50"
+                      className="flex-1 bg-dark-bg border border-border rounded-[var(--lkv-radius-md)] px-4 py-2.5 text-sm text-white placeholder-white/30 focus:outline-none focus:border-cyan-500/50"
                     />
                     <IconButton
                       onClick={handleSend}

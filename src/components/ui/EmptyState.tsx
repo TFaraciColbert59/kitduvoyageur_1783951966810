@@ -30,7 +30,7 @@ export function EmptyState({
     <button
       type="button"
       onClick={onAction}
-      className={`inline-flex items-center gap-2 bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] text-[color:var(--lkv-text-primary)] font-semibold rounded-xl hover:brightness-[1.05] active:scale-[0.97] transition-all duration-150 min-h-[44px] shadow-sm ${
+      className={`inline-flex items-center gap-2 bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] text-[color:var(--lkv-text-primary)] font-semibold rounded-[var(--lkv-radius-md)] hover:brightness-[1.05] active:scale-[0.97] transition-all duration-150 min-h-[44px] shadow-sm ${
         compact ? 'px-4 py-2 text-xs' : 'px-5 py-2.5 text-xs sm:text-sm'
       }`}
     >
@@ -70,7 +70,7 @@ export function EmptyState({
       {icon ? (
         <div className="mb-4 text-lkv-secondary flex items-center justify-center">{icon}</div>
       ) : (
-        <div className="mb-4 w-14 h-14 rounded-2xl bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] shadow-[var(--btn-rim)] border border-lkv-primary/10 flex items-center justify-center text-lkv-secondary">
+        <div className="mb-4 w-14 h-14 rounded-[var(--lkv-radius-lg)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] shadow-[var(--btn-rim)] border border-lkv-primary/10 flex items-center justify-center text-lkv-secondary">
           <Icon name="compass" className="w-7 h-7" />
         </div>
       )}
@@ -103,7 +103,7 @@ export function ErrorState({
     <div
       className={`flex flex-col items-center justify-center py-12 px-6 text-center ${className}`}
     >
-      <div className="mb-4 w-14 h-14 rounded-2xl bg-rose-50 border border-rose-200/80 flex items-center justify-center text-rose-600">
+      <div className="mb-4 w-14 h-14 rounded-[var(--lkv-radius-lg)] bg-[color:var(--lkv-danger-bg)] border border-[color:var(--lkv-danger)]/30 flex items-center justify-center text-[color:var(--lkv-danger)]">
         <Icon name="alert-triangle" className="w-7 h-7" />
       </div>
       <h3 className="text-base font-bold text-lkv-primary mb-1.5">{title}</h3>
@@ -114,7 +114,7 @@ export function ErrorState({
         <button
           type="button"
           onClick={onRetry}
-          className="inline-flex items-center gap-2 px-5 py-2.5 bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] text-[color:var(--lkv-text-primary)] text-xs sm:text-sm font-semibold rounded-xl hover:brightness-[1.05] active:scale-[0.97] transition-all duration-150 min-h-[44px] shadow-sm"
+          className="inline-flex items-center gap-2 px-5 py-2.5 bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] text-[color:var(--lkv-text-primary)] text-xs sm:text-sm font-semibold rounded-[var(--lkv-radius-md)] hover:brightness-[1.05] active:scale-[0.97] transition-all duration-150 min-h-[44px] shadow-sm"
         >
           <Icon name="rotate-ccw" className="w-4 h-4" />
           <span>Réessayer</span>

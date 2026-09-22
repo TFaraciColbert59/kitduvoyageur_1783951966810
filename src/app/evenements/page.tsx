@@ -121,7 +121,7 @@ function EventDetailModal({
         role="dialog"
         aria-modal="true"
         aria-label={event.title}
-        className="glass rounded-2xl w-full max-w-2xl my-4 overflow-hidden"
+        className="glass rounded-[var(--lkv-radius-lg)] w-full max-w-2xl my-4 overflow-hidden"
       >
         {/* Cover */}
         <div className="relative h-56 overflow-hidden">
@@ -162,8 +162,8 @@ function EventDetailModal({
           <div className="p-6 space-y-5">
             {/* Organizer */}
             {event.organizer && (
-              <div className="flex items-center gap-4 p-4 glass-sub-card rounded-xl">
-                <div className="w-12 h-12 rounded-xl bg-sage-700 text-white flex items-center justify-center text-lg font-700 flex-shrink-0">
+              <div className="flex items-center gap-4 p-4 glass-sub-card rounded-[var(--lkv-radius-md)]">
+                <div className="w-12 h-12 rounded-[var(--lkv-radius-md)] bg-[color:var(--lkv-action)] text-[color:var(--lkv-on-action)] flex items-center justify-center text-lg font-700 flex-shrink-0">
                   {event.organizer.full_name?.slice(0, 2).toUpperCase() ?? 'OR'}
                 </div>
                 <div className="flex-1">
@@ -173,19 +173,19 @@ function EventDetailModal({
                 </div>
                 <div className="flex flex-col items-center">
                   <TrustRing score={event.organizer.trust_score ?? 70} size={48} />
-                  <p className="text-[9px] text-muted-foreground mt-1">Trust Score</p>
+                  <p className="text-[length:var(--lkv-text-caption-2)] text-muted-foreground mt-1">Trust Score</p>
                 </div>
               </div>
             )}
 
             {/* Date & location */}
             <div className="grid grid-cols-2 gap-3">
-              <div className="p-4 glass-sub-card rounded-xl">
+              <div className="p-4 glass-sub-card rounded-[var(--lkv-radius-md)]">
                 <p className="text-[10px] text-muted-foreground uppercase tracking-wide font-600 mb-1.5">📅 Date</p>
                 <p className="font-700 text-foreground text-sm">{event.event_date ? formatDate(event.event_date) : '—'}</p>
                 <p className="text-xs text-muted-foreground mt-0.5">{event.duration}</p>
               </div>
-              <div className="p-4 glass-sub-card rounded-xl">
+              <div className="p-4 glass-sub-card rounded-[var(--lkv-radius-md)]">
                 <p className="text-[10px] text-muted-foreground uppercase tracking-wide font-600 mb-1.5">📍 Lieu</p>
                 <p className="font-700 text-foreground text-sm">{event.location}</p>
                 <p className="text-xs text-muted-foreground mt-0.5">{event.country}</p>
@@ -193,7 +193,7 @@ function EventDetailModal({
             </div>
 
             {/* Spots */}
-            <div className="p-4 glass-sub-card rounded-xl">
+            <div className="p-4 glass-sub-card rounded-[var(--lkv-radius-md)]">
               <div className="flex items-center justify-between mb-2">
                 <p className="text-[10px] text-muted-foreground uppercase tracking-wide font-600">Places disponibles</p>
                 <span className={`text-xs font-700 ${spotsLeft <= 2 ? 'text-[color:var(--lkv-danger)]' : 'text-[color:var(--lkv-secondary)]'}`}>
@@ -239,7 +239,7 @@ function EventDetailModal({
                 <p className="text-[10px] text-muted-foreground mt-1">{kittyPct}% collecté</p>
               </div>
               {showKitty && event.expenses && event.expenses.length > 0 && (
-                <div className="mt-3 space-y-2 p-4 glass-sub-card rounded-xl">
+                <div className="mt-3 space-y-2 p-4 glass-sub-card rounded-[var(--lkv-radius-md)]">
                   <p className="text-[10px] text-muted-foreground uppercase tracking-wide font-600 mb-2">Détail des dépenses</p>
                   {event.expenses.map((exp) => (
                     <div key={exp.id} className="flex items-center justify-between text-sm">
@@ -315,7 +315,7 @@ function EventCard({ event, onToggleRegister, onViewDetail }: { event: Event; on
           <p className="text-white/60 text-xs mt-1">{event.location} · {event.duration}</p>
         </div>
         <div className="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity bg-black/20">
-          <div className="bg-white/20 backdrop-blur-sm rounded-xl px-4 py-2 flex items-center gap-2">
+          <div className="bg-[color:var(--glass-bg-medium)] backdrop-blur-sm rounded-[var(--lkv-radius-md)] px-4 py-2 flex items-center gap-2">
             <Icon name="EyeIcon" size={16} className="text-white" />
             <span className="text-white text-sm font-600">Voir les détails</span>
           </div>
@@ -324,8 +324,8 @@ function EventCard({ event, onToggleRegister, onViewDetail }: { event: Event; on
 
       <div className="p-5">
         {event.organizer && (
-          <div className="flex items-center gap-3 mb-4 p-3 glass-sub-card rounded-xl">
-            <div className="w-9 h-9 rounded-xl bg-sage-700 text-white flex items-center justify-center text-sm font-700 flex-shrink-0">
+          <div className="flex items-center gap-3 mb-4 p-3 glass-sub-card rounded-[var(--lkv-radius-md)]">
+            <div className="w-9 h-9 rounded-[var(--lkv-radius-md)] bg-[color:var(--lkv-action)] text-[color:var(--lkv-on-action)] flex items-center justify-center text-sm font-700 flex-shrink-0">
               {event.organizer.full_name?.slice(0, 2).toUpperCase() ?? 'OR'}
             </div>
             <div className="flex-1 min-w-0">
@@ -334,7 +334,7 @@ function EventCard({ event, onToggleRegister, onViewDetail }: { event: Event; on
             </div>
             <div className="flex flex-col items-center">
               <TrustRing score={event.organizer.trust_score ?? 70} size={40} />
-              <p className="text-[9px] text-muted-foreground mt-0.5">Trust Score</p>
+              <p className="text-[length:var(--lkv-text-caption-2)] text-muted-foreground mt-0.5">Trust Score</p>
             </div>
           </div>
         )}
@@ -342,12 +342,12 @@ function EventCard({ event, onToggleRegister, onViewDetail }: { event: Event; on
         <p className="text-sm text-muted-foreground mb-4 leading-relaxed line-clamp-2">{event.description}</p>
 
         <div className="grid grid-cols-2 gap-3 mb-4">
-          <div className="glass-sub-card rounded-xl p-3">
+          <div className="glass-sub-card rounded-[var(--lkv-radius-md)] p-3">
             <p className="text-[10px] text-muted-foreground uppercase tracking-wide font-600 mb-1">Date</p>
             <p className="font-display font-700 text-foreground text-sm">{formatDate(event.event_date)}</p>
             <p className="text-xs text-muted-foreground">{event.duration}</p>
           </div>
-          <div className="glass-sub-card rounded-xl p-3">
+          <div className="glass-sub-card rounded-[var(--lkv-radius-md)] p-3">
             <p className="text-[10px] text-muted-foreground uppercase tracking-wide font-600 mb-1">Places</p>
             <p className="font-display font-700 text-foreground text-sm">{event.current_participants}/{event.max_participants}</p>
             <p className={`text-xs ${spotsLeft <= 2 ? 'text-[color:var(--lkv-danger)]' : 'text-muted-foreground'}`}>
@@ -378,7 +378,7 @@ function EventCard({ event, onToggleRegister, onViewDetail }: { event: Event; on
             <p className="text-[10px] text-muted-foreground mt-1">{kittyPct}% collecté</p>
           </div>
           {showKitty && event.expenses && (
-            <div className="mt-3 space-y-2 p-3 glass-sub-card rounded-xl">
+            <div className="mt-3 space-y-2 p-3 glass-sub-card rounded-[var(--lkv-radius-md)]">
               {event.expenses.map((exp) => (
                 <div key={exp.id} className="flex items-center justify-between text-xs">
                   <div className="flex items-center gap-2">
@@ -459,11 +459,11 @@ function MobileEventCard({ event, onToggleRegister, onViewDetail }: { event: Eve
       <div className="p-[var(--space-3)]">
         <div className="mb-2.5 flex gap-[var(--space-2)]">
           <div className="glass-sub-card flex-1 rounded-[var(--lkv-radius-xs)] p-[var(--space-2)]">
-            <p className="m-0 mb-0.5 text-[9px] font-semibold uppercase tracking-[0.05em] text-[color:var(--lkv-text-secondary)]">Date</p>
+            <p className="m-0 mb-0.5 text-[length:var(--lkv-text-caption-2)] font-semibold uppercase tracking-[0.05em] text-[color:var(--lkv-text-secondary)]">Date</p>
             <p className="m-0 text-[13px] font-bold text-[color:var(--lkv-primary)]">{formatDate(event.event_date)}</p>
           </div>
           <div className="glass-sub-card flex-1 rounded-[var(--lkv-radius-xs)] p-[var(--space-2)]">
-            <p className="m-0 mb-0.5 text-[9px] font-semibold uppercase tracking-[0.05em] text-[color:var(--lkv-text-secondary)]">Places</p>
+            <p className="m-0 mb-0.5 text-[length:var(--lkv-text-caption-2)] font-semibold uppercase tracking-[0.05em] text-[color:var(--lkv-text-secondary)]">Places</p>
             <p className="m-0 text-[13px] font-bold text-[color:var(--lkv-primary)]">{event.current_participants}/{event.max_participants}</p>
           </div>
         </div>
@@ -600,7 +600,7 @@ export default function EvenementsPage() {
 
   const desktopContent = (
     <div className="pt-16 lg:pt-18">
-      <section className="bg-dark-bg text-white py-14 px-4 relative overflow-hidden">
+      <section className="bg-[color:var(--lkv-primary)] text-[color:var(--lkv-text-inverted)] py-14 px-4 relative overflow-hidden">
         <div className="absolute inset-0 opacity-10 pointer-events-none">
           <div className="absolute top-0 right-0 w-96 h-96 rounded-full bg-secondary blur-3xl" />
         </div>
@@ -627,7 +627,7 @@ export default function EvenementsPage() {
         </div>
       </section>
 
-      <section className="sticky top-16 z-30 bg-background/95 backdrop-blur-md border-b border-border">
+      <section className="sticky top-16 z-30 bg-[color:var(--lkv-surface)]/95 backdrop-blur-md border-b border-[color:var(--lkv-border)]">
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex items-center gap-1 py-3 overflow-x-auto scrollbar-hide">
             {[
@@ -650,7 +650,7 @@ export default function EvenementsPage() {
       </section>
 
       <div className="max-w-7xl mx-auto px-4 py-10">
-        {error && <div className="mb-6 p-4 bg-[color:var(--lkv-danger)]/10 border border-[color:var(--lkv-danger)]/30 rounded-xl text-[color:var(--lkv-danger)] text-sm">{error}</div>}
+        {error && <div className="mb-6 p-4 bg-[color:var(--lkv-danger)]/10 border border-[color:var(--lkv-danger)]/30 rounded-[var(--lkv-radius-md)] text-[color:var(--lkv-danger)] text-sm">{error}</div>}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2">
@@ -718,8 +718,8 @@ export default function EvenementsPage() {
       <div className="relative mb-[var(--space-4)] overflow-hidden rounded-[var(--lkv-radius-sm)] bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn p-[var(--space-5)] text-[color:var(--lkv-text-primary)]">
         <div className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-[rgba(23,64,44,0.30)]" />
         <div className="mb-[var(--space-2)] flex items-center gap-[var(--space-2)]">
-          <span className="rounded-[var(--lkv-radius-xs)] border border-[rgba(166,193,160,0.3)] bg-[rgba(166,193,160,0.2)] px-2 py-0.5 text-[9px] font-bold text-[color:var(--sage-400)]">COMMUNAUTE</span>
-          <span className="font-mono text-[9px] text-white/50">EVENEMENTS</span>
+          <span className="rounded-[var(--lkv-radius-xs)] border border-[rgba(166,193,160,0.3)] bg-[rgba(166,193,160,0.2)] px-2 py-0.5 text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--sage-400)]">COMMUNAUTE</span>
+          <span className="font-mono text-[length:var(--lkv-text-caption-2)] text-white/50">EVENEMENTS</span>
         </div>
         <h1 className="mb-1 font-display text-[20px] font-extrabold text-[color:var(--lkv-text-inverted)]">
           Sorties organisees
@@ -780,7 +780,7 @@ export default function EvenementsPage() {
     <>
       {/* ── DESKTOP ── */}
       <div className="hidden md:block">
-        <main className="h-dvh overflow-hidden bg-background flex flex-col">
+        <main className="h-dvh overflow-hidden bg-[color:var(--lkv-surface)] flex flex-col">
           <Header />
           <div className="flex-1 min-h-0 overflow-y-auto">
             {desktopContent}
@@ -800,7 +800,7 @@ export default function EvenementsPage() {
       {/* Shared: Create event modal */}
       {showCreateModal && (
         <div className="fixed inset-0 z-[var(--z-modal)] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
-          <div role="dialog" aria-modal="true" aria-label="Organiser une sortie" className="glass rounded-2xl p-6 max-w-lg w-full my-4">
+          <div role="dialog" aria-modal="true" aria-label="Organiser une sortie" className="glass rounded-[var(--lkv-radius-lg)] p-6 max-w-lg w-full my-4">
             <div className="flex items-center justify-between mb-5">
               <h2 className="font-display font-700 text-foreground text-lg">Organiser une sortie</h2>
               <button onClick={() => setShowCreateModal(false)} aria-label="Fermer" className="glass-circle-btn !w-11 !h-11 !min-w-11 !min-h-11">

@@ -76,7 +76,7 @@ export default function ClubTeamCard({
                     {admin.user?.avatar_url ? (
                       <img
                         src={admin.user.avatar_url}
-                        alt=""
+                        alt={admin.user?.full_name || 'Administrateur du club'}
                         className="h-full w-full object-cover"
                       />
                     ) : (

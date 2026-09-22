@@ -228,7 +228,7 @@ export default function ClubsTab({ profile }: { profile?: any }) {
     <div className="space-y-8 pb-16 font-sans text-[color:var(--lkv-primary)]">
       {/* Toast Notification */}
       {toast && (
-        <div className="fixed bottom-6 right-6 z-[var(--z-toast)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] text-[color:var(--lkv-text-primary)] px-5 py-3 rounded-full flex items-center gap-3 text-sm font-semibold border border-white/20 shadow-lg animate-fade-in">
+        <div className="fixed bottom-[calc(var(--nav-offset)+var(--space-4))] right-[var(--space-4)] z-[var(--z-toast)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] text-[color:var(--lkv-text-primary)] px-5 py-3 rounded-full flex items-center gap-3 text-sm font-semibold border border-white/20 shadow-lg animate-fade-in">
           <span className="w-2 h-2 rounded-full bg-[color:var(--sage-300)] animate-ping" />
           {toast}
         </div>
@@ -410,10 +410,10 @@ export default function ClubsTab({ profile }: { profile?: any }) {
               <div
                 key={club.id}
                 onClick={() => router.push(`/clubs/${club.slug}`)}
-                className="rounded-[var(--lkv-radius-md)] border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] backdrop-blur-[var(--blur-md)] p-4 border border-white/40 hover:bg-white/80 transition-all cursor-pointer flex flex-col justify-between group"
+                className="rounded-[var(--lkv-radius-md)] border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] backdrop-blur-[var(--blur-md)] p-4 border border-white/40 hover:bg-[color:var(--lkv-hover-surface)] transition-all cursor-pointer flex flex-col justify-between group"
               >
                 <div className="flex items-start gap-3.5">
-                  <div className="w-12 h-12 rounded-xl overflow-hidden relative shrink-0 border border-white bg-[color:var(--btn-tint)]">
+                  <div className="w-12 h-12 rounded-[var(--lkv-radius-md)] overflow-hidden relative shrink-0 border border-white bg-[color:var(--btn-tint)]">
                     <Image src={club.coverUrl || '/assets/images/no_image.png'} alt={club.name} fill className="object-cover group-hover:scale-105 transition-transform" />
                   </div>
                   <div className="min-w-0 flex-1">
@@ -513,7 +513,7 @@ export default function ClubsTab({ profile }: { profile?: any }) {
               {discoveryClubs.map((disc) => (
                 <div key={disc.id} className="rounded-[var(--lkv-radius-md)] border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] backdrop-blur-[var(--blur-md)] flex items-center justify-between gap-3 p-2 border border-white/40">
                   <div className="flex items-center gap-2.5 min-w-0">
-                    <div className="w-8 h-8 rounded-lg overflow-hidden relative shrink-0 bg-[color:var(--btn-tint)]">
+                    <div className="w-8 h-8 rounded-[var(--lkv-radius-sm)] overflow-hidden relative shrink-0 bg-[color:var(--btn-tint)]">
                       <Image src={disc.imageUrl || '/assets/images/no_image.png'} alt={disc.name} fill className="object-cover" />
                     </div>
                     <div className="min-w-0">

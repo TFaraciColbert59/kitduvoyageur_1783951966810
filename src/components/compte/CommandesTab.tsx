@@ -391,12 +391,12 @@ export default function CommandesTab({ profile }: CommandesTabProps) {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         <div className="lg:col-span-8 space-y-6">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="bg-[color:var(--card-tint-strong)] border border-[color:var(--glass-border)] shadow-elevation-1 backdrop-blur-[var(--blur-lg)] rounded-2xl h-48 animate-pulse" />
+            <div key={i} className="bg-[color:var(--card-tint-strong)] border border-[color:var(--glass-border)] shadow-elevation-1 backdrop-blur-[var(--blur-lg)] rounded-[var(--lkv-radius-lg)] h-48 animate-pulse" />
           ))}
         </div>
         <div className="lg:col-span-4 space-y-4">
           {[1, 2].map((i) => (
-            <div key={i} className="bg-[color:var(--card-tint-strong)] border border-[color:var(--glass-border)] shadow-elevation-1 backdrop-blur-[var(--blur-lg)] rounded-2xl h-52 animate-pulse" />
+            <div key={i} className="bg-[color:var(--card-tint-strong)] border border-[color:var(--glass-border)] shadow-elevation-1 backdrop-blur-[var(--blur-lg)] rounded-[var(--lkv-radius-lg)] h-52 animate-pulse" />
           ))}
         </div>
       </div>
@@ -456,7 +456,7 @@ export default function CommandesTab({ profile }: CommandesTabProps) {
 
           {/* If no active orders but have history */}
           {activeOrders.length === 0 && enrichedOrders.length > 0 && (
-            <div className="bg-[color:var(--card-tint-strong)] border border-[color:var(--glass-border)] shadow-elevation-1 backdrop-blur-[var(--blur-lg)] rounded-2xl p-8 text-center space-y-2">
+            <div className="bg-[color:var(--card-tint-strong)] border border-[color:var(--glass-border)] shadow-elevation-1 backdrop-blur-[var(--blur-lg)] rounded-[var(--lkv-radius-lg)] p-8 text-center space-y-2">
               <p className="text-3xl">📦</p>
               <h4 className="font-display font-bold text-[color:var(--lkv-primary)] text-lg">Aucune commande en cours</h4>
               <p className="text-xs text-[color:var(--lkv-text-muted)]">Toutes vos commandes ont été livrées.</p>
@@ -663,7 +663,7 @@ export default function CommandesTab({ profile }: CommandesTabProps) {
 
             <div className="space-y-4 mb-4">
               {cards.map((card) => (
-                <div key={card.id} className="w-full aspect-[1.7] bg-gradient-to-br from-[color:var(--lkv-primary)] to-[color:var(--lkv-forest-600)] rounded-2xl p-5 text-white relative overflow-hidden border border-white/10 shadow-md">
+                <div key={card.id} className="w-full aspect-[1.7] bg-gradient-to-br from-[color:var(--lkv-primary)] to-[color:var(--lkv-forest-600)] rounded-[var(--lkv-radius-lg)] p-5 text-white relative overflow-hidden border border-white/10 shadow-md">
                   <div className="absolute -right-6 -top-6 w-24 h-24 bg-white/5 rounded-full blur-2xl pointer-events-none" />
 
                   {/* Chip */}
@@ -734,7 +734,7 @@ export default function CommandesTab({ profile }: CommandesTabProps) {
 
       {/* Global Toast */}
       {toast && (
-        <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[var(--z-toast)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] text-[color:var(--lkv-text-primary)] px-6 py-3 rounded-full text-xs font-bold shadow-lg animate-fade-in flex items-center gap-2 border border-white/20">
+        <div className="fixed bottom-[calc(var(--nav-offset)+var(--space-4))] left-1/2 -translate-x-1/2 z-[var(--z-toast)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] text-[color:var(--lkv-text-primary)] px-6 py-3 rounded-full text-xs font-bold shadow-lg animate-fade-in flex items-center gap-2 border border-white/20">
           <Icon name="CheckIcon" size={14} />
           <span>{toast}</span>
         </div>
@@ -804,7 +804,7 @@ function ActiveOrderCard({
           <div className="flex-1 space-y-3">
             {displayItems.map((item, i) => (
               <div key={i} className="rounded-[var(--lkv-radius-md)] border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] backdrop-blur-[var(--blur-md)] p-3 flex items-center gap-4">
-                <div className="w-14 h-14 bg-white/60 rounded-xl overflow-hidden shrink-0 border border-[color:var(--lkv-primary)]/5">
+                <div className="w-14 h-14 bg-white/60 rounded-[var(--lkv-radius-md)] overflow-hidden shrink-0 border border-[color:var(--lkv-primary)]/5">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={item.image || '/assets/images/no_image.png'}
@@ -926,7 +926,7 @@ function HistoryOrderRow({
   return (
     <div className="rounded-[var(--lkv-radius-md)] border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] backdrop-blur-[var(--blur-md)] p-3 flex items-center gap-4 group">
       {/* Product image */}
-      <div className="w-12 h-12 bg-[color:var(--glass-bg-medium)] rounded-xl overflow-hidden shrink-0 border border-[color:var(--glass-border)]">
+      <div className="w-12 h-12 bg-[color:var(--glass-bg-medium)] rounded-[var(--lkv-radius-md)] overflow-hidden shrink-0 border border-[color:var(--glass-border)]">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={firstItem?.image || 'https://images.unsplash.com/photo-1544441893-675973e31985?auto=format&fit=crop&w=200&q=80'}
@@ -1118,7 +1118,7 @@ function CardModal({
       <div className="space-y-6">
 
         {/* Visual Preview */}
-        <div className="w-full aspect-[1.7] bg-gradient-to-br from-[color:var(--lkv-primary)] to-[color:var(--lkv-forest-600)] rounded-2xl p-5 text-white relative overflow-hidden shadow-md border border-white/10">
+        <div className="w-full aspect-[1.7] bg-gradient-to-br from-[color:var(--lkv-primary)] to-[color:var(--lkv-forest-600)] rounded-[var(--lkv-radius-lg)] p-5 text-white relative overflow-hidden shadow-md border border-white/10">
           <div className="absolute -right-6 -top-6 w-24 h-24 bg-white/5 rounded-full blur-2xl pointer-events-none" />
           <div className="w-10 h-7 bg-gradient-to-br from-[color:var(--sand-300)] to-[color:var(--sand-400)] rounded-sm mb-5" />
           <div className="font-mono text-base tracking-[0.15em] mb-4 text-white">

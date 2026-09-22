@@ -251,7 +251,7 @@ export default function ComptePage() {
 
       {/* Global Toast */}
       {toast && (
-        <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[var(--z-toast)] bg-[var(--lkv-primary)] text-white px-6 py-3 rounded-full text-xs font-extrabold animate-fade-in-up flex items-center gap-2 border border-white/20 shadow-2xl">
+        <div className="fixed bottom-[calc(var(--nav-offset)+var(--space-4))] left-1/2 -translate-x-1/2 z-[var(--z-toast)] bg-[var(--lkv-primary)] text-white px-6 py-3 rounded-full text-xs font-extrabold animate-fade-in-up flex items-center gap-2 border border-white/20 shadow-2xl">
           <span>{toast}</span>
         </div>
       )}

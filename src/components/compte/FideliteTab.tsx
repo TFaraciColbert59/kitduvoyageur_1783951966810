@@ -481,7 +481,7 @@ export default function FideliteTab({ profile: initialProfile }: FideliteTabProp
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {modalBadges.map((badge) => (
                 <div key={badge.id} className="rounded-[var(--lkv-radius-md)] border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] backdrop-blur-[var(--blur-md)] p-5 flex gap-4 items-start">
-                  <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 text-2xl ${badge.is_unlocked ? 'bg-white/60 border border-[color:var(--lkv-primary)]/10' : 'bg-black/5 opacity-50 grayscale'}`}>
+                  <div className={`w-14 h-14 rounded-[var(--lkv-radius-lg)] flex items-center justify-center shrink-0 text-2xl ${badge.is_unlocked ? 'bg-white/60 border border-[color:var(--lkv-primary)]/10' : 'bg-black/5 opacity-50 grayscale'}`}>
                     {badge.is_unlocked ? '🏆' : '🔒'}
                   </div>
                   <div className="flex-1 min-w-0">
@@ -533,10 +533,10 @@ export default function FideliteTab({ profile: initialProfile }: FideliteTabProp
       <div className="animate-pulse space-y-6">
         <div className="h-44 bg-[color:var(--card-tint-strong)] border border-[color:var(--glass-border)] shadow-elevation-1 backdrop-blur-[var(--blur-lg)] rounded-[var(--lkv-radius-md)]" />
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="h-28 bg-[color:var(--card-tint-strong)] border border-[color:var(--glass-border)] shadow-elevation-1 backdrop-blur-[var(--blur-lg)] rounded-2xl" />
-          <div className="h-28 bg-[color:var(--card-tint-strong)] border border-[color:var(--glass-border)] shadow-elevation-1 backdrop-blur-[var(--blur-lg)] rounded-2xl" />
-          <div className="h-28 bg-[color:var(--card-tint-strong)] border border-[color:var(--glass-border)] shadow-elevation-1 backdrop-blur-[var(--blur-lg)] rounded-2xl" />
-          <div className="h-28 bg-[color:var(--card-tint-strong)] border border-[color:var(--glass-border)] shadow-elevation-1 backdrop-blur-[var(--blur-lg)] rounded-2xl" />
+          <div className="h-28 bg-[color:var(--card-tint-strong)] border border-[color:var(--glass-border)] shadow-elevation-1 backdrop-blur-[var(--blur-lg)] rounded-[var(--lkv-radius-lg)]" />
+          <div className="h-28 bg-[color:var(--card-tint-strong)] border border-[color:var(--glass-border)] shadow-elevation-1 backdrop-blur-[var(--blur-lg)] rounded-[var(--lkv-radius-lg)]" />
+          <div className="h-28 bg-[color:var(--card-tint-strong)] border border-[color:var(--glass-border)] shadow-elevation-1 backdrop-blur-[var(--blur-lg)] rounded-[var(--lkv-radius-lg)]" />
+          <div className="h-28 bg-[color:var(--card-tint-strong)] border border-[color:var(--glass-border)] shadow-elevation-1 backdrop-blur-[var(--blur-lg)] rounded-[var(--lkv-radius-lg)]" />
         </div>
         <div className="h-96 bg-[color:var(--card-tint-strong)] border border-[color:var(--glass-border)] shadow-elevation-1 backdrop-blur-[var(--blur-lg)] rounded-[var(--lkv-radius-md)]" />
       </div>
@@ -659,7 +659,7 @@ export default function FideliteTab({ profile: initialProfile }: FideliteTabProp
             </div>
 
             {/* Right: Badges Stat */}
-            <div className="shrink-0 relative z-[var(--z-dropdown)] bg-white/10 backdrop-blur-md rounded-2xl p-4 text-center border border-white/15 min-w-[120px]">
+            <div className="shrink-0 relative z-[var(--z-dropdown)] bg-white/10 backdrop-blur-md rounded-[var(--lkv-radius-lg)] p-4 text-center border border-white/15 min-w-[120px]">
               <p className="text-[9px] font-mono tracking-widest uppercase text-white/70 mb-1">Badges Débloqués</p>
               <p className="font-mono font-bold text-2xl text-white">{unlockedBadges.length} <span className="text-xs font-normal text-white/50">/ {totalBadges}</span></p>
             </div>
@@ -684,14 +684,14 @@ export default function FideliteTab({ profile: initialProfile }: FideliteTabProp
             </div>
 
             {withdrawError && (
-              <div className="p-4 bg-[color:var(--lkv-danger)]/10 border border-[color:var(--lkv-danger)]/20 text-[color:var(--lkv-danger)] rounded-xl text-xs flex gap-2 items-center">
+              <div className="p-4 bg-[color:var(--lkv-danger)]/10 border border-[color:var(--lkv-danger)]/20 text-[color:var(--lkv-danger)] rounded-[var(--lkv-radius-md)] text-xs flex gap-2 items-center">
                 <span className="text-base">⚠️</span>
                 <span>{withdrawError}</span>
               </div>
             )}
 
             {withdrawSuccess && (
-              <div className="p-4 bg-[color:var(--lkv-secondary)]/10 border border-[color:var(--lkv-secondary)]/20 text-[color:var(--lkv-primary)] rounded-xl text-xs flex gap-2 items-center">
+              <div className="p-4 bg-[color:var(--lkv-secondary)]/10 border border-[color:var(--lkv-secondary)]/20 text-[color:var(--lkv-primary)] rounded-[var(--lkv-radius-md)] text-xs flex gap-2 items-center">
                 <span className="text-base">✅</span>
                 <span>{withdrawSuccess}</span>
               </div>
@@ -702,7 +702,7 @@ export default function FideliteTab({ profile: initialProfile }: FideliteTabProp
                 <label htmlFor="amount" className="block text-xs font-mono font-bold text-[color:var(--lkv-primary)] mb-1.5 uppercase tracking-wider">
                   Montant à retirer (€)
                 </label>
-                <div className="relative rounded-xl max-w-md">
+                <div className="relative rounded-[var(--lkv-radius-md)] max-w-md">
                   <input
                     type="number"
                     step="0.01"
@@ -830,7 +830,7 @@ export default function FideliteTab({ profile: initialProfile }: FideliteTabProp
                 <span className="text-[10px] font-mono text-[color:var(--lkv-text-muted)]">{withdrawals.length} demandes</span>
               </div>
 
-              <div className="overflow-hidden rounded-xl max-h-80 overflow-y-auto">
+              <div className="overflow-hidden rounded-[var(--lkv-radius-md)] max-h-80 overflow-y-auto">
                 {withdrawals.length === 0 ? (
                   <div className="p-6 text-center text-xs text-[color:var(--lkv-text-muted)] rounded-[var(--lkv-radius-md)] border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] backdrop-blur-[var(--blur-md)]">
                     Aucune demande de virement.
@@ -878,7 +878,7 @@ export default function FideliteTab({ profile: initialProfile }: FideliteTabProp
                 <span className="text-[10px] font-mono text-[color:var(--lkv-text-muted)]">{transactions.length} entrées</span>
               </div>
 
-              <div className="overflow-hidden rounded-xl max-h-80 overflow-y-auto">
+              <div className="overflow-hidden rounded-[var(--lkv-radius-md)] max-h-80 overflow-y-auto">
                 {transactions.length === 0 ? (
                   <div className="p-6 text-center text-xs text-[color:var(--lkv-text-muted)] rounded-[var(--lkv-radius-md)] border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] backdrop-blur-[var(--blur-md)]">
                     Aucune transaction de points.
@@ -1046,7 +1046,7 @@ export default function FideliteTab({ profile: initialProfile }: FideliteTabProp
 
       {/* Global Toast */}
       {toast && (
-        <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[var(--z-toast)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[color:var(--lkv-text-primary)] px-6 py-3 rounded-full text-xs font-extrabold  animate-fade-in-up flex items-center gap-2 border border-white/20">
+        <div className="fixed bottom-[calc(var(--nav-offset)+var(--space-4))] left-1/2 -translate-x-1/2 z-[var(--z-toast)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[color:var(--lkv-text-primary)] px-6 py-3 rounded-full text-xs font-extrabold  animate-fade-in-up flex items-center gap-2 border border-white/20">
           <Icon name="CheckIcon" size={14} />
           <span>{toast}</span>
         </div>

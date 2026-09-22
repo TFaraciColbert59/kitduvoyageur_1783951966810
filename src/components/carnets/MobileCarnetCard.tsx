@@ -90,7 +90,7 @@ export default function MobileCarnetCard({
         >
           <span className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn font-serif text-[length:var(--lkv-text-caption-2)] font-bold italic text-[color:var(--lkv-text-primary)] transition-transform group-hover/author:scale-105 motion-reduce:transition-none">
             {carnet.author?.avatar_url ? (
-              <img src={carnet.author.avatar_url} alt="" className="h-full w-full object-cover" />
+              <img src={carnet.author.avatar_url} alt={carnet.author?.full_name || 'Auteur du carnet'} className="h-full w-full object-cover" />
             ) : (
               carnet.author?.full_name?.charAt(0) || '👤'
             )}

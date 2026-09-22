@@ -52,9 +52,9 @@ export default function FeedPage() {
       </div>
 
       <MobilePageShell>
-        <main className="min-h-screen bg-background">
+        <main className="min-h-screen">
           <div className="pt-16 md:pt-0 lg:pt-18">
-            <section className="relative overflow-hidden bg-dark-bg px-[var(--space-4)] py-[var(--space-12)] text-white">
+            <section className="relative overflow-hidden bg-[color:var(--lkv-primary)] px-[var(--space-4)] py-[var(--space-12)] text-[color:var(--lkv-text-inverted)]">
               <div className="relative mx-auto max-w-7xl">
                 <div className="mb-[var(--space-4)] flex items-center gap-[var(--space-2)]">
                   <Badge tone="sage" className="border-[color:var(--lkv-forest-500)]/30 bg-[color:var(--lkv-secondary)]/30 text-[color:var(--lkv-forest-300)] uppercase">
@@ -85,7 +85,7 @@ export default function FeedPage() {
               </div>
             </section>
 
-            <section className="sticky top-16 z-[var(--z-sticky)] border-b border-border bg-background/95 backdrop-blur-[var(--blur-md)]">
+            <section className="sticky top-16 z-[var(--z-sticky)] border-b border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface)]/95 backdrop-blur-[var(--blur-md)]">
               <div className="mx-auto max-w-7xl px-[var(--space-4)]">
                 <Tabs
                   variant="scrollable"

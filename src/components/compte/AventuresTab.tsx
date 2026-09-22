@@ -370,10 +370,10 @@ export default function AventuresTab({ profile }: AventuresTabProps) {
                 <div
                   key={av.id}
                   onClick={() => router.push(`/groupes/${av.id}`)}
-                  className="rounded-[var(--lkv-radius-md)] border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] backdrop-blur-[var(--blur-md)] p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 cursor-pointer hover:bg-white/80 transition-all border border-white/40 group"
+                  className="rounded-[var(--lkv-radius-md)] border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] backdrop-blur-[var(--blur-md)] p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 cursor-pointer hover:bg-[color:var(--lkv-hover-surface)] transition-all border border-white/40 group"
                 >
                   <div className="flex items-center gap-3.5 min-w-0">
-                    <div className="relative w-14 h-14 rounded-xl overflow-hidden shrink-0 border border-white bg-stone-200">
+                    <div className="relative w-14 h-14 rounded-[var(--lkv-radius-md)] overflow-hidden shrink-0 border border-white bg-[color:var(--stone-200)]">
                       <Image
                         src={av.image_url}
                         alt={av.title}

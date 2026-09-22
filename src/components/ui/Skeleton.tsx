@@ -5,7 +5,7 @@ import React from 'react';
 export function Skeleton({ className = '' }: { className?: string }) {
   return (
     <div
-      className={`bg-gradient-to-r from-[color:var(--stone-200)] via-[color:var(--lkv-surface)] to-[color:var(--stone-200)] bg-[length:200%_100%] animate-shimmer rounded-xl ${className}`}
+      className={`bg-gradient-to-r from-[color:var(--stone-200)] via-[color:var(--lkv-surface)] to-[color:var(--stone-200)] bg-[length:200%_100%] animate-shimmer rounded-[var(--lkv-radius-md)] ${className}`}
     />
   );
 }
@@ -13,7 +13,7 @@ export function Skeleton({ className = '' }: { className?: string }) {
 export function SkeletonCard({ className = '' }: { className?: string }) {
   return (
     <div className={`bg-[color:var(--glass-bg-medium)] rounded-[var(--lkv-radius-sm)] p-5 border border-[color:var(--glass-border)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] space-y-4  ${className}`}>
-      <Skeleton className="w-full aspect-[16/10] rounded-2xl" />
+      <Skeleton className="w-full aspect-[16/10] rounded-[var(--lkv-radius-lg)]" />
       <div className="space-y-2">
         <Skeleton className="w-1/3 h-4" />
         <Skeleton className="w-3/4 h-6" />
@@ -29,8 +29,8 @@ export function SkeletonCard({ className = '' }: { className?: string }) {
 
 export function SkeletonCarnetCard({ className = '' }: { className?: string }) {
   return (
-    <div className={`bg-[color:var(--glass-bg-medium)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] shadow-[var(--glass-depth-inset)] rounded-2xl p-4 border border-[color:var(--lkv-primary)]/10 space-y-3  ${className}`}>
-      <Skeleton className="w-full h-48 rounded-xl" />
+    <div className={`bg-[color:var(--glass-bg-medium)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] shadow-[var(--glass-depth-inset)] rounded-[var(--lkv-radius-lg)] p-4 border border-[color:var(--lkv-primary)]/10 space-y-3  ${className}`}>
+      <Skeleton className="w-full h-48 rounded-[var(--lkv-radius-md)]" />
       <div className="flex items-center gap-2 pt-1">
         <Skeleton className="w-7 h-7 rounded-full" />
         <Skeleton className="w-28 h-4 rounded" />
@@ -47,8 +47,8 @@ export function SkeletonCarnetCard({ className = '' }: { className?: string }) {
 
 export function SkeletonProductCard({ className = '' }: { className?: string }) {
   return (
-    <div className={`bg-[color:var(--glass-bg-medium)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] shadow-[var(--glass-depth-inset)] rounded-2xl p-4 border border-[color:var(--lkv-primary)]/10 space-y-3  ${className}`}>
-      <Skeleton className="w-full aspect-square rounded-xl" />
+    <div className={`bg-[color:var(--glass-bg-medium)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] shadow-[var(--glass-depth-inset)] rounded-[var(--lkv-radius-lg)] p-4 border border-[color:var(--lkv-primary)]/10 space-y-3  ${className}`}>
+      <Skeleton className="w-full aspect-square rounded-[var(--lkv-radius-md)]" />
       <div className="space-y-1.5 pt-1">
         <Skeleton className="w-1/3 h-3 rounded" />
         <Skeleton className="w-3/4 h-5 rounded" />
@@ -64,15 +64,15 @@ export function SkeletonProductCard({ className = '' }: { className?: string }) 
 
 export function SkeletonClubCard({ className = '' }: { className?: string }) {
   return (
-    <div className={`bg-[color:var(--glass-bg-medium)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] shadow-[var(--glass-depth-inset)] rounded-2xl p-5 border border-[color:var(--lkv-primary)]/10 space-y-4  ${className}`}>
+    <div className={`bg-[color:var(--glass-bg-medium)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] shadow-[var(--glass-depth-inset)] rounded-[var(--lkv-radius-lg)] p-5 border border-[color:var(--lkv-primary)]/10 space-y-4  ${className}`}>
       <div className="flex items-center gap-3.5">
-        <Skeleton className="w-12 h-12 rounded-xl flex-shrink-0" />
+        <Skeleton className="w-12 h-12 rounded-[var(--lkv-radius-md)] flex-shrink-0" />
         <div className="space-y-1.5 flex-1">
           <Skeleton className="w-3/4 h-5 rounded" />
           <Skeleton className="w-1/2 h-3.5 rounded" />
         </div>
       </div>
-      <Skeleton className="w-full h-10 rounded-xl" />
+      <Skeleton className="w-full h-10 rounded-[var(--lkv-radius-md)]" />
     </div>
   );
 }

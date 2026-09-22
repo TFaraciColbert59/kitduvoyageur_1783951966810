@@ -55,7 +55,7 @@ function ReviewCard({ review, onHelpful }: { review: Review; onHelpful: (id: str
       <div className="flex items-start gap-3 mb-4">
         <Link
           href={review.user_id ? `/profil/${review.user_id}` : '/communaute'}
-          className="w-10 h-10 rounded-xl bg-[color:var(--lkv-secondary)] text-white flex items-center justify-center text-sm font-bold flex-shrink-0 hover:opacity-90 transition-opacity cursor-pointer"
+          className="w-10 h-10 rounded-[var(--lkv-radius-md)] bg-[color:var(--lkv-secondary)] text-white flex items-center justify-center text-sm font-bold flex-shrink-0 hover:opacity-90 transition-opacity cursor-pointer"
         >
           {authorName.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase()}
         </Link>
@@ -311,7 +311,7 @@ export default function AvisPage() {
 
             {loading ? (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                {[1, 2, 3, 4].map((i) => <div key={i} className="h-48 rounded-xl glass-sub-card" />)}
+                {[1, 2, 3, 4].map((i) => <div key={i} className="h-48 rounded-[var(--lkv-radius-md)] glass-sub-card" />)}
               </div>
             ) : filtered.length === 0 ? (
               <div className="text-center py-16 text-[color:var(--lkv-forest-100)]">

@@ -277,7 +277,7 @@ export default function ClubDiscussionCard({
                   aria-label={`Voir le profil de ${msgAuthor}`}
                 >
                   {msg.author_avatar ? (
-                    <img src={msg.author_avatar} alt="" className="h-full w-full object-cover" />
+                    <img src={msg.author_avatar} alt={msgAuthor} className="h-full w-full object-cover" />
                   ) : (
                     (msgAuthor.charAt(0) || 'V').toUpperCase()
                   )}

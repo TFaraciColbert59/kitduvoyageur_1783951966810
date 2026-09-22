@@ -178,14 +178,14 @@ export function GearMobileExperience({
       />
 
       {toast && (
-        <p className="fixed bottom-[calc(var(--bottom-nav-height,52px)+16px)] left-1/2 z-[var(--z-toast)] -translate-x-1/2 rounded-full bg-[var(--lkv-primary)] px-4 py-2 text-xs font-bold text-white shadow-lg">
+        <p className="fixed bottom-[calc(var(--nav-offset)+var(--space-4))] left-1/2 z-[var(--z-toast)] -translate-x-1/2 rounded-full bg-[var(--lkv-primary)] px-4 py-2 text-xs font-bold text-white shadow-lg">
           {toast}
         </p>
       )}
       {error && (
         <p
           role="alert"
-          className="fixed bottom-[calc(var(--bottom-nav-height,52px)+16px)] left-1/2 z-[var(--z-toast)] -translate-x-1/2 rounded-full bg-[var(--lkv-danger)] px-4 py-2 text-xs font-bold text-white shadow-lg"
+          className="fixed bottom-[calc(var(--nav-offset)+var(--space-4))] left-1/2 z-[var(--z-toast)] -translate-x-1/2 rounded-full bg-[var(--lkv-danger)] px-4 py-2 text-xs font-bold text-white shadow-lg"
         >
           {error}
         </p>

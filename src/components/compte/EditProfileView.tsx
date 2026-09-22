@@ -316,7 +316,7 @@ export default function EditProfileView({ onCloseModal, onSave }: { onCloseModal
             </div>
 
             {/* Cover Photo Header */}
-            <div className="relative rounded-2xl overflow-hidden h-44 sm:h-52 bg-[color:var(--btn-tint)] group border border-[color:var(--glass-border)]">
+            <div className="relative rounded-[var(--lkv-radius-lg)] overflow-hidden h-44 sm:h-52 bg-[color:var(--btn-tint)] group border border-[color:var(--glass-border)]">
               {form.heroUrl ? (
                 <img src={form.heroUrl} alt="Photo de couverture" className="w-full h-full object-cover" />
               ) : null}
@@ -842,7 +842,7 @@ export default function EditProfileView({ onCloseModal, onSave }: { onCloseModal
               </div>
             </div>
 
-            <p className="text-xs text-white/90 font-serif italic leading-relaxed bg-white/10 p-3.5 rounded-2xl border border-white/10">
+            <p className="text-xs text-white/90 font-serif italic leading-relaxed bg-white/10 p-3.5 rounded-[var(--lkv-radius-lg)] border border-white/10">
               "{form.shortBio || form.bio}"
             </p>
 
@@ -901,7 +901,7 @@ export default function EditProfileView({ onCloseModal, onSave }: { onCloseModal
 
       {/* 4. FLOATING BOTTOM BAR */}
       <div
-        className="fixed bottom-[calc(var(--safe-bottom)+62px+8px)] left-2 right-2 z-[var(--z-fab)] flex items-center justify-between gap-[var(--space-3)] rounded-full border border-[color:var(--btn-glass-border)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn px-[var(--space-4)] py-[var(--space-3)] text-[color:var(--lkv-text-primary)] md:bottom-6 md:left-1/2 md:right-auto md:w-11/12 md:max-w-xl md:-translate-x-1/2 md:px-[var(--space-6)] md:py-[14px]"
+        className="fixed bottom-[calc(var(--nav-offset)+var(--space-2))] left-2 right-2 z-[var(--z-fab)] flex items-center justify-between gap-[var(--space-3)] rounded-full border border-[color:var(--btn-glass-border)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn px-[var(--space-4)] py-[var(--space-3)] text-[color:var(--lkv-text-primary)] md:bottom-6 md:left-1/2 md:right-auto md:w-11/12 md:max-w-xl md:-translate-x-1/2 md:px-[var(--space-6)] md:py-[14px]"
       >
         <div className="hidden items-center gap-[var(--space-2)] font-mono text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-inverted)]/80 md:flex">
           <span aria-hidden="true">⚡</span>

@@ -1,0 +1,87 @@
+{
+  "capturedAt": "2026-09-22T23:39:36.466Z",
+  "stage": "apres",
+  "consoleErrorCount": 0,
+  "shots": [
+    {
+      "slug": "recompenses-393x852",
+      "route": "/recompenses",
+      "viewport": "393x852",
+      "finalUrl": "http://localhost:4028/recompenses",
+      "title": "Mes Récompenses & Cashback | Le Kit du Voyageur",
+      "cookieBannerVisible": false,
+      "consoleErrors": [],
+      "screenshot": "docs/qa/final-ios27/phase-tokens/apres/recompenses-393x852.jpg"
+    },
+    {
+      "slug": "recompenses-1440x900",
+      "route": "/recompenses",
+      "viewport": "1440x900",
+      "finalUrl": "http://localhost:4028/recompenses",
+      "title": "Mes Récompenses & Cashback | Le Kit du Voyageur",
+      "cookieBannerVisible": false,
+      "consoleErrors": [],
+      "screenshot": "docs/qa/final-ios27/phase-tokens/apres/recompenses-1440x900.jpg"
+    },
+    {
+      "slug": "evenements-393x852",
+      "route": "/evenements",
+      "viewport": "393x852",
+      "finalUrl": "http://localhost:4028/evenements",
+      "title": "Événements & Rencontres | Le Kit du Voyageur",
+      "cookieBannerVisible": false,
+      "consoleErrors": [],
+      "screenshot": "docs/qa/final-ios27/phase-tokens/apres/evenements-393x852.jpg"
+    },
+    {
+      "slug": "evenements-1440x900",
+      "route": "/evenements",
+      "viewport": "1440x900",
+      "finalUrl": "http://localhost:4028/evenements",
+      "title": "Événements & Rencontres | Le Kit du Voyageur",
+      "cookieBannerVisible": false,
+      "consoleErrors": [],
+      "screenshot": "docs/qa/final-ios27/phase-tokens/apres/evenements-1440x900.jpg"
+    },
+    {
+      "slug": "feed-393x852",
+      "route": "/feed",
+      "viewport": "393x852",
+      "finalUrl": "http://localhost:4028/feed",
+      "title": "Fil d'actualité | Le Kit du Voyageur",
+      "cookieBannerVisible": false,
+      "consoleErrors": [],
+      "screenshot": "docs/qa/final-ios27/phase-tokens/apres/feed-393x852.jpg"
+    },
+    {
+      "slug": "feed-1440x900",
+      "route": "/feed",
+      "viewport": "1440x900",
+      "finalUrl": "http://localhost:4028/feed",
+      "title": "Fil d'actualité | Le Kit du Voyageur",
+      "cookieBannerVisible": false,
+      "consoleErrors": [],
+      "screenshot": "docs/qa/final-ios27/phase-tokens/apres/feed-1440x900.jpg"
+    },
+    {
+      "slug": "rapport-expedition-393x852",
+      "route": "/rapport-expedition",
+      "viewport": "393x852",
+      "finalUrl": "http://localhost:4028/rapport-expedition",
+      "title": "Rapport d'expédition | Le Kit du Voyageur",
+      "cookieBannerVisible": false,
+      "consoleErrors": [],
+      "screenshot": "docs/qa/final-ios27/phase-tokens/apres/rapport-expedition-393x852.jpg"
+    },
+    {
+      "slug": "rapport-expedition-1440x900",
+      "route": "/rapport-expedition",
+      "viewport": "1440x900",
+      "finalUrl": "http://localhost:4028/rapport-expedition",
+      "title": "Rapport d'expédition | Le Kit du Voyageur",
+      "cookieBannerVisible": false,
+      "consoleErrors": [],
+      "screenshot": "docs/qa/final-ios27/phase-tokens/apres/rapport-expedition-1440x900.jpg"
+    }
+  ]
+}

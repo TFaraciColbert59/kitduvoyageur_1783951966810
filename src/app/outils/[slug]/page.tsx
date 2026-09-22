@@ -69,19 +69,19 @@ function ToolPoidssSac() {
 
   return (
     <div className="space-y-6">
-      <div className="glass rounded-2xl p-6">
+      <div className="glass rounded-[var(--lkv-radius-lg)] p-6">
         <p className="font-mono text-[length:var(--lkv-text-caption-2)] text-muted-foreground uppercase tracking-widest mb-2">POIDS TOTAL DU SAC</p>
         <WeightGauge weightG={totalG} maxG={20000} size="lg" />
         <div className="mt-3 grid grid-cols-3 gap-3 text-center">
-          <div className="glass-sub-card rounded-lg p-2">
+          <div className="glass-sub-card rounded-[var(--lkv-radius-sm)] p-2">
             <p className="font-mono text-[length:var(--lkv-text-caption-2)] text-muted-foreground">TOTAL</p>
             <p className="font-mono font-700 text-info">{totalG >= 1000 ? `${(totalG / 1000).toFixed(2)} kg` : `${totalG} g`}</p>
           </div>
-          <div className="glass-sub-card rounded-lg p-2">
+          <div className="glass-sub-card rounded-[var(--lkv-radius-sm)] p-2">
             <p className="font-mono text-[length:var(--lkv-text-caption-2)] text-muted-foreground">ARTICLES</p>
             <p className="font-mono font-700 text-foreground">{categories.flatMap((c) => c.items).length}</p>
           </div>
-          <div className="glass-sub-card rounded-lg p-2">
+          <div className="glass-sub-card rounded-[var(--lkv-radius-sm)] p-2">
             <p className="font-mono text-[length:var(--lkv-text-caption-2)] text-muted-foreground">CATÉGORIES</p>
             <p className="font-mono font-700 text-foreground">{categories.filter((c) => c.items.length > 0).length}</p>
           </div>
@@ -89,7 +89,7 @@ function ToolPoidssSac() {
       </div>
 
       {/* Add item */}
-      <div className="glass rounded-2xl p-5">
+      <div className="glass rounded-[var(--lkv-radius-lg)] p-5">
         <h3 className="font-display font-700 text-base mb-1">Ajouter un article</h3>
         <p className="mb-4 text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-secondary)]">Catégorie, nom et poids — chaque champ est étiqueté comme sur la page contact.</p>
         <form
@@ -156,7 +156,7 @@ function ToolPoidssSac() {
         {categories.filter((c) => c.items.length > 0).map((cat) => {
           const catTotal = cat.items.reduce((s, i) => s + i.poids_g, 0);
           return (
-            <div key={cat.id} className="glass rounded-xl p-4">
+            <div key={cat.id} className="glass rounded-[var(--lkv-radius-md)] p-4">
               <div className="flex items-center justify-between mb-3">
                 <span className="font-medium text-sm">{cat.icon} {cat.nom}</span>
                 <span className="font-mono text-xs text-info">{catTotal} g</span>
@@ -206,19 +206,19 @@ function ToolBudget() {
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <div className="glass rounded-xl p-4">
+        <div className="glass rounded-[var(--lkv-radius-md)] p-4">
           <label htmlFor="budget-jours" className="font-mono text-[length:var(--lkv-text-caption-2)] text-muted-foreground uppercase tracking-wider block mb-2">DURÉE (jours)</label>
           <input id="budget-jours" type="number" min={1} max={365} value={jours} onChange={(e) => setJours(Math.max(1, parseInt(e.target.value) || 1))}
-            className="w-full min-h-[var(--lkv-touch-min)] px-3 py-2 rounded-lg bg-background border border-border font-mono text-lg font-700 focus:outline-none focus:border-primary focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]" />
+            className="w-full min-h-[var(--lkv-touch-min)] px-3 py-2 rounded-[var(--lkv-radius-sm)] bg-[color:var(--lkv-field-bg)] border border-border font-mono text-lg font-700 focus:outline-none focus:border-primary focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]" />
         </div>
-        <div className="glass rounded-xl p-4">
+        <div className="glass rounded-[var(--lkv-radius-md)] p-4">
           <label htmlFor="budget-personnes" className="font-mono text-[length:var(--lkv-text-caption-2)] text-muted-foreground uppercase tracking-wider block mb-2">PERSONNES</label>
           <input id="budget-personnes" type="number" min={1} max={20} value={personnes} onChange={(e) => setPersonnes(Math.max(1, parseInt(e.target.value) || 1))}
-            className="w-full min-h-[var(--lkv-touch-min)] px-3 py-2 rounded-lg bg-background border border-border font-mono text-lg font-700 focus:outline-none focus:border-primary focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]" />
+            className="w-full min-h-[var(--lkv-touch-min)] px-3 py-2 rounded-[var(--lkv-radius-sm)] bg-[color:var(--lkv-field-bg)] border border-border font-mono text-lg font-700 focus:outline-none focus:border-primary focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]" />
         </div>
       </div>
 
-      <div className="glass rounded-2xl p-6">
+      <div className="glass rounded-[var(--lkv-radius-lg)] p-6">
         <h3 className="font-display font-700 text-base mb-1">Budget par jour / personne (€)</h3>
         <p className="mb-4 text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-secondary)]">Un montant par poste, modifiable au clavier — annoncé aux lecteurs d’écran.</p>
         <div className="space-y-3">
@@ -231,7 +231,7 @@ function ToolBudget() {
                   id={`budget-poste-${idx}`}
                   type="number" min={0} value={poste.montant}
                   onChange={(e) => setPostes((prev) => prev.map((p, i) => i === idx ? { ...p, montant: Math.max(0, parseFloat(e.target.value) || 0) } : p))}
-                  className="w-24 min-h-[var(--lkv-touch-min)] px-2 py-1.5 rounded-lg bg-background border border-border font-mono text-sm text-right focus:outline-none focus:border-primary focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]"
+                  className="w-24 min-h-[var(--lkv-touch-min)] px-2 py-1.5 rounded-[var(--lkv-radius-sm)] bg-[color:var(--lkv-field-bg)] border border-border font-mono text-sm text-right focus:outline-none focus:border-primary focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]"
                 />
                 <span className="font-mono text-xs text-muted-foreground">€/j</span>
               </div>
@@ -246,7 +246,7 @@ function ToolBudget() {
           { label: `PAR JOUR (×${personnes})`, value: `${(totalParJour * personnes).toFixed(0)} €`, color: 'text-accent' },
           { label: `TOTAL ${jours}J`, value: `${totalVoyage.toFixed(0)} €`, color: 'text-primary' },
         ].map((stat) => (
-          <div key={stat.label} className="glass rounded-xl p-4 text-center">
+          <div key={stat.label} className="glass rounded-[var(--lkv-radius-md)] p-4 text-center">
             <p className="font-mono text-[length:var(--lkv-text-caption-2)] text-muted-foreground uppercase tracking-wider mb-1">{stat.label}</p>
             <p className={`font-mono font-700 text-2xl ${stat.color}`}>{stat.value}</p>
           </div>
@@ -303,7 +303,7 @@ function ToolConvertisseur() {
 
   return (
     <div className="space-y-5">
-      <div className="flex gap-1 glass rounded-lg p-1 flex-wrap" role="tablist" aria-label="Type de conversion">
+      <div className="flex gap-1 glass rounded-[var(--lkv-radius-sm)] p-1 flex-wrap" role="tablist" aria-label="Type de conversion">
         {(Object.keys(conversions) as (keyof typeof conversions)[]).map((t) => (
           <button key={t} type="button" role="tab" aria-selected={tab === t} onClick={() => setTab(t as 'distance' | 'poids' | 'temperature' | 'devises')}
             className={`glass-capsule-btn flex-1 min-w-[80px] min-h-[var(--lkv-touch-min)] text-xs font-medium capitalize ${tab === t ? 'primary' : ''}`}>
@@ -312,10 +312,10 @@ function ToolConvertisseur() {
         ))}
       </div>
 
-      <div className="glass rounded-xl p-4">
+      <div className="glass rounded-[var(--lkv-radius-md)] p-4">
         <label htmlFor="convertisseur-valeur" className="font-mono text-[length:var(--lkv-text-caption-2)] text-muted-foreground uppercase tracking-wider block mb-2">VALEUR À CONVERTIR</label>
         <input id="convertisseur-valeur" type="number" value={value} onChange={(e) => setValue(e.target.value)}
-          className="w-full min-h-[var(--lkv-touch-min)] px-4 py-3 rounded-lg bg-background border border-border font-mono text-xl font-700 focus:outline-none focus:border-primary focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]" />
+          className="w-full min-h-[var(--lkv-touch-min)] px-4 py-3 rounded-[var(--lkv-radius-sm)] bg-[color:var(--lkv-field-bg)] border border-border font-mono text-xl font-700 focus:outline-none focus:border-primary focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]" />
       </div>
 
       <div className="space-y-3">
@@ -324,7 +324,7 @@ function ToolConvertisseur() {
             ? num * conv.factor + conv.offset
             : num * conv.factor;
           return (
-            <div key={idx} className="flex items-center justify-between glass rounded-xl p-4">
+            <div key={idx} className="flex items-center justify-between glass rounded-[var(--lkv-radius-md)] p-4">
               <div className="flex items-center gap-3">
                 <span className="font-mono text-sm text-muted-foreground">{num} {conv.from}</span>
                 <span className="text-muted-foreground">→</span>
@@ -391,7 +391,7 @@ function ToolChecklist() {
 
   return (
     <div className="space-y-5">
-      <div className="flex items-center justify-between glass rounded-xl p-4">
+      <div className="flex items-center justify-between glass rounded-[var(--lkv-radius-md)] p-4">
         <div>
           <p className="font-mono text-[length:var(--lkv-text-caption-2)] text-muted-foreground uppercase tracking-wider">PROGRESSION</p>
           <p className="font-mono font-700 text-xl text-foreground">{checked}/{items.length}</p>
@@ -417,7 +417,7 @@ function ToolChecklist() {
           <div>
             <label htmlFor="checklist-nouvel-article" className="mb-1.5 block text-[length:var(--lkv-text-caption-2)] font-semibold uppercase tracking-[0.04em] text-[color:var(--lkv-text-secondary)]">Nouvel article *</label>
             <input id="checklist-nouvel-article" type="text" placeholder="Nouvel article..." value={newText} onChange={(e) => setNewText(e.target.value)}
-              className="w-full min-h-[var(--lkv-touch-min)] px-3 py-2.5 rounded-lg bg-background border border-border text-sm focus:outline-none focus:border-primary focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]"
+              className="w-full min-h-[var(--lkv-touch-min)] px-3 py-2.5 rounded-[var(--lkv-radius-sm)] bg-[color:var(--lkv-field-bg)] border border-border text-sm focus:outline-none focus:border-primary focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]"
               aria-invalid={Boolean(checklistError)}
               aria-describedby={checklistError ? 'checklist-erreur' : undefined}
               autoComplete="off" />
@@ -426,7 +426,7 @@ function ToolChecklist() {
             <label htmlFor="checklist-categorie" className="mb-1.5 block text-[length:var(--lkv-text-caption-2)] font-semibold uppercase tracking-[0.04em] text-[color:var(--lkv-text-secondary)]">Catégorie</label>
             <div className="flex gap-2">
               <select id="checklist-categorie" value={newCat} onChange={(e) => setNewCat(e.target.value)}
-                className="flex-1 min-h-[var(--lkv-touch-min)] px-3 py-2.5 rounded-lg bg-background border border-border text-sm focus:outline-none focus:border-primary focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]">
+                className="flex-1 min-h-[var(--lkv-touch-min)] px-3 py-2.5 rounded-[var(--lkv-radius-sm)] bg-[color:var(--lkv-field-bg)] border border-border text-sm focus:outline-none focus:border-primary focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]">
                 {[...cats, 'Divers'].map((c) => <option key={c}>{c}</option>)}
               </select>
               <button type="submit" aria-label="Ajouter un article" className="glass-circle-btn h-11 w-11 min-h-[var(--lkv-touch-min)] min-w-[var(--lkv-touch-min)]">+</button>
@@ -442,7 +442,7 @@ function ToolChecklist() {
 
       {/* Items by category */}
       {cats.map((cat) => (
-        <div key={cat} className="glass rounded-xl overflow-hidden">
+        <div key={cat} className="glass rounded-[var(--lkv-radius-md)] overflow-hidden">
           <div className="px-4 py-2.5 bg-muted/30 border-b border-border">
             <span className="font-mono text-xs text-muted-foreground uppercase tracking-wider">{cat}</span>
           </div>
@@ -509,7 +509,7 @@ function ToolTailles() {
         ))}
       </div>
 
-      <div className="glass rounded-xl p-4">
+      <div className="glass rounded-[var(--lkv-radius-md)] p-4">
         <p id="tailles-label" className="font-mono text-[length:var(--lkv-text-caption-2)] text-muted-foreground uppercase tracking-wider block mb-3">
           TAILLE FR / EU
         </p>
@@ -527,7 +527,7 @@ function ToolTailles() {
       {currentData && (
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
           {Object.entries(currentData).map(([country, size]) => (
-            <div key={country} className="glass rounded-xl p-4 text-center">
+            <div key={country} className="glass rounded-[var(--lkv-radius-md)] p-4 text-center">
               <p className="font-mono text-[length:var(--lkv-text-caption-2)] text-muted-foreground uppercase tracking-wider mb-1">{country}</p>
               <p className="font-mono font-700 text-2xl text-foreground">{size}</p>
             </div>
@@ -584,10 +584,10 @@ function ToolFuseaux() {
     <div className="space-y-5">
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         {[{ label: 'VOTRE VILLE', value: baseCity, setter: setBaseCity, id: 'fuseaux-base' }, { label: 'DESTINATION', value: targetCity, setter: setTargetCity, id: 'fuseaux-cible' }].map(({ label, value, setter, id }) => (
-          <div key={label} className="glass rounded-xl p-4">
+          <div key={label} className="glass rounded-[var(--lkv-radius-md)] p-4">
             <label htmlFor={id} className="font-mono text-[length:var(--lkv-text-caption-2)] text-muted-foreground uppercase tracking-wider block mb-2">{label}</label>
             <select id={id} value={value} onChange={(e) => setter(e.target.value)}
-              className="w-full min-h-[var(--lkv-touch-min)] px-3 py-2 rounded-lg bg-background border border-border text-sm focus:outline-none focus:border-primary focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]">
+              className="w-full min-h-[var(--lkv-touch-min)] px-3 py-2 rounded-[var(--lkv-radius-sm)] bg-[color:var(--lkv-field-bg)] border border-border text-sm focus:outline-none focus:border-primary focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]">
               {Object.keys(cities).map((c) => <option key={c}>{c}</option>)}
             </select>
             <p className="font-mono font-700 text-3xl text-info mt-3">{getLocalTime(value)}</p>
@@ -596,7 +596,7 @@ function ToolFuseaux() {
         ))}
       </div>
 
-      <div className="glass rounded-xl p-4 text-center">
+      <div className="glass rounded-[var(--lkv-radius-md)] p-4 text-center">
         <p className="font-mono text-[length:var(--lkv-text-caption-2)] text-muted-foreground uppercase tracking-wider mb-2">DÉCALAGE HORAIRE</p>
         <p className="font-mono font-700 text-4xl text-primary">
           {diff >= 0 ? '+' : ''}{diff}h
@@ -608,7 +608,7 @@ function ToolFuseaux() {
 
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
         {Object.entries(cities).map(([city, data]) => (
-          <div key={city} className="glass rounded-lg p-3 text-center">
+          <div key={city} className="glass rounded-[var(--lkv-radius-sm)] p-3 text-center">
             <p className="text-lg mb-1">{data.flag}</p>
             <p className="text-xs text-muted-foreground mb-1">{city}</p>
             <p className="font-mono font-600 text-sm text-foreground">{getLocalTime(city)}</p>
@@ -660,14 +660,14 @@ function ToolBoussole() {
       ) : (
         <>
           {error && (
-            <div role="alert" aria-live="assertive" className="bg-red-500/10 border border-red-500/30 rounded-xl p-4 text-center text-red-400 text-sm">{error}</div>
+            <div role="alert" aria-live="assertive" className="bg-[color:var(--lkv-danger)]/10 border border-[color:var(--lkv-danger)]/30 rounded-[var(--lkv-radius-md)] p-4 text-center text-[color:var(--lkv-danger)] text-sm">{error}</div>
           )}
 
           {/* Compass */}
-          <div className="glass rounded-2xl p-6 text-center">
+          <div className="glass rounded-[var(--lkv-radius-lg)] p-6 text-center">
             <p className="font-mono text-[length:var(--lkv-text-caption-2)] text-muted-foreground uppercase tracking-wider mb-4">BOUSSOLE</p>
             <div className="relative w-40 h-40 mx-auto mb-4">
-              <div className="absolute inset-0 rounded-full border-2 border-border flex items-center justify-center bg-background">
+              <div className="absolute inset-0 rounded-full border-2 border-border flex items-center justify-center bg-[color:var(--lkv-field-bg)]">
                 <div className="relative w-full h-full" style={{ transform: `rotate(${heading ?? 0}deg)`, transition: 'transform 0.3s ease' }}>
                   <div className="absolute top-2 left-1/2 -translate-x-1/2 w-1 h-16 bg-primary rounded-full" />
                   <div className="absolute bottom-2 left-1/2 -translate-x-1/2 w-1 h-16 bg-muted rounded-full" />
@@ -681,11 +681,11 @@ function ToolBoussole() {
           </div>
 
           {/* Level */}
-          <div className="glass rounded-2xl p-6">
+          <div className="glass rounded-[var(--lkv-radius-lg)] p-6">
             <p className="font-mono text-[length:var(--lkv-text-caption-2)] text-muted-foreground uppercase tracking-wider mb-4 text-center">NIVEAU À BULLE</p>
-            <div className={`w-32 h-32 mx-auto rounded-full border-4 flex items-center justify-center relative ${isLevel ? 'border-emerald-400' : 'border-border'}`}>
+            <div className={`w-32 h-32 mx-auto rounded-full border-4 flex items-center justify-center relative ${isLevel ? 'border-[color:var(--lkv-success)]' : 'border-border'}`}>
               <div
-                className={`w-8 h-8 rounded-full motion-safe:transition-transform motion-reduce:transition-none duration-200 ${isLevel ? 'bg-emerald-400' : 'bg-primary'}`}
+                className={`w-8 h-8 rounded-full motion-safe:transition-transform motion-reduce:transition-none duration-200 ${isLevel ? 'bg-[color:var(--lkv-success)]' : 'bg-primary'}`}
                 style={{
                   transform: `translate(${Math.min(40, Math.max(-40, (gamma ?? 0) * 1.5))}px, ${Math.min(40, Math.max(-40, (beta ?? 0) * 1.5))}px)`
                 }}
@@ -748,7 +748,7 @@ function ToolChronometre() {
 
   return (
     <div className="space-y-5">
-      <div className="glass rounded-2xl p-8 text-center">
+      <div className="glass rounded-[var(--lkv-radius-lg)] p-8 text-center">
         <p className="font-mono text-[length:var(--lkv-text-caption-2)] text-muted-foreground uppercase tracking-wider mb-4">CHRONOMÈTRE</p>
         <p className="font-mono font-700 text-5xl md:text-6xl text-foreground tabular-nums">
           {fmt(elapsed)}
@@ -779,7 +779,7 @@ function ToolChronometre() {
       </div>
 
       {laps.length > 0 && (
-        <div className="glass rounded-xl overflow-hidden">
+        <div className="glass rounded-[var(--lkv-radius-md)] overflow-hidden">
           <div className="px-4 py-2.5 bg-muted/30 border-b border-border">
             <span className="font-mono text-xs text-muted-foreground uppercase tracking-wider">TOURS</span>
           </div>
@@ -822,20 +822,20 @@ function ToolRations() {
   return (
     <div className="space-y-5">
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <div className="glass rounded-xl p-4">
+        <div className="glass rounded-[var(--lkv-radius-md)] p-4">
           <label htmlFor="rations-personnes" className="font-mono text-[length:var(--lkv-text-caption-2)] text-muted-foreground uppercase tracking-wider block mb-2">PERSONNES</label>
           <input id="rations-personnes" type="number" min={1} max={20} value={personnes} onChange={(e) => setPersonnes(Math.max(1, parseInt(e.target.value) || 1))}
-            className="w-full min-h-[var(--lkv-touch-min)] px-3 py-2 rounded-lg bg-background border border-border font-mono text-xl font-700 focus:outline-none focus:border-primary focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]" />
+            className="w-full min-h-[var(--lkv-touch-min)] px-3 py-2 rounded-[var(--lkv-radius-sm)] bg-[color:var(--lkv-field-bg)] border border-border font-mono text-xl font-700 focus:outline-none focus:border-primary focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]" />
         </div>
-        <div className="glass rounded-xl p-4">
+        <div className="glass rounded-[var(--lkv-radius-md)] p-4">
           <label htmlFor="rations-jours" className="font-mono text-[length:var(--lkv-text-caption-2)] text-muted-foreground uppercase tracking-wider block mb-2">JOURS</label>
           <input id="rations-jours" type="number" min={1} max={30} value={jours} onChange={(e) => setJours(Math.max(1, parseInt(e.target.value) || 1))}
-            className="w-full min-h-[var(--lkv-touch-min)] px-3 py-2 rounded-lg bg-background border border-border font-mono text-xl font-700 focus:outline-none focus:border-primary focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]" />
+            className="w-full min-h-[var(--lkv-touch-min)] px-3 py-2 rounded-[var(--lkv-radius-sm)] bg-[color:var(--lkv-field-bg)] border border-border font-mono text-xl font-700 focus:outline-none focus:border-primary focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]" />
         </div>
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <div className="glass rounded-xl p-4">
+        <div className="glass rounded-[var(--lkv-radius-md)] p-4">
           <p id="rations-effort-label" className="font-mono text-[length:var(--lkv-text-caption-2)] text-muted-foreground uppercase tracking-wider mb-3">EFFORT</p>
           <div className="flex flex-col gap-2" role="radiogroup" aria-labelledby="rations-effort-label">
             {(['léger', 'modéré', 'intense'] as const).map((e) => (
@@ -846,7 +846,7 @@ function ToolRations() {
             ))}
           </div>
         </div>
-        <div className="glass rounded-xl p-4">
+        <div className="glass rounded-[var(--lkv-radius-md)] p-4">
           <p id="rations-climat-label" className="font-mono text-[length:var(--lkv-text-caption-2)] text-muted-foreground uppercase tracking-wider mb-3">CLIMAT</p>
           <div className="flex flex-col gap-2" role="radiogroup" aria-labelledby="rations-climat-label">
             {(['froid', 'tempéré', 'chaud'] as const).map((c) => (
@@ -865,7 +865,7 @@ function ToolRations() {
           { label: 'NOURRITURE / JOUR', value: `${nourritureParJourG} g`, icon: '🍽️', color: 'text-accent' },
           { label: 'CALORIES / JOUR', value: `${caloriesParJour} kcal`, icon: '⚡', color: 'text-primary' },
         ].map((stat) => (
-          <div key={stat.label} className="glass rounded-xl p-4 text-center">
+          <div key={stat.label} className="glass rounded-[var(--lkv-radius-md)] p-4 text-center">
             <p className="text-2xl mb-1">{stat.icon}</p>
             <p className="font-mono text-[length:var(--lkv-text-caption-2)] text-muted-foreground uppercase tracking-wider mb-1">{stat.label}</p>
             <p className={`font-mono font-700 text-xl ${stat.color}`}>{stat.value}</p>
@@ -873,7 +873,7 @@ function ToolRations() {
         ))}
       </div>
 
-      <div className="bg-info/5 border border-info/20 rounded-xl p-4">
+      <div className="bg-info/5 border border-info/20 rounded-[var(--lkv-radius-md)] p-4">
         <p className="font-mono text-[length:var(--lkv-text-caption-2)] text-info uppercase tracking-wider mb-3">
           TOTAUX — {jours} JOUR{jours > 1 ? 'S' : ''} × {personnes} PERSONNE{personnes > 1 ? 'S' : ''}
         </p>
@@ -965,7 +965,7 @@ function ToolPlanificateur() {
   return (
     <div className="space-y-6">
       <form
-        className="glass rounded-2xl p-5 space-y-4"
+        className="glass rounded-[var(--lkv-radius-lg)] p-5 space-y-4"
         onSubmit={(e) => {
           e.preventDefault();
           generate();
@@ -979,7 +979,7 @@ function ToolPlanificateur() {
             placeholder="Ex : Islande, Japon, Maroc..."
             value={destination}
             onChange={(e) => setDestination(e.target.value)}
-            className="w-full min-h-[var(--lkv-touch-min)] px-3 py-2.5 rounded-lg bg-background border border-border text-sm focus:outline-none focus:border-primary focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]"
+            className="w-full min-h-[var(--lkv-touch-min)] px-3 py-2.5 rounded-[var(--lkv-radius-sm)] bg-[color:var(--lkv-field-bg)] border border-border text-sm focus:outline-none focus:border-primary focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]"
             autoComplete="off"
           />
         </div>
@@ -991,13 +991,13 @@ function ToolPlanificateur() {
               id="planificateur-duree"
               type="number" min={1} max={30} value={duree}
               onChange={(e) => setDuree(Math.max(1, Math.min(30, parseInt(e.target.value) || 7)))}
-              className="w-full min-h-[var(--lkv-touch-min)] px-3 py-2 rounded-lg bg-background border border-border font-mono text-xl font-700 focus:outline-none focus:border-primary focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]"
+              className="w-full min-h-[var(--lkv-touch-min)] px-3 py-2 rounded-[var(--lkv-radius-sm)] bg-[color:var(--lkv-field-bg)] border border-border font-mono text-xl font-700 focus:outline-none focus:border-primary focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]"
             />
           </div>
           <div>
             <label htmlFor="planificateur-budget" className="font-mono text-[length:var(--lkv-text-caption-2)] text-muted-foreground uppercase tracking-wider block mb-2">BUDGET</label>
             <select id="planificateur-budget" value={budget} onChange={(e) => setBudget(e.target.value as 'petit' | 'moyen' | 'grand')}
-              className="w-full min-h-[var(--lkv-touch-min)] px-3 py-2.5 rounded-lg bg-background border border-border text-sm focus:outline-none focus:border-primary focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]">
+              className="w-full min-h-[var(--lkv-touch-min)] px-3 py-2.5 rounded-[var(--lkv-radius-sm)] bg-[color:var(--lkv-field-bg)] border border-border text-sm focus:outline-none focus:border-primary focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]">
               {(Object.entries(budgetLabels) as [string, string][]).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
             </select>
           </div>
@@ -1029,7 +1029,7 @@ function ToolPlanificateur() {
             <span className="text-xs text-muted-foreground">{budgetLabels[budget]}</span>
           </div>
           {etapes.map((etape) => (
-            <div key={etape.jour} className="glass rounded-xl p-4 flex gap-4">
+            <div key={etape.jour} className="glass rounded-[var(--lkv-radius-md)] p-4 flex gap-4">
               <div className="flex-shrink-0 w-10 h-10 rounded-full bg-primary/10 border border-primary/30 flex items-center justify-center">
                 <span className="font-mono font-700 text-sm text-primary">J{etape.jour}</span>
               </div>
@@ -1043,7 +1043,7 @@ function ToolPlanificateur() {
               </div>
             </div>
           ))}
-          <div className="bg-primary/5 border border-primary/20 rounded-xl p-4 text-center">
+          <div className="bg-primary/5 border border-primary/20 rounded-[var(--lkv-radius-md)] p-4 text-center">
             <p className="text-sm text-muted-foreground mb-3">Pour un itinéraire personnalisé avec équipement recommandé :</p>
             <a href="/ai-configurator" className="btn-primary py-2 px-6 text-sm inline-flex items-center gap-2">
               ✨ Configurateur IA complet
@@ -1094,7 +1094,7 @@ export default function OutilSlugPage() {
       <>
         {/* ── DESKTOP ── */}
         <div className="hidden md:block">
-          <div className="min-h-screen bg-background text-foreground">
+          <div className="min-h-screen text-foreground">
             <Header />
             <div className="max-w-2xl mx-auto px-4 pt-32 text-center">
               <p className="text-6xl mb-4">🔧</p>
@@ -1126,11 +1126,11 @@ export default function OutilSlugPage() {
     <>
       {/* ── DESKTOP ── */}
       <div className="hidden md:block">
-        <div className="min-h-screen bg-background text-foreground">
+        <div className="min-h-screen text-foreground">
           <Header />
 
           {/* Tool Header */}
-          <section className="pt-24 pb-8 bg-dark-bg">
+          <section className="pt-24 pb-8 bg-[color:var(--lkv-primary)]">
             <div className="max-w-3xl mx-auto px-4 sm:px-6">
               <nav className="flex items-center gap-2 text-xs text-white/50 mb-4" aria-label="Fil d'Ariane">
                 <Link href="/" className="hover:text-white transition-colors">Accueil</Link>
@@ -1167,7 +1167,7 @@ export default function OutilSlugPage() {
                   .filter(([s]) => s !== slug)
                   .map(([s, t]) => (
                     <Link key={s} href={`/outils/${s}`}
-                      className="flex items-center gap-2 px-3 py-2 min-h-[var(--lkv-touch-min)] glass-sub-card rounded-lg text-sm text-muted-foreground hover:text-foreground motion-safe:transition-[transform,background-color,border-color] motion-reduce:transition-none">
+                      className="flex items-center gap-2 px-3 py-2 min-h-[var(--lkv-touch-min)] glass-sub-card rounded-[var(--lkv-radius-sm)] text-sm text-muted-foreground hover:text-foreground motion-safe:transition-[transform,background-color,border-color] motion-reduce:transition-none">
                       <span>{t.icon}</span>
                       <span>{t.nom}</span>
                     </Link>

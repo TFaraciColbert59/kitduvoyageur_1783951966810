@@ -25,7 +25,7 @@ function StepIcon({ icon, active }: { icon: string; active: boolean }) {
   const badgeBg = active ? 'bg-[color:var(--btn-tint)] shadow-2xs' : 'bg-[color:var(--glass-subtle-fill)]';
 
   return (
-    <div className={`w-10 h-10 rounded-2xl ${badgeBg} border border-[color:var(--glass-border)] flex items-center justify-center flex-shrink-0 motion-safe:transition-[transform,background-color,border-color] motion-reduce:transition-none`}>
+    <div className={`w-10 h-10 rounded-[var(--lkv-radius-lg)] ${badgeBg} border border-[color:var(--glass-border)] flex items-center justify-center flex-shrink-0 motion-safe:transition-[transform,background-color,border-color] motion-reduce:transition-none`}>
       {icon === 'sun' && (
         <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" className={iconColor} viewBox="0 0 24 24">
           <circle cx="12" cy="12" r="5" /><line x1="12" y1="1" x2="12" y2="3" /><line x1="12" y1="21" x2="12" y2="23" /><line x1="4.22" y1="4.22" x2="5.64" y2="5.64" /><line x1="18.36" y1="18.36" x2="19.78" y2="19.78" /><line x1="1" y1="12" x2="3" y2="12" /><line x1="21" y1="12" x2="23" y2="12" /><line x1="4.22" y1="19.78" x2="5.64" y2="18.36" /><line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
@@ -588,7 +588,7 @@ export default function KitConfiguratorWizard({
               triggerHaptic('light');
               onClose();
             }}
-            className="text-xs text-[var(--lkv-text-muted)] hover:text-[var(--lkv-text-primary)] transition-colors font-medium px-3 py-1.5 rounded-lg hover:bg-[color:var(--btn-tint)] min-h-[var(--lkv-touch-min)] min-w-[var(--lkv-touch-min)] flex items-center justify-center cursor-pointer"
+            className="text-xs text-[var(--lkv-text-muted)] hover:text-[var(--lkv-text-primary)] transition-colors font-medium px-3 py-1.5 rounded-[var(--lkv-radius-sm)] hover:bg-[color:var(--btn-tint)] min-h-[var(--lkv-touch-min)] min-w-[var(--lkv-touch-min)] flex items-center justify-center cursor-pointer"
             aria-label="Fermer le configurateur"
           >
             Fermer ✕
@@ -596,7 +596,7 @@ export default function KitConfiguratorWizard({
         ) : (
           <Link
             href="/"
-            className="text-xs text-[var(--lkv-text-muted)] hover:text-[var(--lkv-text-primary)] transition-colors font-medium px-2 py-1 rounded-lg hover:bg-[color:var(--btn-tint)] min-h-[var(--lkv-touch-min)] flex items-center"
+            className="text-xs text-[var(--lkv-text-muted)] hover:text-[var(--lkv-text-primary)] transition-colors font-medium px-2 py-1 rounded-[var(--lkv-radius-sm)] hover:bg-[color:var(--btn-tint)] min-h-[var(--lkv-touch-min)] flex items-center"
           >
             Quitter ✕
           </Link>
@@ -693,7 +693,7 @@ export default function KitConfiguratorWizard({
                             handleSelectOption(opt.id);
                           }
                         }}
-                        className={`glass-sub-card p-4 sm:p-5 rounded-2xl cursor-pointer motion-safe:transition-[transform,background-color,border-color] motion-reduce:transition-none duration-200 flex flex-col justify-between border focus-visible:outline-2 focus-visible:outline-[var(--lkv-primary)] focus-visible:outline-offset-2 ${
+                        className={`glass-sub-card p-4 sm:p-5 rounded-[var(--lkv-radius-lg)] cursor-pointer motion-safe:transition-[transform,background-color,border-color] motion-reduce:transition-none duration-200 flex flex-col justify-between border focus-visible:outline-2 focus-visible:outline-[var(--lkv-primary)] focus-visible:outline-offset-2 ${
                           isSelected
                             ? 'bg-[color:var(--lkv-surface-paper)] border-[var(--lkv-text-primary)] shadow-md ring-2 ring-[var(--lkv-text-primary)]/10'
                             : 'hover:bg-[color:var(--lkv-surface-paper)]/90'
@@ -748,7 +748,7 @@ export default function KitConfiguratorWizard({
               report && (
                 <div className="space-y-4 mb-6">
                   {/* Preparation Score Banner */}
-                  <div className="glass-sub-card p-4 sm:p-5 rounded-2xl border border-[color:var(--glass-border)]">
+                  <div className="glass-sub-card p-4 sm:p-5 rounded-[var(--lkv-radius-lg)] border border-[color:var(--glass-border)]">
                     <div className="flex items-center justify-between">
                       <div>
                         <span className="glass-pill text-[length:var(--lkv-text-caption-2)] font-mono font-bold text-[var(--lkv-text-secondary)] mb-1.5 inline-block">
@@ -761,7 +761,7 @@ export default function KitConfiguratorWizard({
                         <p className="text-xs text-[var(--lkv-text-muted)] mt-1">{report.summary}</p>
                       </div>
 
-                      <div className="w-16 h-16 rounded-2xl bg-[color:var(--glass-bg-medium)] border border-[color:var(--glass-border)] flex flex-col items-center justify-center shadow-xs">
+                      <div className="w-16 h-16 rounded-[var(--lkv-radius-lg)] bg-[color:var(--glass-bg-medium)] border border-[color:var(--glass-border)] flex flex-col items-center justify-center shadow-xs">
                         <span className="text-xl">🏔️</span>
                         <span className="text-[length:var(--lkv-text-caption-2)] font-mono font-bold text-[var(--lkv-text-primary)]">LKDV AI</span>
                       </div>
@@ -769,7 +769,7 @@ export default function KitConfiguratorWizard({
                   </div>
 
                   {/* Section: Owned Items (from user's inventory) */}
-                  <div className="glass-sub-card p-4 rounded-2xl border border-[color:var(--glass-border)]">
+                  <div className="glass-sub-card p-4 rounded-[var(--lkv-radius-lg)] border border-[color:var(--glass-border)]">
                     <div className="flex items-center justify-between mb-2">
                       <h4 className="text-xs font-bold font-mono uppercase tracking-wider text-[var(--lkv-text-primary)]">
                         🎒 Matériel Déjà Possédé ({report.ownedItems.length} articles)
@@ -798,7 +798,7 @@ export default function KitConfiguratorWizard({
                   </div>
 
                   {/* Section: Missing Items */}
-                  <div className="glass-sub-card p-4 rounded-2xl border border-[color:var(--glass-border)]">
+                  <div className="glass-sub-card p-4 rounded-[var(--lkv-radius-lg)] border border-[color:var(--glass-border)]">
                     <div className="flex items-center justify-between mb-2.5">
                       <h4 className="text-xs font-bold font-mono uppercase tracking-wider text-[var(--lkv-text-primary)]">
                         🛒 Matériel Recommandé ({report.missingItems.length} articles)
@@ -813,7 +813,7 @@ export default function KitConfiguratorWizard({
                         <div key={item.id} className="flex items-center justify-between gap-3 text-xs py-1.5 border-b border-[var(--lkv-text-primary)]/5 last:border-none">
                           <div className="flex items-center gap-2.5 min-w-0">
                             {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img src={item.image} alt={item.name} className="w-8 h-8 rounded-lg object-cover flex-shrink-0 border border-[color:var(--glass-border)] shadow-2xs" />
+                            <img src={item.image} alt={item.name} className="w-8 h-8 rounded-[var(--lkv-radius-sm)] object-cover flex-shrink-0 border border-[color:var(--glass-border)] shadow-2xs" />
                             <div className="truncate">
                               <p className="font-bold text-[var(--lkv-text-primary)] truncate">{item.name}</p>
                               <p className="text-[length:var(--lkv-text-caption-2)] text-[var(--lkv-text-muted)] truncate">{item.brand} · {item.reason}</p>
@@ -830,13 +830,13 @@ export default function KitConfiguratorWizard({
 
                   {/* Section: Weather / Security Alerts */}
                   {report.inadequateAlerts.length > 0 && (
-                    <div className="glass-sub-card p-4 rounded-2xl border border-[var(--lkv-warning-bg)] bg-[var(--lkv-warning-bg)]">
+                    <div className="glass-sub-card p-4 rounded-[var(--lkv-radius-lg)] border border-[var(--lkv-warning-bg)] bg-[var(--lkv-warning-bg)]">
                       <h4 className="text-xs font-bold font-mono uppercase tracking-wider text-[var(--lkv-warning-dark)] mb-2 flex items-center gap-1.5">
                         <span>⚠️</span> Points de vigilance terrain
                       </h4>
                       <div className="space-y-2 text-xs">
                         {report.inadequateAlerts.map((alert, idx) => (
-                          <div key={idx} className="p-2.5 rounded-xl bg-[color:var(--lkv-surface-paper)]/80 border border-[color:var(--glass-border)] space-y-0.5">
+                          <div key={idx} className="p-2.5 rounded-[var(--lkv-radius-md)] bg-[color:var(--lkv-surface-paper)]/80 border border-[color:var(--glass-border)] space-y-0.5">
                             <p className="font-bold text-[var(--lkv-text-primary)]">{alert.item}</p>
                             <p className="text-xs text-[var(--lkv-text-muted)]">{alert.issue}</p>
                             <p className="text-[length:var(--lkv-text-caption-2)] text-[var(--lkv-text-secondary)] font-semibold">💡 {alert.recommendation}</p>
@@ -935,7 +935,7 @@ export default function KitConfiguratorWizard({
             </div>
 
             {/* Header Card */}
-            <div className="glass-sub-card p-4 rounded-2xl border border-[color:var(--glass-border)] space-y-1">
+            <div className="glass-sub-card p-4 rounded-[var(--lkv-radius-lg)] border border-[color:var(--glass-border)] space-y-1">
               <h2 className="font-display font-bold text-xl text-[var(--lkv-text-primary)] leading-tight">
                 Composition <span className="font-serif italic font-normal text-[var(--lkv-warning-dark)]">intelligente</span>
               </h2>
@@ -946,7 +946,7 @@ export default function KitConfiguratorWizard({
 
             {/* Live Breakdown List */}
             {report && (
-              <div className="glass-sub-card p-4 rounded-2xl border border-[color:var(--glass-border)] space-y-3">
+              <div className="glass-sub-card p-4 rounded-[var(--lkv-radius-lg)] border border-[color:var(--glass-border)] space-y-3">
                 <div className="flex items-center justify-between text-xs border-b border-[var(--lkv-text-primary)]/5 pb-2">
                   <span className="font-mono text-[length:var(--lkv-text-caption-2)] font-bold uppercase tracking-wider text-[var(--lkv-text-muted)]">
                     CONTENU ({report.ownedItems.length + report.missingItems.length} PIÈCES)
@@ -988,19 +988,19 @@ export default function KitConfiguratorWizard({
             {/* 4 Metadata Cards in Glass */}
             {report && (
               <div className="grid grid-cols-2 gap-2.5 text-xs">
-                <div className="glass-sub-card p-3 rounded-xl border border-[color:var(--glass-border)]">
+                <div className="glass-sub-card p-3 rounded-[var(--lkv-radius-md)] border border-[color:var(--glass-border)]">
                   <p className="text-[length:var(--lkv-text-caption-2)] font-mono text-[var(--lkv-text-muted)] uppercase tracking-wider mb-0.5">DURÉE</p>
                   <p className="font-bold text-[var(--lkv-text-primary)] truncate text-xs">{report.durationLabel}</p>
                 </div>
-                <div className="glass-sub-card p-3 rounded-xl border border-[color:var(--glass-border)]">
+                <div className="glass-sub-card p-3 rounded-[var(--lkv-radius-md)] border border-[color:var(--glass-border)]">
                   <p className="text-[length:var(--lkv-text-caption-2)] font-mono text-[var(--lkv-text-muted)] uppercase tracking-wider mb-0.5">MÉTÉO</p>
                   <p className="font-bold text-[var(--lkv-text-primary)] truncate text-xs">{report.weatherLabel}</p>
                 </div>
-                <div className="glass-sub-card p-3 rounded-xl border border-[color:var(--glass-border)]">
+                <div className="glass-sub-card p-3 rounded-[var(--lkv-radius-md)] border border-[color:var(--glass-border)]">
                   <p className="text-[length:var(--lkv-text-caption-2)] font-mono text-[var(--lkv-text-muted)] uppercase tracking-wider mb-0.5">POIDS ESTIMÉ</p>
                   <p className="font-bold text-[var(--lkv-text-primary)] text-xs">{report.totalWeightKg} kg</p>
                 </div>
-                <div className="glass-sub-card p-3 rounded-xl border border-[color:var(--glass-border)]">
+                <div className="glass-sub-card p-3 rounded-[var(--lkv-radius-md)] border border-[color:var(--glass-border)]">
                   <p className="text-[length:var(--lkv-text-caption-2)] font-mono text-[var(--lkv-text-muted)] uppercase tracking-wider mb-0.5">CO₂ ESTIMÉ</p>
                   <p className="font-bold text-[var(--lkv-text-primary)] text-xs">{report.carbonEstimateKg} kg CO₂</p>
                 </div>
@@ -1018,7 +1018,7 @@ export default function KitConfiguratorWizard({
       {/* ── MOBILE STICKY BOTTOM ACTION BAR (Liquid Glass) ── */}
       {report && (
         <div
-          className="lg:hidden fixed left-2.5 right-2.5 z-[var(--z-command)] glass border border-[color:var(--glass-border)] p-3 px-4 flex items-center justify-between shadow-xl rounded-2xl"
+          className="lg:hidden fixed left-2.5 right-2.5 z-[var(--z-command)] glass border border-[color:var(--glass-border)] p-3 px-4 flex items-center justify-between shadow-xl rounded-[var(--lkv-radius-lg)]"
           style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 84px)' }}
         >
           <div>

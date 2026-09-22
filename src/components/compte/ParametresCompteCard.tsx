@@ -907,13 +907,13 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
                 </div>
 
                 {passwordError && (
-                  <p className="text-xs font-bold text-[color:var(--lkv-danger)] bg-[color:var(--lkv-danger)]/10 p-3 rounded-xl border border-[color:var(--lkv-danger)]/20">
+                  <p className="text-xs font-bold text-[color:var(--lkv-danger)] bg-[color:var(--lkv-danger)]/10 p-3 rounded-[var(--lkv-radius-md)] border border-[color:var(--lkv-danger)]/20">
                     ⚠️ {passwordError}
                   </p>
                 )}
 
                 {passwordSuccess && (
-                  <p className="text-xs font-bold text-[color:var(--lkv-secondary)] bg-[color:var(--lkv-secondary)]/10 p-3 rounded-xl border border-[color:var(--lkv-secondary)]/20">
+                  <p className="text-xs font-bold text-[color:var(--lkv-secondary)] bg-[color:var(--lkv-secondary)]/10 p-3 rounded-[var(--lkv-radius-md)] border border-[color:var(--lkv-secondary)]/20">
                     ✓ {passwordSuccess}
                   </p>
                 )}
@@ -1053,7 +1053,7 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
 
       {/* 3. Sticky Bottom Save Bar */}
       {isDirty && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[var(--z-toast)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] text-[color:var(--lkv-text-primary)] px-6 py-4 rounded-full border border-white/20 flex items-center gap-6 animate-slide-up max-w-xl w-[92%] justify-between shadow-2xl">
+        <div className="fixed bottom-[calc(var(--nav-offset)+var(--space-4))] left-1/2 -translate-x-1/2 z-[var(--z-toast)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] text-[color:var(--lkv-text-primary)] px-6 py-4 rounded-full border border-white/20 flex items-center gap-6 animate-slide-up max-w-xl w-[92%] justify-between shadow-2xl">
           <div className="flex items-center gap-3">
             <span className="w-3 h-3 rounded-full bg-[color:var(--lkv-warning)] animate-ping" />
             <span className="text-xs font-bold font-mono">

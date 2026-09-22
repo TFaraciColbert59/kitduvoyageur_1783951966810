@@ -207,7 +207,7 @@ export default function MobileCarnetDetailView({
               <span className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn font-serif text-[length:var(--lkv-text-caption)] font-bold italic text-[color:var(--lkv-text-primary)] transition-transform group-hover/author:scale-105 motion-reduce:transition-none">
                 <img
                   src={metaAny.authorAvatar || (data.meta?.titleLine1?.includes('Ring Road') ? 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&q=80' : 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&q=80')}
-                  alt=""
+                  alt={metaAny.authorName || 'Auteur du carnet'}
                   className="h-full w-full object-cover"
                 />
               </span>

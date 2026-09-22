@@ -50,8 +50,8 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   };
 
   const colors: Record<ToastType, string> = {
-    success: 'bg-green-600',
-    error: 'bg-red-600',
+    success: 'bg-[color:var(--lkv-success)]',
+    error: 'bg-[color:var(--lkv-danger)]',
     info: 'bg-[color:var(--sky-500)]',
     warning: 'bg-[color:var(--lkv-warning-dark)]',
   };
@@ -63,13 +63,13 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
       <div
         aria-live="polite"
         aria-atomic="false"
-        className="fixed bottom-4 right-4 z-[var(--z-toast)] flex flex-col gap-2 pointer-events-none"
+        className="fixed bottom-[calc(var(--nav-offset)+var(--space-2))] right-4 z-[var(--z-toast)] flex flex-col gap-2 pointer-events-none"
       >
         {toasts.map((t) => (
           <div
             key={t.id}
             role="status"
-            className={`flex items-center gap-3 px-4 py-3 rounded-xl text-white text-sm font-medium  pointer-events-auto max-w-sm animate-in slide-in-from-right-4 ${colors[t.type]}`}
+            className={`flex items-center gap-3 px-4 py-3 rounded-[var(--lkv-radius-md)] text-white text-sm font-medium  pointer-events-auto max-w-sm animate-in slide-in-from-right-4 ${colors[t.type]}`}
           >
             <span className="text-base leading-none">{icons[t.type]}</span>
             <span className="flex-1">{t.message}</span>

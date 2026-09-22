@@ -731,7 +731,7 @@ export default function CreateClubView() {
             <Card variant="compact" className="flex flex-col overflow-hidden p-0">
               <div className="relative h-28 bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn">
                 {form.coverImage && (
-                  <img src={form.coverImage} alt="" className="h-full w-full object-cover" />
+                  <img src={form.coverImage} alt="Couverture du club" className="h-full w-full object-cover" />
                 )}
                 <div aria-hidden className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
                 <Badge className="absolute bottom-2 left-2 border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] font-mono font-bold text-[color:var(--lkv-text-inverted)] backdrop-blur-[var(--blur-md)]">

@@ -675,7 +675,7 @@ export default function PaysPratiqueView({ country, isMobile = false }: PaysPrat
                         triggerHaptic('selection');
                         setOpenFaqIndex(isOpen ? null : idx);
                       }}
-                      className="w-full px-4 py-3 text-left flex items-center justify-between gap-3 cursor-pointer hover:bg-white/80 transition-colors"
+                      className="w-full px-4 py-3 text-left flex items-center justify-between gap-3 cursor-pointer hover:bg-[color:var(--lkv-hover-surface)] transition-colors"
                     >
                       <span className="font-bold text-xs text-[color:var(--lkv-primary)]">
                         {item.question}

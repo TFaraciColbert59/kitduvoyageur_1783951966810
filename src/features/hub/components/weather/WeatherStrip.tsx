@@ -32,7 +32,7 @@ export function WeatherStrip({
       return (
         <div className="glass backdrop-blur-lg rounded-2xl p-2" {...liveMask}>
           <div className="flex items-center gap-2 min-h-[44px]">
-            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/80 border border-white/70 text-[var(--lkv-text-muted)]">
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[color:var(--glass-bg-medium)] border border-white/70 text-[var(--lkv-text-muted)]">
               <Icon name="cloud-off" size={16} aria-hidden="true" />
             </span>
             <p className="text-[9px] font-medium uppercase tracking-[0.14em] text-[var(--lkv-text-secondary)] truncate leading-none">
@@ -45,7 +45,7 @@ export function WeatherStrip({
     return (
       <div className="glass rounded-xl px-3 py-2" {...liveMask}>
         <div className="flex items-center gap-2.5 min-h-[44px]">
-          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/80 border border-white/70 text-[var(--lkv-text-muted)]">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[color:var(--glass-bg-medium)] border border-white/70 text-[var(--lkv-text-muted)]">
             <Icon name="cloud-off" size={18} aria-hidden="true" />
           </span>
           <p className="text-sm font-bold text-[var(--lkv-text-primary)]">Météo indisponible</p>
@@ -61,7 +61,7 @@ export function WeatherStrip({
     return (
       <div className="glass backdrop-blur-lg rounded-2xl p-2" {...liveMask}>
         <div className="flex items-center gap-2">
-          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/80 border border-white/70 text-[var(--lkv-secondary)]">
+          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[color:var(--glass-bg-medium)] border border-white/70 text-[var(--lkv-secondary)]">
             <CurrentIcon size={16} aria-hidden="true" />
           </span>
           <div className="min-w-0">
@@ -105,7 +105,7 @@ export function WeatherStrip({
   return (
     <div className="glass rounded-xl px-3 py-2" {...liveMask}>
       <div className="flex items-center gap-2.5">
-        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/80 border border-white/70 text-[var(--lkv-secondary)]">
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[color:var(--glass-bg-medium)] border border-white/70 text-[var(--lkv-secondary)]">
           <CurrentIcon size={18} aria-hidden="true" />
         </span>
         <div className="min-w-0 flex-1">

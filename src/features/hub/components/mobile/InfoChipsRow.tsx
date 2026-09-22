@@ -17,8 +17,8 @@ function chipClasses(tone: MobileInfoChip['tone']): string {
 }
 
 function bubbleClasses(tone: MobileInfoChip['tone']): string {
-  if (tone === 'warn') return 'border-[var(--lkv-danger)]/20 bg-white/80 text-[var(--lkv-danger)]';
-  if (tone === 'accent') return 'border-[var(--lkv-primary)]/15 bg-white/80 text-[var(--lkv-primary)]';
+  if (tone === 'warn') return 'border-[var(--lkv-danger)]/20 bg-[color:var(--glass-bg-medium)] text-[var(--lkv-danger)]';
+  if (tone === 'accent') return 'border-[var(--lkv-primary)]/15 bg-[color:var(--glass-bg-medium)] text-[var(--lkv-primary)]';
   return 'border-white/70 bg-white/70 text-[var(--lkv-secondary)]';
 }
 

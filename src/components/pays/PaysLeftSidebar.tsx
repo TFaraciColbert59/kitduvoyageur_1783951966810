@@ -142,7 +142,7 @@ export default function PaysLeftSidebar({
       <div className="shrink-0 pt-2 border-t border-[color:var(--lkv-primary)]/5 space-y-1.5">
         <Link
           href="/explorer"
-          className="w-full glass-sub-card text-xs font-semibold text-[color:var(--lkv-primary-soft)] p-2 flex items-center justify-between hover:bg-white/80 transition-colors cursor-pointer"
+          className="w-full glass-sub-card text-xs font-semibold text-[color:var(--lkv-primary-soft)] p-2 flex items-center justify-between hover:bg-[color:var(--lkv-hover-surface)] transition-colors cursor-pointer"
         >
           <span className="flex items-center gap-1.5">
             <span>←</span>

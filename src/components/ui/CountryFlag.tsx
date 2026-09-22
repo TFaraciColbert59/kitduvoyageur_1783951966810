@@ -29,7 +29,7 @@ export default function CountryFlag({
   if (!isoCode || hasError) {
     return (
       <span
-        className={`inline-flex items-center justify-center bg-white/80 border border-white/60 font-mono font-bold text-[10px] text-[color:var(--lkv-primary)] shadow-2xs ${sizeClasses[size]} ${className}`}
+        className={`inline-flex items-center justify-center bg-[color:var(--glass-bg-medium)] border border-white/60 font-mono font-bold text-[10px] text-[color:var(--lkv-primary)] shadow-2xs ${sizeClasses[size]} ${className}`}
         title={name || code}
       >
         {code ? code.toUpperCase() : '🌐'}

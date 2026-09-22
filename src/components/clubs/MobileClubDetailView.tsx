@@ -143,7 +143,7 @@ export default function MobileClubDetailView({
                     style={{ zIndex: 10 - i }}
                   >
                     {m.user?.avatar_url ? (
-                      <img src={m.user.avatar_url} alt="" className="h-full w-full object-cover" />
+                      <img src={m.user.avatar_url} alt={m.user?.full_name || 'Membre du club'} className="h-full w-full object-cover" />
                     ) : (
                       m.user?.full_name?.charAt(0) || '👤'
                     )}

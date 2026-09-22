@@ -1014,7 +1014,7 @@ export default function CarnetsPage() {
       />
 
       {toast && (
-        <div className="fixed bottom-6 left-1/2 z-[var(--z-toast)] -translate-x-1/2 rounded-[var(--lkv-radius-md)] bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn px-[var(--space-5)] py-[var(--space-3)] text-[length:var(--lkv-text-caption)] font-semibold text-[color:var(--lkv-text-primary)]">
+        <div className="fixed bottom-[calc(var(--nav-offset)+var(--space-4))] left-1/2 z-[var(--z-toast)] -translate-x-1/2 rounded-[var(--lkv-radius-md)] bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn px-[var(--space-5)] py-[var(--space-3)] text-[length:var(--lkv-text-caption)] font-semibold text-[color:var(--lkv-text-primary)]">
           {toast}
         </div>
       )}

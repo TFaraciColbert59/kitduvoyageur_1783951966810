@@ -186,7 +186,7 @@ export default function StoriesViewer({
         <img
           key={`${userIndex}-${slideIndex}`}
           src={slide.image}
-          alt=""
+          alt={`Story de ${user.name}`}
           draggable={false}
           className="h-full w-full object-cover"
         />

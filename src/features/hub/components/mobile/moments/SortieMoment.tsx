@@ -118,7 +118,7 @@ export function SortieMoment({ trip, context, hiking, fillViewport = false }: So
               return (
                 <li
                   key={p.id}
-                  className="flex shrink-0 items-center gap-1.5 rounded-full border border-white/70 bg-white/80 px-2 py-1 text-[10.5px] font-semibold text-[var(--lkv-text-primary)]"
+                  className="flex shrink-0 items-center gap-1.5 rounded-full border border-white/70 bg-[color:var(--glass-bg-medium)] px-2 py-1 text-[10.5px] font-semibold text-[var(--lkv-text-primary)]"
                 >
                   <span
                     className="h-2 w-2 rounded-full"
