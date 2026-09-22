@@ -13,6 +13,8 @@ export default function EditProfileView({ onCloseModal, onSave }: { onCloseModal
   const [saving, setSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [user, setUser] = useState<any>(null);
+  // Erreurs annoncées (référence `contact` : labels + role=alert + 44px).
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   // Form State
   const [form, setForm] = useState({
@@ -122,6 +124,12 @@ export default function EditProfileView({ onCloseModal, onSave }: { onCloseModal
   // Update Field Handler
   const setField = (key: string, value: any) => {
     setForm(prev => ({ ...prev, [key]: value }));
+    setErrors(prev => {
+      if (!prev[key]) return prev;
+      const next = { ...prev };
+      delete next[key];
+      return next;
+    });
   };
 
   const toggleArrayItem = (key: string, item: string) => {
@@ -147,8 +155,21 @@ export default function EditProfileView({ onCloseModal, onSave }: { onCloseModal
     return Math.min(100, score);
   }, [form]);
 
+  const validateProfile = () => {
+    const next: Record<string, string> = {};
+    if (!form.firstName.trim()) next.firstName = 'Indiquez votre prénom.';
+    if (!form.lastName.trim()) next.lastName = 'Indiquez votre nom.';
+    if (!form.username.trim()) next.username = 'Choisissez un nom d’utilisateur.';
+    else if (!/^[a-z0-9_]{3,}$/.test(form.username.trim())) next.username = '3 caractères min : lettres, chiffres, underscore.';
+    if (!form.city.trim()) next.city = 'Indiquez votre ville de résidence.';
+    return next;
+  };
+
   // Save Handler to LocalStorage & Supabase
   const handleSave = async () => {
+    const validation = validateProfile();
+    setErrors(validation);
+    if (Object.keys(validation).length > 0) return;
     setSaving(true);
     setSaveSuccess(false);
 
@@ -227,7 +248,7 @@ export default function EditProfileView({ onCloseModal, onSave }: { onCloseModal
         </div>
 
         <div className="flex items-center gap-3">
-          <span className="inline-flex items-center justify-center gap-[6px] rounded-full border border-[color:var(--btn-glass-border)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn px-[var(--space-3)] py-[2px] text-[length:var(--lkv-text-caption-2)] font-medium text-[color:var(--lkv-text-primary)] text-[10px] font-mono">
+          <span className="inline-flex items-center justify-center gap-[6px] rounded-full border border-[color:var(--btn-glass-border)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn px-[var(--space-3)] py-[2px] text-[length:var(--lkv-text-caption-2)] font-medium text-[color:var(--lkv-text-primary)] text-[length:var(--lkv-text-caption-2)] font-mono">
             <span className="w-1.5 h-1.5 rounded-full bg-[color:var(--lkv-secondary)] animate-pulse mr-1"></span>
             ⚡ Modifications synchronisées
           </span>
@@ -248,7 +269,7 @@ export default function EditProfileView({ onCloseModal, onSave }: { onCloseModal
 
       {/* 2. HERO TITLE SECTION */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-6">
-        <div className="text-[10px] font-mono tracking-widest text-[color:var(--lkv-text-muted)] uppercase font-bold mb-2">
+        <div className="text-[length:var(--lkv-text-caption-2)] font-mono tracking-widest text-[color:var(--lkv-text-muted)] uppercase font-bold mb-2">
           — ÉDITION PROFIL · {form.firstName} {form.lastName}
         </div>
         <h1 className="font-display font-bold text-3xl sm:text-4xl text-[color:var(--lkv-primary)] tracking-tight mb-2">
@@ -259,6 +280,24 @@ export default function EditProfileView({ onCloseModal, onSave }: { onCloseModal
           Votre profil apparaît sur vos carnets, dans les clubs et à côté de vos aventures. Prenez le temps — les meilleures histoires ont de bons auteurs.
         </p>
       </div>
+
+      {/* Résumé d'erreurs annoncé (référence contact : role=alert + aria-live) */}
+      {Object.keys(errors).length > 0 && (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4" role="alert" aria-live="assertive">
+          <div className="rounded-[var(--lkv-radius-sm)] border border-[color:var(--lkv-danger-dark)]/30 bg-[color:var(--lkv-danger-bg)] px-[var(--space-4)] py-3">
+            <p className="text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-danger-dark)]">
+              Vérifiez {Object.keys(errors).length} champ{Object.keys(errors).length > 1 ? 's' : ''} avant d’enregistrer.
+            </p>
+            <ul className="mt-1 list-disc pl-5 text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-danger-dark)]">
+              {Object.entries(errors).map(([key, msg]) => (
+                <li key={key}>
+                  <a href={`#profil-${key}`} className="underline underline-offset-2">{msg}</a>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      )}
 
       {/* 3. MAIN FORM & SIDEBAR GRID */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
@@ -271,14 +310,16 @@ export default function EditProfileView({ onCloseModal, onSave }: { onCloseModal
                 <h2 className="font-display font-bold text-lg sm:text-xl text-[color:var(--lkv-primary)]">Identité publique</h2>
                 <p className="text-xs text-[color:var(--lkv-text-muted)] mt-0.5">Nom, avatar, couverture. Ce que la communauté voit en premier.</p>
               </div>
-              <span className="inline-flex items-center justify-center gap-[6px] rounded-full border border-[color:var(--btn-glass-border)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn px-[var(--space-3)] py-[2px] text-[length:var(--lkv-text-caption-2)] font-medium text-[color:var(--lkv-text-primary)] text-[10px] font-mono">
+              <span className="inline-flex items-center justify-center gap-[6px] rounded-full border border-[color:var(--btn-glass-border)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn px-[var(--space-3)] py-[2px] text-[length:var(--lkv-text-caption-2)] font-medium text-[color:var(--lkv-text-primary)] text-[length:var(--lkv-text-caption-2)] font-mono">
                 01 · VISIBILITÉ
               </span>
             </div>
 
             {/* Cover Photo Header */}
-            <div className="relative rounded-2xl overflow-hidden h-44 sm:h-52 bg-[color:var(--btn-tint)] group border border-white/10">
-              <img src={form.heroUrl} alt="Photo de couverture" className="w-full h-full object-cover" />
+            <div className="relative rounded-2xl overflow-hidden h-44 sm:h-52 bg-[color:var(--btn-tint)] group border border-[color:var(--glass-border)]">
+              {form.heroUrl ? (
+                <img src={form.heroUrl} alt="Photo de couverture" className="w-full h-full object-cover" />
+              ) : null}
               <div className="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-colors" />
               <div className="absolute top-4 right-4 flex gap-2">
                 <label className="inline-flex items-center justify-center gap-[var(--space-2)] min-h-[var(--lkv-touch-min)] rounded-full px-[var(--space-4)] py-[var(--space-2)] text-[length:var(--lkv-text-footnote)] font-semibold backdrop-blur-[var(--btn-blur)] border border-[color:var(--glass-border)] bg-[color:var(--btn-tint)] text-[color:var(--btn-content)] shadow-elevation-1 text-xs font-bold cursor-pointer">
@@ -308,7 +349,7 @@ export default function EditProfileView({ onCloseModal, onSave }: { onCloseModal
             <div className="flex flex-col sm:flex-row items-start sm:items-end justify-between gap-4 -mt-12 sm:-mt-14 relative z-[var(--z-dropdown)] px-4">
               <div className="flex items-end gap-4">
                 <div className="relative w-24 h-24 sm:w-28 sm:h-28 rounded-full border border-[color:var(--glass-border)] shadow-md overflow-hidden bg-[color:var(--glass-bg-medium)] shrink-0">
-                  <img src={form.avatarUrl || '/assets/images/no_image.png'} alt={form.publicName} className="w-full h-full object-cover" />
+                  <img src={form.avatarUrl || '/assets/images/no_image.png'} alt={form.publicName || 'Photo de profil'} className="w-full h-full object-cover" />
                   <label className="absolute inset-0 bg-black/40 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-bold cursor-pointer">
                     <Icon name="CameraIcon" size={20} />
                     <input
@@ -346,91 +387,124 @@ export default function EditProfileView({ onCloseModal, onSave }: { onCloseModal
               </div>
             </div>
 
-            {/* Inputs Grid */}
-            <div className="space-y-4 pt-2">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="text-[10px] font-mono tracking-widest uppercase text-[color:var(--lkv-text-muted)] block mb-1.5 font-bold">Prénom *</label>
-                  <input
-                    type="text"
-                    value={form.firstName}
-                    onChange={(e) => {
-                      setField('firstName', e.target.value);
-                      setField('publicName', `${e.target.value} ${form.lastName}`);
-                    }}
-                    className="min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[10px] text-[16px] text-[color:var(--lkv-text-primary)] outline-none transition-colors duration-[var(--motion-control-duration)] placeholder:text-[color:var(--lkv-text-muted)] focus:border-[color:var(--lkv-action)] focus:ring-[3px] focus:ring-[color:var(--lkv-focus-ring)] disabled:cursor-not-allowed disabled:bg-[color:var(--lkv-disabled-bg)] disabled:text-[color:var(--lkv-disabled-text)] sm:text-[length:var(--lkv-text-body-sm)] w-full"
-                  />
-                </div>
-                <div>
-                  <label className="text-[10px] font-mono tracking-widest uppercase text-[color:var(--lkv-text-muted)] block mb-1.5 font-bold">Nom *</label>
-                  <input
-                    type="text"
-                    value={form.lastName}
-                    onChange={(e) => {
-                      setField('lastName', e.target.value);
-                      setField('publicName', `${form.firstName} ${e.target.value}`);
-                    }}
-                    className="min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[10px] text-[16px] text-[color:var(--lkv-text-primary)] outline-none transition-colors duration-[var(--motion-control-duration)] placeholder:text-[color:var(--lkv-text-muted)] focus:border-[color:var(--lkv-action)] focus:ring-[3px] focus:ring-[color:var(--lkv-focus-ring)] disabled:cursor-not-allowed disabled:bg-[color:var(--lkv-disabled-bg)] disabled:text-[color:var(--lkv-disabled-text)] sm:text-[length:var(--lkv-text-body-sm)] w-full"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="text-[10px] font-mono tracking-widest uppercase text-[color:var(--lkv-text-muted)] block mb-1.5 font-bold">Nom d'usage public</label>
-                  <input
-                    type="text"
-                    value={form.publicName}
-                    onChange={(e) => setField('publicName', e.target.value)}
-                    className="min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[10px] text-[16px] text-[color:var(--lkv-text-primary)] outline-none transition-colors duration-[var(--motion-control-duration)] placeholder:text-[color:var(--lkv-text-muted)] focus:border-[color:var(--lkv-action)] focus:ring-[3px] focus:ring-[color:var(--lkv-focus-ring)] disabled:cursor-not-allowed disabled:bg-[color:var(--lkv-disabled-bg)] disabled:text-[color:var(--lkv-disabled-text)] sm:text-[length:var(--lkv-text-body-sm)] w-full"
-                  />
-                </div>
-                <div>
-                  <div className="flex items-center justify-between mb-1.5">
-                    <label className="text-[10px] font-mono tracking-widest uppercase text-[color:var(--lkv-text-muted)] block font-bold">Nom d'utilisateur *</label>
-                    <span className="text-[10px] font-mono text-[color:var(--lkv-secondary)] font-bold">✓ Disponible</span>
-                  </div>
-                  <div className="relative">
-                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-xs font-mono text-[color:var(--lkv-text-muted)]">@</span>
+            {/* Inputs Grid — 3 groupes + sous-titres (6 champs section 01) */}
+            <div className="space-y-6 pt-2">
+              <fieldset className="border-0 m-0 p-0">
+                <legend className="sr-only">État civil</legend>
+                <h3 className="mb-3 text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)]">État civil</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label htmlFor="profil-firstName" className="text-[length:var(--lkv-text-caption-2)] font-mono tracking-widest uppercase text-[color:var(--lkv-text-muted)] block mb-1.5 font-bold">Prénom *</label>
                     <input
+                      id="profil-firstName"
                       type="text"
-                      value={form.username}
-                      onChange={(e) => setField('username', e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''))}
-                      className="min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[10px] text-[16px] text-[color:var(--lkv-text-primary)] outline-none transition-colors duration-[var(--motion-control-duration)] placeholder:text-[color:var(--lkv-text-muted)] focus:border-[color:var(--lkv-action)] focus:ring-[3px] focus:ring-[color:var(--lkv-focus-ring)] disabled:cursor-not-allowed disabled:bg-[color:var(--lkv-disabled-bg)] disabled:text-[color:var(--lkv-disabled-text)] sm:text-[length:var(--lkv-text-body-sm)] w-full pl-8"
+                      autoComplete="given-name"
+                      value={form.firstName}
+                      onChange={(e) => {
+                        setField('firstName', e.target.value);
+                        setField('publicName', `${e.target.value} ${form.lastName}`);
+                      }}
+                      aria-invalid={Boolean(errors.firstName)}
+                      aria-describedby={errors.firstName ? 'profil-firstName-erreur' : undefined}
+                      className="min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[10px] text-[16px] text-[color:var(--lkv-text-primary)] outline-none transition-colors duration-[var(--motion-control-duration)] placeholder:text-[color:var(--lkv-text-muted)] focus:border-[color:var(--lkv-action)] focus:ring-[3px] focus:ring-[color:var(--lkv-focus-ring)] disabled:cursor-not-allowed disabled:bg-[color:var(--lkv-disabled-bg)] disabled:text-[color:var(--lkv-disabled-text)] sm:text-[length:var(--lkv-text-body-sm)] w-full"
+                    />
+                    {errors.firstName && <p id="profil-firstName-erreur" role="alert" aria-live="assertive" className="mt-1.5 text-[length:var(--lkv-text-caption)] font-semibold text-[color:var(--lkv-danger-dark)]">{errors.firstName}</p>}
+                  </div>
+                  <div>
+                    <label htmlFor="profil-lastName" className="text-[length:var(--lkv-text-caption-2)] font-mono tracking-widest uppercase text-[color:var(--lkv-text-muted)] block mb-1.5 font-bold">Nom *</label>
+                    <input
+                      id="profil-lastName"
+                      type="text"
+                      autoComplete="family-name"
+                      value={form.lastName}
+                      onChange={(e) => {
+                        setField('lastName', e.target.value);
+                        setField('publicName', `${form.firstName} ${e.target.value}`);
+                      }}
+                      aria-invalid={Boolean(errors.lastName)}
+                      aria-describedby={errors.lastName ? 'profil-lastName-erreur' : undefined}
+                      className="min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[10px] text-[16px] text-[color:var(--lkv-text-primary)] outline-none transition-colors duration-[var(--motion-control-duration)] placeholder:text-[color:var(--lkv-text-muted)] focus:border-[color:var(--lkv-action)] focus:ring-[3px] focus:ring-[color:var(--lkv-focus-ring)] disabled:cursor-not-allowed disabled:bg-[color:var(--lkv-disabled-bg)] disabled:text-[color:var(--lkv-disabled-text)] sm:text-[length:var(--lkv-text-body-sm)] w-full"
+                    />
+                    {errors.lastName && <p id="profil-lastName-erreur" role="alert" aria-live="assertive" className="mt-1.5 text-[length:var(--lkv-text-caption)] font-semibold text-[color:var(--lkv-danger-dark)]">{errors.lastName}</p>}
+                  </div>
+                </div>
+              </fieldset>
+
+              <fieldset className="border-0 m-0 p-0">
+                <legend className="sr-only">Profil public</legend>
+                <h3 className="mb-3 text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)]">Profil public</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label htmlFor="profil-publicName" className="text-[length:var(--lkv-text-caption-2)] font-mono tracking-widest uppercase text-[color:var(--lkv-text-muted)] block mb-1.5 font-bold">Nom d’usage public</label>
+                    <input
+                      id="profil-publicName"
+                      type="text"
+                      autoComplete="nickname"
+                      value={form.publicName}
+                      onChange={(e) => setField('publicName', e.target.value)}
+                      className="min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[10px] text-[16px] text-[color:var(--lkv-text-primary)] outline-none transition-colors duration-[var(--motion-control-duration)] placeholder:text-[color:var(--lkv-text-muted)] focus:border-[color:var(--lkv-action)] focus:ring-[3px] focus:ring-[color:var(--lkv-focus-ring)] disabled:cursor-not-allowed disabled:bg-[color:var(--lkv-disabled-bg)] disabled:text-[color:var(--lkv-disabled-text)] sm:text-[length:var(--lkv-text-body-sm)] w-full"
+                    />
+                  </div>
+                  <div>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label htmlFor="profil-username" className="text-[length:var(--lkv-text-caption-2)] font-mono tracking-widest uppercase text-[color:var(--lkv-text-muted)] block font-bold">Nom d’utilisateur *</label>
+                      <span className="text-[length:var(--lkv-text-caption-2)] font-mono text-[color:var(--lkv-secondary)] font-bold" aria-hidden="true">✓ Disponible</span>
+                    </div>
+                    <div className="relative">
+                      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-xs font-mono text-[color:var(--lkv-text-muted)]" aria-hidden="true">@</span>
+                      <input
+                        id="profil-username"
+                        type="text"
+                        autoComplete="username"
+                        value={form.username}
+                        onChange={(e) => setField('username', e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''))}
+                        aria-invalid={Boolean(errors.username)}
+                        aria-describedby={errors.username ? 'profil-username-erreur' : undefined}
+                        className="min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[10px] text-[16px] text-[color:var(--lkv-text-primary)] outline-none transition-colors duration-[var(--motion-control-duration)] placeholder:text-[color:var(--lkv-text-muted)] focus:border-[color:var(--lkv-action)] focus:ring-[3px] focus:ring-[color:var(--lkv-focus-ring)] disabled:cursor-not-allowed disabled:bg-[color:var(--lkv-disabled-bg)] disabled:text-[color:var(--lkv-disabled-text)] sm:text-[length:var(--lkv-text-body-sm)] w-full pl-8"
+                      />
+                    </div>
+                    {errors.username && <p id="profil-username-erreur" role="alert" aria-live="assertive" className="mt-1.5 text-[length:var(--lkv-text-caption)] font-semibold text-[color:var(--lkv-danger-dark)]">{errors.username}</p>}
+                  </div>
+                </div>
+              </fieldset>
+
+              <fieldset className="border-0 m-0 p-0">
+                <legend className="sr-only">Biographie</legend>
+                <h3 className="mb-3 text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)]">Biographie</h3>
+                <div className="space-y-4">
+                  <div>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label htmlFor="profil-shortBio" className="text-[length:var(--lkv-text-caption-2)] font-mono tracking-widest uppercase text-[color:var(--lkv-text-muted)] block font-bold">Bio courte (Signature)</label>
+                      <span className="text-[length:var(--lkv-text-caption-2)] font-mono text-[color:var(--lkv-text-muted)]" aria-live="polite">{form.shortBio.length} / 120</span>
+                    </div>
+                    <input
+                      id="profil-shortBio"
+                      type="text"
+                      maxLength={120}
+                      value={form.shortBio}
+                      onChange={(e) => setField('shortBio', e.target.value)}
+                      placeholder="Randonneuse babillarde & Cannelle. Je marche pour retrouver le silence..."
+                      className="min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[10px] text-[16px] text-[color:var(--lkv-text-primary)] outline-none transition-colors duration-[var(--motion-control-duration)] placeholder:text-[color:var(--lkv-text-muted)] focus:border-[color:var(--lkv-action)] focus:ring-[3px] focus:ring-[color:var(--lkv-focus-ring)] disabled:cursor-not-allowed disabled:bg-[color:var(--lkv-disabled-bg)] disabled:text-[color:var(--lkv-disabled-text)] sm:text-[length:var(--lkv-text-body-sm)] w-full font-serif italic"
+                    />
+                  </div>
+
+                  <div>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label htmlFor="profil-bio" className="text-[length:var(--lkv-text-caption-2)] font-mono tracking-widest uppercase text-[color:var(--lkv-text-muted)] block font-bold">À propos (Description complète)</label>
+                      <span className="text-[length:var(--lkv-text-caption-2)] font-mono text-[color:var(--lkv-text-muted)]" aria-live="polite">{form.bio.length} / 500</span>
+                    </div>
+                    <textarea
+                      id="profil-bio"
+                      rows={4}
+                      maxLength={500}
+                      value={form.bio}
+                      onChange={(e) => setField('bio', e.target.value)}
+                      placeholder="Racontez vos expéditions, vos massifs favoris et votre approche de la randonnée..."
+                      className="min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[10px] text-[16px] text-[color:var(--lkv-text-primary)] outline-none transition-colors duration-[var(--motion-control-duration)] placeholder:text-[color:var(--lkv-text-muted)] focus:border-[color:var(--lkv-action)] focus:ring-[3px] focus:ring-[color:var(--lkv-focus-ring)] disabled:cursor-not-allowed disabled:bg-[color:var(--lkv-disabled-bg)] disabled:text-[color:var(--lkv-disabled-text)] sm:text-[length:var(--lkv-text-body-sm)] w-full leading-relaxed resize-none font-serif italic"
                     />
                   </div>
                 </div>
-              </div>
-
-              <div>
-                <div className="flex items-center justify-between mb-1.5">
-                  <label className="text-[10px] font-mono tracking-widest uppercase text-[color:var(--lkv-text-muted)] block font-bold">Bio courte (Signature)</label>
-                  <span className="text-[10px] font-mono text-[color:var(--lkv-text-muted)]">{form.shortBio.length} / 120</span>
-                </div>
-                <input
-                  type="text"
-                  maxLength={120}
-                  value={form.shortBio}
-                  onChange={(e) => setField('shortBio', e.target.value)}
-                  placeholder="Randonneuse babillarde & Cannelle. Je marche pour retrouver le silence..."
-                  className="min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[10px] text-[16px] text-[color:var(--lkv-text-primary)] outline-none transition-colors duration-[var(--motion-control-duration)] placeholder:text-[color:var(--lkv-text-muted)] focus:border-[color:var(--lkv-action)] focus:ring-[3px] focus:ring-[color:var(--lkv-focus-ring)] disabled:cursor-not-allowed disabled:bg-[color:var(--lkv-disabled-bg)] disabled:text-[color:var(--lkv-disabled-text)] sm:text-[length:var(--lkv-text-body-sm)] w-full font-serif italic"
-                />
-              </div>
-
-              <div>
-                <div className="flex items-center justify-between mb-1.5">
-                  <label className="text-[10px] font-mono tracking-widest uppercase text-[color:var(--lkv-text-muted)] block font-bold">À propos (Description complète)</label>
-                  <span className="text-[10px] font-mono text-[color:var(--lkv-text-muted)]">{form.bio.length} / 500</span>
-                </div>
-                <textarea
-                  rows={4}
-                  maxLength={500}
-                  value={form.bio}
-                  onChange={(e) => setField('bio', e.target.value)}
-                  placeholder="Racontez vos expéditions, vos massifs favoris et votre approche de la randonnée..."
-                  className="min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[10px] text-[16px] text-[color:var(--lkv-text-primary)] outline-none transition-colors duration-[var(--motion-control-duration)] placeholder:text-[color:var(--lkv-text-muted)] focus:border-[color:var(--lkv-action)] focus:ring-[3px] focus:ring-[color:var(--lkv-focus-ring)] disabled:cursor-not-allowed disabled:bg-[color:var(--lkv-disabled-bg)] disabled:text-[color:var(--lkv-disabled-text)] sm:text-[length:var(--lkv-text-body-sm)] w-full leading-relaxed resize-none font-serif italic"
-                />
-              </div>
+              </fieldset>
             </div>
           </div>
 
@@ -441,46 +515,58 @@ export default function EditProfileView({ onCloseModal, onSave }: { onCloseModal
                 <h2 className="font-display font-bold text-lg sm:text-xl text-[color:var(--lkv-primary)]">Ancrage géographique</h2>
                 <p className="text-xs text-[color:var(--lkv-text-muted)] mt-0.5">Pour proposer les bons refuges, les clubs proches et suggérer votre profil aux voyageurs.</p>
               </div>
-              <span className="inline-flex items-center justify-center gap-[6px] rounded-full border border-[color:var(--btn-glass-border)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn px-[var(--space-3)] py-[2px] text-[length:var(--lkv-text-caption-2)] font-medium text-[color:var(--lkv-text-primary)] text-[10px] font-mono">
+              <span className="inline-flex items-center justify-center gap-[6px] rounded-full border border-[color:var(--btn-glass-border)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn px-[var(--space-3)] py-[2px] text-[length:var(--lkv-text-caption-2)] font-medium text-[color:var(--lkv-text-primary)] text-[length:var(--lkv-text-caption-2)] font-mono">
                 02 · OÙ VOUS ÊTES
               </span>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="text-[10px] font-mono tracking-widest uppercase text-[color:var(--lkv-text-muted)] block mb-1.5 font-bold">Ville de résidence</label>
-                <div className="relative">
-                  <Icon name="MapPinIcon" size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[color:var(--lkv-text-muted)]" />
-                  <input
-                    type="text"
-                    value={form.city}
-                    onChange={(e) => setField('city', e.target.value)}
-                    placeholder="Ex: Grenoble, Isère"
-                    className="min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[10px] text-[16px] text-[color:var(--lkv-text-primary)] outline-none transition-colors duration-[var(--motion-control-duration)] placeholder:text-[color:var(--lkv-text-muted)] focus:border-[color:var(--lkv-action)] focus:ring-[3px] focus:ring-[color:var(--lkv-focus-ring)] disabled:cursor-not-allowed disabled:bg-[color:var(--lkv-disabled-bg)] disabled:text-[color:var(--lkv-disabled-text)] sm:text-[length:var(--lkv-text-body-sm)] w-full pl-9"
-                  />
+            <fieldset className="border-0 m-0 p-0">
+              <legend className="sr-only">Localisation</legend>
+              <h3 className="mb-3 text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)]">Localisation</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label htmlFor="profil-city" className="text-[length:var(--lkv-text-caption-2)] font-mono tracking-widest uppercase text-[color:var(--lkv-text-muted)] block mb-1.5 font-bold">Ville de résidence *</label>
+                  <div className="relative">
+                    <Icon name="MapPinIcon" size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[color:var(--lkv-text-muted)]" />
+                    <input
+                      id="profil-city"
+                      type="text"
+                      autoComplete="address-level2"
+                      value={form.city}
+                      onChange={(e) => setField('city', e.target.value)}
+                      placeholder="Ex: Grenoble, Isère"
+                      aria-invalid={Boolean(errors.city)}
+                      aria-describedby={errors.city ? 'profil-city-erreur' : undefined}
+                      className="min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[10px] text-[16px] text-[color:var(--lkv-text-primary)] outline-none transition-colors duration-[var(--motion-control-duration)] placeholder:text-[color:var(--lkv-text-muted)] focus:border-[color:var(--lkv-action)] focus:ring-[3px] focus:ring-[color:var(--lkv-focus-ring)] disabled:cursor-not-allowed disabled:bg-[color:var(--lkv-disabled-bg)] disabled:text-[color:var(--lkv-disabled-text)] sm:text-[length:var(--lkv-text-body-sm)] w-full pl-9"
+                    />
+                  </div>
+                  {errors.city && <p id="profil-city-erreur" role="alert" aria-live="assertive" className="mt-1.5 text-[length:var(--lkv-text-caption)] font-semibold text-[color:var(--lkv-danger-dark)]">{errors.city}</p>}
+                </div>
+
+                <div>
+                  <label htmlFor="profil-country" className="text-[length:var(--lkv-text-caption-2)] font-mono tracking-widest uppercase text-[color:var(--lkv-text-muted)] block mb-1.5 font-bold">Pays</label>
+                  <select
+                    id="profil-country"
+                    value={form.country}
+                    autoComplete="country-name"
+                    onChange={(e) => setField('country', e.target.value)}
+                    className="min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[10px] text-[16px] text-[color:var(--lkv-text-primary)] outline-none transition-colors duration-[var(--motion-control-duration)] placeholder:text-[color:var(--lkv-text-muted)] focus:border-[color:var(--lkv-action)] focus:ring-[3px] focus:ring-[color:var(--lkv-focus-ring)] disabled:cursor-not-allowed disabled:bg-[color:var(--lkv-disabled-bg)] disabled:text-[color:var(--lkv-disabled-text)] sm:text-[length:var(--lkv-text-body-sm)] w-full"
+                  >
+                    <option value="France">France</option>
+                    <option value="Suisse">Suisse</option>
+                    <option value="Belgique">Belgique</option>
+                    <option value="Canada">Canada</option>
+                    <option value="Italie">Italie</option>
+                    <option value="Espagne">Espagne</option>
+                  </select>
                 </div>
               </div>
-
-              <div>
-                <label className="text-[10px] font-mono tracking-widest uppercase text-[color:var(--lkv-text-muted)] block mb-1.5 font-bold">Pays</label>
-                <select
-                  value={form.country}
-                  onChange={(e) => setField('country', e.target.value)}
-                  className="min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[10px] text-[16px] text-[color:var(--lkv-text-primary)] outline-none transition-colors duration-[var(--motion-control-duration)] placeholder:text-[color:var(--lkv-text-muted)] focus:border-[color:var(--lkv-action)] focus:ring-[3px] focus:ring-[color:var(--lkv-focus-ring)] disabled:cursor-not-allowed disabled:bg-[color:var(--lkv-disabled-bg)] disabled:text-[color:var(--lkv-disabled-text)] sm:text-[length:var(--lkv-text-body-sm)] w-full"
-                >
-                  <option value="France">France</option>
-                  <option value="Suisse">Suisse</option>
-                  <option value="Belgique">Belgique</option>
-                  <option value="Canada">Canada</option>
-                  <option value="Italie">Italie</option>
-                  <option value="Espagne">Espagne</option>
-                </select>
-              </div>
-            </div>
+            </fieldset>
 
             {/* Massifs De Prédilection Tags */}
-            <div>
-              <label className="text-[10px] font-mono tracking-widest uppercase text-[color:var(--lkv-text-muted)] block mb-2 font-bold">Massifs de prédilection (Sélection multiple)</label>
+            <fieldset className="border-0 m-0 p-0">
+              <legend className="sr-only">Massifs de prédilection</legend>
+              <h3 className="text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)] mb-2">Massifs de prédilection <span className="font-normal text-[color:var(--lkv-text-muted)]">(sélection multiple)</span></h3>
               <div className="flex flex-wrap gap-2">
                 {availableMassifs.map((massif) => {
                   const isSelected = form.selectedMassifs.includes(massif);
@@ -496,13 +582,17 @@ export default function EditProfileView({ onCloseModal, onSave }: { onCloseModal
                   );
                 })}
               </div>
-            </div>
+            </fieldset>
 
             {/* Timezone & Languages */}
+            <fieldset className="border-0 m-0 p-0">
+              <legend className="sr-only">Fuseau horaire et langues</legend>
+              <h3 className="mb-3 text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)]">Fuseau horaire et langues</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
               <div>
-                <label className="text-[10px] font-mono tracking-widest uppercase text-[color:var(--lkv-text-muted)] block mb-1.5 font-bold">Fuseau horaire</label>
+                <label htmlFor="profil-timezone" className="text-[length:var(--lkv-text-caption-2)] font-mono tracking-widest uppercase text-[color:var(--lkv-text-muted)] block mb-1.5 font-bold">Fuseau horaire</label>
                 <select
+                  id="profil-timezone"
                   value={form.timezone}
                   onChange={(e) => setField('timezone', e.target.value)}
                   className="min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[10px] text-[16px] text-[color:var(--lkv-text-primary)] outline-none transition-colors duration-[var(--motion-control-duration)] placeholder:text-[color:var(--lkv-text-muted)] focus:border-[color:var(--lkv-action)] focus:ring-[3px] focus:ring-[color:var(--lkv-focus-ring)] disabled:cursor-not-allowed disabled:bg-[color:var(--lkv-disabled-bg)] disabled:text-[color:var(--lkv-disabled-text)] sm:text-[length:var(--lkv-text-body-sm)] w-full text-xs font-semibold"
@@ -514,8 +604,8 @@ export default function EditProfileView({ onCloseModal, onSave }: { onCloseModal
               </div>
 
               <div>
-                <label className="text-[10px] font-mono tracking-widest uppercase text-[color:var(--lkv-text-muted)] block mb-2 font-bold">Langues parlées</label>
-                <div className="flex flex-wrap gap-2">
+                <p id="profil-langues-label" className="text-[length:var(--lkv-text-caption-2)] font-mono tracking-widest uppercase text-[color:var(--lkv-text-muted)] block mb-2 font-bold">Langues parlées</p>
+                <div className="flex flex-wrap gap-2" role="group" aria-labelledby="profil-langues-label">
                   {form.languages.map((lang) => (
                     <Chip
                       key={lang}
@@ -529,6 +619,7 @@ export default function EditProfileView({ onCloseModal, onSave }: { onCloseModal
                 </div>
               </div>
             </div>
+            </fieldset>
           </div>
 
           {/* ─── SECTION 03: PRATIQUE & NIVEAU ──────────────────────── */}
@@ -538,14 +629,15 @@ export default function EditProfileView({ onCloseModal, onSave }: { onCloseModal
                 <h2 className="font-display font-bold text-lg sm:text-xl text-[color:var(--lkv-primary)]">Pratique &amp; niveau</h2>
                 <p className="text-xs text-[color:var(--lkv-text-muted)] mt-0.5">Ces informations aident à me mettre en relation avec des personnes d'expérience compatible.</p>
               </div>
-              <span className="inline-flex items-center justify-center gap-[6px] rounded-full border border-[color:var(--btn-glass-border)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn px-[var(--space-3)] py-[2px] text-[length:var(--lkv-text-caption-2)] font-medium text-[color:var(--lkv-text-primary)] text-[10px] font-mono">
+              <span className="inline-flex items-center justify-center gap-[6px] rounded-full border border-[color:var(--btn-glass-border)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn px-[var(--space-3)] py-[2px] text-[length:var(--lkv-text-caption-2)] font-medium text-[color:var(--lkv-text-primary)] text-[length:var(--lkv-text-caption-2)] font-mono">
                 03 · VOS COMPÉTENCES
               </span>
             </div>
 
             {/* Disciplines Selection Grid */}
-            <div>
-              <label className="text-[10px] font-mono tracking-widest uppercase text-[color:var(--lkv-text-muted)] block mb-3 font-bold">Disciplines pratiquées</label>
+            <fieldset className="border-0 m-0 p-0">
+              <legend className="sr-only">Disciplines pratiquées</legend>
+              <h3 className="text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)] mb-3">Disciplines pratiquées</h3>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
                 {availableDisciplines.map((d) => {
                   const isSelected = form.disciplines.includes(d.id);
@@ -561,11 +653,12 @@ export default function EditProfileView({ onCloseModal, onSave }: { onCloseModal
                   );
                 })}
               </div>
-            </div>
+            </fieldset>
 
             {/* Niveau d'expérience selector */}
-            <div>
-              <label className="text-[10px] font-mono tracking-widest uppercase text-[color:var(--lkv-text-muted)] block mb-3 font-bold">Niveau d'expérience globale</label>
+            <fieldset className="border-0 m-0 p-0">
+              <legend className="sr-only">Niveau d’expérience globale</legend>
+              <h3 className="text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)] mb-3">Niveau d’expérience globale</h3>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 {[
                   { id: 'I', label: 'I · Débutant', sub: '1-2 ans' },
@@ -582,19 +675,24 @@ export default function EditProfileView({ onCloseModal, onSave }: { onCloseModal
                       className="h-auto w-full flex-col px-[var(--space-3)] py-[var(--space-2)]"
                     >
                       <span className="text-[length:var(--lkv-text-caption)] font-bold">{lvl.label}</span>
-                      <span className="mt-0.5 font-mono text-[10px] opacity-80">{lvl.sub}</span>
+                      <span className="mt-0.5 font-mono text-[length:var(--lkv-text-caption-2)] opacity-80">{lvl.sub}</span>
                     </Chip>
                   );
                 })}
               </div>
-            </div>
+            </fieldset>
 
             {/* Metric Inputs */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
+            <fieldset className="border-0 m-0 p-0">
+              <legend className="sr-only">Mesures moyennes par sortie</legend>
+              <h3 className="mb-3 text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)]">Mesures moyennes par sortie</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
               <div>
-                <label className="text-[10px] font-mono tracking-widest uppercase text-[color:var(--lkv-text-muted)] block mb-1.5 font-bold">Distance moy. / sortie</label>
+                <label htmlFor="profil-avgDistance" className="text-[length:var(--lkv-text-caption-2)] font-mono tracking-widest uppercase text-[color:var(--lkv-text-muted)] block mb-1.5 font-bold">Distance moy. / sortie</label>
                 <input
+                  id="profil-avgDistance"
                   type="text"
+                  autoComplete="off"
                   value={form.avgDistance}
                   onChange={(e) => setField('avgDistance', e.target.value)}
                   placeholder="18 km"
@@ -603,9 +701,11 @@ export default function EditProfileView({ onCloseModal, onSave }: { onCloseModal
               </div>
 
               <div>
-                <label className="text-[10px] font-mono tracking-widest uppercase text-[color:var(--lkv-text-muted)] block mb-1.5 font-bold">Dénivelé moy. / sortie</label>
+                <label htmlFor="profil-avgElevation" className="text-[length:var(--lkv-text-caption-2)] font-mono tracking-widest uppercase text-[color:var(--lkv-text-muted)] block mb-1.5 font-bold">Dénivelé moy. / sortie</label>
                 <input
+                  id="profil-avgElevation"
                   type="text"
+                  autoComplete="off"
                   value={form.avgElevation}
                   onChange={(e) => setField('avgElevation', e.target.value)}
                   placeholder="1200 m D+"
@@ -614,16 +714,19 @@ export default function EditProfileView({ onCloseModal, onSave }: { onCloseModal
               </div>
 
               <div>
-                <label className="text-[10px] font-mono tracking-widest uppercase text-[color:var(--lkv-text-muted)] block mb-1.5 font-bold">Rythme en effort</label>
+                <label htmlFor="profil-pace" className="text-[length:var(--lkv-text-caption-2)] font-mono tracking-widest uppercase text-[color:var(--lkv-text-muted)] block mb-1.5 font-bold">Rythme en effort</label>
                 <input
+                  id="profil-pace"
                   type="text"
+                  autoComplete="off"
                   value={form.pace}
                   onChange={(e) => setField('pace', e.target.value)}
                   placeholder="3.5 à 4 km/h"
                   className="min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-control)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-[10px] text-[16px] text-[color:var(--lkv-text-primary)] outline-none transition-colors duration-[var(--motion-control-duration)] placeholder:text-[color:var(--lkv-text-muted)] focus:border-[color:var(--lkv-action)] focus:ring-[3px] focus:ring-[color:var(--lkv-focus-ring)] disabled:cursor-not-allowed disabled:bg-[color:var(--lkv-disabled-bg)] disabled:text-[color:var(--lkv-disabled-text)] sm:text-[length:var(--lkv-text-body-sm)] w-full text-xs font-mono font-bold"
                 />
               </div>
-            </div>
+              </div>
+            </fieldset>
           </div>
 
           {/* ─── SECTION 04: COMPTES LIÉS ───────────────────────────── */}
@@ -633,7 +736,7 @@ export default function EditProfileView({ onCloseModal, onSave }: { onCloseModal
                 <h2 className="font-display font-bold text-lg sm:text-xl text-[color:var(--lkv-primary)]">Comptes liés</h2>
                 <p className="text-xs text-[color:var(--lkv-text-muted)] mt-0.5">Importez vos traces depuis les plateformes que vous utilisez déjà.</p>
               </div>
-              <span className="inline-flex items-center justify-center gap-[6px] rounded-full border border-[color:var(--btn-glass-border)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn px-[var(--space-3)] py-[2px] text-[length:var(--lkv-text-caption-2)] font-medium text-[color:var(--lkv-text-primary)] text-[10px] font-mono">
+              <span className="inline-flex items-center justify-center gap-[6px] rounded-full border border-[color:var(--btn-glass-border)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn px-[var(--space-3)] py-[2px] text-[length:var(--lkv-text-caption-2)] font-medium text-[color:var(--lkv-text-primary)] text-[length:var(--lkv-text-caption-2)] font-mono">
                 04 · IMPORT &amp; PARTAGE
               </span>
             </div>
@@ -650,14 +753,14 @@ export default function EditProfileView({ onCloseModal, onSave }: { onCloseModal
                     <span className="text-xl">{app.icon}</span>
                     <div>
                       <div className="font-bold text-xs text-[color:var(--lkv-primary)]">{app.name}</div>
-                      <div className="text-[10px] text-[color:var(--lkv-text-muted)] font-mono mt-0.5">{app.handle}</div>
+                      <div className="text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)] font-mono mt-0.5">{app.handle}</div>
                     </div>
                   </div>
 
                   <div className="flex items-center gap-2">
                     {app.connected ? (
                       <>
-                        <Badge tone="sage" className="font-mono text-[10px]">Connecté</Badge>
+                        <Badge tone="sage" className="font-mono text-[length:var(--lkv-text-caption-2)]">Connecté</Badge>
                         <Button
                           type="button"
                           variant="destructive"
@@ -689,7 +792,7 @@ export default function EditProfileView({ onCloseModal, onSave }: { onCloseModal
                 <h2 className="font-display font-bold text-lg sm:text-xl text-[color:var(--lkv-primary)]">Qui peut voir quoi</h2>
                 <p className="text-xs text-[color:var(--lkv-text-muted)] mt-0.5">Et avec qui vous partagez vos traces. Vos carnets peuvent être publics, tout en gardant vos sorties privées.</p>
               </div>
-              <span className="inline-flex items-center justify-center gap-[6px] rounded-full border border-[color:var(--btn-glass-border)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn px-[var(--space-3)] py-[2px] text-[length:var(--lkv-text-caption-2)] font-medium text-[color:var(--lkv-text-primary)] text-[10px] font-mono">
+              <span className="inline-flex items-center justify-center gap-[6px] rounded-full border border-[color:var(--btn-glass-border)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn px-[var(--space-3)] py-[2px] text-[length:var(--lkv-text-caption-2)] font-medium text-[color:var(--lkv-text-primary)] text-[length:var(--lkv-text-caption-2)] font-mono">
                 05 · CONFIDENTIALITÉ
               </span>
             </div>
@@ -732,7 +835,7 @@ export default function EditProfileView({ onCloseModal, onSave }: { onCloseModal
             <div className="text-[9px] font-mono tracking-widest text-[color:var(--sage-300)] uppercase font-bold">APERÇU · PROFIL PUBLIC</div>
 
             <div className="flex items-center gap-4">
-              <img src={form.avatarUrl || '/assets/images/no_image.png'} alt={form.publicName} className="w-14 h-14 rounded-full object-cover border-2 border-white/20" />
+              <img src={form.avatarUrl || '/assets/images/no_image.png'} alt={form.publicName || 'Photo de profil'} className="w-14 h-14 rounded-full object-cover border-2 border-[color:var(--glass-border)]" />
               <div>
                 <h3 className="font-display font-bold text-lg leading-tight">{form.publicName}</h3>
                 <p className="text-[11px] text-white/70 font-mono">@{form.username} · {form.city}</p>
@@ -745,11 +848,11 @@ export default function EditProfileView({ onCloseModal, onSave }: { onCloseModal
 
             <div className="flex flex-wrap gap-1.5 pt-2">
               {form.selectedMassifs.slice(0, 3).map((m) => (
-                <span key={m} className="bg-white/15 text-white text-[10px] font-mono px-2.5 py-1 rounded-full">
+                <span key={m} className="bg-white/15 text-white text-[length:var(--lkv-text-caption-2)] font-mono px-2.5 py-1 rounded-full">
                   {m}
                 </span>
               ))}
-              <span className="bg-[color:var(--lkv-secondary)] text-white text-[10px] font-mono px-2.5 py-1 rounded-full font-bold">
+              <span className="bg-[color:var(--lkv-secondary)] text-white text-[length:var(--lkv-text-caption-2)] font-mono px-2.5 py-1 rounded-full font-bold">
                 Niveau {form.experienceLevel}
               </span>
             </div>
@@ -779,7 +882,7 @@ export default function EditProfileView({ onCloseModal, onSave }: { onCloseModal
                   <span className={item.done ? 'text-[color:var(--lkv-primary)] font-semibold' : 'text-[color:var(--lkv-text-muted)]'}>
                     {item.done ? '✓ ' : '⭕ '}{item.label}
                   </span>
-                  <span className="text-[10px] font-mono text-[color:var(--lkv-text-muted)]">{item.done ? 'Fait' : 'À faire'}</span>
+                  <span className="text-[length:var(--lkv-text-caption-2)] font-mono text-[color:var(--lkv-text-muted)]">{item.done ? 'Fait' : 'À faire'}</span>
                 </div>
               ))}
             </div>
@@ -787,7 +890,7 @@ export default function EditProfileView({ onCloseModal, onSave }: { onCloseModal
 
           {/* WIDGET 3: ASTUCES & CONSEILS */}
           <div className="rounded-[var(--lkv-radius-md)] border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] backdrop-blur-[var(--blur-md)] p-6 text-[color:var(--lkv-primary)] space-y-2 !border-[color:var(--lkv-secondary)]/30">
-            <div className="text-[10px] font-mono tracking-widest text-[color:var(--lkv-secondary)] uppercase font-bold">CONSEIL DE LA COMMUNAUTÉ</div>
+            <div className="text-[length:var(--lkv-text-caption-2)] font-mono tracking-widest text-[color:var(--lkv-secondary)] uppercase font-bold">CONSEIL DE LA COMMUNAUTÉ</div>
             <h4 className="font-display font-bold text-sm">Une bio qui inspire.</h4>
             <p className="text-xs text-[color:var(--lkv-text-muted)] leading-relaxed font-serif italic">
               Faites des liens entre vos massifs de prédilection et vos disciplines favorites. C'est plus facile pour vous contacter et partir ensemble !

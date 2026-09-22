@@ -29,7 +29,6 @@ export default function EditProfilePage() {
       {/* MOBILE */}
       <div className="block md:hidden pb-32">
         <PageHeader
-          sticky
           variant="inline"
           className="px-4 pt-3 pb-2.5"
           title="Modifier mon profil"

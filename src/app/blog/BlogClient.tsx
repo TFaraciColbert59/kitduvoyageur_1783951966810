@@ -11,6 +11,101 @@ import type { BlogPost } from './page';
 
 const CATEGORIES = ['Tous', 'Conseils', 'Destinations', 'Comparatifs', 'Guides d\'achat', 'Lifestyle'];
 
+// ─── Partagés desk/mobile (déduplication P3) — référence `contact` : label visible + 44px + tokens ───
+const NEWSLETTER_LABEL_CLASS =
+  'mb-1.5 block text-left text-[length:var(--lkv-text-caption-2)] font-semibold uppercase tracking-[0.04em] text-[color:var(--lkv-text-secondary)]';
+const NEWSLETTER_FIELD_CLASS =
+  'min-h-[var(--lkv-touch-min)] min-w-0 flex-1 rounded-[var(--lkv-radius-sm)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-3.5 py-2.5 text-[13px] text-[color:var(--lkv-text-primary)] placeholder:text-[color:var(--lkv-text-muted)] outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]';
+
+function NewsletterForm({ idPrefix }: { idPrefix: string }) {
+  const [email, setEmail] = useState('');
+  const [status, setStatus] = useState<'idle' | 'done' | 'error'>('idle');
+  const inputId = `${idPrefix}-newsletter-email`;
+  return (
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+          setStatus('error');
+          return;
+        }
+        setStatus('done');
+      }}
+      noValidate={false}
+    >
+      <label htmlFor={inputId} className={NEWSLETTER_LABEL_CLASS}>Adresse email *</label>
+      <div className="flex gap-3 max-w-sm mx-auto">
+        <input
+          id={inputId}
+          type="email"
+          required
+          autoComplete="email"
+          value={email}
+          onChange={(e) => {
+            setEmail(e.target.value);
+            if (status !== 'idle') setStatus('idle');
+          }}
+          placeholder="votre@email.fr"
+          aria-invalid={status === 'error'}
+          aria-describedby={status !== 'idle' ? `${inputId}-msg` : undefined}
+          className={NEWSLETTER_FIELD_CLASS}
+        />
+        <button type="submit" className="glass-capsule-btn primary whitespace-nowrap min-h-[var(--lkv-touch-min)]">
+          S&apos;abonner
+        </button>
+      </div>
+      {status !== 'idle' && (
+        <p
+          id={`${inputId}-msg`}
+          role={status === 'error' ? 'alert' : 'status'}
+          aria-live={status === 'error' ? 'assertive' : 'polite'}
+          className={`mt-3 text-[length:var(--lkv-text-caption)] font-semibold ${status === 'error' ? 'text-[color:var(--lkv-danger-dark)]' : 'text-[color:var(--lkv-secondary)]'}`}
+        >
+          {status === 'error' ? 'Indiquez une adresse email valide.' : 'Merci ! À très vite dans votre boîte mail.'}
+        </p>
+      )}
+    </form>
+  );
+}
+
+function CategoryFilterBar({ active, onChange, idPrefix }: { active: string; onChange: (c: string) => void; idPrefix: string }) {
+  return (
+    <div className="glass-capsule-bar flex flex-nowrap overflow-x-auto scrollbar-hide" role="tablist" aria-label="Filtrer par catégorie">
+      {CATEGORIES.map((cat) => (
+        <button
+          key={cat}
+          type="button"
+          role="tab"
+          aria-selected={active === cat}
+          id={`${idPrefix}-cat-${cat}`}
+          onClick={() => onChange(cat)}
+          className={`glass-capsule-segment flex-shrink-0 min-h-[var(--lkv-touch-min)] ${active === cat ? 'active' : ''}`}
+        >
+          {cat}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function BlogSearchInput({ value, onChange, id }: { value: string; onChange: (v: string) => void; id: string }) {
+  return (
+    <div className="relative flex-1">
+      <label htmlFor={id} className="sr-only">Rechercher un article</label>
+      <svg className="absolute left-3 top-1/2 -translate-y-1/2 text-[color:var(--lkv-text-secondary)]" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <input
+        id={id}
+        type="search"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder="Rechercher un article…"
+        autoComplete="off"
+        className="glass-input min-h-[var(--lkv-touch-min)] w-full pl-9"
+      />
+    </div>
+  );
+}
+
 function formatDate(dateStr: string): string {
   try {
     const d = new Date(dateStr);
@@ -34,13 +129,13 @@ function FeaturedCard({ post }: { post: BlogPost }) {
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
           <div className="absolute top-4 left-4">
-            <span className="inline-block px-2 py-0.5 rounded-sm text-[10px] font-mono font-bold tracking-widest uppercase text-[color:var(--lkv-primary)] bg-[rgba(255,255,255,0.92)] border border-[rgba(255,255,255,0.60)] ">
+            <span className="inline-block px-2 py-0.5 rounded-sm text-[length:var(--lkv-text-caption-2)] font-mono font-bold tracking-widest uppercase text-[color:var(--lkv-primary)] bg-[color:var(--lkv-surface-paper)]/95 border border-[color:var(--glass-border)] ">
               ⭐ À la une
             </span>
           </div>
           <div className="absolute bottom-4 left-4 right-4">
-            <div className="bg-[rgba(255,255,255,0.92)] border border-[rgba(255,255,255,0.60)] rounded-sm px-3 py-2.5 ">
-              <span className="inline-block px-2 py-0.5 rounded-full text-[10px] font-mono bg-[rgba(91,127,85,0.14)] text-[color:var(--lkv-primary-soft)] border border-[rgba(91,127,85,0.30)] mb-2">
+            <div className="bg-[color:var(--lkv-surface-paper)]/95 border border-[color:var(--glass-border)] rounded-sm px-3 py-2.5 ">
+              <span className="inline-block px-2 py-0.5 rounded-full text-[length:var(--lkv-text-caption-2)] font-mono bg-[rgba(91,127,85,0.14)] text-[color:var(--lkv-primary-soft)] border border-[rgba(91,127,85,0.30)] mb-2">
                 {post.category}
               </span>
               <h2 className="font-display font-bold text-xl md:text-2xl leading-tight text-[color:var(--lkv-primary)] mb-1.5 group-hover:text-[color:var(--lkv-primary-soft)] transition-colors">
@@ -76,7 +171,7 @@ function PostCard({ post }: { post: BlogPost }) {
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
           <div className="absolute top-3 left-3">
-            <span className="inline-block px-2 py-0.5 rounded-sm text-[10px] font-mono text-[color:var(--lkv-primary)] bg-[rgba(255,255,255,0.92)] border border-[rgba(255,255,255,0.60)] ">
+            <span className="inline-block px-2 py-0.5 rounded-sm text-[length:var(--lkv-text-caption-2)] font-mono text-[color:var(--lkv-primary)] bg-[color:var(--lkv-surface-paper)]/95 border border-[color:var(--glass-border)] ">
               {post.category}
             </span>
           </div>
@@ -88,12 +183,12 @@ function PostCard({ post }: { post: BlogPost }) {
           <p className="text-[color:var(--lkv-text-secondary)] text-sm line-clamp-3 mb-4 flex-1">{post.excerpt}</p>
           <div className="flex flex-wrap gap-1.5 mb-3">
             {post.tags.slice(0, 3).map((tag) => (
-              <span key={tag} className="glass-pill text-[10px]">
+              <span key={tag} className="glass-pill text-[length:var(--lkv-text-caption-2)]">
                 #{tag}
               </span>
             ))}
           </div>
-          <div className="flex items-center justify-between text-[10px] font-mono text-[color:var(--lkv-text-secondary)] border-t border-white/40 pt-3">
+          <div className="flex items-center justify-between text-[length:var(--lkv-text-caption-2)] font-mono text-[color:var(--lkv-text-secondary)] border-t border-[color:var(--glass-border)] pt-3">
             <span>{formatDate(post.published_at)}</span>
             <span>{post.read_time} min</span>
           </div>
@@ -115,11 +210,11 @@ function MobilePostCard({ post }: { post: BlogPost }) {
           </div>
           <div className="min-w-0 flex-1">
             <div className="mb-1 flex items-center gap-1.5">
-              <span className="font-mono text-[10px] font-bold text-[color:var(--lkv-primary)]">
+              <span className="font-mono text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-primary)]">
                 {post.category}
               </span>
               {post.featured && (
-                <span className="rounded-[var(--lkv-radius-xs)] bg-[color:var(--glass-bg-medium)] border border-[color:var(--glass-border)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset px-1.5 py-px text-[9px] text-[color:var(--lkv-primary)]">
+                <span className="rounded-[var(--lkv-radius-xs)] bg-[color:var(--glass-bg-medium)] border border-[color:var(--glass-border)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset px-1.5 py-px text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-primary)]">
                   A la une
                 </span>
               )}
@@ -130,7 +225,7 @@ function MobilePostCard({ post }: { post: BlogPost }) {
             <p className="m-0 mt-1 line-clamp-2 text-[12px] leading-[1.4] text-[color:var(--lkv-text-secondary)]">
               {post.excerpt}
             </p>
-            <div className="mt-1.5 flex items-center gap-[var(--space-2)] font-mono text-[10px] text-[color:var(--lkv-text-secondary)]">
+            <div className="mt-1.5 flex items-center gap-[var(--space-2)] font-mono text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-secondary)]">
               <span>{formatDate(post.published_at)}</span>
               <span>·</span>
               <span>{post.read_time} min</span>
@@ -152,12 +247,12 @@ function MobileFeaturedCard({ post }: { post: BlogPost }) {
           )}
           <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
           <div className="absolute left-2 top-2">
-            <span className="rounded-[var(--lkv-radius-xs)] bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn px-2 py-0.5 text-[10px] font-bold text-[color:var(--lkv-text-primary)]">
+            <span className="rounded-[var(--lkv-radius-xs)] bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn px-2 py-0.5 text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-primary)]">
               A la une
             </span>
           </div>
           <div className="absolute bottom-3 left-3 right-3">
-            <span className="rounded-[var(--lkv-radius-xs)] border border-white/60 bg-white/90 px-1.5 py-0.5 font-mono text-[9px] text-[color:var(--lkv-primary)]">
+            <span className="rounded-[var(--lkv-radius-xs)] border border-[color:var(--glass-border)] bg-[color:var(--lkv-surface-paper)]/90 px-1.5 py-0.5 font-mono text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-primary)]">
               {post.category}
             </span>
             <h3 className="mb-0.5 mt-1.5 font-display text-[16px] font-extrabold leading-[1.2] text-[color:var(--lkv-text-inverted)]">
@@ -204,29 +299,10 @@ export default function BlogClient({ posts }: { posts: BlogPost[] }) {
         </p>
       </div>
 
-      {/* Search + Category filters */}
+      {/* Search + Category filters (mutualisés desk/mobile) */}
       <div className="flex flex-col sm:flex-row gap-4 mb-8">
-        <div className="relative flex-1">
-          <svg className="absolute left-3 top-1/2 -translate-y-1/2 text-[color:var(--lkv-text-secondary)]" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Rechercher un article…"
-            className="glass-input w-full pl-9"
-          />
-        </div>
-        <div className="glass-capsule-bar flex flex-nowrap overflow-x-auto scrollbar-hide">
-          {CATEGORIES.map((cat) => (
-            <button
-              key={cat}
-              onClick={() => setActiveCategory(cat)}
-              className={`glass-capsule-segment flex-shrink-0 ${activeCategory === cat ? 'active' : ''}`}
-            >
-              {cat}
-            </button>
-          ))}
-        </div>
+        <BlogSearchInput id="blog-search-desktop" value={searchQuery} onChange={setSearchQuery} />
+        <CategoryFilterBar idPrefix="blog-desktop" active={activeCategory} onChange={setActiveCategory} />
       </div>
 
       {/* Featured posts */}
@@ -273,26 +349,16 @@ export default function BlogClient({ posts }: { posts: BlogPost[] }) {
         </>
       )}
 
-      {/* Newsletter CTA */}
+      {/* Newsletter CTA (mutualisée desk/mobile — label visible comme `contact`) */}
       <div className="glass-sub-card mt-10 p-8 text-center">
-        <p className="text-3xl mb-3">📬</p>
+        <p className="text-3xl mb-3" aria-hidden="true">📬</p>
         <h3 className="font-display font-bold text-xl text-[color:var(--lkv-primary)] mb-2">
           Restez informé
         </h3>
         <p className="text-[color:var(--lkv-text-secondary)] text-sm mb-5 max-w-md mx-auto">
           Recevez nos meilleurs articles, comparatifs et bons plans équipement directement dans votre boîte mail.
         </p>
-        <div className="flex gap-3 max-w-sm mx-auto">
-          <input
-            type="email"
-            placeholder="votre@email.fr"
-            aria-label="Votre adresse email"
-            className="min-w-0 flex-1 rounded-[var(--lkv-radius-sm)] border border-[color:var(--btn-glass-border)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] px-3.5 py-2.5 text-[13px] text-[color:var(--lkv-text-primary)] outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]"
-          />
-          <button className="glass-capsule-btn primary whitespace-nowrap">
-            S&apos;abonner
-          </button>
-        </div>
+        <NewsletterForm idPrefix="blog-desktop" />
       </div>
     </>
   );
@@ -312,28 +378,10 @@ export default function BlogClient({ posts }: { posts: BlogPost[] }) {
         </p>
       </div>
 
-      {/* Search */}
-      <div className="mb-[var(--space-4)]">
-        <input
-          type="text"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="Rechercher un article..."
-          className="box-border w-full rounded-[var(--lkv-radius-sm)] border border-[color:var(--lkv-border-subtle)] bg-[color:var(--stone-100)] px-3.5 py-2.5 text-[14px] text-[color:var(--lkv-primary)] outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]"
-        />
-      </div>
-
-      {/* Category filters */}
-      <div className="scrollbar-hide mb-[var(--space-5)] flex gap-[var(--space-2)] overflow-x-auto pb-[var(--space-2)]">
-        {CATEGORIES.map((cat) => (
-          <button
-            key={cat}
-            onClick={() => setActiveCategory(cat)}
-            className={`glass-capsule-segment flex-shrink-0 ${activeCategory === cat ? 'active' : ''}`}
-          >
-            {cat}
-          </button>
-        ))}
+      {/* Search + filtres (mutualisés desk/mobile) */}
+      <div className="mb-[var(--space-4)] flex flex-col gap-[var(--space-3)]">
+        <BlogSearchInput id="blog-search-mobile" value={searchQuery} onChange={setSearchQuery} />
+        <CategoryFilterBar idPrefix="blog-mobile" active={activeCategory} onChange={setActiveCategory} />
       </div>
 
       {/* Featured */}
@@ -355,7 +403,7 @@ export default function BlogClient({ posts }: { posts: BlogPost[] }) {
           <p className="mb-1 text-[16px] font-bold text-[color:var(--lkv-surface)]">Aucun article trouve</p>
           <p className="mb-[var(--space-4)] text-[13px] text-[color:var(--lkv-forest-100)]">Essayez une autre categorie ou un autre terme de recherche.</p>
           <button onClick={() => { setActiveCategory('Tous'); setSearchQuery(''); }}
-            className="glass-capsule-btn primary !px-6 !py-2.5 !text-[13px]">
+            className="glass-capsule-btn primary px-6 py-2.5 text-[13px] min-h-[var(--lkv-touch-min)]">
             Voir tous les articles
           </button>
         </div>
@@ -379,26 +427,16 @@ export default function BlogClient({ posts }: { posts: BlogPost[] }) {
         </>
       )}
 
-      {/* Newsletter */}
+      {/* Newsletter (mutualisée desk/mobile — label visible comme `contact`) */}
       <div className="glass mt-[var(--space-6)] p-[var(--space-5)] text-center">
-        <p className="mb-[var(--space-2)] text-[28px]">📬</p>
+        <p className="mb-[var(--space-2)] text-[28px]" aria-hidden="true">📬</p>
         <h3 className="mb-[var(--space-2)] font-display text-[16px] font-bold text-[color:var(--lkv-primary)]">
-          Restez informe
+          Restez informé
         </h3>
         <p className="mb-[var(--space-4)] text-[13px] leading-normal text-[color:var(--lkv-text-secondary)]">
-          Recevez nos meilleurs articles, comparatifs et bons plans equipement directement dans votre boite mail.
+          Recevez nos meilleurs articles, comparatifs et bons plans équipement directement dans votre boîte mail.
         </p>
-        <div className="flex gap-[var(--space-2)]">
-          <input
-            type="email"
-            placeholder="votre@email.fr"
-            aria-label="Votre adresse email"
-            className="min-w-0 flex-1 rounded-[var(--lkv-radius-sm)] border border-[color:var(--btn-glass-border)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] px-3.5 py-2.5 text-[13px] text-[color:var(--lkv-text-primary)] outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]"
-          />
-          <button className="glass-capsule-btn primary !px-4 !py-2.5 !text-[13px] whitespace-nowrap">
-            S&apos;abonner
-          </button>
-        </div>
+        <NewsletterForm idPrefix="blog-mobile" />
       </div>
     </div>
   );

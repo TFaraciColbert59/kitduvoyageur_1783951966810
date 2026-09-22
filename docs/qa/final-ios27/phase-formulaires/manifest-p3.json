@@ -1,0 +1,126 @@
+{
+  "capturedAt": "2026-09-22T23:18:22.543Z",
+  "consoleErrorCount": 0,
+  "shots": [
+    {
+      "slug": "contact-393x852",
+      "route": "/contact",
+      "viewport": "393x852",
+      "finalUrl": "http://localhost:4028/contact",
+      "title": "Contact | Le Kit du Voyageur",
+      "cookieBannerVisible": false,
+      "consoleErrors": [],
+      "screenshot": "docs/qa/final-ios27/phase-formulaires/contact-393x852.jpg"
+    },
+    {
+      "slug": "contact-1440x900",
+      "route": "/contact",
+      "viewport": "1440x900",
+      "finalUrl": "http://localhost:4028/contact",
+      "title": "Contact | Le Kit du Voyageur",
+      "cookieBannerVisible": false,
+      "consoleErrors": [],
+      "screenshot": "docs/qa/final-ios27/phase-formulaires/contact-1440x900.jpg"
+    },
+    {
+      "slug": "ai-configurator-393x852",
+      "route": "/ai-configurator",
+      "viewport": "393x852",
+      "finalUrl": "http://localhost:4028/ai-configurator",
+      "title": "Configurateur IA · Le Kit du Voyageur | Le Kit du Voyageur",
+      "cookieBannerVisible": false,
+      "consoleErrors": [],
+      "screenshot": "docs/qa/final-ios27/phase-formulaires/ai-configurator-393x852.jpg"
+    },
+    {
+      "slug": "ai-configurator-1440x900",
+      "route": "/ai-configurator",
+      "viewport": "1440x900",
+      "finalUrl": "http://localhost:4028/ai-configurator",
+      "title": "Configurateur IA · Le Kit du Voyageur | Le Kit du Voyageur",
+      "cookieBannerVisible": false,
+      "consoleErrors": [],
+      "screenshot": "docs/qa/final-ios27/phase-formulaires/ai-configurator-1440x900.jpg"
+    },
+    {
+      "slug": "outils-poids-sac-393x852",
+      "route": "/outils/poids-sac",
+      "viewport": "393x852",
+      "finalUrl": "http://localhost:4028/outils/poids-sac",
+      "title": "Calculateur de poids du sac — Le Kit du Voyageur | Le Kit du Voyageur",
+      "cookieBannerVisible": false,
+      "consoleErrors": [],
+      "screenshot": "docs/qa/final-ios27/phase-formulaires/outils-poids-sac-393x852.jpg"
+    },
+    {
+      "slug": "outils-poids-sac-1440x900",
+      "route": "/outils/poids-sac",
+      "viewport": "1440x900",
+      "finalUrl": "http://localhost:4028/outils/poids-sac",
+      "title": "Calculateur de poids du sac — Le Kit du Voyageur | Le Kit du Voyageur",
+      "cookieBannerVisible": false,
+      "consoleErrors": [],
+      "screenshot": "docs/qa/final-ios27/phase-formulaires/outils-poids-sac-1440x900.jpg"
+    },
+    {
+      "slug": "compte-modifier-393x852",
+      "route": "/compte/modifier",
+      "viewport": "393x852",
+      "finalUrl": "http://localhost:4028/compte/modifier",
+      "title": "Mon compte | Le Kit du Voyageur",
+      "cookieBannerVisible": false,
+      "consoleErrors": [],
+      "screenshot": "docs/qa/final-ios27/phase-formulaires/compte-modifier-393x852.jpg"
+    },
+    {
+      "slug": "compte-modifier-1440x900",
+      "route": "/compte/modifier",
+      "viewport": "1440x900",
+      "finalUrl": "http://localhost:4028/compte/modifier",
+      "title": "Mon compte | Le Kit du Voyageur",
+      "cookieBannerVisible": false,
+      "consoleErrors": [],
+      "screenshot": "docs/qa/final-ios27/phase-formulaires/compte-modifier-1440x900.jpg"
+    },
+    {
+      "slug": "blog-393x852",
+      "route": "/blog",
+      "viewport": "393x852",
+      "finalUrl": "http://localhost:4028/blog",
+      "title": "Blog — Le Kit du Voyageur | Le Kit du Voyageur",
+      "cookieBannerVisible": false,
+      "consoleErrors": [],
+      "screenshot": "docs/qa/final-ios27/phase-formulaires/blog-393x852.jpg"
+    },
+    {
+      "slug": "blog-1440x900",
+      "route": "/blog",
+      "viewport": "1440x900",
+      "finalUrl": "http://localhost:4028/blog",
+      "title": "Blog — Le Kit du Voyageur | Le Kit du Voyageur",
+      "cookieBannerVisible": false,
+      "consoleErrors": [],
+      "screenshot": "docs/qa/final-ios27/phase-formulaires/blog-1440x900.jpg"
+    },
+    {
+      "slug": "carbone-393x852",
+      "route": "/carbone",
+      "viewport": "393x852",
+      "finalUrl": "http://localhost:4028/carbone",
+      "title": "Bilan Carbone | Le Kit du Voyageur",
+      "cookieBannerVisible": false,
+      "consoleErrors": [],
+      "screenshot": "docs/qa/final-ios27/phase-formulaires/carbone-393x852.jpg"
+    },
+    {
+      "slug": "carbone-1440x900",
+      "route": "/carbone",
+      "viewport": "1440x900",
+      "finalUrl": "http://localhost:4028/carbone",
+      "title": "Bilan Carbone | Le Kit du Voyageur",
+      "cookieBannerVisible": false,
+      "consoleErrors": [],
+      "screenshot": "docs/qa/final-ios27/phase-formulaires/carbone-1440x900.jpg"
+    }
+  ]
+}

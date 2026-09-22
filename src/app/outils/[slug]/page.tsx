@@ -29,12 +29,27 @@ function ToolPoidssSac() {
   const [newItemName, setNewItemName] = useState('');
   const [newItemWeight, setNewItemWeight] = useState('');
   const [selectedCat, setSelectedCat] = useState('vetements');
+  const [formError, setFormError] = useState('');
 
   const totalG = categories.flatMap((c) => c.items).reduce((s, i) => s + i.poids_g, 0);
 
+  // Référence qualité formulaires : page `contact` (FIELD_CLASS / LABEL_CLASS, 44px, erreurs annoncées).
+  const FIELD_CLASS =
+    'min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-sm)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-2.5 text-[length:var(--lkv-text-body-sm)] text-[color:var(--lkv-text-primary)] placeholder:text-[color:var(--lkv-text-muted)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]';
+  const LABEL_CLASS =
+    'mb-1.5 block text-[length:var(--lkv-text-caption-2)] font-semibold uppercase tracking-[0.04em] text-[color:var(--lkv-text-secondary)]';
+
   const addItem = () => {
     const w = parseInt(newItemWeight);
-    if (!newItemName.trim() || isNaN(w) || w <= 0) return;
+    if (!newItemName.trim()) {
+      setFormError('Nommez votre article pour l’ajouter au sac.');
+      return;
+    }
+    if (isNaN(w) || w <= 0) {
+      setFormError('Indiquez un poids valide en grammes (supérieur à 0).');
+      return;
+    }
+    setFormError('');
     setCategories((prev) =>
       prev.map((c) =>
         c.id === selectedCat
@@ -55,19 +70,19 @@ function ToolPoidssSac() {
   return (
     <div className="space-y-6">
       <div className="glass rounded-2xl p-6">
-        <p className="font-mono text-[10px] text-muted-foreground uppercase tracking-widest mb-2">POIDS TOTAL DU SAC</p>
+        <p className="font-mono text-[length:var(--lkv-text-caption-2)] text-muted-foreground uppercase tracking-widest mb-2">POIDS TOTAL DU SAC</p>
         <WeightGauge weightG={totalG} maxG={20000} size="lg" />
         <div className="mt-3 grid grid-cols-3 gap-3 text-center">
           <div className="glass-sub-card rounded-lg p-2">
-            <p className="font-mono text-[10px] text-muted-foreground">TOTAL</p>
+            <p className="font-mono text-[length:var(--lkv-text-caption-2)] text-muted-foreground">TOTAL</p>
             <p className="font-mono font-700 text-info">{totalG >= 1000 ? `${(totalG / 1000).toFixed(2)} kg` : `${totalG} g`}</p>
           </div>
           <div className="glass-sub-card rounded-lg p-2">
-            <p className="font-mono text-[10px] text-muted-foreground">ARTICLES</p>
+            <p className="font-mono text-[length:var(--lkv-text-caption-2)] text-muted-foreground">ARTICLES</p>
             <p className="font-mono font-700 text-foreground">{categories.flatMap((c) => c.items).length}</p>
           </div>
           <div className="glass-sub-card rounded-lg p-2">
-            <p className="font-mono text-[10px] text-muted-foreground">CATÉGORIES</p>
+            <p className="font-mono text-[length:var(--lkv-text-caption-2)] text-muted-foreground">CATÉGORIES</p>
             <p className="font-mono font-700 text-foreground">{categories.filter((c) => c.items.length > 0).length}</p>
           </div>
         </div>
@@ -75,39 +90,65 @@ function ToolPoidssSac() {
 
       {/* Add item */}
       <div className="glass rounded-2xl p-5">
-        <h3 className="font-display font-700 text-base mb-4">Ajouter un article</h3>
-        <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
-          <select
-            value={selectedCat}
-            onChange={(e) => setSelectedCat(e.target.value)}
-            className="px-3 py-2.5 rounded-lg bg-background border border-border text-sm focus:outline-none focus:border-primary"
-            aria-label="Catégorie"
-          >
-            {categories.map((c) => <option key={c.id} value={c.id}>{c.icon} {c.nom}</option>)}
-          </select>
-          <input
-            type="text"
-            placeholder="Nom de l'article"
-            value={newItemName}
-            onChange={(e) => setNewItemName(e.target.value)}
-            className="sm:col-span-2 px-3 py-2.5 rounded-lg bg-background border border-border text-sm focus:outline-none focus:border-primary"
-            aria-label="Nom de l'article"
-            onKeyDown={(e) => e.key === 'Enter' && addItem()}
-          />
-          <div className="flex gap-2">
-            <input
-              type="number"
-              placeholder="Poids (g)"
-              value={newItemWeight}
-              onChange={(e) => setNewItemWeight(e.target.value)}
-              className="flex-1 px-3 py-2.5 rounded-lg bg-background border border-border text-sm focus:outline-none focus:border-primary font-mono"
-              aria-label="Poids en grammes"
-             
-              onKeyDown={(e) => e.key === 'Enter' && addItem()}
-            />
-            <button onClick={addItem} className="glass-circle-btn !w-11 !h-11 !min-w-11 !min-h-11" aria-label="Ajouter">+</button>
+        <h3 className="font-display font-700 text-base mb-1">Ajouter un article</h3>
+        <p className="mb-4 text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-secondary)]">Catégorie, nom et poids — chaque champ est étiqueté comme sur la page contact.</p>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            addItem();
+          }}
+        >
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <div>
+              <label htmlFor="poids-sac-categorie" className={LABEL_CLASS}>Catégorie</label>
+              <select
+                id="poids-sac-categorie"
+                value={selectedCat}
+                onChange={(e) => setSelectedCat(e.target.value)}
+                className={FIELD_CLASS}
+              >
+                {categories.map((c) => <option key={c.id} value={c.id}>{c.icon} {c.nom}</option>)}
+              </select>
+            </div>
+            <div className="sm:col-span-1 lg:col-span-2">
+              <label htmlFor="poids-sac-nom" className={LABEL_CLASS}>Nom de l’article *</label>
+              <input
+                id="poids-sac-nom"
+                type="text"
+                placeholder="Nom de l'article"
+                value={newItemName}
+                onChange={(e) => setNewItemName(e.target.value)}
+                className={FIELD_CLASS}
+                aria-invalid={Boolean(formError && !newItemName.trim())}
+                aria-describedby={formError ? 'poids-sac-erreur' : undefined}
+                autoComplete="off"
+              />
+            </div>
+            <div>
+              <label htmlFor="poids-sac-poids" className={LABEL_CLASS}>Poids (g) *</label>
+              <div className="flex gap-2">
+                <input
+                  id="poids-sac-poids"
+                  type="number"
+                  min={1}
+                  placeholder="Poids (g)"
+                  value={newItemWeight}
+                  onChange={(e) => setNewItemWeight(e.target.value)}
+                  className={`${FIELD_CLASS} flex-1 font-mono`}
+                  aria-invalid={Boolean(formError && (newItemWeight === '' || parseInt(newItemWeight) <= 0))}
+                  aria-describedby={formError ? 'poids-sac-erreur' : undefined}
+                  inputMode="numeric"
+                />
+                <button type="submit" className="glass-circle-btn h-11 w-11 min-h-[var(--lkv-touch-min)] min-w-[var(--lkv-touch-min)]" aria-label="Ajouter l’article au sac">+</button>
+              </div>
+            </div>
           </div>
-        </div>
+          {formError && (
+            <p id="poids-sac-erreur" role="alert" aria-live="assertive" className="mt-3 rounded-[var(--lkv-radius-sm)] border border-[color:var(--lkv-danger-dark)]/30 bg-[color:var(--lkv-danger-bg)] px-[var(--space-3)] py-2 text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-danger-dark)]">
+              {formError}
+            </p>
+          )}
+        </form>
       </div>
 
       {/* Categories breakdown */}
@@ -127,7 +168,7 @@ function ToolPoidssSac() {
                     <span className="text-muted-foreground">{item.nom}</span>
                     <div className="flex items-center gap-3">
                       <span className="font-mono text-info">{item.poids_g} g</span>
-                      <button onClick={() => removeItem(cat.id, idx)} className="glass-circle-btn !w-11 !h-11 !min-w-11 !min-h-11" aria-label={`Supprimer ${item.nom}`}>×</button>
+                      <button type="button" onClick={() => removeItem(cat.id, idx)} className="glass-circle-btn h-11 w-11 min-h-[var(--lkv-touch-min)] min-w-[var(--lkv-touch-min)]" aria-label={`Supprimer ${item.nom}`}>×</button>
                     </div>
                   </div>
                 ))}
@@ -164,33 +205,33 @@ function ToolBudget() {
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="glass rounded-xl p-4">
-          <label className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider block mb-2">DURÉE (jours)</label>
-          <input type="number" min={1} max={365} value={jours} onChange={(e) => setJours(Math.max(1, parseInt(e.target.value) || 1))}
-            className="w-full px-3 py-2 rounded-lg bg-background border border-border font-mono text-lg font-700 focus:outline-none focus:border-primary" />
+          <label htmlFor="budget-jours" className="font-mono text-[length:var(--lkv-text-caption-2)] text-muted-foreground uppercase tracking-wider block mb-2">DURÉE (jours)</label>
+          <input id="budget-jours" type="number" min={1} max={365} value={jours} onChange={(e) => setJours(Math.max(1, parseInt(e.target.value) || 1))}
+            className="w-full min-h-[var(--lkv-touch-min)] px-3 py-2 rounded-lg bg-background border border-border font-mono text-lg font-700 focus:outline-none focus:border-primary focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]" />
         </div>
         <div className="glass rounded-xl p-4">
-          <label className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider block mb-2">PERSONNES</label>
-          <input type="number" min={1} max={20} value={personnes} onChange={(e) => setPersonnes(Math.max(1, parseInt(e.target.value) || 1))}
-            className="w-full px-3 py-2 rounded-lg bg-background border border-border font-mono text-lg font-700 focus:outline-none focus:border-primary" />
+          <label htmlFor="budget-personnes" className="font-mono text-[length:var(--lkv-text-caption-2)] text-muted-foreground uppercase tracking-wider block mb-2">PERSONNES</label>
+          <input id="budget-personnes" type="number" min={1} max={20} value={personnes} onChange={(e) => setPersonnes(Math.max(1, parseInt(e.target.value) || 1))}
+            className="w-full min-h-[var(--lkv-touch-min)] px-3 py-2 rounded-lg bg-background border border-border font-mono text-lg font-700 focus:outline-none focus:border-primary focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]" />
         </div>
       </div>
 
       <div className="glass rounded-2xl p-6">
-        <h3 className="font-display font-700 text-base mb-4">Budget par jour / personne (€)</h3>
+        <h3 className="font-display font-700 text-base mb-1">Budget par jour / personne (€)</h3>
+        <p className="mb-4 text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-secondary)]">Un montant par poste, modifiable au clavier — annoncé aux lecteurs d’écran.</p>
         <div className="space-y-3">
           {postes.map((poste, idx) => (
             <div key={idx} className="flex items-center gap-3">
-              <span className="text-xl w-8 text-center">{poste.icon}</span>
-              <span className="flex-1 text-sm text-foreground">{poste.nom}</span>
+              <span className="text-xl w-8 text-center" aria-hidden="true">{poste.icon}</span>
+              <label htmlFor={`budget-poste-${idx}`} className="flex-1 text-sm text-foreground">{poste.nom}</label>
               <div className="flex items-center gap-2">
                 <input
+                  id={`budget-poste-${idx}`}
                   type="number" min={0} value={poste.montant}
                   onChange={(e) => setPostes((prev) => prev.map((p, i) => i === idx ? { ...p, montant: Math.max(0, parseFloat(e.target.value) || 0) } : p))}
-                  className="w-24 px-2 py-1.5 rounded-lg bg-background border border-border font-mono text-sm text-right focus:outline-none focus:border-primary"
-                 
-                  aria-label={`Budget ${poste.nom}`}
+                  className="w-24 min-h-[var(--lkv-touch-min)] px-2 py-1.5 rounded-lg bg-background border border-border font-mono text-sm text-right focus:outline-none focus:border-primary focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]"
                 />
                 <span className="font-mono text-xs text-muted-foreground">€/j</span>
               </div>
@@ -206,7 +247,7 @@ function ToolBudget() {
           { label: `TOTAL ${jours}J`, value: `${totalVoyage.toFixed(0)} €`, color: 'text-primary' },
         ].map((stat) => (
           <div key={stat.label} className="glass rounded-xl p-4 text-center">
-            <p className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider mb-1">{stat.label}</p>
+            <p className="font-mono text-[length:var(--lkv-text-caption-2)] text-muted-foreground uppercase tracking-wider mb-1">{stat.label}</p>
             <p className={`font-mono font-700 text-2xl ${stat.color}`}>{stat.value}</p>
           </div>
         ))}
@@ -262,20 +303,19 @@ function ToolConvertisseur() {
 
   return (
     <div className="space-y-5">
-      <div className="flex gap-1 glass rounded-lg p-1 flex-wrap">
+      <div className="flex gap-1 glass rounded-lg p-1 flex-wrap" role="tablist" aria-label="Type de conversion">
         {(Object.keys(conversions) as (keyof typeof conversions)[]).map((t) => (
-          <button key={t} onClick={() => setTab(t as 'distance' | 'poids' | 'temperature' | 'devises')}
-            className={`glass-capsule-btn flex-1 min-w-[80px] text-xs font-medium capitalize ${tab === t ? 'primary' : ''}`}>
+          <button key={t} type="button" role="tab" aria-selected={tab === t} onClick={() => setTab(t as 'distance' | 'poids' | 'temperature' | 'devises')}
+            className={`glass-capsule-btn flex-1 min-w-[80px] min-h-[var(--lkv-touch-min)] text-xs font-medium capitalize ${tab === t ? 'primary' : ''}`}>
             {conversions[t].label}
           </button>
         ))}
       </div>
 
       <div className="glass rounded-xl p-4">
-        <label className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider block mb-2">VALEUR À CONVERTIR</label>
-        <input type="number" value={value} onChange={(e) => setValue(e.target.value)}
-          className="w-full px-4 py-3 rounded-lg bg-background border border-border font-mono text-xl font-700 focus:outline-none focus:border-primary"
-          aria-label="Valeur à convertir" />
+        <label htmlFor="convertisseur-valeur" className="font-mono text-[length:var(--lkv-text-caption-2)] text-muted-foreground uppercase tracking-wider block mb-2">VALEUR À CONVERTIR</label>
+        <input id="convertisseur-valeur" type="number" value={value} onChange={(e) => setValue(e.target.value)}
+          className="w-full min-h-[var(--lkv-touch-min)] px-4 py-3 rounded-lg bg-background border border-border font-mono text-xl font-700 focus:outline-none focus:border-primary focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]" />
       </div>
 
       <div className="space-y-3">
@@ -326,12 +366,17 @@ function ToolChecklist() {
   const [newText, setNewText] = useState('');
   const [newCat, setNewCat] = useState('Divers');
   const [saved, setSaved] = useState(false);
+  const [checklistError, setChecklistError] = useState('');
 
   const cats = [...new Set(items.map((i) => i.categorie))];
   const checked = items.filter((i) => i.checked).length;
 
   const addItem = () => {
-    if (!newText.trim()) return;
+    if (!newText.trim()) {
+      setChecklistError('Nommez votre article pour l’ajouter à la checklist.');
+      return;
+    }
+    setChecklistError('');
     setItems((prev) => [...prev, { id: Date.now().toString(), text: newText.trim(), checked: false, categorie: newCat }]);
     setNewText('');
   };
@@ -348,32 +393,52 @@ function ToolChecklist() {
     <div className="space-y-5">
       <div className="flex items-center justify-between glass rounded-xl p-4">
         <div>
-          <p className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider">PROGRESSION</p>
+          <p className="font-mono text-[length:var(--lkv-text-caption-2)] text-muted-foreground uppercase tracking-wider">PROGRESSION</p>
           <p className="font-mono font-700 text-xl text-foreground">{checked}/{items.length}</p>
         </div>
         <div className="flex-1 mx-6">
           <div className="h-2 bg-border rounded-full overflow-hidden">
-            <div className="h-full bg-primary rounded-full transition-all duration-500" style={{ width: `${items.length ? (checked / items.length) * 100 : 0}%` }} />
+            <div className="h-full bg-primary rounded-full motion-safe:transition-transform motion-reduce:transition-none duration-500" style={{ width: `${items.length ? (checked / items.length) * 100 : 0}%` }} />
           </div>
         </div>
-        <button onClick={handleSave} className="glass-capsule-btn primary py-2 px-4 text-sm">
+        <button type="button" onClick={handleSave} className="glass-capsule-btn primary py-2 px-4 text-sm min-h-[var(--lkv-touch-min)]" aria-live="polite">
           {saved ? '✓ Sauvegardé' : 'Sauvegarder'}
         </button>
       </div>
 
       {/* Add item */}
-      <div className="flex gap-2">
-        <input type="text" placeholder="Nouvel article..." value={newText} onChange={(e) => setNewText(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && addItem()}
-          className="flex-1 px-3 py-2.5 rounded-lg bg-background border border-border text-sm focus:outline-none focus:border-primary"
-          aria-label="Nouvel article de checklist" />
-        <select value={newCat} onChange={(e) => setNewCat(e.target.value)}
-          className="px-3 py-2.5 rounded-lg bg-background border border-border text-sm focus:outline-none focus:border-primary"
-          aria-label="Catégorie">
-          {[...cats, 'Divers'].map((c) => <option key={c}>{c}</option>)}
-        </select>
-        <button onClick={addItem} aria-label="Ajouter un article" className="glass-circle-btn !w-11 !h-11 !min-w-11 !min-h-11">+</button>
-      </div>
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          addItem();
+        }}
+      >
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <div>
+            <label htmlFor="checklist-nouvel-article" className="mb-1.5 block text-[length:var(--lkv-text-caption-2)] font-semibold uppercase tracking-[0.04em] text-[color:var(--lkv-text-secondary)]">Nouvel article *</label>
+            <input id="checklist-nouvel-article" type="text" placeholder="Nouvel article..." value={newText} onChange={(e) => setNewText(e.target.value)}
+              className="w-full min-h-[var(--lkv-touch-min)] px-3 py-2.5 rounded-lg bg-background border border-border text-sm focus:outline-none focus:border-primary focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]"
+              aria-invalid={Boolean(checklistError)}
+              aria-describedby={checklistError ? 'checklist-erreur' : undefined}
+              autoComplete="off" />
+          </div>
+          <div>
+            <label htmlFor="checklist-categorie" className="mb-1.5 block text-[length:var(--lkv-text-caption-2)] font-semibold uppercase tracking-[0.04em] text-[color:var(--lkv-text-secondary)]">Catégorie</label>
+            <div className="flex gap-2">
+              <select id="checklist-categorie" value={newCat} onChange={(e) => setNewCat(e.target.value)}
+                className="flex-1 min-h-[var(--lkv-touch-min)] px-3 py-2.5 rounded-lg bg-background border border-border text-sm focus:outline-none focus:border-primary focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]">
+                {[...cats, 'Divers'].map((c) => <option key={c}>{c}</option>)}
+              </select>
+              <button type="submit" aria-label="Ajouter un article" className="glass-circle-btn h-11 w-11 min-h-[var(--lkv-touch-min)] min-w-[var(--lkv-touch-min)]">+</button>
+            </div>
+          </div>
+        </div>
+        {checklistError && (
+          <p id="checklist-erreur" role="alert" aria-live="assertive" className="mt-3 rounded-[var(--lkv-radius-sm)] border border-[color:var(--lkv-danger-dark)]/30 bg-[color:var(--lkv-danger-bg)] px-[var(--space-3)] py-2 text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-danger-dark)]">
+            {checklistError}
+          </p>
+        )}
+      </form>
 
       {/* Items by category */}
       {cats.map((cat) => (
@@ -385,14 +450,16 @@ function ToolChecklist() {
             {items.filter((i) => i.categorie === cat).map((item) => (
               <div key={item.id} className={`flex items-center gap-3 px-4 py-3 transition-colors ${item.checked ? 'opacity-50' : ''}`}>
                 <button
+                  type="button"
                   onClick={() => toggleItem(item.id)}
-                  className={`glass-circle-btn !w-11 !h-11 !min-w-11 !min-h-11 flex-shrink-0 ${item.checked ? 'primary' : ''}`}
+                  aria-pressed={item.checked}
+                  className={`glass-circle-btn h-11 w-11 min-h-[var(--lkv-touch-min)] min-w-[var(--lkv-touch-min)] flex-shrink-0 ${item.checked ? 'primary' : ''}`}
                   aria-label={`${item.checked ? 'Décocher' : 'Cocher'} ${item.text}`}
                 >
-                  {item.checked && <span className="text-white text-[10px]">✓</span>}
+                  {item.checked && <span className="text-white text-[length:var(--lkv-text-caption-2)]">✓</span>}
                 </button>
                 <span className={`flex-1 text-sm ${item.checked ? 'line-through text-muted-foreground' : 'text-foreground'}`}>{item.text}</span>
-                <button onClick={() => removeItem(item.id)} className="glass-circle-btn !w-11 !h-11 !min-w-11 !min-h-11" aria-label={`Supprimer ${item.text}`}>×</button>
+                <button type="button" onClick={() => removeItem(item.id)} className="glass-circle-btn h-11 w-11 min-h-[var(--lkv-touch-min)] min-w-[var(--lkv-touch-min)]" aria-label={`Supprimer ${item.text}`}>×</button>
               </div>
             ))}
           </div>
@@ -433,23 +500,23 @@ function ToolTailles() {
 
   return (
     <div className="space-y-5">
-      <div className="flex gap-2">
+      <div className="flex gap-2" role="tablist" aria-label="Type de tailles">
         {(['vetements', 'chaussures'] as const).map((t) => (
-          <button key={t} onClick={() => { setType(t); setTailleFR(t === 'vetements' ? 'M' : '42'); }}
-            className={`glass-capsule-btn flex-1 text-sm font-medium capitalize ${type === t ? 'primary' : ''}`}>
+          <button key={t} type="button" role="tab" aria-selected={type === t} onClick={() => { setType(t); setTailleFR(t === 'vetements' ? 'M' : '42'); }}
+            className={`glass-capsule-btn flex-1 min-h-[var(--lkv-touch-min)] text-sm font-medium capitalize ${type === t ? 'primary' : ''}`}>
             {t === 'vetements' ? '👕 Vêtements' : '👟 Chaussures'}
           </button>
         ))}
       </div>
 
       <div className="glass rounded-xl p-4">
-        <label className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider block mb-3">
+        <p id="tailles-label" className="font-mono text-[length:var(--lkv-text-caption-2)] text-muted-foreground uppercase tracking-wider block mb-3">
           TAILLE FR / EU
-        </label>
-        <div className="flex flex-wrap gap-2">
+        </p>
+        <div className="flex flex-wrap gap-2" role="radiogroup" aria-labelledby="tailles-label">
           {keys.map((k) => (
-            <button key={k} onClick={() => setTailleFR(k)}
-              className={`glass-capsule-btn font-mono text-sm font-600 ${tailleFR === k ? 'primary' : ''}`}
+            <button key={k} type="button" role="radio" aria-checked={tailleFR === k} onClick={() => setTailleFR(k)}
+              className={`glass-capsule-btn min-h-[var(--lkv-touch-min)] font-mono text-sm font-600 ${tailleFR === k ? 'primary' : ''}`}
              >
               {k}
             </button>
@@ -461,7 +528,7 @@ function ToolTailles() {
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
           {Object.entries(currentData).map(([country, size]) => (
             <div key={country} className="glass rounded-xl p-4 text-center">
-              <p className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider mb-1">{country}</p>
+              <p className="font-mono text-[length:var(--lkv-text-caption-2)] text-muted-foreground uppercase tracking-wider mb-1">{country}</p>
               <p className="font-mono font-700 text-2xl text-foreground">{size}</p>
             </div>
           ))}
@@ -515,13 +582,12 @@ function ToolFuseaux() {
 
   return (
     <div className="space-y-5">
-      <div className="grid grid-cols-2 gap-4">
-        {[{ label: 'VOTRE VILLE', value: baseCity, setter: setBaseCity }, { label: 'DESTINATION', value: targetCity, setter: setTargetCity }].map(({ label, value, setter }) => (
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        {[{ label: 'VOTRE VILLE', value: baseCity, setter: setBaseCity, id: 'fuseaux-base' }, { label: 'DESTINATION', value: targetCity, setter: setTargetCity, id: 'fuseaux-cible' }].map(({ label, value, setter, id }) => (
           <div key={label} className="glass rounded-xl p-4">
-            <label className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider block mb-2">{label}</label>
-            <select value={value} onChange={(e) => setter(e.target.value)}
-              className="w-full px-3 py-2 rounded-lg bg-background border border-border text-sm focus:outline-none focus:border-primary"
-              aria-label={label}>
+            <label htmlFor={id} className="font-mono text-[length:var(--lkv-text-caption-2)] text-muted-foreground uppercase tracking-wider block mb-2">{label}</label>
+            <select id={id} value={value} onChange={(e) => setter(e.target.value)}
+              className="w-full min-h-[var(--lkv-touch-min)] px-3 py-2 rounded-lg bg-background border border-border text-sm focus:outline-none focus:border-primary focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]">
               {Object.keys(cities).map((c) => <option key={c}>{c}</option>)}
             </select>
             <p className="font-mono font-700 text-3xl text-info mt-3">{getLocalTime(value)}</p>
@@ -531,7 +597,7 @@ function ToolFuseaux() {
       </div>
 
       <div className="glass rounded-xl p-4 text-center">
-        <p className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider mb-2">DÉCALAGE HORAIRE</p>
+        <p className="font-mono text-[length:var(--lkv-text-caption-2)] text-muted-foreground uppercase tracking-wider mb-2">DÉCALAGE HORAIRE</p>
         <p className="font-mono font-700 text-4xl text-primary">
           {diff >= 0 ? '+' : ''}{diff}h
         </p>
@@ -589,17 +655,17 @@ function ToolBoussole() {
         <div className="text-center py-12">
           <div className="text-6xl mb-4">🧭</div>
           <p className="text-muted-foreground mb-6">Activez les capteurs pour utiliser la boussole et le niveau</p>
-          <button onClick={startSensors} className="glass-capsule-btn primary px-8 py-3">Activer les capteurs</button>
+          <button type="button" onClick={startSensors} className="glass-capsule-btn primary px-8 py-3 min-h-[var(--lkv-touch-min)]">Activer les capteurs</button>
         </div>
       ) : (
         <>
           {error && (
-            <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-4 text-center text-red-400 text-sm">{error}</div>
+            <div role="alert" aria-live="assertive" className="bg-red-500/10 border border-red-500/30 rounded-xl p-4 text-center text-red-400 text-sm">{error}</div>
           )}
 
           {/* Compass */}
           <div className="glass rounded-2xl p-6 text-center">
-            <p className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider mb-4">BOUSSOLE</p>
+            <p className="font-mono text-[length:var(--lkv-text-caption-2)] text-muted-foreground uppercase tracking-wider mb-4">BOUSSOLE</p>
             <div className="relative w-40 h-40 mx-auto mb-4">
               <div className="absolute inset-0 rounded-full border-2 border-border flex items-center justify-center bg-background">
                 <div className="relative w-full h-full" style={{ transform: `rotate(${heading ?? 0}deg)`, transition: 'transform 0.3s ease' }}>
@@ -616,10 +682,10 @@ function ToolBoussole() {
 
           {/* Level */}
           <div className="glass rounded-2xl p-6">
-            <p className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider mb-4 text-center">NIVEAU À BULLE</p>
+            <p className="font-mono text-[length:var(--lkv-text-caption-2)] text-muted-foreground uppercase tracking-wider mb-4 text-center">NIVEAU À BULLE</p>
             <div className={`w-32 h-32 mx-auto rounded-full border-4 flex items-center justify-center relative ${isLevel ? 'border-emerald-400' : 'border-border'}`}>
               <div
-                className={`w-8 h-8 rounded-full transition-all duration-200 ${isLevel ? 'bg-emerald-400' : 'bg-primary'}`}
+                className={`w-8 h-8 rounded-full motion-safe:transition-transform motion-reduce:transition-none duration-200 ${isLevel ? 'bg-emerald-400' : 'bg-primary'}`}
                 style={{
                   transform: `translate(${Math.min(40, Math.max(-40, (gamma ?? 0) * 1.5))}px, ${Math.min(40, Math.max(-40, (beta ?? 0) * 1.5))}px)`
                 }}
@@ -628,11 +694,11 @@ function ToolBoussole() {
             <p className="text-center mt-3 text-sm font-medium">{isLevel ? '✅ Niveau' : '⚠️ Incliner pour niveler'}</p>
             <div className="grid grid-cols-2 gap-3 mt-3">
               <div className="text-center">
-                <p className="font-mono text-[10px] text-muted-foreground">INCLINAISON X</p>
+                <p className="font-mono text-[length:var(--lkv-text-caption-2)] text-muted-foreground">INCLINAISON X</p>
                 <p className="font-mono font-600 text-foreground">{beta ?? '--'}°</p>
               </div>
               <div className="text-center">
-                <p className="font-mono text-[10px] text-muted-foreground">INCLINAISON Y</p>
+                <p className="font-mono text-[length:var(--lkv-text-caption-2)] text-muted-foreground">INCLINAISON Y</p>
                 <p className="font-mono font-600 text-foreground">{gamma ?? '--'}°</p>
               </div>
             </div>
@@ -683,7 +749,7 @@ function ToolChronometre() {
   return (
     <div className="space-y-5">
       <div className="glass rounded-2xl p-8 text-center">
-        <p className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider mb-4">CHRONOMÈTRE</p>
+        <p className="font-mono text-[length:var(--lkv-text-caption-2)] text-muted-foreground uppercase tracking-wider mb-4">CHRONOMÈTRE</p>
         <p className="font-mono font-700 text-5xl md:text-6xl text-foreground tabular-nums">
           {fmt(elapsed)}
         </p>
@@ -695,17 +761,18 @@ function ToolChronometre() {
       </div>
 
       <div className="flex gap-3 justify-center">
-        <button onClick={() => setRunning(!running)}
-          className={`glass-capsule-btn px-8 py-3 font-medium text-base ${running ? '' : 'primary'}`}>
+        <button type="button" onClick={() => setRunning(!running)}
+          aria-pressed={running}
+          className={`glass-capsule-btn min-h-[var(--lkv-touch-min)] px-8 py-3 font-medium text-base ${running ? '' : 'primary'}`}>
           {running ? '⏸ Pause' : elapsed > 0 ? '▶ Reprendre' : '▶ Démarrer'}
         </button>
         {running && (
-          <button onClick={addLap} className="glass-capsule-btn px-6 py-3 font-medium">
+          <button type="button" onClick={addLap} className="glass-capsule-btn min-h-[var(--lkv-touch-min)] px-6 py-3 font-medium">
             🏁 Tour
           </button>
         )}
         {elapsed > 0 && !running && (
-          <button onClick={reset} className="glass-capsule-btn px-6 py-3 font-medium">
+          <button type="button" onClick={reset} className="glass-capsule-btn min-h-[var(--lkv-touch-min)] px-6 py-3 font-medium">
             ↺ Reset
           </button>
         )}
@@ -754,37 +821,37 @@ function ToolRations() {
 
   return (
     <div className="space-y-5">
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="glass rounded-xl p-4">
-          <label className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider block mb-2">PERSONNES</label>
-          <input type="number" min={1} max={20} value={personnes} onChange={(e) => setPersonnes(Math.max(1, parseInt(e.target.value) || 1))}
-            className="w-full px-3 py-2 rounded-lg bg-background border border-border font-mono text-xl font-700 focus:outline-none focus:border-primary" />
+          <label htmlFor="rations-personnes" className="font-mono text-[length:var(--lkv-text-caption-2)] text-muted-foreground uppercase tracking-wider block mb-2">PERSONNES</label>
+          <input id="rations-personnes" type="number" min={1} max={20} value={personnes} onChange={(e) => setPersonnes(Math.max(1, parseInt(e.target.value) || 1))}
+            className="w-full min-h-[var(--lkv-touch-min)] px-3 py-2 rounded-lg bg-background border border-border font-mono text-xl font-700 focus:outline-none focus:border-primary focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]" />
         </div>
         <div className="glass rounded-xl p-4">
-          <label className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider block mb-2">JOURS</label>
-          <input type="number" min={1} max={30} value={jours} onChange={(e) => setJours(Math.max(1, parseInt(e.target.value) || 1))}
-            className="w-full px-3 py-2 rounded-lg bg-background border border-border font-mono text-xl font-700 focus:outline-none focus:border-primary" />
+          <label htmlFor="rations-jours" className="font-mono text-[length:var(--lkv-text-caption-2)] text-muted-foreground uppercase tracking-wider block mb-2">JOURS</label>
+          <input id="rations-jours" type="number" min={1} max={30} value={jours} onChange={(e) => setJours(Math.max(1, parseInt(e.target.value) || 1))}
+            className="w-full min-h-[var(--lkv-touch-min)] px-3 py-2 rounded-lg bg-background border border-border font-mono text-xl font-700 focus:outline-none focus:border-primary focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]" />
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="glass rounded-xl p-4">
-          <p className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider mb-3">EFFORT</p>
-          <div className="flex flex-col gap-2">
+          <p id="rations-effort-label" className="font-mono text-[length:var(--lkv-text-caption-2)] text-muted-foreground uppercase tracking-wider mb-3">EFFORT</p>
+          <div className="flex flex-col gap-2" role="radiogroup" aria-labelledby="rations-effort-label">
             {(['léger', 'modéré', 'intense'] as const).map((e) => (
-              <button key={e} onClick={() => setEffort(e)}
-                className={`glass-capsule-btn py-2 text-sm font-medium capitalize ${effort === e ? 'primary' : ''}`}>
+              <button key={e} type="button" role="radio" aria-checked={effort === e} onClick={() => setEffort(e)}
+                className={`glass-capsule-btn min-h-[var(--lkv-touch-min)] py-2 text-sm font-medium capitalize ${effort === e ? 'primary' : ''}`}>
                 {e === 'léger' ? '🚶 Léger' : e === 'modéré' ? '🏃 Modéré' : '⛰️ Intense'}
               </button>
             ))}
           </div>
         </div>
         <div className="glass rounded-xl p-4">
-          <p className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider mb-3">CLIMAT</p>
-          <div className="flex flex-col gap-2">
+          <p id="rations-climat-label" className="font-mono text-[length:var(--lkv-text-caption-2)] text-muted-foreground uppercase tracking-wider mb-3">CLIMAT</p>
+          <div className="flex flex-col gap-2" role="radiogroup" aria-labelledby="rations-climat-label">
             {(['froid', 'tempéré', 'chaud'] as const).map((c) => (
-              <button key={c} onClick={() => setChaleur(c)}
-                className={`glass-capsule-btn py-2 text-sm font-medium capitalize ${chaleur === c ? 'primary' : ''}`}>
+              <button key={c} type="button" role="radio" aria-checked={chaleur === c} onClick={() => setChaleur(c)}
+                className={`glass-capsule-btn min-h-[var(--lkv-touch-min)] py-2 text-sm font-medium capitalize ${chaleur === c ? 'primary' : ''}`}>
                 {c === 'froid' ? '❄️ Froid' : c === 'tempéré' ? '🌤 Tempéré' : '☀️ Chaud'}
               </button>
             ))}
@@ -800,14 +867,14 @@ function ToolRations() {
         ].map((stat) => (
           <div key={stat.label} className="glass rounded-xl p-4 text-center">
             <p className="text-2xl mb-1">{stat.icon}</p>
-            <p className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider mb-1">{stat.label}</p>
+            <p className="font-mono text-[length:var(--lkv-text-caption-2)] text-muted-foreground uppercase tracking-wider mb-1">{stat.label}</p>
             <p className={`font-mono font-700 text-xl ${stat.color}`}>{stat.value}</p>
           </div>
         ))}
       </div>
 
       <div className="bg-info/5 border border-info/20 rounded-xl p-4">
-        <p className="font-mono text-[10px] text-info uppercase tracking-wider mb-3">
+        <p className="font-mono text-[length:var(--lkv-text-caption-2)] text-info uppercase tracking-wider mb-3">
           TOTAUX — {jours} JOUR{jours > 1 ? 'S' : ''} × {personnes} PERSONNE{personnes > 1 ? 'S' : ''}
         </p>
         <div className="grid grid-cols-3 gap-3 text-center">
@@ -897,60 +964,66 @@ function ToolPlanificateur() {
 
   return (
     <div className="space-y-6">
-      <div className="glass rounded-2xl p-5 space-y-4">
+      <form
+        className="glass rounded-2xl p-5 space-y-4"
+        onSubmit={(e) => {
+          e.preventDefault();
+          generate();
+        }}
+      >
         <div>
-          <label className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider block mb-2">DESTINATION</label>
+          <label htmlFor="planificateur-destination" className="font-mono text-[length:var(--lkv-text-caption-2)] text-muted-foreground uppercase tracking-wider block mb-2">DESTINATION</label>
           <input
+            id="planificateur-destination"
             type="text"
             placeholder="Ex : Islande, Japon, Maroc..."
             value={destination}
             onChange={(e) => setDestination(e.target.value)}
-            className="w-full px-3 py-2.5 rounded-lg bg-background border border-border text-sm focus:outline-none focus:border-primary"
-            aria-label="Destination"
+            className="w-full min-h-[var(--lkv-touch-min)] px-3 py-2.5 rounded-lg bg-background border border-border text-sm focus:outline-none focus:border-primary focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]"
+            autoComplete="off"
           />
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
-            <label className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider block mb-2">DURÉE (jours)</label>
+            <label htmlFor="planificateur-duree" className="font-mono text-[length:var(--lkv-text-caption-2)] text-muted-foreground uppercase tracking-wider block mb-2">DURÉE (jours)</label>
             <input
+              id="planificateur-duree"
               type="number" min={1} max={30} value={duree}
               onChange={(e) => setDuree(Math.max(1, Math.min(30, parseInt(e.target.value) || 7)))}
-              className="w-full px-3 py-2 rounded-lg bg-background border border-border font-mono text-xl font-700 focus:outline-none focus:border-primary"
-             
+              className="w-full min-h-[var(--lkv-touch-min)] px-3 py-2 rounded-lg bg-background border border-border font-mono text-xl font-700 focus:outline-none focus:border-primary focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]"
             />
           </div>
           <div>
-            <label className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider block mb-2">BUDGET</label>
-            <select value={budget} onChange={(e) => setBudget(e.target.value as 'petit' | 'moyen' | 'grand')}
-              className="w-full px-3 py-2.5 rounded-lg bg-background border border-border text-sm focus:outline-none focus:border-primary"
-              aria-label="Budget">
+            <label htmlFor="planificateur-budget" className="font-mono text-[length:var(--lkv-text-caption-2)] text-muted-foreground uppercase tracking-wider block mb-2">BUDGET</label>
+            <select id="planificateur-budget" value={budget} onChange={(e) => setBudget(e.target.value as 'petit' | 'moyen' | 'grand')}
+              className="w-full min-h-[var(--lkv-touch-min)] px-3 py-2.5 rounded-lg bg-background border border-border text-sm focus:outline-none focus:border-primary focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]">
               {(Object.entries(budgetLabels) as [string, string][]).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
             </select>
           </div>
         </div>
 
         <div>
-          <label className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider block mb-2">STYLE DE VOYAGE</label>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+          <p id="planificateur-style-label" className="font-mono text-[length:var(--lkv-text-caption-2)] text-muted-foreground uppercase tracking-wider block mb-2">STYLE DE VOYAGE</p>
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4" role="radiogroup" aria-labelledby="planificateur-style-label">
             {(Object.entries(styleLabels) as [string, string][]).map(([k, v]) => (
-              <button key={k} onClick={() => setStyle(k as 'aventure' | 'culture' | 'detente' | 'mixte')}
-                className={`glass-capsule-btn py-2.5 text-sm font-medium ${style === k ? 'primary' : ''}`}>
+              <button key={k} type="button" role="radio" aria-checked={style === k} onClick={() => setStyle(k as 'aventure' | 'culture' | 'detente' | 'mixte')}
+                className={`glass-capsule-btn min-h-[var(--lkv-touch-min)] py-2.5 text-sm font-medium ${style === k ? 'primary' : ''}`}>
                 {v}
               </button>
             ))}
           </div>
         </div>
 
-        <button onClick={generate} className="glass-capsule-btn primary w-full py-3 text-base font-semibold">
+        <button type="submit" className="glass-capsule-btn primary w-full min-h-[var(--lkv-touch-min)] py-3 text-base font-semibold">
           🗺️ Générer mon itinéraire
         </button>
-      </div>
+      </form>
 
       {generated && etapes.length > 0 && (
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <p className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider">
+            <p className="font-mono text-[length:var(--lkv-text-caption-2)] text-muted-foreground uppercase tracking-wider">
               ITINÉRAIRE — {duree} JOUR{duree > 1 ? 'S' : ''}{destination ? ` · ${destination.toUpperCase()}` : ''}
             </p>
             <span className="text-xs text-muted-foreground">{budgetLabels[budget]}</span>
@@ -1069,7 +1142,7 @@ export default function OutilSlugPage() {
               <div className="flex items-center gap-4">
                 <span className="text-5xl" role="img" aria-label={tool.nom}>{tool.icon}</span>
                 <div>
-                  <h1 className="font-display font-800 text-2xl md:text-3xl text-white tracking-tight" font-extrabold>
+                  <h1 className="font-display font-800 text-2xl md:text-3xl text-white tracking-tight">
                     {tool.nom}
                   </h1>
                   <p className="text-white/60 text-sm mt-1">{tool.description}</p>
@@ -1088,13 +1161,13 @@ export default function OutilSlugPage() {
           {/* Nav between tools */}
           <section className="py-8 border-t border-border">
             <div className="max-w-3xl mx-auto px-4 sm:px-6">
-              <p className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider mb-4">AUTRES OUTILS</p>
+              <p className="font-mono text-[length:var(--lkv-text-caption-2)] text-muted-foreground uppercase tracking-wider mb-4">AUTRES OUTILS</p>
               <div className="flex flex-wrap gap-2">
                 {Object.entries(toolRegistry)
                   .filter(([s]) => s !== slug)
                   .map(([s, t]) => (
                     <Link key={s} href={`/outils/${s}`}
-                      className="flex items-center gap-2 px-3 py-2 glass-sub-card rounded-lg text-sm text-muted-foreground hover:text-foreground transition-all">
+                      className="flex items-center gap-2 px-3 py-2 min-h-[var(--lkv-touch-min)] glass-sub-card rounded-lg text-sm text-muted-foreground hover:text-foreground motion-safe:transition-[transform,background-color,border-color] motion-reduce:transition-none">
                       <span>{t.icon}</span>
                       <span>{t.nom}</span>
                     </Link>
@@ -1132,7 +1205,7 @@ export default function OutilSlugPage() {
 
             {/* Other tools */}
             <div className="mt-[var(--space-8)] border-t border-[color:var(--lkv-border-subtle)] pt-[var(--space-5)]">
-              <p className="mb-[var(--space-3)] font-mono text-[10px] uppercase tracking-[0.1em] text-[color:var(--lkv-text-muted)]">AUTRES OUTILS</p>
+              <p className="mb-[var(--space-3)] font-mono text-[length:var(--lkv-text-caption-2)] uppercase tracking-[0.1em] text-[color:var(--lkv-text-muted)]">AUTRES OUTILS</p>
               <div className="flex flex-wrap gap-[var(--space-2)]">
                 {Object.entries(toolRegistry)
                   .filter(([s]) => s !== slug)

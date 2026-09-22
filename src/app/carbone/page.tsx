@@ -22,8 +22,77 @@ const ECO_GEAR = [
   { name: 'Gourde Klean Kanteen 1L', material: 'Acier inox recyclé', saving: '3.4 kg CO₂', badge: 'Zéro plastique', href: '/boutique' },
 ];
 
+// Charte unique P3 (UNE charte desk/mobile) — référence `contact` : labels visibles + 44px + tokens `--lkv-*` + verre `.lkv-glass`.
+const FIELD_CLASS =
+  'min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-sm)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-2.5 text-[length:var(--lkv-text-body-sm)] text-[color:var(--lkv-text-primary)] placeholder:text-[color:var(--lkv-text-muted)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]';
+const LABEL_CLASS =
+  'mb-1.5 block text-[length:var(--lkv-text-caption-2)] font-semibold uppercase tracking-[0.04em] text-[color:var(--lkv-text-secondary)]';
+
+type TripState = { origin: string; destination: string; transport: string; passengers: number; nights: number; accommodation: string; activities: string[] };
+
+function ParamsBasics({ trip, setTrip, idPrefix }: { trip: TripState; setTrip: (t: TripState) => void; idPrefix: string }) {
+  return (
+    <fieldset className="border-0 m-0 p-0">
+      <legend className="sr-only">Trajet</legend>
+      <h3 className="mb-3 text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)]">Trajet</h3>
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <div>
+          <label htmlFor={`${idPrefix}-origin`} className={LABEL_CLASS}>Départ *</label>
+          <input id={`${idPrefix}-origin`} type="text" autoComplete="off" value={trip.origin} onChange={(e) => setTrip({ ...trip, origin: e.target.value })} placeholder="Paris" className={FIELD_CLASS} />
+        </div>
+        <div>
+          <label htmlFor={`${idPrefix}-destination`} className={LABEL_CLASS}>Destination *</label>
+          <input id={`${idPrefix}-destination`} type="text" autoComplete="off" value={trip.destination} onChange={(e) => setTrip({ ...trip, destination: e.target.value })} placeholder="Katmandou" className={FIELD_CLASS} />
+        </div>
+      </div>
+    </fieldset>
+  );
+}
+
+function ParamsDetails({ trip, setTrip, idPrefix, toggleActivity }: { trip: TripState; setTrip: (t: TripState) => void; idPrefix: string; toggleActivity: (a: string) => void }) {
+  return (
+    <div className="space-y-4">
+      <div>
+        <label htmlFor={`${idPrefix}-transport`} className={LABEL_CLASS}>Transport *</label>
+        <select id={`${idPrefix}-transport`} value={trip.transport} onChange={(e) => setTrip({ ...trip, transport: e.target.value })} className={FIELD_CLASS}>
+          <option value="avion-long">Avion long-courrier</option><option value="avion-court">Avion court-courrier</option><option value="train">Train</option><option value="voiture">Voiture</option><option value="bus">Bus</option>
+        </select>
+      </div>
+      <fieldset className="border-0 m-0 p-0">
+        <legend className="sr-only">Durée et groupe</legend>
+        <h3 className="mb-3 text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)]">Durée et groupe</h3>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <div>
+            <label htmlFor={`${idPrefix}-passengers`} className={LABEL_CLASS}>Voyageurs</label>
+            <input id={`${idPrefix}-passengers`} type="number" min={1} max={20} value={trip.passengers} onChange={(e) => setTrip({ ...trip, passengers: parseInt(e.target.value) || 1 })} className={`${FIELD_CLASS} font-mono`} inputMode="numeric" />
+          </div>
+          <div>
+            <label htmlFor={`${idPrefix}-nights`} className={LABEL_CLASS}>Nuits</label>
+            <input id={`${idPrefix}-nights`} type="number" min={1} max={365} value={trip.nights} onChange={(e) => setTrip({ ...trip, nights: parseInt(e.target.value) || 1 })} className={`${FIELD_CLASS} font-mono`} inputMode="numeric" />
+          </div>
+        </div>
+      </fieldset>
+      <div>
+        <label htmlFor={`${idPrefix}-accommodation`} className={LABEL_CLASS}>Hébergement</label>
+        <select id={`${idPrefix}-accommodation`} value={trip.accommodation} onChange={(e) => setTrip({ ...trip, accommodation: e.target.value })} className={FIELD_CLASS}>
+          <option value="camping">Camping</option><option value="refuge">Refuge</option><option value="airbnb">Airbnb</option><option value="hotel">Hôtel</option>
+        </select>
+      </div>
+      <fieldset className="border-0 m-0 p-0">
+        <legend className="sr-only">Activités</legend>
+        <h3 className="mb-2 text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)]">Activités</h3>
+        <div className="flex flex-wrap gap-[var(--space-2)]" role="group" aria-label="Activités du voyage">
+          {ACTIVITIES_LIST.map((a) => (
+            <Chip key={a} selected={trip.activities.includes(a)} onClick={() => toggleActivity(a)}>{a}</Chip>
+          ))}
+        </div>
+      </fieldset>
+    </div>
+  );
+}
+
 export default function CarbonePage() {
-  const [trip, setTrip] = useState({ origin: 'Paris', destination: 'Katmandou', transport: 'avion-long', passengers: 1, nights: 14, accommodation: 'refuge' as string, activities: ['Randonnée', 'Alpinisme'] as string[] });
+  const [trip, setTrip] = useState<TripState>({ origin: 'Paris', destination: 'Katmandou', transport: 'avion-long', passengers: 1, nights: 14, accommodation: 'refuge', activities: ['Randonnée', 'Alpinisme'] });
   const [selectedOffset, setSelectedOffset] = useState<string | null>(null);
   const [offsetQty] = useState(1);
   const [offsetDone, setOffsetDone] = useState(false);
@@ -54,52 +123,43 @@ export default function CarbonePage() {
   const selectedProject = OFFSET_PROJECTS.find(p => p.id === selectedOffset);
   const offsetCost = selectedProject ? Math.ceil(emissions.total * offsetQty) * selectedProject.pricePerTon : 0;
 
+  const setTripState = (t: TripState) => setTrip(t);
+
   return (
     <>
-      {/* DESKTOP */}
+      {/* DESKTOP — même charte tokens que mobile (verre neutre .lkv-glass, champs contact) */}
       <div className="hidden md:block">
-        <div className="min-h-screen bg-background text-foreground">
+        <div className="min-h-screen text-[color:var(--lkv-text-primary)]">
           <Header />
-          <section className="pt-20 bg-dark-bg">
+          <section className="bg-[color:var(--lkv-primary)] pt-20">
             <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-              <div className="flex items-center gap-3 mb-4"><div className="w-10 h-10 rounded-xl bg-forest-500/20 flex items-center justify-center"><Icon name="LeafIcon" size={20} className="text-forest-400" variant="outline" /></div><p className="font-mono text-xs text-forest-400 tracking-widest uppercase">BILAN CARBONE VOYAGE</p></div>
-              <h1 className="font-display font-800 text-4xl md:text-5xl text-white tracking-tight mb-3">Mesurez et compensez<br />votre empreinte</h1>
-              <p className="text-white/60 text-lg max-w-xl">Calculez l&apos;impact CO₂ de votre expédition.</p>
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 rounded-xl bg-[color:var(--lkv-surface-paper)]/15 border border-[color:var(--glass-border)] flex items-center justify-center">
+                  <Icon name="LeafIcon" size={20} className="text-[color:var(--lkv-text-inverted)]" variant="outline" />
+                </div>
+                <p className="font-mono text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-inverted)]/80 tracking-widest uppercase">Bilan carbone voyage</p>
+              </div>
+              <h1 className="font-display font-bold text-4xl md:text-5xl text-[color:var(--lkv-text-inverted)] tracking-tight mb-3">Mesurez et compensez<br />votre empreinte</h1>
+              <p className="text-[color:var(--lkv-text-inverted)]/70 text-lg max-w-xl">Calculez l&apos;impact CO₂ de votre expédition.</p>
             </div>
           </section>
           <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               <div className="lg:col-span-1 space-y-4">
-                <div className="glass p-5">
-                  <h2 className="font-display font-700 text-base text-foreground mb-4">Paramètres du voyage</h2>
-                  <div className="space-y-4">
-                    <div className="grid grid-cols-2 gap-3">
-                      <div><label className="block text-xs font-mono text-muted-foreground uppercase tracking-wider mb-1.5">Départ</label><input type="text" value={trip.origin} onChange={e => setTrip({ ...trip, origin: e.target.value })} className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary transition-colors" /></div>
-                      <div><label className="block text-xs font-mono text-muted-foreground uppercase tracking-wider mb-1.5">Destination</label><input type="text" value={trip.destination} onChange={e => setTrip({ ...trip, destination: e.target.value })} className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary transition-colors" /></div>
-                    </div>
-                    <div><label className="block text-xs font-mono text-muted-foreground uppercase tracking-wider mb-1.5">Transport</label>
-                      <select value={trip.transport} onChange={e => setTrip({ ...trip, transport: e.target.value })} className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary transition-colors">
-                        <option value="avion-long">Avion long-courrier</option><option value="avion-court">Avion court-courrier</option><option value="train">Train</option><option value="voiture">Voiture</option><option value="bus">Bus</option>
-                      </select>
-                    </div>
-                    <div className="grid grid-cols-2 gap-3"><div><label className="block text-xs font-mono text-muted-foreground uppercase tracking-wider mb-1.5">Voyageurs</label><input type="number" min={1} max={20} value={trip.passengers} onChange={e => setTrip({ ...trip, passengers: parseInt(e.target.value) || 1 })} className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary transition-colors" /></div>
-                      <div><label className="block text-xs font-mono text-muted-foreground uppercase tracking-wider mb-1.5">Nuits</label><input type="number" min={1} max={365} value={trip.nights} onChange={e => setTrip({ ...trip, nights: parseInt(e.target.value) || 1 })} className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary transition-colors" /></div></div>
-                    <div><label className="block text-xs font-mono text-muted-foreground uppercase tracking-wider mb-1.5">Hébergement</label>
-                      <select value={trip.accommodation} onChange={e => setTrip({ ...trip, accommodation: e.target.value })} className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary transition-colors">
-                        <option value="camping">Camping</option><option value="refuge">Refuge</option><option value="airbnb">Airbnb</option><option value="hotel">Hôtel</option>
-                      </select>
-                    </div>
-                    <div><label className="block text-xs font-mono text-muted-foreground uppercase tracking-wider mb-2">Activités</label>
-                      <div className="flex flex-wrap gap-[var(--space-2)]">{ACTIVITIES_LIST.map(a => (<Chip key={a} selected={trip.activities.includes(a)} onClick={() => toggleActivity(a)}>{a}</Chip>))}</div>
-                    </div>
+                <Card variant="standard" className="p-5">
+                  <h2 className="font-display font-bold text-base text-[color:var(--lkv-text-primary)] mb-4">Paramètres du voyage</h2>
+                  <div className="space-y-5">
+                    <ParamsBasics trip={trip} setTrip={setTripState} idPrefix="carbone-desktop" />
+                    <ParamsDetails trip={trip} setTrip={setTripState} idPrefix="carbone-desktop" toggleActivity={toggleActivity} />
                   </div>
-                </div>
+                </Card>
               </div>
               <div className="lg:col-span-2 space-y-5">
-                <div className="glass p-6">
-                  <div className="flex items-center justify-between mb-4"><h2 className="font-display font-700 text-xl text-foreground">Bilan carbone estimé</h2><span className={`text-sm px-3 py-1 rounded-full font-medium ${level.className}`}>{level.label}</span></div>
-                  <div className="flex items-end gap-3 mb-6"><div className="font-mono text-5xl font-700 text-foreground">{emissions.total}</div><div className="text-muted-foreground mb-2">tonnes CO₂e / personne</div></div>
-                </div>
+                <Card variant="standard" className="p-6">
+                  <div className="flex items-center justify-between mb-4"><h2 className="font-display font-bold text-xl text-[color:var(--lkv-text-primary)]">Bilan carbone estimé</h2><span className={`text-[length:var(--lkv-text-caption)] px-3 py-1 rounded-full font-medium ${level.className}`}>{level.label}</span></div>
+                  <div className="flex items-end gap-3 mb-6"><div className="font-mono text-5xl font-bold text-[color:var(--lkv-text-primary)]">{emissions.total}</div><div className="text-[color:var(--lkv-text-secondary)] mb-2">tonnes CO₂e / personne</div></div>
+                  <p className="text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-secondary)]" aria-live="polite">Transport {emissions.transport} t · Hébergement {emissions.accommodation} t · Activités {emissions.activities} t</p>
+                </Card>
               </div>
             </div>
           </div>
@@ -107,31 +167,27 @@ export default function CarbonePage() {
         </div>
       </div>
 
-      {/* MOBILE */}
+      {/* MOBILE — même charte, mêmes champs, mêmes tokens */}
       <div className="block md:hidden">
         <MobilePageShell>
           <div className="p-[var(--space-4)]">
-            <h1 className="mb-[var(--space-3)] font-display text-[length:var(--lkv-text-title-sm)] font-extrabold text-[color:var(--lkv-primary)]">Bilan carbone</h1>
+            <p className="mb-1 font-mono text-[length:var(--lkv-text-caption-2)] uppercase tracking-[0.14em] text-[color:var(--lkv-text-secondary)]">Bilan carbone voyage</p>
+            <h1 className="mb-[var(--space-2)] font-display text-[length:var(--lkv-text-title-sm)] font-extrabold text-[color:var(--lkv-primary)]">Bilan carbone</h1>
             <p className="mb-[var(--space-4)] text-[length:var(--lkv-text-caption-1)] text-[color:var(--lkv-text-muted)]">Calculez l&apos;impact CO₂ de votre voyage.</p>
             <Card variant="standard" className="mb-[var(--space-4)] p-[var(--space-4)]">
               <h2 className="mb-[var(--space-3)] text-[length:var(--lkv-text-footnote)] font-bold text-[color:var(--lkv-primary)]">Paramètres du voyage</h2>
-              <div className="flex flex-col gap-[var(--space-3)]">
-                <div className="grid grid-cols-2 gap-[var(--space-2)]">
-                  <input type="text" value={trip.origin} onChange={e => setTrip({ ...trip, origin: e.target.value })} placeholder="Départ" aria-label="Ville de départ" className="min-h-[var(--lkv-touch-min)] rounded-[var(--lkv-radius-sm)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-2 text-[length:var(--lkv-text-caption-1)] text-[color:var(--lkv-text-primary)]" />
-                  <input type="text" value={trip.destination} onChange={e => setTrip({ ...trip, destination: e.target.value })} placeholder="Destination" aria-label="Destination" className="min-h-[var(--lkv-touch-min)] rounded-[var(--lkv-radius-sm)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-2 text-[length:var(--lkv-text-caption-1)] text-[color:var(--lkv-text-primary)]" />
-                </div>
-                <select value={trip.transport} onChange={e => setTrip({ ...trip, transport: e.target.value })} aria-label="Mode de transport" className="min-h-[var(--lkv-touch-min)] rounded-[var(--lkv-radius-sm)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-2 text-[length:var(--lkv-text-caption-1)] text-[color:var(--lkv-text-primary)]">
-                  <option value="avion-long">Avion long-courrier</option><option value="avion-court">Avion court-courrier</option><option value="train">Train</option><option value="voiture">Voiture</option><option value="bus">Bus</option>
-                </select>
+              <div className="flex flex-col gap-[var(--space-4)]">
+                <ParamsBasics trip={trip} setTrip={setTripState} idPrefix="carbone-mobile" />
+                <ParamsDetails trip={trip} setTrip={setTripState} idPrefix="carbone-mobile" toggleActivity={toggleActivity} />
               </div>
             </Card>
             <Card variant="standard" className="p-[var(--space-4)] text-center">
               <p className="mb-1 text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">Bilan carbone estimé</p>
-              <p className="font-mono text-[32px] font-bold text-[color:var(--lkv-primary)]">{emissions.total}</p>
+              <p className="font-mono text-[32px] font-bold text-[color:var(--lkv-primary)]" aria-live="polite">{emissions.total}</p>
               <p className="text-[length:var(--lkv-text-caption-1)] text-[color:var(--lkv-text-muted)]">tonnes CO₂e / personne</p>
             </Card>
             {selectedProject && (
-              <Button fullWidth className="mt-[var(--space-4)]" onClick={() => setOffsetDone(true)}>
+              <Button fullWidth className="mt-[var(--space-4)] min-h-[var(--lkv-touch-min)]" onClick={() => setOffsetDone(true)}>
                 {offsetDone ? 'Compensé !' : `Compenser — ${offsetCost}€`}
               </Button>
             )}

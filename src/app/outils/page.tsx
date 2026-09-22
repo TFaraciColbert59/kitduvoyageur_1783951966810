@@ -253,7 +253,7 @@ export default function OutilsPage() {
                   <p className="font-mono text-xs text-info tracking-widest uppercase mb-2">
                     BOÎTE À OUTILS — {tools.length} OUTILS GRATUITS
                   </p>
-                  <h1 className="font-display font-800 text-4xl md:text-5xl text-white tracking-tight leading-none" font-extrabold>
+                  <h1 className="font-display font-800 text-4xl md:text-5xl text-white tracking-tight leading-none">
                     OUTILS TERRAIN
                   </h1>
                   <p className="mt-3 text-white/60 text-lg max-w-2xl">
@@ -339,7 +339,7 @@ export default function OutilsPage() {
           <section className="py-16 bg-dark-bg">
             <div className="max-w-3xl mx-auto px-4 text-center">
               <p className="font-mono text-xs text-info tracking-widest uppercase mb-3">CONFIGURATEUR IA</p>
-              <h2 className="font-display font-800 text-3xl text-white tracking-tight mb-4" font-extrabold>
+              <h2 className="font-display font-800 text-3xl text-white tracking-tight mb-4">
                 Préparez votre voyage avec l&apos;IA
               </h2>
               <p className="text-white/60 mb-8">Destination, saison, profil — notre IA génère votre liste d&apos;équipement complète en quelques secondes.</p>
