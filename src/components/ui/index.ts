@@ -11,6 +11,7 @@ export { ConfirmDialog, type ConfirmDialogProps, type ConfirmDialogVariant } fro
 export { PromptDialog, type PromptDialogProps } from './PromptDialog';
 export { LoadingState, type LoadingStateProps } from './LoadingState';
 export { SearchField, type SearchFieldProps } from './SearchField';
+export { FloatingPageControls, type FloatingPageControlsProps } from './FloatingPageControls';
 export { Switch, type SwitchProps } from './Switch';
 export { Sheet, type SheetProps } from './Sheet';
 export { Badge, type BadgeTone } from './Badge';

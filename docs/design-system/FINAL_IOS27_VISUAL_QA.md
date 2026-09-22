@@ -1,5 +1,13 @@
 # FINAL iOS 27 — Visual QA (refinement mobile)
 
+## Phase B — Topbar Communauté → contrôles flottants (TERMINÉE)
+
+- `FloatingPageControls` canonique créé (`@/design`) : rangée flottante (safe-top+8, marges 16, gap 8, 44×44).
+- `MobileCommunityHeader` réécrit : **plus de topbar pleine largeur** — bouton créer (flottant gauche) + recherche (flottante droite), titre « Communauté » dans le contenu.
+- Correctif contraste : bannière cookies repassée en **surface opaque tokenisée** (le verre clair sur zone très lumineuse rendait le texte blanc illisible).
+- Vérification : `type-check` 0 · `lint` 0 · `vitest` **2 948 tests** · `build` 20,2 s · captures `docs/qa/final-ios27/phase-b-communaute/` (4 gabarits) — contrôles flottants, titre en contenu, pills glass, post réel, bannière lisible, bottom bar 5 icônes + capsule.
+
+
 ## Itération « Navigation + contraste + radius » (commit `159893c1`)
 
 ### Bottom navigation — architecture finale

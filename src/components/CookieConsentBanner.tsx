@@ -51,7 +51,7 @@ export default function CookieConsentBanner() {
       style={{ paddingBottom: 'max(8px, env(safe-area-inset-bottom))' }}
     >
       <div
-        className="pointer-events-auto max-w-[min(38rem,calc(100vw-24px))] mx-auto bg-[color:var(--glass-bg-medium)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] border border-[color:var(--glass-border)] rounded-2xl shadow-2xl overflow-hidden transition-all duration-300"
+        className="pointer-events-auto max-w-[min(38rem,calc(100vw-24px))] mx-auto bg-[color:var(--lkv-surface)] border border-[color:var(--glass-border)] rounded-2xl shadow-2xl overflow-hidden transition-all duration-300"
         style={{
           margin: '0 auto',
           marginBottom: 'calc(72px + env(safe-area-inset-bottom))',
@@ -67,7 +67,7 @@ export default function CookieConsentBanner() {
         {!showDetails ? (
           <div className="px-4 py-3 sm:p-5">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-xl bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] flex items-center justify-center flex-shrink-0 text-[color:var(--lkv-primary)]">
+              <div className="w-8 h-8 rounded-xl lkv-glass flex items-center justify-center flex-shrink-0 text-[color:var(--icon-primary)]">
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.955 11.955 0 013.598 6 11.955 11.955 0 003 12c0 6.627 5.373 12 12 12s12-5.373 12-12c0-2.017-.5-3.92-1.382-5.593" />
                 </svg>
