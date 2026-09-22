@@ -644,41 +644,6 @@ export default function ExplorerClient({
         </div>
       </div>
 
-      {/* ── 1B. HEADER MOBILE (ÉCRAN < 768px) ── */}
-      <div className="pointer-events-none fixed left-4 right-4 top-[calc(var(--safe-top)+12px)] z-[var(--z-sticky)] flex items-center justify-between md:hidden">
-        <Link
-          href="/"
-          className="pointer-events-auto flex h-11 w-11 items-center justify-center rounded-full border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] shadow-lg backdrop-blur-[var(--blur-md)] transition-transform active:scale-95"
-          aria-label="Retour à l'accueil"
-        >
-          <img
-            src="/assets/images/app_logo.png"
-            alt="LKDV"
-            width={28}
-            height={28}
-            className="h-7 w-7 rounded-full object-cover"
-          />
-        </Link>
-
-        <div className="pointer-events-auto flex items-center gap-2">
-          <Link
-            href="/progression"
-            className={`${LINK_PILL} min-h-[44px] gap-1.5 px-3.5 text-[length:var(--lkv-text-caption)] font-bold shadow-lg`}
-            aria-label="Ma progression"
-          >
-            <span aria-hidden="true">🧭</span>
-            <span>Progression</span>
-          </Link>
-          <Link
-            href="/compte"
-            className={`${LINK_ICON} shadow-lg`}
-            aria-label="Mon compte"
-          >
-            <Icon name="user" size={17} />
-          </Link>
-        </div>
-      </div>
-
       {/* ── 2B. BOUTON FLOTTANT DYNAMIQUE : « RECHERCHER DANS CETTE ZONE » ── */}
       <AnimatePresence>
         {showSearchHereButton && !unifiedMap && (
