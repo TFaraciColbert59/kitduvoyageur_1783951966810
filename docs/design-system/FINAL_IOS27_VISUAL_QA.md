@@ -1,5 +1,11 @@
 # FINAL iOS 27 — Visual QA (refinement mobile)
 
+## Phase C — Hub slider, file d'attente vérifiée (PARTIELLE)
+
+- `SectionCarousel` : pastilles d'icônes supprimées, **icônes blanches** (`--icon-primary`) — vérifié en capture (`docs/qa/final-ios27/phase-c-hub/`, 4 gabarits) : tuiles glass, icônes blanches, barre 5 icônes + capsule.
+- Vérification : `type-check` 0 · `lint` 0 · `vitest` **2 948 tests** · `build` 20,9 s.
+- **Reste Phase C (non fait, localisé)** : (1) cartes vertes pleines « PROCHAINE ACTION » + « PROCHAIN DÉPART » → verre : `features/hub/components/menu/PossessionMenu.tsx`, `features/hub/components/mobile/moments/PossessionMoment.tsx` ; (2) flèche du slider sans pillule (aucune flèche dans `SectionCarousel.tsx` — composant à identifier) ; (3) strip auto-scroll (composant du strip MÉTÉO/LIEU/DÉPART à identifier : `WeatherStrip.tsx` vs `TripBriefBar`) ; (4) barre de progression mobile 0/10 (composant non identifié) ; (5) cockpit → tiroir latéral sur `/hub` (`HubShell.tsx:282-308`, `app/hub/layout.tsx:82`) ; (6) bouton notification seul en haut-gauche du hub (zone header à identifier).
+
 ## Phase B — Topbar Communauté → contrôles flottants (TERMINÉE)
 
 - `FloatingPageControls` canonique créé (`@/design`) : rangée flottante (safe-top+8, marges 16, gap 8, 44×44).

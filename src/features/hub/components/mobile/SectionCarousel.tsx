@@ -37,10 +37,10 @@ export function SectionCarousel({ tiles, label = 'Sections de l’aventure' }: S
                   </span>
                 )}
                 <span
-                  className={`flex h-14 w-14 items-center justify-center rounded-[var(--lkv-radius-md)] border ${
+                  className={`flex h-14 w-14 items-center justify-center ${
                     tile.accent
-                      ? 'border-white/20 bg-white/10 text-white'
-                      : 'border-white/70 bg-white/70 text-[var(--lkv-secondary)] shadow-2xs'
+                      ? 'rounded-[var(--lkv-radius-md)] border border-white/20 bg-white/10 text-white'
+                      : 'text-[color:var(--icon-primary)]'
                   }`}
                 >
                   <Icon size={26} aria-hidden="true" />
