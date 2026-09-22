@@ -1,0 +1,27 @@
+{
+  "capturedAt": "2026-09-22T23:50:29.250Z",
+  "stage": "avant",
+  "consoleErrorCount": 0,
+  "shots": [
+    {
+      "slug": "messagerie-393x852",
+      "route": "/messagerie",
+      "viewport": "393x852",
+      "finalUrl": "http://localhost:4028/messagerie",
+      "title": "Messagerie | Le Kit du Voyageur",
+      "cookieBannerVisible": false,
+      "consoleErrors": [],
+      "screenshot": "docs/qa/final-ios27/phase-messagerie/avant/messagerie-393x852.jpg"
+    },
+    {
+      "slug": "messagerie-1440x900",
+      "route": "/messagerie",
+      "viewport": "1440x900",
+      "finalUrl": "http://localhost:4028/messagerie",
+      "title": "Messagerie | Le Kit du Voyageur",
+      "cookieBannerVisible": false,
+      "consoleErrors": [],
+      "screenshot": "docs/qa/final-ios27/phase-messagerie/avant/messagerie-1440x900.jpg"
+    }
+  ]
+}

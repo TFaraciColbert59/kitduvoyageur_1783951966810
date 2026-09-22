@@ -3,7 +3,6 @@
 import Icon from '@/components/ui/Icon';
 import React, { useRef, useState } from 'react';
 import Image from 'next/image';
-import { useRouter } from 'next/navigation';
 import type { Conversation } from '../types/messaging.types';
 import { formatConversationTimestamp } from '../lib/messagingUtils';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
@@ -29,7 +28,6 @@ export const ConversationRow: React.FC<ConversationRowProps> = ({
   onSwipeAction,
 }) => {
   const { haptic } = useHapticFeedback();
-  const router = useRouter();
   const [dx, setDx] = useState(0);
   const [snappedOpen, setSnappedOpen] = useState(false);
   // Miroir de dx en ref : le décision de snap au touchend lit une valeur
@@ -59,17 +57,11 @@ export const ConversationRow: React.FC<ConversationRowProps> = ({
   const lastMsg = conversation.last_message;
   const unreadCount = conversation.unread_count || 0;
 
-  // Photo de profil / nom -> fiche profil (convention app : /profil/<id>).
-  // span role=link + router.push : le parent est un <button>, un <Link>
-  // imbriqué serait du HTML invalide.
-  const profileId = conversation.other_member?.id || null;
-  const openProfile = (e: React.MouseEvent | React.KeyboardEvent) => {
-    e.stopPropagation();
-    e.preventDefault();
-    if (!profileId) return;
-    haptic('light');
-    router.push(`/profil/${profileId}`);
-  };
+  // P5 QA visuelle : la carte entière est le seul contrôle interactif
+  // (bouton « ouvrir la conversation »). L'avatar et le titre sont
+  // volontairement non interactifs : un `role="link"` imbriqué dans un
+  // `<button>` est invalide (interactif dans interactif, double tab-stop).
+  // La fiche profil reste accessible depuis l'en-tête de ConversationView.
 
   let lastMessageDisplay = 'Aucun message';
   if (lastMsg) {
@@ -152,19 +144,19 @@ export const ConversationRow: React.FC<ConversationRowProps> = ({
                   type="button"
                   onClick={() => fire('accept')}
                   aria-label="Accepter la demande"
-                  className="h-full flex-1 bg-[color:var(--lkv-forest-700)] text-[color:var(--lkv-text-inverted)] flex flex-col items-center justify-center gap-1 active:opacity-85"
+                  className="h-full min-h-[44px] min-w-[44px] flex-1 bg-[color:var(--lkv-forest-700)] text-[color:var(--lkv-text-inverted)] flex flex-col items-center justify-center gap-1 active:opacity-85 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color:var(--lkv-focus-ring)]"
                 >
                   <Icon name="check" className="w-5 h-5" />
-                  <span className="text-[9px] font-bold">Accepter</span>
+                  <span className="text-[length:var(--lkv-text-caption-2)] font-bold">Accepter</span>
                 </button>
                 <button
                   type="button"
                   onClick={() => fire('decline')}
                   aria-label="Refuser la demande"
-                  className="h-full flex-1 bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[color:var(--lkv-danger)] flex flex-col items-center justify-center gap-1 active:opacity-85"
+                  className="h-full min-h-[44px] min-w-[44px] flex-1 bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[color:var(--lkv-danger)] flex flex-col items-center justify-center gap-1 active:opacity-85 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color:var(--lkv-focus-ring)]"
                 >
                   <Icon name="x" className="w-5 h-5" />
-                  <span className="text-[9px] font-bold">Refuser</span>
+                  <span className="text-[length:var(--lkv-text-caption-2)] font-bold">Refuser</span>
                 </button>
               </>
             ) : (
@@ -173,14 +165,14 @@ export const ConversationRow: React.FC<ConversationRowProps> = ({
                   type="button"
                   onClick={() => fire('archive')}
                   aria-label={conversation.is_archived ? 'Désarchiver' : 'Archiver'}
-                  className="h-full flex-1 bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[color:var(--lkv-text-primary)] flex flex-col items-center justify-center gap-1 active:opacity-85"
+                  className="h-full min-h-[44px] min-w-[44px] flex-1 bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[color:var(--lkv-text-primary)] flex flex-col items-center justify-center gap-1 active:opacity-85 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color:var(--lkv-focus-ring)]"
                 >
                   {conversation.is_archived ? (
                     <Icon name="archive-restore" className="w-5 h-5" />
                   ) : (
                     <Icon name="archive" className="w-5 h-5" />
                   )}
-                  <span className="text-[9px] font-bold">
+                  <span className="text-[length:var(--lkv-text-caption-2)] font-bold">
                     {conversation.is_archived ? 'Restaurer' : 'Archiver'}
                   </span>
                 </button>
@@ -192,14 +184,14 @@ export const ConversationRow: React.FC<ConversationRowProps> = ({
                       ? 'Réactiver les notifications'
                       : 'Masquer les notifications'
                   }
-                  className="h-full flex-1 bg-[color:var(--lkv-warning)] text-[color:var(--lkv-text-inverted)] flex flex-col items-center justify-center gap-1 active:opacity-85"
+                  className="h-full min-h-[44px] min-w-[44px] flex-1 bg-[color:var(--lkv-warning)] text-[color:var(--lkv-text-inverted)] flex flex-col items-center justify-center gap-1 active:opacity-85 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color:var(--lkv-focus-ring)]"
                 >
                   {conversation.is_muted ? (
                     <Icon name="bell" className="w-5 h-5" />
                   ) : (
                     <Icon name="bell-off" className="w-5 h-5" />
                   )}
-                  <span className="text-[9px] font-bold">
+                  <span className="text-[length:var(--lkv-text-caption-2)] font-bold">
                     {conversation.is_muted ? 'Son' : 'Muet'}
                   </span>
                 </button>
@@ -235,11 +227,11 @@ export const ConversationRow: React.FC<ConversationRowProps> = ({
             ? `, ${unreadCount} message${unreadCount > 1 ? 's' : ''} non lu${unreadCount > 1 ? 's' : ''}`
             : ''
         }`}
-        className={`w-full min-h-[76px] text-left p-3.5 rounded-2xl flex items-center gap-3.5 relative border active:scale-[0.985] ${
+        className={`w-full min-h-[76px] text-left p-3.5 rounded-2xl flex items-center gap-3.5 relative border active:scale-[0.985] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)] focus-visible:ring-offset-2 ${
           isSelected
             ? 'bg-[color:var(--btn-tint)] border backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] border-[color:var(--lkv-primary)]/30 shadow-elevation-1 ring-1 ring-[color:var(--lkv-primary)]/20'
             : unreadCount > 0
-              ? // Conversation avec messages non lus : ombre portée douce (pas de compteur).
+              ? // Conversation avec messages non lus : pastille compteur visible + ombre douce.
                 'bg-[color:var(--glass-bg-medium)] border backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] border-[color:var(--glass-border)] shadow-elevation-3'
               : 'bg-[color:var(--glass-bg-medium)] border backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] border-[color:var(--glass-border)] shadow-elevation-1'
         }`}
@@ -250,18 +242,7 @@ export const ConversationRow: React.FC<ConversationRowProps> = ({
       >
         <div className="relative shrink-0">
           <span
-            role={profileId ? 'link' : undefined}
-            tabIndex={profileId ? 0 : undefined}
-            onClick={profileId ? openProfile : undefined}
-            onKeyDown={
-              profileId
-                ? (e) => {
-                    if (e.key === 'Enter' || e.key === ' ') openProfile(e);
-                  }
-                : undefined
-            }
-            title={profileId ? `Voir le profil de ${title}` : undefined}
-            aria-label={profileId ? `Voir le profil de ${title}` : undefined}
+            aria-hidden="true"
             className="block w-12 h-12 rounded-full overflow-hidden relative ring-2 ring-[color:var(--glass-border)] shadow-elevation-1 bg-[color:var(--btn-tint)]"
           >
             <Image
@@ -289,23 +270,7 @@ export const ConversationRow: React.FC<ConversationRowProps> = ({
                 unreadCount > 0 ? 'font-bold' : 'font-semibold'
               }`}
             >
-              <span
-                role={profileId ? 'link' : undefined}
-                tabIndex={profileId ? 0 : undefined}
-                onClick={profileId ? openProfile : undefined}
-                onKeyDown={
-                  profileId
-                    ? (e) => {
-                        if (e.key === 'Enter' || e.key === ' ') openProfile(e);
-                      }
-                    : undefined
-                }
-                className={
-                  profileId
-                    ? 'cursor-pointer hover:underline decoration-[color:var(--lkv-sage-300)] underline-offset-2'
-                    : ''
-                }
-              >
+              <span className="block truncate">
                 {title}
               </span>
             </h4>
@@ -327,6 +292,14 @@ export const ConversationRow: React.FC<ConversationRowProps> = ({
             <span className="flex items-center gap-1.5 shrink-0">
               {conversation.is_muted && (
                 <Icon name="bell-off" className="w-3.5 h-3.5 text-[color:var(--lkv-text-subtle)]" />
+              )}
+              {unreadCount > 0 && (
+                <span
+                  aria-hidden="true"
+                  className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-[color:var(--lkv-danger)] px-1.5 text-[length:var(--lkv-text-caption-2)] font-bold tabular-nums text-[color:var(--lkv-text-inverted)]"
+                >
+                  {unreadCount > 99 ? '99+' : unreadCount}
+                </span>
               )}
             </span>
           </div>

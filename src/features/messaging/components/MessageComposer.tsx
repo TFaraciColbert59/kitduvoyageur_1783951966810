@@ -141,6 +141,8 @@ export const MessageComposer: React.FC<MessageComposerProps> = ({
           onChange={handleFileChange}
           className="hidden"
           accept="image/*"
+          aria-label="Joindre une photo à la conversation"
+          tabIndex={-1}
         />
 
         {/* Photo — envoie une image via le flux d'upload existant */}
