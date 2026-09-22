@@ -6,7 +6,7 @@ const MOBILE_VIEWPORTS = [
 ];
 
 for (const vp of MOBILE_VIEWPORTS) {
-  test.describe(`Mobile Layout Verification — ${vp.name}`, () => {
+  test.describe(`Mobile Layout Verification — ${vp.name}`, { tag: '@mobile' }, () => {
     test.use({ viewport: { width: vp.width, height: vp.height } });
 
     test('Communauté — Header rendered, no white gap, bottom nav visible', async ({ page }) => {

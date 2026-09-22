@@ -10,7 +10,7 @@ import { test, expect } from '@playwright/test';
 
 const MOBILE = { viewport: { width: 390, height: 844 } };
 
-test.describe('Bottom bar mobile — 5 entrées + bouton Hub central', () => {
+test.describe('Bottom bar mobile — 5 entrées + bouton Hub central', { tag: '@mobile' }, () => {
   test.use(MOBILE);
 
   test('BAR-1: 5 destinations canoniques, hub central explicite', async ({ page }) => {
@@ -97,7 +97,7 @@ test.describe('Bottom bar mobile — 5 entrées + bouton Hub central', () => {
   });
 });
 
-test.describe('Redirections 307 des routes héritées (middleware)', () => {
+test.describe('Redirections 307 des routes héritées (middleware)', { tag: '@local-web' }, () => {
   const CASES: Array<[string, RegExp]> = [
     ['/materiel/inventaire', /\/hub\/inventaire/],
     ['/materiel/kits', /\/hub\/kit/],
@@ -139,7 +139,7 @@ test.describe('Redirections 307 des routes héritées (middleware)', () => {
   });
 });
 
-test.describe('/hub sans session', () => {
+test.describe('/hub sans session', { tag: '@local-web' }, () => {
   test('HUB-1: repli possession — aperçu rendu, sections cœur accessibles', async ({ page }) => {
     await page.goto('/hub');
     // Le titre d'identité du hub possession (« Mon matériel ») vit dans

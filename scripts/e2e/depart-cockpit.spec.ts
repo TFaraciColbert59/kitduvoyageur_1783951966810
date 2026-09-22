@@ -32,7 +32,7 @@ async function neutraliserServiceWorker(page: Page) {
 }
 
 test.describe('DÉPART — cockpit canonique', () => {
-  test('desktop : cockpit visible, sentier 375 réel, 5 sections, zéro pageerror', async ({ page }) => {
+  test('desktop : cockpit visible, sentier 375 réel, 5 sections, zéro pageerror', { tag: '@local-web' }, async ({ page }) => {
     const pageErrors: string[] = [];
     page.on('pageerror', (error) => pageErrors.push(error.message));
     await neutraliserServiceWorker(page);
@@ -58,7 +58,7 @@ test.describe('DÉPART — cockpit canonique', () => {
     expect(pageErrors, pageErrors.join('\n')).toHaveLength(0);
   });
 
-  test('mobile : 390×844 → expérience mobile, cockpit desktop caché, CTA matériel', async ({ page }) => {
+  test('mobile : 390×844 → expérience mobile, cockpit desktop caché, CTA matériel', { tag: '@mobile' }, async ({ page }) => {
     const pageErrors: string[] = [];
     page.on('pageerror', (error) => pageErrors.push(error.message));
     await neutraliserServiceWorker(page);

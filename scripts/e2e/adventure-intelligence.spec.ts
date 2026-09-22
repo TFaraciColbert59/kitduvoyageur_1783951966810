@@ -22,7 +22,7 @@ const IGNORED_CONSOLE_PATTERNS = [
   /interactive-widget/i,
 ];
 
-test.describe('Adventure Intelligence — montage hub', () => {
+test.describe('Adventure Intelligence — montage hub', { tag: '@local-web' }, () => {
   test.beforeEach(async ({ context }) => {
     await context.addInitScript(() => {
       window.localStorage.setItem(

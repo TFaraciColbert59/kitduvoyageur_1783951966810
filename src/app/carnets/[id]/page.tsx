@@ -11,27 +11,6 @@ interface Props {
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://lekitduvoyageur.fr';
 
-/**
- * Generate static params for public carnets
- * Enables ISR with revalidate: 3600 (1 hour)
- */
-export async function generateStaticParams() {
-  try {
-    const supabase = await createClient();
-    const { data } = await supabase
-      .from('carnets')
-      .select('id')
-      .order('created_at', { ascending: false })
-      .limit(200);
-
-    return (data || []).map((c) => ({
-      id: c.id,
-    }));
-  } catch {
-    return [];
-  }
-}
-
 export async function generateMetadata(
   { params }: Props,
   parent: ResolvingMetadata
@@ -168,5 +147,8 @@ export default async function CarnetDetailPage({ params }: Props) {
   );
 }
 
-// ISR: Revalidate every hour
-export const revalidate = 3600;
+// Rendu dynamique requis : `generateMetadata` lit la session via cookies()
+// (client serveur). En ISR, la régénération à la demande lève
+// `DYNAMIC_SERVER_USAGE` ⇒ 500 sur toutes les fiches carnet en production.
+// Même convention que `/carnets` (liste) et les autres routes session-aware.
+export const dynamic = 'force-dynamic';

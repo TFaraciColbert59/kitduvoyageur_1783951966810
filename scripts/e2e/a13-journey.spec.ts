@@ -26,7 +26,17 @@ loadEnv({ path: path.resolve(process.cwd(), '.env.local') });
 const SUPABASE_URL = (process.env.NEXT_PUBLIC_SUPABASE_URL ?? '').trim();
 const ANON_KEY = (process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? '').trim();
 const SERVICE_KEY = (process.env.SUPABASE_SERVICE_ROLE_KEY ?? '').trim();
-const HAS_TEST_PROJECT = Boolean(SUPABASE_URL && ANON_KEY && SERVICE_KEY);
+// @external : certification contre un vrai projet Supabase de test (création
+// d'utilisateur via l'API admin, génération IA, SQL). Non applicable en
+// clôture locale par défaut — activer avec `LKDV_E2E_EXTERNAL=1`, ou tourner
+// en CI (Gate 5) où les secrets de test sont fournis.
+const EXTERNAL_ENABLED =
+  Boolean(process.env.CI) || process.env.LKDV_E2E_EXTERNAL === '1';
+const HAS_TEST_PROJECT =
+  EXTERNAL_ENABLED && Boolean(SUPABASE_URL && ANON_KEY && SERVICE_KEY);
+const SKIP_EXTERNAL =
+  'external : projet Supabase de test + service externe requis ' +
+  '(LKDV_E2E_EXTERNAL=1 en local, secrets de test en CI).';
 
 interface AdminHeaders {
   apikey: string;
@@ -42,14 +52,14 @@ function sha256(value: unknown): string {
   return createHash('sha256').update(JSON.stringify(value)).digest('hex');
 }
 
-test.describe('A13 — certification parcours bout-en-bout (S9)', () => {
+test.describe('A13 — certification parcours bout-en-bout (S9)', { tag: '@external' }, () => {
   test('TEST-A13-E2E-01: phrase → plan → sélection → cockpit → offline → reconnexion → retour', async ({
     page,
     request,
   }) => {
     test.skip(
       !HAS_TEST_PROJECT,
-      'Projet Supabase de test requis : NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY et SUPABASE_SERVICE_ROLE_KEY.'
+      SKIP_EXTERNAL
     );
     test.setTimeout(180_000);
 
@@ -271,7 +281,7 @@ test.describe('A13 — certification parcours bout-en-bout (S9)', () => {
   }) => {
     test.skip(
       !HAS_TEST_PROJECT,
-      'Projet Supabase de test requis : NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY et SUPABASE_SERVICE_ROLE_KEY.'
+      SKIP_EXTERNAL
     );
     test.setTimeout(300_000);
 

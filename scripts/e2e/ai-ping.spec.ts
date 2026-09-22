@@ -13,7 +13,7 @@ const ADMIN_EMAIL = process.env.TEST_ADMIN_EMAIL;
 const ADMIN_PASSWORD = process.env.TEST_ADMIN_PASSWORD;
 
 test.describe('GET /api/ai/ping — diagnostic routeur IA', () => {
-  test('TEST-E2E-AI-01: 401 sans session', async ({ request }) => {
+  test('TEST-E2E-AI-01: 401 sans session', { tag: '@local-web' }, async ({ request }) => {
     const res = await request.get('/api/ai/ping');
     expect(res.status()).toBe(401);
 
@@ -21,7 +21,7 @@ test.describe('GET /api/ai/ping — diagnostic routeur IA', () => {
     expect(body.error).toBeTruthy();
   });
 
-  test('TEST-E2E-AI-02: 200 avec session admin', async () => {
+  test('TEST-E2E-AI-02: 200 avec session admin', { tag: '@staging-auth' }, async () => {
     test.skip(
       !SUPABASE_URL || !SUPABASE_ANON_KEY || !ADMIN_EMAIL || !ADMIN_PASSWORD,
       'Identifiants admin de test absents (TEST_ADMIN_EMAIL / TEST_ADMIN_PASSWORD)'

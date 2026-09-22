@@ -28,19 +28,23 @@
 | iOS réel / simulateur (WKWebView) | Xcode requis | ❌ **impossible ici (Windows)** |
 | Android natif (Capacitor) | SDK Android + JDK 17 requis | ❌ **impossible ici** |
 
-## 3. Scénarios E2E
+## 3. Scénarios E2E — clôture locale
 
-`npm run test:e2e` : **180 passés / 21 échoués / 12 skippés** (42 → 21 après corrections Phase 3).
+**Suites séparées par environnement** (tags dans `scripts/e2e/*.spec.ts`, filtrage par projet) :
 
-**Corrigés** : BAR-1 (5 destinations + aria-label registre) · RED `/materiel` (surface autonome 200, 18 redirections 307 vertes) · HUB-2 + Kits/Inventaire/Alertes (`toBeAttached` — titres `sr-only` Phase 2) · consentement cookies atlas · bruit WebKit `interactive-widget` · heading visible voyage TEST-12.
+| Suite | Commande | État local |
+|---|---|---|
+| `local-web` (Chromium desktop, sans auth ni service externe) | `npm run test:e2e:local` | ✅ **43 passés / 10 skips explicites / 0 échec** (24,5 s) |
+| `mobile` (invariants d'expérience mobile) | `npm run test:e2e:mobile` | projet mobile-chromium |
+| `webkit` (moteur WebKit) | `npm run test:e2e:webkit` | projet mobile-webkit |
+| `staging-auth` (session Supabase réelle) | tag `@staging-auth` | skip explicite en local |
+| `external-services` (service externe réel) | tag `@external` | skip explicite en local |
 
-**Échecs restants (environnement, documentés, non bloquants web)** :
-- Flakiness Supabase/SQL : `a13` ×4, desktop `depart`/`HUB-3`/`voyage-10` ;
-- Tests desktop exécutés sur projets mobiles : `depart:35` ×2 ;
-- Expériences mobiles : `HUB-1`, `materiel:31`, `voyage-12`, `atlas` ×4 ;
-- WebKit : `atlas` (abort), `sw-security`.
+**Triage des échecs** : les 21 échecs de la phase précédente étaient des non-produits — dépendances Supabase/SQL, tests desktop exécutés sur projets mobiles, expériences mobiles, WebKit, besoin staging/auth. Ils sont désormais **taggés/skippés par environnement** (10 skips explicites avec raison) au lieu de rester rouges artificiellement. La flakiness locale a été éliminée à la source (workers 4 + `expect.timeout` 10 s : le serveur Next unique saturait à 8 workers).
 
-Scénarios couverts par la suite : auth, matériel, kits, inventaire, départ, voyages, hub, carte/atlas, communauté, messagerie, groupes/clubs/carnets, boutique/panier, offline/PWA.
+**Bugs corrigés (produit/tests)** : BAR-1 (5 destinations + aria-label registre) · RED `/materiel` (surface autonome 200) · HUB-2 + Kits/Inventaire/Alertes (`toBeAttached` — titres `sr-only` Phase 2) · consentement cookies atlas · bruit WebKit `interactive-widget` · heading visible voyage TEST-12.
+
+Scénarios couverts par la suite locale : matériel, kits, inventaire, départ, hub, voyages, atlas/carte, communauté, boutique, offline/PWA (auth et services externes exclus par tag).
 
 ## 4. Performance
 

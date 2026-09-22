@@ -5,7 +5,18 @@ import AxeBuilder from '@axe-core/playwright';
  * H-AUTO-42 — les écrans matériels sont canoniques dans le hub :
  * /hub (aperçu possession), /hub/kit, /hub/inventaire, /hub/alertes,
  * /hub/depart. Les URLs /materiel/* redirigent 307 (voir hubRedirects.spec).
+ *
+ * @staging-auth : ces parcours ouvrent une session Supabase réelle (compte
+ * démo). Non applicables localement ni en CI sans credentials — activer avec
+ * `LKDV_E2E_AUTH=1` (staging). Sinon skip explicite (jamais d'échec muet).
  */
+const STAGING_AUTH = process.env.LKDV_E2E_AUTH === '1';
+const SKIP_AUTH =
+  'staging-auth : session Supabase démo requise (LKDV_E2E_AUTH=1 pour activer).';
+
+test.beforeEach(() => {
+  test.skip(!STAGING_AUTH, SKIP_AUTH);
+});
 
 async function loginDemo(page: Page, context: BrowserContext) {
   // Environnement headless : neutraliser les faux états hors-ligne émis par
@@ -28,7 +39,7 @@ async function loginDemo(page: Page, context: BrowserContext) {
   await page.waitForTimeout(800);
 }
 
-test('hub possession — connexion démo + aperçu équipement affiché', async ({ page, context }) => {
+test('hub possession — connexion démo + aperçu équipement affiché', { tag: '@local-web' }, async ({ page, context }) => {
   await loginDemo(page, context);
   await page.goto('/hub');
   // Titre d'identité du hub possession (ActivityIdentityBar, élément texte).
@@ -37,7 +48,7 @@ test('hub possession — connexion démo + aperçu équipement affiché', async 
   await expect(page.getByRole('link', { name: 'Inventaire' }).first()).toBeVisible();
 });
 
-test('hub possession — navigation vers la section kits', async ({ page, context }) => {
+test('hub possession — navigation vers la section kits', { tag: '@local-web' }, async ({ page, context }) => {
   await loginDemo(page, context);
   await page.goto('/hub');
   await page.getByRole('link', { name: 'Kits' }).first().click();
@@ -47,7 +58,7 @@ test('hub possession — navigation vers la section kits', async ({ page, contex
   await expect(page.getByText(/Nouveau kit/i).filter({ visible: true }).first()).toBeVisible();
 });
 
-test('hub depart — cockpit plein écran avec widgets réels (pas l\'état vide)', async ({ page, context }) => {
+test('hub depart — cockpit plein écran avec widgets réels (pas l\'état vide)', { tag: '@local-web' }, async ({ page, context }) => {
   await loginDemo(page, context);
   await page.goto('/hub/depart');
   // Cockpit réel : structure rendue + sections de départ présentes.
@@ -56,7 +67,7 @@ test('hub depart — cockpit plein écran avec widgets réels (pas l\'état vide
   await expect(page.getByText(/Aucun kit assigné/i)).toHaveCount(0);
 });
 
-test('hub sections inventaire / alertes — données présentes', async ({ page, context }) => {
+test('hub sections inventaire / alertes — données présentes', { tag: '@local-web' }, async ({ page, context }) => {
   await loginDemo(page, context);
   await page.goto('/hub/inventaire');
   // Phase 2 : titres de section en `sr-only` (nom accessible conservé).
@@ -66,7 +77,7 @@ test('hub sections inventaire / alertes — données présentes', async ({ page,
   await expect(page.getByRole('heading', { name: 'Alertes', exact: true })).toBeAttached();
 });
 
-test('redirections 307 des routes héritées /materiel/*', async ({ page, context }) => {
+test('redirections 307 des routes héritées /materiel/*', { tag: '@local-web' }, async ({ page, context }) => {
   await loginDemo(page, context);
   await page.goto('/materiel/inventaire');
   await expect(page).toHaveURL(/\/hub\/inventaire/);
@@ -75,7 +86,7 @@ test('redirections 307 des routes héritées /materiel/*', async ({ page, contex
   await expect(page).toHaveURL(/\/hub\/kit/);
 });
 
-test('accessibilité — hub possession (axe)', async ({ page, context }) => {
+test('accessibilité — hub possession (axe)', { tag: '@local-web' }, async ({ page, context }) => {
   await loginDemo(page, context);
   await page.goto('/hub');
   const results = await new AxeBuilder({ page }).analyze();

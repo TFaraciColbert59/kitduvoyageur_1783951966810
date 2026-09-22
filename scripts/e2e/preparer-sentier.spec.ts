@@ -37,7 +37,7 @@ async function neutraliserServiceWorker(page: Page) {
   });
 }
 
-test('mobile : le CTA Préparer du carrousel redirige l’anonyme vers la connexion avec reprise', async ({
+test('mobile : le CTA Préparer du carrousel redirige l’anonyme vers la connexion avec reprise', { tag: '@mobile' }, async ({
   page,
 }) => {
   const pageErrors: string[] = [];
@@ -84,7 +84,7 @@ test('mobile : le CTA Préparer du carrousel redirige l’anonyme vers la connex
   expect(pageErrors, pageErrors.join('\n')).toHaveLength(0);
 });
 
-test('sentier inconnu : page honnête, aucune donnée inventée, zéro pageerror', async ({ page }) => {
+test('sentier inconnu : page honnête, aucune donnée inventée, zéro pageerror', { tag: '@local-web' }, async ({ page }) => {
   const pageErrors: string[] = [];
   page.on('pageerror', (error) => pageErrors.push(error.message));
   await neutraliserServiceWorker(page);

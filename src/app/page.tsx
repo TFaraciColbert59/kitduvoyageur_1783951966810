@@ -285,7 +285,7 @@ export default function HomePage() {
               <div className="flex-1 w-full">
                 <div className="relative rounded-[var(--lkv-radius-lg)] overflow-hidden aspect-square bg-[var(--stone-200)]">
                   <Image
-                    src="https://images.unsplash.com/photo-1550ed4e1b-3b47bd21096a?w=1000&q=80"
+                    src="https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=1000&q=80"
                     alt="Sac à dos en toile cirée"
                     fill
                     sizes="(max-width: 1024px) 100vw, 50vw"

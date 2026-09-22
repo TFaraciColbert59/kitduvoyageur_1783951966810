@@ -32,7 +32,7 @@ async function waitForUnifiedMap(page: import('@playwright/test').Page) {
   }
 }
 
-test.describe('ATLAS — explorateur unifié, palier local', () => {
+test.describe('ATLAS — explorateur unifié, palier local', { tag: '@local-web' }, () => {
   // Même protocole consentement que voyage.spec.ts / a11y : sans lui, la
   // bannière cookies recouvre les CTA bas de page et intercepte les clics.
   test.beforeEach(async ({ page }) => {
@@ -72,8 +72,10 @@ test.describe('ATLAS — explorateur unifié, palier local', () => {
     await page.waitForTimeout(1_500);
 
     console.log('REQUÊTES ANNULÉES:', JSON.stringify(aborted));
+    // Chromium : `net::ERR_ABORTED` ; WebKit : `Load request cancelled`.
+    // Les deux signalent bien l'annulation de la requête supersédée.
     expect(
-      aborted.some((errorText) => errorText.includes('ERR_ABORTED')),
+      aborted.some((errorText) => /aborted|cancell?ed/i.test(errorText)),
       `aucune requête /api/hikes annulée — requestfailed=${JSON.stringify(aborted)}`
     ).toBeTruthy();
   });

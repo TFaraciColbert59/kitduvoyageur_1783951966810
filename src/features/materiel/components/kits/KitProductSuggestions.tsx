@@ -48,7 +48,7 @@ const CURATED_SUGGESTIONS: ProductSuggestion[] = [
     name: 'Lampe Frontale 450 Lumens USB-C',
     slug: 'lampe-frontale-450-lumens',
     image:
-      'https://images.unsplash.com/photo-1508873696983-2df5293cb32b?q=80&w=600&auto=format&fit=crop',
+      'https://images.unsplash.com/photo-1504851149312-7a075b496cc7?q=80&w=600&auto=format&fit=crop',
     priceEur: 34.9,
     category: 'Accessoires',
     weightG: 85,

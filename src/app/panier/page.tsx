@@ -226,7 +226,7 @@ export default function PanierPage() {
                     <Card variant="compact" className="flex items-center justify-between gap-[var(--space-6)] p-[var(--space-6)]">
                       <div className="flex min-w-0 items-center gap-[var(--space-6)]">
                         <div className="flex h-20 w-20 flex-shrink-0 items-center justify-center overflow-hidden rounded-[var(--lkv-radius-lg)] bg-[color:var(--lkv-surface-muted)] p-[var(--space-2)]">
-                          <img src="https://images.unsplash.com/photo-1572007886481-64539dc31d04?w=400&q=80" alt="Lampe" className="h-full w-full rounded-[var(--lkv-radius-md)] object-cover" />
+                          <img src="https://images.unsplash.com/photo-1504851149312-7a075b496cc7?w=400&q=80" alt="Lampe" className="h-full w-full rounded-[var(--lkv-radius-md)] object-cover" />
                         </div>
                         <div className="min-w-0">
                           <p className="mb-[var(--space-1)] text-[length:var(--lkv-text-caption-2)] font-semibold uppercase tracking-[var(--tracking-wide)] text-[color:var(--lkv-text-muted)]">ON A PENSÉ POUR VOUS</p>

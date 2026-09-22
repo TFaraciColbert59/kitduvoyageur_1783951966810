@@ -2,7 +2,7 @@
 import path from 'path';
 import fs from 'fs';
 
-test.describe('Module Voyage E2E Suite — Parcours Utilisateur & Ergonomie (C1-C8)', () => {
+test.describe('Module Voyage E2E Suite — Parcours Utilisateur & Ergonomie (C1-C8)', { tag: '@local-web' }, () => {
   const screenshotsDir = path.join(process.cwd(), 'tests', 'visual', 'snapshots');
 
   test.beforeAll(() => {
