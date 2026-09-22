@@ -1,0 +1,45 @@
+{
+  "capturedAt": "2026-09-22T22:17:13.314Z",
+  "shots": [
+    {
+      "slug": "explorer-393x852",
+      "route": "/explorer",
+      "viewport": "393x852",
+      "finalUrl": "http://localhost:4028/explorer",
+      "title": "Explorer — Sentiers & Randonnées | Le Kit du Voyageur",
+      "cookieBannerVisible": false,
+      "consoleErrors": [],
+      "screenshot": "docs/qa/final-ios27/phase-explorer/explorer-393x852.jpg"
+    },
+    {
+      "slug": "explorer-430x932",
+      "route": "/explorer",
+      "viewport": "430x932",
+      "finalUrl": "http://localhost:4028/explorer",
+      "title": "Explorer — Sentiers & Randonnées | Le Kit du Voyageur",
+      "cookieBannerVisible": false,
+      "consoleErrors": [],
+      "screenshot": "docs/qa/final-ios27/phase-explorer/explorer-430x932.jpg"
+    },
+    {
+      "slug": "explorer-412x915",
+      "route": "/explorer",
+      "viewport": "412x915",
+      "finalUrl": "http://localhost:4028/explorer",
+      "title": "Explorer — Sentiers & Randonnées | Le Kit du Voyageur",
+      "cookieBannerVisible": false,
+      "consoleErrors": [],
+      "screenshot": "docs/qa/final-ios27/phase-explorer/explorer-412x915.jpg"
+    },
+    {
+      "slug": "explorer-1440x900",
+      "route": "/explorer",
+      "viewport": "1440x900",
+      "finalUrl": "http://localhost:4028/explorer",
+      "title": "Explorer — Sentiers & Randonnées | Le Kit du Voyageur",
+      "cookieBannerVisible": false,
+      "consoleErrors": [],
+      "screenshot": "docs/qa/final-ios27/phase-explorer/explorer-1440x900.jpg"
+    }
+  ]
+}

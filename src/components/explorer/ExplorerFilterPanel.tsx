@@ -67,8 +67,10 @@ export default function ExplorerFilterPanel({
 
   return (
     <div className="flex flex-col gap-3 font-sans">
-      {/* Recherche intégrée */}
-      <div className="flex flex-col gap-1.5">
+      {/* Recherche intégrée — P1 : visible UNIQUEMENT sur mobile (rail filtres).
+          Sur desktop la recherche unique vit dans la colonne liste fixe
+          (ExplorerClient §4) : jamais deux barres `fixed` superposées. */}
+      <div className="flex flex-col gap-1.5 md:hidden">
         <span className={sectionLabel}>Recherche directe</span>
         <SearchField
           value={searchQuery ?? ''}

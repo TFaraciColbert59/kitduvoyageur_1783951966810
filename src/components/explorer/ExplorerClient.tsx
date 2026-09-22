@@ -70,6 +70,8 @@ const UnifiedExplorerMap = dynamic(() => import('@/components/map/UnifiedExplore
 });
 
 // ── Navigation Links (Exactement identiques à la charte LKDV) ──────────────────
+// P1 RULING — le libellé « MATÉRIEL » de la topbar DESKTOP est conservé :
+// pattern desktop légitime, hors scope mobile (aucun « Matériel » en nav mobile).
 
 const NAV_LINKS = [
   { label: 'Explorer', href: '/explorer' },
@@ -644,9 +646,11 @@ export default function ExplorerClient({
         </div>
       </div>
 
-      {/* ── 2B. BOUTON FLOTTANT DYNAMIQUE : « RECHERCHER DANS CETTE ZONE » ── */}
+      {/* ── 2B. BOUTON FLOTTANT DYNAMIQUE : « RECHERCHER DANS CETTE ZONE » ──
+          P1 — CTA unique en haut : masqué quand le rail filtres est ouvert
+          (filtres XOR recherche-ici, jamais superposés au header desktop). */}
       <AnimatePresence>
-        {showSearchHereButton && !unifiedMap && (
+        {showSearchHereButton && !unifiedMap && !filtersOpen && (
           <motion.div
             initial={{ opacity: 0, y: -16, scale: 0.9 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -679,8 +683,11 @@ export default function ExplorerClient({
         )}
       </AnimatePresence>
 
-      {/* ── 3. BOUTON FILTRES FLOTTANT (bord droit, jamais coupé) ── */}
-      <div className="pointer-events-none fixed right-[var(--map-control-inset-x)] top-1/2 z-[var(--z-fab)] flex -translate-y-1/2 items-center justify-end">
+      {/* ── 3. BOUTON FILTRES FLOTTANT (bord droit, jamais coupé) ──
+          P1 — rail droit DESKTOP (centré vertical) OU colonne mobile
+          (haut-droite sous les tuiles), jamais superposés. L'onglet reste à
+          droite sans croiser la colonne zoom carte (décalée right-14 mobile). */}
+      <div className="pointer-events-none fixed right-3 top-[calc(var(--safe-top)+64px)] z-[var(--z-fab)] flex items-center justify-end md:right-[var(--map-control-inset-x)] md:top-1/2 md:-translate-y-1/2">
         <AnimatePresence mode="wait">
           {!filtersOpen ? (
             /* Onglet collé à la paroi droite */
@@ -716,7 +723,7 @@ export default function ExplorerClient({
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: 100 }}
               transition={{ type: 'spring', stiffness: 400, damping: 35 }}
-              className="pointer-events-auto w-[320px] sm:w-[350px]"
+              className="pointer-events-auto w-[320px] max-w-[calc(100vw-24px)] overflow-hidden sm:w-[350px]"
             >
               <Card variant="featured" className="space-y-3 rounded-r-none p-4">
                 <div className="flex items-center justify-between border-b border-[color:var(--lkv-border)] pb-2">
@@ -745,7 +752,7 @@ export default function ExplorerClient({
                   </IconButton>
                 </div>
 
-                <div className="no-scrollbar max-h-[65vh] overflow-y-auto pr-0.5">
+                <div className="no-scrollbar max-h-[65vh] overflow-y-auto overscroll-contain pr-0.5">
                   <ExplorerFilterPanel
                     searchQuery={searchQuery}
                     onSearchChange={handleSearchChange}
@@ -772,8 +779,10 @@ export default function ExplorerClient({
         </AnimatePresence>
       </div>
 
-      {/* ── 4. DESKTOP : LISTE DES SENTIERS FLOTTANTE (PLEINE HAUTEUR) ── */}
-      <div className="pointer-events-none fixed left-4 top-[84px] bottom-4 z-[var(--z-fab)] hidden w-[350px] max-w-[calc(100vw-32px)] flex-col gap-2 md:flex">
+      {/* ── 4. DESKTOP : LISTE DES SENTIERS FLOTTANTE (PLEINE HAUTEUR) ──
+          P1 — garde overflow : le panneau ne déborde jamais (overflow-hidden),
+          seul le rail interne scrolle (overscroll-contain). */}
+      <div className="pointer-events-none fixed left-4 top-[84px] bottom-4 z-[var(--z-fab)] hidden w-[350px] max-w-[calc(100vw-32px)] flex-col gap-2 overflow-hidden md:flex">
         {/* Barre de recherche compacte */}
         <div className="pointer-events-auto shrink-0">
           <SearchField
@@ -795,7 +804,7 @@ export default function ExplorerClient({
               setDisplayLimit((prev) => Math.min(prev + 30, filteredTrails.length));
             }
           }}
-          className="pointer-events-auto flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto pb-4 pr-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          className="pointer-events-auto flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto overscroll-contain pb-4 pr-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         >
           {filteredTrails.length === 0 ? (
             <Card variant="featured" className="p-4">
@@ -929,8 +938,13 @@ export default function ExplorerClient({
 
   const bottomOverlays = (
     <>
-      {/* ── 2C. SORTIE ÉCLAIR — mobile : ancre gauche, au-dessus du carrousel ── */}
-      <div className="pointer-events-auto fixed left-4 bottom-[calc(var(--safe-bottom)+96px+var(--explorer-carousel-height,0px))] z-[var(--z-fab)] md:hidden">
+      {/* ── 2C. SORTIE ÉCLAIR — mobile : ancre gauche, au-dessus du carrousel.
+          P1 — CTA unique et DÉPILÉ : masqué quand le badge live (2D) est
+          affiché (même ancre, même niveau) et remonté d'un cran (nav+100) pour
+          ne jamais chevaucher le CTA carte centré (nav+36). Offset canonique
+          --nav-offset. ── */}
+      {!liveSessionId && (
+      <div className="pointer-events-auto fixed left-4 bottom-[calc(var(--nav-offset)+100px+var(--explorer-carousel-height,0px))] z-[var(--z-fab)] md:hidden">
         <Button
           variant="secondary"
           onClick={() => setEphemeralOpen(true)}
@@ -942,12 +956,16 @@ export default function ExplorerClient({
           <span className="whitespace-nowrap text-[length:var(--lkv-text-caption)] font-bold">Sortie entre amis</span>
         </Button>
       </div>
+      )}
 
-      {/* ── 2D. SESSION LIVE — positions des membres (jamais public) ── */}
+      {/* ── 2D. SESSION LIVE — positions des membres (jamais public).
+          P1 — formule de position UNIQUE via --nav-offset, même ancre/niveau
+          que la sortie éclair (2C) qu'il remplace : un seul visible à la fois.
+          Garde overflow : jamais plus large que le viewport. ── */}
       {liveSessionId && (
         <Card
           variant="compact"
-          className="pointer-events-auto fixed left-4 bottom-[calc(var(--safe-bottom)+156px+var(--explorer-carousel-height,0px))] z-[var(--z-fab)] flex items-center gap-2 md:bottom-40"
+          className="pointer-events-auto fixed left-4 bottom-[calc(var(--nav-offset)+100px+var(--explorer-carousel-height,0px))] z-[var(--z-fab)] flex max-w-[calc(100vw-32px)] items-center gap-2 overflow-hidden"
           data-testid="explorer-live-badge"
         >
           <Badge tone="sage" className="whitespace-nowrap font-mono">

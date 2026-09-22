@@ -1117,12 +1117,25 @@ export default function UnifiedExplorerMap({
   // E1 — `--explorer-carousel-height` est publiée par le carrousel mobile quand
   // il est visible : les contrôles bas (CTA + zoom) remontent au-dessus de lui.
   // Absente (desktop, zéro sentier) ⇒ 0px, positions historiques inchangées.
+  // P1 — offsets canoniques via --nav-offset (= --safe-bottom + 60px) : pixels
+  // identiques à safe+96, formule unique, jamais de calc ad hoc.
   const bottomControlsOffset = safeControls
-    ? 'bottom-[calc(var(--safe-bottom)+96px+var(--explorer-carousel-height,0px))]'
+    ? 'bottom-[calc(var(--nav-offset)+36px+var(--explorer-carousel-height,0px))]'
     : 'bottom-4';
   const desktopTilesOffset = safeControls
-    ? 'md:bottom-[calc(var(--safe-bottom)+96px)]'
+    ? 'md:bottom-[calc(var(--nav-offset)+36px)]'
     : 'md:bottom-4';
+
+  // P1 — ORDRE DES 5 COUCHES absolute (z-index canoniques --z-*) :
+  // L0 canvas carte (z auto / base, parent MapPageLayout `fixed inset-0 z-base`) ;
+  // L1 voile de chargement (z-sticky) ;
+  // L2 pastille attribution (z-sticky, pointer-events-none) ;
+  // L3 contrôles carte + tuiles + légende + carte pays (z-fab) ;
+  // L4 toast globeNotice (z-toast, topmost).
+  // CTA (L3) et toasts (L4) ne sont jamais masqués par la carte (L0/L1).
+  // Moteur MapLibre (hex internes engine/mapTheme, createMapStyle, camera) :
+  // non touché, documenté seulement (interdit P1). Aucun `bg-dark-bg` dans le
+  // scope Explorer/carte (fonds déjà tokenisés glass-bg-medium).
 
   return (
     <div
@@ -1165,14 +1178,14 @@ export default function UnifiedExplorerMap({
         </Button>
       </div>
 
-      {/* Repli sans GPS — message non bloquant (la carte reste interactive). */}
+      {/* Repli sans GPS — message non bloquant (la carte reste interactive).
+          P1 — TOAST : formule de position UNIQUE via --nav-offset (les 2 autres
+          formules supprimées : `bottom-[152px]` ad hoc et `md:bottom-24`).
+          Centré à nav+164 : au-dessus du CTA carte (nav+36) et du CTA sortie
+          (nav+100), jamais superposé. z-toast : jamais masqué. */}
       {globeNotice && (
         <div
-          className={`absolute left-1/2 -translate-x-1/2 z-[var(--z-toast)] pointer-events-none w-max max-w-[calc(100vw-32px)] ${
-            safeControls
-              ? 'bottom-[calc(var(--safe-bottom)+160px+var(--explorer-carousel-height,0px))]'
-              : 'bottom-[152px]'
-          } md:bottom-24`}
+          className="absolute left-1/2 -translate-x-1/2 z-[var(--z-toast)] pointer-events-none w-max max-w-[calc(100vw-32px)] bottom-[calc(var(--nav-offset)+164px+var(--explorer-carousel-height,0px))]"
           data-atlas-geoloc-notice="true"
           role="status"
           aria-live="polite"
@@ -1236,12 +1249,12 @@ export default function UnifiedExplorerMap({
         </div>
       </div>
 
-      {/* Légende densité — desktop uniquement (simplicité mobile) */}
+      {/* Légende densité — desktop uniquement (simplicité mobile).
+          P1 — formule UNIQUE via --nav-offset (nav+156 : au-dessus du badge
+          live nav+100 et des tuiles nav+36, jamais superposée). */}
       {viewport && viewport.zoom > 2.4 && viewport.zoom < 14.4 && (
         <div
-          className={`hidden md:block absolute left-3 ${
-            safeControls ? 'bottom-[calc(var(--safe-bottom)+152px)]' : 'bottom-20'
-          } z-[var(--z-fab)] pointer-events-none`}
+          className="hidden md:block absolute left-3 bottom-[calc(var(--nav-offset)+156px)] z-[var(--z-fab)] pointer-events-none"
           data-atlas-density-legend="true"
         >
           <Badge tone="stone" className="font-semibold" data-atlas-glass="secondary">
@@ -1269,8 +1282,9 @@ export default function UnifiedExplorerMap({
         />
       </div>
 
-      {/* Attribution légère (obligatoire pour les tuiles) — mobile : haut droite ; desktop : bas centre */}
-      <div className="pointer-events-none absolute right-3 top-[calc(var(--safe-top)+16px)] z-[var(--z-sticky)] rounded-full bg-[color:var(--card-tint-strong)] px-2 py-1 text-[9px] leading-none text-[color:var(--lkv-text-muted)] md:right-auto md:left-1/2 md:-translate-x-1/2 md:bottom-[calc(var(--safe-bottom)+2px)] md:top-auto">
+      {/* Attribution légère (obligatoire pour les tuiles) — mobile : haut droite ; desktop : bas centre.
+          P1 — compteur lisible : token caption-2 (11px), jamais text-[9px]. */}
+      <div className="pointer-events-none absolute right-3 top-[calc(var(--safe-top)+16px)] z-[var(--z-sticky)] rounded-full bg-[color:var(--card-tint-strong)] px-2 py-1 text-[length:var(--lkv-text-caption-2)] leading-none text-[color:var(--lkv-text-muted)] md:right-auto md:left-1/2 md:-translate-x-1/2 md:bottom-[calc(var(--safe-bottom)+2px)] md:top-auto">
         © OpenStreetMap France · Esri
       </div>
 
