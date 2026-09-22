@@ -20,8 +20,8 @@ const FIELD_CLASS =
 const OPTION_CARD_CLASS = (selected: boolean) =>
   `flex cursor-pointer items-start gap-[var(--space-2)] rounded-[var(--lkv-radius-md)] border p-[var(--space-3)] transition-colors ${
     selected
-      ? 'border-[color:var(--lkv-primary)] bg-[color:var(--lkv-surface-card)]'
-      : 'border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-muted)]'
+      ? 'border-[color:var(--lkv-primary)] bg-[color:var(--glass-bg-medium)] border backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset'
+      : 'border-[color:var(--glass-border)] bg-[color:var(--glass-bg-medium)] border backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset'
   }`;
 
 // Color Palette
@@ -217,7 +217,7 @@ export default function NouveauGroupePage() {
           {/* ── 1. ZONE HAUTE FIXE (Identité & Actions) ── */}
           <div className="shrink-0 space-y-[var(--space-2)]">
             <Card variant="compact" className="flex items-center gap-[var(--space-3)] border-[color:var(--glass-border)]">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[color:var(--glass-border)] bg-[color:var(--lkv-surface-card)] text-xl" aria-hidden>
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[color:var(--glass-border)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-xl" aria-hidden>
                 ⛺
               </div>
               <div className="min-w-0 flex-1">
@@ -236,7 +236,7 @@ export default function NouveauGroupePage() {
             <div className="grid grid-cols-2 gap-[var(--space-1)]">
               <Link
                 href="/groupes"
-                className="inline-flex items-center justify-center gap-[var(--space-1)] rounded-full bg-[color:var(--lkv-action)] px-[var(--space-2)] py-[var(--space-1)] text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-on-action)]"
+                className="inline-flex items-center justify-center gap-[var(--space-1)] rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn px-[var(--space-2)] py-[var(--space-1)] text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-primary)]"
               >
                 <Icon name="ArrowLeftIcon" size={12} aria-hidden="true" />
                 <span>Groupes</span>
@@ -416,7 +416,7 @@ export default function NouveauGroupePage() {
                 </div>
 
                 {/* Leaflet Live Trail Preview */}
-                <div className="relative h-[220px] overflow-hidden rounded-[var(--lkv-radius-md)] border border-[color:var(--lkv-primary)]/10 bg-[color:var(--lkv-surface-muted)]">
+                <div className="relative h-[220px] overflow-hidden rounded-[var(--lkv-radius-md)] border border-[color:var(--lkv-primary)]/10 bg-[color:var(--glass-bg-medium)]">
                   <div ref={mapContainerRef} className="h-full w-full" />
                 </div>
               </div>

@@ -156,7 +156,7 @@ export default function KitSheetModal({ kitId, context: _context, onClose }: Kit
       'Lignée de kit',
       <div className="py-8 text-center">
         <p className="text-[color:var(--lkv-primary)]">⚠️ {error ?? 'Kit introuvable'}</p>
-        <button onClick={close} className="mt-4 w-full rounded-xl bg-[color:var(--lkv-primary)] py-3 text-sm font-semibold text-[color:var(--lkv-surface)]">
+        <button onClick={close} className="mt-4 w-full rounded-xl bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn py-3 text-sm font-semibold text-[color:var(--lkv-surface)]">
           Fermer
         </button>
       </div>
@@ -199,7 +199,7 @@ export default function KitSheetModal({ kitId, context: _context, onClose }: Kit
         )}
 
         {/* État terrain */}
-        <div className="rounded-2xl border border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-muted)] p-4">
+        <div className="rounded-2xl border border-[color:var(--glass-border)] bg-[color:var(--glass-bg-medium)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset p-4">
           <div className="font-mono text-[10px] uppercase tracking-[0.16em] text-[color:var(--lkv-primary)]">
             Épreuve du terrain
           </div>
@@ -272,7 +272,7 @@ export default function KitSheetModal({ kitId, context: _context, onClose }: Kit
         <div className="mt-2 grid grid-cols-3 gap-2">
           <button
             onClick={carryKit}
-            className="rounded-xl bg-[color:var(--lkv-primary)] px-2 py-2.5 text-[12px] font-semibold text-[color:var(--lkv-surface)]"
+            className="rounded-xl bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn px-2 py-2.5 text-[12px] font-semibold text-[color:var(--lkv-surface)]"
           >
             Emporter
           </button>

@@ -158,10 +158,10 @@ export default function ReportBlockModal({ target, onClose, onSuccess }: Props) 
 
         {submitted ? (
           <div className="py-6 text-center">
-            <div className="w-12 h-12 rounded-full bg-[color:var(--lkv-primary)] text-[color:var(--sage-400)] flex items-center justify-center text-xl mx-auto mb-3">✓</div>
+            <div className="w-12 h-12 rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] shadow-[var(--btn-rim)] text-[color:var(--lkv-text-primary)] flex items-center justify-center text-xl mx-auto mb-3">✓</div>
             <h4 className="font-bold text-lg mb-2">Action confirmée</h4>
             <p className="text-sm text-white/70 mb-6 max-w-sm mx-auto">{actionDoneMsg}</p>
-            <button onClick={onClose} className="px-6 py-2.5 bg-white text-[color:var(--lkv-primary)] rounded-full font-bold text-xs hover:bg-[color:var(--stone-200)] transition-colors">
+            <button onClick={onClose} className="px-6 py-2.5 bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] shadow-[var(--btn-rim)] text-[color:var(--lkv-text-primary)] rounded-full font-bold text-xs hover:brightness-[1.05] transition-colors">
               Fermer
             </button>
           </div>
@@ -199,8 +199,8 @@ export default function ReportBlockModal({ target, onClose, onSuccess }: Props) 
                         key={cat.id}
                         className={`flex items-center justify-between p-2.5 rounded-xl border text-xs cursor-pointer transition-colors ${
                           selectedCategory === cat.id
-                            ? 'bg-[color:var(--lkv-primary)] border-[color:var(--sage-400)] text-white'
-                            : 'bg-black/20 border-white/10 text-white/70 hover:border-white/20'
+                            ? 'bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] shadow-[var(--btn-rim)] border-[color:var(--sage-400)] text-[color:var(--lkv-text-primary)]'
+                            : 'bg-black/20 border-white/10 text-[color:var(--lkv-text-primary)]/70 hover:border-white/20'
                         }`}
                       >
                         <div className="flex items-center gap-2">

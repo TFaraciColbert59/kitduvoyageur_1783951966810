@@ -42,7 +42,7 @@ export default function MesClubsCard({ clubs }: MesClubsCardProps) {
             className="rounded-[var(--lkv-radius-md)] border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] backdrop-blur-[var(--blur-md)] flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 transition-all gap-4"
           >
             <div className="flex items-center gap-4 min-w-0">
-              <div className="w-12 h-12 rounded-2xl overflow-hidden relative shrink-0 border border-[color:var(--lkv-primary)]/10 bg-[color:var(--lkv-primary)]">
+              <div className="w-12 h-12 rounded-2xl overflow-hidden relative shrink-0 border border-[color:var(--lkv-primary)]/10 bg-[color:var(--btn-tint)]">
                 <Image
                   src={club.logo_url || '/assets/images/no_image.png'}
                   alt={club.name}

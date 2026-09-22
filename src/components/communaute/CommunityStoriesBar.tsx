@@ -68,7 +68,7 @@ export default function CommunityStoriesBar({ currentUser }: { currentUser?: any
             aria-label={`Voir la story de ${user.name}`}
             onClick={() => setViewerStart(i)}
             icon={
-              <span className="flex size-7 items-center justify-center rounded-full bg-[color:var(--lkv-primary)] text-[length:var(--lkv-text-footnote)] font-bold uppercase text-[color:var(--lkv-text-inverted)]">
+              <span className="flex size-7 items-center justify-center rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[length:var(--lkv-text-footnote)] font-bold uppercase text-[color:var(--lkv-text-primary)]">
                 {user.name.charAt(0)}
               </span>
             }

@@ -126,7 +126,7 @@ export default function AdventureCockpitControl({
             aria-label="Cockpit aventure"
             tabIndex={-1}
             onKeyDown={handleTabTrap}
-            className={`lkv-sheet-up${closing ? ' lkv-sheet-up--closing' : ''} absolute inset-x-0 bottom-0 z-[var(--z-sheet)] max-h-[82dvh] overflow-y-auto rounded-t-[var(--lkv-radius-sheet)] border-t border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface)] px-4 pt-3 pb-[calc(var(--safe-bottom)+var(--space-4))] shadow-elevation-4`}
+            className={`lkv-sheet-up${closing ? ' lkv-sheet-up--closing' : ''} absolute inset-x-0 bottom-0 z-[var(--z-sheet)] max-h-[82dvh] overflow-y-auto rounded-t-[var(--lkv-radius-sheet)] border-t border-[color:var(--glass-border)] bg-[color:var(--glass-bg-medium)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] px-4 pt-3 pb-[calc(var(--safe-bottom)+var(--space-4))] shadow-elevation-4`}
           >
             <div className="mx-auto mb-3 h-1 w-9 rounded-full bg-[color:var(--lkv-text-subtle)]" aria-hidden="true" />
             <div className="mb-2 flex items-center justify-end">

@@ -68,7 +68,7 @@ export default function SafetyCenterModal({
     >
       <div className="space-y-4">
         {/* GPS Coordinates Display */}
-        <div className="bg-[color:var(--lkv-primary)]/60 border border-white/10 rounded-2xl p-3.5 space-y-1 text-center">
+        <div className="bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn border border-white/10 rounded-2xl p-3.5 space-y-1 text-center">
           <span className="text-[10px] text-[color:var(--sage-400)] font-mono uppercase tracking-widest block">
             Coordonnées GPS WGS-84
           </span>
@@ -84,14 +84,14 @@ export default function SafetyCenterModal({
 
         {/* System Status Indicators */}
         <div className="grid grid-cols-2 gap-2 text-center text-xs font-mono">
-          <div className="bg-[color:var(--lkv-primary)]/40 border border-white/10 rounded-xl p-2">
+          <div className="bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn border border-white/10 rounded-xl p-2">
             <span className="text-[color:var(--sage-400)] text-[10px] block">RÉSEAU</span>
             <span className={isOffline ? 'text-amber-400 font-bold' : 'text-emerald-400 font-bold'}>
               {isOffline ? '🌐 Hors Ligne' : '📶 Connecté'}
             </span>
           </div>
 
-          <div className="bg-[color:var(--lkv-primary)]/40 border border-white/10 rounded-xl p-2">
+          <div className="bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn border border-white/10 rounded-xl p-2">
             <span className="text-[color:var(--sage-400)] text-[10px] block">BATTERIE</span>
             <span className={batteryLevel != null && batteryLevel <= 15 ? 'text-red-400 font-bold animate-pulse' : 'text-emerald-400 font-bold'}>
               🔋 {batteryLevel != null ? `${batteryLevel}%` : '—'}
@@ -111,7 +111,7 @@ export default function SafetyCenterModal({
                     ? 'bg-red-950/80 border-red-500/50 text-red-200'
                     : alert.severity === 'warning'
                     ? 'bg-amber-950/80 border-amber-500/50 text-amber-200'
-                    : 'bg-[color:var(--lkv-primary)] border-white/10 text-white'
+                    : 'bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn border-white/10 text-[color:var(--lkv-text-primary)]'
                 }`}
               >
                 <span>{alert.severity === 'critical' ? '🚨' : alert.severity === 'warning' ? '⚠️' : 'ℹ️'}</span>
@@ -138,7 +138,7 @@ export default function SafetyCenterModal({
                 onReturnToStart();
                 onClose();
               }}
-              className="w-full min-h-[44px] py-3 bg-[color:var(--lkv-primary)] hover:bg-[color:var(--lkv-forest-700)] text-white font-bold text-xs rounded-xl border border-white/20 flex items-center justify-center gap-2 cursor-pointer"
+              className="w-full min-h-[44px] py-3 bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn hover:brightness-[1.05] text-[color:var(--lkv-text-primary)] font-bold text-xs rounded-xl border border-white/20 flex items-center justify-center gap-2 cursor-pointer"
             >
               <span>↩️</span>
               Guider vers le point de départ

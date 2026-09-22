@@ -197,7 +197,7 @@ function MiniCalendar({ available }: { available: boolean }) {
   for (let d = 1; d <= daysInMonth; d++) cells.push(d);
 
   return (
-    <div className="rounded-[var(--lkv-radius-lg)] border border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface)] p-[var(--space-4)]">
+    <div className="rounded-[var(--lkv-radius-lg)] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg-medium)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset p-[var(--space-4)]">
       <div className="mb-[var(--space-3)] flex items-center justify-between">
         <span className="font-display text-[length:var(--lkv-text-body-sm)] font-bold text-[color:var(--lkv-text-primary)]">Juillet 2026</span>
         <div className="flex gap-[var(--space-3)] text-[length:var(--lkv-text-caption)]">
@@ -604,7 +604,7 @@ export default function LocationPage() {
           <Header />
           <main className="pt-20">
             {/* Hero */}
-            <section className="bg-[color:var(--lkv-primary)] px-[var(--space-4)] py-[var(--space-10)] text-[color:var(--lkv-text-inverted)]">
+            <section className="bg-[color:var(--glass-bg-medium)] border border-[color:var(--glass-border)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset px-[var(--space-4)] py-[var(--space-10)] text-[color:var(--lkv-text-primary)]">
               <div className="mx-auto max-w-7xl">
                 <div className="mb-[var(--space-3)] flex items-center gap-[var(--space-3)]">
                   <div className="flex h-10 w-10 items-center justify-center rounded-[var(--lkv-radius-md)] bg-[color:var(--lkv-secondary-subtle)]">
@@ -675,7 +675,7 @@ export default function LocationPage() {
           <div className="px-[var(--space-4)] pb-[var(--space-4)] pt-[var(--space-4)]">
             {/* Header */}
             <div className="mb-[var(--space-4)] flex items-center gap-[var(--space-3)]">
-              <div className="flex h-9 w-9 items-center justify-center rounded-[var(--lkv-radius-md)] bg-[color:var(--lkv-primary)] text-[color:var(--lkv-text-inverted)]">
+              <div className="flex h-9 w-9 items-center justify-center rounded-[var(--lkv-radius-md)] bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[color:var(--lkv-text-primary)]">
                 <Icon name="CalendarDaysIcon" size={16} variant="outline" />
               </div>
               <div>

@@ -32,7 +32,7 @@ export function MaintenanceCalendar({ events }: { events: MaintenanceEvent[] }) 
       <div className="mt-2 grid grid-cols-7 gap-1 text-center">
         {['D','L','M','M','J','V','S'].map((d, i) => <span key={i} className="text-[10px] text-[color:var(--lkv-text-muted)]">{d}</span>)}
         {cells.map((day, i) => (
-          <div key={i} className={`h-8 flex items-center justify-center text-xs rounded-[var(--lkv-radius-sm)] ${day === null ? '' : 'bg-[color:var(--lkv-surface-muted)]'}`}>
+          <div key={i} className={`h-8 flex items-center justify-center text-xs rounded-[var(--lkv-radius-sm)] ${day === null ? '' : 'bg-[color:var(--glass-bg-medium)] border border-[color:var(--glass-border)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset'}`}>
             {day !== null && (
               byDay.has(day) ? <Badge tone="warn">{day}</Badge> : <span className="text-[color:var(--lkv-primary)]">{day}</span>
             )}

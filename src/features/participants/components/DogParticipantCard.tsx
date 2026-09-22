@@ -80,7 +80,7 @@ export const DogParticipantCard: React.FC<DogParticipantCardProps> = ({
 
         {dog.isCarryingPack && (
           <>
-            <div className="h-2 w-full overflow-hidden rounded-full bg-[color:var(--lkv-surface-muted)]">
+            <div className="h-2 w-full overflow-hidden rounded-full bg-[color:var(--btn-tint)]">
               <div
                 className={`h-full rounded-full transition-all duration-300 ${
                   isOverloaded ? 'bg-[color:var(--lkv-danger)]' : 'bg-[color:var(--sage-600)]'

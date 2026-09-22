@@ -101,7 +101,7 @@ export default function ElevationProfileChart({
           </p>
         </div>
         <div className="flex items-center gap-2 text-[10px] font-mono font-bold">
-          <span className="bg-[color:var(--lkv-primary)]/10 text-[color:var(--lkv-primary)] px-2 py-0.5 rounded-full">
+          <span className="bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[color:var(--lkv-primary)] px-2 py-0.5 rounded-full">
             ▲ +{totalElevationGainM}m
           </span>
           <span className="bg-sand-500/10 text-sand-800 px-2 py-0.5 rounded-full">
@@ -114,7 +114,7 @@ export default function ElevationProfileChart({
       <div className="relative pt-6">
         {/* Hover Readout Tooltip */}
         {hoverPoint ? (
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 bg-[color:var(--lkv-primary)] text-white text-[10px] font-mono px-2.5 py-1 rounded-full  border border-white/20 z-10 transition-all">
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[color:var(--lkv-text-primary)] text-[10px] font-mono px-2.5 py-1 rounded-full  border border-white/20 z-10 transition-all">
             📍 {hoverPoint.distanceKm.toFixed(1)} km · ⛰️ {hoverPoint.elevationM} m
           </div>
         ) : (

@@ -29,7 +29,7 @@ export const TrailCard: React.FC<TrailCardProps> = ({ meta, isMine }) => {
     <Link
       href={href}
       className={`mt-[var(--space-2)] flex max-w-[240px] flex-col gap-[var(--space-1)] rounded-[var(--lkv-radius-md)] border px-[var(--space-3)] py-[var(--space-3)] shadow-elevation-1 transition-transform active:scale-[0.98] ${
-        isMine ? 'border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)]' : 'border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-card)]'
+        isMine ? 'border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)]' : 'border-[color:var(--glass-border)] bg-[color:var(--glass-bg-medium)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)]'
       }`}
     >
       <span

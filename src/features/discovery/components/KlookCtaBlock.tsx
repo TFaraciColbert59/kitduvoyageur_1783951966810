@@ -47,7 +47,7 @@ export function KlookCtaBlock({ block, className }: KlookCtaBlockProps) {
         href={block.url}
         target="_blank"
         rel={block.rel}
-        className="flex min-h-[44px] w-full shrink-0 select-none items-center justify-center gap-2 whitespace-nowrap rounded-full bg-[color:var(--lkv-action)] px-5 text-[length:var(--lkv-text-caption-1)] font-bold text-[color:var(--lkv-on-action)] no-underline shadow-sm transition-transform active:scale-[var(--motion-press-scale)] hover:bg-[color:var(--lkv-action-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)] sm:w-auto"
+        className="flex min-h-[44px] w-full shrink-0 select-none items-center justify-center gap-2 whitespace-nowrap rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] px-5 text-[length:var(--lkv-text-caption-1)] font-bold text-[color:var(--lkv-text-primary)] no-underline shadow-sm transition-transform active:scale-[var(--motion-press-scale)] hover:brightness-[1.05] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)] sm:w-auto"
       >
         <span>{block.ctaLabel}</span>
         <Icon name="external-link" className="h-3.5 w-3.5 opacity-70" />

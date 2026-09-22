@@ -10,7 +10,7 @@ interface CompteFooterProps {
 
 export default function CompteFooter({ profile }: CompteFooterProps) {
   return (
-    <div className="w-full bg-[color:var(--lkv-primary)] text-white pt-16 pb-12 px-6 sm:px-12 mt-16 rounded-t-[var(--lkv-radius-sheet)] border-t border-white/10 font-sans">
+    <div className="w-full bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[color:var(--lkv-text-primary)] pt-16 pb-12 px-6 sm:px-12 mt-16 rounded-t-[var(--lkv-radius-sheet)] border-t border-white/10 font-sans">
       <div className="max-w-7xl mx-auto flex flex-col justify-between min-h-[200px]">
         {/* Title */}
         <div className="max-w-2xl">

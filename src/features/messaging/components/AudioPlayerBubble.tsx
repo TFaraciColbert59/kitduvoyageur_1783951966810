@@ -80,8 +80,8 @@ export const AudioPlayerBubble: React.FC<AudioPlayerBubbleProps> = ({ audioUrl, 
     <div
       className={`my-[var(--space-1)] flex max-w-xs items-center gap-[var(--space-3)] rounded-[var(--lkv-radius-md)] border p-[var(--space-2)] ${
         isMine
-          ? 'border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] text-[color:var(--lkv-text-inverted)]'
-          : 'border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-card)] text-[color:var(--lkv-text-primary)] shadow-elevation-1'
+          ? 'border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] text-[color:var(--lkv-text-primary)]'
+          : 'border-[color:var(--glass-border)] bg-[color:var(--glass-bg-medium)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] text-[color:var(--lkv-text-primary)] shadow-elevation-1'
       }`}
     >
       <IconButton

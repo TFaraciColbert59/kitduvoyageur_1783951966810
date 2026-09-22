@@ -167,7 +167,7 @@ export function Step3StylePace({
                   className={`shrink-0 rounded-[var(--lkv-radius-sm)] p-[var(--space-2)] ${
                     active
                       ? 'bg-[color:var(--lkv-action-soft)] text-[color:var(--lkv-action)]'
-                      : 'bg-[color:var(--lkv-surface-muted)] text-[color:var(--lkv-text-secondary)]'
+                      : 'bg-[color:var(--glass-bg-medium)] border border-[color:var(--glass-border)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset text-[color:var(--lkv-text-secondary)]'
                   }`}
                 >
                   <Icon size={18} />

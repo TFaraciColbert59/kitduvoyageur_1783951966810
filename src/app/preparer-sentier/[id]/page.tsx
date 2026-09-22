@@ -58,7 +58,7 @@ export default async function PreparerSentierPage({
           </p>
           <Link
             href="/explorer"
-            className="mt-8 inline-flex min-h-[var(--control-height-md)] items-center justify-center rounded-full bg-[color:var(--lkv-action)] px-6 text-[length:var(--lkv-text-footnote)] font-semibold text-[color:var(--lkv-on-action)] transition-colors hover:bg-[color:var(--lkv-action-hover)]"
+            className="mt-8 inline-flex min-h-[var(--control-height-md)] items-center justify-center rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn px-6 text-[length:var(--lkv-text-footnote)] font-semibold text-[color:var(--lkv-text-primary)] transition-colors hover:brightness-[1.05]"
           >
             Revenir à l&apos;explorateur
           </Link>

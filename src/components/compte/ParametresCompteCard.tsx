@@ -311,7 +311,7 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
 
         <div className="flex items-center gap-3 shrink-0">
           {isDirty && (
-            <span className="inline-flex items-center justify-center gap-[6px] rounded-full border border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-muted)] px-[var(--space-3)] py-[2px] text-[length:var(--lkv-text-caption-2)] font-medium text-[color:var(--lkv-text-primary)] pill-warn animate-pulse text-[11px] font-bold">
+            <span className="inline-flex items-center justify-center gap-[6px] rounded-full border border-[color:var(--btn-glass-border)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn px-[var(--space-3)] py-[2px] text-[length:var(--lkv-text-caption-2)] font-medium text-[color:var(--lkv-text-primary)] pill-warn animate-pulse text-[11px] font-bold">
               Modifications ({dirtyCount})
             </span>
           )}
@@ -385,7 +385,7 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
                     Informations visibles sur votre profil et dans le réseau des voyageurs.
                   </p>
                 </div>
-                <span className="inline-flex items-center justify-center gap-[6px] rounded-full border border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-muted)] px-[var(--space-3)] py-[2px] text-[length:var(--lkv-text-caption-2)] font-medium text-[color:var(--lkv-text-primary)] text-[10px] font-mono">
+                <span className="inline-flex items-center justify-center gap-[6px] rounded-full border border-[color:var(--btn-glass-border)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn px-[var(--space-3)] py-[2px] text-[length:var(--lkv-text-caption-2)] font-medium text-[color:var(--lkv-text-primary)] text-[10px] font-mono">
                   Mis à jour le 5 oct. 2026
                 </span>
               </div>
@@ -542,7 +542,7 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
                     Choisissez où et quand être notifié (Application, Email, SMS).
                   </p>
                 </div>
-                <span className="inline-flex items-center justify-center gap-[6px] rounded-full border border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-muted)] px-[var(--space-3)] py-[2px] text-[length:var(--lkv-text-caption-2)] font-medium text-[color:var(--lkv-text-primary)] text-[10px] font-mono">
+                <span className="inline-flex items-center justify-center gap-[6px] rounded-full border border-[color:var(--btn-glass-border)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn px-[var(--space-3)] py-[2px] text-[length:var(--lkv-text-caption-2)] font-medium text-[color:var(--lkv-text-primary)] text-[10px] font-mono">
                   10 types configurés
                 </span>
               </div>
@@ -634,7 +634,7 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
                     Contrôlez la visibilité de votre profil, de vos sorties et de votre matériel.
                   </p>
                 </div>
-                <span className="inline-flex items-center justify-center gap-[6px] rounded-full border border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-muted)] px-[var(--space-3)] py-[2px] text-[length:var(--lkv-text-caption-2)] font-medium text-[color:var(--lkv-text-primary)] text-[10px] font-mono">
+                <span className="inline-flex items-center justify-center gap-[6px] rounded-full border border-[color:var(--btn-glass-border)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn px-[var(--space-3)] py-[2px] text-[length:var(--lkv-text-caption-2)] font-medium text-[color:var(--lkv-text-primary)] text-[10px] font-mono">
                   3 modes d'accès
                 </span>
               </div>
@@ -749,7 +749,7 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
                     Paramétrez la langue d'affichage, les unités et la devise.
                   </p>
                 </div>
-                <span className="inline-flex items-center justify-center gap-[6px] rounded-full border border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-muted)] px-[var(--space-3)] py-[2px] text-[length:var(--lkv-text-caption-2)] font-medium text-[color:var(--lkv-text-primary)] text-[10px] font-mono">
+                <span className="inline-flex items-center justify-center gap-[6px] rounded-full border border-[color:var(--btn-glass-border)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn px-[var(--space-3)] py-[2px] text-[length:var(--lkv-text-caption-2)] font-medium text-[color:var(--lkv-text-primary)] text-[10px] font-mono">
                   6 langues disponibles
                 </span>
               </div>
@@ -862,7 +862,7 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
                     Protégez votre compte, modifiez votre mot de passe et gérez vos connexions actives.
                   </p>
                 </div>
-                <span className="inline-flex items-center justify-center gap-[6px] rounded-full border border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-muted)] px-[var(--space-3)] py-[2px] text-[length:var(--lkv-text-caption-2)] font-medium text-[color:var(--lkv-text-primary)] pill-info text-[10px] font-mono">
+                <span className="inline-flex items-center justify-center gap-[6px] rounded-full border border-[color:var(--btn-glass-border)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn px-[var(--space-3)] py-[2px] text-[length:var(--lkv-text-caption-2)] font-medium text-[color:var(--lkv-text-primary)] pill-info text-[10px] font-mono">
                   Double facteur recommandé
                 </span>
               </div>
@@ -981,14 +981,14 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
                       className="p-3.5 rounded-[var(--lkv-radius-md)] border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] backdrop-blur-[var(--blur-md)] flex items-center justify-between gap-3 text-xs"
                     >
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-[color:var(--lkv-primary)]/10 flex items-center justify-center text-[color:var(--lkv-primary)]">
+                        <div className="w-8 h-8 rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn flex items-center justify-center text-[color:var(--lkv-primary)]">
                           💻
                         </div>
                         <div>
                           <div className="flex items-center gap-2">
                             <span className="font-bold text-[color:var(--lkv-primary)]">{sess.device}</span>
                             {sess.isCurrent && (
-                              <span className="inline-flex items-center justify-center gap-[6px] rounded-full border border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-muted)] px-[var(--space-3)] py-[2px] text-[length:var(--lkv-text-caption-2)] font-medium text-[color:var(--lkv-text-primary)] text-[9px]">
+                              <span className="inline-flex items-center justify-center gap-[6px] rounded-full border border-[color:var(--btn-glass-border)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn px-[var(--space-3)] py-[2px] text-[length:var(--lkv-text-caption-2)] font-medium text-[color:var(--lkv-text-primary)] text-[9px]">
                                 CET APPAREIL
                               </span>
                             )}
@@ -1053,7 +1053,7 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
 
       {/* 3. Sticky Bottom Save Bar */}
       {isDirty && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[var(--z-toast)] bg-[color:var(--lkv-primary)] text-white px-6 py-4 rounded-full border border-white/20 flex items-center gap-6 animate-slide-up max-w-xl w-[92%] justify-between shadow-2xl">
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[var(--z-toast)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] text-[color:var(--lkv-text-primary)] px-6 py-4 rounded-full border border-white/20 flex items-center gap-6 animate-slide-up max-w-xl w-[92%] justify-between shadow-2xl">
           <div className="flex items-center gap-3">
             <span className="w-3 h-3 rounded-full bg-[color:var(--lkv-warning)] animate-ping" />
             <span className="text-xs font-bold font-mono">

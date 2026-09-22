@@ -92,7 +92,7 @@ export default function MobileCarnetsHub({
           className="flex w-full items-center justify-center overflow-hidden py-[var(--space-2)] transition-all motion-reduce:transition-none"
           style={{ height: isRefreshing ? '44px' : `${Math.min(pullProgress * 44, 44)}px` }}
         >
-          <div className="flex items-center gap-[var(--space-2)] rounded-full border border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-card)] px-[var(--space-3)] py-[var(--space-1)] text-[length:var(--lkv-text-caption-2)] font-medium text-[color:var(--lkv-text-primary)] shadow-elevation-1">
+          <div className="flex items-center gap-[var(--space-2)] rounded-full border border-[color:var(--btn-glass-border)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] px-[var(--space-3)] py-[var(--space-1)] text-[length:var(--lkv-text-caption-2)] font-medium text-[color:var(--lkv-text-primary)] shadow-elevation-1">
             <Spinner size="xs" label="" className={isRefreshing ? '' : 'opacity-0'} />
             <span className="font-mono text-[length:var(--lkv-text-caption-2)]">
               {isRefreshing ? 'Actualisation...' : 'Tirer pour rafraîchir'}

@@ -68,8 +68,8 @@ export function MoveStepModal({
                     <span
                       className={`flex h-9 w-9 items-center justify-center rounded-full text-[length:var(--lkv-text-caption-2)] font-bold ${
                         isCurrent
-                          ? 'bg-[color:var(--lkv-primary)] text-[color:var(--lkv-text-inverted)]'
-                          : 'border border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-card)] text-[color:var(--lkv-primary)]'
+                          ? 'bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[color:var(--lkv-text-primary)]'
+                          : 'border border-[color:var(--btn-glass-border)] bg-[color:var(--btn-tint)]  text-[color:var(--lkv-primary)]'
                       }`}
                     >
                       J{dayNum}

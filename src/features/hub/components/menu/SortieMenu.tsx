@@ -449,7 +449,7 @@ export function SortieMenu({
               {kitThumbs.map((t) => (
                 <li
                   key={t.key}
-                  className="group/thumb w-[104px] shrink-0 overflow-hidden rounded-xl border border-white bg-white shadow-2xs"
+                  className="group/thumb w-[104px] shrink-0 overflow-hidden rounded-xl border border-[color:var(--glass-border)] bg-[color:var(--glass-bg-medium)] shadow-2xs"
                 >
                   <div className="relative h-14 w-full overflow-hidden bg-[var(--lkv-surface-raised)]">
                     {t.url ? (

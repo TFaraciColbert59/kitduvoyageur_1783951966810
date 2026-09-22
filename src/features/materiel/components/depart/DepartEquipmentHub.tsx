@@ -826,7 +826,7 @@ export function DepartEquipmentHub({
                         'p-2 rounded-2xl border flex items-center justify-between gap-2.5 transition-all shadow-2xs active:scale-[0.98]',
                         isItemInBag
                           ? 'bg-[var(--lkv-success)]/10 border-[var(--lkv-success)]/30'
-                          : 'border-[color:var(--lkv-border-subtle)] bg-[color:var(--lkv-surface-card)]'
+                          : 'border-[color:var(--glass-border)] bg-[color:var(--glass-bg-medium)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)]'
                       )}
                     >
                       <div className="flex items-center gap-2.5 min-w-0 flex-1">

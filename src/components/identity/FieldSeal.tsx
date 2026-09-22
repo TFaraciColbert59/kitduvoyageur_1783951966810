@@ -100,7 +100,7 @@ export default function FieldSeal({ userId, signature, size = 48, ariaLabel }: F
       role={ariaLabel ? 'img' : 'presentation'}
       aria-hidden={ariaLabel ? undefined : true}
       aria-label={ariaLabel}
-      className="rounded-full bg-[color:var(--lkv-surface-card)]/10"
+      className="rounded-full bg-[color:var(--btn-tint)]"
     >
       {rings}
       {spokes}

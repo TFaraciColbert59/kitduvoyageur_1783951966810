@@ -40,7 +40,7 @@ export default function MessageriePage() {
 
   return (
     <div
-      className="relative flex min-h-[100dvh] w-full flex-1 flex-col overflow-hidden bg-[color:var(--lkv-surface)]/75 backdrop-blur-[var(--blur-md)]"
+      className="relative flex min-h-[100dvh] w-full flex-1 flex-col overflow-hidden bg-[color:var(--glass-bg-medium)] border border-[color:var(--glass-border)] saturate-[var(--glass-sat)] lkv-rim-inset backdrop-blur-[var(--glass-blur-sm)]"
       style={{ ['--kb-inset' as string]: `${kbInset}px` }}
     >
       {/* Ambiance Liquid Glass LKDV — dégradés climatiques (tokens) */}
@@ -69,7 +69,7 @@ export default function MessageriePage() {
             </div>
           ) : !user ? (
             <Card className="m-[var(--space-4)] w-full max-w-md text-center">
-              <div className="mx-auto mb-[var(--space-4)] flex size-16 items-center justify-center rounded-full bg-[color:var(--lkv-primary)]/10 text-2xl text-[color:var(--lkv-primary)]">
+              <div className="mx-auto mb-[var(--space-4)] flex size-16 items-center justify-center rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-2xl text-[color:var(--lkv-primary)]">
                 💬
               </div>
               <h2 className="text-[length:var(--lkv-text-title-sm)] font-bold text-[color:var(--lkv-primary)]">

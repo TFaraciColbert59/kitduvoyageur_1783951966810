@@ -130,7 +130,7 @@ export default function CarnetHubCard({
       className="group relative block h-full"
     >
       <Card className="flex h-full flex-col overflow-hidden p-0 transition-transform duration-[var(--motion-control-duration)] group-hover:-translate-y-1 group-hover:shadow-elevation-3 motion-reduce:transition-none">
-        <div className="relative aspect-[16/10] w-full overflow-hidden bg-[color:var(--lkv-primary)]">
+        <div className="relative aspect-[16/10] w-full overflow-hidden bg-[color:var(--btn-tint)]">
           {coverUrl ? (
             <SmartImage
               src={coverUrl}
@@ -144,12 +144,12 @@ export default function CarnetHubCard({
 
           <div className="pointer-events-none absolute left-[var(--space-3)] top-[var(--space-3)] flex flex-wrap items-center gap-[var(--space-1)]">
             {destinationStr && (
-              <Badge className="border-[color:var(--glass-border)] bg-[color:var(--lkv-primary)]/40 font-mono font-bold text-[color:var(--lkv-text-inverted)] backdrop-blur-[var(--blur-md)]">
+              <Badge className="border-[color:var(--glass-border)] bg-[color:var(--btn-tint)] border saturate-[var(--btn-saturate)] lkv-rim-btn font-mono font-bold text-[color:var(--lkv-text-primary)] backdrop-blur-[var(--btn-blur)]">
                 📍 {destinationStr}
               </Badge>
             )}
             {dateStr && (
-              <Badge className="border-[color:var(--glass-border)] bg-[color:var(--lkv-primary)]/40 font-mono text-[color:var(--lkv-text-inverted)] backdrop-blur-[var(--blur-md)]">
+              <Badge className="border-[color:var(--glass-border)] bg-[color:var(--btn-tint)] border saturate-[var(--btn-saturate)] lkv-rim-btn font-mono text-[color:var(--lkv-text-primary)] backdrop-blur-[var(--btn-blur)]">
                 {dateStr}
               </Badge>
             )}
@@ -176,7 +176,7 @@ export default function CarnetHubCard({
             {Number(carnet.route_rating) > 0 ? (
               <span className="font-bold text-[color:var(--sand-300)]">★ {carnet.route_rating}/10</span>
             ) : (
-              <Badge className="border-[color:var(--glass-border)] bg-[color:var(--lkv-primary)]/20 font-mono font-bold text-[color:var(--lkv-text-inverted)] backdrop-blur-[var(--blur-md)]">Nouveau</Badge>
+              <Badge className="border-[color:var(--glass-border)] bg-[color:var(--btn-tint)] border saturate-[var(--btn-saturate)] lkv-rim-btn font-mono font-bold text-[color:var(--lkv-text-primary)] backdrop-blur-[var(--btn-blur)]">Nouveau</Badge>
             )}
           </div>
         </div>
@@ -221,7 +221,7 @@ export default function CarnetHubCard({
                   className="h-6 w-6 shrink-0 rounded-full border border-[color:var(--lkv-primary)]/15 object-cover transition-transform group-hover/author:scale-105 motion-reduce:transition-none"
                 />
               ) : (
-                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-[color:var(--lkv-primary)]/15 bg-[color:var(--lkv-primary)] text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-inverted)]">
+                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-[color:var(--lkv-primary)]/15 bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-primary)]">
                   {authorName.charAt(0).toUpperCase()}
                 </span>
               )}

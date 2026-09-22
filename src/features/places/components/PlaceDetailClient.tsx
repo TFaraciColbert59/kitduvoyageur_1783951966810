@@ -240,7 +240,7 @@ export function PlaceDetailClient({ place, reviews, photos, userTrips }: PlaceDe
             {photos.map((photo) => (
               <div
                 key={photo.id}
-                className="relative aspect-video overflow-hidden rounded-[var(--lkv-radius-md)] bg-[color:var(--lkv-surface-muted)]"
+                className="relative aspect-video overflow-hidden rounded-[var(--lkv-radius-md)] bg-[color:var(--glass-bg-medium)]"
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img

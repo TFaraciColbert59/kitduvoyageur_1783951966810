@@ -392,7 +392,7 @@ export default function MaProgressionView({ initialProfile, compact = false }: M
       return (
         <div className="w-full space-y-6">
           <Card variant="featured" className="p-6 sm:p-8 text-center">
-            <div className="w-14 h-14 rounded-2xl bg-[color:var(--lkv-primary)] text-[color:var(--lkv-text-inverted)] flex items-center justify-center mx-auto mb-4 shadow-md">
+            <div className="w-14 h-14 rounded-2xl bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] text-[color:var(--lkv-text-primary)] flex items-center justify-center mx-auto mb-4 shadow-md">
               <Trophy size={28} className="text-sand-200" />
             </div>
             <h2 className="font-display font-bold text-2xl text-[var(--lkv-primary)] mb-2">
@@ -404,7 +404,7 @@ export default function MaProgressionView({ initialProfile, compact = false }: M
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
               <Link
                 href="/connexion"
-                className="inline-flex w-full items-center justify-center gap-[var(--space-2)] min-h-[var(--control-height-md)] rounded-full px-[var(--space-5)] text-[length:var(--lkv-text-body-sm)] font-semibold bg-[color:var(--lkv-action)] text-[color:var(--lkv-on-action)] shadow-elevation-1 sm:w-auto"
+                className="inline-flex w-full items-center justify-center gap-[var(--space-2)] min-h-[var(--control-height-md)] rounded-full px-[var(--space-5)] text-[length:var(--lkv-text-body-sm)] font-semibold bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] text-[color:var(--lkv-text-primary)] shadow-elevation-1 sm:w-auto"
               >
                 Se connecter / Créer un compte
               </Link>
@@ -562,7 +562,7 @@ export default function MaProgressionView({ initialProfile, compact = false }: M
             >
               <span
                 aria-hidden="true"
-                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-white text-[var(--lkv-primary)] shadow-sm"
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] text-[var(--lkv-primary)] shadow-sm"
               >
                 <Icon name={data.icon} size={15} />
               </span>
@@ -883,7 +883,7 @@ export default function MaProgressionView({ initialProfile, compact = false }: M
                 >
                   <span
                     aria-hidden="true"
-                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white text-lg shadow-sm"
+                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] text-lg shadow-sm"
                   >
                     {distinction.icon ?? <Award size={16} className="text-[var(--lkv-secondary)]" />}
                   </span>

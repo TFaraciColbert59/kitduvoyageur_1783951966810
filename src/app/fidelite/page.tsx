@@ -41,7 +41,7 @@ interface PointsHistory {
 }
 
 const LEVELS: LoyaltyLevel[] = [
-  { name: 'Explorateur', minPoints: 0, color: 'text-[color:var(--lkv-text-secondary)]', bg: 'bg-[color:var(--lkv-surface-muted)] border-[color:var(--lkv-border)]', tone: 'stone', badge: '🥾', perks: ['Accès au programme de fidélité', 'Newsletter exclusive'] },
+  { name: 'Explorateur', minPoints: 0, color: 'text-[color:var(--lkv-text-secondary)]', bg: 'bg-[color:var(--glass-bg-medium)] border backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset border-[color:var(--glass-border)]', tone: 'stone', badge: '🥾', perks: ['Accès au programme de fidélité', 'Newsletter exclusive'] },
   { name: 'Aventurier', minPoints: 500, color: 'text-[color:var(--lkv-success)]', bg: 'bg-[color:var(--lkv-success-bg)] border-[color:var(--lkv-success)]', tone: 'sage', badge: '🏕️', perks: ['5% de réduction sur les kits', 'Accès prioritaire aux ventes flash', 'Badge profil'] },
   { name: 'Randonneur Expert', minPoints: 1500, color: 'text-[color:var(--lkv-info)]', bg: 'bg-[color:var(--lkv-info-bg)] border-[color:var(--lkv-info)]', tone: 'info', badge: '🧗', perks: ['10% de réduction permanente', 'Livraison gratuite', 'Accès bêta nouvelles fonctionnalités'] },
   { name: 'Guide de Montagne', minPoints: 3500, color: 'text-[color:var(--sage-700)]', bg: 'bg-[color:var(--sage-50)] border-[color:var(--sage-300)]', tone: 'sage', badge: '🏔️', perks: ['15% de réduction', 'Accès partenaires exclusifs', 'Consultation équipement gratuite', 'Invitation événements'] },
@@ -146,7 +146,7 @@ export default function FidelitePage() {
       )}
       {!error && (
         <>
-          <section className="relative overflow-hidden bg-[color:var(--lkv-primary)] px-[var(--space-4)] py-[var(--space-12)] text-[color:var(--lkv-text-inverted)]">
+          <section className="relative overflow-hidden bg-[color:var(--glass-bg-medium)] border border-[color:var(--glass-border)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset px-[var(--space-4)] py-[var(--space-12)] text-[color:var(--lkv-text-primary)]">
             <div className="relative z-[var(--z-sticky)] mx-auto max-w-7xl">
               <div className="flex flex-col items-start justify-between gap-[var(--space-6)] lg:flex-row lg:items-center">
                 <div>
@@ -227,7 +227,7 @@ export default function FidelitePage() {
                         const isCurrent = level.name === currentLevel.name;
                         return (
                           <div key={level.name} className="flex w-16 flex-col items-center gap-[var(--space-1)] md:w-24 md:gap-[var(--space-2)]">
-                            <div className={`flex h-8 w-8 items-center justify-center rounded-full border-2 text-[length:var(--lkv-text-body-sm)] transition-all md:h-12 md:w-12 md:text-[length:var(--lkv-text-headline)] ${isCurrent ? 'scale-110 border-[color:var(--lkv-primary)] bg-[color:var(--lkv-primary-subtle)]' : isUnlocked ? 'border-[color:var(--lkv-success)] bg-[color:var(--lkv-success-bg)]' : 'border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-card)] opacity-40'}`}>
+                            <div className={`flex h-8 w-8 items-center justify-center rounded-full border-2 text-[length:var(--lkv-text-body-sm)] transition-all md:h-12 md:w-12 md:text-[length:var(--lkv-text-headline)] ${isCurrent ? 'scale-110 border-[color:var(--lkv-primary)] bg-[color:var(--lkv-primary-subtle)]' : isUnlocked ? 'border-[color:var(--lkv-success)] bg-[color:var(--lkv-success-bg)]' : 'border-[color:var(--btn-glass-border)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn opacity-40'}`}>
                               {level.badge}
                             </div>
                             <div className="text-center">

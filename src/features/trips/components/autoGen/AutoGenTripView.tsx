@@ -89,9 +89,9 @@ export const AutoGenTripView: React.FC<AutoGenTripViewProps> = ({
   const maxWeightKg = 14.0; // 20% de 70kg
 
   return (
-    <div className="min-h-screen w-full bg-[color:var(--lkv-surface-paper)] pb-32">
+    <div className="min-h-screen w-full bg-[color:var(--glass-bg-medium)] border border-[color:var(--glass-border)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset pb-32">
       {/* Barre supérieure : Saisie d'intention */}
-      <div className="sticky top-0 z-[var(--z-sticky)] border-b border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-paper)] px-4 py-4 backdrop-blur-[var(--blur-md)]">
+      <div className="sticky top-0 z-[var(--z-sticky)] border-b border-[color:var(--glass-border)] bg-[color:var(--glass-bg-medium)] saturate-[var(--glass-sat)] lkv-rim-inset px-4 py-4 backdrop-blur-[var(--glass-blur-sm)]">
         <TripBriefBar
           initialValue={initialBriefInput}
           onGenerate={handleGenerate}

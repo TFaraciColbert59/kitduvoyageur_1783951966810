@@ -143,7 +143,7 @@ export default function SpeciesIdentifier({ momentId, onIdentified }: Props) {
         <div className="space-y-[var(--space-3)]">
           <div className="flex items-start justify-between gap-[var(--space-3)]">
             <div className="flex items-center gap-[var(--space-2)]">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[var(--lkv-radius-2xl)] border border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-muted)] text-[length:var(--lkv-text-title-sm)]" aria-hidden>
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[var(--lkv-radius-2xl)] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg-medium)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset text-[length:var(--lkv-text-title-sm)]" aria-hidden>
                 {GROUP_ICONS[species.group] || '🌿'}
               </div>
               <div>

@@ -134,7 +134,7 @@ function AuthForm() {
                 }}
                 className={`flex-1 rounded-[var(--lkv-radius-control)] py-2.5 text-[length:var(--lkv-text-footnote)] font-semibold transition-colors duration-[var(--motion-control-duration)] ${
                   isActive
-                    ? 'bg-[color:var(--lkv-primary)] text-[color:var(--lkv-text-inverted)] shadow-elevation-1'
+                    ? 'bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] text-[color:var(--lkv-text-primary)] shadow-elevation-1'
                     : 'text-[color:var(--lkv-text-muted)] hover:text-[color:var(--lkv-text-primary)]'
                 }`}
               >

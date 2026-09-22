@@ -49,7 +49,7 @@ const RAYONS = [
 ];
 
 const CTA_CLASS =
-  'inline-flex min-h-[var(--control-height-md)] items-center justify-center gap-[var(--space-1)] rounded-full bg-[color:var(--lkv-action)] px-[var(--space-5)] text-[length:var(--lkv-text-footnote)] font-semibold text-[color:var(--lkv-on-action)] transition-transform hover:bg-[color:var(--lkv-action-hover)] active:scale-[var(--motion-press-scale)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)] motion-reduce:transition-none';
+  'inline-flex min-h-[var(--control-height-md)] items-center justify-center gap-[var(--space-1)] rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn px-[var(--space-5)] text-[length:var(--lkv-text-footnote)] font-semibold text-[color:var(--lkv-text-primary)] transition-transform hover:brightness-[1.05] active:scale-[var(--motion-press-scale)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)] motion-reduce:transition-none';
 
 export default function BoutiquePage() {
   const webPageSchema = {

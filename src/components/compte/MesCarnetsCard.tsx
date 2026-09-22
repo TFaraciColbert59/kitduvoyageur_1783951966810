@@ -34,7 +34,7 @@ export default function MesCarnetsCard({ carnets }: MesCarnetsCardProps) {
           </Link>
           <Link
             href="/carnets/nouveau"
-            className="inline-flex items-center justify-center gap-[var(--space-2)] min-h-[var(--lkv-touch-min)] rounded-full px-[var(--space-4)] py-[var(--space-2)] text-[length:var(--lkv-text-footnote)] font-semibold backdrop-blur-[var(--blur-md)] border border-transparent bg-[color:var(--lkv-action)] text-[color:var(--lkv-on-action)] shadow-elevation-1 !py-2 !px-4 !min-h-[0] text-xs font-bold"
+            className="inline-flex items-center justify-center gap-[var(--space-2)] min-h-[var(--lkv-touch-min)] rounded-full px-[var(--space-4)] py-[var(--space-2)] text-[length:var(--lkv-text-footnote)] font-semibold backdrop-blur-[var(--btn-blur)] border border-transparent bg-[color:var(--btn-tint)] saturate-[var(--btn-saturate)] text-[color:var(--lkv-text-primary)] shadow-elevation-1 !py-2 !px-4 !min-h-[0] text-xs font-bold"
           >
             <Icon name="PlusIcon" size={14} />
             <span>+ Nouveau</span>
@@ -66,7 +66,7 @@ export default function MesCarnetsCard({ carnets }: MesCarnetsCardProps) {
                 />
                 <div className="absolute top-3 left-3">
                   {item.status === 'Publié' ? (
-                    <Badge className="border-transparent bg-[color:var(--lkv-primary)]/80 text-[color:var(--lkv-text-inverted)] backdrop-blur-md">
+                    <Badge className="border-transparent bg-[color:var(--btn-tint)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[color:var(--lkv-text-primary)] backdrop-blur-[var(--btn-blur)]">
                       Publié
                     </Badge>
                   ) : (

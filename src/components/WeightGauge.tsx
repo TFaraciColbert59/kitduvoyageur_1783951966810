@@ -82,7 +82,7 @@ export default function WeightGauge({
           </span>
         </div>
       )}
-      <div className={`relative overflow-visible rounded-full bg-[color:var(--lkv-surface-muted)] ${SIZE_CLASS[size]}`} aria-hidden="true">
+      <div className={`relative overflow-visible rounded-full bg-[color:var(--btn-tint)] ${SIZE_CLASS[size]}`} aria-hidden="true">
         <div
           ref={fillRef}
           className="absolute left-0 top-0 h-full rounded-full"

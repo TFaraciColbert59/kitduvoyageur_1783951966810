@@ -88,7 +88,7 @@ export default function DesktopRightPanel({
   return (
     <div className="hidden md:flex absolute top-[96px] right-5 w-[340px] max-h-[calc(100%-180px)] flex-col gap-3.5 z-30 select-none overflow-y-auto custom-scrollbar">
       {/* 1. Live Stats Panel */}
-      <div className="bg-[color:var(--lkv-surface)]/92 backdrop-blur-2xl border border-[color:var(--lkv-primary)]/07 rounded-2xl shadow-xl overflow-hidden p-4 space-y-3">
+      <div className="bg-[color:var(--glass-bg-medium)] saturate-[var(--glass-sat)] backdrop-blur-[var(--glass-blur-sm)] border border-[color:var(--lkv-primary)]/07 rounded-2xl shadow-xl overflow-hidden p-4 space-y-3">
         <div className="flex justify-between items-baseline">
           <span className="text-[11px] uppercase tracking-widest text-[color:var(--lkv-text-muted)] font-semibold">
             Stats en direct
@@ -116,7 +116,7 @@ export default function DesktopRightPanel({
           </div>
 
           {/* Cell 2: Durée */}
-          <div className="p-3 bg-[color:var(--lkv-primary)]/04 border border-[color:var(--lkv-primary)]/05 rounded-2xl">
+          <div className="p-3 bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn border border-[color:var(--lkv-primary)]/05 rounded-2xl">
             <div className="font-mono text-[9px] uppercase tracking-widest text-[color:var(--lkv-text-muted)] leading-none">
               Durée
             </div>
@@ -129,7 +129,7 @@ export default function DesktopRightPanel({
           </div>
 
           {/* Cell 3: Vitesse actuelle */}
-          <div className="p-3 bg-[color:var(--lkv-primary)]/04 border border-[color:var(--lkv-primary)]/05 rounded-2xl">
+          <div className="p-3 bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn border border-[color:var(--lkv-primary)]/05 rounded-2xl">
             <div className="font-mono text-[9px] uppercase tracking-widest text-[color:var(--lkv-text-muted)] leading-none">
               Vitesse actuelle
             </div>
@@ -143,7 +143,7 @@ export default function DesktopRightPanel({
           </div>
 
           {/* Cell 4: D+ */}
-          <div className="p-3 bg-[color:var(--lkv-primary)]/04 border border-[color:var(--lkv-primary)]/05 rounded-2xl">
+          <div className="p-3 bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn border border-[color:var(--lkv-primary)]/05 rounded-2xl">
             <div className="font-mono text-[9px] uppercase tracking-widest text-[color:var(--lkv-text-muted)] leading-none">
               D+ · dénivelé
             </div>
@@ -157,7 +157,7 @@ export default function DesktopRightPanel({
           </div>
 
           {/* Cell 5: D- */}
-          <div className="p-3 bg-[color:var(--lkv-primary)]/04 border border-[color:var(--lkv-primary)]/05 rounded-2xl">
+          <div className="p-3 bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn border border-[color:var(--lkv-primary)]/05 rounded-2xl">
             <div className="font-mono text-[9px] uppercase tracking-widest text-[color:var(--lkv-text-muted)] leading-none">
               D− · dénivelé
             </div>
@@ -173,7 +173,7 @@ export default function DesktopRightPanel({
       </div>
 
       {/* 2. Copilot Panel */}
-      <div className="bg-[color:var(--lkv-surface)]/92 backdrop-blur-2xl border border-[color:var(--lkv-primary)]/07 rounded-2xl shadow-xl overflow-hidden p-4 space-y-3">
+      <div className="bg-[color:var(--glass-bg-medium)] saturate-[var(--glass-sat)] backdrop-blur-[var(--glass-blur-sm)] border border-[color:var(--lkv-primary)]/07 rounded-2xl shadow-xl overflow-hidden p-4 space-y-3">
         <div className="flex justify-between items-baseline">
           <span className="text-[11px] uppercase tracking-widest text-[color:var(--lkv-text-muted)] font-semibold">
             Copilote <em className="font-serif italic text-[color:var(--lkv-primary)] font-normal">LKDV IA</em>
@@ -203,8 +203,8 @@ export default function DesktopRightPanel({
               key={idx}
               className={`p-2.5 rounded-xl text-xs leading-relaxed ${
                 msg.sender === 'user'
-                  ? 'bg-[color:var(--lkv-primary)] text-white ml-auto max-w-[85%]'
-                  : 'bg-[color:var(--lkv-primary)]/04 text-[color:var(--lkv-primary)]'
+                  ? 'bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[color:var(--lkv-text-primary)] ml-auto max-w-[85%]'
+                  : 'bg-[color:var(--btn-tint)]  text-[color:var(--lkv-primary)]'
               }`}
             >
               {msg.text}
@@ -212,7 +212,7 @@ export default function DesktopRightPanel({
               {msg.sender === 'ai' && idx === 0 && (
                 <div className="flex flex-wrap gap-1.5 mt-2">
                   {remainingDistanceKm != null && remainingDistanceKm > 0 && (
-                    <span className="px-2 py-0.5 bg-[color:var(--lkv-surface)] border border-[color:var(--lkv-primary)]/06 rounded-full font-mono text-[9px] text-[color:var(--lkv-primary)] inline-flex items-center gap-1">
+                    <span className="px-2 py-0.5 bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn border border-[color:var(--lkv-primary)]/06 rounded-full font-mono text-[9px] text-[color:var(--lkv-primary)] inline-flex items-center gap-1">
                       <svg className="w-2.5 h-2.5 fill-none stroke-current stroke-[2]" viewBox="0 0 24 24">
                         <path d="M4 21l16-8L4 5v6l10 2-10 2z" />
                       </svg>
@@ -220,7 +220,7 @@ export default function DesktopRightPanel({
                     </span>
                   )}
                   {elevationGainM != null && elevationGainM > 0 && (
-                    <span className="px-2 py-0.5 bg-[color:var(--lkv-surface)] border border-[color:var(--lkv-primary)]/06 rounded-full font-mono text-[9px] text-[color:var(--lkv-primary)] inline-flex items-center gap-1">
+                    <span className="px-2 py-0.5 bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn border border-[color:var(--lkv-primary)]/06 rounded-full font-mono text-[9px] text-[color:var(--lkv-primary)] inline-flex items-center gap-1">
                       <svg className="w-2.5 h-2.5 fill-none stroke-current stroke-[2]" viewBox="0 0 24 24">
                         <path d="M4 20l6-12 4 6 4-2 2 8" />
                       </svg>
@@ -228,7 +228,7 @@ export default function DesktopRightPanel({
                     </span>
                   )}
                   {weatherCondition && (
-                    <span className="px-2 py-0.5 bg-[color:var(--lkv-surface)] border border-[color:var(--lkv-primary)]/06 rounded-full font-mono text-[9px] text-[color:var(--lkv-primary)] inline-flex items-center gap-1">
+                    <span className="px-2 py-0.5 bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn border border-[color:var(--lkv-primary)]/06 rounded-full font-mono text-[9px] text-[color:var(--lkv-primary)] inline-flex items-center gap-1">
                       <svg className="w-2.5 h-2.5 fill-none stroke-current stroke-[2]" viewBox="0 0 24 24">
                         <circle cx="12" cy="12" r="9" />
                         <path d="M12 7v5l3 2" />
@@ -252,7 +252,7 @@ export default function DesktopRightPanel({
             <button
               key={q}
               onClick={() => handleSendQuestion(q)}
-              className="px-2.5 py-1 bg-[color:var(--lkv-surface)] border border-[color:var(--lkv-primary)]/08 rounded-full text-[11px] text-[color:var(--lkv-text-secondary)] hover:bg-[color:var(--lkv-forest-50)] transition-colors inline-flex items-center gap-1 active:scale-95"
+              className="px-2.5 py-1 bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn border border-[color:var(--lkv-primary)]/08 rounded-full text-[11px] text-[color:var(--lkv-text-secondary)] hover:bg-[color:var(--lkv-forest-50)] transition-colors inline-flex items-center gap-1 active:scale-95"
             >
               <span>{q}</span>
             </button>
@@ -277,7 +277,7 @@ export default function DesktopRightPanel({
           <button
             type="submit"
             aria-label="Envoyer la question"
-            className="w-8 h-8 rounded-full bg-[color:var(--lkv-primary)] text-white flex items-center justify-center active:scale-95 transition-transform"
+            className="w-8 h-8 rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[color:var(--lkv-text-primary)] flex items-center justify-center active:scale-95 transition-transform"
           >
             <svg className="w-3.5 h-3.5 fill-none stroke-current stroke-[2]" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 2a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z" />

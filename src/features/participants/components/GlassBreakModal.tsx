@@ -68,7 +68,7 @@ export const GlassBreakModal: React.FC<GlassBreakModalProps> = ({
     >
       <div className="space-y-[var(--space-5)]">
         <div className="flex items-center gap-[var(--space-3)]">
-          <div className="flex h-12 w-12 items-center justify-center rounded-[var(--lkv-radius-md)] bg-[color:var(--lkv-surface-muted)] text-[length:var(--lkv-text-title-sm)] font-bold text-[color:var(--lkv-text-primary)]">
+          <div className="flex h-12 w-12 items-center justify-center rounded-[var(--lkv-radius-md)] bg-[color:var(--glass-bg-medium)] border border-[color:var(--glass-border)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset text-[length:var(--lkv-text-title-sm)] font-bold text-[color:var(--lkv-text-primary)]">
             {publicData.firstName[0]}
           </div>
           <span className="font-mono text-[10px] uppercase tracking-widest text-[color:var(--lkv-text-muted)]">
@@ -166,7 +166,7 @@ export const GlassBreakModal: React.FC<GlassBreakModalProps> = ({
 
                   <a
                     href={`tel:${privateData.iceContact.phone.replace(/\s+/g, '')}`}
-                    className="inline-flex min-h-[var(--control-height-sm)] items-center gap-[var(--space-1)] rounded-full bg-[color:var(--lkv-action)] px-[var(--space-3)] text-[length:var(--lkv-text-footnote)] font-bold text-[color:var(--lkv-on-action)] transition-colors hover:bg-[color:var(--lkv-action-hover)]"
+                    className="inline-flex min-h-[var(--control-height-sm)] items-center gap-[var(--space-1)] rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn px-[var(--space-3)] text-[length:var(--lkv-text-footnote)] font-bold text-[color:var(--lkv-text-primary)] transition-colors hover:brightness-[1.05]"
                   >
                     📞 Appeler
                   </a>

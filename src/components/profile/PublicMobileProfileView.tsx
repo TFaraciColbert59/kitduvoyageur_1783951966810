@@ -109,7 +109,7 @@ export default function PublicMobileProfileView({
           <div className="flex items-center gap-4 mb-3">
             <div className="relative shrink-0">
               <div className="w-[76px] h-[76px] rounded-full overflow-hidden flex items-center justify-center p-[2px] relative shadow-xs bg-gradient-to-br from-[color:var(--sage-300)] to-[color:var(--lkv-primary)]">
-                <div className="w-full h-full rounded-full overflow-hidden bg-[color:var(--lkv-surface-card)] flex items-center justify-center">
+                <div className="w-full h-full rounded-full overflow-hidden bg-[color:var(--btn-tint)] flex items-center justify-center">
                   {profile.avatar_url ? (
                     <SmartImage
                       src={profile.avatar_url}
@@ -505,7 +505,7 @@ export default function PublicMobileProfileView({
                     <ListItem
                       key={item.id}
                       leading={
-                        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[color:var(--lkv-surface-muted)] text-[color:var(--lkv-primary)]">
+                        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[color:var(--lkv-primary)]">
                           <Icon name={ACTIVITY_ICONS[item.icon_type] ?? 'compass'} size={14} />
                         </span>
                       }

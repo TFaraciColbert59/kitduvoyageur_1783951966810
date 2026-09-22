@@ -140,8 +140,8 @@ export const GPXPreviewCard: React.FC<GPXPreviewCardProps> = ({
       variant="compact"
       className={`my-[var(--space-2)] overflow-hidden ${
         isMine
-          ? 'border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] text-[color:var(--lkv-text-inverted)]'
-          : 'border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-card)] text-[color:var(--lkv-text-primary)] shadow-elevation-1'
+          ? 'border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] text-[color:var(--lkv-text-primary)]'
+          : 'border-[color:var(--glass-border)] bg-[color:var(--glass-bg-medium)] border backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] text-[color:var(--lkv-text-primary)] shadow-elevation-1'
       }`}
     >
       <div className="mb-[var(--space-2)] flex items-center justify-between gap-[var(--space-2)]">
@@ -165,7 +165,7 @@ export const GPXPreviewCard: React.FC<GPXPreviewCardProps> = ({
             className={`flex size-8 shrink-0 items-center justify-center rounded-full transition-colors ${
               isMine
                 ? 'bg-[color:var(--card-tint-strong)] text-[color:var(--lkv-text-primary)]'
-                : 'bg-[color:var(--lkv-action)] text-[color:var(--lkv-text-inverted)]'
+                : 'bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[color:var(--lkv-text-primary)]'
             }`}
             title="Télécharger le fichier GPX"
             aria-label="Télécharger le fichier GPX"
@@ -192,7 +192,7 @@ export const GPXPreviewCard: React.FC<GPXPreviewCardProps> = ({
       ) : (
         <div className="space-y-[var(--space-2)]">
           {/* SVG Map Path Preview */}
-          <div className="relative flex h-24 w-full items-center justify-center overflow-hidden rounded-[var(--lkv-radius-sm)] border border-[color:var(--lkv-border)] bg-[color:var(--lkv-primary)]/10 p-[var(--space-1)]">
+          <div className="relative flex h-24 w-full items-center justify-center overflow-hidden rounded-[var(--lkv-radius-sm)] border border-[color:var(--btn-glass-border)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn p-[var(--space-1)]">
             <svg viewBox="0 0 240 90" className="size-full">
               <polyline
                 fill="none"
@@ -210,21 +210,21 @@ export const GPXPreviewCard: React.FC<GPXPreviewCardProps> = ({
 
           {/* Stats Grid */}
           <div className="grid grid-cols-3 gap-[var(--space-1)] text-center">
-            <div className="rounded-[var(--lkv-radius-sm)] bg-[color:var(--lkv-primary)]/5 p-[var(--space-1)]">
+            <div className="rounded-[var(--lkv-radius-sm)] bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn p-[var(--space-1)]">
               <span className="block text-[length:var(--lkv-text-caption-2)] font-semibold uppercase tracking-wider opacity-70">
                 Distance
               </span>
               <span className="font-mono text-[length:var(--lkv-text-caption)] font-bold">{stats.distKm} km</span>
             </div>
 
-            <div className="rounded-[var(--lkv-radius-sm)] bg-[color:var(--lkv-primary)]/5 p-[var(--space-1)]">
+            <div className="rounded-[var(--lkv-radius-sm)] bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn p-[var(--space-1)]">
               <span className="block text-[length:var(--lkv-text-caption-2)] font-semibold uppercase tracking-wider opacity-70">
                 Dénivelé D+
               </span>
               <span className="font-mono text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-secondary)]">+{stats.dPlus} m</span>
             </div>
 
-            <div className="rounded-[var(--lkv-radius-sm)] bg-[color:var(--lkv-primary)]/5 p-[var(--space-1)]">
+            <div className="rounded-[var(--lkv-radius-sm)] bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn p-[var(--space-1)]">
               <span className="block text-[length:var(--lkv-text-caption-2)] font-semibold uppercase tracking-wider opacity-70">
                 Alt. Max
               </span>

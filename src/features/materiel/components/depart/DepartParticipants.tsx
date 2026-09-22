@@ -125,7 +125,7 @@ export function DepartParticipants({ participants, emergencyContact }: DepartPar
           <div className="grid grid-cols-2 gap-2 text-xs">
             <a
               href="tel:112"
-              className="p-2 rounded-xl bg-white/70 border border-white/60 flex items-center justify-between hover:bg-white text-[var(--lkv-primary)] font-semibold cursor-pointer"
+              className="p-2 rounded-xl bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] flex items-center justify-between hover:brightness-[1.05] text-[var(--lkv-primary)] font-semibold cursor-pointer"
             >
               <div className="flex items-center gap-1.5">
                 <AlertOctagon size={13} className="text-[var(--lkv-danger)]" />
@@ -136,7 +136,7 @@ export function DepartParticipants({ participants, emergencyContact }: DepartPar
 
             <a
               href="tel:15"
-              className="p-2 rounded-xl bg-white/70 border border-white/60 flex items-center justify-between hover:bg-white text-[var(--lkv-primary)] font-semibold cursor-pointer"
+              className="p-2 rounded-xl bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] flex items-center justify-between hover:brightness-[1.05] text-[var(--lkv-primary)] font-semibold cursor-pointer"
             >
               <div className="flex items-center gap-1.5">
                 <Radio size={13} className="text-[var(--lkv-primary-hover)]" />

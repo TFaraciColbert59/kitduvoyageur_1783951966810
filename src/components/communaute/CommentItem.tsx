@@ -62,7 +62,7 @@ export default function CommentItem({
 
   const profileId = comment.author_id || comment.author?.id;
   const authorBlock = (
-    <div className="mt-[var(--space-1)] flex size-7 shrink-0 items-center justify-center overflow-hidden rounded-full border border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-muted)] text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-primary)]">
+    <div className="mt-[var(--space-1)] flex size-7 shrink-0 items-center justify-center overflow-hidden rounded-full border border-[color:var(--btn-glass-border)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-primary)]">
       {comment.author?.avatar_url ? (
         <img src={comment.author.avatar_url} alt={comment.author?.full_name || 'Utilisateur'} className="size-full object-cover" />
       ) : comment.author?.full_name?.charAt(0) || 'V'}
@@ -285,12 +285,12 @@ export default function CommentItem({
 
         {/* Report Inline Popover Form */}
         {isReporting && (
-          <div className="mt-[var(--space-3)] space-y-[var(--space-2)] rounded-[var(--lkv-radius-sm)] border border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-card)] p-[var(--space-3)] text-[length:var(--lkv-text-caption)]">
+          <div className="mt-[var(--space-3)] space-y-[var(--space-2)] rounded-[var(--lkv-radius-sm)] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg-medium)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset p-[var(--space-3)] text-[length:var(--lkv-text-caption)]">
             <p className="font-bold text-[color:var(--lkv-text-primary)]">Motif du signalement :</p>
             <select
               value={reportReason}
               onChange={(e) => setReportReason(e.target.value)}
-              className="w-full rounded-[var(--lkv-radius-xs)] border border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-muted)] p-1.5 text-[length:var(--lkv-text-caption)]"
+              className="w-full rounded-[var(--lkv-radius-xs)] border border-[color:var(--btn-glass-border)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] p-1.5 text-[length:var(--lkv-text-caption)]"
             >
               <option value="Propos inappropriés">Propos inappropriés / Injurieux</option>
               <option value="Spam / Publicité">Spam ou publicité non sollicitée</option>
@@ -310,7 +310,7 @@ export default function CommentItem({
 
         {/* Success toast badge */}
         {reportSuccessMsg && (
-          <div className="mt-[var(--space-2)] rounded-[var(--lkv-radius-xs)] border border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-muted)] px-[var(--space-2)] py-[var(--space-1)] text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-secondary)]">
+          <div className="mt-[var(--space-2)] rounded-[var(--lkv-radius-xs)] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg-medium)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset px-[var(--space-2)] py-[var(--space-1)] text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-secondary)]">
             {reportSuccessMsg}
           </div>
         )}

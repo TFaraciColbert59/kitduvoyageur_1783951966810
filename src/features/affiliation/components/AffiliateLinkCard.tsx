@@ -85,7 +85,7 @@ export function AffiliateLinkCard({ link, tripId }: AffiliateLinkCardProps) {
           href={href}
           target="_blank"
           rel="sponsored nofollow"
-          className="inline-flex min-h-[var(--lkv-touch-min)] w-full items-center justify-center gap-[var(--space-2)] rounded-full bg-[color:var(--lkv-action)] px-[var(--space-4)] text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-on-action)] shadow-elevation-1 transition-transform hover:bg-[color:var(--lkv-action-hover)] active:scale-[var(--motion-press-scale)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)] motion-reduce:transition-none"
+          className="inline-flex min-h-[var(--lkv-touch-min)] w-full items-center justify-center gap-[var(--space-2)] rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] px-[var(--space-4)] text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)] shadow-elevation-1 transition-transform hover:brightness-[1.05] active:scale-[var(--motion-press-scale)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)] motion-reduce:transition-none"
         >
           <span>Consulter l’offre</span>
           <Icon name="external-link" className="h-3.5 w-3.5" />

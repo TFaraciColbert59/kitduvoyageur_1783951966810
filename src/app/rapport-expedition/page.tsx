@@ -219,7 +219,7 @@ function ReportDetailModal({ report, onClose }: { report: PastReport; onClose: (
           <img src={report.image} alt={report.alt} className="h-full w-full object-cover" />
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
           <div className="absolute bottom-[var(--space-3)] left-[var(--space-4)] right-[var(--space-4)]">
-            <Badge tone="info" className="bg-[color:var(--lkv-primary)] text-[color:var(--lkv-text-inverted)]">{report.type}</Badge>
+            <Badge tone="info" className="bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[color:var(--lkv-text-primary)]">{report.type}</Badge>
           </div>
         </div>
         <div className="grid grid-cols-3 gap-[var(--space-3)]">
@@ -686,7 +686,7 @@ export default function RapportExpeditionPage() {
                       onClick={handleSend}
                       disabled={isLoading || !userInput.trim()}
                       aria-label="Envoyer la question"
-                      className="bg-[color:var(--lkv-primary)] text-[color:var(--lkv-text-inverted)]"
+                      className="bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[color:var(--lkv-text-primary)]"
                     >
                       <Icon name="PaperAirplaneIcon" size={16} variant="outline" />
                     </IconButton>
@@ -722,7 +722,7 @@ export default function RapportExpeditionPage() {
         <MobilePageShell>
           {/* Hero */}
           <div className="border-b border-[color:var(--lkv-border-subtle)] p-[var(--space-4)]">
-            <div className="mb-[10px] flex w-fit items-center gap-[6px] rounded-full bg-[color:var(--lkv-primary)]/8 px-[10px] py-1">
+            <div className="mb-[10px] flex w-fit items-center gap-[6px] rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn px-[10px] py-1">
               <span className="font-mono text-[10px] tracking-[0.05em] text-[color:var(--lkv-primary)]">
                 PHASE 5 &mdash; RAPPORT POST-EXPÉDITION
               </span>
@@ -843,7 +843,7 @@ export default function RapportExpeditionPage() {
                       </div>
                       <div className="flex items-center justify-between px-[var(--space-3)] py-[10px]">
                         <div className="flex items-center gap-[var(--space-2)]">
-                          <div className="flex h-7 w-7 items-center justify-center rounded-[var(--lkv-radius-xs)] bg-[color:var(--lkv-primary)]/10">
+                          <div className="flex h-7 w-7 items-center justify-center rounded-[var(--lkv-radius-xs)] bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn">
                             <span className="text-[12px] font-bold text-[color:var(--lkv-primary)]">{report.score}</span>
                           </div>
                           <span className="text-[10px] text-[color:var(--lkv-text-muted)]">Score</span>
@@ -878,7 +878,7 @@ export default function RapportExpeditionPage() {
               <Card variant="standard" className="overflow-hidden p-0">
                 {/* Header */}
                 <div className="flex items-center gap-[10px] border-b border-[color:var(--lkv-border-subtle)] p-[var(--space-3)]">
-                  <div className="flex h-7 w-7 items-center justify-center rounded-[var(--lkv-radius-xs)] bg-[color:var(--lkv-primary)] text-[13px] text-[color:var(--lkv-text-inverted)]" aria-hidden="true">
+                  <div className="flex h-7 w-7 items-center justify-center rounded-[var(--lkv-radius-xs)] bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[13px] text-[color:var(--lkv-text-primary)]" aria-hidden="true">
                     ✨
                   </div>
                   <div className="flex-1">
@@ -891,15 +891,15 @@ export default function RapportExpeditionPage() {
                 {/* Profile context */}
                 <div className="border-b border-[color:var(--lkv-border-subtle)] p-[var(--space-3)]">
                   <div className="grid grid-cols-3 gap-[var(--space-2)]">
-                    <div className="rounded-[var(--lkv-radius-xs)] bg-[color:var(--lkv-surface-muted)] p-[var(--space-2)] text-center">
+                    <div className="rounded-[var(--lkv-radius-xs)] bg-[color:var(--glass-bg-medium)] border border-[color:var(--glass-border)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset p-[var(--space-2)] text-center">
                       <p className="mb-0.5 font-mono text-[16px] font-bold text-[color:var(--lkv-primary)]">{reports.length}</p>
                       <p className="m-0 text-[9px] text-[color:var(--lkv-text-muted)]">Expéditions</p>
                     </div>
-                    <div className="rounded-[var(--lkv-radius-xs)] bg-[color:var(--lkv-surface-muted)] p-[var(--space-2)] text-center">
+                    <div className="rounded-[var(--lkv-radius-xs)] bg-[color:var(--glass-bg-medium)] border border-[color:var(--glass-border)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset p-[var(--space-2)] text-center">
                       <p className="mb-0.5 font-mono text-[16px] font-bold text-[color:var(--lkv-primary)]">{avgScore > 0 ? `${avgScore}/100` : '—'}</p>
                       <p className="m-0 text-[9px] text-[color:var(--lkv-text-muted)]">Score</p>
                     </div>
-                    <div className="rounded-[var(--lkv-radius-xs)] bg-[color:var(--lkv-surface-muted)] p-[var(--space-2)] text-center">
+                    <div className="rounded-[var(--lkv-radius-xs)] bg-[color:var(--glass-bg-medium)] border border-[color:var(--glass-border)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset p-[var(--space-2)] text-center">
                       <p className="mb-0.5 font-mono text-[16px] font-bold text-[color:var(--lkv-primary)]">{userGear.length}</p>
                       <p className="m-0 text-[9px] text-[color:var(--lkv-text-muted)]">Équipements</p>
                     </div>
@@ -919,8 +919,8 @@ export default function RapportExpeditionPage() {
                         <div
                           className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-[var(--lkv-radius-xs)] text-[10px] ${
                             msg.role === 'user'
-                              ? 'bg-[color:var(--lkv-primary)] text-[color:var(--lkv-text-inverted)]'
-                              : 'bg-[color:var(--lkv-primary)]/10 text-[color:var(--lkv-primary)]'
+                              ? 'bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[color:var(--lkv-text-primary)]'
+                              : 'bg-[color:var(--btn-tint)]  text-[color:var(--lkv-primary)]'
                           }`}
                           aria-hidden="true"
                         >
@@ -929,7 +929,7 @@ export default function RapportExpeditionPage() {
                         <div
                           className={`max-w-[75%] rounded-[var(--lkv-radius-sm)] px-[var(--space-3)] py-[var(--space-2)] text-[12px] leading-[var(--leading-snug)] ${
                             msg.role === 'user'
-                              ? 'bg-[color:var(--lkv-primary)] text-[color:var(--lkv-text-inverted)]'
+                              ? 'bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[color:var(--lkv-text-primary)]'
                               : 'bg-[color:var(--stone-100)] text-[color:var(--lkv-primary)]'
                           }`}
                         >
@@ -939,7 +939,7 @@ export default function RapportExpeditionPage() {
                     ))}
                     {isLoading && (
                       <div className="flex gap-[var(--space-2)]">
-                        <div className="flex h-6 w-6 items-center justify-center rounded-[var(--lkv-radius-xs)] bg-[color:var(--lkv-primary)]/10 text-[10px] text-[color:var(--lkv-primary)]" aria-hidden="true">AI</div>
+                        <div className="flex h-6 w-6 items-center justify-center rounded-[var(--lkv-radius-xs)] bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[10px] text-[color:var(--lkv-primary)]" aria-hidden="true">AI</div>
                         <div className="flex items-center gap-[3px] rounded-[var(--lkv-radius-sm)] bg-[color:var(--stone-100)] px-[var(--space-3)] py-[var(--space-2)]" role="status" aria-label="Analyse en cours">
                           <span className="h-[5px] w-[5px] animate-pulse rounded-full bg-[color:var(--lkv-primary)]" />
                           <span className="h-[5px] w-[5px] animate-pulse rounded-full bg-[color:var(--lkv-primary)]" />
@@ -966,7 +966,7 @@ export default function RapportExpeditionPage() {
                       onClick={handleSend}
                       disabled={isLoading || !userInput.trim()}
                       aria-label="Envoyer la question"
-                      className="bg-[color:var(--lkv-primary)] text-[color:var(--lkv-text-inverted)]"
+                      className="bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[color:var(--lkv-text-primary)]"
                     >
                       ➤
                     </IconButton>

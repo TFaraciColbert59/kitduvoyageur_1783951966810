@@ -79,7 +79,7 @@ export function PlaceReviewSection({
       {/* Score Header */}
       <Card className="flex flex-col items-center justify-between gap-[var(--space-6)] p-6 sm:flex-row">
         <div className="flex items-center gap-5">
-          <div className="flex h-16 w-16 flex-col items-center justify-center rounded-[var(--lkv-radius-md)] bg-[color:var(--lkv-primary)] text-[color:var(--lkv-text-inverted)] shadow-md">
+          <div className="flex h-16 w-16 flex-col items-center justify-center rounded-[var(--lkv-radius-md)] bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] text-[color:var(--lkv-text-primary)] shadow-md">
             <span className="text-[length:var(--lkv-text-title-lg)] font-black leading-none">
               {bayesianRating > 0 ? bayesianRating.toFixed(1) : '-'}
             </span>

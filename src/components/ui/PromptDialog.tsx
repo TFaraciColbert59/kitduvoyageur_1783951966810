@@ -45,7 +45,7 @@ export function PromptDialog({
           aria-describedby={undefined}
           className={cn(
             'fixed left-1/2 top-1/2 z-[var(--z-modal)] w-[min(92vw,26rem)] -translate-x-1/2 -translate-y-1/2',
-            'rounded-[var(--lkv-radius-card)] border border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-card)]',
+            'rounded-[var(--lkv-radius-card)] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg-medium)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)]',
             'p-[var(--space-5)] shadow-[var(--elevation-4)] focus:outline-none'
           )}
         >
@@ -60,8 +60,8 @@ export function PromptDialog({
               aria-label={title}
               autoFocus
               className={cn(
-                'mt-[var(--space-3)] w-full rounded-[var(--lkv-radius-md)] border border-[color:var(--lkv-border)]',
-                'bg-[color:var(--lkv-surface-card)] px-[var(--space-3)] py-[var(--space-2)]',
+                'mt-[var(--space-3)] w-full rounded-[var(--lkv-radius-md)] border border-[color:var(--btn-glass-border)]',
+                'bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] px-[var(--space-3)] py-[var(--space-2)]',
                 'text-[length:var(--lkv-text-body-sm)] text-[color:var(--lkv-text-primary)]',
                 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]'
               )}

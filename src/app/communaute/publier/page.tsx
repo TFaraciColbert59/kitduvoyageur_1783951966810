@@ -356,10 +356,10 @@ function PublierPostContent() {
   const publishDisabled = isSubmitting || (requiresCarnetConsent && !publicationConsent);
 
   return (
-    <div className="relative min-h-screen bg-[color:var(--lkv-surface)]/80 pb-32 text-[color:var(--lkv-text-primary)] backdrop-blur-xl md:pb-24 md:pt-24">
+    <div className="relative min-h-screen bg-[color:var(--glass-bg-medium)] border border-[color:var(--glass-border)] saturate-[var(--glass-sat)] lkv-rim-inset pb-32 text-[color:var(--lkv-text-primary)] backdrop-blur-[var(--glass-blur-sm)] md:pb-24 md:pt-24">
       {/* Toast Notification */}
       {toastMessage && (
-        <div className="animate-fade-in fixed right-4 top-24 z-[var(--z-toast)] rounded-[var(--lkv-radius-md)] bg-[color:var(--lkv-primary)] px-[var(--space-5)] py-[var(--space-3)] text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-inverted)] shadow-elevation-4">
+        <div className="animate-fade-in fixed right-4 top-24 z-[var(--z-toast)] rounded-[var(--lkv-radius-md)] bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] px-[var(--space-5)] py-[var(--space-3)] text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)] shadow-elevation-4">
           {toastMessage}
         </div>
       )}
@@ -432,7 +432,7 @@ function PublierPostContent() {
                     }}
                     className="flex flex-col items-center justify-center gap-[var(--space-2)] p-[var(--space-4)] text-center"
                   >
-                    <span className={`flex size-9 items-center justify-center rounded-[var(--lkv-radius-sm)] text-base ${postType === type.id ? 'bg-[color:var(--lkv-primary)] text-[color:var(--lkv-text-inverted)]' : 'bg-[color:var(--lkv-surface-muted)] text-[color:var(--lkv-primary)]'}`}>
+                    <span className={`flex size-9 items-center justify-center rounded-[var(--lkv-radius-sm)] text-base ${postType === type.id ? 'bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[color:var(--lkv-text-primary)]' : 'bg-[color:var(--glass-bg-medium)]  text-[color:var(--lkv-primary)]'}`}>
                       {type.emoji}
                     </span>
                     <span className="block text-[length:var(--lkv-text-caption)] font-bold leading-tight">{type.title}</span>
@@ -485,7 +485,7 @@ function PublierPostContent() {
                 </div>
 
                 {postType === 'evenement' && (
-                  <div className="grid grid-cols-1 gap-[var(--space-4)] rounded-[var(--lkv-radius-md)] border border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-muted)] p-[var(--space-4)] sm:grid-cols-2">
+                  <div className="grid grid-cols-1 gap-[var(--space-4)] rounded-[var(--lkv-radius-md)] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg-medium)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset p-[var(--space-4)] sm:grid-cols-2">
                     <div>
                       <label htmlFor="event-date" className="mb-[var(--space-1)] block text-[length:var(--lkv-text-caption)] font-semibold text-[color:var(--lkv-text-primary)]">Date de l&apos;événement *</label>
                       <input
@@ -514,8 +514,8 @@ function PublierPostContent() {
                     {postType === 'question' ? 'Détails de la question *' : 'Texte du post *'}
                   </label>
 
-                  <div className="overflow-hidden rounded-[var(--lkv-radius-md)] border border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-muted)]">
-                    <div className="flex items-center gap-[var(--space-1)] border-b border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-muted)] px-[var(--space-3)] py-[var(--space-2)] text-[length:var(--lkv-text-caption)]">
+                  <div className="overflow-hidden rounded-[var(--lkv-radius-md)] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg-medium)]">
+                    <div className="flex items-center gap-[var(--space-1)] border-b border-[color:var(--glass-border)] bg-[color:var(--glass-bg-medium)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset px-[var(--space-3)] py-[var(--space-2)] text-[length:var(--lkv-text-caption)]">
                       <Button
                         type="button"
                         variant="ghost"
@@ -523,7 +523,7 @@ function PublierPostContent() {
                         aria-pressed={isBold}
                         aria-label="Gras"
                         onClick={() => setIsBold(!isBold)}
-                        className={`size-7 min-h-0 px-0 font-bold ${isBold ? 'bg-[color:var(--lkv-primary)] text-[color:var(--lkv-text-inverted)]' : ''}`}
+                        className={`size-7 min-h-0 px-0 font-bold ${isBold ? 'bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[color:var(--lkv-text-primary)]' : ''}`}
                       >
                         B
                       </Button>
@@ -534,7 +534,7 @@ function PublierPostContent() {
                         aria-pressed={isItalic}
                         aria-label="Italique"
                         onClick={() => setIsItalic(!isItalic)}
-                        className={`size-7 min-h-0 px-0 font-serif italic ${isItalic ? 'bg-[color:var(--lkv-primary)] text-[color:var(--lkv-text-inverted)]' : ''}`}
+                        className={`size-7 min-h-0 px-0 font-serif italic ${isItalic ? 'bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[color:var(--lkv-text-primary)]' : ''}`}
                       >
                         I
                       </Button>
@@ -600,9 +600,9 @@ function PublierPostContent() {
               <Card
                 variant="interactive"
                 onClick={() => fileInputRef.current?.click()}
-                className="mb-[var(--space-4)] border-2 border-dashed border-[color:var(--lkv-border-strong)] bg-[color:var(--lkv-surface-muted)] p-[var(--space-8)] text-center"
+                className="mb-[var(--space-4)] border-2 border-dashed border-[color:var(--glass-border)] bg-[color:var(--glass-bg-medium)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset p-[var(--space-8)] text-center"
               >
-                <div className="mx-auto mb-[var(--space-2)] flex size-10 items-center justify-center rounded-full bg-[color:var(--lkv-surface-card)] text-base">⇪</div>
+                <div className="mx-auto mb-[var(--space-2)] flex size-10 items-center justify-center rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-base">⇪</div>
                 <p className="text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)]">Cliquez pour afficher / ou parcourez</p>
                 <p className="mt-[var(--space-1)] text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">JPG, PNG, MP4 max 20Mo</p>
               </Card>
@@ -626,7 +626,7 @@ function PublierPostContent() {
                 <Card
                   variant="interactive"
                   onClick={() => fileInputRef.current?.click()}
-                  className="flex aspect-[4/3] flex-col items-center justify-center border-2 border-dashed border-[color:var(--lkv-border-strong)] bg-[color:var(--lkv-surface-muted)] text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-muted)]"
+                  className="flex aspect-[4/3] flex-col items-center justify-center border-2 border-dashed border-[color:var(--glass-border)] bg-[color:var(--glass-bg-medium)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-muted)]"
                 >
                   <span className="mb-0.5 text-base">+</span>
                   <span className="text-[length:var(--lkv-text-caption-2)]">Ajouter</span>
@@ -743,7 +743,7 @@ function PublierPostContent() {
                       Tags <span className="font-normal text-[color:var(--lkv-text-muted)]">(Au moins 2 pour trouver le post)</span>
                     </label>
                   </div>
-                  <div className="flex min-h-[48px] flex-wrap items-center gap-[var(--space-2)] rounded-[var(--lkv-radius-md)] border border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-muted)] p-[var(--space-2)]">
+                  <div className="flex min-h-[48px] flex-wrap items-center gap-[var(--space-2)] rounded-[var(--lkv-radius-md)] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg-medium)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset p-[var(--space-2)]">
                     {tags.map((tag) => (
                       <Chip key={tag} onClick={() => handleRemoveTag(tag)} aria-label={`Retirer le tag ${tag}`}>
                         <span>{tag}</span>
@@ -765,7 +765,7 @@ function PublierPostContent() {
 
                 <div>
                   <label htmlFor="post-mention-input" className="mb-1.5 block text-[length:var(--lkv-text-caption)] font-semibold text-[color:var(--lkv-text-primary)]">Mentionner des membres</label>
-                  <div className="flex min-h-[48px] flex-wrap items-center gap-[var(--space-2)] rounded-[var(--lkv-radius-md)] border border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-muted)] p-[var(--space-2)]">
+                  <div className="flex min-h-[48px] flex-wrap items-center gap-[var(--space-2)] rounded-[var(--lkv-radius-md)] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg-medium)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset p-[var(--space-2)]">
                     {mentions.map((m) => (
                       <Chip key={m} tone="sage" onClick={() => handleRemoveMention(m)} aria-label={`Retirer la mention ${m}`}>
                         <span>@{m}</span>
@@ -856,7 +856,7 @@ function PublierPostContent() {
                   {user?.user_metadata?.avatar_url ? (
                     <img src={user.user_metadata.avatar_url} alt="Avatar" className="size-9 rounded-full border border-[color:var(--lkv-border)] object-cover" />
                   ) : (
-                    <div className="flex size-9 items-center justify-center rounded-full bg-[color:var(--lkv-primary)] text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-inverted)]">
+                    <div className="flex size-9 items-center justify-center rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)]">
                       {(user?.user_metadata?.full_name?.charAt(0) || 'V').toUpperCase()}
                     </div>
                   )}
@@ -871,7 +871,7 @@ function PublierPostContent() {
                 )}
 
                 {photos.length > 0 && (
-                  <div className="relative aspect-[16/9] overflow-hidden rounded-[var(--lkv-radius-md)] bg-[color:var(--lkv-surface-muted)]">
+                  <div className="relative aspect-[16/9] overflow-hidden rounded-[var(--lkv-radius-md)] bg-[color:var(--glass-bg-medium)]">
                     <img src={photos[0]} alt="Preview" className="size-full object-cover" />
                   </div>
                 )}
@@ -930,7 +930,7 @@ function PublierPostContent() {
                   <span className="font-bold text-[color:var(--lkv-text-primary)]">Prêt : qualité élevée</span>
                   <span className="font-mono font-bold text-[color:var(--lkv-text-primary)]">{qualityScore}%</span>
                 </div>
-                <div className="h-2 w-full overflow-hidden rounded-full bg-[color:var(--lkv-surface-muted)]">
+                <div className="h-2 w-full overflow-hidden rounded-full bg-[color:var(--btn-tint)]">
                   <div className="h-full rounded-full bg-[color:var(--lkv-primary)] transition-all duration-500" style={{ width: `${qualityScore}%` }} />
                 </div>
               </div>
@@ -940,7 +940,7 @@ function PublierPostContent() {
       </div>
 
       {/* BOTTOM STICKY ACTION BAR */}
-      <div className="fixed bottom-[var(--nav-offset)] left-0 right-0 z-[var(--z-sticky)] border-t border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-paper)]/95 px-[var(--space-6)] py-[var(--space-3)] backdrop-blur-[var(--blur-md)]">
+      <div className="fixed bottom-[var(--nav-offset)] left-0 right-0 z-[var(--z-sticky)] border-t border-[color:var(--glass-border)] bg-[color:var(--glass-bg-medium)] saturate-[var(--glass-sat)] lkv-rim-inset px-[var(--space-6)] py-[var(--space-3)] backdrop-blur-[var(--glass-blur-sm)]">
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-[var(--space-4)] sm:flex-row">
           <div className="flex flex-wrap items-center gap-[var(--space-2)] text-[length:var(--lkv-text-caption)] font-semibold text-[color:var(--lkv-text-primary)]">
             <span className="size-2 animate-pulse rounded-full bg-[color:var(--lkv-secondary)]" />
@@ -976,7 +976,7 @@ export default function PublierPage() {
   return (
     <Suspense
       fallback={
-        <div className="flex min-h-screen items-center justify-center bg-[color:var(--lkv-surface-paper)]">
+        <div className="flex min-h-screen items-center justify-center bg-[color:var(--glass-bg-medium)]">
           <LoadingState label="Chargement de l'éditeur" />
         </div>
       }

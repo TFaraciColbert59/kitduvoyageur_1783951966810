@@ -579,7 +579,7 @@ export default function CommunityPostCard({
     <Card className="community-post relative space-y-[var(--space-4)] overflow-hidden p-[var(--space-4)] sm:p-[var(--space-5)]">
       {/* Toast notification */}
       {toastMessage && (
-        <div className="animate-fade-in absolute left-1/2 top-3 z-[var(--z-toast)] -translate-x-1/2 rounded-full bg-[color:var(--lkv-primary)] px-3 py-1 font-mono text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-inverted)] shadow-elevation-2">
+        <div className="animate-fade-in absolute left-1/2 top-3 z-[var(--z-toast)] -translate-x-1/2 rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] px-3 py-1 font-mono text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-primary)] shadow-elevation-2">
           {toastMessage}
         </div>
       )}
@@ -657,7 +657,7 @@ export default function CommunityPostCard({
               className="size-10 rounded-full border border-[color:var(--lkv-border)] object-cover transition-transform group-hover/author:scale-105"
             />
           ) : (
-            <div className="flex size-10 items-center justify-center rounded-full border border-[color:var(--lkv-border)] bg-[color:var(--lkv-primary)] text-[length:var(--lkv-text-footnote)] font-bold text-[color:var(--lkv-text-inverted)] transition-transform group-hover/author:scale-105">
+            <div className="flex size-10 items-center justify-center rounded-full border border-[color:var(--btn-glass-border)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[length:var(--lkv-text-footnote)] font-bold text-[color:var(--lkv-text-primary)] transition-transform group-hover/author:scale-105">
               {(post.author?.full_name?.charAt(0) || 'V').toUpperCase()}
             </div>
           )}
@@ -712,7 +712,7 @@ export default function CommunityPostCard({
       {post.snapshot_payload && (
         <Card variant="compact" className="overflow-hidden p-0">
           {post.snapshot_payload.cover_image && (
-            <div className="aspect-[16/7] bg-[color:var(--lkv-surface-muted)]">
+            <div className="aspect-[16/7] bg-[color:var(--glass-bg-medium)]">
               <SmartImage
                 src={post.snapshot_payload.cover_image}
                 alt={post.snapshot_payload.title || 'Carnet publié'}
@@ -763,7 +763,7 @@ export default function CommunityPostCard({
           />
           <div
             {...doubleTap}
-            className="relative z-10 aspect-[4/5] select-none overflow-hidden bg-[color:var(--lkv-surface-muted)] cursor-zoom-in sm:aspect-[16/10]"
+            className="relative z-10 aspect-[4/5] select-none overflow-hidden bg-[color:var(--glass-bg-medium)] cursor-zoom-in sm:aspect-[16/10]"
           >
             <SmartImage
               src={displayableImage}
@@ -872,7 +872,7 @@ export default function CommunityPostCard({
                             href={rootComment.author?.id ? `/profil/${rootComment.author.id}` : '/communaute'}
                             className="group/cauthor flex cursor-pointer items-center gap-[var(--space-2)]"
                           >
-                            <div className="flex size-7 items-center justify-center overflow-hidden rounded-full border border-[color:var(--lkv-border)] bg-[color:var(--lkv-primary)] text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-inverted)] shadow-elevation-1 transition-transform group-hover/cauthor:scale-105">
+                            <div className="flex size-7 items-center justify-center overflow-hidden rounded-full border border-[color:var(--btn-glass-border)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)] shadow-elevation-1 transition-transform group-hover/cauthor:scale-105">
                               {rootComment.author?.avatar_url ? (
                                 <img
                                   src={rootComment.author.avatar_url}
@@ -1008,7 +1008,7 @@ export default function CommunityPostCard({
                               <Card variant="compact" className="group space-y-[var(--space-1)]">
                                 <div className="flex items-center justify-between text-[length:var(--lkv-text-caption-2)]">
                                   <div className="flex items-center gap-[var(--space-2)]">
-                                    <div className="flex size-5 items-center justify-center overflow-hidden rounded-full border border-[color:var(--lkv-border)] bg-[color:var(--lkv-primary)] text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-inverted)]">
+                                    <div className="flex size-5 items-center justify-center overflow-hidden rounded-full border border-[color:var(--btn-glass-border)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-primary)]">
                                       {reply.author?.avatar_url ? (
                                         <img
                                           src={reply.author.avatar_url}

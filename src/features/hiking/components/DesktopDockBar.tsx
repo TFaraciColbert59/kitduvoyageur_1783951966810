@@ -59,8 +59,8 @@ export default function DesktopDockBar({
           onClick={() => onTabSelect('stats')}
           className={`h-[58px] px-3.5 rounded-2xl flex items-center gap-2 transition-all duration-200 ${
             activeTab === 'stats'
-              ? 'bg-[color:var(--lkv-primary)] text-[color:var(--lkv-forest-100)] border border-[color:var(--lkv-forest-100)]/30 shadow-lg font-semibold scale-[1.02]'
-              : 'text-white/70 hover:text-white hover:bg-white/06'
+              ? 'bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] text-[color:var(--lkv-text-primary)] border border-[color:var(--lkv-forest-100)]/30 shadow-lg font-semibold scale-[1.02]'
+              : 'text-[color:var(--lkv-text-primary)]/70 hover:text-[color:var(--lkv-text-primary)] hover:bg-white/06'
           }`}
         >
           <svg className="w-5 h-5 stroke-current stroke-[1.9] fill-none" viewBox="0 0 24 24">
@@ -73,8 +73,8 @@ export default function DesktopDockBar({
           onClick={() => onTabSelect('carnet')}
           className={`h-[58px] px-3.5 rounded-2xl flex items-center gap-2 transition-all duration-200 ${
             activeTab === 'carnet'
-              ? 'bg-[color:var(--lkv-primary)] text-[color:var(--lkv-forest-100)] border border-[color:var(--lkv-forest-100)]/30 shadow-lg font-semibold scale-[1.02]'
-              : 'text-white/70 hover:text-white hover:bg-white/06'
+              ? 'bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] text-[color:var(--lkv-text-primary)] border border-[color:var(--lkv-forest-100)]/30 shadow-lg font-semibold scale-[1.02]'
+              : 'text-[color:var(--lkv-text-primary)]/70 hover:text-[color:var(--lkv-text-primary)] hover:bg-white/06'
           }`}
         >
           <svg className="w-5 h-5 stroke-current stroke-[1.9] fill-none" viewBox="0 0 24 24">
@@ -128,8 +128,8 @@ export default function DesktopDockBar({
           onClick={() => onTabSelect('capture')}
           className={`h-[58px] px-3.5 rounded-2xl flex items-center gap-2 transition-all duration-200 ${
             activeTab === 'capture'
-              ? 'bg-[color:var(--lkv-primary)] text-[color:var(--lkv-forest-100)] border border-[color:var(--lkv-forest-100)]/30 shadow-lg font-semibold scale-[1.02]'
-              : 'text-white/70 hover:text-white hover:bg-white/06'
+              ? 'bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] text-[color:var(--lkv-text-primary)] border border-[color:var(--lkv-forest-100)]/30 shadow-lg font-semibold scale-[1.02]'
+              : 'text-[color:var(--lkv-text-primary)]/70 hover:text-[color:var(--lkv-text-primary)] hover:bg-white/06'
           }`}
           title="Capture photo / note"
         >
@@ -145,8 +145,8 @@ export default function DesktopDockBar({
           onClick={() => onTabSelect('moment')}
           className={`h-[58px] px-3.5 rounded-2xl flex items-center gap-2 transition-all duration-200 ${
             activeTab === 'moment'
-              ? 'bg-[color:var(--lkv-primary)] text-[color:var(--lkv-forest-100)] border border-[color:var(--lkv-forest-100)]/30 shadow-lg font-semibold scale-[1.02]'
-              : 'text-white/70 hover:text-white hover:bg-white/06'
+              ? 'bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] text-[color:var(--lkv-text-primary)] border border-[color:var(--lkv-forest-100)]/30 shadow-lg font-semibold scale-[1.02]'
+              : 'text-[color:var(--lkv-text-primary)]/70 hover:text-[color:var(--lkv-text-primary)] hover:bg-white/06'
           }`}
           title="Ajouter un moment fort"
         >
@@ -160,8 +160,8 @@ export default function DesktopDockBar({
           onClick={() => onTabSelect('more')}
           className={`h-[58px] px-3 rounded-2xl flex items-center justify-center transition-all duration-200 ${
             activeTab === 'more'
-              ? 'bg-[color:var(--lkv-primary)] text-[color:var(--lkv-forest-100)] border border-[color:var(--lkv-forest-100)]/30 shadow-lg font-semibold scale-[1.02]'
-              : 'text-white/70 hover:text-white hover:bg-white/06'
+              ? 'bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] text-[color:var(--lkv-text-primary)] border border-[color:var(--lkv-forest-100)]/30 shadow-lg font-semibold scale-[1.02]'
+              : 'text-[color:var(--lkv-text-primary)]/70 hover:text-[color:var(--lkv-text-primary)] hover:bg-white/06'
           }`}
           title="Plus d'actions"
         >

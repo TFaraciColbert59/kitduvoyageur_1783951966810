@@ -12,9 +12,9 @@ export default function GlobalError({
   return (
     <html lang="fr">
       <body>
-        <div className="flex min-h-screen flex-col items-center justify-center bg-[color:var(--lkv-surface)] p-[var(--space-4)] font-sans">
+        <div className="flex min-h-screen flex-col items-center justify-center bg-[color:var(--glass-bg-medium)] border border-[color:var(--glass-border)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset p-[var(--space-4)] font-sans">
           <Card variant="standard" className="w-full max-w-md space-y-[var(--space-6)] p-8 text-center">
-            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-[var(--lkv-radius-control)] bg-[color:var(--lkv-surface-muted)]">
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-[var(--lkv-radius-control)] bg-[color:var(--glass-bg-medium)]">
               <svg
                 className="h-8 w-8 text-[color:var(--lkv-primary)]"
                 fill="none"

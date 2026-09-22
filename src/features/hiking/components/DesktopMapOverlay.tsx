@@ -75,8 +75,8 @@ export default function DesktopMapOverlay({
 
       {/* 1. Primary Priority: Imminent Turn Instruction Card */}
       {activeGuideTurn && (
-        <div className="absolute top-16 left-3 right-3 md:left-1/2 md:-translate-x-1/2 md:w-[420px] bg-[color:var(--lkv-surface)]/95 backdrop-blur-2xl border border-[color:var(--lkv-primary)]/12 rounded-[var(--lkv-radius-sm)] p-4 shadow-lg flex items-center gap-3.5 z-30 select-none">
-          <div className="w-11 h-11 rounded-2xl bg-[color:var(--lkv-primary)] text-[color:var(--lkv-forest-100)] flex items-center justify-center text-xl font-bold flex-shrink-0 ">
+        <div className="absolute top-16 left-3 right-3 md:left-1/2 md:-translate-x-1/2 md:w-[420px] bg-[color:var(--glass-bg-medium)] saturate-[var(--glass-sat)] backdrop-blur-[var(--glass-blur-sm)] border border-[color:var(--lkv-primary)]/12 rounded-[var(--lkv-radius-sm)] p-4 shadow-lg flex items-center gap-3.5 z-30 select-none">
+          <div className="w-11 h-11 rounded-2xl bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[color:var(--lkv-text-primary)] flex items-center justify-center text-xl font-bold flex-shrink-0 ">
             {activeGuideTurn.turn.turnType.includes('droite') ? '↱' : activeGuideTurn.turn.turnType.includes('gauche') ? '↰' : '↑'}
           </div>
           <div className="flex-1 min-w-0">
@@ -92,7 +92,7 @@ export default function DesktopMapOverlay({
 
       {/* 2. Secondary Priority: Imminent POI Card (If turn is not imminent) */}
       {!activeGuideTurn && activeGuidePoi && activeGuidePoi.distanceRemainingM < 300 && (
-        <div className="absolute top-16 left-3 right-3 md:left-1/2 md:-translate-x-1/2 md:w-[420px] bg-[color:var(--lkv-surface)]/95 backdrop-blur-2xl border border-[color:var(--lkv-primary)]/12 rounded-[var(--lkv-radius-sm)] p-4 shadow-lg flex items-center gap-3.5 z-30 select-none">
+        <div className="absolute top-16 left-3 right-3 md:left-1/2 md:-translate-x-1/2 md:w-[420px] bg-[color:var(--glass-bg-medium)] saturate-[var(--glass-sat)] backdrop-blur-[var(--glass-blur-sm)] border border-[color:var(--lkv-primary)]/12 rounded-[var(--lkv-radius-sm)] p-4 shadow-lg flex items-center gap-3.5 z-30 select-none">
           <div className="w-11 h-11 rounded-2xl bg-[color:var(--lkv-forest-200)] text-[color:var(--lkv-forest-950)] flex items-center justify-center flex-shrink-0  relative">
             <svg className="w-5 h-5 fill-none stroke-current stroke-[2.2]" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 21s-6-5.333-6-10a6 6 0 0112 0c0 4.667-6 10-6 10z" />

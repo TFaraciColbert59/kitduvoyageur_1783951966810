@@ -56,7 +56,7 @@ export default function KitCarrySelector({ kitId, onSelect, disabled }: KitCarry
   if (kits.length === 0) return null;
 
   return (
-    <div className="fixed top-24 left-4 z-20 w-72 rounded-2xl bg-[color:var(--lkv-surface)]/95 backdrop-blur-md border border-[color:var(--lkv-forest-200)]/40 shadow-lg p-4">
+    <div className="fixed top-24 left-4 z-20 w-72 rounded-2xl bg-[color:var(--glass-bg-medium)] saturate-[var(--glass-sat)] backdrop-blur-[var(--glass-blur-sm)] border border-[color:var(--lkv-forest-200)]/40 shadow-lg p-4">
       <div className="font-mono text-[10px] tracking-[0.18em] uppercase text-[color:var(--lkv-text-muted)]">
         Emporter un kit ?
       </div>
@@ -69,8 +69,8 @@ export default function KitCarrySelector({ kitId, onSelect, disabled }: KitCarry
               onClick={() => onSelect(selected ? null : k.id)}
               className={`text-left px-3 py-2 rounded-xl border transition-colors ${
                 selected
-                  ? 'bg-[color:var(--lkv-primary)] border-[color:var(--lkv-primary)] text-white'
-                  : 'bg-white border-[color:var(--lkv-forest-200)]/50 text-[color:var(--lkv-forest-950)] hover:border-[color:var(--lkv-primary)]'
+                  ? 'bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn border-[color:var(--lkv-primary)] text-[color:var(--lkv-text-primary)]'
+                  : 'bg-[color:var(--btn-tint)] border-[color:var(--btn-glass-border)] text-[color:var(--lkv-text-primary)] hover:border-[color:var(--lkv-primary)]'
               }`}
             >
               <div className="flex items-center justify-between gap-2">
@@ -87,7 +87,7 @@ export default function KitCarrySelector({ kitId, onSelect, disabled }: KitCarry
         <div className="mt-2 flex items-center justify-between gap-2">
           <button
             onClick={() => openKit(kitId, 'cockpit')}
-            className="flex-1 py-1.5 rounded-lg text-[11px] font-medium text-[color:var(--lkv-primary)] hover:bg-[color:var(--lkv-surface-muted)] transition-colors"
+            className="flex-1 py-1.5 rounded-lg text-[11px] font-medium text-[color:var(--lkv-primary)] hover:bg-[color:var(--btn-tint)] transition-colors"
           >
             Voir la fiche →
           </button>

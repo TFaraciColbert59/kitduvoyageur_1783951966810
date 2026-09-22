@@ -140,7 +140,7 @@ export default function TrailDetailPanel({ trail, onClose, open = true }: Props)
     >
       <div className="-mx-[var(--space-5)] -mt-[var(--space-1)] flex flex-col gap-3.5">
         {/* Header Hero Image */}
-        <div className="relative h-48 w-full shrink-0 overflow-hidden bg-[color:var(--lkv-surface-muted)] sm:h-56">
+        <div className="relative h-48 w-full shrink-0 overflow-hidden bg-[color:var(--glass-bg-medium)] sm:h-56">
           <img src={imgUrl} alt={trail.name} className="h-full w-full object-cover" />
           <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/25 to-transparent" />
 
@@ -237,7 +237,7 @@ export default function TrailDetailPanel({ trail, onClose, open = true }: Props)
           {/* Offline Storage Card */}
           <Card variant="compact" className="flex items-center justify-between gap-3 p-3">
             <div className="flex min-w-0 items-center gap-2.5">
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[color:var(--lkv-primary)]/10 text-[color:var(--lkv-primary)]">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[color:var(--lkv-primary)]">
                 {isOfflineAvailable ? <Icon name="check" size={16} /> : <Download size={16} />}
               </div>
               <div className="min-w-0">

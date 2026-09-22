@@ -125,7 +125,7 @@ const PROFILES = [
 ];
 
 const AI_LINK_CLASS =
-  'inline-flex min-h-[var(--control-height-md)] items-center justify-center gap-[var(--space-2)] rounded-full bg-[color:var(--lkv-action)] px-[var(--space-6)] text-[length:var(--lkv-text-body-sm)] font-semibold text-[color:var(--lkv-on-action)] transition-colors hover:bg-[color:var(--lkv-action-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]';
+  'inline-flex min-h-[var(--control-height-md)] items-center justify-center gap-[var(--space-2)] rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn px-[var(--space-6)] text-[length:var(--lkv-text-body-sm)] font-semibold text-[color:var(--lkv-text-primary)] transition-colors hover:brightness-[1.05] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]';
 
 export default function AbonnementsPage() {
   const [selectedPlan, setSelectedPlan] = useState('aventurier');
@@ -136,7 +136,7 @@ export default function AbonnementsPage() {
   const content = (
     <>
       {/* Hero */}
-      <section className="relative overflow-hidden bg-[color:var(--lkv-primary)] px-[var(--space-4)] py-[var(--space-16)] text-[color:var(--lkv-text-inverted)]">
+      <section className="relative overflow-hidden bg-[color:var(--glass-bg-medium)] border border-[color:var(--glass-border)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset px-[var(--space-4)] py-[var(--space-16)] text-[color:var(--lkv-text-primary)]">
         <div className="relative z-[var(--z-sticky)] mx-auto max-w-4xl text-center">
           <Badge tone="sage" className="mb-[var(--space-6)] font-mono">
             <Icon name="SparklesIcon" size={12} variant="outline" />
@@ -307,7 +307,7 @@ export default function AbonnementsPage() {
       </section>
 
       {/* Profile Selector */}
-      <section className="bg-[color:var(--lkv-surface-muted)] px-[var(--space-4)] py-[var(--space-12)]">
+      <section className="bg-[color:var(--glass-bg-medium)] border border-[color:var(--glass-border)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset px-[var(--space-4)] py-[var(--space-12)]">
         <div className="mx-auto max-w-4xl">
           <h2 className="mb-[var(--space-2)] text-center font-display text-[length:var(--lkv-text-title-sm)] font-bold text-[color:var(--lkv-text-primary)]">
             Personnalisez votre box

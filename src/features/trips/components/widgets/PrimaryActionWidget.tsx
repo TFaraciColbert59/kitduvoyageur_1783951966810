@@ -44,7 +44,7 @@ export function PrimaryActionWidget({ trip, activeSection }: PrimaryActionWidget
     <Link
       href={tripSectionHref(trip.slug, action.section)}
       onClick={() => haptic('light')}
-      className="flex min-h-[44px] w-full items-center justify-center gap-[var(--space-2)] rounded-full bg-[color:var(--lkv-action)] py-[var(--space-3)] text-[length:var(--lkv-text-footnote)] font-bold text-[color:var(--lkv-on-action)] transition-colors hover:bg-[color:var(--lkv-action-hover)]"
+      className="flex min-h-[44px] w-full items-center justify-center gap-[var(--space-2)] rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn py-[var(--space-3)] text-[length:var(--lkv-text-footnote)] font-bold text-[color:var(--lkv-text-primary)] transition-colors hover:brightness-[1.05]"
     >
       <span>{action.label}</span>
     </Link>

@@ -46,7 +46,7 @@ export default function CommunityLeftSidebar({
     >
       <div className="flex h-full min-h-0 flex-col p-[var(--space-4)]">
         <div className="flex shrink-0 items-center gap-[var(--space-3)] px-[var(--space-2)] pb-[var(--space-5)] pt-[var(--space-2)]">
-          <div className="flex size-11 shrink-0 items-center justify-center rounded-[var(--lkv-radius-md)] bg-[color:var(--lkv-surface-card)]/65 shadow-elevation-1">
+          <div className="flex size-11 shrink-0 items-center justify-center rounded-[var(--lkv-radius-md)] bg-[color:var(--glass-bg-medium)] shadow-elevation-1">
             <Icon name="globe" size={23} />
           </div>
           <div>

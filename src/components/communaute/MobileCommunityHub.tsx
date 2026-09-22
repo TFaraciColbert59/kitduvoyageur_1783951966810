@@ -243,7 +243,7 @@ export default function MobileCommunityHub({
                       </div>
                     </div>
 
-                    <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-[color:var(--lkv-surface-muted)] text-[color:var(--lkv-text-secondary)]">
+                    <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[color:var(--lkv-text-secondary)]">
                       <Icon name="arrow-right" size={12} aria-hidden="true" />
                     </span>
                   </Card>

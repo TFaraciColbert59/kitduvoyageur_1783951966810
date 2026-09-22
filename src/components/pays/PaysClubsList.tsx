@@ -99,7 +99,7 @@ export default function PaysClubsList({ countryIso, countryName }: Props) {
               </div>
 
               <div className="flex items-center justify-between text-[10px] font-mono text-[color:var(--lkv-text-secondary)] pt-2 border-t border-[color:var(--lkv-primary)]/10">
-                <span className="bg-[color:var(--lkv-primary)]/5 px-2 py-0.5 rounded-md font-bold text-[color:var(--lkv-primary)]">
+                <span className="bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn px-2 py-0.5 rounded-md font-bold text-[color:var(--lkv-primary)]">
                   {club.members_count || 0} membres
                 </span>
                 {club.active_this_month > 0 && (

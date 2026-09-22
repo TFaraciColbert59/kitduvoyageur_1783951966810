@@ -10,7 +10,7 @@ export function InventoryCard({ item, onSelect }: { item: InventoryItem; onSelec
       onClick={() => onSelect?.(item)}
       className="flex h-full flex-col gap-1 p-2 text-left"
     >
-      <div className="relative h-[44px] w-full overflow-hidden rounded-[var(--lkv-radius-sm)] bg-[color:var(--lkv-surface-muted)]">
+      <div className="relative h-[44px] w-full overflow-hidden rounded-[var(--lkv-radius-sm)] bg-[color:var(--glass-bg-medium)]">
         {item.photo_url ? (
           <Image src={item.photo_url} alt={item.name} fill sizes="200px" className="object-cover" />
         ) : (

@@ -1134,7 +1134,7 @@ export default function UnifiedExplorerMap({
       <div ref={containerRef} className="absolute inset-0 w-full h-full" />
 
       {!ready && (
-        <div className="absolute inset-0 z-[var(--z-sticky)] flex items-center justify-center bg-[color:var(--lkv-surface-card)]">
+        <div className="absolute inset-0 z-[var(--z-sticky)] flex items-center justify-center bg-[color:var(--glass-bg-medium)]">
           <Spinner size="lg" label="Chargement de la carte" />
         </div>
       )}
@@ -1295,7 +1295,7 @@ export default function UnifiedExplorerMap({
             <div className="mt-3 flex items-center gap-2">
               <Link
                 href={`/pays/${selectedCountry.iso.toLowerCase()}`}
-                className="inline-flex min-h-[44px] flex-1 select-none items-center justify-center whitespace-nowrap rounded-full bg-[color:var(--lkv-action)] px-[var(--space-4)] text-center text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-on-action)] no-underline transition-transform active:scale-[var(--motion-press-scale)] hover:bg-[color:var(--lkv-action-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]"
+                className="inline-flex min-h-[44px] flex-1 select-none items-center justify-center whitespace-nowrap rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn px-[var(--space-4)] text-center text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)] no-underline transition-transform active:scale-[var(--motion-press-scale)] hover:brightness-[1.05] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]"
               >
                 Explorer le pays
               </Link>

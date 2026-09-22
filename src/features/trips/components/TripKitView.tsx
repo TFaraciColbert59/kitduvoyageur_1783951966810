@@ -399,7 +399,7 @@ export function TripKitView({
     <div className="space-y-6 animate-fade-in">
       {/* Toast discret (ajout au matériel) */}
       {infoToast && (
-        <div className="fixed bottom-24 left-1/2 z-[var(--z-toast)] -translate-x-1/2 rounded-full bg-[color:var(--lkv-primary)] px-[var(--space-4)] py-[var(--space-2)] text-[length:var(--lkv-text-footnote)] font-bold text-[color:var(--lkv-text-inverted)] shadow-elevation-3">
+        <div className="fixed bottom-24 left-1/2 z-[var(--z-toast)] -translate-x-1/2 rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] px-[var(--space-4)] py-[var(--space-2)] text-[length:var(--lkv-text-footnote)] font-bold text-[color:var(--lkv-text-primary)] shadow-elevation-3">
           {infoToast}
         </div>
       )}
@@ -991,7 +991,7 @@ function GearThumb({ url, name, size = 46 }: { url?: string | null; name: string
   }
   return (
     <span
-      className="flex shrink-0 items-center justify-center rounded-[var(--lkv-radius-sm)] border border-[color:var(--lkv-border-subtle)] bg-[color:var(--lkv-surface-muted)] font-bold text-[color:var(--lkv-primary)]"
+      className="flex shrink-0 items-center justify-center rounded-[var(--lkv-radius-sm)] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg-medium)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset font-bold text-[color:var(--lkv-primary)]"
       style={{ width: size, height: size }}
       aria-hidden="true"
     >

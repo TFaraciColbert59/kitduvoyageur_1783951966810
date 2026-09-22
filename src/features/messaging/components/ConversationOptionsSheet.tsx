@@ -109,7 +109,7 @@ export const ConversationOptionsSheet: React.FC<ConversationOptionsSheetProps> =
     >
       {member && (
         <div className="mb-[var(--space-4)] flex items-center gap-[var(--space-3)] pt-[var(--space-1)]">
-          <div className="relative size-12 shrink-0 overflow-hidden rounded-full bg-[color:var(--lkv-surface-muted)] shadow-elevation-1 ring-2 ring-[color:var(--glass-border)]">
+          <div className="relative size-12 shrink-0 overflow-hidden rounded-full bg-[color:var(--btn-tint)] shadow-elevation-1 ring-2 ring-[color:var(--glass-border)]">
             <Image
               src={member.avatar_url || '/assets/images/no_image.png'}
               alt=""

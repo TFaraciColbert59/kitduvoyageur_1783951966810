@@ -51,7 +51,7 @@ export default function CookieConsentBanner() {
       style={{ paddingBottom: 'max(8px, env(safe-area-inset-bottom))' }}
     >
       <div
-        className="pointer-events-auto max-w-[min(38rem,calc(100vw-24px))] mx-auto bg-[color:var(--lkv-forest-950)]/95 backdrop-blur-xl border border-white/20 rounded-2xl shadow-2xl overflow-hidden transition-all duration-300"
+        className="pointer-events-auto max-w-[min(38rem,calc(100vw-24px))] mx-auto bg-[color:var(--glass-bg-medium)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] border border-[color:var(--glass-border)] rounded-2xl shadow-2xl overflow-hidden transition-all duration-300"
         style={{
           margin: '0 auto',
           marginBottom: 'calc(72px + env(safe-area-inset-bottom))',
@@ -67,7 +67,7 @@ export default function CookieConsentBanner() {
         {!showDetails ? (
           <div className="px-4 py-3 sm:p-5">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-xl bg-[var(--lkv-primary)]/20 flex items-center justify-center flex-shrink-0 text-[var(--lkv-accent)]">
+              <div className="w-8 h-8 rounded-xl bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] flex items-center justify-center flex-shrink-0 text-[color:var(--lkv-primary)]">
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.955 11.955 0 013.598 6 11.955 11.955 0 003 12c0 6.627 5.373 12 12 12s12-5.373 12-12c0-2.017-.5-3.92-1.382-5.593" />
                 </svg>
@@ -81,13 +81,13 @@ export default function CookieConsentBanner() {
               <div className="flex items-center gap-2 flex-shrink-0">
                 <button
                   onClick={acceptAll}
-                  className="bg-[var(--lkv-primary)] hover:opacity-90 text-white px-3.5 py-2 rounded-xl text-xs font-semibold transition-all shadow-sm active:scale-95 min-h-[38px] flex items-center justify-center"
+                  className="bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn hover:brightness-[1.05] text-[color:var(--lkv-text-primary)] px-3.5 py-2 rounded-xl text-xs font-semibold transition-all active:scale-95 min-h-[38px] flex items-center justify-center"
                 >
                   Tout accepter
                 </button>
                 <button
                   onClick={rejectAll}
-                  className="bg-white/10 hover:bg-white/20 text-white px-3 py-2 rounded-xl text-xs font-medium transition-all border border-white/10 active:scale-95 min-h-[38px] flex items-center justify-center"
+                  className="bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn hover:brightness-[1.05] text-[color:var(--lkv-text-primary)] px-3 py-2 rounded-xl text-xs font-medium transition-all active:scale-95 min-h-[38px] flex items-center justify-center"
                 >
                   Refuser
                 </button>
@@ -163,7 +163,7 @@ export default function CookieConsentBanner() {
             <div className="flex gap-2">
               <button
                 onClick={saveCustom}
-                className="flex-1 bg-[color:var(--lkv-primary)] hover:bg-[color:var(--lkv-danger)] text-white px-3 py-2 rounded-xl text-xs font-semibold transition-all focus:outline-none focus:ring-2 focus:ring-[color:var(--lkv-primary)] focus:ring-offset-2 focus:ring-offset-[color:var(--lkv-primary)] min-h-[44px]"
+                className="flex-1 bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn hover:brightness-[1.05] text-[color:var(--lkv-text-primary)] px-3 py-2 rounded-xl text-xs font-semibold transition-all focus:outline-none focus:ring-2 focus:ring-[color:var(--lkv-primary)] focus:ring-offset-2 focus:ring-offset-[color:var(--lkv-primary)] min-h-[44px]"
               >
                 Enregistrer
               </button>

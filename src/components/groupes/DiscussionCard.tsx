@@ -225,7 +225,7 @@ export default function DiscussionCard({ discussions, groupId, onRefresh, user }
           <div key={msg.id} className="flex gap-[var(--space-3)]">
             <Link
               href={msg.author_id ? `/profil/${msg.author_id}` : '/communaute'}
-              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[color:var(--lkv-primary)]/10 text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)] transition-colors hover:bg-[color:var(--lkv-primary)]/20"
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)] transition-colors hover:brightness-[1.05]"
               aria-label={`Voir le profil de ${msg.author}`}
             >
               {msg.author.charAt(0)}
@@ -257,7 +257,7 @@ export default function DiscussionCard({ discussions, groupId, onRefresh, user }
                 </p>
               )}
 
-              <div className="mb-[var(--space-2)] rounded-[var(--lkv-radius-md)] rounded-tl-none bg-[color:var(--lkv-surface-muted)] p-[var(--space-4)]">
+              <div className="mb-[var(--space-2)] rounded-[var(--lkv-radius-md)] rounded-tl-none bg-[color:var(--glass-bg-medium)] border border-[color:var(--glass-border)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset p-[var(--space-4)]">
                 <p className="whitespace-pre-wrap font-sans text-[length:var(--lkv-text-caption)] leading-relaxed text-[color:var(--lkv-text-primary)]">
                   {msg.content.split(/(#\w+)/g).map((part, i) =>
                     part.startsWith('#') ? <span key={i} className="font-semibold text-[color:var(--lkv-info)]">{part}</span> : part
@@ -265,8 +265,8 @@ export default function DiscussionCard({ discussions, groupId, onRefresh, user }
                 </p>
 
                 {msg.attachment && (
-                  <div className="mt-[var(--space-3)] flex items-center gap-[var(--space-3)] rounded-[var(--lkv-radius-md)] bg-[color:var(--lkv-surface-card)] p-[var(--space-3)]">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-[var(--lkv-radius-sm)] bg-[color:var(--lkv-primary)]/10 text-[color:var(--lkv-text-primary)]">
+                  <div className="mt-[var(--space-3)] flex items-center gap-[var(--space-3)] rounded-[var(--lkv-radius-md)] bg-[color:var(--glass-bg-medium)] border border-[color:var(--glass-border)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset p-[var(--space-3)]">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-[var(--lkv-radius-sm)] bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[color:var(--lkv-text-primary)]">
                       <Icon name="MapIcon" size={20} aria-hidden="true" />
                     </div>
                     <div>
@@ -297,7 +297,7 @@ export default function DiscussionCard({ discussions, groupId, onRefresh, user }
                     href={`https://www.google.com/maps?q=${typeof msg.location === 'string' ? msg.location : `${(msg.location as any).lat},${(msg.location as any).lng}`}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="mt-[var(--space-3)] inline-flex items-center gap-[var(--space-2)] rounded-full border border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-card)] px-[var(--space-3)] py-[var(--space-2)] text-[length:var(--lkv-text-caption-2)] font-semibold text-[color:var(--lkv-text-primary)]"
+                    className="mt-[var(--space-3)] inline-flex items-center gap-[var(--space-2)] rounded-full border border-[color:var(--btn-glass-border)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn px-[var(--space-3)] py-[var(--space-2)] text-[length:var(--lkv-text-caption-2)] font-semibold text-[color:var(--lkv-text-primary)]"
                   >
                     <Icon name="MapPinIcon" size={14} aria-hidden="true" />
                     <span>
@@ -337,7 +337,7 @@ export default function DiscussionCard({ discussions, groupId, onRefresh, user }
 
       <div className="relative shrink-0">
         {replyingTo && (
-          <div className="mb-[var(--space-2)] flex items-center gap-[var(--space-2)] rounded-[var(--lkv-radius-md)] bg-[color:var(--lkv-surface-muted)] px-[var(--space-3)] py-[var(--space-2)] text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-primary)]">
+          <div className="mb-[var(--space-2)] flex items-center gap-[var(--space-2)] rounded-[var(--lkv-radius-md)] bg-[color:var(--glass-bg-medium)] border border-[color:var(--glass-border)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset px-[var(--space-3)] py-[var(--space-2)] text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-primary)]">
             <span className="font-bold">↩ Répondre à {replyingTo.author}</span>
             <span className="flex-1 truncate text-[color:var(--lkv-text-muted)]">« {replyingTo.content.slice(0, 60)}{replyingTo.content.length > 60 ? '…' : ''} »</span>
             <IconButton variant="ghost" size="sm" aria-label="Annuler la réponse" onClick={() => setReplyingTo(null)}>
@@ -346,7 +346,7 @@ export default function DiscussionCard({ discussions, groupId, onRefresh, user }
           </div>
         )}
         <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-[var(--space-3)]">
-          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[color:var(--lkv-primary)] text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-inverted)]">
+          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-primary)]">
             {user?.user_metadata?.first_name ? user.user_metadata.first_name.charAt(0) : (user?.user_metadata?.full_name ? user.user_metadata.full_name.charAt(0) : 'V')}
           </div>
         </div>

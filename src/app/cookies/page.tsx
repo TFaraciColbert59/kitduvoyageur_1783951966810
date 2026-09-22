@@ -49,7 +49,7 @@ export default function CookiesPage() {
   };
 
   const preferences = (
-    <Card variant="compact" className="bg-[color:var(--lkv-surface-muted)] p-[var(--space-5)]">
+    <Card variant="compact" className="bg-[color:var(--glass-bg-medium)] border border-[color:var(--glass-border)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset p-[var(--space-5)]">
       <h2 className="mb-1 text-[length:var(--lkv-text-body-sm)] font-semibold text-[color:var(--lkv-text-primary)]">
         Gérer mes préférences
       </h2>
@@ -60,7 +60,7 @@ export default function CookiesPage() {
       </p>
 
       <div className="mb-[var(--space-5)] space-y-[var(--space-3)]">
-        <div className="flex items-center justify-between gap-[var(--space-4)] rounded-[var(--lkv-radius-sm)] border border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-card)] p-[var(--space-3)]">
+        <div className="flex items-center justify-between gap-[var(--space-4)] rounded-[var(--lkv-radius-sm)] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg-medium)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset p-[var(--space-3)]">
           <div>
             <p className="text-[length:var(--lkv-text-body-sm)] font-medium text-[color:var(--lkv-text-primary)]">
               Cookies nécessaires
@@ -77,7 +77,7 @@ export default function CookiesPage() {
           />
         </div>
 
-        <div className="flex items-center justify-between gap-[var(--space-4)] rounded-[var(--lkv-radius-sm)] border border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-card)] p-[var(--space-3)]">
+        <div className="flex items-center justify-between gap-[var(--space-4)] rounded-[var(--lkv-radius-sm)] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg-medium)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset p-[var(--space-3)]">
           <div>
             <p className="text-[length:var(--lkv-text-body-sm)] font-medium text-[color:var(--lkv-text-primary)]">
               Cookies analytiques
@@ -93,7 +93,7 @@ export default function CookiesPage() {
           />
         </div>
 
-        <div className="flex items-center justify-between gap-[var(--space-4)] rounded-[var(--lkv-radius-sm)] border border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-card)] p-[var(--space-3)]">
+        <div className="flex items-center justify-between gap-[var(--space-4)] rounded-[var(--lkv-radius-sm)] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg-medium)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset p-[var(--space-3)]">
           <div>
             <p className="text-[length:var(--lkv-text-body-sm)] font-medium text-[color:var(--lkv-text-primary)]">
               Cookies marketing

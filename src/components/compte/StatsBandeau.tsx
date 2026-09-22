@@ -20,7 +20,7 @@ export default function StatsBandeau({ profile }: StatsBandeauProps) {
         <div className="lg:w-2/5 rounded-[var(--lkv-radius-md)] border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] backdrop-blur-[var(--blur-md)] p-4 flex flex-col justify-between gap-2.5 shrink-0 border border-white/50">
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-[color:var(--lkv-primary)] text-[color:var(--sage-300)] font-black font-mono text-xs sm:text-sm flex items-center justify-center shrink-0 shadow-sm">
+              <div className="w-9 h-9 rounded-xl bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] text-[color:var(--lkv-text-primary)] font-black font-mono text-xs sm:text-sm flex items-center justify-center shrink-0 shadow-sm">
                 {level.number}
               </div>
               <div className="min-w-0">
@@ -35,7 +35,7 @@ export default function StatsBandeau({ profile }: StatsBandeauProps) {
 
           {/* Progress Bar */}
           <div className="space-y-1 pt-1">
-            <div className="w-full h-2 bg-[color:var(--lkv-primary)]/10 rounded-full overflow-hidden p-0.5 border border-white/20">
+            <div className="w-full h-2 bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn rounded-full overflow-hidden p-0.5 border border-white/20">
               <div
                 className="h-full bg-gradient-to-r from-[color:var(--lkv-secondary)] to-[color:var(--lkv-warning)] rounded-full transition-all duration-500"
                 style={{ width: `${progressPercent}%` }}

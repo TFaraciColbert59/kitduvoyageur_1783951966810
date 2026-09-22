@@ -156,7 +156,7 @@ export default function MobileCarnetDetailView({
 
   return (
     <div className="min-h-screen bg-transparent pb-[calc(140px+var(--safe-bottom))] text-[color:var(--lkv-text-primary)] md:hidden">
-      <div className="relative h-64 w-full overflow-hidden bg-[color:var(--lkv-primary)] sm:h-72">
+      <div className="relative h-64 w-full overflow-hidden bg-[color:var(--btn-tint)] sm:h-72">
         <img
           src={coverUrl}
           alt={data.meta?.titleLine1 || 'Carnet'}
@@ -168,7 +168,7 @@ export default function MobileCarnetDetailView({
           <Link
             href="/carnets"
             onClick={() => triggerHaptic('light')}
-            className="flex h-10 w-10 items-center justify-center rounded-full border border-[color:var(--glass-border)] bg-[color:var(--lkv-surface-card)]/95 text-[length:var(--lkv-text-subheadline)] font-bold text-[color:var(--lkv-text-primary)] shadow-elevation-2 transition-transform active:scale-95 motion-reduce:transition-none"
+            className="flex h-10 w-10 items-center justify-center rounded-full border border-[color:var(--glass-border)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] text-[length:var(--lkv-text-subheadline)] font-bold text-[color:var(--lkv-text-primary)] shadow-elevation-2 transition-transform active:scale-95 motion-reduce:transition-none"
             aria-label="Retour aux carnets"
           >
             ‹
@@ -176,7 +176,7 @@ export default function MobileCarnetDetailView({
 
           <div className="flex max-w-[78%] items-center gap-[var(--space-1)]">
             <span className="min-w-0" title={data.meta?.itineraire}>
-              <Badge className="truncate border-[color:var(--glass-border)] bg-[color:var(--lkv-surface-card)]/90 px-[var(--space-3)] py-[var(--space-1)] font-mono font-semibold text-[color:var(--lkv-text-primary)] backdrop-blur-[var(--blur-xl)]">
+              <Badge className="truncate border-[color:var(--glass-border)] bg-[color:var(--glass-bg-medium)] border saturate-[var(--glass-sat)] lkv-rim-inset px-[var(--space-3)] py-[var(--space-1)] font-mono font-semibold text-[color:var(--lkv-text-primary)] backdrop-blur-[var(--glass-blur-sm)]">
                 📍 {data.meta?.itineraire || 'Expédition outdoor'}
               </Badge>
             </span>
@@ -204,7 +204,7 @@ export default function MobileCarnetDetailView({
               onClick={() => triggerHaptic('light')}
               className="group/author flex min-w-0 cursor-pointer items-center gap-[var(--space-2)]"
             >
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[color:var(--lkv-primary)] font-serif text-[length:var(--lkv-text-caption)] font-bold italic text-[color:var(--lkv-text-inverted)] transition-transform group-hover/author:scale-105 motion-reduce:transition-none">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn font-serif text-[length:var(--lkv-text-caption)] font-bold italic text-[color:var(--lkv-text-primary)] transition-transform group-hover/author:scale-105 motion-reduce:transition-none">
                 <img
                   src={metaAny.authorAvatar || (data.meta?.titleLine1?.includes('Ring Road') ? 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&q=80' : 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&q=80')}
                   alt=""

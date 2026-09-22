@@ -36,7 +36,7 @@ export const PersistentMetricsBar: React.FC<PersistentMetricsBarProps> = ({
     <div
       data-budget-overflow={isBudgetOverflow ? 'true' : 'false'}
       data-weight-overflow={isWeightOverflow ? 'true' : 'false'}
-      className="fixed bottom-[var(--bottom-nav-height,0px)] left-0 right-0 z-[var(--z-fab)] border-t border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-card)]/90 px-4 py-3 shadow-elevation-3 backdrop-blur-[var(--blur-lg)] transition-all"
+      className="fixed bottom-[var(--bottom-nav-height,0px)] left-0 right-0 z-[var(--z-fab)] border-t border-[color:var(--glass-border)] bg-[color:var(--glass-bg-medium)] saturate-[var(--glass-sat)] px-4 py-3 shadow-elevation-3 backdrop-blur-[var(--glass-blur-sm)] transition-all"
     >
       <div className="mx-auto flex max-w-5xl flex-col items-center justify-between gap-[var(--space-3)] sm:flex-row">
         {/* Métriques synchrones */}
@@ -83,7 +83,7 @@ export const PersistentMetricsBar: React.FC<PersistentMetricsBarProps> = ({
               className={`rounded-[var(--lkv-radius-sm)] p-[var(--space-2)] ${
                 isWeightOverflow
                   ? 'bg-[color:var(--lkv-warning)]/15 text-[color:var(--lkv-warning)]'
-                  : 'bg-[color:var(--lkv-primary)]/15 text-[color:var(--lkv-primary)]'
+                  : 'bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[color:var(--lkv-primary)]'
               }`}
             >
               <Icon name="weight" size={16} />

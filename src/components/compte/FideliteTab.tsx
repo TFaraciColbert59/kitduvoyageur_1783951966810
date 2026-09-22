@@ -110,16 +110,16 @@ function translateWithdrawalStatus(status: string) {
 function getStatusBadgeStyle(status: string) {
   switch (status) {
     case 'paid':
-      return 'inline-flex items-center justify-center gap-[6px] rounded-full border border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-muted)] px-[var(--space-3)] py-[2px] text-[length:var(--lkv-text-caption-2)] font-medium text-[color:var(--lkv-text-primary)]';
+      return 'inline-flex items-center justify-center gap-[6px] rounded-full border border-[color:var(--btn-glass-border)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn px-[var(--space-3)] py-[2px] text-[length:var(--lkv-text-caption-2)] font-medium text-[color:var(--lkv-text-primary)]';
     case 'rejected':
-      return 'inline-flex items-center justify-center gap-[6px] rounded-full border border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-muted)] px-[var(--space-3)] py-[2px] text-[length:var(--lkv-text-caption-2)] font-medium text-[color:var(--lkv-text-primary)] pill-danger';
+      return 'inline-flex items-center justify-center gap-[6px] rounded-full border border-[color:var(--btn-glass-border)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn px-[var(--space-3)] py-[2px] text-[length:var(--lkv-text-caption-2)] font-medium text-[color:var(--lkv-text-primary)] pill-danger';
     case 'approved':
     case 'processing':
-      return 'inline-flex items-center justify-center gap-[6px] rounded-full border border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-muted)] px-[var(--space-3)] py-[2px] text-[length:var(--lkv-text-caption-2)] font-medium text-[color:var(--lkv-text-primary)] pill-info';
+      return 'inline-flex items-center justify-center gap-[6px] rounded-full border border-[color:var(--btn-glass-border)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn px-[var(--space-3)] py-[2px] text-[length:var(--lkv-text-caption-2)] font-medium text-[color:var(--lkv-text-primary)] pill-info';
     case 'pending':
     case 'under_review':
     default:
-      return 'inline-flex items-center justify-center gap-[6px] rounded-full border border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-muted)] px-[var(--space-3)] py-[2px] text-[length:var(--lkv-text-caption-2)] font-medium text-[color:var(--lkv-text-primary)] pill-warn';
+      return 'inline-flex items-center justify-center gap-[6px] rounded-full border border-[color:var(--btn-glass-border)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn px-[var(--space-3)] py-[2px] text-[length:var(--lkv-text-caption-2)] font-medium text-[color:var(--lkv-text-primary)] pill-warn';
   }
 }
 
@@ -552,7 +552,7 @@ export default function FideliteTab({ profile: initialProfile }: FideliteTabProp
           <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 border-b border-[color:var(--lkv-primary)]/5 pb-5">
             <div>
               <div className="flex items-center gap-2 mb-1.5">
-                <span className="inline-flex items-center justify-center gap-[6px] rounded-full border border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-muted)] px-[var(--space-3)] py-[2px] text-[length:var(--lkv-text-caption-2)] font-medium text-[color:var(--lkv-text-primary)] !bg-[color:var(--lkv-primary)] !text-white text-[10px] font-mono uppercase tracking-wider">
+                <span className="inline-flex items-center justify-center gap-[6px] rounded-full border border-[color:var(--btn-glass-border)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn px-[var(--space-3)] py-[2px] text-[length:var(--lkv-text-caption-2)] font-medium text-[color:var(--lkv-text-primary)] text-[10px] font-mono uppercase tracking-wider">
                   Partage de Valeur LKDV
                 </span>
               </div>
@@ -616,7 +616,7 @@ export default function FideliteTab({ profile: initialProfile }: FideliteTabProp
           </div>
 
           {/* ── Hero Card (Progression Niveau) ── */}
-          <div className="bg-[color:var(--lkv-primary)] rounded-[var(--lkv-radius-lg)] p-6 sm:p-8 text-white relative overflow-hidden flex flex-col sm:flex-row items-center gap-8 border border-white/10 shadow-lg">
+          <div className="bg-[color:var(--glass-bg-medium)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] rounded-[var(--lkv-radius-lg)] p-6 sm:p-8 text-[color:var(--lkv-text-primary)] relative overflow-hidden flex flex-col sm:flex-row items-center gap-8 border border-white/10 shadow-lg">
             <div className="absolute top-0 right-0 w-96 h-96 bg-[color:var(--lkv-secondary)]/20 rounded-full blur-[80px] -translate-y-1/2 translate-x-1/3 pointer-events-none" />
 
             {/* Left: Circle Gauge */}
@@ -981,15 +981,15 @@ export default function FideliteTab({ profile: initialProfile }: FideliteTabProp
                 return (
                   <div
                     key={lvl.num}
-                    className={`flex items-start gap-3.5 p-3 transition-all ${ isCurrent ? 'bg-[color:var(--lkv-primary)] text-white shadow-md' : isPassed ? 'rounded-[var(--lkv-radius-md)] border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] backdrop-blur-[var(--blur-md)] opacity-70' : 'rounded-[var(--lkv-radius-md)] border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] backdrop-blur-[var(--blur-md)]' }`}
+                    className={`flex items-start gap-3.5 p-3 transition-all ${ isCurrent ? 'bg-[color:var(--btn-tint)] saturate-[var(--btn-saturate)] text-[color:var(--lkv-text-primary)] shadow-md' : isPassed ? 'rounded-[var(--lkv-radius-md)] border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] backdrop-blur-[var(--btn-blur)] opacity-70' : 'rounded-[var(--lkv-radius-md)] border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] backdrop-blur-[var(--btn-blur)]' }`}
                   >
                     <div
                       className={`w-7 h-7 rounded-full flex items-center justify-center font-mono font-bold text-xs shrink-0 ${
                         isCurrent
-                          ? 'bg-white/20 text-[color:var(--sage-300)]'
+                          ? 'bg-white/20 text-[color:var(--lkv-text-primary)]'
                           : isPassed
-                          ? 'bg-[color:var(--lkv-primary)]/10 text-[color:var(--lkv-primary)]'
-                          : 'bg-white text-[color:var(--lkv-text-muted)]'
+                          ? 'bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[color:var(--lkv-primary)]'
+                          : 'bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] text-[color:var(--lkv-text-muted)]'
                       }`}
                     >
                       {lvl.num}
@@ -1046,7 +1046,7 @@ export default function FideliteTab({ profile: initialProfile }: FideliteTabProp
 
       {/* Global Toast */}
       {toast && (
-        <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[var(--z-toast)] bg-[color:var(--lkv-primary)] text-white px-6 py-3 rounded-full text-xs font-extrabold  animate-fade-in-up flex items-center gap-2 border border-white/20">
+        <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[var(--z-toast)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[color:var(--lkv-text-primary)] px-6 py-3 rounded-full text-xs font-extrabold  animate-fade-in-up flex items-center gap-2 border border-white/20">
           <Icon name="CheckIcon" size={14} />
           <span>{toast}</span>
         </div>

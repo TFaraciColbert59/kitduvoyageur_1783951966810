@@ -23,7 +23,7 @@ export function TopAlertsAccordion({ alerts }: { alerts: AlertItem[] }) {
             variant="ghost"
             onClick={() => setOpen(open === a.id ? null : a.id)}
             aria-expanded={open === a.id}
-            className="h-auto w-full flex-col items-stretch justify-start whitespace-normal rounded-[var(--lkv-radius-sm)] bg-[color:var(--lkv-surface-muted)] p-3 text-left font-normal"
+            className="h-auto w-full flex-col items-stretch justify-start whitespace-normal rounded-[var(--lkv-radius-sm)] bg-[color:var(--glass-bg-medium)] border border-[color:var(--glass-border)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset p-3 text-left font-normal"
           >
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium text-[color:var(--lkv-text-primary)]">{a.type}</span>

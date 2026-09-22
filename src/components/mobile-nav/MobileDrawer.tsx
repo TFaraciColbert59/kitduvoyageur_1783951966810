@@ -186,14 +186,14 @@ export default function MobileDrawer({ isOpen, onClose, onSearchOpen }: MobileDr
           key="drawer-panel"
           id="mobile-drawer"
           ref={panelRef}
-          className={`lkv-drawer-panel fixed inset-y-0 left-0 z-[var(--z-sheet)] flex w-[88%] max-w-[360px] flex-col overflow-hidden bg-[color:var(--lkv-surface)] pl-[var(--safe-left)] shadow-elevation-5${closing ? ' lkv-drawer-panel--closing' : ''}`}
+          className={`lkv-drawer-panel fixed inset-y-0 left-0 z-[var(--z-sheet)] flex w-[88%] max-w-[360px] flex-col overflow-hidden bg-[color:var(--glass-bg-medium)] border border-[color:var(--glass-border)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] pl-[var(--safe-left)] shadow-elevation-5${closing ? ' lkv-drawer-panel--closing' : ''}`}
           role="dialog"
           aria-modal="true"
           aria-label="Navigation principale"
         >
             <div className="flex-1 overflow-y-auto overscroll-contain">
               {/* Header */}
-              <header className="relative overflow-hidden bg-[color:var(--lkv-primary)] px-[var(--space-5)] pb-[22px] pt-[calc(40px+var(--safe-top))] text-[color:var(--lkv-text-inverted)]">
+              <header className="relative overflow-hidden bg-[color:var(--glass-bg-medium)] border border-[color:var(--glass-border)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset px-[var(--space-5)] pb-[22px] pt-[calc(40px+var(--safe-top))] text-[color:var(--lkv-text-primary)]">
                 {/* Glow circle decoration */}
                 <div
                   className="absolute -bottom-[50px] -right-[30px] h-[180px] w-[180px] rounded-full bg-[radial-gradient(circle,var(--sage-300)_0%,transparent_65%)] opacity-40"
@@ -204,7 +204,7 @@ export default function MobileDrawer({ isOpen, onClose, onSearchOpen }: MobileDr
                 <IconButton
                   onClick={onClose}
                   aria-label="Fermer le menu"
-                  className="absolute right-[var(--space-3)] top-[calc(var(--safe-top)+var(--space-3))] bg-[color:var(--lkv-surface-card)] text-[color:var(--lkv-primary)]"
+                  className="absolute right-[var(--space-3)] top-[calc(var(--safe-top)+var(--space-3))] bg-[color:var(--glass-bg-medium)] border border-[color:var(--glass-border)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset text-[color:var(--lkv-primary)]"
                 >
                   <LkvIcon name="close" size={14} />
                 </IconButton>

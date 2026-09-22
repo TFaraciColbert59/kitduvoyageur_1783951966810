@@ -279,14 +279,14 @@ export default function CarnetsTab({ profile }: CarnetsTabProps) {
         <div className="flex items-center gap-3">
           <Link
             href="/carnets/brouillons"
-            className="inline-flex items-center justify-center gap-[var(--space-2)] min-h-[var(--lkv-touch-min)] rounded-full px-[var(--space-4)] py-[var(--space-2)] text-[length:var(--lkv-text-footnote)] font-semibold backdrop-blur-[var(--blur-md)] border border-[color:var(--glass-border)] bg-[color:var(--btn-tint)] text-[color:var(--btn-content)] shadow-elevation-1 text-xs font-bold"
+            className="inline-flex items-center justify-center gap-[var(--space-2)] min-h-[var(--lkv-touch-min)] rounded-full px-[var(--space-4)] py-[var(--space-2)] text-[length:var(--lkv-text-footnote)] font-semibold backdrop-blur-[var(--btn-blur)] border border-[color:var(--glass-border)] bg-[color:var(--btn-tint)] text-[color:var(--btn-content)] shadow-elevation-1 text-xs font-bold"
           >
             <Icon name="DocumentTextIcon" size={14} />
             <span>Brouillons ({drafts.length})</span>
           </Link>
           <Link
             href="/carnets/nouveau"
-            className="inline-flex items-center justify-center gap-[var(--space-2)] min-h-[var(--lkv-touch-min)] rounded-full px-[var(--space-4)] py-[var(--space-2)] text-[length:var(--lkv-text-footnote)] font-semibold backdrop-blur-[var(--blur-md)] border border-transparent bg-[color:var(--lkv-action)] text-[color:var(--lkv-on-action)] shadow-elevation-1 text-xs font-bold"
+            className="inline-flex items-center justify-center gap-[var(--space-2)] min-h-[var(--lkv-touch-min)] rounded-full px-[var(--space-4)] py-[var(--space-2)] text-[length:var(--lkv-text-footnote)] font-semibold backdrop-blur-[var(--btn-blur)] border border-transparent bg-[color:var(--btn-tint)] saturate-[var(--btn-saturate)] text-[color:var(--lkv-text-primary)] shadow-elevation-1 text-xs font-bold"
           >
             <Icon name="PlusIcon" size={14} />
             <span>+ Rédiger un carnet</span>
@@ -357,7 +357,7 @@ export default function CarnetsTab({ profile }: CarnetsTabProps) {
                 </h3>
                 <p className="text-xs text-[color:var(--lkv-text-muted)] mt-0.5">Privés — vous seul pouvez les voir</p>
               </div>
-              <span className="inline-flex items-center justify-center gap-[6px] rounded-full border border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-muted)] px-[var(--space-3)] py-[2px] text-[length:var(--lkv-text-caption-2)] font-medium text-[color:var(--lkv-text-primary)] pill-warn text-xs font-mono font-bold">
+              <span className="inline-flex items-center justify-center gap-[6px] rounded-full border border-[color:var(--btn-glass-border)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn px-[var(--space-3)] py-[2px] text-[length:var(--lkv-text-caption-2)] font-medium text-[color:var(--lkv-text-primary)] pill-warn text-xs font-mono font-bold">
                 {drafts.length} en cours
               </span>
             </div>
@@ -396,10 +396,10 @@ export default function CarnetsTab({ profile }: CarnetsTabProps) {
                     <div
                       className={`w-full rounded-t-sm transition-all ${
                         m.current
-                          ? 'bg-[color:var(--lkv-primary)]'
+                          ? 'bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn'
                           : m.count > 0
                           ? 'bg-[color:var(--lkv-secondary)]'
-                          : 'bg-[color:var(--lkv-primary)]/10'
+                          : 'bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn'
                       }`}
                       style={{ height: `${h}px` }}
                     />
@@ -433,7 +433,7 @@ export default function CarnetsTab({ profile }: CarnetsTabProps) {
                 {fideles.slice(0, 3).map((f) => (
                   <div key={f.id} className="rounded-[var(--lkv-radius-md)] border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] backdrop-blur-[var(--blur-md)] flex items-center justify-between p-2 border border-white/40">
                     <div className="flex items-center gap-2.5 min-w-0">
-                      <div className="w-7 h-7 rounded-full bg-[color:var(--lkv-primary)] text-white flex items-center justify-center text-xs font-bold shrink-0">
+                      <div className="w-7 h-7 rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[color:var(--lkv-text-primary)] flex items-center justify-center text-xs font-bold shrink-0">
                         {f.full_name.charAt(0)}
                       </div>
                       <div className="min-w-0">
@@ -441,7 +441,7 @@ export default function CarnetsTab({ profile }: CarnetsTabProps) {
                         <p className="text-[9.5px] text-[color:var(--lkv-text-muted)] truncate">{f.location || 'Alpes françaises'}</p>
                       </div>
                     </div>
-                    <span className="inline-flex items-center justify-center gap-[6px] rounded-full border border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-muted)] px-[var(--space-3)] py-[2px] text-[length:var(--lkv-text-caption-2)] font-medium text-[color:var(--lkv-text-primary)] text-[8.5px] font-mono font-bold">Fidèle</span>
+                    <span className="inline-flex items-center justify-center gap-[6px] rounded-full border border-[color:var(--btn-glass-border)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn px-[var(--space-3)] py-[2px] text-[length:var(--lkv-text-caption-2)] font-medium text-[color:var(--lkv-text-primary)] text-[8.5px] font-mono font-bold">Fidèle</span>
                   </div>
                 ))}
               </div>
@@ -477,11 +477,11 @@ function CarnetCard({ carnet, isNew }: { carnet: CarnetDB; isNew: boolean }) {
         {/* Status badge */}
         <div className="absolute top-3 left-3">
           {isNew ? (
-            <span className="inline-flex items-center justify-center gap-[6px] rounded-full border border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-muted)] px-[var(--space-3)] py-[2px] text-[length:var(--lkv-text-caption-2)] font-medium text-[color:var(--lkv-text-primary)] !bg-[color:var(--lkv-primary)] !text-white text-[10px] font-bold uppercase tracking-wider">
+            <span className="inline-flex items-center justify-center gap-[6px] rounded-full border border-[color:var(--btn-glass-border)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn px-[var(--space-3)] py-[2px] text-[length:var(--lkv-text-caption-2)] font-medium text-[color:var(--lkv-text-primary)] text-[10px] font-bold uppercase tracking-wider">
               Nouveau
             </span>
           ) : (
-            <span className="inline-flex items-center justify-center gap-[6px] rounded-full border border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-muted)] px-[var(--space-3)] py-[2px] text-[length:var(--lkv-text-caption-2)] font-medium text-[color:var(--lkv-text-primary)] text-[10px] font-bold uppercase tracking-wider">
+            <span className="inline-flex items-center justify-center gap-[6px] rounded-full border border-[color:var(--btn-glass-border)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn px-[var(--space-3)] py-[2px] text-[length:var(--lkv-text-caption-2)] font-medium text-[color:var(--lkv-text-primary)] text-[10px] font-bold uppercase tracking-wider">
               Publié
             </span>
           )}
@@ -534,7 +534,7 @@ function DraftRow({
   const roman = ['I', 'II', 'III', 'IV', 'V'][idx] || String(idx + 1);
 
   return (
-    <div className="px-5 py-4 hover:bg-[color:var(--lkv-surface-card)] transition-colors group">
+    <div className="px-5 py-4 hover:bg-[color:var(--btn-tint)] transition-colors group">
       <div className="flex items-start gap-4">
         {/* Roman numeral */}
         <span className="font-serif italic text-[color:var(--sand-300)] text-lg leading-none mt-0.5 flex-shrink-0 w-6 text-center">

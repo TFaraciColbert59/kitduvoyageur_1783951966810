@@ -146,7 +146,7 @@ export function TripLiveCockpitView({
 
   const metricCardClass = isSunMode
     ? 'border-white/10 bg-white/5'
-    : 'border-[color:var(--lkv-border-subtle)] bg-[color:var(--lkv-surface-card)]';
+    : 'border-[color:var(--glass-border)] bg-[color:var(--glass-bg-medium)] border backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset';
 
   return (
     <div
@@ -234,7 +234,7 @@ export function TripLiveCockpitView({
         </div>
 
         {/* Barre de progression */}
-        <div className="mb-[var(--space-6)] h-2 w-full overflow-hidden rounded-full bg-[color:var(--lkv-surface-muted)]">
+        <div className="mb-[var(--space-6)] h-2 w-full overflow-hidden rounded-full bg-[color:var(--btn-tint)]">
           <div
             className={`h-full rounded-full transition-all duration-300 ${
               isSunMode ? 'bg-[color:var(--lkv-warning)]' : 'bg-[color:var(--lkv-primary)]'
@@ -353,7 +353,7 @@ export function TripLiveCockpitView({
                 className={`flex items-start gap-[var(--space-2)] rounded-[var(--lkv-radius-md)] border p-[var(--space-3)] text-[length:var(--lkv-text-footnote)] ${
                   isSunMode
                     ? 'border-[color:var(--lkv-warning)]/30 bg-[color:var(--lkv-warning)]/10 text-[color:var(--lkv-warning)]'
-                    : 'border-[color:var(--lkv-primary)]/10 bg-[color:var(--lkv-primary)]/5 text-[color:var(--lkv-text-primary)]'
+                    : 'border-[color:var(--lkv-primary)]/10 bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[color:var(--lkv-text-primary)]'
                 }`}
               >
                 <Icon name="droplets" size={16} className="mt-0.5 shrink-0" />
@@ -526,7 +526,7 @@ export function TripLiveCockpitView({
             <div className="grid grid-cols-2 gap-[var(--space-2)]">
               <a
                 href="tel:112"
-                className="flex min-h-[48px] items-center justify-center gap-[var(--space-2)] rounded-full bg-[color:var(--lkv-danger)] p-[var(--space-3)] text-[length:var(--lkv-text-body-sm)] font-extrabold text-white shadow-elevation-2 transition-colors hover:bg-[color:var(--lkv-danger)]/90"
+                className="flex min-h-[48px] items-center justify-center gap-[var(--space-2)] rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] p-[var(--space-3)] text-[length:var(--lkv-text-body-sm)] font-extrabold text-[color:var(--lkv-danger)] shadow-elevation-2 transition-colors hover:brightness-[1.05]"
               >
                 <Icon name="phone-call" size={16} />
                 <span>Appel 112</span>
@@ -534,7 +534,7 @@ export function TripLiveCockpitView({
 
               <a
                 href="sms:114"
-                className="flex min-h-[48px] items-center justify-center gap-[var(--space-2)] rounded-full border border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-card)] p-[var(--space-3)] text-[length:var(--lkv-text-body-sm)] font-extrabold text-[color:var(--lkv-danger)] transition-colors hover:bg-[color:var(--lkv-hover-surface)]"
+                className="flex min-h-[48px] items-center justify-center gap-[var(--space-2)] rounded-full border border-[color:var(--btn-glass-border)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn p-[var(--space-3)] text-[length:var(--lkv-text-body-sm)] font-extrabold text-[color:var(--lkv-danger)] transition-colors hover:bg-[color:var(--lkv-hover-surface)]"
               >
                 <Icon name="message-square" size={16} />
                 <span>SMS 114</span>
@@ -546,7 +546,7 @@ export function TripLiveCockpitView({
               className={`flex items-center justify-between gap-[var(--space-2)] rounded-[var(--lkv-radius-sm)] border p-[var(--space-3)] ${
                 isSunMode
                   ? 'border-white/20 bg-black'
-                  : 'border-[color:var(--lkv-border-subtle)] bg-[color:var(--lkv-surface-card)]'
+                  : 'border-[color:var(--glass-border)] bg-[color:var(--glass-bg-medium)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset'
               }`}
             >
               <div className="min-w-0">

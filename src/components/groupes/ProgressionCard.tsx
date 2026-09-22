@@ -37,7 +37,7 @@ export default function ProgressionCard({ progression }: ProgressionCardProps) {
         aria-valuemin={0}
         aria-valuemax={100}
         aria-label="Progression du voyage"
-        className="mb-[var(--space-8)] h-2 w-full overflow-hidden rounded-full border border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-muted)]"
+        className="mb-[var(--space-8)] h-2 w-full overflow-hidden rounded-full border border-[color:var(--btn-glass-border)] bg-[color:var(--btn-tint)]"
       >
         <motion.div
           className="h-full rounded-full bg-[color:var(--lkv-primary)]"
@@ -55,10 +55,10 @@ export default function ProgressionCard({ progression }: ProgressionCardProps) {
             <div
               className={`z-10 flex h-6 w-6 items-center justify-center rounded-full text-[length:var(--lkv-text-caption-2)] font-bold transition-colors ${
                 step.completed
-                  ? 'bg-[color:var(--lkv-primary)] text-[color:var(--lkv-text-inverted)]'
+                  ? 'bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[color:var(--lkv-text-primary)]'
                   : step.active
-                    ? 'border border-[color:var(--lkv-primary)] bg-[color:var(--lkv-surface-card)] text-[color:var(--lkv-text-primary)] ring-4 ring-[color:var(--lkv-primary)]/20'
-                    : 'bg-[color:var(--lkv-surface-muted)] text-[color:var(--lkv-text-muted)]'
+                    ? 'border border-[color:var(--lkv-primary)] bg-[color:var(--btn-tint)]  text-[color:var(--lkv-text-primary)] ring-4 ring-[color:var(--lkv-primary)]/20'
+                    : 'bg-[color:var(--btn-tint)]  text-[color:var(--lkv-text-muted)]'
               }`}
             >
               {step.completed ? <Icon name="CheckIcon" size={12} aria-hidden="true" /> : step.id}

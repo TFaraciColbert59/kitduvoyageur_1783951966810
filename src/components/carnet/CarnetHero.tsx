@@ -124,7 +124,7 @@ export default function CarnetHero({ meta, onExport, carnetId, onOpenComments }:
           {meta.authorName && (
             <Link
               href={meta.authorId ? `/profil/${meta.authorId}` : '/communaute'}
-              className="group inline-flex items-center gap-[var(--space-1)] rounded-full border border-[color:var(--glass-border)] bg-[color:var(--lkv-primary)]/30 px-[var(--space-3)] py-[var(--space-1)] transition-colors hover:bg-[color:var(--lkv-primary)]/50"
+              className="group inline-flex items-center gap-[var(--space-1)] rounded-full border border-[color:var(--glass-border)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn px-[var(--space-3)] py-[var(--space-1)] transition-colors hover:brightness-[1.05]"
             >
               <span className="font-mono text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-forest-300)]">Par</span>
               <span className="text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-inverted)] group-hover:underline">{meta.authorName}</span>

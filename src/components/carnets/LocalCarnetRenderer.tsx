@@ -89,7 +89,7 @@ export default function LocalCarnetRenderer({ id }: { id: string }) {
         />
         <Link
           href="/carnets"
-          className="mt-[var(--space-4)] inline-flex min-h-[var(--control-height-md)] items-center rounded-full bg-[color:var(--lkv-primary)] px-[var(--space-6)] text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-inverted)]"
+          className="mt-[var(--space-4)] inline-flex min-h-[var(--control-height-md)] items-center rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn px-[var(--space-6)] text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-primary)]"
         >
           Retour aux carnets
         </Link>

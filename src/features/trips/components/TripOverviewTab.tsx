@@ -95,7 +95,7 @@ export function TripOverviewTab({ trip, stats, onTabChange }: TripOverviewTabPro
               {kit.ready} sur {kit.total} emballés ({packedPercent}%)
             </span>
           </div>
-          <div className="h-2.5 w-full overflow-hidden rounded-full bg-[color:var(--lkv-surface-muted)]">
+          <div className="h-2.5 w-full overflow-hidden rounded-full bg-[color:var(--btn-tint)]">
             <div
               className="h-full rounded-full bg-[linear-gradient(to_right,var(--lkv-secondary),var(--lkv-primary))] transition-all duration-500"
               style={{ width: `${packedPercent}%` }}
@@ -169,7 +169,7 @@ export function TripOverviewTab({ trip, stats, onTabChange }: TripOverviewTabPro
                   className="flex items-center justify-between"
                 >
                   <div className="flex items-center gap-[var(--space-3)]">
-                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[color:var(--lkv-action)] text-[length:var(--lkv-text-footnote)] font-bold uppercase text-[color:var(--lkv-on-action)]">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[length:var(--lkv-text-footnote)] font-bold uppercase text-[color:var(--lkv-text-primary)]">
                       {collab.profile?.full_name?.substring(0, 2) || collab.user_id.substring(0, 2)}
                     </div>
                     <div>
@@ -193,7 +193,7 @@ export function TripOverviewTab({ trip, stats, onTabChange }: TripOverviewTabPro
       {/* 4. Bloc Conseils de préparation */}
       <Card>
         <div className="flex items-start gap-[var(--space-4)]">
-          <div className="shrink-0 rounded-[var(--lkv-radius-md)] bg-[color:var(--lkv-surface-muted)] p-[var(--space-2)] text-[color:var(--lkv-primary)]">
+          <div className="shrink-0 rounded-[var(--lkv-radius-md)] bg-[color:var(--glass-bg-medium)] border border-[color:var(--glass-border)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset p-[var(--space-2)] text-[color:var(--lkv-primary)]">
             <Icon name="compass" size={22} />
           </div>
           <div>

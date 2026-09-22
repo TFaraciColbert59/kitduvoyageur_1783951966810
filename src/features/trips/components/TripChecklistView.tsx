@@ -338,7 +338,7 @@ export function TripChecklistView({ tripId, daysUntilStart, items }: TripCheckli
                     className={`items-start gap-[var(--space-3)] rounded-[var(--lkv-radius-md)] border p-[var(--space-3)] sm:p-[var(--space-4)] ${
                       isChecked
                         ? 'border-[color:var(--lkv-action)]/30 bg-[color:var(--lkv-action-soft)]'
-                        : 'border-[color:var(--lkv-border-subtle)] bg-[color:var(--lkv-surface-card)]'
+                        : 'border-[color:var(--glass-border)] bg-[color:var(--glass-bg-medium)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset'
                     }`}
                     leading={
                       <span className="mt-0.5 shrink-0">

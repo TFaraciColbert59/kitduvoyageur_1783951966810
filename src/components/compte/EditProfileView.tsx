@@ -218,7 +218,7 @@ export default function EditProfileView({ onCloseModal, onSave }: { onCloseModal
       {/* 1. TOP STICKY NAVBAR — desktop uniquement */}
       <header className="lkv-material-header sticky top-0 z-[var(--z-sticky)] hidden items-center justify-between border-b border-[color:var(--lkv-primary)]/5 px-4 py-3.5 sm:px-8 md:flex">
         <div className="flex items-center gap-4">
-          <Link href="/compte" className="inline-flex items-center justify-center gap-[var(--space-2)] min-h-[var(--lkv-touch-min)] rounded-full px-[var(--space-4)] py-[var(--space-2)] text-[length:var(--lkv-text-footnote)] font-semibold backdrop-blur-[var(--blur-md)] border border-[color:var(--glass-border)] bg-[color:var(--btn-tint)] text-[color:var(--btn-content)] shadow-elevation-1 text-xs font-bold !py-1.5 !px-3">
+          <Link href="/compte" className="inline-flex items-center justify-center gap-[var(--space-2)] min-h-[var(--lkv-touch-min)] rounded-full px-[var(--space-4)] py-[var(--space-2)] text-[length:var(--lkv-text-footnote)] font-semibold backdrop-blur-[var(--btn-blur)] border border-[color:var(--glass-border)] bg-[color:var(--btn-tint)] text-[color:var(--btn-content)] shadow-elevation-1 text-xs font-bold !py-1.5 !px-3">
             <Icon name="ArrowLeftIcon" size={14} />
             <span>Mon compte</span>
           </Link>
@@ -227,14 +227,14 @@ export default function EditProfileView({ onCloseModal, onSave }: { onCloseModal
         </div>
 
         <div className="flex items-center gap-3">
-          <span className="inline-flex items-center justify-center gap-[6px] rounded-full border border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-muted)] px-[var(--space-3)] py-[2px] text-[length:var(--lkv-text-caption-2)] font-medium text-[color:var(--lkv-text-primary)] text-[10px] font-mono">
+          <span className="inline-flex items-center justify-center gap-[6px] rounded-full border border-[color:var(--btn-glass-border)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn px-[var(--space-3)] py-[2px] text-[length:var(--lkv-text-caption-2)] font-medium text-[color:var(--lkv-text-primary)] text-[10px] font-mono">
             <span className="w-1.5 h-1.5 rounded-full bg-[color:var(--lkv-secondary)] animate-pulse mr-1"></span>
             ⚡ Modifications synchronisées
           </span>
 
           <Link
             href="/compte"
-            className="inline-flex items-center justify-center gap-[var(--space-2)] min-h-[var(--lkv-touch-min)] rounded-full px-[var(--space-4)] py-[var(--space-2)] text-[length:var(--lkv-text-footnote)] font-semibold backdrop-blur-[var(--blur-md)] border border-[color:var(--glass-border)] bg-[color:var(--btn-tint)] text-[color:var(--btn-content)] shadow-elevation-1 text-xs font-bold"
+            className="inline-flex items-center justify-center gap-[var(--space-2)] min-h-[var(--lkv-touch-min)] rounded-full px-[var(--space-4)] py-[var(--space-2)] text-[length:var(--lkv-text-footnote)] font-semibold backdrop-blur-[var(--btn-blur)] border border-[color:var(--glass-border)] bg-[color:var(--btn-tint)] text-[color:var(--btn-content)] shadow-elevation-1 text-xs font-bold"
           >
             <Icon name="EyeIcon" size={14} />
             <span>Aperçu public</span>
@@ -271,17 +271,17 @@ export default function EditProfileView({ onCloseModal, onSave }: { onCloseModal
                 <h2 className="font-display font-bold text-lg sm:text-xl text-[color:var(--lkv-primary)]">Identité publique</h2>
                 <p className="text-xs text-[color:var(--lkv-text-muted)] mt-0.5">Nom, avatar, couverture. Ce que la communauté voit en premier.</p>
               </div>
-              <span className="inline-flex items-center justify-center gap-[6px] rounded-full border border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-muted)] px-[var(--space-3)] py-[2px] text-[length:var(--lkv-text-caption-2)] font-medium text-[color:var(--lkv-text-primary)] text-[10px] font-mono">
+              <span className="inline-flex items-center justify-center gap-[6px] rounded-full border border-[color:var(--btn-glass-border)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn px-[var(--space-3)] py-[2px] text-[length:var(--lkv-text-caption-2)] font-medium text-[color:var(--lkv-text-primary)] text-[10px] font-mono">
                 01 · VISIBILITÉ
               </span>
             </div>
 
             {/* Cover Photo Header */}
-            <div className="relative rounded-2xl overflow-hidden h-44 sm:h-52 bg-[color:var(--lkv-primary)] group border border-white/10">
+            <div className="relative rounded-2xl overflow-hidden h-44 sm:h-52 bg-[color:var(--btn-tint)] group border border-white/10">
               <img src={form.heroUrl} alt="Photo de couverture" className="w-full h-full object-cover" />
               <div className="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-colors" />
               <div className="absolute top-4 right-4 flex gap-2">
-                <label className="inline-flex items-center justify-center gap-[var(--space-2)] min-h-[var(--lkv-touch-min)] rounded-full px-[var(--space-4)] py-[var(--space-2)] text-[length:var(--lkv-text-footnote)] font-semibold backdrop-blur-[var(--blur-md)] border border-[color:var(--glass-border)] bg-[color:var(--btn-tint)] text-[color:var(--btn-content)] shadow-elevation-1 text-xs font-bold cursor-pointer">
+                <label className="inline-flex items-center justify-center gap-[var(--space-2)] min-h-[var(--lkv-touch-min)] rounded-full px-[var(--space-4)] py-[var(--space-2)] text-[length:var(--lkv-text-footnote)] font-semibold backdrop-blur-[var(--btn-blur)] border border-[color:var(--glass-border)] bg-[color:var(--btn-tint)] text-[color:var(--btn-content)] shadow-elevation-1 text-xs font-bold cursor-pointer">
                   <Icon name="CameraIcon" size={14} /> Changer
                   <input
                     type="file"
@@ -307,7 +307,7 @@ export default function EditProfileView({ onCloseModal, onSave }: { onCloseModal
             {/* Avatar & Subtitle Row */}
             <div className="flex flex-col sm:flex-row items-start sm:items-end justify-between gap-4 -mt-12 sm:-mt-14 relative z-[var(--z-dropdown)] px-4">
               <div className="flex items-end gap-4">
-                <div className="relative w-24 h-24 sm:w-28 sm:h-28 rounded-full border-4 border-white shadow-md overflow-hidden bg-white shrink-0">
+                <div className="relative w-24 h-24 sm:w-28 sm:h-28 rounded-full border border-[color:var(--glass-border)] shadow-md overflow-hidden bg-[color:var(--glass-bg-medium)] shrink-0">
                   <img src={form.avatarUrl || '/assets/images/no_image.png'} alt={form.publicName} className="w-full h-full object-cover" />
                   <label className="absolute inset-0 bg-black/40 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-bold cursor-pointer">
                     <Icon name="CameraIcon" size={20} />
@@ -330,7 +330,7 @@ export default function EditProfileView({ onCloseModal, onSave }: { onCloseModal
               </div>
 
               <div className="flex items-center gap-2 mb-2">
-                <label className="inline-flex items-center justify-center gap-[var(--space-2)] min-h-[var(--lkv-touch-min)] rounded-full px-[var(--space-4)] py-[var(--space-2)] text-[length:var(--lkv-text-footnote)] font-semibold backdrop-blur-[var(--blur-md)] border border-[color:var(--glass-border)] bg-[color:var(--btn-tint)] text-[color:var(--btn-content)] shadow-elevation-1 text-xs font-bold cursor-pointer">
+                <label className="inline-flex items-center justify-center gap-[var(--space-2)] min-h-[var(--lkv-touch-min)] rounded-full px-[var(--space-4)] py-[var(--space-2)] text-[length:var(--lkv-text-footnote)] font-semibold backdrop-blur-[var(--btn-blur)] border border-[color:var(--glass-border)] bg-[color:var(--btn-tint)] text-[color:var(--btn-content)] shadow-elevation-1 text-xs font-bold cursor-pointer">
                   Changer photo
                   <input
                     type="file"
@@ -441,7 +441,7 @@ export default function EditProfileView({ onCloseModal, onSave }: { onCloseModal
                 <h2 className="font-display font-bold text-lg sm:text-xl text-[color:var(--lkv-primary)]">Ancrage géographique</h2>
                 <p className="text-xs text-[color:var(--lkv-text-muted)] mt-0.5">Pour proposer les bons refuges, les clubs proches et suggérer votre profil aux voyageurs.</p>
               </div>
-              <span className="inline-flex items-center justify-center gap-[6px] rounded-full border border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-muted)] px-[var(--space-3)] py-[2px] text-[length:var(--lkv-text-caption-2)] font-medium text-[color:var(--lkv-text-primary)] text-[10px] font-mono">
+              <span className="inline-flex items-center justify-center gap-[6px] rounded-full border border-[color:var(--btn-glass-border)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn px-[var(--space-3)] py-[2px] text-[length:var(--lkv-text-caption-2)] font-medium text-[color:var(--lkv-text-primary)] text-[10px] font-mono">
                 02 · OÙ VOUS ÊTES
               </span>
             </div>
@@ -538,7 +538,7 @@ export default function EditProfileView({ onCloseModal, onSave }: { onCloseModal
                 <h2 className="font-display font-bold text-lg sm:text-xl text-[color:var(--lkv-primary)]">Pratique &amp; niveau</h2>
                 <p className="text-xs text-[color:var(--lkv-text-muted)] mt-0.5">Ces informations aident à me mettre en relation avec des personnes d'expérience compatible.</p>
               </div>
-              <span className="inline-flex items-center justify-center gap-[6px] rounded-full border border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-muted)] px-[var(--space-3)] py-[2px] text-[length:var(--lkv-text-caption-2)] font-medium text-[color:var(--lkv-text-primary)] text-[10px] font-mono">
+              <span className="inline-flex items-center justify-center gap-[6px] rounded-full border border-[color:var(--btn-glass-border)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn px-[var(--space-3)] py-[2px] text-[length:var(--lkv-text-caption-2)] font-medium text-[color:var(--lkv-text-primary)] text-[10px] font-mono">
                 03 · VOS COMPÉTENCES
               </span>
             </div>
@@ -633,7 +633,7 @@ export default function EditProfileView({ onCloseModal, onSave }: { onCloseModal
                 <h2 className="font-display font-bold text-lg sm:text-xl text-[color:var(--lkv-primary)]">Comptes liés</h2>
                 <p className="text-xs text-[color:var(--lkv-text-muted)] mt-0.5">Importez vos traces depuis les plateformes que vous utilisez déjà.</p>
               </div>
-              <span className="inline-flex items-center justify-center gap-[6px] rounded-full border border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-muted)] px-[var(--space-3)] py-[2px] text-[length:var(--lkv-text-caption-2)] font-medium text-[color:var(--lkv-text-primary)] text-[10px] font-mono">
+              <span className="inline-flex items-center justify-center gap-[6px] rounded-full border border-[color:var(--btn-glass-border)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn px-[var(--space-3)] py-[2px] text-[length:var(--lkv-text-caption-2)] font-medium text-[color:var(--lkv-text-primary)] text-[10px] font-mono">
                 04 · IMPORT &amp; PARTAGE
               </span>
             </div>
@@ -689,7 +689,7 @@ export default function EditProfileView({ onCloseModal, onSave }: { onCloseModal
                 <h2 className="font-display font-bold text-lg sm:text-xl text-[color:var(--lkv-primary)]">Qui peut voir quoi</h2>
                 <p className="text-xs text-[color:var(--lkv-text-muted)] mt-0.5">Et avec qui vous partagez vos traces. Vos carnets peuvent être publics, tout en gardant vos sorties privées.</p>
               </div>
-              <span className="inline-flex items-center justify-center gap-[6px] rounded-full border border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-muted)] px-[var(--space-3)] py-[2px] text-[length:var(--lkv-text-caption-2)] font-medium text-[color:var(--lkv-text-primary)] text-[10px] font-mono">
+              <span className="inline-flex items-center justify-center gap-[6px] rounded-full border border-[color:var(--btn-glass-border)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn px-[var(--space-3)] py-[2px] text-[length:var(--lkv-text-caption-2)] font-medium text-[color:var(--lkv-text-primary)] text-[10px] font-mono">
                 05 · CONFIDENTIALITÉ
               </span>
             </div>
@@ -728,7 +728,7 @@ export default function EditProfileView({ onCloseModal, onSave }: { onCloseModal
         {/* RIGHT COLUMN: SIDEBAR WIDGETS (4 COLS) */}
         <div className="lg:col-span-4 space-y-6 sticky top-20">
           {/* WIDGET 1: APERÇU PROFIL PUBLIC (Live Card) */}
-          <div className="bg-[color:var(--lkv-primary)] rounded-[var(--lkv-radius-lg)] p-6 text-white relative overflow-hidden space-y-4 shadow-xl border border-white/10">
+          <div className="bg-[color:var(--glass-bg-medium)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] rounded-[var(--lkv-radius-lg)] p-6 text-[color:var(--lkv-text-primary)] relative overflow-hidden space-y-4 shadow-xl border border-white/10">
             <div className="text-[9px] font-mono tracking-widest text-[color:var(--sage-300)] uppercase font-bold">APERÇU · PROFIL PUBLIC</div>
 
             <div className="flex items-center gap-4">
@@ -798,7 +798,7 @@ export default function EditProfileView({ onCloseModal, onSave }: { onCloseModal
 
       {/* 4. FLOATING BOTTOM BAR */}
       <div
-        className="fixed bottom-[calc(var(--safe-bottom)+62px+8px)] left-2 right-2 z-[var(--z-fab)] flex items-center justify-between gap-[var(--space-3)] rounded-full border border-[color:var(--lkv-border)] bg-[color:var(--lkv-primary)] px-[var(--space-4)] py-[var(--space-3)] text-[color:var(--lkv-text-inverted)] md:bottom-6 md:left-1/2 md:right-auto md:w-11/12 md:max-w-xl md:-translate-x-1/2 md:px-[var(--space-6)] md:py-[14px]"
+        className="fixed bottom-[calc(var(--safe-bottom)+62px+8px)] left-2 right-2 z-[var(--z-fab)] flex items-center justify-between gap-[var(--space-3)] rounded-full border border-[color:var(--btn-glass-border)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn px-[var(--space-4)] py-[var(--space-3)] text-[color:var(--lkv-text-primary)] md:bottom-6 md:left-1/2 md:right-auto md:w-11/12 md:max-w-xl md:-translate-x-1/2 md:px-[var(--space-6)] md:py-[14px]"
       >
         <div className="hidden items-center gap-[var(--space-2)] font-mono text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-inverted)]/80 md:flex">
           <span aria-hidden="true">⚡</span>

@@ -47,7 +47,7 @@ export function ResumeActiveTripCard() {
           <div className="flex flex-wrap items-center gap-[var(--space-3)] pt-[var(--space-2)] md:pt-0">
             <Link
               href={tripSectionHref(activeTrip.slug, 'overview')}
-              className="inline-flex min-h-[var(--control-height-sm)] items-center gap-[var(--space-2)] rounded-full bg-[color:var(--lkv-action)] px-[var(--space-4)] text-[length:var(--lkv-text-footnote)] font-bold text-[color:var(--lkv-on-action)] transition-colors hover:bg-[color:var(--lkv-action-hover)]"
+              className="inline-flex min-h-[var(--control-height-sm)] items-center gap-[var(--space-2)] rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn px-[var(--space-4)] text-[length:var(--lkv-text-footnote)] font-bold text-[color:var(--lkv-text-primary)] transition-colors hover:brightness-[1.05]"
             >
               <Icon name="compass" size={14} />
               <span>Reprendre le voyage</span>

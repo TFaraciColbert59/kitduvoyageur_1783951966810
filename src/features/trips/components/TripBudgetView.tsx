@@ -284,7 +284,7 @@ export function TripBudgetView({ trip, initialDay }: TripBudgetViewProps) {
                 {budgetSummary.spentPercentage}%
               </span>
             </div>
-            <div className="h-2.5 w-full overflow-hidden rounded-full bg-[color:var(--lkv-surface-muted)]">
+            <div className="h-2.5 w-full overflow-hidden rounded-full bg-[color:var(--btn-tint)]">
               <div
                 className={`h-full rounded-full transition-all duration-500 ${
                   budgetSummary.isOverBudget
@@ -596,7 +596,7 @@ export function TripBudgetView({ trip, initialDay }: TripBudgetViewProps) {
                       <div className="text-[length:var(--lkv-text-footnote)] font-bold text-[color:var(--lkv-text-primary)]">
                         {amt} {budgetSummary.currency}
                       </div>
-                      <div className="h-1.5 w-full overflow-hidden rounded-full bg-[color:var(--lkv-surface-muted)]">
+                      <div className="h-1.5 w-full overflow-hidden rounded-full bg-[color:var(--btn-tint)]">
                         <div
                           className="h-full rounded-full bg-[color:var(--lkv-secondary)]"
                           style={{ width: `${pct}%` }}

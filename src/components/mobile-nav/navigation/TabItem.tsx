@@ -182,16 +182,20 @@ const TabItem = memo(function TabItem({
       {isActive && (
         <motion.span
           layoutId="bottom-tab-active-pill"
-          className="glass-circle-btn pointer-events-none"
+          className="pointer-events-none"
           style={{
             position: 'absolute',
-            top: 2,
-            left: 0,
-            right: 0,
-            margin: '0 auto',
-            width: 40,
+            top: 6,
+            left: '50%',
+            marginLeft: -32,
+            width: 64,
             height: 40,
             borderRadius: 9999,
+            background: 'var(--btn-tint)',
+            border: '1px solid var(--btn-glass-border)',
+            boxShadow: 'var(--btn-rim)',
+            backdropFilter: 'blur(var(--btn-blur)) saturate(var(--btn-saturate))',
+            WebkitBackdropFilter: 'blur(var(--btn-blur)) saturate(var(--btn-saturate))',
           }}
           transition={{ type: 'spring', stiffness: 450, damping: 32 }}
         />

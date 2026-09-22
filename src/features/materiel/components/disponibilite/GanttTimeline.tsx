@@ -24,7 +24,7 @@ export function GanttTimeline({ loans, days = 30 }: { loans: GanttLoan[]; days?:
           return (
             <div key={l.id} className="flex items-center gap-2">
               <span className="w-32 shrink-0 truncate text-xs text-[color:var(--lkv-text-primary)]">{l.label}</span>
-              <div className="relative h-4 flex-1 rounded-full bg-[color:var(--lkv-surface-muted)]">
+              <div className="relative h-4 flex-1 rounded-full bg-[color:var(--btn-tint)]">
                 {start <= days - 1 && (
                   <div
                     className="absolute top-0 h-4 rounded-full bg-[var(--sage-500)]"

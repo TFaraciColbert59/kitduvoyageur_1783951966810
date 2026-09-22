@@ -52,7 +52,7 @@ export function LoanTabs({ loans, userId }: { loans: LoanItem[]; userId: string 
           <li key={l.id}>
             <ListItem
               as="div"
-              className="bg-[color:var(--lkv-surface-muted)]"
+              className="bg-[color:var(--glass-bg-medium)]"
               title={`${l.borrower_contact ?? 'Emprunteur'} · ${l.due_date ? new Date(l.due_date).toLocaleDateString('fr-FR') : 'sans date'}`}
               trailing={
                 <span className="flex items-center gap-2">

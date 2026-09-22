@@ -184,9 +184,9 @@ export default function DepensesCard({ expenses, groupId, onRefresh, user, membe
           <ListItem
             key={item.id}
             as="div"
-            className="group bg-[color:var(--lkv-surface-muted)]"
+            className="group bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn"
             leading={
-              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[color:var(--lkv-surface-card)] text-[color:var(--lkv-text-primary)]">
+              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[color:var(--lkv-text-primary)]">
                 <Icon name="CurrencyEuroIcon" size={14} aria-hidden="true" />
               </span>
             }

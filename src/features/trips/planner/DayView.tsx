@@ -137,7 +137,7 @@ export function DayView({
                     aria-hidden="true"
                   />
                   <div
-                    className="absolute right-0 top-11 z-[var(--z-fab)] w-56 rounded-[var(--lkv-radius-md)] border border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-card)] py-1.5 text-[length:var(--lkv-text-footnote)] text-[color:var(--lkv-text-primary)] shadow-elevation-3 animate-in fade-in zoom-in-95"
+                    className="absolute right-0 top-11 z-[var(--z-fab)] w-56 rounded-[var(--lkv-radius-md)] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg-medium)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] py-1.5 text-[length:var(--lkv-text-footnote)] text-[color:var(--lkv-text-primary)] shadow-elevation-3 animate-in fade-in zoom-in-95"
                     role="menu"
                   >
                     {menuItems.map((item) => (
@@ -169,7 +169,7 @@ export function DayView({
         {/* Barre de métriques déterministes */}
         <div className="mt-[var(--space-5)] grid grid-cols-2 gap-[var(--space-3)] border-t border-[color:var(--lkv-border-subtle)] pt-[var(--space-4)] sm:grid-cols-4">
           <Card variant="compact" className="flex items-center gap-[var(--space-3)]">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[color:var(--lkv-primary)]/10 text-[color:var(--lkv-primary)]">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[color:var(--lkv-primary)]">
               <Icon name="map-pin" size={16} />
             </div>
             <div>
@@ -183,7 +183,7 @@ export function DayView({
           </Card>
 
           <Card variant="compact" className="flex items-center gap-[var(--space-3)]">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[color:var(--lkv-primary)]/10 text-[color:var(--lkv-primary)]">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[color:var(--lkv-primary)]">
               <Icon name="trending-up" size={16} />
             </div>
             <div>
@@ -197,7 +197,7 @@ export function DayView({
           </Card>
 
           <Card variant="compact" className="flex items-center gap-[var(--space-3)]">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[color:var(--lkv-primary)]/10 text-[color:var(--lkv-primary)]">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[color:var(--lkv-primary)]">
               <Icon name="clock" size={16} />
             </div>
             <div>
@@ -211,7 +211,7 @@ export function DayView({
           </Card>
 
           <Card variant="compact" className="flex items-center gap-[var(--space-3)]">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[color:var(--lkv-primary)]/10 text-[color:var(--lkv-primary)]">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[color:var(--lkv-primary)]">
               <Icon name="footprints" size={16} />
             </div>
             <div>

@@ -78,9 +78,9 @@ export default function CopilotePage() {
                 >
                   <div
                     aria-hidden="true"
-                    className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[10px] font-bold text-[color:var(--lkv-text-inverted)] ${
+                    className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[10px] font-bold text-[color:var(--lkv-text-primary)] ${
                       msg.role === 'assistant'
-                        ? 'bg-[color:var(--lkv-primary)]'
+                        ? 'bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn'
                         : 'bg-[color:var(--lkv-secondary)]'
                     }`}
                   >
@@ -89,8 +89,8 @@ export default function CopilotePage() {
                   <div
                     className={`max-w-[80%] rounded-[var(--lkv-radius-sm)] px-[var(--space-3)] py-[var(--space-2)] text-[length:var(--lkv-text-caption-1)] ${
                       msg.role === 'assistant'
-                        ? 'bg-[color:var(--lkv-surface-muted)] text-[color:var(--lkv-primary)]'
-                        : 'bg-[color:var(--lkv-primary)] text-[color:var(--lkv-text-inverted)]'
+                        ? 'bg-[color:var(--glass-bg-medium)] border border-[color:var(--glass-border)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset text-[color:var(--lkv-primary)]'
+                        : 'bg-[color:var(--btn-tint)]  text-[color:var(--lkv-text-primary)]'
                     }`}
                   >
                     {msg.content}

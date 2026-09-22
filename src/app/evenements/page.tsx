@@ -448,7 +448,7 @@ function MobileEventCard({ event, onToggleRegister, onViewDetail }: { event: Eve
             {event.emoji} {typeConfig[event.type]?.label || event.type}
           </span>
           {event.status === 'full' && (
-            <span className="rounded-[var(--lkv-radius-xs)] bg-[color:var(--lkv-danger)] px-2 py-0.5 text-[10px] font-bold text-[color:var(--lkv-text-inverted)]">Complet</span>
+            <span className="rounded-[var(--lkv-radius-xs)] bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn px-2 py-0.5 text-[10px] font-bold text-[color:var(--lkv-danger)]">Complet</span>
           )}
         </div>
         <div className="absolute bottom-3 left-3 right-3 text-left">
@@ -715,7 +715,7 @@ export default function EvenementsPage() {
   const mobileContent = (
     <div className="p-[var(--space-4)]">
       {/* Hero */}
-      <div className="relative mb-[var(--space-4)] overflow-hidden rounded-[var(--lkv-radius-sm)] bg-[color:var(--lkv-primary)] p-[var(--space-5)] text-[color:var(--lkv-text-inverted)]">
+      <div className="relative mb-[var(--space-4)] overflow-hidden rounded-[var(--lkv-radius-sm)] bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn p-[var(--space-5)] text-[color:var(--lkv-text-primary)]">
         <div className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-[rgba(23,64,44,0.30)]" />
         <div className="mb-[var(--space-2)] flex items-center gap-[var(--space-2)]">
           <span className="rounded-[var(--lkv-radius-xs)] border border-[rgba(166,193,160,0.3)] bg-[rgba(166,193,160,0.2)] px-2 py-0.5 text-[9px] font-bold text-[color:var(--sage-400)]">COMMUNAUTE</span>

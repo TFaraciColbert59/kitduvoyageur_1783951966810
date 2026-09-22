@@ -34,8 +34,8 @@ const LABEL_CLASS = 'mb-[var(--space-1)] block text-[length:var(--lkv-text-capti
 const OPTION_CARD_CLASS = (selected: boolean) =>
   `flex cursor-pointer items-start gap-[var(--space-2)] rounded-[var(--lkv-radius-md)] border p-[var(--space-3)] transition-colors ${
     selected
-      ? 'border-[color:var(--lkv-primary)] bg-[color:var(--lkv-surface-card)]'
-      : 'border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-muted)]'
+      ? 'border-[color:var(--lkv-primary)] bg-[color:var(--glass-bg-medium)] border backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset'
+      : 'border-[color:var(--glass-border)] bg-[color:var(--glass-bg-medium)] border backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset'
   }`;
 
 export default function CreateCarnetView({ onCloseModal }: { onCloseModal?: () => void } = {}) {
@@ -294,7 +294,7 @@ export default function CreateCarnetView({ onCloseModal }: { onCloseModal?: () =
         <aside className="flex h-full max-h-full w-[230px] shrink-0 select-none flex-col justify-between overflow-hidden rounded-[var(--lkv-radius-2xl)] border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] p-[var(--space-3)] font-sans text-[color:var(--lkv-text-primary)] shadow-elevation-1 backdrop-blur-[var(--blur-lg)]">
           <div className="shrink-0 space-y-[var(--space-2)]">
             <Card variant="compact" className="flex items-center gap-[var(--space-3)] border-[color:var(--glass-border)]">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[color:var(--glass-border)] bg-[color:var(--lkv-surface-card)] text-xl" aria-hidden>
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[color:var(--glass-border)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-xl" aria-hidden>
                 ✍️
               </div>
               <div className="min-w-0 flex-1">
@@ -313,7 +313,7 @@ export default function CreateCarnetView({ onCloseModal }: { onCloseModal?: () =
             <div className="grid grid-cols-2 gap-[var(--space-1)]">
               <Link
                 href="/carnets"
-                className="inline-flex items-center justify-center gap-[var(--space-1)] rounded-full bg-[color:var(--lkv-action)] px-[var(--space-2)] py-[var(--space-1)] text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-on-action)]"
+                className="inline-flex items-center justify-center gap-[var(--space-1)] rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn px-[var(--space-2)] py-[var(--space-1)] text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-primary)]"
               >
                 <Icon name="ArrowLeftIcon" size={12} aria-hidden="true" />
                 <span>Retour</span>
@@ -551,7 +551,7 @@ export default function CreateCarnetView({ onCloseModal }: { onCloseModal?: () =
                   <Card key={ch.id} variant="compact" className="space-y-[var(--space-3)] p-[var(--space-4)]">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-[var(--space-2)]">
-                        <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[color:var(--lkv-primary)] font-mono text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-inverted)]">
+                        <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn font-mono text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-primary)]">
                           {ch.num}
                         </span>
                         <input
@@ -1026,12 +1026,12 @@ export default function CreateCarnetView({ onCloseModal }: { onCloseModal?: () =
             </div>
 
             <Card variant="compact" className="flex flex-col overflow-hidden p-0">
-              <div className="relative h-28 bg-[color:var(--lkv-primary)]">
+              <div className="relative h-28 bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn">
                 {form.coverImage && (
                   <img src={form.coverImage} alt="" className="h-full w-full object-cover" />
                 )}
                 <div aria-hidden className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                <Badge className="absolute bottom-[var(--space-2)] left-[var(--space-2)] border-[color:var(--glass-border)] bg-[color:var(--lkv-primary)]/40 font-mono font-bold text-[color:var(--lkv-text-inverted)] backdrop-blur-[var(--blur-md)]">
+                <Badge className="absolute bottom-[var(--space-2)] left-[var(--space-2)] border-[color:var(--glass-border)] bg-[color:var(--btn-tint)] border saturate-[var(--btn-saturate)] lkv-rim-btn font-mono font-bold text-[color:var(--lkv-text-primary)] backdrop-blur-[var(--btn-blur)]">
                   {form.destination}
                 </Badge>
               </div>

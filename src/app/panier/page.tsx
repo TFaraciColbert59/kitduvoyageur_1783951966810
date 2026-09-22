@@ -168,7 +168,7 @@ export default function PanierPage() {
                         key={item.id}
                         className={`flex gap-[var(--space-6)] p-[var(--space-6)] transition-all duration-300 ${removingId === item.id ? 'scale-95 opacity-0' : 'scale-100 opacity-100'}`}
                       >
-                        <div className="h-32 w-32 flex-shrink-0 overflow-hidden rounded-[var(--lkv-radius-lg)] border border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-muted)]">
+                        <div className="h-32 w-32 flex-shrink-0 overflow-hidden rounded-[var(--lkv-radius-lg)] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg-medium)]">
                           {/* eslint-disable-next-line @next/next/no-img-element */}
                           {item.image ? <img src={item.image} alt={item.name} className="h-full w-full object-cover mix-blend-multiply" /> : null}
                         </div>
@@ -191,7 +191,7 @@ export default function PanierPage() {
                             </div>
 
                             <div className="flex flex-col items-end">
-                              <div className="flex items-center gap-[var(--space-1)] rounded-full border border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-muted)] p-[var(--space-1)]">
+                              <div className="flex items-center gap-[var(--space-1)] rounded-full border border-[color:var(--btn-glass-border)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn p-[var(--space-1)]">
                                 <IconButton variant="ghost" onClick={() => handleQuantity(item.id, item.quantity - 1)} aria-label="Réduire la quantité">
                                   <Icon name="MinusIcon" size={12} />
                                 </IconButton>
@@ -225,7 +225,7 @@ export default function PanierPage() {
                     {/* Upsell Section */}
                     <Card variant="compact" className="flex items-center justify-between gap-[var(--space-6)] p-[var(--space-6)]">
                       <div className="flex min-w-0 items-center gap-[var(--space-6)]">
-                        <div className="flex h-20 w-20 flex-shrink-0 items-center justify-center overflow-hidden rounded-[var(--lkv-radius-lg)] bg-[color:var(--lkv-surface-muted)] p-[var(--space-2)]">
+                        <div className="flex h-20 w-20 flex-shrink-0 items-center justify-center overflow-hidden rounded-[var(--lkv-radius-lg)] bg-[color:var(--glass-bg-medium)] border border-[color:var(--glass-border)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset p-[var(--space-2)]">
                           <img src="https://images.unsplash.com/photo-1504851149312-7a075b496cc7?w=400&q=80" alt="Lampe" className="h-full w-full rounded-[var(--lkv-radius-md)] object-cover" />
                         </div>
                         <div className="min-w-0">
@@ -342,7 +342,7 @@ export default function PanierPage() {
               {items.map((item) => (
                 <div key={item.id} className="flex gap-[var(--space-3)] border-b border-[color:var(--lkv-border-subtle)] p-[var(--space-4)]">
                   <Link href={`/produit/${item.slug}`} aria-label={item.name} className="no-underline">
-                    <div className="h-[92px] w-[76px] flex-shrink-0 overflow-hidden rounded-[var(--lkv-radius-md)] bg-[color:var(--lkv-surface-muted)]">
+                    <div className="h-[92px] w-[76px] flex-shrink-0 overflow-hidden rounded-[var(--lkv-radius-md)] bg-[color:var(--glass-bg-medium)]">
                       {item.image ? <img src={item.image} alt={item.name} className="h-full w-full object-cover mix-blend-multiply" /> : null}
                     </div>
                   </Link>
@@ -358,7 +358,7 @@ export default function PanierPage() {
                       </Link>
                     </div>
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-[6px] rounded-full border border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-muted)] px-[6px] py-[3px]">
+                      <div className="flex items-center gap-[6px] rounded-full border border-[color:var(--btn-glass-border)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn px-[6px] py-[3px]">
                         <IconButton variant="ghost" onClick={() => handleQuantity(item.id, Math.max(1, item.quantity - 1))} aria-label="Diminuer la quantité">
                           <Icon name="MinusIcon" size={12} />
                         </IconButton>
@@ -408,7 +408,7 @@ export default function PanierPage() {
               <div className="p-[var(--space-4)]">
                 <Link
                   href="/checkout"
-                  className="flex min-h-[var(--control-height-lg)] w-full items-center justify-between rounded-full bg-[color:var(--lkv-action)] px-[var(--space-5)] font-semibold text-[color:var(--lkv-on-action)] no-underline transition-transform active:scale-[var(--motion-press-scale)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)] motion-reduce:transition-none"
+                  className="flex min-h-[var(--control-height-lg)] w-full items-center justify-between rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn px-[var(--space-5)] font-semibold text-[color:var(--lkv-text-primary)] no-underline transition-transform active:scale-[var(--motion-press-scale)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)] motion-reduce:transition-none"
                 >
                   <span>Suivant</span>
                   <span className="font-mono text-[length:var(--lkv-text-caption)] opacity-75">{grandTotal.toFixed(0)} €</span>

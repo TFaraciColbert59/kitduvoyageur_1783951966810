@@ -228,7 +228,7 @@ export default function ClubsTab({ profile }: { profile?: any }) {
     <div className="space-y-8 pb-16 font-sans text-[color:var(--lkv-primary)]">
       {/* Toast Notification */}
       {toast && (
-        <div className="fixed bottom-6 right-6 z-[var(--z-toast)] bg-[color:var(--lkv-primary)] text-white px-5 py-3 rounded-full flex items-center gap-3 text-sm font-semibold border border-white/20 shadow-lg animate-fade-in">
+        <div className="fixed bottom-6 right-6 z-[var(--z-toast)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] text-[color:var(--lkv-text-primary)] px-5 py-3 rounded-full flex items-center gap-3 text-sm font-semibold border border-white/20 shadow-lg animate-fade-in">
           <span className="w-2 h-2 rounded-full bg-[color:var(--sage-300)] animate-ping" />
           {toast}
         </div>
@@ -247,14 +247,14 @@ export default function ClubsTab({ profile }: { profile?: any }) {
         <div className="flex items-center gap-3">
           <Link
             href="/groupes"
-            className="inline-flex items-center justify-center gap-[var(--space-2)] min-h-[var(--lkv-touch-min)] rounded-full px-[var(--space-4)] py-[var(--space-2)] text-[length:var(--lkv-text-footnote)] font-semibold backdrop-blur-[var(--blur-md)] border border-[color:var(--glass-border)] bg-[color:var(--btn-tint)] text-[color:var(--btn-content)] shadow-elevation-1 text-xs font-bold"
+            className="inline-flex items-center justify-center gap-[var(--space-2)] min-h-[var(--lkv-touch-min)] rounded-full px-[var(--space-4)] py-[var(--space-2)] text-[length:var(--lkv-text-footnote)] font-semibold backdrop-blur-[var(--btn-blur)] border border-[color:var(--glass-border)] bg-[color:var(--btn-tint)] text-[color:var(--btn-content)] shadow-elevation-1 text-xs font-bold"
           >
             <Icon name="PlusIcon" size={14} />
             <span>Nouveau groupe</span>
           </Link>
           <Link
             href="/clubs/nouveau"
-            className="inline-flex items-center justify-center gap-[var(--space-2)] min-h-[var(--lkv-touch-min)] rounded-full px-[var(--space-4)] py-[var(--space-2)] text-[length:var(--lkv-text-footnote)] font-semibold backdrop-blur-[var(--blur-md)] border border-transparent bg-[color:var(--lkv-action)] text-[color:var(--lkv-on-action)] shadow-elevation-1 text-xs font-bold"
+            className="inline-flex items-center justify-center gap-[var(--space-2)] min-h-[var(--lkv-touch-min)] rounded-full px-[var(--space-4)] py-[var(--space-2)] text-[length:var(--lkv-text-footnote)] font-semibold backdrop-blur-[var(--btn-blur)] border border-transparent bg-[color:var(--btn-tint)] saturate-[var(--btn-saturate)] text-[color:var(--lkv-text-primary)] shadow-elevation-1 text-xs font-bold"
           >
             <Icon name="UserGroupIcon" size={14} />
             <span>+ Créer un club</span>
@@ -306,7 +306,7 @@ export default function ClubsTab({ profile }: { profile?: any }) {
       <div className="space-y-6">
         {/* Featured Club Banner ("Club à la une") */}
         {featuredClub && (
-          <div className="relative rounded-[var(--lkv-radius-lg)] overflow-hidden border border-white/10 bg-[color:var(--lkv-primary)] text-white shadow-lg">
+          <div className="relative rounded-[var(--lkv-radius-lg)] overflow-hidden border border-white/10 bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] text-[color:var(--lkv-text-primary)] shadow-lg">
             {/* Cover Image Background */}
             <div className="absolute inset-0 z-0">
               <Image
@@ -368,7 +368,7 @@ export default function ClubsTab({ profile }: { profile?: any }) {
                 <div className="flex items-center gap-2">
                   <Link
                     href={`/clubs/${featuredClub.slug}`}
-                    className="inline-flex items-center justify-center gap-[var(--space-2)] min-h-[var(--lkv-touch-min)] rounded-full px-[var(--space-4)] py-[var(--space-2)] text-[length:var(--lkv-text-footnote)] font-semibold backdrop-blur-[var(--blur-md)] border border-transparent bg-[color:var(--lkv-action)] text-[color:var(--lkv-on-action)] shadow-elevation-1 !py-1.5 !px-4 text-xs font-bold"
+                    className="inline-flex items-center justify-center gap-[var(--space-2)] min-h-[var(--lkv-touch-min)] rounded-full px-[var(--space-4)] py-[var(--space-2)] text-[length:var(--lkv-text-footnote)] font-semibold backdrop-blur-[var(--btn-blur)] border border-transparent bg-[color:var(--btn-tint)] saturate-[var(--btn-saturate)] text-[color:var(--lkv-text-primary)] shadow-elevation-1 !py-1.5 !px-4 text-xs font-bold"
                   >
                     Espace Admin →
                   </Link>
@@ -413,7 +413,7 @@ export default function ClubsTab({ profile }: { profile?: any }) {
                 className="rounded-[var(--lkv-radius-md)] border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] backdrop-blur-[var(--blur-md)] p-4 border border-white/40 hover:bg-white/80 transition-all cursor-pointer flex flex-col justify-between group"
               >
                 <div className="flex items-start gap-3.5">
-                  <div className="w-12 h-12 rounded-xl overflow-hidden relative shrink-0 border border-white bg-[color:var(--lkv-primary)]">
+                  <div className="w-12 h-12 rounded-xl overflow-hidden relative shrink-0 border border-white bg-[color:var(--btn-tint)]">
                     <Image src={club.coverUrl || '/assets/images/no_image.png'} alt={club.name} fill className="object-cover group-hover:scale-105 transition-transform" />
                   </div>
                   <div className="min-w-0 flex-1">
@@ -422,7 +422,7 @@ export default function ClubsTab({ profile }: { profile?: any }) {
                         {club.name}
                       </h4>
                       {club.role === 'admin' && (
-                        <span className="inline-flex items-center justify-center gap-[6px] rounded-full border border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-muted)] px-[var(--space-3)] py-[2px] text-[length:var(--lkv-text-caption-2)] font-medium text-[color:var(--lkv-text-primary)] !bg-[color:var(--lkv-primary)] !text-white text-[8.5px] font-mono font-bold uppercase">
+                        <span className="inline-flex items-center justify-center gap-[6px] rounded-full border border-[color:var(--btn-glass-border)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn px-[var(--space-3)] py-[2px] text-[length:var(--lkv-text-caption-2)] font-medium text-[color:var(--lkv-text-primary)] text-[8.5px] font-mono font-bold uppercase">
                           ADMIN
                         </span>
                       )}
@@ -432,7 +432,7 @@ export default function ClubsTab({ profile }: { profile?: any }) {
                     </p>
                     <div className="flex flex-wrap gap-1 mt-2">
                       {club.tags?.map((t, idx) => (
-                        <span key={idx} className="inline-flex items-center justify-center gap-[6px] rounded-full border border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-muted)] px-[var(--space-3)] py-[2px] text-[length:var(--lkv-text-caption-2)] font-medium text-[color:var(--lkv-text-primary)] text-[8.5px] font-mono font-bold">
+                        <span key={idx} className="inline-flex items-center justify-center gap-[6px] rounded-full border border-[color:var(--btn-glass-border)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn px-[var(--space-3)] py-[2px] text-[length:var(--lkv-text-caption-2)] font-medium text-[color:var(--lkv-text-primary)] text-[8.5px] font-mono font-bold">
                           {t}
                         </span>
                       ))}
@@ -513,7 +513,7 @@ export default function ClubsTab({ profile }: { profile?: any }) {
               {discoveryClubs.map((disc) => (
                 <div key={disc.id} className="rounded-[var(--lkv-radius-md)] border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] backdrop-blur-[var(--blur-md)] flex items-center justify-between gap-3 p-2 border border-white/40">
                   <div className="flex items-center gap-2.5 min-w-0">
-                    <div className="w-8 h-8 rounded-lg overflow-hidden relative shrink-0 bg-[color:var(--lkv-primary)]">
+                    <div className="w-8 h-8 rounded-lg overflow-hidden relative shrink-0 bg-[color:var(--btn-tint)]">
                       <Image src={disc.imageUrl || '/assets/images/no_image.png'} alt={disc.name} fill className="object-cover" />
                     </div>
                     <div className="min-w-0">

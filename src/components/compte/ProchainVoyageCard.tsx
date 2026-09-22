@@ -35,7 +35,7 @@ export default function ProchainVoyageCard({ voyage, compact = false }: Prochain
         <div className="flex items-center gap-3 shrink-0 w-full sm:w-auto">
           <Link
             href="/groupes"
-            className="inline-flex items-center justify-center gap-[var(--space-2)] min-h-[var(--lkv-touch-min)] rounded-full px-[var(--space-4)] py-[var(--space-2)] text-[length:var(--lkv-text-footnote)] font-semibold backdrop-blur-[var(--blur-md)] border border-transparent bg-[color:var(--lkv-action)] text-[color:var(--lkv-on-action)] shadow-elevation-1 text-xs font-bold w-full sm:w-auto shadow-sm"
+            className="inline-flex items-center justify-center gap-[var(--space-2)] min-h-[var(--lkv-touch-min)] rounded-full px-[var(--space-4)] py-[var(--space-2)] text-[length:var(--lkv-text-footnote)] font-semibold backdrop-blur-[var(--btn-blur)] border border-transparent bg-[color:var(--btn-tint)] saturate-[var(--btn-saturate)] text-[color:var(--lkv-text-primary)] shadow-elevation-1 text-xs font-bold w-full sm:w-auto shadow-sm"
           >
             <span>Explorer les sorties</span>
             <Icon name="ArrowRightIcon" size={13} />
@@ -46,7 +46,7 @@ export default function ProchainVoyageCard({ voyage, compact = false }: Prochain
   }
 
   return (
-    <Card className="w-full bg-[color:var(--lkv-primary)] text-[color:var(--lkv-text-inverted)] p-6 border-[color:var(--lkv-border)] relative overflow-hidden font-sans group">
+    <Card className="w-full bg-[color:var(--glass-bg-medium)] border backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset text-[color:var(--lkv-text-primary)] p-6 border-[color:var(--glass-border)] relative overflow-hidden font-sans group">
       {/* Background Subtle Gradient glow */}
       <div className="absolute top-0 right-0 w-80 h-80 bg-[color:var(--lkv-secondary)]/20 rounded-full blur-[90px] pointer-events-none" />
 
@@ -97,7 +97,7 @@ export default function ProchainVoyageCard({ voyage, compact = false }: Prochain
 
           <Link
             href={`/groupes/${voyage.group_id}`}
-            className="inline-flex items-center justify-center gap-[var(--space-2)] min-h-[var(--lkv-touch-min)] rounded-full px-[var(--space-4)] py-[var(--space-2)] text-[length:var(--lkv-text-footnote)] font-semibold backdrop-blur-[var(--blur-md)] border border-[color:var(--glass-border)] bg-[color:var(--btn-tint)] text-[color:var(--btn-content)] shadow-elevation-1 text-xs font-bold shadow-sm"
+            className="inline-flex items-center justify-center gap-[var(--space-2)] min-h-[var(--lkv-touch-min)] rounded-full px-[var(--space-4)] py-[var(--space-2)] text-[length:var(--lkv-text-footnote)] font-semibold backdrop-blur-[var(--btn-blur)] border border-[color:var(--glass-border)] bg-[color:var(--btn-tint)] text-[color:var(--btn-content)] shadow-elevation-1 text-xs font-bold shadow-sm"
           >
             <span>→ Ouvrir le cockpit</span>
           </Link>

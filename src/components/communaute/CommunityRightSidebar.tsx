@@ -45,7 +45,7 @@ export default function CommunityRightSidebar({ clubs = [], events = [] }: Commu
               <Link
                 key={out.id}
                 href="/communaute?tab=evenements"
-                className="block space-y-[var(--space-1)] rounded-[var(--lkv-radius-sm)] border border-[color:var(--lkv-border-subtle)] bg-[color:var(--lkv-surface-muted)]/55 p-[var(--space-2)] shadow-elevation-1 transition-colors hover:bg-[color:var(--lkv-hover-surface)]"
+                className="block space-y-[var(--space-1)] rounded-[var(--lkv-radius-sm)] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg-medium)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] p-[var(--space-2)] shadow-elevation-1 transition-colors hover:bg-[color:var(--lkv-hover-surface)]"
               >
                 <div className="flex items-center justify-between">
                   <Badge tone="sage" className="px-[var(--space-2)] font-mono">
@@ -98,7 +98,7 @@ export default function CommunityRightSidebar({ clubs = [], events = [] }: Commu
               <Link
                 key={club.id}
                 href={`/clubs/${club.slug || club.id}`}
-                className="group flex items-center justify-between rounded-[var(--lkv-radius-sm)] border border-[color:var(--lkv-border-subtle)] bg-[color:var(--lkv-surface-muted)]/55 p-[var(--space-2)] shadow-elevation-1 transition-colors hover:bg-[color:var(--lkv-hover-surface)]"
+                className="group flex items-center justify-between rounded-[var(--lkv-radius-sm)] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg-medium)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] p-[var(--space-2)] shadow-elevation-1 transition-colors hover:bg-[color:var(--lkv-hover-surface)]"
               >
                 <div className="flex min-w-0 items-center gap-[var(--space-2)]">
                   <span className="shrink-0 text-base">{club.emoji || '🏕️'}</span>
@@ -118,7 +118,7 @@ export default function CommunityRightSidebar({ clubs = [], events = [] }: Commu
                   <span className="font-mono text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">
                     {club.members_count ?? 0}
                   </span>
-                  <span className="flex size-7 items-center justify-center rounded-full bg-[color:var(--lkv-surface-card)] text-[color:var(--lkv-text-muted)]">
+                  <span className="flex size-7 items-center justify-center rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[color:var(--lkv-text-muted)]">
                     <Icon name="chevron-right" size={11} aria-hidden="true" />
                   </span>
                 </div>

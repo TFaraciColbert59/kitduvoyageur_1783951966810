@@ -356,7 +356,7 @@ function DocCard({ doc, required = false, canEdit, isPending, onDelete }: DocCar
       <div className="space-y-[var(--space-2)]">
         <div className="flex items-start justify-between gap-[var(--space-2)]">
           <div className="flex items-center gap-[var(--space-3)]">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--lkv-radius-sm)] bg-[color:var(--lkv-primary)]/10 text-[color:var(--lkv-primary)]">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--lkv-radius-sm)] bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[color:var(--lkv-primary)]">
               <Icon name="file-text" size={18} />
             </div>
             <div>

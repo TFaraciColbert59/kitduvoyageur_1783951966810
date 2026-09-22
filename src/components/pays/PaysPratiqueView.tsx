@@ -715,7 +715,7 @@ export default function PaysPratiqueView({ country, isMobile = false }: PaysPrat
         <div className="glass p-5 sm:p-6 space-y-4">
           <div className="flex items-center justify-between pb-2.5 border-b border-[color:var(--lkv-primary)]/10">
             <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-xl bg-[color:var(--lkv-primary)] text-white flex items-center justify-center font-bold text-sm shadow-xs">
+              <div className="w-8 h-8 rounded-xl bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] text-[color:var(--lkv-text-primary)] flex items-center justify-center font-bold text-sm shadow-xs">
                 🎒
               </div>
               <div>
@@ -767,7 +767,7 @@ export default function PaysPratiqueView({ country, isMobile = false }: PaysPrat
                         {rec.equipements_clefs.map((eq, eIdx) => (
                           <span
                             key={eIdx}
-                            className="text-[9.5px] font-mono px-2 py-0.5 rounded-full bg-[color:var(--lkv-primary)]/5 text-[color:var(--lkv-primary)] border border-[color:var(--lkv-primary)]/10"
+                            className="text-[9.5px] font-mono px-2 py-0.5 rounded-full bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[color:var(--lkv-primary)] border border-[color:var(--lkv-primary)]/10"
                           >
                             ✓ {eq}
                           </span>

@@ -56,7 +56,7 @@ export function TripPhaseController({
   ];
 
   return (
-    <div className="w-full rounded-full border border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-muted)] p-1.5">
+    <div className="w-full rounded-full border border-[color:var(--btn-glass-border)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn p-1.5">
       <div
         className="grid grid-cols-3 gap-1.5"
         role="tablist"
@@ -75,7 +75,7 @@ export function TripPhaseController({
               onClick={() => onPhaseChange(p.id)}
               className={`relative flex min-h-[52px] select-none flex-col items-center justify-center gap-1.5 rounded-full px-2 py-2 font-medium transition-colors duration-200 sm:flex-row sm:gap-2.5 sm:py-3 ${
                 isSelected
-                  ? 'bg-[color:var(--lkv-surface-card)] text-[color:var(--lkv-text-primary)] shadow-elevation-1'
+                  ? 'bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] text-[color:var(--lkv-text-primary)] shadow-elevation-1'
                   : 'text-[color:var(--lkv-text-secondary)] hover:bg-[color:var(--lkv-hover-surface)]'
               }`}
             >

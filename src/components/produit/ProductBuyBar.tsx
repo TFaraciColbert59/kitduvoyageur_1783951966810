@@ -30,7 +30,7 @@ export default function ProductBuyBar({ price, onAddToCart }: ProductBuyBarProps
       variant="featured"
       className="sticky bottom-0 z-[var(--z-sticky)] mx-[var(--space-2)] mb-[var(--space-2)] flex items-center gap-[var(--space-2)] p-[var(--space-2)]"
     >
-      <div className="flex items-center gap-[var(--space-1)] rounded-full bg-[color:var(--lkv-surface-muted)] p-[var(--space-1)]">
+      <div className="flex items-center gap-[var(--space-1)] rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn p-[var(--space-1)]">
         <IconButton
           variant="ghost"
           aria-label="Diminuer la quantité"

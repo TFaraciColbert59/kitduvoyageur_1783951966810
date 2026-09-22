@@ -21,7 +21,7 @@ export default function Terrain3DViewer({
   return (
     <div className="fixed inset-0 z-50 bg-[color:var(--lkv-forest-950)] text-white flex flex-col justify-between select-none">
       {/* Top Bar */}
-      <div className="p-4 flex items-center justify-between bg-[color:var(--lkv-primary)]/80 backdrop-blur-xl border-b border-white/10 z-10">
+      <div className="p-4 flex items-center justify-between bg-[color:var(--btn-tint)] saturate-[var(--btn-saturate)] lkv-rim-btn backdrop-blur-[var(--btn-blur)] border-b border-white/10 z-10">
         <div>
           <div className="text-xs font-mono tracking-widest text-[color:var(--lkv-forest-200)] uppercase">
             VUE 3D RELIEF · DIGITAL TWIN
@@ -57,7 +57,7 @@ export default function Terrain3DViewer({
         </motion.div>
 
         {/* Floating Info Overlay */}
-        <div className="absolute bottom-6 left-6 right-6 p-4 bg-[color:var(--lkv-primary)]/90 backdrop-blur-2xl border border-white/15 rounded-[var(--lkv-radius-sm)] space-y-1.5 ">
+        <div className="absolute bottom-6 left-6 right-6 p-4 bg-[color:var(--btn-tint)] saturate-[var(--btn-saturate)] lkv-rim-btn backdrop-blur-[var(--btn-blur)] border border-white/15 rounded-[var(--lkv-radius-sm)] space-y-1.5 ">
           <div className="flex justify-between items-center text-xs font-mono text-[color:var(--lkv-forest-200)]">
             <span>DÉNIVELÉ +: +{elevationGainM != null ? Math.round(elevationGainM) : '—'} m</span>
           </div>

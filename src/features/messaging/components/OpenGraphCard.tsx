@@ -64,7 +64,7 @@ export const OpenGraphCard: React.FC<OpenGraphCardProps> = ({ url, isMine }) => 
   return (
     <Card variant="compact" className="mt-[var(--space-2)] overflow-hidden p-0 transition-shadow hover:shadow-elevation-2">
       {loading ? (
-        <div className="flex animate-pulse flex-col gap-[var(--space-2)] bg-[color:var(--lkv-primary)]/5 p-[var(--space-3)]">
+        <div className="flex animate-pulse flex-col gap-[var(--space-2)] bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn p-[var(--space-3)]">
           <Skeleton className="h-28 w-full rounded-[var(--lkv-radius-sm)]" />
           <Skeleton className="h-3 w-3/4 rounded" />
           <Skeleton className="h-2 w-1/2 rounded" />
@@ -76,12 +76,12 @@ export const OpenGraphCard: React.FC<OpenGraphCardProps> = ({ url, isMine }) => 
           rel="noopener noreferrer"
           className={`group block text-left ${
             isMine
-              ? 'bg-[color:var(--card-tint-strong)] text-[color:var(--lkv-text-inverted)]'
-              : 'border border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-card)] text-[color:var(--lkv-text-primary)]'
+              ? 'bg-[color:var(--card-tint-strong)] text-[color:var(--lkv-text-primary)]'
+              : 'border border-[color:var(--glass-border)] bg-[color:var(--glass-bg-medium)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset text-[color:var(--lkv-text-primary)]'
           }`}
         >
           {ogData.image && (
-            <div className="relative h-32 w-full overflow-hidden bg-[color:var(--lkv-primary)]/10">
+            <div className="relative h-32 w-full overflow-hidden bg-[color:var(--btn-tint)]">
               <Image
                 src={ogData.image}
                 alt={ogData.title}

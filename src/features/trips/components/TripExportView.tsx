@@ -181,7 +181,7 @@ export default function ExportClientView({ trip, stats, budgetSummary }: ExportC
           {trip.items.map((item) => (
             <div
               key={item.id}
-              className="flex items-center gap-[var(--space-2)] rounded-[var(--lkv-radius-sm)] border border-[color:var(--lkv-border-subtle)] bg-[color:var(--lkv-surface-muted)] p-[var(--space-2)]"
+              className="flex items-center gap-[var(--space-2)] rounded-[var(--lkv-radius-sm)] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg-medium)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset p-[var(--space-2)]"
             >
               <div className="flex h-3.5 w-3.5 items-center justify-center rounded-xs border border-[color:var(--lkv-border)]">
                 {item.is_packed && <div className="h-2 w-2 bg-[color:var(--lkv-primary)]" />}

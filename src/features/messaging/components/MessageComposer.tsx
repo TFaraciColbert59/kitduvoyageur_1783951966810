@@ -103,9 +103,9 @@ export const MessageComposer: React.FC<MessageComposerProps> = ({
   }
 
   return (
-    <div className="flex shrink-0 flex-col border-t border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface)]/90 pb-[max(calc(var(--safe-bottom)-var(--kb-inset,0px)),8px)] shadow-elevation-3 backdrop-blur-[var(--blur-lg)]">
+    <div className="flex shrink-0 flex-col border-t border-[color:var(--glass-border)] bg-[color:var(--glass-bg-medium)] saturate-[var(--glass-sat)] pb-[max(calc(var(--safe-bottom)-var(--kb-inset,0px)),8px)] shadow-elevation-3 backdrop-blur-[var(--glass-blur-sm)]">
       {replyToMessage && (
-        <div className="animate-fade-in flex items-center justify-between border-b border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-muted)]/95 px-[var(--space-4)] py-[var(--space-2)]">
+        <div className="animate-fade-in flex items-center justify-between border-b border-[color:var(--glass-border)] bg-[color:var(--glass-bg-medium)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset px-[var(--space-4)] py-[var(--space-2)]">
           <div className="flex items-center gap-[var(--space-2)] overflow-hidden">
             <div className="h-8 w-1 shrink-0 rounded-full bg-[color:var(--lkv-primary)]" />
             <Icon name="reply" className="size-4 shrink-0 text-[color:var(--lkv-text-primary)]" aria-hidden="true" />

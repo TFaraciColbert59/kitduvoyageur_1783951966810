@@ -119,7 +119,7 @@ function MobilePostCard({ post }: { post: BlogPost }) {
                 {post.category}
               </span>
               {post.featured && (
-                <span className="rounded-[var(--lkv-radius-xs)] bg-[color:var(--lkv-surface-muted)] px-1.5 py-px text-[9px] text-[color:var(--lkv-primary)]">
+                <span className="rounded-[var(--lkv-radius-xs)] bg-[color:var(--glass-bg-medium)] border border-[color:var(--glass-border)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset px-1.5 py-px text-[9px] text-[color:var(--lkv-primary)]">
                   A la une
                 </span>
               )}
@@ -152,7 +152,7 @@ function MobileFeaturedCard({ post }: { post: BlogPost }) {
           )}
           <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
           <div className="absolute left-2 top-2">
-            <span className="rounded-[var(--lkv-radius-xs)] bg-[color:var(--lkv-primary)] px-2 py-0.5 text-[10px] font-bold text-[color:var(--lkv-text-inverted)]">
+            <span className="rounded-[var(--lkv-radius-xs)] bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn px-2 py-0.5 text-[10px] font-bold text-[color:var(--lkv-text-primary)]">
               A la une
             </span>
           </div>
@@ -287,7 +287,7 @@ export default function BlogClient({ posts }: { posts: BlogPost[] }) {
             type="email"
             placeholder="votre@email.fr"
             aria-label="Votre adresse email"
-            className="min-w-0 flex-1 rounded-[var(--lkv-radius-sm)] border border-[color:var(--lkv-border-subtle)] bg-[color:var(--lkv-surface)] px-3.5 py-2.5 text-[13px] text-[color:var(--lkv-primary)] outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]"
+            className="min-w-0 flex-1 rounded-[var(--lkv-radius-sm)] border border-[color:var(--btn-glass-border)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] px-3.5 py-2.5 text-[13px] text-[color:var(--lkv-text-primary)] outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]"
           />
           <button className="glass-capsule-btn primary whitespace-nowrap">
             S&apos;abonner
@@ -393,7 +393,7 @@ export default function BlogClient({ posts }: { posts: BlogPost[] }) {
             type="email"
             placeholder="votre@email.fr"
             aria-label="Votre adresse email"
-            className="min-w-0 flex-1 rounded-[var(--lkv-radius-sm)] border border-[color:var(--lkv-border-subtle)] bg-[color:var(--lkv-surface)] px-3.5 py-2.5 text-[13px] text-[color:var(--lkv-primary)] outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]"
+            className="min-w-0 flex-1 rounded-[var(--lkv-radius-sm)] border border-[color:var(--btn-glass-border)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] px-3.5 py-2.5 text-[13px] text-[color:var(--lkv-text-primary)] outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]"
           />
           <button className="glass-capsule-btn primary !px-4 !py-2.5 !text-[13px] whitespace-nowrap">
             S&apos;abonner

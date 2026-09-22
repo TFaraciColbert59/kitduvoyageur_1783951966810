@@ -64,7 +64,7 @@ export default function ClubTeamCard({
             <ListItem
               key={admin.id}
               as="div"
-              className="bg-[color:var(--lkv-surface-muted)]"
+              className="bg-[color:var(--glass-bg-medium)]"
               leading={
                 <Link
                   href={admin.user_id ? `/profil/${admin.user_id}` : '#'}
@@ -72,7 +72,7 @@ export default function ClubTeamCard({
                   className="relative block shrink-0"
                   aria-label={`Voir le profil de ${admin.user?.full_name || 'ce membre'}`}
                 >
-                  <span className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-[color:var(--lkv-primary)] font-serif text-[length:var(--lkv-text-caption-2)] font-bold italic text-[color:var(--lkv-text-inverted)]">
+                  <span className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn font-serif text-[length:var(--lkv-text-caption-2)] font-bold italic text-[color:var(--lkv-text-primary)]">
                     {admin.user?.avatar_url ? (
                       <img
                         src={admin.user.avatar_url}

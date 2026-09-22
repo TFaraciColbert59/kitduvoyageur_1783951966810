@@ -106,7 +106,7 @@ export default function SearchOverlay() {
         {/* Scrim with deep frosted blur — completely masks underlying content */}
         <div
           key="search-scrim"
-          className={`lkv-drawer-scrim fixed inset-0 z-[var(--z-sheet)] bg-[color:var(--lkv-primary)]/85 backdrop-blur-[var(--blur-xl)] backdrop-saturate-[var(--glass-sat)]${closing ? ' lkv-drawer-scrim--closing' : ''}`}
+          className={`lkv-drawer-scrim fixed inset-0 z-[var(--z-sheet)] bg-[color:var(--glass-bg-dark)] backdrop-blur-[var(--blur-xl)] backdrop-saturate-[var(--glass-sat)]${closing ? ' lkv-drawer-scrim--closing' : ''}`}
           onClick={closeSearch}
           aria-hidden="true"
         />
@@ -116,7 +116,7 @@ export default function SearchOverlay() {
           key="search-panel"
           ref={panelRef}
           onKeyDown={handleTabTrap}
-          className={`lkv-search-panel fixed inset-x-0 top-0 z-[var(--z-sheet)] rounded-b-[var(--lkv-radius-card)] border border-t-0 border-white/90 bg-[color:var(--lkv-surface)] px-[var(--space-4)] pb-[var(--space-5)] pt-[calc(var(--safe-top)+var(--space-4))] shadow-elevation-5${closing ? ' lkv-search-panel--closing' : ''}`}
+          className={`lkv-search-panel fixed inset-x-0 top-0 z-[var(--z-sheet)] rounded-b-[var(--lkv-radius-card)] border border-t-0 border-white/90 bg-[color:var(--glass-bg-medium)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] px-[var(--space-4)] pb-[var(--space-5)] pt-[calc(var(--safe-top)+var(--space-4))] shadow-elevation-5${closing ? ' lkv-search-panel--closing' : ''}`}
           role="dialog"
           aria-modal="true"
           aria-label="Recherche"
@@ -152,7 +152,7 @@ export default function SearchOverlay() {
                   {recentSearches.map((entry) => (
                     <span
                       key={entry.query}
-                      className="inline-flex items-center rounded-full border border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-muted)] pl-1 pr-0.5"
+                      className="inline-flex items-center rounded-full border border-[color:var(--btn-glass-border)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn pl-1 pr-0.5"
                     >
                       <Chip
                         onClick={() => handleRecentClick(entry.query)}

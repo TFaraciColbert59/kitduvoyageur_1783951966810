@@ -50,7 +50,7 @@ export function CategoryTabs({ alerts }: { alerts: AlertItem[] }) {
           <li key={a.id}>
             <ListItem
               as="div"
-              className="bg-[color:var(--lkv-surface-muted)]"
+              className="bg-[color:var(--glass-bg-medium)]"
               title={a.message}
               trailing={
                 <span className="flex items-center gap-2">

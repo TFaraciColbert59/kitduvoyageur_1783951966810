@@ -860,7 +860,7 @@ export function KitBuilder({
             value={season}
             onChange={(e) => setSeason(e.target.value)}
             aria-label="Filtrer par saison"
-            className="h-7 cursor-pointer appearance-none rounded-full border border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-card)] py-0 pl-2.5 pr-6 text-[10px] font-bold text-[var(--lkv-primary)] outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]"
+            className="h-7 cursor-pointer appearance-none rounded-full border border-[color:var(--btn-glass-border)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] py-0 pl-2.5 pr-6 text-[10px] font-bold text-[var(--lkv-primary)] outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]"
           >
             <option value="toute_saison">🌿 Toutes saisons</option>
             <option value="ete">☀️ Été</option>

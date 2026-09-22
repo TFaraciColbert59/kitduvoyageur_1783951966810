@@ -177,7 +177,7 @@ export function Step1Destinations({ selectedCountries, onChange }: Step1Destinat
             <li key={country.code}>
               <Card variant="compact" className="flex items-center justify-between">
                 <div className="flex items-center gap-[var(--space-3)]">
-                  <span className="flex h-6 w-6 items-center justify-center rounded-full border border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-paper)] text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-primary)]">
+                  <span className="flex h-6 w-6 items-center justify-center rounded-full border border-[color:var(--btn-glass-border)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-primary)]">
                     {idx + 1}
                   </span>
                   <span aria-hidden="true" className="text-xl">

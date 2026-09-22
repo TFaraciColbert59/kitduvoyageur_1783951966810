@@ -212,7 +212,7 @@ export const ComposerMenuSheet: React.FC<ComposerMenuSheetProps> = ({
                 }}
                 className="min-h-[60px]"
                 leading={
-                  <span className="flex size-10 shrink-0 items-center justify-center rounded-[var(--lkv-radius-sm)] bg-[color:var(--lkv-surface-muted)] ring-1 ring-[color:var(--lkv-secondary)]/50">
+                  <span className="flex size-10 shrink-0 items-center justify-center rounded-[var(--lkv-radius-sm)] bg-[color:var(--glass-bg-medium)] ring-1 ring-[color:var(--lkv-secondary)]/50">
                     <Icon name="backpack" className="size-5 text-[color:var(--lkv-text-primary)]" aria-hidden="true" />
                   </span>
                 }
@@ -250,7 +250,7 @@ export const ComposerMenuSheet: React.FC<ComposerMenuSheetProps> = ({
                 }}
                 className="min-h-[60px]"
                 leading={
-                  <span className="relative size-10 shrink-0 overflow-hidden rounded-[var(--lkv-radius-sm)] bg-[color:var(--lkv-surface-muted)] ring-1 ring-[color:var(--glass-border)]">
+                  <span className="relative size-10 shrink-0 overflow-hidden rounded-[var(--lkv-radius-sm)] bg-[color:var(--glass-bg-medium)] ring-1 ring-[color:var(--glass-border)]">
                     <Image
                       src={item.photo_url || '/assets/images/no_image.png'}
                       alt=""
@@ -297,7 +297,7 @@ export const ComposerMenuSheet: React.FC<ComposerMenuSheetProps> = ({
                 }}
                 className="min-h-[60px]"
                 leading={
-                  <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[color:var(--lkv-primary)]/10 text-[color:var(--lkv-text-primary)]">
+                  <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[color:var(--lkv-text-primary)]">
                     <Icon name="mountain" className="size-5" aria-hidden="true" />
                   </span>
                 }

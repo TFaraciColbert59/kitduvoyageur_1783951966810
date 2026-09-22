@@ -161,7 +161,7 @@ export const ConversationRow: React.FC<ConversationRowProps> = ({
                   type="button"
                   onClick={() => fire('decline')}
                   aria-label="Refuser la demande"
-                  className="h-full flex-1 bg-[color:var(--lkv-danger)] text-[color:var(--lkv-text-inverted)] flex flex-col items-center justify-center gap-1 active:opacity-85"
+                  className="h-full flex-1 bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[color:var(--lkv-danger)] flex flex-col items-center justify-center gap-1 active:opacity-85"
                 >
                   <Icon name="x" className="w-5 h-5" />
                   <span className="text-[9px] font-bold">Refuser</span>
@@ -173,7 +173,7 @@ export const ConversationRow: React.FC<ConversationRowProps> = ({
                   type="button"
                   onClick={() => fire('archive')}
                   aria-label={conversation.is_archived ? 'Désarchiver' : 'Archiver'}
-                  className="h-full flex-1 bg-[color:var(--lkv-primary)] text-[color:var(--lkv-text-inverted)] flex flex-col items-center justify-center gap-1 active:opacity-85"
+                  className="h-full flex-1 bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[color:var(--lkv-text-primary)] flex flex-col items-center justify-center gap-1 active:opacity-85"
                 >
                   {conversation.is_archived ? (
                     <Icon name="archive-restore" className="w-5 h-5" />
@@ -237,11 +237,11 @@ export const ConversationRow: React.FC<ConversationRowProps> = ({
         }`}
         className={`w-full min-h-[76px] text-left p-3.5 rounded-2xl flex items-center gap-3.5 relative border active:scale-[0.985] ${
           isSelected
-            ? 'bg-[color:var(--lkv-primary)]/10 border-[color:var(--lkv-primary)]/30 shadow-elevation-1 ring-1 ring-[color:var(--lkv-primary)]/20'
+            ? 'bg-[color:var(--btn-tint)] border backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] border-[color:var(--lkv-primary)]/30 shadow-elevation-1 ring-1 ring-[color:var(--lkv-primary)]/20'
             : unreadCount > 0
               ? // Conversation avec messages non lus : ombre portée douce (pas de compteur).
-                'bg-[color:var(--lkv-surface-card)]/95 border-[color:var(--glass-border)] shadow-elevation-3'
-              : 'bg-[color:var(--lkv-surface-card)]/95 border-[color:var(--glass-border)] shadow-elevation-1'
+                'bg-[color:var(--glass-bg-medium)] border backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] border-[color:var(--glass-border)] shadow-elevation-3'
+              : 'bg-[color:var(--glass-bg-medium)] border backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] border-[color:var(--glass-border)] shadow-elevation-1'
         }`}
         style={{
           transform: `translate3d(${dx}px,0,0)`,
@@ -262,7 +262,7 @@ export const ConversationRow: React.FC<ConversationRowProps> = ({
             }
             title={profileId ? `Voir le profil de ${title}` : undefined}
             aria-label={profileId ? `Voir le profil de ${title}` : undefined}
-            className="block w-12 h-12 rounded-full overflow-hidden relative ring-2 ring-[color:var(--glass-border)] shadow-elevation-1 bg-[color:var(--lkv-surface-muted)]"
+            className="block w-12 h-12 rounded-full overflow-hidden relative ring-2 ring-[color:var(--glass-border)] shadow-elevation-1 bg-[color:var(--btn-tint)]"
           >
             <Image
               src={avatarUrl}
@@ -276,7 +276,7 @@ export const ConversationRow: React.FC<ConversationRowProps> = ({
             />
           </span>
           {isGroup && (
-            <span className="absolute -bottom-1 -right-1 bg-[color:var(--lkv-primary)] text-[color:var(--lkv-text-inverted)] rounded-full p-1 shadow-xs border border-white">
+            <span className="absolute -bottom-1 -right-1 bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] text-[color:var(--lkv-text-primary)] rounded-full p-1 shadow-xs border border-white">
               <Icon name="users" className="w-3 h-3" />
             </span>
           )}

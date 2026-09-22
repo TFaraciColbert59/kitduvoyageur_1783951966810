@@ -10,7 +10,7 @@ export default function MobileCommunityHeader({ onSearchClick }: { onSearchClick
   const { triggerHaptic } = useHapticFeedback();
   const { openSearch } = useSearchContext();
   return (
-    <header className="sticky top-0 z-[var(--z-sticky)] flex w-full items-center justify-between gap-[var(--space-3)] bg-[color:var(--lkv-surface)]/85 px-[var(--space-4)] pb-[var(--space-3)] pt-[calc(var(--safe-top)+var(--space-3))] backdrop-blur-[var(--blur-md)]">
+    <header className="sticky top-0 z-[var(--z-sticky)] flex w-full items-center justify-between gap-[var(--space-3)] bg-[color:var(--glass-bg-medium)] border border-[color:var(--glass-border)] saturate-[var(--glass-sat)] lkv-rim-inset px-[var(--space-4)] pb-[var(--space-3)] pt-[calc(var(--safe-top)+var(--space-3))] backdrop-blur-[var(--glass-blur-sm)]">
       <div>
         <span className="block font-mono text-[length:var(--lkv-text-caption-2)] font-semibold uppercase tracking-[0.14em] text-[color:var(--lkv-text-muted)]">
           LE KIT DU VOYAGEUR

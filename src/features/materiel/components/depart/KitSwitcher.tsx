@@ -57,7 +57,7 @@ export function KitSwitcher({ kits, currentId }: KitSwitcherProps) {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -4, scale: 0.97 }}
             transition={{ duration: 0.15 }}
-            className="absolute left-0 top-full z-[var(--z-fab)] mt-1 w-full min-w-[200px] overflow-hidden rounded-2xl border border-white/60 bg-[color:var(--lkv-surface-card)] shadow-lg"
+            className="absolute left-0 top-full z-[var(--z-fab)] mt-1 w-full min-w-[200px] overflow-hidden rounded-2xl border border-white/60 bg-[color:var(--glass-bg-medium)] shadow-lg"
           >
             {kits.map((kit) => (
               <li key={kit.id}>

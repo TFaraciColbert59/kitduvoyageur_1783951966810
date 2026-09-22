@@ -94,7 +94,7 @@ export default function PaysCarnetsList({ countryIso, countryName }: Props) {
               className="glass-sub-card group cursor-pointer overflow-hidden flex flex-col justify-between p-3 space-y-2.5"
             >
               <div className="space-y-2">
-                <div className="aspect-[16/10] rounded-2xl relative overflow-hidden bg-[color:var(--lkv-primary)]">
+                <div className="aspect-[16/10] rounded-2xl relative overflow-hidden bg-[color:var(--btn-tint)]">
                   <img
                     src={
                       carnet.cover_image ||
@@ -118,7 +118,7 @@ export default function PaysCarnetsList({ countryIso, countryName }: Props) {
 
               <div className="flex items-center justify-between pt-2 border-t border-[color:var(--lkv-primary)]/10 text-xs">
                 <div className="flex items-center gap-2 min-w-0">
-                  <div className="w-5 h-5 rounded-full bg-[color:var(--lkv-primary)] text-white flex items-center justify-center font-bold text-[9px] overflow-hidden shrink-0">
+                  <div className="w-5 h-5 rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[color:var(--lkv-text-primary)] flex items-center justify-center font-bold text-[9px] overflow-hidden shrink-0">
                     {carnet.author?.avatar_url ? (
                       <img src={carnet.author.avatar_url} alt="" className="w-full h-full object-cover" />
                     ) : (

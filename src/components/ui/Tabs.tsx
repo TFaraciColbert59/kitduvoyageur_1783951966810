@@ -79,7 +79,7 @@ export function Tabs({
                 baseItem,
                 'min-h-[var(--control-height-sm)] rounded-full px-[var(--space-4)] text-[length:var(--lkv-text-footnote)]',
                 active
-                  ? 'border border-[color:var(--btn-glass-border)] bg-[color:var(--btn-tint-action)] text-[color:var(--lkv-action)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] shadow-[var(--btn-rim)]'
+                  ? 'border border-[color:var(--btn-glass-border)] bg-[color:var(--btn-tint)] font-bold text-[color:var(--lkv-text-primary)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] shadow-[var(--btn-rim)]'
                   : 'border border-[color:var(--glass-border)] bg-[color:var(--btn-tint)] text-[color:var(--btn-content)] backdrop-blur-[var(--btn-blur)]'
               )}
             >

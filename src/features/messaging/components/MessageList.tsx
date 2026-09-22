@@ -157,7 +157,7 @@ export const MessageList: React.FC<MessageListProps> = ({
         <EmptyState
           className="h-full"
           icon={
-            <span className="flex size-16 items-center justify-center rounded-full bg-[color:var(--lkv-primary)]/10 text-2xl text-[color:var(--lkv-primary)]">
+            <span className="flex size-16 items-center justify-center rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-2xl text-[color:var(--lkv-primary)]">
               💬
             </span>
           }

@@ -81,7 +81,7 @@ export default function Footer() {
 
         {/* Left: Brand Logo (Sans texte) */}
         <Link href="/" className="flex items-center group focus-visible:outline-none shrink-0" aria-label="Accueil LKDV">
-          <div className="w-8 h-8 min-w-[32px] min-h-[32px] max-w-[32px] max-h-[32px] rounded-full overflow-hidden border border-white/80 shadow-xs group-hover:scale-105 transition-transform bg-[color:var(--lkv-primary)]/10 shrink-0">
+          <div className="w-8 h-8 min-w-[32px] min-h-[32px] max-w-[32px] max-h-[32px] rounded-full overflow-hidden border border-white/80 shadow-xs group-hover:scale-105 transition-transform bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] shrink-0">
             <img
               src="/assets/images/app_logo.png"
               alt="LKDV"

@@ -329,7 +329,7 @@ function CommunautePageContent() {
               {activeTab === 'carnets' && (
                 <div className="space-y-[var(--space-4)]">
                   <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
-                    <div className="no-scrollbar flex gap-[var(--space-1)] overflow-x-auto rounded-full border border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-card)]/80 p-1">
+                    <div className="no-scrollbar flex gap-[var(--space-1)] overflow-x-auto rounded-full border border-[color:var(--btn-glass-border)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn p-1">
                       {[
                         { id: 'all', label: 'Tous' },
                         { id: 'Trek', label: '🏔️ Trek' },
@@ -380,7 +380,7 @@ function CommunautePageContent() {
               {activeTab === 'clubs' && (
                 <div className="space-y-[var(--space-4)]">
                   <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
-                    <div className="no-scrollbar flex gap-[var(--space-1)] overflow-x-auto rounded-full border border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-card)]/80 p-1">
+                    <div className="no-scrollbar flex gap-[var(--space-1)] overflow-x-auto rounded-full border border-[color:var(--btn-glass-border)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn p-1">
                       {[
                         { id: 'all', label: 'Tous les clubs' },
                         { id: 'activite', label: '🎯 Par Activité' },
@@ -421,7 +421,7 @@ function CommunautePageContent() {
                             variant="interactive"
                             className="flex h-full flex-col justify-between overflow-hidden p-0 transition-transform hover:-translate-y-1"
                           >
-                            <div className="relative h-32 overflow-hidden bg-[color:var(--lkv-primary)]">
+                            <div className="relative h-32 overflow-hidden bg-[color:var(--btn-tint)]">
                               {cover ? (
                                 <img src={cover} alt={clubName} className="size-full object-cover transition-transform duration-700 group-hover:scale-105" />
                               ) : (
@@ -648,7 +648,7 @@ export default function CommunautePage() {
   return (
     <Suspense
       fallback={
-        <div className="flex min-h-screen items-center justify-center bg-[color:var(--lkv-surface)]">
+        <div className="flex min-h-screen items-center justify-center bg-[color:var(--glass-bg-medium)]">
           <LoadingState label="Chargement du Hub Communauté..." />
         </div>
       }

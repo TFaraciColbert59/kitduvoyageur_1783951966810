@@ -24,7 +24,7 @@ function fmtMeters(m: number | null, unit = 'm'): string {
 }
 
 const LINK_CARD_CLASS =
-  'flex w-full flex-col items-stretch justify-start gap-[var(--space-1)] rounded-[var(--lkv-radius-md)] border border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-card)] p-[var(--space-3)] transition-colors hover:bg-[color:var(--lkv-hover-surface)]';
+  'flex w-full flex-col items-stretch justify-start gap-[var(--space-1)] rounded-[var(--lkv-radius-md)] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg-medium)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset p-[var(--space-3)] transition-colors hover:bg-[color:var(--lkv-hover-surface)]';
 
 /**
  * Widget `steps-timeline` — déroulé des étapes du jour (liste simple).

@@ -39,8 +39,8 @@
      décliné portrait (mobile) / paysage (large), voilé pour la lisibilité. */
   --lkv-app-bg-image-portrait: url('/assets/images/lkdv-bg-portrait.webp');
   --lkv-app-bg-image-landscape: url('/assets/images/lkdv-bg-landscape.webp');
-  --lkv-app-bg-scrim: rgba(6, 18, 12, 0.30);
-  --lkv-app-bg-fallback: #0B1510;
+  --lkv-app-bg-scrim: rgba(46, 92, 66, 0.34);
+  --lkv-app-bg-fallback: #12301F;
 
   --lkv-surface: #F5F7F3;
   --lkv-surface-paper: #FFFFFF;
@@ -581,8 +581,8 @@
   --lkv-secondary-hover: #B8CDB4;
   --lkv-secondary-subtle: #24382C;
 
-  --lkv-app-bg-scrim: rgba(4, 12, 8, 0.46);
-  --lkv-app-bg-fallback: #08110C;
+  --lkv-app-bg-scrim: rgba(46, 92, 66, 0.34);
+  --lkv-app-bg-fallback: #12301F;
 
   --lkv-surface: #101C17;
   --lkv-surface-paper: #1B2D24;
@@ -624,10 +624,10 @@
   --glass-solid: var(--card-tint-solid);
   --glass-text: #F1F5F1;
   --glass-text-secondary: rgba(241, 245, 241, 0.74);
-  --glass-bg-light: rgba(27, 45, 36, 0.78);
-  --glass-bg-medium: rgba(27, 45, 36, 0.88);
-  --glass-bg-strong: rgba(27, 45, 36, 0.96);
-  --glass-subtle-fill: rgba(27, 45, 36, 0.65);
+  --glass-bg-light: rgba(27, 45, 36, 0.58);
+  --glass-bg-medium: rgba(27, 45, 36, 0.68);
+  --glass-bg-strong: rgba(27, 45, 36, 0.82);
+  --glass-subtle-fill: rgba(27, 45, 36, 0.48);
   --glass-border: rgba(241, 245, 241, 0.18);
   --glass-rim: rgba(241, 245, 241, 0.20);
   --glass-focus: #7FC49A;
@@ -647,16 +647,16 @@
   --btn-text-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
   --btn-shadow: 0 4px 14px rgba(0, 0, 0, 0.40), 0 1px 3px rgba(0, 0, 0, 0.30);
 
-  --card-tint: rgba(255, 255, 255, 0.10);
-  --card-tint-strong: rgba(255, 255, 255, 0.18);
+  --card-tint: rgba(255, 255, 255, 0.06);
+  --card-tint-strong: rgba(255, 255, 255, 0.11);
   --card-tint-solid: #1B2D24;
   --card-content: #F1F5F1;
   --card-shadow: 0 4px 14px rgba(0, 0, 0, 0.40), 0 1px 3px rgba(0, 0, 0, 0.30);
   --card-shadow-elevated: 0 10px 28px rgba(0, 0, 0, 0.48), 0 2px 6px rgba(0, 0, 0, 0.32);
 
-  --material-bar-bg: rgba(17, 30, 23, 0.72);
-  --material-bar-border: rgba(255, 255, 255, 0.10);
-  --material-sheet-bg: rgba(15, 26, 20, 0.94);
+  --material-bar-bg: rgba(17, 30, 23, 0.50);
+  --material-bar-border: rgba(255, 255, 255, 0.12);
+  --material-sheet-bg: rgba(15, 26, 20, 0.80);
 }
 
 

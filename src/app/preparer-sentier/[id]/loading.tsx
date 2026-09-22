@@ -15,7 +15,7 @@ export default function PreparerSentierLoading() {
       <div
         role="status"
         aria-label="Préparation de l'activité en cours"
-        className="w-56 rounded-full border border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-card)] p-1 shadow-elevation-1"
+        className="w-56 rounded-full border border-[color:var(--btn-glass-border)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] p-1 shadow-elevation-1"
       >
         <div className="h-1.5 w-full overflow-hidden rounded-full bg-[color:var(--lkv-primary)]/10">
           <div className="h-full w-2/5 animate-pulse rounded-full bg-[color:var(--lkv-primary)]/80 motion-reduce:animate-none" />

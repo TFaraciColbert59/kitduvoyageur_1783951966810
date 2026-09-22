@@ -59,7 +59,7 @@ export default function CarnetHubHero({
         <Link
           href="/carnets/nouveau"
           onClick={onCreateClick}
-          className="inline-flex min-h-[var(--control-height-lg)] w-full items-center justify-center gap-[var(--space-2)] rounded-full bg-[color:var(--lkv-action)] px-[var(--space-6)] text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-on-action)] shadow-elevation-2 md:w-auto"
+          className="inline-flex min-h-[var(--control-height-lg)] w-full items-center justify-center gap-[var(--space-2)] rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] px-[var(--space-6)] text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)] shadow-elevation-2 md:w-auto"
         >
           <Icon name="PlusIcon" size={16} aria-hidden="true" />
           <span>Créer un carnet</span>

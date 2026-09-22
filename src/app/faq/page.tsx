@@ -85,7 +85,7 @@ function FAQAccordion({ items }: { items: FAQItem[] }) {
             <Icon name="ChevronDownIcon" size={16} variant="outline" className={`shrink-0 transition-transform duration-200 ${open === i ? 'rotate-180' : ''}`} />
           </button>
           {open === i && (
-            <div className="border-t border-[color:var(--lkv-border-subtle)] bg-[color:var(--lkv-surface-muted)] px-[var(--space-5)] pb-[var(--space-4)] pt-[var(--space-3)] text-[length:var(--lkv-text-body-sm)] leading-[var(--leading-relaxed)] text-[color:var(--lkv-text-secondary)]">
+            <div className="border-t border-[color:var(--glass-border)] bg-[color:var(--glass-bg-medium)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset px-[var(--space-5)] pb-[var(--space-4)] pt-[var(--space-3)] text-[length:var(--lkv-text-body-sm)] leading-[var(--leading-relaxed)] text-[color:var(--lkv-text-secondary)]">
               {item.a}
             </div>
           )}
@@ -110,7 +110,7 @@ function FAQContent({ mobile = false }: { mobile?: boolean }) {
 
   const helpCard = (
     <Card variant="standard" className="flex flex-col items-center gap-[var(--space-4)] p-[var(--space-5)] text-center sm:flex-row sm:text-left">
-      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[var(--lkv-radius-sm)] bg-[color:var(--lkv-surface-muted)]">
+      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[var(--lkv-radius-sm)] bg-[color:var(--glass-bg-medium)]">
         <Icon name="ChatBubbleLeftRightIcon" size={22} className="text-[color:var(--lkv-secondary)]" variant="outline" />
       </div>
       <div className="flex-1">

@@ -32,7 +32,7 @@ export function SosFloatingButton({ safetyHref }: SosFloatingButtonProps) {
         style={{
           bottom: 'calc(var(--bottom-nav-height) + 12px)',
         }} // lkdv-safe-area-ok
-        className="fixed right-4 z-[var(--z-drawer)] !bg-[var(--lkv-danger-dark)] text-[var(--lkv-text-inverted)] hover:!bg-[var(--lkv-danger)] md:bottom-6 md:right-6 md:!bottom-6 flex h-14 w-14 items-center justify-center transition-transform active:scale-90 cursor-pointer"
+        className="fixed right-4 z-[var(--z-drawer)] !bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[color:var(--lkv-danger)] hover:!brightness-[1.05] md:bottom-6 md:right-6 md:!bottom-6 flex h-14 w-14 items-center justify-center transition-transform active:scale-90 cursor-pointer"
       >
         <Icon name="siren" size={24} aria-hidden="true" />
       </IconButton>
@@ -44,7 +44,7 @@ export function SosFloatingButton({ safetyHref }: SosFloatingButtonProps) {
             onClick={() => triggerHaptic('success')}
             className="flex items-center gap-4 rounded-2xl border-2 border-[var(--lkv-danger)] bg-[var(--lkv-danger)]/5 p-4 active:scale-[0.98] transition-transform"
           >
-            <span className="flex h-12 w-12 items-center justify-center rounded-full bg-[var(--lkv-danger)] text-white shrink-0">
+            <span className="flex h-12 w-12 items-center justify-center rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] text-[color:var(--lkv-danger)] shrink-0">
               <Icon name="phone" size={22} aria-hidden="true" />
             </span>
             <span>
@@ -62,7 +62,7 @@ export function SosFloatingButton({ safetyHref }: SosFloatingButtonProps) {
             onClick={() => triggerHaptic('selection')}
             className="glass-sub-card flex items-center gap-4 rounded-2xl p-4 active:scale-[0.98] transition-transform"
           >
-            <span className="flex h-12 w-12 items-center justify-center rounded-full bg-[var(--lkv-primary)]/10 text-[var(--lkv-primary)] shrink-0">
+            <span className="flex h-12 w-12 items-center justify-center rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] text-[var(--lkv-primary)] shrink-0">
               <Icon name="shield" size={22} aria-hidden="true" />
             </span>
             <span>

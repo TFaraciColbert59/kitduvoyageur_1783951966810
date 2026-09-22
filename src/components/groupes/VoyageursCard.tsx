@@ -277,11 +277,11 @@ export default function VoyageursCard({ travelers, groupId, onRefresh, user, mem
           <ListItem
             key={t.id}
             as="div"
-            className="bg-[color:var(--lkv-surface-muted)] p-[var(--space-2)]"
+            className="bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn p-[var(--space-2)]"
             leading={
               <Link
                 href={t.user_id ? `/profil/${t.user_id}` : '#'}
-                className="flex h-6 w-6 items-center justify-center rounded-full bg-[color:var(--lkv-primary)]/10 text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-primary)]"
+                className="flex h-6 w-6 items-center justify-center rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-primary)]"
                 aria-label={`Voir le profil de ${t.name}`}
               >
                 {t.name.charAt(0)}
@@ -307,7 +307,7 @@ export default function VoyageursCard({ travelers, groupId, onRefresh, user, mem
       </div>
 
       {group?.invite_code && (
-        <div className="flex items-center justify-between rounded-[var(--lkv-radius-md)] border-t border-[color:var(--lkv-primary)]/10 bg-[color:var(--lkv-surface-muted)] p-[var(--space-2)] text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">
+        <div className="flex items-center justify-between rounded-[var(--lkv-radius-md)] border-t border-[color:var(--lkv-primary)]/10 bg-[color:var(--glass-bg-medium)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset p-[var(--space-2)] text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">
           <span>Code invitation :</span>
           <strong className="font-mono font-bold tracking-widest text-[color:var(--lkv-text-primary)]">{group.invite_code}</strong>
         </div>
@@ -355,7 +355,7 @@ export default function VoyageursCard({ travelers, groupId, onRefresh, user, mem
                 <ListItem
                   key={m.id}
                   as="div"
-                  className="bg-[color:var(--lkv-surface-muted)]"
+                  className="bg-[color:var(--glass-bg-medium)] border border-[color:var(--glass-border)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset"
                   title={
                     m.user_id ? (
                       <Link href={`/profil/${m.user_id}`} className="text-[length:var(--lkv-text-caption)] font-bold hover:underline">
@@ -417,9 +417,9 @@ export default function VoyageursCard({ travelers, groupId, onRefresh, user, mem
                     <ListItem
                       key={p.id}
                       as="div"
-                      className="bg-[color:var(--lkv-surface-muted)]"
+                      className="bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn"
                       leading={
-                        <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[color:var(--lkv-primary)]/10 text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-primary)]">
+                        <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-primary)]">
                           {p.full_name?.charAt(0) || '?'}
                         </span>
                       }

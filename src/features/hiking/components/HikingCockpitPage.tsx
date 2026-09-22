@@ -475,7 +475,7 @@ export default function HikingCockpitPage({ terrainEnabled = false }: HikingCock
               {/* Confirmation Dialog Modal pour l'Arrêt */}
               {showStopModal && (
                 <div className="fixed inset-0 z-[var(--z-modal)] bg-black/60 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200">
-                  <div className="bg-[color:var(--lkv-surface)] border border-[color:var(--lkv-primary)]/12 rounded-[var(--lkv-radius-sm)] p-6 max-w-sm w-full  text-center space-y-4">
+                  <div className="bg-[color:var(--glass-bg-medium)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset border border-[color:var(--lkv-primary)]/12 rounded-[var(--lkv-radius-sm)] p-6 max-w-sm w-full  text-center space-y-4">
                     <div className="w-12 h-12 rounded-2xl bg-[color:var(--lkv-danger)]/10 text-[color:var(--lkv-danger)] flex items-center justify-center mx-auto text-xl font-bold">
                       🏁
                     </div>
@@ -488,13 +488,13 @@ export default function HikingCockpitPage({ terrainEnabled = false }: HikingCock
                     <div className="flex gap-2.5 pt-2">
                       <button
                         onClick={() => setShowStopModal(false)}
-                        className="flex-1 py-3 px-4 rounded-xl border border-[color:var(--lkv-border)] text-xs font-semibold text-[color:var(--lkv-primary)] hover:bg-[color:var(--stone-100)] transition-colors"
+                        className="flex-1 py-3 px-4 rounded-xl border border-[color:var(--lkv-border)] text-xs font-semibold text-[color:var(--lkv-primary)] hover:bg-[color:var(--btn-tint)] transition-colors"
                       >
                         Annuler
                       </button>
                       <button
                         onClick={handleConfirmStop}
-                        className="flex-1 py-3 px-4 rounded-xl bg-[color:var(--lkv-danger)] text-white text-xs font-bold  hover:bg-[var(--lkv-danger-dark)] active:scale-[0.98] transition-all"
+                        className="flex-1 py-3 px-4 rounded-xl bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[color:var(--lkv-danger)] text-xs font-bold  hover:brightness-[1.05] active:scale-[0.98] transition-all"
                       >
                         Oui, terminer
                       </button>
@@ -597,8 +597,8 @@ export default function HikingCockpitPage({ terrainEnabled = false }: HikingCock
               {/* Geolocation Permission Request Modal */}
               {routeIdParam && !hikingStore.isActive && geoPermissionState === 'prompt' && (
                 <div className="fixed inset-0 z-[var(--z-emergency)] bg-black/75 backdrop-blur-md flex items-center justify-center p-4 animate-fade-in">
-                  <div className="bg-white rounded-[var(--lkv-radius-sm)] max-w-md w-full p-6  border border-[color:var(--lkv-border)] text-center space-y-4">
-                    <div className="w-16 h-16 rounded-full bg-[var(--lkv-forest-50)] text-[color:var(--sage-700)] flex items-center justify-center mx-auto text-2xl ">
+                  <div className="bg-[color:var(--glass-bg-medium)] border border-[color:var(--glass-border)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset rounded-[var(--lkv-radius-sm)] max-w-md w-full p-6 text-center space-y-4">
+                    <div className="w-16 h-16 rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] text-[color:var(--lkv-primary)] flex items-center justify-center mx-auto text-2xl ">
                       📍
                     </div>
                     <div>
@@ -611,7 +611,7 @@ export default function HikingCockpitPage({ terrainEnabled = false }: HikingCock
                     </div>
                     <button
                       onClick={handleStartHikeWithPermission}
-                      className="w-full py-3.5 bg-[color:var(--lkv-primary)] text-white text-sm font-bold rounded-2xl  hover:bg-[color:var(--lkv-primary-soft)] active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+                      className="w-full py-3.5 bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[color:var(--lkv-text-primary)] text-sm font-bold rounded-2xl  hover:brightness-[1.05] active:scale-[0.98] transition-all flex items-center justify-center gap-2"
                     >
                       <span>🚀</span>
                       <span>Autoriser la position & Démarrer</span>
@@ -623,8 +623,8 @@ export default function HikingCockpitPage({ terrainEnabled = false }: HikingCock
               {/* Geolocation Permission Denied Modal */}
               {routeIdParam && !hikingStore.isActive && geoPermissionState === 'denied' && (
                 <div className="fixed inset-0 z-[var(--z-emergency)] bg-black/75 backdrop-blur-md flex items-center justify-center p-4 animate-fade-in">
-                  <div className="bg-white rounded-[var(--lkv-radius-sm)] max-w-md w-full p-6  border border-red-200 text-center space-y-4">
-                    <div className="w-16 h-16 rounded-full bg-red-50 text-red-600 flex items-center justify-center mx-auto text-2xl">
+                  <div className="bg-[color:var(--glass-bg-medium)] border border-[color:var(--glass-border)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset rounded-[var(--lkv-radius-sm)] max-w-md w-full p-6 text-center space-y-4">
+                    <div className="w-16 h-16 rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] text-[color:var(--lkv-danger)] flex items-center justify-center mx-auto text-2xl">
                       ⚠️
                     </div>
                     <div>
@@ -638,13 +638,13 @@ export default function HikingCockpitPage({ terrainEnabled = false }: HikingCock
                     <div className="space-y-2">
                       <button
                         onClick={handleStartHikeWithPermission}
-                        className="w-full py-3 bg-[color:var(--sage-700)] text-white text-sm font-bold rounded-2xl  hover:bg-[color:var(--lkv-forest-800)] active:scale-[0.98] transition-all"
+                        className="w-full py-3 bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[color:var(--lkv-text-primary)] text-sm font-bold rounded-2xl  hover:brightness-[1.05] active:scale-[0.98] transition-all"
                       >
                         Réessayer
                       </button>
                       <button
                         onClick={() => setGeoPermissionState('granted')}
-                        className="w-full py-2.5 bg-[color:var(--stone-100)] text-[color:var(--lkv-text-secondary)] text-xs font-semibold rounded-2xl hover:bg-[color:var(--stone-200)] transition-all"
+                        className="w-full py-2.5 bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] text-[color:var(--lkv-text-secondary)] text-xs font-semibold rounded-2xl hover:brightness-[1.05] transition-all"
                       >
                         Consulter sans le suivi GPS
                       </button>

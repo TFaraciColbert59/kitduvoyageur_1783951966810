@@ -43,7 +43,7 @@ export default function MomentCard({ moment }: MomentCardProps) {
         ariaLabelledBy={`moment-${moment.id}-citation`}
         className="group flex flex-col justify-between space-y-[var(--space-3)] p-[var(--space-3)]"
       >
-        <div className="relative aspect-[16/10] overflow-hidden rounded-[var(--lkv-radius-2xl)] bg-[color:var(--lkv-primary)]">
+        <div className="relative aspect-[16/10] overflow-hidden rounded-[var(--lkv-radius-2xl)] bg-[color:var(--btn-tint)]">
           <img
             src={photoUrl}
             alt={moment.location}
@@ -53,7 +53,7 @@ export default function MomentCard({ moment }: MomentCardProps) {
           <div aria-hidden className="absolute inset-0 bg-gradient-to-t from-black/75 via-transparent to-black/30" />
 
           <div className="absolute left-[var(--space-2)] top-[var(--space-2)]">
-            <Badge className="border-[color:var(--glass-border)] bg-[color:var(--lkv-primary)]/40 font-bold uppercase tracking-widest text-[color:var(--lkv-text-inverted)] backdrop-blur-[var(--blur-md)]">
+            <Badge className="border-[color:var(--glass-border)] bg-[color:var(--btn-tint)] border saturate-[var(--btn-saturate)] lkv-rim-btn font-bold uppercase tracking-widest text-[color:var(--lkv-text-primary)] backdrop-blur-[var(--btn-blur)]">
               {moment.label}
             </Badge>
           </div>
@@ -69,7 +69,7 @@ export default function MomentCard({ moment }: MomentCardProps) {
               aria-pressed={isLiked}
               size="sm"
               variant={isLiked ? 'solid' : 'glass'}
-              className={isLiked ? 'bg-[color:var(--lkv-danger)] text-[color:var(--lkv-text-inverted)]' : 'bg-[color:var(--lkv-primary)]/40 text-[color:var(--lkv-text-inverted)] backdrop-blur-[var(--blur-md)]'}
+              className={isLiked ? 'bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[color:var(--lkv-danger)]' : 'bg-[color:var(--btn-tint)]  text-[color:var(--lkv-text-primary)] backdrop-blur-[var(--btn-blur)]'}
             >
               <motion.svg
                 whileTap={{ scale: 1.3 }}
@@ -93,7 +93,7 @@ export default function MomentCard({ moment }: MomentCardProps) {
 
           <div className="flex items-center justify-between border-t border-[color:var(--lkv-primary)]/10 pt-[var(--space-2)]">
             <div className="flex items-center gap-[var(--space-2)]">
-              <div className="flex h-5 w-5 items-center justify-center rounded-full bg-[color:var(--lkv-primary)] text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-inverted)]" aria-hidden>
+              <div className="flex h-5 w-5 items-center justify-center rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-primary)]" aria-hidden>
                 {moment.author.charAt(0)}
               </div>
               <span className="font-sans text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-primary)]">{moment.author}</span>

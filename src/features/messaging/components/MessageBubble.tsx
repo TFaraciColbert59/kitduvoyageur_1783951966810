@@ -176,7 +176,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
         (showAvatar ? (
           <Link
             href={`/profil/${message.sender_profile?.id || ''}`}
-            className="relative mb-0.5 size-8 shrink-0 cursor-pointer overflow-hidden rounded-full bg-[color:var(--lkv-surface-muted)] shadow-elevation-1 ring-1 ring-[color:var(--glass-border)] transition-shadow hover:ring-2 hover:ring-[color:var(--lkv-secondary)]"
+            className="relative mb-0.5 size-8 shrink-0 cursor-pointer overflow-hidden rounded-full bg-[color:var(--btn-tint)] shadow-elevation-1 ring-1 ring-[color:var(--glass-border)] transition-shadow hover:ring-2 hover:ring-[color:var(--lkv-secondary)]"
             title={`Voir le profil de ${senderName}`}
             aria-label={`Voir le profil de ${senderName}`}
           >
@@ -377,7 +377,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                           href={att.file_url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="flex items-center gap-[var(--space-2)] rounded-[var(--lkv-radius-sm)] bg-[color:var(--lkv-primary)]/5 p-[var(--space-2)] text-[length:var(--lkv-text-caption)] transition-colors hover:bg-[color:var(--lkv-primary)]/10"
+                          className="flex items-center gap-[var(--space-2)] rounded-[var(--lkv-radius-sm)] bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn p-[var(--space-2)] text-[length:var(--lkv-text-caption)] transition-colors hover:brightness-[1.05]"
                         >
                           <Icon name="file-text" className="size-4" aria-hidden="true" />
                           <span className="truncate underline">

@@ -112,7 +112,7 @@ export default function MesAventuresCard({ aventures }: MesAventuresCardProps) {
                 {item.companions.slice(0, 3).map((name, i) => (
                   <div
                     key={name + i}
-                    className="w-7 h-7 rounded-full bg-[color:var(--lkv-primary)] text-white border-2 border-white text-[10px] font-bold flex items-center justify-center"
+                    className="w-7 h-7 rounded-full bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[color:var(--lkv-text-primary)] border-2 border-white text-[10px] font-bold flex items-center justify-center"
                   >
                     {name[0]}
                   </div>

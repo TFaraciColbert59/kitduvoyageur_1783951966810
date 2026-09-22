@@ -42,7 +42,7 @@ export default function MobileClubCard({
     <Card className="relative flex flex-col justify-between space-y-[var(--space-3)] p-[var(--space-4)] transition-transform active:scale-[0.99] motion-reduce:transition-none">
       <div className="flex items-start justify-between gap-[var(--space-3)]">
         <div className="flex min-w-0 items-center gap-[var(--space-3)]">
-          <div className="relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-[var(--lkv-radius-2xl)] border border-[color:var(--lkv-primary)]/10 bg-[color:var(--lkv-primary)]/5 text-[length:var(--lkv-text-title-sm)]">
+          <div className="relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-[var(--lkv-radius-2xl)] border border-[color:var(--lkv-primary)]/10 bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[length:var(--lkv-text-title-sm)]">
             {club.cover_image ? (
               <img
                 src={club.cover_image}

@@ -48,7 +48,7 @@ export default function MobileCarnetCard({
       <Link
         href={carnetHref}
         onClick={() => triggerHaptic('light')}
-        className="group relative block h-44 w-full overflow-hidden rounded-[var(--lkv-radius-2xl)] bg-[color:var(--lkv-primary)]"
+        className="group relative block h-44 w-full overflow-hidden rounded-[var(--lkv-radius-2xl)] bg-[color:var(--btn-tint)]"
       >
         <img
           src={carnet.cover_image || 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=800&q=80'}
@@ -59,12 +59,12 @@ export default function MobileCarnetCard({
         <div aria-hidden className="absolute inset-0 bg-gradient-to-t from-[color:var(--lkv-primary)]/80 via-transparent to-black/30" />
 
         <div className="absolute left-[var(--space-2)] right-[var(--space-2)] top-[var(--space-2)] z-10 flex items-center justify-between">
-          <Badge className="border-[color:var(--glass-border)] bg-[color:var(--lkv-primary)]/60 font-mono font-semibold text-[color:var(--lkv-text-inverted)] backdrop-blur-[var(--blur-md)]">
+          <Badge className="border-[color:var(--glass-border)] bg-[color:var(--btn-tint)] border saturate-[var(--btn-saturate)] lkv-rim-btn font-mono font-semibold text-[color:var(--lkv-text-primary)] backdrop-blur-[var(--btn-blur)]">
             📍 {carnet.destination || 'Massif & Randonnée'}
           </Badge>
 
           {carnet.route_rating !== undefined && (
-            <Badge className="border-[color:var(--glass-border)] bg-[color:var(--lkv-primary)]/60 font-mono font-bold text-[color:var(--sand-200)] backdrop-blur-[var(--blur-md)]">
+            <Badge className="border-[color:var(--glass-border)] bg-[color:var(--btn-tint)] border saturate-[var(--btn-saturate)] lkv-rim-btn font-mono font-bold text-[color:var(--lkv-text-primary)] backdrop-blur-[var(--btn-blur)]">
               ★ {carnet.route_rating}/10
             </Badge>
           )}
@@ -88,7 +88,7 @@ export default function MobileCarnetCard({
           onClick={() => triggerHaptic('light')}
           className="group/author flex cursor-pointer items-center gap-[var(--space-2)]"
         >
-          <span className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[color:var(--lkv-primary)] font-serif text-[length:var(--lkv-text-caption-2)] font-bold italic text-[color:var(--lkv-text-inverted)] transition-transform group-hover/author:scale-105 motion-reduce:transition-none">
+          <span className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn font-serif text-[length:var(--lkv-text-caption-2)] font-bold italic text-[color:var(--lkv-text-primary)] transition-transform group-hover/author:scale-105 motion-reduce:transition-none">
             {carnet.author?.avatar_url ? (
               <img src={carnet.author.avatar_url} alt="" className="h-full w-full object-cover" />
             ) : (
@@ -168,7 +168,7 @@ export default function MobileCarnetCard({
         <Link
           href={carnetHref}
           onClick={() => triggerHaptic('light')}
-          className="inline-flex min-h-[var(--control-height-sm)] items-center gap-[var(--space-1)] rounded-full bg-[color:var(--lkv-action)] px-[var(--space-4)] text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-on-action)]"
+          className="inline-flex min-h-[var(--control-height-sm)] items-center gap-[var(--space-1)] rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn px-[var(--space-4)] text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-primary)]"
         >
           <span>Lire le récit</span>
           <Icon name="ArrowRightIcon" size={12} aria-hidden="true" />

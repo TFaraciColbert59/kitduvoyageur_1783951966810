@@ -91,7 +91,7 @@ export function StepCard({
       <div className="flex items-start justify-between gap-[var(--space-3)]">
         {/* En-tête de l'étape & Titre */}
         <div className="flex min-w-0 flex-1 items-start gap-[var(--space-3)]">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[color:var(--lkv-border-subtle)] bg-[color:var(--lkv-surface-muted)] text-[color:var(--lkv-primary)]">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[color:var(--btn-glass-border)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[color:var(--lkv-primary)]">
             <TransportIcon className="h-5 w-5" />
           </div>
 

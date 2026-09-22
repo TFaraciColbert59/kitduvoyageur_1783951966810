@@ -680,13 +680,13 @@ export default function InteractiveMap() {
 const LINK_PILL =
   'inline-flex min-h-[36px] flex-1 select-none items-center justify-center gap-1.5 whitespace-nowrap rounded-full border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] px-[var(--space-4)] text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--card-content)] no-underline transition-transform active:scale-[var(--motion-press-scale)] hover:bg-[color:var(--lkv-hover-surface)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]';
 const LINK_PILL_PRIMARY =
-  'inline-flex min-h-[36px] flex-1 select-none items-center justify-center gap-1.5 whitespace-nowrap rounded-full border border-transparent bg-[color:var(--lkv-action)] px-[var(--space-4)] text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-on-action)] no-underline transition-transform active:scale-[var(--motion-press-scale)] hover:bg-[color:var(--lkv-action-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]';
+  'inline-flex min-h-[36px] flex-1 select-none items-center justify-center gap-1.5 whitespace-nowrap rounded-full border border-transparent bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn px-[var(--space-4)] text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)] no-underline transition-transform active:scale-[var(--motion-press-scale)] hover:brightness-[1.05] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]';
 const LINK_ICON =
   'inline-flex h-9 w-9 shrink-0 select-none items-center justify-center rounded-full border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] text-[color:var(--card-content)] no-underline transition-transform active:scale-[var(--motion-press-scale)] hover:bg-[color:var(--lkv-hover-surface)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]';
   const filterPanel = (
     <div className="min-h-0 flex-1 overflow-y-auto">
       {/* Header & Location Banner */}
-      <div className="space-y-3 border-b border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-muted)] p-4">
+      <div className="space-y-3 border-b border-[color:var(--glass-border)] bg-[color:var(--glass-bg-medium)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset p-4">
         <div className="flex items-center justify-between">
           <div>
             <h2 className="font-display text-[length:var(--lkv-text-title-sm)] font-bold tracking-tight text-[color:var(--lkv-text-primary)]">
@@ -734,7 +734,7 @@ const LINK_ICON =
         </div>
 
         {/* Strict POI & Layer Category Chips */}
-        <div className="space-y-2 rounded-[var(--lkv-radius-lg)] border border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-card)] p-3 text-[length:var(--lkv-text-caption)] shadow-xs">
+        <div className="space-y-2 rounded-[var(--lkv-radius-lg)] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg-medium)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] p-3 text-[length:var(--lkv-text-caption)] shadow-xs">
           <div className="flex items-center justify-between">
             <span className="font-mono text-[length:var(--lkv-text-caption-2)] font-bold uppercase tracking-wider text-[color:var(--lkv-text-muted)]">
               Filtres affichés :
@@ -781,7 +781,7 @@ const LINK_ICON =
       </div>
 
       {/* Trail Count Banner */}
-      <div className="flex items-center justify-between border-b border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-muted)] px-4 py-2 text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-secondary)]">
+      <div className="flex items-center justify-between border-b border-[color:var(--glass-border)] bg-[color:var(--glass-bg-medium)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset px-4 py-2 text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-secondary)]">
         <span className="font-bold">{filteredTrails.length} randonnée{filteredTrails.length !== 1 ? 's' : ''} (Rayon 10 km)</span>
         <span className="font-mono text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">Fluide 60 fps</span>
       </div>
@@ -835,7 +835,7 @@ const LINK_ICON =
   return (
     <div className="relative flex h-full w-full overflow-hidden font-sans">
       {/* ── SIDEBAR PANEL (desktop ; mobile = Sheet canonique) ── */}
-      <div className="hidden overflow-hidden border-r border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-card)] sm:flex sm:w-[380px] sm:shrink-0">
+      <div className="hidden overflow-hidden border-r border-[color:var(--glass-border)] bg-[color:var(--glass-bg-medium)] sm:flex sm:w-[380px] sm:shrink-0">
         {filterPanel}
       </div>
       {showMobileFilters && (
@@ -1003,7 +1003,7 @@ const LINK_ICON =
                 {selectedTrail.name}
               </h3>
 
-              <div className="mb-3 flex items-center gap-3 rounded-[var(--lkv-radius-md)] border border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-card)] p-2.5 font-mono text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-primary)]">
+              <div className="mb-3 flex items-center gap-3 rounded-[var(--lkv-radius-md)] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg-medium)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset p-2.5 font-mono text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-primary)]">
                 <div>
                   <p className="text-[length:var(--lkv-text-caption-2)] font-bold uppercase text-[color:var(--lkv-text-muted)]">Distance</p>
                   <p className="font-bold">{selectedTrail.distance_km ? `${Number(selectedTrail.distance_km).toFixed(1)} km` : 'N/A'}</p>
@@ -1085,14 +1085,14 @@ const LINK_ICON =
 
               {/* Detailed Description */}
               {selectedPoi.details && (
-                <p className="mb-3 rounded-[var(--lkv-radius-md)] border border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-card)] p-2 text-[length:var(--lkv-text-caption)] leading-relaxed text-[color:var(--lkv-text-secondary)]">
+                <p className="mb-3 rounded-[var(--lkv-radius-md)] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg-medium)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset p-2 text-[length:var(--lkv-text-caption)] leading-relaxed text-[color:var(--lkv-text-secondary)]">
                   {selectedPoi.details}
                 </p>
               )}
 
               {/* Category-specific specs */}
               {selectedPoi.category === 'refuge' && (
-                <div className="mb-3 grid grid-cols-2 gap-2 rounded-[var(--lkv-radius-md)] border border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-card)] p-2 font-mono text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-primary)]">
+                <div className="mb-3 grid grid-cols-2 gap-2 rounded-[var(--lkv-radius-md)] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg-medium)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset p-2 font-mono text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-primary)]">
                   <div>
                     <span className="block text-[length:var(--lkv-text-caption-2)] uppercase text-[color:var(--lkv-text-muted)]">Capacité</span>
                     <span className="font-bold">{selectedPoi.capacity ? `${selectedPoi.capacity} couchages` : 'Ouvert'}</span>

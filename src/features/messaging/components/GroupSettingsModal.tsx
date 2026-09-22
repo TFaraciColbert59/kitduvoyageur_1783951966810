@@ -147,7 +147,7 @@ export const GroupSettingsModal: React.FC<GroupSettingsModalProps> = ({
         {/* Group Header Info Edit */}
         <Card variant="compact" className="flex flex-col gap-[var(--space-3)]">
           <div className="flex items-center gap-[var(--space-3)]">
-            <div className="relative size-12 shrink-0 overflow-hidden rounded-full bg-[color:var(--lkv-surface-muted)] ring-2 ring-[color:var(--lkv-primary)]/20">
+            <div className="relative size-12 shrink-0 overflow-hidden rounded-full bg-[color:var(--btn-tint)] ring-2 ring-[color:var(--lkv-primary)]/20">
               <Image
                 src={avatarUrl || conversation.avatar_url || '/assets/images/no_image.png'}
                 alt={title}
@@ -250,7 +250,7 @@ export const GroupSettingsModal: React.FC<GroupSettingsModalProps> = ({
                     <div className="flex items-center gap-[var(--space-2)] overflow-hidden">
                       <Link
                         href={`/profil/${mem.user_id}`}
-                        className="relative size-8 shrink-0 overflow-hidden rounded-full bg-[color:var(--lkv-surface-muted)] ring-1 ring-[color:var(--glass-border)] transition-shadow hover:ring-2 hover:ring-[color:var(--lkv-secondary)]"
+                        className="relative size-8 shrink-0 overflow-hidden rounded-full bg-[color:var(--btn-tint)] ring-1 ring-[color:var(--glass-border)] transition-shadow hover:ring-2 hover:ring-[color:var(--lkv-secondary)]"
                         title={`Voir le profil de ${name}`}
                         aria-label={`Voir le profil de ${name}`}
                       >

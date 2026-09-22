@@ -198,7 +198,7 @@ export default function ParcoursCard({ groupId, trail, meta }: ParcoursCardProps
         {meta?.description || `Tracé de ${trailName} avec dénivelé cumulé de +${elevationGain} m.`}
       </p>
 
-      <div className="relative mb-[var(--space-3)] h-48 overflow-hidden rounded-[var(--lkv-radius-md)] bg-[color:var(--lkv-surface-muted)] sm:h-56">
+      <div className="relative mb-[var(--space-3)] h-48 overflow-hidden rounded-[var(--lkv-radius-md)] bg-[color:var(--glass-bg-medium)] sm:h-56">
         <div ref={containerRef} className="z-0 h-full w-full" />
       </div>
 

@@ -60,7 +60,7 @@ export default function CopilotSheet({
         animate={{ y: 0 }}
         exit={{ y: '100%' }}
         transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-        className="w-full max-w-md bg-[color:var(--lkv-surface)] text-[color:var(--lkv-primary)] rounded-t-[34px] pt-3 pb-10 px-4  max-h-[85vh] overflow-y-auto space-y-4"
+        className="w-full max-w-md bg-[color:var(--glass-bg-medium)] border border-[color:var(--glass-border)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset text-[color:var(--lkv-primary)] rounded-t-[34px] pt-3 pb-10 px-4  max-h-[85vh] overflow-y-auto space-y-4"
       >
         {/* Grabber */}
         <div className="w-10 h-1 bg-[color:var(--lkv-primary)]/14 rounded-full mx-auto" />
@@ -83,7 +83,7 @@ export default function CopilotSheet({
               key={i}
               className={`p-3 rounded-2xl text-xs leading-relaxed max-w-[85%] ${
                 m.sender === 'me'
-                  ? 'ml-auto bg-[color:var(--lkv-primary)] text-white rounded-br-xs'
+                  ? 'ml-auto bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[color:var(--lkv-text-primary)] rounded-br-xs'
                   : 'mr-auto bg-[color:var(--lkv-forest-50)] text-[color:var(--lkv-primary)] border border-[color:var(--sage-400)]/40 rounded-bl-xs'
               }`}
             >
@@ -116,7 +116,7 @@ export default function CopilotSheet({
 
         <button
           onClick={onClose}
-          className="w-full py-3 bg-[color:var(--lkv-primary)] text-white font-bold text-xs rounded-2xl  mt-2"
+          className="w-full py-3 bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[color:var(--lkv-text-primary)] font-bold text-xs rounded-2xl  mt-2"
         >
           Fermer le Copilote
         </button>

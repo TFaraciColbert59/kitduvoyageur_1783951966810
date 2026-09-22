@@ -346,7 +346,7 @@ function CarnetDetailModal({
     >
       {!carnet ? null : (
         <div className="space-y-[var(--space-6)]">
-          <div className="relative h-64 overflow-hidden rounded-[var(--lkv-radius-md)] bg-[color:var(--lkv-primary)]">
+          <div className="relative h-64 overflow-hidden rounded-[var(--lkv-radius-md)] bg-[color:var(--btn-tint)]">
             {carnet.cover_image ? (
               <Image src={carnet.cover_image} alt={carnet.cover_image_alt || carnet.title} fill className="object-cover" />
             ) : (
@@ -383,14 +383,14 @@ function CarnetDetailModal({
               <div className="flex items-center gap-[var(--space-3)]">
                 {carnet.author_id ? (
                   <Link href={`/profil/${carnet.author_id}`} className="flex items-center gap-[var(--space-2)] transition-opacity hover:opacity-80">
-                    <span className="flex h-7 w-7 items-center justify-center rounded-[var(--lkv-radius-md)] bg-[color:var(--lkv-primary)]/30 text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-inverted)]">
+                    <span className="flex h-7 w-7 items-center justify-center rounded-[var(--lkv-radius-md)] bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-primary)]">
                       {carnet.author?.full_name?.[0] ?? '?'}
                     </span>
                     <span className="text-[length:var(--lkv-text-caption)] font-medium text-[color:var(--lkv-text-inverted)]/80">{carnet.author?.full_name ?? 'Anonyme'}</span>
                   </Link>
                 ) : (
                   <>
-                    <span className="flex h-7 w-7 items-center justify-center rounded-[var(--lkv-radius-md)] bg-[color:var(--lkv-primary)]/30 text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-inverted)]">
+                    <span className="flex h-7 w-7 items-center justify-center rounded-[var(--lkv-radius-md)] bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-primary)]">
                       {carnet.author?.full_name?.[0] ?? '?'}
                     </span>
                     <span className="text-[length:var(--lkv-text-caption)] font-medium text-[color:var(--lkv-text-inverted)]/80">{carnet.author?.full_name ?? 'Anonyme'}</span>
@@ -420,7 +420,7 @@ function CarnetDetailModal({
 
           <div className="space-y-[var(--space-6)]">
             {(carnet.start_date || carnet.end_date) && (
-              <div className="flex items-center gap-[var(--space-4)] rounded-[var(--lkv-radius-md)] bg-[color:var(--lkv-primary)] p-[var(--space-4)]">
+              <div className="flex items-center gap-[var(--space-4)] rounded-[var(--lkv-radius-md)] bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn p-[var(--space-4)]">
                 <Icon name="CalendarDaysIcon" size={20} className="shrink-0 text-[color:var(--lkv-text-inverted)]" aria-hidden="true" />
                 <div className="flex flex-wrap items-center gap-[var(--space-4)] text-[length:var(--lkv-text-caption)]">
                   {carnet.start_date && (
@@ -471,7 +471,7 @@ function CarnetDetailModal({
                 <div className="space-y-[var(--space-2)]">
                   {carnet.map_points.map((point, i) => (
                     <Card key={i} variant="compact" className="flex items-center gap-[var(--space-3)]">
-                      <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-[var(--lkv-radius-md)] bg-[color:var(--lkv-primary)] text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-inverted)]">
+                      <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-[var(--lkv-radius-md)] bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-primary)]">
                         {point.day ?? i + 1}
                       </span>
                       <div className="flex-1">
@@ -518,7 +518,7 @@ function CarnetDetailModal({
                         onClick={() => { onLike(carnet, r.key); setShowReactions(false); }}
                         title={r.label}
                         aria-label={r.label}
-                        className={`flex h-9 w-9 items-center justify-center rounded-[var(--lkv-radius-md)] text-[length:var(--lkv-text-subheadline)] transition-colors hover:bg-[color:var(--lkv-hover-surface)] ${carnet.user_reaction === r.key ? 'bg-[color:var(--lkv-primary)]/10' : ''}`}
+                        className={`flex h-9 w-9 items-center justify-center rounded-[var(--lkv-radius-md)] text-[length:var(--lkv-text-subheadline)] transition-colors hover:bg-[color:var(--lkv-hover-surface)] ${carnet.user_reaction === r.key ? 'bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn' : ''}`}
                       >
                         {r.emoji}
                       </button>
@@ -1014,7 +1014,7 @@ export default function CarnetsPage() {
       />
 
       {toast && (
-        <div className="fixed bottom-6 left-1/2 z-[var(--z-toast)] -translate-x-1/2 rounded-[var(--lkv-radius-md)] bg-[color:var(--lkv-primary)] px-[var(--space-5)] py-[var(--space-3)] text-[length:var(--lkv-text-caption)] font-semibold text-[color:var(--lkv-text-inverted)]">
+        <div className="fixed bottom-6 left-1/2 z-[var(--z-toast)] -translate-x-1/2 rounded-[var(--lkv-radius-md)] bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn px-[var(--space-5)] py-[var(--space-3)] text-[length:var(--lkv-text-caption)] font-semibold text-[color:var(--lkv-text-primary)]">
           {toast}
         </div>
       )}

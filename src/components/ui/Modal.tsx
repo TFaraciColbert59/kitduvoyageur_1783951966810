@@ -65,7 +65,7 @@ export function Modal({
             SIZE[size]
           )}
         >
-          <div className="lkv-modal-in flex max-h-[85dvh] flex-col overflow-hidden rounded-[var(--lkv-radius-card)] border border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-card)] shadow-[var(--elevation-4)] group-data-[state=closed]:[animation:lkv-modal-out_var(--dur-fast)_var(--motion-ease-accelerate)_both] motion-reduce:[animation:none]">
+          <div className="lkv-modal-in flex max-h-[85dvh] flex-col overflow-hidden rounded-[var(--lkv-radius-card)] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg-medium)] shadow-[var(--elevation-4)] group-data-[state=closed]:[animation:lkv-modal-out_var(--dur-fast)_var(--motion-ease-accelerate)_both] motion-reduce:[animation:none]">
             <div className="flex shrink-0 items-start justify-between gap-[var(--space-3)] px-[var(--space-5)] pt-[var(--space-5)]">
               <div className="min-w-0">
                 <Dialog.Title

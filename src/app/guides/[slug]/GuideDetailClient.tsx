@@ -279,7 +279,7 @@ export default function GuideDetailClient({ slug }: { slug: string }) {
 
       {/* Author */}
       <div className="mb-[var(--space-4)] flex items-center gap-[10px] border-b border-[color:var(--lkv-border-subtle)] pb-[var(--space-4)]">
-        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[color:var(--lkv-surface-muted)] text-[14px] text-[color:var(--lkv-primary)]" aria-hidden="true">
+        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[14px] text-[color:var(--lkv-primary)]" aria-hidden="true">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
         </div>
         <div>
@@ -337,7 +337,7 @@ export default function GuideDetailClient({ slug }: { slug: string }) {
   return (
     <>
       {/* ── DESKTOP ── fullscreen, scroll interne */}
-      <div className="hidden md:flex flex-col h-[100dvh] overflow-hidden bg-[color:var(--lkv-surface)]" data-lkv-material-theme="light">
+      <div className="hidden md:flex flex-col h-[100dvh] overflow-hidden bg-[color:var(--glass-bg-medium)]" data-lkv-material-theme="light">
         <Header />
         <main className="flex-1 min-h-0 overflow-y-auto">
           {loading ? desktopLoading : notFoundState || !guide ? desktopNotFound : desktopDetail}

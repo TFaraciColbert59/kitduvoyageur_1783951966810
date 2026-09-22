@@ -67,7 +67,7 @@ export default function HeroProfil({ profile, onEditProfile, onShareProfile }: H
           <div className="flex items-start sm:items-center gap-4.5 max-w-2xl">
             {/* Avatar with Camera action */}
             <div className="relative shrink-0">
-              <div className="w-18 h-18 sm:w-20 sm:h-20 rounded-full overflow-hidden border-2 border-white shadow-md bg-[color:var(--lkv-primary)] relative">
+              <div className="w-18 h-18 sm:w-20 sm:h-20 rounded-full overflow-hidden border-2 border-white shadow-md bg-[color:var(--btn-tint)] relative">
                 <Image
                   src={profile.avatar_url || '/assets/images/no_image.png'}
                   alt={`${profile.first_name} ${profile.last_name}`}
@@ -111,11 +111,11 @@ export default function HeroProfil({ profile, onEditProfile, onShareProfile }: H
 
               {/* Meta tags */}
               <div className="flex flex-wrap items-center gap-2 pt-1 text-[11px] font-mono text-[color:var(--lkv-text-muted)]">
-                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg bg-[color:var(--lkv-primary)]/5 border border-[color:var(--lkv-primary)]/5 font-sans font-medium text-xs text-[color:var(--lkv-forest-600)]">
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn border border-[color:var(--lkv-primary)]/5 font-sans font-medium text-xs text-[color:var(--lkv-forest-600)]">
                   <Icon name="MapPinIcon" size={12} className="text-[color:var(--lkv-warning-dark)]" />
                   {profile.location}
                 </span>
-                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg bg-[color:var(--lkv-primary)]/5 border border-[color:var(--lkv-primary)]/5 font-sans font-medium text-xs text-[color:var(--lkv-forest-600)]">
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn border border-[color:var(--lkv-primary)]/5 font-sans font-medium text-xs text-[color:var(--lkv-forest-600)]">
                   <Icon name="CalendarIcon" size={12} className="text-[color:var(--lkv-secondary)]" />
                   {profile.tenure}
                 </span>
@@ -135,7 +135,7 @@ export default function HeroProfil({ profile, onEditProfile, onShareProfile }: H
           <div className="shrink-0 self-end md:self-center">
             <Link
               href="/hub"
-              className="inline-flex items-center justify-center gap-[var(--space-2)] min-h-[var(--lkv-touch-min)] rounded-full px-[var(--space-4)] py-[var(--space-2)] text-[length:var(--lkv-text-footnote)] font-semibold backdrop-blur-[var(--blur-md)] border border-transparent bg-[color:var(--lkv-action)] text-[color:var(--lkv-on-action)] shadow-elevation-1 text-xs font-bold !py-2.5 !px-4 flex items-center gap-2 shadow-sm"
+              className="inline-flex items-center justify-center gap-[var(--space-2)] min-h-[var(--lkv-touch-min)] rounded-full px-[var(--space-4)] py-[var(--space-2)] text-[length:var(--lkv-text-footnote)] font-semibold backdrop-blur-[var(--btn-blur)] border border-transparent bg-[color:var(--btn-tint)] saturate-[var(--btn-saturate)] text-[color:var(--lkv-text-primary)] shadow-elevation-1 text-xs font-bold !py-2.5 !px-4 flex items-center gap-2 shadow-sm"
             >
               <span>🎒</span>
               <span>Mon Matériel</span>

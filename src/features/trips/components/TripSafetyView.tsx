@@ -207,7 +207,7 @@ export function TripSafetyView({ trip }: TripSafetyViewProps) {
       {/* Rappels de sécurité & Urgences */}
       <Card>
         <div className="flex items-start gap-[var(--space-4)]">
-          <div className="rounded-[var(--lkv-radius-sm)] bg-[color:var(--lkv-primary)]/10 p-[var(--space-2)] text-[color:var(--lkv-primary)]">
+          <div className="rounded-[var(--lkv-radius-sm)] bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn p-[var(--space-2)] text-[color:var(--lkv-primary)]">
             <Icon name="phone-call" size={20} />
           </div>
           <div>

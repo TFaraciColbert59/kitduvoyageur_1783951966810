@@ -39,7 +39,7 @@ export default function ActiviteCard({ activites }: ActiviteCardProps) {
         );
       default:
         return (
-          <div className="w-5.5 h-5.5 rounded-full bg-[color:var(--lkv-primary)]/5 text-[color:var(--lkv-primary)] flex items-center justify-center shrink-0">
+          <div className="w-5.5 h-5.5 rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[color:var(--lkv-primary)] flex items-center justify-center shrink-0">
             <Icon name="UserIcon" size={11} />
           </div>
         );

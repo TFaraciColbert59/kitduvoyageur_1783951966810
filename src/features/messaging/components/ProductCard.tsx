@@ -28,10 +28,10 @@ export const ProductCard: React.FC<ProductCardProps> = ({ meta, isMine }) => {
       className={`mt-[var(--space-2)] flex max-w-[240px] flex-col overflow-hidden rounded-[var(--lkv-radius-md)] border shadow-elevation-1 transition-transform active:scale-[0.98] ${
         isMine
           ? 'border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)]'
-          : 'border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-card)]'
+          : 'border-[color:var(--glass-border)] bg-[color:var(--glass-bg-medium)]'
       }`}
     >
-      <div className="relative h-24 w-full bg-[color:var(--lkv-surface-muted)]">
+      <div className="relative h-24 w-full bg-[color:var(--glass-bg-medium)]">
         <Image
           src={imgSrc}
           alt={title}

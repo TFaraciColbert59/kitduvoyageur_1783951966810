@@ -135,7 +135,7 @@ export default function Header() {
               className="flex items-center group focus-visible:outline-none opacity-100 hover:opacity-90 active:scale-95 transition-all cursor-pointer touch-manipulation py-0.5 shrink-0"
               aria-label="Accueil LKDV"
             >
-              <div className="w-8 h-8 min-w-[32px] min-h-[32px] max-w-[32px] max-h-[32px] rounded-full overflow-hidden border border-white/80 shadow-xs flex items-center justify-center bg-[color:var(--lkv-primary)]/10 group-hover:scale-105 transition-transform shrink-0">
+              <div className="w-8 h-8 min-w-[32px] min-h-[32px] max-w-[32px] max-h-[32px] rounded-full overflow-hidden border border-white/80 shadow-xs flex items-center justify-center bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] group-hover:scale-105 transition-transform shrink-0">
                 <img
                   src="/assets/images/app_logo.png"
                   alt="LKDV"
@@ -155,7 +155,7 @@ export default function Header() {
               {pill && (
                 <span
                   aria-hidden="true"
-                  className="absolute top-0.5 bottom-0.5 rounded-full bg-[color:var(--lkv-primary)]/10 border border-[color:var(--lkv-primary)]/15 shadow-inner transition-all duration-300 ease-out"
+                  className="absolute top-0.5 bottom-0.5 rounded-full bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] border border-[color:var(--lkv-primary)]/15 shadow-inner transition-all duration-300 ease-out"
                   style={{ left: pill.left, width: pill.width }}
                 />
               )}

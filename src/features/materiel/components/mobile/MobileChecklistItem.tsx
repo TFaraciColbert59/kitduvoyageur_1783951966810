@@ -83,8 +83,8 @@ export function MobileChecklistItem({
         whileTap={{ scale: 0.99 }}
         className={cn(
           'relative z-10 w-full flex items-center justify-between gap-2.5 px-2 py-1.5 rounded-2xl transition-all',
-          'bg-white border border-white/90 shadow-2xs',
-          item.is_checked && 'bg-[color:var(--lkv-surface-muted)] opacity-80 hover:opacity-100',
+          'bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn',
+          item.is_checked && 'bg-[color:var(--glass-bg-medium)] border-[color:var(--glass-border)] opacity-80 hover:opacity-100',
           isHighlighted &&
             'ring-2 ring-[var(--lkv-danger)] bg-[var(--lkv-danger)]/10 border-[var(--lkv-danger)]/25'
         )}
@@ -105,8 +105,8 @@ export function MobileChecklistItem({
             className={cn(
               'w-8 h-8 rounded-full border-[1.5px] flex items-center justify-center transition-all duration-200 shadow-2xs',
               item.is_checked
-                ? 'bg-[var(--lkv-primary-hover)] border-[var(--lkv-primary-hover)] text-white shadow-xs'
-                : 'border-[var(--lkv-text-muted)]/40 bg-white text-transparent hover:border-[var(--lkv-primary-hover)]'
+                ? 'bg-[color:var(--btn-tint)] border-[color:var(--btn-glass-border)] text-[color:var(--lkv-text-primary)] shadow-xs'
+                : 'border-[var(--lkv-text-muted)]/40 bg-[color:var(--btn-tint)] text-transparent hover:border-[var(--lkv-primary-hover)]'
             )}
           >
             {item.is_checked && (
@@ -115,7 +115,7 @@ export function MobileChecklistItem({
                 animate={{ scale: 1 }}
                 transition={{ type: 'spring', stiffness: 500, damping: 25 }}
               >
-                <Icon name="check" size={14} strokeWidth={3} className="text-white" />
+                <Icon name="check" size={14} strokeWidth={3} className="text-[color:var(--lkv-text-primary)]" />
               </motion.span>
             )}
           </div>

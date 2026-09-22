@@ -78,7 +78,7 @@ export default function CaptureSheet({ isOpen, onClose, onCaptureAction, userLoc
         animate={{ y: 0 }}
         exit={{ y: '100%' }}
         transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-        className="w-full max-w-md bg-[color:var(--lkv-surface)] text-[color:var(--lkv-primary)] rounded-t-[34px] pt-3 pb-10 px-4  max-h-[85vh] overflow-y-auto space-y-5"
+        className="w-full max-w-md bg-[color:var(--glass-bg-medium)] border border-[color:var(--glass-border)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset text-[color:var(--lkv-primary)] rounded-t-[34px] pt-3 pb-10 px-4  max-h-[85vh] overflow-y-auto space-y-5"
       >
         {/* Grabber */}
         <div className="w-10 h-1 bg-[color:var(--lkv-primary)]/14 rounded-full mx-auto" />
@@ -105,7 +105,7 @@ export default function CaptureSheet({ isOpen, onClose, onCaptureAction, userLoc
         <div className="grid grid-cols-4 gap-2">
           <button
             onClick={() => photoInputRef.current?.click()}
-            className="aspect-square rounded-2xl flex flex-col items-center justify-center gap-1.5 p-1 transition-transform active:scale-95  bg-[color:var(--lkv-primary)] text-white"
+            className="aspect-square rounded-2xl flex flex-col items-center justify-center gap-1.5 p-1 transition-transform active:scale-95  bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[color:var(--lkv-text-primary)]"
           >
             <span className="text-xl leading-none">📸</span>
             <span className="text-[9px] font-mono font-semibold tracking-wider uppercase text-center leading-none">
@@ -126,7 +126,7 @@ export default function CaptureSheet({ isOpen, onClose, onCaptureAction, userLoc
           <button
             onClick={() => setNoteMode('NOTE')}
             className={`aspect-square rounded-2xl flex flex-col items-center justify-center gap-1.5 p-1 transition-transform active:scale-95  ${
-              noteMode === 'NOTE' ? 'bg-[color:var(--lkv-primary)] text-white' : 'bg-[color:var(--stone-100)] text-[color:var(--lkv-primary)]'
+              noteMode === 'NOTE' ? 'bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[color:var(--lkv-text-primary)]' : 'bg-[color:var(--stone-100)] text-[color:var(--lkv-primary)]'
             }`}
           >
             <span className="text-xl leading-none">📝</span>
@@ -138,7 +138,7 @@ export default function CaptureSheet({ isOpen, onClose, onCaptureAction, userLoc
           <button
             onClick={() => setNoteMode('MOMENT')}
             className={`aspect-square rounded-2xl flex flex-col items-center justify-center gap-1.5 p-1 transition-transform active:scale-95  ${
-              noteMode === 'MOMENT' ? 'bg-[color:var(--lkv-primary)] text-white' : 'bg-gradient-to-br from-[var(--lkv-warning)] to-[var(--lkv-warning)] text-[var(--lkv-warning-dark)]'
+              noteMode === 'MOMENT' ? 'bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[color:var(--lkv-text-primary)]' : 'bg-gradient-to-br from-[var(--lkv-warning)] to-[var(--lkv-warning)] text-[var(--lkv-warning-dark)]'
             }`}
           >
             <span className="text-xl leading-none">✨</span>
@@ -160,14 +160,14 @@ export default function CaptureSheet({ isOpen, onClose, onCaptureAction, userLoc
               value={noteText}
               onChange={(e) => setNoteText(e.target.value)}
               placeholder={noteMode === 'NOTE' ? 'Saisissez votre note de terrain…' : 'Description du moment marquant…'}
-              className="w-full p-2.5 bg-white rounded-xl text-xs text-[color:var(--lkv-primary)] border border-[color:var(--lkv-border)] focus:outline-none focus:border-[color:var(--lkv-primary)]"
+              className="w-full p-2.5 bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] rounded-xl text-xs text-[color:var(--lkv-text-primary)] focus:outline-none focus:border-[color:var(--lkv-primary)]"
             />
             <button
               onClick={() => {
                 if (noteText.trim()) addCapture(noteMode, noteText);
               }}
               disabled={!noteText.trim()}
-              className="w-full py-2 bg-[color:var(--lkv-primary)] text-white text-xs font-bold rounded-xl disabled:opacity-50 hover:bg-[color:var(--lkv-forest-950)] transition-colors"
+              className="w-full py-2 bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[color:var(--lkv-text-primary)] text-xs font-bold rounded-xl disabled:opacity-50 hover:bg-[color:var(--lkv-forest-950)] transition-colors"
             >
               Enregistrer
             </button>
@@ -176,7 +176,7 @@ export default function CaptureSheet({ isOpen, onClose, onCaptureAction, userLoc
 
         {/* Tag GPS Auto Banner */}
         <div className="p-3.5 bg-[color:var(--lkv-forest-50)] border border-[color:var(--lkv-forest-200)] rounded-2xl flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-[color:var(--lkv-primary)] text-[color:var(--lkv-forest-100)] flex items-center justify-center text-lg flex-shrink-0">
+          <div className="w-10 h-10 rounded-xl bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[color:var(--lkv-text-primary)] flex items-center justify-center text-lg flex-shrink-0">
             📌
           </div>
           <div className="flex-1 min-w-0">
@@ -195,7 +195,7 @@ export default function CaptureSheet({ isOpen, onClose, onCaptureAction, userLoc
             Captures enregistrées ({captures.length})
           </h3>
           {captures.length === 0 ? (
-            <div className="p-4 bg-[color:var(--lkv-surface)] border border-[color:var(--lkv-primary)]/06 rounded-2xl text-center">
+            <div className="p-4 bg-[color:var(--glass-bg-medium)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset border border-[color:var(--lkv-primary)]/06 rounded-2xl text-center">
               <p className="text-xs text-[color:var(--lkv-text-muted)]">
                 Aucune capture enregistrée pour le moment.
               </p>
@@ -203,7 +203,7 @@ export default function CaptureSheet({ isOpen, onClose, onCaptureAction, userLoc
           ) : (
             <div className="space-y-2 max-h-48 overflow-y-auto">
               {captures.map((cap) => (
-                <div key={cap.id} className="p-3 bg-white border border-[color:var(--lkv-border)] rounded-xl flex items-center justify-between text-xs">
+                <div key={cap.id} className="p-3 bg-[color:var(--glass-bg-medium)] border border-[color:var(--glass-border)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] rounded-xl flex items-center justify-between text-xs">
                   <div className="flex items-center gap-2 truncate">
                     <span>{cap.type === 'PHOTO' ? '📸' : cap.type === 'VIDEO' ? '🎥' : cap.type === 'NOTE' ? '📝' : '✨'}</span>
                     <span className="font-medium text-[color:var(--lkv-primary)] truncate">{cap.text || cap.type}</span>

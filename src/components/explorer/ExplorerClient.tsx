@@ -49,7 +49,7 @@ import { MapPageLayout } from '@/design';
 const ExplorerMap = dynamic(() => import('@/components/explorer/ExplorerMap'), {
   ssr: false,
   loading: () => (
-    <div className="flex h-full w-full items-center justify-center bg-[color:var(--lkv-surface-muted)]">
+    <div className="flex h-full w-full items-center justify-center bg-[color:var(--glass-bg-medium)]">
       <Spinner size="lg" label="Chargement de la carte" />
     </div>
   ),
@@ -63,7 +63,7 @@ const TrailDetailPanel = dynamic(() => import('@/components/explorer/TrailDetail
 const UnifiedExplorerMap = dynamic(() => import('@/components/map/UnifiedExplorerMap'), {
   ssr: false,
   loading: () => (
-    <div className="flex h-full w-full items-center justify-center bg-[color:var(--lkv-surface-card)]">
+    <div className="flex h-full w-full items-center justify-center bg-[color:var(--glass-bg-medium)]">
       <Spinner size="lg" label="Chargement de la carte" />
     </div>
   ),
@@ -567,7 +567,7 @@ export default function ExplorerClient({
             className="group flex shrink-0 items-center"
             aria-label="Accueil LKDV"
           >
-            <div className="h-8 w-8 max-h-[32px] min-h-[32px] w-8 min-w-[32px] max-w-[32px] shrink-0 overflow-hidden rounded-full border border-[color:var(--glass-border)] bg-[color:var(--lkv-primary)]/10 shadow-xs transition-transform group-hover:scale-105">
+            <div className="h-8 w-8 max-h-[32px] min-h-[32px] w-8 min-w-[32px] max-w-[32px] shrink-0 overflow-hidden rounded-full border border-[color:var(--glass-border)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] shadow-xs transition-transform group-hover:scale-105">
               <img
                 src="/assets/images/app_logo.png"
                 alt="LKDV"
@@ -736,7 +736,7 @@ export default function ExplorerClient({
                 <SlidersHorizontalAnimated size={20} />
                 {(activeFilterCount > 0 || searchQuery.trim().length > 0) && (
                   <Badge
-                    className="absolute left-1 top-1 h-4 min-h-0 border-transparent bg-[color:var(--lkv-action)] px-1 text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-on-action)]"
+                    className="absolute left-1 top-1 h-4 min-h-0 border-transparent bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn px-1 text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-primary)]"
                   >
                     {activeFilterCount + (searchQuery.trim().length > 0 ? 1 : 0)}
                   </Badge>
@@ -882,7 +882,7 @@ export default function ExplorerClient({
           >
             <Card variant="featured" className="overflow-hidden p-0">
               {/* Photo hero */}
-              <div className="relative h-20 w-full overflow-hidden bg-[color:var(--lkv-surface-muted)]">
+              <div className="relative h-20 w-full overflow-hidden bg-[color:var(--glass-bg-medium)]">
                 <img
                   src={getTrailImage(selectedTrail.id)}
                   alt={selectedTrail.name}

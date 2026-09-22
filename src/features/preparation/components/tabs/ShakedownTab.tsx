@@ -46,7 +46,7 @@ export function ShakedownTab() {
     <div className="space-y-[var(--space-4)] animate-in fade-in duration-200">
       <Card className="flex items-center justify-between gap-[var(--space-3)]">
         <div className="flex items-center gap-[var(--space-3)]">
-          <div className="flex h-14 w-14 items-center justify-center rounded-[var(--lkv-radius-md)] border border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-muted)] font-mono text-2xl font-extrabold text-[color:var(--lkv-text-primary)]">
+          <div className="flex h-14 w-14 items-center justify-center rounded-[var(--lkv-radius-md)] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg-medium)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset font-mono text-2xl font-extrabold text-[color:var(--lkv-text-primary)]">
             {score}
           </div>
 

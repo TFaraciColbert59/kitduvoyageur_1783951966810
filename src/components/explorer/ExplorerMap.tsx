@@ -528,7 +528,7 @@ export default function ExplorerMap({
   };
 
   return (
-    <div className="relative w-full h-full bg-[color:var(--lkv-surface-muted)] overflow-hidden select-none" style={{ width: '100%', height: '100%', touchAction: 'none' }}>
+    <div className="relative w-full h-full bg-[color:var(--glass-bg-medium)] overflow-hidden select-none" style={{ width: '100%', height: '100%', touchAction: 'none' }}>
       <div ref={containerRef} className="w-full h-full z-0" style={{ width: '100%', height: '100%', touchAction: 'none' }} />
 
       {mapReady && mapInstance && (trails.length > 0 || (pois && pois.length > 0)) && (

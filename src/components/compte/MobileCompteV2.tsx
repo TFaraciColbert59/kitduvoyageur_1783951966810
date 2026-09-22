@@ -335,7 +335,7 @@ export default function MobileCompteV2() {
   if (!user && !loading) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-6 text-center" >
-        <div className="w-20 h-20 rounded-full flex items-center justify-center mb-4 text-3xl bg-[color:var(--lkv-surface-card)]/65" >
+        <div className="w-20 h-20 rounded-full flex items-center justify-center mb-4 text-3xl bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn" >
           🧭
         </div>
         <h2 className="text-2xl font-display font-bold tracking-tight mb-2 text-[color:var(--lkv-text-primary)]" >
@@ -346,7 +346,7 @@ export default function MobileCompteV2() {
         </p>
         <Link
           href="/connexion?mode=connexion"
-          className="inline-flex items-center justify-center gap-[var(--space-2)] min-h-[var(--lkv-touch-min)] rounded-full px-[var(--space-4)] py-[var(--space-2)] text-[length:var(--lkv-text-footnote)] font-semibold backdrop-blur-[var(--blur-md)] border border-transparent bg-[color:var(--lkv-action)] text-[color:var(--lkv-on-action)] shadow-elevation-1"
+          className="inline-flex items-center justify-center gap-[var(--space-2)] min-h-[var(--lkv-touch-min)] rounded-full px-[var(--space-4)] py-[var(--space-2)] text-[length:var(--lkv-text-footnote)] font-semibold backdrop-blur-[var(--btn-blur)] border border-transparent bg-[color:var(--btn-tint)] saturate-[var(--btn-saturate)] text-[color:var(--lkv-text-primary)] shadow-elevation-1"
         >
           Se connecter
         </Link>
@@ -362,41 +362,41 @@ export default function MobileCompteV2() {
       <div className="min-h-screen p-4 pb-28 animate-pulse font-sans" >
         {/* Header Skeleton */}
         <div className="flex items-center justify-between py-3 mb-3">
-          <div className="h-5 w-28 rounded-full bg-[color:var(--lkv-surface-card)]/65"  />
+          <div className="h-5 w-28 rounded-full bg-[color:var(--btn-tint)]"  />
           <div className="flex gap-2">
-            <div className="w-8 h-8 rounded-full bg-[color:var(--lkv-surface-card)]/65"  />
-            <div className="w-8 h-8 rounded-full bg-[color:var(--lkv-surface-card)]/65"  />
+            <div className="w-8 h-8 rounded-full bg-[color:var(--btn-tint)]"  />
+            <div className="w-8 h-8 rounded-full bg-[color:var(--btn-tint)]"  />
           </div>
         </div>
 
         {/* Identity Skeleton */}
         <div className="flex items-start gap-4 mb-4">
-          <div className="w-20 h-20 rounded-full shrink-0 bg-[color:var(--lkv-surface-card)]/65"  />
+          <div className="w-20 h-20 rounded-full shrink-0 bg-[color:var(--btn-tint)]"  />
           <div className="flex-1 grid grid-cols-3 gap-2 pt-2">
-            <div className="h-10 rounded-xl bg-[color:var(--lkv-surface-card)]/65"  />
-            <div className="h-10 rounded-xl bg-[color:var(--lkv-surface-card)]/65"  />
-            <div className="h-10 rounded-xl bg-[color:var(--lkv-surface-card)]/65"  />
+            <div className="h-10 rounded-xl bg-[color:var(--glass-bg-medium)]"  />
+            <div className="h-10 rounded-xl bg-[color:var(--glass-bg-medium)]"  />
+            <div className="h-10 rounded-xl bg-[color:var(--glass-bg-medium)]"  />
           </div>
         </div>
 
         {/* Text lines */}
         <div className="space-y-2 mb-6">
-          <div className="h-5 w-40 rounded-md bg-[color:var(--lkv-surface-card)]/65"  />
-          <div className="h-4 w-28 rounded-md bg-[color:var(--lkv-surface-card)]/65"  />
-          <div className="h-12 w-full rounded-md bg-[color:var(--lkv-surface-card)]/65"  />
+          <div className="h-5 w-40 rounded-md bg-[color:var(--glass-bg-medium)]"  />
+          <div className="h-4 w-28 rounded-md bg-[color:var(--glass-bg-medium)]"  />
+          <div className="h-12 w-full rounded-md bg-[color:var(--glass-bg-medium)]"  />
         </div>
 
         {/* Action buttons */}
         <div className="flex gap-2 mb-6">
-          <div className="h-10 flex-1 rounded-xl bg-[color:var(--lkv-surface-card)]/65"  />
-          <div className="h-10 flex-1 rounded-xl bg-[color:var(--lkv-surface-card)]/65"  />
-          <div className="h-10 w-10 rounded-xl bg-[color:var(--lkv-surface-card)]/65"  />
+          <div className="h-10 flex-1 rounded-xl bg-[color:var(--glass-bg-medium)]"  />
+          <div className="h-10 flex-1 rounded-xl bg-[color:var(--glass-bg-medium)]"  />
+          <div className="h-10 w-10 rounded-xl bg-[color:var(--glass-bg-medium)]"  />
         </div>
 
         {/* Grid Skeleton */}
         <div className="grid grid-cols-3 gap-1">
           {[...Array(6)].map((_, i) => (
-            <div key={i} className="aspect-square rounded-lg bg-[color:var(--lkv-surface-card)]/65"  />
+            <div key={i} className="aspect-square rounded-lg bg-[color:var(--glass-bg-medium)]"  />
           ))}
         </div>
       </div>
@@ -438,7 +438,7 @@ export default function MobileCompteV2() {
           className="min-h-0 px-[var(--space-3)] py-[var(--space-1)] text-[length:var(--lkv-text-body-sm)]"
         >
           <span>{handleName}</span>
-          <span className="inline-flex items-center justify-center gap-[6px] rounded-full border border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-muted)] px-[var(--space-3)] py-[2px] font-mono text-[length:var(--lkv-text-caption-2)] font-medium text-[color:var(--lkv-text-primary)]">
+          <span className="inline-flex items-center justify-center gap-[6px] rounded-full border border-[color:var(--btn-glass-border)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn px-[var(--space-3)] py-[2px] font-mono text-[length:var(--lkv-text-caption-2)] font-medium text-[color:var(--lkv-text-primary)]">
             Niv.{String(levelNum).padStart(2, '0')}
           </span>
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden="true">
@@ -611,7 +611,7 @@ export default function MobileCompteV2() {
             className="mt-3 flex items-center justify-between p-3 rounded-2xl border border-[color:var(--lkv-primary)]/10 bg-white/75 hover:bg-white/95 transition-all active:scale-[0.98] shadow-2xs cursor-pointer min-h-[52px]"
           >
             <div className="flex items-center gap-3 min-w-0">
-              <div className="w-10 h-10 rounded-xl bg-[color:var(--lkv-primary)] text-white flex items-center justify-center text-lg shrink-0 shadow-2xs">
+              <div className="w-10 h-10 rounded-xl bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] text-[color:var(--lkv-text-primary)] flex items-center justify-center text-lg shrink-0 shadow-2xs">
                 {calculatedLevel.badge || '🏆'}
               </div>
               <div className="min-w-0">
@@ -619,7 +619,7 @@ export default function MobileCompteV2() {
                   <span className="text-xs font-bold truncate text-[color:var(--lkv-text-primary)]" >
                     Ma progression & classements
                   </span>
-                  <span className="text-[10px] font-mono px-1.5 py-0.2 rounded-full bg-[color:var(--lkv-primary)]/10 text-[color:var(--lkv-primary)] font-semibold">
+                  <span className="text-[10px] font-mono px-1.5 py-0.2 rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[color:var(--lkv-primary)] font-semibold">
                     Niv. {calculatedLevel.level}
                   </span>
                 </div>
@@ -637,7 +637,7 @@ export default function MobileCompteV2() {
           <div className="flex items-center gap-2 pt-4">
             <Link
               href="/compte/modifier"
-              className="inline-flex items-center justify-center gap-[var(--space-2)] min-h-[var(--lkv-touch-min)] rounded-full px-[var(--space-4)] py-[var(--space-2)] text-[length:var(--lkv-text-footnote)] font-semibold backdrop-blur-[var(--blur-md)] border border-transparent bg-[color:var(--lkv-action)] text-[color:var(--lkv-on-action)] shadow-elevation-1 flex-1 !py-2.5 text-xs font-bold"
+              className="inline-flex items-center justify-center gap-[var(--space-2)] min-h-[var(--lkv-touch-min)] rounded-full px-[var(--space-4)] py-[var(--space-2)] text-[length:var(--lkv-text-footnote)] font-semibold backdrop-blur-[var(--btn-blur)] border border-transparent bg-[color:var(--btn-tint)] saturate-[var(--btn-saturate)] text-[color:var(--lkv-text-primary)] shadow-elevation-1 flex-1 !py-2.5 text-xs font-bold"
             >
               <Icon name="pencil" size={13} />
               Modifier
@@ -702,7 +702,7 @@ export default function MobileCompteV2() {
               href="/nouveau-groupe"
               className="flex w-[62px] shrink-0 snap-start flex-col items-center gap-1 transition-transform active:scale-95"
             >
-              <div className="flex h-[54px] w-[54px] items-center justify-center rounded-full border-2 border-dashed border-[color:var(--lkv-primary)]/30 bg-[color:var(--lkv-surface-card)]/90 backdrop-blur-[var(--blur-md)]">
+              <div className="flex h-[54px] w-[54px] items-center justify-center rounded-full border-2 border-dashed border-[color:var(--lkv-primary)]/30 bg-[color:var(--btn-tint)] saturate-[var(--btn-saturate)] lkv-rim-btn backdrop-blur-[var(--btn-blur)]">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--lkv-primary)" strokeWidth="2.5" strokeLinecap="round" aria-hidden="true">
                   <path d="M12 5v14M5 12h14" />
                 </svg>
@@ -808,7 +808,7 @@ export default function MobileCompteV2() {
             </div>
             <Link
               href="/compte"
-              className="inline-flex items-center justify-center gap-[var(--space-2)] min-h-[var(--lkv-touch-min)] rounded-full px-[var(--space-4)] py-[var(--space-2)] text-[length:var(--lkv-text-footnote)] font-semibold backdrop-blur-[var(--blur-md)] border border-transparent bg-[color:var(--lkv-action)] text-[color:var(--lkv-on-action)] shadow-elevation-1 !py-2 !px-3.5 text-xs font-bold"
+              className="inline-flex items-center justify-center gap-[var(--space-2)] min-h-[var(--lkv-touch-min)] rounded-full px-[var(--space-4)] py-[var(--space-2)] text-[length:var(--lkv-text-footnote)] font-semibold backdrop-blur-[var(--btn-blur)] border border-transparent bg-[color:var(--btn-tint)] saturate-[var(--btn-saturate)] text-[color:var(--lkv-text-primary)] shadow-elevation-1 !py-2 !px-3.5 text-xs font-bold"
             >
               <span>Détails</span>
               <Icon name="arrow-right" size={12} />
@@ -864,7 +864,7 @@ export default function MobileCompteV2() {
                       </p>
                     </div>
                   </div>
-                  <span className="inline-flex items-center justify-center gap-[6px] rounded-full border border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-muted)] px-[var(--space-3)] py-[2px] text-[length:var(--lkv-text-caption-2)] font-medium text-[color:var(--lkv-text-primary)] bg-forest-50 text-forest-800 border-forest-200">
+                  <span className="inline-flex items-center justify-center gap-[6px] rounded-full border border-[color:var(--btn-glass-border)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn px-[var(--space-3)] py-[2px] text-[length:var(--lkv-text-caption-2)] font-medium text-[color:var(--lkv-text-primary)] bg-forest-50 text-forest-800 border-forest-200">
                     Possédé
                   </span>
                 </div>
@@ -878,7 +878,7 @@ export default function MobileCompteV2() {
               <h4 className="text-sm font-bold text-[color:var(--lkv-text-primary)]" >Compléter mon sac</h4>
               <p className="text-xs text-[color:var(--lkv-text-muted)]" >Trouver les équipements ultralégers manquants.</p>
             </div>
-            <Link href="/boutique" className="inline-flex items-center justify-center gap-[var(--space-2)] min-h-[var(--lkv-touch-min)] rounded-full px-[var(--space-4)] py-[var(--space-2)] text-[length:var(--lkv-text-footnote)] font-semibold backdrop-blur-[var(--blur-md)] border border-transparent bg-[color:var(--lkv-action)] text-[color:var(--lkv-on-action)] shadow-elevation-1 text-xs font-bold">
+            <Link href="/boutique" className="inline-flex items-center justify-center gap-[var(--space-2)] min-h-[var(--lkv-touch-min)] rounded-full px-[var(--space-4)] py-[var(--space-2)] text-[length:var(--lkv-text-footnote)] font-semibold backdrop-blur-[var(--btn-blur)] border border-transparent bg-[color:var(--btn-tint)] saturate-[var(--btn-saturate)] text-[color:var(--lkv-text-primary)] shadow-elevation-1 text-xs font-bold">
               Boutique →
             </Link>
           </div>
@@ -906,7 +906,7 @@ export default function MobileCompteV2() {
                   return (
                     <div
                       key={c.id}
-                      className="flex aspect-square flex-col justify-between rounded-[var(--lkv-radius-md)] border border-[color:var(--glass-border)] bg-[color:var(--lkv-primary)]/90 p-[var(--space-3)] text-[color:var(--lkv-text-inverted)] backdrop-blur-[var(--blur-md)] transition-transform active:scale-95"
+                      className="flex aspect-square flex-col justify-between rounded-[var(--lkv-radius-md)] border border-[color:var(--glass-border)] bg-[color:var(--btn-tint)] saturate-[var(--btn-saturate)] lkv-rim-btn p-[var(--space-3)] text-[color:var(--lkv-text-primary)] backdrop-blur-[var(--btn-blur)] transition-transform active:scale-95"
                     >
                       <p className="font-serif text-[length:var(--lkv-text-caption)] italic leading-snug text-[color:var(--lkv-text-inverted)]/95 line-clamp-4">
                         {c.quote}
@@ -944,7 +944,7 @@ export default function MobileCompteV2() {
                   <Link
                     key={`${c.kind}-${c.id}`}
                     href={c.kind === 'carnet' ? `/carnets/${c.id}` : c.kind === 'groupe' ? `/groupes/${c.id}` : `/clubs/${c.slug || c.id}`}
-                    className="aspect-square relative overflow-hidden rounded-2xl border border-white/70 shadow-2xs block active:scale-95 transition-all cursor-pointer bg-[color:var(--lkv-primary)]/10"
+                    className="aspect-square relative overflow-hidden rounded-2xl border border-white/70 shadow-2xs block active:scale-95 transition-all cursor-pointer bg-[color:var(--btn-tint)]"
                   >
                     <SmartImage
                       src={c.cover}
@@ -992,7 +992,7 @@ export default function MobileCompteV2() {
                     href={c.kind === 'carnet' ? `/carnets/${c.id}` : c.kind === 'groupe' ? `/groupes/${c.id}` : `/clubs/${c.slug || c.id}`}
                     className="bg-[color:var(--card-tint-strong)] border border-[color:var(--glass-border)] shadow-elevation-1 backdrop-blur-[var(--blur-lg)] flex gap-3.5 p-3 rounded-2xl active:scale-[0.98] transition-all cursor-pointer"
                   >
-                    <div className="w-22 h-22 rounded-xl shrink-0 overflow-hidden border border-white/60 shadow-2xs relative bg-[color:var(--lkv-primary)]/10">
+                    <div className="w-22 h-22 rounded-xl shrink-0 overflow-hidden border border-white/60 shadow-2xs relative bg-[color:var(--btn-tint)]">
                       <SmartImage
                         src={c.cover}
                         alt={c.title}
@@ -1014,7 +1014,7 @@ export default function MobileCompteV2() {
                         </p>
                       </div>
                       <div className="flex items-center gap-2 mt-2">
-                        <span className="inline-flex items-center justify-center gap-[6px] rounded-full border border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-muted)] px-[var(--space-3)] py-[2px] text-[length:var(--lkv-text-caption-2)] font-medium text-[color:var(--lkv-text-primary)] bg-white/90 border-white">
+                        <span className="inline-flex items-center justify-center gap-[6px] rounded-full border border-[color:var(--btn-glass-border)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn px-[var(--space-3)] py-[2px] text-[length:var(--lkv-text-caption-2)] font-medium text-[color:var(--lkv-text-primary)] bg-white/90 border-white">
                           {c.status || 'Publié'}
                         </span>
                         {c.likes > 0 && (
@@ -1049,7 +1049,7 @@ export default function MobileCompteV2() {
       >
         <div className="space-y-[var(--space-4)]">
           {/* Jauge de Points LKDV */}
-          <div className="rounded-[var(--lkv-radius-md)] bg-[color:var(--lkv-surface-muted)] p-[var(--space-4)]">
+          <div className="rounded-[var(--lkv-radius-md)] bg-[color:var(--glass-bg-medium)] border border-[color:var(--glass-border)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset p-[var(--space-4)]">
             <div className="mb-[var(--space-2)] flex justify-between font-mono text-[length:var(--lkv-text-caption)] font-semibold">
               <span className="text-[color:var(--lkv-primary)]">{currentPoints.toLocaleString('fr-FR')} pts LKDV</span>
               <span className="text-[color:var(--lkv-text-muted)]">
@@ -1070,7 +1070,7 @@ export default function MobileCompteV2() {
           </div>
 
           {/* Trust Score */}
-          <div className="flex items-center justify-between rounded-[var(--lkv-radius-md)] border border-[color:var(--lkv-primary)]/10 bg-[color:var(--lkv-surface-card)] p-[var(--space-4)]">
+          <div className="flex items-center justify-between rounded-[var(--lkv-radius-md)] border border-[color:var(--lkv-primary)]/10 bg-[color:var(--glass-bg-medium)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset p-[var(--space-4)]">
             <div className="flex items-center gap-[var(--space-3)]">
               <span className="text-2xl">🛡️</span>
               <div>
@@ -1093,15 +1093,15 @@ export default function MobileCompteV2() {
               Badges débloqués
             </h4>
             <div className="flex gap-[var(--space-2)]">
-              <div className="flex-1 rounded-[var(--lkv-radius-sm)] border border-[color:var(--lkv-primary)]/10 bg-[color:var(--lkv-surface-card)] p-[var(--space-3)] text-center">
+              <div className="flex-1 rounded-[var(--lkv-radius-sm)] border border-[color:var(--lkv-primary)]/10 bg-[color:var(--glass-bg-medium)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset p-[var(--space-3)] text-center">
                 <span className="text-xl">🏔️</span>
                 <p className="mt-[var(--space-1)] text-[10px] font-bold text-[color:var(--lkv-text-primary)]">Sommets 3000</p>
               </div>
-              <div className="flex-1 rounded-[var(--lkv-radius-sm)] border border-[color:var(--lkv-primary)]/10 bg-[color:var(--lkv-surface-card)] p-[var(--space-3)] text-center">
+              <div className="flex-1 rounded-[var(--lkv-radius-sm)] border border-[color:var(--lkv-primary)]/10 bg-[color:var(--glass-bg-medium)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset p-[var(--space-3)] text-center">
                 <span className="text-xl">⛺</span>
                 <p className="mt-[var(--space-1)] text-[10px] font-bold text-[color:var(--lkv-text-primary)]">Bivouac Master</p>
               </div>
-              <div className="flex-1 rounded-[var(--lkv-radius-sm)] border border-[color:var(--lkv-primary)]/10 bg-[color:var(--lkv-surface-card)] p-[var(--space-3)] text-center">
+              <div className="flex-1 rounded-[var(--lkv-radius-sm)] border border-[color:var(--lkv-primary)]/10 bg-[color:var(--glass-bg-medium)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset p-[var(--space-3)] text-center">
                 <span className="text-xl">✍️</span>
                 <p className="mt-[var(--space-1)] text-[10px] font-bold text-[color:var(--lkv-text-primary)]">Auteur Pro</p>
               </div>
@@ -1148,7 +1148,7 @@ export default function MobileCompteV2() {
               onClick={() => {
                 setMenuOpen(false);
               }}
-              className="flex min-h-[var(--lkv-touch-min)] items-center justify-between rounded-[var(--lkv-radius-sm)] p-[var(--space-3)] text-[color:var(--lkv-text-primary)] transition-colors hover:bg-[color:var(--lkv-hover-surface)] active:bg-[color:var(--lkv-primary)]/5"
+              className="flex min-h-[var(--lkv-touch-min)] items-center justify-between rounded-[var(--lkv-radius-sm)] p-[var(--space-3)] text-[color:var(--lkv-text-primary)] transition-colors hover:bg-[color:var(--lkv-hover-surface)] active:bg-[color:var(--btn-tint)]"
             >
               <span className="flex items-center gap-[var(--space-3)]">
                 <span className="text-base" aria-hidden="true">{item.icon}</span>
@@ -1185,7 +1185,7 @@ export default function MobileCompteV2() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 20 }}
-            className="fixed bottom-24 left-1/2 z-[var(--z-toast)] flex -translate-x-1/2 items-center gap-[var(--space-2)] rounded-full border border-[color:var(--lkv-border)] bg-[color:var(--lkv-primary)] px-[var(--space-4)] py-[10px] text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-inverted)]"
+            className="fixed bottom-24 left-1/2 z-[var(--z-toast)] flex -translate-x-1/2 items-center gap-[var(--space-2)] rounded-full border border-[color:var(--btn-glass-border)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn px-[var(--space-4)] py-[10px] text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)]"
           >
             <span aria-hidden="true">✓</span>
             <span>{toastMessage}</span>

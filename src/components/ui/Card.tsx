@@ -17,27 +17,27 @@ export interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
 
 const TONE: Record<CardTone, string> = {
   neutral: '',
-  sage: 'border-[color:var(--lkv-secondary)]/30 bg-[color:var(--lkv-secondary-subtle)]',
-  warn: 'border-[color:var(--lkv-warning)]/40 bg-[color:var(--lkv-warning-bg)]',
-  danger: 'border-[color:var(--lkv-danger)]/40 bg-[color:var(--lkv-danger-bg)]',
-  info: 'border-[color:var(--lkv-info)]/40 bg-[color:var(--lkv-info-bg)]',
+  sage: 'border-[color:var(--lkv-secondary)]',
+  warn: 'border-[color:var(--lkv-warning)]',
+  danger: 'border-[color:var(--lkv-danger)]',
+  info: 'border-[color:var(--lkv-info)]',
 };
 
+/* Phase 3 — TOUTES les cartes partagent le MÊME liquid glass (aucun aplat). */
+const GLASS =
+  'bg-[color:var(--glass-bg-medium)] border border-[color:var(--glass-border)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] shadow-[var(--glass-depth-inset)]';
+
 const VARIANT: Record<CardVariant, string> = {
-  standard:
-    'bg-[color:var(--lkv-surface-card)] border border-[color:var(--lkv-border)] rounded-[var(--lkv-radius-card)] p-[var(--space-5)] shadow-[var(--elevation-1)]',
-  interactive:
-    'bg-[color:var(--lkv-surface-card)] border border-[color:var(--lkv-border)] rounded-[var(--lkv-radius-card)] p-[var(--space-5)] shadow-[var(--elevation-1)] cursor-pointer transition-transform duration-[var(--motion-control-duration)] ease-[var(--motion-ease-standard)] hover:shadow-[var(--elevation-2)] active:scale-[0.99] motion-reduce:transition-none',
-  featured:
-    'bg-[color:var(--card-tint-strong)] border border-[color:var(--glass-border)] rounded-[var(--lkv-radius-card)] p-[var(--space-5)] shadow-[var(--elevation-3)] backdrop-blur-[var(--blur-lg)]',
-  compact:
-    'bg-[color:var(--lkv-surface-card)] border border-[color:var(--lkv-border-subtle)] rounded-[var(--lkv-radius-md)] p-[var(--space-3)]',
+  standard: `${GLASS} rounded-[var(--lkv-radius-card)] p-[var(--space-5)]`,
+  interactive: `${GLASS} rounded-[var(--lkv-radius-card)] p-[var(--space-5)] cursor-pointer transition-transform duration-[var(--motion-control-duration)] ease-[var(--motion-ease-standard)] hover:brightness-[1.04] active:scale-[0.99] motion-reduce:transition-none`,
+  featured: `${GLASS} rounded-[var(--lkv-radius-card)] p-[var(--space-5)] shadow-[var(--elevation-3)]`,
+  compact: `${GLASS} rounded-[var(--lkv-radius-md)] p-[var(--space-3)]`,
 };
 
 /**
  * Card — primitive canonique (Phase 2, Lot 3).
- * Surfaces calmes et lisibles : le verre n'est pas appliqué par défaut
- * (`featured` seulement). Le contenu détermine la structure interne.
+ * Phase 3 : toutes les variantes sont du liquid glass ; les tons ne colorent
+ * que le liseré. Le contenu détermine la structure interne.
  */
 export function Card({
   variant = 'standard',

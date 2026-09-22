@@ -345,7 +345,7 @@ export default function CheckoutPage() {
                           />
                         </div>
                         <label className="mt-[var(--space-2)] flex cursor-pointer items-center gap-[var(--space-3)]">
-                          <span aria-hidden="true" className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-[color:var(--lkv-action)] text-[color:var(--lkv-on-action)]">
+                          <span aria-hidden="true" className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[color:var(--lkv-text-primary)]">
                             <Icon name="CheckIcon" size={10} />
                           </span>
                           <span className="text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-primary)]">Recevoir le journal du Kit — un envoi par saison, refuges et sentiers uniquement.</span>
@@ -460,7 +460,7 @@ export default function CheckoutPage() {
                           ].map((opt) => (
                             <label
                               key={opt.id}
-                              className={`flex cursor-pointer items-center justify-between rounded-[var(--lkv-radius-md)] border bg-[color:var(--lkv-surface-card)] p-[var(--space-4)] transition-colors ${shippingOption === opt.id ? 'border-[color:var(--lkv-secondary)]' : 'border-[color:var(--lkv-border)]'}`}
+                              className={`flex cursor-pointer items-center justify-between rounded-[var(--lkv-radius-md)] border bg-[color:var(--glass-bg-medium)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset p-[var(--space-4)] transition-colors ${shippingOption === opt.id ? 'border-[color:var(--lkv-secondary)]' : 'border-[color:var(--glass-border)]'}`}
                             >
                               <div className="flex items-center gap-[var(--space-4)]">
                                 <span className={`flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-full border ${shippingOption === opt.id ? 'border-[color:var(--lkv-primary)]' : 'border-[color:var(--lkv-text-secondary)]'}`}>
@@ -559,7 +559,7 @@ export default function CheckoutPage() {
                             </div>
 
                             <label className="mb-[var(--space-6)] mt-[var(--space-4)] flex cursor-pointer items-center gap-[var(--space-3)]">
-                              <span aria-hidden="true" className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-[color:var(--lkv-action)] text-[color:var(--lkv-on-action)]">
+                              <span aria-hidden="true" className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[color:var(--lkv-text-primary)]">
                                 <Icon name="CheckIcon" size={10} />
                               </span>
                               <span className="text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-muted)]">Enregistrer cette carte pour un futur achat (chiffrée par Stripe).</span>
@@ -615,12 +615,12 @@ export default function CheckoutPage() {
                   <div className="mb-[var(--space-6)] space-y-[var(--space-4)]">
                     {items.map((item) => (
                       <div key={item.slug} className="flex items-center gap-[var(--space-4)]">
-                        <div className="h-12 w-12 flex-shrink-0 overflow-hidden rounded-[var(--lkv-radius-md)] border border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-muted)]">
+                        <div className="h-12 w-12 flex-shrink-0 overflow-hidden rounded-[var(--lkv-radius-md)] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg-medium)]">
                           {item.image ? (
                             // eslint-disable-next-line @next/next/no-img-element
                             <img src={item.image} alt={item.name} className="h-full w-full object-cover" />
                           ) : (
-                            <div className="flex h-full w-full items-center justify-center bg-[color:var(--lkv-surface-muted)]">
+                            <div className="flex h-full w-full items-center justify-center bg-[color:var(--glass-bg-medium)]">
                               <Icon name="PhotoIcon" size={16} className="text-[color:var(--lkv-text-muted)]" />
                             </div>
                           )}
@@ -694,7 +694,7 @@ export default function CheckoutPage() {
 
           <Card variant="compact" className="mx-[var(--space-4)] mb-[var(--space-3)] p-[var(--space-4)]">
             <div className="flex items-center gap-[var(--space-3)]">
-              <div className="flex h-9 w-9 items-center justify-center rounded-[var(--lkv-radius-md)] bg-[color:var(--lkv-surface-muted)]">
+              <div className="flex h-9 w-9 items-center justify-center rounded-[var(--lkv-radius-md)] bg-[color:var(--glass-bg-medium)]">
                 <Icon name="MapPinIcon" size={16} variant="outline" className="text-[color:var(--lkv-primary)]" />
               </div>
               <div className="flex-1">

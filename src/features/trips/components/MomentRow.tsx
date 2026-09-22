@@ -46,7 +46,7 @@ export function MomentRow({
     <div
       data-moment-slot={slot}
       className={cn(
-        'flex min-h-[44px] w-full items-center gap-[var(--space-3)] rounded-[var(--lkv-radius-md)] border border-[color:var(--lkv-border-subtle)] bg-[color:var(--lkv-surface-card)] px-[var(--space-3)] py-[var(--space-2)]',
+        'flex min-h-[44px] w-full items-center gap-[var(--space-3)] rounded-[var(--lkv-radius-md)] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg-medium)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset px-[var(--space-3)] py-[var(--space-2)]',
         className
       )}
     >

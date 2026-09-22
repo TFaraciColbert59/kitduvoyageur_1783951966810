@@ -38,7 +38,7 @@ export function TripPhaseRecountView({ trip }: TripPhaseRecountViewProps) {
       <Card tone="sage">
         <div className="flex flex-col justify-between gap-[var(--space-4)] sm:flex-row sm:items-center">
           <div className="flex items-start gap-[var(--space-4)] sm:items-center">
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[var(--lkv-radius-md)] bg-[color:var(--lkv-action)] text-[color:var(--lkv-on-action)] shadow-elevation-1">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[var(--lkv-radius-md)] bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] text-[color:var(--lkv-text-primary)] shadow-elevation-1">
               <Icon name="sparkles" size={24} />
             </div>
             <div>

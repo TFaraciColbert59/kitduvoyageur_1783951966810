@@ -140,7 +140,7 @@ export function GearTab() {
             return (
               <ListItem
                 key={item.id}
-                className="border border-[color:var(--lkv-border-subtle)] bg-[color:var(--lkv-surface-card)]"
+                className="border border-[color:var(--glass-border)] bg-[color:var(--glass-bg-medium)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset"
                 title={
                   <span className="flex flex-wrap items-center gap-[var(--space-2)]">
                     <span className="truncate">{item.name}</span>

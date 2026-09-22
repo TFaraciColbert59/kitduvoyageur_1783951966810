@@ -69,7 +69,7 @@ export default function PaysRightSidebar({
       {/* 1. GLOBE 3D AMÉLIORÉ & REPÈRES (Zéro titre, affichage plein & centré) */}
       <div className="glass p-3 space-y-2.5 text-[color:var(--lkv-primary)]">
         {/* Globe Container */}
-        <div className="w-full h-44 sm:h-48 rounded-xl overflow-hidden relative bg-[color:var(--lkv-primary)]/5 border border-white/60 shadow-2xs flex items-center justify-center">
+        <div className="w-full h-44 sm:h-48 rounded-xl overflow-hidden relative bg-[color:var(--btn-tint)] border border-white/60 shadow-2xs flex items-center justify-center">
           <CountryGlobe
             countries={ALL_COUNTRIES}
             onCountryClick={onCountryGlobeClick || (() => {})}

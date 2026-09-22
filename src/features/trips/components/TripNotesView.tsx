@@ -224,7 +224,7 @@ export function TripNotesView({ trip }: TripNotesViewProps) {
             <dd className="font-display text-[length:var(--lkv-text-footnote)] font-bold text-[color:var(--lkv-text-primary)]">
               {daysTold} / {totalTripDays} jours
             </dd>
-            <div className="h-1.5 w-full overflow-hidden rounded-full bg-[color:var(--lkv-surface-muted)]">
+            <div className="h-1.5 w-full overflow-hidden rounded-full bg-[color:var(--btn-tint)]">
               <div
                 className="h-full rounded-full bg-[color:var(--lkv-primary)] transition-all duration-300"
                 style={{ width: `${progressPct}%` }}

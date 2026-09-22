@@ -48,12 +48,12 @@ export default function ContextualInsight({
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: 10 }}
-        className={`absolute left-3 right-3 bottom-[100px] z-20 p-3.5 rounded-[var(--lkv-radius-sm)] backdrop-blur-2xl border  flex items-center gap-3 select-none ${
+        className={`absolute left-3 right-3 bottom-[100px] z-20 p-3.5 rounded-[var(--lkv-radius-sm)] backdrop-blur-[var(--btn-blur)] border  flex items-center gap-3 select-none ${
           priorityType === 'off-route'
             ? 'bg-[var(--lkv-warning)]/95 text-[var(--lkv-warning-dark)] border-[color:var(--lkv-warning-dark)]/20 shadow-amber-900/20'
             : priorityType === 'weather'
-            ? 'bg-[color:var(--sky-500)]/95 text-white border-white/20 shadow-blue-950/30'
-            : 'bg-[color:var(--lkv-primary)]/95 text-white border-[color:var(--lkv-forest-100)]/20'
+            ? 'bg-[color:var(--sky-500)]/95 text-[color:var(--lkv-text-primary)] border-white/20 shadow-blue-950/30'
+            : 'bg-[color:var(--btn-tint)] saturate-[var(--btn-saturate)] text-[color:var(--lkv-text-primary)] border-[color:var(--lkv-forest-100)]/20'
         }`}
       >
         {/* Icon Box */}
@@ -110,7 +110,7 @@ export default function ContextualInsight({
               </button>
               <button
                 onClick={onDismissOffRoute}
-                className="px-3 py-1.5 rounded-full text-xs font-semibold bg-[color:var(--lkv-primary)]/14 text-inherit active:scale-95 transition-transform"
+                className="px-3 py-1.5 rounded-full text-xs font-semibold bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-inherit active:scale-95 transition-transform"
               >
                 IGNORER
               </button>

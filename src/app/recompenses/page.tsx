@@ -261,16 +261,18 @@ export default function RecompensesPage() {
   };
 
   const getStatusColor = (status: string) => {
+    const glass =
+      'bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn';
     switch (status) {
       case 'paid':
-        return 'bg-emerald-100 text-emerald-800 border-emerald-200';
+        return `${glass} text-[color:var(--lkv-success)]`;
       case 'rejected':
-        return 'bg-rose-100 text-rose-800 border-rose-200';
+        return `${glass} text-[color:var(--lkv-danger)]`;
       case 'pending':
       case 'under_review':
-        return 'bg-amber-100 text-amber-800 border-amber-200';
+        return `${glass} text-[color:var(--lkv-warning)]`;
       default:
-        return 'bg-stone-100 text-stone-700 border-stone-200';
+        return `${glass} text-[color:var(--lkv-text-primary)]`;
     }
   };
 
@@ -396,7 +398,7 @@ export default function RecompensesPage() {
                     id="amount"
                     value={withdrawAmount}
                     onChange={(e) => setWithdrawAmount(e.target.value)}
-                    className="block w-full rounded-xl border border-stone-200/80 pl-4 pr-12 py-2.5 text-xs text-[color:var(--lkv-primary)] focus:outline-none focus:ring-1 focus:ring-[color:var(--lkv-primary)] focus:border-[color:var(--lkv-primary)] bg-[color:var(--lkv-surface)]"
+                    className="block w-full rounded-xl border border-[color:var(--btn-glass-border)] pl-4 pr-12 py-2.5 text-xs text-[color:var(--lkv-text-primary)] focus:outline-none focus:ring-1 focus:ring-[color:var(--lkv-primary)] focus:border-[color:var(--lkv-primary)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)]"
                     placeholder="20.00"
                     required
                   />
@@ -535,7 +537,7 @@ export default function RecompensesPage() {
                       <th className="p-3 text-right">Date</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-stone-100">
+                  <tbody className="divide-y divide-[color:var(--lkv-border-subtle)]">
                     {transactions.map((tx) => (
                       <tr key={tx.id} className="hover:bg-stone-50/50">
                         <td className="p-3 text-[color:var(--lkv-primary)] font-semibold">{translateTxType(tx.transaction_type)}</td>
@@ -572,7 +574,7 @@ export default function RecompensesPage() {
                       <th className="p-3 text-right">Date</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-stone-100">
+                  <tbody className="divide-y divide-[color:var(--lkv-border-subtle)]">
                     {withdrawals.map((w) => (
                       <tr key={w.id} className="hover:bg-stone-50/50">
                         <td className="p-3 text-[color:var(--lkv-primary)] font-semibold">{w.amount.toFixed(2)} €</td>
@@ -600,7 +602,7 @@ export default function RecompensesPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[color:var(--stone-100)] text-[color:var(--lkv-primary)] selection:bg-[color:var(--lkv-primary)]/20 font-sans">
+    <div className="min-h-screen bg-transparent text-[color:var(--lkv-text-primary)] selection:bg-[color:var(--lkv-primary)]/20 font-sans">
       {/* Mobile Shell */}
       <div className="block md:hidden">
         <MobilePageShell background="transparent">

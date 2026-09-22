@@ -22,10 +22,10 @@ import {
 
 function StepIcon({ icon, active }: { icon: string; active: boolean }) {
   const iconColor = active ? 'text-[var(--lkv-text-primary)]' : 'text-[var(--lkv-text-muted)]';
-  const badgeBg = active ? 'bg-white shadow-2xs' : 'bg-white/60';
+  const badgeBg = active ? 'bg-[color:var(--btn-tint)] shadow-2xs' : 'bg-[color:var(--glass-subtle-fill)]';
 
   return (
-    <div className={`w-10 h-10 rounded-2xl ${badgeBg} border border-white/80 flex items-center justify-center flex-shrink-0 transition-all`}>
+    <div className={`w-10 h-10 rounded-2xl ${badgeBg} border border-[color:var(--glass-border)] flex items-center justify-center flex-shrink-0 transition-all`}>
       {icon === 'sun' && (
         <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" className={iconColor} viewBox="0 0 24 24">
           <circle cx="12" cy="12" r="5" /><line x1="12" y1="1" x2="12" y2="3" /><line x1="12" y1="21" x2="12" y2="23" /><line x1="4.22" y1="4.22" x2="5.64" y2="5.64" /><line x1="18.36" y1="18.36" x2="19.78" y2="19.78" /><line x1="1" y1="12" x2="3" y2="12" /><line x1="21" y1="12" x2="23" y2="12" /><line x1="4.22" y1="19.78" x2="5.64" y2="18.36" /><line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
@@ -540,7 +540,7 @@ export default function KitConfiguratorWizard({
               <span className="truncate max-w-[200px]">{tripContext.title}</span>
             </span>
           ) : (
-            <Link href="/" className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/80 hover:bg-white text-xs font-bold text-[var(--lkv-text-primary)] border border-white/80 shadow-2xs transition-all">
+            <Link href="/" className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[color:var(--btn-tint)] hover:brightness-[1.05] text-xs font-bold text-[var(--lkv-text-primary)] border border-[color:var(--btn-glass-border)] shadow-2xs transition-all">
               <span>🌲</span>
               <span>Configurateur IA</span>
             </Link>
@@ -588,7 +588,7 @@ export default function KitConfiguratorWizard({
               triggerHaptic('light');
               onClose();
             }}
-            className="text-xs text-[var(--lkv-text-muted)] hover:text-[var(--lkv-text-primary)] transition-colors font-medium px-3 py-1.5 rounded-lg hover:bg-white/60 min-h-[44px] min-w-[44px] flex items-center justify-center cursor-pointer"
+            className="text-xs text-[var(--lkv-text-muted)] hover:text-[var(--lkv-text-primary)] transition-colors font-medium px-3 py-1.5 rounded-lg hover:bg-[color:var(--btn-tint)] min-h-[44px] min-w-[44px] flex items-center justify-center cursor-pointer"
             aria-label="Fermer le configurateur"
           >
             Fermer ✕
@@ -596,7 +596,7 @@ export default function KitConfiguratorWizard({
         ) : (
           <Link
             href="/"
-            className="text-xs text-[var(--lkv-text-muted)] hover:text-[var(--lkv-text-primary)] transition-colors font-medium px-2 py-1 rounded-lg hover:bg-white/60 min-h-[44px] flex items-center"
+            className="text-xs text-[var(--lkv-text-muted)] hover:text-[var(--lkv-text-primary)] transition-colors font-medium px-2 py-1 rounded-lg hover:bg-[color:var(--btn-tint)] min-h-[44px] flex items-center"
           >
             Quitter ✕
           </Link>
@@ -627,14 +627,14 @@ export default function KitConfiguratorWizard({
                       isActive
                         ? 'bg-[var(--lkv-text-primary)] text-white border-[var(--lkv-text-primary)] shadow-sm'
                         : isDone
-                        ? 'bg-white text-[var(--lkv-text-primary)] border-white/90 shadow-2xs'
-                        : 'bg-white/70 hover:bg-white text-[var(--lkv-text-muted)] border-white/60 shadow-2xs'
+                        ? 'bg-[color:var(--btn-tint)] text-[var(--lkv-text-primary)] border-[color:var(--btn-glass-border)] shadow-2xs'
+                        : 'bg-[color:var(--glass-subtle-fill)] hover:bg-[color:var(--btn-tint)] text-[var(--lkv-text-muted)] border-[color:var(--glass-border)] shadow-2xs'
                     }`}
                   >
                     {isDone ? (
                       <span className="w-4 h-4 rounded-full bg-[var(--lkv-text-secondary)] text-white flex items-center justify-center text-[9px] font-bold">✓</span>
                     ) : (
-                      <span className={`w-4 h-4 rounded-full ${isActive ? 'bg-white text-[var(--lkv-text-primary)]' : 'bg-[var(--lkv-text-primary)]/10 text-[var(--lkv-text-primary)]'} flex items-center justify-center text-[9.5px] font-bold font-mono`}>
+                      <span className={`w-4 h-4 rounded-full ${isActive ? 'bg-[color:var(--btn-tint)] text-[var(--lkv-text-primary)]' : 'bg-[var(--lkv-text-primary)]/10 text-[var(--lkv-text-primary)]'} flex items-center justify-center text-[9.5px] font-bold font-mono`}>
                         {s.id}
                       </span>
                     )}
@@ -753,7 +753,7 @@ export default function KitConfiguratorWizard({
                         <p className="text-xs text-[var(--lkv-text-muted)] mt-1">{report.summary}</p>
                       </div>
 
-                      <div className="w-16 h-16 rounded-2xl bg-white border border-white flex flex-col items-center justify-center shadow-xs">
+                      <div className="w-16 h-16 rounded-2xl bg-[color:var(--glass-bg-medium)] border border-[color:var(--glass-border)] flex flex-col items-center justify-center shadow-xs">
                         <span className="text-xl">🏔️</span>
                         <span className="text-[9px] font-mono font-bold text-[var(--lkv-text-primary)]">LKDV AI</span>
                       </div>
@@ -958,7 +958,7 @@ export default function KitConfiguratorWizard({
                   {report.missingItems.map((item) => (
                     <div key={item.id} className="flex items-center justify-between gap-2 py-0.5">
                       <div className="flex items-center gap-1.5 truncate">
-                        <span className="w-3.5 h-3.5 rounded-full border border-[var(--lkv-text-primary)]/30 bg-white shrink-0" />
+                        <span className="w-3.5 h-3.5 rounded-full border border-[var(--lkv-text-primary)]/30 bg-[color:var(--btn-tint)] shrink-0" />
                         <span className="truncate text-[var(--lkv-primary-soft)]">{item.name}</span>
                       </div>
                       <span className="font-mono text-[var(--lkv-text-primary)] font-semibold shrink-0 text-xs">{item.priceEur} €</span>

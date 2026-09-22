@@ -51,7 +51,7 @@ export default function ProductCard({
       onClick={onClick}
       className="group flex flex-col overflow-hidden p-0"
     >
-      <div className="relative aspect-[4/3] overflow-hidden rounded-t-[var(--lkv-radius-card)] bg-[color:var(--lkv-surface-muted)]">
+      <div className="relative aspect-[4/3] overflow-hidden rounded-t-[var(--lkv-radius-card)] bg-[color:var(--glass-bg-medium)]">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={image}
@@ -106,7 +106,7 @@ export default function ProductCard({
         </div>
 
         {ctaLabel && (
-          <span className="mt-[var(--space-3)] inline-flex min-h-[var(--control-height-sm)] w-full items-center justify-center gap-[var(--space-1)] rounded-full bg-[color:var(--lkv-surface-muted)] text-[length:var(--lkv-text-caption)] font-semibold text-[color:var(--lkv-text-primary)]">
+          <span className="mt-[var(--space-3)] inline-flex min-h-[var(--control-height-sm)] w-full items-center justify-center gap-[var(--space-1)] rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[length:var(--lkv-text-caption)] font-semibold text-[color:var(--lkv-text-primary)]">
             {ctaLabel}
             <Icon name="arrow-right" size={14} />
           </span>

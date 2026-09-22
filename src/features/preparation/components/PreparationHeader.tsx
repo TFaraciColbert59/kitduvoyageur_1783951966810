@@ -59,7 +59,7 @@ export function PreparationHeader() {
           </span>
         </div>
 
-        <div className="relative h-3 w-full overflow-hidden rounded-full bg-[color:var(--lkv-surface-muted)] p-0.5 shadow-inner">
+        <div className="relative h-3 w-full overflow-hidden rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] p-0.5 shadow-inner">
           <div
             className="h-full rounded-full bg-[linear-gradient(90deg,var(--sage-600),var(--lkv-action))] transition-all duration-500 ease-out"
             style={{ width: `${Math.min(100, Math.max(4, stats.overallScore))}%` }}

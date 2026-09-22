@@ -192,7 +192,7 @@ export default function AventuresTab({ profile }: AventuresTabProps) {
           </Button>
           <Link
             href="/groupes"
-            className="inline-flex items-center justify-center gap-[var(--space-2)] min-h-[var(--lkv-touch-min)] rounded-full px-[var(--space-4)] py-[var(--space-2)] text-[length:var(--lkv-text-footnote)] font-semibold backdrop-blur-[var(--blur-md)] border border-transparent bg-[color:var(--lkv-action)] text-[color:var(--lkv-on-action)] shadow-elevation-1 !py-2 !px-4 text-xs font-bold"
+            className="inline-flex items-center justify-center gap-[var(--space-2)] min-h-[var(--lkv-touch-min)] rounded-full px-[var(--space-4)] py-[var(--space-2)] text-[length:var(--lkv-text-footnote)] font-semibold backdrop-blur-[var(--btn-blur)] border border-transparent bg-[color:var(--btn-tint)] saturate-[var(--btn-saturate)] text-[color:var(--lkv-text-primary)] shadow-elevation-1 !py-2 !px-4 text-xs font-bold"
           >
             <Icon name="PlusIcon" size={14} />
             <span>Nouveau groupe</span>
@@ -403,14 +403,14 @@ export default function AventuresTab({ profile }: AventuresTabProps) {
 
                     <div className="flex items-center gap-2">
                       <span
-                        className={`inline-flex items-center justify-center gap-[6px] rounded-full border border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-muted)] px-[var(--space-3)] py-[2px] text-[length:var(--lkv-text-caption-2)] font-medium text-[color:var(--lkv-text-primary)] text-[9.5px] font-bold ${
+                        className={`inline-flex items-center justify-center gap-[6px] rounded-full border border-[color:var(--btn-glass-border)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn px-[var(--space-3)] py-[2px] text-[length:var(--lkv-text-caption-2)] font-medium text-[color:var(--lkv-text-primary)] text-[9.5px] font-bold ${
                           av.status === 'En cours' ? 'pill-warn' : ''
                         }`}
                       >
                         {av.status}
                       </span>
 
-                      <div className="w-7 h-7 rounded-full bg-white/60 border border-[color:var(--lkv-primary)]/10 flex items-center justify-center text-[color:var(--lkv-text-muted)] group-hover:text-[color:var(--lkv-primary)] group-hover:bg-white transition-colors">
+                      <div className="w-7 h-7 rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] flex items-center justify-center text-[color:var(--lkv-text-muted)] group-hover:text-[color:var(--lkv-primary)] group-hover:brightness-[1.05] transition-colors">
                         <Icon name="ArrowRightIcon" size={12} />
                       </div>
                     </div>

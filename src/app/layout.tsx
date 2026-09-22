@@ -287,7 +287,7 @@ export default async function RootLayout({
                       {/* Skip navigation for accessibility */}
                       <a
                         href="#main-content"
-                        className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[var(--z-emergency)] focus:px-4 focus:py-2 focus:bg-[color:var(--lkv-primary)] focus:text-white focus:rounded-lg focus:font-semibold focus:text-sm"
+                        className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[var(--z-emergency)] focus:px-4 focus:py-2 focus:bg-[color:var(--btn-tint)] focus:text-white focus:rounded-lg focus:font-semibold focus:text-sm"
                       >
                         Aller au contenu principal
                       </a>

@@ -38,7 +38,7 @@ export default function DesktopLeftPanel({
   return (
     <div className="hidden md:flex absolute top-[96px] left-5 w-[320px] max-h-[calc(100%-180px)] flex-col gap-3.5 z-30 select-none overflow-y-auto custom-scrollbar">
       {/* 1. Progression Panel */}
-      <div className="bg-[color:var(--lkv-surface)]/92 backdrop-blur-2xl border border-[color:var(--lkv-primary)]/07 rounded-2xl shadow-xl overflow-hidden p-4">
+      <div className="bg-[color:var(--glass-bg-medium)] saturate-[var(--glass-sat)] backdrop-blur-[var(--glass-blur-sm)] border border-[color:var(--lkv-primary)]/07 rounded-2xl shadow-xl overflow-hidden p-4">
         <div className="flex justify-between items-baseline mb-2">
           <span className="text-[11px] uppercase tracking-widest text-[color:var(--lkv-text-muted)] font-semibold">
             Progression
@@ -77,7 +77,7 @@ export default function DesktopLeftPanel({
       </div>
 
       {/* 2. Waypoints List Panel */}
-      <div className="bg-[color:var(--lkv-surface)]/92 backdrop-blur-2xl border border-[color:var(--lkv-primary)]/07 rounded-2xl shadow-xl overflow-hidden p-4 space-y-3">
+      <div className="bg-[color:var(--glass-bg-medium)] saturate-[var(--glass-sat)] backdrop-blur-[var(--glass-blur-sm)] border border-[color:var(--lkv-primary)]/07 rounded-2xl shadow-xl overflow-hidden p-4 space-y-3">
         <div className="flex justify-between items-baseline">
           <span className="text-[11px] uppercase tracking-widest text-[color:var(--lkv-text-muted)] font-semibold">
             Itinéraire · {waypoints.length} étapes
@@ -100,10 +100,10 @@ export default function DesktopLeftPanel({
               <div
                 className={`w-5.5 h-5.5 rounded-full border-2 flex items-center justify-center flex-shrink-0 text-xs z-10 ${
                   wp.status === 'done'
-                    ? 'bg-[color:var(--lkv-primary)] border-[color:var(--lkv-primary)] text-[color:var(--lkv-forest-100)]'
+                    ? 'bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] border-[color:var(--lkv-primary)] text-[color:var(--lkv-text-primary)]'
                     : wp.status === 'current'
                     ? 'bg-[color:var(--lkv-forest-200)] border-[color:var(--lkv-primary)] text-[color:var(--lkv-forest-950)] shadow-sm'
-                    : 'bg-[color:var(--lkv-surface)] border-[color:var(--lkv-primary)]/20 text-[color:var(--lkv-ink-300)]'
+                    : 'bg-[color:var(--btn-tint)]  border-[color:var(--lkv-primary)]/20 text-[color:var(--lkv-ink-300)]'
                 }`}
               >
                 {wp.status === 'done' ? (

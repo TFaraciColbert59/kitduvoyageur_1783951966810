@@ -337,13 +337,13 @@ export default function DecisionsCard({ decisions: initialDecisions, groupId, on
                   disabled={savingVoteId === decision.id}
                   className={`group relative w-full cursor-pointer overflow-hidden rounded-[var(--lkv-radius-md)] border text-left transition-colors disabled:opacity-[var(--opacity-disabled)] ${
                     option.selected
-                      ? 'border-[color:var(--lkv-primary)] bg-[color:var(--lkv-surface-card)]'
-                      : 'border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-muted)]'
+                      ? 'border-[color:var(--lkv-primary)] bg-[color:var(--glass-bg-medium)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset'
+                      : 'border-[color:var(--glass-border)] bg-[color:var(--glass-bg-medium)] '
                   }`}
                 >
                   <motion.div
                     aria-hidden="true"
-                    className={`absolute inset-y-0 left-0 ${option.selected ? 'bg-[color:var(--lkv-primary)]/20' : 'bg-[color:var(--lkv-primary)]/10'}`}
+                    className={`absolute inset-y-0 left-0 ${option.selected ? 'bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn' : 'bg-[color:var(--btn-tint)] '}`}
                     initial={{ width: 0 }}
                     animate={{ width: `${pct}%` }}
                     transition={{ duration: 0.5 }}
@@ -354,8 +354,8 @@ export default function DecisionsCard({ decisions: initialDecisions, groupId, on
                       <span
                         className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border ${
                           option.selected
-                            ? 'border-[color:var(--lkv-primary)] bg-[color:var(--lkv-primary)] text-[color:var(--lkv-text-inverted)]'
-                            : 'border-[color:var(--lkv-border-strong)] bg-[color:var(--lkv-field-bg)]'
+                            ? 'border-[color:var(--lkv-primary)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[color:var(--lkv-text-primary)]'
+                            : 'border-[color:var(--btn-glass-border)] bg-[color:var(--lkv-field-bg)]'
                         }`}
                       >
                         {option.selected && <Icon name="CheckIcon" size={12} aria-hidden="true" />}

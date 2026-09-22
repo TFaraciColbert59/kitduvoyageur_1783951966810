@@ -376,11 +376,11 @@
 }
 .glass-capsule-btn.sm, .glass-btn.sm, .glass-capsule-btn.xs, .glass-btn.xs { font-size: 11px; }
 .glass-btn-primary, .glass-capsule-btn.primary, .glass-circle-btn.primary {
-  background: var(--btn-tint-solid); color: var(--btn-on-solid);
+  background: var(--btn-tint); color: var(--btn-content);
 }
 .glass-btn-secondary, .glass-capsule-btn.secondary { background: var(--btn-tint); }
 .lkv-button-primitive { text-shadow: var(--btn-text-shadow); }
-.glass-btn-danger, .glass-capsule-btn.danger, .glass-circle-btn.danger { background: var(--lkv-danger-dark); color: var(--lkv-text-inverted); }
+.glass-btn-danger, .glass-capsule-btn.danger, .glass-circle-btn.danger { background: var(--btn-tint); color: var(--lkv-danger); }
 :is(.glass-btn, .glass-capsule-btn, .glass-circle-btn, .glass-capsule-btn-like):not(:disabled):active {
   transform: scale(var(--glass-press-scale));
 }
@@ -411,7 +411,11 @@
   border: 1px solid transparent;
   cursor: pointer;
 }
-.glass-capsule-segment.active { background: var(--lkv-action); color: var(--btn-on-solid); }
+.glass-capsule-segment.active {
+  background: var(--btn-tint-action);
+  border-color: var(--glass-selected-border);
+  color: var(--btn-content);
+}
 
 /* Contrôles de zoom Leaflet natifs (carte roadbook) — matériau des boutons DS.
    Les contrôles sont injectés par Leaflet : simple habillage, aucune logique touchée. */
@@ -738,19 +742,13 @@
 .msg-bubble {
   position: relative;
   isolation: isolate;
-  background: linear-gradient(
-    180deg,
-    rgba(255, 255, 255, 0.92),
-    rgba(251, 250, 246, 0.86)
-  );
+  background: var(--glass-bg-medium);
   backdrop-filter: blur(var(--glass-blur-md)) saturate(var(--glass-sat));
   -webkit-backdrop-filter: blur(var(--glass-blur-md)) saturate(var(--glass-sat));
-  border: 1px solid rgba(255, 255, 255, 0.9);
+  border: 1px solid var(--glass-border);
   box-shadow:
-    inset 0 1px 1px rgba(255, 255, 255, 0.95),
-    inset 0 -1px 1px rgba(23, 64, 44, 0.03),
-    0 2px 8px -2px rgba(23, 64, 44, 0.08),
-    0 8px 22px -8px rgba(23, 64, 44, 0.12);
+    var(--glass-depth-inset),
+    var(--glass-shadow);
 }
 
 .msg-bubble::before {
@@ -762,17 +760,14 @@
   pointer-events: none;
 }
 
-/* Bulle envoyee : conifere fondu (CTA primaire du site) — texte blanc lisible,
-   meme traitement que .glass-capsule-btn.primary / .glass-circle-btn.primary. */
+/* Bulle envoyee : verre teinte action (Phase 3 — aucun aplat plein). */
 .msg-bubble--mine {
-  background: linear-gradient(165deg, var(--lkv-forest-500) 0%, var(--lkv-primary-hover) 45%, var(--lkv-primary) 100%);
-  border-color: rgba(255, 255, 255, 0.32);
-  color: var(--stone-50);
+  background: var(--btn-tint-action);
+  border-color: var(--glass-selected-border);
+  color: var(--btn-content);
   box-shadow:
-    inset 0 1.5px 1px rgba(255, 255, 255, 0.32),
-    inset 0 -1px 1.5px rgba(11, 31, 23, 0.28),
-    0 3px 10px -3px rgba(23, 64, 44, 0.32),
-    0 10px 24px -10px rgba(23, 64, 44, 0.5);
+    var(--glass-depth-inset),
+    var(--glass-shadow);
 }
 
 /* Bouton d'envoi Liquid Glass : translucide sage + speculaire */
@@ -952,12 +947,12 @@
    P5 : l'action est --lkv-action (vert forêt clair/sombre selon le mode)
    et son contenu --btn-on-solid (blanc en clair, encre en sombre). */
 :is(.glass-btn-primary, .glass-capsule-btn.primary, .glass-circle-btn.primary) {
-  background: var(--lkv-action) !important;
-  color: var(--btn-on-solid) !important;
+  background: var(--btn-tint) !important;
+  color: var(--btn-content) !important;
 }
 .glass-btn-danger {
-  background: var(--lkv-danger-dark) !important;
-  color: var(--lkv-text-inverted) !important;
+  background: var(--btn-tint) !important;
+  color: var(--lkv-danger) !important;
 }
 @media (forced-colors: active) {
   :is(.glass-btn-primary, .glass-capsule-btn.primary, .glass-circle-btn.primary, .glass-btn-danger) {
@@ -1148,3 +1143,8 @@
 }
 
 
+
+/* Phase 3 — rims du matériau (utilitaires : les garde-fous design interdisent
+   les ombres arbitraires hors primitives ; valeurs = tokens --glass-*). */
+.lkv-rim-inset { box-shadow: var(--glass-depth-inset); }
+.lkv-rim-btn { box-shadow: var(--btn-rim); }

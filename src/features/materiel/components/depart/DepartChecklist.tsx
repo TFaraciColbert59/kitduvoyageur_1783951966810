@@ -534,7 +534,7 @@ export function DepartChecklist({
                 'h-6 w-6 rounded-lg shadow-2xs',
                 isSpeaking
                   ? 'bg-[var(--lkv-primary-hover)] text-white animate-pulse'
-                  : 'bg-[color:var(--card-tint-strong)] text-[var(--lkv-primary)] hover:bg-white'
+                  : 'bg-[color:var(--card-tint-strong)] text-[var(--lkv-primary)] hover:brightness-[1.05]'
               )}
               title={isSpeaking ? 'Arrêter la lecture' : 'Lire les articles restants à voix haute'}
               aria-label={

@@ -552,7 +552,7 @@ export default function ClubDetailPage() {
               return (
                 <Card key={ev.id} className="flex flex-col items-start justify-between gap-[var(--space-4)] transition-all sm:flex-row sm:items-center">
                   <div className="flex min-w-0 items-center gap-[var(--space-4)]">
-                    <div className="flex h-16 w-16 shrink-0 flex-col items-center justify-center rounded-[var(--lkv-radius-2xl)] bg-[color:var(--lkv-primary)] text-[color:var(--lkv-text-inverted)]">
+                    <div className="flex h-16 w-16 shrink-0 flex-col items-center justify-center rounded-[var(--lkv-radius-2xl)] bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[color:var(--lkv-text-primary)]">
                       <span className="font-mono text-[length:var(--lkv-text-caption-2)] font-bold uppercase tracking-wider text-[color:var(--lkv-forest-300)]">{month}</span>
                       <span className="font-display text-[length:var(--lkv-text-title-sm)] font-bold leading-none">{day}</span>
                     </div>
@@ -602,9 +602,9 @@ export default function ClubDetailPage() {
               <Link
                 key={member.id}
                 href={member.user_id ? `/profil/${member.user_id}` : '/clubs'}
-                className="flex items-center gap-[var(--space-3)] rounded-[var(--lkv-radius-md)] bg-[color:var(--lkv-surface-muted)] p-[var(--space-3)] transition-colors"
+                className="flex items-center gap-[var(--space-3)] rounded-[var(--lkv-radius-md)] bg-[color:var(--glass-bg-medium)] border border-[color:var(--glass-border)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset p-[var(--space-3)] transition-colors"
               >
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[color:var(--lkv-primary)] text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-inverted)]" aria-hidden>
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)]" aria-hidden>
                   {member.user?.full_name?.[0] || '👤'}
                 </div>
                 <div className="min-w-0">
@@ -624,7 +624,7 @@ export default function ClubDetailPage() {
           <h2 className="font-display text-[length:var(--lkv-text-title-sm)] font-bold text-[color:var(--lkv-text-primary)]">Photos partagées</h2>
           <div className="grid grid-cols-2 gap-[var(--space-3)] sm:grid-cols-3 md:grid-cols-4">
             {topics.filter(t => t.image_url).map(topic => (
-              <div key={topic.id} className="group relative aspect-square cursor-pointer overflow-hidden rounded-[var(--lkv-radius-2xl)] bg-[color:var(--lkv-surface-muted)]">
+              <div key={topic.id} className="group relative aspect-square cursor-pointer overflow-hidden rounded-[var(--lkv-radius-2xl)] bg-[color:var(--glass-bg-medium)]">
                 <img src={topic.image_url} alt="Photo du club" className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105 motion-reduce:transition-none" />
               </div>
             ))}
@@ -716,7 +716,7 @@ export default function ClubDetailPage() {
                 return (
                   <Card key={ev.id} className="flex items-center justify-between gap-[var(--space-4)]">
                     <div className="flex min-w-0 items-center gap-[var(--space-3)]">
-                      <div className="flex h-12 w-12 shrink-0 flex-col items-center justify-center rounded-[var(--lkv-radius-md)] bg-[color:var(--lkv-primary)] text-[color:var(--lkv-text-inverted)]">
+                      <div className="flex h-12 w-12 shrink-0 flex-col items-center justify-center rounded-[var(--lkv-radius-md)] bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[color:var(--lkv-text-primary)]">
                         <span className="font-mono text-[length:var(--lkv-text-caption-2)] font-bold uppercase leading-none text-[color:var(--lkv-forest-300)]">{month}</span>
                         <span className="font-display text-[length:var(--lkv-text-subheadline)] font-bold leading-tight">{day}</span>
                       </div>
@@ -925,7 +925,7 @@ export default function ClubDetailPage() {
               <Link
                 key={participant.user_id}
                 href={participant.user_id ? `/profil/${participant.user_id}` : '/clubs'}
-                className="flex items-center gap-[var(--space-3)] rounded-[var(--lkv-radius-md)] bg-[color:var(--lkv-surface-muted)] p-[var(--space-3)] transition-colors"
+                className="flex items-center gap-[var(--space-3)] rounded-[var(--lkv-radius-md)] bg-[color:var(--glass-bg-medium)] border border-[color:var(--glass-border)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset p-[var(--space-3)] transition-colors"
               >
                 <div className="relative">
                   {participant.user?.trust_score && participant.user.trust_score > 80 && (

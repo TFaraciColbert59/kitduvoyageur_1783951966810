@@ -186,7 +186,7 @@ function MakeOfferModal({ item, onClose }: { item: OccasionItem; onClose: () => 
         </>
       ) : (
         <div className="py-[var(--space-6)] text-center">
-          <div className="mx-auto mb-[var(--space-4)] flex h-16 w-16 items-center justify-center rounded-full bg-[color:var(--lkv-surface-muted)]">
+          <div className="mx-auto mb-[var(--space-4)] flex h-16 w-16 items-center justify-center rounded-full bg-[color:var(--btn-tint)]">
             <Icon name="CheckIcon" size={28} className="text-[color:var(--lkv-secondary)]" />
           </div>
           <h3 className="mb-[var(--space-2)] font-display text-[length:var(--lkv-text-headline)] font-bold text-[color:var(--lkv-text-primary)]">Offre envoyée !</h3>
@@ -230,7 +230,7 @@ function ContactModal({ item, onClose }: { item: OccasionItem; onClose: () => vo
         </>
       ) : (
         <div className="py-[var(--space-6)] text-center">
-          <div className="mx-auto mb-[var(--space-4)] flex h-16 w-16 items-center justify-center rounded-full bg-[color:var(--lkv-surface-muted)]">
+          <div className="mx-auto mb-[var(--space-4)] flex h-16 w-16 items-center justify-center rounded-full bg-[color:var(--btn-tint)]">
             <Icon name="CheckIcon" size={28} className="text-[color:var(--lkv-secondary)]" />
           </div>
           <h3 className="mb-[var(--space-2)] font-display text-[length:var(--lkv-text-headline)] font-bold text-[color:var(--lkv-text-primary)]">Message envoyé !</h3>
@@ -636,7 +636,7 @@ export default function OccasionPage() {
           <Header />
           <main className="pt-20">
             {/* Hero */}
-            <section className="bg-[color:var(--lkv-primary)] px-[var(--space-4)] py-[var(--space-10)] text-[color:var(--lkv-text-inverted)]">
+            <section className="bg-[color:var(--glass-bg-medium)] border border-[color:var(--glass-border)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset px-[var(--space-4)] py-[var(--space-10)] text-[color:var(--lkv-text-primary)]">
               <div className="mx-auto max-w-7xl">
                 <div className="mb-[var(--space-3)] flex items-center gap-[var(--space-3)]">
                   <div className="flex h-10 w-10 items-center justify-center rounded-[var(--lkv-radius-md)] bg-[color:var(--lkv-secondary-subtle)]">
@@ -768,7 +768,7 @@ export default function OccasionPage() {
           <div className="min-h-screen bg-transparent">
             <div className="px-[var(--space-4)] pb-[var(--space-4)] pt-[var(--space-4)]">
               <div className="mb-[var(--space-4)] flex items-center gap-[var(--space-3)]">
-                <div className="flex h-9 w-9 items-center justify-center rounded-[var(--lkv-radius-md)] bg-[color:var(--lkv-primary)] text-[color:var(--lkv-text-inverted)]">
+                <div className="flex h-9 w-9 items-center justify-center rounded-[var(--lkv-radius-md)] bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[color:var(--lkv-text-primary)]">
                   <Icon name="TagIcon" size={16} variant="outline" />
                 </div>
                 <div>

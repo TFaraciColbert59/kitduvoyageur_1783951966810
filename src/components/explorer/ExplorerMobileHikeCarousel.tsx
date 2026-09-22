@@ -168,7 +168,7 @@ export default function ExplorerMobileHikeCarousel({
                 className="w-[calc(100vw-68px)] max-w-[290px] shrink-0 snap-start overflow-hidden p-0"
               >
                 {/* Photo Header */}
-                <div className="relative h-20 w-full overflow-hidden bg-[color:var(--lkv-surface-muted)]">
+                <div className="relative h-20 w-full overflow-hidden bg-[color:var(--glass-bg-medium)]">
                   <img
                     src={getTrailImage(trail.id)}
                     alt={trail.name}

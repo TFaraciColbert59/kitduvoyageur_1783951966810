@@ -26,7 +26,7 @@ export default function TimelineJours({ jours, hebergements }: TimelineJoursProp
         {items.map((item, idx) => (
           <div key={idx} className="relative pl-[var(--space-12)]">
             {item.type === 'jour' && (
-              <div className="absolute left-0 top-0 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-[color:var(--lkv-primary)] font-mono text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-inverted)]">
+              <div className="absolute left-0 top-0 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn font-mono text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-primary)]">
                 {(item.data as CarnetJour).dayNumber}
               </div>
             )}

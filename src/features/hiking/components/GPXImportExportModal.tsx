@@ -78,7 +78,7 @@ export default function GPXImportExportModal({
           <p className="text-[10px] font-mono text-[color:var(--lkv-text-muted)]">
             Compatible Visorando, AllTrails, Komoot & Garmin
           </p>
-          <label className="inline-flex items-center justify-center min-h-[44px] mt-2 px-5 py-2.5 bg-[color:var(--lkv-primary)] text-white text-xs font-bold rounded-full cursor-pointer active:scale-95 transition-transform">
+          <label className="inline-flex items-center justify-center min-h-[44px] mt-2 px-5 py-2.5 bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[color:var(--lkv-text-primary)] text-xs font-bold rounded-full cursor-pointer active:scale-95 transition-transform">
             Choisir un fichier .gpx
             <input type="file" accept=".gpx" onChange={handleFileUpload} className="hidden" />
           </label>

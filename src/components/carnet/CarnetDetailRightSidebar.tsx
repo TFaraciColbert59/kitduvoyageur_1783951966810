@@ -38,7 +38,7 @@ export default function CarnetDetailRightSidebar({
         </div>
 
         <Card variant="compact" className="flex items-center gap-[var(--space-2)] p-[var(--space-2)]">
-          <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[color:var(--lkv-primary)]/10 text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-primary)]" aria-hidden>
+          <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-primary)]" aria-hidden>
             👤
           </div>
           <div className="min-w-0 flex-1">
@@ -108,7 +108,7 @@ export default function CarnetDetailRightSidebar({
 
           <Link
             href="/ai-configurator"
-            className="inline-flex min-h-[var(--control-height-md)] w-full items-center justify-center gap-[var(--space-1)] rounded-full border border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-card)] px-[var(--space-4)] text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-primary)]"
+            className="inline-flex min-h-[var(--control-height-md)] w-full items-center justify-center gap-[var(--space-1)] rounded-full border border-[color:var(--btn-glass-border)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn px-[var(--space-4)] text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-primary)]"
           >
             <span aria-hidden>🤖</span> Configurer mon sac
           </Link>

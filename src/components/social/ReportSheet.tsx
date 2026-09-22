@@ -119,8 +119,8 @@ export default function ReportSheet({
                     <span
                       className={`flex size-4 items-center justify-center rounded-full border ${
                         isSelected
-                          ? 'border-[color:var(--lkv-action)] bg-[color:var(--lkv-action)]'
-                          : 'border-[color:var(--lkv-border-strong)]'
+                          ? 'border-[color:var(--lkv-action)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn'
+                          : 'border-[color:var(--btn-glass-border)]'
                       }`}
                     >
                       {isSelected && <span className="size-1.5 rounded-full bg-[color:var(--lkv-on-action)]" />}
@@ -136,7 +136,7 @@ export default function ReportSheet({
               value={details}
               onChange={(e) => setDetails(e.target.value)}
               placeholder="Précisions supplémentaires (facultatif)..."
-              className="h-20 w-full resize-none rounded-[var(--lkv-radius-md)] border border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-muted)] p-[var(--space-3)] text-[length:var(--lkv-text-footnote)] text-[color:var(--lkv-text-primary)] placeholder:text-[color:var(--lkv-text-muted)] focus:outline-none focus:ring-2 focus:ring-[color:var(--lkv-focus-ring)]"
+              className="h-20 w-full resize-none rounded-[var(--lkv-radius-md)] border border-[color:var(--btn-glass-border)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] p-[var(--space-3)] text-[length:var(--lkv-text-footnote)] text-[color:var(--lkv-text-primary)] placeholder:text-[color:var(--lkv-text-muted)] focus:outline-none focus:ring-2 focus:ring-[color:var(--lkv-focus-ring)]"
             />
           )}
         </>

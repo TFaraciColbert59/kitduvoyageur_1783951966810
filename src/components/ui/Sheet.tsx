@@ -115,7 +115,7 @@ export function Sheet({
                 ? 'none'
                 : 'transform var(--motion-control-duration) var(--motion-ease-standard)',
             }}
-            className="lkv-sheet-up flex max-h-[90dvh] min-h-0 flex-1 flex-col overflow-hidden rounded-t-[var(--lkv-radius-sheet)] border-t border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-card)] shadow-[var(--elevation-4)]"
+            className="lkv-sheet-up flex max-h-[90dvh] min-h-0 flex-1 flex-col overflow-hidden rounded-t-[var(--lkv-radius-sheet)] border-t border-[color:var(--glass-border)] bg-[color:var(--glass-bg-medium)] shadow-[var(--elevation-4)]"
           >
             <div
               aria-hidden="true"

@@ -55,7 +55,7 @@ export default function CommandesCard({ commandes }: CommandesCardProps) {
             className="rounded-[var(--lkv-radius-md)] border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] backdrop-blur-[var(--blur-md)] flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 transition-all gap-4"
           >
             <div className="flex items-center gap-4 min-w-0">
-              <div className="w-12 h-12 rounded-xl overflow-hidden relative shrink-0 border border-[color:var(--lkv-primary)]/10 bg-white">
+              <div className="w-12 h-12 rounded-xl overflow-hidden relative shrink-0 border border-[color:var(--glass-border)] bg-[color:var(--glass-bg-medium)]">
                 <Image
                   src={item.image_url || '/assets/images/no_image.png'}
                   alt={item.product_name}

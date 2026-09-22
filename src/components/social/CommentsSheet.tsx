@@ -196,7 +196,7 @@ export default function CommentsSheet({
                 <Card variant="compact" className="relative z-10 flex items-start gap-[var(--space-3)]">
                   <a
                     href={rootComment.author_id ? `/profil/${rootComment.author_id}` : '#'}
-                    className="mt-0.5 flex size-8 shrink-0 items-center justify-center overflow-hidden rounded-full border border-[color:var(--lkv-border)] bg-[color:var(--lkv-primary)] text-[length:var(--lkv-text-footnote)] font-bold uppercase text-[color:var(--lkv-text-inverted)] transition-opacity hover:opacity-80"
+                    className="mt-0.5 flex size-8 shrink-0 items-center justify-center overflow-hidden rounded-full border border-[color:var(--btn-glass-border)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[length:var(--lkv-text-footnote)] font-bold uppercase text-[color:var(--lkv-text-primary)] transition-opacity hover:opacity-80"
                   >
                     {rootComment.author_avatar ? (
                       <img src={rootComment.author_avatar} alt={rootComment.author_name} className="size-full object-cover" />
@@ -292,7 +292,7 @@ export default function CommentsSheet({
                         >
                           <a
                             href={reply.author_id ? `/profil/${reply.author_id}` : '#'}
-                            className="mt-0.5 flex size-7 shrink-0 items-center justify-center overflow-hidden rounded-full border border-[color:var(--lkv-border)] bg-[color:var(--lkv-primary)] text-[length:var(--lkv-text-caption-2)] font-bold uppercase text-[color:var(--lkv-text-inverted)] transition-opacity hover:opacity-80"
+                            className="mt-0.5 flex size-7 shrink-0 items-center justify-center overflow-hidden rounded-full border border-[color:var(--btn-glass-border)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[length:var(--lkv-text-caption-2)] font-bold uppercase text-[color:var(--lkv-text-primary)] transition-opacity hover:opacity-80"
                           >
                             {reply.author_avatar ? (
                               <img src={reply.author_avatar} alt={reply.author_name} className="size-full object-cover" />
@@ -379,7 +379,7 @@ export default function CommentsSheet({
 
       {/* Active Reply Banner */}
       {replyTarget && (
-        <div className="mb-[var(--space-2)] flex shrink-0 items-center justify-between rounded-[var(--lkv-radius-md)] border border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-muted)] px-[var(--space-3)] py-[var(--space-1)] text-[length:var(--lkv-text-footnote)] text-[color:var(--lkv-text-primary)]">
+        <div className="mb-[var(--space-2)] flex shrink-0 items-center justify-between rounded-[var(--lkv-radius-md)] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg-medium)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset px-[var(--space-3)] py-[var(--space-1)] text-[length:var(--lkv-text-footnote)] text-[color:var(--lkv-text-primary)]">
           <span className="truncate">
             En réponse à <strong className="underline">@{replyTarget.authorName}</strong>
           </span>

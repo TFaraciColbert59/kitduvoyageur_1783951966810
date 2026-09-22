@@ -90,7 +90,7 @@ export default function NotFound() {
                   <Link
                     key={page.href}
                     href={page.href}
-                    className="flex min-h-[var(--lkv-touch-min)] items-center gap-[var(--space-2)] rounded-[var(--lkv-radius-sm)] border border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-card)] px-[var(--space-3)] py-[var(--space-2)] text-[length:var(--lkv-text-caption-1)] font-medium text-[color:var(--lkv-primary)] transition-colors hover:bg-[color:var(--lkv-hover-surface)]"
+                    className="flex min-h-[var(--lkv-touch-min)] items-center gap-[var(--space-2)] rounded-[var(--lkv-radius-sm)] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg-medium)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset px-[var(--space-3)] py-[var(--space-2)] text-[length:var(--lkv-text-caption-1)] font-medium text-[color:var(--lkv-primary)] transition-colors hover:bg-[color:var(--lkv-hover-surface)]"
                   >
                     <Icon
                       name={page.icon}

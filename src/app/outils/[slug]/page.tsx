@@ -1038,7 +1038,7 @@ export default function OutilSlugPage() {
             <div className="p-[var(--space-4)] pt-20 text-center">
               <p className="mb-[var(--space-4)] text-[40px]">🔧</p>
               <h1 className="mb-[var(--space-3)] text-[20px] font-bold text-[color:var(--lkv-primary)]">Outil introuvable</h1>
-              <Link href="/outils" className="inline-block rounded-full bg-[color:var(--lkv-primary)] px-6 py-3 text-[14px] font-bold text-white no-underline">← Retour aux outils</Link>
+              <Link href="/outils" className="inline-block rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn px-6 py-3 text-[14px] font-bold text-[color:var(--lkv-text-primary)] no-underline">← Retour aux outils</Link>
             </div>
           </MobilePageShell>
           

@@ -44,7 +44,7 @@ export function ConfirmDialog({
         <Dialog.Content
           className={cn(
             'fixed left-1/2 top-1/2 z-[var(--z-modal)] w-[min(92vw,26rem)] -translate-x-1/2 -translate-y-1/2',
-            'rounded-[var(--lkv-radius-card)] border border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-card)]',
+            'rounded-[var(--lkv-radius-card)] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg-medium)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)]',
             'p-[var(--space-5)] shadow-[var(--elevation-4)] focus:outline-none'
           )}
         >

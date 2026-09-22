@@ -522,7 +522,7 @@ function ClubDetailModal({
               </IconButton>
             </div>
             {club.rules && (
-              <div className="relative z-10 mt-[var(--space-5)] flex items-start gap-[var(--space-3)] rounded-[var(--lkv-radius-md)] border border-[color:var(--glass-border)] bg-[color:var(--lkv-primary)]/20 px-[var(--space-4)] py-[var(--space-3)] backdrop-blur-[var(--blur-sm)]">
+              <div className="relative z-10 mt-[var(--space-5)] flex items-start gap-[var(--space-3)] rounded-[var(--lkv-radius-md)] border border-[color:var(--glass-border)] bg-[color:var(--btn-tint)] saturate-[var(--btn-saturate)] lkv-rim-btn px-[var(--space-4)] py-[var(--space-3)] backdrop-blur-[var(--btn-blur)]">
                 <Icon name="ShieldCheckIcon" size={16} className="mt-[2px] shrink-0 text-[color:var(--lkv-text-inverted)]/80" aria-hidden="true" />
                 <div>
                   <p className="mb-[var(--space-1)] font-mono text-[length:var(--lkv-text-caption-2)] font-bold uppercase tracking-widest text-[color:var(--lkv-text-inverted)]/50">Règles du club</p>
@@ -598,7 +598,7 @@ function ClubDetailModal({
                             </div>
                             {topic.content && <p className="mb-[var(--space-4)] line-clamp-2 text-[length:var(--lkv-text-caption)] leading-relaxed text-[color:var(--lkv-text-muted)]">{topic.content}</p>}
                             <div className="flex items-center gap-[var(--space-4)] text-[length:var(--lkv-text-caption-2)] font-medium text-[color:var(--lkv-text-muted)]">
-                              <span className="flex items-center gap-[var(--space-1)] rounded-[var(--lkv-radius-sm)] bg-[color:var(--lkv-surface-muted)] px-[var(--space-2)] py-[var(--space-1)]">
+                              <span className="flex items-center gap-[var(--space-1)] rounded-[var(--lkv-radius-sm)] bg-[color:var(--glass-bg-medium)] border border-[color:var(--glass-border)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset px-[var(--space-2)] py-[var(--space-1)]">
                                 <Icon name="UserIcon" size={12} aria-hidden="true" /> {topic.author?.full_name ?? 'Anonyme'}
                               </span>
                               <span className="flex items-center gap-[var(--space-1)]">
@@ -610,7 +610,7 @@ function ClubDetailModal({
                             </div>
                           </div>
                           {isAdmin && (
-                            <div className="flex shrink-0 items-center gap-[var(--space-1)] rounded-[var(--lkv-radius-md)] bg-[color:var(--lkv-surface-muted)] p-[var(--space-1)] opacity-0 transition-opacity group-hover:opacity-100">
+                            <div className="flex shrink-0 items-center gap-[var(--space-1)] rounded-[var(--lkv-radius-md)] bg-[color:var(--glass-bg-medium)] border border-[color:var(--glass-border)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset p-[var(--space-1)] opacity-0 transition-opacity group-hover:opacity-100">
                               <IconButton
                                 variant="ghost"
                                 size="sm"
@@ -789,11 +789,11 @@ function ClubDetailModal({
                           {ev.description && <p className="mb-[var(--space-4)] line-clamp-2 text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-muted)]">{ev.description}</p>}
                           <div className="mt-auto flex flex-wrap items-center gap-[var(--space-4)] text-[length:var(--lkv-text-caption-2)] font-semibold text-[color:var(--lkv-text-muted)]">
                             {ev.location && (
-                              <span className="flex items-center gap-[var(--space-1)] rounded-[var(--lkv-radius-sm)] bg-[color:var(--lkv-surface-muted)] px-[var(--space-2)] py-[var(--space-1)]">
+                              <span className="flex items-center gap-[var(--space-1)] rounded-[var(--lkv-radius-sm)] bg-[color:var(--glass-bg-medium)] border border-[color:var(--glass-border)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset px-[var(--space-2)] py-[var(--space-1)]">
                                 <Icon name="MapPinIcon" size={14} aria-hidden="true" />{ev.location}
                               </span>
                             )}
-                            <span className="flex items-center gap-[var(--space-1)] rounded-[var(--lkv-radius-sm)] bg-[color:var(--lkv-surface-muted)] px-[var(--space-2)] py-[var(--space-1)]">
+                            <span className="flex items-center gap-[var(--space-1)] rounded-[var(--lkv-radius-sm)] bg-[color:var(--glass-bg-medium)] border border-[color:var(--glass-border)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset px-[var(--space-2)] py-[var(--space-1)]">
                               <Icon name="UsersIcon" size={14} aria-hidden="true" />{ev.participants_count} / {ev.max_participants} inscrits
                             </span>
                           </div>
@@ -832,7 +832,7 @@ function ClubDetailModal({
                         {pendingRequests.map((req) => (
                           <Card key={req.id} className="flex flex-col items-start justify-between gap-[var(--space-4)] sm:flex-row sm:items-center">
                             <div className="flex items-center gap-[var(--space-4)]">
-                              <div className="flex h-12 w-12 items-center justify-center rounded-full border border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-muted)] text-[length:var(--lkv-text-subheadline)] font-extrabold text-[color:var(--lkv-text-primary)]" aria-hidden>
+                              <div className="flex h-12 w-12 items-center justify-center rounded-full border border-[color:var(--btn-glass-border)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[length:var(--lkv-text-subheadline)] font-extrabold text-[color:var(--lkv-text-primary)]" aria-hidden>
                                 {(req as unknown as { user?: { full_name: string } }).user?.full_name?.[0] ?? '?'}
                               </div>
                               <div>
@@ -894,7 +894,7 @@ function ClubCard({
 
         <div className="relative z-10 flex h-full flex-col">
           <div className="mb-[var(--space-5)] flex items-start justify-between">
-            <div className="flex h-16 w-16 items-center justify-center rounded-[var(--lkv-radius-2xl)] bg-[color:var(--lkv-surface-muted)] text-[length:var(--lkv-text-title-lg)] transition-transform duration-300 group-hover:rotate-3 group-hover:scale-110" aria-hidden>
+            <div className="flex h-16 w-16 items-center justify-center rounded-[var(--lkv-radius-2xl)] bg-[color:var(--glass-bg-medium)] border border-[color:var(--glass-border)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset text-[length:var(--lkv-text-title-lg)] transition-transform duration-300 group-hover:rotate-3 group-hover:scale-110" aria-hidden>
               {club.emoji}
             </div>
 
@@ -1161,7 +1161,7 @@ export default function ClubsPage() {
   return (
     <>
       <div className="hidden md:block">
-        <main className="flex h-dvh flex-col overflow-hidden bg-[color:var(--lkv-surface)]/75 backdrop-blur-[var(--blur-xl)]">
+        <main className="flex h-dvh flex-col overflow-hidden bg-[color:var(--glass-bg-medium)] backdrop-blur-[var(--glass-blur-sm)]">
           <Header />
           <div className="min-h-0 flex-1 overflow-y-auto">
             <section className="relative overflow-hidden border-b border-[color:var(--glass-border)] pb-[var(--space-16)] pt-32 lg:pb-24 lg:pt-40">
@@ -1187,7 +1187,7 @@ export default function ClubsPage() {
                   <div className="shrink-0">
                     <Link
                       href="/clubs/nouveau"
-                      className="inline-flex min-h-[var(--control-height-lg)] items-center gap-[var(--space-2)] rounded-full bg-[color:var(--lkv-action)] px-[var(--space-8)] text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-on-action)]"
+                      className="inline-flex min-h-[var(--control-height-lg)] items-center gap-[var(--space-2)] rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn px-[var(--space-8)] text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)]"
                     >
                       <Icon name="PlusIcon" size={18} aria-hidden="true" />
                       <span>Fonder un Club</span>
@@ -1311,7 +1311,7 @@ export default function ClubsPage() {
       />
 
       {toast && (
-        <div className="fixed bottom-10 left-1/2 z-[var(--z-toast)] flex -translate-x-1/2 items-center gap-[var(--space-3)] rounded-full bg-[color:var(--lkv-primary)] px-[var(--space-8)] py-[var(--space-4)] text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-inverted)] shadow-elevation-4">
+        <div className="fixed bottom-10 left-1/2 z-[var(--z-toast)] flex -translate-x-1/2 items-center gap-[var(--space-3)] rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] px-[var(--space-8)] py-[var(--space-4)] text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)] shadow-elevation-4">
           <Icon name="CheckCircleIcon" size={18} className="text-[color:var(--lkv-text-inverted)]/70" aria-hidden="true" />
           {toast}
         </div>

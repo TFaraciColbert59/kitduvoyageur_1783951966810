@@ -42,7 +42,7 @@ export default function ContactPage() {
       {CONTACTS.map((c) => (
         <a key={c.href} href={c.href} className="block no-underline">
           <Card variant="interactive" className="flex items-start gap-[var(--space-4)] p-[var(--space-4)]">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[var(--lkv-radius-sm)] bg-[color:var(--lkv-surface-muted)]">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[var(--lkv-radius-sm)] bg-[color:var(--glass-bg-medium)]">
               <Icon name={c.icon} size={18} className="text-[color:var(--lkv-secondary)]" variant="outline" />
             </div>
             <div className="min-w-0 flex-1">

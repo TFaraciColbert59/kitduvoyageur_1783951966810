@@ -7,12 +7,12 @@ import { Skeleton, Spinner } from '@/components/ui';
 export default function ExplorerLoading() {
   return (
     <div
-      className="fixed inset-0 bg-[color:var(--lkv-surface-muted)]"
+      className="fixed inset-0 bg-[color:var(--glass-bg-medium)]"
       aria-busy="true"
       aria-label="Chargement de l'espace Aventures…"
     >
       {/* Map skeleton */}
-      <div className="absolute inset-0 animate-pulse bg-[color:var(--lkv-surface-card)]" />
+      <div className="absolute inset-0 animate-pulse bg-[color:var(--glass-bg-medium)]" />
 
       {/* Header skeleton */}
       <div className="absolute left-3 right-3 top-[calc(var(--safe-top)+12px)] z-[var(--z-sticky)] h-12">

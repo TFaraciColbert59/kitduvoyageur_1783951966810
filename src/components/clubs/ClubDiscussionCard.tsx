@@ -273,7 +273,7 @@ export default function ClubDiscussionCard({
                 <Link
                   href={msg.author_id ? `/profil/${msg.author_id}` : '/communaute'}
                   onClick={() => triggerHaptic('light')}
-                  className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full border border-[color:var(--glass-border)] bg-[color:var(--lkv-primary)] text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-inverted)] transition-transform hover:scale-105"
+                  className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full border border-[color:var(--glass-border)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)] transition-transform hover:scale-105"
                   aria-label={`Voir le profil de ${msgAuthor}`}
                 >
                   {msg.author_avatar ? (
@@ -321,7 +321,7 @@ export default function ClubDiscussionCard({
                     </p>
                   )}
 
-                  <div className="mb-[var(--space-2)] rounded-[var(--lkv-radius-md)] rounded-tl-none bg-[color:var(--lkv-surface-muted)] p-[var(--space-4)]">
+                  <div className="mb-[var(--space-2)] rounded-[var(--lkv-radius-md)] rounded-tl-none bg-[color:var(--glass-bg-medium)] border border-[color:var(--glass-border)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset p-[var(--space-4)]">
                     {msgTitle && msgTitle !== msgContent.slice(0, 50) && (
                       <h4 className="mb-[var(--space-1)] text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)]">{msgTitle}</h4>
                     )}
@@ -338,7 +338,7 @@ export default function ClubDiscussionCard({
                     </p>
 
                     {msg.attachment && (
-                      <div className="mt-[var(--space-3)] max-h-60 overflow-hidden rounded-[var(--lkv-radius-md)] border border-[color:var(--lkv-primary)]/10 bg-[color:var(--lkv-primary)]/5">
+                      <div className="mt-[var(--space-3)] max-h-60 overflow-hidden rounded-[var(--lkv-radius-md)] border border-[color:var(--lkv-primary)]/10 bg-[color:var(--btn-tint)]">
                         <img
                           src={msg.attachment}
                           alt="Pièce jointe"
@@ -357,7 +357,7 @@ export default function ClubDiscussionCard({
                         }`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="mt-[var(--space-3)] inline-flex items-center gap-[var(--space-2)] rounded-full border border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-card)] px-[var(--space-3)] py-[var(--space-2)] text-[length:var(--lkv-text-caption-2)] font-semibold text-[color:var(--lkv-text-primary)]"
+                        className="mt-[var(--space-3)] inline-flex items-center gap-[var(--space-2)] rounded-full border border-[color:var(--btn-glass-border)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn px-[var(--space-3)] py-[var(--space-2)] text-[length:var(--lkv-text-caption-2)] font-semibold text-[color:var(--lkv-text-primary)]"
                       >
                         <Icon name="MapPinIcon" size={14} className="text-[color:var(--lkv-forest-700)]" aria-hidden="true" />
                         <span>
@@ -441,7 +441,7 @@ export default function ClubDiscussionCard({
       />
 
       {replyingTo && (
-        <div className="mb-[var(--space-2)] flex shrink-0 items-center gap-[var(--space-2)] rounded-[var(--lkv-radius-md)] bg-[color:var(--lkv-surface-muted)] px-[var(--space-3)] py-[var(--space-2)] text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-primary)]">
+        <div className="mb-[var(--space-2)] flex shrink-0 items-center gap-[var(--space-2)] rounded-[var(--lkv-radius-md)] bg-[color:var(--glass-bg-medium)] border border-[color:var(--glass-border)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset px-[var(--space-3)] py-[var(--space-2)] text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-primary)]">
           <span className="font-bold">↩ Répondre à {replyingTo.author || 'Voyageur'}</span>
           <span className="flex-1 truncate text-[color:var(--lkv-text-muted)]">
             « {(replyingTo.content || '').slice(0, 60)}{(replyingTo.content || '').length > 60 ? '…' : ''} »
@@ -460,7 +460,7 @@ export default function ClubDiscussionCard({
 
       <div className="relative shrink-0">
         <div className="pointer-events-none absolute inset-y-0 left-0 z-10 flex items-center pl-[var(--space-3)]">
-          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[color:var(--lkv-primary)] text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-inverted)]">
+          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-primary)]">
             {user?.user_metadata?.first_name
               ? user.user_metadata.first_name.charAt(0)
               : user?.user_metadata?.full_name

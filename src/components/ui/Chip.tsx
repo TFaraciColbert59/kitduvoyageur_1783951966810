@@ -50,10 +50,8 @@ export function Chip({
       !disabled &&
       'active:scale-[var(--motion-press-scale)] motion-reduce:active:scale-100',
     disabled && 'pointer-events-none opacity-[var(--opacity-disabled)]',
-    'border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] shadow-[var(--btn-rim)]',
-    selected
-      ? 'bg-[color:var(--btn-tint-action)] font-bold text-[color:var(--lkv-action)]'
-      : cn('bg-[color:var(--btn-tint)]', TONE[tone]),
+    'border-[color:var(--btn-glass-border)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] shadow-[var(--btn-rim)]',
+    selected ? 'font-bold text-[color:var(--lkv-text-primary)]' : TONE[tone],
     className
   );
 

@@ -196,7 +196,7 @@ function WriteReviewModal({ onClose, onSubmit }: { onClose: () => void; onSubmit
         </div>
       ) : (
         <div className="py-[var(--space-8)] text-center">
-          <div className="mx-auto mb-[var(--space-4)] flex h-16 w-16 items-center justify-center rounded-full bg-[color:var(--lkv-surface-muted)]">
+          <div className="mx-auto mb-[var(--space-4)] flex h-16 w-16 items-center justify-center rounded-full bg-[color:var(--btn-tint)]">
             <Icon name="CheckIcon" size={28} className="text-[color:var(--lkv-primary)]" />
           </div>
           <h3 className="mb-[var(--space-2)] text-[length:var(--lkv-text-title-sm)] font-bold text-[color:var(--lkv-primary)]">Avis publié !</h3>
@@ -337,7 +337,7 @@ export default function AvisPage() {
                   return (
                     <Card key={review.id} variant="standard" className="p-[14px]">
                       <div className="mb-[var(--space-2)] flex items-center gap-[var(--space-2)]">
-                        <div className="flex h-8 w-8 items-center justify-center rounded-[var(--lkv-radius-xs)] bg-[color:var(--lkv-primary)] text-[12px] font-bold text-[color:var(--lkv-text-inverted)]">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-[var(--lkv-radius-xs)] bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[12px] font-bold text-[color:var(--lkv-text-primary)]">
                           {authorName[0]}
                         </div>
                         <div>

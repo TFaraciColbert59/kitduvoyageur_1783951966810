@@ -218,10 +218,10 @@ export const ConversationView: React.FC<ConversationViewProps> = ({
   const headerTargetLabel = isGroup ? 'Gérer le groupe' : `Voir le profil de ${title}`;
 
   return (
-    <div className="relative flex h-full w-full flex-col overflow-hidden rounded-none bg-[color:var(--lkv-surface-card)] md:rounded-[var(--lkv-radius-lg)]">
+    <div className="relative flex h-full w-full flex-col overflow-hidden rounded-none bg-[color:var(--glass-bg-medium)] md:rounded-[var(--lkv-radius-lg)]">
       {/* Top Header avec safe-area iOS */}
       <PageHeader
-        className="z-10 shrink-0 border-b border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface)]/90 px-[var(--space-3)] pb-[var(--space-3)] pt-[calc(var(--safe-top)+8px)] shadow-elevation-1 backdrop-blur-[var(--blur-lg)] md:pt-[var(--space-3)]"
+        className="z-10 shrink-0 border-b border-[color:var(--glass-border)] bg-[color:var(--glass-bg-medium)] saturate-[var(--glass-sat)] px-[var(--space-3)] pb-[var(--space-3)] pt-[calc(var(--safe-top)+8px)] shadow-elevation-1 backdrop-blur-[var(--glass-blur-sm)] md:pt-[var(--space-3)]"
         back={
           <div className="flex items-center gap-[var(--space-2)]">
             {onBack && (
@@ -322,7 +322,7 @@ export const ConversationView: React.FC<ConversationViewProps> = ({
 
       {/* Message Request Action Bar (Pending status) */}
       {convStatus === 'pending' ? (
-        <div className="animate-slide-up flex shrink-0 flex-col gap-[var(--space-3)] border-t border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface)]/95 px-[var(--space-4)] pb-[calc(var(--safe-bottom)+var(--space-3))] pt-[var(--space-4)] backdrop-blur-[var(--blur-lg)]">
+        <div className="animate-slide-up flex shrink-0 flex-col gap-[var(--space-3)] border-t border-[color:var(--glass-border)] bg-[color:var(--glass-bg-medium)] saturate-[var(--glass-sat)] lkv-rim-inset px-[var(--space-4)] pb-[calc(var(--safe-bottom)+var(--space-3))] pt-[var(--space-4)] backdrop-blur-[var(--glass-blur-sm)]">
           <div className="flex items-center gap-[var(--space-2)]">
             <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-[color:var(--lkv-warning)]/15 text-[color:var(--lkv-warning)]">
               <Icon name="shield-alert" className="size-5" aria-hidden="true" />

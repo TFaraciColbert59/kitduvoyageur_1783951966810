@@ -90,7 +90,7 @@ export default function MobileClubDetailView({
 
   return (
     <div className="min-h-full bg-transparent text-[color:var(--lkv-text-primary)] md:hidden">
-      <div className="relative h-64 w-full overflow-hidden bg-[color:var(--lkv-primary)] sm:h-72">
+      <div className="relative h-64 w-full overflow-hidden bg-[color:var(--btn-tint)] sm:h-72">
         <img
           src={coverUrl}
           alt={club.name}
@@ -102,7 +102,7 @@ export default function MobileClubDetailView({
           <Link
             href="/clubs"
             onClick={() => triggerHaptic('light')}
-            className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[color:var(--glass-border)] bg-[color:var(--lkv-primary)]/30 text-[length:var(--lkv-text-title-sm)] text-[color:var(--lkv-text-inverted)] backdrop-blur-[var(--blur-md)]"
+            className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[color:var(--glass-border)] bg-[color:var(--btn-tint)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[length:var(--lkv-text-title-sm)] text-[color:var(--lkv-text-primary)] backdrop-blur-[var(--btn-blur)]"
             aria-label="Retour aux clubs"
           >
             ‹
@@ -132,7 +132,7 @@ export default function MobileClubDetailView({
                 {members.slice(0, 4).map((m: any, i: number) => (
                   <div
                     key={m.id || i}
-                    className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full border-2 border-[color:var(--lkv-surface-card)] bg-[color:var(--lkv-primary)] font-serif text-[length:var(--lkv-text-caption-2)] font-bold italic text-[color:var(--lkv-text-inverted)]"
+                    className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full border-2 border-[color:var(--lkv-surface-card)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn font-serif text-[length:var(--lkv-text-caption-2)] font-bold italic text-[color:var(--lkv-text-primary)]"
                     style={{ zIndex: 10 - i }}
                   >
                     {m.user?.avatar_url ? (

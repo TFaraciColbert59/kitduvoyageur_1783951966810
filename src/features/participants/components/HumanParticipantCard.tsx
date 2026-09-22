@@ -41,7 +41,7 @@ export const HumanParticipantCard: React.FC<HumanParticipantCardProps> = ({
       <Card className="flex flex-col justify-between gap-[var(--space-3)]">
         <div className="flex items-start justify-between gap-[var(--space-3)]">
           <div className="flex items-center gap-[var(--space-3)]">
-            <div className="flex h-10 w-10 items-center justify-center rounded-[var(--lkv-radius-sm)] bg-[color:var(--lkv-action)] text-[length:var(--lkv-text-footnote)] font-bold text-[color:var(--lkv-on-action)]">
+            <div className="flex h-10 w-10 items-center justify-center rounded-[var(--lkv-radius-sm)] bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[length:var(--lkv-text-footnote)] font-bold text-[color:var(--lkv-text-primary)]">
               {publicData.firstName[0]}
             </div>
             <div>

@@ -139,7 +139,7 @@ export function TripWizard() {
 
   // Colonne Gauche Desktop (260px) : Stepper vertical
   const renderSidebarLeft = () => (
-    <div className="flex h-full max-h-full w-full flex-1 flex-col justify-between gap-[var(--space-3)] overflow-y-auto rounded-[var(--lkv-radius-md)] border border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-card)] p-[var(--space-3)] text-[color:var(--lkv-text-primary)] shadow-elevation-1 [scrollbar-width:none] select-none">
+    <div className="flex h-full max-h-full w-full flex-1 flex-col justify-between gap-[var(--space-3)] overflow-y-auto rounded-[var(--lkv-radius-md)] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg-medium)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] p-[var(--space-3)] text-[color:var(--lkv-text-primary)] shadow-elevation-1 [scrollbar-width:none] select-none">
       <div className="shrink-0 space-y-[var(--space-3)]">
         <Link
           href="/voyages"
@@ -287,7 +287,7 @@ export function TripWizard() {
               <span>Étape {state.step} sur 5</span>
               <span>{STEP_LABELS[state.step - 1].label}</span>
             </div>
-            <div className="mb-4 h-1.5 w-full overflow-hidden rounded-full bg-[color:var(--lkv-surface-muted)]">
+            <div className="mb-4 h-1.5 w-full overflow-hidden rounded-full bg-[color:var(--btn-tint)]">
               <div
                 className="h-full rounded-full bg-[color:var(--lkv-action)] transition-all duration-300"
                 style={{ width: `${(state.step / 5) * 100}%` }}

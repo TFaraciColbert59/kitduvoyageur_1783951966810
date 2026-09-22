@@ -333,7 +333,7 @@ export default function MobileCountryDetailView({
                           onClick={() => handleSectionSwitch('destinations')}
                           className="w-52 shrink-0 glass overflow-hidden cursor-pointer group snap-start"
                         >
-                          <div className="h-26 relative overflow-hidden bg-[color:var(--lkv-primary)]">
+                          <div className="h-26 relative overflow-hidden bg-[color:var(--btn-tint)]">
                             <img
                               src={d.image_url}
                               alt={d.titre}
@@ -474,7 +474,7 @@ export default function MobileCountryDetailView({
                 {country.meteo && (
                 <div className="glass p-4 space-y-2.5">
                   <div className="flex items-center justify-between">
-                    <span className="glass-pill text-[9.5px] font-mono font-bold text-[color:var(--lkv-secondary)] bg-white">
+                    <span className="glass-pill text-[9.5px] font-mono font-bold text-[color:var(--lkv-secondary)]">
                       ⛅ Météo en direct · {country.meteo.ville}
                     </span>
                     <span className="inline-flex items-center gap-1.5 text-[9.5px] font-mono text-[color:var(--lkv-secondary)] font-bold">

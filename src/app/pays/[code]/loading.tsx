@@ -5,7 +5,7 @@ export default function CountryLoading() {
   return (
     <div className="min-h-screen bg-transparent pb-24 lg:pb-12">
       {/* Hero skeleton */}
-      <div className="h-[50vh] min-h-[400px] bg-white relative">
+      <div className="h-[50vh] min-h-[400px] bg-[color:var(--glass-bg-medium)] relative">
         <Skeleton className="absolute inset-0 w-full h-full rounded-none" />
         <div className="absolute inset-0 flex flex-col justify-end p-8">
           <Skeleton className="h-16 w-64 mb-4" />

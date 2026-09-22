@@ -22,7 +22,7 @@ export function ToCompleteList({ items }: { items: InventoryItem[] }) {
           <li key={i.id}>
             <ListItem
               as="div"
-              className="bg-[color:var(--lkv-surface-muted)]"
+              className="bg-[color:var(--glass-bg-medium)]"
               title={i.name}
               trailing={
                 <Badge tone="warn">{i.maintenance_due_at ? `Entretien ${dueLabel(i.maintenance_due_at)}` : `Expire ${dueLabel(i.expiry_date)}`}</Badge>

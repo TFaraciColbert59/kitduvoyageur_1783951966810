@@ -197,7 +197,7 @@ export function DepartHeroCard({
             aria-label="Changer de kit"
             defaultValue={depart?.assignedKit?.id}
             onChange={(event) => onSelectKit?.(event.target.value)}
-            className="ml-auto max-w-[45%] truncate rounded-full border border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-card)] px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--lkv-text-primary)] outline-none"
+            className="ml-auto max-w-[45%] truncate rounded-full border border-[color:var(--btn-glass-border)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--lkv-text-primary)] outline-none"
           >
             {selectKits?.map((kit) => (
               <option key={kit.id} value={kit.id}>

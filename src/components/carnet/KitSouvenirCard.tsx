@@ -54,7 +54,7 @@ export default function KitSouvenirCard({ intro, items }: KitSouvenirCardProps) 
           <Link
             href="/ai-configurator"
             onClick={() => triggerHaptic('light')}
-            className="inline-flex min-h-[var(--control-height-sm)] items-center gap-[var(--space-1)] rounded-full bg-[color:var(--lkv-action)] px-[var(--space-3)] text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-on-action)]"
+            className="inline-flex min-h-[var(--control-height-sm)] items-center gap-[var(--space-1)] rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn px-[var(--space-3)] text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-primary)]"
           >
             <Icon name="SparklesIcon" size={13} aria-hidden="true" />
             <span>Reconfigurer IA</span>
@@ -63,7 +63,7 @@ export default function KitSouvenirCard({ intro, items }: KitSouvenirCardProps) 
       </div>
 
       {intro && (
-        <p className="rounded-[var(--lkv-radius-2xl)] border border-[color:var(--lkv-primary)]/5 bg-[color:var(--lkv-primary)]/5 p-[var(--space-3)] font-sans text-[length:var(--lkv-text-caption-2)] italic leading-relaxed text-[color:var(--lkv-text-secondary)]">
+        <p className="rounded-[var(--lkv-radius-2xl)] border border-[color:var(--lkv-primary)]/5 bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn p-[var(--space-3)] font-sans text-[length:var(--lkv-text-caption-2)] italic leading-relaxed text-[color:var(--lkv-text-secondary)]">
           {intro}
         </p>
       )}
@@ -96,13 +96,13 @@ export default function KitSouvenirCard({ intro, items }: KitSouvenirCardProps) 
               className={`flex cursor-pointer items-center gap-[var(--space-3)] rounded-[var(--lkv-radius-2xl)] border p-[var(--space-3)] text-left transition-colors ${
                 isChecked
                   ? 'border-[color:var(--lkv-success)]/40 bg-[color:var(--lkv-success-bg)]'
-                  : 'border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-muted)] hover:bg-[color:var(--lkv-hover-surface)]'
+                  : 'border-[color:var(--glass-border)] bg-[color:var(--glass-bg-medium)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset hover:bg-[color:var(--lkv-hover-surface)]'
               }`}
             >
               <span
                 aria-hidden
                 className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-[var(--lkv-radius-sm)] text-[length:var(--lkv-text-caption-2)] font-bold transition-colors ${
-                  isChecked ? 'bg-[color:var(--lkv-primary)] text-[color:var(--lkv-text-inverted)]' : 'border border-[color:var(--lkv-border-strong)] bg-[color:var(--lkv-field-bg)]'
+                  isChecked ? 'bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[color:var(--lkv-text-primary)]' : 'border border-[color:var(--btn-glass-border)] bg-[color:var(--lkv-field-bg)]'
                 }`}
               >
                 {isChecked && '✓'}

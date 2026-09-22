@@ -154,7 +154,7 @@ export function TripTeamView({ trip }: TripTeamViewProps) {
                     className="-mx-1 flex min-h-[44px] items-center gap-[var(--space-3)] rounded-[var(--lkv-radius-sm)] px-1 transition-colors hover:bg-[color:var(--lkv-hover-surface)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]"
                     title={`Voir le profil de ${name}`}
                   >
-                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[color:var(--lkv-action)] text-[length:var(--lkv-text-footnote)] font-bold text-[color:var(--lkv-on-action)] shadow-inner">
+                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] text-[length:var(--lkv-text-footnote)] font-bold text-[color:var(--lkv-text-primary)] shadow-inner">
                       {initials}
                     </div>
                     <div>

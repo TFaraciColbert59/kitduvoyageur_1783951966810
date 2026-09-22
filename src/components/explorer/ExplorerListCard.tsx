@@ -40,7 +40,7 @@ export default function ExplorerListCard({ trail, isSelected, onClick }: Props) 
       className="group relative flex h-[84px] w-full shrink-0 items-stretch gap-2.5 p-2.5"
     >
       {/* Vignette Photo */}
-      <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-[var(--lkv-radius-sm)] bg-[color:var(--lkv-surface-muted)] border border-[color:var(--glass-border)]">
+      <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-[var(--lkv-radius-sm)] bg-[color:var(--glass-bg-medium)] border border-[color:var(--glass-border)]">
         <img
           src={imgUrl}
           alt={trail.name}

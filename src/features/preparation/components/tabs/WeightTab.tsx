@@ -132,7 +132,7 @@ export function WeightTab() {
         </div>
 
         <div className="space-y-[var(--space-2)] pt-[var(--space-1)]">
-          <div className="flex h-3 w-full overflow-hidden rounded-full border border-[color:var(--lkv-border-subtle)] bg-[color:var(--lkv-surface-muted)] p-0.5">
+          <div className="flex h-3 w-full overflow-hidden rounded-full border border-[color:var(--btn-glass-border)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn p-0.5">
             <div
               className="h-full rounded-l-full bg-[color:var(--sage-600)] transition-all duration-500"
               style={{ width: `${Math.max(2, basePct)}%` }}
@@ -190,7 +190,7 @@ export function WeightTab() {
                   <span className="font-bold text-[color:var(--lkv-text-primary)]">
                     {cat.weightGrams} g
                   </span>
-                  <div className="hidden h-1.5 w-16 overflow-hidden rounded-full bg-[color:var(--lkv-surface-muted)] sm:block">
+                  <div className="hidden h-1.5 w-16 overflow-hidden rounded-full bg-[color:var(--btn-tint)] sm:block">
                     <div
                       className="h-full rounded-full bg-[color:var(--sage-600)]"
                       style={{ width: `${cat.percentage}%` }}

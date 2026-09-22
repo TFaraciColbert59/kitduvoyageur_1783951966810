@@ -144,9 +144,9 @@ export const ConversationList: React.FC<ConversationListProps> = ({
   }, [conversations, activeTab, debouncedSearch]);
 
   return (
-    <Card className="relative flex h-full w-full flex-col overflow-hidden rounded-none bg-[color:var(--lkv-surface-card)] p-0 md:rounded-[var(--lkv-radius-lg)]">
+    <Card className="relative flex h-full w-full flex-col overflow-hidden rounded-none bg-[color:var(--glass-bg-medium)] border border-[color:var(--glass-border)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset p-0 md:rounded-[var(--lkv-radius-lg)]">
       {/* Chrome haut — recherche + bouton « + » unique (gère le safe-area top) */}
-      <div className="msg-safe-top shrink-0 border-b border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface)]/70 px-[var(--space-3)] pb-[var(--space-3)] backdrop-blur-[var(--blur-lg)] md:px-[var(--space-4)]">
+      <div className="msg-safe-top shrink-0 border-b border-[color:var(--glass-border)] bg-[color:var(--glass-bg-medium)] saturate-[var(--glass-sat)] lkv-rim-inset px-[var(--space-3)] pb-[var(--space-3)] backdrop-blur-[var(--glass-blur-sm)] md:px-[var(--space-4)]">
         <div className="flex items-center gap-[var(--space-2)]">
           <SearchField
             containerClassName="flex-1 min-w-0"
@@ -231,7 +231,7 @@ export const ConversationList: React.FC<ConversationListProps> = ({
 
       {/* Onglets — DESKTOP uniquement (sidebar dual-pane). Sur mobile le
           filtre vit dans le tray d'extension de la BottomTabBar (canonique). */}
-      <div className="mt-[var(--space-1)] hidden shrink-0 border-t border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface)]/40 px-[var(--space-3)] pb-[var(--space-3)] pt-[var(--space-2)] backdrop-blur-[var(--blur-lg)] md:block md:px-[var(--space-4)]">
+      <div className="mt-[var(--space-1)] hidden shrink-0 border-t border-[color:var(--glass-border)] bg-[color:var(--glass-bg-medium)] saturate-[var(--glass-sat)] lkv-rim-inset px-[var(--space-3)] pb-[var(--space-3)] pt-[var(--space-2)] backdrop-blur-[var(--glass-blur-sm)] md:block md:px-[var(--space-4)]">
         <Tabs
           ariaLabel="Filtrer les conversations"
           value={activeTab}

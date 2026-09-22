@@ -27,12 +27,12 @@ export default class ErrorBoundaryWrapper extends Component<Props, State> {
   render() {
     if (this.state.hasError) {
       return (
-        <div className="flex min-h-screen flex-col items-center justify-center bg-[color:var(--lkv-primary)] p-[var(--space-8)] text-center text-[color:var(--lkv-text-inverted)]">
+        <div className="flex min-h-screen flex-col items-center justify-center bg-[color:var(--glass-bg-dark)] p-[var(--space-8)] text-center text-[color:var(--lkv-text-inverted)]">
           <h1 className="mb-[var(--space-4)]">Une erreur est survenue</h1>
           <p className="mb-[var(--space-8)] text-[color:var(--lkv-forest-100)]">L'application a rencontré un problème inattendu.</p>
           <button
             onClick={() => window.location.reload()}
-            className="min-h-[var(--lkv-touch-min)] cursor-pointer rounded-[var(--lkv-radius-sm)] border-none bg-[color:var(--lkv-surface-paper)] px-[var(--space-6)] py-3 font-semibold text-[color:var(--lkv-primary)]"
+            className="min-h-[var(--lkv-touch-min)] cursor-pointer rounded-[var(--lkv-radius-sm)] border-none bg-[color:var(--glass-bg-medium)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset px-[var(--space-6)] py-3 font-semibold text-[color:var(--lkv-primary)]"
           >
             Réessayer
           </button>

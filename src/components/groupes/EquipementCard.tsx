@@ -268,7 +268,7 @@ export default function EquipementCard({ equipment, groupId, onRefresh, user, me
         {groupId && (
           <Link
             href={`/ai-configurator?groupId=${groupId}`}
-            className="mt-[var(--space-1)] flex w-full items-center justify-between rounded-[var(--lkv-radius-md)] border border-[color:var(--lkv-border-subtle)] bg-[color:var(--lkv-surface-muted)] p-[var(--space-3)] text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)]"
+            className="mt-[var(--space-1)] flex w-full items-center justify-between rounded-[var(--lkv-radius-md)] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg-medium)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset p-[var(--space-3)] text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)]"
           >
             <span className="flex items-center gap-[var(--space-2)]">
               <span aria-hidden>🎒</span>
@@ -495,7 +495,7 @@ export default function EquipementCard({ equipment, groupId, onRefresh, user, me
                 className="flex items-center justify-between gap-[var(--space-3)]"
               >
                 <div className="flex min-w-0 flex-1 items-center gap-[var(--space-2)]">
-                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--lkv-radius-md)] bg-[color:var(--lkv-surface-muted)] text-base" aria-hidden>
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--lkv-radius-md)] bg-[color:var(--glass-bg-medium)] border border-[color:var(--glass-border)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset text-base" aria-hidden>
                     {CATEGORY_EMOJI[item.category || 'Divers'] || '🎒'}
                   </div>
 
@@ -602,7 +602,7 @@ export default function EquipementCard({ equipment, groupId, onRefresh, user, me
                     onClick={() => setSelectedGear(s => ({ ...s, [gear.id]: !s[gear.id] }))}
                     className={`flex w-full items-center justify-between gap-[var(--space-2)] p-[var(--space-3)] text-left ${
                       isChecked
-                        ? 'border-[color:var(--lkv-primary)] bg-[color:var(--lkv-primary)] text-[color:var(--lkv-text-inverted)]'
+                        ? 'border-[color:var(--lkv-primary)] bg-[color:var(--btn-tint)] border backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[color:var(--lkv-text-primary)]'
                         : 'text-[color:var(--lkv-text-primary)]'
                     }`}
                   >
@@ -615,7 +615,7 @@ export default function EquipementCard({ equipment, groupId, onRefresh, user, me
                     <span
                       aria-hidden
                       className={`flex h-5 w-5 items-center justify-center rounded-[var(--lkv-radius-sm)] text-[length:var(--lkv-text-caption-2)] font-bold ${
-                        isChecked ? 'bg-[color:var(--lkv-surface-card)] text-[color:var(--lkv-text-primary)]' : 'border border-[color:var(--lkv-border-strong)]'
+                        isChecked ? 'bg-[color:var(--glass-bg-medium)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset text-[color:var(--lkv-text-primary)]' : 'border border-[color:var(--glass-border)]'
                       }`}
                     >
                       {isChecked ? '✓' : ''}

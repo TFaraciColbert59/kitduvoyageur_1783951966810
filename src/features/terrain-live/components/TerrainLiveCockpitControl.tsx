@@ -181,7 +181,7 @@ export default function TerrainLiveCockpitControl({
         <Icon name="radio" size={18} aria-hidden="true" />
         {reports.length > 0 ? (
           <Badge
-            className="absolute -right-1 -top-1 min-h-0 border-transparent bg-[color:var(--lkv-action)] px-1 font-semibold text-[color:var(--lkv-on-action)]"
+            className="absolute -right-1 -top-1 min-h-0 border-transparent bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn px-1 font-semibold text-[color:var(--lkv-text-primary)]"
           >
             {reports.length > 99 ? '99+' : reports.length}
           </Badge>
@@ -205,7 +205,7 @@ export default function TerrainLiveCockpitControl({
               aria-label="Conditions terrain autour de moi"
               tabIndex={-1}
               onKeyDown={handleTabTrap}
-              className={`lkv-sheet-up${closing ? ' lkv-sheet-up--closing' : ''} relative flex max-h-[82dvh] w-full max-w-lg flex-col rounded-t-[var(--lkv-radius-sheet)] bg-[color:var(--lkv-surface-card)] pb-[calc(var(--safe-bottom)+16px)] shadow-2xl`}
+              className={`lkv-sheet-up${closing ? ' lkv-sheet-up--closing' : ''} relative flex max-h-[82dvh] w-full max-w-lg flex-col rounded-t-[var(--lkv-radius-sheet)] bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] pb-[calc(var(--safe-bottom)+16px)] shadow-2xl`}
               {...dragHandlers}
             >
               <div

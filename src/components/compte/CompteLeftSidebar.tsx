@@ -54,7 +54,7 @@ export default function CompteLeftSidebar({
       <div className="shrink-0 space-y-2.5">
         {/* User Mini Header */}
         <div className="relative flex items-center gap-3 overflow-hidden rounded-[var(--lkv-radius-md)] border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] p-[var(--space-3)] backdrop-blur-[var(--blur-md)]">
-          <div className="relative w-11 h-11 rounded-full overflow-hidden border-2 border-white shadow-sm shrink-0 bg-[color:var(--lkv-primary)]">
+          <div className="relative w-11 h-11 rounded-full overflow-hidden border-2 border-white shadow-sm shrink-0 bg-[color:var(--btn-tint)]">
             <Image
               src={profile.avatar_url || '/assets/images/no_image.png'}
               alt={fullName}
@@ -94,7 +94,7 @@ export default function CompteLeftSidebar({
 
           <Link
             href="/hub"
-            className="inline-flex min-h-[var(--control-height-sm)] items-center justify-center gap-[var(--space-2)] rounded-full border border-transparent bg-[color:var(--lkv-action)] px-[var(--space-2)] text-[10.5px] font-bold text-[color:var(--lkv-on-action)]"
+            className="inline-flex min-h-[var(--control-height-sm)] items-center justify-center gap-[var(--space-2)] rounded-full border border-transparent bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn px-[var(--space-2)] text-[10.5px] font-bold text-[color:var(--lkv-text-primary)]"
           >
             <Icon name="BriefcaseIcon" size={12} aria-hidden="true" />
             <span>Mon Matériel</span>

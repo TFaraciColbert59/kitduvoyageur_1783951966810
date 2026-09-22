@@ -516,7 +516,7 @@ export default function CommandesTab({ profile }: CommandesTabProps) {
         {/* ════════════════ SIDEBAR ════════════════ */}
         <div className="lg:col-span-4 space-y-6">
           {/* ── Guide annuel Card ── */}
-          <div className="bg-[color:var(--lkv-primary)] rounded-[var(--lkv-radius-lg)] p-6 text-white relative overflow-hidden border border-white/10 shadow-lg">
+          <div className="bg-[color:var(--glass-bg-medium)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] rounded-[var(--lkv-radius-lg)] p-6 text-[color:var(--lkv-text-primary)] relative overflow-hidden border border-white/10 shadow-lg">
             <div className="absolute -top-10 -right-10 w-32 h-32 bg-[color:var(--lkv-secondary)]/20 rounded-full blur-[40px] pointer-events-none" />
             <div className="flex items-start justify-between mb-4 relative z-[var(--z-dropdown)]">
               <div>
@@ -526,7 +526,7 @@ export default function CommandesTab({ profile }: CommandesTabProps) {
                   <span className="text-white/70 text-sm font-semibold">€ / an</span>
                 </div>
               </div>
-              <span className="inline-flex items-center justify-center gap-[6px] rounded-full border border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-muted)] px-[var(--space-3)] py-[2px] text-[length:var(--lkv-text-caption-2)] font-medium text-[color:var(--lkv-text-primary)] !bg-white/15 !text-white text-[10px] font-mono font-bold uppercase tracking-wider">
+              <span className="inline-flex items-center justify-center gap-[6px] rounded-full border border-[color:var(--btn-glass-border)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn px-[var(--space-3)] py-[2px] text-[length:var(--lkv-text-caption-2)] font-medium text-[color:var(--lkv-text-primary)] !bg-white/15 !text-[color:var(--lkv-text-primary)] text-[10px] font-mono font-bold uppercase tracking-wider">
                 Actif
               </span>
             </div>
@@ -585,7 +585,7 @@ export default function CommandesTab({ profile }: CommandesTabProps) {
                   <div className="flex items-start justify-between mb-1">
                     <span className="font-bold text-sm text-[color:var(--lkv-primary)]">{addr.label}</span>
                     {addr.isDefault && (
-                      <Badge className="border-transparent bg-[color:var(--lkv-primary)] text-[color:var(--lkv-text-inverted)] text-[9px] font-mono font-bold uppercase tracking-wider">
+                      <Badge className="border-transparent bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[color:var(--lkv-text-primary)] text-[9px] font-mono font-bold uppercase tracking-wider">
                         défaut
                       </Badge>
                     )}
@@ -734,7 +734,7 @@ export default function CommandesTab({ profile }: CommandesTabProps) {
 
       {/* Global Toast */}
       {toast && (
-        <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[var(--z-toast)] bg-[color:var(--lkv-primary)] text-white px-6 py-3 rounded-full text-xs font-bold shadow-lg animate-fade-in flex items-center gap-2 border border-white/20">
+        <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[var(--z-toast)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] text-[color:var(--lkv-text-primary)] px-6 py-3 rounded-full text-xs font-bold shadow-lg animate-fade-in flex items-center gap-2 border border-white/20">
           <Icon name="CheckIcon" size={14} />
           <span>{toast}</span>
         </div>
@@ -869,9 +869,9 @@ function ActiveOrderCard({
               <div key={step} className="flex flex-col items-center relative z-[var(--z-dropdown)] flex-1">
                 <div className={`w-7 h-7 rounded-full flex items-center justify-center transition-all ${
                   isDone
-                    ? 'bg-[color:var(--lkv-primary)] text-white'
-                    : 'bg-white text-[color:var(--lkv-text-muted)] border border-[color:var(--lkv-primary)]/20'
-                } ${isCurrent ? 'ring-2 ring-[color:var(--lkv-secondary)] ring-offset-2 ring-offset-white' : ''}`}>
+                    ? 'bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[color:var(--lkv-text-primary)]'
+                    : 'bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] text-[color:var(--lkv-text-muted)]'
+                } ${isCurrent ? 'ring-2 ring-[color:var(--lkv-secondary)] ring-offset-2 ring-offset-[color:var(--glass-bg-medium)]' : ''}`}>
                   {isDone ? (
                     <Icon name="CheckIcon" size={14} />
                   ) : (
@@ -926,7 +926,7 @@ function HistoryOrderRow({
   return (
     <div className="rounded-[var(--lkv-radius-md)] border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] backdrop-blur-[var(--blur-md)] p-3 flex items-center gap-4 group">
       {/* Product image */}
-      <div className="w-12 h-12 bg-white rounded-xl overflow-hidden shrink-0 border border-[color:var(--lkv-primary)]/10">
+      <div className="w-12 h-12 bg-[color:var(--glass-bg-medium)] rounded-xl overflow-hidden shrink-0 border border-[color:var(--glass-border)]">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={firstItem?.image || 'https://images.unsplash.com/photo-1544441893-675973e31985?auto=format&fit=crop&w=200&q=80'}
