@@ -66,7 +66,8 @@ export default function CommunityHubNav({
               }`}
             >
               <span className="truncate text-left">{tab.label}</span>
-              {isActive && <ChevronRightAnimated size={13} className="shrink-0 text-white/70" />}
+              {/* P2 — chevron sombre sur verre clair actif (≥4.5, plus de white/70) */}
+              {isActive && <ChevronRightAnimated size={13} className="shrink-0 text-[color:var(--lkv-text-muted)]" aria-hidden />}
             </Link>
           );
         })}

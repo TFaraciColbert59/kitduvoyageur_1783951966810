@@ -116,7 +116,9 @@ export default function MobileClubsHub({
           </Button>
         </div>
 
-        <div className="flex items-center gap-[var(--space-1)] overflow-x-auto pb-[2px] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        {/* P2 — fade iOS en fin de rail catégories + plateau = mécanisme unique
+            (écoute `clubs-tab-change` conservée : seul fil de pilotage mobile). */}
+        <div className="flex items-center gap-[var(--space-1)] overflow-x-auto pb-[2px] pr-[28px] [scrollbar-width:none] [-webkit-mask-image:linear-gradient(to_right,black_calc(100%-28px),transparent)] [mask-image:linear-gradient(to_right,black_calc(100%-28px),transparent)] [&::-webkit-scrollbar]:hidden">
           {CATEGORIES.map((cat) => {
             const isSelected = selectedCategory === cat;
             return (

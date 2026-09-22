@@ -9,6 +9,10 @@ import ClubFeaturedEventCard from '@/components/clubs/ClubFeaturedEventCard';
 import ClubTeamCard from '@/components/clubs/ClubTeamCard';
 import ClubAboutCard from '@/components/clubs/ClubAboutCard';
 import ClubGroupsTab from '@/components/clubs/ClubGroupsTab';
+// P2 — registre UNIQUE des sections (cf. ClubVerticalTabs) : les mêmes ids
+// pilotent la sidebar desktop, cette vue mobile et le plateau
+// (`club-detail-tab-change`, seul fil de pilotage mobile conservé).
+import { CLUB_SECTION_LABELS, type ClubSectionId } from '@/components/clubs/ClubVerticalTabs';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { Badge, Button, Card, EmptyState } from '@/components/ui';
 
@@ -44,7 +48,8 @@ export default function MobileClubDetailView({
   onRefresh,
 }: MobileClubDetailViewProps) {
   const { triggerHaptic } = useHapticFeedback();
-  const [activeSection, setActiveSection] = useState<'overview' | 'events' | 'groups' | 'discussions' | 'members' | 'guides'>('overview');
+  // Sous-ensemble mobile du registre (photos/parcours restent desktop).
+  const [activeSection, setActiveSection] = useState<Extract<ClubSectionId, 'overview' | 'events' | 'groups' | 'discussions' | 'members' | 'guides'>>('overview');
 
   useEffect(() => {
     const handler = (e: any) => {
@@ -108,14 +113,16 @@ export default function MobileClubDetailView({
             ‹
           </Link>
           <div className="flex items-center gap-[var(--space-2)]">
-            <Badge className="border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] font-mono text-[color:var(--lkv-text-inverted)] backdrop-blur-[var(--blur-md)]">
+            {/* P2 — pastille sombre : blanc solide sur photo (≥4.5, ≥11px) */}
+            <Badge className="border-[color:var(--glass-border)] bg-black/55 font-mono text-[color:var(--lkv-text-inverted)] backdrop-blur-[var(--blur-md)]">
               {club.category || 'Collectif'} · {club.type === 'activite' ? '⚡ Activité' : '🌍 Région'}
             </Badge>
           </div>
         </div>
 
         <div className="absolute bottom-4 left-4 right-4 z-10">
-          <span className="mb-[var(--space-1)] block font-mono text-[length:var(--lkv-text-caption-2)] font-bold uppercase tracking-widest text-[color:var(--lkv-forest-300)]">
+          {/* P2 — blanc 90 % sur voile sombre (≥4.5, plus de forest-300 sur photo) */}
+          <span className="mb-[var(--space-1)] block font-mono text-[length:var(--lkv-text-caption-2)] font-bold uppercase tracking-widest text-white/90">
             {club.emoji || '🏕️'} COLLECTIF OFFICIEL
           </span>
           <h1 className="font-display text-[length:var(--lkv-text-title-sm)] font-extrabold leading-tight text-[color:var(--lkv-text-inverted)] sm:text-[length:var(--lkv-text-title-lg)]">
@@ -186,6 +193,8 @@ export default function MobileClubDetailView({
         <AnimatePresence mode="wait">
           <motion.div
             key={activeSection}
+            role="region"
+            aria-label={CLUB_SECTION_LABELS[activeSection]}
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}

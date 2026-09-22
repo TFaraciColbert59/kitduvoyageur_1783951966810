@@ -54,7 +54,9 @@ export default function CookieConsentBanner() {
         className="pointer-events-auto max-w-[min(38rem,calc(100vw-24px))] mx-auto bg-[color:var(--lkv-surface)] border border-[color:var(--glass-border)] rounded-2xl shadow-2xl overflow-hidden transition-all duration-300"
         style={{
           margin: '0 auto',
-          marginBottom: 'calc(72px + env(safe-area-inset-bottom))',
+          // P2 — offset UNIQUE via token : jamais sous la bottom bar mobile
+          // (`--nav-offset` inclut déjà la safe-area basse).
+          marginBottom: 'calc(var(--nav-offset) + var(--space-2))',
         }}
       >
         <style jsx>{`
@@ -81,19 +83,19 @@ export default function CookieConsentBanner() {
               <div className="flex items-center gap-2 flex-shrink-0">
                 <button
                   onClick={acceptAll}
-                  className="bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn hover:brightness-[1.05] text-[color:var(--lkv-text-primary)] px-3.5 py-2 rounded-xl text-xs font-semibold transition-all active:scale-95 min-h-[38px] flex items-center justify-center"
+                  className="bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn hover:brightness-[1.05] text-[color:var(--lkv-text-primary)] px-3.5 py-2 rounded-xl text-xs font-semibold transition-all active:scale-95 min-h-[var(--lkv-touch-min)] flex items-center justify-center"
                 >
                   Tout accepter
                 </button>
                 <button
                   onClick={rejectAll}
-                  className="bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn hover:brightness-[1.05] text-[color:var(--lkv-text-primary)] px-3 py-2 rounded-xl text-xs font-medium transition-all active:scale-95 min-h-[38px] flex items-center justify-center"
+                  className="bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn hover:brightness-[1.05] text-[color:var(--lkv-text-primary)] px-3 py-2 rounded-xl text-xs font-medium transition-all active:scale-95 min-h-[var(--lkv-touch-min)] flex items-center justify-center"
                 >
                   Refuser
                 </button>
                 <button
                   onClick={() => setShowDetails(true)}
-                  className="border border-white/20 hover:border-white/40 text-white/80 hover:text-white px-2.5 py-2 rounded-xl text-xs transition-all active:scale-95 min-h-[38px] flex items-center justify-center"
+                  className="border border-white/20 hover:border-white/40 text-white/80 hover:text-white px-2.5 py-2 rounded-xl text-xs transition-all active:scale-95 min-h-[var(--lkv-touch-min)] flex items-center justify-center"
                   aria-label="Gérer mes préférences cookies"
                 >
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">

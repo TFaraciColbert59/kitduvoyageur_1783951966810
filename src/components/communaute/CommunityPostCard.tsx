@@ -505,6 +505,8 @@ export default function CommunityPostCard({
   );
 
   // Rangée d'actions : même contenu sur la carte claire et sur le média.
+  // P2 — sur photo, les boutons portent déjà un verre clair (`card-tint-strong`) :
+  // icônes sombres (`text-primary`) pour un contraste ≥4.5 (plus de blanc sur verre clair).
   const actionsNode = (onImage: boolean) => (
     <>
       <div className="flex items-center gap-[var(--space-2)]">
@@ -516,7 +518,7 @@ export default function CommunityPostCard({
           aria-label="J'aime cette expédition"
           className={onImage ? 'min-w-[84px] border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] backdrop-blur-[var(--blur-md)]' : 'min-w-[84px]'}
         >
-          <HeartSvg filled={isLiked} className={onImage && !isLiked ? '!text-[color:var(--lkv-text-inverted)]' : ''} />
+          <HeartSvg filled={isLiked} className="" />
           {likesCount > 0 && <span className="tabular-nums">{likesCount}</span>}
         </Button>
 
@@ -531,7 +533,7 @@ export default function CommunityPostCard({
           <Icon
             name="message-square"
             size={15}
-            color={onImage ? 'var(--lkv-text-inverted)' : 'var(--lkv-text-primary)'}
+            color="var(--lkv-text-primary)"
             aria-hidden="true"
           />
           {commentsCount > 0 && <span className="tabular-nums">{commentsCount}</span>}
@@ -549,7 +551,7 @@ export default function CommunityPostCard({
           <Icon
             name="send"
             size={15}
-            color={onImage ? 'var(--lkv-text-inverted)' : 'var(--lkv-text-primary)'}
+            color="var(--lkv-text-primary)"
             aria-hidden="true"
           />
         </IconButton>
@@ -565,7 +567,7 @@ export default function CommunityPostCard({
             <Icon
               name="ellipsis"
               size={16}
-              color={onImage ? 'var(--lkv-text-inverted)' : 'var(--lkv-text-primary)'}
+              color="var(--lkv-text-primary)"
               aria-hidden="true"
             />
           </IconButton>

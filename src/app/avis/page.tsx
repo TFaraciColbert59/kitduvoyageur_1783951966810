@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import Icon from '@/components/ui/AppIcon';
-import { Button, Card, Chip, IconButton, Modal, Tabs } from '@/components/ui';
+import { Button, Card, IconButton, Modal, Tabs } from '@/components/ui';
 import { createClient } from '@/lib/supabase/client';
 import { fetchPublicProfilesWith } from '@/lib/queries/publicProfilesCore';
 import { useAuth } from '@/contexts/AuthContext';
@@ -67,12 +67,12 @@ function ReviewCard({ review, onHelpful }: { review: Review; onHelpful: (id: str
             >
               {authorName}
             </Link>
-            {review.verified && <span className="flex items-center gap-1 text-[10px] text-[color:var(--lkv-primary-soft)]"><Icon name="CheckBadgeIcon" size={12} className="text-[color:var(--lkv-secondary)]" />Achat vérifié</span>}
+            {review.verified && <span className="flex items-center gap-1 text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-primary-soft)]"><Icon name="CheckBadgeIcon" size={12} className="text-[color:var(--lkv-secondary)]" />Achat vérifié</span>}
           </div>
-          <div className="flex items-center gap-2 mt-0.5"><StarRating rating={review.rating} size={12} /><span className="text-[10px] text-[color:var(--lkv-text-secondary)]">{new Date(review.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}</span></div>
+          <div className="flex items-center gap-2 mt-0.5"><StarRating rating={review.rating} size={12} /><span className="text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-secondary)]">{new Date(review.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}</span></div>
         </div>
       </div>
-      <div className="flex items-center gap-2 mb-3"><span className={`${type.color} text-[10px]`}>{type.label}</span><span className="text-xs text-[color:var(--lkv-text-secondary)]">sur</span><span className="text-xs font-semibold text-[color:var(--lkv-primary)] truncate">{review.target_name}</span></div>
+      <div className="flex items-center gap-2 mb-3"><span className={`${type.color} text-[length:var(--lkv-text-caption-2)]`}>{type.label}</span><span className="text-xs text-[color:var(--lkv-text-secondary)]">sur</span><span className="text-xs font-semibold text-[color:var(--lkv-primary)] truncate">{review.target_name}</span></div>
       <h4 className="font-display font-bold text-[color:var(--lkv-primary)] text-sm mb-2">{review.title}</h4>
       <p className="text-sm text-[color:var(--lkv-primary-soft)] leading-relaxed flex-1">{review.comment}</p>
       <div className="mt-[var(--space-4)] flex items-center justify-between border-t border-[color:var(--lkv-border-subtle)] pt-[var(--space-3)]">
@@ -98,8 +98,11 @@ const FIELD_CLASS =
 const LABEL_CLASS =
   'mb-1.5 block text-[length:var(--lkv-text-caption-2)] font-semibold uppercase tracking-[0.05em] text-[color:var(--lkv-text-secondary)]';
 
-function WriteReviewModal({ onClose, onSubmit }: { onClose: () => void; onSubmit: (data: { type: string; target_name: string; rating: number; title: string; comment: string }) => Promise<void> }) {
-  const [rating, setRating] = useState(0); const [hovered, setHovered] = useState(0); const [submitted, setSubmitted] = useState(false); const [submitting, setSubmitting] = useState(false); const [form, setForm] = useState({ type: 'produit', target_name: '', title: '', comment: '' });
+// P2 — une seule couche de navigation : les Tabs de la page filtrent ;
+// le modal n'empile plus une seconde taxonomie en Chips : il hérite du filtre
+// actif (`initialType`) et propose un choix radio monoligne (44px, sans pill).
+function WriteReviewModal({ onClose, onSubmit, initialType }: { onClose: () => void; onSubmit: (data: { type: string; target_name: string; rating: number; title: string; comment: string }) => Promise<void>; initialType?: string }) {
+  const [rating, setRating] = useState(0); const [hovered, setHovered] = useState(0); const [submitted, setSubmitted] = useState(false); const [submitting, setSubmitting] = useState(false); const [form, setForm] = useState({ type: initialType && initialType in typeConfig ? initialType : 'produit', target_name: '', title: '', comment: '' });
   const handleSubmit = async () => { if (!rating || !form.title || !form.comment || !form.target_name) return; setSubmitting(true); await onSubmit({ ...form, rating }); setSubmitting(false); setSubmitted(true); setTimeout(() => { onClose(); }, 2000); };
   return (
     <Modal
@@ -112,22 +115,38 @@ function WriteReviewModal({ onClose, onSubmit }: { onClose: () => void; onSubmit
     >
       {!submitted ? (
         <div className="flex flex-col gap-[var(--space-4)]">
-          <div>
-            <span className={LABEL_CLASS}>Type d&apos;avis</span>
-            <div className="grid grid-cols-2 gap-[var(--space-2)]">
-              {Object.entries(typeConfig).map(([key, val]) => (
-                <Chip
-                  key={key}
-                  selected={form.type === key}
-                  onClick={() => setForm((f) => ({ ...f, type: key }))}
-                  icon={<Icon name={val.icon} size={14} />}
-                  className="justify-start"
-                >
-                  {val.label}
-                </Chip>
-              ))}
+          <fieldset>
+            <legend className={LABEL_CLASS}>Type d&apos;avis</legend>
+            <div className="flex flex-col gap-[var(--space-1)]" role="radiogroup" aria-label="Type d'avis">
+              {Object.entries(typeConfig).map(([key, val]) => {
+                const checked = form.type === key;
+                return (
+                  <label
+                    key={key}
+                    className={`flex min-h-[var(--lkv-touch-min)] cursor-pointer items-center gap-[var(--space-3)] rounded-[var(--lkv-radius-md)] border px-[var(--space-3)] transition-colors motion-reduce:transition-none ${checked ? 'border-[color:var(--lkv-action)] bg-[color:var(--lkv-action-soft)]' : 'border-[color:var(--lkv-border)] bg-[color:var(--lkv-field-bg)]'}`}
+                  >
+                    <input
+                      type="radio"
+                      name="review-type"
+                      value={key}
+                      checked={checked}
+                      onChange={() => setForm((f) => ({ ...f, type: key }))}
+                      className="h-4 w-4 shrink-0 accent-[var(--lkv-action)]"
+                    />
+                    <Icon name={val.icon} size={16} aria-hidden="true" />
+                    <span className="text-[length:var(--lkv-text-body-sm)] font-semibold text-[color:var(--lkv-text-primary)]">
+                      {val.label}
+                    </span>
+                    {checked && (
+                      <span className="ml-auto font-mono text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-action)]">
+                        ✓
+                      </span>
+                    )}
+                  </label>
+                );
+              })}
             </div>
-          </div>
+          </fieldset>
           <div>
             <label htmlFor="review-target" className={LABEL_CLASS}>Cible</label>
             <input
@@ -280,7 +299,8 @@ export default function AvisPage() {
               onChange={(id) => setActiveFilter(id as typeof activeFilter)}
               variant="scrollable"
               ariaLabel="Filtrer les avis"
-              className="mb-6"
+              // P2 — fade iOS en fin de rail, jamais coupé net
+              className="mb-6 pr-[28px] [mask-image:linear-gradient(to_right,black_calc(100%-28px),transparent)] [-webkit-mask-image:linear-gradient(to_right,black_calc(100%-28px),transparent)]"
             />
 
             {error && (
@@ -303,7 +323,7 @@ export default function AvisPage() {
             )}
           </div>
         </main>
-        {showWriteModal && <WriteReviewModal onClose={() => setShowWriteModal(false)} onSubmit={handleSubmitReview} />}
+        {showWriteModal && <WriteReviewModal onClose={() => setShowWriteModal(false)} onSubmit={handleSubmitReview} initialType={activeFilter === 'tous' ? 'produit' : activeFilter} />}
         <Footer />
       </div>
 
@@ -320,7 +340,8 @@ export default function AvisPage() {
               onChange={(id) => setActiveFilter(id as typeof activeFilter)}
               variant="scrollable"
               ariaLabel="Filtrer les avis"
-              className="mb-[var(--space-4)]"
+              // P2 — fade iOS en fin de rail, jamais coupé net
+              className="mb-[var(--space-4)] pr-[28px] [mask-image:linear-gradient(to_right,black_calc(100%-28px),transparent)] [-webkit-mask-image:linear-gradient(to_right,black_calc(100%-28px),transparent)]"
             />
             {error ? (
               <div className="py-[var(--space-10)] text-center">
@@ -358,7 +379,7 @@ export default function AvisPage() {
           </div>
         </MobilePageShell>
 
-        {showWriteModal && <WriteReviewModal onClose={() => setShowWriteModal(false)} onSubmit={handleSubmitReview} />}
+        {showWriteModal && <WriteReviewModal onClose={() => setShowWriteModal(false)} onSubmit={handleSubmitReview} initialType={activeFilter === 'tous' ? 'produit' : activeFilter} />}
       </div>
     </>
   );

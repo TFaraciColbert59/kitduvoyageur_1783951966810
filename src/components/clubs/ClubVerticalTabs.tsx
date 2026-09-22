@@ -7,27 +7,51 @@ import { ChevronRightIcon as ChevronRightAnimated } from '@/components/icons/che
 import { Button, Card } from '@/components/ui';
 
 interface ClubVerticalTabsProps {
-  activeTab: string;
-  setActiveTab: (tab: string) => void;
+  activeTab: ClubSectionId;
+  setActiveTab: (tab: ClubSectionId) => void;
   eventsCount?: number;
   membersCount?: number;
   topicsCount?: number;
 }
 
+/**
+ * P2 — REGISTRE UNIQUE des sections d'un club (un seul job).
+ * La sidebar desktop (`ClubVerticalTabs`), la vue mobile
+ * (`MobileClubDetailView`, via `CLUB_SECTION_LABELS` + `ClubSectionId`) et la
+ * page (`src/app/clubs/[id]/page.tsx`, commutation du contenu) parlent les
+ * mêmes ids stables ; le plateau mobile émet déjà ces ids
+ * (`club-detail-tab-change` : overview/events/groups/discussions/members/guides).
+ */
+export type ClubSectionId =
+  | 'overview'
+  | 'events'
+  | 'groups'
+  | 'members'
+  | 'photos'
+  | 'discussions'
+  | 'guides'
+  | 'parcours';
+
+export const CLUB_SECTIONS: ReadonlyArray<{ id: ClubSectionId; label: string }> = [
+  { id: 'overview', label: "Vue d'ensemble" },
+  { id: 'events', label: 'Sorties' },
+  { id: 'groups', label: 'Groupes' },
+  { id: 'members', label: 'Membres' },
+  { id: 'photos', label: 'Photos' },
+  { id: 'discussions', label: 'Discussions' },
+  { id: 'guides', label: 'Guides & Astuces' },
+  { id: 'parcours', label: 'Parcours' },
+];
+
+export const CLUB_SECTION_LABELS: Record<ClubSectionId, string> = Object.fromEntries(
+  CLUB_SECTIONS.map((s) => [s.id, s.label])
+) as Record<ClubSectionId, string>;
+
 export default function ClubVerticalTabs({
   activeTab,
   setActiveTab,
 }: ClubVerticalTabsProps) {
-  const tabs = [
-    { id: "Vue d'ensemble", label: "Vue d'ensemble" },
-    { id: 'Sorties', label: 'Sorties' },
-    { id: 'Groupes', label: 'Groupes' },
-    { id: 'Membres', label: 'Membres' },
-    { id: 'Photos', label: 'Photos' },
-    { id: 'Discussions', label: 'Discussions' },
-    { id: 'Guides & Astuces', label: 'Guides & Astuces' },
-    { id: 'Parcours', label: 'Parcours' },
-  ];
+  const tabs = CLUB_SECTIONS;
 
   return (
     <aside className="flex h-full max-h-full w-full select-none flex-1 flex-col justify-between overflow-hidden rounded-[var(--lkv-radius-2xl)] border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] p-[var(--space-3)] font-sans text-[color:var(--lkv-text-primary)] shadow-elevation-1 backdrop-blur-[var(--blur-lg)]">

@@ -10,7 +10,7 @@ import CompteBackground from '@/components/compte/CompteBackground';
 import CommentsSheet, { CommentData } from '@/components/social/CommentsSheet';
 import ClubDiscussionCard, { ClubMessage } from '@/components/clubs/ClubDiscussionCard';
 import ClubHero from '@/components/clubs/ClubHero';
-import ClubVerticalTabs from '@/components/clubs/ClubVerticalTabs';
+import ClubVerticalTabs, { type ClubSectionId } from '@/components/clubs/ClubVerticalTabs';
 import ClubFeaturedEventCard from '@/components/clubs/ClubFeaturedEventCard';
 import ClubTeamCard from '@/components/clubs/ClubTeamCard';
 import ClubAboutCard from '@/components/clubs/ClubAboutCard';
@@ -93,7 +93,8 @@ export default function ClubDetailPage() {
   const [clubGroups, setClubGroups] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
-  const [activeTab, setActiveTab] = useState('Vue d\'ensemble');
+  // P2 — ids stables du registre unique `CLUB_SECTIONS` (cf. ClubVerticalTabs).
+  const [activeTab, setActiveTab] = useState<ClubSectionId>('overview');
   const [isMember, setIsMember] = useState(false);
   const [joining, setJoining] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
@@ -523,7 +524,7 @@ export default function ClubDetailPage() {
   const admins = (members || []).filter(m => m.role === 'admin' || m.role === 'moderator');
 
   const renderTabContent = () => {
-    if (activeTab === 'Sorties') {
+    if (activeTab === 'events') {
       return (
         <section className="space-y-[var(--space-4)]">
           <div className="flex items-center justify-between">
@@ -591,7 +592,7 @@ export default function ClubDetailPage() {
       );
     }
 
-    if (activeTab === 'Membres') {
+    if (activeTab === 'members') {
       return (
         <Card className="space-y-[var(--space-4)] p-[var(--space-6)]">
           <div className="flex items-center justify-between">
@@ -618,7 +619,7 @@ export default function ClubDetailPage() {
       );
     }
 
-    if (activeTab === 'Photos') {
+    if (activeTab === 'photos') {
       return (
         <Card className="space-y-[var(--space-4)] p-[var(--space-6)]">
           <h2 className="font-display text-[length:var(--lkv-text-title-sm)] font-bold text-[color:var(--lkv-text-primary)]">Photos partagées</h2>
@@ -642,7 +643,7 @@ export default function ClubDetailPage() {
       );
     }
 
-    if (activeTab === 'Discussions' || activeTab === 'Guides & Astuces') {
+    if (activeTab === 'discussions' || activeTab === 'guides') {
       return (
         <section className="space-y-[var(--space-4)]">
           <ClubDiscussionCard
@@ -651,14 +652,14 @@ export default function ClubDetailPage() {
             discussions={clubDiscussions}
             onRefresh={loadData}
             user={user}
-            filterType={activeTab === 'Guides & Astuces' ? 'guides' : 'all'}
-            onFilterChange={(f) => setActiveTab(f === 'guides' ? 'Guides & Astuces' : 'Discussions')}
+            filterType={activeTab === 'guides' ? 'guides' : 'all'}
+            onFilterChange={(f) => setActiveTab(f === 'guides' ? 'guides' : 'discussions')}
           />
         </section>
       );
     }
 
-    if (activeTab === 'Groupes') {
+    if (activeTab === 'groups') {
       return (
         <ClubGroupsTab
           club={club}
@@ -672,7 +673,7 @@ export default function ClubDetailPage() {
       );
     }
 
-    if (activeTab === 'Parcours') {
+    if (activeTab === 'parcours') {
       return (
         <Card className="p-[var(--space-12)]">
           <EmptyState
@@ -693,7 +694,7 @@ export default function ClubDetailPage() {
               <Badge className="font-mono font-bold">{events.length} sorties</Badge>
             </div>
             {events.length > 0 && (
-              <Button variant="secondary" size="sm" onClick={() => setActiveTab('Sorties')}>
+              <Button variant="secondary" size="sm" onClick={() => setActiveTab('events')}>
                 Voir tout →
               </Button>
             )}
@@ -781,7 +782,7 @@ export default function ClubDetailPage() {
                 <span className="font-semibold text-[color:var(--lkv-text-primary)]">{club.name}</span>
               </div>
 
-              {activeTab === "Vue d'ensemble" && (
+              {activeTab === 'overview' && (
                 <ClubHero
                   club={club}
                   eventsCount={events.length}
@@ -808,7 +809,7 @@ export default function ClubDetailPage() {
               )}
               <ClubTeamCard
                 admins={admins}
-                onViewAll={() => setActiveTab('Membres')}
+                onViewAll={() => setActiveTab('members')}
                 onContact={(name) => showToast('Contacter ' + name)}
               />
               <ClubAboutCard club={club} />
@@ -945,8 +946,9 @@ export default function ClubDetailPage() {
       </Modal>
 
       {toast && (
-        <div className="fixed bottom-10 left-1/2 z-[var(--z-toast)] flex -translate-x-1/2 items-center gap-[var(--space-3)] rounded-full bg-[color:var(--lkv-forest-950)] px-[var(--space-8)] py-[var(--space-4)] text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-inverted)] shadow-elevation-4">
-          <Icon name="CheckCircleIcon" size={18} className="text-[color:var(--lkv-text-inverted)]/70" aria-hidden="true" />
+        // P2 — offset UNIQUE via token : jamais sous la bottom bar.
+        <div className="fixed bottom-[calc(var(--nav-offset)+var(--space-4))] left-1/2 z-[var(--z-toast)] flex max-w-[calc(100vw-32px)] -translate-x-1/2 items-center gap-[var(--space-3)] rounded-full bg-[color:var(--lkv-forest-950)] px-[var(--space-8)] py-[var(--space-4)] text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-inverted)] shadow-elevation-4">
+          <Icon name="CheckCircleIcon" size={18} className="text-[color:var(--lkv-text-inverted)]" aria-hidden="true" />
           {toast}
         </div>
       )}

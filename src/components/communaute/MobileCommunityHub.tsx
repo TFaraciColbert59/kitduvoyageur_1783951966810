@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import Icon from '@/components/ui/AppIcon';
 import { Badge, Button, Card, Chip, EmptyState, Skeleton, Spinner, Tabs } from '@/components/ui';
@@ -54,8 +54,11 @@ export default function MobileCommunityHub({
   onJoinEvent,
 }: MobileCommunityHubProps) {
   const { triggerHaptic } = useHapticFeedback();
-  const [currentTab, setCurrentTab] = useState<CommunityMobileTab>(activeTab);
   const [carnetFilter, setCarnetFilter] = useState('all');
+  // P2 — mécanisme unique : l'URL `?tab=` (page) est la seule source de vérité,
+  // en miroir du plateau mobile (vraies routes pour carnets/clubs/groupes).
+  // Plus d'état local dupliqué ni d'écoute `community-tab-change` ici.
+  const currentTab: CommunityMobileTab = activeTab;
 
   const { isRefreshing, pullProgress } = usePullToRefresh(async () => {
     if (onRefresh) {
@@ -63,22 +66,6 @@ export default function MobileCommunityHub({
       await onRefresh();
     }
   });
-
-  useEffect(() => {
-    setCurrentTab(activeTab);
-  }, [activeTab]);
-
-  useEffect(() => {
-    const handler = (e: any) => {
-      if (e.detail) {
-        const tab = e.detail as CommunityMobileTab;
-        setCurrentTab(tab);
-        if (onTabChange) onTabChange(tab);
-      }
-    };
-    window.addEventListener('community-tab-change', handler);
-    return () => window.removeEventListener('community-tab-change', handler);
-  }, [onTabChange]);
 
   const filteredCarnets = carnets.filter((c) => {
     if (carnetFilter === 'all') return true;
@@ -114,10 +101,12 @@ export default function MobileCommunityHub({
           value={currentTab}
           onChange={(tab) => {
             triggerHaptic('light');
-            setCurrentTab(tab as CommunityMobileTab);
             onTabChange?.(tab as CommunityMobileTab);
           }}
           options={TABS}
+          // P2 — fade iOS en fin de rail : la dernière pill (« Sorties »)
+          // s'estompe au lieu d'être coupée nette ; `pr` de fin de course.
+          className="pr-[28px] [mask-image:linear-gradient(to_right,black_calc(100%-28px),transparent)] [-webkit-mask-image:linear-gradient(to_right,black_calc(100%-28px),transparent)]"
         />
         {/* 1. LIVE EXPLORER STORIES BAR */}
         <Card variant="featured" className="p-[var(--space-2)]">
@@ -171,8 +160,8 @@ export default function MobileCommunityHub({
           {/* ── TAB 2: CARNETS DE VOYAGE ── */}
           {currentTab === 'carnets' && (
             <div className="space-y-[var(--space-3)]">
-              {/* Massif filter chips */}
-              <div className="no-scrollbar flex items-center gap-[var(--space-1)] overflow-x-auto pb-[var(--space-1)]">
+              {/* Massif filter chips — P2 : fade de fin de rail, jamais coupé net */}
+              <div className="no-scrollbar flex items-center gap-[var(--space-1)] overflow-x-auto pb-[var(--space-1)] pr-[28px] [mask-image:linear-gradient(to_right,black_calc(100%-28px),transparent)] [-webkit-mask-image:linear-gradient(to_right,black_calc(100%-28px),transparent)]">
                 {MASSIFS.map((m) => (
                   <Chip
                     key={m}
@@ -213,7 +202,7 @@ export default function MobileCommunityHub({
               {clubs.map((c) => (
                 <Link
                   key={c.id || c.name}
-                  href={c.id ? `/clubs/${c.id}` : c.slug ? `/clubs/${c.slug}` : '/communaute?tab=clubs'}
+                  href={c.id ? `/clubs/${c.id}` : c.slug ? `/clubs/${c.slug}` : '/clubs'}
                   className="block transition-transform active:scale-[0.98]"
                 >
                   <Card variant="compact" className="flex items-center justify-between gap-[var(--space-3)]">
@@ -268,7 +257,7 @@ export default function MobileCommunityHub({
               {groups.map((grp) => (
                 <Link
                   key={grp.id || grp.name}
-                  href={grp.id ? `/groupes/${grp.id}` : '/communaute?tab=groupes'}
+                  href={grp.id ? `/groupes/${grp.id}` : '/hub'}
                   className="block transition-transform active:scale-[0.98]"
                 >
                   <Card variant="compact" className="flex flex-col justify-between space-y-[var(--space-3)]">

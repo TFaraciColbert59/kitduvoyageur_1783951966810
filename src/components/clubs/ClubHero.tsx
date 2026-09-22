@@ -42,7 +42,8 @@ export default function ClubHero({
       <div aria-hidden className="pointer-events-none absolute right-0 top-0 h-[40rem] w-[40rem] rounded-full bg-[color:var(--lkv-text-inverted)] opacity-5 blur-[100px]" />
 
       <div className="relative z-10 max-w-2xl">
-        <Badge className="mb-[var(--space-6)] border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] text-[color:var(--lkv-text-inverted)]">
+        {/* P2 — pastille claire : texte sombre sur verre clair (≥4.5) */}
+        <Badge className="mb-[var(--space-6)] border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] text-[color:var(--lkv-text-primary)]">
           <span aria-hidden className="h-1.5 w-1.5 animate-pulse rounded-full bg-[var(--lkv-forest-400)]" />
           <span className="font-mono text-[length:var(--lkv-text-caption-2)] font-bold uppercase tracking-widest">
             {club.type || 'CLUB'} · {membersCount} MEMBRES · {club.privacy === 'open' ? 'PUBLIC' : 'PRIVÉ'}
@@ -55,29 +56,30 @@ export default function ClubHero({
         </h1>
 
         {club.description && (
-          <p className="mb-[var(--space-8)] max-w-xl font-sans text-[length:var(--lkv-text-caption)] leading-relaxed text-[color:var(--lkv-text-inverted)]/80 md:text-[length:var(--lkv-text-body-sm)]">
+          // P2 — blanc 90 % sur dégradé sombre (≥4.5, plus de /80)
+          <p className="mb-[var(--space-8)] max-w-xl font-sans text-[length:var(--lkv-text-caption)] leading-relaxed text-[color:var(--lkv-text-inverted)]/90 md:text-[length:var(--lkv-text-body-sm)]">
             {club.description}
           </p>
         )}
 
         <div className="flex flex-wrap items-center gap-[var(--space-4)] font-mono text-[length:var(--lkv-text-caption)] sm:gap-[var(--space-6)]">
           <div className="flex flex-col">
-            <span className="mb-[var(--space-1)] text-[length:var(--lkv-text-caption-2)] font-bold uppercase tracking-widest text-[color:var(--lkv-text-inverted)]/60">Membres</span>
+            <span className="mb-[var(--space-1)] text-[length:var(--lkv-text-caption-2)] font-bold uppercase tracking-widest text-[color:var(--lkv-text-inverted)]/85">Membres</span>
             <span className="font-bold text-[color:var(--lkv-text-inverted)]">{membersCount}</span>
           </div>
           <div aria-hidden className="h-8 w-px bg-[color:var(--lkv-text-inverted)]/20" />
           <div className="flex flex-col">
-            <span className="mb-[var(--space-1)] text-[length:var(--lkv-text-caption-2)] font-bold uppercase tracking-widest text-[color:var(--lkv-text-inverted)]/60">En ligne</span>
-            <span className="font-bold text-[color:var(--lkv-forest-400)]">{isOnline}</span>
+            <span className="mb-[var(--space-1)] text-[length:var(--lkv-text-caption-2)] font-bold uppercase tracking-widest text-[color:var(--lkv-text-inverted)]/85">En ligne</span>
+            <span className="font-bold text-[color:var(--lkv-forest-100)]">{isOnline}</span>
           </div>
           <div aria-hidden className="h-8 w-px bg-[color:var(--lkv-text-inverted)]/20" />
           <div className="flex flex-col">
-            <span className="mb-[var(--space-1)] text-[length:var(--lkv-text-caption-2)] font-bold uppercase tracking-widest text-[color:var(--lkv-text-inverted)]/60">Sorties</span>
+            <span className="mb-[var(--space-1)] text-[length:var(--lkv-text-caption-2)] font-bold uppercase tracking-widest text-[color:var(--lkv-text-inverted)]/85">Sorties</span>
             <span className="font-bold text-[color:var(--lkv-text-inverted)]">{eventsCount}</span>
           </div>
           <div aria-hidden className="h-8 w-px bg-[color:var(--lkv-text-inverted)]/20" />
           <div className="flex flex-col">
-            <span className="mb-[var(--space-1)] text-[length:var(--lkv-text-caption-2)] font-bold uppercase tracking-widest text-[color:var(--lkv-text-inverted)]/60">Lieu</span>
+            <span className="mb-[var(--space-1)] text-[length:var(--lkv-text-caption-2)] font-bold uppercase tracking-widest text-[color:var(--lkv-text-inverted)]/85">Lieu</span>
             <span className="max-w-[120px] truncate font-bold text-[color:var(--lkv-text-inverted)]">{club.location || 'Monde'}</span>
           </div>
         </div>
@@ -86,7 +88,7 @@ export default function ClubHero({
       <div className="relative z-10 mt-[var(--space-6)] flex w-full flex-col items-end gap-[var(--space-3)] md:mt-0 md:w-auto">
         <Card variant="compact" className="mb-[var(--space-1)] flex h-24 w-24 flex-col items-center justify-center border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)]">
           <span className="mb-[var(--space-1)] text-[length:var(--lkv-text-title-sm)]" aria-hidden>{club.emoji || '🏕️'}</span>
-          <span className="px-[var(--space-1)] text-center font-mono text-[length:var(--lkv-text-caption-2)] font-bold uppercase tracking-widest text-[color:var(--lkv-text-inverted)]/70">
+          <span className="px-[var(--space-1)] text-center font-mono text-[length:var(--lkv-text-caption-2)] font-bold uppercase tracking-widest text-[color:var(--lkv-text-primary)]">
             {club.category?.slice(0, 10) || 'Club'}
           </span>
         </Card>

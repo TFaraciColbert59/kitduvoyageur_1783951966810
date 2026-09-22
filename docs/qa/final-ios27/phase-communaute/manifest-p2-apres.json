@@ -1,0 +1,134 @@
+{
+  "phase": "apres",
+  "capturedAt": "2026-09-22T22:54:08.520Z",
+  "shots": [
+    {
+      "slug": "communaute-393x852",
+      "route": "/communaute",
+      "viewport": "393x852",
+      "finalUrl": "http://localhost:4028/communaute",
+      "title": "Communauté Voyageurs & Aventuriers | Le Kit du Voyageur",
+      "cookieBannerVisible": false,
+      "consoleErrors": [],
+      "screenshot": "docs/qa/final-ios27/phase-communaute/apres/communaute-393x852.jpg"
+    },
+    {
+      "slug": "communaute-430x932",
+      "route": "/communaute",
+      "viewport": "430x932",
+      "finalUrl": "http://localhost:4028/communaute",
+      "title": "Communauté Voyageurs & Aventuriers | Le Kit du Voyageur",
+      "cookieBannerVisible": false,
+      "consoleErrors": [],
+      "screenshot": "docs/qa/final-ios27/phase-communaute/apres/communaute-430x932.jpg"
+    },
+    {
+      "slug": "communaute-412x915",
+      "route": "/communaute",
+      "viewport": "412x915",
+      "finalUrl": "http://localhost:4028/communaute",
+      "title": "Communauté Voyageurs & Aventuriers | Le Kit du Voyageur",
+      "cookieBannerVisible": false,
+      "consoleErrors": [],
+      "screenshot": "docs/qa/final-ios27/phase-communaute/apres/communaute-412x915.jpg"
+    },
+    {
+      "slug": "communaute-1440x900",
+      "route": "/communaute",
+      "viewport": "1440x900",
+      "finalUrl": "http://localhost:4028/communaute",
+      "title": "Communauté Voyageurs & Aventuriers | Le Kit du Voyageur",
+      "cookieBannerVisible": false,
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+      ],
+      "screenshot": "docs/qa/final-ios27/phase-communaute/apres/communaute-1440x900.jpg"
+    },
+    {
+      "slug": "clubs-393x852",
+      "route": "/clubs",
+      "viewport": "393x852",
+      "finalUrl": "http://localhost:4028/clubs",
+      "title": "Clubs de voyageurs | Le Kit du Voyageur",
+      "cookieBannerVisible": false,
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+      ],
+      "screenshot": "docs/qa/final-ios27/phase-communaute/apres/clubs-393x852.jpg"
+    },
+    {
+      "slug": "clubs-430x932",
+      "route": "/clubs",
+      "viewport": "430x932",
+      "finalUrl": "http://localhost:4028/clubs",
+      "title": "Clubs de voyageurs | Le Kit du Voyageur",
+      "cookieBannerVisible": false,
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+      ],
+      "screenshot": "docs/qa/final-ios27/phase-communaute/apres/clubs-430x932.jpg"
+    },
+    {
+      "slug": "clubs-412x915",
+      "route": "/clubs",
+      "viewport": "412x915",
+      "finalUrl": "http://localhost:4028/clubs",
+      "title": "Clubs de voyageurs | Le Kit du Voyageur",
+      "cookieBannerVisible": false,
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+      ],
+      "screenshot": "docs/qa/final-ios27/phase-communaute/apres/clubs-412x915.jpg"
+    },
+    {
+      "slug": "clubs-1440x900",
+      "route": "/clubs",
+      "viewport": "1440x900",
+      "finalUrl": "http://localhost:4028/clubs",
+      "title": "Clubs de voyageurs | Le Kit du Voyageur",
+      "cookieBannerVisible": false,
+      "consoleErrors": [],
+      "screenshot": "docs/qa/final-ios27/phase-communaute/apres/clubs-1440x900.jpg"
+    },
+    {
+      "slug": "avis-393x852",
+      "route": "/avis",
+      "viewport": "393x852",
+      "finalUrl": "http://localhost:4028/avis",
+      "title": "Avis & Témoignages | Le Kit du Voyageur",
+      "cookieBannerVisible": false,
+      "consoleErrors": [],
+      "screenshot": "docs/qa/final-ios27/phase-communaute/apres/avis-393x852.jpg"
+    },
+    {
+      "slug": "avis-430x932",
+      "route": "/avis",
+      "viewport": "430x932",
+      "finalUrl": "http://localhost:4028/avis",
+      "title": "Avis & Témoignages | Le Kit du Voyageur",
+      "cookieBannerVisible": false,
+      "consoleErrors": [],
+      "screenshot": "docs/qa/final-ios27/phase-communaute/apres/avis-430x932.jpg"
+    },
+    {
+      "slug": "avis-412x915",
+      "route": "/avis",
+      "viewport": "412x915",
+      "finalUrl": "http://localhost:4028/avis",
+      "title": "Avis & Témoignages | Le Kit du Voyageur",
+      "cookieBannerVisible": false,
+      "consoleErrors": [],
+      "screenshot": "docs/qa/final-ios27/phase-communaute/apres/avis-412x915.jpg"
+    },
+    {
+      "slug": "avis-1440x900",
+      "route": "/avis",
+      "viewport": "1440x900",
+      "finalUrl": "http://localhost:4028/avis",
+      "title": "Avis & Témoignages | Le Kit du Voyageur",
+      "cookieBannerVisible": false,
+      "consoleErrors": [],
+      "screenshot": "docs/qa/final-ios27/phase-communaute/apres/avis-1440x900.jpg"
+    }
+  ]
+}

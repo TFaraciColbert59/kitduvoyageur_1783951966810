@@ -42,7 +42,9 @@ export default function CommunityStoriesBar({ currentUser }: { currentUser?: any
 
   return (
     <>
-      <div className="flex w-full items-center gap-[var(--space-2)] overflow-x-auto pb-[var(--space-1)] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      {/* P2 — fade iOS en fin de rail : la dernière story (« M ») s'estompe
+          au lieu d'être tronquée nette ; `pr` de fin de course. */}
+      <div className="flex w-full items-center gap-[var(--space-2)] overflow-x-auto pb-[var(--space-1)] pr-[28px] [scrollbar-width:none] [-webkit-mask-image:linear-gradient(to_right,black_calc(100%-28px),transparent)] [mask-image:linear-gradient(to_right,black_calc(100%-28px),transparent)] [&::-webkit-scrollbar]:hidden">
         <Button
           type="button"
           variant="ghost"

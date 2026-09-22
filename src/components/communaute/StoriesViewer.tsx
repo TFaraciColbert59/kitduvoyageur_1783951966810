@@ -229,14 +229,16 @@ export default function StoriesViewer({
         {/* En-tête : auteur + fermeture */}
         <div className="absolute inset-x-0 top-0 z-[var(--z-sticky)] flex items-center justify-between gap-[var(--space-3)] px-[var(--space-4)] pt-[max(var(--space-6),calc(var(--safe-top)+var(--space-4)))]">
           <span className="flex min-w-0 items-center gap-[var(--space-2)]">
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/20 text-[length:var(--lkv-text-subheadline)] font-semibold text-white">
+            {/* P2 — pastille sombre : initiale blanche sur noir/40 (≥4.5) */}
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-black/40 text-[length:var(--lkv-text-subheadline)] font-semibold text-white backdrop-blur-md">
               {user.name.charAt(0)}
             </span>
             <span className="truncate text-[length:var(--lkv-text-subheadline)] font-semibold text-white">
               {user.name}
             </span>
             {user.time && (
-              <span className="shrink-0 text-[length:var(--lkv-text-caption-1)] text-white/70">
+              // P2 — blanc 90 % sur voile haut (≥4.5, plus de white/70)
+              <span className="shrink-0 text-[length:var(--lkv-text-caption-2)] text-white/90">
                 {user.time}
               </span>
             )}

@@ -56,9 +56,20 @@ function CommunautePageContent() {
     }
   }, [searchParams]);
 
+  // P2 — mécanisme UNIQUE (miroir du plateau mobile `useNavigationPlateau`) :
+  // carnets/clubs/groupes vivent sur leurs vraies routes ; seuls
+  // fil/evenements/entraide restent des états `?tab=` du hub.
   const handleTabSelect = (tab: CommunityHubTab) => {
     setActiveTab(tab);
-    router.push(`/communaute?tab=${tab}`);
+    if (tab === 'carnets') {
+      router.push('/carnets');
+    } else if (tab === 'clubs') {
+      router.push('/clubs');
+    } else if (tab === 'groupes') {
+      router.push('/groupes');
+    } else {
+      router.push(`/communaute?tab=${tab}`);
+    }
   };
 
   // Data States — uniquement alimentés par le serveur (aucune donnée fictive).
@@ -329,7 +340,8 @@ function CommunautePageContent() {
               {activeTab === 'carnets' && (
                 <div className="space-y-[var(--space-4)]">
                   <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
-                    <div className="no-scrollbar flex gap-[var(--space-1)] overflow-x-auto rounded-full border border-[color:var(--btn-glass-border)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn p-1">
+                    {/* P2 — fade iOS en fin de rail filtres */}
+                    <div className="no-scrollbar flex gap-[var(--space-1)] overflow-x-auto rounded-full border border-[color:var(--btn-glass-border)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn p-1 pr-[28px] [mask-image:linear-gradient(to_right,black_calc(100%-28px),transparent)] [-webkit-mask-image:linear-gradient(to_right,black_calc(100%-28px),transparent)]">
                       {[
                         { id: 'all', label: 'Tous' },
                         { id: 'Trek', label: '🏔️ Trek' },
@@ -380,7 +392,8 @@ function CommunautePageContent() {
               {activeTab === 'clubs' && (
                 <div className="space-y-[var(--space-4)]">
                   <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
-                    <div className="no-scrollbar flex gap-[var(--space-1)] overflow-x-auto rounded-full border border-[color:var(--btn-glass-border)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn p-1">
+                    {/* P2 — fade iOS en fin de rail filtres */}
+                    <div className="no-scrollbar flex gap-[var(--space-1)] overflow-x-auto rounded-full border border-[color:var(--btn-glass-border)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn p-1 pr-[28px] [mask-image:linear-gradient(to_right,black_calc(100%-28px),transparent)] [-webkit-mask-image:linear-gradient(to_right,black_calc(100%-28px),transparent)]">
                       {[
                         { id: 'all', label: 'Tous les clubs' },
                         { id: 'activite', label: '🎯 Par Activité' },
@@ -428,8 +441,9 @@ function CommunautePageContent() {
                                 <div className="flex size-full items-center justify-center text-4xl">{club.emoji || '🏕️'}</div>
                               )}
                               <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
+                              {/* P2 — pastille sombre renforcée (blanc solide ≥11px sur photo) */}
                               {club.category && (
-                                <Badge tone="stone" className="absolute bottom-2 left-3 border-0 bg-black/40 font-mono text-[color:var(--lkv-text-inverted)] backdrop-blur-[var(--blur-md)]">
+                                <Badge tone="stone" className="absolute bottom-2 left-3 border-0 bg-black/55 font-mono text-[color:var(--lkv-text-inverted)] backdrop-blur-[var(--blur-md)]">
                                   {club.category}
                                 </Badge>
                               )}

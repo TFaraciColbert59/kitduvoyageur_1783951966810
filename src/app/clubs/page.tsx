@@ -1311,8 +1311,9 @@ export default function ClubsPage() {
       />
 
       {toast && (
-        <div className="fixed bottom-10 left-1/2 z-[var(--z-toast)] flex -translate-x-1/2 items-center gap-[var(--space-3)] rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] px-[var(--space-8)] py-[var(--space-4)] text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)] shadow-elevation-4">
-          <Icon name="CheckCircleIcon" size={18} className="text-[color:var(--lkv-text-inverted)]/70" aria-hidden="true" />
+        // P2 — offset UNIQUE via token : jamais sous la bottom bar.
+        <div className="fixed bottom-[calc(var(--nav-offset)+var(--space-4))] left-1/2 z-[var(--z-toast)] flex max-w-[calc(100vw-32px)] -translate-x-1/2 items-center gap-[var(--space-3)] rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] px-[var(--space-8)] py-[var(--space-4)] text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)] shadow-elevation-4">
+          <Icon name="CheckCircleIcon" size={18} className="text-[color:var(--lkv-secondary)]" aria-hidden="true" />
           {toast}
         </div>
       )}
