@@ -93,11 +93,12 @@ describe('LOT 2 — PageHeader canonique', () => {
   const pageHeader = readFileSync('src/components/ui/PageHeader.tsx', 'utf8');
   const backButton = readFileSync('src/components/ui/HeaderBackButton.tsx', 'utf8');
 
-  it('PageHeader expose les variantes inline/large, back et état scroll', () => {
+  it('PageHeader expose variantes, back et contrôles flottants (zéro barre pleine largeur)', () => {
     expect(pageHeader).toContain("export type PageHeaderVariant = 'inline' | 'large'");
     expect(pageHeader).toContain('back?: React.ReactNode | boolean');
-    expect(pageHeader).toContain('scrollAware');
-    expect(pageHeader).toContain('useScrolled');
+    expect(pageHeader).toContain('subtitleLines');
+    expect(pageHeader).toContain('fixed inset-x-0');
+    expect(pageHeader).toContain('HeaderBackButton');
   });
 
   it('le bouton retour est unique : 44×44, icône chevron, historique puis repli', () => {

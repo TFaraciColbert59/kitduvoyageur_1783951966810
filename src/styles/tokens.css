@@ -39,7 +39,7 @@
      décliné portrait (mobile) / paysage (large), voilé pour la lisibilité. */
   --lkv-app-bg-image-portrait: url('/assets/images/lkdv-bg-portrait.webp');
   --lkv-app-bg-image-landscape: url('/assets/images/lkdv-bg-landscape.webp');
-  --lkv-app-bg-scrim: rgba(46, 92, 66, 0.34);
+  --lkv-app-bg-scrim: rgba(46, 92, 66, 0.26);
   --lkv-app-bg-fallback: #12301F;
 
   --lkv-surface: #F5F7F3;
@@ -394,6 +394,13 @@
   --tracking-wide: 0.02em;
   --tracking-caps: 0.04em;
 
+  /* ├─ Matériau verre canonique (Phase 3 final — neutre blanc) */
+  --glass-fill-top: rgba(255, 255, 255, 0.14);
+  --glass-fill-bottom: rgba(255, 255, 255, 0.075);
+  --glass-fill-active: rgba(255, 255, 255, 0.17);
+  --glass-blur: 26px;
+  --glass-saturation: 1.10;
+
   /* ├─ Flous canoniques (échelle cible Phase 2) */
   --blur-none: 0px;
   --blur-sm: 4px;
@@ -581,7 +588,7 @@
   --lkv-secondary-hover: #B8CDB4;
   --lkv-secondary-subtle: #24382C;
 
-  --lkv-app-bg-scrim: rgba(46, 92, 66, 0.34);
+  --lkv-app-bg-scrim: rgba(46, 92, 66, 0.26);
   --lkv-app-bg-fallback: #12301F;
 
   --lkv-surface: #101C17;
@@ -624,11 +631,16 @@
   --glass-solid: var(--card-tint-solid);
   --glass-text: #F1F5F1;
   --glass-text-secondary: rgba(241, 245, 241, 0.74);
-  --glass-bg-light: rgba(27, 45, 36, 0.58);
-  --glass-bg-medium: rgba(27, 45, 36, 0.68);
-  --glass-bg-strong: rgba(27, 45, 36, 0.82);
-  --glass-subtle-fill: rgba(27, 45, 36, 0.48);
-  --glass-border: rgba(241, 245, 241, 0.18);
+  /* Phase 3 (final) — VERRE NEUTRE BLANC : plus aucune teinte verte dans la
+     couche UI. Le vert reste dans la photo, le contenu et les états. */
+  --glass-bg-light: rgba(255, 255, 255, 0.07);
+  --glass-bg-medium: rgba(255, 255, 255, 0.10);
+  --glass-bg-strong: rgba(255, 255, 255, 0.14);
+  --glass-subtle-fill: rgba(255, 255, 255, 0.05);
+  --glass-border-strong: rgba(255, 255, 255, 0.30);
+  --glass-highlight: rgba(255, 255, 255, 0.36);
+  --glass-shadow-final: 0 8px 32px rgba(0, 0, 0, 0.14), inset 0 1px 0 rgba(255, 255, 255, 0.18);
+  --glass-border: rgba(255, 255, 255, 0.20);
   --glass-rim: rgba(241, 245, 241, 0.20);
   --glass-focus: #7FC49A;
   --glass-selected-border: #7FC49A;
@@ -636,11 +648,11 @@
   --glass-shadow-overlay: inset 0 1px 0 var(--glass-rim), 0 24px 48px -16px rgba(0, 0, 0, 0.5);
   --glass-shadow-sheet: inset 0 1px 0 var(--glass-rim), 0 -4px 24px -8px rgba(0, 0, 0, 0.3);
 
-  --btn-tint: rgba(255, 255, 255, 0.14);
-  --btn-tint-action: rgba(127, 196, 154, 0.26);
-  --btn-tint-danger: rgba(239, 160, 150, 0.22);
-  --btn-glass-border: rgba(255, 255, 255, 0.14);
-  --btn-rim: inset 0 1px 1px rgba(255, 255, 255, 0.12);
+  --btn-tint: rgba(255, 255, 255, 0.10);
+  --btn-tint-action: rgba(255, 255, 255, 0.10);
+  --btn-tint-danger: rgba(255, 255, 255, 0.10);
+  --btn-glass-border: rgba(255, 255, 255, 0.20);
+  --btn-rim: inset 0 1px 0 rgba(255, 255, 255, 0.18);
   --btn-tint-solid: #7FC49A;
   --btn-content: #F1F5F1;
   --btn-on-solid: #08150F;
@@ -654,9 +666,10 @@
   --card-shadow: 0 4px 14px rgba(0, 0, 0, 0.40), 0 1px 3px rgba(0, 0, 0, 0.30);
   --card-shadow-elevated: 0 10px 28px rgba(0, 0, 0, 0.48), 0 2px 6px rgba(0, 0, 0, 0.32);
 
-  --material-bar-bg: rgba(17, 30, 23, 0.50);
-  --material-bar-border: rgba(255, 255, 255, 0.12);
-  --material-sheet-bg: rgba(15, 26, 20, 0.80);
+  --material-bar-bg: rgba(255, 255, 255, 0.10);
+  --material-bar-border: rgba(255, 255, 255, 0.20);
+  --material-sheet-bg: rgba(30, 32, 30, 0.62);
+  --card-saturate: 110%;
 }
 
 

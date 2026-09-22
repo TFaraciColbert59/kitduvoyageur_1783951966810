@@ -102,11 +102,11 @@ export default function NavigationPlateau({ controller }: { controller: Navigati
         // M03 — hauteur utile 44 px pour chaque bouton (content-box
         // 44 + padding-top 4 = 48, moins les 8 px glissés sous la
         // barre : la hauteur totale étendue reste 92 px).
-        width: 'calc(100% - 4px)',
-        height: 48,
-        marginBottom: -8,
-        paddingTop: 4,
-        paddingBottom: 0,
+        width: 'calc(100% - 8px)',
+        height: 40,
+        marginBottom: 0,
+        paddingTop: 2,
+        paddingBottom: 2,
         background: 'var(--material-bar-bg)',
         backdropFilter: 'blur(var(--material-bar-blur)) saturate(var(--material-bar-saturate))',
         WebkitBackdropFilter: 'blur(var(--material-bar-blur)) saturate(var(--material-bar-saturate))',

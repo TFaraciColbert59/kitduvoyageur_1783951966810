@@ -50,7 +50,7 @@ export function Chip({
       !disabled &&
       'active:scale-[var(--motion-press-scale)] motion-reduce:active:scale-100',
     disabled && 'pointer-events-none opacity-[var(--opacity-disabled)]',
-    'border-[color:var(--btn-glass-border)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] shadow-[var(--btn-rim)]',
+    'lkv-glass lkv-glass-interactive',
     selected ? 'font-bold text-[color:var(--lkv-text-primary)]' : TONE[tone],
     className
   );

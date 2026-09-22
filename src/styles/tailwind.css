@@ -172,13 +172,35 @@
   .text-lkv-title-xl { font-size: var(--lkv-text-title-xl); line-height: 1.12; letter-spacing: var(--lkv-tracking-title); font-weight: var(--lkv-weight-bold); }
   .lkv-tabular-nums { font-variant-numeric: var(--lkv-font-numeric); }
 
+  /* Phase 3 (final) — MATÉRIAU VERRE CANONIQUE, neutre blanc.
+     Une seule recette pour toute la couche UI (navigation, contrôles,
+     overlays) : transparent, lumineux, sans teinte verte. */
+  .lkv-glass {
+    background: linear-gradient(180deg, var(--glass-fill-top), var(--glass-fill-bottom));
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--glass-shadow-final);
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturation));
+    backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturation));
+  }
+
+  .lkv-glass-interactive {
+    transition: transform var(--motion-control-duration) var(--motion-ease-standard),
+      background var(--motion-control-duration) var(--motion-ease-standard),
+      border-color var(--motion-control-duration) var(--motion-ease-standard);
+  }
+
+  .lkv-glass-interactive:active {
+    transform: scale(var(--motion-press-scale));
+    background: var(--glass-fill-active);
+  }
+
   /* Phase 2 — matériau de barre flottante (Liquid Glass web). */
   .lkv-material-bar {
-    background-color: var(--material-bar-bg);
+    background: linear-gradient(180deg, var(--glass-fill-top), var(--glass-fill-bottom));
     border: 1px solid var(--material-bar-border);
-    box-shadow: var(--btn-rim);
-    -webkit-backdrop-filter: blur(var(--material-bar-blur)) saturate(var(--material-bar-saturate));
-    backdrop-filter: blur(var(--material-bar-blur)) saturate(var(--material-bar-saturate));
+    box-shadow: var(--glass-shadow-final);
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturation));
+    backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturation));
   }
 
   /* Phase 2 — en-tête collant : matériau + liseré bas uniquement. */

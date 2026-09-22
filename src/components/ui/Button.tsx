@@ -45,8 +45,7 @@ const ICON_SIZE: Record<ButtonSize, string> = {
 
 /* Phase 3 — « rien de plein » : tous les boutons sont du verre (teinté pour
    les variantes sémantiques), jamais un aplat de couleur. */
-const GLASS_BASE =
-  'border border-[color:var(--btn-glass-border)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] shadow-[var(--btn-rim)] hover:brightness-[1.05]';
+const GLASS_BASE = 'lkv-glass lkv-glass-interactive hover:brightness-[1.06]';
 
 const VARIANT: Record<ButtonVariant, string> = {
   primary: `${GLASS_BASE} text-[color:var(--lkv-text-primary)]`,

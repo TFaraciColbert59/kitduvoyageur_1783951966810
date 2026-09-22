@@ -68,7 +68,7 @@ test('capture la matrice de référence', async ({ page }, testInfo) => {
 
     try {
       await page.goto(route, { waitUntil: 'domcontentloaded', timeout: 45_000 });
-      await page.waitForTimeout(1500);
+      await page.waitForTimeout(2800);
       finalUrl = page.url();
       title = await page.title();
       await page.screenshot({

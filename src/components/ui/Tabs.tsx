@@ -79,8 +79,8 @@ export function Tabs({
                 baseItem,
                 'min-h-[var(--control-height-sm)] rounded-full px-[var(--space-4)] text-[length:var(--lkv-text-footnote)]',
                 active
-                  ? 'border border-[color:var(--btn-glass-border)] bg-[color:var(--btn-tint)] font-bold text-[color:var(--lkv-text-primary)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] shadow-[var(--btn-rim)]'
-                  : 'border border-[color:var(--glass-border)] bg-[color:var(--btn-tint)] text-[color:var(--btn-content)] backdrop-blur-[var(--btn-blur)]'
+                  ? 'lkv-glass lkv-glass-interactive font-bold text-[color:var(--lkv-text-primary)]'
+                  : 'lkv-glass lkv-glass-interactive text-[color:var(--btn-content)]'
               )}
             >
               {option.icon}
@@ -120,8 +120,8 @@ export function Tabs({
               baseItem,
               'min-h-[var(--control-height-sm)] flex-1 rounded-full px-[var(--space-3)] text-[length:var(--lkv-text-footnote)]',
               active
-                ? 'border border-[color:var(--btn-glass-border)] bg-[color:var(--btn-tint)] text-[color:var(--lkv-text-primary)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] shadow-[var(--btn-rim)]'
-                : 'border border-transparent text-[color:var(--lkv-text-secondary)]'
+                ? 'lkv-glass lkv-glass-interactive text-[color:var(--lkv-text-primary)]'
+                : 'text-[color:var(--lkv-text-secondary)]'
             )}
           >
             {option.icon}

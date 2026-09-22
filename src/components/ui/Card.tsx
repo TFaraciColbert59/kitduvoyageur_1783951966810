@@ -23,9 +23,8 @@ const TONE: Record<CardTone, string> = {
   info: 'border-[color:var(--lkv-info)]',
 };
 
-/* Phase 3 — TOUTES les cartes partagent le MÊME liquid glass (aucun aplat). */
-const GLASS =
-  'bg-[color:var(--glass-bg-medium)] border border-[color:var(--glass-border)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] shadow-[var(--glass-depth-inset)]';
+/* Phase 3 — TOUTES les cartes partagent le MÊME verre neutre (aucun aplat). */
+const GLASS = 'lkv-glass';
 
 const VARIANT: Record<CardVariant, string> = {
   standard: `${GLASS} rounded-[var(--lkv-radius-card)] p-[var(--space-5)]`,

@@ -40,10 +40,8 @@ export default function HeaderBackButton({
         }
       }}
       className={cn(
-        'inline-flex h-[var(--control-height-md)] w-[var(--control-height-md)] shrink-0 items-center justify-center rounded-full',
+        'lkv-glass lkv-glass-interactive inline-flex h-[var(--control-height-md)] w-[var(--control-height-md)] shrink-0 items-center justify-center rounded-full',
         'text-[color:var(--lkv-text-primary)]',
-        'transition-transform duration-[var(--motion-press-duration)] ease-[var(--motion-ease-standard)]',
-        'active:scale-[var(--motion-press-scale)]',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]',
         className
       )}

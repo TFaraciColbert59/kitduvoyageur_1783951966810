@@ -23,10 +23,8 @@ const SIZE: Record<IconButtonSize, string> = {
 const VARIANT: Record<IconButtonVariant, string> = {
   ghost:
     'bg-transparent text-[color:var(--lkv-text-primary)] hover:bg-[color:var(--lkv-hover-surface)]',
-  glass:
-    'bg-[color:var(--card-tint-strong)] text-[color:var(--card-content)] border border-[color:var(--glass-border)] backdrop-blur-[var(--blur-md)] hover:bg-[color:var(--lkv-hover-surface)]',
-  solid:
-    'bg-[color:var(--btn-tint)] text-[color:var(--lkv-text-primary)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] shadow-[var(--btn-rim)] hover:brightness-[1.05]',
+  glass: 'lkv-glass lkv-glass-interactive text-[color:var(--lkv-text-primary)]',
+  solid: 'lkv-glass lkv-glass-interactive text-[color:var(--lkv-text-primary)]',
 };
 
 /**
