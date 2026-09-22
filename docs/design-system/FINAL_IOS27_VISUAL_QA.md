@@ -1,5 +1,30 @@
 # FINAL iOS 27 — Visual QA (refinement mobile)
 
+## Itération « Navigation + contraste + radius » (commit `159893c1`)
+
+### Bottom navigation — architecture finale
+- **Exactement 5 destinations**, ordre définitif : **Hub · Communauté · Explorer · Messages · Compte** (`destinationRegistry`, test `m02` verrouille l'ordre et les hrefs).
+- **Matériel retiré** de la bottom bar (fonctionnalité intacte ; `/materiel` + `/kits` rattachés à l'onglet Hub pour l'état actif).
+- **Hamburger supprimé** (aucun 6ᵉ item) ; `MobileDrawer` détaché de `MobileNavWrapper` (orphelin après suppression du déclencheur).
+- Géométrie : hauteur **60 px** (`--nav-height`), rayon **32 px** (`--lkv-radius-nav`), marges latérales 12 px, plateau local **40 px**, sélection en **capsule** de verre, un seul plateau (pas 5 boutons séparés).
+- Iconographie : `home · users · compass · message-square · user` (pack masque SF-like), monochrome, taille optique 26.
+
+### Contraste (priorité absolue)
+- Nouveaux tokens : `--icon-primary 0.96` · `--icon-secondary 0.72` · `--icon-tertiary 0.56` · `--icon-on-light 0.90/0.64`.
+- `TabItem` : sélection = blanc 0.96 + capsule, non-sélection = blanc 0.72 (plus d'icône invisible).
+- **Base neutre adaptative** du verre : `--glass-base rgba(12,16,14,0.34)` sous le gradient blanc → texte/icônes blancs lisibles même quand la photo est très lumineuse derrière, sans teinter le verre en vert.
+
+### Radius — famille unique premium
+`control 18` · `button 20` · `card 28` · `large-card 32` · `sheet 36` · `nav 32` (`tokens.css` + `tailwind.config.js`), rayon concentrique conservé.
+
+### Vérification
+- Captures réelles : `docs/qa/final-ios27/iteration-nav/` (4 gabarits) — HUB inspecté : 5 icônes lisibles ✅, barre ronde ✅, sélection évidente ✅, fond visible ✅, pas de barre pleine largeur ✅, pas de collision ✅.
+- `type-check` ✅ 0 · `lint` ✅ 0 · `vitest` ✅ **2 948 tests** · `verify:invariants` ✅ 6/6 · `build` ✅ 15,9 s.
+
+### Reste (non fait)
+Explorer (retrait logo/progression/profil-recherche + zones de contrôles tokenisées) · `ReadableSurface` · `LocalSectionBar` nommé + unification des sélecteurs · formulaires (`/carnets/nouveau`, `/groupes/nouveau`, global) · purge primary (~72 usages live) · contrat `IconName` + purge des couleurs d'icônes · propagation aux 9 familles (≥2 passes chacune) · invariants + `audit-final-ui.mjs`.
+
+
 > Skills appliqués : **apple-ui-designer**, **browser-qa**, **verification-before-completion** (`ui-designer` et `test-engineer` n'existent pas dans cet environnement — non inventés).
 > App réelle inspectée sur `http://localhost:4028` (build de production local, captures Playwright + sondes DOM).
 
