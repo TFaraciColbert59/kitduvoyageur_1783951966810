@@ -1,4 +1,3 @@
-import type { LkvIconName } from '@/components/ui/LkvIcon';
 import type { Locale } from '@/lib/i18n/locale';
 
 /**
@@ -18,9 +17,9 @@ import type { Locale } from '@/lib/i18n/locale';
  */
 export type DestinationId =
   | 'adventures'
-  | 'explorer'
-  | 'gear'
   | 'community'
+  | 'explorer'
+  | 'messages'
   | 'me';
 
 export interface Destination {
@@ -29,7 +28,8 @@ export interface Destination {
   /** Libellés statiques FR/EN, résolus par `getDestinationLabel`. */
   label: { fr: string; en: string };
   ariaLabel: string;
-  iconName: LkvIconName;
+  /** Nom de glyphe résolu par la primitive canonique `Icon`. */
+  iconName: string;
   /**
    * Préfixes reconnus. Une route n'appartient qu'à une destination :
    * aucun chemin ne doit apparaître dans deux destinations.
@@ -37,17 +37,17 @@ export interface Destination {
   matchPaths: readonly string[];
 }
 
+/* Phase 3 (final) — 5 destinations, ordre définitif :
+   HUB · COMMUNAUTÉ · EXPLORER · MESSAGES · COMPTE.
+   Matériel n'est plus une destination principale (accessible via Hub,
+   préparation, voyage, départ) ; le hamburger est supprimé. */
 export const DESTINATIONS: readonly Destination[] = [
   {
     id: 'adventures',
     href: '/hub',
-    label: { fr: 'Aventures', en: 'Adventures' },
-    ariaLabel:
-      'Aventures : aventure active, préparation et voyages',
+    label: { fr: 'Hub', en: 'Hub' },
+    ariaLabel: 'Hub : aventure active, préparation et voyages',
     iconName: 'tent',
-    // /voyages, /groupes, /equipages, /preparation, /terrain, /alertes et
-    // /mes-aventures redirigent 307 vers /hub (hubRedirects) : ce sont des
-    // alias de la surface Aventures, jamais des surfaces autonomes.
     matchPaths: [
       '/hub',
       '/voyages',
@@ -58,23 +58,9 @@ export const DESTINATIONS: readonly Destination[] = [
       '/terrain',
       '/alertes',
       '/recommandations',
+      '/materiel',
+      '/kits',
     ],
-  },
-  {
-    id: 'explorer',
-    href: '/explorer',
-    label: { fr: 'Explorer', en: 'Explore' },
-    ariaLabel: 'Explorer les sentiers, pays et destinations',
-    iconName: 'compass',
-    matchPaths: ['/explorer', '/hors-ligne', '/pays'],
-  },
-  {
-    id: 'gear',
-    href: '/materiel',
-    label: { fr: 'Matériel', en: 'Gear' },
-    ariaLabel: 'Matériel : kit actif et équipement',
-    iconName: 'bag',
-    matchPaths: ['/materiel'],
   },
   {
     id: 'community',
@@ -91,13 +77,28 @@ export const DESTINATIONS: readonly Destination[] = [
       '/experts',
       '/evenements',
       '/feed',
-      '/messagerie',
     ],
+  },
+  {
+    id: 'explorer',
+    href: '/explorer',
+    label: { fr: 'Explorer', en: 'Explore' },
+    ariaLabel: 'Explorer les sentiers, pays et destinations',
+    iconName: 'compass',
+    matchPaths: ['/explorer', '/hors-ligne', '/pays'],
+  },
+  {
+    id: 'messages',
+    href: '/messagerie',
+    label: { fr: 'Messages', en: 'Messages' },
+    ariaLabel: 'Messagerie : conversations et demandes',
+    iconName: 'message-square',
+    matchPaths: ['/messagerie'],
   },
   {
     id: 'me',
     href: '/compte',
-    label: { fr: 'Moi', en: 'Me' },
+    label: { fr: 'Compte', en: 'Account' },
     ariaLabel: 'Mon compte voyageur et ma progression',
     iconName: 'user',
     matchPaths: ['/compte', '/connexion', '/inscription', '/profil', '/progression'],

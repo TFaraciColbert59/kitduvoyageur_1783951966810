@@ -27,8 +27,8 @@ function walk(dir: string, acc: string[] = []): string[] {
 
 describe('LOT 2 — safe areas et offsets : source unique', () => {
   it('tokens.css déclare les offsets canoniques (barre, plateau, page, clavier)', () => {
-    expect(tokens).toContain('--nav-height: 52px;');
-    expect(tokens).toContain('--nav-plateau-height: 48px;');
+    expect(tokens).toContain('--nav-height: 60px;');
+    expect(tokens).toContain('--nav-plateau-height: 40px;');
     expect(tokens).toContain('--nav-offset: calc(var(--nav-height) + var(--safe-bottom));');
     expect(tokens).toContain('--nav-offset-extended:');
     expect(tokens).toContain('--page-top-inset: calc(var(--safe-top) + var(--space-2));');

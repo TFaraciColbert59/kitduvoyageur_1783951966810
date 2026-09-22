@@ -13,10 +13,10 @@ import type { DestinationId } from '@/components/mobile-nav/destinationRegistry'
 /* Phase 3 — glyphes SF-like (pack masque) pour la bottom bar, plus modernes
    que les pictos legacy du drawer. */
 const TAB_ICON: Record<DestinationId, string> = {
-  adventures: 'tent',
-  explorer: 'compass',
-  gear: 'backpack',
+  adventures: 'home',
   community: 'users',
+  explorer: 'compass',
+  messages: 'message-square',
   me: 'user',
 };
 import type { Destination } from '@/components/mobile-nav/destinationRegistry';
@@ -209,7 +209,7 @@ const TabItem = memo(function TabItem({
         <Icon
           name={TAB_ICON[destination.id]}
           size={onLongPress ? 28 : 26}
-          color={isActive ? 'var(--lkv-primary)' : 'var(--lkv-text-secondary)'}
+          color={isActive ? 'var(--icon-primary)' : 'var(--icon-secondary)'}
         />
       </motion.span>
       {badge > 0 && <BadgeDot count={badge} />}

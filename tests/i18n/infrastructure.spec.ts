@@ -165,8 +165,8 @@ describe('P6 — Infrastructure i18n', () => {
         expect(getDestinationLabel(destination.id, 'fr')).toBe(destination.label.fr);
         expect(getDestinationLabel(destination.id, 'en')).toBe(destination.label.en);
       }
-      expect(getDestinationLabel('adventures', 'fr')).toBe('Aventures');
-      expect(getDestinationLabel('adventures', 'en')).toBe('Adventures');
+      expect(getDestinationLabel('adventures', 'fr')).toBe('Hub');
+      expect(getDestinationLabel('adventures', 'en')).toBe('Hub');
     });
   });
 });

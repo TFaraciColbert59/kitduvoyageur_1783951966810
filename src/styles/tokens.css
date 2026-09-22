@@ -177,17 +177,21 @@
   --lkv-touch-min: 44px;
   --lkv-touch-comfortable: 48px;
 
-  /* Phase 2 — formes iOS : capsules pour les contrôles, cartes 26,
-     feuilles 34 en haut, et rayon concentrique (rayon parent − padding). */
-  --lkv-radius-xs: 8px;
-  --lkv-radius-sm: 12px;
-  --lkv-radius-md: 16px;
+  /* Phase 3 (final) — géométrie premium nettement plus ronde, UNE famille :
+     contrôles 18, boutons 20, cartes 28, grandes cartes 32, feuilles 36,
+     barre de navigation 32. Rayon concentrique = parent − padding. */
+  --lkv-radius-xs: 10px;
+  --lkv-radius-sm: 14px;
+  --lkv-radius-md: 18px;
   --lkv-radius-lg: 24px;
-  --lkv-radius-xl: 24px;
-  --lkv-radius-card: 26px;
-  --lkv-radius-2xl: 24px;
-  --lkv-radius-sheet: 34px;
-  --lkv-radius-control: 14px;
+  --lkv-radius-xl: 28px;
+  --lkv-radius-card: 28px;
+  --lkv-radius-2xl: 32px;
+  --lkv-radius-large-card: 32px;
+  --lkv-radius-sheet: 36px;
+  --lkv-radius-nav: 32px;
+  --lkv-radius-control: 18px;
+  --lkv-radius-button: 20px;
   --lkv-radius-concentric: calc(var(--lkv-radius-card) - var(--space-4));
   --lkv-radius-full: 9999px;
 
@@ -359,8 +363,8 @@
   /* ├─ Shell & navigation — SOURCE UNIQUE des offsets (Phase 2, Lot 2).
      Aucune page ne recalcule le bas d'écran : hauteur barre 52, plateau
      secondaire 48, offsets = hauteur(s) + safe area. */
-  --nav-height: 52px;
-  --nav-plateau-height: 48px;
+  --nav-height: 60px;
+  --nav-plateau-height: 40px;
   --nav-offset: calc(var(--nav-height) + var(--safe-bottom));
   --nav-offset-extended: calc(var(--nav-height) + var(--nav-plateau-height) + var(--space-2) + var(--safe-bottom));
   --header-height: 44px;
@@ -394,10 +398,20 @@
   --tracking-wide: 0.02em;
   --tracking-caps: 0.04em;
 
-  /* ├─ Matériau verre canonique (Phase 3 final — neutre blanc) */
-  --glass-fill-top: rgba(255, 255, 255, 0.14);
-  --glass-fill-bottom: rgba(255, 255, 255, 0.075);
-  --glass-fill-active: rgba(255, 255, 255, 0.17);
+  /* ├─ Contraste des icônes UI (Phase 3 final) — jamais invisibles. */
+  --icon-primary: rgba(255, 255, 255, 0.96);
+  --icon-secondary: rgba(255, 255, 255, 0.72);
+  --icon-tertiary: rgba(255, 255, 255, 0.56);
+  --icon-on-light: rgba(10, 18, 15, 0.90);
+  --icon-on-light-secondary: rgba(10, 18, 15, 0.64);
+
+  /* ├─ Matériau verre canonique (Phase 3 final — neutre, adaptatif) */
+  --glass-fill-top: rgba(255, 255, 255, 0.13);
+  --glass-fill-bottom: rgba(255, 255, 255, 0.09);
+  --glass-fill-active: rgba(255, 255, 255, 0.16);
+  /* Base neutre sombre : garantit un contraste stable du texte/icônes blancs
+     même quand la photo est très lumineuse derrière le verre. */
+  --glass-base: rgba(12, 16, 14, 0.34);
   --glass-blur: 26px;
   --glass-saturation: 1.10;
 

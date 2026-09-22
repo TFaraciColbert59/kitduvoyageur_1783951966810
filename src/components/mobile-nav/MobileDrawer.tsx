@@ -19,7 +19,7 @@ interface NavItem {
   label: string;
   href: string;
   action?: 'search';
-  icon: LkvIconName;
+  icon: string;
 }
 
 interface NavSection {
@@ -282,7 +282,7 @@ export default function MobileDrawer({ isOpen, onClose, onSearchOpen }: MobileDr
                             isActive ? 'bg-[color:var(--lkv-hover-surface)] font-medium' : ''
                           }`}
                         >
-                          <LkvIcon name={item.icon} size={20} />
+                          <LkvIcon name={item.icon as LkvIconName} size={20} />
                           <span className="flex-1">{item.label}</span>
                           {item.href === '/panier' && cartCount > 0 && (
                             <span className="mr-1 rounded-full bg-[color:var(--lkv-secondary)] px-1.5 py-px font-mono text-[10px] font-bold text-[color:var(--lkv-text-inverted)]">

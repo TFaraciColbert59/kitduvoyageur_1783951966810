@@ -4,7 +4,6 @@ import React, { useState } from 'react';
 import dynamic from 'next/dynamic';
 import { usePathname } from 'next/navigation';
 
-import MobileDrawer from '@/components/mobile-nav/MobileDrawer';
 import OfflineBanner from '@/components/mobile-nav/OfflineBanner';
 import SearchOverlay from '@/components/search/SearchOverlay';
 import { HUB_DEPART_HREF } from '@/features/hub/registry/hubSectionRegistry';
@@ -15,7 +14,6 @@ const NavigationBar = dynamic(() => import('@/components/mobile-nav/NavigationBa
 });
 
 export default function MobileNavWrapper() {
-  const [drawerOpen, setDrawerOpen] = useState(false);
   const { openSearch } = useSearchContext();
   const pathname = usePathname();
 
@@ -45,7 +43,6 @@ export default function MobileNavWrapper() {
 
   return (
     <>
-      <MobileDrawer isOpen={drawerOpen} onClose={() => setDrawerOpen(false)} onSearchOpen={openSearch} />
       <NavigationBar />
       <SearchOverlay />
       <OfflineBanner />

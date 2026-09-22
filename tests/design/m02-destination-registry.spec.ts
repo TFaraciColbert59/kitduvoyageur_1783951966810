@@ -65,18 +65,39 @@ describe('M02 — registre des destinations (navigation mobile)', () => {
     expect(getActiveDestinationId('/hub/kit')).toBe('adventures');
     expect(getActiveDestinationId('/explorer')).toBe('explorer');
     expect(getActiveDestinationId('/pays/france')).toBe('explorer');
-    expect(getActiveDestinationId('/materiel')).toBe('gear');
+    // Phase 3 — Matériel n'est plus une destination : il reste rattaché au Hub.
+    expect(getActiveDestinationId('/materiel')).toBe('adventures');
     expect(getActiveDestinationId('/communaute')).toBe('community');
     expect(getActiveDestinationId('/communaute/publier')).toBe('community');
+    expect(getActiveDestinationId('/messagerie')).toBe('messages');
     expect(getActiveDestinationId('/compte')).toBe('me');
     expect(getActiveDestinationId('/progression')).toBe('me');
     expect(getActiveDestinationId('/route-inconnue')).toBeNull();
     expect(getActiveDestinationId(null)).toBeNull();
   });
 
+  it('expose exactement 5 destinations dans l’ordre définitif', () => {
+    expect(DESTINATIONS.map((d) => d.id)).toEqual([
+      'adventures',
+      'community',
+      'explorer',
+      'messages',
+      'me',
+    ]);
+    expect(DESTINATIONS.map((d) => d.href)).toEqual([
+      '/hub',
+      '/communaute',
+      '/explorer',
+      '/messagerie',
+      '/compte',
+    ]);
+    expect(DESTINATIONS.some((d) => (d.id as string) === 'gear')).toBe(false);
+  });
+
   it('retrouve une destination par href exact (état pressé)', () => {
     expect(getDestinationByHref('/hub')?.id).toBe('adventures');
-    expect(getDestinationByHref('/materiel')?.id).toBe('gear');
+    expect(getDestinationByHref('/messagerie')?.id).toBe('messages');
+    expect(getDestinationByHref('/materiel')).toBeNull();
     expect(getDestinationByHref('/inconnu')).toBeNull();
   });
 });

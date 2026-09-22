@@ -176,7 +176,9 @@
      Une seule recette pour toute la couche UI (navigation, contrôles,
      overlays) : transparent, lumineux, sans teinte verte. */
   .lkv-glass {
-    background: linear-gradient(180deg, var(--glass-fill-top), var(--glass-fill-bottom));
+    background:
+      linear-gradient(180deg, var(--glass-fill-top), var(--glass-fill-bottom)),
+      var(--glass-base);
     border: 1px solid var(--glass-border);
     box-shadow: var(--glass-shadow-final);
     -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturation));
@@ -196,7 +198,9 @@
 
   /* Phase 2 — matériau de barre flottante (Liquid Glass web). */
   .lkv-material-bar {
-    background: linear-gradient(180deg, var(--glass-fill-top), var(--glass-fill-bottom));
+    background:
+      linear-gradient(180deg, var(--glass-fill-top), var(--glass-fill-bottom)),
+      var(--glass-base);
     border: 1px solid var(--material-bar-border);
     box-shadow: var(--glass-shadow-final);
     -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturation));

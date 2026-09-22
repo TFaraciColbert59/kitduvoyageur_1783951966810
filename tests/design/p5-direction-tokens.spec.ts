@@ -74,12 +74,12 @@ describe('P5 — échelles espacements, rayons et typographie', () => {
     expect(tailwind).toContain('.lkv-screen-x');
   });
 
-  it('rayons Phase 2 : cartes 26, feuilles 34, contrôles concentriques', () => {
-    expect(tokens).toContain('--lkv-radius-sm: 12px;');
-    expect(tokens).toContain('--lkv-radius-md: 16px;');
+  it('rayons Phase 3 : cartes 28, feuilles 36, contrôles 18, nav 32', () => {
+    expect(tokens).toContain('--lkv-radius-md: 18px;');
     expect(tokens).toContain('--lkv-radius-lg: 24px;');
-    expect(tokens).toContain('--lkv-radius-card: 26px;');
-    expect(tokens).toContain('--lkv-radius-sheet: 34px;');
+    expect(tokens).toContain('--lkv-radius-card: 28px;');
+    expect(tokens).toContain('--lkv-radius-sheet: 36px;');
+    expect(tokens).toContain('--lkv-radius-nav: 32px;');
     expect(tokens).toContain('--lkv-radius-concentric:');
   });
 

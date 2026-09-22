@@ -89,7 +89,7 @@ export default function NavigationSurface({
     >
       <div
         style={{
-          width: 'calc(100vw - 8px)',
+          width: 'calc(100vw - 24px)',
           maxWidth: '480px',
           display: 'flex',
           flexDirection: 'column',
@@ -109,13 +109,12 @@ export default function NavigationSurface({
             zIndex: 2,
             width: '100%',
             height: 'var(--nav-height)',
-            borderRadius: 999,
-            boxShadow: 'var(--card-shadow)',
+            borderRadius: 'var(--lkv-radius-nav)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            padding: '0 clamp(4px, 1.5vw, 8px)',
-            gap: 'clamp(2px, 1.2vw, 6px)',
+            padding: '0 var(--space-2)',
+            gap: 'var(--space-1)',
             // M03 — le pan vertical de la page reste possible au-dessus de la
             // barre ; le plateau garde son propre `pan-x` pour faire défiler
             // les sous-onglets.

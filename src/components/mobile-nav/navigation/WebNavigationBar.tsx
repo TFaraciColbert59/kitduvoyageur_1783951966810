@@ -13,7 +13,6 @@ import {
 import TabItem from './TabItem';
 import NavigationSurface from './NavigationSurface';
 import NavigationPlateau from './NavigationPlateau';
-import HamburgerMenu from './HamburgerMenu';
 import { useNavigationBadges } from './useNavigationBadges';
 import { useNavigationPlateau } from './useNavigationPlateau';
 import { useProminentAction } from './ProminentAction';
@@ -21,7 +20,6 @@ import { useProminentAction } from './ProminentAction';
 function WebNavigationBar() {
   const pathname = usePathname();
   const [mounted, setMounted] = useState(false);
-  const [menuOpen, setMenuOpen] = useState(false);
   const [pressedTab, setPressedTab] = useState<string | null>(null);
   // M08 — le prefetch des Link suit la politique réseau existante
   // (réseau inconnu = traité comme limité, jamais de prefetch aveugle).
@@ -41,7 +39,7 @@ function WebNavigationBar() {
   const hasUpperExtension = hasExtendedNav(pathname);
 
   const plateauController = useNavigationPlateau(pathname);
-  const { badgeFor, messagerieBadge, cartCount } = useNavigationBadges();
+  const { badgeFor } = useNavigationBadges();
   const openHubSwitcher = useProminentAction(pathname);
 
   // M02 — état actif UNIQUE : le registre résout une seule destination.
@@ -76,13 +74,6 @@ function WebNavigationBar() {
           onLongPress={destination.id === 'adventures' ? openHubSwitcher : undefined}
         />
       ))}
-
-      <HamburgerMenu
-        menuOpen={menuOpen}
-        setMenuOpen={setMenuOpen}
-        messagerieBadge={messagerieBadge}
-        cartCount={cartCount}
-      />
     </NavigationSurface>
   );
 }
