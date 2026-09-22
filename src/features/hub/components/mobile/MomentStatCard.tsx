@@ -13,7 +13,7 @@ export function MomentStatCard({ eyebrow, badge, children, cta }: MomentStatCard
   return (
     <section
       aria-label={eyebrow}
-      className="relative overflow-hidden rounded-[var(--lkv-radius-card)] bg-[var(--lkv-primary)] p-4 text-white shadow-sm"
+      className="relative overflow-hidden rounded-[var(--lkv-radius-card)] lkv-glass p-4 text-[color:var(--lkv-text-primary)]"
     >
       <span
         className="pointer-events-none absolute -right-10 -top-12 h-40 w-40 rounded-full bg-white/10"
@@ -25,9 +25,9 @@ export function MomentStatCard({ eyebrow, badge, children, cta }: MomentStatCard
       />
 
       <header className="relative flex items-start justify-between gap-2">
-        <p className="text-[10px] font-medium uppercase tracking-[0.14em] text-white/75">{eyebrow}</p>
+        <p className="text-[10px] font-medium uppercase tracking-[0.14em] text-[color:var(--lkv-text-secondary)]">{eyebrow}</p>
         {badge && (
-          <span className="shrink-0 rounded-full bg-white/15 px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.08em]">
+          <span className="shrink-0 rounded-full bg-white/15 px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.08em] text-[color:var(--lkv-text-primary)]">
             {badge}
           </span>
         )}
@@ -38,7 +38,7 @@ export function MomentStatCard({ eyebrow, badge, children, cta }: MomentStatCard
       {cta && (
         <HapticLink
           href={cta.href}
-          className="relative mt-4 flex h-11 items-center justify-center gap-1.5 rounded-full bg-white/95 px-4 text-xs font-bold text-[var(--lkv-primary)] shadow-2xs transition-transform active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+          className="relative mt-4 flex h-11 items-center justify-center gap-1.5 rounded-full border border-[color:var(--btn-glass-border)] bg-[color:var(--btn-tint)] px-4 text-xs font-bold text-[color:var(--lkv-text-primary)] lkv-rim-btn backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] transition-transform hover:brightness-[1.05] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]"
         >
           <span className="truncate">{cta.label}</span>
           <ArrowRight size={14} className="shrink-0" aria-hidden="true" />

@@ -107,7 +107,7 @@ export function NextActionCard({ actions, checklist, variant = 'default' }: Next
         } min-h-[44px] ${
           isAllClear
             ? 'glass'
-            : 'border border-[var(--lkv-forest-900)]/15 bg-[var(--lkv-forest-900)] text-sage-300 shadow-sm'
+            : 'lkv-glass lkv-glass-interactive'
         }`}
         style={reduceMotion ? undefined : { transition: 'transform 0.15s ease' }}
       >
@@ -117,7 +117,7 @@ export function NextActionCard({ actions, checklist, variant = 'default' }: Next
           } ${
             isAllClear
               ? 'border-white/60 bg-white/70 text-[var(--lkv-secondary)]'
-              : 'border-white/20 bg-white/10 text-sage-300'
+              : 'border border-[color:var(--glass-border)] bg-[color:var(--glass-bg-medium)] text-[color:var(--lkv-text-primary)]'
           }`}
         >
           <Icon size={compact ? 16 : 19} aria-hidden="true" />
@@ -126,30 +126,24 @@ export function NextActionCard({ actions, checklist, variant = 'default' }: Next
           <span
             className={`block font-medium uppercase tracking-[0.14em] ${
               compact ? 'text-[9px]' : 'text-[10px]'
-            } ${isAllClear ? 'text-[var(--lkv-text-muted)]' : 'text-sage-300/80'}`}
+            } text-[color:var(--lkv-text-muted)]`}
           >
             {isAllClear ? 'À jour' : 'Prochaine action'}
           </span>
           <span
-            className={`block truncate font-bold ${compact ? 'text-[13px]' : 'text-sm'} ${
-              isAllClear ? 'text-[var(--lkv-text-primary)]' : 'text-white'
-            }`}
+            className={`block truncate font-bold ${compact ? 'text-[13px]' : 'text-sm'} text-[color:var(--lkv-text-primary)]`}
           >
             {picked.title}
           </span>
           <span
-            className={`block truncate ${compact ? 'text-[11px]' : 'text-xs'} ${
-              isAllClear ? 'text-[var(--lkv-text-secondary)]' : 'text-white/70'
-            }`}
+            className={`block truncate ${compact ? 'text-[11px]' : 'text-xs'} text-[color:var(--lkv-text-secondary)]`}
           >
             {picked.description}
           </span>
         </span>
         <ArrowRight
           size={compact ? 15 : 17}
-          className={`shrink-0 transition-transform group-hover:translate-x-0.5 ${
-            isAllClear ? 'text-[var(--lkv-text-muted)]' : 'text-white/80'
-          }`}
+          className="shrink-0 text-[color:var(--lkv-text-muted)] transition-transform group-hover:translate-x-0.5"
           aria-hidden="true"
         />
       </div>
