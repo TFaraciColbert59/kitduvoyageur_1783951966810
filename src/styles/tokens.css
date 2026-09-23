@@ -748,6 +748,8 @@
   --lkv-radius-hero: 38px;
   --lkv-radius-sheet: 44px;
   --lkv-radius-full: 9999px;
+  --lkv-radius-concentric-floor: 20px;
+  --lkv-radius-concentric-strict: max(calc(var(--lkv-radius-card) - var(--space-4)), var(--lkv-radius-concentric-floor));
 
   /* Hiérarchie des couches Z-Index */
   --z-base: 1;

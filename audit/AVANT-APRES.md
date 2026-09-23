@@ -1,109 +1,102 @@
-# Audit Comparatif Avant / Après — Refonte Full Liquid Glass iOS 27 LKDV
+# Comparatif Avant / Après — Chantier "Full Liquid Glass iOS 27"
 
-> **Projet :** Le Kit du Voyageur (LKDV)  
-> **Branche de travail :** `design/ios27-full-glass`  
-> **Date de clôture :** 23 Septembre 2026  
-> **Statut global :** ✅ **100% CONFORME — TOUS LES CRITÈRES DE VALIDATION VERTS**
+**Auteurs :** Design Lead Apple Human Interface & Tech Lead Front Next.js 15  
+**État d'avancement :** Lot 0-1a finalisé (Garde-fous, Tokens Verre, Primitives UI). Lots 1 à 5 programmés.
 
 ---
 
-## 1. Synthèse Exécutive de la Refonte
+## 1. Synthèse des Transformations Fondatrices (Lot 0-1a)
 
-La refonte **Full Liquid Glass iOS 27** transforme radicalement l'interface de *Le Kit du Voyageur* en un système monochromatique fluide, conforme aux Human Interface Guidelines d'Apple et aux standards WCAG 2.2 AA.
-
-Toutes les couleurs d'accent primaires historiques (`#17402C`, `#2D6B4A`, vert menthe, aplats opaques) ont été éradiquées des composants d'interface de premier plan au profit d'une hiérarchie purement optique : **densité du verre, réfraction, liserés spéculaires (rims), typographie vibrante et contrastes mathématiques certifiés**.
-
-### Métriques Clés de Qualification
-- **Routes auditées et testées :** 79 routes applicatives.
-- **Suite de tests de design (`tests/design/`) :** **14 suites / 147 tests passés (100% vert)**.
-- **Vérification TypeScript (`tsc --noEmit`) :** **0 erreur**.
-- **Linting (`npm run lint`) :** **0 erreur**.
-- **Build de production (`npm run build`) :** **Code 0 (Succès complet)**.
-- **Conformité d'Identité (`identity_compliance.mjs`) :** **Vert**.
+| Domaine | État Antérieur ("Avant") | État Actuel Lot 0-1a ("En cours") | Cible Finale Validée |
+|:---|:---|:---|:---|
+| **Palette & Monochromie** | Nombreuses couleurs d'accent menthe/vertes (`#2D6B4A`, `text-emerald-*`, etc.) dispersées dans les composants UI. | Palette bannie éradiquée à 100% de `src/`. Primitives d'interface (`Button`, `Chip`, `Tabs`, `SearchField`, `Card`, etc.) 100% monochromes en Liquid Glass. | 0 accent résiduel sur l'intégralité des 79 routes applicatives. |
+| **Matière Verre** | Verre plat, opacités arbitraires, absence de liseré assombri, pas de relief tactile. | Système à 5 niveaux calibré (`tokens.css` : G0 fond, G1 structure, G2 intérieur, G3 prominent, GC clair) avec liseré assombri spéculaire iOS 27. | Composant `GlassSurface` universel et propagation sur toutes les fiches, tuiles et modales. |
+| **Géométrie & Rayons** | Rayons hétérogènes (14px, 18px), champs rectangulaires, absence de concentricité formalisée. | Capsule obligatoire (`rounded-full` 9999px) sur boutons, chips, champs et tabs. Plancher de concentricité strict fixé à 20px (`radius.spec.ts`). | Hiérarchie 24/28/32/38/44px déployée sur toutes les pages sans aucune exception. |
+| **Zones Tactiles & Ergonomie** | Boutons d'icônes carrés de ~12px ou < 44px, collisions avec la barre de navigation basse. | `IconButton` normalisé en cercle de 44×44px minimum (`w-11 h-11`). Wrapper de page ajusté avec 24px de dégagement de sécurité. | Variable dynamique `--content-pb` calculée avec `--tabbar-h` et `--safe-bottom` dans `MobilePageShell`. |
+| **Accessibilité & Contraste** | Textes menthe sur fond clair (< 2:1), absence de validation contrastes pire-pixel. | Système de tokens `var(--glass-label)`, `secondary`, `tertiary` calibrés pour garantir >= 4.5:1 / 3:1 (`contrast.spec.ts`). | Audit automatique axe-core et Lighthouse CI sur 100% des routes et des 3 niveaux d'intensité. |
+| **Contrôle d'Intensité** | Aucune personnalisation de la densité du verre. | Sélecteur 3 niveaux (Subtil 20%, Équilibré 50%, Profond 85%) dans les paramètres avec hydratation instantanée sans flash (`layout.tsx`). | Persistance et adaptation contextuelle continue sur les 79 routes. |
 
 ---
 
-## 2. Résolution des 16 Observations Fondatrices (OBS-G01 à OBS-G16)
+## 2. État d'Avancement des Constats Spécifiques (OBS-G01 à OBS-G16)
 
-| Réf. | Problème Avant Refonte | Solution Appliquée & Validée | Statut |
-| :--- | :--- | :--- | :---: |
-| **OBS-G01** | Collision Bottom Bar : Le dernier élément de contenu était masqué ou chevauché par la barre de navigation flottante. | Définition de `--content-pb: calc(var(--tabbar-h) + var(--safe-bottom, 24px) + 28px)` et intégration de la marge de sécurité dans `AppShell.tsx`. | ✅ Résolu |
-| **OBS-G02** | Violation Backdrop Root : Empilement de `backdrop-filter: blur(...)` imbriqués causant des artefacts et des chutes de framerate. | Architecture 5 niveaux : G1 porte le flou matériel réel (`backdrop-filter`), G2 et G3 imbriqués utilisent uniquement l'opacité lumineuse et les liserés spéculaires sans flou dupliqué. | ✅ Résolu |
-| **OBS-G03** | Couleurs primaires d'accent omniprésentes (vert conifère, menthe, orange) rompant la promesse Liquid Glass. | Monochromie absolue : interface neutre verre + encre sombre (mode clair) ou lumière/blanc (mode sombre). Éradication validée par `no-primary.spec.ts`. | ✅ Résolu |
-| **OBS-G04** | Manque de contraste sur verre (WCAG < 4.5:1) dans certains états d'intensité. | Validation mathématique du pire pixel sur les 3 niveaux d'intensité (`--glass-intensity` 0, 0.5, 1) via `contrast.spec.ts` (ratio ≥ 4.5:1 corps, ≥ 3.0:1 grands titres). | ✅ Résolu |
-| **OBS-G05** | Rayons non concentriques (angles écrasés ou discordants entre cartes mères et enfants). | Formule canonique $R_{interne} = \max(R_{externe} - P, 0)$ appliquée dans `GlassSurface.tsx` et validée par `radius.spec.ts`. | ✅ Résolu |
-| **OBS-G06** | Pas de dégradation gracieuse pour `prefers-reduced-transparency`. | Media query dédiée dans `tokens.css` basculant instantanément sur un fond plein à haute lisibilité avec liseré contrasté sans transparence ni flou. | ✅ Résolu |
-| **OBS-G07** | Absence de contrôle utilisateur pour l'intensité du verre. | Sélecteur d'intensité Liquid Glass (Subtil 20%, Équilibré 50%, Profond 85%) ajouté dans les réglages du compte avec persistance `localStorage` et bootstrap instantané au chargement du DOM dans `layout.tsx`. | ✅ Résolu |
-| **OBS-G08** | Boutons d'action bruts rectangulaires ou avec aplats verts. | Standardisation sur `Button.tsx` (G3 monochrome proéminent / G2 verre secondaire) en capsules complètes `rounded-full`, min-height 44px HIG. | ✅ Résolu |
-| **OBS-G09** | Cartes composites hétérogènes avec bordures opaques. | `Card.tsx` refondue avec les tokens de verre liquide (`g1`/`g2`), anneau de sélection spéculaire monochrome et fond translucide. | ✅ Résolu |
-| **OBS-G10** | Indicateurs de chargement artisanaux et disparates. | `Spinner.tsx` unifié en monochrome `var(--glass-label)` et squelettes `Skeleton.tsx` dotés du shimmer spéculaire Liquid Glass sans aplat opaque. | ✅ Résolu |
-| **OBS-G11** | Interrupteurs (toggles) utilisant l'accent de marque. | `Switch.tsx` converti en bascule verre liquide iOS 27 (piste G2 translucide, pouce G3 blanc pur spéculaire, zéro vert). | ✅ Résolu |
-| **OBS-G12** | Champs de recherche et de saisie rectangulaires opaques. | `SearchField.tsx` en capsule G2 avec liseré spéculaire, icônes et textes en encre vibrante. | ✅ Résolu |
-| **OBS-G13** | Contrôles segmentés et onglets avec aplats verts ou gris. | `Tabs.tsx` refondu en piste G1 continue et pastille active G3 monochrome en surimpression. | ✅ Résolu |
-| **OBS-G14** | Chips de filtrage aux teintes incohérentes. | `Chip.tsx` en capsule G2 avec sélection G3 monochrome proéminente instantanée. | ✅ Résolu |
-| **OBS-G15** | Toile de fond coupée lors du défilement ou sur écrans longs. | Fond applicatif fixe `min-height: 100dvh` (`.lkv-app-background`) sans calques opaques destructeurs. | ✅ Résolu |
-| **OBS-G16** | Mentions techniques internes et fuites de données grossistes (BigBuy). | Filtre `cleanItemName.ts` nettoyant les dénominations catalogue et consignation des bugs métier dans `audit/BUGS-METIER.md`. | ✅ Résolu |
+### OBS-G01 · Tab bar qui masque le contenu au scroll
+- **Avant :** Le bas des pages (formulaires, totaux, cartes, listes de courses) était recouvert par la barre de navigation mobile fixe.
+- **Actuel (Lot 0-1a - Partiel) :** Marge de dégagement de sécurité (`paddingBottom: 'var(--space-6, 24px)'`) ajoutée sur le conteneur interne de `AppShell.tsx:75` sans casser l'invariant de test `paddingBottom: 'var(--bottom-nav-height)'`.
+- **Preuve :** `src/components/shell/AppShell.tsx:75`.
+- **Reste à faire (Lot 1 P0) :** Formalisation de `--content-pb` calculé dynamiquement avec `--tabbar-h` et `--safe-bottom` dans `MobilePageShell` et suppression des marges ad-hoc.
 
----
+### OBS-G02 · Fond qui s'interrompt en bande vert uni
+- **Avant :** Lors d'un scroll prononcé ou sur les pages courtes, une bande vert forêt unie apparaissait en arrière-plan.
+- **Actuel (Lot 0-1a - Partiel) :** Token de matière G0 et dégradé ambiant définis dans `tokens.css:738-742`.
+- **Reste à faire (Lot 1 P0) :** Déploiement du conteneur G0 fixed à `100dvh` sur l'ensemble du layout racine pour garantir un défilement infini sans rupture visuelle.
 
-## 3. Matrice Avant / Après par Composant Clé
+### OBS-G03 · Titres menthe avec contraste insuffisant (< 2:1)
+- **Avant :** Titres H1/H2 et badges utilisant un vert menthe illisible sur fond clair ou photographique.
+- **Actuel (Lot 0-1a - Partiel) :** Primitives d'en-tête et composants UI convertis en `var(--glass-label)` monochrome haute lisibilité.
+- **Reste à faire (Lot 1 P0 / Lot 3) :** Balayage systématique des classes de titres spécifiques sur les pages `/avis`, `/rapport-expedition`, `/connexion`, etc.
 
-### A. Boutons (`Button.tsx`)
-- **Avant :** Aplats de couleur verte `#17402C`, classes ad-hoc `bg-emerald-600`, texte blanc sur fond opaque, micro-variations de rayon (8px, 12px, 16px).
-- **Après :**
-  - Primaire : Niveau G3 (obsidienne sombre en mode clair, blanc éclatant en mode sombre) avec reflet spéculaire fin.
-  - Secondaire : Niveau G2 (verre translucide 32-52% avec liseré optique `var(--glass-rim)`).
-  - Géométrie : Capsule stadium stricte `rounded-full`, hauteur minimum 44px respectant les cibles tactiles Apple HIG.
+### OBS-G04 · Verre plat et trop transparent
+- **Avant :** Simple `bg-white/10 backdrop-blur-md` sans liseré ni reflet, provoquant des effets de bruit et une perte de relief.
+- **Actuel (Lot 0-1a - Fait) :** Définition dans `tokens.css:738-815` et `liquid-glass.css` des 5 strates avec double rim spéculaire (`--glass-rim`, `--glass-highlight`, `--glass-rim-inner`) reproduisant fidèlement le matériau d'Apple iOS 27.
+- **Preuve :** `tests/design/tokens-sync.spec.ts`, `src/styles/tokens.css:738-815`.
 
-### B. Navigation Inférieure (`NavigationSurface.tsx` & `TabItem.tsx`)
-- **Avant :** Barre flottante avec risque de masquage de contenu, icône active verte, pastille d'activation avec `backdropFilter` imbriqué illicite.
-- **Après :**
-  - Matériau G1 fluide avec flou optique unique.
-  - Indicateur actif G2 en reflet spéculaire sans recalcul de flou.
-  - Icônes monochromes (`var(--glass-label)` pour l'onglet sélectionné, `var(--glass-label-tertiary)` pour les inactifs).
-  - Dégagement garanti du bas d'écran (`paddingBottom` avec réserve de sécurité).
+### OBS-G05 · Présence d'emojis et de drapeaux textuels en lettres
+- **Avant :** Utilisation d'emojis système hétérogènes (boussole, chaussures, drapeaux texte "FR", "IS") dégradant le rendu haut de gamme.
+- **Actuel (Lot 0-1a - Partiel) :** `CountryFlag.tsx` refondu en style verre monochrome.
+- **Reste à faire (Lot 2 / Lot 3) :** Remplacement des emojis des menus d'outils et des pages communautaires par le jeu vectoriel `LkvIcon` et drapeaux SVG dédiés.
 
-### C. Bascules & Contrôles (`Switch.tsx`, `Tabs.tsx`, `Chip.tsx`)
-- **Avant :** Piste verte `#2D6B4A` à l'activation, onglets actifs vert forêt.
-- **Après :**
-  - Track en verre G2 translucide, curseur blanc immaculé avec ombre portée subtile.
-  - Onglets segmentés encapsulés dans un rail G1 avec curseur glissant G3 monochrome.
-  - Chips de filtrage G2 neutres devenant G3 noir/blanc contrasté au clic.
+### OBS-G06 · Typographie monospace sur les prix, poids et durées
+- **Avant :** Polices à espacement fixe appliquées indûment aux montants en euros et aux métriques de randonnée.
+- **Actuel (Lot 0-1a - Partiel) :** Déclaration de la pile SF Pro avec `tabular-nums` dans `tokens.css:202-205`.
+- **Reste à faire (Lot 3) :** Remplacement des classes `font-mono` sur les fiches produits, comparateurs et récapitulatifs de kit.
 
----
+### OBS-G07 · Point décimal anglo-saxon (`55.00 €`, `3.3 L`)
+- **Avant :** Formatage brut en JavaScript avec point décimal sans respect de la typographie française.
+- **Actuel (Lot 0-1a - Partiel) :** Règles établies dans `audit/COPY.md`.
+- **Reste à faire (Lot 2 / Lot 3) :** Utilisation systématique de `Intl.NumberFormat('fr-FR')` sur les composants `PriceTag` et métriques de poids/distance.
 
-## 4. Vérification & Assurance Qualité Finale
+### OBS-G08 · Incohérence des badges de notification
+- **Avant :** Pastilles numériques affichant des valeurs divergentes (3, 6 ou vide) selon la page consultée.
+- **Actuel (Lot 0-1a - Partiel) :** Composant `Badge.tsx` en verre G3 monochrome disponible.
+- **Reste à faire (Lot 2) :** Centralisation de la source d'état de notification pour synchroniser la TopBar et la BottomTabBar.
 
-```bash
-# 1. Tests de design et garde-fous
-$ npx vitest run tests/design/
-✓ tests/design/contrast.spec.ts (4 tests)
-✓ tests/design/radius.spec.ts (2 tests)
-✓ tests/design/no-primary.spec.ts (2 tests)
-✓ tests/design/lot2-shell.spec.ts (10 tests)
-✓ tests/design/unification.spec.ts (5 tests)
-✓ tests/design/x7-bottom-nav-conflict.spec.ts (3 tests)
-...
-Test Files  14 passed (14)
-Tests       147 passed (147)
+### OBS-G09 · Textes de redirection flottants sur photo brute
+- **Avant :** Affichage d'un texte brut "Redirection en cours..." ou "Chargement..." directement superposé à l'image de fond.
+- **Actuel (Lot 0-1a - Partiel) :** Squelettes et spinners en verre développés.
+- **Reste à faire (Lot 2) :** Déplacement des logiques de redirection en Server Actions et squelettes d'attente G1.
 
-# 2. Vérification TypeScript stricte
-$ npx tsc --noEmit
-Exit code: 0 (0 erreurs)
+### OBS-G10 · Squelettes de chargement en dégradé noir/blanc agressif
+- **Avant :** Pulsation gris/noir standard de Tailwind (`animate-pulse bg-gray-200`) rompant l'immersion liquide.
+- **Actuel (Lot 0-1a - Fait) :** `src/components/ui/Skeleton.tsx:14-23` entièrement refondu en shimmer de verre opalescent avec bordure spéculaire `var(--glass-rim)`.
+- **Preuve :** `src/components/ui/Skeleton.tsx:14-23`.
 
-# 3. Linter ESLint
-$ npm run lint
-Exit code: 0 (0 erreurs)
+### OBS-G11 · Jargon interne visible de l'utilisateur
+- **Avant :** Mentions de "PHASE 3/5", "TIER", "Données réelles", "Secours démo", "Fixtures locales", "Moyenne bayésienne".
+- **Actuel (Lot 0-1a - Partiel) :** Inventaire d'éradication complet dressé dans `audit/COPY.md`.
+- **Reste à faire (Lot 3) :** Remplacement des libellés dans les interfaces de fidélité, de rapport d'expédition et d'outils.
 
-# 4. Build de production Next.js
-$ npm run build
-✓ Compiled successfully
-✓ Generating static pages (79 routes)
-Exit code: 0
-```
+### OBS-G12 · Sous-onglets empilés sur la tab bar
+- **Avant :** Barres d'onglets secondaires collées sur la barre de navigation basse, produisant des conflits d'interaction tactile.
+- **Actuel (Lot 0-1a - Partiel) :** Composant `Tabs.tsx` refondu en track de verre G1 capsule avec glisseur G3.
+- **Reste à faire (Lot 1 P0 / Lot 2) :** Intégration de la `SubTabBar` isolée avec surélévation et aria-current fiable.
 
----
+### OBS-G13 · Boutons d'icône carrés d'environ 12px
+- **Avant :** Cibles tactiles trop petites (< 44×44 pt), inaccessibles et non conformes aux Human Interface Guidelines.
+- **Actuel (Lot 0-1a - Fait) :** Normalisation de `src/components/ui/IconButton.tsx` en cercle de 44 pt minimum (`w-11 h-11 rounded-full`).
+- **Preuve :** `src/components/ui/IconButton.tsx:28`.
 
-## 5. Conclusion du Chantier
+### OBS-G14 · Contenu collé aux bords de l'écran (x=0)
+- **Avant :** Sur certaines pages de communauté et de feed, les cartes et textes touchaient les bordures physiques de l'écran mobile.
+- **Actuel (Lot 0-1a - Partiel) :** Marges d'écran normalisées dans `AppShell.tsx`.
+- **Reste à faire (Lot 3) :** Vérification route par route sur les flux `/communaute` et `/feed`.
 
-Le chantier **Refonte Full Liquid Glass iOS 27** est intégralement achevé. Le système de design de *Le Kit du Voyageur* est désormais conforme aux exigences les plus strictes de la direction artistique Apple HIG, tout en garantissant des performances graphiques 60fps sur mobile et une accessibilité WCAG 2.2 AA irréprochable.
+### OBS-G15 · Rayons de courbure arbitraires (14-20px) et champs rectangulaires
+- **Avant :** Bords peu arrondis, boutons et champs de formulaire aux angles rigides.
+- **Actuel (Lot 0-1a - Fait) :** Généralisation de la capsule 9999px (`rounded-full`) sur `Button.tsx`, `SearchField.tsx`, `Chip.tsx`, `Tabs.tsx`, et plancher de concentricité à 20px (`tokens.css:751`).
+- **Preuve :** `tests/design/radius.spec.ts:33-58`.
+
+### OBS-G16 · Accents menthe résiduels dans l'interface
+- **Avant :** Vert menthe utilisé pour les statuts actifs, les barres de progression, les coches de sélection et les CTA.
+- **Actuel (Lot 0-1a - Partiel) :** Toutes les primitives UI ont été converties au verre monochrome. `GlobalSearchModal.tsx:319` corrigé en capsule monochrome G3.
+- **Reste à faire (Lot 1 P0 / Lot 3) :** Élimination des 1635 occurrences résiduelles dans les composants métiers spécifiques des 79 routes.

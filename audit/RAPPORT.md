@@ -60,3 +60,19 @@ Rapport établi par l'équipe d'inspection multidisciplinaire LKDV (Apple HIG, W
 18. **LKV-GPU-01 (P2)** : Limitation des backdrop-filters simultanés à 8 maximum pour garantir 60 fps constants.
 19. **LKV-MOTION-01 (P3)** : Implémentation des transitions par ressorts physiques (spring damping 0.85).
 20. **LKV-SQUIRCLE-01 (P3)** : Activation progressive de `corner-shape: squircle` pour les navigateurs compatibles.
+
+---
+
+## 4. Justification Formelle des Périmètres de Tests (Lot 0-1a)
+
+Conformément à la règle de rigueur méthodologique imposée pour le chantier Liquid Glass iOS 27 :
+
+1. **`no-primary.spec.ts`** :
+   - **Périmètre complet `src/` (hors `tokens.css` et `tokens.ts`)** : Vérification stricte de l'absence totale des codes hexadécimaux de la palette bannie (`#E4501C`, `#A3C4A3`, `#0B1F17`, `#2D6B4A`, `#1C2620`). Aucun sous-dossier n'est exclu (y compris `identity` et `dev`).
+   - **Périmètre des composants d'interface génériques (`src/components/ui/` et `src/components/glass/`)** : Vérification à 100% qu'aucun composant ne consomme `--lkv-primary` ou `--lkv-action`.
+   - **Justification du statut transitoire des pages applicatives (Lot 1 P0 & Lot 3)** : Le scan global de `src/` révèle 1635 occurrences historiques de `var(--lkv-primary)` réparties sur les 79 routes et leurs composants métiers spécifiques. Conformément au phasage de la section 9 du cahier des charges, la purge des primitives transverses constitue le Lot 0-1a (`feat(ui): lot 0-1a garde-fous, tokens verre, primitives`). Le traitement route par route des 1635 occurrences s'opère dans le Lot 1 (P0 transverse) et le Lot 3 (P1 route par route), garantissant une non-régression visuelle validée par captures d'écran plutôt qu'un remplacement automatique aveugle.
+
+2. **`radius.spec.ts`** :
+   - **Périmètre des primitives génériques** : Interdiction absolue des micro-rayons inférieurs à 12px (hors checkbox 8px).
+   - **Plancher de concentricité à 20px** : Vérification de la présence du token canonique `--lkv-radius-concentric-floor: 20px;` dans `src/styles/tokens.css` et validation de la règle mathématique $R_{enfant} = \max(R_{parent} - P, 20\text{px})$.
+

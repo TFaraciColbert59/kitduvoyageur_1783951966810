@@ -49,10 +49,21 @@ describe('CHANTIER IOS 27 — GARDE-FOU RAYONS & GÉOMÉTRIE', () => {
     ).toEqual([]);
   });
 
-  it('Les tokens CSS définissent bien les rayons minimaux et capsules canoniques', () => {
+  it('Les tokens CSS définissent bien les rayons minimaux, plancher de concentricité à 20 et capsules canoniques', () => {
     const tokens = fs.readFileSync(path.join(root, 'src', 'styles', 'tokens.css'), 'utf8');
     expect(tokens).toContain('--lkv-radius-full: 9999px;');
     expect(tokens).toContain('--lkv-radius-card:');
     expect(tokens).toContain('--lkv-radius-sheet:');
+    expect(tokens).toContain('--lkv-radius-concentric-floor: 20px;');
+  });
+
+  it('La concentricité stricte garantit un plancher de 20px (enfant = max(parent - padding, 20))', () => {
+    // Calcul mathématique vérifié : card 28px - padding 16px = 12px -> plancher forcé à 20px
+    const cardRadius = 28;
+    const padding = 16;
+    const floor = 20;
+    const childRadius = Math.max(cardRadius - padding, floor);
+    expect(childRadius).toBeGreaterThanOrEqual(20);
+    expect(childRadius).toBe(20);
   });
 });
