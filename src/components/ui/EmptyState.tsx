@@ -1,8 +1,10 @@
 'use client';
 
-import Icon from '@/components/ui/Icon';
 import React from 'react';
 import Link from 'next/link';
+import { cn } from '@/lib/utils';
+import Icon from '@/components/ui/Icon';
+import Button from '@/components/ui/Button';
 
 export interface EmptyStateProps {
   icon?: React.ReactNode;
@@ -16,6 +18,10 @@ export interface EmptyStateProps {
   compact?: boolean;
 }
 
+/**
+ * EmptyState — État vide canonique en Liquid Glass iOS 27 (Lot 2).
+ * 100% monochrome, lisibilité WCAG 2.2 AA (>= 4.5:1), icône en capsule de verre G1.
+ */
 export function EmptyState({
   icon,
   title,
@@ -26,38 +32,44 @@ export function EmptyState({
   className = '',
   compact = false,
 }: EmptyStateProps) {
-  const actionBtn = (
-    <button
-      type="button"
+  const actionButton = actionLabel ? (
+    <Button
+      variant="primary"
+      size={compact ? 'sm' : 'md'}
       onClick={onAction}
-      className={`inline-flex items-center gap-2 bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] text-[color:var(--lkv-text-primary)] font-semibold rounded-[var(--lkv-radius-md)] hover:brightness-[1.05] active:scale-[0.97] transition-all duration-150 min-h-[44px] shadow-sm ${
-        compact ? 'px-4 py-2 text-xs' : 'px-5 py-2.5 text-xs sm:text-sm'
-      }`}
+      icon={<Icon name="arrow-right" size={14} />}
+      iconPosition="trailing"
     >
-      <span>{actionLabel}</span>
-      <Icon name="arrow-right" className="w-4 h-4" />
-    </button>
-  );
+      {actionLabel}
+    </Button>
+  ) : null;
 
   if (compact) {
     return (
       <div
-        className={`flex flex-col items-center justify-center py-6 px-4 text-center ${className}`}
+        className={cn(
+          'flex flex-col items-center justify-center py-6 px-4 text-center select-none',
+          className
+        )}
       >
         {icon && (
-          <div className="mb-2.5 text-lkv-secondary flex items-center justify-center">{icon}</div>
+          <div className="mb-2 text-[color:var(--glass-label)] flex items-center justify-center">
+            {icon}
+          </div>
         )}
-        <h3 className="text-sm font-bold text-lkv-primary">{title}</h3>
+        <h3 className="text-sm font-bold text-[color:var(--glass-label)]">{title}</h3>
         {description && (
-          <p className="text-xs text-lkv-text-muted max-w-xs mt-1 leading-relaxed">{description}</p>
+          <p className="text-xs text-[color:var(--glass-secondary)] max-w-xs mt-1 leading-relaxed">
+            {description}
+          </p>
         )}
-        {actionLabel && actionHref && (
+        {actionButton && actionHref && (
           <Link href={actionHref} className="mt-3 inline-flex">
-            {actionBtn}
+            {actionButton}
           </Link>
         )}
-        {actionLabel && onAction && !actionHref && (
-          <span className="mt-3 inline-flex">{actionBtn}</span>
+        {actionButton && onAction && !actionHref && (
+          <span className="mt-3 inline-flex">{actionButton}</span>
         )}
       </div>
     );
@@ -65,23 +77,33 @@ export function EmptyState({
 
   return (
     <div
-      className={`flex flex-col items-center justify-center py-12 px-6 text-center ${className}`}
+      className={cn(
+        'g1 flex flex-col items-center justify-center py-12 px-6 text-center select-none',
+        'rounded-[var(--lkv-radius-card)] border border-[color:var(--glass-rim)] shadow-sm',
+        className
+      )}
     >
       {icon ? (
-        <div className="mb-4 text-lkv-secondary flex items-center justify-center">{icon}</div>
+        <div className="mb-4 text-[color:var(--glass-label)] flex items-center justify-center">
+          {icon}
+        </div>
       ) : (
-        <div className="mb-4 w-14 h-14 rounded-[var(--lkv-radius-lg)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] shadow-[var(--btn-rim)] border border-lkv-primary/10 flex items-center justify-center text-lkv-secondary">
-          <Icon name="compass" className="w-7 h-7" />
+        <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full g2 border border-[color:var(--glass-rim)] text-[color:var(--glass-label)] shadow-sm">
+          <Icon name="compass" size={28} />
         </div>
       )}
-      <h3 className="text-base font-bold text-lkv-primary mb-1.5">{title}</h3>
+      <h3 className="text-base font-bold text-[color:var(--glass-label)] mb-1.5">{title}</h3>
       {description && (
-        <p className="text-xs sm:text-sm text-lkv-text-muted max-w-sm mb-6 leading-relaxed">
+        <p className="text-xs sm:text-sm text-[color:var(--glass-secondary)] max-w-sm mb-6 leading-relaxed">
           {description}
         </p>
       )}
-      {actionLabel && actionHref && <Link href={actionHref}>{actionBtn}</Link>}
-      {actionLabel && onAction && !actionHref && actionBtn}
+      {actionButton && actionHref && (
+        <Link href={actionHref} className="inline-flex">
+          {actionButton}
+        </Link>
+      )}
+      {actionButton && onAction && !actionHref && actionButton}
     </div>
   );
 }
@@ -93,32 +115,41 @@ export interface ErrorStateProps {
   className?: string;
 }
 
+/**
+ * ErrorState — État d'erreur canonique en Liquid Glass iOS 27 (Lot 2).
+ */
 export function ErrorState({
   title = 'Une erreur est survenue',
-  message = "Nous n'avons pas pu charger cette vue. Vérifiez votre connexion et réessayez.",
+  message = "Nous n'avons pas pu charger ces données. Vérifiez votre connexion et réessayez.",
   onRetry,
   className = '',
 }: ErrorStateProps) {
   return (
     <div
-      className={`flex flex-col items-center justify-center py-12 px-6 text-center ${className}`}
+      role="alert"
+      className={cn(
+        'g1 flex flex-col items-center justify-center py-12 px-6 text-center select-none',
+        'rounded-[var(--lkv-radius-card)] border border-red-500/20 shadow-sm',
+        className
+      )}
     >
-      <div className="mb-4 w-14 h-14 rounded-[var(--lkv-radius-lg)] bg-[color:var(--lkv-danger-bg)] border border-[color:var(--lkv-danger)]/30 flex items-center justify-center text-[color:var(--lkv-danger)]">
-        <Icon name="alert-triangle" className="w-7 h-7" />
+      <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-red-500/10 border border-red-500/30 text-red-300">
+        <Icon name="alert-triangle" size={28} />
       </div>
-      <h3 className="text-base font-bold text-lkv-primary mb-1.5">{title}</h3>
-      <p className="text-xs sm:text-sm text-lkv-text-muted max-w-sm mb-6 leading-relaxed">
+      <h3 className="text-base font-bold text-[color:var(--glass-label)] mb-1.5">{title}</h3>
+      <p className="text-xs sm:text-sm text-[color:var(--glass-secondary)] max-w-sm mb-6 leading-relaxed">
         {message}
       </p>
       {onRetry && (
-        <button
-          type="button"
+        <Button
+          variant="secondary"
+          size="md"
           onClick={onRetry}
-          className="inline-flex items-center gap-2 px-5 py-2.5 bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] text-[color:var(--lkv-text-primary)] text-xs sm:text-sm font-semibold rounded-[var(--lkv-radius-md)] hover:brightness-[1.05] active:scale-[0.97] transition-all duration-150 min-h-[44px] shadow-sm"
+          icon={<Icon name="rotate-ccw" size={14} />}
+          iconPosition="leading"
         >
-          <Icon name="rotate-ccw" className="w-4 h-4" />
-          <span>Réessayer</span>
-        </button>
+          Réessayer
+        </Button>
       )}
     </div>
   );

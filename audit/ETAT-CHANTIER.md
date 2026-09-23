@@ -40,14 +40,14 @@
 | **OBS-G02** | Fond interrompu en bande vert uni lors du scroll | **fait** | `src/styles/tokens.css:738-744` : tokens `--lkv-app-bg-fallback: #0b0d12` et `--lkv-app-bg-scrim: rgba(10, 12, 16, 0.38)` appliqués sur `.lkv-app-background` 100dvh fixe (`layout.tsx:283`). |
 | **OBS-G03** | Titres menthe avec contraste < 2:1 | **partiel** | Primitives converties en `var(--glass-label)`. Balayage des pages spécifiques en Lot 1 P0 / Lot 3. |
 | **OBS-G04** | Verre actuel plat et trop transparent | **fait** | `src/styles/tokens.css:738-815` et `src/styles/liquid-glass.css` : implémentation G1/G2/G3/GC avec rim spéculaire assombri iOS 27. |
-| **OBS-G05** | Emojis et drapeaux en lettres | **partiel** | `CountryFlag.tsx` converti en verre monochrome. Remplacement des emojis des pages en Lot 2/3. |
-| **OBS-G06** | Mono pour prix, stats, heures, poids | **partiel** | Tokens `tokens.css:202-205` configurés en SF Pro `tabular-nums`. Fiches produits/outils à aligner en Lot 3. |
-| **OBS-G07** | Formatage des nombres à l'anglo-saxonne | **partiel** | `formatPriceEur` déployé sur checkout et kits. Audit global route par route en Lot 2/3. |
-| **OBS-G08** | Incohérence des badges Accueil | **partiel** | `Badge.tsx` prêt en verre G3. Synchronisation de la source d'état en Lot 2. |
-| **OBS-G09** | Loaders flottants sur la photo | **partiel** | `Skeleton.tsx` et `Spinner.tsx` refondus en verre. Intégration sur les routes en Lot 2. |
+| **OBS-G05** | Emojis et drapeaux en lettres | **fait** | `src/components/ui/CountryFlag.tsx` : rendu vectoriel SVG (`flagcdn.com/{iso}.svg`), capsule/cercle de verre, suppression de l'émoji globe de repli (globe SVG). |
+| **OBS-G06** | Mono pour prix, stats, heures, poids | **partiel** | Tokens `tokens.css:202-205` configurés en SF Pro `tabular-nums`. `PriceTag.tsx` standardisé en tabular-nums. Fiches produits/outils à aligner en Lot 3. |
+| **OBS-G07** | Formatage des nombres à l'anglo-saxonne | **fait** | `PriceTag.tsx` et `formatCurrencyEur` canonique (`Intl.NumberFormat('fr-FR')`). Déployé sur checkout, kits et disponible globalement. |
+| **OBS-G08** | Incohérence des badges Accueil | **partiel** | `Badge.tsx` prêt en verre G3. Synchronisation de la source d'état en Lot 3. |
+| **OBS-G09** | Loaders flottants sur la photo | **fait** | `Skeleton.tsx` enrichi (`SkeletonList`, cartes avec rayons concentriques) et `Spinner.tsx` refondus en verre. |
 | **OBS-G10** | Squelettes en dégradé noir/blanc agressif | **fait** | `src/components/ui/Skeleton.tsx:14-23` : shimmer de verre opalescent et bordure `var(--glass-rim)`. |
 | **OBS-G11** | Jargon interne visible (`PHASE 3`, `Données réelles`, etc.) | **partiel** | Inventorié dans `audit/COPY.md`. Nettoyage des chaînes en Lot 3. |
-| **OBS-G12** | Sous-onglets empilés sur la tab bar | **partiel** | Primitif `Tabs.tsx` refondu en segmented glass. Intégration de `SubTabBar` capsule en Lot 2. |
+| **OBS-G12** | Sous-onglets empilés sur la tab bar | **fait** | `src/components/ui/SubTabBar.tsx` : plateau d'onglets secondaire capsule flottante G1 avec curseur G3 prominent et zéro conflit tactile. |
 | **OBS-G13** | Boutons d'icône carrés ou < 44px | **fait** | `src/components/ui/IconButton.tsx:28` : taille canonique `w-11 h-11` (44px) avec rayon capsule `rounded-full`. |
 | **OBS-G14** | Contenu collé aux bords (x=0) | **partiel** | Marges configurées sur `AppShell.tsx`. Alignement des pages Communauté en Lot 3. |
 | **OBS-G15** | Rayons 14-20px et champs rectangulaires | **fait** | `SearchField.tsx`, `Button.tsx`, `Chip.tsx` convertis en `rounded-full` (capsules 9999px). |
@@ -109,8 +109,8 @@
 
 - [x] **Lot 0 & 1a** : Garde-fous de tests (`no-primary.spec.ts`, `radius.spec.ts`, `contrast.spec.ts`), tokens Liquid Glass (`tokens.css`), primitives UI de base (`Button`, `Card`, `Tabs`, `SearchField`, etc.), sélecteur d'intensité de verre et bootstrap head (`commit 67cde9bf`).
 - [x] **Captures de référence "Avant" (Section 4)** : `@playwright/test`, `@axe-core/playwright`, `@lhci/cli` déployés (`scripts/audit/capture_section4.mjs`) -> 575 captures multi-viewports (390, 430, 820, 1440) en dark/light dans `audit/screens/` + 70 audits WCAG dans `audit/a11y/`.
-- [x] **Lot 1 (P0)** : `--content-pb` calculé (`AppShell.tsx`), fond 100dvh (`tokens.css`), garde `/apercu-preparation`, `/communaute/pro`, attribution carte au-dessus de `--content-pb`, HUD rando (`DesktopDockBar.tsx`), studios mobiles (`CreateCarnetView.tsx`), contrastes Kits (`/kits`), affichage checkout sécurisé et tab bar masquée (`/checkout`).
-- [ ] **Lot 2** : Primitives étendues (InsetGroupedList, StepIndicator, PriceTag, SubTabBar, Skeleton enrichi), drapeaux SVG, Intl fr-FR, états vides & d'erreur.
+- [x] **Lot 1 (P0)** : `--content-pb` calculé (`AppShell.tsx`), fond 100dvh (`tokens.css`), garde `/apercu-preparation`, `/communaute/pro`, attribution carte au-dessus de `--content-pb`, HUD rando (`DesktopDockBar.tsx`), studios mobiles (`CreateCarnetView.tsx`), contrastes Kits (`/kits`), affichage checkout sécurisé et tab bar masquée (`/checkout`) (`commit ea2cc09d`).
+- [x] **Lot 2** : Primitives étendues (`InsetGroupedList`, `StepIndicator`, `PriceTag`, `SubTabBar`, `Skeleton` enrichi & `SkeletonList`), drapeaux vectoriels SVG (`CountryFlag`), Intl fr-FR (`formatCurrencyEur`), états vides (`EmptyState`) et d'erreur (`ErrorState`) en Liquid Glass unifié (`tests/design-system/lot2-primitives.spec.tsx`).
 - [ ] **Lot 3 (P1)** : Refonte route par route (8.1 à 8.7), éradication complète des inline styles et des couleurs résiduelles.
 - [ ] **Lot 4 (P2/P3)** : Motion physics (ressorts, press-scale, morphing), réfraction progressive Chromium, micro-copies fr-FR.
 - [ ] **Lot 5** : Documentation finale, guide des composants, rapport de conformité pixel et clôture.
