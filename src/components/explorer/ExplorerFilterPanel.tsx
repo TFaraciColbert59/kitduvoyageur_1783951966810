@@ -13,7 +13,7 @@ export interface PoiFilterItem {
 export const POI_FILTERS: PoiFilterItem[] = [
   { id: 'refuge', label: 'Refuges & Cabanes', color: '#17402C' },
   { id: 'water', label: "Points d'eau", color: '#0284C7' },
-  { id: 'summit', label: 'Sommets & Pics', color: '#2D6B4A' },
+  { id: 'summit', label: 'Sommets & Pics', color: '#334155' },
   { id: 'camping', label: 'Bivouac & Camping', color: '#16A34A' },
   { id: 'col', label: 'Cols', color: '#D97706' },
   { id: 'waterfall', label: 'Cascades', color: '#0EA5E9' },

@@ -103,10 +103,16 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
   const [pauseModalOpen, setPauseModalOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [deleteConfirmationText, setDeleteConfirmationText] = useState('');
+  const [glassIntensity, setGlassIntensity] = useState(0.5);
 
   // 1. Load saved settings on initial client render from localStorage
   useEffect(() => {
     try {
+      const storedIntensity = localStorage.getItem('lkdv_glass_intensity');
+      if (storedIntensity !== null) {
+        const parsed = parseFloat(storedIntensity);
+        if (!isNaN(parsed)) setGlassIntensity(parsed);
+      }
       const savedSettings = localStorage.getItem('user_account_settings_v1');
       if (savedSettings) {
         const parsed = JSON.parse(savedSettings);
@@ -235,6 +241,15 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
       setDirtyCount(0);
       if (onSave) onSave('Tous vos réglages ont été enregistrés et sauvegardés en base !');
     }, 600);
+  };
+
+  const handleGlassIntensityChange = (val: number) => {
+    setGlassIntensity(val);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('lkdv_glass_intensity', String(val));
+      document.documentElement.style.setProperty('--glass-intensity', String(val));
+    }
+    if (onSave) onSave(`Intensité Liquid Glass réglée sur ${Math.round(val * 100)}%`);
   };
 
   const handleExportData = () => {
@@ -845,6 +860,39 @@ export default function ParametresCompteCard({ profile, onSave }: ParametresComp
                     <option value="monday">Lundi</option>
                     <option value="sunday">Dimanche</option>
                   </select>
+                </div>
+
+                {/* Intensité Liquid Glass iOS 27 */}
+                <div className="pt-4 border-t border-[color:var(--glass-rim)] space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <label className="block font-mono text-[10px] uppercase tracking-widest text-[color:var(--glass-label)] font-bold">
+                        Intensité Liquid Glass
+                      </label>
+                      <p className="text-xs text-[color:var(--glass-label-secondary)] mt-0.5">
+                        Densité optique, réfraction et clarté de l'interface en verre.
+                      </p>
+                    </div>
+                    <Badge tone="stone" className="font-mono text-[10px]">
+                      {Math.round(glassIntensity * 100)}%
+                    </Badge>
+                  </div>
+                  <div className="grid grid-cols-3 gap-2">
+                    {[
+                      { label: 'Subtil (20%)', value: 0.2 },
+                      { label: 'Équilibré (50%)', value: 0.5 },
+                      { label: 'Profond (85%)', value: 0.85 },
+                    ].map((level) => (
+                      <Chip
+                        key={level.value}
+                        selected={Math.abs(glassIntensity - level.value) < 0.15}
+                        onClick={() => handleGlassIntensityChange(level.value)}
+                        className="w-full text-center"
+                      >
+                        {level.label}
+                      </Chip>
+                    ))}
+                  </div>
                 </div>
               </div>
             </div>

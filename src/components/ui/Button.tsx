@@ -43,16 +43,20 @@ const ICON_SIZE: Record<ButtonSize, string> = {
   lg: 'h-[var(--control-height-lg)] w-[var(--control-height-lg)]',
 };
 
-/* Phase 3 — « rien de plein » : tous les boutons sont du verre (teinté pour
-   les variantes sémantiques), jamais un aplat de couleur. */
-const GLASS_BASE = 'lkv-glass lkv-glass-interactive hover:brightness-[1.06]';
-
+/* iOS 27 Full Liquid Glass Button Scale:
+   Primary: G3 monochrome prominent (obsidian/light contrast)
+   Secondary: G2 neutral glass with specular rim
+   Ghost: transparent with glass hover
+   Destructive: tinted glass */
 const VARIANT: Record<ButtonVariant, string> = {
-  primary: `${GLASS_BASE} text-[color:var(--lkv-text-primary)]`,
-  secondary: `${GLASS_BASE} text-[color:var(--lkv-text-secondary)]`,
+  primary:
+    'bg-[color:var(--g3-bg)] text-[color:var(--g3-text)] shadow-[var(--glass-specular)] hover:brightness-[1.08]',
+  secondary:
+    'bg-[color:var(--g2-bg)] text-[color:var(--glass-label)] border border-[color:var(--glass-rim)] shadow-[var(--glass-specular)] backdrop-blur-md hover:brightness-[1.08]',
   ghost:
-    'bg-transparent text-[color:var(--lkv-text-primary)] hover:bg-[color:var(--lkv-hover-surface)]',
-  destructive: `${GLASS_BASE} text-[color:var(--lkv-danger-dark)]`,
+    'bg-transparent text-[color:var(--glass-label)] hover:bg-[color:var(--lkv-hover-surface)]',
+  destructive:
+    'bg-red-500/15 border border-red-500/30 text-[color:var(--lkv-danger)] hover:bg-red-500/25',
 };
 
 /**

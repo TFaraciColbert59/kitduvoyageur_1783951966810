@@ -22,8 +22,8 @@ const SIZE: Record<SpinnerSize, string> = {
 };
 
 const TONE: Record<SpinnerTone, string> = {
-  primary: 'border-[color:var(--lkv-primary)]',
-  accent: 'border-[color:var(--lkv-secondary)]',
+  primary: 'border-[color:var(--glass-label)]',
+  accent: 'border-[color:var(--glass-label-secondary)]',
   danger: 'border-[color:var(--lkv-danger)]',
   inverted: 'border-[color:var(--lkv-text-inverted)]',
   muted: 'border-[color:var(--lkv-text-muted)]',

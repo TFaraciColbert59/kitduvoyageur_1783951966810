@@ -691,7 +691,153 @@
   --material-bar-border: rgba(255, 255, 255, 0.20);
   --material-sheet-bg: rgba(30, 32, 30, 0.62);
   --card-saturate: 110%;
+
+  /* iOS 27 Liquid Glass Inks & Layers (Dark Mode) */
+  --glass-tint-rgb: 34 34 38;
+  --glass-label: #FFFFFF;
+  --glass-label-secondary: #E2E8E4;
+  --glass-label-tertiary: #B2C2B8;
+  --glass-label-quaternary: #7A8C82;
+
+  --g1-bg: rgb(var(--glass-tint-rgb) / calc(0.50 + 0.32 * var(--glass-intensity, 0.5)));
+  --g2-bg: rgb(255 255 255 / calc(0.08 + 0.08 * var(--glass-intensity, 0.5)));
+  --g3-bg: rgba(255, 255, 255, 0.90);
+  --g3-text: #121815;
+  --gc-bg: rgba(255, 255, 255, 0.12);
+
+  --glass-rim: 0 0 0 0.5px rgba(0, 0, 0, 0.55);
+  --glass-rim-inner: inset 0 0 0 0.5px rgba(255, 255, 255, 0.22);
+  --glass-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.18);
+  --glass-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
 }
 
+/* ══════════════════════════════════════════════════════════════════
+   iOS 27 FULL LIQUID GLASS CANONICAL SPECIFICATION (5 Niveaux)
+   ══════════════════════════════════════════════════════════════════ */
+:root {
+  --glass-intensity: 0.5;
+  --glass-tint-rgb: 255 255 255;
+  --glass-ink: 18 24 21;
+  --glass-blur: calc(20px + 12px * var(--glass-intensity));
+  --glass-sat: 180%;
+
+  /* Typographie vibrante monochrome */
+  --glass-label: #121815;
+  --glass-label-secondary: #324038;
+  --glass-label-tertiary: #526359;
+  --glass-label-quaternary: #7E9186;
+
+  /* Couches de matière (G1 = flou, G2/G3 = lumière/matière sans flou) */
+  --g1-bg: rgb(var(--glass-tint-rgb) / calc(0.46 + 0.30 * var(--glass-intensity)));
+  --g2-bg: rgb(var(--glass-tint-rgb) / calc(0.32 + 0.20 * var(--glass-intensity)));
+  --g3-bg: rgba(18, 24, 21, 0.88);
+  --g3-text: #FFFFFF;
+  --gc-bg: rgba(255, 255, 255, 0.22);
+
+  /* Bords assombris et reflets iOS 27 */
+  --glass-rim: 0 0 0 0.5px rgba(0, 0, 0, 0.22);
+  --glass-rim-inner: inset 0 0 0 0.5px rgba(255, 255, 255, 0.45);
+  --glass-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.55);
+  --glass-shadow: 0 10px 36px rgba(0, 0, 0, 0.16);
+
+  /* Rayons & Concentricité */
+  --lkv-radius-min: 12px;
+  --lkv-radius-tile: 24px;
+  --lkv-radius-popover: 28px;
+  --lkv-radius-card: 28px;
+  --lkv-radius-hero: 38px;
+  --lkv-radius-sheet: 44px;
+  --lkv-radius-full: 9999px;
+
+  /* Hiérarchie des couches Z-Index */
+  --z-base: 1;
+  --z-sticky: 100;
+  --z-subbar: 200;
+  --z-tabbar: 300;
+  --z-hud: 400;
+  --z-sheet: 500;
+  --z-toast: 600;
+  --z-alert: 700;
+
+  /* Dimensions de navigation & compensation de scroll */
+  --nav-height: 56px;
+  --tabbar-h: 72px;
+  --subbar-h: 48px;
+  --content-pb: calc(var(--tabbar-h) + var(--safe-bottom, 24px) + 28px);
+}
+
+/* Classes utilitaires universelles Liquid Glass */
+.g0-backdrop {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100dvh;
+  z-index: -1;
+  background-image: var(--lkv-app-bg-image-portrait);
+  background-size: cover;
+  background-position: center;
+  pointer-events: none;
+}
+@media (min-aspect-ratio: 1 / 1) {
+  .g0-backdrop {
+    background-image: var(--lkv-app-bg-image-landscape);
+  }
+}
+
+.g1 {
+  background: var(--g1-bg);
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+  box-shadow: var(--glass-rim), var(--glass-rim-inner), var(--glass-highlight), var(--glass-shadow);
+  border-radius: var(--lkv-radius-card);
+}
+
+.g2 {
+  background: var(--g2-bg);
+  box-shadow: var(--glass-rim), var(--glass-highlight);
+  border-radius: var(--lkv-radius-tile);
+}
+
+.g3 {
+  background: var(--g3-bg);
+  color: var(--g3-text);
+  box-shadow: var(--glass-rim), inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 4px 16px rgba(0, 0, 0, 0.25);
+  border-radius: var(--lkv-radius-full);
+  font-weight: 600;
+}
+
+.gc {
+  background: var(--gc-bg);
+  backdrop-filter: blur(16px) saturate(160%);
+  -webkit-backdrop-filter: blur(16px) saturate(160%);
+  box-shadow: var(--glass-rim), var(--glass-highlight), 0 4px 14px rgba(0,0,0,0.18);
+  border-radius: var(--lkv-radius-full);
+}
+
+/* Squircle progressif */
+@supports (corner-shape: squircle) {
+  .g1, .g2 { corner-shape: squircle; }
+}
+
+/* Dégradation gracieuse accessibilité */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .g1 { background: rgb(var(--glass-tint-rgb) / 0.94); }
+  .gc { background: rgb(var(--glass-tint-rgb) / 0.90); }
+}
+
+@media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
+  .g1, .g2, .g3, .gc {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+  .g1 {
+    background: rgb(var(--glass-tint-rgb) / 1) !important;
+    box-shadow: 0 0 0 1.5px rgb(var(--glass-ink) / 0.5) !important;
+  }
+  .g2 {
+    background: rgb(var(--glass-ink) / 0.08) !important;
+    box-shadow: 0 0 0 1px rgb(var(--glass-ink) / 0.3) !important;
+  }
+}
 
 .glass { --lkv-text-secondary: var(--glass-text-secondary); }

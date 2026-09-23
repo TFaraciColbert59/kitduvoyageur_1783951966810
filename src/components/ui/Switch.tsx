@@ -73,15 +73,15 @@ export function Switch({
         <span
           aria-hidden="true"
           className={cn(
-            'relative inline-flex h-[28px] w-[48px] items-center rounded-[var(--lkv-radius-full)] border transition-colors duration-[var(--motion-control-duration)] ease-[var(--motion-ease-standard)] motion-reduce:transition-none',
+            'relative inline-flex h-[28px] w-[48px] items-center rounded-[var(--lkv-radius-full)] border transition-all duration-[var(--motion-control-duration)] ease-[var(--motion-ease-standard)] motion-reduce:transition-none',
             checked
-              ? 'border-transparent bg-[color:var(--lkv-action)]'
-              : 'border-[color:var(--lkv-border-strong)] bg-[color:var(--lkv-surface-muted)]'
+              ? 'border-white/40 bg-[color:var(--g3-bg)] shadow-[inset_0_1px_2px_rgba(0,0,0,0.2)]'
+              : 'border-[color:var(--glass-rim)] bg-[color:var(--g2-bg)]'
           )}
         >
           <span
             className={cn(
-              'pointer-events-none absolute top-1/2 block h-[22px] w-[22px] -translate-y-1/2 rounded-[var(--lkv-radius-full)] border border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-card)] shadow-elevation-1 transition-transform duration-[var(--motion-control-duration)] ease-[var(--motion-ease-decelerate)] motion-reduce:transition-none',
+              'pointer-events-none absolute top-1/2 block h-[22px] w-[22px] -translate-y-1/2 rounded-[var(--lkv-radius-full)] border border-white/60 bg-white shadow-[0_2px_6px_rgba(0,0,0,0.25)] transition-transform duration-[var(--motion-control-duration)] ease-[var(--motion-ease-decelerate)] motion-reduce:transition-none',
               checked ? 'translate-x-[24px]' : 'translate-x-[2px]'
             )}
           />

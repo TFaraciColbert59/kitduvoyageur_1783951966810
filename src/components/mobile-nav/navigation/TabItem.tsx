@@ -191,11 +191,9 @@ const TabItem = memo(function TabItem({
             width: 64,
             height: 40,
             borderRadius: 9999,
-            background: 'var(--btn-tint)',
-            border: '1px solid var(--btn-glass-border)',
-            boxShadow: 'var(--btn-rim)',
-            backdropFilter: 'blur(var(--btn-blur)) saturate(var(--btn-saturate))',
-            WebkitBackdropFilter: 'blur(var(--btn-blur)) saturate(var(--btn-saturate))',
+            background: 'var(--g2-bg)',
+            border: '1px solid var(--glass-rim)',
+            boxShadow: 'var(--glass-specular)',
           }}
           transition={{ type: 'spring', stiffness: 450, damping: 32 }}
         />
@@ -209,7 +207,7 @@ const TabItem = memo(function TabItem({
         <Icon
           name={TAB_ICON[destination.id]}
           size={onLongPress ? 28 : 26}
-          color={isActive ? 'var(--icon-primary)' : 'var(--icon-secondary)'}
+          color={isActive ? 'var(--glass-label)' : 'var(--glass-label-tertiary)'}
         />
       </motion.span>
       {badge > 0 && <BadgeDot count={badge} />}

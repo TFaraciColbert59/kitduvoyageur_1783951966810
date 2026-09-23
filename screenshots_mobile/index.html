@@ -1,0 +1,2234 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>LKDV — Galerie Visuelle 100% Mobile (iPhone 14/15/16 Pro)</title>
+  <style>
+    :root {
+      --bg: #090B0A;
+      --card-bg: #121614;
+      --border: rgba(255, 255, 255, 0.08);
+      --accent: #34C759;
+      --text: #F2F5F3;
+      --text-sub: #7E8C83;
+      --font: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, sans-serif;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      -webkit-font-smoothing: antialiased;
+    }
+    header {
+      background: rgba(18, 22, 20, 0.9);
+      backdrop-filter: blur(25px);
+      -webkit-backdrop-filter: blur(25px);
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      padding: 18px 28px;
+    }
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .brand h1 {
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+    .badge-ios {
+      background: rgba(52, 199, 89, 0.15);
+      color: var(--accent);
+      border: 1px solid rgba(52, 199, 89, 0.35);
+      padding: 3px 10px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+    .stats {
+      display: flex;
+      gap: 18px;
+      font-size: 13px;
+      color: var(--text-sub);
+    }
+    .stats strong { color: var(--text); }
+    .toolbar {
+      display: flex;
+      gap: 10px;
+      margin-top: 16px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .search-box {
+      background: #1B211E;
+      border: 1px solid var(--border);
+      color: #fff;
+      padding: 8px 14px;
+      border-radius: 9px;
+      font-size: 13px;
+      width: 260px;
+      outline: none;
+    }
+    .search-box:focus { border-color: var(--accent); }
+    .filter-btn {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      color: var(--text-sub);
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 12px;
+      cursor: pointer;
+    }
+    .filter-btn:hover { color: #fff; background: #1B211E; }
+    .filter-btn.active {
+      background: var(--accent);
+      color: #000;
+      border-color: var(--accent);
+      font-weight: 600;
+    }
+    main {
+      max-width: 1700px;
+      margin: 0 auto;
+      padding: 32px 24px;
+    }
+    .category-header {
+      display: flex;
+      align-items: baseline;
+      gap: 12px;
+      margin: 36px 0 20px 0;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border);
+    }
+    .category-header h2 { font-size: 18px; font-weight: 700; }
+    .category-header .count { color: var(--text-sub); font-size: 12px; }
+    .mobile-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 28px 20px;
+    }
+    .mobile-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .mobile-frame {
+      width: 280px;
+      height: 520px;
+      border: 6px solid #28302C;
+      border-radius: 40px;
+      background: #000;
+      overflow: hidden;
+      position: relative;
+      box-shadow: 0 16px 36px rgba(0,0,0,0.6);
+      transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    .mobile-frame:hover {
+      transform: translateY(-6px);
+      border-color: #3D4A43;
+      box-shadow: 0 22px 48px rgba(0,0,0,0.8);
+    }
+    .notch {
+      position: absolute;
+      top: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 72px;
+      height: 18px;
+      background: #000;
+      border-radius: 12px;
+      z-index: 10;
+      box-shadow: 0 0 0 1px rgba(255,255,255,0.06);
+    }
+    .img-link {
+      display: block;
+      width: 100%;
+      height: 100%;
+      overflow-y: auto;
+      overflow-x: hidden;
+      cursor: zoom-in;
+      position: relative;
+    }
+    .img-link img {
+      width: 100%;
+      display: block;
+    }
+    .zoom-badge {
+      position: absolute;
+      bottom: 14px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0, 0, 0, 0.75);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      backdrop-filter: blur(8px);
+      color: #fff;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 4px 12px;
+      border-radius: 999px;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.2s ease;
+    }
+    .mobile-frame:hover .zoom-badge { opacity: 1; }
+    .card-meta {
+      width: 280px;
+      margin-top: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .top-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      color: var(--text-sub);
+      font-family: ui-monospace, monospace;
+    }
+    .top-row .idx { color: var(--accent); font-weight: 700; }
+    .label {
+      font-size: 13px;
+      font-weight: 600;
+      color: #fff;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .card-meta code {
+      font-size: 11px;
+      color: var(--text-sub);
+      font-family: ui-monospace, monospace;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="top-bar">
+      <div class="brand">
+        <h1>LKDV Mobile Showcase</h1>
+        <span class="badge-ios">iPhone 14/15/16 Pro · 393 × 852</span>
+      </div>
+      <div class="stats">
+        <span><strong>100</strong> écrans</span>
+        <span>Poids : <strong>164.4 Mo</strong></span>
+        <span>Durée : <strong>645s</strong></span>
+      </div>
+    </div>
+    <div class="toolbar">
+      <input type="text" id="searchBox" class="search-box" placeholder="Filtrer une page mobile (/hub, /materiel)...">
+      <button class="filter-btn active" data-filter="all">Tous (100)</button>
+      <button class="filter-btn" data-filter="Général">Général</button>
+<button class="filter-btn" data-filter="Hub">Hub</button>
+<button class="filter-btn" data-filter="Exploration">Exploration</button>
+<button class="filter-btn" data-filter="Équipement">Équipement</button>
+<button class="filter-btn" data-filter="E-commerce">E-commerce</button>
+<button class="filter-btn" data-filter="Destinations">Destinations</button>
+<button class="filter-btn" data-filter="Communauté">Communauté</button>
+<button class="filter-btn" data-filter="Outils">Outils</button>
+<button class="filter-btn" data-filter="Utilisateur">Utilisateur</button>
+<button class="filter-btn" data-filter="Voyages">Voyages</button>
+<button class="filter-btn" data-filter="Contenu">Contenu</button>
+<button class="filter-btn" data-filter="Admin">Admin</button>
+<button class="filter-btn" data-filter="Design System">Design System</button>
+<button class="filter-btn" data-filter="Légal">Légal</button>
+<button class="filter-btn" data-filter="Système">Système</button>
+    </div>
+  </header>
+
+  <main>
+    
+      <section class="category-block" id="cat-g-n-ral">
+        <div class="category-header">
+          <h2>Général</h2>
+          <span class="count">1 écran(s) mobile</span>
+        </div>
+        <div class="mobile-grid">
+          
+        <div class="mobile-card" data-cat="Général" data-title="accueil / vitrine" data-path="/">
+          <div class="mobile-frame">
+            <div class="notch"></div>
+            <a href="001_accueil_mobile.png" target="_blank" class="img-link" title="Agrandir en taille réelle">
+              <img src="001_accueil_mobile.png" loading="lazy" alt="Accueil / Vitrine">
+              <div class="zoom-badge">🔍 Ouvrir</div>
+            </a>
+          </div>
+          <div class="card-meta">
+            <div class="top-row">
+              <span class="idx">#001</span>
+              <span class="size">822 Ko</span>
+            </div>
+            <h3 class="label">Accueil / Vitrine</h3>
+            <code>/</code>
+          </div>
+        </div>
+        </div>
+      </section>
+
+      <section class="category-block" id="cat-hub">
+        <div class="category-header">
+          <h2>Hub</h2>
+          <span class="count">8 écran(s) mobile</span>
+        </div>
+        <div class="mobile-grid">
+          
+        <div class="mobile-card" data-cat="Hub" data-title="hub cockpit voyage" data-path="/hub">
+          <div class="mobile-frame">
+            <div class="notch"></div>
+            <a href="002_hub_mobile.png" target="_blank" class="img-link" title="Agrandir en taille réelle">
+              <img src="002_hub_mobile.png" loading="lazy" alt="Hub Cockpit Voyage">
+              <div class="zoom-badge">🔍 Ouvrir</div>
+            </a>
+          </div>
+          <div class="card-meta">
+            <div class="top-row">
+              <span class="idx">#002</span>
+              <span class="size">973 Ko</span>
+            </div>
+            <h3 class="label">Hub Cockpit Voyage</h3>
+            <code>/hub</code>
+          </div>
+        </div>
+
+        <div class="mobile-card" data-cat="Hub" data-title="hub — créer voyage" data-path="/hub/nouveau">
+          <div class="mobile-frame">
+            <div class="notch"></div>
+            <a href="003_hub-nouveau_mobile.png" target="_blank" class="img-link" title="Agrandir en taille réelle">
+              <img src="003_hub-nouveau_mobile.png" loading="lazy" alt="Hub — Créer Voyage">
+              <div class="zoom-badge">🔍 Ouvrir</div>
+            </a>
+          </div>
+          <div class="card-meta">
+            <div class="top-row">
+              <span class="idx">#003</span>
+              <span class="size">1183 Ko</span>
+            </div>
+            <h3 class="label">Hub — Créer Voyage</h3>
+            <code>/hub/nouveau</code>
+          </div>
+        </div>
+
+        <div class="mobile-card" data-cat="Hub" data-title="hub — itinéraire" data-path="/hub/itineraire">
+          <div class="mobile-frame">
+            <div class="notch"></div>
+            <a href="004_hub-itineraire_mobile.png" target="_blank" class="img-link" title="Agrandir en taille réelle">
+              <img src="004_hub-itineraire_mobile.png" loading="lazy" alt="Hub — Itinéraire">
+              <div class="zoom-badge">🔍 Ouvrir</div>
+            </a>
+          </div>
+          <div class="card-meta">
+            <div class="top-row">
+              <span class="idx">#004</span>
+              <span class="size">1062 Ko</span>
+            </div>
+            <h3 class="label">Hub — Itinéraire</h3>
+            <code>/hub/itineraire</code>
+          </div>
+        </div>
+
+        <div class="mobile-card" data-cat="Hub" data-title="hub — budget & dépenses" data-path="/hub/budget">
+          <div class="mobile-frame">
+            <div class="notch"></div>
+            <a href="005_hub-budget_mobile.png" target="_blank" class="img-link" title="Agrandir en taille réelle">
+              <img src="005_hub-budget_mobile.png" loading="lazy" alt="Hub — Budget & Dépenses">
+              <div class="zoom-badge">🔍 Ouvrir</div>
+            </a>
+          </div>
+          <div class="card-meta">
+            <div class="top-row">
+              <span class="idx">#005</span>
+              <span class="size">1273 Ko</span>
+            </div>
+            <h3 class="label">Hub — Budget & Dépenses</h3>
+            <code>/hub/budget</code>
+          </div>
+        </div>
+
+        <div class="mobile-card" data-cat="Hub" data-title="hub — équipage & rôles" data-path="/hub/groupe">
+          <div class="mobile-frame">
+            <div class="notch"></div>
+            <a href="006_hub-groupe_mobile.png" target="_blank" class="img-link" title="Agrandir en taille réelle">
+              <img src="006_hub-groupe_mobile.png" loading="lazy" alt="Hub — Équipage & Rôles">
+              <div class="zoom-badge">🔍 Ouvrir</div>
+            </a>
+          </div>
+          <div class="card-meta">
+            <div class="top-row">
+              <span class="idx">#006</span>
+              <span class="size">1328 Ko</span>
+            </div>
+            <h3 class="label">Hub — Équipage & Rôles</h3>
+            <code>/hub/groupe</code>
+          </div>
+        </div>
+
+        <div class="mobile-card" data-cat="Hub" data-title="hub — sécurité & checkpoints" data-path="/hub/securite">
+          <div class="mobile-frame">
+            <div class="notch"></div>
+            <a href="007_hub-securite_mobile.png" target="_blank" class="img-link" title="Agrandir en taille réelle">
+              <img src="007_hub-securite_mobile.png" loading="lazy" alt="Hub — Sécurité & Checkpoints">
+              <div class="zoom-badge">🔍 Ouvrir</div>
+            </a>
+          </div>
+          <div class="card-meta">
+            <div class="top-row">
+              <span class="idx">#007</span>
+              <span class="size">1317 Ko</span>
+            </div>
+            <h3 class="label">Hub — Sécurité & Checkpoints</h3>
+            <code>/hub/securite</code>
+          </div>
+        </div>
+
+        <div class="mobile-card" data-cat="Hub" data-title="hub — matériel & inventaire" data-path="/hub/materiel">
+          <div class="mobile-frame">
+            <div class="notch"></div>
+            <a href="008_hub-materiel_mobile.png" target="_blank" class="img-link" title="Agrandir en taille réelle">
+              <img src="008_hub-materiel_mobile.png" loading="lazy" alt="Hub — Matériel & Inventaire">
+              <div class="zoom-badge">🔍 Ouvrir</div>
+            </a>
+          </div>
+          <div class="card-meta">
+            <div class="top-row">
+              <span class="idx">#008</span>
+              <span class="size">1326 Ko</span>
+            </div>
+            <h3 class="label">Hub — Matériel & Inventaire</h3>
+            <code>/hub/materiel</code>
+          </div>
+        </div>
+
+        <div class="mobile-card" data-cat="Hub" data-title="hub — documents" data-path="/hub/documents">
+          <div class="mobile-frame">
+            <div class="notch"></div>
+            <a href="009_hub-documents_mobile.png" target="_blank" class="img-link" title="Agrandir en taille réelle">
+              <img src="009_hub-documents_mobile.png" loading="lazy" alt="Hub — Documents">
+              <div class="zoom-badge">🔍 Ouvrir</div>
+            </a>
+          </div>
+          <div class="card-meta">
+            <div class="top-row">
+              <span class="idx">#009</span>
+              <span class="size">1367 Ko</span>
+            </div>
+            <h3 class="label">Hub — Documents</h3>
+            <code>/hub/documents</code>
+          </div>
+        </div>
+        </div>
+      </section>
+
+      <section class="category-block" id="cat-exploration">
+        <div class="category-header">
+          <h2>Exploration</h2>
+          <span class="count">4 écran(s) mobile</span>
+        </div>
+        <div class="mobile-grid">
+          
+        <div class="mobile-card" data-cat="Exploration" data-title="explorer / recherche sentiers" data-path="/explorer">
+          <div class="mobile-frame">
+            <div class="notch"></div>
+            <a href="010_explorer_mobile.png" target="_blank" class="img-link" title="Agrandir en taille réelle">
+              <img src="010_explorer_mobile.png" loading="lazy" alt="Explorer / Recherche Sentiers">
+              <div class="zoom-badge">🔍 Ouvrir</div>
+            </a>
+          </div>
+          <div class="card-meta">
+            <div class="top-row">
+              <span class="idx">#010</span>
+              <span class="size">1370 Ko</span>
+            </div>
+            <h3 class="label">Explorer / Recherche Sentiers</h3>
+            <code>/explorer</code>
+          </div>
+        </div>
+
+        <div class="mobile-card" data-cat="Exploration" data-title="carte interactive mobile" data-path="/carte-interactive">
+          <div class="mobile-frame">
+            <div class="notch"></div>
+            <a href="011_carte-interactive_mobile.png" target="_blank" class="img-link" title="Agrandir en taille réelle">
+              <img src="011_carte-interactive_mobile.png" loading="lazy" alt="Carte Interactive Mobile">
+              <div class="zoom-badge">🔍 Ouvrir</div>
+            </a>
+          </div>
+          <div class="card-meta">
+            <div class="top-row">
+              <span class="idx">#011</span>
+              <span class="size">1370 Ko</span>
+            </div>
+            <h3 class="label">Carte Interactive Mobile</h3>
+            <code>/carte-interactive</code>
+          </div>
+        </div>
+
+        <div class="mobile-card" data-cat="Exploration" data-title="randonnée active mobile" data-path="/randonnee-active">
+          <div class="mobile-frame">
+            <div class="notch"></div>
+            <a href="012_randonnee-active_mobile.png" target="_blank" class="img-link" title="Agrandir en taille réelle">
+              <img src="012_randonnee-active_mobile.png" loading="lazy" alt="Randonnée Active Mobile">
+              <div class="zoom-badge">🔍 Ouvrir</div>
+            </a>
+          </div>
+          <div class="card-meta">
+            <div class="top-row">
+              <span class="idx">#012</span>
+              <span class="size">1267 Ko</span>
+            </div>
+            <h3 class="label">Randonnée Active Mobile</h3>
+            <code>/randonnee-active</code>
+          </div>
+        </div>
+
+        <div class="mobile-card" data-cat="Exploration" data-title="rapport d’expédition" data-path="/rapport-expedition">
+          <div class="mobile-frame">
+            <div class="notch"></div>
+            <a href="013_rapport-expedition_mobile.png" target="_blank" class="img-link" title="Agrandir en taille réelle">
+              <img src="013_rapport-expedition_mobile.png" loading="lazy" alt="Rapport d’Expédition">
+              <div class="zoom-badge">🔍 Ouvrir</div>
+            </a>
+          </div>
+          <div class="card-meta">
+            <div class="top-row">
+              <span class="idx">#013</span>
+              <span class="size">1531 Ko</span>
+            </div>
+            <h3 class="label">Rapport d’Expédition</h3>
+            <code>/rapport-expedition</code>
+          </div>
+        </div>
+        </div>
+      </section>
+
+      <section class="category-block" id="cat--quipement">
+        <div class="category-header">
+          <h2>Équipement</h2>
+          <span class="count">8 écran(s) mobile</span>
+        </div>
+        <div class="mobile-grid">
+          
+        <div class="mobile-card" data-cat="Équipement" data-title="gestionnaire matériel liquid glass" data-path="/materiel">
+          <div class="mobile-frame">
+            <div class="notch"></div>
+            <a href="014_materiel_mobile.png" target="_blank" class="img-link" title="Agrandir en taille réelle">
+              <img src="014_materiel_mobile.png" loading="lazy" alt="Gestionnaire Matériel Liquid Glass">
+              <div class="zoom-badge">🔍 Ouvrir</div>
+            </a>
+          </div>
+          <div class="card-meta">
+            <div class="top-row">
+              <span class="idx">#014</span>
+              <span class="size">1300 Ko</span>
+            </div>
+            <h3 class="label">Gestionnaire Matériel Liquid Glass</h3>
+            <code>/materiel</code>
+          </div>
+        </div>
+
+        <div class="mobile-card" data-cat="Équipement" data-title="catalogue des kits outdoor" data-path="/kits">
+          <div class="mobile-frame">
+            <div class="notch"></div>
+            <a href="015_kits_mobile.png" target="_blank" class="img-link" title="Agrandir en taille réelle">
+              <img src="015_kits_mobile.png" loading="lazy" alt="Catalogue des Kits Outdoor">
+              <div class="zoom-badge">🔍 Ouvrir</div>
+            </a>
+          </div>
+          <div class="card-meta">
+            <div class="top-row">
+              <span class="idx">#015</span>
+              <span class="size">1314 Ko</span>
+            </div>
+            <h3 class="label">Catalogue des Kits Outdoor</h3>
+            <code>/kits</code>
+          </div>
+        </div>
+
+        <div class="mobile-card" data-cat="Équipement" data-title="kit détail — islande trek" data-path="/kits/islande-trek">
+          <div class="mobile-frame">
+            <div class="notch"></div>
+            <a href="016_kit-islande_mobile.png" target="_blank" class="img-link" title="Agrandir en taille réelle">
+              <img src="016_kit-islande_mobile.png" loading="lazy" alt="Kit Détail — Islande Trek">
+              <div class="zoom-badge">🔍 Ouvrir</div>
+            </a>
+          </div>
+          <div class="card-meta">
+            <div class="top-row">
+              <span class="idx">#016</span>
+              <span class="size">1423 Ko</span>
+            </div>
+            <h3 class="label">Kit Détail — Islande Trek</h3>
+            <code>/kits/islande-trek</code>
+          </div>
+        </div>
+
+        <div class="mobile-card" data-cat="Équipement" data-title="kit détail — gr20 corse" data-path="/kits/gr20-corse">
+          <div class="mobile-frame">
+            <div class="notch"></div>
+            <a href="017_kit-gr20_mobile.png" target="_blank" class="img-link" title="Agrandir en taille réelle">
+              <img src="017_kit-gr20_mobile.png" loading="lazy" alt="Kit Détail — GR20 Corse">
+              <div class="zoom-badge">🔍 Ouvrir</div>
+            </a>
+          </div>
+          <div class="card-meta">
+            <div class="top-row">
+              <span class="idx">#017</span>
+              <span class="size">1423 Ko</span>
+            </div>
+            <h3 class="label">Kit Détail — GR20 Corse</h3>
+            <code>/kits/gr20-corse</code>
+          </div>
+        </div>
+
+        <div class="mobile-card" data-cat="Équipement" data-title="kit détail — vanlife europe" data-path="/kits/vanlife-europe">
+          <div class="mobile-frame">
+            <div class="notch"></div>
+            <a href="018_kit-vanlife_mobile.png" target="_blank" class="img-link" title="Agrandir en taille réelle">
+              <img src="018_kit-vanlife_mobile.png" loading="lazy" alt="Kit Détail — Vanlife Europe">
+              <div class="zoom-badge">🔍 Ouvrir</div>
+            </a>
+          </div>
+          <div class="card-meta">
+            <div class="top-row">
+              <span class="idx">#018</span>
+              <span class="size">1422 Ko</span>
+            </div>
+            <h3 class="label">Kit Détail — Vanlife Europe</h3>
+            <code>/kits/vanlife-europe</code>
+          </div>
+        </div>
+
+        <div class="mobile-card" data-cat="Équipement" data-title="kit partagé — vue mobile /k/" data-path="/k/demo-token">
+          <div class="mobile-frame">
+            <div class="notch"></div>
+            <a href="019_kit-partage_mobile.png" target="_blank" class="img-link" title="Agrandir en taille réelle">
+              <img src="019_kit-partage_mobile.png" loading="lazy" alt="Kit Partagé — Vue Mobile /k/">
+              <div class="zoom-badge">🔍 Ouvrir</div>
+            </a>
+          </div>
+          <div class="card-meta">
+            <div class="top-row">
+              <span class="idx">#019</span>
+              <span class="size">1755 Ko</span>
+            </div>
+            <h3 class="label">Kit Partagé — Vue Mobile /k/</h3>
+            <code>/k/demo-token</code>
+          </div>
+        </div>
+
+        <div class="mobile-card" data-cat="Équipement" data-title="configurateur ia mobile" data-path="/ai-configurator">
+          <div class="mobile-frame">
+            <div class="notch"></div>
+            <a href="020_ai-configurator_mobile.png" target="_blank" class="img-link" title="Agrandir en taille réelle">
+              <img src="020_ai-configurator_mobile.png" loading="lazy" alt="Configurateur IA Mobile">
+              <div class="zoom-badge">🔍 Ouvrir</div>
+            </a>
+          </div>
+          <div class="card-meta">
+            <div class="top-row">
+              <span class="idx">#020</span>
+              <span class="size">1191 Ko</span>
+            </div>
+            <h3 class="label">Configurateur IA Mobile</h3>
+            <code>/ai-configurator</code>
+          </div>
+        </div>
+
+        <div class="mobile-card" data-cat="Équipement" data-title="copilote ia voyageur mobile" data-path="/copilote">
+          <div class="mobile-frame">
+            <div class="notch"></div>
+            <a href="021_copilote_mobile.png" target="_blank" class="img-link" title="Agrandir en taille réelle">
+              <img src="021_copilote_mobile.png" loading="lazy" alt="Copilote IA Voyageur Mobile">
+              <div class="zoom-badge">🔍 Ouvrir</div>
+            </a>
+          </div>
+          <div class="card-meta">
+            <div class="top-row">
+              <span class="idx">#021</span>
+              <span class="size">1505 Ko</span>
+            </div>
+            <h3 class="label">Copilote IA Voyageur Mobile</h3>
+            <code>/copilote</code>
+          </div>
+        </div>
+        </div>
+      </section>
+
+      <section class="category-block" id="cat-e-commerce">
+        <div class="category-header">
+          <h2>E-commerce</h2>
+          <span class="count">7 écran(s) mobile</span>
+        </div>
+        <div class="mobile-grid">
+          
+        <div class="mobile-card" data-cat="E-commerce" data-title="boutique outdoor mobile" data-path="/boutique">
+          <div class="mobile-frame">
+            <div class="notch"></div>
+            <a href="022_boutique_mobile.png" target="_blank" class="img-link" title="Agrandir en taille réelle">
+              <img src="022_boutique_mobile.png" loading="lazy" alt="Boutique Outdoor Mobile">
+              <div class="zoom-badge">🔍 Ouvrir</div>
+            </a>
+          </div>
+          <div class="card-meta">
+            <div class="top-row">
+              <span class="idx">#022</span>
+              <span class="size">1370 Ko</span>
+            </div>
+            <h3 class="label">Boutique Outdoor Mobile</h3>
+            <code>/boutique</code>
+          </div>
+        </div>
+
+        <div class="mobile-card" data-cat="E-commerce" data-title="fiche produit mobile" data-path="/produit/sac-a-dos-de-randonnee-categorie-bigbuy">
+          <div class="mobile-frame">
+            <div class="notch"></div>
+            <a href="023_produit-detail_mobile.png" target="_blank" class="img-link" title="Agrandir en taille réelle">
+              <img src="023_produit-detail_mobile.png" loading="lazy" alt="Fiche Produit Mobile">
+              <div class="zoom-badge">🔍 Ouvrir</div>
+            </a>
+          </div>
+          <div class="card-meta">
+            <div class="top-row">
+              <span class="idx">#023</span>
+              <span class="size">1358 Ko</span>
+            </div>
+            <h3 class="label">Fiche Produit Mobile</h3>
+            <code>/produit/sac-a-dos-de-randonnee-categorie-bigbuy</code>
+          </div>
+        </div>
+
+        <div class="mobile-card" data-cat="E-commerce" data-title="occasion mobile" data-path="/occasion">
+          <div class="mobile-frame">
+            <div class="notch"></div>
+            <a href="024_occasion_mobile.png" target="_blank" class="img-link" title="Agrandir en taille réelle">
+              <img src="024_occasion_mobile.png" loading="lazy" alt="Occasion Mobile">
+              <div class="zoom-badge">🔍 Ouvrir</div>
+            </a>
+          </div>
+          <div class="card-meta">
+            <div class="top-row">
+              <span class="idx">#024</span>
+              <span class="size">3227 Ko</span>
+            </div>
+            <h3 class="label">Occasion Mobile</h3>
+            <code>/occasion</code>
+          </div>
+        </div>
+
+        <div class="mobile-card" data-cat="E-commerce" data-title="location mobile" data-path="/location">
+          <div class="mobile-frame">
+            <div class="notch"></div>
+            <a href="025_location_mobile.png" target="_blank" class="img-link" title="Agrandir en taille réelle">
+              <img src="025_location_mobile.png" loading="lazy" alt="Location Mobile">
+              <div class="zoom-badge">🔍 Ouvrir</div>
+            </a>
+          </div>
+          <div class="card-meta">
+            <div class="top-row">
+              <span class="idx">#025</span>
+              <span class="size">3396 Ko</span>
+            </div>
+            <h3 class="label">Location Mobile</h3>
+            <code>/location</code>
+          </div>
+        </div>
+
+        <div class="mobile-card" data-cat="E-commerce" data-title="panier mobile" data-path="/panier">
+          <div class="mobile-frame">
+            <div class="notch"></div>
+            <a href="026_panier_mobile.png" target="_blank" class="img-link" title="Agrandir en taille réelle">
+              <img src="026_panier_mobile.png" loading="lazy" alt="Panier Mobile">
+              <div class="zoom-badge">🔍 Ouvrir</div>
+            </a>
+          </div>
+          <div class="card-meta">
+            <div class="top-row">
+              <span class="idx">#026</span>
+              <span class="size">1699 Ko</span>
+            </div>
+            <h3 class="label">Panier Mobile</h3>
+            <code>/panier</code>
+          </div>
+        </div>
+
+        <div class="mobile-card" data-cat="E-commerce" data-title="paiement stripe mobile" data-path="/checkout">
+          <div class="mobile-frame">
+            <div class="notch"></div>
+            <a href="027_checkout_mobile.png" target="_blank" class="img-link" title="Agrandir en taille réelle">
+              <img src="027_checkout_mobile.png" loading="lazy" alt="Paiement Stripe Mobile">
+              <div class="zoom-badge">🔍 Ouvrir</div>
+            </a>
+          </div>
+          <div class="card-meta">
+            <div class="top-row">
+              <span class="idx">#027</span>
+              <span class="size">1162 Ko</span>
+            </div>
+            <h3 class="label">Paiement Stripe Mobile</h3>
+            <code>/checkout</code>
+          </div>
+        </div>
+
+        <div class="mobile-card" data-cat="E-commerce" data-title="abonnements club mobile" data-path="/abonnements">
+          <div class="mobile-frame">
+            <div class="notch"></div>
+            <a href="028_abonnements_mobile.png" target="_blank" class="img-link" title="Agrandir en taille réelle">
+              <img src="028_abonnements_mobile.png" loading="lazy" alt="Abonnements Club Mobile">
+              <div class="zoom-badge">🔍 Ouvrir</div>
+            </a>
+          </div>
+          <div class="card-meta">
+            <div class="top-row">
+              <span class="idx">#028</span>
+              <span class="size">1657 Ko</span>
+            </div>
+            <h3 class="label">Abonnements Club Mobile</h3>
+            <code>/abonnements</code>
+          </div>
+        </div>
+        </div>
+      </section>
+
+      <section class="category-block" id="cat-destinations">
+        <div class="category-header">
+          <h2>Destinations</h2>
+          <span class="count">8 écran(s) mobile</span>
+        </div>
+        <div class="mobile-grid">
+          
+        <div class="mobile-card" data-cat="Destinations" data-title="destination pays — france mobile" data-path="/pays/fr">
+          <div class="mobile-frame">
+            <div class="notch"></div>
+            <a href="029_pays-fr_mobile.png" target="_blank" class="img-link" title="Agrandir en taille réelle">
+              <img src="029_pays-fr_mobile.png" loading="lazy" alt="Destination Pays — France Mobile">
+              <div class="zoom-badge">🔍 Ouvrir</div>
+            </a>
+          </div>
+          <div class="card-meta">
+            <div class="top-row">
+              <span class="idx">#029</span>
+              <span class="size">2152 Ko</span>
+            </div>
+            <h3 class="label">Destination Pays — France Mobile</h3>
+            <code>/pays/fr</code>
+          </div>
+        </div>
+
+        <div class="mobile-card" data-cat="Destinations" data-title="destination pays — islande mobile" data-path="/pays/is">
+          <div class="mobile-frame">
+            <div class="notch"></div>
+            <a href="030_pays-is_mobile.png" target="_blank" class="img-link" title="Agrandir en taille réelle">
+              <img src="030_pays-is_mobile.png" loading="lazy" alt="Destination Pays — Islande Mobile">
+              <div class="zoom-badge">🔍 Ouvrir</div>
+            </a>
+          </div>
+          <div class="card-meta">
+            <div class="top-row">
+              <span class="idx">#030</span>
+              <span class="size">2580 Ko</span>
+            </div>
+            <h3 class="label">Destination Pays — Islande Mobile</h3>
+            <code>/pays/is</code>
+          </div>
+        </div>
+
+        <div class="mobile-card" data-cat="Destinations" data-title="destination pays — japon mobile" data-path="/pays/jp">
+          <div class="mobile-frame">
+            <div class="notch"></div>
+            <a href="031_pays-jp_mobile.png" target="_blank" class="img-link" title="Agrandir en taille réelle">
+              <img src="031_pays-jp_mobile.png" loading="lazy" alt="Destination Pays — Japon Mobile">
+              <div class="zoom-badge">🔍 Ouvrir</div>
+            </a>
+          </div>
+          <div class="card-meta">
+            <div class="top-row">
+              <span class="idx">#031</span>
+              <span class="size">2394 Ko</span>
+            </div>
+            <h3 class="label">Destination Pays — Japon Mobile</h3>
+            <code>/pays/jp</code>
+          </div>
+        </div>
+
+        <div class="mobile-card" data-cat="Destinations" data-title="index des lieux & refuges" data-path="/lieux">
+          <div class="mobile-frame">
+            <div class="notch"></div>
+            <a href="032_lieux_mobile.png" target="_blank" class="img-link" title="Agrandir en taille réelle">
+              <img src="032_lieux_mobile.png" loading="lazy" alt="Index des Lieux & Refuges">
+              <div class="zoom-badge">🔍 Ouvrir</div>
+            </a>
+          </div>
+          <div class="card-meta">
+            <div class="top-row">
+              <span class="idx">#032</span>
+              <span class="size">2926 Ko</span>
+            </div>
+            <h3 class="label">Index des Lieux & Refuges</h3>
+            <code>/lieux</code>
+          </div>
+        </div>
+
+        <div class="mobile-card" data-cat="Destinations" data-title="lieu détail — refuge du goûter" data-path="/lieux/refuge-du-gouter-mont-blanc">
+          <div class="mobile-frame">
+            <div class="notch"></div>
+            <a href="033_lieu-detail_mobile.png" target="_blank" class="img-link" title="Agrandir en taille réelle">
+              <img src="033_lieu-detail_mobile.png" loading="lazy" alt="Lieu Détail — Refuge du Goûter">
+              <div class="zoom-badge">🔍 Ouvrir</div>
+            </a>
+          </div>
+          <div class="card-meta">
+            <div class="top-row">
+              <span class="idx">#033</span>
+              <span class="size">1307 Ko</span>
+            </div>
+            <h3 class="label">Lieu Détail — Refuge du Goûter</h3>
+            <code>/lieux/refuge-du-gouter-mont-blanc</code>
+          </div>
+        </div>
+
+        <div class="mobile-card" data-cat="Destinations" data-title="préparer randonnée mobile" data-path="/preparer-randonnee">
+          <div class="mobile-frame">
+            <div class="notch"></div>
+            <a href="034_preparer-randonnee_mobile.png" target="_blank" class="img-link" title="Agrandir en taille réelle">
+              <img src="034_preparer-randonnee_mobile.png" loading="lazy" alt="Préparer Randonnée Mobile">
+              <div class="zoom-badge">🔍 Ouvrir</div>
+            </a>
+          </div>
+          <div class="card-meta">
+            <div class="top-row">
+              <span class="idx">#034</span>
+              <span class="size">823 Ko</span>
+            </div>
+            <h3 class="label">Préparer Randonnée Mobile</h3>
+            <code>/preparer-randonnee</code>
+          </div>
+        </div>
+
+        <div class="mobile-card" data-cat="Destinations" data-title="préparer sentier — aperçu" data-path="/preparer-sentier/apercu">
+          <div class="mobile-frame">
+            <div class="notch"></div>
+            <a href="035_preparer-sentier-apercu_mobile.png" target="_blank" class="img-link" title="Agrandir en taille réelle">
+              <img src="035_preparer-sentier-apercu_mobile.png" loading="lazy" alt="Préparer Sentier — Aperçu">
+              <div class="zoom-badge">🔍 Ouvrir</div>
+            </a>
+          </div>
+          <div class="card-meta">
+            <div class="top-row">
+              <span class="idx">#035</span>
+              <span class="size">1727 Ko</span>
+            </div>
+            <h3 class="label">Préparer Sentier — Aperçu</h3>
+            <code>/preparer-sentier/apercu</code>
+          </div>
+        </div>
+
+        <div class="mobile-card" data-cat="Destinations" data-title="préparer sentier — fiche sentier" data-path="/preparer-sentier/refuge-du-gouter-mont-blanc">
+          <div class="mobile-frame">
+            <div class="notch"></div>
+            <a href="036_preparer-sentier-detail_mobile.png" target="_blank" class="img-link" title="Agrandir en taille réelle">
+              <img src="036_preparer-sentier-detail_mobile.png" loading="lazy" alt="Préparer Sentier — Fiche Sentier">
+              <div class="zoom-badge">🔍 Ouvrir</div>
+            </a>
+          </div>
+          <div class="card-meta">
+            <div class="top-row">
+              <span class="idx">#036</span>
+              <span class="size">1706 Ko</span>
+            </div>
+            <h3 class="label">Préparer Sentier — Fiche Sentier</h3>
+            <code>/preparer-sentier/refuge-du-gouter-mont-blanc</code>
+          </div>
+        </div>
+        </div>
+      </section>
+
+      <section class="category-block" id="cat-communaut-">
+        <div class="category-header">
+          <h2>Communauté</h2>
+          <span class="count">15 écran(s) mobile</span>
+        </div>
+        <div class="mobile-grid">
+          
+        <div class="mobile-card" data-cat="Communauté" data-title="communauté — flux mobile" data-path="/communaute">
+          <div class="mobile-frame">
+            <div class="notch"></div>
+            <a href="037_communaute_mobile.png" target="_blank" class="img-link" title="Agrandir en taille réelle">
+              <img src="037_communaute_mobile.png" loading="lazy" alt="Communauté — Flux Mobile">
+              <div class="zoom-badge">🔍 Ouvrir</div>
+            </a>
+          </div>
+          <div class="card-meta">
+            <div class="top-row">
+              <span class="idx">#037</span>
+              <span class="size">1190 Ko</span>
+            </div>
+            <h3 class="label">Communauté — Flux Mobile</h3>
+            <code>/communaute</code>
+          </div>
+        </div>
+
+        <div class="mobile-card" data-cat="Communauté" data-title="publier dans la communauté" data-path="/communaute/publier">
+          <div class="mobile-frame">
+            <div class="notch"></div>
+            <a href="038_communaute-publier_mobile.png" target="_blank" class="img-link" title="Agrandir en taille réelle">
+              <img src="038_communaute-publier_mobile.png" loading="lazy" alt="Publier dans la Communauté">
+              <div class="zoom-badge">🔍 Ouvrir</div>
+            </a>
+          </div>
+          <div class="card-meta">
+            <div class="top-row">
+              <span class="idx">#038</span>
+              <span class="size">1200 Ko</span>
+            </div>
+            <h3 class="label">Publier dans la Communauté</h3>
+            <code>/communaute/publier</code>
+          </div>
+        </div>
+
+        <div class="mobile-card" data-cat="Communauté" data-title="espace communauté pro" data-path="/communaute-pro">
+          <div class="mobile-frame">
+            <div class="notch"></div>
+            <a href="039_communaute-pro_mobile.png" target="_blank" class="img-link" title="Agrandir en taille réelle">
+              <img src="039_communaute-pro_mobile.png" loading="lazy" alt="Espace Communauté Pro">
+              <div class="zoom-badge">🔍 Ouvrir</div>
+            </a>
+          </div>
+          <div class="card-meta">
+            <div class="top-row">
+              <span class="idx">#039</span>
+              <span class="size">1769 Ko</span>
+            </div>
+            <h3 class="label">Espace Communauté Pro</h3>
+            <code>/communaute-pro</code>
+          </div>
+        </div>
+
+        <div class="mobile-card" data-cat="Communauté" data-title="feed actualité mobile" data-path="/feed">
+          <div class="mobile-frame">
+            <div class="notch"></div>
+            <a href="040_feed_mobile.png" target="_blank" class="img-link" title="Agrandir en taille réelle">
+              <img src="040_feed_mobile.png" loading="lazy" alt="Feed Actualité Mobile">
+              <div class="zoom-badge">🔍 Ouvrir</div>
+            </a>
+          </div>
+          <div class="card-meta">
+            <div class="top-row">
+              <span class="idx">#040</span>
+              <span class="size">892 Ko</span>
+            </div>
+            <h3 class="label">Feed Actualité Mobile</h3>
+            <code>/feed</code>
+          </div>
+        </div>
+
+        <div class="mobile-card" data-cat="Communauté" data-title="carnets de voyage mobile" data-path="/carnets">
+          <div class="mobile-frame">
+            <div class="notch"></div>
+            <a href="041_carnets_mobile.png" target="_blank" class="img-link" title="Agrandir en taille réelle">
+              <img src="041_carnets_mobile.png" loading="lazy" alt="Carnets de Voyage Mobile">
+              <div class="zoom-badge">🔍 Ouvrir</div>
+            </a>
+          </div>
+          <div class="card-meta">
+            <div class="top-row">
+              <span class="idx">#041</span>
+              <span class="size">7370 Ko</span>
+            </div>
+            <h3 class="label">Carnets de Voyage Mobile</h3>
+            <code>/carnets</code>
+          </div>
+        </div>
+
+        <div class="mobile-card" data-cat="Communauté" data-title="nouveau carnet mobile" data-path="/carnets/nouveau">
+          <div class="mobile-frame">
+            <div class="notch"></div>
+            <a href="042_carnet-nouveau_mobile.png" target="_blank" class="img-link" title="Agrandir en taille réelle">
+              <img src="042_carnet-nouveau_mobile.png" loading="lazy" alt="Nouveau Carnet Mobile">
+              <div class="zoom-badge">🔍 Ouvrir</div>
+            </a>
+          </div>
+          <div class="card-meta">
+            <div class="top-row">
+              <span class="idx">#042</span>
+              <span class="size">1148 Ko</span>
+            </div>
+            <h3 class="label">Nouveau Carnet Mobile</h3>
+            <code>/carnets/nouveau</code>
+          </div>
+        </div>
+
+        <div class="mobile-card" data-cat="Communauté" data-title="carnet détail mobile" data-path="/carnets/f21439a3-4daf-42ed-a778-1fa3fffa8f61">
+          <div class="mobile-frame">
+            <div class="notch"></div>
+            <a href="043_carnet-detail_mobile.png" target="_blank" class="img-link" title="Agrandir en taille réelle">
+              <img src="043_carnet-detail_mobile.png" loading="lazy" alt="Carnet Détail Mobile">
+              <div class="zoom-badge">🔍 Ouvrir</div>
+            </a>
+          </div>
+          <div class="card-meta">
+            <div class="top-row">
+              <span class="idx">#043</span>
+              <span class="size">1331 Ko</span>
+            </div>
+            <h3 class="label">Carnet Détail Mobile</h3>
+            <code>/carnets/f21439a3-4daf-42ed-a778-1fa3fffa8f61</code>
+          </div>
+        </div>
+
+        <div class="mobile-card" data-cat="Communauté" data-title="clubs d’aventuriers mobile" data-path="/clubs">
+          <div class="mobile-frame">
+            <div class="notch"></div>
+            <a href="044_clubs_mobile.png" target="_blank" class="img-link" title="Agrandir en taille réelle">
+              <img src="044_clubs_mobile.png" loading="lazy" alt="Clubs d’Aventuriers Mobile">
+              <div class="zoom-badge">🔍 Ouvrir</div>
+            </a>
+          </div>
+          <div class="card-meta">
+            <div class="top-row">
+              <span class="idx">#044</span>
+              <span class="size">2730 Ko</span>
+            </div>
+            <h3 class="label">Clubs d’Aventuriers Mobile</h3>
+            <code>/clubs</code>
+          </div>
+        </div>
+
+        <div class="mobile-card" data-cat="Communauté" data-title="créer un club mobile" data-path="/clubs/nouveau">
+          <div class="mobile-frame">
+            <div class="notch"></div>
+            <a href="045_club-nouveau_mobile.png" target="_blank" class="img-link" title="Agrandir en taille réelle">
+              <img src="045_club-nouveau_mobile.png" loading="lazy" alt="Créer un Club Mobile">
+              <div class="zoom-badge">🔍 Ouvrir</div>
+            </a>
+          </div>
+          <div class="card-meta">
+            <div class="top-row">
+              <span class="idx">#045</span>
+              <span class="size">1157 Ko</span>
+            </div>
+            <h3 class="label">Créer un Club Mobile</h3>
+            <code>/clubs/nouveau</code>
+          </div>
+        </div>
+
+        <div class="mobile-card" data-cat="Communauté" data-title="club détail mobile" data-path="/clubs/b2000012-0000-0000-0000-000000000005">
+          <div class="mobile-frame">
+            <div class="notch"></div>
+            <a href="046_club-detail_mobile.png" target="_blank" class="img-link" title="Agrandir en taille réelle">
+              <img src="046_club-detail_mobile.png" loading="lazy" alt="Club Détail Mobile">
+              <div class="zoom-badge">🔍 Ouvrir</div>
+            </a>
+          </div>
+          <div class="card-meta">
+            <div class="top-row">
+              <span class="idx">#046</span>
+              <span class="size">2287 Ko</span>
+            </div>
+            <h3 class="label">Club Détail Mobile</h3>
+            <code>/clubs/b2000012-0000-0000-0000-000000000005</code>
+          </div>
+        </div>
+
+        <div class="mobile-card" data-cat="Communauté" data-title="nouveau groupe mobile" data-path="/nouveau-groupe">
+          <div class="mobile-frame">
+            <div class="notch"></div>
+            <a href="047_nouveau-groupe_mobile.png" target="_blank" class="img-link" title="Agrandir en taille réelle">
+              <img src="047_nouveau-groupe_mobile.png" loading="lazy" alt="Nouveau Groupe Mobile">
+              <div class="zoom-badge">🔍 Ouvrir</div>
+            </a>
+          </div>
+          <div class="card-meta">
+            <div class="top-row">
+              <span class="idx">#047</span>
+              <span class="size">1115 Ko</span>
+            </div>
+            <h3 class="label">Nouveau Groupe Mobile</h3>
+            <code>/nouveau-groupe</code>
+          </div>
+        </div>
+
+        <div class="mobile-card" data-cat="Communauté" data-title="entraide & sos mobile" data-path="/entraide">
+          <div class="mobile-frame">
+            <div class="notch"></div>
+            <a href="048_entraide_mobile.png" target="_blank" class="img-link" title="Agrandir en taille réelle">
+              <img src="048_entraide_mobile.png" loading="lazy" alt="Entraide & SOS Mobile">
+              <div class="zoom-badge">🔍 Ouvrir</div>
+            </a>
+          </div>
+          <div class="card-meta">
+            <div class="top-row">
+              <span class="idx">#048</span>
+              <span class="size">1598 Ko</span>
+            </div>
+            <h3 class="label">Entraide & SOS Mobile</h3>
+            <code>/entraide</code>
+          </div>
+        </div>
+
+        <div class="mobile-card" data-cat="Communauté" data-title="événements mobile" data-path="/evenements">
+          <div class="mobile-frame">
+            <div class="notch"></div>
+            <a href="049_evenements_mobile.png" target="_blank" class="img-link" title="Agrandir en taille réelle">
+              <img src="049_evenements_mobile.png" loading="lazy" alt="Événements Mobile">
+              <div class="zoom-badge">🔍 Ouvrir</div>
+            </a>
+          </div>
+          <div class="card-meta">
+            <div class="top-row">
+              <span class="idx">#049</span>
+              <span class="size">5198 Ko</span>
+            </div>
+            <h3 class="label">Événements Mobile</h3>
+            <code>/evenements</code>
+          </div>
+        </div>
+
+        <div class="mobile-card" data-cat="Communauté" data-title="avis voyageurs mobile" data-path="/avis">
+          <div class="mobile-frame">
+            <div class="notch"></div>
+            <a href="050_avis_mobile.png" target="_blank" class="img-link" title="Agrandir en taille réelle">
+              <img src="050_avis_mobile.png" loading="lazy" alt="Avis Voyageurs Mobile">
+              <div class="zoom-badge">🔍 Ouvrir</div>
+            </a>
+          </div>
+          <div class="card-meta">
+            <div class="top-row">
+              <span class="idx">#050</span>
+              <span class="size">1364 Ko</span>
+            </div>
+            <h3 class="label">Avis Voyageurs Mobile</h3>
+            <code>/avis</code>
+          </div>
+        </div>
+
+        <div class="mobile-card" data-cat="Communauté" data-title="portail publier mobile" data-path="/publier">
+          <div class="mobile-frame">
+            <div class="notch"></div>
+            <a href="051_publier_mobile.png" target="_blank" class="img-link" title="Agrandir en taille réelle">
+              <img src="051_publier_mobile.png" loading="lazy" alt="Portail Publier Mobile">
+              <div class="zoom-badge">🔍 Ouvrir</div>
+            </a>
+          </div>
+          <div class="card-meta">
+            <div class="top-row">
+              <span class="idx">#051</span>
+              <span class="size">1186 Ko</span>
+            </div>
+            <h3 class="label">Portail Publier Mobile</h3>
+            <code>/publier</code>
+          </div>
+        </div>
+        </div>
+      </section>
+
+      <section class="category-block" id="cat-outils">
+        <div class="category-header">
+          <h2>Outils</h2>
+          <span class="count">11 écran(s) mobile</span>
+        </div>
+        <div class="mobile-grid">
+          
+        <div class="mobile-card" data-cat="Outils" data-title="boîte à outils mobile" data-path="/outils">
+          <div class="mobile-frame">
+            <div class="notch"></div>
+            <a href="052_outils_mobile.png" target="_blank" class="img-link" title="Agrandir en taille réelle">
+              <img src="052_outils_mobile.png" loading="lazy" alt="Boîte à Outils Mobile">
+              <div class="zoom-badge">🔍 Ouvrir</div>
+            </a>
+          </div>
+          <div class="card-meta">
+            <div class="top-row">
+              <span class="idx">#052</span>
+              <span class="size">1732 Ko</span>
+            </div>
+            <h3 class="label">Boîte à Outils Mobile</h3>
+            <code>/outils</code>
+          </div>
+        </div>
+
+        <div class="mobile-card" data-cat="Outils" data-title="simulateur poids sac mobile" data-path="/outils/poids-sac">
+          <div class="mobile-frame">
+            <div class="notch"></div>
+            <a href="053_outil-poids-sac_mobile.png" target="_blank" class="img-link" title="Agrandir en taille réelle">
+              <img src="053_outil-poids-sac_mobile.png" loading="lazy" alt="Simulateur Poids Sac Mobile">
+              <div class="zoom-badge">🔍 Ouvrir</div>
+            </a>
+          </div>
+          <div class="card-meta">
+            <div class="top-row">
+              <span class="idx">#053</span>
+              <span class="size">1173 Ko</span>
+            </div>
+            <h3 class="label">Simulateur Poids Sac Mobile</h3>
+            <code>/outils/poids-sac</code>
+          </div>
+        </div>
+
+        <div class="mobile-card" data-cat="Outils" data-title="simulateur budget mobile" data-path="/outils/budget-voyage">
+          <div class="mobile-frame">
+            <div class="notch"></div>
+            <a href="054_outil-budget_mobile.png" target="_blank" class="img-link" title="Agrandir en taille réelle">
+              <img src="054_outil-budget_mobile.png" loading="lazy" alt="Simulateur Budget Mobile">
+              <div class="zoom-badge">🔍 Ouvrir</div>
+            </a>
+          </div>
+          <div class="card-meta">
+            <div class="top-row">
+              <span class="idx">#054</span>
+              <span class="size">1150 Ko</span>
+            </div>
+            <h3 class="label">Simulateur Budget Mobile</h3>
+            <code>/outils/budget-voyage</code>
+          </div>
+        </div>
+
+        <div class="mobile-card" data-cat="Outils" data-title="convertisseur devises mobile" data-path="/outils/convertisseur">
+          <div class="mobile-frame">
+            <div class="notch"></div>
+            <a href="055_outil-convertisseur_mobile.png" target="_blank" class="img-link" title="Agrandir en taille réelle">
+              <img src="055_outil-convertisseur_mobile.png" loading="lazy" alt="Convertisseur Devises Mobile">
+              <div class="zoom-badge">🔍 Ouvrir</div>
+            </a>
+          </div>
+          <div class="card-meta">
+            <div class="top-row">
+              <span class="idx">#055</span>
+              <span class="size">1457 Ko</span>
+            </div>
+            <h3 class="label">Convertisseur Devises Mobile</h3>
+            <code>/outils/convertisseur</code>
+          </div>
+        </div>
+
+        <div class="mobile-card" data-cat="Outils" data-title="checklist dynamique mobile" data-path="/outils/checklist">
+          <div class="mobile-frame">
+            <div class="notch"></div>
+            <a href="056_outil-checklist_mobile.png" target="_blank" class="img-link" title="Agrandir en taille réelle">
+              <img src="056_outil-checklist_mobile.png" loading="lazy" alt="Checklist Dynamique Mobile">
+              <div class="zoom-badge">🔍 Ouvrir</div>
+            </a>
+          </div>
+          <div class="card-meta">
+            <div class="top-row">
+              <span class="idx">#056</span>
+              <span class="size">1363 Ko</span>
+            </div>
+            <h3 class="label">Checklist Dynamique Mobile</h3>
+            <code>/outils/checklist</code>
+          </div>
+        </div>
+
+        <div class="mobile-card" data-cat="Outils" data-title="guide des tailles mobile" data-path="/outils/tailles">
+          <div class="mobile-frame">
+            <div class="notch"></div>
+            <a href="057_outil-tailles_mobile.png" target="_blank" class="img-link" title="Agrandir en taille réelle">
+              <img src="057_outil-tailles_mobile.png" loading="lazy" alt="Guide des Tailles Mobile">
+              <div class="zoom-badge">🔍 Ouvrir</div>
+            </a>
+          </div>
+          <div class="card-meta">
+            <div class="top-row">
+              <span class="idx">#057</span>
+              <span class="size">1532 Ko</span>
+            </div>
+            <h3 class="label">Guide des Tailles Mobile</h3>
+            <code>/outils/tailles</code>
+          </div>
+        </div>
+
+        <div class="mobile-card" data-cat="Outils" data-title="fuseaux horaires mobile" data-path="/outils/fuseaux">
+          <div class="mobile-frame">
+            <div class="notch"></div>
+            <a href="058_outil-fuseaux_mobile.png" target="_blank" class="img-link" title="Agrandir en taille réelle">
+              <img src="058_outil-fuseaux_mobile.png" loading="lazy" alt="Fuseaux Horaires Mobile">
+              <div class="zoom-badge">🔍 Ouvrir</div>
+            </a>
+          </div>
+          <div class="card-meta">
+            <div class="top-row">
+              <span class="idx">#058</span>
+              <span class="size">1317 Ko</span>
+            </div>
+            <h3 class="label">Fuseaux Horaires Mobile</h3>
+            <code>/outils/fuseaux</code>
+          </div>
+        </div>
+
+        <div class="mobile-card" data-cat="Outils" data-title="boussole mobile" data-path="/outils/boussole">
+          <div class="mobile-frame">
+            <div class="notch"></div>
+            <a href="059_outil-boussole_mobile.png" target="_blank" class="img-link" title="Agrandir en taille réelle">
+              <img src="059_outil-boussole_mobile.png" loading="lazy" alt="Boussole Mobile">
+              <div class="zoom-badge">🔍 Ouvrir</div>
+            </a>
+          </div>
+          <div class="card-meta">
+            <div class="top-row">
+              <span class="idx">#059</span>
+              <span class="size">1827 Ko</span>
+            </div>
+            <h3 class="label">Boussole Mobile</h3>
+            <code>/outils/boussole</code>
+          </div>
+        </div>
+
+        <div class="mobile-card" data-cat="Outils" data-title="chronomètre mobile" data-path="/outils/chronometre">
+          <div class="mobile-frame">
+            <div class="notch"></div>
+            <a href="060_outil-chronometre_mobile.png" target="_blank" class="img-link" title="Agrandir en taille réelle">
+              <img src="060_outil-chronometre_mobile.png" loading="lazy" alt="Chronomètre Mobile">
+              <div class="zoom-badge">🔍 Ouvrir</div>
+            </a>
+          </div>
+          <div class="card-meta">
+            <div class="top-row">
+              <span class="idx">#060</span>
+              <span class="size">1636 Ko</span>
+            </div>
+            <h3 class="label">Chronomètre Mobile</h3>
+            <code>/outils/chronometre</code>
+          </div>
+        </div>
+
+        <div class="mobile-card" data-cat="Outils" data-title="calculateur rations mobile" data-path="/outils/rations">
+          <div class="mobile-frame">
+            <div class="notch"></div>
+            <a href="061_outil-rations_mobile.png" target="_blank" class="img-link" title="Agrandir en taille réelle">
+              <img src="061_outil-rations_mobile.png" loading="lazy" alt="Calculateur Rations Mobile">
+              <div class="zoom-badge">🔍 Ouvrir</div>
+            </a>
+          </div>
+          <div class="card-meta">
+            <div class="top-row">
+              <span class="idx">#061</span>
+              <span class="size">1253 Ko</span>
+            </div>
+            <h3 class="label">Calculateur Rations Mobile</h3>
+            <code>/outils/rations</code>
+          </div>
+        </div>
+
+        <div class="mobile-card" data-cat="Outils" data-title="calculateur carbone mobile" data-path="/carbone">
+          <div class="mobile-frame">
+            <div class="notch"></div>
+            <a href="062_carbone_mobile.png" target="_blank" class="img-link" title="Agrandir en taille réelle">
+              <img src="062_carbone_mobile.png" loading="lazy" alt="Calculateur Carbone Mobile">
+              <div class="zoom-badge">🔍 Ouvrir</div>
+            </a>
+          </div>
+          <div class="card-meta">
+            <div class="top-row">
+              <span class="idx">#062</span>
+              <span class="size">891 Ko</span>
+            </div>
+            <h3 class="label">Calculateur Carbone Mobile</h3>
+            <code>/carbone</code>
+          </div>
+        </div>
+        </div>
+      </section>
+
+      <section class="category-block" id="cat-utilisateur">
+        <div class="category-header">
+          <h2>Utilisateur</h2>
+          <span class="count">11 écran(s) mobile</span>
+        </div>
+        <div class="mobile-grid">
+          
+        <div class="mobile-card" data-cat="Utilisateur" data-title="mon compte mobile" data-path="/compte">
+          <div class="mobile-frame">
+            <div class="notch"></div>
+            <a href="063_compte_mobile.png" target="_blank" class="img-link" title="Agrandir en taille réelle">
+              <img src="063_compte_mobile.png" loading="lazy" alt="Mon Compte Mobile">
+              <div class="zoom-badge">🔍 Ouvrir</div>
+            </a>
+          </div>
+          <div class="card-meta">
+            <div class="top-row">
+              <span class="idx">#063</span>
+              <span class="size">3793 Ko</span>
+            </div>
+            <h3 class="label">Mon Compte Mobile</h3>
+            <code>/compte</code>
+          </div>
+        </div>
+
+        <div class="mobile-card" data-cat="Utilisateur" data-title="modifier profil mobile" data-path="/compte/modifier">
+          <div class="mobile-frame">
+            <div class="notch"></div>
+            <a href="064_compte-modifier_mobile.png" target="_blank" class="img-link" title="Agrandir en taille réelle">
+              <img src="064_compte-modifier_mobile.png" loading="lazy" alt="Modifier Profil Mobile">
+              <div class="zoom-badge">🔍 Ouvrir</div>
+            </a>
+          </div>
+          <div class="card-meta">
+            <div class="top-row">
+              <span class="idx">#064</span>
+              <span class="size">1766 Ko</span>
+            </div>
+            <h3 class="label">Modifier Profil Mobile</h3>
+            <code>/compte/modifier</code>
+          </div>
+        </div>
+
+        <div class="mobile-card" data-cat="Utilisateur" data-title="compte redirection id" data-path="/compte/622c9c69-2b19-425c-be5f-d47d470461d8">
+          <div class="mobile-frame">
+            <div class="notch"></div>
+            <a href="065_compte-user-redirect_mobile.png" target="_blank" class="img-link" title="Agrandir en taille réelle">
+              <img src="065_compte-user-redirect_mobile.png" loading="lazy" alt="Compte Redirection ID">
+              <div class="zoom-badge">🔍 Ouvrir</div>
+            </a>
+          </div>
+          <div class="card-meta">
+            <div class="top-row">
+              <span class="idx">#065</span>
+              <span class="size">1702 Ko</span>
+            </div>
+            <h3 class="label">Compte Redirection ID</h3>
+            <code>/compte/622c9c69-2b19-425c-be5f-d47d470461d8</code>
+          </div>
+        </div>
+
+        <div class="mobile-card" data-cat="Utilisateur" data-title="profil public mobile" data-path="/profil">
+          <div class="mobile-frame">
+            <div class="notch"></div>
+            <a href="066_profil-public_mobile.png" target="_blank" class="img-link" title="Agrandir en taille réelle">
+              <img src="066_profil-public_mobile.png" loading="lazy" alt="Profil Public Mobile">
+              <div class="zoom-badge">🔍 Ouvrir</div>
+            </a>
+          </div>
+          <div class="card-meta">
+            <div class="top-row">
+              <span class="idx">#066</span>
+              <span class="size">3793 Ko</span>
+            </div>
+            <h3 class="label">Profil Public Mobile</h3>
+            <code>/profil</code>
+          </div>
+        </div>
+
+        <div class="mobile-card" data-cat="Utilisateur" data-title="profil détail mobile" data-path="/profil/622c9c69-2b19-425c-be5f-d47d470461d8">
+          <div class="mobile-frame">
+            <div class="notch"></div>
+            <a href="067_profil-detail_mobile.png" target="_blank" class="img-link" title="Agrandir en taille réelle">
+              <img src="067_profil-detail_mobile.png" loading="lazy" alt="Profil Détail Mobile">
+              <div class="zoom-badge">🔍 Ouvrir</div>
+            </a>
+          </div>
+          <div class="card-meta">
+            <div class="top-row">
+              <span class="idx">#067</span>
+              <span class="size">1346 Ko</span>
+            </div>
+            <h3 class="label">Profil Détail Mobile</h3>
+            <code>/profil/622c9c69-2b19-425c-be5f-d47d470461d8</code>
+          </div>
+        </div>
+
+        <div class="mobile-card" data-cat="Utilisateur" data-title="progression & niveaux mobile" data-path="/progression">
+          <div class="mobile-frame">
+            <div class="notch"></div>
+            <a href="068_progression_mobile.png" target="_blank" class="img-link" title="Agrandir en taille réelle">
+              <img src="068_progression_mobile.png" loading="lazy" alt="Progression & Niveaux Mobile">
+              <div class="zoom-badge">🔍 Ouvrir</div>
+            </a>
+          </div>
+          <div class="card-meta">
+            <div class="top-row">
+              <span class="idx">#068</span>
+              <span class="size">1758 Ko</span>
+            </div>
+            <h3 class="label">Progression & Niveaux Mobile</h3>
+            <code>/progression</code>
+          </div>
+        </div>
+
+        <div class="mobile-card" data-cat="Utilisateur" data-title="fidélité & badges mobile" data-path="/fidelite">
+          <div class="mobile-frame">
+            <div class="notch"></div>
+            <a href="069_fidelite_mobile.png" target="_blank" class="img-link" title="Agrandir en taille réelle">
+              <img src="069_fidelite_mobile.png" loading="lazy" alt="Fidélité & Badges Mobile">
+              <div class="zoom-badge">🔍 Ouvrir</div>
+            </a>
+          </div>
+          <div class="card-meta">
+            <div class="top-row">
+              <span class="idx">#069</span>
+              <span class="size">1066 Ko</span>
+            </div>
+            <h3 class="label">Fidélité & Badges Mobile</h3>
+            <code>/fidelite</code>
+          </div>
+        </div>
+
+        <div class="mobile-card" data-cat="Utilisateur" data-title="récompenses mobile" data-path="/recompenses">
+          <div class="mobile-frame">
+            <div class="notch"></div>
+            <a href="070_recompenses_mobile.png" target="_blank" class="img-link" title="Agrandir en taille réelle">
+              <img src="070_recompenses_mobile.png" loading="lazy" alt="Récompenses Mobile">
+              <div class="zoom-badge">🔍 Ouvrir</div>
+            </a>
+          </div>
+          <div class="card-meta">
+            <div class="top-row">
+              <span class="idx">#070</span>
+              <span class="size">1489 Ko</span>
+            </div>
+            <h3 class="label">Récompenses Mobile</h3>
+            <code>/recompenses</code>
+          </div>
+        </div>
+
+        <div class="mobile-card" data-cat="Utilisateur" data-title="messagerie mobile" data-path="/messagerie">
+          <div class="mobile-frame">
+            <div class="notch"></div>
+            <a href="071_messagerie_mobile.png" target="_blank" class="img-link" title="Agrandir en taille réelle">
+              <img src="071_messagerie_mobile.png" loading="lazy" alt="Messagerie Mobile">
+              <div class="zoom-badge">🔍 Ouvrir</div>
+            </a>
+          </div>
+          <div class="card-meta">
+            <div class="top-row">
+              <span class="idx">#071</span>
+              <span class="size">1595 Ko</span>
+            </div>
+            <h3 class="label">Messagerie Mobile</h3>
+            <code>/messagerie</code>
+          </div>
+        </div>
+
+        <div class="mobile-card" data-cat="Utilisateur" data-title="connexion mobile" data-path="/connexion">
+          <div class="mobile-frame">
+            <div class="notch"></div>
+            <a href="072_connexion_mobile.png" target="_blank" class="img-link" title="Agrandir en taille réelle">
+              <img src="072_connexion_mobile.png" loading="lazy" alt="Connexion Mobile">
+              <div class="zoom-badge">🔍 Ouvrir</div>
+            </a>
+          </div>
+          <div class="card-meta">
+            <div class="top-row">
+              <span class="idx">#072</span>
+              <span class="size">1323 Ko</span>
+            </div>
+            <h3 class="label">Connexion Mobile</h3>
+            <code>/connexion</code>
+          </div>
+        </div>
+
+        <div class="mobile-card" data-cat="Utilisateur" data-title="inscription mobile" data-path="/inscription">
+          <div class="mobile-frame">
+            <div class="notch"></div>
+            <a href="073_inscription_mobile.png" target="_blank" class="img-link" title="Agrandir en taille réelle">
+              <img src="073_inscription_mobile.png" loading="lazy" alt="Inscription Mobile">
+              <div class="zoom-badge">🔍 Ouvrir</div>
+            </a>
+          </div>
+          <div class="card-meta">
+            <div class="top-row">
+              <span class="idx">#073</span>
+              <span class="size">1049 Ko</span>
+            </div>
+            <h3 class="label">Inscription Mobile</h3>
+            <code>/inscription</code>
+          </div>
+        </div>
+        </div>
+      </section>
+
+      <section class="category-block" id="cat-voyages">
+        <div class="category-header">
+          <h2>Voyages</h2>
+          <span class="count">6 écran(s) mobile</span>
+        </div>
+        <div class="mobile-grid">
+          
+        <div class="mobile-card" data-cat="Voyages" data-title="voyage tmb groupe mobile" data-path="/voyages/y-long-group">
+          <div class="mobile-frame">
+            <div class="notch"></div>
+            <a href="074_voyage-y-long-group_mobile.png" target="_blank" class="img-link" title="Agrandir en taille réelle">
+              <img src="074_voyage-y-long-group_mobile.png" loading="lazy" alt="Voyage TMB Groupe Mobile">
+              <div class="zoom-badge">🔍 Ouvrir</div>
+            </a>
+          </div>
+          <div class="card-meta">
+            <div class="top-row">
+              <span class="idx">#074</span>
+              <span class="size">1756 Ko</span>
+            </div>
+            <h3 class="label">Voyage TMB Groupe Mobile</h3>
+            <code>/voyages/y-long-group</code>
+          </div>
+        </div>
+
+        <div class="mobile-card" data-cat="Voyages" data-title="itinéraire voyage mobile" data-path="/voyages/y-long-group/itineraire">
+          <div class="mobile-frame">
+            <div class="notch"></div>
+            <a href="075_voyage-section-itineraire_mobile.png" target="_blank" class="img-link" title="Agrandir en taille réelle">
+              <img src="075_voyage-section-itineraire_mobile.png" loading="lazy" alt="Itinéraire Voyage Mobile">
+              <div class="zoom-badge">🔍 Ouvrir</div>
+            </a>
+          </div>
+          <div class="card-meta">
+            <div class="top-row">
+              <span class="idx">#075</span>
+              <span class="size">1489 Ko</span>
+            </div>
+            <h3 class="label">Itinéraire Voyage Mobile</h3>
+            <code>/voyages/y-long-group/itineraire</code>
+          </div>
+        </div>
+
+        <div class="mobile-card" data-cat="Voyages" data-title="budget voyage mobile" data-path="/voyages/y-long-group/budget">
+          <div class="mobile-frame">
+            <div class="notch"></div>
+            <a href="076_voyage-section-budget_mobile.png" target="_blank" class="img-link" title="Agrandir en taille réelle">
+              <img src="076_voyage-section-budget_mobile.png" loading="lazy" alt="Budget Voyage Mobile">
+              <div class="zoom-badge">🔍 Ouvrir</div>
+            </a>
+          </div>
+          <div class="card-meta">
+            <div class="top-row">
+              <span class="idx">#076</span>
+              <span class="size">1756 Ko</span>
+            </div>
+            <h3 class="label">Budget Voyage Mobile</h3>
+            <code>/voyages/y-long-group/budget</code>
+          </div>
+        </div>
+
+        <div class="mobile-card" data-cat="Voyages" data-title="équipage voyage mobile" data-path="/voyages/y-long-group/groupe">
+          <div class="mobile-frame">
+            <div class="notch"></div>
+            <a href="077_voyage-section-groupe_mobile.png" target="_blank" class="img-link" title="Agrandir en taille réelle">
+              <img src="077_voyage-section-groupe_mobile.png" loading="lazy" alt="Équipage Voyage Mobile">
+              <div class="zoom-badge">🔍 Ouvrir</div>
+            </a>
+          </div>
+          <div class="card-meta">
+            <div class="top-row">
+              <span class="idx">#077</span>
+              <span class="size">1410 Ko</span>
+            </div>
+            <h3 class="label">Équipage Voyage Mobile</h3>
+            <code>/voyages/y-long-group/groupe</code>
+          </div>
+        </div>
+
+        <div class="mobile-card" data-cat="Voyages" data-title="sécurité voyage mobile" data-path="/voyages/y-long-group/securite">
+          <div class="mobile-frame">
+            <div class="notch"></div>
+            <a href="078_voyage-section-securite_mobile.png" target="_blank" class="img-link" title="Agrandir en taille réelle">
+              <img src="078_voyage-section-securite_mobile.png" loading="lazy" alt="Sécurité Voyage Mobile">
+              <div class="zoom-badge">🔍 Ouvrir</div>
+            </a>
+          </div>
+          <div class="card-meta">
+            <div class="top-row">
+              <span class="idx">#078</span>
+              <span class="size">1756 Ko</span>
+            </div>
+            <h3 class="label">Sécurité Voyage Mobile</h3>
+            <code>/voyages/y-long-group/securite</code>
+          </div>
+        </div>
+
+        <div class="mobile-card" data-cat="Voyages" data-title="rejoindre voyage mobile" data-path="/rejoindre/y-long-group">
+          <div class="mobile-frame">
+            <div class="notch"></div>
+            <a href="079_rejoindre-voyage_mobile.png" target="_blank" class="img-link" title="Agrandir en taille réelle">
+              <img src="079_rejoindre-voyage_mobile.png" loading="lazy" alt="Rejoindre Voyage Mobile">
+              <div class="zoom-badge">🔍 Ouvrir</div>
+            </a>
+          </div>
+          <div class="card-meta">
+            <div class="top-row">
+              <span class="idx">#079</span>
+              <span class="size">973 Ko</span>
+            </div>
+            <h3 class="label">Rejoindre Voyage Mobile</h3>
+            <code>/rejoindre/y-long-group</code>
+          </div>
+        </div>
+        </div>
+      </section>
+
+      <section class="category-block" id="cat-contenu">
+        <div class="category-header">
+          <h2>Contenu</h2>
+          <span class="count">10 écran(s) mobile</span>
+        </div>
+        <div class="mobile-grid">
+          
+        <div class="mobile-card" data-cat="Contenu" data-title="guides pratiques mobile" data-path="/guides">
+          <div class="mobile-frame">
+            <div class="notch"></div>
+            <a href="080_guides_mobile.png" target="_blank" class="img-link" title="Agrandir en taille réelle">
+              <img src="080_guides_mobile.png" loading="lazy" alt="Guides Pratiques Mobile">
+              <div class="zoom-badge">🔍 Ouvrir</div>
+            </a>
+          </div>
+          <div class="card-meta">
+            <div class="top-row">
+              <span class="idx">#080</span>
+              <span class="size">1556 Ko</span>
+            </div>
+            <h3 class="label">Guides Pratiques Mobile</h3>
+            <code>/guides</code>
+          </div>
+        </div>
+
+        <div class="mobile-card" data-cat="Contenu" data-title="guide détail mobile" data-path="/guides/checklist-sac-a-dos-trek-nepal">
+          <div class="mobile-frame">
+            <div class="notch"></div>
+            <a href="081_guide-detail_mobile.png" target="_blank" class="img-link" title="Agrandir en taille réelle">
+              <img src="081_guide-detail_mobile.png" loading="lazy" alt="Guide Détail Mobile">
+              <div class="zoom-badge">🔍 Ouvrir</div>
+            </a>
+          </div>
+          <div class="card-meta">
+            <div class="top-row">
+              <span class="idx">#081</span>
+              <span class="size">1358 Ko</span>
+            </div>
+            <h3 class="label">Guide Détail Mobile</h3>
+            <code>/guides/checklist-sac-a-dos-trek-nepal</code>
+          </div>
+        </div>
+
+        <div class="mobile-card" data-cat="Contenu" data-title="blog outdoor mobile" data-path="/blog">
+          <div class="mobile-frame">
+            <div class="notch"></div>
+            <a href="082_blog_mobile.png" target="_blank" class="img-link" title="Agrandir en taille réelle">
+              <img src="082_blog_mobile.png" loading="lazy" alt="Blog Outdoor Mobile">
+              <div class="zoom-badge">🔍 Ouvrir</div>
+            </a>
+          </div>
+          <div class="card-meta">
+            <div class="top-row">
+              <span class="idx">#082</span>
+              <span class="size">1968 Ko</span>
+            </div>
+            <h3 class="label">Blog Outdoor Mobile</h3>
+            <code>/blog</code>
+          </div>
+        </div>
+
+        <div class="mobile-card" data-cat="Contenu" data-title="manifeste lkdv mobile" data-path="/manifeste">
+          <div class="mobile-frame">
+            <div class="notch"></div>
+            <a href="083_manifeste_mobile.png" target="_blank" class="img-link" title="Agrandir en taille réelle">
+              <img src="083_manifeste_mobile.png" loading="lazy" alt="Manifeste LKDV Mobile">
+              <div class="zoom-badge">🔍 Ouvrir</div>
+            </a>
+          </div>
+          <div class="card-meta">
+            <div class="top-row">
+              <span class="idx">#083</span>
+              <span class="size">1370 Ko</span>
+            </div>
+            <h3 class="label">Manifeste LKDV Mobile</h3>
+            <code>/manifeste</code>
+          </div>
+        </div>
+
+        <div class="mobile-card" data-cat="Contenu" data-title="experts & guides mobile" data-path="/experts">
+          <div class="mobile-frame">
+            <div class="notch"></div>
+            <a href="084_experts_mobile.png" target="_blank" class="img-link" title="Agrandir en taille réelle">
+              <img src="084_experts_mobile.png" loading="lazy" alt="Experts & Guides Mobile">
+              <div class="zoom-badge">🔍 Ouvrir</div>
+            </a>
+          </div>
+          <div class="card-meta">
+            <div class="top-row">
+              <span class="idx">#084</span>
+              <span class="size">1767 Ko</span>
+            </div>
+            <h3 class="label">Experts & Guides Mobile</h3>
+            <code>/experts</code>
+          </div>
+        </div>
+
+        <div class="mobile-card" data-cat="Contenu" data-title="ambassadeurs mobile" data-path="/ambassadeurs">
+          <div class="mobile-frame">
+            <div class="notch"></div>
+            <a href="085_ambassadeurs_mobile.png" target="_blank" class="img-link" title="Agrandir en taille réelle">
+              <img src="085_ambassadeurs_mobile.png" loading="lazy" alt="Ambassadeurs Mobile">
+              <div class="zoom-badge">🔍 Ouvrir</div>
+            </a>
+          </div>
+          <div class="card-meta">
+            <div class="top-row">
+              <span class="idx">#085</span>
+              <span class="size">1694 Ko</span>
+            </div>
+            <h3 class="label">Ambassadeurs Mobile</h3>
+            <code>/ambassadeurs</code>
+          </div>
+        </div>
+
+        <div class="mobile-card" data-cat="Contenu" data-title="créateurs mobile" data-path="/createurs">
+          <div class="mobile-frame">
+            <div class="notch"></div>
+            <a href="086_createurs_mobile.png" target="_blank" class="img-link" title="Agrandir en taille réelle">
+              <img src="086_createurs_mobile.png" loading="lazy" alt="Créateurs Mobile">
+              <div class="zoom-badge">🔍 Ouvrir</div>
+            </a>
+          </div>
+          <div class="card-meta">
+            <div class="top-row">
+              <span class="idx">#086</span>
+              <span class="size">1723 Ko</span>
+            </div>
+            <h3 class="label">Créateurs Mobile</h3>
+            <code>/createurs</code>
+          </div>
+        </div>
+
+        <div class="mobile-card" data-cat="Contenu" data-title="pro mobile" data-path="/pro">
+          <div class="mobile-frame">
+            <div class="notch"></div>
+            <a href="087_pro_mobile.png" target="_blank" class="img-link" title="Agrandir en taille réelle">
+              <img src="087_pro_mobile.png" loading="lazy" alt="Pro Mobile">
+              <div class="zoom-badge">🔍 Ouvrir</div>
+            </a>
+          </div>
+          <div class="card-meta">
+            <div class="top-row">
+              <span class="idx">#087</span>
+              <span class="size">1266 Ko</span>
+            </div>
+            <h3 class="label">Pro Mobile</h3>
+            <code>/pro</code>
+          </div>
+        </div>
+
+        <div class="mobile-card" data-cat="Contenu" data-title="faq mobile" data-path="/faq">
+          <div class="mobile-frame">
+            <div class="notch"></div>
+            <a href="088_faq_mobile.png" target="_blank" class="img-link" title="Agrandir en taille réelle">
+              <img src="088_faq_mobile.png" loading="lazy" alt="FAQ Mobile">
+              <div class="zoom-badge">🔍 Ouvrir</div>
+            </a>
+          </div>
+          <div class="card-meta">
+            <div class="top-row">
+              <span class="idx">#088</span>
+              <span class="size">1496 Ko</span>
+            </div>
+            <h3 class="label">FAQ Mobile</h3>
+            <code>/faq</code>
+          </div>
+        </div>
+
+        <div class="mobile-card" data-cat="Contenu" data-title="contact mobile" data-path="/contact">
+          <div class="mobile-frame">
+            <div class="notch"></div>
+            <a href="089_contact_mobile.png" target="_blank" class="img-link" title="Agrandir en taille réelle">
+              <img src="089_contact_mobile.png" loading="lazy" alt="Contact Mobile">
+              <div class="zoom-badge">🔍 Ouvrir</div>
+            </a>
+          </div>
+          <div class="card-meta">
+            <div class="top-row">
+              <span class="idx">#089</span>
+              <span class="size">1296 Ko</span>
+            </div>
+            <h3 class="label">Contact Mobile</h3>
+            <code>/contact</code>
+          </div>
+        </div>
+        </div>
+      </section>
+
+      <section class="category-block" id="cat-admin">
+        <div class="category-header">
+          <h2>Admin</h2>
+          <span class="count">2 écran(s) mobile</span>
+        </div>
+        <div class="mobile-grid">
+          
+        <div class="mobile-card" data-cat="Admin" data-title="admin dashboard mobile" data-path="/admin">
+          <div class="mobile-frame">
+            <div class="notch"></div>
+            <a href="090_admin_mobile.png" target="_blank" class="img-link" title="Agrandir en taille réelle">
+              <img src="090_admin_mobile.png" loading="lazy" alt="Admin Dashboard Mobile">
+              <div class="zoom-badge">🔍 Ouvrir</div>
+            </a>
+          </div>
+          <div class="card-meta">
+            <div class="top-row">
+              <span class="idx">#090</span>
+              <span class="size">973 Ko</span>
+            </div>
+            <h3 class="label">Admin Dashboard Mobile</h3>
+            <code>/admin</code>
+          </div>
+        </div>
+
+        <div class="mobile-card" data-cat="Admin" data-title="admin produits mobile" data-path="/admin/produits">
+          <div class="mobile-frame">
+            <div class="notch"></div>
+            <a href="091_admin-produits_mobile.png" target="_blank" class="img-link" title="Agrandir en taille réelle">
+              <img src="091_admin-produits_mobile.png" loading="lazy" alt="Admin Produits Mobile">
+              <div class="zoom-badge">🔍 Ouvrir</div>
+            </a>
+          </div>
+          <div class="card-meta">
+            <div class="top-row">
+              <span class="idx">#091</span>
+              <span class="size">973 Ko</span>
+            </div>
+            <h3 class="label">Admin Produits Mobile</h3>
+            <code>/admin/produits</code>
+          </div>
+        </div>
+        </div>
+      </section>
+
+      <section class="category-block" id="cat-design-system">
+        <div class="category-header">
+          <h2>Design System</h2>
+          <span class="count">2 écran(s) mobile</span>
+        </div>
+        <div class="mobile-grid">
+          
+        <div class="mobile-card" data-cat="Design System" data-title="showcase liquid glass mobile" data-path="/dev/glass">
+          <div class="mobile-frame">
+            <div class="notch"></div>
+            <a href="092_dev-glass_mobile.png" target="_blank" class="img-link" title="Agrandir en taille réelle">
+              <img src="092_dev-glass_mobile.png" loading="lazy" alt="Showcase Liquid Glass Mobile">
+              <div class="zoom-badge">🔍 Ouvrir</div>
+            </a>
+          </div>
+          <div class="card-meta">
+            <div class="top-row">
+              <span class="idx">#092</span>
+              <span class="size">3243 Ko</span>
+            </div>
+            <h3 class="label">Showcase Liquid Glass Mobile</h3>
+            <code>/dev/glass</code>
+          </div>
+        </div>
+
+        <div class="mobile-card" data-cat="Design System" data-title="style guide mobile" data-path="/dev/style">
+          <div class="mobile-frame">
+            <div class="notch"></div>
+            <a href="093_dev-style_mobile.png" target="_blank" class="img-link" title="Agrandir en taille réelle">
+              <img src="093_dev-style_mobile.png" loading="lazy" alt="Style Guide Mobile">
+              <div class="zoom-badge">🔍 Ouvrir</div>
+            </a>
+          </div>
+          <div class="card-meta">
+            <div class="top-row">
+              <span class="idx">#093</span>
+              <span class="size">2056 Ko</span>
+            </div>
+            <h3 class="label">Style Guide Mobile</h3>
+            <code>/dev/style</code>
+          </div>
+        </div>
+        </div>
+      </section>
+
+      <section class="category-block" id="cat-l-gal">
+        <div class="category-header">
+          <h2>Légal</h2>
+          <span class="count">5 écran(s) mobile</span>
+        </div>
+        <div class="mobile-grid">
+          
+        <div class="mobile-card" data-cat="Légal" data-title="mentions légales mobile" data-path="/mentions-legales">
+          <div class="mobile-frame">
+            <div class="notch"></div>
+            <a href="094_mentions-legales_mobile.png" target="_blank" class="img-link" title="Agrandir en taille réelle">
+              <img src="094_mentions-legales_mobile.png" loading="lazy" alt="Mentions Légales Mobile">
+              <div class="zoom-badge">🔍 Ouvrir</div>
+            </a>
+          </div>
+          <div class="card-meta">
+            <div class="top-row">
+              <span class="idx">#094</span>
+              <span class="size">1859 Ko</span>
+            </div>
+            <h3 class="label">Mentions Légales Mobile</h3>
+            <code>/mentions-legales</code>
+          </div>
+        </div>
+
+        <div class="mobile-card" data-cat="Légal" data-title="cgv mobile" data-path="/cgv">
+          <div class="mobile-frame">
+            <div class="notch"></div>
+            <a href="095_cgv_mobile.png" target="_blank" class="img-link" title="Agrandir en taille réelle">
+              <img src="095_cgv_mobile.png" loading="lazy" alt="CGV Mobile">
+              <div class="zoom-badge">🔍 Ouvrir</div>
+            </a>
+          </div>
+          <div class="card-meta">
+            <div class="top-row">
+              <span class="idx">#095</span>
+              <span class="size">1935 Ko</span>
+            </div>
+            <h3 class="label">CGV Mobile</h3>
+            <code>/cgv</code>
+          </div>
+        </div>
+
+        <div class="mobile-card" data-cat="Légal" data-title="cgu mobile" data-path="/cgu">
+          <div class="mobile-frame">
+            <div class="notch"></div>
+            <a href="096_cgu_mobile.png" target="_blank" class="img-link" title="Agrandir en taille réelle">
+              <img src="096_cgu_mobile.png" loading="lazy" alt="CGU Mobile">
+              <div class="zoom-badge">🔍 Ouvrir</div>
+            </a>
+          </div>
+          <div class="card-meta">
+            <div class="top-row">
+              <span class="idx">#096</span>
+              <span class="size">1882 Ko</span>
+            </div>
+            <h3 class="label">CGU Mobile</h3>
+            <code>/cgu</code>
+          </div>
+        </div>
+
+        <div class="mobile-card" data-cat="Légal" data-title="confidentialité mobile" data-path="/politique-confidentialite">
+          <div class="mobile-frame">
+            <div class="notch"></div>
+            <a href="097_politique-confidentialite_mobile.png" target="_blank" class="img-link" title="Agrandir en taille réelle">
+              <img src="097_politique-confidentialite_mobile.png" loading="lazy" alt="Confidentialité Mobile">
+              <div class="zoom-badge">🔍 Ouvrir</div>
+            </a>
+          </div>
+          <div class="card-meta">
+            <div class="top-row">
+              <span class="idx">#097</span>
+              <span class="size">2010 Ko</span>
+            </div>
+            <h3 class="label">Confidentialité Mobile</h3>
+            <code>/politique-confidentialite</code>
+          </div>
+        </div>
+
+        <div class="mobile-card" data-cat="Légal" data-title="cookies mobile" data-path="/cookies">
+          <div class="mobile-frame">
+            <div class="notch"></div>
+            <a href="098_cookies_mobile.png" target="_blank" class="img-link" title="Agrandir en taille réelle">
+              <img src="098_cookies_mobile.png" loading="lazy" alt="Cookies Mobile">
+              <div class="zoom-badge">🔍 Ouvrir</div>
+            </a>
+          </div>
+          <div class="card-meta">
+            <div class="top-row">
+              <span class="idx">#098</span>
+              <span class="size">1306 Ko</span>
+            </div>
+            <h3 class="label">Cookies Mobile</h3>
+            <code>/cookies</code>
+          </div>
+        </div>
+        </div>
+      </section>
+
+      <section class="category-block" id="cat-syst-me">
+        <div class="category-header">
+          <h2>Système</h2>
+          <span class="count">2 écran(s) mobile</span>
+        </div>
+        <div class="mobile-grid">
+          
+        <div class="mobile-card" data-cat="Système" data-title="mode hors-ligne mobile" data-path="/hors-ligne">
+          <div class="mobile-frame">
+            <div class="notch"></div>
+            <a href="099_hors-ligne_mobile.png" target="_blank" class="img-link" title="Agrandir en taille réelle">
+              <img src="099_hors-ligne_mobile.png" loading="lazy" alt="Mode Hors-Ligne Mobile">
+              <div class="zoom-badge">🔍 Ouvrir</div>
+            </a>
+          </div>
+          <div class="card-meta">
+            <div class="top-row">
+              <span class="idx">#099</span>
+              <span class="size">1627 Ko</span>
+            </div>
+            <h3 class="label">Mode Hors-Ligne Mobile</h3>
+            <code>/hors-ligne</code>
+          </div>
+        </div>
+
+        <div class="mobile-card" data-cat="Système" data-title="page 404 mobile" data-path="/page-introuvable-404">
+          <div class="mobile-frame">
+            <div class="notch"></div>
+            <a href="100_page-404_mobile.png" target="_blank" class="img-link" title="Agrandir en taille réelle">
+              <img src="100_page-404_mobile.png" loading="lazy" alt="Page 404 Mobile">
+              <div class="zoom-badge">🔍 Ouvrir</div>
+            </a>
+          </div>
+          <div class="card-meta">
+            <div class="top-row">
+              <span class="idx">#100</span>
+              <span class="size">1323 Ko</span>
+            </div>
+            <h3 class="label">Page 404 Mobile</h3>
+            <code>/page-introuvable-404</code>
+          </div>
+        </div>
+        </div>
+      </section>
+  </main>
+
+  <script>
+    const searchBox = document.getElementById('searchBox');
+    const filterBtns = document.querySelectorAll('.filter-btn');
+    const cards = document.querySelectorAll('.mobile-card');
+    const sections = document.querySelectorAll('.category-block');
+
+    function filterAll() {
+      const q = searchBox.value.toLowerCase().trim();
+      const activeFilter = document.querySelector('.filter-btn.active').dataset.filter;
+
+      sections.forEach(sec => {
+        let visibleCount = 0;
+        const secCards = sec.querySelectorAll('.mobile-card');
+        secCards.forEach(c => {
+          const cat = c.dataset.cat;
+          const title = c.dataset.title;
+          const p = c.dataset.path;
+
+          const matchCat = activeFilter === 'all' || cat === activeFilter;
+          const matchQuery = !q || title.includes(q) || p.includes(q) || cat.toLowerCase().includes(q);
+
+          if (matchCat && matchQuery) {
+            c.style.display = 'flex';
+            visibleCount++;
+          } else {
+            c.style.display = 'none';
+          }
+        });
+
+        sec.style.display = visibleCount > 0 ? 'block' : 'none';
+      });
+    }
+
+    searchBox.addEventListener('input', filterAll);
+
+    filterBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        filterBtns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        filterAll();
+      });
+    });
+  </script>
+</body>
+</html>

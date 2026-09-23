@@ -29,7 +29,7 @@ export function SearchField({
     <div
       className={cn(
         'flex h-[var(--control-height-md)] w-full items-center gap-[var(--space-2)] rounded-full',
-        'border border-[color:var(--lkv-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)]',
+        'border border-[color:var(--glass-rim)] bg-[color:var(--g2-bg)] backdrop-blur-md shadow-[var(--glass-specular)] px-[var(--space-3)]',
         'focus-within:ring-2 focus-within:ring-[color:var(--lkv-focus-ring)]',
         containerClassName
       )}
@@ -37,7 +37,7 @@ export function SearchField({
       <Icon
         name="MagnifyingGlassIcon"
         size={18}
-        className="shrink-0 text-[color:var(--lkv-text-muted)]"
+        className="shrink-0 text-[color:var(--glass-label-secondary)]"
       />
       <input
         {...props}
@@ -46,8 +46,8 @@ export function SearchField({
         placeholder={placeholder}
         aria-label={props['aria-label'] ?? placeholder}
         className={cn(
-          'min-w-0 flex-1 bg-transparent text-[length:var(--lkv-text-body)] text-[color:var(--lkv-text-primary)]',
-          'placeholder:text-[color:var(--lkv-text-muted)] focus:outline-none',
+          'min-w-0 flex-1 bg-transparent text-[length:var(--lkv-text-body)] text-[color:var(--glass-label)]',
+          'placeholder:text-[color:var(--glass-label-tertiary)] focus:outline-none',
           '[&::-webkit-search-cancel-button]:hidden',
           className
         )}
@@ -57,7 +57,7 @@ export function SearchField({
           type="button"
           onClick={onClear}
           aria-label="Effacer la recherche"
-          className="inline-flex h-[var(--control-height-sm)] w-[var(--control-height-sm)] shrink-0 items-center justify-center rounded-full text-[color:var(--lkv-text-muted)] transition-colors hover:bg-[color:var(--lkv-hover-surface)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]"
+          className="inline-flex h-[var(--control-height-sm)] w-[var(--control-height-sm)] shrink-0 items-center justify-center rounded-full text-[color:var(--glass-label-secondary)] transition-colors hover:bg-[color:var(--lkv-hover-surface)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]"
         >
           <Icon name="XMarkIcon" size={16} />
         </button>

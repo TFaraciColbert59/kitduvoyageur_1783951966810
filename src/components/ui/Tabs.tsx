@@ -79,8 +79,8 @@ export function Tabs({
                 baseItem,
                 'min-h-[var(--control-height-sm)] rounded-full px-[var(--space-4)] text-[length:var(--lkv-text-footnote)]',
                 active
-                  ? 'lkv-glass lkv-glass-interactive font-bold text-[color:var(--lkv-text-primary)]'
-                  : 'lkv-glass lkv-glass-interactive text-[color:var(--btn-content)]'
+                  ? 'bg-[color:var(--g3-bg)] text-[color:var(--g3-text)] shadow-[var(--glass-specular)] font-bold'
+                  : 'bg-[color:var(--g2-bg)] border border-[color:var(--glass-rim)] text-[color:var(--glass-label-secondary)] shadow-[var(--glass-specular)] backdrop-blur-md hover:text-[color:var(--glass-label)]'
               )}
             >
               {option.icon}
@@ -102,7 +102,7 @@ export function Tabs({
       role="tablist"
       aria-label={ariaLabel}
       className={cn(
-        'flex w-full items-center gap-[var(--space-1)] rounded-full border border-[color:var(--lkv-border)] bg-[color:var(--lkv-surface-muted)] p-[3px]',
+        'flex w-full items-center gap-[var(--space-1)] rounded-full border border-[color:var(--glass-rim)] bg-[color:var(--g1-bg)] backdrop-blur-md p-[3px]',
         className
       )}
     >
@@ -118,10 +118,10 @@ export function Tabs({
             onClick={() => onChange(option.id)}
             className={cn(
               baseItem,
-              'min-h-[var(--control-height-sm)] flex-1 rounded-full px-[var(--space-3)] text-[length:var(--lkv-text-footnote)]',
+              'min-h-[var(--control-height-sm)] flex-1 rounded-full px-[var(--space-3)] text-[length:var(--lkv-text-footnote)] transition-all duration-[var(--motion-control-duration)]',
               active
-                ? 'lkv-glass lkv-glass-interactive text-[color:var(--lkv-text-primary)]'
-                : 'text-[color:var(--lkv-text-secondary)]'
+                ? 'bg-[color:var(--g3-bg)] text-[color:var(--g3-text)] shadow-[var(--glass-specular)] font-bold'
+                : 'text-[color:var(--glass-label-secondary)] hover:text-[color:var(--glass-label)]'
             )}
           >
             {option.icon}

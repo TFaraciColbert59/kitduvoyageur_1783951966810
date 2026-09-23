@@ -42,7 +42,7 @@ export function Chip({
   const actionOnly = interactive && !selectable;
 
   const classes = cn(
-    'inline-flex touch-manipulation select-none items-center justify-center gap-[6px] rounded-full border px-[var(--space-3)] text-[length:var(--lkv-text-caption-2)] font-medium transition-colors',
+    'inline-flex touch-manipulation select-none items-center justify-center gap-[6px] rounded-full px-[var(--space-3)] text-[length:var(--lkv-text-caption-2)] font-medium transition-all duration-[var(--motion-control-duration)]',
     actionOnly ? 'min-h-[var(--lkv-touch-min)]' : 'min-h-[var(--control-height-xs)]',
     interactive &&
       'cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)] motion-reduce:transition-none',
@@ -50,8 +50,9 @@ export function Chip({
       !disabled &&
       'active:scale-[var(--motion-press-scale)] motion-reduce:active:scale-100',
     disabled && 'pointer-events-none opacity-[var(--opacity-disabled)]',
-    'lkv-glass lkv-glass-interactive',
-    selected ? 'font-bold text-[color:var(--lkv-text-primary)]' : TONE[tone],
+    selected
+      ? 'bg-[color:var(--g3-bg)] text-[color:var(--g3-text)] shadow-[var(--glass-specular)] border border-transparent font-bold'
+      : cn('bg-[color:var(--g2-bg)] border border-[color:var(--glass-rim)] shadow-[var(--glass-specular)] backdrop-blur-md hover:brightness-[1.06]', TONE[tone]),
     className
   );
 

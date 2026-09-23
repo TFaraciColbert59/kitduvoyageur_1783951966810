@@ -1,4 +1,4 @@
-﻿import React, { Suspense } from 'react';
+import React, { Suspense } from 'react';
 import type { Metadata, Viewport } from 'next';
 import { cookies, headers } from 'next/headers';
 import { Manrope, IBM_Plex_Mono, Instrument_Serif } from 'next/font/google';
@@ -259,6 +259,22 @@ export default async function RootLayout({
             }}
           />
         )}
+        {/* iOS 27 Liquid Glass Intensity bootstrap */}
+        <script
+          id="glass-intensity-bootstrap"
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                try {
+                  var val = localStorage.getItem('lkdv_glass_intensity');
+                  if (val !== null) {
+                    document.documentElement.style.setProperty('--glass-intensity', val);
+                  }
+                } catch(e) {}
+              })();
+            `,
+          }}
+        />
       </head>
       <body
         className={`${manrope.variable} ${ibmPlexMono.variable} ${instrumentSerif.variable} bg-transparent min-h-[100dvh]`}

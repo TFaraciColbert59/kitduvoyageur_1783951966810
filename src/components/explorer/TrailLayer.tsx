@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 import { useRef, useEffect } from 'react';
 import type { Map as LeafletMap } from 'leaflet';
 import type { MapTrail } from './types';
@@ -272,7 +272,7 @@ export default function TrailLayer({ map, trails, pois, selectedTrailId, onTrail
               const count = cluster.getChildCount();
               const html = `
                 <div style="
-                  background: #2D6B4A;
+                  background: #334155;
                   color: white;
                   font-weight: 700;
                   font-size: 11px;
@@ -282,7 +282,7 @@ export default function TrailLayer({ map, trails, pois, selectedTrailId, onTrail
                   display: flex;
                   align-items: center;
                   justify-content: center;
-                  box-shadow: 0 2px 6px rgba(45,107,74,0.35);
+                  box-shadow: 0 2px 6px rgba(51,65,85,0.35);
                   border: 2px solid white;
                 ">📍${count}</div>
               `;
@@ -298,7 +298,7 @@ export default function TrailLayer({ map, trails, pois, selectedTrailId, onTrail
           let bgColor = '#7C3AED';
           switch (poi.category) {
             case 'refuge': emoji = '🏡'; bgColor = '#17402C'; break;
-            case 'summit': case 'col': emoji = '⛰️'; bgColor = '#2D6B4A'; break;
+            case 'summit': case 'col': emoji = '⛰️'; bgColor = '#334155'; break;
             case 'water': emoji = '💧'; bgColor = '#0284C7'; break;
             case 'waterfall': emoji = '🌊'; bgColor = '#0EA5E9'; break;
             case 'camping': emoji = '⛺'; bgColor = '#16A34A'; break;

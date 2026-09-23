@@ -115,10 +115,10 @@ export default function CustomCursor() {
       <div
         className={`fixed top-0 left-0 rounded-full border transition-all duration-200 ease-out ${
           isHovered
-            ? 'w-11 h-11 bg-[color:var(--lkv-forest-500)]/15 border-[color:var(--lkv-forest-500)]/60 backdrop-blur-[1px] scale-110'
+            ? 'w-11 h-11 bg-white/20 border-white/60 backdrop-blur-[2px] shadow-[0_2px_8px_rgba(0,0,0,0.15)] scale-110'
             : isClicked
-            ? 'w-7 h-7 bg-[color:var(--lkv-forest-500)]/30 border-[color:var(--lkv-forest-500)]/80 scale-90'
-            : 'w-8 h-8 bg-[color:var(--lkv-forest-500)]/08 border-[color:var(--lkv-forest-500)]/35'
+            ? 'w-7 h-7 bg-white/30 border-white/80 scale-90'
+            : 'w-8 h-8 bg-white/10 border-white/40'
         }`}
         style={{
           transform: `translate3d(${ringPosition.x}px, ${ringPosition.y}px, 0) translate(-50%, -50%)`,
@@ -127,11 +127,11 @@ export default function CustomCursor() {
 
       {/* Inner Precision Center Dot */}
       <div
-        className={`fixed top-0 left-0 rounded-full bg-[color:var(--lkv-primary)] transition-transform duration-100 ease-out  ${
+        className={`fixed top-0 left-0 rounded-full bg-[color:var(--glass-label)] transition-transform duration-100 ease-out  ${
           isHovered
-            ? 'w-2.5 h-2.5 bg-[color:var(--lkv-forest-500)] scale-125'
+            ? 'w-2.5 h-2.5 bg-[color:var(--glass-label)] scale-125'
             : isClicked
-            ? 'w-1.5 h-1.5 bg-[color:var(--lkv-primary)] scale-75'
+            ? 'w-1.5 h-1.5 bg-[color:var(--glass-label)] scale-75'
             : 'w-2 h-2'
         }`}
         style={{

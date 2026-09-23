@@ -84,7 +84,7 @@ export function Card({
         TONE[tone],
         interactive &&
           'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]',
-        selected && 'ring-2 ring-[color:var(--lkv-action)]',
+        selected && 'ring-2 ring-[color:var(--glass-rim)] shadow-[var(--glass-specular)]',
         className
       )}
     >

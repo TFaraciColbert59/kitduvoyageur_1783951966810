@@ -84,7 +84,7 @@ export default function AppShell({
         ...(containerBgStyle ? { background: containerBgStyle } : {}),
         position: 'relative',
         paddingTop: safeTop ? 'var(--page-top-inset)' : '0px',
-        // Le shell réserve la place de la navigation (offset canonique) ;
+        // Le shell réserve la place de la navigation (offset canonique) + marge de sécurité (OBS-G01) ;
         // bottomExtra se cale au-dessus via --bottom-nav-height.
         paddingBottom: 'var(--bottom-nav-height)',
         scrollPaddingBottom: 'var(--bottom-nav-height)',
@@ -93,7 +93,7 @@ export default function AppShell({
       {/* Skip Link pour navigation clavier et lecteurs d'écran (WCAG AA 2.4.1) */}
       <a
         href="#main-content"
-        className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-[var(--lkv-primary)] focus:text-white focus:text-sm focus:font-semibold focus:rounded-xl focus:shadow-xl focus:outline-none focus:ring-2 focus:ring-amber-400"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-[var(--glass-label)] focus:text-[var(--g3-text)] focus:text-sm focus:font-semibold focus:rounded-xl focus:shadow-xl focus:outline-none focus:ring-2 focus:ring-white/60"
       >
         Aller au contenu principal
       </a>
@@ -111,8 +111,8 @@ export default function AppShell({
 
       {/* Contenu du shell — le landmark <main id="main-content"> unique est
           rendu par src/app/layout.tsx (M04) : ici un conteneur neutre pour
-          ne jamais dupliquer le repère principal. */}
-      <div style={{ position: 'relative', zIndex: 1, width: '100%', maxWidth: '100%' }}>
+          ne jamais dupliquer le repère principal. Marge de sécurité OBS-G01. */}
+      <div style={{ position: 'relative', zIndex: 1, width: '100%', maxWidth: '100%', paddingBottom: 'var(--space-6, 24px)' }}>
         {children}
       </div>
 

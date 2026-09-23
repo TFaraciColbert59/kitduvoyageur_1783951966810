@@ -210,7 +210,7 @@ export default function ReportBlockModal({ target, onClose, onSuccess }: Props) 
                             value={cat.id}
                             checked={selectedCategory === cat.id}
                             onChange={() => setSelectedCategory(cat.id)}
-                            className="text-[color:var(--lkv-primary)]"
+                            className="text-[color:var(--glass-label)] accent-foreground"
                           />
                           <span>{cat.label}</span>
                         </div>

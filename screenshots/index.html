@@ -1,0 +1,2391 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>LKDV — Galerie Complète des Visuels de l'App (100% des Pages)</title>
+  <style>
+    :root {
+      --bg: #0C0F0E;
+      --surface: #141A17;
+      --surface-elevated: #1B2420;
+      --border: rgba(255, 255, 255, 0.08);
+      --border-accent: rgba(52, 199, 89, 0.3);
+      --text: #F5F7F5;
+      --text-muted: #8F9E95;
+      --accent: #34C759;
+      --accent-glow: rgba(52, 199, 89, 0.15);
+      --font: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      padding: 0;
+      margin: 0;
+      -webkit-font-smoothing: antialiased;
+    }
+    header {
+      background: rgba(20, 26, 23, 0.85);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      padding: 20px 32px;
+    }
+    .header-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+    .logo-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .logo-badge h1 {
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: #fff;
+    }
+    .tag {
+      background: var(--accent-glow);
+      color: var(--accent);
+      border: 1px solid var(--border-accent);
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+    .stats-bar {
+      display: flex;
+      gap: 20px;
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+    .stats-bar strong {
+      color: var(--text);
+      font-weight: 600;
+    }
+    .controls {
+      display: flex;
+      gap: 12px;
+      margin-top: 18px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .search-input {
+      background: var(--surface-elevated);
+      border: 1px solid var(--border);
+      color: #fff;
+      padding: 10px 16px;
+      border-radius: 10px;
+      font-size: 14px;
+      width: 280px;
+      outline: none;
+      transition: all 0.2s ease;
+    }
+    .search-input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-glow);
+    }
+    .filters {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .filter-btn {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      padding: 7px 14px;
+      border-radius: 8px;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .filter-btn:hover {
+      background: var(--surface-elevated);
+      color: #fff;
+    }
+    .filter-btn.active {
+      background: var(--accent);
+      color: #000;
+      border-color: var(--accent);
+      font-weight: 600;
+    }
+    main {
+      padding: 32px;
+      max-width: 1800px;
+      margin: 0 auto;
+    }
+    .cat-header {
+      display: flex;
+      align-items: baseline;
+      gap: 12px;
+      margin: 40px 0 20px 0;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--border);
+    }
+    .cat-header h2 {
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+    }
+    .cat-count {
+      color: var(--text-muted);
+      font-size: 13px;
+    }
+    .cards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+      gap: 24px;
+    }
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    .card:hover {
+      transform: translateY(-4px);
+      border-color: rgba(255, 255, 255, 0.2);
+      box-shadow: 0 12px 30px rgba(0,0,0,0.5);
+    }
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 14px;
+      background: rgba(0, 0, 0, 0.2);
+      border-bottom: 1px solid var(--border);
+      font-size: 12px;
+    }
+    .badge {
+      font-family: ui-monospace, monospace;
+      font-weight: 700;
+      color: var(--accent);
+    }
+    .category-pill {
+      background: rgba(255, 255, 255, 0.06);
+      padding: 2px 8px;
+      border-radius: 6px;
+      color: var(--text-muted);
+    }
+    .file-size {
+      margin-left: auto;
+      color: var(--text-muted);
+      font-family: ui-monospace, monospace;
+      font-size: 11px;
+    }
+    .img-wrap {
+      position: relative;
+      display: block;
+      height: 380px;
+      background: #000;
+      overflow: hidden;
+      cursor: zoom-in;
+    }
+    .img-wrap img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: top;
+      transition: transform 0.3s ease;
+    }
+    .img-wrap:hover img {
+      transform: scale(1.02);
+    }
+    .overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transition: opacity 0.2s ease;
+      color: #fff;
+      font-weight: 600;
+      font-size: 14px;
+      backdrop-filter: blur(2px);
+    }
+    .img-wrap:hover .overlay {
+      opacity: 1;
+    }
+    .card-body {
+      padding: 14px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: auto;
+    }
+    .title {
+      font-size: 15px;
+      font-weight: 600;
+      color: #fff;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .path-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .path-bar code {
+      background: rgba(0, 0, 0, 0.3);
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-size: 12px;
+      color: var(--accent);
+      font-family: ui-monospace, monospace;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .open-link {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 14px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      background: rgba(255, 255, 255, 0.05);
+    }
+    .open-link:hover {
+      color: #fff;
+      background: rgba(255, 255, 255, 0.15);
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="header-top">
+      <div class="logo-badge">
+        <h1>Le Kit du Voyageur — Galerie Visuelle 100%</h1>
+        <span class="tag">Tous les Écrans Rendu Réel</span>
+      </div>
+      <div class="stats-bar">
+        <span><strong>100</strong> pages capturées</span>
+        <span>Poids total : <strong>133.1 Mo</strong></span>
+        <span>Résolution : <strong>1440px Pleine Page</strong></span>
+        <span>Durée : <strong>846s</strong></span>
+      </div>
+    </div>
+    <div class="controls">
+      <input type="text" id="searchInput" class="search-input" placeholder="Filtrer une page, une route (/hub, /pays)...">
+      <div class="filters">
+        <button class="filter-btn active" data-filter="all">Tous (100)</button>
+        <button class="filter-btn" data-filter="Général">Général</button>
+<button class="filter-btn" data-filter="Hub">Hub</button>
+<button class="filter-btn" data-filter="Exploration">Exploration</button>
+<button class="filter-btn" data-filter="Équipement">Équipement</button>
+<button class="filter-btn" data-filter="E-commerce">E-commerce</button>
+<button class="filter-btn" data-filter="Destinations">Destinations</button>
+<button class="filter-btn" data-filter="Communauté">Communauté</button>
+<button class="filter-btn" data-filter="Outils">Outils</button>
+<button class="filter-btn" data-filter="Utilisateur">Utilisateur</button>
+<button class="filter-btn" data-filter="Voyages">Voyages</button>
+<button class="filter-btn" data-filter="Contenu">Contenu</button>
+<button class="filter-btn" data-filter="Admin">Admin</button>
+<button class="filter-btn" data-filter="Design System">Design System</button>
+<button class="filter-btn" data-filter="Légal">Légal</button>
+<button class="filter-btn" data-filter="Système">Système</button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    
+      <section class="category-section" id="cat-g-n-ral">
+        <div class="cat-header">
+          <h2>Général</h2>
+          <span class="cat-count">1 page(s)</span>
+        </div>
+        <div class="cards-grid">
+          
+        <div class="card" data-cat="Général" data-title="accueil / vitrine" data-path="/">
+          <div class="card-header">
+            <span class="badge">#001</span>
+            <span class="category-pill">Général</span>
+            <span class="file-size">3078 Ko</span>
+          </div>
+          <a href="001_accueil.png" target="_blank" class="img-wrap" title="Agrandir Accueil / Vitrine">
+            <img src="001_accueil.png" loading="lazy" alt="Accueil / Vitrine">
+            <div class="overlay">🔍 Plein Écran</div>
+          </a>
+          <div class="card-body">
+            <h3 class="title">Accueil / Vitrine</h3>
+            <div class="path-bar">
+              <code>/</code>
+              <a href="http://localhost:4000/" target="_blank" class="open-link" title="Ouvrir dans l'app locale">↗</a>
+            </div>
+          </div>
+        </div>
+        </div>
+      </section>
+
+      <section class="category-section" id="cat-hub">
+        <div class="cat-header">
+          <h2>Hub</h2>
+          <span class="cat-count">8 page(s)</span>
+        </div>
+        <div class="cards-grid">
+          
+        <div class="card" data-cat="Hub" data-title="hub cockpit voyage" data-path="/hub">
+          <div class="card-header">
+            <span class="badge">#002</span>
+            <span class="category-pill">Hub</span>
+            <span class="file-size">1315 Ko</span>
+          </div>
+          <a href="002_hub.png" target="_blank" class="img-wrap" title="Agrandir Hub Cockpit Voyage">
+            <img src="002_hub.png" loading="lazy" alt="Hub Cockpit Voyage">
+            <div class="overlay">🔍 Plein Écran</div>
+          </a>
+          <div class="card-body">
+            <h3 class="title">Hub Cockpit Voyage</h3>
+            <div class="path-bar">
+              <code>/hub</code>
+              <a href="http://localhost:4000/hub" target="_blank" class="open-link" title="Ouvrir dans l'app locale">↗</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" data-cat="Hub" data-title="hub — créer voyage" data-path="/hub/nouveau">
+          <div class="card-header">
+            <span class="badge">#003</span>
+            <span class="category-pill">Hub</span>
+            <span class="file-size">1297 Ko</span>
+          </div>
+          <a href="003_hub-nouveau.png" target="_blank" class="img-wrap" title="Agrandir Hub — Créer Voyage">
+            <img src="003_hub-nouveau.png" loading="lazy" alt="Hub — Créer Voyage">
+            <div class="overlay">🔍 Plein Écran</div>
+          </a>
+          <div class="card-body">
+            <h3 class="title">Hub — Créer Voyage</h3>
+            <div class="path-bar">
+              <code>/hub/nouveau</code>
+              <a href="http://localhost:4000/hub/nouveau" target="_blank" class="open-link" title="Ouvrir dans l'app locale">↗</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" data-cat="Hub" data-title="hub — itinéraire" data-path="/hub/itineraire">
+          <div class="card-header">
+            <span class="badge">#004</span>
+            <span class="category-pill">Hub</span>
+            <span class="file-size">993 Ko</span>
+          </div>
+          <a href="004_hub-itineraire.png" target="_blank" class="img-wrap" title="Agrandir Hub — Itinéraire">
+            <img src="004_hub-itineraire.png" loading="lazy" alt="Hub — Itinéraire">
+            <div class="overlay">🔍 Plein Écran</div>
+          </a>
+          <div class="card-body">
+            <h3 class="title">Hub — Itinéraire</h3>
+            <div class="path-bar">
+              <code>/hub/itineraire</code>
+              <a href="http://localhost:4000/hub/itineraire" target="_blank" class="open-link" title="Ouvrir dans l'app locale">↗</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" data-cat="Hub" data-title="hub — budget & dépenses" data-path="/hub/budget">
+          <div class="card-header">
+            <span class="badge">#005</span>
+            <span class="category-pill">Hub</span>
+            <span class="file-size">1149 Ko</span>
+          </div>
+          <a href="005_hub-budget.png" target="_blank" class="img-wrap" title="Agrandir Hub — Budget & Dépenses">
+            <img src="005_hub-budget.png" loading="lazy" alt="Hub — Budget & Dépenses">
+            <div class="overlay">🔍 Plein Écran</div>
+          </a>
+          <div class="card-body">
+            <h3 class="title">Hub — Budget & Dépenses</h3>
+            <div class="path-bar">
+              <code>/hub/budget</code>
+              <a href="http://localhost:4000/hub/budget" target="_blank" class="open-link" title="Ouvrir dans l'app locale">↗</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" data-cat="Hub" data-title="hub — équipage & rôles" data-path="/hub/groupe">
+          <div class="card-header">
+            <span class="badge">#006</span>
+            <span class="category-pill">Hub</span>
+            <span class="file-size">1229 Ko</span>
+          </div>
+          <a href="006_hub-groupe.png" target="_blank" class="img-wrap" title="Agrandir Hub — Équipage & Rôles">
+            <img src="006_hub-groupe.png" loading="lazy" alt="Hub — Équipage & Rôles">
+            <div class="overlay">🔍 Plein Écran</div>
+          </a>
+          <div class="card-body">
+            <h3 class="title">Hub — Équipage & Rôles</h3>
+            <div class="path-bar">
+              <code>/hub/groupe</code>
+              <a href="http://localhost:4000/hub/groupe" target="_blank" class="open-link" title="Ouvrir dans l'app locale">↗</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" data-cat="Hub" data-title="hub — sécurité & checkpoints" data-path="/hub/securite">
+          <div class="card-header">
+            <span class="badge">#007</span>
+            <span class="category-pill">Hub</span>
+            <span class="file-size">1283 Ko</span>
+          </div>
+          <a href="007_hub-securite.png" target="_blank" class="img-wrap" title="Agrandir Hub — Sécurité & Checkpoints">
+            <img src="007_hub-securite.png" loading="lazy" alt="Hub — Sécurité & Checkpoints">
+            <div class="overlay">🔍 Plein Écran</div>
+          </a>
+          <div class="card-body">
+            <h3 class="title">Hub — Sécurité & Checkpoints</h3>
+            <div class="path-bar">
+              <code>/hub/securite</code>
+              <a href="http://localhost:4000/hub/securite" target="_blank" class="open-link" title="Ouvrir dans l'app locale">↗</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" data-cat="Hub" data-title="hub — matériel & inventaire" data-path="/hub/materiel">
+          <div class="card-header">
+            <span class="badge">#008</span>
+            <span class="category-pill">Hub</span>
+            <span class="file-size">1689 Ko</span>
+          </div>
+          <a href="008_hub-materiel.png" target="_blank" class="img-wrap" title="Agrandir Hub — Matériel & Inventaire">
+            <img src="008_hub-materiel.png" loading="lazy" alt="Hub — Matériel & Inventaire">
+            <div class="overlay">🔍 Plein Écran</div>
+          </a>
+          <div class="card-body">
+            <h3 class="title">Hub — Matériel & Inventaire</h3>
+            <div class="path-bar">
+              <code>/hub/materiel</code>
+              <a href="http://localhost:4000/hub/materiel" target="_blank" class="open-link" title="Ouvrir dans l'app locale">↗</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" data-cat="Hub" data-title="hub — documents" data-path="/hub/documents">
+          <div class="card-header">
+            <span class="badge">#009</span>
+            <span class="category-pill">Hub</span>
+            <span class="file-size">1146 Ko</span>
+          </div>
+          <a href="009_hub-documents.png" target="_blank" class="img-wrap" title="Agrandir Hub — Documents">
+            <img src="009_hub-documents.png" loading="lazy" alt="Hub — Documents">
+            <div class="overlay">🔍 Plein Écran</div>
+          </a>
+          <div class="card-body">
+            <h3 class="title">Hub — Documents</h3>
+            <div class="path-bar">
+              <code>/hub/documents</code>
+              <a href="http://localhost:4000/hub/documents" target="_blank" class="open-link" title="Ouvrir dans l'app locale">↗</a>
+            </div>
+          </div>
+        </div>
+        </div>
+      </section>
+
+      <section class="category-section" id="cat-exploration">
+        <div class="cat-header">
+          <h2>Exploration</h2>
+          <span class="cat-count">4 page(s)</span>
+        </div>
+        <div class="cards-grid">
+          
+        <div class="card" data-cat="Exploration" data-title="explorer / recherche sentiers" data-path="/explorer">
+          <div class="card-header">
+            <span class="badge">#010</span>
+            <span class="category-pill">Exploration</span>
+            <span class="file-size">1844 Ko</span>
+          </div>
+          <a href="010_explorer.png" target="_blank" class="img-wrap" title="Agrandir Explorer / Recherche Sentiers">
+            <img src="010_explorer.png" loading="lazy" alt="Explorer / Recherche Sentiers">
+            <div class="overlay">🔍 Plein Écran</div>
+          </a>
+          <div class="card-body">
+            <h3 class="title">Explorer / Recherche Sentiers</h3>
+            <div class="path-bar">
+              <code>/explorer</code>
+              <a href="http://localhost:4000/explorer" target="_blank" class="open-link" title="Ouvrir dans l'app locale">↗</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" data-cat="Exploration" data-title="carte interactive (leaflet/maplibre)" data-path="/carte-interactive">
+          <div class="card-header">
+            <span class="badge">#011</span>
+            <span class="category-pill">Exploration</span>
+            <span class="file-size">1838 Ko</span>
+          </div>
+          <a href="011_carte-interactive.png" target="_blank" class="img-wrap" title="Agrandir Carte Interactive (Leaflet/MapLibre)">
+            <img src="011_carte-interactive.png" loading="lazy" alt="Carte Interactive (Leaflet/MapLibre)">
+            <div class="overlay">🔍 Plein Écran</div>
+          </a>
+          <div class="card-body">
+            <h3 class="title">Carte Interactive (Leaflet/MapLibre)</h3>
+            <div class="path-bar">
+              <code>/carte-interactive</code>
+              <a href="http://localhost:4000/carte-interactive" target="_blank" class="open-link" title="Ouvrir dans l'app locale">↗</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" data-cat="Exploration" data-title="randonnée active / en cours" data-path="/randonnee-active">
+          <div class="card-header">
+            <span class="badge">#012</span>
+            <span class="category-pill">Exploration</span>
+            <span class="file-size">1512 Ko</span>
+          </div>
+          <a href="012_randonnee-active.png" target="_blank" class="img-wrap" title="Agrandir Randonnée Active / En cours">
+            <img src="012_randonnee-active.png" loading="lazy" alt="Randonnée Active / En cours">
+            <div class="overlay">🔍 Plein Écran</div>
+          </a>
+          <div class="card-body">
+            <h3 class="title">Randonnée Active / En cours</h3>
+            <div class="path-bar">
+              <code>/randonnee-active</code>
+              <a href="http://localhost:4000/randonnee-active" target="_blank" class="open-link" title="Ouvrir dans l'app locale">↗</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" data-cat="Exploration" data-title="rapport d’expédition" data-path="/rapport-expedition">
+          <div class="card-header">
+            <span class="badge">#013</span>
+            <span class="category-pill">Exploration</span>
+            <span class="file-size">1847 Ko</span>
+          </div>
+          <a href="013_rapport-expedition.png" target="_blank" class="img-wrap" title="Agrandir Rapport d’Expédition">
+            <img src="013_rapport-expedition.png" loading="lazy" alt="Rapport d’Expédition">
+            <div class="overlay">🔍 Plein Écran</div>
+          </a>
+          <div class="card-body">
+            <h3 class="title">Rapport d’Expédition</h3>
+            <div class="path-bar">
+              <code>/rapport-expedition</code>
+              <a href="http://localhost:4000/rapport-expedition" target="_blank" class="open-link" title="Ouvrir dans l'app locale">↗</a>
+            </div>
+          </div>
+        </div>
+        </div>
+      </section>
+
+      <section class="category-section" id="cat--quipement">
+        <div class="cat-header">
+          <h2>Équipement</h2>
+          <span class="cat-count">8 page(s)</span>
+        </div>
+        <div class="cards-grid">
+          
+        <div class="card" data-cat="Équipement" data-title="gestionnaire matériel (liquid glass)" data-path="/materiel">
+          <div class="card-header">
+            <span class="badge">#014</span>
+            <span class="category-pill">Équipement</span>
+            <span class="file-size">1556 Ko</span>
+          </div>
+          <a href="014_materiel.png" target="_blank" class="img-wrap" title="Agrandir Gestionnaire Matériel (Liquid Glass)">
+            <img src="014_materiel.png" loading="lazy" alt="Gestionnaire Matériel (Liquid Glass)">
+            <div class="overlay">🔍 Plein Écran</div>
+          </a>
+          <div class="card-body">
+            <h3 class="title">Gestionnaire Matériel (Liquid Glass)</h3>
+            <div class="path-bar">
+              <code>/materiel</code>
+              <a href="http://localhost:4000/materiel" target="_blank" class="open-link" title="Ouvrir dans l'app locale">↗</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" data-cat="Équipement" data-title="catalogue des kits outdoor" data-path="/kits">
+          <div class="card-header">
+            <span class="badge">#015</span>
+            <span class="category-pill">Équipement</span>
+            <span class="file-size">1681 Ko</span>
+          </div>
+          <a href="015_kits.png" target="_blank" class="img-wrap" title="Agrandir Catalogue des Kits Outdoor">
+            <img src="015_kits.png" loading="lazy" alt="Catalogue des Kits Outdoor">
+            <div class="overlay">🔍 Plein Écran</div>
+          </a>
+          <div class="card-body">
+            <h3 class="title">Catalogue des Kits Outdoor</h3>
+            <div class="path-bar">
+              <code>/kits</code>
+              <a href="http://localhost:4000/kits" target="_blank" class="open-link" title="Ouvrir dans l'app locale">↗</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" data-cat="Équipement" data-title="kit détail — islande trek" data-path="/kits/islande-trek">
+          <div class="card-header">
+            <span class="badge">#016</span>
+            <span class="category-pill">Équipement</span>
+            <span class="file-size">1696 Ko</span>
+          </div>
+          <a href="016_kit-islande.png" target="_blank" class="img-wrap" title="Agrandir Kit Détail — Islande Trek">
+            <img src="016_kit-islande.png" loading="lazy" alt="Kit Détail — Islande Trek">
+            <div class="overlay">🔍 Plein Écran</div>
+          </a>
+          <div class="card-body">
+            <h3 class="title">Kit Détail — Islande Trek</h3>
+            <div class="path-bar">
+              <code>/kits/islande-trek</code>
+              <a href="http://localhost:4000/kits/islande-trek" target="_blank" class="open-link" title="Ouvrir dans l'app locale">↗</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" data-cat="Équipement" data-title="kit détail — gr20 corse" data-path="/kits/gr20-corse">
+          <div class="card-header">
+            <span class="badge">#017</span>
+            <span class="category-pill">Équipement</span>
+            <span class="file-size">1696 Ko</span>
+          </div>
+          <a href="017_kit-gr20.png" target="_blank" class="img-wrap" title="Agrandir Kit Détail — GR20 Corse">
+            <img src="017_kit-gr20.png" loading="lazy" alt="Kit Détail — GR20 Corse">
+            <div class="overlay">🔍 Plein Écran</div>
+          </a>
+          <div class="card-body">
+            <h3 class="title">Kit Détail — GR20 Corse</h3>
+            <div class="path-bar">
+              <code>/kits/gr20-corse</code>
+              <a href="http://localhost:4000/kits/gr20-corse" target="_blank" class="open-link" title="Ouvrir dans l'app locale">↗</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" data-cat="Équipement" data-title="kit détail — vanlife europe" data-path="/kits/vanlife-europe">
+          <div class="card-header">
+            <span class="badge">#018</span>
+            <span class="category-pill">Équipement</span>
+            <span class="file-size">1696 Ko</span>
+          </div>
+          <a href="018_kit-vanlife.png" target="_blank" class="img-wrap" title="Agrandir Kit Détail — Vanlife Europe">
+            <img src="018_kit-vanlife.png" loading="lazy" alt="Kit Détail — Vanlife Europe">
+            <div class="overlay">🔍 Plein Écran</div>
+          </a>
+          <div class="card-body">
+            <h3 class="title">Kit Détail — Vanlife Europe</h3>
+            <div class="path-bar">
+              <code>/kits/vanlife-europe</code>
+              <a href="http://localhost:4000/kits/vanlife-europe" target="_blank" class="open-link" title="Ouvrir dans l'app locale">↗</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" data-cat="Équipement" data-title="kit partagé — vue publique /k/" data-path="/k/demo-token">
+          <div class="card-header">
+            <span class="badge">#019</span>
+            <span class="category-pill">Équipement</span>
+            <span class="file-size">1778 Ko</span>
+          </div>
+          <a href="019_kit-partage.png" target="_blank" class="img-wrap" title="Agrandir Kit Partagé — Vue Publique /k/">
+            <img src="019_kit-partage.png" loading="lazy" alt="Kit Partagé — Vue Publique /k/">
+            <div class="overlay">🔍 Plein Écran</div>
+          </a>
+          <div class="card-body">
+            <h3 class="title">Kit Partagé — Vue Publique /k/</h3>
+            <div class="path-bar">
+              <code>/k/demo-token</code>
+              <a href="http://localhost:4000/k/demo-token" target="_blank" class="open-link" title="Ouvrir dans l'app locale">↗</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" data-cat="Équipement" data-title="configurateur ia de pack" data-path="/ai-configurator">
+          <div class="card-header">
+            <span class="badge">#020</span>
+            <span class="category-pill">Équipement</span>
+            <span class="file-size">1019 Ko</span>
+          </div>
+          <a href="020_ai-configurator.png" target="_blank" class="img-wrap" title="Agrandir Configurateur IA de Pack">
+            <img src="020_ai-configurator.png" loading="lazy" alt="Configurateur IA de Pack">
+            <div class="overlay">🔍 Plein Écran</div>
+          </a>
+          <div class="card-body">
+            <h3 class="title">Configurateur IA de Pack</h3>
+            <div class="path-bar">
+              <code>/ai-configurator</code>
+              <a href="http://localhost:4000/ai-configurator" target="_blank" class="open-link" title="Ouvrir dans l'app locale">↗</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" data-cat="Équipement" data-title="copilote ia voyageur" data-path="/copilote">
+          <div class="card-header">
+            <span class="badge">#021</span>
+            <span class="category-pill">Équipement</span>
+            <span class="file-size">62 Ko</span>
+          </div>
+          <a href="021_copilote.png" target="_blank" class="img-wrap" title="Agrandir Copilote IA Voyageur">
+            <img src="021_copilote.png" loading="lazy" alt="Copilote IA Voyageur">
+            <div class="overlay">🔍 Plein Écran</div>
+          </a>
+          <div class="card-body">
+            <h3 class="title">Copilote IA Voyageur</h3>
+            <div class="path-bar">
+              <code>/copilote</code>
+              <a href="http://localhost:4000/copilote" target="_blank" class="open-link" title="Ouvrir dans l'app locale">↗</a>
+            </div>
+          </div>
+        </div>
+        </div>
+      </section>
+
+      <section class="category-section" id="cat-e-commerce">
+        <div class="cat-header">
+          <h2>E-commerce</h2>
+          <span class="cat-count">7 page(s)</span>
+        </div>
+        <div class="cards-grid">
+          
+        <div class="card" data-cat="E-commerce" data-title="boutique outdoor" data-path="/boutique">
+          <div class="card-header">
+            <span class="badge">#022</span>
+            <span class="category-pill">E-commerce</span>
+            <span class="file-size">1838 Ko</span>
+          </div>
+          <a href="022_boutique.png" target="_blank" class="img-wrap" title="Agrandir Boutique Outdoor">
+            <img src="022_boutique.png" loading="lazy" alt="Boutique Outdoor">
+            <div class="overlay">🔍 Plein Écran</div>
+          </a>
+          <div class="card-body">
+            <h3 class="title">Boutique Outdoor</h3>
+            <div class="path-bar">
+              <code>/boutique</code>
+              <a href="http://localhost:4000/boutique" target="_blank" class="open-link" title="Ouvrir dans l'app locale">↗</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" data-cat="E-commerce" data-title="fiche produit bigbuy" data-path="/produit/sac-a-dos-de-randonnee-categorie-bigbuy">
+          <div class="card-header">
+            <span class="badge">#023</span>
+            <span class="category-pill">E-commerce</span>
+            <span class="file-size">1546 Ko</span>
+          </div>
+          <a href="023_produit-detail.png" target="_blank" class="img-wrap" title="Agrandir Fiche Produit BigBuy">
+            <img src="023_produit-detail.png" loading="lazy" alt="Fiche Produit BigBuy">
+            <div class="overlay">🔍 Plein Écran</div>
+          </a>
+          <div class="card-body">
+            <h3 class="title">Fiche Produit BigBuy</h3>
+            <div class="path-bar">
+              <code>/produit/sac-a-dos-de-randonnee-categorie-bigbuy</code>
+              <a href="http://localhost:4000/produit/sac-a-dos-de-randonnee-categorie-bigbuy" target="_blank" class="open-link" title="Ouvrir dans l'app locale">↗</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" data-cat="E-commerce" data-title="bourse au matériel d’occasion" data-path="/occasion">
+          <div class="card-header">
+            <span class="badge">#024</span>
+            <span class="category-pill">E-commerce</span>
+            <span class="file-size">2231 Ko</span>
+          </div>
+          <a href="024_occasion.png" target="_blank" class="img-wrap" title="Agrandir Bourse au Matériel d’Occasion">
+            <img src="024_occasion.png" loading="lazy" alt="Bourse au Matériel d’Occasion">
+            <div class="overlay">🔍 Plein Écran</div>
+          </a>
+          <div class="card-body">
+            <h3 class="title">Bourse au Matériel d’Occasion</h3>
+            <div class="path-bar">
+              <code>/occasion</code>
+              <a href="http://localhost:4000/occasion" target="_blank" class="open-link" title="Ouvrir dans l'app locale">↗</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" data-cat="E-commerce" data-title="location de matériel" data-path="/location">
+          <div class="card-header">
+            <span class="badge">#025</span>
+            <span class="category-pill">E-commerce</span>
+            <span class="file-size">2288 Ko</span>
+          </div>
+          <a href="025_location.png" target="_blank" class="img-wrap" title="Agrandir Location de Matériel">
+            <img src="025_location.png" loading="lazy" alt="Location de Matériel">
+            <div class="overlay">🔍 Plein Écran</div>
+          </a>
+          <div class="card-body">
+            <h3 class="title">Location de Matériel</h3>
+            <div class="path-bar">
+              <code>/location</code>
+              <a href="http://localhost:4000/location" target="_blank" class="open-link" title="Ouvrir dans l'app locale">↗</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" data-cat="E-commerce" data-title="panier d’achat" data-path="/panier">
+          <div class="card-header">
+            <span class="badge">#026</span>
+            <span class="category-pill">E-commerce</span>
+            <span class="file-size">1673 Ko</span>
+          </div>
+          <a href="026_panier.png" target="_blank" class="img-wrap" title="Agrandir Panier d’Achat">
+            <img src="026_panier.png" loading="lazy" alt="Panier d’Achat">
+            <div class="overlay">🔍 Plein Écran</div>
+          </a>
+          <div class="card-body">
+            <h3 class="title">Panier d’Achat</h3>
+            <div class="path-bar">
+              <code>/panier</code>
+              <a href="http://localhost:4000/panier" target="_blank" class="open-link" title="Ouvrir dans l'app locale">↗</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" data-cat="E-commerce" data-title="tunnel de paiement stripe" data-path="/checkout">
+          <div class="card-header">
+            <span class="badge">#027</span>
+            <span class="category-pill">E-commerce</span>
+            <span class="file-size">1374 Ko</span>
+          </div>
+          <a href="027_checkout.png" target="_blank" class="img-wrap" title="Agrandir Tunnel de Paiement Stripe">
+            <img src="027_checkout.png" loading="lazy" alt="Tunnel de Paiement Stripe">
+            <div class="overlay">🔍 Plein Écran</div>
+          </a>
+          <div class="card-body">
+            <h3 class="title">Tunnel de Paiement Stripe</h3>
+            <div class="path-bar">
+              <code>/checkout</code>
+              <a href="http://localhost:4000/checkout" target="_blank" class="open-link" title="Ouvrir dans l'app locale">↗</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" data-cat="E-commerce" data-title="abonnements & forfaits club" data-path="/abonnements">
+          <div class="card-header">
+            <span class="badge">#028</span>
+            <span class="category-pill">E-commerce</span>
+            <span class="file-size">2131 Ko</span>
+          </div>
+          <a href="028_abonnements.png" target="_blank" class="img-wrap" title="Agrandir Abonnements & Forfaits Club">
+            <img src="028_abonnements.png" loading="lazy" alt="Abonnements & Forfaits Club">
+            <div class="overlay">🔍 Plein Écran</div>
+          </a>
+          <div class="card-body">
+            <h3 class="title">Abonnements & Forfaits Club</h3>
+            <div class="path-bar">
+              <code>/abonnements</code>
+              <a href="http://localhost:4000/abonnements" target="_blank" class="open-link" title="Ouvrir dans l'app locale">↗</a>
+            </div>
+          </div>
+        </div>
+        </div>
+      </section>
+
+      <section class="category-section" id="cat-destinations">
+        <div class="cat-header">
+          <h2>Destinations</h2>
+          <span class="cat-count">8 page(s)</span>
+        </div>
+        <div class="cards-grid">
+          
+        <div class="card" data-cat="Destinations" data-title="destination pays — france" data-path="/pays/fr">
+          <div class="card-header">
+            <span class="badge">#029</span>
+            <span class="category-pill">Destinations</span>
+            <span class="file-size">1290 Ko</span>
+          </div>
+          <a href="029_pays-fr.png" target="_blank" class="img-wrap" title="Agrandir Destination Pays — France">
+            <img src="029_pays-fr.png" loading="lazy" alt="Destination Pays — France">
+            <div class="overlay">🔍 Plein Écran</div>
+          </a>
+          <div class="card-body">
+            <h3 class="title">Destination Pays — France</h3>
+            <div class="path-bar">
+              <code>/pays/fr</code>
+              <a href="http://localhost:4000/pays/fr" target="_blank" class="open-link" title="Ouvrir dans l'app locale">↗</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" data-cat="Destinations" data-title="destination pays — islande" data-path="/pays/is">
+          <div class="card-header">
+            <span class="badge">#030</span>
+            <span class="category-pill">Destinations</span>
+            <span class="file-size">1266 Ko</span>
+          </div>
+          <a href="030_pays-is.png" target="_blank" class="img-wrap" title="Agrandir Destination Pays — Islande">
+            <img src="030_pays-is.png" loading="lazy" alt="Destination Pays — Islande">
+            <div class="overlay">🔍 Plein Écran</div>
+          </a>
+          <div class="card-body">
+            <h3 class="title">Destination Pays — Islande</h3>
+            <div class="path-bar">
+              <code>/pays/is</code>
+              <a href="http://localhost:4000/pays/is" target="_blank" class="open-link" title="Ouvrir dans l'app locale">↗</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" data-cat="Destinations" data-title="destination pays — japon" data-path="/pays/jp">
+          <div class="card-header">
+            <span class="badge">#031</span>
+            <span class="category-pill">Destinations</span>
+            <span class="file-size">1256 Ko</span>
+          </div>
+          <a href="031_pays-jp.png" target="_blank" class="img-wrap" title="Agrandir Destination Pays — Japon">
+            <img src="031_pays-jp.png" loading="lazy" alt="Destination Pays — Japon">
+            <div class="overlay">🔍 Plein Écran</div>
+          </a>
+          <div class="card-body">
+            <h3 class="title">Destination Pays — Japon</h3>
+            <div class="path-bar">
+              <code>/pays/jp</code>
+              <a href="http://localhost:4000/pays/jp" target="_blank" class="open-link" title="Ouvrir dans l'app locale">↗</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" data-cat="Destinations" data-title="index des lieux & refuges" data-path="/lieux">
+          <div class="card-header">
+            <span class="badge">#032</span>
+            <span class="category-pill">Destinations</span>
+            <span class="file-size">1976 Ko</span>
+          </div>
+          <a href="032_lieux.png" target="_blank" class="img-wrap" title="Agrandir Index des Lieux & Refuges">
+            <img src="032_lieux.png" loading="lazy" alt="Index des Lieux & Refuges">
+            <div class="overlay">🔍 Plein Écran</div>
+          </a>
+          <div class="card-body">
+            <h3 class="title">Index des Lieux & Refuges</h3>
+            <div class="path-bar">
+              <code>/lieux</code>
+              <a href="http://localhost:4000/lieux" target="_blank" class="open-link" title="Ouvrir dans l'app locale">↗</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" data-cat="Destinations" data-title="lieu détail — refuge du goûter" data-path="/lieux/refuge-du-gouter-mont-blanc">
+          <div class="card-header">
+            <span class="badge">#033</span>
+            <span class="category-pill">Destinations</span>
+            <span class="file-size">1471 Ko</span>
+          </div>
+          <a href="033_lieu-detail.png" target="_blank" class="img-wrap" title="Agrandir Lieu Détail — Refuge du Goûter">
+            <img src="033_lieu-detail.png" loading="lazy" alt="Lieu Détail — Refuge du Goûter">
+            <div class="overlay">🔍 Plein Écran</div>
+          </a>
+          <div class="card-body">
+            <h3 class="title">Lieu Détail — Refuge du Goûter</h3>
+            <div class="path-bar">
+              <code>/lieux/refuge-du-gouter-mont-blanc</code>
+              <a href="http://localhost:4000/lieux/refuge-du-gouter-mont-blanc" target="_blank" class="open-link" title="Ouvrir dans l'app locale">↗</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" data-cat="Destinations" data-title="préparer randonnée" data-path="/preparer-randonnee">
+          <div class="card-header">
+            <span class="badge">#034</span>
+            <span class="category-pill">Destinations</span>
+            <span class="file-size">1315 Ko</span>
+          </div>
+          <a href="034_preparer-randonnee.png" target="_blank" class="img-wrap" title="Agrandir Préparer Randonnée">
+            <img src="034_preparer-randonnee.png" loading="lazy" alt="Préparer Randonnée">
+            <div class="overlay">🔍 Plein Écran</div>
+          </a>
+          <div class="card-body">
+            <h3 class="title">Préparer Randonnée</h3>
+            <div class="path-bar">
+              <code>/preparer-randonnee</code>
+              <a href="http://localhost:4000/preparer-randonnee" target="_blank" class="open-link" title="Ouvrir dans l'app locale">↗</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" data-cat="Destinations" data-title="préparer sentier — aperçu" data-path="/preparer-sentier/apercu">
+          <div class="card-header">
+            <span class="badge">#035</span>
+            <span class="category-pill">Destinations</span>
+            <span class="file-size">1655 Ko</span>
+          </div>
+          <a href="035_preparer-sentier-apercu.png" target="_blank" class="img-wrap" title="Agrandir Préparer Sentier — Aperçu">
+            <img src="035_preparer-sentier-apercu.png" loading="lazy" alt="Préparer Sentier — Aperçu">
+            <div class="overlay">🔍 Plein Écran</div>
+          </a>
+          <div class="card-body">
+            <h3 class="title">Préparer Sentier — Aperçu</h3>
+            <div class="path-bar">
+              <code>/preparer-sentier/apercu</code>
+              <a href="http://localhost:4000/preparer-sentier/apercu" target="_blank" class="open-link" title="Ouvrir dans l'app locale">↗</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" data-cat="Destinations" data-title="préparer sentier — fiche sentier" data-path="/preparer-sentier/refuge-du-gouter-mont-blanc">
+          <div class="card-header">
+            <span class="badge">#036</span>
+            <span class="category-pill">Destinations</span>
+            <span class="file-size">1788 Ko</span>
+          </div>
+          <a href="036_preparer-sentier-detail.png" target="_blank" class="img-wrap" title="Agrandir Préparer Sentier — Fiche Sentier">
+            <img src="036_preparer-sentier-detail.png" loading="lazy" alt="Préparer Sentier — Fiche Sentier">
+            <div class="overlay">🔍 Plein Écran</div>
+          </a>
+          <div class="card-body">
+            <h3 class="title">Préparer Sentier — Fiche Sentier</h3>
+            <div class="path-bar">
+              <code>/preparer-sentier/refuge-du-gouter-mont-blanc</code>
+              <a href="http://localhost:4000/preparer-sentier/refuge-du-gouter-mont-blanc" target="_blank" class="open-link" title="Ouvrir dans l'app locale">↗</a>
+            </div>
+          </div>
+        </div>
+        </div>
+      </section>
+
+      <section class="category-section" id="cat-communaut-">
+        <div class="cat-header">
+          <h2>Communauté</h2>
+          <span class="cat-count">15 page(s)</span>
+        </div>
+        <div class="cards-grid">
+          
+        <div class="card" data-cat="Communauté" data-title="communauté lkdv — flux social" data-path="/communaute">
+          <div class="card-header">
+            <span class="badge">#037</span>
+            <span class="category-pill">Communauté</span>
+            <span class="file-size">1329 Ko</span>
+          </div>
+          <a href="037_communaute.png" target="_blank" class="img-wrap" title="Agrandir Communauté LKDV — Flux Social">
+            <img src="037_communaute.png" loading="lazy" alt="Communauté LKDV — Flux Social">
+            <div class="overlay">🔍 Plein Écran</div>
+          </a>
+          <div class="card-body">
+            <h3 class="title">Communauté LKDV — Flux Social</h3>
+            <div class="path-bar">
+              <code>/communaute</code>
+              <a href="http://localhost:4000/communaute" target="_blank" class="open-link" title="Ouvrir dans l'app locale">↗</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" data-cat="Communauté" data-title="publier dans la communauté" data-path="/communaute/publier">
+          <div class="card-header">
+            <span class="badge">#038</span>
+            <span class="category-pill">Communauté</span>
+            <span class="file-size">944 Ko</span>
+          </div>
+          <a href="038_communaute-publier.png" target="_blank" class="img-wrap" title="Agrandir Publier dans la Communauté">
+            <img src="038_communaute-publier.png" loading="lazy" alt="Publier dans la Communauté">
+            <div class="overlay">🔍 Plein Écran</div>
+          </a>
+          <div class="card-body">
+            <h3 class="title">Publier dans la Communauté</h3>
+            <div class="path-bar">
+              <code>/communaute/publier</code>
+              <a href="http://localhost:4000/communaute/publier" target="_blank" class="open-link" title="Ouvrir dans l'app locale">↗</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" data-cat="Communauté" data-title="espace communauté pro" data-path="/communaute-pro">
+          <div class="card-header">
+            <span class="badge">#039</span>
+            <span class="category-pill">Communauté</span>
+            <span class="file-size">1525 Ko</span>
+          </div>
+          <a href="039_communaute-pro.png" target="_blank" class="img-wrap" title="Agrandir Espace Communauté Pro">
+            <img src="039_communaute-pro.png" loading="lazy" alt="Espace Communauté Pro">
+            <div class="overlay">🔍 Plein Écran</div>
+          </a>
+          <div class="card-body">
+            <h3 class="title">Espace Communauté Pro</h3>
+            <div class="path-bar">
+              <code>/communaute-pro</code>
+              <a href="http://localhost:4000/communaute-pro" target="_blank" class="open-link" title="Ouvrir dans l'app locale">↗</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" data-cat="Communauté" data-title="flux d’actualité aventure" data-path="/feed">
+          <div class="card-header">
+            <span class="badge">#040</span>
+            <span class="category-pill">Communauté</span>
+            <span class="file-size">1053 Ko</span>
+          </div>
+          <a href="040_feed.png" target="_blank" class="img-wrap" title="Agrandir Flux d’Actualité Aventure">
+            <img src="040_feed.png" loading="lazy" alt="Flux d’Actualité Aventure">
+            <div class="overlay">🔍 Plein Écran</div>
+          </a>
+          <div class="card-body">
+            <h3 class="title">Flux d’Actualité Aventure</h3>
+            <div class="path-bar">
+              <code>/feed</code>
+              <a href="http://localhost:4000/feed" target="_blank" class="open-link" title="Ouvrir dans l'app locale">↗</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" data-cat="Communauté" data-title="carnets de voyage — galerie" data-path="/carnets">
+          <div class="card-header">
+            <span class="badge">#041</span>
+            <span class="category-pill">Communauté</span>
+            <span class="file-size">1500 Ko</span>
+          </div>
+          <a href="041_carnets.png" target="_blank" class="img-wrap" title="Agrandir Carnets de Voyage — Galerie">
+            <img src="041_carnets.png" loading="lazy" alt="Carnets de Voyage — Galerie">
+            <div class="overlay">🔍 Plein Écran</div>
+          </a>
+          <div class="card-body">
+            <h3 class="title">Carnets de Voyage — Galerie</h3>
+            <div class="path-bar">
+              <code>/carnets</code>
+              <a href="http://localhost:4000/carnets" target="_blank" class="open-link" title="Ouvrir dans l'app locale">↗</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" data-cat="Communauté" data-title="créer un nouveau carnet" data-path="/carnets/nouveau">
+          <div class="card-header">
+            <span class="badge">#042</span>
+            <span class="category-pill">Communauté</span>
+            <span class="file-size">1246 Ko</span>
+          </div>
+          <a href="042_carnet-nouveau.png" target="_blank" class="img-wrap" title="Agrandir Créer un Nouveau Carnet">
+            <img src="042_carnet-nouveau.png" loading="lazy" alt="Créer un Nouveau Carnet">
+            <div class="overlay">🔍 Plein Écran</div>
+          </a>
+          <div class="card-body">
+            <h3 class="title">Créer un Nouveau Carnet</h3>
+            <div class="path-bar">
+              <code>/carnets/nouveau</code>
+              <a href="http://localhost:4000/carnets/nouveau" target="_blank" class="open-link" title="Ouvrir dans l'app locale">↗</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" data-cat="Communauté" data-title="carnet détail" data-path="/carnets/f21439a3-4daf-42ed-a778-1fa3fffa8f61">
+          <div class="card-header">
+            <span class="badge">#043</span>
+            <span class="category-pill">Communauté</span>
+            <span class="file-size">1541 Ko</span>
+          </div>
+          <a href="043_carnet-detail.png" target="_blank" class="img-wrap" title="Agrandir Carnet Détail">
+            <img src="043_carnet-detail.png" loading="lazy" alt="Carnet Détail">
+            <div class="overlay">🔍 Plein Écran</div>
+          </a>
+          <div class="card-body">
+            <h3 class="title">Carnet Détail</h3>
+            <div class="path-bar">
+              <code>/carnets/f21439a3-4daf-42ed-a778-1fa3fffa8f61</code>
+              <a href="http://localhost:4000/carnets/f21439a3-4daf-42ed-a778-1fa3fffa8f61" target="_blank" class="open-link" title="Ouvrir dans l'app locale">↗</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" data-cat="Communauté" data-title="clubs & communautés d’aventuriers" data-path="/clubs">
+          <div class="card-header">
+            <span class="badge">#044</span>
+            <span class="category-pill">Communauté</span>
+            <span class="file-size">727 Ko</span>
+          </div>
+          <a href="044_clubs.png" target="_blank" class="img-wrap" title="Agrandir Clubs & Communautés d’Aventuriers">
+            <img src="044_clubs.png" loading="lazy" alt="Clubs & Communautés d’Aventuriers">
+            <div class="overlay">🔍 Plein Écran</div>
+          </a>
+          <div class="card-body">
+            <h3 class="title">Clubs & Communautés d’Aventuriers</h3>
+            <div class="path-bar">
+              <code>/clubs</code>
+              <a href="http://localhost:4000/clubs" target="_blank" class="open-link" title="Ouvrir dans l'app locale">↗</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" data-cat="Communauté" data-title="créer un club" data-path="/clubs/nouveau">
+          <div class="card-header">
+            <span class="badge">#045</span>
+            <span class="category-pill">Communauté</span>
+            <span class="file-size">1255 Ko</span>
+          </div>
+          <a href="045_club-nouveau.png" target="_blank" class="img-wrap" title="Agrandir Créer un Club">
+            <img src="045_club-nouveau.png" loading="lazy" alt="Créer un Club">
+            <div class="overlay">🔍 Plein Écran</div>
+          </a>
+          <div class="card-body">
+            <h3 class="title">Créer un Club</h3>
+            <div class="path-bar">
+              <code>/clubs/nouveau</code>
+              <a href="http://localhost:4000/clubs/nouveau" target="_blank" class="open-link" title="Ouvrir dans l'app locale">↗</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" data-cat="Communauté" data-title="club détail — alpinistes débutants" data-path="/clubs/b2000012-0000-0000-0000-000000000005">
+          <div class="card-header">
+            <span class="badge">#046</span>
+            <span class="category-pill">Communauté</span>
+            <span class="file-size">1108 Ko</span>
+          </div>
+          <a href="046_club-detail.png" target="_blank" class="img-wrap" title="Agrandir Club Détail — Alpinistes Débutants">
+            <img src="046_club-detail.png" loading="lazy" alt="Club Détail — Alpinistes Débutants">
+            <div class="overlay">🔍 Plein Écran</div>
+          </a>
+          <div class="card-body">
+            <h3 class="title">Club Détail — Alpinistes Débutants</h3>
+            <div class="path-bar">
+              <code>/clubs/b2000012-0000-0000-0000-000000000005</code>
+              <a href="http://localhost:4000/clubs/b2000012-0000-0000-0000-000000000005" target="_blank" class="open-link" title="Ouvrir dans l'app locale">↗</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" data-cat="Communauté" data-title="créer un nouveau groupe" data-path="/nouveau-groupe">
+          <div class="card-header">
+            <span class="badge">#047</span>
+            <span class="category-pill">Communauté</span>
+            <span class="file-size">1290 Ko</span>
+          </div>
+          <a href="047_nouveau-groupe.png" target="_blank" class="img-wrap" title="Agrandir Créer un Nouveau Groupe">
+            <img src="047_nouveau-groupe.png" loading="lazy" alt="Créer un Nouveau Groupe">
+            <div class="overlay">🔍 Plein Écran</div>
+          </a>
+          <div class="card-body">
+            <h3 class="title">Créer un Nouveau Groupe</h3>
+            <div class="path-bar">
+              <code>/nouveau-groupe</code>
+              <a href="http://localhost:4000/nouveau-groupe" target="_blank" class="open-link" title="Ouvrir dans l'app locale">↗</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" data-cat="Communauté" data-title="entraide & sos voyageurs" data-path="/entraide">
+          <div class="card-header">
+            <span class="badge">#048</span>
+            <span class="category-pill">Communauté</span>
+            <span class="file-size">1760 Ko</span>
+          </div>
+          <a href="048_entraide.png" target="_blank" class="img-wrap" title="Agrandir Entraide & SOS Voyageurs">
+            <img src="048_entraide.png" loading="lazy" alt="Entraide & SOS Voyageurs">
+            <div class="overlay">🔍 Plein Écran</div>
+          </a>
+          <div class="card-body">
+            <h3 class="title">Entraide & SOS Voyageurs</h3>
+            <div class="path-bar">
+              <code>/entraide</code>
+              <a href="http://localhost:4000/entraide" target="_blank" class="open-link" title="Ouvrir dans l'app locale">↗</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" data-cat="Communauté" data-title="événements & meetups outdoor" data-path="/evenements">
+          <div class="card-header">
+            <span class="badge">#049</span>
+            <span class="category-pill">Communauté</span>
+            <span class="file-size">288 Ko</span>
+          </div>
+          <a href="049_evenements.png" target="_blank" class="img-wrap" title="Agrandir Événements & Meetups Outdoor">
+            <img src="049_evenements.png" loading="lazy" alt="Événements & Meetups Outdoor">
+            <div class="overlay">🔍 Plein Écran</div>
+          </a>
+          <div class="card-body">
+            <h3 class="title">Événements & Meetups Outdoor</h3>
+            <div class="path-bar">
+              <code>/evenements</code>
+              <a href="http://localhost:4000/evenements" target="_blank" class="open-link" title="Ouvrir dans l'app locale">↗</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" data-cat="Communauté" data-title="avis & retours d’expérience" data-path="/avis">
+          <div class="card-header">
+            <span class="badge">#050</span>
+            <span class="category-pill">Communauté</span>
+            <span class="file-size">1495 Ko</span>
+          </div>
+          <a href="050_avis.png" target="_blank" class="img-wrap" title="Agrandir Avis & Retours d’Expérience">
+            <img src="050_avis.png" loading="lazy" alt="Avis & Retours d’Expérience">
+            <div class="overlay">🔍 Plein Écran</div>
+          </a>
+          <div class="card-body">
+            <h3 class="title">Avis & Retours d’Expérience</h3>
+            <div class="path-bar">
+              <code>/avis</code>
+              <a href="http://localhost:4000/avis" target="_blank" class="open-link" title="Ouvrir dans l'app locale">↗</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" data-cat="Communauté" data-title="portail publier" data-path="/publier">
+          <div class="card-header">
+            <span class="badge">#051</span>
+            <span class="category-pill">Communauté</span>
+            <span class="file-size">943 Ko</span>
+          </div>
+          <a href="051_publier.png" target="_blank" class="img-wrap" title="Agrandir Portail Publier">
+            <img src="051_publier.png" loading="lazy" alt="Portail Publier">
+            <div class="overlay">🔍 Plein Écran</div>
+          </a>
+          <div class="card-body">
+            <h3 class="title">Portail Publier</h3>
+            <div class="path-bar">
+              <code>/publier</code>
+              <a href="http://localhost:4000/publier" target="_blank" class="open-link" title="Ouvrir dans l'app locale">↗</a>
+            </div>
+          </div>
+        </div>
+        </div>
+      </section>
+
+      <section class="category-section" id="cat-outils">
+        <div class="cat-header">
+          <h2>Outils</h2>
+          <span class="cat-count">11 page(s)</span>
+        </div>
+        <div class="cards-grid">
+          
+        <div class="card" data-cat="Outils" data-title="boîte à outils du voyageur" data-path="/outils">
+          <div class="card-header">
+            <span class="badge">#052</span>
+            <span class="category-pill">Outils</span>
+            <span class="file-size">486 Ko</span>
+          </div>
+          <a href="052_outils.png" target="_blank" class="img-wrap" title="Agrandir Boîte à Outils du Voyageur">
+            <img src="052_outils.png" loading="lazy" alt="Boîte à Outils du Voyageur">
+            <div class="overlay">🔍 Plein Écran</div>
+          </a>
+          <div class="card-body">
+            <h3 class="title">Boîte à Outils du Voyageur</h3>
+            <div class="path-bar">
+              <code>/outils</code>
+              <a href="http://localhost:4000/outils" target="_blank" class="open-link" title="Ouvrir dans l'app locale">↗</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" data-cat="Outils" data-title="outil — simulateur poids du sac" data-path="/outils/poids-sac">
+          <div class="card-header">
+            <span class="badge">#053</span>
+            <span class="category-pill">Outils</span>
+            <span class="file-size">1502 Ko</span>
+          </div>
+          <a href="053_outil-poids-sac.png" target="_blank" class="img-wrap" title="Agrandir Outil — Simulateur Poids du Sac">
+            <img src="053_outil-poids-sac.png" loading="lazy" alt="Outil — Simulateur Poids du Sac">
+            <div class="overlay">🔍 Plein Écran</div>
+          </a>
+          <div class="card-body">
+            <h3 class="title">Outil — Simulateur Poids du Sac</h3>
+            <div class="path-bar">
+              <code>/outils/poids-sac</code>
+              <a href="http://localhost:4000/outils/poids-sac" target="_blank" class="open-link" title="Ouvrir dans l'app locale">↗</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" data-cat="Outils" data-title="outil — simulateur budget voyage" data-path="/outils/budget-voyage">
+          <div class="card-header">
+            <span class="badge">#054</span>
+            <span class="category-pill">Outils</span>
+            <span class="file-size">1480 Ko</span>
+          </div>
+          <a href="054_outil-budget.png" target="_blank" class="img-wrap" title="Agrandir Outil — Simulateur Budget Voyage">
+            <img src="054_outil-budget.png" loading="lazy" alt="Outil — Simulateur Budget Voyage">
+            <div class="overlay">🔍 Plein Écran</div>
+          </a>
+          <div class="card-body">
+            <h3 class="title">Outil — Simulateur Budget Voyage</h3>
+            <div class="path-bar">
+              <code>/outils/budget-voyage</code>
+              <a href="http://localhost:4000/outils/budget-voyage" target="_blank" class="open-link" title="Ouvrir dans l'app locale">↗</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" data-cat="Outils" data-title="outil — convertisseur devises & unités" data-path="/outils/convertisseur">
+          <div class="card-header">
+            <span class="badge">#055</span>
+            <span class="category-pill">Outils</span>
+            <span class="file-size">1472 Ko</span>
+          </div>
+          <a href="055_outil-convertisseur.png" target="_blank" class="img-wrap" title="Agrandir Outil — Convertisseur Devises & Unités">
+            <img src="055_outil-convertisseur.png" loading="lazy" alt="Outil — Convertisseur Devises & Unités">
+            <div class="overlay">🔍 Plein Écran</div>
+          </a>
+          <div class="card-body">
+            <h3 class="title">Outil — Convertisseur Devises & Unités</h3>
+            <div class="path-bar">
+              <code>/outils/convertisseur</code>
+              <a href="http://localhost:4000/outils/convertisseur" target="_blank" class="open-link" title="Ouvrir dans l'app locale">↗</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" data-cat="Outils" data-title="outil — checklist dynamique" data-path="/outils/checklist">
+          <div class="card-header">
+            <span class="badge">#056</span>
+            <span class="category-pill">Outils</span>
+            <span class="file-size">1557 Ko</span>
+          </div>
+          <a href="056_outil-checklist.png" target="_blank" class="img-wrap" title="Agrandir Outil — Checklist Dynamique">
+            <img src="056_outil-checklist.png" loading="lazy" alt="Outil — Checklist Dynamique">
+            <div class="overlay">🔍 Plein Écran</div>
+          </a>
+          <div class="card-body">
+            <h3 class="title">Outil — Checklist Dynamique</h3>
+            <div class="path-bar">
+              <code>/outils/checklist</code>
+              <a href="http://localhost:4000/outils/checklist" target="_blank" class="open-link" title="Ouvrir dans l'app locale">↗</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" data-cat="Outils" data-title="outil — guide des tailles & sacs" data-path="/outils/tailles">
+          <div class="card-header">
+            <span class="badge">#057</span>
+            <span class="category-pill">Outils</span>
+            <span class="file-size">1523 Ko</span>
+          </div>
+          <a href="057_outil-tailles.png" target="_blank" class="img-wrap" title="Agrandir Outil — Guide des Tailles & Sacs">
+            <img src="057_outil-tailles.png" loading="lazy" alt="Outil — Guide des Tailles & Sacs">
+            <div class="overlay">🔍 Plein Écran</div>
+          </a>
+          <div class="card-body">
+            <h3 class="title">Outil — Guide des Tailles & Sacs</h3>
+            <div class="path-bar">
+              <code>/outils/tailles</code>
+              <a href="http://localhost:4000/outils/tailles" target="_blank" class="open-link" title="Ouvrir dans l'app locale">↗</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" data-cat="Outils" data-title="outil — horloges & fuseaux" data-path="/outils/fuseaux">
+          <div class="card-header">
+            <span class="badge">#058</span>
+            <span class="category-pill">Outils</span>
+            <span class="file-size">1518 Ko</span>
+          </div>
+          <a href="058_outil-fuseaux.png" target="_blank" class="img-wrap" title="Agrandir Outil — Horloges & Fuseaux">
+            <img src="058_outil-fuseaux.png" loading="lazy" alt="Outil — Horloges & Fuseaux">
+            <div class="overlay">🔍 Plein Écran</div>
+          </a>
+          <div class="card-body">
+            <h3 class="title">Outil — Horloges & Fuseaux</h3>
+            <div class="path-bar">
+              <code>/outils/fuseaux</code>
+              <a href="http://localhost:4000/outils/fuseaux" target="_blank" class="open-link" title="Ouvrir dans l'app locale">↗</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" data-cat="Outils" data-title="outil — boussole & orientation" data-path="/outils/boussole">
+          <div class="card-header">
+            <span class="badge">#059</span>
+            <span class="category-pill">Outils</span>
+            <span class="file-size">1511 Ko</span>
+          </div>
+          <a href="059_outil-boussole.png" target="_blank" class="img-wrap" title="Agrandir Outil — Boussole & Orientation">
+            <img src="059_outil-boussole.png" loading="lazy" alt="Outil — Boussole & Orientation">
+            <div class="overlay">🔍 Plein Écran</div>
+          </a>
+          <div class="card-body">
+            <h3 class="title">Outil — Boussole & Orientation</h3>
+            <div class="path-bar">
+              <code>/outils/boussole</code>
+              <a href="http://localhost:4000/outils/boussole" target="_blank" class="open-link" title="Ouvrir dans l'app locale">↗</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" data-cat="Outils" data-title="outil — chronomètre & rythme" data-path="/outils/chronometre">
+          <div class="card-header">
+            <span class="badge">#060</span>
+            <span class="category-pill">Outils</span>
+            <span class="file-size">1485 Ko</span>
+          </div>
+          <a href="060_outil-chronometre.png" target="_blank" class="img-wrap" title="Agrandir Outil — Chronomètre & Rythme">
+            <img src="060_outil-chronometre.png" loading="lazy" alt="Outil — Chronomètre & Rythme">
+            <div class="overlay">🔍 Plein Écran</div>
+          </a>
+          <div class="card-body">
+            <h3 class="title">Outil — Chronomètre & Rythme</h3>
+            <div class="path-bar">
+              <code>/outils/chronometre</code>
+              <a href="http://localhost:4000/outils/chronometre" target="_blank" class="open-link" title="Ouvrir dans l'app locale">↗</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" data-cat="Outils" data-title="outil — calculateur de rations" data-path="/outils/rations">
+          <div class="card-header">
+            <span class="badge">#061</span>
+            <span class="category-pill">Outils</span>
+            <span class="file-size">1500 Ko</span>
+          </div>
+          <a href="061_outil-rations.png" target="_blank" class="img-wrap" title="Agrandir Outil — Calculateur de Rations">
+            <img src="061_outil-rations.png" loading="lazy" alt="Outil — Calculateur de Rations">
+            <div class="overlay">🔍 Plein Écran</div>
+          </a>
+          <div class="card-body">
+            <h3 class="title">Outil — Calculateur de Rations</h3>
+            <div class="path-bar">
+              <code>/outils/rations</code>
+              <a href="http://localhost:4000/outils/rations" target="_blank" class="open-link" title="Ouvrir dans l'app locale">↗</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" data-cat="Outils" data-title="calculateur empreinte carbone" data-path="/carbone">
+          <div class="card-header">
+            <span class="badge">#062</span>
+            <span class="category-pill">Outils</span>
+            <span class="file-size">1174 Ko</span>
+          </div>
+          <a href="062_carbone.png" target="_blank" class="img-wrap" title="Agrandir Calculateur Empreinte Carbone">
+            <img src="062_carbone.png" loading="lazy" alt="Calculateur Empreinte Carbone">
+            <div class="overlay">🔍 Plein Écran</div>
+          </a>
+          <div class="card-body">
+            <h3 class="title">Calculateur Empreinte Carbone</h3>
+            <div class="path-bar">
+              <code>/carbone</code>
+              <a href="http://localhost:4000/carbone" target="_blank" class="open-link" title="Ouvrir dans l'app locale">↗</a>
+            </div>
+          </div>
+        </div>
+        </div>
+      </section>
+
+      <section class="category-section" id="cat-utilisateur">
+        <div class="cat-header">
+          <h2>Utilisateur</h2>
+          <span class="cat-count">11 page(s)</span>
+        </div>
+        <div class="cards-grid">
+          
+        <div class="card" data-cat="Utilisateur" data-title="mon compte & cockpit profil" data-path="/compte">
+          <div class="card-header">
+            <span class="badge">#063</span>
+            <span class="category-pill">Utilisateur</span>
+            <span class="file-size">1340 Ko</span>
+          </div>
+          <a href="063_compte.png" target="_blank" class="img-wrap" title="Agrandir Mon Compte & Cockpit Profil">
+            <img src="063_compte.png" loading="lazy" alt="Mon Compte & Cockpit Profil">
+            <div class="overlay">🔍 Plein Écran</div>
+          </a>
+          <div class="card-body">
+            <h3 class="title">Mon Compte & Cockpit Profil</h3>
+            <div class="path-bar">
+              <code>/compte</code>
+              <a href="http://localhost:4000/compte" target="_blank" class="open-link" title="Ouvrir dans l'app locale">↗</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" data-cat="Utilisateur" data-title="modifier mon profil" data-path="/compte/modifier">
+          <div class="card-header">
+            <span class="badge">#064</span>
+            <span class="category-pill">Utilisateur</span>
+            <span class="file-size">756 Ko</span>
+          </div>
+          <a href="064_compte-modifier.png" target="_blank" class="img-wrap" title="Agrandir Modifier Mon Profil">
+            <img src="064_compte-modifier.png" loading="lazy" alt="Modifier Mon Profil">
+            <div class="overlay">🔍 Plein Écran</div>
+          </a>
+          <div class="card-body">
+            <h3 class="title">Modifier Mon Profil</h3>
+            <div class="path-bar">
+              <code>/compte/modifier</code>
+              <a href="http://localhost:4000/compte/modifier" target="_blank" class="open-link" title="Ouvrir dans l'app locale">↗</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" data-cat="Utilisateur" data-title="compte redirection id" data-path="/compte/622c9c69-2b19-425c-be5f-d47d470461d8">
+          <div class="card-header">
+            <span class="badge">#065</span>
+            <span class="category-pill">Utilisateur</span>
+            <span class="file-size">1780 Ko</span>
+          </div>
+          <a href="065_compte-user-redirect.png" target="_blank" class="img-wrap" title="Agrandir Compte Redirection ID">
+            <img src="065_compte-user-redirect.png" loading="lazy" alt="Compte Redirection ID">
+            <div class="overlay">🔍 Plein Écran</div>
+          </a>
+          <div class="card-body">
+            <h3 class="title">Compte Redirection ID</h3>
+            <div class="path-bar">
+              <code>/compte/622c9c69-2b19-425c-be5f-d47d470461d8</code>
+              <a href="http://localhost:4000/compte/622c9c69-2b19-425c-be5f-d47d470461d8" target="_blank" class="open-link" title="Ouvrir dans l'app locale">↗</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" data-cat="Utilisateur" data-title="mon profil public" data-path="/profil">
+          <div class="card-header">
+            <span class="badge">#066</span>
+            <span class="category-pill">Utilisateur</span>
+            <span class="file-size">1340 Ko</span>
+          </div>
+          <a href="066_profil-public.png" target="_blank" class="img-wrap" title="Agrandir Mon Profil Public">
+            <img src="066_profil-public.png" loading="lazy" alt="Mon Profil Public">
+            <div class="overlay">🔍 Plein Écran</div>
+          </a>
+          <div class="card-body">
+            <h3 class="title">Mon Profil Public</h3>
+            <div class="path-bar">
+              <code>/profil</code>
+              <a href="http://localhost:4000/profil" target="_blank" class="open-link" title="Ouvrir dans l'app locale">↗</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" data-cat="Utilisateur" data-title="profil public — voyageur y" data-path="/profil/622c9c69-2b19-425c-be5f-d47d470461d8">
+          <div class="card-header">
+            <span class="badge">#067</span>
+            <span class="category-pill">Utilisateur</span>
+            <span class="file-size">1683 Ko</span>
+          </div>
+          <a href="067_profil-detail.png" target="_blank" class="img-wrap" title="Agrandir Profil Public — Voyageur Y">
+            <img src="067_profil-detail.png" loading="lazy" alt="Profil Public — Voyageur Y">
+            <div class="overlay">🔍 Plein Écran</div>
+          </a>
+          <div class="card-body">
+            <h3 class="title">Profil Public — Voyageur Y</h3>
+            <div class="path-bar">
+              <code>/profil/622c9c69-2b19-425c-be5f-d47d470461d8</code>
+              <a href="http://localhost:4000/profil/622c9c69-2b19-425c-be5f-d47d470461d8" target="_blank" class="open-link" title="Ouvrir dans l'app locale">↗</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" data-cat="Utilisateur" data-title="progression & niveaux d’aventurier" data-path="/progression">
+          <div class="card-header">
+            <span class="badge">#068</span>
+            <span class="category-pill">Utilisateur</span>
+            <span class="file-size">168 Ko</span>
+          </div>
+          <a href="068_progression.png" target="_blank" class="img-wrap" title="Agrandir Progression & Niveaux d’Aventurier">
+            <img src="068_progression.png" loading="lazy" alt="Progression & Niveaux d’Aventurier">
+            <div class="overlay">🔍 Plein Écran</div>
+          </a>
+          <div class="card-body">
+            <h3 class="title">Progression & Niveaux d’Aventurier</h3>
+            <div class="path-bar">
+              <code>/progression</code>
+              <a href="http://localhost:4000/progression" target="_blank" class="open-link" title="Ouvrir dans l'app locale">↗</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" data-cat="Utilisateur" data-title="programme fidélité & badges" data-path="/fidelite">
+          <div class="card-header">
+            <span class="badge">#069</span>
+            <span class="category-pill">Utilisateur</span>
+            <span class="file-size">1857 Ko</span>
+          </div>
+          <a href="069_fidelite.png" target="_blank" class="img-wrap" title="Agrandir Programme Fidélité & Badges">
+            <img src="069_fidelite.png" loading="lazy" alt="Programme Fidélité & Badges">
+            <div class="overlay">🔍 Plein Écran</div>
+          </a>
+          <div class="card-body">
+            <h3 class="title">Programme Fidélité & Badges</h3>
+            <div class="path-bar">
+              <code>/fidelite</code>
+              <a href="http://localhost:4000/fidelite" target="_blank" class="open-link" title="Ouvrir dans l'app locale">↗</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" data-cat="Utilisateur" data-title="récompenses débloquées" data-path="/recompenses">
+          <div class="card-header">
+            <span class="badge">#070</span>
+            <span class="category-pill">Utilisateur</span>
+            <span class="file-size">1803 Ko</span>
+          </div>
+          <a href="070_recompenses.png" target="_blank" class="img-wrap" title="Agrandir Récompenses Débloquées">
+            <img src="070_recompenses.png" loading="lazy" alt="Récompenses Débloquées">
+            <div class="overlay">🔍 Plein Écran</div>
+          </a>
+          <div class="card-body">
+            <h3 class="title">Récompenses Débloquées</h3>
+            <div class="path-bar">
+              <code>/recompenses</code>
+              <a href="http://localhost:4000/recompenses" target="_blank" class="open-link" title="Ouvrir dans l'app locale">↗</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" data-cat="Utilisateur" data-title="messagerie & chats sécurisés" data-path="/messagerie">
+          <div class="card-header">
+            <span class="badge">#071</span>
+            <span class="category-pill">Utilisateur</span>
+            <span class="file-size">1671 Ko</span>
+          </div>
+          <a href="071_messagerie.png" target="_blank" class="img-wrap" title="Agrandir Messagerie & Chats Sécurisés">
+            <img src="071_messagerie.png" loading="lazy" alt="Messagerie & Chats Sécurisés">
+            <div class="overlay">🔍 Plein Écran</div>
+          </a>
+          <div class="card-body">
+            <h3 class="title">Messagerie & Chats Sécurisés</h3>
+            <div class="path-bar">
+              <code>/messagerie</code>
+              <a href="http://localhost:4000/messagerie" target="_blank" class="open-link" title="Ouvrir dans l'app locale">↗</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" data-cat="Utilisateur" data-title="page connexion" data-path="/connexion">
+          <div class="card-header">
+            <span class="badge">#072</span>
+            <span class="category-pill">Utilisateur</span>
+            <span class="file-size">82 Ko</span>
+          </div>
+          <a href="072_connexion.png" target="_blank" class="img-wrap" title="Agrandir Page Connexion">
+            <img src="072_connexion.png" loading="lazy" alt="Page Connexion">
+            <div class="overlay">🔍 Plein Écran</div>
+          </a>
+          <div class="card-body">
+            <h3 class="title">Page Connexion</h3>
+            <div class="path-bar">
+              <code>/connexion</code>
+              <a href="http://localhost:4000/connexion" target="_blank" class="open-link" title="Ouvrir dans l'app locale">↗</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" data-cat="Utilisateur" data-title="page inscription" data-path="/inscription">
+          <div class="card-header">
+            <span class="badge">#073</span>
+            <span class="category-pill">Utilisateur</span>
+            <span class="file-size">1340 Ko</span>
+          </div>
+          <a href="073_inscription.png" target="_blank" class="img-wrap" title="Agrandir Page Inscription">
+            <img src="073_inscription.png" loading="lazy" alt="Page Inscription">
+            <div class="overlay">🔍 Plein Écran</div>
+          </a>
+          <div class="card-body">
+            <h3 class="title">Page Inscription</h3>
+            <div class="path-bar">
+              <code>/inscription</code>
+              <a href="http://localhost:4000/inscription" target="_blank" class="open-link" title="Ouvrir dans l'app locale">↗</a>
+            </div>
+          </div>
+        </div>
+        </div>
+      </section>
+
+      <section class="category-section" id="cat-voyages">
+        <div class="cat-header">
+          <h2>Voyages</h2>
+          <span class="cat-count">6 page(s)</span>
+        </div>
+        <div class="cards-grid">
+          
+        <div class="card" data-cat="Voyages" data-title="voyage — tmb itinérance groupe" data-path="/voyages/y-long-group">
+          <div class="card-header">
+            <span class="badge">#074</span>
+            <span class="category-pill">Voyages</span>
+            <span class="file-size">1779 Ko</span>
+          </div>
+          <a href="074_voyage-y-long-group.png" target="_blank" class="img-wrap" title="Agrandir Voyage — TMB Itinérance Groupe">
+            <img src="074_voyage-y-long-group.png" loading="lazy" alt="Voyage — TMB Itinérance Groupe">
+            <div class="overlay">🔍 Plein Écran</div>
+          </a>
+          <div class="card-body">
+            <h3 class="title">Voyage — TMB Itinérance Groupe</h3>
+            <div class="path-bar">
+              <code>/voyages/y-long-group</code>
+              <a href="http://localhost:4000/voyages/y-long-group" target="_blank" class="open-link" title="Ouvrir dans l'app locale">↗</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" data-cat="Voyages" data-title="voyage — section itinéraire" data-path="/voyages/y-long-group/itineraire">
+          <div class="card-header">
+            <span class="badge">#075</span>
+            <span class="category-pill">Voyages</span>
+            <span class="file-size">1779 Ko</span>
+          </div>
+          <a href="075_voyage-section-itineraire.png" target="_blank" class="img-wrap" title="Agrandir Voyage — Section Itinéraire">
+            <img src="075_voyage-section-itineraire.png" loading="lazy" alt="Voyage — Section Itinéraire">
+            <div class="overlay">🔍 Plein Écran</div>
+          </a>
+          <div class="card-body">
+            <h3 class="title">Voyage — Section Itinéraire</h3>
+            <div class="path-bar">
+              <code>/voyages/y-long-group/itineraire</code>
+              <a href="http://localhost:4000/voyages/y-long-group/itineraire" target="_blank" class="open-link" title="Ouvrir dans l'app locale">↗</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" data-cat="Voyages" data-title="voyage — section budget & comptes" data-path="/voyages/y-long-group/budget">
+          <div class="card-header">
+            <span class="badge">#076</span>
+            <span class="category-pill">Voyages</span>
+            <span class="file-size">1779 Ko</span>
+          </div>
+          <a href="076_voyage-section-budget.png" target="_blank" class="img-wrap" title="Agrandir Voyage — Section Budget & Comptes">
+            <img src="076_voyage-section-budget.png" loading="lazy" alt="Voyage — Section Budget & Comptes">
+            <div class="overlay">🔍 Plein Écran</div>
+          </a>
+          <div class="card-body">
+            <h3 class="title">Voyage — Section Budget & Comptes</h3>
+            <div class="path-bar">
+              <code>/voyages/y-long-group/budget</code>
+              <a href="http://localhost:4000/voyages/y-long-group/budget" target="_blank" class="open-link" title="Ouvrir dans l'app locale">↗</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" data-cat="Voyages" data-title="voyage — section coéquipiers" data-path="/voyages/y-long-group/groupe">
+          <div class="card-header">
+            <span class="badge">#077</span>
+            <span class="category-pill">Voyages</span>
+            <span class="file-size">1193 Ko</span>
+          </div>
+          <a href="077_voyage-section-groupe.png" target="_blank" class="img-wrap" title="Agrandir Voyage — Section Coéquipiers">
+            <img src="077_voyage-section-groupe.png" loading="lazy" alt="Voyage — Section Coéquipiers">
+            <div class="overlay">🔍 Plein Écran</div>
+          </a>
+          <div class="card-body">
+            <h3 class="title">Voyage — Section Coéquipiers</h3>
+            <div class="path-bar">
+              <code>/voyages/y-long-group/groupe</code>
+              <a href="http://localhost:4000/voyages/y-long-group/groupe" target="_blank" class="open-link" title="Ouvrir dans l'app locale">↗</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" data-cat="Voyages" data-title="voyage — section sécurité" data-path="/voyages/y-long-group/securite">
+          <div class="card-header">
+            <span class="badge">#078</span>
+            <span class="category-pill">Voyages</span>
+            <span class="file-size">1779 Ko</span>
+          </div>
+          <a href="078_voyage-section-securite.png" target="_blank" class="img-wrap" title="Agrandir Voyage — Section Sécurité">
+            <img src="078_voyage-section-securite.png" loading="lazy" alt="Voyage — Section Sécurité">
+            <div class="overlay">🔍 Plein Écran</div>
+          </a>
+          <div class="card-body">
+            <h3 class="title">Voyage — Section Sécurité</h3>
+            <div class="path-bar">
+              <code>/voyages/y-long-group/securite</code>
+              <a href="http://localhost:4000/voyages/y-long-group/securite" target="_blank" class="open-link" title="Ouvrir dans l'app locale">↗</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" data-cat="Voyages" data-title="page rejoindre un voyage" data-path="/rejoindre/y-long-group">
+          <div class="card-header">
+            <span class="badge">#079</span>
+            <span class="category-pill">Voyages</span>
+            <span class="file-size">1315 Ko</span>
+          </div>
+          <a href="079_rejoindre-voyage.png" target="_blank" class="img-wrap" title="Agrandir Page Rejoindre un Voyage">
+            <img src="079_rejoindre-voyage.png" loading="lazy" alt="Page Rejoindre un Voyage">
+            <div class="overlay">🔍 Plein Écran</div>
+          </a>
+          <div class="card-body">
+            <h3 class="title">Page Rejoindre un Voyage</h3>
+            <div class="path-bar">
+              <code>/rejoindre/y-long-group</code>
+              <a href="http://localhost:4000/rejoindre/y-long-group" target="_blank" class="open-link" title="Ouvrir dans l'app locale">↗</a>
+            </div>
+          </div>
+        </div>
+        </div>
+      </section>
+
+      <section class="category-section" id="cat-contenu">
+        <div class="cat-header">
+          <h2>Contenu</h2>
+          <span class="cat-count">10 page(s)</span>
+        </div>
+        <div class="cards-grid">
+          
+        <div class="card" data-cat="Contenu" data-title="guides pratiques & conseils" data-path="/guides">
+          <div class="card-header">
+            <span class="badge">#080</span>
+            <span class="category-pill">Contenu</span>
+            <span class="file-size">1595 Ko</span>
+          </div>
+          <a href="080_guides.png" target="_blank" class="img-wrap" title="Agrandir Guides Pratiques & Conseils">
+            <img src="080_guides.png" loading="lazy" alt="Guides Pratiques & Conseils">
+            <div class="overlay">🔍 Plein Écran</div>
+          </a>
+          <div class="card-body">
+            <h3 class="title">Guides Pratiques & Conseils</h3>
+            <div class="path-bar">
+              <code>/guides</code>
+              <a href="http://localhost:4000/guides" target="_blank" class="open-link" title="Ouvrir dans l'app locale">↗</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" data-cat="Contenu" data-title="guide détail — trek népal" data-path="/guides/checklist-sac-a-dos-trek-nepal">
+          <div class="card-header">
+            <span class="badge">#081</span>
+            <span class="category-pill">Contenu</span>
+            <span class="file-size">1613 Ko</span>
+          </div>
+          <a href="081_guide-detail.png" target="_blank" class="img-wrap" title="Agrandir Guide Détail — Trek Népal">
+            <img src="081_guide-detail.png" loading="lazy" alt="Guide Détail — Trek Népal">
+            <div class="overlay">🔍 Plein Écran</div>
+          </a>
+          <div class="card-body">
+            <h3 class="title">Guide Détail — Trek Népal</h3>
+            <div class="path-bar">
+              <code>/guides/checklist-sac-a-dos-trek-nepal</code>
+              <a href="http://localhost:4000/guides/checklist-sac-a-dos-trek-nepal" target="_blank" class="open-link" title="Ouvrir dans l'app locale">↗</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" data-cat="Contenu" data-title="blog du voyageur" data-path="/blog">
+          <div class="card-header">
+            <span class="badge">#082</span>
+            <span class="category-pill">Contenu</span>
+            <span class="file-size">1654 Ko</span>
+          </div>
+          <a href="082_blog.png" target="_blank" class="img-wrap" title="Agrandir Blog du Voyageur">
+            <img src="082_blog.png" loading="lazy" alt="Blog du Voyageur">
+            <div class="overlay">🔍 Plein Écran</div>
+          </a>
+          <div class="card-body">
+            <h3 class="title">Blog du Voyageur</h3>
+            <div class="path-bar">
+              <code>/blog</code>
+              <a href="http://localhost:4000/blog" target="_blank" class="open-link" title="Ouvrir dans l'app locale">↗</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" data-cat="Contenu" data-title="manifeste & vision lkdv" data-path="/manifeste">
+          <div class="card-header">
+            <span class="badge">#083</span>
+            <span class="category-pill">Contenu</span>
+            <span class="file-size">1838 Ko</span>
+          </div>
+          <a href="083_manifeste.png" target="_blank" class="img-wrap" title="Agrandir Manifeste & Vision LKDV">
+            <img src="083_manifeste.png" loading="lazy" alt="Manifeste & Vision LKDV">
+            <div class="overlay">🔍 Plein Écran</div>
+          </a>
+          <div class="card-body">
+            <h3 class="title">Manifeste & Vision LKDV</h3>
+            <div class="path-bar">
+              <code>/manifeste</code>
+              <a href="http://localhost:4000/manifeste" target="_blank" class="open-link" title="Ouvrir dans l'app locale">↗</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" data-cat="Contenu" data-title="experts & guides de montagne" data-path="/experts">
+          <div class="card-header">
+            <span class="badge">#084</span>
+            <span class="category-pill">Contenu</span>
+            <span class="file-size">66 Ko</span>
+          </div>
+          <a href="084_experts.png" target="_blank" class="img-wrap" title="Agrandir Experts & Guides de Montagne">
+            <img src="084_experts.png" loading="lazy" alt="Experts & Guides de Montagne">
+            <div class="overlay">🔍 Plein Écran</div>
+          </a>
+          <div class="card-body">
+            <h3 class="title">Experts & Guides de Montagne</h3>
+            <div class="path-bar">
+              <code>/experts</code>
+              <a href="http://localhost:4000/experts" target="_blank" class="open-link" title="Ouvrir dans l'app locale">↗</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" data-cat="Contenu" data-title="programme ambassadeurs" data-path="/ambassadeurs">
+          <div class="card-header">
+            <span class="badge">#085</span>
+            <span class="category-pill">Contenu</span>
+            <span class="file-size">79 Ko</span>
+          </div>
+          <a href="085_ambassadeurs.png" target="_blank" class="img-wrap" title="Agrandir Programme Ambassadeurs">
+            <img src="085_ambassadeurs.png" loading="lazy" alt="Programme Ambassadeurs">
+            <div class="overlay">🔍 Plein Écran</div>
+          </a>
+          <div class="card-body">
+            <h3 class="title">Programme Ambassadeurs</h3>
+            <div class="path-bar">
+              <code>/ambassadeurs</code>
+              <a href="http://localhost:4000/ambassadeurs" target="_blank" class="open-link" title="Ouvrir dans l'app locale">↗</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" data-cat="Contenu" data-title="portail créateurs de contenu" data-path="/createurs">
+          <div class="card-header">
+            <span class="badge">#086</span>
+            <span class="category-pill">Contenu</span>
+            <span class="file-size">67 Ko</span>
+          </div>
+          <a href="086_createurs.png" target="_blank" class="img-wrap" title="Agrandir Portail Créateurs de Contenu">
+            <img src="086_createurs.png" loading="lazy" alt="Portail Créateurs de Contenu">
+            <div class="overlay">🔍 Plein Écran</div>
+          </a>
+          <div class="card-body">
+            <h3 class="title">Portail Créateurs de Contenu</h3>
+            <div class="path-bar">
+              <code>/createurs</code>
+              <a href="http://localhost:4000/createurs" target="_blank" class="open-link" title="Ouvrir dans l'app locale">↗</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" data-cat="Contenu" data-title="espace professionnels" data-path="/pro">
+          <div class="card-header">
+            <span class="badge">#087</span>
+            <span class="category-pill">Contenu</span>
+            <span class="file-size">104 Ko</span>
+          </div>
+          <a href="087_pro.png" target="_blank" class="img-wrap" title="Agrandir Espace Professionnels">
+            <img src="087_pro.png" loading="lazy" alt="Espace Professionnels">
+            <div class="overlay">🔍 Plein Écran</div>
+          </a>
+          <div class="card-body">
+            <h3 class="title">Espace Professionnels</h3>
+            <div class="path-bar">
+              <code>/pro</code>
+              <a href="http://localhost:4000/pro" target="_blank" class="open-link" title="Ouvrir dans l'app locale">↗</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" data-cat="Contenu" data-title="foire aux questions (faq)" data-path="/faq">
+          <div class="card-header">
+            <span class="badge">#088</span>
+            <span class="category-pill">Contenu</span>
+            <span class="file-size">1809 Ko</span>
+          </div>
+          <a href="088_faq.png" target="_blank" class="img-wrap" title="Agrandir Foire Aux Questions (FAQ)">
+            <img src="088_faq.png" loading="lazy" alt="Foire Aux Questions (FAQ)">
+            <div class="overlay">🔍 Plein Écran</div>
+          </a>
+          <div class="card-body">
+            <h3 class="title">Foire Aux Questions (FAQ)</h3>
+            <div class="path-bar">
+              <code>/faq</code>
+              <a href="http://localhost:4000/faq" target="_blank" class="open-link" title="Ouvrir dans l'app locale">↗</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" data-cat="Contenu" data-title="formulaire de contact" data-path="/contact">
+          <div class="card-header">
+            <span class="badge">#089</span>
+            <span class="category-pill">Contenu</span>
+            <span class="file-size">1718 Ko</span>
+          </div>
+          <a href="089_contact.png" target="_blank" class="img-wrap" title="Agrandir Formulaire de Contact">
+            <img src="089_contact.png" loading="lazy" alt="Formulaire de Contact">
+            <div class="overlay">🔍 Plein Écran</div>
+          </a>
+          <div class="card-body">
+            <h3 class="title">Formulaire de Contact</h3>
+            <div class="path-bar">
+              <code>/contact</code>
+              <a href="http://localhost:4000/contact" target="_blank" class="open-link" title="Ouvrir dans l'app locale">↗</a>
+            </div>
+          </div>
+        </div>
+        </div>
+      </section>
+
+      <section class="category-section" id="cat-admin">
+        <div class="cat-header">
+          <h2>Admin</h2>
+          <span class="cat-count">2 page(s)</span>
+        </div>
+        <div class="cards-grid">
+          
+        <div class="card" data-cat="Admin" data-title="dashboard administration" data-path="/admin">
+          <div class="card-header">
+            <span class="badge">#090</span>
+            <span class="category-pill">Admin</span>
+            <span class="file-size">2842 Ko</span>
+          </div>
+          <a href="090_admin.png" target="_blank" class="img-wrap" title="Agrandir Dashboard Administration">
+            <img src="090_admin.png" loading="lazy" alt="Dashboard Administration">
+            <div class="overlay">🔍 Plein Écran</div>
+          </a>
+          <div class="card-body">
+            <h3 class="title">Dashboard Administration</h3>
+            <div class="path-bar">
+              <code>/admin</code>
+              <a href="http://localhost:4000/admin" target="_blank" class="open-link" title="Ouvrir dans l'app locale">↗</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" data-cat="Admin" data-title="admin — gestion catalogue produits" data-path="/admin/produits">
+          <div class="card-header">
+            <span class="badge">#091</span>
+            <span class="category-pill">Admin</span>
+            <span class="file-size">3078 Ko</span>
+          </div>
+          <a href="091_admin-produits.png" target="_blank" class="img-wrap" title="Agrandir Admin — Gestion Catalogue Produits">
+            <img src="091_admin-produits.png" loading="lazy" alt="Admin — Gestion Catalogue Produits">
+            <div class="overlay">🔍 Plein Écran</div>
+          </a>
+          <div class="card-body">
+            <h3 class="title">Admin — Gestion Catalogue Produits</h3>
+            <div class="path-bar">
+              <code>/admin/produits</code>
+              <a href="http://localhost:4000/admin/produits" target="_blank" class="open-link" title="Ouvrir dans l'app locale">↗</a>
+            </div>
+          </div>
+        </div>
+        </div>
+      </section>
+
+      <section class="category-section" id="cat-design-system">
+        <div class="cat-header">
+          <h2>Design System</h2>
+          <span class="cat-count">2 page(s)</span>
+        </div>
+        <div class="cards-grid">
+          
+        <div class="card" data-cat="Design System" data-title="showcase liquid glass & ui tokens" data-path="/dev/glass">
+          <div class="card-header">
+            <span class="badge">#092</span>
+            <span class="category-pill">Design System</span>
+            <span class="file-size">1688 Ko</span>
+          </div>
+          <a href="092_dev-glass.png" target="_blank" class="img-wrap" title="Agrandir Showcase Liquid Glass & UI Tokens">
+            <img src="092_dev-glass.png" loading="lazy" alt="Showcase Liquid Glass & UI Tokens">
+            <div class="overlay">🔍 Plein Écran</div>
+          </a>
+          <div class="card-body">
+            <h3 class="title">Showcase Liquid Glass & UI Tokens</h3>
+            <div class="path-bar">
+              <code>/dev/glass</code>
+              <a href="http://localhost:4000/dev/glass" target="_blank" class="open-link" title="Ouvrir dans l'app locale">↗</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" data-cat="Design System" data-title="guide de styles & composants" data-path="/dev/style">
+          <div class="card-header">
+            <span class="badge">#093</span>
+            <span class="category-pill">Design System</span>
+            <span class="file-size">903 Ko</span>
+          </div>
+          <a href="093_dev-style.png" target="_blank" class="img-wrap" title="Agrandir Guide de Styles & Composants">
+            <img src="093_dev-style.png" loading="lazy" alt="Guide de Styles & Composants">
+            <div class="overlay">🔍 Plein Écran</div>
+          </a>
+          <div class="card-body">
+            <h3 class="title">Guide de Styles & Composants</h3>
+            <div class="path-bar">
+              <code>/dev/style</code>
+              <a href="http://localhost:4000/dev/style" target="_blank" class="open-link" title="Ouvrir dans l'app locale">↗</a>
+            </div>
+          </div>
+        </div>
+        </div>
+      </section>
+
+      <section class="category-section" id="cat-l-gal">
+        <div class="cat-header">
+          <h2>Légal</h2>
+          <span class="cat-count">5 page(s)</span>
+        </div>
+        <div class="cards-grid">
+          
+        <div class="card" data-cat="Légal" data-title="mentions légales" data-path="/mentions-legales">
+          <div class="card-header">
+            <span class="badge">#094</span>
+            <span class="category-pill">Légal</span>
+            <span class="file-size">115 Ko</span>
+          </div>
+          <a href="094_mentions-legales.png" target="_blank" class="img-wrap" title="Agrandir Mentions Légales">
+            <img src="094_mentions-legales.png" loading="lazy" alt="Mentions Légales">
+            <div class="overlay">🔍 Plein Écran</div>
+          </a>
+          <div class="card-body">
+            <h3 class="title">Mentions Légales</h3>
+            <div class="path-bar">
+              <code>/mentions-legales</code>
+              <a href="http://localhost:4000/mentions-legales" target="_blank" class="open-link" title="Ouvrir dans l'app locale">↗</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" data-cat="Légal" data-title="conditions générales de vente (cgv)" data-path="/cgv">
+          <div class="card-header">
+            <span class="badge">#095</span>
+            <span class="category-pill">Légal</span>
+            <span class="file-size">156 Ko</span>
+          </div>
+          <a href="095_cgv.png" target="_blank" class="img-wrap" title="Agrandir Conditions Générales de Vente (CGV)">
+            <img src="095_cgv.png" loading="lazy" alt="Conditions Générales de Vente (CGV)">
+            <div class="overlay">🔍 Plein Écran</div>
+          </a>
+          <div class="card-body">
+            <h3 class="title">Conditions Générales de Vente (CGV)</h3>
+            <div class="path-bar">
+              <code>/cgv</code>
+              <a href="http://localhost:4000/cgv" target="_blank" class="open-link" title="Ouvrir dans l'app locale">↗</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" data-cat="Légal" data-title="conditions générales d’utilisation (cgu)" data-path="/cgu">
+          <div class="card-header">
+            <span class="badge">#096</span>
+            <span class="category-pill">Légal</span>
+            <span class="file-size">241 Ko</span>
+          </div>
+          <a href="096_cgu.png" target="_blank" class="img-wrap" title="Agrandir Conditions Générales d’Utilisation (CGU)">
+            <img src="096_cgu.png" loading="lazy" alt="Conditions Générales d’Utilisation (CGU)">
+            <div class="overlay">🔍 Plein Écran</div>
+          </a>
+          <div class="card-body">
+            <h3 class="title">Conditions Générales d’Utilisation (CGU)</h3>
+            <div class="path-bar">
+              <code>/cgu</code>
+              <a href="http://localhost:4000/cgu" target="_blank" class="open-link" title="Ouvrir dans l'app locale">↗</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" data-cat="Légal" data-title="politique de confidentialité" data-path="/politique-confidentialite">
+          <div class="card-header">
+            <span class="badge">#097</span>
+            <span class="category-pill">Légal</span>
+            <span class="file-size">139 Ko</span>
+          </div>
+          <a href="097_politique-confidentialite.png" target="_blank" class="img-wrap" title="Agrandir Politique de Confidentialité">
+            <img src="097_politique-confidentialite.png" loading="lazy" alt="Politique de Confidentialité">
+            <div class="overlay">🔍 Plein Écran</div>
+          </a>
+          <div class="card-body">
+            <h3 class="title">Politique de Confidentialité</h3>
+            <div class="path-bar">
+              <code>/politique-confidentialite</code>
+              <a href="http://localhost:4000/politique-confidentialite" target="_blank" class="open-link" title="Ouvrir dans l'app locale">↗</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" data-cat="Légal" data-title="gestion des cookies & données" data-path="/cookies">
+          <div class="card-header">
+            <span class="badge">#098</span>
+            <span class="category-pill">Légal</span>
+            <span class="file-size">155 Ko</span>
+          </div>
+          <a href="098_cookies.png" target="_blank" class="img-wrap" title="Agrandir Gestion des Cookies & Données">
+            <img src="098_cookies.png" loading="lazy" alt="Gestion des Cookies & Données">
+            <div class="overlay">🔍 Plein Écran</div>
+          </a>
+          <div class="card-body">
+            <h3 class="title">Gestion des Cookies & Données</h3>
+            <div class="path-bar">
+              <code>/cookies</code>
+              <a href="http://localhost:4000/cookies" target="_blank" class="open-link" title="Ouvrir dans l'app locale">↗</a>
+            </div>
+          </div>
+        </div>
+        </div>
+      </section>
+
+      <section class="category-section" id="cat-syst-me">
+        <div class="cat-header">
+          <h2>Système</h2>
+          <span class="cat-count">2 page(s)</span>
+        </div>
+        <div class="cards-grid">
+          
+        <div class="card" data-cat="Système" data-title="page mode hors-ligne (pwa)" data-path="/hors-ligne">
+          <div class="card-header">
+            <span class="badge">#099</span>
+            <span class="category-pill">Système</span>
+            <span class="file-size">1589 Ko</span>
+          </div>
+          <a href="099_hors-ligne.png" target="_blank" class="img-wrap" title="Agrandir Page Mode Hors-Ligne (PWA)">
+            <img src="099_hors-ligne.png" loading="lazy" alt="Page Mode Hors-Ligne (PWA)">
+            <div class="overlay">🔍 Plein Écran</div>
+          </a>
+          <div class="card-body">
+            <h3 class="title">Page Mode Hors-Ligne (PWA)</h3>
+            <div class="path-bar">
+              <code>/hors-ligne</code>
+              <a href="http://localhost:4000/hors-ligne" target="_blank" class="open-link" title="Ouvrir dans l'app locale">↗</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" data-cat="Système" data-title="page 404 (introuvable)" data-path="/page-introuvable-404">
+          <div class="card-header">
+            <span class="badge">#100</span>
+            <span class="category-pill">Système</span>
+            <span class="file-size">1689 Ko</span>
+          </div>
+          <a href="100_page-404.png" target="_blank" class="img-wrap" title="Agrandir Page 404 (Introuvable)">
+            <img src="100_page-404.png" loading="lazy" alt="Page 404 (Introuvable)">
+            <div class="overlay">🔍 Plein Écran</div>
+          </a>
+          <div class="card-body">
+            <h3 class="title">Page 404 (Introuvable)</h3>
+            <div class="path-bar">
+              <code>/page-introuvable-404</code>
+              <a href="http://localhost:4000/page-introuvable-404" target="_blank" class="open-link" title="Ouvrir dans l'app locale">↗</a>
+            </div>
+          </div>
+        </div>
+        </div>
+      </section>
+  </main>
+
+  <script>
+    const searchInput = document.getElementById('searchInput');
+    const filterBtns = document.querySelectorAll('.filter-btn');
+    const cards = document.querySelectorAll('.card');
+    const sections = document.querySelectorAll('.category-section');
+
+    function filterCards() {
+      const q = searchInput.value.toLowerCase().trim();
+      const activeFilter = document.querySelector('.filter-btn.active').dataset.filter;
+
+      sections.forEach(sec => {
+        let visibleCount = 0;
+        const secCards = sec.querySelectorAll('.card');
+        secCards.forEach(c => {
+          const cat = c.dataset.cat;
+          const title = c.dataset.title;
+          const p = c.dataset.path;
+
+          const matchCat = activeFilter === 'all' || cat === activeFilter;
+          const matchQuery = !q || title.includes(q) || p.includes(q) || cat.toLowerCase().includes(q);
+
+          if (matchCat && matchQuery) {
+            c.style.display = 'flex';
+            visibleCount++;
+          } else {
+            c.style.display = 'none';
+          }
+        });
+
+        sec.style.display = visibleCount > 0 ? 'block' : 'none';
+      });
+    }
+
+    searchInput.addEventListener('input', filterCards);
+
+    filterBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        filterBtns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        filterCards();
+      });
+    });
+  </script>
+</body>
+</html>

@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useEffect, useState, useMemo, useRef, useCallback } from 'react';
 import Link from 'next/link';
@@ -449,7 +449,7 @@ export default function InteractiveMap() {
           const count = cluster.getChildCount();
           const html = `
             <div style="
-              background: #2D6B4A;
+              background: #334155;
               color: white;
               font-weight: 700;
               font-size: 11px;
@@ -459,7 +459,7 @@ export default function InteractiveMap() {
               display: flex;
               align-items: center;
               justify-content: center;
-              box-shadow: 0 2px 6px rgba(45,107,74,0.3);
+              box-shadow: 0 2px 6px rgba(51,65,85,0.3);
               border: 2px solid #E4DED3;
             ">📍${count}</div>
           `;
@@ -568,7 +568,7 @@ export default function InteractiveMap() {
           case 'summit':
           case 'col':
             emoji = '⛰️';
-            bgColor = '#2D6B4A';
+            bgColor = '#334155';
             break;
           case 'water':
             emoji = '💧';

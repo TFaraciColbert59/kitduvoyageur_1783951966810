@@ -67,7 +67,7 @@ export const PASSABILITY_LABELS: Record<TerrainPassability, string> = {
 
 /** Couleurs calmées, hors palette orange (interdite par le design system). */
 export const SEVERITY_COLORS: Record<TerrainSeverity, string> = {
-  info: '#2D6B4A',
+  info: '#334155',
   warning: '#8A6D1F',
   critical: '#7A2E2E',
 };
