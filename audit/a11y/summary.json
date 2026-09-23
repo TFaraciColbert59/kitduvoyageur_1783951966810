@@ -1,0 +1,354 @@
+{
+  "accueil": {
+    "violationsCount": 1,
+    "impacts": {
+      "serious": 1
+    }
+  },
+  "hub": {
+    "violationsCount": 0,
+    "impacts": {}
+  },
+  "hub-nouveau": {
+    "violationsCount": 1,
+    "impacts": {
+      "serious": 1
+    }
+  },
+  "hub-itineraire": {
+    "violationsCount": 1,
+    "impacts": {
+      "serious": 1
+    }
+  },
+  "hub-budget": {
+    "violationsCount": 2,
+    "impacts": {
+      "serious": 2
+    }
+  },
+  "hub-groupe": {
+    "violationsCount": 0,
+    "impacts": {}
+  },
+  "hub-securite": {
+    "violationsCount": 0,
+    "impacts": {}
+  },
+  "hub-materiel": {
+    "violationsCount": 1,
+    "impacts": {
+      "serious": 1
+    }
+  },
+  "hub-documents": {
+    "violationsCount": 0,
+    "impacts": {}
+  },
+  "explorer": {
+    "violationsCount": 1,
+    "impacts": {
+      "serious": 1
+    }
+  },
+  "carte-interactive": {
+    "violationsCount": 0,
+    "impacts": {}
+  },
+  "randonnee-active": {
+    "violationsCount": 0,
+    "impacts": {}
+  },
+  "rapport-expedition": {
+    "violationsCount": 0,
+    "impacts": {}
+  },
+  "materiel": {
+    "violationsCount": 1,
+    "impacts": {
+      "serious": 1
+    }
+  },
+  "kits": {
+    "violationsCount": 1,
+    "impacts": {
+      "serious": 1
+    }
+  },
+  "kit-islande": {
+    "violationsCount": 0,
+    "impacts": {}
+  },
+  "kit-gr20": {
+    "violationsCount": 0,
+    "impacts": {}
+  },
+  "kit-vanlife": {
+    "violationsCount": 0,
+    "impacts": {}
+  },
+  "ai-configurator": {
+    "violationsCount": 0,
+    "impacts": {}
+  },
+  "copilote": {
+    "violationsCount": 1,
+    "impacts": {
+      "serious": 1
+    }
+  },
+  "boutique": {
+    "violationsCount": 0,
+    "impacts": {}
+  },
+  "produit-detail": {
+    "violationsCount": 1,
+    "impacts": {
+      "serious": 1
+    }
+  },
+  "occasion": {
+    "violationsCount": 1,
+    "impacts": {
+      "serious": 1
+    }
+  },
+  "location": {
+    "violationsCount": 1,
+    "impacts": {
+      "serious": 1
+    }
+  },
+  "panier": {
+    "violationsCount": 0,
+    "impacts": {}
+  },
+  "checkout": {
+    "violationsCount": 0,
+    "impacts": {}
+  },
+  "abonnements": {
+    "violationsCount": 2,
+    "impacts": {
+      "serious": 2
+    }
+  },
+  "pays-fr": {
+    "violationsCount": 1,
+    "impacts": {
+      "serious": 1
+    }
+  },
+  "pays-is": {
+    "violationsCount": 1,
+    "impacts": {
+      "serious": 1
+    }
+  },
+  "lieux": {
+    "violationsCount": 1,
+    "impacts": {
+      "serious": 1
+    }
+  },
+  "preparer-randonnee": {
+    "violationsCount": 0,
+    "impacts": {}
+  },
+  "communaute": {
+    "violationsCount": 1,
+    "impacts": {
+      "serious": 1
+    }
+  },
+  "communaute-publier": {
+    "violationsCount": 1,
+    "impacts": {
+      "serious": 1
+    }
+  },
+  "communaute-pro": {
+    "violationsCount": 0,
+    "impacts": {}
+  },
+  "feed": {
+    "violationsCount": 1,
+    "impacts": {
+      "serious": 1
+    }
+  },
+  "carnets": {
+    "violationsCount": 1,
+    "impacts": {
+      "serious": 1
+    }
+  },
+  "clubs": {
+    "violationsCount": 1,
+    "impacts": {
+      "serious": 1
+    }
+  },
+  "entraide": {
+    "violationsCount": 0,
+    "impacts": {}
+  },
+  "evenements": {
+    "violationsCount": 1,
+    "impacts": {
+      "serious": 1
+    }
+  },
+  "avis": {
+    "violationsCount": 1,
+    "impacts": {
+      "serious": 1
+    }
+  },
+  "outils": {
+    "violationsCount": 0,
+    "impacts": {}
+  },
+  "outil-poids-sac": {
+    "violationsCount": 0,
+    "impacts": {}
+  },
+  "outil-budget": {
+    "violationsCount": 0,
+    "impacts": {}
+  },
+  "outil-convertisseur": {
+    "violationsCount": 0,
+    "impacts": {}
+  },
+  "outil-checklist": {
+    "violationsCount": 0,
+    "impacts": {}
+  },
+  "carbone": {
+    "violationsCount": 1,
+    "impacts": {
+      "serious": 1
+    }
+  },
+  "compte": {
+    "violationsCount": 0,
+    "impacts": {}
+  },
+  "compte-modifier": {
+    "violationsCount": 1,
+    "impacts": {
+      "serious": 1
+    }
+  },
+  "profil-public": {
+    "violationsCount": 1,
+    "impacts": {
+      "serious": 1
+    }
+  },
+  "progression": {
+    "violationsCount": 0,
+    "impacts": {}
+  },
+  "fidelite": {
+    "violationsCount": 1,
+    "impacts": {
+      "serious": 1
+    }
+  },
+  "recompenses": {
+    "violationsCount": 0,
+    "impacts": {}
+  },
+  "messagerie": {
+    "violationsCount": 1,
+    "impacts": {
+      "serious": 1
+    }
+  },
+  "connexion": {
+    "violationsCount": 0,
+    "impacts": {}
+  },
+  "inscription": {
+    "violationsCount": 0,
+    "impacts": {}
+  },
+  "guides": {
+    "violationsCount": 0,
+    "impacts": {}
+  },
+  "blog": {
+    "violationsCount": 1,
+    "impacts": {
+      "serious": 1
+    }
+  },
+  "manifeste": {
+    "violationsCount": 0,
+    "impacts": {}
+  },
+  "faq": {
+    "violationsCount": 1,
+    "impacts": {
+      "serious": 1
+    }
+  },
+  "contact": {
+    "violationsCount": 1,
+    "impacts": {
+      "serious": 1
+    }
+  },
+  "admin": {
+    "violationsCount": 1,
+    "impacts": {
+      "serious": 1
+    }
+  },
+  "admin-produits": {
+    "violationsCount": 1,
+    "impacts": {
+      "serious": 1
+    }
+  },
+  "dev-glass": {
+    "violationsCount": 2,
+    "impacts": {
+      "serious": 2
+    }
+  },
+  "dev-style": {
+    "violationsCount": 0,
+    "impacts": {}
+  },
+  "mentions-legales": {
+    "violationsCount": 0,
+    "impacts": {}
+  },
+  "cgv": {
+    "violationsCount": 0,
+    "impacts": {}
+  },
+  "cgu": {
+    "violationsCount": 0,
+    "impacts": {}
+  },
+  "cookies": {
+    "violationsCount": 1,
+    "impacts": {
+      "serious": 1
+    }
+  },
+  "hors-ligne": {
+    "violationsCount": 0,
+    "impacts": {}
+  },
+  "page-404": {
+    "violationsCount": 1,
+    "impacts": {
+      "serious": 1
+    }
+  }
+}

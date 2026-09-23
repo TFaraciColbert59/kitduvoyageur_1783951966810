@@ -278,18 +278,51 @@ export default function CheckoutPage() {
     return '';
   };
 
+  const formatPriceEur = (val: number): string => {
+    return val.toLocaleString('fr-FR', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }) + ' €';
+  };
+
   const steps: { id: Step; label: string; num: number }[] = [
     { id: 'livraison', label: 'Livraison', num: 1 },
     { id: 'paiement', label: 'Paiement', num: 2 },
     { id: 'confirmation', label: 'Confirmation', num: 3 },
   ];
 
-  const PAYMENT_METHODS: { id: PaymentMethod; label: string; icon: string; desc: string; badge?: string }[] = [
-    { id: 'card', label: 'Carte bancaire (Stripe)', icon: '💳', desc: 'Visa, Mastercard, Amex — paiement sécurisé Stripe', badge: 'Recommandé' },
-    { id: 'paypal', label: 'PayPal', icon: '🅿️', desc: 'Paiement sécurisé PayPal' },
-    { id: 'apple_pay', label: 'Apple Pay', icon: '🍎', desc: 'Paiement rapide Apple' },
-    { id: 'google_pay', label: 'Google Pay', icon: '🔵', desc: 'Paiement rapide Google' },
-    { id: 'virement', label: 'Virement bancaire', icon: '🏦', desc: 'Délai 2–3 jours ouvrés' },
+  const PAYMENT_METHODS = [
+    {
+      id: 'card' as PaymentMethod,
+      label: 'Carte bancaire',
+      icon: '💳',
+      desc: 'Visa, Mastercard, Amex — paiement sécurisé Stripe',
+      badge: 'Recommandé',
+      disabled: false,
+    },
+    {
+      id: 'apple_pay' as PaymentMethod,
+      label: 'Apple Pay',
+      icon: '🍎',
+      desc: 'Paiement express avec Touch ID / Face ID',
+      badge: 'Safari iOS',
+      disabled: true,
+      note: 'Disponible sur Safari iOS avec appareil compatible',
+    },
+    {
+      id: 'paypal' as PaymentMethod,
+      label: 'PayPal',
+      icon: '🅿️',
+      desc: 'Paiement sécurisé via votre compte PayPal',
+      disabled: false,
+    },
+    {
+      id: 'virement' as PaymentMethod,
+      label: 'Virement bancaire',
+      icon: '🏦',
+      desc: 'Délai 2–3 jours ouvrés — validation manuelle',
+      disabled: false,
+    },
   ];
 
   if (!mounted) {
@@ -497,30 +530,44 @@ export default function CheckoutPage() {
                               {error}
                             </div>
                           )}
-                          <div className="mb-[var(--space-8)] grid grid-cols-2 gap-[var(--space-2)] sm:grid-cols-4">
-                            <Button variant="primary" className="h-auto flex-col gap-[var(--space-1)] p-[var(--space-3)]">
-                              <Icon name="CreditCardIcon" size={24} className="mb-[var(--space-1)]" />
-                              <span className="font-mono text-[length:var(--lkv-text-caption-2)] font-semibold uppercase tracking-[var(--tracking-caps)]">Carte</span>
-                            </Button>
-                            <Button variant="secondary" className="h-auto flex-col gap-[var(--space-1)] p-[var(--space-3)]">
-                              <span className="mb-[var(--space-1)] text-[length:var(--lkv-text-title-sm)]">🍎</span>
-                              <span className="font-mono text-[length:var(--lkv-text-caption-2)] font-semibold uppercase tracking-[var(--tracking-caps)]">Apple Pay</span>
-                            </Button>
-                            <Button variant="secondary" className="h-auto flex-col gap-[var(--space-1)] p-[var(--space-3)]">
-                              <span className="mb-[var(--space-1)] text-[length:var(--lkv-text-title-sm)] font-bold">P</span>
-                              <span className="font-mono text-[length:var(--lkv-text-caption-2)] font-semibold uppercase tracking-[var(--tracking-caps)]">Compte</span>
-                            </Button>
-                            <Button variant="secondary" className="h-auto flex-col gap-[var(--space-1)] p-[var(--space-3)]">
-                              <span className="mb-[var(--space-1)] text-[length:var(--lkv-text-caption)] font-bold italic">3× sans frais</span>
-                              <span className="font-mono text-[length:var(--lkv-text-caption-2)] font-semibold uppercase tracking-[var(--tracking-caps)]">Alma</span>
-                            </Button>
+                          <div role="radiogroup" aria-label="Moyen de paiement" className="mb-[var(--space-8)] grid grid-cols-2 gap-[var(--space-2)] sm:grid-cols-4">
+                            {PAYMENT_METHODS.map((method) => {
+                              const isSelected = paymentMethod === method.id;
+                              return (
+                                <button
+                                  key={method.id}
+                                  type="button"
+                                  role="radio"
+                                  aria-checked={isSelected}
+                                  disabled={method.disabled}
+                                  onClick={() => !method.disabled && setPaymentMethod(method.id)}
+                                  className={`group relative flex h-auto flex-col items-center justify-center gap-[var(--space-1)] rounded-[var(--lkv-radius-md)] border p-[var(--space-3)] text-center transition-all ${
+                                    isSelected
+                                      ? 'border-[color:var(--glass-rim)] bg-[color:var(--g3-bg)] text-[color:var(--g3-text)] shadow-md'
+                                      : method.disabled
+                                      ? 'cursor-not-allowed border-[color:var(--glass-border)] bg-[color:var(--glass-bg-subtle)] opacity-40'
+                                      : 'border-[color:var(--glass-border)] bg-[color:var(--glass-bg-medium)] text-[color:var(--glass-label)] hover:bg-[color:var(--lkv-hover-surface)]'
+                                  }`}
+                                >
+                                  <span className="text-[20px]">{method.icon}</span>
+                                  <span className="font-mono text-[length:var(--lkv-text-caption-2)] font-semibold uppercase tracking-[var(--tracking-caps)]">
+                                    {method.label}
+                                  </span>
+                                  {method.note && (
+                                    <span className="mt-0.5 text-[9px] leading-tight opacity-75">
+                                      {method.note}
+                                    </span>
+                                  )}
+                                </button>
+                              );
+                            })}
                           </div>
 
                           <div className="mb-[var(--space-8)] flex justify-center">
-                            {/* Fake Credit Card visual */}
-                            <div className="relative aspect-[1.586] w-full max-w-[320px] overflow-hidden rounded-[var(--lkv-radius-lg)] bg-gradient-to-br from-[var(--lkv-primary)] to-[var(--lkv-forest-600)] p-[var(--space-6)] text-[color:var(--lkv-text-inverted)]">
+                            {/* Fake Credit Card visual — Monochrome Liquid Glass (iOS 27 HIG) */}
+                            <div className="relative aspect-[1.586] w-full max-w-[320px] overflow-hidden rounded-[var(--lkv-radius-lg)] border border-[color:var(--glass-rim)] bg-gradient-to-br from-[var(--glass-bg-prominent)] to-[var(--glass-bg-medium)] p-[var(--space-6)] text-[color:var(--glass-label)] shadow-md backdrop-blur-xl">
                               <div className="pointer-events-none absolute right-[-20px] top-[-20px] h-40 w-40 rounded-full bg-white/5 blur-2xl" />
-                              <div className="mb-[var(--space-8)] h-8 w-12 rounded bg-gradient-to-br from-[var(--lkv-surface)] to-[var(--lkv-border)]" />
+                              <div className="mb-[var(--space-8)] h-8 w-12 rounded border border-white/20 bg-gradient-to-br from-white/20 to-white/5" />
                               <div className="mb-[var(--space-6)] flex justify-between font-mono text-[length:var(--lkv-text-headline)] tracking-[var(--tracking-caps)]">
                                 <span>••••</span><span>••••</span><span>••••</span><span>4242</span>
                               </div>
@@ -573,8 +620,9 @@ export default function CheckoutPage() {
                             variant="primary"
                             size="lg"
                             fullWidth
+                            icon={<Icon name="LockClosedIcon" size={18} />}
                           >
-                            Payer {grandTotal.toFixed(2)} €
+                            Payer {formatPriceEur(grandTotal)}
                           </Button>
                         </>
                       )}
@@ -629,7 +677,7 @@ export default function CheckoutPage() {
                           <p className="truncate pr-[var(--space-2)] text-[length:var(--lkv-text-caption)] font-semibold text-[color:var(--lkv-text-primary)]">{item.name}</p>
                           <p className="mt-0.5 text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">Quantité : {item.quantity}</p>
                         </div>
-                        <p className="whitespace-nowrap font-mono text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)]">{(item.priceEur * item.quantity).toFixed(2)} €</p>
+                        <p className="whitespace-nowrap font-mono text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)]">{formatPriceEur(item.priceEur * item.quantity)}</p>
                       </div>
                     ))}
                   </div>
@@ -637,31 +685,31 @@ export default function CheckoutPage() {
                   <div className="mb-[var(--space-5)] space-y-[var(--space-2)] border-t border-[color:var(--lkv-border)] pt-[var(--space-5)]">
                     <div className="flex justify-between text-[length:var(--lkv-text-caption)]">
                       <span className="text-[color:var(--lkv-text-muted)]">Sous-total</span>
-                      <span className="font-mono font-bold text-[color:var(--lkv-text-primary)]">{totalPriceEur.toFixed(2)} €</span>
+                      <span className="font-mono font-bold text-[color:var(--lkv-text-primary)]">{formatPriceEur(totalPriceEur)}</span>
                     </div>
                     <div className="flex justify-between text-[length:var(--lkv-text-caption)]">
                       <span className="text-[color:var(--lkv-text-muted)]">Livraison suivie</span>
-                      <span className="font-mono font-bold text-[color:var(--lkv-text-primary)]">{shippingEur === 0 ? 'Offerte' : `${shippingEur.toFixed(2)} €`}</span>
+                      <span className="font-mono font-bold text-[color:var(--lkv-text-primary)]">{shippingEur === 0 ? 'Offerte' : formatPriceEur(shippingEur)}</span>
                     </div>
                     <div className="flex justify-between text-[length:var(--lkv-text-caption)]">
                       <span className="text-[color:var(--lkv-text-muted)]">TVA (20 %, incluse)</span>
-                      <span className="font-mono font-bold text-[color:var(--lkv-text-primary)]">{(totalPriceEur * 0.2).toFixed(2)} €</span>
+                      <span className="font-mono font-bold text-[color:var(--lkv-text-primary)]">{formatPriceEur(totalPriceEur * 0.2)}</span>
                     </div>
                   </div>
 
                   <div className="flex items-end justify-between border-t border-[color:var(--lkv-border)] pt-[var(--space-5)] font-display text-[length:var(--lkv-text-title-sm)] font-extrabold">
                     <span className="text-[length:var(--lkv-text-headline)] text-[color:var(--lkv-text-primary)]">Total</span>
-                    <span className="font-mono font-bold text-[color:var(--lkv-text-primary)]">{grandTotal.toFixed(2)} €</span>
+                    <span className="font-mono font-bold text-[color:var(--lkv-text-primary)]">{formatPriceEur(grandTotal)}</span>
                   </div>
 
                   {step === 'livraison' && (
-                    <Button onClick={handleShippingSubmit} fullWidth className="mt-[var(--space-6)]">
-                      Payer {grandTotal.toFixed(2)} € par carte
+                    <Button onClick={handleShippingSubmit} fullWidth className="mt-[var(--space-6)]" icon={<Icon name="LockClosedIcon" size={16} />}>
+                      Payer {formatPriceEur(grandTotal)} par carte
                     </Button>
                   )}
                   {step === 'paiement' && (
-                    <Button onClick={handleStripeCheckout} disabled={processing} loading={processing} fullWidth className="mt-[var(--space-6)]">
-                      {processing ? 'Traitement...' : `Payer ${grandTotal.toFixed(2)} € par carte`}
+                    <Button onClick={handleStripeCheckout} disabled={processing} loading={processing} fullWidth className="mt-[var(--space-6)]" icon={<Icon name="LockClosedIcon" size={16} />}>
+                      {processing ? 'Traitement...' : `Payer ${formatPriceEur(grandTotal)} par carte`}
                     </Button>
                   )}
 
@@ -679,14 +727,14 @@ export default function CheckoutPage() {
 
       {/* ── MOBILE VIEW (scroll natif) ── */}
       <div className="block md:hidden">
-        <MobilePageShell background="transparent">
+        <MobilePageShell background="transparent" hasBottomNav={false}>
           <div className="px-[var(--space-4)] pb-[var(--space-5)] pt-[var(--space-3)]">
             <div className="mb-[var(--space-4)] flex gap-[6px]">
               {[0, 1, 2, 3].map(i => (
-                <div key={i} className={`h-[3px] flex-1 rounded-full ${i < 2 ? 'bg-[color:var(--lkv-secondary-subtle)]' : i === 2 ? 'bg-[color:var(--lkv-primary)]' : 'bg-[color:var(--lkv-border)]'}`} />
+                <div key={i} className={`h-[3px] flex-1 rounded-full ${i < 2 ? 'bg-[color:var(--lkv-secondary-subtle)]' : i === 2 ? 'bg-[color:var(--glass-label)]' : 'bg-[color:var(--lkv-border)]'}`} />
               ))}
             </div>
-            <div className="text-[length:var(--lkv-text-caption-2)] uppercase tracking-[var(--tracking-caps)] text-[color:var(--lkv-text-muted)]">Étape 3 · 4 · Paiement</div>
+            <div className="text-[length:var(--lkv-text-caption-2)] uppercase tracking-[var(--tracking-caps)] text-[color:var(--lkv-text-muted)]">Étape 3 sur 4 · Paiement</div>
             <h1 className="m-0 text-[length:var(--lkv-text-title-sm)] tracking-[var(--lkv-tracking-title)] text-[color:var(--lkv-text-primary)]">
               Un dernier <em className="font-normal italic text-[color:var(--lkv-secondary)]">geste.</em>
             </h1>
@@ -695,7 +743,7 @@ export default function CheckoutPage() {
           <Card variant="compact" className="mx-[var(--space-4)] mb-[var(--space-3)] p-[var(--space-4)]">
             <div className="flex items-center gap-[var(--space-3)]">
               <div className="flex h-9 w-9 items-center justify-center rounded-[var(--lkv-radius-md)] bg-[color:var(--glass-bg-medium)]">
-                <Icon name="MapPinIcon" size={16} variant="outline" className="text-[color:var(--lkv-primary)]" />
+                <Icon name="MapPinIcon" size={16} variant="outline" className="text-[color:var(--glass-label)]" />
               </div>
               <div className="flex-1">
                 <div className="text-[length:var(--lkv-text-footnote)] font-medium text-[color:var(--lkv-text-primary)]">{shipping.prenom || 'Mathieu'} {shipping.nom || 'Chevrier'}</div>
@@ -709,8 +757,8 @@ export default function CheckoutPage() {
             <div className="mb-[var(--space-2)] text-[length:var(--lkv-text-caption)] font-medium text-[color:var(--lkv-text-primary)]">Mode d&apos;expédition</div>
             {[{ id: 'standard', label: 'Livraison suivie', price: 'Offerte', desc: '3-5 jours ouvrés' }, { id: 'express', label: 'Express 48h', price: '9,90 €', desc: 'Livré à domicile' }].map(opt => (
               <label key={opt.id} onClick={() => setShippingOption(opt.id)} className="flex cursor-pointer items-center gap-[var(--space-3)] border-t border-[color:var(--lkv-border-subtle)] py-[var(--space-3)]">
-                <span className={`flex h-[18px] w-[18px] flex-shrink-0 items-center justify-center rounded-full border-[1.5px] ${shippingOption === opt.id ? 'border-[color:var(--lkv-primary)]' : 'border-[color:var(--lkv-secondary-subtle)]'}`}>
-                  {shippingOption === opt.id && <span className="h-[10px] w-[10px] rounded-full bg-[color:var(--lkv-primary)]" />}
+                <span className={`flex h-[18px] w-[18px] flex-shrink-0 items-center justify-center rounded-full border-[1.5px] ${shippingOption === opt.id ? 'border-[color:var(--glass-label)]' : 'border-[color:var(--lkv-secondary-subtle)]'}`}>
+                  {shippingOption === opt.id && <span className="h-[10px] w-[10px] rounded-full bg-[color:var(--glass-label)]" />}
                 </span>
                 <span className="flex-1">
                   <span className="block text-[length:var(--lkv-text-footnote)] font-medium text-[color:var(--lkv-text-primary)]">{opt.label}</span>
@@ -722,11 +770,54 @@ export default function CheckoutPage() {
           </Card>
 
           <Card variant="compact" className="mx-[var(--space-4)] mb-[var(--space-3)] p-[var(--space-4)]">
-            <div className="mb-[var(--space-2)] text-[length:var(--lkv-text-caption)] font-medium text-[color:var(--lkv-text-primary)]">Moyen de paiement</div>
-            <div className="grid grid-cols-2 gap-[var(--space-2)]">
-              {['Carte', 'Apple Pay', 'PayPal', "3× sans frais"].map(m => (
-                <Button key={m} variant="secondary" size="sm" className="h-auto py-[var(--space-3)]">{m}</Button>
-              ))}
+            <div className="mb-[var(--space-3)] text-[length:var(--lkv-text-caption)] font-semibold text-[color:var(--glass-label)]">Moyen de paiement</div>
+            <div role="radiogroup" aria-label="Moyen de paiement" className="space-y-[var(--space-2)]">
+              {PAYMENT_METHODS.map(m => {
+                const isSelected = paymentMethod === m.id;
+                return (
+                  <button
+                    key={m.id}
+                    type="button"
+                    role="radio"
+                    aria-checked={isSelected}
+                    disabled={m.disabled}
+                    onClick={() => !m.disabled && setPaymentMethod(m.id)}
+                    className={`flex w-full items-center justify-between rounded-[var(--lkv-radius-md)] border p-[var(--space-3)] text-left transition-all ${
+                      isSelected
+                        ? 'border-[color:var(--glass-rim)] bg-[color:var(--g3-bg)] text-[color:var(--g3-text)] shadow-md'
+                        : m.disabled
+                        ? 'cursor-not-allowed border-[color:var(--glass-border)] bg-[color:var(--glass-bg-subtle)] opacity-45'
+                        : 'border-[color:var(--glass-border)] bg-[color:var(--glass-bg-medium)] text-[color:var(--glass-label)] active:scale-[0.99]'
+                    }`}
+                  >
+                    <div className="flex items-center gap-[var(--space-3)]">
+                      <span className={`flex h-[18px] w-[18px] flex-shrink-0 items-center justify-center rounded-full border-[1.5px] ${
+                        isSelected
+                          ? 'border-current'
+                          : 'border-[color:var(--glass-label-secondary)]'
+                      }`}>
+                        {isSelected && <span className="h-[9px] w-[9px] rounded-full bg-current" />}
+                      </span>
+                      <div>
+                        <div className="flex items-center gap-1.5 font-medium text-[length:var(--lkv-text-footnote)]">
+                          <span>{m.icon}</span>
+                          <span>{m.label}</span>
+                          {m.badge && (
+                            <span className="rounded-full border border-current/20 px-1.5 py-0.5 text-[9px] uppercase tracking-wide opacity-80">
+                              {m.badge}
+                            </span>
+                          )}
+                        </div>
+                        {m.note ? (
+                          <div className="text-[10px] opacity-75 mt-0.5">{m.note}</div>
+                        ) : (
+                          <div className="text-[10px] opacity-75 mt-0.5">{m.desc}</div>
+                        )}
+                      </div>
+                    </div>
+                  </button>
+                );
+              })}
             </div>
           </Card>
 
@@ -740,19 +831,19 @@ export default function CheckoutPage() {
             <div className="mb-[var(--space-3)] text-[length:var(--lkv-text-caption)] font-medium text-[color:var(--lkv-text-primary)]">Récapitulatif</div>
             <div className="mb-[var(--space-2)] flex justify-between text-[length:var(--lkv-text-caption)]">
               <span className="text-[color:var(--lkv-text-muted)]">Sous-total</span>
-              <span className="font-mono font-bold text-[color:var(--lkv-text-primary)]">{totalPriceEur.toFixed(0)} €</span>
+              <span className="font-mono font-bold text-[color:var(--lkv-text-primary)]">{formatPriceEur(totalPriceEur)}</span>
             </div>
             <div className="mb-[var(--space-3)] flex justify-between text-[length:var(--lkv-text-caption)]">
               <span className="text-[color:var(--lkv-text-muted)]">Livraison</span>
-              <span className="font-mono font-bold text-[color:var(--lkv-text-primary)]">{shippingEur === 0 ? 'Offerte' : `${shippingEur.toFixed(2)} €`}</span>
+              <span className="font-mono font-bold text-[color:var(--lkv-text-primary)]">{shippingEur === 0 ? 'Offerte' : formatPriceEur(shippingEur)}</span>
             </div>
             <Divider spacing="sm" />
             <div className="mb-[var(--space-4)] flex justify-between">
               <span className="text-[length:var(--lkv-text-subheadline)] font-bold text-[color:var(--lkv-text-primary)]">Total</span>
-              <span className="font-mono text-[length:var(--lkv-text-subheadline)] font-bold text-[color:var(--lkv-text-primary)]">{grandTotal.toFixed(0)} €</span>
+              <span className="font-mono text-[length:var(--lkv-text-subheadline)] font-bold text-[color:var(--lkv-text-primary)]">{formatPriceEur(grandTotal)}</span>
             </div>
-            <Button onClick={handleStripeCheckout} disabled={processing} loading={processing} fullWidth icon={<Icon name="LockClosedIcon" size={14} />}>
-              Payer {grandTotal.toFixed(0)} €
+            <Button onClick={handleStripeCheckout} disabled={processing} loading={processing} fullWidth icon={<Icon name="LockClosedIcon" size={16} />}>
+              Payer {formatPriceEur(grandTotal)}
             </Button>
           </Card>
         </MobilePageShell>

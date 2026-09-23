@@ -1,0 +1,14 @@
+{
+  "route": "/route-inexistante-pour-tester-404",
+  "id": "page-404",
+  "timestamp": "2026-09-23T19:08:26.803Z",
+  "violationsCount": 1,
+  "violations": [
+    {
+      "id": "color-contrast",
+      "impact": "serious",
+      "description": "Ensure the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+      "nodes": 5
+    }
+  ]
+}

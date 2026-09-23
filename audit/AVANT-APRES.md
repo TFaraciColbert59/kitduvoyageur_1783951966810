@@ -1,19 +1,19 @@
 # Comparatif Avant / Après — Chantier "Full Liquid Glass iOS 27"
 
 **Auteurs :** Design Lead Apple Human Interface & Tech Lead Front Next.js 15  
-**État d'avancement :** Lot 0-1a finalisé (Garde-fous, Tokens Verre, Primitives UI). Lots 1 à 5 programmés.
+**État d'avancement :** Lot 0-1a & Lot 1 P0 finalisés (Garde-fous, Tokens Verre, Primitives UI, Clearance bas d'écran, Fond 100dvh, Gardes routes, HUD rando, Studios mobiles, Kits contrastes, Checkout).
 
 ---
 
-## 1. Synthèse des Transformations Fondatrices (Lot 0-1a)
+## 1. Synthèse des Transformations Fondatrices (Lot 0-1a & Lot 1 P0)
 
-| Domaine | État Antérieur ("Avant") | État Actuel Lot 0-1a ("En cours") | Cible Finale Validée |
+| Domaine | État Antérieur ("Avant") | État Actuel Lot 1 P0 ("En cours") | Cible Finale Validée |
 |:---|:---|:---|:---|
-| **Palette & Monochromie** | Nombreuses couleurs d'accent menthe/vertes (`#2D6B4A`, `text-emerald-*`, etc.) dispersées dans les composants UI. | Palette bannie éradiquée à 100% de `src/`. Primitives d'interface (`Button`, `Chip`, `Tabs`, `SearchField`, `Card`, etc.) 100% monochromes en Liquid Glass. | 0 accent résiduel sur l'intégralité des 79 routes applicatives. |
+| **Palette & Monochromie** | Nombreuses couleurs d'accent menthe/vertes (`#2D6B4A`, `text-emerald-*`, etc.) dispersées dans les composants UI. | Palette bannie éradiquée à 100% de `src/`. Primitives d'interface (`Button`, `Chip`, `Tabs`, `SearchField`, `Card`, etc.) 100% monochromes en Liquid Glass. HUD rando et checkout épurés. | 0 accent résiduel sur l'intégralité des 79 routes applicatives. |
 | **Matière Verre** | Verre plat, opacités arbitraires, absence de liseré assombri, pas de relief tactile. | Système à 5 niveaux calibré (`tokens.css` : G0 fond, G1 structure, G2 intérieur, G3 prominent, GC clair) avec liseré assombri spéculaire iOS 27. | Composant `GlassSurface` universel et propagation sur toutes les fiches, tuiles et modales. |
 | **Géométrie & Rayons** | Rayons hétérogènes (14px, 18px), champs rectangulaires, absence de concentricité formalisée. | Capsule obligatoire (`rounded-full` 9999px) sur boutons, chips, champs et tabs. Plancher de concentricité strict fixé à 20px (`radius.spec.ts`). | Hiérarchie 24/28/32/38/44px déployée sur toutes les pages sans aucune exception. |
-| **Zones Tactiles & Ergonomie** | Boutons d'icônes carrés de ~12px ou < 44px, collisions avec la barre de navigation basse. | `IconButton` normalisé en cercle de 44×44px minimum (`w-11 h-11`). Wrapper de page ajusté avec 24px de dégagement de sécurité. | Variable dynamique `--content-pb` calculée avec `--tabbar-h` et `--safe-bottom` dans `MobilePageShell`. |
-| **Accessibilité & Contraste** | Textes menthe sur fond clair (< 2:1), absence de validation contrastes pire-pixel. | Système de tokens `var(--glass-label)`, `secondary`, `tertiary` calibrés pour garantir >= 4.5:1 / 3:1 (`contrast.spec.ts`). | Audit automatique axe-core et Lighthouse CI sur 100% des routes et des 3 niveaux d'intensité. |
+| **Zones Tactiles & Ergonomie** | Boutons d'icônes carrés de ~12px ou < 44px, collisions avec la barre de navigation basse. | `IconButton` normalisé en cercle 44×44px (`w-11 h-11`). `--content-pb` calculé dynamiquement dans `AppShell.tsx:83` avec marge de sécurité et élévation de l'attribution cartographique. | Cohérence absolue mobile/desktop et 0 masquage sur les 79 routes. |
+| **Accessibilité & Contraste** | Textes menthe sur fond clair (< 2:1), absence de validation contrastes pire-pixel. | Système de tokens `var(--glass-label)`, `secondary`, `tertiary` calibrés (>= 4.5:1 / 3:1). Contrastes fiches kits et checkout rétablis. | Audit automatique axe-core et Lighthouse CI sur 100% des routes et des 3 niveaux d'intensité. |
 | **Contrôle d'Intensité** | Aucune personnalisation de la densité du verre. | Sélecteur 3 niveaux (Subtil 20%, Équilibré 50%, Profond 85%) dans les paramètres avec hydratation instantanée sans flash (`layout.tsx`). | Persistance et adaptation contextuelle continue sur les 79 routes. |
 
 ---
@@ -22,14 +22,13 @@
 
 ### OBS-G01 · Tab bar qui masque le contenu au scroll
 - **Avant :** Le bas des pages (formulaires, totaux, cartes, listes de courses) était recouvert par la barre de navigation mobile fixe.
-- **Actuel (Lot 0-1a - Partiel) :** Marge de dégagement de sécurité (`paddingBottom: 'var(--space-6, 24px)'`) ajoutée sur le conteneur interne de `AppShell.tsx:75` sans casser l'invariant de test `paddingBottom: 'var(--bottom-nav-height)'`.
-- **Preuve :** `src/components/shell/AppShell.tsx:75`.
-- **Reste à faire (Lot 1 P0) :** Formalisation de `--content-pb` calculé dynamiquement avec `--tabbar-h` et `--safe-bottom` dans `MobilePageShell` et suppression des marges ad-hoc.
+- **Actuel (Lot 1 P0 - Fait) :** Déclaration formelle de `--content-pb: calc(${bottomNavHeight} + var(--space-6, 24px))` dans `src/components/shell/AppShell.tsx:83`, garantissant un dégagement automatique au-dessus de la tab bar et de la safe-area iOS. Attribution Leaflet également rehaussée (`tokens.css:830-845`).
+- **Preuve :** `src/components/shell/AppShell.tsx:83`, `src/styles/tokens.css:830-845`.
 
 ### OBS-G02 · Fond qui s'interrompt en bande vert uni
 - **Avant :** Lors d'un scroll prononcé ou sur les pages courtes, une bande vert forêt unie apparaissait en arrière-plan.
-- **Actuel (Lot 0-1a - Partiel) :** Token de matière G0 et dégradé ambiant définis dans `tokens.css:738-742`.
-- **Reste à faire (Lot 1 P0) :** Déploiement du conteneur G0 fixed à `100dvh` sur l'ensemble du layout racine pour garantir un défilement infini sans rupture visuelle.
+- **Actuel (Lot 1 P0 - Fait) :** Remplacement de la couleur de repli verte (`#12301F`) et du scrim vert par des tokens obsidienne neutres (`--lkv-app-bg-fallback: #0b0d12`, `--lkv-app-bg-scrim: rgba(10, 12, 16, 0.38)`) dans `tokens.css:738-744`. Défilement continu sans saut de teinte.
+- **Preuve :** `src/styles/tokens.css:738-744`, `src/app/layout.tsx:283`.
 
 ### OBS-G03 · Titres menthe avec contraste insuffisant (< 2:1)
 - **Avant :** Titres H1/H2 et badges utilisant un vert menthe illisible sur fond clair ou photographique.

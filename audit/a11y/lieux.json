@@ -1,0 +1,14 @@
+{
+  "route": "/lieux",
+  "id": "lieux",
+  "timestamp": "2026-09-23T18:57:02.812Z",
+  "violationsCount": 1,
+  "violations": [
+    {
+      "id": "color-contrast",
+      "impact": "serious",
+      "description": "Ensure the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+      "nodes": 10
+    }
+  ]
+}

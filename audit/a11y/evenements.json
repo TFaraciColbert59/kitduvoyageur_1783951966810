@@ -1,0 +1,14 @@
+{
+  "route": "/evenements",
+  "id": "evenements",
+  "timestamp": "2026-09-23T18:59:40.922Z",
+  "violationsCount": 1,
+  "violations": [
+    {
+      "id": "color-contrast",
+      "impact": "serious",
+      "description": "Ensure the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+      "nodes": 2
+    }
+  ]
+}

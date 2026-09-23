@@ -32,22 +32,22 @@ export default function DesktopDockBar({
 }: DesktopDockBarProps) {
   return (
     <div
-      className="absolute left-1/2 -translate-x-1/2 max-w-[95vw] h-[68px] md:h-[82px] px-2.5 md:px-4 bg-[color:var(--lkv-forest-950)]/90 backdrop-blur-3xl border border-white/12 rounded-full shadow-lg flex items-center gap-1.5 md:gap-3 z-40 select-none transition-all duration-300 overflow-x-auto no-scrollbar"
+      className="absolute left-1/2 -translate-x-1/2 max-w-[95vw] h-[68px] md:h-[82px] px-3 md:px-5 g1 rounded-full shadow-2xl border border-[var(--glass-rim)] flex items-center gap-2 md:gap-3 z-40 select-none transition-all duration-300 overflow-x-auto no-scrollbar"
       style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 12px)' }}
     >
       
       {/* 1. Live Timer & Recording Status Indicator */}
-      <div className="flex items-center gap-3 pl-2 pr-4 border-r border-white/10">
+      <div className="flex items-center gap-3 pl-1 pr-3 border-r border-[var(--glass-rim)]">
         <div className="relative flex items-center justify-center w-3 h-3">
-          <span className={`absolute w-3 h-3 rounded-full ${isPaused ? 'bg-amber-400' : 'bg-emerald-400 animate-ping opacity-75'}`} />
-          <span className={`w-2.5 h-2.5 rounded-full shadow-md ${isPaused ? 'bg-amber-400' : 'bg-emerald-400'}`} />
+          <span className={`absolute w-3 h-3 rounded-full ${isPaused ? 'bg-amber-400' : 'bg-white animate-ping opacity-75'}`} />
+          <span className={`w-2.5 h-2.5 rounded-full shadow-md ${isPaused ? 'bg-amber-400' : 'bg-white'}`} />
         </div>
         
         <div className="flex flex-col leading-none">
-          <div className="font-mono text-[9px] tracking-widest text-[color:var(--lkv-forest-100)]/70 font-semibold uppercase flex items-center gap-1.5">
+          <div className="text-[10px] tracking-wider text-[var(--glass-secondary)] font-semibold uppercase flex items-center gap-1.5">
             <span>{isPaused ? 'EN PAUSE' : 'GPS · LIVE'}</span>
           </div>
-          <div className="text-xl font-medium tracking-tight text-white font-mono tabular-nums mt-1 drop-shadow-sm">
+          <div className="text-xl font-bold tracking-tight text-[var(--glass-label)] font-mono tabular-nums mt-1 drop-shadow-sm">
             {formatTimer(durationSeconds)}
           </div>
         </div>
@@ -57,49 +57,49 @@ export default function DesktopDockBar({
       <div className="flex items-center gap-1.5">
         <button
           onClick={() => onTabSelect('stats')}
-          className={`h-[58px] px-3.5 rounded-2xl flex items-center gap-2 transition-all duration-200 ${
+          className={`h-[48px] px-3.5 rounded-full flex items-center gap-2 transition-all duration-200 ${
             activeTab === 'stats'
-              ? 'bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] text-[color:var(--lkv-text-primary)] border border-[color:var(--lkv-forest-100)]/30 shadow-lg font-semibold scale-[1.02]'
-              : 'text-[color:var(--lkv-text-primary)]/70 hover:text-[color:var(--lkv-text-primary)] hover:bg-white/06'
+              ? 'bg-[var(--g3-bg)] text-[var(--g3-text)] shadow-sm font-semibold scale-[1.02]'
+              : 'text-[var(--glass-secondary)] hover:text-[var(--glass-label)] hover:bg-white/10'
           }`}
         >
-          <svg className="w-5 h-5 stroke-current stroke-[1.9] fill-none" viewBox="0 0 24 24">
+          <svg className="w-4 h-4 stroke-current stroke-[2] fill-none" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M4 20l6-12 4 6 4-2 2 8" />
           </svg>
-          <span className="text-[11px] font-mono tracking-wider uppercase font-medium">Stats</span>
+          <span className="text-xs font-semibold">Stats</span>
         </button>
 
         <button
           onClick={() => onTabSelect('carnet')}
-          className={`h-[58px] px-3.5 rounded-2xl flex items-center gap-2 transition-all duration-200 ${
+          className={`h-[48px] px-3.5 rounded-full flex items-center gap-2 transition-all duration-200 ${
             activeTab === 'carnet'
-              ? 'bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] text-[color:var(--lkv-text-primary)] border border-[color:var(--lkv-forest-100)]/30 shadow-lg font-semibold scale-[1.02]'
-              : 'text-[color:var(--lkv-text-primary)]/70 hover:text-[color:var(--lkv-text-primary)] hover:bg-white/06'
+              ? 'bg-[var(--g3-bg)] text-[var(--g3-text)] shadow-sm font-semibold scale-[1.02]'
+              : 'text-[var(--glass-secondary)] hover:text-[var(--glass-label)] hover:bg-white/10'
           }`}
         >
-          <svg className="w-5 h-5 stroke-current stroke-[1.9] fill-none" viewBox="0 0 24 24">
+          <svg className="w-4 h-4 stroke-current stroke-[2] fill-none" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M4 5a2 2 0 0 1 2-2h10l4 4v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z" />
             <path strokeLinecap="round" strokeLinejoin="round" d="M8 9h5M8 13h8M8 17h6" />
           </svg>
-          <span className="text-[11px] font-mono tracking-wider uppercase font-medium">Carnet</span>
+          <span className="text-xs font-semibold">Carnet</span>
         </button>
       </div>
 
-      <div className="w-[1px] h-8 bg-white/10 mx-0.5" />
+      <div className="w-[1px] h-6 bg-[var(--glass-rim)] mx-0.5" />
 
       {/* 3. Central Main Action Controls: Pause / Resume & Stop */}
       <div className="flex items-center gap-2 px-1">
         <button
           onClick={onToggleHike}
-          className={`h-[58px] px-5 rounded-2xl flex items-center gap-2.5 font-mono text-[11px] font-semibold tracking-widest uppercase  transition-all duration-200 active:scale-95 ${
+          className={`h-[48px] px-5 rounded-full flex items-center gap-2 text-xs font-bold tracking-wide uppercase transition-all duration-200 active:scale-95 border border-[var(--glass-rim)] ${
             isPaused
-              ? 'bg-gradient-to-r from-[color:var(--lkv-forest-200)] to-[var(--lkv-secondary)] text-[color:var(--lkv-forest-950)] shadow-emerald-950/40 hover:brightness-110'
+              ? 'bg-[var(--g2-bg)] text-[var(--glass-label)] hover:brightness-110'
               : isActive
-              ? 'bg-gradient-to-r from-[var(--lkv-warning)] to-[var(--lkv-warning-dark)] text-[var(--lkv-warning-dark)] shadow-amber-950/40 hover:brightness-110'
-              : 'bg-gradient-to-r from-[color:var(--lkv-primary)] to-[color:var(--lkv-primary-soft)] text-white border border-emerald-500/30 shadow-emerald-950/60 hover:brightness-110'
+              ? 'bg-amber-500/20 text-amber-200 border-amber-500/30'
+              : 'bg-[var(--g3-bg)] text-[var(--g3-text)] shadow-sm hover:brightness-105'
           }`}
         >
-          <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
+          <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
             {isPaused ? (
               <path d="M8 5v14l11-7z" />
             ) : isActive ? (
@@ -113,9 +113,9 @@ export default function DesktopDockBar({
 
         <button
           onClick={onStopHike}
-          className="h-[58px] px-4 rounded-2xl bg-gradient-to-r from-[color:var(--lkv-danger)] to-[var(--lkv-danger-dark)] text-white border border-rose-400/20  shadow-rose-950/50 hover:brightness-110 active:scale-95 transition-all duration-200 flex items-center gap-2 font-mono text-[11px] font-semibold tracking-widest uppercase"
+          className="h-[48px] px-4 rounded-full bg-rose-500/20 text-rose-200 border border-rose-500/30 hover:brightness-110 active:scale-95 transition-all duration-200 flex items-center gap-2 text-xs font-bold tracking-wide uppercase"
         >
-          <span className="w-3 h-3 rounded-sm bg-white " />
+          <span className="w-2.5 h-2.5 rounded-sm bg-rose-300" />
           <span>TERMINER</span>
         </button>
       </div>

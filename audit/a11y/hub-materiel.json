@@ -1,0 +1,14 @@
+{
+  "route": "/hub/materiel",
+  "id": "hub-materiel",
+  "timestamp": "2026-09-23T18:51:28.576Z",
+  "violationsCount": 1,
+  "violations": [
+    {
+      "id": "color-contrast",
+      "impact": "serious",
+      "description": "Ensure the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+      "nodes": 5
+    }
+  ]
+}

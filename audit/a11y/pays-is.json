@@ -1,0 +1,14 @@
+{
+  "route": "/pays/is",
+  "id": "pays-is",
+  "timestamp": "2026-09-23T18:56:42.683Z",
+  "violationsCount": 1,
+  "violations": [
+    {
+      "id": "scrollable-region-focusable",
+      "impact": "serious",
+      "description": "Ensure elements that have scrollable content are accessible by keyboard in Safari",
+      "nodes": 1
+    }
+  ]
+}

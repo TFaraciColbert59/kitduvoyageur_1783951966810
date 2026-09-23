@@ -39,8 +39,8 @@
      décliné portrait (mobile) / paysage (large), voilé pour la lisibilité. */
   --lkv-app-bg-image-portrait: url('/assets/images/lkdv-bg-portrait.webp');
   --lkv-app-bg-image-landscape: url('/assets/images/lkdv-bg-landscape.webp');
-  --lkv-app-bg-scrim: rgba(46, 92, 66, 0.26);
-  --lkv-app-bg-fallback: #12301F;
+  --lkv-app-bg-scrim: rgba(10, 12, 16, 0.38);
+  --lkv-app-bg-fallback: #0b0d12;
 
   --lkv-surface: #F5F7F3;
   --lkv-surface-paper: #FFFFFF;
@@ -769,6 +769,28 @@
 }
 
 /* Classes utilitaires universelles Liquid Glass */
+.leaflet-bottom.leaflet-right {
+  bottom: calc(var(--content-pb, 88px) + 8px) !important;
+  right: 12px !important;
+  z-index: var(--z-hud, 400) !important;
+}
+.leaflet-control-attribution {
+  background: rgba(255, 255, 255, 0.75) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  border: 0.5px solid rgba(0, 0, 0, 0.15) !important;
+  border-radius: 9999px !important;
+  padding: 2px 8px !important;
+  color: #1e293b !important;
+  font-size: 10px !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12) !important;
+}
+.dark .leaflet-control-attribution {
+  background: rgba(24, 24, 27, 0.75) !important;
+  border-color: rgba(255, 255, 255, 0.18) !important;
+  color: #f1f5f9 !important;
+}
+
 .g0-backdrop {
   position: fixed;
   inset: 0;

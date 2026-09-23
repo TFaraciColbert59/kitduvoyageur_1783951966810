@@ -1,0 +1,14 @@
+{
+  "route": "/fidelite",
+  "id": "fidelite",
+  "timestamp": "2026-09-23T19:03:10.812Z",
+  "violationsCount": 1,
+  "violations": [
+    {
+      "id": "color-contrast",
+      "impact": "serious",
+      "description": "Ensure the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+      "nodes": 7
+    }
+  ]
+}

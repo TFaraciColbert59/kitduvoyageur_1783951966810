@@ -1,0 +1,4606 @@
+{
+  "totalCaptures": 575,
+  "timestamp": "2026-09-23T19:08:36.234Z",
+  "manifest": [
+    {
+      "routeId": "accueil",
+      "path": "/",
+      "viewport": "390x844",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/accueil/390x844-dark-default.png"
+    },
+    {
+      "routeId": "accueil",
+      "path": "/",
+      "viewport": "390x844",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/accueil/390x844-light-default.png"
+    },
+    {
+      "routeId": "accueil",
+      "path": "/",
+      "viewport": "430x932",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/accueil/430x932-dark-default.png"
+    },
+    {
+      "routeId": "accueil",
+      "path": "/",
+      "viewport": "430x932",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/accueil/430x932-light-default.png"
+    },
+    {
+      "routeId": "accueil",
+      "path": "/",
+      "viewport": "820x1180",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/accueil/820x1180-dark-default.png"
+    },
+    {
+      "routeId": "accueil",
+      "path": "/",
+      "viewport": "820x1180",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/accueil/820x1180-light-default.png"
+    },
+    {
+      "routeId": "accueil",
+      "path": "/",
+      "viewport": "1440x900",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/accueil/1440x900-dark-default.png"
+    },
+    {
+      "routeId": "accueil",
+      "path": "/",
+      "viewport": "1440x900",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/accueil/1440x900-light-default.png"
+    },
+    {
+      "routeId": "hub",
+      "path": "/hub",
+      "viewport": "390x844",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/hub/390x844-dark-default.png"
+    },
+    {
+      "routeId": "hub",
+      "path": "/hub",
+      "viewport": "390x844",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/hub/390x844-light-default.png"
+    },
+    {
+      "routeId": "hub",
+      "path": "/hub",
+      "viewport": "430x932",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/hub/430x932-dark-default.png"
+    },
+    {
+      "routeId": "hub",
+      "path": "/hub",
+      "viewport": "430x932",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/hub/430x932-light-default.png"
+    },
+    {
+      "routeId": "hub",
+      "path": "/hub",
+      "viewport": "820x1180",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/hub/820x1180-dark-default.png"
+    },
+    {
+      "routeId": "hub",
+      "path": "/hub",
+      "viewport": "820x1180",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/hub/820x1180-light-default.png"
+    },
+    {
+      "routeId": "hub",
+      "path": "/hub",
+      "viewport": "1440x900",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/hub/1440x900-dark-default.png"
+    },
+    {
+      "routeId": "hub",
+      "path": "/hub",
+      "viewport": "1440x900",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/hub/1440x900-light-default.png"
+    },
+    {
+      "routeId": "hub",
+      "path": "/hub",
+      "viewport": "390x844",
+      "theme": "dark",
+      "state": "intensity-0",
+      "file": "audit/screens/hub/390x844-dark-intensity-0.png"
+    },
+    {
+      "routeId": "hub",
+      "path": "/hub",
+      "viewport": "390x844",
+      "theme": "dark",
+      "state": "intensity-0.5",
+      "file": "audit/screens/hub/390x844-dark-intensity-0.5.png"
+    },
+    {
+      "routeId": "hub",
+      "path": "/hub",
+      "viewport": "390x844",
+      "theme": "dark",
+      "state": "intensity-1",
+      "file": "audit/screens/hub/390x844-dark-intensity-1.png"
+    },
+    {
+      "routeId": "hub-nouveau",
+      "path": "/hub/nouveau",
+      "viewport": "390x844",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/hub-nouveau/390x844-dark-default.png"
+    },
+    {
+      "routeId": "hub-nouveau",
+      "path": "/hub/nouveau",
+      "viewport": "390x844",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/hub-nouveau/390x844-light-default.png"
+    },
+    {
+      "routeId": "hub-nouveau",
+      "path": "/hub/nouveau",
+      "viewport": "430x932",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/hub-nouveau/430x932-dark-default.png"
+    },
+    {
+      "routeId": "hub-nouveau",
+      "path": "/hub/nouveau",
+      "viewport": "430x932",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/hub-nouveau/430x932-light-default.png"
+    },
+    {
+      "routeId": "hub-nouveau",
+      "path": "/hub/nouveau",
+      "viewport": "820x1180",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/hub-nouveau/820x1180-dark-default.png"
+    },
+    {
+      "routeId": "hub-nouveau",
+      "path": "/hub/nouveau",
+      "viewport": "820x1180",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/hub-nouveau/820x1180-light-default.png"
+    },
+    {
+      "routeId": "hub-nouveau",
+      "path": "/hub/nouveau",
+      "viewport": "1440x900",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/hub-nouveau/1440x900-dark-default.png"
+    },
+    {
+      "routeId": "hub-nouveau",
+      "path": "/hub/nouveau",
+      "viewport": "1440x900",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/hub-nouveau/1440x900-light-default.png"
+    },
+    {
+      "routeId": "hub-itineraire",
+      "path": "/hub/itineraire",
+      "viewport": "390x844",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/hub-itineraire/390x844-dark-default.png"
+    },
+    {
+      "routeId": "hub-itineraire",
+      "path": "/hub/itineraire",
+      "viewport": "390x844",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/hub-itineraire/390x844-light-default.png"
+    },
+    {
+      "routeId": "hub-itineraire",
+      "path": "/hub/itineraire",
+      "viewport": "430x932",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/hub-itineraire/430x932-dark-default.png"
+    },
+    {
+      "routeId": "hub-itineraire",
+      "path": "/hub/itineraire",
+      "viewport": "430x932",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/hub-itineraire/430x932-light-default.png"
+    },
+    {
+      "routeId": "hub-itineraire",
+      "path": "/hub/itineraire",
+      "viewport": "820x1180",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/hub-itineraire/820x1180-dark-default.png"
+    },
+    {
+      "routeId": "hub-itineraire",
+      "path": "/hub/itineraire",
+      "viewport": "820x1180",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/hub-itineraire/820x1180-light-default.png"
+    },
+    {
+      "routeId": "hub-itineraire",
+      "path": "/hub/itineraire",
+      "viewport": "1440x900",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/hub-itineraire/1440x900-dark-default.png"
+    },
+    {
+      "routeId": "hub-itineraire",
+      "path": "/hub/itineraire",
+      "viewport": "1440x900",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/hub-itineraire/1440x900-light-default.png"
+    },
+    {
+      "routeId": "hub-budget",
+      "path": "/hub/budget",
+      "viewport": "390x844",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/hub-budget/390x844-dark-default.png"
+    },
+    {
+      "routeId": "hub-budget",
+      "path": "/hub/budget",
+      "viewport": "390x844",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/hub-budget/390x844-light-default.png"
+    },
+    {
+      "routeId": "hub-budget",
+      "path": "/hub/budget",
+      "viewport": "430x932",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/hub-budget/430x932-dark-default.png"
+    },
+    {
+      "routeId": "hub-budget",
+      "path": "/hub/budget",
+      "viewport": "430x932",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/hub-budget/430x932-light-default.png"
+    },
+    {
+      "routeId": "hub-budget",
+      "path": "/hub/budget",
+      "viewport": "820x1180",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/hub-budget/820x1180-dark-default.png"
+    },
+    {
+      "routeId": "hub-budget",
+      "path": "/hub/budget",
+      "viewport": "820x1180",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/hub-budget/820x1180-light-default.png"
+    },
+    {
+      "routeId": "hub-budget",
+      "path": "/hub/budget",
+      "viewport": "1440x900",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/hub-budget/1440x900-dark-default.png"
+    },
+    {
+      "routeId": "hub-budget",
+      "path": "/hub/budget",
+      "viewport": "1440x900",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/hub-budget/1440x900-light-default.png"
+    },
+    {
+      "routeId": "hub-groupe",
+      "path": "/hub/groupe",
+      "viewport": "390x844",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/hub-groupe/390x844-dark-default.png"
+    },
+    {
+      "routeId": "hub-groupe",
+      "path": "/hub/groupe",
+      "viewport": "390x844",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/hub-groupe/390x844-light-default.png"
+    },
+    {
+      "routeId": "hub-groupe",
+      "path": "/hub/groupe",
+      "viewport": "430x932",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/hub-groupe/430x932-dark-default.png"
+    },
+    {
+      "routeId": "hub-groupe",
+      "path": "/hub/groupe",
+      "viewport": "430x932",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/hub-groupe/430x932-light-default.png"
+    },
+    {
+      "routeId": "hub-groupe",
+      "path": "/hub/groupe",
+      "viewport": "820x1180",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/hub-groupe/820x1180-dark-default.png"
+    },
+    {
+      "routeId": "hub-groupe",
+      "path": "/hub/groupe",
+      "viewport": "820x1180",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/hub-groupe/820x1180-light-default.png"
+    },
+    {
+      "routeId": "hub-groupe",
+      "path": "/hub/groupe",
+      "viewport": "1440x900",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/hub-groupe/1440x900-dark-default.png"
+    },
+    {
+      "routeId": "hub-groupe",
+      "path": "/hub/groupe",
+      "viewport": "1440x900",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/hub-groupe/1440x900-light-default.png"
+    },
+    {
+      "routeId": "hub-securite",
+      "path": "/hub/securite",
+      "viewport": "390x844",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/hub-securite/390x844-dark-default.png"
+    },
+    {
+      "routeId": "hub-securite",
+      "path": "/hub/securite",
+      "viewport": "390x844",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/hub-securite/390x844-light-default.png"
+    },
+    {
+      "routeId": "hub-securite",
+      "path": "/hub/securite",
+      "viewport": "430x932",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/hub-securite/430x932-dark-default.png"
+    },
+    {
+      "routeId": "hub-securite",
+      "path": "/hub/securite",
+      "viewport": "430x932",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/hub-securite/430x932-light-default.png"
+    },
+    {
+      "routeId": "hub-securite",
+      "path": "/hub/securite",
+      "viewport": "820x1180",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/hub-securite/820x1180-dark-default.png"
+    },
+    {
+      "routeId": "hub-securite",
+      "path": "/hub/securite",
+      "viewport": "820x1180",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/hub-securite/820x1180-light-default.png"
+    },
+    {
+      "routeId": "hub-securite",
+      "path": "/hub/securite",
+      "viewport": "1440x900",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/hub-securite/1440x900-dark-default.png"
+    },
+    {
+      "routeId": "hub-securite",
+      "path": "/hub/securite",
+      "viewport": "1440x900",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/hub-securite/1440x900-light-default.png"
+    },
+    {
+      "routeId": "hub-materiel",
+      "path": "/hub/materiel",
+      "viewport": "390x844",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/hub-materiel/390x844-dark-default.png"
+    },
+    {
+      "routeId": "hub-materiel",
+      "path": "/hub/materiel",
+      "viewport": "390x844",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/hub-materiel/390x844-light-default.png"
+    },
+    {
+      "routeId": "hub-materiel",
+      "path": "/hub/materiel",
+      "viewport": "430x932",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/hub-materiel/430x932-dark-default.png"
+    },
+    {
+      "routeId": "hub-materiel",
+      "path": "/hub/materiel",
+      "viewport": "430x932",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/hub-materiel/430x932-light-default.png"
+    },
+    {
+      "routeId": "hub-materiel",
+      "path": "/hub/materiel",
+      "viewport": "820x1180",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/hub-materiel/820x1180-dark-default.png"
+    },
+    {
+      "routeId": "hub-materiel",
+      "path": "/hub/materiel",
+      "viewport": "820x1180",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/hub-materiel/820x1180-light-default.png"
+    },
+    {
+      "routeId": "hub-materiel",
+      "path": "/hub/materiel",
+      "viewport": "1440x900",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/hub-materiel/1440x900-dark-default.png"
+    },
+    {
+      "routeId": "hub-materiel",
+      "path": "/hub/materiel",
+      "viewport": "1440x900",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/hub-materiel/1440x900-light-default.png"
+    },
+    {
+      "routeId": "hub-documents",
+      "path": "/hub/documents",
+      "viewport": "390x844",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/hub-documents/390x844-dark-default.png"
+    },
+    {
+      "routeId": "hub-documents",
+      "path": "/hub/documents",
+      "viewport": "390x844",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/hub-documents/390x844-light-default.png"
+    },
+    {
+      "routeId": "hub-documents",
+      "path": "/hub/documents",
+      "viewport": "430x932",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/hub-documents/430x932-dark-default.png"
+    },
+    {
+      "routeId": "hub-documents",
+      "path": "/hub/documents",
+      "viewport": "430x932",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/hub-documents/430x932-light-default.png"
+    },
+    {
+      "routeId": "hub-documents",
+      "path": "/hub/documents",
+      "viewport": "820x1180",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/hub-documents/820x1180-dark-default.png"
+    },
+    {
+      "routeId": "hub-documents",
+      "path": "/hub/documents",
+      "viewport": "820x1180",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/hub-documents/820x1180-light-default.png"
+    },
+    {
+      "routeId": "hub-documents",
+      "path": "/hub/documents",
+      "viewport": "1440x900",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/hub-documents/1440x900-dark-default.png"
+    },
+    {
+      "routeId": "hub-documents",
+      "path": "/hub/documents",
+      "viewport": "1440x900",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/hub-documents/1440x900-light-default.png"
+    },
+    {
+      "routeId": "explorer",
+      "path": "/explorer",
+      "viewport": "390x844",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/explorer/390x844-dark-default.png"
+    },
+    {
+      "routeId": "explorer",
+      "path": "/explorer",
+      "viewport": "390x844",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/explorer/390x844-light-default.png"
+    },
+    {
+      "routeId": "explorer",
+      "path": "/explorer",
+      "viewport": "430x932",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/explorer/430x932-dark-default.png"
+    },
+    {
+      "routeId": "explorer",
+      "path": "/explorer",
+      "viewport": "430x932",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/explorer/430x932-light-default.png"
+    },
+    {
+      "routeId": "explorer",
+      "path": "/explorer",
+      "viewport": "820x1180",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/explorer/820x1180-dark-default.png"
+    },
+    {
+      "routeId": "explorer",
+      "path": "/explorer",
+      "viewport": "820x1180",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/explorer/820x1180-light-default.png"
+    },
+    {
+      "routeId": "explorer",
+      "path": "/explorer",
+      "viewport": "1440x900",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/explorer/1440x900-dark-default.png"
+    },
+    {
+      "routeId": "explorer",
+      "path": "/explorer",
+      "viewport": "1440x900",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/explorer/1440x900-light-default.png"
+    },
+    {
+      "routeId": "explorer",
+      "path": "/explorer",
+      "viewport": "390x844",
+      "theme": "dark",
+      "state": "intensity-0",
+      "file": "audit/screens/explorer/390x844-dark-intensity-0.png"
+    },
+    {
+      "routeId": "explorer",
+      "path": "/explorer",
+      "viewport": "390x844",
+      "theme": "dark",
+      "state": "intensity-0.5",
+      "file": "audit/screens/explorer/390x844-dark-intensity-0.5.png"
+    },
+    {
+      "routeId": "explorer",
+      "path": "/explorer",
+      "viewport": "390x844",
+      "theme": "dark",
+      "state": "intensity-1",
+      "file": "audit/screens/explorer/390x844-dark-intensity-1.png"
+    },
+    {
+      "routeId": "carte-interactive",
+      "path": "/carte-interactive",
+      "viewport": "390x844",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/carte-interactive/390x844-dark-default.png"
+    },
+    {
+      "routeId": "carte-interactive",
+      "path": "/carte-interactive",
+      "viewport": "390x844",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/carte-interactive/390x844-light-default.png"
+    },
+    {
+      "routeId": "carte-interactive",
+      "path": "/carte-interactive",
+      "viewport": "430x932",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/carte-interactive/430x932-dark-default.png"
+    },
+    {
+      "routeId": "carte-interactive",
+      "path": "/carte-interactive",
+      "viewport": "430x932",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/carte-interactive/430x932-light-default.png"
+    },
+    {
+      "routeId": "carte-interactive",
+      "path": "/carte-interactive",
+      "viewport": "820x1180",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/carte-interactive/820x1180-dark-default.png"
+    },
+    {
+      "routeId": "carte-interactive",
+      "path": "/carte-interactive",
+      "viewport": "820x1180",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/carte-interactive/820x1180-light-default.png"
+    },
+    {
+      "routeId": "carte-interactive",
+      "path": "/carte-interactive",
+      "viewport": "1440x900",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/carte-interactive/1440x900-dark-default.png"
+    },
+    {
+      "routeId": "carte-interactive",
+      "path": "/carte-interactive",
+      "viewport": "1440x900",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/carte-interactive/1440x900-light-default.png"
+    },
+    {
+      "routeId": "randonnee-active",
+      "path": "/randonnee-active",
+      "viewport": "390x844",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/randonnee-active/390x844-dark-default.png"
+    },
+    {
+      "routeId": "randonnee-active",
+      "path": "/randonnee-active",
+      "viewport": "390x844",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/randonnee-active/390x844-light-default.png"
+    },
+    {
+      "routeId": "randonnee-active",
+      "path": "/randonnee-active",
+      "viewport": "430x932",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/randonnee-active/430x932-dark-default.png"
+    },
+    {
+      "routeId": "randonnee-active",
+      "path": "/randonnee-active",
+      "viewport": "430x932",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/randonnee-active/430x932-light-default.png"
+    },
+    {
+      "routeId": "randonnee-active",
+      "path": "/randonnee-active",
+      "viewport": "820x1180",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/randonnee-active/820x1180-dark-default.png"
+    },
+    {
+      "routeId": "randonnee-active",
+      "path": "/randonnee-active",
+      "viewport": "820x1180",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/randonnee-active/820x1180-light-default.png"
+    },
+    {
+      "routeId": "randonnee-active",
+      "path": "/randonnee-active",
+      "viewport": "1440x900",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/randonnee-active/1440x900-dark-default.png"
+    },
+    {
+      "routeId": "randonnee-active",
+      "path": "/randonnee-active",
+      "viewport": "1440x900",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/randonnee-active/1440x900-light-default.png"
+    },
+    {
+      "routeId": "rapport-expedition",
+      "path": "/rapport-expedition",
+      "viewport": "390x844",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/rapport-expedition/390x844-dark-default.png"
+    },
+    {
+      "routeId": "rapport-expedition",
+      "path": "/rapport-expedition",
+      "viewport": "390x844",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/rapport-expedition/390x844-light-default.png"
+    },
+    {
+      "routeId": "rapport-expedition",
+      "path": "/rapport-expedition",
+      "viewport": "430x932",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/rapport-expedition/430x932-dark-default.png"
+    },
+    {
+      "routeId": "rapport-expedition",
+      "path": "/rapport-expedition",
+      "viewport": "430x932",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/rapport-expedition/430x932-light-default.png"
+    },
+    {
+      "routeId": "rapport-expedition",
+      "path": "/rapport-expedition",
+      "viewport": "820x1180",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/rapport-expedition/820x1180-dark-default.png"
+    },
+    {
+      "routeId": "rapport-expedition",
+      "path": "/rapport-expedition",
+      "viewport": "820x1180",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/rapport-expedition/820x1180-light-default.png"
+    },
+    {
+      "routeId": "rapport-expedition",
+      "path": "/rapport-expedition",
+      "viewport": "1440x900",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/rapport-expedition/1440x900-dark-default.png"
+    },
+    {
+      "routeId": "rapport-expedition",
+      "path": "/rapport-expedition",
+      "viewport": "1440x900",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/rapport-expedition/1440x900-light-default.png"
+    },
+    {
+      "routeId": "materiel",
+      "path": "/materiel",
+      "viewport": "390x844",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/materiel/390x844-dark-default.png"
+    },
+    {
+      "routeId": "materiel",
+      "path": "/materiel",
+      "viewport": "390x844",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/materiel/390x844-light-default.png"
+    },
+    {
+      "routeId": "materiel",
+      "path": "/materiel",
+      "viewport": "430x932",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/materiel/430x932-dark-default.png"
+    },
+    {
+      "routeId": "materiel",
+      "path": "/materiel",
+      "viewport": "430x932",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/materiel/430x932-light-default.png"
+    },
+    {
+      "routeId": "materiel",
+      "path": "/materiel",
+      "viewport": "820x1180",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/materiel/820x1180-dark-default.png"
+    },
+    {
+      "routeId": "materiel",
+      "path": "/materiel",
+      "viewport": "820x1180",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/materiel/820x1180-light-default.png"
+    },
+    {
+      "routeId": "materiel",
+      "path": "/materiel",
+      "viewport": "1440x900",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/materiel/1440x900-dark-default.png"
+    },
+    {
+      "routeId": "materiel",
+      "path": "/materiel",
+      "viewport": "1440x900",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/materiel/1440x900-light-default.png"
+    },
+    {
+      "routeId": "materiel",
+      "path": "/materiel",
+      "viewport": "390x844",
+      "theme": "dark",
+      "state": "intensity-0",
+      "file": "audit/screens/materiel/390x844-dark-intensity-0.png"
+    },
+    {
+      "routeId": "materiel",
+      "path": "/materiel",
+      "viewport": "390x844",
+      "theme": "dark",
+      "state": "intensity-0.5",
+      "file": "audit/screens/materiel/390x844-dark-intensity-0.5.png"
+    },
+    {
+      "routeId": "materiel",
+      "path": "/materiel",
+      "viewport": "390x844",
+      "theme": "dark",
+      "state": "intensity-1",
+      "file": "audit/screens/materiel/390x844-dark-intensity-1.png"
+    },
+    {
+      "routeId": "kits",
+      "path": "/kits",
+      "viewport": "390x844",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/kits/390x844-dark-default.png"
+    },
+    {
+      "routeId": "kits",
+      "path": "/kits",
+      "viewport": "390x844",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/kits/390x844-light-default.png"
+    },
+    {
+      "routeId": "kits",
+      "path": "/kits",
+      "viewport": "430x932",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/kits/430x932-dark-default.png"
+    },
+    {
+      "routeId": "kits",
+      "path": "/kits",
+      "viewport": "430x932",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/kits/430x932-light-default.png"
+    },
+    {
+      "routeId": "kits",
+      "path": "/kits",
+      "viewport": "820x1180",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/kits/820x1180-dark-default.png"
+    },
+    {
+      "routeId": "kits",
+      "path": "/kits",
+      "viewport": "820x1180",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/kits/820x1180-light-default.png"
+    },
+    {
+      "routeId": "kits",
+      "path": "/kits",
+      "viewport": "1440x900",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/kits/1440x900-dark-default.png"
+    },
+    {
+      "routeId": "kits",
+      "path": "/kits",
+      "viewport": "1440x900",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/kits/1440x900-light-default.png"
+    },
+    {
+      "routeId": "kit-islande",
+      "path": "/kits/islande-trek",
+      "viewport": "390x844",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/kit-islande/390x844-dark-default.png"
+    },
+    {
+      "routeId": "kit-islande",
+      "path": "/kits/islande-trek",
+      "viewport": "390x844",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/kit-islande/390x844-light-default.png"
+    },
+    {
+      "routeId": "kit-islande",
+      "path": "/kits/islande-trek",
+      "viewport": "430x932",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/kit-islande/430x932-dark-default.png"
+    },
+    {
+      "routeId": "kit-islande",
+      "path": "/kits/islande-trek",
+      "viewport": "430x932",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/kit-islande/430x932-light-default.png"
+    },
+    {
+      "routeId": "kit-islande",
+      "path": "/kits/islande-trek",
+      "viewport": "820x1180",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/kit-islande/820x1180-dark-default.png"
+    },
+    {
+      "routeId": "kit-islande",
+      "path": "/kits/islande-trek",
+      "viewport": "820x1180",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/kit-islande/820x1180-light-default.png"
+    },
+    {
+      "routeId": "kit-islande",
+      "path": "/kits/islande-trek",
+      "viewport": "1440x900",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/kit-islande/1440x900-dark-default.png"
+    },
+    {
+      "routeId": "kit-islande",
+      "path": "/kits/islande-trek",
+      "viewport": "1440x900",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/kit-islande/1440x900-light-default.png"
+    },
+    {
+      "routeId": "kit-gr20",
+      "path": "/kits/gr20-corse",
+      "viewport": "390x844",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/kit-gr20/390x844-dark-default.png"
+    },
+    {
+      "routeId": "kit-gr20",
+      "path": "/kits/gr20-corse",
+      "viewport": "390x844",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/kit-gr20/390x844-light-default.png"
+    },
+    {
+      "routeId": "kit-gr20",
+      "path": "/kits/gr20-corse",
+      "viewport": "430x932",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/kit-gr20/430x932-dark-default.png"
+    },
+    {
+      "routeId": "kit-gr20",
+      "path": "/kits/gr20-corse",
+      "viewport": "430x932",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/kit-gr20/430x932-light-default.png"
+    },
+    {
+      "routeId": "kit-gr20",
+      "path": "/kits/gr20-corse",
+      "viewport": "820x1180",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/kit-gr20/820x1180-dark-default.png"
+    },
+    {
+      "routeId": "kit-gr20",
+      "path": "/kits/gr20-corse",
+      "viewport": "820x1180",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/kit-gr20/820x1180-light-default.png"
+    },
+    {
+      "routeId": "kit-gr20",
+      "path": "/kits/gr20-corse",
+      "viewport": "1440x900",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/kit-gr20/1440x900-dark-default.png"
+    },
+    {
+      "routeId": "kit-gr20",
+      "path": "/kits/gr20-corse",
+      "viewport": "1440x900",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/kit-gr20/1440x900-light-default.png"
+    },
+    {
+      "routeId": "kit-vanlife",
+      "path": "/kits/vanlife-europe",
+      "viewport": "390x844",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/kit-vanlife/390x844-dark-default.png"
+    },
+    {
+      "routeId": "kit-vanlife",
+      "path": "/kits/vanlife-europe",
+      "viewport": "390x844",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/kit-vanlife/390x844-light-default.png"
+    },
+    {
+      "routeId": "kit-vanlife",
+      "path": "/kits/vanlife-europe",
+      "viewport": "430x932",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/kit-vanlife/430x932-dark-default.png"
+    },
+    {
+      "routeId": "kit-vanlife",
+      "path": "/kits/vanlife-europe",
+      "viewport": "430x932",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/kit-vanlife/430x932-light-default.png"
+    },
+    {
+      "routeId": "kit-vanlife",
+      "path": "/kits/vanlife-europe",
+      "viewport": "820x1180",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/kit-vanlife/820x1180-dark-default.png"
+    },
+    {
+      "routeId": "kit-vanlife",
+      "path": "/kits/vanlife-europe",
+      "viewport": "820x1180",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/kit-vanlife/820x1180-light-default.png"
+    },
+    {
+      "routeId": "kit-vanlife",
+      "path": "/kits/vanlife-europe",
+      "viewport": "1440x900",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/kit-vanlife/1440x900-dark-default.png"
+    },
+    {
+      "routeId": "kit-vanlife",
+      "path": "/kits/vanlife-europe",
+      "viewport": "1440x900",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/kit-vanlife/1440x900-light-default.png"
+    },
+    {
+      "routeId": "ai-configurator",
+      "path": "/ai-configurator",
+      "viewport": "390x844",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/ai-configurator/390x844-dark-default.png"
+    },
+    {
+      "routeId": "ai-configurator",
+      "path": "/ai-configurator",
+      "viewport": "390x844",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/ai-configurator/390x844-light-default.png"
+    },
+    {
+      "routeId": "ai-configurator",
+      "path": "/ai-configurator",
+      "viewport": "430x932",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/ai-configurator/430x932-dark-default.png"
+    },
+    {
+      "routeId": "ai-configurator",
+      "path": "/ai-configurator",
+      "viewport": "430x932",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/ai-configurator/430x932-light-default.png"
+    },
+    {
+      "routeId": "ai-configurator",
+      "path": "/ai-configurator",
+      "viewport": "820x1180",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/ai-configurator/820x1180-dark-default.png"
+    },
+    {
+      "routeId": "ai-configurator",
+      "path": "/ai-configurator",
+      "viewport": "820x1180",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/ai-configurator/820x1180-light-default.png"
+    },
+    {
+      "routeId": "ai-configurator",
+      "path": "/ai-configurator",
+      "viewport": "1440x900",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/ai-configurator/1440x900-dark-default.png"
+    },
+    {
+      "routeId": "ai-configurator",
+      "path": "/ai-configurator",
+      "viewport": "1440x900",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/ai-configurator/1440x900-light-default.png"
+    },
+    {
+      "routeId": "copilote",
+      "path": "/copilote",
+      "viewport": "390x844",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/copilote/390x844-dark-default.png"
+    },
+    {
+      "routeId": "copilote",
+      "path": "/copilote",
+      "viewport": "390x844",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/copilote/390x844-light-default.png"
+    },
+    {
+      "routeId": "copilote",
+      "path": "/copilote",
+      "viewport": "430x932",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/copilote/430x932-dark-default.png"
+    },
+    {
+      "routeId": "copilote",
+      "path": "/copilote",
+      "viewport": "430x932",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/copilote/430x932-light-default.png"
+    },
+    {
+      "routeId": "copilote",
+      "path": "/copilote",
+      "viewport": "820x1180",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/copilote/820x1180-dark-default.png"
+    },
+    {
+      "routeId": "copilote",
+      "path": "/copilote",
+      "viewport": "820x1180",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/copilote/820x1180-light-default.png"
+    },
+    {
+      "routeId": "copilote",
+      "path": "/copilote",
+      "viewport": "1440x900",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/copilote/1440x900-dark-default.png"
+    },
+    {
+      "routeId": "copilote",
+      "path": "/copilote",
+      "viewport": "1440x900",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/copilote/1440x900-light-default.png"
+    },
+    {
+      "routeId": "boutique",
+      "path": "/boutique",
+      "viewport": "390x844",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/boutique/390x844-dark-default.png"
+    },
+    {
+      "routeId": "boutique",
+      "path": "/boutique",
+      "viewport": "390x844",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/boutique/390x844-light-default.png"
+    },
+    {
+      "routeId": "boutique",
+      "path": "/boutique",
+      "viewport": "430x932",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/boutique/430x932-dark-default.png"
+    },
+    {
+      "routeId": "boutique",
+      "path": "/boutique",
+      "viewport": "430x932",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/boutique/430x932-light-default.png"
+    },
+    {
+      "routeId": "boutique",
+      "path": "/boutique",
+      "viewport": "820x1180",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/boutique/820x1180-dark-default.png"
+    },
+    {
+      "routeId": "boutique",
+      "path": "/boutique",
+      "viewport": "820x1180",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/boutique/820x1180-light-default.png"
+    },
+    {
+      "routeId": "boutique",
+      "path": "/boutique",
+      "viewport": "1440x900",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/boutique/1440x900-dark-default.png"
+    },
+    {
+      "routeId": "boutique",
+      "path": "/boutique",
+      "viewport": "1440x900",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/boutique/1440x900-light-default.png"
+    },
+    {
+      "routeId": "boutique",
+      "path": "/boutique",
+      "viewport": "390x844",
+      "theme": "dark",
+      "state": "intensity-0",
+      "file": "audit/screens/boutique/390x844-dark-intensity-0.png"
+    },
+    {
+      "routeId": "boutique",
+      "path": "/boutique",
+      "viewport": "390x844",
+      "theme": "dark",
+      "state": "intensity-0.5",
+      "file": "audit/screens/boutique/390x844-dark-intensity-0.5.png"
+    },
+    {
+      "routeId": "boutique",
+      "path": "/boutique",
+      "viewport": "390x844",
+      "theme": "dark",
+      "state": "intensity-1",
+      "file": "audit/screens/boutique/390x844-dark-intensity-1.png"
+    },
+    {
+      "routeId": "produit-detail",
+      "path": "/produit/sac-a-dos-de-randonnee-categorie-bigbuy",
+      "viewport": "390x844",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/produit-detail/390x844-dark-default.png"
+    },
+    {
+      "routeId": "produit-detail",
+      "path": "/produit/sac-a-dos-de-randonnee-categorie-bigbuy",
+      "viewport": "390x844",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/produit-detail/390x844-light-default.png"
+    },
+    {
+      "routeId": "produit-detail",
+      "path": "/produit/sac-a-dos-de-randonnee-categorie-bigbuy",
+      "viewport": "430x932",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/produit-detail/430x932-dark-default.png"
+    },
+    {
+      "routeId": "produit-detail",
+      "path": "/produit/sac-a-dos-de-randonnee-categorie-bigbuy",
+      "viewport": "430x932",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/produit-detail/430x932-light-default.png"
+    },
+    {
+      "routeId": "produit-detail",
+      "path": "/produit/sac-a-dos-de-randonnee-categorie-bigbuy",
+      "viewport": "820x1180",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/produit-detail/820x1180-dark-default.png"
+    },
+    {
+      "routeId": "produit-detail",
+      "path": "/produit/sac-a-dos-de-randonnee-categorie-bigbuy",
+      "viewport": "820x1180",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/produit-detail/820x1180-light-default.png"
+    },
+    {
+      "routeId": "produit-detail",
+      "path": "/produit/sac-a-dos-de-randonnee-categorie-bigbuy",
+      "viewport": "1440x900",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/produit-detail/1440x900-dark-default.png"
+    },
+    {
+      "routeId": "produit-detail",
+      "path": "/produit/sac-a-dos-de-randonnee-categorie-bigbuy",
+      "viewport": "1440x900",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/produit-detail/1440x900-light-default.png"
+    },
+    {
+      "routeId": "occasion",
+      "path": "/occasion",
+      "viewport": "390x844",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/occasion/390x844-dark-default.png"
+    },
+    {
+      "routeId": "occasion",
+      "path": "/occasion",
+      "viewport": "390x844",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/occasion/390x844-light-default.png"
+    },
+    {
+      "routeId": "occasion",
+      "path": "/occasion",
+      "viewport": "430x932",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/occasion/430x932-dark-default.png"
+    },
+    {
+      "routeId": "occasion",
+      "path": "/occasion",
+      "viewport": "430x932",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/occasion/430x932-light-default.png"
+    },
+    {
+      "routeId": "occasion",
+      "path": "/occasion",
+      "viewport": "820x1180",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/occasion/820x1180-dark-default.png"
+    },
+    {
+      "routeId": "occasion",
+      "path": "/occasion",
+      "viewport": "820x1180",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/occasion/820x1180-light-default.png"
+    },
+    {
+      "routeId": "occasion",
+      "path": "/occasion",
+      "viewport": "1440x900",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/occasion/1440x900-dark-default.png"
+    },
+    {
+      "routeId": "occasion",
+      "path": "/occasion",
+      "viewport": "1440x900",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/occasion/1440x900-light-default.png"
+    },
+    {
+      "routeId": "location",
+      "path": "/location",
+      "viewport": "390x844",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/location/390x844-dark-default.png"
+    },
+    {
+      "routeId": "location",
+      "path": "/location",
+      "viewport": "390x844",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/location/390x844-light-default.png"
+    },
+    {
+      "routeId": "location",
+      "path": "/location",
+      "viewport": "430x932",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/location/430x932-dark-default.png"
+    },
+    {
+      "routeId": "location",
+      "path": "/location",
+      "viewport": "430x932",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/location/430x932-light-default.png"
+    },
+    {
+      "routeId": "location",
+      "path": "/location",
+      "viewport": "820x1180",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/location/820x1180-dark-default.png"
+    },
+    {
+      "routeId": "location",
+      "path": "/location",
+      "viewport": "820x1180",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/location/820x1180-light-default.png"
+    },
+    {
+      "routeId": "location",
+      "path": "/location",
+      "viewport": "1440x900",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/location/1440x900-dark-default.png"
+    },
+    {
+      "routeId": "location",
+      "path": "/location",
+      "viewport": "1440x900",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/location/1440x900-light-default.png"
+    },
+    {
+      "routeId": "panier",
+      "path": "/panier",
+      "viewport": "390x844",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/panier/390x844-dark-default.png"
+    },
+    {
+      "routeId": "panier",
+      "path": "/panier",
+      "viewport": "390x844",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/panier/390x844-light-default.png"
+    },
+    {
+      "routeId": "panier",
+      "path": "/panier",
+      "viewport": "430x932",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/panier/430x932-dark-default.png"
+    },
+    {
+      "routeId": "panier",
+      "path": "/panier",
+      "viewport": "430x932",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/panier/430x932-light-default.png"
+    },
+    {
+      "routeId": "panier",
+      "path": "/panier",
+      "viewport": "820x1180",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/panier/820x1180-dark-default.png"
+    },
+    {
+      "routeId": "panier",
+      "path": "/panier",
+      "viewport": "820x1180",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/panier/820x1180-light-default.png"
+    },
+    {
+      "routeId": "panier",
+      "path": "/panier",
+      "viewport": "1440x900",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/panier/1440x900-dark-default.png"
+    },
+    {
+      "routeId": "panier",
+      "path": "/panier",
+      "viewport": "1440x900",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/panier/1440x900-light-default.png"
+    },
+    {
+      "routeId": "checkout",
+      "path": "/checkout",
+      "viewport": "390x844",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/checkout/390x844-dark-default.png"
+    },
+    {
+      "routeId": "checkout",
+      "path": "/checkout",
+      "viewport": "390x844",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/checkout/390x844-light-default.png"
+    },
+    {
+      "routeId": "checkout",
+      "path": "/checkout",
+      "viewport": "430x932",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/checkout/430x932-dark-default.png"
+    },
+    {
+      "routeId": "checkout",
+      "path": "/checkout",
+      "viewport": "430x932",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/checkout/430x932-light-default.png"
+    },
+    {
+      "routeId": "checkout",
+      "path": "/checkout",
+      "viewport": "820x1180",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/checkout/820x1180-dark-default.png"
+    },
+    {
+      "routeId": "checkout",
+      "path": "/checkout",
+      "viewport": "820x1180",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/checkout/820x1180-light-default.png"
+    },
+    {
+      "routeId": "checkout",
+      "path": "/checkout",
+      "viewport": "1440x900",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/checkout/1440x900-dark-default.png"
+    },
+    {
+      "routeId": "checkout",
+      "path": "/checkout",
+      "viewport": "1440x900",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/checkout/1440x900-light-default.png"
+    },
+    {
+      "routeId": "abonnements",
+      "path": "/abonnements",
+      "viewport": "390x844",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/abonnements/390x844-dark-default.png"
+    },
+    {
+      "routeId": "abonnements",
+      "path": "/abonnements",
+      "viewport": "390x844",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/abonnements/390x844-light-default.png"
+    },
+    {
+      "routeId": "abonnements",
+      "path": "/abonnements",
+      "viewport": "430x932",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/abonnements/430x932-dark-default.png"
+    },
+    {
+      "routeId": "abonnements",
+      "path": "/abonnements",
+      "viewport": "430x932",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/abonnements/430x932-light-default.png"
+    },
+    {
+      "routeId": "abonnements",
+      "path": "/abonnements",
+      "viewport": "820x1180",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/abonnements/820x1180-dark-default.png"
+    },
+    {
+      "routeId": "abonnements",
+      "path": "/abonnements",
+      "viewport": "820x1180",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/abonnements/820x1180-light-default.png"
+    },
+    {
+      "routeId": "abonnements",
+      "path": "/abonnements",
+      "viewport": "1440x900",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/abonnements/1440x900-dark-default.png"
+    },
+    {
+      "routeId": "abonnements",
+      "path": "/abonnements",
+      "viewport": "1440x900",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/abonnements/1440x900-light-default.png"
+    },
+    {
+      "routeId": "pays-fr",
+      "path": "/pays/fr",
+      "viewport": "390x844",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/pays-fr/390x844-dark-default.png"
+    },
+    {
+      "routeId": "pays-fr",
+      "path": "/pays/fr",
+      "viewport": "390x844",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/pays-fr/390x844-light-default.png"
+    },
+    {
+      "routeId": "pays-fr",
+      "path": "/pays/fr",
+      "viewport": "430x932",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/pays-fr/430x932-dark-default.png"
+    },
+    {
+      "routeId": "pays-fr",
+      "path": "/pays/fr",
+      "viewport": "430x932",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/pays-fr/430x932-light-default.png"
+    },
+    {
+      "routeId": "pays-fr",
+      "path": "/pays/fr",
+      "viewport": "820x1180",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/pays-fr/820x1180-dark-default.png"
+    },
+    {
+      "routeId": "pays-fr",
+      "path": "/pays/fr",
+      "viewport": "820x1180",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/pays-fr/820x1180-light-default.png"
+    },
+    {
+      "routeId": "pays-fr",
+      "path": "/pays/fr",
+      "viewport": "1440x900",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/pays-fr/1440x900-dark-default.png"
+    },
+    {
+      "routeId": "pays-fr",
+      "path": "/pays/fr",
+      "viewport": "1440x900",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/pays-fr/1440x900-light-default.png"
+    },
+    {
+      "routeId": "pays-is",
+      "path": "/pays/is",
+      "viewport": "390x844",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/pays-is/390x844-dark-default.png"
+    },
+    {
+      "routeId": "pays-is",
+      "path": "/pays/is",
+      "viewport": "390x844",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/pays-is/390x844-light-default.png"
+    },
+    {
+      "routeId": "pays-is",
+      "path": "/pays/is",
+      "viewport": "430x932",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/pays-is/430x932-dark-default.png"
+    },
+    {
+      "routeId": "pays-is",
+      "path": "/pays/is",
+      "viewport": "430x932",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/pays-is/430x932-light-default.png"
+    },
+    {
+      "routeId": "pays-is",
+      "path": "/pays/is",
+      "viewport": "820x1180",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/pays-is/820x1180-dark-default.png"
+    },
+    {
+      "routeId": "pays-is",
+      "path": "/pays/is",
+      "viewport": "820x1180",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/pays-is/820x1180-light-default.png"
+    },
+    {
+      "routeId": "pays-is",
+      "path": "/pays/is",
+      "viewport": "1440x900",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/pays-is/1440x900-dark-default.png"
+    },
+    {
+      "routeId": "pays-is",
+      "path": "/pays/is",
+      "viewport": "1440x900",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/pays-is/1440x900-light-default.png"
+    },
+    {
+      "routeId": "lieux",
+      "path": "/lieux",
+      "viewport": "390x844",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/lieux/390x844-dark-default.png"
+    },
+    {
+      "routeId": "lieux",
+      "path": "/lieux",
+      "viewport": "390x844",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/lieux/390x844-light-default.png"
+    },
+    {
+      "routeId": "lieux",
+      "path": "/lieux",
+      "viewport": "430x932",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/lieux/430x932-dark-default.png"
+    },
+    {
+      "routeId": "lieux",
+      "path": "/lieux",
+      "viewport": "430x932",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/lieux/430x932-light-default.png"
+    },
+    {
+      "routeId": "lieux",
+      "path": "/lieux",
+      "viewport": "820x1180",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/lieux/820x1180-dark-default.png"
+    },
+    {
+      "routeId": "lieux",
+      "path": "/lieux",
+      "viewport": "820x1180",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/lieux/820x1180-light-default.png"
+    },
+    {
+      "routeId": "lieux",
+      "path": "/lieux",
+      "viewport": "1440x900",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/lieux/1440x900-dark-default.png"
+    },
+    {
+      "routeId": "lieux",
+      "path": "/lieux",
+      "viewport": "1440x900",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/lieux/1440x900-light-default.png"
+    },
+    {
+      "routeId": "preparer-randonnee",
+      "path": "/preparer-randonnee",
+      "viewport": "390x844",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/preparer-randonnee/390x844-dark-default.png"
+    },
+    {
+      "routeId": "preparer-randonnee",
+      "path": "/preparer-randonnee",
+      "viewport": "390x844",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/preparer-randonnee/390x844-light-default.png"
+    },
+    {
+      "routeId": "preparer-randonnee",
+      "path": "/preparer-randonnee",
+      "viewport": "430x932",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/preparer-randonnee/430x932-dark-default.png"
+    },
+    {
+      "routeId": "preparer-randonnee",
+      "path": "/preparer-randonnee",
+      "viewport": "430x932",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/preparer-randonnee/430x932-light-default.png"
+    },
+    {
+      "routeId": "preparer-randonnee",
+      "path": "/preparer-randonnee",
+      "viewport": "820x1180",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/preparer-randonnee/820x1180-dark-default.png"
+    },
+    {
+      "routeId": "preparer-randonnee",
+      "path": "/preparer-randonnee",
+      "viewport": "820x1180",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/preparer-randonnee/820x1180-light-default.png"
+    },
+    {
+      "routeId": "preparer-randonnee",
+      "path": "/preparer-randonnee",
+      "viewport": "1440x900",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/preparer-randonnee/1440x900-dark-default.png"
+    },
+    {
+      "routeId": "preparer-randonnee",
+      "path": "/preparer-randonnee",
+      "viewport": "1440x900",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/preparer-randonnee/1440x900-light-default.png"
+    },
+    {
+      "routeId": "communaute",
+      "path": "/communaute",
+      "viewport": "390x844",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/communaute/390x844-dark-default.png"
+    },
+    {
+      "routeId": "communaute",
+      "path": "/communaute",
+      "viewport": "390x844",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/communaute/390x844-light-default.png"
+    },
+    {
+      "routeId": "communaute",
+      "path": "/communaute",
+      "viewport": "430x932",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/communaute/430x932-dark-default.png"
+    },
+    {
+      "routeId": "communaute",
+      "path": "/communaute",
+      "viewport": "430x932",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/communaute/430x932-light-default.png"
+    },
+    {
+      "routeId": "communaute",
+      "path": "/communaute",
+      "viewport": "820x1180",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/communaute/820x1180-dark-default.png"
+    },
+    {
+      "routeId": "communaute",
+      "path": "/communaute",
+      "viewport": "820x1180",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/communaute/820x1180-light-default.png"
+    },
+    {
+      "routeId": "communaute",
+      "path": "/communaute",
+      "viewport": "1440x900",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/communaute/1440x900-dark-default.png"
+    },
+    {
+      "routeId": "communaute",
+      "path": "/communaute",
+      "viewport": "1440x900",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/communaute/1440x900-light-default.png"
+    },
+    {
+      "routeId": "communaute-publier",
+      "path": "/communaute/publier",
+      "viewport": "390x844",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/communaute-publier/390x844-dark-default.png"
+    },
+    {
+      "routeId": "communaute-publier",
+      "path": "/communaute/publier",
+      "viewport": "390x844",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/communaute-publier/390x844-light-default.png"
+    },
+    {
+      "routeId": "communaute-publier",
+      "path": "/communaute/publier",
+      "viewport": "430x932",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/communaute-publier/430x932-dark-default.png"
+    },
+    {
+      "routeId": "communaute-publier",
+      "path": "/communaute/publier",
+      "viewport": "430x932",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/communaute-publier/430x932-light-default.png"
+    },
+    {
+      "routeId": "communaute-publier",
+      "path": "/communaute/publier",
+      "viewport": "820x1180",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/communaute-publier/820x1180-dark-default.png"
+    },
+    {
+      "routeId": "communaute-publier",
+      "path": "/communaute/publier",
+      "viewport": "820x1180",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/communaute-publier/820x1180-light-default.png"
+    },
+    {
+      "routeId": "communaute-publier",
+      "path": "/communaute/publier",
+      "viewport": "1440x900",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/communaute-publier/1440x900-dark-default.png"
+    },
+    {
+      "routeId": "communaute-publier",
+      "path": "/communaute/publier",
+      "viewport": "1440x900",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/communaute-publier/1440x900-light-default.png"
+    },
+    {
+      "routeId": "communaute-pro",
+      "path": "/communaute-pro",
+      "viewport": "390x844",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/communaute-pro/390x844-dark-default.png"
+    },
+    {
+      "routeId": "communaute-pro",
+      "path": "/communaute-pro",
+      "viewport": "390x844",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/communaute-pro/390x844-light-default.png"
+    },
+    {
+      "routeId": "communaute-pro",
+      "path": "/communaute-pro",
+      "viewport": "430x932",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/communaute-pro/430x932-dark-default.png"
+    },
+    {
+      "routeId": "communaute-pro",
+      "path": "/communaute-pro",
+      "viewport": "430x932",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/communaute-pro/430x932-light-default.png"
+    },
+    {
+      "routeId": "communaute-pro",
+      "path": "/communaute-pro",
+      "viewport": "820x1180",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/communaute-pro/820x1180-dark-default.png"
+    },
+    {
+      "routeId": "communaute-pro",
+      "path": "/communaute-pro",
+      "viewport": "820x1180",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/communaute-pro/820x1180-light-default.png"
+    },
+    {
+      "routeId": "communaute-pro",
+      "path": "/communaute-pro",
+      "viewport": "1440x900",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/communaute-pro/1440x900-dark-default.png"
+    },
+    {
+      "routeId": "communaute-pro",
+      "path": "/communaute-pro",
+      "viewport": "1440x900",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/communaute-pro/1440x900-light-default.png"
+    },
+    {
+      "routeId": "feed",
+      "path": "/feed",
+      "viewport": "390x844",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/feed/390x844-dark-default.png"
+    },
+    {
+      "routeId": "feed",
+      "path": "/feed",
+      "viewport": "390x844",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/feed/390x844-light-default.png"
+    },
+    {
+      "routeId": "feed",
+      "path": "/feed",
+      "viewport": "430x932",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/feed/430x932-dark-default.png"
+    },
+    {
+      "routeId": "feed",
+      "path": "/feed",
+      "viewport": "430x932",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/feed/430x932-light-default.png"
+    },
+    {
+      "routeId": "feed",
+      "path": "/feed",
+      "viewport": "820x1180",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/feed/820x1180-dark-default.png"
+    },
+    {
+      "routeId": "feed",
+      "path": "/feed",
+      "viewport": "820x1180",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/feed/820x1180-light-default.png"
+    },
+    {
+      "routeId": "feed",
+      "path": "/feed",
+      "viewport": "1440x900",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/feed/1440x900-dark-default.png"
+    },
+    {
+      "routeId": "feed",
+      "path": "/feed",
+      "viewport": "1440x900",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/feed/1440x900-light-default.png"
+    },
+    {
+      "routeId": "carnets",
+      "path": "/carnets",
+      "viewport": "390x844",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/carnets/390x844-dark-default.png"
+    },
+    {
+      "routeId": "carnets",
+      "path": "/carnets",
+      "viewport": "390x844",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/carnets/390x844-light-default.png"
+    },
+    {
+      "routeId": "carnets",
+      "path": "/carnets",
+      "viewport": "430x932",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/carnets/430x932-dark-default.png"
+    },
+    {
+      "routeId": "carnets",
+      "path": "/carnets",
+      "viewport": "430x932",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/carnets/430x932-light-default.png"
+    },
+    {
+      "routeId": "carnets",
+      "path": "/carnets",
+      "viewport": "820x1180",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/carnets/820x1180-dark-default.png"
+    },
+    {
+      "routeId": "carnets",
+      "path": "/carnets",
+      "viewport": "820x1180",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/carnets/820x1180-light-default.png"
+    },
+    {
+      "routeId": "carnets",
+      "path": "/carnets",
+      "viewport": "1440x900",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/carnets/1440x900-dark-default.png"
+    },
+    {
+      "routeId": "carnets",
+      "path": "/carnets",
+      "viewport": "1440x900",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/carnets/1440x900-light-default.png"
+    },
+    {
+      "routeId": "clubs",
+      "path": "/clubs",
+      "viewport": "390x844",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/clubs/390x844-dark-default.png"
+    },
+    {
+      "routeId": "clubs",
+      "path": "/clubs",
+      "viewport": "390x844",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/clubs/390x844-light-default.png"
+    },
+    {
+      "routeId": "clubs",
+      "path": "/clubs",
+      "viewport": "430x932",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/clubs/430x932-dark-default.png"
+    },
+    {
+      "routeId": "clubs",
+      "path": "/clubs",
+      "viewport": "430x932",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/clubs/430x932-light-default.png"
+    },
+    {
+      "routeId": "clubs",
+      "path": "/clubs",
+      "viewport": "820x1180",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/clubs/820x1180-dark-default.png"
+    },
+    {
+      "routeId": "clubs",
+      "path": "/clubs",
+      "viewport": "820x1180",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/clubs/820x1180-light-default.png"
+    },
+    {
+      "routeId": "clubs",
+      "path": "/clubs",
+      "viewport": "1440x900",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/clubs/1440x900-dark-default.png"
+    },
+    {
+      "routeId": "clubs",
+      "path": "/clubs",
+      "viewport": "1440x900",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/clubs/1440x900-light-default.png"
+    },
+    {
+      "routeId": "entraide",
+      "path": "/entraide",
+      "viewport": "390x844",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/entraide/390x844-dark-default.png"
+    },
+    {
+      "routeId": "entraide",
+      "path": "/entraide",
+      "viewport": "390x844",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/entraide/390x844-light-default.png"
+    },
+    {
+      "routeId": "entraide",
+      "path": "/entraide",
+      "viewport": "430x932",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/entraide/430x932-dark-default.png"
+    },
+    {
+      "routeId": "entraide",
+      "path": "/entraide",
+      "viewport": "430x932",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/entraide/430x932-light-default.png"
+    },
+    {
+      "routeId": "entraide",
+      "path": "/entraide",
+      "viewport": "820x1180",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/entraide/820x1180-dark-default.png"
+    },
+    {
+      "routeId": "entraide",
+      "path": "/entraide",
+      "viewport": "820x1180",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/entraide/820x1180-light-default.png"
+    },
+    {
+      "routeId": "entraide",
+      "path": "/entraide",
+      "viewport": "1440x900",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/entraide/1440x900-dark-default.png"
+    },
+    {
+      "routeId": "entraide",
+      "path": "/entraide",
+      "viewport": "1440x900",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/entraide/1440x900-light-default.png"
+    },
+    {
+      "routeId": "evenements",
+      "path": "/evenements",
+      "viewport": "390x844",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/evenements/390x844-dark-default.png"
+    },
+    {
+      "routeId": "evenements",
+      "path": "/evenements",
+      "viewport": "390x844",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/evenements/390x844-light-default.png"
+    },
+    {
+      "routeId": "evenements",
+      "path": "/evenements",
+      "viewport": "430x932",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/evenements/430x932-dark-default.png"
+    },
+    {
+      "routeId": "evenements",
+      "path": "/evenements",
+      "viewport": "430x932",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/evenements/430x932-light-default.png"
+    },
+    {
+      "routeId": "evenements",
+      "path": "/evenements",
+      "viewport": "820x1180",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/evenements/820x1180-dark-default.png"
+    },
+    {
+      "routeId": "evenements",
+      "path": "/evenements",
+      "viewport": "820x1180",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/evenements/820x1180-light-default.png"
+    },
+    {
+      "routeId": "evenements",
+      "path": "/evenements",
+      "viewport": "1440x900",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/evenements/1440x900-dark-default.png"
+    },
+    {
+      "routeId": "evenements",
+      "path": "/evenements",
+      "viewport": "1440x900",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/evenements/1440x900-light-default.png"
+    },
+    {
+      "routeId": "avis",
+      "path": "/avis",
+      "viewport": "390x844",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/avis/390x844-dark-default.png"
+    },
+    {
+      "routeId": "avis",
+      "path": "/avis",
+      "viewport": "390x844",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/avis/390x844-light-default.png"
+    },
+    {
+      "routeId": "avis",
+      "path": "/avis",
+      "viewport": "430x932",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/avis/430x932-dark-default.png"
+    },
+    {
+      "routeId": "avis",
+      "path": "/avis",
+      "viewport": "430x932",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/avis/430x932-light-default.png"
+    },
+    {
+      "routeId": "avis",
+      "path": "/avis",
+      "viewport": "820x1180",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/avis/820x1180-dark-default.png"
+    },
+    {
+      "routeId": "avis",
+      "path": "/avis",
+      "viewport": "820x1180",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/avis/820x1180-light-default.png"
+    },
+    {
+      "routeId": "avis",
+      "path": "/avis",
+      "viewport": "1440x900",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/avis/1440x900-dark-default.png"
+    },
+    {
+      "routeId": "avis",
+      "path": "/avis",
+      "viewport": "1440x900",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/avis/1440x900-light-default.png"
+    },
+    {
+      "routeId": "outils",
+      "path": "/outils",
+      "viewport": "390x844",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/outils/390x844-dark-default.png"
+    },
+    {
+      "routeId": "outils",
+      "path": "/outils",
+      "viewport": "390x844",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/outils/390x844-light-default.png"
+    },
+    {
+      "routeId": "outils",
+      "path": "/outils",
+      "viewport": "430x932",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/outils/430x932-dark-default.png"
+    },
+    {
+      "routeId": "outils",
+      "path": "/outils",
+      "viewport": "430x932",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/outils/430x932-light-default.png"
+    },
+    {
+      "routeId": "outils",
+      "path": "/outils",
+      "viewport": "820x1180",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/outils/820x1180-dark-default.png"
+    },
+    {
+      "routeId": "outils",
+      "path": "/outils",
+      "viewport": "820x1180",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/outils/820x1180-light-default.png"
+    },
+    {
+      "routeId": "outils",
+      "path": "/outils",
+      "viewport": "1440x900",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/outils/1440x900-dark-default.png"
+    },
+    {
+      "routeId": "outils",
+      "path": "/outils",
+      "viewport": "1440x900",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/outils/1440x900-light-default.png"
+    },
+    {
+      "routeId": "outil-poids-sac",
+      "path": "/outils/poids-sac",
+      "viewport": "390x844",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/outil-poids-sac/390x844-dark-default.png"
+    },
+    {
+      "routeId": "outil-poids-sac",
+      "path": "/outils/poids-sac",
+      "viewport": "390x844",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/outil-poids-sac/390x844-light-default.png"
+    },
+    {
+      "routeId": "outil-poids-sac",
+      "path": "/outils/poids-sac",
+      "viewport": "430x932",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/outil-poids-sac/430x932-dark-default.png"
+    },
+    {
+      "routeId": "outil-poids-sac",
+      "path": "/outils/poids-sac",
+      "viewport": "430x932",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/outil-poids-sac/430x932-light-default.png"
+    },
+    {
+      "routeId": "outil-poids-sac",
+      "path": "/outils/poids-sac",
+      "viewport": "820x1180",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/outil-poids-sac/820x1180-dark-default.png"
+    },
+    {
+      "routeId": "outil-poids-sac",
+      "path": "/outils/poids-sac",
+      "viewport": "820x1180",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/outil-poids-sac/820x1180-light-default.png"
+    },
+    {
+      "routeId": "outil-poids-sac",
+      "path": "/outils/poids-sac",
+      "viewport": "1440x900",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/outil-poids-sac/1440x900-dark-default.png"
+    },
+    {
+      "routeId": "outil-poids-sac",
+      "path": "/outils/poids-sac",
+      "viewport": "1440x900",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/outil-poids-sac/1440x900-light-default.png"
+    },
+    {
+      "routeId": "outil-budget",
+      "path": "/outils/budget",
+      "viewport": "390x844",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/outil-budget/390x844-dark-default.png"
+    },
+    {
+      "routeId": "outil-budget",
+      "path": "/outils/budget",
+      "viewport": "390x844",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/outil-budget/390x844-light-default.png"
+    },
+    {
+      "routeId": "outil-budget",
+      "path": "/outils/budget",
+      "viewport": "430x932",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/outil-budget/430x932-dark-default.png"
+    },
+    {
+      "routeId": "outil-budget",
+      "path": "/outils/budget",
+      "viewport": "430x932",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/outil-budget/430x932-light-default.png"
+    },
+    {
+      "routeId": "outil-budget",
+      "path": "/outils/budget",
+      "viewport": "820x1180",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/outil-budget/820x1180-dark-default.png"
+    },
+    {
+      "routeId": "outil-budget",
+      "path": "/outils/budget",
+      "viewport": "820x1180",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/outil-budget/820x1180-light-default.png"
+    },
+    {
+      "routeId": "outil-budget",
+      "path": "/outils/budget",
+      "viewport": "1440x900",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/outil-budget/1440x900-dark-default.png"
+    },
+    {
+      "routeId": "outil-budget",
+      "path": "/outils/budget",
+      "viewport": "1440x900",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/outil-budget/1440x900-light-default.png"
+    },
+    {
+      "routeId": "outil-convertisseur",
+      "path": "/outils/convertisseur",
+      "viewport": "390x844",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/outil-convertisseur/390x844-dark-default.png"
+    },
+    {
+      "routeId": "outil-convertisseur",
+      "path": "/outils/convertisseur",
+      "viewport": "390x844",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/outil-convertisseur/390x844-light-default.png"
+    },
+    {
+      "routeId": "outil-convertisseur",
+      "path": "/outils/convertisseur",
+      "viewport": "430x932",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/outil-convertisseur/430x932-dark-default.png"
+    },
+    {
+      "routeId": "outil-convertisseur",
+      "path": "/outils/convertisseur",
+      "viewport": "430x932",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/outil-convertisseur/430x932-light-default.png"
+    },
+    {
+      "routeId": "outil-convertisseur",
+      "path": "/outils/convertisseur",
+      "viewport": "820x1180",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/outil-convertisseur/820x1180-dark-default.png"
+    },
+    {
+      "routeId": "outil-convertisseur",
+      "path": "/outils/convertisseur",
+      "viewport": "820x1180",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/outil-convertisseur/820x1180-light-default.png"
+    },
+    {
+      "routeId": "outil-convertisseur",
+      "path": "/outils/convertisseur",
+      "viewport": "1440x900",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/outil-convertisseur/1440x900-dark-default.png"
+    },
+    {
+      "routeId": "outil-convertisseur",
+      "path": "/outils/convertisseur",
+      "viewport": "1440x900",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/outil-convertisseur/1440x900-light-default.png"
+    },
+    {
+      "routeId": "outil-checklist",
+      "path": "/outils/checklist",
+      "viewport": "390x844",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/outil-checklist/390x844-dark-default.png"
+    },
+    {
+      "routeId": "outil-checklist",
+      "path": "/outils/checklist",
+      "viewport": "390x844",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/outil-checklist/390x844-light-default.png"
+    },
+    {
+      "routeId": "outil-checklist",
+      "path": "/outils/checklist",
+      "viewport": "430x932",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/outil-checklist/430x932-dark-default.png"
+    },
+    {
+      "routeId": "outil-checklist",
+      "path": "/outils/checklist",
+      "viewport": "430x932",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/outil-checklist/430x932-light-default.png"
+    },
+    {
+      "routeId": "outil-checklist",
+      "path": "/outils/checklist",
+      "viewport": "820x1180",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/outil-checklist/820x1180-dark-default.png"
+    },
+    {
+      "routeId": "outil-checklist",
+      "path": "/outils/checklist",
+      "viewport": "820x1180",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/outil-checklist/820x1180-light-default.png"
+    },
+    {
+      "routeId": "outil-checklist",
+      "path": "/outils/checklist",
+      "viewport": "1440x900",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/outil-checklist/1440x900-dark-default.png"
+    },
+    {
+      "routeId": "outil-checklist",
+      "path": "/outils/checklist",
+      "viewport": "1440x900",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/outil-checklist/1440x900-light-default.png"
+    },
+    {
+      "routeId": "carbone",
+      "path": "/carbone",
+      "viewport": "390x844",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/carbone/390x844-dark-default.png"
+    },
+    {
+      "routeId": "carbone",
+      "path": "/carbone",
+      "viewport": "390x844",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/carbone/390x844-light-default.png"
+    },
+    {
+      "routeId": "carbone",
+      "path": "/carbone",
+      "viewport": "430x932",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/carbone/430x932-dark-default.png"
+    },
+    {
+      "routeId": "carbone",
+      "path": "/carbone",
+      "viewport": "430x932",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/carbone/430x932-light-default.png"
+    },
+    {
+      "routeId": "carbone",
+      "path": "/carbone",
+      "viewport": "820x1180",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/carbone/820x1180-dark-default.png"
+    },
+    {
+      "routeId": "carbone",
+      "path": "/carbone",
+      "viewport": "820x1180",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/carbone/820x1180-light-default.png"
+    },
+    {
+      "routeId": "carbone",
+      "path": "/carbone",
+      "viewport": "1440x900",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/carbone/1440x900-dark-default.png"
+    },
+    {
+      "routeId": "carbone",
+      "path": "/carbone",
+      "viewport": "1440x900",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/carbone/1440x900-light-default.png"
+    },
+    {
+      "routeId": "compte",
+      "path": "/compte",
+      "viewport": "390x844",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/compte/390x844-dark-default.png"
+    },
+    {
+      "routeId": "compte",
+      "path": "/compte",
+      "viewport": "390x844",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/compte/390x844-light-default.png"
+    },
+    {
+      "routeId": "compte",
+      "path": "/compte",
+      "viewport": "430x932",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/compte/430x932-dark-default.png"
+    },
+    {
+      "routeId": "compte",
+      "path": "/compte",
+      "viewport": "430x932",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/compte/430x932-light-default.png"
+    },
+    {
+      "routeId": "compte",
+      "path": "/compte",
+      "viewport": "820x1180",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/compte/820x1180-dark-default.png"
+    },
+    {
+      "routeId": "compte",
+      "path": "/compte",
+      "viewport": "820x1180",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/compte/820x1180-light-default.png"
+    },
+    {
+      "routeId": "compte",
+      "path": "/compte",
+      "viewport": "1440x900",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/compte/1440x900-dark-default.png"
+    },
+    {
+      "routeId": "compte",
+      "path": "/compte",
+      "viewport": "1440x900",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/compte/1440x900-light-default.png"
+    },
+    {
+      "routeId": "compte",
+      "path": "/compte",
+      "viewport": "390x844",
+      "theme": "dark",
+      "state": "intensity-0",
+      "file": "audit/screens/compte/390x844-dark-intensity-0.png"
+    },
+    {
+      "routeId": "compte",
+      "path": "/compte",
+      "viewport": "390x844",
+      "theme": "dark",
+      "state": "intensity-0.5",
+      "file": "audit/screens/compte/390x844-dark-intensity-0.5.png"
+    },
+    {
+      "routeId": "compte",
+      "path": "/compte",
+      "viewport": "390x844",
+      "theme": "dark",
+      "state": "intensity-1",
+      "file": "audit/screens/compte/390x844-dark-intensity-1.png"
+    },
+    {
+      "routeId": "compte-modifier",
+      "path": "/compte/modifier",
+      "viewport": "390x844",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/compte-modifier/390x844-dark-default.png"
+    },
+    {
+      "routeId": "compte-modifier",
+      "path": "/compte/modifier",
+      "viewport": "390x844",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/compte-modifier/390x844-light-default.png"
+    },
+    {
+      "routeId": "compte-modifier",
+      "path": "/compte/modifier",
+      "viewport": "430x932",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/compte-modifier/430x932-dark-default.png"
+    },
+    {
+      "routeId": "compte-modifier",
+      "path": "/compte/modifier",
+      "viewport": "430x932",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/compte-modifier/430x932-light-default.png"
+    },
+    {
+      "routeId": "compte-modifier",
+      "path": "/compte/modifier",
+      "viewport": "820x1180",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/compte-modifier/820x1180-dark-default.png"
+    },
+    {
+      "routeId": "compte-modifier",
+      "path": "/compte/modifier",
+      "viewport": "820x1180",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/compte-modifier/820x1180-light-default.png"
+    },
+    {
+      "routeId": "compte-modifier",
+      "path": "/compte/modifier",
+      "viewport": "1440x900",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/compte-modifier/1440x900-dark-default.png"
+    },
+    {
+      "routeId": "compte-modifier",
+      "path": "/compte/modifier",
+      "viewport": "1440x900",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/compte-modifier/1440x900-light-default.png"
+    },
+    {
+      "routeId": "profil-public",
+      "path": "/profil",
+      "viewport": "390x844",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/profil-public/390x844-dark-default.png"
+    },
+    {
+      "routeId": "profil-public",
+      "path": "/profil",
+      "viewport": "390x844",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/profil-public/390x844-light-default.png"
+    },
+    {
+      "routeId": "profil-public",
+      "path": "/profil",
+      "viewport": "430x932",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/profil-public/430x932-dark-default.png"
+    },
+    {
+      "routeId": "profil-public",
+      "path": "/profil",
+      "viewport": "430x932",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/profil-public/430x932-light-default.png"
+    },
+    {
+      "routeId": "profil-public",
+      "path": "/profil",
+      "viewport": "820x1180",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/profil-public/820x1180-dark-default.png"
+    },
+    {
+      "routeId": "profil-public",
+      "path": "/profil",
+      "viewport": "820x1180",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/profil-public/820x1180-light-default.png"
+    },
+    {
+      "routeId": "profil-public",
+      "path": "/profil",
+      "viewport": "1440x900",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/profil-public/1440x900-dark-default.png"
+    },
+    {
+      "routeId": "profil-public",
+      "path": "/profil",
+      "viewport": "1440x900",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/profil-public/1440x900-light-default.png"
+    },
+    {
+      "routeId": "progression",
+      "path": "/progression",
+      "viewport": "390x844",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/progression/390x844-dark-default.png"
+    },
+    {
+      "routeId": "progression",
+      "path": "/progression",
+      "viewport": "390x844",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/progression/390x844-light-default.png"
+    },
+    {
+      "routeId": "progression",
+      "path": "/progression",
+      "viewport": "430x932",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/progression/430x932-dark-default.png"
+    },
+    {
+      "routeId": "progression",
+      "path": "/progression",
+      "viewport": "430x932",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/progression/430x932-light-default.png"
+    },
+    {
+      "routeId": "progression",
+      "path": "/progression",
+      "viewport": "820x1180",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/progression/820x1180-dark-default.png"
+    },
+    {
+      "routeId": "progression",
+      "path": "/progression",
+      "viewport": "820x1180",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/progression/820x1180-light-default.png"
+    },
+    {
+      "routeId": "progression",
+      "path": "/progression",
+      "viewport": "1440x900",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/progression/1440x900-dark-default.png"
+    },
+    {
+      "routeId": "progression",
+      "path": "/progression",
+      "viewport": "1440x900",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/progression/1440x900-light-default.png"
+    },
+    {
+      "routeId": "fidelite",
+      "path": "/fidelite",
+      "viewport": "390x844",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/fidelite/390x844-dark-default.png"
+    },
+    {
+      "routeId": "fidelite",
+      "path": "/fidelite",
+      "viewport": "390x844",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/fidelite/390x844-light-default.png"
+    },
+    {
+      "routeId": "fidelite",
+      "path": "/fidelite",
+      "viewport": "430x932",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/fidelite/430x932-dark-default.png"
+    },
+    {
+      "routeId": "fidelite",
+      "path": "/fidelite",
+      "viewport": "430x932",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/fidelite/430x932-light-default.png"
+    },
+    {
+      "routeId": "fidelite",
+      "path": "/fidelite",
+      "viewport": "820x1180",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/fidelite/820x1180-dark-default.png"
+    },
+    {
+      "routeId": "fidelite",
+      "path": "/fidelite",
+      "viewport": "820x1180",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/fidelite/820x1180-light-default.png"
+    },
+    {
+      "routeId": "fidelite",
+      "path": "/fidelite",
+      "viewport": "1440x900",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/fidelite/1440x900-dark-default.png"
+    },
+    {
+      "routeId": "fidelite",
+      "path": "/fidelite",
+      "viewport": "1440x900",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/fidelite/1440x900-light-default.png"
+    },
+    {
+      "routeId": "recompenses",
+      "path": "/recompenses",
+      "viewport": "390x844",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/recompenses/390x844-dark-default.png"
+    },
+    {
+      "routeId": "recompenses",
+      "path": "/recompenses",
+      "viewport": "390x844",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/recompenses/390x844-light-default.png"
+    },
+    {
+      "routeId": "recompenses",
+      "path": "/recompenses",
+      "viewport": "430x932",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/recompenses/430x932-dark-default.png"
+    },
+    {
+      "routeId": "recompenses",
+      "path": "/recompenses",
+      "viewport": "430x932",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/recompenses/430x932-light-default.png"
+    },
+    {
+      "routeId": "recompenses",
+      "path": "/recompenses",
+      "viewport": "820x1180",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/recompenses/820x1180-dark-default.png"
+    },
+    {
+      "routeId": "recompenses",
+      "path": "/recompenses",
+      "viewport": "820x1180",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/recompenses/820x1180-light-default.png"
+    },
+    {
+      "routeId": "recompenses",
+      "path": "/recompenses",
+      "viewport": "1440x900",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/recompenses/1440x900-dark-default.png"
+    },
+    {
+      "routeId": "recompenses",
+      "path": "/recompenses",
+      "viewport": "1440x900",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/recompenses/1440x900-light-default.png"
+    },
+    {
+      "routeId": "messagerie",
+      "path": "/messagerie",
+      "viewport": "390x844",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/messagerie/390x844-dark-default.png"
+    },
+    {
+      "routeId": "messagerie",
+      "path": "/messagerie",
+      "viewport": "390x844",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/messagerie/390x844-light-default.png"
+    },
+    {
+      "routeId": "messagerie",
+      "path": "/messagerie",
+      "viewport": "430x932",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/messagerie/430x932-dark-default.png"
+    },
+    {
+      "routeId": "messagerie",
+      "path": "/messagerie",
+      "viewport": "430x932",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/messagerie/430x932-light-default.png"
+    },
+    {
+      "routeId": "messagerie",
+      "path": "/messagerie",
+      "viewport": "820x1180",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/messagerie/820x1180-dark-default.png"
+    },
+    {
+      "routeId": "messagerie",
+      "path": "/messagerie",
+      "viewport": "820x1180",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/messagerie/820x1180-light-default.png"
+    },
+    {
+      "routeId": "messagerie",
+      "path": "/messagerie",
+      "viewport": "1440x900",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/messagerie/1440x900-dark-default.png"
+    },
+    {
+      "routeId": "messagerie",
+      "path": "/messagerie",
+      "viewport": "1440x900",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/messagerie/1440x900-light-default.png"
+    },
+    {
+      "routeId": "connexion",
+      "path": "/connexion",
+      "viewport": "390x844",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/connexion/390x844-dark-default.png"
+    },
+    {
+      "routeId": "connexion",
+      "path": "/connexion",
+      "viewport": "390x844",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/connexion/390x844-light-default.png"
+    },
+    {
+      "routeId": "connexion",
+      "path": "/connexion",
+      "viewport": "430x932",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/connexion/430x932-dark-default.png"
+    },
+    {
+      "routeId": "connexion",
+      "path": "/connexion",
+      "viewport": "430x932",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/connexion/430x932-light-default.png"
+    },
+    {
+      "routeId": "connexion",
+      "path": "/connexion",
+      "viewport": "820x1180",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/connexion/820x1180-dark-default.png"
+    },
+    {
+      "routeId": "connexion",
+      "path": "/connexion",
+      "viewport": "820x1180",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/connexion/820x1180-light-default.png"
+    },
+    {
+      "routeId": "connexion",
+      "path": "/connexion",
+      "viewport": "1440x900",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/connexion/1440x900-dark-default.png"
+    },
+    {
+      "routeId": "connexion",
+      "path": "/connexion",
+      "viewport": "1440x900",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/connexion/1440x900-light-default.png"
+    },
+    {
+      "routeId": "inscription",
+      "path": "/inscription",
+      "viewport": "390x844",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/inscription/390x844-dark-default.png"
+    },
+    {
+      "routeId": "inscription",
+      "path": "/inscription",
+      "viewport": "390x844",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/inscription/390x844-light-default.png"
+    },
+    {
+      "routeId": "inscription",
+      "path": "/inscription",
+      "viewport": "430x932",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/inscription/430x932-dark-default.png"
+    },
+    {
+      "routeId": "inscription",
+      "path": "/inscription",
+      "viewport": "430x932",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/inscription/430x932-light-default.png"
+    },
+    {
+      "routeId": "inscription",
+      "path": "/inscription",
+      "viewport": "820x1180",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/inscription/820x1180-dark-default.png"
+    },
+    {
+      "routeId": "inscription",
+      "path": "/inscription",
+      "viewport": "820x1180",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/inscription/820x1180-light-default.png"
+    },
+    {
+      "routeId": "inscription",
+      "path": "/inscription",
+      "viewport": "1440x900",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/inscription/1440x900-dark-default.png"
+    },
+    {
+      "routeId": "inscription",
+      "path": "/inscription",
+      "viewport": "1440x900",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/inscription/1440x900-light-default.png"
+    },
+    {
+      "routeId": "guides",
+      "path": "/guides",
+      "viewport": "390x844",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/guides/390x844-dark-default.png"
+    },
+    {
+      "routeId": "guides",
+      "path": "/guides",
+      "viewport": "390x844",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/guides/390x844-light-default.png"
+    },
+    {
+      "routeId": "guides",
+      "path": "/guides",
+      "viewport": "430x932",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/guides/430x932-dark-default.png"
+    },
+    {
+      "routeId": "guides",
+      "path": "/guides",
+      "viewport": "430x932",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/guides/430x932-light-default.png"
+    },
+    {
+      "routeId": "guides",
+      "path": "/guides",
+      "viewport": "820x1180",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/guides/820x1180-dark-default.png"
+    },
+    {
+      "routeId": "guides",
+      "path": "/guides",
+      "viewport": "820x1180",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/guides/820x1180-light-default.png"
+    },
+    {
+      "routeId": "guides",
+      "path": "/guides",
+      "viewport": "1440x900",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/guides/1440x900-dark-default.png"
+    },
+    {
+      "routeId": "guides",
+      "path": "/guides",
+      "viewport": "1440x900",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/guides/1440x900-light-default.png"
+    },
+    {
+      "routeId": "blog",
+      "path": "/blog",
+      "viewport": "390x844",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/blog/390x844-dark-default.png"
+    },
+    {
+      "routeId": "blog",
+      "path": "/blog",
+      "viewport": "390x844",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/blog/390x844-light-default.png"
+    },
+    {
+      "routeId": "blog",
+      "path": "/blog",
+      "viewport": "430x932",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/blog/430x932-dark-default.png"
+    },
+    {
+      "routeId": "blog",
+      "path": "/blog",
+      "viewport": "430x932",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/blog/430x932-light-default.png"
+    },
+    {
+      "routeId": "blog",
+      "path": "/blog",
+      "viewport": "820x1180",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/blog/820x1180-dark-default.png"
+    },
+    {
+      "routeId": "blog",
+      "path": "/blog",
+      "viewport": "820x1180",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/blog/820x1180-light-default.png"
+    },
+    {
+      "routeId": "blog",
+      "path": "/blog",
+      "viewport": "1440x900",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/blog/1440x900-dark-default.png"
+    },
+    {
+      "routeId": "blog",
+      "path": "/blog",
+      "viewport": "1440x900",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/blog/1440x900-light-default.png"
+    },
+    {
+      "routeId": "manifeste",
+      "path": "/manifeste",
+      "viewport": "390x844",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/manifeste/390x844-dark-default.png"
+    },
+    {
+      "routeId": "manifeste",
+      "path": "/manifeste",
+      "viewport": "390x844",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/manifeste/390x844-light-default.png"
+    },
+    {
+      "routeId": "manifeste",
+      "path": "/manifeste",
+      "viewport": "430x932",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/manifeste/430x932-dark-default.png"
+    },
+    {
+      "routeId": "manifeste",
+      "path": "/manifeste",
+      "viewport": "430x932",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/manifeste/430x932-light-default.png"
+    },
+    {
+      "routeId": "manifeste",
+      "path": "/manifeste",
+      "viewport": "820x1180",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/manifeste/820x1180-dark-default.png"
+    },
+    {
+      "routeId": "manifeste",
+      "path": "/manifeste",
+      "viewport": "820x1180",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/manifeste/820x1180-light-default.png"
+    },
+    {
+      "routeId": "manifeste",
+      "path": "/manifeste",
+      "viewport": "1440x900",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/manifeste/1440x900-dark-default.png"
+    },
+    {
+      "routeId": "manifeste",
+      "path": "/manifeste",
+      "viewport": "1440x900",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/manifeste/1440x900-light-default.png"
+    },
+    {
+      "routeId": "faq",
+      "path": "/faq",
+      "viewport": "390x844",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/faq/390x844-dark-default.png"
+    },
+    {
+      "routeId": "faq",
+      "path": "/faq",
+      "viewport": "390x844",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/faq/390x844-light-default.png"
+    },
+    {
+      "routeId": "faq",
+      "path": "/faq",
+      "viewport": "430x932",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/faq/430x932-dark-default.png"
+    },
+    {
+      "routeId": "faq",
+      "path": "/faq",
+      "viewport": "430x932",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/faq/430x932-light-default.png"
+    },
+    {
+      "routeId": "faq",
+      "path": "/faq",
+      "viewport": "820x1180",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/faq/820x1180-dark-default.png"
+    },
+    {
+      "routeId": "faq",
+      "path": "/faq",
+      "viewport": "820x1180",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/faq/820x1180-light-default.png"
+    },
+    {
+      "routeId": "faq",
+      "path": "/faq",
+      "viewport": "1440x900",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/faq/1440x900-dark-default.png"
+    },
+    {
+      "routeId": "faq",
+      "path": "/faq",
+      "viewport": "1440x900",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/faq/1440x900-light-default.png"
+    },
+    {
+      "routeId": "contact",
+      "path": "/contact",
+      "viewport": "390x844",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/contact/390x844-dark-default.png"
+    },
+    {
+      "routeId": "contact",
+      "path": "/contact",
+      "viewport": "390x844",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/contact/390x844-light-default.png"
+    },
+    {
+      "routeId": "contact",
+      "path": "/contact",
+      "viewport": "430x932",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/contact/430x932-dark-default.png"
+    },
+    {
+      "routeId": "contact",
+      "path": "/contact",
+      "viewport": "430x932",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/contact/430x932-light-default.png"
+    },
+    {
+      "routeId": "contact",
+      "path": "/contact",
+      "viewport": "820x1180",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/contact/820x1180-dark-default.png"
+    },
+    {
+      "routeId": "contact",
+      "path": "/contact",
+      "viewport": "820x1180",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/contact/820x1180-light-default.png"
+    },
+    {
+      "routeId": "contact",
+      "path": "/contact",
+      "viewport": "1440x900",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/contact/1440x900-dark-default.png"
+    },
+    {
+      "routeId": "contact",
+      "path": "/contact",
+      "viewport": "1440x900",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/contact/1440x900-light-default.png"
+    },
+    {
+      "routeId": "admin",
+      "path": "/admin",
+      "viewport": "390x844",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/admin/390x844-dark-default.png"
+    },
+    {
+      "routeId": "admin",
+      "path": "/admin",
+      "viewport": "390x844",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/admin/390x844-light-default.png"
+    },
+    {
+      "routeId": "admin",
+      "path": "/admin",
+      "viewport": "430x932",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/admin/430x932-dark-default.png"
+    },
+    {
+      "routeId": "admin",
+      "path": "/admin",
+      "viewport": "430x932",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/admin/430x932-light-default.png"
+    },
+    {
+      "routeId": "admin",
+      "path": "/admin",
+      "viewport": "820x1180",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/admin/820x1180-dark-default.png"
+    },
+    {
+      "routeId": "admin",
+      "path": "/admin",
+      "viewport": "820x1180",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/admin/820x1180-light-default.png"
+    },
+    {
+      "routeId": "admin",
+      "path": "/admin",
+      "viewport": "1440x900",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/admin/1440x900-dark-default.png"
+    },
+    {
+      "routeId": "admin",
+      "path": "/admin",
+      "viewport": "1440x900",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/admin/1440x900-light-default.png"
+    },
+    {
+      "routeId": "admin-produits",
+      "path": "/admin/produits",
+      "viewport": "390x844",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/admin-produits/390x844-dark-default.png"
+    },
+    {
+      "routeId": "admin-produits",
+      "path": "/admin/produits",
+      "viewport": "390x844",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/admin-produits/390x844-light-default.png"
+    },
+    {
+      "routeId": "admin-produits",
+      "path": "/admin/produits",
+      "viewport": "430x932",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/admin-produits/430x932-dark-default.png"
+    },
+    {
+      "routeId": "admin-produits",
+      "path": "/admin/produits",
+      "viewport": "430x932",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/admin-produits/430x932-light-default.png"
+    },
+    {
+      "routeId": "admin-produits",
+      "path": "/admin/produits",
+      "viewport": "820x1180",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/admin-produits/820x1180-dark-default.png"
+    },
+    {
+      "routeId": "admin-produits",
+      "path": "/admin/produits",
+      "viewport": "820x1180",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/admin-produits/820x1180-light-default.png"
+    },
+    {
+      "routeId": "admin-produits",
+      "path": "/admin/produits",
+      "viewport": "1440x900",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/admin-produits/1440x900-dark-default.png"
+    },
+    {
+      "routeId": "admin-produits",
+      "path": "/admin/produits",
+      "viewport": "1440x900",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/admin-produits/1440x900-light-default.png"
+    },
+    {
+      "routeId": "dev-glass",
+      "path": "/dev/glass",
+      "viewport": "390x844",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/dev-glass/390x844-dark-default.png"
+    },
+    {
+      "routeId": "dev-glass",
+      "path": "/dev/glass",
+      "viewport": "390x844",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/dev-glass/390x844-light-default.png"
+    },
+    {
+      "routeId": "dev-glass",
+      "path": "/dev/glass",
+      "viewport": "430x932",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/dev-glass/430x932-dark-default.png"
+    },
+    {
+      "routeId": "dev-glass",
+      "path": "/dev/glass",
+      "viewport": "430x932",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/dev-glass/430x932-light-default.png"
+    },
+    {
+      "routeId": "dev-glass",
+      "path": "/dev/glass",
+      "viewport": "820x1180",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/dev-glass/820x1180-dark-default.png"
+    },
+    {
+      "routeId": "dev-glass",
+      "path": "/dev/glass",
+      "viewport": "820x1180",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/dev-glass/820x1180-light-default.png"
+    },
+    {
+      "routeId": "dev-glass",
+      "path": "/dev/glass",
+      "viewport": "1440x900",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/dev-glass/1440x900-dark-default.png"
+    },
+    {
+      "routeId": "dev-glass",
+      "path": "/dev/glass",
+      "viewport": "1440x900",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/dev-glass/1440x900-light-default.png"
+    },
+    {
+      "routeId": "dev-style",
+      "path": "/dev/style",
+      "viewport": "390x844",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/dev-style/390x844-dark-default.png"
+    },
+    {
+      "routeId": "dev-style",
+      "path": "/dev/style",
+      "viewport": "390x844",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/dev-style/390x844-light-default.png"
+    },
+    {
+      "routeId": "dev-style",
+      "path": "/dev/style",
+      "viewport": "430x932",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/dev-style/430x932-dark-default.png"
+    },
+    {
+      "routeId": "dev-style",
+      "path": "/dev/style",
+      "viewport": "430x932",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/dev-style/430x932-light-default.png"
+    },
+    {
+      "routeId": "dev-style",
+      "path": "/dev/style",
+      "viewport": "820x1180",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/dev-style/820x1180-dark-default.png"
+    },
+    {
+      "routeId": "dev-style",
+      "path": "/dev/style",
+      "viewport": "820x1180",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/dev-style/820x1180-light-default.png"
+    },
+    {
+      "routeId": "dev-style",
+      "path": "/dev/style",
+      "viewport": "1440x900",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/dev-style/1440x900-dark-default.png"
+    },
+    {
+      "routeId": "dev-style",
+      "path": "/dev/style",
+      "viewport": "1440x900",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/dev-style/1440x900-light-default.png"
+    },
+    {
+      "routeId": "mentions-legales",
+      "path": "/mentions-legales",
+      "viewport": "390x844",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/mentions-legales/390x844-dark-default.png"
+    },
+    {
+      "routeId": "mentions-legales",
+      "path": "/mentions-legales",
+      "viewport": "390x844",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/mentions-legales/390x844-light-default.png"
+    },
+    {
+      "routeId": "mentions-legales",
+      "path": "/mentions-legales",
+      "viewport": "430x932",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/mentions-legales/430x932-dark-default.png"
+    },
+    {
+      "routeId": "mentions-legales",
+      "path": "/mentions-legales",
+      "viewport": "430x932",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/mentions-legales/430x932-light-default.png"
+    },
+    {
+      "routeId": "mentions-legales",
+      "path": "/mentions-legales",
+      "viewport": "820x1180",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/mentions-legales/820x1180-dark-default.png"
+    },
+    {
+      "routeId": "mentions-legales",
+      "path": "/mentions-legales",
+      "viewport": "820x1180",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/mentions-legales/820x1180-light-default.png"
+    },
+    {
+      "routeId": "mentions-legales",
+      "path": "/mentions-legales",
+      "viewport": "1440x900",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/mentions-legales/1440x900-dark-default.png"
+    },
+    {
+      "routeId": "mentions-legales",
+      "path": "/mentions-legales",
+      "viewport": "1440x900",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/mentions-legales/1440x900-light-default.png"
+    },
+    {
+      "routeId": "cgv",
+      "path": "/cgv",
+      "viewport": "390x844",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/cgv/390x844-dark-default.png"
+    },
+    {
+      "routeId": "cgv",
+      "path": "/cgv",
+      "viewport": "390x844",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/cgv/390x844-light-default.png"
+    },
+    {
+      "routeId": "cgv",
+      "path": "/cgv",
+      "viewport": "430x932",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/cgv/430x932-dark-default.png"
+    },
+    {
+      "routeId": "cgv",
+      "path": "/cgv",
+      "viewport": "430x932",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/cgv/430x932-light-default.png"
+    },
+    {
+      "routeId": "cgv",
+      "path": "/cgv",
+      "viewport": "820x1180",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/cgv/820x1180-dark-default.png"
+    },
+    {
+      "routeId": "cgv",
+      "path": "/cgv",
+      "viewport": "820x1180",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/cgv/820x1180-light-default.png"
+    },
+    {
+      "routeId": "cgv",
+      "path": "/cgv",
+      "viewport": "1440x900",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/cgv/1440x900-dark-default.png"
+    },
+    {
+      "routeId": "cgv",
+      "path": "/cgv",
+      "viewport": "1440x900",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/cgv/1440x900-light-default.png"
+    },
+    {
+      "routeId": "cgu",
+      "path": "/cgu",
+      "viewport": "390x844",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/cgu/390x844-dark-default.png"
+    },
+    {
+      "routeId": "cgu",
+      "path": "/cgu",
+      "viewport": "390x844",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/cgu/390x844-light-default.png"
+    },
+    {
+      "routeId": "cgu",
+      "path": "/cgu",
+      "viewport": "430x932",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/cgu/430x932-dark-default.png"
+    },
+    {
+      "routeId": "cgu",
+      "path": "/cgu",
+      "viewport": "430x932",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/cgu/430x932-light-default.png"
+    },
+    {
+      "routeId": "cgu",
+      "path": "/cgu",
+      "viewport": "820x1180",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/cgu/820x1180-dark-default.png"
+    },
+    {
+      "routeId": "cgu",
+      "path": "/cgu",
+      "viewport": "820x1180",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/cgu/820x1180-light-default.png"
+    },
+    {
+      "routeId": "cgu",
+      "path": "/cgu",
+      "viewport": "1440x900",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/cgu/1440x900-dark-default.png"
+    },
+    {
+      "routeId": "cgu",
+      "path": "/cgu",
+      "viewport": "1440x900",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/cgu/1440x900-light-default.png"
+    },
+    {
+      "routeId": "cookies",
+      "path": "/cookies",
+      "viewport": "390x844",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/cookies/390x844-dark-default.png"
+    },
+    {
+      "routeId": "cookies",
+      "path": "/cookies",
+      "viewport": "390x844",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/cookies/390x844-light-default.png"
+    },
+    {
+      "routeId": "cookies",
+      "path": "/cookies",
+      "viewport": "430x932",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/cookies/430x932-dark-default.png"
+    },
+    {
+      "routeId": "cookies",
+      "path": "/cookies",
+      "viewport": "430x932",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/cookies/430x932-light-default.png"
+    },
+    {
+      "routeId": "cookies",
+      "path": "/cookies",
+      "viewport": "820x1180",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/cookies/820x1180-dark-default.png"
+    },
+    {
+      "routeId": "cookies",
+      "path": "/cookies",
+      "viewport": "820x1180",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/cookies/820x1180-light-default.png"
+    },
+    {
+      "routeId": "cookies",
+      "path": "/cookies",
+      "viewport": "1440x900",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/cookies/1440x900-dark-default.png"
+    },
+    {
+      "routeId": "cookies",
+      "path": "/cookies",
+      "viewport": "1440x900",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/cookies/1440x900-light-default.png"
+    },
+    {
+      "routeId": "hors-ligne",
+      "path": "/hors-ligne",
+      "viewport": "390x844",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/hors-ligne/390x844-dark-default.png"
+    },
+    {
+      "routeId": "hors-ligne",
+      "path": "/hors-ligne",
+      "viewport": "390x844",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/hors-ligne/390x844-light-default.png"
+    },
+    {
+      "routeId": "hors-ligne",
+      "path": "/hors-ligne",
+      "viewport": "430x932",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/hors-ligne/430x932-dark-default.png"
+    },
+    {
+      "routeId": "hors-ligne",
+      "path": "/hors-ligne",
+      "viewport": "430x932",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/hors-ligne/430x932-light-default.png"
+    },
+    {
+      "routeId": "hors-ligne",
+      "path": "/hors-ligne",
+      "viewport": "820x1180",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/hors-ligne/820x1180-dark-default.png"
+    },
+    {
+      "routeId": "hors-ligne",
+      "path": "/hors-ligne",
+      "viewport": "820x1180",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/hors-ligne/820x1180-light-default.png"
+    },
+    {
+      "routeId": "hors-ligne",
+      "path": "/hors-ligne",
+      "viewport": "1440x900",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/hors-ligne/1440x900-dark-default.png"
+    },
+    {
+      "routeId": "hors-ligne",
+      "path": "/hors-ligne",
+      "viewport": "1440x900",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/hors-ligne/1440x900-light-default.png"
+    },
+    {
+      "routeId": "page-404",
+      "path": "/route-inexistante-pour-tester-404",
+      "viewport": "390x844",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/page-404/390x844-dark-default.png"
+    },
+    {
+      "routeId": "page-404",
+      "path": "/route-inexistante-pour-tester-404",
+      "viewport": "390x844",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/page-404/390x844-light-default.png"
+    },
+    {
+      "routeId": "page-404",
+      "path": "/route-inexistante-pour-tester-404",
+      "viewport": "430x932",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/page-404/430x932-dark-default.png"
+    },
+    {
+      "routeId": "page-404",
+      "path": "/route-inexistante-pour-tester-404",
+      "viewport": "430x932",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/page-404/430x932-light-default.png"
+    },
+    {
+      "routeId": "page-404",
+      "path": "/route-inexistante-pour-tester-404",
+      "viewport": "820x1180",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/page-404/820x1180-dark-default.png"
+    },
+    {
+      "routeId": "page-404",
+      "path": "/route-inexistante-pour-tester-404",
+      "viewport": "820x1180",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/page-404/820x1180-light-default.png"
+    },
+    {
+      "routeId": "page-404",
+      "path": "/route-inexistante-pour-tester-404",
+      "viewport": "1440x900",
+      "theme": "dark",
+      "state": "default",
+      "file": "audit/screens/page-404/1440x900-dark-default.png"
+    },
+    {
+      "routeId": "page-404",
+      "path": "/route-inexistante-pour-tester-404",
+      "viewport": "1440x900",
+      "theme": "light",
+      "state": "default",
+      "file": "audit/screens/page-404/1440x900-light-default.png"
+    }
+  ]
+}

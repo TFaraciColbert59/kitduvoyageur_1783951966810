@@ -1,0 +1,14 @@
+{
+  "route": "/communaute",
+  "id": "communaute",
+  "timestamp": "2026-09-23T18:57:52.604Z",
+  "violationsCount": 1,
+  "violations": [
+    {
+      "id": "color-contrast",
+      "impact": "serious",
+      "description": "Ensure the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+      "nodes": 5
+    }
+  ]
+}
