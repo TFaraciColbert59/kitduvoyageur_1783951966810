@@ -23,6 +23,7 @@ type ThemeResult = {
 type ComputedSurface = {
   backgroundColor: string;
   backdropFilter: string;
+  color: string;
 };
 
 const read = (relative: string) => readFileSync(path.join(process.cwd(), relative), 'utf8');
@@ -210,7 +211,7 @@ async function compileBrowserStyles(content: string): Promise<string> {
   return result.css;
 }
 
-describe('Task 2A fix rounds 1–4 — contraste systémique, thème et primitives', () => {
+describe('Task 2A fix rounds 1–5 — contraste systémique, thème et primitives', () => {
   it('applique le thème light stocké et le repli système light malgré un stockage bloqué', () => {
     const result = runThemeBootstrap({
       theme: null,
@@ -392,7 +393,11 @@ describe('Task 2A fix rounds 1–4 — contraste systémique, thème et primitiv
               const element = document.getElementById(id);
               if (!element) throw new Error(`Missing surface ${id}`);
               const style = getComputedStyle(element);
-              return [id, { backgroundColor: style.backgroundColor, backdropFilter: style.backdropFilter }];
+              return [id, {
+                backgroundColor: style.backgroundColor,
+                backdropFilter: style.backdropFilter,
+                color: style.color,
+              }];
             }));
           })) as Record<string, ComputedSurface>;
 
@@ -436,6 +441,12 @@ describe('Task 2A fix rounds 1–4 — contraste systémique, thème et primitiv
           expect(styles.gc.backgroundColor).toBe(styles['gc-reference'].backgroundColor);
           expect(styles['inline-g2'].backgroundColor).toBe(styles['g2-reference'].backgroundColor);
           expect(styles['inline-g3'].backgroundColor).toBe(styles['g3-reference'].backgroundColor);
+          expect(styles['inline-g3'].color).toBe(
+            colorScheme === 'light' ? 'rgb(255, 255, 255)' : 'rgb(14, 20, 17)'
+          );
+          const g3Text: RGB = colorScheme === 'light' ? [255, 255, 255] : [14, 20, 17];
+          const g3Background: RGB = colorScheme === 'light' ? [18, 24, 21] : [255, 255, 255];
+          expect(contrast(g3Text, g3Background)).toBeGreaterThanOrEqual(4.5);
           expect(styles.pill.backgroundColor).toBe(styles['g3-reference'].backgroundColor);
           expect(styles.primary.backgroundColor).toBe(styles['g3-reference'].backgroundColor);
         }

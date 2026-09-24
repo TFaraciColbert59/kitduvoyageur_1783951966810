@@ -999,6 +999,7 @@ button.g2,
   }
   html body [style*='--g3-bg'] {
     background: var(--g3-reduced-bg) !important;
+    color: var(--g3-text) !important;
   }
   html body .glass-pill.glass-pill,
   html body .primary.primary {
