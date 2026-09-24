@@ -35,8 +35,13 @@ export function loadAuditStorageState(storagePath = auditStorageStatePath(), bas
 }
 
 export async function fillVisibleLoginForm(page, credentials) {
-  await page.locator('input:visible#email').first().fill(credentials.email);
-  await page.locator('input:visible#password').first().fill(credentials.password);
+  const form = page.locator('form:visible:has(input#email:visible):has(input#password:visible)');
+  if (await form.count() !== 1) {
+    throw new Error('Formulaire de connexion audit attendu unique');
+  }
+  await form.locator('input#email:visible').fill(credentials.email);
+  await form.locator('input#password:visible').fill(credentials.password);
+  return form;
 }
 
 export async function verifyCompteSession(page, baseUrl) {
@@ -98,10 +103,10 @@ export async function createAuthenticatedStorageState() {
     if (!loginResponse || loginResponse.status() < 200 || loginResponse.status() >= 400) {
       throw new Error(`Connexion audit HTTP invalide: ${loginResponse?.status() ?? 'aucune réponse'}`);
     }
-    await fillVisibleLoginForm(page, credentials);
+    const loginForm = await fillVisibleLoginForm(page, credentials);
     await Promise.all([
       page.waitForURL((url) => new URL(url).pathname === '/compte', { timeout: 30000 }),
-      page.locator('main form:visible').first().locator('button[type="submit"]').click(),
+      loginForm.locator('button[type="submit"]:visible').click(),
     ]);
     await verifyCompteSession(page, baseUrl);
     const state = await context.storageState();
