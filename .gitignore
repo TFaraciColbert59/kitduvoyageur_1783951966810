@@ -84,3 +84,7 @@ audit/screens/**
 !audit/screens/**/
 !audit/screens/**/*.json
 
+audit/auth-storage-state.json
+**/auth-storage-state*.json
+**/*.storageState.json
+
