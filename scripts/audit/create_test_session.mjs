@@ -34,6 +34,11 @@ export function loadAuditStorageState(storagePath = auditStorageStatePath(), bas
   return state;
 }
 
+export async function fillVisibleLoginForm(page, credentials) {
+  await page.locator('input:visible#email').first().fill(credentials.email);
+  await page.locator('input:visible#password').first().fill(credentials.password);
+}
+
 export async function verifyCompteSession(page, baseUrl) {
   const diagnostics = attachPageDiagnostics(page);
   try {
@@ -93,11 +98,10 @@ export async function createAuthenticatedStorageState() {
     if (!loginResponse || loginResponse.status() < 200 || loginResponse.status() >= 400) {
       throw new Error(`Connexion audit HTTP invalide: ${loginResponse?.status() ?? 'aucune réponse'}`);
     }
-    await page.locator('#email').fill(credentials.email);
-    await page.locator('#password').fill(credentials.password);
+    await fillVisibleLoginForm(page, credentials);
     await Promise.all([
       page.waitForURL((url) => new URL(url).pathname === '/compte', { timeout: 30000 }),
-      page.locator('form button[type="submit"]').first().click(),
+      page.locator('main form:visible').first().locator('button[type="submit"]').click(),
     ]);
     await verifyCompteSession(page, baseUrl);
     const state = await context.storageState();
