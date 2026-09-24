@@ -5,7 +5,7 @@ import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import {
   assertRenderedAuditSettings,
-  auditVerificationStatus,
+  buildCampaignAuditReport,
   getAuditBaseUrl,
 } from './contrast_audit_core.mjs';
 import {
@@ -81,18 +81,13 @@ async function assertPageSettings(page, theme, intensity = 0.5) {
   return rendered;
 }
 
-function buildContrastReport(findings, errors) {
-  const totals = findings.reduce((result, finding) => {
-    for (const status of ['pass', 'contrast_fail', 'unknown', 'occluded']) {
-      result[status] += finding.counts[status];
-    }
-    return result;
-  }, { pass: 0, contrast_fail: 0, unknown: 0, occluded: 0 });
+function buildContrastReport(findings, errors, report) {
+  const { totals, weightedPassRate: passRate, verificationStatus } = report;
   const nodeCount = totals.pass + totals.contrast_fail + totals.unknown + totals.occluded;
-  const passRate = errors.length > 0 || nodeCount === 0 ? 0 : (totals.pass / nodeCount) * 100;
   const lines = [
     '# Audit de contraste — campagne',
     '',
+    `- Statut : ${verificationStatus}`,
     `- Nœuds : ${nodeCount}`,
     `- pass : ${totals.pass}`,
     `- contrast_fail : ${totals.contrast_fail}`,
@@ -105,15 +100,20 @@ function buildContrastReport(findings, errors) {
     '|:---|---:|---:|---:|---:|---:|---:|',
   ];
   for (const finding of findings) {
-    const total = finding.counts.pass + finding.counts.contrast_fail + finding.counts.unknown + finding.counts.occluded;
-    const rate = total === 0 ? 0 : (finding.counts.pass / total) * 100;
-    lines.push(`| ${finding.routeId} | ${total} | ${finding.counts.pass} | ${finding.counts.contrast_fail} | ${finding.counts.unknown} | ${finding.counts.occluded} | ${rate.toFixed(1)}% |`);
+    const counts = finding.counts || {};
+    const pass = Number.isFinite(counts.pass) ? counts.pass : 0;
+    const contrastFail = Number.isFinite(counts.contrast_fail) ? counts.contrast_fail : 0;
+    const unknown = Number.isFinite(counts.unknown) ? counts.unknown : 0;
+    const occluded = Number.isFinite(counts.occluded) ? counts.occluded : 0;
+    const total = pass + contrastFail + unknown + occluded;
+    const rate = total === 0 ? 0 : (pass / total) * 100;
+    lines.push(`| ${finding.routeId} | ${total} | ${pass} | ${contrastFail} | ${unknown} | ${occluded} | ${rate.toFixed(1)}% |`);
   }
   if (errors.length > 0) {
     lines.push('', '## Erreurs', '');
     for (const error of errors) lines.push(`- ${error.route} (${error.stage}) : ${error.message}`);
   }
-  return { markdown: `${lines.join('\n')}\n`, totals, passRate };
+  return { markdown: `${lines.join('\n')}\n`, totals, passRate, verificationStatus };
 }
 
 async function run() {
@@ -344,26 +344,23 @@ async function run() {
 
   const safeErrors = redactRuntimeValue(errors);
   const safeFindings = redactRuntimeValue(contrastFindings);
-  const verificationStatus = auditVerificationStatus({
-    liveVerified: errors.length === 0 && contrastFindings.length > 0,
-    errors,
+  const completedRouteCount = new Set(contrastFindings.map((finding) => finding.routeId)).size;
+  const campaignReport = buildCampaignAuditReport({
+    findings: safeFindings,
+    errors: safeErrors,
+    expectedRouteCount: ROUTES.length,
+    completedRouteCount,
+    liveVerified: errors.length === 0 && completedRouteCount === ROUTES.length,
   });
-  const contrastReport = buildContrastReport(safeFindings, safeErrors);
+  const contrastReport = buildContrastReport(safeFindings, safeErrors, campaignReport);
   const safeManifest = redactRuntimeValue({
-    verificationStatus,
+    verificationStatus: campaignReport.verificationStatus,
     totalCaptures: manifest.length,
     timestamp: new Date().toISOString(),
     captures: manifest,
   });
   const safeSummary = redactRuntimeValue(a11ySummary);
-  const safeContrastReport = redactRuntimeValue({
-    verificationStatus,
-    generatedAt: new Date().toISOString(),
-    totals: contrastReport.totals,
-    weightedPassRate: contrastReport.passRate,
-    findings: safeFindings,
-    errors: safeErrors,
-  });
+  const safeContrastReport = redactRuntimeValue(campaignReport);
   fs.writeFileSync(path.join(screensDir, 'manifest.json'), `${JSON.stringify(safeManifest, null, 2)}\n`);
   fs.writeFileSync(path.join(a11yDir, 'summary.json'), `${JSON.stringify(safeSummary, null, 2)}\n`);
   fs.writeFileSync(path.join(a11yDir, 'campaign-contrast.json'), `${JSON.stringify(safeContrastReport, null, 2)}\n`);

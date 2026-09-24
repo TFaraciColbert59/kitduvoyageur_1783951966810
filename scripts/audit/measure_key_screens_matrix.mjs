@@ -4,9 +4,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import {
-  aggregateContrastMatrix,
   assertRenderedAuditSettings,
-  auditVerificationStatus,
+  buildMatrixAuditReport,
   buildMatrixCells,
   collectColorContrastAxeNodes,
   EXPECTED_MATRIX_CELL_COUNT,
@@ -188,17 +187,17 @@ async function run() {
     writeAuditErrorReport(errorReportPath, error, { resultCount: results.length });
     throw error;
   }
-  const report = aggregateContrastMatrix(results);
-  const verificationStatus = auditVerificationStatus({
-    liveVerified: report.totals.error === 0 && report.cellCount === EXPECTED_MATRIX_CELL_COUNT,
-    errors: results.filter((result) => result.error).map((result) => result.error),
+  const resultErrors = results.filter((result) => result.error).map((result) => result.error);
+  const report = buildMatrixAuditReport({
+    cells: results,
+    expectedCellCount: EXPECTED_MATRIX_CELL_COUNT,
+    liveVerified: resultErrors.length === 0,
+    errors: resultErrors,
   });
   const serialized = redactRuntimeValue({
     ...report,
-    verificationStatus,
     generatedAt: new Date().toISOString(),
     baseUrl,
-    expectedCellCount: EXPECTED_MATRIX_CELL_COUNT,
   });
   fs.writeFileSync(matrixJsonPath, `${JSON.stringify(serialized, null, 2)}\n`);
   fs.writeFileSync(matrixMarkdownPath, buildMarkdown(serialized));

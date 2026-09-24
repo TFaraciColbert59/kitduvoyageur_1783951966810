@@ -10,17 +10,22 @@ const auditScripts = [
   'scripts/audit/create_test_session.mjs',
   'scripts/audit/measure_key_screens_matrix.mjs',
 ];
-const trackedScriptExtensions = ['.js', '.mjs', '.cjs', '.ts', '.mts', '.tsx', '.py', '.ps1'];
-const trackedScripts = execFileSync('git', ['ls-files', 'scripts'], { cwd: root, encoding: 'utf8' })
+const codeExtensions = ['.js', '.mjs', '.cjs', '.ts', '.mts', '.tsx', '.py', '.ps1'];
+const excludedCodeFiles = new Set([
+  'src/features/materiel/components/DemoLoginButton.tsx',
+]);
+const allTrackedCodeFiles = execFileSync('git', ['ls-files'], { cwd: root, encoding: 'utf8' })
   .split(/\r?\n/)
-  .filter((file) => trackedScriptExtensions.some((extension) => file.endsWith(extension)));
+  .filter((file) => codeExtensions.some((extension) => file.endsWith(extension)))
+  .filter((file) => !file.startsWith('docs/'));
+const trackedCodeFiles = allTrackedCodeFiles.filter((file) => !excludedCodeFiles.has(file));
 
 function source(relativePath: string) {
   return readFileSync(path.join(root, relativePath), 'utf8');
 }
 
 describe('audit — garde-fous statiques', () => {
-  it('interdit les credentials littéraux dans tous les scripts suivis', () => {
+  it('interdit les credentials littéraux dans tout le code suivi hors docs', () => {
     const violations: string[] = [];
     const forbidden = [
       ['y-demo', '@lekitduvoyageur.fr'].join(''),
@@ -35,7 +40,7 @@ describe('audit — garde-fous statiques', () => {
     ];
     const jwt = /eyJ[A-Za-z0-9_-]{20,}\./;
 
-    for (const relativePath of trackedScripts) {
+    for (const relativePath of trackedCodeFiles) {
       const content = source(relativePath);
       if (forbidden.some((secret) => content.includes(secret)) || jwt.test(content)) {
         violations.push(relativePath);
@@ -43,6 +48,26 @@ describe('audit — garde-fous statiques', () => {
     }
 
     expect(violations).toEqual([]);
+  });
+
+  it('exclut explicitement le seul reliquat démo public autorisé', () => {
+    const excluded = 'src/features/materiel/components/DemoLoginButton.tsx';
+
+    expect([...excludedCodeFiles]).toEqual([excluded]);
+    expect(allTrackedCodeFiles).toContain(excluded);
+    expect(trackedCodeFiles).not.toContain(excluded);
+    expect(trackedCodeFiles.some((file) => file.startsWith('scripts/')))
+      .toBe(true);
+    expect(trackedCodeFiles.some((file) => file.startsWith('src/')))
+      .toBe(true);
+    expect(trackedCodeFiles.some((file) => file.startsWith('tests/')))
+      .toBe(true);
+    expect(trackedCodeFiles.some((file) => file.startsWith('.agents/')))
+      .toBe(true);
+    expect(allTrackedCodeFiles.some((file) => file.startsWith('docs/')))
+      .toBe(false);
+    expect(source('.agents/test_rls_intrusion.mjs')).toContain('NEXT_PUBLIC_SUPABASE_URL');
+    expect(source('.agents/test_rls_intrusion.mjs')).toContain('NEXT_PUBLIC_SUPABASE_ANON_KEY');
   });
 
   it('ignore auth-storage-state.json et tous les storageState JSON', () => {

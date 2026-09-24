@@ -46,11 +46,37 @@ export function captureStatusForRoute(options = {}) {
 export function auditVerificationStatus(options = {}) {
   const source = options && typeof options === 'object' ? options : {};
   const liveVerified = Reflect.get(source, 'liveVerified') === true;
+  const coverageComplete = Reflect.get(source, 'coverageComplete');
   const errors = Reflect.get(source, 'errors');
   const hasErrors = Array.isArray(errors) ? errors.length > 0 : Boolean(errors);
-  return !liveVerified || hasErrors
+  return !liveVerified || coverageComplete === false || hasErrors
     ? 'PARTIAL / NOT VERIFIED'
     : 'VERIFIED';
+}
+
+function routeName(route) {
+  if (typeof route === 'string') return route;
+  return route?.name ?? route?.route ?? null;
+}
+
+export function buildAuditCoverage(expectedRoutes = [], observedRoutes = []) {
+  const expected = Array.isArray(expectedRoutes) ? expectedRoutes : [];
+  const observed = new Set(
+    (Array.isArray(observedRoutes) ? observedRoutes : []).map(routeName).filter(Boolean)
+  );
+  const normalizedExpected = expected.map((route) => (
+    typeof route === 'string'
+      ? { name: route, path: route, auth: false }
+      : { ...route }
+  ));
+  const missingRoutes = normalizedExpected.filter((route) => (
+    !route.path || !observed.has(routeName(route))
+  ));
+  return {
+    expectedRoutes: normalizedExpected,
+    missingRoutes,
+    coverageComplete: missingRoutes.length === 0,
+  };
 }
 
 function finiteNumber(value) {
@@ -518,6 +544,75 @@ export function aggregateContrastMatrix(cells, expectedCells = buildMatrixCells(
     cells: summaries,
     totals,
     weightedPassRate: totals.error > 0 || totals.nodes === 0 ? 0 : (totals.pass / totals.nodes) * 100,
+  };
+}
+
+export function buildMatrixAuditReport(options = {}) {
+  const source = options && typeof options === 'object' ? options : {};
+  const cells = Reflect.get(source, 'cells');
+  const expectedCells = Reflect.get(source, 'expectedCells');
+  const requestedCellCount = Reflect.get(source, 'expectedCellCount');
+  const expectedCellCount = Number.isInteger(requestedCellCount)
+    ? requestedCellCount
+    : EXPECTED_MATRIX_CELL_COUNT;
+  const liveVerified = Reflect.get(source, 'liveVerified') === true;
+  const errors = Reflect.get(source, 'errors');
+  const aggregate = aggregateContrastMatrix(cells, expectedCells);
+  const liveEvidence = aggregate.totals.nodes > 0 && aggregate.totals.error === 0;
+  return {
+    ...aggregate,
+    expectedCellCount,
+    liveEvidence,
+    verificationStatus: auditVerificationStatus({
+      liveVerified: liveVerified && liveEvidence,
+      errors,
+    }),
+  };
+}
+
+export function buildCampaignAuditReport(options = {}) {
+  const source = options && typeof options === 'object' ? options : {};
+  const findings = Reflect.get(source, 'findings');
+  const errors = Reflect.get(source, 'errors');
+  const expectedRouteCount = Reflect.get(source, 'expectedRouteCount') ?? null;
+  const requestedCompletedRouteCount = Reflect.get(source, 'completedRouteCount');
+  const liveVerified = Reflect.get(source, 'liveVerified') === true;
+  const requestedGeneratedAt = Reflect.get(source, 'generatedAt');
+  const generatedAt = typeof requestedGeneratedAt === 'string'
+    ? requestedGeneratedAt
+    : new Date().toISOString();
+  const safeFindings = Array.isArray(findings) ? findings : [];
+  const safeErrors = Array.isArray(errors) ? errors : [];
+  const completed = Number.isInteger(requestedCompletedRouteCount)
+    ? requestedCompletedRouteCount
+    : safeFindings.length;
+  const coverageComplete = expectedRouteCount === null || completed >= expectedRouteCount;
+  const totals = safeFindings.reduce((result, finding) => {
+    const counts = finding?.counts || {};
+    for (const status of ['pass', 'contrast_fail', 'unknown', 'occluded']) {
+      result[status] += Number.isFinite(counts[status]) ? counts[status] : 0;
+    }
+    return result;
+  }, { pass: 0, contrast_fail: 0, unknown: 0, occluded: 0 });
+  const nodeCount = totals.pass + totals.contrast_fail + totals.unknown + totals.occluded;
+  const weightedPassRate = safeErrors.length > 0 || nodeCount === 0
+    ? 0
+    : (totals.pass / nodeCount) * 100;
+  const liveEvidence = nodeCount > 0;
+  return {
+    generatedAt,
+    verificationStatus: auditVerificationStatus({
+      liveVerified: liveVerified && coverageComplete && liveEvidence,
+      errors: safeErrors,
+    }),
+    expectedRouteCount,
+    completedRouteCount: completed,
+    coverageComplete,
+    liveEvidence,
+    totals,
+    weightedPassRate,
+    findings: safeFindings,
+    errors: safeErrors,
   };
 }
 

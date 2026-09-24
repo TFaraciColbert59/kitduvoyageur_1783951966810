@@ -15,7 +15,7 @@ import { chromium } from 'playwright';
 import { createClient } from '@supabase/supabase-js';
 import fs from 'node:fs';
 import path from 'node:path';
-import { auditModeRequiresAuth, auditVerificationStatus, getAuditCredentials } from './contrast_audit_core.mjs';
+import { auditModeRequiresAuth, auditVerificationStatus, buildAuditCoverage, getAuditCredentials } from './contrast_audit_core.mjs';
 import { redactDiagnosticText, redactRuntimeValue } from './audit_runtime.mjs';
 
 const BASE = process.env.AUDIT_BASE_URL || 'http://localhost:4000';
@@ -64,15 +64,15 @@ const fixtures = {
   profileId: await fixture('public_profiles', 'id'),
 };
 
-const ROUTES = [
+const ROUTE_DEFINITIONS = [
   // Commerce
   { name: 'home', path: '/', auth: false },
   { name: 'boutique', path: '/boutique', auth: false },
-  { name: 'produit', path: fixtures.productSlug ? `/produit/${fixtures.productSlug}` : null, auth: false },
+  { name: 'produit', path: fixtures.productSlug ? `/produit/${fixtures.productSlug}` : null, expectedPath: '/produit/:productSlug', auth: false },
   { name: 'panier', path: '/panier', auth: false },
   { name: 'checkout', path: '/checkout', auth: false },
   { name: 'kits', path: '/kits', auth: false },
-  { name: 'kit-detail', path: fixtures.kitSlug ? `/kits/${fixtures.kitSlug}` : null, auth: false },
+  { name: 'kit-detail', path: fixtures.kitSlug ? `/kits/${fixtures.kitSlug}` : null, expectedPath: '/kits/:kitSlug', auth: false },
   { name: 'occasion', path: '/occasion', auth: false },
   { name: 'location', path: '/location', auth: false },
   { name: 'abonnements', path: '/abonnements', auth: false },
@@ -81,7 +81,7 @@ const ROUTES = [
   { name: 'carte-interactive', path: '/carte-interactive', auth: false },
   { name: 'pays-fr', path: '/pays/fr', auth: false },
   { name: 'lieux', path: '/lieux', auth: false },
-  { name: 'lieu-detail', path: fixtures.lieuSlug ? `/lieux/${fixtures.lieuSlug}` : null, auth: false },
+  { name: 'lieu-detail', path: fixtures.lieuSlug ? `/lieux/${fixtures.lieuSlug}` : null, expectedPath: '/lieux/:lieuSlug', auth: false },
   { name: 'evenements', path: '/evenements', auth: false },
   { name: 'outils', path: '/outils', auth: false },
   { name: 'hors-ligne', path: '/hors-ligne', auth: false },
@@ -94,7 +94,7 @@ const ROUTES = [
   // Communauté / clubs
   { name: 'communaute', path: '/communaute', auth: false },
   { name: 'clubs', path: '/clubs', auth: false },
-  { name: 'club-detail', path: fixtures.clubSlug ? `/clubs/${fixtures.clubSlug}` : null, auth: false },
+  { name: 'club-detail', path: fixtures.clubSlug ? `/clubs/${fixtures.clubSlug}` : null, expectedPath: '/clubs/:clubSlug', auth: false },
   { name: 'feed', path: '/feed', auth: false },
   { name: 'entraide', path: '/entraide', auth: false },
   // Auth (formulaires anonymes)
@@ -105,19 +105,21 @@ const ROUTES = [
   { name: 'compte', path: '/compte', auth: true },
   { name: 'compte-modifier', path: '/compte/modifier', auth: true },
   { name: 'profil', path: '/profil', auth: true },
-  { name: 'profil-public', path: fixtures.profileId ? `/profil/${fixtures.profileId}` : null, auth: true },
+  { name: 'profil-public', path: fixtures.profileId ? `/profil/${fixtures.profileId}` : null, expectedPath: '/profil/:profileId', auth: true },
   { name: 'carnets', path: '/carnets', auth: true },
-  { name: 'carnet-detail', path: fixtures.carnetId ? `/carnets/${fixtures.carnetId}` : null, auth: true },
+  { name: 'carnet-detail', path: fixtures.carnetId ? `/carnets/${fixtures.carnetId}` : null, expectedPath: '/carnets/:carnetId', auth: true },
   { name: 'carnet-nouveau', path: '/carnets/nouveau', auth: true },
-  { name: 'voyage-detail', path: fixtures.tripSlug ? `/voyages/${fixtures.tripSlug}` : null, auth: true },
-  { name: 'preparer-sentier', path: fixtures.trailId ? `/preparer-sentier/${fixtures.trailId}` : null, auth: true },
+  { name: 'voyage-detail', path: fixtures.tripSlug ? `/voyages/${fixtures.tripSlug}` : null, expectedPath: '/voyages/:tripSlug', auth: true },
+  { name: 'preparer-sentier', path: fixtures.trailId ? `/preparer-sentier/${fixtures.trailId}` : null, expectedPath: '/preparer-sentier/:trailId', auth: true },
   { name: 'messagerie', path: '/messagerie', auth: true },
   { name: 'randonnee-active', path: '/randonnee-active', auth: true },
   { name: 'rapport-expedition', path: '/rapport-expedition', auth: true },
   { name: 'publier', path: '/publier', auth: true },
   { name: 'communaute-publier', path: '/communaute/publier', auth: true },
   { name: 'admin-refus', path: '/admin', auth: true },
-].filter((route) => route.path);
+];
+
+const ROUTES = ROUTE_DEFINITIONS.filter((route) => route.path);
 
 const DEVICES = [
   { id: 'desktop', viewport: { width: 1440, height: 900 }, isMobile: false, scaleFactor: 1 },
@@ -296,11 +298,16 @@ try {
 }
 
 fs.mkdirSync(OUT_DIR, { recursive: true });
+const coverage = buildAuditCoverage(ROUTE_DEFINITIONS, findings);
 const report = {
   generatedAt: new Date().toISOString(),
   baseUrl: BASE,
   fixtures,
-  routeCount: ROUTES.length,
+  expectedRoutes: coverage.expectedRoutes,
+  missingRoutes: coverage.missingRoutes,
+  coverageComplete: coverage.coverageComplete,
+  routeCount: coverage.expectedRoutes.length,
+  runnableRouteCount: ROUTES.length,
   deviceCount: DEVICES.length,
   captures: findings.filter((f) => f.screenshot).length,
   issues: findings.filter((f) => f.pageErrors.length > 0
@@ -313,7 +320,9 @@ const report = {
 };
 const authFailure = findings.some((finding) => finding.route === 'AUDIT-LOGIN');
 const verificationStatus = auditVerificationStatus({
-  liveVerified: report.issues.length === 0 && (!auditModeRequiresAuth(args) || !authFailure),
+  liveVerified: report.issues.length === 0
+    && (!auditModeRequiresAuth(args) || !authFailure),
+  coverageComplete: coverage.coverageComplete,
   errors: [
     ...report.issues.map((finding) => finding.pageErrors?.[0]).filter(Boolean),
     ...Object.keys(report.brokenLinks),

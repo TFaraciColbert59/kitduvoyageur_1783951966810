@@ -3,7 +3,9 @@ import os from 'node:os';
 import path from 'node:path';
 
 const REDACTED_VALUE = '[redacted]';
+const AUTHORIZATION_ASSIGNMENT = /((?:["']?authorization["']?)\s*[:=]\s*)("(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|(?:bearer|basic)\s+[^"',;}\]\r\n]+|[^\s,;}\]]+)/gi;
 const SENSITIVE_ASSIGNMENT = /((?:["']?)(?:access[_-]?token|refresh[_-]?token|accessToken|refreshToken|authorization|set-cookie|cookie|password|token|secret|api[_-]?key|apikey|client[_-]?secret|private[_-]?key|service[_-]?role[_-]?key)(?:["']?)\s*[:=]\s*)("(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|[^\s,;}\]]+)/gi;
+const BEARER_VALUE = /\b(?:bearer|basic)\s+[^"',;}\]\r\n]+/gi;
 const SENSITIVE_KEYS = new Set([
   'accesstoken',
   'refreshtoken',
@@ -25,13 +27,17 @@ function isSensitiveKey(key) {
   return SENSITIVE_KEYS.has(normalized) || /(?:token|secret|password|cookie|authorization|apikey|privatekey)/.test(normalized);
 }
 
+function redactAssignment(prefix, sensitiveValue) {
+  const quote = sensitiveValue[0] === '"' || sensitiveValue[0] === "'" ? sensitiveValue[0] : '';
+  const keyIsQuoted = quote && prefix.trimStart().startsWith(quote);
+  return keyIsQuoted ? `${quote}${REDACTED_VALUE}${quote}` : REDACTED_VALUE;
+}
+
 export function redactDiagnosticText(value) {
   return String(value ?? '')
-    .replace(SENSITIVE_ASSIGNMENT, (_match, prefix, sensitiveValue) => {
-      const quote = sensitiveValue[0] === '"' || sensitiveValue[0] === "'" ? sensitiveValue[0] : '';
-      return `${prefix}${quote}${REDACTED_VALUE}${quote}`;
-    })
-    .replace(/\b(?:bearer|basic)\s+[A-Za-z0-9._~+/=-]+/gi, REDACTED_VALUE)
+    .replace(AUTHORIZATION_ASSIGNMENT, (_match, prefix, sensitiveValue) => redactAssignment(prefix, sensitiveValue))
+    .replace(SENSITIVE_ASSIGNMENT, (_match, prefix, sensitiveValue) => redactAssignment(prefix, sensitiveValue))
+    .replace(BEARER_VALUE, REDACTED_VALUE)
     .replace(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi, '[email]')
     .slice(0, 500);
 }
@@ -55,10 +61,11 @@ function redactDetails(value, seen = new WeakSet()) {
   if (value && typeof value === 'object') {
     if (seen.has(value)) return '[circular]';
     seen.add(value);
-    const result = Object.fromEntries(Object.entries(value).map(([key, entry]) => [
-      key,
-      isSensitiveKey(key) ? REDACTED_VALUE : redactDetails(entry, seen),
-    ]));
+    const result = {};
+    for (const [key, entry] of Object.entries(value)) {
+      if (isSensitiveKey(key)) continue;
+      result[key] = redactDetails(entry, seen);
+    }
     seen.delete(value);
     return result;
   }
