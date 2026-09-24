@@ -78,3 +78,9 @@ audit_shots/
 
 # SDD scratch
 .superpowers/
+
+# Captures lourdes d'audit visuel
+audit/screens/**
+!audit/screens/**/
+!audit/screens/**/*.json
+
