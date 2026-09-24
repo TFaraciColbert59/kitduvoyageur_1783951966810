@@ -79,8 +79,8 @@ export function Tabs({
                 baseItem,
                 'min-h-[var(--control-height-sm)] rounded-full px-[var(--space-4)] text-[length:var(--lkv-text-footnote)]',
                 active
-                  ? 'bg-[color:var(--g3-bg)] text-[color:var(--g3-text)] shadow-[var(--glass-specular)] font-bold'
-                  : 'bg-[color:var(--g2-bg)] border border-[color:var(--glass-rim)] text-[color:var(--glass-label-secondary)] shadow-[var(--glass-specular)] backdrop-blur-md hover:text-[color:var(--glass-label)]'
+                  ? 'bg-[var(--g3-bg)] text-[var(--g3-text)] shadow-[var(--glass-rim)] font-bold'
+                  : 'bg-[var(--g2-bg)] border border-[color:var(--glass-border-color)] text-[var(--glass-label-secondary)] shadow-[var(--glass-rim)] hover:text-[var(--glass-label)]'
               )}
             >
               {option.icon}
@@ -102,7 +102,7 @@ export function Tabs({
       role="tablist"
       aria-label={ariaLabel}
       className={cn(
-        'flex w-full items-center gap-[var(--space-1)] rounded-full border border-[color:var(--glass-rim)] bg-[color:var(--g1-bg)] backdrop-blur-md p-[3px]',
+        'flex w-full items-center gap-[var(--space-1)] rounded-full border border-[color:var(--glass-border-color)] bg-[var(--g1-bg)] backdrop-blur-md p-[3px]',
         className
       )}
     >
@@ -120,8 +120,8 @@ export function Tabs({
               baseItem,
               'min-h-[var(--control-height-sm)] flex-1 rounded-full px-[var(--space-3)] text-[length:var(--lkv-text-footnote)] transition-all duration-[var(--motion-control-duration)]',
               active
-                ? 'bg-[color:var(--g3-bg)] text-[color:var(--g3-text)] shadow-[var(--glass-specular)] font-bold'
-                : 'text-[color:var(--glass-label-secondary)] hover:text-[color:var(--glass-label)]'
+                ? 'bg-[var(--g3-bg)] text-[var(--g3-text)] shadow-[var(--glass-rim)] font-bold'
+                : 'text-[var(--glass-label-secondary)] hover:text-[var(--glass-label)]'
             )}
           >
             {option.icon}

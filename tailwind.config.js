@@ -63,7 +63,7 @@ module.exports = {
         input: { DEFAULT: 'var(--input)' },
         ring: { DEFAULT: 'var(--ring)' },
         info: {
-          DEFAULT: 'var(--info)',
+          DEFAULT: 'var(--lkv-info)',
           foreground: 'var(--info-foreground)',
         },
         'dark-bg': { DEFAULT: 'var(--dark-bg)' },
@@ -137,7 +137,6 @@ module.exports = {
         ink: { 900: '#14140F', 700: '#2B2A24', 500: '#5A574E', 300: '#8C8779' },
         warn: '#C89A3B',
         danger: '#A8443A',
-        info: '#4B6B7C',
       },
       // Direction P5 §6 : rayons 12 / 16 / 24 (xs = micro-éléments, card = 24).
       borderRadius: {

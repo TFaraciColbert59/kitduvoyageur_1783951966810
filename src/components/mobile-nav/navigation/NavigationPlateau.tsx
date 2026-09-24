@@ -158,7 +158,7 @@ export default function NavigationPlateau({ controller }: { controller: Navigati
               cursor: 'pointer',
               fontSize: '12px',
               fontWeight: isSelected ? 700 : 500,
-              color: isSelected ? 'var(--lkv-primary)' : 'var(--lkv-text-muted)',
+              color: isSelected ? 'var(--g3-text)' : 'var(--glass-label-secondary)',
               fontFamily: 'inherit',
               padding: isWide ? '0 12px' : '0 4px',
               whiteSpace: 'nowrap',
@@ -176,11 +176,9 @@ export default function NavigationPlateau({ controller }: { controller: Navigati
                   left: 2,
                   right: 2,
                   borderRadius: 999,
-                  background: 'linear-gradient(180deg, rgba(255,255,255,0.92) 0%, rgba(242,248,243,0.80) 100%)',
-                  backdropFilter: 'blur(var(--glass-blur-lg))',
-                  WebkitBackdropFilter: 'blur(var(--glass-blur-lg))',
-                  border: '1px solid rgba(255, 255, 255, 0.95)',
-                  boxShadow: '0 2px 8px rgba(23, 64, 44, 0.08), inset 0 1.5px 2px rgba(255,255,255,0.98)',
+                  background: 'var(--g3-bg)',
+                  border: '1px solid var(--glass-border-color)',
+                  boxShadow: 'var(--glass-shadow)',
                   pointerEvents: 'none',
                 }}
                 transition={{ type: 'spring', stiffness: 500, damping: 32 }}

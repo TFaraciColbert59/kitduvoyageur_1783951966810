@@ -495,6 +495,7 @@
   --glass-bg-strong: var(--card-tint-strong);
   --glass-bg-dark: rgba(16, 28, 23, 0.90);
   --glass-subtle-fill: rgba(255, 255, 255, 0.66);
+  --glass-border-color: rgba(23, 43, 36, 0.12);
   --glass-border: rgba(23, 43, 36, 0.12);
   --glass-rim: rgba(255, 255, 255, 0.85);
   --glass-radius: var(--card-radius);
@@ -661,6 +662,7 @@
   --glass-border-strong: rgba(255, 255, 255, 0.30);
   --glass-highlight: rgba(255, 255, 255, 0.36);
   --glass-shadow-final: 0 8px 32px rgba(0, 0, 0, 0.14), inset 0 1px 0 rgba(255, 255, 255, 0.18);
+  --glass-border-color: rgba(255, 255, 255, 0.20);
   --glass-border: rgba(255, 255, 255, 0.20);
   --glass-rim: rgba(241, 245, 241, 0.20);
   --glass-focus: #7FC49A;
@@ -728,8 +730,8 @@
   --glass-label-quaternary: #5E7067;
 
   /* Couches de matière (G1 = flou, G2/G3 = lumière/matière sans flou) */
-  --g1-bg: rgb(var(--glass-tint-rgb) / calc(0.86 + 0.12 * var(--glass-intensity, 0.5)));
-  --g2-bg: rgb(245 248 246 / calc(0.80 + 0.15 * var(--glass-intensity, 0.5)));
+  --g1-bg: rgb(var(--glass-tint-rgb) / calc(0.92 + 0.06 * var(--glass-intensity, 0.5)));
+  --g2-bg: rgb(245 248 246 / calc(0.90 + 0.08 * var(--glass-intensity, 0.5)));
   --g3-bg: rgba(18, 24, 21, 0.94);
   --g3-text: #FFFFFF;
   --gc-bg: rgba(255, 255, 255, 0.40);
@@ -785,8 +787,8 @@ html.dark, .dark, [data-theme='dark'] {
   --card-tint: rgba(14, 18, 16, calc(0.88 + 0.10 * var(--glass-intensity, 0.5)));
   --card-tint-strong: rgba(14, 18, 16, calc(0.92 + 0.06 * var(--glass-intensity, 0.5)));
   --card-content: #F1F5F1;
-  --g1-bg: rgba(14, 18, 16, calc(0.88 + 0.10 * var(--glass-intensity, 0.5)));
-  --g2-bg: rgba(22, 26, 24, calc(0.85 + 0.12 * var(--glass-intensity, 0.5)));
+  --g1-bg: rgba(14, 18, 16, calc(0.92 + 0.06 * var(--glass-intensity, 0.5)));
+  --g2-bg: rgba(22, 26, 24, calc(0.90 + 0.08 * var(--glass-intensity, 0.5)));
   --g3-bg: rgba(255, 255, 255, 0.95);
   --g3-text: #0E1411;
   --gc-bg: rgba(255, 255, 255, 0.18);
@@ -817,9 +819,9 @@ button.g2,
 }
 
 .dark .glass-pill {
-  background: rgba(14, 18, 16, 0.88) !important;
-  color: #FFFFFF !important;
-  border-color: rgba(255, 255, 255, 0.25) !important;
+  background: var(--g3-bg) !important;
+  color: var(--g3-text) !important;
+  border-color: var(--glass-border-color) !important;
 }
 .dark .leaflet-control-zoom a,
 .dark .leaflet-bar a {

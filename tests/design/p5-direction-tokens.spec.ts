@@ -101,10 +101,13 @@ describe('P5 — échelles espacements, rayons et typographie', () => {
 });
 
 describe('P5 — câblage du mode sombre et topographie', () => {
-  it('layout.tsx applique le thème sombre en permanence (fond image sombre unique)', () => {
+  it('layout.tsx initialise le thème depuis la préférence système ou le choix stocké', () => {
+    expect(layout).toContain("colorScheme: 'light dark'");
+    expect(layout).toContain("localStorage.getItem('lkdv_theme')");
+    expect(layout).toContain("matchMedia('(prefers-color-scheme: light)')");
     expect(layout).toContain("classList.add('dark')");
-    expect(layout).toContain("colorScheme: 'dark'");
-    expect(layout).toContain("setAttribute('data-theme','dark')");
+    expect(layout).toContain("classList.remove('dark')");
+    expect(layout).toContain("setAttribute('data-theme'");
   });
 
   it('tailwind.css mappe le clair sur les tokens et ne fige plus de couleurs .dark', () => {

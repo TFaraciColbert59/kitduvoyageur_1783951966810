@@ -68,7 +68,7 @@ export const viewport: Viewport = {
   viewportFit: 'cover',
   interactiveWidget: 'resizes-visual',
   // Direction P5 §6 : plus de verrouillage clair — les deux schémas sont déclarés.
-  colorScheme: 'dark',
+  colorScheme: 'light dark',
   themeColor: [
     { media: '(prefers-color-scheme: light)', color: '#0B1510' },
     { media: '(prefers-color-scheme: dark)', color: '#08110C' },
@@ -184,7 +184,7 @@ export default async function RootLayout({
           id="lkdv-theme-init"
           suppressHydrationWarning
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var r=document.documentElement;r.classList.add('dark');r.setAttribute('data-theme','dark');r.style.colorScheme='dark';var g=localStorage.getItem('lkdv_glass_intensity');if(g)r.style.setProperty('--glass-intensity',g);}catch(e){}})();`,
+            __html: `(function(){try{var r=document.documentElement;var t=localStorage.getItem('lkdv_theme');var isDark=t?t==='dark':!window.matchMedia('(prefers-color-scheme: light)').matches;if(isDark){r.classList.add('dark');r.setAttribute('data-theme','dark');r.style.colorScheme='dark';}else{r.classList.remove('dark');r.setAttribute('data-theme','light');r.style.colorScheme='light';}var g=localStorage.getItem('lkdv_glass_intensity');if(g)r.style.setProperty('--glass-intensity',g);}catch(e){}})();`,
           }}
         />
         {/* Preload critical images for LCP optimization */}
@@ -259,22 +259,6 @@ export default async function RootLayout({
             }}
           />
         )}
-        {/* iOS 27 Liquid Glass Intensity bootstrap */}
-        <script
-          id="glass-intensity-bootstrap"
-          dangerouslySetInnerHTML={{
-            __html: `
-              (function() {
-                try {
-                  var val = localStorage.getItem('lkdv_glass_intensity');
-                  if (val !== null) {
-                    document.documentElement.style.setProperty('--glass-intensity', val);
-                  }
-                } catch(e) {}
-              })();
-            `,
-          }}
-        />
       </head>
       <body
         className={`${manrope.variable} ${ibmPlexMono.variable} ${instrumentSerif.variable} bg-transparent min-h-[100dvh]`}
