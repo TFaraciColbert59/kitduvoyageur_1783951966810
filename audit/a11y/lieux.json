@@ -1,14 +1,467 @@
 {
   "route": "/lieux",
   "id": "lieux",
-  "timestamp": "2026-09-23T18:57:02.812Z",
+  "timestamp": "2026-09-24T17:05:58.584Z",
   "violationsCount": 1,
+  "seriousCount": 1,
+  "criticalCount": 0,
   "violations": [
     {
       "id": "color-contrast",
       "impact": "serious",
+      "tags": [
+        "cat.color",
+        "wcag2aa",
+        "wcag143",
+        "TTv5",
+        "TT13.c",
+        "EN-301-549",
+        "EN-9.1.4.3",
+        "ACT",
+        "RGAAv4",
+        "RGAA-3.2.1"
+      ],
       "description": "Ensure the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
-      "nodes": 10
+      "help": "Elements must meet minimum color contrast ratio thresholds",
+      "helpUrl": "https://dequeuniversity.com/rules/axe/4.13/color-contrast?application=playwright",
+      "nodes": [
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "fgColor": "#2a2722",
+                "bgColor": "#12301f",
+                "contrastRatio": 1.04,
+                "fontSize": "18.0pt (24px)",
+                "fontWeight": "bold",
+                "messageKey": null,
+                "expectedContrastRatio": "3:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<html lang=\"fr\" class=\"__variable_a5811e __variable_d7e2b6 dark\" data-theme=\"dark\" style=\"color-scheme: dark;\">",
+                  "target": [
+                    "html"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element has insufficient color contrast of 1.04 (foreground color: #2a2722, background color: #12301f, font size: 18.0pt (24px), font weight: bold). Expected contrast ratio of 3:1"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<h1 class=\"text-2xl sm:text-4xl font-black text-stone-900 tracking-tight\">Lieux &amp; Refuges d’Altitude</h1>",
+          "target": [
+            "h1"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 1.04 (foreground color: #2a2722, background color: #12301f, font size: 18.0pt (24px), font weight: bold). Expected contrast ratio of 3:1"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "fgColor": "#7a7365",
+                "bgColor": "#12301f",
+                "contrastRatio": 3.04,
+                "fontSize": "10.5pt (14px)",
+                "fontWeight": "normal",
+                "messageKey": null,
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<html lang=\"fr\" class=\"__variable_a5811e __variable_d7e2b6 dark\" data-theme=\"dark\" style=\"color-scheme: dark;\">",
+                  "target": [
+                    "html"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element has insufficient color contrast of 3.04 (foreground color: #7a7365, background color: #12301f, font size: 10.5pt (14px), font weight: normal). Expected contrast ratio of 4.5:1"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<p class=\"text-sm sm:text-base text-stone-600 max-w-2xl leading-relaxed\">Refuges gardés, zones de bivouac réglementées, sources d’eau et cols remarquables. Notes bayésiennes certifiées par les retours terrain de randonneurs autonomes.</p>",
+          "target": [
+            ".text-sm"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 3.04 (foreground color: #7a7365, background color: #12301f, font size: 10.5pt (14px), font weight: normal). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "fgColor": "#324038",
+                "bgColor": "#83938a",
+                "contrastRatio": 3.37,
+                "fontSize": "9.8pt (13px)",
+                "fontWeight": "normal",
+                "messageKey": null,
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<button type=\"button\" role=\"tab\" aria-selected=\"false\" class=\"inline-flex shrink-0...\">",
+                  "target": [
+                    ".hover\\:text-\\[color\\:var\\(--glass-label\\)\\].gap-\\[var\\(--space-1\\)\\].transition-colors:nth-child(2)"
+                  ]
+                },
+                {
+                  "html": "<div data-variant=\"standard\" data-tone=\"neutral\" class=\"lkv-glass rounded-[var(--lkv-radius-card)] space-y-[var(--space-4)] p-[var(--space-4)] sm:p-[var(--space-5)]\">",
+                  "target": [
+                    ".space-y-\\[var\\(--space-4\\)\\]"
+                  ]
+                },
+                {
+                  "html": "<html lang=\"fr\" class=\"__variable_a5811e __variable_d7e2b6 dark\" data-theme=\"dark\" style=\"color-scheme: dark;\">",
+                  "target": [
+                    "html"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element has insufficient color contrast of 3.37 (foreground color: #324038, background color: #83938a, font size: 9.8pt (13px), font weight: normal). Expected contrast ratio of 4.5:1"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<button type=\"button\" role=\"tab\" aria-selected=\"false\" class=\"inline-flex shrink-0...\">",
+          "target": [
+            ".hover\\:text-\\[color\\:var\\(--glass-label\\)\\].gap-\\[var\\(--space-1\\)\\].transition-colors:nth-child(2)"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 3.37 (foreground color: #324038, background color: #83938a, font size: 9.8pt (13px), font weight: normal). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "fgColor": "#f1f5f1",
+                "bgColor": "#83938a",
+                "contrastRatio": 2.93,
+                "fontSize": "8.3pt (11px)",
+                "fontWeight": "normal",
+                "messageKey": null,
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<button type=\"button\" aria-pressed=\"false\" class=\"inline-flex touch-ma...\">",
+                  "target": [
+                    ".hover\\:brightness-\\[1\\.06\\].transition-all.min-h-\\[var\\(--control-height-xs\\)\\]:nth-child(2)"
+                  ]
+                },
+                {
+                  "html": "<div data-variant=\"standard\" data-tone=\"neutral\" class=\"lkv-glass rounded-[var(--lkv-radius-card)] space-y-[var(--space-4)] p-[var(--space-4)] sm:p-[var(--space-5)]\">",
+                  "target": [
+                    ".space-y-\\[var\\(--space-4\\)\\]"
+                  ]
+                },
+                {
+                  "html": "<html lang=\"fr\" class=\"__variable_a5811e __variable_d7e2b6 dark\" data-theme=\"dark\" style=\"color-scheme: dark;\">",
+                  "target": [
+                    "html"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element has insufficient color contrast of 2.93 (foreground color: #f1f5f1, background color: #83938a, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<button type=\"button\" aria-pressed=\"false\" class=\"inline-flex touch-ma...\">",
+          "target": [
+            ".hover\\:brightness-\\[1\\.06\\].transition-all.min-h-\\[var\\(--control-height-xs\\)\\]:nth-child(2)"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 2.93 (foreground color: #f1f5f1, background color: #83938a, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "fgColor": "#f1f5f1",
+                "bgColor": "#83938a",
+                "contrastRatio": 2.93,
+                "fontSize": "8.3pt (11px)",
+                "fontWeight": "normal",
+                "messageKey": null,
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<button type=\"button\" aria-pressed=\"false\" class=\"inline-flex touch-ma...\">",
+                  "target": [
+                    ".hover\\:brightness-\\[1\\.06\\].transition-all.min-h-\\[var\\(--control-height-xs\\)\\]:nth-child(3)"
+                  ]
+                },
+                {
+                  "html": "<div data-variant=\"standard\" data-tone=\"neutral\" class=\"lkv-glass rounded-[var(--lkv-radius-card)] space-y-[var(--space-4)] p-[var(--space-4)] sm:p-[var(--space-5)]\">",
+                  "target": [
+                    ".space-y-\\[var\\(--space-4\\)\\]"
+                  ]
+                },
+                {
+                  "html": "<html lang=\"fr\" class=\"__variable_a5811e __variable_d7e2b6 dark\" data-theme=\"dark\" style=\"color-scheme: dark;\">",
+                  "target": [
+                    "html"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element has insufficient color contrast of 2.93 (foreground color: #f1f5f1, background color: #83938a, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<button type=\"button\" aria-pressed=\"false\" class=\"inline-flex touch-ma...\">",
+          "target": [
+            ".hover\\:brightness-\\[1\\.06\\].transition-all.min-h-\\[var\\(--control-height-xs\\)\\]:nth-child(3)"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 2.93 (foreground color: #f1f5f1, background color: #83938a, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "fgColor": "#f1f5f1",
+                "bgColor": "#83938a",
+                "contrastRatio": 2.93,
+                "fontSize": "8.3pt (11px)",
+                "fontWeight": "normal",
+                "messageKey": null,
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<button type=\"button\" aria-pressed=\"false\" class=\"inline-flex touch-ma...\">",
+                  "target": [
+                    ".hover\\:brightness-\\[1\\.06\\].transition-all.min-h-\\[var\\(--control-height-xs\\)\\]:nth-child(4)"
+                  ]
+                },
+                {
+                  "html": "<div data-variant=\"standard\" data-tone=\"neutral\" class=\"lkv-glass rounded-[var(--lkv-radius-card)] space-y-[var(--space-4)] p-[var(--space-4)] sm:p-[var(--space-5)]\">",
+                  "target": [
+                    ".space-y-\\[var\\(--space-4\\)\\]"
+                  ]
+                },
+                {
+                  "html": "<html lang=\"fr\" class=\"__variable_a5811e __variable_d7e2b6 dark\" data-theme=\"dark\" style=\"color-scheme: dark;\">",
+                  "target": [
+                    "html"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element has insufficient color contrast of 2.93 (foreground color: #f1f5f1, background color: #83938a, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<button type=\"button\" aria-pressed=\"false\" class=\"inline-flex touch-ma...\">",
+          "target": [
+            ".hover\\:brightness-\\[1\\.06\\].transition-all.min-h-\\[var\\(--control-height-xs\\)\\]:nth-child(4)"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 2.93 (foreground color: #f1f5f1, background color: #83938a, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "fgColor": "#f1f5f1",
+                "bgColor": "#83938a",
+                "contrastRatio": 2.93,
+                "fontSize": "8.3pt (11px)",
+                "fontWeight": "normal",
+                "messageKey": null,
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<button type=\"button\" aria-pressed=\"false\" class=\"inline-flex touch-ma...\">",
+                  "target": [
+                    ".hover\\:brightness-\\[1\\.06\\].transition-all.min-h-\\[var\\(--control-height-xs\\)\\]:nth-child(5)"
+                  ]
+                },
+                {
+                  "html": "<div data-variant=\"standard\" data-tone=\"neutral\" class=\"lkv-glass rounded-[var(--lkv-radius-card)] space-y-[var(--space-4)] p-[var(--space-4)] sm:p-[var(--space-5)]\">",
+                  "target": [
+                    ".space-y-\\[var\\(--space-4\\)\\]"
+                  ]
+                },
+                {
+                  "html": "<html lang=\"fr\" class=\"__variable_a5811e __variable_d7e2b6 dark\" data-theme=\"dark\" style=\"color-scheme: dark;\">",
+                  "target": [
+                    "html"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element has insufficient color contrast of 2.93 (foreground color: #f1f5f1, background color: #83938a, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<button type=\"button\" aria-pressed=\"false\" class=\"inline-flex touch-ma...\">",
+          "target": [
+            ".hover\\:brightness-\\[1\\.06\\].transition-all.min-h-\\[var\\(--control-height-xs\\)\\]:nth-child(5)"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 2.93 (foreground color: #f1f5f1, background color: #83938a, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "fgColor": "#f1f5f1",
+                "bgColor": "#83938a",
+                "contrastRatio": 2.93,
+                "fontSize": "8.3pt (11px)",
+                "fontWeight": "normal",
+                "messageKey": null,
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<button type=\"button\" aria-pressed=\"false\" class=\"inline-flex touch-ma...\">",
+                  "target": [
+                    ".hover\\:brightness-\\[1\\.06\\].transition-all.min-h-\\[var\\(--control-height-xs\\)\\]:nth-child(6)"
+                  ]
+                },
+                {
+                  "html": "<div data-variant=\"standard\" data-tone=\"neutral\" class=\"lkv-glass rounded-[var(--lkv-radius-card)] space-y-[var(--space-4)] p-[var(--space-4)] sm:p-[var(--space-5)]\">",
+                  "target": [
+                    ".space-y-\\[var\\(--space-4\\)\\]"
+                  ]
+                },
+                {
+                  "html": "<html lang=\"fr\" class=\"__variable_a5811e __variable_d7e2b6 dark\" data-theme=\"dark\" style=\"color-scheme: dark;\">",
+                  "target": [
+                    "html"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element has insufficient color contrast of 2.93 (foreground color: #f1f5f1, background color: #83938a, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<button type=\"button\" aria-pressed=\"false\" class=\"inline-flex touch-ma...\">",
+          "target": [
+            ".hover\\:brightness-\\[1\\.06\\].transition-all.min-h-\\[var\\(--control-height-xs\\)\\]:nth-child(6)"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 2.93 (foreground color: #f1f5f1, background color: #83938a, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "fgColor": "#f1f5f1",
+                "bgColor": "#83938a",
+                "contrastRatio": 2.93,
+                "fontSize": "8.3pt (11px)",
+                "fontWeight": "normal",
+                "messageKey": null,
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<button type=\"button\" aria-pressed=\"false\" class=\"inline-flex touch-ma...\">",
+                  "target": [
+                    ".hover\\:brightness-\\[1\\.06\\].transition-all.min-h-\\[var\\(--control-height-xs\\)\\]:nth-child(7)"
+                  ]
+                },
+                {
+                  "html": "<div data-variant=\"standard\" data-tone=\"neutral\" class=\"lkv-glass rounded-[var(--lkv-radius-card)] space-y-[var(--space-4)] p-[var(--space-4)] sm:p-[var(--space-5)]\">",
+                  "target": [
+                    ".space-y-\\[var\\(--space-4\\)\\]"
+                  ]
+                },
+                {
+                  "html": "<html lang=\"fr\" class=\"__variable_a5811e __variable_d7e2b6 dark\" data-theme=\"dark\" style=\"color-scheme: dark;\">",
+                  "target": [
+                    "html"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element has insufficient color contrast of 2.93 (foreground color: #f1f5f1, background color: #83938a, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<button type=\"button\" aria-pressed=\"false\" class=\"inline-flex touch-ma...\">",
+          "target": [
+            ".hover\\:brightness-\\[1\\.06\\].transition-all.min-h-\\[var\\(--control-height-xs\\)\\]:nth-child(7)"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 2.93 (foreground color: #f1f5f1, background color: #83938a, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "fgColor": "#f1f5f1",
+                "bgColor": "#83938a",
+                "contrastRatio": 2.93,
+                "fontSize": "8.3pt (11px)",
+                "fontWeight": "normal",
+                "messageKey": null,
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<button type=\"button\" aria-pressed=\"false\" class=\"inline-flex touch-ma...\">",
+                  "target": [
+                    ".hover\\:brightness-\\[1\\.06\\].transition-all.min-h-\\[var\\(--control-height-xs\\)\\]:nth-child(8)"
+                  ]
+                },
+                {
+                  "html": "<div data-variant=\"standard\" data-tone=\"neutral\" class=\"lkv-glass rounded-[var(--lkv-radius-card)] space-y-[var(--space-4)] p-[var(--space-4)] sm:p-[var(--space-5)]\">",
+                  "target": [
+                    ".space-y-\\[var\\(--space-4\\)\\]"
+                  ]
+                },
+                {
+                  "html": "<html lang=\"fr\" class=\"__variable_a5811e __variable_d7e2b6 dark\" data-theme=\"dark\" style=\"color-scheme: dark;\">",
+                  "target": [
+                    "html"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element has insufficient color contrast of 2.93 (foreground color: #f1f5f1, background color: #83938a, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<button type=\"button\" aria-pressed=\"false\" class=\"inline-flex touch-ma...\">",
+          "target": [
+            ".hover\\:brightness-\\[1\\.06\\].transition-all.min-h-\\[var\\(--control-height-xs\\)\\]:nth-child(8)"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 2.93 (foreground color: #f1f5f1, background color: #83938a, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+        }
+      ]
     }
   ]
 }

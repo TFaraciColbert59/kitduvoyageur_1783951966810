@@ -39,7 +39,7 @@
      décliné portrait (mobile) / paysage (large), voilé pour la lisibilité. */
   --lkv-app-bg-image-portrait: url('/assets/images/lkdv-bg-portrait.webp');
   --lkv-app-bg-image-landscape: url('/assets/images/lkdv-bg-landscape.webp');
-  --lkv-app-bg-scrim: rgba(10, 12, 16, 0.38);
+  --lkv-app-bg-scrim: rgba(242, 246, 243, 0.78);
   --lkv-app-bg-fallback: #0b0d12;
 
   --lkv-surface: #F5F7F3;
@@ -609,8 +609,8 @@
   --lkv-secondary-hover: #B8CDB4;
   --lkv-secondary-subtle: #24382C;
 
-  --lkv-app-bg-scrim: rgba(46, 92, 66, 0.26);
-  --lkv-app-bg-fallback: #12301F;
+  --lkv-app-bg-scrim: rgba(8, 10, 12, 0.88);
+  --lkv-app-bg-fallback: #0b0d12;
 
   --lkv-surface: #101C17;
   --lkv-surface-paper: #1B2D24;
@@ -619,9 +619,9 @@
   --lkv-surface-muted: #182A21;
 
   --lkv-text-primary: #F1F5F1;
-  --lkv-text-secondary: #C2CFC8;
-  --lkv-text-muted: #A9B8B0;
-  --lkv-text-subtle: #8A9A91;
+  --lkv-text-secondary: #EDF3EF;
+  --lkv-text-muted: #CBD8D0;
+  --lkv-text-subtle: #A8B8AF;
   --lkv-text-inverted: #FFFFFF;
 
   --lkv-hover-surface: #22382C;
@@ -722,17 +722,17 @@
   --glass-sat: 180%;
 
   /* Typographie vibrante monochrome */
-  --glass-label: #121815;
-  --glass-label-secondary: #324038;
-  --glass-label-tertiary: #526359;
-  --glass-label-quaternary: #7E9186;
+  --glass-label: #101813;
+  --glass-label-secondary: #26332B;
+  --glass-label-tertiary: #405047;
+  --glass-label-quaternary: #5E7067;
 
   /* Couches de matière (G1 = flou, G2/G3 = lumière/matière sans flou) */
-  --g1-bg: rgb(var(--glass-tint-rgb) / calc(0.46 + 0.30 * var(--glass-intensity)));
-  --g2-bg: rgb(var(--glass-tint-rgb) / calc(0.32 + 0.20 * var(--glass-intensity)));
-  --g3-bg: rgba(18, 24, 21, 0.88);
+  --g1-bg: rgb(var(--glass-tint-rgb) / calc(0.86 + 0.12 * var(--glass-intensity, 0.5)));
+  --g2-bg: rgb(245 248 246 / calc(0.80 + 0.15 * var(--glass-intensity, 0.5)));
+  --g3-bg: rgba(18, 24, 21, 0.94);
   --g3-text: #FFFFFF;
-  --gc-bg: rgba(255, 255, 255, 0.22);
+  --gc-bg: rgba(255, 255, 255, 0.40);
 
   /* Bords assombris et reflets iOS 27 */
   --glass-rim: 0 0 0 0.5px rgba(0, 0, 0, 0.22);
@@ -766,6 +766,93 @@
   --tabbar-h: 72px;
   --subbar-h: 48px;
   --content-pb: calc(var(--tabbar-h) + var(--safe-bottom, 24px) + 28px);
+}
+
+html.dark, .dark, [data-theme='dark'] {
+  --glass-tint-rgb: 14 18 16;
+  --glass-ink: 245 250 246;
+  --glass-label: #FFFFFF;
+  --glass-label-secondary: #EDF3EF;
+  --glass-label-tertiary: #CBD8D0;
+  --glass-label-quaternary: #A8B8AF;
+  --glass-text: #F1F5F1;
+  --glass-text-secondary: #EDF3EF;
+  --glass-bg-light: rgba(18, 22, 20, 0.82);
+  --glass-bg-medium: rgba(14, 18, 16, calc(0.88 + 0.10 * var(--glass-intensity, 0.5)));
+  --glass-bg-strong: rgba(14, 18, 16, calc(0.92 + 0.06 * var(--glass-intensity, 0.5)));
+  --glass-subtle-fill: rgba(255, 255, 255, 0.08);
+  --btn-tint: rgba(26, 32, 28, 0.88);
+  --card-tint: rgba(14, 18, 16, calc(0.88 + 0.10 * var(--glass-intensity, 0.5)));
+  --card-tint-strong: rgba(14, 18, 16, calc(0.92 + 0.06 * var(--glass-intensity, 0.5)));
+  --card-content: #F1F5F1;
+  --g1-bg: rgba(14, 18, 16, calc(0.88 + 0.10 * var(--glass-intensity, 0.5)));
+  --g2-bg: rgba(22, 26, 24, calc(0.85 + 0.12 * var(--glass-intensity, 0.5)));
+  --g3-bg: rgba(255, 255, 255, 0.95);
+  --g3-text: #0E1411;
+  --gc-bg: rgba(255, 255, 255, 0.18);
+  --glass-rim: 0 0 0 0.5px rgba(0, 0, 0, 0.65);
+  --glass-rim-inner: inset 0 0 0 0.5px rgba(255, 255, 255, 0.25);
+  --glass-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.20);
+  --glass-shadow: 0 12px 40px rgba(0, 0, 0, 0.50);
+  --lkv-app-bg-scrim: rgba(8, 10, 12, 0.88);
+  --lkv-app-bg-fallback: #0b0d12;
+  --lkv-text-primary: #F1F5F1;
+  --lkv-text-secondary: #EDF3EF;
+  --lkv-text-muted: #CBD8D0;
+  --lkv-text-subtle: #A8B8AF;
+}
+
+/* Primitives boutons & composants Liquid Glass */
+.g3,
+button.g3,
+[class*='var(--g3-bg)'] {
+  background-color: var(--g3-bg) !important;
+  color: var(--g3-text) !important;
+}
+.g2,
+button.g2,
+[class*='var(--g2-bg)'] {
+  background-color: var(--g2-bg) !important;
+  color: var(--glass-label) !important;
+}
+
+.dark .glass-pill {
+  background: rgba(14, 18, 16, 0.88) !important;
+  color: #FFFFFF !important;
+  border-color: rgba(255, 255, 255, 0.25) !important;
+}
+.dark .leaflet-control-zoom a,
+.dark .leaflet-bar a {
+  background: rgba(18, 24, 21, 0.90) !important;
+  color: #FFFFFF !important;
+  border-color: rgba(255, 255, 255, 0.20) !important;
+}
+.dark .leaflet-control-attribution a {
+  color: #9AD4B1 !important;
+}
+.dark [class~='bg-[var(--lkv-primary)]']:not(button) {
+  color: #08150F !important;
+}
+.dark .text-forest-soft,
+.dark .text-\[var\(--lkv-primary-soft\)\] {
+  color: #9AD4B1 !important;
+}
+.dark .ring-white {
+  --tw-ring-color: rgba(255, 255, 255, 0.20) !important;
+}
+.dark .text-stone-900,
+.dark .text-stone-800 {
+  color: #F1F5F1 !important;
+}
+.dark .text-stone-700,
+.dark .text-stone-600 {
+  color: #CBD8D0 !important;
+}
+.dark .text-forest-900,
+.dark .text-forest-800,
+.dark .text-forest-700,
+.dark .text-forest-600 {
+  color: #EDF3EF !important;
 }
 
 /* Classes utilitaires universelles Liquid Glass */

@@ -1,7 +1,145 @@
 {
   "route": "/communaute-pro",
   "id": "communaute-pro",
-  "timestamp": "2026-09-23T18:58:23.862Z",
-  "violationsCount": 0,
-  "violations": []
+  "timestamp": "2026-09-24T17:06:45.402Z",
+  "violationsCount": 1,
+  "seriousCount": 1,
+  "criticalCount": 0,
+  "violations": [
+    {
+      "id": "color-contrast",
+      "impact": "serious",
+      "tags": [
+        "cat.color",
+        "wcag2aa",
+        "wcag143",
+        "TTv5",
+        "TT13.c",
+        "EN-301-549",
+        "EN-9.1.4.3",
+        "ACT",
+        "RGAAv4",
+        "RGAA-3.2.1"
+      ],
+      "description": "Ensure the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+      "help": "Elements must meet minimum color contrast ratio thresholds",
+      "helpUrl": "https://dequeuniversity.com/rules/axe/4.13/color-contrast?application=playwright",
+      "nodes": [
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "fgColor": "#f1f5f1",
+                "bgColor": "#76877d",
+                "contrastRatio": 3.44,
+                "fontSize": "8.3pt (11px)",
+                "fontWeight": "normal",
+                "messageKey": null,
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<span class=\"inline-block px-3 py-1 text-[11px] font-semibold tracking-wide uppercase rounded-full bg-[var(--g2-bg)] text-[var(--glass-secondary)] border border-[var(--glass-rim)] mb-2\">Espace Pro</span>",
+                  "target": [
+                    ".inline-block"
+                  ]
+                },
+                {
+                  "html": "<html lang=\"fr\" class=\"__variable_a5811e __variable_d7e2b6 dark\" data-theme=\"dark\" style=\"color-scheme: dark;\">",
+                  "target": [
+                    "html"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element has insufficient color contrast of 3.44 (foreground color: #f1f5f1, background color: #76877d, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<span class=\"inline-block px-3 py-1 text-[11px] font-semibold tracking-wide uppercase rounded-full bg-[var(--g2-bg)] text-[var(--glass-secondary)] border border-[var(--glass-rim)] mb-2\">Espace Pro</span>",
+          "target": [
+            ".inline-block"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 3.44 (foreground color: #f1f5f1, background color: #76877d, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "fgColor": "#121815",
+                "bgColor": "#12301f",
+                "contrastRatio": 1.25,
+                "fontSize": "18.0pt (24px)",
+                "fontWeight": "bold",
+                "messageKey": null,
+                "expectedContrastRatio": "3:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<html lang=\"fr\" class=\"__variable_a5811e __variable_d7e2b6 dark\" data-theme=\"dark\" style=\"color-scheme: dark;\">",
+                  "target": [
+                    "html"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element has insufficient color contrast of 1.25 (foreground color: #121815, background color: #12301f, font size: 18.0pt (24px), font weight: bold). Expected contrast ratio of 3:1"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<h1 class=\"text-2xl font-extrabold text-[var(--glass-label)] tracking-tight\">Communauté Certifiée</h1>",
+          "target": [
+            ".text-2xl"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 1.25 (foreground color: #121815, background color: #12301f, font size: 18.0pt (24px), font weight: bold). Expected contrast ratio of 3:1"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "fgColor": "#f1f5f1",
+                "bgColor": "#a3aea8",
+                "contrastRatio": 2.07,
+                "fontSize": "9.0pt (12px)",
+                "fontWeight": "normal",
+                "messageKey": null,
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<div class=\"g1 p-6 rounded-[var(--lkv-radius-card)] border border-[var(--glass-rim)] text-center space-y-4\">",
+                  "target": [
+                    ".p-6"
+                  ]
+                },
+                {
+                  "html": "<html lang=\"fr\" class=\"__variable_a5811e __variable_d7e2b6 dark\" data-theme=\"dark\" style=\"color-scheme: dark;\">",
+                  "target": [
+                    "html"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element has insufficient color contrast of 2.07 (foreground color: #f1f5f1, background color: #a3aea8, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<p class=\"text-xs text-[var(--glass-secondary)] leading-relaxed\">Les fiches d'expédition validées et le forum des guides seront accessibles dès la phase d'ouverture communautaire.</p>",
+          "target": [
+            ".leading-relaxed"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 2.07 (foreground color: #f1f5f1, background color: #a3aea8, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+        }
+      ]
+    }
+  ]
 }

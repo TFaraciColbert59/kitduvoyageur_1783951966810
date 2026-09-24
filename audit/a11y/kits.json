@@ -1,14 +1,271 @@
 {
   "route": "/kits",
   "id": "kits",
-  "timestamp": "2026-09-23T18:53:26.602Z",
+  "timestamp": "2026-09-24T17:04:07.579Z",
   "violationsCount": 1,
+  "seriousCount": 1,
+  "criticalCount": 0,
   "violations": [
     {
       "id": "color-contrast",
       "impact": "serious",
+      "tags": [
+        "cat.color",
+        "wcag2aa",
+        "wcag143",
+        "TTv5",
+        "TT13.c",
+        "EN-301-549",
+        "EN-9.1.4.3",
+        "ACT",
+        "RGAAv4",
+        "RGAA-3.2.1"
+      ],
       "description": "Ensure the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
-      "nodes": 3
+      "help": "Elements must meet minimum color contrast ratio thresholds",
+      "helpUrl": "https://dequeuniversity.com/rules/axe/4.13/color-contrast?application=playwright",
+      "nodes": [
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "fgColor": "#f1f5f1",
+                "bgColor": "#a3aea8",
+                "contrastRatio": 2.07,
+                "fontSize": "9.0pt (12px)",
+                "fontWeight": "normal",
+                "messageKey": null,
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<div class=\"g1 p-5 rounded-[var(--lkv-radius-card)] border border-[var(--glass-rim)] flex flex-col gap-3 shadow-md\">",
+                  "target": [
+                    ".p-5.g1.rounded-\\[var\\(--lkv-radius-card\\)\\]:nth-child(1)"
+                  ]
+                },
+                {
+                  "html": "<html lang=\"fr\" class=\"__variable_a5811e __variable_d7e2b6 dark\" data-theme=\"dark\" style=\"color-scheme: dark;\">",
+                  "target": [
+                    "html"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element has insufficient color contrast of 2.07 (foreground color: #f1f5f1, background color: #a3aea8, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<p class=\"text-xs text-[var(--glass-secondary)] leading-relaxed\">Équipement complet pour affronter les conditions extrêmes islandaises</p>",
+          "target": [
+            ".p-5.g1.rounded-\\[var\\(--lkv-radius-card\\)\\]:nth-child(1) > .leading-relaxed"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 2.07 (foreground color: #f1f5f1, background color: #a3aea8, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "fgColor": "#f1f5f1",
+                "bgColor": "#a3aea8",
+                "contrastRatio": 2.07,
+                "fontSize": "9.0pt (12px)",
+                "fontWeight": "normal",
+                "messageKey": null,
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<div class=\"g1 p-5 rounded-[var(--lkv-radius-card)] border border-[var(--glass-rim)] flex flex-col gap-3 shadow-md\">",
+                  "target": [
+                    ".p-5.g1.rounded-\\[var\\(--lkv-radius-card\\)\\]:nth-child(1)"
+                  ]
+                },
+                {
+                  "html": "<html lang=\"fr\" class=\"__variable_a5811e __variable_d7e2b6 dark\" data-theme=\"dark\" style=\"color-scheme: dark;\">",
+                  "target": [
+                    "html"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element has insufficient color contrast of 2.07 (foreground color: #f1f5f1, background color: #a3aea8, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<span class=\"text-xs font-semibold tabular-nums text-[var(--glass-secondary)]\">14.2 kg<!-- --> · <!-- -->18<!-- --> articles</span>",
+          "target": [
+            ".p-5.g1.rounded-\\[var\\(--lkv-radius-card\\)\\]:nth-child(1) > .pt-2.border-t.border-\\[var\\(--glass-rim\\)\\] > .tabular-nums.text-xs.text-\\[var\\(--glass-secondary\\)\\]"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 2.07 (foreground color: #f1f5f1, background color: #a3aea8, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "fgColor": "#f1f5f1",
+                "bgColor": "#a3aea8",
+                "contrastRatio": 2.07,
+                "fontSize": "9.0pt (12px)",
+                "fontWeight": "normal",
+                "messageKey": null,
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<div class=\"g1 p-5 rounded-[var(--lkv-radius-card)] border border-[var(--glass-rim)] flex flex-col gap-3 shadow-md\">",
+                  "target": [
+                    ".p-5.g1.rounded-\\[var\\(--lkv-radius-card\\)\\]:nth-child(2)"
+                  ]
+                },
+                {
+                  "html": "<html lang=\"fr\" class=\"__variable_a5811e __variable_d7e2b6 dark\" data-theme=\"dark\" style=\"color-scheme: dark;\">",
+                  "target": [
+                    "html"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element has insufficient color contrast of 2.07 (foreground color: #f1f5f1, background color: #a3aea8, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<p class=\"text-xs text-[var(--glass-secondary)] leading-relaxed\">Le kit optimisé pour le GR20, l'un des sentiers les plus exigeants d'Europe</p>",
+          "target": [
+            ".p-5.g1.rounded-\\[var\\(--lkv-radius-card\\)\\]:nth-child(2) > .leading-relaxed"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 2.07 (foreground color: #f1f5f1, background color: #a3aea8, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "fgColor": "#f1f5f1",
+                "bgColor": "#a3aea8",
+                "contrastRatio": 2.07,
+                "fontSize": "9.0pt (12px)",
+                "fontWeight": "normal",
+                "messageKey": null,
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<div class=\"g1 p-5 rounded-[var(--lkv-radius-card)] border border-[var(--glass-rim)] flex flex-col gap-3 shadow-md\">",
+                  "target": [
+                    ".p-5.g1.rounded-\\[var\\(--lkv-radius-card\\)\\]:nth-child(2)"
+                  ]
+                },
+                {
+                  "html": "<html lang=\"fr\" class=\"__variable_a5811e __variable_d7e2b6 dark\" data-theme=\"dark\" style=\"color-scheme: dark;\">",
+                  "target": [
+                    "html"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element has insufficient color contrast of 2.07 (foreground color: #f1f5f1, background color: #a3aea8, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<span class=\"text-xs font-semibold tabular-nums text-[var(--glass-secondary)]\">11.8 kg<!-- --> · <!-- -->15<!-- --> articles</span>",
+          "target": [
+            ".p-5.g1.rounded-\\[var\\(--lkv-radius-card\\)\\]:nth-child(2) > .pt-2.border-t.border-\\[var\\(--glass-rim\\)\\] > .tabular-nums.text-xs.text-\\[var\\(--glass-secondary\\)\\]"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 2.07 (foreground color: #f1f5f1, background color: #a3aea8, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "fgColor": "#f1f5f1",
+                "bgColor": "#a3aea8",
+                "contrastRatio": 2.07,
+                "fontSize": "9.0pt (12px)",
+                "fontWeight": "normal",
+                "messageKey": null,
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<div class=\"g1 p-5 rounded-[var(--lkv-radius-card)] border border-[var(--glass-rim)] flex flex-col gap-3 shadow-md\">",
+                  "target": [
+                    ".p-5.g1.rounded-\\[var\\(--lkv-radius-card\\)\\]:nth-child(3)"
+                  ]
+                },
+                {
+                  "html": "<html lang=\"fr\" class=\"__variable_a5811e __variable_d7e2b6 dark\" data-theme=\"dark\" style=\"color-scheme: dark;\">",
+                  "target": [
+                    "html"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element has insufficient color contrast of 2.07 (foreground color: #f1f5f1, background color: #a3aea8, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<p class=\"text-xs text-[var(--glass-secondary)] leading-relaxed\">Tout ce qu'il faut pour vivre et dormir dans son van à travers l'Europe</p>",
+          "target": [
+            ".p-5.g1.rounded-\\[var\\(--lkv-radius-card\\)\\]:nth-child(3) > .leading-relaxed"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 2.07 (foreground color: #f1f5f1, background color: #a3aea8, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "fgColor": "#f1f5f1",
+                "bgColor": "#a3aea8",
+                "contrastRatio": 2.07,
+                "fontSize": "9.0pt (12px)",
+                "fontWeight": "normal",
+                "messageKey": null,
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<div class=\"g1 p-5 rounded-[var(--lkv-radius-card)] border border-[var(--glass-rim)] flex flex-col gap-3 shadow-md\">",
+                  "target": [
+                    ".p-5.g1.rounded-\\[var\\(--lkv-radius-card\\)\\]:nth-child(3)"
+                  ]
+                },
+                {
+                  "html": "<html lang=\"fr\" class=\"__variable_a5811e __variable_d7e2b6 dark\" data-theme=\"dark\" style=\"color-scheme: dark;\">",
+                  "target": [
+                    "html"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element has insufficient color contrast of 2.07 (foreground color: #f1f5f1, background color: #a3aea8, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<span class=\"text-xs font-semibold tabular-nums text-[var(--glass-secondary)]\">22.5 kg<!-- --> · <!-- -->24<!-- --> articles</span>",
+          "target": [
+            ".p-5.g1.rounded-\\[var\\(--lkv-radius-card\\)\\]:nth-child(3) > .pt-2.border-t.border-\\[var\\(--glass-rim\\)\\] > .tabular-nums.text-xs.text-\\[var\\(--glass-secondary\\)\\]"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 2.07 (foreground color: #f1f5f1, background color: #a3aea8, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+        }
+      ]
     }
   ]
 }

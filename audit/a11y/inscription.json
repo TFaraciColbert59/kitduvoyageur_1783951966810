@@ -1,7 +1,9 @@
 {
   "route": "/inscription",
   "id": "inscription",
-  "timestamp": "2026-09-23T19:04:27.501Z",
+  "timestamp": "2026-09-24T17:09:25.260Z",
   "violationsCount": 0,
+  "seriousCount": 0,
+  "criticalCount": 0,
   "violations": []
 }

@@ -1,14 +1,1597 @@
 {
   "route": "/communaute/publier",
   "id": "communaute-publier",
-  "timestamp": "2026-09-23T18:58:10.564Z",
+  "timestamp": "2026-09-24T17:06:35.519Z",
   "violationsCount": 1,
+  "seriousCount": 1,
+  "criticalCount": 0,
   "violations": [
     {
       "id": "color-contrast",
       "impact": "serious",
+      "tags": [
+        "cat.color",
+        "wcag2aa",
+        "wcag143",
+        "TTv5",
+        "TT13.c",
+        "EN-301-549",
+        "EN-9.1.4.3",
+        "ACT",
+        "RGAAv4",
+        "RGAA-3.2.1"
+      ],
       "description": "Ensure the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
-      "nodes": 36
+      "help": "Elements must meet minimum color contrast ratio thresholds",
+      "helpUrl": "https://dequeuniversity.com/rules/axe/4.13/color-contrast?application=playwright",
+      "nodes": [
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "fgColor": "#a9b8b0",
+                "bgColor": "#3f574a",
+                "contrastRatio": 3.8,
+                "fontSize": "8.3pt (11px)",
+                "fontWeight": "normal",
+                "messageKey": null,
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<div data-variant=\"standard\" data-tone=\"neutral\" class=\"lkv-glass rounded-[var(--lkv-radius-card)] p-[var(--space-5)] space-y-[var(--space-4)]\">",
+                  "target": [
+                    ".p-\\[var\\(--space-5\\)\\].space-y-\\[var\\(--space-4\\)\\][data-variant=\"standard\"]:nth-child(1)"
+                  ]
+                },
+                {
+                  "html": "<div class=\"relative min-h-screen bg-[color:var(--glass-bg-medium)] border border-[color:var(--glass-border)] saturate-[var(--glass-sat)] lkv-rim-inset pb-32 text-[color:var(--lkv-text-primary)] backdrop-blur-[var(--glass-blur-sm)] md:pb-24 md:pt-24\">",
+                  "target": [
+                    ".min-h-screen"
+                  ]
+                },
+                {
+                  "html": "<html lang=\"fr\" class=\"__variable_a5811e __variable_d7e2b6 dark\" data-theme=\"dark\" style=\"color-scheme: dark;\">",
+                  "target": [
+                    "html"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element has insufficient color contrast of 3.8 (foreground color: #a9b8b0, background color: #3f574a, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<span class=\"font-mono text-[length:var(--lkv-text-caption-2)] uppercase text-[color:var(--lkv-text-muted)]\">01 — Format</span>",
+          "target": [
+            ".p-\\[var\\(--space-5\\)\\].space-y-\\[var\\(--space-4\\)\\][data-variant=\"standard\"]:nth-child(1) > .justify-between.flex.items-center > .font-mono.uppercase.text-\\[length\\:var\\(--lkv-text-caption-2\\)\\]"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 3.8 (foreground color: #a9b8b0, background color: #3f574a, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "fgColor": "#a9b8b0",
+                "bgColor": "#3f574a",
+                "contrastRatio": 3.8,
+                "fontSize": "9.0pt (12px)",
+                "fontWeight": "normal",
+                "messageKey": null,
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<div data-variant=\"standard\" data-tone=\"neutral\" class=\"lkv-glass rounded-[var(--lkv-radius-card)] p-[var(--space-5)] space-y-[var(--space-4)]\">",
+                  "target": [
+                    ".p-\\[var\\(--space-5\\)\\].space-y-\\[var\\(--space-4\\)\\][data-variant=\"standard\"]:nth-child(1)"
+                  ]
+                },
+                {
+                  "html": "<div class=\"relative min-h-screen bg-[color:var(--glass-bg-medium)] border border-[color:var(--glass-border)] saturate-[var(--glass-sat)] lkv-rim-inset pb-32 text-[color:var(--lkv-text-primary)] backdrop-blur-[var(--glass-blur-sm)] md:pb-24 md:pt-24\">",
+                  "target": [
+                    ".min-h-screen"
+                  ]
+                },
+                {
+                  "html": "<html lang=\"fr\" class=\"__variable_a5811e __variable_d7e2b6 dark\" data-theme=\"dark\" style=\"color-scheme: dark;\">",
+                  "target": [
+                    "html"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element has insufficient color contrast of 3.8 (foreground color: #a9b8b0, background color: #3f574a, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<p class=\"text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-muted)]\">Choisissez la forme qui correspond à ce que vous voulez partager. Chaque type adapt les champs et le rendu dans le fil.</p>",
+          "target": [
+            ".p-\\[var\\(--space-5\\)\\].space-y-\\[var\\(--space-4\\)\\][data-variant=\"standard\"]:nth-child(1) > p"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 3.8 (foreground color: #a9b8b0, background color: #3f574a, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "fgColor": "#a9b8b0",
+                "bgColor": "#52685c",
+                "contrastRatio": 2.91,
+                "fontSize": "8.3pt (11px)",
+                "fontWeight": "normal",
+                "messageKey": null,
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<div role=\"button\" tabindex=\"0\" aria-pressed=\"true\" data-variant=\"interactive\" data-tone=\"neutral\" class=\"lkv-glass rounded-[v...\">",
+                  "target": [
+                    ".grid-cols-2 > .ring-2.ring-\\[color\\:var\\(--glass-rim\\)\\].shadow-\\[var\\(--glass-specular\\)\\]"
+                  ]
+                },
+                {
+                  "html": "<div data-variant=\"standard\" data-tone=\"neutral\" class=\"lkv-glass rounded-[var(--lkv-radius-card)] p-[var(--space-5)] space-y-[var(--space-4)]\">",
+                  "target": [
+                    ".p-\\[var\\(--space-5\\)\\].space-y-\\[var\\(--space-4\\)\\][data-variant=\"standard\"]:nth-child(1)"
+                  ]
+                },
+                {
+                  "html": "<div class=\"relative min-h-screen bg-[color:var(--glass-bg-medium)] border border-[color:var(--glass-border)] saturate-[var(--glass-sat)] lkv-rim-inset pb-32 text-[color:var(--lkv-text-primary)] backdrop-blur-[var(--glass-blur-sm)] md:pb-24 md:pt-24\">",
+                  "target": [
+                    ".min-h-screen"
+                  ]
+                },
+                {
+                  "html": "<html lang=\"fr\" class=\"__variable_a5811e __variable_d7e2b6 dark\" data-theme=\"dark\" style=\"color-scheme: dark;\">",
+                  "target": [
+                    "html"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element has insufficient color contrast of 2.91 (foreground color: #a9b8b0, background color: #52685c, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<span class=\"mt-0.5 text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]\">Instantané ou galerie</span>",
+          "target": [
+            ".grid-cols-2 > .ring-2.ring-\\[color\\:var\\(--glass-rim\\)\\].shadow-\\[var\\(--glass-specular\\)\\] > .mt-0\\.5.text-\\[length\\:var\\(--lkv-text-caption-2\\)\\].text-\\[color\\:var\\(--lkv-text-muted\\)\\]"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 2.91 (foreground color: #a9b8b0, background color: #52685c, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "fgColor": "#a9b8b0",
+                "bgColor": "#52685c",
+                "contrastRatio": 2.91,
+                "fontSize": "8.3pt (11px)",
+                "fontWeight": "normal",
+                "messageKey": null,
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<div role=\"button\" tabindex=\"0\" data-variant=\"interactive\" data-tone=\"neutral\" class=\"lkv-glass rounded-[v...\">",
+                  "target": [
+                    ".text-center.p-\\[var\\(--space-4\\)\\].duration-\\[var\\(--motion-control-duration\\)\\]:nth-child(2)"
+                  ]
+                },
+                {
+                  "html": "<div data-variant=\"standard\" data-tone=\"neutral\" class=\"lkv-glass rounded-[var(--lkv-radius-card)] p-[var(--space-5)] space-y-[var(--space-4)]\">",
+                  "target": [
+                    ".p-\\[var\\(--space-5\\)\\].space-y-\\[var\\(--space-4\\)\\][data-variant=\"standard\"]:nth-child(1)"
+                  ]
+                },
+                {
+                  "html": "<div class=\"relative min-h-screen bg-[color:var(--glass-bg-medium)] border border-[color:var(--glass-border)] saturate-[var(--glass-sat)] lkv-rim-inset pb-32 text-[color:var(--lkv-text-primary)] backdrop-blur-[var(--glass-blur-sm)] md:pb-24 md:pt-24\">",
+                  "target": [
+                    ".min-h-screen"
+                  ]
+                },
+                {
+                  "html": "<html lang=\"fr\" class=\"__variable_a5811e __variable_d7e2b6 dark\" data-theme=\"dark\" style=\"color-scheme: dark;\">",
+                  "target": [
+                    "html"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element has insufficient color contrast of 2.91 (foreground color: #a9b8b0, background color: #52685c, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<span class=\"mt-0.5 text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]\">Texte long, mise en page</span>",
+          "target": [
+            ".text-center.p-\\[var\\(--space-4\\)\\].duration-\\[var\\(--motion-control-duration\\)\\]:nth-child(2) > .mt-0\\.5.text-\\[length\\:var\\(--lkv-text-caption-2\\)\\].text-\\[color\\:var\\(--lkv-text-muted\\)\\]"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 2.91 (foreground color: #a9b8b0, background color: #52685c, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "fgColor": "#a9b8b0",
+                "bgColor": "#52685c",
+                "contrastRatio": 2.91,
+                "fontSize": "8.3pt (11px)",
+                "fontWeight": "normal",
+                "messageKey": null,
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<div role=\"button\" tabindex=\"0\" data-variant=\"interactive\" data-tone=\"neutral\" class=\"lkv-glass rounded-[v...\">",
+                  "target": [
+                    ".text-center.p-\\[var\\(--space-4\\)\\].duration-\\[var\\(--motion-control-duration\\)\\]:nth-child(3)"
+                  ]
+                },
+                {
+                  "html": "<div data-variant=\"standard\" data-tone=\"neutral\" class=\"lkv-glass rounded-[var(--lkv-radius-card)] p-[var(--space-5)] space-y-[var(--space-4)]\">",
+                  "target": [
+                    ".p-\\[var\\(--space-5\\)\\].space-y-\\[var\\(--space-4\\)\\][data-variant=\"standard\"]:nth-child(1)"
+                  ]
+                },
+                {
+                  "html": "<div class=\"relative min-h-screen bg-[color:var(--glass-bg-medium)] border border-[color:var(--glass-border)] saturate-[var(--glass-sat)] lkv-rim-inset pb-32 text-[color:var(--lkv-text-primary)] backdrop-blur-[var(--glass-blur-sm)] md:pb-24 md:pt-24\">",
+                  "target": [
+                    ".min-h-screen"
+                  ]
+                },
+                {
+                  "html": "<html lang=\"fr\" class=\"__variable_a5811e __variable_d7e2b6 dark\" data-theme=\"dark\" style=\"color-scheme: dark;\">",
+                  "target": [
+                    "html"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element has insufficient color contrast of 2.91 (foreground color: #a9b8b0, background color: #52685c, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<span class=\"mt-0.5 text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]\">Demandez aux membres</span>",
+          "target": [
+            ".text-center.p-\\[var\\(--space-4\\)\\].duration-\\[var\\(--motion-control-duration\\)\\]:nth-child(3) > .mt-0\\.5.text-\\[length\\:var\\(--lkv-text-caption-2\\)\\].text-\\[color\\:var\\(--lkv-text-muted\\)\\]"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 2.91 (foreground color: #a9b8b0, background color: #52685c, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "fgColor": "#a9b8b0",
+                "bgColor": "#52685c",
+                "contrastRatio": 2.91,
+                "fontSize": "8.3pt (11px)",
+                "fontWeight": "normal",
+                "messageKey": null,
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<div role=\"button\" tabindex=\"0\" data-variant=\"interactive\" data-tone=\"neutral\" class=\"lkv-glass rounded-[v...\">",
+                  "target": [
+                    ".text-center.p-\\[var\\(--space-4\\)\\].duration-\\[var\\(--motion-control-duration\\)\\]:nth-child(4)"
+                  ]
+                },
+                {
+                  "html": "<div data-variant=\"standard\" data-tone=\"neutral\" class=\"lkv-glass rounded-[var(--lkv-radius-card)] p-[var(--space-5)] space-y-[var(--space-4)]\">",
+                  "target": [
+                    ".p-\\[var\\(--space-5\\)\\].space-y-\\[var\\(--space-4\\)\\][data-variant=\"standard\"]:nth-child(1)"
+                  ]
+                },
+                {
+                  "html": "<div class=\"relative min-h-screen bg-[color:var(--glass-bg-medium)] border border-[color:var(--glass-border)] saturate-[var(--glass-sat)] lkv-rim-inset pb-32 text-[color:var(--lkv-text-primary)] backdrop-blur-[var(--glass-blur-sm)] md:pb-24 md:pt-24\">",
+                  "target": [
+                    ".min-h-screen"
+                  ]
+                },
+                {
+                  "html": "<html lang=\"fr\" class=\"__variable_a5811e __variable_d7e2b6 dark\" data-theme=\"dark\" style=\"color-scheme: dark;\">",
+                  "target": [
+                    "html"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element has insufficient color contrast of 2.91 (foreground color: #a9b8b0, background color: #52685c, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<span class=\"mt-0.5 text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]\">Sortie à venir</span>",
+          "target": [
+            ".text-center.p-\\[var\\(--space-4\\)\\].duration-\\[var\\(--motion-control-duration\\)\\]:nth-child(4) > .mt-0\\.5.text-\\[length\\:var\\(--lkv-text-caption-2\\)\\].text-\\[color\\:var\\(--lkv-text-muted\\)\\]"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 2.91 (foreground color: #a9b8b0, background color: #52685c, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "fgColor": "#a9b8b0",
+                "bgColor": "#3f574a",
+                "contrastRatio": 3.8,
+                "fontSize": "8.3pt (11px)",
+                "fontWeight": "normal",
+                "messageKey": null,
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<div data-variant=\"standard\" data-tone=\"neutral\" class=\"lkv-glass rounded-[var(--lkv-radius-card)] p-[var(--space-5)] space-y-[var(--space-4)]\">",
+                  "target": [
+                    ".lg\\:col-span-8 > .p-\\[var\\(--space-5\\)\\].space-y-\\[var\\(--space-4\\)\\][data-variant=\"standard\"]:nth-child(2)"
+                  ]
+                },
+                {
+                  "html": "<div class=\"relative min-h-screen bg-[color:var(--glass-bg-medium)] border border-[color:var(--glass-border)] saturate-[var(--glass-sat)] lkv-rim-inset pb-32 text-[color:var(--lkv-text-primary)] backdrop-blur-[var(--glass-blur-sm)] md:pb-24 md:pt-24\">",
+                  "target": [
+                    ".min-h-screen"
+                  ]
+                },
+                {
+                  "html": "<html lang=\"fr\" class=\"__variable_a5811e __variable_d7e2b6 dark\" data-theme=\"dark\" style=\"color-scheme: dark;\">",
+                  "target": [
+                    "html"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element has insufficient color contrast of 3.8 (foreground color: #a9b8b0, background color: #3f574a, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<span class=\"font-mono text-[length:var(--lkv-text-caption-2)] uppercase text-[color:var(--lkv-text-muted)]\">02 — Ce que vous partagez</span>",
+          "target": [
+            ".p-\\[var\\(--space-5\\)\\].space-y-\\[var\\(--space-4\\)\\][data-variant=\"standard\"]:nth-child(2) > .justify-between.flex.items-center > .font-mono.uppercase.text-\\[length\\:var\\(--lkv-text-caption-2\\)\\]"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 3.8 (foreground color: #a9b8b0, background color: #3f574a, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "fgColor": "#a9b8b0",
+                "bgColor": "#3f574a",
+                "contrastRatio": 3.8,
+                "fontSize": "9.0pt (12px)",
+                "fontWeight": "normal",
+                "messageKey": null,
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<div data-variant=\"standard\" data-tone=\"neutral\" class=\"lkv-glass rounded-[var(--lkv-radius-card)] p-[var(--space-5)] space-y-[var(--space-4)]\">",
+                  "target": [
+                    ".lg\\:col-span-8 > .p-\\[var\\(--space-5\\)\\].space-y-\\[var\\(--space-4\\)\\][data-variant=\"standard\"]:nth-child(2)"
+                  ]
+                },
+                {
+                  "html": "<div class=\"relative min-h-screen bg-[color:var(--glass-bg-medium)] border border-[color:var(--glass-border)] saturate-[var(--glass-sat)] lkv-rim-inset pb-32 text-[color:var(--lkv-text-primary)] backdrop-blur-[var(--glass-blur-sm)] md:pb-24 md:pt-24\">",
+                  "target": [
+                    ".min-h-screen"
+                  ]
+                },
+                {
+                  "html": "<html lang=\"fr\" class=\"__variable_a5811e __variable_d7e2b6 dark\" data-theme=\"dark\" style=\"color-scheme: dark;\">",
+                  "target": [
+                    "html"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element has insufficient color contrast of 3.8 (foreground color: #a9b8b0, background color: #3f574a, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<p class=\"text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-muted)]\">Un mot court engage plus qu'un long paragraphe. Une image, une phrase — c'est souvent tout ce qu'il faut.</p>",
+          "target": [
+            ".p-\\[var\\(--space-5\\)\\].space-y-\\[var\\(--space-4\\)\\][data-variant=\"standard\"]:nth-child(2) > p"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 3.8 (foreground color: #a9b8b0, background color: #3f574a, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "fgColor": "#a9b8b0",
+                "bgColor": "#3f574a",
+                "contrastRatio": 3.8,
+                "fontSize": "9.0pt (12px)",
+                "fontWeight": "normal",
+                "messageKey": null,
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<div data-variant=\"standard\" data-tone=\"neutral\" class=\"lkv-glass rounded-[var(--lkv-radius-card)] p-[var(--space-5)] space-y-[var(--space-4)]\">",
+                  "target": [
+                    ".lg\\:col-span-8 > .p-\\[var\\(--space-5\\)\\].space-y-\\[var\\(--space-4\\)\\][data-variant=\"standard\"]:nth-child(2)"
+                  ]
+                },
+                {
+                  "html": "<div class=\"relative min-h-screen bg-[color:var(--glass-bg-medium)] border border-[color:var(--glass-border)] saturate-[var(--glass-sat)] lkv-rim-inset pb-32 text-[color:var(--lkv-text-primary)] backdrop-blur-[var(--glass-blur-sm)] md:pb-24 md:pt-24\">",
+                  "target": [
+                    ".min-h-screen"
+                  ]
+                },
+                {
+                  "html": "<html lang=\"fr\" class=\"__variable_a5811e __variable_d7e2b6 dark\" data-theme=\"dark\" style=\"color-scheme: dark;\">",
+                  "target": [
+                    "html"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element has insufficient color contrast of 3.8 (foreground color: #a9b8b0, background color: #3f574a, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<span class=\"font-normal text-[color:var(--lkv-text-muted)]\">(Optionnel pour une seule photo)</span>",
+          "target": [
+            "label[for=\"post-title\"] > .font-normal.text-\\[color\\:var\\(--lkv-text-muted\\)\\]"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 3.8 (foreground color: #a9b8b0, background color: #3f574a, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "fgColor": "#a9b8b0",
+                "bgColor": "#3f574a",
+                "contrastRatio": 3.8,
+                "fontSize": "8.3pt (11px)",
+                "fontWeight": "normal",
+                "messageKey": null,
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<div data-variant=\"standard\" data-tone=\"neutral\" class=\"lkv-glass rounded-[var(--lkv-radius-card)] p-[var(--space-5)] space-y-[var(--space-4)]\">",
+                  "target": [
+                    ".lg\\:col-span-8 > .p-\\[var\\(--space-5\\)\\].space-y-\\[var\\(--space-4\\)\\][data-variant=\"standard\"]:nth-child(2)"
+                  ]
+                },
+                {
+                  "html": "<div class=\"relative min-h-screen bg-[color:var(--glass-bg-medium)] border border-[color:var(--glass-border)] saturate-[var(--glass-sat)] lkv-rim-inset pb-32 text-[color:var(--lkv-text-primary)] backdrop-blur-[var(--glass-blur-sm)] md:pb-24 md:pt-24\">",
+                  "target": [
+                    ".min-h-screen"
+                  ]
+                },
+                {
+                  "html": "<html lang=\"fr\" class=\"__variable_a5811e __variable_d7e2b6 dark\" data-theme=\"dark\" style=\"color-scheme: dark;\">",
+                  "target": [
+                    "html"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element has insufficient color contrast of 3.8 (foreground color: #a9b8b0, background color: #3f574a, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<span>Mise en forme légère : les liens et les citations sont automatiquement supportés</span>",
+          "target": [
+            ".mt-\\[var\\(--space-2\\)\\] > span:nth-child(1)"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 3.8 (foreground color: #a9b8b0, background color: #3f574a, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "fgColor": "#a9b8b0",
+                "bgColor": "#3f574a",
+                "contrastRatio": 3.8,
+                "fontSize": "8.3pt (11px)",
+                "fontWeight": "normal",
+                "messageKey": null,
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<div data-variant=\"standard\" data-tone=\"neutral\" class=\"lkv-glass rounded-[var(--lkv-radius-card)] p-[var(--space-5)] space-y-[var(--space-4)]\">",
+                  "target": [
+                    ".p-\\[var\\(--space-5\\)\\].space-y-\\[var\\(--space-4\\)\\][data-variant=\"standard\"]:nth-child(3)"
+                  ]
+                },
+                {
+                  "html": "<div class=\"relative min-h-screen bg-[color:var(--glass-bg-medium)] border border-[color:var(--glass-border)] saturate-[var(--glass-sat)] lkv-rim-inset pb-32 text-[color:var(--lkv-text-primary)] backdrop-blur-[var(--glass-blur-sm)] md:pb-24 md:pt-24\">",
+                  "target": [
+                    ".min-h-screen"
+                  ]
+                },
+                {
+                  "html": "<html lang=\"fr\" class=\"__variable_a5811e __variable_d7e2b6 dark\" data-theme=\"dark\" style=\"color-scheme: dark;\">",
+                  "target": [
+                    "html"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element has insufficient color contrast of 3.8 (foreground color: #a9b8b0, background color: #3f574a, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<span class=\"font-mono text-[length:var(--lkv-text-caption-2)] uppercase text-[color:var(--lkv-text-muted)]\">03 — Médias</span>",
+          "target": [
+            ".p-\\[var\\(--space-5\\)\\].space-y-\\[var\\(--space-4\\)\\][data-variant=\"standard\"]:nth-child(3) > .justify-between.flex.items-center > .font-mono.uppercase.text-\\[length\\:var\\(--lkv-text-caption-2\\)\\]"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 3.8 (foreground color: #a9b8b0, background color: #3f574a, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "fgColor": "#a9b8b0",
+                "bgColor": "#3f574a",
+                "contrastRatio": 3.8,
+                "fontSize": "9.0pt (12px)",
+                "fontWeight": "normal",
+                "messageKey": null,
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<div data-variant=\"standard\" data-tone=\"neutral\" class=\"lkv-glass rounded-[var(--lkv-radius-card)] p-[var(--space-5)] space-y-[var(--space-4)]\">",
+                  "target": [
+                    ".p-\\[var\\(--space-5\\)\\].space-y-\\[var\\(--space-4\\)\\][data-variant=\"standard\"]:nth-child(3)"
+                  ]
+                },
+                {
+                  "html": "<div class=\"relative min-h-screen bg-[color:var(--glass-bg-medium)] border border-[color:var(--glass-border)] saturate-[var(--glass-sat)] lkv-rim-inset pb-32 text-[color:var(--lkv-text-primary)] backdrop-blur-[var(--glass-blur-sm)] md:pb-24 md:pt-24\">",
+                  "target": [
+                    ".min-h-screen"
+                  ]
+                },
+                {
+                  "html": "<html lang=\"fr\" class=\"__variable_a5811e __variable_d7e2b6 dark\" data-theme=\"dark\" style=\"color-scheme: dark;\">",
+                  "target": [
+                    "html"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element has insufficient color contrast of 3.8 (foreground color: #a9b8b0, background color: #3f574a, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<p class=\"text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-muted)]\">Jusqu'à 10 fichiers. Glissez-déposez ou parcourez. La première image devient la vignette du post.</p>",
+          "target": [
+            ".p-\\[var\\(--space-5\\)\\].space-y-\\[var\\(--space-4\\)\\][data-variant=\"standard\"]:nth-child(3) > p"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 3.8 (foreground color: #a9b8b0, background color: #3f574a, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "fgColor": "#a9b8b0",
+                "bgColor": "#52685c",
+                "contrastRatio": 2.91,
+                "fontSize": "8.3pt (11px)",
+                "fontWeight": "normal",
+                "messageKey": null,
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<div role=\"button\" tabindex=\"0\" data-variant=\"interactive\" data-tone=\"neutral\" class=\"lkv-glass rounded-[v...\">",
+                  "target": [
+                    ".mb-\\[var\\(--space-4\\)\\]"
+                  ]
+                },
+                {
+                  "html": "<div data-variant=\"standard\" data-tone=\"neutral\" class=\"lkv-glass rounded-[var(--lkv-radius-card)] p-[var(--space-5)] space-y-[var(--space-4)]\">",
+                  "target": [
+                    ".p-\\[var\\(--space-5\\)\\].space-y-\\[var\\(--space-4\\)\\][data-variant=\"standard\"]:nth-child(3)"
+                  ]
+                },
+                {
+                  "html": "<div class=\"relative min-h-screen bg-[color:var(--glass-bg-medium)] border border-[color:var(--glass-border)] saturate-[var(--glass-sat)] lkv-rim-inset pb-32 text-[color:var(--lkv-text-primary)] backdrop-blur-[var(--glass-blur-sm)] md:pb-24 md:pt-24\">",
+                  "target": [
+                    ".min-h-screen"
+                  ]
+                },
+                {
+                  "html": "<html lang=\"fr\" class=\"__variable_a5811e __variable_d7e2b6 dark\" data-theme=\"dark\" style=\"color-scheme: dark;\">",
+                  "target": [
+                    "html"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element has insufficient color contrast of 2.91 (foreground color: #a9b8b0, background color: #52685c, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<p class=\"mt-[var(--space-1)] text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]\">JPG, PNG, MP4 max 20Mo</p>",
+          "target": [
+            ".mb-\\[var\\(--space-4\\)\\] > .mt-\\[var\\(--space-1\\)\\]"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 2.91 (foreground color: #a9b8b0, background color: #52685c, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "fgColor": "#a9b8b0",
+                "bgColor": "#52685c",
+                "contrastRatio": 2.91,
+                "fontSize": "8.3pt (11px)",
+                "fontWeight": "bold",
+                "messageKey": null,
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<div role=\"button\" tabindex=\"0\" data-variant=\"interactive\" data-tone=\"neutral\" class=\"lkv-glass rounded-[v...\">",
+                  "target": [
+                    ".aspect-\\[4\\/3\\]"
+                  ]
+                },
+                {
+                  "html": "<div data-variant=\"standard\" data-tone=\"neutral\" class=\"lkv-glass rounded-[var(--lkv-radius-card)] p-[var(--space-5)] space-y-[var(--space-4)]\">",
+                  "target": [
+                    ".p-\\[var\\(--space-5\\)\\].space-y-\\[var\\(--space-4\\)\\][data-variant=\"standard\"]:nth-child(3)"
+                  ]
+                },
+                {
+                  "html": "<div class=\"relative min-h-screen bg-[color:var(--glass-bg-medium)] border border-[color:var(--glass-border)] saturate-[var(--glass-sat)] lkv-rim-inset pb-32 text-[color:var(--lkv-text-primary)] backdrop-blur-[var(--glass-blur-sm)] md:pb-24 md:pt-24\">",
+                  "target": [
+                    ".min-h-screen"
+                  ]
+                },
+                {
+                  "html": "<html lang=\"fr\" class=\"__variable_a5811e __variable_d7e2b6 dark\" data-theme=\"dark\" style=\"color-scheme: dark;\">",
+                  "target": [
+                    "html"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element has insufficient color contrast of 2.91 (foreground color: #a9b8b0, background color: #52685c, font size: 8.3pt (11px), font weight: bold). Expected contrast ratio of 4.5:1"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<span class=\"text-[length:var(--lkv-text-caption-2)]\">Ajouter</span>",
+          "target": [
+            ".aspect-\\[4\\/3\\] > .text-\\[length\\:var\\(--lkv-text-caption-2\\)\\]"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 2.91 (foreground color: #a9b8b0, background color: #52685c, font size: 8.3pt (11px), font weight: bold). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "fgColor": "#a9b8b0",
+                "bgColor": "#3f574a",
+                "contrastRatio": 3.8,
+                "fontSize": "8.3pt (11px)",
+                "fontWeight": "normal",
+                "messageKey": null,
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<div data-variant=\"standard\" data-tone=\"neutral\" class=\"lkv-glass rounded-[var(--lkv-radius-card)] p-[var(--space-5)] space-y-[var(--space-4)]\">",
+                  "target": [
+                    ".p-\\[var\\(--space-5\\)\\].space-y-\\[var\\(--space-4\\)\\][data-variant=\"standard\"]:nth-child(4)"
+                  ]
+                },
+                {
+                  "html": "<div class=\"relative min-h-screen bg-[color:var(--glass-bg-medium)] border border-[color:var(--glass-border)] saturate-[var(--glass-sat)] lkv-rim-inset pb-32 text-[color:var(--lkv-text-primary)] backdrop-blur-[var(--glass-blur-sm)] md:pb-24 md:pt-24\">",
+                  "target": [
+                    ".min-h-screen"
+                  ]
+                },
+                {
+                  "html": "<html lang=\"fr\" class=\"__variable_a5811e __variable_d7e2b6 dark\" data-theme=\"dark\" style=\"color-scheme: dark;\">",
+                  "target": [
+                    "html"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element has insufficient color contrast of 3.8 (foreground color: #a9b8b0, background color: #3f574a, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<span class=\"font-mono text-[length:var(--lkv-text-caption-2)] uppercase text-[color:var(--lkv-text-muted)]\">04 — Contexte</span>",
+          "target": [
+            ".p-\\[var\\(--space-5\\)\\].space-y-\\[var\\(--space-4\\)\\][data-variant=\"standard\"]:nth-child(4) > .justify-between.flex.items-center > .font-mono.uppercase.text-\\[length\\:var\\(--lkv-text-caption-2\\)\\]"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 3.8 (foreground color: #a9b8b0, background color: #3f574a, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "fgColor": "#a9b8b0",
+                "bgColor": "#3f574a",
+                "contrastRatio": 3.8,
+                "fontSize": "9.0pt (12px)",
+                "fontWeight": "normal",
+                "messageKey": null,
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<div data-variant=\"standard\" data-tone=\"neutral\" class=\"lkv-glass rounded-[var(--lkv-radius-card)] p-[var(--space-5)] space-y-[var(--space-4)]\">",
+                  "target": [
+                    ".p-\\[var\\(--space-5\\)\\].space-y-\\[var\\(--space-4\\)\\][data-variant=\"standard\"]:nth-child(4)"
+                  ]
+                },
+                {
+                  "html": "<div class=\"relative min-h-screen bg-[color:var(--glass-bg-medium)] border border-[color:var(--glass-border)] saturate-[var(--glass-sat)] lkv-rim-inset pb-32 text-[color:var(--lkv-text-primary)] backdrop-blur-[var(--glass-blur-sm)] md:pb-24 md:pt-24\">",
+                  "target": [
+                    ".min-h-screen"
+                  ]
+                },
+                {
+                  "html": "<html lang=\"fr\" class=\"__variable_a5811e __variable_d7e2b6 dark\" data-theme=\"dark\" style=\"color-scheme: dark;\">",
+                  "target": [
+                    "html"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element has insufficient color contrast of 3.8 (foreground color: #a9b8b0, background color: #3f574a, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<p class=\"text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-muted)]\">Rattachez votre post à un contenu existant : le lien apparaîtra en pied de post et enrichira le fil.</p>",
+          "target": [
+            ".p-\\[var\\(--space-5\\)\\].space-y-\\[var\\(--space-4\\)\\][data-variant=\"standard\"]:nth-child(4) > p"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 3.8 (foreground color: #a9b8b0, background color: #3f574a, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "fgColor": "#a9b8b0",
+                "bgColor": "#3f574a",
+                "contrastRatio": 3.8,
+                "fontSize": "8.3pt (11px)",
+                "fontWeight": "normal",
+                "messageKey": null,
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<div data-variant=\"standard\" data-tone=\"neutral\" class=\"lkv-glass rounded-[var(--lkv-radius-card)] p-[var(--space-5)] space-y-[var(--space-4)]\">",
+                  "target": [
+                    ".p-\\[var\\(--space-5\\)\\].space-y-\\[var\\(--space-4\\)\\][data-variant=\"standard\"]:nth-child(4)"
+                  ]
+                },
+                {
+                  "html": "<div class=\"relative min-h-screen bg-[color:var(--glass-bg-medium)] border border-[color:var(--glass-border)] saturate-[var(--glass-sat)] lkv-rim-inset pb-32 text-[color:var(--lkv-text-primary)] backdrop-blur-[var(--glass-blur-sm)] md:pb-24 md:pt-24\">",
+                  "target": [
+                    ".min-h-screen"
+                  ]
+                },
+                {
+                  "html": "<html lang=\"fr\" class=\"__variable_a5811e __variable_d7e2b6 dark\" data-theme=\"dark\" style=\"color-scheme: dark;\">",
+                  "target": [
+                    "html"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element has insufficient color contrast of 3.8 (foreground color: #a9b8b0, background color: #3f574a, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<p class=\"mt-1.5 text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]\">Aucun carnet disponible — terminez une sortie pour en créer un.</p>",
+          "target": [
+            ".mt-1\\.5"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 3.8 (foreground color: #a9b8b0, background color: #3f574a, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "fgColor": "#121815",
+                "bgColor": "#78817c",
+                "contrastRatio": 4.48,
+                "fontSize": "9.8pt (13px)",
+                "fontWeight": "normal",
+                "messageKey": null,
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<button type=\"button\" data-variant=\"secondary\" data-size=\"sm\" class=\"inline-flex shrink-0...\">",
+                  "target": [
+                    ".bg-\\[color\\:var\\(--g2-bg\\)\\]"
+                  ]
+                },
+                {
+                  "html": "<input id=\"post-location\" type=\"text\" placeholder=\"Ex: Massif de la Cha...\" class=\"w-full rounded-[var(...\" value=\"\">",
+                  "target": [
+                    "#post-location"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element has insufficient color contrast of 4.48 (foreground color: #121815, background color: #78817c, font size: 9.8pt (13px), font weight: normal). Expected contrast ratio of 4.5:1"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<button type=\"button\" data-variant=\"secondary\" data-size=\"sm\" class=\"inline-flex shrink-0...\">",
+          "target": [
+            ".bg-\\[color\\:var\\(--g2-bg\\)\\]"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 4.48 (foreground color: #121815, background color: #78817c, font size: 9.8pt (13px), font weight: normal). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "fgColor": "#a9b8b0",
+                "bgColor": "#3f574a",
+                "contrastRatio": 3.8,
+                "fontSize": "9.0pt (12px)",
+                "fontWeight": "normal",
+                "messageKey": null,
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<div data-variant=\"standard\" data-tone=\"neutral\" class=\"lkv-glass rounded-[var(--lkv-radius-card)] p-[var(--space-5)] space-y-[var(--space-4)]\">",
+                  "target": [
+                    ".p-\\[var\\(--space-5\\)\\].space-y-\\[var\\(--space-4\\)\\][data-variant=\"standard\"]:nth-child(4)"
+                  ]
+                },
+                {
+                  "html": "<div class=\"relative min-h-screen bg-[color:var(--glass-bg-medium)] border border-[color:var(--glass-border)] saturate-[var(--glass-sat)] lkv-rim-inset pb-32 text-[color:var(--lkv-text-primary)] backdrop-blur-[var(--glass-blur-sm)] md:pb-24 md:pt-24\">",
+                  "target": [
+                    ".min-h-screen"
+                  ]
+                },
+                {
+                  "html": "<html lang=\"fr\" class=\"__variable_a5811e __variable_d7e2b6 dark\" data-theme=\"dark\" style=\"color-scheme: dark;\">",
+                  "target": [
+                    "html"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element has insufficient color contrast of 3.8 (foreground color: #a9b8b0, background color: #3f574a, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<span class=\"font-normal text-[color:var(--lkv-text-muted)]\">(Au moins 2 pour trouver le post)</span>",
+          "target": [
+            "label[for=\"post-tag-input\"] > .font-normal.text-\\[color\\:var\\(--lkv-text-muted\\)\\]"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 3.8 (foreground color: #a9b8b0, background color: #3f574a, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "fgColor": "#a9b8b0",
+                "bgColor": "#3f574a",
+                "contrastRatio": 3.8,
+                "fontSize": "8.3pt (11px)",
+                "fontWeight": "normal",
+                "messageKey": null,
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<div data-variant=\"standard\" data-tone=\"neutral\" class=\"lkv-glass rounded-[var(--lkv-radius-card)] p-[var(--space-5)] space-y-[var(--space-4)]\">",
+                  "target": [
+                    ".p-\\[var\\(--space-5\\)\\].space-y-\\[var\\(--space-4\\)\\][data-variant=\"standard\"]:nth-child(5)"
+                  ]
+                },
+                {
+                  "html": "<div class=\"relative min-h-screen bg-[color:var(--glass-bg-medium)] border border-[color:var(--glass-border)] saturate-[var(--glass-sat)] lkv-rim-inset pb-32 text-[color:var(--lkv-text-primary)] backdrop-blur-[var(--glass-blur-sm)] md:pb-24 md:pt-24\">",
+                  "target": [
+                    ".min-h-screen"
+                  ]
+                },
+                {
+                  "html": "<html lang=\"fr\" class=\"__variable_a5811e __variable_d7e2b6 dark\" data-theme=\"dark\" style=\"color-scheme: dark;\">",
+                  "target": [
+                    "html"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element has insufficient color contrast of 3.8 (foreground color: #a9b8b0, background color: #3f574a, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<span class=\"font-mono text-[length:var(--lkv-text-caption-2)] uppercase text-[color:var(--lkv-text-muted)]\">05 — Destination</span>",
+          "target": [
+            ".p-\\[var\\(--space-5\\)\\].space-y-\\[var\\(--space-4\\)\\][data-variant=\"standard\"]:nth-child(5) > .justify-between.flex.items-center > .font-mono.uppercase.text-\\[length\\:var\\(--lkv-text-caption-2\\)\\]"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 3.8 (foreground color: #a9b8b0, background color: #3f574a, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "fgColor": "#a9b8b0",
+                "bgColor": "#3f574a",
+                "contrastRatio": 3.8,
+                "fontSize": "9.0pt (12px)",
+                "fontWeight": "normal",
+                "messageKey": null,
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<div data-variant=\"standard\" data-tone=\"neutral\" class=\"lkv-glass rounded-[var(--lkv-radius-card)] p-[var(--space-5)] space-y-[var(--space-4)]\">",
+                  "target": [
+                    ".p-\\[var\\(--space-5\\)\\].space-y-\\[var\\(--space-4\\)\\][data-variant=\"standard\"]:nth-child(5)"
+                  ]
+                },
+                {
+                  "html": "<div class=\"relative min-h-screen bg-[color:var(--glass-bg-medium)] border border-[color:var(--glass-border)] saturate-[var(--glass-sat)] lkv-rim-inset pb-32 text-[color:var(--lkv-text-primary)] backdrop-blur-[var(--glass-blur-sm)] md:pb-24 md:pt-24\">",
+                  "target": [
+                    ".min-h-screen"
+                  ]
+                },
+                {
+                  "html": "<html lang=\"fr\" class=\"__variable_a5811e __variable_d7e2b6 dark\" data-theme=\"dark\" style=\"color-scheme: dark;\">",
+                  "target": [
+                    "html"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element has insufficient color contrast of 3.8 (foreground color: #a9b8b0, background color: #3f574a, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<p class=\"text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-muted)]\">Un post peut apparaître sur votre profil, sur le fil communauté, ou uniquement dans un club spécifique dont vous êtes membre.</p>",
+          "target": [
+            ".p-\\[var\\(--space-5\\)\\].space-y-\\[var\\(--space-4\\)\\][data-variant=\"standard\"]:nth-child(5) > p"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 3.8 (foreground color: #a9b8b0, background color: #3f574a, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "fgColor": "#a9b8b0",
+                "bgColor": "#52685c",
+                "contrastRatio": 2.91,
+                "fontSize": "8.3pt (11px)",
+                "fontWeight": "normal",
+                "messageKey": null,
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<div role=\"button\" tabindex=\"0\" aria-pressed=\"true\" data-variant=\"interactive\" data-tone=\"neutral\" class=\"lkv-glass rounded-[v...\">",
+                  "target": [
+                    ".ring-2.ring-\\[color\\:var\\(--glass-rim\\)\\].text-left"
+                  ]
+                },
+                {
+                  "html": "<div data-variant=\"standard\" data-tone=\"neutral\" class=\"lkv-glass rounded-[var(--lkv-radius-card)] p-[var(--space-5)] space-y-[var(--space-4)]\">",
+                  "target": [
+                    ".p-\\[var\\(--space-5\\)\\].space-y-\\[var\\(--space-4\\)\\][data-variant=\"standard\"]:nth-child(5)"
+                  ]
+                },
+                {
+                  "html": "<div class=\"relative min-h-screen bg-[color:var(--glass-bg-medium)] border border-[color:var(--glass-border)] saturate-[var(--glass-sat)] lkv-rim-inset pb-32 text-[color:var(--lkv-text-primary)] backdrop-blur-[var(--glass-blur-sm)] md:pb-24 md:pt-24\">",
+                  "target": [
+                    ".min-h-screen"
+                  ]
+                },
+                {
+                  "html": "<html lang=\"fr\" class=\"__variable_a5811e __variable_d7e2b6 dark\" data-theme=\"dark\" style=\"color-scheme: dark;\">",
+                  "target": [
+                    "html"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element has insufficient color contrast of 2.91 (foreground color: #a9b8b0, background color: #52685c, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<span class=\"mt-0.5 text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]\">Communauté + votre profil</span>",
+          "target": [
+            ".ring-2.ring-\\[color\\:var\\(--glass-rim\\)\\].text-left > .mt-0\\.5.text-\\[length\\:var\\(--lkv-text-caption-2\\)\\].text-\\[color\\:var\\(--lkv-text-muted\\)\\]"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 2.91 (foreground color: #a9b8b0, background color: #52685c, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "fgColor": "#a9b8b0",
+                "bgColor": "#52685c",
+                "contrastRatio": 2.91,
+                "fontSize": "8.3pt (11px)",
+                "fontWeight": "normal",
+                "messageKey": null,
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<div role=\"button\" tabindex=\"0\" data-variant=\"interactive\" data-tone=\"neutral\" class=\"lkv-glass rounded-[v...\">",
+                  "target": [
+                    ".text-left.p-\\[var\\(--space-4\\)\\].duration-\\[var\\(--motion-control-duration\\)\\]:nth-child(2)"
+                  ]
+                },
+                {
+                  "html": "<div data-variant=\"standard\" data-tone=\"neutral\" class=\"lkv-glass rounded-[var(--lkv-radius-card)] p-[var(--space-5)] space-y-[var(--space-4)]\">",
+                  "target": [
+                    ".p-\\[var\\(--space-5\\)\\].space-y-\\[var\\(--space-4\\)\\][data-variant=\"standard\"]:nth-child(5)"
+                  ]
+                },
+                {
+                  "html": "<div class=\"relative min-h-screen bg-[color:var(--glass-bg-medium)] border border-[color:var(--glass-border)] saturate-[var(--glass-sat)] lkv-rim-inset pb-32 text-[color:var(--lkv-text-primary)] backdrop-blur-[var(--glass-blur-sm)] md:pb-24 md:pt-24\">",
+                  "target": [
+                    ".min-h-screen"
+                  ]
+                },
+                {
+                  "html": "<html lang=\"fr\" class=\"__variable_a5811e __variable_d7e2b6 dark\" data-theme=\"dark\" style=\"color-scheme: dark;\">",
+                  "target": [
+                    "html"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element has insufficient color contrast of 2.91 (foreground color: #a9b8b0, background color: #52685c, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<span class=\"mt-0.5 text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]\">Vos clubs uniquement</span>",
+          "target": [
+            ".text-left.p-\\[var\\(--space-4\\)\\].duration-\\[var\\(--motion-control-duration\\)\\]:nth-child(2) > .mt-0\\.5.text-\\[length\\:var\\(--lkv-text-caption-2\\)\\].text-\\[color\\:var\\(--lkv-text-muted\\)\\]"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 2.91 (foreground color: #a9b8b0, background color: #52685c, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "fgColor": "#a9b8b0",
+                "bgColor": "#52685c",
+                "contrastRatio": 2.91,
+                "fontSize": "8.3pt (11px)",
+                "fontWeight": "normal",
+                "messageKey": null,
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<div role=\"button\" tabindex=\"0\" data-variant=\"interactive\" data-tone=\"neutral\" class=\"lkv-glass rounded-[v...\">",
+                  "target": [
+                    ".text-left.p-\\[var\\(--space-4\\)\\].duration-\\[var\\(--motion-control-duration\\)\\]:nth-child(3)"
+                  ]
+                },
+                {
+                  "html": "<div data-variant=\"standard\" data-tone=\"neutral\" class=\"lkv-glass rounded-[var(--lkv-radius-card)] p-[var(--space-5)] space-y-[var(--space-4)]\">",
+                  "target": [
+                    ".p-\\[var\\(--space-5\\)\\].space-y-\\[var\\(--space-4\\)\\][data-variant=\"standard\"]:nth-child(5)"
+                  ]
+                },
+                {
+                  "html": "<div class=\"relative min-h-screen bg-[color:var(--glass-bg-medium)] border border-[color:var(--glass-border)] saturate-[var(--glass-sat)] lkv-rim-inset pb-32 text-[color:var(--lkv-text-primary)] backdrop-blur-[var(--glass-blur-sm)] md:pb-24 md:pt-24\">",
+                  "target": [
+                    ".min-h-screen"
+                  ]
+                },
+                {
+                  "html": "<html lang=\"fr\" class=\"__variable_a5811e __variable_d7e2b6 dark\" data-theme=\"dark\" style=\"color-scheme: dark;\">",
+                  "target": [
+                    "html"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element has insufficient color contrast of 2.91 (foreground color: #a9b8b0, background color: #52685c, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<span class=\"mt-0.5 text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]\">Vos abonnés uniquement</span>",
+          "target": [
+            ".text-left.p-\\[var\\(--space-4\\)\\].duration-\\[var\\(--motion-control-duration\\)\\]:nth-child(3) > .mt-0\\.5.text-\\[length\\:var\\(--lkv-text-caption-2\\)\\].text-\\[color\\:var\\(--lkv-text-muted\\)\\]"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 2.91 (foreground color: #a9b8b0, background color: #52685c, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "fgColor": "#a9b8b0",
+                "bgColor": "#3f574a",
+                "contrastRatio": 3.8,
+                "fontSize": "8.3pt (11px)",
+                "fontWeight": "normal",
+                "messageKey": null,
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<div data-variant=\"standard\" data-tone=\"neutral\" class=\"lkv-glass rounded-[var(--lkv-radius-card)] p-[var(--space-5)] space-y-[var(--space-3)]\">",
+                  "target": [
+                    ".space-y-\\[var\\(--space-3\\)\\].p-\\[var\\(--space-5\\)\\][data-variant=\"standard\"]"
+                  ]
+                },
+                {
+                  "html": "<div class=\"relative min-h-screen bg-[color:var(--glass-bg-medium)] border border-[color:var(--glass-border)] saturate-[var(--glass-sat)] lkv-rim-inset pb-32 text-[color:var(--lkv-text-primary)] backdrop-blur-[var(--glass-blur-sm)] md:pb-24 md:pt-24\">",
+                  "target": [
+                    ".min-h-screen"
+                  ]
+                },
+                {
+                  "html": "<html lang=\"fr\" class=\"__variable_a5811e __variable_d7e2b6 dark\" data-theme=\"dark\" style=\"color-scheme: dark;\">",
+                  "target": [
+                    "html"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element has insufficient color contrast of 3.8 (foreground color: #a9b8b0, background color: #3f574a, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<div class=\"font-mono text-[length:var(--lkv-text-caption-2)] uppercase tracking-wider text-[color:var(--lkv-text-muted)]\">APERÇU · FIL COMMUNAUTÉ</div>",
+          "target": [
+            ".tracking-wider"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 3.8 (foreground color: #a9b8b0, background color: #3f574a, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "fgColor": "#a9b8b0",
+                "bgColor": "#3f574a",
+                "contrastRatio": 3.8,
+                "fontSize": "8.3pt (11px)",
+                "fontWeight": "normal",
+                "messageKey": null,
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<div data-variant=\"standard\" data-tone=\"neutral\" class=\"lkv-glass rounded-[var(--lkv-radius-card)] p-[var(--space-5)] space-y-[var(--space-3)]\">",
+                  "target": [
+                    ".space-y-\\[var\\(--space-3\\)\\].p-\\[var\\(--space-5\\)\\][data-variant=\"standard\"]"
+                  ]
+                },
+                {
+                  "html": "<div class=\"relative min-h-screen bg-[color:var(--glass-bg-medium)] border border-[color:var(--glass-border)] saturate-[var(--glass-sat)] lkv-rim-inset pb-32 text-[color:var(--lkv-text-primary)] backdrop-blur-[var(--glass-blur-sm)] md:pb-24 md:pt-24\">",
+                  "target": [
+                    ".min-h-screen"
+                  ]
+                },
+                {
+                  "html": "<html lang=\"fr\" class=\"__variable_a5811e __variable_d7e2b6 dark\" data-theme=\"dark\" style=\"color-scheme: dark;\">",
+                  "target": [
+                    "html"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element has insufficient color contrast of 3.8 (foreground color: #a9b8b0, background color: #3f574a, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<p class=\"text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]\">À l'instant</p>",
+          "target": [
+            ".gap-\\[var\\(--space-3\\)\\].flex.items-center > div:nth-child(2) > p"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 3.8 (foreground color: #a9b8b0, background color: #3f574a, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "fgColor": "#a9b8b0",
+                "bgColor": "#3f574a",
+                "contrastRatio": 3.8,
+                "fontSize": "8.3pt (11px)",
+                "fontWeight": "normal",
+                "messageKey": null,
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<div data-variant=\"standard\" data-tone=\"neutral\" class=\"lkv-glass rounded-[var(--lkv-radius-card)] p-[var(--space-5)] space-y-[var(--space-4)]\">",
+                  "target": [
+                    ".lg\\:sticky > .p-\\[var\\(--space-5\\)\\].space-y-\\[var\\(--space-4\\)\\][data-variant=\"standard\"]"
+                  ]
+                },
+                {
+                  "html": "<div class=\"relative min-h-screen bg-[color:var(--glass-bg-medium)] border border-[color:var(--glass-border)] saturate-[var(--glass-sat)] lkv-rim-inset pb-32 text-[color:var(--lkv-text-primary)] backdrop-blur-[var(--glass-blur-sm)] md:pb-24 md:pt-24\">",
+                  "target": [
+                    ".min-h-screen"
+                  ]
+                },
+                {
+                  "html": "<html lang=\"fr\" class=\"__variable_a5811e __variable_d7e2b6 dark\" data-theme=\"dark\" style=\"color-scheme: dark;\">",
+                  "target": [
+                    "html"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element has insufficient color contrast of 3.8 (foreground color: #a9b8b0, background color: #3f574a, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<p class=\"mt-[var(--space-1)] text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]\">Les posts avec image + mention + regroupement ont en moyenne 3x plus d'interactions.</p>",
+          "target": [
+            "div:nth-child(1) > .mt-\\[var\\(--space-1\\)\\]"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 3.8 (foreground color: #a9b8b0, background color: #3f574a, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "fgColor": "#a9b8b0",
+                "bgColor": "#3f574a",
+                "contrastRatio": 3.8,
+                "fontSize": "8.3pt (11px)",
+                "fontWeight": "normal",
+                "messageKey": null,
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<div data-variant=\"standard\" data-tone=\"neutral\" class=\"lkv-glass rounded-[var(--lkv-radius-card)] p-[var(--space-5)] space-y-[var(--space-4)]\">",
+                  "target": [
+                    ".lg\\:sticky > .p-\\[var\\(--space-5\\)\\].space-y-\\[var\\(--space-4\\)\\][data-variant=\"standard\"]"
+                  ]
+                },
+                {
+                  "html": "<div class=\"relative min-h-screen bg-[color:var(--glass-bg-medium)] border border-[color:var(--glass-border)] saturate-[var(--glass-sat)] lkv-rim-inset pb-32 text-[color:var(--lkv-text-primary)] backdrop-blur-[var(--glass-blur-sm)] md:pb-24 md:pt-24\">",
+                  "target": [
+                    ".min-h-screen"
+                  ]
+                },
+                {
+                  "html": "<html lang=\"fr\" class=\"__variable_a5811e __variable_d7e2b6 dark\" data-theme=\"dark\" style=\"color-scheme: dark;\">",
+                  "target": [
+                    "html"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element has insufficient color contrast of 3.8 (foreground color: #a9b8b0, background color: #3f574a, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<span class=\"text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]\">À FAIRE</span>",
+          "target": [
+            ".justify-between.text-\\[color\\:var\\(--lkv-text-primary\\)\\].font-semibold:nth-child(1) > .text-\\[length\\:var\\(--lkv-text-caption-2\\)\\].text-\\[color\\:var\\(--lkv-text-muted\\)\\]"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 3.8 (foreground color: #a9b8b0, background color: #3f574a, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "fgColor": "#a9b8b0",
+                "bgColor": "#3f574a",
+                "contrastRatio": 3.8,
+                "fontSize": "8.3pt (11px)",
+                "fontWeight": "normal",
+                "messageKey": null,
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<div data-variant=\"standard\" data-tone=\"neutral\" class=\"lkv-glass rounded-[var(--lkv-radius-card)] p-[var(--space-5)] space-y-[var(--space-4)]\">",
+                  "target": [
+                    ".lg\\:sticky > .p-\\[var\\(--space-5\\)\\].space-y-\\[var\\(--space-4\\)\\][data-variant=\"standard\"]"
+                  ]
+                },
+                {
+                  "html": "<div class=\"relative min-h-screen bg-[color:var(--glass-bg-medium)] border border-[color:var(--glass-border)] saturate-[var(--glass-sat)] lkv-rim-inset pb-32 text-[color:var(--lkv-text-primary)] backdrop-blur-[var(--glass-blur-sm)] md:pb-24 md:pt-24\">",
+                  "target": [
+                    ".min-h-screen"
+                  ]
+                },
+                {
+                  "html": "<html lang=\"fr\" class=\"__variable_a5811e __variable_d7e2b6 dark\" data-theme=\"dark\" style=\"color-scheme: dark;\">",
+                  "target": [
+                    "html"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element has insufficient color contrast of 3.8 (foreground color: #a9b8b0, background color: #3f574a, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<span class=\"text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]\">OPTIONNEL</span>",
+          "target": [
+            ".justify-between.text-\\[color\\:var\\(--lkv-text-primary\\)\\].font-semibold:nth-child(2) > .text-\\[length\\:var\\(--lkv-text-caption-2\\)\\].text-\\[color\\:var\\(--lkv-text-muted\\)\\]"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 3.8 (foreground color: #a9b8b0, background color: #3f574a, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "fgColor": "#a9b8b0",
+                "bgColor": "#3f574a",
+                "contrastRatio": 3.8,
+                "fontSize": "8.3pt (11px)",
+                "fontWeight": "normal",
+                "messageKey": null,
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<div data-variant=\"standard\" data-tone=\"neutral\" class=\"lkv-glass rounded-[var(--lkv-radius-card)] p-[var(--space-5)] space-y-[var(--space-4)]\">",
+                  "target": [
+                    ".lg\\:sticky > .p-\\[var\\(--space-5\\)\\].space-y-\\[var\\(--space-4\\)\\][data-variant=\"standard\"]"
+                  ]
+                },
+                {
+                  "html": "<div class=\"relative min-h-screen bg-[color:var(--glass-bg-medium)] border border-[color:var(--glass-border)] saturate-[var(--glass-sat)] lkv-rim-inset pb-32 text-[color:var(--lkv-text-primary)] backdrop-blur-[var(--glass-blur-sm)] md:pb-24 md:pt-24\">",
+                  "target": [
+                    ".min-h-screen"
+                  ]
+                },
+                {
+                  "html": "<html lang=\"fr\" class=\"__variable_a5811e __variable_d7e2b6 dark\" data-theme=\"dark\" style=\"color-scheme: dark;\">",
+                  "target": [
+                    "html"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element has insufficient color contrast of 3.8 (foreground color: #a9b8b0, background color: #3f574a, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<span class=\"text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]\">OPTIONNEL</span>",
+          "target": [
+            ".justify-between.text-\\[color\\:var\\(--lkv-text-primary\\)\\].font-semibold:nth-child(3) > .text-\\[length\\:var\\(--lkv-text-caption-2\\)\\].text-\\[color\\:var\\(--lkv-text-muted\\)\\]"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 3.8 (foreground color: #a9b8b0, background color: #3f574a, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "fgColor": "#a9b8b0",
+                "bgColor": "#3f574a",
+                "contrastRatio": 3.8,
+                "fontSize": "8.3pt (11px)",
+                "fontWeight": "normal",
+                "messageKey": null,
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<div data-variant=\"standard\" data-tone=\"neutral\" class=\"lkv-glass rounded-[var(--lkv-radius-card)] p-[var(--space-5)] space-y-[var(--space-4)]\">",
+                  "target": [
+                    ".lg\\:sticky > .p-\\[var\\(--space-5\\)\\].space-y-\\[var\\(--space-4\\)\\][data-variant=\"standard\"]"
+                  ]
+                },
+                {
+                  "html": "<div class=\"relative min-h-screen bg-[color:var(--glass-bg-medium)] border border-[color:var(--glass-border)] saturate-[var(--glass-sat)] lkv-rim-inset pb-32 text-[color:var(--lkv-text-primary)] backdrop-blur-[var(--glass-blur-sm)] md:pb-24 md:pt-24\">",
+                  "target": [
+                    ".min-h-screen"
+                  ]
+                },
+                {
+                  "html": "<html lang=\"fr\" class=\"__variable_a5811e __variable_d7e2b6 dark\" data-theme=\"dark\" style=\"color-scheme: dark;\">",
+                  "target": [
+                    "html"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element has insufficient color contrast of 3.8 (foreground color: #a9b8b0, background color: #3f574a, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<span class=\"text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]\">OPTIONNEL</span>",
+          "target": [
+            ".justify-between.text-\\[color\\:var\\(--lkv-text-primary\\)\\].font-semibold:nth-child(4) > .text-\\[length\\:var\\(--lkv-text-caption-2\\)\\].text-\\[color\\:var\\(--lkv-text-muted\\)\\]"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 3.8 (foreground color: #a9b8b0, background color: #3f574a, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "fgColor": "#a9b8b0",
+                "bgColor": "#3f574a",
+                "contrastRatio": 3.8,
+                "fontSize": "9.0pt (12px)",
+                "fontWeight": "normal",
+                "messageKey": null,
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<div data-variant=\"standard\" data-tone=\"neutral\" class=\"lkv-glass rounded-[var(--lkv-radius-card)] p-[var(--space-5)] space-y-[var(--space-4)]\">",
+                  "target": [
+                    ".lg\\:sticky > .p-\\[var\\(--space-5\\)\\].space-y-\\[var\\(--space-4\\)\\][data-variant=\"standard\"]"
+                  ]
+                },
+                {
+                  "html": "<div class=\"relative min-h-screen bg-[color:var(--glass-bg-medium)] border border-[color:var(--glass-border)] saturate-[var(--glass-sat)] lkv-rim-inset pb-32 text-[color:var(--lkv-text-primary)] backdrop-blur-[var(--glass-blur-sm)] md:pb-24 md:pt-24\">",
+                  "target": [
+                    ".min-h-screen"
+                  ]
+                },
+                {
+                  "html": "<html lang=\"fr\" class=\"__variable_a5811e __variable_d7e2b6 dark\" data-theme=\"dark\" style=\"color-scheme: dark;\">",
+                  "target": [
+                    "html"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element has insufficient color contrast of 3.8 (foreground color: #a9b8b0, background color: #3f574a, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<span class=\"flex items-center gap-[var(--space-1)]\">○<!-- --> Ajouter la géolocalisation exacte</span>",
+          "target": [
+            ".space-y-\\[var\\(--space-2\\)\\] > .justify-between.text-\\[color\\:var\\(--lkv-text-muted\\)\\].flex > .gap-\\[var\\(--space-1\\)\\].flex"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 3.8 (foreground color: #a9b8b0, background color: #3f574a, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "fgColor": "#a9b8b0",
+                "bgColor": "#3f574a",
+                "contrastRatio": 3.8,
+                "fontSize": "8.3pt (11px)",
+                "fontWeight": "normal",
+                "messageKey": null,
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<div data-variant=\"standard\" data-tone=\"neutral\" class=\"lkv-glass rounded-[var(--lkv-radius-card)] p-[var(--space-5)] space-y-[var(--space-4)]\">",
+                  "target": [
+                    ".lg\\:sticky > .p-\\[var\\(--space-5\\)\\].space-y-\\[var\\(--space-4\\)\\][data-variant=\"standard\"]"
+                  ]
+                },
+                {
+                  "html": "<div class=\"relative min-h-screen bg-[color:var(--glass-bg-medium)] border border-[color:var(--glass-border)] saturate-[var(--glass-sat)] lkv-rim-inset pb-32 text-[color:var(--lkv-text-primary)] backdrop-blur-[var(--glass-blur-sm)] md:pb-24 md:pt-24\">",
+                  "target": [
+                    ".min-h-screen"
+                  ]
+                },
+                {
+                  "html": "<html lang=\"fr\" class=\"__variable_a5811e __variable_d7e2b6 dark\" data-theme=\"dark\" style=\"color-scheme: dark;\">",
+                  "target": [
+                    "html"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element has insufficient color contrast of 3.8 (foreground color: #a9b8b0, background color: #3f574a, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<span class=\"text-[length:var(--lkv-text-caption-2)]\">OPTIONNEL</span>",
+          "target": [
+            ".justify-between.text-\\[color\\:var\\(--lkv-text-muted\\)\\].flex > .text-\\[length\\:var\\(--lkv-text-caption-2\\)\\]"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 3.8 (foreground color: #a9b8b0, background color: #3f574a, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+        }
+      ]
     }
   ]
 }

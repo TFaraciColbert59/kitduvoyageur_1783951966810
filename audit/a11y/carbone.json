@@ -1,14 +1,307 @@
 {
   "route": "/carbone",
   "id": "carbone",
-  "timestamp": "2026-09-23T19:01:14.505Z",
+  "timestamp": "2026-09-24T17:08:19.860Z",
   "violationsCount": 1,
+  "seriousCount": 1,
+  "criticalCount": 0,
   "violations": [
     {
       "id": "color-contrast",
       "impact": "serious",
+      "tags": [
+        "cat.color",
+        "wcag2aa",
+        "wcag143",
+        "TTv5",
+        "TT13.c",
+        "EN-301-549",
+        "EN-9.1.4.3",
+        "ACT",
+        "RGAAv4",
+        "RGAA-3.2.1"
+      ],
       "description": "Ensure the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
-      "nodes": 6
+      "help": "Elements must meet minimum color contrast ratio thresholds",
+      "helpUrl": "https://dequeuniversity.com/rules/axe/4.13/color-contrast?application=playwright",
+      "nodes": [
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "fgColor": "#f1f5f1",
+                "bgColor": "#83938a",
+                "contrastRatio": 2.93,
+                "fontSize": "8.3pt (11px)",
+                "fontWeight": "normal",
+                "messageKey": null,
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<button type=\"button\" aria-pressed=\"false\" class=\"inline-flex touch-ma...\">",
+                  "target": [
+                    ".gap-\\[var\\(--space-4\\)\\] > .space-y-4 > fieldset:nth-child(4) > .gap-\\[var\\(--space-2\\)\\][role=\"group\"][aria-label=\"Activités du voyage\"] > .bg-\\[color\\:var\\(--g2-bg\\)\\].border-\\[color\\:var\\(--glass-rim\\)\\].backdrop-blur-md:nth-child(3)"
+                  ]
+                },
+                {
+                  "html": "<div data-variant=\"standard\" data-tone=\"neutral\" class=\"lkv-glass rounded-[var(--lkv-radius-card)] mb-[var(--space-4)] p-[var(--space-4)]\">",
+                  "target": [
+                    ".mb-\\[var\\(--space-4\\)\\].p-\\[var\\(--space-4\\)\\].lkv-glass"
+                  ]
+                },
+                {
+                  "html": "<html lang=\"fr\" class=\"__variable_a5811e __variable_d7e2b6 dark\" data-theme=\"dark\" style=\"color-scheme: dark;\">",
+                  "target": [
+                    "html"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element has insufficient color contrast of 2.93 (foreground color: #f1f5f1, background color: #83938a, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<button type=\"button\" aria-pressed=\"false\" class=\"inline-flex touch-ma...\">",
+          "target": [
+            ".gap-\\[var\\(--space-4\\)\\] > .space-y-4 > fieldset:nth-child(4) > .gap-\\[var\\(--space-2\\)\\][role=\"group\"][aria-label=\"Activités du voyage\"] > .bg-\\[color\\:var\\(--g2-bg\\)\\].border-\\[color\\:var\\(--glass-rim\\)\\].backdrop-blur-md:nth-child(3)"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 2.93 (foreground color: #f1f5f1, background color: #83938a, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "fgColor": "#f1f5f1",
+                "bgColor": "#83938a",
+                "contrastRatio": 2.93,
+                "fontSize": "8.3pt (11px)",
+                "fontWeight": "normal",
+                "messageKey": null,
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<button type=\"button\" aria-pressed=\"false\" class=\"inline-flex touch-ma...\">",
+                  "target": [
+                    ".gap-\\[var\\(--space-4\\)\\] > .space-y-4 > fieldset:nth-child(4) > .gap-\\[var\\(--space-2\\)\\][role=\"group\"][aria-label=\"Activités du voyage\"] > .bg-\\[color\\:var\\(--g2-bg\\)\\].border-\\[color\\:var\\(--glass-rim\\)\\].backdrop-blur-md:nth-child(4)"
+                  ]
+                },
+                {
+                  "html": "<div data-variant=\"standard\" data-tone=\"neutral\" class=\"lkv-glass rounded-[var(--lkv-radius-card)] mb-[var(--space-4)] p-[var(--space-4)]\">",
+                  "target": [
+                    ".mb-\\[var\\(--space-4\\)\\].p-\\[var\\(--space-4\\)\\].lkv-glass"
+                  ]
+                },
+                {
+                  "html": "<html lang=\"fr\" class=\"__variable_a5811e __variable_d7e2b6 dark\" data-theme=\"dark\" style=\"color-scheme: dark;\">",
+                  "target": [
+                    "html"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element has insufficient color contrast of 2.93 (foreground color: #f1f5f1, background color: #83938a, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<button type=\"button\" aria-pressed=\"false\" class=\"inline-flex touch-ma...\">",
+          "target": [
+            ".gap-\\[var\\(--space-4\\)\\] > .space-y-4 > fieldset:nth-child(4) > .gap-\\[var\\(--space-2\\)\\][role=\"group\"][aria-label=\"Activités du voyage\"] > .bg-\\[color\\:var\\(--g2-bg\\)\\].border-\\[color\\:var\\(--glass-rim\\)\\].backdrop-blur-md:nth-child(4)"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 2.93 (foreground color: #f1f5f1, background color: #83938a, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "fgColor": "#f1f5f1",
+                "bgColor": "#83938a",
+                "contrastRatio": 2.93,
+                "fontSize": "8.3pt (11px)",
+                "fontWeight": "normal",
+                "messageKey": null,
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<button type=\"button\" aria-pressed=\"false\" class=\"inline-flex touch-ma...\">",
+                  "target": [
+                    ".gap-\\[var\\(--space-4\\)\\] > .space-y-4 > fieldset:nth-child(4) > .gap-\\[var\\(--space-2\\)\\][role=\"group\"][aria-label=\"Activités du voyage\"] > .bg-\\[color\\:var\\(--g2-bg\\)\\].border-\\[color\\:var\\(--glass-rim\\)\\].backdrop-blur-md:nth-child(5)"
+                  ]
+                },
+                {
+                  "html": "<div data-variant=\"standard\" data-tone=\"neutral\" class=\"lkv-glass rounded-[var(--lkv-radius-card)] mb-[var(--space-4)] p-[var(--space-4)]\">",
+                  "target": [
+                    ".mb-\\[var\\(--space-4\\)\\].p-\\[var\\(--space-4\\)\\].lkv-glass"
+                  ]
+                },
+                {
+                  "html": "<html lang=\"fr\" class=\"__variable_a5811e __variable_d7e2b6 dark\" data-theme=\"dark\" style=\"color-scheme: dark;\">",
+                  "target": [
+                    "html"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element has insufficient color contrast of 2.93 (foreground color: #f1f5f1, background color: #83938a, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<button type=\"button\" aria-pressed=\"false\" class=\"inline-flex touch-ma...\">",
+          "target": [
+            ".gap-\\[var\\(--space-4\\)\\] > .space-y-4 > fieldset:nth-child(4) > .gap-\\[var\\(--space-2\\)\\][role=\"group\"][aria-label=\"Activités du voyage\"] > .bg-\\[color\\:var\\(--g2-bg\\)\\].border-\\[color\\:var\\(--glass-rim\\)\\].backdrop-blur-md:nth-child(5)"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 2.93 (foreground color: #f1f5f1, background color: #83938a, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "fgColor": "#f1f5f1",
+                "bgColor": "#83938a",
+                "contrastRatio": 2.93,
+                "fontSize": "8.3pt (11px)",
+                "fontWeight": "normal",
+                "messageKey": null,
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<button type=\"button\" aria-pressed=\"false\" class=\"inline-flex touch-ma...\">",
+                  "target": [
+                    ".gap-\\[var\\(--space-4\\)\\] > .space-y-4 > fieldset:nth-child(4) > .gap-\\[var\\(--space-2\\)\\][role=\"group\"][aria-label=\"Activités du voyage\"] > .bg-\\[color\\:var\\(--g2-bg\\)\\].border-\\[color\\:var\\(--glass-rim\\)\\].backdrop-blur-md:nth-child(6)"
+                  ]
+                },
+                {
+                  "html": "<div data-variant=\"standard\" data-tone=\"neutral\" class=\"lkv-glass rounded-[var(--lkv-radius-card)] mb-[var(--space-4)] p-[var(--space-4)]\">",
+                  "target": [
+                    ".mb-\\[var\\(--space-4\\)\\].p-\\[var\\(--space-4\\)\\].lkv-glass"
+                  ]
+                },
+                {
+                  "html": "<html lang=\"fr\" class=\"__variable_a5811e __variable_d7e2b6 dark\" data-theme=\"dark\" style=\"color-scheme: dark;\">",
+                  "target": [
+                    "html"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element has insufficient color contrast of 2.93 (foreground color: #f1f5f1, background color: #83938a, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<button type=\"button\" aria-pressed=\"false\" class=\"inline-flex touch-ma...\">",
+          "target": [
+            ".gap-\\[var\\(--space-4\\)\\] > .space-y-4 > fieldset:nth-child(4) > .gap-\\[var\\(--space-2\\)\\][role=\"group\"][aria-label=\"Activités du voyage\"] > .bg-\\[color\\:var\\(--g2-bg\\)\\].border-\\[color\\:var\\(--glass-rim\\)\\].backdrop-blur-md:nth-child(6)"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 2.93 (foreground color: #f1f5f1, background color: #83938a, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "fgColor": "#f1f5f1",
+                "bgColor": "#83938a",
+                "contrastRatio": 2.93,
+                "fontSize": "8.3pt (11px)",
+                "fontWeight": "normal",
+                "messageKey": null,
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<button type=\"button\" aria-pressed=\"false\" class=\"inline-flex touch-ma...\">",
+                  "target": [
+                    ".gap-\\[var\\(--space-4\\)\\] > .space-y-4 > fieldset:nth-child(4) > .gap-\\[var\\(--space-2\\)\\][role=\"group\"][aria-label=\"Activités du voyage\"] > .bg-\\[color\\:var\\(--g2-bg\\)\\].border-\\[color\\:var\\(--glass-rim\\)\\].backdrop-blur-md:nth-child(7)"
+                  ]
+                },
+                {
+                  "html": "<div data-variant=\"standard\" data-tone=\"neutral\" class=\"lkv-glass rounded-[var(--lkv-radius-card)] mb-[var(--space-4)] p-[var(--space-4)]\">",
+                  "target": [
+                    ".mb-\\[var\\(--space-4\\)\\].p-\\[var\\(--space-4\\)\\].lkv-glass"
+                  ]
+                },
+                {
+                  "html": "<html lang=\"fr\" class=\"__variable_a5811e __variable_d7e2b6 dark\" data-theme=\"dark\" style=\"color-scheme: dark;\">",
+                  "target": [
+                    "html"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element has insufficient color contrast of 2.93 (foreground color: #f1f5f1, background color: #83938a, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<button type=\"button\" aria-pressed=\"false\" class=\"inline-flex touch-ma...\">",
+          "target": [
+            ".gap-\\[var\\(--space-4\\)\\] > .space-y-4 > fieldset:nth-child(4) > .gap-\\[var\\(--space-2\\)\\][role=\"group\"][aria-label=\"Activités du voyage\"] > .bg-\\[color\\:var\\(--g2-bg\\)\\].border-\\[color\\:var\\(--glass-rim\\)\\].backdrop-blur-md:nth-child(7)"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 2.93 (foreground color: #f1f5f1, background color: #83938a, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "fgColor": "#f1f5f1",
+                "bgColor": "#83938a",
+                "contrastRatio": 2.93,
+                "fontSize": "8.3pt (11px)",
+                "fontWeight": "normal",
+                "messageKey": null,
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<button type=\"button\" aria-pressed=\"false\" class=\"inline-flex touch-ma...\">",
+                  "target": [
+                    ".gap-\\[var\\(--space-4\\)\\] > .space-y-4 > fieldset:nth-child(4) > .gap-\\[var\\(--space-2\\)\\][role=\"group\"][aria-label=\"Activités du voyage\"] > .bg-\\[color\\:var\\(--g2-bg\\)\\].border-\\[color\\:var\\(--glass-rim\\)\\].backdrop-blur-md:nth-child(8)"
+                  ]
+                },
+                {
+                  "html": "<div data-variant=\"standard\" data-tone=\"neutral\" class=\"lkv-glass rounded-[var(--lkv-radius-card)] mb-[var(--space-4)] p-[var(--space-4)]\">",
+                  "target": [
+                    ".mb-\\[var\\(--space-4\\)\\].p-\\[var\\(--space-4\\)\\].lkv-glass"
+                  ]
+                },
+                {
+                  "html": "<html lang=\"fr\" class=\"__variable_a5811e __variable_d7e2b6 dark\" data-theme=\"dark\" style=\"color-scheme: dark;\">",
+                  "target": [
+                    "html"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element has insufficient color contrast of 2.93 (foreground color: #f1f5f1, background color: #83938a, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<button type=\"button\" aria-pressed=\"false\" class=\"inline-flex touch-ma...\">",
+          "target": [
+            ".gap-\\[var\\(--space-4\\)\\] > .space-y-4 > fieldset:nth-child(4) > .gap-\\[var\\(--space-2\\)\\][role=\"group\"][aria-label=\"Activités du voyage\"] > .bg-\\[color\\:var\\(--g2-bg\\)\\].border-\\[color\\:var\\(--glass-rim\\)\\].backdrop-blur-md:nth-child(8)"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 2.93 (foreground color: #f1f5f1, background color: #83938a, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+        }
+      ]
     }
   ]
 }

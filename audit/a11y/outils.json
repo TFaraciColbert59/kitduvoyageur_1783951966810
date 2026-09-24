@@ -1,7 +1,865 @@
 {
   "route": "/outils",
   "id": "outils",
-  "timestamp": "2026-09-23T19:00:09.771Z",
-  "violationsCount": 0,
-  "violations": []
+  "timestamp": "2026-09-24T17:07:39.934Z",
+  "violationsCount": 1,
+  "seriousCount": 1,
+  "criticalCount": 0,
+  "violations": [
+    {
+      "id": "color-contrast",
+      "impact": "serious",
+      "tags": [
+        "cat.color",
+        "wcag2aa",
+        "wcag143",
+        "TTv5",
+        "TT13.c",
+        "EN-301-549",
+        "EN-9.1.4.3",
+        "ACT",
+        "RGAAv4",
+        "RGAA-3.2.1"
+      ],
+      "description": "Ensure the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+      "help": "Elements must meet minimum color contrast ratio thresholds",
+      "helpUrl": "https://dequeuniversity.com/rules/axe/4.13/color-contrast?application=playwright",
+      "nodes": [
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "fgColor": "#121815",
+                "bgColor": "#12301f",
+                "contrastRatio": 1.25,
+                "fontSize": "21.0pt (28px)",
+                "fontWeight": "bold",
+                "messageKey": null,
+                "expectedContrastRatio": "3:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<html lang=\"fr\" class=\"__variable_a5811e __variable_d7e2b6 dark\" data-theme=\"dark\" style=\"color-scheme: dark;\">",
+                  "target": [
+                    "html"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element has insufficient color contrast of 1.25 (foreground color: #121815, background color: #12301f, font size: 21.0pt (28px), font weight: bold). Expected contrast ratio of 3:1"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<h1 class=\"mb-[var(--space-2)] text-[28px] font-extrabold leading-[1.1] text-[color:var(--glass-label)]\">Outils terrain</h1>",
+          "target": [
+            ".font-extrabold"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 1.25 (foreground color: #121815, background color: #12301f, font size: 21.0pt (28px), font weight: bold). Expected contrast ratio of 3:1"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "fgColor": "#121815",
+                "bgColor": "#2a4535",
+                "contrastRatio": 1.71,
+                "fontSize": "11.3pt (15px)",
+                "fontWeight": "bold",
+                "messageKey": null,
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<div data-variant=\"interactive\" data-tone=\"neutral\" class=\"lkv-glass rounded-[v...\">",
+                  "target": [
+                    ".no-underline.block[href$=\"poids-sac\"] > .lkv-glass.rounded-\\[var\\(--lkv-radius-card\\)\\].duration-\\[var\\(--motion-control-duration\\)\\]"
+                  ]
+                },
+                {
+                  "html": "<html lang=\"fr\" class=\"__variable_a5811e __variable_d7e2b6 dark\" data-theme=\"dark\" style=\"color-scheme: dark;\">",
+                  "target": [
+                    "html"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element has insufficient color contrast of 1.71 (foreground color: #121815, background color: #2a4535, font size: 11.3pt (15px), font weight: bold). Expected contrast ratio of 4.5:1"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<span class=\"text-[15px] font-bold text-[color:var(--glass-label)]\">Calculateur de poids</span>",
+          "target": [
+            ".no-underline.block[href$=\"poids-sac\"] > .lkv-glass.rounded-\\[var\\(--lkv-radius-card\\)\\].duration-\\[var\\(--motion-control-duration\\)\\] > .min-w-0.flex-1 > .mb-1.flex-wrap.gap-\\[6px\\] > .text-\\[15px\\].text-\\[color\\:var\\(--glass-label\\)\\].font-bold"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 1.71 (foreground color: #121815, background color: #2a4535, font size: 11.3pt (15px), font weight: bold). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "fgColor": "#121815",
+                "bgColor": "#2a4535",
+                "contrastRatio": 1.71,
+                "fontSize": "11.3pt (15px)",
+                "fontWeight": "bold",
+                "messageKey": null,
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<div data-variant=\"interactive\" data-tone=\"neutral\" class=\"lkv-glass rounded-[v...\">",
+                  "target": [
+                    ".no-underline.block[href$=\"budget-voyage\"] > .lkv-glass.rounded-\\[var\\(--lkv-radius-card\\)\\].duration-\\[var\\(--motion-control-duration\\)\\]"
+                  ]
+                },
+                {
+                  "html": "<html lang=\"fr\" class=\"__variable_a5811e __variable_d7e2b6 dark\" data-theme=\"dark\" style=\"color-scheme: dark;\">",
+                  "target": [
+                    "html"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element has insufficient color contrast of 1.71 (foreground color: #121815, background color: #2a4535, font size: 11.3pt (15px), font weight: bold). Expected contrast ratio of 4.5:1"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<span class=\"text-[15px] font-bold text-[color:var(--glass-label)]\">Budget voyage</span>",
+          "target": [
+            ".no-underline.block[href$=\"budget-voyage\"] > .lkv-glass.rounded-\\[var\\(--lkv-radius-card\\)\\].duration-\\[var\\(--motion-control-duration\\)\\] > .min-w-0.flex-1 > .mb-1.flex-wrap.gap-\\[6px\\] > .text-\\[15px\\].text-\\[color\\:var\\(--glass-label\\)\\].font-bold"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 1.71 (foreground color: #121815, background color: #2a4535, font size: 11.3pt (15px), font weight: bold). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "fgColor": "#121815",
+                "bgColor": "#2a4535",
+                "contrastRatio": 1.71,
+                "fontSize": "11.3pt (15px)",
+                "fontWeight": "bold",
+                "messageKey": null,
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<div data-variant=\"interactive\" data-tone=\"neutral\" class=\"lkv-glass rounded-[v...\">",
+                  "target": [
+                    ".no-underline.block[href$=\"convertisseur\"] > .lkv-glass.rounded-\\[var\\(--lkv-radius-card\\)\\].duration-\\[var\\(--motion-control-duration\\)\\]"
+                  ]
+                },
+                {
+                  "html": "<html lang=\"fr\" class=\"__variable_a5811e __variable_d7e2b6 dark\" data-theme=\"dark\" style=\"color-scheme: dark;\">",
+                  "target": [
+                    "html"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element has insufficient color contrast of 1.71 (foreground color: #121815, background color: #2a4535, font size: 11.3pt (15px), font weight: bold). Expected contrast ratio of 4.5:1"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<span class=\"text-[15px] font-bold text-[color:var(--glass-label)]\">Convertisseur universel</span>",
+          "target": [
+            ".no-underline.block[href$=\"convertisseur\"] > .lkv-glass.rounded-\\[var\\(--lkv-radius-card\\)\\].duration-\\[var\\(--motion-control-duration\\)\\] > .min-w-0.flex-1 > .mb-1.flex-wrap.gap-\\[6px\\] > .text-\\[15px\\].text-\\[color\\:var\\(--glass-label\\)\\].font-bold"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 1.71 (foreground color: #121815, background color: #2a4535, font size: 11.3pt (15px), font weight: bold). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "fgColor": "#121815",
+                "bgColor": "#2a4535",
+                "contrastRatio": 1.71,
+                "fontSize": "11.3pt (15px)",
+                "fontWeight": "bold",
+                "messageKey": null,
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<div data-variant=\"interactive\" data-tone=\"neutral\" class=\"lkv-glass rounded-[v...\">",
+                  "target": [
+                    ".no-underline.block[href$=\"checklist\"] > .lkv-glass.rounded-\\[var\\(--lkv-radius-card\\)\\].duration-\\[var\\(--motion-control-duration\\)\\]"
+                  ]
+                },
+                {
+                  "html": "<html lang=\"fr\" class=\"__variable_a5811e __variable_d7e2b6 dark\" data-theme=\"dark\" style=\"color-scheme: dark;\">",
+                  "target": [
+                    "html"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element has insufficient color contrast of 1.71 (foreground color: #121815, background color: #2a4535, font size: 11.3pt (15px), font weight: bold). Expected contrast ratio of 4.5:1"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<span class=\"text-[15px] font-bold text-[color:var(--glass-label)]\">Checklist interactive</span>",
+          "target": [
+            ".no-underline.block[href$=\"checklist\"] > .lkv-glass.rounded-\\[var\\(--lkv-radius-card\\)\\].duration-\\[var\\(--motion-control-duration\\)\\] > .min-w-0.flex-1 > .mb-1.flex-wrap.gap-\\[6px\\] > .text-\\[15px\\].text-\\[color\\:var\\(--glass-label\\)\\].font-bold"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 1.71 (foreground color: #121815, background color: #2a4535, font size: 11.3pt (15px), font weight: bold). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "fgColor": "#121815",
+                "bgColor": "#2a4535",
+                "contrastRatio": 1.71,
+                "fontSize": "11.3pt (15px)",
+                "fontWeight": "bold",
+                "messageKey": null,
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<div data-variant=\"interactive\" data-tone=\"neutral\" class=\"lkv-glass rounded-[v...\">",
+                  "target": [
+                    ".no-underline.block[href$=\"tailles\"] > .lkv-glass.rounded-\\[var\\(--lkv-radius-card\\)\\].duration-\\[var\\(--motion-control-duration\\)\\]"
+                  ]
+                },
+                {
+                  "html": "<html lang=\"fr\" class=\"__variable_a5811e __variable_d7e2b6 dark\" data-theme=\"dark\" style=\"color-scheme: dark;\">",
+                  "target": [
+                    "html"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element has insufficient color contrast of 1.71 (foreground color: #121815, background color: #2a4535, font size: 11.3pt (15px), font weight: bold). Expected contrast ratio of 4.5:1"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<span class=\"text-[15px] font-bold text-[color:var(--glass-label)]\">Convertisseur de tailles</span>",
+          "target": [
+            ".no-underline.block[href$=\"tailles\"] > .lkv-glass.rounded-\\[var\\(--lkv-radius-card\\)\\].duration-\\[var\\(--motion-control-duration\\)\\] > .min-w-0.flex-1 > .mb-1.flex-wrap.gap-\\[6px\\] > .text-\\[15px\\].text-\\[color\\:var\\(--glass-label\\)\\].font-bold"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 1.71 (foreground color: #121815, background color: #2a4535, font size: 11.3pt (15px), font weight: bold). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "fgColor": "#121815",
+                "bgColor": "#2a4535",
+                "contrastRatio": 1.71,
+                "fontSize": "11.3pt (15px)",
+                "fontWeight": "bold",
+                "messageKey": null,
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<div data-variant=\"interactive\" data-tone=\"neutral\" class=\"lkv-glass rounded-[v...\">",
+                  "target": [
+                    ".no-underline.block[href$=\"fuseaux\"] > .lkv-glass.rounded-\\[var\\(--lkv-radius-card\\)\\].duration-\\[var\\(--motion-control-duration\\)\\]"
+                  ]
+                },
+                {
+                  "html": "<html lang=\"fr\" class=\"__variable_a5811e __variable_d7e2b6 dark\" data-theme=\"dark\" style=\"color-scheme: dark;\">",
+                  "target": [
+                    "html"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element has insufficient color contrast of 1.71 (foreground color: #121815, background color: #2a4535, font size: 11.3pt (15px), font weight: bold). Expected contrast ratio of 4.5:1"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<span class=\"text-[15px] font-bold text-[color:var(--glass-label)]\">Fuseaux horaires</span>",
+          "target": [
+            ".no-underline.block[href$=\"fuseaux\"] > .lkv-glass.rounded-\\[var\\(--lkv-radius-card\\)\\].duration-\\[var\\(--motion-control-duration\\)\\] > .min-w-0.flex-1 > .mb-1.flex-wrap.gap-\\[6px\\] > .text-\\[15px\\].text-\\[color\\:var\\(--glass-label\\)\\].font-bold"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 1.71 (foreground color: #121815, background color: #2a4535, font size: 11.3pt (15px), font weight: bold). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "fgColor": "#121815",
+                "bgColor": "#2a4535",
+                "contrastRatio": 1.71,
+                "fontSize": "11.3pt (15px)",
+                "fontWeight": "bold",
+                "messageKey": null,
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<div data-variant=\"interactive\" data-tone=\"neutral\" class=\"lkv-glass rounded-[v...\">",
+                  "target": [
+                    ".no-underline.block[href$=\"boussole\"] > .lkv-glass.rounded-\\[var\\(--lkv-radius-card\\)\\].duration-\\[var\\(--motion-control-duration\\)\\]"
+                  ]
+                },
+                {
+                  "html": "<html lang=\"fr\" class=\"__variable_a5811e __variable_d7e2b6 dark\" data-theme=\"dark\" style=\"color-scheme: dark;\">",
+                  "target": [
+                    "html"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element has insufficient color contrast of 1.71 (foreground color: #121815, background color: #2a4535, font size: 11.3pt (15px), font weight: bold). Expected contrast ratio of 4.5:1"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<span class=\"text-[15px] font-bold text-[color:var(--glass-label)]\">Boussole &amp; Niveau</span>",
+          "target": [
+            ".no-underline.block[href$=\"boussole\"] > .lkv-glass.rounded-\\[var\\(--lkv-radius-card\\)\\].duration-\\[var\\(--motion-control-duration\\)\\] > .min-w-0.flex-1 > .mb-1.flex-wrap.gap-\\[6px\\] > .text-\\[15px\\].text-\\[color\\:var\\(--glass-label\\)\\].font-bold"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 1.71 (foreground color: #121815, background color: #2a4535, font size: 11.3pt (15px), font weight: bold). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "fgColor": "#121815",
+                "bgColor": "#2a4535",
+                "contrastRatio": 1.71,
+                "fontSize": "11.3pt (15px)",
+                "fontWeight": "bold",
+                "messageKey": null,
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<div data-variant=\"interactive\" data-tone=\"neutral\" class=\"lkv-glass rounded-[v...\">",
+                  "target": [
+                    ".no-underline.block[href$=\"chronometre\"] > .lkv-glass.rounded-\\[var\\(--lkv-radius-card\\)\\].duration-\\[var\\(--motion-control-duration\\)\\]"
+                  ]
+                },
+                {
+                  "html": "<html lang=\"fr\" class=\"__variable_a5811e __variable_d7e2b6 dark\" data-theme=\"dark\" style=\"color-scheme: dark;\">",
+                  "target": [
+                    "html"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element has insufficient color contrast of 1.71 (foreground color: #121815, background color: #2a4535, font size: 11.3pt (15px), font weight: bold). Expected contrast ratio of 4.5:1"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<span class=\"text-[15px] font-bold text-[color:var(--glass-label)]\">Chronomètre rando</span>",
+          "target": [
+            ".no-underline.block[href$=\"chronometre\"] > .lkv-glass.rounded-\\[var\\(--lkv-radius-card\\)\\].duration-\\[var\\(--motion-control-duration\\)\\] > .min-w-0.flex-1 > .mb-1.flex-wrap.gap-\\[6px\\] > .text-\\[15px\\].text-\\[color\\:var\\(--glass-label\\)\\].font-bold"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 1.71 (foreground color: #121815, background color: #2a4535, font size: 11.3pt (15px), font weight: bold). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "fgColor": "#121815",
+                "bgColor": "#2a4535",
+                "contrastRatio": 1.71,
+                "fontSize": "11.3pt (15px)",
+                "fontWeight": "bold",
+                "messageKey": null,
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<div data-variant=\"interactive\" data-tone=\"neutral\" class=\"lkv-glass rounded-[v...\">",
+                  "target": [
+                    ".no-underline.block[href$=\"rations\"] > .lkv-glass.rounded-\\[var\\(--lkv-radius-card\\)\\].duration-\\[var\\(--motion-control-duration\\)\\]"
+                  ]
+                },
+                {
+                  "html": "<html lang=\"fr\" class=\"__variable_a5811e __variable_d7e2b6 dark\" data-theme=\"dark\" style=\"color-scheme: dark;\">",
+                  "target": [
+                    "html"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element has insufficient color contrast of 1.71 (foreground color: #121815, background color: #2a4535, font size: 11.3pt (15px), font weight: bold). Expected contrast ratio of 4.5:1"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<span class=\"text-[15px] font-bold text-[color:var(--glass-label)]\">Rations eau &amp; nourriture</span>",
+          "target": [
+            ".no-underline.block[href$=\"rations\"] > .lkv-glass.rounded-\\[var\\(--lkv-radius-card\\)\\].duration-\\[var\\(--motion-control-duration\\)\\] > .min-w-0.flex-1 > .mb-1.flex-wrap.gap-\\[6px\\] > .text-\\[15px\\].text-\\[color\\:var\\(--glass-label\\)\\].font-bold"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 1.71 (foreground color: #121815, background color: #2a4535, font size: 11.3pt (15px), font weight: bold). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "fgColor": "#121815",
+                "bgColor": "#2a4535",
+                "contrastRatio": 1.71,
+                "fontSize": "11.3pt (15px)",
+                "fontWeight": "bold",
+                "messageKey": null,
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<div data-variant=\"interactive\" data-tone=\"neutral\" class=\"lkv-glass rounded-[v...\">",
+                  "target": [
+                    ".no-underline.block[href$=\"decompression\"] > .lkv-glass.rounded-\\[var\\(--lkv-radius-card\\)\\].duration-\\[var\\(--motion-control-duration\\)\\]"
+                  ]
+                },
+                {
+                  "html": "<html lang=\"fr\" class=\"__variable_a5811e __variable_d7e2b6 dark\" data-theme=\"dark\" style=\"color-scheme: dark;\">",
+                  "target": [
+                    "html"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element has insufficient color contrast of 1.71 (foreground color: #121815, background color: #2a4535, font size: 11.3pt (15px), font weight: bold). Expected contrast ratio of 4.5:1"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<span class=\"text-[15px] font-bold text-[color:var(--glass-label)]\">Calculateur de décompression</span>",
+          "target": [
+            ".no-underline.block[href$=\"decompression\"] > .lkv-glass.rounded-\\[var\\(--lkv-radius-card\\)\\].duration-\\[var\\(--motion-control-duration\\)\\] > .min-w-0.flex-1 > .mb-1.flex-wrap.gap-\\[6px\\] > .text-\\[15px\\].text-\\[color\\:var\\(--glass-label\\)\\].font-bold"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 1.71 (foreground color: #121815, background color: #2a4535, font size: 11.3pt (15px), font weight: bold). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "fgColor": "#121815",
+                "bgColor": "#2a4535",
+                "contrastRatio": 1.71,
+                "fontSize": "11.3pt (15px)",
+                "fontWeight": "bold",
+                "messageKey": null,
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<div data-variant=\"interactive\" data-tone=\"neutral\" class=\"lkv-glass rounded-[v...\">",
+                  "target": [
+                    ".no-underline.block[href$=\"altimetre\"] > .lkv-glass.rounded-\\[var\\(--lkv-radius-card\\)\\].duration-\\[var\\(--motion-control-duration\\)\\]"
+                  ]
+                },
+                {
+                  "html": "<html lang=\"fr\" class=\"__variable_a5811e __variable_d7e2b6 dark\" data-theme=\"dark\" style=\"color-scheme: dark;\">",
+                  "target": [
+                    "html"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element has insufficient color contrast of 1.71 (foreground color: #121815, background color: #2a4535, font size: 11.3pt (15px), font weight: bold). Expected contrast ratio of 4.5:1"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<span class=\"text-[15px] font-bold text-[color:var(--glass-label)]\">Altimètre &amp; Pression</span>",
+          "target": [
+            ".no-underline.block[href$=\"altimetre\"] > .lkv-glass.rounded-\\[var\\(--lkv-radius-card\\)\\].duration-\\[var\\(--motion-control-duration\\)\\] > .min-w-0.flex-1 > .mb-1.flex-wrap.gap-\\[6px\\] > .text-\\[15px\\].text-\\[color\\:var\\(--glass-label\\)\\].font-bold"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 1.71 (foreground color: #121815, background color: #2a4535, font size: 11.3pt (15px), font weight: bold). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "fgColor": "#121815",
+                "bgColor": "#2a4535",
+                "contrastRatio": 1.71,
+                "fontSize": "11.3pt (15px)",
+                "fontWeight": "bold",
+                "messageKey": null,
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<div data-variant=\"interactive\" data-tone=\"neutral\" class=\"lkv-glass rounded-[v...\">",
+                  "target": [
+                    ".no-underline.block[href$=\"meteo-montagne\"] > .lkv-glass.rounded-\\[var\\(--lkv-radius-card\\)\\].duration-\\[var\\(--motion-control-duration\\)\\]"
+                  ]
+                },
+                {
+                  "html": "<html lang=\"fr\" class=\"__variable_a5811e __variable_d7e2b6 dark\" data-theme=\"dark\" style=\"color-scheme: dark;\">",
+                  "target": [
+                    "html"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element has insufficient color contrast of 1.71 (foreground color: #121815, background color: #2a4535, font size: 11.3pt (15px), font weight: bold). Expected contrast ratio of 4.5:1"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<span class=\"text-[15px] font-bold text-[color:var(--glass-label)]\">Météo montagne</span>",
+          "target": [
+            ".no-underline.block[href$=\"meteo-montagne\"] > .lkv-glass.rounded-\\[var\\(--lkv-radius-card\\)\\].duration-\\[var\\(--motion-control-duration\\)\\] > .min-w-0.flex-1 > .mb-1.flex-wrap.gap-\\[6px\\] > .text-\\[15px\\].text-\\[color\\:var\\(--glass-label\\)\\].font-bold"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 1.71 (foreground color: #121815, background color: #2a4535, font size: 11.3pt (15px), font weight: bold). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "fgColor": "#121815",
+                "bgColor": "#2a4535",
+                "contrastRatio": 1.71,
+                "fontSize": "11.3pt (15px)",
+                "fontWeight": "bold",
+                "messageKey": null,
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<div data-variant=\"interactive\" data-tone=\"neutral\" class=\"lkv-glass rounded-[v...\">",
+                  "target": [
+                    ".no-underline.block[href$=\"carbone\"] > .lkv-glass.rounded-\\[var\\(--lkv-radius-card\\)\\].duration-\\[var\\(--motion-control-duration\\)\\]"
+                  ]
+                },
+                {
+                  "html": "<html lang=\"fr\" class=\"__variable_a5811e __variable_d7e2b6 dark\" data-theme=\"dark\" style=\"color-scheme: dark;\">",
+                  "target": [
+                    "html"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element has insufficient color contrast of 1.71 (foreground color: #121815, background color: #2a4535, font size: 11.3pt (15px), font weight: bold). Expected contrast ratio of 4.5:1"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<span class=\"text-[15px] font-bold text-[color:var(--glass-label)]\">Calculateur carbone voyage</span>",
+          "target": [
+            ".no-underline.block[href$=\"carbone\"] > .lkv-glass.rounded-\\[var\\(--lkv-radius-card\\)\\].duration-\\[var\\(--motion-control-duration\\)\\] > .min-w-0.flex-1 > .mb-1.flex-wrap.gap-\\[6px\\] > .text-\\[15px\\].text-\\[color\\:var\\(--glass-label\\)\\].font-bold"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 1.71 (foreground color: #121815, background color: #2a4535, font size: 11.3pt (15px), font weight: bold). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "fgColor": "#121815",
+                "bgColor": "#2a4535",
+                "contrastRatio": 1.71,
+                "fontSize": "11.3pt (15px)",
+                "fontWeight": "bold",
+                "messageKey": null,
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<div data-variant=\"interactive\" data-tone=\"neutral\" class=\"lkv-glass rounded-[v...\">",
+                  "target": [
+                    ".no-underline.block[href$=\"debit-eau\"] > .lkv-glass.rounded-\\[var\\(--lkv-radius-card\\)\\].duration-\\[var\\(--motion-control-duration\\)\\]"
+                  ]
+                },
+                {
+                  "html": "<html lang=\"fr\" class=\"__variable_a5811e __variable_d7e2b6 dark\" data-theme=\"dark\" style=\"color-scheme: dark;\">",
+                  "target": [
+                    "html"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element has insufficient color contrast of 1.71 (foreground color: #121815, background color: #2a4535, font size: 11.3pt (15px), font weight: bold). Expected contrast ratio of 4.5:1"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<span class=\"text-[15px] font-bold text-[color:var(--glass-label)]\">Calculateur débit rivière</span>",
+          "target": [
+            ".no-underline.block[href$=\"debit-eau\"] > .lkv-glass.rounded-\\[var\\(--lkv-radius-card\\)\\].duration-\\[var\\(--motion-control-duration\\)\\] > .min-w-0.flex-1 > .mb-1.flex-wrap.gap-\\[6px\\] > .text-\\[15px\\].text-\\[color\\:var\\(--glass-label\\)\\].font-bold"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 1.71 (foreground color: #121815, background color: #2a4535, font size: 11.3pt (15px), font weight: bold). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "fgColor": "#121815",
+                "bgColor": "#2a4535",
+                "contrastRatio": 1.71,
+                "fontSize": "11.3pt (15px)",
+                "fontWeight": "bold",
+                "messageKey": null,
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<div data-variant=\"interactive\" data-tone=\"neutral\" class=\"lkv-glass rounded-[v...\">",
+                  "target": [
+                    ".no-underline.block[href$=\"pharmacie\"] > .lkv-glass.rounded-\\[var\\(--lkv-radius-card\\)\\].duration-\\[var\\(--motion-control-duration\\)\\]"
+                  ]
+                },
+                {
+                  "html": "<html lang=\"fr\" class=\"__variable_a5811e __variable_d7e2b6 dark\" data-theme=\"dark\" style=\"color-scheme: dark;\">",
+                  "target": [
+                    "html"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element has insufficient color contrast of 1.71 (foreground color: #121815, background color: #2a4535, font size: 11.3pt (15px), font weight: bold). Expected contrast ratio of 4.5:1"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<span class=\"text-[15px] font-bold text-[color:var(--glass-label)]\">Pharmacie de voyage</span>",
+          "target": [
+            ".no-underline.block[href$=\"pharmacie\"] > .lkv-glass.rounded-\\[var\\(--lkv-radius-card\\)\\].duration-\\[var\\(--motion-control-duration\\)\\] > .min-w-0.flex-1 > .mb-1.flex-wrap.gap-\\[6px\\] > .text-\\[15px\\].text-\\[color\\:var\\(--glass-label\\)\\].font-bold"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 1.71 (foreground color: #121815, background color: #2a4535, font size: 11.3pt (15px), font weight: bold). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "fgColor": "#121815",
+                "bgColor": "#2a4535",
+                "contrastRatio": 1.71,
+                "fontSize": "11.3pt (15px)",
+                "fontWeight": "bold",
+                "messageKey": null,
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<div data-variant=\"interactive\" data-tone=\"neutral\" class=\"lkv-glass rounded-[v...\">",
+                  "target": [
+                    ".no-underline.block[href$=\"visa\"] > .lkv-glass.rounded-\\[var\\(--lkv-radius-card\\)\\].duration-\\[var\\(--motion-control-duration\\)\\]"
+                  ]
+                },
+                {
+                  "html": "<html lang=\"fr\" class=\"__variable_a5811e __variable_d7e2b6 dark\" data-theme=\"dark\" style=\"color-scheme: dark;\">",
+                  "target": [
+                    "html"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element has insufficient color contrast of 1.71 (foreground color: #121815, background color: #2a4535, font size: 11.3pt (15px), font weight: bold). Expected contrast ratio of 4.5:1"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<span class=\"text-[15px] font-bold text-[color:var(--glass-label)]\">Vérificateur de visa</span>",
+          "target": [
+            ".no-underline.block[href$=\"visa\"] > .lkv-glass.rounded-\\[var\\(--lkv-radius-card\\)\\].duration-\\[var\\(--motion-control-duration\\)\\] > .min-w-0.flex-1 > .mb-1.flex-wrap.gap-\\[6px\\] > .text-\\[15px\\].text-\\[color\\:var\\(--glass-label\\)\\].font-bold"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 1.71 (foreground color: #121815, background color: #2a4535, font size: 11.3pt (15px), font weight: bold). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "fgColor": "#121815",
+                "bgColor": "#2a4535",
+                "contrastRatio": 1.71,
+                "fontSize": "11.3pt (15px)",
+                "fontWeight": "bold",
+                "messageKey": null,
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<div data-variant=\"interactive\" data-tone=\"neutral\" class=\"lkv-glass rounded-[v...\">",
+                  "target": [
+                    ".no-underline.block[href$=\"vaccins\"] > .lkv-glass.rounded-\\[var\\(--lkv-radius-card\\)\\].duration-\\[var\\(--motion-control-duration\\)\\]"
+                  ]
+                },
+                {
+                  "html": "<html lang=\"fr\" class=\"__variable_a5811e __variable_d7e2b6 dark\" data-theme=\"dark\" style=\"color-scheme: dark;\">",
+                  "target": [
+                    "html"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element has insufficient color contrast of 1.71 (foreground color: #121815, background color: #2a4535, font size: 11.3pt (15px), font weight: bold). Expected contrast ratio of 4.5:1"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<span class=\"text-[15px] font-bold text-[color:var(--glass-label)]\">Recommandations vaccins</span>",
+          "target": [
+            ".no-underline.block[href$=\"vaccins\"] > .lkv-glass.rounded-\\[var\\(--lkv-radius-card\\)\\].duration-\\[var\\(--motion-control-duration\\)\\] > .min-w-0.flex-1 > .mb-1.flex-wrap.gap-\\[6px\\] > .text-\\[15px\\].text-\\[color\\:var\\(--glass-label\\)\\].font-bold"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 1.71 (foreground color: #121815, background color: #2a4535, font size: 11.3pt (15px), font weight: bold). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "fgColor": "#121815",
+                "bgColor": "#2a4535",
+                "contrastRatio": 1.71,
+                "fontSize": "11.3pt (15px)",
+                "fontWeight": "bold",
+                "messageKey": null,
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<div data-variant=\"interactive\" data-tone=\"neutral\" class=\"lkv-glass rounded-[v...\">",
+                  "target": [
+                    ".no-underline.block[href$=\"langue\"] > .lkv-glass.rounded-\\[var\\(--lkv-radius-card\\)\\].duration-\\[var\\(--motion-control-duration\\)\\]"
+                  ]
+                },
+                {
+                  "html": "<html lang=\"fr\" class=\"__variable_a5811e __variable_d7e2b6 dark\" data-theme=\"dark\" style=\"color-scheme: dark;\">",
+                  "target": [
+                    "html"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element has insufficient color contrast of 1.71 (foreground color: #121815, background color: #2a4535, font size: 11.3pt (15px), font weight: bold). Expected contrast ratio of 4.5:1"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<span class=\"text-[15px] font-bold text-[color:var(--glass-label)]\">Phrases essentielles</span>",
+          "target": [
+            ".no-underline.block[href$=\"langue\"] > .lkv-glass.rounded-\\[var\\(--lkv-radius-card\\)\\].duration-\\[var\\(--motion-control-duration\\)\\] > .min-w-0.flex-1 > .mb-1.flex-wrap.gap-\\[6px\\] > .text-\\[15px\\].text-\\[color\\:var\\(--glass-label\\)\\].font-bold"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 1.71 (foreground color: #121815, background color: #2a4535, font size: 11.3pt (15px), font weight: bold). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "fgColor": "#121815",
+                "bgColor": "#2a4535",
+                "contrastRatio": 1.71,
+                "fontSize": "11.3pt (15px)",
+                "fontWeight": "bold",
+                "messageKey": null,
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<div data-variant=\"interactive\" data-tone=\"neutral\" class=\"lkv-glass rounded-[v...\">",
+                  "target": [
+                    ".no-underline.block[href$=\"noeud\"] > .lkv-glass.rounded-\\[var\\(--lkv-radius-card\\)\\].duration-\\[var\\(--motion-control-duration\\)\\]"
+                  ]
+                },
+                {
+                  "html": "<html lang=\"fr\" class=\"__variable_a5811e __variable_d7e2b6 dark\" data-theme=\"dark\" style=\"color-scheme: dark;\">",
+                  "target": [
+                    "html"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element has insufficient color contrast of 1.71 (foreground color: #121815, background color: #2a4535, font size: 11.3pt (15px), font weight: bold). Expected contrast ratio of 4.5:1"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<span class=\"text-[15px] font-bold text-[color:var(--glass-label)]\">Guide des nœuds</span>",
+          "target": [
+            ".no-underline.block[href$=\"noeud\"] > .lkv-glass.rounded-\\[var\\(--lkv-radius-card\\)\\].duration-\\[var\\(--motion-control-duration\\)\\] > .min-w-0.flex-1 > .mb-1.flex-wrap.gap-\\[6px\\] > .text-\\[15px\\].text-\\[color\\:var\\(--glass-label\\)\\].font-bold"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 1.71 (foreground color: #121815, background color: #2a4535, font size: 11.3pt (15px), font weight: bold). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "fgColor": "#121815",
+                "bgColor": "#2a4535",
+                "contrastRatio": 1.71,
+                "fontSize": "11.3pt (15px)",
+                "fontWeight": "bold",
+                "messageKey": null,
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<div data-variant=\"interactive\" data-tone=\"neutral\" class=\"lkv-glass rounded-[v...\">",
+                  "target": [
+                    ".no-underline.block[href$=\"soleil\"] > .lkv-glass.rounded-\\[var\\(--lkv-radius-card\\)\\].duration-\\[var\\(--motion-control-duration\\)\\]"
+                  ]
+                },
+                {
+                  "html": "<html lang=\"fr\" class=\"__variable_a5811e __variable_d7e2b6 dark\" data-theme=\"dark\" style=\"color-scheme: dark;\">",
+                  "target": [
+                    "html"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element has insufficient color contrast of 1.71 (foreground color: #121815, background color: #2a4535, font size: 11.3pt (15px), font weight: bold). Expected contrast ratio of 4.5:1"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<span class=\"text-[15px] font-bold text-[color:var(--glass-label)]\">Calculateur lever/coucher soleil</span>",
+          "target": [
+            ".no-underline.block[href$=\"soleil\"] > .lkv-glass.rounded-\\[var\\(--lkv-radius-card\\)\\].duration-\\[var\\(--motion-control-duration\\)\\] > .min-w-0.flex-1 > .mb-1.flex-wrap.gap-\\[6px\\] > .text-\\[15px\\].text-\\[color\\:var\\(--glass-label\\)\\].font-bold"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 1.71 (foreground color: #121815, background color: #2a4535, font size: 11.3pt (15px), font weight: bold). Expected contrast ratio of 4.5:1"
+        }
+      ]
+    }
+  ]
 }

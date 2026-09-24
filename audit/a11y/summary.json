@@ -1,354 +1,632 @@
 {
   "accueil": {
-    "violationsCount": 1,
-    "impacts": {
-      "serious": 1
-    }
+    "label": "Accueil",
+    "path": "/",
+    "totalViolations": 1,
+    "serious": 1,
+    "critical": 0,
+    "colorContrastViolationsCount": 9,
+    "colorContrastIncompleteCount": 34
   },
   "hub": {
-    "violationsCount": 0,
-    "impacts": {}
+    "label": "Hub Cockpit",
+    "path": "/hub",
+    "totalViolations": 0,
+    "serious": 0,
+    "critical": 0,
+    "colorContrastViolationsCount": 0,
+    "colorContrastIncompleteCount": 10
   },
   "hub-nouveau": {
-    "violationsCount": 1,
-    "impacts": {
-      "serious": 1
-    }
+    "label": "Hub Nouveau",
+    "path": "/hub/nouveau",
+    "totalViolations": 0,
+    "serious": 0,
+    "critical": 0,
+    "colorContrastViolationsCount": 0,
+    "colorContrastIncompleteCount": 18
   },
   "hub-itineraire": {
-    "violationsCount": 1,
-    "impacts": {
-      "serious": 1
-    }
+    "label": "Hub Itinéraire",
+    "path": "/hub/itineraire",
+    "totalViolations": 0,
+    "serious": 0,
+    "critical": 0,
+    "colorContrastViolationsCount": 0,
+    "colorContrastIncompleteCount": 64
   },
   "hub-budget": {
-    "violationsCount": 2,
-    "impacts": {
-      "serious": 2
-    }
+    "label": "Hub Budget",
+    "path": "/hub/budget",
+    "totalViolations": 1,
+    "serious": 1,
+    "critical": 0,
+    "colorContrastViolationsCount": 0,
+    "colorContrastIncompleteCount": 58
   },
   "hub-groupe": {
-    "violationsCount": 0,
-    "impacts": {}
+    "label": "Hub Équipage",
+    "path": "/hub/groupe",
+    "totalViolations": 0,
+    "serious": 0,
+    "critical": 0,
+    "colorContrastViolationsCount": 0,
+    "colorContrastIncompleteCount": 46
   },
   "hub-securite": {
-    "violationsCount": 0,
-    "impacts": {}
+    "label": "Hub Sécurité",
+    "path": "/hub/securite",
+    "totalViolations": 0,
+    "serious": 0,
+    "critical": 0,
+    "colorContrastViolationsCount": 0,
+    "colorContrastIncompleteCount": 37
   },
   "hub-materiel": {
-    "violationsCount": 1,
-    "impacts": {
-      "serious": 1
-    }
+    "label": "Hub Matériel",
+    "path": "/hub/materiel",
+    "totalViolations": 1,
+    "serious": 1,
+    "critical": 0,
+    "colorContrastViolationsCount": 1,
+    "colorContrastIncompleteCount": 1
   },
   "hub-documents": {
-    "violationsCount": 0,
-    "impacts": {}
+    "label": "Hub Documents",
+    "path": "/hub/documents",
+    "totalViolations": 0,
+    "serious": 0,
+    "critical": 0,
+    "colorContrastViolationsCount": 0,
+    "colorContrastIncompleteCount": 16
   },
   "explorer": {
-    "violationsCount": 1,
-    "impacts": {
-      "serious": 1
-    }
+    "label": "Explorer",
+    "path": "/explorer",
+    "totalViolations": 0,
+    "serious": 0,
+    "critical": 0,
+    "colorContrastViolationsCount": 0,
+    "colorContrastIncompleteCount": 1
   },
   "carte-interactive": {
-    "violationsCount": 0,
-    "impacts": {}
+    "label": "Carte Interactive",
+    "path": "/carte-interactive",
+    "totalViolations": 0,
+    "serious": 0,
+    "critical": 0,
+    "colorContrastViolationsCount": 0,
+    "colorContrastIncompleteCount": 0
   },
   "randonnee-active": {
-    "violationsCount": 0,
-    "impacts": {}
+    "label": "Randonnée Active",
+    "path": "/randonnee-active",
+    "totalViolations": 0,
+    "serious": 0,
+    "critical": 0,
+    "colorContrastViolationsCount": 0,
+    "colorContrastIncompleteCount": 20
   },
   "rapport-expedition": {
-    "violationsCount": 0,
-    "impacts": {}
+    "label": "Rapport Expédition",
+    "path": "/rapport-expedition",
+    "totalViolations": 0,
+    "serious": 0,
+    "critical": 0,
+    "colorContrastViolationsCount": 0,
+    "colorContrastIncompleteCount": 1
   },
   "materiel": {
-    "violationsCount": 1,
-    "impacts": {
-      "serious": 1
-    }
+    "label": "Matériel",
+    "path": "/materiel",
+    "totalViolations": 0,
+    "serious": 0,
+    "critical": 0,
+    "colorContrastViolationsCount": 0,
+    "colorContrastIncompleteCount": 1
   },
   "kits": {
-    "violationsCount": 1,
-    "impacts": {
-      "serious": 1
-    }
+    "label": "Catalogue Kits",
+    "path": "/kits",
+    "totalViolations": 0,
+    "serious": 0,
+    "critical": 0,
+    "colorContrastViolationsCount": 0,
+    "colorContrastIncompleteCount": 1
   },
   "kit-islande": {
-    "violationsCount": 0,
-    "impacts": {}
+    "label": "Kit Islande",
+    "path": "/kits/islande-trek",
+    "totalViolations": 0,
+    "serious": 0,
+    "critical": 0,
+    "colorContrastViolationsCount": 0,
+    "colorContrastIncompleteCount": 1
   },
   "kit-gr20": {
-    "violationsCount": 0,
-    "impacts": {}
+    "label": "Kit GR20",
+    "path": "/kits/gr20-corse",
+    "totalViolations": 0,
+    "serious": 0,
+    "critical": 0,
+    "colorContrastViolationsCount": 0,
+    "colorContrastIncompleteCount": 1
   },
   "kit-vanlife": {
-    "violationsCount": 0,
-    "impacts": {}
+    "label": "Kit Vanlife",
+    "path": "/kits/vanlife-europe",
+    "totalViolations": 0,
+    "serious": 0,
+    "critical": 0,
+    "colorContrastViolationsCount": 0,
+    "colorContrastIncompleteCount": 1
   },
   "ai-configurator": {
-    "violationsCount": 0,
-    "impacts": {}
+    "label": "Configurateur IA",
+    "path": "/ai-configurator",
+    "totalViolations": 1,
+    "serious": 1,
+    "critical": 0,
+    "colorContrastViolationsCount": 0,
+    "colorContrastIncompleteCount": 96
   },
   "copilote": {
-    "violationsCount": 1,
-    "impacts": {
-      "serious": 1
-    }
+    "label": "Copilote IA",
+    "path": "/copilote",
+    "totalViolations": 0,
+    "serious": 0,
+    "critical": 0,
+    "colorContrastViolationsCount": 0,
+    "colorContrastIncompleteCount": 1
   },
   "boutique": {
-    "violationsCount": 0,
-    "impacts": {}
+    "label": "Boutique",
+    "path": "/boutique",
+    "totalViolations": 0,
+    "serious": 0,
+    "critical": 0,
+    "colorContrastViolationsCount": 0,
+    "colorContrastIncompleteCount": 2
   },
   "produit-detail": {
-    "violationsCount": 1,
-    "impacts": {
-      "serious": 1
-    }
+    "label": "Fiche Produit",
+    "path": "/produit/sac-a-dos-de-randonnee-categorie-bigbuy",
+    "totalViolations": 1,
+    "serious": 1,
+    "critical": 0,
+    "colorContrastViolationsCount": 0,
+    "colorContrastIncompleteCount": 0
   },
   "occasion": {
-    "violationsCount": 1,
-    "impacts": {
-      "serious": 1
-    }
+    "label": "Occasion",
+    "path": "/occasion",
+    "totalViolations": 0,
+    "serious": 0,
+    "critical": 0,
+    "colorContrastViolationsCount": 0,
+    "colorContrastIncompleteCount": 9
   },
   "location": {
-    "violationsCount": 1,
-    "impacts": {
-      "serious": 1
-    }
+    "label": "Location",
+    "path": "/location",
+    "totalViolations": 1,
+    "serious": 1,
+    "critical": 0,
+    "colorContrastViolationsCount": 1,
+    "colorContrastIncompleteCount": 15
   },
   "panier": {
-    "violationsCount": 0,
-    "impacts": {}
+    "label": "Panier",
+    "path": "/panier",
+    "totalViolations": 0,
+    "serious": 0,
+    "critical": 0,
+    "colorContrastViolationsCount": 0,
+    "colorContrastIncompleteCount": 1
   },
   "checkout": {
-    "violationsCount": 0,
-    "impacts": {}
+    "label": "Checkout",
+    "path": "/checkout",
+    "totalViolations": 0,
+    "serious": 0,
+    "critical": 0,
+    "colorContrastViolationsCount": 0,
+    "colorContrastIncompleteCount": 0
   },
   "abonnements": {
-    "violationsCount": 2,
-    "impacts": {
-      "serious": 2
-    }
+    "label": "Abonnements",
+    "path": "/abonnements",
+    "totalViolations": 1,
+    "serious": 1,
+    "critical": 0,
+    "colorContrastViolationsCount": 0,
+    "colorContrastIncompleteCount": 4
   },
   "pays-fr": {
-    "violationsCount": 1,
-    "impacts": {
-      "serious": 1
-    }
+    "label": "Pays France",
+    "path": "/pays/fr",
+    "totalViolations": 2,
+    "serious": 2,
+    "critical": 0,
+    "colorContrastViolationsCount": 1,
+    "colorContrastIncompleteCount": 71
   },
   "pays-is": {
-    "violationsCount": 1,
-    "impacts": {
-      "serious": 1
-    }
+    "label": "Pays Islande",
+    "path": "/pays/is",
+    "totalViolations": 1,
+    "serious": 1,
+    "critical": 0,
+    "colorContrastViolationsCount": 0,
+    "colorContrastIncompleteCount": 77
   },
   "lieux": {
-    "violationsCount": 1,
-    "impacts": {
-      "serious": 1
-    }
+    "label": "Lieux",
+    "path": "/lieux",
+    "totalViolations": 0,
+    "serious": 0,
+    "critical": 0,
+    "colorContrastViolationsCount": 0,
+    "colorContrastIncompleteCount": 5
   },
   "preparer-randonnee": {
-    "violationsCount": 0,
-    "impacts": {}
+    "label": "Préparer Randonnée",
+    "path": "/preparer-randonnee",
+    "totalViolations": 0,
+    "serious": 0,
+    "critical": 0,
+    "colorContrastViolationsCount": 0,
+    "colorContrastIncompleteCount": 10
   },
   "communaute": {
-    "violationsCount": 1,
-    "impacts": {
-      "serious": 1
-    }
+    "label": "Communauté",
+    "path": "/communaute",
+    "totalViolations": 0,
+    "serious": 0,
+    "critical": 0,
+    "colorContrastViolationsCount": 0,
+    "colorContrastIncompleteCount": 50
   },
   "communaute-publier": {
-    "violationsCount": 1,
-    "impacts": {
-      "serious": 1
-    }
+    "label": "Publier",
+    "path": "/communaute/publier",
+    "totalViolations": 0,
+    "serious": 0,
+    "critical": 0,
+    "colorContrastViolationsCount": 0,
+    "colorContrastIncompleteCount": 1
   },
   "communaute-pro": {
-    "violationsCount": 0,
-    "impacts": {}
+    "label": "Communauté Pro",
+    "path": "/communaute-pro",
+    "totalViolations": 0,
+    "serious": 0,
+    "critical": 0,
+    "colorContrastViolationsCount": 0,
+    "colorContrastIncompleteCount": 1
   },
   "feed": {
-    "violationsCount": 1,
-    "impacts": {
-      "serious": 1
-    }
+    "label": "Fil Actualités",
+    "path": "/feed",
+    "totalViolations": 1,
+    "serious": 1,
+    "critical": 0,
+    "colorContrastViolationsCount": 4,
+    "colorContrastIncompleteCount": 2
   },
   "carnets": {
-    "violationsCount": 1,
-    "impacts": {
-      "serious": 1
-    }
+    "label": "Carnets",
+    "path": "/carnets",
+    "totalViolations": 0,
+    "serious": 0,
+    "critical": 0,
+    "colorContrastViolationsCount": 0,
+    "colorContrastIncompleteCount": 135
   },
   "clubs": {
-    "violationsCount": 1,
-    "impacts": {
-      "serious": 1
-    }
+    "label": "Clubs",
+    "path": "/clubs",
+    "totalViolations": 0,
+    "serious": 0,
+    "critical": 0,
+    "colorContrastViolationsCount": 0,
+    "colorContrastIncompleteCount": 34
   },
   "entraide": {
-    "violationsCount": 0,
-    "impacts": {}
+    "label": "Entraide",
+    "path": "/entraide",
+    "totalViolations": 0,
+    "serious": 0,
+    "critical": 0,
+    "colorContrastViolationsCount": 0,
+    "colorContrastIncompleteCount": 2
   },
   "evenements": {
-    "violationsCount": 1,
-    "impacts": {
-      "serious": 1
-    }
+    "label": "Événements",
+    "path": "/evenements",
+    "totalViolations": 1,
+    "serious": 1,
+    "critical": 0,
+    "colorContrastViolationsCount": 1,
+    "colorContrastIncompleteCount": 112
   },
   "avis": {
-    "violationsCount": 1,
-    "impacts": {
-      "serious": 1
-    }
+    "label": "Avis",
+    "path": "/avis",
+    "totalViolations": 0,
+    "serious": 0,
+    "critical": 0,
+    "colorContrastViolationsCount": 0,
+    "colorContrastIncompleteCount": 27
   },
   "outils": {
-    "violationsCount": 0,
-    "impacts": {}
+    "label": "Hub Outils",
+    "path": "/outils",
+    "totalViolations": 0,
+    "serious": 0,
+    "critical": 0,
+    "colorContrastViolationsCount": 0,
+    "colorContrastIncompleteCount": 1
   },
   "outil-poids-sac": {
-    "violationsCount": 0,
-    "impacts": {}
+    "label": "Outil Poids",
+    "path": "/outils/poids-sac",
+    "totalViolations": 0,
+    "serious": 0,
+    "critical": 0,
+    "colorContrastViolationsCount": 0,
+    "colorContrastIncompleteCount": 31
   },
   "outil-budget": {
-    "violationsCount": 0,
-    "impacts": {}
+    "label": "Outil Budget",
+    "path": "/outils/budget",
+    "totalViolations": 0,
+    "serious": 0,
+    "critical": 0,
+    "colorContrastViolationsCount": 0,
+    "colorContrastIncompleteCount": 1
   },
   "outil-convertisseur": {
-    "violationsCount": 0,
-    "impacts": {}
+    "label": "Convertisseur",
+    "path": "/outils/convertisseur",
+    "totalViolations": 0,
+    "serious": 0,
+    "critical": 0,
+    "colorContrastViolationsCount": 0,
+    "colorContrastIncompleteCount": 19
   },
   "outil-checklist": {
-    "violationsCount": 0,
-    "impacts": {}
+    "label": "Checklist",
+    "path": "/outils/checklist",
+    "totalViolations": 0,
+    "serious": 0,
+    "critical": 0,
+    "colorContrastViolationsCount": 0,
+    "colorContrastIncompleteCount": 26
   },
   "carbone": {
-    "violationsCount": 1,
-    "impacts": {
-      "serious": 1
-    }
+    "label": "Carbone",
+    "path": "/carbone",
+    "totalViolations": 0,
+    "serious": 0,
+    "critical": 0,
+    "colorContrastViolationsCount": 0,
+    "colorContrastIncompleteCount": 1
   },
   "compte": {
-    "violationsCount": 0,
-    "impacts": {}
+    "label": "Compte",
+    "path": "/compte",
+    "totalViolations": 1,
+    "serious": 1,
+    "critical": 0,
+    "colorContrastViolationsCount": 2,
+    "colorContrastIncompleteCount": 11
   },
   "compte-modifier": {
-    "violationsCount": 1,
-    "impacts": {
-      "serious": 1
-    }
+    "label": "Modifier Profil",
+    "path": "/compte/modifier",
+    "totalViolations": 1,
+    "serious": 1,
+    "critical": 0,
+    "colorContrastViolationsCount": 1,
+    "colorContrastIncompleteCount": 4
   },
   "profil-public": {
-    "violationsCount": 1,
-    "impacts": {
-      "serious": 1
-    }
+    "label": "Profil Public",
+    "path": "/profil",
+    "totalViolations": 0,
+    "serious": 0,
+    "critical": 0,
+    "colorContrastViolationsCount": 0,
+    "colorContrastIncompleteCount": 1
   },
   "progression": {
-    "violationsCount": 0,
-    "impacts": {}
+    "label": "Progression",
+    "path": "/progression",
+    "totalViolations": 0,
+    "serious": 0,
+    "critical": 0,
+    "colorContrastViolationsCount": 0,
+    "colorContrastIncompleteCount": 20
   },
   "fidelite": {
-    "violationsCount": 1,
-    "impacts": {
-      "serious": 1
-    }
+    "label": "Fidélité",
+    "path": "/fidelite",
+    "totalViolations": 0,
+    "serious": 0,
+    "critical": 0,
+    "colorContrastViolationsCount": 0,
+    "colorContrastIncompleteCount": 6
   },
   "recompenses": {
-    "violationsCount": 0,
-    "impacts": {}
+    "label": "Récompenses",
+    "path": "/recompenses",
+    "totalViolations": 0,
+    "serious": 0,
+    "critical": 0,
+    "colorContrastViolationsCount": 0,
+    "colorContrastIncompleteCount": 39
   },
   "messagerie": {
-    "violationsCount": 1,
-    "impacts": {
-      "serious": 1
-    }
+    "label": "Messagerie",
+    "path": "/messagerie",
+    "totalViolations": 0,
+    "serious": 0,
+    "critical": 0,
+    "colorContrastViolationsCount": 0,
+    "colorContrastIncompleteCount": 2
   },
   "connexion": {
-    "violationsCount": 0,
-    "impacts": {}
+    "label": "Connexion",
+    "path": "/connexion",
+    "totalViolations": 0,
+    "serious": 0,
+    "critical": 0,
+    "colorContrastViolationsCount": 0,
+    "colorContrastIncompleteCount": 0
   },
   "inscription": {
-    "violationsCount": 0,
-    "impacts": {}
+    "label": "Inscription",
+    "path": "/inscription",
+    "totalViolations": 0,
+    "serious": 0,
+    "critical": 0,
+    "colorContrastViolationsCount": 0,
+    "colorContrastIncompleteCount": 1
   },
   "guides": {
-    "violationsCount": 0,
-    "impacts": {}
+    "label": "Guides",
+    "path": "/guides",
+    "totalViolations": 0,
+    "serious": 0,
+    "critical": 0,
+    "colorContrastViolationsCount": 0,
+    "colorContrastIncompleteCount": 1
   },
   "blog": {
-    "violationsCount": 1,
-    "impacts": {
-      "serious": 1
-    }
+    "label": "Blog",
+    "path": "/blog",
+    "totalViolations": 1,
+    "serious": 1,
+    "critical": 0,
+    "colorContrastViolationsCount": 3,
+    "colorContrastIncompleteCount": 49
   },
   "manifeste": {
-    "violationsCount": 0,
-    "impacts": {}
+    "label": "Manifeste",
+    "path": "/manifeste",
+    "totalViolations": 0,
+    "serious": 0,
+    "critical": 0,
+    "colorContrastViolationsCount": 0,
+    "colorContrastIncompleteCount": 2
   },
   "faq": {
-    "violationsCount": 1,
-    "impacts": {
-      "serious": 1
-    }
+    "label": "FAQ",
+    "path": "/faq",
+    "totalViolations": 1,
+    "serious": 1,
+    "critical": 0,
+    "colorContrastViolationsCount": 1,
+    "colorContrastIncompleteCount": 1
   },
   "contact": {
-    "violationsCount": 1,
-    "impacts": {
-      "serious": 1
-    }
+    "label": "Contact",
+    "path": "/contact",
+    "totalViolations": 1,
+    "serious": 1,
+    "critical": 0,
+    "colorContrastViolationsCount": 1,
+    "colorContrastIncompleteCount": 2
   },
   "admin": {
-    "violationsCount": 1,
-    "impacts": {
-      "serious": 1
-    }
+    "label": "Admin",
+    "path": "/admin",
+    "totalViolations": 1,
+    "serious": 1,
+    "critical": 0,
+    "colorContrastViolationsCount": 9,
+    "colorContrastIncompleteCount": 35
   },
   "admin-produits": {
-    "violationsCount": 1,
-    "impacts": {
-      "serious": 1
-    }
+    "label": "Admin Produits",
+    "path": "/admin/produits",
+    "totalViolations": 1,
+    "serious": 1,
+    "critical": 0,
+    "colorContrastViolationsCount": 9,
+    "colorContrastIncompleteCount": 35
   },
   "dev-glass": {
-    "violationsCount": 2,
-    "impacts": {
-      "serious": 2
-    }
+    "label": "Showcase Glass",
+    "path": "/dev/glass",
+    "totalViolations": 1,
+    "serious": 1,
+    "critical": 0,
+    "colorContrastViolationsCount": 4,
+    "colorContrastIncompleteCount": 1
   },
   "dev-style": {
-    "violationsCount": 0,
-    "impacts": {}
+    "label": "Showcase Style",
+    "path": "/dev/style",
+    "totalViolations": 1,
+    "serious": 1,
+    "critical": 0,
+    "colorContrastViolationsCount": 4,
+    "colorContrastIncompleteCount": 1
   },
   "mentions-legales": {
-    "violationsCount": 0,
-    "impacts": {}
+    "label": "Mentions Légales",
+    "path": "/mentions-legales",
+    "totalViolations": 0,
+    "serious": 0,
+    "critical": 0,
+    "colorContrastViolationsCount": 0,
+    "colorContrastIncompleteCount": 2
   },
   "cgv": {
-    "violationsCount": 0,
-    "impacts": {}
+    "label": "CGV",
+    "path": "/cgv",
+    "totalViolations": 0,
+    "serious": 0,
+    "critical": 0,
+    "colorContrastViolationsCount": 0,
+    "colorContrastIncompleteCount": 2
   },
   "cgu": {
-    "violationsCount": 0,
-    "impacts": {}
+    "label": "CGU",
+    "path": "/cgu",
+    "totalViolations": 0,
+    "serious": 0,
+    "critical": 0,
+    "colorContrastViolationsCount": 0,
+    "colorContrastIncompleteCount": 1
   },
   "cookies": {
-    "violationsCount": 1,
-    "impacts": {
-      "serious": 1
-    }
+    "label": "Cookies",
+    "path": "/cookies",
+    "totalViolations": 0,
+    "serious": 0,
+    "critical": 0,
+    "colorContrastViolationsCount": 0,
+    "colorContrastIncompleteCount": 1
   },
   "hors-ligne": {
-    "violationsCount": 0,
-    "impacts": {}
+    "label": "Hors-Ligne",
+    "path": "/hors-ligne",
+    "totalViolations": 0,
+    "serious": 0,
+    "critical": 0,
+    "colorContrastViolationsCount": 0,
+    "colorContrastIncompleteCount": 1
   },
   "page-404": {
-    "violationsCount": 1,
-    "impacts": {
-      "serious": 1
-    }
+    "label": "404",
+    "path": "/route-inexistante-pour-tester-404",
+    "totalViolations": 1,
+    "serious": 1,
+    "critical": 0,
+    "colorContrastViolationsCount": 1,
+    "colorContrastIncompleteCount": 1
   }
 }

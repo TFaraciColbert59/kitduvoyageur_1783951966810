@@ -1,14 +1,71 @@
 {
   "route": "/hub/nouveau",
   "id": "hub-nouveau",
-  "timestamp": "2026-09-23T18:49:52.327Z",
+  "timestamp": "2026-09-24T17:01:55.776Z",
   "violationsCount": 1,
+  "seriousCount": 1,
+  "criticalCount": 0,
   "violations": [
     {
       "id": "color-contrast",
       "impact": "serious",
+      "tags": [
+        "cat.color",
+        "wcag2aa",
+        "wcag143",
+        "TTv5",
+        "TT13.c",
+        "EN-301-549",
+        "EN-9.1.4.3",
+        "ACT",
+        "RGAAv4",
+        "RGAA-3.2.1"
+      ],
       "description": "Ensure the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
-      "nodes": 1
+      "help": "Elements must meet minimum color contrast ratio thresholds",
+      "helpUrl": "https://dequeuniversity.com/rules/axe/4.13/color-contrast?application=playwright",
+      "nodes": [
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "fgColor": "#f1f5f1",
+                "bgColor": "#76877d",
+                "contrastRatio": 3.44,
+                "fontSize": "8.3pt (11px)",
+                "fontWeight": "normal",
+                "messageKey": null,
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<span class=\"inline-flex touch-ma...\">",
+                  "target": [
+                    ".h-\\[calc\\(100dvh-var\\(--shell-top-padding\\,0px\\)\\)\\] > div:nth-child(2) > .gap-2.py-4[aria-label=\"Mode de création\"] > a[href=\"/hub/nouveau?mode=ia\"] > .hover\\:brightness-\\[1\\.06\\].min-h-\\[var\\(--control-height-xs\\)\\].gap-\\[6px\\]"
+                  ]
+                },
+                {
+                  "html": "<html lang=\"fr\" class=\"__variable_a5811e __variable_d7e2b6 dark\" data-theme=\"dark\" style=\"color-scheme: dark;\" data-lkv-marble=\"\">",
+                  "target": [
+                    "html"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element has insufficient color contrast of 3.44 (foreground color: #f1f5f1, background color: #76877d, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<span class=\"inline-flex touch-ma...\">",
+          "target": [
+            ".h-\\[calc\\(100dvh-var\\(--shell-top-padding\\,0px\\)\\)\\] > div:nth-child(2) > .gap-2.py-4[aria-label=\"Mode de création\"] > a[href=\"/hub/nouveau?mode=ia\"] > .hover\\:brightness-\\[1\\.06\\].min-h-\\[var\\(--control-height-xs\\)\\].gap-\\[6px\\]"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 3.44 (foreground color: #f1f5f1, background color: #76877d, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+        }
+      ]
     }
   ]
 }

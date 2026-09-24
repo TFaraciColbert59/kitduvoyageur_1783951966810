@@ -1,14 +1,133 @@
 {
   "route": "/blog",
   "id": "blog",
-  "timestamp": "2026-09-23T19:05:04.402Z",
+  "timestamp": "2026-09-24T17:09:38.290Z",
   "violationsCount": 1,
+  "seriousCount": 1,
+  "criticalCount": 0,
   "violations": [
     {
       "id": "color-contrast",
       "impact": "serious",
+      "tags": [
+        "cat.color",
+        "wcag2aa",
+        "wcag143",
+        "TTv5",
+        "TT13.c",
+        "EN-301-549",
+        "EN-9.1.4.3",
+        "ACT",
+        "RGAAv4",
+        "RGAA-3.2.1"
+      ],
       "description": "Ensure the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
-      "nodes": 3
+      "help": "Elements must meet minimum color contrast ratio thresholds",
+      "helpUrl": "https://dequeuniversity.com/rules/axe/4.13/color-contrast?application=playwright",
+      "nodes": [
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "fgColor": "#101c17",
+                "bgColor": "#12301f",
+                "contrastRatio": 1.22,
+                "fontSize": "16.5pt (22px)",
+                "fontWeight": "bold",
+                "messageKey": null,
+                "expectedContrastRatio": "3:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<html lang=\"fr\" class=\"__variable_a5811e __variable_d7e2b6 dark\" data-theme=\"dark\" style=\"color-scheme: dark;\">",
+                  "target": [
+                    "html"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element has insufficient color contrast of 1.22 (foreground color: #101c17, background color: #12301f, font size: 16.5pt (22px), font weight: bold). Expected contrast ratio of 3:1"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<h1 class=\"m-0 font-display text-[22px] font-extrabold text-[color:var(--lkv-surface)]\">Conseils &amp; Guides</h1>",
+          "target": [
+            ".text-\\[22px\\]"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 1.22 (foreground color: #101c17, background color: #12301f, font size: 16.5pt (22px), font weight: bold). Expected contrast ratio of 3:1"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "fgColor": "#101c17",
+                "bgColor": "#12301f",
+                "contrastRatio": 1.22,
+                "fontSize": "12.0pt (16px)",
+                "fontWeight": "bold",
+                "messageKey": null,
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<html lang=\"fr\" class=\"__variable_a5811e __variable_d7e2b6 dark\" data-theme=\"dark\" style=\"color-scheme: dark;\">",
+                  "target": [
+                    "html"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element has insufficient color contrast of 1.22 (foreground color: #101c17, background color: #12301f, font size: 12.0pt (16px), font weight: bold). Expected contrast ratio of 4.5:1"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<h2 class=\"mb-[var(--space-3)] font-display text-[16px] font-bold text-[color:var(--lkv-surface)]\">A la une</h2>",
+          "target": [
+            ".mb-\\[var\\(--space-5\\)\\] > .text-\\[16px\\]"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 1.22 (foreground color: #101c17, background color: #12301f, font size: 12.0pt (16px), font weight: bold). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "fgColor": "#101c17",
+                "bgColor": "#12301f",
+                "contrastRatio": 1.22,
+                "fontSize": "12.0pt (16px)",
+                "fontWeight": "bold",
+                "messageKey": null,
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<html lang=\"fr\" class=\"__variable_a5811e __variable_d7e2b6 dark\" data-theme=\"dark\" style=\"color-scheme: dark;\">",
+                  "target": [
+                    "html"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element has insufficient color contrast of 1.22 (foreground color: #101c17, background color: #12301f, font size: 12.0pt (16px), font weight: bold). Expected contrast ratio of 4.5:1"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<h2 class=\"mb-[var(--space-3)] font-display text-[16px] font-bold text-[color:var(--lkv-surface)]\">Tous les articles</h2>",
+          "target": [
+            ".p-\\[var\\(--space-4\\)\\] > .text-\\[16px\\]"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 1.22 (foreground color: #101c17, background color: #12301f, font size: 12.0pt (16px), font weight: bold). Expected contrast ratio of 4.5:1"
+        }
+      ]
     }
   ]
 }

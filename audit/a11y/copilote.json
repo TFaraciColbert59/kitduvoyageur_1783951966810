@@ -1,14 +1,77 @@
 {
   "route": "/copilote",
   "id": "copilote",
-  "timestamp": "2026-09-23T18:54:27.548Z",
+  "timestamp": "2026-09-24T17:04:40.142Z",
   "violationsCount": 1,
+  "seriousCount": 1,
+  "criticalCount": 0,
   "violations": [
     {
       "id": "color-contrast",
       "impact": "serious",
+      "tags": [
+        "cat.color",
+        "wcag2aa",
+        "wcag143",
+        "TTv5",
+        "TT13.c",
+        "EN-301-549",
+        "EN-9.1.4.3",
+        "ACT",
+        "RGAAv4",
+        "RGAA-3.2.1"
+      ],
       "description": "Ensure the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
-      "nodes": 1
+      "help": "Elements must meet minimum color contrast ratio thresholds",
+      "helpUrl": "https://dequeuniversity.com/rules/axe/4.13/color-contrast?application=playwright",
+      "nodes": [
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "fgColor": "#7fc49a",
+                "bgColor": "#3f574a",
+                "contrastRatio": 3.83,
+                "fontSize": "12.8pt (17px)",
+                "fontWeight": "normal",
+                "messageKey": null,
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<div class=\"max-w-[80%] rounded-...\">",
+                  "target": [
+                    ".max-w-\\[80\\%\\]"
+                  ]
+                },
+                {
+                  "html": "<div aria-live=\"polite\" data-variant=\"standard\" data-tone=\"neutral\" class=\"lkv-glass rounded-[var(--lkv-radius-card)] mb-[var(--space-3)] min-h-[200px] p-[var(--space-4)]\">",
+                  "target": [
+                    ".lkv-glass"
+                  ]
+                },
+                {
+                  "html": "<html lang=\"fr\" class=\"__variable_a5811e __variable_d7e2b6 dark\" data-theme=\"dark\" style=\"color-scheme: dark;\">",
+                  "target": [
+                    "html"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element has insufficient color contrast of 3.83 (foreground color: #7fc49a, background color: #3f574a, font size: 12.8pt (17px), font weight: normal). Expected contrast ratio of 4.5:1"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<div class=\"max-w-[80%] rounded-...\">",
+          "target": [
+            ".max-w-\\[80\\%\\]"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 3.83 (foreground color: #7fc49a, background color: #3f574a, font size: 12.8pt (17px), font weight: normal). Expected contrast ratio of 4.5:1"
+        }
+      ]
     }
   ]
 }

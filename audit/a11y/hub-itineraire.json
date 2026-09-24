@@ -1,14 +1,71 @@
 {
   "route": "/hub/itineraire",
   "id": "hub-itineraire",
-  "timestamp": "2026-09-23T18:50:17.095Z",
+  "timestamp": "2026-09-24T17:02:09.439Z",
   "violationsCount": 1,
+  "seriousCount": 1,
+  "criticalCount": 0,
   "violations": [
     {
       "id": "color-contrast",
       "impact": "serious",
+      "tags": [
+        "cat.color",
+        "wcag2aa",
+        "wcag143",
+        "TTv5",
+        "TT13.c",
+        "EN-301-549",
+        "EN-9.1.4.3",
+        "ACT",
+        "RGAAv4",
+        "RGAA-3.2.1"
+      ],
       "description": "Ensure the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
-      "nodes": 1
+      "help": "Elements must meet minimum color contrast ratio thresholds",
+      "helpUrl": "https://dequeuniversity.com/rules/axe/4.13/color-contrast?application=playwright",
+      "nodes": [
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "fgColor": "#7fc49a",
+                "bgColor": "#76877d",
+                "contrastRatio": 1.85,
+                "fontSize": "7.1pt (9.5px)",
+                "fontWeight": "bold",
+                "messageKey": null,
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<button aria-label=\"1. Départ & approche\" type=\"button\" data-variant=\"secondary\" data-size=\"md\" class=\"inline-flex shrink-0...\">",
+                  "target": [
+                    ".pt-2\\.5 > .space-y-2\\.5 > .lg\\:hidden > .gap-5.pb-1.flex-col > section[aria-label=\"Déroulé du jour\"] > ol > .items-stretch.gap-3 > .flex-1.min-w-0 > div[data-arrival=\"\"] > .mb-1.\\!whitespace-normal[aria-label=\"1. Départ & approche\"]"
+                  ]
+                },
+                {
+                  "html": "<html lang=\"fr\" class=\"__variable_a5811e __variable_d7e2b6 dark\" data-theme=\"dark\" style=\"color-scheme: dark;\" data-lkv-marble=\"\">",
+                  "target": [
+                    "html"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element has insufficient color contrast of 1.85 (foreground color: #7fc49a, background color: #76877d, font size: 7.1pt (9.5px), font weight: bold). Expected contrast ratio of 4.5:1"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<span class=\"inline-flex items-center gap-1 rounded-full bg-[var(--lkv-primary)]/10 px-2 py-0.5 text-[9.5px] font-bold uppercase tracking-[0.08em] text-[var(--lkv-primary)]\">",
+          "target": [
+            ".pt-2\\.5 > .space-y-2\\.5 > .lg\\:hidden > .gap-5.pb-1.flex-col > section[aria-label=\"Déroulé du jour\"] > ol > .items-stretch.gap-3 > .flex-1.min-w-0 > div[data-arrival=\"\"] > .mb-1.\\!whitespace-normal[aria-label=\"1. Départ & approche\"] > .gap-2.w-full.flex > .text-\\[var\\(--lkv-primary\\)\\].gap-1.text-\\[9\\.5px\\]"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 1.85 (foreground color: #7fc49a, background color: #76877d, font size: 7.1pt (9.5px), font weight: bold). Expected contrast ratio of 4.5:1"
+        }
+      ]
     }
   ]
 }

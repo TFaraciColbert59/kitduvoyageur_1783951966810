@@ -1,14 +1,9 @@
 {
   "route": "/explorer",
   "id": "explorer",
-  "timestamp": "2026-09-23T18:52:13.485Z",
-  "violationsCount": 1,
-  "violations": [
-    {
-      "id": "link-in-text-block",
-      "impact": "serious",
-      "description": "Ensure links are distinguished from surrounding text in a way that does not rely on color",
-      "nodes": 1
-    }
-  ]
+  "timestamp": "2026-09-24T17:03:26.288Z",
+  "violationsCount": 0,
+  "seriousCount": 0,
+  "criticalCount": 0,
+  "violations": []
 }

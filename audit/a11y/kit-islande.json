@@ -1,7 +1,9 @@
 {
   "route": "/kits/islande-trek",
   "id": "kit-islande",
-  "timestamp": "2026-09-23T18:53:38.997Z",
+  "timestamp": "2026-09-24T17:04:14.119Z",
   "violationsCount": 0,
+  "seriousCount": 0,
+  "criticalCount": 0,
   "violations": []
 }

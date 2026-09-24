@@ -1,14 +1,261 @@
 {
   "route": "/materiel",
   "id": "materiel",
-  "timestamp": "2026-09-23T18:53:09.866Z",
+  "timestamp": "2026-09-24T17:03:54.891Z",
   "violationsCount": 1,
+  "seriousCount": 1,
+  "criticalCount": 0,
   "violations": [
     {
       "id": "color-contrast",
       "impact": "serious",
+      "tags": [
+        "cat.color",
+        "wcag2aa",
+        "wcag143",
+        "TTv5",
+        "TT13.c",
+        "EN-301-549",
+        "EN-9.1.4.3",
+        "ACT",
+        "RGAAv4",
+        "RGAA-3.2.1"
+      ],
       "description": "Ensure the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
-      "nodes": 5
+      "help": "Elements must meet minimum color contrast ratio thresholds",
+      "helpUrl": "https://dequeuniversity.com/rules/axe/4.13/color-contrast?application=playwright",
+      "nodes": [
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "fgColor": "#a9b8b0",
+                "bgColor": "#3f574a",
+                "contrastRatio": 3.8,
+                "fontSize": "7.5pt (10px)",
+                "fontWeight": "bold",
+                "messageKey": null,
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<div data-variant=\"compact\" data-tone=\"neutral\" class=\"lkv-glass rounded-[var(--lkv-radius-md)] p-[var(--space-3)] px-3 py-2\">",
+                  "target": [
+                    ".pb-24 > .space-y-5.font-sans.text-\\[var\\(--lkv-text-primary\\)\\] > section[aria-labelledby=\"materiel-kit-actif\"] > .sm\\:p-5.p-4[data-variant=\"compact\"] > .flex-wrap.gap-3.justify-between > .gap-2.flex-wrap.flex > .p-\\[var\\(--space-3\\)\\].py-2.px-3:nth-child(1)"
+                  ]
+                },
+                {
+                  "html": "<div data-variant=\"compact\" data-tone=\"neutral\" class=\"lkv-glass rounded-[var(--lkv-radius-md)] p-4 sm:p-5\">",
+                  "target": [
+                    ".pb-24 > .space-y-5.font-sans.text-\\[var\\(--lkv-text-primary\\)\\] > section[aria-labelledby=\"materiel-kit-actif\"] > .sm\\:p-5.p-4[data-variant=\"compact\"]"
+                  ]
+                },
+                {
+                  "html": "<html lang=\"fr\" class=\"__variable_a5811e __variable_d7e2b6 dark\" data-theme=\"dark\" style=\"color-scheme: dark;\">",
+                  "target": [
+                    "html"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element has insufficient color contrast of 3.8 (foreground color: #a9b8b0, background color: #3f574a, font size: 7.5pt (10px), font weight: bold). Expected contrast ratio of 4.5:1"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<span class=\"block font-mono text-[10px] font-bold uppercase tracking-wider text-[var(--lkv-text-muted)]\">Poids</span>",
+          "target": [
+            ".pb-24 > .space-y-5.font-sans.text-\\[var\\(--lkv-text-primary\\)\\] > section[aria-labelledby=\"materiel-kit-actif\"] > .sm\\:p-5.p-4[data-variant=\"compact\"] > .flex-wrap.gap-3.justify-between > .gap-2.flex-wrap.flex > .p-\\[var\\(--space-3\\)\\].py-2.px-3:nth-child(1) > .tracking-wider.text-\\[var\\(--lkv-text-muted\\)\\].text-\\[10px\\]"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 3.8 (foreground color: #a9b8b0, background color: #3f574a, font size: 7.5pt (10px), font weight: bold). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "fgColor": "#a9b8b0",
+                "bgColor": "#3f574a",
+                "contrastRatio": 3.8,
+                "fontSize": "7.5pt (10px)",
+                "fontWeight": "bold",
+                "messageKey": null,
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<div data-variant=\"compact\" data-tone=\"neutral\" class=\"lkv-glass rounded-[var(--lkv-radius-md)] p-[var(--space-3)] px-3 py-2\">",
+                  "target": [
+                    ".pb-24 > .space-y-5.font-sans.text-\\[var\\(--lkv-text-primary\\)\\] > section[aria-labelledby=\"materiel-kit-actif\"] > .sm\\:p-5.p-4[data-variant=\"compact\"] > .flex-wrap.gap-3.justify-between > .gap-2.flex-wrap.flex > .p-\\[var\\(--space-3\\)\\].py-2.px-3:nth-child(2)"
+                  ]
+                },
+                {
+                  "html": "<div data-variant=\"compact\" data-tone=\"neutral\" class=\"lkv-glass rounded-[var(--lkv-radius-md)] p-4 sm:p-5\">",
+                  "target": [
+                    ".pb-24 > .space-y-5.font-sans.text-\\[var\\(--lkv-text-primary\\)\\] > section[aria-labelledby=\"materiel-kit-actif\"] > .sm\\:p-5.p-4[data-variant=\"compact\"]"
+                  ]
+                },
+                {
+                  "html": "<html lang=\"fr\" class=\"__variable_a5811e __variable_d7e2b6 dark\" data-theme=\"dark\" style=\"color-scheme: dark;\">",
+                  "target": [
+                    "html"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element has insufficient color contrast of 3.8 (foreground color: #a9b8b0, background color: #3f574a, font size: 7.5pt (10px), font weight: bold). Expected contrast ratio of 4.5:1"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<span class=\"block font-mono text-[10px] font-bold uppercase tracking-wider text-[var(--lkv-text-muted)]\">Prêt</span>",
+          "target": [
+            ".pb-24 > .space-y-5.font-sans.text-\\[var\\(--lkv-text-primary\\)\\] > section[aria-labelledby=\"materiel-kit-actif\"] > .sm\\:p-5.p-4[data-variant=\"compact\"] > .flex-wrap.gap-3.justify-between > .gap-2.flex-wrap.flex > .p-\\[var\\(--space-3\\)\\].py-2.px-3:nth-child(2) > .tracking-wider.text-\\[var\\(--lkv-text-muted\\)\\].text-\\[10px\\]"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 3.8 (foreground color: #a9b8b0, background color: #3f574a, font size: 7.5pt (10px), font weight: bold). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "fgColor": "#a9b8b0",
+                "bgColor": "#3f574a",
+                "contrastRatio": 3.8,
+                "fontSize": "7.5pt (10px)",
+                "fontWeight": "bold",
+                "messageKey": null,
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<div data-variant=\"compact\" data-tone=\"neutral\" class=\"lkv-glass rounded-[var(--lkv-radius-md)] p-[var(--space-3)] px-3 py-2\">",
+                  "target": [
+                    ".pb-24 > .space-y-5.font-sans.text-\\[var\\(--lkv-text-primary\\)\\] > section[aria-labelledby=\"materiel-a-preparer\"] > .sm\\:p-5.p-4[data-variant=\"compact\"] > .mt-4.gap-2.flex-wrap > .p-\\[var\\(--space-3\\)\\].py-2.px-3:nth-child(1)"
+                  ]
+                },
+                {
+                  "html": "<div data-variant=\"compact\" data-tone=\"neutral\" class=\"lkv-glass rounded-[var(--lkv-radius-md)] p-4 sm:p-5\">",
+                  "target": [
+                    ".pb-24 > .space-y-5.font-sans.text-\\[var\\(--lkv-text-primary\\)\\] > section[aria-labelledby=\"materiel-a-preparer\"] > .sm\\:p-5.p-4[data-variant=\"compact\"]"
+                  ]
+                },
+                {
+                  "html": "<html lang=\"fr\" class=\"__variable_a5811e __variable_d7e2b6 dark\" data-theme=\"dark\" style=\"color-scheme: dark;\">",
+                  "target": [
+                    "html"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element has insufficient color contrast of 3.8 (foreground color: #a9b8b0, background color: #3f574a, font size: 7.5pt (10px), font weight: bold). Expected contrast ratio of 4.5:1"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<span class=\"block font-mono text-[10px] font-bold uppercase tracking-wider text-[var(--lkv-text-muted)]\">Équipements</span>",
+          "target": [
+            ".pb-24 > .space-y-5.font-sans.text-\\[var\\(--lkv-text-primary\\)\\] > section[aria-labelledby=\"materiel-a-preparer\"] > .sm\\:p-5.p-4[data-variant=\"compact\"] > .mt-4.gap-2.flex-wrap > .p-\\[var\\(--space-3\\)\\].py-2.px-3:nth-child(1) > .tracking-wider.text-\\[var\\(--lkv-text-muted\\)\\].text-\\[10px\\]"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 3.8 (foreground color: #a9b8b0, background color: #3f574a, font size: 7.5pt (10px), font weight: bold). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "fgColor": "#a9b8b0",
+                "bgColor": "#3f574a",
+                "contrastRatio": 3.8,
+                "fontSize": "7.5pt (10px)",
+                "fontWeight": "bold",
+                "messageKey": null,
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<div data-variant=\"compact\" data-tone=\"neutral\" class=\"lkv-glass rounded-[var(--lkv-radius-md)] p-[var(--space-3)] px-3 py-2\">",
+                  "target": [
+                    ".pb-24 > .space-y-5.font-sans.text-\\[var\\(--lkv-text-primary\\)\\] > section[aria-labelledby=\"materiel-a-preparer\"] > .sm\\:p-5.p-4[data-variant=\"compact\"] > .mt-4.gap-2.flex-wrap > .p-\\[var\\(--space-3\\)\\].py-2.px-3:nth-child(2)"
+                  ]
+                },
+                {
+                  "html": "<div data-variant=\"compact\" data-tone=\"neutral\" class=\"lkv-glass rounded-[var(--lkv-radius-md)] p-4 sm:p-5\">",
+                  "target": [
+                    ".pb-24 > .space-y-5.font-sans.text-\\[var\\(--lkv-text-primary\\)\\] > section[aria-labelledby=\"materiel-a-preparer\"] > .sm\\:p-5.p-4[data-variant=\"compact\"]"
+                  ]
+                },
+                {
+                  "html": "<html lang=\"fr\" class=\"__variable_a5811e __variable_d7e2b6 dark\" data-theme=\"dark\" style=\"color-scheme: dark;\">",
+                  "target": [
+                    "html"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element has insufficient color contrast of 3.8 (foreground color: #a9b8b0, background color: #3f574a, font size: 7.5pt (10px), font weight: bold). Expected contrast ratio of 4.5:1"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<span class=\"block font-mono text-[10px] font-bold uppercase tracking-wider text-[var(--lkv-text-muted)]\">En bon état</span>",
+          "target": [
+            ".pb-24 > .space-y-5.font-sans.text-\\[var\\(--lkv-text-primary\\)\\] > section[aria-labelledby=\"materiel-a-preparer\"] > .sm\\:p-5.p-4[data-variant=\"compact\"] > .mt-4.gap-2.flex-wrap > .p-\\[var\\(--space-3\\)\\].py-2.px-3:nth-child(2) > .tracking-wider.text-\\[var\\(--lkv-text-muted\\)\\].text-\\[10px\\]"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 3.8 (foreground color: #a9b8b0, background color: #3f574a, font size: 7.5pt (10px), font weight: bold). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "fgColor": "#a9b8b0",
+                "bgColor": "#3f574a",
+                "contrastRatio": 3.8,
+                "fontSize": "7.5pt (10px)",
+                "fontWeight": "bold",
+                "messageKey": null,
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<div data-variant=\"compact\" data-tone=\"neutral\" class=\"lkv-glass rounded-[var(--lkv-radius-md)] p-[var(--space-3)] px-3 py-2\">",
+                  "target": [
+                    ".pb-24 > .space-y-5.font-sans.text-\\[var\\(--lkv-text-primary\\)\\] > section[aria-labelledby=\"materiel-a-preparer\"] > .sm\\:p-5.p-4[data-variant=\"compact\"] > .mt-4.gap-2.flex-wrap > .p-\\[var\\(--space-3\\)\\].py-2.px-3:nth-child(3)"
+                  ]
+                },
+                {
+                  "html": "<div data-variant=\"compact\" data-tone=\"neutral\" class=\"lkv-glass rounded-[var(--lkv-radius-md)] p-4 sm:p-5\">",
+                  "target": [
+                    ".pb-24 > .space-y-5.font-sans.text-\\[var\\(--lkv-text-primary\\)\\] > section[aria-labelledby=\"materiel-a-preparer\"] > .sm\\:p-5.p-4[data-variant=\"compact\"]"
+                  ]
+                },
+                {
+                  "html": "<html lang=\"fr\" class=\"__variable_a5811e __variable_d7e2b6 dark\" data-theme=\"dark\" style=\"color-scheme: dark;\">",
+                  "target": [
+                    "html"
+                  ]
+                }
+              ],
+              "impact": "serious",
+              "message": "Element has insufficient color contrast of 3.8 (foreground color: #a9b8b0, background color: #3f574a, font size: 7.5pt (10px), font weight: bold). Expected contrast ratio of 4.5:1"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": "serious",
+          "html": "<span class=\"block font-mono text-[10px] font-bold uppercase tracking-wider text-[var(--lkv-text-muted)]\">Fiabilité</span>",
+          "target": [
+            ".pb-24 > .space-y-5.font-sans.text-\\[var\\(--lkv-text-primary\\)\\] > section[aria-labelledby=\"materiel-a-preparer\"] > .sm\\:p-5.p-4[data-variant=\"compact\"] > .mt-4.gap-2.flex-wrap > .p-\\[var\\(--space-3\\)\\].py-2.px-3:nth-child(3) > .tracking-wider.text-\\[var\\(--lkv-text-muted\\)\\].text-\\[10px\\]"
+          ],
+          "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 3.8 (foreground color: #a9b8b0, background color: #3f574a, font size: 7.5pt (10px), font weight: bold). Expected contrast ratio of 4.5:1"
+        }
+      ]
     }
   ]
 }
