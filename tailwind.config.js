@@ -63,7 +63,7 @@ module.exports = {
         input: { DEFAULT: 'var(--input)' },
         ring: { DEFAULT: 'var(--ring)' },
         info: {
-          DEFAULT: 'var(--lkv-info)',
+          DEFAULT: 'rgb(var(--lkv-info-rgb) / <alpha-value>)',
           foreground: 'var(--info-foreground)',
         },
         'dark-bg': { DEFAULT: 'var(--dark-bg)' },

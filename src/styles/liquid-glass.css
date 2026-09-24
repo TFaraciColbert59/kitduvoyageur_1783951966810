@@ -235,7 +235,7 @@
 
 .glass-pill.pill-warn {
   background: color-mix(in oklab, var(--warn) 12%, transparent);
-  color: var(--warn);
+  color: var(--lkv-warning-dark);
   border-color: color-mix(in oklab, var(--warn) 30%, transparent);
 }
 
@@ -310,14 +310,12 @@
   cursor: pointer;
   white-space: nowrap;
 }
-/* Contenu blanc garanti (texte + icônes masques) sur les boutons non pleins */
 :is(.glass-capsule-btn, .glass-btn, .glass-circle-btn, .glass-capsule-btn-like):not(.primary):not(.danger) :is(span, svg, i, b, strong, p) {
   color: inherit !important;
 }
 :is(.glass-capsule-btn, .glass-btn, .glass-circle-btn, .glass-capsule-btn-like):not(.primary):not(.danger) span[style*='mask-image'] {
   background-color: currentColor !important;
 }
-/* Exemption : les badges .glass-pill internes gardent leur teinte forêt */
 :is(.glass-capsule-btn, .glass-btn, .glass-circle-btn, .lkv-button-primitive) .glass-pill,
 :is(.glass-capsule-btn, .glass-btn, .glass-circle-btn, .lkv-button-primitive) .glass-pill :is(span, svg, i) {
   color: var(--g3-text) !important;
@@ -814,7 +812,6 @@
   -webkit-backdrop-filter: none;
 }
 
-/* Contenu blanc garanti (texte + icônes masques) dans les boutons LkvButton */
 .lkv-button-primitive :is(span, svg, i, b, strong, p) {
   color: inherit !important;
 }
@@ -943,9 +940,6 @@
 }
 .glass[data-glass-shape='drawer'] { border-radius: var(--glass-radius) 0 0 var(--glass-radius); }
 :where(.glass) { overflow: hidden; }
-/* Filled actions keep their semantic contrast in every fallback mode.
-   P5 : l'action est --lkv-action (vert forêt clair/sombre selon le mode)
-   et son contenu --btn-on-solid (blanc en clair, encre en sombre). */
 :is(.glass-btn-primary, .glass-capsule-btn.primary, .glass-circle-btn.primary) {
   background: var(--g3-bg) !important;
   color: var(--g3-text) !important;

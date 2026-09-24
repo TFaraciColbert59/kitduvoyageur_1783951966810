@@ -104,7 +104,7 @@ describe('P5 — câblage du mode sombre et topographie', () => {
   it('layout.tsx initialise le thème depuis la préférence système ou le choix stocké', () => {
     expect(layout).toContain("colorScheme: 'light dark'");
     expect(layout).toContain("localStorage.getItem('lkdv_theme')");
-    expect(layout).toContain("matchMedia('(prefers-color-scheme: light)')");
+    expect(layout).toContain("matchMedia('(prefers-color-scheme: dark)')");
     expect(layout).toContain("classList.add('dark')");
     expect(layout).toContain("classList.remove('dark')");
     expect(layout).toContain("setAttribute('data-theme'");

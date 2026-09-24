@@ -41,7 +41,7 @@ export function Tabs({
   className,
 }: TabsProps) {
   const baseItem =
-    'inline-flex shrink-0 items-center justify-center gap-[var(--space-1)] font-semibold transition-colors duration-[var(--motion-control-duration)] ease-[var(--motion-ease-standard)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]';
+    'inline-flex shrink-0 items-center justify-center gap-[var(--space-1)] font-semibold transition-colors duration-[var(--motion-control-duration)] ease-[var(--motion-ease-standard)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--glass-focus-outline)]';
 
   // Navigation clavier WAI-ARIA : flèches gauche/droite dans la tablist.
   const handleArrowKeys = (event: React.KeyboardEvent<HTMLButtonElement>, index: number) => {
@@ -77,7 +77,7 @@ export function Tabs({
               onClick={() => onChange(option.id)}
               className={cn(
                 baseItem,
-                'min-h-[var(--control-height-sm)] rounded-full px-[var(--space-4)] text-[length:var(--lkv-text-footnote)]',
+                'min-h-[var(--lkv-touch-min)] min-w-[var(--lkv-touch-min)] rounded-full px-[var(--space-4)] text-[length:var(--lkv-text-footnote)]',
                 active
                   ? 'bg-[var(--g3-bg)] text-[var(--g3-text)] shadow-[var(--glass-rim)] font-bold'
                   : 'bg-[var(--g2-bg)] border border-[color:var(--glass-border-color)] text-[var(--glass-label-secondary)] shadow-[var(--glass-rim)] hover:text-[var(--glass-label)]'
@@ -118,7 +118,7 @@ export function Tabs({
             onClick={() => onChange(option.id)}
             className={cn(
               baseItem,
-              'min-h-[var(--control-height-sm)] flex-1 rounded-full px-[var(--space-3)] text-[length:var(--lkv-text-footnote)] transition-all duration-[var(--motion-control-duration)]',
+              'min-h-[var(--lkv-touch-min)] min-w-[var(--lkv-touch-min)] flex-1 rounded-full px-[var(--space-3)] text-[length:var(--lkv-text-footnote)] transition-all duration-[var(--motion-control-duration)]',
               active
                 ? 'bg-[var(--g3-bg)] text-[var(--g3-text)] shadow-[var(--glass-rim)] font-bold'
                 : 'text-[var(--glass-label-secondary)] hover:text-[var(--glass-label)]'

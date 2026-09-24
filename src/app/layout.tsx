@@ -184,7 +184,7 @@ export default async function RootLayout({
           id="lkdv-theme-init"
           suppressHydrationWarning
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var r=document.documentElement;var t=localStorage.getItem('lkdv_theme');var isDark=t?t==='dark':!window.matchMedia('(prefers-color-scheme: light)').matches;if(isDark){r.classList.add('dark');r.setAttribute('data-theme','dark');r.style.colorScheme='dark';}else{r.classList.remove('dark');r.setAttribute('data-theme','light');r.style.colorScheme='light';}var g=localStorage.getItem('lkdv_glass_intensity');if(g)r.style.setProperty('--glass-intensity',g);}catch(e){}})();`,
+            __html: `(function(){var r=document.documentElement;var t=null;try{t=localStorage.getItem('lkdv_theme');}catch(e){}var isDark=t?t==='dark':window.matchMedia('(prefers-color-scheme: dark)').matches;if(isDark){r.classList.add('dark');r.setAttribute('data-theme','dark');r.style.colorScheme='dark';}else{r.classList.remove('dark');r.setAttribute('data-theme','light');r.style.colorScheme='light';}try{var g=localStorage.getItem('lkdv_glass_intensity');if(g)r.style.setProperty('--glass-intensity',g);}catch(e){}})();`,
           }}
         />
         {/* Preload critical images for LCP optimization */}

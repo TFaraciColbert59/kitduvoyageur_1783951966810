@@ -154,12 +154,13 @@
   --lkv-success-bg: #E1EBDE;
   --lkv-warning: #C89A3B;
   --lkv-warning-bg: #FBF1DC;
-  --lkv-warning-dark: #8C6418;
+  --lkv-warning-dark: #765014;
   --lkv-warning-subtle: #FDF6E8;
   --lkv-danger: #A8443A;
   --lkv-danger-bg: #FDE8E6;
   --lkv-danger-dark: #7E2D25;
   --lkv-info: #4B6B7C;
+  --lkv-info-rgb: 75, 107, 124;
   --lkv-info-bg: #DDE7EE;
 
   --sky-900: #10222B;
@@ -648,6 +649,7 @@
   --lkv-danger-bg: #3A211E;
   --lkv-danger-dark: #B8544A;
   --lkv-info: #9FC4D4;
+  --lkv-info-rgb: 159, 196, 212;
   --lkv-info-bg: #1D2F38;
 
   --glass-solid: var(--card-tint-solid);
@@ -727,11 +729,14 @@
   --glass-label: #101813;
   --glass-label-secondary: #26332B;
   --glass-label-tertiary: #405047;
-  --glass-label-quaternary: #5E7067;
+  --glass-label-quaternary: #3F5147;
+  --glass-focus-outline: #226148;
 
   /* Couches de matière (G1 = flou, G2/G3 = lumière/matière sans flou) */
   --g1-bg: rgb(var(--glass-tint-rgb) / calc(0.92 + 0.06 * var(--glass-intensity, 0.5)));
   --g2-bg: rgb(245 248 246 / calc(0.90 + 0.08 * var(--glass-intensity, 0.5)));
+  --g1-reduced-bg: #FFFFFF;
+  --g2-reduced-bg: #F5F8F6;
   --g3-bg: rgba(18, 24, 21, 0.94);
   --g3-text: #FFFFFF;
   --gc-bg: rgba(255, 255, 255, 0.40);
@@ -777,6 +782,7 @@ html.dark, .dark, [data-theme='dark'] {
   --glass-label-secondary: #EDF3EF;
   --glass-label-tertiary: #CBD8D0;
   --glass-label-quaternary: #A8B8AF;
+  --glass-focus-outline: #7FC49A;
   --glass-text: #F1F5F1;
   --glass-text-secondary: #EDF3EF;
   --glass-bg-light: rgba(18, 22, 20, 0.82);
@@ -789,6 +795,8 @@ html.dark, .dark, [data-theme='dark'] {
   --card-content: #F1F5F1;
   --g1-bg: rgba(14, 18, 16, calc(0.92 + 0.06 * var(--glass-intensity, 0.5)));
   --g2-bg: rgba(22, 26, 24, calc(0.90 + 0.08 * var(--glass-intensity, 0.5)));
+  --g1-reduced-bg: #0E1210;
+  --g2-reduced-bg: #161A18;
   --g3-bg: rgba(255, 255, 255, 0.95);
   --g3-text: #0E1411;
   --gc-bg: rgba(255, 255, 255, 0.18);
@@ -939,16 +947,21 @@ button.g2,
 }
 
 @media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
-  .g1, .g2, .g3, .gc {
+  .g1, .g2, .g3, .gc,
+  [class*='var(--g1-bg)'],
+  [class*='var(--g2-bg)'],
+  [class~='backdrop-blur-md'] {
     backdrop-filter: none !important;
     -webkit-backdrop-filter: none !important;
   }
-  .g1 {
-    background: rgb(var(--glass-tint-rgb) / 1) !important;
+  .g1,
+  [class*='var(--g1-bg)'] {
+    background: var(--g1-reduced-bg) !important;
     box-shadow: 0 0 0 1.5px rgb(var(--glass-ink) / 0.5) !important;
   }
-  .g2 {
-    background: rgb(var(--glass-ink) / 0.08) !important;
+  .g2,
+  [class*='var(--g2-bg)'] {
+    background: var(--g2-reduced-bg) !important;
     box-shadow: 0 0 0 1px rgb(var(--glass-ink) / 0.3) !important;
   }
 }
