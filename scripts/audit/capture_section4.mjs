@@ -8,6 +8,7 @@ import {
   invalidateAuditReportDirectory,
   invalidateAuditReports,
   redactDiagnosticText,
+  redactRuntimeValue,
   writeAuditErrorReport,
 } from './audit_runtime.mjs';
 import { getAuditCredentials } from './credentials.mjs';
@@ -201,7 +202,7 @@ async function run() {
       diagnostics.assertClean();
 
       const a11yFilePath = path.join(a11yDir, `${r.id}.json`);
-      fs.writeFileSync(a11yFilePath, JSON.stringify({
+      fs.writeFileSync(a11yFilePath, JSON.stringify(redactRuntimeValue({
         route: r.path,
         id: r.id,
         timestamp: new Date().toISOString(),
@@ -212,7 +213,7 @@ async function run() {
           description: v.description,
           nodes: v.nodes.length,
         })),
-      }, null, 2));
+      }), null, 2));
 
       a11ySummary[r.id] = {
         violationsCount: axeResults.violations.length,
@@ -346,13 +347,13 @@ async function run() {
   await browser.close();
 
   // Écriture du manifest général
-  fs.writeFileSync(path.join(screensDir, 'manifest.json'), JSON.stringify({
+  fs.writeFileSync(path.join(screensDir, 'manifest.json'), JSON.stringify(redactRuntimeValue({
     totalCaptures: manifest.length,
     timestamp: new Date().toISOString(),
     manifest,
-  }, null, 2));
+  }), null, 2));
 
-  fs.writeFileSync(path.join(a11yDir, 'summary.json'), JSON.stringify(a11ySummary, null, 2));
+  fs.writeFileSync(path.join(a11yDir, 'summary.json'), JSON.stringify(redactRuntimeValue(a11ySummary), null, 2));
 
   if (errors.length > 0) {
     const error = new Error(`Campagne Section 4 terminée avec ${errors.length} erreur(s)`);
@@ -363,6 +364,6 @@ async function run() {
 }
 
 run().catch((e) => {
-  console.error('Fatal error during Section 4 captures:', e);
+  console.error('Fatal error during Section 4 captures:', redactDiagnosticText(e instanceof Error ? e.message : e));
   process.exit(1);
 });

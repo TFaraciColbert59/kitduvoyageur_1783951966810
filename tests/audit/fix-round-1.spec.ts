@@ -199,7 +199,7 @@ describe('fix round 1 — régressions', () => {
     const campaign = source('scripts/audit/run_audit_campaign.mjs');
     const auditFiles = execFileSync('git', ['ls-files', 'scripts/audit'], { cwd: root, encoding: 'utf8' })
       .split(/\r?\n/)
-      .filter((file) => /\.(?:mjs|js|ts|tsx)$/.test(file));
+      .filter((file) => /\.(?:mjs|js|cjs|ts|mts|tsx|py|ps1)$/.test(file));
 
     expect(matrix).toContain("localStorage.setItem('lkdv_theme'");
     expect(campaign).toContain("localStorage.setItem('lkdv_theme'");
@@ -213,7 +213,7 @@ describe('fix round 1 — régressions', () => {
   it('scan tous les scripts suivis pour les credentials littéraux du compte audit', () => {
     const tracked = execFileSync('git', ['ls-files', 'scripts'], { cwd: root, encoding: 'utf8' })
       .split(/\r?\n/)
-      .filter((file) => /\.(?:mjs|js|ts|tsx)$/.test(file));
+      .filter((file) => /\.(?:mjs|js|cjs|ts|mts|tsx|py|ps1)$/.test(file));
     const forbidden = [
       ['y-demo', '@lekitduvoyageur.fr'].join(''),
       ['Ydemo', '!2026'].join(''),

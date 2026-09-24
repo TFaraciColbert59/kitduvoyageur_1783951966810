@@ -6,6 +6,7 @@ import { pathToFileURL } from 'node:url';
 import {
   aggregateContrastMatrix,
   assertRenderedAuditSettings,
+  auditVerificationStatus,
   buildMatrixCells,
   collectColorContrastAxeNodes,
   EXPECTED_MATRIX_CELL_COUNT,
@@ -21,6 +22,8 @@ import {
 import {
   attachPageDiagnostics,
   invalidateAuditReports,
+  redactDiagnosticText,
+  redactRuntimeValue,
   writeAuditErrorReport,
 } from './audit_runtime.mjs';
 import {
@@ -169,7 +172,7 @@ async function run() {
         };
         result.image = measured.image;
       } catch (error) {
-        result.error = error instanceof Error ? error.message : String(error);
+        result.error = redactDiagnosticText(error instanceof Error ? error.message : String(error));
       } finally {
         diagnostics.dispose();
         await context.close();
@@ -186,12 +189,17 @@ async function run() {
     throw error;
   }
   const report = aggregateContrastMatrix(results);
-  const serialized = {
+  const verificationStatus = auditVerificationStatus({
+    liveVerified: report.totals.error === 0 && report.cellCount === EXPECTED_MATRIX_CELL_COUNT,
+    errors: results.filter((result) => result.error).map((result) => result.error),
+  });
+  const serialized = redactRuntimeValue({
     ...report,
+    verificationStatus,
     generatedAt: new Date().toISOString(),
     baseUrl,
     expectedCellCount: EXPECTED_MATRIX_CELL_COUNT,
-  };
+  });
   fs.writeFileSync(matrixJsonPath, `${JSON.stringify(serialized, null, 2)}\n`);
   fs.writeFileSync(matrixMarkdownPath, buildMarkdown(serialized));
 
@@ -206,7 +214,7 @@ async function run() {
 const invokedPath = process.argv[1] ? pathToFileURL(path.resolve(process.argv[1])).href : null;
 if (invokedPath === import.meta.url) {
   run().catch((error) => {
-    console.error(error.message);
+    console.error(redactDiagnosticText(error instanceof Error ? error.message : error));
     process.exit(1);
   });
 }

@@ -226,7 +226,11 @@ describe('audit contraste — configuration et session', () => {
     const valid = {
       cookies: [{
         name: 'sb-project-auth-token',
-        value: 'opaque',
+        value: JSON.stringify({
+          access_token: 'access',
+          refresh_token: 'refresh',
+          expires_at: now / 1000 + 3600,
+        }),
         domain: 'localhost',
         path: '/',
         expires: -1,

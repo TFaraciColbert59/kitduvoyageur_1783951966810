@@ -15,12 +15,12 @@ import { chromium } from 'playwright';
 import { createClient } from '@supabase/supabase-js';
 import fs from 'node:fs';
 import path from 'node:path';
-import { redactDiagnosticText } from './audit_runtime.mjs';
+import { auditModeRequiresAuth, auditVerificationStatus, getAuditCredentials } from './contrast_audit_core.mjs';
+import { redactDiagnosticText, redactRuntimeValue } from './audit_runtime.mjs';
 
 const BASE = process.env.AUDIT_BASE_URL || 'http://localhost:4000';
 const OUT_DIR = 'docs/audit-global';
 const CAPTURES_DIR = path.join(OUT_DIR, 'captures');
-const YDEMO = { email: process.env.AUDIT_EMAIL || (() => { throw new Error('AUDIT_EMAIL est requis'); })(), password: process.env.AUDIT_PASSWORD || (() => { throw new Error('AUDIT_PASSWORD est requis'); })() };
 const args = process.argv.slice(2);
 const ANON_ONLY = args.includes('--anon-only');
 const AUTH_ONLY = args.includes('--auth-only');
@@ -35,13 +35,14 @@ function readEnv(name) {
   return null;
 }
 
-const supabase = createClient(
-  readEnv('NEXT_PUBLIC_SUPABASE_URL'),
-  readEnv('SUPABASE_SERVICE_ROLE_KEY'),
-  { auth: { persistSession: false } }
-);
+const supabaseUrl = readEnv('NEXT_PUBLIC_SUPABASE_URL');
+const supabaseServiceRoleKey = readEnv('SUPABASE_SERVICE_ROLE_KEY');
+const supabase = supabaseUrl && supabaseServiceRoleKey
+  ? createClient(supabaseUrl, supabaseServiceRoleKey, { auth: { persistSession: false } })
+  : null;
 
 async function fixture(table, column) {
+  if (!supabase) return null;
   try {
     const { data, error } = await supabase.from(table).select(column).limit(1);
     if (error || !data?.[0]) return null;
@@ -140,12 +141,13 @@ const findings = [];
 const linkChecks = new Map();
 
 async function login(page) {
+  const { email: auditEmail, password: auditPassword } = getAuditCredentials();
   await page.goto(`${BASE}/connexion`, { waitUntil: 'domcontentloaded', timeout: 45_000 });
   await page.waitForTimeout(800);
   const email = page.locator('input[type="email"]:visible').first();
   const password = page.locator('input[type="password"]:visible').first();
-  await email.fill(YDEMO.email, { timeout: 15_000 });
-  await password.fill(YDEMO.password, { timeout: 15_000 });
+  await email.fill(auditEmail, { timeout: 15_000 });
+  await password.fill(auditPassword, { timeout: 15_000 });
   await Promise.all([
     page.waitForURL((url) => !url.pathname.startsWith('/connexion'), { timeout: 30_000 }).catch(() => {}),
     page.locator('button[type="submit"]:visible').first().click({ timeout: 15_000 }),
@@ -309,11 +311,21 @@ const report = {
   brokenLinks: Object.fromEntries([...linkChecks].filter(([, status]) => status === 'ERR' || (typeof status === 'number' && status >= 400))),
   findings,
 };
-fs.writeFileSync(path.join(OUT_DIR, 'findings.json'), JSON.stringify(report, null, 2));
+const authFailure = findings.some((finding) => finding.route === 'AUDIT-LOGIN');
+const verificationStatus = auditVerificationStatus({
+  liveVerified: report.issues.length === 0 && (!auditModeRequiresAuth(args) || !authFailure),
+  errors: [
+    ...report.issues.map((finding) => finding.pageErrors?.[0]).filter(Boolean),
+    ...Object.keys(report.brokenLinks),
+  ],
+});
+report.verificationStatus = verificationStatus;
+fs.writeFileSync(path.join(OUT_DIR, 'findings.json'), JSON.stringify(redactRuntimeValue(report), null, 2));
 
 const critical = report.issues.filter((f) => !(f.route === 'admin-refus' && (f.status === 403 || f.status === 307 || f.status === 302)));
 console.log('\n=== SYNTHèse ===');
 console.log(`captures: ${report.captures} | routes: ${ROUTES.length} | devices: ${DEVICES.length}`);
+console.log(`statut: ${verificationStatus}`);
 console.log(`routes en erreur (hors /admin): ${critical.length}`);
 for (const issue of critical) {
   console.log(`  - [${issue.device}${issue.authed ? '/auth' : ''}] ${issue.route} status=${issue.status} ${issue.pageErrors[0] ?? ''}`);
@@ -329,6 +341,6 @@ console.log(`liens cassés: ${Object.keys(report.brokenLinks).length}`);
 for (const [href, status] of Object.entries(report.brokenLinks)) {
   console.log(`  - ${href} → ${status}`);
 }
-if (critical.length > 0 || Object.keys(report.brokenLinks).length > 0) {
+if (verificationStatus !== 'VERIFIED' || critical.length > 0 || Object.keys(report.brokenLinks).length > 0) {
   process.exitCode = 1;
 }

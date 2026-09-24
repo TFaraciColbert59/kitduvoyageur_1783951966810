@@ -7,6 +7,7 @@ import sharp from 'sharp';
 import {
   analyzeDecodedPixels,
   assertRenderedAuditSettings,
+  auditVerificationStatus,
   collectColorContrastAxeNodes,
   describeAdminNavigation,
   getAuditBaseUrl,
@@ -16,6 +17,8 @@ import {
 import {
   attachPageDiagnostics,
   invalidateAuditReports,
+  redactDiagnosticText,
+  redactRuntimeValue,
   writeAuditErrorReport,
 } from './audit_runtime.mjs';
 import {
@@ -160,8 +163,19 @@ export async function extractTextElements(page) {
       .map((element) => ({ element, rects: rectsFor(element) }))
       .filter((overlay) => overlay.rects.length > 0);
     const groups = new Map();
+    const elementAuditIds = new Map();
+    const usedIds = new Set();
     let sequence = 0;
     document.querySelectorAll('[data-audit-id^="audit-text-"]').forEach((element) => element.removeAttribute('data-audit-id'));
+
+    const nextAuditId = () => {
+      let auditId;
+      do {
+        auditId = `audit-text-${sequence++}`;
+      } while (usedIds.has(auditId));
+      usedIds.add(auditId);
+      return auditId;
+    };
 
     const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
     let textNode;
@@ -205,12 +219,15 @@ export async function extractTextElements(page) {
       range.detach();
       if (rects.length === 0) continue;
 
-      let auditId = element.getAttribute('data-audit-id');
+      let auditId = elementAuditIds.get(element);
       if (!auditId) {
-        auditId = `audit-text-${sequence++}`;
+        const existingId = element.getAttribute('data-audit-id');
+        auditId = existingId && !usedIds.has(existingId) ? existingId : nextAuditId();
+        elementAuditIds.set(element, auditId);
+        usedIds.add(auditId);
         element.setAttribute('data-audit-id', auditId);
       }
-      const existing = groups.get(auditId);
+      const existing = groups.get(element);
       if (existing) {
         existing.rects.push(...rects);
         existing.text += ` ${text}`;
@@ -218,7 +235,7 @@ export async function extractTextElements(page) {
         const fontSize = Number.parseFloat(style.fontSize) || 16;
         const fontWeight = Number.parseInt(style.fontWeight, 10) || 400;
         const isLarge = fontSize >= 24 || (fontSize >= 18.66 && fontWeight >= 700);
-        groups.set(auditId, {
+        groups.set(element, {
           dataAuditId: auditId,
           id: auditId,
           selector: `[data-audit-id="${auditId}"]`,
@@ -449,7 +466,7 @@ async function run() {
         };
         summary[route.id].counts = countNodes(contrast.nodes);
       } catch (error) {
-        const message = error instanceof Error ? error.message : String(error);
+        const message = redactDiagnosticText(error instanceof Error ? error.message : String(error));
         errors.push({ route: route.id, message });
         summary[route.id] = { id: route.id, path: route.path, error: message };
       } finally {
@@ -468,19 +485,25 @@ async function run() {
     }
     return result;
   }, { pass: 0, contrast_fail: 0, unknown: 0, occluded: 0, errors: errors.length });
+  const verificationStatus = auditVerificationStatus({
+    liveVerified: errors.length === 0 && measured.length === ROUTES.length,
+    errors: errors.map((entry) => entry.message),
+  });
   const report = {
     baseUrl,
     generatedAt: new Date().toISOString(),
+    verificationStatus,
     expectedRoutes: ROUTES.length,
     measuredRoutes: measured.length,
     totals,
     errors,
     routes: summary,
   };
-  fs.writeFileSync(path.join(a11yDir, 'measure-contrast-v2.json'), `${JSON.stringify(report, null, 2)}\n`);
-  fs.writeFileSync(path.join(a11yDir, 'summary.json'), `${JSON.stringify(summary, null, 2)}\n`);
-  fs.writeFileSync(matrixReportPath, `${JSON.stringify(report, null, 2)}\n`);
-  fs.writeFileSync(contrastReportPath, buildContrastMarkdown(Object.values(summary), totals));
+  const safeReport = redactRuntimeValue(report);
+  fs.writeFileSync(path.join(a11yDir, 'measure-contrast-v2.json'), `${JSON.stringify(safeReport, null, 2)}\n`);
+  fs.writeFileSync(path.join(a11yDir, 'summary.json'), `${JSON.stringify(redactRuntimeValue(summary), null, 2)}\n`);
+  fs.writeFileSync(matrixReportPath, `${JSON.stringify(safeReport, null, 2)}\n`);
+  fs.writeFileSync(contrastReportPath, buildContrastMarkdown(Object.values(redactRuntimeValue(summary)), totals));
 
   if (errors.length > 0) {
     const error = new Error(`${errors.length} route(s) en erreur; aucun taux de succès global n'est publié`);
@@ -493,7 +516,7 @@ async function run() {
 const invokedPath = process.argv[1] ? pathToFileURL(path.resolve(process.argv[1])).href : null;
 if (invokedPath === import.meta.url) {
   run().catch((error) => {
-    console.error(error.message);
+    console.error(redactDiagnosticText(error instanceof Error ? error.message : error));
     process.exit(1);
   });
 }

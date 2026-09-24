@@ -22,6 +22,37 @@ export const KEY_SCREEN_ROUTES = Object.freeze([
   { id: 'boutique', path: '/boutique' },
 ]);
 
+export function auditModeRequiresAuth(args = []) {
+  const modes = Array.isArray(args) ? new Set(args) : new Set();
+  if (modes.has('--anon-only') && !modes.has('--auth-only')) return false;
+  return true;
+}
+
+export function captureStatusForRoute(options = {}) {
+  const source = options && typeof options === 'object' ? options : {};
+  const authVerified = Reflect.get(source, 'authVerified') === true;
+  const requiresAuth = Reflect.get(source, 'requiresAuth') === true;
+  const errors = Reflect.get(source, 'errors');
+  if (requiresAuth && !authVerified) {
+    return 'PARTIAL / NOT VERIFIED';
+  }
+  const hasErrors = Array.isArray(errors) ? errors.length > 0 : Boolean(errors);
+  if (!authVerified || hasErrors) {
+    return 'PARTIAL / NOT VERIFIED';
+  }
+  return 'OK';
+}
+
+export function auditVerificationStatus(options = {}) {
+  const source = options && typeof options === 'object' ? options : {};
+  const liveVerified = Reflect.get(source, 'liveVerified') === true;
+  const errors = Reflect.get(source, 'errors');
+  const hasErrors = Array.isArray(errors) ? errors.length > 0 : Boolean(errors);
+  return !liveVerified || hasErrors
+    ? 'PARTIAL / NOT VERIFIED'
+    : 'VERIFIED';
+}
+
 function finiteNumber(value) {
   return typeof value === 'number' && Number.isFinite(value);
 }
@@ -536,15 +567,33 @@ function isAuthName(name) {
   return typeof name === 'string' && /(?:^|[-.])auth-token(?:\.|$)/i.test(name);
 }
 
-function parseAuthValue(value, label) {
+function parseSupabaseSessionValue(value, label) {
   if (typeof value !== 'string' || value.trim() === '') {
     throw new Error(`${label} vide`);
   }
+  let serialized = value.trim();
+  if (/^base64-/i.test(serialized)) {
+    const encoded = serialized.slice('base64-'.length);
+    if (!encoded) throw new Error(`${label} vide`);
+    try {
+      serialized = Buffer.from(encoded, 'base64url').toString('utf8');
+    } catch {
+      throw new Error(`${label} malformé`);
+    }
+  }
+  let parsed;
   try {
-    return JSON.parse(value);
+    parsed = JSON.parse(serialized);
   } catch {
+    const isOpaqueCookie = label.includes('cookie') && !/^[\[{]/.test(serialized);
+    throw new Error(`${label} ${isOpaqueCookie ? 'opaque' : 'malformé'}`);
+  }
+  if (!parsed || typeof parsed !== 'object'
+    || typeof parsed.access_token !== 'string' || parsed.access_token === ''
+    || typeof parsed.refresh_token !== 'string' || parsed.refresh_token === '') {
     throw new Error(`${label} malformé`);
   }
+  return parsed;
 }
 
 export function validateStorageState(storageState, nowOrOptions = Date.now(), expectedBaseUrl) {
@@ -556,7 +605,6 @@ export function validateStorageState(storageState, nowOrOptions = Date.now(), ex
   const authCookies = storageState.cookies.filter((cookie) => cookie && isAuthName(cookie.name));
   const authLocalEntries = [];
   const expiries = [];
-  let opaqueCookieCount = 0;
   let parsedCookieCount = 0;
 
   if (expectedOrigin && storageState.origins.length === 0) {
@@ -580,12 +628,7 @@ export function validateStorageState(storageState, nowOrOptions = Date.now(), ex
         throw new Error('storageState valeur locale invalide');
       }
       if (!isAuthName(item.name)) continue;
-      const value = parseAuthValue(item.value, 'storageState localStorage');
-      if (!value || typeof value !== 'object'
-        || typeof value.access_token !== 'string' || value.access_token === ''
-        || typeof value.refresh_token !== 'string' || value.refresh_token === '') {
-        throw new Error('storageState localStorage malformé');
-      }
+      const value = parseSupabaseSessionValue(item.value, 'storageState localStorage');
       const expiry = sessionExpiry(value);
       if (expiry === null) throw new Error('storageState expiration absente');
       expiries.push(expiry);
@@ -603,22 +646,7 @@ export function validateStorageState(storageState, nowOrOptions = Date.now(), ex
   }
 
   for (const cookie of authCookies) {
-    if (typeof cookie.value !== 'string' || cookie.value.trim() === '') {
-      throw new Error('cookie auth vide');
-    }
-    let value;
-    try {
-      value = JSON.parse(cookie.value);
-    } catch {
-      if (/^[\[{]/.test(cookie.value.trim())) throw new Error('cookie auth malformé');
-      opaqueCookieCount += 1;
-      continue;
-    }
-    if (!value || typeof value !== 'object'
-      || typeof value.access_token !== 'string' || value.access_token === ''
-      || typeof value.refresh_token !== 'string' || value.refresh_token === '') {
-      throw new Error('cookie auth malformé');
-    }
+    const value = parseSupabaseSessionValue(cookie.value, 'cookie auth');
     parsedCookieCount += 1;
     const cookieExpiry = sessionExpiry(value);
     if (cookieExpiry !== null) expiries.push(cookieExpiry);
@@ -627,9 +655,6 @@ export function validateStorageState(storageState, nowOrOptions = Date.now(), ex
 
   if (authCookies.length === 0 && authLocalEntries.length === 0) {
     throw new Error('storageState non authentifié');
-  }
-  if (authLocalEntries.length === 0 && opaqueCookieCount > 0) {
-    throw new Error('cookie auth opaque');
   }
   if (expiries.length === 0) {
     throw new Error('storageState expiration absente');

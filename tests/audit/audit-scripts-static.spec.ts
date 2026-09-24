@@ -10,9 +10,10 @@ const auditScripts = [
   'scripts/audit/create_test_session.mjs',
   'scripts/audit/measure_key_screens_matrix.mjs',
 ];
+const trackedScriptExtensions = ['.js', '.mjs', '.cjs', '.ts', '.mts', '.tsx', '.py', '.ps1'];
 const trackedScripts = execFileSync('git', ['ls-files', 'scripts'], { cwd: root, encoding: 'utf8' })
   .split(/\r?\n/)
-  .filter((file) => /\.(?:mjs|js|ts|tsx)$/.test(file));
+  .filter((file) => trackedScriptExtensions.some((extension) => file.endsWith(extension)));
 
 function source(relativePath: string) {
   return readFileSync(path.join(root, relativePath), 'utf8');

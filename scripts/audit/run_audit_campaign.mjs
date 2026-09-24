@@ -5,12 +5,15 @@ import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import {
   assertRenderedAuditSettings,
+  auditVerificationStatus,
   getAuditBaseUrl,
 } from './contrast_audit_core.mjs';
 import {
   attachPageDiagnostics,
   invalidateAuditReportDirectory,
   invalidateAuditReports,
+  redactDiagnosticText,
+  redactRuntimeValue,
   writeAuditErrorReport,
 } from './audit_runtime.mjs';
 import {
@@ -179,7 +182,7 @@ async function run() {
             incomplete: [],
             colorContrast: { violations: [], incomplete: [] },
           };
-          fs.writeFileSync(path.join(a11yDir, `${route.id}.json`), `${JSON.stringify(redirectRecord, null, 2)}\n`);
+          fs.writeFileSync(path.join(a11yDir, `${route.id}.json`), `${JSON.stringify(redactRuntimeValue(redirectRecord), null, 2)}\n`);
           a11ySummary[route.id] = {
             id: route.id,
             path: route.path,
@@ -213,7 +216,7 @@ async function run() {
           },
           adminNavigation,
         };
-        fs.writeFileSync(path.join(a11yDir, `${route.id}.json`), `${JSON.stringify(a11y, null, 2)}\n`);
+        fs.writeFileSync(path.join(a11yDir, `${route.id}.json`), `${JSON.stringify(redactRuntimeValue(a11y), null, 2)}\n`);
         a11ySummary[route.id] = {
           id: route.id,
           path: route.path,
@@ -231,14 +234,14 @@ async function run() {
         errors.push({
           route: route.id,
           stage: 'axe',
-          message: error instanceof Error ? error.message : String(error),
+          message: redactDiagnosticText(error instanceof Error ? error.message : String(error)),
         });
-        a11ySummary[route.id] = { id: route.id, path: route.path, error: error instanceof Error ? error.message : String(error) };
+        a11ySummary[route.id] = { id: route.id, path: route.path, error: redactDiagnosticText(error instanceof Error ? error.message : String(error)) };
       } finally {
         if (diagnostics) diagnostics.dispose();
         if (context) {
           await context.close().catch((closeError) => {
-            console.warn(`Fermeture du contexte audit: ${closeError.message}`);
+            console.warn(`Fermeture du contexte audit: ${redactDiagnosticText(closeError instanceof Error ? closeError.message : closeError)}`);
           });
         }
       }
@@ -326,7 +329,7 @@ async function run() {
             errors.push({
               route: route.id,
               stage: `${viewport.name}-${theme}`,
-              message: error instanceof Error ? error.message : String(error),
+              message: redactDiagnosticText(error instanceof Error ? error.message : String(error)),
             });
           } finally {
             diagnostics.dispose();
@@ -339,20 +342,31 @@ async function run() {
     await browser.close();
   }
 
-  const contrastReport = buildContrastReport(contrastFindings, errors);
-  fs.writeFileSync(path.join(screensDir, 'manifest.json'), `${JSON.stringify({
+  const safeErrors = redactRuntimeValue(errors);
+  const safeFindings = redactRuntimeValue(contrastFindings);
+  const verificationStatus = auditVerificationStatus({
+    liveVerified: errors.length === 0 && contrastFindings.length > 0,
+    errors,
+  });
+  const contrastReport = buildContrastReport(safeFindings, safeErrors);
+  const safeManifest = redactRuntimeValue({
+    verificationStatus,
     totalCaptures: manifest.length,
     timestamp: new Date().toISOString(),
     captures: manifest,
-  }, null, 2)}\n`);
-  fs.writeFileSync(path.join(a11yDir, 'summary.json'), `${JSON.stringify(a11ySummary, null, 2)}\n`);
-  fs.writeFileSync(path.join(a11yDir, 'campaign-contrast.json'), `${JSON.stringify({
+  });
+  const safeSummary = redactRuntimeValue(a11ySummary);
+  const safeContrastReport = redactRuntimeValue({
+    verificationStatus,
     generatedAt: new Date().toISOString(),
     totals: contrastReport.totals,
     weightedPassRate: contrastReport.passRate,
-    findings: contrastFindings,
-    errors,
-  }, null, 2)}\n`);
+    findings: safeFindings,
+    errors: safeErrors,
+  });
+  fs.writeFileSync(path.join(screensDir, 'manifest.json'), `${JSON.stringify(safeManifest, null, 2)}\n`);
+  fs.writeFileSync(path.join(a11yDir, 'summary.json'), `${JSON.stringify(safeSummary, null, 2)}\n`);
+  fs.writeFileSync(path.join(a11yDir, 'campaign-contrast.json'), `${JSON.stringify(safeContrastReport, null, 2)}\n`);
   fs.writeFileSync(path.resolve('audit', 'CONTRASTE.md'), contrastReport.markdown);
 
   if (errors.length > 0) {
@@ -366,7 +380,7 @@ async function run() {
 const invokedPath = process.argv[1] ? pathToFileURL(path.resolve(process.argv[1])).href : null;
 if (invokedPath === import.meta.url) {
   run().catch((error) => {
-    console.error(error.message);
+    console.error(redactDiagnosticText(error instanceof Error ? error.message : error));
     process.exit(1);
   });
 }

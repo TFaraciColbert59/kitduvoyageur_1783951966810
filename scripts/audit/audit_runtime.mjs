@@ -2,20 +2,71 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
+const REDACTED_VALUE = '[redacted]';
+const SENSITIVE_ASSIGNMENT = /((?:["']?)(?:access[_-]?token|refresh[_-]?token|accessToken|refreshToken|authorization|set-cookie|cookie|password|token|secret|api[_-]?key|apikey|client[_-]?secret|private[_-]?key|service[_-]?role[_-]?key)(?:["']?)\s*[:=]\s*)("(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|[^\s,;}\]]+)/gi;
+const SENSITIVE_KEYS = new Set([
+  'accesstoken',
+  'refreshtoken',
+  'authorization',
+  'cookie',
+  'setcookie',
+  'password',
+  'token',
+  'secret',
+  'apikey',
+  'clientsecret',
+  'privatekey',
+  'servicerolekey',
+  'session',
+]);
+
+function isSensitiveKey(key) {
+  const normalized = String(key).replace(/[^a-z0-9]/gi, '').toLowerCase();
+  return SENSITIVE_KEYS.has(normalized) || /(?:token|secret|password|cookie|authorization|apikey|privatekey)/.test(normalized);
+}
+
 export function redactDiagnosticText(value) {
   return String(value ?? '')
-    .replace(/(access_token|refresh_token|password|token)(\s*[=:]\s*)[^\s,;]+/gi, '$1$2[redacted]')
+    .replace(SENSITIVE_ASSIGNMENT, (_match, prefix, sensitiveValue) => {
+      const quote = sensitiveValue[0] === '"' || sensitiveValue[0] === "'" ? sensitiveValue[0] : '';
+      return `${prefix}${quote}${REDACTED_VALUE}${quote}`;
+    })
+    .replace(/\b(?:bearer|basic)\s+[A-Za-z0-9._~+/=-]+/gi, REDACTED_VALUE)
     .replace(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi, '[email]')
     .slice(0, 500);
 }
 
-function redactDetails(value) {
+function redactDetails(value, seen = new WeakSet()) {
   if (typeof value === 'string') return redactDiagnosticText(value);
-  if (Array.isArray(value)) return value.map(redactDetails);
+  if (value instanceof Error) {
+    return {
+      name: value.name,
+      message: redactDiagnosticText(value.message),
+      stack: redactDiagnosticText(value.stack),
+    };
+  }
+  if (Array.isArray(value)) {
+    if (seen.has(value)) return '[circular]';
+    seen.add(value);
+    const result = value.map((entry) => redactDetails(entry, seen));
+    seen.delete(value);
+    return result;
+  }
   if (value && typeof value === 'object') {
-    return Object.fromEntries(Object.entries(value).map(([key, entry]) => [key, redactDetails(entry)]));
+    if (seen.has(value)) return '[circular]';
+    seen.add(value);
+    const result = Object.fromEntries(Object.entries(value).map(([key, entry]) => [
+      key,
+      isSensitiveKey(key) ? REDACTED_VALUE : redactDetails(entry, seen),
+    ]));
+    seen.delete(value);
+    return result;
   }
   return value;
+}
+
+export function redactRuntimeValue(value) {
+  return redactDetails(value);
 }
 
 function safeUrl(value) {
@@ -52,11 +103,15 @@ export function invalidateAuditReportDirectory(directory, predicate = () => true
 
 export function writeAuditErrorReport(reportPath, error, details = {}) {
   ensurePrivateAuditDirectory(path.dirname(reportPath));
+  const redactedDetails = redactRuntimeValue(details);
+  const detailFields = redactedDetails && typeof redactedDetails === 'object' && !Array.isArray(redactedDetails)
+    ? redactedDetails
+    : { details: redactedDetails };
   fs.writeFileSync(reportPath, `${JSON.stringify({
+    ...detailFields,
     status: 'ERROR',
     generatedAt: new Date().toISOString(),
     error: redactDiagnosticText(error instanceof Error ? error.message : error),
-    ...redactDetails(details),
   }, null, 2)}\n`);
 }
 
