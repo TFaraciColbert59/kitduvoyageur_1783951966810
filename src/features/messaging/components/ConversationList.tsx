@@ -167,12 +167,13 @@ export const ConversationList: React.FC<ConversationListProps> = ({
           <IconButton
             type="button"
             variant="solid"
+            size="md"
             onClick={() => {
               haptic('medium');
               onNewConversation();
             }}
             aria-label="Nouvelle discussion"
-            className="shrink-0 shadow-elevation-2"
+            className="shrink-0 min-h-[44px] min-w-[44px]"
             title="Nouvelle discussion"
           >
             <Icon name="plus" className="size-5" aria-hidden="true" />

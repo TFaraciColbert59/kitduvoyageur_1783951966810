@@ -7,7 +7,7 @@ import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
 import Image from 'next/image';
 import Icon from '@/components/ui/AppIcon';
 import Link from 'next/link';
-import { Badge, Button, Card, Chip, IconButton, Tabs } from '@/components/ui';
+import { Badge, Button, Card, Chip, IconButton, PriceTag, Tabs } from '@/components/ui';
 
 interface Plan {
   id: string;
@@ -138,13 +138,13 @@ export default function AbonnementsPage() {
       {/* Hero */}
       <section className="relative overflow-hidden bg-[color:var(--glass-bg-medium)] border border-[color:var(--glass-border)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset px-[var(--space-4)] py-[var(--space-16)] text-[color:var(--lkv-text-primary)]">
         <div className="relative z-[var(--z-sticky)] mx-auto max-w-4xl text-center">
-          <Badge tone="sage" className="mb-[var(--space-6)] font-mono">
+          <Badge tone="stone" className="mb-[var(--space-6)] font-mono">
             <Icon name="SparklesIcon" size={12} variant="outline" />
-            PHASE 5 — ABONNEMENTS & BOX
+            Abonnements &amp; Box LKDV
           </Badge>
           <h1 className="mb-[var(--space-4)] font-display text-[length:var(--lkv-text-title-xl)] font-extrabold tracking-[var(--lkv-tracking-title)]">
             L&apos;équipement parfait,<br />
-            <span className="text-[color:var(--lkv-secondary)]">livré chaque mois</span>
+            <span className="text-white">livré chaque mois</span>
           </h1>
           <p className="mx-auto max-w-2xl text-[length:var(--lkv-text-body)] text-[color:var(--lkv-text-inverted)] opacity-60">
             Une box mensuelle sélectionnée par notre IA selon votre profil voyageur. Chaque produit choisi pour votre prochaine expédition.
@@ -183,34 +183,39 @@ export default function AbonnementsPage() {
                 onClick={() => setSelectedPlan(plan.id)}
                 className="relative flex flex-col p-[var(--space-6)]"
               >
-                {plan.badge && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                    <Badge tone={plan.id === 'expedition' ? 'warn' : 'sage'} className="font-bold">
-                      {plan.badge}
-                    </Badge>
-                  </div>
-                )}
                 <div className="mb-[var(--space-4)]">
-                  <h3 className="mb-[var(--space-1)] font-display text-[length:var(--lkv-text-headline)] font-bold text-[color:var(--lkv-text-primary)]">{plan.name}</h3>
+                  <div className="flex items-center justify-between gap-2 mb-[var(--space-1.5)]">
+                    <h3 className="font-display text-[length:var(--lkv-text-headline)] font-bold text-[color:var(--glass-label)]">{plan.name}</h3>
+                    {plan.badge && (
+                      <Badge tone={plan.id === 'expedition' ? 'stone' : 'sage'} className="font-bold text-xs">
+                        {plan.badge}
+                      </Badge>
+                    )}
+                  </div>
                   <div className="flex items-baseline gap-[var(--space-1)]">
                     {plan.price > 0 ? (
-                      <>
-                        <span className="text-[length:var(--lkv-text-title-sm)] font-bold text-[color:var(--lkv-text-primary)]">{price}€</span>
-                        <span className="text-[length:var(--lkv-text-body-sm)] text-[color:var(--lkv-text-muted)]">{plan.period}</span>
-                      </>
+                      <PriceTag
+                        amountEur={price}
+                        period={plan.period}
+                        size="lg"
+                      />
                     ) : (
-                      <span className="text-[length:var(--lkv-text-headline)] font-bold text-[color:var(--lkv-text-muted)]">{plan.period}</span>
+                      <PriceTag
+                        amountEur={0}
+                        freeLabel="Gratuit"
+                        size="lg"
+                      />
                     )}
                   </div>
                   {billingAnnual && plan.price > 0 && (
-                    <p className="mt-[var(--space-1)] text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-success)]">Facturé {price * 12}€/an</p>
+                    <p className="mt-[var(--space-1)] text-[length:var(--lkv-text-caption)] text-[color:var(--glass-label-secondary)]">Facturé {price * 12}€/an</p>
                   )}
                 </div>
 
                 <ul className="mb-[var(--space-6)] space-y-[var(--space-2)]">
                   {plan.features.map((f, i) => (
                     <li key={i} className="flex items-start gap-[var(--space-2)] text-[length:var(--lkv-text-body-sm)] text-[color:var(--lkv-text-secondary)]">
-                      <Icon name="CheckIcon" size={14} variant="outline" className="mt-0.5 flex-shrink-0 text-[color:var(--lkv-primary)]" />
+                      <Icon name="CheckIcon" size={14} variant="outline" className="mt-0.5 flex-shrink-0 text-white" />
                       {f}
                     </li>
                   ))}
@@ -255,7 +260,7 @@ export default function AbonnementsPage() {
                   onClick={() => setActiveBox(i)}
                   className="h-11 w-11"
                 >
-                  <span className={`h-2.5 w-2.5 rounded-full transition-colors ${activeBox === i ? 'bg-[color:var(--lkv-primary)]' : 'bg-[color:var(--lkv-border-strong)]'}`} />
+                  <span className={`h-2.5 w-2.5 rounded-full transition-colors ${activeBox === i ? 'bg-white' : 'bg-white/20'}`} />
                 </IconButton>
               ))}
             </div>

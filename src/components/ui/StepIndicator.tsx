@@ -7,6 +7,7 @@ export interface StepIndicatorProps {
   totalSteps: number;
   currentStep: number;
   stepLabels?: string[];
+  labels?: string[];
   className?: string;
   variant?: 'bars' | 'capsules';
 }
@@ -20,12 +21,14 @@ export function StepIndicator({
   totalSteps,
   currentStep,
   stepLabels,
+  labels,
   className = '',
   variant = 'bars',
 }: StepIndicatorProps) {
   const steps = Array.from({ length: totalSteps }, (_, i) => i);
   const currentStepNumber = Math.min(Math.max(currentStep, 0), totalSteps - 1) + 1;
-  const currentLabel = stepLabels?.[currentStep] || `Étape ${currentStepNumber} sur ${totalSteps}`;
+  const labelsList = labels || stepLabels;
+  const currentLabel = labelsList?.[currentStep] || `Étape ${currentStepNumber} sur ${totalSteps}`;
 
   return (
     <div

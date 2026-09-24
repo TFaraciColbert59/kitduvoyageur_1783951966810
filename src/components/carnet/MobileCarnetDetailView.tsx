@@ -162,13 +162,13 @@ export default function MobileCarnetDetailView({
           alt={data.meta?.titleLine1 || 'Carnet'}
           className="h-full w-full object-cover opacity-70"
         />
-        <div aria-hidden className="absolute inset-0 bg-gradient-to-t from-[color:var(--lkv-primary)] via-[color:var(--lkv-primary)]/60 to-black/30" />
+        <div aria-hidden className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/40 to-transparent" />
 
         <div className="absolute left-4 right-4 top-[calc(max(var(--safe-top),14px)+8px)] z-10 flex items-center justify-between">
           <Link
             href="/carnets"
             onClick={() => triggerHaptic('light')}
-            className="flex h-10 w-10 items-center justify-center rounded-full border border-[color:var(--glass-border)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] text-[length:var(--lkv-text-subheadline)] font-bold text-[color:var(--lkv-text-primary)] shadow-elevation-2 transition-transform active:scale-95 motion-reduce:transition-none"
+            className="flex h-11 w-11 min-h-[44px] min-w-[44px] items-center justify-center rounded-full border border-[color:var(--glass-border)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] text-[length:var(--lkv-text-subheadline)] font-bold text-[color:var(--lkv-text-primary)] shadow-elevation-2 transition-transform active:scale-95 motion-reduce:transition-none"
             aria-label="Retour aux carnets"
           >
             ‹
@@ -177,7 +177,8 @@ export default function MobileCarnetDetailView({
           <div className="flex max-w-[78%] items-center gap-[var(--space-1)]">
             <span className="min-w-0" title={data.meta?.itineraire}>
               <Badge className="truncate border-[color:var(--glass-border)] bg-[color:var(--glass-bg-medium)] border saturate-[var(--glass-sat)] lkv-rim-inset px-[var(--space-3)] py-[var(--space-1)] font-mono font-semibold text-[color:var(--lkv-text-primary)] backdrop-blur-[var(--glass-blur-sm)]">
-                📍 {data.meta?.itineraire || 'Expédition outdoor'}
+                <Icon name="map-pin" size={11} className="inline mr-1 text-[color:var(--glass-label)]" />
+                {data.meta?.itineraire || 'Expédition outdoor'}
               </Badge>
             </span>
           </div>
@@ -185,8 +186,8 @@ export default function MobileCarnetDetailView({
 
         <div className="absolute bottom-4 left-4 right-4 z-10">
           <div className="mb-[var(--space-1)] flex items-center gap-[var(--space-2)]">
-            <span className="flex items-center gap-[var(--space-1)] font-mono text-[length:var(--lkv-text-caption-2)] font-bold uppercase tracking-widest text-[color:var(--lkv-forest-300)]">
-              <span aria-hidden>📖</span> CARNET DE TERRAIN
+            <span className="flex items-center gap-[var(--space-1)] font-mono text-[length:var(--lkv-text-caption-2)] font-bold uppercase tracking-widest text-white/80">
+              <Icon name="book-open" size={11} className="inline mr-1 text-white/80" /> CARNET DE TERRAIN
             </span>
             <span className="font-mono text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-inverted)]/70">· {dateRange}</span>
           </div>

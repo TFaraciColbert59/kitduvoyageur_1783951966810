@@ -825,12 +825,12 @@ function ToolRations() {
         <div className="glass rounded-[var(--lkv-radius-md)] p-4">
           <label htmlFor="rations-personnes" className="font-mono text-[length:var(--lkv-text-caption-2)] text-muted-foreground uppercase tracking-wider block mb-2">PERSONNES</label>
           <input id="rations-personnes" type="number" min={1} max={20} value={personnes} onChange={(e) => setPersonnes(Math.max(1, parseInt(e.target.value) || 1))}
-            className="w-full min-h-[var(--lkv-touch-min)] px-3 py-2 rounded-[var(--lkv-radius-sm)] bg-[color:var(--lkv-field-bg)] border border-border font-mono text-xl font-700 focus:outline-none focus:border-primary focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]" />
+            className="w-full min-h-[var(--lkv-touch-min)] px-3 py-2 rounded-[var(--lkv-radius-sm)] bg-[color:var(--lkv-field-bg)] border border-border font-mono text-xl font-700 focus:outline-none focus:border-white/40 focus-visible:ring-2 focus-visible:ring-white/30" />
         </div>
         <div className="glass rounded-[var(--lkv-radius-md)] p-4">
           <label htmlFor="rations-jours" className="font-mono text-[length:var(--lkv-text-caption-2)] text-muted-foreground uppercase tracking-wider block mb-2">JOURS</label>
           <input id="rations-jours" type="number" min={1} max={30} value={jours} onChange={(e) => setJours(Math.max(1, parseInt(e.target.value) || 1))}
-            className="w-full min-h-[var(--lkv-touch-min)] px-3 py-2 rounded-[var(--lkv-radius-sm)] bg-[color:var(--lkv-field-bg)] border border-border font-mono text-xl font-700 focus:outline-none focus:border-primary focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]" />
+            className="w-full min-h-[var(--lkv-touch-min)] px-3 py-2 rounded-[var(--lkv-radius-sm)] bg-[color:var(--lkv-field-bg)] border border-border font-mono text-xl font-700 focus:outline-none focus:border-white/40 focus-visible:ring-2 focus-visible:ring-white/30" />
         </div>
       </div>
 
@@ -863,7 +863,7 @@ function ToolRations() {
         {[
           { label: 'EAU / JOUR / PERS.', value: `${eauParJourL.toFixed(1)} L`, icon: '💧', color: 'text-info' },
           { label: 'NOURRITURE / JOUR', value: `${nourritureParJourG} g`, icon: '🍽️', color: 'text-accent' },
-          { label: 'CALORIES / JOUR', value: `${caloriesParJour} kcal`, icon: '⚡', color: 'text-primary' },
+          { label: 'CALORIES / JOUR', value: `${caloriesParJour} kcal`, icon: '⚡', color: 'text-white' },
         ].map((stat) => (
           <div key={stat.label} className="glass rounded-[var(--lkv-radius-md)] p-4 text-center">
             <p className="text-2xl mb-1">{stat.icon}</p>
@@ -888,7 +888,7 @@ function ToolRations() {
           </div>
           <div>
             <p className="font-mono text-xs text-muted-foreground">CALORIES</p>
-            <p className="font-mono font-700 text-lg text-primary">{totalCalories.toLocaleString()} kcal</p>
+            <p className="font-mono font-700 text-lg text-white">{totalCalories.toLocaleString()} kcal</p>
           </div>
         </div>
       </div>
@@ -1110,7 +1110,7 @@ export default function OutilSlugPage() {
           <MobilePageShell>
             <div className="p-[var(--space-4)] pt-20 text-center">
               <p className="mb-[var(--space-4)] text-[40px]">🔧</p>
-              <h1 className="mb-[var(--space-3)] text-[20px] font-bold text-[color:var(--lkv-primary)]">Outil introuvable</h1>
+              <h1 className="mb-[var(--space-3)] text-[20px] font-bold text-[color:var(--glass-label)]">Outil introuvable</h1>
               <Link href="/outils" className="inline-block rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn px-6 py-3 text-[14px] font-bold text-[color:var(--lkv-text-primary)] no-underline">← Retour aux outils</Link>
             </div>
           </MobilePageShell>
@@ -1130,7 +1130,7 @@ export default function OutilSlugPage() {
           <Header />
 
           {/* Tool Header */}
-          <section className="pt-24 pb-8 bg-[color:var(--lkv-primary)]">
+          <section className="pt-24 pb-8 bg-[color:var(--glass-bg-medium)] border-b border-white/10">
             <div className="max-w-3xl mx-auto px-4 sm:px-6">
               <nav className="flex items-center gap-2 text-xs text-white/50 mb-4" aria-label="Fil d'Ariane">
                 <Link href="/" className="hover:text-white transition-colors">Accueil</Link>
@@ -1189,12 +1189,12 @@ export default function OutilSlugPage() {
               <nav className="mb-[var(--space-3)] flex items-center gap-1.5 text-[12px] text-[color:var(--lkv-text-muted)]" aria-label="Fil d'Ariane">
                 <Link href="/outils" className="text-[color:var(--lkv-text-muted)] no-underline">Outils</Link>
                 <span>/</span>
-                <span className="text-[color:var(--lkv-primary)]">{tool.nom}</span>
+                <span className="text-[color:var(--glass-label)]">{tool.nom}</span>
               </nav>
               <div className="flex items-center gap-[var(--space-3)]">
                 <span className="text-[36px]" role="img" aria-label={tool.nom}>{tool.icon}</span>
                 <div>
-                  <h1 className="mb-1 text-[22px] font-extrabold leading-[1.2] text-[color:var(--lkv-primary)]">{tool.nom}</h1>
+                  <h1 className="mb-1 text-[22px] font-extrabold leading-[1.2] text-[color:var(--glass-label)]">{tool.nom}</h1>
                   <p className="text-[13px] leading-[1.4] text-[color:var(--lkv-text-muted)]">{tool.description}</p>
                 </div>
               </div>
@@ -1213,7 +1213,7 @@ export default function OutilSlugPage() {
                     <Link
                       key={s}
                       href={`/outils/${s}`}
-                      className="glass-sub-card flex items-center gap-1.5 rounded-[var(--lkv-radius-sm)] px-3.5 py-2 text-[13px] text-[color:var(--lkv-text-muted)] no-underline"
+                      className="glass-sub-card flex min-h-[var(--lkv-touch-min)] items-center gap-1.5 rounded-[var(--lkv-radius-sm)] px-3.5 py-2 text-[13px] text-[color:var(--lkv-text-muted)] no-underline"
                     >
                       <span>{t.icon}</span>
                       <span>{t.nom}</span>

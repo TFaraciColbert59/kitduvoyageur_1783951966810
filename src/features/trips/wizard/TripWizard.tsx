@@ -14,7 +14,7 @@ import { Step4Travelers } from './Step4Travelers';
 import { Step5Preview } from './Step5Preview';
 import AppShellDesktop from '@/components/shell/AppShellDesktop';
 import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
-import { Button, Card, Spinner } from '@/components/ui';
+import { Button, Card, Spinner, StepIndicator } from '@/components/ui';
 import { MapPin, Calendar, Compass, Users, Eye } from 'lucide-react';
 
 const STEP_LABELS = [
@@ -205,7 +205,7 @@ export function TripWizard() {
 
       <div className="border-t border-[color:var(--lkv-border-subtle)] pt-[var(--space-3)] text-[10px] text-[color:var(--sage-700)]">
         <div>Planificateur d’expédition</div>
-        <div className="font-mono">LKDV WIZARD V2</div>
+        <div className="font-medium text-[color:var(--glass-label)]">Assistant d’expédition</div>
       </div>
     </div>
   );
@@ -283,16 +283,12 @@ export function TripWizard() {
       mobileSlot={
         <MobilePageShell safeTop={true} hasBottomNav={false} className="pb-24">
           <div className="mx-auto max-w-4xl px-4 py-4">
-            <div className="mb-1.5 flex items-center justify-between text-[length:var(--lkv-text-footnote)] font-semibold text-[color:var(--lkv-text-secondary)]">
-              <span>Étape {state.step} sur 5</span>
-              <span>{STEP_LABELS[state.step - 1].label}</span>
-            </div>
-            <div className="mb-4 h-1.5 w-full overflow-hidden rounded-full bg-[color:var(--btn-tint)]">
-              <div
-                className="h-full rounded-full bg-[color:var(--lkv-action)] transition-all duration-300"
-                style={{ width: `${(state.step / 5) * 100}%` }}
-              />
-            </div>
+            <StepIndicator
+              currentStep={state.step}
+              totalSteps={5}
+              labels={STEP_LABELS.map((s) => s.label)}
+              className="mb-4"
+            />
             <Card>
               {renderCurrentStep()}
               {renderNavControls(true)}

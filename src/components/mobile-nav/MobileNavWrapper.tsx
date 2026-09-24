@@ -21,7 +21,8 @@ export default function MobileNavWrapper() {
   const isNoNavRoute =
     pathname?.startsWith('/connexion') ||
     pathname?.startsWith('/inscription') ||
-    pathname?.startsWith('/checkout');
+    pathname?.startsWith('/checkout') ||
+    pathname?.startsWith('/communaute/publier');
 
   if (isNoNavRoute) {
     return <OfflineBanner />;

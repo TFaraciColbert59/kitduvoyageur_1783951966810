@@ -3,6 +3,7 @@
 import React from 'react';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { Button, Card } from '@/components/ui';
+import Icon from '@/components/ui/Icon';
 
 interface ClubFeaturedEventCardProps {
   event: {
@@ -40,7 +41,7 @@ export default function ClubFeaturedEventCard({
     <Card className="relative space-y-[var(--space-3)] overflow-hidden p-[var(--space-4)] transition-all duration-[var(--motion-control-duration)]">
       <div className="flex items-start gap-[var(--space-3)]">
         <div className="flex h-12 w-12 shrink-0 flex-col items-center justify-center rounded-[var(--lkv-radius-2xl)] bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[color:var(--lkv-text-primary)]">
-          <span className="text-[length:var(--lkv-text-caption-2)] font-bold uppercase leading-none tracking-wider text-[color:var(--lkv-forest-200)]">
+          <span className="text-[length:var(--lkv-text-caption-2)] font-bold uppercase leading-none tracking-wider text-[color:var(--glass-label)]">
             {monthStr}
           </span>
           <span className="mt-[var(--space-1)] font-display text-[length:var(--lkv-text-subheadline)] font-extrabold leading-none">
@@ -50,16 +51,17 @@ export default function ClubFeaturedEventCard({
 
         <div className="min-w-0 flex-1 space-y-[2px]">
           <div className="flex items-center justify-between">
-            <span className="font-mono text-[length:var(--lkv-text-caption-2)] font-bold uppercase tracking-wide text-[color:var(--lkv-text-primary)]">
-              🏕️ Sortie Collective
+            <span className="font-mono text-[length:var(--lkv-text-caption-2)] font-bold uppercase tracking-wide text-[color:var(--lkv-text-primary)] flex items-center gap-1">
+              <Icon name="compass" size={12} className="text-[color:var(--glass-label)]" />
+              <span>Sortie Collective</span>
             </span>
-            <span aria-hidden className="h-2 w-2 animate-pulse rounded-full bg-[var(--lkv-forest-500)]" title="Sortie active" />
+            <span aria-hidden className="h-2 w-2 animate-pulse rounded-full bg-white" title="Sortie active" />
           </div>
           <h3 className="truncate font-display text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)]">
             {event.title}
           </h3>
           <p className="flex items-center gap-[var(--space-1)] truncate font-mono text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">
-            <span aria-hidden>📍</span>
+            <Icon name="map-pin" size={11} className="text-[color:var(--glass-label)]" />
             <span>{event.location || 'Lieu à définir'}</span>
           </p>
         </div>
@@ -84,16 +86,16 @@ export default function ClubFeaturedEventCard({
           aria-valuemin={0}
           aria-valuemax={100}
           aria-label="Places réservées"
-          className="h-1.5 w-full overflow-hidden rounded-full bg-[color:var(--lkv-primary)]/10"
+          className="h-1.5 w-full overflow-hidden rounded-full bg-white/10"
         >
           <div
-            className="h-full rounded-full bg-[color:var(--lkv-forest-600)] transition-all duration-500 motion-reduce:transition-none"
+            className="h-full rounded-full bg-[color:var(--glass-label)] transition-all duration-500 motion-reduce:transition-none"
             style={{ width: `${progressPercent}%` }}
           />
         </div>
       </div>
 
-      <div className="flex items-center justify-between gap-[var(--space-2)] border-t border-[color:var(--lkv-primary)]/10 pt-[var(--space-2)]">
+      <div className="flex items-center justify-between gap-[var(--space-2)] border-t border-white/10 pt-[var(--space-2)]">
         {onViewParticipants ? (
           <Button
             type="button"

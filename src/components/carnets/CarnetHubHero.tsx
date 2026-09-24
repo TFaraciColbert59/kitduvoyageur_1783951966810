@@ -17,40 +17,40 @@ export default function CarnetHubHero({
   onCreateClick,
 }: CarnetHubHeroProps) {
   return (
-    <div className="relative flex flex-col items-start justify-between gap-[var(--space-6)] overflow-hidden rounded-[var(--lkv-radius-card)] border border-[color:var(--glass-border)] bg-gradient-to-br from-[color:var(--lkv-primary)]/95 via-[color:var(--lkv-primary)]/85 to-[color:var(--lkv-forest-600)]/90 p-[var(--space-6)] text-[color:var(--stone-50)] sm:p-[var(--space-8)] md:flex-row md:items-end">
-      <div aria-hidden className="pointer-events-none absolute right-0 top-0 h-[35rem] w-[35rem] rounded-full bg-[color:var(--lkv-text-inverted)] opacity-5 blur-[90px]" />
+    <div className="relative flex flex-col items-start justify-between gap-[var(--space-6)] overflow-hidden rounded-[var(--lkv-radius-card)] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg-base)] backdrop-blur-[var(--glass-blur)] p-[var(--space-6)] text-white sm:p-[var(--space-8)] md:flex-row md:items-end shadow-lg">
+      <div aria-hidden className="pointer-events-none absolute right-0 top-0 h-[35rem] w-[35rem] rounded-full bg-white opacity-5 blur-[90px]" />
 
       <div className="relative z-10 max-w-xl">
-        <Badge className="mb-[var(--space-4)] border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] text-[color:var(--lkv-text-inverted)]">
-          <span aria-hidden className="h-1.5 w-1.5 animate-pulse rounded-full bg-[var(--lkv-forest-400)]" />
+        <Badge className="mb-[var(--space-4)] border-white/20 bg-white/10 text-white">
+          <span aria-hidden className="h-1.5 w-1.5 animate-pulse rounded-full bg-white" />
           <span className="font-mono text-[length:var(--lkv-text-caption-2)] font-bold uppercase tracking-widest">
             MÉMOIRE OUTDOOR · {totalCarnets} EXPÉDITIONS
           </span>
         </Badge>
 
-        <h1 className="mb-[var(--space-4)] text-[length:var(--lkv-text-title-lg)] leading-[1.15] text-[color:var(--lkv-text-inverted)] sm:text-[length:var(--lkv-text-title-xl)] md:text-5xl">
+        <h1 className="mb-[var(--space-4)] text-[length:var(--lkv-text-title-lg)] leading-[1.15] text-white sm:text-[length:var(--lkv-text-title-xl)] md:text-5xl">
           <span className="block font-display font-bold">Carnets d&apos;expédition</span>
-          <span className="font-serif font-normal italic text-[color:var(--lkv-forest-200)]">Récits, traces et mémoires</span>
+          <span className="font-serif font-normal italic text-white/80">Récits, traces et mémoires</span>
         </h1>
 
-        <p className="mb-[var(--space-6)] max-w-lg font-sans text-[length:var(--lkv-text-caption)] leading-relaxed text-[color:var(--lkv-text-inverted)]/80 sm:text-[length:var(--lkv-text-caption)]">
+        <p className="mb-[var(--space-6)] max-w-lg font-sans text-[length:var(--lkv-text-caption)] leading-relaxed text-white/70 sm:text-[length:var(--lkv-text-caption)]">
           Explorez les aventures vécues par la communauté LKDV. Traces GPX, hébergements, retours d&apos;équipement et photos de bivouac.
         </p>
 
         <div className="flex flex-wrap items-center gap-[var(--space-4)] font-mono text-[length:var(--lkv-text-caption-2)] sm:gap-[var(--space-6)]">
           <div className="flex flex-col">
-            <span className="mb-[var(--space-1)] text-[length:var(--lkv-text-caption-2)] font-bold uppercase tracking-widest text-[color:var(--lkv-text-inverted)]/60">Récits</span>
-            <span className="text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-inverted)]">{totalCarnets}</span>
+            <span className="mb-[var(--space-1)] text-[length:var(--lkv-text-caption-2)] font-bold uppercase tracking-widest text-white/60">Récits</span>
+            <span className="text-[length:var(--lkv-text-caption)] font-bold text-white">{totalCarnets}</span>
           </div>
-          <div aria-hidden className="h-6 w-px bg-[color:var(--lkv-text-inverted)]/20" />
+          <div aria-hidden className="h-6 w-px bg-white/20" />
           <div className="flex flex-col">
-            <span className="mb-[var(--space-1)] text-[length:var(--lkv-text-caption-2)] font-bold uppercase tracking-widest text-[color:var(--lkv-text-inverted)]/60">Distance totale</span>
-            <span className="text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-forest-400)]">{totalKm} km</span>
+            <span className="mb-[var(--space-1)] text-[length:var(--lkv-text-caption-2)] font-bold uppercase tracking-widest text-white/60">Distance totale</span>
+            <span className="text-[length:var(--lkv-text-caption)] font-bold text-white">{totalKm} km</span>
           </div>
-          <div aria-hidden className="h-6 w-px bg-[color:var(--lkv-text-inverted)]/20" />
+          <div aria-hidden className="h-6 w-px bg-white/20" />
           <div className="flex flex-col">
-            <span className="mb-[var(--space-1)] text-[length:var(--lkv-text-caption-2)] font-bold uppercase tracking-widest text-[color:var(--lkv-text-inverted)]/60">Traces GPX</span>
-            <span className="text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-inverted)]">100% Libres</span>
+            <span className="mb-[var(--space-1)] text-[length:var(--lkv-text-caption-2)] font-bold uppercase tracking-widest text-white/60">Traces GPX</span>
+            <span className="text-[length:var(--lkv-text-caption)] font-bold text-white">100% Libres</span>
           </div>
         </div>
       </div>

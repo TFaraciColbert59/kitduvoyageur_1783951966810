@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Button, Card, IconButton } from '@/components/ui';
+import { Button, Card, IconButton, PriceTag } from '@/components/ui';
 import Icon from '@/components/ui/AppIcon';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 
@@ -66,7 +66,7 @@ export default function ProductBuyBar({ price, onAddToCart }: ProductBuyBarProps
         onClick={handleAdd}
       >
         <span>{added ? 'Ajouté' : 'Ajouter au panier'}</span>
-        <span className="font-mono font-bold">{(price * qty).toFixed(0)} €</span>
+        <PriceTag amountEur={price * qty} size="md" className="text-white" />
       </Button>
     </Card>
   );

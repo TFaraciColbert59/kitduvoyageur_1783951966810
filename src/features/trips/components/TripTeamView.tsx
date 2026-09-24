@@ -127,7 +127,7 @@ export function TripTeamView({ trip }: TripTeamViewProps) {
       {/* Liste des membres */}
       {trip.collaborators.length === 0 ? (
         <EmptyState
-          icon={<Icon name="users" size={32} className="text-[color:var(--lkv-secondary)]" />}
+          icon={<Icon name="users" size={32} className="text-[color:var(--glass-label)]" />}
           title="Aucun compagnon de route"
           description="Vous préparez actuellement cette expédition en solo. Invitez des coéquipiers pour partager l'itinéraire, le matériel et les dépenses."
           actionLabel={isOwner ? 'Inviter un voyageur' : undefined}
@@ -158,7 +158,7 @@ export function TripTeamView({ trip }: TripTeamViewProps) {
                       {initials}
                     </div>
                     <div>
-                      <div className="text-[length:var(--lkv-text-footnote)] font-bold text-[color:var(--lkv-text-primary)] underline-offset-2 decoration-[color:var(--lkv-secondary)]/60 group-hover:underline">
+                      <div className="text-[length:var(--lkv-text-footnote)] font-bold text-[color:var(--lkv-text-primary)] underline-offset-2 decoration-white/40 group-hover:underline">
                         {name}
                       </div>
                       <div className="text-[length:var(--lkv-text-footnote)] text-[color:var(--lkv-text-secondary)]">

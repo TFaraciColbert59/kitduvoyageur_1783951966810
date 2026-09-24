@@ -12,9 +12,9 @@ import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
 import { Button, Card } from '@/components/ui';
 
 const FIELD_CLASS =
-  'min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-sm)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-[var(--space-3)] py-2.5 text-[length:var(--lkv-text-body-sm)] text-[color:var(--lkv-text-primary)] placeholder:text-[color:var(--lkv-text-muted)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]';
+  'min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-sm)] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg-medium)] px-[var(--space-3)] py-2.5 text-[length:var(--lkv-text-body-sm)] text-[color:var(--glass-label)] placeholder:text-[color:var(--glass-label-muted)] backdrop-blur-[var(--glass-blur-sm)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30';
 const LABEL_CLASS =
-  'mb-1.5 block text-[length:var(--lkv-text-caption-1)] font-medium text-[color:var(--lkv-text-secondary)]';
+  'mb-1.5 block text-[length:var(--lkv-text-caption-1)] font-medium text-[color:var(--glass-label-secondary)]';
 
 export default function InscriptionPage() {
   const router = useRouter();
@@ -44,14 +44,14 @@ export default function InscriptionPage() {
 
   const content = success ? (
     <Card variant="featured" className="p-[var(--space-8)] text-center">
-      <div className="mx-auto mb-[var(--space-4)] flex h-16 w-16 items-center justify-center rounded-full bg-[color:var(--lkv-secondary)]/15">
-        <Icon name="CheckCircleIcon" size={32} className="text-[color:var(--lkv-secondary)]" variant="outline" />
+      <div className="mx-auto mb-[var(--space-4)] flex h-16 w-16 items-center justify-center rounded-full bg-white/10 border border-white/15">
+        <Icon name="CheckCircleIcon" size={32} className="text-white" variant="outline" />
       </div>
-      <h2 className="mb-2 font-display text-[length:var(--lkv-text-title-sm)] font-extrabold text-[color:var(--lkv-text-primary)]">
+      <h2 className="mb-2 font-display text-[length:var(--lkv-text-title-sm)] font-extrabold text-[color:var(--glass-label)]">
         Compte créé !
       </h2>
-      <p className="mb-[var(--space-6)] text-[length:var(--lkv-text-footnote)] text-[color:var(--lkv-text-secondary)]">
-        Un email de confirmation a été envoyé à <strong className="text-[color:var(--lkv-text-primary)]">{form.email}</strong>.
+      <p className="mb-[var(--space-6)] text-[length:var(--lkv-text-footnote)] text-[color:var(--glass-label-secondary)]">
+        Un email de confirmation a été envoyé à <strong className="text-[color:var(--glass-label)]">{form.email}</strong>.
       </p>
       <Link href="/connexion">
         <Button icon={<Icon name="ArrowRightIcon" size={14} variant="outline" />}>
@@ -62,13 +62,13 @@ export default function InscriptionPage() {
   ) : (
     <Card variant="featured" className="p-[var(--space-8)]">
       <div className="mb-[var(--space-8)] text-center">
-        <p className="mb-2 font-mono text-[length:var(--lkv-text-caption-2)] uppercase tracking-widest text-[color:var(--lkv-secondary)]">
+        <p className="mb-2 font-mono text-[length:var(--lkv-text-caption-2)] uppercase tracking-widest text-[color:var(--glass-label-secondary)]">
           Rejoindre la communauté
         </p>
-        <h1 className="font-display text-[length:var(--lkv-text-title-lg)] font-extrabold text-[color:var(--lkv-text-primary)]">
+        <h1 className="font-display text-[length:var(--lkv-text-title-lg)] font-extrabold text-[color:var(--glass-label)]">
           Créer un compte
         </h1>
-        <p className="mt-2 text-[length:var(--lkv-text-footnote)] text-[color:var(--lkv-text-muted)]">
+        <p className="mt-2 text-[length:var(--lkv-text-footnote)] text-[color:var(--glass-label-muted)]">
           Configurez vos kits, sauvegardez vos aventures
         </p>
       </div>
@@ -106,7 +106,7 @@ export default function InscriptionPage() {
       </form>
       <p className="mt-[var(--space-6)] text-center text-[length:var(--lkv-text-caption-1)] text-[color:var(--lkv-text-muted)]">
         Déjà un compte ?{' '}
-        <Link href="/connexion" className="font-medium text-[color:var(--lkv-primary)] hover:underline">
+        <Link href="/connexion" className="font-medium text-[color:var(--glass-label)] hover:underline">
           Se connecter
         </Link>
       </p>

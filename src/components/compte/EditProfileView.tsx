@@ -53,14 +53,14 @@ export default function EditProfileView({ onCloseModal, onSave }: { onCloseModal
   ];
 
   const availableDisciplines = [
-    { id: 'Randonnée', label: '🏔️ Randonnée' },
-    { id: 'Bivouac', label: '🏕️ Bivouac' },
-    { id: 'Alpinisme', label: '🚵 Alpinisme' },
-    { id: 'Ski de rando', label: '⛷️ Ski de rando' },
-    { id: 'Trail', label: '🚣 Trail' },
-    { id: 'VTT', label: '🚴 VTT' },
-    { id: 'Escalade', label: '🧭 Escalade' },
-    { id: 'Haute montagne', label: '❄️ Haute montagne' }
+    { id: 'Randonnée', label: 'Randonnée' },
+    { id: 'Bivouac', label: 'Bivouac' },
+    { id: 'Alpinisme', label: 'Alpinisme' },
+    { id: 'Ski de rando', label: 'Ski de rando' },
+    { id: 'Trail', label: 'Trail' },
+    { id: 'VTT', label: 'VTT' },
+    { id: 'Escalade', label: 'Escalade' },
+    { id: 'Haute montagne', label: 'Haute montagne' }
   ];
 
   // Fetch Saved Profile from localStorage / Supabase on Mount
@@ -510,9 +510,9 @@ export default function EditProfileView({ onCloseModal, onSave }: { onCloseModal
 
           {/* ─── SECTION 02: ANCRAGE GÉOGRAPHIQUE ───────────────────── */}
           <div className="bg-[color:var(--card-tint-strong)] border border-[color:var(--glass-border)] shadow-elevation-1 backdrop-blur-[var(--blur-lg)] rounded-[var(--lkv-radius-md)] p-6 sm:p-8 space-y-6">
-            <div className="flex flex-wrap items-center justify-between gap-2 pb-4 border-b border-[color:var(--lkv-primary)]/5">
+            <div className="flex flex-wrap items-center justify-between gap-2 pb-4 border-b border-white/10">
               <div>
-                <h2 className="font-display font-bold text-lg sm:text-xl text-[color:var(--lkv-primary)]">Ancrage géographique</h2>
+                <h2 className="font-display font-bold text-lg sm:text-xl text-[color:var(--glass-label)]">Ancrage géographique</h2>
                 <p className="text-xs text-[color:var(--lkv-text-muted)] mt-0.5">Pour proposer les bons refuges, les clubs proches et suggérer votre profil aux voyageurs.</p>
               </div>
               <span className="inline-flex items-center justify-center gap-[6px] rounded-full border border-[color:var(--btn-glass-border)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn px-[var(--space-3)] py-[2px] text-[length:var(--lkv-text-caption-2)] font-medium text-[color:var(--lkv-text-primary)] text-[length:var(--lkv-text-caption-2)] font-mono">
@@ -624,9 +624,9 @@ export default function EditProfileView({ onCloseModal, onSave }: { onCloseModal
 
           {/* ─── SECTION 03: PRATIQUE & NIVEAU ──────────────────────── */}
           <div className="bg-[color:var(--card-tint-strong)] border border-[color:var(--glass-border)] shadow-elevation-1 backdrop-blur-[var(--blur-lg)] rounded-[var(--lkv-radius-md)] p-6 sm:p-8 space-y-6">
-            <div className="flex flex-wrap items-center justify-between gap-2 pb-4 border-b border-[color:var(--lkv-primary)]/5">
+            <div className="flex flex-wrap items-center justify-between gap-2 pb-4 border-b border-white/10">
               <div>
-                <h2 className="font-display font-bold text-lg sm:text-xl text-[color:var(--lkv-primary)]">Pratique &amp; niveau</h2>
+                <h2 className="font-display font-bold text-lg sm:text-xl text-[color:var(--glass-label)]">Pratique &amp; niveau</h2>
                 <p className="text-xs text-[color:var(--lkv-text-muted)] mt-0.5">Ces informations aident à me mettre en relation avec des personnes d'expérience compatible.</p>
               </div>
               <span className="inline-flex items-center justify-center gap-[6px] rounded-full border border-[color:var(--btn-glass-border)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn px-[var(--space-3)] py-[2px] text-[length:var(--lkv-text-caption-2)] font-medium text-[color:var(--lkv-text-primary)] text-[length:var(--lkv-text-caption-2)] font-mono">
@@ -733,7 +733,7 @@ export default function EditProfileView({ onCloseModal, onSave }: { onCloseModal
           <div className="bg-[color:var(--card-tint-strong)] border border-[color:var(--glass-border)] shadow-elevation-1 backdrop-blur-[var(--blur-lg)] rounded-[var(--lkv-radius-md)] p-6 sm:p-8 space-y-6">
             <div className="flex flex-wrap items-center justify-between gap-2 pb-4 border-b border-[color:var(--lkv-primary)]/5">
               <div>
-                <h2 className="font-display font-bold text-lg sm:text-xl text-[color:var(--lkv-primary)]">Comptes liés</h2>
+                <h2 className="font-display font-bold text-lg sm:text-xl text-[color:var(--glass-label)]">Comptes liés</h2>
                 <p className="text-xs text-[color:var(--lkv-text-muted)] mt-0.5">Importez vos traces depuis les plateformes que vous utilisez déjà.</p>
               </div>
               <span className="inline-flex items-center justify-center gap-[6px] rounded-full border border-[color:var(--btn-glass-border)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn px-[var(--space-3)] py-[2px] text-[length:var(--lkv-text-caption-2)] font-medium text-[color:var(--lkv-text-primary)] text-[length:var(--lkv-text-caption-2)] font-mono">
@@ -743,16 +743,18 @@ export default function EditProfileView({ onCloseModal, onSave }: { onCloseModal
 
             <div className="space-y-3">
               {[
-                { name: 'Strava', handle: '@mchevrier · 124 sorties synchro', connected: form.stravaConnected, key: 'stravaConnected', icon: '🧡' },
-                { name: 'Garmin Connect', handle: '@mchevrier_trek · Traces synchro', connected: form.garminConnected, key: 'garminConnected', icon: '🟦' },
-                { name: 'Komoot', handle: 'Non connecté', connected: form.komootConnected, key: 'komootConnected', icon: '💚' },
-                { name: 'Wikiloc', handle: 'Non connecté', connected: form.wikilocConnected, key: 'wikilocConnected', icon: '🟢' },
+                { name: 'Strava', handle: '@mchevrier · 124 sorties synchro', connected: form.stravaConnected, key: 'stravaConnected', icon: 'activity' },
+                { name: 'Garmin Connect', handle: '@mchevrier_trek · Traces synchro', connected: form.garminConnected, key: 'garminConnected', icon: 'watch' },
+                { name: 'Komoot', handle: 'Non connecté', connected: form.komootConnected, key: 'komootConnected', icon: 'map' },
+                { name: 'Wikiloc', handle: 'Non connecté', connected: form.wikilocConnected, key: 'wikilocConnected', icon: 'compass' },
               ].map((app) => (
                 <div key={app.name} className="rounded-[var(--lkv-radius-md)] border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] backdrop-blur-[var(--blur-md)] p-4 flex items-center justify-between gap-4">
                   <div className="flex items-center gap-3">
-                    <span className="text-xl">{app.icon}</span>
+                    <span className="flex size-9 items-center justify-center rounded-full bg-white/10 text-[color:var(--glass-label)]">
+                      <Icon name={app.icon} size={18} aria-hidden="true" />
+                    </span>
                     <div>
-                      <div className="font-bold text-xs text-[color:var(--lkv-primary)]">{app.name}</div>
+                      <div className="font-bold text-xs text-[color:var(--glass-label)]">{app.name}</div>
                       <div className="text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)] font-mono mt-0.5">{app.handle}</div>
                     </div>
                   </div>
@@ -787,9 +789,9 @@ export default function EditProfileView({ onCloseModal, onSave }: { onCloseModal
 
           {/* ─── SECTION 05: CONFIDENTIALITÉ ────────────────────────── */}
           <div className="bg-[color:var(--card-tint-strong)] border border-[color:var(--glass-border)] shadow-elevation-1 backdrop-blur-[var(--blur-lg)] rounded-[var(--lkv-radius-md)] p-6 sm:p-8 space-y-6">
-            <div className="flex flex-wrap items-center justify-between gap-2 pb-4 border-b border-[color:var(--lkv-primary)]/5">
+            <div className="flex flex-wrap items-center justify-between gap-2 pb-4 border-b border-white/10">
               <div>
-                <h2 className="font-display font-bold text-lg sm:text-xl text-[color:var(--lkv-primary)]">Qui peut voir quoi</h2>
+                <h2 className="font-display font-bold text-lg sm:text-xl text-[color:var(--glass-label)]">Qui peut voir quoi</h2>
                 <p className="text-xs text-[color:var(--lkv-text-muted)] mt-0.5">Et avec qui vous partagez vos traces. Vos carnets peuvent être publics, tout en gardant vos sorties privées.</p>
               </div>
               <span className="inline-flex items-center justify-center gap-[6px] rounded-full border border-[color:var(--btn-glass-border)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn px-[var(--space-3)] py-[2px] text-[length:var(--lkv-text-caption-2)] font-medium text-[color:var(--lkv-text-primary)] text-[length:var(--lkv-text-caption-2)] font-mono">
@@ -852,7 +854,7 @@ export default function EditProfileView({ onCloseModal, onSave }: { onCloseModal
                   {m}
                 </span>
               ))}
-              <span className="bg-[color:var(--lkv-secondary)] text-white text-[length:var(--lkv-text-caption-2)] font-mono px-2.5 py-1 rounded-full font-bold">
+              <span className="bg-white/15 text-white text-[length:var(--lkv-text-caption-2)] font-mono px-2.5 py-1 rounded-full font-bold">
                 Niveau {form.experienceLevel}
               </span>
             </div>
@@ -861,12 +863,12 @@ export default function EditProfileView({ onCloseModal, onSave }: { onCloseModal
           {/* WIDGET 2: PROFIL COMPLÉTÉ À X% */}
           <div className="bg-[color:var(--card-tint-strong)] border border-[color:var(--glass-border)] shadow-elevation-1 backdrop-blur-[var(--blur-lg)] rounded-[var(--lkv-radius-md)] p-6 space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="font-display font-bold text-sm text-[color:var(--lkv-primary)]">Profil complété à {completionScore}%</h3>
-              <span className="text-xs font-mono font-bold text-[color:var(--lkv-secondary)]">{completionScore}/100</span>
+              <h3 className="font-display font-bold text-sm text-[color:var(--glass-label)]">Profil complété à {completionScore}%</h3>
+              <span className="text-xs font-mono font-bold text-[color:var(--glass-label)]">{completionScore}/100</span>
             </div>
 
-            <div className="w-full bg-[color:var(--lkv-primary)]/10 h-2 rounded-full overflow-hidden">
-              <div className="bg-[color:var(--lkv-primary)] h-full transition-all duration-500 rounded-full" style={{ width: `${completionScore}%` }} />
+            <div className="w-full bg-white/10 h-2 rounded-full overflow-hidden">
+              <div className="bg-white h-full transition-all duration-500 rounded-full" style={{ width: `${completionScore}%` }} />
             </div>
 
             <div className="space-y-2 pt-2">
@@ -874,13 +876,14 @@ export default function EditProfileView({ onCloseModal, onSave }: { onCloseModal
                 { label: 'Photo de profil', done: !!form.avatarUrl },
                 { label: 'Bio renseignée', done: !!form.bio },
                 { label: '3 massifs favoris', done: form.selectedMassifs.length >= 3 },
-                { label: 'Discipline (s)', done: form.disciplines.length >= 1 },
+                { label: 'Discipline(s)', done: form.disciplines.length >= 1 },
                 { label: 'Pratique & statistiques', done: !!form.experienceLevel },
                 { label: 'Strava / Garmin connecté', done: form.stravaConnected || form.garminConnected },
               ].map((item) => (
                 <div key={item.label} className="flex items-center justify-between text-xs">
-                  <span className={item.done ? 'text-[color:var(--lkv-primary)] font-semibold' : 'text-[color:var(--lkv-text-muted)]'}>
-                    {item.done ? '✓ ' : '⭕ '}{item.label}
+                  <span className={item.done ? 'text-[color:var(--glass-label)] font-semibold flex items-center gap-1.5' : 'text-[color:var(--lkv-text-muted)] flex items-center gap-1.5'}>
+                    <Icon name={item.done ? 'check' : 'circle'} size={12} className={item.done ? 'text-white' : 'opacity-40'} />
+                    {item.label}
                   </span>
                   <span className="text-[length:var(--lkv-text-caption-2)] font-mono text-[color:var(--lkv-text-muted)]">{item.done ? 'Fait' : 'À faire'}</span>
                 </div>
@@ -889,8 +892,8 @@ export default function EditProfileView({ onCloseModal, onSave }: { onCloseModal
           </div>
 
           {/* WIDGET 3: ASTUCES & CONSEILS */}
-          <div className="rounded-[var(--lkv-radius-md)] border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] backdrop-blur-[var(--blur-md)] p-6 text-[color:var(--lkv-primary)] space-y-2 !border-[color:var(--lkv-secondary)]/30">
-            <div className="text-[length:var(--lkv-text-caption-2)] font-mono tracking-widest text-[color:var(--lkv-secondary)] uppercase font-bold">CONSEIL DE LA COMMUNAUTÉ</div>
+          <div className="rounded-[var(--lkv-radius-md)] border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] backdrop-blur-[var(--blur-md)] p-6 text-[color:var(--glass-label)] space-y-2">
+            <div className="text-[length:var(--lkv-text-caption-2)] font-mono tracking-widest text-[color:var(--glass-label-secondary)] uppercase font-bold">CONSEIL DE LA COMMUNAUTÉ</div>
             <h4 className="font-display font-bold text-sm">Une bio qui inspire.</h4>
             <p className="text-xs text-[color:var(--lkv-text-muted)] leading-relaxed font-serif italic">
               Faites des liens entre vos massifs de prédilection et vos disciplines favorites. C'est plus facile pour vous contacter et partir ensemble !
@@ -904,7 +907,7 @@ export default function EditProfileView({ onCloseModal, onSave }: { onCloseModal
         className="fixed bottom-[calc(var(--nav-offset)+var(--space-2))] left-2 right-2 z-[var(--z-fab)] flex items-center justify-between gap-[var(--space-3)] rounded-full border border-[color:var(--btn-glass-border)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn px-[var(--space-4)] py-[var(--space-3)] text-[color:var(--lkv-text-primary)] md:bottom-6 md:left-1/2 md:right-auto md:w-11/12 md:max-w-xl md:-translate-x-1/2 md:px-[var(--space-6)] md:py-[14px]"
       >
         <div className="hidden items-center gap-[var(--space-2)] font-mono text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-inverted)]/80 md:flex">
-          <span aria-hidden="true">⚡</span>
+          <Icon name="zap" size={14} aria-hidden="true" />
           <span>Brouillon synchronisé</span>
         </div>
 

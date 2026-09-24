@@ -26,7 +26,7 @@ interface InfoTileProps {
 function InfoTile({ icon, label, children }: InfoTileProps) {
   return (
     <Card variant="compact" className="flex items-start gap-3 p-3.5">
-      <Icon name={icon} className="mt-0.5 h-4 w-4 shrink-0 text-[color:var(--lkv-primary)]" />
+      <Icon name={icon} className="mt-0.5 h-4 w-4 shrink-0 text-[color:var(--glass-label)]" />
       <div>
         <span className="block font-semibold text-[color:var(--lkv-text-muted)]">{label}</span>
         <strong className="text-[length:var(--lkv-text-body-sm)] text-[color:var(--lkv-text-primary)]">
@@ -63,7 +63,7 @@ export function PlaceDetailClient({ place, reviews, photos, userTrips }: PlaceDe
         <div className="mb-[var(--space-4)] flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             <Badge tone="sage" className="gap-1.5">
-              <CategoryIcon className="h-4 w-4 text-[color:var(--lkv-primary)]" />
+              <CategoryIcon className="h-4 w-4 text-[color:var(--glass-label)]" />
               {categoryLabel}
             </Badge>
 
@@ -78,7 +78,7 @@ export function PlaceDetailClient({ place, reviews, photos, userTrips }: PlaceDe
           <div className="flex items-center gap-2">
             {place.is_verified && (
               <Badge tone="sage" className="gap-1">
-                <Icon name="shield-check" className="h-3.5 w-3.5 text-[color:var(--lkv-primary)]" />
+                <Icon name="shield-check" className="h-3.5 w-3.5 text-[color:var(--glass-label)]" />
                 Lieu vérifié terrain
               </Badge>
             )}
@@ -91,7 +91,7 @@ export function PlaceDetailClient({ place, reviews, photos, userTrips }: PlaceDe
         </h1>
 
         <div className="mb-[var(--space-6)] flex items-center gap-2 text-[length:var(--lkv-text-body-sm)] text-[color:var(--lkv-text-muted)]">
-          <Icon name="map-pin" className="h-4 w-4 shrink-0 text-[color:var(--lkv-primary)]" />
+          <Icon name="map-pin" className="h-4 w-4 shrink-0 text-[color:var(--glass-label)]" />
           <span>
             {place.city ? `${place.city}, ` : ''}
             {place.region ? `${place.region}, ` : ''}
@@ -142,7 +142,7 @@ export function PlaceDetailClient({ place, reviews, photos, userTrips }: PlaceDe
       {place.description && (
         <Card className="p-6 sm:p-7">
           <h2 className="mb-[var(--space-3)] flex items-center gap-2 text-[length:var(--lkv-text-body)] font-bold text-[color:var(--lkv-text-primary)]">
-            <Icon name="compass" className="h-4 w-4 text-[color:var(--lkv-primary)]" />
+            <Icon name="compass" className="h-4 w-4 text-[color:var(--glass-label)]" />
             Présentation & Caractéristiques
           </h2>
           <p className="whitespace-pre-line text-[length:var(--lkv-text-body-sm)] leading-relaxed text-[color:var(--lkv-text-secondary)]">
@@ -154,7 +154,7 @@ export function PlaceDetailClient({ place, reviews, photos, userTrips }: PlaceDe
       {/* Informations Pratiques */}
       <Card className="p-6 sm:p-7">
         <h2 className="mb-[var(--space-4)] flex items-center gap-2 text-[length:var(--lkv-text-body)] font-bold text-[color:var(--lkv-text-primary)]">
-          <Icon name="calendar" className="h-4 w-4 text-[color:var(--lkv-primary)]" />
+          <Icon name="calendar" className="h-4 w-4 text-[color:var(--glass-label)]" />
           Informations Pratiques & Équipements
         </h2>
 
@@ -220,7 +220,7 @@ export function PlaceDetailClient({ place, reviews, photos, userTrips }: PlaceDe
                 href={info.website}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="block max-w-[200px] truncate font-semibold text-[color:var(--lkv-primary)] hover:underline"
+                className="block max-w-[200px] truncate font-semibold text-[color:var(--glass-label)] hover:underline"
               >
                 Consulter
               </a>
@@ -233,7 +233,7 @@ export function PlaceDetailClient({ place, reviews, photos, userTrips }: PlaceDe
       {photos.length > 0 && (
         <Card className="p-6 sm:p-7">
           <h2 className="mb-[var(--space-4)] flex items-center gap-2 text-[length:var(--lkv-text-body)] font-bold text-[color:var(--lkv-text-primary)]">
-            <Icon name="compass" className="h-4 w-4 text-[color:var(--lkv-primary)]" />
+            <Icon name="compass" className="h-4 w-4 text-[color:var(--glass-label)]" />
             Photos Communautaires ({photos.length})
           </h2>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
