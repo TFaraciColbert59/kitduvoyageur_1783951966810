@@ -192,7 +192,7 @@ async function compileUtilities(content: string): Promise<string> {
   return result.css;
 }
 
-describe('Task 2A fix round 1 — contraste systémique, thème et primitives', () => {
+describe('Task 2A fix rounds 1–2 — contraste systémique, thème et primitives', () => {
   it('applique le thème light stocké et le repli système light malgré un stockage bloqué', () => {
     const result = runThemeBootstrap({
       theme: null,
@@ -306,14 +306,41 @@ describe('Task 2A fix round 1 — contraste systémique, thème et primitives', 
     expect(tabs).toContain('focus-visible:ring-[color:var(--glass-focus-outline)]');
   });
 
-  it('expose des fonds reduced-transparency opaques et retire le flou des classes arbitraires', () => {
-    expect(tokens).toContain('--g1-reduced-bg: #FFFFFF;');
-    expect(tokens).toContain('--g2-reduced-bg: #F5F8F6;');
-    expect(tokens).toContain('--g1-reduced-bg: #0E1210;');
-    expect(tokens).toContain('--g2-reduced-bg: #161A18;');
-    expect(tokens).toMatch(/\[class\*=['"]var\(--g1-bg\)['"][\s\S]*var\(--g1-reduced-bg\)/);
-    expect(tokens).toMatch(/\[class\*=['"]var\(--g2-bg\)['"][\s\S]*var\(--g2-reduced-bg\)/);
-    expect(tokens).toMatch(/\[class~=['"]backdrop-blur-md['"][\s\S]*backdrop-filter:\s*none/);
+  it('rend les backdrop-blur opaques et thème-adaptés sous média', async () => {
+    const mediaStart = tokens.indexOf(
+      '@media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {'
+    );
+    expect(mediaStart).toBeGreaterThanOrEqual(0);
+    const mediaEnd = tokens.indexOf('\n.glass {', mediaStart);
+    expect(mediaEnd).toBeGreaterThan(mediaStart);
+    const media = tokens.slice(mediaStart, mediaEnd);
+
+    for (const size of ['sm', 'md', 'lg', 'xl', '2xl']) {
+      expect(media).toContain(`[class~='backdrop-blur-${size}']`);
+    }
+    expect(media).toContain("[class*='backdrop-blur-']");
+    expect(media).toContain('background: var(--glass-solid) !important;');
+    expect(media).toContain('background: var(--g1-reduced-bg) !important;');
+    expect(media).toContain('background: var(--g2-reduced-bg) !important;');
+    expect(media).toMatch(
+      /\[class\*=['"]backdrop-blur-['"][\s\S]*backdrop-filter:\s*none\s*!important;/
+    );
+    expect(media.indexOf('background: var(--glass-solid)')).toBeLessThan(
+      media.indexOf('background: var(--g1-reduced-bg)')
+    );
+    expect(media.indexOf('background: var(--glass-solid)')).toBeLessThan(
+      media.indexOf('background: var(--g2-reduced-bg)')
+    );
+    expect((tokens.match(/--card-tint-solid:\s*#[0-9a-f]{6};/gi) ?? [])).toEqual([
+      '--card-tint-solid: #FFFFFF;',
+      '--card-tint-solid: #1B2D24;',
+    ]);
+    expect((tokens.match(/--glass-solid:\s*var\(--card-tint-solid\);/g) ?? [])).toHaveLength(2);
+
+    const generated = await compileUtilities(
+      '<button class="bg-white/40 backdrop-blur-md"></button>'
+    );
+    expect(generated).toContain('.backdrop-blur-md');
   });
 
   it('NavigationPlateau utilise G3 et une bordure de couleur sans flou imbriqué', () => {

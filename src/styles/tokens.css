@@ -950,9 +950,22 @@ button.g2,
   .g1, .g2, .g3, .gc,
   [class*='var(--g1-bg)'],
   [class*='var(--g2-bg)'],
-  [class~='backdrop-blur-md'] {
+  [class~='backdrop-blur-sm'],
+  [class~='backdrop-blur-md'],
+  [class~='backdrop-blur-lg'],
+  [class~='backdrop-blur-xl'],
+  [class~='backdrop-blur-2xl'],
+  [class*='backdrop-blur-'] {
     backdrop-filter: none !important;
     -webkit-backdrop-filter: none !important;
+  }
+  [class~='backdrop-blur-sm'],
+  [class~='backdrop-blur-md'],
+  [class~='backdrop-blur-lg'],
+  [class~='backdrop-blur-xl'],
+  [class~='backdrop-blur-2xl'],
+  [class*='backdrop-blur-'] {
+    background: var(--glass-solid) !important;
   }
   .g1,
   [class*='var(--g1-bg)'] {
