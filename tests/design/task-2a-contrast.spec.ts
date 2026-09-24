@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { chromium } from '@playwright/test';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { runInNewContext } from 'node:vm';
@@ -19,12 +20,18 @@ type ThemeResult = {
   colorScheme: string;
 };
 
+type ComputedSurface = {
+  backgroundColor: string;
+  backdropFilter: string;
+};
+
 const read = (relative: string) => readFileSync(path.join(process.cwd(), relative), 'utf8');
 const layout = read('src/app/layout.tsx');
 const tokens = read('src/styles/tokens.css');
 const navigation = read('src/components/mobile-nav/navigation/NavigationPlateau.tsx');
 const tabs = read('src/components/ui/Tabs.tsx');
 const liquidGlass = read('src/styles/liquid-glass.css');
+const tailwindStyles = read('src/styles/tailwind.css');
 const tailwind = read('tailwind.config.js');
 
 function getThemeScript(): string {
@@ -192,7 +199,18 @@ async function compileUtilities(content: string): Promise<string> {
   return result.css;
 }
 
-describe('Task 2A fix rounds 1–2 — contraste systémique, thème et primitives', () => {
+async function compileBrowserStyles(content: string): Promise<string> {
+  const result = await postcss([
+    tailwindcss({
+      ...tailwindConfig,
+      content: [{ raw: content, extension: 'html' }],
+      corePlugins: { preflight: false },
+    }),
+  ]).process(`${tokens}\n${tailwindStyles}\n${liquidGlass}`, { from: undefined });
+  return result.css;
+}
+
+describe('Task 2A fix rounds 1–3 — contraste systémique, thème et primitives', () => {
   it('applique le thème light stocké et le repli système light malgré un stockage bloqué', () => {
     const result = runThemeBootstrap({
       theme: null,
@@ -306,41 +324,88 @@ describe('Task 2A fix rounds 1–2 — contraste systémique, thème et primitiv
     expect(tabs).toContain('focus-visible:ring-[color:var(--glass-focus-outline)]');
   });
 
-  it('rend les backdrop-blur opaques et thème-adaptés sous média', async () => {
-    const mediaStart = tokens.indexOf(
-      '@media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {'
-    );
-    expect(mediaStart).toBeGreaterThanOrEqual(0);
-    const mediaEnd = tokens.indexOf('\n.glass {', mediaStart);
-    expect(mediaEnd).toBeGreaterThan(mediaStart);
-    const media = tokens.slice(mediaStart, mediaEnd);
+  it('applique les backgrounds opaques par styles calculés sous contraste Chromium', async () => {
+    const markup = `
+      <div id="btn-tint" class="!bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)]"></div>
+      <div id="white" class="!bg-white/15 backdrop-blur-[var(--glass-blur-sm)]"></div>
+      <div id="prefixed" class="!bg-white/15 backdrop-blur-2xl"></div>
+      <div id="g1" class="g1 backdrop-blur-sm"></div>
+      <button id="g2" class="g2 backdrop-blur-md">G2</button>
+      <div id="g3" class="g3 backdrop-blur-lg"></div>
+      <div id="gc" class="gc backdrop-blur-xl"></div>
+      <div id="solid-reference" style="background: var(--glass-solid)"></div>
+      <div id="g1-reference" style="background: var(--g1-reduced-bg)"></div>
+      <div id="g2-reference" style="background: var(--g2-reduced-bg)"></div>
+      <div id="g3-reference" style="background: var(--g3-reduced-bg)"></div>
+      <div id="gc-reference" style="background: var(--gc-reduced-bg)"></div>
+    `;
+    const compiled = await compileBrowserStyles(markup);
+    const browser = await chromium.launch({ headless: true });
 
-    for (const size of ['sm', 'md', 'lg', 'xl', '2xl']) {
-      expect(media).toContain(`[class~='backdrop-blur-${size}']`);
+    try {
+      const page = await browser.newPage();
+      await page.setContent(`<!doctype html><html><head><style>${compiled}</style></head><body>${markup}</body></html>`);
+
+      for (const colorScheme of ['light', 'dark'] as const) {
+        await page.emulateMedia({ colorScheme, contrast: 'more' });
+        await page.evaluate((scheme) => {
+          document.documentElement.classList.toggle('dark', scheme === 'dark');
+        }, colorScheme);
+        expect(await page.evaluate(() => matchMedia('(prefers-contrast: more)').matches)).toBe(true);
+
+        const styles = (await page.evaluate(() => {
+          const ids = [
+            'btn-tint',
+            'white',
+            'prefixed',
+            'g1',
+            'g2',
+            'g3',
+            'gc',
+            'solid-reference',
+            'g1-reference',
+            'g2-reference',
+            'g3-reference',
+            'gc-reference',
+          ];
+          return Object.fromEntries(ids.map((id) => {
+            const element = document.getElementById(id);
+            if (!element) throw new Error(`Missing surface ${id}`);
+            const style = getComputedStyle(element);
+            return [id, { backgroundColor: style.backgroundColor, backdropFilter: style.backdropFilter }];
+          }));
+        })) as Record<string, ComputedSurface>;
+
+        expect(styles['solid-reference'].backgroundColor).toBe(
+          colorScheme === 'light' ? 'rgb(255, 255, 255)' : 'rgb(27, 45, 36)'
+        );
+        expect(styles['g1-reference'].backgroundColor).toBe(
+          colorScheme === 'light' ? 'rgb(255, 255, 255)' : 'rgb(14, 18, 16)'
+        );
+        expect(styles['g2-reference'].backgroundColor).toBe(
+          colorScheme === 'light' ? 'rgb(245, 248, 246)' : 'rgb(22, 26, 24)'
+        );
+        expect(styles['g3-reference'].backgroundColor).toBe(
+          colorScheme === 'light' ? 'rgb(18, 24, 21)' : 'rgb(255, 255, 255)'
+        );
+        expect(styles['gc-reference'].backgroundColor).toBe(styles['g2-reference'].backgroundColor);
+
+        for (const id of ['btn-tint', 'white', 'prefixed', 'g1', 'g2', 'g3', 'gc']) {
+          expect(styles[id].backgroundColor).not.toContain('rgba');
+          expect(styles[id].backgroundColor).not.toBe('transparent');
+          expect(styles[id].backdropFilter).toBe('none');
+        }
+        expect(styles['btn-tint'].backgroundColor).toBe(styles['solid-reference'].backgroundColor);
+        expect(styles.white.backgroundColor).toBe(styles['solid-reference'].backgroundColor);
+        expect(styles.prefixed.backgroundColor).toBe(styles['solid-reference'].backgroundColor);
+        expect(styles.g1.backgroundColor).toBe(styles['g1-reference'].backgroundColor);
+        expect(styles.g2.backgroundColor).toBe(styles['g2-reference'].backgroundColor);
+        expect(styles.g3.backgroundColor).toBe(styles['g3-reference'].backgroundColor);
+        expect(styles.gc.backgroundColor).toBe(styles['gc-reference'].backgroundColor);
+      }
+    } finally {
+      await browser.close();
     }
-    expect(media).toContain("[class*='backdrop-blur-']");
-    expect(media).toContain('background: var(--glass-solid) !important;');
-    expect(media).toContain('background: var(--g1-reduced-bg) !important;');
-    expect(media).toContain('background: var(--g2-reduced-bg) !important;');
-    expect(media).toMatch(
-      /\[class\*=['"]backdrop-blur-['"][\s\S]*backdrop-filter:\s*none\s*!important;/
-    );
-    expect(media.indexOf('background: var(--glass-solid)')).toBeLessThan(
-      media.indexOf('background: var(--g1-reduced-bg)')
-    );
-    expect(media.indexOf('background: var(--glass-solid)')).toBeLessThan(
-      media.indexOf('background: var(--g2-reduced-bg)')
-    );
-    expect((tokens.match(/--card-tint-solid:\s*#[0-9a-f]{6};/gi) ?? [])).toEqual([
-      '--card-tint-solid: #FFFFFF;',
-      '--card-tint-solid: #1B2D24;',
-    ]);
-    expect((tokens.match(/--glass-solid:\s*var\(--card-tint-solid\);/g) ?? [])).toHaveLength(2);
-
-    const generated = await compileUtilities(
-      '<button class="bg-white/40 backdrop-blur-md"></button>'
-    );
-    expect(generated).toContain('.backdrop-blur-md');
   });
 
   it('NavigationPlateau utilise G3 et une bordure de couleur sans flou imbriqué', () => {

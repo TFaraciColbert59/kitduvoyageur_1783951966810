@@ -737,6 +737,8 @@
   --g2-bg: rgb(245 248 246 / calc(0.90 + 0.08 * var(--glass-intensity, 0.5)));
   --g1-reduced-bg: #FFFFFF;
   --g2-reduced-bg: #F5F8F6;
+  --g3-reduced-bg: #121815;
+  --gc-reduced-bg: #F5F8F6;
   --g3-bg: rgba(18, 24, 21, 0.94);
   --g3-text: #FFFFFF;
   --gc-bg: rgba(255, 255, 255, 0.40);
@@ -797,6 +799,8 @@ html.dark, .dark, [data-theme='dark'] {
   --g2-bg: rgba(22, 26, 24, calc(0.90 + 0.08 * var(--glass-intensity, 0.5)));
   --g1-reduced-bg: #0E1210;
   --g2-reduced-bg: #161A18;
+  --g3-reduced-bg: #FFFFFF;
+  --gc-reduced-bg: #161A18;
   --g3-bg: rgba(255, 255, 255, 0.95);
   --g3-text: #0E1411;
   --gc-bg: rgba(255, 255, 255, 0.18);
@@ -947,35 +951,48 @@ button.g2,
 }
 
 @media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
-  .g1, .g2, .g3, .gc,
-  [class*='var(--g1-bg)'],
-  [class*='var(--g2-bg)'],
-  [class~='backdrop-blur-sm'],
-  [class~='backdrop-blur-md'],
-  [class~='backdrop-blur-lg'],
-  [class~='backdrop-blur-xl'],
-  [class~='backdrop-blur-2xl'],
-  [class*='backdrop-blur-'] {
+  html body .g1,
+  html body .g2,
+  html body .g3,
+  html body .gc,
+  html body [class*='var(--g1-bg)'],
+  html body [class*='var(--g2-bg)'],
+  html body [class*='var(--g3-bg)'],
+  html body [class*='var(--gc-bg)'],
+  html body [class~='backdrop-blur-sm'],
+  html body [class~='backdrop-blur-md'],
+  html body [class~='backdrop-blur-lg'],
+  html body [class~='backdrop-blur-xl'],
+  html body [class~='backdrop-blur-2xl'],
+  html body [class*='backdrop-blur-'] {
     backdrop-filter: none !important;
     -webkit-backdrop-filter: none !important;
   }
-  [class~='backdrop-blur-sm'],
-  [class~='backdrop-blur-md'],
-  [class~='backdrop-blur-lg'],
-  [class~='backdrop-blur-xl'],
-  [class~='backdrop-blur-2xl'],
-  [class*='backdrop-blur-'] {
+  html body [class~='backdrop-blur-sm'],
+  html body [class~='backdrop-blur-md'],
+  html body [class~='backdrop-blur-lg'],
+  html body [class~='backdrop-blur-xl'],
+  html body [class~='backdrop-blur-2xl'],
+  html body [class*='backdrop-blur-'] {
     background: var(--glass-solid) !important;
   }
-  .g1,
-  [class*='var(--g1-bg)'] {
+  html body .g1,
+  html body [class*='var(--g1-bg)'] {
     background: var(--g1-reduced-bg) !important;
     box-shadow: 0 0 0 1.5px rgb(var(--glass-ink) / 0.5) !important;
   }
-  .g2,
-  [class*='var(--g2-bg)'] {
+  html body .g2,
+  html body [class*='var(--g2-bg)'] {
     background: var(--g2-reduced-bg) !important;
     box-shadow: 0 0 0 1px rgb(var(--glass-ink) / 0.3) !important;
+  }
+  html body .g3,
+  html body [class*='var(--g3-bg)'] {
+    background: var(--g3-reduced-bg) !important;
+  }
+  html body .gc,
+  html body [class*='var(--gc-bg)'] {
+    background: var(--gc-reduced-bg) !important;
   }
 }
 
