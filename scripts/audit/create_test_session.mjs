@@ -5,19 +5,22 @@ import { pathToFileURL } from 'node:url';
 import {
   assertAuthenticatedCompte,
   getAuditBaseUrl,
-  getAuditCredentials,
   validateStorageState,
 } from './contrast_audit_core.mjs';
+import { getAuditCredentials } from './credentials.mjs';
+import {
+  attachPageDiagnostics,
+  defaultAuditStorageStatePath,
+  ensurePrivateAuditDirectory,
+} from './audit_runtime.mjs';
 
 export const ACCOUNT_SENTINEL_SELECTOR = 'a[href="/compte/modifier"]:visible';
 
 export function auditStorageStatePath(env = process.env) {
-  return env.AUDIT_STORAGE_STATE
-    ? path.resolve(env.AUDIT_STORAGE_STATE)
-    : path.resolve('audit', 'auth-storage-state.json');
+  return defaultAuditStorageStatePath(env);
 }
 
-export function loadAuditStorageState(storagePath = auditStorageStatePath()) {
+export function loadAuditStorageState(storagePath = auditStorageStatePath(), baseUrl) {
   if (!fs.existsSync(storagePath)) {
     throw new Error(`storageState absent: ${storagePath}`);
   }
@@ -27,26 +30,33 @@ export function loadAuditStorageState(storagePath = auditStorageStatePath()) {
   } catch (error) {
     throw new Error(`storageState invalide: ${error.message}`);
   }
-  validateStorageState(state);
+  validateStorageState(state, Date.now(), baseUrl);
   return state;
 }
 
 export async function verifyCompteSession(page, baseUrl) {
-  const response = await page.goto(new URL('/compte', baseUrl).toString(), {
-    waitUntil: 'domcontentloaded',
-    timeout: 30000,
-  });
-  await page.locator(ACCOUNT_SENTINEL_SELECTOR).first().waitFor({
-    state: 'visible',
-    timeout: 15000,
-  });
-  const sentinelVisible = await page.locator(ACCOUNT_SENTINEL_SELECTOR).first().isVisible();
-  return assertAuthenticatedCompte({
-    baseUrl,
-    finalUrl: page.url(),
-    status: response?.status() ?? null,
-    sentinelVisible,
-  });
+  const diagnostics = attachPageDiagnostics(page);
+  try {
+    const response = await page.goto(new URL('/compte', baseUrl).toString(), {
+      waitUntil: 'domcontentloaded',
+      timeout: 30000,
+    });
+    await page.locator(ACCOUNT_SENTINEL_SELECTOR).first().waitFor({
+      state: 'visible',
+      timeout: 15000,
+    });
+    const sentinelVisible = await page.locator(ACCOUNT_SENTINEL_SELECTOR).first().isVisible();
+    const result = assertAuthenticatedCompte({
+      baseUrl,
+      finalUrl: page.url(),
+      status: response?.status() ?? null,
+      sentinelVisible,
+    });
+    diagnostics.assertClean();
+    return result;
+  } finally {
+    diagnostics.dispose();
+  }
 }
 
 export async function createAuthenticatedStorageState() {
@@ -58,8 +68,9 @@ export async function createAuthenticatedStorageState() {
     args: ['--no-sandbox', '--disable-setuid-sandbox'],
   });
 
+  let context;
   try {
-    const context = await browser.newContext({
+    context = await browser.newContext({
       baseURL: baseUrl,
       viewport: { width: 390, height: 844 },
       colorScheme: 'dark',
@@ -90,12 +101,13 @@ export async function createAuthenticatedStorageState() {
     ]);
     await verifyCompteSession(page, baseUrl);
     const state = await context.storageState();
-    validateStorageState(state);
-    fs.mkdirSync(path.dirname(storagePath), { recursive: true });
+    validateStorageState(state, Date.now(), baseUrl);
+    ensurePrivateAuditDirectory(path.dirname(storagePath));
     fs.writeFileSync(storagePath, `${JSON.stringify(state, null, 2)}\n`, { mode: 0o600 });
-    await context.close();
+    fs.chmodSync(storagePath, 0o600);
     return { storagePath, state };
   } finally {
+    if (context) await context.close().catch(() => {});
     await browser.close();
   }
 }

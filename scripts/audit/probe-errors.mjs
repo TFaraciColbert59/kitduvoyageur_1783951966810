@@ -3,9 +3,13 @@
  * Usage : node scripts/audit/probe-errors.mjs
  */
 import { chromium } from 'playwright';
+import {
+  attachPageDiagnostics,
+  redactDiagnosticText,
+} from './audit_runtime.mjs';
 
 const BASE = 'http://localhost:4000';
-const YDEMO = { email: 'y-demo@lekitduvoyageur.fr', password: 'Ydemo!2026' };
+const YDEMO = { email: process.env.AUDIT_EMAIL || (() => { throw new Error('AUDIT_EMAIL est requis'); })(), password: process.env.AUDIT_PASSWORD || (() => { throw new Error('AUDIT_PASSWORD est requis'); })() };
 const ROUTES = process.argv.slice(2).length > 0
   ? process.argv.slice(2)
   : ['/hub', '/compte', '/profil', '/messagerie', '/randonnee-active'];
@@ -24,30 +28,35 @@ await Promise.all([
 ]);
 await page.waitForTimeout(1500);
 
+let failed = false;
 for (const route of ROUTES) {
   const bad = [];
-  const consoleFull = [];
+  const diagnostics = attachPageDiagnostics(page);
   const onResponse = (response) => {
     const status = response.status();
     if (status >= 400) {
-      bad.push(`${status} ${response.request().method()} ${response.url()}`);
+      bad.push(redactDiagnosticText(`${status} ${response.request().method()} ${response.url()}`));
     }
   };
-  const onConsole = (message) => {
-    if (message.type() === 'error') consoleFull.push(message.text().replace(/\n/g, ' ').slice(0, 600));
-  };
   page.on('response', onResponse);
-  page.on('console', onConsole);
 
-  await page.goto(`${BASE}${route}`, { waitUntil: 'domcontentloaded', timeout: 45000 });
-  await page.waitForTimeout(2500);
+  try {
+    await page.goto(`${BASE}${route}`, { waitUntil: 'domcontentloaded', timeout: 45000 });
+    await page.waitForTimeout(2500);
+    diagnostics.assertClean();
+  } catch (error) {
+    failed = true;
+    console.error(`  ERROR ${route}: ${redactDiagnosticText(error instanceof Error ? error.message : error)}`);
+  } finally {
+    page.off('response', onResponse);
+    diagnostics.dispose();
+  }
 
   console.log(`\n=== ${route} ===`);
   for (const entry of [...new Set(bad)]) console.log('  RESP', entry);
-  for (const entry of [...new Set(consoleFull)]) console.log('  CONS', entry);
-
-  page.off('response', onResponse);
-  page.off('console', onConsole);
+  for (const entry of [...new Set(diagnostics.errors.map((item) => `${item.type}: ${item.message}`))]) console.log('  CONS', entry);
+  if (bad.length > 0 || diagnostics.errors.length > 0) failed = true;
 }
 
 await browser.close();
+if (failed) process.exitCode = 1;

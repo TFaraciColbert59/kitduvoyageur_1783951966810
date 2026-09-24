@@ -36,11 +36,11 @@ const supabase = createClient(SUPABASE_URL, SERVICE_KEY, {
 
 // ── Utilitaires dates (ancrage horloge captures : 2026-06-01) ───────────────
 const d = (iso) => iso; // lisibilité
-const OWNER = { email: 'y-demo@lekitduvoyageur.fr', password: 'Ydemo!2026', name: 'Voyageur Y' };
+const OWNER = { email: process.env.AUDIT_EMAIL || (() => { throw new Error('AUDIT_EMAIL est requis'); })(), password: process.env.AUDIT_PASSWORD || (() => { throw new Error('AUDIT_PASSWORD est requis'); })(), name: 'Voyageur Y' };
 const PEERS = [
-  { email: 'y-peer1@lekitduvoyageur.fr', password: 'Ydemo!2026', name: 'Coéquipier Y 1' },
-  { email: 'y-peer2@lekitduvoyageur.fr', password: 'Ydemo!2026', name: 'Coéquipier Y 2' },
-  { email: 'y-peer3@lekitduvoyageur.fr', password: 'Ydemo!2026', name: 'Coéquipier Y 3' },
+  { email: 'y-peer1@lekitduvoyageur.fr', password: process.env.AUDIT_PASSWORD || (() => { throw new Error('AUDIT_PASSWORD est requis'); })(), name: 'Coéquipier Y 1' },
+  { email: 'y-peer2@lekitduvoyageur.fr', password: process.env.AUDIT_PASSWORD || (() => { throw new Error('AUDIT_PASSWORD est requis'); })(), name: 'Coéquipier Y 2' },
+  { email: 'y-peer3@lekitduvoyageur.fr', password: process.env.AUDIT_PASSWORD || (() => { throw new Error('AUDIT_PASSWORD est requis'); })(), name: 'Coéquipier Y 3' },
 ];
 
 async function getOrCreateUser({ email, password, name }) {
@@ -277,7 +277,7 @@ async function purgeAndSeed() {
     created++;
     console.log(`✓ ${p.slug} (${p.steps} étapes, ${p.items} objets, ${p.expenses} dépenses, ${p.docs} docs, ${p.checkpoints} checkpoints, ${p.notes} notes, ${p.peers} pairs)`);
   }
-  console.log(`\n✓ ${created} voyages y-* seedés (owner ${OWNER.email}).`);
+  console.log(`\n✓ ${created} voyages y-* seedés.`);
 }
 
 purgeAndSeed().catch((e) => {

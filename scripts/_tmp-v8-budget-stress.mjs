@@ -15,7 +15,7 @@ let savedCookies = [];
 const sb = createServerClient(readEnv('NEXT_PUBLIC_SUPABASE_URL'), readEnv('NEXT_PUBLIC_SUPABASE_ANON_KEY'), {
   cookies: { getAll: () => savedCookies, setAll: (cs) => { savedCookies = cs; } },
 });
-await sb.auth.signInWithPassword({ email: 'y-demo@lekitduvoyageur.fr', password: 'Ydemo!2026' });
+await sb.auth.signInWithPassword({ email: process.env.AUDIT_EMAIL || (() => { throw new Error('AUDIT_EMAIL est requis'); })(), password: process.env.AUDIT_PASSWORD || (() => { throw new Error('AUDIT_PASSWORD est requis'); })() });
 const slug = process.env.TRIP_SLUG || 'tour-mont-blanc-refuge';
 const { data: trip } = await sb.from('trips').select('id,slug,title').eq('slug', slug).maybeSingle();
 const b64 = (o) => Buffer.from(JSON.stringify(o), 'utf-8').toString('base64url');

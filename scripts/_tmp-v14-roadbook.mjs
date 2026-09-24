@@ -25,7 +25,7 @@ let savedCookies = [];
 const sb = createServerClient(ADMIN_URL, readEnv('NEXT_PUBLIC_SUPABASE_ANON_KEY'), {
   cookies: { getAll: () => savedCookies, setAll: (cs) => { savedCookies = cs; } },
 });
-const { data: auth } = await sb.auth.signInWithPassword({ email: 'y-demo@lekitduvoyageur.fr', password: 'Ydemo!2026' });
+const { data: auth } = await sb.auth.signInWithPassword({ email: process.env.AUDIT_EMAIL || (() => { throw new Error('AUDIT_EMAIL est requis'); })(), password: process.env.AUDIT_PASSWORD || (() => { throw new Error('AUDIT_PASSWORD est requis'); })() });
 const userId = auth.user.id;
 const { data: trip } = await sb
   .from('trips')

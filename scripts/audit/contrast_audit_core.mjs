@@ -87,6 +87,39 @@ export function parseCssColor(value) {
   return null;
 }
 
+export function parseStrictNumber(value) {
+  if (typeof value === 'number') return Number.isFinite(value) ? value : null;
+  if (typeof value !== 'string') return null;
+  const text = value.trim();
+  if (!/^[+-]?(?:\d+\.?\d*|\.\d+)(?:e[+-]?\d+)?$/i.test(text)) return null;
+  const number = Number(text);
+  return Number.isFinite(number) ? number : null;
+}
+
+function clippedRectangle(rect, viewport) {
+  if (!rect || !finiteNumber(rect.x) || !finiteNumber(rect.y) || !finiteNumber(rect.width) || !finiteNumber(rect.height)) return null;
+  const left = Math.max(0, rect.x);
+  const top = Math.max(0, rect.y);
+  const right = Math.min(viewport?.width ?? Number.POSITIVE_INFINITY, rect.x + rect.width);
+  const bottom = Math.min(viewport?.height ?? Number.POSITIVE_INFINITY, rect.y + rect.height);
+  if (right <= left || bottom <= top) return null;
+  return { left, top, right, bottom };
+}
+
+export function rectanglesIntersect(first, second, viewport) {
+  const a = clippedRectangle(first, viewport);
+  const b = clippedRectangle(second, viewport);
+  return Boolean(a && b && a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top);
+}
+
+export function hasFixedOverlayIntersection(textRects, overlays, viewport) {
+  if (!Array.isArray(textRects) || !Array.isArray(overlays)) return false;
+  return overlays.some((overlay) => {
+    if (!overlay || overlay.containsTarget || !Array.isArray(overlay.rects)) return false;
+    return textRects.some((textRect) => overlay.rects.some((overlayRect) => rectanglesIntersect(textRect, overlayRect, viewport)));
+  });
+}
+
 export function ancestorOpacityProduct(ancestorOpacities) {
   if (!Array.isArray(ancestorOpacities)) return null;
   let product = 1;
@@ -307,16 +340,21 @@ function targetValues(node) {
   return targets.map((target) => Array.isArray(target) ? target.join(' ') : String(target));
 }
 
+function dataAuditIdFromTargets(node) {
+  for (const target of targetValues(node)) {
+    const match = target.match(/\[data-audit-id(?:=|~=)\s*["']?([^"'\\\s\]]+)/);
+    if (match) return match[1];
+  }
+  return null;
+}
+
 function nodeMatchesMeasurement(node, measurement) {
   const targets = targetValues(node);
+  const auditId = dataAuditIdFromTargets(node);
+  if (measurement.dataAuditId && auditId) return auditId === measurement.dataAuditId;
   const selector = measurement.selector || '';
   const id = measurement.id || '';
-  return targets.some((target) => (
-    target === selector
-    || target === id
-    || (selector && target.includes(selector))
-    || (id && target.includes(id))
-  ));
+  return targets.some((target) => target === selector || target === id);
 }
 
 function mergeAxeEvidence(measurements, entries, forcedStatus, prefix) {
@@ -328,6 +366,8 @@ function mergeAxeEvidence(measurements, entries, forcedStatus, prefix) {
       merged[matchIndex] = {
         ...current,
         status: current.status === CONTRAST_STATES.OCCLUDED ? CONTRAST_STATES.OCCLUDED : forcedStatus,
+        ratio: null,
+        dataAuditId: dataAuditIdFromTargets(entry.node),
         axeTarget: targetValues(entry.node),
         axeFailureSummary: entry.node?.failureSummary || null,
       };
@@ -339,6 +379,7 @@ function mergeAxeEvidence(measurements, entries, forcedStatus, prefix) {
       text: entry.node?.html || '',
       status: forcedStatus,
       ratio: null,
+      dataAuditId: dataAuditIdFromTargets(entry.node),
       axeTarget: targetValues(entry.node),
       axeFailureSummary: entry.node?.failureSummary || null,
     });
@@ -445,7 +486,7 @@ export function aggregateContrastMatrix(cells, expectedCells = buildMatrixCells(
     cellCount: summaries.length,
     cells: summaries,
     totals,
-    weightedPassRate: totals.nodes === 0 ? 0 : (totals.pass / totals.nodes) * 100,
+    weightedPassRate: totals.error > 0 || totals.nodes === 0 ? 0 : (totals.pass / totals.nodes) * 100,
   };
 }
 
@@ -473,20 +514,15 @@ export function getAuditCredentials(env = process.env) {
   return { email, password };
 }
 
-function parsedLocalStorageEntries(storageState) {
-  const entries = [];
-  for (const origin of storageState.origins) {
-    for (const item of origin.localStorage || []) {
-      let value = item.value;
-      try {
-        value = JSON.parse(item.value);
-      } catch {
-        value = null;
-      }
-      entries.push({ name: item.name, value });
-    }
+function storageValidationOptions(nowOrOptions, expectedBaseUrl) {
+  let now = Date.now();
+  let baseUrl = expectedBaseUrl;
+  if (finiteNumber(nowOrOptions)) now = nowOrOptions;
+  if (nowOrOptions && typeof nowOrOptions === 'object') {
+    now = finiteNumber(nowOrOptions.now) ? nowOrOptions.now : Date.now();
+    baseUrl = nowOrOptions.baseUrl ?? baseUrl;
   }
-  return entries;
+  return { now, baseUrl };
 }
 
 function sessionExpiry(value) {
@@ -496,34 +532,113 @@ function sessionExpiry(value) {
   return finiteNumber(numeric) ? numeric * 1000 : null;
 }
 
-export function validateStorageState(storageState, now = Date.now()) {
+function isAuthName(name) {
+  return typeof name === 'string' && /(?:^|[-.])auth-token(?:\.|$)/i.test(name);
+}
+
+function parseAuthValue(value, label) {
+  if (typeof value !== 'string' || value.trim() === '') {
+    throw new Error(`${label} vide`);
+  }
+  try {
+    return JSON.parse(value);
+  } catch {
+    throw new Error(`${label} malformé`);
+  }
+}
+
+export function validateStorageState(storageState, nowOrOptions = Date.now(), expectedBaseUrl) {
   if (!storageState || !Array.isArray(storageState.cookies) || !Array.isArray(storageState.origins)) {
     throw new Error('storageState invalide');
   }
+  const { now, baseUrl } = storageValidationOptions(nowOrOptions, expectedBaseUrl);
+  const expectedOrigin = baseUrl ? new URL(baseUrl).origin : null;
+  const authCookies = storageState.cookies.filter((cookie) => cookie && isAuthName(cookie.name));
+  const authLocalEntries = [];
+  const expiries = [];
+  let opaqueCookieCount = 0;
+  let parsedCookieCount = 0;
 
-  const authCookies = storageState.cookies.filter((cookie) => (
-    cookie && typeof cookie.name === 'string' && /(?:^|[-.])auth-token(?:\.|$)/i.test(cookie.name)
-  ));
-  const localEntries = parsedLocalStorageEntries(storageState);
-  const authEntries = localEntries.filter((entry) => (
-    /(?:^|[-.])auth-token(?:\.|$)/i.test(entry.name)
-    || (entry.value && typeof entry.value === 'object' && (entry.value.access_token || entry.value.refresh_token))
-  ));
+  if (expectedOrigin && storageState.origins.length === 0) {
+    throw new Error('storageState origine absente');
+  }
 
-  if (authCookies.length === 0 && authEntries.length === 0) {
+  for (const origin of storageState.origins) {
+    if (!origin || typeof origin.origin !== 'string') throw new Error('storageState origine invalide');
+    let normalizedOrigin;
+    try {
+      normalizedOrigin = new URL(origin.origin).origin;
+    } catch {
+      throw new Error('storageState origine invalide');
+    }
+    if (expectedOrigin && normalizedOrigin !== expectedOrigin) {
+      throw new Error(`storageState origine incorrecte: ${origin.origin}`);
+    }
+    if (!Array.isArray(origin.localStorage)) throw new Error('storageState localStorage invalide');
+    for (const item of origin.localStorage) {
+      if (!item || typeof item.name !== 'string' || typeof item.value !== 'string') {
+        throw new Error('storageState valeur locale invalide');
+      }
+      if (!isAuthName(item.name)) continue;
+      const value = parseAuthValue(item.value, 'storageState localStorage');
+      if (!value || typeof value !== 'object'
+        || typeof value.access_token !== 'string' || value.access_token === ''
+        || typeof value.refresh_token !== 'string' || value.refresh_token === '') {
+        throw new Error('storageState localStorage malformé');
+      }
+      const expiry = sessionExpiry(value);
+      if (expiry === null) throw new Error('storageState expiration absente');
+      expiries.push(expiry);
+      authLocalEntries.push({ name: item.name, value });
+    }
+  }
+
+  if (expectedOrigin) {
+    const expectedHost = new URL(baseUrl).hostname;
+    for (const cookie of authCookies) {
+      if (typeof cookie.domain === 'string' && cookie.domain !== expectedHost && cookie.domain !== `.${expectedHost}`) {
+        throw new Error(`storageState origine cookie incorrecte: ${cookie.domain}`);
+      }
+    }
+  }
+
+  for (const cookie of authCookies) {
+    if (typeof cookie.value !== 'string' || cookie.value.trim() === '') {
+      throw new Error('cookie auth vide');
+    }
+    let value;
+    try {
+      value = JSON.parse(cookie.value);
+    } catch {
+      if (/^[\[{]/.test(cookie.value.trim())) throw new Error('cookie auth malformé');
+      opaqueCookieCount += 1;
+      continue;
+    }
+    if (!value || typeof value !== 'object'
+      || typeof value.access_token !== 'string' || value.access_token === ''
+      || typeof value.refresh_token !== 'string' || value.refresh_token === '') {
+      throw new Error('cookie auth malformé');
+    }
+    parsedCookieCount += 1;
+    const cookieExpiry = sessionExpiry(value);
+    if (cookieExpiry !== null) expiries.push(cookieExpiry);
+    else if (finiteNumber(cookie.expires) && cookie.expires > 0) expiries.push(cookie.expires * 1000);
+  }
+
+  if (authCookies.length === 0 && authLocalEntries.length === 0) {
     throw new Error('storageState non authentifié');
   }
-
-  const expiries = [];
-  for (const cookie of authCookies) {
-    if (finiteNumber(cookie.expires) && cookie.expires > 0) expiries.push(cookie.expires * 1000);
+  if (authLocalEntries.length === 0 && opaqueCookieCount > 0) {
+    throw new Error('cookie auth opaque');
   }
-  for (const entry of authEntries) {
-    const expiry = sessionExpiry(entry.value);
-    if (expiry !== null) expiries.push(expiry);
+  if (expiries.length === 0) {
+    throw new Error('storageState expiration absente');
   }
-  if (expiries.length > 0 && expiries.every((expiry) => expiry <= now)) {
+  if (expiries.some((expiry) => expiry <= now)) {
     throw new Error('storageState expiré');
+  }
+  if (authLocalEntries.length === 0 && parsedCookieCount === 0) {
+    throw new Error('storageState non authentifié');
   }
 
   return true;
@@ -557,13 +672,14 @@ export function assertRenderedAuditSettings({ requestedTheme, requestedIntensity
   }
 }
 
-export function describeAdminNavigation({ finalUrl, status }) {
+export function describeAdminNavigation({ requestedPath = '/admin', finalUrl, status }) {
   const final = new URL(finalUrl);
   if (!Number.isInteger(status) || status < 200 || status >= 300) {
-    throw new Error(`Réponse HTTP invalide pour /admin: ${status}`);
+    throw new Error(`Réponse HTTP invalide pour ${requestedPath}: ${status}`);
   }
   const finalPath = normalizedPath(final.pathname);
-  if (finalPath === '/admin') return { redirected: false, reason: null, finalPath };
+  const requested = normalizedPath(requestedPath);
+  if (finalPath === requested) return { redirected: false, reason: null, finalPath };
   if (finalPath === '/') {
     return { redirected: true, reason: 'missing_admin_role', finalPath };
   }

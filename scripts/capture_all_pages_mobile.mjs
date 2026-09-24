@@ -26,8 +26,8 @@ async function getAuthCookie() {
     });
 
     await sb.auth.signInWithPassword({
-      email: 'y-demo@lekitduvoyageur.fr',
-      password: 'Ydemo!2026',
+      email: process.env.AUDIT_EMAIL || (() => { throw new Error('AUDIT_EMAIL est requis'); })(),
+      password: process.env.AUDIT_PASSWORD || (() => { throw new Error('AUDIT_PASSWORD est requis'); })(),
     });
 
     if (savedCookies.length > 0) {

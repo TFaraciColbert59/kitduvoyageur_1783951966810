@@ -15,11 +15,12 @@ import { chromium } from 'playwright';
 import { createClient } from '@supabase/supabase-js';
 import fs from 'node:fs';
 import path from 'node:path';
+import { redactDiagnosticText } from './audit_runtime.mjs';
 
 const BASE = process.env.AUDIT_BASE_URL || 'http://localhost:4000';
 const OUT_DIR = 'docs/audit-global';
 const CAPTURES_DIR = path.join(OUT_DIR, 'captures');
-const YDEMO = { email: 'y-demo@lekitduvoyageur.fr', password: 'Ydemo!2026' };
+const YDEMO = { email: process.env.AUDIT_EMAIL || (() => { throw new Error('AUDIT_EMAIL est requis'); })(), password: process.env.AUDIT_PASSWORD || (() => { throw new Error('AUDIT_PASSWORD est requis'); })() };
 const args = process.argv.slice(2);
 const ANON_ONLY = args.includes('--anon-only');
 const AUTH_ONLY = args.includes('--auth-only');
@@ -156,12 +157,17 @@ async function captureRoute(context, device, route, authed) {
   const page = await context.newPage();
   const pageErrors = [];
   const consoleErrors = [];
-  page.on('pageerror', (error) => pageErrors.push(String(error?.message || error).slice(0, 300)));
+  const requestErrors = [];
+  page.on('pageerror', (error) => pageErrors.push(redactDiagnosticText(error?.message || error)));
   page.on('console', (message) => {
     if (message.type() === 'error') {
-      const text = message.text();
+      const text = redactDiagnosticText(message.text());
       if (!isNoise(text)) consoleErrors.push(text.slice(0, 300));
     }
+  });
+  page.on('requestfailed', (request) => {
+    const failure = request.failure()?.errorText || 'requestfailed';
+    requestErrors.push(redactDiagnosticText(`${request.method()} ${request.url()} ${failure}`));
   });
 
   const record = {
@@ -173,6 +179,7 @@ async function captureRoute(context, device, route, authed) {
     finalUrl: null,
     pageErrors,
     consoleErrors,
+    requestErrors,
     screenshot: null,
   };
 
@@ -205,13 +212,13 @@ async function captureRoute(context, device, route, authed) {
       }
     }
   } catch (error) {
-    record.pageErrors.push(`AUDIT: ${String(error?.message || error).slice(0, 300)}`);
+    record.pageErrors.push(`AUDIT: ${redactDiagnosticText(error?.message || error)}`);
   } finally {
     await page.close().catch(() => {});
   }
 
   findings.push(record);
-  const marker = record.pageErrors.length > 0 || record.consoleErrors.length > 0 ? '⚠' : '✓';
+  const marker = record.pageErrors.length > 0 || record.consoleErrors.length > 0 || record.requestErrors.length > 0 ? '⚠' : '✓';
   console.log(
     `${marker} [${device.id}${authed ? '/auth' : ''}] ${route.name} (${record.status ?? 'ERR'})` +
       (record.pageErrors.length ? ` pageerrors=${record.pageErrors.length}` : '') +
@@ -250,8 +257,9 @@ try {
           authed: true,
           status: null,
           finalUrl: null,
-          pageErrors: [`LOGIN FAILED: ${String(error?.message || error).slice(0, 200)}`],
+          pageErrors: [`LOGIN FAILED: ${redactDiagnosticText(error?.message || error)}`],
           consoleErrors: [],
+          requestErrors: [],
           screenshot: null,
         });
         console.log(`✗ [${device.id}] login impossible — routes connectées ignorées`);
@@ -293,7 +301,10 @@ const report = {
   routeCount: ROUTES.length,
   deviceCount: DEVICES.length,
   captures: findings.filter((f) => f.screenshot).length,
-  issues: findings.filter((f) => f.pageErrors.length > 0 || (f.status && f.status >= 400)),
+  issues: findings.filter((f) => f.pageErrors.length > 0
+    || f.consoleErrors.length > 0
+    || f.requestErrors?.length > 0
+    || (f.status && f.status >= 400)),
   consoleNoise: findings.filter((f) => f.consoleErrors.length > 0),
   brokenLinks: Object.fromEntries([...linkChecks].filter(([, status]) => status === 'ERR' || (typeof status === 'number' && status >= 400))),
   findings,
@@ -311,7 +322,13 @@ console.log(`console errors (échantillon): ${report.consoleNoise.length} routes
 for (const noise of report.consoleNoise.slice(0, 10)) {
   console.log(`  - [${noise.device}] ${noise.route}: ${noise.consoleErrors[0]}`);
 }
+for (const issue of report.issues.filter((f) => f.requestErrors?.length)) {
+  console.log(`  - [${issue.device}] ${issue.route}: ${issue.requestErrors[0]}`);
+}
 console.log(`liens cassés: ${Object.keys(report.brokenLinks).length}`);
 for (const [href, status] of Object.entries(report.brokenLinks)) {
   console.log(`  - ${href} → ${status}`);
+}
+if (critical.length > 0 || Object.keys(report.brokenLinks).length > 0) {
+  process.exitCode = 1;
 }

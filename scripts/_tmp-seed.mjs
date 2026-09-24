@@ -10,7 +10,7 @@ const url = env.match(/NEXT_PUBLIC_SUPABASE_URL=(.*)/)[1].trim();
 const key = env.match(/NEXT_PUBLIC_SUPABASE_ANON_KEY=(.*)/)[1].trim();
 let sc = [];
 const sb = createServerClient(url, key, { cookies: { getAll: () => sc, setAll: (c) => { sc = c; } } });
-await sb.auth.signInWithPassword({ email: 'y-demo@lekitduvoyageur.fr', password: 'Ydemo!2026' });
+await sb.auth.signInWithPassword({ email: process.env.AUDIT_EMAIL || (() => { throw new Error('AUDIT_EMAIL est requis'); })(), password: process.env.AUDIT_PASSWORD || (() => { throw new Error('AUDIT_PASSWORD est requis'); })() });
 
 const { data: trip } = await sb.from('trips').select('id,slug').order('created_at', { ascending: false }).limit(1).maybeSingle();
 const { data: steps } = await sb.from('trip_steps').select('id,day_number,order_index').eq('trip_id', trip.id).order('day_number').order('order_index');

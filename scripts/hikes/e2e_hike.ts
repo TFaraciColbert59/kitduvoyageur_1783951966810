@@ -14,11 +14,11 @@ import { loadRouteDetail } from '../src/features/hiking/services/RouteService';
 const require = createRequire(import.meta.url);
 const { chromium } = require('C:/Users/Tony/.claude/skills/seo/.venv/Lib/site-packages/playwright/driver/package/index.js');
 
-const URL = 'https://icxyvwzfjbflcbqukpfz.supabase.co';
-const KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImljeHl2d3pmamJmbGNicXVrcGZ6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM5NDc3ODcsImV4cCI6MjA5OTUyMzc4N30.-zry9a_kzwgZU_SpLuguT6P4HMbd7czPdMzBJx7ICMA';
+const URL = process.env.NEXT_PUBLIC_SUPABASE_URL || (() => { throw new Error('NEXT_PUBLIC_SUPABASE_URL est requis'); })();
+const KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || (() => { throw new Error('NEXT_PUBLIC_SUPABASE_ANON_KEY est requis'); })();
 const BASE = 'http://localhost:4028';
 
-const supabase = createClient('https://icxyvwzfjbflcbqukpfz.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImljeHl2d3pmamJmbGNicXVrcGZ6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM5NDc3ODcsImV4cCI6MjA5OTUyMzc4N30.-zry9a_kzwgZU_SpLuguT6P4HMbd7czPdMzBJx7ICMA', { auth: { persistSession: false } });
+const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL || (() => { throw new Error('NEXT_PUBLIC_SUPABASE_URL est requis'); })(), process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || (() => { throw new Error('NEXT_PUBLIC_SUPABASE_ANON_KEY est requis'); })(), { auth: { persistSession: false } });
 
 function assert(cond: boolean, msg: string) {
   console.log(`  ${cond ? '✅' : '❌'} ${msg}`);
@@ -53,13 +53,13 @@ function buildWalk(geojson: any) {
 async function runTest(routeId: string) {
   const hasRoute = routeId != null && routeId !== '';
   const email = `lkdv.e2e.${Date.now()}@test.com`;
-  const password = 'Str0ngPass!lkdv';
+  const password = process.env.AUDIT_PASSWORD || (() => { throw new Error('AUDIT_PASSWORD est requis'); })();
   console.log(`=== E2E navigateur — ${routeId ? `route ${routeId}` : 'mode libre'} ===`);
 
-  const { data: su, error: suErr } = await supabase.auth.signUp({ email: `lkdv.e2e.${Date.now()}@test.com`, password: 'Str0ngPass!lkdv' });
+  const { data: su, error: suErr } = await supabase.auth.signUp({ email: `lkdv.e2e.${Date.now()}@test.com`, password: process.env.AUDIT_PASSWORD || (() => { throw new Error('AUDIT_PASSWORD est requis'); })() });
   if (!su.user || !su.session) throw new Error(`signup/e2e échec: ${suErr?.message}`);
   const session1 = su.session;
-  console.log(`  utilisateur: ${su.user.email}`);
+  console.info('  utilisateur E2E authentifié');
 
   let route = null;
   let walk: any[] = [];
@@ -161,7 +161,7 @@ try { localStorage.removeItem('lkdv_active_hike_session'); } catch (e) {}
 
   await page.screenshot({ path: `${process.env.TEMP || 'C:/Users/Tony/AppData/Local/Temp'}/lkdv_e2e_${routeId || 'free'}.png`, fullPage: false });
 
-  const auth = createClient('https://icxyvwzfjbflcbqukpfz.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImljeHl2d3pmamJmbGNicXVrcGZ6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM5NDc3ODcsImV4cCI6MjA5OTUyMzc4N30.-zry9a_kzwgZU_SpLuguT6P4HMbd7czPdMzBJx7ICMA', { auth: { persistSession: false } });
+  const auth = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL || (() => { throw new Error('NEXT_PUBLIC_SUPABASE_URL est requis'); })(), process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || (() => { throw new Error('NEXT_PUBLIC_SUPABASE_ANON_KEY est requis'); })(), { auth: { persistSession: false } });
   await auth.auth.setSession({ access_token: session1.access_token, refresh_token: session1.refresh_token });
   const { data: rows, error: rowsErr } = await supabase.from('hike_sessions').select('id, route_id, distance_km, duration_seconds, positions_geojson').eq('user_id', session1.user.id).eq('route_id', routeId || null);
   if (rowsErr || !Array.isArray(rows) || rows.length < 1) throw new Error('session sauvegardée en base');

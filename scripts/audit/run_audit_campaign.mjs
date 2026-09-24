@@ -8,6 +8,13 @@ import {
   getAuditBaseUrl,
 } from './contrast_audit_core.mjs';
 import {
+  attachPageDiagnostics,
+  invalidateAuditReportDirectory,
+  invalidateAuditReports,
+  writeAuditErrorReport,
+} from './audit_runtime.mjs';
+import {
+  auditStorageStatePath,
   loadAuditStorageState,
   verifyCompteSession,
 } from './create_test_session.mjs';
@@ -15,6 +22,7 @@ import {
   ROUTES,
   assertRouteNavigation,
   colorContrastRules,
+  extractTextElements,
   getAdventureCookie,
   measurePageContrast,
   readRenderedAuditSettings,
@@ -22,6 +30,7 @@ import {
 
 const screensDir = path.resolve('audit', 'screens');
 const a11yDir = path.resolve('audit', 'a11y');
+const errorReportPath = path.join(a11yDir, 'campaign-error.json');
 const VIEWPORTS = [
   { name: '390x844', width: 390, height: 844 },
   { name: '1440x900', width: 1440, height: 900 },
@@ -54,10 +63,7 @@ async function initializeAuditPage(page, theme, intensity = 0.5) {
       version: '1',
     }));
     localStorage.setItem('lkdv_glass_intensity', String(requestedIntensity));
-    document.documentElement.classList.toggle('dark', requestedTheme === 'dark');
-    document.documentElement.dataset.theme = requestedTheme;
-    document.documentElement.style.colorScheme = requestedTheme;
-    document.documentElement.style.setProperty('--glass-intensity', String(requestedIntensity));
+    localStorage.setItem('lkdv_theme', requestedTheme);
   }, { requestedTheme: theme, requestedIntensity: intensity });
 }
 
@@ -108,10 +114,18 @@ function buildContrastReport(findings, errors) {
 }
 
 async function run() {
+  invalidateAuditReports([
+    path.join(screensDir, 'manifest.json'),
+    path.join(a11yDir, 'summary.json'),
+    path.join(a11yDir, 'campaign-contrast.json'),
+    path.resolve('audit', 'CONTRASTE.md'),
+    errorReportPath,
+  ]);
+  invalidateAuditReportDirectory(a11yDir, (name) => name.endsWith('.json'));
   fs.mkdirSync(screensDir, { recursive: true });
   fs.mkdirSync(a11yDir, { recursive: true });
   const BASE_URL = getAuditBaseUrl();
-  const storageState = loadAuditStorageState();
+  const storageState = loadAuditStorageState(auditStorageStatePath(), BASE_URL);
   const browser = await chromium.launch({
     headless: true,
     args: ['--no-sandbox', '--disable-setuid-sandbox'],
@@ -136,6 +150,7 @@ async function run() {
 
     for (const route of ROUTES) {
       let context;
+      let diagnostics;
       try {
         context = await browser.newContext({
           baseURL: BASE_URL,
@@ -147,9 +162,11 @@ async function run() {
         });
         await context.addCookies([getAdventureCookie(BASE_URL)]);
         const page = await context.newPage();
+        diagnostics = attachPageDiagnostics(page);
         await initializeAuditPage(page, 'dark');
-        const adminNavigation = await assertRouteNavigation(page, BASE_URL, route.path);
-        if (adminNavigation?.redirected && adminNavigation.reason !== 'missing_admin_role') {
+         const adminNavigation = await assertRouteNavigation(page, BASE_URL, route.path);
+         diagnostics.assertClean();
+         if (adminNavigation?.redirected && adminNavigation.reason !== 'missing_admin_role') {
           throw new Error(`Redirection /admin inattendue: ${adminNavigation.reason}`);
         }
         if (adminNavigation?.redirected) {
@@ -178,6 +195,7 @@ async function run() {
         await page.waitForTimeout(600);
         const rendered = await assertPageSettings(page, 'dark');
         const axeResults = await analyzeAxe(page);
+        diagnostics.assertClean();
         const colorContrast = colorContrastRules(axeResults);
         const a11y = {
           route: route.path,
@@ -217,6 +235,7 @@ async function run() {
         });
         a11ySummary[route.id] = { id: route.id, path: route.path, error: error instanceof Error ? error.message : String(error) };
       } finally {
+        if (diagnostics) diagnostics.dispose();
         if (context) {
           await context.close().catch((closeError) => {
             console.warn(`Fermeture du contexte audit: ${closeError.message}`);
@@ -236,6 +255,7 @@ async function run() {
           });
           await context.addCookies([getAdventureCookie(BASE_URL)]);
           const page = await context.newPage();
+          const diagnostics = attachPageDiagnostics(page);
           await initializeAuditPage(page, theme);
 
           try {
@@ -276,14 +296,17 @@ async function run() {
                 actualIntensity: rendered.intensity,
               });
             }
+            diagnostics.assertClean();
 
             if (viewport.name === '390x844' && theme === 'dark') {
               await assertRouteNavigation(page, BASE_URL, route.path);
               await page.waitForTimeout(500);
               const measuredSettings = await assertPageSettings(page, 'dark');
+              const textElements = await extractTextElements(page);
               const axeResults = await analyzeAxe(page);
-              const measured = await measurePageContrast(page, axeResults);
+              const measured = await measurePageContrast(page, axeResults, { textElements });
               if (measured.nodes.length === 0) throw new Error('Aucun nœud texte mesuré');
+              diagnostics.assertClean();
               const colorContrast = colorContrastRules(axeResults);
               contrastFindings.push({
                 routeId: route.id,
@@ -306,6 +329,7 @@ async function run() {
               message: error instanceof Error ? error.message : String(error),
             });
           } finally {
+            diagnostics.dispose();
             await context.close();
           }
         }
@@ -332,7 +356,9 @@ async function run() {
   fs.writeFileSync(path.resolve('audit', 'CONTRASTE.md'), contrastReport.markdown);
 
   if (errors.length > 0) {
-    throw new Error(`Campagne terminée avec ${errors.length} erreur(s); aucun succès global n'est publié`);
+    const error = new Error(`Campagne terminée avec ${errors.length} erreur(s); aucun succès global n'est publié`);
+    writeAuditErrorReport(errorReportPath, error, { errors });
+    throw error;
   }
   console.info(`Campagne terminée: ${manifest.length} captures, ${contrastReport.totals.pass} pass, ${contrastReport.totals.contrast_fail} contrast_fail, ${contrastReport.totals.unknown} unknown, ${contrastReport.totals.occluded} occluded.`);
 }

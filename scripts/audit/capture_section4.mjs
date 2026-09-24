@@ -3,48 +3,61 @@ import AxeBuilder from '@axe-core/playwright';
 import fs from 'node:fs';
 import path from 'node:path';
 import { createServerClient } from '@supabase/ssr';
+import {
+  attachPageDiagnostics,
+  invalidateAuditReportDirectory,
+  invalidateAuditReports,
+  redactDiagnosticText,
+  writeAuditErrorReport,
+} from './audit_runtime.mjs';
+import { getAuditCredentials } from './credentials.mjs';
+import {
+  assertRenderedAuditSettings,
+  readRenderedAuditSettings,
+} from './measure_contrast_v2.mjs';
 
 const BASE_URL = 'http://localhost:3000';
 const screensDir = path.resolve('audit', 'screens');
 const a11yDir = path.resolve('audit', 'a11y');
+const errorReportPath = path.join(a11yDir, 'capture-section4-error.json');
 
+invalidateAuditReports([
+  path.join(screensDir, 'manifest.json'),
+  path.join(a11yDir, 'summary.json'),
+  errorReportPath,
+]);
+invalidateAuditReportDirectory(a11yDir, (name) => name.endsWith('.json'));
 fs.mkdirSync(screensDir, { recursive: true });
 fs.mkdirSync(a11yDir, { recursive: true });
 
 // Récupérer les cookies de session pour y-demo
 async function getAuthCookie() {
-  try {
-    const envPath = fs.existsSync('.env.local') ? '.env.local' : '.env';
-    const raw = fs.readFileSync(envPath, 'utf8');
-    const url = raw.match(/NEXT_PUBLIC_SUPABASE_URL=(.*)/)?.[1]?.trim();
-    const anonKey = raw.match(/NEXT_PUBLIC_SUPABASE_ANON_KEY=(.*)/)?.[1]?.trim();
-    if (!url || !anonKey) return null;
+  const credentials = getAuditCredentials();
+  const envPath = fs.existsSync('.env.local') ? '.env.local' : '.env';
+  if (!fs.existsSync(envPath)) throw new Error('Configuration Supabase absente pour la capture audit');
+  const raw = fs.readFileSync(envPath, 'utf8');
+  const url = raw.match(/NEXT_PUBLIC_SUPABASE_URL=(.*)/)?.[1]?.trim();
+  const anonKey = raw.match(/NEXT_PUBLIC_SUPABASE_ANON_KEY=(.*)/)?.[1]?.trim();
+  if (!url || !anonKey) throw new Error('Configuration Supabase absente pour la capture audit');
 
-    let savedCookies = [];
-    const sb = createServerClient(url, anonKey, {
-      cookies: {
-        getAll: () => savedCookies,
-        setAll: (cs) => { savedCookies = cs; },
-      },
-    });
+  let savedCookies = [];
+  const sb = createServerClient(url, anonKey, {
+    cookies: {
+      getAll: () => savedCookies,
+      setAll: (cs) => { savedCookies = cs; },
+    },
+  });
 
-    await sb.auth.signInWithPassword({
-      email: 'y-demo@lekitduvoyageur.fr',
-      password: 'Ydemo!2026',
-    });
-
-    if (savedCookies.length > 0) {
-      return {
-        name: savedCookies[0].name,
-        value: savedCookies[0].value,
-        domain: 'localhost',
-        path: '/',
-      };
-    }
-  } catch (err) {
-    console.warn('[capture] Erreur auth démo:', err.message);
+  const { data, error } = await sb.auth.signInWithPassword(credentials);
+  if (error || !data?.user || savedCookies.length === 0) {
+    throw new Error('Authentification audit impossible');
   }
-  return null;
+  return {
+    name: savedCookies[0].name,
+    value: savedCookies[0].value,
+    domain: 'localhost',
+    path: '/',
+  };
 }
 
 function getAdventureCookie(slug = 'y-long-group') {
@@ -158,6 +171,7 @@ async function run() {
 
   const manifest = [];
   const a11ySummary = {};
+  const errors = [];
 
   for (const r of ROUTES) {
     const routeDir = path.join(screensDir, r.id);
@@ -166,14 +180,17 @@ async function run() {
     console.log(`\n📸 [Route] ${r.label} (${r.path}) -> audit/screens/${r.id}/`);
 
     // 1. Audit A11Y avec Axe-core (sur viewport mobile de référence)
+    let a11yCtx;
+    let diagnostics;
     try {
-      const a11yCtx = await browser.newContext({
+      a11yCtx = await browser.newContext({
         viewport: { width: 390, height: 844 },
         colorScheme: 'dark',
         locale: 'fr-FR',
       });
       if (authCookie) await a11yCtx.addCookies([authCookie, advCookie]);
       const a11yPage = await a11yCtx.newPage();
+      diagnostics = attachPageDiagnostics(a11yPage);
 
       await a11yPage.goto(`${BASE_URL}${r.path}`, { waitUntil: 'domcontentloaded', timeout: 30000 });
       await a11yPage.waitForTimeout(1000);
@@ -181,6 +198,7 @@ async function run() {
       const axeResults = await new AxeBuilder({ page: a11yPage })
         .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'])
         .analyze();
+      diagnostics.assertClean();
 
       const a11yFilePath = path.join(a11yDir, `${r.id}.json`);
       fs.writeFileSync(a11yFilePath, JSON.stringify({
@@ -203,10 +221,13 @@ async function run() {
           return acc;
         }, {}),
       };
-
-      await a11yCtx.close();
     } catch (err) {
-      console.warn(`  ⚠️ A11y warning sur ${r.id}:`, err.message);
+      const message = redactDiagnosticText(err instanceof Error ? err.message : err);
+      errors.push({ route: r.id, stage: 'a11y', message });
+      a11ySummary[r.id] = { error: message };
+    } finally {
+      diagnostics?.dispose();
+      await a11yCtx?.close().catch(() => {});
     }
 
     // 2. Captures multi-viewports & thèmes (Section 4)
@@ -215,8 +236,10 @@ async function run() {
         const shotFilename = `${vp.name}-${theme}-default.png`;
         const shotPath = path.join(routeDir, shotFilename);
 
+        let captureCtx;
+        let diagnostics;
         try {
-          const ctx = await browser.newContext({
+          captureCtx = await browser.newContext({
             viewport: { width: vp.width, height: vp.height },
             colorScheme: theme,
             locale: 'fr-FR',
@@ -224,23 +247,30 @@ async function run() {
 
           const cookiesToSet = [advCookie];
           if (authCookie) cookiesToSet.push(authCookie);
-          await ctx.addCookies(cookiesToSet);
+          await captureCtx.addCookies(cookiesToSet);
 
-          const page = await ctx.newPage();
+          const page = await captureCtx.newPage();
+          diagnostics = attachPageDiagnostics(page);
 
           // Bootstrap theme & cookie consent
           await page.addInitScript((t) => {
             localStorage.setItem('lkdv_cookie_consent', JSON.stringify({ necessary: true, analytics: false, marketing: false, version: '1' }));
-            document.documentElement.setAttribute('data-theme', t);
-            if (t === 'dark') document.documentElement.classList.add('dark');
-            else document.documentElement.classList.remove('dark');
+            localStorage.setItem('lkdv_theme', t);
           }, theme);
 
           await page.goto(`${BASE_URL}${r.path}`, { waitUntil: 'domcontentloaded', timeout: 30000 });
           await page.waitForTimeout(600);
+          const rendered = await readRenderedAuditSettings(page);
+          assertRenderedAuditSettings({
+            requestedTheme: theme,
+            requestedIntensity: 0.5,
+            actualTheme: rendered.theme,
+            actualIntensity: rendered.intensity,
+          });
 
           // Capture viewport exact d'abord (fullPage: false conformément à la section 4)
           await page.screenshot({ path: shotPath, fullPage: false });
+          diagnostics.assertClean();
 
           manifest.push({
             routeId: r.id,
@@ -250,10 +280,13 @@ async function run() {
             state: 'default',
             file: `audit/screens/${r.id}/${shotFilename}`,
           });
-
-          await ctx.close();
         } catch (err) {
-          console.warn(`  ⚠️ Erreur capture ${r.id} (${vp.name} ${theme}):`, err.message);
+          const message = redactDiagnosticText(err instanceof Error ? err.message : err);
+          errors.push({ route: r.id, stage: `${vp.name}-${theme}`, message });
+          console.warn(`  ⚠️ Erreur capture ${r.id} (${vp.name} ${theme}): ${message}`);
+        } finally {
+          diagnostics?.dispose();
+          await captureCtx?.close().catch(() => {});
         }
       }
     }
@@ -263,22 +296,32 @@ async function run() {
       for (const intensity of [0, 0.5, 1]) {
         const shotFilename = `390x844-dark-intensity-${intensity}.png`;
         const shotPath = path.join(routeDir, shotFilename);
+        let intensityCtx;
+        let diagnostics;
         try {
-          const ctx = await browser.newContext({
+          intensityCtx = await browser.newContext({
             viewport: { width: 390, height: 844 },
             colorScheme: 'dark',
             locale: 'fr-FR',
           });
-          if (authCookie) await ctx.addCookies([authCookie, advCookie]);
-          const page = await ctx.newPage();
+          if (authCookie) await intensityCtx.addCookies([authCookie, advCookie]);
+          const page = await intensityCtx.newPage();
+          diagnostics = attachPageDiagnostics(page);
           await page.addInitScript((i) => {
             localStorage.setItem('lkdv_glass_intensity', String(i));
-            document.documentElement.style.setProperty('--glass-intensity', String(i));
           }, intensity);
 
           await page.goto(`${BASE_URL}${r.path}`, { waitUntil: 'domcontentloaded', timeout: 30000 });
           await page.waitForTimeout(600);
+          const rendered = await readRenderedAuditSettings(page);
+          assertRenderedAuditSettings({
+            requestedTheme: 'dark',
+            requestedIntensity: intensity,
+            actualTheme: rendered.theme,
+            actualIntensity: rendered.intensity,
+          });
           await page.screenshot({ path: shotPath, fullPage: false });
+          diagnostics.assertClean();
 
           manifest.push({
             routeId: r.id,
@@ -288,9 +331,13 @@ async function run() {
             state: `intensity-${intensity}`,
             file: `audit/screens/${r.id}/${shotFilename}`,
           });
-          await ctx.close();
         } catch (err) {
-          console.warn(`  ⚠️ Erreur intensité ${intensity} sur ${r.id}:`, err.message);
+          const message = redactDiagnosticText(err instanceof Error ? err.message : err);
+          errors.push({ route: r.id, stage: `intensity-${intensity}`, message });
+          console.warn(`  ⚠️ Erreur intensité ${intensity} sur ${r.id}: ${message}`);
+        } finally {
+          diagnostics?.dispose();
+          await intensityCtx?.close().catch(() => {});
         }
       }
     }
@@ -307,6 +354,11 @@ async function run() {
 
   fs.writeFileSync(path.join(a11yDir, 'summary.json'), JSON.stringify(a11ySummary, null, 2));
 
+  if (errors.length > 0) {
+    const error = new Error(`Campagne Section 4 terminée avec ${errors.length} erreur(s)`);
+    writeAuditErrorReport(errorReportPath, error, { errors });
+    throw error;
+  }
   console.log(`\n✅ Campagne Section 4 terminée avec succès : ${manifest.length} captures enregistrées dans audit/screens/ et audits A11y dans audit/a11y/`);
 }
 

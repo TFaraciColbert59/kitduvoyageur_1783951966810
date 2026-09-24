@@ -11,8 +11,15 @@ import {
   describeAdminNavigation,
   getAuditBaseUrl,
   mergeAxeContrastEvidence,
+  parseStrictNumber,
 } from './contrast_audit_core.mjs';
 import {
+  attachPageDiagnostics,
+  invalidateAuditReports,
+  writeAuditErrorReport,
+} from './audit_runtime.mjs';
+import {
+  auditStorageStatePath,
   loadAuditStorageState,
   verifyCompteSession,
 } from './create_test_session.mjs';
@@ -20,6 +27,7 @@ import {
 const a11yDir = path.resolve('audit', 'a11y');
 const contrastReportPath = path.resolve('audit', 'CONTRASTE.md');
 const matrixReportPath = path.resolve('audit', 'contrast-measurements.json');
+const errorReportPath = path.join(a11yDir, 'measure-contrast-error.json');
 export const ROUTES = [
   ['accueil', '/'],
   ['hub', '/hub'],
@@ -108,7 +116,7 @@ export function getAdventureCookie(baseUrl = 'http://localhost:3000', slug = 'y-
 }
 
 export async function readRenderedAuditSettings(page) {
-  return page.evaluate(() => {
+  const rendered = await page.evaluate(() => {
     const root = document.documentElement;
     const theme = root.classList.contains('dark') || root.dataset.theme === 'dark'
       ? 'dark'
@@ -117,59 +125,52 @@ export async function readRenderedAuditSettings(page) {
         : window.matchMedia('(prefers-color-scheme: dark)').matches
           ? 'dark'
           : 'light';
-    const rawIntensity = window.getComputedStyle(root).getPropertyValue('--glass-intensity').trim();
     return {
       theme,
-      intensity: Number.parseFloat(rawIntensity),
+      intensityText: window.getComputedStyle(root).getPropertyValue('--glass-intensity').trim(),
     };
   });
+  return { theme: rendered.theme, intensity: parseStrictNumber(rendered.intensityText) };
 }
 
 export async function extractTextElements(page) {
   return page.evaluate(() => {
     const ignored = new Set(['canvas', 'noscript', 'path', 'script', 'style', 'svg', 'text']);
-    const nodes = [];
-
-    const fixedOverlayAt = (element, target) => {
-      let current = element;
-      while (current && current !== document.body) {
-        const position = window.getComputedStyle(current).position;
-        if ((position === 'fixed' || position === 'sticky')
-          && !current.contains(target)
-          && !target.contains(current)) {
-          return true;
-        }
-        current = current.parentElement;
-      }
-      return false;
+    const viewport = { width: window.innerWidth, height: window.innerHeight };
+    const clips = (rect) => {
+      const left = Math.max(0, rect.x);
+      const top = Math.max(0, rect.y);
+      const right = Math.min(viewport.width, rect.x + rect.width);
+      const bottom = Math.min(viewport.height, rect.y + rect.height);
+      return right > left && bottom > top ? { left, top, right, bottom } : null;
     };
+    const intersects = (first, second) => {
+      const a = clips(first);
+      const b = clips(second);
+      return Boolean(a && b && a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top);
+    };
+    const rectsFor = (element) => Array.from(element.getClientRects()).map((rect) => ({
+      x: rect.x,
+      y: rect.y,
+      width: rect.width,
+      height: rect.height,
+    }));
+    const overlays = Array.from(document.querySelectorAll('*'))
+      .filter((element) => ['fixed', 'sticky'].includes(window.getComputedStyle(element).position))
+      .map((element) => ({ element, rects: rectsFor(element) }))
+      .filter((overlay) => overlay.rects.length > 0);
+    const groups = new Map();
+    let sequence = 0;
+    document.querySelectorAll('[data-audit-id^="audit-text-"]').forEach((element) => element.removeAttribute('data-audit-id'));
 
-    const isOccluded = (element, rects) => rects.some((rect) => {
-      const points = [
-        [rect.x + rect.width * 0.2, rect.y + rect.height * 0.5],
-        [rect.x + rect.width * 0.5, rect.y + rect.height * 0.5],
-        [rect.x + rect.width * 0.8, rect.y + rect.height * 0.5],
-      ];
-      return points.some(([x, y]) => {
-        const topElement = document.elementFromPoint(x, y);
-        return topElement ? fixedOverlayAt(topElement, element) : false;
-      });
-    });
-
-    const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_ELEMENT);
-    let element;
-    while ((element = walker.nextNode())) {
-      const tag = element.tagName.toLowerCase();
-      if (ignored.has(tag) || element === document.body || element === document.documentElement) continue;
+    const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+    let textNode;
+    while ((textNode = walker.nextNode())) {
+      const element = textNode.parentElement;
+      if (!element || ignored.has(element.tagName.toLowerCase())) continue;
       if (element.closest('.sr-only')) continue;
-
-      const directText = Array.from(element.childNodes)
-        .filter((node) => node.nodeType === Node.TEXT_NODE)
-        .map((node) => node.textContent?.trim() || '')
-        .join(' ')
-        .trim();
-      if (!directText) continue;
-
+      const text = textNode.textContent?.trim() || '';
+      if (!text) continue;
       const style = window.getComputedStyle(element);
       if (style.visibility === 'hidden' || style.display === 'none') continue;
 
@@ -178,11 +179,11 @@ export async function extractTextElements(page) {
       let hidden = false;
       while (current) {
         const opacityText = window.getComputedStyle(current).opacity;
-        const opacity = Number.parseFloat(opacityText);
-        if (!Number.isFinite(opacity)) {
+        if (!/^[+-]?(?:\d+\.?\d*|\.\d+)(?:e[+-]?\d+)?$/i.test(opacityText)) {
           ancestorOpacities.push('invalid');
           break;
         }
+        const opacity = Number(opacityText);
         ancestorOpacities.push(opacity);
         if (opacity <= 0) hidden = true;
         current = current.parentElement;
@@ -190,53 +191,67 @@ export async function extractTextElements(page) {
       if (hidden) continue;
 
       const range = document.createRange();
-      range.selectNodeContents(element);
+      range.selectNode(textNode);
       const rects = Array.from(range.getClientRects())
         .filter((rect) => (
           rect.width > 0
           && rect.height > 0
           && rect.right > 0
-          && rect.left < window.innerWidth
+          && rect.left < viewport.width
           && rect.bottom > 0
-          && rect.top < window.innerHeight
+          && rect.top < viewport.height
         ))
-        .map((rect) => ({
-          x: rect.x,
-          y: rect.y,
-          width: rect.width,
-          height: rect.height,
-        }));
+        .map((rect) => ({ x: rect.x, y: rect.y, width: rect.width, height: rect.height }));
       range.detach();
       if (rects.length === 0) continue;
 
-      const fontSize = Number.parseFloat(style.fontSize) || 16;
-      const fontWeight = Number.parseInt(style.fontWeight, 10) || 400;
-      const isLarge = fontSize >= 24 || (fontSize >= 18.66 && fontWeight >= 700);
-      let selector = tag;
-      if (element.id) {
-        selector += `#${window.CSS?.escape ? window.CSS.escape(element.id) : element.id}`;
-      } else if (typeof element.className === 'string') {
-        const className = element.className.split(/\s+/).find(Boolean);
-        if (className) selector += `.${window.CSS?.escape ? window.CSS.escape(className) : className}`;
+      let auditId = element.getAttribute('data-audit-id');
+      if (!auditId) {
+        auditId = `audit-text-${sequence++}`;
+        element.setAttribute('data-audit-id', auditId);
       }
-
-      nodes.push({
-        id: selector,
-        selector,
-        text: directText.slice(0, 120),
-        color: style.color,
-        ancestorOpacities,
-        isLarge,
-        occluded: isOccluded(element, rects),
-        rects,
-      });
+      const existing = groups.get(auditId);
+      if (existing) {
+        existing.rects.push(...rects);
+        existing.text += ` ${text}`;
+      } else {
+        const fontSize = Number.parseFloat(style.fontSize) || 16;
+        const fontWeight = Number.parseInt(style.fontWeight, 10) || 400;
+        const isLarge = fontSize >= 24 || (fontSize >= 18.66 && fontWeight >= 700);
+        groups.set(auditId, {
+          dataAuditId: auditId,
+          id: auditId,
+          selector: `[data-audit-id="${auditId}"]`,
+          text: text.slice(0, 240),
+          color: style.color,
+          ancestorOpacities,
+          isLarge,
+          rects,
+          element,
+        });
+      }
     }
-    return nodes;
+
+    return Array.from(groups.values()).map((group) => ({
+      dataAuditId: group.dataAuditId,
+      id: group.id,
+      selector: group.selector,
+      text: group.text.slice(0, 240),
+      color: group.color,
+      ancestorOpacities: group.ancestorOpacities,
+      isLarge: group.isLarge,
+      occluded: overlays.some((overlay) => (
+        !overlay.element.contains(group.element)
+        && !group.element.contains(overlay.element)
+        && overlay.rects.some((overlayRect) => group.rects.some((textRect) => intersects(textRect, overlayRect)))
+      )),
+      rects: group.rects,
+    }));
   });
 }
 
 export async function measurePageContrast(page, axeResults, options = {}) {
-  const textElements = await extractTextElements(page);
+  const textElements = options.textElements || await extractTextElements(page);
   await page.screenshot({ fullPage: false, animations: 'disabled' });
   await page.addStyleTag({
     content: options.backgroundCss || '* { color: transparent !important; text-shadow: none !important; -webkit-text-fill-color: transparent !important; }',
@@ -281,9 +296,9 @@ export async function assertRouteNavigation(page, baseUrl, routePath) {
   if (finalUrl.origin !== new URL(baseUrl).origin) {
     throw new Error(`Redirection hors origine pour ${routePath}: ${finalUrl.origin}`);
   }
-  if (routePath === '/admin') {
+  if (routePath === '/admin' || routePath === '/admin/produits') {
     await page.waitForTimeout(600);
-    return describeAdminNavigation({ finalUrl: page.url(), status });
+    return describeAdminNavigation({ requestedPath: routePath, finalUrl: page.url(), status });
   }
   const expected = new URL(routePath, baseUrl);
   if (normalizedPath(finalUrl.pathname) !== normalizedPath(expected.pathname)) {
@@ -329,9 +344,16 @@ function countNodes(nodes) {
 }
 
 async function run() {
+  invalidateAuditReports([
+    contrastReportPath,
+    matrixReportPath,
+    errorReportPath,
+    path.join(a11yDir, 'measure-contrast-v2.json'),
+    path.join(a11yDir, 'summary.json'),
+  ]);
   fs.mkdirSync(a11yDir, { recursive: true });
   const baseUrl = getAuditBaseUrl();
-  const storageState = loadAuditStorageState();
+  const storageState = loadAuditStorageState(auditStorageStatePath(), baseUrl);
   const browser = await chromium.launch({
     headless: true,
     args: ['--no-sandbox', '--disable-setuid-sandbox'],
@@ -363,6 +385,7 @@ async function run() {
       });
       await context.addCookies([getAdventureCookie(baseUrl)]);
       const page = await context.newPage();
+      const diagnostics = attachPageDiagnostics(page);
       await page.addInitScript(() => {
         localStorage.setItem('lkdv_cookie_consent', JSON.stringify({
           necessary: true,
@@ -371,14 +394,13 @@ async function run() {
           version: '1',
         }));
         localStorage.setItem('lkdv_glass_intensity', '0.5');
-        document.documentElement.classList.add('dark');
-        document.documentElement.dataset.theme = 'dark';
-        document.documentElement.style.setProperty('--glass-intensity', '0.5');
+        localStorage.setItem('lkdv_theme', 'dark');
       });
 
       try {
-        const adminNavigation = await assertRouteNavigation(page, baseUrl, route.path);
-        if (adminNavigation?.redirected && adminNavigation.reason !== 'missing_admin_role') {
+         const adminNavigation = await assertRouteNavigation(page, baseUrl, route.path);
+         diagnostics.assertClean();
+         if (adminNavigation?.redirected && adminNavigation.reason !== 'missing_admin_role') {
           throw new Error(`Redirection /admin inattendue: ${adminNavigation.reason}`);
         }
         if (adminNavigation?.redirected) {
@@ -401,11 +423,13 @@ async function run() {
           actualTheme: rendered.theme,
           actualIntensity: rendered.intensity,
         });
+        const textElements = await extractTextElements(page);
         const axeResults = await new AxeBuilder({ page })
           .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'])
           .analyze();
-        const contrast = await measurePageContrast(page, axeResults);
+        const contrast = await measurePageContrast(page, axeResults, { textElements });
         if (contrast.nodes.length === 0) throw new Error('Aucun nœud texte mesuré');
+        diagnostics.assertClean();
         const axe = colorContrastRules(axeResults);
         summary[route.id] = {
           id: route.id,
@@ -429,6 +453,7 @@ async function run() {
         errors.push({ route: route.id, message });
         summary[route.id] = { id: route.id, path: route.path, error: message };
       } finally {
+        diagnostics.dispose();
         await context.close();
       }
     }
@@ -458,7 +483,9 @@ async function run() {
   fs.writeFileSync(contrastReportPath, buildContrastMarkdown(Object.values(summary), totals));
 
   if (errors.length > 0) {
-    throw new Error(`${errors.length} route(s) en erreur; aucun taux de succès global n'est publié`);
+    const error = new Error(`${errors.length} route(s) en erreur; aucun taux de succès global n'est publié`);
+    writeAuditErrorReport(errorReportPath, error, { errors });
+    throw error;
   }
   console.info(`Mesure terminée: ${measured.length}/${ROUTES.length} routes, ${totals.pass} pass, ${totals.contrast_fail} contrast_fail, ${totals.unknown} unknown, ${totals.occluded} occluded.`);
 }

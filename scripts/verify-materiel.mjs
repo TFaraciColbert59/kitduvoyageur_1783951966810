@@ -22,7 +22,7 @@ const CHECKS = [
 ];
 
 async function main() {
-  const { data: signIn } = await supabase.auth.signInWithPassword({ email: 'demo@lkdv.app', password: 'DemoPass!2026' });
+  const { data: signIn } = await supabase.auth.signInWithPassword({ email: process.env.AUDIT_EMAIL || (() => { throw new Error('AUDIT_EMAIL est requis'); })(), password: process.env.AUDIT_PASSWORD || (() => { throw new Error('AUDIT_PASSWORD est requis'); })() });
   if (!signIn.user) { console.error('Login démo échoué — exécutez scripts/seed/seed-materiel.mjs'); process.exit(1); }
   const uid = signIn.user.id;
   const authed = createClient(url, key, { auth: { persistSession: false }, global: { headers: { Authorization: 'Bearer ' + signIn.session.access_token } } });

@@ -15,7 +15,7 @@ let savedCookies = [];
 const sb = createServerClient(readEnv('NEXT_PUBLIC_SUPABASE_URL'), readEnv('NEXT_PUBLIC_SUPABASE_ANON_KEY'), {
   cookies: { getAll: () => savedCookies, setAll: (cs) => { savedCookies = cs; } },
 });
-await sb.auth.signInWithPassword({ email: 'y-demo@lekitduvoyageur.fr', password: 'Ydemo!2026' });
+await sb.auth.signInWithPassword({ email: process.env.AUDIT_EMAIL || (() => { throw new Error('AUDIT_EMAIL est requis'); })(), password: process.env.AUDIT_PASSWORD || (() => { throw new Error('AUDIT_PASSWORD est requis'); })() });
 const b64 = (o) => Buffer.from(JSON.stringify(o), 'utf-8').toString('base64url');
 const authCookies = savedCookies.map((c) => ({ name: c.name, value: c.value, domain: 'localhost', path: '/', httpOnly: true }));
 const sortie = { name: 'lkv_active_adventure', value: b64({ nature: 'sortie', id: '0e393749-c9b9-42b9-9678-22067b570f43', slug: 'tour-mont-blanc-refuge', title: 'Tour du Mont-Blanc — version refuges' }), domain: 'localhost', path: '/', httpOnly: true };

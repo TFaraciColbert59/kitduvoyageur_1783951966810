@@ -21,7 +21,7 @@ let savedCookies = [];
 const sb = createServerClient(url, anonKey, {
   cookies: { getAll: () => savedCookies, setAll: (cs) => { savedCookies = cs; } },
 });
-await sb.auth.signInWithPassword({ email: 'y-demo@lekitduvoyageur.fr', password: 'Ydemo!2026' });
+await sb.auth.signInWithPassword({ email: process.env.AUDIT_EMAIL || (() => { throw new Error('AUDIT_EMAIL est requis'); })(), password: process.env.AUDIT_PASSWORD || (() => { throw new Error('AUDIT_PASSWORD est requis'); })() });
 const { data: tripRow } = await sb.from('trips').select('id,slug,title').order('created_at', { ascending: false }).limit(1).maybeSingle();
 const b64 = (o) => Buffer.from(JSON.stringify(o), 'utf-8').toString('base64url');
 const authCookies = savedCookies.map((c) => ({ name: c.name, value: c.value, domain: 'localhost', path: '/', httpOnly: true }));

@@ -6,13 +6,13 @@
 // Usage : node scripts/test_hike_session.mjs [baseUrl]
 import { createClient } from '@supabase/supabase-js';
 
-const SUPABASE_URL = 'https://icxyvwzfjbflcbqukpfz.supabase.co';
-const ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImljeHl2d3pmamJmbGNicXVrcGZ6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM5NDc3ODcsImV4cCI6MjA5OTUyMzc4N30.-zry9a_kzwgZU_SpLuguT6P4HMbd7czPdMzBJx7ICMA';
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || (() => { throw new Error('NEXT_PUBLIC_SUPABASE_URL est requis'); })();
+const ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || (() => { throw new Error('NEXT_PUBLIC_SUPABASE_ANON_KEY est requis'); })();
 const BASE = process.argv[2] || 'http://localhost:4028';
 const COOKIE_NAME = 'sb-icxyvwzfjbflcbqukpfz-auth-token';
 
 const email = `lkdv.session.${Date.now()}@test.com`;
-const password = 'Str0ngPass!lkdv';
+const password = process.env.AUDIT_PASSWORD || (() => { throw new Error('AUDIT_PASSWORD est requis'); })();
 
 const anon = createClient(SUPABASE_URL, ANON_KEY, { auth: { persistSession: false } });
 
@@ -26,7 +26,7 @@ async function main() {
   const { data: signUp, error: signUpErr } = await anon.auth.signUp({ email, password });
   assert(!signUpErr, `signUp ok (${signUpErr?.message || 'pas d\'erreur'})`);
   if (!signUp.user) throw new Error('signUp: aucun user');
-  console.log(`  user: ${email} (${signUp.user.id})`);
+  console.log('  utilisateur de test authentifié.');
   if (!signUp.session) {
     console.log('  ⚠️ Aucune session retournée → confirmation email requise par défaut. On tente un signIn.');
     const { data: si, error: siErr } = await anon.auth.signInWithPassword({ email, password });

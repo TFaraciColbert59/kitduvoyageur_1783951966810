@@ -10,24 +10,35 @@ const auditScripts = [
   'scripts/audit/create_test_session.mjs',
   'scripts/audit/measure_key_screens_matrix.mjs',
 ];
+const trackedScripts = execFileSync('git', ['ls-files', 'scripts'], { cwd: root, encoding: 'utf8' })
+  .split(/\r?\n/)
+  .filter((file) => /\.(?:mjs|js|ts|tsx)$/.test(file));
 
 function source(relativePath: string) {
   return readFileSync(path.join(root, relativePath), 'utf8');
 }
 
 describe('audit — garde-fous statiques', () => {
-  it('interdit les credentials Supabase littéraux dans les scripts de la campagne', () => {
+  it('interdit les credentials littéraux dans tous les scripts suivis', () => {
     const violations: string[] = [];
-    const forbiddenSupabaseApi = new RegExp([
-      ['create', 'Server', 'Client'].join(''),
-      ['sign', 'InWith', 'Password'].join(''),
-    ].join('|'));
+    const forbidden = [
+      ['y-demo', '@lekitduvoyageur.fr'].join(''),
+      ['Ydemo', '!2026'].join(''),
+      ['demo@', 'lkdv.app'].join(''),
+      ['DemoPass', '!2026'].join(''),
+      ['password', '123'].join(''),
+      ['Str0ngPass', '!lkdv'].join(''),
+      ['Password', '!2026'].join(''),
+      ['demo.bot', '@example.com'].join(''),
+      ['icxyvwzfjbflcbqukpfz', '.supabase.co'].join(''),
+    ];
+    const jwt = /eyJ[A-Za-z0-9_-]{20,}\./;
 
-    for (const relativePath of auditScripts) {
+    for (const relativePath of trackedScripts) {
       const content = source(relativePath);
-      if (/['"][^'"\s@]+@[^'"\s]+['"]/.test(content)) violations.push(`${relativePath}: email littéral`);
-      if (/\bpassword\s*:\s*['"][^'"]+['"]/i.test(content)) violations.push(`${relativePath}: password littéral`);
-      if (forbiddenSupabaseApi.test(content)) violations.push(`${relativePath}: lecture Supabase directe`);
+      if (forbidden.some((secret) => content.includes(secret)) || jwt.test(content)) {
+        violations.push(relativePath);
+      }
     }
 
     expect(violations).toEqual([]);

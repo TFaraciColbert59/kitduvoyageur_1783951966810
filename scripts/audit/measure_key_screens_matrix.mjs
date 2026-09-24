@@ -13,11 +13,18 @@ import {
 } from './contrast_audit_core.mjs';
 import {
   colorContrastRules,
+  extractTextElements,
   getAdventureCookie,
   measurePageContrast,
   readRenderedAuditSettings,
 } from './measure_contrast_v2.mjs';
 import {
+  attachPageDiagnostics,
+  invalidateAuditReports,
+  writeAuditErrorReport,
+} from './audit_runtime.mjs';
+import {
+  auditStorageStatePath,
   loadAuditStorageState,
   verifyCompteSession,
 } from './create_test_session.mjs';
@@ -26,6 +33,7 @@ const BACKGROUND_CAPTURE_CSS = '* { color: transparent !important; text-shadow: 
 const a11yDir = path.resolve('audit', 'a11y');
 const matrixJsonPath = path.join(a11yDir, 'contrast-key-screens-matrix.json');
 const matrixMarkdownPath = path.resolve('audit', 'CONTRASTE-MATRICE.md');
+const errorReportPath = path.join(a11yDir, 'contrast-key-screens-error.json');
 
 function markdownCell(value) {
   return String(value ?? '').replace(/\|/g, '/').replace(/\r?\n/g, ' ');
@@ -73,9 +81,10 @@ async function navigateCell(page, baseUrl, routePath) {
 }
 
 async function run() {
+  invalidateAuditReports([matrixJsonPath, matrixMarkdownPath, errorReportPath]);
   fs.mkdirSync(a11yDir, { recursive: true });
   const baseUrl = getAuditBaseUrl();
-  const storageState = loadAuditStorageState();
+  const storageState = loadAuditStorageState(auditStorageStatePath(), baseUrl);
   const cells = buildMatrixCells();
   const browser = await chromium.launch({
     headless: true,
@@ -107,6 +116,7 @@ async function run() {
       });
       await context.addCookies([getAdventureCookie(baseUrl)]);
       const page = await context.newPage();
+      const diagnostics = attachPageDiagnostics(page);
       await page.addInitScript(({ theme, intensity }) => {
         localStorage.setItem('lkdv_cookie_consent', JSON.stringify({
           necessary: true,
@@ -115,10 +125,7 @@ async function run() {
           version: '1',
         }));
         localStorage.setItem('lkdv_glass_intensity', String(intensity));
-        document.documentElement.classList.toggle('dark', theme === 'dark');
-        document.documentElement.dataset.theme = theme;
-        document.documentElement.style.colorScheme = theme;
-        document.documentElement.style.setProperty('--glass-intensity', String(intensity));
+        localStorage.setItem('lkdv_theme', theme);
       }, { theme: cell.theme, intensity: cell.intensity });
 
       const result = {
@@ -144,13 +151,16 @@ async function run() {
           actualTheme: rendered.theme,
           actualIntensity: rendered.intensity,
         });
+        const textElements = await extractTextElements(page);
         const axeResults = await new AxeBuilder({ page })
           .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'])
           .analyze();
         const measured = await measurePageContrast(page, axeResults, {
           backgroundCss: BACKGROUND_CAPTURE_CSS,
+          textElements,
         });
         if (measured.nodes.length === 0) throw new Error('Aucun nœud texte mesuré');
+        diagnostics.assertClean();
         result.nodes = measured.nodes;
         result.axe = colorContrastRules(axeResults);
         result.axeNodeCounts = {
@@ -161,6 +171,7 @@ async function run() {
       } catch (error) {
         result.error = error instanceof Error ? error.message : String(error);
       } finally {
+        diagnostics.dispose();
         await context.close();
       }
       results.push(result);
@@ -170,10 +181,11 @@ async function run() {
   }
 
   if (results.length !== EXPECTED_MATRIX_CELL_COUNT) {
-    throw new Error(`Matrice incomplète: ${results.length}/${EXPECTED_MATRIX_CELL_COUNT} cellules`);
+    const error = new Error(`Matrice incomplète: ${results.length}/${EXPECTED_MATRIX_CELL_COUNT} cellules`);
+    writeAuditErrorReport(errorReportPath, error, { resultCount: results.length });
+    throw error;
   }
   const report = aggregateContrastMatrix(results);
-  if (report.totals.error > 0) report.weightedPassRate = 0;
   const serialized = {
     ...report,
     generatedAt: new Date().toISOString(),
@@ -184,7 +196,9 @@ async function run() {
   fs.writeFileSync(matrixMarkdownPath, buildMarkdown(serialized));
 
   if (report.totals.error > 0 || report.totals.nodes === 0) {
-    throw new Error(`Matrice terminée avec ${report.totals.error} erreur(s) et ${report.totals.nodes} nœud(s)`);
+    const error = new Error(`Matrice terminée avec ${report.totals.error} erreur(s) et ${report.totals.nodes} nœud(s)`);
+    writeAuditErrorReport(errorReportPath, error, { report });
+    throw error;
   }
   console.info(`Matrice terminée: ${report.cellCount}/${EXPECTED_MATRIX_CELL_COUNT} cellules, ${report.weightedPassRate.toFixed(1)}% pass.`);
 }
