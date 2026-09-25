@@ -327,7 +327,7 @@ export function attachPageDiagnostics(page, options = {}) {
   const onResponse = (response) => {
     const info = responseInfo(response);
     if (info.status < 400) return;
-    if (isExpected404(info.url, info.status, info.resourceType)) return;
+    if (isReadMethod(info.method) && isExpected404(info.url, info.status, info.resourceType)) return;
     if (isAllowedSpeedInsightsResponse(info, auditBaseUrl())) return;
     const message = `HTTP ${info.status} ${safeUrl(info.url)}`;
     if (isSameOrigin(info.url, auditBaseUrl())) {
