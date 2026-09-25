@@ -117,12 +117,22 @@ describe('Task 1B — diagnostics runtime', () => {
     const diagnostics = attachPageDiagnostics(emitted.page, { baseUrl });
 
     emitted.emit('requestfailed', makeRequest({
-      url: `${baseUrl}/explorer`,
-      headers: { 'next-router-prefetch': '1' },
+      url: `${baseUrl}/explorer?_rsc=explorer-key`,
+      headers: {
+        rsc: '1',
+        'next-router-state-tree': 'explorer-state',
+        'next-url': '/explorer',
+        referer: `${baseUrl}/explorer`,
+      },
     }));
     emitted.emit('requestfailed', makeRequest({
       url: `${baseUrl}/hub?_rsc=cache-key`,
-      headers: { rsc: '1', 'next-router-prefetch': '1' },
+      headers: {
+        rsc: '1',
+        'next-router-state-tree': 'hub-state',
+        'next-url': '/hub',
+        referer: `${baseUrl}/hub`,
+      },
     }));
     emitted.emit('requestfailed', makeRequest({
       url: `${baseUrl}${speedInsightsPath}`,

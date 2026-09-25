@@ -213,17 +213,14 @@ function isExactSpeedInsights(info) {
   return info.pathname === SPEED_INSIGHTS_PATH && isReadMethod(info.method);
 }
 
-function isPrefetchRequest(info) {
-  const nextPrefetch = headerValue(info.headers, 'next-router-prefetch').trim().toLowerCase();
-  const middlewarePrefetch = headerValue(info.headers, 'x-middleware-prefetch').trim().toLowerCase();
-  const purpose = headerValue(info.headers, 'purpose').trim().toLowerCase();
-  const secPurpose = headerValue(info.headers, 'sec-purpose').trim().toLowerCase();
-  return Boolean(
-    (nextPrefetch && nextPrefetch !== '0')
-    || (middlewarePrefetch && middlewarePrefetch !== '0')
-    || purpose === 'prefetch'
-    || secPurpose === 'prefetch'
-  );
+function isExactNextPrefetchRequest(info, reference) {
+  return info.method === 'GET'
+    && info.resourceType === 'fetch'
+    && headerValue(info.headers, 'rsc').trim() === '1'
+    && headerValue(info.headers, 'next-router-state-tree').trim().length > 0
+    && headerValue(info.headers, 'next-url').trim().length > 0
+    && /(?:[?&])_rsc=/.test(info.url)
+    && isSameOrigin(headerValue(info.headers, 'referer'), reference);
 }
 
 function isAllowedAbortedRequest(info, reference) {
@@ -233,7 +230,7 @@ function isAllowedAbortedRequest(info, reference) {
   if (isExternalSupabase(info.url)) return true;
   if (!isSameOrigin(info.url, reference)) return false;
   if (isExactSpeedInsights(info)) return true;
-  return isPrefetchRequest(info);
+  return isExactNextPrefetchRequest(info, reference);
 }
 
 function isAllowedSpeedInsightsResponse(info, reference) {

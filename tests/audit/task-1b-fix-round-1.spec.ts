@@ -74,20 +74,19 @@ function adminSettlingPage() {
 }
 
 describe('Task 1B fix round 1 — diagnostics et routes', () => {
-  it('exige un marqueur PrefetchRoutes explicite et refuse le fallback session', () => {
+  it('exige la signature PrefetchRoutes exacte et refuse le fallback session', () => {
     const emitted = createPage();
     const diagnostics = runtime.attachPageDiagnostics(emitted.page, { baseUrl, sessionMode: true });
 
-    const explicitPrefetchHeaders: Array<Record<string, string>> = [
-      { 'next-router-prefetch': '1' },
-      { purpose: 'prefetch' },
-      { 'sec-purpose': 'prefetch' },
-      { 'x-middleware-prefetch': '1' },
-    ];
-    for (const headers of explicitPrefetchHeaders) {
-      emitted.emit('requestfailed', makeRequest({ headers }));
-    }
-
+    emitted.emit('requestfailed', makeRequest({
+      url: `${baseUrl}/hub?_rsc=cache-key`,
+      headers: {
+        rsc: '1',
+        'next-router-state-tree': 'state',
+        'next-url': '/hub',
+        referer: `${baseUrl}/hub`,
+      },
+    }));
     emitted.emit('requestfailed', makeRequest({
       url: `${baseUrl}/hub?_rsc=cache-key`,
       headers: { rsc: '1' },
@@ -95,10 +94,22 @@ describe('Task 1B fix round 1 — diagnostics et routes', () => {
     emitted.emit('requestfailed', makeRequest({ url: `${baseUrl}/plain-abort` }));
     emitted.emit('requestfailed', makeRequest({
       method: 'POST',
-      headers: { 'next-router-prefetch': '1' },
+      url: `${baseUrl}/hub?_rsc=cache-key`,
+      headers: {
+        rsc: '1',
+        'next-router-state-tree': 'state',
+        'next-url': '/hub',
+        referer: `${baseUrl}/hub`,
+      },
     }));
     emitted.emit('requestfailed', makeRequest({
-      headers: { 'next-router-prefetch': '0' },
+      url: `${baseUrl}/hub?_rsc=cache-key`,
+      headers: {
+        rsc: '0',
+        'next-router-state-tree': 'state',
+        'next-url': '/hub',
+        referer: `${baseUrl}/hub`,
+      },
     }));
 
     expect(diagnostics.errors).toHaveLength(4);

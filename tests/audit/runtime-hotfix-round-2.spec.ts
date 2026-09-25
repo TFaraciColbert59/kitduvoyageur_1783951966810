@@ -54,7 +54,7 @@ function createPage() {
 }
 
 describe('audit runtime — session opt-in', () => {
-  it('reste strict même en session et autorise le GET aborted avec marqueur explicite', () => {
+  it('reste strict même en session et autorise le GET aborted avec signature Next complète', () => {
     const strictPage = createPage();
     const strict = attachPageDiagnostics(strictPage.page, { baseUrl });
     strictPage.emit('request', makeRequest());
@@ -67,8 +67,13 @@ describe('audit runtime — session opt-in', () => {
     sessionPage.emit('request', makeRequest());
     sessionPage.emit('requestfailed', makeRequest());
     sessionPage.emit('requestfailed', makeRequest({
-      url: `${baseUrl}/prefetch`,
-      headers: { 'next-router-prefetch': '1' },
+      url: `${baseUrl}/prefetch?_rsc=cache-key`,
+      headers: {
+        rsc: '1',
+        'next-router-state-tree': 'state',
+        'next-url': '/prefetch',
+        referer: `${baseUrl}/prefetch`,
+      },
     }));
     expect(session.errors).toHaveLength(1);
     session.dispose();

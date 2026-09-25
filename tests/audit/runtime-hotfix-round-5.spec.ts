@@ -35,10 +35,15 @@ function createPage(prefetch = false) {
     async goto() {
       listeners.get('requestfailed')?.({
         method: () => 'GET',
-        url: () => `${baseUrl}/prefetch`,
+        url: () => `${baseUrl}/prefetch${prefetch ? '?_rsc=cache-key' : ''}`,
         failure: () => ({ errorText: 'net::ERR_ABORTED' }),
         resourceType: () => 'fetch',
-        headers: () => (prefetch ? { 'next-router-prefetch': '1' } : {}),
+        headers: () => (prefetch ? {
+          rsc: '1',
+          'next-router-state-tree': 'state',
+          'next-url': '/prefetch',
+          referer: `${baseUrl}/prefetch`,
+        } : {}),
       });
       return { status: () => 200 };
     },
@@ -50,7 +55,7 @@ function createPage(prefetch = false) {
 }
 
 describe('audit runtime — preflight opt-in', () => {
-  it('reste strict sans marqueur et accepte le preflight session explicite', async () => {
+  it('reste strict sans signature et accepte le preflight session exact', async () => {
     await expect(verifyCompteSession(createPage(), baseUrl)).rejects.toThrow(/runtime audit/i);
     await expect(verifyCompteSession(createPage(true), baseUrl, { sessionMode: true })).resolves.toMatchObject({
       finalPath: '/compte',

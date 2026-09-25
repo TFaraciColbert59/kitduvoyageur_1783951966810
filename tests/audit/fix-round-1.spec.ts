@@ -309,9 +309,15 @@ describe('fix round 1 — régressions', () => {
     });
     listeners.get('requestfailed')?.({
       method: () => 'GET',
-      url: () => 'http://localhost:3000/prefetch',
+      url: () => 'http://localhost:3000/prefetch?_rsc=cache-key',
       failure: () => ({ errorText: 'net::ERR_ABORTED' }),
-      headers: () => ({ 'next-router-prefetch': '1' }),
+      resourceType: () => 'fetch',
+      headers: () => ({
+        rsc: '1',
+        'next-router-state-tree': 'state',
+        'next-url': '/prefetch',
+        referer: 'http://localhost:3000/prefetch',
+      }),
     });
 
     expect(diagnostics.errors).toHaveLength(0);
