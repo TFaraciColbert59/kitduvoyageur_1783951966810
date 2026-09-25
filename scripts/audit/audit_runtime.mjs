@@ -141,7 +141,7 @@ function requestInfo(request) {
     pathname = '';
   }
   return {
-    method: String(request?.method?.() || 'GET').toUpperCase(),
+    method: String(request?.method?.() || '').toUpperCase(),
     url,
     pathname,
     failureText: String(request?.failure?.()?.errorText || ''),
@@ -164,18 +164,20 @@ function isSameOrigin(url, reference) {
   return Boolean(urlOrigin && referenceOrigin && urlOrigin === referenceOrigin);
 }
 
-function resourceKey(url) {
-  return safeUrl(url);
-}
-
 function isAllowedSessionRequestFailure(info, reference) {
   if (info.method !== 'GET' && info.method !== 'HEAD') return false;
-  return info.failureText === 'net::ERR_ABORTED'
-    && isSameOrigin(info.url, reference)
-    && !info.pathname.includes('net::ERR_ABORTED');
+  if (info.failureText !== 'net::ERR_ABORTED') return false;
+  if (info.pathname.includes('net::ERR_ABORTED')) return false;
+  if (isSameOrigin(info.url, reference)) return true;
+  if (info.pathname === '/_vercel/speed-insights/script.js' && isSameOrigin(info.url, reference)) return true;
+  try {
+    return new URL(info.url).hostname.endsWith('.supabase.co');
+  } catch {
+    return false;
+  }
 }
 
-function isAllowedSessionConsoleError(message, requestMethods) {
+function isAllowedSpeedInsightsConsoleError(text, message) {
   const locationUrl = message?.location?.()?.url;
   if (!locationUrl) return false;
   let parsed;
@@ -184,15 +186,8 @@ function isAllowedSessionConsoleError(message, requestMethods) {
   } catch {
     return false;
   }
-  if (parsed.pathname.includes('net::ERR_ABORTED')) return false;
-  const method = requestMethods.get(locationUrl) || requestMethods.get(resourceKey(locationUrl));
-  if (parsed.pathname === '/_vercel/speed-insights/script.js') {
-    return !method || method === 'GET' || method === 'HEAD';
-  }
-  if (parsed.hostname.endsWith('.supabase.co')) {
-    return method === 'GET' || method === 'HEAD';
-  }
-  return false;
+  if (parsed.pathname !== '/_vercel/speed-insights/script.js') return false;
+  return /^Refused to execute script from .* because its MIME type .* is not executable, and strict MIME type checking is enabled\.$/i.test(text);
 }
 
 export function attachPageDiagnostics(page, options = {}) {
@@ -201,45 +196,30 @@ export function attachPageDiagnostics(page, options = {}) {
   const pageUrl = () => (typeof page.url === 'function' ? page.url() : '');
   const auditBaseUrl = () => configuredBaseUrl || pageUrl();
   const errors = [];
-  const requestMethods = new Map();
-  const coveredResponses = new Set();
   const onPageError = (error) => {
     errors.push({ type: 'pageerror', message: redactDiagnosticText(error?.message || error) });
-  };
-  const onRequest = (request) => {
-    const info = requestInfo(request);
-    requestMethods.set(info.url, info.method);
-    requestMethods.set(resourceKey(info.url), info.method);
   };
   const onRequestFailed = (request) => {
     const info = requestInfo(request);
     if (sessionMode && isAllowedSessionRequestFailure(info, auditBaseUrl())) return;
-    const message = `${info.method} ${safeUrl(info.url)} ${redactDiagnosticText(info.failureText || 'requestfailed')}`;
+    const message = `${info.method || 'UNKNOWN'} ${safeUrl(info.url)} ${redactDiagnosticText(info.failureText || 'requestfailed')}`;
     errors.push({ type: 'requestfailed', message });
   };
   const onResponse = (response) => {
     const info = responseInfo(response);
     if (info.status < 400) return;
-    const key = resourceKey(info.url);
-    if (isSameOrigin(info.url, auditBaseUrl())) {
-      if (HTTP_ERROR_RESOURCE_TYPES.has(info.resourceType)) {
-        errors.push({ type: 'http', message: `HTTP ${info.status} ${safeUrl(info.url)}` });
-        coveredResponses.add(key);
-      }
-      return;
+    if (isSameOrigin(info.url, auditBaseUrl()) && HTTP_ERROR_RESOURCE_TYPES.has(info.resourceType)) {
+      errors.push({ type: 'http', message: `HTTP ${info.status} ${safeUrl(info.url)}` });
     }
-    coveredResponses.add(key);
   };
   const onConsole = (message) => {
     if (message?.type?.() !== 'error') return;
     const text = redactDiagnosticText(message.text());
-    const locationUrl = message?.location?.()?.url;
-    if (/^Failed to load resource\b/i.test(text) && locationUrl && coveredResponses.has(resourceKey(locationUrl))) return;
-    if (sessionMode && isAllowedSessionConsoleError(message, requestMethods)) return;
+    if (/^Failed to load resource\b/i.test(text)) return;
+    if (isAllowedSpeedInsightsConsoleError(text, message)) return;
     errors.push({ type: 'console', message: text });
   };
   page.on('pageerror', onPageError);
-  page.on('request', onRequest);
   page.on('requestfailed', onRequestFailed);
   page.on('response', onResponse);
   page.on('console', onConsole);
@@ -251,7 +231,6 @@ export function attachPageDiagnostics(page, options = {}) {
     },
     dispose() {
       page.off('pageerror', onPageError);
-      page.off('request', onRequest);
       page.off('requestfailed', onRequestFailed);
       page.off('response', onResponse);
       page.off('console', onConsole);

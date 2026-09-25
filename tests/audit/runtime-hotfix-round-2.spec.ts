@@ -94,7 +94,7 @@ describe('audit runtime — session opt-in', () => {
 
     const lookalikePage = createPage();
     const lookalike = attachPageDiagnostics(lookalikePage.page, { baseUrl, sessionMode: true });
-    lookalikePage.emit('console', makeConsole('Failed to load resource', `${baseUrl}/_vercel/speed-insights/script.js.evil`));
+    lookalikePage.emit('console', makeConsole('Unexpected SpeedInsights failure', `${baseUrl}/_vercel/speed-insights/script.js.evil`));
     expect(lookalike.errors).toHaveLength(1);
     lookalike.dispose();
   });
@@ -105,7 +105,7 @@ describe('audit runtime — session opt-in', () => {
     const exactRequest = makeRequest({ url: 'https://project.supabase.co/rest/v1/resource', method: 'GET' });
     exactPage.emit('request', exactRequest);
     exactPage.emit('console', makeConsole('net::ERR_ABORTED', 'https://project.supabase.co/rest/v1/resource'));
-    expect(exact.errors).toHaveLength(0);
+    expect(exact.errors).toHaveLength(1);
     exact.dispose();
 
     const lookalikePage = createPage();

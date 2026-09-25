@@ -347,7 +347,7 @@ describe('fix round 1 — régressions', () => {
     diagnostics.dispose();
   });
 
-  it('ignore une erreur console aborted sur une ressource externe autorisée', () => {
+  it('conserve une erreur console aborted sur une ressource externe', () => {
     const listeners = new Map<string, (...args: any[]) => void>();
     const page = {
       on(event: string, listener: (...args: any[]) => void) {
@@ -371,8 +371,8 @@ describe('fix round 1 — régressions', () => {
       location: () => ({ url: 'https://project.supabase.co/rest/v1/resource' }),
     });
 
-    expect(diagnostics.errors).toHaveLength(0);
-    expect(() => diagnostics.assertClean()).not.toThrow();
+    expect(diagnostics.errors).toHaveLength(1);
+    expect(() => diagnostics.assertClean()).toThrow(/runtime audit/i);
     diagnostics.dispose();
   });
 
