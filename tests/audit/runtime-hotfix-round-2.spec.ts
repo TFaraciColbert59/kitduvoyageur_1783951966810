@@ -54,12 +54,14 @@ function createPage() {
 }
 
 describe('audit runtime — session opt-in', () => {
-  it('reste strict même en session et autorise le GET aborted avec signature Next complète', () => {
+  it('conserve le GET aborted générique en warning et la signature Next exacte en silence', () => {
     const strictPage = createPage();
     const strict = attachPageDiagnostics(strictPage.page, { baseUrl });
     strictPage.emit('request', makeRequest());
     strictPage.emit('requestfailed', makeRequest());
-    expect(strict.errors).toHaveLength(1);
+    expect(strict.errors).toHaveLength(0);
+    expect(strict.warnings).toHaveLength(1);
+    expect(() => strict.assertClean()).not.toThrow();
     strict.dispose();
 
     const sessionPage = createPage();
@@ -75,7 +77,8 @@ describe('audit runtime — session opt-in', () => {
         referer: `${baseUrl}/prefetch`,
       },
     }));
-    expect(session.errors).toHaveLength(1);
+    expect(session.errors).toHaveLength(0);
+    expect(session.warnings).toHaveLength(1);
     session.dispose();
   });
 

@@ -112,7 +112,7 @@ describe('Task 1B — diagnostics runtime', () => {
     diagnostics.dispose();
   });
 
-  it('ignore globalement les aborted PrefetchRoutes et Supabase GET/HEAD, jamais les mutations', () => {
+  it('ignore les aborted exacts, retient l’aborted générique et garde les mutations fatales', () => {
     const emitted = createPage();
     const diagnostics = attachPageDiagnostics(emitted.page, { baseUrl });
 
@@ -152,8 +152,11 @@ describe('Task 1B — diagnostics runtime', () => {
       url: `${baseUrl}/prefetch-without-header`,
     }));
 
-    expect(diagnostics.errors).toHaveLength(2);
-    expect(diagnostics.errors.map((entry: { type: string }) => entry.type)).toEqual(['requestfailed', 'requestfailed']);
+    expect(diagnostics.errors).toHaveLength(1);
+    expect(diagnostics.errors.map((entry: { type: string }) => entry.type)).toEqual(['requestfailed']);
+    expect(diagnostics.warnings).toHaveLength(1);
+    expect(diagnostics.warnings[0]).toMatchObject({ type: 'requestfailed' });
+    expect(() => diagnostics.assertClean()).toThrow(/runtime audit/i);
     diagnostics.dispose();
   });
 

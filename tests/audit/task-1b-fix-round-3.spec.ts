@@ -43,7 +43,7 @@ function createPage() {
 }
 
 describe('Task 1B fix round 3 — PrefetchRoutes strict', () => {
-  it('accepte la signature Next complète et refuse RSC seul ou _rsc seul', () => {
+  it('accepte la signature Next complète et retient RSC seul ou _rsc seul en warnings', () => {
     const emitted = createPage();
     const diagnostics = attachPageDiagnostics(emitted.page, { baseUrl, sessionMode: true });
 
@@ -64,13 +64,11 @@ describe('Task 1B fix round 3 — PrefetchRoutes strict', () => {
       url: `${baseUrl}/query-only?_rsc=cache-key`,
     }));
 
-    expect(diagnostics.errors).toHaveLength(2);
-    expect(diagnostics.errors.map((entry: { type: string }) => entry.type)).toEqual([
-      'requestfailed',
-      'requestfailed',
-    ]);
-    expect(diagnostics.errors[0].message).toContain('/rsc-only');
-    expect(diagnostics.errors[1].message).toContain('/query-only');
+    expect(diagnostics.errors).toHaveLength(0);
+    expect(diagnostics.warnings).toHaveLength(2);
+    expect(diagnostics.warnings.every((entry: { type: string }) => entry.type === 'requestfailed')).toBe(true);
+    expect(diagnostics.warnings[0].message).toContain('/rsc-only');
+    expect(diagnostics.warnings[1].message).toContain('/query-only');
     diagnostics.dispose();
   });
 });

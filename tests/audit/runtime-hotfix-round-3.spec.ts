@@ -136,13 +136,16 @@ describe('audit runtime — diagnostics sans corrélation mutable', () => {
     diagnostics.dispose();
   });
 
-  it('reste strict sans opt-in et conserve les autres erreurs console', () => {
+  it('conserve aborted same-origin et les autres erreurs console en warnings', () => {
     const strictPage = createPage();
     const strict = attachPageDiagnostics(strictPage.page, { baseUrl });
     strictPage.emit('requestfailed', makeRequest());
     strictPage.emit('console', makeConsole('Uncaught TypeError'));
-    expect(strict.errors).toHaveLength(1);
-    expect(strict.warnings).toHaveLength(1);
+    expect(strict.errors).toHaveLength(0);
+    expect(strict.warnings.map((entry: { type: string }) => entry.type)).toEqual([
+      'requestfailed',
+      'console',
+    ]);
     strict.dispose();
   });
 });

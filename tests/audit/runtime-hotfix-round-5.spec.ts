@@ -55,8 +55,11 @@ function createPage(prefetch = false) {
 }
 
 describe('audit runtime — preflight opt-in', () => {
-  it('reste strict sans signature et accepte le preflight session exact', async () => {
-    await expect(verifyCompteSession(createPage(), baseUrl)).rejects.toThrow(/runtime audit/i);
+  it('conserve l’aborted générique et accepte le preflight session exact', async () => {
+    await expect(verifyCompteSession(createPage(), baseUrl)).resolves.toMatchObject({
+      finalPath: '/compte',
+      status: 200,
+    });
     await expect(verifyCompteSession(createPage(true), baseUrl, { sessionMode: true })).resolves.toMatchObject({
       finalPath: '/compte',
       status: 200,

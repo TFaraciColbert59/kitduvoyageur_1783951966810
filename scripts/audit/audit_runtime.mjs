@@ -122,13 +122,6 @@ export function writeAuditErrorReport(reportPath, error, details = {}) {
   }, null, 2)}\n`);
 }
 
-const HTTP_ERROR_RESOURCE_TYPES = new Set([
-  'document',
-  'script',
-  'stylesheet',
-  'font',
-  'image',
-]);
 const SPEED_INSIGHTS_PATH = '/_vercel/speed-insights/script.js';
 
 function originOf(value) {
@@ -233,6 +226,13 @@ function isAllowedAbortedRequest(info, reference) {
   return isExactNextPrefetchRequest(info, reference);
 }
 
+function isRetainedAbortedRequest(info, reference) {
+  return isReadMethod(info.method)
+    && info.failureText === 'net::ERR_ABORTED'
+    && !info.url.includes('net::ERR_ABORTED')
+    && isSameOrigin(info.url, reference);
+}
+
 function isAllowedSpeedInsightsResponse(info, reference) {
   return info.status === 404
     && isExactSpeedInsights(info)
@@ -317,7 +317,12 @@ export function attachPageDiagnostics(page, options = {}) {
     const info = requestInfo(request);
     if (isAllowedAbortedRequest(info, auditBaseUrl())) return;
     const message = `${info.method || 'UNKNOWN'} ${safeUrl(info.url)} ${redactDiagnosticText(info.failureText || 'requestfailed')}`;
-    errors.push({ type: 'requestfailed', message });
+    const entry = { type: 'requestfailed', message };
+    if (isRetainedAbortedRequest(info, auditBaseUrl())) {
+      warnings.push(entry);
+      return;
+    }
+    errors.push(entry);
   };
   const onResponse = (response) => {
     const info = responseInfo(response);
@@ -326,11 +331,7 @@ export function attachPageDiagnostics(page, options = {}) {
     if (isAllowedSpeedInsightsResponse(info, auditBaseUrl())) return;
     const message = `HTTP ${info.status} ${safeUrl(info.url)}`;
     if (isSameOrigin(info.url, auditBaseUrl())) {
-      if (!info.resourceType || HTTP_ERROR_RESOURCE_TYPES.has(info.resourceType)) {
-        errors.push({ type: 'http', message });
-      } else {
-        warnings.push({ type: 'http', message });
-      }
+      errors.push({ type: 'http', message });
       return;
     }
     warnings.push({ type: 'http', message });

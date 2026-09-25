@@ -74,7 +74,7 @@ function adminSettlingPage() {
 }
 
 describe('Task 1B fix round 1 — diagnostics et routes', () => {
-  it('exige la signature PrefetchRoutes exacte et refuse le fallback session', () => {
+  it('exige la signature PrefetchRoutes exacte et retient les aborted incomplets', () => {
     const emitted = createPage();
     const diagnostics = runtime.attachPageDiagnostics(emitted.page, { baseUrl, sessionMode: true });
 
@@ -112,8 +112,10 @@ describe('Task 1B fix round 1 — diagnostics et routes', () => {
       },
     }));
 
-    expect(diagnostics.errors).toHaveLength(4);
+    expect(diagnostics.errors).toHaveLength(1);
     expect(diagnostics.errors.every((entry: { type: string }) => entry.type === 'requestfailed')).toBe(true);
+    expect(diagnostics.warnings).toHaveLength(3);
+    expect(diagnostics.warnings.every((entry: { type: string }) => entry.type === 'requestfailed')).toBe(true);
     diagnostics.dispose();
   });
 
