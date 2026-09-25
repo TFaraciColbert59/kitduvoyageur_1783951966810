@@ -292,4 +292,102 @@ describe('fix round 1 — régressions', () => {
     expect(JSON.stringify(diagnostics.errors)).not.toContain('hidden');
     diagnostics.dispose();
   });
+
+  it('ignore une requête explicitement autorisée', () => {
+    const listeners = new Map<string, (...args: any[]) => void>();
+    const page = {
+      on(event: string, listener: (...args: any[]) => void) {
+        listeners.set(event, listener);
+      },
+      off(event: string) {
+        listeners.delete(event);
+      },
+    };
+    const diagnostics = attachPageDiagnostics(page, {
+      allowedRequestFailures: [/net::ERR_ABORTED/],
+    });
+    listeners.get('requestfailed')?.({
+      method: () => 'GET',
+      url: () => 'http://localhost:3000/prefetch',
+      failure: () => ({ errorText: 'net::ERR_ABORTED' }),
+    });
+
+    expect(diagnostics.errors).toHaveLength(0);
+    expect(() => diagnostics.assertClean()).not.toThrow();
+    diagnostics.dispose();
+  });
+
+  it('ignore une ressource console externe autorisée', () => {
+    const listeners = new Map<string, (...args: any[]) => void>();
+    const page = {
+      on(event: string, listener: (...args: any[]) => void) {
+        listeners.set(event, listener);
+      },
+      off(event: string) {
+        listeners.delete(event);
+      },
+    };
+    const diagnostics = attachPageDiagnostics(page, {
+      allowedConsoleErrors: [/failed to load resource.*supabase\.co/i],
+    });
+    listeners.get('console')?.({
+      type: () => 'error',
+      text: () => 'Failed to load resource: 403 (Forbidden)',
+      location: () => ({ url: 'https://project.supabase.co/rest/v1/resource' }),
+    });
+
+    expect(diagnostics.errors).toHaveLength(0);
+    expect(() => diagnostics.assertClean()).not.toThrow();
+    diagnostics.dispose();
+  });
+
+  it('ignore une erreur console aborted sur une ressource externe autorisée', () => {
+    const listeners = new Map<string, (...args: any[]) => void>();
+    const page = {
+      on(event: string, listener: (...args: any[]) => void) {
+        listeners.set(event, listener);
+      },
+      off(event: string) {
+        listeners.delete(event);
+      },
+    };
+    const diagnostics = attachPageDiagnostics(page, {
+      allowedConsoleErrors: [/net::ERR_ABORTED.*supabase\.co/i],
+    });
+    listeners.get('console')?.({
+      type: () => 'error',
+      text: () => 'net::ERR_ABORTED',
+      location: () => ({ url: 'https://project.supabase.co/rest/v1/resource' }),
+    });
+
+    expect(diagnostics.errors).toHaveLength(0);
+    expect(() => diagnostics.assertClean()).not.toThrow();
+    diagnostics.dispose();
+  });
+
+  it('conserve les erreurs locales et pageerror bloquantes', () => {
+    const listeners = new Map<string, (...args: any[]) => void>();
+    const page = {
+      on(event: string, listener: (...args: any[]) => void) {
+        listeners.set(event, listener);
+      },
+      off(event: string) {
+        listeners.delete(event);
+      },
+    };
+    const diagnostics = attachPageDiagnostics(page, {
+      allowedRequestFailures: [/net::ERR_ABORTED/],
+      allowedConsoleErrors: [/supabase\.co/i],
+    });
+    listeners.get('pageerror')?.(new Error('local page failure'));
+    listeners.get('requestfailed')?.({
+      method: () => 'GET',
+      url: () => 'http://localhost:3000/local',
+      failure: () => ({ errorText: 'net::ERR_CONNECTION_REFUSED' }),
+    });
+
+    expect(diagnostics.errors).toHaveLength(2);
+    expect(() => diagnostics.assertClean()).toThrow(/runtime audit/i);
+    diagnostics.dispose();
+  });
 });

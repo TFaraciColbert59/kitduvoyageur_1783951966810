@@ -122,7 +122,15 @@ export function writeAuditErrorReport(reportPath, error, details = {}) {
   }, null, 2)}\n`);
 }
 
+function matchesDiagnosticPattern(pattern, text, context) {
+  if (typeof pattern === 'function') return Boolean(pattern(text, context));
+  if (!(pattern instanceof RegExp)) return false;
+  pattern.lastIndex = 0;
+  return pattern.test(text);
+}
+
 export function attachPageDiagnostics(page, options = {}) {
+  const allowedRequestFailures = options.allowedRequestFailures || [];
   const allowedConsoleErrors = options.allowedConsoleErrors || [];
   const errors = [];
   const onPageError = (error) => {
@@ -130,15 +138,16 @@ export function attachPageDiagnostics(page, options = {}) {
   };
   const onRequestFailed = (request) => {
     const failure = request?.failure?.()?.errorText || 'requestfailed';
-    errors.push({
-      type: 'requestfailed',
-      message: `${request?.method?.() || 'GET'} ${safeUrl(request?.url?.())} ${redactDiagnosticText(failure)}`,
-    });
+    const message = `${request?.method?.() || 'GET'} ${safeUrl(request?.url?.())} ${redactDiagnosticText(failure)}`;
+    if (allowedRequestFailures.some((pattern) => matchesDiagnosticPattern(pattern, message, request))) return;
+    errors.push({ type: 'requestfailed', message });
   };
   const onConsole = (message) => {
     if (message?.type?.() !== 'error') return;
     const text = redactDiagnosticText(message.text());
-    if (allowedConsoleErrors.some((pattern) => pattern.test(text))) return;
+    const locationUrl = message?.location?.()?.url;
+    const matchText = locationUrl ? `${text} ${safeUrl(locationUrl)}` : text;
+    if (allowedConsoleErrors.some((pattern) => matchesDiagnosticPattern(pattern, matchText, message))) return;
     errors.push({ type: 'console', message: text });
   };
   page.on('pageerror', onPageError);
