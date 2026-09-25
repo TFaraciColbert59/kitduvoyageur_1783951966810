@@ -304,7 +304,8 @@ describe('fix round 1 — régressions', () => {
       },
     };
     const diagnostics = attachPageDiagnostics(page, {
-      allowedRequestFailures: [/net::ERR_ABORTED/],
+      baseUrl: 'http://localhost:3000',
+      sessionMode: true,
     });
     listeners.get('requestfailed')?.({
       method: () => 'GET',
@@ -328,7 +329,12 @@ describe('fix round 1 — régressions', () => {
       },
     };
     const diagnostics = attachPageDiagnostics(page, {
-      allowedConsoleErrors: [/failed to load resource.*supabase\.co/i],
+      baseUrl: 'http://localhost:3000',
+      sessionMode: true,
+    });
+    listeners.get('request')?.({
+      method: () => 'GET',
+      url: () => 'https://project.supabase.co/rest/v1/resource',
     });
     listeners.get('console')?.({
       type: () => 'error',
@@ -352,7 +358,12 @@ describe('fix round 1 — régressions', () => {
       },
     };
     const diagnostics = attachPageDiagnostics(page, {
-      allowedConsoleErrors: [/net::ERR_ABORTED.*supabase\.co/i],
+      baseUrl: 'http://localhost:3000',
+      sessionMode: true,
+    });
+    listeners.get('request')?.({
+      method: () => 'GET',
+      url: () => 'https://project.supabase.co/rest/v1/resource',
     });
     listeners.get('console')?.({
       type: () => 'error',
@@ -376,8 +387,8 @@ describe('fix round 1 — régressions', () => {
       },
     };
     const diagnostics = attachPageDiagnostics(page, {
-      allowedRequestFailures: [/net::ERR_ABORTED/],
-      allowedConsoleErrors: [/supabase\.co/i],
+      baseUrl: 'http://localhost:3000',
+      sessionMode: true,
     });
     listeners.get('pageerror')?.(new Error('local page failure'));
     listeners.get('requestfailed')?.({

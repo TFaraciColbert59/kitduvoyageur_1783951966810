@@ -12,24 +12,10 @@ import {
   attachPageDiagnostics,
   defaultAuditStorageStatePath,
   ensurePrivateAuditDirectory,
+  redactDiagnosticText,
 } from './audit_runtime.mjs';
 
 export const ACCOUNT_SENTINEL_SELECTOR = 'a[href="/compte/modifier"]:visible';
-
-const SESSION_ALLOWED_CONSOLE_ERRORS = [
-  /net::ERR_ABORTED.*(?:_vercel\/insights|speed-insights|supabase\.co)/i,
-  /(?:failed to load resource|refused to execute script).*?(?:_vercel\/insights|speed-insights|supabase\.co)/i,
-];
-
-function isAllowedSessionRequestFailure(text, request, baseUrl) {
-  if (!/net::ERR_ABORTED/i.test(text)) return false;
-  try {
-    const requestUrl = new URL(request?.url?.() || '');
-    return requestUrl.origin === new URL(baseUrl).origin || requestUrl.hostname.endsWith('.supabase.co');
-  } catch {
-    return false;
-  }
-}
 
 export function auditStorageStatePath(env = process.env) {
   return defaultAuditStorageStatePath(env);
@@ -59,12 +45,10 @@ export async function fillVisibleLoginForm(page, credentials) {
   return form;
 }
 
-export async function verifyCompteSession(page, baseUrl) {
+export async function verifyCompteSession(page, baseUrl, options = {}) {
   const diagnostics = attachPageDiagnostics(page, {
-    allowedRequestFailures: [
-      (text, request) => isAllowedSessionRequestFailure(text, request, baseUrl),
-    ],
-    allowedConsoleErrors: SESSION_ALLOWED_CONSOLE_ERRORS,
+    baseUrl,
+    sessionMode: options.sessionMode === true,
   });
   try {
     const response = await page.goto(new URL('/compte', baseUrl).toString(), {
@@ -128,7 +112,7 @@ export async function createAuthenticatedStorageState() {
       page.waitForURL((url) => new URL(url).pathname === '/compte', { timeout: 30000 }),
       loginForm.locator('button[type="submit"]:visible').click(),
     ]);
-    await verifyCompteSession(page, baseUrl);
+    await verifyCompteSession(page, baseUrl, { sessionMode: true });
     const state = await context.storageState();
     validateStorageState(state, Date.now(), baseUrl);
     ensurePrivateAuditDirectory(path.dirname(storagePath));
@@ -149,7 +133,7 @@ async function run() {
 const invokedPath = process.argv[1] ? pathToFileURL(path.resolve(process.argv[1])).href : null;
 if (invokedPath === import.meta.url) {
   run().catch((error) => {
-    console.error(error.message);
+    console.error(redactDiagnosticText(error.message));
     process.exit(1);
   });
 }

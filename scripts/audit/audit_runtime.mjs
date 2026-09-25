@@ -122,36 +122,126 @@ export function writeAuditErrorReport(reportPath, error, details = {}) {
   }, null, 2)}\n`);
 }
 
-function matchesDiagnosticPattern(pattern, text, context) {
-  if (typeof pattern === 'function') return Boolean(pattern(text, context));
-  if (!(pattern instanceof RegExp)) return false;
-  pattern.lastIndex = 0;
-  return pattern.test(text);
+const HTTP_ERROR_RESOURCE_TYPES = new Set(['document', 'script', 'stylesheet', 'font', 'image']);
+
+function originOf(value) {
+  try {
+    return new URL(String(value || '')).origin;
+  } catch {
+    return null;
+  }
+}
+
+function requestInfo(request) {
+  const url = String(request?.url?.() || '');
+  let pathname = '';
+  try {
+    pathname = new URL(url).pathname;
+  } catch {
+    pathname = '';
+  }
+  return {
+    method: String(request?.method?.() || 'GET').toUpperCase(),
+    url,
+    pathname,
+    failureText: String(request?.failure?.()?.errorText || ''),
+    resourceType: String(request?.resourceType?.() || ''),
+  };
+}
+
+function responseInfo(response) {
+  const request = requestInfo(response?.request?.());
+  return {
+    ...request,
+    url: String(response?.url?.() || request.url),
+    status: Number(response?.status?.() || 0),
+  };
+}
+
+function isSameOrigin(url, reference) {
+  const urlOrigin = originOf(url);
+  const referenceOrigin = originOf(reference);
+  return Boolean(urlOrigin && referenceOrigin && urlOrigin === referenceOrigin);
+}
+
+function resourceKey(url) {
+  return safeUrl(url);
+}
+
+function isAllowedSessionRequestFailure(info, reference) {
+  if (info.method !== 'GET' && info.method !== 'HEAD') return false;
+  return info.failureText === 'net::ERR_ABORTED'
+    && isSameOrigin(info.url, reference)
+    && !info.pathname.includes('net::ERR_ABORTED');
+}
+
+function isAllowedSessionConsoleError(message, requestMethods) {
+  const locationUrl = message?.location?.()?.url;
+  if (!locationUrl) return false;
+  let parsed;
+  try {
+    parsed = new URL(String(locationUrl));
+  } catch {
+    return false;
+  }
+  if (parsed.pathname.includes('net::ERR_ABORTED')) return false;
+  const method = requestMethods.get(locationUrl) || requestMethods.get(resourceKey(locationUrl));
+  if (parsed.pathname === '/_vercel/speed-insights/script.js') {
+    return !method || method === 'GET' || method === 'HEAD';
+  }
+  if (parsed.hostname.endsWith('.supabase.co')) {
+    return method === 'GET' || method === 'HEAD';
+  }
+  return false;
 }
 
 export function attachPageDiagnostics(page, options = {}) {
-  const allowedRequestFailures = options.allowedRequestFailures || [];
-  const allowedConsoleErrors = options.allowedConsoleErrors || [];
+  const sessionMode = options.sessionMode === true;
+  const configuredBaseUrl = typeof options.baseUrl === 'string' ? options.baseUrl : '';
+  const pageUrl = () => (typeof page.url === 'function' ? page.url() : '');
+  const auditBaseUrl = () => configuredBaseUrl || pageUrl();
   const errors = [];
+  const requestMethods = new Map();
+  const coveredResponses = new Set();
   const onPageError = (error) => {
     errors.push({ type: 'pageerror', message: redactDiagnosticText(error?.message || error) });
   };
+  const onRequest = (request) => {
+    const info = requestInfo(request);
+    requestMethods.set(info.url, info.method);
+    requestMethods.set(resourceKey(info.url), info.method);
+  };
   const onRequestFailed = (request) => {
-    const failure = request?.failure?.()?.errorText || 'requestfailed';
-    const message = `${request?.method?.() || 'GET'} ${safeUrl(request?.url?.())} ${redactDiagnosticText(failure)}`;
-    if (allowedRequestFailures.some((pattern) => matchesDiagnosticPattern(pattern, message, request))) return;
+    const info = requestInfo(request);
+    if (sessionMode && isAllowedSessionRequestFailure(info, auditBaseUrl())) return;
+    const message = `${info.method} ${safeUrl(info.url)} ${redactDiagnosticText(info.failureText || 'requestfailed')}`;
     errors.push({ type: 'requestfailed', message });
+  };
+  const onResponse = (response) => {
+    const info = responseInfo(response);
+    if (info.status < 400) return;
+    const key = resourceKey(info.url);
+    if (isSameOrigin(info.url, auditBaseUrl())) {
+      if (HTTP_ERROR_RESOURCE_TYPES.has(info.resourceType)) {
+        errors.push({ type: 'http', message: `HTTP ${info.status} ${safeUrl(info.url)}` });
+        coveredResponses.add(key);
+      }
+      return;
+    }
+    coveredResponses.add(key);
   };
   const onConsole = (message) => {
     if (message?.type?.() !== 'error') return;
     const text = redactDiagnosticText(message.text());
     const locationUrl = message?.location?.()?.url;
-    const matchText = locationUrl ? `${text} ${safeUrl(locationUrl)}` : text;
-    if (allowedConsoleErrors.some((pattern) => matchesDiagnosticPattern(pattern, matchText, message))) return;
+    if (/^Failed to load resource\b/i.test(text) && locationUrl && coveredResponses.has(resourceKey(locationUrl))) return;
+    if (sessionMode && isAllowedSessionConsoleError(message, requestMethods)) return;
     errors.push({ type: 'console', message: text });
   };
   page.on('pageerror', onPageError);
+  page.on('request', onRequest);
   page.on('requestfailed', onRequestFailed);
+  page.on('response', onResponse);
   page.on('console', onConsole);
   return {
     errors,
@@ -161,7 +251,9 @@ export function attachPageDiagnostics(page, options = {}) {
     },
     dispose() {
       page.off('pageerror', onPageError);
+      page.off('request', onRequest);
       page.off('requestfailed', onRequestFailed);
+      page.off('response', onResponse);
       page.off('console', onConsole);
     },
   };
