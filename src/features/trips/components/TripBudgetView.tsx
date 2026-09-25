@@ -289,7 +289,7 @@ export function TripBudgetView({ trip, initialDay }: TripBudgetViewProps) {
                 className={`h-full rounded-full transition-all duration-500 ${
                   budgetSummary.isOverBudget
                     ? 'bg-[color:var(--lkv-danger)]'
-                    : 'bg-[color:var(--lkv-primary)]'
+                    : 'bg-[color:var(--glass-label)]'
                 }`}
                 style={{ width: `${Math.min(budgetSummary.spentPercentage ?? 0, 100)}%` }}
               />
@@ -301,7 +301,7 @@ export function TripBudgetView({ trip, initialDay }: TripBudgetViewProps) {
         <div className="space-y-[var(--space-3)]">
           <div className="flex items-center justify-between">
             <h4 className="flex items-center gap-[var(--space-2)] text-[length:var(--lkv-text-subheadline)] font-bold text-[color:var(--lkv-text-primary)]">
-              <Icon name="calendar-check" size={18} className="text-[color:var(--lkv-secondary)]" />
+              <Icon name="calendar-check" size={18} className="text-[color:var(--glass-label)]" />
               Jour par jour — prévu vs réel
             </h4>
             {canManage && (

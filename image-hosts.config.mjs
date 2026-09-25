@@ -29,10 +29,6 @@ export const imageHosts = [
     },
     {
         protocol: 'https',
-        hostname: 'icxyvwzfjbflcbqukpfz.supabase.co',
-    },
-    {
-        protocol: 'https',
         hostname: '**.supabase.co',
     },
 ];

@@ -2,10 +2,7 @@
   "ci": {
     "collect": {
       "url": ["http://localhost:4028/"],
-      "numberOfRuns": 1,
-      "settings": {
-        "chromeFlags": "--no-sandbox --disable-dev-shm-usage"
-      }
+      "numberOfRuns": 1
     },
     "assert": {
       "assertions": {
@@ -14,9 +11,6 @@
         "categories:best-practices": "off",
         "categories:seo": "off"
       }
-    },
-    "upload": {
-      "target": "temporary-public-storage"
     }
   }
 }

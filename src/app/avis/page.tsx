@@ -276,9 +276,9 @@ export default function AvisPage() {
           <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-12">
             <div className="flex items-end justify-between gap-6 mb-6">
               <div>
-                <p className="text-[11px] font-mono uppercase tracking-[0.14em] text-[color:var(--lkv-forest-100)] mb-2">AVIS &amp; ÉVALUATIONS</p>
-                <h1 className="font-display font-bold text-3xl tracking-tight text-[color:var(--lkv-surface)]">Les avis de la communauté</h1>
-                <p className="text-sm text-[color:var(--lkv-forest-100)] mt-1.5 max-w-xl">Avis vérifiés sur les produits, kits, locations et articles d&apos;occasion.</p>
+                <p className="text-[11px] font-mono uppercase tracking-[0.14em] text-[color:var(--lkv-text-secondary)] mb-2">AVIS &amp; ÉVALUATIONS</p>
+                <h1 className="font-display font-bold text-3xl tracking-tight text-[color:var(--glass-label)]">Les avis de la communauté</h1>
+                <p className="text-sm text-[color:var(--lkv-text-secondary)] mt-1.5 max-w-xl">Avis vérifiés sur les produits, kits, locations et articles d&apos;occasion.</p>
               </div>
               <Button onClick={() => setShowWriteModal(true)} icon={<Icon name="PencilSquareIcon" size={16} />} className="shrink-0">
                 Laisser un avis
@@ -286,10 +286,10 @@ export default function AvisPage() {
             </div>
 
             <div className="flex items-center gap-3 mb-6">
-              <span className="font-display font-bold text-4xl text-[color:var(--lkv-surface)]">{avgRating}</span>
+              <span className="font-display font-bold text-4xl text-[color:var(--glass-label)]">{avgRating}</span>
               <div>
                 <StarRating rating={Math.round(parseFloat(avgRating))} size={16} />
-                <p className="text-[11px] text-[color:var(--lkv-forest-100)] mt-0.5">{reviews.length} avis</p>
+                <p className="text-[11px] text-[color:var(--lkv-text-secondary)] mt-0.5">{reviews.length} avis</p>
               </div>
             </div>
 
@@ -331,26 +331,30 @@ export default function AvisPage() {
       <div className="block md:hidden">
         <MobilePageShell>
           <div className="p-[var(--space-4)]">
-            <p className="mb-[var(--space-3)] font-mono text-[length:var(--lkv-text-caption-2)] uppercase tracking-[0.14em] text-[color:var(--sage-100)]">AVIS &amp; ÉVALUATIONS</p>
-            <h1 className="mb-[var(--space-2)] font-display text-[24px] font-extrabold text-[color:var(--lkv-surface)]">Les avis de la communauté</h1>
-            <p className="mb-[var(--space-4)] text-[length:var(--lkv-text-caption-1)] text-[color:var(--lkv-forest-100)]">Avis vérifiés sur les produits, kits et locations.</p>
+            <p className="mb-[var(--space-3)] font-mono text-[length:var(--lkv-text-caption-2)] uppercase tracking-[0.14em] text-[color:var(--lkv-text-secondary)]">AVIS &amp; ÉVALUATIONS</p>
+            <h1 className="mb-[var(--space-2)] font-display text-[24px] font-extrabold text-[color:var(--glass-label)]">Les avis de la communauté</h1>
+            <p className="mb-[var(--space-4)] text-[length:var(--lkv-text-caption-1)] text-[color:var(--lkv-text-secondary)]">Avis vérifiés sur les produits, kits et locations.</p>
+
+            <Button fullWidth className="mb-[var(--space-4)]" onClick={() => setShowWriteModal(true)} icon={<Icon name="PencilSquareIcon" size={16} />}>
+              Laisser un avis
+            </Button>
+
             <Tabs
               options={[{ id: 'tous', label: 'Tous' }, { id: 'produit', label: 'Produits' }, { id: 'kit', label: 'Kits' }, { id: 'location', label: 'Locations' }, { id: 'occasion', label: 'Occasion' }]}
               value={activeFilter}
               onChange={(id) => setActiveFilter(id as typeof activeFilter)}
               variant="scrollable"
               ariaLabel="Filtrer les avis"
-              // P2 — fade iOS en fin de rail, jamais coupé net
               className="mb-[var(--space-4)] pr-[28px] [mask-image:linear-gradient(to_right,black_calc(100%-28px),transparent)] [-webkit-mask-image:linear-gradient(to_right,black_calc(100%-28px),transparent)]"
             />
             {error ? (
               <div className="py-[var(--space-10)] text-center">
-                <p className="mb-[var(--space-2)] text-[28px]" aria-hidden="true">⚠️</p>
-                <p className="mb-[var(--space-3)] text-[length:var(--lkv-text-caption-1)] text-[color:var(--lkv-forest-100)]">{error}</p>
+                <Icon name="ExclamationTriangleIcon" size={32} className="mx-auto mb-[var(--space-2)] text-[var(--lkv-warning)]" />
+                <p className="mb-[var(--space-3)] text-[length:var(--lkv-text-caption-1)] text-[color:var(--lkv-text-secondary)]">{error}</p>
                 <Button size="sm" onClick={() => loadReviews()}>Réessayer</Button>
               </div>
             ) : filtered.length === 0 ? (
-              <p className="py-[var(--space-10)] text-center text-[length:var(--lkv-text-caption-1)] text-[color:var(--lkv-forest-100)]">Aucun avis pour l&apos;instant</p>
+              <p className="py-[var(--space-10)] text-center text-[length:var(--lkv-text-caption-1)] text-[color:var(--lkv-text-secondary)]">Aucun avis pour l&apos;instant</p>
             ) : (
               <div className="flex flex-col gap-[var(--space-3)]">
                 {filtered.map((review) => {
@@ -362,20 +366,20 @@ export default function AvisPage() {
                           {authorName[0]}
                         </div>
                         <div>
-                          <p className="text-[13px] font-semibold text-[color:var(--lkv-primary)]">{authorName}</p>
-                          <p className="text-[11px] text-[color:var(--lkv-text-secondary)]">⭐ {review.rating}/5</p>
+                          <p className="text-[13px] font-semibold text-[color:var(--lkv-text-primary)]">{authorName}</p>
+                          <div className="flex items-center gap-1.5 mt-0.5">
+                            <StarRating rating={review.rating} size={11} />
+                            <span className="text-[11px] text-[color:var(--lkv-text-secondary)]">{review.rating}/5</span>
+                          </div>
                         </div>
                       </div>
-                      <p className="mb-1 text-[13px] font-semibold text-[color:var(--lkv-primary)]">{review.title}</p>
+                      <p className="mb-1 text-[13px] font-semibold text-[color:var(--lkv-text-primary)]">{review.title}</p>
                       <p className="text-[12px] leading-[var(--leading-normal)] text-[color:var(--lkv-text-secondary)]">{review.comment}</p>
                     </Card>
                   );
                 })}
               </div>
             )}
-            <Button fullWidth className="mt-[var(--space-4)]" onClick={() => setShowWriteModal(true)}>
-              Laisser un avis
-            </Button>
           </div>
         </MobilePageShell>
 

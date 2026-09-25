@@ -30,12 +30,12 @@ export function WeatherStrip({
   if (!current) {
     if (variant === 'capsule') {
       return (
-        <div className="glass backdrop-blur-lg rounded-2xl p-2" {...liveMask}>
+        <div className="glass bg-[color:var(--card-tint-solid)] backdrop-blur-lg rounded-2xl p-2" {...liveMask}>
           <div className="flex items-center gap-2 min-h-[44px]">
             <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[color:var(--glass-bg-medium)] border border-white/70 text-[var(--lkv-text-muted)]">
               <Icon name="cloud-off" size={16} aria-hidden="true" />
             </span>
-            <p className="text-[9px] font-medium uppercase tracking-[0.14em] text-[var(--lkv-text-secondary)] truncate leading-none">
+            <p className="text-[9px] font-medium uppercase tracking-[0.14em] text-[var(--lkv-text-primary)] truncate leading-none">
               Météo indisponible
             </p>
           </div>
@@ -43,7 +43,7 @@ export function WeatherStrip({
       );
     }
     return (
-      <div className="glass rounded-xl px-3 py-2" {...liveMask}>
+      <div className="glass bg-[color:var(--card-tint-solid)] rounded-xl px-3 py-2" {...liveMask}>
         <div className="flex items-center gap-2.5 min-h-[44px]">
           <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[color:var(--glass-bg-medium)] border border-white/70 text-[var(--lkv-text-muted)]">
             <Icon name="cloud-off" size={18} aria-hidden="true" />
@@ -59,13 +59,13 @@ export function WeatherStrip({
 
   if (variant === 'capsule') {
     return (
-      <div className="glass backdrop-blur-lg rounded-2xl p-2" {...liveMask}>
+      <div className="glass bg-[color:var(--card-tint-solid)] backdrop-blur-lg rounded-2xl p-2" {...liveMask}>
         <div className="flex items-center gap-2">
           <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[color:var(--glass-bg-medium)] border border-white/70 text-[var(--lkv-secondary)]">
             <CurrentIcon size={16} aria-hidden="true" />
           </span>
           <div className="min-w-0">
-            <p className="text-[9px] font-medium uppercase tracking-[0.14em] text-[var(--lkv-text-secondary)] truncate leading-none">
+            <p className="text-[9px] font-medium uppercase tracking-[0.14em] text-[var(--lkv-text-primary)] truncate leading-none">
               {locationLabel || 'Météo'}
             </p>
             <p className="text-xs font-bold text-[var(--lkv-text-primary)] leading-tight">
@@ -82,7 +82,7 @@ export function WeatherStrip({
               const Icon = getWeatherIcon(d.weathercode);
               return (
                 <div key={d.date} className="flex flex-1 flex-col items-center">
-                  <p className="text-[8px] font-bold uppercase text-[var(--lkv-text-muted)] leading-none">
+                  <p className="text-[8px] font-bold uppercase text-[var(--lkv-text-primary)] leading-none">
                     {d.day}
                   </p>
                   <Icon
@@ -103,20 +103,20 @@ export function WeatherStrip({
   }
 
   return (
-    <div className="glass rounded-xl px-3 py-2" {...liveMask}>
+    <div className="glass bg-[color:var(--card-tint-solid)] rounded-xl px-3 py-2" {...liveMask}>
       <div className="flex items-center gap-2.5">
         <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[color:var(--glass-bg-medium)] border border-white/70 text-[var(--lkv-secondary)]">
           <CurrentIcon size={18} aria-hidden="true" />
         </span>
         <div className="min-w-0 flex-1">
-          <p className="text-xs font-serif-lkv italic text-[var(--lkv-text-secondary)] truncate">
+          <p className="text-xs font-serif-lkv italic text-[var(--lkv-text-primary)] truncate">
             {locationLabel || 'Météo'}
           </p>
           <p className="text-sm font-bold text-[var(--lkv-text-primary)] leading-tight">
             {Math.round(current.tempC)}°C · {weatherLabel(current.weathercode)}
           </p>
         </div>
-        <p className="shrink-0 flex items-center gap-1 text-[11px] font-semibold text-[var(--lkv-text-secondary)]">
+        <p className="shrink-0 flex items-center gap-1 text-[11px] font-semibold text-[var(--lkv-text-primary)]">
           <Icon name="droplets" size={12} aria-hidden="true" />
           {current.precipPct}%
         </p>
@@ -129,9 +129,9 @@ export function WeatherStrip({
             return (
               <div
                 key={d.date}
-                className="glass-sub-card flex-1 rounded-lg px-1.5 py-1.5 text-center"
+                className="glass-sub-card bg-[color:var(--card-tint-solid)] flex-1 rounded-lg px-1.5 py-1.5 text-center"
               >
-                <p className="text-[9px] font-medium uppercase tracking-[0.14em] text-[var(--lkv-text-muted)]">
+                <p className="text-[9px] font-medium uppercase tracking-[0.14em] text-[var(--lkv-text-primary)]">
                   {d.day}
                 </p>
                 <Icon
@@ -141,11 +141,11 @@ export function WeatherStrip({
                 />
                 <p className="text-[10px] font-bold text-[var(--lkv-text-primary)] leading-none">
                   {Math.round(d.tempMaxC)}°
-                  <span className="ml-1 font-medium text-[var(--lkv-text-muted)]">
+                  <span className="ml-1 font-medium text-[var(--lkv-text-primary)]">
                     {Math.round(d.tempMinC)}°
                   </span>
                 </p>
-                <p className="mt-0.5 flex items-center justify-center gap-0.5 text-[9px] font-semibold text-[var(--lkv-text-secondary)] leading-none">
+                <p className="mt-0.5 flex items-center justify-center gap-0.5 text-[9px] font-semibold text-[var(--lkv-text-primary)] leading-none">
                   <Icon name="droplets" size={9} aria-hidden="true" />
                   {d.precipPct}%
                 </p>

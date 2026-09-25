@@ -16,6 +16,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useEquipment } from '@/hooks/useEquipment';
 import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
 import ProductBuyBar from '@/components/produit/ProductBuyBar';
+import { cleanItemName } from '@/lib/cleanItemName';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // TYPES
@@ -42,15 +43,28 @@ interface Product {
 // ─────────────────────────────────────────────────────────────────────────────
 // HELPERS
 // ─────────────────────────────────────────────────────────────────────────────
+function cleanCategory(raw: string): string {
+  if (!raw) return 'Équipement';
+  return raw
+    .replace(/^categorie[-_ ]*/i, '')
+    .replace(/[-_]/g, ' ')
+    .replace(/bigbuy/gi, '')
+    .trim() || 'Équipement';
+}
+
 function mapToProduct(data: Record<string, unknown>): Product {
-  const name = (data.name as string) || 'Produit';
+  const rawName = (data.name as string) || 'Produit';
+  const name = cleanItemName(rawName);
   const image = (data.image as string) || 'https://via.placeholder.com/400x300?text=No+Image';
+  const rawBrand = (data.brand as string) || 'Le Kit du Voyageur';
+  const marque = /bigbuy/i.test(rawBrand) ? 'Le Kit du Voyageur' : rawBrand;
+  const rawCat = (data.category_main as string) || (data.category as string) || 'Équipement';
   return {
     id: data.id as string,
     slug: data.slug as string,
     nom: name,
-    marque: (data.brand as string) || 'Le Kit du Voyageur',
-    categorie: (data.category_main as string) || (data.category as string) || 'Équipement',
+    marque,
+    categorie: cleanCategory(rawCat),
     description: (data.description_why as string) || '',
     prix_cents: Number.isFinite(Number(data.price_eur)) ? Math.round(Number(data.price_eur) * 100) : 0,
     poids_g: Number.isFinite(Number(data.weight_g)) ? Number(data.weight_g) : Number(data.weight_grams) || 0,

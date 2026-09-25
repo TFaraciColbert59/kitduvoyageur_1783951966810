@@ -3,7 +3,7 @@
 // =============================================================================
 // Usage : node scripts/seed-demo.mjs
 //
-// - Compte démo : y-demo@lekitduvoyageur.fr / Ydemo!2026
+// - Compte de démonstration configuré par AUDIT_EMAIL et AUDIT_PASSWORD
 // - Idempotence : voyages upsert par slug déterministe ; tables filles
 //   "delete-then-insert" RESTRICTÉ aux libellés déterministes du seed
 //   (aucune donnée utilisateur hors du périmètre du seed n'est touchée).
@@ -40,8 +40,8 @@ const admin = SUPABASE_SERVICE
   : null;
 
 // --- Compte démo -------------------------------------------------------------
-const DEMO_EMAIL = 'y-demo@lekitduvoyageur.fr';
-const DEMO_PASSWORD = 'Ydemo!2026';
+const DEMO_EMAIL = process.env.AUDIT_EMAIL || (() => { throw new Error('AUDIT_EMAIL est requis'); })();
+const DEMO_PASSWORD = process.env.AUDIT_PASSWORD || (() => { throw new Error('AUDIT_PASSWORD est requis'); })();
 
 const { data: session, error: signInErr } = await sb.auth.signInWithPassword({
   email: DEMO_EMAIL, password: DEMO_PASSWORD,
@@ -577,7 +577,7 @@ const COLLAB_TRIPS = new Map([
 // EXÉCUTION
 // =============================================================================
 
-console.log(`Seed démo LKDV — utilisateur ${DEMO_EMAIL} (${UID})`);
+console.log('Seed démo LKDV terminé.');
 console.log(`Aujourd'hui : ${iso(today)}`);
 
 // --- 0. Vérification countries_geo (seuls les iso_a2 retournés sont utilisables)

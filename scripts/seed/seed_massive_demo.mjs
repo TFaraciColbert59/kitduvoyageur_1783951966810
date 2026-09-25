@@ -1,6 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://icxyvwzfjbflcbqukpfz.supabase.co';
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || (() => { throw new Error('NEXT_PUBLIC_SUPABASE_URL est requis'); })();
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 // Use service role client to bypass RLS and create auth users
@@ -27,7 +27,7 @@ async function getOrCreateUser(email, password, fullName, avatarUrl) {
   try {
     const { data, error } = await supabase.auth.admin.createUser({
       email,
-      password: password || 'Password!2026',
+      password: password || (() => { throw new Error('AUDIT_PASSWORD est requis'); })(),
       email_confirm: true,
       user_metadata: { full_name: fullName, avatar_url: avatarUrl }
     });
@@ -46,15 +46,15 @@ export async function runMassiveSeed() {
 
   // 1. GET OR CREATE DEMO USER & COMMUNITY USERS IN AUTH.USERS
   console.log('1. Création / Récupération des comptes auth...');
-  const demoId = await getOrCreateUser('demo@lkdv.app', 'DemoPass!2026', 'Alexandre Dumas', 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&q=80');
-  const u1 = await getOrCreateUser('marie.dupont@email.fr', 'DemoPass!2026', 'Marie Dupont', 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&q=80');
-  const u2 = await getOrCreateUser('thomas.martin@email.fr', 'DemoPass!2026', 'Thomas Martin', 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&q=80');
-  const u3 = await getOrCreateUser('sophie.bernard@email.fr', 'DemoPass!2026', 'Sophie Bernard', 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&q=80');
-  const u4 = await getOrCreateUser('lucas.petit@email.fr', 'DemoPass!2026', 'Lucas Petit', 'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=400&q=80');
-  const u5 = await getOrCreateUser('camille.leroy@email.fr', 'DemoPass!2026', 'Camille Leroy', 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400&q=80');
-  const u6 = await getOrCreateUser('antoine.moreau@email.fr', 'DemoPass!2026', 'Antoine Moreau', 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=400&q=80');
-  const u7 = await getOrCreateUser('julie.simon@email.fr', 'DemoPass!2026', 'Julie Simon', 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=400&q=80');
-  const u8 = await getOrCreateUser('maxime.garcia@email.fr', 'DemoPass!2026', 'Maxime Garcia', 'https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=400&q=80');
+  const demoId = await getOrCreateUser(process.env.AUDIT_EMAIL || (() => { throw new Error('AUDIT_EMAIL est requis'); })(), process.env.AUDIT_PASSWORD || (() => { throw new Error('AUDIT_PASSWORD est requis'); })(), 'Alexandre Dumas', 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&q=80');
+  const u1 = await getOrCreateUser('marie.dupont@email.fr', process.env.AUDIT_PASSWORD || (() => { throw new Error('AUDIT_PASSWORD est requis'); })(), 'Marie Dupont', 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&q=80');
+  const u2 = await getOrCreateUser('thomas.martin@email.fr', process.env.AUDIT_PASSWORD || (() => { throw new Error('AUDIT_PASSWORD est requis'); })(), 'Thomas Martin', 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&q=80');
+  const u3 = await getOrCreateUser('sophie.bernard@email.fr', process.env.AUDIT_PASSWORD || (() => { throw new Error('AUDIT_PASSWORD est requis'); })(), 'Sophie Bernard', 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&q=80');
+  const u4 = await getOrCreateUser('lucas.petit@email.fr', process.env.AUDIT_PASSWORD || (() => { throw new Error('AUDIT_PASSWORD est requis'); })(), 'Lucas Petit', 'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=400&q=80');
+  const u5 = await getOrCreateUser('camille.leroy@email.fr', process.env.AUDIT_PASSWORD || (() => { throw new Error('AUDIT_PASSWORD est requis'); })(), 'Camille Leroy', 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400&q=80');
+  const u6 = await getOrCreateUser('antoine.moreau@email.fr', process.env.AUDIT_PASSWORD || (() => { throw new Error('AUDIT_PASSWORD est requis'); })(), 'Antoine Moreau', 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=400&q=80');
+  const u7 = await getOrCreateUser('julie.simon@email.fr', process.env.AUDIT_PASSWORD || (() => { throw new Error('AUDIT_PASSWORD est requis'); })(), 'Julie Simon', 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=400&q=80');
+  const u8 = await getOrCreateUser('maxime.garcia@email.fr', process.env.AUDIT_PASSWORD || (() => { throw new Error('AUDIT_PASSWORD est requis'); })(), 'Maxime Garcia', 'https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=400&q=80');
 
   console.log(`✓ Utilisateurs vérifiés : Démo (${demoId}) + 8 membres de la communauté.`);
 
@@ -63,7 +63,7 @@ export async function runMassiveSeed() {
   const profiles = [
     {
       id: demoId,
-      email: 'demo@lkdv.app',
+      email: process.env.AUDIT_EMAIL || (() => { throw new Error('AUDIT_EMAIL est requis'); })(),
       full_name: 'Alexandre Dumas',
       avatar_url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&q=80',
       trust_score: 96,
@@ -826,7 +826,7 @@ export async function runMassiveSeed() {
   console.log('\n======================================================');
   console.log('🎉 SEEDING MASSIF TERMINÉ AVEC SUCCÈS À 100% !');
   console.log('======================================================');
-  console.log('Compte Démo : demo@lkdv.app / DemoPass!2026');
+  console.log('Compte de démonstration configuré.');
 }
 
 // Run if called directly via node

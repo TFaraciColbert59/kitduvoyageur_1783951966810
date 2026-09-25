@@ -34,14 +34,14 @@ const sb = createServerClient(url, anonKey, {
   },
 });
 const { data: authData, error: authError } = await sb.auth.signInWithPassword({
-  email: 'y-demo@lekitduvoyageur.fr',
-  password: 'Ydemo!2026',
+  email: process.env.AUDIT_EMAIL || (() => { throw new Error('AUDIT_EMAIL est requis'); })(),
+  password: process.env.AUDIT_PASSWORD || (() => { throw new Error('AUDIT_PASSWORD est requis'); })(),
 });
 if (authError || !authData?.user) {
   console.error('Auth démo KO:', authError?.message);
   process.exit(1);
 }
-console.log('Auth OK:', authData.user.email);
+console.info('Authentification audit réussie.');
 
 // Première sortie du compte démo (pour le cookie d'aventure active).
 const { data: tripRow } = await sb

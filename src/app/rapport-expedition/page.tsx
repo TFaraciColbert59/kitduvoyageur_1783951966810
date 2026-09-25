@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import Header from '@/components/Header';
@@ -447,17 +447,17 @@ export default function RapportExpeditionPage() {
       <main className="pt-20">
         {/* Hero */}
         <section className="relative overflow-hidden py-12 px-4">
-          <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/8 via-dark-bg to-primary/5 pointer-events-none" />
+          <div className="absolute inset-0 bg-gradient-to-br from-white/5 via-black/40 to-transparent pointer-events-none" />
           <div className="max-w-5xl mx-auto relative z-10">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
               <div>
-                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 text-xs font-mono mb-4">
+                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] text-[color:var(--glass-label)] text-xs font-mono mb-4">
                   <Icon name="DocumentChartBarIcon" size={12} variant="outline" />
-                  PHASE 5 — RAPPORT POST-EXPÉDITION
+                  Rapport post-expédition
                 </div>
                 <h1 className="font-display font-800 text-3xl sm:text-4xl text-white mb-3 tracking-tight">
                   Bilan automatique<br />
-                  <span className="text-cyan-400">de chaque aventure</span>
+                  <span className="text-white/80">de chaque aventure</span>
                 </h1>
                 <p className="text-white/50 text-base max-w-xl">
                   Équipement utilisé, budget réel vs estimé, retour IA personnalisé. Chaque expédition devient une leçon pour la suivante.
@@ -723,11 +723,11 @@ export default function RapportExpeditionPage() {
           {/* Hero */}
           <div className="border-b border-[color:var(--lkv-border-subtle)] p-[var(--space-4)]">
             <div className="mb-[10px] flex w-fit items-center gap-[6px] rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn px-[10px] py-1">
-              <span className="font-mono text-[10px] tracking-[0.05em] text-[color:var(--lkv-primary)]">
-                PHASE 5 &mdash; RAPPORT POST-EXPÉDITION
+              <span className="font-mono text-[10px] tracking-[0.05em] text-[color:var(--glass-label)]">
+                Rapport post-expédition
               </span>
             </div>
-            <h1 className="mb-1 text-[22px] font-bold leading-[var(--leading-tight)] text-[color:var(--lkv-primary)]">
+            <h1 className="mb-1 text-[22px] font-bold leading-[var(--leading-tight)] text-[color:var(--lkv-text-primary)]">
               Bilan automatique de chaque aventure
             </h1>
             <p className="mb-[var(--space-4)] text-[length:var(--lkv-text-caption-1)] leading-[var(--leading-snug)] text-[color:var(--lkv-text-muted)]">
@@ -742,11 +742,11 @@ export default function RapportExpeditionPage() {
           <div className="grid grid-cols-2 gap-[var(--space-2)] px-[var(--space-4)] py-[var(--space-3)]">
             <Card variant="standard" className="p-[var(--space-3)]">
               <p className="mb-0.5 text-[10px] text-[color:var(--lkv-text-muted)]">Expéditions</p>
-              <p className="m-0 font-mono text-[20px] font-bold text-[color:var(--lkv-primary)]">{reports.length}</p>
+              <p className="m-0 font-mono text-[20px] font-bold text-[color:var(--glass-label)]">{reports.length}</p>
             </Card>
             <Card variant="standard" className="p-[var(--space-3)]">
               <p className="mb-0.5 text-[10px] text-[color:var(--lkv-text-muted)]">Score moyen</p>
-              <p className="m-0 font-mono text-[20px] font-bold text-[color:var(--lkv-primary)]">{reports.length > 0 ? `${avgScore}/100` : '—'}</p>
+              <p className="m-0 font-mono text-[20px] font-bold text-[color:var(--glass-label)]">{reports.length > 0 ? `${avgScore}/100` : '—'}</p>
             </Card>
             <Card variant="standard" className="p-[var(--space-3)]">
               <p className="mb-0.5 text-[10px] text-[color:var(--lkv-text-muted)]">Budget total</p>
@@ -756,7 +756,7 @@ export default function RapportExpeditionPage() {
             </Card>
             <Card variant="standard" className="p-[var(--space-3)]">
               <p className="mb-0.5 text-[10px] text-[color:var(--lkv-text-muted)]">Équipements</p>
-              <p className="m-0 font-mono text-[20px] font-bold text-[color:var(--lkv-primary)]">
+              <p className="m-0 font-mono text-[20px] font-bold text-[color:var(--glass-label)]">
                 {userGear.length > 0 ? `${(totalWeight / 1000).toFixed(1)} kg` : '—'}
               </p>
             </Card>
@@ -781,14 +781,14 @@ export default function RapportExpeditionPage() {
               {savedSuccess && (
                 <Card variant="compact" role="status" aria-live="polite" className="mb-[var(--space-3)] flex items-center gap-[var(--space-2)] border-[color:var(--lkv-success)]/40 bg-[color:var(--lkv-success-bg)]">
                   <span className="text-[14px] text-[color:var(--lkv-success)]" aria-hidden="true">✓</span>
-                  <p className="m-0 text-[length:var(--lkv-text-caption-1)] text-[color:var(--lkv-primary)]">
+                  <p className="m-0 text-[length:var(--lkv-text-caption-1)] text-[color:var(--lkv-text-primary)]">
                     Rapport créé avec succès ! +75 points fidélité.
                   </p>
                 </Card>
               )}
 
               <div className="mb-[var(--space-3)] flex items-center justify-between">
-                <p className="m-0 text-[length:var(--lkv-text-subheadline)] font-semibold text-[color:var(--lkv-primary)]">
+                <p className="m-0 text-[length:var(--lkv-text-subheadline)] font-semibold text-[color:var(--glass-label)]">
                   Mes expéditions ({reports.length})
                 </p>
                 <Button size="sm" onClick={() => setShowNewReportModal(true)}>

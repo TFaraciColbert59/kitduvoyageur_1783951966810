@@ -2,6 +2,8 @@ import { chromium } from '@playwright/test';
 import fs from 'node:fs';
 import path from 'node:path';
 import { createServerClient } from '@supabase/ssr';
+import { captureStatusForRoute, getAuditCredentials } from './audit/contrast_audit_core.mjs';
+import { redactDiagnosticText, redactRuntimeValue } from './audit/audit_runtime.mjs';
 
 const outDir = path.resolve('screenshots');
 if (!fs.existsSync(outDir)) {
@@ -19,36 +21,40 @@ for (const file of fs.readdirSync(outDir)) {
 async function getAuthCookie() {
   try {
     const envPath = fs.existsSync('.env.local') ? '.env.local' : '.env';
+    if (!fs.existsSync(envPath)) throw new Error('configuration Supabase absente');
     const raw = fs.readFileSync(envPath, 'utf8');
-    const url = raw.match(/NEXT_PUBLIC_SUPABASE_URL=(.*)/)?.[1]?.trim();
-    const anonKey = raw.match(/NEXT_PUBLIC_SUPABASE_ANON_KEY=(.*)/)?.[1]?.trim();
-    if (!url || !anonKey) return null;
+    const url = raw.match(/NEXT_PUBLIC_SUPABASE_URL=(.*)/)?.[1]?.trim().replace(/^["']|["']$/g, '');
+    const anonKey = raw.match(/NEXT_PUBLIC_SUPABASE_ANON_KEY=(.*)/)?.[1]?.trim().replace(/^["']|["']$/g, '');
+    if (!url || !anonKey) throw new Error('configuration Supabase absente');
 
     let savedCookies = [];
     const sb = createServerClient(url, anonKey, {
       cookies: {
         getAll: () => savedCookies,
-        setAll: (cs) => { savedCookies = cs; },
+        setAll: (cookies) => { savedCookies = cookies; },
       },
     });
-
-    await sb.auth.signInWithPassword({
-      email: 'y-demo@lekitduvoyageur.fr',
-      password: 'Ydemo!2026',
-    });
-
-    if (savedCookies.length > 0) {
-      return {
-        name: savedCookies[0].name,
-        value: savedCookies[0].value,
+    const { email, password } = getAuditCredentials();
+    const result = await sb.auth.signInWithPassword({ email, password });
+    if (result?.error) throw new Error(result.error.message);
+    const authCookie = savedCookies.find((cookie) => /auth-token/i.test(cookie.name));
+    if (!authCookie || typeof authCookie.value !== 'string' || authCookie.value === '') {
+      throw new Error('cookie de session absent');
+    }
+    return {
+      verified: true,
+      cookie: {
+        name: authCookie.name,
+        value: authCookie.value,
         domain: 'localhost',
         path: '/',
-      };
-    }
+      },
+    };
   } catch (err) {
-    console.warn('[capture] Erreur auth démo:', err.message);
+    const message = redactDiagnosticText(err instanceof Error ? err.message : err);
+    console.warn('[capture] Authentification non vérifiée:', message || 'échec non renseigné');
+    return { verified: false, cookie: null, error: message || 'Authentification non vérifiée' };
   }
-  return null;
 }
 
 // Cookie d'aventure active
@@ -59,6 +65,31 @@ function getAdventureCookie(slug = 'y-long-group') {
     domain: 'localhost',
     path: '/',
   };
+}
+
+const PROTECTED_ROUTE_PREFIXES = [
+  '/hub',
+  '/compte',
+  '/profil',
+  '/progression',
+  '/fidelite',
+  '/recompenses',
+  '/messagerie',
+  '/voyages',
+  '/carnets',
+  '/carnet',
+  '/preparer-sentier',
+  '/nouveau-groupe',
+  '/rejoindre',
+  '/admin',
+];
+
+function routeRequiresAuth(route) {
+  return PROTECTED_ROUTE_PREFIXES.some((prefix) => (
+    route.path === prefix
+    || route.path.startsWith(`${prefix}/`)
+    || route.path.startsWith(`${prefix}?`)
+  ));
 }
 
 // Liste exhaustive de toutes les routes de l'application
@@ -191,7 +222,9 @@ async function captureAllPages() {
   console.log(`📸 LANCEMENT CAPTURE VISUELLE DE TOUTES LES PAGES (${ALL_ROUTES.length} PAGES)`);
   console.log(`=======================================================\n`);
 
-  const authCookie = await getAuthCookie();
+  const authState = await getAuthCookie();
+  const authCookie = authState.cookie;
+  const authVerified = authState.verified;
   const adventureCookie = getAdventureCookie();
 
   const browser = await chromium.launch({
@@ -231,9 +264,26 @@ async function captureAllPages() {
     const filename = `${indexStr}_${r.id}.png`;
     const fullPath = path.join(outDir, filename);
     const targetUrl = `http://localhost:4000${r.path}`;
+    const requiresAuth = routeRequiresAuth(r);
 
     process.stdout.write(`[${i + 1}/${ALL_ROUTES.length}] ${r.label} (${r.path}) ... `);
     const itemStart = Date.now();
+
+    if (requiresAuth && !authVerified) {
+      const message = 'Authentification non vérifiée';
+      results.push({
+        ...r,
+        index: i + 1,
+        filename: null,
+        status: captureStatusForRoute({ authVerified, requiresAuth }),
+        duration: '0.0',
+        error: message,
+        authVerified: false,
+        requiresAuth: true,
+      });
+      console.log(`⚠️ ${message}`);
+      continue;
+    }
 
     try {
       // 1. Navigation
@@ -295,18 +345,22 @@ async function captureAllPages() {
       const elapsed = ((Date.now() - itemStart) / 1000).toFixed(1);
       const sizeKo = Math.round(stat.size / 1024);
 
-      console.log(`✓ OK (${sizeKo} Ko, ${elapsed}s)`);
+      const status = captureStatusForRoute({ authVerified, requiresAuth });
+      const marker = status === 'OK' ? '✓ OK' : `⚠ ${status}`;
+      console.log(`${marker} (${sizeKo} Ko, ${elapsed}s)`);
       results.push({
         ...r,
         index: i + 1,
         filename,
         fileSize: stat.size,
-        status: 'OK',
+        status,
         duration: elapsed,
+        authVerified,
+        requiresAuth,
       });
     } catch (err) {
-      console.log(`⚠️ ERREUR: ${err.message}`);
-      // Tentative fallback screenshot
+      const message = redactDiagnosticText(err instanceof Error ? err.message : err);
+      console.log(`⚠️ ERREUR: ${message}`);
       try {
         await page.screenshot({ path: fullPath, fullPage: false });
         const stat = fs.statSync(fullPath);
@@ -315,17 +369,21 @@ async function captureAllPages() {
           index: i + 1,
           filename,
           fileSize: stat.size,
-          status: 'PARTIAL',
+          status: 'PARTIAL / NOT VERIFIED',
           duration: ((Date.now() - itemStart) / 1000).toFixed(1),
-          error: err.message,
+          error: message,
+          authVerified,
+          requiresAuth,
         });
-      } catch (err2) {
+      } catch {
         results.push({
           ...r,
           index: i + 1,
           filename: null,
-          status: 'FAILED',
-          error: err.message,
+          status: 'PARTIAL / NOT VERIFIED',
+          error: message,
+          authVerified,
+          requiresAuth,
         });
       }
     }
@@ -334,17 +392,22 @@ async function captureAllPages() {
   await browser.close();
 
   const totalTime = Math.round((Date.now() - startTime) / 1000);
+  const verificationStatus = authVerified && results.every((result) => result.status === 'OK')
+    ? 'OK'
+    : 'PARTIAL / NOT VERIFIED';
   console.log(`\n=======================================================`);
   console.log(`🎉 TOUTES LES CAPTURES SONT TERMINÉES EN ${totalTime}s !`);
-  console.log(`Total capturé: ${results.filter((r) => r.status === 'OK' || r.status === 'PARTIAL').length}/${ALL_ROUTES.length}`);
+  console.log(`Total capturé: ${results.filter((r) => r.filename).length}/${ALL_ROUTES.length}`);
+  console.log(`Statut de campagne: ${verificationStatus}`);
   console.log(`Dossier: ${outDir}`);
   console.log(`=======================================================\n`);
 
-  // Générer la planche galerie HTML
-  generateGalleryHtml(results, totalTime);
+  generateGalleryHtml(results, totalTime, verificationStatus);
+  if (verificationStatus !== 'OK') process.exitCode = 1;
+  return { results, verificationStatus };
 }
 
-function generateGalleryHtml(results, totalTime) {
+function generateGalleryHtml(results, totalTime, verificationStatus) {
   const categories = [...new Set(results.map((r) => r.cat))];
   const totalScreenshots = results.filter((r) => r.filename).length;
   const totalSizeMo = (results.reduce((acc, r) => acc + (r.fileSize || 0), 0) / (1024 * 1024)).toFixed(1);
@@ -672,7 +735,7 @@ function generateGalleryHtml(results, totalTime) {
     <div class="header-top">
       <div class="logo-badge">
         <h1>Le Kit du Voyageur — Galerie Visuelle 100%</h1>
-        <span class="tag">Tous les Écrans Rendu Réel</span>
+        <span class="tag">Statut : ${verificationStatus}</span>
       </div>
       <div class="stats-bar">
         <span><strong>${totalScreenshots}</strong> pages capturées</span>
@@ -746,8 +809,12 @@ function generateGalleryHtml(results, totalTime) {
 
   // Générer aussi un JSON de manifeste pour outillage ultérieur
   const manifestPath = path.join(outDir, 'manifest.json');
-  fs.writeFileSync(manifestPath, JSON.stringify(results, null, 2), 'utf8');
+  const manifest = results.map((result) => ({ ...result, campaignStatus: verificationStatus }));
+  fs.writeFileSync(manifestPath, JSON.stringify(redactRuntimeValue(manifest), null, 2), 'utf8');
   console.log(`✓ Manifeste JSON généré : ${manifestPath}`);
 }
 
-captureAllPages().catch(console.error);
+captureAllPages().catch((error) => {
+  console.error(redactDiagnosticText(error instanceof Error ? error.message : error));
+  process.exitCode = 1;
+});

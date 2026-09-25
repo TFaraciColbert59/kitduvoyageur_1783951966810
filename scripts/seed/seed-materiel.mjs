@@ -12,8 +12,8 @@ if (!url || !key) {
 }
 const supabase = createClient(url, key, { auth: { persistSession: false } });
 
-const DEMO_EMAIL = 'demo@lkdv.app';
-const DEMO_PASSWORD = 'DemoPass!2026';
+const DEMO_EMAIL = process.env.AUDIT_EMAIL || (() => { throw new Error('AUDIT_EMAIL est requis'); })();
+const DEMO_PASSWORD = process.env.AUDIT_PASSWORD || (() => { throw new Error('AUDIT_PASSWORD est requis'); })();
 
 async function ensureDemoUser() {
   // Tente une connexion ; sinon crée le compte.
@@ -33,7 +33,7 @@ async function ensureDemoUser() {
 
 async function main() {
   const demoUserId = await ensureDemoUser();
-  console.log('Compte démo :', DEMO_EMAIL, '/', DEMO_PASSWORD);
+  console.log('Compte de démonstration configuré.');
 
   // Nettoie les données démo précédentes (idempotent)
   const kids = await supabase.from('materiel_kits').select('id').eq('user_id', demoUserId);
@@ -121,7 +121,7 @@ async function main() {
   }
   console.log('Participants : 3');
 
-  console.log('Seed terminé. Connectez-vous avec demo@lkdv.app');
+  console.log('Seed terminé.');
 }
 
 main().catch((e) => { console.error(e); process.exit(1); });

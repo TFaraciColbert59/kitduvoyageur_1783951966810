@@ -1,0 +1,519 @@
+<USER_REQUEST>
+# CHANTIER LKDV — Refonte "FULL LIQUID GLASS iOS 27" · niveau lancement grand public
+
+Tu es à la fois : Design Lead Apple Human Interface, ingénieur front senior Next.js 15 /
+React 19, expert rendu CSS (compositing, backdrop-filter), expert accessibilité
+(WCAG 2.2 AA) et responsable qualité d'un produit utilisé par des millions de personnes.
+Skills : /apple-ui-designer, /frontend-design, Aura (.agents/skills/interaction-design/SKILL.md).
+AUTONOMIE COMPLÈTE : tu ne poses aucune question, tu décides, tu justifies chaque choix
+(HIG, WCAG, lisibilité ou performance), tu documentes et tu vas jusqu'au bout.
+Tu orchestres des sous-agents en parallèle. Tu ne t'arrêtes que lorsque tous les
+critères de la section 12 sont verts.
+
+DIRECTION ARTISTIQUE (non négociable) :
+1. FULL LIQUID GLASS. Tout ce qui est interface est en verre : cartes, tuiles,
+   cellules, boutons, pilules, chips, badges, champs, segmented, toggles, tab bar,
+   barres secondaires, TopBar, sheets, modales, alertes, toasts, menus, popovers,
+   contrôles de carte, HUD, squelettes, états vides.
+2. VERRE SUR VERRE AUTORISÉ ET VOULU. Les couches s'empilent (carte de verre →
+   cellule de verre → pilule de verre). La profondeur vient de l'empilement.
+3. AUCUNE COULEUR PRIMAIRE. Pas de vert menthe, pas d'accent de marque, pas de CTA
+   coloré. L'interface est monochrome : verre neutre + encre (light) ou lumière
+   (dark). La hiérarchie passe par la densité du verre, la luminosité, l'épaisseur
+   du bord, le reflet, la graisse du texte et la taille.
+   Seule couleur tolérée : les statuts (danger, warning, success), et seulement
+   comme légère teinte de verre ou sur une icône, jamais comme identité ni comme
+   fond plein. Les contenus (photos, cartes, graphiques) gardent leurs couleurs.
+4. LISIBILITÉ AVANT TOUT. Le verre ne justifie jamais un texte illisible :
+   ≥ 4.5:1 pour le texte, mesuré sur le pire pixel derrière lui, en light et en dark.
+
+====================================================================
+## 0. LECTURES OBLIGATOIRES (avant la moindre modification)
+====================================================================
+Dépôt : CLAUDE.md, DESIGN_SYSTEM.md, docs/DESIGN_TRUTH.md, docs/Design-tokens.md,
+src/design/README.md, src/styles/tokens.css, src/styles/tailwind.css, tailwind.config.*,
+tests/design/*, scripts/verify/identity_compliance.mjs, PROGRESS.md, package.json.
+
+Apple (lis-les vraiment et extrais les règles dans audit/REFERENCES.md) :
+- https://developer.apple.com/ios/
+- https://developer.apple.com/design/human-interface-guidelines/ (Materials, Layout,
+  Typography, Color, Dark Mode, Accessibility, Tab bars, Toolbars, Sheets, Buttons,
+  Text fields, Segmented controls, Toggles, Lists, Progress, Alerts, Menus, Search, Maps)
+- https://developer.apple.com/design/whats-new/
+- https://developer.apple.com/documentation/technologyoverviews/adopting-liquid-glass
+- https://www.macrumors.com/2026/06/10/how-liquid-glass-is-changing-in-ios-27/
+- WWDC25 « Meet Liquid Glass », « Get to know the new design system » : variantes
+  regular et clear, glassEffect, GlassEffectContainer (fusion et morphing des formes
+  proches), capsules, concentricité, scroll edge effect, tab bar qui se réduit.
+- Apple Design Resources iOS/iPadOS 27 s'il est publié.
+Rappels iOS 27 : meilleure diffusion du contenu sous le verre, bord assombri, reflets
+plus marqués, réglage d'intensité (du plus clair au plus teinté), bande uniforme en haut
+au scroll, Réduire la transparence et Augmenter le contraste.
+
+Web : cherche les meilleures recréations web de Liquid Glass (backdrop-filter +
+-webkit-backdrop-filter, reflets par pseudo-éléments masqués, bords en dégradé
+conique, réfraction SVG feDisplacementMap via backdrop-filter:url(), qui ne marche
+que sous Chromium, corner-shape: squircle), la notion de « backdrop root » (Filter
+Effects Level 2), et le coût GPU de backdrop-filter sur Safari iOS et Android bas de
+gamme. Note les sources et tes conclusions techniques dans audit/REFERENCES.md.
+
+====================================================================
+## 1. CONTRAINTES NON NÉGOCIABLES
+====================================================================
+- INTERDIT de modifier la logique métier : Supabase (requêtes, RLS, migrations), Stripe,
+  hooks de données, engines, API routes, server actions, calculs. Un bug qui vient
+  d'une donnée ou d'un calcul va dans audit/BUGS-METIER.md (route, capture, hypothèse,
+  fichier suspect), SANS correction.
+- Tu conserves MobilePageShell, BottomTabBar, TopBar, MobileNavWrapper, les safe areas
+  et le pattern desktop/mobile. Tu modifies leur style, pas leur contrat (props, rôle).
+- Toute valeur passe par src/styles/tokens.css. Aucune valeur brute (couleur, rayon,
+  ombre, blur, durée) dans un composant.
+- Couleur primaire : --lkv-primary est verrouillé par tests/design/tokens-sync.spec.ts.
+  Tu le LAISSES défini dans tokens.css pour que le test passe, mais AUCUN composant
+  ne le consomme. Crée tests/design/no-primary.spec.ts, qui échoue si --lkv-primary,
+  --lkv-action, un token menthe ou une classe Tailwind d'accent (text-/bg-/border-
+  primary, emerald, green, teal…) est utilisé dans src/ hors tokens.css.
+- Palette interdite, y compris en rgba ou oklch équivalent : #E4501C, #A3C4A3,
+  #0B1F17, #2D6B4A, #1C2620.
+- identity_compliance.mjs reste vert (pas de --role-*, pas de grade ; ink et sage
+  seulement dans src/components/identity).
+- Animations : transform et opacity uniquement ; prefers-reduced-motion respecté.
+- Après chaque lot : npm run lint && npm run type-check && npm test && npm run build,
+  puis captures de régression. 1 lot = 1 commit conventionnel.
+- Branche design/ios27-full-glass. Implémenteurs en git worktrees distincts.
+  Seul le « Gardien des tokens » écrit dans tokens.css.
+
+====================================================================
+## 2. SOUS-AGENTS
+====================================================================
+- Chef de chantier (toi) : planning, arbitrages, fusion, rapport final.
+- Cartographe : inventaire (section 3).
+- Photographes ×4 (Voyage/Hub · Communauté · Boutique/Compte · Outils/Carte).
+- Inspecteurs en parallèle : Rayons & concentricité · Matière verre (couches, bords,
+  reflets, empilement) · Monochromie (chasse à toute couleur d'accent) · Contraste
+  (mesure chiffrée sur pixels réels) · Typo & espacements · Navigation & motion ·
+  Accessibilité (axe + clavier + VoiceOver) · Performance GPU (traces, frame time) ·
+  Contenu & micro-copie fr-FR · Responsive.
+- Gardien des tokens : design system (section 7).
+- Implémenteurs ×4 : corrections par lots.
+- Vérificateur (red team) : ne voit que les captures « après », cherche les défauts,
+  peut rejeter un lot.
+Outils (dev uniquement) : npm i -D @playwright/test @axe-core/playwright @lhci/cli
+&& npx playwright install. MCP Playwright et traces Chrome DevTools si disponibles.
+
+====================================================================
+## 3. CARTOGRAPHIE → audit/00-inventaire.md
+====================================================================
+- Tout src/app : routes statiques et dynamiques ([slug], [id], [token], [groupId]),
+  groupes, layouts, loading/error/not-found, routes parallèles et interceptées,
+  admin et dev.
+- Par route : chemin, fichier, layout, auth, sources de données, états, 1 à 3
+  identifiants réels (Supabase en LECTURE SEULE ou fixtures).
+- Composants atomes → organismes, modales, sheets, overlays, toasts, bannières, avec
+  leurs fichiers et les pages qui les utilisent.
+- Relevé en tableau de TOUTES les valeurs en dur : borderRadius, rounded-, rounded-[,
+  border-radius, rgba(, #hex, couleurs Tailwind, zIndex, font-size, font-family,
+  boxShadow, backdrop-filter, opacity de fond. Ajoute une colonne « couleur d'accent
+  à supprimer ».
+
+====================================================================
+## 4. CAPTURES → audit/screens/<route>/<viewport>-<theme>-<etat>.png
+====================================================================
+Viewports : 390×844, 430×932, 820×1180, 1440×900. Thèmes light ET dark.
+États : default, loading, empty, error (500, timeout), offline, hover, focus-visible,
+pressed, disabled, long-text (texte ×3, noms de 60 caractères), zoom-200,
+keyboard-open, scroll-top/mid/end, tabbar-collapsed, chaque modale/sheet/menu,
+logged-in et logged-out. Pour chaque état, capture aussi les réglages
+--glass-intensity = 0, 0.5 et 1.
+Émulations : prefers-reduced-motion, prefers-contrast: more,
+prefers-reduced-transparency, forced-colors.
+Règles : viewport exact d'abord (fullPage:false), puis une capture par pas de scroll.
+Le fullPage aplatit les éléments fixed : réservé à l'inventaire. Attends networkidle,
+les polices et les tuiles de carte. Clique chaque élément interactif. axe-core sur
+chaque route et état → audit/a11y/<route>.json.
+
+====================================================================
+## 5. GRILLE D'ANALYSE
+====================================================================
+RAYONS : sous l'échelle cible, codé en dur, non concentrique
+(enfant = max(parent − padding, plancher)), formes mélangées, focus ring non arrondi,
+contrôles natifs (Leaflet, select, textarea, scrollbars) non restylés.
+MATIÈRE : élément d'UI qui n'est pas en verre ; verre plat (sans bord assombri ni
+reflet) ; couches empilées impossibles à distinguer (même densité, même bord) ;
+verre intérieur plus sombre que son parent en light, ou plus terne en dark ; halos
+ou bandes de flou aux bords (overflow + clip) ; repli absent sous
+reduced-transparency ou dans les navigateurs sans backdrop-filter.
+MONOCHROMIE : toute couleur d'accent dans l'UI ; statut exprimé par la couleur seule
+(il faut aussi une icône et un texte).
+CONTRASTE : sur la capture, échantillonne le pixel le plus clair ET le plus sombre sous
+chaque texte ; texte ≥ 4.5:1, grand texte et icônes ≥ 3:1, au pire cas,
+en light/dark et aux trois intensités de verre.
+TYPO : échelle Dynamic Type (34/28/22/20/17/16/15/13/12/11), rien sous 11px, chiffres
+en SF + tabular-nums, mono uniquement pour les GPS et les codes.
+ESPACEMENTS : grille 4/8, marge d'écran ≥ 16 (20 sur 430+).
+TACTILE : cibles ≥ 44×44, espacement ≥ 8.
+COUCHES : aucun contenu masqué par la tab bar, les barres secondaires ou les CTA collants.
+DÉBORDEMENTS : pas de scroll horizontal involontaire ni de troncature d'info clé.
+CONTENU : pas de jargon interne, de doublon, de titre répété ni de « (s) » ;
+Intl fr-FR (virgule décimale, espace insécable avant € et %, « 19 juil. ») ; marques
+exactes (PayPal, Apple Pay).
+ICÔNES : aucun emoji ; drapeaux SVG ; jeu unique LkvIcon façon SF Symbols.
+ÉTATS : squelettes en verre, états vides et d'erreur complets, jamais d'erreur affichée
+en même temps que de fausses valeurs.
+A11Y : focus visible, labels, rôles, aria-current, ordre de tabulation, aria-live.
+PERF : LCP < 2,5 s, CLS < 0,1, INP < 200 ms, scroll à 60 fps (frame < 16,7 ms) sur
+mobile de milieu de gamme émulé (CPU ×4, 4G).
+
+====================================================================
+## 6. RAPPORT → audit/RAPPORT.md (+ audit/BUGS-METIER.md)
+====================================================================
+Par entrée : ID (LKV-<domaine>-<n°>), route, capture(s), fichier:lignes, sévérité
+(P0 bloque le lancement ou l'accessibilité · P1 lisibilité ou confiance · P2 cohérence
+· P3 finition), règle HIG/WCAG, correction, lot cible.
+Ajoute un score par route (0–100), une synthèse par catégorie, un top 20 et une section
+« Innovations ». Chaque constat OBS-* de la section 8 est confirmé (avec ID) ou
+infirmé (avec preuve).
+
+====================================================================
+## 7. DESIGN SYSTEM « FULL GLASS » (tokens.css — Gardien des tokens)
+====================================================================
+### 7.1 Rayons — forte augmentation, sans exception
+- Capsule 9999px : boutons, pilules, chips, champs (input, select, recherche),
+  segmented, tab bar, barres secondaires, toasts, badges, progress, toggles.
+  Boutons icône en cercle de 44.
+- Concentricité stricte : enfant = max(parent − padding, 20).
+- Petites tuiles 24 · cartes 32 · grandes cartes et hero 38 · popovers et menus 28
+  · sheets et modales 44 (haut) · alerts 34.
+- Médias : rayon du conteneur moins l'inset. MiniMap, Explorer et Leaflet : rayon du
+  conteneur + overflow:hidden, contrôles restylés en pilules de verre.
+- Checkbox 8 (seule exception), avatars en cercle.
+- @supports (corner-shape: squircle) { corner-shape: squircle; } avec repli.
+- Unifie --card-radius et --lkv-radius-card sur une seule valeur.
+- AUCUN rayon < 12px (hors hairlines). tests/design/radius.spec.ts : (a) analyse
+  statique qui refuse tout rayon en dur ou < 12 ; (b) Playwright qui lit
+  getComputedStyle sur tous les éléments visibles de 10 routes clés.
+
+### 7.2 La matière : 5 niveaux de verre
+Tous pilotés par --glass-intensity (0 = clair … 1 = teinté), avec un réglage
+utilisateur dans /compte (localStorage, pas en base), plus des variantes light/dark.
+Teinte neutre uniquement : blanc en light, graphite neutre en dark, jamais de vert.
+
+G0 · Fond : photo + scrim global adaptatif (dégradé + voile), fixed, 100dvh, qui
+     couvre tout le scroll. Plus aucune bande vert uni.
+G1 · Verre de base (« regular ») : TopBar, tab bar, barres secondaires, cartes de
+     premier niveau, sheets, modales. VRAI backdrop-filter.
+G2 · Verre intérieur : cellules, tuiles, lignes de liste, champs, chips et pilules
+     posés dans un G1. Construit SANS nouveau backdrop-filter (voir 7.3) : couche de
+     lumière + bord + reflet. Visuellement, du verre sur du verre.
+G3 · Verre prominent (remplace le CTA coloré) : action principale. Light = verre
+     encre dense (≈ 82–88 %) + texte blanc ; dark = verre lumineux dense (≈ 86–92 %)
+     + texte encre. Reflet plus fort, bord plus net, légère ombre portée.
+     Un seul G3 par écran.
+GC · Verre clair (« clear ») : contrôles posés sur un média (carte, photo, lecteur) :
+     boutons de carte, HUD, actions sur hero. Verre plus transparent + voile
+     d'assombrissement local sous l'icône pour garantir ≥ 3:1.
+
+Exemple de base (à adapter et tester) :
+~~~css
+:root {
+  --glass-intensity: 0.5;
+  --glass-tint: 255 255 255;                         /* light */
+  --glass-ink: 18 18 20;
+  --glass-blur: calc(20px + 12px * var(--glass-intensity));
+  --glass-sat: 180%;
+  --g1-bg: rgb(var(--glass-tint) / calc(0.42 + 0.34 * var(--glass-intensity)));
+  --g2-bg: rgb(var(--glass-tint) / calc(0.30 + 0.25 * var(--glass-intensity)));
+  --glass-rim: 0 0 0 0.5px rgb(0 0 0 / .22);          /* bord assombri iOS 27 */
+  --glass-rim-inner: inset 0 0 0 0.5px rgb(255 255 255 / .45);
+  --glass-highlight: inset 0 1px 0 rgb(255 255 255 / .55);
+  --glass-shadow: 0 10px 36px rgb(0 0 0 / .16);
+}
+[data-theme="dark"] {
+  --glass-tint: 34 34 38;
+  --g1-bg: rgb(var(--glass-tint) / calc(0.50 + 0.32 * var(--glass-intensity)));
+  --g2-bg: rgb(255 255 255 / calc(0.07 + 0.07 * var(--glass-intensity)));
+  --glass-rim: 0 0 0 0.5px rgb(0 0 0 / .55);
+  --glass-highlight: inset 0 1px 0 rgb(255 255 255 / .18);
+}
+.g1 {
+  background: var(--g1-bg);
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+  box-shadow: var(--glass-rim), var(--glass-rim-inner), var(--glass-highlight), var(--glass-shadow);
+}
+.g2 { background: var(--g2-bg); box-shadow: var(--glass-rim), var(--glass-highlight); }
+/* reflet spéculaire : ::before avec dégradé linéaire + masque sur le bord (padding-box/border-box) */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .g1 { background: rgb(var(--glass-tint) / .94); }
+}
+@media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
+  .g1, .g2, .g3, .gc { backdrop-filter: none; -webkit-backdrop-filter: none; }
+  .g1 { background: rgb(var(--glass-tint) / 1); box-shadow: 0 0 0 1px rgb(var(--glass-ink) / .45); }
+  .g2 { background: rgb(var(--glass-ink) / .08); }
+}
+~~~
+Chaque niveau doit se distinguer du niveau inférieur (luminosité ΔL ≥ 4 en OKLab,
+bord et reflet visibles). Documente-le avec des planches dans audit/GLASS.md.
+
+### 7.3 Verre sur verre : règles techniques
+- Un élément qui a un backdrop-filter crée une « backdrop root » : un backdrop-filter
+  imbriqué ne floute que le contenu de son parent, pas la photo. Donc : G1 porte le
+  vrai flou, G2 et G3 simulent la matière (couche de lumière, bord, reflet, ombre
+  interne). Un backdrop-filter imbriqué n'est permis que s'il apporte un gain
+  visible mesuré, et il est documenté.
+- Évite les ancêtres qui cassent le flou (opacity < 1, filter, mask, will-change:
+  filter, overflow et transform mal placés) : audite chaque G1.
+- Formes proches qui fusionnent (équivalent GlassEffectContainer) : groupes de pilules
+  (segmented, barres d'actions, contrôles de carte) sur UN seul G1 capsule avec
+  séparateurs, indicateur G2 qui glisse.
+- Réfraction SVG (feDisplacementMap) en amélioration progressive, uniquement sous
+  Chromium, sur la tab bar et 1 à 2 éléments hero ; désactivée sous
+  reduced-motion/transparency, sur les appareils lents et sous Safari.
+- Budget GPU : ≤ 8 éléments avec un vrai backdrop-filter visibles à la fois sur mobile ;
+  listes longues avec content-visibility: auto ; pas de backdrop-filter animé
+  (anime l'opacité d'un calque déjà flouté). Mesure en traces : 60 fps au scroll.
+
+### 7.4 Lisibilité sur le verre (obligatoire)
+- Couleurs de texte « vibrantes » monochromes : label, secondaryLabel, tertiaryLabel,
+  quaternary, en light et en dark, calibrées pour ≥ 4.5 / 4.5 / 3:1 AU PIRE CAS sur
+  G1 et G2, aux trois intensités.
+- Si une valeur échoue, remonte l'opacité minimale du verre concerné ; ne baisse
+  jamais le seuil.
+- Texte long (descriptions, avis, articles) : G1 à intensité forcée ≥ 0.7 ou calque
+  de lisibilité interne ; jamais sur GC.
+- Aucun texte directement sur la photo, sauf les titres hero sur un scrim local.
+- Statuts : icône + texte + teinte légère du verre (≤ 12 %) ; le texte reste
+  label/secondaryLabel.
+- tests/design/contrast.spec.ts : (a) couples de tokens sur fonds simulés (photo la
+  plus claire et la plus sombre de l'app, floutées) ; (b) mesure pixel sur les
+  captures de 20 écrans clés.
+
+### 7.5 Typographie
+Pile SF (-apple-system, "SF Pro Text", "SF Pro Display", system-ui…). Justifie
+Manrope, Georgia et Mono, ou supprime-les ; mono réservée au GPS et aux codes.
+Boutons 17 semibold (15 en compact). Eyebrows 13 semibold, pas de mono en capitales.
+Titres en label (encre ou blanc), jamais en couleur.
+
+### 7.6 Espacement, couches, motion
+- Échelle 4/8 ; marges d'écran 16/20 ; 24–32 entre sections.
+- Échelle z-index unique : contenu < sticky < barre secondaire < tab bar < HUD < sheet
+  < toast < alerte (la carte 400/1000 comprise).
+- --nav-height unique ; --tabbar-h, --subbar-h, --sticky-cta-h, --safe-bottom →
+  --content-pb calculé.
+- Motion : ressorts (response 0.35–0.5, amortissement 0.8–0.9), press-scale 0.97 +
+  éclaircissement du verre à l'appui (le reflet « s'allume »), morphing de la tab bar
+  entre ses tailles, sélection du segmented par déplacement fluide du G2, bande
+  uniforme en haut quand le contenu passe sous les barres.
+
+### 7.7 Primitives (toutes en verre)
+GlassSurface (G1/G2/G3/GC, prop level), LkvButton (prominent G3, glass G2, plain ·
+50/44/36 · capsule), IconButton (cercle 44), Pill/Chip, SegmentedControl, TextField,
+SearchField, Select, Toggle (piste en verre, pastille lumineuse), Checkbox, Stepper,
+ProgressBar et Ring (piste G2, remplissage label, pas de couleur), ListRow /
+InsetGroupedList, Card, Sheet (poignée, detents), Alert, Toast, Badge, EmptyState,
+ErrorState, Skeleton (reflet qui glisse sur le verre, pas de dégradé noir/blanc),
+Avatar/AvatarStack, Flag SVG, Rating, StatTile, PriceTag (Intl fr-FR), StepIndicator,
+StickyActionBar, SubTabBar, MapControlCluster.
+
+====================================================================
+## 8. CHANTIER PAGE PAR PAGE (constats OBS-* → cible full glass)
+====================================================================
+Chemins déduits des captures : confirme-les dans l'inventaire.
+
+### 8.0 Transverse — P0/P1
+- OBS-G01 Tab bar qui masque le contenu (wizard, carbone, matériel, produit, carnet,
+  pays, avis, équipe, budget) → --content-pb global dans MobilePageShell.
+- OBS-G02 Fond qui s'arrête, bande vert uni → G0 fixed 100dvh sur tout le scroll.
+- OBS-G03 Titres menthe < 2:1 → label monochrome sur G1.
+- OBS-G04 Verre actuel plat et trop transparent (texte illisible) → niveaux 7.2 et
+  lisibilité 7.4.
+- OBS-G05 Emojis et drapeaux en lettres (« FR », « IS ») → LkvIcon + Flag SVG.
+- OBS-G06 Mono pour prix, stats, heures, poids → SF + tabular-nums.
+- OBS-G07 Point décimal (« 55.00 € », « 3.3 L ») → Intl fr-FR.
+- OBS-G08 Badge Accueil qui vaut 3, 6 ou rien → Badge G3 compact, même source partout.
+- OBS-G09 Loaders flottants sur la photo (« Redirection… », « Chargement… ») →
+  squelettes de verre de la page cible ; redirections côté serveur.
+- OBS-G10 Squelettes en dégradé agressif → Skeleton en verre.
+- OBS-G11 Jargon (« PHASE 3/5 », « TIER », « Données réelles », « Secours démo »,
+  « Fixtures locales », « Moyenne bayésienne… ») → audit/COPY.md.
+- OBS-G12 Sous-onglets empilés sur la tab bar, onglet actif erroné (« Fil » sur
+  Entraide) → SubTabBar G1 capsule, aria-current fiable.
+- OBS-G13 Boutons icône carrés d'environ 12px → IconButton cercle 44 en verre.
+- OBS-G14 Contenu collé au bord (Communauté x=0) → marges d'écran.
+- OBS-G15 Rayons de 14 à 20px, champs rectangulaires → échelle 7.1.
+- OBS-G16 Tous les accents menthe (CTA, liens, actifs, progress, coches) → monochrome :
+  actif = G2 plus lumineux + texte semibold ; coche = icône label ; lien = label
+  souligné ; CTA = G3.
+
+### 8.1 Voyage / Hub
+- /voyages/nouveau : « Étape 1 sur 5 » en double → un seul StepIndicator ;
+  « Destinations » coupé ; « Assistant guidé / Génération IA » → SegmentedControl ;
+  lignes pays = InsetGroupedList (G2 dans G1) avec Flag ; sélection = cellule plus
+  lumineuse + coche ; « Continuer » en StickyActionBar G3.
+- /voyages/[slug] : progression sans libellé ; « Point de contrôle : Point de
+  contrôle 1… » ; tuiles d'action sans libellé, dont une coupée → tuiles G2 libellées ;
+  rangée météo illisible sur la photo → pilule G1 ; « BILAN BILAN » ; carte 108 km
+  cassée → placeholder + ErrorState ; légendes en 11px majuscules → 13 semibold ;
+  « Confiance 0 % » sans explication.
+- /voyages/[slug]/itineraire : trop dense, chevauchements → sections InsetGrouped,
+  défilements horizontaux avec fondu aux bords.
+- /securite : « 02:00 » → BUGS-METIER ; « Secours démo » ; 112/114 = boutons G3
+  avec teinte danger légère + icône téléphone, tel: fiable.
+- /budget : donut + chips en double → une seule source ; négatifs = signe + icône.
+- /documents : compteurs incohérents → BUGS-METIER ; « document(s) » → ICU ;
+  retour 44.
+- /equipe : « CY CY » → AvatarStack distincts ; « Gérer » en pilule.
+- /materiel : « Tous les kits → » minuscule ; stats sous la tab bar ; même bouclier
+  pour 4 niveaux → icônes distinctes + libellé.
+- /kits : descriptions invisibles (P0) → label sur G1 ; poids en mono.
+- /kits/[slug] introuvable : titre répété, icône insecte → EmptyState.
+- /ai-configurateur : chips tronqués ; 3 CTA identiques → un seul G3 ; résumé collant
+  qui recouvre le contenu.
+- /rapport-expedition : « PHASE 5 » ; titre menthe ; 3 CTA ; tab bar à une icône (P0).
+- /randonnee-active : HUD GPS sur la tab bar → en mode actif, fusion HUD + barre en un
+  seul G1 morphé ; « Recherche GPS… » chevauché ; panneau « Emporter un kit ? »
+  illisible ; contrôles de carte vides → MapControlCluster GC.
+
+### 8.2 Carte / Explorer / Lieux / Pays
+- /explorer : 3 contrôles sans icône (P0) → MapControlCluster ; attribution OSM/Esri
+  sous la tab bar (P0 licence) → au-dessus de --content-pb, pilule GC lisible ;
+  chip « Sortie entre amis » illisible + emoji.
+- /lieux/[slug] : « - /5.0 » → « Pas encore noté » ; jargon bayésien → info-bulle ;
+  « Signaler un problème » qui semble désactivé.
+- /pays/[slug] : blocs vides au chargement → Skeleton ; sous-onglets qui chevauchent ;
+  stats en 10px ; textes longs → G1 intensité ≥ 0.7.
+- /guides : titres menthe → label ; lignes sans chevron → ListRow.
+
+### 8.3 Communauté
+- /communaute : titre collé au bord ; + et recherche carrés → IconButton ; chips coupés ;
+  stories ≥ 64 avec anneau en verre (pas d'anneau coloré) ; squelettes.
+- /communaute/publier : trop long ; « Publier maintenant » contre la tab bar → page
+  de composition sans tab bar, G3 fixe.
+- /communaute/carnets : hero menthe plein (P0) → hero photo + scrim + G1 ; chip
+  illisible ; titre répété.
+- /carnet/[slug] : « Randonnée du 10/08/2026 » ; fil d'Ariane coupé ; « 0 jours » →
+  BUGS-METIER ; emojis ; sous-onglets qui masquent le contenu.
+- Studios (expédition, club, carnet) : deux colonnes desktop sur mobile, aperçu coupé
+  (P0) → stepper plein écran + aperçu en Sheet ; retirer « Imprimer ».
+- /communaute/entraide : pas d'état vide ; « Fil » actif à tort ; segmented sombre.
+- /communaute/pro : « Contenu à venir. » (P0) → feature flag ou vrai état « Bientôt ».
+- /clubs/[slug] : emojis ; événements denses ; « S'inscrire » peu visible → G3.
+- /sorties : GR10 ×3, Islande ×3 → cause key/rendu (UI) ou données (BUGS-METIER).
+- /avis : titre vert foncé sur la forêt (P0) ; « Membre » partout ; « Laisser un avis »
+  en haut + collant.
+- /messagerie : état vide illisible ; icône cassée ; + carré ; barres empilées.
+- /profil/[username] : illustrations emoji ; redirection visible → côté serveur.
+- /compte/profil : formulaire long → InsetGroupedList, sauvegarde collante, toggles
+  en verre ; ajoute ici le réglage « Intensité du verre ».
+- /fidelite : « PHASE 3 » ; 🥾 ; onglets coupés ; frise en 9px ; progression invisible
+  à 0.
+- /recompenses : erreur ET fausses valeurs « 0 pts » en même temps → ErrorState
+  seul ; 🏦 💳 ; « Paypal » → « PayPal » ; placeholder IBAN qui déborde → « FR76 … »
+  + masque ; règles → accordéon.
+
+### 8.4 Boutique / Paiement
+- /produit/[slug] : « BigBuy » exposé (P0 marque) → BUGS-METIER / mapping
+  d'affichage ; image assombrie → plateau G2 lumineux, image nette ; prix en mono ;
+  stepper + « Ajouter au panier » → StickyActionBar G1 au-dessus de la tab bar, G3.
+- /location, /occasion : images incohérentes → BUGS-METIER + placeholder neutre ;
+  chips 10px.
+- /panier vide : illisible → EmptyState sur G1.
+- /checkout : « ÉTAPE 3 · 4 » → « Étape 3 sur 4 » ; « Offerte » cochée + 5.90 €, total
+  6 € sur un sous-total à 0 € (P0 → BUGS-METIER, calcul intact) ; engrenage sur
+  « Payer » → cadenas ; Apple Pay désactivé sans explication ; moyen de paiement
+  ambigu → radios explicites ; tab bar masquée pendant le paiement ; « 9,90 € » et
+  « 5.90 » dans le même écran.
+- /abonnements : offres denses, listes en 12px, badge « Populaire » qui chevauche.
+
+### 8.5 Outils
+- Commun : « Autres outils » en double et contenant l'outil courant (P1) → grille de
+  ListRows G2 dans G1, sans l'outil courant ; titres tronqués ; emoji de titre →
+  LkvIcon dans une tuile G2 de 44.
+- Carbone : 3120,2 « tonnes » Paris–Katmandou (P0 → BUGS-METIER) ; selects natifs →
+  Select en verre ; résultat sous la tab bar.
+- Rations : valeurs < 3:1 ; boutons emoji → SegmentedControl.
+- Chronomètre : ▶ → icône ; tour et réinitialiser ; aria-live throttlé.
+- Boussole : emoji ; texte sur la photo ; « Activer les capteurs » + explication.
+- Fuseaux : heures illisibles ; codes pays → Flag ; « +8h » peu contrasté.
+- Tailles : M = EU 38 = UK 10 → BUGS-METIER.
+- Checklist : + et × < 44 ; checkbox sans libellé ; swipe-to-delete en plus.
+- Convertisseur : segmented tronqué ; « 1 miles ».
+- Budget : totaux illisibles ; emojis ; « €/j » peu contrasté.
+- Poids du sac : titre coupé ; « 2.22 kg » ; + trop petit.
+- /outils : badges TERRAIN/OFFLINE en 9px → Badge 12 semibold.
+
+### 8.6 Auth / Système
+- /connexion : titre menthe ; « Inscription » inactive invisible ; « Mot de passe
+  oublié ? » minuscule ; CTA → G3 ; double chemin segmented + lien → un seul ;
+  bande vide.
+- /inscription : eyebrow mono ; sous-titre ~2:1 ; champs capsule en verre ;
+  afficher/masquer le mot de passe ; liens CGU/Confidentialité réels ;
+  autocomplete et inputmode.
+- 404 : « 404 » menthe → label géant sur G1 ; libellés coupés → grille 2×2.
+- /apercu-preparation (« Fixtures locales ») en prod (P0) → garde de route
+  (development ou admin).
+- Sentier introuvable : jargon → copie utilisateur + action.
+
+### 8.7 Desktop 1440 et iPad 820
+Double DOM (hidden md:block / block md:hidden) divergent → harmoniser sur les mêmes
+primitives ; sidebar iPad en G1 (NavigationSplitView) ; CustomCursor désactivé ;
+lignes ≤ 75 caractères ; sur desktop, verre plus clair et moins de couches
+simultanées.
+
+====================================================================
+## 9. LOTS
+====================================================================
+Lot 0 : garde-fous (radius.spec, contrast.spec, no-primary.spec, toHaveScreenshot
+        sur 20 écrans, axe sans violation serious/critical, trace de scroll de référence).
+Lot 1 (P0) : tokens 7.1–7.6, G0 fond, GlassSurface, couches (content-pb, z-index),
+        tab bar, HUD, carte + attribution, studios mobiles, pages dev, « Contenu à venir »,
+        contrastes P0, suppression de toute couleur primaire.
+Lot 2 : primitives 7.7, icônes et drapeaux SVG, Intl fr-FR, squelettes, états vides
+        et d'erreur.
+Lot 3 (P1) : route par route 8.1 → 8.6, mobile puis desktop, plus aucune valeur
+        inline en dur.
+Lot 4 (P2/P3) : motion (ressorts, morphing, reflet à l'appui, bande au scroll),
+        réfraction progressive, réglage d'intensité, micro-copies, finitions pixel.
+Lot 5 : docs (CLAUDE.md, DESIGN_SYSTEM.md, audit/GLASS.md, retrait de #A3C4A3 dans
+        la section Aura, --nav-height), guide des composants.
+
+====================================================================
+## 10. NIVEAU PRODUCTION
+====================================================================
+- Lighthouse CI mobile : LCP < 2,5 s, CLS < 0,1, INP < 200 ms, JS de route < 170 kB gzip.
+- GPU : budget 7.3 respecté, 60 fps au scroll sur CPU ×4 ; repli opaque automatique
+  (reduced-transparency, navigateurs sans support, heuristique d'appareil lent via
+  navigator.hardwareConcurrency / deviceMemory → attribut data-glass="lite").
+- Images : next/image, AVIF/WebP, fond en plusieurs résolutions, preload,
+  placeholder flou.
+- Polices système, aucune police web bloquante.
+- 0 violation axe serious/critical ; parcours clavier et VoiceOver complets : achat,
+  création de voyage, démarrage de rando, création de carnet.
+- Robustesse : zoom 200 %, texte ×3, noms longs.
+- Aucune nouvelle dépendance runtime sans justification.
+
+====================================================================
+## 11. VÉRIFICATION → audit/AVANT-APRES.md
+====================================================================
+Refais toute la section 4. Par ID : avant | après côte à côte, contraste avant → après
+(pire pixel), statut. Scores par route avant/après, Lighthouse, axe, radius.spec,
+no-primary.spec, frame time au scroll. Le Vérificateur fait une passe « chaque pixel »
+à l'aveugle : chaque défaut devient un ID et renvoie au lot concerné.
+
+====================================================================
+## 12. DÉFINITION DE « TERMINÉ »
+====================================================================
+- 0 P0 et 0 P1 ouverts ; P2/P3 corrigés ou justifiés.
+- lint, type-check, test, build, identity_compliance, tokens-sync, radius.spec,
+  contrast.spec, no-primary.spec, axe et Lighthouse CI verts.
+- 100 % des éléments d'UI en verre (G1/G2/G3/GC) ; aucune couleur primaire ni
+  d'accent ; aucun rayon < 12px ; aucun emoji ; aucun jargon ; aucun contenu masqué ;
+  aucun texte < 4.5:1 au pire pixel, en light/dark et aux 3 intensités.
+- audit/00-inventaire.md, REFERENCES.md, GLASS.md, RAPPORT.md, BUGS-METIER.md, COPY.md,
+  AVANT-APRES.md livrés.
+- Logique métier intacte (git diff vide sur Supabase, Stripe, hooks, engines, api).
+
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-23T20:05:23+02:00.
+</ADDITIONAL_METADATA>

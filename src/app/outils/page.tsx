@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import Link from 'next/link';
 import type { Metadata } from 'next';
 import Header from '@/components/Header';
@@ -335,7 +335,7 @@ export default function OutilsPage() {
           </section>
 
           {/* CTA */}
-          <TopoSeparator inverted color="var(--lkv-primary)" />
+          <TopoSeparator inverted color="rgba(255, 255, 255, 0.08)" />
           <section className="py-16 bg-dark-bg">
             <div className="max-w-3xl mx-auto px-4 text-center">
               <p className="font-mono text-xs text-info tracking-widest uppercase mb-3">CONFIGURATEUR IA</p>
@@ -364,7 +364,7 @@ export default function OutilsPage() {
               <p className="mb-[var(--space-2)] font-mono text-[10px] uppercase tracking-[0.14em] text-[color:var(--lkv-text-muted)]">
                 BOÎTE À OUTILS — {tools.length} OUTILS
               </p>
-              <h1 className="mb-[var(--space-2)] text-[28px] font-extrabold leading-[1.1] text-[color:var(--lkv-primary)]">
+              <h1 className="mb-[var(--space-2)] text-[28px] font-extrabold leading-[1.1] text-[color:var(--glass-label)]">
                 Outils terrain
               </h1>
               <p className="text-[14px] leading-[var(--leading-normal)] text-[color:var(--lkv-text-muted)]">
@@ -380,7 +380,7 @@ export default function OutilsPage() {
                     <span className="shrink-0 text-[28px]" role="img" aria-label={tool.nom}>{tool.icon}</span>
                     <div className="min-w-0 flex-1">
                       <div className="mb-1 flex flex-wrap items-center gap-[6px]">
-                        <span className="text-[15px] font-bold text-[color:var(--lkv-primary)]">{tool.nom}</span>
+                        <span className="text-[15px] font-bold text-[color:var(--glass-label)]">{tool.nom}</span>
                         <Badge className="font-mono text-[9px]">{tool.categorie.toUpperCase()}</Badge>
                         {tool.offline && (
                           <Badge tone="sage" className="font-mono text-[9px]">OFFLINE</Badge>

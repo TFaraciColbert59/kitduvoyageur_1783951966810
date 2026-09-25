@@ -109,7 +109,7 @@ function AuthForm() {
     <div className="flex min-h-[100dvh] items-center justify-center px-[var(--space-4)] pb-[var(--space-12)] pt-20 sm:pt-24">
       <div className="w-full max-w-[420px]">
         <div className="mb-[var(--space-6)] text-center">
-          <h1 className="text-[length:var(--lkv-text-title-sm)] font-bold tracking-tight text-[color:var(--lkv-primary)] sm:text-[length:var(--lkv-text-title-lg)]">
+          <h1 className="text-[length:var(--lkv-text-title-sm)] font-bold tracking-tight text-[color:var(--glass-label)] sm:text-[length:var(--lkv-text-title-lg)]">
             {t(mode === 'connexion' ? 'auth.signInTitle' : 'auth.signUpTitle')}
           </h1>
           <p className="mt-1 text-[length:var(--lkv-text-footnote)] text-[color:var(--lkv-text-muted)]">
@@ -147,12 +147,12 @@ function AuthForm() {
         <div className="rounded-[var(--lkv-radius-card)] border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] p-[var(--space-6)] shadow-elevation-2 backdrop-blur-[var(--blur-lg)] sm:p-[var(--space-8)]">
           {confirmationSent ? (
             <div className="text-center">
-              <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-[color:var(--lkv-success-bg)]">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--lkv-primary)" strokeWidth="2" aria-hidden="true">
+              <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-white/10 border border-white/15">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
                   <polyline points="20 6 9 17 4 12" />
                 </svg>
               </div>
-              <p className="mb-2 font-bold text-[color:var(--lkv-primary)]">{t('auth.confirmationTitle')}</p>
+              <p className="mb-2 font-bold text-[color:var(--glass-label)]">{t('auth.confirmationTitle')}</p>
               <p className="mb-[var(--space-4)] text-[length:var(--lkv-text-caption-1)] text-[color:var(--lkv-text-muted)]">
                 {t('auth.confirmationBodyPrefix')} <strong>{email}</strong>{t('auth.confirmationBodySuffix')}
               </p>
@@ -169,14 +169,14 @@ function AuthForm() {
             </div>
           ) : forgotPasswordOpen ? (
             <form onSubmit={handleResetPassword} className="flex flex-col gap-[14px]">
-              <h2 className="text-[length:var(--lkv-text-body-sm)] font-bold text-[color:var(--lkv-primary)]">
+              <h2 className="text-[length:var(--lkv-text-body-sm)] font-bold text-[color:var(--glass-label)]">
                 {t('auth.forgotPassword')}
               </h2>
               <p className="text-[length:var(--lkv-text-caption-1)] text-[color:var(--lkv-text-muted)]">
                 {t('auth.forgotPasswordHint')}
               </p>
               {resetSent ? (
-                <div className="rounded-[var(--lkv-radius-sm)] border border-[color:var(--lkv-success)] bg-[color:var(--lkv-success-bg)] p-[var(--space-3)] text-[length:var(--lkv-text-caption-1)] text-[color:var(--lkv-primary)]">
+                <div className="rounded-[var(--lkv-radius-sm)] border border-[color:var(--lkv-success)] bg-[color:var(--lkv-success-bg)] p-[var(--space-3)] text-[length:var(--lkv-text-caption-1)] text-[color:var(--glass-label)]">
                   {t('auth.resetSentBody')}
                 </div>
               ) : (
@@ -193,7 +193,7 @@ function AuthForm() {
                       placeholder={t('auth.emailPlaceholder')}
                       autoComplete="email"
                       required
-                      className="min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-sm)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-[14px] py-2.5 text-[length:var(--lkv-text-body-sm)] text-[color:var(--lkv-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]"
+                      className="min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-sm)] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg-medium)] px-[14px] py-2.5 text-[length:var(--lkv-text-body-sm)] text-[color:var(--glass-label)] placeholder:text-[color:var(--glass-label-muted)] backdrop-blur-[var(--glass-blur-sm)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30"
                     />
                   </div>
                   {error && (
@@ -209,26 +209,26 @@ function AuthForm() {
               <button
                 type="button"
                 onClick={() => { setForgotPasswordOpen(false); setError(''); }}
-                className="mt-2 min-h-[var(--lkv-touch-min)] cursor-pointer text-center text-[length:var(--lkv-text-caption-1)] text-[color:var(--lkv-text-muted)] underline hover:text-[color:var(--lkv-primary)]"
+                className="mt-2 min-h-[var(--lkv-touch-min)] cursor-pointer text-center text-[length:var(--lkv-text-caption-1)] text-[color:var(--lkv-text-muted)] underline hover:text-[color:var(--glass-label)]"
               >
                 {t('auth.backToSignIn')}
               </button>
             </form>
           ) : (
-            <form onSubmit={handleSubmit} className="flex flex-col gap-[14px]">
+             <form method="post" onSubmit={handleSubmit} className="flex flex-col gap-[14px]">
               {mode === 'inscription' && (
                 <div>
                   <label htmlFor="name" className="mb-1 block text-[length:var(--lkv-text-caption-1)] font-semibold text-[color:var(--lkv-text-primary)]">
                     {t('auth.name')}
                   </label>
-                  <input id="name" type="text" autoComplete="name" value={name} onChange={(e) => setName(e.target.value)} placeholder={t('auth.namePlaceholder')} className="min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-sm)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-[14px] py-2.5 text-[length:var(--lkv-text-body-sm)] text-[color:var(--lkv-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]" />
+                  <input id="name" type="text" autoComplete="name" value={name} onChange={(e) => setName(e.target.value)} placeholder={t('auth.namePlaceholder')} className="min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-sm)] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg-medium)] px-[14px] py-2.5 text-[length:var(--lkv-text-body-sm)] text-[color:var(--glass-label)] placeholder:text-[color:var(--glass-label-muted)] backdrop-blur-[var(--glass-blur-sm)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30" />
                 </div>
               )}
               <div>
                 <label htmlFor="email" className="mb-1 block text-[length:var(--lkv-text-caption-1)] font-semibold text-[color:var(--lkv-text-primary)]">
                   {t('auth.email')}
                 </label>
-                <input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder={t('auth.emailPlaceholder')} autoComplete="email" required className="min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-sm)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] px-[14px] py-2.5 text-[length:var(--lkv-text-body-sm)] text-[color:var(--lkv-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]" />
+                <input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder={t('auth.emailPlaceholder')} autoComplete="email" required className="min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-sm)] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg-medium)] px-[14px] py-2.5 text-[length:var(--lkv-text-body-sm)] text-[color:var(--glass-label)] placeholder:text-[color:var(--glass-label-muted)] backdrop-blur-[var(--glass-blur-sm)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30" />
               </div>
 
               <div>
@@ -240,7 +240,7 @@ function AuthForm() {
                     <button
                       type="button"
                       onClick={() => { setForgotPasswordOpen(true); setError(''); }}
-                      className="cursor-pointer text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)] underline hover:text-[color:var(--lkv-primary)]"
+                      className="cursor-pointer text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)] underline hover:text-[color:var(--glass-label)]"
                     >
                       {t('auth.forgotPasswordLink')}
                     </button>
@@ -255,7 +255,7 @@ function AuthForm() {
                     placeholder={mode === 'inscription' ? t('auth.passwordMinPlaceholder') : t('auth.passwordPlaceholder')}
                     autoComplete={mode === 'inscription' ? 'new-password' : 'current-password'}
                     required
-                    className="min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-sm)] border border-[color:var(--lkv-field-border)] bg-[color:var(--lkv-field-bg)] py-2.5 pl-[14px] pr-11 text-[length:var(--lkv-text-body-sm)] text-[color:var(--lkv-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--lkv-focus-ring)]"
+                    className="min-h-[var(--lkv-touch-min)] w-full rounded-[var(--lkv-radius-sm)] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg-medium)] py-2.5 pl-[14px] pr-11 text-[length:var(--lkv-text-body-sm)] text-[color:var(--glass-label)] placeholder:text-[color:var(--glass-label-muted)] backdrop-blur-[var(--glass-blur-sm)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30"
                   />
                   <button
                     type="button"
@@ -293,7 +293,7 @@ function AuthForm() {
                   setConfirmationSent(false);
                   setForgotPasswordOpen(false);
                 }}
-                className="cursor-pointer px-[var(--space-3)] py-1 text-[length:var(--lkv-text-caption-1)] font-semibold text-[color:var(--lkv-primary)] underline"
+                className="cursor-pointer px-[var(--space-3)] py-1 text-[length:var(--lkv-text-caption-1)] font-semibold text-[color:var(--glass-label)] underline"
               >
                 {mode === 'connexion' ? t('auth.registerLink') : t('auth.signIn')}
               </button>

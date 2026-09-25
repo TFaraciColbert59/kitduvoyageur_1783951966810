@@ -31,7 +31,6 @@ function getSourceFiles(dir: string, acc: string[] = []): string[] {
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
     const full = path.join(dir, entry.name);
     if (entry.isDirectory()) {
-      if (entry.name === 'identity' || entry.name === 'dev') continue; // Identité historique isolée / sandbox
       getSourceFiles(full, acc);
     } else if (/\.(tsx|ts|jsx|js)$/.test(entry.name)) {
       if (entry.name === 'tokens.ts' || entry.name === 'tokens.css') continue;
@@ -44,7 +43,7 @@ function getSourceFiles(dir: string, acc: string[] = []): string[] {
 const filesToScan = getSourceFiles(srcDir);
 
 describe('CHANTIER IOS 27 — GARDE-FOU NO PRIMARY & MONOCHROMIE', () => {
-  it('Palette bannie (#E4501C, #A3C4A3, #0B1F17, #2D6B4A, #1C2620) absente des fichiers sources', () => {
+  it('Palette bannie (#E4501C, #A3C4A3, #0B1F17, #2D6B4A, #1C2620) absente de tout src/ (hors tokens.css)', () => {
     const violations: string[] = [];
 
     for (const file of filesToScan) {
@@ -62,9 +61,13 @@ describe('CHANTIER IOS 27 — GARDE-FOU NO PRIMARY & MONOCHROMIE', () => {
     ).toEqual([]);
   });
 
-  it('Aucun composant de premier plan ne consomme directement --lkv-primary', () => {
+  it('Aucun composant d\'interface (ui & glass) ne consomme directement --lkv-primary / --lkv-action', () => {
     const primaryConsumers: string[] = [];
-    const targetFiles = getSourceFiles(path.join(srcDir, 'components', 'ui'));
+    const uiFiles = getSourceFiles(path.join(srcDir, 'components', 'ui'));
+    const glassFiles = fs.existsSync(path.join(srcDir, 'components', 'glass'))
+      ? getSourceFiles(path.join(srcDir, 'components', 'glass'))
+      : [];
+    const targetFiles = [...uiFiles, ...glassFiles];
 
     for (const file of targetFiles) {
       const content = fs.readFileSync(file, 'utf8');

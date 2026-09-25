@@ -316,8 +316,8 @@ export default function GlobalSearchModal({ isOpen, onClose }: GlobalSearchModal
                 onClick={() => setActiveFilter(tab.id as any)}
                 className={`px-3 py-1 rounded-full text-xs font-bold transition-all whitespace-nowrap ${
                   activeFilter === tab.id
-                    ? 'bg-emerald-500 text-emerald-950 '
-                    : 'bg-white/5 text-white/60 hover:bg-white/10 hover:text-white'
+                    ? 'bg-white text-black shadow-sm'
+                    : 'bg-white/10 text-white/70 hover:bg-white/15 hover:text-white'
                 }`}
               >
                 {tab.label}

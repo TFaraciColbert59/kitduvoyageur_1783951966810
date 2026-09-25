@@ -10,6 +10,9 @@ import fs from 'node:fs';
  *   - y-exped-solo (Annapurna expedition solo)
  */
 
+const TEST_AUDIT_EMAIL = process.env.AUDIT_EMAIL || 'audit@example.invalid';
+const TEST_AUDIT_PASSWORD = process.env.AUDIT_PASSWORD || 'audit-password.invalid';
+
 let cachedAuthCookie: { name: string; value: string; domain: string; path: string } | null = null;
 
 /**
@@ -59,8 +62,8 @@ async function getDemoAuthCookie(): Promise<{ name: string; value: string; domai
       },
     });
     await sb.auth.signInWithPassword({
-      email: 'y-demo@lekitduvoyageur.fr',
-      password: 'Ydemo!2026',
+      email: TEST_AUDIT_EMAIL,
+      password: TEST_AUDIT_PASSWORD,
     });
     if (savedCookies.length > 0) {
       cachedAuthCookie = {

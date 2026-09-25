@@ -1,7 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 
-const SUPABASE_URL = 'https://icxyvwzfjbflcbqukpfz.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImljeHl2d3pmamJmbGNicXVrcGZ6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM5NDc3ODcsImV4cCI6MjA5OTUyMzc4N30.-zry9a_kzwgZU_SpLuguT6P4HMbd7czPdMzBJx7ICMA';
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || (() => { throw new Error('NEXT_PUBLIC_SUPABASE_URL est requis'); })();
+const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || (() => { throw new Error('NEXT_PUBLIC_SUPABASE_ANON_KEY est requis'); })();
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -60,14 +60,14 @@ async function runAudit() {
   // 5. Test bot user auth & post creation
   console.log('\n4. Testing Post Insertion with Bot user auth...');
   const { data: authData, error: authErr } = await supabase.auth.signInWithPassword({
-    email: 'demo.bot@example.com',
-    password: 'password123'
+    email: process.env.AUDIT_EMAIL || (() => { throw new Error('AUDIT_EMAIL est requis'); })(),
+    password: process.env.AUDIT_PASSWORD || (() => { throw new Error('AUDIT_PASSWORD est requis'); })()
   });
 
   if (authErr) {
     console.error('Bot sign in error:', authErr);
   } else {
-    console.log('Bot signed in successfully. User ID:', authData.user.id);
+    console.log('Bot signed in successfully.');
     
     // Check if user_profiles row exists for bot
     const { data: profile, error: profErr } = await supabase

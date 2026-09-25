@@ -91,7 +91,7 @@ export default function ExplorerMap({
   const accuracyCircleRef = useRef<import('leaflet').Circle | null>(null);
 
   // Auto-compact sur mobile (toutes les instances de la carte)
-  const [isAutoCompact, setIsAutoCompact] = useState(false);
+  const [isAutoCompact, setIsAutoCompact] = useState(() => typeof window !== 'undefined' && window.innerWidth < 768);
   useEffect(() => {
     const check = () => setIsAutoCompact(typeof window !== 'undefined' && window.innerWidth < 768);
     check();

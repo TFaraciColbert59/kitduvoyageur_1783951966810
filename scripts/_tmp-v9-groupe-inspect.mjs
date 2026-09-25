@@ -17,8 +17,8 @@ const sb = createServerClient(readEnv('NEXT_PUBLIC_SUPABASE_URL'), readEnv('NEXT
 });
 
 const { data: auth } = await sb.auth.signInWithPassword({
-  email: 'y-demo@lekitduvoyageur.fr',
-  password: 'Ydemo!2026',
+  email: process.env.AUDIT_EMAIL || (() => { throw new Error('AUDIT_EMAIL est requis'); })(),
+  password: process.env.AUDIT_PASSWORD || (() => { throw new Error('AUDIT_PASSWORD est requis'); })(),
 });
 const userId = auth?.user?.id;
 console.log('user', userId);

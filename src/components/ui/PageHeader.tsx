@@ -93,7 +93,7 @@ export function PageHeader({
         {subtitle && (
           <p
             className={cn(
-              'mt-[var(--space-1)] text-[length:var(--lkv-text-subheadline)] text-[color:var(--lkv-text-secondary)]',
+              'mt-[var(--space-1)] text-[length:var(--lkv-text-subheadline)] text-[color:var(--lkv-text-primary)]',
               SUBTITLE_CLAMP[subtitleLines] ?? ''
             )}
           >

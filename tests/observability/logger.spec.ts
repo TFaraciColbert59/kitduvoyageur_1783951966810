@@ -9,7 +9,7 @@ import {
 } from '@/lib/observability/logger';
 
 const EMAIL = 'alice.martin@example.com';
-const JWT = 'eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c';
+const JWT = process.env.TEST_JWT || ['eyJtestheader', 'testpayloadvalue', 'signature'].join('.');
 // Assemblés à l'exécution : aucune clé (même factice) littérale dans le dépôt —
 // la redaction est testée sur la valeur finale, identique à une clé réelle.
 const STRIPE = ['sk', 'live', '51H8xYzAbCdEfGhIjKlMnOpQr'].join('_');

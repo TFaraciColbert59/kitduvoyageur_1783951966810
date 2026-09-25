@@ -39,24 +39,20 @@ jobs:
       - name: Mask Capacitor server URL in logs
         run: echo "::add-mask::${{ secrets.CAPACITOR_SERVER_URL }}"
 
+      - name: Validate Capacitor server URL
+        env:
+          CAPACITOR_SERVER_URL: ${{ secrets.CAPACITOR_SERVER_URL }}
+        run: node scripts/verify/verify_capacitor_server.mjs
+
       - name: Capacitor sync
         env:
           CAPACITOR_SERVER_URL: ${{ secrets.CAPACITOR_SERVER_URL }}
         run: npx cap sync ios
 
-      - name: Verify Capacitor server.url (no secret leak)
-        run: |
-          CONFIG="ios/App/App/capacitor.config.json"
-          if [ ! -f "$CONFIG" ]; then
-            echo "::error::capacitor.config.json introuvable"
-            exit 1
-          fi
-          # Check only the KEY presence; the value is never printed.
-          if grep -q '"url"' "$CONFIG"; then
-            echo "server.url: present in embedded Capacitor config"
-          else
-            echo "::warning::server.url: MISSING - the app will load the local shell instead of the backend"
-          fi
+      - name: Verify embedded Capacitor configuration
+        env:
+          CAPACITOR_SERVER_URL: ${{ secrets.CAPACITOR_SERVER_URL }}
+        run: node scripts/verify/verify_capacitor_server.mjs ios/App/App/capacitor.config.json --config-only
 
       - name: List Xcode schemes
         working-directory: ios/App

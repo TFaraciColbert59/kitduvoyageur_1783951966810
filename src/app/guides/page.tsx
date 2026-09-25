@@ -1,8 +1,8 @@
-﻿import { Metadata } from 'next';
+import { Metadata } from 'next';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
-import { Card } from '@/components/ui';
+import { Card, InsetGroupedList, InsetGroupedItem } from '@/components/ui';
 import Link from 'next/link';
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://lekitduvoyageur.fr';
@@ -50,14 +50,14 @@ export default function GuidesPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {GUIDES.map((guide) => (
                 <Link key={guide.slug} href={`/guides/${guide.slug}`} className="group block h-full">
-                  <Card as="article" tone="sage" variant="interactive" className="p-6 flex flex-col justify-between gap-4 h-full">
+                  <Card as="article" variant="interactive" className="p-6 flex flex-col justify-between gap-4 h-full">
                     <div>
-                      <h2 className="font-display font-bold text-xl text-[color:var(--lkv-primary)] mb-2 group-hover:text-[color:var(--lkv-primary-soft)] transition-colors">
+                      <h2 className="font-display font-bold text-xl text-[color:var(--glass-label)] mb-2 group-hover:text-white transition-colors">
                         {guide.title}
                       </h2>
-                      <p className="text-sm text-[color:var(--lkv-primary-soft)]">{guide.description}</p>
+                      <p className="text-sm text-[color:var(--lkv-text-secondary)]">{guide.description}</p>
                     </div>
-                    <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-[color:var(--lkv-text-secondary)] transition-colors group-hover:text-[color:var(--lkv-primary)]">
+                    <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-[color:var(--lkv-text-secondary)] transition-colors group-hover:text-white">
                       Lire le guide →
                     </span>
                   </Card>
@@ -73,24 +73,23 @@ export default function GuidesPage() {
       <div className="block md:hidden">
         <MobilePageShell>
           <div className="p-[var(--space-4)]">
-            <h1 className="mb-[var(--space-2)] font-display text-[24px] font-extrabold text-[color:var(--lkv-forest-50)]">
+            <h1 className="mb-[var(--space-2)] font-display text-[24px] font-extrabold text-[color:var(--glass-label)]">
               Guides de voyage
             </h1>
-            <p className="mb-[var(--space-6)] text-[14px] leading-[var(--leading-normal)] text-[color:var(--lkv-forest-100)]">
+            <p className="mb-[var(--space-6)] text-[14px] leading-[var(--leading-normal)] text-[color:var(--lkv-text-secondary)]">
               Découvrez nos guides complets pour préparer chaque aventure.
             </p>
-            <div className="flex flex-col gap-[var(--space-3)]">
+            <InsetGroupedList>
               {GUIDES.map((guide) => (
-                <Link key={guide.slug} href={`/guides/${guide.slug}`} className="block">
-                  <Card as="article" tone="sage" variant="interactive" className="p-[var(--space-4)]">
-                    <h2 className="mb-1 text-[16px] font-semibold text-[color:var(--lkv-primary)]">
-                      {guide.title}
-                    </h2>
-                    <p className="text-[13px] text-[color:var(--lkv-text-secondary)]">{guide.description}</p>
-                  </Card>
-                </Link>
+                <InsetGroupedItem
+                  key={guide.slug}
+                  href={`/guides/${guide.slug}`}
+                  title={guide.title}
+                  subtitle={guide.description}
+                  chevron
+                />
               ))}
-            </div>
+            </InsetGroupedList>
           </div>
         </MobilePageShell>
       </div>

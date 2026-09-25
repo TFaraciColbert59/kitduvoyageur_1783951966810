@@ -101,27 +101,24 @@ export default function KitsPage() {
           <Header />
           <main className="h-full overflow-y-auto max-w-[var(--page-max-w)] mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-20">
             <PageHeader variant="large" className="mb-3" title="Kits de voyage" />
-            <p className="mb-8 max-w-2xl text-base text-[var(--lkv-forest-100)]">
+            <p className="mb-8 max-w-2xl text-base text-[var(--glass-secondary)]">
               Découvrez nos kits complets et optimisés pour chaque destination. Équipement
               sélectionné, testé et prêt à partir.
             </p>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {KITS.map((kit) => (
-                <Card
+                <div
                   key={kit.slug}
-                  as="article"
-                  variant="interactive"
-                  tone="sage"
-                  className="p-6 flex flex-col justify-between gap-4"
+                  className="g1 p-6 rounded-[var(--lkv-radius-card)] border border-[var(--glass-rim)] flex flex-col justify-between gap-4 shadow-md"
                 >
                   <div className="space-y-2">
-                    <h2 className="font-display font-bold text-xl text-[var(--lkv-primary)]">{kit.nom}</h2>
-                    <p className="text-sm text-[var(--lkv-forest-600)] leading-relaxed">{kit.description}</p>
+                    <h2 className="font-display font-bold text-xl text-[var(--glass-label)]">{kit.nom}</h2>
+                    <p className="text-sm text-[var(--glass-secondary)] leading-relaxed">{kit.description}</p>
                   </div>
 
-                  <div className="flex items-center justify-between pt-2 border-t border-white/20">
-                    <span className="text-xs font-mono font-medium text-[var(--lkv-text-muted)]">
+                  <div className="flex items-center justify-between pt-3 border-t border-[var(--glass-rim)]">
+                    <span className="text-xs font-semibold tabular-nums text-[var(--glass-secondary)]">
                       {kit.weight} · {kit.itemsCount} articles
                     </span>
                     <Link href={`/kits/${kit.slug}`} className="shrink-0">
@@ -130,7 +127,7 @@ export default function KitsPage() {
                       </Button>
                     </Link>
                   </div>
-                </Card>
+                </div>
               ))}
             </div>
           </main>
@@ -141,7 +138,7 @@ export default function KitsPage() {
       {/* ── MOBILE (COCKPIT LIQUID GLASS) ── */}
       <div className="block md:hidden">
         <MobilePageShell>
-          <div className="px-3 pt-3 pb-24 flex flex-col gap-4">
+          <div className="px-4 pt-3 pb-24 flex flex-col gap-4">
             <PageHeader
               variant="large"
               title="Kits de voyage"
@@ -150,36 +147,33 @@ export default function KitsPage() {
               backLabel="Matériel"
             />
 
-            <p className="text-xs text-[var(--lkv-forest-100)] leading-relaxed">
+            <p className="text-sm text-[var(--glass-secondary)] leading-relaxed">
               Kits complets et optimisés pour chaque destination. Équipement sélectionné, testé et
               prêt à partir.
             </p>
 
             <div className="flex flex-col gap-3">
               {KITS.map((kit) => (
-                <Card
+                <div
                   key={kit.slug}
-                  as="article"
-                  variant="interactive"
-                  tone="sage"
-                  className="p-4 flex flex-col gap-3"
+                  className="g1 p-5 rounded-[var(--lkv-radius-card)] border border-[var(--glass-rim)] flex flex-col gap-3 shadow-md"
                 >
                   <div className="flex items-start justify-between gap-2">
-                    <h2 className="font-display font-bold text-[17px] text-[var(--lkv-primary)]">{kit.nom}</h2>
+                    <h2 className="font-display font-bold text-lg text-[var(--glass-label)]">{kit.nom}</h2>
                   </div>
-                  <p className="text-xs text-[var(--lkv-forest-600)] leading-relaxed">{kit.description}</p>
+                  <p className="text-xs text-[var(--glass-secondary)] leading-relaxed">{kit.description}</p>
 
-                  <div className="flex items-center justify-between pt-1">
-                    <span className="text-[11px] font-mono text-[var(--lkv-text-muted)]">
+                  <div className="flex items-center justify-between pt-2 border-t border-[var(--glass-rim)]">
+                    <span className="text-xs font-semibold tabular-nums text-[var(--glass-secondary)]">
                       {kit.weight} · {kit.itemsCount} articles
                     </span>
                     <Link href={`/kits/${kit.slug}`} className="shrink-0">
-                      <Button size="sm" icon={<Icon name="arrow-right" size={13} />} iconPosition="trailing">
+                      <Button variant="primary" size="sm" icon={<Icon name="arrow-right" size={13} />} iconPosition="trailing">
                         Explorer
                       </Button>
                     </Link>
                   </div>
-                </Card>
+                </div>
               ))}
             </div>
           </div>

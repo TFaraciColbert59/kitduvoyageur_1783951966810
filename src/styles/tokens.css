@@ -39,8 +39,8 @@
      décliné portrait (mobile) / paysage (large), voilé pour la lisibilité. */
   --lkv-app-bg-image-portrait: url('/assets/images/lkdv-bg-portrait.webp');
   --lkv-app-bg-image-landscape: url('/assets/images/lkdv-bg-landscape.webp');
-  --lkv-app-bg-scrim: rgba(46, 92, 66, 0.26);
-  --lkv-app-bg-fallback: #12301F;
+  --lkv-app-bg-scrim: rgba(242, 246, 243, 0.78);
+  --lkv-app-bg-fallback: #F5F7F3;
 
   --lkv-surface: #F5F7F3;
   --lkv-surface-paper: #FFFFFF;
@@ -50,8 +50,8 @@
 
   --lkv-text-primary: #172B24;
   --lkv-text-secondary: #56665D;
-  --lkv-text-muted: #5C6B62;
-  --lkv-text-subtle: #65736A;
+  --lkv-text-muted: #46584D;
+  --lkv-text-subtle: #526158;
   --lkv-text-inverted: #FFFFFF;
 
   /* États complets (champs, survol, focus, désactivé, voile) */
@@ -63,6 +63,10 @@
   --lkv-overlay-scrim: rgba(16, 28, 23, 0.45);
   --lkv-focus-ring: rgba(34, 97, 72, 0.28);
   --lkv-on-action: #FFFFFF;
+  --lkv-on-primary: #FFFFFF;
+  --lkv-on-primary-muted: #E7F0E8;
+  --lkv-on-dark: #FFFFFF;
+  --lkv-on-dark-muted: #E7F0E8;
 
   /* ── 2. Échelles Canoniques ──────────────────────────────── */
   /* ├─ Forest ──────────────────────────────────────────────── */
@@ -150,16 +154,17 @@
   --lkv-border-strong: rgba(23, 43, 36, 0.52);
 
   /* ── 3. Statuts et Alertes Terrain (0 #E4501C) ───────────── */
-  --lkv-success: #5B7F55;
+  --lkv-success: #3D6038;
   --lkv-success-bg: #E1EBDE;
   --lkv-warning: #C89A3B;
   --lkv-warning-bg: #FBF1DC;
-  --lkv-warning-dark: #8C6418;
+  --lkv-warning-dark: #765014;
   --lkv-warning-subtle: #FDF6E8;
   --lkv-danger: #A8443A;
   --lkv-danger-bg: #FDE8E6;
   --lkv-danger-dark: #7E2D25;
   --lkv-info: #4B6B7C;
+  --lkv-info-rgb: 75, 107, 124;
   --lkv-info-bg: #DDE7EE;
 
   --sky-900: #10222B;
@@ -490,11 +495,12 @@
   --glass-text-secondary: rgba(23, 43, 36, 0.74);
   /* Direction §6 : le verre est clair, léger et réservé aux surfaces
      superposées ; texte sombre sur verre clair (contraste mesuré). */
-  --glass-bg-light: rgba(255, 255, 255, 0.72);
+  --glass-bg-light: rgb(255 255 255 / calc(0.88 + 0.10 * var(--glass-intensity, 0.5)));
   --glass-bg-medium: var(--card-tint);
   --glass-bg-strong: var(--card-tint-strong);
   --glass-bg-dark: rgba(16, 28, 23, 0.90);
-  --glass-subtle-fill: rgba(255, 255, 255, 0.66);
+  --glass-subtle-fill: rgb(255 255 255 / calc(0.84 + 0.12 * var(--glass-intensity, 0.5)));
+  --glass-border-color: rgba(23, 43, 36, 0.12);
   --glass-border: rgba(23, 43, 36, 0.12);
   --glass-rim: rgba(255, 255, 255, 0.85);
   --glass-radius: var(--card-radius);
@@ -537,7 +543,7 @@
      Source de vérité unique : modifier UNE valeur ici met à jour
      TOUS les boutons du site (classes CSS + composants React).
      ════════════════════════════════════════════════════════════════ */
-  --btn-tint: rgba(255, 255, 255, 0.78);            /* verre clair (Phase 2) */
+  --btn-tint: rgb(255 255 255 / calc(0.86 + 0.10 * var(--glass-intensity, 0.5)));
   /* Phase 3 — « rien de plein » : les boutons/pills sont du verre teinté. */
   --btn-tint-action: rgba(34, 97, 72, 0.20);
   --btn-tint-danger: rgba(168, 68, 58, 0.18);
@@ -561,8 +567,8 @@
      Surfaces claires (blanc translucide), rayon 24, contenu sombre.
      Modifier UNE valeur ici met à jour TOUTES les cards du site.
      ════════════════════════════════════════════════════════════════ */
-  --card-tint: rgba(255, 255, 255, 0.64);           /* verre clair (Phase 2) */
-  --card-tint-strong: rgba(255, 255, 255, 0.84);    /* cards élevées / panneaux */
+  --card-tint: rgb(255 255 255 / calc(0.90 + 0.08 * var(--glass-intensity, 0.5)));
+  --card-tint-strong: rgb(255 255 255 / calc(0.95 + 0.04 * var(--glass-intensity, 0.5)));
   --card-tint-solid: #FFFFFF;                       /* repli opaque (a11y) */
   --card-blur: 14px;                                /* verre plus profond (Phase 2) */
   --card-saturate: 160%;                            /* = --btn-saturate */
@@ -609,8 +615,8 @@
   --lkv-secondary-hover: #B8CDB4;
   --lkv-secondary-subtle: #24382C;
 
-  --lkv-app-bg-scrim: rgba(46, 92, 66, 0.26);
-  --lkv-app-bg-fallback: #12301F;
+  --lkv-app-bg-scrim: rgba(8, 10, 12, 0.88);
+  --lkv-app-bg-fallback: #0b0d12;
 
   --lkv-surface: #101C17;
   --lkv-surface-paper: #1B2D24;
@@ -619,9 +625,9 @@
   --lkv-surface-muted: #182A21;
 
   --lkv-text-primary: #F1F5F1;
-  --lkv-text-secondary: #C2CFC8;
-  --lkv-text-muted: #A9B8B0;
-  --lkv-text-subtle: #8A9A91;
+  --lkv-text-secondary: #EDF3EF;
+  --lkv-text-muted: #CBD8D0;
+  --lkv-text-subtle: #A8B8AF;
   --lkv-text-inverted: #FFFFFF;
 
   --lkv-hover-surface: #22382C;
@@ -632,6 +638,8 @@
   --lkv-overlay-scrim: rgba(0, 0, 0, 0.55);
   --lkv-focus-ring: rgba(127, 196, 154, 0.35);
   --lkv-on-action: #08150F;
+  --lkv-on-primary: #08150F;
+  --lkv-on-primary-muted: #163B28;
 
   --lkv-border: rgba(241, 245, 241, 0.16);
   --lkv-border-subtle: rgba(241, 245, 241, 0.08);
@@ -647,6 +655,7 @@
   --lkv-danger-bg: #3A211E;
   --lkv-danger-dark: #B8544A;
   --lkv-info: #9FC4D4;
+  --lkv-info-rgb: 159, 196, 212;
   --lkv-info-bg: #1D2F38;
 
   --glass-solid: var(--card-tint-solid);
@@ -661,6 +670,7 @@
   --glass-border-strong: rgba(255, 255, 255, 0.30);
   --glass-highlight: rgba(255, 255, 255, 0.36);
   --glass-shadow-final: 0 8px 32px rgba(0, 0, 0, 0.14), inset 0 1px 0 rgba(255, 255, 255, 0.18);
+  --glass-border-color: rgba(255, 255, 255, 0.20);
   --glass-border: rgba(255, 255, 255, 0.20);
   --glass-rim: rgba(241, 245, 241, 0.20);
   --glass-focus: #7FC49A;
@@ -722,17 +732,22 @@
   --glass-sat: 180%;
 
   /* Typographie vibrante monochrome */
-  --glass-label: #121815;
-  --glass-label-secondary: #324038;
-  --glass-label-tertiary: #526359;
-  --glass-label-quaternary: #7E9186;
+  --glass-label: #101813;
+  --glass-label-secondary: #26332B;
+  --glass-label-tertiary: #405047;
+  --glass-label-quaternary: #3F5147;
+  --glass-focus-outline: #226148;
 
   /* Couches de matière (G1 = flou, G2/G3 = lumière/matière sans flou) */
-  --g1-bg: rgb(var(--glass-tint-rgb) / calc(0.46 + 0.30 * var(--glass-intensity)));
-  --g2-bg: rgb(var(--glass-tint-rgb) / calc(0.32 + 0.20 * var(--glass-intensity)));
-  --g3-bg: rgba(18, 24, 21, 0.88);
+  --g1-bg: rgb(var(--glass-tint-rgb) / calc(0.92 + 0.06 * var(--glass-intensity, 0.5)));
+  --g2-bg: rgb(245 248 246 / calc(0.90 + 0.08 * var(--glass-intensity, 0.5)));
+  --g1-reduced-bg: #FFFFFF;
+  --g2-reduced-bg: #F5F8F6;
+  --g3-reduced-bg: #121815;
+  --gc-reduced-bg: #F5F8F6;
+  --g3-bg: rgba(18, 24, 21, 0.94);
   --g3-text: #FFFFFF;
-  --gc-bg: rgba(255, 255, 255, 0.22);
+  --gc-bg: rgba(255, 255, 255, 0.40);
 
   /* Bords assombris et reflets iOS 27 */
   --glass-rim: 0 0 0 0.5px rgba(0, 0, 0, 0.22);
@@ -748,6 +763,8 @@
   --lkv-radius-hero: 38px;
   --lkv-radius-sheet: 44px;
   --lkv-radius-full: 9999px;
+  --lkv-radius-concentric-floor: 20px;
+  --lkv-radius-concentric-strict: max(calc(var(--lkv-radius-card) - var(--space-4)), var(--lkv-radius-concentric-floor));
 
   /* Hiérarchie des couches Z-Index */
   --z-base: 1;
@@ -766,7 +783,138 @@
   --content-pb: calc(var(--tabbar-h) + var(--safe-bottom, 24px) + 28px);
 }
 
+html.dark, .dark, [data-theme='dark'] {
+  --glass-tint-rgb: 14 18 16;
+  --glass-ink: 245 250 246;
+  --glass-label: #FFFFFF;
+  --glass-label-secondary: #EDF3EF;
+  --glass-label-tertiary: #CBD8D0;
+  --glass-label-quaternary: #A8B8AF;
+  --glass-focus-outline: #7FC49A;
+  --glass-text: #F1F5F1;
+  --glass-text-secondary: #EDF3EF;
+  --glass-bg-light: rgba(18, 22, 20, 0.82);
+  --glass-bg-medium: rgba(14, 18, 16, calc(0.88 + 0.10 * var(--glass-intensity, 0.5)));
+  --glass-bg-strong: rgba(14, 18, 16, calc(0.92 + 0.06 * var(--glass-intensity, 0.5)));
+  --glass-subtle-fill: rgba(255, 255, 255, 0.08);
+  --btn-tint: rgba(26, 32, 28, 0.88);
+  --card-tint: rgba(14, 18, 16, calc(0.88 + 0.10 * var(--glass-intensity, 0.5)));
+  --card-tint-strong: rgba(14, 18, 16, calc(0.92 + 0.06 * var(--glass-intensity, 0.5)));
+  --card-content: #F1F5F1;
+  --g1-bg: rgba(14, 18, 16, calc(0.92 + 0.06 * var(--glass-intensity, 0.5)));
+  --g2-bg: rgba(22, 26, 24, calc(0.90 + 0.08 * var(--glass-intensity, 0.5)));
+  --g1-reduced-bg: #0E1210;
+  --g2-reduced-bg: #161A18;
+  --g3-reduced-bg: #FFFFFF;
+  --gc-reduced-bg: #161A18;
+  --g3-bg: rgba(255, 255, 255, 0.95);
+  --g3-text: #0E1411;
+  --gc-bg: rgba(255, 255, 255, 0.18);
+  --glass-rim: 0 0 0 0.5px rgba(0, 0, 0, 0.65);
+  --glass-rim-inner: inset 0 0 0 0.5px rgba(255, 255, 255, 0.25);
+  --glass-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.20);
+  --glass-shadow: 0 12px 40px rgba(0, 0, 0, 0.50);
+  --lkv-app-bg-scrim: rgba(8, 10, 12, 0.88);
+  --lkv-app-bg-fallback: #0b0d12;
+  --lkv-text-primary: #F1F5F1;
+  --lkv-text-secondary: #EDF3EF;
+  --lkv-text-muted: #CBD8D0;
+  --lkv-text-subtle: #A8B8AF;
+  --lkv-on-primary: #08150F;
+  --lkv-on-primary-muted: #163B28;
+}
+
+/* Primitives boutons & composants Liquid Glass */
+.g3,
+button.g3,
+[class*='var(--g3-bg)'] {
+  background-color: var(--g3-bg) !important;
+  color: var(--g3-text) !important;
+}
+.g2,
+button.g2,
+[class*='var(--g2-bg)'] {
+  background-color: var(--g2-bg) !important;
+  color: var(--glass-label) !important;
+}
+
+.dark .glass-pill {
+  background: var(--g3-bg) !important;
+  color: var(--g3-text) !important;
+  border-color: var(--glass-border-color) !important;
+}
+.dark .leaflet-control-zoom a,
+.dark .leaflet-bar a {
+  background: rgba(18, 24, 21, 0.90) !important;
+  color: #FFFFFF !important;
+  border-color: rgba(255, 255, 255, 0.20) !important;
+}
+.dark .leaflet-control-attribution a {
+  color: #9AD4B1 !important;
+}
+.dark [class~='bg-[var(--lkv-primary)]']:not(button) {
+  color: #08150F !important;
+}
+.dark .text-forest-soft,
+.dark .text-\[var\(--lkv-primary-soft\)\] {
+  color: #9AD4B1 !important;
+}
+.dark .ring-white {
+  --tw-ring-color: rgba(255, 255, 255, 0.20) !important;
+}
+.dark .text-stone-900,
+.dark .text-stone-800 {
+  color: #F1F5F1 !important;
+}
+.dark .text-stone-700,
+.dark .text-stone-600 {
+  color: #CBD8D0 !important;
+}
+.dark .text-forest-900,
+.dark .text-forest-800,
+.dark .text-forest-700,
+.dark .text-forest-600 {
+  color: #EDF3EF !important;
+}
+
 /* Classes utilitaires universelles Liquid Glass */
+.leaflet-control-attribution a {
+  color: var(--lkv-text-primary) !important;
+}
+.leaflet-bottom.leaflet-right {
+  bottom: calc(var(--content-pb, 88px) + 8px) !important;
+  right: 12px !important;
+  z-index: var(--z-hud, 400) !important;
+}
+.leaflet-control-attribution {
+  background: var(--card-tint-solid) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  border: 0.5px solid rgba(0, 0, 0, 0.15) !important;
+  border-radius: 9999px !important;
+  padding: 2px 8px !important;
+  color: var(--lkv-text-primary) !important;
+  font-size: 10px !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12) !important;
+}
+.dark .leaflet-control-attribution {
+  background: var(--card-tint-solid) !important;
+  border-color: rgba(255, 255, 255, 0.18) !important;
+  color: var(--lkv-text-primary) !important;
+}
+@media (max-width: 767px) {
+  .leaflet-bottom.leaflet-right {
+    bottom: calc(var(--content-pb, 88px) + 48px) !important;
+    left: 12px !important;
+    right: auto !important;
+  }
+  .leaflet-bottom.leaflet-right .leaflet-control-attribution {
+    left: auto !important;
+    right: auto !important;
+    float: none !important;
+  }
+}
+
 .g0-backdrop {
   position: fixed;
   inset: 0;
@@ -826,17 +974,60 @@
 }
 
 @media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
-  .g1, .g2, .g3, .gc {
+  html body .g1,
+  html body .g2,
+  html body .g3,
+  html body .gc,
+  html body [class*='var(--g1-bg)'],
+  html body [class*='var(--g2-bg)'],
+  html body [class*='var(--g3-bg)'],
+  html body [class*='var(--gc-bg)'],
+  html body [class~='backdrop-blur-sm'],
+  html body [class~='backdrop-blur-md'],
+  html body [class~='backdrop-blur-lg'],
+  html body [class~='backdrop-blur-xl'],
+  html body [class~='backdrop-blur-2xl'],
+  html body [class*='backdrop-blur-'] {
     backdrop-filter: none !important;
     -webkit-backdrop-filter: none !important;
   }
-  .g1 {
-    background: rgb(var(--glass-tint-rgb) / 1) !important;
+  html body [class~='backdrop-blur-sm'],
+  html body [class~='backdrop-blur-md'],
+  html body [class~='backdrop-blur-lg'],
+  html body [class~='backdrop-blur-xl'],
+  html body [class~='backdrop-blur-2xl'],
+  html body [class*='backdrop-blur-'] {
+    background: var(--glass-solid) !important;
+  }
+  html body .g1,
+  html body [class*='var(--g1-bg)'] {
+    background: var(--g1-reduced-bg) !important;
     box-shadow: 0 0 0 1.5px rgb(var(--glass-ink) / 0.5) !important;
   }
-  .g2 {
-    background: rgb(var(--glass-ink) / 0.08) !important;
+  html body .g2,
+  html body [class*='var(--g2-bg)'] {
+    background: var(--g2-reduced-bg) !important;
     box-shadow: 0 0 0 1px rgb(var(--glass-ink) / 0.3) !important;
+  }
+  html body .g3,
+  html body [class*='var(--g3-bg)'] {
+    background: var(--g3-reduced-bg) !important;
+  }
+  html body .gc,
+  html body [class*='var(--gc-bg)'] {
+    background: var(--gc-reduced-bg) !important;
+  }
+  html body [style*='--g2-bg'] {
+    background: var(--g2-reduced-bg) !important;
+  }
+  html body [style*='--g3-bg'] {
+    background: var(--g3-reduced-bg) !important;
+    color: var(--g3-text) !important;
+  }
+  html body .glass-pill.glass-pill,
+  html body .primary.primary {
+    background: var(--g3-reduced-bg) !important;
+    color: var(--g3-text) !important;
   }
 }
 

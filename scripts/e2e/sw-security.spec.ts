@@ -46,8 +46,8 @@ async function loginDemo(page: Page, context: BrowserContext) {
     window.addEventListener('offline', (e) => e.stopImmediatePropagation(), true);
   });
   await page.goto('/connexion');
-  await page.locator('input:visible#email').first().fill('demo@lkdv.app');
-  await page.locator('input:visible#password').first().fill('DemoPass!2026');
+  await page.locator('input:visible#email').first().fill(process.env.AUDIT_EMAIL || (() => { throw new Error('AUDIT_EMAIL est requis'); })());
+  await page.locator('input:visible#password').first().fill(process.env.AUDIT_PASSWORD || (() => { throw new Error('AUDIT_PASSWORD est requis'); })());
   await page.locator('main form:visible').first().locator('button[type="submit"]').click();
   let tries = 0;
   while (tries < 12) {
@@ -135,7 +135,7 @@ test.describe('SEC-1 — Service Worker : jamais de données cross-comptes', { t
     try {
       await page.goto('/hub', { waitUntil: 'domcontentloaded' });
       const body = (await page.locator('body').innerText().catch(() => '')) as string;
-      expect(body).not.toContain('demo@lkdv.app');
+      expect(body).not.toContain(process.env.AUDIT_EMAIL || (() => { throw new Error('AUDIT_EMAIL est requis'); })());
       expect(body).not.toContain('Aperçu de l\'équipement');
     } finally {
       await page.context().setOffline(false);

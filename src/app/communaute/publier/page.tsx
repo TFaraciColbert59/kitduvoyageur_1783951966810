@@ -9,6 +9,7 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { createClient } from '@/lib/supabase/client';
+import Icon from '@/components/ui/Icon';
 import {
   Button,
   Card,
@@ -33,17 +34,17 @@ interface UserCarnetOption {
   cover_image?: string | null;
 }
 
-const POST_TYPES: Array<{ id: PostType; emoji: string; title: string; hint: string }> = [
-  { id: 'photo', emoji: '🖼️', title: 'Photo / vidéo', hint: 'Instantané ou galerie' },
-  { id: 'billet', emoji: '📝', title: 'Billet', hint: 'Texte long, mise en page' },
-  { id: 'question', emoji: '⏱️', title: 'Question', hint: 'Demandez aux membres' },
-  { id: 'evenement', emoji: '📅', title: 'Événement', hint: 'Sortie à venir' },
+const POST_TYPES: Array<{ id: PostType; icon: string; title: string; hint: string }> = [
+  { id: 'photo', icon: 'camera', title: 'Photo / vidéo', hint: 'Instantané ou galerie' },
+  { id: 'billet', icon: 'file-text', title: 'Billet', hint: 'Texte long, mise en page' },
+  { id: 'question', icon: 'help-circle', title: 'Question', hint: 'Demandez aux membres' },
+  { id: 'evenement', icon: 'calendar', title: 'Événement', hint: 'Sortie à venir' },
 ];
 
-const AUDIENCES: Array<{ id: AudienceType; emoji: string; title: string; hint: string }> = [
-  { id: 'public', emoji: '🌐', title: 'Fil public', hint: 'Communauté + votre profil' },
-  { id: 'club', emoji: '👥', title: 'Un club', hint: 'Vos clubs uniquement' },
-  { id: 'abonnies', emoji: '🔒', title: 'Abonnés', hint: 'Vos abonnés uniquement' },
+const AUDIENCES: Array<{ id: AudienceType; icon: string; title: string; hint: string }> = [
+  { id: 'public', icon: 'globe', title: 'Fil public', hint: 'Communauté + votre profil' },
+  { id: 'club', icon: 'users', title: 'Un club', hint: 'Vos clubs uniquement' },
+  { id: 'abonnies', icon: 'lock', title: 'Abonnés', hint: 'Vos abonnés uniquement' },
 ];
 
 function PublierPostContent() {
@@ -432,8 +433,8 @@ function PublierPostContent() {
                     }}
                     className="flex flex-col items-center justify-center gap-[var(--space-2)] p-[var(--space-4)] text-center"
                   >
-                    <span className={`flex size-9 items-center justify-center rounded-[var(--lkv-radius-sm)] text-base ${postType === type.id ? 'bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[color:var(--lkv-text-primary)]' : 'bg-[color:var(--glass-bg-medium)]  text-[color:var(--lkv-primary)]'}`}>
-                      {type.emoji}
+                    <span className={`flex size-9 items-center justify-center rounded-[var(--lkv-radius-sm)] text-base ${postType === type.id ? 'bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[color:var(--lkv-text-primary)]' : 'bg-[color:var(--glass-bg-medium)] text-[color:var(--glass-label)]'}`}>
+                      <Icon name={type.icon} size={18} />
                     </span>
                     <span className="block text-[length:var(--lkv-text-caption)] font-bold leading-tight">{type.title}</span>
                     <span className="mt-0.5 text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">{type.hint}</span>
@@ -553,10 +554,10 @@ function PublierPostContent() {
                       </Button>
                       <Divider orientation="vertical" spacing="sm" className="mx-[var(--space-1)] h-4" />
                       <Button type="button" variant="ghost" size="sm" aria-label="Insérer un lien" className="size-7 min-h-0 px-0">
-                        🔗
+                        <Icon name="link" size={14} />
                       </Button>
                       <Button type="button" variant="ghost" size="sm" aria-label="Insérer une image" className="size-7 min-h-0 px-0">
-                        📷
+                        <Icon name="camera" size={14} />
                       </Button>
                     </div>
 
@@ -807,7 +808,7 @@ function PublierPostContent() {
                       onClick={() => setAudience(option.id)}
                       className="flex flex-col p-[var(--space-4)] text-left"
                     >
-                      <span className="mb-[var(--space-1)] text-base">{option.emoji}</span>
+                      <Icon name={option.icon} size={18} className="mb-[var(--space-1)] text-[color:var(--glass-label)]" />
                       <span className="block text-[length:var(--lkv-text-caption)] font-bold">{option.title}</span>
                       <span className="mt-0.5 text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">{option.hint}</span>
                     </Card>
@@ -880,9 +881,9 @@ function PublierPostContent() {
 
                 <div className="flex items-center justify-between border-t border-[color:var(--lkv-border)] pt-[var(--space-2)] text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">
                   <div className="flex items-center gap-[var(--space-3)]">
-                    <span>💬 0</span>
-                    <span>❤️ 0</span>
-                    <span>🚀 0</span>
+                    <span className="inline-flex items-center gap-1"><Icon name="message-square" size={12} /> 0</span>
+                    <span className="inline-flex items-center gap-1"><Icon name="heart" size={12} /> 0</span>
+                    <span className="inline-flex items-center gap-1"><Icon name="share-2" size={12} /> 0</span>
                   </div>
                   <div className="flex gap-[var(--space-1)] font-semibold text-[color:var(--lkv-text-primary)]">
                     {tags.slice(0, 2).map((t) => (<span key={t}>#{t}</span>))}
@@ -940,10 +941,10 @@ function PublierPostContent() {
       </div>
 
       {/* BOTTOM STICKY ACTION BAR */}
-      <div className="fixed bottom-[var(--nav-offset)] left-0 right-0 z-[var(--z-sticky)] border-t border-[color:var(--glass-border)] bg-[color:var(--glass-bg-medium)] saturate-[var(--glass-sat)] lkv-rim-inset px-[var(--space-6)] py-[var(--space-3)] backdrop-blur-[var(--glass-blur-sm)]">
+      <div className="fixed bottom-0 left-0 right-0 z-[var(--z-sticky)] border-t border-[color:var(--glass-border)] bg-[color:var(--glass-bg-medium)] saturate-[var(--glass-sat)] lkv-rim-inset px-[var(--space-6)] py-[var(--space-3)] pb-[max(env(safe-area-inset-bottom),16px)] backdrop-blur-[var(--glass-blur-sm)]">
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-[var(--space-4)] sm:flex-row">
           <div className="flex flex-wrap items-center gap-[var(--space-2)] text-[length:var(--lkv-text-caption)] font-semibold text-[color:var(--lkv-text-primary)]">
-            <span className="size-2 animate-pulse rounded-full bg-[color:var(--lkv-secondary)]" />
+            <span className="size-2 animate-pulse rounded-full bg-white" />
             <span>Prêt à publier</span>
             <span className="text-[color:var(--lkv-text-muted)]">·</span>
             <span className="text-[color:var(--lkv-text-muted)]">{wordCount} mots</span>

@@ -8,6 +8,7 @@ import { addToCart } from '@/lib/cart';
 import { createClient } from '@/lib/supabase/client';
 import { newId } from '@/lib/uuid';
 import Icon from '@/components/ui/AppIcon';
+import { MapPin, Compass, Zap, Mountain, Users, BookOpen, Package } from 'lucide-react';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { applyConfiguratorKitToTripAction } from '@/app/voyages/kit-actions';
 import {
@@ -536,12 +537,12 @@ export default function KitConfiguratorWizard({
         <div className="flex items-center gap-2 flex-wrap">
           {tripContext ? (
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[color:var(--lkv-surface-paper)]/90 text-xs font-bold text-[var(--lkv-text-primary)] border border-[color:var(--glass-border)] shadow-2xs">
-              <span>🗺️</span>
+              <MapPin size={12} className="shrink-0 text-[color:var(--glass-label)]" aria-hidden="true" />
               <span className="truncate max-w-[200px]">{tripContext.title}</span>
             </span>
           ) : (
             <Link href="/" className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[color:var(--btn-tint)] hover:brightness-[1.05] text-xs font-bold text-[var(--lkv-text-primary)] border border-[color:var(--btn-glass-border)] shadow-2xs motion-safe:transition-[transform,background-color,border-color] motion-reduce:transition-none min-h-[var(--lkv-touch-min)] items-center">
-              <span>🌲</span>
+              <Compass size={12} className="shrink-0 text-[color:var(--glass-label)]" aria-hidden="true" />
               <span>Configurateur IA</span>
             </Link>
           )}
@@ -551,32 +552,37 @@ export default function KitConfiguratorWizard({
           </span>
 
           {tripContext?.activity && (
-            <span className="glass-pill text-[length:var(--lkv-text-caption-2)] font-mono font-bold text-[var(--lkv-text-secondary)]">
-              ⚡ {tripContext.activity}
+            <span className="glass-pill inline-flex items-center gap-1 text-[length:var(--lkv-text-caption-2)] font-mono font-bold text-[var(--lkv-text-secondary)]">
+              <Zap size={11} className="shrink-0 text-[color:var(--glass-label)]" aria-hidden="true" />
+              <span>{tripContext.activity}</span>
             </span>
           )}
 
           {tripContext?.maxAltitudeM && tripContext.maxAltitudeM > 0 ? (
-            <span className="glass-pill text-[length:var(--lkv-text-caption-2)] font-mono font-bold text-[var(--lkv-text-secondary)]">
-              ⛰️ {tripContext.maxAltitudeM} m
+            <span className="glass-pill inline-flex items-center gap-1 text-[length:var(--lkv-text-caption-2)] font-mono font-bold text-[var(--lkv-text-secondary)]">
+              <Mountain size={11} className="shrink-0 text-[color:var(--glass-label)]" aria-hidden="true" />
+              <span>{tripContext.maxAltitudeM} m</span>
             </span>
           ) : null}
 
           {groupInfo && (
-            <span className="glass-pill text-[length:var(--lkv-text-caption-2)] font-mono font-bold text-[var(--lkv-text-primary)]">
-              👥 {groupInfo.groupName}
+            <span className="glass-pill inline-flex items-center gap-1 text-[length:var(--lkv-text-caption-2)] font-mono font-bold text-[var(--lkv-text-primary)]">
+              <Users size={11} className="shrink-0 text-[color:var(--glass-label)]" aria-hidden="true" />
+              <span>{groupInfo.groupName}</span>
             </span>
           )}
 
           {carnetData && (
-            <span className="glass-pill text-[length:var(--lkv-text-caption-2)] font-mono font-bold text-[var(--lkv-text-primary)]">
-              📖 {carnetData.title}
+            <span className="glass-pill inline-flex items-center gap-1 text-[length:var(--lkv-text-caption-2)] font-mono font-bold text-[var(--lkv-text-primary)]">
+              <BookOpen size={11} className="shrink-0 text-[color:var(--glass-label)]" aria-hidden="true" />
+              <span>{carnetData.title}</span>
             </span>
           )}
 
           {userInventory.length > 0 && (
-            <span className="glass-pill text-[length:var(--lkv-text-caption-2)] font-mono font-bold text-[var(--lkv-text-secondary)]">
-              🎒 {userInventory.length} matériel(s) détecté(s)
+            <span className="glass-pill inline-flex items-center gap-1 text-[length:var(--lkv-text-caption-2)] font-mono font-bold text-[var(--lkv-text-secondary)]">
+              <Package size={11} className="shrink-0 text-[color:var(--glass-label)]" aria-hidden="true" />
+              <span>{userInventory.length} matériel(s) détecté(s)</span>
             </span>
           )}
         </div>

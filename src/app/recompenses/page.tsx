@@ -283,8 +283,10 @@ export default function RecompensesPage() {
     if (!user) {
       return (
         <div className="flex flex-col items-center justify-center py-20 text-center px-6">
-          <p className="text-5xl mb-4">🔐</p>
-          <h2 className="font-display font-800 text-xl text-[color:var(--lkv-primary)] mb-2">Authentification requise</h2>
+          <div className="flex size-14 items-center justify-center rounded-full bg-white/10 text-white mb-4">
+            <Icon name="lock" size={28} />
+          </div>
+          <h2 className="font-display font-800 text-xl text-[color:var(--glass-label)] mb-2">Authentification requise</h2>
           <p className="text-xs text-[color:var(--lkv-text-muted)] mb-6 max-w-sm">Vous devez vous connecter à votre compte Le Kit du Voyageur pour voir et gérer vos récompenses.</p>
           <Link href="/connexion?mode=connexion" className="glass-capsule-btn primary !px-6 !py-2.5 !text-xs !font-bold">
             Se connecter
@@ -296,7 +298,7 @@ export default function RecompensesPage() {
     if (loading && !account) {
       return (
         <div className="flex flex-col items-center justify-center py-20 text-center">
-          <div className="w-8 h-8 border-2 border-[color:var(--lkv-primary)] border-t-transparent rounded-full animate-spin mb-3" />
+          <div className="w-8 h-8 border-2 border-white/40 border-t-white rounded-full animate-spin mb-3" />
           <p className="text-xs text-[color:var(--lkv-text-muted)]">Chargement de votre économie de récompenses...</p>
         </div>
       );
@@ -307,11 +309,11 @@ export default function RecompensesPage() {
         {/* Header Section */}
         <div className="flex flex-col gap-2">
           <div className="flex items-center gap-2">
-            <span className="px-2 py-0.5 text-[length:var(--lkv-text-caption-2)] font-mono font-bold tracking-wider uppercase bg-[color:var(--lkv-forest-200)]/25 text-[color:var(--lkv-primary)] border border-[color:var(--lkv-forest-200)]/40 rounded-full">
+            <span className="px-2.5 py-1 text-[length:var(--lkv-text-caption-2)] font-mono font-bold tracking-wider uppercase bg-white/10 text-white border border-white/20 rounded-full">
               Récompenses communautaires
             </span>
           </div>
-          <h1 className="font-display font-900 text-2xl sm:text-3xl text-[color:var(--lkv-primary)] tracking-tight">
+          <h1 className="font-display font-900 text-2xl sm:text-3xl text-[color:var(--glass-label)] tracking-tight">
             Partage de Valeur LKDV
           </h1>
           <p className="text-xs text-[color:var(--lkv-text-muted)] max-w-2xl">
@@ -321,14 +323,14 @@ export default function RecompensesPage() {
 
         {error && (
           <div className="p-4 bg-[color:var(--lkv-danger-bg)] border border-[color:var(--lkv-danger)]/30 text-[color:var(--lkv-danger)] rounded-[var(--lkv-radius-md)] text-xs flex gap-2 items-center">
-            <span>⚠️</span>
+            <Icon name="alert-triangle" size={16} className="shrink-0" />
             <span>{error}</span>
           </div>
         )}
 
         {successMessage && (
-          <div className="p-4 bg-[color:var(--lkv-success-bg)] border border-[color:var(--lkv-success)]/30 text-[color:var(--lkv-primary)] rounded-[var(--lkv-radius-md)] text-xs flex gap-2 items-center">
-            <span>✅</span>
+          <div className="p-4 bg-white/10 border border-white/20 text-white rounded-[var(--lkv-radius-md)] text-xs flex gap-2 items-center">
+            <Icon name="check" size={16} className="shrink-0" />
             <span>{successMessage}</span>
           </div>
         )}
@@ -337,7 +339,7 @@ export default function RecompensesPage() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div className="glass rounded-[var(--lkv-radius-lg)] p-4 ">
             <p className="text-[length:var(--lkv-text-caption-2)] font-mono tracking-wider text-[color:var(--lkv-text-muted)] uppercase">Mes points actifs</p>
-            <p className="text-xl font-display font-900 text-[color:var(--lkv-primary)] mt-1">
+            <p className="text-xl font-display font-900 text-[color:var(--glass-label)] mt-1">
               {account?.eligible_points || 0} pts
             </p>
             <p className="text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)] mt-0.5">Pour la période en cours</p>
@@ -345,7 +347,7 @@ export default function RecompensesPage() {
 
           <div className="glass rounded-[var(--lkv-radius-lg)] p-4 ">
             <p className="text-[length:var(--lkv-text-caption-2)] font-mono tracking-wider text-[color:var(--lkv-text-muted)] uppercase">Ma contribution</p>
-            <p className="text-sm font-bold text-[color:var(--lkv-primary)] mt-2 truncate">
+            <p className="text-sm font-bold text-[color:var(--glass-label)] mt-2 truncate">
               {getContributionRating()}
             </p>
             <p className="text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)] mt-0.5">
@@ -355,10 +357,10 @@ export default function RecompensesPage() {
             </p>
           </div>
 
-          <div className="glass rounded-[var(--lkv-radius-lg)] p-4  relative overflow-hidden">
-            <div className="absolute right-3 top-3 text-[color:var(--lkv-primary)]/10 text-2xl font-bold">€</div>
+          <div className="glass rounded-[var(--lkv-radius-lg)] p-4 relative overflow-hidden">
+            <div className="absolute right-3 top-3 text-white/10 text-2xl font-bold">€</div>
             <p className="text-[length:var(--lkv-text-caption-2)] font-mono tracking-wider text-[color:var(--lkv-text-muted)] uppercase">Disponibles</p>
-            <p className="text-xl font-display font-900 text-[color:var(--lkv-primary)] mt-1">
+            <p className="text-xl font-display font-900 text-[color:var(--glass-label)] mt-1">
               {account?.available_cash ? account.available_cash.toFixed(2) : '0.00'} €
             </p>
             <p className="text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)] mt-0.5">Prêts au retrait</p>
@@ -366,7 +368,7 @@ export default function RecompensesPage() {
 
           <div className="glass rounded-[var(--lkv-radius-lg)] p-4 ">
             <p className="text-[length:var(--lkv-text-caption-2)] font-mono tracking-wider text-[color:var(--lkv-text-muted)] uppercase">En cours / en attente</p>
-            <p className="text-xl font-display font-900 text-[color:var(--lkv-primary)]/70 mt-1">
+            <p className="text-xl font-display font-900 text-[color:var(--glass-label)]/70 mt-1">
               {account?.pending_cash ? account.pending_cash.toFixed(2) : '0.00'} €
             </p>
             <p className="text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)] mt-0.5">Virement en traitement</p>
@@ -376,10 +378,10 @@ export default function RecompensesPage() {
         {/* Withdrawal Section & Guide */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
           {/* Cash-out Form */}
-          <div className="glass lg:col-span-7 rounded-[var(--lkv-radius-sm)] p-6  space-y-6">
+          <div className="glass lg:col-span-7 rounded-[var(--lkv-radius-sm)] p-6 space-y-6">
             <div className="flex items-center justify-between border-b border-[color:var(--lkv-border)] pb-3">
-              <h3 className="font-display font-800 text-[color:var(--lkv-primary)] text-sm tracking-tight flex items-center gap-1.5">
-                <Icon name="CurrencyEuroIcon" size={18} className="text-[color:var(--lkv-primary)]" />
+              <h3 className="font-display font-800 text-[color:var(--glass-label)] text-sm tracking-tight flex items-center gap-1.5">
+                <Icon name="CurrencyEuroIcon" size={18} className="text-white" />
                 Demande de retrait de fonds
               </h3>
               <span className="text-[length:var(--lkv-text-caption-2)] font-mono text-[color:var(--lkv-text-muted)]">
@@ -389,7 +391,7 @@ export default function RecompensesPage() {
 
             <form onSubmit={handleWithdrawSubmit} className="space-y-4">
               <div>
-                <label htmlFor="amount" className="block text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-primary)] mb-1.5 uppercase tracking-wider">Montant (EUR)</label>
+                <label htmlFor="amount" className="block text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--glass-label)] mb-1.5 uppercase tracking-wider">Montant (EUR)</label>
                 <div className="relative rounded-[var(--lkv-radius-md)] ">
                   <input
                     type="number"
@@ -398,7 +400,7 @@ export default function RecompensesPage() {
                     id="amount"
                     value={withdrawAmount}
                     onChange={(e) => setWithdrawAmount(e.target.value)}
-                    className="block w-full rounded-[var(--lkv-radius-md)] border border-[color:var(--btn-glass-border)] pl-4 pr-12 py-2.5 text-xs text-[color:var(--lkv-text-primary)] focus:outline-none focus:ring-1 focus:ring-[color:var(--lkv-primary)] focus:border-[color:var(--lkv-primary)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)]"
+                    className="block w-full rounded-[var(--lkv-radius-md)] border border-[color:var(--btn-glass-border)] pl-4 pr-12 py-2.5 text-xs text-[color:var(--lkv-text-primary)] focus:outline-none focus:ring-1 focus:ring-white/40 focus:border-white/40 bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)]"
                     placeholder="20.00"
                     required
                   />
@@ -412,14 +414,14 @@ export default function RecompensesPage() {
               </div>
 
               <div>
-                <label className="block text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-primary)] mb-1.5 uppercase tracking-wider">Méthode de virement</label>
+                <label className="block text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--glass-label)] mb-1.5 uppercase tracking-wider">Méthode de virement</label>
                 <div className="grid grid-cols-2 gap-3">
                   <button
                     type="button"
                     onClick={() => setPaymentProvider('bank_transfer')}
                     className={`glass-capsule-btn flex flex-col items-center justify-center !p-3 ${paymentProvider === 'bank_transfer' ? 'primary' : ''}`}
                   >
-                    <span className="text-base mb-1">🏦</span>
+                    <Icon name="landmark" size={20} className="mb-1 text-white" />
                     <span className="text-[length:var(--lkv-text-caption-2)]">Virement SEPA</span>
                   </button>
                   <button
@@ -427,7 +429,7 @@ export default function RecompensesPage() {
                     onClick={() => setPaymentProvider('paypal')}
                     className={`glass-capsule-btn flex flex-col items-center justify-center !p-3 ${paymentProvider === 'paypal' ? 'primary' : ''}`}
                   >
-                    <span className="text-base mb-1">💳</span>
+                    <Icon name="credit-card" size={20} className="mb-1 text-white" />
                     <span className="text-[length:var(--lkv-text-caption-2)]">Paypal</span>
                   </button>
                 </div>
@@ -520,9 +522,9 @@ export default function RecompensesPage() {
         {/* Ledger & Withdrawals lists */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
           {/* Ledger of points transactions */}
-          <div className="glass rounded-[var(--lkv-radius-sm)] p-6  space-y-4">
-            <h3 className="font-display font-800 text-[color:var(--lkv-primary)] text-sm tracking-tight flex items-center gap-1.5">
-              <Icon name="ClipboardDocumentListIcon" size={18} className="text-[color:var(--lkv-primary)]" />
+          <div className="glass rounded-[var(--lkv-radius-sm)] p-6 space-y-4">
+            <h3 className="font-display font-800 text-[color:var(--glass-label)] text-sm tracking-tight flex items-center gap-1.5">
+              <Icon name="ClipboardDocumentListIcon" size={18} className="text-white" />
               Historique de points (Ledger)
             </h3>
             <div className="glass-sub-card overflow-hidden rounded-[var(--lkv-radius-lg)] max-h-96 overflow-y-auto">
@@ -531,16 +533,16 @@ export default function RecompensesPage() {
               ) : (
                 <table className="w-full text-left text-[length:var(--lkv-text-caption-2)] border-collapse">
                   <thead>
-                    <tr className="bg-[color:var(--lkv-surface-muted)] border-b border-[color:var(--lkv-border)] text-[color:var(--lkv-text-muted)] uppercase font-mono tracking-wider">
+                    <tr className="bg-white/5 border-b border-white/10 text-[color:var(--lkv-text-muted)] uppercase font-mono tracking-wider">
                       <th className="p-3">Type</th>
                       <th className="p-3 text-right">Points</th>
                       <th className="p-3 text-right">Date</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-[color:var(--lkv-border-subtle)]">
+                  <tbody className="divide-y divide-white/5">
                     {transactions.map((tx) => (
-                      <tr key={tx.id} className="hover:bg-[color:var(--lkv-field-bg)]">
-                        <td className="p-3 text-[color:var(--lkv-primary)] font-semibold">{translateTxType(tx.transaction_type)}</td>
+                      <tr key={tx.id} className="hover:bg-white/5">
+                        <td className="p-3 text-[color:var(--glass-label)] font-semibold">{translateTxType(tx.transaction_type)}</td>
                         <td className={`p-3 text-right font-bold ${tx.points >= 0 ? 'text-[color:var(--lkv-success)]' : 'text-[color:var(--lkv-danger)]'}`}>
                           {tx.points >= 0 ? `+${tx.points}` : tx.points}
                         </td>
@@ -556,9 +558,9 @@ export default function RecompensesPage() {
           </div>
 
           {/* History of Cash-out withdrawals */}
-          <div className="glass rounded-[var(--lkv-radius-sm)] p-6  space-y-4">
-            <h3 className="font-display font-800 text-[color:var(--lkv-primary)] text-sm tracking-tight flex items-center gap-1.5">
-              <Icon name="WrenchScrewdriverIcon" size={18} className="text-[color:var(--lkv-primary)]" />
+          <div className="glass rounded-[var(--lkv-radius-sm)] p-6 space-y-4">
+            <h3 className="font-display font-800 text-[color:var(--glass-label)] text-sm tracking-tight flex items-center gap-1.5">
+              <Icon name="WrenchScrewdriverIcon" size={18} className="text-white" />
               Demandes de virements
             </h3>
             <div className="glass-sub-card overflow-hidden rounded-[var(--lkv-radius-lg)] max-h-96 overflow-y-auto">
@@ -567,17 +569,17 @@ export default function RecompensesPage() {
               ) : (
                 <table className="w-full text-left text-[length:var(--lkv-text-caption-2)] border-collapse">
                   <thead>
-                    <tr className="bg-[color:var(--lkv-surface-muted)] border-b border-[color:var(--lkv-border)] text-[color:var(--lkv-text-muted)] uppercase font-mono tracking-wider">
+                    <tr className="bg-white/5 border-b border-white/10 text-[color:var(--lkv-text-muted)] uppercase font-mono tracking-wider">
                       <th className="p-3">Montant</th>
                       <th className="p-3">Méthode</th>
                       <th className="p-3 text-center">Statut</th>
                       <th className="p-3 text-right">Date</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-[color:var(--lkv-border-subtle)]">
+                  <tbody className="divide-y divide-white/5">
                     {withdrawals.map((w) => (
-                      <tr key={w.id} className="hover:bg-[color:var(--lkv-field-bg)]">
-                        <td className="p-3 text-[color:var(--lkv-primary)] font-semibold">{w.amount.toFixed(2)} €</td>
+                      <tr key={w.id} className="hover:bg-white/5">
+                        <td className="p-3 text-[color:var(--glass-label)] font-semibold">{w.amount.toFixed(2)} €</td>
                         <td className="p-3 text-[color:var(--lkv-text-muted)] font-mono">
                           {w.payment_provider === 'bank_transfer' ? 'Banque' : 'Paypal'}
                         </td>
@@ -602,7 +604,7 @@ export default function RecompensesPage() {
   };
 
   return (
-    <div className="min-h-screen bg-transparent text-[color:var(--lkv-text-primary)] selection:bg-[color:var(--lkv-primary)]/20 font-sans">
+    <div className="min-h-screen bg-transparent text-[color:var(--lkv-text-primary)] selection:bg-white/20 font-sans">
       {/* Mobile Shell */}
       <div className="block md:hidden">
         <MobilePageShell background="transparent">

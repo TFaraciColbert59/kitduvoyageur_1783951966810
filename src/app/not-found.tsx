@@ -44,16 +44,16 @@ export default function NotFound() {
           <Card variant="featured" className="w-full max-w-sm p-6 md:max-w-md md:p-8">
             <span
               aria-hidden="true"
-              className="mb-3 block select-none font-display text-[length:var(--lkv-text-title-lg)] font-extrabold leading-none tracking-tight text-[color:var(--lkv-primary)] opacity-25 md:text-8xl"
+              className="mb-3 block select-none font-display text-[length:var(--lkv-text-title-lg)] font-extrabold leading-none tracking-tight text-[color:var(--glass-label)] opacity-25 md:text-8xl"
             >
               404
             </span>
 
-            <p className="mb-2 font-mono text-[length:var(--lkv-text-caption-2)] font-semibold uppercase tracking-[0.2em] text-[color:var(--lkv-secondary)] md:text-[length:var(--lkv-text-caption-1)]">
+            <p className="mb-2 font-mono text-[length:var(--lkv-text-caption-2)] font-semibold uppercase tracking-[0.2em] text-[color:var(--glass-label-secondary)] md:text-[length:var(--lkv-text-caption-1)]">
               Sentier introuvable
             </p>
 
-            <h1 className="mb-2 font-display text-[length:var(--lkv-text-title-sm)] font-bold text-[color:var(--lkv-text-primary)] md:mb-3 md:text-[length:var(--lkv-text-title-lg)]">
+            <h1 className="mb-2 font-display text-[length:var(--lkv-text-title-sm)] font-bold text-[color:var(--glass-label)] md:mb-3 md:text-[length:var(--lkv-text-title-lg)]">
               Cette page n&apos;existe pas
             </h1>
 
@@ -90,13 +90,13 @@ export default function NotFound() {
                   <Link
                     key={page.href}
                     href={page.href}
-                    className="flex min-h-[var(--lkv-touch-min)] items-center gap-[var(--space-2)] rounded-[var(--lkv-radius-sm)] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg-medium)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset px-[var(--space-3)] py-[var(--space-2)] text-[length:var(--lkv-text-caption-1)] font-medium text-[color:var(--lkv-primary)] transition-colors hover:bg-[color:var(--lkv-hover-surface)]"
+                    className="flex min-h-[var(--lkv-touch-min)] items-center gap-[var(--space-2)] rounded-[var(--lkv-radius-sm)] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg-medium)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset px-[var(--space-3)] py-[var(--space-2)] text-[length:var(--lkv-text-caption-1)] font-medium text-[color:var(--glass-label)] transition-colors hover:bg-[color:var(--lkv-hover-surface)]"
                   >
                     <Icon
                       name={page.icon}
                       size={14}
                       variant="outline"
-                      className="text-[color:var(--lkv-secondary)]"
+                      className="text-[color:var(--glass-label-secondary)]"
                     />
                     <span className="truncate">{page.label}</span>
                   </Link>

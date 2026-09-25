@@ -17,12 +17,14 @@ export default function MobileNavWrapper() {
   const { openSearch } = useSearchContext();
   const pathname = usePathname();
 
-  // Masquer la navigation mobile sur les pages d'authentification pour éviter tout chevauchement avec le clavier ou le formulaire
-  const isAuthRoute =
+  // Masquer la navigation mobile sur les pages d'authentification et de checkout pour éviter tout chevauchement
+  const isNoNavRoute =
     pathname?.startsWith('/connexion') ||
-    pathname?.startsWith('/inscription');
+    pathname?.startsWith('/inscription') ||
+    pathname?.startsWith('/checkout') ||
+    pathname?.startsWith('/communaute/publier');
 
-  if (isAuthRoute) {
+  if (isNoNavRoute) {
     return <OfflineBanner />;
   }
 

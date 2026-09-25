@@ -45,20 +45,28 @@ export default function ProductCard({
   ctaLabel,
   onClick,
 }: ProductCardProps) {
+  const [imgError, setImgError] = React.useState(false);
+
   return (
     <Card
       variant={onClick ? 'interactive' : 'standard'}
       onClick={onClick}
       className="group flex flex-col overflow-hidden p-0"
     >
-      <div className="relative aspect-[4/3] overflow-hidden rounded-t-[var(--lkv-radius-card)] bg-[color:var(--glass-bg-medium)]">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={image}
-          alt={imageAlt}
-          loading="lazy"
-          className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105 motion-reduce:transition-none motion-reduce:group-hover:scale-100"
-        />
+      <div className="relative aspect-[4/3] overflow-hidden rounded-t-[var(--lkv-radius-card)] bg-white/5">
+        {imgError || !image ? (
+          <div className="flex h-full w-full items-center justify-center text-[color:var(--glass-label)]">
+            <Icon name="package" size={32} className="opacity-30" />
+          </div>
+        ) : (
+          <img
+            src={image}
+            alt={imageAlt}
+            loading="lazy"
+            onError={() => setImgError(true)}
+            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105 motion-reduce:transition-none motion-reduce:group-hover:scale-100"
+          />
+        )}
         {badges && (
           <div className="absolute left-[var(--space-2)] top-[var(--space-2)] flex flex-wrap gap-[var(--space-1)]">
             {badges}
@@ -80,7 +88,7 @@ export default function ProductCard({
         {tags && tags.length > 0 && (
           <div className="mb-[var(--space-3)] flex flex-wrap gap-[var(--space-1)]">
             {tags.slice(0, 3).map((tag) => (
-              <Badge key={tag} tone="stone">{tag}</Badge>
+              <Badge key={tag} tone="stone" className="text-xs">{tag}</Badge>
             ))}
           </div>
         )}

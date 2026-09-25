@@ -421,6 +421,47 @@ export default function MobileCompteV2() {
     );
   }
 
+  const viewModeControls = tab !== 'materiel' ? (
+     <div className="hidden min-[360px]:flex items-center gap-0.5 border-l border-[color:var(--lkv-primary)]/10 pl-1.5 pr-0.5">
+      <IconButton
+        variant={viewMode === 'grid' ? 'solid' : 'glass'}
+         size="md"
+         aria-label="Vue Grille"
+        aria-pressed={viewMode === 'grid'}
+        onClick={() => {
+          triggerHaptic('light');
+          setViewMode('grid');
+        }}
+      >
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden="true">
+          <rect x="3" y="3" width="7" height="7" rx="1.5" />
+          <rect x="14" y="3" width="7" height="7" rx="1.5" />
+          <rect x="3" y="14" width="7" height="7" rx="1.5" />
+          <rect x="14" y="14" width="7" height="7" rx="1.5" />
+        </svg>
+      </IconButton>
+      <IconButton
+        variant={viewMode === 'list' ? 'solid' : 'glass'}
+         size="md"
+         aria-label="Vue Liste"
+        aria-pressed={viewMode === 'list'}
+        onClick={() => {
+          triggerHaptic('light');
+          setViewMode('list');
+        }}
+      >
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" aria-hidden="true">
+          <line x1="8" y1="6" x2="21" y2="6" />
+          <line x1="8" y1="12" x2="21" y2="12" />
+          <line x1="8" y1="18" x2="21" y2="18" />
+          <circle cx="4" cy="6" r="1.2" fill="currentColor" />
+          <circle cx="4" cy="12" r="1.2" fill="currentColor" />
+          <circle cx="4" cy="18" r="1.2" fill="currentColor" />
+        </svg>
+      </IconButton>
+    </div>
+  ) : null;
+
   return (
     <div className="min-h-full font-sans selection:bg-[color:var(--lkv-primary)]/10 bg-transparent">
       {/* ══════════════════════════════════════════════════════════════════════
@@ -435,9 +476,9 @@ export default function MobileCompteV2() {
             triggerHaptic('light');
             setRewardModalOpen(true);
           }}
-          className="min-h-0 px-[var(--space-3)] py-[var(--space-1)] text-[length:var(--lkv-text-body-sm)]"
+          className="min-h-0 min-w-0 max-w-[132px] sm:max-w-none overflow-hidden px-[var(--space-3)] py-[var(--space-1)] text-[length:var(--lkv-text-body-sm)]"
         >
-          <span>{handleName}</span>
+          <span className="truncate">{handleName}</span>
           <span className="inline-flex items-center justify-center gap-[6px] rounded-full border border-[color:var(--btn-glass-border)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn px-[var(--space-3)] py-[2px] font-mono text-[length:var(--lkv-text-caption-2)] font-medium text-[color:var(--lkv-text-primary)]">
             Niv.{String(levelNum).padStart(2, '0')}
           </span>
@@ -448,6 +489,7 @@ export default function MobileCompteV2() {
 
         {/* Actions : Notifications + Paramètres Menu */}
         <div className="flex items-center gap-1">
+          {viewModeControls}
           <Link
             href="/hub/alertes"
             aria-label="Alertes et notifications"
@@ -457,8 +499,8 @@ export default function MobileCompteV2() {
           </Link>
           <IconButton
             variant="glass"
-            size="sm"
-            aria-label="Options et paramètres"
+             size="md"
+             aria-label="Options et paramètres"
             onClick={() => {
               triggerHaptic('selection');
               setMenuOpen(true);
@@ -523,7 +565,7 @@ export default function MobileCompteV2() {
                 <span className="text-lg font-bold leading-none tracking-tight text-[color:var(--lkv-text-primary)]">
                   {totalVoyages}
                 </span>
-                <span className="mt-1 text-[11px] font-medium text-[color:var(--lkv-text-muted)]">
+                <span className="mt-1 text-[11px] font-medium text-[color:var(--lkv-text-primary)]">
                   Voyages
                 </span>
               </Button>
@@ -538,7 +580,7 @@ export default function MobileCompteV2() {
                 <span className="text-lg font-bold leading-none tracking-tight text-[color:var(--lkv-text-primary)]">
                   {totalCarnets}
                 </span>
-                <span className="mt-1 text-[11px] font-medium text-[color:var(--lkv-text-muted)]">
+                <span className="mt-1 text-[11px] font-medium text-[color:var(--lkv-text-primary)]">
                   Carnets
                 </span>
               </Button>
@@ -546,7 +588,7 @@ export default function MobileCompteV2() {
                 <span className="text-lg font-bold tracking-tight leading-none text-[color:var(--lkv-text-primary)]" >
                   {formatCount(followers)}
                 </span>
-                <span className="text-[11px] mt-1 font-medium text-[color:var(--lkv-text-muted)]" >
+                <span className="text-[11px] mt-1 font-medium text-[color:var(--lkv-text-primary)]" >
                   Abonnés
                 </span>
               </div>
@@ -608,7 +650,7 @@ export default function MobileCompteV2() {
           {/* Bannière Ma Progression & Classements */}
           <Link
             href="/progression"
-            className="mt-3 flex items-center justify-between p-3 rounded-2xl border border-[color:var(--lkv-primary)]/10 bg-white/75 hover:bg-white/95 transition-all active:scale-[0.98] shadow-2xs cursor-pointer min-h-[52px]"
+            className="mt-3 flex items-center justify-between p-3 rounded-2xl border border-[color:var(--lkv-primary)]/10 bg-[color:var(--card-tint-strong)] hover:bg-[color:var(--card-tint)] transition-all active:scale-[0.98] shadow-2xs cursor-pointer min-h-[52px]"
           >
             <div className="flex items-center gap-3 min-w-0">
               <div className="w-10 h-10 rounded-xl bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] text-[color:var(--lkv-text-primary)] flex items-center justify-center text-lg shrink-0 shadow-2xs">
@@ -619,7 +661,7 @@ export default function MobileCompteV2() {
                   <span className="text-xs font-bold truncate text-[color:var(--lkv-text-primary)]" >
                     Ma progression & classements
                   </span>
-                  <span className="text-[10px] font-mono px-1.5 py-0.2 rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[color:var(--lkv-primary)] font-semibold">
+                     <span className="text-[10px] font-mono px-1.5 py-0.2 rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[color:var(--lkv-text-primary)] font-semibold">
                     Niv. {calculatedLevel.level}
                   </span>
                 </div>
@@ -721,8 +763,8 @@ export default function MobileCompteV2() {
       <div className="sticky top-[48px] z-[var(--z-sticky)] px-3 py-1.5">
         <div className="bg-[color:var(--card-tint-strong)] border border-[color:var(--glass-border)] shadow-elevation-1 backdrop-blur-[var(--blur-lg)] rounded-2xl p-1 flex items-center justify-between gap-1">
           <div className="min-w-0 flex-1">
-            <Tabs
-              variant="segmented"
+              <Tabs
+              variant="scrollable"
               ariaLabel="Sections du compte"
               value={tab}
               onChange={(id) => {
@@ -742,47 +784,6 @@ export default function MobileCompteV2() {
             />
           </div>
 
-          {/* Toggle Grille / Liste (pour carnets et voyages) */}
-          {tab !== 'materiel' && (
-            <div className="flex items-center gap-0.5 border-l border-[color:var(--lkv-primary)]/10 pl-1.5 pr-0.5">
-              <IconButton
-                variant={viewMode === 'grid' ? 'solid' : 'glass'}
-                size="sm"
-                aria-label="Vue Grille"
-                aria-pressed={viewMode === 'grid'}
-                onClick={() => {
-                  triggerHaptic('light');
-                  setViewMode('grid');
-                }}
-              >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden="true">
-                  <rect x="3" y="3" width="7" height="7" rx="1.5" />
-                  <rect x="14" y="3" width="7" height="7" rx="1.5" />
-                  <rect x="3" y="14" width="7" height="7" rx="1.5" />
-                  <rect x="14" y="14" width="7" height="7" rx="1.5" />
-                </svg>
-              </IconButton>
-              <IconButton
-                variant={viewMode === 'list' ? 'solid' : 'glass'}
-                size="sm"
-                aria-label="Vue Liste"
-                aria-pressed={viewMode === 'list'}
-                onClick={() => {
-                  triggerHaptic('light');
-                  setViewMode('list');
-                }}
-              >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" aria-hidden="true">
-                  <line x1="8" y1="6" x2="21" y2="6" />
-                  <line x1="8" y1="12" x2="21" y2="12" />
-                  <line x1="8" y1="18" x2="21" y2="18" />
-                  <circle cx="4" cy="6" r="1.2" fill="currentColor" />
-                  <circle cx="4" cy="12" r="1.2" fill="currentColor" />
-                  <circle cx="4" cy="18" r="1.2" fill="currentColor" />
-                </svg>
-              </IconButton>
-            </div>
-          )}
         </div>
       </div>
 
@@ -908,10 +909,10 @@ export default function MobileCompteV2() {
                       key={c.id}
                       className="flex aspect-square flex-col justify-between rounded-[var(--lkv-radius-md)] border border-[color:var(--glass-border)] bg-[color:var(--btn-tint)] saturate-[var(--btn-saturate)] lkv-rim-btn p-[var(--space-3)] text-[color:var(--lkv-text-primary)] backdrop-blur-[var(--btn-blur)] transition-transform active:scale-95"
                     >
-                      <p className="font-serif text-[length:var(--lkv-text-caption)] italic leading-snug text-[color:var(--lkv-text-inverted)]/95 line-clamp-4">
+                       <p className="font-serif text-[length:var(--lkv-text-caption)] italic leading-snug text-[color:var(--lkv-text-primary)] line-clamp-4">
                         {c.quote}
                       </p>
-                      <span className="font-mono text-[9px] uppercase tracking-wider text-[color:var(--sage-300)]">
+                      <span className="font-mono text-[9px] uppercase tracking-wider text-[color:var(--lkv-text-secondary)]">
                         Carnet · J.04
                       </span>
                     </div>
@@ -955,7 +956,7 @@ export default function MobileCompteV2() {
                     />
 
                     {/* Badge de Type en haut à droite */}
-                    <div className="absolute top-2 right-2 w-5 h-5 rounded-md bg-black/40 backdrop-blur-md flex items-center justify-center text-white text-[10px] z-[var(--z-dropdown)]">
+                     <div aria-hidden="true" className="absolute top-2 right-2 w-5 h-5 rounded-md bg-black/40 backdrop-blur-md flex items-center justify-center text-white text-[10px] z-[var(--z-dropdown)]">
                       {c.kind === 'carnet' ? (
                         <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                           <rect x="4" y="5" width="16" height="14" rx="2" />
@@ -970,7 +971,7 @@ export default function MobileCompteV2() {
 
                     {/* Likes ou Nombre de membres en bas à gauche */}
                     {c.likes > 0 && (
-                      <div className="absolute bottom-1.5 left-1.5 flex items-center gap-1 text-[10px] font-bold text-white drop-shadow-sm z-[var(--z-dropdown)]">
+                      <div className="absolute bottom-1.5 left-1.5 flex items-center gap-1 rounded-full bg-[color:var(--lkv-forest-950)] px-1.5 py-0.5 text-[10px] font-bold text-white drop-shadow-sm z-[var(--z-dropdown)]">
                         <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor">
                           <path d="M12 21s-8-5-8-11a5 5 0 0 1 9-3 5 5 0 0 1 9 3c0 6-8 11-8 11h-2z" />
                         </svg>

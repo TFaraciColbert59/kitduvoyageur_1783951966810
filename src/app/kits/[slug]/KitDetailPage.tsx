@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import Link from 'next/link';
@@ -180,7 +180,7 @@ export default function KitDetailPage() {
             <Header />
             <main className="h-full overflow-y-auto pt-20">
               <div className="flex min-h-[60dvh] items-center justify-center px-4">
-                <Card tone="sage" className="w-full max-w-md p-8">
+                <div className="w-full max-w-md">
                   <EmptyState
                     icon={
                       <Icon
@@ -194,7 +194,7 @@ export default function KitDetailPage() {
                     actionLabel="Voir tous les kits"
                     actionHref="/kits"
                   />
-                </Card>
+                </div>
               </div>
             </main>
           </div>
@@ -204,21 +204,19 @@ export default function KitDetailPage() {
         <div className="block md:hidden">
           <MobilePageShell>
             <div className="px-3 pt-20">
-              <Card tone="sage" className="p-6">
-                <EmptyState
-                  icon={
-                    <Icon
-                      name="ExclamationTriangleIcon"
-                      size={40}
-                      className="text-[var(--lkv-warning)]"
-                    />
-                  }
-                  title="Kit introuvable"
-                  description={error || 'Ce kit n\'existe pas ou a été supprimé.'}
-                  actionLabel="Voir tous les kits"
-                  actionHref="/kits"
-                />
-              </Card>
+              <EmptyState
+                icon={
+                  <Icon
+                    name="ExclamationTriangleIcon"
+                    size={40}
+                    className="text-[var(--lkv-warning)]"
+                  />
+                }
+                title="Kit introuvable"
+                description={error || 'Ce kit n\'existe pas ou a été supprimé.'}
+                actionLabel="Voir tous les kits"
+                actionHref="/kits"
+              />
             </div>
           </MobilePageShell>
         </div>
@@ -241,12 +239,12 @@ export default function KitDetailPage() {
               <div className="absolute bottom-0 left-0 right-0 p-6 md:p-10">
                 <div className="mx-auto max-w-7xl space-y-2">
                   <nav
-                    className="inline-flex items-center gap-2 rounded-sm border border-white/60 bg-[color:var(--card-tint-strong)] px-3 py-2 text-xs text-[var(--lkv-primary)]"
+                    className="inline-flex items-center gap-2 rounded-sm border border-white/60 bg-[color:var(--card-tint-strong)] px-3 py-2 text-xs text-white/80"
                     aria-label="Fil d'Ariane"
                   >
-                    <Link href="/" className="transition-colors hover:text-[var(--lkv-primary-hover)]">Accueil</Link>
+                    <Link href="/" className="transition-colors hover:text-white">Accueil</Link>
                     <span aria-hidden="true">/</span>
-                    <Link href="/kits" className="transition-colors hover:text-[var(--lkv-primary-hover)]">Kits</Link>
+                    <Link href="/kits" className="transition-colors hover:text-white">Kits</Link>
                     <span aria-hidden="true">/</span>
                     <span className="font-medium text-[var(--lkv-text-primary)]" aria-current="page">{kit.nom}</span>
                   </nav>
@@ -300,7 +298,7 @@ export default function KitDetailPage() {
                                     <span
                                       className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border ${
                                         selected
-                                          ? 'border-[var(--lkv-primary)] bg-[var(--lkv-primary)] text-white'
+                                          ? 'border-white bg-white text-black'
                                           : 'border-white/40 bg-white/40'
                                       }`}
                                       aria-hidden="true"
@@ -476,7 +474,7 @@ export default function KitDetailPage() {
                               <span
                                 className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border ${
                                   selected
-                                    ? 'border-[var(--lkv-primary)] bg-[var(--lkv-primary)] text-white'
+                                    ? 'border-white bg-white text-black'
                                     : 'border-white/40 bg-white/40'
                                 }`}
                                 aria-hidden="true"

@@ -292,7 +292,7 @@ export function SafetyMobileExperience({ trip }: SafetyMobileExperienceProps) {
             className="glass flex h-[7.5rem] w-[9.5rem] flex-col items-center justify-center gap-1 rounded-[var(--lkv-radius-lg)] p-3 text-center"
             aria-label="Appeler le 114 — urgences montagne"
           >
-            <Phone size={18} className="text-[var(--lkv-primary)]" aria-hidden="true" />
+            <Phone size={18} className="text-[color:var(--glass-label)]" aria-hidden="true" />
             <span className="font-display text-xl font-extrabold text-[var(--lkv-text-primary)]">114</span>
             <span className="text-[9.5px] font-semibold uppercase tracking-[0.1em] text-[var(--lkv-text-primary)]/60">
               Montagne

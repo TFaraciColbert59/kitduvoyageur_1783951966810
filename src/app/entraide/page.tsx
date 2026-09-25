@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState } from 'react';
 import Footer from '@/components/Footer';
@@ -53,10 +53,10 @@ export default function EntraidePage() {
                 <span className="rounded-full border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] px-[var(--space-3)] py-1.5 text-[10px] font-bold uppercase tracking-widest text-[color:var(--lkv-text-primary)] backdrop-blur-[var(--blur-md)]">Communauté</span>
                 <span className="font-mono text-[length:var(--lkv-text-caption-1)] uppercase tracking-widest text-[color:var(--sage-100)]">Entraide SOS</span>
               </div>
-              <h1 className="font-display text-[length:var(--lkv-text-title-xl)] font-bold leading-[var(--leading-tight)] tracking-tight text-[color:var(--lkv-forest-50)]">
-                Réseau d&apos;entraide <span className="text-[color:var(--lkv-forest-200)]">géolocalisé</span>
+              <h1 className="font-display text-[length:var(--lkv-text-title-xl)] font-bold leading-[var(--leading-tight)] tracking-tight text-white">
+                Réseau d&apos;entraide <span className="text-white/80">géolocalisé</span>
               </h1>
-              <p className="max-w-md text-[length:var(--lkv-text-footnote)] leading-[var(--leading-relaxed)] text-[color:var(--lkv-forest-100)]">
+              <p className="max-w-md text-[length:var(--lkv-text-footnote)] leading-[var(--leading-relaxed)] text-white/70">
                 Trouvez du soutien, partagez des conseils et demandez de l&apos;aide autour de vous, où que vous soyez.
               </p>
               <FilterBar filter={filter} onChange={setFilter} />
@@ -74,8 +74,8 @@ export default function EntraidePage() {
       <div className="block md:hidden">
         <MobilePageShell>
           <div className="p-[var(--space-4)]">
-            <h1 className="mb-[var(--space-2)] font-display text-[length:var(--lkv-text-title-sm)] font-extrabold text-[color:var(--lkv-forest-50)]">Entraide</h1>
-            <p className="mb-[var(--space-4)] text-[length:var(--lkv-text-caption-1)] text-[color:var(--lkv-forest-100)]">Réseau d&apos;entraide géolocalisé.</p>
+            <h1 className="mb-[var(--space-2)] font-display text-[length:var(--lkv-text-title-sm)] font-extrabold text-[color:var(--glass-label)]">Entraide</h1>
+            <p className="mb-[var(--space-4)] text-[length:var(--lkv-text-caption-1)] text-[color:var(--lkv-text-secondary)]">Réseau d&apos;entraide géolocalisé.</p>
             <div className="mb-[var(--space-4)]">
               <FilterBar filter={filter} onChange={setFilter} />
             </div>

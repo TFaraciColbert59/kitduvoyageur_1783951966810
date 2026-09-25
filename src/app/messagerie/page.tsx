@@ -6,6 +6,7 @@ import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
 import { useAuth } from '@/contexts/AuthContext';
 import { MessageInbox } from '@/features/messaging/components/MessageInbox';
 import { useKeyboardInset } from '@/features/messaging/hooks/useKeyboardInset';
+import Icon from '@/components/ui/Icon';
 import { Button, Card, LoadingState } from '@/components/ui';
 import Link from 'next/link';
 
@@ -69,10 +70,10 @@ export default function MessageriePage() {
             </div>
           ) : !user ? (
             <Card className="m-[var(--space-4)] w-full max-w-md text-center">
-              <div className="mx-auto mb-[var(--space-4)] flex size-16 items-center justify-center rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-2xl text-[color:var(--lkv-primary)]">
-                💬
+              <div className="mx-auto mb-[var(--space-4)] flex size-16 items-center justify-center rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[color:var(--glass-label)]">
+                <Icon name="message-square" size={28} />
               </div>
-              <h2 className="text-[length:var(--lkv-text-title-sm)] font-bold text-[color:var(--lkv-primary)]">
+              <h2 className="text-[length:var(--lkv-text-title-sm)] font-bold text-[color:var(--glass-label)]">
                 Connexion requise
               </h2>
               <p className="mb-[var(--space-6)] mt-[var(--space-2)] text-[length:var(--lkv-text-footnote)] leading-relaxed text-[color:var(--lkv-text-muted)]">

@@ -376,9 +376,9 @@ export function SortieMenu({
       node: (
         <MenuCard href={`${HUB_HOME_HREF}?phase=recount`} label="Raconter" tone="accent">
           <div className="flex flex-wrap items-center justify-center gap-1.5">
-            <span className="rounded-full bg-[var(--lkv-primary)]/10 px-2.5 py-1 text-[11px] font-bold text-[var(--lkv-primary)]">Carnet</span>
-            <span className="rounded-full bg-[var(--lkv-primary)]/10 px-2.5 py-1 text-[11px] font-bold text-[var(--lkv-primary)]">Bilan</span>
-            <span className="rounded-full bg-[var(--lkv-primary)]/10 px-2.5 py-1 text-[11px] font-bold text-[var(--lkv-primary)]">Partage</span>
+            <span className="rounded-full bg-[color:var(--card-tint-solid)] px-2.5 py-1 text-[11px] font-bold text-[color:var(--lkv-text-primary)]">Carnet</span>
+            <span className="rounded-full bg-[color:var(--card-tint-solid)] px-2.5 py-1 text-[11px] font-bold text-[color:var(--lkv-text-primary)]">Bilan</span>
+            <span className="rounded-full bg-[color:var(--card-tint-solid)] px-2.5 py-1 text-[11px] font-bold text-[color:var(--lkv-text-primary)]">Partage</span>
           </div>
           <p className="mt-1.5 text-center text-xs text-[var(--lkv-text-secondary)]">Bilan, carnet de bord et partage du groupe.</p>
         </MenuCard>

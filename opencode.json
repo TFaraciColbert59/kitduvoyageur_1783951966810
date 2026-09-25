@@ -3,7 +3,7 @@
   "instructions": ["AGENTS.md"],
   "plugin": [
     [
-      "@omniroute/opencode-plugin",
+      "@omniroute/opencode-plugin@0.2.1",
       {
         "providerId": "omniroute",
         "baseURL": "http://localhost:20128",
@@ -16,5 +16,47 @@
         }
       }
     ]
-  ]
+  ],
+  "mcp": {
+    "chrome-devtools": {
+      "type": "local",
+      "command": [
+        "node",
+        "node_modules/chrome-devtools-mcp/build/src/bin/chrome-devtools-mcp.js",
+        "--headless",
+        "--isolated",
+        "--no-usage-statistics",
+        "--redact-network-headers",
+        "--no-performance-crux",
+        "--no-javascript-evaluation",
+        "--allowed-url-pattern=http://localhost:*/*",
+        "--allowed-url-pattern=http://127.0.0.1:*/*"
+      ],
+      "environment": {
+        "CHROME_DEVTOOLS_MCP_NO_UPDATE_CHECKS": "1"
+      },
+      "enabled": true,
+      "timeout": 120000
+    },
+    "playwright": {
+      "type": "local",
+      "command": [
+        "node",
+        "node_modules/@playwright/mcp/cli.js",
+        "--browser=webkit",
+        "--mobile",
+        "--headless",
+        "--isolated",
+        "--no-webmcp",
+        "--codegen=none",
+        "--allowed-origins=http://localhost:*;http://127.0.0.1:*"
+      ],
+      "enabled": true,
+      "timeout": 120000
+    }
+  },
+  "tools": {
+    "chrome-devtools_*": false,
+    "playwright_*": false
+  }
 }

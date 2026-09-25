@@ -608,15 +608,15 @@ export function TripKitView({
 
             <div className="space-y-[var(--space-2)] pt-[var(--space-2)] text-[length:var(--lkv-text-footnote)] text-[color:var(--lkv-text-muted)]">
               <label className="flex cursor-pointer items-center gap-[var(--space-2)]">
-                <input type="checkbox" name="isVital" value="true" className="rounded accent-[color:var(--lkv-primary)]" />
+                <input type="checkbox" name="isVital" value="true" className="rounded accent-white" />
                 <span>Équipement vital pour la sécurité ou survie</span>
               </label>
               <label className="flex cursor-pointer items-center gap-[var(--space-2)]">
-                <input type="checkbox" name="isWorn" value="true" className="rounded accent-[color:var(--lkv-primary)]" />
+                <input type="checkbox" name="isWorn" value="true" className="rounded accent-white" />
                 <span>Porté sur soi (exclu du poids de base du sac)</span>
               </label>
               <label className="flex cursor-pointer items-center gap-[var(--space-2)]">
-                <input type="checkbox" name="isConsumable" value="true" className="rounded accent-[color:var(--lkv-primary)]" />
+                <input type="checkbox" name="isConsumable" value="true" className="rounded accent-white" />
                 <span>Consommable (eau, vivres, gaz)</span>
               </label>
             </div>
@@ -650,7 +650,7 @@ export function TripKitView({
             <Icon
               name="package"
               size={20}
-              className="shrink-0 text-[color:var(--lkv-secondary)]"
+              className="shrink-0 text-[color:var(--glass-label)]"
               aria-hidden="true"
             />
             <h3 className="text-[length:var(--lkv-text-subheadline)] font-bold text-[color:var(--lkv-text-primary)]">
@@ -663,7 +663,7 @@ export function TripKitView({
             variant="compact"
             className="mt-[var(--space-3)] flex shrink-0 items-center gap-[var(--space-2)] text-[length:var(--lkv-text-footnote)] text-[color:var(--lkv-text-secondary)]"
           >
-            <span className="shrink-0 text-base">ℹ️</span>
+            <Icon name="info" size={16} className="shrink-0 text-[color:var(--glass-label)]" aria-hidden="true" />
             <span>
               Votre inventaire personnel reste intact — votre matériel est simplement référencé pour
               cette aventure sans décompte de stock.
@@ -991,7 +991,7 @@ function GearThumb({ url, name, size = 46 }: { url?: string | null; name: string
   }
   return (
     <span
-      className="flex shrink-0 items-center justify-center rounded-[var(--lkv-radius-sm)] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg-medium)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset font-bold text-[color:var(--lkv-primary)]"
+      className="flex shrink-0 items-center justify-center rounded-[var(--lkv-radius-sm)] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg-medium)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset font-bold text-[color:var(--glass-label)]"
       style={{ width: size, height: size }}
       aria-hidden="true"
     >

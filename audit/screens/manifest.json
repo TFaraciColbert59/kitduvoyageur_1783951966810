@@ -1,0 +1,2310 @@
+{
+  "totalCaptures": 576,
+  "timestamp": "2026-09-24T17:11:23.372Z",
+  "manifest": [
+    {
+      "route": "accueil",
+      "file": "390x844-dark-default.png"
+    },
+    {
+      "route": "accueil",
+      "file": "390x844-dark-scroll-end.png"
+    },
+    {
+      "route": "accueil",
+      "file": "390x844-light-default.png"
+    },
+    {
+      "route": "accueil",
+      "file": "390x844-light-scroll-end.png"
+    },
+    {
+      "route": "accueil",
+      "file": "1440x900-dark-default.png"
+    },
+    {
+      "route": "accueil",
+      "file": "1440x900-dark-scroll-end.png"
+    },
+    {
+      "route": "accueil",
+      "file": "1440x900-light-default.png"
+    },
+    {
+      "route": "accueil",
+      "file": "1440x900-light-scroll-end.png"
+    },
+    {
+      "route": "hub",
+      "file": "390x844-dark-default.png"
+    },
+    {
+      "route": "hub",
+      "file": "390x844-dark-scroll-end.png"
+    },
+    {
+      "route": "hub",
+      "file": "390x844-dark-modal.png"
+    },
+    {
+      "route": "hub",
+      "file": "390x844-light-default.png"
+    },
+    {
+      "route": "hub",
+      "file": "390x844-light-scroll-end.png"
+    },
+    {
+      "route": "hub",
+      "file": "390x844-light-modal.png"
+    },
+    {
+      "route": "hub",
+      "file": "1440x900-dark-default.png"
+    },
+    {
+      "route": "hub",
+      "file": "1440x900-dark-scroll-end.png"
+    },
+    {
+      "route": "hub",
+      "file": "1440x900-light-default.png"
+    },
+    {
+      "route": "hub",
+      "file": "1440x900-light-scroll-end.png"
+    },
+    {
+      "route": "hub-nouveau",
+      "file": "390x844-dark-default.png"
+    },
+    {
+      "route": "hub-nouveau",
+      "file": "390x844-dark-scroll-end.png"
+    },
+    {
+      "route": "hub-nouveau",
+      "file": "390x844-light-default.png"
+    },
+    {
+      "route": "hub-nouveau",
+      "file": "390x844-light-scroll-end.png"
+    },
+    {
+      "route": "hub-nouveau",
+      "file": "1440x900-dark-default.png"
+    },
+    {
+      "route": "hub-nouveau",
+      "file": "1440x900-dark-scroll-end.png"
+    },
+    {
+      "route": "hub-nouveau",
+      "file": "1440x900-dark-modal.png"
+    },
+    {
+      "route": "hub-nouveau",
+      "file": "1440x900-light-default.png"
+    },
+    {
+      "route": "hub-nouveau",
+      "file": "1440x900-light-scroll-end.png"
+    },
+    {
+      "route": "hub-nouveau",
+      "file": "1440x900-light-modal.png"
+    },
+    {
+      "route": "hub-itineraire",
+      "file": "390x844-dark-default.png"
+    },
+    {
+      "route": "hub-itineraire",
+      "file": "390x844-dark-scroll-end.png"
+    },
+    {
+      "route": "hub-itineraire",
+      "file": "390x844-light-default.png"
+    },
+    {
+      "route": "hub-itineraire",
+      "file": "390x844-light-scroll-end.png"
+    },
+    {
+      "route": "hub-itineraire",
+      "file": "1440x900-dark-default.png"
+    },
+    {
+      "route": "hub-itineraire",
+      "file": "1440x900-dark-scroll-end.png"
+    },
+    {
+      "route": "hub-itineraire",
+      "file": "1440x900-light-default.png"
+    },
+    {
+      "route": "hub-itineraire",
+      "file": "1440x900-light-scroll-end.png"
+    },
+    {
+      "route": "hub-budget",
+      "file": "390x844-dark-default.png"
+    },
+    {
+      "route": "hub-budget",
+      "file": "390x844-dark-scroll-end.png"
+    },
+    {
+      "route": "hub-budget",
+      "file": "390x844-light-default.png"
+    },
+    {
+      "route": "hub-budget",
+      "file": "390x844-light-scroll-end.png"
+    },
+    {
+      "route": "hub-budget",
+      "file": "1440x900-dark-default.png"
+    },
+    {
+      "route": "hub-budget",
+      "file": "1440x900-dark-scroll-end.png"
+    },
+    {
+      "route": "hub-budget",
+      "file": "1440x900-dark-modal.png"
+    },
+    {
+      "route": "hub-budget",
+      "file": "1440x900-light-default.png"
+    },
+    {
+      "route": "hub-budget",
+      "file": "1440x900-light-scroll-end.png"
+    },
+    {
+      "route": "hub-budget",
+      "file": "1440x900-light-modal.png"
+    },
+    {
+      "route": "hub-groupe",
+      "file": "390x844-dark-default.png"
+    },
+    {
+      "route": "hub-groupe",
+      "file": "390x844-dark-scroll-end.png"
+    },
+    {
+      "route": "hub-groupe",
+      "file": "390x844-light-default.png"
+    },
+    {
+      "route": "hub-groupe",
+      "file": "390x844-light-scroll-end.png"
+    },
+    {
+      "route": "hub-groupe",
+      "file": "1440x900-dark-default.png"
+    },
+    {
+      "route": "hub-groupe",
+      "file": "1440x900-dark-scroll-end.png"
+    },
+    {
+      "route": "hub-groupe",
+      "file": "1440x900-dark-modal.png"
+    },
+    {
+      "route": "hub-groupe",
+      "file": "1440x900-light-default.png"
+    },
+    {
+      "route": "hub-groupe",
+      "file": "1440x900-light-scroll-end.png"
+    },
+    {
+      "route": "hub-groupe",
+      "file": "1440x900-light-modal.png"
+    },
+    {
+      "route": "hub-securite",
+      "file": "390x844-dark-default.png"
+    },
+    {
+      "route": "hub-securite",
+      "file": "390x844-dark-scroll-end.png"
+    },
+    {
+      "route": "hub-securite",
+      "file": "390x844-light-default.png"
+    },
+    {
+      "route": "hub-securite",
+      "file": "390x844-light-scroll-end.png"
+    },
+    {
+      "route": "hub-securite",
+      "file": "1440x900-dark-default.png"
+    },
+    {
+      "route": "hub-securite",
+      "file": "1440x900-dark-scroll-end.png"
+    },
+    {
+      "route": "hub-securite",
+      "file": "1440x900-dark-modal.png"
+    },
+    {
+      "route": "hub-securite",
+      "file": "1440x900-light-default.png"
+    },
+    {
+      "route": "hub-securite",
+      "file": "1440x900-light-scroll-end.png"
+    },
+    {
+      "route": "hub-securite",
+      "file": "1440x900-light-modal.png"
+    },
+    {
+      "route": "hub-materiel",
+      "file": "390x844-dark-default.png"
+    },
+    {
+      "route": "hub-materiel",
+      "file": "390x844-dark-scroll-end.png"
+    },
+    {
+      "route": "hub-materiel",
+      "file": "390x844-light-default.png"
+    },
+    {
+      "route": "hub-materiel",
+      "file": "390x844-light-scroll-end.png"
+    },
+    {
+      "route": "hub-materiel",
+      "file": "1440x900-dark-default.png"
+    },
+    {
+      "route": "hub-materiel",
+      "file": "1440x900-dark-scroll-end.png"
+    },
+    {
+      "route": "hub-materiel",
+      "file": "1440x900-light-default.png"
+    },
+    {
+      "route": "hub-materiel",
+      "file": "1440x900-light-scroll-end.png"
+    },
+    {
+      "route": "hub-documents",
+      "file": "390x844-dark-default.png"
+    },
+    {
+      "route": "hub-documents",
+      "file": "390x844-dark-scroll-end.png"
+    },
+    {
+      "route": "hub-documents",
+      "file": "390x844-light-default.png"
+    },
+    {
+      "route": "hub-documents",
+      "file": "390x844-light-scroll-end.png"
+    },
+    {
+      "route": "hub-documents",
+      "file": "1440x900-dark-default.png"
+    },
+    {
+      "route": "hub-documents",
+      "file": "1440x900-dark-scroll-end.png"
+    },
+    {
+      "route": "hub-documents",
+      "file": "1440x900-dark-modal.png"
+    },
+    {
+      "route": "hub-documents",
+      "file": "1440x900-light-default.png"
+    },
+    {
+      "route": "hub-documents",
+      "file": "1440x900-light-scroll-end.png"
+    },
+    {
+      "route": "hub-documents",
+      "file": "1440x900-light-modal.png"
+    },
+    {
+      "route": "explorer",
+      "file": "390x844-dark-default.png"
+    },
+    {
+      "route": "explorer",
+      "file": "390x844-dark-scroll-end.png"
+    },
+    {
+      "route": "explorer",
+      "file": "390x844-light-default.png"
+    },
+    {
+      "route": "explorer",
+      "file": "390x844-light-scroll-end.png"
+    },
+    {
+      "route": "explorer",
+      "file": "1440x900-dark-default.png"
+    },
+    {
+      "route": "explorer",
+      "file": "1440x900-dark-scroll-end.png"
+    },
+    {
+      "route": "explorer",
+      "file": "1440x900-light-default.png"
+    },
+    {
+      "route": "explorer",
+      "file": "1440x900-light-scroll-end.png"
+    },
+    {
+      "route": "carte-interactive",
+      "file": "390x844-dark-default.png"
+    },
+    {
+      "route": "carte-interactive",
+      "file": "390x844-dark-scroll-end.png"
+    },
+    {
+      "route": "carte-interactive",
+      "file": "390x844-light-default.png"
+    },
+    {
+      "route": "carte-interactive",
+      "file": "390x844-light-scroll-end.png"
+    },
+    {
+      "route": "carte-interactive",
+      "file": "1440x900-dark-default.png"
+    },
+    {
+      "route": "carte-interactive",
+      "file": "1440x900-dark-scroll-end.png"
+    },
+    {
+      "route": "carte-interactive",
+      "file": "1440x900-light-default.png"
+    },
+    {
+      "route": "carte-interactive",
+      "file": "1440x900-light-scroll-end.png"
+    },
+    {
+      "route": "randonnee-active",
+      "file": "390x844-dark-default.png"
+    },
+    {
+      "route": "randonnee-active",
+      "file": "390x844-dark-scroll-end.png"
+    },
+    {
+      "route": "randonnee-active",
+      "file": "390x844-light-default.png"
+    },
+    {
+      "route": "randonnee-active",
+      "file": "390x844-light-scroll-end.png"
+    },
+    {
+      "route": "randonnee-active",
+      "file": "1440x900-dark-default.png"
+    },
+    {
+      "route": "randonnee-active",
+      "file": "1440x900-dark-scroll-end.png"
+    },
+    {
+      "route": "randonnee-active",
+      "file": "1440x900-light-default.png"
+    },
+    {
+      "route": "randonnee-active",
+      "file": "1440x900-light-scroll-end.png"
+    },
+    {
+      "route": "rapport-expedition",
+      "file": "390x844-dark-default.png"
+    },
+    {
+      "route": "rapport-expedition",
+      "file": "390x844-dark-scroll-end.png"
+    },
+    {
+      "route": "rapport-expedition",
+      "file": "390x844-light-default.png"
+    },
+    {
+      "route": "rapport-expedition",
+      "file": "390x844-light-scroll-end.png"
+    },
+    {
+      "route": "rapport-expedition",
+      "file": "1440x900-dark-default.png"
+    },
+    {
+      "route": "rapport-expedition",
+      "file": "1440x900-dark-scroll-end.png"
+    },
+    {
+      "route": "rapport-expedition",
+      "file": "1440x900-light-default.png"
+    },
+    {
+      "route": "rapport-expedition",
+      "file": "1440x900-light-scroll-end.png"
+    },
+    {
+      "route": "materiel",
+      "file": "390x844-dark-default.png"
+    },
+    {
+      "route": "materiel",
+      "file": "390x844-dark-scroll-end.png"
+    },
+    {
+      "route": "materiel",
+      "file": "390x844-light-default.png"
+    },
+    {
+      "route": "materiel",
+      "file": "390x844-light-scroll-end.png"
+    },
+    {
+      "route": "materiel",
+      "file": "1440x900-dark-default.png"
+    },
+    {
+      "route": "materiel",
+      "file": "1440x900-dark-scroll-end.png"
+    },
+    {
+      "route": "materiel",
+      "file": "1440x900-light-default.png"
+    },
+    {
+      "route": "materiel",
+      "file": "1440x900-light-scroll-end.png"
+    },
+    {
+      "route": "kits",
+      "file": "390x844-dark-default.png"
+    },
+    {
+      "route": "kits",
+      "file": "390x844-dark-scroll-end.png"
+    },
+    {
+      "route": "kits",
+      "file": "390x844-light-default.png"
+    },
+    {
+      "route": "kits",
+      "file": "390x844-light-scroll-end.png"
+    },
+    {
+      "route": "kits",
+      "file": "1440x900-dark-default.png"
+    },
+    {
+      "route": "kits",
+      "file": "1440x900-dark-scroll-end.png"
+    },
+    {
+      "route": "kits",
+      "file": "1440x900-light-default.png"
+    },
+    {
+      "route": "kits",
+      "file": "1440x900-light-scroll-end.png"
+    },
+    {
+      "route": "kit-islande",
+      "file": "390x844-dark-default.png"
+    },
+    {
+      "route": "kit-islande",
+      "file": "390x844-dark-scroll-end.png"
+    },
+    {
+      "route": "kit-islande",
+      "file": "390x844-light-default.png"
+    },
+    {
+      "route": "kit-islande",
+      "file": "390x844-light-scroll-end.png"
+    },
+    {
+      "route": "kit-islande",
+      "file": "1440x900-dark-default.png"
+    },
+    {
+      "route": "kit-islande",
+      "file": "1440x900-dark-scroll-end.png"
+    },
+    {
+      "route": "kit-islande",
+      "file": "1440x900-light-default.png"
+    },
+    {
+      "route": "kit-islande",
+      "file": "1440x900-light-scroll-end.png"
+    },
+    {
+      "route": "kit-gr20",
+      "file": "390x844-dark-default.png"
+    },
+    {
+      "route": "kit-gr20",
+      "file": "390x844-dark-scroll-end.png"
+    },
+    {
+      "route": "kit-gr20",
+      "file": "390x844-light-default.png"
+    },
+    {
+      "route": "kit-gr20",
+      "file": "390x844-light-scroll-end.png"
+    },
+    {
+      "route": "kit-gr20",
+      "file": "1440x900-dark-default.png"
+    },
+    {
+      "route": "kit-gr20",
+      "file": "1440x900-dark-scroll-end.png"
+    },
+    {
+      "route": "kit-gr20",
+      "file": "1440x900-light-default.png"
+    },
+    {
+      "route": "kit-gr20",
+      "file": "1440x900-light-scroll-end.png"
+    },
+    {
+      "route": "kit-vanlife",
+      "file": "390x844-dark-default.png"
+    },
+    {
+      "route": "kit-vanlife",
+      "file": "390x844-dark-scroll-end.png"
+    },
+    {
+      "route": "kit-vanlife",
+      "file": "390x844-light-default.png"
+    },
+    {
+      "route": "kit-vanlife",
+      "file": "390x844-light-scroll-end.png"
+    },
+    {
+      "route": "kit-vanlife",
+      "file": "1440x900-dark-default.png"
+    },
+    {
+      "route": "kit-vanlife",
+      "file": "1440x900-dark-scroll-end.png"
+    },
+    {
+      "route": "kit-vanlife",
+      "file": "1440x900-light-default.png"
+    },
+    {
+      "route": "kit-vanlife",
+      "file": "1440x900-light-scroll-end.png"
+    },
+    {
+      "route": "ai-configurator",
+      "file": "390x844-dark-default.png"
+    },
+    {
+      "route": "ai-configurator",
+      "file": "390x844-dark-scroll-end.png"
+    },
+    {
+      "route": "ai-configurator",
+      "file": "390x844-light-default.png"
+    },
+    {
+      "route": "ai-configurator",
+      "file": "390x844-light-scroll-end.png"
+    },
+    {
+      "route": "ai-configurator",
+      "file": "1440x900-dark-default.png"
+    },
+    {
+      "route": "ai-configurator",
+      "file": "1440x900-dark-scroll-end.png"
+    },
+    {
+      "route": "ai-configurator",
+      "file": "1440x900-light-default.png"
+    },
+    {
+      "route": "ai-configurator",
+      "file": "1440x900-light-scroll-end.png"
+    },
+    {
+      "route": "copilote",
+      "file": "390x844-dark-default.png"
+    },
+    {
+      "route": "copilote",
+      "file": "390x844-dark-scroll-end.png"
+    },
+    {
+      "route": "copilote",
+      "file": "390x844-light-default.png"
+    },
+    {
+      "route": "copilote",
+      "file": "390x844-light-scroll-end.png"
+    },
+    {
+      "route": "copilote",
+      "file": "1440x900-dark-default.png"
+    },
+    {
+      "route": "copilote",
+      "file": "1440x900-dark-scroll-end.png"
+    },
+    {
+      "route": "copilote",
+      "file": "1440x900-light-default.png"
+    },
+    {
+      "route": "copilote",
+      "file": "1440x900-light-scroll-end.png"
+    },
+    {
+      "route": "boutique",
+      "file": "390x844-dark-default.png"
+    },
+    {
+      "route": "boutique",
+      "file": "390x844-dark-scroll-end.png"
+    },
+    {
+      "route": "boutique",
+      "file": "390x844-light-default.png"
+    },
+    {
+      "route": "boutique",
+      "file": "390x844-light-scroll-end.png"
+    },
+    {
+      "route": "boutique",
+      "file": "1440x900-dark-default.png"
+    },
+    {
+      "route": "boutique",
+      "file": "1440x900-dark-scroll-end.png"
+    },
+    {
+      "route": "boutique",
+      "file": "1440x900-light-default.png"
+    },
+    {
+      "route": "boutique",
+      "file": "1440x900-light-scroll-end.png"
+    },
+    {
+      "route": "produit-detail",
+      "file": "390x844-dark-default.png"
+    },
+    {
+      "route": "produit-detail",
+      "file": "390x844-dark-scroll-end.png"
+    },
+    {
+      "route": "produit-detail",
+      "file": "390x844-light-default.png"
+    },
+    {
+      "route": "produit-detail",
+      "file": "390x844-light-scroll-end.png"
+    },
+    {
+      "route": "produit-detail",
+      "file": "1440x900-dark-default.png"
+    },
+    {
+      "route": "produit-detail",
+      "file": "1440x900-dark-scroll-end.png"
+    },
+    {
+      "route": "produit-detail",
+      "file": "1440x900-light-default.png"
+    },
+    {
+      "route": "produit-detail",
+      "file": "1440x900-light-scroll-end.png"
+    },
+    {
+      "route": "occasion",
+      "file": "390x844-dark-default.png"
+    },
+    {
+      "route": "occasion",
+      "file": "390x844-dark-scroll-end.png"
+    },
+    {
+      "route": "occasion",
+      "file": "390x844-light-default.png"
+    },
+    {
+      "route": "occasion",
+      "file": "390x844-light-scroll-end.png"
+    },
+    {
+      "route": "occasion",
+      "file": "1440x900-dark-default.png"
+    },
+    {
+      "route": "occasion",
+      "file": "1440x900-dark-scroll-end.png"
+    },
+    {
+      "route": "occasion",
+      "file": "1440x900-light-default.png"
+    },
+    {
+      "route": "occasion",
+      "file": "1440x900-light-scroll-end.png"
+    },
+    {
+      "route": "location",
+      "file": "390x844-dark-default.png"
+    },
+    {
+      "route": "location",
+      "file": "390x844-dark-scroll-end.png"
+    },
+    {
+      "route": "location",
+      "file": "390x844-light-default.png"
+    },
+    {
+      "route": "location",
+      "file": "390x844-light-scroll-end.png"
+    },
+    {
+      "route": "location",
+      "file": "1440x900-dark-default.png"
+    },
+    {
+      "route": "location",
+      "file": "1440x900-dark-scroll-end.png"
+    },
+    {
+      "route": "location",
+      "file": "1440x900-light-default.png"
+    },
+    {
+      "route": "location",
+      "file": "1440x900-light-scroll-end.png"
+    },
+    {
+      "route": "panier",
+      "file": "390x844-dark-default.png"
+    },
+    {
+      "route": "panier",
+      "file": "390x844-dark-scroll-end.png"
+    },
+    {
+      "route": "panier",
+      "file": "390x844-light-default.png"
+    },
+    {
+      "route": "panier",
+      "file": "390x844-light-scroll-end.png"
+    },
+    {
+      "route": "panier",
+      "file": "1440x900-dark-default.png"
+    },
+    {
+      "route": "panier",
+      "file": "1440x900-dark-scroll-end.png"
+    },
+    {
+      "route": "panier",
+      "file": "1440x900-light-default.png"
+    },
+    {
+      "route": "panier",
+      "file": "1440x900-light-scroll-end.png"
+    },
+    {
+      "route": "checkout",
+      "file": "390x844-dark-default.png"
+    },
+    {
+      "route": "checkout",
+      "file": "390x844-dark-scroll-end.png"
+    },
+    {
+      "route": "checkout",
+      "file": "390x844-light-default.png"
+    },
+    {
+      "route": "checkout",
+      "file": "390x844-light-scroll-end.png"
+    },
+    {
+      "route": "checkout",
+      "file": "1440x900-dark-default.png"
+    },
+    {
+      "route": "checkout",
+      "file": "1440x900-dark-scroll-end.png"
+    },
+    {
+      "route": "checkout",
+      "file": "1440x900-light-default.png"
+    },
+    {
+      "route": "checkout",
+      "file": "1440x900-light-scroll-end.png"
+    },
+    {
+      "route": "abonnements",
+      "file": "390x844-dark-default.png"
+    },
+    {
+      "route": "abonnements",
+      "file": "390x844-dark-scroll-end.png"
+    },
+    {
+      "route": "abonnements",
+      "file": "390x844-light-default.png"
+    },
+    {
+      "route": "abonnements",
+      "file": "390x844-light-scroll-end.png"
+    },
+    {
+      "route": "abonnements",
+      "file": "1440x900-dark-default.png"
+    },
+    {
+      "route": "abonnements",
+      "file": "1440x900-dark-scroll-end.png"
+    },
+    {
+      "route": "abonnements",
+      "file": "1440x900-light-default.png"
+    },
+    {
+      "route": "abonnements",
+      "file": "1440x900-light-scroll-end.png"
+    },
+    {
+      "route": "pays-fr",
+      "file": "390x844-dark-default.png"
+    },
+    {
+      "route": "pays-fr",
+      "file": "390x844-dark-scroll-end.png"
+    },
+    {
+      "route": "pays-fr",
+      "file": "390x844-light-default.png"
+    },
+    {
+      "route": "pays-fr",
+      "file": "390x844-light-scroll-end.png"
+    },
+    {
+      "route": "pays-fr",
+      "file": "1440x900-dark-default.png"
+    },
+    {
+      "route": "pays-fr",
+      "file": "1440x900-dark-scroll-end.png"
+    },
+    {
+      "route": "pays-fr",
+      "file": "1440x900-light-default.png"
+    },
+    {
+      "route": "pays-fr",
+      "file": "1440x900-light-scroll-end.png"
+    },
+    {
+      "route": "pays-is",
+      "file": "390x844-dark-default.png"
+    },
+    {
+      "route": "pays-is",
+      "file": "390x844-dark-scroll-end.png"
+    },
+    {
+      "route": "pays-is",
+      "file": "390x844-light-default.png"
+    },
+    {
+      "route": "pays-is",
+      "file": "390x844-light-scroll-end.png"
+    },
+    {
+      "route": "pays-is",
+      "file": "1440x900-dark-default.png"
+    },
+    {
+      "route": "pays-is",
+      "file": "1440x900-dark-scroll-end.png"
+    },
+    {
+      "route": "pays-is",
+      "file": "1440x900-light-default.png"
+    },
+    {
+      "route": "pays-is",
+      "file": "1440x900-light-scroll-end.png"
+    },
+    {
+      "route": "lieux",
+      "file": "390x844-dark-default.png"
+    },
+    {
+      "route": "lieux",
+      "file": "390x844-dark-scroll-end.png"
+    },
+    {
+      "route": "lieux",
+      "file": "390x844-light-default.png"
+    },
+    {
+      "route": "lieux",
+      "file": "390x844-light-scroll-end.png"
+    },
+    {
+      "route": "lieux",
+      "file": "1440x900-dark-default.png"
+    },
+    {
+      "route": "lieux",
+      "file": "1440x900-dark-scroll-end.png"
+    },
+    {
+      "route": "lieux",
+      "file": "1440x900-light-default.png"
+    },
+    {
+      "route": "lieux",
+      "file": "1440x900-light-scroll-end.png"
+    },
+    {
+      "route": "preparer-randonnee",
+      "file": "390x844-dark-default.png"
+    },
+    {
+      "route": "preparer-randonnee",
+      "file": "390x844-dark-scroll-end.png"
+    },
+    {
+      "route": "preparer-randonnee",
+      "file": "390x844-dark-modal.png"
+    },
+    {
+      "route": "preparer-randonnee",
+      "file": "390x844-light-default.png"
+    },
+    {
+      "route": "preparer-randonnee",
+      "file": "390x844-light-scroll-end.png"
+    },
+    {
+      "route": "preparer-randonnee",
+      "file": "390x844-light-modal.png"
+    },
+    {
+      "route": "preparer-randonnee",
+      "file": "1440x900-dark-default.png"
+    },
+    {
+      "route": "preparer-randonnee",
+      "file": "1440x900-dark-scroll-end.png"
+    },
+    {
+      "route": "preparer-randonnee",
+      "file": "1440x900-light-default.png"
+    },
+    {
+      "route": "preparer-randonnee",
+      "file": "1440x900-light-scroll-end.png"
+    },
+    {
+      "route": "communaute",
+      "file": "390x844-dark-default.png"
+    },
+    {
+      "route": "communaute",
+      "file": "390x844-dark-scroll-end.png"
+    },
+    {
+      "route": "communaute",
+      "file": "390x844-light-default.png"
+    },
+    {
+      "route": "communaute",
+      "file": "390x844-light-scroll-end.png"
+    },
+    {
+      "route": "communaute",
+      "file": "1440x900-dark-default.png"
+    },
+    {
+      "route": "communaute",
+      "file": "1440x900-dark-scroll-end.png"
+    },
+    {
+      "route": "communaute",
+      "file": "1440x900-light-default.png"
+    },
+    {
+      "route": "communaute",
+      "file": "1440x900-light-scroll-end.png"
+    },
+    {
+      "route": "communaute-publier",
+      "file": "390x844-dark-default.png"
+    },
+    {
+      "route": "communaute-publier",
+      "file": "390x844-dark-scroll-end.png"
+    },
+    {
+      "route": "communaute-publier",
+      "file": "390x844-light-default.png"
+    },
+    {
+      "route": "communaute-publier",
+      "file": "390x844-light-scroll-end.png"
+    },
+    {
+      "route": "communaute-publier",
+      "file": "1440x900-dark-default.png"
+    },
+    {
+      "route": "communaute-publier",
+      "file": "1440x900-dark-scroll-end.png"
+    },
+    {
+      "route": "communaute-publier",
+      "file": "1440x900-light-default.png"
+    },
+    {
+      "route": "communaute-publier",
+      "file": "1440x900-light-scroll-end.png"
+    },
+    {
+      "route": "communaute-pro",
+      "file": "390x844-dark-default.png"
+    },
+    {
+      "route": "communaute-pro",
+      "file": "390x844-dark-scroll-end.png"
+    },
+    {
+      "route": "communaute-pro",
+      "file": "390x844-light-default.png"
+    },
+    {
+      "route": "communaute-pro",
+      "file": "390x844-light-scroll-end.png"
+    },
+    {
+      "route": "communaute-pro",
+      "file": "1440x900-dark-default.png"
+    },
+    {
+      "route": "communaute-pro",
+      "file": "1440x900-dark-scroll-end.png"
+    },
+    {
+      "route": "communaute-pro",
+      "file": "1440x900-light-default.png"
+    },
+    {
+      "route": "communaute-pro",
+      "file": "1440x900-light-scroll-end.png"
+    },
+    {
+      "route": "feed",
+      "file": "390x844-dark-default.png"
+    },
+    {
+      "route": "feed",
+      "file": "390x844-dark-scroll-end.png"
+    },
+    {
+      "route": "feed",
+      "file": "390x844-light-default.png"
+    },
+    {
+      "route": "feed",
+      "file": "390x844-light-scroll-end.png"
+    },
+    {
+      "route": "feed",
+      "file": "1440x900-dark-default.png"
+    },
+    {
+      "route": "feed",
+      "file": "1440x900-dark-scroll-end.png"
+    },
+    {
+      "route": "feed",
+      "file": "1440x900-light-default.png"
+    },
+    {
+      "route": "feed",
+      "file": "1440x900-light-scroll-end.png"
+    },
+    {
+      "route": "carnets",
+      "file": "390x844-dark-default.png"
+    },
+    {
+      "route": "carnets",
+      "file": "390x844-dark-scroll-end.png"
+    },
+    {
+      "route": "carnets",
+      "file": "390x844-light-default.png"
+    },
+    {
+      "route": "carnets",
+      "file": "390x844-light-scroll-end.png"
+    },
+    {
+      "route": "carnets",
+      "file": "1440x900-dark-default.png"
+    },
+    {
+      "route": "carnets",
+      "file": "1440x900-dark-scroll-end.png"
+    },
+    {
+      "route": "carnets",
+      "file": "1440x900-light-default.png"
+    },
+    {
+      "route": "carnets",
+      "file": "1440x900-light-scroll-end.png"
+    },
+    {
+      "route": "clubs",
+      "file": "390x844-dark-default.png"
+    },
+    {
+      "route": "clubs",
+      "file": "390x844-dark-scroll-end.png"
+    },
+    {
+      "route": "clubs",
+      "file": "390x844-light-default.png"
+    },
+    {
+      "route": "clubs",
+      "file": "390x844-light-scroll-end.png"
+    },
+    {
+      "route": "clubs",
+      "file": "1440x900-dark-default.png"
+    },
+    {
+      "route": "clubs",
+      "file": "1440x900-dark-scroll-end.png"
+    },
+    {
+      "route": "clubs",
+      "file": "1440x900-light-default.png"
+    },
+    {
+      "route": "clubs",
+      "file": "1440x900-light-scroll-end.png"
+    },
+    {
+      "route": "entraide",
+      "file": "390x844-dark-default.png"
+    },
+    {
+      "route": "entraide",
+      "file": "390x844-dark-scroll-end.png"
+    },
+    {
+      "route": "entraide",
+      "file": "390x844-light-default.png"
+    },
+    {
+      "route": "entraide",
+      "file": "390x844-light-scroll-end.png"
+    },
+    {
+      "route": "entraide",
+      "file": "1440x900-dark-default.png"
+    },
+    {
+      "route": "entraide",
+      "file": "1440x900-dark-scroll-end.png"
+    },
+    {
+      "route": "entraide",
+      "file": "1440x900-light-default.png"
+    },
+    {
+      "route": "entraide",
+      "file": "1440x900-light-scroll-end.png"
+    },
+    {
+      "route": "evenements",
+      "file": "390x844-dark-default.png"
+    },
+    {
+      "route": "evenements",
+      "file": "390x844-dark-scroll-end.png"
+    },
+    {
+      "route": "evenements",
+      "file": "390x844-light-default.png"
+    },
+    {
+      "route": "evenements",
+      "file": "390x844-light-scroll-end.png"
+    },
+    {
+      "route": "evenements",
+      "file": "1440x900-dark-default.png"
+    },
+    {
+      "route": "evenements",
+      "file": "1440x900-dark-scroll-end.png"
+    },
+    {
+      "route": "evenements",
+      "file": "1440x900-light-default.png"
+    },
+    {
+      "route": "evenements",
+      "file": "1440x900-light-scroll-end.png"
+    },
+    {
+      "route": "avis",
+      "file": "390x844-dark-default.png"
+    },
+    {
+      "route": "avis",
+      "file": "390x844-dark-scroll-end.png"
+    },
+    {
+      "route": "avis",
+      "file": "390x844-light-default.png"
+    },
+    {
+      "route": "avis",
+      "file": "390x844-light-scroll-end.png"
+    },
+    {
+      "route": "avis",
+      "file": "1440x900-dark-default.png"
+    },
+    {
+      "route": "avis",
+      "file": "1440x900-dark-scroll-end.png"
+    },
+    {
+      "route": "avis",
+      "file": "1440x900-light-default.png"
+    },
+    {
+      "route": "avis",
+      "file": "1440x900-light-scroll-end.png"
+    },
+    {
+      "route": "outils",
+      "file": "390x844-dark-default.png"
+    },
+    {
+      "route": "outils",
+      "file": "390x844-dark-scroll-end.png"
+    },
+    {
+      "route": "outils",
+      "file": "390x844-light-default.png"
+    },
+    {
+      "route": "outils",
+      "file": "390x844-light-scroll-end.png"
+    },
+    {
+      "route": "outils",
+      "file": "1440x900-dark-default.png"
+    },
+    {
+      "route": "outils",
+      "file": "1440x900-dark-scroll-end.png"
+    },
+    {
+      "route": "outils",
+      "file": "1440x900-light-default.png"
+    },
+    {
+      "route": "outils",
+      "file": "1440x900-light-scroll-end.png"
+    },
+    {
+      "route": "outil-poids-sac",
+      "file": "390x844-dark-default.png"
+    },
+    {
+      "route": "outil-poids-sac",
+      "file": "390x844-dark-scroll-end.png"
+    },
+    {
+      "route": "outil-poids-sac",
+      "file": "390x844-light-default.png"
+    },
+    {
+      "route": "outil-poids-sac",
+      "file": "390x844-light-scroll-end.png"
+    },
+    {
+      "route": "outil-poids-sac",
+      "file": "1440x900-dark-default.png"
+    },
+    {
+      "route": "outil-poids-sac",
+      "file": "1440x900-dark-scroll-end.png"
+    },
+    {
+      "route": "outil-poids-sac",
+      "file": "1440x900-light-default.png"
+    },
+    {
+      "route": "outil-poids-sac",
+      "file": "1440x900-light-scroll-end.png"
+    },
+    {
+      "route": "outil-budget",
+      "file": "390x844-dark-default.png"
+    },
+    {
+      "route": "outil-budget",
+      "file": "390x844-dark-scroll-end.png"
+    },
+    {
+      "route": "outil-budget",
+      "file": "390x844-light-default.png"
+    },
+    {
+      "route": "outil-budget",
+      "file": "390x844-light-scroll-end.png"
+    },
+    {
+      "route": "outil-budget",
+      "file": "1440x900-dark-default.png"
+    },
+    {
+      "route": "outil-budget",
+      "file": "1440x900-dark-scroll-end.png"
+    },
+    {
+      "route": "outil-budget",
+      "file": "1440x900-light-default.png"
+    },
+    {
+      "route": "outil-budget",
+      "file": "1440x900-light-scroll-end.png"
+    },
+    {
+      "route": "outil-convertisseur",
+      "file": "390x844-dark-default.png"
+    },
+    {
+      "route": "outil-convertisseur",
+      "file": "390x844-dark-scroll-end.png"
+    },
+    {
+      "route": "outil-convertisseur",
+      "file": "390x844-light-default.png"
+    },
+    {
+      "route": "outil-convertisseur",
+      "file": "390x844-light-scroll-end.png"
+    },
+    {
+      "route": "outil-convertisseur",
+      "file": "1440x900-dark-default.png"
+    },
+    {
+      "route": "outil-convertisseur",
+      "file": "1440x900-dark-scroll-end.png"
+    },
+    {
+      "route": "outil-convertisseur",
+      "file": "1440x900-light-default.png"
+    },
+    {
+      "route": "outil-convertisseur",
+      "file": "1440x900-light-scroll-end.png"
+    },
+    {
+      "route": "outil-checklist",
+      "file": "390x844-dark-default.png"
+    },
+    {
+      "route": "outil-checklist",
+      "file": "390x844-dark-scroll-end.png"
+    },
+    {
+      "route": "outil-checklist",
+      "file": "390x844-light-default.png"
+    },
+    {
+      "route": "outil-checklist",
+      "file": "390x844-light-scroll-end.png"
+    },
+    {
+      "route": "outil-checklist",
+      "file": "1440x900-dark-default.png"
+    },
+    {
+      "route": "outil-checklist",
+      "file": "1440x900-dark-scroll-end.png"
+    },
+    {
+      "route": "outil-checklist",
+      "file": "1440x900-light-default.png"
+    },
+    {
+      "route": "outil-checklist",
+      "file": "1440x900-light-scroll-end.png"
+    },
+    {
+      "route": "carbone",
+      "file": "390x844-dark-default.png"
+    },
+    {
+      "route": "carbone",
+      "file": "390x844-dark-scroll-end.png"
+    },
+    {
+      "route": "carbone",
+      "file": "390x844-light-default.png"
+    },
+    {
+      "route": "carbone",
+      "file": "390x844-light-scroll-end.png"
+    },
+    {
+      "route": "carbone",
+      "file": "1440x900-dark-default.png"
+    },
+    {
+      "route": "carbone",
+      "file": "1440x900-dark-scroll-end.png"
+    },
+    {
+      "route": "carbone",
+      "file": "1440x900-light-default.png"
+    },
+    {
+      "route": "carbone",
+      "file": "1440x900-light-scroll-end.png"
+    },
+    {
+      "route": "compte",
+      "file": "390x844-dark-default.png"
+    },
+    {
+      "route": "compte",
+      "file": "390x844-dark-scroll-end.png"
+    },
+    {
+      "route": "compte",
+      "file": "390x844-light-default.png"
+    },
+    {
+      "route": "compte",
+      "file": "390x844-light-scroll-end.png"
+    },
+    {
+      "route": "compte",
+      "file": "1440x900-dark-default.png"
+    },
+    {
+      "route": "compte",
+      "file": "1440x900-dark-scroll-end.png"
+    },
+    {
+      "route": "compte",
+      "file": "1440x900-light-default.png"
+    },
+    {
+      "route": "compte",
+      "file": "1440x900-light-scroll-end.png"
+    },
+    {
+      "route": "compte-modifier",
+      "file": "390x844-dark-default.png"
+    },
+    {
+      "route": "compte-modifier",
+      "file": "390x844-dark-scroll-end.png"
+    },
+    {
+      "route": "compte-modifier",
+      "file": "390x844-light-default.png"
+    },
+    {
+      "route": "compte-modifier",
+      "file": "390x844-light-scroll-end.png"
+    },
+    {
+      "route": "compte-modifier",
+      "file": "1440x900-dark-default.png"
+    },
+    {
+      "route": "compte-modifier",
+      "file": "1440x900-dark-scroll-end.png"
+    },
+    {
+      "route": "compte-modifier",
+      "file": "1440x900-light-default.png"
+    },
+    {
+      "route": "compte-modifier",
+      "file": "1440x900-light-scroll-end.png"
+    },
+    {
+      "route": "profil-public",
+      "file": "390x844-dark-default.png"
+    },
+    {
+      "route": "profil-public",
+      "file": "390x844-dark-scroll-end.png"
+    },
+    {
+      "route": "profil-public",
+      "file": "390x844-light-default.png"
+    },
+    {
+      "route": "profil-public",
+      "file": "390x844-light-scroll-end.png"
+    },
+    {
+      "route": "profil-public",
+      "file": "1440x900-dark-default.png"
+    },
+    {
+      "route": "profil-public",
+      "file": "1440x900-dark-scroll-end.png"
+    },
+    {
+      "route": "profil-public",
+      "file": "1440x900-light-default.png"
+    },
+    {
+      "route": "profil-public",
+      "file": "1440x900-light-scroll-end.png"
+    },
+    {
+      "route": "progression",
+      "file": "390x844-dark-default.png"
+    },
+    {
+      "route": "progression",
+      "file": "390x844-dark-scroll-end.png"
+    },
+    {
+      "route": "progression",
+      "file": "390x844-light-default.png"
+    },
+    {
+      "route": "progression",
+      "file": "390x844-light-scroll-end.png"
+    },
+    {
+      "route": "progression",
+      "file": "1440x900-dark-default.png"
+    },
+    {
+      "route": "progression",
+      "file": "1440x900-dark-scroll-end.png"
+    },
+    {
+      "route": "progression",
+      "file": "1440x900-light-default.png"
+    },
+    {
+      "route": "progression",
+      "file": "1440x900-light-scroll-end.png"
+    },
+    {
+      "route": "fidelite",
+      "file": "390x844-dark-default.png"
+    },
+    {
+      "route": "fidelite",
+      "file": "390x844-dark-scroll-end.png"
+    },
+    {
+      "route": "fidelite",
+      "file": "390x844-light-default.png"
+    },
+    {
+      "route": "fidelite",
+      "file": "390x844-light-scroll-end.png"
+    },
+    {
+      "route": "fidelite",
+      "file": "1440x900-dark-default.png"
+    },
+    {
+      "route": "fidelite",
+      "file": "1440x900-dark-scroll-end.png"
+    },
+    {
+      "route": "fidelite",
+      "file": "1440x900-light-default.png"
+    },
+    {
+      "route": "fidelite",
+      "file": "1440x900-light-scroll-end.png"
+    },
+    {
+      "route": "recompenses",
+      "file": "390x844-dark-default.png"
+    },
+    {
+      "route": "recompenses",
+      "file": "390x844-dark-scroll-end.png"
+    },
+    {
+      "route": "recompenses",
+      "file": "390x844-light-default.png"
+    },
+    {
+      "route": "recompenses",
+      "file": "390x844-light-scroll-end.png"
+    },
+    {
+      "route": "recompenses",
+      "file": "1440x900-dark-default.png"
+    },
+    {
+      "route": "recompenses",
+      "file": "1440x900-dark-scroll-end.png"
+    },
+    {
+      "route": "recompenses",
+      "file": "1440x900-light-default.png"
+    },
+    {
+      "route": "recompenses",
+      "file": "1440x900-light-scroll-end.png"
+    },
+    {
+      "route": "messagerie",
+      "file": "390x844-dark-default.png"
+    },
+    {
+      "route": "messagerie",
+      "file": "390x844-dark-scroll-end.png"
+    },
+    {
+      "route": "messagerie",
+      "file": "390x844-light-default.png"
+    },
+    {
+      "route": "messagerie",
+      "file": "390x844-light-scroll-end.png"
+    },
+    {
+      "route": "messagerie",
+      "file": "1440x900-dark-default.png"
+    },
+    {
+      "route": "messagerie",
+      "file": "1440x900-dark-scroll-end.png"
+    },
+    {
+      "route": "messagerie",
+      "file": "1440x900-light-default.png"
+    },
+    {
+      "route": "messagerie",
+      "file": "1440x900-light-scroll-end.png"
+    },
+    {
+      "route": "connexion",
+      "file": "390x844-dark-default.png"
+    },
+    {
+      "route": "connexion",
+      "file": "390x844-dark-scroll-end.png"
+    },
+    {
+      "route": "connexion",
+      "file": "390x844-light-default.png"
+    },
+    {
+      "route": "connexion",
+      "file": "390x844-light-scroll-end.png"
+    },
+    {
+      "route": "connexion",
+      "file": "1440x900-dark-default.png"
+    },
+    {
+      "route": "connexion",
+      "file": "1440x900-dark-scroll-end.png"
+    },
+    {
+      "route": "connexion",
+      "file": "1440x900-light-default.png"
+    },
+    {
+      "route": "connexion",
+      "file": "1440x900-light-scroll-end.png"
+    },
+    {
+      "route": "inscription",
+      "file": "390x844-dark-default.png"
+    },
+    {
+      "route": "inscription",
+      "file": "390x844-dark-scroll-end.png"
+    },
+    {
+      "route": "inscription",
+      "file": "390x844-light-default.png"
+    },
+    {
+      "route": "inscription",
+      "file": "390x844-light-scroll-end.png"
+    },
+    {
+      "route": "inscription",
+      "file": "1440x900-dark-default.png"
+    },
+    {
+      "route": "inscription",
+      "file": "1440x900-dark-scroll-end.png"
+    },
+    {
+      "route": "inscription",
+      "file": "1440x900-light-default.png"
+    },
+    {
+      "route": "inscription",
+      "file": "1440x900-light-scroll-end.png"
+    },
+    {
+      "route": "guides",
+      "file": "390x844-dark-default.png"
+    },
+    {
+      "route": "guides",
+      "file": "390x844-dark-scroll-end.png"
+    },
+    {
+      "route": "guides",
+      "file": "390x844-light-default.png"
+    },
+    {
+      "route": "guides",
+      "file": "390x844-light-scroll-end.png"
+    },
+    {
+      "route": "guides",
+      "file": "1440x900-dark-default.png"
+    },
+    {
+      "route": "guides",
+      "file": "1440x900-dark-scroll-end.png"
+    },
+    {
+      "route": "guides",
+      "file": "1440x900-light-default.png"
+    },
+    {
+      "route": "guides",
+      "file": "1440x900-light-scroll-end.png"
+    },
+    {
+      "route": "blog",
+      "file": "390x844-dark-default.png"
+    },
+    {
+      "route": "blog",
+      "file": "390x844-dark-scroll-end.png"
+    },
+    {
+      "route": "blog",
+      "file": "390x844-light-default.png"
+    },
+    {
+      "route": "blog",
+      "file": "390x844-light-scroll-end.png"
+    },
+    {
+      "route": "blog",
+      "file": "1440x900-dark-default.png"
+    },
+    {
+      "route": "blog",
+      "file": "1440x900-dark-scroll-end.png"
+    },
+    {
+      "route": "blog",
+      "file": "1440x900-light-default.png"
+    },
+    {
+      "route": "blog",
+      "file": "1440x900-light-scroll-end.png"
+    },
+    {
+      "route": "manifeste",
+      "file": "390x844-dark-default.png"
+    },
+    {
+      "route": "manifeste",
+      "file": "390x844-dark-scroll-end.png"
+    },
+    {
+      "route": "manifeste",
+      "file": "390x844-light-default.png"
+    },
+    {
+      "route": "manifeste",
+      "file": "390x844-light-scroll-end.png"
+    },
+    {
+      "route": "manifeste",
+      "file": "1440x900-dark-default.png"
+    },
+    {
+      "route": "manifeste",
+      "file": "1440x900-dark-scroll-end.png"
+    },
+    {
+      "route": "manifeste",
+      "file": "1440x900-light-default.png"
+    },
+    {
+      "route": "manifeste",
+      "file": "1440x900-light-scroll-end.png"
+    },
+    {
+      "route": "faq",
+      "file": "390x844-dark-default.png"
+    },
+    {
+      "route": "faq",
+      "file": "390x844-dark-scroll-end.png"
+    },
+    {
+      "route": "faq",
+      "file": "390x844-light-default.png"
+    },
+    {
+      "route": "faq",
+      "file": "390x844-light-scroll-end.png"
+    },
+    {
+      "route": "faq",
+      "file": "1440x900-dark-default.png"
+    },
+    {
+      "route": "faq",
+      "file": "1440x900-dark-scroll-end.png"
+    },
+    {
+      "route": "faq",
+      "file": "1440x900-dark-modal.png"
+    },
+    {
+      "route": "faq",
+      "file": "1440x900-light-default.png"
+    },
+    {
+      "route": "faq",
+      "file": "1440x900-light-scroll-end.png"
+    },
+    {
+      "route": "faq",
+      "file": "1440x900-light-modal.png"
+    },
+    {
+      "route": "contact",
+      "file": "390x844-dark-default.png"
+    },
+    {
+      "route": "contact",
+      "file": "390x844-dark-scroll-end.png"
+    },
+    {
+      "route": "contact",
+      "file": "390x844-light-default.png"
+    },
+    {
+      "route": "contact",
+      "file": "390x844-light-scroll-end.png"
+    },
+    {
+      "route": "contact",
+      "file": "1440x900-dark-default.png"
+    },
+    {
+      "route": "contact",
+      "file": "1440x900-dark-scroll-end.png"
+    },
+    {
+      "route": "contact",
+      "file": "1440x900-light-default.png"
+    },
+    {
+      "route": "contact",
+      "file": "1440x900-light-scroll-end.png"
+    },
+    {
+      "route": "admin",
+      "file": "390x844-dark-default.png"
+    },
+    {
+      "route": "admin",
+      "file": "390x844-dark-scroll-end.png"
+    },
+    {
+      "route": "admin",
+      "file": "390x844-light-default.png"
+    },
+    {
+      "route": "admin",
+      "file": "390x844-light-scroll-end.png"
+    },
+    {
+      "route": "admin",
+      "file": "1440x900-dark-default.png"
+    },
+    {
+      "route": "admin",
+      "file": "1440x900-dark-scroll-end.png"
+    },
+    {
+      "route": "admin",
+      "file": "1440x900-light-default.png"
+    },
+    {
+      "route": "admin",
+      "file": "1440x900-light-scroll-end.png"
+    },
+    {
+      "route": "admin-produits",
+      "file": "390x844-dark-default.png"
+    },
+    {
+      "route": "admin-produits",
+      "file": "390x844-dark-scroll-end.png"
+    },
+    {
+      "route": "admin-produits",
+      "file": "390x844-light-default.png"
+    },
+    {
+      "route": "admin-produits",
+      "file": "390x844-light-scroll-end.png"
+    },
+    {
+      "route": "admin-produits",
+      "file": "1440x900-dark-default.png"
+    },
+    {
+      "route": "admin-produits",
+      "file": "1440x900-dark-scroll-end.png"
+    },
+    {
+      "route": "admin-produits",
+      "file": "1440x900-light-default.png"
+    },
+    {
+      "route": "admin-produits",
+      "file": "1440x900-light-scroll-end.png"
+    },
+    {
+      "route": "dev-glass",
+      "file": "390x844-dark-default.png"
+    },
+    {
+      "route": "dev-glass",
+      "file": "390x844-dark-scroll-end.png"
+    },
+    {
+      "route": "dev-glass",
+      "file": "390x844-light-default.png"
+    },
+    {
+      "route": "dev-glass",
+      "file": "390x844-light-scroll-end.png"
+    },
+    {
+      "route": "dev-glass",
+      "file": "1440x900-dark-default.png"
+    },
+    {
+      "route": "dev-glass",
+      "file": "1440x900-dark-scroll-end.png"
+    },
+    {
+      "route": "dev-glass",
+      "file": "1440x900-light-default.png"
+    },
+    {
+      "route": "dev-glass",
+      "file": "1440x900-light-scroll-end.png"
+    },
+    {
+      "route": "dev-style",
+      "file": "390x844-dark-default.png"
+    },
+    {
+      "route": "dev-style",
+      "file": "390x844-dark-scroll-end.png"
+    },
+    {
+      "route": "dev-style",
+      "file": "390x844-light-default.png"
+    },
+    {
+      "route": "dev-style",
+      "file": "390x844-light-scroll-end.png"
+    },
+    {
+      "route": "dev-style",
+      "file": "1440x900-dark-default.png"
+    },
+    {
+      "route": "dev-style",
+      "file": "1440x900-dark-scroll-end.png"
+    },
+    {
+      "route": "dev-style",
+      "file": "1440x900-light-default.png"
+    },
+    {
+      "route": "dev-style",
+      "file": "1440x900-light-scroll-end.png"
+    },
+    {
+      "route": "mentions-legales",
+      "file": "390x844-dark-default.png"
+    },
+    {
+      "route": "mentions-legales",
+      "file": "390x844-dark-scroll-end.png"
+    },
+    {
+      "route": "mentions-legales",
+      "file": "390x844-light-default.png"
+    },
+    {
+      "route": "mentions-legales",
+      "file": "390x844-light-scroll-end.png"
+    },
+    {
+      "route": "mentions-legales",
+      "file": "1440x900-dark-default.png"
+    },
+    {
+      "route": "mentions-legales",
+      "file": "1440x900-dark-scroll-end.png"
+    },
+    {
+      "route": "mentions-legales",
+      "file": "1440x900-light-default.png"
+    },
+    {
+      "route": "mentions-legales",
+      "file": "1440x900-light-scroll-end.png"
+    },
+    {
+      "route": "cgv",
+      "file": "390x844-dark-default.png"
+    },
+    {
+      "route": "cgv",
+      "file": "390x844-dark-scroll-end.png"
+    },
+    {
+      "route": "cgv",
+      "file": "390x844-light-default.png"
+    },
+    {
+      "route": "cgv",
+      "file": "390x844-light-scroll-end.png"
+    },
+    {
+      "route": "cgv",
+      "file": "1440x900-dark-default.png"
+    },
+    {
+      "route": "cgv",
+      "file": "1440x900-dark-scroll-end.png"
+    },
+    {
+      "route": "cgv",
+      "file": "1440x900-light-default.png"
+    },
+    {
+      "route": "cgv",
+      "file": "1440x900-light-scroll-end.png"
+    },
+    {
+      "route": "cgu",
+      "file": "390x844-dark-default.png"
+    },
+    {
+      "route": "cgu",
+      "file": "390x844-dark-scroll-end.png"
+    },
+    {
+      "route": "cgu",
+      "file": "390x844-light-default.png"
+    },
+    {
+      "route": "cgu",
+      "file": "390x844-light-scroll-end.png"
+    },
+    {
+      "route": "cgu",
+      "file": "1440x900-dark-default.png"
+    },
+    {
+      "route": "cgu",
+      "file": "1440x900-dark-scroll-end.png"
+    },
+    {
+      "route": "cgu",
+      "file": "1440x900-light-default.png"
+    },
+    {
+      "route": "cgu",
+      "file": "1440x900-light-scroll-end.png"
+    },
+    {
+      "route": "cookies",
+      "file": "390x844-dark-default.png"
+    },
+    {
+      "route": "cookies",
+      "file": "390x844-dark-scroll-end.png"
+    },
+    {
+      "route": "cookies",
+      "file": "390x844-light-default.png"
+    },
+    {
+      "route": "cookies",
+      "file": "390x844-light-scroll-end.png"
+    },
+    {
+      "route": "cookies",
+      "file": "1440x900-dark-default.png"
+    },
+    {
+      "route": "cookies",
+      "file": "1440x900-dark-scroll-end.png"
+    },
+    {
+      "route": "cookies",
+      "file": "1440x900-light-default.png"
+    },
+    {
+      "route": "cookies",
+      "file": "1440x900-light-scroll-end.png"
+    },
+    {
+      "route": "hors-ligne",
+      "file": "390x844-dark-default.png"
+    },
+    {
+      "route": "hors-ligne",
+      "file": "390x844-dark-scroll-end.png"
+    },
+    {
+      "route": "hors-ligne",
+      "file": "390x844-light-default.png"
+    },
+    {
+      "route": "hors-ligne",
+      "file": "390x844-light-scroll-end.png"
+    },
+    {
+      "route": "hors-ligne",
+      "file": "1440x900-dark-default.png"
+    },
+    {
+      "route": "hors-ligne",
+      "file": "1440x900-dark-scroll-end.png"
+    },
+    {
+      "route": "hors-ligne",
+      "file": "1440x900-light-default.png"
+    },
+    {
+      "route": "hors-ligne",
+      "file": "1440x900-light-scroll-end.png"
+    },
+    {
+      "route": "page-404",
+      "file": "390x844-dark-default.png"
+    },
+    {
+      "route": "page-404",
+      "file": "390x844-dark-scroll-end.png"
+    },
+    {
+      "route": "page-404",
+      "file": "390x844-light-default.png"
+    },
+    {
+      "route": "page-404",
+      "file": "390x844-light-scroll-end.png"
+    },
+    {
+      "route": "page-404",
+      "file": "1440x900-dark-default.png"
+    },
+    {
+      "route": "page-404",
+      "file": "1440x900-dark-scroll-end.png"
+    },
+    {
+      "route": "page-404",
+      "file": "1440x900-light-default.png"
+    },
+    {
+      "route": "page-404",
+      "file": "1440x900-light-scroll-end.png"
+    }
+  ]
+}

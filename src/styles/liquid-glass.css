@@ -228,14 +228,14 @@
   font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.03em;
-  background: color-mix(in oklab, var(--sage-500) 15%, transparent);
-  color: var(--sage-700);
-  border: 1px solid color-mix(in oklab, var(--sage-500) 30%, transparent);
+  background: var(--g3-bg);
+  color: var(--g3-text);
+  border: 1px solid var(--glass-border-color);
 }
 
 .glass-pill.pill-warn {
   background: color-mix(in oklab, var(--warn) 12%, transparent);
-  color: var(--warn);
+  color: var(--lkv-warning-dark);
   border-color: color-mix(in oklab, var(--warn) 30%, transparent);
 }
 
@@ -310,17 +310,15 @@
   cursor: pointer;
   white-space: nowrap;
 }
-/* Contenu blanc garanti (texte + icônes masques) sur les boutons non pleins */
 :is(.glass-capsule-btn, .glass-btn, .glass-circle-btn, .glass-capsule-btn-like):not(.primary):not(.danger) :is(span, svg, i, b, strong, p) {
   color: inherit !important;
 }
 :is(.glass-capsule-btn, .glass-btn, .glass-circle-btn, .glass-capsule-btn-like):not(.primary):not(.danger) span[style*='mask-image'] {
   background-color: currentColor !important;
 }
-/* Exemption : les badges .glass-pill internes gardent leur teinte forêt */
 :is(.glass-capsule-btn, .glass-btn, .glass-circle-btn, .lkv-button-primitive) .glass-pill,
 :is(.glass-capsule-btn, .glass-btn, .glass-circle-btn, .lkv-button-primitive) .glass-pill :is(span, svg, i) {
-  color: var(--glass-text) !important;
+  color: var(--g3-text) !important;
 }
 :is(.glass-capsule-btn, .glass-btn, .glass-circle-btn, .lkv-button-primitive) .glass-pill span[style*='mask-image'] {
   background-color: currentColor !important;
@@ -376,7 +374,7 @@
 }
 .glass-capsule-btn.sm, .glass-btn.sm, .glass-capsule-btn.xs, .glass-btn.xs { font-size: 11px; }
 .glass-btn-primary, .glass-capsule-btn.primary, .glass-circle-btn.primary {
-  background: var(--btn-tint); color: var(--btn-content);
+  background: var(--g3-bg); color: var(--g3-text);
 }
 .glass-btn-secondary, .glass-capsule-btn.secondary { background: var(--btn-tint); }
 .lkv-button-primitive { text-shadow: var(--btn-text-shadow); }
@@ -814,7 +812,6 @@
   -webkit-backdrop-filter: none;
 }
 
-/* Contenu blanc garanti (texte + icônes masques) dans les boutons LkvButton */
 .lkv-button-primitive :is(span, svg, i, b, strong, p) {
   color: inherit !important;
 }
@@ -849,6 +846,14 @@
   :is(.lkv-button-primitive, .lkv-chip-primitive, .glass-circle-btn, [style*='backdrop-filter']) {
   -webkit-backdrop-filter: none !important;
   backdrop-filter: none !important;
+}
+.glass-sub-card {
+  background: var(--card-tint);
+  color: var(--card-content);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+  -webkit-backdrop-filter: blur(var(--card-blur)) saturate(var(--card-saturate));
+  backdrop-filter: blur(var(--card-blur)) saturate(var(--card-saturate));
 }
 .glass .glass,
 .glass .glass-sub-card {
@@ -943,12 +948,9 @@
 }
 .glass[data-glass-shape='drawer'] { border-radius: var(--glass-radius) 0 0 var(--glass-radius); }
 :where(.glass) { overflow: hidden; }
-/* Filled actions keep their semantic contrast in every fallback mode.
-   P5 : l'action est --lkv-action (vert forêt clair/sombre selon le mode)
-   et son contenu --btn-on-solid (blanc en clair, encre en sombre). */
 :is(.glass-btn-primary, .glass-capsule-btn.primary, .glass-circle-btn.primary) {
-  background: var(--btn-tint) !important;
-  color: var(--btn-content) !important;
+  background: var(--g3-bg) !important;
+  color: var(--g3-text) !important;
 }
 .glass-btn-danger {
   background: var(--btn-tint) !important;
@@ -970,7 +972,7 @@
   --glass-blur-light: 16px;
   --glass-saturate: 170%;
   --glass-brightness: 1.02;
-  --glass-tint: rgba(255, 255, 255, 0.55);
+  --glass-tint: var(--card-tint-solid);
   --glass-tint-strong: rgba(255, 255, 255, 0.78);
 
   /* Géométrie — direction P5 : rayons 12/16/24 */
@@ -1071,9 +1073,9 @@
    Spec §6 : tous les états complétés, pas seulement l'inversion du fond.
    ════════════════════════════════════════════════════════════════ */
 .dark .glass-pill {
-  background: color-mix(in oklab, var(--sage-500) 28%, transparent);
-  color: var(--sage-200);
-  border-color: color-mix(in oklab, var(--sage-500) 42%, transparent);
+  background: var(--g3-bg);
+  color: var(--g3-text);
+  border-color: var(--glass-border-color);
 }
 
 .dark .glass-check-circle {
@@ -1110,7 +1112,7 @@
 
 /* Optique legacy (.lkv-glass) */
 .dark {
-  --glass-tint: rgba(255, 255, 255, 0.10);
+  --glass-tint: var(--card-tint-solid);
   --glass-tint-strong: rgba(255, 255, 255, 0.16);
 }
 

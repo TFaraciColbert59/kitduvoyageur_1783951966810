@@ -290,50 +290,62 @@ export default function CreateCarnetView({ onCloseModal }: { onCloseModal?: () =
       <CompteBackground />
       <Header />
 
-      <main className="mx-auto flex min-h-0 w-full max-w-[1440px] flex-1 gap-[var(--space-5)] overflow-hidden px-[var(--space-4)] pb-[var(--space-4)] pt-24 sm:px-[var(--space-6)] lg:px-[var(--space-8)]">
-        <aside className="flex h-full max-h-full w-[230px] shrink-0 select-none flex-col justify-between overflow-hidden rounded-[var(--lkv-radius-2xl)] border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] p-[var(--space-3)] font-sans text-[color:var(--lkv-text-primary)] shadow-elevation-1 backdrop-blur-[var(--blur-lg)]">
-          <div className="shrink-0 space-y-[var(--space-2)]">
-            <Card variant="compact" className="flex items-center gap-[var(--space-3)] border-[color:var(--glass-border)]">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[color:var(--glass-border)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-xl" aria-hidden>
-                ✍️
+      <main className="mx-auto flex min-h-0 w-full max-w-[1440px] flex-1 flex-col md:flex-row gap-[var(--space-4)] md:gap-[var(--space-5)] overflow-hidden px-[var(--space-3)] sm:px-[var(--space-6)] lg:px-[var(--space-8)] pb-[var(--space-4)] pt-20 md:pt-24">
+        {/* Mobile Horizontal Stepper */}
+        <div className="flex md:hidden items-center gap-1.5 overflow-x-auto no-scrollbar py-1 shrink-0">
+          <Link
+            href="/carnets"
+            className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-[var(--g2-bg)] text-[var(--glass-label)] border border-[var(--glass-rim)] shrink-0"
+            aria-label="Retour aux carnets"
+          >
+            <Icon name="ArrowLeftIcon" size={14} aria-hidden="true" />
+          </Link>
+          {STEPS.map((st) => {
+            const isActive = activeStep === st.id;
+            return (
+              <button
+                key={st.id}
+                onClick={() => setActiveStep(st.id)}
+                className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all border ${
+                  isActive
+                    ? 'bg-[var(--g3-bg)] text-[var(--g3-text)] border-[var(--glass-rim)] shadow-sm'
+                    : 'bg-[var(--g2-bg)] text-[var(--glass-secondary)] border-[var(--glass-rim)]'
+                }`}
+              >
+                {st.short} · {st.label.split(' ')[0]}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Desktop Sidebar */}
+        <aside className="hidden md:flex h-full max-h-full w-[240px] shrink-0 select-none flex-col justify-between overflow-hidden rounded-[var(--lkv-radius-card)] border border-[var(--glass-rim)] g1 p-4 text-[var(--glass-label)] shadow-md">
+          <div className="shrink-0 space-y-3">
+            <div className="flex items-center gap-3 p-2 rounded-2xl g2 border border-[var(--glass-rim)]">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--g3-bg)] text-[var(--g3-text)] font-bold text-xs" aria-hidden>
+                RC
               </div>
               <div className="min-w-0 flex-1">
-                <h4 className="truncate font-display text-[length:var(--lkv-text-caption)] font-bold leading-tight text-[color:var(--lkv-text-primary)] sm:text-[length:var(--lkv-text-subheadline)]">
-                  Création{' '}
-                  <span className="font-serif text-[length:var(--lkv-text-caption)] font-normal italic text-[color:var(--lkv-secondary)]">
-                    Carnet
-                  </span>
-                </h4>
-                <p className="mt-[var(--space-1)] truncate font-mono text-[length:var(--lkv-text-caption-2)] text-[color:var(--lkv-text-muted)]">
+                <h4 className="truncate text-xs font-bold leading-tight text-[var(--glass-label)]">
                   Studio Récit
+                </h4>
+                <p className="truncate text-[10px] text-[var(--glass-secondary)]">
+                  Carnet de voyage
                 </p>
               </div>
-            </Card>
-
-            <div className="grid grid-cols-2 gap-[var(--space-1)]">
-              <Link
-                href="/carnets"
-                className="inline-flex items-center justify-center gap-[var(--space-1)] rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn px-[var(--space-2)] py-[var(--space-1)] text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-primary)]"
-              >
-                <Icon name="ArrowLeftIcon" size={12} aria-hidden="true" />
-                <span>Retour</span>
-              </Link>
-
-              <Button
-                type="button"
-                variant="secondary"
-                size="sm"
-                onClick={() => window.print()}
-                icon={<Icon name="PrinterIcon" size={12} aria-hidden="true" />}
-                className="px-[var(--space-2)]"
-              >
-                Imprimer
-              </Button>
             </div>
+
+            <Link
+              href="/carnets"
+              className="inline-flex items-center justify-center gap-1.5 w-full rounded-full bg-[var(--g2-bg)] border border-[var(--glass-rim)] px-3 py-1.5 text-xs font-semibold text-[var(--glass-label)] hover:brightness-110 transition-all"
+            >
+              <Icon name="ArrowLeftIcon" size={12} aria-hidden="true" />
+              <span>Retour aux carnets</span>
+            </Link>
           </div>
 
-          <nav className="min-h-0 flex-1 space-y-[var(--space-1)] overflow-y-auto py-[var(--space-2)] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" aria-label="Étapes de création">
-            <p className="mb-[var(--space-1)] px-[var(--space-2)] font-mono text-[length:var(--lkv-text-caption-2)] font-bold uppercase tracking-widest text-[color:var(--lkv-text-muted)]">
+          <nav className="min-h-0 flex-1 space-y-1 overflow-y-auto py-3 no-scrollbar" aria-label="Étapes de création">
+            <p className="mb-2 px-2 text-[10px] font-bold uppercase tracking-wider text-[var(--glass-secondary)]">
               Étapes de création
             </p>
             {STEPS.map((st) => {

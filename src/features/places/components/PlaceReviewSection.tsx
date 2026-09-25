@@ -81,31 +81,35 @@ export function PlaceReviewSection({
         <div className="flex items-center gap-5">
           <div className="flex h-16 w-16 flex-col items-center justify-center rounded-[var(--lkv-radius-md)] bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] text-[color:var(--lkv-text-primary)] shadow-md">
             <span className="text-[length:var(--lkv-text-title-lg)] font-black leading-none">
-              {bayesianRating > 0 ? bayesianRating.toFixed(1) : '-'}
+              {bayesianRating > 0 ? bayesianRating.toFixed(1) : '—'}
             </span>
-            <span className="text-[length:var(--lkv-text-caption-2)] font-semibold opacity-80">/ 5.0</span>
+            <span className="text-[length:var(--lkv-text-caption-2)] font-semibold opacity-80">
+              {bayesianRating > 0 ? '/ 5.0' : 'Nouveau'}
+            </span>
           </div>
 
           <div>
             <h3 className="text-[length:var(--lkv-text-body)] font-bold text-[color:var(--lkv-text-primary)]">
-              Évaluation Communautaire
+              {bayesianRating > 0 ? 'Évaluation Communautaire' : 'Pas encore noté'}
             </h3>
             <div className="mt-[var(--space-1)] flex items-center gap-2">
-              <div className="flex items-center text-[color:var(--lkv-warning-dark)]">
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <Icon
-                    name="star"
-                    key={star}
-                    className={`h-4 w-4 ${
-                      star <= Math.round(bayesianRating)
-                        ? 'text-[color:var(--lkv-warning-dark)]'
-                        : 'text-[color:var(--lkv-text-muted)]/40'
-                    }`}
-                  />
-                ))}
-              </div>
+              {bayesianRating > 0 ? (
+                <div className="flex items-center text-[color:var(--lkv-warning-dark)]">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <Icon
+                      name="star"
+                      key={star}
+                      className={`h-4 w-4 ${
+                        star <= Math.round(bayesianRating)
+                          ? 'text-[color:var(--lkv-warning-dark)]'
+                          : 'text-[color:var(--lkv-text-muted)]/40'
+                      }`}
+                    />
+                  ))}
+                </div>
+              ) : null}
               <span className="text-[length:var(--lkv-text-caption-1)] font-semibold text-[color:var(--lkv-text-muted)]">
-                ({reviewsCount} avis recueillis)
+                {reviewsCount > 0 ? `(${reviewsCount} avis recueillis)` : 'Soyez le premier à partager votre retour terrain'}
               </span>
             </div>
             <p className="mt-[var(--space-1)] text-[length:var(--lkv-text-caption-1)] text-[color:var(--lkv-text-muted)]">
@@ -130,7 +134,7 @@ export function PlaceReviewSection({
       {showForm && (
         <Card className="p-6">
           <h4 className="mb-[var(--space-4)] flex items-center gap-2 text-[length:var(--lkv-text-body)] font-bold text-[color:var(--lkv-text-primary)]">
-            <Icon name="compass" className="h-4 w-4 text-[color:var(--lkv-primary)]" />
+            <Icon name="compass" className="h-4 w-4 text-[color:var(--glass-label)]" />
             Votre retour d’expérience terrain
           </h4>
 

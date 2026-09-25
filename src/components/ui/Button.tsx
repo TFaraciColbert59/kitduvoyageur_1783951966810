@@ -50,13 +50,13 @@ const ICON_SIZE: Record<ButtonSize, string> = {
    Destructive: tinted glass */
 const VARIANT: Record<ButtonVariant, string> = {
   primary:
-    'bg-[color:var(--g3-bg)] text-[color:var(--g3-text)] shadow-[var(--glass-specular)] hover:brightness-[1.08]',
+    'bg-[var(--g3-bg)] text-[var(--g3-text)] shadow-[var(--glass-rim)] hover:brightness-[1.08]',
   secondary:
-    'bg-[color:var(--g2-bg)] text-[color:var(--glass-label)] border border-[color:var(--glass-rim)] shadow-[var(--glass-specular)] backdrop-blur-md hover:brightness-[1.08]',
+    'bg-[var(--g2-bg)] text-[var(--glass-label)] border border-[var(--glass-rim)] shadow-[var(--glass-rim)] backdrop-blur-md hover:brightness-[1.08]',
   ghost:
-    'bg-transparent text-[color:var(--glass-label)] hover:bg-[color:var(--lkv-hover-surface)]',
+    'bg-transparent text-[var(--glass-label)] hover:bg-[var(--lkv-hover-surface)]',
   destructive:
-    'bg-red-500/15 border border-red-500/30 text-[color:var(--lkv-danger)] hover:bg-red-500/25',
+    'bg-red-500/15 border border-red-500/30 text-[var(--lkv-danger)] hover:bg-red-500/25',
 };
 
 /**

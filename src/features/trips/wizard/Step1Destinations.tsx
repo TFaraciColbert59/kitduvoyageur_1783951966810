@@ -3,7 +3,7 @@
 import Icon from '@/components/ui/Icon';
 import React, { useState } from 'react';
 import { type SelectedCountry, CURATED_COUNTRIES, OTHER_COUNTRIES } from './wizardTypes';
-import { Badge, Card, IconButton, ListItem, SearchField } from '@/components/ui';
+import { Badge, Card, CountryFlag, IconButton, ListItem, SearchField } from '@/components/ui';
 
 interface Step1DestinationsProps {
   selectedCountries: SelectedCountry[];
@@ -62,7 +62,7 @@ export function Step1Destinations({ selectedCountries, onChange }: Step1Destinat
   return (
     <div className="space-y-[var(--space-6)]">
       <div>
-        <div className="mb-1 flex items-center gap-[var(--space-2)] text-[length:var(--lkv-text-footnote)] font-semibold uppercase tracking-wider text-[color:var(--lkv-secondary)]">
+        <div className="mb-1 flex items-center gap-[var(--space-2)] text-[length:var(--lkv-text-footnote)] font-semibold uppercase tracking-wider text-[color:var(--glass-label)]">
           <Icon name="map-pin" size={14} />
           <span>Étape 1 sur 5</span>
         </div>
@@ -78,7 +78,7 @@ export function Step1Destinations({ selectedCountries, onChange }: Step1Destinat
       {/* Destinations phares curées (5 pays réels) */}
       <div>
         <div className="mb-[var(--space-3)] flex items-center gap-[var(--space-2)] text-[length:var(--lkv-text-footnote)] font-semibold text-[color:var(--lkv-text-primary)]">
-          <Icon name="sparkles" size={14} className="text-[color:var(--lkv-secondary)]" />
+          <Icon name="sparkles" size={14} className="text-[color:var(--glass-label)]" />
           <span>Destinations phares (itinéraires réels sourcés)</span>
         </div>
         <div className="grid grid-cols-1 gap-[var(--space-3)] sm:grid-cols-2 lg:grid-cols-3">
@@ -93,9 +93,7 @@ export function Step1Destinations({ selectedCountries, onChange }: Step1Destinat
                 className="flex items-center justify-between text-left"
               >
                 <div className="flex items-center gap-[var(--space-3)]">
-                  <span aria-hidden="true" className="text-2xl">
-                    {country.flag}
-                  </span>
+                  <CountryFlag code={country.code} size="md" />
                   <div>
                     <div className="text-[length:var(--lkv-text-footnote)] font-semibold text-[color:var(--lkv-text-primary)]">
                       {country.name}
@@ -115,7 +113,7 @@ export function Step1Destinations({ selectedCountries, onChange }: Step1Destinat
                   aria-hidden="true"
                   className={`flex h-5 w-5 items-center justify-center rounded-full text-[length:var(--lkv-text-caption-2)] font-bold ${
                     active
-                      ? 'bg-white text-[color:var(--lkv-primary)]'
+                      ? 'bg-white text-black'
                       : 'border border-[color:var(--lkv-border-strong)] text-transparent'
                   }`}
                 >
@@ -151,7 +149,7 @@ export function Step1Destinations({ selectedCountries, onChange }: Step1Destinat
                     toggleCountry(c);
                     setSearch('');
                   }}
-                  leading={<span aria-hidden="true">{c.flag}</span>}
+                  leading={<CountryFlag code={c.code} size="sm" />}
                   title={c.name}
                   trailing={
                     active ? (
@@ -180,9 +178,7 @@ export function Step1Destinations({ selectedCountries, onChange }: Step1Destinat
                   <span className="flex h-6 w-6 items-center justify-center rounded-full border border-[color:var(--btn-glass-border)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-primary)]">
                     {idx + 1}
                   </span>
-                  <span aria-hidden="true" className="text-xl">
-                    {country.flag}
-                  </span>
+                  <CountryFlag code={country.code} size="sm" />
                   <span className="text-[length:var(--lkv-text-footnote)] font-medium text-[color:var(--lkv-text-primary)]">
                     {country.name}
                   </span>

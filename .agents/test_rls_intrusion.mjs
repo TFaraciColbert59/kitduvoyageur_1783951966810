@@ -1,12 +1,16 @@
 import { createClient } from '@supabase/supabase-js';
 
-const SUPABASE_URL = 'https://icxyvwzfjbflcbqukpfz.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImljeHl2d3pmamJmbGNicXVrcGZ6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM5NDc3ODcsImV4cCI6MjA5OTUyMzc4N30.-zry9a_kzwgZU_SpLuguT6P4HMbd7czPdMzBJx7ICMA';
+function getSupabaseClient() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!url || !anonKey) throw new Error('Configuration Supabase absente pour le test RLS');
+  return createClient(url, anonKey);
+}
 
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const FAKE_USER_ID = '00000000-0000-0000-0000-000000000000'; // Non-existent or dummy user
 
 async function runIntrusionTests() {
+  const supabase = getSupabaseClient();
   console.log('--- STARTING RLS INTRUSION TESTS (CLIENT-SIDE) ---');
 
   // Test 1: Direct insert into reward_transactions
@@ -70,4 +74,7 @@ async function runIntrusionTests() {
   console.log('\n--- RLS INTRUSION TESTS COMPLETED ---');
 }
 
-runIntrusionTests();
+runIntrusionTests().catch(() => {
+  console.error('RLS intrusion tests failed or configuration is missing.');
+  process.exitCode = 1;
+});

@@ -97,7 +97,7 @@ export function TripOverviewTab({ trip, stats, onTabChange }: TripOverviewTabPro
           </div>
           <div className="h-2.5 w-full overflow-hidden rounded-full bg-[color:var(--btn-tint)]">
             <div
-              className="h-full rounded-full bg-[linear-gradient(to_right,var(--lkv-secondary),var(--lkv-primary))] transition-all duration-500"
+              className="h-full rounded-full bg-[color:var(--glass-label)] transition-all duration-500"
               style={{ width: `${packedPercent}%` }}
             />
           </div>
@@ -126,10 +126,10 @@ export function TripOverviewTab({ trip, stats, onTabChange }: TripOverviewTabPro
                 description="Ajoutez des étapes à votre voyage pour visualiser l’itinéraire détaillé."
               />
             ) : (
-              <div className="relative ml-2 space-y-[var(--space-4)] border-l-2 border-[color:var(--lkv-secondary)]/30 pl-[var(--space-6)]">
+              <div className="relative ml-2 space-y-[var(--space-4)] border-l-2 border-white/20 pl-[var(--space-6)]">
                 {steps.slice(0, 4).map((step) => (
                   <div key={step.id} className="relative">
-                    <span className="absolute -left-[31px] top-1 h-3.5 w-3.5 rounded-full border-2 border-white bg-[color:var(--lkv-secondary)]" />
+                    <span className="absolute -left-[31px] top-1 h-3.5 w-3.5 rounded-full border-2 border-white bg-white" />
                     <div className="text-[length:var(--lkv-text-footnote)] font-semibold uppercase tracking-wide text-[color:var(--lkv-text-secondary)]">
                       Jour {step.day_number}
                     </div>
@@ -193,7 +193,7 @@ export function TripOverviewTab({ trip, stats, onTabChange }: TripOverviewTabPro
       {/* 4. Bloc Conseils de préparation */}
       <Card>
         <div className="flex items-start gap-[var(--space-4)]">
-          <div className="shrink-0 rounded-[var(--lkv-radius-md)] bg-[color:var(--glass-bg-medium)] border border-[color:var(--glass-border)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset p-[var(--space-2)] text-[color:var(--lkv-primary)]">
+          <div className="shrink-0 rounded-[var(--lkv-radius-md)] bg-[color:var(--glass-bg-medium)] border border-[color:var(--glass-border)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset p-[var(--space-2)] text-[color:var(--glass-label)]">
             <Icon name="compass" size={22} />
           </div>
           <div>

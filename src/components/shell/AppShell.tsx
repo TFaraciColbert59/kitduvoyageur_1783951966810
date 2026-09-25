@@ -80,6 +80,7 @@ export default function AppShell({
       className={`app-shell mobile-page-shell lkv-shell ${containerBgClass} ${className}`}
       style={{
         ['--bottom-nav-height' as any]: bottomNavHeight,
+        ['--content-pb' as any]: `calc(${bottomNavHeight} + var(--space-6, 24px))`,
         ['--shell-top-padding' as any]: safeTop ? 'var(--page-top-inset)' : '0px',
         ...(containerBgStyle ? { background: containerBgStyle } : {}),
         position: 'relative',
