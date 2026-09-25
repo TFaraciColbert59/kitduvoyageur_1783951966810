@@ -268,7 +268,7 @@ describe('fix round 1 — régressions', () => {
     expect(defaultPath).not.toContain(`${path.sep}audit${path.sep}`);
   });
 
-  it('transforme pageerror, requestfailed et console error en erreurs bloquantes', () => {
+  it('transforme pageerror et requestfailed en erreurs, console en warning', () => {
     const listeners = new Map<string, (...args: any[]) => void>();
     const page = {
       on(event: string, listener: (...args: any[]) => void) {
@@ -287,9 +287,10 @@ describe('fix round 1 — régressions', () => {
     });
     listeners.get('console')?.({ type: () => 'error', text: () => 'boom' });
 
-    expect(diagnostics.errors).toHaveLength(3);
+    expect(diagnostics.errors).toHaveLength(2);
+    expect(diagnostics.warnings).toHaveLength(1);
     expect(() => diagnostics.assertClean()).toThrow(/runtime audit/i);
-    expect(JSON.stringify(diagnostics.errors)).not.toContain('hidden');
+    expect(JSON.stringify({ errors: diagnostics.errors, warnings: diagnostics.warnings })).not.toContain('hidden');
     diagnostics.dispose();
   });
 
@@ -347,7 +348,7 @@ describe('fix round 1 — régressions', () => {
     diagnostics.dispose();
   });
 
-  it('conserve une erreur console aborted sur une ressource externe', () => {
+  it('conserve une erreur console aborted externe comme warning non bloquant', () => {
     const listeners = new Map<string, (...args: any[]) => void>();
     const page = {
       on(event: string, listener: (...args: any[]) => void) {
@@ -371,8 +372,9 @@ describe('fix round 1 — régressions', () => {
       location: () => ({ url: 'https://project.supabase.co/rest/v1/resource' }),
     });
 
-    expect(diagnostics.errors).toHaveLength(1);
-    expect(() => diagnostics.assertClean()).toThrow(/runtime audit/i);
+    expect(diagnostics.errors).toHaveLength(0);
+    expect(diagnostics.warnings).toHaveLength(1);
+    expect(() => diagnostics.assertClean()).not.toThrow();
     diagnostics.dispose();
   });
 

@@ -9,6 +9,7 @@ import {
   getAuditBaseUrl,
 } from './contrast_audit_core.mjs';
 import {
+  aggregateRouteOutcomes,
   attachPageDiagnostics,
   invalidateAuditReportDirectory,
   invalidateAuditReports,
@@ -22,6 +23,7 @@ import {
   verifyCompteSession,
 } from './create_test_session.mjs';
 import {
+  AUDIT_USER_AGENT,
   ROUTES,
   assertRouteNavigation,
   colorContrastRules,
@@ -29,6 +31,7 @@ import {
   getAdventureCookie,
   measurePageContrast,
   readRenderedAuditSettings,
+  routeExpectationFor,
 } from './measure_contrast_v2.mjs';
 
 const screensDir = path.resolve('audit', 'screens');
@@ -142,6 +145,7 @@ async function run() {
     const authContext = await browser.newContext({
       baseURL: BASE_URL,
       viewport: { width: 390, height: 844 },
+      userAgent: AUDIT_USER_AGENT,
       colorScheme: 'dark',
       deviceScaleFactor: 1,
       locale: 'fr-FR',
@@ -158,6 +162,7 @@ async function run() {
         context = await browser.newContext({
           baseURL: BASE_URL,
           viewport: { width: 390, height: 844 },
+          userAgent: AUDIT_USER_AGENT,
           colorScheme: 'dark',
           deviceScaleFactor: 1,
           locale: 'fr-FR',
@@ -165,19 +170,28 @@ async function run() {
         });
         await context.addCookies([getAdventureCookie(BASE_URL)]);
         const page = await context.newPage();
-        diagnostics = attachPageDiagnostics(page);
+        const routeExpectation = routeExpectationFor(route.path);
+        diagnostics = attachPageDiagnostics(page, {
+          baseUrl: BASE_URL,
+          expected404Path: routeExpectation?.kind === 'http' ? route.path : undefined,
+        });
         await initializeAuditPage(page, 'dark');
-         const adminNavigation = await assertRouteNavigation(page, BASE_URL, route.path);
-         diagnostics.assertClean();
-         if (adminNavigation?.redirected && adminNavigation.reason !== 'missing_admin_role') {
-          throw new Error(`Redirection /admin inattendue: ${adminNavigation.reason}`);
-        }
-        if (adminNavigation?.redirected) {
+        const navigation = await assertRouteNavigation(page, BASE_URL, route.path);
+        diagnostics.assertClean();
+        const navigationWarnings = diagnostics.warnings.map((entry) => ({ ...entry }));
+        if (navigation.expected) {
           const redirectRecord = {
             route: route.path,
             id: route.id,
             timestamp: new Date().toISOString(),
-            adminNavigation,
+            expected: true,
+            status: navigation.reason === 'missing_admin_role' ? 'admin_redirected' : navigation.status,
+            reason: navigation.reason,
+            finalPath: navigation.finalPath,
+            expectedFinalPath: navigation.expectedFinalPath,
+            httpStatus: navigation.httpStatus,
+            warnings: navigationWarnings,
+            degraded: navigationWarnings.length > 0,
             violations: [],
             incomplete: [],
             colorContrast: { violations: [], incomplete: [] },
@@ -186,57 +200,82 @@ async function run() {
           a11ySummary[route.id] = {
             id: route.id,
             path: route.path,
-            status: 'admin_redirected',
-            adminNavigation,
+            measured: false,
+            expected: true,
+            status: redirectRecord.status,
+            reason: navigation.reason,
+            finalPath: navigation.finalPath,
+            expectedFinalPath: navigation.expectedFinalPath,
+            warnings: navigationWarnings,
+            degraded: navigationWarnings.length > 0,
             violations: 0,
             incomplete: 0,
             colorContrastViolations: 0,
             colorContrastIncomplete: 0,
           };
-          continue;
+        } else {
+          await page.waitForTimeout(600);
+          const rendered = await assertPageSettings(page, 'dark');
+          const axeResults = await analyzeAxe(page);
+          diagnostics.assertClean();
+          const warnings = diagnostics.warnings.map((entry) => ({ ...entry }));
+          const colorContrast = colorContrastRules(axeResults);
+          const a11y = {
+            route: route.path,
+            id: route.id,
+            timestamp: new Date().toISOString(),
+            measured: true,
+            expected: false,
+            status: warnings.length > 0 ? 'degraded' : 'measured',
+            theme: 'dark',
+            requestedIntensity: 0.5,
+            actualTheme: rendered.theme,
+            actualIntensity: rendered.intensity,
+            violations: axeResults.violations,
+            incomplete: axeResults.incomplete,
+            colorContrast: {
+              violations: colorContrast.violations,
+              incomplete: colorContrast.incomplete,
+            },
+            warnings,
+            degraded: warnings.length > 0,
+          };
+          fs.writeFileSync(path.join(a11yDir, `${route.id}.json`), `${JSON.stringify(redactRuntimeValue(a11y), null, 2)}\n`);
+          a11ySummary[route.id] = {
+            id: route.id,
+            path: route.path,
+            measured: true,
+            expected: false,
+            status: a11y.status,
+            theme: 'dark',
+            requestedIntensity: 0.5,
+            actualTheme: rendered.theme,
+            actualIntensity: rendered.intensity,
+            violations: axeResults.violations.length,
+            incomplete: axeResults.incomplete.length,
+            colorContrastViolations: countNodesByTarget(colorContrast.violations),
+            colorContrastIncomplete: countNodesByTarget(colorContrast.incomplete),
+            warnings,
+            degraded: warnings.length > 0,
+          };
         }
-        await page.waitForTimeout(600);
-        const rendered = await assertPageSettings(page, 'dark');
-        const axeResults = await analyzeAxe(page);
-        diagnostics.assertClean();
-        const colorContrast = colorContrastRules(axeResults);
-        const a11y = {
-          route: route.path,
-          id: route.id,
-          timestamp: new Date().toISOString(),
-          theme: 'dark',
-          requestedIntensity: 0.5,
-          actualTheme: rendered.theme,
-          actualIntensity: rendered.intensity,
-          violations: axeResults.violations,
-          incomplete: axeResults.incomplete,
-          colorContrast: {
-            violations: colorContrast.violations,
-            incomplete: colorContrast.incomplete,
-          },
-          adminNavigation,
-        };
-        fs.writeFileSync(path.join(a11yDir, `${route.id}.json`), `${JSON.stringify(redactRuntimeValue(a11y), null, 2)}\n`);
-        a11ySummary[route.id] = {
-          id: route.id,
-          path: route.path,
-          theme: 'dark',
-          requestedIntensity: 0.5,
-          actualTheme: rendered.theme,
-          actualIntensity: rendered.intensity,
-          violations: axeResults.violations.length,
-          incomplete: axeResults.incomplete.length,
-          colorContrastViolations: countNodesByTarget(colorContrast.violations),
-          colorContrastIncomplete: countNodesByTarget(colorContrast.incomplete),
-          adminNavigation,
-        };
       } catch (error) {
+        const message = redactDiagnosticText(error instanceof Error ? error.message : String(error));
+        const warnings = diagnostics?.warnings?.map((entry) => ({ ...entry })) || [];
         errors.push({
           route: route.id,
           stage: 'axe',
-          message: redactDiagnosticText(error instanceof Error ? error.message : String(error)),
+          message,
         });
-        a11ySummary[route.id] = { id: route.id, path: route.path, error: redactDiagnosticText(error instanceof Error ? error.message : String(error)) };
+        a11ySummary[route.id] = {
+          id: route.id,
+          path: route.path,
+          measured: false,
+          expected: false,
+          error: message,
+          warnings,
+          degraded: warnings.length > 0,
+        };
       } finally {
         if (diagnostics) diagnostics.dispose();
         if (context) {
@@ -251,6 +290,7 @@ async function run() {
           const context = await browser.newContext({
             baseURL: BASE_URL,
             viewport: { width: viewport.width, height: viewport.height },
+            userAgent: AUDIT_USER_AGENT,
             colorScheme: theme,
             deviceScaleFactor: 1,
             locale: 'fr-FR',
@@ -258,11 +298,17 @@ async function run() {
           });
           await context.addCookies([getAdventureCookie(BASE_URL)]);
           const page = await context.newPage();
-          const diagnostics = attachPageDiagnostics(page);
+          const routeExpectation = routeExpectationFor(route.path);
+          const diagnostics = attachPageDiagnostics(page, {
+            baseUrl: BASE_URL,
+            expected404Path: routeExpectation?.kind === 'http' ? route.path : undefined,
+          });
           await initializeAuditPage(page, theme);
 
           try {
-            await assertRouteNavigation(page, BASE_URL, route.path);
+            const navigation = await assertRouteNavigation(page, BASE_URL, route.path);
+            diagnostics.assertClean();
+            if (navigation.expected) continue;
             await page.waitForTimeout(500);
             const rendered = await assertPageSettings(page, theme);
             const routeDir = path.join(screensDir, route.id);
@@ -288,6 +334,8 @@ async function run() {
               states.push(modalName);
             }
 
+            diagnostics.assertClean();
+            const warnings = diagnostics.warnings.map((entry) => ({ ...entry }));
             for (const file of states) {
               manifest.push({
                 route: route.id,
@@ -297,33 +345,41 @@ async function run() {
                 actualTheme: rendered.theme,
                 requestedIntensity: 0.5,
                 actualIntensity: rendered.intensity,
+                warnings,
+                degraded: warnings.length > 0,
               });
             }
-            diagnostics.assertClean();
 
             if (viewport.name === '390x844' && theme === 'dark') {
-              await assertRouteNavigation(page, BASE_URL, route.path);
-              await page.waitForTimeout(500);
-              const measuredSettings = await assertPageSettings(page, 'dark');
-              const textElements = await extractTextElements(page);
-              const axeResults = await analyzeAxe(page);
-              const measured = await measurePageContrast(page, axeResults, { textElements });
-              if (measured.nodes.length === 0) throw new Error('Aucun nœud texte mesuré');
-              diagnostics.assertClean();
-              const colorContrast = colorContrastRules(axeResults);
-              contrastFindings.push({
-                routeId: route.id,
-                path: route.path,
-                actualTheme: measuredSettings.theme,
-                actualIntensity: measuredSettings.intensity,
-                image: measured.image,
-                nodes: measured.nodes,
-                counts: countNodes(measured.nodes),
-                axe: {
-                  violations: colorContrast.violations,
-                  incomplete: colorContrast.incomplete,
-                },
-              });
+              const measurementNavigation = await assertRouteNavigation(page, BASE_URL, route.path);
+              if (!measurementNavigation.expected) {
+                await page.waitForTimeout(500);
+                const measuredSettings = await assertPageSettings(page, 'dark');
+                const textElements = await extractTextElements(page);
+                const axeResults = await analyzeAxe(page);
+                const measured = await measurePageContrast(page, axeResults, { textElements });
+                if (measured.nodes.length === 0) throw new Error('Aucun nœud texte mesuré');
+                diagnostics.assertClean();
+                const measuredWarnings = diagnostics.warnings.map((entry) => ({ ...entry }));
+                const colorContrast = colorContrastRules(axeResults);
+                contrastFindings.push({
+                  routeId: route.id,
+                  path: route.path,
+                  measured: true,
+                  status: measuredWarnings.length > 0 ? 'degraded' : 'measured',
+                  actualTheme: measuredSettings.theme,
+                  actualIntensity: measuredSettings.intensity,
+                  image: measured.image,
+                  nodes: measured.nodes,
+                  counts: countNodes(measured.nodes),
+                  axe: {
+                    violations: colorContrast.violations,
+                    incomplete: colorContrast.incomplete,
+                  },
+                  warnings: measuredWarnings,
+                  degraded: measuredWarnings.length > 0,
+                });
+              }
             }
           } catch (error) {
             errors.push({
@@ -344,14 +400,28 @@ async function run() {
 
   const safeErrors = redactRuntimeValue(errors);
   const safeFindings = redactRuntimeValue(contrastFindings);
+  const findingAggregate = aggregateRouteOutcomes(contrastFindings);
+  const summaryAggregate = aggregateRouteOutcomes(Object.values(a11ySummary));
+  const warnings = [...findingAggregate.warnings, ...summaryAggregate.warnings];
+  const degradedRoutes = Object.values(a11ySummary).filter((entry) => entry.degraded).map((entry) => entry.id);
+  const expectedRouteCount = Object.values(a11ySummary).filter((entry) => entry.expected).length;
   const completedRouteCount = new Set(contrastFindings.map((finding) => finding.routeId)).size;
-  const campaignReport = buildCampaignAuditReport({
-    findings: safeFindings,
-    errors: safeErrors,
-    expectedRouteCount: ROUTES.length,
-    completedRouteCount,
-    liveVerified: errors.length === 0 && completedRouteCount === ROUTES.length,
-  });
+  const campaignReport = {
+    ...buildCampaignAuditReport({
+      findings: safeFindings,
+      errors: safeErrors,
+      expectedRouteCount: ROUTES.length,
+      completedRouteCount,
+      liveVerified: errors.length === 0
+        && completedRouteCount === ROUTES.length
+        && warnings.length === 0
+        && degradedRoutes.length === 0
+        && expectedRouteCount === 0,
+    }),
+    warnings,
+    degradedRoutes,
+    expectedRouteCount,
+  };
   const contrastReport = buildContrastReport(safeFindings, safeErrors, campaignReport);
   const safeManifest = redactRuntimeValue({
     verificationStatus: campaignReport.verificationStatus,

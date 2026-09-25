@@ -12,13 +12,17 @@ import {
   getAuditBaseUrl,
 } from './contrast_audit_core.mjs';
 import {
+  AUDIT_USER_AGENT,
+  assertRouteNavigation,
   colorContrastRules,
   extractTextElements,
   getAdventureCookie,
   measurePageContrast,
   readRenderedAuditSettings,
+  routeExpectationFor,
 } from './measure_contrast_v2.mjs';
 import {
+  aggregateRouteOutcomes,
   attachPageDiagnostics,
   invalidateAuditReports,
   redactDiagnosticText,
@@ -64,23 +68,6 @@ function buildMarkdown(report) {
   return `${lines.join('\n')}\n`;
 }
 
-async function navigateCell(page, baseUrl, routePath) {
-  const response = await page.goto(new URL(routePath, baseUrl).toString(), {
-    waitUntil: 'domcontentloaded',
-    timeout: 30000,
-  });
-  const status = response?.status() ?? null;
-  if (!response || status < 200 || status >= 300) {
-    throw new Error(`HTTP ${status ?? 'inconnu'} pour ${routePath}`);
-  }
-  const expected = new URL(routePath, baseUrl);
-  const final = new URL(page.url());
-  if (final.origin !== expected.origin
-    || final.pathname.replace(/\/+$/, '') !== expected.pathname.replace(/\/+$/, '')
-    || (expected.search && final.search !== expected.search)) {
-    throw new Error(`URL finale inattendue pour ${routePath}: ${final.pathname}${final.search}`);
-  }
-}
 
 async function run() {
   invalidateAuditReports([matrixJsonPath, matrixMarkdownPath, errorReportPath]);
@@ -98,6 +85,7 @@ async function run() {
     const authContext = await browser.newContext({
       baseURL: baseUrl,
       viewport: { width: 390, height: 844 },
+      userAgent: AUDIT_USER_AGENT,
       colorScheme: 'dark',
       deviceScaleFactor: 1,
       locale: 'fr-FR',
@@ -111,6 +99,7 @@ async function run() {
       const context = await browser.newContext({
         baseURL: baseUrl,
         viewport: { width: 390, height: 844 },
+        userAgent: AUDIT_USER_AGENT,
         colorScheme: cell.theme,
         deviceScaleFactor: 1,
         locale: 'fr-FR',
@@ -118,7 +107,11 @@ async function run() {
       });
       await context.addCookies([getAdventureCookie(baseUrl)]);
       const page = await context.newPage();
-      const diagnostics = attachPageDiagnostics(page);
+      const routeExpectation = routeExpectationFor(cell.path);
+      const diagnostics = attachPageDiagnostics(page, {
+        baseUrl,
+        expected404Path: routeExpectation?.kind === 'http' ? cell.path : undefined,
+      });
       await page.addInitScript(({ theme, intensity }) => {
         localStorage.setItem('lkdv_cookie_consent', JSON.stringify({
           necessary: true,
@@ -135,6 +128,8 @@ async function run() {
         path: cell.path,
         theme: cell.theme,
         intensity: cell.intensity,
+        measured: false,
+        expected: false,
         actualTheme: null,
         actualIntensity: null,
         nodes: [],
@@ -142,36 +137,54 @@ async function run() {
       };
 
       try {
-        await navigateCell(page, baseUrl, cell.path);
-        await page.waitForTimeout(600);
-        const rendered = await readRenderedAuditSettings(page);
-        result.actualTheme = rendered.theme;
-        result.actualIntensity = rendered.intensity;
-        assertRenderedAuditSettings({
-          requestedTheme: cell.theme,
-          requestedIntensity: cell.intensity,
-          actualTheme: rendered.theme,
-          actualIntensity: rendered.intensity,
-        });
-        const textElements = await extractTextElements(page);
-        const axeResults = await new AxeBuilder({ page })
-          .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'])
-          .analyze();
-        const measured = await measurePageContrast(page, axeResults, {
-          backgroundCss: BACKGROUND_CAPTURE_CSS,
-          textElements,
-        });
-        if (measured.nodes.length === 0) throw new Error('Aucun nœud texte mesuré');
+        const navigation = await assertRouteNavigation(page, baseUrl, cell.path);
         diagnostics.assertClean();
-        result.nodes = measured.nodes;
-        result.axe = colorContrastRules(axeResults);
-        result.axeNodeCounts = {
-          violations: collectColorContrastAxeNodes(axeResults).violations.length,
-          incomplete: collectColorContrastAxeNodes(axeResults).incomplete.length,
-        };
-        result.image = measured.image;
+        result.warnings = diagnostics.warnings.map((entry) => ({ ...entry }));
+        result.degraded = result.warnings.length > 0;
+        if (navigation.expected) {
+          result.expected = true;
+          result.status = navigation.reason === 'missing_admin_role' ? 'admin_redirected' : navigation.status;
+          result.reason = navigation.reason;
+          result.finalPath = navigation.finalPath;
+          result.expectedFinalPath = navigation.expectedFinalPath;
+          result.httpStatus = navigation.httpStatus;
+        } else {
+          await page.waitForTimeout(600);
+          const rendered = await readRenderedAuditSettings(page);
+          result.actualTheme = rendered.theme;
+          result.actualIntensity = rendered.intensity;
+          assertRenderedAuditSettings({
+            requestedTheme: cell.theme,
+            requestedIntensity: cell.intensity,
+            actualTheme: rendered.theme,
+            actualIntensity: rendered.intensity,
+          });
+          const textElements = await extractTextElements(page);
+          const axeResults = await new AxeBuilder({ page })
+            .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'])
+            .analyze();
+          const measured = await measurePageContrast(page, axeResults, {
+            backgroundCss: BACKGROUND_CAPTURE_CSS,
+            textElements,
+          });
+          if (measured.nodes.length === 0) throw new Error('Aucun nœud texte mesuré');
+          diagnostics.assertClean();
+          result.warnings = diagnostics.warnings.map((entry) => ({ ...entry }));
+          result.degraded = result.warnings.length > 0;
+          result.measured = true;
+          result.status = result.degraded ? 'degraded' : 'measured';
+          result.nodes = measured.nodes;
+          result.axe = colorContrastRules(axeResults);
+          result.axeNodeCounts = {
+            violations: collectColorContrastAxeNodes(axeResults).violations.length,
+            incomplete: collectColorContrastAxeNodes(axeResults).incomplete.length,
+          };
+          result.image = measured.image;
+        }
       } catch (error) {
         result.error = redactDiagnosticText(error instanceof Error ? error.message : String(error));
+        result.warnings = diagnostics.warnings.map((entry) => ({ ...entry }));
+        result.degraded = result.warnings.length > 0;
       } finally {
         diagnostics.dispose();
         await context.close();
@@ -187,17 +200,21 @@ async function run() {
     writeAuditErrorReport(errorReportPath, error, { resultCount: results.length });
     throw error;
   }
-  const resultErrors = results.filter((result) => result.error).map((result) => result.error);
+  const aggregate = aggregateRouteOutcomes(results);
+  const resultErrors = aggregate.errors.map((entry) => entry.error);
+  const expectedCells = results.filter((result) => result.expected).length;
   const report = buildMatrixAuditReport({
     cells: results,
     expectedCellCount: EXPECTED_MATRIX_CELL_COUNT,
-    liveVerified: resultErrors.length === 0,
+    liveVerified: resultErrors.length === 0 && aggregate.warnings.length === 0 && expectedCells === 0,
     errors: resultErrors,
   });
   const serialized = redactRuntimeValue({
     ...report,
     generatedAt: new Date().toISOString(),
     baseUrl,
+    warnings: aggregate.warnings,
+    expectedCells,
   });
   fs.writeFileSync(matrixJsonPath, `${JSON.stringify(serialized, null, 2)}\n`);
   fs.writeFileSync(matrixMarkdownPath, buildMarkdown(serialized));

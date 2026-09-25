@@ -101,11 +101,6 @@ const nextConfig = {
         permanent: true,
       },
       {
-        source: '/boutique',
-        destination: '/explorer',
-        permanent: true,
-      },
-      {
         source: '/mon-kit',
         destination: '/explorer',
         permanent: true,
@@ -131,11 +126,6 @@ const nextConfig = {
         permanent: true,
       },
       {
-        source: '/manifeste',
-        destination: '/explorer',
-        permanent: false,
-      },
-      {
         source: '/ateliers',
         destination: '/explorer',
         permanent: false,
@@ -154,13 +144,6 @@ const nextConfig = {
         source: '/carte',
         destination: '/explorer',
         permanent: true,
-      },
-      {
-        // ATLAS — le nouvel explorateur unifié remplace la carte historique.
-        // 307 temporaire : retirer cette entrée = rollback immédiat vers Leaflet.
-        source: '/carte-interactive',
-        destination: '/explorer',
-        permanent: false,
       },
       {
         // ATLAS — « Earth » retiré : la racine /pays (globe) est remplacée par

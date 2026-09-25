@@ -122,7 +122,14 @@ export function writeAuditErrorReport(reportPath, error, details = {}) {
   }, null, 2)}\n`);
 }
 
-const HTTP_ERROR_RESOURCE_TYPES = new Set(['document', 'script', 'stylesheet', 'font', 'image']);
+const HTTP_ERROR_RESOURCE_TYPES = new Set([
+  'document',
+  'script',
+  'stylesheet',
+  'font',
+  'image',
+]);
+const SPEED_INSIGHTS_PATH = '/_vercel/speed-insights/script.js';
 
 function originOf(value) {
   try {
@@ -130,6 +137,23 @@ function originOf(value) {
   } catch {
     return null;
   }
+}
+
+function requestHeaders(request) {
+  try {
+    const headers = typeof request?.headers === 'function'
+      ? request.headers()
+      : request?.headers;
+    return headers && typeof headers === 'object' ? headers : {};
+  } catch {
+    return {};
+  }
+}
+
+function headerValue(headers, name) {
+  const normalized = name.toLowerCase();
+  const entry = Object.entries(headers || {}).find(([key]) => key.toLowerCase() === normalized);
+  return entry ? String(entry[1] || '') : '';
 }
 
 function requestInfo(request) {
@@ -140,12 +164,20 @@ function requestInfo(request) {
   } catch {
     pathname = '';
   }
+  let failure;
+  try {
+    failure = request?.failure?.();
+  } catch {
+    failure = null;
+  }
+  const failureText = typeof failure === 'string' ? failure : String(failure?.errorText || '');
   return {
     method: String(request?.method?.() || '').toUpperCase(),
     url,
     pathname,
-    failureText: String(request?.failure?.()?.errorText || ''),
+    failureText,
     resourceType: String(request?.resourceType?.() || ''),
+    headers: requestHeaders(request),
   };
 }
 
@@ -164,17 +196,52 @@ function isSameOrigin(url, reference) {
   return Boolean(urlOrigin && referenceOrigin && urlOrigin === referenceOrigin);
 }
 
-function isAllowedSessionRequestFailure(info, reference) {
-  if (info.method !== 'GET' && info.method !== 'HEAD') return false;
-  if (info.failureText !== 'net::ERR_ABORTED') return false;
-  if (info.pathname.includes('net::ERR_ABORTED')) return false;
-  if (isSameOrigin(info.url, reference)) return true;
-  if (info.pathname === '/_vercel/speed-insights/script.js' && isSameOrigin(info.url, reference)) return true;
+function isReadMethod(method) {
+  return method === 'GET' || method === 'HEAD';
+}
+
+function isExternalSupabase(url) {
   try {
-    return new URL(info.url).hostname.endsWith('.supabase.co');
+    const hostname = new URL(String(url)).hostname.toLowerCase();
+    return hostname.endsWith('.supabase.co') && hostname !== 'supabase.co';
   } catch {
     return false;
   }
+}
+
+function isExactSpeedInsights(info) {
+  return info.pathname === SPEED_INSIGHTS_PATH && isReadMethod(info.method);
+}
+
+function isPrefetchRequest(info) {
+  const nextPrefetch = headerValue(info.headers, 'next-router-prefetch');
+  const legacyPrefetch = headerValue(info.headers, 'x-nextjs-prefetch');
+  const purpose = `${headerValue(info.headers, 'purpose')} ${headerValue(info.headers, 'sec-purpose')}`.toLowerCase();
+  const rsc = headerValue(info.headers, 'rsc');
+  const hasRscPrefetchQuery = /(?:[?&])_rsc=/.test(info.url);
+  return Boolean(
+    (nextPrefetch && nextPrefetch !== '0')
+    || (legacyPrefetch && legacyPrefetch !== '0')
+    || purpose.includes('prefetch')
+    || (rsc && rsc !== '0' && hasRscPrefetchQuery)
+    || (hasRscPrefetchQuery && info.resourceType === 'fetch')
+  );
+}
+
+function isAllowedAbortedRequest(info, reference, sessionMode) {
+  if (!isReadMethod(info.method)) return false;
+  if (info.failureText !== 'net::ERR_ABORTED') return false;
+  if (info.url.includes('net::ERR_ABORTED')) return false;
+  if (isExternalSupabase(info.url)) return true;
+  if (!isSameOrigin(info.url, reference)) return false;
+  if (isExactSpeedInsights(info)) return true;
+  return isPrefetchRequest(info) || sessionMode === true;
+}
+
+function isAllowedSpeedInsightsResponse(info, reference) {
+  return info.status === 404
+    && isExactSpeedInsights(info)
+    && isSameOrigin(info.url, reference);
 }
 
 function isAllowedSpeedInsightsConsoleError(text, message) {
@@ -183,7 +250,7 @@ function isAllowedSpeedInsightsConsoleError(text, message) {
   const textPathIsExact = /\/_vercel\/speed-insights\/script\.js(?:[?'"\s]|$)/i.test(text);
   if (locationUrl) {
     try {
-      pathIsExact = new URL(String(locationUrl)).pathname === '/_vercel/speed-insights/script.js' || textPathIsExact;
+      pathIsExact = new URL(String(locationUrl)).pathname === SPEED_INSIGHTS_PATH || textPathIsExact;
     } catch {
       pathIsExact = textPathIsExact;
     }
@@ -197,11 +264,35 @@ function isAllowedSpeedInsightsConsoleError(text, message) {
     && /strict MIME type checking is enabled/i.test(text);
 }
 
-function isAllowedSessionSpeedInsightsResponse(info, reference) {
-  return info.status === 404
-    && (info.method === 'GET' || info.method === 'HEAD')
-    && info.pathname === '/_vercel/speed-insights/script.js'
-    && isSameOrigin(info.url, reference);
+function isAllowedSpeedInsightsResourceConsole(text, message) {
+  const locationUrl = message?.location?.()?.url;
+  let pathIsExact = false;
+  if (locationUrl) {
+    try {
+      pathIsExact = new URL(String(locationUrl)).pathname === SPEED_INSIGHTS_PATH;
+    } catch {
+      pathIsExact = false;
+    }
+  }
+  return pathIsExact
+    && /^failed to load resource\b/i.test(text)
+    && (/\b404\b/.test(text) || /net::ERR_ABORTED/i.test(text));
+}
+
+export function isDiagnosticDegraded(diagnostics) {
+  return Boolean(diagnostics && Array.isArray(diagnostics.warnings) && diagnostics.warnings.length > 0);
+}
+
+export function aggregateRouteOutcomes(outcomes = []) {
+  const entries = Array.isArray(outcomes) ? outcomes : [];
+  return {
+    measured: entries.filter((entry) => entry?.measured === true),
+    errors: entries
+      .filter((entry) => entry?.error)
+      .map((entry) => ({ id: entry.id, error: entry.error })),
+    warnings: entries.flatMap((entry) => Array.isArray(entry?.warnings) ? entry.warnings : []),
+    degraded: entries.some((entry) => entry?.degraded === true || isDiagnosticDegraded(entry)),
+  };
 }
 
 export function attachPageDiagnostics(page, options = {}) {
@@ -209,30 +300,60 @@ export function attachPageDiagnostics(page, options = {}) {
   const configuredBaseUrl = typeof options.baseUrl === 'string' ? options.baseUrl : '';
   const pageUrl = () => (typeof page.url === 'function' ? page.url() : '');
   const auditBaseUrl = () => configuredBaseUrl || pageUrl();
+  let expected404Pathname = '';
+  if (typeof options.expected404Path === 'string' && options.expected404Path) {
+    try {
+      expected404Pathname = new URL(options.expected404Path, auditBaseUrl()).pathname;
+    } catch {
+      expected404Pathname = '';
+    }
+  }
+  const isExpected404 = (url, status, resourceType = '') => {
+    if (status !== 404 || !expected404Pathname) return false;
+    try {
+      const parsed = new URL(String(url));
+      return parsed.pathname === expected404Pathname
+        && (!resourceType || resourceType === 'document')
+        && isSameOrigin(parsed.toString(), auditBaseUrl());
+    } catch {
+      return false;
+    }
+  };
   const errors = [];
+  const warnings = [];
   const onPageError = (error) => {
     errors.push({ type: 'pageerror', message: redactDiagnosticText(error?.message || error) });
   };
   const onRequestFailed = (request) => {
     const info = requestInfo(request);
-    if (sessionMode && isAllowedSessionRequestFailure(info, auditBaseUrl())) return;
+    if (isAllowedAbortedRequest(info, auditBaseUrl(), sessionMode)) return;
     const message = `${info.method || 'UNKNOWN'} ${safeUrl(info.url)} ${redactDiagnosticText(info.failureText || 'requestfailed')}`;
     errors.push({ type: 'requestfailed', message });
   };
   const onResponse = (response) => {
     const info = responseInfo(response);
     if (info.status < 400) return;
-    if (sessionMode && isAllowedSessionSpeedInsightsResponse(info, auditBaseUrl())) return;
-    if (isSameOrigin(info.url, auditBaseUrl()) && HTTP_ERROR_RESOURCE_TYPES.has(info.resourceType)) {
-      errors.push({ type: 'http', message: `HTTP ${info.status} ${safeUrl(info.url)}` });
+    if (isExpected404(info.url, info.status, info.resourceType)) return;
+    if (isAllowedSpeedInsightsResponse(info, auditBaseUrl())) return;
+    const message = `HTTP ${info.status} ${safeUrl(info.url)}`;
+    if (isSameOrigin(info.url, auditBaseUrl())) {
+      if (!info.resourceType || HTTP_ERROR_RESOURCE_TYPES.has(info.resourceType)) {
+        errors.push({ type: 'http', message });
+      } else {
+        warnings.push({ type: 'http', message });
+      }
+      return;
     }
+    warnings.push({ type: 'http', message });
   };
   const onConsole = (message) => {
     if (message?.type?.() !== 'error') return;
     const text = redactDiagnosticText(message.text());
-    if (/^Failed to load resource\b/i.test(text)) return;
+    const locationUrl = message?.location?.()?.url;
+    if (isExpected404(locationUrl, 404) && /failed to load resource\b.*404/i.test(text)) return;
+    if (isAllowedSpeedInsightsResourceConsole(text, message)) return;
     if (isAllowedSpeedInsightsConsoleError(text, message)) return;
-    errors.push({ type: 'console', message: text });
+    warnings.push({ type: 'console', message: text });
   };
   page.on('pageerror', onPageError);
   page.on('requestfailed', onRequestFailed);
@@ -240,6 +361,13 @@ export function attachPageDiagnostics(page, options = {}) {
   page.on('console', onConsole);
   return {
     errors,
+    warnings,
+    get degraded() {
+      return isDiagnosticDegraded({ warnings });
+    },
+    isDegraded() {
+      return isDiagnosticDegraded({ warnings });
+    },
     assertClean() {
       if (errors.length === 0) return;
       throw new Error(`Erreurs runtime audit (${errors.length}): ${errors.map((entry) => entry.message).join(' | ')}`);

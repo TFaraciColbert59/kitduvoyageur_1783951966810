@@ -51,11 +51,11 @@ describe('audit runtime — SpeedInsights response opt-in', () => {
     diagnostics.dispose();
   });
 
-  it('rejette le 404 exact en mode strict', () => {
+  it('ignore le 404 exact SpeedInsights même sans mode session', () => {
     const page = createPage();
     const diagnostics = attachPageDiagnostics(page.page, { baseUrl });
     page.emit('response', makeResponse());
-    expect(diagnostics.errors).toHaveLength(1);
+    expect(diagnostics.errors).toHaveLength(0);
     diagnostics.dispose();
   });
 

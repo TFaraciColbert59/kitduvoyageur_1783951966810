@@ -15,6 +15,7 @@ import {
   parseStrictNumber,
 } from './contrast_audit_core.mjs';
 import {
+  aggregateRouteOutcomes,
   attachPageDiagnostics,
   invalidateAuditReports,
   redactDiagnosticText,
@@ -31,6 +32,15 @@ const a11yDir = path.resolve('audit', 'a11y');
 const contrastReportPath = path.resolve('audit', 'CONTRASTE.md');
 const matrixReportPath = path.resolve('audit', 'contrast-measurements.json');
 const errorReportPath = path.join(a11yDir, 'measure-contrast-error.json');
+export const AUDIT_USER_AGENT = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36';
+export const ROUTE_EXPECTATIONS = Object.freeze({
+  '/preparer-randonnee': Object.freeze({ kind: 'redirect', finalPath: '/hub', reason: 'expected_legacy_redirect' }),
+  '/admin': Object.freeze({ kind: 'redirect', finalPath: '/', reason: 'missing_admin_role' }),
+  '/admin/produits': Object.freeze({ kind: 'redirect', finalPath: '/', reason: 'missing_admin_role' }),
+  '/dev/glass': Object.freeze({ kind: 'http', status: 404, reason: 'expected_404' }),
+  '/dev/style': Object.freeze({ kind: 'http', status: 404, reason: 'expected_404' }),
+  '/route-inexistante-pour-tester-404': Object.freeze({ kind: 'http', status: 404, reason: 'expected_404' }),
+});
 export const ROUTES = [
   ['accueil', '/'],
   ['hub', '/hub'],
@@ -300,28 +310,109 @@ function normalizedPath(pathname) {
   return pathname === '/' ? pathname : pathname.replace(/\/+$/, '') || '/';
 }
 
+export function routeExpectationFor(routePath) {
+  const pathname = new URL(String(routePath), 'http://audit.invalid').pathname;
+  return ROUTE_EXPECTATIONS[normalizedPath(pathname)] || null;
+}
+
+export function assessRouteNavigation({ routePath, baseUrl, finalUrl, status }) {
+  const base = new URL(baseUrl);
+  const requested = new URL(routePath, base);
+  const final = new URL(finalUrl);
+  if (final.origin !== base.origin) {
+    throw new Error(`Redirection hors origine pour ${routePath}: ${final.origin}`);
+  }
+  if (!Number.isInteger(status) || status <= 0) {
+    throw new Error(`HTTP ${status ?? 'inconnu'} pour ${routePath}`);
+  }
+  const finalPath = normalizedPath(final.pathname);
+  const requestedPath = normalizedPath(requested.pathname);
+  const queryMatches = !requested.search || final.search === requested.search;
+  const expectation = routeExpectationFor(routePath);
+  if (expectation?.kind === 'redirect' && expectation.reason === 'missing_admin_role') {
+    const navigation = describeAdminNavigation({ requestedPath, finalUrl: final.toString(), status });
+    if (navigation.redirected && navigation.reason !== expectation.reason) {
+      throw new Error(`Redirection ${requestedPath} inattendue: ${navigation.reason}`);
+    }
+    if (navigation.redirected) {
+      return {
+        ...navigation,
+        expected: true,
+        status: 'expected_redirect',
+        expectedFinalPath: expectation.finalPath,
+        expectedStatus: null,
+        httpStatus: status,
+      };
+    }
+  } else if (expectation?.kind === 'redirect') {
+    if (finalPath !== expectation.finalPath) {
+      throw new Error(`Redirection inattendue pour ${routePath}: ${finalPath}, attendu ${expectation.finalPath}`);
+    }
+    if (status < 200 || status >= 400) {
+      throw new Error(`HTTP ${status} pour ${routePath}`);
+    }
+    return {
+      expected: true,
+      redirected: true,
+      reason: expectation.reason,
+      status: 'expected_redirect',
+      finalPath,
+      expectedFinalPath: expectation.finalPath,
+      expectedStatus: null,
+      httpStatus: status,
+    };
+  } else if (expectation?.kind === 'http') {
+    if (status !== expectation.status) {
+      throw new Error(`HTTP ${status} pour ${routePath}, attendu ${expectation.status}`);
+    }
+    if (finalPath !== requestedPath || !queryMatches) {
+      throw new Error(`URL finale inattendue pour ${routePath}: ${finalPath}${final.search}`);
+    }
+    return {
+      expected: true,
+      redirected: false,
+      reason: expectation.reason,
+      status: 'expected_404',
+      finalPath,
+      expectedFinalPath: null,
+      expectedStatus: expectation.status,
+      httpStatus: status,
+    };
+  }
+  if (status < 200 || status >= 300) {
+    throw new Error(`HTTP ${status} pour ${routePath}`);
+  }
+  if (finalPath !== requestedPath || !queryMatches) {
+    throw new Error(`URL finale inattendue pour ${routePath}: ${finalPath}${final.search}`);
+  }
+  return {
+    expected: false,
+    redirected: false,
+    reason: null,
+    status: 'ok',
+    finalPath,
+    expectedFinalPath: null,
+    expectedStatus: null,
+    httpStatus: status,
+  };
+}
+
 export async function assertRouteNavigation(page, baseUrl, routePath) {
   const response = await page.goto(new URL(routePath, baseUrl).toString(), {
     waitUntil: 'domcontentloaded',
     timeout: 30000,
   });
-  const status = response?.status() ?? null;
-  if (!response || status < 200 || status >= 300) {
-    throw new Error(`HTTP ${status ?? 'inconnu'} pour ${routePath}`);
-  }
-  const finalUrl = new URL(page.url());
-  if (finalUrl.origin !== new URL(baseUrl).origin) {
-    throw new Error(`Redirection hors origine pour ${routePath}: ${finalUrl.origin}`);
-  }
-  if (routePath === '/admin' || routePath === '/admin/produits') {
+  const result = assessRouteNavigation({
+    routePath,
+    baseUrl,
+    finalUrl: page.url(),
+    status: response?.status() ?? null,
+  });
+  if ((routeExpectationFor(routePath)?.reason === 'missing_admin_role' || routePath === '/admin' || routePath === '/admin/produits')
+    && typeof page.waitForTimeout === 'function') {
     await page.waitForTimeout(600);
-    return describeAdminNavigation({ requestedPath: routePath, finalUrl: page.url(), status });
   }
-  const expected = new URL(routePath, baseUrl);
-  if (normalizedPath(finalUrl.pathname) !== normalizedPath(expected.pathname)) {
-    throw new Error(`URL finale inattendue pour ${routePath}: ${finalUrl.pathname}`);
-  }
-  return null;
+  return result;
 }
 
 function markdownCell(value) {
@@ -376,12 +467,12 @@ async function run() {
     args: ['--no-sandbox', '--disable-setuid-sandbox'],
   });
   const summary = {};
-  const errors = [];
 
   try {
     const authContext = await browser.newContext({
       baseURL: baseUrl,
       viewport: { width: 390, height: 844 },
+      userAgent: AUDIT_USER_AGENT,
       colorScheme: 'dark',
       deviceScaleFactor: 1,
       locale: 'fr-FR',
@@ -395,6 +486,7 @@ async function run() {
       const context = await browser.newContext({
         baseURL: baseUrl,
         viewport: { width: 390, height: 844 },
+        userAgent: AUDIT_USER_AGENT,
         colorScheme: 'dark',
         deviceScaleFactor: 1,
         locale: 'fr-FR',
@@ -402,7 +494,11 @@ async function run() {
       });
       await context.addCookies([getAdventureCookie(baseUrl)]);
       const page = await context.newPage();
-      const diagnostics = attachPageDiagnostics(page);
+      const routeExpectation = routeExpectationFor(route.path);
+      const diagnostics = attachPageDiagnostics(page, {
+        baseUrl,
+        expected404Path: routeExpectation?.kind === 'http' ? route.path : undefined,
+      });
       await page.addInitScript(() => {
         localStorage.setItem('lkdv_cookie_consent', JSON.stringify({
           necessary: true,
@@ -415,17 +511,22 @@ async function run() {
       });
 
       try {
-         const adminNavigation = await assertRouteNavigation(page, baseUrl, route.path);
-         diagnostics.assertClean();
-         if (adminNavigation?.redirected && adminNavigation.reason !== 'missing_admin_role') {
-          throw new Error(`Redirection /admin inattendue: ${adminNavigation.reason}`);
-        }
-        if (adminNavigation?.redirected) {
+        const navigation = await assertRouteNavigation(page, baseUrl, route.path);
+        diagnostics.assertClean();
+        const warnings = diagnostics.warnings.map((entry) => ({ ...entry }));
+        if (navigation.expected) {
           summary[route.id] = {
             id: route.id,
             path: route.path,
-            status: 'admin_redirected',
-            adminNavigation,
+            measured: false,
+            expected: true,
+            status: navigation.reason === 'missing_admin_role' ? 'admin_redirected' : navigation.status,
+            reason: navigation.reason,
+            finalPath: navigation.finalPath,
+            expectedFinalPath: navigation.expectedFinalPath,
+            httpStatus: navigation.httpStatus,
+            warnings,
+            degraded: warnings.length > 0,
             nodes: [],
             counts: { pass: 0, contrast_fail: 0, unknown: 0, occluded: 0 },
             axe: { violations: [], incomplete: [] },
@@ -447,10 +548,14 @@ async function run() {
         const contrast = await measurePageContrast(page, axeResults, { textElements });
         if (contrast.nodes.length === 0) throw new Error('Aucun nœud texte mesuré');
         diagnostics.assertClean();
+        const measuredWarnings = diagnostics.warnings.map((entry) => ({ ...entry }));
         const axe = colorContrastRules(axeResults);
         summary[route.id] = {
           id: route.id,
           path: route.path,
+          measured: true,
+          expected: false,
+          status: measuredWarnings.length > 0 ? 'degraded' : 'measured',
           theme: 'dark',
           requestedIntensity: 0.5,
           actualTheme: rendered.theme,
@@ -462,13 +567,21 @@ async function run() {
             violations: collectColorContrastAxeNodes(axeResults).violations.length,
             incomplete: collectColorContrastAxeNodes(axeResults).incomplete.length,
           },
-          adminNavigation,
+          warnings: measuredWarnings,
+          degraded: measuredWarnings.length > 0,
         };
         summary[route.id].counts = countNodes(contrast.nodes);
       } catch (error) {
         const message = redactDiagnosticText(error instanceof Error ? error.message : String(error));
-        errors.push({ route: route.id, message });
-        summary[route.id] = { id: route.id, path: route.path, error: message };
+        const warnings = diagnostics.warnings.map((entry) => ({ ...entry }));
+        summary[route.id] = {
+          id: route.id,
+          path: route.path,
+          measured: false,
+          error: message,
+          warnings,
+          degraded: warnings.length > 0,
+        };
       } finally {
         diagnostics.dispose();
         await context.close();
@@ -478,16 +591,19 @@ async function run() {
     await browser.close();
   }
 
-  const measured = Object.values(summary).filter((item) => !item.error && item.status !== 'admin_redirected');
+  const aggregate = aggregateRouteOutcomes(Object.values(summary));
+  const measured = aggregate.measured;
+  const errors = aggregate.errors;
+  const warnings = aggregate.warnings;
   const totals = measured.reduce((result, item) => {
     for (const status of ['pass', 'contrast_fail', 'unknown', 'occluded']) {
       result[status] += item.counts[status];
     }
     return result;
-  }, { pass: 0, contrast_fail: 0, unknown: 0, occluded: 0, errors: errors.length });
+  }, { pass: 0, contrast_fail: 0, unknown: 0, occluded: 0, errors: errors.length, warnings: warnings.length });
   const verificationStatus = auditVerificationStatus({
-    liveVerified: errors.length === 0 && measured.length === ROUTES.length,
-    errors: errors.map((entry) => entry.message),
+    liveVerified: errors.length === 0 && warnings.length === 0 && measured.length === ROUTES.length,
+    errors: errors.map((entry) => entry.error),
   });
   const report = {
     baseUrl,
@@ -497,6 +613,7 @@ async function run() {
     measuredRoutes: measured.length,
     totals,
     errors,
+    warnings,
     routes: summary,
   };
   const safeReport = redactRuntimeValue(report);

@@ -71,13 +71,15 @@ describe('audit runtime — diagnostics sans corrélation mutable', () => {
     const otherErrorPage = createPage();
     const otherError = attachPageDiagnostics(otherErrorPage.page, { baseUrl, sessionMode: true });
     otherErrorPage.emit('console', makeConsole('Unexpected SpeedInsights failure', `${baseUrl}${speedInsightsPath}`));
-    expect(otherError.errors).toHaveLength(1);
+    expect(otherError.errors).toHaveLength(0);
+    expect(otherError.warnings).toHaveLength(1);
     otherError.dispose();
 
     const lookalikePage = createPage();
     const lookalike = attachPageDiagnostics(lookalikePage.page, { baseUrl, sessionMode: true });
     lookalikePage.emit('console', makeConsole(speedInsightsMimeError.replace(speedInsightsPath, `${speedInsightsPath}.evil`), `${baseUrl}${speedInsightsPath}.evil`));
-    expect(lookalike.errors).toHaveLength(1);
+    expect(lookalike.errors).toHaveLength(0);
+    expect(lookalike.warnings).toHaveLength(1);
     lookalike.dispose();
   });
 
@@ -108,7 +110,8 @@ describe('audit runtime — diagnostics sans corrélation mutable', () => {
     page.emit('request', makeRequest({ method: 'POST', url }));
     page.emit('request', makeRequest({ method: 'GET', url }));
     page.emit('console', makeConsole('net::ERR_ABORTED', url));
-    expect(diagnostics.errors).toHaveLength(1);
+    expect(diagnostics.errors).toHaveLength(0);
+    expect(diagnostics.warnings).toHaveLength(1);
     diagnostics.dispose();
   });
 
@@ -126,8 +129,10 @@ describe('audit runtime — diagnostics sans corrélation mutable', () => {
     const url = `${baseUrl}/missing.js`;
     page.emit('response', makeResponse({ url, resourceType: 'script', status: 404 }));
     page.emit('console', makeConsole('Uncaught TypeError', url));
-    expect(diagnostics.errors).toHaveLength(2);
-    expect(diagnostics.errors.map((entry) => entry.type)).toEqual(['http', 'console']);
+    expect(diagnostics.errors).toHaveLength(1);
+    expect(diagnostics.warnings).toHaveLength(1);
+    expect(diagnostics.errors.map((entry) => entry.type)).toEqual(['http']);
+    expect(diagnostics.warnings.map((entry) => entry.type)).toEqual(['console']);
     diagnostics.dispose();
   });
 
@@ -136,7 +141,8 @@ describe('audit runtime — diagnostics sans corrélation mutable', () => {
     const strict = attachPageDiagnostics(strictPage.page, { baseUrl });
     strictPage.emit('requestfailed', makeRequest());
     strictPage.emit('console', makeConsole('Uncaught TypeError'));
-    expect(strict.errors).toHaveLength(2);
+    expect(strict.errors).toHaveLength(1);
+    expect(strict.warnings).toHaveLength(1);
     strict.dispose();
   });
 });

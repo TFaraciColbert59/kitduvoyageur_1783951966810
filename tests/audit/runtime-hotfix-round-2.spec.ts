@@ -95,7 +95,8 @@ describe('audit runtime — session opt-in', () => {
     const lookalikePage = createPage();
     const lookalike = attachPageDiagnostics(lookalikePage.page, { baseUrl, sessionMode: true });
     lookalikePage.emit('console', makeConsole('Unexpected SpeedInsights failure', `${baseUrl}/_vercel/speed-insights/script.js.evil`));
-    expect(lookalike.errors).toHaveLength(1);
+    expect(lookalike.errors).toHaveLength(0);
+    expect(lookalike.warnings).toHaveLength(1);
     lookalike.dispose();
   });
 
@@ -105,7 +106,8 @@ describe('audit runtime — session opt-in', () => {
     const exactRequest = makeRequest({ url: 'https://project.supabase.co/rest/v1/resource', method: 'GET' });
     exactPage.emit('request', exactRequest);
     exactPage.emit('console', makeConsole('net::ERR_ABORTED', 'https://project.supabase.co/rest/v1/resource'));
-    expect(exact.errors).toHaveLength(1);
+    expect(exact.errors).toHaveLength(0);
+    expect(exact.warnings).toHaveLength(1);
     exact.dispose();
 
     const lookalikePage = createPage();
@@ -113,7 +115,8 @@ describe('audit runtime — session opt-in', () => {
     const lookalikeRequest = makeRequest({ url: 'https://supabase.co.attacker.example/rest/v1/resource', method: 'GET' });
     lookalikePage.emit('request', lookalikeRequest);
     lookalikePage.emit('console', makeConsole('net::ERR_ABORTED', 'https://supabase.co.attacker.example/rest/v1/resource'));
-    expect(lookalike.errors).toHaveLength(1);
+    expect(lookalike.errors).toHaveLength(0);
+    expect(lookalike.warnings).toHaveLength(1);
     lookalike.dispose();
 
     const pathTrapPage = createPage();
@@ -121,7 +124,8 @@ describe('audit runtime — session opt-in', () => {
     const pathTrapRequest = makeRequest({ url: 'https://project.supabase.co/rest/v1/net::ERR_ABORTED', method: 'GET' });
     pathTrapPage.emit('request', pathTrapRequest);
     pathTrapPage.emit('console', makeConsole('net::ERR_ABORTED', 'https://project.supabase.co/rest/v1/net::ERR_ABORTED'));
-    expect(pathTrap.errors).toHaveLength(1);
+    expect(pathTrap.errors).toHaveLength(0);
+    expect(pathTrap.warnings).toHaveLength(1);
     pathTrap.dispose();
 
     const postPage = createPage();
@@ -129,7 +133,8 @@ describe('audit runtime — session opt-in', () => {
     const postRequest = makeRequest({ url: 'https://project.supabase.co/rest/v1/resource', method: 'POST' });
     postPage.emit('request', postRequest);
     postPage.emit('console', makeConsole('net::ERR_ABORTED', 'https://project.supabase.co/rest/v1/resource'));
-    expect(post.errors).toHaveLength(1);
+    expect(post.errors).toHaveLength(0);
+    expect(post.warnings).toHaveLength(1);
     post.dispose();
   });
 
