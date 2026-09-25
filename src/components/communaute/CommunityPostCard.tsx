@@ -749,13 +749,16 @@ export default function CommunityPostCard({
       {displayableImage && (
         <div className={`relative -mx-4 sm:-mx-5 ${showComments ? '' : '-mb-4 sm:-mb-5'}`}>
           {/* Ambilight — les couleurs de la photo remontent dans la card jusqu'à ~30% sous le texte */}
-          <div
+          {/* Le décor partage l'URL de la photo et charge seulement à proximité du viewport. */}
+          {/* eslint-disable-next-line @next/next/no-img-element -- Décor distant chargé paresseusement, même URL que la photo. */}
+          <img
             aria-hidden="true"
-            className="lkdv-ambilight pointer-events-none absolute -top-24 inset-x-0 h-60"
+            src={displayableImage}
+            alt=""
+            loading="lazy"
+            decoding="async"
+            className="lkdv-ambilight pointer-events-none absolute -top-24 inset-x-0 h-60 w-full object-cover object-[center_30%]"
             style={{
-              backgroundImage: `url(${displayableImage})`,
-              backgroundSize: 'cover',
-              backgroundPosition: 'center 30%',
               filter: 'blur(50px) saturate(1.7)',
               transform: 'scale(1.25)',
               opacity: 0.45,
