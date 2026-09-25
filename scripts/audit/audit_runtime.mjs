@@ -179,15 +179,29 @@ function isAllowedSessionRequestFailure(info, reference) {
 
 function isAllowedSpeedInsightsConsoleError(text, message) {
   const locationUrl = message?.location?.()?.url;
-  if (!locationUrl) return false;
-  let parsed;
-  try {
-    parsed = new URL(String(locationUrl));
-  } catch {
-    return false;
+  let pathIsExact = false;
+  const textPathIsExact = /\/_vercel\/speed-insights\/script\.js(?:[?'"\s]|$)/i.test(text);
+  if (locationUrl) {
+    try {
+      pathIsExact = new URL(String(locationUrl)).pathname === '/_vercel/speed-insights/script.js' || textPathIsExact;
+    } catch {
+      pathIsExact = textPathIsExact;
+    }
+  } else {
+    pathIsExact = textPathIsExact;
   }
-  if (parsed.pathname !== '/_vercel/speed-insights/script.js') return false;
-  return /^Refused to execute script from .* because its MIME type .* is not executable, and strict MIME type checking is enabled\.$/i.test(text);
+  if (!pathIsExact) return false;
+  return /refused to execute script/i.test(text)
+    && /because its MIME type/i.test(text)
+    && /not executable/i.test(text)
+    && /strict MIME type checking is enabled/i.test(text);
+}
+
+function isAllowedSessionSpeedInsightsResponse(info, reference) {
+  return info.status === 404
+    && (info.method === 'GET' || info.method === 'HEAD')
+    && info.pathname === '/_vercel/speed-insights/script.js'
+    && isSameOrigin(info.url, reference);
 }
 
 export function attachPageDiagnostics(page, options = {}) {
@@ -208,6 +222,7 @@ export function attachPageDiagnostics(page, options = {}) {
   const onResponse = (response) => {
     const info = responseInfo(response);
     if (info.status < 400) return;
+    if (sessionMode && isAllowedSessionSpeedInsightsResponse(info, auditBaseUrl())) return;
     if (isSameOrigin(info.url, auditBaseUrl()) && HTTP_ERROR_RESOURCE_TYPES.has(info.resourceType)) {
       errors.push({ type: 'http', message: `HTTP ${info.status} ${safeUrl(info.url)}` });
     }

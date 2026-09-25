@@ -76,7 +76,7 @@ describe('audit runtime — diagnostics sans corrélation mutable', () => {
 
     const lookalikePage = createPage();
     const lookalike = attachPageDiagnostics(lookalikePage.page, { baseUrl, sessionMode: true });
-    lookalikePage.emit('console', makeConsole(speedInsightsMimeError, `${baseUrl}${speedInsightsPath}.evil`));
+    lookalikePage.emit('console', makeConsole(speedInsightsMimeError.replace(speedInsightsPath, `${speedInsightsPath}.evil`), `${baseUrl}${speedInsightsPath}.evil`));
     expect(lookalike.errors).toHaveLength(1);
     lookalike.dispose();
   });
