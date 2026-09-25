@@ -46,6 +46,11 @@ function markdownCell(value) {
   return String(value ?? '').replace(/\|/g, '/').replace(/\r?\n/g, ' ');
 }
 
+export function assignMatrixNavigationMetadata(result, navigation) {
+  result.finalPath = navigation.finalPath;
+  result.httpStatus = navigation.httpStatus;
+}
+
 export function attachMatrixCellMetadata(report, results = []) {
   const source = report && typeof report === 'object' ? report : {};
   const resultByKey = new Map(
@@ -172,6 +177,7 @@ async function run() {
 
       try {
         const navigation = await assertRouteNavigation(page, baseUrl, cell.path);
+        assignMatrixNavigationMetadata(result, navigation);
         diagnostics.assertClean();
         result.warnings = diagnostics.warnings.map((entry) => ({ ...entry }));
         result.degraded = result.warnings.length > 0;
@@ -179,9 +185,7 @@ async function run() {
           result.expected = true;
           result.status = navigation.reason === 'missing_admin_role' ? 'admin_redirected' : navigation.status;
           result.reason = navigation.reason;
-          result.finalPath = navigation.finalPath;
           result.expectedFinalPath = navigation.expectedFinalPath;
-          result.httpStatus = navigation.httpStatus;
         } else {
           await page.waitForTimeout(600);
           const rendered = await readRenderedAuditSettings(page);
