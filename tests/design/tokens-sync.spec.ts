@@ -25,7 +25,7 @@ describe('CHANTIER X — SYNCHRONISATION TOKENS', () => {
     expect(css).toContain('--lkv-primary: #17402C;');
     expect(css).toContain('--lkv-primary-hover: #205238;');
     expect(css).toContain('--lkv-primary-soft: #365233;');
-    expect(css).toContain('--lkv-success: #5B7F55;');
+    expect(css).toContain('--lkv-success: #3D6038;');
     // Phase 3 — géométrie premium : le rayon carte canonique passe à 28
     // (la vérification reste, seule la valeur canonique change).
     expect(css).toContain('--lkv-radius-card: 28px;');

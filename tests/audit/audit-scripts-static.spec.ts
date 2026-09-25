@@ -9,6 +9,7 @@ const auditScripts = [
   'scripts/audit/run_audit_campaign.mjs',
   'scripts/audit/create_test_session.mjs',
   'scripts/audit/measure_key_screens_matrix.mjs',
+  'scripts/audit/capture_section4.mjs',
 ];
 const codeExtensions = ['.js', '.mjs', '.cjs', '.ts', '.mts', '.tsx', '.py', '.ps1'];
 const excludedCodeFiles = new Set([
@@ -102,6 +103,46 @@ describe('audit — garde-fous statiques', () => {
     expect(matrixScript).toContain('measurePageContrast');
     expect(contrastScript).toContain('deviceScaleFactor: 1');
     expect(matrixScript).toContain('deviceScaleFactor: 1');
+  });
+
+  it('ne désactive pas le sandbox du navigateur pour les audits authentifiés', () => {
+    for (const relativePath of auditScripts) {
+      expect(source(relativePath)).not.toContain('--no-sandbox');
+      expect(source(relativePath)).not.toContain('--disable-setuid-sandbox');
+      expect(source(relativePath)).toContain("serviceWorkers: 'block'");
+    }
+  });
+
+  it('ne désactive pas le sandbox Lighthouse ni ne publie ses résultats', () => {
+    const lighthouse = source('.lighthouserc.json');
+    expect(lighthouse).not.toContain('--no-sandbox');
+    expect(lighthouse).not.toContain('temporary-public-storage');
+  });
+
+  it('bloque la publication d’une campagne dégradée ou incomplète', () => {
+    expect(source('scripts/audit/run_audit_campaign.mjs')).toContain("campaignReport.verificationStatus !== 'VERIFIED'");
+    expect(source('scripts/audit/measure_contrast_v2.mjs')).toContain("verificationStatus !== 'VERIFIED'");
+    const capture = source('scripts/audit/capture_section4.mjs');
+    expect(capture).toContain("verificationStatus !== 'VERIFIED'");
+    expect(capture).toContain('getAuditBaseUrl');
+    expect(capture).toContain('assertRouteNavigation');
+    expect(capture).toContain('EXPECTED_CAPTURE_COUNT');
+    expect(capture).toContain('loadAuditStorageState');
+    expect(capture).toContain('verifyCompteSession');
+    expect(capture).not.toContain('createServerClient');
+    expect(capture).not.toContain('getAuthCookie');
+    expect(capture).toContain('invokedPath === import.meta.url');
+    expect(capture.lastIndexOf('invalidateAuditReports')).toBeGreaterThan(capture.indexOf('async function run'));
+    const campaign = source('scripts/audit/run_audit_campaign.mjs');
+    const campaignRunStart = campaign.indexOf('async function run()');
+    const campaignWarningsStart = campaign.indexOf('const warnings = []', campaignRunStart);
+    const campaignRouteLoopStart = campaign.indexOf('for (const route of ROUTES)', campaignRunStart);
+    expect(campaignWarningsStart).toBeGreaterThan(campaignRunStart);
+    expect(campaignWarningsStart).toBeLessThan(campaignRouteLoopStart);
+    const campaignAfterWarnings = campaign.slice(campaign.indexOf(';', campaignWarningsStart) + 1, campaign.indexOf('const safeErrors', campaignRunStart));
+    expect(campaignAfterWarnings).not.toContain('const warnings = [');
+    const intensityBlock = capture.slice(capture.indexOf('if (INTENSITY_ROUTES.has(r.id))'));
+    expect(intensityBlock).not.toContain('${vp.name}-${theme}');
   });
 
   it('conserve tous les résultats Axe color-contrast et ne publie pas ancien taux', () => {

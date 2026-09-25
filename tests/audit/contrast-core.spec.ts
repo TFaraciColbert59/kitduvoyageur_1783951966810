@@ -26,9 +26,14 @@ const white = { r: 255, g: 255, b: 255 };
 function completeCells() {
   return buildMatrixCells().map((cell, index) => ({
     ...cell,
-    actualTheme: 'dark',
-    actualIntensity: cell.intensity,
-    nodes: index === 0 ? [{ id: 'first-pass', status: 'pass' }] : [],
+     actualTheme: cell.theme,
+     actualIntensity: cell.intensity,
+     finalPath: cell.path,
+     httpStatus: 200,
+     measurementState: 'default',
+     scrollY: 0,
+     overlayOpen: false,
+     nodes: index === 0 ? [{ id: 'first-pass', selector: '#first-pass', ratio: 4.5, threshold: 4.5, status: 'pass' }] : [],
     axe: { violations: [], incomplete: [] },
   }));
 }
@@ -98,6 +103,7 @@ describe('audit contraste — pixels et Axe', () => {
       info: { width: 2, height: 1, channels: 3 },
       textElements: [{
         id: 'line',
+        dataAuditId: 'audit-line',
         selector: '#line',
         text: 'Audit',
         color: 'rgb(0, 0, 0)',
@@ -109,7 +115,7 @@ describe('audit contraste — pixels et Axe', () => {
     });
 
     expect(results).toHaveLength(1);
-    expect(results[0]).toMatchObject({ status: 'contrast_fail', ratio: 1 });
+    expect(results[0]).toMatchObject({ status: 'contrast_fail', ratio: 1, dataAuditId: 'audit-line' });
     expect(results[0].worstBackground).toEqual({ r: 0, g: 0, b: 0 });
   });
 
@@ -130,7 +136,7 @@ describe('audit contraste — pixels et Axe', () => {
     expect(nodes.incomplete).toHaveLength(2);
   });
 
-  it('force unknown un nœud Axe incomplete et ne le compte jamais pass', () => {
+  it('conserve unknown quand Axe reste incomplet', () => {
     const axeResults = {
       violations: [],
       incomplete: [{
@@ -146,9 +152,46 @@ describe('audit contraste — pixels et Axe', () => {
       ? { ...cell, nodes, axe: collectColorContrastAxeNodes(axeResults) }
       : cell));
 
-    expect(nodes).toHaveLength(1);
-    expect(nodes[0].status).toBe('unknown');
-    expect(aggregate.totals).toMatchObject({ pass: 0, unknown: 1, contrast_fail: 0 });
+     expect(nodes).toHaveLength(1);
+     expect(nodes[0]).toMatchObject({ status: 'unknown', ratio: null });
+     expect(aggregate.totals).toMatchObject({ pass: 0, unknown: 1, contrast_fail: 0 });
+
+  });
+
+  it('conserve unknown lorsqu’Axe et le pixel ne peuvent pas conclure', () => {
+    const axeResults = {
+      violations: [],
+      incomplete: [{
+        id: 'color-contrast',
+        nodes: [{ target: ['#unstable'], failureSummary: 'background cannot be determined' }],
+      }],
+    };
+
+    const nodes = mergeAxeContrastEvidence([
+      { id: 'measured', selector: '#unstable', status: 'unknown', ratio: null },
+    ], axeResults);
+
+    expect(nodes[0]).toMatchObject({ status: 'unknown', ratio: null });
+  });
+
+  it('fusionne un Axe node dont le HTML porte le data-audit-id', () => {
+    const axeResults = {
+      violations: [],
+      incomplete: [{
+        id: 'color-contrast',
+        nodes: [{
+          target: ['a[href$="esri.com"]'],
+          html: '<a href="https://www.esri.com" data-audit-id="audit-text-1">Esri</a>',
+        }],
+      }],
+    };
+    const nodes = mergeAxeContrastEvidence([
+      { dataAuditId: 'audit-text-1', selector: '[data-audit-id="audit-text-1"]', status: 'pass', ratio: 8 },
+    ], axeResults);
+
+     expect(nodes).toHaveLength(1);
+     expect(nodes[0]).toMatchObject({ status: 'unknown', ratio: null, dataAuditId: 'audit-text-1' });
+
   });
 
   it('conserve occluded lorsqu’Axe signale aussi le même nœud', () => {
@@ -179,14 +222,14 @@ describe('audit contraste — matrice pondérée', () => {
         return {
           ...cell,
           nodes: [
-            { id: 'pass-1', status: 'pass' },
-            { id: 'pass-2', status: 'pass' },
-            { id: 'pass-3', status: 'pass' },
+            { id: 'pass-1', selector: '#pass-1', ratio: 4.5, status: 'pass' },
+            { id: 'pass-2', selector: '#pass-2', ratio: 4.5, status: 'pass' },
+            { id: 'pass-3', selector: '#pass-3', ratio: 4.5, status: 'pass' },
           ],
         };
       }
       if (index === 2) {
-        return { ...cell, nodes: [{ id: 'fail-1', status: 'contrast_fail' }] };
+        return { ...cell, nodes: [{ id: 'fail-1', selector: '#fail-1', ratio: 2, status: 'contrast_fail' }] };
       }
       return cell;
     });
@@ -210,7 +253,36 @@ describe('audit contraste — matrice pondérée', () => {
 describe('audit contraste — configuration et session', () => {
   it('utilise PW_BASE_URL avec le défaut localhost:3000', () => {
     expect(getAuditBaseUrl(env({}))).toBe('http://localhost:3000');
-    expect(getAuditBaseUrl(env({ PW_BASE_URL: 'http://127.0.0.1:4028/' }))).toBe('http://127.0.0.1:4028');
+    expect(getAuditBaseUrl(env({
+      PW_BASE_URL: 'http://127.0.0.1:4028/',
+      AUDIT_ALLOW_LOCAL_BASE_URL: '1',
+      AUDIT_ALLOWED_BASE_URLS: 'http://127.0.0.1:4028',
+    }))).toBe('http://127.0.0.1:4028');
+    expect(() => getAuditBaseUrl(env({ PW_BASE_URL: 'http://audit.example.com' }))).toThrow(/HTTPS/i);
+    expect(() => getAuditBaseUrl(env({ PW_BASE_URL: 'http://localhost:4444' }))).toThrow(/non autorisé/i);
+    expect(() => getAuditBaseUrl(env({ PW_BASE_URL: 'https://audit.example.com' }))).toThrow(/non autorisé/i);
+    expect(getAuditBaseUrl(env({
+      PW_BASE_URL: 'https://audit.example.com',
+      AUDIT_ALLOW_REMOTE_BASE_URL: '1',
+      AUDIT_ALLOWED_BASE_URLS: 'https://audit.example.com',
+    }))).toBe('https://audit.example.com');
+    let userInfoError = '';
+    try {
+      getAuditBaseUrl(env({ PW_BASE_URL: 'https://audit-user:super-secret@audit.example.com' }));
+    } catch (error) {
+      userInfoError = error instanceof Error ? error.message : String(error);
+    }
+    expect(userInfoError).toMatch(/identifiants|userinfo/i);
+    expect(userInfoError).not.toContain('super-secret');
+    let invalidProtocolError = '';
+    try {
+      getAuditBaseUrl(env({ PW_BASE_URL: 'ftp://audit.example/?access_token=query-secret#fragment' }));
+    } catch (error) {
+      invalidProtocolError = error instanceof Error ? error.message : String(error);
+    }
+    expect(invalidProtocolError).toMatch(/HTTP\(S\)/i);
+    expect(invalidProtocolError).not.toContain('query-secret');
+    expect(invalidProtocolError).not.toContain('fragment');
   });
 
   it('exige AUDIT_EMAIL et AUDIT_PASSWORD explicitement', () => {

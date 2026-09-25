@@ -1,9 +1,10 @@
 import { execFileSync } from 'node:child_process';
-import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import * as core from '../../scripts/audit/contrast_audit_core.mjs';
+import { loadAuditStorageState } from '../../scripts/audit/create_test_session.mjs';
 import {
   attachPageDiagnostics,
   defaultAuditStorageStatePath,
@@ -62,6 +63,21 @@ describe('fix round 1 — régressions', () => {
     }, now, 'http://localhost:3000')).toThrow(/malform/i);
     expect(() => core.validateStorageState({
       ...validState,
+      cookies: [{
+        ...validState.cookies[0],
+        domain: undefined,
+        url: 'https://evil.example/steal',
+      }],
+    }, now, 'http://localhost:3000')).toThrow(/cookie URL|origine cookie/i);
+    expect(() => core.validateStorageState({
+      ...validState,
+      cookies: [
+        ...validState.cookies,
+        { name: 'foreign', value: 'opaque', domain: 'evil.example', path: '/' },
+      ],
+    }, now, 'http://localhost:3000')).toThrow(/origine cookie/i);
+    expect(() => core.validateStorageState({
+      ...validState,
       origins: [{
         ...validState.origins[0],
         localStorage: [{ name: 'sb-project-auth-token', value: '{malformed' }],
@@ -77,6 +93,23 @@ describe('fix round 1 — régressions', () => {
         }],
       }],
     }, now, 'http://localhost:3000')).toThrow(/expir/i);
+  });
+
+  it('ne propage pas le message brut d’un storageState JSON malformé', () => {
+     const privateRoot = path.join(os.tmpdir(), 'lkdv-audit');
+     mkdirSync(privateRoot, { recursive: true });
+     const directory = mkdtempSync(path.join(privateRoot, 'invalid-'));
+    const filePath = path.join(directory, 'state.json');
+    writeFileSync(filePath, '{"access_token":"raw-secret');
+    let message = '';
+    try {
+      loadAuditStorageState(filePath, 'http://localhost:3000');
+    } catch (error) {
+      message = error instanceof Error ? error.message : String(error);
+    }
+    rmSync(directory, { recursive: true, force: true });
+    expect(message).toBe('storageState invalide');
+    expect(message).not.toContain('raw-secret');
   });
 
   it('mesure un pixel dangereux hors des trois anciens points et compose alpha/opacité', () => {
@@ -118,7 +151,8 @@ describe('fix round 1 — régressions', () => {
   it('utilise des rectangles de texte direct et évite les descendants mélangés', () => {
     const script = source('scripts/audit/measure_contrast_v2.mjs');
 
-    expect(script).toContain('selectNode(textNode)');
+    expect(script).toContain('range.setStart(textNode, segment.start)');
+    expect(script).toContain('range.setEnd(textNode, segment.end)');
     expect(script).toContain('NodeFilter.SHOW_TEXT');
     expect(script).toContain('textNode.parentElement');
     expect(script).not.toContain('selectNodeContents');
@@ -167,7 +201,7 @@ describe('fix round 1 — régressions', () => {
     });
 
     expect(nodes[0]).toMatchObject({ dataAuditId: 'audit-2', status: 'pass', ratio: 21 });
-    expect(nodes[1]).toMatchObject({ dataAuditId: 'audit-20', status: 'contrast_fail', ratio: null });
+     expect(nodes[1]).toMatchObject({ dataAuditId: 'audit-20', status: 'unknown', ratio: null, threshold: null });
   });
 
   it('agrège à zéro dès qu’une cellule est en erreur', () => {

@@ -21,7 +21,7 @@ const InteractiveMap = dynamic(() => import('@/components/map/InteractiveMap'), 
 export default function CarteClient() {
   return (
     <MapPageLayout
-      hasBottomNav={false}
+      hasBottomNav={true}
       map={<InteractiveMap />}
       header={
         <div className="hidden md:block">

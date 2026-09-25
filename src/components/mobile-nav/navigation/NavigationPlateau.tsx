@@ -107,7 +107,7 @@ export default function NavigationPlateau({ controller }: { controller: Navigati
         marginBottom: 0,
         paddingTop: 2,
         paddingBottom: 2,
-        background: 'var(--material-bar-bg)',
+        background: 'var(--g1-bg)',
         backdropFilter: 'blur(var(--material-bar-blur)) saturate(var(--material-bar-saturate))',
         WebkitBackdropFilter: 'blur(var(--material-bar-blur)) saturate(var(--material-bar-saturate))',
         borderTopLeftRadius: 'var(--lkv-radius-sheet)',

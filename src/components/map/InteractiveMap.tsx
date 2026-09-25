@@ -457,11 +457,12 @@ export default function InteractiveMap() {
               height: 28px;
               border-radius: 50%;
               display: flex;
-              align-items: center;
-              justify-content: center;
-              box-shadow: 0 2px 6px rgba(51,65,85,0.3);
-              border: 2px solid #E4DED3;
-            ">📍${count}</div>
+               position: relative;
+               align-items: center;
+               justify-content: center;
+               box-shadow: 0 2px 6px rgba(51,65,85,0.3);
+               border: 2px solid #E4DED3;
+             "><span aria-hidden="true" style="position: absolute; left: 2px; top: 50%; transform: translateY(-50%); font-size: 9px;">📍</span><span>${count}</span></div>
           `;
           return L.divIcon({ html, className: '', iconSize: [28, 28], iconAnchor: [14, 14] });
         }
@@ -572,7 +573,7 @@ export default function InteractiveMap() {
             break;
           case 'water':
             emoji = '💧';
-            bgColor = '#0284C7';
+            bgColor = '#0C4A6E';
             break;
           case 'waterfall':
             emoji = '🌊';
@@ -892,7 +893,7 @@ const LINK_ICON =
         )}
 
         {/* 2. Floating Tile Switcher (EN BAS À GAUCHE) */}
-        <div className="absolute bottom-[var(--map-control-bottom)] left-3.5 z-[var(--z-fab)] md:bottom-6 md:left-4">
+        <div className="absolute bottom-[calc(var(--map-control-bottom)+88px)] left-3.5 z-[var(--z-fab)] md:bottom-6 md:left-4">
           <Card variant="featured" className="flex items-center gap-1.5 rounded-full p-1 shadow-md">
             <IconButton
               variant={tileMode === 'osm' ? 'solid' : 'ghost'}

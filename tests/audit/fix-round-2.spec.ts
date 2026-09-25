@@ -139,8 +139,9 @@ describe('fix round 2 — régressions', () => {
     expect(typeof coreApi.auditVerificationStatus).toBe('function');
     if (typeof coreApi.auditVerificationStatus !== 'function') return;
     expect(coreApi.auditVerificationStatus({ liveVerified: false })).toBe('PARTIAL / NOT VERIFIED');
-    expect(coreApi.auditVerificationStatus({ liveVerified: true, errors: ['runtime'] })).toBe('PARTIAL / NOT VERIFIED');
-    expect(coreApi.auditVerificationStatus({ liveVerified: true, errors: [] })).toBe('VERIFIED');
+     expect(coreApi.auditVerificationStatus({ liveVerified: true, errors: ['runtime'] })).toBe('PARTIAL / NOT VERIFIED');
+     expect(coreApi.auditVerificationStatus({ liveVerified: true, errors: [] })).toBe('PARTIAL / NOT VERIFIED');
+     expect(coreApi.auditVerificationStatus({ liveVerified: true, coverageComplete: true, errors: [] })).toBe('VERIFIED');
   });
 
   it('étend le scan statique aux formats de scripts pertinents', () => {

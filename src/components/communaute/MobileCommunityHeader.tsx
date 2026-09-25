@@ -38,7 +38,7 @@ export default function MobileCommunityHeader({ onSearchClick }: { onSearchClick
         }
       />
       <div className="w-full pt-[calc(var(--safe-top)+var(--space-2)+var(--control-height-md)+var(--space-2))]">
-        <span className="block font-mono text-[length:var(--lkv-text-caption-2)] font-semibold uppercase tracking-[0.14em] text-[color:var(--lkv-text-muted)]">
+        <span className="block font-mono text-[length:var(--lkv-text-caption-2)] font-semibold uppercase tracking-[0.14em] text-[color:var(--lkv-text-primary)]">
           Le kit du voyageur
         </span>
         <h1 className="text-[length:var(--lkv-text-title-lg)] font-bold leading-[var(--lkv-line-title)] tracking-[var(--lkv-tracking-title)] text-[color:var(--lkv-text-primary)]">

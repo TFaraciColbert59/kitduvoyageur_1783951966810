@@ -8,12 +8,15 @@ import {
   buildMatrixAuditReport,
   buildMatrixCells,
   collectColorContrastAxeNodes,
+  countContrastNodes,
   EXPECTED_MATRIX_CELL_COUNT,
   getAuditBaseUrl,
+  hasValidContrastEvidence,
   matrixCellKey,
 } from './contrast_audit_core.mjs';
 import {
   AUDIT_USER_AGENT,
+  assessCurrentRouteNavigation,
   assertRouteNavigation,
   colorContrastRules,
   extractTextElements,
@@ -25,10 +28,12 @@ import {
 import {
   aggregateRouteOutcomes,
   attachPageDiagnostics,
+  ensurePrivateAuditDirectory,
   invalidateAuditReports,
   redactDiagnosticText,
   redactRuntimeValue,
   writeAuditErrorReport,
+  writePrivateAuditFile,
 } from './audit_runtime.mjs';
 import {
   auditStorageStatePath,
@@ -41,6 +46,34 @@ const a11yDir = path.resolve('audit', 'a11y');
 const matrixJsonPath = path.join(a11yDir, 'contrast-key-screens-matrix.json');
 const matrixMarkdownPath = path.resolve('audit', 'CONTRASTE-MATRICE.md');
 const errorReportPath = path.join(a11yDir, 'contrast-key-screens-error.json');
+const MATRIX_MEASUREMENT_SCOPE = {
+  viewport: { width: 390, height: 844 },
+  fullPage: false,
+  scrollCoverage: 'first_viewport',
+};
+
+export function isRenderedContentReady(text) {
+  const normalized = String(text || '').trim();
+  return normalized.length > 80
+    && !/Connexion requise|Chargement|Initialisation/i.test(normalized);
+}
+
+export async function waitForRenderedContent(page, timeout = 10000) {
+  await page.waitForFunction(() => {
+    const text = document.querySelector('main')?.innerText || '';
+    const animations = typeof document.getAnimations === 'function' ? document.getAnimations() : [];
+    const animationsSettled = animations.every((animation) => {
+      const timing = animation.effect?.getTiming?.();
+      return animation.playState === 'finished' || timing?.iterations === Infinity;
+    });
+    return text.trim().length > 80
+      && !/Connexion requise|Chargement|Initialisation/i.test(text)
+      && animationsSettled;
+  }, undefined, { timeout });
+  if (typeof page.waitForTimeout === 'function') {
+    await page.waitForTimeout(600);
+  }
+}
 
 function markdownCell(value) {
   return String(value ?? '').replace(/\|/g, '/').replace(/\r?\n/g, ' ');
@@ -74,26 +107,102 @@ export function attachMatrixCellMetadata(report, results = []) {
         status: result?.status ?? (result?.error ? 'error' : 'not_measured'),
         warnings,
         degraded: result?.degraded === true || warnings.length > 0 || Boolean(result?.error),
-        finalPath: result?.finalPath ?? null,
-        httpStatus: Number.isFinite(result?.httpStatus) ? result.httpStatus : null,
+         finalPath: result?.finalPath ?? null,
+         httpStatus: Number.isFinite(result?.httpStatus) ? result.httpStatus : null,
+         actualTheme: result?.actualTheme ?? null,
+         actualIntensity: result?.actualIntensity ?? null,
+         measurementState: result?.measurementState ?? 'unknown',
+         scrollY: result?.scrollY ?? null,
+         overlayOpen: result?.overlayOpen ?? null,
       };
     }),
   };
 }
 
+export function isMatrixAuditVerified(report) {
+  const cells = Array.isArray(report?.cells) ? report.cells : [];
+  const expectedCells = buildMatrixCells();
+  const expectedByKey = new Map(expectedCells.map((cell) => [matrixCellKey(cell), cell]));
+  const actualKeys = cells.map((cell) => matrixCellKey({
+    ...cell,
+    intensity: cell?.requestedIntensity ?? cell?.intensity,
+  }));
+  const actualKeySet = new Set(actualKeys);
+  const totals = { pass: 0, contrast_fail: 0, unknown: 0, occluded: 0, error: 0, nodes: 0 };
+  const cellsValid = cells.every((cell) => {
+    const key = matrixCellKey({
+      ...cell,
+      intensity: cell?.requestedIntensity ?? cell?.intensity,
+    });
+    const expected = expectedByKey.get(key);
+    const nodes = Array.isArray(cell?.nodes) ? cell.nodes : [];
+     if (!expected || cell?.path !== expected.path || !hasValidContrastEvidence(cell)) return false;
+     if (cell?.finalPath !== expected.path
+       || !Number.isInteger(cell?.httpStatus)
+       || cell.httpStatus < 200
+       || cell.httpStatus >= 300) return false;
+     if (cell?.expected === true
+        || cell?.actualTheme !== expected.theme
+        || Number(cell?.actualIntensity) !== Number(expected.intensity)
+        || cell?.measurementState !== 'default'
+        || cell?.scrollY !== 0
+        || cell?.overlayOpen !== false) return false;
+     if (Number(cell?.nodeCount) !== nodes.length || nodes.length === 0) return false;
+    const counts = countContrastNodes(nodes);
+    const declaredCounts = cell?.counts || {};
+    if (
+      Number(declaredCounts.pass) !== counts.pass
+      || Number(declaredCounts.contrast_fail) !== counts.contrast_fail
+      || Number(declaredCounts.unknown) !== counts.unknown
+      || Number(declaredCounts.occluded) !== counts.occluded
+    ) return false;
+    totals.pass += counts.pass;
+    totals.contrast_fail += counts.contrast_fail;
+    totals.unknown += counts.unknown;
+    totals.occluded += counts.occluded;
+    totals.nodes += nodes.length;
+    if (cell?.error) totals.error += 1;
+    return cell?.degraded !== true
+      && !(Array.isArray(cell?.warnings) && cell.warnings.length > 0)
+      && !cell?.error;
+  });
+  const totalsMatch = ['pass', 'contrast_fail', 'unknown', 'occluded', 'error', 'nodes']
+    .every((key) => Number(report?.totals?.[key]) === totals[key]);
+  return report?.verificationStatus === 'VERIFIED'
+    && report?.coverageComplete === true
+    && report?.expectedCellCount === EXPECTED_MATRIX_CELL_COUNT
+    && report?.cellCount === report?.expectedCellCount
+    && cells.length === report?.expectedCellCount
+    && actualKeySet.size === actualKeys.length
+    && actualKeys.every((key) => expectedByKey.has(key))
+    && cellsValid
+    && totalsMatch
+    && totals.error === 0
+    && totals.unknown === 0
+    && totals.occluded === 0
+    && totals.nodes > 0;
+}
+
 export function buildMarkdown(report) {
+  const scope = report.measurementScope || MATRIX_MEASUREMENT_SCOPE;
+  const viewport = scope.viewport || { width: 390, height: 844 };
+  const coverageLabel = scope.scrollCoverage === 'first_viewport' ? 'premier viewport' : scope.scrollCoverage;
   const lines = [
     '# Matrice de contraste — écrans clés',
     '',
     `- Cellules : ${report.cellCount}/${EXPECTED_MATRIX_CELL_COUNT}`,
-    `- Agrégat pondéré : ${report.weightedPassRate.toFixed(1)}% pass`,
+    `- Portée : ${coverageLabel} ${viewport.width}×${viewport.height} (document non scrollé)`,
+    `- Agrégat pondéré (premier viewport) : ${report.weightedPassRate.toFixed(1)}% pass`,
     `- Nœuds : ${report.totals.nodes}`,
     `- pass : ${report.totals.pass}`,
     `- contrast_fail : ${report.totals.contrast_fail}`,
     `- unknown : ${report.totals.unknown}`,
     `- occluded : ${report.totals.occluded}`,
     `- erreurs : ${report.totals.error}`,
+    `- Couverture des cellules : ${report.coverageComplete ? 'complète' : 'incomplète'}`,
+    `- Statut de vérification : ${report.verificationStatus || 'PARTIAL / NOT VERIFIED'}`,
     '',
+
     '| Route | Thème demandé | Intensité demandée | Thème réel | Intensité réelle | Nœuds | Taux | Mesuré | Attendu | Statut | HTTP | Chemin final | Degraded | Warnings | Erreur |',
     '|:---|:---|---:|:---:|---:|---:|---:|:---:|:---:|:---|---:|:---|:---:|:---|:---|',
   ];
@@ -110,13 +219,13 @@ export function buildMarkdown(report) {
 
 async function run() {
   invalidateAuditReports([matrixJsonPath, matrixMarkdownPath, errorReportPath]);
-  fs.mkdirSync(a11yDir, { recursive: true });
+   ensurePrivateAuditDirectory(a11yDir);
   const baseUrl = getAuditBaseUrl();
   const storageState = loadAuditStorageState(auditStorageStatePath(), baseUrl);
   const cells = buildMatrixCells();
   const browser = await chromium.launch({
-    headless: true,
-    args: ['--no-sandbox', '--disable-setuid-sandbox'],
+     headless: true,
+
   });
   const results = [];
 
@@ -128,10 +237,11 @@ async function run() {
       colorScheme: 'dark',
       deviceScaleFactor: 1,
       locale: 'fr-FR',
-      storageState,
-    });
+       storageState,
+       serviceWorkers: 'block',
+     });
     const authPage = await authContext.newPage();
-    await verifyCompteSession(authPage, baseUrl, { sessionMode: true });
+    await verifyCompteSession(authPage, baseUrl, { sessionMode: true, expectedEmail: process.env.AUDIT_EMAIL });
     await authContext.close();
 
     for (const cell of cells) {
@@ -143,6 +253,7 @@ async function run() {
         deviceScaleFactor: 1,
         locale: 'fr-FR',
         storageState,
+       serviceWorkers: 'block',
       });
       await context.addCookies([getAdventureCookie(baseUrl)]);
       const page = await context.newPage();
@@ -169,26 +280,57 @@ async function run() {
         intensity: cell.intensity,
         measured: false,
         expected: false,
-        actualTheme: null,
-        actualIntensity: null,
-        nodes: [],
+         actualTheme: null,
+         actualIntensity: null,
+         measurementState: 'unknown',
+         scrollY: 0,
+         overlayOpen: false,
+         nodes: [],
         axe: { violations: [], incomplete: [] },
       };
 
       try {
-        const navigation = await assertRouteNavigation(page, baseUrl, cell.path);
-        assignMatrixNavigationMetadata(result, navigation);
-        diagnostics.assertClean();
-        result.warnings = diagnostics.warnings.map((entry) => ({ ...entry }));
-        result.degraded = result.warnings.length > 0;
-        if (navigation.expected) {
+         const navigation = await assertRouteNavigation(page, baseUrl, cell.path);
+         assignMatrixNavigationMetadata(result, navigation);
+         if (navigation.expected) {
+           await page.waitForTimeout(600);
+         } else {
+           await waitForRenderedContent(page);
+         }
+         const settledNavigation = assessCurrentRouteNavigation(page, baseUrl, cell.path, navigation.httpStatus);
+           if (settledNavigation.finalPath !== navigation.finalPath
+             || settledNavigation.expected !== navigation.expected
+             || settledNavigation.status !== navigation.status) {
+             throw new Error('La route a changé après le chargement initial');
+           }
+           const captureState = await page.evaluate(() => ({
+             scrollY: window.scrollY,
+             overlayOpen: [...document.querySelectorAll('[role="dialog"], dialog, [aria-modal="true"]')]
+               .some((element) => {
+                 const rect = element.getBoundingClientRect();
+                 const style = getComputedStyle(element);
+                 return rect.width > 0 && rect.height > 0
+                   && rect.bottom > 0 && rect.top < window.innerHeight
+                   && rect.right > 0 && rect.left < window.innerWidth
+                   && style.display !== 'none' && style.visibility !== 'hidden';
+               }),
+           }));
+           if (captureState.scrollY !== 0 || captureState.overlayOpen) {
+             throw new Error('État de matrice non canonical');
+           }
+           result.scrollY = captureState.scrollY;
+           result.overlayOpen = captureState.overlayOpen;
+           result.measurementState = 'default';
+           diagnostics.assertClean();
+         result.warnings = diagnostics.warnings.map((entry) => ({ ...entry }));
+         result.degraded = result.warnings.length > 0;
+         if (navigation.expected) {
           result.expected = true;
           result.status = navigation.reason === 'missing_admin_role' ? 'admin_redirected' : navigation.status;
           result.reason = navigation.reason;
           result.expectedFinalPath = navigation.expectedFinalPath;
-        } else {
-          await page.waitForTimeout(600);
-          const rendered = await readRenderedAuditSettings(page);
+         } else {
+           const rendered = await readRenderedAuditSettings(page);
           result.actualTheme = rendered.theme;
           result.actualIntensity = rendered.intensity;
           assertRenderedAuditSettings({
@@ -199,14 +341,21 @@ async function run() {
           });
           const textElements = await extractTextElements(page);
           const axeResults = await new AxeBuilder({ page })
+            .include('[data-audit-id]')
             .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'])
             .analyze();
           const measured = await measurePageContrast(page, axeResults, {
             backgroundCss: BACKGROUND_CAPTURE_CSS,
             textElements,
-          });
-          if (measured.nodes.length === 0) throw new Error('Aucun nœud texte mesuré');
-          diagnostics.assertClean();
+           });
+           if (measured.nodes.length === 0) throw new Error('Aucun nœud texte mesuré');
+           const finalNavigation = assessCurrentRouteNavigation(page, baseUrl, cell.path, navigation.httpStatus);
+           if (finalNavigation.finalPath !== navigation.finalPath
+             || finalNavigation.expected !== navigation.expected
+             || finalNavigation.status !== navigation.status) {
+             throw new Error('La route a changé pendant la mesure');
+           }
+           diagnostics.assertClean();
           result.warnings = diagnostics.warnings.map((entry) => ({ ...entry }));
           result.degraded = result.warnings.length > 0;
           result.measured = true;
@@ -225,7 +374,7 @@ async function run() {
         result.degraded = result.warnings.length > 0;
       } finally {
         diagnostics.dispose();
-        await context.close();
+         await context.close().catch(() => {});
       }
       results.push(result);
     }
@@ -241,27 +390,43 @@ async function run() {
   const aggregate = aggregateRouteOutcomes(results);
   const resultErrors = aggregate.errors.map((entry) => entry.error);
   const expectedCells = results.filter((result) => result.expected).length;
-  const report = attachMatrixCellMetadata(buildMatrixAuditReport({
-    cells: results,
-    expectedCellCount: EXPECTED_MATRIX_CELL_COUNT,
-    liveVerified: resultErrors.length === 0 && aggregate.warnings.length === 0 && expectedCells === 0,
-    errors: resultErrors,
-  }), results);
-  const serialized = redactRuntimeValue({
-    ...report,
-    generatedAt: new Date().toISOString(),
-    baseUrl,
-    warnings: aggregate.warnings,
-    expectedCells,
-  });
-  fs.writeFileSync(matrixJsonPath, `${JSON.stringify(serialized, null, 2)}\n`);
-  fs.writeFileSync(matrixMarkdownPath, buildMarkdown(serialized));
+   const report = attachMatrixCellMetadata(buildMatrixAuditReport({
+      cells: results,
+      expectedCells: buildMatrixCells(),
+      expectedCellCount: EXPECTED_MATRIX_CELL_COUNT,
+     liveVerified: resultErrors.length === 0 && aggregate.warnings.length === 0 && expectedCells === 0,
+     errors: resultErrors,
+   }), results);
+   report.measurementScope = MATRIX_MEASUREMENT_SCOPE;
+    const matrixVerified = isMatrixAuditVerified(report);
+    const finalReport = matrixVerified
+      ? report
+      : { ...report, verificationStatus: 'PARTIAL / NOT VERIFIED' };
+    const serialized = redactRuntimeValue({
+      ...finalReport,
+      generatedAt: new Date().toISOString(),
+      baseUrl,
+      warnings: aggregate.warnings,
+      expectedCells,
+    }, { redactContent: true });
+    if (!matrixVerified) {
+       const error = new Error(`Matrice non vérifiée (${finalReport.verificationStatus}): ${report.cellCount}/${EXPECTED_MATRIX_CELL_COUNT} cellules, ${report.totals.nodes} nœud(s)`);
+     writeAuditErrorReport(errorReportPath, error, {
+       report: {
+         cellCount: report.cellCount,
+         expectedCellCount: report.expectedCellCount,
+         verificationStatus: report.verificationStatus,
+         weightedPassRate: report.weightedPassRate,
+         totals: report.totals,
+         measurementScope: report.measurementScope,
+       },
+       warnings: aggregate.warnings,
+     });
+      throw error;
+    }
+    writePrivateAuditFile(matrixJsonPath, `${JSON.stringify(serialized, null, 2)}\n`);
+    writePrivateAuditFile(matrixMarkdownPath, buildMarkdown(serialized));
 
-  if (report.totals.error > 0 || report.totals.nodes === 0) {
-    const error = new Error(`Matrice terminée avec ${report.totals.error} erreur(s) et ${report.totals.nodes} nœud(s)`);
-    writeAuditErrorReport(errorReportPath, error, { report });
-    throw error;
-  }
   console.info(`Matrice terminée: ${report.cellCount}/${EXPECTED_MATRIX_CELL_COUNT} cellules, ${report.weightedPassRate.toFixed(1)}% pass.`);
 }
 

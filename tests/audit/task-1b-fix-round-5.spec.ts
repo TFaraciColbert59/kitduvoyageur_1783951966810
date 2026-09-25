@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { attachPageDiagnostics } from '../../scripts/audit/audit_runtime.mjs';
+import { routeDiagnosticsOptions } from '../../scripts/audit/measure_contrast_v2.mjs';
 
 type Listener = (...args: any[]) => void;
 
@@ -49,6 +50,19 @@ function diagnosticsFor(method: string) {
 }
 
 describe('Task 1B fix round 5 — 404 attendu par méthode', () => {
+  it('configure les diagnostics avec la route 404 attendue', () => {
+    const emitted = createPage();
+    const diagnostics = attachPageDiagnostics(
+      emitted.page,
+      routeDiagnosticsOptions(baseUrl, '/dev/glass'),
+    );
+    emitted.emit('response', makeResponse('GET'));
+
+    expect(diagnostics.errors).toEqual([]);
+    expect(() => diagnostics.assertClean()).not.toThrow();
+    diagnostics.dispose();
+  });
+
   it.each(['GET', 'HEAD'])('ignore le 404 attendu en %s', (method) => {
     const diagnostics = diagnosticsFor(method);
 

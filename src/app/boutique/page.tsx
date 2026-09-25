@@ -80,7 +80,7 @@ export default function BoutiquePage() {
           <Header />
           <main className="mx-auto h-full max-w-[var(--page-max-w)] overflow-y-auto px-4 pb-20 pt-24 sm:px-6 lg:px-8">
             <PageHeader variant="large" className="mb-[var(--space-3)]" title="La boutique" />
-            <p className="mb-[var(--space-8)] max-w-2xl text-[length:var(--lkv-text-body)] text-[color:var(--lkv-text-muted)]">
+            <p className="mb-[var(--space-8)] max-w-2xl text-[length:var(--lkv-text-body)] text-[color:var(--lkv-text-primary)]">
               Chaque objet est testé en conditions réelles pendant six semaines minimum. Ceux qui
               restent trouvent leur place ici.
             </p>
@@ -120,7 +120,7 @@ export default function BoutiquePage() {
           <div className="flex flex-col gap-[var(--space-4)] px-[var(--space-3)] pb-24 pt-[var(--space-3)]">
             <PageHeader variant="large" title="La boutique" />
 
-            <p className="text-[length:var(--lkv-text-caption)] leading-[var(--leading-relaxed)] text-[color:var(--lkv-text-muted)]">
+            <p className="text-[length:var(--lkv-text-caption)] leading-[var(--leading-relaxed)] text-[color:var(--lkv-text-primary)]">
               Chaque objet est testé en conditions réelles pendant six semaines minimum. Ceux qui
               restent trouvent leur place ici.
             </p>

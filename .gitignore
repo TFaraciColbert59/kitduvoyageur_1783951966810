@@ -87,4 +87,10 @@ audit/screens/**
 audit/auth-storage-state.json
 **/auth-storage-state*.json
 **/*.storageState.json
+audit/a11y/measure-contrast-*.json
+audit/a11y/contrast-key-screens-matrix.json
+audit/a11y/*.json
+audit/a11y/campaign/**
+audit/a11y/section4/**
+audit/contrast-measurements.json
 

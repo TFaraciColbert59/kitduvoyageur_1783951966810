@@ -148,14 +148,23 @@ describe('Task 1B — diagnostics runtime', () => {
       url: 'https://project.supabase.co/rest/v1/thing',
       method: 'POST',
     }));
-    emitted.emit('requestfailed', makeRequest({
-      url: `${baseUrl}/prefetch-without-header`,
-    }));
+     emitted.emit('requestfailed', makeRequest({
+       url: `${baseUrl}/prefetch-without-header`,
+     }));
+     emitted.emit('requestfailed', makeRequest({
+       url: `${baseUrl}/api/private?_rsc=private-key`,
+       headers: {
+         rsc: '1',
+         'next-router-state-tree': 'private-state',
+         'next-url': '/api/private',
+         referer: `${baseUrl}/api/private`,
+       },
+     }));
 
-    expect(diagnostics.errors).toHaveLength(1);
-    expect(diagnostics.errors.map((entry: { type: string }) => entry.type)).toEqual(['requestfailed']);
-    expect(diagnostics.warnings).toHaveLength(1);
-    expect(diagnostics.warnings[0]).toMatchObject({ type: 'requestfailed' });
+     expect(diagnostics.errors).toHaveLength(2);
+     expect(diagnostics.errors.map((entry: { type: string }) => entry.type)).toEqual(['requestfailed', 'requestfailed']);
+     expect(diagnostics.warnings).toHaveLength(2);
+     expect(diagnostics.warnings.every((entry: { type: string }) => entry.type === 'requestfailed')).toBe(true);
     expect(() => diagnostics.assertClean()).toThrow(/runtime audit/i);
     diagnostics.dispose();
   });
@@ -232,8 +241,13 @@ describe('Task 1B — route semantics', () => {
       baseUrl,
       '/admin/produits',
     )).resolves.toMatchObject({ expected: true, finalPath: '/', reason: 'missing_admin_role' });
-    await expect(contrastApi.assertRouteNavigation(
-      navigationPage(`${baseUrl}/dev/glass`, 404),
+     await expect(contrastApi.assertRouteNavigation(
+       navigationPage(`${baseUrl}/admin`, 200),
+       baseUrl,
+       '/admin',
+     )).rejects.toThrow(/rôle administrateur|Redirection/i);
+     await expect(contrastApi.assertRouteNavigation(
+       navigationPage(`${baseUrl}/dev/glass`, 404),
       baseUrl,
       '/dev/glass',
     )).resolves.toMatchObject({ expected: true, status: 'expected_404' });
@@ -253,6 +267,74 @@ describe('Task 1B — route semantics', () => {
       baseUrl,
       '/compte?tab=parametres',
     )).rejects.toThrow(/URL finale/);
+    await expect(contrastApi.assertRouteNavigation(
+      navigationPage(`${baseUrl}/hub?mode=unexpected#state`, 200),
+      baseUrl,
+      '/preparer-randonnee',
+    )).rejects.toThrow(/paramètres|fragment|Redirection/i);
+  });
+
+  it('retire query, fragment et userinfo des erreurs de navigation', () => {
+    const cases = [
+      {
+        routePath: '/compte?access_token=route-secret#route-fragment',
+        finalUrl: `${baseUrl}/compte`,
+        status: 401,
+      },
+      {
+        routePath: '/compte?access_token=route-secret',
+        finalUrl: `${baseUrl}/autre?access_token=final-secret#final-fragment`,
+        status: 200,
+      },
+      {
+        routePath: '/compte?access_token=route-secret',
+        finalUrl: 'https://audit-user:final-secret@example.com/autre?access_token=query-secret#final-fragment',
+        status: 200,
+      },
+      {
+        routePath: '/compte',
+        finalUrl: 'http://audit-user:final-secret@localhost:3000/compte',
+        status: 200,
+      },
+    ];
+
+    for (const testCase of cases) {
+      let message = '';
+      try {
+        contrastApi.assessRouteNavigation({ baseUrl, ...testCase });
+      } catch (error) {
+        message = error instanceof Error ? error.message : String(error);
+      }
+      expect(message).not.toMatch(/route-secret|final-secret|query-secret|route-fragment|final-fragment/);
+      expect(message).not.toMatch(/access_token|#/);
+    }
+  });
+
+  it('redige les URL relatives, protocol-relative et WebSocket', () => {
+    const jwt = ['eyJ', 'a'.repeat(32), '.', 'b'.repeat(20), '.', 'c'.repeat(20)].join('');
+    const message = runtimeApi.redactDiagnosticText(
+      `GET /compte?access_token=relative-secret#fragment url=/reset/quoted-secret error:/profil/colon-secret "/profil/quote-secret" //user:pass@example.test/ws wss://example.test/socket?jwt=socket-secret ${jwt}`,
+    );
+
+    expect(message).not.toMatch(/relative-secret|quoted-secret|colon-secret|quote-secret|socket-secret|user:pass|eyJaaaaaaaaaaaaaaaa/);
+    expect(message).not.toMatch(/access_token|jwt=/);
+  });
+
+  it('redige les erreurs de navigation Playwright avant leur persistance', async () => {
+    const failingPage = {
+      url: () => `${baseUrl}/compte`,
+      goto: async () => {
+        throw new Error(`goto https://audit-user:pass@localhost:3000/compte?token=goto-secret#fragment`);
+      },
+    };
+    let message = '';
+    try {
+      await contrastApi.assertRouteNavigation(failingPage, baseUrl, '/compte');
+    } catch (error) {
+      message = error instanceof Error ? error.message : String(error);
+    }
+
+    expect(message).not.toMatch(/goto-secret|audit-user|pass@|#fragment/);
   });
 
   it('conserve les mesures valides lorsqu’une autre route est en erreur', () => {
@@ -260,7 +342,7 @@ describe('Task 1B — route semantics', () => {
     if (typeof runtimeApi.aggregateRouteOutcomes !== 'function') return;
 
     const aggregate = runtimeApi.aggregateRouteOutcomes([
-      { id: 'ok', measured: true, nodes: [{ status: 'pass' }] },
+      { id: 'ok', measured: true, nodes: [{ id: 'pass-node', selector: '#pass-node', ratio: 4.5, threshold: 4.5, status: 'pass' }] },
       { id: 'produit', measured: false, error: 'HTTP 500' },
     ]);
 

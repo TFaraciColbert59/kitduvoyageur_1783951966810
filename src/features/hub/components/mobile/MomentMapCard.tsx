@@ -56,26 +56,21 @@ export function MomentMapCard({
         />
       </div>
       <div
-        className="pointer-events-none absolute inset-0 z-10 bg-gradient-to-b from-black/40 via-black/0 to-black/5"
-        aria-hidden="true"
-      />
-
-      <div
         className={`relative z-20 flex h-full ${heightClass} flex-col justify-between p-3.5 ${
           fillViewport ? 'pb-[calc(var(--bottom-nav-height,52px)+16px)]' : ''
         }`}
       >
         <header className="flex items-start justify-between gap-2">
           <div className="min-w-0">
-            <p className="inline-flex items-center rounded-full bg-black/35 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-white/95 backdrop-blur-sm">
+            <p className="inline-flex items-center rounded-full bg-[var(--lkv-forest-950)] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--lkv-on-dark)] backdrop-blur-sm">
               {eyebrow}
             </p>
-            <p className="mt-1 inline-flex items-center rounded-full bg-white/90 px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.08em] text-[var(--lkv-primary)] shadow-2xs">
+            <p className="mt-1 inline-flex items-center rounded-full bg-[var(--lkv-surface-paper)] px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.08em] text-[var(--lkv-primary)] shadow-2xs">
               {badge}
             </p>
           </div>
           {dateLabel && (
-            <p className="shrink-0 rounded-full bg-black/35 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-white/95 backdrop-blur-sm">
+            <p className="shrink-0 rounded-full bg-[var(--lkv-forest-950)] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--lkv-on-dark)] backdrop-blur-sm">
               {dateLabel}
             </p>
           )}

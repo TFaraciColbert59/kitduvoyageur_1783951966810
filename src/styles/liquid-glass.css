@@ -847,6 +847,14 @@
   -webkit-backdrop-filter: none !important;
   backdrop-filter: none !important;
 }
+.glass-sub-card {
+  background: var(--card-tint);
+  color: var(--card-content);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+  -webkit-backdrop-filter: blur(var(--card-blur)) saturate(var(--card-saturate));
+  backdrop-filter: blur(var(--card-blur)) saturate(var(--card-saturate));
+}
 .glass .glass,
 .glass .glass-sub-card {
   /* Surface imbriquée = puits clair, jamais de second flou. */
@@ -964,7 +972,7 @@
   --glass-blur-light: 16px;
   --glass-saturate: 170%;
   --glass-brightness: 1.02;
-  --glass-tint: rgba(255, 255, 255, 0.55);
+  --glass-tint: var(--card-tint-solid);
   --glass-tint-strong: rgba(255, 255, 255, 0.78);
 
   /* Géométrie — direction P5 : rayons 12/16/24 */
@@ -1104,7 +1112,7 @@
 
 /* Optique legacy (.lkv-glass) */
 .dark {
-  --glass-tint: rgba(255, 255, 255, 0.10);
+  --glass-tint: var(--card-tint-solid);
   --glass-tint-strong: rgba(255, 255, 255, 0.16);
 }
 

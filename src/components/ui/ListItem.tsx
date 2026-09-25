@@ -78,7 +78,7 @@ export function ListItem({
           {title}
         </span>
         {subtitle && (
-          <span className="block truncate text-[length:var(--lkv-text-footnote)] text-[color:var(--lkv-text-secondary)]">
+          <span className="block truncate text-[length:var(--lkv-text-footnote)] text-[color:var(--lkv-text-primary)]">
             {subtitle}
           </span>
         )}

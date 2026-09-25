@@ -46,7 +46,7 @@ function plural(count: number, singular: string, pluralForm = `${singular}s`): s
 function StatChip({ label, value }: { label: string; value: string }) {
   return (
     <Card variant="compact" className="px-3 py-2">
-      <span className="block font-mono text-[10px] font-bold uppercase tracking-wider text-[var(--lkv-text-muted)]">
+      <span className="block font-mono text-[10px] font-bold uppercase tracking-wider text-[var(--lkv-text-primary)]">
         {label}
       </span>
       <span className="font-mono text-base font-extrabold tabular-nums text-[var(--lkv-text-primary)]">
@@ -144,7 +144,7 @@ function MaterielSurface({ summary }: { summary: MaterielSummary }) {
   }
 
   return (
-    <div className="w-full space-y-5 font-sans text-[var(--lkv-text-primary)]">
+    <div className="w-full space-y-2 sm:space-y-4 font-sans text-[var(--lkv-text-primary)]">
       <PageHeader
         variant="large"
         title="Matériel"
@@ -223,9 +223,9 @@ function MaterielSurface({ summary }: { summary: MaterielSummary }) {
 
       {/* ── Éléments à préparer ── */}
       <Section aria-labelledby="materiel-a-preparer" title="À préparer">
-        <Card variant="compact" className="p-4 sm:p-5">
+        <Card variant="compact" className="p-3 sm:p-5">
         {prepRows.length > 0 ? (
-          <ul className="space-y-2">
+          <ul className="space-y-1 sm:space-y-2">
             {prepRows.map((row) => (
               <li key={row.label}>
                 <Link
@@ -260,7 +260,8 @@ function MaterielSurface({ summary }: { summary: MaterielSummary }) {
 
         {/* Chiffres réels uniquement : jamais d'état « bon » sur un inventaire vide. */}
         {hasInventory && (
-          <div className="mt-4 flex flex-wrap gap-2">
+           <div className="mt-0 sm:mt-4 flex flex-wrap gap-2">
+
             <StatChip label="Équipements" value={String(summary.inventaire.count)} />
             <StatChip label="En bon état" value={`${summary.inventaire.goodConditionPct} %`} />
             <StatChip label="Fiabilité" value={`${summary.alertes.reliabilityScore} %`} />
@@ -270,8 +271,9 @@ function MaterielSurface({ summary }: { summary: MaterielSummary }) {
       </Section>
 
       {/* ── Accès ── */}
-      <nav aria-label="Accès matériel">
-        <Section as="div" title="Accès">
+       <nav aria-label="Accès matériel">
+         <Section as="div" title="Accès" className="pt-8 md:pt-0">
+
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             {ACCESS_LINKS.map(({ label, hint, href, Icon }) => (
               <Card key={label} variant="interactive" className="p-0">
@@ -318,7 +320,8 @@ export default async function MaterielPage() {
       {/* MOBILE LAYOUT (< 768px, iPhone 16 Pro priority) */}
       <div className="block md:hidden">
         <AppShell>
-          <div className="relative px-3.5 pb-24 pt-4 font-sans">
+           <div className="relative px-3.5 pb-24 pt-2 font-sans">
+
             <MaterielSurface summary={summary} />
           </div>
         </AppShell>

@@ -1,21 +1,26 @@
 import AxeBuilder from '@axe-core/playwright';
 import { chromium } from '@playwright/test';
+import { createHash, randomUUID } from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import {
   assertRenderedAuditSettings,
   buildCampaignAuditReport,
+  countContrastNodes,
   getAuditBaseUrl,
+  hasValidContrastEvidence,
 } from './contrast_audit_core.mjs';
 import {
   aggregateRouteOutcomes,
   attachPageDiagnostics,
+  ensurePrivateAuditDirectory,
   invalidateAuditReportDirectory,
   invalidateAuditReports,
   redactDiagnosticText,
   redactRuntimeValue,
   writeAuditErrorReport,
+  writePrivateAuditFile,
 } from './audit_runtime.mjs';
 import {
   auditStorageStatePath,
@@ -25,6 +30,7 @@ import {
 import {
   AUDIT_USER_AGENT,
   ROUTES,
+  assessCurrentRouteNavigation,
   assertRouteNavigation,
   colorContrastRules,
   extractTextElements,
@@ -34,20 +40,24 @@ import {
   routeExpectationFor,
 } from './measure_contrast_v2.mjs';
 
-const screensDir = path.resolve('audit', 'screens');
-const a11yDir = path.resolve('audit', 'a11y');
+const screensDir = path.resolve('audit', 'screens', 'campaign');
+const manifestPath = path.join(screensDir, 'manifest.json');
+const a11yDir = path.resolve('audit', 'a11y', 'campaign');
 const errorReportPath = path.join(a11yDir, 'campaign-error.json');
+const contrastMarkdownPath = path.resolve('audit', 'CONTRASTE-CAMPAGNE.md');
 const VIEWPORTS = [
   { name: '390x844', width: 390, height: 844 },
   { name: '1440x900', width: 1440, height: 900 },
 ];
 
+function fileDigest(filePath) {
+  const stat = fs.lstatSync(filePath);
+  if (!stat.isFile() || stat.isSymbolicLink()) throw new Error('Artifact capture invalide');
+  return { size: stat.size, sha256: createHash('sha256').update(fs.readFileSync(filePath)).digest('hex') };
+}
+
 function countNodes(nodes) {
-  return nodes.reduce((counts, node) => {
-    if (Object.hasOwn(counts, node.status)) counts[node.status] += 1;
-    else counts.unknown += 1;
-    return counts;
-  }, { pass: 0, contrast_fail: 0, unknown: 0, occluded: 0 });
+  return countContrastNodes(nodes);
 }
 
 function countNodesByTarget(rules) {
@@ -71,6 +81,25 @@ async function initializeAuditPage(page, theme, intensity = 0.5) {
     localStorage.setItem('lkdv_glass_intensity', String(requestedIntensity));
     localStorage.setItem('lkdv_theme', requestedTheme);
   }, { requestedTheme: theme, requestedIntensity: intensity });
+}
+
+async function waitForCampaignDefaultState(page) {
+  await page.waitForFunction(() => {
+    const text = document.querySelector('main')?.innerText || '';
+    return text.trim().length > 80 && !/Connexion requise|Chargement|Initialisation/i.test(text);
+  }, undefined, { timeout: 10000 });
+  return page.evaluate(() => ({
+    scrollY: window.scrollY,
+    overlayOpen: [...document.querySelectorAll('[role="dialog"], dialog, [aria-modal="true"]')]
+      .some((element) => {
+        const rect = element.getBoundingClientRect();
+        const style = getComputedStyle(element);
+        return rect.width > 0 && rect.height > 0
+          && rect.bottom > 0 && rect.top < window.innerHeight
+          && rect.right > 0 && rect.left < window.innerWidth
+          && style.display !== 'none' && style.visibility !== 'hidden';
+      }),
+  }));
 }
 
 async function assertPageSettings(page, theme, intensity = 0.5) {
@@ -103,11 +132,13 @@ function buildContrastReport(findings, errors, report) {
     '|:---|---:|---:|---:|---:|---:|---:|',
   ];
   for (const finding of findings) {
-    const counts = finding.counts || {};
-    const pass = Number.isFinite(counts.pass) ? counts.pass : 0;
-    const contrastFail = Number.isFinite(counts.contrast_fail) ? counts.contrast_fail : 0;
-    const unknown = Number.isFinite(counts.unknown) ? counts.unknown : 0;
-    const occluded = Number.isFinite(counts.occluded) ? counts.occluded : 0;
+     const counts = hasValidContrastEvidence(finding)
+      ? countContrastNodes(finding.nodes)
+      : { pass: 0, contrast_fail: 0, unknown: 0, occluded: 0 };
+    const pass = counts.pass;
+    const contrastFail = counts.contrast_fail;
+    const unknown = counts.unknown;
+    const occluded = counts.occluded;
     const total = pass + contrastFail + unknown + occluded;
     const rate = total === 0 ? 0 : (pass / total) * 100;
     lines.push(`| ${finding.routeId} | ${total} | ${pass} | ${contrastFail} | ${unknown} | ${occluded} | ${rate.toFixed(1)}% |`);
@@ -152,6 +183,14 @@ export function aggregateManifestDiagnostics(captures = []) {
   return { warnings, degradedRoutes: [...degradedRoutes] };
 }
 
+function manifestStateForFile(file) {
+  if (typeof file !== 'string') return 'invalid';
+  if (file.endsWith('-default.png')) return 'default';
+  if (file.endsWith('-scroll-end.png')) return 'scroll-end';
+  if (file.endsWith('-modal.png')) return 'modal';
+  return 'invalid';
+}
+
 export function campaignExpectedCounts(summary = {}, expectedRouteCount = ROUTES.length) {
   const entries = summary && typeof summary === 'object' ? Object.values(summary) : [];
   return {
@@ -166,35 +205,62 @@ export function campaignIsLiveVerified(options = {}) {
   const expectedRouteCount = options.expectedRouteCount ?? ROUTES.length;
   const warnings = Array.isArray(options.warnings) ? options.warnings : [];
   const degradedRoutes = Array.isArray(options.degradedRoutes) ? options.degradedRoutes : [];
-  const expectedOutcomeCount = options.expectedOutcomeCount ?? 0;
+  const expectedOutcomeCount = Number.isInteger(options.expectedOutcomeCount)
+    ? Math.max(0, options.expectedOutcomeCount)
+    : 0;
+  const expectedMeasuredRouteIds = Array.isArray(options.expectedMeasuredRouteIds)
+    ? options.expectedMeasuredRouteIds
+    : [];
+  const observedMeasuredRouteIds = Array.isArray(options.observedMeasuredRouteIds)
+    ? options.observedMeasuredRouteIds
+    : [];
+  const manifestRouteIds = Array.isArray(options.manifestRouteIds)
+    ? options.manifestRouteIds
+    : [];
+  const uniqueManifestRouteIds = [...new Set(manifestRouteIds)];
+  const manifestRouteSetComplete = options.manifestCoverageComplete === true
+    && expectedMeasuredRouteIds.length > 0
+    && new Set(expectedMeasuredRouteIds).size === expectedMeasuredRouteIds.length
+    && uniqueManifestRouteIds.length > 0
+    && expectedMeasuredRouteIds.every((routeId) => uniqueManifestRouteIds.includes(routeId))
+    && uniqueManifestRouteIds.every((routeId) => expectedMeasuredRouteIds.includes(routeId));
+  const expectedMeasuredRouteCount = expectedMeasuredRouteIds.length || Math.max(0, expectedRouteCount - expectedOutcomeCount);
+  const observedRouteSetComplete = observedMeasuredRouteIds.length === expectedMeasuredRouteCount
+    && new Set(observedMeasuredRouteIds).size === observedMeasuredRouteIds.length
+    && expectedMeasuredRouteIds.every((routeId) => observedMeasuredRouteIds.includes(routeId))
+    && observedMeasuredRouteIds.every((routeId) => expectedMeasuredRouteIds.includes(routeId));
+  if (![errorCount, completedRouteCount, expectedRouteCount].every(Number.isInteger)) return false;
   return errorCount === 0
-    && completedRouteCount === expectedRouteCount
+    && completedRouteCount === expectedMeasuredRouteCount
     && warnings.length === 0
     && degradedRoutes.length === 0
-    && expectedOutcomeCount === 0;
+    && observedRouteSetComplete
+    && manifestRouteSetComplete;
 }
 
 async function run() {
   invalidateAuditReports([
-    path.join(screensDir, 'manifest.json'),
-    path.join(a11yDir, 'summary.json'),
-    path.join(a11yDir, 'campaign-contrast.json'),
-    path.resolve('audit', 'CONTRASTE.md'),
+     manifestPath,
+     path.join(a11yDir, 'summary.json'),
+     path.join(a11yDir, 'campaign-contrast.json'),
+     contrastMarkdownPath,
     errorReportPath,
   ]);
-  invalidateAuditReportDirectory(a11yDir, (name) => name.endsWith('.json'));
-  fs.mkdirSync(screensDir, { recursive: true });
-  fs.mkdirSync(a11yDir, { recursive: true });
+   invalidateAuditReportDirectory(a11yDir, (name) => name.endsWith('.json'));
+   ensurePrivateAuditDirectory(screensDir);
+   ensurePrivateAuditDirectory(a11yDir);
   const BASE_URL = getAuditBaseUrl();
   const storageState = loadAuditStorageState(auditStorageStatePath(), BASE_URL);
   const browser = await chromium.launch({
-    headless: true,
-    args: ['--no-sandbox', '--disable-setuid-sandbox'],
+     headless: true,
+
   });
-  const manifest = [];
-  const a11ySummary = {};
+   const manifest = [];
+   const a11ySummary = {};
+   const runId = randomUUID();
   const contrastFindings = [];
   const errors = [];
+  const warnings = [];
 
   try {
     const authContext = await browser.newContext({
@@ -204,10 +270,11 @@ async function run() {
       colorScheme: 'dark',
       deviceScaleFactor: 1,
       locale: 'fr-FR',
-      storageState,
-    });
+       storageState,
+       serviceWorkers: 'block',
+     });
     const authPage = await authContext.newPage();
-    await verifyCompteSession(authPage, BASE_URL, { sessionMode: true });
+    await verifyCompteSession(authPage, BASE_URL, { sessionMode: true, expectedEmail: process.env.AUDIT_EMAIL });
     await authContext.close();
 
     for (const route of ROUTES) {
@@ -222,6 +289,7 @@ async function run() {
           deviceScaleFactor: 1,
           locale: 'fr-FR',
           storageState,
+         serviceWorkers: 'block',
         });
         await context.addCookies([getAdventureCookie(BASE_URL)]);
         const page = await context.newPage();
@@ -230,11 +298,18 @@ async function run() {
           baseUrl: BASE_URL,
           expected404Path: routeExpectation?.kind === 'http' ? route.path : undefined,
         });
-        await initializeAuditPage(page, 'dark');
-        const navigation = await assertRouteNavigation(page, BASE_URL, route.path);
-        diagnostics.assertClean();
-        const navigationWarnings = diagnostics.warnings.map((entry) => ({ ...entry }));
-        if (navigation.expected) {
+         await initializeAuditPage(page, 'dark');
+         const navigation = await assertRouteNavigation(page, BASE_URL, route.path);
+         await page.waitForTimeout(600);
+         const settledNavigation = assessCurrentRouteNavigation(page, BASE_URL, route.path, navigation.httpStatus);
+         if (settledNavigation.finalPath !== navigation.finalPath
+           || settledNavigation.expected !== navigation.expected
+           || settledNavigation.status !== navigation.status) {
+           throw new Error('La route a changé après le chargement initial');
+         }
+         diagnostics.assertClean();
+         const navigationWarnings = diagnostics.warnings.map((entry) => ({ ...entry }));
+         if (navigation.expected) {
           const redirectRecord = {
             route: route.path,
             id: route.id,
@@ -251,7 +326,7 @@ async function run() {
             incomplete: [],
             colorContrast: { violations: [], incomplete: [] },
           };
-          fs.writeFileSync(path.join(a11yDir, `${route.id}.json`), `${JSON.stringify(redactRuntimeValue(redirectRecord), null, 2)}\n`);
+          writePrivateAuditFile(path.join(a11yDir, `${route.id}.json`), `${JSON.stringify(redactRuntimeValue(redirectRecord), null, 2)}\n`);
           a11ySummary[route.id] = {
             id: route.id,
             path: route.path,
@@ -259,30 +334,36 @@ async function run() {
             expected: true,
             status: redirectRecord.status,
             reason: navigation.reason,
-            finalPath: navigation.finalPath,
-            expectedFinalPath: navigation.expectedFinalPath,
-            warnings: navigationWarnings,
+             finalPath: navigation.finalPath,
+             expectedFinalPath: navigation.expectedFinalPath,
+             httpStatus: navigation.httpStatus,
+             warnings: navigationWarnings,
             degraded: navigationWarnings.length > 0,
             violations: 0,
             incomplete: 0,
             colorContrastViolations: 0,
             colorContrastIncomplete: 0,
           };
-        } else {
-          await page.waitForTimeout(600);
-          const rendered = await assertPageSettings(page, 'dark');
-          const axeResults = await analyzeAxe(page);
-          diagnostics.assertClean();
-          const warnings = diagnostics.warnings.map((entry) => ({ ...entry }));
-          const colorContrast = colorContrastRules(axeResults);
+         } else {
+           const rendered = await assertPageSettings(page, 'dark');
+           const axeResults = await analyzeAxe(page);
+           const finalNavigation = assessCurrentRouteNavigation(page, BASE_URL, route.path, navigation.httpStatus);
+           if (finalNavigation.finalPath !== navigation.finalPath
+             || finalNavigation.expected !== navigation.expected
+             || finalNavigation.status !== navigation.status) {
+             throw new Error('La route a changé pendant la mesure');
+           }
+           diagnostics.assertClean();
+           const routeWarnings = diagnostics.warnings.map((entry) => ({ ...entry }));
+           const colorContrast = colorContrastRules(axeResults);
           const a11y = {
             route: route.path,
             id: route.id,
             timestamp: new Date().toISOString(),
             measured: true,
             expected: false,
-            status: warnings.length > 0 ? 'degraded' : 'measured',
-            theme: 'dark',
+             status: routeWarnings.length > 0 ? 'degraded' : 'measured',
+             theme: 'dark',
             requestedIntensity: 0.5,
             actualTheme: rendered.theme,
             actualIntensity: rendered.intensity,
@@ -292,10 +373,10 @@ async function run() {
               violations: colorContrast.violations,
               incomplete: colorContrast.incomplete,
             },
-            warnings,
-            degraded: warnings.length > 0,
+             warnings: routeWarnings,
+             degraded: routeWarnings.length > 0,
           };
-          fs.writeFileSync(path.join(a11yDir, `${route.id}.json`), `${JSON.stringify(redactRuntimeValue(a11y), null, 2)}\n`);
+          writePrivateAuditFile(path.join(a11yDir, `${route.id}.json`), `${JSON.stringify(redactRuntimeValue(a11y), null, 2)}\n`);
           a11ySummary[route.id] = {
             id: route.id,
             path: route.path,
@@ -310,14 +391,14 @@ async function run() {
             incomplete: axeResults.incomplete.length,
             colorContrastViolations: countNodesByTarget(colorContrast.violations),
             colorContrastIncomplete: countNodesByTarget(colorContrast.incomplete),
-            warnings,
-            degraded: warnings.length > 0,
+             warnings: routeWarnings,
+             degraded: routeWarnings.length > 0,
           };
         }
       } catch (error) {
         const message = redactDiagnosticText(error instanceof Error ? error.message : String(error));
-        const warnings = diagnostics?.warnings?.map((entry) => ({ ...entry })) || [];
-        errors.push({
+         const errorWarnings = diagnostics?.warnings?.map((entry) => ({ ...entry })) || [];
+         errors.push({
           route: route.id,
           stage: 'axe',
           message,
@@ -328,9 +409,9 @@ async function run() {
           measured: false,
           expected: false,
           error: message,
-          warnings,
-          degraded: warnings.length > 0,
-        };
+           warnings: errorWarnings,
+           degraded: errorWarnings.length > 0,
+         };
       } finally {
         if (diagnostics) diagnostics.dispose();
         if (context) {
@@ -342,7 +423,7 @@ async function run() {
 
       for (const viewport of VIEWPORTS) {
         for (const theme of ['light', 'dark']) {
-          const context = await browser.newContext({
+           const captureContext = await browser.newContext({
             baseURL: BASE_URL,
             viewport: { width: viewport.width, height: viewport.height },
             userAgent: AUDIT_USER_AGENT,
@@ -350,81 +431,154 @@ async function run() {
             deviceScaleFactor: 1,
             locale: 'fr-FR',
             storageState,
+         serviceWorkers: 'block',
           });
-          await context.addCookies([getAdventureCookie(BASE_URL)]);
-          const page = await context.newPage();
+           await captureContext.addCookies([getAdventureCookie(BASE_URL)]);
+           const page = await captureContext.newPage();
           const routeExpectation = routeExpectationFor(route.path);
-          const diagnostics = attachPageDiagnostics(page, {
+           const captureDiagnostics = attachPageDiagnostics(page, {
             baseUrl: BASE_URL,
             expected404Path: routeExpectation?.kind === 'http' ? route.path : undefined,
           });
           await initializeAuditPage(page, theme);
 
-          try {
-            const navigation = await assertRouteNavigation(page, BASE_URL, route.path);
-            diagnostics.assertClean();
-            if (navigation.expected) continue;
-            await page.waitForTimeout(500);
-            const rendered = await assertPageSettings(page, theme);
-            const routeDir = path.join(screensDir, route.id);
+           try {
+             const navigation = await assertRouteNavigation(page, BASE_URL, route.path);
+             await page.waitForTimeout(500);
+             const settledNavigation = assessCurrentRouteNavigation(page, BASE_URL, route.path, navigation.httpStatus);
+             if (settledNavigation.finalPath !== navigation.finalPath
+               || settledNavigation.expected !== navigation.expected
+               || settledNavigation.status !== navigation.status) {
+               throw new Error('La route a changé après le chargement initial');
+             }
+              captureDiagnostics.assertClean();
+              if (navigation.expected) {
+                warnings.push(...captureDiagnostics.warnings.map((entry) => ({
+
+                 ...entry,
+                 route: route.id,
+                 stage: `${viewport.name}-${theme}-navigation`,
+               })));
+               continue;
+             }
+               const defaultState = await waitForCampaignDefaultState(page);
+               if (defaultState.scrollY !== 0 || defaultState.overlayOpen) {
+                 throw new Error('État de capture par défaut non canonical');
+               }
+               const rendered = await assertPageSettings(page, theme);
+              const routeDir = path.join(screensDir, route.id);
             fs.mkdirSync(routeDir, { recursive: true });
             const states = [];
 
             const defaultName = `${viewport.name}-${theme}-default.png`;
-            await page.screenshot({ path: path.join(routeDir, defaultName), fullPage: false, animations: 'disabled' });
+             const defaultBuffer = await page.screenshot({ fullPage: false, animations: 'disabled' });
+             const defaultFile = path.join(routeDir, defaultName);
+             writePrivateAuditFile(defaultFile, defaultBuffer);
+             const defaultArtifact = fileDigest(defaultFile);
             states.push(defaultName);
 
             await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
             await page.waitForTimeout(300);
             const scrollName = `${viewport.name}-${theme}-scroll-end.png`;
-            await page.screenshot({ path: path.join(routeDir, scrollName), fullPage: false, animations: 'disabled' });
-            states.push(scrollName);
+             const scrollBuffer = await page.screenshot({ fullPage: false, animations: 'disabled' });
+             const scrollFile = path.join(routeDir, scrollName);
+             writePrivateAuditFile(scrollFile, scrollBuffer);
+             const scrollArtifact = fileDigest(scrollFile);
+             const scrollY = await page.evaluate(() => window.scrollY);
+             states.push(scrollName);
 
-            const modalTrigger = page.locator('button[aria-haspopup="dialog"], [data-search-trigger], button[aria-expanded="false"]').first();
-            if (await modalTrigger.isVisible().catch(() => false)) {
-              await modalTrigger.click({ timeout: 1000 });
-              await page.waitForTimeout(300);
-              const modalName = `${viewport.name}-${theme}-modal.png`;
-              await page.screenshot({ path: path.join(routeDir, modalName), fullPage: false, animations: 'disabled' });
-              states.push(modalName);
-            }
+             let modalArtifact = null;
+             let modalOpen = false;
+             const modalTrigger = page.locator('button[aria-haspopup="dialog"]').first();
+             if (await modalTrigger.isVisible().catch(() => false)) {
+               const modalClicked = await modalTrigger.click({ timeout: 1000 }).then(() => true).catch(() => false);
 
-            diagnostics.assertClean();
-            const warnings = diagnostics.warnings.map((entry) => ({ ...entry }));
-            for (const file of states) {
-              manifest.push({
-                route: route.id,
-                file,
-                viewport: viewport.name,
-                requestedTheme: theme,
-                actualTheme: rendered.theme,
-                requestedIntensity: 0.5,
-                actualIntensity: rendered.intensity,
-                warnings,
-                degraded: warnings.length > 0,
-              });
-            }
+               await page.waitForTimeout(300);
+               modalOpen = await page.evaluate(() => [...document.querySelectorAll('[role="dialog"], dialog, [aria-modal="true"]')]
+                 .some((element) => {
+                   const rect = element.getBoundingClientRect();
+                   const style = getComputedStyle(element);
+                   return rect.width > 0 && rect.height > 0
+                     && rect.bottom > 0 && rect.top < window.innerHeight
+                     && rect.right > 0 && rect.left < window.innerWidth
+                     && style.display !== 'none' && style.visibility !== 'hidden';
+                 }));
+                if (modalOpen) {
+                  const modalName = `${viewport.name}-${theme}-modal.png`;
+                  const modalBuffer = await page.screenshot({ fullPage: false, animations: 'disabled' });
+                  const modalFile = path.join(routeDir, modalName);
+                  writePrivateAuditFile(modalFile, modalBuffer);
+                   modalArtifact = fileDigest(modalFile);
+                   states.push(modalName);
+                 }
+               }
 
-            if (viewport.name === '390x844' && theme === 'dark') {
-              const measurementNavigation = await assertRouteNavigation(page, BASE_URL, route.path);
-              if (!measurementNavigation.expected) {
-                await page.waitForTimeout(500);
-                const measuredSettings = await assertPageSettings(page, 'dark');
+              const finalCaptureNavigation = assessCurrentRouteNavigation(page, BASE_URL, route.path, navigation.httpStatus);
+             if (finalCaptureNavigation.finalPath !== navigation.finalPath
+               || finalCaptureNavigation.expected !== navigation.expected
+               || finalCaptureNavigation.status !== navigation.status) {
+               throw new Error('La route a changé pendant la capture');
+             }
+              captureDiagnostics.assertClean();
+              const captureWarnings = captureDiagnostics.warnings.map((entry) => ({ ...entry }));
+              for (const file of states) {
+                 const artifact = file === defaultName ? defaultArtifact : file === scrollName ? scrollArtifact : modalArtifact;
+                 manifest.push({
+                  route: route.id,
+                  routeId: route.id,
+                  file,
+                 viewport: viewport.name,
+                 requestedTheme: theme,
+                 actualTheme: rendered.theme,
+                 requestedIntensity: 0.5,
+                   actualIntensity: rendered.intensity,
+                    measurementState: file.includes('modal') ? 'modal' : file.includes('scroll') ? 'scroll-end' : 'default',
+                    scrollY: file.includes('scroll') ? scrollY : file.endsWith('-default.png') ? defaultState.scrollY : null,
+                    overlayOpen: file.includes('modal') ? modalOpen : file.endsWith('-default.png') ? defaultState.overlayOpen : false,
+                   runId,
+                   size: artifact.size,
+                   sha256: artifact.sha256,
+                   warnings: captureWarnings,
+                 degraded: captureWarnings.length > 0,
+               });
+             }
+
+               if (viewport.name === '390x844' && theme === 'dark') {
+                 if (!navigation.expected) {
+                   const freshResponse = await page.goto(new URL(route.path, BASE_URL).toString(), { waitUntil: 'domcontentloaded' });
+                   if (!freshResponse || freshResponse.status() < 200 || freshResponse.status() >= 300) {
+                     throw new Error('Réponse de mesure invalide');
+                   }
+                   const defaultState = await waitForCampaignDefaultState(page);
+                   if (defaultState.scrollY !== 0 || defaultState.overlayOpen) {
+                     throw new Error('État de mesure non canonical');
+                   }
+                  const measuredSettings = await assertPageSettings(page, 'dark');
                 const textElements = await extractTextElements(page);
                 const axeResults = await analyzeAxe(page);
-                const measured = await measurePageContrast(page, axeResults, { textElements });
-                if (measured.nodes.length === 0) throw new Error('Aucun nœud texte mesuré');
-                diagnostics.assertClean();
-                const measuredWarnings = diagnostics.warnings.map((entry) => ({ ...entry }));
+                 const measured = await measurePageContrast(page, axeResults, { textElements });
+                 if (measured.nodes.length === 0) throw new Error('Aucun nœud texte mesuré');
+                 const finalNavigation = assessCurrentRouteNavigation(page, BASE_URL, route.path, navigation.httpStatus);
+                 if (finalNavigation.finalPath !== navigation.finalPath
+                   || finalNavigation.expected !== navigation.expected
+                   || finalNavigation.status !== navigation.status) {
+                   throw new Error('La route a changé pendant la mesure');
+                 }
+                 captureDiagnostics.assertClean();
+                 const measuredWarnings = captureDiagnostics.warnings.map((entry) => ({ ...entry }));
+
                 const colorContrast = colorContrastRules(axeResults);
                 contrastFindings.push({
                   routeId: route.id,
                   path: route.path,
                   measured: true,
                   status: measuredWarnings.length > 0 ? 'degraded' : 'measured',
-                  actualTheme: measuredSettings.theme,
-                  actualIntensity: measuredSettings.intensity,
-                  image: measured.image,
+                   actualTheme: measuredSettings.theme,
+                   actualIntensity: measuredSettings.intensity,
+                   measurementState: 'default',
+                   scrollY: defaultState.scrollY,
+                   overlayOpen: defaultState.overlayOpen,
+                   image: measured.image,
                   nodes: measured.nodes,
                   counts: countNodes(measured.nodes),
                   axe: {
@@ -443,8 +597,9 @@ async function run() {
               message: redactDiagnosticText(error instanceof Error ? error.message : String(error)),
             });
           } finally {
-            diagnostics.dispose();
-            await context.close();
+             captureDiagnostics.dispose();
+
+              await captureContext.close().catch(() => {});
           }
         }
       }
@@ -458,11 +613,11 @@ async function run() {
   const findingAggregate = aggregateRouteOutcomes(contrastFindings);
   const summaryAggregate = aggregateRouteOutcomes(Object.values(a11ySummary));
   const manifestDiagnostics = aggregateManifestDiagnostics(manifest);
-  const warnings = [
-    ...findingAggregate.warnings,
-    ...summaryAggregate.warnings,
-    ...manifestDiagnostics.warnings,
-  ];
+   warnings.push(
+     ...findingAggregate.warnings,
+     ...summaryAggregate.warnings,
+     ...manifestDiagnostics.warnings,
+   );
   const degradedRoutes = [...new Set([
     ...Object.values(a11ySummary)
       .filter((entry) => entry.degraded)
@@ -470,13 +625,73 @@ async function run() {
     ...manifestDiagnostics.degradedRoutes,
   ])];
   const { expectedRouteCount, expectedOutcomeCount } = campaignExpectedCounts(a11ySummary, ROUTES.length);
-  const completedRouteCount = new Set(contrastFindings.map((finding) => finding.routeId)).size;
+  const expectedOutcomeDefinitions = ROUTES.flatMap((route) => {
+    const expectation = routeExpectationFor(route.path);
+    return expectation
+      ? [{ routeId: route.id, path: route.path, ...expectation }]
+      : [];
+  });
+  const expectedMeasuredRouteIds = ROUTES
+    .filter((route) => !routeExpectationFor(route.path))
+    .map((route) => route.id);
+  const observedMeasuredRouteIds = [...new Set(contrastFindings.map((finding) => finding.routeId))];
+   const stateEvidenceComplete = contrastFindings.every((finding) => (
+     finding.measurementState === 'default'
+     && finding.scrollY === 0
+     && finding.overlayOpen === false
+   ));
+   const manifestRouteIds = [...new Set(manifest.map((capture) => capture.routeId))];
+  const expectedManifestKeys = new Set(expectedMeasuredRouteIds.flatMap((routeId) => (
+    VIEWPORTS.flatMap((viewport) => ['dark', 'light'].flatMap((theme) => [
+      `${routeId}|${viewport.name}-${theme}-default.png|${viewport.name}|${theme}|default`,
+      `${routeId}|${viewport.name}-${theme}-scroll-end.png|${viewport.name}|${theme}|scroll-end`,
+    ]))
+  )));
+  const actualManifestKeys = manifest.map((capture) => (
+    `${capture.routeId}|${capture.file}|${capture.viewport}|${capture.requestedTheme}|${manifestStateForFile(capture.file)}`
+  ));
+  const actualManifestKeySet = new Set(actualManifestKeys);
+   const manifestFilesComplete = manifest.every((capture) => {
+     const filePath = path.resolve(screensDir, capture.routeId, capture.file);
+     const relative = path.relative(path.resolve(screensDir), filePath);
+     if (relative === '..' || relative.startsWith(`..${path.sep}`) || path.isAbsolute(relative) || !fs.existsSync(filePath)) return false;
+     const stat = fs.lstatSync(filePath);
+       if (!stat.isFile() || stat.isSymbolicLink() || stat.size <= 0
+         || capture.runId !== runId
+         || !['default', 'scroll-end', 'modal'].includes(capture.measurementState)
+         || (capture.measurementState === 'default' && (capture.scrollY !== 0 || capture.overlayOpen !== false))
+         || (capture.measurementState === 'scroll-end' && !Number.isFinite(capture.scrollY))
+         || (capture.measurementState === 'modal' && capture.overlayOpen !== true)
+         || stat.size !== capture.size) return false;
+     return createHash('sha256').update(fs.readFileSync(filePath)).digest('hex') === capture.sha256;
+   });
+  const expectedRouteIdSet = new Set(expectedMeasuredRouteIds);
+
+  const manifestCoverageComplete = expectedMeasuredRouteIds.length > 0
+    && actualManifestKeys.length === actualManifestKeySet.size
+    && [...expectedManifestKeys].every((key) => actualManifestKeySet.has(key))
+    && manifest.every((capture) => (
+      expectedRouteIdSet.has(capture.routeId)
+      && manifestStateForFile(capture.file) !== 'invalid'
+    ))
+     && manifestRouteIds.every((routeId) => expectedRouteIdSet.has(routeId))
+     && manifestFilesComplete;
+  const completedRouteCount = observedMeasuredRouteIds.length;
+  const expectedOutcomes = Object.values(a11ySummary)
+    .filter((entry) => entry.expected === true)
+    .map((entry) => ({ ...entry, routeId: entry.routeId ?? entry.id }));
   const campaignReport = {
     ...buildCampaignAuditReport({
       findings: safeFindings,
       errors: safeErrors,
-      expectedRouteCount,
-      completedRouteCount,
+       expectedRouteCount,
+       expectedRouteIds: ROUTES.map((route) => route.id),
+       expectedRoutePaths: ROUTES.map((route) => ({ routeId: route.id, path: route.path })),
+       expectedOutcomes,
+      expectedOutcomeDefinitions,
+       manifestCoverageComplete,
+       stateEvidenceComplete,
+       completedRouteCount,
       liveVerified: campaignIsLiveVerified({
         errorCount: errors.length,
         completedRouteCount,
@@ -484,34 +699,49 @@ async function run() {
         warnings,
         degradedRoutes,
         expectedOutcomeCount,
-      }),
+        expectedMeasuredRouteIds,
+         observedMeasuredRouteIds,
+         manifestRouteIds,
+         manifestCoverageComplete,
+       }),
     }),
     warnings,
     degradedRoutes,
     expectedRouteCount,
     expectedOutcomeCount,
+    expectedMeasuredRouteCount: expectedMeasuredRouteIds.length,
+    expectedMeasuredRouteIds,
+    manifestCoverageComplete,
   };
-  const contrastReport = buildContrastReport(safeFindings, safeErrors, campaignReport);
-  const safeManifest = redactRuntimeValue({
-    verificationStatus: campaignReport.verificationStatus,
-    totalCaptures: manifest.length,
-    timestamp: new Date().toISOString(),
-    warnings: manifestDiagnostics.warnings,
-    degradedRoutes: manifestDiagnostics.degradedRoutes,
-    captures: manifest,
-  });
-  const safeSummary = redactRuntimeValue(a11ySummary);
-  const safeContrastReport = redactRuntimeValue(campaignReport);
-  fs.writeFileSync(path.join(screensDir, 'manifest.json'), `${JSON.stringify(safeManifest, null, 2)}\n`);
-  fs.writeFileSync(path.join(a11yDir, 'summary.json'), `${JSON.stringify(safeSummary, null, 2)}\n`);
-  fs.writeFileSync(path.join(a11yDir, 'campaign-contrast.json'), `${JSON.stringify(safeContrastReport, null, 2)}\n`);
-  fs.writeFileSync(path.resolve('audit', 'CONTRASTE.md'), contrastReport.markdown);
+  const contrastReport = buildContrastReport(campaignReport.findings, safeErrors, campaignReport);
+    if (campaignReport.verificationStatus !== 'VERIFIED') {
+      const error = new Error(`Campagne non vérifiée (${campaignReport.verificationStatus}); ${errors.length} erreur(s), ${warnings.length} warning(s)`);
+      writeAuditErrorReport(errorReportPath, error, {
+        errors,
+        warnings,
+        degradedRoutes,
+        expectedRouteCount,
+        completedRouteCount,
+        expectedOutcomeCount,
+      });
+      throw error;
+    }
+   const safeManifest = redactRuntimeValue({
+     runId,
+     verificationStatus: campaignReport.verificationStatus,
+     totalCaptures: manifest.length,
+     timestamp: new Date().toISOString(),
+     warnings: manifestDiagnostics.warnings,
+     degradedRoutes: manifestDiagnostics.degradedRoutes,
+     captures: manifest,
+   });
+   const safeSummary = redactRuntimeValue(a11ySummary);
+   const safeContrastReport = redactRuntimeValue(campaignReport);
+    writePrivateAuditFile(manifestPath, `${JSON.stringify(safeManifest, null, 2)}\n`);
+    writePrivateAuditFile(path.join(a11yDir, 'summary.json'), `${JSON.stringify(safeSummary, null, 2)}\n`);
+    writePrivateAuditFile(path.join(a11yDir, 'campaign-contrast.json'), `${JSON.stringify(safeContrastReport, null, 2)}\n`);
+    writePrivateAuditFile(contrastMarkdownPath, contrastReport.markdown);
 
-  if (errors.length > 0) {
-    const error = new Error(`Campagne terminée avec ${errors.length} erreur(s); aucun succès global n'est publié`);
-    writeAuditErrorReport(errorReportPath, error, { errors });
-    throw error;
-  }
   console.info(`Campagne terminée: ${manifest.length} captures, ${contrastReport.totals.pass} pass, ${contrastReport.totals.contrast_fail} contrast_fail, ${contrastReport.totals.unknown} unknown, ${contrastReport.totals.occluded} occluded.`);
 }
 

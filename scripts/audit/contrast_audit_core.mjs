@@ -1,3 +1,5 @@
+import { safeAuditUrl } from './audit_runtime.mjs';
+
 export const CONTRAST_STATES = Object.freeze({
   PASS: 'pass',
   CONTRAST_FAIL: 'contrast_fail',
@@ -20,6 +22,15 @@ export const KEY_SCREEN_ROUTES = Object.freeze([
   { id: 'compte-parametres', path: '/compte?tab=parametres' },
   { id: 'communaute', path: '/communaute' },
   { id: 'boutique', path: '/boutique' },
+]);
+
+const REQUIRED_EXPECTED_OUTCOME_PATHS = new Set([
+  '/preparer-randonnee',
+  '/admin',
+  '/admin/produits',
+  '/dev/glass',
+  '/dev/style',
+  '/route-inexistante-pour-tester-404',
 ]);
 
 export function auditModeRequiresAuth(args = []) {
@@ -49,7 +60,7 @@ export function auditVerificationStatus(options = {}) {
   const coverageComplete = Reflect.get(source, 'coverageComplete');
   const errors = Reflect.get(source, 'errors');
   const hasErrors = Array.isArray(errors) ? errors.length > 0 : Boolean(errors);
-  return !liveVerified || coverageComplete === false || hasErrors
+  return !liveVerified || coverageComplete !== true || hasErrors
     ? 'PARTIAL / NOT VERIFIED'
     : 'VERIFIED';
 }
@@ -325,6 +336,7 @@ export function analyzeDecodedPixels({ data, info, textElements }) {
   return textElements.map((element) => {
     const base = {
       id: element.id,
+      ...(element.dataAuditId ? { dataAuditId: element.dataAuditId } : {}),
       selector: element.selector,
       text: element.text,
       rectCount: Array.isArray(element.rects) ? element.rects.length : 0,
@@ -402,7 +414,9 @@ function dataAuditIdFromTargets(node) {
     const match = target.match(/\[data-audit-id(?:=|~=)\s*["']?([^"'\\\s\]]+)/);
     if (match) return match[1];
   }
-  return null;
+  const html = typeof node?.html === 'string' ? node.html : '';
+  const htmlMatch = html.match(/data-audit-id\s*=\s*["']([^"']+)["']/i);
+  return htmlMatch ? htmlMatch[1] : null;
 }
 
 function nodeMatchesMeasurement(node, measurement) {
@@ -419,24 +433,36 @@ function mergeAxeEvidence(measurements, entries, forcedStatus, prefix) {
   entries.forEach((entry, index) => {
     const matchIndex = merged.findIndex((measurement) => nodeMatchesMeasurement(entry.node, measurement));
     if (matchIndex >= 0) {
-      const current = merged[matchIndex];
-      merged[matchIndex] = {
-        ...current,
-        status: current.status === CONTRAST_STATES.OCCLUDED ? CONTRAST_STATES.OCCLUDED : forcedStatus,
-        ratio: null,
-        dataAuditId: dataAuditIdFromTargets(entry.node),
-        axeTarget: targetValues(entry.node),
-        axeFailureSummary: entry.node?.failureSummary || null,
-      };
+       const current = merged[matchIndex];
+       const measuredFailure = (current.status === CONTRAST_STATES.CONTRAST_FAIL
+         || forcedStatus === CONTRAST_STATES.CONTRAST_FAIL)
+         && Number.isFinite(current.ratio)
+         && [3, 4.5].includes(current.threshold)
+         && current.ratio < current.threshold;
+       const status = current.status === CONTRAST_STATES.OCCLUDED
+         ? CONTRAST_STATES.OCCLUDED
+         : measuredFailure
+           ? CONTRAST_STATES.CONTRAST_FAIL
+           : CONTRAST_STATES.UNKNOWN;
+       merged[matchIndex] = {
+         ...current,
+         status,
+         ratio: status === CONTRAST_STATES.CONTRAST_FAIL ? current.ratio : null,
+         threshold: status === CONTRAST_STATES.CONTRAST_FAIL ? current.threshold : null,
+         dataAuditId: dataAuditIdFromTargets(entry.node) || current.dataAuditId || null,
+         axeTarget: targetValues(entry.node),
+         axeFailureSummary: entry.node?.failureSummary || null,
+       };
       return;
     }
-    merged.push({
-      id: `${prefix}-${index}`,
-      selector: targetValues(entry.node).join(', '),
-      text: entry.node?.html || '',
-      status: forcedStatus,
-      ratio: null,
-      dataAuditId: dataAuditIdFromTargets(entry.node),
+     merged.push({
+       id: `${prefix}-${index}`,
+       selector: targetValues(entry.node).join(', '),
+       text: entry.node?.html || '',
+       status: CONTRAST_STATES.UNKNOWN,
+       ratio: null,
+       threshold: null,
+       dataAuditId: dataAuditIdFromTargets(entry.node),
       axeTarget: targetValues(entry.node),
       axeFailureSummary: entry.node?.failureSummary || null,
     });
@@ -461,7 +487,8 @@ export function mergeAxeContrastEvidence(measurements, axeResults) {
 }
 
 export function matrixCellKey(cell) {
-  return `${cell.routeId}|${cell.theme}|${cell.intensity}`;
+  const source = cell && typeof cell === 'object' ? cell : {};
+  return `${source.routeId ?? ''}|${source.path ?? ''}|${source.theme ?? ''}|${source.intensity ?? ''}`;
 }
 
 export function buildMatrixCells() {
@@ -483,6 +510,102 @@ function emptyCounts() {
     occluded: 0,
     error: 0,
   };
+}
+
+export function countContrastNodes(nodes = []) {
+  const counts = {
+    pass: 0,
+    contrast_fail: 0,
+    unknown: 0,
+    occluded: 0,
+  };
+  for (const node of Array.isArray(nodes) ? nodes : []) {
+    const status = Object.hasOwn(counts, node?.status) ? node.status : CONTRAST_STATES.UNKNOWN;
+    counts[status] += 1;
+  }
+  return counts;
+}
+
+function validContrastNode(node) {
+  return node
+    && typeof node === 'object'
+    && typeof node.id === 'string'
+    && node.id.trim().length > 0
+    && typeof node.status === 'string'
+    && ['pass', 'contrast_fail', 'unknown', 'occluded'].includes(node.status)
+    && (typeof node.selector === 'string' || typeof node.dataAuditId === 'string')
+    && Object.hasOwn(node, 'ratio')
+    && (node.ratio === null || finiteNumber(node.ratio));
+}
+
+export function hasContrastEvidence(entry) {
+  if (entry?.measured !== true || !Array.isArray(entry.nodes) || entry.nodes.length === 0) return false;
+  const identities = new Set();
+  return entry.nodes.every((node) => {
+    if (!validContrastNode(node) || identities.has(node.id)) return false;
+    identities.add(node.id);
+    return true;
+  });
+}
+
+function semanticallyValidContrastNode(node) {
+  const validThreshold = node.threshold === 3 || node.threshold === 4.5;
+  if (node.status === 'pass') return validThreshold && Number.isFinite(node.ratio) && node.ratio >= node.threshold && node.ratio <= 21;
+  if (node.status === 'contrast_fail') return validThreshold && Number.isFinite(node.ratio) && node.ratio >= 1 && node.ratio < node.threshold;
+  return node.ratio === null && node.threshold === null;
+}
+
+export function hasValidContrastEvidence(entry) {
+  return hasContrastEvidence(entry) && entry.nodes.every(semanticallyValidContrastNode);
+}
+
+function findingIdentity(finding) {
+  return finding?.routeId ?? null;
+}
+
+function normalizedContrastFinding(finding) {
+  return {
+    ...finding,
+    counts: hasValidContrastEvidence(finding)
+      ? countContrastNodes(finding.nodes)
+      : { pass: 0, contrast_fail: 0, unknown: 0, occluded: 0 },
+  };
+}
+
+function expectedOutcomeMatches(outcome, definition) {
+  if (!outcome || !definition || outcome.expected !== true || outcome.measured !== false) return false;
+  if (outcome.routeId !== definition.routeId || outcome.path !== definition.path) return false;
+  if (definition.kind === 'redirect') {
+    const expectedStatus = definition.reason === 'missing_admin_role'
+      ? 'admin_redirected'
+      : 'expected_redirect';
+    return outcome.status === expectedStatus
+      && outcome.reason === definition.reason
+      && outcome.finalPath === definition.finalPath
+      && outcome.expectedFinalPath === definition.finalPath
+      && Number.isInteger(outcome.httpStatus)
+      && outcome.httpStatus >= 200
+      && outcome.httpStatus < 400;
+  }
+  if (definition.kind === 'http') {
+    if (!Number.isInteger(definition.status) || definition.status < 100 || definition.status > 599) return false;
+    return outcome.status === 'expected_404'
+      && outcome.reason === definition.reason
+      && outcome.finalPath === definition.path
+      && outcome.expectedFinalPath === null
+      && outcome.httpStatus === definition.status;
+  }
+  return false;
+}
+
+function exactStringSet(expected, observed) {
+  if (!Array.isArray(expected) || !Array.isArray(observed)) return false;
+  const expectedSet = new Set(expected);
+  const observedSet = new Set(observed);
+  return expectedSet.size === expected.length
+    && observedSet.size === observed.length
+    && expectedSet.size === observedSet.size
+    && [...expectedSet].every((value) => observedSet.has(value));
 }
 
 export function aggregateContrastMatrix(cells, expectedCells = buildMatrixCells()) {
@@ -556,18 +679,55 @@ export function buildMatrixAuditReport(options = {}) {
     ? requestedCellCount
     : EXPECTED_MATRIX_CELL_COUNT;
   const liveVerified = Reflect.get(source, 'liveVerified') === true;
+  const stateEvidenceComplete = Reflect.get(source, 'stateEvidenceComplete') !== false;
   const errors = Reflect.get(source, 'errors');
-  const aggregate = aggregateContrastMatrix(cells, expectedCells);
-  const liveEvidence = aggregate.totals.nodes > 0 && aggregate.totals.error === 0;
-  return {
-    ...aggregate,
-    expectedCellCount,
-    liveEvidence,
-    verificationStatus: auditVerificationStatus({
-      liveVerified: liveVerified && liveEvidence,
-      errors,
-    }),
-  };
+     const observedCells = Array.isArray(cells) ? cells : [];
+     const expectedMatrixCells = Array.isArray(expectedCells) ? expectedCells : buildMatrixCells();
+     const expectedMatrixByKey = new Map(expectedMatrixCells.map((cell) => [matrixCellKey(cell), cell]));
+     const metadataComplete = observedCells.every((cell) => {
+       const expected = expectedMatrixByKey.get(matrixCellKey(cell));
+       return Boolean(expected)
+         && cell?.path === expected.path
+         && cell?.finalPath === expected.path
+         && Number.isInteger(cell?.httpStatus)
+         && cell.httpStatus >= 200
+         && cell.httpStatus < 300
+         && cell?.actualTheme === expected.theme
+         && Number(cell?.actualIntensity) === Number(expected.intensity)
+         && cell?.measurementState === 'default'
+         && cell?.scrollY === 0
+         && cell?.overlayOpen === false;
+     });
+     const aggregate = aggregateContrastMatrix(cells, expectedCells);
+     const measuredCellCount = observedCells.filter((cell) => hasValidContrastEvidence(cell)).length;
+   const warningCellCount = observedCells.filter((cell) => (
+     cell?.degraded === true
+     || (Array.isArray(cell.warnings) && cell.warnings.length > 0)
+   )).length;
+   const evidenceComplete = aggregate.totals.unknown === 0
+     && aggregate.totals.occluded === 0;
+     const coverageComplete = observedCells.length === expectedCellCount
+       && measuredCellCount === expectedCellCount
+       && metadataComplete
+       && stateEvidenceComplete
+       && warningCellCount === 0
+     && evidenceComplete
+     && observedCells.every((cell) => !cell.error);
+   const liveEvidence = coverageComplete && aggregate.totals.error === 0;
+   return {
+     ...aggregate,
+     expectedCellCount,
+     measuredCellCount,
+     warningCellCount,
+       coverageComplete,
+       metadataComplete,
+       liveEvidence,
+     verificationStatus: auditVerificationStatus({
+       liveVerified: liveVerified && liveEvidence,
+       coverageComplete,
+       errors,
+     }),
+   };
 }
 
 export function buildCampaignAuditReport(options = {}) {
@@ -575,7 +735,12 @@ export function buildCampaignAuditReport(options = {}) {
   const findings = Reflect.get(source, 'findings');
   const errors = Reflect.get(source, 'errors');
   const expectedRouteCount = Reflect.get(source, 'expectedRouteCount') ?? null;
-  const requestedCompletedRouteCount = Reflect.get(source, 'completedRouteCount');
+  const expectedRouteIds = Reflect.get(source, 'expectedRouteIds');
+  const expectedRoutePaths = Reflect.get(source, 'expectedRoutePaths');
+  const expectedOutcomes = Reflect.get(source, 'expectedOutcomes');
+  const expectedOutcomeDefinitions = Reflect.get(source, 'expectedOutcomeDefinitions');
+  const manifestCoverageComplete = Reflect.get(source, 'manifestCoverageComplete') === true;
+  const stateEvidenceComplete = Reflect.get(source, 'stateEvidenceComplete') !== false;
   const liveVerified = Reflect.get(source, 'liveVerified') === true;
   const requestedGeneratedAt = Reflect.get(source, 'generatedAt');
   const generatedAt = typeof requestedGeneratedAt === 'string'
@@ -583,14 +748,81 @@ export function buildCampaignAuditReport(options = {}) {
     : new Date().toISOString();
   const safeFindings = Array.isArray(findings) ? findings : [];
   const safeErrors = Array.isArray(errors) ? errors : [];
-  const completed = Number.isInteger(requestedCompletedRouteCount)
-    ? requestedCompletedRouteCount
-    : safeFindings.length;
-  const coverageComplete = expectedRouteCount === null || completed >= expectedRouteCount;
-  const totals = safeFindings.reduce((result, finding) => {
-    const counts = finding?.counts || {};
+  const safeExpectedOutcomes = Array.isArray(expectedOutcomes) ? expectedOutcomes : [];
+  const safeExpectedDefinitions = Array.isArray(expectedOutcomeDefinitions)
+    ? expectedOutcomeDefinitions
+    : [];
+  const safeExpectedRouteIds = Array.isArray(expectedRouteIds) ? expectedRouteIds : [];
+  const safeExpectedRoutePaths = Array.isArray(expectedRoutePaths) ? expectedRoutePaths : [];
+  const expectedRouteSet = new Set(safeExpectedRouteIds);
+  const expectedRoutePathMap = new Map(
+    safeExpectedRoutePaths.map((route) => [route?.routeId, route?.path]),
+  );
+  const expectedOutcomeMap = new Map(
+    safeExpectedOutcomes.map((outcome) => [outcome?.routeId, outcome]),
+  );
+  const requiredOutcomeRouteIds = new Set(
+    safeExpectedRoutePaths
+      .filter((route) => REQUIRED_EXPECTED_OUTCOME_PATHS.has(route?.path))
+      .map((route) => route.routeId),
+  );
+  const expectedRouteSetComplete = safeExpectedRouteIds.length > 0
+    && expectedRouteSet.size === safeExpectedRouteIds.length
+    && expectedRoutePathMap.size === safeExpectedRouteIds.length
+    && safeExpectedRouteIds.every((routeId) => (
+      typeof routeId === 'string'
+      && routeId.length > 0
+      && typeof expectedRoutePathMap.get(routeId) === 'string'
+      && expectedRoutePathMap.get(routeId).length > 0
+    ))
+    && (expectedRouteCount === null || expectedRouteSet.size === expectedRouteCount);
+  const requiredDefinitionsPresent = [...requiredOutcomeRouteIds].every((routeId) => (
+    safeExpectedDefinitions.some((definition) => definition?.routeId === routeId)
+    && expectedOutcomeMap.has(routeId)
+  ));
+  const expectedOutcomesComplete = requiredDefinitionsPresent
+    && safeExpectedDefinitions.length === safeExpectedOutcomes.length
+    && safeExpectedDefinitions.every((definition) => {
+      const outcome = expectedOutcomeMap.get(definition?.routeId);
+      return expectedRouteSet.has(definition?.routeId)
+        && expectedRoutePathMap.get(definition?.routeId) === definition?.path
+        && expectedOutcomeMatches(outcome, definition);
+    })
+    && expectedOutcomeMap.size === safeExpectedOutcomes.length;
+  const contrastFindings = safeFindings.filter((finding) => finding?.expected !== true);
+  const findingIdentities = contrastFindings.map(findingIdentity);
+  const observedMeasuredRouteIds = new Set(findingIdentities);
+  const observedRouteIds = new Set([
+    ...observedMeasuredRouteIds,
+    ...safeExpectedOutcomes.map((outcome) => outcome?.routeId),
+  ]);
+  const routeSetComplete = expectedRouteSetComplete
+    && observedRouteIds.size === expectedRouteSet.size
+    && [...expectedRouteSet].every((routeId) => observedRouteIds.has(routeId));
+   const evidenceComplete = stateEvidenceComplete
+     && contrastFindings.length > 0
+     && findingIdentities.every(Boolean)
+    && observedMeasuredRouteIds.size === contrastFindings.length
+     && contrastFindings.every((finding) => hasValidContrastEvidence(finding));
+  const contrastRouteSetComplete = contrastFindings.every((finding) => (
+    expectedRoutePathMap.get(findingIdentity(finding)) === finding?.path
+  ));
+  const expectedMeasuredRouteCount = expectedRouteSetComplete
+    ? [...expectedRouteSet].filter((routeId) => !expectedOutcomeMap.has(routeId)).length
+    : null;
+  const coverageComplete = routeSetComplete
+    && expectedOutcomesComplete
+    && evidenceComplete
+    && contrastRouteSetComplete
+    && manifestCoverageComplete
+    && (expectedMeasuredRouteCount === null
+      || observedMeasuredRouteIds.size === expectedMeasuredRouteCount);
+  const normalizedFindings = safeFindings.map(normalizedContrastFinding);
+  const totals = contrastFindings.reduce((result, finding) => {
+    if (!hasValidContrastEvidence(finding)) return result;
+    const counts = countContrastNodes(finding.nodes);
     for (const status of ['pass', 'contrast_fail', 'unknown', 'occluded']) {
-      result[status] += Number.isFinite(counts[status]) ? counts[status] : 0;
+      result[status] += counts[status];
     }
     return result;
   }, { pass: 0, contrast_fail: 0, unknown: 0, occluded: 0 });
@@ -598,22 +830,62 @@ export function buildCampaignAuditReport(options = {}) {
   const weightedPassRate = safeErrors.length > 0 || nodeCount === 0
     ? 0
     : (totals.pass / nodeCount) * 100;
-  const liveEvidence = nodeCount > 0;
+  const liveEvidence = routeSetComplete
+     && expectedOutcomesComplete
+     && evidenceComplete
+     && contrastRouteSetComplete
+     && manifestCoverageComplete
+     && nodeCount > 0
+    && totals.unknown === 0
+    && totals.occluded === 0;
   return {
     generatedAt,
     verificationStatus: auditVerificationStatus({
       liveVerified: liveVerified && coverageComplete && liveEvidence,
+      coverageComplete,
       errors: safeErrors,
     }),
-    expectedRouteCount,
-    completedRouteCount: completed,
-    coverageComplete,
+     expectedRouteCount,
+     expectedRouteIds: safeExpectedRouteIds,
+     expectedRoutePaths: safeExpectedRoutePaths,
+     expectedOutcomeCount: safeExpectedOutcomes.length,
+    expectedMeasuredRouteCount,
+    expectedOutcomes: safeExpectedOutcomes,
+    expectedOutcomeDefinitions: safeExpectedDefinitions,
+    completedRouteCount: observedRouteIds.size,
+    observedCompletedRouteCount: observedRouteIds.size,
+    measuredRouteCount: observedMeasuredRouteIds.size,
+    manifestCoverageComplete,
+     routeSetComplete,
+     contrastRouteSetComplete,
+     expectedOutcomesComplete,
+     coverageComplete,
     liveEvidence,
     totals,
     weightedPassRate,
-    findings: safeFindings,
+    findings: normalizedFindings,
     errors: safeErrors,
   };
+}
+
+function displayAuditUrl(value) {
+  return safeAuditUrl(value);
+}
+
+function originAllowlisted(parsed, env, flag) {
+  if (env?.[flag] !== '1') return false;
+  const configured = typeof env?.AUDIT_ALLOWED_BASE_URLS === 'string'
+    ? env.AUDIT_ALLOWED_BASE_URLS.split(',').map((value) => value.trim()).filter(Boolean)
+    : [];
+  return configured.some((value) => {
+    try {
+      const allowed = new URL(value);
+      return ['http:', 'https:'].includes(allowed.protocol)
+        && allowed.origin === parsed.origin;
+    } catch {
+      return false;
+    }
+  });
 }
 
 export function getAuditBaseUrl(env = process.env) {
@@ -624,10 +896,30 @@ export function getAuditBaseUrl(env = process.env) {
   try {
     parsed = new URL(raw);
   } catch {
-    throw new Error(`PW_BASE_URL invalide: ${raw}`);
+    throw new Error(`PW_BASE_URL invalide: ${displayAuditUrl(raw)}`);
   }
   if (!['http:', 'https:'].includes(parsed.protocol)) {
-    throw new Error(`PW_BASE_URL doit être HTTP(S): ${raw}`);
+    throw new Error(`PW_BASE_URL doit être HTTP(S): ${displayAuditUrl(raw)}`);
+  }
+  if (parsed.username || parsed.password) {
+    throw new Error(`PW_BASE_URL ne doit pas contenir d’identifiants: ${displayAuditUrl(raw)}`);
+  }
+  if (parsed.pathname !== '/' && parsed.pathname !== '') {
+    throw new Error(`PW_BASE_URL ne doit pas contenir de chemin: ${displayAuditUrl(raw)}`);
+  }
+  const loopbackHosts = new Set(['localhost', '127.0.0.1', '::1', '[::1]']);
+  const isLoopback = loopbackHosts.has(parsed.hostname.toLowerCase());
+  if (parsed.protocol === 'http:' && !isLoopback) {
+    throw new Error(`PW_BASE_URL distant doit utiliser HTTPS: ${displayAuditUrl(raw)}`);
+  }
+  const isDefaultLocal = parsed.origin === 'http://localhost:3000'
+    || parsed.origin === 'http://127.0.0.1:3000';
+  const localAlternateAllowed = isLoopback
+    && originAllowlisted(parsed, env, 'AUDIT_ALLOW_LOCAL_BASE_URL');
+  const remoteAllowed = !isLoopback
+    && originAllowlisted(parsed, env, 'AUDIT_ALLOW_REMOTE_BASE_URL');
+  if (!isDefaultLocal && !localAlternateAllowed && !remoteAllowed) {
+    throw new Error(`PW_BASE_URL non autorisé: ${displayAuditUrl(raw)}`);
   }
   return parsed.origin;
 }
@@ -691,6 +983,42 @@ function parseSupabaseSessionValue(value, label) {
   return parsed;
 }
 
+function cookieBelongsToHost(cookie, expectedHost) {
+  if (!cookie || typeof cookie !== 'object' || typeof cookie.domain !== 'string') return false;
+  const normalizedDomain = cookie.domain.toLowerCase().replace(/^\./, '');
+  return normalizedDomain === expectedHost.toLowerCase();
+}
+
+export function sanitizeStorageState(storageState, baseUrl) {
+  if (!storageState || !Array.isArray(storageState.cookies) || !Array.isArray(storageState.origins)) {
+    throw new Error('storageState invalide');
+  }
+  const base = new URL(baseUrl);
+  return {
+    cookies: storageState.cookies
+      .filter((cookie) => !Object.hasOwn(cookie || {}, 'url') && cookieBelongsToHost(cookie, base.hostname))
+      .map((cookie) => ({
+        name: cookie.name,
+        value: cookie.value,
+        domain: cookie.domain,
+        path: cookie.path,
+        expires: cookie.expires,
+        httpOnly: cookie.httpOnly,
+        secure: cookie.secure,
+        sameSite: cookie.sameSite,
+      })),
+    origins: storageState.origins
+      .filter((origin) => origin?.origin === base.origin)
+      .map((origin) => ({
+        origin: base.origin,
+        localStorage: (origin.localStorage || []).map((item) => ({
+          name: item.name,
+          value: item.value,
+        })),
+      })),
+  };
+}
+
 export function validateStorageState(storageState, nowOrOptions = Date.now(), expectedBaseUrl) {
   if (!storageState || !Array.isArray(storageState.cookies) || !Array.isArray(storageState.origins)) {
     throw new Error('storageState invalide');
@@ -714,8 +1042,8 @@ export function validateStorageState(storageState, nowOrOptions = Date.now(), ex
     } catch {
       throw new Error('storageState origine invalide');
     }
-    if (expectedOrigin && normalizedOrigin !== expectedOrigin) {
-      throw new Error(`storageState origine incorrecte: ${origin.origin}`);
+    if (expectedOrigin && (origin.origin !== expectedOrigin || normalizedOrigin !== expectedOrigin)) {
+      throw new Error('storageState origine incorrecte');
     }
     if (!Array.isArray(origin.localStorage)) throw new Error('storageState localStorage invalide');
     for (const item of origin.localStorage) {
@@ -733,10 +1061,15 @@ export function validateStorageState(storageState, nowOrOptions = Date.now(), ex
 
   if (expectedOrigin) {
     const expectedHost = new URL(baseUrl).hostname;
-    for (const cookie of authCookies) {
-      if (typeof cookie.domain === 'string' && cookie.domain !== expectedHost && cookie.domain !== `.${expectedHost}`) {
-        throw new Error(`storageState origine cookie incorrecte: ${cookie.domain}`);
+    for (const cookie of storageState.cookies) {
+      if (Object.hasOwn(cookie || {}, 'url')) throw new Error('storageState cookie URL invalide');
+      if (!cookieBelongsToHost(cookie, expectedHost)) {
+        throw new Error('storageState origine cookie incorrecte');
       }
+    }
+  } else {
+    for (const cookie of storageState.cookies) {
+      if (Object.hasOwn(cookie || {}, 'url')) throw new Error('storageState cookie URL invalide');
     }
   }
 
@@ -775,9 +1108,13 @@ export function assertAuthenticatedCompte({ baseUrl, finalUrl, status, sentinelV
   if (!Number.isInteger(status) || status < 200 || status >= 300) {
     throw new Error(`Réponse HTTP invalide pour /compte: ${status}`);
   }
-  if (final.origin !== base.origin) throw new Error('URL finale hors origine pour /compte');
-  if (normalizedPath(final.pathname) !== '/compte') {
-    throw new Error(`URL finale inattendue pour /compte: ${final.pathname}`);
+  if (base.username || base.password || final.username || final.password) {
+    throw new Error('Identifiants dans URL /compte');
+  }
+   if (final.origin !== base.origin) throw new Error('URL finale hors origine pour /compte');
+   if (final.search || final.hash) throw new Error('Paramètres inattendus dans URL /compte');
+   if (normalizedPath(final.pathname) !== '/compte') {
+    throw new Error('URL finale inattendue pour /compte');
   }
   if (!sentinelVisible) throw new Error('Sentinelle authentifiée /compte absente');
   return { finalPath: '/compte', status };

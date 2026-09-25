@@ -118,7 +118,7 @@ export function Tabs({
             onClick={() => onChange(option.id)}
             className={cn(
               baseItem,
-              'min-h-[var(--lkv-touch-min)] min-w-[var(--lkv-touch-min)] flex-1 rounded-full px-[var(--space-3)] text-[length:var(--lkv-text-footnote)] transition-all duration-[var(--motion-control-duration)]',
+              'min-h-[var(--lkv-touch-min)] min-w-[var(--lkv-touch-min)] flex-1 rounded-full px-1 text-[length:var(--lkv-text-caption-2)] transition-all duration-[var(--motion-control-duration)]',
               active
                 ? 'bg-[var(--g3-bg)] text-[var(--g3-text)] shadow-[var(--glass-rim)] font-bold'
                 : 'text-[var(--glass-label-secondary)] hover:text-[var(--glass-label)]'

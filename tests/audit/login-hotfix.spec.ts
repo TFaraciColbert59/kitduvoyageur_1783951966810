@@ -18,7 +18,7 @@ describe('audit login — responsive forms', () => {
     const browser = await chromium.launch({ headless: true });
     try {
       const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
-      await page.route('http://audit.test/login', route => route.fulfill({
+      await page.route('http://audit.test/connexion', route => route.fulfill({
         contentType: 'text/html',
         body: `
           <main>
@@ -27,7 +27,7 @@ describe('audit login — responsive forms', () => {
               <input id="password" type="password">
               <button type="submit">Desktop</button>
             </form>
-            <form id="mobile-form" onsubmit="event.preventDefault(); this.dataset.submitted = 'true'; history.pushState({}, '', '/signed-in')">
+             <form id="mobile-form" method="post" onsubmit="event.preventDefault(); this.dataset.submitted = 'true'; history.pushState({}, '', '/signed-in')">
               <input id="email" type="email">
               <input id="password" type="password">
               <button type="submit">Mobile</button>
@@ -35,12 +35,12 @@ describe('audit login — responsive forms', () => {
           </main>
         `,
       }));
-      await page.goto('http://audit.test/login');
+      await page.goto('http://audit.test/connexion');
 
-      const form = await api.fillVisibleLoginForm(page, {
-        email: 'visible@example.test',
-        password: 'visible-secret',
-      });
+       const form = await api.fillVisibleLoginForm(page, {
+         email: 'visible@example.test',
+         password: 'visible-secret',
+       }, 'http://audit.test');
       expect(form).toBeDefined();
       if (!form) return;
 
@@ -81,7 +81,7 @@ describe('audit login — responsive forms', () => {
           </form>
         </main>
       `);
-      await expect(fillVisibleLoginForm(noVisibleFormPage, credentials)).rejects.toThrow(/attendu unique/);
+       await expect(fillVisibleLoginForm(noVisibleFormPage, credentials, 'http://audit.test')).rejects.toThrow(/attendu unique/);
       expect(await noVisibleFormPage.locator('input#email').inputValue()).toBe('');
 
       const twoVisibleFormsPage = await browser.newPage({ viewport: { width: 390, height: 844 } });
@@ -97,7 +97,7 @@ describe('audit login — responsive forms', () => {
           </form>
         </main>
       `);
-      await expect(fillVisibleLoginForm(twoVisibleFormsPage, credentials)).rejects.toThrow(/attendu unique/);
+       await expect(fillVisibleLoginForm(twoVisibleFormsPage, credentials, 'http://audit.test')).rejects.toThrow(/attendu unique/);
       expect(await twoVisibleFormsPage.locator('#first-form input#email').inputValue()).toBe('');
       expect(await twoVisibleFormsPage.locator('#second-form input#email').inputValue()).toBe('');
     } finally {

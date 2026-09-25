@@ -215,7 +215,7 @@ function AuthForm() {
               </button>
             </form>
           ) : (
-            <form onSubmit={handleSubmit} className="flex flex-col gap-[14px]">
+             <form method="post" onSubmit={handleSubmit} className="flex flex-col gap-[14px]">
               {mode === 'inscription' && (
                 <div>
                   <label htmlFor="name" className="mb-1 block text-[length:var(--lkv-text-caption-1)] font-semibold text-[color:var(--lkv-text-primary)]">

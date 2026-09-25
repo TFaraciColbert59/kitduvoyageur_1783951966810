@@ -40,7 +40,7 @@
   --lkv-app-bg-image-portrait: url('/assets/images/lkdv-bg-portrait.webp');
   --lkv-app-bg-image-landscape: url('/assets/images/lkdv-bg-landscape.webp');
   --lkv-app-bg-scrim: rgba(242, 246, 243, 0.78);
-  --lkv-app-bg-fallback: #0b0d12;
+  --lkv-app-bg-fallback: #F5F7F3;
 
   --lkv-surface: #F5F7F3;
   --lkv-surface-paper: #FFFFFF;
@@ -50,8 +50,8 @@
 
   --lkv-text-primary: #172B24;
   --lkv-text-secondary: #56665D;
-  --lkv-text-muted: #5C6B62;
-  --lkv-text-subtle: #65736A;
+  --lkv-text-muted: #46584D;
+  --lkv-text-subtle: #526158;
   --lkv-text-inverted: #FFFFFF;
 
   /* États complets (champs, survol, focus, désactivé, voile) */
@@ -63,6 +63,10 @@
   --lkv-overlay-scrim: rgba(16, 28, 23, 0.45);
   --lkv-focus-ring: rgba(34, 97, 72, 0.28);
   --lkv-on-action: #FFFFFF;
+  --lkv-on-primary: #FFFFFF;
+  --lkv-on-primary-muted: #E7F0E8;
+  --lkv-on-dark: #FFFFFF;
+  --lkv-on-dark-muted: #E7F0E8;
 
   /* ── 2. Échelles Canoniques ──────────────────────────────── */
   /* ├─ Forest ──────────────────────────────────────────────── */
@@ -150,7 +154,7 @@
   --lkv-border-strong: rgba(23, 43, 36, 0.52);
 
   /* ── 3. Statuts et Alertes Terrain (0 #E4501C) ───────────── */
-  --lkv-success: #5B7F55;
+  --lkv-success: #3D6038;
   --lkv-success-bg: #E1EBDE;
   --lkv-warning: #C89A3B;
   --lkv-warning-bg: #FBF1DC;
@@ -491,11 +495,11 @@
   --glass-text-secondary: rgba(23, 43, 36, 0.74);
   /* Direction §6 : le verre est clair, léger et réservé aux surfaces
      superposées ; texte sombre sur verre clair (contraste mesuré). */
-  --glass-bg-light: rgba(255, 255, 255, 0.72);
+  --glass-bg-light: rgb(255 255 255 / calc(0.88 + 0.10 * var(--glass-intensity, 0.5)));
   --glass-bg-medium: var(--card-tint);
   --glass-bg-strong: var(--card-tint-strong);
   --glass-bg-dark: rgba(16, 28, 23, 0.90);
-  --glass-subtle-fill: rgba(255, 255, 255, 0.66);
+  --glass-subtle-fill: rgb(255 255 255 / calc(0.84 + 0.12 * var(--glass-intensity, 0.5)));
   --glass-border-color: rgba(23, 43, 36, 0.12);
   --glass-border: rgba(23, 43, 36, 0.12);
   --glass-rim: rgba(255, 255, 255, 0.85);
@@ -539,7 +543,7 @@
      Source de vérité unique : modifier UNE valeur ici met à jour
      TOUS les boutons du site (classes CSS + composants React).
      ════════════════════════════════════════════════════════════════ */
-  --btn-tint: rgba(255, 255, 255, 0.78);            /* verre clair (Phase 2) */
+  --btn-tint: rgb(255 255 255 / calc(0.86 + 0.10 * var(--glass-intensity, 0.5)));
   /* Phase 3 — « rien de plein » : les boutons/pills sont du verre teinté. */
   --btn-tint-action: rgba(34, 97, 72, 0.20);
   --btn-tint-danger: rgba(168, 68, 58, 0.18);
@@ -563,8 +567,8 @@
      Surfaces claires (blanc translucide), rayon 24, contenu sombre.
      Modifier UNE valeur ici met à jour TOUTES les cards du site.
      ════════════════════════════════════════════════════════════════ */
-  --card-tint: rgba(255, 255, 255, 0.64);           /* verre clair (Phase 2) */
-  --card-tint-strong: rgba(255, 255, 255, 0.84);    /* cards élevées / panneaux */
+  --card-tint: rgb(255 255 255 / calc(0.90 + 0.08 * var(--glass-intensity, 0.5)));
+  --card-tint-strong: rgb(255 255 255 / calc(0.95 + 0.04 * var(--glass-intensity, 0.5)));
   --card-tint-solid: #FFFFFF;                       /* repli opaque (a11y) */
   --card-blur: 14px;                                /* verre plus profond (Phase 2) */
   --card-saturate: 160%;                            /* = --btn-saturate */
@@ -634,6 +638,8 @@
   --lkv-overlay-scrim: rgba(0, 0, 0, 0.55);
   --lkv-focus-ring: rgba(127, 196, 154, 0.35);
   --lkv-on-action: #08150F;
+  --lkv-on-primary: #08150F;
+  --lkv-on-primary-muted: #163B28;
 
   --lkv-border: rgba(241, 245, 241, 0.16);
   --lkv-border-subtle: rgba(241, 245, 241, 0.08);
@@ -814,6 +820,8 @@ html.dark, .dark, [data-theme='dark'] {
   --lkv-text-secondary: #EDF3EF;
   --lkv-text-muted: #CBD8D0;
   --lkv-text-subtle: #A8B8AF;
+  --lkv-on-primary: #08150F;
+  --lkv-on-primary-muted: #163B28;
 }
 
 /* Primitives boutons & composants Liquid Glass */
@@ -870,26 +878,41 @@ button.g2,
 }
 
 /* Classes utilitaires universelles Liquid Glass */
+.leaflet-control-attribution a {
+  color: var(--lkv-text-primary) !important;
+}
 .leaflet-bottom.leaflet-right {
   bottom: calc(var(--content-pb, 88px) + 8px) !important;
   right: 12px !important;
   z-index: var(--z-hud, 400) !important;
 }
 .leaflet-control-attribution {
-  background: rgba(255, 255, 255, 0.75) !important;
+  background: var(--card-tint-solid) !important;
   backdrop-filter: blur(12px) !important;
   -webkit-backdrop-filter: blur(12px) !important;
   border: 0.5px solid rgba(0, 0, 0, 0.15) !important;
   border-radius: 9999px !important;
   padding: 2px 8px !important;
-  color: #1e293b !important;
+  color: var(--lkv-text-primary) !important;
   font-size: 10px !important;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12) !important;
 }
 .dark .leaflet-control-attribution {
-  background: rgba(24, 24, 27, 0.75) !important;
+  background: var(--card-tint-solid) !important;
   border-color: rgba(255, 255, 255, 0.18) !important;
-  color: #f1f5f9 !important;
+  color: var(--lkv-text-primary) !important;
+}
+@media (max-width: 767px) {
+  .leaflet-bottom.leaflet-right {
+    bottom: calc(var(--content-pb, 88px) + 48px) !important;
+    left: 12px !important;
+    right: auto !important;
+  }
+  .leaflet-bottom.leaflet-right .leaflet-control-attribution {
+    left: auto !important;
+    right: auto !important;
+    float: none !important;
+  }
 }
 
 .g0-backdrop {

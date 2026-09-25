@@ -1,0 +1,24 @@
+{
+  "$schema": "./performance-budgets.schema.json",
+  "baselineDate": "2026-09-12",
+  "notes": [
+    "Historical baseline from docs/PERFORMANCE_BUDGET.md; refresh with /perf-baseline before treating as current.",
+    "Explorer map is intentionally budgeted separately from application shell."
+  ],
+  "webVitals": {
+    "lcp_ms_p75_max": 2500,
+    "inp_ms_p75_max": 200,
+    "cls_p75_max": 0.1
+  },
+  "explorer": {
+    "shell_first_load_js_kib_max": 265,
+    "shared_js_kib_reference": 104,
+    "maplibre_gzip_kib_max": 286,
+    "maplibre_raw_kib_reference": 1124
+  },
+  "regressionPolicy": {
+    "latency_percent": 3,
+    "latency_absolute_ms": 30,
+    "compressed_asset_kib": 10
+  }
+}

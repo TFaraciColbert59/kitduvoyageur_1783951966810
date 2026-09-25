@@ -13,13 +13,13 @@ function chipClasses(tone: MobileInfoChip['tone']): string {
   if (tone === 'accent') {
     return 'border border-[var(--lkv-primary)]/15 bg-[var(--lkv-primary)]/10 text-[var(--lkv-primary)]';
   }
-  return 'glass-sub-card text-[var(--lkv-text-primary)]';
+  return 'glass-sub-card bg-[color:var(--glass-bg-medium)] bg-[color:var(--card-tint-solid)] text-[var(--lkv-text-primary)]';
 }
 
 function bubbleClasses(tone: MobileInfoChip['tone']): string {
   if (tone === 'warn') return 'border-[var(--lkv-danger)]/20 bg-[color:var(--glass-bg-medium)] text-[var(--lkv-danger)]';
   if (tone === 'accent') return 'border-[var(--lkv-primary)]/15 bg-[color:var(--glass-bg-medium)] text-[var(--lkv-primary)]';
-  return 'border-white/70 bg-white/70 text-[var(--lkv-secondary)]';
+  return 'border-[color:var(--glass-border-color)] bg-[color:var(--btn-tint)] bg-[color:var(--card-tint-solid)] text-[var(--lkv-text-primary)]';
 }
 
 export function InfoChipsRow({ chips, label = 'Informations clés' }: InfoChipsRowProps) {
@@ -42,7 +42,7 @@ export function InfoChipsRow({ chips, label = 'Informations clés' }: InfoChipsR
               </span>
               <span className="min-w-0 leading-tight">
                 <span className="block truncate text-[13px] font-extrabold tabular-nums">{chip.value}</span>
-                <span className="block max-w-[10rem] truncate text-[9px] font-medium uppercase tracking-[0.12em] opacity-70">
+                <span className="block max-w-[10rem] truncate text-[9px] font-medium uppercase tracking-[0.12em] text-[color:var(--lkv-text-secondary)]">
                   {chip.label}
                 </span>
               </span>

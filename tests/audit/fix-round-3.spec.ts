@@ -5,7 +5,7 @@ import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import * as core from '../../scripts/audit/contrast_audit_core.mjs';
 import * as runtime from '../../scripts/audit/audit_runtime.mjs';
-import { extractTextElements } from '../../scripts/audit/measure_contrast_v2.mjs';
+import { extractTextElements, summarizeFullContrastEvidence } from '../../scripts/audit/measure_contrast_v2.mjs';
 
 const coreApi = core as typeof core & Record<string, any>;
 const runtimeApi = runtime as typeof runtime & Record<string, any>;
@@ -19,9 +19,14 @@ type TextNode = {
 function completeCells() {
   return core.buildMatrixCells().map((cell) => ({
     ...cell,
-    actualTheme: 'dark',
-    actualIntensity: cell.intensity,
-    nodes: [],
+     actualTheme: cell.theme,
+     actualIntensity: cell.intensity,
+     finalPath: cell.path,
+     httpStatus: 200,
+     measurementState: 'default',
+     scrollY: 0,
+     overlayOpen: false,
+     nodes: [],
     axe: { violations: [], incomplete: [] },
   }));
 }
@@ -73,6 +78,22 @@ describe('fix round 3 — régressions', () => {
     }
   });
 
+  it('ignore les textes décoratifs marqués aria-hidden', async () => {
+    const browser = await chromium.launch({ headless: true });
+    try {
+      const page = await browser.newPage({ viewport: { width: 800, height: 200 } });
+      await page.setContent(`
+        <span aria-hidden="true">⚡</span>
+        <span>Texte visible</span>
+      `);
+      const nodes = await extractTextElements(page) as TextNode[];
+
+      expect(nodes.map((node) => node.text)).toEqual(['Texte visible']);
+    } finally {
+      await browser.close();
+    }
+  });
+
   it('produit des rapports partiels sans preuve live pour matrice et campagne', () => {
     const matrix = coreApi.buildMatrixAuditReport({
       cells: completeCells(),
@@ -114,7 +135,213 @@ describe('fix round 3 — régressions', () => {
     expect(campaign.verificationStatus).not.toBe('VERIFIED');
   });
 
-  it('intègre la couverture et les routes manquantes au rapport global', () => {
+  it('refuse une matrice avec une cellule vide ou dégradée', () => {
+     const cells = completeCells().map((cell, index) => ({
+       ...cell,
+       measured: true,
+       nodes: index === 0 ? [{ id: 'pass-node', selector: '#pass-node', ratio: 4.5, threshold: 4.5, status: 'pass' }] : [],
+       degraded: index === 1,
+       warnings: index === 2 ? [{ type: 'console', message: 'warning' }] : [],
+     }));
+     const report = coreApi.buildMatrixAuditReport({ cells, liveVerified: true, errors: [] });
+
+     expect(report.coverageComplete).toBe(false);
+     expect(report.measuredCellCount).toBe(1);
+     expect(report.warningCellCount).toBe(2);
+     expect(report.verificationStatus).toBe('PARTIAL / NOT VERIFIED');
+  });
+
+  it('refuse une preuve unknown ou occluded comme couverture vérifiée', () => {
+     const cells = completeCells().map((cell) => ({
+       ...cell,
+       measured: true,
+       nodes: [{ id: 'unknown-node', selector: '#unknown-node', ratio: null, threshold: null, status: 'unknown' }],
+     }));
+     const report = coreApi.buildMatrixAuditReport({ cells, liveVerified: true, errors: [] });
+
+     expect(report.coverageComplete).toBe(false);
+     expect(report.verificationStatus).toBe('PARTIAL / NOT VERIFIED');
+  });
+
+   it('refuse une campagne dont la preuve contient unknown ou occluded', () => {
+     const report = coreApi.buildCampaignAuditReport({
+       findings: [{ counts: { pass: 0, contrast_fail: 0, unknown: 1, occluded: 0 } }],
+       errors: [],
+       expectedRouteCount: 1,
+       completedRouteCount: 1,
+       liveVerified: true,
+     });
+
+     expect(report.liveEvidence).toBe(false);
+     expect(report.verificationStatus).toBe('PARTIAL / NOT VERIFIED');
+   });
+
+   it('recalcule les comptes et refuse les preuves de campagne sparses', () => {
+     const sparse = coreApi.buildCampaignAuditReport({
+       findings: [{ routeId: 'accueil', measured: false, nodes: [], counts: { pass: 99 } }],
+       errors: [],
+       expectedRouteCount: 1,
+       completedRouteCount: 1,
+       liveVerified: true,
+     });
+     const inconsistent = coreApi.buildCampaignAuditReport({
+       findings: [{
+           routeId: 'accueil',
+           path: '/',
+           measured: true,
+         nodes: [{ id: 'unknown-node', selector: '#unknown-node', ratio: null, threshold: null, status: 'unknown' }],
+         counts: { pass: 99, contrast_fail: 0, unknown: 0, occluded: 0 },
+       }],
+       errors: [],
+       expectedRouteCount: 1,
+       completedRouteCount: 1,
+       liveVerified: true,
+     });
+     const valid = coreApi.buildCampaignAuditReport({
+       findings: [{
+           routeId: 'accueil',
+           path: '/',
+           measured: true,
+         nodes: [{ id: 'pass-node', selector: '#pass-node', ratio: 4.5, threshold: 4.5, status: 'pass' }],
+         counts: { pass: 99, contrast_fail: 0, unknown: 0, occluded: 0 },
+       }],
+       errors: [],
+       expectedRouteCount: 1,
+        expectedRouteIds: ['accueil'],
+        expectedRoutePaths: [{ routeId: 'accueil', path: '/' }],
+        expectedOutcomes: [],
+       expectedOutcomeDefinitions: [],
+         manifestCoverageComplete: true,
+         coverageComplete: true,
+         completedRouteCount: 1,
+         liveVerified: true,
+     });
+
+      expect(sparse.liveEvidence).toBe(false);
+     expect(sparse.totals).toMatchObject({ pass: 0, unknown: 0 });
+     expect(inconsistent.totals).toMatchObject({ pass: 0, unknown: 1 });
+     expect(inconsistent.verificationStatus).toBe('PARTIAL / NOT VERIFIED');
+     expect(valid.totals).toMatchObject({ pass: 1, unknown: 0 });
+     expect(valid.verificationStatus).toBe('VERIFIED');
+   });
+
+   it('refuse un rapport global limité aux issues attendues sans preuve contrastée', () => {
+     const expectedRoutes = [
+       { id: 'normal', path: '/compte' },
+       { id: 'expected', path: '/dev/glass' },
+     ];
+     const expectedOnly = {
+       normal: { id: 'normal', path: '/compte', measured: false, expected: false, nodes: [] },
+       expected: {
+         id: 'expected',
+         path: '/dev/glass',
+         measured: false,
+         expected: true,
+         status: 'expected_404',
+         reason: 'expected_404',
+         finalPath: '/dev/glass',
+         expectedFinalPath: null,
+         httpStatus: 404,
+         nodes: [],
+       },
+     };
+     const measured = {
+       normal: { id: 'normal', path: '/compte', measured: true, nodes: [{ id: 'pass-node', selector: '#pass-node', ratio: 4.5, threshold: 4.5, status: 'pass' }] },
+       expected: expectedOnly.expected,
+     };
+     const sparse = summarizeFullContrastEvidence(expectedOnly, expectedRoutes);
+     const complete = summarizeFullContrastEvidence(measured, expectedRoutes);
+
+     expect(sparse.expectedMeasuredRouteCount).toBe(1);
+     expect(sparse.coverageComplete).toBe(false);
+     expect(sparse.totals.nodes).toBe(0);
+     expect(complete.coverageComplete).toBe(true);
+     expect(complete.totals.nodes).toBe(1);
+     const wrongPath = {
+       normal: { ...measured.normal, path: '/autre' },
+       expected: measured.expected,
+     };
+     const duplicate = {
+       normal: measured.normal,
+       expected: measured.expected,
+       duplicate: { ...measured.normal },
+     };
+     expect(summarizeFullContrastEvidence(wrongPath, expectedRoutes).coverageComplete).toBe(false);
+     expect(summarizeFullContrastEvidence(duplicate, expectedRoutes).coverageComplete).toBe(false);
+   });
+
+   it('lie les outcomes attendus à leurs définitions et à leur route canonique', () => {
+     const expectedOutcome = {
+       routeId: 'expected',
+       path: '/dev/glass',
+       expected: true,
+       measured: false,
+       status: 'expected_404',
+       reason: 'expected_404',
+       finalPath: '/dev/glass',
+       expectedFinalPath: null,
+       httpStatus: 404,
+     };
+     const definition = {
+       routeId: 'expected',
+       path: '/dev/glass',
+       kind: 'http',
+       status: 404,
+       reason: 'expected_404',
+     };
+     const base = {
+       findings: [{ routeId: 'normal', path: '/compte', measured: true, nodes: [{ id: 'pass-node', selector: '#pass-node', ratio: 4.5, threshold: 4.5, status: 'pass' }] }],
+       errors: [],
+       expectedRouteCount: 2,
+       expectedRouteIds: ['normal', 'expected'],
+       expectedRoutePaths: [
+         { routeId: 'normal', path: '/compte' },
+         { routeId: 'expected', path: '/dev/glass' },
+       ],
+       expectedOutcomeDefinitions: [definition],
+         manifestCoverageComplete: true,
+         coverageComplete: true,
+         liveVerified: true,
+     };
+     const valid = coreApi.buildCampaignAuditReport({ ...base, expectedOutcomes: [expectedOutcome] });
+     const wrongOutcome = coreApi.buildCampaignAuditReport({
+       ...base,
+       expectedOutcomes: [{ ...expectedOutcome, finalPath: '/other' }],
+     });
+     const missingOutcome = coreApi.buildCampaignAuditReport({ ...base, expectedOutcomes: [] });
+     const invalidRatio = coreApi.buildCampaignAuditReport({
+       ...base,
+       findings: [{
+         routeId: 'normal',
+         path: '/compte',
+         measured: true,
+         nodes: [{ id: 'invalid-ratio', selector: '#invalid-ratio', ratio: null, threshold: 4.5, status: 'pass' }],
+       }],
+       expectedOutcomes: [expectedOutcome],
+     });
+     const duplicateNodes = coreApi.buildCampaignAuditReport({
+       ...base,
+        findings: [{
+
+         routeId: 'normal',
+         path: '/compte',
+         measured: true,
+         nodes: [
+           { id: 'duplicate-node', selector: '#duplicate-node', ratio: 4.5, threshold: 4.5, status: 'pass' },
+           { id: 'duplicate-node', selector: '#duplicate-node-2', ratio: 4.5, threshold: 4.5, status: 'pass' },
+         ],
+       }],
+       expectedOutcomes: [expectedOutcome],
+     });
+
+     expect(valid.verificationStatus).toBe('VERIFIED');
+     expect(wrongOutcome.verificationStatus).toBe('PARTIAL / NOT VERIFIED');
+     expect(missingOutcome.verificationStatus).toBe('PARTIAL / NOT VERIFIED');
+     expect(duplicateNodes.verificationStatus).toBe('PARTIAL / NOT VERIFIED');
+     expect(invalidRatio.verificationStatus).toBe('PARTIAL / NOT VERIFIED');
+   });
+
+   it('intègre la couverture et les routes manquantes au rapport global', () => {
     const script = readFileSync(path.join(process.cwd(), 'scripts/audit/global-audit.mjs'), 'utf8');
 
     expect(script).toContain('ROUTE_DEFINITIONS');
@@ -177,8 +404,11 @@ describe('fix round 3 — régressions', () => {
       access_token: 'access-secret',
       refresh_token: 'refresh-secret',
       authorization: 'Bearer object-secret',
-      cookie: 'sid=cookie-secret',
-      password: 'password-secret',
+       cookie: 'sid=cookie-secret',
+       password: 'password-secret',
+       text: 'private-user-text',
+       html: '<b>private-html</b>',
+
     });
     const serialized = readFileSync(reportPath, 'utf8');
 
@@ -191,12 +421,42 @@ describe('fix round 3 — régressions', () => {
       'Bearer',
       'access-secret',
       'refresh-secret',
-      'object-secret',
-      'cookie-secret',
-      'password-secret',
-    ]) {
+       'object-secret',
+       'cookie-secret',
+       'password-secret',
+       'private-user-text',
+       'private-html',
+     ]) {
       expect(serialized).not.toContain(forbidden);
     }
     rmSync(directory, { recursive: true, force: true });
+  });
+
+  it('ignore le fond fixe derrière le texte et détecte un vrai overlay', async () => {
+    const browser = await chromium.launch({ headless: true });
+    try {
+      const page = await browser.newPage({ viewport: { width: 800, height: 300 } });
+      await page.setContent(`
+        <style>
+          body { margin: 0; }
+          #background { position: fixed; inset: 0; z-index: -1; pointer-events: none; background: rgb(0, 0, 0); }
+          #banner { position: fixed; top: 120px; left: 0; width: 800px; height: 40px; z-index: 10; background: rgb(0, 0, 0); }
+          #under { position: absolute; top: 20px; left: 20px; }
+          #over { position: absolute; top: 130px; left: 20px; }
+        </style>
+        <div id="background"></div>
+        <div id="banner"></div>
+        <p id="under">Texte visible</p>
+        <p id="over">Texte masqué</p>
+      `);
+      const nodes = await extractTextElements(page) as Array<{ text: string; occluded: boolean }>;
+      const visible = nodes.find((node) => node.text.includes('visible'));
+      const covered = nodes.find((node) => node.text.includes('masqué'));
+
+      expect(visible?.occluded).toBe(false);
+      expect(covered?.occluded).toBe(true);
+    } finally {
+      await browser.close();
+    }
   });
 });

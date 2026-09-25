@@ -100,6 +100,34 @@ describe('Task 1B fix round 4 — aborted non bloquants', () => {
     diagnostics.dispose();
   });
 
+  it('conserve les requêtes Supabase annulées en warnings non bloquants', () => {
+    const emitted = createPage();
+    const diagnostics = attachPageDiagnostics(emitted.page, { baseUrl });
+
+    emitted.emit('requestfailed', makeRequest({
+      url: 'https://project.supabase.co/rest/v1/notifications',
+    }));
+
+    expect(diagnostics.errors).toHaveLength(0);
+    expect(diagnostics.warnings).toHaveLength(1);
+    diagnostics.dispose();
+  });
+
+  it('conserve les requêtes GET/HEAD externes annulés en warnings non bloquants', () => {
+    const emitted = createPage();
+    const diagnostics = attachPageDiagnostics(emitted.page, { baseUrl });
+
+    emitted.emit('requestfailed', makeRequest({
+      url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/14/5833/8504',
+      resourceType: 'image',
+    }));
+
+    expect(diagnostics.errors).toHaveLength(0);
+    expect(diagnostics.warnings).toHaveLength(1);
+    expect(() => diagnostics.assertClean()).not.toThrow();
+    diagnostics.dispose();
+  });
+
   it('garde toute réponse HTTP locale ≥400 fatale', () => {
     const emitted = createPage();
     const diagnostics = attachPageDiagnostics(emitted.page, { baseUrl });

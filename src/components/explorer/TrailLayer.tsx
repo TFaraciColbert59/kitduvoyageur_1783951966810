@@ -280,11 +280,12 @@ export default function TrailLayer({ map, trails, pois, selectedTrailId, onTrail
                   height: 28px;
                   border-radius: 50%;
                   display: flex;
-                  align-items: center;
-                  justify-content: center;
-                  box-shadow: 0 2px 6px rgba(51,65,85,0.35);
-                  border: 2px solid white;
-                ">📍${count}</div>
+                   position: relative;
+                   align-items: center;
+                   justify-content: center;
+                   box-shadow: 0 2px 6px rgba(51,65,85,0.35);
+                   border: 2px solid white;
+                 "><span aria-hidden="true" style="position: absolute; left: 2px; top: 50%; transform: translateY(-50%); font-size: 9px;">📍</span><span>${count}</span></div>
               `;
               return L.divIcon({ html, className: '', iconSize: [28, 28], iconAnchor: [14, 14] });
             }
@@ -299,7 +300,7 @@ export default function TrailLayer({ map, trails, pois, selectedTrailId, onTrail
           switch (poi.category) {
             case 'refuge': emoji = '🏡'; bgColor = '#17402C'; break;
             case 'summit': case 'col': emoji = '⛰️'; bgColor = '#334155'; break;
-            case 'water': emoji = '💧'; bgColor = '#0284C7'; break;
+            case 'water': emoji = '💧'; bgColor = '#0C4A6E'; break;
             case 'waterfall': emoji = '🌊'; bgColor = '#0EA5E9'; break;
             case 'camping': emoji = '⛺'; bgColor = '#16A34A'; break;
             default: emoji = '👁️'; bgColor = '#7C3AED'; break;
