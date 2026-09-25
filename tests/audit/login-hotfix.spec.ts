@@ -60,4 +60,48 @@ describe('audit login — responsive forms', () => {
       await browser.close();
     }
   });
+
+  it('rejette un fixture sans formulaire visible et un fixture avec deux formulaires visibles', async () => {
+    const fillVisibleLoginForm = api.fillVisibleLoginForm;
+    expect(typeof fillVisibleLoginForm).toBe('function');
+    if (typeof fillVisibleLoginForm !== 'function') return;
+
+    const browser = await chromium.launch({ headless: true });
+    try {
+      const credentials = {
+        email: 'negative@example.test',
+        password: 'negative-secret',
+      };
+      const noVisibleFormPage = await browser.newPage({ viewport: { width: 390, height: 844 } });
+      await noVisibleFormPage.setContent(`
+        <main>
+          <form id="hidden-form" style="display: none">
+            <input id="email" type="email">
+            <input id="password" type="password">
+          </form>
+        </main>
+      `);
+      await expect(fillVisibleLoginForm(noVisibleFormPage, credentials)).rejects.toThrow(/attendu unique/);
+      expect(await noVisibleFormPage.locator('input#email').inputValue()).toBe('');
+
+      const twoVisibleFormsPage = await browser.newPage({ viewport: { width: 390, height: 844 } });
+      await twoVisibleFormsPage.setContent(`
+        <main>
+          <form id="first-form">
+            <input id="email" type="email">
+            <input id="password" type="password">
+          </form>
+          <form id="second-form">
+            <input id="email" type="email">
+            <input id="password" type="password">
+          </form>
+        </main>
+      `);
+      await expect(fillVisibleLoginForm(twoVisibleFormsPage, credentials)).rejects.toThrow(/attendu unique/);
+      expect(await twoVisibleFormsPage.locator('#first-form input#email').inputValue()).toBe('');
+      expect(await twoVisibleFormsPage.locator('#second-form input#email').inputValue()).toBe('');
+    } finally {
+      await browser.close();
+    }
+  });
 });
