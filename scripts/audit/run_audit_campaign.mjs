@@ -148,7 +148,7 @@ async function run() {
       storageState,
     });
     const authPage = await authContext.newPage();
-    await verifyCompteSession(authPage, BASE_URL);
+    await verifyCompteSession(authPage, BASE_URL, { sessionMode: true });
     await authContext.close();
 
     for (const route of ROUTES) {

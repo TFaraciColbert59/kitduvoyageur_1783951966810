@@ -104,7 +104,7 @@ async function run() {
       storageState,
     });
     const authPage = await authContext.newPage();
-    await verifyCompteSession(authPage, baseUrl);
+    await verifyCompteSession(authPage, baseUrl, { sessionMode: true });
     await authContext.close();
 
     for (const cell of cells) {
