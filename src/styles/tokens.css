@@ -777,7 +777,6 @@
   --z-alert: 700;
 
   /* Dimensions de navigation & compensation de scroll */
-  --nav-height: 56px;
   --tabbar-h: 72px;
   --subbar-h: 48px;
   --content-pb: calc(var(--tabbar-h) + var(--safe-bottom, 24px) + 28px);

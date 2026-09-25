@@ -5,12 +5,14 @@ import dynamic from 'next/dynamic';
 import { usePathname } from 'next/navigation';
 
 import OfflineBanner from '@/components/mobile-nav/OfflineBanner';
+import NavigationSurface from '@/components/mobile-nav/navigation/NavigationSurface';
 import SearchOverlay from '@/components/search/SearchOverlay';
 import { HUB_DEPART_HREF } from '@/features/hub/registry/hubSectionRegistry';
 import { useSearchContext } from '@/contexts/SearchContext';
 
 const NavigationBar = dynamic(() => import('@/components/mobile-nav/NavigationBar'), {
   ssr: false,
+  loading: () => <NavigationSurface loading label="Chargement de la navigation" />,
 });
 
 export default function MobileNavWrapper() {

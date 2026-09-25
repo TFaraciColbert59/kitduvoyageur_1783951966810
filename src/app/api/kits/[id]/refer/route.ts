@@ -11,7 +11,8 @@ export const dynamic = 'force-dynamic';
  * Le checkout lira et vérifiera ce cookie côté serveur pour attribuer la part.
  * Signature invalide/expirée → ignorée silencieusement au checkout.
  */
-export async function GET(_req: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const secret = process.env.KIT_REF_SECRET;
   if (!secret) {
     return NextResponse.json({ ok: false });
@@ -19,7 +20,7 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
 
   // Le kit doit être lisible (RLS) pour que le cookie soit signé — on vérifie
   // au checkout, mais on évite de signer un kit inexistant.
-  const token = await signKitRef(params.id, secret);
+  const token = await signKitRef(id, secret);
 
   const res = NextResponse.json({ ok: true });
   res.cookies.set(KIT_REF_COOKIE, token, {

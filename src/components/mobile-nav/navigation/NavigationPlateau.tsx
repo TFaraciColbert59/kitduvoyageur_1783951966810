@@ -1,6 +1,6 @@
 'use client';
 
-import { motion } from 'framer-motion';
+import { motion, useReducedMotion } from 'framer-motion';
 import type { NavigationPlateauController, PlateauFlags } from './useNavigationPlateau';
 
 interface UpperTab {
@@ -89,15 +89,16 @@ function getUpperTabs(flags: PlateauFlags, messagerieRequestsCount: number): Upp
 }
 
 export default function NavigationPlateau({ controller }: { controller: NavigationPlateauController }) {
+  const reduceMotion = useReducedMotion();
   const { flags, activeId, isWide, messagerieRequestsCount, selectTab } = controller;
   const upperTabs = getUpperTabs(flags, messagerieRequestsCount);
 
   return (
     <motion.div
-      initial={{ y: 14, opacity: 0 }}
+      initial={reduceMotion ? false : { y: 14, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
-      exit={{ y: 14, opacity: 0 }}
-      transition={{ type: 'spring', stiffness: 450, damping: 28 }}
+      exit={reduceMotion ? { opacity: 0 } : { y: 14, opacity: 0 }}
+      transition={reduceMotion ? { duration: 0 } : { type: 'spring', stiffness: 450, damping: 28 }}
       style={{
         // M03 — hauteur utile 44 px pour chaque bouton (content-box
         // 44 + padding-top 4 = 48, moins les 8 px glissés sous la
@@ -181,7 +182,7 @@ export default function NavigationPlateau({ controller }: { controller: Navigati
                   boxShadow: 'var(--glass-shadow)',
                   pointerEvents: 'none',
                 }}
-                transition={{ type: 'spring', stiffness: 500, damping: 32 }}
+                transition={reduceMotion ? { duration: 0 } : { type: 'spring', stiffness: 500, damping: 32 }}
               />
             )}
             <span
@@ -189,8 +190,8 @@ export default function NavigationPlateau({ controller }: { controller: Navigati
                 position: 'relative',
                 zIndex: 2,
                 lineHeight: 1,
-                transform: isSelected ? 'scale(1.04)' : 'scale(1)',
-                transition: 'transform var(--motion-control-duration) var(--lkv-ease)',
+                transform: isSelected && !reduceMotion ? 'scale(1.04)' : 'scale(1)',
+                transition: reduceMotion ? 'none' : 'transform var(--motion-control-duration) var(--lkv-ease)',
                 display: 'flex',
                 alignItems: 'center',
                 gap: 5,

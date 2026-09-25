@@ -44,13 +44,14 @@ jobs:
       - name: Wait for server
         run: npx wait-on http://localhost:4028 --timeout 60000
 
-      - name: Install Lighthouse CI
-        run: npm install -g @lhci/cli@0.12.x
-
-      - name: Run Lighthouse CI
-        run: lhci autorun
-        env:
-          LHCI_GITHUB_APP_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
+      - name: Run Lighthouse
+        run: |
+          google-chrome --version
+          mkdir -p .lighthouseci
+          npx --yes lighthouse@13.5.0 http://localhost:4028/ \
+            --output=json \
+            --output-path=.lighthouseci/report.json \
+            --chrome-flags="--headless --no-sandbox"
 
       - name: Upload Lighthouse results
         if: always()
@@ -58,31 +59,34 @@ jobs:
         with:
           name: lighthouse-results
           path: .lighthouseci/
+          if-no-files-found: warn
           retention-days: 30
 
-      - name: Comment PR with results
-        if: github.event_name == 'pull_request'
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const fs = require('fs');
-            const resultsPath = '.lighthouseci/results.json';
-            if (fs.existsSync(resultsPath)) {
-              const results = JSON.parse(fs.readFileSync(resultsPath, 'utf8'));
-              const summary = results.map(r => `
-                **${r.url}**
-                - Performance: ${r.scores.performance}
-                - SEO: ${r.scores.seo}
-                - Accessibility: ${r.scores.accessibility}
-                - Best Practices: ${r.scores.bestPractices}
-              `).join('\n');
-              github.rest.issues.createComment({
-                issue_number: context.issue.number,
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                body: `## 🔍 Lighthouse CI Results\n${summary}`
-              });
-            }
+      - name: Summarize Lighthouse results
+        if: always()
+        run: |
+          node <<'NODE' >> "$GITHUB_STEP_SUMMARY"
+          const fs = require('node:fs');
+          const path = '.lighthouseci/report.json';
+          console.log('## Lighthouse results\n');
+          if (!fs.existsSync(path)) {
+            console.log('No report was produced. Check the build, server, and Lighthouse steps.');
+            process.exit(0);
+          }
+          const report = JSON.parse(fs.readFileSync(path, 'utf8'));
+          console.log(`URL: ${report.finalUrl || report.requestedUrl || 'unknown'}\n`);
+          console.log('| Category | Score |\n| --- | ---: |');
+          for (const [id, label] of [
+            ['performance', 'Performance'],
+            ['accessibility', 'Accessibility'],
+            ['best-practices', 'Best practices'],
+            ['seo', 'SEO'],
+          ]) {
+            const score = report.categories?.[id]?.score;
+            console.log(`| ${label} | ${typeof score === 'number' ? `${Math.round(score * 100)}/100` : 'n/a'} |`);
+          }
+          console.log('\nScores are informational; this workflow does not enforce score thresholds.');
+          NODE
 
   bundle-analysis:
     runs-on: ubuntu-latest

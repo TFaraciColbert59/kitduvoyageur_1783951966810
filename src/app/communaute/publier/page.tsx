@@ -557,7 +557,7 @@ function PublierPostContent() {
                         <Icon name="link" size={14} />
                       </Button>
                       <Button type="button" variant="ghost" size="sm" aria-label="Insérer une image" className="size-7 min-h-0 px-0">
-                        <Icon name="camera" size={14} />
+                        <Icon name="image-plus" size={14} />
                       </Button>
                     </div>
 
@@ -883,7 +883,7 @@ function PublierPostContent() {
                   <div className="flex items-center gap-[var(--space-3)]">
                     <span className="inline-flex items-center gap-1"><Icon name="message-square" size={12} /> 0</span>
                     <span className="inline-flex items-center gap-1"><Icon name="heart" size={12} /> 0</span>
-                    <span className="inline-flex items-center gap-1"><Icon name="share-2" size={12} /> 0</span>
+                    <span className="inline-flex items-center gap-1"><Icon name="share2" size={12} /> 0</span>
                   </div>
                   <div className="flex gap-[var(--space-1)] font-semibold text-[color:var(--lkv-text-primary)]">
                     {tags.slice(0, 2).map((t) => (<span key={t}>#{t}</span>))}

@@ -24,7 +24,17 @@ import { loadRouteDetail } from '../services/RouteService';
 import { routeStartPoint, nextTurnOnRoute } from '../services/RouteGeom';
 import { getRouteOffline } from '@/lib/offlineStorage';
 
-import StatsSheet from './sheets/StatsSheet';
+// Le profil d'altitude n'est utile qu'à l'ouverture du panneau Statistiques.
+const StatsSheet = dynamic(() => import('./sheets/StatsSheet'), {
+  ssr: false,
+  loading: () => (
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60" role="status" aria-live="polite">
+      <div className="w-full max-w-md rounded-t-[34px] bg-[color:var(--glass-bg-medium)] p-6 text-[color:var(--lkv-primary)]">
+        Chargement des statistiques…
+      </div>
+    </div>
+  ),
+});
 import CaptureSheet from './sheets/CaptureSheet';
 import CopilotSheet from './sheets/CopilotSheet';
 import MoreSheet from './sheets/MoreSheet';
@@ -504,18 +514,20 @@ export default function HikingCockpitPage({ terrainEnabled = false }: HikingCock
               )}
 
               {/* Interactive Modals */}
-              <StatsSheet
-                isOpen={activeTab === 'stats'}
-                onClose={() => setActiveTab(null)}
-                distanceKm={currentDistanceKm}
-                durationSeconds={hikingStore.durationSeconds}
-                routeTotalKm={totalDistanceKm}
-                progressPercent={progressPct}
-                elevationGainM={hikingStore.elevationGainM}
-                currentSpeedKmH={hikingStore.currentSpeedKmH}
-                averageSpeedKmH={hikingStore.averageSpeedKmH}
-                paceMinPerKm={hikingStore.paceMinPerKm}
-              />
+              {activeTab === 'stats' && (
+                <StatsSheet
+                  isOpen
+                  onClose={() => setActiveTab(null)}
+                  distanceKm={currentDistanceKm}
+                  durationSeconds={hikingStore.durationSeconds}
+                  routeTotalKm={totalDistanceKm}
+                  progressPercent={progressPct}
+                  elevationGainM={hikingStore.elevationGainM}
+                  currentSpeedKmH={hikingStore.currentSpeedKmH}
+                  averageSpeedKmH={hikingStore.averageSpeedKmH}
+                  paceMinPerKm={hikingStore.paceMinPerKm}
+                />
+              )}
 
               <CaptureSheet
                 isOpen={activeTab === 'capture' || activeTab === 'carnet'}
