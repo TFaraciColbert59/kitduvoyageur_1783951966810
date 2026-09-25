@@ -492,26 +492,27 @@ async function run() {
              const modalTrigger = page.locator('button[aria-haspopup="dialog"]').first();
              if (await modalTrigger.isVisible().catch(() => false)) {
                const modalClicked = await modalTrigger.click({ timeout: 1000 }).then(() => true).catch(() => false);
-
-               await page.waitForTimeout(300);
-               modalOpen = await page.evaluate(() => [...document.querySelectorAll('[role="dialog"], dialog, [aria-modal="true"]')]
-                 .some((element) => {
-                   const rect = element.getBoundingClientRect();
-                   const style = getComputedStyle(element);
-                   return rect.width > 0 && rect.height > 0
-                     && rect.bottom > 0 && rect.top < window.innerHeight
-                     && rect.right > 0 && rect.left < window.innerWidth
-                     && style.display !== 'none' && style.visibility !== 'hidden';
-                 }));
-                if (modalOpen) {
-                  const modalName = `${viewport.name}-${theme}-modal.png`;
-                  const modalBuffer = await page.screenshot({ fullPage: false, animations: 'disabled' });
-                  const modalFile = path.join(routeDir, modalName);
-                  writePrivateAuditFile(modalFile, modalBuffer);
-                   modalArtifact = fileDigest(modalFile);
-                   states.push(modalName);
-                 }
+               if (modalClicked) {
+                 await page.waitForTimeout(300);
+                 modalOpen = await page.evaluate(() => [...document.querySelectorAll('[role="dialog"], dialog, [aria-modal="true"]')]
+                   .some((element) => {
+                     const rect = element.getBoundingClientRect();
+                     const style = getComputedStyle(element);
+                     return rect.width > 0 && rect.height > 0
+                       && rect.bottom > 0 && rect.top < window.innerHeight
+                       && rect.right > 0 && rect.left < window.innerWidth
+                       && style.display !== 'none' && style.visibility !== 'hidden';
+                   }));
                }
+               if (modalOpen) {
+                 const modalName = `${viewport.name}-${theme}-modal.png`;
+                 const modalBuffer = await page.screenshot({ fullPage: false, animations: 'disabled' });
+                 const modalFile = path.join(routeDir, modalName);
+                 writePrivateAuditFile(modalFile, modalBuffer);
+                 modalArtifact = fileDigest(modalFile);
+                 states.push(modalName);
+               }
+             }
 
               const finalCaptureNavigation = assessCurrentRouteNavigation(page, BASE_URL, route.path, navigation.httpStatus);
              if (finalCaptureNavigation.finalPath !== navigation.finalPath

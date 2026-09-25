@@ -350,9 +350,12 @@ export async function extractTextElements(page) {
 
 export async function readCanonicalMeasurementState(page) {
   await page.waitForFunction(() => {
-    const text = document.querySelector('main')?.innerText || '';
-    return text.trim().length > 80 && !/Connexion requise|Chargement|Initialisation/i.test(text);
-  }, undefined, { timeout: 10000 });
+    if (document.readyState === 'loading') return false;
+    const root = document.querySelector('main') || document.body;
+    const text = root?.innerText || '';
+    return !/Connexion requise|Chargement|Initialisation/i.test(text)
+      && document.querySelectorAll('[data-audit-id]').length > 0;
+  }, undefined, { timeout: 15000 });
   return page.evaluate(() => ({
     scrollY: window.scrollY,
     overlayOpen: [...document.querySelectorAll('[role="dialog"], dialog, [aria-modal="true"]')]
@@ -754,10 +757,6 @@ async function run() {
            || settledNavigation.status !== navigation.status) {
            throw new Error('La route a changé après le chargement initial');
          }
-          const canonicalState = await readCanonicalMeasurementState(page);
-          if (canonicalState.scrollY !== 0 || canonicalState.overlayOpen) {
-            throw new Error('État de contraste non canonical');
-          }
           diagnostics.assertClean();
           const warnings = diagnostics.warnings.map((entry) => ({ ...entry }));
          if (navigation.expected) {
@@ -778,6 +777,10 @@ async function run() {
             axe: { violations: [], incomplete: [] },
           };
           continue;
+         }
+         const canonicalState = await readCanonicalMeasurementState(page);
+         if (canonicalState.scrollY !== 0 || canonicalState.overlayOpen) {
+           throw new Error('État de contraste non canonical');
          }
          const rendered = await readRenderedAuditSettings(page);
         assertRenderedAuditSettings({
