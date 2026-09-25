@@ -15,9 +15,10 @@ export const dynamic = 'force-dynamic';
  */
 export async function POST(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return NextResponse.json({ error: 'Non authentifié' }, { status: 401 });
@@ -43,7 +44,7 @@ export async function POST(
     if (session.user_id !== user.id) {
       return NextResponse.json({ error: 'Session non autorisée' }, { status: 403 });
     }
-    if (!session.kit_id || session.kit_id !== params.id) {
+    if (!session.kit_id || session.kit_id !== id) {
       return NextResponse.json(
         { error: 'Cette session n’est pas rattachée à ce kit' },
         { status: 400 }
@@ -65,7 +66,7 @@ export async function POST(
       .from('kit_field_reports')
       .upsert(
         {
-          kit_id: params.id,
+          kit_id: id,
           hike_session_id: body.hike_session_id,
           user_id: user.id,
           item_key: itemKey,

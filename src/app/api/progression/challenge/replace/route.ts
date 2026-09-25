@@ -10,9 +10,7 @@ const GENERIC_ERROR = 'Erreur lors du remplacement du défi';
  * Corps facultatif : aucun champ n'est attendu (le serveur choisit le défi).
  * Tout corps non vide doit néanmoins être un objet JSON valide.
  */
-async function isBodyAcceptable(request?: NextRequest): Promise<boolean> {
-  if (!request) return true;
-
+async function isBodyAcceptable(request: NextRequest): Promise<boolean> {
   let text = '';
   try {
     text = await request.text();
@@ -30,7 +28,7 @@ async function isBodyAcceptable(request?: NextRequest): Promise<boolean> {
   }
 }
 
-export async function POST(request?: NextRequest) {
+export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient();
     const {

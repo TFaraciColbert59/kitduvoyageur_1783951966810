@@ -1,98 +1,27 @@
-﻿"use client";
+'use client';
 
-import { useEffect } from "react";
-import { useRouter, usePathname } from "next/navigation";
-import { useQueryClient } from "@tanstack/react-query";
-import { evaluateCurrentPrefetchPolicy } from "@/lib/perf/networkPrefs";
+import { useEffect } from 'react';
+import { usePathname, useRouter } from 'next/navigation';
+import { evaluateCurrentPrefetchPolicy } from '@/lib/perf/networkPrefs';
+import { getLikelyPrefetchRoute } from '@/lib/perf/prefetchCandidates';
 
-/**
- * PrefetchRoutes — Prefetch predictif base sur la route courante.
- *
- * Logique :
- * - Prefetch les routes les plus probables a partir de la page actuelle.
- * - Prefetch les donnees QueryClient correspondantes via prefetchQuery().
- *
- * Resultat :
- *   Sur Accueil -> Explorer, Materiel, Communaute, Pays sont deja charges.
- *   Tap -> transition instantanee + donnees deja en cache L1.
- *
- * Architecture :
- *   Accueil  -> Explorer, Materiel, Communaute, Pays
- *   Explorer -> carte-interactive, hors-ligne
- *   Communaute -> carnets, groupes, clubs
- *   Materiel -> kits, ai-configurator
- *   Pays     -> pays (toutes fiches)
- */
-
-type PrefetchConfig = {
-  routes: string[];
-  /** Cles QueryClient a prefetcher avec leur fetcher */
-  queries?: Array<{ queryKey: unknown[]; fetcher: () => Promise<unknown> }>;
-};
-
-const PREFETCH_MAP: Record<string, PrefetchConfig> = {
-  "/": {
-    routes: ["/explorer", "/hub", "/communaute", "/compte"],
-  },
-  "/explorer": {
-    routes: ["/hors-ligne", "/hub"],
-  },
-  "/communaute": {
-    routes: ["/carnets", "/groupes", "/clubs", "/evenements", "/entraide"],
-  },
-  "/hub": {
-    // P1-4 (C-14) — la destination de tous les taps du hub : les sections
-    // canoniques de l'aventure active (registre hubSectionRegistry), pas des
-    // surfaces génériques.
-    routes: ["/hub/itineraire", "/hub/kit-voyage", "/hub/checklist", "/hub/documents", "/explorer"],
-  },
-  "/compte": {
-    // C-14 : /mes-aventures est redirigée par le middleware — retirée.
-    routes: ["/profil", "/abonnements"],
-  },
-  "/carnets": {
-    routes: ["/communaute", "/compte"],
-  },
-};
-
-/** Prefetche les routes du niveau suivant (2 niveaux de profondeur). */
-function getRoutesToPrefetch(pathname: string): string[] {
-  const direct = PREFETCH_MAP[pathname]?.routes ?? [];
-  const indirect = direct
-    .flatMap((r) => PREFETCH_MAP[r]?.routes ?? [])
-    .filter((r) => !direct.includes(r) && r !== pathname);
-  // Priorite aux routes directes, puis indirectes (max 8 total)
-  return [...direct, ...indirect].slice(0, 8);
-}
-
+/** Prefetch one likely destination after the current page has had time to paint. */
 export default function PrefetchRoutes() {
-  const router = useRouter();
   const pathname = usePathname();
-  const queryClient = useQueryClient();
+  const router = useRouter();
 
   useEffect(() => {
-    // P0 — politique réseau : pas de cascade de prefetch quand l'utilisateur a
-    // limité sa connexion (saveData / 2G / 3G → voir networkPrefs).
-    const policy = evaluateCurrentPrefetchPolicy();
+    const route = getLikelyPrefetchRoute(pathname);
+    if (!route || !evaluateCurrentPrefetchPolicy().allow) return;
 
-    // -- 1. Prefetch routes Next.js (JS bundle + RSC payload)
-    if (policy.allow) {
-      const routes = getRoutesToPrefetch(pathname);
-      routes.forEach((r) => router.prefetch(r));
+    if ('requestIdleCallback' in window) {
+      const idleId = window.requestIdleCallback(() => router.prefetch(route), { timeout: 3_000 });
+      return () => window.cancelIdleCallback(idleId);
     }
 
-    // -- 2. Prefetch donnees QueryClient de la page courante
-    const currentConfig = PREFETCH_MAP[pathname];
-    if (policy.allowData && currentConfig?.queries) {
-      currentConfig.queries.forEach(({ queryKey, fetcher }) => {
-        queryClient.prefetchQuery({
-          queryKey,
-          queryFn: fetcher,
-          staleTime: 60_000,
-        });
-      });
-    }
-  }, [pathname, router, queryClient]);
+    const timer = globalThis.setTimeout(() => router.prefetch(route), 1_500);
+    return () => globalThis.clearTimeout(timer);
+  }, [pathname, router]);
 
   return null;
 }

@@ -421,7 +421,7 @@ export default function RecompensesPage() {
                     onClick={() => setPaymentProvider('bank_transfer')}
                     className={`glass-capsule-btn flex flex-col items-center justify-center !p-3 ${paymentProvider === 'bank_transfer' ? 'primary' : ''}`}
                   >
-                    <Icon name="landmark" size={20} className="mb-1 text-white" />
+                    <Icon name="building" size={20} className="mb-1 text-white" />
                     <span className="text-[length:var(--lkv-text-caption-2)]">Virement SEPA</span>
                   </button>
                   <button

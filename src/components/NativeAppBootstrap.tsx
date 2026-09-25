@@ -1,6 +1,6 @@
-﻿"use client";
+"use client";
 
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import {
@@ -12,75 +12,69 @@ import {
 } from "@/lib/native";
 import { purgeExpiredCache } from "@/lib/storage/cacheDB";
 import { useAuth } from "@/contexts/AuthContext";
+import { useCriticalCacheReady } from "@/components/ReactQueryProvider";
 
-/**
- * M07 — délai maximal borné d'affichage du splash : au-delà, on le masque même
- * si l'événement de disponibilité n'est pas arrivé. Une erreur récupérable
- * (error boundary) est préférable à un splash figé sur un écran vide.
- */
+/** A recoverable error is preferable to a splash stuck over an empty screen. */
 const SPLASH_MAX_WAIT_MS = 4_000;
 
 export default function NativeAppBootstrap() {
   const router = useRouter();
   const queryClient = useQueryClient();
-  const { user, refreshProfile } = useAuth();
+  const { user, loading, refreshProfile } = useAuth();
+  const cacheReady = useCriticalCacheReady();
 
-  // Évite de ré-abonner les listeners natifs à chaque changement d'utilisateur :
-  // la reprise lit toujours l'état le plus récent.
   const resumeRef = useRef({ user, refreshProfile, queryClient });
   resumeRef.current = { user, refreshProfile, queryClient };
+  const revealReadyRef = useRef(false);
+  revealReadyRef.current = !loading && cacheReady;
+  const paintedRef = useRef(false);
+  const splashDismissedRef = useRef(false);
+
+  const dismissSplash = useCallback(() => {
+    if (splashDismissedRef.current) return;
+    splashDismissedRef.current = true;
+    hideNativeSplashScreen().catch(() => {});
+  }, []);
+  const revealAfterPaint = useCallback(() => {
+    if (paintedRef.current && revealReadyRef.current) dismissSplash();
+  }, [dismissSplash]);
 
   useEffect(() => {
-    // 1. Purge expired cache entries in background
     purgeExpiredCache().catch(() => {});
   }, []);
 
+  // Auth and IndexedDB may resolve after the first paint. Keep the native
+  // splash until both are ready, subject to the existing four-second cap.
   useEffect(() => {
-    // 2. Native Capacitor setup
+    if (isNative()) revealAfterPaint();
+  }, [cacheReady, loading, revealAfterPaint]);
+
+  useEffect(() => {
     if (!isNative()) return;
 
-    // Configure Status Bar
     setStatusBarStyle("dark").catch(() => {});
     setStatusBarColor("#17402C").catch(() => {});
 
-    // Android hardware back button & app lifecycle
     const unsubPromise = setupNativeAppListeners({
       onBackButton: () => {
-        if (window.history.length > 1) {
-          router.back();
-        }
+        if (window.history.length > 1) router.back();
       },
       onAppActive: () => {
-        // Reprise : vérifie la fraîcheur de session/profil et ne refetch que
-        // les requêtes actives devenues périmées (refetchOnWindowFocus est
-        // désactivé côté React Query pour le web mobile).
         const current = resumeRef.current;
-        if (current.user) {
-          current.refreshProfile().catch(() => {});
-        }
-        current.queryClient
-          .refetchQueries({ type: "active", stale: true })
-          .catch(() => {});
+        if (current.user) current.refreshProfile().catch(() => {});
+        current.queryClient.refetchQueries({ type: "active", stale: true }).catch(() => {});
       },
       onAppInactive: () => {
-        // Mise en arrière-plan non destructive : brouillons et état restent en
-        // mémoire, les écritures en attente se vident via leurs files offline.
+        // Pending offline writes are handled by their own queues.
       },
     });
 
-    // Fin du splash pilotée par l'état réel : premier rendu de l'app (double
-    // requestAnimationFrame) après chargement complet de la fenêtre, erreur
-    // précoce, ou délai maximal borné. Jamais d'écran vide permanent.
-    let splashDismissed = false;
-    const dismissSplash = () => {
-      if (splashDismissed) return;
-      splashDismissed = true;
-      hideNativeSplashScreen().catch(() => {});
-    };
     const dismissAfterFirstPaint = () => {
-      requestAnimationFrame(() => requestAnimationFrame(dismissSplash));
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        paintedRef.current = true;
+        revealAfterPaint();
+      }));
     };
-
     if (document.readyState === "complete") {
       dismissAfterFirstPaint();
     } else {
@@ -95,7 +89,7 @@ export default function NativeAppBootstrap() {
       window.removeEventListener("error", dismissSplash, true);
       unsubPromise.then((unsub) => unsub());
     };
-  }, [router]);
+  }, [router, dismissSplash, revealAfterPaint]);
 
   return null;
 }

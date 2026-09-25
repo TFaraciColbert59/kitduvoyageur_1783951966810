@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { use, useEffect, useState } from 'react';
 import { Card } from '@/components/ui';
 import { Eyebrow } from '@/components/ui/Eyebrow';
 import { Badge } from '@/components/ui/Badge';
@@ -12,8 +12,8 @@ interface ShareResult { kit: SharedKit; permission: string }
 
 const PERMISSION_LABEL: Record<string, string> = { lecture: 'Lecture', fork: 'Fork', co_edition: 'Co-édition' };
 
-export default function SharedKitPage({ params }: { params: { token: string } }) {
-  const { token } = params;
+export default function SharedKitPage({ params }: { params: Promise<{ token: string }> }) {
+  const { token } = use(params);
   const [data, setData] = useState<ShareResult | null>(null);
   const [error, setError] = useState<string | null>(null);
 

@@ -3,7 +3,7 @@
 import React, { memo, useCallback, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useQueryClient } from '@tanstack/react-query';
-import { motion } from 'framer-motion';
+import { motion, useReducedMotion } from 'framer-motion';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { evaluateCurrentPrefetchPolicy } from '@/lib/perf/networkPrefs';
 import { isMoveBeyondTolerance } from '@/hooks/gestures/gestureMath';
@@ -73,6 +73,7 @@ const TabItem = memo(function TabItem({
   onLongPress?: () => void;
 }) {
   const { triggerHaptic } = useHapticFeedback();
+  const reduceMotion = useReducedMotion();
   const queryClient = useQueryClient();
   const longPressFiredRef = useRef(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -133,15 +134,19 @@ const TabItem = memo(function TabItem({
     if (longPressFiredRef.current) {
       longPressFiredRef.current = false;
       e.preventDefault();
+      window.dispatchEvent(new Event('lkdv:navigation-cancel'));
       return;
     }
+    // Une ouverture dans un autre onglet ne change pas l'onglet courant.
+    if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
     onPress(destination.href);
-    // H5 : haptique medium à l'ouverture du hub, léger ailleurs.
-    triggerHaptic(destination.id === 'adventures' ? 'medium' : 'light');
+    // Un retour de sélection seulement lorsque la destination active change.
+    if (!isActive) triggerHaptic('selection');
   };
 
   return (
     <Link
+      className="lkv-nav-tab"
       href={destination.href}
       prefetch={prefetch}
       onClick={handleClick}
@@ -192,15 +197,14 @@ const TabItem = memo(function TabItem({
             height: 40,
             borderRadius: 9999,
             background: 'var(--g2-bg)',
-            border: '1px solid var(--glass-rim)',
-            boxShadow: 'var(--glass-specular)',
+            boxShadow: 'var(--glass-rim), var(--glass-highlight)',
           }}
-          transition={{ type: 'spring', stiffness: 450, damping: 32 }}
+          transition={reduceMotion ? { duration: 0 } : { type: 'spring', stiffness: 450, damping: 32 }}
         />
       )}
       <motion.span
-        whileTap={{ scale: 0.85 }}
-        transition={{ type: 'spring', stiffness: 500, damping: 25 }}
+        whileTap={reduceMotion ? undefined : { scale: 0.97 }}
+        transition={reduceMotion ? { duration: 0 } : { type: 'spring', stiffness: 500, damping: 25 }}
         style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', zIndex: 1 }}
       >
         {/* Icône seule (labels retirés) — glyphes SF-like, cible tactile conservée. */}

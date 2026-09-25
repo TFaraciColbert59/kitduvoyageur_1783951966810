@@ -70,7 +70,7 @@ describe('POST /api/progression/challenge/replace', () => {
     mockedCreateClient.mockResolvedValue(sessionClient({ id: USER_ID }));
     mockedReplace.mockResolvedValue({ ok: true, challengeId: 'catalogue-defi-reel' });
 
-    const response = await POST();
+    const response = await POST(post());
     const body = await response.json();
 
     expect(response.status).toBe(200);

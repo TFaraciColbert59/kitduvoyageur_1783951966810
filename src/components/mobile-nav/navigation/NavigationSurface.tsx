@@ -48,10 +48,10 @@ export default function NavigationSurface({
             maxWidth: 'calc(100vw - 8px)',
           }}
         >
-          {[...Array(6)].map((_, i) => (
+          {[...Array(5)].map((_, i) => (
             <div
               key={i}
-              className="animate-pulse"
+              className="lkv-nav-loading-dot animate-pulse"
               style={{ width: 44, height: 44, borderRadius: 999, background: 'rgba(23, 64, 44, 0.08)' }}
             />
           ))}
@@ -64,7 +64,8 @@ export default function NavigationSurface({
     <nav
       role="navigation"
       aria-label={label}
-      className="md:hidden flex items-center justify-center select-none"
+      className="lkv-nav-surface md:hidden flex items-center justify-center select-none"
+      data-hidden={hidden}
       style={{
         position: 'fixed',
         left: 0,
