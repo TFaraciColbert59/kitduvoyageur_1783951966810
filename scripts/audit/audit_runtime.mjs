@@ -214,28 +214,26 @@ function isExactSpeedInsights(info) {
 }
 
 function isPrefetchRequest(info) {
-  const nextPrefetch = headerValue(info.headers, 'next-router-prefetch');
-  const legacyPrefetch = headerValue(info.headers, 'x-nextjs-prefetch');
-  const purpose = `${headerValue(info.headers, 'purpose')} ${headerValue(info.headers, 'sec-purpose')}`.toLowerCase();
-  const rsc = headerValue(info.headers, 'rsc');
-  const hasRscPrefetchQuery = /(?:[?&])_rsc=/.test(info.url);
+  const nextPrefetch = headerValue(info.headers, 'next-router-prefetch').trim().toLowerCase();
+  const middlewarePrefetch = headerValue(info.headers, 'x-middleware-prefetch').trim().toLowerCase();
+  const purpose = headerValue(info.headers, 'purpose').trim().toLowerCase();
+  const secPurpose = headerValue(info.headers, 'sec-purpose').trim().toLowerCase();
   return Boolean(
     (nextPrefetch && nextPrefetch !== '0')
-    || (legacyPrefetch && legacyPrefetch !== '0')
-    || purpose.includes('prefetch')
-    || (rsc && rsc !== '0' && hasRscPrefetchQuery)
-    || (hasRscPrefetchQuery && info.resourceType === 'fetch')
+    || (middlewarePrefetch && middlewarePrefetch !== '0')
+    || purpose === 'prefetch'
+    || secPurpose === 'prefetch'
   );
 }
 
-function isAllowedAbortedRequest(info, reference, sessionMode) {
+function isAllowedAbortedRequest(info, reference) {
   if (!isReadMethod(info.method)) return false;
   if (info.failureText !== 'net::ERR_ABORTED') return false;
   if (info.url.includes('net::ERR_ABORTED')) return false;
   if (isExternalSupabase(info.url)) return true;
   if (!isSameOrigin(info.url, reference)) return false;
   if (isExactSpeedInsights(info)) return true;
-  return isPrefetchRequest(info) || sessionMode === true;
+  return isPrefetchRequest(info);
 }
 
 function isAllowedSpeedInsightsResponse(info, reference) {
@@ -244,18 +242,14 @@ function isAllowedSpeedInsightsResponse(info, reference) {
     && isSameOrigin(info.url, reference);
 }
 
-function isAllowedSpeedInsightsConsoleError(text, message) {
+function isAllowedSpeedInsightsConsoleError(text, message, reference) {
   const locationUrl = message?.location?.()?.url;
+  if (!locationUrl || !isSameOrigin(String(locationUrl), reference)) return false;
   let pathIsExact = false;
-  const textPathIsExact = /\/_vercel\/speed-insights\/script\.js(?:[?'"\s]|$)/i.test(text);
-  if (locationUrl) {
-    try {
-      pathIsExact = new URL(String(locationUrl)).pathname === SPEED_INSIGHTS_PATH || textPathIsExact;
-    } catch {
-      pathIsExact = textPathIsExact;
-    }
-  } else {
-    pathIsExact = textPathIsExact;
+  try {
+    pathIsExact = new URL(String(locationUrl)).pathname === SPEED_INSIGHTS_PATH;
+  } catch {
+    pathIsExact = false;
   }
   if (!pathIsExact) return false;
   return /refused to execute script/i.test(text)
@@ -264,15 +258,14 @@ function isAllowedSpeedInsightsConsoleError(text, message) {
     && /strict MIME type checking is enabled/i.test(text);
 }
 
-function isAllowedSpeedInsightsResourceConsole(text, message) {
+function isAllowedSpeedInsightsResourceConsole(text, message, reference) {
   const locationUrl = message?.location?.()?.url;
+  if (!locationUrl || !isSameOrigin(String(locationUrl), reference)) return false;
   let pathIsExact = false;
-  if (locationUrl) {
-    try {
-      pathIsExact = new URL(String(locationUrl)).pathname === SPEED_INSIGHTS_PATH;
-    } catch {
-      pathIsExact = false;
-    }
+  try {
+    pathIsExact = new URL(String(locationUrl)).pathname === SPEED_INSIGHTS_PATH;
+  } catch {
+    pathIsExact = false;
   }
   return pathIsExact
     && /^failed to load resource\b/i.test(text)
@@ -296,7 +289,6 @@ export function aggregateRouteOutcomes(outcomes = []) {
 }
 
 export function attachPageDiagnostics(page, options = {}) {
-  const sessionMode = options.sessionMode === true;
   const configuredBaseUrl = typeof options.baseUrl === 'string' ? options.baseUrl : '';
   const pageUrl = () => (typeof page.url === 'function' ? page.url() : '');
   const auditBaseUrl = () => configuredBaseUrl || pageUrl();
@@ -326,7 +318,7 @@ export function attachPageDiagnostics(page, options = {}) {
   };
   const onRequestFailed = (request) => {
     const info = requestInfo(request);
-    if (isAllowedAbortedRequest(info, auditBaseUrl(), sessionMode)) return;
+    if (isAllowedAbortedRequest(info, auditBaseUrl())) return;
     const message = `${info.method || 'UNKNOWN'} ${safeUrl(info.url)} ${redactDiagnosticText(info.failureText || 'requestfailed')}`;
     errors.push({ type: 'requestfailed', message });
   };
@@ -351,8 +343,8 @@ export function attachPageDiagnostics(page, options = {}) {
     const text = redactDiagnosticText(message.text());
     const locationUrl = message?.location?.()?.url;
     if (isExpected404(locationUrl, 404) && /failed to load resource\b.*404/i.test(text)) return;
-    if (isAllowedSpeedInsightsResourceConsole(text, message)) return;
-    if (isAllowedSpeedInsightsConsoleError(text, message)) return;
+    if (isAllowedSpeedInsightsResourceConsole(text, message, auditBaseUrl())) return;
+    if (isAllowedSpeedInsightsConsoleError(text, message, auditBaseUrl())) return;
     warnings.push({ type: 'console', message: text });
   };
   page.on('pageerror', onPageError);

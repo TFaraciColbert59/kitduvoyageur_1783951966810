@@ -4,17 +4,18 @@ import { describe, expect, it } from 'vitest';
 import { attachPageDiagnostics } from '../../scripts/audit/audit_runtime.mjs';
 
 type Listener = (...args: any[]) => void;
-type RequestOptions = { method?: string; url?: string; failure?: string; resourceType?: string };
+type RequestOptions = { method?: string; url?: string; failure?: string; resourceType?: string; headers?: Record<string, string> };
 type ResponseOptions = { method?: string; url?: string; status?: number; resourceType?: string };
 
 const baseUrl = 'http://localhost:3000';
 
-function makeRequest({ method = 'GET', url = `${baseUrl}/resource`, failure = 'net::ERR_ABORTED', resourceType = 'fetch' }: RequestOptions = {}) {
+function makeRequest({ method = 'GET', url = `${baseUrl}/resource`, failure = 'net::ERR_ABORTED', resourceType = 'fetch', headers = {} }: RequestOptions = {}) {
   return {
     method: () => method,
     url: () => url,
     failure: () => ({ errorText: failure }),
     resourceType: () => resourceType,
+    headers: () => headers,
   };
 }
 
@@ -53,7 +54,7 @@ function createPage() {
 }
 
 describe('audit runtime — session opt-in', () => {
-  it('reste strict par défaut et autorise le GET aborted same-origin en session', () => {
+  it('reste strict même en session et autorise le GET aborted avec marqueur explicite', () => {
     const strictPage = createPage();
     const strict = attachPageDiagnostics(strictPage.page, { baseUrl });
     strictPage.emit('request', makeRequest());
@@ -65,7 +66,11 @@ describe('audit runtime — session opt-in', () => {
     const session = attachPageDiagnostics(sessionPage.page, { baseUrl, sessionMode: true });
     sessionPage.emit('request', makeRequest());
     sessionPage.emit('requestfailed', makeRequest());
-    expect(session.errors).toHaveLength(0);
+    sessionPage.emit('requestfailed', makeRequest({
+      url: `${baseUrl}/prefetch`,
+      headers: { 'next-router-prefetch': '1' },
+    }));
+    expect(session.errors).toHaveLength(1);
     session.dispose();
   });
 

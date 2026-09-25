@@ -402,17 +402,16 @@ export async function assertRouteNavigation(page, baseUrl, routePath) {
     waitUntil: 'domcontentloaded',
     timeout: 30000,
   });
-  const result = assessRouteNavigation({
+  if ((routeExpectationFor(routePath)?.reason === 'missing_admin_role' || routePath === '/admin' || routePath === '/admin/produits')
+    && typeof page.waitForTimeout === 'function') {
+    await page.waitForTimeout(600);
+  }
+  return assessRouteNavigation({
     routePath,
     baseUrl,
     finalUrl: page.url(),
     status: response?.status() ?? null,
   });
-  if ((routeExpectationFor(routePath)?.reason === 'missing_admin_role' || routePath === '/admin' || routePath === '/admin/produits')
-    && typeof page.waitForTimeout === 'function') {
-    await page.waitForTimeout(600);
-  }
-  return result;
 }
 
 function markdownCell(value) {

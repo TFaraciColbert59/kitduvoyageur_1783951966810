@@ -119,6 +119,61 @@ function buildContrastReport(findings, errors, report) {
   return { markdown: `${lines.join('\n')}\n`, totals, passRate, verificationStatus };
 }
 
+export function aggregateManifestDiagnostics(captures = []) {
+  const entries = Array.isArray(captures) ? captures : [];
+  const warnings = [];
+  const warningKeys = new Set();
+  const degradedRoutes = new Set();
+  for (const capture of entries) {
+    const captureWarnings = Array.isArray(capture?.warnings) ? capture.warnings : [];
+    if ((capture?.degraded === true || captureWarnings.length > 0) && capture?.route) {
+      degradedRoutes.add(capture.route);
+    }
+    for (const warning of captureWarnings) {
+      const enriched = {
+        ...warning,
+        route: capture?.route ?? null,
+        viewport: capture?.viewport ?? null,
+        requestedTheme: capture?.requestedTheme ?? null,
+      };
+      const key = [
+        enriched.route,
+        enriched.viewport,
+        enriched.requestedTheme,
+        enriched.type || '',
+        enriched.message || '',
+      ].join('|');
+      if (!warningKeys.has(key)) {
+        warningKeys.add(key);
+        warnings.push(enriched);
+      }
+    }
+  }
+  return { warnings, degradedRoutes: [...degradedRoutes] };
+}
+
+export function campaignExpectedCounts(summary = {}, expectedRouteCount = ROUTES.length) {
+  const entries = summary && typeof summary === 'object' ? Object.values(summary) : [];
+  return {
+    expectedRouteCount,
+    expectedOutcomeCount: entries.filter((entry) => entry?.expected === true).length,
+  };
+}
+
+export function campaignIsLiveVerified(options = {}) {
+  const errorCount = options.errorCount ?? 0;
+  const completedRouteCount = options.completedRouteCount ?? 0;
+  const expectedRouteCount = options.expectedRouteCount ?? ROUTES.length;
+  const warnings = Array.isArray(options.warnings) ? options.warnings : [];
+  const degradedRoutes = Array.isArray(options.degradedRoutes) ? options.degradedRoutes : [];
+  const expectedOutcomeCount = options.expectedOutcomeCount ?? 0;
+  return errorCount === 0
+    && completedRouteCount === expectedRouteCount
+    && warnings.length === 0
+    && degradedRoutes.length === 0
+    && expectedOutcomeCount === 0;
+}
+
 async function run() {
   invalidateAuditReports([
     path.join(screensDir, 'manifest.json'),
@@ -402,31 +457,47 @@ async function run() {
   const safeFindings = redactRuntimeValue(contrastFindings);
   const findingAggregate = aggregateRouteOutcomes(contrastFindings);
   const summaryAggregate = aggregateRouteOutcomes(Object.values(a11ySummary));
-  const warnings = [...findingAggregate.warnings, ...summaryAggregate.warnings];
-  const degradedRoutes = Object.values(a11ySummary).filter((entry) => entry.degraded).map((entry) => entry.id);
-  const expectedRouteCount = Object.values(a11ySummary).filter((entry) => entry.expected).length;
+  const manifestDiagnostics = aggregateManifestDiagnostics(manifest);
+  const warnings = [
+    ...findingAggregate.warnings,
+    ...summaryAggregate.warnings,
+    ...manifestDiagnostics.warnings,
+  ];
+  const degradedRoutes = [...new Set([
+    ...Object.values(a11ySummary)
+      .filter((entry) => entry.degraded)
+      .map((entry) => entry.id),
+    ...manifestDiagnostics.degradedRoutes,
+  ])];
+  const { expectedRouteCount, expectedOutcomeCount } = campaignExpectedCounts(a11ySummary, ROUTES.length);
   const completedRouteCount = new Set(contrastFindings.map((finding) => finding.routeId)).size;
   const campaignReport = {
     ...buildCampaignAuditReport({
       findings: safeFindings,
       errors: safeErrors,
-      expectedRouteCount: ROUTES.length,
+      expectedRouteCount,
       completedRouteCount,
-      liveVerified: errors.length === 0
-        && completedRouteCount === ROUTES.length
-        && warnings.length === 0
-        && degradedRoutes.length === 0
-        && expectedRouteCount === 0,
+      liveVerified: campaignIsLiveVerified({
+        errorCount: errors.length,
+        completedRouteCount,
+        expectedRouteCount,
+        warnings,
+        degradedRoutes,
+        expectedOutcomeCount,
+      }),
     }),
     warnings,
     degradedRoutes,
     expectedRouteCount,
+    expectedOutcomeCount,
   };
   const contrastReport = buildContrastReport(safeFindings, safeErrors, campaignReport);
   const safeManifest = redactRuntimeValue({
     verificationStatus: campaignReport.verificationStatus,
     totalCaptures: manifest.length,
     timestamp: new Date().toISOString(),
+    warnings: manifestDiagnostics.warnings,
+    degradedRoutes: manifestDiagnostics.degradedRoutes,
     captures: manifest,
   });
   const safeSummary = redactRuntimeValue(a11ySummary);

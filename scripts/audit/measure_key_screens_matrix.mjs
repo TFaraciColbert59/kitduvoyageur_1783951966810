@@ -10,6 +10,7 @@ import {
   collectColorContrastAxeNodes,
   EXPECTED_MATRIX_CELL_COUNT,
   getAuditBaseUrl,
+  matrixCellKey,
 } from './contrast_audit_core.mjs';
 import {
   AUDIT_USER_AGENT,
@@ -45,7 +46,37 @@ function markdownCell(value) {
   return String(value ?? '').replace(/\|/g, '/').replace(/\r?\n/g, ' ');
 }
 
-function buildMarkdown(report) {
+export function attachMatrixCellMetadata(report, results = []) {
+  const source = report && typeof report === 'object' ? report : {};
+  const resultByKey = new Map(
+    (Array.isArray(results) ? results : []).map((result) => [matrixCellKey(result), result]),
+  );
+  return {
+    ...source,
+    cells: (Array.isArray(source.cells) ? source.cells : []).map((cell) => {
+      const cellKey = matrixCellKey({
+        ...cell,
+        intensity: cell.requestedIntensity ?? cell.intensity,
+      });
+      const result = resultByKey.get(cellKey);
+      const warnings = Array.isArray(result?.warnings)
+        ? result.warnings.map((entry) => ({ ...entry }))
+        : [];
+      return {
+        ...cell,
+        measured: result?.measured === true,
+        expected: result?.expected === true,
+        status: result?.status ?? (result?.error ? 'error' : 'not_measured'),
+        warnings,
+        degraded: result?.degraded === true || warnings.length > 0 || Boolean(result?.error),
+        finalPath: result?.finalPath ?? null,
+        httpStatus: Number.isFinite(result?.httpStatus) ? result.httpStatus : null,
+      };
+    }),
+  };
+}
+
+export function buildMarkdown(report) {
   const lines = [
     '# Matrice de contraste — écrans clés',
     '',
@@ -58,12 +89,15 @@ function buildMarkdown(report) {
     `- occluded : ${report.totals.occluded}`,
     `- erreurs : ${report.totals.error}`,
     '',
-    '| Route | Thème demandé | Intensité demandée | Thème réel | Intensité réelle | Nœuds | Taux | États | Erreur |',
-    '|:---|:---|---:|:---:|---:|---:|---:|:---|:---|',
+    '| Route | Thème demandé | Intensité demandée | Thème réel | Intensité réelle | Nœuds | Taux | Mesuré | Attendu | Statut | HTTP | Chemin final | Degraded | Warnings | Erreur |',
+    '|:---|:---|---:|:---:|---:|---:|---:|:---:|:---:|:---|---:|:---|:---:|:---|:---|',
   ];
   for (const cell of report.cells) {
     const counts = cell.counts;
-    lines.push(`| ${markdownCell(cell.path)} | ${cell.theme} | ${cell.requestedIntensity} | ${cell.actualTheme ?? 'inconnu'} | ${cell.actualIntensity ?? 'inconnu'} | ${cell.nodeCount} | ${cell.passRate.toFixed(1)}% | ${counts.pass}/${counts.contrast_fail}/${counts.unknown}/${counts.occluded} | ${markdownCell(cell.error || '-')} |`);
+    const warnings = (cell.warnings || [])
+      .map((entry) => `${entry.type || 'warning'}: ${entry.message || ''}`)
+      .join(' | ') || '-';
+    lines.push(`| ${markdownCell(cell.path)} | ${cell.theme} | ${cell.requestedIntensity} | ${cell.actualTheme ?? 'inconnu'} | ${cell.actualIntensity ?? 'inconnu'} | ${cell.nodeCount} | ${cell.passRate.toFixed(1)}% | ${cell.measured ? 'oui' : 'non'} | ${cell.expected ? 'oui' : 'non'} | ${markdownCell(cell.status || '-')} | ${cell.httpStatus ?? '-'} | ${markdownCell(cell.finalPath || '-')} | ${cell.degraded ? 'oui' : 'non'} | ${markdownCell(warnings)} | ${markdownCell(cell.error || '-')} |`);
   }
   return `${lines.join('\n')}\n`;
 }
@@ -203,12 +237,12 @@ async function run() {
   const aggregate = aggregateRouteOutcomes(results);
   const resultErrors = aggregate.errors.map((entry) => entry.error);
   const expectedCells = results.filter((result) => result.expected).length;
-  const report = buildMatrixAuditReport({
+  const report = attachMatrixCellMetadata(buildMatrixAuditReport({
     cells: results,
     expectedCellCount: EXPECTED_MATRIX_CELL_COUNT,
     liveVerified: resultErrors.length === 0 && aggregate.warnings.length === 0 && expectedCells === 0,
     errors: resultErrors,
-  });
+  }), results);
   const serialized = redactRuntimeValue({
     ...report,
     generatedAt: new Date().toISOString(),

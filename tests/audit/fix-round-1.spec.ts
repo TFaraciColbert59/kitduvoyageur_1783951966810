@@ -306,12 +306,12 @@ describe('fix round 1 — régressions', () => {
     };
     const diagnostics = attachPageDiagnostics(page, {
       baseUrl: 'http://localhost:3000',
-      sessionMode: true,
     });
     listeners.get('requestfailed')?.({
       method: () => 'GET',
       url: () => 'http://localhost:3000/prefetch',
       failure: () => ({ errorText: 'net::ERR_ABORTED' }),
+      headers: () => ({ 'next-router-prefetch': '1' }),
     });
 
     expect(diagnostics.errors).toHaveLength(0);

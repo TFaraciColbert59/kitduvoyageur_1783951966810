@@ -122,7 +122,7 @@ describe('Task 1B — diagnostics runtime', () => {
     }));
     emitted.emit('requestfailed', makeRequest({
       url: `${baseUrl}/hub?_rsc=cache-key`,
-      headers: { rsc: '1' },
+      headers: { rsc: '1', 'next-router-prefetch': '1' },
     }));
     emitted.emit('requestfailed', makeRequest({
       url: `${baseUrl}${speedInsightsPath}`,

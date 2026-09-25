@@ -11,7 +11,7 @@ function source(relativePath: string) {
   return readFileSync(path.join(process.cwd(), relativePath), 'utf8');
 }
 
-function createPage() {
+function createPage(prefetch = false) {
   const listeners = new Map<string, Listener>();
   const locator = {
     first() {
@@ -38,6 +38,7 @@ function createPage() {
         url: () => `${baseUrl}/prefetch`,
         failure: () => ({ errorText: 'net::ERR_ABORTED' }),
         resourceType: () => 'fetch',
+        headers: () => (prefetch ? { 'next-router-prefetch': '1' } : {}),
       });
       return { status: () => 200 };
     },
@@ -49,9 +50,9 @@ function createPage() {
 }
 
 describe('audit runtime — preflight opt-in', () => {
-  it('reste strict par défaut et accepte le preflight session', async () => {
+  it('reste strict sans marqueur et accepte le preflight session explicite', async () => {
     await expect(verifyCompteSession(createPage(), baseUrl)).rejects.toThrow(/runtime audit/i);
-    await expect(verifyCompteSession(createPage(), baseUrl, { sessionMode: true })).resolves.toMatchObject({
+    await expect(verifyCompteSession(createPage(true), baseUrl, { sessionMode: true })).resolves.toMatchObject({
       finalPath: '/compte',
       status: 200,
     });
