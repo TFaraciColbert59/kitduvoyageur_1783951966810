@@ -16,8 +16,8 @@ Dépôt : `C:\Users\Tony\Downloads\LKDV\kitduvoyageur_1783951966810`
 | `main` local | `302ea16d` - **en retard de 33 commits** sur `origin/main` |
 | `origin/main` | `098a95eb` - PR #50 (`design/ios27-full-glass`), **deja mergee** |
 | Base de fusion reelle | `699f15e3` - et **non** `main` local |
-| Avance sur `origin/main` | **13 commits**, 1 derriere (le merge `098a95eb`, sans delta de contenu) |
-| Diff reel vs `origin/main` | **232 fichiers, +27 135 / -4 090** |
+| Avance sur `origin/main` | **15 commits**, 1 derriere (le merge `098a95eb`, sans delta de contenu) — 13 de chantier + 2 de cloture documentaire |
+| Diff reel vs `origin/main` | **233 fichiers, +27 266 / -4 090** — dont 232 / +27 135 pour le chantier seul |
 | Pousse sur une remote | **non** au moment de la redaction |
 | PR ouverte | **non** au moment de la redaction |
 | Merge dans `main` | **non** |
@@ -26,7 +26,7 @@ Rien n'a été poussé, aucune PR n'a été ouverte, `main` n'a pas été touch�
 
 Le diff a d'abord été calculé contre `main` local : c'est **erroné**. Le travail de design a déjà été mergé en amont par la PR #50 — **32 des 33 commits** de `origin/main` sont exactement les mêmes SHA que ceux déjà présents dans la branche. Le design n'est donc pas un contenu nouveau à merger, et la volumétrie réelle est environ **2,5 fois plus faible** que ce qu'un diff contre `main` local laisse croire.
 
-Les **13 commits** réellement nouveaux se décomposent en **5 commits de WIP antérieur** (préparation de voyage, hub, route préparateur, RLS), **1 commit de schéma et catalogue**, et **7 commits de chantier** :
+Les **13 commits de chantier** réellement nouveaux se décomposent en **5 commits de WIP antérieur** (préparation de voyage, hub, route préparateur, RLS), **1 commit de schéma et catalogue**, et **7 commits de chantier** :
 
 | Commit | Workstream |
 |---|---|
@@ -38,13 +38,13 @@ Les **13 commits** réellement nouveaux se décomposent en **5 commits de WIP an
 | `b1f245d3` | W1 — récupération du WIP + addendum D-19→D-21 |
 | `09d03120` | pré-existant au chantier — schéma + catalogue unifiés |
 
-> **Note de fraîcheur.** `origin/main` a été re-consulté par `git fetch` au moment de la clôture et valait toujours `098a95eb` ; aucun rebase n'était donc nécessaire. Les chiffres de cette section sont donc **confirmés**, et non estimés. Un `git fetch` ultérieur peut les modifier si l'upstream avance.
+> **Note de fraîcheur.** `origin/main` a été re-consulté par `git fetch` au moment de la clôture et valait toujours `098a95eb` ; aucun rebase n'était donc nécessaire. Les chiffres de cette section sont donc **confirmés**, et non estimés. Un `git fetch` ultérieur peut les modifier si l'upstream avance. Ils intègrent les 2 commits de clôture documentaire (`d7f0412d` et son successeur), qui ajoutent `supabase/MIGRATIONS_PENDING.md` et corrigent ce rapport : c'est pourquoi l'avancement est de 15 commits et non de 13.
 
 ---
 
 ## 2. Portes de validation — sorties brutes
 
-Les trois portes sont vertes sur l'état final, tests W8 inclus.
+Les trois portes sont vertes sur l'état final, tests W8 inclus. Elles ont été **rejouées dans le worktree isolé** `wt-2routes-closure` sur l'arbre `d7f0412d`, et pas seulement sur le checkout principal : les sorties ci-dessous sont celles du worktree. Le commit qui suit ne modifie que ce rapport. `/hub` et `/prepare` sont bien présentes dans la table de routes du build.
 
 ### 2.1 TypeScript
 
@@ -304,7 +304,7 @@ Garde-fou ajouté par ce chantier : `tests/security/unified-booking-rls.spec.ts`
 
 ## 7. Prémisses du plan qui se sont révélées fausses
 
-Le plan a été écrit sur un état supposé. Six de ses affirmations ne tenaient pas à l'état réel. Aucune n'a été exécutée à l'aveugle.
+Le plan a été écrit sur un état supposé. Huit de ses affirmations ne tenaient pas à l'état réel — six sur le chantier lui-même, deux sur la clôture. Aucune n'a été exécutée à l'aveugle.
 
 ### 7.1 Les 8 redirections de la table §8.1
 
@@ -331,6 +331,30 @@ Le plan les identifiait à tort comme des mocks. Les supprimer aurait cassé la 
 - **`.env.example` — 12 vs 13** : le décompte « 12 noms providers canoniques » de l'énoncé oubliait `ROUTESTACK_MODE`. La réalité est 13.
 - **W6** : `evaluateModelPromotion` n'est pas appelé au rendu de `/prepare` (voir § 4, W6).
 
+### 7.4 `hub-liquid.css` n'est pas un orphelin — prémisse fausse
+
+Le plan de clôture affirmait : « `src/features/hub/components/hub-liquid.css` reste un orphelin non importé, à supprimer par sa session. »
+
+**Cette affirmation est fausse.** Vérification faite dans le worktree isolé :
+
+- le fichier **est importé**, par `src/app/hub/layout.tsx:11` ;
+- il est **couvert par 4 tests** : `tests/design/hub-liquid-glass.spec.ts`, `tests/design/p5-direction-tokens.spec.ts`, `tests/features/hub/hubMapLiquid.spec.ts`, `tests/features/hub/mobileEdgeDrawers.spec.ts` ;
+- il n'est pas figé : le commit de récupération W1 (`b1f245d3`) lui retire 232 lignes.
+
+Le supprimer dans cette branche aurait cassé le hub et 4 tests. Il n'a donc pas été supprimé. Ce n'est pas un arbitrage esthétique : c'est la correction d'un fait.
+
+### 7.5 Conflit annoncé avec la session concurrente
+
+Le contenu Liquid Glass présent dans cette branche **n'est pas** une fuite du travail non commité de la session concurrente : il provient du WIP antérieur **commité** (`f8531897`, `96a8a2ce`) et n'a été repris que par le commit de récupération W1. Un diff ne peut, par construction, contenir que du contenu commité.
+
+En revanche, la session concurrente travaille **en sens inverse sur les mêmes fichiers**. État constaté dans le checkout principal au moment de la clôture :
+
+| Fichier | État dans le checkout principal | État dans cette branche |
+|---|---|---|
+| `src/features/hub/components/hub-liquid.css` | `D` — suppression **stagée** | ajouté (1 140 lignes) |
+| `src/app/hub/layout.tsx` | `M` — import retiré | réécrit (99 / 97 lignes) |
+
+**Le raccordement des deux travaux exigera un arbitrage explicite.** Soit la suppression engagée par l'autre session est confirmée — et les 4 tests doivent alors être adaptés dans la même transaction —, soit ce CSS est conservé. Cette décision n'a pas été prise à sa place.
 ---
 
 ## 8. Variables d'environnement — inventaire exact
@@ -435,7 +459,7 @@ dans `DECISIONS.md` où le plan demandait explicitement de la documenter.
 
 ## 13. Décisions tranchées et checklist post-merge
 
-**Décision tranchée :** PR **unique** des 13 commits vers `main`. La fear de mélange design/chantier qui motivait un découpage ne se vérifie pas : le design est déjà mergé en amont par la PR #50 (32 des 33 commits de `origin/main` sont les mêmes SHA) et `origin/main` n'a pas avancé depuis. Le seul commit divergent est le merge `098a95eb`, sans delta de contenu.
+**Décision tranchée :** PR **unique** des 15 commits (13 de chantier + 2 de clôture documentaire) vers `main`. La fear de mélange design/chantier qui motivait un découpage ne se vérifie pas : le design est déjà mergé en amont par la PR #50 (32 des 33 commits de `origin/main` sont les mêmes SHA) et `origin/main` n'a pas avancé depuis. Le seul commit divergent est le merge `098a95eb`, sans delta de contenu.
 
 La liste ci-dessous est une checklist **post-merge**. Aucun de ces points n'a été traité par ce chantier.
 
@@ -458,6 +482,10 @@ La liste ci-dessous est une checklist **post-merge**. Aucun de ces points n'a é
 5. Résoudre la dette documentée dans [`supabase/MIGRATIONS_PENDING.md`](supabase/MIGRATIONS_PENDING.md) : 4 migrations en attente, 2 migrations remote-only sans contrepartie locale, et le quasi-doublon `20260926010000` / `20260926010115` (risques R-3 et R-4).
 
 6. Documenter dans `AGENTS.md` la règle : **une migration n'est verte qu'après application réelle sur une base.**
+
+**Raccordement avec la session concurrente :**
+
+7. Arbitrer le conflit `hub-liquid.css` / `src/app/hub/layout.tsx` décrit en § 7.5 : cette PR ajoute le CSS et réécrit le layout, l'autre session supprime le CSS et retire l'import. Les 4 tests qui lisent ce fichier doivent être adaptés dans la même transaction que la suppression.
 
 ---
 
