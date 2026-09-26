@@ -13,6 +13,19 @@ import { createViatorBookingProvider } from './viatorBookingProvider';
 
 export * from './bookingProviderTypes';
 export * from './bookingProviderErrors';
+export {
+  getActiveProviderMode,
+  getProviderCredentialSummary,
+  resolveProviderCredentials,
+} from './providerCredentials';
+export type {
+  ProviderCredentialId,
+  ProviderCredentialMode,
+  ProviderCredentialReason,
+  ProviderCredentialSlot,
+  ProviderCredentialSource,
+  ResolvedProviderCredentials,
+} from './providerCredentials';
 export { createRouteStackBookingProvider } from './routeStackBookingProvider';
 export type { RouteStackToolCaller, RouteStackToolResult } from './routeStackBookingProvider';
 export { createViatorBookingProvider } from './viatorBookingProvider';

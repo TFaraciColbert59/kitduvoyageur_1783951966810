@@ -15,11 +15,11 @@ import {
   BookingProviderError,
   normalizeBookingProviderError,
 } from './bookingProviderErrors';
+import { resolveProviderCredentials } from './providerCredentials';
 import type {
   BookingCandidate,
   BookingProvider,
   BookingProviderEnv,
-  BookingProviderMode,
   BookingSearchRequest,
   BookingSearchResult,
 } from './bookingProviderTypes';
@@ -51,20 +51,6 @@ interface ViatorProviderOptions {
   env?: BookingProviderEnv;
   searchProducts?: ViatorSearchProductsLike;
   now?: () => Date;
-}
-
-function boolEnv(value: string | undefined): boolean {
-  if (!value) return false;
-  return ['1', 'true', 'yes', 'on'].includes(value.trim().toLowerCase());
-}
-
-function resolveMode(env: BookingProviderEnv): BookingProviderMode {
-  const requested = (env.VIATOR_BOOKING_MODE || 'sandbox').trim().toLowerCase();
-  if (requested === 'sandbox') return 'sandbox';
-  if (requested === 'full' || requested === 'live') {
-    return boolEnv(env.VIATOR_BOOKING_FULL_ENABLED) ? 'live' : 'disabled';
-  }
-  return 'disabled';
 }
 
 function parseDestinationMap(raw: string | undefined): Record<string, string> {
@@ -116,15 +102,16 @@ function normalizeHttpsUrl(value: unknown): string | null {
 }
 
 function defaultSearchProducts(env: BookingProviderEnv): ViatorSearchProductsLike {
-  const key = env.VIATOR_API_KEY?.trim();
+  const resolved = resolveProviderCredentials('viator', env);
+  const key = resolved.apiKey;
   if (!key) throw new BookingProviderError({
     code: BOOKING_PROVIDER_ERROR_CODES.config,
     provider: 'viator',
-    message: 'VIATOR_API_KEY est absente.',
+    message: resolved.message,
   });
   const config: ViatorClientConfig = {
     apiKey: key,
-    baseUrl: env.VIATOR_API_BASE_URL,
+    baseUrl: resolved.baseUrl ?? undefined,
     timeoutMs: Number(env.VIATOR_TIMEOUT_MS) || undefined,
   };
   const search = createViatorProductSearch(config);
@@ -190,9 +177,10 @@ function normalizeOffers(
 export function createViatorBookingProvider(options: ViatorProviderOptions = {}): BookingProvider {
   const env = options.env ?? process.env;
   const now = options.now ?? (() => new Date());
-  const mode = resolveMode(env);
+  const credentials = resolveProviderCredentials('viator', env);
+  const mode = credentials.mode;
   const isConfigured = () => {
-    const key = env.VIATOR_API_KEY?.trim();
+    const key = credentials.apiKey;
     if (mode === 'disabled' || !key || key.includes('your-')) return false;
     try {
       defaultSearchProducts(env);

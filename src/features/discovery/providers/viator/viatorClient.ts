@@ -19,7 +19,10 @@ const DEFAULT_TIMEOUT_MS = 6000;
 const DEFAULT_LANGUAGE = 'fr';
 const DEFAULT_CURRENCY = 'EUR';
 const API_VERSION = 'application/json;version=2.0';
-const VIATOR_API_HOSTS = new Set(['api.viator.com']);
+// Hôte live + hôte sandbox officiel, listés explicitement. L'allowlist reste
+// fermée : sans cet ajout, une clé sandbox ne peut cibler que la production,
+// ce qui fausserait tout test de réservation (D-07).
+const VIATOR_API_HOSTS = new Set(['api.viator.com', 'api.sandbox.viator.com']);
 
 export interface ViatorClientConfig {
   apiKey: string;
