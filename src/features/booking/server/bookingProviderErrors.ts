@@ -75,6 +75,8 @@ function readNumericStatus(value: unknown, depth = 0): number | undefined {
 function statusToCode(status: number): BookingProviderErrorCode {
   if (status === 400 || status === 422) return BOOKING_PROVIDER_ERROR_CODES.validation;
   if (status === 401 || status === 403) return BOOKING_PROVIDER_ERROR_CODES.auth;
+  // 402 = compte solvable mais credits epuises : un quota, pas une panne.
+  if (status === 402) return BOOKING_PROVIDER_ERROR_CODES.quota;
   if (status === 404) return BOOKING_PROVIDER_ERROR_CODES.not_found;
   if (status === 408 || status === 504) return BOOKING_PROVIDER_ERROR_CODES.timeout;
   if (status === 429) return BOOKING_PROVIDER_ERROR_CODES.quota;

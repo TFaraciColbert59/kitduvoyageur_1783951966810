@@ -16,12 +16,15 @@ import {
   normalizeBookingProviderError,
 } from './bookingProviderErrors';
 import { resolveProviderCredentials } from './providerCredentials';
+import { applyViatorAttribution } from './viatorAttribution';
 import type {
   BookingCandidate,
   BookingProvider,
   BookingProviderEnv,
   BookingSearchRequest,
   BookingSearchResult,
+  CheckoutContext,
+  CheckoutResult,
 } from './bookingProviderTypes';
 
 const DEFAULT_LIMIT = 5;
@@ -240,6 +243,44 @@ export function createViatorBookingProvider(options: ViatorProviderOptions = {})
         ),
         fetchedAt: now().toISOString(),
       } satisfies BookingSearchResult;
+    },
+
+    /**
+     * Le catalogue Viator n'est pas rafraichissable prix-par-prix depuis un
+     * candidat isole. Plutot que de renommer un prix inconnu en « frais », on
+     * signale la donnee comme needing revalidation et on rend le candidat
+     * intact : lePreparateur fera une recherche complete si besoin.
+     */
+    async revalidate(candidate) {
+      return { ...candidate, requiresRevalidation: true };
+    },
+
+    /**
+     * Checkout externe : nous ne debitons rien, nous renvoyons vers Viator.
+     * Le verrou de reservation (D-07) est exige — sans lui, un serveur en
+     * sandbox emettrait des liens de commission comme s'ils etaient reels.
+     */
+    async checkoutUrl(candidate, _context: CheckoutContext): Promise<CheckoutResult> {
+      if (!credentials.bookingEnabled) {
+        throw new BookingProviderError({
+          code: BOOKING_PROVIDER_ERROR_CODES.config,
+          provider: 'viator',
+          message: 'Réservation Viator verrouillée (VIATOR_BOOKING_ENABLED).',
+        });
+      }
+      if (!candidate.deeplink) {
+        throw new BookingProviderError({
+          code: BOOKING_PROVIDER_ERROR_CODES.validation,
+          provider: 'viator',
+          message: 'Candidat Viator sans deeplink exploitable.',
+        });
+      }
+      // W4 : l'attribution est appliquee ici, jamais sur une URL arbitraire.
+      return {
+        mode: 'external',
+        url: applyViatorAttribution(candidate.deeplink, env),
+        bookingId: null,
+      };
     },
   };
 }

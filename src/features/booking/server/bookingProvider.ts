@@ -57,6 +57,17 @@ const unavailableProvider: BookingProvider = {
       message: 'Aucun fournisseur de réservation n’est activé.',
     });
   },
+  async revalidate(candidate) {
+    // Pas de fournisseur => pas de donnee fraiche. On le dit, on invente pas.
+    return { ...candidate, requiresRevalidation: true };
+  },
+  async checkoutUrl(_candidate, _context) {
+    throw new BookingProviderError({
+      code: BOOKING_PROVIDER_ERROR_CODES.unavailable,
+      provider: 'unavailable',
+      message: 'Aucun fournisseur de réservation n’est activé.',
+    });
+  },
 };
 
 function mergeModes(providers: BookingProvider[]): BookingProviderRouter['mode'] {
@@ -115,6 +126,16 @@ export function createBookingProvider(
     },
     async search(request) {
       return router.providerFor(request.vertical).search(request);
+    },
+    /**
+     * Le routage suit le candidat, pas une verticale : c'est le provider qui
+     * a produit l'offre qui sait la revalider et l'encaisser.
+     */
+    async revalidate(candidate) {
+      return router.providerFor(candidate.vertical).revalidate(candidate);
+    },
+    async checkoutUrl(candidate, context) {
+      return router.providerFor(candidate.vertical).checkoutUrl(candidate, context);
     },
   };
   return router;
