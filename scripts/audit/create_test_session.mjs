@@ -119,8 +119,34 @@ export async function installCredentialEgressGuard(page, credentials, baseUrl) {
     .flatMap((value) => {
       const encoded = encodeURIComponent(value);
       const base64 = Buffer.from(value, 'utf8').toString('base64');
-      return [value, encoded, encoded.replace(/%20/g, '+'), base64, base64.replace(/\+/g, '-').replace(/\//g, '_'), JSON.stringify(value).slice(1, -1)];
+      return [
+        value,
+        encoded,
+        encoded.replace(/%20/g, '+'),
+        base64,
+        base64.replace(/=+$/, ''),
+        base64.replace(/\+/g, '-').replace(/\//g, '_'),
+        JSON.stringify(value).slice(1, -1),
+      ];
     });
+  const unescapeUnicode = (text) => text.replace(/\\u([0-9a-f]{4})/gi, (_match, hex) => (
+    String.fromCharCode(parseInt(hex, 16))
+  ));
+  const containsCredential = (text) => {
+    if (!text) return false;
+    let decoded = text;
+    try {
+      decoded = decodeURIComponent(text);
+    } catch {
+      decoded = text;
+    }
+    return encodedCredentials.some((value) => (
+      text.includes(value)
+      || decoded.includes(value)
+      || unescapeUnicode(text).includes(value)
+      || unescapeUnicode(decoded).includes(value)
+    ));
+  };
   const carriesCredentials = (request) => {
     const rawBody = request.postData() || '';
     let body = rawBody;
@@ -129,44 +155,61 @@ export async function installCredentialEgressGuard(page, credentials, baseUrl) {
     } catch {
       body = rawBody;
     }
-    const searchable = `${request.url()} ${rawBody} ${body}`;
-    return encodedCredentials.some((value) => searchable.includes(value));
+    let headers = '';
+    try {
+      headers = JSON.stringify(request.headers?.() || {});
+    } catch {
+      headers = '';
+    }
+    return containsCredential([
+      request.url(),
+      rawBody,
+      body,
+      unescapeUnicode(rawBody),
+      unescapeUnicode(body),
+      unescapeUnicode(headers),
+    ].join(' '));
   };
   const isAllowed = (request) => {
     try {
       const requestUrl = new URL(request.url());
-      return request.method() === 'POST'
-        && requestUrl.origin === origin
-        && requestUrl.pathname === '/connexion'
-        || request.method() === 'POST'
-          && requestUrl.origin === supabaseOrigin
-          && requestUrl.pathname === '/auth/v1/token'
-          && requestUrl.searchParams.get('grant_type') === 'password';
+      if (request.method() !== 'POST') return false;
+      if (requestUrl.origin === origin && requestUrl.pathname === '/connexion') return true;
+      return requestUrl.origin === supabaseOrigin
+        && requestUrl.pathname === '/auth/v1/token'
+        && requestUrl.searchParams.get('grant_type') === 'password';
     } catch {
       return false;
     }
   };
   const context = typeof page.context === 'function' ? page.context() : null;
-  if (context && typeof context.route === 'function') {
-    const onRoute = async (route) => {
-      const request = route.request();
-      if (carriesCredentials(request) && !isAllowed(request)) {
-        await route.abort('blockedbyclient').catch(() => {});
-        return;
-      }
-      await route.continue().catch(() => {});
-    };
-    await context.route('**/*', onRoute);
-    return async () => {
-      await context.unroute('**/*', onRoute).catch(() => {});
-    };
+  if (!context || typeof context.route !== 'function') {
+    throw new Error('Credential egress guard: interception de contexte indisponible');
   }
-  const onRequest = (request) => {
-    if (!carriesCredentials(request) || isAllowed(request)) return;
-    void request.abort('blockedbyclient').catch(() => {});
+  const onRoute = async (route) => {
+    const request = route.request();
+    if (carriesCredentials(request) && !isAllowed(request)) {
+      await route.abort('blockedbyclient').catch(() => {});
+      return;
+    }
+    await route.continue().catch(() => {});
   };
-  page.on('request', onRequest);
-  return () => page.off('request', onRequest);
+  await context.route('**/*', onRoute);
+  if (typeof context.routeWebSocket === 'function') {
+    await context.routeWebSocket(
+      (webSocketUrl) => containsCredential(String(webSocketUrl?.href ?? webSocketUrl ?? '')),
+      async (webSocketRoute) => {
+        await webSocketRoute.close({ code: 1008 }).catch(() => {});
+      },
+    );
+  }
+  return async () => {
+    try {
+      await context.unroute('**/*', onRoute).catch(() => {});
+    } catch {
+      await Promise.resolve();
+    }
+  };
 }
 
 export async function verifyCompteSession(page, baseUrl, options = {}) {
@@ -350,7 +393,7 @@ export async function createAuthenticatedStorageState() {
      writePrivateStorageState(storagePath, sanitizedState);
      return { storagePath, state: sanitizedState };
   } finally {
-    if (removeCredentialGuard) removeCredentialGuard();
+    if (removeCredentialGuard) await removeCredentialGuard();
     if (context) await context.close().catch(() => {});
     await browser.close();
   }

@@ -356,7 +356,10 @@ export interface SortieMoment {
   dPlus: number;
   dMinus: number;
   stepCount: number;
+  /** POI contextuels de la phase (jour courant, première étape ou bilan). */
   pois: TripPoi[];
+  /** Tous les POI géolocalisés du voyage : carte et rail complet, quelle que soit la phase. */
+  routePois: TripPoi[];
   accommodation: string | null;
   checkpoint: TripSafetyCheckpoint | null;
   note: TripNote | null;
@@ -403,6 +406,20 @@ function dedupeCoords(coords: Array<[number, number]>): Array<[number, number]> 
   return out;
 }
 
+function hasValidPoiCoords(poi: TripPoi): boolean {
+  if (poi.latitude == null || poi.longitude == null) return false;
+  const lat = Number(poi.latitude);
+  const lon = Number(poi.longitude);
+  return (
+    Number.isFinite(lat) &&
+    Number.isFinite(lon) &&
+    lat >= -90 &&
+    lat <= 90 &&
+    lon >= -180 &&
+    lon <= 180
+  );
+}
+
 function localTodayIso(now: Date): string {
   const y = now.getFullYear();
   const m = String(now.getMonth() + 1).padStart(2, '0');
@@ -430,6 +447,7 @@ export function selectSortieMoment(args: {
     allSteps.map(stepCoords).filter((c): c is [number, number] => c !== null),
   );
   const totals = getTripDistance(trip.steps);
+  const routePois = (trip.pois ?? []).filter(hasValidPoiCoords);
 
   if (context.phase === 'live') {
     const day = context.dayIndex ?? 1;
@@ -462,6 +480,7 @@ export function selectSortieMoment(args: {
       dMinus: dayDistance.dMinus,
       stepCount: daySteps.length,
       pois: (trip.pois ?? []).filter((p) => p.step_id != null && dayStepIds.has(p.step_id)),
+      routePois,
       accommodation: daySteps.find((s) => s.accommodation_name)?.accommodation_name ?? null,
       checkpoint,
       note,
@@ -485,6 +504,7 @@ export function selectSortieMoment(args: {
       dMinus: totals.dMinus,
       stepCount: canonical.length,
       pois: [],
+      routePois,
       accommodation: null,
       checkpoint: null,
       note: notes[0] ?? null,
@@ -507,6 +527,7 @@ export function selectSortieMoment(args: {
     dMinus: totals.dMinus,
     stepCount: canonical.length,
     pois: (trip.pois ?? []).filter((p) => p.step_id != null && firstStepIds.has(p.step_id)),
+    routePois,
     accommodation: first?.accommodation_name ?? null,
     checkpoint:
       [...checkpoints].sort((a, b) => a.scheduled_at.localeCompare(b.scheduled_at))[0] ?? null,
@@ -529,6 +550,7 @@ export function buildPossessionSectionTiles(
       label: 'Départ',
       href: hubSectionHref(ref, 'depart'),
       icon: Footprints,
+      accent: true,
       badge:
         !summary.depart.isEstimated && departDays != null && departDays >= 0 ? `J-${departDays}` : null,
     },

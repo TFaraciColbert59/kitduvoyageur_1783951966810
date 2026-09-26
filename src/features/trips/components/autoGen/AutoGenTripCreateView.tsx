@@ -6,7 +6,6 @@ import { AutoGenTripView } from './AutoGenTripView';
 import type { Proposal } from '@/features/trips/schemas/autoGen.schema';
 import type { TripBrief } from '@/features/trips/schemas/autoGen.schema';
 import { createTripFromAutogenIntent } from '@/features/trips/server/createTripFromAutogenIntent';
-import { tripSectionHref } from '../../registry/tripSectionRegistry';
 import { useActiveAdventure } from '@/features/hub/context/ActiveAdventureContext';
 import { Card, Spinner } from '@/components/ui';
 
@@ -98,7 +97,7 @@ export function AutoGenTripCreateView({ initialBriefInput = '' }: AutoGenTripCre
           title: res.title,
         });
         startTransition(() => {
-          router.push(tripSectionHref(res.slug, 'overview'));
+          router.push('/preparer');
           router.refresh();
         });
         return;

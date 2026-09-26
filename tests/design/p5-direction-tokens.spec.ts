@@ -16,6 +16,7 @@ const liquidGlass = readFileSync('src/styles/liquid-glass.css', 'utf8');
 const layout = readFileSync('src/app/layout.tsx', 'utf8');
 const home = readFileSync('src/app/page.tsx', 'utf8');
 const momentMap = readFileSync('src/features/hub/components/mobile/MomentMapCard.tsx', 'utf8');
+const hubLiquid = readFileSync('src/features/hub/components/hub-liquid.css', 'utf8');
 const mobileCompte = readFileSync('src/components/compte/MobileCompteV2.tsx', 'utf8');
 const infoChips = readFileSync('src/features/hub/components/mobile/InfoChipsRow.tsx', 'utf8');
 const weather = readFileSync('src/features/hub/components/weather/WeatherStrip.tsx', 'utf8');
@@ -214,8 +215,11 @@ describe('P5 — direction visuelle : palette', () => {
   });
 
   it('rend les pastilles de la carte mesurables', () => {
-    expect(momentMap).toContain('bg-[var(--lkv-forest-950)]');
-    expect(momentMap).toContain('text-[var(--lkv-on-dark)]');
+    expect(momentMap).toContain('hub-map-card__panel');
+    expect(momentMap).toContain('hub-map-card__legend');
+    expect(hubLiquid).toContain('.hub-map-card__panel {');
+    expect(hubLiquid).toContain('color: var(--hub-white);');
+    expect(hubLiquid).toContain('backdrop-filter: blur(26px) saturate(205%) brightness(1.05);');
     expect(momentMap).not.toContain('bg-black/35');
     expect(momentMap).not.toContain('bg-gradient-to-b from-black/40 via-black/0 to-black/5');
   });
@@ -259,7 +263,10 @@ describe('P5 — échelles espacements, rayons et typographie', () => {
   it('SF Pro (système) pour toute l\'UI, Manrope conservée pour la marque', () => {
     expect(tokens).toContain("--font-display: -apple-system, BlinkMacSystemFont, 'SF Pro Display'");
     expect(tokens).toContain("--font-brand: 'Manrope'");
-    expect(tokens).toContain("--font-sans: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto");
+    // Inter s insere apres SF Pro : sur les plates-formes Apple la pile systeme
+    // resout SF Pro et Inter ne sert jamais, ailleurs il evite la chute Segoe.
+    expect(tokens).toContain("var(--font-inter, 'Inter')");
+    expect(tokens.indexOf('SF Pro Text')).toBeLessThan(tokens.indexOf('var(--font-inter'));
   });
 });
 

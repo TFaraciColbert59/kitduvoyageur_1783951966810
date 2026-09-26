@@ -16,6 +16,7 @@ import NavigationPlateau from './NavigationPlateau';
 import { useNavigationBadges } from './useNavigationBadges';
 import { useNavigationPlateau } from './useNavigationPlateau';
 import { useProminentAction } from './ProminentAction';
+import { isHubSurfacePathname } from '@/features/hub/context/adventureLists';
 
 function WebNavigationBar() {
   const pathname = usePathname();
@@ -48,15 +49,23 @@ function WebNavigationBar() {
     ? getDestinationByHref(pressedTab)?.id ?? null
     : null;
   const activeDestinationId = pressedDestinationId ?? getActiveDestinationId(pathname);
+  const opticalNavigation = isHubSurfacePathname(pathname);
 
   if (!mounted) {
-    return <NavigationSurface loading label="Chargement de la navigation" />;
+    return (
+      <NavigationSurface
+        loading
+        label="Chargement de la navigation"
+        opticalNavigation={opticalNavigation}
+      />
+    );
   }
 
   return (
     <NavigationSurface
       label="Navigation principale"
       hidden={plateauController.hiddenByEvent}
+      opticalNavigation={opticalNavigation}
       plateau={
         <AnimatePresence>
           {hasUpperExtension && <NavigationPlateau controller={plateauController} />}
@@ -72,6 +81,7 @@ function WebNavigationBar() {
           onPress={setPressedTab}
           badge={badgeFor(destination)}
           onLongPress={destination.id === 'adventures' ? openHubSwitcher : undefined}
+          optical={opticalNavigation}
         />
       ))}
     </NavigationSurface>

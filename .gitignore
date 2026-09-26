@@ -94,3 +94,6 @@ audit/a11y/campaign/**
 audit/a11y/section4/**
 audit/contrast-measurements.json
 
+# Local visual QA scratch
+.probe/
+tmp-probe-*.mjs

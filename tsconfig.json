@@ -31,10 +31,10 @@
   "include": [
     "**/*.ts",
     "**/*.tsx",
+    ".next/next-build/types/**/*.ts",
     ".next/types/**/*.ts",
     "next-env.d.ts",
-    "types/**/*.d.ts",
-    ".next/next-build/types/**/*.ts"
+    "types/**/*.d.ts"
   ],
   "exclude": [
     "node_modules",
@@ -43,6 +43,7 @@
     "scripts",
     "geo_data",
     "public",
-    ".next"
+    ".next",
+    ".next-codex-build"
   ]
 }

@@ -9,6 +9,7 @@ import {
   setWorkerUrl,
   type GeoJSONSource,
   type MapLayerMouseEvent,
+  type MapMouseEvent,
 } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import Icon from '@/components/ui/Icon';
@@ -60,6 +61,8 @@ export interface UnifiedExplorerMapProps {
   selectedTrail?: MapTrail | null;
   onTrailClick?: (trail: MapTrail) => void;
   onPoiClick?: (poi: UnifiedPOI) => void;
+  /** Tap libre sur la carte (hors couche POI) — permet de poser un point. */
+  onMapClick?: (lat: number, lng: number) => void;
   userLocation?: [number, number] | null;
   onMapReady?: () => void;
   onLocationUpdate?: (loc: [number, number]) => void;
@@ -222,6 +225,7 @@ export default function UnifiedExplorerMap({
   selectedTrail = null,
   onTrailClick,
   onPoiClick,
+  onMapClick,
   userLocation,
   onMapReady,
   onLocationUpdate,
@@ -231,6 +235,7 @@ export default function UnifiedExplorerMap({
   regionDensity,
   memberPositions,
   safeControls = false,
+  compact = false,
 }: UnifiedExplorerMapProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   /** Racine du composant : porte `data-atlas-flying` pendant tout geste caméra. */
@@ -243,6 +248,7 @@ export default function UnifiedExplorerMap({
   const callbacksRef = useRef({
     onTrailClick,
     onPoiClick,
+    onMapClick,
     onMapReady,
     onLocationUpdate,
     onViewportChange,
@@ -271,6 +277,7 @@ export default function UnifiedExplorerMap({
   callbacksRef.current = {
     onTrailClick,
     onPoiClick,
+    onMapClick,
     onMapReady,
     onLocationUpdate,
     onViewportChange,
@@ -511,6 +518,20 @@ export default function UnifiedExplorerMap({
             const id = event.features?.[0]?.properties?.id;
             const trail = trailsRef.current.find((t) => t.id === String(id));
             if (trail) callbacksRef.current.onTrailClick?.(trail);
+          });
+          // Tap libre sur la carte (pas sur un trail/POI) : latitude/longitude.
+          // Utile au preparateur pour poser un point a l'endroit touche.
+          instance.on('click', (event: MapMouseEvent) => {
+            const features = instance.queryRenderedFeatures(event.point, {
+              layers: ['atlas-trails-points'],
+            });
+            if (features.length > 0) return;
+            const handleMapClick = callbacksRef.current.onMapClick;
+            if (!handleMapClick) return;
+            const lng = event.lngLat.lng;
+            const lat = event.lngLat.lat;
+            if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
+            handleMapClick(lat, lng);
           });
           instance.on('mouseenter', 'atlas-trails-points', () => {
             instance.getCanvas().style.cursor = 'pointer';
@@ -1119,9 +1140,11 @@ export default function UnifiedExplorerMap({
   // Absente (desktop, zéro sentier) ⇒ 0px, positions historiques inchangées.
   // P1 — offsets canoniques via --nav-offset (= --safe-bottom + 60px) : pixels
   // identiques à safe+96, formule unique, jamais de calc ad hoc.
-  const bottomControlsOffset = safeControls
-    ? 'bottom-[calc(var(--nav-offset)+36px+var(--explorer-carousel-height,0px))]'
-    : 'bottom-4';
+  const bottomControlsOffset = compact
+    ? 'bottom-[calc(var(--safe-bottom)+10.5rem)]'
+    : safeControls
+      ? 'bottom-[calc(var(--nav-offset)+36px+var(--explorer-carousel-height,0px))]'
+      : 'bottom-4';
   const desktopTilesOffset = safeControls
     ? 'md:bottom-[calc(var(--nav-offset)+36px)]'
     : 'md:bottom-4';
@@ -1143,6 +1166,7 @@ export default function UnifiedExplorerMap({
       className="relative w-full h-full"
       data-testid="unified-explorer-map"
       data-atlas-ready={ready ? 'true' : 'false'}
+      data-atlas-compact={compact ? 'true' : 'false'}
     >
       <div ref={containerRef} className="absolute inset-0 w-full h-full" />
 
@@ -1167,7 +1191,7 @@ export default function UnifiedExplorerMap({
         <Button
           variant="secondary"
           onClick={handleToggleGlobe}
-          className="min-h-[48px] px-4 shadow-lg"
+          className={`shadow-lg ${compact ? 'min-h-[40px] px-3' : 'min-h-[48px] px-4'}`}
           aria-label={viewMode === 'globe' ? 'Explorer ma zone (vue locale)' : 'Afficher le globe'}
           aria-pressed={viewMode === 'local'}
         >
@@ -1185,7 +1209,7 @@ export default function UnifiedExplorerMap({
           (nav+100), jamais superposé. z-toast : jamais masqué. */}
       {globeNotice && (
         <div
-          className="absolute left-1/2 -translate-x-1/2 z-[var(--z-toast)] pointer-events-none w-max max-w-[calc(100vw-32px)] bottom-[calc(var(--nav-offset)+164px+var(--explorer-carousel-height,0px))]"
+          className={`absolute left-1/2 -translate-x-1/2 z-[var(--z-toast)] pointer-events-none w-max max-w-[calc(100vw-32px)] ${compact ? 'bottom-[calc(var(--safe-bottom)+15.5rem)]' : 'bottom-[calc(var(--nav-offset)+164px+var(--explorer-carousel-height,0px))]'}`}
           data-atlas-geoloc-notice="true"
           role="status"
           aria-live="polite"
@@ -1252,7 +1276,7 @@ export default function UnifiedExplorerMap({
       {/* Légende densité — desktop uniquement (simplicité mobile).
           P1 — formule UNIQUE via --nav-offset (nav+156 : au-dessus du badge
           live nav+100 et des tuiles nav+36, jamais superposée). */}
-      {viewport && viewport.zoom > 2.4 && viewport.zoom < 14.4 && (
+      {!compact && viewport && viewport.zoom > 2.4 && viewport.zoom < 14.4 && (
         <div
           className="hidden md:block absolute left-3 bottom-[calc(var(--nav-offset)+156px)] z-[var(--z-fab)] pointer-events-none"
           data-atlas-density-legend="true"
@@ -1264,6 +1288,7 @@ export default function UnifiedExplorerMap({
       )}
 
       {/* Fond de carte — mobile : icônes en haut à gauche ; desktop : libellés en bas à gauche */}
+      {!compact && (
       <div
         className={`absolute left-3 top-[calc(var(--safe-top)+10px)] md:top-auto ${desktopTilesOffset} z-[var(--z-fab)]`}
         data-atlas-controls="tiles"
@@ -1281,6 +1306,7 @@ export default function UnifiedExplorerMap({
           className="shadow-lg"
         />
       </div>
+      )}
 
       {/* Attribution légère (obligatoire pour les tuiles) — mobile : haut droite ; desktop : bas centre.
           P1 — compteur lisible : token caption-2 (11px), jamais text-[9px]. */}
@@ -1289,7 +1315,7 @@ export default function UnifiedExplorerMap({
       </div>
 
       {/* Sélection pays (couche monde) — données réelles, jamais inventées. */}
-      {selectedCountry && (
+      {!compact && selectedCountry && (
         <div
           className="absolute left-3 top-[calc(var(--safe-top)+72px)] md:left-auto md:right-3 md:top-20 z-[var(--z-fab)] w-[236px]"
           data-atlas-country-card="true"

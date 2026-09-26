@@ -785,7 +785,7 @@ export default function PaysPratiqueView({ country, isMobile = false }: PaysPrat
                       Découvrir ce Kit →
                     </Link>
                     <Link
-                      href={`/ai-configurator?country=${country.code}`}
+                      href={`/preparer?tab=equipement&country=${country.code}`}
                       onClick={() => triggerHaptic('selection')}
                       className="glass-capsule-btn flex-1 !min-h-[36px] !py-1.5 !px-3 !text-xs !font-bold text-center justify-center shadow-2xs cursor-pointer active:scale-95 transition-all"
                     >

@@ -37,7 +37,15 @@ describe('H-AUTO-42 — resolveLegacyRedirect : table statique', () => {
     expect(resolveLegacyRedirect('/recommandations')?.destination).toBe('/hub');
     expect(resolveLegacyRedirect('/naviguer')?.destination).toBe('/randonnee-active');
     expect(resolveLegacyRedirect('/boussole')?.destination).toBe('/randonnee-active');
-    expect(resolveLegacyRedirect('/rapport-kit')?.destination).toBe('/ai-configurator');
+    // L'assistant equipement est un onglet du preparateur (fusion).
+    expect(resolveLegacyRedirect('/rapport-kit')).toEqual({
+      destination: '/preparer',
+      setParams: { tab: 'equipement' },
+    });
+    expect(resolveLegacyRedirect('/ai-configurator')).toEqual({
+      destination: '/preparer',
+      setParams: { tab: 'equipement' },
+    });
     expect(resolveLegacyRedirect('/activite')?.destination).toBe('/feed');
     expect(resolveLegacyRedirect('/gamification')?.destination).toBe('/recompenses');
     expect(resolveLegacyRedirect('/encheres')?.destination).toBe('/occasion');

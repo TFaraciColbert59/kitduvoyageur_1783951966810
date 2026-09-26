@@ -19,32 +19,27 @@ export function SectionCarousel({ tiles, label = 'Sections de l’aventure' }: S
               <HapticLink
                 href={tile.href}
                 ariaLabel={tile.label}
-                className={`relative flex h-[8.75rem] w-[7.75rem] flex-col items-center justify-center rounded-[var(--lkv-radius-lg)] p-3 text-center transition-transform active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)] sm:h-[9.5rem] sm:w-[8.5rem] md:h-[10rem] md:w-[9rem] ${
+                className={`hub-section-control relative flex h-[7rem] w-[7.75rem] flex-col items-center justify-center gap-1.5 rounded-[var(--lkv-radius-lg)] p-3 text-center transition-transform active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)] sm:h-[8rem] sm:w-[8.5rem] md:h-[8.5rem] md:w-[9rem] ${
                   tile.accent
-                    ? 'bg-[var(--lkv-primary)] text-white shadow-sm'
-                    : 'glass interactive text-[var(--lkv-text-primary)]'
+                    ? 'hub-section-control--accent interactive text-[var(--lkv-text-primary)]'
+                    : 'interactive text-[var(--lkv-text-primary)]'
                 }`}
               >
                 {tile.badge && (
                   <span
                     className={`absolute right-2.5 top-2.5 rounded-full px-2 py-0.5 text-[9.5px] font-bold tabular-nums ${
                       tile.accent
-                        ? 'bg-white/20 text-white'
+                        ? 'bg-[var(--lkv-primary)]/15 text-[var(--lkv-primary)]'
                         : 'bg-[var(--lkv-primary)]/10 text-[var(--lkv-primary)]'
                     }`}
                   >
                     {tile.badge}
                   </span>
                 )}
-                <span
-                  className={`flex h-14 w-14 items-center justify-center ${
-                    tile.accent
-                      ? 'rounded-[var(--lkv-radius-md)] border border-white/20 bg-white/10 text-white'
-                      : 'text-[color:var(--icon-primary)]'
-                  }`}
-                >
-                  <Icon size={26} aria-hidden="true" />
+                <span className="hub-tile-glyph flex h-12 w-12 items-center justify-center">
+                  <Icon size={23} aria-hidden="true" />
                 </span>
+                <span className="line-clamp-2 text-[12px] font-bold leading-tight">{tile.label}</span>
               </HapticLink>
             </li>
           );

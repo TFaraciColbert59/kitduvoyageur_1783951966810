@@ -343,7 +343,7 @@ export default function OutilsPage() {
                 Préparez votre voyage avec l&apos;IA
               </h2>
               <p className="text-white/60 mb-8">Destination, saison, profil — notre IA génère votre liste d&apos;équipement complète en quelques secondes.</p>
-              <Link href="/ai-configurator" className="btn-primary text-base px-8 py-3.5 inline-flex items-center gap-2">
+              <Link href="/preparer?tab=equipement" className="btn-primary text-base px-8 py-3.5 inline-flex items-center gap-2">
                 <span>✨</span>
                 Lancer le configurateur
               </Link>

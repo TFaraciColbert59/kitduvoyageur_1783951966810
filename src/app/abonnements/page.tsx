@@ -333,7 +333,7 @@ export default function AbonnementsPage() {
           </div>
           <div className="mt-[var(--space-6)] text-center">
             <p className="mb-[var(--space-3)] text-[length:var(--lkv-text-caption)] text-[color:var(--lkv-text-muted)]">Profil sélectionné : <span className="text-[color:var(--lkv-text-secondary)]">{PROFILES.find((p) => p.id === selectedProfile)?.label}</span></p>
-            <Link href="/ai-configurator" className={AI_LINK_CLASS}>
+            <Link href="/preparer?tab=equipement" className={AI_LINK_CLASS}>
               <Icon name="SparklesIcon" size={16} variant="outline" />
               Affiner mon profil avec l&apos;IA
             </Link>

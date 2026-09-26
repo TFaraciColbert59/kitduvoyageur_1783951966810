@@ -73,7 +73,7 @@ export default function PaysHeroOverview({
             {/* Actions */}
             <div className="flex flex-wrap items-center gap-2.5 pt-2">
               <Link
-                href={`/ai-configurator?country=${country.code}`}
+                href={`/preparer?tab=equipement&country=${country.code}`}
                 className="glass-capsule-btn primary text-xs font-bold !py-2 !px-4"
               >
                 <Icon name="SparklesIcon" size={14} />

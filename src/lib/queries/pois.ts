@@ -3,7 +3,24 @@ import { createClient } from '@/lib/supabase/server';
 export interface UnifiedPOI {
   id: string;
   name: string;
-  category: 'refuge' | 'summit' | 'water' | 'viewpoint' | 'waterfall' | 'col' | 'camping';
+  /**
+   * Catégories unifiées. Les 7 premières sont les categories outdoor d'origine ;
+   * les suivantes sont ajoutees par le preparateur de voyage (toute activite) :
+   * nuitee, repas, deplacement, etape, poi generique.
+   */
+  category:
+    | 'refuge'
+    | 'summit'
+    | 'water'
+    | 'viewpoint'
+    | 'waterfall'
+    | 'col'
+    | 'camping'
+    | 'food'
+    | 'stay'
+    | 'transport'
+    | 'step'
+    | 'poi';
   lat: number;
   lng: number;
   altitude_m?: number | null;
@@ -54,6 +71,41 @@ function normalizeCategory(cat: string | null | undefined): UnifiedPOI['category
   if (c.includes('waterfall') || c.includes('cascade')) return 'waterfall';
   if (c.includes('col') || c.includes('pass')) return 'col';
   if (c.includes('camp') || c.includes('bivouac')) return 'camping';
+  // Categories du preparateur de voyage (toute activite, pas seulement outdoor).
+  if (
+    c.includes('food') ||
+    c.includes('restaurant') ||
+    c.includes('resto') ||
+    c.includes('table') ||
+    c.includes('repas') ||
+    c.includes('diner') ||
+    c.includes('brasserie') ||
+    c.includes('cafe')
+  )
+    return 'food';
+  if (
+    c.includes('stay') ||
+    c.includes('gite') ||
+    c.includes('hut') ||
+    c.includes('hotel') ||
+    c.includes('nuit') ||
+    c.includes('hebergement')
+  )
+    return 'stay';
+  if (
+    c.includes('transport') ||
+    c.includes('car') ||
+    c.includes('bus') ||
+    c.includes('train') ||
+    c.includes('plane') ||
+    c.includes('boat') ||
+    c.includes('bike') ||
+    c.includes('avion') ||
+    c.includes('bateau') ||
+    c.includes('voiture')
+  )
+    return 'transport';
+  if (c.includes('step') || c.includes('etape') || c.includes('jour')) return 'step';
   return 'viewpoint';
 }
 

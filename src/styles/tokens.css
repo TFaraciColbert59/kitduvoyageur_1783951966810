@@ -204,8 +204,12 @@
      Police système pour le corps/UI (adaptation documentée vs dossier) ;
      Manrope reste la police de marque pour les titres. */
   /* Phase 2 — SF Pro d'abord (iOS), Manrope conservée pour la marque. */
-  --font-sans: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-  --font-display: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, system-ui, sans-serif;
+  /* SF Pro d'abord (pile systeme Apple, donc identique a iOS/macOS), puis
+     Inter qui en est le substitut metrique le plus proche sur les autres OS.
+     Segoe UI n arrive qu en dernier recours : c est la seule raison pour
+     laquelle l UI ne ressemblait pas a Apple sur Windows. */
+  --font-sans: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display', var(--font-inter, 'Inter'), 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-display: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', var(--font-inter, 'Inter'), 'Segoe UI', Roboto, system-ui, sans-serif;
   --font-brand: 'Manrope', system-ui, sans-serif;
   --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
   --font-body: var(--font-sans);

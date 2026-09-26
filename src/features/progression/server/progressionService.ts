@@ -213,7 +213,7 @@ export async function getTerritorialLeaderboard(
       data: unknown;
       error: { message: string; code?: string } | null;
     }>;
-  }).rpc;
+  }).rpc?.bind(supabase);
 
   if (typeof rpc === 'function') {
     const { data, error } = await rpc('get_leaderboard', {

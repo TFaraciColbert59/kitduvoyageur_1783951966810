@@ -29,7 +29,7 @@ const POPULAR_SEARCHES = [
   { label: 'Club Randonnée Alpes', category: 'Communauté', url: '/clubs' },
   { label: 'Sac de couchage -5°C', category: 'Couchage', url: '/boutique?search=sac' },
   { label: 'Guide Islande & Volcans', category: 'Destination', url: '/pays/is' },
-  { label: 'Configurateur IA de Kit', category: 'Outil IA', url: '/ai-configurator' },
+  { label: 'Configurateur IA de Kit', category: 'Outil IA', url: '/preparer?tab=equipement' },
 ];
 
 export default function GlobalSearchModal({ isOpen, onClose }: GlobalSearchModalProps) {
@@ -443,7 +443,7 @@ export default function GlobalSearchModal({ isOpen, onClose }: GlobalSearchModal
                   <p className="text-xs text-white/60 mt-0.5">Laissez notre IA composer votre équipement idéal selon vos critères.</p>
                 </div>
                 <button
-                  onClick={() => handleSelectResult('/ai-configurator')}
+                  onClick={() => handleSelectResult('/preparer?tab=equipement')}
                   className="px-4 py-2 bg-forest-400 text-forest-950 font-extrabold rounded-xl text-xs whitespace-nowrap hover:bg-forest-300 transition-colors "
                 >
                   Lancer l'IA

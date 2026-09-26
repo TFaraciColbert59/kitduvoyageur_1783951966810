@@ -48,8 +48,7 @@ export const LEGACY_REDIRECTS: Record<string, string> = {
   // ── Mode live : un seul cockpit canonique (D2) ──
   '/naviguer': '/randonnee-active',
   '/boussole': '/randonnee-active',
-  // ── Assistants : un seul wizard kit (D5) ──
-  '/rapport-kit': '/ai-configurator',
+  // ── Assistants : l'equipement est un onglet du preparateur (traite en cas dynamic ci-dessous) ──
   // ── Social-lite / commerce (D7) ──
   '/activite': '/feed',
   '/gamification': '/recompenses',
@@ -66,6 +65,14 @@ export const LEGACY_REDIRECTS: Record<string, string> = {
  *   (changement d'aventure active puis redirection) — non gérés ici.
  */
 export function resolveLegacyRedirect(pathname: string): LegacyRedirect | null {
+  // L'assistant equipement n'est plus une page : c'est l'onglet « equipement »
+  // du preparateur. /rapport-kit et /ai-configurator ouvrent directement le
+  // bon onglet ; la query d'origine (country, groupId, carnetId, trail) est
+  // conservee par le clone d'URL du middleware.
+  if (pathname === '/rapport-kit' || pathname === '/ai-configurator') {
+    return { destination: '/preparer', setParams: { tab: 'equipement' } };
+  }
+
   const staticTarget = LEGACY_REDIRECTS[pathname];
   if (staticTarget) return { destination: staticTarget };
 

@@ -20,7 +20,7 @@ export function HubQuickCreate() {
       <Button variant="primary"
         type="button"
         onClick={() => setOpen(true)}
-        className="w-full min-h-[44px] !px-3 flex items-center justify-center gap-1.5 text-xs font-bold cursor-pointer active:scale-[0.98]"
+        className="hub-liquid-action w-full min-h-[44px] !px-3 flex items-center justify-center gap-1.5 text-xs font-bold cursor-pointer active:scale-[0.98]"
       >
         <Icon name="plus" size={14} aria-hidden="true" />
         <span>Nouvelle activité</span>

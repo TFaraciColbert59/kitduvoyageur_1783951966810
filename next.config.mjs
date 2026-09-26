@@ -12,11 +12,8 @@ const nextConfig = {
   distDir: process.env.DIST_DIR || '.next',
   compress: true,
 
-  // Dev-only : l'indicateur « N » flotte au-dessus de l'UI mobile (bouton retour,
-  // recherche). En bas à droite il ne masque plus le chrome de l'app.
-  devIndicators: {
-    position: 'bottom-right',
-  },
+  // L'aperçu local doit laisser la navigation mobile entièrement utilisable.
+  devIndicators: false,
 
   typescript: {
     ignoreBuildErrors: false,
@@ -122,7 +119,7 @@ const nextConfig = {
       },
       {
         source: '/configurateur',
-        destination: '/ai-configurator',
+        destination: '/preparer?tab=equipement',
         permanent: true,
       },
       {

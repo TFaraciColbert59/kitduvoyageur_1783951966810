@@ -64,6 +64,7 @@ const TabItem = memo(function TabItem({
   onPress,
   badge,
   onLongPress,
+  optical = false,
 }: {
   destination: Destination;
   isActive: boolean;
@@ -71,6 +72,8 @@ const TabItem = memo(function TabItem({
   onPress: (href: string) => void;
   badge: number;
   onLongPress?: () => void;
+  /** Variante Hub iOS 27 : capsule compacte, icônes seules, lentille active. */
+  optical?: boolean;
 }) {
   const { triggerHaptic } = useHapticFeedback();
   const reduceMotion = useReducedMotion();
@@ -146,7 +149,7 @@ const TabItem = memo(function TabItem({
 
   return (
     <Link
-      className="lkv-nav-tab"
+      className={`lkv-nav-tab${optical ? ' lkv-nav-tab--optical' : ''}`}
       href={destination.href}
       prefetch={prefetch}
       onClick={handleClick}
@@ -174,46 +177,60 @@ const TabItem = memo(function TabItem({
         gap: 1,
         textDecoration: 'none',
         position: 'relative',
+        zIndex: 1,
         userSelect: 'none',
         WebkitUserSelect: 'none',
         touchAction: 'manipulation',
         WebkitTapHighlightColor: 'transparent',
         flex: '1 1 0',
         minWidth: 44,
-        maxWidth: 76,
+        maxWidth: optical ? 64 : 76,
         height: 'var(--nav-height)',
       }}
     >
       {isActive && (
         <motion.span
           layoutId="bottom-tab-active-pill"
-          className="pointer-events-none"
+          className="lkv-nav-active-lens"
           style={{
             position: 'absolute',
-            top: 6,
+            top: optical ? 6 : 4,
             left: '50%',
-            marginLeft: -32,
-            width: 64,
-            height: 40,
-            borderRadius: 9999,
-            background: 'var(--g2-bg)',
-            boxShadow: 'var(--glass-rim), var(--glass-highlight)',
+            marginLeft: optical ? -24 : -32,
+            width: optical ? 48 : 64,
+            height: optical ? 48 : 52,
+            borderRadius: optical ? 999 : 20,
           }}
           transition={reduceMotion ? { duration: 0 } : { type: 'spring', stiffness: 450, damping: 32 }}
         />
       )}
       <motion.span
-        whileTap={reduceMotion ? undefined : { scale: 0.97 }}
+        whileTap={reduceMotion ? undefined : { scale: optical ? 0.9 : 0.97 }}
         transition={reduceMotion ? { duration: 0 } : { type: 'spring', stiffness: 500, damping: 25 }}
         style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', zIndex: 1 }}
       >
-        {/* Icône seule (labels retirés) — glyphes SF-like, cible tactile conservée. */}
         <Icon
           name={TAB_ICON[destination.id]}
-          size={onLongPress ? 28 : 26}
-          color={isActive ? 'var(--glass-label)' : 'var(--glass-label-tertiary)'}
+          size={optical ? 25 : onLongPress ? 24 : 23}
+          color={
+            optical
+              ? isActive
+                ? 'var(--hub-label-primary)'
+                : 'var(--hub-symbol)'
+              : isActive
+              ? 'var(--glass-label)'
+              : 'var(--glass-label-tertiary)'
+          }
         />
       </motion.span>
+      {!optical ? (
+        <span
+          className="relative z-[1] max-w-full truncate px-0.5 text-[10px] font-semibold leading-none"
+          style={{ color: isActive ? 'var(--glass-label)' : 'var(--glass-label-tertiary)' }}
+        >
+          {destination.label.fr}
+        </span>
+      ) : null}
       {badge > 0 && <BadgeDot count={badge} />}
     </Link>
   );

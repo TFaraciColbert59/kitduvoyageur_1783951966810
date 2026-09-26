@@ -5,7 +5,6 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Sheet } from '@/components/ui/Sheet';
 import { Button, Card } from '@/components/ui';
-import { tripSectionHref } from '../registry/tripSectionRegistry';
 import { setActiveAdventureAction } from '@/features/hub/context/activeAdventureServer';
 import { createTripSchema, type CreateTripInput } from '../schemas/trip.schema';
 import type { TripActivityType, TripDifficulty, TripVisibility } from '../types/trip.types';
@@ -47,7 +46,7 @@ export function QuickCreateTripModal({ isOpen, onClose, onSubmitTrip }: QuickCre
       slug,
       title: title.trim() || 'Nouvelle aventure',
     });
-    router.push(tripSectionHref(slug, 'overview'));
+    router.push('/preparer');
   };
 
   const handleSubmit = async (e: React.FormEvent) => {

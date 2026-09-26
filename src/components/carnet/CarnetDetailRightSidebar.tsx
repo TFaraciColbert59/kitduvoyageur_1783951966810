@@ -107,7 +107,7 @@ export default function CarnetDetailRightSidebar({
           )}
 
           <Link
-            href="/ai-configurator"
+            href="/preparer?tab=equipement"
             className="inline-flex min-h-[var(--control-height-md)] w-full items-center justify-center gap-[var(--space-1)] rounded-full border border-[color:var(--btn-glass-border)] bg-[color:var(--btn-tint)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn px-[var(--space-4)] text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-primary)]"
           >
             <span aria-hidden>🤖</span> Configurer mon sac

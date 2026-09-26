@@ -7,7 +7,7 @@ import Icon from '@/components/ui/AppIcon';
 const FOOTER_LINKS = [
   { label: 'Explorer', href: '/explorer' },
   { label: 'Clubs', href: '/communaute' },
-  { label: 'Configurateur IA', href: '/ai-configurator' },
+  { label: 'Configurateur IA', href: '/preparer?tab=equipement' },
   { label: 'FAQ & Aide', href: '/faq' },
   { label: 'Contact', href: '/contact' },
 ];

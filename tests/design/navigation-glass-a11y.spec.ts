@@ -16,10 +16,11 @@ describe('navigation mobile : matériau et accessibilité', () => {
     expect(tokens.match(/--nav-height:\s*\d+px;/g)).toEqual(['--nav-height: 60px;']);
   });
 
-  it('utilise un bord Glass valide pour la sélection active', () => {
+  it('délègue la sélection active à la lentille optique (pas de style inline legacy)', () => {
     expect(tabItem).not.toContain("border: '1px solid var(--glass-rim)'");
     expect(tabItem).not.toContain("var(--glass-specular)");
-    expect(tabItem).toContain("boxShadow: 'var(--glass-rim), var(--glass-highlight)'");
+    expect(tabItem).not.toContain("var(--g2-bg)");
+    expect(tabItem).toContain('lkv-nav-active-lens');
   });
 
   it('donne un focus visible aux liens et supprime le glissement en mouvement réduit', () => {

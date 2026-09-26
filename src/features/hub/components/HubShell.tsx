@@ -37,6 +37,7 @@ import {
 import HubSidebarLeft from './HubSidebarLeft';
 import HubSidebarRight from './HubSidebarRight';
 import { HubNetworkStatus } from './HubNetworkStatus';
+import { HubEdgeDrawer } from './mobile/HubEdgeDrawer';
 import { HubRealtimeRefresh } from './HubRealtimeRefresh';
 import { ActivityLiveBridge } from './live/ActivityLiveBridge';
 import { MarbleZone } from '@/components/glass/MarbleZone';
@@ -259,6 +260,7 @@ export function HubShell({
 
   return (
     <>
+      {isHubRoot && <span className="hub-liquid-root" hidden aria-hidden="true" />}
       <MarbleZone />
       {/* T10 — un seul pont realtime du voyage actif pour TOUTE la surface hub
           (racine + sections) : le rail et les reveals le consomment. */}
@@ -285,15 +287,9 @@ export function HubShell({
             {children}
           </div>
           {isHubRoot && adventureIntelligence ? (
-            <div
-              className={
-                isHubRootFilled
-                  ? 'mt-[var(--bottom-nav-height)] px-4 pt-3'
-                  : 'px-4 pt-3'
-              }
-            >
+            <HubEdgeDrawer kind="cockpit" slot="bottom" label="Cockpit" title="Cockpit aventure">
               {adventureIntelligence}
-            </div>
+            </HubEdgeDrawer>
           ) : null}
         </MobilePageShell>
       }

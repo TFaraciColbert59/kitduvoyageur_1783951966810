@@ -396,6 +396,9 @@ async function run() {
       expectedCellCount: EXPECTED_MATRIX_CELL_COUNT,
      liveVerified: resultErrors.length === 0 && aggregate.warnings.length === 0 && expectedCells === 0,
      errors: resultErrors,
+     stateEvidenceComplete: results.length > 0 && results.every((result) => (
+       result?.measurementState === 'default' && result?.scrollY === 0 && result?.overlayOpen === false
+     )),
    }), results);
    report.measurementScope = MATRIX_MEASUREMENT_SCOPE;
     const matrixVerified = isMatrixAuditVerified(report);
