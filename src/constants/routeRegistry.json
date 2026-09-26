@@ -1,0 +1,88 @@
+{
+  "$note": [
+    "SOURCE UNIQUE du routage de configuration (P6, chantier 2 routes).",
+    "Ce fichier est lu par next.config.mjs (JSON) ET par src/constants/routeRegistry.ts.",
+    "Il n'existe aucune liste de 301 en dur : next.config.mjs derive redirects() de `active`.",
+    "",
+    "`active`  : redirection appliquee. Sa destination DOIT resoudre vers un page.tsx reel.",
+    "`kept`    : route canonique qui ne doit JAMAIS etre masquee par une redirection.",
+    "`blocked` : redirection proposee par le plan §8.1 mais NON appliquee, avec la raison.",
+    "           Une entree `blocked` doit toujours pointer vers une page vivante :",
+    "           c'est la preuve materielle du refus de supprimer une feature."
+  ],
+  "active": [
+    {
+      "source": "/voyage-ia",
+      "destination": "/hub/nouveau",
+      "permanent": true,
+      "note": "Corrige : /voyages/nouveau n'a pas de page.tsx et le middleware le redirigeait deja vers /hub/nouveau. La cible directe supprime une chaine 301 -> 307."
+    },
+    { "source": "/mon-kit", "destination": "/explorer", "permanent": true, "note": "Materiel fusionne dans l'explorateur." },
+    { "source": "/inventaire", "destination": "/explorer", "permanent": true, "note": "Materiel fusionne dans l'explorateur." },
+    { "source": "/shop", "destination": "/explorer", "permanent": true, "note": "Commerce non livre." },
+    { "source": "/catalogue/:path*", "destination": "/explorer", "permanent": true, "note": "Catalogue remplace par l'explorateur." },
+    { "source": "/configurateur", "destination": "/prepare?tab=equipement", "permanent": true, "note": "L'equipement est un onglet du preparateur." },
+    { "source": "/ateliers", "destination": "/explorer", "permanent": false, "note": "Cible temporaire, pas de promesse d'URL." },
+    { "source": "/presse", "destination": "/contact", "permanent": false, "note": "Page de presse non livree." },
+    { "source": "/confidentialite", "destination": "/politique-confidentialite", "permanent": true, "note": "Correction du nom de route." },
+    { "source": "/carte", "destination": "/explorer", "permanent": true, "note": "Racine /carte : la carte vivante est /carte-interactive." },
+    { "source": "/pays", "destination": "/explorer", "permanent": false, "note": "Racine /pays remplacee par l'explorateur ; /pays/[code] reste servie." }
+  ],
+  "kept": [
+    { "route": "/prepare", "note": "Route fine du preparateur de voyage (D-20)." },
+    { "route": "/hub", "note": "Hub unique (D-02)." },
+    { "route": "/hub/[section]", "note": "Sections du hub, y compris /hub/nouveau." },
+    { "route": "/k/[token]", "note": "Deep link d'invitation, servi." },
+    { "route": "/go/[slug]", "note": "Repertoire reserve : aucun page.tsx aujourd'hui, aucun lien produit. Conserve pour ne pas figer l'URL." },
+    { "route": "/explorer", "note": "Explorateur unifie, cible de 6 redirections." },
+    { "route": "/randonnee-active", "note": "Cockpit live canonique (RED-2c). Requis par le flag terrain_live (A13/S7)." },
+    { "route": "/voyages/[slug]", "note": "Page de voyage servie ; le middleware la laisse passer (DYN-3)." },
+    { "route": "/preparer-sentier/[id]", "note": "Preparation serveur d'un sentier reel : pose le cookie d'aventure active." },
+    { "route": "/copilote", "note": "Page cliente vivante, liee depuis la navigation mobile." },
+    { "route": "/carte-interactive", "note": "Carte vivante + schema.org WebPage." },
+    { "route": "/communaute-pro", "note": "Page pro vivante (106 l.), non fusionnee." }
+  ],
+  "blocked": [
+    {
+      "source": "/ai-configurator",
+      "proposed": "/prepare",
+      "reason": "La page existe deja et fait un redirect() 307 qui RECOPIE les query params (tab, country, groupId, carnetId, trail) vers /prepare?tab=equipement. Une regle next.config perdrait ces params : regression. Le middleware le traite deja (resolveLegacyRedirect)."
+    },
+    {
+      "source": "/preparer-sentier/[id]",
+      "proposed": "/prepare",
+      "reason": "Page serveur vivante (71 l.) : elle resout un sentier reel, ecrit le cookie d'aventure active puis redirige vers /hub. La rediriger vers /prepare supprimerait la preparation par sentier et l'ecriture du cookie."
+    },
+    {
+      "source": "/preparer-randonnee",
+      "proposed": "/prepare",
+      "reason": "Stub vivant qui redirige vers /preparer-sentier/[id] (avec routeId) ou /hub. La cible du plan divergerait et creerait une double definition de la meme URL."
+    },
+    {
+      "source": "/copilote",
+      "proposed": "/prepare",
+      "reason": "Page cliente vivante de 125 l., referencee par la navigation mobile. La supprimer casserait un acces utilisateur reel et trois liens de navigation."
+    },
+    {
+      "source": "/carte-interactive",
+      "proposed": "/prepare",
+      "reason": "Page cartographique vivante avec schema.org WebPage et SEO. Le preparateur consomme la carte existante (D-17) : il ne la remplace pas."
+    },
+    {
+      "source": "/voyages/[slug]",
+      "proposed": "/hub",
+      "reason": "Page de voyage servie, avec /voyages/[slug]/[section]. Le test DYN-3 verifie explicitement qu'elle n'est pas redirigee. C'est la route la plus liee de l'application."
+    },
+    {
+      "source": "/randonnee-active",
+      "proposed": "/hub?phase=live",
+      "reason": "Cockpit live vivant, derriere le flag terrain_live (A13/S7) et les flags de feature lus par requete. RED-2c le declare canonique : /naviguer et /boussole y aboutissent deja. Le rediriger vers le hub supprimerait le mode live."
+    },
+    {
+      "source": "/communaute-pro",
+      "proposed": "/communaute/pro",
+      "reason": "Page pro vivante de 106 l. avec son propre layout. /communaute/pro est une page distincte, pas un doublon : la fusion n'a pas ete faite, elle ne doit pas etre simulee par une redirection."
+    }
+  ],
+  "reservedWithoutPage": ["/go/[slug]"]
+}

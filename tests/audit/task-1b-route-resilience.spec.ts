@@ -5,6 +5,7 @@ import * as runtime from '../../scripts/audit/audit_runtime.mjs';
 import { attachPageDiagnostics } from '../../scripts/audit/audit_runtime.mjs';
 import { buildCampaignAuditReport } from '../../scripts/audit/contrast_audit_core.mjs';
 import * as contrast from '../../scripts/audit/measure_contrast_v2.mjs';
+import { ACTIVE_ROUTES } from '@/constants/routeRegistry';
 
 type Listener = (...args: any[]) => void;
 type RequestOptions = {
@@ -363,12 +364,16 @@ describe('Task 1B — route semantics', () => {
 
 describe('Task 1B — configuration et contexts', () => {
   it('retire les trois redirections canoniques sans toucher aux legacies', () => {
-    const config = source('next.config.mjs');
+    // P6 : la liste de redirections vit dans src/constants/routeRegistry.json
+    // et next.config.mjs la derive. On interroge la source unique.
+    const sources = ACTIVE_ROUTES.map((route) => route.source);
 
-    expect(config).not.toMatch(/source:\s*['"]\/boutique['"]/);
-    expect(config).not.toMatch(/source:\s*['"]\/manifeste['"]/);
-    expect(config).not.toMatch(/source:\s*['"]\/carte-interactive['"]/);
-    expect(config).toMatch(/source:\s*['"]\/voyage-ia['"]/);
+    expect(sources).not.toContain('/boutique');
+    expect(sources).not.toContain('/manifeste');
+    // /carte-interactive reste une page cartographique vivante : la
+    // rediriger vers /prepare supprimerait la carte (D-17).
+    expect(sources).not.toContain('/carte-interactive');
+    expect(sources).toContain('/voyage-ia');
   });
 
   it('utilise un user agent desktop explicite avec le viewport mobile dans les trois runners', () => {

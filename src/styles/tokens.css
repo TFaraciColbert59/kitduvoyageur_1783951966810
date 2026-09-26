@@ -153,7 +153,7 @@
   --lkv-border-subtle: rgba(23, 43, 36, 0.07);
   --lkv-border-strong: rgba(23, 43, 36, 0.52);
 
-  /* ── 3. Statuts et Alertes Terrain (0 #E4501C) ───────────── */
+  /* ── 3. Statuts et Alertes Terrain (palette hors orange designer) ───────────── */
   --lkv-success: #3D6038;
   --lkv-success-bg: #E1EBDE;
   --lkv-warning: #C89A3B;
