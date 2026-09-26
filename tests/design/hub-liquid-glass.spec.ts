@@ -59,6 +59,7 @@ const momentMapCard = readFileSync(
 const hubGlobeMap = existsSync('src/features/hub/components/mobile/HubGlobeMap.tsx')
   ? readFileSync('src/features/hub/components/mobile/HubGlobeMap.tsx', 'utf8')
   : '';
+const unifiedExplorerMap = readFileSync('src/components/map/UnifiedExplorerMap.tsx', 'utf8');
 const maProgressionView = readFileSync(
   'src/components/progression/MaProgressionView.tsx',
   'utf8',
@@ -241,8 +242,8 @@ describe('Hub — tiroirs lateraux mobile', () => {
     // des references de composants lucide, incompatibles avec un prop de
     // fonction traverse vers un Client Component.
     expect(mobileAdventureHub.trimStart().startsWith("'use client'")).toBe(false);
-    expect(mobileAdventureHub).toContain('<HubEdgeDrawer kind="status" slot="top"');
-    expect(mobileAdventureHub).toContain('<HubEdgeDrawer kind="progression" slot="mid"');
+    expect(mobileAdventureHub).toMatch(/<HubEdgeDrawer\s+kind="progression"\s+slot="top"/);
+    expect(mobileAdventureHub).toMatch(/<HubEdgeDrawer\s+kind="status"\s+slot="mid"/);
     expect(mobileAdventureHub).not.toContain('icon={');
   });
 
@@ -264,9 +265,9 @@ describe('Hub — tiroirs lateraux mobile', () => {
 
   it('style les trois poignees et le panneau avec le meme materiau de verre', () => {
     expect(hubLiquid).toContain('.hub-edge-trigger {');
-    expect(hubLiquid).toContain('.hub-edge-trigger--top { top: 32%; }');
-    expect(hubLiquid).toContain('.hub-edge-trigger--mid { top: 50%; }');
-    expect(hubLiquid).toContain('.hub-edge-trigger--bottom { top: 68%; }');
+    expect(hubLiquid).toMatch(/\.hub-edge-trigger--top\s*\{\s*top:\s*32%;\s*\}/);
+    expect(hubLiquid).toMatch(/\.hub-edge-trigger--mid\s*\{\s*top:\s*50%;\s*\}/);
+    expect(hubLiquid).toMatch(/\.hub-edge-trigger--bottom\s*\{\s*top:\s*68%;\s*\}/);
     expect(hubLiquid).toContain('.hub-edge-panel__surface');
     expect(hubLiquid).toContain('backdrop-filter: blur(30px) saturate(200%)');
   });
@@ -309,6 +310,29 @@ describe('Hub — tiroirs lateraux mobile', () => {
     expect(hubGlobeMap).toContain('sanitizeGeoJSON(routeGeojson)');
     expect(hubGlobeMap).not.toContain('unifiedPois.slice(0, 6)');
     expect(momentMapCard).toContain('routeGeojson?: Record<string, unknown> | null');
+  });
+
+  it('remplace le popup blanc MapLibre par un tooltip POI Liquid Glass iOS 27', () => {
+    expect(unifiedExplorerMap).toContain("from './engine/poiTooltip'");
+    expect(unifiedExplorerMap).toContain("container.className = 'hub-map-poi-tooltip'");
+    expect(unifiedExplorerMap).not.toContain("container.className = 'px-1 py-0.5 max-w-[220px]'");
+    expect(unifiedExplorerMap).toContain("className: 'atlas-poi-popup hub-map-poi-popup'");
+    expect(hubLiquid).toContain('.hub-globe-map .maplibregl-popup.hub-map-poi-popup');
+    expect(hubLiquid).toContain('.hub-map-poi-tooltip');
+    expect(hubLiquid).toMatch(
+      /\.hub-globe-map \.maplibregl-popup-content \{[^}]*backdrop-filter: blur\(30px\) saturate\(220%\)/,
+    );
+    expect(hubLiquid).toMatch(
+      /\.hub-map-poi-popup \.maplibregl-popup-close-button \{[^}]*width: 36px;[^}]*height: 36px;/,
+    );
+  });
+
+  it('affiche des marqueurs POI plus lisibles et conserve la selection', () => {
+    expect(unifiedExplorerMap).toContain('selectedPoiId?: string | null');
+    expect(unifiedExplorerMap).toContain("id: 'atlas-poi-selected-halo'");
+    expect(unifiedExplorerMap).toContain("'circle-radius': ['case', ['==', ['get', 'selected'], true], 8, 6]");
+    expect(hubGlobeMap).toContain('selectedPoiId={selectedPoiId}');
+    expect(hubGlobeMap).toContain('onPoiDismiss={() => setSelectedPoiId(null)}');
   });
 
   it('retire le materiau derriere les icones de tuiles', () => {

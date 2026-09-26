@@ -28,6 +28,8 @@ export interface UnifiedPOI {
   description?: string | null;
   source: 'outdoor_points' | 'map_refuges' | 'map_summits' | 'map_water_points' | 'trail_pois';
   is_verified?: boolean;
+  is_visited?: boolean | null;
+  step_id?: string | number | null;
   region?: string | null;
   country?: string | null;
   massif?: string | null;

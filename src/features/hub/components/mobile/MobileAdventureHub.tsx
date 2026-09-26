@@ -7,8 +7,8 @@ import type { MobileInfoChip, MobileSectionTile } from '../../mobile/mobileHubEn
 
 export interface MobileAdventureHubProps {
   /**
-   * Carte d etat (NextActionCard compact) — sortie du flux : tiroir droit.
-   * Elle neVit plus dans la colonne, elle ouvre au bord de l ecran.
+   * Tirouir d etat enrichi — centre de decision du depart, au milieu du bord droit.
+   * Il neVit plus dans la colonne, il s ouvre depuis la poignee centrale.
    */
   statusSlot?: ReactNode;
   /** Carte « Ma progression » — idem, tiroir droit. */
@@ -39,14 +39,14 @@ export function MobileAdventureHub({
         fill ? 'h-full min-h-0 flex-1' : ''
       }`}
     >
+      <HubEdgeDrawer kind="progression" slot="top" label="Points" title="Ma progression">
+        {progressionSlot ?? <ProgressionCompactCard variant="drawer" />}
+      </HubEdgeDrawer>
       {statusSlot ? (
-        <HubEdgeDrawer kind="status" slot="top" label="État" title="État de l’aventure">
+        <HubEdgeDrawer kind="status" slot="mid" label="État" title="État de l’aventure">
           {statusSlot}
         </HubEdgeDrawer>
       ) : null}
-      <HubEdgeDrawer kind="progression" slot="mid" label="Points" title="Ma progression">
-        {progressionSlot ?? <ProgressionCompactCard variant="drawer" />}
-      </HubEdgeDrawer>
       <SectionCarousel tiles={tiles} />
       <InfoChipsRow chips={chips} />
       <div className={fill ? 'flex min-h-0 flex-1 flex-col' : undefined}>{children}</div>

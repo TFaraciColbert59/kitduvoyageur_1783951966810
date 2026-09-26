@@ -27,6 +27,7 @@ import {
 import { resolveCountryName, resolveIsoA2 } from './engine/geo';
 import { registerAtlasMapImages } from './engine/icons';
 import { getPoiColor, getZoomTier, MAP_COLORS, type ZoomTier } from './engine/mapTheme';
+import { buildPoiTooltipModel } from './engine/poiTooltip';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { buildCountryDensityFC, buildRegionDensityFC } from './layers/densityLayers';
 import type { CountryDensityRow, RegionDensityCell } from './layers/densityLayers';
@@ -61,6 +62,10 @@ export interface UnifiedExplorerMapProps {
   selectedTrail?: MapTrail | null;
   onTrailClick?: (trail: MapTrail) => void;
   onPoiClick?: (poi: UnifiedPOI) => void;
+  /** POI courant — piloté par le Hub pour surligner le marqueur et ouvrir son tooltip. */
+  selectedPoiId?: string | null;
+  /** Fermeture du tooltip (croix, clic carte ou second tap). */
+  onPoiDismiss?: () => void;
   /** Tap libre sur la carte (hors couche POI) — permet de poser un point. */
   onMapClick?: (lat: number, lng: number) => void;
   userLocation?: [number, number] | null;
@@ -153,7 +158,7 @@ function buildTrailTrackFeature(trail: MapTrail | null | undefined) {
   };
 }
 
-function buildPoisFeatureCollection(pois: UnifiedPOI[]) {
+function buildPoisFeatureCollection(pois: UnifiedPOI[], selectedPoiId: string | null = null) {
   return {
     type: 'FeatureCollection' as const,
     features: pois
@@ -169,7 +174,12 @@ function buildPoisFeatureCollection(pois: UnifiedPOI[]) {
           name: poi.name,
           category: poi.category,
           altitude: poi.altitude_m ?? null,
+          description: poi.description ?? poi.details ?? '',
+          visited: poi.is_visited === true,
+          stepLabel: poi.step_id == null ? '' : `Étape ${poi.step_id}`,
+          verified: poi.is_verified === true,
           color: getPoiColor(poi.category),
+          selected: poi.id === selectedPoiId,
         },
       })),
   };
@@ -183,39 +193,75 @@ function openPoiPopup(
   map: MapLibreMap,
   properties: Record<string, unknown>,
   coordinates: [number, number],
-  popupRef: React.MutableRefObject<Popup | null>
+  popupRef: React.MutableRefObject<Popup | null>,
+  onDismiss?: () => void
 ): void {
+  const model = buildPoiTooltipModel(properties);
   const container = document.createElement('div');
-  container.className = 'px-1 py-0.5 max-w-[220px]';
+  container.className = 'hub-map-poi-tooltip';
+  const color =
+    typeof properties.color === 'string' ? properties.color : 'rgba(255, 255, 255, 0.9)';
+  container.style.setProperty('--poi-color', color);
+
+  const header = document.createElement('div');
+  header.className = 'hub-map-poi-tooltip__header';
+
+  const glyph = document.createElement('span');
+  glyph.className = 'hub-map-poi-tooltip__glyph';
+  glyph.setAttribute('aria-hidden', 'true');
+  header.append(glyph);
 
   const title = document.createElement('p');
-  title.className = 'text-[13px] font-semibold text-[color:var(--lkv-text-primary)]';
-  title.textContent =
-    typeof properties.name === 'string' && properties.name ? properties.name : 'Point d’intérêt';
-  container.append(title);
+  title.className = 'hub-map-poi-tooltip__title';
+  title.textContent = model.title;
+  header.append(title);
+  container.append(header);
 
-  const parts: string[] = [];
-  if (typeof properties.category === 'string' && properties.category) parts.push(properties.category);
-  if (typeof properties.altitude === 'number' && Number.isFinite(properties.altitude)) {
-    parts.push(`${properties.altitude} m`);
-  }
-  if (parts.length > 0) {
-    const meta = document.createElement('p');
-    meta.className = 'text-[11px] text-[color:var(--lkv-text-muted)]';
-    meta.textContent = parts.join(' · ');
-    container.append(meta);
+  const meta = document.createElement('p');
+  meta.className = 'hub-map-poi-tooltip__meta';
+  meta.textContent = [model.categoryLabel, model.altitudeLabel].filter(Boolean).join(' · ');
+  container.append(meta);
+
+  if (model.description) {
+    const description = document.createElement('p');
+    description.className = 'hub-map-poi-tooltip__description';
+    description.textContent = model.description;
+    container.append(description);
   }
 
-  popupRef.current?.remove();
-  popupRef.current = new Popup({
+  if (model.badges.length > 0) {
+    const badges = document.createElement('div');
+    badges.className = 'hub-map-poi-tooltip__badges';
+    for (const label of model.badges) {
+      const badge = document.createElement('span');
+      badge.className = 'hub-map-poi-tooltip__badge';
+      badge.textContent = label;
+      badges.append(badge);
+    }
+    container.append(badges);
+  }
+
+  const previousPopup = popupRef.current;
+  popupRef.current = null;
+  previousPopup?.remove();
+
+  const popup = new Popup({
     closeButton: true,
     closeOnClick: true,
+    focusAfterOpen: false,
+    maxWidth: 'none',
     offset: 12,
-    className: 'atlas-poi-popup',
+    className: 'atlas-poi-popup hub-map-poi-popup',
   })
     .setLngLat(coordinates)
     .setDOMContent(container)
     .addTo(map);
+  popupRef.current = popup;
+  popup.on('close', () => {
+    if (popupRef.current !== popup) return;
+    popupRef.current = null;
+    onDismiss?.();
+  });
 }
 
 export default function UnifiedExplorerMap({
@@ -225,6 +271,8 @@ export default function UnifiedExplorerMap({
   selectedTrail = null,
   onTrailClick,
   onPoiClick,
+  selectedPoiId = null,
+  onPoiDismiss,
   onMapClick,
   userLocation,
   onMapReady,
@@ -248,6 +296,7 @@ export default function UnifiedExplorerMap({
   const callbacksRef = useRef({
     onTrailClick,
     onPoiClick,
+    onPoiDismiss,
     onMapClick,
     onMapReady,
     onLocationUpdate,
@@ -277,6 +326,7 @@ export default function UnifiedExplorerMap({
   callbacksRef.current = {
     onTrailClick,
     onPoiClick,
+    onPoiDismiss,
     onMapClick,
     onMapReady,
     onLocationUpdate,
@@ -805,7 +855,7 @@ export default function UnifiedExplorerMap({
     const map = mapRef.current;
     if (!map || !ready) return;
 
-    const data = buildPoisFeatureCollection(pois ?? []);
+    const data = buildPoisFeatureCollection(pois ?? [], selectedPoiId);
     const source = map.getSource('atlas-pois') as GeoJSONSource | undefined;
     if (source) {
       source.setData(data);
@@ -839,9 +889,21 @@ export default function UnifiedExplorerMap({
       filter: ['!', ['has', 'point_count']],
       paint: {
         'circle-color': ['get', 'color'],
-        'circle-radius': 5,
+        'circle-radius': ['case', ['==', ['get', 'selected'], true], 8, 6],
         'circle-stroke-color': MAP_COLORS.white,
-        'circle-stroke-width': 1.5,
+        'circle-stroke-width': ['case', ['==', ['get', 'selected'], true], 3.5, 2],
+      },
+    });
+    map.addLayer({
+      id: 'atlas-poi-selected-halo',
+      type: 'circle',
+      source: 'atlas-pois',
+      filter: ['all', ['!', ['has', 'point_count']], ['==', ['get', 'selected'], true]],
+      paint: {
+        'circle-color': 'rgba(255, 255, 255, 0.16)',
+        'circle-radius': 13,
+        'circle-stroke-color': ['get', 'color'],
+        'circle-stroke-width': 3,
       },
     });
 
@@ -871,7 +933,13 @@ export default function UnifiedExplorerMap({
       const id = String(feature.properties?.id ?? '');
       const poi = poisRef.current.find((candidate) => candidate.id === id);
       const coordinates = feature.geometry.coordinates as [number, number];
-      openPoiPopup(map, (feature.properties ?? {}) as Record<string, unknown>, coordinates, poiPopupRef);
+      openPoiPopup(
+        map,
+        (feature.properties ?? {}) as Record<string, unknown>,
+        coordinates,
+        poiPopupRef,
+        callbacksRef.current.onPoiDismiss
+      );
       if (poi) callbacksRef.current.onPoiClick?.(poi);
     });
 
@@ -885,7 +953,43 @@ export default function UnifiedExplorerMap({
       map.on('mouseenter', layer, setPointer);
       map.on('mouseleave', layer, clearPointer);
     }
-  }, [pois, ready]);
+  }, [pois, ready, selectedPoiId]);
+
+  // Le Hub pilote aussi la selection depuis ses chips : le tooltip doit donc
+  // s'ouvrir meme quand le tap initial ne vient pas de la couche MapLibre.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !ready) return;
+
+    if (!selectedPoiId) {
+      const popup = poiPopupRef.current;
+      poiPopupRef.current = null;
+      popup?.remove();
+      return;
+    }
+
+    const poi = poisRef.current.find((candidate) => candidate.id === selectedPoiId);
+    if (!poi || !isValidLatLng(poi.lat, poi.lng)) return;
+
+    const properties: Record<string, unknown> = {
+      id: poi.id,
+      name: poi.name,
+      category: poi.category,
+      altitude: poi.altitude_m ?? null,
+      description: poi.description ?? poi.details ?? '',
+      visited: poi.is_visited === true,
+      stepLabel: poi.step_id == null ? '' : `Étape ${poi.step_id}`,
+      verified: poi.is_verified === true,
+      color: getPoiColor(poi.category),
+    };
+    openPoiPopup(
+      map,
+      properties,
+      [Number(poi.lng), Number(poi.lat)],
+      poiPopupRef,
+      callbacksRef.current.onPoiDismiss
+    );
+  }, [ready, selectedPoiId]);
 
   // ── Densités matérialisées : continent (pays) + région (geohash5) ───────────
   useEffect(() => {
