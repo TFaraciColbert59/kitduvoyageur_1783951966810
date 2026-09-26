@@ -2,7 +2,7 @@
 /**
  * seed_ultra_demo.mjs
  *
- * Enricht le compte démo LKDV (demo@lkdv.app) pour qu'il soit crédible sur
+ * Enrichit le compte démo LKDV configuré par AUDIT_EMAIL pour qu'il soit crédible sur
  * /hub, /explorer et /progression : profil, progression (ledger + projection),
  * badges, territoires, et un voyage hiking complet (itinéraire réel dérivé de
  * la géométrie PostGIS de la route 371, POI, matériel, dépenses, documents,
@@ -31,9 +31,13 @@ const ROOT = resolve(HERE, '..', '..');
 const ENV_FILE = resolve(ROOT, '.env.local');
 
 // ─── Identité du compte démo (épinglé) ────────────────────────────────────────
-const DEMO_EMAIL = 'demo@lkdv.app';
+const DEMO_EMAIL = process.env.AUDIT_EMAIL || (() => {
+  throw new Error('AUDIT_EMAIL est requis');
+})();
 const DEMO_UID_PINNED = 'd5451f35-db9f-4575-9114-6d3b79550bbc';
-const DEMO_PASSWORD = 'DemoPass!2026';
+const DEMO_PASSWORD = process.env.AUDIT_PASSWORD || (() => {
+  throw new Error('AUDIT_PASSWORD est requis');
+})();
 const DEMO_FULL_NAME = 'Léa Fontaine';
 const DEMO_AVATAR =
   'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400&q=80&auto=format&fit=crop';
