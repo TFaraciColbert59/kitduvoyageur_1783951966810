@@ -29,6 +29,12 @@ export type {
 export { createRouteStackBookingProvider } from './routeStackBookingProvider';
 export type { RouteStackToolCaller, RouteStackToolResult } from './routeStackBookingProvider';
 export { createViatorBookingProvider } from './viatorBookingProvider';
+export {
+  applyViatorAttribution,
+  buildViatorAttributionUrl,
+  resolveViatorAttribution,
+} from './viatorAttribution';
+export type { ViatorAttribution } from './viatorAttribution';
 
 export interface CreateBookingProviderOptions {
   env?: BookingProviderEnv;
