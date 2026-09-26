@@ -30,6 +30,11 @@ import { addTripPoiAction } from '@/app/voyages/poi-actions';
 import type { HubRoutePoint } from '@/features/hub/components/mobile/HubRouteMap';
 import type { PreparatorData } from '../server/getPreparatorData';
 import type { PreparatorMarker } from '../engine/preparatorModel';
+import {
+  LOGISTICS_VOLET_ORDER,
+  type LogisticsVolet,
+  type LogisticsVolets,
+} from '../engine/activityCatalog';
 import { BookingSearchPanel } from './BookingSearchPanel';
 import './preparator.css';
 
@@ -126,6 +131,16 @@ function formatM(value: number): string {
   return Math.round(value).toLocaleString('fr-FR') + ' m';
 }
 
+/**
+ * Score de confiance de la promotion publiée, en pourcentage entier. La
+ * promotion est un complément : son absence ne doit jamais s'afficher comme un
+ * « 0 % » qui ferait croire à un modèle mesuré et vide.
+ */
+function formatConfidence(value: number): string {
+  if (!Number.isFinite(value)) return '—';
+  return Math.round(value * 100) + ' %';
+}
+
 function scopeLabel(scope: string): string {
   switch (scope) {
     case 'full':
@@ -137,6 +152,27 @@ function scopeLabel(scope: string): string {
     default:
       return 'Sortie simple';
   }
+}
+
+const VOLET_LABELS: Record<LogisticsVolet, string> = {
+  access: 'Accès',
+  stages: 'Étapes',
+  flights: 'Vols',
+  vehicles: 'Véhicules',
+  lodging: 'Hôtels',
+  budget: 'Budget',
+};
+
+/**
+ * Resume lisible des volets ouverts par le meilleur format propose. Un scope
+ * `none` (footing) n'ouvre rien : on l'assume explicitement plutot que
+ * d'afficher une logistique vide qui laisserait croire a un oubli.
+ */
+function voletSummary(volets: LogisticsVolets): string {
+  const active = LOGISTICS_VOLET_ORDER.filter((volet) => volets[volet]).map(
+    (volet) => VOLET_LABELS[volet],
+  );
+  return active.length === 0 ? 'aucun volet' : active.join(' · ');
 }
 
 export function PreparatorView({
@@ -276,6 +312,18 @@ export function PreparatorView({
         <Metric label="POI" value={String(counters.pois)} />
       </section>
 
+      {data.activeModel ? (
+        <p className="preparator__model">
+          <Sparkles size={12} aria-hidden="true" />
+          <span>
+            Prédictions affinées · modèle <strong>{data.activeModel.modelVersion}</strong>
+          </span>
+          <span className="preparator__model-score">
+            confiance {formatConfidence(data.activeModel.score)}
+          </span>
+        </p>
+      ) : null}
+
       <div
         ref={tabsRef}
         className="glass-segmented preparator__tabs"
@@ -320,6 +368,11 @@ export function PreparatorView({
                   </div>
                 ))
               )}
+              {data.activityCatalog.length > 0 ? (
+                <p className="preparator__row-sub">
+                  Volets de reservation&nbsp;: {voletSummary(data.logisticsVolets)}
+                </p>
+              ) : null}
             </Panel>
             <div className="hidden lg:block">
               <ItineraryPlannerClient trip={trip} initialSteps={data.plannerSteps} />

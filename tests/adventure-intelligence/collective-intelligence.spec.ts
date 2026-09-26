@@ -9,6 +9,7 @@ import {
   weightedMedian,
   MAX_AGGREGATE_AGE_DAYS,
   MIN_DISTINCT_USERS,
+  MIN_PUBLISH_CONFIDENCE,
   type CollectiveAggregate,
   type CollectivePassage,
 } from '@/features/adventure-intelligence/domain/collectiveIntelligence';
@@ -227,6 +228,9 @@ describe('Agrégation collective robuste — TEST-A4-AGG', () => {
     const [five] = aggregateCollective(fiveUsers(), { now: NOW });
 
     expect(MIN_DISTINCT_USERS).toBe(5);
+    // D-13 : seuil INTOUCHABLE. La preuve collective se fait par fixtures,
+    // jamais en abaissant le plancher de publication.
+    expect(MIN_PUBLISH_CONFIDENCE).toBe(0.5);
     expect(four.distinctUserCount).toBe(4);
     expect(five.distinctUserCount).toBe(5);
     expect(isPublishable({ ...four, computedAt: NOW }, { now: NOW })).toBe(false);

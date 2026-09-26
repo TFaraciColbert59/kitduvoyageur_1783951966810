@@ -103,6 +103,26 @@
   gap: 6px;
 }
 
+/* P5 — version de modèle publiée par l'apprentissage collectif. */
+.preparator__model {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  font-size: 11px;
+  color: var(--lkv-text-muted, #5a7064);
+}
+
+.preparator__model strong {
+  font-weight: 700;
+  color: var(--lkv-text-primary);
+}
+
+.preparator__model-score {
+  margin-left: auto;
+  white-space: nowrap;
+}
+
 .preparator__metric {
   display: flex;
   flex-direction: column;

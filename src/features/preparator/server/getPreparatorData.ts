@@ -16,9 +16,15 @@ import {
 } from '../engine/preparatorModel';
 import {
   rankActivityCatalog,
+  logisticsVoletsFor,
   type ActivityCatalogItem,
   type ActivityLogisticsScope,
+  type LogisticsVolets,
 } from '../engine/activityCatalog';
+import {
+  getActivePromotion,
+  type PromotionOutcome,
+} from '@/features/promotions/server/promotionService';
 
 /**
  * Préparateur de voyage — chargeur serveur UNIQUE de /prepare.
@@ -47,6 +53,18 @@ export interface PreparatorData {
   bookingByPoiId: Record<string, ResolvedStepBookingLink>;
   /** Formats d'activité publiés, filtrés pour le voyage actif. */
   activityCatalog: ActivityCatalogItem[];
+  /**
+   * Volets de logistique du MEILLEUR format propose pour ce voyage. Un
+   * catalogue vide ne doit pas ouvrir de volet : tout est alors desactive,
+   * jamais « plein » par defaut.
+   */
+  logisticsVolets: LogisticsVolets;
+  /**
+   * Version de modèle publiée par l'apprentissage collectif (P5). `null` quand
+   * aucune promotion n'est publiée ou quand la table est absente : le
+   * préparateur affiche alors le modèle courant sans annoncer de version.
+   */
+  activeModel: PromotionOutcome | null;
   canEdit: boolean;
   canManageBudget: boolean;
 }
@@ -147,6 +165,23 @@ export async function getPreparatorData(): Promise<PreparatorData | null> {
     console.warn('[preparer] catalogue d\'activités indisponible');
     activityCatalog = [];
   }
+
+  // Apprentissage collectif (P5) : LECTURE seule de la promotion publiée.
+  // `evaluateModelPromotion` n'est volontairement pas appelé ici — il écrit une
+  // ligne `model_promotions` et une page rendue en GET ne doit pas muter la
+  // base. L'évaluation reste déclenchée par la route d'administration
+  // /api/promotions/evaluate ; ici on se contente d'afficher la version en
+  // vigueur, donc les prédictions que le voyageur voit sont celles du modèle
+  // réellement publié.
+  let activeModel: PromotionOutcome | null = null;
+  try {
+    const promotionClient = (await createClient()) as unknown as SupabaseClient;
+    activeModel = await getActivePromotion(promotionClient);
+  } catch {
+    console.warn("[preparer] promotion active indisponible");
+    activeModel = null;
+  }
+
   // Check-list : le hub charge un résumé (HubChecklistItem) pour ses compteurs,
   // le préparateur a besoin des lignes réelles (bascule optimiste + live bus).
   let checklist: DatabaseTripChecklistItem[] = [];
@@ -180,6 +215,8 @@ export async function getPreparatorData(): Promise<PreparatorData | null> {
     bookingByStepId: data.bookingByStepId,
     bookingByPoiId,
     activityCatalog,
+    logisticsVolets: logisticsVoletsFor(activityCatalog[0]?.logisticsScope ?? 'none'),
+    activeModel,
     canEdit: trip.permissions.canEdit,
     canManageBudget: trip.permissions.canManageBudget,
   };

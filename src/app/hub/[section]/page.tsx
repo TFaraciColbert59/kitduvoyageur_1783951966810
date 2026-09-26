@@ -2,6 +2,11 @@ import { notFound } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { PageHeader } from '@/components/ui';
 import { getHubAdventureData, getHubTripStats } from '@/features/hub/server/getHubAdventureData';
+import {
+  EMPTY_OVERVIEW,
+  getTripBookingOverview,
+} from '@/features/hub/server/getTripBookingOverview';
+import { ReservationsOverview } from '@/features/hub/components/budget/ReservationsOverview';
 import { MenuBack } from '@/features/hub/components/menu/MenuBack';
 import { hubSectionRegistry } from '@/features/hub/registry/hubSectionRegistry';
 import { HubInventaireSection } from '@/features/hub/components/possession/HubInventaireSection';
@@ -154,14 +159,27 @@ async function SortieSection({ sectionId, slug, jour }: { sectionId: string; slu
             <TeamMobileExperience trip={trip} />
           </div>
         </>
-      );    case 'budget':
-      if (!trip.permissions.canManageBudget) notFound();
-      return (
-        <TripBudgetView
-          trip={trip}
-          initialDay={jour && Number.isFinite(Number(jour)) ? Number(jour) : undefined}
-        />
       );
+    case 'budget': {
+      if (!trip.permissions.canManageBudget) notFound();
+      // W6 (P4) : le hub lit enfin `bookings` et `cart_lines`. Le panier est
+      // filtre par l'appelant et par lui seul : c'est l'ID de session qui fait
+      // foi, jamais `trip.user_id` (le panier d'un collegue n'est pas le
+      // mien). Sans session, l'apercu reste vide plutot que deviner.
+      const { data: userData } = await supabase.auth.getUser();
+      const overview = userData?.user
+        ? await getTripBookingOverview(supabase, { tripId: trip.id, userId: userData.user.id })
+        : EMPTY_OVERVIEW;
+      return (
+        <>
+          <ReservationsOverview overview={overview} />
+          <TripBudgetView
+            trip={trip}
+            initialDay={jour && Number.isFinite(Number(jour)) ? Number(jour) : undefined}
+          />
+        </>
+      );
+    }
     case 'docs':
       if (!trip.permissions.canViewDocuments) notFound();
       return (
