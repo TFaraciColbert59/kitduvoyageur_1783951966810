@@ -25,7 +25,12 @@ describe('raccordement des transports au contrat de credentials', () => {
     expect(provider.isConfigured()).toBe(false);
 
     await expect(
-      provider.search({ vertical: 'flight', origin: 'CDG', destination: 'JFK', date: '2026-11-12' })
+      provider.search({
+        vertical: 'flight',
+        origin: 'CDG',
+        destination: 'JFK',
+        departure: '2026-11-12',
+      })
     ).rejects.toMatchObject({ code: BOOKING_PROVIDER_ERROR_CODES.config });
 
     // Point dur : aucune requête ne doit partir avec la clé sandbox.
