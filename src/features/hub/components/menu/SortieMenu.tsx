@@ -1,5 +1,9 @@
 import Link from 'next/link';
-import { hubSectionHref, HUB_HOME_HREF, type HubAdventureRef } from '../../registry/hubSectionRegistry';
+import {
+  hubSectionHref,
+  HUB_HOME_HREF,
+  type HubAdventureRef,
+} from '../../registry/hubSectionRegistry';
 import { MenuCard } from './MenuCard';
 import { NumberStat } from '@/components/ui-layouts/number-stat';
 import { ChecklistCardBody } from './ChecklistCardBody';
@@ -14,12 +18,10 @@ import { getWeatherIcon } from '../weather/getWeatherIcon';
 import { weatherLabel } from '@/features/materiel/services/getWeather';
 import HubMiniMap from '@/components/hub/HubMiniMap';
 import { MobileAdventureHub } from '../mobile/MobileAdventureHub';
+import { ActivityStateDrawer } from '../mobile/ActivityStateDrawer';
 import { SortieMoment } from '../mobile/moments/SortieMoment';
 import { ActivityPreparationStatus } from '../live/ActivityPreparationStatus';
-import {
-  buildSortieInfoChips,
-  buildSortieSectionTiles,
-} from '../../mobile/mobileHubEngine';
+import { buildSortieInfoChips, buildSortieSectionTiles } from '../../mobile/mobileHubEngine';
 import { decideHikingNavigation } from '../../engine/hikingNavigation';
 import { getTripDuration } from '@/features/trips/hooks/useTripDuration';
 import { getKitCounters } from '@/features/trips/hooks/useKitCounters';
@@ -74,18 +76,42 @@ function shortDate(iso: string | null | undefined): string {
 /** Ordre + spans des cartes par phase (contextualisation V3 plein écran). */
 const ORDER: Record<TripPhase, Array<[string, 3 | 4 | 6 | 8]>> = {
   prepare: [
-    ['itinerary', 8], ['gear', 4], ['budget', 4], ['groupe', 4], ['checklist', 4],
-    ['docs', 3], ['safety', 3], ['journal', 3], ['context', 3], ['progression', 3],
+    ['itinerary', 8],
+    ['gear', 4],
+    ['budget', 4],
+    ['groupe', 4],
+    ['checklist', 4],
+    ['docs', 3],
+    ['safety', 3],
+    ['journal', 3],
+    ['context', 3],
+    ['progression', 3],
   ],
   live: [
-    ['cockpit', 8], ['safety', 4], ['itinerary', 8], ['gear', 4],
-    ['journal', 4], ['groupe', 4], ['budget', 4],
-    ['checklist', 3], ['docs', 3], ['context', 3], ['progression', 3],
+    ['cockpit', 8],
+    ['safety', 4],
+    ['itinerary', 8],
+    ['gear', 4],
+    ['journal', 4],
+    ['groupe', 4],
+    ['budget', 4],
+    ['checklist', 3],
+    ['docs', 3],
+    ['context', 3],
+    ['progression', 3],
   ],
   recount: [
-    ['raconter', 8], ['context', 4], ['itinerary', 8], ['gear', 4],
-    ['journal', 4], ['groupe', 4], ['budget', 4],
-    ['checklist', 3], ['docs', 3], ['safety', 3], ['progression', 3],
+    ['raconter', 8],
+    ['context', 4],
+    ['itinerary', 8],
+    ['gear', 4],
+    ['journal', 4],
+    ['groupe', 4],
+    ['budget', 4],
+    ['checklist', 3],
+    ['docs', 3],
+    ['safety', 3],
+    ['progression', 3],
   ],
 };
 
@@ -146,7 +172,9 @@ export function SortieMenu({
   const packedPercent = kit.total > 0 ? Math.round((kit.ready / kit.total) * 100) : 0;
   const weightKg = (trip.items ?? []).reduce((s, i) => s + (i.weight_grams ?? 0), 0) / 1000;
   const budgetPct =
-    stats.estimated_budget > 0 ? Math.round((stats.total_spent / stats.estimated_budget) * 100) : null;
+    stats.estimated_budget > 0
+      ? Math.round((stats.total_spent / stats.estimated_budget) * 100)
+      : null;
   const currency = trip.budget_currency || 'EUR';
   const collabs = trip.collaborators ?? [];
   const teamCount = collabs.length + 1;
@@ -156,14 +184,17 @@ export function SortieMenu({
     [...pendingList].sort((a, b) => a.scheduled_at.localeCompare(b.scheduled_at))[0] ?? null;
   const exp = soonestExpiry(trip.documents);
   const notes = [...(trip.notes ?? [])].sort(
-    (a, b) => (b.day_number ?? 0) - (a.day_number ?? 0) || b.created_at.localeCompare(a.created_at),
+    (a, b) => (b.day_number ?? 0) - (a.day_number ?? 0) || b.created_at.localeCompare(a.created_at)
   );
   const lastNote = notes[0] ?? null;
   const weatherCtx = hiking?.weather ?? null;
   const catTotals = new Map<string, number>();
   for (const e of trip.expenses ?? []) {
     if (e.is_planned) continue;
-    catTotals.set(e.category ?? 'Autre', (catTotals.get(e.category ?? 'Autre') ?? 0) + Number(e.amount || 0));
+    catTotals.set(
+      e.category ?? 'Autre',
+      (catTotals.get(e.category ?? 'Autre') ?? 0) + Number(e.amount || 0)
+    );
   }
   const topCats = [...catTotals.entries()].sort((a, b) => b[1] - a[1]).slice(0, 1);
   const budgetSummary = calculateBudgetSummary(trip, trip.expenses ?? [], collabs);
@@ -175,7 +206,7 @@ export function SortieMenu({
   const maxDPlusM = (trip.steps ?? []).reduce((m, s) => Math.max(m, s.elevation_gain_m ?? 0), 0);
   const contextCountry = trip.destination_country_code
     ? `${trip.destination_country_code.toUpperCase()}${trip.destination_name ? ` · ${trip.destination_name}` : ''}`
-    : trip.destination_name ?? null;
+    : (trip.destination_name ?? null);
 
   // ── Mini-cartes du kit (image + badge état + poids + catégorie) ──
   const urlByItemId = new Map(itemImages.map((i) => [i.itemId, i.url] as const));
@@ -190,7 +221,7 @@ export function SortieMenu({
   }> = [];
   const seenThumbUrls = new Set<string>();
   const sortedKitItems = [...(trip.items ?? [])].sort(
-    (a, b) => Number(b.is_packed) - Number(a.is_packed),
+    (a, b) => Number(b.is_packed) - Number(a.is_packed)
   );
   for (const item of sortedKitItems) {
     const url = urlByItemId.get(item.id) ?? null;
@@ -226,6 +257,8 @@ export function SortieMenu({
     .filter((r) => r.days != null && r.days <= 30)
     .sort((a, b) => (a.days as number) - (b.days as number));
   const otherDocs = docRows.filter((r) => r.days == null || r.days > 30);
+  const expiredDocuments = attentionDocs.filter((r) => (r.days ?? 0) < 0).length;
+  const expiringDocuments = attentionDocs.filter((r) => r.days != null && r.days >= 0).length;
   const presentDocCats = new Set((trip.documents ?? []).map((d) => d.category));
   const missingDocSuggestions: string[] = [];
   if (!presentDocCats.has('passport')) missingDocSuggestions.push('Passeport');
@@ -234,7 +267,11 @@ export function SortieMenu({
   if (destCountry === 'FR' || destCountry === 'IT') missingDocSuggestions.push('CEAM');
   const docSuggestions = (
     (trip.documents ?? []).length === 0
-      ? ['Passeport', 'Assurance voyage', ...(destCountry === 'FR' || destCountry === 'IT' ? ['CEAM'] : [])]
+      ? [
+          'Passeport',
+          'Assurance voyage',
+          ...(destCountry === 'FR' || destCountry === 'IT' ? ['CEAM'] : []),
+        ]
       : missingDocSuggestions
   ).slice(0, 3);
 
@@ -245,7 +282,7 @@ export function SortieMenu({
     .sort(
       (a, b) =>
         (SAFETY_RANK[a.status] ?? 3) - (SAFETY_RANK[b.status] ?? 3) ||
-        a.scheduled_at.localeCompare(b.scheduled_at),
+        a.scheduled_at.localeCompare(b.scheduled_at)
     );
   const safetyNextDay = dayIndex != null ? dayIndex + 1 : 1;
 
@@ -253,28 +290,30 @@ export function SortieMenu({
   const hasNoteToday =
     dayIndex != null && (trip.notes ?? []).some((n) => n.day_number === dayIndex);
   const coveredDays = new Set(
-    (trip.notes ?? []).map((n) => n.day_number).filter((d): d is number => d != null),
+    (trip.notes ?? []).map((n) => n.day_number).filter((d): d is number => d != null)
   );
   const journalDayMax = Math.max(1, duration.durationDays);
   const journalDay =
     dayIndex != null
       ? Math.min(Math.max(1, dayIndex), journalDayMax)
-      : ([...Array(journalDayMax).keys()].map((i) => i + 1).find((d) => !coveredDays.has(d)) ?? journalDayMax);
+      : ([...Array(journalDayMax).keys()].map((i) => i + 1).find((d) => !coveredDays.has(d)) ??
+        journalDayMax);
 
   // ── FIL D'ACTION (règles déterministes, ordonnées par priorité) ──
   const nextActions: NextActionSignal[] = [];
+  const navigationDecision = decideHikingNavigation(hiking ?? null);
   // Phase 3 — en préparation, un parcours lié n'ouvre la navigation que si sa
   // géométrie BDD est réelle et navigable ; sinon « Choisir un parcours » avec
   // explication (jamais de navigation sur une estimation blueprint).
   if (phase === 'prepare' && hiking?.routeId) {
-    const navigation = decideHikingNavigation(hiking);
+    const navigation = navigationDecision;
     nextActions.push({
       kind: 'navigation',
       href: navigation.href,
       title: navigation.label,
       description: navigation.enabled
         ? `Parcours vérifié${hiking.routeName ? ` — ${hiking.routeName}` : ''}.`
-        : navigation.reason ?? 'Tracé GPS vérifié requis pour naviguer.',
+        : (navigation.reason ?? 'Tracé GPS vérifié requis pour naviguer.'),
     });
   }
   if (phase === 'live') {
@@ -334,6 +373,13 @@ export function SortieMenu({
     daysUntil,
   };
   const checklistDone = checklist.filter((i) => i.done).length;
+  const actionableNextAction =
+    nextActions.find(
+      (action) =>
+        action.kind !== 'checklist' || checklist.length === 0 || checklistDone < checklist.length
+    ) ??
+    nextActions[0] ??
+    null;
   const mobileTiles = buildSortieSectionTiles(ref, phase, {
     steps: steps.length,
     packedPct: packedPercent,
@@ -342,8 +388,7 @@ export function SortieMenu({
     checklistLabel: checklist.length > 0 ? `${checklistDone}/${checklist.length}` : null,
     safetyPending: pendingSafety,
     notes: (trip.notes ?? []).length,
-    budgetLabel:
-      stats.total_spent > 0 ? `${Math.round(stats.total_spent)}€` : null,
+    budgetLabel: stats.total_spent > 0 ? `${Math.round(stats.total_spent)}€` : null,
   });
   const mobileChips = buildSortieInfoChips({
     trip,
@@ -367,7 +412,9 @@ export function SortieMenu({
       span: 6,
       node: (
         <MenuCard href={`${HUB_HOME_HREF}?phase=live`} label="Cockpit terrain" tone="accent">
-          <p className="text-xs text-[var(--lkv-text-secondary)] mt-0.5">Jour en cours, secours 112, dépense express.</p>
+          <p className="text-xs text-[var(--lkv-text-secondary)] mt-0.5">
+            Jour en cours, secours 112, dépense express.
+          </p>
         </MenuCard>
       ),
     },
@@ -376,11 +423,19 @@ export function SortieMenu({
       node: (
         <MenuCard href={`${HUB_HOME_HREF}?phase=recount`} label="Raconter" tone="accent">
           <div className="flex flex-wrap items-center justify-center gap-1.5">
-            <span className="rounded-full bg-[color:var(--card-tint-solid)] px-2.5 py-1 text-[11px] font-bold text-[color:var(--lkv-text-primary)]">Carnet</span>
-            <span className="rounded-full bg-[color:var(--card-tint-solid)] px-2.5 py-1 text-[11px] font-bold text-[color:var(--lkv-text-primary)]">Bilan</span>
-            <span className="rounded-full bg-[color:var(--card-tint-solid)] px-2.5 py-1 text-[11px] font-bold text-[color:var(--lkv-text-primary)]">Partage</span>
+            <span className="rounded-full bg-[color:var(--card-tint-solid)] px-2.5 py-1 text-[11px] font-bold text-[color:var(--lkv-text-primary)]">
+              Carnet
+            </span>
+            <span className="rounded-full bg-[color:var(--card-tint-solid)] px-2.5 py-1 text-[11px] font-bold text-[color:var(--lkv-text-primary)]">
+              Bilan
+            </span>
+            <span className="rounded-full bg-[color:var(--card-tint-solid)] px-2.5 py-1 text-[11px] font-bold text-[color:var(--lkv-text-primary)]">
+              Partage
+            </span>
           </div>
-          <p className="mt-1.5 text-center text-xs text-[var(--lkv-text-secondary)]">Bilan, carnet de bord et partage du groupe.</p>
+          <p className="mt-1.5 text-center text-xs text-[var(--lkv-text-secondary)]">
+            Bilan, carnet de bord et partage du groupe.
+          </p>
         </MenuCard>
       ),
     },
@@ -392,11 +447,7 @@ export function SortieMenu({
           label="Itinéraire"
           media={
             <div className="relative h-full w-full">
-              <HubMiniMap
-                steps={steps}
-                distanceKm={dist.totalKm}
-                reserveBottom={78}
-              />
+              <HubMiniMap steps={steps} distanceKm={dist.totalKm} reserveBottom={78} />
               <div className="absolute bottom-2.5 right-2.5 z-20 w-[210px]">
                 <WeatherStrip
                   current={weatherCtx?.current ?? null}
@@ -410,7 +461,11 @@ export function SortieMenu({
         >
           <p className="text-2xl font-extrabold tracking-tight text-[var(--lkv-text-primary)]">
             <NumberStat value={duration.durationDays} /> j ·{' '}
-            <NumberStat value={dist.totalKm} decimals={dist.totalKm % 1 === 0 ? 0 : 1} suffix=" km" />
+            <NumberStat
+              value={dist.totalKm}
+              decimals={dist.totalKm % 1 === 0 ? 0 : 1}
+              suffix=" km"
+            />
           </p>
           <p className="text-[10px] text-[var(--lkv-text-secondary)] font-medium leading-tight">
             {steps.length} étapes · +{dist.dPlus}m / -{dist.dMinus}m
@@ -419,8 +474,12 @@ export function SortieMenu({
             <ul className="mt-1 space-y-0.5 border-l-2 border-[var(--lkv-secondary)]/30 ml-1 pl-2">
               {steps.slice(0, 4).map((s) => (
                 <li key={s.id} className="flex items-center gap-1.5 text-[11px]">
-                  <span className="font-bold tabular-nums text-[var(--lkv-text-muted)] shrink-0">J{s.day_number}</span>
-                  <span className="truncate text-[var(--lkv-text-primary)] font-medium">{s.title}</span>
+                  <span className="font-bold tabular-nums text-[var(--lkv-text-muted)] shrink-0">
+                    J{s.day_number}
+                  </span>
+                  <span className="truncate text-[var(--lkv-text-primary)] font-medium">
+                    {s.title}
+                  </span>
                 </li>
               ))}
             </ul>
@@ -439,7 +498,10 @@ export function SortieMenu({
             </span>
           </p>
           <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-black/5">
-            <div className="h-full rounded-full bg-gradient-to-r from-[var(--lkv-secondary)] to-[var(--lkv-primary)]" style={{ width: `${packedPercent}%` }} />
+            <div
+              className="h-full rounded-full bg-gradient-to-r from-[var(--lkv-secondary)] to-[var(--lkv-primary)]"
+              style={{ width: `${packedPercent}%` }}
+            />
           </div>
           {kitThumbs.length > 0 && (
             <ul
@@ -453,9 +515,17 @@ export function SortieMenu({
                 >
                   <div className="relative h-14 w-full overflow-hidden bg-[var(--lkv-surface-raised)]">
                     {t.url ? (
-                      <img src={t.url} alt={t.name} loading="lazy" className="h-full w-full object-cover" />
+                      <img
+                        src={t.url}
+                        alt={t.name}
+                        loading="lazy"
+                        className="h-full w-full object-cover"
+                      />
                     ) : (
-                      <span aria-hidden="true" className="flex h-full w-full items-center justify-center text-base font-bold text-[var(--lkv-text-secondary)]">
+                      <span
+                        aria-hidden="true"
+                        className="flex h-full w-full items-center justify-center text-base font-bold text-[var(--lkv-text-secondary)]"
+                      >
                         {t.initial}
                       </span>
                     )}
@@ -470,7 +540,9 @@ export function SortieMenu({
                     )}
                   </div>
                   <div className="space-y-0.5 p-1.5">
-                    <p className="truncate text-[10px] font-bold leading-tight text-[var(--lkv-text-primary)]">{t.name}</p>
+                    <p className="truncate text-[10px] font-bold leading-tight text-[var(--lkv-text-primary)]">
+                      {t.name}
+                    </p>
                     <div className="flex items-center justify-between gap-1">
                       <span className="text-[9px] font-semibold tabular-nums text-[var(--lkv-text-secondary)]">
                         {t.weight != null && t.weight > 0
@@ -499,10 +571,7 @@ export function SortieMenu({
         <MenuCard href={hubSectionHref(ref, 'budget')} label="Budget">
           {/* Donut + équilibres : compteurs animés (NumberFlow, hors gel CSS)
               → masque visuel canonique (protocole Y0.5). */}
-          <div
-            data-visual-mask
-            className="mt-0.5 flex items-center gap-3"
-          >
+          <div data-visual-mask className="mt-0.5 flex items-center gap-3">
             <div className="relative h-11 w-11 shrink-0">
               <BudgetDonut
                 categories={topCats.map(([label, value]) => ({ label, value }))}
@@ -520,7 +589,9 @@ export function SortieMenu({
             </div>
             <div className="min-w-0 flex-1">
               <p className="text-[10px] font-semibold text-[var(--lkv-text-secondary)] leading-tight">
-                {stats.estimated_budget > 0 ? `sur ${stats.estimated_budget} ${currency} · ${budgetPct}%` : 'estimation non définie'}
+                {stats.estimated_budget > 0
+                  ? `sur ${stats.estimated_budget} ${currency} · ${budgetPct}%`
+                  : 'estimation non définie'}
               </p>
               {topCats.length > 0 && (
                 <ul className="mt-1 space-y-0.5">
@@ -530,7 +601,9 @@ export function SortieMenu({
                         className={`h-2 w-2 shrink-0 rounded-full ${i === 0 ? 'bg-[var(--lkv-primary)]' : 'bg-[var(--lkv-secondary)]'}`}
                       />
                       <span className="truncate text-[var(--lkv-text-secondary)]">{cat}</span>
-                      <span className="font-bold text-[var(--lkv-text-primary)] ml-auto shrink-0">{Math.round(sum)} {currency}</span>
+                      <span className="font-bold text-[var(--lkv-text-primary)] ml-auto shrink-0">
+                        {Math.round(sum)} {currency}
+                      </span>
                     </li>
                   ))}
                 </ul>
@@ -539,7 +612,10 @@ export function SortieMenu({
           </div>
           {topCats.length === 0 && budgetPct !== null && (
             <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-black/5">
-              <div className={`h-full rounded-full ${budgetPct > 100 ? 'bg-[var(--lkv-danger)]' : 'bg-gradient-to-r from-[var(--lkv-secondary)] to-[var(--lkv-primary)]'}`} style={{ width: `${Math.min(100, budgetPct)}%` }} />
+              <div
+                className={`h-full rounded-full ${budgetPct > 100 ? 'bg-[var(--lkv-danger)]' : 'bg-gradient-to-r from-[var(--lkv-secondary)] to-[var(--lkv-primary)]'}`}
+                style={{ width: `${Math.min(100, budgetPct)}%` }}
+              />
             </div>
           )}
           {showBalances && (
@@ -557,7 +633,9 @@ export function SortieMenu({
                       <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[var(--lkv-surface-raised)] text-[9px] font-bold text-[var(--lkv-text-secondary)]">
                         {b.name.slice(0, 1).toUpperCase()}
                       </span>
-                      <span className="truncate text-[11px] font-medium text-[var(--lkv-text-primary)]">{b.name}</span>
+                      <span className="truncate text-[11px] font-medium text-[var(--lkv-text-primary)]">
+                        {b.name}
+                      </span>
                       <span
                         className={`ml-auto shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-bold ${
                           owes
@@ -565,7 +643,8 @@ export function SortieMenu({
                             : 'bg-[var(--sage-50)] text-[var(--sage-700)]'
                         }`}
                       >
-                        {owes ? `−${fmtAmount(b.net)}` : `+${fmtAmount(b.net)}`} {currency} {owes ? 'doit' : 'reçoit'}
+                        {owes ? `−${fmtAmount(b.net)}` : `+${fmtAmount(b.net)}`} {currency}{' '}
+                        {owes ? 'doit' : 'reçoit'}
                       </span>
                     </li>
                   );
@@ -587,7 +666,9 @@ export function SortieMenu({
                 {fmtAmount(todaySpend)} {currency}
               </span>
             ) : (
-              <span className="ml-auto shrink-0 text-[var(--lkv-text-muted)]">Aucune dépense aujourd&apos;hui</span>
+              <span className="ml-auto shrink-0 text-[var(--lkv-text-muted)]">
+                Aucune dépense aujourd&apos;hui
+              </span>
             )}
           </p>
         </MenuCard>
@@ -628,18 +709,22 @@ export function SortieMenu({
                         >
                           {(c.profile?.full_name ?? '?').slice(0, 1).toUpperCase()}
                         </span>
-                      ),
+                      )
                     )}
                   </span>
                   <span className="truncate text-xs font-medium text-[var(--lkv-text-primary)]">
                     {collabs[0].profile?.full_name ?? 'Compagnon'}
                   </span>
-                  <span className="ml-auto text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--lkv-text-muted)] shrink-0">{collabs[0].role}</span>
+                  <span className="ml-auto text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--lkv-text-muted)] shrink-0">
+                    {collabs[0].role}
+                  </span>
                 </Link>
               </li>
             </ul>
           ) : (
-            <p className="mt-1 text-xs text-[var(--lkv-text-secondary)]">Sortie en solo — invitez un compagnon.</p>
+            <p className="mt-1 text-xs text-[var(--lkv-text-secondary)]">
+              Sortie en solo — invitez un compagnon.
+            </p>
           )}
         </MenuCard>
       ),
@@ -663,7 +748,9 @@ export function SortieMenu({
             <ul className="mt-1.5 space-y-1">
               {[...attentionDocs, ...otherDocs].slice(0, 3).map((r) => (
                 <li key={r.doc.id} className="flex items-center justify-between gap-2 text-xs">
-                  <span className="truncate text-[var(--lkv-text-primary)] font-medium">{r.doc.title}</span>
+                  <span className="truncate text-[var(--lkv-text-primary)] font-medium">
+                    {r.doc.title}
+                  </span>
                   {r.doc.expires_at && (
                     <span
                       className={`shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-bold ${
@@ -674,7 +761,9 @@ export function SortieMenu({
                             : 'bg-black/5 text-[var(--lkv-text-muted)]'
                       }`}
                     >
-                      {r.days != null && r.days < 0 ? 'expiré' : `exp. ${shortDate(r.doc.expires_at)}`}
+                      {r.days != null && r.days < 0
+                        ? 'expiré'
+                        : `exp. ${shortDate(r.doc.expires_at)}`}
                     </span>
                   )}
                 </li>
@@ -682,11 +771,19 @@ export function SortieMenu({
             </ul>
           ) : (
             <div className="mt-1 text-center">
-              <p className="text-sm font-serif-lkv italic text-[var(--lkv-text-primary)]">Prépare tes documents</p>
+              <p className="text-sm font-serif-lkv italic text-[var(--lkv-text-primary)]">
+                Prépare tes documents
+              </p>
               <ul className="mt-1 space-y-0.5 text-left" aria-label="Documents conseillés">
                 {docSuggestions.map((s) => (
-                  <li key={s} className="flex items-center gap-1.5 text-[11px] text-[var(--lkv-text-secondary)]">
-                    <span className="h-1 w-1 shrink-0 rounded-full bg-[var(--lkv-secondary)]" aria-hidden="true" />
+                  <li
+                    key={s}
+                    className="flex items-center gap-1.5 text-[11px] text-[var(--lkv-text-secondary)]"
+                  >
+                    <span
+                      className="h-1 w-1 shrink-0 rounded-full bg-[var(--lkv-secondary)]"
+                      aria-hidden="true"
+                    />
                     {s}
                   </li>
                 ))}
@@ -712,13 +809,17 @@ export function SortieMenu({
         <MenuCard href={hubSectionHref(ref, 'safety')} label="Sécurité">
           <p className="mt-1 text-3xl font-extrabold tracking-tight text-[var(--lkv-text-primary)]">
             <NumberStat value={pendingSafety} />
-            <span className="ml-2 text-xs font-semibold text-[var(--lkv-text-secondary)]">point{pendingSafety > 1 ? 's' : ''} en attente</span>
+            <span className="ml-2 text-xs font-semibold text-[var(--lkv-text-secondary)]">
+              point{pendingSafety > 1 ? 's' : ''} en attente
+            </span>
           </p>
           {attentionCheckpoints.length > 0 ? (
             <ul className="mt-1.5 space-y-1">
               {attentionCheckpoints.slice(0, 2).map((c) => (
                 <li key={c.id} className="flex items-center justify-between gap-2 text-xs">
-                  <span className="truncate text-[var(--lkv-text-primary)] font-medium">{c.label}</span>
+                  <span className="truncate text-[var(--lkv-text-primary)] font-medium">
+                    {c.label}
+                  </span>
                   <span
                     className={`shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-bold ${
                       c.status === 'alert_sent'
@@ -728,7 +829,11 @@ export function SortieMenu({
                           : 'bg-black/5 text-[var(--lkv-text-muted)]'
                     }`}
                   >
-                    {c.status === 'alert_sent' ? 'alerte' : c.status === 'missed' ? 'manqué' : shortDate(c.scheduled_at)}
+                    {c.status === 'alert_sent'
+                      ? 'alerte'
+                      : c.status === 'missed'
+                        ? 'manqué'
+                        : shortDate(c.scheduled_at)}
                   </span>
                 </li>
               ))}
@@ -751,11 +856,19 @@ export function SortieMenu({
           {lastNote && (dayIndex == null || hasNoteToday) ? (
             <div className="mt-1">
               {lastNote.day_number != null && (
-                <span className="text-[10px] font-medium uppercase tracking-[0.14em] text-[var(--lkv-text-muted)]">Jour {lastNote.day_number}</span>
+                <span className="text-[10px] font-medium uppercase tracking-[0.14em] text-[var(--lkv-text-muted)]">
+                  Jour {lastNote.day_number}
+                </span>
               )}
-              <p className="truncate text-sm font-serif-lkv italic text-[var(--lkv-text-primary)]">{lastNote.title || 'Sans titre'}</p>
-              <p className="line-clamp-1 text-xs text-[var(--lkv-text-secondary)]">{lastNote.content}</p>
-              <p className="mt-1 text-[11px] font-medium text-[var(--lkv-text-muted)]">{notes.length} note{notes.length > 1 ? 's' : ''}</p>
+              <p className="truncate text-sm font-serif-lkv italic text-[var(--lkv-text-primary)]">
+                {lastNote.title || 'Sans titre'}
+              </p>
+              <p className="line-clamp-1 text-xs text-[var(--lkv-text-secondary)]">
+                {lastNote.content}
+              </p>
+              <p className="mt-1 text-[11px] font-medium text-[var(--lkv-text-muted)]">
+                {notes.length} note{notes.length > 1 ? 's' : ''}
+              </p>
             </div>
           ) : (
             <div className="mt-1 text-center">
@@ -776,28 +889,40 @@ export function SortieMenu({
       span: 3,
       node: (
         <MenuCard href={hubSectionHref(ref, 'overview')} label="Contexte">
-          {weatherCtx?.current && (() => {
-            const WeatherIcon = getWeatherIcon(weatherCtx.current.weathercode);
-            return (
-              <p className="flex items-center justify-between gap-2 text-xs">
-                <span className="text-[var(--lkv-text-secondary)] shrink-0">Météo</span>
-                <span className="flex min-w-0 items-center gap-1 truncate font-bold text-[var(--lkv-text-primary)]">
-                  <WeatherIcon size={12} className="shrink-0 text-[var(--lkv-secondary)]" aria-hidden="true" />
-                  <span className="truncate">{Math.round(weatherCtx.current.tempC)}°C · {weatherLabel(weatherCtx.current.weathercode)}</span>
-                </span>
-              </p>
-            );
-          })()}
+          {weatherCtx?.current &&
+            (() => {
+              const WeatherIcon = getWeatherIcon(weatherCtx.current.weathercode);
+              return (
+                <p className="flex items-center justify-between gap-2 text-xs">
+                  <span className="text-[var(--lkv-text-secondary)] shrink-0">Météo</span>
+                  <span className="flex min-w-0 items-center gap-1 truncate font-bold text-[var(--lkv-text-primary)]">
+                    <WeatherIcon
+                      size={12}
+                      className="shrink-0 text-[var(--lkv-secondary)]"
+                      aria-hidden="true"
+                    />
+                    <span className="truncate">
+                      {Math.round(weatherCtx.current.tempC)}°C ·{' '}
+                      {weatherLabel(weatherCtx.current.weathercode)}
+                    </span>
+                  </span>
+                </p>
+              );
+            })()}
           <ul className="mt-1 space-y-0.5 text-xs">
             {maxDPlusM > 0 && (
               <li className="flex items-center justify-between gap-2">
                 <span className="text-[var(--lkv-text-secondary)]">D+ max</span>
-                <span className="font-bold text-[var(--lkv-text-primary)]">{maxDPlusM.toLocaleString('fr-FR')} m</span>
+                <span className="font-bold text-[var(--lkv-text-primary)]">
+                  {maxDPlusM.toLocaleString('fr-FR')} m
+                </span>
               </li>
             )}
             <li className="flex items-center justify-between gap-2">
               <span className="text-[var(--lkv-text-secondary)]">Durée</span>
-              <span className="font-bold text-[var(--lkv-text-primary)]">{duration.durationDays} j</span>
+              <span className="font-bold text-[var(--lkv-text-primary)]">
+                {duration.durationDays} j
+              </span>
             </li>
             <li className="flex items-center justify-between gap-2">
               <span className="text-[var(--lkv-text-secondary)]">Difficulté</span>
@@ -808,7 +933,9 @@ export function SortieMenu({
             {contextCountry && (
               <li className="flex items-center justify-between gap-2">
                 <span className="text-[var(--lkv-text-secondary)]">Pays</span>
-                <span className="truncate font-bold text-[var(--lkv-text-primary)]">{contextCountry}</span>
+                <span className="truncate font-bold text-[var(--lkv-text-primary)]">
+                  {contextCountry}
+                </span>
               </li>
             )}
           </ul>
@@ -840,13 +967,16 @@ export function SortieMenu({
   const primaryCells = orderedCells.filter((c) => !secondaryKeys.includes(c.key ?? ''));
   const secondaryCells = orderedCells.filter((c) => secondaryKeys.includes(c.key ?? ''));
 
-
   return (
     <>
       <div className="hidden lg:flex h-[calc(100%-24px)] min-h-[680px] flex-col gap-3 overflow-hidden">
         <ActivityPreparationStatus
           className="shrink-0"
-          preparation={preparation ? { counts: preparation, enrichmentStatus: preparation.enrichmentStatus } : null}
+          preparation={
+            preparation
+              ? { counts: preparation, enrichmentStatus: preparation.enrichmentStatus }
+              : null
+          }
           tripId={trip.id}
         />
         <ActivityIdentityBar
@@ -855,13 +985,14 @@ export function SortieMenu({
           phaseLabel={PHASE_LABELS[phase]}
           daysUntil={daysUntil}
         />
-        <NextActionCard
-          actions={nextActions}
-          checklist={{ tripId: trip.id, items: checklist }}
-        />
+        <NextActionCard actions={nextActions} checklist={{ tripId: trip.id, items: checklist }} />
         <ProgressionCompactCard />
         <div className="flex-1 min-h-0">
-          <MoreSectionsGrid cells={primaryCells} moreCells={secondaryCells} fitRows={FIT_ROWS[phase]} />
+          <MoreSectionsGrid
+            cells={primaryCells}
+            moreCells={secondaryCells}
+            fitRows={FIT_ROWS[phase]}
+          />
         </div>
         {phase === 'live' && <SosFloatingButton safetyHref={hubSectionHref(ref, 'safety')} />}
       </div>
@@ -870,10 +1001,31 @@ export function SortieMenu({
 
       <MobileAdventureHub
         statusSlot={
-          <NextActionCard
-            actions={nextActions}
-            checklist={{ tripId: trip.id, items: checklist }}
-            variant="compact"
+          <ActivityStateDrawer
+            input={{
+              phase,
+              daysUntil,
+              checklist: { done: checklistDone, total: checklist.length },
+              equipment: { ready: kit.ready, total: kit.total },
+              safety: { pending: pendingSafety },
+              documents: { expired: expiredDocuments, expiring: expiringDocuments },
+              route: {
+                ready: navigationDecision.enabled,
+                href: navigationDecision.href,
+                name: hiking?.routeName ?? null,
+                reason: navigationDecision.reason,
+              },
+              nextAction: actionableNextAction,
+              hrefs: {
+                route: hubSectionHref(ref, 'itinerary'),
+                checklist: hubSectionHref(ref, 'checklist'),
+                equipment: hubSectionHref(ref, 'gear'),
+                safety: hubSectionHref(ref, 'safety'),
+                documents: hubSectionHref(ref, 'docs'),
+                live: `${HUB_HOME_HREF}?phase=live`,
+                journal: hubSectionHref(ref, 'journal'),
+              },
+            }}
           />
         }
         progressionSlot={<ProgressionCompactCard variant="drawer" />}
@@ -881,12 +1033,7 @@ export function SortieMenu({
         chips={mobileChips}
         fill
       >
-        <SortieMoment
-          trip={trip}
-          context={momentContext}
-          hiking={hiking}
-          fillViewport
-        />
+        <SortieMoment trip={trip} context={momentContext} hiking={hiking} fillViewport />
 
         {phase === 'live' && <SosFloatingButton safetyHref={hubSectionHref(ref, 'safety')} />}
       </MobileAdventureHub>

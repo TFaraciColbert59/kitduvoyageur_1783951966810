@@ -88,7 +88,7 @@ export function HubEdgeDrawer({
         window.history.replaceState(
           window.history.state,
           '',
-          `${window.location.pathname}${query ? `?${query}` : ''}${window.location.hash}`,
+          `${window.location.pathname}${query ? `?${query}` : ''}${window.location.hash}`
         );
         setOpen(true);
       }
@@ -179,17 +179,18 @@ export function HubEdgeDrawer({
                   ) : null}
                 </div>
                 <Dialog.Close asChild>
-                  <button
-                    type="button"
-                    aria-label="Fermer"
-                    className="hub-edge-panel__close"
-                  >
+                  <button type="button" aria-label="Fermer" className="hub-edge-panel__close">
                     <Icon name="x" size={16} aria-hidden="true" />
                   </button>
                 </Dialog.Close>
               </div>
 
-              <div className="hub-edge-panel__body">{children}</div>
+              <div
+                data-hub-drawer={kind}
+                className={`hub-edge-panel__body hub-edge-panel__body--${kind}`}
+              >
+                {children}
+              </div>
             </div>
           </Dialog.Content>
         </Dialog.Portal>

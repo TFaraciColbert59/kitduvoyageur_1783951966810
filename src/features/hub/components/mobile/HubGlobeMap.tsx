@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState, type ComponentType } from 'react';
-import { Check, ChevronDown, MapPin, Route, X } from 'lucide-react';
+import { Check, MapPin } from 'lucide-react';
 import { sanitizeGeoJSON, type MapTrail } from '@/components/explorer/types';
 import type { UnifiedPOI } from '@/lib/queries/pois';
 import type { HubRoutePoint } from './HubRouteMap';
@@ -29,6 +29,8 @@ type HubUnifiedMapProps = {
   selectedTrailId?: string | null;
   pois?: UnifiedPOI[];
   onPoiClick?: (poi: UnifiedPOI) => void;
+  selectedPoiId?: string | null;
+  onPoiDismiss?: () => void;
   onMapClick?: (lat: number, lng: number) => void;
 };
 
@@ -114,7 +116,6 @@ export function HubGlobeMap({
   onMapClick,
 }: HubGlobeMapProps) {
   const [selectedPoiId, setSelectedPoiId] = useState<string | null>(null);
-  const [poiExpanded, setPoiExpanded] = useState(false);
 
   const selectedTrail = useMemo<MapTrail | null>(() => {
     const realGeometry = sanitizeGeoJSON(routeGeojson);
@@ -155,18 +156,11 @@ export function HubGlobeMap({
         details: point.description ?? point.label,
         source: 'trail_pois',
         is_verified: true,
+        is_visited: point.visited === true,
+        step_id: point.stepId ?? null,
       })),
     [validPoints],
   );
-
-  const pointByPoiId = useMemo(() => {
-    const index = new Map<string, HubRoutePoint>();
-    validPoints.forEach((point, pointIndex) => index.set(poiId(point, pointIndex), point));
-    return index;
-  }, [validPoints]);
-
-  const selectedPoi = unifiedPois.find((poi) => poi.id === selectedPoiId) ?? null;
-  const selectedPoint = selectedPoiId ? pointByPoiId.get(selectedPoiId) ?? null : null;
   const [MapComponent, setMapComponent] = useState<ComponentType<HubUnifiedMapProps> | null>(
     null,
   );
@@ -202,8 +196,9 @@ export function HubGlobeMap({
           pois={unifiedPois}
           onPoiClick={(poi) => {
             setSelectedPoiId(poi.id);
-            setPoiExpanded(false);
           }}
+          selectedPoiId={selectedPoiId}
+          onPoiDismiss={() => setSelectedPoiId(null)}
           onMapClick={onMapClick}
         />
       ) : selectedTrail && !mapLoadFailed ? (
@@ -228,7 +223,6 @@ export function HubGlobeMap({
                 type="button"
                 onClick={() => {
                   setSelectedPoiId(poi.id);
-                  setPoiExpanded(false);
                 }}
                 aria-pressed={selectedPoiId === poi.id}
                 className="hub-globe-poi-chip"
@@ -244,58 +238,6 @@ export function HubGlobeMap({
               </button>
             );
           })}
-        </div>
-      ) : null}
-
-      {selectedPoi ? (
-        <div className={`hub-globe-poi-card ${poiExpanded ? 'is-expanded' : ''}`}>
-          <button
-            type="button"
-            className="hub-globe-poi-card__main"
-            onClick={() => setPoiExpanded((value) => !value)}
-            aria-expanded={poiExpanded}
-          >
-            <span className="hub-globe-poi-card__icon" aria-hidden="true">
-              <MapPin size={15} />
-            </span>
-            <span className="min-w-0 text-left">
-              <span className="block truncate text-[10px] font-bold uppercase tracking-[0.12em] text-white/60">
-                {selectedPoi.category}
-              </span>
-              <span className="block truncate text-[13px] font-semibold text-white">
-                {selectedPoi.name}
-              </span>
-            </span>
-            <ChevronDown
-              size={15}
-              aria-hidden="true"
-              className={`ml-auto shrink-0 text-white/70 transition-transform ${poiExpanded ? 'rotate-180' : ''}`}
-            />
-          </button>
-          {poiExpanded ? (
-            <div className="hub-globe-poi-card__details">
-              <p>{selectedPoi.description ?? 'Point d’intérêt de l’itinéraire.'}</p>
-              <p className="hub-globe-poi-card__route">
-                <Route size={13} aria-hidden="true" />
-                {selectedTrail?.name ?? 'Itinéraire'}
-              </p>
-              <div className="hub-globe-poi-card__meta">
-                <span>{selectedPoint?.visited ? 'Déjà visité' : 'À découvrir'}</span>
-                {selectedPoint?.stepId ? <span>Étape liée</span> : <span>Voyage entier</span>}
-              </div>
-            </div>
-          ) : null}
-          <button
-            type="button"
-            className="hub-globe-poi-card__close"
-            onClick={() => {
-              setSelectedPoiId(null);
-              setPoiExpanded(false);
-            }}
-            aria-label="Fermer le point d’intérêt"
-          >
-            <X size={14} aria-hidden="true" />
-          </button>
         </div>
       ) : null}
     </div>
