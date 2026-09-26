@@ -8,6 +8,10 @@ import {
   BookingProviderError,
   normalizeBookingProviderError,
 } from './bookingProviderErrors';
+import {
+  resolveProviderCredentials,
+  type ResolvedProviderCredentials,
+} from './providerCredentials';
 import type {
   BookingCandidate,
   BookingProvider,
@@ -33,7 +37,11 @@ const MAX_TITLE_LENGTH = 160;
 const MAX_DESCRIPTION_LENGTH = 600;
 const MAX_ID_LENGTH = 160;
 const ROUTESTACK_MCP_HOSTS = new Set(['mcp.routestack.ai', 'routestack.ai', 'www.routestack.ai']);
+// Hôte sandbox officiel, en plus de l'hôte live. Ajout explicite, jamais un
+// suffixe large : l'allowlist reste une liste close (D-21).
+const ROUTESTACK_SANDBOX_MCP_HOST = 'evolvemcp.routestack.ai';
 const ROUTESTACK_LINK_SUFFIX = '.routestack.ai';
+const DEFAULT_MCP_PATH = '/sse';
 
 export interface RouteStackToolResult {
   content?: Array<{ type: string; text?: string; [key: string]: unknown }>;
@@ -82,17 +90,21 @@ const routeStackConnecting = new Map<string, Promise<RouteStackSession>>();
 
 const routeStackRecordSchema = z.record(z.string(), z.unknown());
 
-function boolEnv(value: string | undefined): boolean {
-  if (!value) return false;
-  return ['1', 'true', 'yes', 'on'].includes(value.trim().toLowerCase());
-}
-
-function resolveMode(env: BookingProviderEnv): BookingProviderMode {
-  const requested = (env.ROUTESTACK_BOOKING_MODE || 'sandbox').trim().toLowerCase();
-  if (requested === 'live' || requested === 'full') {
-    return boolEnv(env.ROUTESTACK_LIVE_ENABLED) ? 'live' : 'disabled';
+/**
+ * Fail-closed (D-07) : un mode live demandé sans ses identifiants est
+ * `disabled`, jamais ramené au sandbox. L'erreur est levée au moment de
+ * l'usage pour que la construction d'un fournisseur reste sans effet de bord.
+ */
+function requireRouteStackCredentials(env: BookingProviderEnv): ResolvedProviderCredentials {
+  const resolved = resolveProviderCredentials('routestack', env);
+  if (resolved.mode === 'disabled' || !resolved.apiKey) {
+    throw new BookingProviderError({
+      code: BOOKING_PROVIDER_ERROR_CODES.config,
+      provider: 'routestack',
+      message: resolved.message,
+    });
   }
-  return 'sandbox';
+  return resolved;
 }
 
 function isPrivateHost(hostname: string): boolean {
@@ -104,7 +116,8 @@ function isPrivateHost(hostname: string): boolean {
 }
 
 function isAllowedMcpHost(hostname: string): boolean {
-  return ROUTESTACK_MCP_HOSTS.has(hostname.toLowerCase());
+  const host = hostname.toLowerCase();
+  return ROUTESTACK_MCP_HOSTS.has(host) || host === ROUTESTACK_SANDBOX_MCP_HOST;
 }
 
 function isAllowedDeeplink(value: unknown, env: BookingProviderEnv): string | null {
@@ -128,7 +141,9 @@ function isAllowedDeeplink(value: unknown, env: BookingProviderEnv): string | nu
 }
 
 function resolveMcpUrl(env: BookingProviderEnv): URL {
-  const raw = env.ROUTESTACK_MCP_URL?.trim() || DEFAULT_MCP_URL;
+  // La base vient désormais du contrat de credentials : une seule source de
+  // vérité pour le choix du slot (sandbox vs live).
+  const raw = resolveProviderCredentials('routestack', env).baseUrl?.trim() || DEFAULT_MCP_URL;
   let url: URL;
   try {
     url = new URL(raw);
@@ -136,7 +151,7 @@ function resolveMcpUrl(env: BookingProviderEnv): URL {
     throw new BookingProviderError({
       code: BOOKING_PROVIDER_ERROR_CODES.config,
       provider: 'routestack',
-      message: 'ROUTESTACK_MCP_URL est invalide.',
+      message: 'La base RouteStack configurée est invalide.',
       cause: error,
     });
   }
@@ -151,9 +166,11 @@ function resolveMcpUrl(env: BookingProviderEnv): URL {
     throw new BookingProviderError({
       code: BOOKING_PROVIDER_ERROR_CODES.config,
       provider: 'routestack',
-      message: 'ROUTESTACK_MCP_URL doit être une URL HTTPS sur un hôte RouteStack autorisé.',
+      message: 'La base RouteStack doit être une URL HTTPS sur un hôte RouteStack autorisé.',
     });
   }
+  // Une base réduite à son origine (sandbox) reçoit l'endpoint MCP par défaut.
+  if (url.pathname === '/') url.pathname = DEFAULT_MCP_PATH;
   return url;
 }
 
@@ -482,21 +499,23 @@ function parseToolPayload(result: RouteStackToolResult): unknown {
 }
 
 export function createRouteStackSessionKey(env: BookingProviderEnv): string {
-  const url = env.ROUTESTACK_MCP_URL?.trim() || DEFAULT_MCP_URL;
-  const apiKey = env.ROUTESTACK_API_KEY?.trim() || '';
+  const resolved = resolveProviderCredentials('routestack', env);
+  const url = resolved.baseUrl?.trim() || DEFAULT_MCP_URL;
+  const apiKey = resolved.apiKey?.trim() || '';
   return createHash('sha256').update(url).update('\0').update(apiKey).digest('hex');
 }
 
 async function getPartnerToken(env: BookingProviderEnv): Promise<string> {
-  const apiKey = env.ROUTESTACK_API_KEY?.trim();
+  const resolved = requireRouteStackCredentials(env);
+  const apiKey = resolved.apiKey;
   if (!apiKey) {
     throw new BookingProviderError({
       code: BOOKING_PROVIDER_ERROR_CODES.config,
       provider: 'routestack',
-      message: 'ROUTESTACK_API_KEY est requis.',
+      message: resolved.message,
     });
   }
-  const secret = env.ROUTESTACK_API_SECRET?.trim();
+  const secret = resolved.secret?.trim();
   if (!secret) return apiKey;
 
   const timestamp = Math.floor(Date.now() / 1000);
@@ -791,8 +810,9 @@ export function createRouteStackBookingProvider(
   const env = options.env ?? process.env;
   const callTool = options.callTool ?? createDefaultToolCaller(env);
   const now = options.now ?? (() => new Date());
-  const mode = resolveMode(env);
-  const isConfigured = () => mode !== 'disabled' && Boolean(env.ROUTESTACK_API_KEY?.trim());
+  const credentials = resolveProviderCredentials('routestack', env);
+  const mode = credentials.mode;
+  const isConfigured = () => credentials.reason === null && Boolean(credentials.apiKey);
 
   return {
     id: 'routestack',
@@ -807,7 +827,7 @@ export function createRouteStackBookingProvider(
         throw new BookingProviderError({
           code: BOOKING_PROVIDER_ERROR_CODES.config,
           provider: 'routestack',
-          message: 'RouteStack n’est pas activé sur ce serveur.',
+          message: credentials.message,
         });
       }
       const validated = validateBookingSearchRequest(request);
