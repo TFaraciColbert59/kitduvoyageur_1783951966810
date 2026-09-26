@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useRef, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
@@ -97,7 +97,7 @@ export function AutoGenTripCreateView({ initialBriefInput = '' }: AutoGenTripCre
           title: res.title,
         });
         startTransition(() => {
-          router.push('/preparer');
+          router.push('/prepare');
           router.refresh();
         });
         return;

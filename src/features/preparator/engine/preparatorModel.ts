@@ -3,7 +3,7 @@ import type { TripFull, TripPoi, TripStep } from '@/features/trips/types/trip.ty
 /**
  * Préparateur de voyage — modèle PUR.
  *
- * Source unique de vérité de l'écran /preparer : à partir du seul TripFull
+ * Source unique de vérité de l'écran /prepare : à partir du seul TripFull
  * (étapes + POI) il dérive tout ce que la carte affiche et ce que les onglets
  * listent : nuitées, transports, repas, POI, compteurs et score de préparation.
  *

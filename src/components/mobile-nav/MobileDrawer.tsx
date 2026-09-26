@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
@@ -69,7 +69,7 @@ const SECTIONS: NavSection[] = [
     label: 'Compte & légal',
     items: [
       { label: "Rapport d'Expédition", icon: 'doc', href: '/rapport-expedition' },
-          { label: 'Rapport Kit', icon: 'bag', href: '/preparer?tab=equipement' },
+          { label: 'Rapport Kit', icon: 'bag', href: '/prepare?tab=equipement' },
       { label: 'Aide / FAQ', icon: 'heart', href: '/faq' },
       { label: 'Contact', icon: 'heart', href: '/contact' },
       { label: 'CGU', icon: 'lock', href: '/cgu' },

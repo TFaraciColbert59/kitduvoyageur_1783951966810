@@ -15,7 +15,7 @@ import {
 } from '../engine/preparatorModel';
 
 /**
- * Préparateur de voyage — chargeur serveur UNIQUE de /preparer.
+ * Préparateur de voyage — chargeur serveur UNIQUE de /prepare.
  *
  * Une seule source de vérité : l'aventure active déjà chargée par le hub
  * (getHubAdventureData, elle-même cachée par React `cache`). Le préparateur

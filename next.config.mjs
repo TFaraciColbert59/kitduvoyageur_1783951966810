@@ -119,7 +119,7 @@ const nextConfig = {
       },
       {
         source: '/configurateur',
-        destination: '/preparer?tab=equipement',
+        destination: '/prepare?tab=equipement',
         permanent: true,
       },
       {
