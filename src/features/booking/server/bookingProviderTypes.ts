@@ -74,6 +74,27 @@ export interface BookingSearchResult {
 
 export type BookingProviderEnv = Record<string, string | undefined>;
 
+/** D-03 : `deeplink`/`acp` sortent chez le fournisseur, `external` hors plateforme. */
+export type CheckoutMode = 'deeplink' | 'acp' | 'external';
+
+export interface CheckoutContext {
+  tripId: string;
+  /**
+   * `auth.uid()`. Provenance serveur obligatoire : une valeur fournie par le
+   * client permettrait d'ouvrir un checkout au nom d'un autre voyageur.
+   */
+  userId: string;
+  campaign?: string;
+}
+
+export interface CheckoutResult {
+  mode: CheckoutMode;
+  /** Null si le mode ne produit pas de lien (ACP) ou si le deeplink est refuse. */
+  url: string | null;
+  /** Renseigné par la couche de persistance, pas par le transport. */
+  bookingId: string | null;
+}
+
 export interface BookingProvider {
   readonly id: BookingProviderId;
   readonly mode: BookingProviderMode;
@@ -81,6 +102,13 @@ export interface BookingProvider {
   supports(vertical: BookingVertical): boolean;
   isConfigured(): boolean;
   search(request: BookingSearchRequest): Promise<BookingSearchResult>;
+  /**
+   * Rafraichit un candidat. Un fournisseur incapable de le faire retourne le
+   * candidat avec `requiresRevalidation: true` : declarer un prix invente
+   * serait pire que l'aveu d'une donnee perimee.
+   */
+  revalidate(candidate: BookingCandidate): Promise<BookingCandidate>;
+  checkoutUrl(candidate: BookingCandidate, context: CheckoutContext): Promise<CheckoutResult>;
 }
 
 export interface BookingProviderRouter {
@@ -91,5 +119,7 @@ export interface BookingProviderRouter {
   isConfigured(): boolean;
   providerFor(vertical: BookingVertical): BookingProvider;
   search(request: BookingSearchRequest): Promise<BookingSearchResult>;
+  revalidate(candidate: BookingCandidate): Promise<BookingCandidate>;
+  checkoutUrl(candidate: BookingCandidate, context: CheckoutContext): Promise<CheckoutResult>;
 }
 

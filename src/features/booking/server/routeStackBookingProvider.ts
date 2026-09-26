@@ -16,10 +16,12 @@ import type {
   BookingCandidate,
   BookingProvider,
   BookingProviderEnv,
-  BookingProviderMode,
   BookingSearchRequest,
   BookingSearchResult,
   BookingVertical,
+  CheckoutContext,
+  CheckoutMode,
+  CheckoutResult,
 } from './bookingProviderTypes';
 
 const DEFAULT_MCP_URL = 'https://mcp.routestack.ai/sse';
@@ -42,6 +44,7 @@ const ROUTESTACK_MCP_HOSTS = new Set(['mcp.routestack.ai', 'routestack.ai', 'www
 const ROUTESTACK_SANDBOX_MCP_HOST = 'evolvemcp.routestack.ai';
 const ROUTESTACK_LINK_SUFFIX = '.routestack.ai';
 const DEFAULT_MCP_PATH = '/sse';
+const CHECKOUT_TOOL = 'get-payment-url';
 
 export interface RouteStackToolResult {
   content?: Array<{ type: string; text?: string; [key: string]: unknown }>;
@@ -183,6 +186,40 @@ function toolNameForVertical(vertical: BookingVertical): string {
     provider: 'routestack',
     message: 'Les activités ne sont pas exposées par RouteStack.',
   });
+}
+
+/**
+ * Mode de checkout. Une valeur inconnue retombe sur `deeplink` : c'est le mode
+ * qui degrace le moins (un lien ouvrable) plutot qu'un checkout sans sortie.
+ */
+function resolveCheckoutMode(env: BookingProviderEnv): Exclude<CheckoutMode, 'external'> {
+  const requested = (env.ROUTESTACK_CHECKOUT_MODE ?? '').trim().toLowerCase();
+  return requested === 'acp' ? 'acp' : 'deeplink';
+}
+
+/** Cherche l'URL de paiement sans faire confiance a la forme de la reponse. */
+function extractCheckoutUrl(payload: unknown, env: BookingProviderEnv): string | null {
+  if (!isRecord(payload)) return null;
+  const direct = [
+    payload.url,
+    payload.paymentUrl,
+    payload.payment_url,
+    payload.checkoutUrl,
+    payload.checkout_url,
+    payload.redirectUrl,
+    payload.redirect_url,
+    isRecord(payload.data) ? payload.data.url : undefined,
+  ].find((value) => typeof value === 'string' && value.length > 0);
+  return isAllowedDeeplink(direct, env);
+}
+
+function readErrorStatus(error: unknown): number | null {
+  if (!isRecord(error)) return null;
+  for (const key of ['status', 'code']) {
+    const value = error[key];
+    if (typeof value === 'number' && Number.isFinite(value)) return value;
+  }
+  return null;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -804,6 +841,102 @@ async function argumentsForRequest(
   });
 }
 
+/**
+ * Metadata de checkout : valeurs primitives uniquement, cles stables. Un objet
+ * metier libre aurait pu contenir une cle sensible transmise a un tiers ; on
+ * n'accepte que ces trois champs, construits ici.
+ */
+function sanitizeCheckoutMetadata(
+  input: Record<string, string | number | boolean | null>
+): Record<string, string | number | boolean | null> {
+  return {
+    trip_id: input.trip_id,
+    vertical: input.vertical,
+    campaign: input.campaign,
+  };
+}
+
+/**
+ * Un 401 signifie « jeton expire », pas « acces refuse » : on retente une
+ * seule fois. Un 402 est un etat (credits epuises) : le remonter en quota
+ * plutot que boucler, sinon chaque tentative aggrave le blocage.
+ */
+async function callWithAuthRetry(
+  callTool: RouteStackToolCaller,
+  name: string,
+  args: Record<string, unknown>
+): Promise<unknown> {
+  try {
+    return parseToolPayload(await callTool(name, args));
+  } catch (error) {
+    const status = readErrorStatus(error);
+    if (status === 402) {
+      throw new BookingProviderError({
+        code: BOOKING_PROVIDER_ERROR_CODES.quota,
+        provider: 'routestack',
+        status,
+        message: 'Quota RouteStack épuisé.',
+      });
+    }
+    if (status === 401 || status === 403) {
+      try {
+        return parseToolPayload(await callTool(name, args));
+      } catch (retryError) {
+        throw normalizeBookingProviderError(retryError, 'routestack');
+      }
+    }
+    throw normalizeBookingProviderError(error, 'routestack');
+  }
+}
+
+/**
+ * Reconstruction minimale d'une requete de recherche depuis les metadonnees
+ * d'un candidat. Volontairement partielle : si un champ necessaire manque, on
+ * renvoie `null` et le candidat reste marque a revalider plutot que d'etre
+ * reinterroge avec des hypotheses.
+ */
+function searchRequestFromCandidate(candidate: BookingCandidate): BookingSearchRequest | null {
+  const meta = candidate.metadata;
+  const text = (key: string): string | undefined => {
+    const value = meta[key];
+    return typeof value === 'string' && value.trim() ? value.trim() : undefined;
+  };
+  const travelers = typeof meta.travelers === 'number' ? meta.travelers : undefined;
+  const currency = text('currency');
+  const shared = {
+    ...(travelers !== undefined ? { travelers } : {}),
+    ...(currency ? { currency } : {}),
+    limit: DEFAULT_LIMIT,
+  };
+
+  if (candidate.vertical === 'flight') {
+    const origin = text('origin');
+    const destination = text('destination');
+    const departure = text('departure');
+    const ret = text('return');
+    if (!origin || !destination || !departure) return null;
+    return { vertical: 'flight', origin, destination, departure, ...(ret ? { return: ret } : {}), ...shared };
+  }
+  if (candidate.vertical === 'hotel') {
+    const destination = text('destination');
+    const checkIn = text('checkIn');
+    const checkOut = text('checkOut');
+    if (!destination || !checkIn || !checkOut) return null;
+    return { vertical: 'hotel', destination, checkIn, checkOut, ...shared };
+  }
+  if (candidate.vertical === 'car') {
+    const destination = text('destination');
+    const pickupAt = text('pickupAt');
+    const dropoffAt = text('dropoffAt');
+    if (!destination || !pickupAt || !dropoffAt) return null;
+    return { vertical: 'car', destination, pickupAt, dropoffAt, ...shared };
+  }
+  const destination = text('destination');
+  const date = text('date');
+  if (!destination || !date) return null;
+  return { vertical: 'activity', destination, date, ...shared };
+}
+
 export function createRouteStackBookingProvider(
   options: RouteStackProviderOptions = {}
 ): BookingProvider {
@@ -813,14 +946,14 @@ export function createRouteStackBookingProvider(
   const credentials = resolveProviderCredentials('routestack', env);
   const mode = credentials.mode;
   const isConfigured = () => credentials.reason === null && Boolean(credentials.apiKey);
+  const supports = (vertical: BookingVertical) =>
+    vertical === 'flight' || vertical === 'hotel' || vertical === 'car';
 
   return {
     id: 'routestack',
     mode,
     supportedVerticals: ['flight', 'hotel', 'car'],
-    supports(vertical) {
-      return vertical === 'flight' || vertical === 'hotel' || vertical === 'car';
-    },
+    supports,
     isConfigured,
     async search(request) {
       if (!isConfigured()) {
@@ -846,6 +979,76 @@ export function createRouteStackBookingProvider(
         offers: normalizeOffers(payload, validated, env),
         fetchedAt: now().toISOString(),
       } satisfies BookingSearchResult;
+    },
+
+    /**
+     * Un candidat frais est-il encore valable ? RouteStack est republished en
+     * temps reel, mais on ne peut pas le prouver : on reconsulte et on ne
+     * remplace que par une offre reellement presente dans la reponse.
+     */
+    async revalidate(candidate) {
+      if (!candidate.requiresRevalidation) return candidate;
+      if (!isConfigured() || !supports(candidate.vertical)) {
+        return { ...candidate, requiresRevalidation: true };
+      }
+      const request = searchRequestFromCandidate(candidate);
+      if (!request) return { ...candidate, requiresRevalidation: true };
+      try {
+        const name = toolNameForVertical(candidate.vertical);
+        const args = await argumentsForRequest(request, callTool);
+        const payload = parseToolPayload(await callTool(name, args));
+        const offers = normalizeOffers(payload, request, env);
+        const fresh = offers.find(
+          (offer) => offer.id === candidate.id || offer.providerReference === candidate.providerReference
+        );
+        return fresh ? { ...fresh, requiresRevalidation: false } : { ...candidate, requiresRevalidation: true };
+      } catch {
+        // Echec de revalidation != prix change : on le signale, on invente rien.
+        return { ...candidate, requiresRevalidation: true };
+      }
+    },
+
+    async checkoutUrl(candidate, context): Promise<CheckoutResult> {
+      if (!isConfigured()) {
+        throw new BookingProviderError({
+          code: BOOKING_PROVIDER_ERROR_CODES.config,
+          provider: 'routestack',
+          message: credentials.message,
+        });
+      }
+      if (!supports(candidate.vertical)) {
+        throw new BookingProviderError({
+          code: BOOKING_PROVIDER_ERROR_CODES.validation,
+          provider: 'routestack',
+          message: 'Vertical RouteStack non supportée pour ce checkout.',
+        });
+      }
+
+      const checkoutMode = resolveCheckoutMode(env);
+      // Cloisonnement : ces deux champs identifient NOTRE voyage et SON
+      // contexte. Ils n'apparaissent QUE sur get-payment-url, jamais sur un
+      // outil de recherche, et `routestack_accountid` n'est jamais emis (D-21).
+      const args: Record<string, unknown> = {
+        routestack_external_userid: context.userId,
+        routestack_metadata: sanitizeCheckoutMetadata({
+          trip_id: context.tripId,
+          vertical: candidate.vertical,
+          campaign: context.campaign ?? null,
+        }),
+        candidate_id: candidate.providerReference ?? candidate.id,
+        ...(candidate.amount !== null ? { amount: candidate.amount } : {}),
+        ...(candidate.currency !== null ? { currency: candidate.currency } : {}),
+      };
+
+      const payload = await callWithAuthRetry(callTool, CHECKOUT_TOOL, args);
+      const url = extractCheckoutUrl(payload, env);
+
+      return {
+        mode: checkoutMode,
+        // ACP : le paiement se poursuit dans le flux agent, aucun lien sortant.
+        url: checkoutMode === 'acp' ? null : url,
+        bookingId: null,
+      };
     },
   };
 }
