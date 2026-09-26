@@ -1,5 +1,50 @@
 export type ActivityLogisticsScope = 'none' | 'access' | 'stages' | 'full';
 
+/**
+ * Volets de logistique derives du `logistics_scope` d'un format d'activite.
+ *
+ * Regle de produit (D-02, P2) : plus le scope est large, plus le format ouvre
+ * de volets de reservation. La regle est PURE et explicite — un footing ne
+ * propose jamais un vol, un bivouac ne propose jamais d'hotel, seul `full`
+ * ouvre l'ensemble (vols, vehicules, hotellerie, budget).
+ */
+export type LogisticsVolet = 'access' | 'stages' | 'flights' | 'vehicles' | 'lodging' | 'budget';
+
+export type LogisticsVolets = Readonly<Record<LogisticsVolet, boolean>>;
+
+/** Ordre canonique d'affichage des volets (jamais reconstruit cote vue). */
+export const LOGISTICS_VOLET_ORDER: readonly LogisticsVolet[] = [
+  'access',
+  'stages',
+  'flights',
+  'vehicles',
+  'lodging',
+  'budget',
+] as const;
+
+const VOLETS_BY_SCOPE: Record<ActivityLogisticsScope, LogisticsVolets> = {
+  none: { access: false, stages: false, flights: false, vehicles: false, lodging: false, budget: false },
+  access: { access: true, stages: false, flights: false, vehicles: false, lodging: false, budget: false },
+  stages: { access: true, stages: true, flights: false, vehicles: false, lodging: false, budget: false },
+  full: { access: true, stages: true, flights: true, vehicles: true, lodging: true, budget: true },
+};
+
+/**
+ * Volets actifs pour un scope donne. Retourne un objet NEUF a chaque appel
+ * (immuabilite) : l'appelant ne peut pas polluer la table de reference.
+ */
+export function logisticsVoletsFor(
+  scope: ActivityLogisticsScope,
+): LogisticsVolets {
+  return { ...(VOLETS_BY_SCOPE[scope] ?? VOLETS_BY_SCOPE.none) };
+}
+
+/** Volets actifs dans l'ordre canonique, pour un rendu stable. */
+export function activeLogisticsVolets(scope: ActivityLogisticsScope): LogisticsVolet[] {
+  const volets = logisticsVoletsFor(scope);
+  return LOGISTICS_VOLET_ORDER.filter((volet) => volets[volet]);
+}
+
 export interface ActivityCatalogItem {
   id: string;
   slug: string;
