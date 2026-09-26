@@ -167,6 +167,8 @@ export const config = {
     '/naviguer',
     '/boussole',
     '/rapport-kit',
+    // Fusion configurateurs : equipement = onglet du preparateur.
+    '/ai-configurator',
     '/activite',
     '/gamification',
     '/encheres',

@@ -818,7 +818,7 @@ export function SortieMenu({
     progression: {
       span: 3,
       node: (
-        <MenuCard href="/progression" label="Ma progression">
+        <MenuCard href="/hub?panel=points" label="Ma progression">
           <div className="mt-1 flex items-center justify-between">
             <div>
               <p className="text-xs font-bold text-[var(--lkv-text-primary)]">Rang & Défis</p>
@@ -839,6 +839,7 @@ export function SortieMenu({
   const secondaryKeys = MOBILE_SECONDARY[phase];
   const primaryCells = orderedCells.filter((c) => !secondaryKeys.includes(c.key ?? ''));
   const secondaryCells = orderedCells.filter((c) => secondaryKeys.includes(c.key ?? ''));
+
 
   return (
     <>
@@ -868,26 +869,14 @@ export function SortieMenu({
       {/* T7 — affiliation retirée du hub (réservations hors des rendus hub). */}
 
       <MobileAdventureHub
-        rail={
-          <ActivityPreparationStatus
-            preparation={
-              preparation
-                ? { counts: preparation, enrichmentStatus: preparation.enrichmentStatus }
-                : null
-            }
-            tripId={trip.id}
+        statusSlot={
+          <NextActionCard
+            actions={nextActions}
+            checklist={{ tripId: trip.id, items: checklist }}
+            variant="compact"
           />
         }
-        action={
-          <>
-            <NextActionCard
-              actions={nextActions}
-              checklist={{ tripId: trip.id, items: checklist }}
-              variant="compact"
-            />
-            <ProgressionCompactCard />
-          </>
-        }
+        progressionSlot={<ProgressionCompactCard variant="drawer" />}
         tiles={mobileTiles}
         chips={mobileChips}
         fill

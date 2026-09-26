@@ -63,6 +63,19 @@ const POI_CATEGORY_COLORS: Record<string, string> = {
   viewpoint: MAP_COLORS.inkSecondary,
   col: MAP_COLORS.inkSecondary,
   camping: MAP_COLORS.sage,
+  // Preparateur de voyage : nuit, repas, deplacement, etape, poi generique.
+  stay: MAP_COLORS.ink,
+  food: MAP_COLORS.danger,
+  transport: MAP_COLORS.info,
+  step: MAP_COLORS.inkSecondary,
+  poi: MAP_COLORS.inkTertiary,
+  // Modes de transport individuels (meme famille que transport).
+  car: MAP_COLORS.info,
+  bus: MAP_COLORS.info,
+  train: MAP_COLORS.info,
+  plane: MAP_COLORS.info,
+  boat: MAP_COLORS.info,
+  bike: MAP_COLORS.info,
 };
 
 export function getPoiColor(category: string | null | undefined): string {

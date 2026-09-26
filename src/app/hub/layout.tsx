@@ -8,6 +8,7 @@ import { ItineraryAdventureCockpit } from '@/features/hub/components/mobile/itin
 import { TripAffiliateProvider } from '@/features/affiliation/components/TripAffiliateProvider';
 import { traceStage } from '@/lib/perf/ssrTrace';
 import HubLoading from './loading';
+import '@/features/hub/components/hub-liquid.css';
 
 // Hub auth/cookie-driven : jamais prerenderee statiquement au build.
 export const dynamic = 'force-dynamic';
@@ -21,7 +22,8 @@ export const dynamic = 'force-dynamic';
  */
 export default function HubLayout({ children }: { children: React.ReactNode }) {
   return (
-    <>      <Suspense fallback={<HubLoading />}>
+    <>
+      <Suspense fallback={<HubLoading />}>
         <HubLayoutAsync>{children}</HubLayoutAsync>
       </Suspense>
     </>

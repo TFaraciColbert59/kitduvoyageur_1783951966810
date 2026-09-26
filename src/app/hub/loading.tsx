@@ -15,7 +15,7 @@ const SPAN_CLASS: Record<number, string> = {
  */
 export default function HubLoading() {
   return (
-    <div className="space-y-4" role="status" aria-busy="true" aria-label="Chargement du hub">
+    <div className="space-y-4" role="status" aria-busy="true" aria-label="Chargement de l’aventure">
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3">
         {SPANS.map((span, i) => (
           <Card key={i} className={`min-h-[120px] ${SPAN_CLASS[span]}`}>

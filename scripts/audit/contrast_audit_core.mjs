@@ -679,7 +679,7 @@ export function buildMatrixAuditReport(options = {}) {
     ? requestedCellCount
     : EXPECTED_MATRIX_CELL_COUNT;
   const liveVerified = Reflect.get(source, 'liveVerified') === true;
-  const stateEvidenceComplete = Reflect.get(source, 'stateEvidenceComplete') !== false;
+  const stateEvidenceComplete = Reflect.get(source, 'stateEvidenceComplete') === true;
   const errors = Reflect.get(source, 'errors');
      const observedCells = Array.isArray(cells) ? cells : [];
      const expectedMatrixCells = Array.isArray(expectedCells) ? expectedCells : buildMatrixCells();
@@ -740,7 +740,7 @@ export function buildCampaignAuditReport(options = {}) {
   const expectedOutcomes = Reflect.get(source, 'expectedOutcomes');
   const expectedOutcomeDefinitions = Reflect.get(source, 'expectedOutcomeDefinitions');
   const manifestCoverageComplete = Reflect.get(source, 'manifestCoverageComplete') === true;
-  const stateEvidenceComplete = Reflect.get(source, 'stateEvidenceComplete') !== false;
+  const stateEvidenceComplete = Reflect.get(source, 'stateEvidenceComplete') === true;
   const liveVerified = Reflect.get(source, 'liveVerified') === true;
   const requestedGeneratedAt = Reflect.get(source, 'generatedAt');
   const generatedAt = typeof requestedGeneratedAt === 'string'
@@ -799,11 +799,16 @@ export function buildCampaignAuditReport(options = {}) {
   const routeSetComplete = expectedRouteSetComplete
     && observedRouteIds.size === expectedRouteSet.size
     && [...expectedRouteSet].every((routeId) => observedRouteIds.has(routeId));
-   const evidenceComplete = stateEvidenceComplete
-     && contrastFindings.length > 0
-     && findingIdentities.every(Boolean)
+  const evidenceComplete = stateEvidenceComplete
+    && contrastFindings.length > 0
+    && findingIdentities.every(Boolean)
     && observedMeasuredRouteIds.size === contrastFindings.length
-     && contrastFindings.every((finding) => hasValidContrastEvidence(finding));
+     && contrastFindings.every((finding) => (
+       hasValidContrastEvidence(finding)
+       && finding?.measurementState === 'default'
+       && finding?.scrollY === 0
+       && finding?.overlayOpen === false
+     ));
   const contrastRouteSetComplete = contrastFindings.every((finding) => (
     expectedRoutePathMap.get(findingIdentity(finding)) === finding?.path
   ));

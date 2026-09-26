@@ -5,7 +5,6 @@ import React, { useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useTripDraft } from './useTripDraft';
-import { tripSectionHref } from '../registry/tripSectionRegistry';
 import { setActiveAdventureAction } from '@/features/hub/context/activeAdventureServer';
 import { Step1Destinations } from './Step1Destinations';
 import { Step2Dates } from './Step2Dates';
@@ -68,7 +67,9 @@ export function TripWizard() {
       slug,
       title: state.title.trim() || defaultSuggestedTitle,
     });
-    router.push(tripSectionHref(slug, 'overview'));
+    // Le preparateur est la destination de fin de creation : la carte, les
+    // nuits, les transports, les tables et la check-list y sont reunionnes.
+    router.push('/preparer');
   };
 
   // Contenu interactif de l'étape active

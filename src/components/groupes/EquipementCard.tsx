@@ -267,7 +267,7 @@ export default function EquipementCard({ equipment, groupId, onRefresh, user, me
 
         {groupId && (
           <Link
-            href={`/ai-configurator?groupId=${groupId}`}
+            href={`/preparer?tab=equipement&groupId=${groupId}`}
             className="mt-[var(--space-1)] flex w-full items-center justify-between rounded-[var(--lkv-radius-md)] border border-[color:var(--glass-border)] bg-[color:var(--glass-bg-medium)] backdrop-blur-[var(--glass-blur-sm)] saturate-[var(--glass-sat)] lkv-rim-inset p-[var(--space-3)] text-[length:var(--lkv-text-caption)] font-bold text-[color:var(--lkv-text-primary)]"
           >
             <span className="flex items-center gap-[var(--space-2)]">

@@ -1,68 +1,31 @@
-import React, { Suspense } from 'react';
-import KitConfiguratorWizard from '@/app/ai-configurator/components/KitConfiguratorWizard';
-import MobilePageShell from '@/components/mobile-nav/MobilePageShell';
-import CompteBackground from '@/components/compte/CompteBackground';
+import { redirect } from 'next/navigation';
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://lekitduvoyageur.fr';
+/**
+ * Fusion des configurateurs — l'equipement est desormais un ONGLET du
+ * preparateur de voyage unique. Cette route n'est plus une page : elle
+ * redirige (307) vers /preparer?tab=equipement en conservant tous les
+ * parametres utiles (country, groupId, carnetId, trail) lus par l'assistant.
+ */
+export const dynamic = 'force-dynamic';
 
 export const metadata = {
-  title: 'Configurateur IA · Le Kit du Voyageur',
-  description: 'Assistant intelligent pour composer votre sac à dos d\'aventure en temps réel.',
+  title: 'Equipement · Preparateur de voyage · Le Kit du Voyageur',
+  description:
+    'Assistant equipement integre au preparateur de voyage : composez le sac du voyage actif.',
+  robots: { index: false, follow: true },
 };
 
-function WizardFallback() {
-  return (
-    <div className="w-full h-full flex flex-col items-center justify-center gap-5 min-h-[60vh]">
-      <div className="w-10 h-10 rounded-full border-2 border-[var(--lkv-text-primary)] border-t-transparent animate-spin" />
-      <p className="text-xs font-mono font-bold text-[var(--lkv-text-muted)]">Initialisation de l&apos;intelligence terrain…</p>
-    </div>
-  );
-}
-
-export default function ConfiguratorPage() {
-  const webPageSchema = {
-    '@context': 'https://schema.org',
-    '@type': 'WebPage',
-    name: 'Configurateur IA · Le Kit du Voyageur',
-    description: 'Assistant intelligent pour composer votre sac à dos d\'aventure en temps réel.',
-    url: `${siteUrl}/ai-configurator`,
-    isPartOf: { '@id': `${siteUrl}/#website` },
-  };
-
-  const breadcrumbSchema = {
-    '@context': 'https://schema.org',
-    '@type': 'BreadcrumbList',
-    itemListElement: [
-      { '@type': 'ListItem', position: 1, name: 'Accueil', item: siteUrl },
-      { '@type': 'ListItem', position: 2, name: 'Configurateur IA', item: `${siteUrl}/ai-configurator` },
-    ],
-  };
-
-  return (
-    <div className="min-h-screen md:h-dvh md:overflow-hidden text-[var(--lkv-text-primary)] selection:bg-[var(--lkv-text-primary)]/10 font-sans relative">
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(webPageSchema) }} suppressHydrationWarning />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} suppressHydrationWarning />
-
-      {/* Fond canopée dorée immersif */}
-      <CompteBackground />
-
-      {/* ── DESKTOP COCKPIT (hidden md:flex) ── */}
-      <div className="hidden md:flex flex-col h-full overflow-hidden p-4 lg:p-6 max-w-[1600px] w-full mx-auto">
-        <Suspense fallback={<WizardFallback />}>
-          <KitConfiguratorWizard />
-        </Suspense>
-      </div>
-
-      {/* ── MOBILE NATIVE VIEW (block md:hidden) ── */}
-      <div className="block md:hidden min-h-screen">
-        <MobilePageShell videoBackground={false} background="transparent">
-          <div className="px-3 pt-3 pb-32">
-            <Suspense fallback={<WizardFallback />}>
-              <KitConfiguratorWizard isMobile={true} />
-            </Suspense>
-          </div>
-        </MobilePageShell>
-      </div>
-    </div>
-  );
+export default async function ConfiguratorPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const incoming = await searchParams;
+  const params = new URLSearchParams();
+  params.set('tab', 'equipement');
+  for (const [key, value] of Object.entries(incoming)) {
+    if (key === 'tab' || value == null) continue;
+    params.set(key, Array.isArray(value) ? value[0] : value);
+  }
+  redirect(`/preparer?${params.toString()}`);
 }

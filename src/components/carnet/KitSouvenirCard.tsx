@@ -52,7 +52,7 @@ export default function KitSouvenirCard({ intro, items }: KitSouvenirCardProps) 
 
         <div className="flex items-center gap-[var(--space-2)]">
           <Link
-            href="/ai-configurator"
+            href="/preparer?tab=equipement"
             onClick={() => triggerHaptic('light')}
             className="inline-flex min-h-[var(--control-height-sm)] items-center gap-[var(--space-1)] rounded-full bg-[color:var(--btn-tint)] border border-[color:var(--btn-glass-border)] backdrop-blur-[var(--btn-blur)] saturate-[var(--btn-saturate)] lkv-rim-btn px-[var(--space-3)] text-[length:var(--lkv-text-caption-2)] font-bold text-[color:var(--lkv-text-primary)]"
           >

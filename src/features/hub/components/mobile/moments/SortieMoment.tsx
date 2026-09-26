@@ -43,18 +43,23 @@ export function SortieMoment({ trip, context, hiking, fillViewport = false }: So
   const moment = selectSortieMoment({ trip, context });
   const ref: HubAdventureRef = { nature: 'sortie', slug: trip.slug };
 
-  const points = moment.pois
+  const points = moment.routePois
     .filter((p) => p.latitude != null && p.longitude != null)
     .map((p) => ({
+      id: p.id,
       lat: Number(p.latitude),
       lon: Number(p.longitude),
       label: p.name,
+      category: p.category,
+      description: p.notes ?? p.name,
+      visited: p.visited,
+      stepId: p.step_id,
       color: poiCategoryMeta(p.category, p.name).color,
     }))
     .filter((p) => Number.isFinite(p.lat) && Number.isFinite(p.lon));
 
   const legendMap = new Map<string, string>();
-  for (const p of moment.pois) {
+  for (const p of moment.routePois) {
     const meta = poiCategoryMeta(p.category, p.name);
     if (!legendMap.has(meta.label)) legendMap.set(meta.label, meta.color);
   }
@@ -111,9 +116,9 @@ export function SortieMoment({ trip, context, hiking, fillViewport = false }: So
           )}
         </div>
 
-        {moment.pois.length > 0 && (
-          <ul className="mt-2.5 flex gap-1.5 overflow-x-auto" aria-label="Points d’intérêt du jour">
-            {moment.pois.slice(0, 8).map((p) => {
+        {moment.routePois.length > 0 && (
+          <ul className="mt-2.5 flex gap-1.5 overflow-x-auto" aria-label="Tous les points d’intérêt du voyage">
+            {moment.routePois.map((p) => {
               const meta = poiCategoryMeta(p.category, p.name);
               return (
                 <li
@@ -212,9 +217,9 @@ export function SortieMoment({ trip, context, hiking, fillViewport = false }: So
         <MomentRow icon={Flag} label="Étapes" value={String(moment.stepCount)} />
         <MomentRow icon={Clock} label="Distance" value={`${formatKm(moment.distanceKm)} km`} />
       </ul>
-      {moment.pois.length > 0 && (
+      {moment.routePois.length > 0 && (
         <ul className="space-y-1.5 border-t border-black/5 pt-2">
-          {moment.pois.map((p) => {
+          {moment.routePois.map((p) => {
             const meta = poiCategoryMeta(p.category, p.name);
             return (
               <li key={p.id} className="flex items-center gap-2 text-[11.5px]">
@@ -249,6 +254,7 @@ export function SortieMoment({ trip, context, hiking, fillViewport = false }: So
       badge={moment.badge}
       dateLabel={moment.dateLabel}
       routeCoords={moment.routeCoords}
+      routeGeojson={hiking?.routeGeojson ?? null}
       highlightCoords={moment.highlightCoords}
       points={points}
       panel={panel}

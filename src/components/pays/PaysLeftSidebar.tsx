@@ -98,7 +98,7 @@ export default function PaysLeftSidebar({
         {/* Quick action buttons */}
         <div className="grid grid-cols-2 gap-1.5">
           <Link
-            href={`/ai-configurator?country=${country.code}`}
+            href={`/preparer?tab=equipement&country=${country.code}`}
             className="glass-capsule-btn primary text-[10.5px] font-bold !py-1.5 !px-2 flex items-center justify-center gap-1 shadow-none cursor-pointer text-center"
           >
             <span>Créer mon kit</span>

@@ -1,0 +1,1046 @@
+/* Hub — Liquid Glass iOS 27 (page /hub uniquement).
+
+   Source de verite : kit officiel Apple « iOS and iPadOS 27 (Community) »,
+   node 221-56229, composant « Notification - Collapsed ». Recette reprise
+   telle quelle :
+
+     Fill + Shadow
+       background: linear-gradient(0deg, rgba(255,255,255,.04), rgba(255,255,255,.04)), #101010;
+       background-blend-mode: luminosity, plus-lighter;
+       box-shadow: 1.25px 0 0 -.75px #D0D0D0, -1.25px 0 0 -.75px #D0D0D0,
+                   0 0 0 .5px #CCCCCC, 0 8px 15px rgba(0,0,0,.02);
+
+   Web : #101010 est remplace par un #101010 alpha pour que le contenu
+   traverse reellement le materiau (le verre natif est un filtre, pas une
+   teinte). Tout le reste — voile blanc 4 %, blend plus-lighter, rim 4 couches,
+   rayon, SF Pro 590 / -0.23px, symbols #D9D9D9 — est repris a l identique. */
+
+body:has(.hub-liquid-root) {
+  /* Voile global quasi nul : la photo traverse la page intacte. */
+  --lkv-app-bg-scrim: rgba(229, 237, 231, 0.02);
+
+  /* Blanc et vibrancy : meme blanc que le label primaire d Apple, les niveaux
+     inferieurs sont le meme blanc en opacite reduite. */
+  --hub-white: #ffffff;
+  --hub-white-secondary: rgba(255, 255, 255, 0.71);
+  --hub-white-tertiary: rgba(255, 255, 255, 0.5);
+  --lkv-text-primary: var(--hub-white);
+  --lkv-text-secondary: var(--hub-white-secondary);
+  --lkv-text-muted: var(--hub-white-tertiary);
+
+  /* Materiau Apple : quasi-noir #101010 + voile blanc 4 % en plus-lighter. */
+  --hub-glass-base: #101010;
+  --hub-glass-lift: rgba(255, 255, 255, 0.04);
+  --hub-glass-rim: #cccccc;
+  --hub-glass-rim-soft: #d0d0d0;
+  --hub-glass-shadow:
+    1.25px 0 0 -0.75px var(--hub-glass-rim-soft),
+    -1.25px 0 0 -0.75px var(--hub-glass-rim-soft),
+    0 0 0 0.5px var(--hub-glass-rim),
+    0 8px 15px rgba(0, 0, 0, 0.02);
+
+  /* Alphabet du kit : label primaire #FFFFFF, vibrant secondary #999999,
+     symbols poses sur le verre #D9D9D9 (leves de luminance, pas du blanc). */
+  --hub-label-primary: #ffffff;
+  --hub-label-secondary: #999999;
+  --hub-symbol: #d9d9d9;
+  --hub-symbol-dim: rgba(217, 217, 217, 0.58);
+
+  /* Les variables de navigation du design system sont redefinies ici : sinon
+     le theme clair de tokens.css (--glass-label: #101813) l'emporte et les
+     icones de la barre deviennent illisibles sur le verre sombre. */
+  --glass-label: #ffffff;
+  --glass-label-secondary: rgba(255, 255, 255, 0.78);
+  --glass-label-tertiary: var(--hub-symbol-dim);
+  --glass-label-quaternary: rgba(255, 255, 255, 0.4);
+
+  /* Typographie du kit : SF Pro 15px, tracking -0.23px, titre en 590. */
+  --hub-tracking: -0.23px;
+  --hub-title-weight: 590;
+
+  /* Repli opaque dedie (preferences systeme). */
+  --hub-opaque-fallback: #101010;
+
+  /* Fumee neutre du materiau : c est elle qui porte le contraste du texte
+     blanc, jamais un voile blanc laiteux. */
+  --hub-smoke: rgba(16, 16, 16, 0.3);
+  --hub-smoke-strong: rgba(16, 16, 16, 0.44);
+  --lkv-surface: var(--hub-smoke);
+  --lkv-surface-card: rgba(16, 16, 16, 0.28);
+  --lkv-surface-raised: rgba(16, 16, 16, 0.38);
+  --card-tint: rgba(16, 16, 16, 0.28);
+  --card-tint-strong: rgba(16, 16, 16, 0.38);
+  --card-tint-solid: rgba(16, 16, 16, 0.82);
+  --card-border: transparent;
+  --glass-tint: rgba(16, 16, 16, 0.28);
+  --glass-bg-medium: rgba(16, 16, 16, 0.28);
+  --btn-tint: rgba(255, 255, 255, 0.1);
+  --material-bar-border: transparent;
+}
+
+/* ── Blanc et vibrancy : tout le texte du Hub, sur les trois niveaux ───── */
+
+body:has(.hub-liquid-root) .hub-content-material,
+body:has(.hub-liquid-root) .hub-control-material,
+body:has(.hub-liquid-root) .hub-section-control,
+body:has(.hub-liquid-root) .hub-chip-control,
+body:has(.hub-liquid-root) .hub-control-lens,
+body:has(.hub-liquid-root) .hub-tile-glyph,
+body:has(.hub-liquid-root) .hub-liquid-action {
+  color: var(--hub-white) !important;
+}
+
+body:has(.hub-liquid-root)
+  :is(.hub-content-material, .hub-control-material, .hub-section-control, .hub-chip-control)
+  :is(p, span, div, h1, h2, h3, h4, li) {
+  color: var(--hub-white-secondary) !important;
+}
+
+body:has(.hub-liquid-root)
+  :is(.hub-content-material, .hub-control-material, .hub-section-control, .hub-chip-control)
+  [class*='uppercase'] {
+  color: var(--hub-white-tertiary) !important;
+  letter-spacing: 0.14em;
+}
+
+body:has(.hub-liquid-root)
+  :is(.hub-content-material, .hub-control-material, .hub-section-control, .hub-chip-control)
+  :is(h1, h2, h3, h4, strong, b) {
+  color: var(--hub-white) !important;
+  font-weight: var(--hub-title-weight);
+}
+
+/* SF Pro : tracking du kit sur tous les labels. */
+body:has(.hub-liquid-root)
+  :is(.hub-content-material, .hub-control-material, .hub-section-control, .hub-chip-control, .hub-control-lens, .hub-liquid-action)
+  :is(p, span, div, h1, h2, h3, h4, li, button, a) {
+  letter-spacing: var(--hub-tracking);
+}
+
+/* Micro-ombre : detache le glyphe du fond sans halo laiteux. */
+body:has(.hub-liquid-root)
+  :is(.hub-content-material, .hub-control-material, .hub-section-control, .hub-chip-control)
+  :is(p, span, div, h1, h2, h3, h4, li, button, a) {
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.55);
+}
+
+/* ── Navigation : capsule de verre quasi-noir, isolee du contenu ────────── */
+
+body:has(.hub-liquid-root) .lkv-nav-surface[data-optical='true'] .lkv-material-bar,
+body:has(.hub-liquid-root) .lkv-nav-surface[data-optical='true'].lkv-material-bar {
+  /* Recette « Fill + Shadow » du kit iOS 27, en alpha pour la transmission. */
+  background:
+    linear-gradient(0deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.04)),
+    rgba(16, 16, 16, 0.24) !important;
+  background-blend-mode: normal !important;
+  background-blend-mode: luminosity, plus-lighter;
+  border-color: transparent !important;
+  box-shadow: var(--hub-glass-shadow) !important;
+}
+
+/* Pas de calque ∕before : le rim est deja porte par le box-shadow du kit et
+   par la couche de liseré de LiquidGlass. Un second voile le Double. */
+body:has(.hub-liquid-root) .lkv-nav-surface[data-optical='true'] .lkv-material-bar::before {
+  content: none;
+}
+
+body:has(.hub-liquid-root) .lkv-nav-refraction {
+  pointer-events: none !important;
+}
+
+/* Le composant ne sert ici que de materiau : son wrapper de contenu vide ne
+   doit pas creer de boite de layout supplementaire. */
+body:has(.hub-liquid-root) .lkv-nav-refraction > div {
+  display: none !important;
+}
+
+/* La teinte du composant est un quasi-noir transparent : elle absorbe le
+   vert du design system et laisse passer la photo. */
+body:has(.hub-liquid-root) .lkv-nav-surface[data-optical='true'] .lkv-nav-refraction > span > span:last-of-type {
+  background: rgba(16, 16, 16, 0.14) !important;
+}
+
+body:has(.hub-liquid-root) .lkv-nav-surface[data-optical='true'] .lkv-nav-refraction > span {
+  box-shadow: none !important;
+}
+
+/* La lentille active ne doit jamais capter le pointeur. */
+body:has(.hub-liquid-root) .lkv-nav-active-lens {
+  pointer-events: none;
+}
+
+/* Lentille active : le verre clair d Apple Music — un cercle de verre
+   surexpose, pas une capsule opaque. */
+.lkv-nav-active-lens {
+  background:
+    radial-gradient(circle at 34% 14%, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0.1) 54%),
+    rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.34);
+  box-shadow:
+    inset 0 0 0 0.5px rgba(255, 255, 255, 0.45),
+    inset 0 1px 2px rgba(255, 255, 255, 0.5),
+    0 6px 14px rgba(0, 0, 0, 0.14);
+  -webkit-backdrop-filter: blur(8px) saturate(220%) brightness(1.08);
+  backdrop-filter: blur(8px) saturate(220%) brightness(1.08);
+}
+
+body:has(.hub-liquid-root) .lkv-nav-surface[data-optical='true'] .lkv-nav-active-lens {
+  background:
+    radial-gradient(circle at 34% 12%, rgba(255, 255, 255, 0.46), rgba(255, 255, 255, 0.12) 50%),
+    rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.4);
+  box-shadow:
+    inset 0 0 0 0.5px rgba(255, 255, 255, 0.5),
+    inset 0 1px 2px rgba(255, 255, 255, 0.6),
+    0 8px 18px rgba(0, 0, 0, 0.16);
+  -webkit-backdrop-filter: blur(8px) saturate(225%) brightness(1.1);
+  backdrop-filter: blur(8px) saturate(225%) brightness(1.1);
+}
+
+/* ── Grandes surfaces : verre tres transmissif ──────────────────────────── */
+
+.hub-content-material {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background:
+    linear-gradient(0deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.04)),
+    rgba(16, 16, 16, 0.28) !important;
+  background-blend-mode: normal !important;
+  background-blend-mode: luminosity, plus-lighter;
+  border: 1px solid transparent !important;
+  box-shadow: var(--hub-glass-shadow) !important;
+  -webkit-backdrop-filter: blur(22px) saturate(200%) brightness(1.04);
+  backdrop-filter: blur(22px) saturate(200%) brightness(1.04);
+}
+
+.hub-content-material::before {
+  content: none;
+}
+
+/* Liseré spéculaire : bord haut allume, bord bas dans l'ombre. C'est ce qui
+   donne au materiau son epaisseur et le detache du fond. */
+.hub-content-material::after,
+.hub-control-material::after,
+.hub-section-control::after,
+.hub-chip-control::after,
+.hub-control-lens::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  pointer-events: none;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.34) 0%,
+    rgba(255, 255, 255, 0.06) 26%,
+    rgba(255, 255, 255, 0) 62%,
+    rgba(0, 0, 0, 0.22) 100%
+  );
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  mask-composite: exclude;
+}
+
+/* Les boutons/etats internes restent du verre leger, pas des aplats blancs. */
+.hub-content-material :is(button, [role='status']) {
+  background:
+    linear-gradient(0deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.04)),
+    rgba(16, 16, 16, 0.22) !important;
+  background-blend-mode: luminosity, plus-lighter;
+  border: 1px solid transparent;
+  /* Rim attenue : le rim plein du kit sur un element de cette taille se lit
+     comme un champ de formulaire. On garde la presence du liseré, pas son
+     intensite. */
+  box-shadow:
+    0 0 0 0.5px rgba(204, 204, 204, 0.3),
+    0 6px 12px rgba(0, 0, 0, 0.06);
+  color: var(--hub-white) !important;
+}
+
+/* ── Controles compacts : verre fin, meme rim ────────────────────────────── */
+
+.hub-control-material {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background:
+    linear-gradient(0deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.04)),
+    rgba(16, 16, 16, 0.24) !important;
+  background-blend-mode: normal !important;
+  background-blend-mode: luminosity, plus-lighter;
+  border: 1px solid transparent !important;
+  box-shadow: var(--hub-glass-shadow) !important;
+  -webkit-backdrop-filter: blur(18px) saturate(200%) brightness(1.05);
+  backdrop-filter: blur(18px) saturate(200%) brightness(1.05);
+}
+
+.hub-section-control {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background:
+    linear-gradient(0deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.04)),
+    rgba(16, 16, 16, 0.22) !important;
+  background-blend-mode: normal !important;
+  background-blend-mode: luminosity, plus-lighter;
+  border: 1px solid transparent !important;
+  box-shadow: var(--hub-glass-shadow) !important;
+  -webkit-backdrop-filter: blur(16px) saturate(200%) brightness(1.05);
+  backdrop-filter: blur(16px) saturate(200%) brightness(1.05);
+}
+
+.hub-section-control--accent {
+  background:
+    linear-gradient(0deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.06)),
+    rgba(16, 16, 16, 0.34) !important;
+}
+
+.hub-chip-control {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background:
+    linear-gradient(0deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.04)),
+    rgba(16, 16, 16, 0.2) !important;
+  background-blend-mode: normal !important;
+  background-blend-mode: luminosity, plus-lighter;
+  border: 1px solid transparent !important;
+  box-shadow: var(--hub-glass-shadow) !important;
+  -webkit-backdrop-filter: blur(16px) saturate(200%) brightness(1.06);
+  backdrop-filter: blur(16px) saturate(200%) brightness(1.06);
+}
+
+.hub-control-lens {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  border: 1px solid transparent !important;
+  background:
+    radial-gradient(circle at 32% 12%, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.07) 54%),
+    rgba(255, 255, 255, 0.04) !important;
+  box-shadow: var(--hub-glass-shadow) !important;
+  -webkit-backdrop-filter: blur(14px) saturate(215%) brightness(1.08);
+  backdrop-filter: blur(14px) saturate(215%) brightness(1.08);
+}
+
+/* Glyphe de tuile : l'icone flotte directement sur le verre de la tuile,
+   sans lentille ni fond (demande explicite). */
+.hub-tile-glyph {
+  position: relative;
+  isolation: isolate;
+  background: none;
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+
+.hub-tile-glyph::after {
+  content: none;
+}
+
+/* L'action primaire reste un controle en verre, mais plus dense : c'est le
+   seul element ou le materiau se concentre pour porter le geste. */
+.hub-liquid-action {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background:
+    linear-gradient(0deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.1)),
+    rgba(16, 16, 16, 0.34) !important;
+  background-blend-mode: normal !important;
+  background-blend-mode: luminosity, plus-lighter;
+  border: 1px solid transparent !important;
+  box-shadow: var(--hub-glass-shadow) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(200%) brightness(1.06);
+  backdrop-filter: blur(20px) saturate(200%) brightness(1.06);
+  color: #fff !important;
+}
+
+/* ── Icones : symbols du kit, pas du blanc brut ─────────────────────────── */
+
+body:has(.hub-liquid-root)
+  :is(.hub-content-material, .hub-control-material, .hub-section-control, .hub-chip-control, .hub-control-lens, .hub-tile-glyph)
+  :is(svg, svg *),
+body:has(.hub-liquid-root)
+  :is(.hub-content-material, .hub-control-material, .hub-section-control, .hub-chip-control, .hub-control-lens, .hub-tile-glyph)
+  [class*='lucide'],
+body:has(.hub-liquid-root)
+  :is(.hub-content-material, .hub-control-material, .hub-section-control, .hub-chip-control, .hub-control-lens, .hub-tile-glyph)
+  [class*='heroicon'],
+body:has(.hub-liquid-root)
+  :is(.hub-content-material, .hub-control-material, .hub-section-control, .hub-chip-control, .hub-control-lens, .hub-tile-glyph)
+  [class*='Icon'] {
+  color: var(--hub-symbol) !important;
+  stroke: currentColor;
+}
+
+/* Les icones d'action secondaire prennent le niveau vibrancy intermediate. */
+body:has(.hub-liquid-root)
+  :is(.hub-chip-control, .hub-control-lens)
+  :is(svg, svg *, [class*='lucide'], [class*='heroicon'], [class*='Icon']) {
+  color: var(--hub-white-secondary) !important;
+}
+
+/* Les glyphes masques (pack PNG) sont peints en background-color par le
+   composant Icon : il faut neutraliser la couleur inline heritee du theme. */
+body:has(.hub-liquid-root)
+  :is(.hub-content-material, .hub-control-material, .hub-section-control, .hub-chip-control, .hub-control-lens, .hub-liquid-action)
+  span[style*='-webkit-mask-image'] {
+  color: var(--hub-symbol) !important;
+  background-color: var(--hub-symbol) !important;
+  mix-blend-mode: plus-lighter;
+  opacity: 0.9;
+}
+
+/* ── Accessibilite des preferences systeme ──────────────────────────────── */
+
+body:has(.hub-liquid-root) :is(.hub-content-material, .hub-control-material, .hub-section-control, .hub-chip-control, .hub-control-lens, button, a):focus-visible {
+  outline: 2px solid #ffffff;
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
+  body:has(.hub-liquid-root) :is(.hub-content-material, .hub-control-material, .hub-section-control, .hub-chip-control, .hub-control-lens) {
+    background: var(--hub-opaque-fallback) !important;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2) !important;
+  }
+
+  body:has(.hub-liquid-root) .lkv-nav-surface[data-optical='true'] .lkv-nav-refraction {
+    display: none !important;
+  }
+
+  body:has(.hub-liquid-root) .lkv-nav-surface[data-optical='true'] .lkv-material-bar {
+    background: #101010 !important;
+    border: 1px solid rgba(204, 204, 204, 0.4) !important;
+    box-shadow: none !important;
+  }
+
+  body:has(.hub-liquid-root) .lkv-nav-surface[data-optical='true'] .lkv-nav-active-lens {
+    background: rgba(255, 255, 255, 0.16) !important;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+  }
+}
+
+@media (forced-colors: active) {
+  body:has(.hub-liquid-root) :is(.hub-content-material, .hub-control-material, .hub-section-control, .hub-chip-control, .hub-control-lens) {
+    background: Canvas !important;
+    color: CanvasText !important;
+    border-color: CanvasText !important;
+    box-shadow: none !important;
+  }
+
+  body:has(.hub-liquid-root) .lkv-nav-surface[data-optical='true'] .lkv-nav-tab--optical {
+    color: CanvasText !important;
+  }
+}
+
+/* ── Recette de blend du kit ──────────────────────────────────────────────
+   Le kit Figma exporte « luminosity, plus-lighter ». Chromium n'implemente
+   pas `plus-lighter` pour background-blend-mode (uniquement pour
+   mix-blend-mode) : la declaration y est invalide et toute la liste est
+   rejetee. On redonne donc `normal` — sans effet visuel ici, le voile du kit
+   etant un blanc plat a 4 % — puis on laisse la recette d'Apple s'appliquer
+   sur les moteurs qui savent la traiter. */
+
+@supports (background-blend-mode: plus-lighter) {
+  body:has(.hub-liquid-root) .hub-content-material,
+  body:has(.hub-liquid-root) .hub-control-material,
+  body:has(.hub-liquid-root) .hub-section-control,
+  body:has(.hub-liquid-root) .hub-chip-control,
+  body:has(.hub-liquid-root) .hub-liquid-action,
+  body:has(.hub-liquid-root) .lkv-nav-surface[data-optical='true'] .lkv-material-bar {
+    background-blend-mode: luminosity, plus-lighter !important;
+  }
+}
+
+/* ── Tiroirs lateraux droit (Hub mobile) ──────────────────────────────
+   Les cartes « etat », « ma progression » et « cockpit aventure » ne sont
+   plus empilees dans le flux : elles deviennent trois poignees de verre
+   collees au bord droit, qui ouvrent un panneau de verre ancre a droite.
+   Meme materiau que le reste du hub (base #101010, voile blanc 4 %, rim du
+   kit), meme blanc, meme easing que le Sheet. */
+
+.hub-edge-trigger {
+  position: fixed;
+  right: 0;
+  z-index: var(--z-drawer);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  width: 52px;
+  min-height: 58px;
+  padding: 8px 4px;
+  transform: translateY(-50%);
+  border: 1px solid transparent;
+  border-right: 0;
+  border-radius: 22px 0 0 22px;
+  color: var(--hub-white);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  background:
+    linear-gradient(0deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.04)),
+    rgba(16, 16, 16, 0.24) !important;
+  background-blend-mode: normal !important;
+  background-blend-mode: luminosity, plus-lighter;
+  box-shadow:
+    1.25px 0 0 -0.75px rgba(208, 208, 208, 0.9),
+    -1.25px 0 0 -0.75px rgba(208, 208, 208, 0.9),
+    0 0 0 0.5px rgba(204, 204, 204, 0.55),
+    0 8px 15px rgba(0, 0, 0, 0.12);
+  -webkit-backdrop-filter: blur(18px) saturate(200%) brightness(1.05);
+  backdrop-filter: blur(18px) saturate(200%) brightness(1.05);
+  transition: transform 140ms var(--ease-glass), background-color 140ms var(--lkv-ease);
+}
+
+.hub-edge-trigger:active {
+  transform: translateY(-50%) scale(0.96);
+}
+
+.hub-edge-trigger:focus-visible {
+  outline: 2px solid #ffffff;
+  outline-offset: 2px;
+}
+
+.hub-edge-trigger__label {
+  font-size: 9px;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--hub-white-secondary);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+  white-space: nowrap;
+}
+
+.hub-edge-trigger--top { top: 32%; }
+.hub-edge-trigger--mid { top: 50%; }
+.hub-edge-trigger--bottom { top: 68%; }
+
+.hub-edge-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-sheet);
+  background: rgba(8, 10, 9, 0.26);
+  -webkit-backdrop-filter: blur(3px) saturate(115%);
+  backdrop-filter: blur(3px) saturate(115%);
+  animation: hub-edge-fade var(--motion-control-duration) var(--lkv-ease) both;
+}
+
+.hub-edge-overlay[data-state='closed'] {
+  animation: hub-edge-fade var(--motion-control-duration) var(--lkv-ease) reverse both;
+}
+
+.hub-edge-panel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: calc(var(--z-sheet) + 1);
+  width: min(88vw, 400px);
+  max-width: 100%;
+  outline: none;
+  color: var(--hub-white);
+  animation: hub-edge-in var(--motion-control-duration) var(--ease-glass) both;
+}
+
+.hub-edge-panel[data-state='closed'] {
+  animation: hub-edge-in var(--motion-control-duration) var(--ease-glass) reverse both;
+}
+
+.hub-edge-panel__surface {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+  border-radius: 28px 0 0 28px;
+  background:
+    linear-gradient(0deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.04)),
+    rgba(16, 16, 16, 0.36);
+  background-blend-mode: normal;
+  background-blend-mode: luminosity, plus-lighter;
+  box-shadow:
+    inset 1px 0 0 -0.5px rgba(208, 208, 208, 0.9),
+    inset 0 0 0 0.5px rgba(204, 204, 204, 0.4),
+    -18px 0 44px rgba(0, 0, 0, 0.3);
+  -webkit-backdrop-filter: blur(30px) saturate(200%) brightness(1.04);
+  backdrop-filter: blur(30px) saturate(200%) brightness(1.04);
+}
+
+.hub-edge-panel__grip {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  cursor: grab;
+  touch-action: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.hub-edge-panel__grip:active { cursor: grabbing; }
+
+.hub-edge-panel__grip-bar {
+  width: 4px;
+  height: 44px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.28);
+}
+
+.hub-edge-panel__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: calc(var(--safe-top) + 18px) 18px 14px 34px;
+}
+
+.hub-edge-panel__title {
+  font-size: 20px;
+  font-weight: 590;
+  line-height: 1.2;
+  letter-spacing: -0.23px;
+  color: var(--hub-white);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
+}
+
+.hub-edge-panel__desc {
+  margin-top: 4px;
+  font-size: 13px;
+  line-height: 1.3;
+  color: var(--hub-white-secondary);
+}
+
+.hub-edge-panel__close {
+  display: flex;
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  color: var(--hub-white);
+  background: rgba(255, 255, 255, 0.08);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  transition: transform 140ms var(--ease-glass), background-color 140ms var(--lkv-ease);
+}
+
+.hub-edge-panel__close:active { transform: scale(0.92); }
+.hub-edge-panel__close:focus-visible { outline: 2px solid #ffffff; outline-offset: 2px; }
+
+.hub-edge-panel__body {
+  min-height: 0;
+  flex: 1;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 2px 18px calc(var(--safe-bottom) + 104px) 34px;
+}
+
+@keyframes hub-edge-in {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+
+@keyframes hub-edge-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hub-edge-panel,
+  .hub-edge-panel[data-state='closed'],
+  .hub-edge-overlay,
+  .hub-edge-overlay[data-state='closed'] {
+    animation: none;
+  }
+}
+
+@media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
+  .hub-edge-trigger,
+  .hub-edge-panel__surface {
+    background: #101010 !important;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+  }
+}
+
+
+/* ── Carte du Hub : moteur Atlas + itinéraire réel + POI extensibles ────── */
+
+.hub-map-card {
+  background: #0b0f0d;
+  isolation: isolate;
+}
+
+.hub-map-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  border-radius: inherit;
+  box-shadow: inset 0 0 0 0.5px rgba(255, 255, 255, 0.34);
+}
+
+.hub-map-card__eyebrow,
+.hub-map-card__badge,
+.hub-map-card__date {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(16, 16, 16, 0.34);
+  -webkit-backdrop-filter: blur(18px) saturate(190%) brightness(1.05);
+  backdrop-filter: blur(18px) saturate(190%) brightness(1.05);
+  box-shadow: var(--hub-glass-shadow);
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.48);
+}
+
+.hub-map-card__eyebrow {
+  border-radius: 999px;
+  padding: 5px 10px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.hub-map-card__badge {
+  margin-top: 6px;
+  border-radius: 999px;
+  padding: 5px 10px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.hub-map-card__date {
+  flex-shrink: 0;
+  border-radius: 999px;
+  padding: 5px 10px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.hub-map-card__panel {
+  max-width: 31rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 22px;
+  padding: 14px;
+  color: var(--hub-white);
+  background:
+    linear-gradient(0deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.04)),
+    rgba(16, 16, 16, 0.3);
+  background-blend-mode: luminosity, plus-lighter;
+  box-shadow:
+    inset 1px 0 0 -0.5px rgba(208, 208, 208, 0.72),
+    inset 0 0 0 0.5px rgba(204, 204, 204, 0.28),
+    0 12px 34px rgba(0, 0, 0, 0.18);
+  -webkit-backdrop-filter: blur(26px) saturate(205%) brightness(1.05);
+  backdrop-filter: blur(26px) saturate(205%) brightness(1.05);
+}
+
+.hub-map-card__panel :is(p, span, li) {
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.42);
+}
+
+.hub-map-card__legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.hub-map-card__legend li {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 28px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 999px;
+  padding: 4px 9px;
+  color: rgba(255, 255, 255, 0.84);
+  background: rgba(255, 255, 255, 0.08);
+  font-size: 10.5px;
+  font-weight: 600;
+}
+
+.hub-map-card__cta {
+  display: inline-flex;
+  width: 44px;
+  height: 44px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 999px;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.12);
+  box-shadow: var(--hub-glass-shadow);
+  -webkit-backdrop-filter: blur(18px) saturate(210%);
+  backdrop-filter: blur(18px) saturate(210%);
+  transition: transform 140ms var(--ease-glass), background-color 140ms var(--lkv-ease);
+}
+
+.hub-map-card__cta:active {
+  transform: scale(0.94);
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.hub-globe-map {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 20rem;
+  overflow: hidden;
+  background: #0b0f0d;
+}
+
+.hub-globe-map [data-testid='unified-explorer-map'] {
+  position: absolute;
+  inset: 0;
+}
+
+.hub-globe-map__loading,
+.hub-globe-map__empty {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  color: rgba(255, 255, 255, 0.78);
+  background: rgba(16, 16, 16, 0.44);
+  font-size: 12px;
+  font-weight: 600;
+  pointer-events: none;
+}
+
+.hub-globe-map__loading-orb {
+  width: 18px;
+  height: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-top-color: #fff;
+  border-radius: 999px;
+  animation: hub-globe-spin 900ms linear infinite;
+}
+
+@keyframes hub-globe-spin {
+  to { transform: rotate(360deg); }
+}
+
+.hub-globe-poi-rail {
+  position: absolute;
+  z-index: 5;
+  top: calc(var(--safe-top) + 4.5rem);
+  left: 12px;
+  right: 12px;
+  display: flex;
+  gap: 7px;
+  overflow-x: auto;
+  padding: 2px 2px 8px;
+  scrollbar-width: none;
+  overscroll-behavior-x: contain;
+  pointer-events: none;
+}
+
+.hub-globe-poi-rail::-webkit-scrollbar { display: none; }
+
+.hub-globe-poi-chip {
+  display: inline-flex;
+  min-height: 40px;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 6px;
+  max-width: 11rem;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 999px;
+  padding: 7px 11px;
+  color: rgba(255, 255, 255, 0.9);
+  background: rgba(16, 16, 16, 0.32);
+  box-shadow: var(--hub-glass-shadow);
+  -webkit-backdrop-filter: blur(18px) saturate(200%) brightness(1.06);
+  backdrop-filter: blur(18px) saturate(200%) brightness(1.06);
+  font-size: 11px;
+  font-weight: 650;
+  white-space: nowrap;
+  pointer-events: auto;
+  transition: transform 140ms var(--ease-glass), background-color 140ms var(--lkv-ease);
+}
+
+.hub-globe-poi-chip span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.hub-globe-poi-chip__dot {
+  width: 6px;
+  height: 6px;
+  flex: 0 0 auto;
+  border-radius: 999px;
+  box-shadow: 0 0 8px currentColor;
+}
+
+.hub-globe-poi-chip[aria-pressed='true'] {
+  color: #101010;
+  background: rgba(255, 255, 255, 0.88);
+}
+
+.hub-globe-poi-chip:active { transform: scale(0.96); }
+
+.hub-globe-poi-card {
+  position: absolute;
+  z-index: 6;
+  top: calc(var(--safe-top) + 9.6rem);
+  right: 12px;
+  width: min(15.5rem, calc(100% - 24px));
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 18px;
+  color: #fff;
+  background: rgba(16, 16, 16, 0.34);
+  box-shadow: var(--hub-glass-shadow);
+  -webkit-backdrop-filter: blur(24px) saturate(205%) brightness(1.06);
+  backdrop-filter: blur(24px) saturate(205%) brightness(1.06);
+}
+
+.hub-globe-poi-card__main {
+  display: flex;
+  width: 100%;
+  min-height: 56px;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 38px 9px 10px;
+  color: inherit;
+  text-align: left;
+}
+
+.hub-globe-poi-card__icon {
+  display: inline-flex;
+  width: 34px;
+  height: 34px;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  /* Icône posée sur le verre : aucun fond ni contour derrière le glyphe. */
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+}
+
+.hub-globe-poi-card__details {
+  padding: 0 12px 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.76);
+  font-size: 11.5px;
+  line-height: 1.4;
+}
+
+.hub-globe-poi-card__details p { margin: 10px 0 0; }
+
+.hub-globe-poi-card__route {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: rgba(255, 255, 255, 0.58);
+}
+
+.hub-globe-poi-card__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.hub-globe-poi-card__meta span {
+  display: inline-flex;
+  min-height: 24px;
+  align-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 999px;
+  padding: 0 9px;
+  color: rgba(255, 255, 255, 0.82);
+  background: rgba(255, 255, 255, 0.08);
+  font-size: 10px;
+  font-weight: 650;
+}
+
+.hub-globe-poi-card__close {
+  position: absolute;
+  top: 7px;
+  right: 7px;
+  display: inline-flex;
+  width: 32px;
+  height: 32px;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 999px;
+  color: rgba(255, 255, 255, 0.72);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* ── Progression condensée dans le tiroir POINTS ─────────────────────────── */
+
+.hub-progression-drawer {
+  --lkv-text-primary: #ffffff;
+  --lkv-text-secondary: rgba(255, 255, 255, 0.72);
+  --lkv-text-muted: rgba(255, 255, 255, 0.54);
+  --lkv-primary: #ffffff;
+  --card-content: #ffffff;
+}
+
+.hub-progression-drawer .glass,
+.hub-progression-drawer :is(.rounded-2xl, .rounded-3xl) {
+  border-color: rgba(255, 255, 255, 0.14) !important;
+  background-color: rgba(255, 255, 255, 0.07) !important;
+  box-shadow: none;
+}
+
+.hub-progression-drawer :is(button, a):focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.92);
+  outline-offset: 2px;
+}
+
+.hub-progression-drawer [role='progressbar'] {
+  background: rgba(255, 255, 255, 0.1) !important;
+}
+
+.hub-progression-drawer [role='progressbar'] > div {
+  background: rgba(255, 255, 255, 0.82) !important;
+}
+
+@media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
+  .hub-map-card__panel,
+  .hub-globe-poi-chip,
+  .hub-globe-poi-card,
+  .hub-map-card__eyebrow,
+  .hub-map-card__badge,
+  .hub-map-card__date {
+    background: #101010 !important;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+  }
+}

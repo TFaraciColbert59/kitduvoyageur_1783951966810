@@ -16,12 +16,6 @@ function chipClasses(tone: MobileInfoChip['tone']): string {
   return 'glass-sub-card bg-[color:var(--glass-bg-medium)] bg-[color:var(--card-tint-solid)] text-[var(--lkv-text-primary)]';
 }
 
-function bubbleClasses(tone: MobileInfoChip['tone']): string {
-  if (tone === 'warn') return 'border-[var(--lkv-danger)]/20 bg-[color:var(--glass-bg-medium)] text-[var(--lkv-danger)]';
-  if (tone === 'accent') return 'border-[var(--lkv-primary)]/15 bg-[color:var(--glass-bg-medium)] text-[var(--lkv-primary)]';
-  return 'border-[color:var(--glass-border-color)] bg-[color:var(--btn-tint)] bg-[color:var(--card-tint-solid)] text-[var(--lkv-text-primary)]';
-}
-
 export function InfoChipsRow({ chips, label = 'Informations clés' }: InfoChipsRowProps) {
   if (chips.length === 0) return null;
 
@@ -35,11 +29,7 @@ export function InfoChipsRow({ chips, label = 'Informations clés' }: InfoChipsR
           const Icon = chip.icon;
           const content = (
             <>
-              <span
-                className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full border ${bubbleClasses(chip.tone)}`}
-              >
-                <Icon size={14} aria-hidden="true" />
-              </span>
+              <Icon size={15} strokeWidth={2.25} className="shrink-0" aria-hidden="true" />
               <span className="min-w-0 leading-tight">
                 <span className="block truncate text-[13px] font-extrabold tabular-nums">{chip.value}</span>
                 <span className="block max-w-[10rem] truncate text-[9px] font-medium uppercase tracking-[0.12em] text-[color:var(--lkv-text-secondary)]">
@@ -48,7 +38,7 @@ export function InfoChipsRow({ chips, label = 'Informations clés' }: InfoChipsR
               </span>
             </>
           );
-          const classes = `flex min-h-[44px] items-center gap-2 rounded-2xl px-3 py-2 ${chipClasses(chip.tone)}`;
+          const classes = `hub-chip-control flex min-h-[44px] items-center gap-2 rounded-2xl px-3 py-2 ${chipClasses(chip.tone)}`;
           return (
             <li key={chip.key} className="shrink-0">
               {chip.href ? (

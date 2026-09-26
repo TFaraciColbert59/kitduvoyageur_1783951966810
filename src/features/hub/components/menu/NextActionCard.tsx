@@ -104,20 +104,18 @@ export function NextActionCard({ actions, checklist, variant = 'default' }: Next
       <div
         className={`flex items-center transition-transform active:scale-[0.99] ${
           compact ? 'gap-3 rounded-[var(--lkv-radius-md)] p-3' : 'gap-3.5 rounded-[var(--lkv-radius-lg)] p-4'
-        } min-h-[44px] ${
-          isAllClear
-            ? 'glass'
-            : 'lkv-glass lkv-glass-interactive'
+        } min-h-[44px] ${compact ? 'hub-control-material' : 'hub-content-material'} ${
+          isAllClear ? '' : 'lkv-glass-interactive'
         }`}
         style={reduceMotion ? undefined : { transition: 'transform 0.15s ease' }}
       >
         <span
-          className={`flex shrink-0 items-center justify-center rounded-full border ${
+          className={`hub-control-lens flex shrink-0 items-center justify-center rounded-full border ${
             compact ? 'h-9 w-9' : 'h-11 w-11'
           } ${
             isAllClear
-              ? 'border-white/60 bg-white/70 text-[var(--lkv-secondary)]'
-              : 'border border-[color:var(--glass-border)] bg-[color:var(--glass-bg-medium)] text-[color:var(--lkv-text-primary)]'
+              ? 'text-[var(--lkv-secondary)]'
+              : 'text-[color:var(--lkv-text-primary)]'
           }`}
         >
           <Icon size={compact ? 16 : 19} aria-hidden="true" />

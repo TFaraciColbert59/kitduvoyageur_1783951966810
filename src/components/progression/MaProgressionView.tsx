@@ -20,6 +20,7 @@ import {
 interface MaProgressionViewProps {
   initialProfile?: UserProgressionProfile;
   compact?: boolean;
+  presentation?: 'page' | 'drawer';
 }
 
 type TFn = LocaleContextValue['t'];
@@ -104,11 +105,31 @@ function ProgressionSection({
   title,
   summary,
   children,
+  forceOpen = false,
 }: {
   title: string;
   summary: string;
   children: React.ReactNode;
+  forceOpen?: boolean;
 }) {
+  const body = <div className="border-t border-black/5 p-4 pt-3 sm:p-5 sm:pt-3">{children}</div>;
+
+  if (forceOpen) {
+    return (
+      <section className="glass overflow-hidden rounded-3xl border border-white/70 shadow-sm">
+        <div className="flex min-h-[44px] items-center gap-3 p-4 sm:p-5">
+          <span className="min-w-0">
+            <span className="block font-display text-base font-bold text-[var(--lkv-text-primary)]">
+              {title}
+            </span>
+            <span className="mt-0.5 block text-xs text-[var(--lkv-text-secondary)]">{summary}</span>
+          </span>
+        </div>
+        {body}
+      </section>
+    );
+  }
+
   return (
     <details className="glass group rounded-3xl border border-white/70 shadow-sm">
       <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-3 rounded-3xl p-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)] sm:p-5 [&::-webkit-details-marker]:hidden">
@@ -170,7 +191,12 @@ function SummaryChip({
   );
 }
 
-export default function MaProgressionView({ initialProfile, compact = false }: MaProgressionViewProps) {
+export default function MaProgressionView({
+  initialProfile,
+  compact = false,
+  presentation = 'page',
+}: MaProgressionViewProps) {
+  const isDrawer = presentation === 'drawer';
   const { triggerHaptic } = useHapticFeedback();
   const { t, locale } = useTranslation();
   const [profile, setProfile] = useState<UserProgressionProfile | null>(initialProfile || null);
@@ -455,7 +481,7 @@ export default function MaProgressionView({ initialProfile, compact = false }: M
 
   return (
     <div
-      className={`w-full space-y-4 font-sans text-[var(--lkv-text-primary)] ${compact ? '' : 'sm:space-y-5'}`}
+      className={`w-full font-sans text-[var(--lkv-text-primary)] ${isDrawer ? 'hub-progression-drawer space-y-3' : `space-y-4 ${compact ? '' : 'sm:space-y-5'}`}`}
     >
       {/* ── (a) EN-TÊTE COMPACT : Points cumulés, points de saison, niveau + titre ── */}
       <section className="glass relative overflow-hidden rounded-3xl border border-white/70 p-4 shadow-sm sm:p-5">
@@ -477,17 +503,21 @@ export default function MaProgressionView({ initialProfile, compact = false }: M
               )}
             </div>
             <div className="min-w-0">
-              <h1 className="truncate font-display text-xl font-extrabold tracking-tight text-[var(--lkv-text-primary)] sm:text-2xl">
-                {hasData
-                  ? profile.level.title ?? `${t('progression.level')} ${profile.level.level}`
-                  : t('progression.title')}
-              </h1>
-              <p className="text-xs font-medium text-[var(--lkv-text-secondary)]">
-                {hasData
-                  ? `${t('progression.level')} ${profile.level.level}`
-                  : t('progression.noData')}
-                {hasData && profile.displayName ? ` · ${profile.displayName}` : ''}
-              </p>
+              {!isDrawer ? (
+                <>
+                  <h1 className="truncate font-display text-xl font-extrabold tracking-tight text-[var(--lkv-text-primary)] sm:text-2xl">
+                    {hasData
+                      ? profile.level.title ?? `${t('progression.level')} ${profile.level.level}`
+                      : t('progression.title')}
+                  </h1>
+                  <p className="text-xs font-medium text-[var(--lkv-text-secondary)]">
+                    {hasData
+                      ? `${t('progression.level')} ${profile.level.level}`
+                      : t('progression.noData')}
+                    {hasData && profile.displayName ? ` · ${profile.displayName}` : ''}
+                  </p>
+                </>
+              ) : null}
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -636,6 +666,7 @@ export default function MaProgressionView({ initialProfile, compact = false }: M
       {/* ── (c) SECTIONS DÉTAILLÉES — repliées par défaut ── */}
 
       <ProgressionSection
+        forceOpen={isDrawer}
         title={t('progression.leaderboard')}
         summary={
           leaderboard
@@ -761,6 +792,7 @@ export default function MaProgressionView({ initialProfile, compact = false }: M
       </ProgressionSection>
 
       <ProgressionSection
+        forceOpen={isDrawer}
         title={t('progression.challenges')}
         summary={
           challenge
@@ -847,6 +879,7 @@ export default function MaProgressionView({ initialProfile, compact = false }: M
       </ProgressionSection>
 
       <ProgressionSection
+        forceOpen={isDrawer}
         title={t('progression.distinctions')}
         summary={
           distinctions.status === 'ready'
@@ -905,6 +938,7 @@ export default function MaProgressionView({ initialProfile, compact = false }: M
       </ProgressionSection>
 
       <ProgressionSection
+        forceOpen={isDrawer}
         title={t('progression.gainsHistory')}
         summary={
           gains.status === 'ready'

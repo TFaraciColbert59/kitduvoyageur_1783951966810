@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { ChevronRight, Flame, Target, Trophy } from 'lucide-react';
 import { Badge } from '@/components/ui';
+import MaProgressionView from './MaProgressionView';
 import type {
   TerritorialLeaderboard,
   UserProgressionProfile,
@@ -19,6 +20,7 @@ interface ProgressionCompactState {
 
 interface ProgressionCompactCardProps {
   className?: string;
+  variant?: 'card' | 'drawer';
 }
 
 /**
@@ -80,7 +82,10 @@ interface LeaderboardPayload {
  * inventé : `hasData=false` → état vide explicite, rang/défi absents → masqués.
  * La carte reste silencieuse (non montée) si l'API ne répond pas.
  */
-export function ProgressionCompactCard({ className = '' }: ProgressionCompactCardProps) {
+export function ProgressionCompactCard({
+  className = '',
+  variant = 'card',
+}: ProgressionCompactCardProps) {
   const [state, setState] = useState<ProgressionCompactState>({
     status: 'hidden',
     profile: null,
@@ -137,6 +142,14 @@ export function ProgressionCompactCard({ className = '' }: ProgressionCompactCar
     };
   }, []);
 
+  if (variant === 'drawer') {
+    return (
+      <div className={className}>
+        <MaProgressionView compact presentation="drawer" />
+      </div>
+    );
+  }
+
   if (state.status !== 'ready' || !state.profile) return null;
 
   const { profile, rank } = state;
@@ -150,7 +163,7 @@ export function ProgressionCompactCard({ className = '' }: ProgressionCompactCar
   return (
     <section aria-label="Progression" className={className}>
       <Link
-        href="/progression"
+        href="/compte#progression"
         className="block min-h-[44px] rounded-2xl border border-[color:var(--glass-border)] bg-[color:var(--card-tint-strong)] backdrop-blur-[var(--blur-md)] px-3.5 py-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lkv-focus-ring)]"
       >
         <span className="flex items-center gap-3">

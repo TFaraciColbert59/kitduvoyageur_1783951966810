@@ -1,0 +1,283 @@
+/* Préparateur de voyage — feuille de style scoped.
+   Tout le verre vient de liquid-glass.css (.glass, .glass-segmented, ...) :
+   ici on ne pose que la mise en page de l'écran et les pastilles. */
+
+.preparator {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 12px calc(12px + env(safe-area-inset-bottom));
+  max-width: 900px;
+  margin: 0 auto;
+  min-height: 100dvh;
+}
+
+.preparator__top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+}
+
+.preparator__back {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  border-radius: 999px;
+  color: var(--lkv-text-primary, #17402c);
+  background: color-mix(in srgb, var(--card-tint-strong, #fff) 70%, transparent);
+}
+
+.preparator__title {
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: -0.2px;
+  line-height: 1.2;
+  color: var(--lkv-text-primary, #17402c);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.preparator__sub {
+  font-size: 12px;
+  color: var(--lkv-text-secondary, #5a7064);
+}
+
+.preparator__score {
+  display: flex;
+  align-items: baseline;
+  gap: 1px;
+  flex-shrink: 0;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--card-tint-strong, #fff) 70%, transparent);
+}
+
+.preparator__score-value {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--lkv-text-primary, #17402c);
+}
+
+.preparator__score-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--lkv-text-secondary, #5a7064);
+}
+
+/* Carte : une seule surface, hauteur native, pas de couche supplementaire. */
+.preparator__map {
+  position: relative;
+  overflow: hidden;
+  padding: 0;
+  min-height: 260px;
+}
+
+.preparator__map .hub-globe-map {
+  min-height: 260px;
+  height: clamp(260px, 42vh, 380px);
+}
+
+.preparator__map-hint {
+  position: absolute;
+  left: 10px;
+  bottom: 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 9px;
+  border-radius: 999px;
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--lkv-text-secondary, #5a7064);
+  background: color-mix(in srgb, var(--card-tint-strong, #fff) 78%, transparent);
+  backdrop-filter: blur(var(--blur-sm, 8px));
+}
+
+.preparator__metrics {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.preparator__metric {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  padding: 8px 4px;
+  min-width: 0;
+}
+
+.preparator__metric-value {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--lkv-text-primary, #17402c);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.preparator__metric-label {
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--lkv-text-muted, #5a7064);
+}
+
+.preparator__tabs {
+  overflow-x: auto;
+  scrollbar-width: none;
+  scroll-snap-type: x proximity;
+  -webkit-overflow-scrolling: touch;
+}
+
+.preparator__tabs::-webkit-scrollbar {
+  display: none;
+}
+
+/* 6 onglets sur 402px : les libelles ne doivent jamais etre comprimes
+   ni coupes (ils defilent, l onglet actif est centre par le JS). */
+.preparator__tabs .glass-segmented-item {
+  flex: 0 0 auto;
+  white-space: nowrap;
+  scroll-snap-align: center;
+}
+
+.preparator__tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.preparator__panel {
+  min-height: 320px;
+}
+
+.preparator__panel-card {
+  padding: 12px 14px;
+}
+
+.preparator__panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.preparator__panel-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--lkv-text-primary, #17402c);
+}
+
+.preparator__panel-count {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--lkv-text-muted, #5a7064);
+}
+
+.preparator__row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 11px;
+}
+
+.preparator__row-title {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--lkv-text-primary, #17402c);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.preparator__day {
+  flex-shrink: 0;
+  padding: 1px 6px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--lkv-text-secondary, #5a7064);
+  background: color-mix(in srgb, var(--lkv-primary, #17402c) 10%, transparent);
+}
+
+.preparator__row-sub {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: var(--lkv-text-muted, #5a7064);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.preparator__cta {
+  width: auto;
+  min-width: 132px;
+  flex-shrink: 0;
+  padding: 6px 9px;
+}
+
+.preparator__empty {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 14px 4px;
+  font-size: 12.5px;
+  color: var(--lkv-text-muted, #5a7064);
+}
+
+/* Feuille de pose d'un point (tap carte). */
+.preparator__sheet {
+  position: fixed;
+  inset: auto 0 0 0;
+  z-index: 60;
+  display: flex;
+  justify-content: center;
+  padding: 12px 12px calc(12px + env(safe-area-inset-bottom));
+}
+
+.preparator__sheet-card {
+  width: 100%;
+  max-width: 420px;
+  padding: 14px;
+  animation: glass-anim-in 180ms ease-out;
+}
+
+@media (min-width: 640px) {
+  .preparator__sheet {
+    inset: 0;
+    align-items: center;
+    background: color-mix(in srgb, #05100a 32%, transparent);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .preparator__sheet-card {
+    animation: none;
+  }
+}
+
+/* Onglet equipement : l'assistant herite du flux compact du preparateur. */
+.preparator__kit {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-top: 4px;
+}

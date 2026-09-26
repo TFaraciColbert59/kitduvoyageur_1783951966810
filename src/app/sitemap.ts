@@ -19,7 +19,6 @@ const staticRoutes: Array<{
   { url: '/carnets', priority: 0.75, changeFrequency: 'daily' },
   { url: '/clubs', priority: 0.75, changeFrequency: 'weekly' },
   { url: '/communaute', priority: 0.7, changeFrequency: 'daily' },
-  { url: '/ai-configurator', priority: 0.7, changeFrequency: 'monthly' },
   { url: '/outils', priority: 0.65, changeFrequency: 'monthly' },
   { url: '/avis', priority: 0.65, changeFrequency: 'weekly' },
   { url: '/evenements', priority: 0.6, changeFrequency: 'weekly' },

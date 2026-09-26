@@ -58,7 +58,7 @@ export default function HomePage() {
                 </p>
                  <div className="flex flex-col sm:flex-row items-center gap-3 mb-6 min-[360px]:gap-4 min-[360px]:mb-8 sm:mb-14">
 
-                  <Link href="/ai-configurator" className="inline-flex w-full sm:w-auto">
+                  <Link href="/preparer?tab=equipement" className="inline-flex w-full sm:w-auto">
                     <Button
                       variant="primary"
                       size="lg"

@@ -24,7 +24,19 @@ export function HubSidebarActivities({ trips, activeSlug = null }: HubSidebarAct
   const router = useRouter();
   const { setActiveAdventure, isCurrentAdventure, getLastSection } = useActiveAdventure();
 
-  if (trips.length === 0) return null;
+  if (trips.length === 0) {
+    return (
+      <div className="flex h-full min-h-48 flex-col items-center justify-center px-4 text-center">
+        <span className="mb-3 flex size-12 items-center justify-center rounded-2xl bg-[var(--lkv-primary)]/10 text-[var(--lkv-primary)]">
+          <Icon name="compass" size={23} aria-hidden="true" />
+        </span>
+        <p className="text-sm font-semibold text-[var(--lkv-text-primary)]">Vos aventures, au même endroit</p>
+        <p className="mt-1 text-xs leading-relaxed text-[var(--lkv-text-secondary)]">
+          Créez une activité pour retrouver vos étapes, votre matériel et vos préparatifs.
+        </p>
+      </div>
+    );
+  }
 
   const open = async (t: HubUserTripLite): Promise<void> => {
     const ok = await setActiveAdventure({

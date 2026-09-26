@@ -1,7 +1,7 @@
 import React, { Suspense } from 'react';
 import type { Metadata, Viewport } from 'next';
 import { cookies, headers } from 'next/headers';
-import { Manrope, IBM_Plex_Mono, Instrument_Serif } from 'next/font/google';
+import { Manrope, IBM_Plex_Mono, Instrument_Serif, Inter } from 'next/font/google';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 import '@/styles/tokens.css';
 import '@/styles/tailwind.css';
@@ -59,6 +59,18 @@ const instrumentSerif = Instrument_Serif({
   display: 'swap',
   weight: ['400'],
   style: ['normal', 'italic'],
+  preload: false,
+});
+
+// Inter est le substitut le plus proche de SF Pro en dehors des plates-formes
+// Apple. Sur iOS/macOS, `-apple-system` resout SF Pro en amont et l empilement
+// ci-dessous ne sert donc jamais. Sur Windows/Linux, c est Inter qui paint,
+// ce qui evite la chute sur Segoe UI.
+const inter = Inter({
+  subsets: ['latin'],
+  variable: '--font-inter',
+  display: 'swap',
+  weight: ['400', '500', '600', '700', '800', '900'],
   preload: false,
 });
 
@@ -174,7 +186,7 @@ export default async function RootLayout({
     <html
       lang={locale}
       suppressHydrationWarning
-      className={`${manrope.variable} ${ibmPlexMono.variable}`}
+      className={`${manrope.variable} ${ibmPlexMono.variable} ${inter.variable}`}
     >
       <head>
         {/* Thème honnête : respect de prefers-color-scheme, surcharge
@@ -261,7 +273,7 @@ export default async function RootLayout({
         )}
       </head>
       <body
-        className={`${manrope.variable} ${ibmPlexMono.variable} ${instrumentSerif.variable} bg-transparent min-h-[100dvh]`}
+        className={`${manrope.variable} ${ibmPlexMono.variable} ${instrumentSerif.variable} ${inter.variable} bg-transparent min-h-[100dvh]`}
       >
         {/* Toile unique LKDV — fond d'écran de toutes les routes */}
         <div className="lkv-app-background" aria-hidden="true" />

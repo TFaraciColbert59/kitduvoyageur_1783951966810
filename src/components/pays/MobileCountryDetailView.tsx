@@ -93,7 +93,7 @@ export default function MobileCountryDetailView({
             type="button"
             onClick={() => {
               triggerHaptic('selection');
-              router.push(`/ai-configurator?country=${country.code}`);
+              router.push(`/preparer?tab=equipement&country=${country.code}`);
             }}
             className="glass-capsule-btn primary !min-h-[32px] !py-1 !px-3.5 !text-xs !font-bold !gap-1.5 shadow-sm active:scale-95 transition-all cursor-pointer"
           >
@@ -544,7 +544,7 @@ export default function MobileCountryDetailView({
               type="button"
               onClick={() => {
                 triggerHaptic('selection');
-                router.push(`/ai-configurator?country=${country.code}`);
+                router.push(`/preparer?tab=equipement&country=${country.code}`);
               }}
               className="w-full glass-capsule-btn primary !min-h-[38px] !py-2 !px-4 !text-xs !font-bold !gap-2 justify-center shadow-md"
             >

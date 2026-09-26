@@ -60,7 +60,7 @@ export function AdventureHubSection({
 
   return (
     <section
-      className={`lkv-appear rounded-[var(--lkv-radius-card)] bg-[var(--lkv-surface-card)] shadow-sm ${
+      className={`hub-content-material lkv-appear rounded-[var(--lkv-radius-card)] ${
         compact ? 'space-y-2.5 p-3' : 'space-y-3 p-4'
       } ${className}`}
       aria-label="Cockpit de l’aventure"
@@ -86,7 +86,7 @@ export function AdventureHubSection({
           <button
             type="button"
             onClick={onOpenCockpit}
-            className="min-h-[44px] shrink-0 rounded-full bg-[var(--lkv-primary)] px-4 text-[13px] font-semibold text-white active:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)]"
+            className="hub-liquid-action min-h-[44px] shrink-0 rounded-full px-4 text-[13px] font-semibold active:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lkv-primary)]"
           >
             Ouvrir
           </button>

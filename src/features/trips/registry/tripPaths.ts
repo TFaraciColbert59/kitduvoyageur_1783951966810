@@ -15,7 +15,9 @@ export function tripPath(slug: string): string {
 
 /** Chemin de création d'un voyage (wizard). */
 export function tripNewPath(): string {
-  return '/voyages/nouveau';
+  // La page /voyages/nouveau n'existe plus (hub unique) : la création réelle
+  // est /hub/nouveau, le hub qui porte le parcours de création.
+  return '/hub/nouveau';
 }
 
 /** Chemin complet d'une section par segment d'URL (ex: 'itineraire', 'kit', '' = racine). */
