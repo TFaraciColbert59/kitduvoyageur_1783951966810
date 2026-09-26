@@ -11,18 +11,22 @@ Dépôt : `C:\Users\Tony\Downloads\LKDV\kitduvoyageur_1783951966810`
 
 | Élément | Valeur |
 |---|---|
-| Branche courante | `chantier/2routes-p7-routing` |
-| `HEAD` | `7b51f67d` + commit W8 (ce rapport) |
-| `main` | `302ea16d` — **inchangée**, et c'est la base de fusion |
-| Avance sur `main` | **44 commits**, 0 derrière (fast-forward possible) |
-| Diff vs `main` | **588 fichiers, +55 632 / −2 766** |
-| Poussé sur une remote | **non** — `fatal: no upstream configured` |
-| PR ouverte | **non** |
-| Mergé dans `main` | **non** |
+| Branche de cloture | `chantier/2routes-closure`, creee depuis `2dc79707` dans un worktree isole |
+| Commit W8 | `2dc79707` - porte les 4 migrations du chantier, `.env.example` et ce rapport |
+| `main` local | `302ea16d` - **en retard de 33 commits** sur `origin/main` |
+| `origin/main` | `098a95eb` - PR #50 (`design/ios27-full-glass`), **deja mergee** |
+| Base de fusion reelle | `699f15e3` - et **non** `main` local |
+| Avance sur `origin/main` | **13 commits**, 1 derriere (le merge `098a95eb`, sans delta de contenu) |
+| Diff reel vs `origin/main` | **232 fichiers, +27 135 / -4 090** |
+| Pousse sur une remote | **non** au moment de la redaction |
+| PR ouverte | **non** au moment de la redaction |
+| Merge dans `main` | **non** |
 
 Rien n'a été poussé, aucune PR n'a été ouverte, `main` n'a pas été touché. Ces actions restent soumises à accord explicite (boundary AGENTS.md : les outils réseau sont en lecture seule par défaut).
 
-Les 44 commits se décomposent en **37 commits de design antérieurs** (branche `design/ios27-full-glass`, refonte Full Liquid Glass iOS 27) et **7 commits de chantier** :
+Le diff a d'abord été calculé contre `main` local : c'est **erroné**. Le travail de design a déjà été mergé en amont par la PR #50 — **32 des 33 commits** de `origin/main` sont exactement les mêmes SHA que ceux déjà présents dans la branche. Le design n'est donc pas un contenu nouveau à merger, et la volumétrie réelle est environ **2,5 fois plus faible** que ce qu'un diff contre `main` local laisse croire.
+
+Les **13 commits** réellement nouveaux se décomposent en **5 commits de WIP antérieur** (préparation de voyage, hub, route préparateur, RLS), **1 commit de schéma et catalogue**, et **7 commits de chantier** :
 
 | Commit | Workstream |
 |---|---|
@@ -33,6 +37,8 @@ Les 44 commits se décomposent en **37 commits de design antérieurs** (branche 
 | `a998cb0d` | W2 — contrat de credentials double-clé (D-07) |
 | `b1f245d3` | W1 — récupération du WIP + addendum D-19→D-21 |
 | `09d03120` | pré-existant au chantier — schéma + catalogue unifiés |
+
+> **Note de fraîcheur.** `origin/main` a été re-consulté par `git fetch` au moment de la clôture et valait toujours `098a95eb` ; aucun rebase n'était donc nécessaire. Les chiffres de cette section sont donc **confirmés**, et non estimés. Un `git fetch` ultérieur peut les modifier si l'upstream avance.
 
 ---
 
@@ -387,7 +393,7 @@ VIATOR_MCID
 | R-5 | `VIATOR_BOOKING_ENABLED=false` : le checkout Viator est désactivé | basse | Voulu tant que l'attribution n'est pas configurée. |
 | R-6 | Cache PostgREST ~45 s après migration | basse | Cosmétique, mais peut faire croire à un échec de migration. |
 | R-7 | Historique de branches non conforme au découpage `chantier/2routes-pN-*` (W3/W4 sur la branche W2) | basse | Cosmétique. |
-| R-8 | Diff vs `main` de 588 fichiers / +55 632 lignes, dont 37 commits de design strangers au chantier | moyenne | La PR de merge sera **très large**. Une PR unique serait difficile à relire : envisager de la découper, design d'abord, chantier ensuite. |
+| R-8 | Volumétrie de la PR : 232 fichiers / +27 135 lignes | **faible** | **Requalifié.** Le design étant déjà mergé en amont (PR #50), il ne s'agit plus d'un mélange design/chantier. La volumétrie provient du WIP de préparation qui est la base même du chantier. PR unique assumée. |
 
 ---
 
@@ -427,26 +433,31 @@ dans `DECISIONS.md` où le plan demandait explicitement de la documenter.
 
 ---
 
-## 13. Ce qu'il reste à faire
+## 13. Décisions tranchées et checklist post-merge
 
-**Immédiat :**
+**Décision tranchée :** PR **unique** des 13 commits vers `main`. La fear de mélange design/chantier qui motivait un découpage ne se vérifie pas : le design est déjà mergé en amont par la PR #50 (32 des 33 commits de `origin/main` sont les mêmes SHA) et `origin/main` n'a pas avancé depuis. Le seul commit divergent est le merge `098a95eb`, sans delta de contenu.
 
-1. Relire et merger ce commit W8.
-2. **Décider de la stratégie de merge** : la branche contient 37 commits de design strangers au chantier (risque R-8). Une PR unique serait très difficile à relire.
-3. Pousser la branche et ouvrir la PR vers `main` — **sur accord explicite**.
+La liste ci-dessous est une checklist **post-merge**. Aucun de ces points n'a été traité par ce chantier.
 
-**Sécurité :**
+**Sécurité — sans délai :**
 
-4. **Révoquer et régénérer les 4 clés** (risque R-1).
-5. Renseigner `ROUTESTACK_FULL_API_KEY` si le mode production est réellement voulu.
-6. Renseigner `VIATOR_PID` / `VIATOR_MCID` pour activer l'attribution, puis `VIATOR_BOOKING_ENABLED=true`.
+1. **Révoquer et régénérer les 4 clés** (risque R-1). Les 4 secrets providers ont été partagés en clair dans une conversation. Ils n'ont jamais quitté `.env.local` et ne figurent dans aucun commit, mais ils sont à considérer comme compromis.
 
-**Dette technique :**
+**Activation des providers :**
 
-7. Arbitrer `20260926010000_rls_role_helper_execute.sql` (risque R-3).
-8. Planifier l'application des 4 migrations hors périmètre (risque R-4).
-9. Renseigner `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `CRON_SECRET` pour couvrir Stripe et les crons E2E.
-10. Documenter dans `AGENTS.md` la règle : **une migration n'est verte qu'après application réelle sur une base.**
+2. Renseigner `ROUTESTACK_FULL_API_KEY` si le mode `production` est réellement voulu. Tant qu'elle est absente, `ROUTESTACK_MODE=production` échoue en **fail-closed** (`credentials.incomplete`) — comportement voulu — et `main` reste le défaut de fait.
+
+3. Renseigner `VIATOR_PID` / `VIATOR_MCID`, puis `VIATOR_BOOKING_ENABLED=true` pour activer l'attribution de commission. Sans eux, le helper `buildViatorAttributionUrl` est livré et testé, mais les URLs sortantes ne portent aucune commission : l'attribution réelle reste **non vérifiable**.
+
+**Couverture de bout en bout :**
+
+4. Renseigner `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` et `CRON_SECRET` pour couvrir le checkout Stripe et les crons d'agrégation. Ces trois pistes restent non testées de bout en bout.
+
+**Dette de migrations :**
+
+5. Résoudre la dette documentée dans [`supabase/MIGRATIONS_PENDING.md`](supabase/MIGRATIONS_PENDING.md) : 4 migrations en attente, 2 migrations remote-only sans contrepartie locale, et le quasi-doublon `20260926010000` / `20260926010115` (risques R-3 et R-4).
+
+6. Documenter dans `AGENTS.md` la règle : **une migration n'est verte qu'après application réelle sur une base.**
 
 ---
 
