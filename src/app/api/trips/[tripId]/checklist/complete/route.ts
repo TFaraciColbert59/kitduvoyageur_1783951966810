@@ -6,7 +6,7 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 /**
- * POST /api/trips/[id]/checklist/complete
+ * POST /api/trips/[tripId]/checklist/complete
  *
  * Appelée après un toggle réussi de la checklist (le toggle reste une écriture
  * directe client). Le serveur vérifie l'état réel en base via l'accroche
@@ -15,10 +15,10 @@ export const dynamic = 'force-dynamic';
  */
 export async function POST(
   _req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ tripId: string }> }
 ) {
   try {
-    const { id } = await params;
+    const { tripId } = await params;
     const supabase = await createClient();
     const {
       data: { user },
@@ -29,7 +29,7 @@ export async function POST(
     const { data: trip } = await supabase
       .from('trips')
       .select('id, user_id')
-      .eq('id', id)
+      .eq('id', tripId)
       .maybeSingle();
     if (!trip) return NextResponse.json({ error: 'Voyage introuvable' }, { status: 404 });
 
@@ -37,7 +37,7 @@ export async function POST(
       const { data: collaborator } = await supabase
         .from('trip_collaborators')
         .select('role')
-        .eq('trip_id', id)
+        .eq('trip_id', tripId)
         .eq('user_id', user.id)
         .maybeSingle();
       if (collaborator?.role !== 'editor') {
@@ -45,13 +45,13 @@ export async function POST(
       }
     }
 
-    const result = await awardChecklistCompleted(id);
+    const result = await awardChecklistCompleted(tripId);
     return NextResponse.json(
       { ok: true, awarded: result.success, outcome: result.outcome, reason: result.reason ?? null },
       { status: 200 }
     );
   } catch (err) {
-    console.error('POST /api/trips/[id]/checklist/complete', err);
+    console.error('POST /api/trips/[tripId]/checklist/complete', err);
     return NextResponse.json({ ok: true, awarded: false }, { status: 200 });
   }
 }

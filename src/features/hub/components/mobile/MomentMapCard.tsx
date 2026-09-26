@@ -46,7 +46,7 @@ export function MomentMapCard({
       aria-label={sheetTitle}
       className={`hub-map-card relative ${heightClass} overflow-hidden rounded-[var(--lkv-radius-card)] border border-white/50 shadow-sm`}
     >
-      <div className="absolute inset-0 z-0">
+      <div className="absolute inset-0">
         <HubGlobeMap
           name={sheetTitle}
           routeCoords={routeCoords}

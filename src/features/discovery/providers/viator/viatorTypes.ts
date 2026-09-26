@@ -10,6 +10,10 @@ export interface ViatorSearchParams {
   /** Tags Viator (numériques) — ex. filtre culinaire pour la Gastronomie. */
   tags?: number[];
   currency?: string;
+  /** Date de recherche au format YYYY-MM-DD (filtre, pas une disponibilité confirmée). */
+  date?: string;
+  /** Nombre de voyageurs (filtre, pas une disponibilité confirmée). */
+  travelers?: number;
   language?: string;
   signal?: AbortSignal;
 }

@@ -6,6 +6,7 @@ import {
   collectStays,
   collectTransports,
   isFoodPoi,
+  normalizePoiCategory,
   isReservableTransport,
   routeCoordsFromSteps,
   transportLabel,
@@ -198,5 +199,32 @@ describe('buildPreparatorModel', () => {
       [50.2, 5.2],
       [50.3, 5.3],
     ]);
+  });
+});
+
+describe('normalizePoiCategory', () => {
+  it('déduit les catégories outdoor à partir du nom, de la catégorie et des notes', () => {
+    expect(normalizePoiCategory({ name: 'Belvédère du Roc', category: 'other' })).toBe('viewpoint');
+    expect(normalizePoiCategory({ name: 'Source du Vallon', category: 'other' })).toBe('water');
+    expect(normalizePoiCategory({ name: 'Gîte de la Pierre', category: 'other' })).toBe('refuge');
+    expect(normalizePoiCategory({ name: 'Pico Norte', category: 'other' })).toBe('summit');
+    expect(normalizePoiCategory({ name: 'Cascade du Loup', category: 'other' })).toBe('waterfall');
+    expect(normalizePoiCategory({ name: 'Col de la Schlucht', category: 'other' })).toBe('col');
+    expect(normalizePoiCategory({ name: 'Camping des Aulnes', category: 'other' })).toBe('camping');
+  });
+
+  it('déduit les catégories voyage et le transport', () => {
+    expect(normalizePoiCategory({ name: 'Table du Col', category: 'other' })).toBe('food');
+    expect(normalizePoiCategory({ name: 'Hôtel du Centre', category: 'other' })).toBe('stay');
+    expect(normalizePoiCategory({ name: 'Navette gare', category: 'other' })).toBe('transport');
+    expect(normalizePoiCategory({ name: 'Départ étape 2', category: 'other' })).toBe('step');
+    expect(
+      normalizePoiCategory({ name: 'Pause', category: 'other', notes: 'À voir au sommet' })
+    ).toBe('summit');
+  });
+
+  it('retombe sur poi et plus jamais sur une catégorie AUTRE', () => {
+    expect(normalizePoiCategory({ name: 'Point non décrit', category: 'other' })).toBe('poi');
+    expect(normalizePoiCategory({ name: 'Autre', category: 'AUTRE' })).toBe('poi');
   });
 });

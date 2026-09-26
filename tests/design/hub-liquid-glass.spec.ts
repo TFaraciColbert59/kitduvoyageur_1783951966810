@@ -11,6 +11,11 @@ const webNavigationBar = readFileSync(
 );
 const tabItem = readFileSync('src/components/mobile-nav/navigation/TabItem.tsx', 'utf8');
 const hubLiquid = readFileSync('src/features/hub/components/hub-liquid.css', 'utf8');
+const hubMapLiquid = readFileSync(
+  'src/features/hub/components/mobile/hub-map-liquid.css',
+  'utf8',
+);
+const hubMapMaterial = hubLiquid + '\n' + hubMapLiquid;
 const sectionCarousel = readFileSync(
   'src/features/hub/components/mobile/SectionCarousel.tsx',
   'utf8',
@@ -131,7 +136,7 @@ describe('Hub — rendu Liquid Glass iOS 27', () => {
     // halo, sinon il lave sur le ciel clair de la photo de fond.
     // Le materiau est le quasi-noir #101010 d Apple, donc le texte est blanc.
     expect(hubLiquid).toContain('--hub-smoke: rgba(16, 16, 16, 0.3)');
-    expect(hubLiquid).toMatch(/text-shadow:[^;]*rgba\(0, 0, 0/);
+    expect(hubMapMaterial).toMatch(/text-shadow:[^;]*rgba\(0, 0, 0/);
   });
 
   it('reproduit la recette Fill + Shadow du kit iOS 27 sur tous les materiaux', () => {
@@ -265,9 +270,9 @@ describe('Hub — tiroirs lateraux mobile', () => {
 
   it('style les trois poignees et le panneau avec le meme materiau de verre', () => {
     expect(hubLiquid).toContain('.hub-edge-trigger {');
-    expect(hubLiquid).toMatch(/\.hub-edge-trigger--top\s*\{\s*top:\s*32%;\s*\}/);
-    expect(hubLiquid).toMatch(/\.hub-edge-trigger--mid\s*\{\s*top:\s*50%;\s*\}/);
-    expect(hubLiquid).toMatch(/\.hub-edge-trigger--bottom\s*\{\s*top:\s*68%;\s*\}/);
+    expect(hubMapMaterial).toMatch(/\.hub-edge-trigger--top\s*\{\s*top:\s*32%;\s*\}/);
+    expect(hubMapMaterial).toMatch(/\.hub-edge-trigger--mid\s*\{\s*top:\s*50%;\s*\}/);
+    expect(hubMapMaterial).toMatch(/\.hub-edge-trigger--bottom\s*\{\s*top:\s*68%;\s*\}/);
     expect(hubLiquid).toContain('.hub-edge-panel__surface');
     expect(hubLiquid).toContain('backdrop-filter: blur(30px) saturate(200%)');
   });
@@ -296,9 +301,9 @@ describe('Hub — tiroirs lateraux mobile', () => {
   it('laisse les gestes de la carte reaching le canvas sans bloquer le panneau', () => {
     expect(momentMapCard).toContain('pointer-events-none relative z-20');
     expect(momentMapCard).toContain('hub-map-card__panel pointer-events-auto');
-    expect(hubLiquid).toMatch(/\.hub-globe-map__loading,\s*\.hub-globe-map__empty \{[^}]*pointer-events: none;/);
-    expect(hubLiquid).toMatch(/\.hub-globe-poi-rail \{[^}]*pointer-events: none;/);
-    expect(hubLiquid).toMatch(/\.hub-globe-poi-chip \{[^}]*pointer-events: auto;/);
+    expect(hubMapMaterial).toMatch(/\.hub-globe-map__loading,\s*\.hub-globe-map__empty \{[^}]*pointer-events: none;/);
+    expect(hubMapMaterial).toMatch(/\.hub-globe-poi-rail \{[^}]*pointer-events: none;/);
+    expect(hubMapMaterial).toMatch(/\.hub-globe-poi-chip \{[^}]*pointer-events: auto;/);
   });
 
   it('charge la vraie geometrie et expose tous les POI du voyage sur le globe', () => {
@@ -317,12 +322,12 @@ describe('Hub — tiroirs lateraux mobile', () => {
     expect(unifiedExplorerMap).toContain("container.className = 'hub-map-poi-tooltip'");
     expect(unifiedExplorerMap).not.toContain("container.className = 'px-1 py-0.5 max-w-[220px]'");
     expect(unifiedExplorerMap).toContain("className: 'atlas-poi-popup hub-map-poi-popup'");
-    expect(hubLiquid).toContain('.hub-globe-map .maplibregl-popup.hub-map-poi-popup');
-    expect(hubLiquid).toContain('.hub-map-poi-tooltip');
-    expect(hubLiquid).toMatch(
+    expect(hubMapMaterial).toContain('.hub-globe-map .maplibregl-popup.hub-map-poi-popup');
+    expect(hubMapMaterial).toContain('.hub-map-poi-tooltip');
+    expect(hubMapMaterial).toMatch(
       /\.hub-globe-map \.maplibregl-popup-content \{[^}]*backdrop-filter: blur\(30px\) saturate\(220%\)/,
     );
-    expect(hubLiquid).toMatch(
+    expect(hubMapMaterial).toMatch(
       /\.hub-map-poi-popup \.maplibregl-popup-close-button \{[^}]*width: 36px;[^}]*height: 36px;/,
     );
   });
@@ -338,7 +343,7 @@ describe('Hub — tiroirs lateraux mobile', () => {
   it('retire le materiau derriere les icones de tuiles', () => {
     expect(sectionCarousel).toContain('hub-tile-glyph');
     expect(sectionCarousel).not.toMatch(/hub-tile-glyph[^\n]*hub-control-lens/);
-    expect(hubLiquid).toMatch(/\.hub-tile-glyph \{[^}]*background: none;/);
+    expect(hubMapMaterial).toMatch(/\.hub-tile-glyph \{[^}]*background: none;/);
   });
 
 });

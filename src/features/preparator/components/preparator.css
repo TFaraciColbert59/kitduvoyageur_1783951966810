@@ -281,3 +281,249 @@
   gap: 10px;
   padding-top: 4px;
 }
+
+.preparator__row--stack {
+  align-items: flex-start;
+}
+
+.preparator__row--stack .preparator__row-sub {
+  white-space: normal;
+  line-height: 1.35;
+}
+
+.preparator__tag {
+  flex-shrink: 0;
+  padding: 4px 8px;
+  border-radius: 999px;
+  font-size: 9.5px;
+  font-weight: 650;
+  letter-spacing: 0.02em;
+  color: var(--lkv-text-secondary, #5a7064);
+  background: color-mix(in srgb, var(--lkv-primary, #17402c) 10%, transparent);
+}
+
+/* Réservations — formulaire contextuel + candidats sans confirmation implicite. */
+.preparator__booking {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.preparator__booking-form {
+  padding: 12px 14px;
+}
+
+.preparator__booking-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.preparator__field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.preparator__field > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  font-weight: 650;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--lkv-text-muted, #5a7064);
+}
+
+.preparator__field input {
+  width: 100%;
+  min-height: 36px;
+  padding: 7px 9px;
+  border: 1px solid color-mix(in srgb, var(--lkv-text-primary, #17402c) 14%, transparent);
+  border-radius: 11px;
+  color: var(--lkv-text-primary, #17402c);
+  background: color-mix(in srgb, var(--card-tint-strong, #fff) 72%, transparent);
+  font-size: 12px;
+}
+
+.preparator__field--compact {
+  grid-column: span 1;
+}
+
+.preparator__booking-note {
+  margin: 9px 0 0;
+  font-size: 10.5px;
+  line-height: 1.4;
+  color: var(--lkv-text-muted, #5a7064);
+}
+
+.preparator__booking-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.preparator__booking-card {
+  min-width: 0;
+  padding: 11px 12px;
+}
+
+.preparator__booking-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 7px;
+}
+
+.preparator__booking-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--lkv-text-primary, #17402c);
+}
+
+.preparator__booking-empty,
+.preparator__booking-error {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.35;
+  color: var(--lkv-text-muted, #5a7064);
+}
+
+.preparator__booking-error {
+  color: #a8443a;
+}
+
+.preparator__booking-results {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.preparator__offer {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  padding: 7px 8px;
+  border-radius: 11px;
+  background: color-mix(in srgb, var(--card-tint-strong, #fff) 58%, transparent);
+}
+
+.preparator__offer-title {
+  margin: 0;
+  font-size: 11.5px;
+  font-weight: 650;
+  line-height: 1.25;
+  color: var(--lkv-text-primary, #17402c);
+}
+
+.preparator__offer-sub {
+  margin: 2px 0 0;
+  font-size: 10.5px;
+  line-height: 1.3;
+  color: var(--lkv-text-muted, #5a7064);
+}
+
+.preparator__offer-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin: 4px 0 0;
+  font-size: 10.5px;
+  font-weight: 650;
+  color: var(--lkv-text-secondary, #5a7064);
+}
+
+.preparator__badge {
+  padding: 2px 5px;
+  border-radius: 999px;
+  font-size: 9px;
+  font-weight: 700;
+  color: #7a4d00;
+  background: color-mix(in srgb, #c89a3b 22%, transparent);
+}
+
+@media (min-width: 720px) {
+  .preparator__booking-fields {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+}
+
+.preparator__offer {
+  flex-wrap: wrap;
+}
+
+.preparator__offer-actions {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 6px;
+}
+
+.glass-icon-btn {
+  display: inline-grid;
+  width: 34px;
+  height: 34px;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 999px;
+  color: #ffffff;
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.02)),
+    rgba(16, 18, 17, 0.3);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.14),
+    0 8px 20px rgba(0, 0, 0, 0.16);
+  -webkit-backdrop-filter: blur(22px) saturate(210%) brightness(1.12);
+  backdrop-filter: blur(22px) saturate(210%) brightness(1.12);
+  transition:
+    transform 140ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    background-color 140ms ease,
+    opacity 140ms ease;
+}
+
+.glass-icon-btn:hover:not(:disabled) {
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0.04)),
+    rgba(16, 18, 17, 0.36);
+}
+
+.glass-icon-btn:active:not(:disabled) {
+  transform: scale(0.94);
+}
+
+.glass-icon-btn:disabled {
+  cursor: default;
+  opacity: 0.66;
+}
+
+.preparator__offer-save {
+  display: flex;
+  flex: 1 0 100%;
+  align-items: center;
+  gap: 4px;
+  margin: 1px 0 0;
+  color: rgba(255, 255, 255, 0.76);
+  font-size: 10px;
+  font-weight: 650;
+}
+
+.preparator__offer-save--error {
+  color: #ffb4ab;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .glass-icon-btn {
+    transition: none;
+  }
+}

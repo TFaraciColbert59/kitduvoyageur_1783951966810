@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
-import { buildPoiTooltipModel } from '../../src/components/map/engine/poiTooltip';
+import {
+  buildPoiTooltipModel,
+  formatPoiStepLabel,
+} from '../../src/components/map/engine/poiTooltip';
 
 describe('POI — modele de tooltip Liquid Glass', () => {
   it('conserve les donnees reelles et les rend lisibles sur mobile', () => {
@@ -48,5 +51,22 @@ describe('POI — modele de tooltip Liquid Glass', () => {
       description: '',
       badges: [],
     });
+  });
+
+  it('masque un identifiant technique de step et conserve les libelles humains', () => {
+    expect(
+      buildPoiTooltipModel({
+        name: 'Gitavesnois',
+        stepLabel: 'Étape 0b1f4c10-0000-4000-8000-000000000001',
+      }).badges
+    ).toEqual([]);
+    expect(buildPoiTooltipModel({ name: 'Gitavesnois', stepLabel: 'Étape 2' }).badges).toEqual([
+      'Étape 2',
+    ]);
+  });
+
+  it('normalise les identifiants de step avant de construire le tooltip', () => {
+    expect(formatPoiStepLabel('2')).toBe('Étape 2');
+    expect(formatPoiStepLabel('0b1f4c10-0000-4000-8000-000000000001')).toBe('');
   });
 });

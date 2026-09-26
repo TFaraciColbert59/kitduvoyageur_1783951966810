@@ -5,6 +5,7 @@ import { Check, MapPin } from 'lucide-react';
 import { sanitizeGeoJSON, type MapTrail } from '@/components/explorer/types';
 import type { UnifiedPOI } from '@/lib/queries/pois';
 import type { HubRoutePoint } from './HubRouteMap';
+import './hub-map-liquid.css';
 
 export interface HubGlobeMapProps {
   name: string;

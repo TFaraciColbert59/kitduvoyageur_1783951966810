@@ -36,6 +36,20 @@ function cleanText(value: unknown): string {
   return typeof value === 'string' ? value.replace(/\s+/g, ' ').trim() : '';
 }
 
+const UUID_LIKE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
+
+function stepLabel(value: unknown): string {
+  const label = cleanText(value);
+  if (!label || UUID_LIKE.test(label) || label.length > 48) return '';
+  return label;
+}
+
+export function formatPoiStepLabel(stepId: unknown): string {
+  const label = cleanText(stepId);
+  if (!label || UUID_LIKE.test(label) || label.length > 32) return '';
+  return `Étape ${label}`;
+}
+
 function categoryLabel(value: unknown): string {
   const category = cleanText(value).toLowerCase();
   if (!category) return "Point d’intérêt";
@@ -54,8 +68,8 @@ export function buildPoiTooltipModel(input: PoiTooltipInput): PoiTooltipModel {
   const badges: string[] = [];
 
   if (input.visited === true) badges.push('Déjà visité');
-  const stepLabel = cleanText(input.stepLabel);
-  if (stepLabel) badges.push(stepLabel);
+  const readableStep = stepLabel(input.stepLabel);
+  if (readableStep) badges.push(readableStep);
   if (input.verified === true) badges.push('Vérifié');
 
   return {

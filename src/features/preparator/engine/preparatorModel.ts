@@ -15,6 +15,20 @@ import type { TripFull, TripPoi, TripStep } from '@/features/trips/types/trip.ty
 
 export type PreparatorMarkerKind = 'poi' | 'stay' | 'transport' | 'step';
 
+export type PreparatorPoiCategory =
+  | 'viewpoint'
+  | 'water'
+  | 'refuge'
+  | 'summit'
+  | 'waterfall'
+  | 'col'
+  | 'camping'
+  | 'food'
+  | 'stay'
+  | 'transport'
+  | 'step'
+  | 'poi';
+
 export interface PreparatorMarker {
   id: string;
   kind: PreparatorMarkerKind;
@@ -111,11 +125,39 @@ const TRANSPORT_LABELS: Record<string, string> = {
   other: 'Transport',
 };
 
-/** Catégories de POI « repas » (table trip_pois, vocabulaire libre). */
-const FOOD_TOKENS = ['food', 'restaurant', 'resto', 'table', 'repas', 'diner', 'brasserie', 'cafe'];
+/** Catégories unifiées de la carte, tous voyages et toutes activités. */
+const POI_CATEGORY_PATTERNS: ReadonlyArray<
+  readonly [RegExp, PreparatorPoiCategory]
+> = [
+  [/\b(?:water|spring|source|fontaine|eau)\b/, 'water'],
+  [/\b(?:refuge|gite|cabane|chalet|hut|shelter)\b/, 'refuge'],
+  [/\b(?:summit|peak|cime|sommet|pic(?:o)?|mont)\b/, 'summit'],
+  [/\b(?:waterfall|cascade)\b/, 'waterfall'],
+  [/\b(?:camping|camp|bivouac)\b/, 'camping'],
+  [/\b(?:viewpoint|panorama|belvedere|point de vue)\b/, 'viewpoint'],
+  [
+    /\b(?:food|restaurant|resto|table|repas|diner|brasserie|cafe)\b/,
+    'food',
+  ],
+  [
+    /\b(?:stay|hotel|hebergement|nuit|chambre|lodge|maison d.?hotes)\b/,
+    'stay',
+  ],
+  [
+    /\b(?:transport|voiture|car|bus|train|avion|plane|bateau|boat|bike|velo|navette|funiculaire)\b/,
+    'transport',
+  ],
+  [/\b(?:etape|step|jour)\b/, 'step'],
+  [/\b(?:col|pass)\b/, 'col'],
+];
 
-/** Catégories de POI « hébergement » (en plus des nuits portées par les étapes). */
-const STAY_TOKENS = ['refuge', 'gite', 'camp', 'camping', 'hotel', 'hut', 'bivouac'];
+const STAY_CATEGORIES: ReadonlySet<PreparatorPoiCategory> = new Set([
+  'stay',
+  'refuge',
+  'camping',
+]);
+
+const FOOD_CATEGORIES: ReadonlySet<PreparatorPoiCategory> = new Set(['food']);
 
 function clean(value: string | null | undefined): string {
   return (value ?? '').trim().replace(/\s+/g, ' ');
@@ -123,7 +165,7 @@ function clean(value: string | null | undefined): string {
 
 function coord(
   lat: number | string | null | undefined,
-  lon: number | string | null | undefined
+  lon: number | string | null | undefined,
 ): { lat: number; lon: number } | null {
   const la = Number(lat);
   const lo = Number(lon);
@@ -132,11 +174,47 @@ function coord(
   if (la === 0 && lo === 0) return null;
   return { lat: la, lon: lo };
 }
+function normalizeSearchText(value: string | null | undefined): string {
+  return clean(value)
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim();
+}
 
-function hasToken(value: string | null | undefined, tokens: string[]): boolean {
-  const haystack = clean(value).toLowerCase();
-  if (!haystack) return false;
-  return tokens.some((token) => haystack.includes(token));
+export type PoiCategoryInput = Pick<TripPoi, 'name' | 'category'> & {
+  notes?: string | null;
+};
+
+/**
+ * Déduit une catégorie cartographique stable à partir du vocabulaire libre
+ * de la table trip_pois. Le repli est « poi » : jamais « autre ».
+ * Les champs sont lus dans l'ordre category, name, notes afin qu'une
+ * catégorie explicite reste prioritaire sur le vocabulaire du nom.
+ */
+export function normalizePoiCategory(poi: PoiCategoryInput): PreparatorPoiCategory {
+  for (const field of [poi.category, poi.name, poi.notes]) {
+    const haystack = normalizeSearchText(field);
+    if (!haystack) continue;
+    for (const [pattern, category] of POI_CATEGORY_PATTERNS) {
+      if (pattern.test(haystack)) return category;
+    }
+  }
+  return 'poi';
+}
+
+function matchesPoiCategories(
+  poi: Pick<TripPoi, 'name' | 'category'>,
+  targets: ReadonlySet<PreparatorPoiCategory>,
+): boolean {
+  const fields = [poi.category, poi.name]
+    .map(normalizeSearchText)
+    .filter(Boolean);
+  return POI_CATEGORY_PATTERNS.some(
+    ([pattern, category]) =>
+      targets.has(category) && fields.some((field) => pattern.test(field)),
+  );
 }
 
 /** Mode de transport lisible (jamais de code brut dans l'UI). */
@@ -153,11 +231,11 @@ export function isReservableTransport(mode: string | null | undefined): boolean 
 }
 
 export function isFoodPoi(poi: Pick<TripPoi, 'name' | 'category'>): boolean {
-  return hasToken(poi.category, FOOD_TOKENS) || hasToken(poi.name, FOOD_TOKENS);
+  return matchesPoiCategories(poi, FOOD_CATEGORIES);
 }
 
 export function isStayPoi(poi: Pick<TripPoi, 'name' | 'category'>): boolean {
-  return hasToken(poi.category, STAY_TOKENS) || hasToken(poi.name, STAY_TOKENS);
+  return matchesPoiCategories(poi, STAY_CATEGORIES);
 }
 
 /** Nuitées : une par étape portant un accommodation_name. */
@@ -208,7 +286,7 @@ export function collectMeals(pois: readonly TripPoi[], steps: readonly TripStep[
       return {
         id: poi.id,
         name: clean(poi.name),
-        category: clean(poi.category) || 'food',
+        category: normalizePoiCategory(poi),
         dayNumber: step ? Number(step.day_number) || null : null,
         lat: point?.lat ?? null,
         lon: point?.lon ?? null,
@@ -233,7 +311,11 @@ export function buildMarkers(trip: Pick<TripFull, 'steps' | 'pois'>): Preparator
    * deplacement ou d'une etape.
    */
   const slotOf = (marker: PreparatorMarker): PreparatorMarkerKind => {
-    if (marker.kind === 'stay' || marker.category === 'stay') return 'stay';
+    if (
+      marker.kind === 'stay' ||
+      STAY_CATEGORIES.has(marker.category as PreparatorPoiCategory)
+    )
+      return 'stay';
     return marker.kind;
   };
 
@@ -250,14 +332,12 @@ export function buildMarkers(trip: Pick<TripFull, 'steps' | 'pois'>): Preparator
     if (!point) continue;
     const label = clean(poi.name);
     if (!label) continue;
-    const food = isFoodPoi(poi);
-    const stay = isStayPoi(poi);
     push({
       id: poi.id,
       kind: 'poi',
       label,
       detail: clean(poi.notes) || null,
-      category: food ? 'food' : stay ? 'stay' : clean(poi.category) || 'poi',
+      category: normalizePoiCategory(poi),
       lat: point.lat,
       lon: point.lon,
       dayNumber: null,

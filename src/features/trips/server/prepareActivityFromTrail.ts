@@ -27,6 +27,11 @@ import { generateTripDocuments } from './generateTripDocuments';
 import { generateJournalNotes } from './generateJournalNotes';
 import { createKitForTrip } from './createKitForTrip';
 import { awardTrailPrepared } from '@/features/progression/server/producerHooks';
+import {
+  claimTripLaunch,
+  completeTripLaunch,
+  failTripLaunch,
+} from './tripLaunch';
 
 /**
  * « Préparer » un sentier → activité complète (Task 4).
@@ -748,8 +753,48 @@ export async function prepareActivityFromTrail(trailIdRaw: string): Promise<Prep
     return { status: 'reused', tripId, slug, title };
   }
 
-  const { trail, meta, polyline } = loaded;
   const writer: SupabaseClient = service ?? session;
+  const { trail, meta, polyline } = loaded;
+
+  // --- Revendication atomique -------------------------------------------
+  // La reservation (user_id, route_id) est posee AVANT toute creation de
+  // voyage : deux appels concurrents ne peuvent plus creer deux voyages, et
+  // aucun voyage ne peut exister sans route_id (fenetre qui rendait les
+  // orphelins invisibles de findExistingTrip).
+  // -----------------------------------------------------------------------
+  const claim = await claimTripLaunch(db, user.id, routeId);
+  if (claim.status === 'ready') {
+    if (shouldReenqueueEnrichment(null)) {
+      await enqueueActivityEnrichment(claim.trip.tripId, user.id);
+    }
+    await ensureReusedTripKit(db, user.id, claim.trip.tripId, trail, meta);
+    return {
+      status: 'reused',
+      tripId: claim.trip.tripId,
+      slug: claim.trip.slug,
+      title: claim.trip.title,
+    };
+  }
+  if (claim.status === 'in_progress') {
+    // Une preparation concurrente est en cours : on attend la gagnante plutot
+    // que de dupliquer. Repli tardif si elle n'apparait pas.
+    const raced = await waitForRacedTrip(db, user.id, routeId);
+    if (raced.status === 'found') {
+      if (shouldReenqueueEnrichment(raced.trip.metadata)) {
+        await enqueueActivityEnrichment(raced.trip.tripId, user.id);
+      }
+      await ensureReusedTripKit(db, user.id, raced.trip.tripId, trail, meta);
+      return {
+        status: 'reused',
+        tripId: raced.trip.tripId,
+        slug: raced.trip.slug,
+        title: raced.trip.title,
+      };
+    }
+    return await finalReuseOrUnavailable({ db, writer, userId: user.id, routeId, trail, meta });
+  }
+  // claim.status === 'unavailable' : migration absente en base, on continue
+  // sur le chemin historique (writeTripPrepareMetadata + compensation TS).
 
   let record: TripRecord | null = null;
   let layers: CreateTripFromAutogenIntentInput['layers'] | null = null;
@@ -889,23 +934,48 @@ export async function prepareActivityFromTrail(trailIdRaw: string): Promise<Prep
     }
   }
 
-  const persisted = await writeTripPrepareMetadata(writer, tripId, user.id, routeId, service);
-  if (persisted.status === 'duplicate') {
-    // Course perdue : le voyage fraîchement créé (sans `route_id`, il ne peut
-    // pas être le gagnant retrouvé par l'index unique) est supprimé — cascades
-    // enfants comprises — avant de servir l'activité gagnante. Jamais
-    // d'orphelin sans route_id.
-    await compensateCreatedTrip(writer, tripId, user.id);
-    if (shouldReenqueueEnrichment(persisted.trip.metadata)) {
-      await enqueueActivityEnrichment(persisted.trip.tripId, user.id);
+  // --- Persistance atomique ----------------------------------------------
+  // complete_trip_launch attache route_id ET bascule la reservation en
+  // 'ready' dans une seule transaction. En cas de course perdue ('lost'),
+  // fail_trip_launch supprime notre orphelin ET marque 'failed' dans la meme
+  // transaction : plus de compensation best-effort qui peut laisser un etat
+  // partiel cote base.
+  // -----------------------------------------------------------------------
+  if (claim.status === 'claimed') {
+    const completion = await completeTripLaunch(db, user.id, routeId, tripId);
+    if (completion.status === 'lost') {
+      await failTripLaunch(db, user.id, routeId, tripId, 'lost_race');
+      if (shouldReenqueueEnrichment(null)) {
+        await enqueueActivityEnrichment(completion.trip.tripId, user.id);
+      }
+      await ensureReusedTripKit(db, user.id, completion.trip.tripId, trail, meta);
+      const { tripId: reusedTripId, slug, title } = completion.trip;
+      return { status: 'reused', tripId: reusedTripId, slug, title };
     }
-    await ensureReusedTripKit(db, user.id, persisted.trip.tripId, trail, meta);
-    const { tripId: reusedTripId, slug, title } = persisted.trip;
-    return { status: 'reused', tripId: reusedTripId, slug, title };
-  }
-  if (persisted.status === 'failed') {
-    await compensateCreatedTrip(writer, tripId, user.id);
-    return await finalReuseOrUnavailable({ db, writer, userId: user.id, routeId, trail, meta });
+    if (completion.status === 'unavailable') {
+      await failTripLaunch(db, user.id, routeId, tripId, 'complete_unavailable');
+      return await finalReuseOrUnavailable({ db, writer, userId: user.id, routeId, trail, meta });
+    }
+  } else {
+    // Repli : migration absente, on conserve le chemin historique verifie.
+    const persisted = await writeTripPrepareMetadata(writer, tripId, user.id, routeId, service);
+    if (persisted.status === 'duplicate') {
+      // Course perdue : le voyage fraichement cree (sans `route_id`, il ne peut
+      // pas etre le gagnant retrouve par l'index unique) est supprime - cascades
+      // enfants comprises - avant de servir l'activite gagnante. Jamais
+      // d'orphelin sans route_id.
+      await compensateCreatedTrip(writer, tripId, user.id);
+      if (shouldReenqueueEnrichment(persisted.trip.metadata)) {
+        await enqueueActivityEnrichment(persisted.trip.tripId, user.id);
+      }
+      await ensureReusedTripKit(db, user.id, persisted.trip.tripId, trail, meta);
+      const { tripId: reusedTripId, slug, title } = persisted.trip;
+      return { status: 'reused', tripId: reusedTripId, slug, title };
+    }
+    if (persisted.status === 'failed') {
+      await compensateCreatedTrip(writer, tripId, user.id);
+      return await finalReuseOrUnavailable({ db, writer, userId: user.id, routeId, trail, meta });
+    }
   }
 
   const pois = await loadTrailPois(db, polyline);

@@ -71,6 +71,61 @@ export function easeToTarget(map: MapLibreMap, target: FlyToTarget): void {
   map.easeTo({ center: target.center, zoom: target.zoom, duration });
 }
 
+type ToggleInteraction = {
+  enable?: () => void;
+  disable?: () => void;
+};
+
+type RotationInteraction = {
+  enableRotation?: () => void;
+  disableRotation?: () => void;
+};
+
+export interface GlobeInteractionHandlers {
+  dragRotate?: ToggleInteraction;
+  touchZoomRotate?: RotationInteraction;
+  touchPitch?: ToggleInteraction;
+}
+
+function callInteraction<T extends object>(
+  receiver: T | undefined,
+  method: (() => void) | undefined,
+  label: string
+): void {
+  if (!receiver || typeof method !== 'function') return;
+  try {
+    method.call(receiver);
+  } catch (error) {
+    console.warn('[camera] geste MapLibre indisponible : ' + label, error);
+  }
+}
+
+/**
+ * Le globe exploite la rotation et l'inclinaison ; la vue locale les neutralise
+ * pour éviter qu'un pincement ne bascule la carte de travers sous le doigt.
+ */
+export function syncGlobeInteractionHandlers(
+  map: GlobeInteractionHandlers,
+  mode: 'local' | 'globe'
+): void {
+  const enabled = mode === 'globe';
+  callInteraction(
+    map.dragRotate,
+    enabled ? map.dragRotate?.enable : map.dragRotate?.disable,
+    'dragRotate (' + mode + ')'
+  );
+  callInteraction(
+    map.touchZoomRotate,
+    enabled ? map.touchZoomRotate?.enableRotation : map.touchZoomRotate?.disableRotation,
+    'touchZoomRotate.rotation (' + mode + ')'
+  );
+  callInteraction(
+    map.touchPitch,
+    enabled ? map.touchPitch?.enable : map.touchPitch?.disable,
+    'touchPitch (' + mode + ')'
+  );
+}
+
 const EARTH_RADIUS_KM = 6371;
 
 function toRadians(value: number): number {
