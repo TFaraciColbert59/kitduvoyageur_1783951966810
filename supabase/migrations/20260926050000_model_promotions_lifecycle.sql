@@ -194,66 +194,10 @@ BEGIN
     RAISE EXCEPTION 'model_promotions: admin_required' USING ERRCODE = '42501';
   END IF;
 
-  IF p_model_version IS NULL OR p_model_version !~ '^[A-Za-z0-9][A-Za-z0-9._-]{1,119}
-  PERFORM pg_advisory_xact_lock(hashtextextended('model_promotions.promote', 0));
-
-  SELECT mp.score INTO v_score
-  FROM public.model_promotions mp
-  WHERE mp.model_version = p_model_version
-    AND mp.status = 'pending'
-  FOR UPDATE;
-
-  IF NOT FOUND THEN
-    RAISE EXCEPTION 'model_promotions: not_pending' USING ERRCODE = '55000';
-  END IF;
-
-  -- Demote l'eventuelle promotion precedente, puis promeut la nouvelle.
-  -- L'index unique partiel garantit qu'un seul 'promoted' subsiste meme si
-  -- ce bloc est rejoue ; l'advisory lock serialise les ecritures concurrentes.
-  SELECT mp.model_version INTO v_previous
-  FROM public.model_promotions mp
-  WHERE mp.status = 'promoted';
-
-  UPDATE public.model_promotions
-  SET status = 'pending', promoted_by = NULL
-  WHERE status = 'promoted';
-
-  UPDATE public.model_promotions mp
-  SET status = 'promoted',
-      promoted_at = now(),
-      promoted_by = auth.uid(),
-      previous_version = v_previous
-  WHERE mp.model_version = p_model_version
-  RETURNING mp.status, mp.model_version, mp.score INTO v_status, p_model_version, v_score;
-
-  RETURN QUERY SELECT v_status, p_model_version, v_score, true;
-END;
-$function$;
-
--- ---------------------------------------------------------------------------
--- Grants
--- ---------------------------------------------------------------------------
-REVOKE ALL ON FUNCTION public.evaluate_model_promotion(text, numeric, jsonb, boolean) FROM PUBLIC, anon;
-REVOKE ALL ON FUNCTION public.promote_model_version(text) FROM PUBLIC, anon;
-GRANT EXECUTE ON FUNCTION public.evaluate_model_promotion(text, numeric, jsonb, boolean)
-  TO authenticated, service_role;
-GRANT EXECUTE ON FUNCTION public.promote_model_version(text)
-  TO authenticated, service_role;
-
-COMMENT ON COLUMN public.model_promotions.status IS
-  'pending = evalue non promu ; promoted = version active (une seule a la fois).';
-COMMENT ON COLUMN public.model_promotions.promoted_by IS
-  'Utilisateur (ou NULL en service_role) ayant declenche la promotion.';
-COMMENT ON FUNCTION public.evaluate_model_promotion(text, numeric, jsonb, boolean) IS
-  'Valide score/evidence, ecrit la promotion en pending (idempotent), promeut optionnellement.';
-COMMENT ON FUNCTION public.promote_model_version(text) IS
-  'Bascule une promotion pending vers promoted sous advisory lock, demote l'' precedente.';
-
-COMMIT; THEN
+  IF p_model_version IS NULL OR p_model_version !~ '^[A-Za-z0-9][A-Za-z0-9._-]{1,119}$' THEN
     RAISE EXCEPTION 'model_promotions: invalid_model_version' USING ERRCODE = '22023';
   END IF;
 
-  -- Serialise les promotions concurrentes.
   PERFORM pg_advisory_xact_lock(hashtextextended('model_promotions.promote', 0));
 
   SELECT mp.score INTO v_score
