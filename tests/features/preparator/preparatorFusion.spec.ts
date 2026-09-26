@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path';
 import { LEGACY_REDIRECTS, resolveLegacyRedirect } from '@/lib/hub/hubRedirects';
+import { ACTIVE_ROUTES } from '@/constants/routeRegistry';
 
 /**
  * Fusion des configurateurs — /prepare est l'UNIQUE point d'entree :
@@ -21,10 +22,10 @@ describe('Fusion des configurateurs — /prepare est l unique point de vente', (
   });
 
   it('FUS-2: /configurateur (next.config) pointe vers le preparateur canonique', () => {
-    const config = fs.readFileSync(path.join(ROOT, 'next.config.mjs'), 'utf8');
-    const block = config.slice(config.indexOf("'/configurateur'"));
-    const destination = block.match(/destination:\s*'([^']+)'/)?.[1];
-    expect(destination).toBe(KIT_TAB);
+    // P6 : next.config.mjs est GENERE depuis le registre, plus de litteral.
+    // On lit donc la source unique, pas le fichier de configuration.
+    const entry = ACTIVE_ROUTES.find((route) => route.source === '/configurateur');
+    expect(entry?.destination).toBe(KIT_TAB);
   });
 
   it('FUS-3: le middleware couvre les alias legacy', () => {
