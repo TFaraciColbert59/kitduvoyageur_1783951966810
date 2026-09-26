@@ -115,7 +115,7 @@ BEGIN
     ON CONFLICT (user_id, route_id) DO UPDATE
       SET status = 'ready',
           trip_id = EXCLUDED.trip_id,
-          failure_reason = NULL
+          failure_reason = NULL;
     RETURN QUERY SELECT 'ready'::text, v_existing.id, v_existing.slug, v_existing.title;
     RETURN;
   END IF;
