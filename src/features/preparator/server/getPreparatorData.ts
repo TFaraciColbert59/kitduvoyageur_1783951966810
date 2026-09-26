@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server';
+import type { SupabaseClient } from '@supabase/supabase-js';
 import { getHubAdventureData } from '@/features/hub/server/getHubAdventureData';
 import { getTripPhaseDetails } from '@/features/trips/engine/temporalPhaseEngine';
 import type { PlannerStep } from '@/features/trips/planner/plannerEngine';
@@ -13,6 +14,11 @@ import {
   routeCoordsFromSteps,
   type PreparatorModel,
 } from '../engine/preparatorModel';
+import {
+  rankActivityCatalog,
+  type ActivityCatalogItem,
+  type ActivityLogisticsScope,
+} from '../engine/activityCatalog';
 
 /**
  * Préparateur de voyage — chargeur serveur UNIQUE de /prepare.
@@ -39,6 +45,8 @@ export interface PreparatorData {
   plannerSteps: PlannerStep[];
   bookingByStepId: Record<string, ResolvedStepBookingLink>;
   bookingByPoiId: Record<string, ResolvedStepBookingLink>;
+  /** Formats d'activité publiés, filtrés pour le voyage actif. */
+  activityCatalog: ActivityCatalogItem[];
   canEdit: boolean;
   canManageBudget: boolean;
 }
@@ -93,6 +101,52 @@ export async function getPreparatorData(): Promise<PreparatorData | null> {
     context,
   );
 
+  // Catalogue d'activités : lecture tolérante, la migration peut être absente
+  // en environnement local. Aucune donnée n'est synthétisée si la table échoue.
+  let activityCatalog: ActivityCatalogItem[] = [];
+  try {
+    const catalogClient = (await createClient()) as unknown as SupabaseClient;
+    const { data: rows, error } = await catalogClient
+      .from('activity_catalog')
+      .select('id, slug, label, family, description, logistics_scope, sport_tags, metrics, is_seed')
+      .eq('is_active', true)
+      .order('family', { ascending: true })
+      .order('label', { ascending: true });
+    if (error) throw error;
+    const catalog = ((rows ?? []) as Array<Record<string, unknown>>)
+      .map((row): ActivityCatalogItem | null => {
+        const id = typeof row.id === 'string' ? row.id : null;
+        const slug = typeof row.slug === 'string' ? row.slug : null;
+        const label = typeof row.label === 'string' ? row.label : null;
+        const family = typeof row.family === 'string' ? row.family : null;
+        if (!id || !slug || !label || !family) return null;
+        const scope = row.logistics_scope;
+        const logisticsScope: ActivityLogisticsScope =
+          scope === 'access' || scope === 'stages' || scope === 'full' ? scope : 'none';
+        return {
+          id,
+          slug,
+          label,
+          family,
+          description: typeof row.description === 'string' ? row.description : '',
+          logisticsScope,
+          sportTags: Array.isArray(row.sport_tags)
+            ? row.sport_tags.filter((tag): tag is string => typeof tag === 'string')
+            : [],
+          metrics:
+            row.metrics && typeof row.metrics === 'object' && !Array.isArray(row.metrics)
+              ? (row.metrics as Record<string, unknown>)
+              : {},
+          isSeed: row.is_seed !== false,
+        };
+      })
+      .filter((item): item is ActivityCatalogItem => item !== null);
+    activityCatalog = rankActivityCatalog(catalog, trip.primary_activity, 12);
+  } catch {
+    // Le catalogue est un complément : son absence ne doit pas casser /prepare.
+    console.warn('[preparer] catalogue d\'activités indisponible');
+    activityCatalog = [];
+  }
   // Check-list : le hub charge un résumé (HubChecklistItem) pour ses compteurs,
   // le préparateur a besoin des lignes réelles (bascule optimiste + live bus).
   let checklist: DatabaseTripChecklistItem[] = [];
@@ -125,6 +179,7 @@ export async function getPreparatorData(): Promise<PreparatorData | null> {
     plannerSteps: toPlannerSteps(trip),
     bookingByStepId: data.bookingByStepId,
     bookingByPoiId,
+    activityCatalog,
     canEdit: trip.permissions.canEdit,
     canManageBudget: trip.permissions.canManageBudget,
   };

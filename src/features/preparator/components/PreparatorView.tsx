@@ -16,8 +16,10 @@ import {
   Plane,
   UtensilsCrossed,
   Wallet,
+  Ticket,
   ListChecks,
   Loader2,
+  Sparkles,
   Plus,
 } from 'lucide-react';
 import dynamicImport from 'next/dynamic';
@@ -28,6 +30,7 @@ import { addTripPoiAction } from '@/app/voyages/poi-actions';
 import type { HubRoutePoint } from '@/features/hub/components/mobile/HubRouteMap';
 import type { PreparatorData } from '../server/getPreparatorData';
 import type { PreparatorMarker } from '../engine/preparatorModel';
+import { BookingSearchPanel } from './BookingSearchPanel';
 import './preparator.css';
 
 /**
@@ -81,7 +84,7 @@ const KitConfiguratorWizard = dynamicImport(
   { ssr: false },
 );
 
-type TabId = 'itineraire' | 'nuits' | 'tables' | 'budget' | 'checklist' | 'equipement';
+type TabId = 'itineraire' | 'nuits' | 'tables' | 'reservations' | 'budget' | 'checklist' | 'equipement';
 
 const TABS: ReadonlyArray<{ id: TabId; label: string; icon: typeof Navigation }> = [
   { id: 'itineraire', label: 'Itinéraire', icon: Navigation },
@@ -89,6 +92,7 @@ const TABS: ReadonlyArray<{ id: TabId; label: string; icon: typeof Navigation }>
   { id: 'tables', label: 'Tables', icon: UtensilsCrossed },
   { id: 'budget', label: 'Budget', icon: Wallet },
   { id: 'checklist', label: 'Check-list', icon: ListChecks },
+  { id: 'reservations', label: 'Réservations', icon: Ticket },
   { id: 'equipement', label: 'Équipement', icon: Backpack },
 ];
 
@@ -120,6 +124,19 @@ function formatKm(value: number): string {
 function formatM(value: number): string {
   if (!Number.isFinite(value) || value <= 0) return '—';
   return Math.round(value).toLocaleString('fr-FR') + ' m';
+}
+
+function scopeLabel(scope: string): string {
+  switch (scope) {
+    case 'full':
+      return 'Logistique complète';
+    case 'stages':
+      return 'Multi-étapes';
+    case 'access':
+      return 'Accès';
+    default:
+      return 'Sortie simple';
+  }
 }
 
 export function PreparatorView({
@@ -283,6 +300,27 @@ export function PreparatorView({
       <section className="preparator__panel" role="tabpanel">
         {tab === 'itineraire' ? (
           <>
+            <Panel
+              title="Formats d'activité"
+              icon={<Sparkles size={14} aria-hidden="true" />}
+              count={data.activityCatalog.length}
+            >
+              {data.activityCatalog.length === 0 ? (
+                <EmptyRow label="Aucun format publié pour cette activité" />
+              ) : (
+                data.activityCatalog.slice(0, 6).map((activity) => (
+                  <div key={activity.id} className="glass-sub-card preparator__row preparator__row--stack">
+                    <div className="min-w-0 flex-1">
+                      <p className="preparator__row-title">{activity.label}</p>
+                      {activity.description ? (
+                        <p className="preparator__row-sub">{activity.description}</p>
+                      ) : null}
+                    </div>
+                    <span className="preparator__tag">{scopeLabel(activity.logisticsScope)}</span>
+                  </div>
+                ))
+              )}
+            </Panel>
             <div className="hidden lg:block">
               <ItineraryPlannerClient trip={trip} initialSteps={data.plannerSteps} />
             </div>
@@ -402,6 +440,15 @@ export function PreparatorView({
               })
             )}
           </Panel>
+        ) : null}
+
+        {tab === 'reservations' ? (
+          <BookingSearchPanel
+            tripId={trip.id}
+            destination={trip.destination_name}
+            startDate={trip.start_date}
+            endDate={trip.end_date}
+          />
         ) : null}
 
         {tab === 'budget' ? (

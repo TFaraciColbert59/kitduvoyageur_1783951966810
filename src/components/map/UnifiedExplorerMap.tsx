@@ -23,11 +23,17 @@ import {
   prefersReducedMotion,
   easeToTarget,
   flyToTarget,
+  syncGlobeInteractionHandlers,
 } from './engine/camera';
 import { resolveCountryName, resolveIsoA2 } from './engine/geo';
 import { registerAtlasMapImages } from './engine/icons';
 import { getPoiColor, getZoomTier, MAP_COLORS, type ZoomTier } from './engine/mapTheme';
-import { buildPoiTooltipModel } from './engine/poiTooltip';
+import { buildPoiTooltipModel, formatPoiStepLabel } from './engine/poiTooltip';
+import {
+  getPoiPopupPanCorrection,
+  getPoiPopupPanOffset,
+  type PoiPopupInsets,
+} from './engine/poiPopupPlacement';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { buildCountryDensityFC, buildRegionDensityFC } from './layers/densityLayers';
 import type { CountryDensityRow, RegionDensityCell } from './layers/densityLayers';
@@ -176,13 +182,53 @@ function buildPoisFeatureCollection(pois: UnifiedPOI[], selectedPoiId: string | 
           altitude: poi.altitude_m ?? null,
           description: poi.description ?? poi.details ?? '',
           visited: poi.is_visited === true,
-          stepLabel: poi.step_id == null ? '' : `Étape ${poi.step_id}`,
+          stepLabel: formatPoiStepLabel(poi.step_id),
           verified: poi.is_verified === true,
           color: getPoiColor(poi.category),
           selected: poi.id === selectedPoiId,
         },
       })),
   };
+}
+
+function resolvePoiPopupInsets(map: MapLibreMap, popupHeight: number): PoiPopupInsets {
+  const mapRect = map.getCanvas().getBoundingClientRect();
+  const card = map.getContainer().closest('.hub-map-card');
+  const rail = card?.querySelector('.hub-globe-poi-rail');
+  const panel = card?.querySelector('.hub-map-card__panel');
+
+  const top = rail instanceof HTMLElement
+    ? Math.max(16, rail.getBoundingClientRect().bottom - mapRect.top + 8)
+    : 16;
+  const panelBottomInset = panel instanceof HTMLElement
+    ? Math.max(16, mapRect.bottom - panel.getBoundingClientRect().top + 12)
+    : 16;
+  const maxBottomInset = Math.max(16, mapRect.height - top - popupHeight - 16);
+
+  return {
+    top,
+    right: 16,
+    bottom: Math.min(panelBottomInset, maxBottomInset),
+    left: 16,
+  };
+}
+
+function keepPoiPopupVisible(map: MapLibreMap, popup: Popup): void {
+  const element = popup.getElement();
+  if (!element) return;
+
+  const popupRect = element.getBoundingClientRect();
+  const correction = getPoiPopupPanCorrection(
+    map.getCanvas().getBoundingClientRect(),
+    popupRect,
+    resolvePoiPopupInsets(map, popupRect.height)
+  );
+  if (correction.x === 0 && correction.y === 0) return;
+
+  const panOffset = getPoiPopupPanOffset(correction);
+  map.panBy([panOffset.x, panOffset.y], {
+    duration: prefersReducedMotion() ? 0 : 240,
+  });
 }
 
 /**
@@ -245,18 +291,22 @@ function openPoiPopup(
   popupRef.current = null;
   previousPopup?.remove();
 
+  const safeInsets = resolvePoiPopupInsets(map, 176);
   const popup = new Popup({
     closeButton: true,
     closeOnClick: true,
     focusAfterOpen: false,
     maxWidth: 'none',
     offset: 12,
+    padding: safeInsets,
+    anchor: 'top',
     className: 'atlas-poi-popup hub-map-poi-popup',
   })
     .setLngLat(coordinates)
     .setDOMContent(container)
     .addTo(map);
   popupRef.current = popup;
+  keepPoiPopupVisible(map, popup);
   popup.on('close', () => {
     if (popupRef.current !== popup) return;
     popupRef.current = null;
@@ -423,8 +473,8 @@ export default function UnifiedExplorerMap({
           minZoom: GLOBE_MIN_ZOOM,
           renderWorldCopies: false,
           attributionControl: false,
-          dragRotate: false,
-          pitchWithRotate: false,
+          dragRotate: true,
+          pitchWithRotate: true,
         });
       } catch (caught) {
         // Jamais de spinner infini : erreur journalisée avec contexte, UI débloquée.
@@ -778,6 +828,14 @@ export default function UnifiedExplorerMap({
     };
   }, [initialView.center, initialView.zoom]);
 
+  // Les gestures 3D suivent exactement le mode affiché : rotation/pitch actifs
+  // sur le globe, neutralisés en vue locale pour garder le nord stable.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+    syncGlobeInteractionHandlers(map, viewMode);
+  }, [ready, viewMode]);
+
   // ── Synchronisation des sentiers (props → source GeoJSON) ───────────────────
   useEffect(() => {
     const map = mapRef.current;
@@ -978,7 +1036,7 @@ export default function UnifiedExplorerMap({
       altitude: poi.altitude_m ?? null,
       description: poi.description ?? poi.details ?? '',
       visited: poi.is_visited === true,
-      stepLabel: poi.step_id == null ? '' : `Étape ${poi.step_id}`,
+      stepLabel: formatPoiStepLabel(poi.step_id),
       verified: poi.is_verified === true,
       color: getPoiColor(poi.category),
     };
@@ -1249,6 +1307,14 @@ export default function UnifiedExplorerMap({
     : safeControls
       ? 'bottom-[calc(var(--nav-offset)+36px+var(--explorer-carousel-height,0px))]'
       : 'bottom-4';
+  const rightControlsPosition = compact
+    ? 'right-[68px] top-[calc(var(--safe-top)+112px)]'
+    : `${bottomControlsOffset} right-14 md:right-3`;
+
+  const attributionPosition = compact
+    ? 'right-3 top-[calc(var(--safe-top)+174px)]'
+    : 'right-3 top-[calc(var(--safe-top)+16px)] md:right-auto md:left-1/2 md:-translate-x-1/2 md:bottom-[calc(var(--safe-bottom)+2px)] md:top-auto';
+
   const desktopTilesOffset = safeControls
     ? 'md:bottom-[calc(var(--nav-offset)+36px)]'
     : 'md:bottom-4';
@@ -1287,24 +1353,27 @@ export default function UnifiedExplorerMap({
           ⚠️ Les classes `.glass-*` imposent leur `display` : les bascules
           responsives passent par des wrappers, jamais directement dessus. */}
 
-      {/* Action principale — mobile (centrée, seule au-dessus de la tab bar) */}
-      <div
-        className={`absolute left-1/2 -translate-x-1/2 ${bottomControlsOffset} z-[var(--z-fab)] md:hidden`}
-        data-atlas-primary-cta="mobile"
-      >
-        <Button
-          variant="secondary"
-          onClick={handleToggleGlobe}
-          className={`shadow-lg ${compact ? 'min-h-[40px] px-3' : 'min-h-[48px] px-4'}`}
-          aria-label={viewMode === 'globe' ? 'Explorer ma zone (vue locale)' : 'Afficher le globe'}
-          aria-pressed={viewMode === 'local'}
+      {/* Action principale — mobile Explorer uniquement. Le Hub compact garde
+          son rail globe en haut à droite, sans CTA central superposé. */}
+      {!compact && (
+        <div
+          className={`absolute left-1/2 -translate-x-1/2 ${bottomControlsOffset} z-[var(--z-fab)] md:hidden`}
+          data-atlas-primary-cta="mobile"
         >
-          <Icon name="compass" size={15} />
-          <span className="whitespace-nowrap text-[length:var(--lkv-text-caption)] font-bold">
-            {viewMode === 'globe' ? 'Explorer ma zone' : 'Vue globe'}
-          </span>
-        </Button>
-      </div>
+          <Button
+            variant="secondary"
+            onClick={handleToggleGlobe}
+            className="min-h-[48px] px-4 shadow-lg"
+            aria-label={viewMode === 'globe' ? 'Explorer ma zone (vue locale)' : 'Afficher le globe'}
+            aria-pressed={viewMode === 'globe'}
+          >
+            <Icon name="compass" size={15} />
+            <span className="whitespace-nowrap text-[length:var(--lkv-text-caption)] font-bold">
+              {viewMode === 'globe' ? 'Explorer ma zone' : 'Vue globe'}
+            </span>
+          </Button>
+        </div>
+      )}
 
       {/* Repli sans GPS — message non bloquant (la carte reste interactive).
           P1 — TOAST : formule de position UNIQUE via --nav-offset (les 2 autres
@@ -1322,59 +1391,79 @@ export default function UnifiedExplorerMap({
         </div>
       )}
 
-      {/* Zoom (−/+) + recentrage : mobile = zoom seul ; desktop = colonne complète.
-          E1 — sur mobile la colonne est décalée de `right-14` pour rester à
-          gauche de l'onglet filtres fixe (`right-0 top-1/2`) : une fois
-          remontée au-dessus du carrousel, elle croise sa bande verticale. */}
+      {/* Contrôles cartographiques — Hub compact : rail horizontal entre les
+          poignées Points et État, sans recouvrement des tiroirs ni du panneau
+          bas ; Explorer : colonne de zoom historique. */}
       <div
-        className={`absolute right-14 md:right-3 ${bottomControlsOffset} z-[var(--z-fab)] flex flex-col gap-2`}
+        className={`absolute z-[var(--z-fab)] flex ${compact ? 'flex-row' : 'flex-col'} gap-2 ${rightControlsPosition}`}
         data-atlas-controls="right"
+        data-atlas-globe-rail={compact ? 'compact' : undefined}
       >
+        {compact ? (
+          <>
+            <IconButton
+              variant="glass"
+              size="lg"
+              onClick={handleToggleGlobe}
+              className="hub-map-rail-control shadow-lg"
+              aria-label={viewMode === 'globe' ? 'Explorer ma zone (vue locale)' : 'Afficher le globe'}
+              title={viewMode === 'globe' ? 'Explorer ma zone' : 'Vue globe'}
+              aria-pressed={viewMode === 'globe'}
+            >
+              <Icon name="compass" size={19} />
+            </IconButton>
+            <span className="h-6 w-px self-center bg-white/30" aria-hidden="true" />
+          </>
+        ) : null}
+
         <IconButton
           variant="glass"
           size="lg"
           onClick={handleZoomIn}
-          className="shadow-lg"
+          className={compact ? 'hub-map-rail-control shadow-lg' : 'shadow-lg'}
           aria-label="Zoom avant"
           title="Zoom avant"
         >
-          <Icon name="plus" size={16} />
+          <Icon name="plus" size={17} />
         </IconButton>
         <IconButton
           variant="glass"
           size="lg"
           onClick={handleZoomOut}
-          className="shadow-lg"
+          className={compact ? 'hub-map-rail-control shadow-lg' : 'shadow-lg'}
           aria-label="Zoom arrière"
           title="Zoom arrière"
         >
-          <Icon name="minus" size={16} />
+          <Icon name="minus" size={17} />
         </IconButton>
-        <div className="hidden md:contents">
-          <IconButton
-            variant="glass"
-            size="lg"
-            onClick={handleRecenter}
-            className="shadow-lg"
-            aria-label="Me recentrer"
-            title="Me recentrer"
-          >
-            <Icon name="navigation" size={16} />
-          </IconButton>
-          <Button
-            variant="secondary"
-            onClick={handleToggleGlobe}
-            className="min-h-[44px] px-3 shadow-lg"
-            aria-label={viewMode === 'globe' ? 'Explorer ma zone (vue locale)' : 'Afficher le globe'}
-            title={viewMode === 'globe' ? 'Explorer ma zone' : 'Vue globe'}
-            aria-pressed={viewMode === 'local'}
-          >
-            <Icon name="compass" size={14} />
-            <span className="whitespace-nowrap text-[length:var(--lkv-text-caption-2)] font-bold">
-              {viewMode === 'globe' ? 'Explorer ma zone' : 'Vue globe'}
-            </span>
-          </Button>
-        </div>
+
+        {!compact && (
+          <div className="hidden md:contents">
+            <IconButton
+              variant="glass"
+              size="lg"
+              onClick={handleRecenter}
+              className="shadow-lg"
+              aria-label="Me recentrer"
+              title="Me recentrer"
+            >
+              <Icon name="navigation" size={16} />
+            </IconButton>
+            <Button
+              variant="secondary"
+              onClick={handleToggleGlobe}
+              className="min-h-[44px] px-3 shadow-lg"
+              aria-label={viewMode === 'globe' ? 'Explorer ma zone (vue locale)' : 'Afficher le globe'}
+              title={viewMode === 'globe' ? 'Explorer ma zone' : 'Vue globe'}
+              aria-pressed={viewMode === 'globe'}
+            >
+              <Icon name="compass" size={14} />
+              <span className="whitespace-nowrap text-[length:var(--lkv-text-caption-2)] font-bold">
+                {viewMode === 'globe' ? 'Explorer ma zone' : 'Vue globe'}
+              </span>
+            </Button>
+          </div>
+        )}
       </div>
 
       {/* Légende densité — desktop uniquement (simplicité mobile).
@@ -1414,7 +1503,7 @@ export default function UnifiedExplorerMap({
 
       {/* Attribution légère (obligatoire pour les tuiles) — mobile : haut droite ; desktop : bas centre.
           P1 — compteur lisible : token caption-2 (11px), jamais text-[9px]. */}
-      <div className="pointer-events-none absolute right-3 top-[calc(var(--safe-top)+16px)] z-[var(--z-sticky)] rounded-full bg-[color:var(--card-tint-strong)] px-2 py-1 text-[length:var(--lkv-text-caption-2)] leading-none text-[color:var(--lkv-text-muted)] md:right-auto md:left-1/2 md:-translate-x-1/2 md:bottom-[calc(var(--safe-bottom)+2px)] md:top-auto">
+      <div className="pointer-events-none absolute z-[var(--z-sticky)] rounded-full bg-[color:var(--card-tint-strong)] px-2 py-1 text-[length:var(--lkv-text-caption-2)] leading-none text-[color:var(--lkv-text-muted)] ${attributionPosition}">
         © OpenStreetMap France · Esri
       </div>
 

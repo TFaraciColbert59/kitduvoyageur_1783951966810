@@ -97,3 +97,6 @@ audit/contrast-measurements.json
 # Local visual QA scratch
 .probe/
 tmp-probe-*.mjs
+
+# Captures QA locales (Playwright / debug) — jamais commisees.
+artifacts/
