@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation';
 /**
  * Fusion des configurateurs — l'equipement est desormais un ONGLET du
  * preparateur de voyage unique. Cette route n'est plus une page : elle
- * redirige (307) vers /preparer?tab=equipement en conservant tous les
+ * redirige (307) vers /prepare?tab=equipement en conservant tous les
  * parametres utiles (country, groupId, carnetId, trail) lus par l'assistant.
  */
 export const dynamic = 'force-dynamic';
@@ -27,5 +27,5 @@ export default async function ConfiguratorPage({
     if (key === 'tab' || value == null) continue;
     params.set(key, Array.isArray(value) ? value[0] : value);
   }
-  redirect(`/preparer?${params.toString()}`);
+  redirect(`/prepare?${params.toString()}`);
 }

@@ -69,7 +69,7 @@ export function TripWizard() {
     });
     // Le preparateur est la destination de fin de creation : la carte, les
     // nuits, les transports, les tables et la check-list y sont reunionnes.
-    router.push('/preparer');
+    router.push('/prepare');
   };
 
   // Contenu interactif de l'étape active

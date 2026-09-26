@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import Icon from '@/components/ui/Icon';
 import React, { useState } from 'react';
@@ -46,7 +46,7 @@ export function QuickCreateTripModal({ isOpen, onClose, onSubmitTrip }: QuickCre
       slug,
       title: title.trim() || 'Nouvelle aventure',
     });
-    router.push('/preparer');
+    router.push('/prepare');
   };
 
   const handleSubmit = async (e: React.FormEvent) => {

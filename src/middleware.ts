@@ -160,6 +160,7 @@ export const config = {
     '/equipages',
     '/equipages/:path*',
     '/preparation',
+    '/preparer',
     '/alertes',
     '/terrain',
     '/mes-aventures',

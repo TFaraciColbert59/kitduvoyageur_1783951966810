@@ -85,7 +85,7 @@ const ACCESS_LINKS: AccessLink[] = [
   {
     label: 'Configurateur',
     hint: 'Générez un kit adapté à votre sortie',
-    href: '/preparer?tab=equipement',
+    href: '/prepare?tab=equipement',
     Icon: SlidersHorizontal,
   },
   {

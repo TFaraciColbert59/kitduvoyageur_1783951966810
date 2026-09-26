@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
@@ -189,7 +189,7 @@ export default function GuideDetailClient({ slug }: { slug: string }) {
               Utilisez notre configurateur IA pour obtenir une liste d&apos;équipement personnalisée pour cette destination.
             </p>
             <Link
-              href="/preparer?tab=equipement"
+              href="/prepare?tab=equipement"
               className="glass-capsule-btn primary"
             >
               <Icon name="SparklesIcon" size={14} variant="outline" />
@@ -307,7 +307,7 @@ export default function GuideDetailClient({ slug }: { slug: string }) {
               <p className="mb-[var(--space-3)] text-[13px] text-[color:var(--lkv-text-secondary)]">
                 Utilisez notre configurateur IA pour obtenir une liste d&apos;équipement personnalisée.
               </p>
-              <Link href="/preparer?tab=equipement">
+              <Link href="/prepare?tab=equipement">
                 <Button size="sm">Lancer le configurateur</Button>
               </Link>
             </Card>
