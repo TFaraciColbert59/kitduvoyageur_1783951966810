@@ -3,6 +3,7 @@ import { SectionCarousel } from './SectionCarousel';
 import { InfoChipsRow } from './InfoChipsRow';
 import { HubEdgeDrawer } from './HubEdgeDrawer';
 import { HubPrepareEntry } from './HubPrepareEntry';
+import { HubFreeDepartureEntry } from './HubFreeDepartureEntry';
 import ProgressionCompactCard from '@/components/progression/ProgressionCompactCard';
 import type { MobileInfoChip, MobileSectionTile } from '../../mobile/mobileHubEngine';
 
@@ -50,7 +51,10 @@ export function MobileAdventureHub({
       ) : null}
       <SectionCarousel tiles={tiles} />
       <InfoChipsRow chips={chips} />
+      {/* A3 : « Preparer » puis, juste dessous, « Partir librement ». Deux
+          decisions opposees, deux liens distincts — jamais un dedoublement. */}
       <HubPrepareEntry />
+      <HubFreeDepartureEntry />
       <div className={fill ? 'flex min-h-0 flex-1 flex-col' : undefined}>{children}</div>
     </div>
   );
