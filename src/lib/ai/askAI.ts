@@ -1,6 +1,6 @@
 import 'server-only';
 import { z } from 'zod';
-import { getProvider, modelFor } from './providers';
+import { getProvider, modelNameFor } from './providers';
 import { getCached, setCached } from './responseStore';
 import { consumeQuota } from './quota';
 import { getFeature } from './features/registry';
@@ -71,13 +71,13 @@ export async function askAI(rawRequest: AIRequest): Promise<AIResponse> {
     spec.maxReasoningBudget,
     req.reasoningBudget ?? spec.maxReasoningBudget
   );
-  const provider = getProvider();
+  const provider = getProvider(req.tier);
 
   try {
     const text = await provider.complete({ ...req, reasoningBudget });
     const response: AIResponse = {
       text,
-      model: provider.name === 'openrouter' ? modelFor(req.tier) : provider.name,
+      model: modelNameFor(provider, req.tier),
       degraded: false,
       cached: false,
       provider: provider.name,
